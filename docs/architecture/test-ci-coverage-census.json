@@ -7,18 +7,19 @@
     "pullRequestCovered counts only workflows triggered by pull_request or merge_group, i.e. the set that can block a merge.",
     "While indeterminateInvocations is non-empty, uncoveredTestFiles is an upper bound.",
     "An unrun file a naming command excludes through its own --testPathIgnorePatterns is a declared quarantine: triaged, with a reason recorded somewhere. An unrun file no command names is untriaged. Both stay in uncoveredTestFiles; only untriagedUnrunTestFiles separates them.",
+    "governedRiskFiles reports each file in a ranked governed-risk directory: loaded means the census found the file, collected means a workflow-reachable command named it before ignore subtraction, run/green/covered mean that command still reaches it after ignore subtraction, and untriaged means no command reaches it and no naming command quarantines it.",
     "Every directory holding an UNTRIAGED unrun file is ranked by governed-surface risk: declared AI controls, approval or lifecycle writes, then tenant-scoped reads; the count of unrun files is only a tie-breaker. A directory whose unrun set is entirely declared quarantine is not ranked, because it has already been triaged.",
     "Governed-risk signals come from product modules a test loads at runtime, not from directory names alone; type-only imports are erased before the test runs and are not counted as edges.",
     "Evidence source lists for the top 25 governed-risk directories are sorted and capped at five paths per signal; companion counts preserve the full match cardinality.",
     "No timestamp is recorded, so refreshing this file on an unchanged tree is a no-op."
   ],
   "counts": {
-    "testFiles": 2359,
-    "coveredTestFiles": 1819,
-    "pullRequestCoveredTestFiles": 1816,
+    "testFiles": 2360,
+    "coveredTestFiles": 1820,
+    "pullRequestCoveredTestFiles": 1817,
     "uncoveredTestFiles": 540,
-    "directoriesWithTests": 479,
-    "directoriesFullyCovered": 269,
+    "directoriesWithTests": 480,
+    "directoriesFullyCovered": 270,
     "directoriesPartiallyCovered": 30,
     "directoriesUncovered": 180,
     "directoriesWithUnrunTestFiles": 210,
@@ -40,7 +41,9 @@
       "coveredTestFiles": 89,
       "declaredQuarantineTestFiles": 8,
       "untriagedUnrunTestFiles": 0,
-      "via": ["command"]
+      "via": [
+        "command"
+      ]
     },
     {
       "directory": "src/__tests__/integration/admin",
@@ -48,7 +51,9 @@
       "coveredTestFiles": 44,
       "declaredQuarantineTestFiles": 2,
       "untriagedUnrunTestFiles": 0,
-      "via": ["command"]
+      "via": [
+        "command"
+      ]
     },
     {
       "directory": "src/__tests__/integration",
@@ -56,7 +61,9 @@
       "coveredTestFiles": 40,
       "declaredQuarantineTestFiles": 0,
       "untriagedUnrunTestFiles": 5,
-      "via": ["command"]
+      "via": [
+        "command"
+      ]
     },
     {
       "directory": "src/__tests__/integration/qa",
@@ -64,7 +71,10 @@
       "coveredTestFiles": 39,
       "declaredQuarantineTestFiles": 1,
       "untriagedUnrunTestFiles": 0,
-      "via": ["command", "script-file"]
+      "via": [
+        "command",
+        "script-file"
+      ]
     },
     {
       "directory": "src/lib/admin/__tests__",
@@ -72,7 +82,9 @@
       "coveredTestFiles": 29,
       "declaredQuarantineTestFiles": 9,
       "untriagedUnrunTestFiles": 0,
-      "via": ["command"]
+      "via": [
+        "command"
+      ]
     },
     {
       "directory": "src/app/(maestro)/source/preview/workspace/__tests__",
@@ -80,7 +92,9 @@
       "coveredTestFiles": 2,
       "declaredQuarantineTestFiles": 0,
       "untriagedUnrunTestFiles": 31,
-      "via": ["script-file"]
+      "via": [
+        "script-file"
+      ]
     },
     {
       "directory": "src/lib/agent/__tests__",
@@ -88,7 +102,9 @@
       "coveredTestFiles": 2,
       "declaredQuarantineTestFiles": 0,
       "untriagedUnrunTestFiles": 31,
-      "via": ["command"]
+      "via": [
+        "command"
+      ]
     },
     {
       "directory": "src/__tests__/integration/intelligence",
@@ -96,7 +112,9 @@
       "coveredTestFiles": 8,
       "declaredQuarantineTestFiles": 15,
       "untriagedUnrunTestFiles": 0,
-      "via": ["command"]
+      "via": [
+        "command"
+      ]
     },
     {
       "directory": "src/lib/intelligence/__tests__",
@@ -104,7 +122,9 @@
       "coveredTestFiles": 18,
       "declaredQuarantineTestFiles": 5,
       "untriagedUnrunTestFiles": 0,
-      "via": ["command"]
+      "via": [
+        "command"
+      ]
     },
     {
       "directory": "src/lib/source/ava/__tests__",
@@ -112,7 +132,9 @@
       "coveredTestFiles": 22,
       "declaredQuarantineTestFiles": 1,
       "untriagedUnrunTestFiles": 0,
-      "via": ["command"]
+      "via": [
+        "command"
+      ]
     },
     {
       "directory": "src/lib/auth/__tests__",
@@ -120,7 +142,9 @@
       "coveredTestFiles": 13,
       "declaredQuarantineTestFiles": 6,
       "untriagedUnrunTestFiles": 0,
-      "via": ["command"]
+      "via": [
+        "command"
+      ]
     },
     {
       "directory": "src/components/strategic-moves/__tests__",
@@ -128,7 +152,9 @@
       "coveredTestFiles": 13,
       "declaredQuarantineTestFiles": 0,
       "untriagedUnrunTestFiles": 1,
-      "via": ["command"]
+      "via": [
+        "command"
+      ]
     },
     {
       "directory": "src/lib/enterprise-context/__tests__",
@@ -136,7 +162,9 @@
       "coveredTestFiles": 7,
       "declaredQuarantineTestFiles": 0,
       "untriagedUnrunTestFiles": 2,
-      "via": ["command"]
+      "via": [
+        "command"
+      ]
     },
     {
       "directory": "src/lib/knowledge/__tests__",
@@ -144,7 +172,9 @@
       "coveredTestFiles": 8,
       "declaredQuarantineTestFiles": 1,
       "untriagedUnrunTestFiles": 0,
-      "via": ["command"]
+      "via": [
+        "command"
+      ]
     },
     {
       "directory": "src/lib/governance/__tests__",
@@ -152,7 +182,9 @@
       "coveredTestFiles": 5,
       "declaredQuarantineTestFiles": 0,
       "untriagedUnrunTestFiles": 3,
-      "via": ["command"]
+      "via": [
+        "command"
+      ]
     },
     {
       "directory": "src/lib/source/new-workspace",
@@ -160,7 +192,9 @@
       "coveredTestFiles": 6,
       "declaredQuarantineTestFiles": 0,
       "untriagedUnrunTestFiles": 1,
-      "via": ["command"]
+      "via": [
+        "command"
+      ]
     },
     {
       "directory": "src/lib/knowledge/context-broker/__tests__",
@@ -168,7 +202,9 @@
       "coveredTestFiles": 4,
       "declaredQuarantineTestFiles": 1,
       "untriagedUnrunTestFiles": 0,
-      "via": ["command"]
+      "via": [
+        "command"
+      ]
     },
     {
       "directory": "src/lib/__tests__",
@@ -176,7 +212,9 @@
       "coveredTestFiles": 1,
       "declaredQuarantineTestFiles": 0,
       "untriagedUnrunTestFiles": 3,
-      "via": ["command"]
+      "via": [
+        "command"
+      ]
     },
     {
       "directory": "src/lib/eval/answer-quality/__tests__",
@@ -184,7 +222,9 @@
       "coveredTestFiles": 1,
       "declaredQuarantineTestFiles": 0,
       "untriagedUnrunTestFiles": 3,
-      "via": ["command"]
+      "via": [
+        "command"
+      ]
     },
     {
       "directory": "src/lib/knowledge/tenant-data/__tests__",
@@ -192,7 +232,9 @@
       "coveredTestFiles": 3,
       "declaredQuarantineTestFiles": 1,
       "untriagedUnrunTestFiles": 0,
-      "via": ["command"]
+      "via": [
+        "command"
+      ]
     },
     {
       "directory": "src/lib/programs/archetypes/__tests__",
@@ -200,7 +242,9 @@
       "coveredTestFiles": 3,
       "declaredQuarantineTestFiles": 0,
       "untriagedUnrunTestFiles": 1,
-      "via": ["command"]
+      "via": [
+        "command"
+      ]
     },
     {
       "directory": "src/lib/source/contract-evidence/__tests__",
@@ -208,7 +252,9 @@
       "coveredTestFiles": 1,
       "declaredQuarantineTestFiles": 0,
       "untriagedUnrunTestFiles": 3,
-      "via": ["command"]
+      "via": [
+        "command"
+      ]
     },
     {
       "directory": "src/lib/source/contract-intelligence/__tests__",
@@ -216,7 +262,9 @@
       "coveredTestFiles": 2,
       "declaredQuarantineTestFiles": 0,
       "untriagedUnrunTestFiles": 2,
-      "via": ["command"]
+      "via": [
+        "command"
+      ]
     },
     {
       "directory": "src/app/(maestro)/source/__tests__",
@@ -224,7 +272,9 @@
       "coveredTestFiles": 1,
       "declaredQuarantineTestFiles": 0,
       "untriagedUnrunTestFiles": 2,
-      "via": ["command"]
+      "via": [
+        "command"
+      ]
     },
     {
       "directory": "src/components/source/new-workspace",
@@ -232,7 +282,9 @@
       "coveredTestFiles": 2,
       "declaredQuarantineTestFiles": 0,
       "untriagedUnrunTestFiles": 1,
-      "via": ["command"]
+      "via": [
+        "command"
+      ]
     },
     {
       "directory": "src/lib/atlas",
@@ -240,7 +292,9 @@
       "coveredTestFiles": 1,
       "declaredQuarantineTestFiles": 0,
       "untriagedUnrunTestFiles": 2,
-      "via": ["command"]
+      "via": [
+        "command"
+      ]
     },
     {
       "directory": "src/lib/data-plane/__tests__",
@@ -248,7 +302,9 @@
       "coveredTestFiles": 1,
       "declaredQuarantineTestFiles": 0,
       "untriagedUnrunTestFiles": 2,
-      "via": ["command"]
+      "via": [
+        "command"
+      ]
     },
     {
       "directory": "src/lib/observability/__tests__",
@@ -256,7 +312,9 @@
       "coveredTestFiles": 1,
       "declaredQuarantineTestFiles": 0,
       "untriagedUnrunTestFiles": 2,
-      "via": ["command"]
+      "via": [
+        "command"
+      ]
     },
     {
       "directory": "src/lib/source/new-workspace/__tests__",
@@ -264,7 +322,9 @@
       "coveredTestFiles": 2,
       "declaredQuarantineTestFiles": 0,
       "untriagedUnrunTestFiles": 1,
-      "via": ["command"]
+      "via": [
+        "command"
+      ]
     },
     {
       "directory": "src/lib/agent/quality/__tests__",
@@ -272,7 +332,3799 @@
       "coveredTestFiles": 1,
       "declaredQuarantineTestFiles": 0,
       "untriagedUnrunTestFiles": 1,
-      "via": ["command"]
+      "via": [
+        "command"
+      ]
+    }
+  ],
+  "governedRiskFiles": [
+    {
+      "directory": "src/__tests__/integration",
+      "testPath": "src/__tests__/integration/admin-context-uploads-tabs.test.tsx",
+      "loaded": true,
+      "collected": true,
+      "run": true,
+      "green": true,
+      "covered": true,
+      "pullRequestCovered": true,
+      "declaredQuarantine": false,
+      "untriaged": false,
+      "via": [
+        "command"
+      ],
+      "governedRisk": {
+        "score": 1110,
+        "band": "critical",
+        "signals": [
+          "declared_ai_surface_control",
+          "approval_or_lifecycle_write",
+          "tenant_scoped_read"
+        ],
+        "rank": 1
+      }
+    },
+    {
+      "directory": "src/__tests__/integration",
+      "testPath": "src/__tests__/integration/agent-column-agent-answer.test.ts",
+      "loaded": true,
+      "collected": true,
+      "run": true,
+      "green": true,
+      "covered": true,
+      "pullRequestCovered": true,
+      "declaredQuarantine": false,
+      "untriaged": false,
+      "via": [
+        "command"
+      ],
+      "governedRisk": {
+        "score": 1110,
+        "band": "critical",
+        "signals": [
+          "declared_ai_surface_control",
+          "approval_or_lifecycle_write",
+          "tenant_scoped_read"
+        ],
+        "rank": 1
+      }
+    },
+    {
+      "directory": "src/__tests__/integration",
+      "testPath": "src/__tests__/integration/app-rail-home-nav.test.tsx",
+      "loaded": true,
+      "collected": true,
+      "run": true,
+      "green": true,
+      "covered": true,
+      "pullRequestCovered": true,
+      "declaredQuarantine": false,
+      "untriaged": false,
+      "via": [
+        "command"
+      ],
+      "governedRisk": {
+        "score": 1110,
+        "band": "critical",
+        "signals": [
+          "declared_ai_surface_control",
+          "approval_or_lifecycle_write",
+          "tenant_scoped_read"
+        ],
+        "rank": 1
+      }
+    },
+    {
+      "directory": "src/__tests__/integration",
+      "testPath": "src/__tests__/integration/app-topbar-prefetch-guard.test.tsx",
+      "loaded": true,
+      "collected": true,
+      "run": true,
+      "green": true,
+      "covered": true,
+      "pullRequestCovered": true,
+      "declaredQuarantine": false,
+      "untriaged": false,
+      "via": [
+        "command"
+      ],
+      "governedRisk": {
+        "score": 1110,
+        "band": "critical",
+        "signals": [
+          "declared_ai_surface_control",
+          "approval_or_lifecycle_write",
+          "tenant_scoped_read"
+        ],
+        "rank": 1
+      }
+    },
+    {
+      "directory": "src/__tests__/integration",
+      "testPath": "src/__tests__/integration/app-topbar-preserve-tenant-name.test.ts",
+      "loaded": true,
+      "collected": true,
+      "run": true,
+      "green": true,
+      "covered": true,
+      "pullRequestCovered": true,
+      "declaredQuarantine": false,
+      "untriaged": false,
+      "via": [
+        "command"
+      ],
+      "governedRisk": {
+        "score": 1110,
+        "band": "critical",
+        "signals": [
+          "declared_ai_surface_control",
+          "approval_or_lifecycle_write",
+          "tenant_scoped_read"
+        ],
+        "rank": 1
+      }
+    },
+    {
+      "directory": "src/__tests__/integration",
+      "testPath": "src/__tests__/integration/ask-anything-bar-agent-answer.test.tsx",
+      "loaded": true,
+      "collected": true,
+      "run": true,
+      "green": true,
+      "covered": true,
+      "pullRequestCovered": true,
+      "declaredQuarantine": false,
+      "untriaged": false,
+      "via": [
+        "command"
+      ],
+      "governedRisk": {
+        "score": 1110,
+        "band": "critical",
+        "signals": [
+          "declared_ai_surface_control",
+          "approval_or_lifecycle_write",
+          "tenant_scoped_read"
+        ],
+        "rank": 1
+      }
+    },
+    {
+      "directory": "src/__tests__/integration",
+      "testPath": "src/__tests__/integration/atlas-ask-route.test.ts",
+      "loaded": true,
+      "collected": false,
+      "run": false,
+      "green": false,
+      "covered": false,
+      "pullRequestCovered": false,
+      "declaredQuarantine": false,
+      "untriaged": true,
+      "via": [],
+      "governedRisk": {
+        "score": 1110,
+        "band": "critical",
+        "signals": [
+          "declared_ai_surface_control",
+          "approval_or_lifecycle_write",
+          "tenant_scoped_read"
+        ],
+        "rank": 1
+      }
+    },
+    {
+      "directory": "src/__tests__/integration",
+      "testPath": "src/__tests__/integration/atlas-page-state-timeout.test.ts",
+      "loaded": true,
+      "collected": true,
+      "run": true,
+      "green": true,
+      "covered": true,
+      "pullRequestCovered": true,
+      "declaredQuarantine": false,
+      "untriaged": false,
+      "via": [
+        "command"
+      ],
+      "governedRisk": {
+        "score": 1110,
+        "band": "critical",
+        "signals": [
+          "declared_ai_surface_control",
+          "approval_or_lifecycle_write",
+          "tenant_scoped_read"
+        ],
+        "rank": 1
+      }
+    },
+    {
+      "directory": "src/__tests__/integration",
+      "testPath": "src/__tests__/integration/canonical-routes.test.ts",
+      "loaded": true,
+      "collected": true,
+      "run": true,
+      "green": true,
+      "covered": true,
+      "pullRequestCovered": true,
+      "declaredQuarantine": false,
+      "untriaged": false,
+      "via": [
+        "command"
+      ],
+      "governedRisk": {
+        "score": 1110,
+        "band": "critical",
+        "signals": [
+          "declared_ai_surface_control",
+          "approval_or_lifecycle_write",
+          "tenant_scoped_read"
+        ],
+        "rank": 1
+      }
+    },
+    {
+      "directory": "src/__tests__/integration",
+      "testPath": "src/__tests__/integration/composite-disclaimer-presence.test.ts",
+      "loaded": true,
+      "collected": true,
+      "run": true,
+      "green": true,
+      "covered": true,
+      "pullRequestCovered": true,
+      "declaredQuarantine": false,
+      "untriaged": false,
+      "via": [
+        "command"
+      ],
+      "governedRisk": {
+        "score": 1110,
+        "band": "critical",
+        "signals": [
+          "declared_ai_surface_control",
+          "approval_or_lifecycle_write",
+          "tenant_scoped_read"
+        ],
+        "rank": 1
+      }
+    },
+    {
+      "directory": "src/__tests__/integration",
+      "testPath": "src/__tests__/integration/deliverable-render-contract.test.ts",
+      "loaded": true,
+      "collected": false,
+      "run": false,
+      "green": false,
+      "covered": false,
+      "pullRequestCovered": false,
+      "declaredQuarantine": false,
+      "untriaged": true,
+      "via": [],
+      "governedRisk": {
+        "score": 1110,
+        "band": "critical",
+        "signals": [
+          "declared_ai_surface_control",
+          "approval_or_lifecycle_write",
+          "tenant_scoped_read"
+        ],
+        "rank": 1
+      }
+    },
+    {
+      "directory": "src/__tests__/integration",
+      "testPath": "src/__tests__/integration/demo-code-sign-in-panel.test.tsx",
+      "loaded": true,
+      "collected": true,
+      "run": true,
+      "green": true,
+      "covered": true,
+      "pullRequestCovered": true,
+      "declaredQuarantine": false,
+      "untriaged": false,
+      "via": [
+        "command"
+      ],
+      "governedRisk": {
+        "score": 1110,
+        "band": "critical",
+        "signals": [
+          "declared_ai_surface_control",
+          "approval_or_lifecycle_write",
+          "tenant_scoped_read"
+        ],
+        "rank": 1
+      }
+    },
+    {
+      "directory": "src/__tests__/integration",
+      "testPath": "src/__tests__/integration/demo-code-sign-in-route.test.ts",
+      "loaded": true,
+      "collected": true,
+      "run": true,
+      "green": true,
+      "covered": true,
+      "pullRequestCovered": true,
+      "declaredQuarantine": false,
+      "untriaged": false,
+      "via": [
+        "command"
+      ],
+      "governedRisk": {
+        "score": 1110,
+        "band": "critical",
+        "signals": [
+          "declared_ai_surface_control",
+          "approval_or_lifecycle_write",
+          "tenant_scoped_read"
+        ],
+        "rank": 1
+      }
+    },
+    {
+      "directory": "src/__tests__/integration",
+      "testPath": "src/__tests__/integration/demo-p0-graceful-degradation.test.ts",
+      "loaded": true,
+      "collected": true,
+      "run": true,
+      "green": true,
+      "covered": true,
+      "pullRequestCovered": true,
+      "declaredQuarantine": false,
+      "untriaged": false,
+      "via": [
+        "command"
+      ],
+      "governedRisk": {
+        "score": 1110,
+        "band": "critical",
+        "signals": [
+          "declared_ai_surface_control",
+          "approval_or_lifecycle_write",
+          "tenant_scoped_read"
+        ],
+        "rank": 1
+      }
+    },
+    {
+      "directory": "src/__tests__/integration",
+      "testPath": "src/__tests__/integration/email-code-sign-in-panel.test.tsx",
+      "loaded": true,
+      "collected": true,
+      "run": true,
+      "green": true,
+      "covered": true,
+      "pullRequestCovered": true,
+      "declaredQuarantine": false,
+      "untriaged": false,
+      "via": [
+        "command"
+      ],
+      "governedRisk": {
+        "score": 1110,
+        "band": "critical",
+        "signals": [
+          "declared_ai_surface_control",
+          "approval_or_lifecycle_write",
+          "tenant_scoped_read"
+        ],
+        "rank": 1
+      }
+    },
+    {
+      "directory": "src/__tests__/integration",
+      "testPath": "src/__tests__/integration/evidence-citation-resolution.test.ts",
+      "loaded": true,
+      "collected": true,
+      "run": true,
+      "green": true,
+      "covered": true,
+      "pullRequestCovered": true,
+      "declaredQuarantine": false,
+      "untriaged": false,
+      "via": [
+        "command"
+      ],
+      "governedRisk": {
+        "score": 1110,
+        "band": "critical",
+        "signals": [
+          "declared_ai_surface_control",
+          "approval_or_lifecycle_write",
+          "tenant_scoped_read"
+        ],
+        "rank": 1
+      }
+    },
+    {
+      "directory": "src/__tests__/integration",
+      "testPath": "src/__tests__/integration/evidence-registry.test.ts",
+      "loaded": true,
+      "collected": true,
+      "run": true,
+      "green": true,
+      "covered": true,
+      "pullRequestCovered": true,
+      "declaredQuarantine": false,
+      "untriaged": false,
+      "via": [
+        "command"
+      ],
+      "governedRisk": {
+        "score": 1110,
+        "band": "critical",
+        "signals": [
+          "declared_ai_surface_control",
+          "approval_or_lifecycle_write",
+          "tenant_scoped_read"
+        ],
+        "rank": 1
+      }
+    },
+    {
+      "directory": "src/__tests__/integration",
+      "testPath": "src/__tests__/integration/findings-harness.test.ts",
+      "loaded": true,
+      "collected": true,
+      "run": true,
+      "green": true,
+      "covered": true,
+      "pullRequestCovered": true,
+      "declaredQuarantine": false,
+      "untriaged": false,
+      "via": [
+        "command"
+      ],
+      "governedRisk": {
+        "score": 1110,
+        "band": "critical",
+        "signals": [
+          "declared_ai_surface_control",
+          "approval_or_lifecycle_write",
+          "tenant_scoped_read"
+        ],
+        "rank": 1
+      }
+    },
+    {
+      "directory": "src/__tests__/integration",
+      "testPath": "src/__tests__/integration/intelligence-chat-shape.test.ts",
+      "loaded": true,
+      "collected": true,
+      "run": true,
+      "green": true,
+      "covered": true,
+      "pullRequestCovered": true,
+      "declaredQuarantine": false,
+      "untriaged": false,
+      "via": [
+        "command"
+      ],
+      "governedRisk": {
+        "score": 1110,
+        "band": "critical",
+        "signals": [
+          "declared_ai_surface_control",
+          "approval_or_lifecycle_write",
+          "tenant_scoped_read"
+        ],
+        "rank": 1
+      }
+    },
+    {
+      "directory": "src/__tests__/integration",
+      "testPath": "src/__tests__/integration/intelligence-pattern-manifest.test.ts",
+      "loaded": true,
+      "collected": true,
+      "run": true,
+      "green": true,
+      "covered": true,
+      "pullRequestCovered": true,
+      "declaredQuarantine": false,
+      "untriaged": false,
+      "via": [
+        "command"
+      ],
+      "governedRisk": {
+        "score": 1110,
+        "band": "critical",
+        "signals": [
+          "declared_ai_surface_control",
+          "approval_or_lifecycle_write",
+          "tenant_scoped_read"
+        ],
+        "rank": 1
+      }
+    },
+    {
+      "directory": "src/__tests__/integration",
+      "testPath": "src/__tests__/integration/learn-welcome-cxo-toggle.test.tsx",
+      "loaded": true,
+      "collected": true,
+      "run": true,
+      "green": true,
+      "covered": true,
+      "pullRequestCovered": true,
+      "declaredQuarantine": false,
+      "untriaged": false,
+      "via": [
+        "command"
+      ],
+      "governedRisk": {
+        "score": 1110,
+        "band": "critical",
+        "signals": [
+          "declared_ai_surface_control",
+          "approval_or_lifecycle_write",
+          "tenant_scoped_read"
+        ],
+        "rank": 1
+      }
+    },
+    {
+      "directory": "src/__tests__/integration",
+      "testPath": "src/__tests__/integration/marketing-nav-dropdowns.test.tsx",
+      "loaded": true,
+      "collected": false,
+      "run": false,
+      "green": false,
+      "covered": false,
+      "pullRequestCovered": false,
+      "declaredQuarantine": false,
+      "untriaged": true,
+      "via": [],
+      "governedRisk": {
+        "score": 1110,
+        "band": "critical",
+        "signals": [
+          "declared_ai_surface_control",
+          "approval_or_lifecycle_write",
+          "tenant_scoped_read"
+        ],
+        "rank": 1
+      }
+    },
+    {
+      "directory": "src/__tests__/integration",
+      "testPath": "src/__tests__/integration/pack-j-realistic-portfolio.test.ts",
+      "loaded": true,
+      "collected": true,
+      "run": true,
+      "green": true,
+      "covered": true,
+      "pullRequestCovered": true,
+      "declaredQuarantine": false,
+      "untriaged": false,
+      "via": [
+        "command"
+      ],
+      "governedRisk": {
+        "score": 1110,
+        "band": "critical",
+        "signals": [
+          "declared_ai_surface_control",
+          "approval_or_lifecycle_write",
+          "tenant_scoped_read"
+        ],
+        "rank": 1
+      }
+    },
+    {
+      "directory": "src/__tests__/integration",
+      "testPath": "src/__tests__/integration/pattern-deliverable-api.test.ts",
+      "loaded": true,
+      "collected": true,
+      "run": true,
+      "green": true,
+      "covered": true,
+      "pullRequestCovered": true,
+      "declaredQuarantine": false,
+      "untriaged": false,
+      "via": [
+        "command"
+      ],
+      "governedRisk": {
+        "score": 1110,
+        "band": "critical",
+        "signals": [
+          "declared_ai_surface_control",
+          "approval_or_lifecycle_write",
+          "tenant_scoped_read"
+        ],
+        "rank": 1
+      }
+    },
+    {
+      "directory": "src/__tests__/integration",
+      "testPath": "src/__tests__/integration/pattern-graph-validation.test.ts",
+      "loaded": true,
+      "collected": true,
+      "run": true,
+      "green": true,
+      "covered": true,
+      "pullRequestCovered": true,
+      "declaredQuarantine": false,
+      "untriaged": false,
+      "via": [
+        "command"
+      ],
+      "governedRisk": {
+        "score": 1110,
+        "band": "critical",
+        "signals": [
+          "declared_ai_surface_control",
+          "approval_or_lifecycle_write",
+          "tenant_scoped_read"
+        ],
+        "rank": 1
+      }
+    },
+    {
+      "directory": "src/__tests__/integration",
+      "testPath": "src/__tests__/integration/pattern-observation-pipeline.test.ts",
+      "loaded": true,
+      "collected": true,
+      "run": true,
+      "green": true,
+      "covered": true,
+      "pullRequestCovered": true,
+      "declaredQuarantine": false,
+      "untriaged": false,
+      "via": [
+        "command"
+      ],
+      "governedRisk": {
+        "score": 1110,
+        "band": "critical",
+        "signals": [
+          "declared_ai_surface_control",
+          "approval_or_lifecycle_write",
+          "tenant_scoped_read"
+        ],
+        "rank": 1
+      }
+    },
+    {
+      "directory": "src/__tests__/integration",
+      "testPath": "src/__tests__/integration/programs-api-contracts.test.ts",
+      "loaded": true,
+      "collected": true,
+      "run": true,
+      "green": true,
+      "covered": true,
+      "pullRequestCovered": true,
+      "declaredQuarantine": false,
+      "untriaged": false,
+      "via": [
+        "command"
+      ],
+      "governedRisk": {
+        "score": 1110,
+        "band": "critical",
+        "signals": [
+          "declared_ai_surface_control",
+          "approval_or_lifecycle_write",
+          "tenant_scoped_read"
+        ],
+        "rank": 1
+      }
+    },
+    {
+      "directory": "src/__tests__/integration",
+      "testPath": "src/__tests__/integration/programs-demo-beats.test.ts",
+      "loaded": true,
+      "collected": true,
+      "run": true,
+      "green": true,
+      "covered": true,
+      "pullRequestCovered": true,
+      "declaredQuarantine": false,
+      "untriaged": false,
+      "via": [
+        "command"
+      ],
+      "governedRisk": {
+        "score": 1110,
+        "band": "critical",
+        "signals": [
+          "declared_ai_surface_control",
+          "approval_or_lifecycle_write",
+          "tenant_scoped_read"
+        ],
+        "rank": 1
+      }
+    },
+    {
+      "directory": "src/__tests__/integration",
+      "testPath": "src/__tests__/integration/programs-enhancement-seed-planner.test.ts",
+      "loaded": true,
+      "collected": true,
+      "run": true,
+      "green": true,
+      "covered": true,
+      "pullRequestCovered": true,
+      "declaredQuarantine": false,
+      "untriaged": false,
+      "via": [
+        "command"
+      ],
+      "governedRisk": {
+        "score": 1110,
+        "band": "critical",
+        "signals": [
+          "declared_ai_surface_control",
+          "approval_or_lifecycle_write",
+          "tenant_scoped_read"
+        ],
+        "rank": 1
+      }
+    },
+    {
+      "directory": "src/__tests__/integration",
+      "testPath": "src/__tests__/integration/programs-enhancement-seed-writer.test.ts",
+      "loaded": true,
+      "collected": true,
+      "run": true,
+      "green": true,
+      "covered": true,
+      "pullRequestCovered": true,
+      "declaredQuarantine": false,
+      "untriaged": false,
+      "via": [
+        "command"
+      ],
+      "governedRisk": {
+        "score": 1110,
+        "band": "critical",
+        "signals": [
+          "declared_ai_surface_control",
+          "approval_or_lifecycle_write",
+          "tenant_scoped_read"
+        ],
+        "rank": 1
+      }
+    },
+    {
+      "directory": "src/__tests__/integration",
+      "testPath": "src/__tests__/integration/programs-enhancement-spec.test.ts",
+      "loaded": true,
+      "collected": true,
+      "run": true,
+      "green": true,
+      "covered": true,
+      "pullRequestCovered": true,
+      "declaredQuarantine": false,
+      "untriaged": false,
+      "via": [
+        "command"
+      ],
+      "governedRisk": {
+        "score": 1110,
+        "band": "critical",
+        "signals": [
+          "declared_ai_surface_control",
+          "approval_or_lifecycle_write",
+          "tenant_scoped_read"
+        ],
+        "rank": 1
+      }
+    },
+    {
+      "directory": "src/__tests__/integration",
+      "testPath": "src/__tests__/integration/programs-nexus-ask-route.test.ts",
+      "loaded": true,
+      "collected": true,
+      "run": true,
+      "green": true,
+      "covered": true,
+      "pullRequestCovered": true,
+      "declaredQuarantine": false,
+      "untriaged": false,
+      "via": [
+        "command"
+      ],
+      "governedRisk": {
+        "score": 1110,
+        "band": "critical",
+        "signals": [
+          "declared_ai_surface_control",
+          "approval_or_lifecycle_write",
+          "tenant_scoped_read"
+        ],
+        "rank": 1
+      }
+    },
+    {
+      "directory": "src/__tests__/integration",
+      "testPath": "src/__tests__/integration/programs-nexus-free-text.test.ts",
+      "loaded": true,
+      "collected": true,
+      "run": true,
+      "green": true,
+      "covered": true,
+      "pullRequestCovered": true,
+      "declaredQuarantine": false,
+      "untriaged": false,
+      "via": [
+        "command"
+      ],
+      "governedRisk": {
+        "score": 1110,
+        "band": "critical",
+        "signals": [
+          "declared_ai_surface_control",
+          "approval_or_lifecycle_write",
+          "tenant_scoped_read"
+        ],
+        "rank": 1
+      }
+    },
+    {
+      "directory": "src/__tests__/integration",
+      "testPath": "src/__tests__/integration/programs-quality-gates.test.ts",
+      "loaded": true,
+      "collected": true,
+      "run": true,
+      "green": true,
+      "covered": true,
+      "pullRequestCovered": true,
+      "declaredQuarantine": false,
+      "untriaged": false,
+      "via": [
+        "command"
+      ],
+      "governedRisk": {
+        "score": 1110,
+        "band": "critical",
+        "signals": [
+          "declared_ai_surface_control",
+          "approval_or_lifecycle_write",
+          "tenant_scoped_read"
+        ],
+        "rank": 1
+      }
+    },
+    {
+      "directory": "src/__tests__/integration",
+      "testPath": "src/__tests__/integration/seed-integrity-report.test.ts",
+      "loaded": true,
+      "collected": true,
+      "run": true,
+      "green": true,
+      "covered": true,
+      "pullRequestCovered": true,
+      "declaredQuarantine": false,
+      "untriaged": false,
+      "via": [
+        "command"
+      ],
+      "governedRisk": {
+        "score": 1110,
+        "band": "critical",
+        "signals": [
+          "declared_ai_surface_control",
+          "approval_or_lifecycle_write",
+          "tenant_scoped_read"
+        ],
+        "rank": 1
+      }
+    },
+    {
+      "directory": "src/__tests__/integration",
+      "testPath": "src/__tests__/integration/shell-topbar-auth.test.tsx",
+      "loaded": true,
+      "collected": true,
+      "run": true,
+      "green": true,
+      "covered": true,
+      "pullRequestCovered": true,
+      "declaredQuarantine": false,
+      "untriaged": false,
+      "via": [
+        "command"
+      ],
+      "governedRisk": {
+        "score": 1110,
+        "band": "critical",
+        "signals": [
+          "declared_ai_surface_control",
+          "approval_or_lifecycle_write",
+          "tenant_scoped_read"
+        ],
+        "rank": 1
+      }
+    },
+    {
+      "directory": "src/__tests__/integration",
+      "testPath": "src/__tests__/integration/sign-in-route-contract.test.ts",
+      "loaded": true,
+      "collected": true,
+      "run": true,
+      "green": true,
+      "covered": true,
+      "pullRequestCovered": true,
+      "declaredQuarantine": false,
+      "untriaged": false,
+      "via": [
+        "command"
+      ],
+      "governedRisk": {
+        "score": 1110,
+        "band": "critical",
+        "signals": [
+          "declared_ai_surface_control",
+          "approval_or_lifecycle_write",
+          "tenant_scoped_read"
+        ],
+        "rank": 1
+      }
+    },
+    {
+      "directory": "src/__tests__/integration",
+      "testPath": "src/__tests__/integration/sign-in-shell.test.tsx",
+      "loaded": true,
+      "collected": false,
+      "run": false,
+      "green": false,
+      "covered": false,
+      "pullRequestCovered": false,
+      "declaredQuarantine": false,
+      "untriaged": true,
+      "via": [],
+      "governedRisk": {
+        "score": 1110,
+        "band": "critical",
+        "signals": [
+          "declared_ai_surface_control",
+          "approval_or_lifecycle_write",
+          "tenant_scoped_read"
+        ],
+        "rank": 1
+      }
+    },
+    {
+      "directory": "src/__tests__/integration",
+      "testPath": "src/__tests__/integration/source-chat-shape.test.ts",
+      "loaded": true,
+      "collected": false,
+      "run": false,
+      "green": false,
+      "covered": false,
+      "pullRequestCovered": false,
+      "declaredQuarantine": false,
+      "untriaged": true,
+      "via": [],
+      "governedRisk": {
+        "score": 1110,
+        "band": "critical",
+        "signals": [
+          "declared_ai_surface_control",
+          "approval_or_lifecycle_write",
+          "tenant_scoped_read"
+        ],
+        "rank": 1
+      }
+    },
+    {
+      "directory": "src/__tests__/integration",
+      "testPath": "src/__tests__/integration/strategic-moves-chat-shape.test.ts",
+      "loaded": true,
+      "collected": true,
+      "run": true,
+      "green": true,
+      "covered": true,
+      "pullRequestCovered": true,
+      "declaredQuarantine": false,
+      "untriaged": false,
+      "via": [
+        "command"
+      ],
+      "governedRisk": {
+        "score": 1110,
+        "band": "critical",
+        "signals": [
+          "declared_ai_surface_control",
+          "approval_or_lifecycle_write",
+          "tenant_scoped_read"
+        ],
+        "rank": 1
+      }
+    },
+    {
+      "directory": "src/__tests__/integration",
+      "testPath": "src/__tests__/integration/supabase.test.ts",
+      "loaded": true,
+      "collected": true,
+      "run": true,
+      "green": true,
+      "covered": true,
+      "pullRequestCovered": true,
+      "declaredQuarantine": false,
+      "untriaged": false,
+      "via": [
+        "command"
+      ],
+      "governedRisk": {
+        "score": 1110,
+        "band": "critical",
+        "signals": [
+          "declared_ai_surface_control",
+          "approval_or_lifecycle_write",
+          "tenant_scoped_read"
+        ],
+        "rank": 1
+      }
+    },
+    {
+      "directory": "src/__tests__/integration",
+      "testPath": "src/__tests__/integration/tenant-empty-states.test.tsx",
+      "loaded": true,
+      "collected": true,
+      "run": true,
+      "green": true,
+      "covered": true,
+      "pullRequestCovered": true,
+      "declaredQuarantine": false,
+      "untriaged": false,
+      "via": [
+        "command"
+      ],
+      "governedRisk": {
+        "score": 1110,
+        "band": "critical",
+        "signals": [
+          "declared_ai_surface_control",
+          "approval_or_lifecycle_write",
+          "tenant_scoped_read"
+        ],
+        "rank": 1
+      }
+    },
+    {
+      "directory": "src/__tests__/integration",
+      "testPath": "src/__tests__/integration/tenant-rescope-validation.test.ts",
+      "loaded": true,
+      "collected": true,
+      "run": true,
+      "green": true,
+      "covered": true,
+      "pullRequestCovered": true,
+      "declaredQuarantine": false,
+      "untriaged": false,
+      "via": [
+        "command"
+      ],
+      "governedRisk": {
+        "score": 1110,
+        "band": "critical",
+        "signals": [
+          "declared_ai_surface_control",
+          "approval_or_lifecycle_write",
+          "tenant_scoped_read"
+        ],
+        "rank": 1
+      }
+    },
+    {
+      "directory": "src/__tests__/integration",
+      "testPath": "src/__tests__/integration/tower-p6-handoff-panel.test.ts",
+      "loaded": true,
+      "collected": true,
+      "run": true,
+      "green": true,
+      "covered": true,
+      "pullRequestCovered": true,
+      "declaredQuarantine": false,
+      "untriaged": false,
+      "via": [
+        "command"
+      ],
+      "governedRisk": {
+        "score": 1110,
+        "band": "critical",
+        "signals": [
+          "declared_ai_surface_control",
+          "approval_or_lifecycle_write",
+          "tenant_scoped_read"
+        ],
+        "rank": 1
+      }
+    },
+    {
+      "directory": "src/__tests__/integration",
+      "testPath": "src/__tests__/integration/tower-subsurface-stubs.test.ts",
+      "loaded": true,
+      "collected": true,
+      "run": true,
+      "green": true,
+      "covered": true,
+      "pullRequestCovered": true,
+      "declaredQuarantine": false,
+      "untriaged": false,
+      "via": [
+        "command"
+      ],
+      "governedRisk": {
+        "score": 1110,
+        "band": "critical",
+        "signals": [
+          "declared_ai_surface_control",
+          "approval_or_lifecycle_write",
+          "tenant_scoped_read"
+        ],
+        "rank": 1
+      }
+    },
+    {
+      "directory": "src/components/strategic-moves/__tests__",
+      "testPath": "src/components/strategic-moves/__tests__/BoardArtifactsPanel.test.tsx",
+      "loaded": true,
+      "collected": true,
+      "run": true,
+      "green": true,
+      "covered": true,
+      "pullRequestCovered": true,
+      "declaredQuarantine": false,
+      "untriaged": false,
+      "via": [
+        "command"
+      ],
+      "governedRisk": {
+        "score": 1100,
+        "band": "critical",
+        "signals": [
+          "declared_ai_surface_control",
+          "approval_or_lifecycle_write"
+        ],
+        "rank": 2
+      }
+    },
+    {
+      "directory": "src/components/strategic-moves/__tests__",
+      "testPath": "src/components/strategic-moves/__tests__/composeOriginateFirstMessage.grounding.test.ts",
+      "loaded": true,
+      "collected": true,
+      "run": true,
+      "green": true,
+      "covered": true,
+      "pullRequestCovered": true,
+      "declaredQuarantine": false,
+      "untriaged": false,
+      "via": [
+        "command"
+      ],
+      "governedRisk": {
+        "score": 1100,
+        "band": "critical",
+        "signals": [
+          "declared_ai_surface_control",
+          "approval_or_lifecycle_write"
+        ],
+        "rank": 2
+      }
+    },
+    {
+      "directory": "src/components/strategic-moves/__tests__",
+      "testPath": "src/components/strategic-moves/__tests__/FileCabinetPanel.labels.test.ts",
+      "loaded": true,
+      "collected": true,
+      "run": true,
+      "green": true,
+      "covered": true,
+      "pullRequestCovered": true,
+      "declaredQuarantine": false,
+      "untriaged": false,
+      "via": [
+        "command"
+      ],
+      "governedRisk": {
+        "score": 1100,
+        "band": "critical",
+        "signals": [
+          "declared_ai_surface_control",
+          "approval_or_lifecycle_write"
+        ],
+        "rank": 2
+      }
+    },
+    {
+      "directory": "src/components/strategic-moves/__tests__",
+      "testPath": "src/components/strategic-moves/__tests__/move-list-format.test.ts",
+      "loaded": true,
+      "collected": true,
+      "run": true,
+      "green": true,
+      "covered": true,
+      "pullRequestCovered": true,
+      "declaredQuarantine": false,
+      "untriaged": false,
+      "via": [
+        "command"
+      ],
+      "governedRisk": {
+        "score": 1100,
+        "band": "critical",
+        "signals": [
+          "declared_ai_surface_control",
+          "approval_or_lifecycle_write"
+        ],
+        "rank": 2
+      }
+    },
+    {
+      "directory": "src/components/strategic-moves/__tests__",
+      "testPath": "src/components/strategic-moves/__tests__/MovePhaseExplorer.finder-shell.test.tsx",
+      "loaded": true,
+      "collected": true,
+      "run": true,
+      "green": true,
+      "covered": true,
+      "pullRequestCovered": true,
+      "declaredQuarantine": false,
+      "untriaged": false,
+      "via": [
+        "command"
+      ],
+      "governedRisk": {
+        "score": 1100,
+        "band": "critical",
+        "signals": [
+          "declared_ai_surface_control",
+          "approval_or_lifecycle_write"
+        ],
+        "rank": 2
+      }
+    },
+    {
+      "directory": "src/components/strategic-moves/__tests__",
+      "testPath": "src/components/strategic-moves/__tests__/moves-detail-route-sunset.test.ts",
+      "loaded": true,
+      "collected": true,
+      "run": true,
+      "green": true,
+      "covered": true,
+      "pullRequestCovered": true,
+      "declaredQuarantine": false,
+      "untriaged": false,
+      "via": [
+        "command"
+      ],
+      "governedRisk": {
+        "score": 1100,
+        "band": "critical",
+        "signals": [
+          "declared_ai_surface_control",
+          "approval_or_lifecycle_write"
+        ],
+        "rank": 2
+      }
+    },
+    {
+      "directory": "src/components/strategic-moves/__tests__",
+      "testPath": "src/components/strategic-moves/__tests__/moves-liability-visible-controls.test.tsx",
+      "loaded": true,
+      "collected": true,
+      "run": true,
+      "green": true,
+      "covered": true,
+      "pullRequestCovered": true,
+      "declaredQuarantine": false,
+      "untriaged": false,
+      "via": [
+        "command"
+      ],
+      "governedRisk": {
+        "score": 1100,
+        "band": "critical",
+        "signals": [
+          "declared_ai_surface_control",
+          "approval_or_lifecycle_write"
+        ],
+        "rank": 2
+      }
+    },
+    {
+      "directory": "src/components/strategic-moves/__tests__",
+      "testPath": "src/components/strategic-moves/__tests__/MovesPhaseStandaloneClient.test.tsx",
+      "loaded": true,
+      "collected": false,
+      "run": false,
+      "green": false,
+      "covered": false,
+      "pullRequestCovered": false,
+      "declaredQuarantine": false,
+      "untriaged": true,
+      "via": [],
+      "governedRisk": {
+        "score": 1100,
+        "band": "critical",
+        "signals": [
+          "declared_ai_surface_control",
+          "approval_or_lifecycle_write"
+        ],
+        "rank": 2
+      }
+    },
+    {
+      "directory": "src/components/strategic-moves/__tests__",
+      "testPath": "src/components/strategic-moves/__tests__/phase-approve-and-build-settle.test.tsx",
+      "loaded": true,
+      "collected": true,
+      "run": true,
+      "green": true,
+      "covered": true,
+      "pullRequestCovered": true,
+      "declaredQuarantine": false,
+      "untriaged": false,
+      "via": [
+        "command"
+      ],
+      "governedRisk": {
+        "score": 1100,
+        "band": "critical",
+        "signals": [
+          "declared_ai_surface_control",
+          "approval_or_lifecycle_write"
+        ],
+        "rank": 2
+      }
+    },
+    {
+      "directory": "src/components/strategic-moves/__tests__",
+      "testPath": "src/components/strategic-moves/__tests__/phase-capture-autosave-lanes.test.tsx",
+      "loaded": true,
+      "collected": true,
+      "run": true,
+      "green": true,
+      "covered": true,
+      "pullRequestCovered": true,
+      "declaredQuarantine": false,
+      "untriaged": false,
+      "via": [
+        "command"
+      ],
+      "governedRisk": {
+        "score": 1100,
+        "band": "critical",
+        "signals": [
+          "declared_ai_surface_control",
+          "approval_or_lifecycle_write"
+        ],
+        "rank": 2
+      }
+    },
+    {
+      "directory": "src/components/strategic-moves/__tests__",
+      "testPath": "src/components/strategic-moves/__tests__/PhaseRoleApprovalsSummary.test.tsx",
+      "loaded": true,
+      "collected": true,
+      "run": true,
+      "green": true,
+      "covered": true,
+      "pullRequestCovered": true,
+      "declaredQuarantine": false,
+      "untriaged": false,
+      "via": [
+        "command"
+      ],
+      "governedRisk": {
+        "score": 1100,
+        "band": "critical",
+        "signals": [
+          "declared_ai_surface_control",
+          "approval_or_lifecycle_write"
+        ],
+        "rank": 2
+      }
+    },
+    {
+      "directory": "src/components/strategic-moves/__tests__",
+      "testPath": "src/components/strategic-moves/__tests__/strategicMoveBriefToDiscoveryShape.test.ts",
+      "loaded": true,
+      "collected": true,
+      "run": true,
+      "green": true,
+      "covered": true,
+      "pullRequestCovered": true,
+      "declaredQuarantine": false,
+      "untriaged": false,
+      "via": [
+        "command"
+      ],
+      "governedRisk": {
+        "score": 1100,
+        "band": "critical",
+        "signals": [
+          "declared_ai_surface_control",
+          "approval_or_lifecycle_write"
+        ],
+        "rank": 2
+      }
+    },
+    {
+      "directory": "src/components/strategic-moves/__tests__",
+      "testPath": "src/components/strategic-moves/__tests__/StrategicMoveOriginateClient.test.ts",
+      "loaded": true,
+      "collected": true,
+      "run": true,
+      "green": true,
+      "covered": true,
+      "pullRequestCovered": true,
+      "declaredQuarantine": false,
+      "untriaged": false,
+      "via": [
+        "command"
+      ],
+      "governedRisk": {
+        "score": 1100,
+        "band": "critical",
+        "signals": [
+          "declared_ai_surface_control",
+          "approval_or_lifecycle_write"
+        ],
+        "rank": 2
+      }
+    },
+    {
+      "directory": "src/components/strategic-moves/__tests__",
+      "testPath": "src/components/strategic-moves/__tests__/StrategicMoveOriginateClient.test.tsx",
+      "loaded": true,
+      "collected": true,
+      "run": true,
+      "green": true,
+      "covered": true,
+      "pullRequestCovered": true,
+      "declaredQuarantine": false,
+      "untriaged": false,
+      "via": [
+        "command"
+      ],
+      "governedRisk": {
+        "score": 1100,
+        "band": "critical",
+        "signals": [
+          "declared_ai_surface_control",
+          "approval_or_lifecycle_write"
+        ],
+        "rank": 2
+      }
+    },
+    {
+      "directory": "src/app/(maestro)/source/preview/workspace/__tests__",
+      "testPath": "src/app/(maestro)/source/preview/workspace/__tests__/avaComposerGate.test.ts",
+      "loaded": true,
+      "collected": false,
+      "run": false,
+      "green": false,
+      "covered": false,
+      "pullRequestCovered": false,
+      "declaredQuarantine": false,
+      "untriaged": true,
+      "via": [],
+      "governedRisk": {
+        "score": 10,
+        "band": "high",
+        "signals": [
+          "tenant_scoped_read"
+        ],
+        "rank": 3
+      }
+    },
+    {
+      "directory": "src/app/(maestro)/source/preview/workspace/__tests__",
+      "testPath": "src/app/(maestro)/source/preview/workspace/__tests__/buildViewModel.numeric.test.ts",
+      "loaded": true,
+      "collected": false,
+      "run": false,
+      "green": false,
+      "covered": false,
+      "pullRequestCovered": false,
+      "declaredQuarantine": false,
+      "untriaged": true,
+      "via": [],
+      "governedRisk": {
+        "score": 10,
+        "band": "high",
+        "signals": [
+          "tenant_scoped_read"
+        ],
+        "rank": 3
+      }
+    },
+    {
+      "directory": "src/app/(maestro)/source/preview/workspace/__tests__",
+      "testPath": "src/app/(maestro)/source/preview/workspace/__tests__/compositionInvariants.test.tsx",
+      "loaded": true,
+      "collected": false,
+      "run": false,
+      "green": false,
+      "covered": false,
+      "pullRequestCovered": false,
+      "declaredQuarantine": false,
+      "untriaged": true,
+      "via": [],
+      "governedRisk": {
+        "score": 10,
+        "band": "high",
+        "signals": [
+          "tenant_scoped_read"
+        ],
+        "rank": 3
+      }
+    },
+    {
+      "directory": "src/app/(maestro)/source/preview/workspace/__tests__",
+      "testPath": "src/app/(maestro)/source/preview/workspace/__tests__/Contract360Briefing.test.tsx",
+      "loaded": true,
+      "collected": false,
+      "run": false,
+      "green": false,
+      "covered": false,
+      "pullRequestCovered": false,
+      "declaredQuarantine": false,
+      "untriaged": true,
+      "via": [],
+      "governedRisk": {
+        "score": 10,
+        "band": "high",
+        "signals": [
+          "tenant_scoped_read"
+        ],
+        "rank": 3
+      }
+    },
+    {
+      "directory": "src/app/(maestro)/source/preview/workspace/__tests__",
+      "testPath": "src/app/(maestro)/source/preview/workspace/__tests__/Contract360Economics.coverage.test.tsx",
+      "loaded": true,
+      "collected": false,
+      "run": false,
+      "green": false,
+      "covered": false,
+      "pullRequestCovered": false,
+      "declaredQuarantine": false,
+      "untriaged": true,
+      "via": [],
+      "governedRisk": {
+        "score": 10,
+        "band": "high",
+        "signals": [
+          "tenant_scoped_read"
+        ],
+        "rank": 3
+      }
+    },
+    {
+      "directory": "src/app/(maestro)/source/preview/workspace/__tests__",
+      "testPath": "src/app/(maestro)/source/preview/workspace/__tests__/contract360Ledes.test.ts",
+      "loaded": true,
+      "collected": false,
+      "run": false,
+      "green": false,
+      "covered": false,
+      "pullRequestCovered": false,
+      "declaredQuarantine": false,
+      "untriaged": true,
+      "via": [],
+      "governedRisk": {
+        "score": 10,
+        "band": "high",
+        "signals": [
+          "tenant_scoped_read"
+        ],
+        "rank": 3
+      }
+    },
+    {
+      "directory": "src/app/(maestro)/source/preview/workspace/__tests__",
+      "testPath": "src/app/(maestro)/source/preview/workspace/__tests__/Contract360Surfaces.test.tsx",
+      "loaded": true,
+      "collected": false,
+      "run": false,
+      "green": false,
+      "covered": false,
+      "pullRequestCovered": false,
+      "declaredQuarantine": false,
+      "untriaged": true,
+      "via": [],
+      "governedRisk": {
+        "score": 10,
+        "band": "high",
+        "signals": [
+          "tenant_scoped_read"
+        ],
+        "rank": 3
+      }
+    },
+    {
+      "directory": "src/app/(maestro)/source/preview/workspace/__tests__",
+      "testPath": "src/app/(maestro)/source/preview/workspace/__tests__/contractAnatomy.test.tsx",
+      "loaded": true,
+      "collected": false,
+      "run": false,
+      "green": false,
+      "covered": false,
+      "pullRequestCovered": false,
+      "declaredQuarantine": false,
+      "untriaged": true,
+      "via": [],
+      "governedRisk": {
+        "score": 10,
+        "band": "high",
+        "signals": [
+          "tenant_scoped_read"
+        ],
+        "rank": 3
+      }
+    },
+    {
+      "directory": "src/app/(maestro)/source/preview/workspace/__tests__",
+      "testPath": "src/app/(maestro)/source/preview/workspace/__tests__/ContractCanvas.executive-story.test.tsx",
+      "loaded": true,
+      "collected": false,
+      "run": false,
+      "green": false,
+      "covered": false,
+      "pullRequestCovered": false,
+      "declaredQuarantine": false,
+      "untriaged": true,
+      "via": [],
+      "governedRisk": {
+        "score": 10,
+        "band": "high",
+        "signals": [
+          "tenant_scoped_read"
+        ],
+        "rank": 3
+      }
+    },
+    {
+      "directory": "src/app/(maestro)/source/preview/workspace/__tests__",
+      "testPath": "src/app/(maestro)/source/preview/workspace/__tests__/contractDetailRetry.test.tsx",
+      "loaded": true,
+      "collected": false,
+      "run": false,
+      "green": false,
+      "covered": false,
+      "pullRequestCovered": false,
+      "declaredQuarantine": false,
+      "untriaged": true,
+      "via": [],
+      "governedRisk": {
+        "score": 10,
+        "band": "high",
+        "signals": [
+          "tenant_scoped_read"
+        ],
+        "rank": 3
+      }
+    },
+    {
+      "directory": "src/app/(maestro)/source/preview/workspace/__tests__",
+      "testPath": "src/app/(maestro)/source/preview/workspace/__tests__/contractEvidenceFamilies.test.tsx",
+      "loaded": true,
+      "collected": false,
+      "run": false,
+      "green": false,
+      "covered": false,
+      "pullRequestCovered": false,
+      "declaredQuarantine": false,
+      "untriaged": true,
+      "via": [],
+      "governedRisk": {
+        "score": 10,
+        "band": "high",
+        "signals": [
+          "tenant_scoped_read"
+        ],
+        "rank": 3
+      }
+    },
+    {
+      "directory": "src/app/(maestro)/source/preview/workspace/__tests__",
+      "testPath": "src/app/(maestro)/source/preview/workspace/__tests__/ContractLeverTable.test.tsx",
+      "loaded": true,
+      "collected": false,
+      "run": false,
+      "green": false,
+      "covered": false,
+      "pullRequestCovered": false,
+      "declaredQuarantine": false,
+      "untriaged": true,
+      "via": [],
+      "governedRisk": {
+        "score": 10,
+        "band": "high",
+        "signals": [
+          "tenant_scoped_read"
+        ],
+        "rank": 3
+      }
+    },
+    {
+      "directory": "src/app/(maestro)/source/preview/workspace/__tests__",
+      "testPath": "src/app/(maestro)/source/preview/workspace/__tests__/contractOptimizeMethod.test.tsx",
+      "loaded": true,
+      "collected": false,
+      "run": false,
+      "green": false,
+      "covered": false,
+      "pullRequestCovered": false,
+      "declaredQuarantine": false,
+      "untriaged": true,
+      "via": [],
+      "governedRisk": {
+        "score": 10,
+        "band": "high",
+        "signals": [
+          "tenant_scoped_read"
+        ],
+        "rank": 3
+      }
+    },
+    {
+      "directory": "src/app/(maestro)/source/preview/workspace/__tests__",
+      "testPath": "src/app/(maestro)/source/preview/workspace/__tests__/contractPerformanceCards.test.tsx",
+      "loaded": true,
+      "collected": false,
+      "run": false,
+      "green": false,
+      "covered": false,
+      "pullRequestCovered": false,
+      "declaredQuarantine": false,
+      "untriaged": true,
+      "via": [],
+      "governedRisk": {
+        "score": 10,
+        "band": "high",
+        "signals": [
+          "tenant_scoped_read"
+        ],
+        "rank": 3
+      }
+    },
+    {
+      "directory": "src/app/(maestro)/source/preview/workspace/__tests__",
+      "testPath": "src/app/(maestro)/source/preview/workspace/__tests__/contractPopulations.test.ts",
+      "loaded": true,
+      "collected": false,
+      "run": false,
+      "green": false,
+      "covered": false,
+      "pullRequestCovered": false,
+      "declaredQuarantine": false,
+      "untriaged": true,
+      "via": [],
+      "governedRisk": {
+        "score": 10,
+        "band": "high",
+        "signals": [
+          "tenant_scoped_read"
+        ],
+        "rank": 3
+      }
+    },
+    {
+      "directory": "src/app/(maestro)/source/preview/workspace/__tests__",
+      "testPath": "src/app/(maestro)/source/preview/workspace/__tests__/contractPurposeGuard.test.tsx",
+      "loaded": true,
+      "collected": false,
+      "run": false,
+      "green": false,
+      "covered": false,
+      "pullRequestCovered": false,
+      "declaredQuarantine": false,
+      "untriaged": true,
+      "via": [],
+      "governedRisk": {
+        "score": 10,
+        "band": "high",
+        "signals": [
+          "tenant_scoped_read"
+        ],
+        "rank": 3
+      }
+    },
+    {
+      "directory": "src/app/(maestro)/source/preview/workspace/__tests__",
+      "testPath": "src/app/(maestro)/source/preview/workspace/__tests__/contractPurposeProse.test.ts",
+      "loaded": true,
+      "collected": false,
+      "run": false,
+      "green": false,
+      "covered": false,
+      "pullRequestCovered": false,
+      "declaredQuarantine": false,
+      "untriaged": true,
+      "via": [],
+      "governedRisk": {
+        "score": 10,
+        "band": "high",
+        "signals": [
+          "tenant_scoped_read"
+        ],
+        "rank": 3
+      }
+    },
+    {
+      "directory": "src/app/(maestro)/source/preview/workspace/__tests__",
+      "testPath": "src/app/(maestro)/source/preview/workspace/__tests__/contractStoryDuplication.test.ts",
+      "loaded": true,
+      "collected": false,
+      "run": false,
+      "green": false,
+      "covered": false,
+      "pullRequestCovered": false,
+      "declaredQuarantine": false,
+      "untriaged": true,
+      "via": [],
+      "governedRisk": {
+        "score": 10,
+        "band": "high",
+        "signals": [
+          "tenant_scoped_read"
+        ],
+        "rank": 3
+      }
+    },
+    {
+      "directory": "src/app/(maestro)/source/preview/workspace/__tests__",
+      "testPath": "src/app/(maestro)/source/preview/workspace/__tests__/governedDirectives.test.ts",
+      "loaded": true,
+      "collected": false,
+      "run": false,
+      "green": false,
+      "covered": false,
+      "pullRequestCovered": false,
+      "declaredQuarantine": false,
+      "untriaged": true,
+      "via": [],
+      "governedRisk": {
+        "score": 10,
+        "band": "high",
+        "signals": [
+          "tenant_scoped_read"
+        ],
+        "rank": 3
+      }
+    },
+    {
+      "directory": "src/app/(maestro)/source/preview/workspace/__tests__",
+      "testPath": "src/app/(maestro)/source/preview/workspace/__tests__/moneyPrecision.test.ts",
+      "loaded": true,
+      "collected": false,
+      "run": false,
+      "green": false,
+      "covered": false,
+      "pullRequestCovered": false,
+      "declaredQuarantine": false,
+      "untriaged": true,
+      "via": [],
+      "governedRisk": {
+        "score": 10,
+        "band": "high",
+        "signals": [
+          "tenant_scoped_read"
+        ],
+        "rank": 3
+      }
+    },
+    {
+      "directory": "src/app/(maestro)/source/preview/workspace/__tests__",
+      "testPath": "src/app/(maestro)/source/preview/workspace/__tests__/page-tenant-routing.test.ts",
+      "loaded": true,
+      "collected": true,
+      "run": true,
+      "green": true,
+      "covered": true,
+      "pullRequestCovered": false,
+      "declaredQuarantine": false,
+      "untriaged": false,
+      "via": [
+        "script-file"
+      ],
+      "governedRisk": {
+        "score": 10,
+        "band": "high",
+        "signals": [
+          "tenant_scoped_read"
+        ],
+        "rank": 3
+      }
+    },
+    {
+      "directory": "src/app/(maestro)/source/preview/workspace/__tests__",
+      "testPath": "src/app/(maestro)/source/preview/workspace/__tests__/portfolioAdapter.ecl.test.ts",
+      "loaded": true,
+      "collected": true,
+      "run": true,
+      "green": true,
+      "covered": true,
+      "pullRequestCovered": false,
+      "declaredQuarantine": false,
+      "untriaged": false,
+      "via": [
+        "script-file"
+      ],
+      "governedRisk": {
+        "score": 10,
+        "band": "high",
+        "signals": [
+          "tenant_scoped_read"
+        ],
+        "rank": 3
+      }
+    },
+    {
+      "directory": "src/app/(maestro)/source/preview/workspace/__tests__",
+      "testPath": "src/app/(maestro)/source/preview/workspace/__tests__/portfolioTruth.test.tsx",
+      "loaded": true,
+      "collected": false,
+      "run": false,
+      "green": false,
+      "covered": false,
+      "pullRequestCovered": false,
+      "declaredQuarantine": false,
+      "untriaged": true,
+      "via": [],
+      "governedRisk": {
+        "score": 10,
+        "band": "high",
+        "signals": [
+          "tenant_scoped_read"
+        ],
+        "rank": 3
+      }
+    },
+    {
+      "directory": "src/app/(maestro)/source/preview/workspace/__tests__",
+      "testPath": "src/app/(maestro)/source/preview/workspace/__tests__/sourceFreshness.test.tsx",
+      "loaded": true,
+      "collected": false,
+      "run": false,
+      "green": false,
+      "covered": false,
+      "pullRequestCovered": false,
+      "declaredQuarantine": false,
+      "untriaged": true,
+      "via": [],
+      "governedRisk": {
+        "score": 10,
+        "band": "high",
+        "signals": [
+          "tenant_scoped_read"
+        ],
+        "rank": 3
+      }
+    },
+    {
+      "directory": "src/app/(maestro)/source/preview/workspace/__tests__",
+      "testPath": "src/app/(maestro)/source/preview/workspace/__tests__/VendorCanvas.cockpit.test.tsx",
+      "loaded": true,
+      "collected": false,
+      "run": false,
+      "green": false,
+      "covered": false,
+      "pullRequestCovered": false,
+      "declaredQuarantine": false,
+      "untriaged": true,
+      "via": [],
+      "governedRisk": {
+        "score": 10,
+        "band": "high",
+        "signals": [
+          "tenant_scoped_read"
+        ],
+        "rank": 3
+      }
+    },
+    {
+      "directory": "src/app/(maestro)/source/preview/workspace/__tests__",
+      "testPath": "src/app/(maestro)/source/preview/workspace/__tests__/viewModel.explore.test.ts",
+      "loaded": true,
+      "collected": false,
+      "run": false,
+      "green": false,
+      "covered": false,
+      "pullRequestCovered": false,
+      "declaredQuarantine": false,
+      "untriaged": true,
+      "via": [],
+      "governedRisk": {
+        "score": 10,
+        "band": "high",
+        "signals": [
+          "tenant_scoped_read"
+        ],
+        "rank": 3
+      }
+    },
+    {
+      "directory": "src/app/(maestro)/source/preview/workspace/__tests__",
+      "testPath": "src/app/(maestro)/source/preview/workspace/__tests__/workspace-ava-contract.test.ts",
+      "loaded": true,
+      "collected": false,
+      "run": false,
+      "green": false,
+      "covered": false,
+      "pullRequestCovered": false,
+      "declaredQuarantine": false,
+      "untriaged": true,
+      "via": [],
+      "governedRisk": {
+        "score": 10,
+        "band": "high",
+        "signals": [
+          "tenant_scoped_read"
+        ],
+        "rank": 3
+      }
+    },
+    {
+      "directory": "src/app/(maestro)/source/preview/workspace/__tests__",
+      "testPath": "src/app/(maestro)/source/preview/workspace/__tests__/workspace-explicit-client-api-routing.test.ts",
+      "loaded": true,
+      "collected": false,
+      "run": false,
+      "green": false,
+      "covered": false,
+      "pullRequestCovered": false,
+      "declaredQuarantine": false,
+      "untriaged": true,
+      "via": [],
+      "governedRisk": {
+        "score": 10,
+        "band": "high",
+        "signals": [
+          "tenant_scoped_read"
+        ],
+        "rank": 3
+      }
+    },
+    {
+      "directory": "src/app/(maestro)/source/preview/workspace/__tests__",
+      "testPath": "src/app/(maestro)/source/preview/workspace/__tests__/WorkspaceClient.ecl-browser.test.tsx",
+      "loaded": true,
+      "collected": false,
+      "run": false,
+      "green": false,
+      "covered": false,
+      "pullRequestCovered": false,
+      "declaredQuarantine": false,
+      "untriaged": true,
+      "via": [],
+      "governedRisk": {
+        "score": 10,
+        "band": "high",
+        "signals": [
+          "tenant_scoped_read"
+        ],
+        "rank": 3
+      }
+    },
+    {
+      "directory": "src/app/(maestro)/source/preview/workspace/__tests__",
+      "testPath": "src/app/(maestro)/source/preview/workspace/__tests__/WorkspaceExecutiveShell.evidence.test.tsx",
+      "loaded": true,
+      "collected": false,
+      "run": false,
+      "green": false,
+      "covered": false,
+      "pullRequestCovered": false,
+      "declaredQuarantine": false,
+      "untriaged": true,
+      "via": [],
+      "governedRisk": {
+        "score": 10,
+        "band": "high",
+        "signals": [
+          "tenant_scoped_read"
+        ],
+        "rank": 3
+      }
+    },
+    {
+      "directory": "src/app/(maestro)/source/preview/workspace/__tests__",
+      "testPath": "src/app/(maestro)/source/preview/workspace/__tests__/WorkspaceExecutiveShell.performance.test.ts",
+      "loaded": true,
+      "collected": false,
+      "run": false,
+      "green": false,
+      "covered": false,
+      "pullRequestCovered": false,
+      "declaredQuarantine": false,
+      "untriaged": true,
+      "via": [],
+      "governedRisk": {
+        "score": 10,
+        "band": "high",
+        "signals": [
+          "tenant_scoped_read"
+        ],
+        "rank": 3
+      }
+    },
+    {
+      "directory": "src/app/(maestro)/source/preview/workspace/__tests__",
+      "testPath": "src/app/(maestro)/source/preview/workspace/__tests__/workspaceNavigation.test.ts",
+      "loaded": true,
+      "collected": false,
+      "run": false,
+      "green": false,
+      "covered": false,
+      "pullRequestCovered": false,
+      "declaredQuarantine": false,
+      "untriaged": true,
+      "via": [],
+      "governedRisk": {
+        "score": 10,
+        "band": "high",
+        "signals": [
+          "tenant_scoped_read"
+        ],
+        "rank": 3
+      }
+    },
+    {
+      "directory": "src/app/(maestro)/source/preview/workspace/__tests__",
+      "testPath": "src/app/(maestro)/source/preview/workspace/__tests__/workspaceUrlState.test.ts",
+      "loaded": true,
+      "collected": false,
+      "run": false,
+      "green": false,
+      "covered": false,
+      "pullRequestCovered": false,
+      "declaredQuarantine": false,
+      "untriaged": true,
+      "via": [],
+      "governedRisk": {
+        "score": 10,
+        "band": "high",
+        "signals": [
+          "tenant_scoped_read"
+        ],
+        "rank": 3
+      }
+    },
+    {
+      "directory": "src/lib/agent/__tests__",
+      "testPath": "src/lib/agent/__tests__/admin-editorial-tenant-isolation.test.ts",
+      "loaded": true,
+      "collected": false,
+      "run": false,
+      "green": false,
+      "covered": false,
+      "pullRequestCovered": false,
+      "declaredQuarantine": false,
+      "untriaged": true,
+      "via": [],
+      "governedRisk": {
+        "score": 10,
+        "band": "high",
+        "signals": [
+          "tenant_scoped_read"
+        ],
+        "rank": 4
+      }
+    },
+    {
+      "directory": "src/lib/agent/__tests__",
+      "testPath": "src/lib/agent/__tests__/agent-mission-derived.test.ts",
+      "loaded": true,
+      "collected": false,
+      "run": false,
+      "green": false,
+      "covered": false,
+      "pullRequestCovered": false,
+      "declaredQuarantine": false,
+      "untriaged": true,
+      "via": [],
+      "governedRisk": {
+        "score": 10,
+        "band": "high",
+        "signals": [
+          "tenant_scoped_read"
+        ],
+        "rank": 4
+      }
+    },
+    {
+      "directory": "src/lib/agent/__tests__",
+      "testPath": "src/lib/agent/__tests__/artifacts.test.ts",
+      "loaded": true,
+      "collected": false,
+      "run": false,
+      "green": false,
+      "covered": false,
+      "pullRequestCovered": false,
+      "declaredQuarantine": false,
+      "untriaged": true,
+      "via": [],
+      "governedRisk": {
+        "score": 10,
+        "band": "high",
+        "signals": [
+          "tenant_scoped_read"
+        ],
+        "rank": 4
+      }
+    },
+    {
+      "directory": "src/lib/agent/__tests__",
+      "testPath": "src/lib/agent/__tests__/attachments.test.ts",
+      "loaded": true,
+      "collected": false,
+      "run": false,
+      "green": false,
+      "covered": false,
+      "pullRequestCovered": false,
+      "declaredQuarantine": false,
+      "untriaged": true,
+      "via": [],
+      "governedRisk": {
+        "score": 10,
+        "band": "high",
+        "signals": [
+          "tenant_scoped_read"
+        ],
+        "rank": 4
+      }
+    },
+    {
+      "directory": "src/lib/agent/__tests__",
+      "testPath": "src/lib/agent/__tests__/capture-field-artifact.test.ts",
+      "loaded": true,
+      "collected": false,
+      "run": false,
+      "green": false,
+      "covered": false,
+      "pullRequestCovered": false,
+      "declaredQuarantine": false,
+      "untriaged": true,
+      "via": [],
+      "governedRisk": {
+        "score": 10,
+        "band": "high",
+        "signals": [
+          "tenant_scoped_read"
+        ],
+        "rank": 4
+      }
+    },
+    {
+      "directory": "src/lib/agent/__tests__",
+      "testPath": "src/lib/agent/__tests__/citation-gap.test.ts",
+      "loaded": true,
+      "collected": false,
+      "run": false,
+      "green": false,
+      "covered": false,
+      "pullRequestCovered": false,
+      "declaredQuarantine": false,
+      "untriaged": true,
+      "via": [],
+      "governedRisk": {
+        "score": 10,
+        "band": "high",
+        "signals": [
+          "tenant_scoped_read"
+        ],
+        "rank": 4
+      }
+    },
+    {
+      "directory": "src/lib/agent/__tests__",
+      "testPath": "src/lib/agent/__tests__/context-bundle-scoring.test.ts",
+      "loaded": true,
+      "collected": false,
+      "run": false,
+      "green": false,
+      "covered": false,
+      "pullRequestCovered": false,
+      "declaredQuarantine": false,
+      "untriaged": true,
+      "via": [],
+      "governedRisk": {
+        "score": 10,
+        "band": "high",
+        "signals": [
+          "tenant_scoped_read"
+        ],
+        "rank": 4
+      }
+    },
+    {
+      "directory": "src/lib/agent/__tests__",
+      "testPath": "src/lib/agent/__tests__/context-bundle-tenant-resolve.test.ts",
+      "loaded": true,
+      "collected": false,
+      "run": false,
+      "green": false,
+      "covered": false,
+      "pullRequestCovered": false,
+      "declaredQuarantine": false,
+      "untriaged": true,
+      "via": [],
+      "governedRisk": {
+        "score": 10,
+        "band": "high",
+        "signals": [
+          "tenant_scoped_read"
+        ],
+        "rank": 4
+      }
+    },
+    {
+      "directory": "src/lib/agent/__tests__",
+      "testPath": "src/lib/agent/__tests__/editorial-tenant-aware.test.ts",
+      "loaded": true,
+      "collected": false,
+      "run": false,
+      "green": false,
+      "covered": false,
+      "pullRequestCovered": false,
+      "declaredQuarantine": false,
+      "untriaged": true,
+      "via": [],
+      "governedRisk": {
+        "score": 10,
+        "band": "high",
+        "signals": [
+          "tenant_scoped_read"
+        ],
+        "rank": 4
+      }
+    },
+    {
+      "directory": "src/lib/agent/__tests__",
+      "testPath": "src/lib/agent/__tests__/honest-disclosure.test.ts",
+      "loaded": true,
+      "collected": false,
+      "run": false,
+      "green": false,
+      "covered": false,
+      "pullRequestCovered": false,
+      "declaredQuarantine": false,
+      "untriaged": true,
+      "via": [],
+      "governedRisk": {
+        "score": 10,
+        "band": "high",
+        "signals": [
+          "tenant_scoped_read"
+        ],
+        "rank": 4
+      }
+    },
+    {
+      "directory": "src/lib/agent/__tests__",
+      "testPath": "src/lib/agent/__tests__/markdownRenderer.test.tsx",
+      "loaded": true,
+      "collected": false,
+      "run": false,
+      "green": false,
+      "covered": false,
+      "pullRequestCovered": false,
+      "declaredQuarantine": false,
+      "untriaged": true,
+      "via": [],
+      "governedRisk": {
+        "score": 10,
+        "band": "high",
+        "signals": [
+          "tenant_scoped_read"
+        ],
+        "rank": 4
+      }
+    },
+    {
+      "directory": "src/lib/agent/__tests__",
+      "testPath": "src/lib/agent/__tests__/markdownTokens.test.tsx",
+      "loaded": true,
+      "collected": false,
+      "run": false,
+      "green": false,
+      "covered": false,
+      "pullRequestCovered": false,
+      "declaredQuarantine": false,
+      "untriaged": true,
+      "via": [],
+      "governedRisk": {
+        "score": 10,
+        "band": "high",
+        "signals": [
+          "tenant_scoped_read"
+        ],
+        "rank": 4
+      }
+    },
+    {
+      "directory": "src/lib/agent/__tests__",
+      "testPath": "src/lib/agent/__tests__/module-context-contract.test.ts",
+      "loaded": true,
+      "collected": false,
+      "run": false,
+      "green": false,
+      "covered": false,
+      "pullRequestCovered": false,
+      "declaredQuarantine": false,
+      "untriaged": true,
+      "via": [],
+      "governedRisk": {
+        "score": 10,
+        "band": "high",
+        "signals": [
+          "tenant_scoped_read"
+        ],
+        "rank": 4
+      }
+    },
+    {
+      "directory": "src/lib/agent/__tests__",
+      "testPath": "src/lib/agent/__tests__/module-routing.test.ts",
+      "loaded": true,
+      "collected": false,
+      "run": false,
+      "green": false,
+      "covered": false,
+      "pullRequestCovered": false,
+      "declaredQuarantine": false,
+      "untriaged": true,
+      "via": [],
+      "governedRisk": {
+        "score": 10,
+        "band": "high",
+        "signals": [
+          "tenant_scoped_read"
+        ],
+        "rank": 4
+      }
+    },
+    {
+      "directory": "src/lib/agent/__tests__",
+      "testPath": "src/lib/agent/__tests__/module-v6-answer-contract.test.ts",
+      "loaded": true,
+      "collected": false,
+      "run": false,
+      "green": false,
+      "covered": false,
+      "pullRequestCovered": false,
+      "declaredQuarantine": false,
+      "untriaged": true,
+      "via": [],
+      "governedRisk": {
+        "score": 10,
+        "band": "high",
+        "signals": [
+          "tenant_scoped_read"
+        ],
+        "rank": 4
+      }
+    },
+    {
+      "directory": "src/lib/agent/__tests__",
+      "testPath": "src/lib/agent/__tests__/paperclip-abuse-guard.test.ts",
+      "loaded": true,
+      "collected": false,
+      "run": false,
+      "green": false,
+      "covered": false,
+      "pullRequestCovered": false,
+      "declaredQuarantine": false,
+      "untriaged": true,
+      "via": [],
+      "governedRisk": {
+        "score": 10,
+        "band": "high",
+        "signals": [
+          "tenant_scoped_read"
+        ],
+        "rank": 4
+      }
+    },
+    {
+      "directory": "src/lib/agent/__tests__",
+      "testPath": "src/lib/agent/__tests__/persona-army-harness.test.ts",
+      "loaded": true,
+      "collected": false,
+      "run": false,
+      "green": false,
+      "covered": false,
+      "pullRequestCovered": false,
+      "declaredQuarantine": false,
+      "untriaged": true,
+      "via": [],
+      "governedRisk": {
+        "score": 10,
+        "band": "high",
+        "signals": [
+          "tenant_scoped_read"
+        ],
+        "rank": 4
+      }
+    },
+    {
+      "directory": "src/lib/agent/__tests__",
+      "testPath": "src/lib/agent/__tests__/rendered-response-metadata.test.ts",
+      "loaded": true,
+      "collected": false,
+      "run": false,
+      "green": false,
+      "covered": false,
+      "pullRequestCovered": false,
+      "declaredQuarantine": false,
+      "untriaged": true,
+      "via": [],
+      "governedRisk": {
+        "score": 10,
+        "band": "high",
+        "signals": [
+          "tenant_scoped_read"
+        ],
+        "rank": 4
+      }
+    },
+    {
+      "directory": "src/lib/agent/__tests__",
+      "testPath": "src/lib/agent/__tests__/response-parts.test.ts",
+      "loaded": true,
+      "collected": false,
+      "run": false,
+      "green": false,
+      "covered": false,
+      "pullRequestCovered": false,
+      "declaredQuarantine": false,
+      "untriaged": true,
+      "via": [],
+      "governedRisk": {
+        "score": 10,
+        "band": "high",
+        "signals": [
+          "tenant_scoped_read"
+        ],
+        "rank": 4
+      }
+    },
+    {
+      "directory": "src/lib/agent/__tests__",
+      "testPath": "src/lib/agent/__tests__/response-shape-regression.test.ts",
+      "loaded": true,
+      "collected": false,
+      "run": false,
+      "green": false,
+      "covered": false,
+      "pullRequestCovered": false,
+      "declaredQuarantine": false,
+      "untriaged": true,
+      "via": [],
+      "governedRisk": {
+        "score": 10,
+        "band": "high",
+        "signals": [
+          "tenant_scoped_read"
+        ],
+        "rank": 4
+      }
+    },
+    {
+      "directory": "src/lib/agent/__tests__",
+      "testPath": "src/lib/agent/__tests__/response-shape-truncation-artifacts.test.ts",
+      "loaded": true,
+      "collected": false,
+      "run": false,
+      "green": false,
+      "covered": false,
+      "pullRequestCovered": false,
+      "declaredQuarantine": false,
+      "untriaged": true,
+      "via": [],
+      "governedRisk": {
+        "score": 10,
+        "band": "high",
+        "signals": [
+          "tenant_scoped_read"
+        ],
+        "rank": 4
+      }
+    },
+    {
+      "directory": "src/lib/agent/__tests__",
+      "testPath": "src/lib/agent/__tests__/response-shape.test.ts",
+      "loaded": true,
+      "collected": false,
+      "run": false,
+      "green": false,
+      "covered": false,
+      "pullRequestCovered": false,
+      "declaredQuarantine": false,
+      "untriaged": true,
+      "via": [],
+      "governedRisk": {
+        "score": 10,
+        "band": "high",
+        "signals": [
+          "tenant_scoped_read"
+        ],
+        "rank": 4
+      }
+    },
+    {
+      "directory": "src/lib/agent/__tests__",
+      "testPath": "src/lib/agent/__tests__/restricted-financial-streamer.test.ts",
+      "loaded": true,
+      "collected": false,
+      "run": false,
+      "green": false,
+      "covered": false,
+      "pullRequestCovered": false,
+      "declaredQuarantine": false,
+      "untriaged": true,
+      "via": [],
+      "governedRisk": {
+        "score": 10,
+        "band": "high",
+        "signals": [
+          "tenant_scoped_read"
+        ],
+        "rank": 4
+      }
+    },
+    {
+      "directory": "src/lib/agent/__tests__",
+      "testPath": "src/lib/agent/__tests__/restricted-output-policy.test.ts",
+      "loaded": true,
+      "collected": false,
+      "run": false,
+      "green": false,
+      "covered": false,
+      "pullRequestCovered": false,
+      "declaredQuarantine": false,
+      "untriaged": true,
+      "via": [],
+      "governedRisk": {
+        "score": 10,
+        "band": "high",
+        "signals": [
+          "tenant_scoped_read"
+        ],
+        "rank": 4
+      }
+    },
+    {
+      "directory": "src/lib/agent/__tests__",
+      "testPath": "src/lib/agent/__tests__/retrieval-tenant-leak.test.ts",
+      "loaded": true,
+      "collected": false,
+      "run": false,
+      "green": false,
+      "covered": false,
+      "pullRequestCovered": false,
+      "declaredQuarantine": false,
+      "untriaged": true,
+      "via": [],
+      "governedRisk": {
+        "score": 10,
+        "band": "high",
+        "signals": [
+          "tenant_scoped_read"
+        ],
+        "rank": 4
+      }
+    },
+    {
+      "directory": "src/lib/agent/__tests__",
+      "testPath": "src/lib/agent/__tests__/retrieval.azure-context.test.ts",
+      "loaded": true,
+      "collected": true,
+      "run": true,
+      "green": true,
+      "covered": true,
+      "pullRequestCovered": true,
+      "declaredQuarantine": false,
+      "untriaged": false,
+      "via": [
+        "command"
+      ],
+      "governedRisk": {
+        "score": 10,
+        "band": "high",
+        "signals": [
+          "tenant_scoped_read"
+        ],
+        "rank": 4
+      }
+    },
+    {
+      "directory": "src/lib/agent/__tests__",
+      "testPath": "src/lib/agent/__tests__/source-ava-polish-gate-response-shape.test.ts",
+      "loaded": true,
+      "collected": false,
+      "run": false,
+      "green": false,
+      "covered": false,
+      "pullRequestCovered": false,
+      "declaredQuarantine": false,
+      "untriaged": true,
+      "via": [],
+      "governedRisk": {
+        "score": 10,
+        "band": "high",
+        "signals": [
+          "tenant_scoped_read"
+        ],
+        "rank": 4
+      }
+    },
+    {
+      "directory": "src/lib/agent/__tests__",
+      "testPath": "src/lib/agent/__tests__/surface.test.ts",
+      "loaded": true,
+      "collected": false,
+      "run": false,
+      "green": false,
+      "covered": false,
+      "pullRequestCovered": false,
+      "declaredQuarantine": false,
+      "untriaged": true,
+      "via": [],
+      "governedRisk": {
+        "score": 10,
+        "band": "high",
+        "signals": [
+          "tenant_scoped_read"
+        ],
+        "rank": 4
+      }
+    },
+    {
+      "directory": "src/lib/agent/__tests__",
+      "testPath": "src/lib/agent/__tests__/system-prompt-guardrails.test.ts",
+      "loaded": true,
+      "collected": false,
+      "run": false,
+      "green": false,
+      "covered": false,
+      "pullRequestCovered": false,
+      "declaredQuarantine": false,
+      "untriaged": true,
+      "via": [],
+      "governedRisk": {
+        "score": 10,
+        "band": "high",
+        "signals": [
+          "tenant_scoped_read"
+        ],
+        "rank": 4
+      }
+    },
+    {
+      "directory": "src/lib/agent/__tests__",
+      "testPath": "src/lib/agent/__tests__/tenant-guardrails.test.ts",
+      "loaded": true,
+      "collected": false,
+      "run": false,
+      "green": false,
+      "covered": false,
+      "pullRequestCovered": false,
+      "declaredQuarantine": false,
+      "untriaged": true,
+      "via": [],
+      "governedRisk": {
+        "score": 10,
+        "band": "high",
+        "signals": [
+          "tenant_scoped_read"
+        ],
+        "rank": 4
+      }
+    },
+    {
+      "directory": "src/lib/agent/__tests__",
+      "testPath": "src/lib/agent/__tests__/untrusted-content.test.ts",
+      "loaded": true,
+      "collected": false,
+      "run": false,
+      "green": false,
+      "covered": false,
+      "pullRequestCovered": false,
+      "declaredQuarantine": false,
+      "untriaged": true,
+      "via": [],
+      "governedRisk": {
+        "score": 10,
+        "band": "high",
+        "signals": [
+          "tenant_scoped_read"
+        ],
+        "rank": 4
+      }
+    },
+    {
+      "directory": "src/lib/agent/__tests__",
+      "testPath": "src/lib/agent/__tests__/userContext.test.ts",
+      "loaded": true,
+      "collected": false,
+      "run": false,
+      "green": false,
+      "covered": false,
+      "pullRequestCovered": false,
+      "declaredQuarantine": false,
+      "untriaged": true,
+      "via": [],
+      "governedRisk": {
+        "score": 10,
+        "band": "high",
+        "signals": [
+          "tenant_scoped_read"
+        ],
+        "rank": 4
+      }
+    },
+    {
+      "directory": "src/lib/agent/__tests__",
+      "testPath": "src/lib/agent/__tests__/visible-answer-contract.test.ts",
+      "loaded": true,
+      "collected": true,
+      "run": true,
+      "green": true,
+      "covered": true,
+      "pullRequestCovered": true,
+      "declaredQuarantine": false,
+      "untriaged": false,
+      "via": [
+        "command"
+      ],
+      "governedRisk": {
+        "score": 10,
+        "band": "high",
+        "signals": [
+          "tenant_scoped_read"
+        ],
+        "rank": 4
+      }
+    },
+    {
+      "directory": "src/lib/__tests__",
+      "testPath": "src/lib/__tests__/active-client.test.ts",
+      "loaded": true,
+      "collected": false,
+      "run": false,
+      "green": false,
+      "covered": false,
+      "pullRequestCovered": false,
+      "declaredQuarantine": false,
+      "untriaged": true,
+      "via": [],
+      "governedRisk": {
+        "score": 10,
+        "band": "high",
+        "signals": [
+          "tenant_scoped_read"
+        ],
+        "rank": 5
+      }
+    },
+    {
+      "directory": "src/lib/__tests__",
+      "testPath": "src/lib/__tests__/client-config-canonical.test.ts",
+      "loaded": true,
+      "collected": true,
+      "run": true,
+      "green": true,
+      "covered": true,
+      "pullRequestCovered": true,
+      "declaredQuarantine": false,
+      "untriaged": false,
+      "via": [
+        "command"
+      ],
+      "governedRisk": {
+        "score": 10,
+        "band": "high",
+        "signals": [
+          "tenant_scoped_read"
+        ],
+        "rank": 5
+      }
+    },
+    {
+      "directory": "src/lib/__tests__",
+      "testPath": "src/lib/__tests__/control-plane-tenant-purity.test.ts",
+      "loaded": true,
+      "collected": false,
+      "run": false,
+      "green": false,
+      "covered": false,
+      "pullRequestCovered": false,
+      "declaredQuarantine": false,
+      "untriaged": true,
+      "via": [],
+      "governedRisk": {
+        "score": 10,
+        "band": "high",
+        "signals": [
+          "tenant_scoped_read"
+        ],
+        "rank": 5
+      }
+    },
+    {
+      "directory": "src/lib/__tests__",
+      "testPath": "src/lib/__tests__/supabase-server.test.ts",
+      "loaded": true,
+      "collected": false,
+      "run": false,
+      "green": false,
+      "covered": false,
+      "pullRequestCovered": false,
+      "declaredQuarantine": false,
+      "untriaged": true,
+      "via": [],
+      "governedRisk": {
+        "score": 10,
+        "band": "high",
+        "signals": [
+          "tenant_scoped_read"
+        ],
+        "rank": 5
+      }
+    },
+    {
+      "directory": "src/lib/governance/__tests__",
+      "testPath": "src/lib/governance/__tests__/agent-context-bundle.test.ts",
+      "loaded": true,
+      "collected": false,
+      "run": false,
+      "green": false,
+      "covered": false,
+      "pullRequestCovered": false,
+      "declaredQuarantine": false,
+      "untriaged": true,
+      "via": [],
+      "governedRisk": {
+        "score": 10,
+        "band": "high",
+        "signals": [
+          "tenant_scoped_read"
+        ],
+        "rank": 6
+      }
+    },
+    {
+      "directory": "src/lib/governance/__tests__",
+      "testPath": "src/lib/governance/__tests__/context-corpus-policy.test.ts",
+      "loaded": true,
+      "collected": false,
+      "run": false,
+      "green": false,
+      "covered": false,
+      "pullRequestCovered": false,
+      "declaredQuarantine": false,
+      "untriaged": true,
+      "via": [],
+      "governedRisk": {
+        "score": 10,
+        "band": "high",
+        "signals": [
+          "tenant_scoped_read"
+        ],
+        "rank": 6
+      }
+    },
+    {
+      "directory": "src/lib/governance/__tests__",
+      "testPath": "src/lib/governance/__tests__/dataset-manifest.test.ts",
+      "loaded": true,
+      "collected": false,
+      "run": false,
+      "green": false,
+      "covered": false,
+      "pullRequestCovered": false,
+      "declaredQuarantine": false,
+      "untriaged": true,
+      "via": [],
+      "governedRisk": {
+        "score": 10,
+        "band": "high",
+        "signals": [
+          "tenant_scoped_read"
+        ],
+        "rank": 6
+      }
+    },
+    {
+      "directory": "src/lib/governance/__tests__",
+      "testPath": "src/lib/governance/__tests__/inventory.test.ts",
+      "loaded": true,
+      "collected": true,
+      "run": true,
+      "green": true,
+      "covered": true,
+      "pullRequestCovered": true,
+      "declaredQuarantine": false,
+      "untriaged": false,
+      "via": [
+        "command"
+      ],
+      "governedRisk": {
+        "score": 10,
+        "band": "high",
+        "signals": [
+          "tenant_scoped_read"
+        ],
+        "rank": 6
+      }
+    },
+    {
+      "directory": "src/lib/governance/__tests__",
+      "testPath": "src/lib/governance/__tests__/policy-exceptions.test.ts",
+      "loaded": true,
+      "collected": true,
+      "run": true,
+      "green": true,
+      "covered": true,
+      "pullRequestCovered": true,
+      "declaredQuarantine": false,
+      "untriaged": false,
+      "via": [
+        "command"
+      ],
+      "governedRisk": {
+        "score": 10,
+        "band": "high",
+        "signals": [
+          "tenant_scoped_read"
+        ],
+        "rank": 6
+      }
+    },
+    {
+      "directory": "src/lib/governance/__tests__",
+      "testPath": "src/lib/governance/__tests__/promotion-evaluator.test.ts",
+      "loaded": true,
+      "collected": true,
+      "run": true,
+      "green": true,
+      "covered": true,
+      "pullRequestCovered": true,
+      "declaredQuarantine": false,
+      "untriaged": false,
+      "via": [
+        "command"
+      ],
+      "governedRisk": {
+        "score": 10,
+        "band": "high",
+        "signals": [
+          "tenant_scoped_read"
+        ],
+        "rank": 6
+      }
+    },
+    {
+      "directory": "src/lib/governance/__tests__",
+      "testPath": "src/lib/governance/__tests__/readiness-backfill.test.ts",
+      "loaded": true,
+      "collected": true,
+      "run": true,
+      "green": true,
+      "covered": true,
+      "pullRequestCovered": true,
+      "declaredQuarantine": false,
+      "untriaged": false,
+      "via": [
+        "command"
+      ],
+      "governedRisk": {
+        "score": 10,
+        "band": "high",
+        "signals": [
+          "tenant_scoped_read"
+        ],
+        "rank": 6
+      }
+    },
+    {
+      "directory": "src/lib/governance/__tests__",
+      "testPath": "src/lib/governance/__tests__/tenant-coverage.test.ts",
+      "loaded": true,
+      "collected": true,
+      "run": true,
+      "green": true,
+      "covered": true,
+      "pullRequestCovered": true,
+      "declaredQuarantine": false,
+      "untriaged": false,
+      "via": [
+        "command"
+      ],
+      "governedRisk": {
+        "score": 10,
+        "band": "high",
+        "signals": [
+          "tenant_scoped_read"
+        ],
+        "rank": 6
+      }
+    },
+    {
+      "directory": "src/lib/source/contract-evidence/__tests__",
+      "testPath": "src/lib/source/contract-evidence/__tests__/evidence-review.test.ts",
+      "loaded": true,
+      "collected": true,
+      "run": true,
+      "green": true,
+      "covered": true,
+      "pullRequestCovered": true,
+      "declaredQuarantine": false,
+      "untriaged": false,
+      "via": [
+        "command"
+      ],
+      "governedRisk": {
+        "score": 10,
+        "band": "high",
+        "signals": [
+          "tenant_scoped_read"
+        ],
+        "rank": 7
+      }
+    },
+    {
+      "directory": "src/lib/source/contract-evidence/__tests__",
+      "testPath": "src/lib/source/contract-evidence/__tests__/persistence.test.ts",
+      "loaded": true,
+      "collected": false,
+      "run": false,
+      "green": false,
+      "covered": false,
+      "pullRequestCovered": false,
+      "declaredQuarantine": false,
+      "untriaged": true,
+      "via": [],
+      "governedRisk": {
+        "score": 10,
+        "band": "high",
+        "signals": [
+          "tenant_scoped_read"
+        ],
+        "rank": 7
+      }
+    },
+    {
+      "directory": "src/lib/source/contract-evidence/__tests__",
+      "testPath": "src/lib/source/contract-evidence/__tests__/read-model.test.ts",
+      "loaded": true,
+      "collected": false,
+      "run": false,
+      "green": false,
+      "covered": false,
+      "pullRequestCovered": false,
+      "declaredQuarantine": false,
+      "untriaged": true,
+      "via": [],
+      "governedRisk": {
+        "score": 10,
+        "band": "high",
+        "signals": [
+          "tenant_scoped_read"
+        ],
+        "rank": 7
+      }
+    },
+    {
+      "directory": "src/lib/source/contract-evidence/__tests__",
+      "testPath": "src/lib/source/contract-evidence/__tests__/templates.test.ts",
+      "loaded": true,
+      "collected": false,
+      "run": false,
+      "green": false,
+      "covered": false,
+      "pullRequestCovered": false,
+      "declaredQuarantine": false,
+      "untriaged": true,
+      "via": [],
+      "governedRisk": {
+        "score": 10,
+        "band": "high",
+        "signals": [
+          "tenant_scoped_read"
+        ],
+        "rank": 7
+      }
+    },
+    {
+      "directory": "src/app/(maestro)/source/__tests__",
+      "testPath": "src/app/(maestro)/source/__tests__/new-route-optimization-redirect.test.ts",
+      "loaded": true,
+      "collected": true,
+      "run": true,
+      "green": true,
+      "covered": true,
+      "pullRequestCovered": true,
+      "declaredQuarantine": false,
+      "untriaged": false,
+      "via": [
+        "command"
+      ],
+      "governedRisk": {
+        "score": 10,
+        "band": "high",
+        "signals": [
+          "tenant_scoped_read"
+        ],
+        "rank": 8
+      }
+    },
+    {
+      "directory": "src/app/(maestro)/source/__tests__",
+      "testPath": "src/app/(maestro)/source/__tests__/not-found-source.test.ts",
+      "loaded": true,
+      "collected": false,
+      "run": false,
+      "green": false,
+      "covered": false,
+      "pullRequestCovered": false,
+      "declaredQuarantine": false,
+      "untriaged": true,
+      "via": [],
+      "governedRisk": {
+        "score": 10,
+        "band": "high",
+        "signals": [
+          "tenant_scoped_read"
+        ],
+        "rank": 8
+      }
+    },
+    {
+      "directory": "src/app/(maestro)/source/__tests__",
+      "testPath": "src/app/(maestro)/source/__tests__/tenant-resolution-source-contract.test.ts",
+      "loaded": true,
+      "collected": false,
+      "run": false,
+      "green": false,
+      "covered": false,
+      "pullRequestCovered": false,
+      "declaredQuarantine": false,
+      "untriaged": true,
+      "via": [],
+      "governedRisk": {
+        "score": 10,
+        "band": "high",
+        "signals": [
+          "tenant_scoped_read"
+        ],
+        "rank": 8
+      }
+    },
+    {
+      "directory": "src/lib/data-plane/__tests__",
+      "testPath": "src/lib/data-plane/__tests__/azure-read.test.ts",
+      "loaded": true,
+      "collected": false,
+      "run": false,
+      "green": false,
+      "covered": false,
+      "pullRequestCovered": false,
+      "declaredQuarantine": false,
+      "untriaged": true,
+      "via": [],
+      "governedRisk": {
+        "score": 10,
+        "band": "high",
+        "signals": [
+          "tenant_scoped_read"
+        ],
+        "rank": 9
+      }
+    },
+    {
+      "directory": "src/lib/data-plane/__tests__",
+      "testPath": "src/lib/data-plane/__tests__/objectStorage.test.ts",
+      "loaded": true,
+      "collected": false,
+      "run": false,
+      "green": false,
+      "covered": false,
+      "pullRequestCovered": false,
+      "declaredQuarantine": false,
+      "untriaged": true,
+      "via": [],
+      "governedRisk": {
+        "score": 10,
+        "band": "high",
+        "signals": [
+          "tenant_scoped_read"
+        ],
+        "rank": 9
+      }
+    },
+    {
+      "directory": "src/lib/data-plane/__tests__",
+      "testPath": "src/lib/data-plane/__tests__/test-boundary.test.ts",
+      "loaded": true,
+      "collected": true,
+      "run": true,
+      "green": true,
+      "covered": true,
+      "pullRequestCovered": true,
+      "declaredQuarantine": false,
+      "untriaged": false,
+      "via": [
+        "command"
+      ],
+      "governedRisk": {
+        "score": 10,
+        "band": "high",
+        "signals": [
+          "tenant_scoped_read"
+        ],
+        "rank": 9
+      }
+    },
+    {
+      "directory": "src/lib/enterprise-context/__tests__",
+      "testPath": "src/lib/enterprise-context/__tests__/chunking.test.ts",
+      "loaded": true,
+      "collected": true,
+      "run": true,
+      "green": true,
+      "covered": true,
+      "pullRequestCovered": true,
+      "declaredQuarantine": false,
+      "untriaged": false,
+      "via": [
+        "command"
+      ],
+      "governedRisk": {
+        "score": 10,
+        "band": "high",
+        "signals": [
+          "tenant_scoped_read"
+        ],
+        "rank": 10
+      }
+    },
+    {
+      "directory": "src/lib/enterprise-context/__tests__",
+      "testPath": "src/lib/enterprise-context/__tests__/client-enterprise-context-datasets.test.ts",
+      "loaded": true,
+      "collected": true,
+      "run": true,
+      "green": true,
+      "covered": true,
+      "pullRequestCovered": true,
+      "declaredQuarantine": false,
+      "untriaged": false,
+      "via": [
+        "command"
+      ],
+      "governedRisk": {
+        "score": 10,
+        "band": "high",
+        "signals": [
+          "tenant_scoped_read"
+        ],
+        "rank": 10
+      }
+    },
+    {
+      "directory": "src/lib/enterprise-context/__tests__",
+      "testPath": "src/lib/enterprise-context/__tests__/derived-enterprise-read.test.ts",
+      "loaded": true,
+      "collected": false,
+      "run": false,
+      "green": false,
+      "covered": false,
+      "pullRequestCovered": false,
+      "declaredQuarantine": false,
+      "untriaged": true,
+      "via": [],
+      "governedRisk": {
+        "score": 10,
+        "band": "high",
+        "signals": [
+          "tenant_scoped_read"
+        ],
+        "rank": 10
+      }
+    },
+    {
+      "directory": "src/lib/enterprise-context/__tests__",
+      "testPath": "src/lib/enterprise-context/__tests__/intelligence-read-model.test.ts",
+      "loaded": true,
+      "collected": false,
+      "run": false,
+      "green": false,
+      "covered": false,
+      "pullRequestCovered": false,
+      "declaredQuarantine": false,
+      "untriaged": true,
+      "via": [],
+      "governedRisk": {
+        "score": 10,
+        "band": "high",
+        "signals": [
+          "tenant_scoped_read"
+        ],
+        "rank": 10
+      }
+    },
+    {
+      "directory": "src/lib/enterprise-context/__tests__",
+      "testPath": "src/lib/enterprise-context/__tests__/meridian-ingestion-plan.test.ts",
+      "loaded": true,
+      "collected": true,
+      "run": true,
+      "green": true,
+      "covered": true,
+      "pullRequestCovered": true,
+      "declaredQuarantine": false,
+      "untriaged": false,
+      "via": [
+        "command"
+      ],
+      "governedRisk": {
+        "score": 10,
+        "band": "high",
+        "signals": [
+          "tenant_scoped_read"
+        ],
+        "rank": 10
+      }
+    },
+    {
+      "directory": "src/lib/enterprise-context/__tests__",
+      "testPath": "src/lib/enterprise-context/__tests__/meridian-refresh-simulator.test.ts",
+      "loaded": true,
+      "collected": true,
+      "run": true,
+      "green": true,
+      "covered": true,
+      "pullRequestCovered": true,
+      "declaredQuarantine": false,
+      "untriaged": false,
+      "via": [
+        "command"
+      ],
+      "governedRisk": {
+        "score": 10,
+        "band": "high",
+        "signals": [
+          "tenant_scoped_read"
+        ],
+        "rank": 10
+      }
+    },
+    {
+      "directory": "src/lib/enterprise-context/__tests__",
+      "testPath": "src/lib/enterprise-context/__tests__/meridian-synthetic-dataset.test.ts",
+      "loaded": true,
+      "collected": true,
+      "run": true,
+      "green": true,
+      "covered": true,
+      "pullRequestCovered": true,
+      "declaredQuarantine": false,
+      "untriaged": false,
+      "via": [
+        "command"
+      ],
+      "governedRisk": {
+        "score": 10,
+        "band": "high",
+        "signals": [
+          "tenant_scoped_read"
+        ],
+        "rank": 10
+      }
+    },
+    {
+      "directory": "src/lib/enterprise-context/__tests__",
+      "testPath": "src/lib/enterprise-context/__tests__/schema.test.ts",
+      "loaded": true,
+      "collected": true,
+      "run": true,
+      "green": true,
+      "covered": true,
+      "pullRequestCovered": true,
+      "declaredQuarantine": false,
+      "untriaged": false,
+      "via": [
+        "command"
+      ],
+      "governedRisk": {
+        "score": 10,
+        "band": "high",
+        "signals": [
+          "tenant_scoped_read"
+        ],
+        "rank": 10
+      }
+    },
+    {
+      "directory": "src/lib/enterprise-context/__tests__",
+      "testPath": "src/lib/enterprise-context/__tests__/template-schema.test.ts",
+      "loaded": true,
+      "collected": true,
+      "run": true,
+      "green": true,
+      "covered": true,
+      "pullRequestCovered": true,
+      "declaredQuarantine": false,
+      "untriaged": false,
+      "via": [
+        "command"
+      ],
+      "governedRisk": {
+        "score": 10,
+        "band": "high",
+        "signals": [
+          "tenant_scoped_read"
+        ],
+        "rank": 10
+      }
+    },
+    {
+      "directory": "src/lib/source/contract-intelligence/__tests__",
+      "testPath": "src/lib/source/contract-intelligence/__tests__/cloud-adapter.test.ts",
+      "loaded": true,
+      "collected": true,
+      "run": true,
+      "green": true,
+      "covered": true,
+      "pullRequestCovered": true,
+      "declaredQuarantine": false,
+      "untriaged": false,
+      "via": [
+        "command"
+      ],
+      "governedRisk": {
+        "score": 10,
+        "band": "high",
+        "signals": [
+          "tenant_scoped_read"
+        ],
+        "rank": 11
+      }
+    },
+    {
+      "directory": "src/lib/source/contract-intelligence/__tests__",
+      "testPath": "src/lib/source/contract-intelligence/__tests__/education.test.ts",
+      "loaded": true,
+      "collected": true,
+      "run": true,
+      "green": true,
+      "covered": true,
+      "pullRequestCovered": true,
+      "declaredQuarantine": false,
+      "untriaged": false,
+      "via": [
+        "command"
+      ],
+      "governedRisk": {
+        "score": 10,
+        "band": "high",
+        "signals": [
+          "tenant_scoped_read"
+        ],
+        "rank": 11
+      }
+    },
+    {
+      "directory": "src/lib/source/contract-intelligence/__tests__",
+      "testPath": "src/lib/source/contract-intelligence/__tests__/prompt.test.ts",
+      "loaded": true,
+      "collected": false,
+      "run": false,
+      "green": false,
+      "covered": false,
+      "pullRequestCovered": false,
+      "declaredQuarantine": false,
+      "untriaged": true,
+      "via": [],
+      "governedRisk": {
+        "score": 10,
+        "band": "high",
+        "signals": [
+          "tenant_scoped_read"
+        ],
+        "rank": 11
+      }
+    },
+    {
+      "directory": "src/lib/source/contract-intelligence/__tests__",
+      "testPath": "src/lib/source/contract-intelligence/__tests__/provenance.test.ts",
+      "loaded": true,
+      "collected": false,
+      "run": false,
+      "green": false,
+      "covered": false,
+      "pullRequestCovered": false,
+      "declaredQuarantine": false,
+      "untriaged": true,
+      "via": [],
+      "governedRisk": {
+        "score": 10,
+        "band": "high",
+        "signals": [
+          "tenant_scoped_read"
+        ],
+        "rank": 11
+      }
+    },
+    {
+      "directory": "src/app/api/programs/synthesis/__tests__",
+      "testPath": "src/app/api/programs/synthesis/__tests__/route.test.ts",
+      "loaded": true,
+      "collected": false,
+      "run": false,
+      "green": false,
+      "covered": false,
+      "pullRequestCovered": false,
+      "declaredQuarantine": false,
+      "untriaged": true,
+      "via": [],
+      "governedRisk": {
+        "score": 10,
+        "band": "high",
+        "signals": [
+          "tenant_scoped_read"
+        ],
+        "rank": 12
+      }
+    },
+    {
+      "directory": "src/app/api/source/synthesis/__tests__",
+      "testPath": "src/app/api/source/synthesis/__tests__/route.test.ts",
+      "loaded": true,
+      "collected": false,
+      "run": false,
+      "green": false,
+      "covered": false,
+      "pullRequestCovered": false,
+      "declaredQuarantine": false,
+      "untriaged": true,
+      "via": [],
+      "governedRisk": {
+        "score": 10,
+        "band": "high",
+        "signals": [
+          "tenant_scoped_read"
+        ],
+        "rank": 13
+      }
+    },
+    {
+      "directory": "src/lib/programs/archetypes/__tests__",
+      "testPath": "src/lib/programs/archetypes/__tests__/ai-pdlc.test.ts",
+      "loaded": true,
+      "collected": true,
+      "run": true,
+      "green": true,
+      "covered": true,
+      "pullRequestCovered": true,
+      "declaredQuarantine": false,
+      "untriaged": false,
+      "via": [
+        "command"
+      ],
+      "governedRisk": {
+        "score": 10,
+        "band": "high",
+        "signals": [
+          "tenant_scoped_read"
+        ],
+        "rank": 14
+      }
+    },
+    {
+      "directory": "src/lib/programs/archetypes/__tests__",
+      "testPath": "src/lib/programs/archetypes/__tests__/generality.test.ts",
+      "loaded": true,
+      "collected": true,
+      "run": true,
+      "green": true,
+      "covered": true,
+      "pullRequestCovered": true,
+      "declaredQuarantine": false,
+      "untriaged": false,
+      "via": [
+        "command"
+      ],
+      "governedRisk": {
+        "score": 10,
+        "band": "high",
+        "signals": [
+          "tenant_scoped_read"
+        ],
+        "rank": 14
+      }
+    },
+    {
+      "directory": "src/lib/programs/archetypes/__tests__",
+      "testPath": "src/lib/programs/archetypes/__tests__/resolve-program-archetype.test.ts",
+      "loaded": true,
+      "collected": true,
+      "run": true,
+      "green": true,
+      "covered": true,
+      "pullRequestCovered": true,
+      "declaredQuarantine": false,
+      "untriaged": false,
+      "via": [
+        "command"
+      ],
+      "governedRisk": {
+        "score": 10,
+        "band": "high",
+        "signals": [
+          "tenant_scoped_read"
+        ],
+        "rank": 14
+      }
+    },
+    {
+      "directory": "src/lib/programs/archetypes/__tests__",
+      "testPath": "src/lib/programs/archetypes/__tests__/resolver.test.ts",
+      "loaded": true,
+      "collected": false,
+      "run": false,
+      "green": false,
+      "covered": false,
+      "pullRequestCovered": false,
+      "declaredQuarantine": false,
+      "untriaged": true,
+      "via": [],
+      "governedRisk": {
+        "score": 10,
+        "band": "high",
+        "signals": [
+          "tenant_scoped_read"
+        ],
+        "rank": 14
+      }
+    },
+    {
+      "directory": "src/lib/source/candidate-suppliers/__tests__",
+      "testPath": "src/lib/source/candidate-suppliers/__tests__/event-candidate-authority-repository.test.ts",
+      "loaded": true,
+      "collected": false,
+      "run": false,
+      "green": false,
+      "covered": false,
+      "pullRequestCovered": false,
+      "declaredQuarantine": false,
+      "untriaged": true,
+      "via": [],
+      "governedRisk": {
+        "score": 10,
+        "band": "high",
+        "signals": [
+          "tenant_scoped_read"
+        ],
+        "rank": 15
+      }
+    },
+    {
+      "directory": "src/lib/source/nda/__tests__",
+      "testPath": "src/lib/source/nda/__tests__/nda-authority-repository.test.ts",
+      "loaded": true,
+      "collected": false,
+      "run": false,
+      "green": false,
+      "covered": false,
+      "pullRequestCovered": false,
+      "declaredQuarantine": false,
+      "untriaged": true,
+      "via": [],
+      "governedRisk": {
+        "score": 10,
+        "band": "high",
+        "signals": [
+          "tenant_scoped_read"
+        ],
+        "rank": 16
+      }
     }
   ],
   "governedRiskRanking": [
@@ -318,7 +4170,9 @@
       "governedRisk": {
         "score": 10,
         "band": "high",
-        "signals": ["tenant_scoped_read"],
+        "signals": [
+          "tenant_scoped_read"
+        ],
         "rank": 3
       }
     },
@@ -331,7 +4185,9 @@
       "governedRisk": {
         "score": 10,
         "band": "high",
-        "signals": ["tenant_scoped_read"],
+        "signals": [
+          "tenant_scoped_read"
+        ],
         "rank": 4
       }
     },
@@ -344,7 +4200,9 @@
       "governedRisk": {
         "score": 10,
         "band": "high",
-        "signals": ["tenant_scoped_read"],
+        "signals": [
+          "tenant_scoped_read"
+        ],
         "rank": 5
       }
     },
@@ -357,7 +4215,9 @@
       "governedRisk": {
         "score": 10,
         "band": "high",
-        "signals": ["tenant_scoped_read"],
+        "signals": [
+          "tenant_scoped_read"
+        ],
         "rank": 6
       }
     },
@@ -370,7 +4230,9 @@
       "governedRisk": {
         "score": 10,
         "band": "high",
-        "signals": ["tenant_scoped_read"],
+        "signals": [
+          "tenant_scoped_read"
+        ],
         "rank": 7
       }
     },
@@ -383,7 +4245,9 @@
       "governedRisk": {
         "score": 10,
         "band": "high",
-        "signals": ["tenant_scoped_read"],
+        "signals": [
+          "tenant_scoped_read"
+        ],
         "rank": 8
       }
     },
@@ -396,7 +4260,9 @@
       "governedRisk": {
         "score": 10,
         "band": "high",
-        "signals": ["tenant_scoped_read"],
+        "signals": [
+          "tenant_scoped_read"
+        ],
         "rank": 9
       }
     },
@@ -409,7 +4275,9 @@
       "governedRisk": {
         "score": 10,
         "band": "high",
-        "signals": ["tenant_scoped_read"],
+        "signals": [
+          "tenant_scoped_read"
+        ],
         "rank": 10
       }
     },
@@ -422,7 +4290,9 @@
       "governedRisk": {
         "score": 10,
         "band": "high",
-        "signals": ["tenant_scoped_read"],
+        "signals": [
+          "tenant_scoped_read"
+        ],
         "rank": 11
       }
     },
@@ -435,7 +4305,9 @@
       "governedRisk": {
         "score": 10,
         "band": "high",
-        "signals": ["tenant_scoped_read"],
+        "signals": [
+          "tenant_scoped_read"
+        ],
         "rank": 12
       }
     },
@@ -448,7 +4320,9 @@
       "governedRisk": {
         "score": 10,
         "band": "high",
-        "signals": ["tenant_scoped_read"],
+        "signals": [
+          "tenant_scoped_read"
+        ],
         "rank": 13
       }
     },
@@ -461,7 +4335,9 @@
       "governedRisk": {
         "score": 10,
         "band": "high",
-        "signals": ["tenant_scoped_read"],
+        "signals": [
+          "tenant_scoped_read"
+        ],
         "rank": 14
       }
     },
@@ -474,7 +4350,9 @@
       "governedRisk": {
         "score": 10,
         "band": "high",
-        "signals": ["tenant_scoped_read"],
+        "signals": [
+          "tenant_scoped_read"
+        ],
         "rank": 15
       }
     },
@@ -487,7 +4365,9 @@
       "governedRisk": {
         "score": 10,
         "band": "high",
-        "signals": ["tenant_scoped_read"],
+        "signals": [
+          "tenant_scoped_read"
+        ],
         "rank": 16
       }
     }
@@ -505,7 +4385,9 @@
           "approval_or_lifecycle_write",
           "tenant_scoped_read"
         ],
-        "controlIds": ["moves-phase-advance-route"],
+        "controlIds": [
+          "moves-phase-advance-route"
+        ],
         "approvalOrLifecycleSourceCount": 4,
         "approvalOrLifecycleSources": [
           "src/app/api/v1/programs/[programId]/advance/route.ts",
@@ -535,7 +4417,9 @@
           "declared_ai_surface_control",
           "approval_or_lifecycle_write"
         ],
-        "controlIds": ["moves-deliverable-canvas-view"],
+        "controlIds": [
+          "moves-deliverable-canvas-view"
+        ],
         "approvalOrLifecycleSourceCount": 3,
         "approvalOrLifecycleSources": [
           "src/components/strategic-moves/MovesPhaseStandaloneClient.tsx",
@@ -552,7 +4436,9 @@
       "governedRisk": {
         "score": 10,
         "band": "high",
-        "signals": ["tenant_scoped_read"],
+        "signals": [
+          "tenant_scoped_read"
+        ],
         "tenantScopedReadSourceCount": 1,
         "tenantScopedReadSources": [
           "src/app/(maestro)/source/preview/workspace/live/portfolioAdapter.ts"
@@ -567,9 +4453,13 @@
       "governedRisk": {
         "score": 10,
         "band": "high",
-        "signals": ["tenant_scoped_read"],
+        "signals": [
+          "tenant_scoped_read"
+        ],
         "tenantScopedReadSourceCount": 1,
-        "tenantScopedReadSources": ["src/lib/agent/context-bundle.ts"],
+        "tenantScopedReadSources": [
+          "src/lib/agent/context-bundle.ts"
+        ],
         "rank": 4
       }
     },
@@ -580,9 +4470,13 @@
       "governedRisk": {
         "score": 10,
         "band": "high",
-        "signals": ["tenant_scoped_read"],
+        "signals": [
+          "tenant_scoped_read"
+        ],
         "tenantScopedReadSourceCount": 1,
-        "tenantScopedReadSources": ["src/lib/active-client.ts"],
+        "tenantScopedReadSources": [
+          "src/lib/active-client.ts"
+        ],
         "rank": 5
       }
     },
@@ -593,7 +4487,9 @@
       "governedRisk": {
         "score": 10,
         "band": "high",
-        "signals": ["tenant_scoped_read"],
+        "signals": [
+          "tenant_scoped_read"
+        ],
         "tenantScopedReadSourceCount": 2,
         "tenantScopedReadSources": [
           "src/lib/governance/context-bundle-adapters.ts",
@@ -609,7 +4505,9 @@
       "governedRisk": {
         "score": 10,
         "band": "high",
-        "signals": ["tenant_scoped_read"],
+        "signals": [
+          "tenant_scoped_read"
+        ],
         "tenantScopedReadSourceCount": 1,
         "tenantScopedReadSources": [
           "src/lib/source/contract-evidence/read-model.ts"
@@ -624,7 +4522,9 @@
       "governedRisk": {
         "score": 10,
         "band": "high",
-        "signals": ["tenant_scoped_read"],
+        "signals": [
+          "tenant_scoped_read"
+        ],
         "tenantScopedReadSourceCount": 3,
         "tenantScopedReadSources": [
           "src/app/(maestro)/source/new/page.tsx",
@@ -641,7 +4541,9 @@
       "governedRisk": {
         "score": 10,
         "band": "high",
-        "signals": ["tenant_scoped_read"],
+        "signals": [
+          "tenant_scoped_read"
+        ],
         "tenantScopedReadSourceCount": 1,
         "tenantScopedReadSources": [
           "src/lib/data-plane/read-adapters/azurePostgresReadAdapter.ts"
@@ -656,7 +4558,9 @@
       "governedRisk": {
         "score": 10,
         "band": "high",
-        "signals": ["tenant_scoped_read"],
+        "signals": [
+          "tenant_scoped_read"
+        ],
         "tenantScopedReadSourceCount": 2,
         "tenantScopedReadSources": [
           "src/lib/enterprise-context/derived-enterprise-read.ts",
@@ -672,7 +4576,9 @@
       "governedRisk": {
         "score": 10,
         "band": "high",
-        "signals": ["tenant_scoped_read"],
+        "signals": [
+          "tenant_scoped_read"
+        ],
         "tenantScopedReadSourceCount": 1,
         "tenantScopedReadSources": [
           "src/lib/source/contract-intelligence/cloud-adapter.ts"
@@ -687,9 +4593,13 @@
       "governedRisk": {
         "score": 10,
         "band": "high",
-        "signals": ["tenant_scoped_read"],
+        "signals": [
+          "tenant_scoped_read"
+        ],
         "tenantScopedReadSourceCount": 1,
-        "tenantScopedReadSources": ["src/app/api/programs/synthesis/route.ts"],
+        "tenantScopedReadSources": [
+          "src/app/api/programs/synthesis/route.ts"
+        ],
         "rank": 12
       }
     },
@@ -700,9 +4610,13 @@
       "governedRisk": {
         "score": 10,
         "band": "high",
-        "signals": ["tenant_scoped_read"],
+        "signals": [
+          "tenant_scoped_read"
+        ],
         "tenantScopedReadSourceCount": 1,
-        "tenantScopedReadSources": ["src/app/api/source/synthesis/route.ts"],
+        "tenantScopedReadSources": [
+          "src/app/api/source/synthesis/route.ts"
+        ],
         "rank": 13
       }
     },
@@ -713,7 +4627,9 @@
       "governedRisk": {
         "score": 10,
         "band": "high",
-        "signals": ["tenant_scoped_read"],
+        "signals": [
+          "tenant_scoped_read"
+        ],
         "tenantScopedReadSourceCount": 1,
         "tenantScopedReadSources": [
           "src/lib/programs/current-state-readiness.ts"
@@ -728,7 +4644,9 @@
       "governedRisk": {
         "score": 10,
         "band": "high",
-        "signals": ["tenant_scoped_read"],
+        "signals": [
+          "tenant_scoped_read"
+        ],
         "tenantScopedReadSourceCount": 1,
         "tenantScopedReadSources": [
           "src/lib/source/candidate-suppliers/event-candidate-authority-repository.ts"
@@ -743,7 +4661,9 @@
       "governedRisk": {
         "score": 10,
         "band": "high",
-        "signals": ["tenant_scoped_read"],
+        "signals": [
+          "tenant_scoped_read"
+        ],
         "tenantScopedReadSourceCount": 1,
         "tenantScopedReadSources": [
           "src/lib/source/nda/nda-authority-repository.ts"
