@@ -58,6 +58,7 @@ import { readNormalizedVendorResponsePackages } from "@/lib/source/vendor-respon
 import {
   buildVendorBafoInstructionPack,
   buildEvaluationBafoReadinessView,
+  buildStage07BafoRoundConcessionView,
   buildStage07NegotiationBriefCandidate,
   buildVendorChallengeIntelligence,
   compactVendorResponseParseReportsForRoute,
@@ -261,11 +262,21 @@ export default async function SourceEventDetailPage({
           decisionView: vendorEvaluationDecisionView,
         })
       : null;
+    const bafoRoundConcessionView =
+      evaluationBafoReadinessView && activeClient?.key
+        ? buildStage07BafoRoundConcessionView({
+            tenantKey: activeClient.key,
+            sourceEventId: event.id,
+            rounds: [],
+            concessions: [],
+          })
+        : null;
     const negotiationBriefCandidate = evaluationBafoReadinessView
       ? buildStage07NegotiationBriefCandidate({
           readinessView: evaluationBafoReadinessView,
           bafoInstructionPack: vendorBafoInstructionPack,
           decisionView: vendorEvaluationDecisionView,
+          bafoRoundConcessionView,
         })
       : null;
     const vendorResponseParseReports =

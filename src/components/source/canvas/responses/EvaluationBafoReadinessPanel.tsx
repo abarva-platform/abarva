@@ -47,8 +47,25 @@ export function EvaluationBafoReadinessPanel({
 }) {
   if (!view) return null;
   const visibleBlockers = view.blockers.slice(0, 5);
-  const visibleFacts =
-    negotiationBriefCandidate?.acceptedFacts.slice(0, 4) ?? [];
+  const reviewedFacts =
+    negotiationBriefCandidate?.acceptedFacts.filter((fact) => fact.reviewState) ??
+    [];
+  const otherFacts =
+    negotiationBriefCandidate?.acceptedFacts.filter(
+      (fact) => !fact.reviewState,
+    ) ?? [];
+  const concessionFact = reviewedFacts.find(
+    (fact) => fact.category === "bafo_concession",
+  );
+  const visibleReviewedFacts = [
+    ...reviewedFacts.slice(0, 1),
+    ...(concessionFact ? [concessionFact] : reviewedFacts.slice(1, 2)),
+  ].filter(
+    (fact, index, facts) =>
+      facts.findIndex((candidate) => candidate.factId === fact.factId) ===
+      index,
+  );
+  const visibleFacts = [...visibleReviewedFacts, ...otherFacts].slice(0, 4);
   const visibleAsks = negotiationBriefCandidate?.proposedAsks.slice(0, 4) ?? [];
   const visibleRefusals = negotiationBriefCandidate?.refusals.slice(0, 3) ?? [];
 
@@ -274,6 +291,16 @@ export function EvaluationBafoReadinessPanel({
                     <article key={fact.factId} style={BRIEF_ITEM}>
                       <strong>{fact.vendorName}</strong>
                       <span style={ROW_NOTE}>{fact.statement}</span>
+                      {fact.reviewState ? (
+                        <span style={EVIDENCE_NOTE}>
+                          Review state: {fact.reviewState}
+                        </span>
+                      ) : null}
+                      {fact.citation ? (
+                        <span style={EVIDENCE_NOTE}>
+                          Citation: {fact.citation}
+                        </span>
+                      ) : null}
                     </article>
                   ))}
                 </div>

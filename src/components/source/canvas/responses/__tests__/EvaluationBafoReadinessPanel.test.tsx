@@ -2,6 +2,8 @@ import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import {
   buildEvaluationBafoReadinessView,
+  buildScorecardAuthorityView,
+  buildStage07BafoRoundConcessionView,
   buildStage07NegotiationBriefCandidate,
   buildVendorBafoInstructionPack,
   buildVendorChallengeIntelligence,
@@ -35,6 +37,22 @@ describe("EvaluationBafoReadinessPanel", () => {
       readinessView: view,
       bafoInstructionPack: bafoPack,
       decisionView,
+      scorecardAuthorityView: buildReadyScorecardAuthorityView(
+        profileSet?.tenantKey ?? "tenant-a",
+        profileSet?.sourceEventId ?? "event-1",
+        profileSet?.profiles.map((profile) => ({
+          vendorId: profile.vendorId,
+          vendorName: profile.vendorName,
+        })) ?? [],
+      ),
+      bafoRoundConcessionView: buildReadyBafoRoundConcessionView(
+        profileSet?.tenantKey ?? "tenant-a",
+        profileSet?.sourceEventId ?? "event-1",
+        profileSet?.profiles.map((profile) => ({
+          vendorId: profile.vendorId,
+          vendorName: profile.vendorName,
+        })) ?? [],
+      ),
     });
 
     const html = renderToStaticMarkup(
@@ -55,6 +73,8 @@ describe("EvaluationBafoReadinessPanel", () => {
     expect(html).toContain("Negotiation brief candidate");
     expect(html).toContain("Accepted facts");
     expect(html).toContain("Proposed asks");
+    expect(html).toContain("Review state: reviewed");
+    expect(html).toContain("Citation: EVID-BAFO-CONCESSION");
     expect(html).toContain("Vendor A");
     expect(html).toContain("Vendor B");
     expect(html).toContain("Vendor C");
@@ -114,3 +134,89 @@ describe("EvaluationBafoReadinessPanel", () => {
     expect(html).not.toContain("Proposed asks");
   });
 });
+
+function buildReadyScorecardAuthorityView(
+  tenantKey: string,
+  sourceEventId: string,
+  vendors: { vendorId: string; vendorName: string }[],
+) {
+  return buildScorecardAuthorityView({
+    tenantKey,
+    sourceEventId,
+    criteria: [
+      {
+        tenantKey,
+        sourceEventId,
+        criterionId: "transition",
+        criterionVersion: "criteria-v1",
+        label: "Transition certainty",
+        weight: 100,
+        weightsFrozen: true,
+        approvedCriterionVersion: "criteria-v1",
+        approvedBy: "named-procurement-lead",
+        approvedAt: "2026-09-21T18:00:00Z",
+      },
+    ],
+    scores: vendors.map((vendor) => ({
+      tenantKey,
+      sourceEventId,
+      vendorId: vendor.vendorId,
+      vendorName: vendor.vendorName,
+      criterionId: "transition",
+      criterionVersion: "criteria-v1",
+      evaluatorId: "eval-1",
+      evaluatorName: "Named Evaluator",
+      evaluatorScore: 8,
+      evidenceReference: `EVID-SCORE-${vendor.vendorId}`,
+      overrideReason: null,
+      overrideReasonRequired: false,
+      lockState: "locked",
+      lockedBy: "eval-1",
+      lockedAt: "2026-09-21T18:30:00Z",
+    })),
+  });
+}
+
+function buildReadyBafoRoundConcessionView(
+  tenantKey: string,
+  sourceEventId: string,
+  vendors: { vendorId: string; vendorName: string }[],
+) {
+  return buildStage07BafoRoundConcessionView({
+    tenantKey,
+    sourceEventId,
+    rounds: vendors.map((vendor) => ({
+      tenantKey,
+      sourceEventId,
+      roundId: `bafo-round-1-${vendor.vendorId}`,
+      roundVersion: "round-v1",
+      roundLabel: "BAFO Round 1",
+      vendorId: vendor.vendorId,
+      vendorName: vendor.vendorName,
+      submittedAt: "2026-09-21T17:00:00Z",
+      evidenceReference: `EVID-BAFO-ROUND-${vendor.vendorId}`,
+      reviewedBy: "named-commercial-reviewer",
+      reviewedAt: "2026-09-21T18:00:00Z",
+      reviewState: "reviewed",
+    })),
+    concessions: vendors.map((vendor) => ({
+      tenantKey,
+      sourceEventId,
+      concessionId: `concession-${vendor.vendorId}`,
+      concessionVersion: "concession-v1",
+      roundId: `bafo-round-1-${vendor.vendorId}`,
+      roundVersion: "round-v1",
+      vendorId: vendor.vendorId,
+      vendorName: vendor.vendorName,
+      concessionType: "commercial",
+      summary: "Reviewed concession summary; no value claim is created here.",
+      condition: "Condition remains subject to reviewer acceptance.",
+      expiryDate: "2026-10-15",
+      acceptedFlag: null,
+      evidenceReference: `EVID-BAFO-CONCESSION-${vendor.vendorId}`,
+      reviewedBy: "named-commercial-reviewer",
+      reviewedAt: "2026-09-21T18:05:00Z",
+      reviewState: "reviewed",
+    })),
+  });
+}
