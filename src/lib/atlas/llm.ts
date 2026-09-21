@@ -21,6 +21,10 @@ import {
   AI_DECISION_SUPPORT_SYSTEM_PROMPT_BLOCK,
   sanitizeAutonomousDecisionLanguage,
 } from "@/lib/ai-liability/human-decision-controls";
+import {
+  atlasModeLogLevel,
+  buildAtlasModeLogPayload,
+} from '@/lib/atlas/mode-log';
 import type {
   AtlasDebugTrace,
   AtlasExecutionMode,
@@ -141,19 +145,16 @@ function logAtlasMode(args: {
   model: string;
   workflow: string;
 }): void {
-  const payload = {
-    event: "atlas_model_mode",
-    tenantId: args.tenantId,
-    mode: args.mode,
-    reason: args.reason,
-    model: args.model,
-    workflow: args.workflow,
-  };
-  if (args.mode === "fallback") {
-    console.warn("[atlas.mode]", JSON.stringify(payload));
+  // Payload shape and level live in `mode-log.ts` as pure functions so the
+  // contract can be asserted by calling it rather than by grepping this file
+  // (T-462). This logger stays module-private.
+  const payload = buildAtlasModeLogPayload(args);
+  const line = JSON.stringify(payload);
+  if (atlasModeLogLevel(payload.mode) === "warn") {
+    console.warn("[atlas.mode]", line);
     return;
   }
-  console.info("[atlas.mode]", JSON.stringify(payload));
+  console.info("[atlas.mode]", line);
 }
 
 function formatMoney(value: number | null | undefined): string | null {
