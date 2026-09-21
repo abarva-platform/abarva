@@ -382,9 +382,29 @@ jobs:
         run: npx jest src/lib/admin/ai-initiatives --no-coverage --ci
 
       # Eight approval/lifecycle-adjacent suites across six small trees were
-      # measured first. Seven are green and import live code; the lifecycle
-      # operating-system suite is red on an authored-contract expectation and
-      # stays unwired as an exact file-level quarantine.
+      # measured first. Seven were green and import live code; the lifecycle
+      # operating-system suite was red on an authored-contract expectation and
+      # stayed unwired as an exact file-level quarantine.
+      #
+      # That quarantine is lifted here and the suite joins the step. It ranked 7
+      # in the census, band `critical`, the highest-ranked fully unreached
+      # directory in the tree, and it was red for one reason: the case asserted
+      # a `programs:P6` lifecycle contract against a phase-pack registry that
+      # has held six packs since before the suite was written, and whose
+      # `PhaseNumber` type cannot express a seventh. The expectation was
+      # corrected to the six authored phases with that reasoning recorded beside
+      # it. 1 failed / 43 passed before; 44 passed after.
+      #
+      # What the band does NOT mean, stated here so the number is not read as a
+      # guard it is not: the `approval_or_lifecycle_write` signal fires from
+      # `APPROVAL_OR_LIFECYCLE_PATH_RE` matching the word `lifecycle` in the
+      # directory path. No source in the module matches the corresponding
+      # source-level regex, and the module makes no database, network, or async
+      # call at all — it is a pure builder over authored packs. The suite
+      # asserts authored-content shape, never a refused approval or a blocked
+      # transition. Its value is that `buildSourceLifecycleContract` is read on
+      # a live path (`src/app/api/chat/agent/route.ts`); the program half it
+      # also covers has no non-test importer.
       - name: Run small approval and lifecycle suites
         run: >-
           npx jest --runTestsByPath
@@ -395,6 +415,32 @@ jobs:
           src/components/source/approval/__tests__/EventApprovalCard.test.tsx
           src/lib/enterprise-knowledge/narratives/__tests__/knowledge-narrative-store.test.ts
           src/lib/intelligence/insight-engine/rules/__tests__/context-record-rules.test.ts
+          src/lib/lifecycle-operating-system/__tests__/lifecycle-operating-system.test.ts
+          --no-coverage --ci
+
+      # Four Program archetype suites, census rank 13, band `high`, signal
+      # `tenant_scoped_read`, 4 files and 0 covered. All four load, collect and
+      # run; three are green and are owned here. The subjects they exercise have
+      # live non-test importers outside the directory: `registry` 6 (four v1
+      # Programs API routes and two library modules), `resolver` 3,
+      # `method-library` 1, `types` 9 — so this is not coverage of nothing.
+      #
+      # `resolver.test.ts` stays an exact file-level quarantine, and its red is
+      # a real defect rather than a stale assertion: the archetype
+      # `ANALYTICS_CAPABILITY_REPATRIATION` declares two `analysisMethods` keys,
+      # `strategic_control_repatriation_readiness` and
+      # `capability_parity_traceability`, that `ANALYSIS_METHODS` does not
+      # define, so the registry references guidance the method library cannot
+      # resolve. Which side is wrong — author the two methods, or withdraw them
+      # from the archetype — is authored-content authority, so it is filed as
+      # backlog item T-456 rather than guessed at inside a wiring change.
+      # Loaded 4; collected 4; run 4; green 3; newly owned 3.
+      - name: Run the green Program archetype suites
+        run: >-
+          npx jest --runTestsByPath
+          src/lib/programs/archetypes/__tests__/ai-pdlc.test.ts
+          src/lib/programs/archetypes/__tests__/generality.test.ts
+          src/lib/programs/archetypes/__tests__/resolve-program-archetype.test.ts
           --no-coverage --ci
 
       # `src/lib/admin/__tests__` was measured as 33 green files and 5 red
