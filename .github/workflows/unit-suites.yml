@@ -728,5 +728,25 @@ jobs:
           src/lib/source/contract-intelligence/__tests__/education.test.ts
           --no-coverage --ci
 
+      # Eight previously dark suites were measured before wiring: 8 loaded,
+      # 8 collected, 8 run, 6 green. The two stale setup route harnesses were
+      # repaired by mocking tenancy plus the read/write persistence boundary;
+      # the route itself is unchanged. All 8 are now green, and both setup
+      # suites assert refusal before any mocked data call. The attachment
+      # suites cover successful transfer plus unauthenticated and tenant/access
+      # refusal, with object storage and metadata writes mocked. Framework route
+      # entry points have 0 ordinary importers. Contract adapter/projection have
+      # 2 non-test importers each; File Cabinet blob-store/service/repository
+      # have 5/2/11. The File Cabinet tests cover storage, versioning, tenancy,
+      # and row mapping, not rendered identifiers.
+      - name: Run T-451 Source and Programs suites
+        run: >-
+          npx jest
+          src/app/api/programs/__tests__
+          src/app/api/setup/initiatives/__tests__
+          src/lib/source/contract-depth-package/__tests__
+          src/lib/source/file-cabinet/__tests__
+          --no-coverage --ci
+
       - name: Refuse a new dark tree under src/__tests__
         run: npx jest --runTestsByPath src/__tests__/behaviors/unit-directory-ci-coverage.test.ts --no-coverage --ci
