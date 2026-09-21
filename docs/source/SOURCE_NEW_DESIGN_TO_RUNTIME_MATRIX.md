@@ -42,6 +42,30 @@ The phase rail is **not** a tab strip: selecting a phase also resets the view to
 (`SourceNewWorkspace.tsx:285`). The Work view therefore has one subview per phase state, not one per
 phase, which is why rows W1–W4 are states rather than phases.
 
+### Row census
+
+**26 rows.** Stated as a breakdown rather than a bare total so it can be checked against the tables
+below without counting them by hand:
+
+| Section | Rows | Ids |
+|---|---|---|
+| Routes | 3 | `R1`–`R3` |
+| Workspace chrome | 3 | `C1`–`C3` |
+| Work view, one per phase state | 5 | `W1`–`W5` |
+| Work view, conditional stage panels | 4 | `P1`–`P4` |
+| Files view | 5 | `F1`–`F5` |
+| Intelligence view | 3 | `I1`–`I3` |
+| Approvals view | 2 | `A1`, `A2` |
+| Agent dock | 1 | `D1` |
+| **Total** | **26** | — |
+
+**23** of those 26 sit inside the event workspace route `R3`; `R1` and `R2` are the other two
+routes. Where a gap below is quoted as a proportion, it is against 26 unless it names `R3`.
+
+Two rows are worth flagging as not ordinarily reachable, so the denominator is not read as 26
+screens an operator sees: **`F5`** never renders at all (see the negative control), and **`R2`** is
+reached only by query parameter.
+
 ---
 
 ## The matrix
@@ -178,7 +202,7 @@ accessibility check.** It is unverified structure, and is recorded here as such.
 
 The gate asks for real tenant-scoped fixture shapes and for synthetic evidence to be marked in the
 row. Having enumerated the rows, the honest report is that **the marking applies to all of them**,
-so it is stated once here rather than repeated 23 times:
+so it is stated once here rather than repeated 26 times:
 
 > **Every row in this matrix is `synthetic`.** No row's runtime evidence comes from a tenant-scoped
 > fixture shape.
@@ -230,9 +254,9 @@ The other three gaps, restated as rows rather than as harness commentary:
 
 | Gap | Rows affected | Kind |
 |---|---|---|
-| No screenshot harness reaches `/source/new/{eventId}` | R3 and every row inside it — 21 of 23 | Missing harness coverage |
-| No mobile project exists; F4 and D1 have mobile-only behaviour | 23 of 23; F4 and D1 materially | Missing runner configuration |
-| Axe covers two public routes; none is signed in | 23 of 23 | Missing harness capability |
+| No screenshot harness reaches `/source/new/{eventId}` | R3 and all 23 rows inside it — **24 of 26** | Missing harness coverage |
+| No mobile project exists; F4 and D1 have mobile-only behaviour | **26 of 26**; F4 and D1 materially | Missing runner configuration |
+| Axe covers two public routes; none is signed in | **26 of 26** | Missing harness capability |
 
 ---
 

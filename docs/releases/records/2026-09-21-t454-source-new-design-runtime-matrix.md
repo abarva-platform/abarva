@@ -10,8 +10,8 @@
 
 ## Plain-English Summary
 
-Adds one documentation file. It lists every tab and subview of the Source New surface — 23 rows
-across two routes — and, for each one, records seven things the Source quality gate asks for:
+Adds one documentation file. It lists every tab and subview of the Source New surface — 26 rows
+across two routes, 23 of them inside the event workspace — and, for each one, records seven things the Source quality gate asks for:
 what frame it renders in, what read model backs it, what it shows when there is nothing to show or
 the read failed, where its actions go, and whether a desktop screenshot, a mobile screenshot or an
 accessibility check covers it.
@@ -87,6 +87,15 @@ complete.
 | One axe harness, two routes | parse `path:` entries in `tests/accessibility/public-axe.spec.ts` | 1 file, 2 paths (`/`, `/sign-in`) |
 | Files upload has no production caller | `grep -rn "onUpload=" src/` scoped to `SourceNewFiles` | 1 caller — `SourceNewFiles.test.tsx:251` |
 
+**Row-count correction, recorded because it was my own error and the checker did not catch it.**
+The first version of this record, the commit message and the PR body all said "23 rows". The actual
+count is **26**; 23 is the number sitting inside the event workspace route, which is what I had
+conflated. It was found by counting the table rows programmatically rather than by re-reading, and
+it is the second error in this item that a citation checker could not have found — the checker
+verifies that references resolve, not that totals are right. The matrix now carries a per-section
+row census that can be checked against the tables without hand-counting, and the three gap
+proportions were restated against the correct denominator (`24 of 26`, `26 of 26`, `26 of 26`).
+
 **Fixture-scope check.** The three Source New rendering fixtures were cross-checked against
 `CANONICAL_TENANT_KEYS`, which is derived in code from `TENANT_ALIAS_PROFILES`
 (`src/lib/tenant/aliases.ts:153`) rather than from a hand-typed list. 0 of 3 use a canonical key.
@@ -145,7 +154,7 @@ two documentation files and nothing else.
 - **The matrix is a read of source, not of a running product.** Every cell was derived by reading
   code on this commit. Nothing was observed rendering. The signed-in operator journey for Source New
   remains owed.
-- **Three of seven columns are empty for all 23 rows**, for the harness reasons the matrix sets out.
+- **Three of seven columns are empty for all 26 rows**, for the harness reasons the matrix sets out.
   Filling them needs (a) an audited e2e spec that reaches `/source/new/{eventId}`, (b) a mobile
   Playwright project, and (c) an axe harness able to reach a signed-in route. None is in scope here.
 - **The dead Upload affordance is reported, not repaired.** Whether Source New should offer upload
