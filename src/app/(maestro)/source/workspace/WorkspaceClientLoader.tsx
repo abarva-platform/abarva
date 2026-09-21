@@ -25,6 +25,15 @@ interface ImpactResponse {
 type ImpactLoadState = "loading" | "ready" | "error";
 const PORTFOLIO_RETRY_ATTEMPTS = 2;
 const PORTFOLIO_RETRY_DELAY_MS = 800;
+/**
+ * A stalled impact read must become a state the operator can act on.
+ *
+ * The evidence badge has three states and only ever had two exits: `fetch`
+ * carries no timeout, so a request that never settles leaves "Evidence depth
+ * updating" on screen indefinitely, with zero spend, depth and action rows
+ * beneath it. A spinner that cannot time out reports a failure as progress.
+ */
+const IMPACT_TIMEOUT_MS = 20_000;
 
 export function initialPortfolioImpactModeForWorkspaceTab(
   workspaceTab?: string | null,
@@ -88,19 +97,59 @@ async function fetchPortfolio(
   }
 }
 
-async function fetchImpact(url: string): Promise<ImpactResponse> {
-  const response = await fetch(url, {
-    headers: { Accept: "application/json" },
-  });
-  const payload = await response.json().catch(() => null);
-  if (!response.ok || !payload?.impact) {
-    throw new Error(
-      payload?.detail ??
-        payload?.error ??
-        `Source workspace impact returned ${response.status}`,
+/**
+ * The impact read is retried and bounded exactly as the portfolio read is.
+ *
+ * It was neither. `fetchPortfolio` gained retry when transient portfolio reads
+ * were failing; the second read on the same page did not, so a transient fault
+ * that the totals recovered from silently took the whole evidence layer down
+ * with it. That asymmetry is the defect: two reads of the same API, one
+ * resilient and one not, on a surface whose headline numbers therefore load
+ * while its evidence does not.
+ */
+async function fetchImpact(
+  url: string,
+  remaining = PORTFOLIO_RETRY_ATTEMPTS,
+): Promise<ImpactResponse> {
+  try {
+    const response = await fetchWithTimeout(url, IMPACT_TIMEOUT_MS);
+    const payload = await response.json().catch(() => null);
+    if (!response.ok || !payload?.impact) {
+      const error = new Error(
+        payload?.detail ??
+          payload?.error ??
+          `Source workspace impact returned ${response.status}`,
+      ) as Error & { status?: number };
+      error.status = response.status;
+      throw error;
+    }
+    return payload as ImpactResponse;
+  } catch (error) {
+    const status =
+      error && typeof error === "object" && "status" in error
+        ? Number((error as { status?: unknown }).status)
+        : null;
+    const retryable = status == null || status >= 500;
+    if (!retryable || remaining <= 0) throw error;
+    await new Promise((resolve) =>
+      window.setTimeout(resolve, PORTFOLIO_RETRY_DELAY_MS),
     );
+    return fetchImpact(url, remaining - 1);
   }
-  return payload as ImpactResponse;
+}
+
+/** `fetch` with an abort, so a stalled read rejects instead of hanging. */
+async function fetchWithTimeout(url: string, timeoutMs: number) {
+  const controller = new AbortController();
+  const timer = window.setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    return await fetch(url, {
+      headers: { Accept: "application/json" },
+      signal: controller.signal,
+    });
+  } finally {
+    window.clearTimeout(timer);
+  }
 }
 
 export function WorkspaceClientLoader({
@@ -193,6 +242,9 @@ export function WorkspaceClientLoader({
       })
       .catch((err) => {
         if (cancelled) return;
+        // The badge is a separate state machine from `error`, and leaving it
+        // on "loading" here was its third missing exit.
+        setImpactLoadState("error");
         setError(
           err instanceof Error
             ? err.message
