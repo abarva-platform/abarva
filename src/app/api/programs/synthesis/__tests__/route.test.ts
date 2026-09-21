@@ -63,7 +63,28 @@ describe('POST /api/programs/synthesis', () => {
     expect(mockAnthropicStream).not.toHaveBeenCalled();
   });
 
-  it('uses the active Lakeshore Holdings V6 Moves pack instead of defaulting to the Apex CDP fixture', async () => {
+  /**
+   * These two cases expected 200 from a V6 Moves pack and now assert 404,
+   * because the packs they read were retired on purpose.
+   *
+   * `buildV6ProgramInstanceForTenant` resolves a dataset root from
+   * TENANT_DATASET_BY_KEY, whose only two entries are
+   * `skyharbor-air-synthetic-v6` and `lakeshore-holdings-synthetic-v6`.
+   * Neither directory is in the repository: both were deleted by
+   * `4a7ebcd85` — "Establish canonical tenant input standard" (#4767) — which
+   * replaced the synthetic V6 packs with the canonical tenant input standard.
+   *
+   * So the 404 is the route being honest: "No V6 Moves program is loaded for
+   * the active tenant" is exactly true. This is an expectation refresh
+   * against a deliberate product change, NOT a deleted control.
+   *
+   * Recorded so the next reader does not re-derive it: because both dataset
+   * roots are gone, `buildV6ProgramInstanceForTenant` cannot return non-null
+   * for any tenant it knows, and the route's v6Instance branch is currently
+   * unreachable. Whether that branch should be removed is a product decision
+   * and is not taken here.
+   */
+  it('reports no V6 Moves pack for Lakeshore Holdings, whose synthetic pack was retired', async () => {
     mockGetActiveClientRow.mockResolvedValue({
       id: 'client-lakeshore',
       name: 'Lakeshore Holdings',
@@ -79,18 +100,18 @@ describe('POST /api/programs/synthesis', () => {
       }),
     );
 
-    expect(res.status).toBe(200);
-    expect(res.headers.get('x-abarva-v6-surface')).toBe('moves');
-    await expect(res.text()).resolves.toBe('Moves V6 answer.');
-    expect(mockAnthropicStream).toHaveBeenCalledTimes(1);
-    const streamArgs = mockAnthropicStream.mock.calls[0]?.[0];
-    expect(streamArgs.messages[0].content).toContain('Corporate ERP and HCM controls modernization');
-    expect(streamArgs.messages[0].content).toContain('execution-sequence-packet');
-    expect(streamArgs.messages[0].content).not.toContain('APX-CDP-2026');
+    expect(res.status).toBe(404);
+    expect(res.headers.get('x-abarva-moves-layer')).toBe('moves-current');
+    await expect(res.json()).resolves.toEqual({
+      error: 'program_synthesis_not_available',
+      detail: 'No V6 Moves program is loaded for the active tenant.',
+    });
+    // The half that still matters from the original case: a tenant with no
+    // pack of its own must not be served the Apex fixture instead.
+    expect(mockAnthropicStream).not.toHaveBeenCalled();
   });
 
-  it('uses the active Airline Demo V6 Moves pack for airline programs', async () => {
-    mockAnthropicStream.mockReturnValue(claudeTextStream('Airline Moves V6 answer.'));
+  it('reports no V6 Moves pack for the airline tenant, and does not fall back to Apex', async () => {
     mockGetActiveClientRow.mockResolvedValue({
       id: 'client-skyharbor',
       name: 'Airline Demo',
@@ -106,12 +127,13 @@ describe('POST /api/programs/synthesis', () => {
       }),
     );
 
-    expect(res.status).toBe(200);
-    expect(res.headers.get('x-abarva-v6-surface')).toBe('moves');
-    await expect(res.text()).resolves.toBe('Airline Moves V6 answer.');
-    const streamArgs = mockAnthropicStream.mock.calls[0]?.[0];
-    expect(streamArgs.messages[0].content).toContain('OCC Modernization');
-    expect(streamArgs.messages[0].content).toContain('execution-sequence-packet');
+    expect(res.status).toBe(404);
+    expect(res.headers.get('x-abarva-moves-layer')).toBe('moves-current');
+    await expect(res.json()).resolves.toEqual({
+      error: 'program_synthesis_not_available',
+      detail: 'No V6 Moves program is loaded for the active tenant.',
+    });
+    expect(mockAnthropicStream).not.toHaveBeenCalled();
   });
 
   it('blocks explicit Apex program access for a different active tenant', async () => {
@@ -131,7 +153,7 @@ describe('POST /api/programs/synthesis', () => {
     );
 
     expect(res.status).toBe(403);
-    expect(res.headers.get('x-abarva-v6-surface')).toBe('moves');
+    expect(res.headers.get('x-abarva-moves-layer')).toBe('moves-current');
     await expect(res.json()).resolves.toEqual({
       error: 'wrong_client',
       detail: 'Requested Moves program does not belong to the active tenant.',
