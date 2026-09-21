@@ -13,6 +13,7 @@ import { readSourceEventAuthority } from "@/lib/source/new-workspace/event-autho
 import { readSourceAuthorityVersionState } from "@/lib/source/new-workspace/authority-version-store";
 import { evaluateRequestVersionApproval } from "@/lib/source/new-workspace/source-version-authority";
 import { buildSourceNewEventIntelligence } from "@/lib/source/new-workspace/event-intelligence";
+import { buildSourceEventStagePlanSnapshot } from "@/lib/source/new-workspace/stage-plan-snapshot";
 import { readSourceNewStage04VendorPanel } from "@/lib/source/new-workspace/stage04-vendor-panel";
 import { readSourceNewStage05NdaCoverage } from "@/lib/source/new-workspace/stage05-nda-coverage";
 import { buildScorecardAuthorityView } from "@/lib/source/proposal-intelligence";
@@ -44,6 +45,25 @@ export default async function SourceNewEventPage({
     tenancy,
   });
   if (!event) notFound();
+  const stagePlanSnapshot = buildSourceEventStagePlanSnapshot(
+    {
+      id: event.id,
+      client_key: activeClient.key,
+      current_stage_key: event.currentStageKey,
+      lifecycle_state: event.status,
+      sourcing_motion: event.sourcingMotion ?? null,
+      event_type: event.eventType ?? event.archetype ?? null,
+      classified_category: event.classifiedCategory ?? null,
+      event_name: event.name,
+      event_code: event.code,
+      trigger_description: event.triggerDescription ?? null,
+    },
+    activeClient.key,
+  );
+  const projectedCurrentStage =
+    stagePlanSnapshot.kind === "available"
+      ? stagePlanSnapshot.snapshot.currentStageKey
+      : event.currentStageKey;
 
   const asOfDate = event.valueLedger.updatedAt.slice(0, 10);
   const [
@@ -153,7 +173,7 @@ export default async function SourceNewEventPage({
       clientKey: activeClient.key,
       eventType: event.eventType ?? event.archetype ?? null,
       category: event.classifiedCategory ?? null,
-      currentStage: event.currentStageKey,
+      currentStage: projectedCurrentStage,
     },
     artifacts: artifacts.map((artifact) => ({
       id: artifact.id,
@@ -190,7 +210,7 @@ export default async function SourceNewEventPage({
         clientKey: activeClient.key,
         eventType: event.eventType ?? event.archetype,
         category: event.classifiedCategory ?? null,
-        currentStage: event.currentStageKey,
+        currentStage: projectedCurrentStage,
         lifecycle: event.status,
         trigger: event.triggerDescription ?? null,
         scope: event.scopeDescription ?? null,
