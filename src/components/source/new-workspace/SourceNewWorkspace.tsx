@@ -387,7 +387,9 @@ export function SourceNewWorkspace({
                     />
                   )}
                   {phase === "suppliers" && (
-                    <SourceNewStage04VendorPanelView panel={stage04VendorPanel} />
+                    <SourceNewStage04VendorPanelView
+                      panel={stage04VendorPanel}
+                    />
                   )}
                   {phase === "suppliers" && (
                     <SourceNewStage05NdaReadiness
@@ -420,7 +422,9 @@ export function SourceNewWorkspace({
                     />
                   )}
                   {phase === "suppliers" && (
-                    <SourceNewStage04VendorPanelView panel={stage04VendorPanel} />
+                    <SourceNewStage04VendorPanelView
+                      panel={stage04VendorPanel}
+                    />
                   )}
                   {phase === "suppliers" && (
                     <SourceNewStage05NdaReadiness
@@ -649,7 +653,6 @@ function SourceNewStage04VendorReadiness({
   );
 }
 
-
 function SourceNewStage04VendorPanelView({
   panel,
 }: {
@@ -855,17 +858,16 @@ function SourceNewStage07ScorecardAuthority({
       <h3>Frozen evaluator scorecard</h3>
       <p>
         This read-only check summarizes whether scorecard authority is ready for
-        ranking, advancement and BAFO readiness review. It does not rank
-        vendors, send BAFOs, approve an award or turn an AI suggestion into a
-        final score.
+        governed reviewer inspection. It does not rank vendors, send BAFOs,
+        approve an award or turn an AI suggestion into a final score.
       </p>
       <dl className="snw-facts">
         <div>
           <dt>Readiness posture</dt>
           <dd>
             {authority.state === "ready"
-              ? "Ready for governed scorecard review"
-              : "Blocked before ranking"}
+              ? "Ready for governed scorecard inspection"
+              : "Blocked before scorecard inspection"}
           </dd>
         </div>
         <div>
@@ -881,7 +883,7 @@ function SourceNewStage07ScorecardAuthority({
           <dd>
             {lockedScoreCount > 0
               ? `${lockedScoreCount} score${lockedScoreCount === 1 ? "" : "s"}`
-              : "None ready for ranking"}
+              : "None ready for inspection"}
           </dd>
         </div>
       </dl>
@@ -944,14 +946,13 @@ function SourceNewStage07ScorecardAuthority({
       </div>
       {authority.vendorRows.length > 0 && (
         <div className="snw-nda-next">
-          <strong>Locked score totals</strong>
+          <strong>Score authority completeness</strong>
           <ul>
             {authority.vendorRows.map((row) => (
               <li key={row.vendorId}>
-                {row.vendorName}:{" "}
-                {row.weightedScore === null
-                  ? "No weighted total"
-                  : `${row.weightedScore}/10`}
+                {row.vendorName}: {row.lockedScoreCount}/
+                {row.requiredScoreCount} locked; completeness{" "}
+                {row.completenessState}; conflicts {row.conflictState}
               </li>
             ))}
           </ul>

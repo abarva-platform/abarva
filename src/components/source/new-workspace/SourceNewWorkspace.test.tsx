@@ -192,7 +192,9 @@ describe("SourceNewWorkspace", () => {
     const authority = screen.getByRole("region", {
       name: "Stage 07 scorecard authority",
     });
-    expect(within(authority).getByText("Blocked before ranking")).toBeTruthy();
+    expect(
+      within(authority).getByText("Blocked before scorecard inspection"),
+    ).toBeTruthy();
     expect(
       within(authority).getByText(
         "No tenant-scoped scorecard authority is loaded for this event.",
@@ -262,7 +264,9 @@ describe("SourceNewWorkspace", () => {
     const panel = screen.getByRole("region", {
       name: "Stage 07 scorecard authority",
     });
-    expect(within(panel).getByText("Blocked before ranking")).toBeTruthy();
+    expect(
+      within(panel).getByText("Blocked before scorecard inspection"),
+    ).toBeTruthy();
     expect(
       within(panel).getByText(
         "No tenant-scoped scorecard authority is loaded for this event.",
@@ -908,7 +912,9 @@ describe("SourceNewWorkspace", () => {
     ).getAllByRole("button");
     fireEvent.click(buttons[2]);
 
-    const region = screen.getByRole("region", { name: "Stage 04 vendor panel" });
+    const region = screen.getByRole("region", {
+      name: "Stage 04 vendor panel",
+    });
     expect(within(region).getByText("Incumbent Supplier LLC")).toBeTruthy();
     expect(within(region).getByText("New Supplier LLC")).toBeTruthy();
 
@@ -918,18 +924,18 @@ describe("SourceNewWorkspace", () => {
     const rowText = within(region)
       .getAllByRole("listitem")
       .map((li) => li.textContent ?? "");
-    expect(
-      rowText.find((t) => t.includes("Incumbent Supplier LLC")),
-    ).toContain("already under contract");
+    expect(rowText.find((t) => t.includes("Incumbent Supplier LLC"))).toContain(
+      "already under contract",
+    );
     expect(rowText.find((t) => t.includes("New Supplier LLC"))).toContain(
       "not under contract",
     );
 
     // Who accepted it, on the screen and not only in the data. A panel row
     // without its provenance is an assertion the reader cannot check.
-    expect(
-      rowText.find((t) => t.includes("Incumbent Supplier LLC")),
-    ).toContain("Accepted by A. Buyer");
+    expect(rowText.find((t) => t.includes("Incumbent Supplier LLC"))).toContain(
+      "Accepted by A. Buyer",
+    );
 
     // What the panel does not know, on the surface rather than buried.
     expect(
@@ -938,8 +944,12 @@ describe("SourceNewWorkspace", () => {
     ).toBeGreaterThan(0);
 
     // No send, contact or select affordance reaches the reader.
-    expect(within(region).queryByRole("button", { name: /send|contact|select/i })).toBeNull();
-    expect(within(region).queryByRole("link", { name: /send|contact|select/i })).toBeNull();
+    expect(
+      within(region).queryByRole("button", { name: /send|contact|select/i }),
+    ).toBeNull();
+    expect(
+      within(region).queryByRole("link", { name: /send|contact|select/i }),
+    ).toBeNull();
   });
 
   it("shows the stage 04 blocker instead of a panel when a read failed", () => {
@@ -973,7 +983,9 @@ describe("SourceNewWorkspace", () => {
     ).getAllByRole("button");
     fireEvent.click(buttons[2]);
 
-    const region = screen.getByRole("region", { name: "Stage 04 vendor panel" });
+    const region = screen.getByRole("region", {
+      name: "Stage 04 vendor panel",
+    });
     expect(within(region).getByText("Panel withheld")).toBeTruthy();
     expect(
       within(region).getByText(/cannot be told from a new candidate/),
@@ -1344,7 +1356,9 @@ describe("SourceNewWorkspace", () => {
       ),
     ).toBeTruthy();
     expect(screen.getByRole("button", { name: "Current work" })).toBeTruthy();
-    expect(screen.queryByRole("link", { name: /approve|continue|advance/i })).toBeNull();
+    expect(
+      screen.queryByRole("link", { name: /approve|continue|advance/i }),
+    ).toBeNull();
 
     fireEvent.click(phases[3]);
     expect(
@@ -1353,7 +1367,9 @@ describe("SourceNewWorkspace", () => {
       ),
     ).toBeTruthy();
     expect(screen.getByRole("button", { name: "Current work" })).toBeTruthy();
-    expect(screen.queryByRole("link", { name: /approve|continue|advance/i })).toBeNull();
+    expect(
+      screen.queryByRole("link", { name: /approve|continue|advance/i }),
+    ).toBeNull();
   });
 
   /**
