@@ -1,0 +1,179 @@
+# 2026-09-21-give-the-evidence-read-the-resilience-the-totals-already-had
+
+## Release ID
+
+`2026-09-21-give-the-evidence-read-the-resilience-the-totals-already-had`
+
+## Status
+
+`candidate`
+
+## Plain-English Summary
+
+The Source workspace makes **two reads of the same API**: the portfolio totals,
+and the impact payload behind the evidence, depth and action rows. A fix for
+transient portfolio failures gave the first read retry. **The second read never
+got it**, and carried no timeout either.
+
+So a transient fault the totals recovered from took the whole evidence layer
+down with it, and a stalled read left "Evidence depth updating" on screen
+indefinitely with zero rows beneath it. That is the reported signed-in symptom:
+totals present, evidence never arriving.
+
+| | before | after |
+|---|---|---|
+| Portfolio read retries a 5xx | yes | yes |
+| **Impact read retries a 5xx** | **no** | **yes** |
+| Impact read bounded by a timeout | **no** | yes, 20s with abort |
+| Badge state after a portfolio failure | **stays `loading`** | terminal |
+
+## The badge had three states and two exits
+
+`ImpactLoadState` is `loading | ready | error`, and nothing could move it out of
+`loading` except the impact promise settling. Two paths left it stuck:
+
+1. **A stalled read.** `fetch` carries no timeout, so a request that never
+   settles never resolves and never rejects. The badge spins forever.
+2. **A failed portfolio read.** The outer `.catch` set `error` but never gave
+   the badge a terminal value — a third missing exit, latent because the error
+   page currently short-circuits the render.
+
+A spinner that cannot time out reports a failure as progress. That is why this
+was not noticed earlier: the surface had no way to say the evidence read had
+failed.
+
+## What this does and does not do
+
+**It does not restore the data.** If the impact query is genuinely slow or
+failing upstream, this change makes that visible and retryable rather than
+hiding it behind a spinner. The badge will say "Evidence depth retry needed"
+instead of "updating", and the read will have retried twice before saying so.
+
+**It is not signed-in proof.** The symptom was observed in the live signed-in
+environment; this is a code-level fix with component-level tests. Whether the
+live surface now populates has to be confirmed in that environment by someone
+who can sign in, and is not claimed here.
+
+
+## The suite was dark, and the census said so
+
+CI's behaviour-coverage gate failed this PR on `census --check`: adding a test
+file created a new test directory that **no workflow ran**, so the coverage
+shape changed and the committed census had not been refreshed. The gate was
+right — a suite proving a live surface fails closed would itself have run
+nowhere.
+
+It was found by `--explain`, the flag added earlier today for exactly this: it
+named `workspace-impact-read-resilience.test.tsx` as unrun before it was wired.
+
+The directory is now wired by exact file path and is green on arrival (3 of 3).
+
+### Census delta, attributed
+
+| | before | after | whose |
+|---|---|---|---|
+| Test files under `src/` | 2353 | 2357 | **+1 mine**, +3 drift |
+| Covered | 1801 | 1806 | **+1 mine**, +4 drift |
+| Unrun | 552 | 551 | **0 mine**, −1 drift |
+
+This change is net-zero on unrun: it adds one test file and covers that same
+file. The remaining movement is the committed census having fallen behind
+merges on `main`, absorbed by this regeneration rather than caused by it. Set
+diff is empty in both directions — no directory left or joined the uncovered
+set.
+
+**That drift is worth noting on its own:** the committed census is the input to
+which directory gets wired next, so a stale one mis-ranks that queue, and
+nothing fails when it goes stale.
+
+## Layer Impact
+
+- `global-control-lane`. One client component and one new suite. No tenant
+  data, schema, projection, migration, flag, or server behaviour: the change is
+  entirely in how a browser read is retried and bounded.
+
+## Client Applicability
+
+- All clients: no · Specific clients: none · Internal only: no — this is a
+  product surface, but the change is failure handling, not content
+- Public/demo only: no · Feature flag: none
+
+## Changes Included
+
+- `src/app/(maestro)/source/workspace/WorkspaceClientLoader.tsx` — impact read
+  gains the portfolio read's retry, an abort-backed timeout, and a terminal
+  badge state on portfolio failure.
+- `src/app/(maestro)/source/workspace/__tests__/workspace-impact-read-resilience.test.tsx`
+  — 3 cases.
+- `.github/workflows/unit-suites.yml` — one step, so the suite above runs.
+- `docs/architecture/test-ci-coverage-census.json` — regenerated.
+
+## QA / Validation
+
+Measured on base `362b249e2`.
+
+| What | Result |
+|---|---|
+| New suite | **3 passed** |
+| Workspace suites (37) | 301 passed, 5 failed |
+| The same 5 failures on unmodified `origin/main` | **identical — pre-existing** |
+| `tsc` (exit code) | 0 |
+| `eslint` | clean |
+| `release-check` | passed |
+
+The two red suites — `WorkspaceExecutiveShell.performance` and
+`WorkspaceClient.ecl-browser` — were measured on the unmodified base and fail
+the same way there: 5 failed / 56 passed in both runs. They are left red and
+untouched.
+
+### Mutation results
+
+| Mutation | Result |
+|---|---|
+| timeout's `controller.abort()` removed | **1 case fails** — the stalled read sits in `loading` |
+| impact retry removed | **1 case fails** — a 503 is no longer survived |
+
+The retry case also asserts the call count, so a version that reached `ready`
+on the first attempt could not pass it.
+
+## Rollout Plan
+
+Merge to `main`. No image build, migration, flag, or data change. The next
+signed-in pass on the workspace will show either populated evidence or an
+explicit "retry needed" — both are better than the current silent spinner.
+
+## Deployment Authority
+
+- Repo-owned deploy workflow: not exercised beyond the ordinary main deploy
+- Shared runtime mutators: none · Approved image digest: not applicable
+- ACA runtime invariant: not applicable · Worker image invariant: not applicable
+- Feature/env flag update path: none
+- **Live signed-in proof required: yes**, and it is owed. See above.
+
+## Rollback Plan
+
+Revert the PR. The impact read returns to one unbounded attempt and the badge
+to a state machine with an unreachable exit.
+
+## Audit Evidence
+
+- The two fetch helpers side by side, showing retry on one and not the other.
+- Baseline comparison of the two red suites with and without the change.
+- Both mutation results.
+
+## Known Gaps
+
+- **The underlying slowness or failure is not diagnosed.** This change surfaces
+  it; it does not explain it. If "retry needed" appears in the signed-in
+  environment, the impact endpoint itself is the next thing to look at.
+- **The timeout is now measured, and the merge order mattered.** When this was
+  written no latency figure was available and 20s was a guess. It is not a
+  guess any more: `#8173` (Reduce Source action candidate read latency) took the
+  signed-in load from **~54s to ~6.5s**, so 20s is roughly three times the
+  observed load.
+
+  **Had this merged before `#8173`, it would have caused a regression** — a 20s
+  abort against a 54s load turns a slow-but-working surface into "retry
+  needed". It is safe only because the latency fix landed first. A timeout
+  chosen without a latency distribution is a hazard, and this one was.
+- **Two workspace suites remain red** and were red before this change.
