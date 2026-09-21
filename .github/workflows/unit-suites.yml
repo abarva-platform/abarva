@@ -831,5 +831,28 @@ jobs:
           src/lib/source/new-workspace/event-intelligence.test.ts
           --no-coverage --ci
 
+      # The governed Tower answer contract. Measured on origin/main at
+      # 7d19b27ef: 2 collected, 2 FAILED — and not because the routing control
+      # regressed. The suite mocked `@/lib/cio-tower/answer`, which the
+      # orchestrator has not imported since it moved to
+      # `answerCurrentTowerQuestion` in `@/lib/tower/current-layer-answer`
+      # (orchestrator.ts:44, :289). The mock intercepted nothing, so the real
+      # contract ran and tried to open a Postgres session. It failed here only
+      # because no DATABASE_URL is set; anywhere one is, it would have
+      # performed live tenant reads. Repaired against the boundary the
+      # orchestrator actually resolves, so no tenant read is reachable.
+      # Mutation-proved, comment decoy included: deleting the governed branch
+      # fails 3 of 4, routing everything to it fails the negative control,
+      # dropping `answer_current_tower_question` from toolsUsed and leaving the
+      # name in a COMMENT fails 2 of 4, and bypassing canonicalization fails 3
+      # of 4. The rest of src/lib/atlas/__tests__ stays dark on purpose: two of
+      # those suites assert by reading source as text, and a green text-matcher
+      # is worse than a red one. Exact file named for that reason.
+      - name: Run the governed Tower answer contract suite
+        run: >-
+          npx jest --runTestsByPath
+          src/lib/atlas/__tests__/orchestrator-governed-tower.test.ts
+          --no-coverage --ci
+
       - name: Refuse a new dark tree under src/__tests__
         run: npx jest --runTestsByPath src/__tests__/behaviors/unit-directory-ci-coverage.test.ts --no-coverage --ci
