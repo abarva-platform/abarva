@@ -395,6 +395,27 @@ export function SourceNewWorkspace({
                     {PREVIEW_UNMET_CONDITIONS[phase]}
                   </p>
                 </>
+              ) : stateOf(phase) === "historical_gap" ? (
+                <>
+                  <h2>Governed history is missing for this phase</h2>
+                  <p className="snw-lede">
+                    The completed event has no governed evidence recorded for
+                    this phase. Record the missing evidence or a named waiver
+                    before treating this history as complete.
+                  </p>
+                  <p className="snw-note">{completedNote}</p>
+                  {phase === "suppliers" && (
+                    <SourceNewStage04VendorPanelView
+                      panel={stage04VendorPanel}
+                    />
+                  )}
+                  {phase === "suppliers" && (
+                    <SourceNewStage05NdaReadiness
+                      coverage={stage05NdaCoverage}
+                      eventHref={eventHref}
+                    />
+                  )}
+                </>
               ) : stateOf(phase) === "no_record" ? (
                 <>
                   <h2>Nothing is recorded in this phase</h2>
