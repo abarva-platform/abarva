@@ -56,6 +56,9 @@ describe("Source contract depth package loader", () => {
     expect(loader.replace(/\s+/g, " ")).toContain(
       'stringValue(row, "recommended_action") || stringValue(row, "next_action")',
     );
+    expect(loader.replace(/\s+/g, " ")).toContain(
+      'vendor_concession: stringValue(opportunity, "vendor_concession") || stringValue(opportunity, "vendor_give")',
+    );
   });
 
   it("preserves explicit SLA credit and change-order fields before legacy fallbacks", () => {

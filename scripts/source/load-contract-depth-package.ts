@@ -2486,7 +2486,9 @@ async function upsertOptimizationSpine(
             opportunity,
             "negotiation_language",
           ),
-          vendor_concession: stringValue(opportunity, "vendor_give"),
+          vendor_concession:
+            stringValue(opportunity, "vendor_concession") ||
+            stringValue(opportunity, "vendor_give"),
           timing_dependency: stringValue(opportunity, "timing_dependency"),
           owner_role: stringValue(opportunity, "owner_role"),
           priority: stringValue(opportunity, "priority"),
