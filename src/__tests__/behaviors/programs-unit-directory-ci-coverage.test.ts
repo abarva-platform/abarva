@@ -118,8 +118,13 @@ const WIRED_DIRECTORIES = [
  * number against "directories now fully wired" would be off by this row.
  * Finishing it means repairing the red, not renaming it; that repair is
  * backlog item T-456.
+ *
+ * 21 → 20 on 21 Sep for T-516 wiring
+ * `src/lib/programs/queries.azure-read.test.ts` by exact file path. The
+ * directory has one test file, so the count moved by one and no sibling was
+ * adopted.
  */
-const DARK_DIRECTORY_COUNT = 21;
+const DARK_DIRECTORY_COUNT = 20;
 
 type Census = {
   counts: { indeterminateInvocations: number };
@@ -211,12 +216,12 @@ describe("the Programs unit suite directory a workflow actually reaches", () => 
   it.each(WIRED_DIRECTORIES)(
     "names $directory literally in a jest command, so the CI-visibility gate can see it too",
     ({ directory }) => {
-    // The runner and the gate do not share a matching rule. Jest takes a path
-    // argument as a regex; the visibility gate registers a suite by its exact
-    // path or by an ancestor DIRECTORY it can see named. A command that reached
-    // these suites some other way — a glob, a wrapper script, a changed-files
-    // list — would run them and still leave every one of them reported as
-    // having no CI owner.
+      // The runner and the gate do not share a matching rule. Jest takes a path
+      // argument as a regex; the visibility gate registers a suite by its exact
+      // path or by an ancestor DIRECTORY it can see named. A command that reached
+      // these suites some other way — a glob, a wrapper script, a changed-files
+      // list — would run them and still leave every one of them reported as
+      // having no CI owner.
       const commands = expandedWorkflowCommands().filter((command) =>
         /\b(?:npx\s+)?(?:jest|vitest|playwright)\b/.test(command),
       );

@@ -60,7 +60,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v6
         with:
-          node-version: '24'
+          node-version: "24"
           cache: npm
 
       - name: Install dependencies
@@ -933,6 +933,27 @@ jobs:
           src/lib/atlas/__tests__/tower-budget-rollup-resolution.test.ts
           src/lib/atlas/__tests__/tower-factual-spine.test.ts
           src/lib/atlas/llm-determinism.test.ts
+          --no-coverage --ci
+
+      # T-516. Eleven suites were green when executed directly but were still
+      # named by no workflow. They are wired as exact files, not as directories:
+      # these directories were the measured green set, and several paths contain
+      # bracketed route segments that Jest would read as regex character
+      # classes without --runTestsByPath.
+      - name: Run the T-516 exact green suite set
+        run: >-
+          npx jest --runTestsByPath
+          src/app/api/knowledge/consumption/__tests__/_shared.test.ts
+          "src/app/api/setup/files/[scope]/[artifactId]/download/__tests__/route.test.ts"
+          "src/app/api/source/optimize/contract/[contractId]/workflow/__tests__/route.test.ts"
+          "src/app/api/source/workspace/contract/[contractId]/__tests__/route.test.ts"
+          "src/app/api/source/workspace/contract/[contractId]/optimization/__tests__/route.test.ts"
+          src/app/api/source/workspace/portfolio/__tests__/route.test.ts
+          src/app/api/webhooks/clerk/__tests__/route-w4-pr3-emit.test.ts
+          src/app/programs/expert-kernel/expert-review/export/__tests__/route.test.ts
+          src/lib/enterprise-data/source-adapters/__tests__/mapping-profiles.test.ts
+          src/lib/programs/queries.azure-read.test.ts
+          src/lib/source/stage-guidebooks/__tests__/repository.test.ts
           --no-coverage --ci
 
       - name: Refuse a new dark tree under src/__tests__
