@@ -323,4 +323,107 @@ describe("SourceNewFiles", () => {
     fireEvent.keyDown(row, { key: " " });
     expect(container.querySelector(".source-new-files")?.getAttribute("data-mobile-detail")).toBe("true");
   });
+
+  // The market-package folder holds artifacts whose recorded type still
+  // carries the reused solicitation key (`rfp_package` is a real artifact
+  // type in the file cabinet, and `sourceNewFilePhase` files it here). That
+  // key does not record whether the event is an RFI or an RFP, so printing it
+  // raw invents an authority the column does not carry — the same defect the
+  // phase rail and the folder rail were already corrected for.
+  const marketPackageFile: SourceNewFileRow = {
+    ...base,
+    id: "market-package",
+    phase: "rfi",
+    artifactGroup: "generated",
+    artifactType: "rfp_package",
+    artifactFamily: "solicitation",
+    title: "Sourcing package draft",
+    fileName: "sourcing-package-draft.pdf",
+    version: 1,
+    lifecycleState: "current",
+    status: "approved",
+  };
+
+  function openMarketPackageDetail(folderLabel: string) {
+    const folders = screen.getByRole("navigation", { name: "File folders" });
+    fireEvent.click(within(folders).getByRole("button", { name: folderLabel }));
+    const list = screen.getByRole("listbox", { name: "Files in folder" });
+    fireEvent.click(
+      within(list).getByRole("option", { name: /Sourcing package draft/ }),
+    );
+    return screen.getByRole("complementary", { name: "Selected file details" });
+  }
+
+  it("states the accepted RFI motion on a market-package artifact instead of its reused RFP key", () => {
+    render(<SourceNewFiles rows={[marketPackageFile]} marketPackageLabel="RFI" />);
+
+    const detail = openMarketPackageDetail("RFI");
+    expect(within(detail).getByText("RFI package")).toBeTruthy();
+    expect(within(detail).queryByText(/rfp/i)).toBeNull();
+  });
+
+  it("states the accepted RFP motion on the same artifact rather than inferring it from the key", () => {
+    render(<SourceNewFiles rows={[marketPackageFile]} marketPackageLabel="RFP" />);
+
+    const detail = openMarketPackageDetail("RFP");
+    expect(within(detail).getByText("RFP package")).toBeTruthy();
+    expect(within(detail).queryByText(/rfi/i)).toBeNull();
+  });
+
+  it("keeps a market-package artifact neutral while no motion is accepted", () => {
+    render(<SourceNewFiles rows={[marketPackageFile]} />);
+
+    const detail = openMarketPackageDetail("Market package");
+    expect(within(detail).getByText("Market package")).toBeTruthy();
+    expect(within(detail).queryByText(/rfi/i)).toBeNull();
+    expect(within(detail).queryByText(/rfp/i)).toBeNull();
+  });
+
+  // Artifact types are free text and the legacy `rfp_rfi_package` stage key is
+  // still live in `phase-state.ts`, so an artifact named after it carries two
+  // solicitation tokens, not one. Neither may reach the operator.
+  it("withholds every solicitation token, not just the first", () => {
+    render(
+      <SourceNewFiles
+        rows={[{ ...marketPackageFile, artifactType: "rfp_rfi_package" }]}
+        marketPackageLabel="RFI"
+      />,
+    );
+
+    const detail = openMarketPackageDetail("RFI");
+    expect(within(detail).getByText("RFI package")).toBeTruthy();
+    expect(within(detail).queryByText(/rfp/i)).toBeNull();
+  });
+
+  // The rule is keyed on the solicitation token, not on the folder. A package
+  // copy filed against a later stage lands in "Other stages", where the folder
+  // label carries no motion at all — and that is exactly where a raw `rfp_`
+  // key would go unnoticed.
+  it("withholds a solicitation key from an artifact filed outside the market-package folder", () => {
+    render(
+      <SourceNewFiles
+        rows={[{ ...marketPackageFile, id: "late-copy", phase: "other" }]}
+        initialPhase="other"
+        marketPackageLabel="RFI"
+      />,
+    );
+
+    const detail = screen.getByRole("complementary", {
+      name: "Selected file details",
+    });
+    expect(within(detail).getByText("RFI package")).toBeTruthy();
+    expect(within(detail).queryByText(/rfp/i)).toBeNull();
+  });
+
+  // An artifact that never carried a solicitation key keeps the type recorded
+  // against it. Withholding an unrecorded motion is the point; rewording a
+  // recorded fact is not.
+  it("leaves an artifact that carries no solicitation key on its recorded type", () => {
+    render(<SourceNewFiles rows={[base]} initialPhase="define" marketPackageLabel="RFI" />);
+
+    const detail = screen.getByRole("complementary", {
+      name: "Selected file details",
+    });
+    expect(within(detail).getByText("strategy brief")).toBeTruthy();
+  });
 });

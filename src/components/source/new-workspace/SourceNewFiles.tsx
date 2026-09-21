@@ -87,6 +87,38 @@ const PHASES: readonly { key: SourceNewFilePhase; label: string }[] = [
 
 const label = (value: string) => value.replaceAll("_", " ");
 
+/**
+ * The type shown for an artifact whose recorded type still carries a reused
+ * solicitation key.
+ *
+ * `rfp_package` and its siblings are stage vocabulary, not motion authority:
+ * the column records which part of the event an artifact belongs to, never
+ * whether that event is an RFI or an RFP. Printing the key raw names a motion
+ * nobody accepted — the same defect the phase rail and the folder rail were
+ * already corrected for, one panel further in. So leading solicitation tokens
+ * are replaced by the motion the event actually accepted, and by neutral
+ * wording when none has been.
+ *
+ * Keyed on the solicitation token rather than on the folder. An artifact that
+ * carries the key is the one that can misname the motion, wherever it is
+ * filed; one that does not keeps the type recorded against it, because
+ * withholding an unrecorded motion is the point and rewording a recorded fact
+ * is not.
+ */
+function artifactTypeLabel(artifactType: string, marketPackageLabel: string): string {
+  const tokens = artifactType.trim().toLowerCase().split("_").filter(Boolean);
+  let index = 0;
+  while (tokens[index] === "rfp" || tokens[index] === "rfi") index += 1;
+  if (index === 0) return label(artifactType);
+  const motion =
+    marketPackageLabel === "RFI" || marketPackageLabel === "RFP"
+      ? marketPackageLabel
+      : null;
+  const rest = tokens.slice(index).join(" ");
+  if (!rest) return motion ?? "Market package";
+  return `${motion ?? "Market"} ${rest}`;
+}
+
 function displayRows(
   rows: readonly SourceNewFileRow[],
   includeHistory: boolean,
@@ -425,7 +457,7 @@ export function SourceNewFiles({
                           : ""}
                       </DetailRow>
                       <DetailRow term="Type">
-                        {label(selected.artifactType)}
+                        {artifactTypeLabel(selected.artifactType, marketPackageLabel)}
                       </DetailRow>
                       <DetailRow term="Group">
                         {label(selected.artifactGroup)}

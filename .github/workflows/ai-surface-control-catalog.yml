@@ -332,6 +332,14 @@ jobs:
       - name: Exercise the Source New workspace, including the decision trail
         run: npx jest --runTestsByPath src/components/source/new-workspace/SourceNewWorkspace.test.tsx --runInBand
 
+      # The file cabinet is where the workspace's motion labels are actually
+      # read: the folder rail carries the accepted motion, and the artifact
+      # opened inside it carries a reused stage key that must not contradict
+      # it. The suite existed and no workflow named it, so the rule that keeps
+      # an RFI event from printing RFP on its own package ran nowhere.
+      - name: Exercise the Source New file cabinet, including solicitation labels
+        run: npx jest --runTestsByPath src/components/source/new-workspace/SourceNewFiles.test.tsx --runInBand
+
       # The Source stage gate decides whether an event may move past a stage
       # whose criteria are still open. It ran in no workflow, so the branch
       # that treated a criterion the canonical catalog cannot resolve as
