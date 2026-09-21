@@ -41,10 +41,11 @@ describe("DESROUTE4 source route shell enforcement (analytics shell)", () => {
     expect(source).toContain("SourceAnalyticsCanvas");
   });
 
-  it("labels the event return link for its real Source 360 destination", () => {
+  it("returns governed events to the Source New event workspace", () => {
     const source = read(sourceAnalyticsCanvas);
-    expect(source).toContain('href="/source"');
-    expect(source).toContain("← Source 360");
+    expect(source).toContain('href="/source/new"');
+    expect(source).toContain("← Source New");
+    expect(source).not.toContain("← Source 360");
     expect(source).not.toContain("← All Source events");
   });
 
