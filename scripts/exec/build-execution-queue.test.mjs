@@ -871,5 +871,160 @@ function twoLineClaimFixture(id, firstLine, secondLine) {
   );
 }
 
+
+/* ------------------------------------------------------------------------ */
+/* 20. THE RELEASE VERDICT BELONGS TO THE ID IT SITS NEXT TO — item T-545.  */
+/*                                                                          */
+/*     The defect: the verdict was `/\bRELEASED\b/.test(line)` over the     */
+/*     WHOLE line, and the id was matched separately, so the two were never */
+/*     related to each other. A line claiming item A while narrating that   */
+/*     item B's files were released read as a release of A, and the queue   */
+/*     then offered actively-held work as free — an invitation straight     */
+/*     into a collision.                                                    */
+/*                                                                          */
+/*     Measured on the live register at 2026-09-21T21:05Z: 107 lines parse  */
+/*     as a release under the whole-line rule. On 100 of them the token is  */
+/*     within 40 characters of the id reference and the furthest genuine    */
+/*     one is 54; the five false ones sit 251, 457, 631, 793 and 908        */
+/*     characters away. The band between 54 and 251 is empty, so the reach  */
+/*     below is measured rather than guessed, and it errs toward `held`,    */
+/*     which hides work, rather than toward `released`, which collides.     */
+/* ------------------------------------------------------------------------ */
+
+/** One claim line for one id, and the rendered queue it produces. */
+function oneLineClaimFixture(id, line) {
+  const dir = freshFixture();
+  addBacklogItem(dir, id);
+  mapFixtureId(dir, id);
+  fs.appendFileSync(path.join(dir, "EXECUTION_CLAIMS.md"), `\n${line}\n`);
+  const q = buildBoardAndQueue(dir);
+  const rendered = fs.readFileSync(path.join(dir, "EXECUTION_QUEUE.md"), "utf8");
+  fs.rmSync(dir, { recursive: true, force: true });
+  return { q, rendered };
+}
+
+/* 20a. THE DEFECT, in the exact shape found live: one line, two items.     */
+/*      The claimed item is held; the release belongs to the OTHER id.      */
+{
+  const id = "T-595";
+  const line =
+    `${registerStamp(0)} | lane-a | item ${id} · CLAIMED | branch codex/${id}-fixture | ` +
+    `files: a.ts, b.ts (free — the lane that held b.ts RELEASED item T-411 at 17:18Z, ` +
+    `so nothing of theirs is outstanding on it) | no product runtime change`;
+  const { q, rendered } = oneLineClaimFixture(id, line);
+  check(
+    "a claim that MENTIONS another item's release does not release the item it claims",
+    q.status === 0 &&
+      heldSection(rendered).includes(id) &&
+      !releasedSection(rendered).includes(id),
+    `exit=${q.status}\nheld=${heldSection(rendered)}\nreleased=${releasedSection(rendered)}`,
+  );
+}
+
+/* 20b. No other id intervenes, but the token is far from the reference.    */
+/*      This is the `#25` shape: a long claim line whose closing sentence   */
+/*      releases a FILE claim, not the item.                                */
+{
+  const id = "T-596";
+  // NOTHING between the id and the token may be another id reference, or the
+  // intervening-id rule catches this case and the reach bound is never
+  // exercised. An earlier draft wrote the branch as `codex/${id}-fixture` and
+  // did exactly that: the case passed while the reach could be deleted.
+  const filler = "Deploy readback is owed; the suite was confirmed executing in CI before merge. ".repeat(4);
+  const line =
+    `${registerStamp(0)} | lane-a | item ${id} · MERGED | branch codex/queue-fixture | ` +
+    `${filler}Claim on the two catalog entries and the release record is RELEASED.`;
+  const { q, rendered } = oneLineClaimFixture(id, line);
+  check(
+    "a release token beyond the measured reach of the id reference does not release it",
+    q.status === 0 &&
+      heldSection(rendered).includes(id) &&
+      !releasedSection(rendered).includes(id),
+    `exit=${q.status}\nheld=${heldSection(rendered)}\nreleased=${releasedSection(rendered)}`,
+  );
+}
+
+/* 20c. ANTI-TAUTOLOGY. Without this a fix that never releases anything     */
+/*      passes 20a and 20b, and the queue would then hide every finished    */
+/*      item forever.                                                       */
+{
+  const id = "T-597";
+  const line = `${registerStamp(0)} | lane-a | RELEASED item ${id} — merged, deployed, all files free`;
+  const { q, rendered } = oneLineClaimFixture(id, line);
+  check(
+    "a well-formed release still releases the item it names",
+    q.status === 0 &&
+      releasedSection(rendered).includes(id) &&
+      !heldSection(rendered).includes(id),
+    `exit=${q.status}\nheld=${heldSection(rendered)}\nreleased=${releasedSection(rendered)}`,
+  );
+}
+
+/* 20d. The reach is pinned ABOVE the furthest GENUINE release measured on  */
+/*      the live register (54 characters, the `- item <id> | agent | <stamp> */
+/*      | RELEASED` form). A reach tightened below this silently converts   */
+/*      real releases into permanent holds, and no other case here would    */
+/*      notice.                                                             */
+{
+  const id = "T-598";
+  const line =
+    `- item ${id} | source-backlog-executor | ${registerStamp(0)} | ` +
+    `RELEASED — merged, deployed, runtime invariant proven, all files free`;
+  const { q, rendered } = oneLineClaimFixture(id, line);
+  check(
+    "the id-first release form used live, with the agent and stamp in between, still releases",
+    q.status === 0 &&
+      releasedSection(rendered).includes(id) &&
+      !heldSection(rendered).includes(id),
+    `exit=${q.status}\nheld=${heldSection(rendered)}\nreleased=${releasedSection(rendered)}`,
+  );
+}
+
+/* 20e. A NEGATED release is not a release. The register says "NOT RELEASED, */
+/*      still holding" as readily as it says "RELEASED", and reading the     */
+/*      negated use as an announcement is the same false positive T-457     */
+/*      measured for merge tokens.                                          */
+{
+  const id = "T-599";
+  // Again no id reference between the two, so the NEGATOR is the only rule
+  // that can reject this line, and deleting it fails this case.
+  const line = `${registerStamp(0)} | lane-a | item ${id} · CLAIMED | branch codex/queue-fixture | NOT RELEASED, still holding every file`;
+  const { q, rendered } = oneLineClaimFixture(id, line);
+  check(
+    "a negated release token does not release the item",
+    q.status === 0 &&
+      heldSection(rendered).includes(id) &&
+      !releasedSection(rendered).includes(id),
+    `exit=${q.status}\nheld=${heldSection(rendered)}\nreleased=${releasedSection(rendered)}`,
+  );
+}
+
+/* 20f. THE NEAREST TOKEN, NOT THE FIRST ONE.                               */
+/*      Added after a deliberate mutation escaped: replacing the "nearest"  */
+/*      selection with "whichever token appears first" changed nothing,     */
+/*      because no case above put two release tokens on one line, and the   */
+/*      loop was an unreached branch. A surviving mutation over an          */
+/*      unreached branch is not a score to accept.                          */
+/*                                                                          */
+/*      Here the first token is 200-odd characters away and speaks about    */
+/*      another lane's shared fixture; the nearest sits beside the id. The  */
+/*      first-token reading puts this item beyond the reach and holds it    */
+/*      forever.                                                            */
+{
+  const id = "T-590";
+  const filler = "The shared fixture was handed back before this claim was written, and nothing of theirs is outstanding on any file this lane touches. ".repeat(2);
+  const line =
+    `${registerStamp(0)} | lane-a | The lane that RELEASED the shared fixture is gone. ${filler}` +
+    `— item ${id} · RELEASED, all files free`;
+  const { q, rendered } = oneLineClaimFixture(id, line);
+  check(
+    "the release verdict follows the NEAREST token, not the first one on the line",
+    q.status === 0 &&
+      releasedSection(rendered).includes(id) &&
+      !heldSection(rendered).includes(id),
+    `exit=${q.status}\nheld=${heldSection(rendered)}\nreleased=${releasedSection(rendered)}`,
+  );
+}
+
 console.log(`\n${passes} passed, ${failures} failed`);
 process.exit(failures ? 1 : 0);
