@@ -1,5 +1,6 @@
 const mockAnthropicStream = jest.fn();
 const mockGetActiveClientRow = jest.fn();
+const mockBuildV6ProgramInstanceForTenant = jest.fn();
 
 jest.mock('@/lib/integrations/ai-egress', () => ({
   preflightAnthropicDirectClient: jest.fn(() => ({
@@ -16,6 +17,51 @@ jest.mock('@/lib/integrations/ai-egress', () => ({
 jest.mock('@/lib/active-client', () => ({
   getActiveClientRow: mockGetActiveClientRow,
 }));
+
+// The two cases above assert what the route returns when no pack resolves,
+// which is the whole of what it returns today. That left the route's v6Instance
+// branch asserted-unreachable and tested by nothing: the packet contract it
+// builds, the domain phrase it injects, and its no-Apex-fallback guard all
+// stopped being proved anywhere. Whether that branch should exist at all is a
+// product decision, filed as D-511 and not taken here — but an unreachable
+// branch that is still in the tree must not also be an untested one, so the
+// pack reader is mocked below and the branch's contract is proved again. This
+// mirrors the mock the Source synthesis suite next door already carries.
+//
+// Note what is NOT claimed: this says nothing about whether the dataset's
+// deletion was intended for THIS reader. `4a7ebcd85` deleted 43 dataset files
+// and left the reader untouched; reading that as a deliberate retirement of the
+// reader is an inference, and D-511 exists to have it decided rather than
+// assumed.
+jest.mock('@/lib/module-v6/demo-tenant-packs', () => {
+  const actual = jest.requireActual('@/lib/module-v6/demo-tenant-packs');
+
+  return {
+    ...actual,
+    // Default: behave exactly as the real reader does today — null for every
+    // tenant, because the dataset root it resolves is not in the tree. The two
+    // not-loaded cases above therefore keep testing the real current behavior,
+    // and only the cases that opt in below see a pack.
+    buildV6ProgramInstanceForTenant: mockBuildV6ProgramInstanceForTenant.mockImplementation(
+      () => null,
+    ),
+  };
+});
+
+function v6PackFor(tenantKey: string) {
+  const programInstances = jest.requireActual('@/lib/programs/program-instances');
+  return {
+    ...programInstances.APX_CDP_2026_INSTANCE,
+    id: `${tenantKey}-v6-execution-sequence`,
+    displayId: tenantKey === 'skyharbor-air' ? 'PRG-AIR-V6-2026' : 'PRG-IND-V6-2026',
+    tenantSlug: tenantKey,
+    tenantId: tenantKey,
+    name:
+      tenantKey === 'skyharbor-air'
+        ? 'OCC Modernization execution sequence'
+        : 'Corporate ERP and HCM controls modernization execution sequence',
+  };
+}
 
 jest.mock('@/lib/agent/userContext', () => ({
   getUserContextPromptBlock: jest.fn().mockResolvedValue('USER CONTEXT'),
@@ -134,6 +180,72 @@ describe('POST /api/programs/synthesis', () => {
       detail: 'No V6 Moves program is loaded for the active tenant.',
     });
     expect(mockAnthropicStream).not.toHaveBeenCalled();
+  });
+
+  // Restored from the two cases that became not-loaded assertions. Each keeps
+  // the prompt guards that were dropped with them and re-homed nowhere: the
+  // packet type the route must build, and — for the industrial tenant — that a
+  // tenant with a pack of its own is never served the Apex fixture's id.
+  it('builds the execution-sequence packet from the active tenant pack, not the Apex fixture', async () => {
+    mockBuildV6ProgramInstanceForTenant.mockReturnValueOnce(
+      v6PackFor('lakeshore-holdings'),
+    );
+    mockGetActiveClientRow.mockResolvedValue({
+      id: 'client-lakeshore',
+      name: 'Lakeshore Holdings',
+      industry_code: 'industrial',
+      key: 'lakeshore-holdings',
+    });
+    const { POST } = await import('../route');
+    const res = await POST(
+      new Request('http://test/api/programs/synthesis', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({}),
+      }),
+    );
+
+    expect(res.status).toBe(200);
+    expect(res.headers.get('x-abarva-moves-layer')).toBe('moves-current');
+    await expect(res.text()).resolves.toBe('Moves V6 answer.');
+    expect(mockAnthropicStream).toHaveBeenCalledTimes(1);
+    const streamArgs = mockAnthropicStream.mock.calls[0]?.[0];
+    expect(streamArgs.messages[0].content).toContain(
+      'Corporate ERP and HCM controls modernization',
+    );
+    expect(streamArgs.messages[0].content).toContain('execution-sequence-packet');
+    expect(streamArgs.messages[0].content).not.toContain('APX-CDP-2026');
+  });
+
+  it('injects the airline tenant domain phrase when its pack resolves', async () => {
+    mockAnthropicStream.mockReturnValue(claudeTextStream('Airline Moves V6 answer.'));
+    mockBuildV6ProgramInstanceForTenant.mockReturnValueOnce(
+      v6PackFor('skyharbor-air'),
+    );
+    mockGetActiveClientRow.mockResolvedValue({
+      id: 'client-skyharbor',
+      name: 'Airline Demo',
+      industry_code: 'airline',
+      key: 'skyharbor-air',
+    });
+    const { POST } = await import('../route');
+    const res = await POST(
+      new Request('http://test/api/programs/synthesis', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({}),
+      }),
+    );
+
+    expect(res.status).toBe(200);
+    expect(res.headers.get('x-abarva-moves-layer')).toBe('moves-current');
+    await expect(res.text()).resolves.toBe('Airline Moves V6 answer.');
+    const streamArgs = mockAnthropicStream.mock.calls[0]?.[0];
+    expect(streamArgs.messages[0].content).toContain('OCC Modernization');
+    expect(streamArgs.messages[0].content).toContain('execution-sequence-packet');
+    // The route picks the domain phrase off the tenant key, so this is the one
+    // assertion that fails if the airline branch of that lookup is lost.
+    expect(streamArgs.messages[0].content).toContain('IROPS');
   });
 
   it('blocks explicit Apex program access for a different active tenant', async () => {
