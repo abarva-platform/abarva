@@ -628,5 +628,23 @@ jobs:
           src/lib/azure-search/__tests__/tenant-context-backfill.test.ts
           --no-coverage --ci
 
+      # Nine Source-adjacent control suites were measured before wiring:
+      # six green and three red. The three corpus subjects have 2, 7, and 8
+      # non-test importers. The contract-optimization subjects have live
+      # importers ranging from 1 to 7. The three Atlas route files remain an
+      # exact file-level quarantine: their stale source-string and return-shape
+      # assertions fail on current main and do not execute an opposite-tenant
+      # refusal. Loaded 9; collected 9; run 9; green 6; newly owned 6.
+      - name: Run the green Source control library suites
+        run: >-
+          npx jest --runTestsByPath
+          src/lib/corpus/azure-search.test.ts
+          src/lib/corpus/industry-scope.test.ts
+          src/lib/corpus/retrieval.test.ts
+          src/lib/source/contract-optimization/__tests__/contract-optimization-mve.test.ts
+          src/lib/source/contract-optimization/__tests__/eligibility.test.ts
+          src/lib/source/contract-optimization/__tests__/read.test.ts
+          --no-coverage --ci
+
       - name: Refuse a new dark tree under src/__tests__
         run: npx jest --runTestsByPath src/__tests__/behaviors/unit-directory-ci-coverage.test.ts --no-coverage --ci
