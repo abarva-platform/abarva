@@ -27,3 +27,16 @@ jobs:
 
       - name: Run the execution queue behavioral contract
         run: node scripts/exec/build-execution-queue.test.mjs
+
+      # T-457. The deployment register's time authority. Measured against
+      # GitHub before this landed: 26 merge announcements in one day's window,
+      # 17 of them outside +/-300s of the `mergedAt` they reported, drift
+      # running from -44s to +48077s -- opposite signs and non-constant
+      # magnitude, so not a skew one offset would repair -- and six lines
+      # stamped in the future of the clock that read them. The control runs
+      # over FIXTURE registers here and asserts on exit status and verdicts, so
+      # CI never reads an operator file it cannot see. Mutation-proved,
+      # negated-use case included: the real register's "NOT MERGED YET" line
+      # was classified as an announcement until case 9 was added.
+      - name: Run the register time-authority contract
+        run: node scripts/exec/register-time-authority.test.mjs
