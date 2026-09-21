@@ -663,5 +663,24 @@ jobs:
           "src/app/(maestro)/source/__tests__/new-route-optimization-redirect.test.ts"
           --no-coverage --ci
 
+      # Eight Source contract suites were measured before wiring: all eight
+      # loaded, collected, and ran; seven suites were green and one was red.
+      # Only three green files are owned here. Evidence review has one runtime
+      # importer and executes refusal behavior. Cloud adaptation has one
+      # operator importer and checks structured evidence projection. Education
+      # has two runtime product importers and checks decision-readiness states.
+      # Five files remain exact quarantines: persistence and read-model omit a
+      # register contract identity and cannot reproduce the live identity split;
+      # templates is red; prompt only checks strings and has no importer; and
+      # provenance asserts refusal but its validators have no runtime importer.
+      # Loaded 8; collected 8; run 8; green 7; newly owned 3.
+      - name: Run the owned Source contract suites
+        run: >-
+          npx jest --runTestsByPath
+          src/lib/source/contract-evidence/__tests__/evidence-review.test.ts
+          src/lib/source/contract-intelligence/__tests__/cloud-adapter.test.ts
+          src/lib/source/contract-intelligence/__tests__/education.test.ts
+          --no-coverage --ci
+
       - name: Refuse a new dark tree under src/__tests__
         run: npx jest --runTestsByPath src/__tests__/behaviors/unit-directory-ci-coverage.test.ts --no-coverage --ci
