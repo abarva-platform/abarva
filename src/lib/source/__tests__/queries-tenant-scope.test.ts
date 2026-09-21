@@ -4,6 +4,8 @@ import {
   getSourcingEventArtifact,
   listSourcingEvents,
 } from "../queries";
+import { CANONICAL_TENANT_KEYS } from "@/config/tenants/CANONICAL_TENANTS";
+import { appClientKeyForTenant } from "@/lib/tenant/aliases";
 
 const mockSourceEventsAdapter = {
   getPendingEventsForClient: jest.fn(),
@@ -172,6 +174,53 @@ describe("resolved Source event tenant boundary", () => {
     mockSourceEventsAdapter.getEventByCodeForClient.mockResolvedValue({ ...row, client_key: "tenant-b" });
     canReadSourceEvent.mockClear();
     await expect(getSourcingEventForResolvedClient("EVENT-1", args)).resolves.toBeNull();
+    expect(canReadSourceEvent).not.toHaveBeenCalled();
+  });
+
+  it("returns not found when an unscoped source_events read returns another canonical tenant's event", async () => {
+    const [activeCanonicalTenant, foreignCanonicalTenant] =
+      CANONICAL_TENANT_KEYS;
+    expect(activeCanonicalTenant).toBeDefined();
+    expect(foreignCanonicalTenant).toBeDefined();
+
+    const activeClientKey = appClientKeyForTenant(activeCanonicalTenant);
+    expect(activeClientKey).toBeTruthy();
+
+    const foreignEventIdentifier = `${foreignCanonicalTenant}:source-event:t583`;
+    mockSourceEventsAdapter.getEventByCodeForClient.mockResolvedValue({
+      id: foreignEventIdentifier,
+      client_key: foreignCanonicalTenant,
+      event_code: foreignEventIdentifier,
+      event_name: "Tenant boundary control event",
+      event_type: "managed_services",
+      current_stage_key: "strategy",
+      lifecycle_state: "active",
+      linked_program_id: null,
+      estimated_value_usd: null,
+      trigger_description: "Tenant boundary control",
+      scope_description: "Tenant boundary control",
+      decision_owner: "Sourcing lead",
+      created_by_user_id: null,
+      created_at: "2026-01-01T00:00:00Z",
+      updated_at: "2026-01-01T00:00:00Z",
+    });
+
+    await expect(
+      getSourcingEventForResolvedClient(foreignEventIdentifier, {
+        activeClientKey: activeClientKey!,
+        activeClientName: "Active canonical tenant",
+        tenancy: { clientKey: activeCanonicalTenant } as Awaited<
+          ReturnType<typeof requireTenancy>
+        >,
+      }),
+    ).resolves.toBeNull();
+
+    expect(
+      mockSourceEventsAdapter.getEventByCodeForClient,
+    ).toHaveBeenCalledWith(foreignEventIdentifier, activeClientKey);
+    expect(
+      mockSourceEventsAdapter.getEventByCodeForClient,
+    ).not.toHaveBeenCalledWith(foreignEventIdentifier, foreignCanonicalTenant);
     expect(canReadSourceEvent).not.toHaveBeenCalled();
   });
 });

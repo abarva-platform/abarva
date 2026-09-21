@@ -267,6 +267,12 @@ jobs:
       - name: Run the Source core suites
         run: npx jest src/lib/source/__tests__ --no-coverage --ci
 
+      - name: Run the exact Source event tenant guard suite
+        run: >-
+          npx jest --runTestsByPath
+          src/lib/source/__tests__/queries-tenant-scope.test.ts
+          --no-coverage --ci
+
       # Nineteen approval and approval-adjacent route suites across thirteen
       # directories were not reached by a pull-request workflow. The narrow
       # list is deliberate: their common parents also contain unrelated route
