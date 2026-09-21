@@ -53,6 +53,8 @@ type Census = {
     directoriesPartiallyCovered: number;
     directoriesUncovered: number;
     directoriesWithUnrunTestFiles: number;
+    declaredQuarantineTestFiles: number;
+    untriagedUnrunTestFiles: number;
     indeterminateInvocations: number;
     criticalGovernedRiskDirectories: number;
     highGovernedRiskDirectories: number;
@@ -60,7 +62,13 @@ type Census = {
   };
   indeterminateInvocations: { source: string; invocation: string }[];
   unresolvedIgnoreArguments: { script: string; source: string; reason: string }[];
-  partiallyCoveredDirectories: { directory: string; testFiles: number; coveredTestFiles: number }[];
+  partiallyCoveredDirectories: {
+    directory: string;
+    testFiles: number;
+    coveredTestFiles: number;
+    declaredQuarantineTestFiles: number;
+    untriagedUnrunTestFiles: number;
+  }[];
   governedRiskEvidence: {
     directory: string;
     testFiles: number;
@@ -80,6 +88,8 @@ type Census = {
     directory: string;
     testFiles: number;
     unrunTestFiles: number;
+    declaredQuarantineTestFiles: number;
+    untriagedUnrunTestFiles: number;
     governedRisk: {
       rank: number;
       score: number;
@@ -87,7 +97,12 @@ type Census = {
       signals: string[];
     };
   }[];
-  uncoveredDirectories: { directory: string; testFiles: number }[];
+  uncoveredDirectories: {
+    directory: string;
+    testFiles: number;
+    declaredQuarantineTestFiles: number;
+    untriagedUnrunTestFiles: number;
+  }[];
 };
 
 function write(root: string, relative: string, contents: string): void {
@@ -424,8 +439,15 @@ describe("test CI coverage census", () => {
     });
     const summary = runSummary(dir);
     // Heading changed with the ranking it labels: partially covered
-    // directories now appear, so "uncovered" would misdescribe the list.
-    expect(summary).toContain("top governed-risk directories by unrun tests:");
+    // directories now appear, so "uncovered" would misdescribe the list. It
+    // moved a second time under T-471, when the ranking's basis narrowed from
+    // every unrun file to only the untriaged ones — a directory whose unrun
+    // set is entirely declared quarantine is no longer ranked, so "by unrun
+    // tests" would now overstate what the list is ordered on. The assertion is
+    // updated rather than relaxed: it still pins an exact heading.
+    expect(summary).toContain(
+      "top governed-risk directories by untriaged unrun tests:",
+    );
     expect(summary.indexOf("src/components/agent/__tests__")).toBeLessThan(
       summary.indexOf("src/app/api/source/action/__tests__"),
     );
@@ -1172,6 +1194,111 @@ describe("test CI coverage census --explain", () => {
       .split("\n")
       .filter((line) => /^ {4}\S+\.test\.tsx?$/.test(line));
     expect(listed).toHaveLength(census.counts.uncoveredTestFiles);
+  });
+
+  /**
+   * T-471. The draw that produced this case asked for "the next 20 stale
+   * suites to triage", ranked by `governedRiskRanking`, and 11 of the 20 came
+   * back already triaged: seven named in
+   * `scripts/quality/source-integration-quarantine.json`, one in its
+   * `alsoIgnored`, two named in the auth step's `--testPathIgnorePatterns`,
+   * and one recorded as triaged-red in a workflow comment. The census counted
+   * every one of them as simply "uncovered", which is true and useless: an
+   * unrun file that a command names and then deliberately excludes has been
+   * looked at, and an unrun file no command names at all has not. Ranks 2 and
+   * 3 of the critical band were directories whose entire unrun set was
+   * declared quarantine, so the ranking was pointing the next agent at work
+   * that was already done.
+   *
+   * The fixture has to disagree with itself or it cannot fail: one unrun file
+   * that a command names and excludes, one unrun file nothing names, in two
+   * directories carrying the same governed signal. Classifying all unrun
+   * files as quarantine fails the dark half; classifying none fails the
+   * excluded half; dropping the ranking filter fails the first assertion.
+   */
+  it("separates an unrun file a command excludes by name from one nothing names", () => {
+    const dir = fixture({
+      "src/app/api/alpha/action/route.ts":
+        "export async function POST() { return approve({ value: true }); }\n",
+      "src/app/api/alpha/action/__tests__/green.test.ts":
+        'import "../route";\nit("green", () => expect(true).toBe(true));\n',
+      "src/app/api/alpha/action/__tests__/red.test.ts":
+        'import "../route";\nit("red", () => expect(true).toBe(true));\n',
+      "src/app/api/beta/action/route.ts":
+        "export async function POST() { return approve({ value: true }); }\n",
+      "src/app/api/beta/action/__tests__/dark.test.ts":
+        'import "../route";\nit("dark", () => expect(true).toBe(true));\n',
+      ".github/workflows/gate.yml": PR_WORKFLOW(
+        [
+          "npx jest src/app/api/alpha/action/__tests__",
+          "--testPathIgnorePatterns /node_modules/",
+          "src/app/api/alpha/action/__tests__/red.test.ts",
+        ].join(" "),
+      ),
+    });
+
+    const { census } = runCensus(dir);
+
+    // Both files are unrun, and the total is unchanged by the classification.
+    expect(census.counts.uncoveredTestFiles).toBe(2);
+    expect(census.counts.declaredQuarantineTestFiles).toBe(1);
+    expect(census.counts.untriagedUnrunTestFiles).toBe(1);
+
+    const alpha = census.partiallyCoveredDirectories.find(
+      (row) => row.directory === "src/app/api/alpha/action/__tests__",
+    );
+    expect(alpha).toMatchObject({
+      testFiles: 2,
+      coveredTestFiles: 1,
+      declaredQuarantineTestFiles: 1,
+      untriagedUnrunTestFiles: 0,
+    });
+
+    const beta = census.uncoveredDirectories.find(
+      (row) => row.directory === "src/app/api/beta/action/__tests__",
+    );
+    expect(beta).toMatchObject({
+      testFiles: 1,
+      declaredQuarantineTestFiles: 0,
+      untriagedUnrunTestFiles: 1,
+    });
+
+    // The whole point: a directory whose unrun set is entirely declared
+    // quarantine is not offered as work to triage, while the dark one is.
+    expect(census.governedRiskRanking.map((row) => row.directory)).toEqual([
+      "src/app/api/beta/action/__tests__",
+    ]);
+    expect(census.governedRiskRanking[0]).toMatchObject({
+      unrunTestFiles: 1,
+      declaredQuarantineTestFiles: 0,
+      untriagedUnrunTestFiles: 1,
+    });
+  });
+
+  /**
+   * A second command running the same file in full must still count it as
+   * covered rather than as a quarantine. `coverageFor` already scopes the
+   * ignore patterns to the command that passes them; this holds that the new
+   * classification did not reintroduce the global subtraction.
+   */
+  it("does not call a file quarantined when another command runs it in full", () => {
+    const dir = fixture({
+      "src/lib/gamma/__tests__/shared.test.ts": TEST_FILE,
+      ".github/workflows/narrow.yml": PR_WORKFLOW(
+        [
+          "npx jest src/lib/gamma/__tests__",
+          "--testPathIgnorePatterns /node_modules/",
+          "src/lib/gamma/__tests__/shared.test.ts",
+        ].join(" "),
+      ),
+      ".github/workflows/full.yml": PR_WORKFLOW("npx jest src/lib/gamma/__tests__"),
+    });
+
+    const { census } = runCensus(dir);
+
+    expect(census.counts.uncoveredTestFiles).toBe(0);
+    expect(census.counts.declaredQuarantineTestFiles).toBe(0);
+    expect(census.counts.untriagedUnrunTestFiles).toBe(0);
   });
 
   it("adds no field to the published artifact and writes nothing", () => {
