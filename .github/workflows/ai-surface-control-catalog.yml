@@ -78,6 +78,12 @@ jobs:
       - name: Exercise Source approval queue controls
         run: npx jest --runTestsByPath src/components/source/__tests__/AdminSourceEventApprovalQueue.controls.test.tsx --runInBand
 
+      - name: Exercise Source canonical artifact render approval gate
+        run: npx jest --runTestsByPath "src/app/api/v1/source/[eventId]/artifacts/[artifactCode]/render/__tests__/route.test.ts" --runInBand
+
+      - name: Exercise Source governed artifact download approval gate
+        run: npx jest --runTestsByPath "src/app/api/v1/source/artifacts/[artifactId]/download/__tests__/route.test.ts" --runInBand
+
       - name: Exercise Moves phase-advance button
         run: npx jest --runTestsByPath src/components/programs/__tests__/PhaseAdvanceButton.controls.test.tsx --runInBand
 

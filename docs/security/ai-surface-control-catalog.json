@@ -529,6 +529,46 @@
           }
         }
       ]
+    },
+    {
+      "id": "source-canonical-artifact-render-export",
+      "surface": "Source canonical d-code artifact render",
+      "lane": "global-control-lane",
+      "owner": "AbarVa",
+      "path": "src/app/api/v1/source/[eventId]/artifacts/[artifactCode]/render/route.ts",
+      "requiredControls": [
+        {
+          "kind": "human-approval-gate",
+          "evidence": [
+            "getLatestArtifactAcceptance",
+            "resolveArtifactAuthority",
+            "export_not_eligible"
+          ],
+          "behavioralTest": {
+            "path": "src/app/api/v1/source/[eventId]/artifacts/[artifactCode]/render/__tests__/route.test.ts"
+          }
+        }
+      ]
+    },
+    {
+      "id": "source-governed-artifact-download-export",
+      "surface": "Source governed d-code artifact download",
+      "lane": "global-control-lane",
+      "owner": "AbarVa",
+      "path": "src/app/api/v1/source/artifacts/[artifactId]/download/route.ts",
+      "requiredControls": [
+        {
+          "kind": "human-approval-gate",
+          "evidence": [
+            "getLatestArtifactAcceptance",
+            "resolveArtifactAuthority",
+            "export_not_eligible"
+          ],
+          "behavioralTest": {
+            "path": "src/app/api/v1/source/artifacts/[artifactId]/download/__tests__/route.test.ts"
+          }
+        }
+      ]
     }
   ],
   "catalogClaimCoverage": [
@@ -563,10 +603,16 @@
       "controlKind": "human-approval-gate"
     },
     {
-      "key": "consequential|Source|Vendor-facing artifact renders/exports|human-approval-gate",
-      "status": "deferred",
-      "controlKind": "human-approval-gate",
-      "reason": "Export watermark exists, but artifact routes vary and send/approval enforcement is not universal enough for machine-covered status."
+      "key": "consequential|Source|Canonical d-code artifact render|human-approval-gate",
+      "status": "covered",
+      "surfaceId": "source-canonical-artifact-render-export",
+      "controlKind": "human-approval-gate"
+    },
+    {
+      "key": "consequential|Source|Governed d-code artifact download|human-approval-gate",
+      "status": "covered",
+      "surfaceId": "source-governed-artifact-download-export",
+      "controlKind": "human-approval-gate"
     },
     {
       "key": "consequential|Source|Work item mutation|human-approval-gate",
