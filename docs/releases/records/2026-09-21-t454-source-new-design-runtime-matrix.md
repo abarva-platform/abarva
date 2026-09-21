@@ -20,9 +20,15 @@ The point of the exercise is the last three columns, and they come back empty fo
 is the finding, not a gap in the write-up:
 
 - No test in the repository navigates to the event workspace route at all (`0` matches).
-- The Playwright runner declares exactly one project, desktop Chrome, so no mobile capture is
-  expressible — while two subviews change behaviour below a breakpoint and nothing can observe them.
+- The mobile device projects exist and run on every pull request, but their one spec covers three
+  public routes and captures no screenshot — while two subviews change behaviour below a breakpoint
+  and no spec exercises them.
 - The only accessibility harness covers two public routes; every row here is behind a sign-in.
+
+All three trace to one root cause: **no harness here can render a signed-in, tenant-scoped route.**
+The test-mode Clerk bypass is gated on `isPublicRoute` (`src/proxy.ts:294`), which fences the mobile
+matrix and the axe gate alike. Build that path once and all three columns become writable — a
+materially smaller piece of work than three separate harness build-outs.
 
 It also records that the Files pane offers an "Upload" button whose callback no production code
 supplies — the only caller is that component's own unit test. So the affordance is exercised in a
@@ -58,7 +64,7 @@ This item produces a document, so its validation is that each claim in the docum
 was checked. Nothing here is a behavioural before/after, because no behaviour changed — stating a
 test delta would misrepresent what was done.
 
-**Citation audit — 86 of 86 line references verified, across 11 files.** Every `file:line` citation
+**Citation audit — 90 of 90 line references verified, across 17 files.** Every `file:line` citation
 in the matrix was machine-checked by reading that exact line and asserting it contains the construct
 the matrix claims for it. This ran twice, and both rounds are reported because the first found real
 errors:
@@ -72,6 +78,8 @@ errors:
 - **Round 2**, widened to 86 citations across 11 files — the four component and route files plus
   `phase-state.ts`, the two stage read models, `event-intelligence.ts`, `aliases.ts`,
   `playwright.config.ts` and the axe spec: **86 pass, 0 fail.**
+- **Round 3**, after the mobile correction added references to the browser-matrix config, its spec,
+  the proxy bypass and two workflow files: **90 citations across 17 files, 90 pass, 0 fail.**
 
 Worth stating plainly, because it bears on how much the 86/86 is worth: a checker that reads the
 citations a document makes cannot find a citation the document should have made and did not. The
@@ -95,6 +103,24 @@ it is the second error in this item that a citation checker could not have found
 verifies that references resolve, not that totals are right. The matrix now carries a per-section
 row census that can be checked against the tables without hand-counting, and the three gap
 proportions were restated against the correct denominator (`24 of 26`, `26 of 26`, `26 of 26`).
+
+**Second correction, and the more serious one: an earlier revision claimed no mobile Playwright
+project exists. One does.** `playwright.browser-matrix.config.ts` declares five projects including
+Pixel 5 and iPhone 13, and the `Chrome Firefox Safari mobile smoke` job runs it on every pull
+request. The original claim came from reading `playwright.config.ts` and treating it as *the*
+Playwright configuration; there are three configs and the default is the smallest.
+
+How it was caught is worth recording, because it was not caught by any check I designed: the
+`Chrome Firefox Safari mobile smoke` job went green on this document's own pull request, and the
+name contradicted the document. The runtime corrected the write-up — which is the direction of
+evidence this matrix exists to privilege, arriving against the matrix itself.
+
+The finding survives but changes shape, and gets better: the device matrix is already configured
+and already paid for, so the mobile column is blocked by a missing spec and a missing signed-in
+path, not by a missing runner. That reframing is what produced the single-root-cause reading above,
+which the first revision did not have. Corrected in a follow-up commit on this branch; the per-row cells now
+distinguish `no spec` (a capable harness exists, nothing points it here) from `no harness` (nothing
+in the repository can produce this verdict).
 
 **Fixture-scope check.** The three Source New rendering fixtures were cross-checked against
 `CANONICAL_TENANT_KEYS`, which is derived in code from `TENANT_ALIAS_PROFILES`
@@ -154,9 +180,10 @@ two documentation files and nothing else.
 - **The matrix is a read of source, not of a running product.** Every cell was derived by reading
   code on this commit. Nothing was observed rendering. The signed-in operator journey for Source New
   remains owed.
-- **Three of seven columns are empty for all 26 rows**, for the harness reasons the matrix sets out.
-  Filling them needs (a) an audited e2e spec that reaches `/source/new/{eventId}`, (b) a mobile
-  Playwright project, and (c) an axe harness able to reach a signed-in route. None is in scope here.
+- **Three of seven columns are empty for all 26 rows**, for the one root cause the matrix sets out.
+  Filling them needs a way to render a signed-in, tenant-scoped route under a harness, plus specs
+  that point at this surface and capture. The mobile device projects and the capture helper already
+  exist. None of it is in scope here.
 - **The dead Upload affordance is reported, not repaired.** Whether Source New should offer upload
   is a product call with an owner, adjacent to the Files authority question already held open as an
   owner decision. Filed separately rather than fixed inside a read-only item.
