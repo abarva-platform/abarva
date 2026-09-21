@@ -34,6 +34,14 @@ function text(row: CsvRecord, key: string): string {
   return row[key]?.trim() ?? "";
 }
 
+function vendorConcession(row: CsvRecord): string {
+  return (
+    text(row, "vendor_concession") ||
+    text(row, "vendor_give") ||
+    "Vendor concession: not declared in source row."
+  );
+}
+
 function number(row: CsvRecord, key: string): number | null {
   const raw = text(row, key);
   if (!raw) return null;
@@ -264,7 +272,7 @@ function buildLevers(rows: readonly CsvRecord[]): ContractIntelligenceLever[] {
     buyerAsk: text(row, "buyer_ask") || "Buyer ask not loaded.",
     negotiationLanguage:
       text(row, "negotiation_language") || "Negotiation language not loaded.",
-    vendorGive: text(row, "vendor_give") || "Vendor give not loaded.",
+    vendorGive: vendorConcession(row),
     valueBasis: text(row, "value_basis") || "Value basis not loaded.",
     candidateRange: candidateRange(row),
     valueType: valueType(row),

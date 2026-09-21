@@ -24,6 +24,8 @@ function text(row: CsvRecord, key: string): string {
 }
 
 function mapCloudOpportunityToLever(row: CsvRecord): CsvRecord {
+  const vendorConcession =
+    text(row, "vendor_concession") || text(row, "vendor_give");
   return {
     tenant_key: text(row, "tenant_key"),
     dataset_version: text(row, "dataset_version"),
@@ -34,7 +36,7 @@ function mapCloudOpportunityToLever(row: CsvRecord): CsvRecord {
     target_term: text(row, "buyer_ask"),
     buyer_ask: text(row, "buyer_ask"),
     negotiation_language: text(row, "negotiation_language"),
-    vendor_give: text(row, "vendor_concession"),
+    vendor_concession: vendorConcession,
     value_basis: text(row, "evidence_family"),
     annual_impact_low_usd: text(row, "amount_low_usd"),
     annual_impact_high_usd: text(row, "amount_high_usd"),

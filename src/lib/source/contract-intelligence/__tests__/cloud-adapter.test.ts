@@ -1,4 +1,5 @@
 import { buildCloudContractIntelligenceRecords } from "../cloud-adapter";
+import { buildContractIntelligenceRecords } from "../build";
 import type { CsvRecord } from "../../contract-depth-package/projection";
 
 const contract: CsvRecord = {
@@ -107,6 +108,7 @@ describe("buildCloudContractIntelligenceRecords", () => {
     });
     expect(records[0].levers).toHaveLength(2);
     expect(records[0].levers[0].amountState).toBe("range");
+    expect(records[0].levers[0].vendorGive).toBe("Accept milestone billing.");
     expect(records[0].levers[1].amountState).toBe("not_sized");
     expect(
       records[0].baseline.metrics.find(
@@ -134,5 +136,73 @@ describe("buildCloudContractIntelligenceRecords", () => {
     ).toBe(true);
     expect(records[0].review.status).toBe("reviewed");
     expect(records[0].levers[1].candidateRange).toBe("Not sized");
+  });
+
+  it("uses canonical vendor_concession, explicit legacy vendor_give, and declared absence", () => {
+    const records = buildCloudContractIntelligenceRecords({
+      contracts: [contract],
+      applicationScope: [],
+      contractClauses: [],
+      contractPageText: [],
+      evidenceManifest: [],
+      monthlySpend: [],
+      serviceUsage: [],
+      commitmentCoverage: [],
+      apReconciliation: [],
+      resourceInventory: [],
+      optimizationOpportunities: [
+        row("opp-canonical", {
+          opportunity_id: "opp-canonical",
+          opportunity_type: "negotiated_improvement",
+          vendor_concession: "Canonical concession survives.",
+        }),
+        row("opp-legacy", {
+          opportunity_id: "opp-legacy",
+          opportunity_type: "negotiated_improvement",
+          vendor_give: "Legacy concession survives.",
+        }),
+        row("opp-absent", {
+          opportunity_id: "opp-absent",
+          opportunity_type: "negotiated_improvement",
+        }),
+      ],
+    });
+
+    expect(records[0].levers.map((lever) => lever.vendorGive)).toEqual([
+      "Canonical concession survives.",
+      "Legacy concession survives.",
+      "Vendor concession: not declared in source row.",
+    ]);
+  });
+
+  it("keeps the shared builder compatible with legacy vendor_give rows", () => {
+    const records = buildContractIntelligenceRecords({
+      contracts: [contract],
+      applicationScope: [],
+      changeOrders: [],
+      contractPageText: [],
+      resourceModel: [],
+      pricingBridge: [],
+      invoiceLineDetail: [],
+      batchJobVolumetrics: [],
+      qbrScorecards: [],
+      monthlySpend: [],
+      slaPerformance: [],
+      ticketVolumetrics: [],
+      contractClauses: [],
+      evidenceManifest: [],
+      optimizationOpportunities: [],
+      negotiationLevers: [
+        row("legacy-lever", {
+          lever_id: "legacy-lever",
+          lever_type: "negotiated_improvement",
+          vendor_give: "Legacy builder concession survives.",
+        }),
+      ],
+    });
+
+    expect(records[0].levers[0].vendorGive).toBe(
+      "Legacy builder concession survives.",
+    );
   });
 });
