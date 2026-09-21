@@ -192,7 +192,9 @@ describe("SourceNewWorkspace", () => {
     const authority = screen.getByRole("region", {
       name: "Stage 07 scorecard authority",
     });
-    expect(within(authority).getByText("Blocked before ranking")).toBeTruthy();
+    expect(
+      within(authority).getByText("Blocked before scorecard inspection"),
+    ).toBeTruthy();
     expect(
       within(authority).getByText(
         "No tenant-scoped scorecard authority is loaded for this event.",
@@ -262,7 +264,9 @@ describe("SourceNewWorkspace", () => {
     const panel = screen.getByRole("region", {
       name: "Stage 07 scorecard authority",
     });
-    expect(within(panel).getByText("Blocked before ranking")).toBeTruthy();
+    expect(
+      within(panel).getByText("Blocked before scorecard inspection"),
+    ).toBeTruthy();
     expect(
       within(panel).getByText(
         "No tenant-scoped scorecard authority is loaded for this event.",
@@ -494,6 +498,7 @@ describe("SourceNewWorkspace", () => {
           "Resolved archetype AMS_MANAGED_SERVICES from classifier category 'ams'.",
       },
       currentStage: "rfp",
+      stageEvidenceContract: "available",
       requiredEvidence: [
         {
           key: "service_tower_scope",
@@ -595,6 +600,80 @@ describe("SourceNewWorkspace", () => {
     expect(
       screen.getAllByRole("link", { name: "Resolve evidence gap" }),
     ).toHaveLength(1);
+  });
+
+  it("explains a resolved final stage without calling the archetype unresolved", () => {
+    const intelligence: SourceNewEventIntelligenceView = {
+      posture: "blocked",
+      archetype: {
+        id: "AMS_MANAGED_SERVICES",
+        name: "IT Outsourcing / AMS / Managed Services",
+        source: "classifier_category",
+        reason:
+          "Resolved archetype AMS_MANAGED_SERVICES from classifier category 'ams'.",
+      },
+      currentStage: "value",
+      stageEvidenceContract: "not_defined",
+      requiredEvidence: [],
+      governedContext: {
+        policyVersion: "1.0.0",
+        decision: "block",
+        usableCount: 0,
+        blockedCount: 1,
+        agentReadyCount: 0,
+        citationsCount: 0,
+        available: [],
+        blocked: [
+          {
+            id: "artifact-blocked",
+            title: "Unreviewed value record",
+            reasons: ["agent_readiness_status is not_reviewed"],
+          },
+        ],
+      },
+      industryMetrics: [],
+      allowedStatement:
+        "Source resolves this event to the IT Outsourcing / AMS / Managed Services playbook. That playbook does not define a separate evidence contract for the final Value stage, so final value claims must be supported by governed evidence from the completed lifecycle.",
+      gaps: ["No current evidence is ready to cite yet."],
+      refusals: [
+        "Unreviewed value record: review its source, confidence, citations, and retrieval status before Source can use it.",
+      ],
+      nextQuestion:
+        "Which governed evidence supports the recorded final value outcome?",
+      nextAction: {
+        label: "Review lifecycle evidence",
+        detail:
+          "Review the governed evidence and unresolved gaps from the completed lifecycle before relying on a final value claim.",
+      },
+    };
+
+    render(
+      <SourceNewWorkspace
+        event={{
+          ...request,
+          category: "ams",
+          lifecycle: "completed",
+          currentStage: "value",
+        }}
+        files={[]}
+        intelligence={intelligence}
+      />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Intelligence" }));
+
+    expect(
+      screen.getByText("No separate evidence contract for this stage."),
+    ).toBeTruthy();
+    expect(
+      screen.getByText(
+        "The archetype is resolved. Review governed evidence from the completed lifecycle before relying on a final-stage claim.",
+      ),
+    ).toBeTruthy();
+    expect(
+      screen.queryByText(
+        "The event needs a resolved archetype before evidence can be scored.",
+      ),
+    ).toBeNull();
   });
 
   it("labels intake phase as review-needed not completed for waiting_on_client", () => {
@@ -833,7 +912,9 @@ describe("SourceNewWorkspace", () => {
     ).getAllByRole("button");
     fireEvent.click(buttons[2]);
 
-    const region = screen.getByRole("region", { name: "Stage 04 vendor panel" });
+    const region = screen.getByRole("region", {
+      name: "Stage 04 vendor panel",
+    });
     expect(within(region).getByText("Incumbent Supplier LLC")).toBeTruthy();
     expect(within(region).getByText("New Supplier LLC")).toBeTruthy();
 
@@ -843,18 +924,18 @@ describe("SourceNewWorkspace", () => {
     const rowText = within(region)
       .getAllByRole("listitem")
       .map((li) => li.textContent ?? "");
-    expect(
-      rowText.find((t) => t.includes("Incumbent Supplier LLC")),
-    ).toContain("already under contract");
+    expect(rowText.find((t) => t.includes("Incumbent Supplier LLC"))).toContain(
+      "already under contract",
+    );
     expect(rowText.find((t) => t.includes("New Supplier LLC"))).toContain(
       "not under contract",
     );
 
     // Who accepted it, on the screen and not only in the data. A panel row
     // without its provenance is an assertion the reader cannot check.
-    expect(
-      rowText.find((t) => t.includes("Incumbent Supplier LLC")),
-    ).toContain("Accepted by A. Buyer");
+    expect(rowText.find((t) => t.includes("Incumbent Supplier LLC"))).toContain(
+      "Accepted by A. Buyer",
+    );
 
     // What the panel does not know, on the surface rather than buried.
     expect(
@@ -863,8 +944,12 @@ describe("SourceNewWorkspace", () => {
     ).toBeGreaterThan(0);
 
     // No send, contact or select affordance reaches the reader.
-    expect(within(region).queryByRole("button", { name: /send|contact|select/i })).toBeNull();
-    expect(within(region).queryByRole("link", { name: /send|contact|select/i })).toBeNull();
+    expect(
+      within(region).queryByRole("button", { name: /send|contact|select/i }),
+    ).toBeNull();
+    expect(
+      within(region).queryByRole("link", { name: /send|contact|select/i }),
+    ).toBeNull();
   });
 
   it("shows the stage 04 blocker instead of a panel when a read failed", () => {
@@ -898,7 +983,9 @@ describe("SourceNewWorkspace", () => {
     ).getAllByRole("button");
     fireEvent.click(buttons[2]);
 
-    const region = screen.getByRole("region", { name: "Stage 04 vendor panel" });
+    const region = screen.getByRole("region", {
+      name: "Stage 04 vendor panel",
+    });
     expect(within(region).getByText("Panel withheld")).toBeTruthy();
     expect(
       within(region).getByText(/cannot be told from a new candidate/),
@@ -1031,6 +1118,81 @@ describe("SourceNewWorkspace", () => {
       screen.getByText("1 tenant-scoped response file available"),
     ).toBeTruthy();
     expect(screen.getByText("Ready for evaluation intake review")).toBeTruthy();
+  });
+
+  it("reports request authority as unread rather than unaccepted when the store cannot answer", () => {
+    // The authority tables are behind the separate migration apply gate, so
+    // the store returns nothing today. A surface that renders that as "not
+    // accepted" tells the client a decision nobody made.
+    render(
+      <SourceNewWorkspace
+        event={{
+          ...request,
+          currentStage: "responses",
+          lifecycle: "waiting_on_vendor",
+          solicitationMotion: "rfp",
+          solicitationMotionAcceptedAt: "2026-03-08T00:00:00Z",
+          solicitationMotionAcceptedByUserId: "person-1",
+          requestVersionApproval: null,
+        }}
+        files={[responseFile]}
+      />,
+    );
+
+    const readiness = screen.getByRole("region", {
+      name: "Stage 04 vendor readiness",
+    });
+    expect(within(readiness).getByText("Not recorded")).toBeTruthy();
+    // The negative half, and the point of the case: absence is not a blocker.
+    expect(document.body.textContent ?? "").not.toMatch(
+      /Changes are requested on the current Request version/,
+    );
+  });
+
+  it("blocks on an explicit changes-requested decision on the Request version", () => {
+    render(
+      <SourceNewWorkspace
+        event={{
+          ...request,
+          currentStage: "responses",
+          lifecycle: "waiting_on_vendor",
+          solicitationMotion: "rfp",
+          solicitationMotionAcceptedAt: "2026-03-08T00:00:00Z",
+          solicitationMotionAcceptedByUserId: "person-1",
+          requestVersionApproval: "changes_requested",
+        }}
+        files={[responseFile]}
+      />,
+    );
+
+    expect(
+      screen.getByText(/Changes are requested on the current Request version/),
+    ).toBeTruthy();
+  });
+
+  it("does not block when the Request version is accepted", () => {
+    render(
+      <SourceNewWorkspace
+        event={{
+          ...request,
+          currentStage: "responses",
+          lifecycle: "waiting_on_vendor",
+          solicitationMotion: "rfp",
+          solicitationMotionAcceptedAt: "2026-03-08T00:00:00Z",
+          solicitationMotionAcceptedByUserId: "person-1",
+          requestVersionApproval: "accepted",
+        }}
+        files={[responseFile]}
+      />,
+    );
+
+    const readiness = screen.getByRole("region", {
+      name: "Stage 04 vendor readiness",
+    });
+    expect(within(readiness).getByText("Request version accepted")).toBeTruthy();
+    expect(document.body.textContent ?? "").not.toMatch(
+      /Changes are requested on the current Request version/,
+    );
   });
 
   it("shows a tenant-scoped empty state instead of inventing candidate vendors", () => {
@@ -1179,6 +1341,35 @@ describe("SourceNewWorkspace", () => {
     expect(screen.queryByText("Recorded earlier in this event")).toBeNull();
     // Sidebar still offers one return action
     expect(screen.getByRole("button", { name: "Current work" })).toBeTruthy();
+  });
+
+  it("names the unmet conditions for previewed phases without exposing an advance action", () => {
+    render(<SourceNewWorkspace event={request} files={[]} />);
+    const phases = within(
+      screen.getByRole("navigation", { name: "Event phases" }),
+    ).getAllByRole("button");
+
+    fireEvent.click(phases[1]);
+    expect(
+      screen.getByText(
+        "Before this phase can open: intake approval must be recorded.",
+      ),
+    ).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Current work" })).toBeTruthy();
+    expect(
+      screen.queryByRole("link", { name: /approve|continue|advance/i }),
+    ).toBeNull();
+
+    fireEvent.click(phases[3]);
+    expect(
+      screen.getByText(
+        "Before this phase can open: scope, supplier eligibility, and required NDA coverage must be ready.",
+      ),
+    ).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Current work" })).toBeTruthy();
+    expect(
+      screen.queryByRole("link", { name: /approve|continue|advance/i }),
+    ).toBeNull();
   });
 
   /**

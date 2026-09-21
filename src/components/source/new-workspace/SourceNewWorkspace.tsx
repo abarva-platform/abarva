@@ -50,6 +50,12 @@ export interface SourceNewEventView {
   solicitationMotion?: "rfi" | "rfp" | null;
   solicitationMotionAcceptedAt?: string | null;
   solicitationMotionAcceptedByUserId?: string | null;
+  /**
+   * Request-version authority from the persisted store. `null`/absent means
+   * the authority could not be read — not that no acceptance exists. The two
+   * render differently and only one of them is a blocker.
+   */
+  requestVersionApproval?: "accepted" | "pending" | "changes_requested" | null;
 }
 
 const BASE_PHASE_LABELS: Record<Phase, string> = {
@@ -64,6 +70,14 @@ const VIEWS: readonly { key: View; label: string }[] = [
   { key: "intelligence", label: "Intelligence" },
   { key: "approvals", label: "Approvals" },
 ];
+
+const PREVIEW_UNMET_CONDITIONS: Record<Phase, string> = {
+  request: "the request must be recorded and accepted for review.",
+  define: "intake approval must be recorded.",
+  suppliers:
+    "scope and strategy must advance, then supplier eligibility and required NDA coverage must be recorded.",
+  rfi: "scope, supplier eligibility, and required NDA coverage must be ready.",
+};
 
 /**
  * What each phase actually holds. A phase behind the event is only described
@@ -348,6 +362,10 @@ export function SourceNewWorkspace({
                     cleared before this work can begin. Browsing here does not
                     advance the event.
                   </p>
+                  <p className="snw-note">
+                    Before this phase can open:{" "}
+                    {PREVIEW_UNMET_CONDITIONS[phase]}
+                  </p>
                 </>
               ) : stateOf(phase) === "no_record" ? (
                 <>
@@ -369,7 +387,9 @@ export function SourceNewWorkspace({
                     />
                   )}
                   {phase === "suppliers" && (
-                    <SourceNewStage04VendorPanelView panel={stage04VendorPanel} />
+                    <SourceNewStage04VendorPanelView
+                      panel={stage04VendorPanel}
+                    />
                   )}
                   {phase === "suppliers" && (
                     <SourceNewStage05NdaReadiness
@@ -402,7 +422,9 @@ export function SourceNewWorkspace({
                     />
                   )}
                   {phase === "suppliers" && (
-                    <SourceNewStage04VendorPanelView panel={stage04VendorPanel} />
+                    <SourceNewStage04VendorPanelView
+                      panel={stage04VendorPanel}
+                    />
                   )}
                   {phase === "suppliers" && (
                     <SourceNewStage05NdaReadiness
@@ -545,7 +567,23 @@ function SourceNewStage04VendorReadiness({
     responseRows.length === 0
       ? "No tenant-scoped candidate response files are loaded in Source New."
       : null,
+    // Only an explicit negative becomes a blocker. An unreadable authority
+    // (null) is reported as unread, never as a refusal: absence is not a
+    // decision, and a surface that turns "cannot read" into "changes
+    // requested" tells the client something nobody decided.
+    event.requestVersionApproval === "changes_requested"
+      ? "Changes are requested on the current Request version."
+      : null,
   ].filter((item): item is string => Boolean(item));
+
+  const requestAuthorityLabel =
+    event.requestVersionApproval === "accepted"
+      ? "Request version accepted"
+      : event.requestVersionApproval === "pending"
+        ? "Request acceptance pending"
+        : event.requestVersionApproval === "changes_requested"
+          ? "Changes requested on the Request version"
+          : "Not recorded";
 
   return (
     <section
@@ -563,6 +601,10 @@ function SourceNewStage04VendorReadiness({
         <div>
           <dt>Tenant scope</dt>
           <dd>{event.clientName}</dd>
+        </div>
+        <div>
+          <dt>Request authority</dt>
+          <dd>{requestAuthorityLabel}</dd>
         </div>
         <div>
           <dt>Solicitation motion</dt>
@@ -610,7 +652,6 @@ function SourceNewStage04VendorReadiness({
     </section>
   );
 }
-
 
 function SourceNewStage04VendorPanelView({
   panel,
@@ -817,17 +858,16 @@ function SourceNewStage07ScorecardAuthority({
       <h3>Frozen evaluator scorecard</h3>
       <p>
         This read-only check summarizes whether scorecard authority is ready for
-        ranking, advancement and BAFO readiness review. It does not rank
-        vendors, send BAFOs, approve an award or turn an AI suggestion into a
-        final score.
+        governed reviewer inspection. It does not rank vendors, send BAFOs,
+        approve an award or turn an AI suggestion into a final score.
       </p>
       <dl className="snw-facts">
         <div>
           <dt>Readiness posture</dt>
           <dd>
             {authority.state === "ready"
-              ? "Ready for governed scorecard review"
-              : "Blocked before ranking"}
+              ? "Ready for governed scorecard inspection"
+              : "Blocked before scorecard inspection"}
           </dd>
         </div>
         <div>
@@ -843,7 +883,7 @@ function SourceNewStage07ScorecardAuthority({
           <dd>
             {lockedScoreCount > 0
               ? `${lockedScoreCount} score${lockedScoreCount === 1 ? "" : "s"}`
-              : "None ready for ranking"}
+              : "None ready for inspection"}
           </dd>
         </div>
       </dl>
@@ -906,14 +946,13 @@ function SourceNewStage07ScorecardAuthority({
       </div>
       {authority.vendorRows.length > 0 && (
         <div className="snw-nda-next">
-          <strong>Locked score totals</strong>
+          <strong>Score authority completeness</strong>
           <ul>
             {authority.vendorRows.map((row) => (
               <li key={row.vendorId}>
-                {row.vendorName}:{" "}
-                {row.weightedScore === null
-                  ? "No weighted total"
-                  : `${row.weightedScore}/10`}
+                {row.vendorName}: {row.lockedScoreCount}/
+                {row.requiredScoreCount} locked; completeness{" "}
+                {row.completenessState}; conflicts {row.conflictState}
               </li>
             ))}
           </ul>
@@ -1034,11 +1073,16 @@ function SourceNewIntelligenceWorkspace({
             ) : (
               <li>
                 <strong>
-                  No stage-specific evidence contract is available.
+                  {intelligence.stageEvidenceContract === "not_defined"
+                    ? "No separate evidence contract for this stage."
+                    : "No stage-specific evidence contract is available."}
                 </strong>
                 <p>
-                  The event needs a resolved archetype before evidence can be
-                  scored.
+                  {intelligence.stageEvidenceContract === "not_defined"
+                    ? intelligence.currentStage === "value"
+                      ? "The archetype is resolved. Review governed evidence from the completed lifecycle before relying on a final-stage claim."
+                      : "The archetype is resolved, but this stage has no declared evidence contract. Source will not infer requirements."
+                    : "The event needs a resolved archetype before evidence can be scored."}
                 </p>
               </li>
             )}

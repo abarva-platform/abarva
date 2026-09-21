@@ -8,8 +8,10 @@ import path from "node:path";
  * `canvas/UniversalCanvasShell.tsx`, which the event route no longer mounts.
  * The change was correct, tested and deployed, and no user could reach it.
  *
- * This runs the reachability audit and fails when a NEW unreachable component
- * appears, or when the baseline lists something that is reachable again.
+ * The original Source-only audit was widened to every product component. This
+ * suite follows that current audit rather than invoking its retired filename.
+ * It fails when a NEW unreachable component appears, or when the baseline
+ * lists something that is reachable again.
  */
 describe("source canvas reachability", () => {
   it("has no component that no route can reach", () => {
@@ -18,7 +20,7 @@ describe("source canvas reachability", () => {
       repoRoot,
       "scripts",
       "audit",
-      "source-canvas-reachability.mjs",
+      "route-reachability-check.mjs",
     );
 
     try {

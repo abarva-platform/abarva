@@ -9,10 +9,13 @@ import process from 'node:process';
 // tokens and its behavioral test are.
 import { computeRouteReachability } from './lib/route-reachability.mjs';
 
-const CATALOG_PATH = path.join(
-  process.cwd(),
-  'docs/security/ai-surface-control-catalog.json',
-);
+// The catalog this gate reads. `AI_SURFACE_CONTROL_CATALOG_PATH` is a test
+// seam: it lets a suite run this script against a mutated copy and prove the
+// gate goes red, which is the only way to show a branch can fail. Nothing in
+// CI sets it — `npm run audit:ai-surface-controls` reads the file below.
+const CATALOG_PATH = process.env.AI_SURFACE_CONTROL_CATALOG_PATH
+  ? path.resolve(process.cwd(), process.env.AI_SURFACE_CONTROL_CATALOG_PATH)
+  : path.join(process.cwd(), 'docs/security/ai-surface-control-catalog.json');
 
 const WORKFLOW_PATH = '.github/workflows/ai-surface-control-catalog.yml';
 
@@ -94,27 +97,43 @@ function parseMarkdownTableClaims(catalog) {
     fail(`Legal catalog missing: ${catalog.path}`);
   }
 
+  const expectedHeader = parseMarkdownTableColumns(catalog.header);
   const lines = fs.readFileSync(catalogPath, 'utf8').split(/\r?\n/);
   const claims = [];
   let inTable = false;
 
   for (const line of lines) {
-    if (line.trim() === catalog.header) {
+    const columns = parseMarkdownTableColumns(line);
+    if (!inTable && sameColumns(columns, expectedHeader)) {
       inTable = true;
       continue;
     }
     if (!inTable) continue;
-    if (line.startsWith('| ---')) continue;
-    if (!line.startsWith('|')) break;
+    if (isMarkdownDivider(columns)) continue;
+    if (columns.length === 0) break;
 
-    const columns = line
-      .slice(1, -1)
-      .split('|')
-      .map((column) => column.trim());
     claims.push(...catalog.parseClaims(columns));
   }
 
   return claims;
+}
+
+function parseMarkdownTableColumns(line) {
+  const trimmed = line.trim();
+  if (!trimmed.startsWith('|')) return [];
+  return trimmed
+    .replace(/^\|/, '')
+    .replace(/\|$/, '')
+    .split('|')
+    .map((column) => column.trim());
+}
+
+function sameColumns(left, right) {
+  return left.length === right.length && left.every((value, index) => value === right[index]);
+}
+
+function isMarkdownDivider(columns) {
+  return columns.length > 0 && columns.every((column) => /^:?-{3,}:?$/.test(column));
 }
 
 function collectLegalCatalogClaims() {
@@ -205,13 +224,68 @@ function readWorkflowJestRuns() {
   return runs;
 }
 
+const SUITE_SCAN_ROOT = 'src';
+const SUITE_SCAN_SKIP = new Set(['node_modules', '.git', '.next', 'dist', 'coverage']);
+
+function isTestFile(relative) {
+  return /(^|\/)__tests__\//.test(relative) || /\.(test|spec)\.[cm]?[jt]sx?$/.test(relative);
+}
+
+function moduleToken(controlPath) {
+  return path.basename(controlPath).replace(/\.[^.]+$/, '');
+}
+
+/**
+ * Every test file that references each of these modules, walked from the tree.
+ *
+ * An uncovered control's `knownSuites` is checked against this, so the list is
+ * derived rather than chosen. One walk covers every token because reading two
+ * thousand test files once per control would make the gate slow enough that
+ * someone would be tempted to skip it.
+ */
+function indexSuitesReferencing(tokens) {
+  const index = new Map(tokens.map((token) => [token, []]));
+  if (tokens.length === 0) return index;
+
+  const walk = (relative) => {
+    let entries;
+    try {
+      entries = fs.readdirSync(path.join(process.cwd(), relative), { withFileTypes: true });
+    } catch {
+      return;
+    }
+    for (const entry of entries) {
+      if (SUITE_SCAN_SKIP.has(entry.name)) continue;
+      const child = `${relative}/${entry.name}`;
+      if (entry.isDirectory()) {
+        walk(child);
+        continue;
+      }
+      if (!isTestFile(child)) continue;
+      let text;
+      try {
+        text = fs.readFileSync(path.join(process.cwd(), child), 'utf8');
+      } catch {
+        continue;
+      }
+      for (const token of tokens) {
+        if (text.includes(token)) index.get(token).push(child);
+      }
+    }
+  };
+
+  walk(SUITE_SCAN_ROOT);
+  for (const list of index.values()) list.sort();
+  return index;
+}
+
 /**
  * Behavioral coverage is declared per control kind, not per surface. A surface
  * with four controls and a suite that exercises two of them is two covered and
  * two uncovered — counting it as one covered surface overstates the programme
  * by every control the suite never touched.
  */
-function validateBehavioralTest(control, controlLabel, workflowRuns) {
+function validateBehavioralTest(control, controlLabel, workflowRuns, surface, suiteIndex) {
   const declared = control.behavioralTest;
   const problems = [];
 
@@ -233,6 +307,37 @@ function validateBehavioralTest(control, controlLabel, workflowRuns) {
         `${controlLabel}: an uncovered control needs a concrete reason saying what is not proven`,
       );
     }
+
+    // A reason of forty characters was everything this branch checked, and
+    // prose cannot go stale loudly. One reason here read "the component has no
+    // rendering suite" for weeks after a rendering suite landed, and the gate
+    // stayed green because nothing compared the sentence to the tree.
+    //
+    // So the sentence is no longer alone: an uncovered control enumerates the
+    // suites that reference its module, and that list is checked against a
+    // walk of `src`. A suite appearing or disappearing turns this red until
+    // someone reconciles the reason with it.
+    const surfacePath = typeof surface?.path === 'string' ? surface.path : null;
+    const actual = surfacePath ? (suiteIndex?.get(moduleToken(surfacePath)) ?? []) : [];
+    const claimed = declared.knownSuites;
+
+    if (!Array.isArray(claimed)) {
+      problems.push(
+        `${controlLabel}: an uncovered control must declare knownSuites — every test file that references ${surfacePath ?? 'its module'}, or [] when there are none`,
+      );
+    } else {
+      for (const suite of actual.filter((file) => !claimed.includes(file))) {
+        problems.push(
+          `${controlLabel}: declares no behavioral test, but ${suite} references ${surfacePath} — name it in knownSuites and say in the reason what it does not prove`,
+        );
+      }
+      for (const suite of claimed.filter((file) => !actual.includes(file))) {
+        problems.push(
+          `${controlLabel}: knownSuites names ${suite}, which no longer references ${surfacePath} — this list is derived from the tree, not chosen`,
+        );
+      }
+    }
+
     return { problems, covered: false };
   }
 
@@ -385,7 +490,7 @@ function validateCatalogClaimCoverage(catalog, surfacesById) {
   return problems;
 }
 
-function validateSurface(surface, index, workflowRuns, tally, routeGraph) {
+function validateSurface(surface, index, workflowRuns, tally, routeGraph, suiteIndex) {
   const label = surface?.id ?? `surface[${index}]`;
   const problems = [];
 
@@ -432,7 +537,7 @@ function validateSurface(surface, index, workflowRuns, tally, routeGraph) {
     }
     seenKinds.add(kind);
 
-    const behavioral = validateBehavioralTest(control, controlLabel, workflowRuns);
+    const behavioral = validateBehavioralTest(control, controlLabel, workflowRuns, surface, suiteIndex);
     problems.push(...behavioral.problems);
     tally.declared += 1;
     if (!reachability.reachable) {
@@ -480,6 +585,22 @@ function main() {
   const problems = [];
   const workflowRuns = readWorkflowJestRuns();
   const routeGraph = computeRouteReachability(process.cwd());
+  // Walked once, for the modules that claim to have no behavioral test.
+  const suiteIndex = indexSuitesReferencing(
+    Array.from(
+      new Set(
+        surfaces
+          .filter((surface) =>
+            (surface?.requiredControls ?? []).some(
+              (control) => control?.behavioralTest?.status === 'none',
+            ),
+          )
+          .map((surface) => surface?.path)
+          .filter((value) => typeof value === 'string')
+          .map(moduleToken),
+      ),
+    ),
+  );
   const tally = { declared: 0, covered: 0, unreachable: 0 };
   surfaces.forEach((surface, index) => {
     if (surface?.id) {
@@ -489,7 +610,7 @@ function main() {
       ids.add(surface.id);
       surfacesById.set(surface.id, surface);
     }
-    problems.push(...validateSurface(surface, index, workflowRuns, tally, routeGraph));
+    problems.push(...validateSurface(surface, index, workflowRuns, tally, routeGraph, suiteIndex));
   });
   problems.push(...validateCatalogClaimCoverage(catalog, surfacesById));
 

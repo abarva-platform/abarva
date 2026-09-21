@@ -31,8 +31,13 @@ function readSourceFile(relativePath: string): string {
   return readFileSync(resolve(process.cwd(), relativePath), 'utf-8');
 }
 
-const PANEL_SOURCE_PATH = 'src/components/agents/AgentMissionPanel.tsx';
-const VIEW_SOURCE_PATH = 'src/lib/agents/agent-mission-view.ts';
+// Repointed from `components/agents/` to `components/agent/`. The component
+// was moved, the constant was not, and because this path is read at module
+// scope the suite stopped COLLECTING rather than failing a case -- it reported
+// as red while running zero assertions against a component that is still
+// shipped and still changing.
+const PANEL_SOURCE_PATH = 'src/components/agent/AgentMissionPanel.tsx';
+const VIEW_SOURCE_PATH = 'src/lib/agent/agent-mission-view.ts';
 
 // ---------------------------------------------------------------------
 // Determinism + seed coverage

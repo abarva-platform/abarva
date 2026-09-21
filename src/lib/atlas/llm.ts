@@ -21,7 +21,10 @@ import {
   AI_DECISION_SUPPORT_SYSTEM_PROMPT_BLOCK,
   sanitizeAutonomousDecisionLanguage,
 } from "@/lib/ai-liability/human-decision-controls";
-import { getDerivedEnterpriseReadForTenant } from '@/lib/enterprise-context/derived-enterprise-read';
+import {
+  atlasModeLogLevel,
+  buildAtlasModeLogPayload,
+} from '@/lib/atlas/mode-log';
 import type {
   AtlasDebugTrace,
   AtlasExecutionMode,
@@ -29,6 +32,7 @@ import type {
   AtlasTenancyCtx,
   AtlasToolResultMap,
 } from '@/lib/atlas/types';
+import type { DerivedEnterpriseReadSummary } from '@/lib/enterprise-context/derived-enterprise-read';
 import {
   loadCuratedSemanticDossier,
   type CuratedDossierLoadResult,
@@ -141,19 +145,16 @@ function logAtlasMode(args: {
   model: string;
   workflow: string;
 }): void {
-  const payload = {
-    event: "atlas_model_mode",
-    tenantId: args.tenantId,
-    mode: args.mode,
-    reason: args.reason,
-    model: args.model,
-    workflow: args.workflow,
-  };
-  if (args.mode === "fallback") {
-    console.warn("[atlas.mode]", JSON.stringify(payload));
+  // Payload shape and level live in `mode-log.ts` as pure functions so the
+  // contract can be asserted by calling it rather than by grepping this file
+  // (T-462). This logger stays module-private.
+  const payload = buildAtlasModeLogPayload(args);
+  const line = JSON.stringify(payload);
+  if (atlasModeLogLevel(payload.mode) === "warn") {
+    console.warn("[atlas.mode]", line);
     return;
   }
-  console.info("[atlas.mode]", JSON.stringify(payload));
+  console.info("[atlas.mode]", line);
 }
 
 function formatMoney(value: number | null | undefined): string | null {
@@ -448,7 +449,10 @@ export async function runAtlasLlm(
       topKTopic: 3,
       atlasTenancy: ctx,
     }),
-    getDerivedEnterpriseReadForTenant(towerState.client.tenantKey ?? towerState.client.clientName),
+    // RETIRED from live composition (backlog T-613) -- see the note at the
+    // Intelligence read model call site. Measured `null` for every configured
+    // tenant before removal, so this is behaviour-preserving.
+    Promise.resolve<DerivedEnterpriseReadSummary | null>(null),
   ]);
 
   const toolResults: AtlasToolResultMap = {

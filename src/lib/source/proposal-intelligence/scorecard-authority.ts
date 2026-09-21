@@ -2,6 +2,8 @@ import { canonicalTenantKey } from "@/lib/tenant/aliases";
 
 export type ScorecardAuthorityState = "ready" | "blocked";
 export type ScorecardScoreLockState = "locked" | "unlocked";
+export type ScorecardAuthorityCompletenessState = "complete" | "incomplete";
+export type ScorecardAuthorityConflictState = "none" | "conflict";
 
 export interface ScorecardAuthorityCriterionRecord {
   tenantKey: string;
@@ -72,7 +74,9 @@ export interface ScorecardAuthorityVendorRow {
   vendorId: string;
   vendorName: string;
   lockedScoreCount: number;
-  weightedScore: number | null;
+  requiredScoreCount: number;
+  completenessState: ScorecardAuthorityCompletenessState;
+  conflictState: ScorecardAuthorityConflictState;
 }
 
 export interface ScorecardAuthorityView {
@@ -114,7 +118,7 @@ export function buildScorecardAuthorityView(input: {
       label: "Scorecard authority missing",
       detail: "No tenant-scoped scorecard authority is loaded for this event.",
       nextAction:
-        "Load approved scorecard criteria, frozen weights and named evaluator scores before ranking.",
+        "Load approved scorecard criteria, frozen weights and named evaluator scores before review.",
     });
   }
 
@@ -127,7 +131,7 @@ export function buildScorecardAuthorityView(input: {
         label: "Weights not frozen",
         detail: `${criterion.label} weights are not frozen.`,
         nextAction:
-          "Freeze the criterion weights before using the scorecard for ranking.",
+          "Freeze the criterion weights before using the scorecard for authority review.",
       });
     }
     if (
@@ -161,7 +165,7 @@ export function buildScorecardAuthorityView(input: {
       detail:
         "No named evaluator scores are loaded for the approved scorecard criteria.",
       nextAction:
-        "Record named evaluator scores with evidence references before ranking.",
+        "Record named evaluator scores with evidence references before review.",
     });
   }
 
@@ -174,7 +178,7 @@ export function buildScorecardAuthorityView(input: {
         label: "Score does not match approved criterion",
         detail: `${score.vendorName} has a score for ${score.criterionId} that is not tied to an approved criterion version.`,
         nextAction:
-          "Tie every score to the approved criterion version before ranking.",
+          "Tie every score to the approved criterion version before review.",
       });
     }
     if (!score.evaluatorId?.trim() || !score.evaluatorName?.trim()) {
@@ -194,8 +198,7 @@ export function buildScorecardAuthorityView(input: {
         blockerId: `score-${score.vendorId}-${score.criterionId}-evaluator-score-missing`,
         label: "Evaluator score missing",
         detail: `${score.vendorName} is missing the evaluator score for ${score.criterionId}.`,
-        nextAction:
-          "Record a human evaluator score before ranking or advancing.",
+        nextAction: "Record a human evaluator score before review.",
       });
     }
     if (!score.evidenceReference?.trim()) {
@@ -226,7 +229,7 @@ export function buildScorecardAuthorityView(input: {
         label: "Score not locked",
         detail: `${score.vendorName} does not have a locked score for ${score.criterionId}.`,
         nextAction:
-          "Lock the named evaluator score before using it for rank, advance or BAFO readiness.",
+          "Lock the named evaluator score before using it for authority review.",
       });
     }
 
@@ -245,39 +248,80 @@ export function buildScorecardAuthorityView(input: {
           label: "Criterion score missing",
           detail: `${vendorName} is missing a score for ${criterion.label}.`,
           nextAction:
-            "Record every approved criterion score before comparing vendors.",
+            "Record every approved criterion score before completing authority review.",
         });
       }
+    }
+    const scoreGroups = new Map<string, ScorecardAuthorityScoreRecord[]>();
+    for (const score of vendorScores) {
+      const group = scoreGroups.get(score.criterionId) ?? [];
+      group.push(score);
+      scoreGroups.set(score.criterionId, group);
+    }
+    for (const [criterionId, groupedScores] of scoreGroups) {
+      if (groupedScores.length < 2) continue;
+      const distinctScoreValues = new Set(
+        groupedScores.map((score) => String(score.evaluatorScore)),
+      );
+      const distinctEvidence = new Set(
+        groupedScores.map((score) => score.evidenceReference?.trim() ?? ""),
+      );
+      if (distinctScoreValues.size <= 1 && distinctEvidence.size <= 1) {
+        continue;
+      }
+      const vendorName = vendorScores[0]?.vendorName ?? vendorId;
+      blockers.push({
+        blockerId: `score-${vendorId}-${criterionId}-conflict`,
+        label: "Evaluator score conflict",
+        detail: `${vendorName} has conflicting evaluator score authority for ${criterionId}.`,
+        nextAction:
+          "Resolve duplicate or conflicting evaluator score records before authority review.",
+      });
     }
   }
 
   const ready = blockers.length === 0;
   const weightTotal = criteria.reduce((total, item) => total + item.weight, 0);
   const vendorRows = ready
-    ? [...scoresByVendor.entries()]
-        .map(([vendorId, vendorScores]) => {
-          const weighted = vendorScores.reduce((total, score) => {
-            const weight = criteriaById.get(score.criterionId)?.weight ?? 0;
-            return total + (score.evaluatorScore ?? 0) * weight;
-          }, 0);
-          return {
-            vendorId,
-            vendorName: vendorScores[0]?.vendorName ?? vendorId,
-            lockedScoreCount: vendorScores.length,
-            weightedScore:
-              weightTotal > 0
-                ? Math.round((weighted / weightTotal) * 100) / 100
-                : null,
-          };
-        })
-        .sort((a, b) => (b.weightedScore ?? -1) - (a.weightedScore ?? -1))
+    ? [...scoresByVendor.entries()].map(([vendorId, vendorScores]) => {
+        const criterionIds = new Set(
+          vendorScores.map((score) => score.criterionId),
+        );
+        const conflictState: ScorecardAuthorityConflictState = criteria.some(
+          (criterion) => {
+            const matching = vendorScores.filter(
+              (score) => score.criterionId === criterion.criterionId,
+            );
+            if (matching.length < 2) return false;
+            const scoreValues = new Set(
+              matching.map((score) => String(score.evaluatorScore)),
+            );
+            const evidenceValues = new Set(
+              matching.map((score) => score.evidenceReference?.trim() ?? ""),
+            );
+            return scoreValues.size > 1 || evidenceValues.size > 1;
+          },
+        )
+          ? "conflict"
+          : "none";
+        const completenessState: ScorecardAuthorityCompletenessState =
+          criterionIds.size === criteria.length ? "complete" : "incomplete";
+        return {
+          vendorId,
+          vendorName: vendorScores[0]?.vendorName ?? vendorId,
+          lockedScoreCount: vendorScores.length,
+          requiredScoreCount: criteria.length,
+          completenessState,
+          conflictState,
+        };
+      })
     : [];
 
   return {
     state: ready ? "ready" : "blocked",
-    rankAllowed: ready,
-    advanceAllowed: ready,
-    bafoReady: ready,
+    rankAllowed: false,
+    advanceAllowed: false,
+    bafoReady: false,
     weightTotal,
     criteria: criteria.map((criterion) => ({
       criterionId: criterion.criterionId,
@@ -307,6 +351,6 @@ export function buildScorecardAuthorityView(input: {
     vendorRows,
     blockers,
     guardrail:
-      "AI suggestions remain advisory. Ranking, advancement and BAFO-ready posture require frozen approved criteria, named evaluator scores, evidence references, override reasons when required, and locked score authority.",
+      "AI suggestions remain advisory. This read-only authority view checks frozen approved criteria, named evaluator scores, evidence references, override reasons when required, and locked score state. It does not rank suppliers, advance stages, create BAFO rounds, or approve awards.",
   };
 }

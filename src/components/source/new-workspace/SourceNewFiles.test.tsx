@@ -220,6 +220,32 @@ describe("SourceNewFiles", () => {
     expect(within(sparseDetails).queryByRole("button", { name: "Download" })).toBeNull();
   });
 
+  it("renders explicit unresolved states instead of internal UUIDs in client-facing metadata", () => {
+    const internalId = "24fc65af-8223-4884-9241-ef5736960a1b";
+    const unresolved: SourceNewFileRow = {
+      ...base,
+      id: "uuid-metadata",
+      generatedBy: internalId,
+      sourceRegisterId: internalId,
+      supersedesArtifactId: internalId,
+      supersededByArtifactId: internalId,
+      approvedBy: internalId,
+      clientFinalAcceptedBy: internalId,
+      clientFinalUploadedBy: internalId,
+    };
+
+    render(<SourceNewFiles rows={[unresolved]} initialPhase="define" />);
+    const details = screen.getByLabelText("Selected file details");
+
+    expect(within(details).queryByText(internalId)).toBeNull();
+    expect(within(details).getByText("Origin name unresolved")).toBeTruthy();
+    expect(within(details).getByText("Register reference unresolved")).toBeTruthy();
+    expect(within(details).getAllByText("Artifact reference unresolved")).toHaveLength(2);
+    expect(within(details).getByText(/^Recorded approver; name unresolved ·/)).toBeTruthy();
+    expect(within(details).getByText(/^Accepted by recorded user; name unresolved ·/)).toBeTruthy();
+    expect(within(details).getByText(/^Uploaded by recorded user; name unresolved ·/)).toBeTruthy();
+  });
+
   it("shows a quiet empty state and delegates upload for the selected phase", () => {
     const onUpload = jest.fn();
     render(<SourceNewFiles rows={[]} onUpload={onUpload} />);

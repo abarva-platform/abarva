@@ -1,6 +1,7 @@
 "use client";
 
 import { useLayoutEffect, useRef, useState, type ReactNode } from "react";
+import { containsUuidDisplayValue } from "@/lib/source/display-identifiers";
 import type { SourceArtifactRecord } from "@/lib/source/file-cabinet/types";
 
 export type SourceNewFilePhase =
@@ -107,6 +108,22 @@ function fileSize(bytes: number | null) {
 
 function recorded(value: string | null | undefined) {
   return value?.trim() || "Not recorded";
+}
+
+function clientFacingRecorded(value: string | null | undefined, unresolved: string) {
+  if (!value?.trim()) return "Not recorded";
+  return containsUuidDisplayValue(value) ? unresolved : value.trim();
+}
+
+function actorWithDate(
+  action: "Approved" | "Accepted" | "Uploaded",
+  actor: string,
+  at: string | null | undefined,
+) {
+  const actorLabel = containsUuidDisplayValue(actor)
+    ? `${action === "Approved" ? "Recorded approver" : `${action} by recorded user`}; name unresolved`
+    : `${action} by ${actor.trim()}`;
+  return `${actorLabel}${at ? ` · ${new Date(at).toLocaleDateString()}` : ""}`;
 }
 
 function boolState(value: boolean) {
@@ -423,9 +440,9 @@ export function SourceNewFiles({
                         {dateTime(selected.generatedAt)}
                       </DetailRow>
                       <DetailRow term="Origin">
-                        {selected.generatedBy ??
-                          selected.sourceBasis ??
-                          "Not recorded"}
+                        {selected.generatedBy
+                          ? clientFacingRecorded(selected.generatedBy, "Origin name unresolved")
+                          : recorded(selected.sourceBasis)}
                       </DetailRow>
                     </dl>
                   </div>
@@ -443,10 +460,10 @@ export function SourceNewFiles({
                           : ""}
                       </DetailRow>
                       <DetailRow term="Supersedes">
-                        {recorded(selected.supersedesArtifactId)}
+                        {clientFacingRecorded(selected.supersedesArtifactId, "Artifact reference unresolved")}
                       </DetailRow>
                       <DetailRow term="Superseded by">
-                        {recorded(selected.supersededByArtifactId)}
+                        {clientFacingRecorded(selected.supersededByArtifactId, "Artifact reference unresolved")}
                       </DetailRow>
                       <DetailRow term="Updated">
                         {dateTime(selected.updatedAt)}
@@ -461,7 +478,11 @@ export function SourceNewFiles({
                       </DetailRow>
                       <DetailRow term="Register ID">
                         {selected.sourceRegisterId ? (
-                          <code>{selected.sourceRegisterId}</code>
+                          containsUuidDisplayValue(selected.sourceRegisterId) ? (
+                            "Register reference unresolved"
+                          ) : (
+                            <code>{selected.sourceRegisterId}</code>
+                          )
                         ) : (
                           "Not recorded"
                         )}
@@ -489,21 +510,21 @@ export function SourceNewFiles({
                     <dl>
                       <DetailRow term="Approval">
                         {selected.approvedBy
-                          ? `Approved by ${selected.approvedBy}${selected.approvedAt ? ` · ${new Date(selected.approvedAt).toLocaleDateString()}` : ""}`
+                          ? actorWithDate("Approved", selected.approvedBy, selected.approvedAt)
                           : selected.approvalState
                             ? label(selected.approvalState)
                             : "Not recorded"}
                       </DetailRow>
                       <DetailRow term="Client final">
                         {selected.clientFinalAcceptedBy
-                          ? `Accepted by ${selected.clientFinalAcceptedBy}${selected.clientFinalAcceptedAt ? ` · ${new Date(selected.clientFinalAcceptedAt).toLocaleDateString()}` : ""}`
+                          ? actorWithDate("Accepted", selected.clientFinalAcceptedBy, selected.clientFinalAcceptedAt)
                           : selected.isClientFinal
                             ? "Uploaded, not accepted"
                             : "No"}
                       </DetailRow>
                       <DetailRow term="Final upload">
                         {selected.clientFinalUploadedBy
-                          ? `Uploaded by ${selected.clientFinalUploadedBy}${selected.clientFinalUploadedAt ? ` · ${new Date(selected.clientFinalUploadedAt).toLocaleDateString()}` : ""}`
+                          ? actorWithDate("Uploaded", selected.clientFinalUploadedBy, selected.clientFinalUploadedAt)
                           : "Not recorded"}
                       </DetailRow>
                       <DetailRow term="Review group">

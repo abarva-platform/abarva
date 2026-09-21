@@ -5,7 +5,6 @@ import { BlockerPill } from './BlockerPill';
 export interface StewardEditorialProps {
   title: string;
   body: string;
-  contextUsed: ReadonlyArray<string>;
   evidenceStrength: EvidenceStrength;
   blocker?: string;
   primaryAction: { label: string; href: string };

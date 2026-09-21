@@ -37,6 +37,7 @@ import { tmpdir } from 'os';
 import { join, dirname } from 'path';
 
 const GATE_SOURCE = join(process.cwd(), 'scripts/integration/hygiene_gate.sh');
+const REPORT_SOURCE = join(process.cwd(), 'scripts/integration/hygiene_gate_report.sh');
 const SECRET_HYGIENE_TEST = 'src/__tests__/integration/qa/secret-hygiene-patterns.test.ts';
 
 interface ShimPlan {
@@ -69,6 +70,14 @@ interface ScratchOptions {
   omit?: ReadonlyArray<string>;
   /** Raw file bodies that replace a manifest's default, keyed by repo-relative path. */
   manifests?: Readonly<Record<string, string>>;
+  /**
+   * Extra files committed into the scratch repo before the gate runs.
+   *
+   * Section 1 reads the tree with `git grep`, so a file only reaches it once
+   * it is committed -- writing it and leaving it untracked exercises the
+   * uncommitted-changes branch instead, which is a different check.
+   */
+  files?: Readonly<Record<string, string>>;
 }
 
 function makeScratchRepo(
@@ -100,6 +109,11 @@ function makeScratchRepo(
   // The real script, at the path it derives its repo root from.
   mkdirSync(join(root, 'scripts/integration'), { recursive: true });
   copyFileSync(GATE_SOURCE, join(root, 'scripts/integration/hygiene_gate.sh'));
+  // The gate sources its reporting from a sibling file. The fixture copied
+  // one file because the gate used to be one file; without this the gate
+  // refuses to run, which is the behaviour it should have -- but it is not
+  // the behaviour these cases are here to measure.
+  copyFileSync(REPORT_SOURCE, join(root, 'scripts/integration/hygiene_gate_report.sh'));
 
   if (!omit.has('stash')) {
     const stash = join(root, 'scripts/integration/stash_safety_check.py');
@@ -128,6 +142,8 @@ function makeScratchRepo(
     ].join('\n'),
   );
   shim('python3', `printf '%s' ${JSON.stringify(full.stashJson)}; exit ${full.stashExit}`);
+
+  for (const [relative, body] of Object.entries(options.files ?? {})) write(relative, body);
 
   // Section 1 runs git; a clean committed tree keeps it out of the way.
   const git = (...args: string[]) =>
@@ -422,6 +438,57 @@ describe('hygiene gate · the exit status agrees with the verdicts it printed', 
     const run = runGate(scratch());
     expect(run.lines.some((l) => l.startsWith('[FAIL]'))).toBe(false);
     expect(run.exitCode).toBe(0);
+  });
+
+  describe('conflict markers', () => {
+    // Section 1 counts conflict markers with a git grep pipeline. Nothing
+    // here exercised it: measured against the source-text contract suite,
+    // deleting this entire section was caught only by that scanner, never
+    // behaviourally. So the counting could be rewritten -- as it just was,
+    // from `grep | wc -l` to `grep -c` -- with no case able to notice.
+    //
+    // A passing conflict check proves nothing on its own; it passes on every
+    // tree that has no conflicts, which is almost all of them. The case that
+    // matters is the one where a marker is really there.
+    const MARKERS = ['<<<<<<< HEAD', 'mine', '=======', 'theirs', '>>>>>>> other'].join('\n');
+
+    it('fails when a committed file carries conflict markers', () => {
+      const run = runGate(scratch({}, { files: { 'src/conflicted.ts': `${MARKERS}\n` } }));
+      expect(verdictFor(run, 'conflict')).toBe('FAIL');
+    });
+
+    it('passes when no file carries them', () => {
+      expect(verdictFor(runGate(scratch()), 'conflict')).toBe('PASS');
+    });
+
+    it('does not count a marker inside a markdown file', () => {
+      // The pipeline excludes `.md` on purpose: documentation about merge
+      // conflicts quotes the markers. Prose about the thing is not the thing.
+      const run = runGate(scratch({}, { files: { 'docs/merges.md': `${MARKERS}\n` } }));
+      expect(verdictFor(run, 'conflict')).toBe('PASS');
+    });
+
+    it('does not count a binary file whose bytes happen to match', () => {
+      // git grep reports a binary match as "Binary file X matches" rather
+      // than as a line, so the count excludes it. Untested until now: a
+      // mutation removing that exclusion survived, because no fixture had a
+      // binary file in it. A NUL byte is what makes git treat it as one.
+      const binary = `<<<<<<< HEAD\n\0\n=======\n>>>>>>> other\n`;
+      const run = runGate(scratch({}, { files: { 'assets/blob.bin': binary } }));
+      expect(verdictFor(run, 'conflict')).toBe('PASS');
+    });
+
+    it('does not count a marker that does not begin its line', () => {
+      // True, and worth pinning -- but the reason is the `^` anchor on the
+      // search, not the exclusion list. Written the other way round first,
+      // this case passed while a mutation removed three exclusion patterns,
+      // which is how those patterns were found to filter nothing: measured
+      // on a scratch repository with a real conflict and a commented one,
+      // they removed 0 of 3 matches. They are gone; the anchor is the guard.
+      const commented = ['# <<<<<<< HEAD', '# =======', '# >>>>>>> other'].join('\n');
+      const run = runGate(scratch({}, { files: { 'scripts/notes.sh': `${commented}\n` } }));
+      expect(verdictFor(run, 'conflict')).toBe('PASS');
+    });
   });
 
   it('is not vacuous — the fixture exercises every section the gate declares', () => {

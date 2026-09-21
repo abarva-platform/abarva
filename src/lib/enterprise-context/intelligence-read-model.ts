@@ -1,10 +1,7 @@
 
 import { getAzureReadFluentClient } from '@/lib/data-plane/postgresCompat';
 import { canonicalTenantKey } from '@/lib/tenant/aliases';
-import {
-  getDerivedEnterpriseReadForTenant,
-  type DerivedEnterpriseReadSummary,
-} from '@/lib/enterprise-context/derived-enterprise-read';
+import type { DerivedEnterpriseReadSummary } from '@/lib/enterprise-context/derived-enterprise-read';
 export interface EnterpriseContextRecordRow {
   record_type: string;
   title: string;
@@ -132,7 +129,20 @@ export async function getEnterpriseContextOverviewForTenant(
 ): Promise<EnterpriseContextOverview | null> {
   const normalizedTenantKey = canonicalTenantKey(tenantKey?.trim());
   if (!normalizedTenantKey) return null;
-  const derivedEnterpriseRead = await getDerivedEnterpriseReadForTenant(normalizedTenantKey);
+  // RETIRED from live composition (backlog T-613). The local V4 derived
+  // enterprise read resolved to files that no longer exist: canonical-input
+  // commit `4a7ebcd85` archived them and purge commit `617585f80` deleted
+  // them, and the loader's bare `catch` turned that into a silent `null`
+  // rather than an error. It was measured returning `null` for all six
+  // configured tenant spellings before this change, so removing the call
+  // is behaviour-preserving by construction -- every consumer below is
+  // null-guarded and already took its fallback branch on every request.
+  //
+  // Restore this ONLY by binding a governed Layer 3 derived-enterprise-read
+  // source that can be read per tenant with provenance, evidence status and
+  // agent-readiness enforcement. The architecture constitution forbids
+  // substituting Layer 1 intake files for the missing Layer 3 projection.
+  const derivedEnterpriseRead: DerivedEnterpriseReadSummary | null = null;
 
   try {
     const counts = await countEnterpriseContextRows(normalizedTenantKey);

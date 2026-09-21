@@ -81,6 +81,7 @@ export interface SourceNewEventIntelligenceView {
     reason: string;
   };
   currentStage: string;
+  stageEvidenceContract: "available" | "not_defined" | "unresolved";
   requiredEvidence: SourceNewRequiredEvidenceView[];
   governedContext: SourceNewGovernedContextView;
   industryMetrics: SourceNewIndustryMetricView[];
@@ -160,15 +161,29 @@ function artifactFamilies(artifacts: readonly SourceNewEventIntelligenceArtifact
   );
 }
 
+function stageLabel(stage: string): string {
+  return stage
+    .split("_")
+    .map((part) => `${part.slice(0, 1).toUpperCase()}${part.slice(1)}`)
+    .join(" ");
+}
+
 function allowedStatementFor(args: {
   archetypeName: string;
   resolved: boolean;
   stage: string;
+  stageEvidenceContract: SourceNewEventIntelligenceView["stageEvidenceContract"];
   availableTitles: readonly string[];
   hardGapLabels: readonly string[];
 }): string {
   if (!args.resolved) {
     return "This event does not yet map to a supported sourcing playbook, so Source will not provide event-specific advice.";
+  }
+  if (args.stageEvidenceContract === "not_defined") {
+    if (args.stage === "value") {
+      return `Source resolves this event to the ${args.archetypeName} playbook. That playbook does not define a separate evidence contract for the final Value stage, so final value claims must be supported by governed evidence from the completed lifecycle.`;
+    }
+    return `Source resolves this event to the ${args.archetypeName} playbook. That playbook does not define a separate evidence contract for the ${stageLabel(args.stage)} stage, so Source will not infer requirements or a recommendation for it.`;
   }
   if (args.availableTitles.length === 0) {
     return `Source can identify the ${args.archetypeName} playbook and its evidence gaps, but it cannot make a recommendation yet.`;
@@ -204,6 +219,12 @@ export function buildSourceNewEventIntelligence(input: {
 
   let requiredEvidence: SourceNewRequiredEvidenceView[] = [];
   let industryMetrics: SourceNewIndustryMetricView[] = [];
+  const stageEvidenceContract: SourceNewEventIntelligenceView["stageEvidenceContract"] =
+    !resolution.resolved || !resolution.archetype
+      ? "unresolved"
+      : resolution.archetype.stageModel.some((item) => item.stage === stage)
+        ? "available"
+        : "not_defined";
 
   if (resolution.resolved && resolution.archetype) {
     const requirements = resolveSourceStageRequirements(
@@ -270,15 +291,29 @@ export function buildSourceNewEventIntelligence(input: {
     archetypeName: resolution.archetype?.name ?? "unresolved archetype",
     resolved: resolution.resolved,
     stage,
+    stageEvidenceContract,
     availableTitles,
     hardGapLabels,
   });
-  const nextQuestion = firstEvidenceGap
-    ? `Can you provide ${firstEvidenceGap.sourceDocHint}?`
-    : industryMetrics[0]
-      ? `Which comparability fields are valid for ${industryMetrics[0].label}?`
-      : "Which governed evidence should resolve the next sourcing decision?";
-  const nextAction = firstEvidenceGap
+  const nextQuestion =
+    stageEvidenceContract === "not_defined" && stage === "value"
+      ? "Which governed evidence supports the recorded final value outcome?"
+      : stageEvidenceContract === "not_defined"
+        ? `Which governed evidence should support the recorded ${stageLabel(stage)} decision?`
+      : firstEvidenceGap
+        ? `Can you provide ${firstEvidenceGap.sourceDocHint}?`
+        : industryMetrics[0]
+          ? `Which comparability fields are valid for ${industryMetrics[0].label}?`
+          : "Which governed evidence should resolve the next sourcing decision?";
+  const nextAction = stageEvidenceContract === "not_defined"
+    ? {
+        label: "Review lifecycle evidence",
+        detail:
+          stage === "value"
+            ? "Review the governed evidence and unresolved gaps from the completed lifecycle before relying on a final value claim."
+            : `Review governed lifecycle evidence before relying on the recorded ${stageLabel(stage)} outcome.`,
+      }
+    : firstEvidenceGap
     ? {
         label: "Resolve evidence gap",
         detail: `Add or review ${firstEvidenceGap.label} before relying on this intelligence.`,
@@ -309,6 +344,7 @@ export function buildSourceNewEventIntelligence(input: {
       reason: resolution.reason,
     },
     currentStage: stage,
+    stageEvidenceContract,
     requiredEvidence,
     governedContext: {
       policyVersion: bundle.policy_version,

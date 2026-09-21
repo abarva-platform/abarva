@@ -23,14 +23,45 @@ for arg in "$@"; do
   esac
 done
 
-cd "$REPO_ROOT"
+# A failed cd is not survivable here. Without this the gate would run every
+# check against whatever directory it happened to be in, find nothing wrong
+# with a tree it was never asked about, and exit 0. An exit status that reads
+# as assurance is the one thing this script must not get wrong.
+cd "$REPO_ROOT" || {
+  echo "[FAIL] could not enter $REPO_ROOT"
+  echo "HYGIENE GATE: FAIL"
+  exit 1
+}
+
+# Where a finding goes once this gate has made it. Sourced rather than inlined
+# so the reporting can be exercised by running it, instead of by reading this
+# file's source text.
+#
+# Missing is fatal. There is no `set -e` here, so a failed `.` would print an
+# error and carry on -- and the gate would then run every check, find things,
+# and report none of them, while still exiting 0. A gate that cannot report
+# is worse than a gate that did not run, because its exit status still reads
+# as assurance.
+HYGIENE_REPORT="$REPO_ROOT/scripts/integration/hygiene_gate_report.sh"
+if [ ! -f "$HYGIENE_REPORT" ]; then
+  echo "[FAIL] hygiene_gate_report.sh not found at $HYGIENE_REPORT"
+  echo "HYGIENE GATE: FAIL"
+  exit 1
+fi
+# shellcheck source=scripts/integration/hygiene_gate_report.sh
+. "$HYGIENE_REPORT"
 
 pass() { echo "[PASS] $1"; PASS=$((PASS+1)); }
 fail() { echo "[FAIL] $1"; FAIL=$((FAIL+1)); }
 # A finding that is real but must not block the gate still has to be reported as
 # a finding. Before T-071 the only alternative to fail() was pass(), so a check
 # that found something printed the same line as a check that found nothing.
-warn() { echo "[WARN] $1"; WARN=$((WARN+1)); }
+#
+# Printing it was not enough: the workflow read only the exit status, so the
+# verdict reached the raw log and nowhere a person looks. hygiene_warn also
+# annotates the pull request under Actions, and the summary lists every
+# finding. Warnings are still not failures -- the exit status is unchanged.
+warn() { hygiene_warn "$1"; WARN=$((WARN+1)); }
 section() { echo ""; echo "=== $1 ==="; }
 
 # Section 1: Git hygiene
@@ -50,7 +81,17 @@ fi
 # Carve-out: conflict markers inside fenced code blocks in *.md files are
 # acceptable per the BUILD_WAVE_PROGRESS_PROTOCOL (documentation examples).
 # Filter out any lines reported from .md files.
-CONFLICT_COUNT=$(git grep -n "^<<<<<<<\|^=======\|^>>>>>>>" -- . 2>/dev/null | grep -v "^Binary\|#.*<<<<\|#.*>>>>>>>\|#.*=======\|\.md:" | wc -l | tr -d ' ')
+# The exclusions dropped three patterns -- `#.*<<<<`, `#.*>>>>>>>` and
+# `#.*=======` -- that could never fire. The search pattern is anchored with
+# `^`, so it only ever matches a line that BEGINS with a marker; a commented
+# `# <<<<<<< HEAD` is not matched in the first place and there is nothing for
+# the exclusion to remove. Measured on a scratch repository holding both a
+# real conflict and a commented one: the exclusions filtered 0 of 3 matches.
+#
+# A guard nothing can exercise is not a safeguard, and leaving it in reads as
+# though commented markers are being handled deliberately when the anchor is
+# what handles them.
+CONFLICT_COUNT=$(git grep -n "^<<<<<<<\|^=======\|^>>>>>>>" -- . 2>/dev/null | grep -cv "^Binary\|\.md:")
 if [ "$CONFLICT_COUNT" -gt 0 ]; then
   fail "Conflict markers found ($CONFLICT_COUNT lines)"
   git grep -n "^<<<<<<<\|^=======\|^>>>>>>>" -- . 2>/dev/null | grep -v "Binary\|\.md:" | head -10
@@ -250,10 +291,9 @@ fi
 # Summary
 section "Summary"
 echo "PASS: $PASS  WARN: $WARN  FAIL: $FAIL"
+hygiene_write_step_summary "$PASS" "$WARN" "$FAIL"
+hygiene_verdict_line "$FAIL" "$WARN"
 if [ "$FAIL" -gt 0 ]; then
-  echo "HYGIENE GATE: FAIL"
   exit 1
-else
-  echo "HYGIENE GATE: PASS"
-  exit 0
 fi
+exit 0

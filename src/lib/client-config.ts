@@ -488,20 +488,14 @@ const THESUNDARAM_OPERATOR_LOCALPART_TO_CLIENT_KEY: ReadonlyArray<
   ["anand.sundaram+lakeshore", "lakeshore"],
 ];
 
-/**
- * Real external pilot users, each pinned to exactly one client. These are live
- * people (pilot sponsors / evaluators), NOT synthetic demo personas — keep the
- * list tiny, explicit, and reviewed: every entry is an access grant. Ported
- * from the production pilot so the main line carries the same access.
- * (fix/pilot-email-access-on-main)
- */
+/** Exact pilot access grants, each pinned to one client; never broaden to a domain grant. */
 const PILOT_EXACT_EMAIL_TO_CLIENT_KEY: Readonly<Record<string, ClientKey>> = {
-  "kmysore@gmail.com": "meridian", // Kiran Mysore · CDAO / pilot sponsor
-  "surekha.durvasula@gmail.com": "lakeshore", // Surekha Durvasula · VP Innovation / Delivery
+  "kmysore@gmail.com": "meridian",
+  "surekha.durvasula@gmail.com": "lakeshore",
   "anandshp@gmail.com": "lakeshore",
   "admin@abarva.ai": "meridian",
   "anand@abarva.ai": "meridian",
-  "mreddy@republicebank.com": "arcturus", // Madhu Reddy · Republic E Bank / Financial Services pilot
+  "mreddy@republicebank.com": "arcturus",
 };
 
 const AGENT_EXACT_EMAIL_TO_CLIENT_KEY: Readonly<Record<string, ClientKey>> =

@@ -14,10 +14,21 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { SourceArtifactDrawer } from "@/components/source/SourceArtifactDrawer";
+import { SentinelAgentColumn } from "@/components/source/SentinelAgentColumn";
 import type {
   SourceArtifactDetail,
   SourceArtifactTier,
 } from "@/lib/source/types";
+
+jest.mock("@/components/shell/AgentColumn", () => ({
+  AgentColumn: ({
+    agent,
+  }: {
+    agent: { name: string; role: string };
+  }) => (
+    <div data-agent-name={agent.name} data-agent-role={agent.role} />
+  ),
+}));
 
 const BASE_ARTIFACT: SourceArtifactDetail = {
   id: "test-artifact-001",
@@ -266,9 +277,8 @@ describe("SourceArtifactDrawer · hygiene", () => {
   });
 
   it("Source shell rail uses aVa naming rather than stale internal agent labels", () => {
-    const railSrc = readFileSync(
-      join(process.cwd(), "src/components/source/SentinelAgentColumn.tsx"),
-      "utf8",
+    const rail = renderToStaticMarkup(
+      createElement(SentinelAgentColumn),
     );
     const scorecardSrc = readFileSync(
       join(
@@ -282,10 +292,10 @@ describe("SourceArtifactDrawer · hygiene", () => {
       "utf8",
     );
 
-    expect(railSrc).toContain("name: 'aVa'");
-    expect(railSrc).toContain("role: 'Source advisor'");
-    expect(railSrc).not.toContain("name: 'Ava'");
-    expect(railSrc).not.toContain("role: 'Validator'");
+    expect(rail).toContain('data-agent-name="aVa"');
+    expect(rail).toContain('data-agent-role="Source advisor"');
+    expect(rail).not.toContain('data-agent-name="Ava"');
+    expect(rail).not.toContain('data-agent-role="Validator"');
     expect(scorecardSrc).not.toContain("Sentinel ·");
     expect(valueSrc).not.toContain("Sentinel ·");
   });

@@ -47,6 +47,8 @@ import {
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
+import ts from "typescript";
+
 import {
   extractWorkflowRunCommands,
   expandWorkflowCommands,
@@ -76,6 +78,84 @@ const TENANT_KEY_SOURCE_RE =
   /\b(?:tenantKey|clientKey|requestedClientKey|tenant_key|client_key)\b/;
 const TENANT_READ_PATH_RE =
   /(?:read|query|queries|adapter|route|repository|lookup|search|fetch)/i;
+
+function sourceWithoutNonExecutableSignalText(source, fileName) {
+  const lowerFileName = fileName.toLowerCase();
+  const scriptKind = lowerFileName.endsWith(".tsx")
+    ? ts.ScriptKind.TSX
+    : lowerFileName.endsWith(".jsx")
+      ? ts.ScriptKind.JSX
+      : /\.[cm]?ts$/.test(lowerFileName)
+        ? ts.ScriptKind.TS
+        : ts.ScriptKind.JS;
+  const sourceFile = ts.createSourceFile(
+    fileName,
+    source,
+    ts.ScriptTarget.Latest,
+    true,
+    scriptKind,
+  );
+  const spans = [];
+
+  const addCommentsAt = (position) => {
+    for (const range of ts.getLeadingCommentRanges(source, position) ?? []) {
+      spans.push([range.pos, range.end]);
+    }
+    for (const range of ts.getTrailingCommentRanges(source, position) ?? []) {
+      spans.push([range.pos, range.end]);
+    }
+  };
+
+  const visit = (node) => {
+    addCommentsAt(node.getFullStart());
+    addCommentsAt(node.getEnd());
+    if (
+      ts.isStringLiteralLike(node) ||
+      ts.isTemplateLiteralToken(node) ||
+      ts.isRegularExpressionLiteral(node) ||
+      ts.isJsxText(node) ||
+      ts.isInterfaceDeclaration(node) ||
+      ts.isTypeAliasDeclaration(node)
+    ) {
+      spans.push([node.getStart(sourceFile), node.getEnd()]);
+    }
+    if (ts.isCallExpression(node)) {
+      const callee = node.expression;
+      const isPromiseReject =
+        ts.isPropertyAccessExpression(callee) &&
+        ts.isIdentifier(callee.expression) &&
+        callee.expression.text === "Promise" &&
+        callee.name.text === "reject";
+      let isRejectCallback = false;
+      if (ts.isIdentifier(callee) && callee.text === "reject") {
+        for (let parent = node.parent; parent; parent = parent.parent) {
+          if (ts.isFunctionLike(parent)) {
+            isRejectCallback = parent.parameters.some(
+              (parameter) =>
+                ts.isIdentifier(parameter.name) && parameter.name.text === "reject",
+            );
+            if (isRejectCallback) break;
+          }
+        }
+      }
+      if (isPromiseReject || isRejectCallback) {
+        spans.push([callee.getStart(sourceFile), callee.getEnd()]);
+      }
+    }
+    ts.forEachChild(node, visit);
+  };
+  visit(sourceFile);
+
+  const characters = [...source];
+  for (const [start, end] of spans) {
+    for (let index = start; index < end; index += 1) {
+      if (characters[index] !== "\n" && characters[index] !== "\r") {
+        characters[index] = " ";
+      }
+    }
+  }
+  return characters.join("");
+}
 
 /** A test runner token, as it appears in a command line. */
 const RUNNER_RE = /\b(?:npx\s+)?(?:jest|vitest)\b/;
@@ -175,10 +255,31 @@ function ignorePatternsFor(root, command, unresolved) {
     // Jest reads every following token as a pattern until the next flag.
     for (let next = index + 1; next < tokens.length; next += 1) {
       if (tokens[next].startsWith("-")) break;
-      if (tokens[next].length > 0) patterns.push(tokens[next]);
+      const pattern = unquote(tokens[next]);
+      if (pattern.length > 0) patterns.push(pattern);
     }
   }
   return patterns;
+}
+
+/**
+ * Shell quoting removed, because this file reads command TEXT where the shell
+ * reads command ARGUMENTS. `--testPathIgnorePatterns "foo$"` excludes `foo` at
+ * run time — the shell strips the quotes before jest ever sees them — so a
+ * census that keeps them compares a pattern that cannot match and reports the
+ * excluded file as covered. That is the over-stating direction: a quarantined
+ * suite reads as run, and the directory holding it drops out of the queue of
+ * work this file exists to rank.
+ *
+ * Only a matched pair wrapping the WHOLE token is shell quoting. A quote in
+ * the middle belongs to the regex, and stripping that would break patterns
+ * that work today.
+ */
+function unquote(token) {
+  if (token.length < 2) return token;
+  const first = token[0];
+  if (first !== '"' && first !== "'") return token;
+  return token.endsWith(first) ? token.slice(1, -1) : token;
 }
 
 /**
@@ -228,65 +329,92 @@ function resolveSourceModule(root, importer, specifier) {
 }
 
 /**
- * A type-only import is erased before the test runs, so the test never loads the
- * module and never exercises anything declared on it. Counting one as a product
- * edge is how `src/components/source/canvas/__tests__` came to carry the control
- * id `agent-dock-chat-turns`: the only thing joining it to `AgentDock.tsx` was
- * `import type { ChatMessage }`. The conclusion happened to be right there, but
- * a risk ranking that a borrowed type name can inflate will eventually send
- * someone to the wrong directory first.
+ * Every module specifier a test file loads at runtime.
  *
- * Three forms are erasable and are stripped before specifiers are read:
- * `import type … from "m"`, `export type … from "m"`, and a brace list whose
- * every specifier carries the inline `type` keyword. A brace list with one value
- * specifier among the types is NOT erasable — the module is loaded for that one
- * binding — so it is left in place.
- */
-const TYPE_ONLY_STATEMENT_RE =
-  /\b(?:import|export)\s+type\s[^;'"]*?\bfrom\s*["'][^"']+["']/g;
-/**
- * A bare side-effect import — `import "../route";` — loads the module and runs
- * it, so it is a product edge in exactly the way a named import is. It carries
- * no `from`, so the specifier pattern below never saw it: a directory whose
- * only edge to a governed module took that form scored zero and banded
- * `unclassified`. That under-states governed risk, which is the dangerous
- * direction for a ranking whose job is to say where to look first.
+ * This was three regular expressions over source text, grown one branch at a
+ * time as somebody noticed a form the previous branches missed. T-075 asked
+ * for the gap to be bounded rather than enumerated, so the whole tree was
+ * parsed with TypeScript's own scanner and the two readers compared over
+ * 2,321 test files and 5,705 runtime edges.
  *
- * Anchored to the start of a line deliberately. This file's own header records
- * why the census refuses to credit a path a reachable script merely mentions,
- * and an unanchored `import\s*["']` would credit the word `import` followed by
- * a quoted path anywhere in the file — prose in a comment included. A statement
- * that does not begin its line is missed instead, which is the safe direction.
+ * The result inverted the worry. The regexes missed **zero** runtime edges.
+ * What they did instead was credit **608** specifiers that are not edges at
+ * all, because a quoted module path inside an assertion looks exactly like a
+ * quoted module path inside an import:
+ *
+ *     expect(pageSource).not.toContain('from "@/lib/active-client"');
+ *
+ * The census read that as the test importing `@/lib/active-client` -- from a
+ * line asserting that the page must NOT import it. Over-crediting is the
+ * dangerous direction here: this file ranks which directory to wire next, and
+ * a directory looks covered when nothing actually imports the module. It also
+ * contradicts this file's own rule, recorded in its header, that a path a
+ * script merely mentions is not an edge.
+ *
+ * So the reader is the parser. An assertion string is not an import node, and
+ * no fourth branch has to be invented the next time somebody writes a form
+ * nobody anticipated.
+ *
+ * What is deliberately NOT counted:
+ *
+ *   type-only imports        erased at compile time, so nothing is loaded --
+ *                            the same rule the regexes implemented, now
+ *                            decided by the parser's own isTypeOnly flags
+ *                            rather than by matching `type` in a brace list.
+ *   jest.mock("m") targets   a mock loads nothing. It does name a module the
+ *                            suite is exercising, and whether that should
+ *                            count is a real question with 1,199 instances --
+ *                            but it is a change in what the census MEANS, not
+ *                            a reader fix, so it is left as it was and filed
+ *                            rather than decided here.
  */
-const SIDE_EFFECT_IMPORT_RE = /^[ \t]*import\s*["']([^"']+)["']/gm;
+export function runtimeModuleSpecifiers(source, fileName) {
+  const sourceFile = ts.createSourceFile(
+    fileName,
+    source,
+    ts.ScriptTarget.Latest,
+    /* setParentNodes */ true,
+  );
+  const specifiers = [];
 
-const BRACED_IMPORT_RE =
-  /\b(?:import|export)\s*\{([^}]*)\}\s*from\s*["'][^"']+["']/g;
+  const visit = (node) => {
+    if (ts.isImportDeclaration(node)) {
+      const clause = node.importClause;
+      // No clause at all is a bare side-effect import: it loads and runs.
+      const named = clause?.namedBindings;
+      const erased =
+        clause?.isTypeOnly === true ||
+        (named !== undefined &&
+          ts.isNamedImports(named) &&
+          named.elements.length > 0 &&
+          named.elements.every((element) => element.isTypeOnly));
+      if (!erased && ts.isStringLiteral(node.moduleSpecifier)) {
+        specifiers.push(node.moduleSpecifier.text);
+      }
+    } else if (ts.isExportDeclaration(node) && node.moduleSpecifier) {
+      if (!node.isTypeOnly && ts.isStringLiteral(node.moduleSpecifier)) {
+        specifiers.push(node.moduleSpecifier.text);
+      }
+    } else if (ts.isCallExpression(node)) {
+      const argument = node.arguments[0];
+      if (argument && ts.isStringLiteral(argument)) {
+        const callee = node.expression;
+        const isDynamicImport = callee.kind === ts.SyntaxKind.ImportKeyword;
+        const isRequire =
+          ts.isIdentifier(callee) && callee.escapedText === "require";
+        if (isDynamicImport || isRequire) specifiers.push(argument.text);
+      }
+    }
+    ts.forEachChild(node, visit);
+  };
 
-function stripErasableImports(source) {
-  return source
-    .replace(TYPE_ONLY_STATEMENT_RE, " ")
-    .replace(BRACED_IMPORT_RE, (statement, specifierList) => {
-      const specifiers = specifierList
-        .split(",")
-        .map((entry) => entry.trim())
-        .filter((entry) => entry.length > 0);
-      if (specifiers.length === 0) return statement;
-      return specifiers.every((entry) => /^type\s+\S/.test(entry)) ? " " : statement;
-    });
+  visit(sourceFile);
+  return specifiers;
 }
 
 function importedProductSources(root, testFile) {
-  const source = stripErasableImports(readFileSync(path.join(root, testFile), "utf8"));
-  const specifiers = [];
-  for (const match of source.matchAll(
-    /(?:\bfrom\s*|\bimport\s*\(\s*|\brequire\s*\(\s*)["']([^"']+)["']/g,
-  )) {
-    specifiers.push(match[1]);
-  }
-  for (const match of source.matchAll(SIDE_EFFECT_IMPORT_RE)) {
-    specifiers.push(match[1]);
-  }
+  const source = readFileSync(path.join(root, testFile), "utf8");
+  const specifiers = runtimeModuleSpecifiers(source, testFile);
 
   const inferred = testFile
     .replace("/__tests__/", "/")
@@ -336,15 +464,17 @@ function governedRiskForDirectory(root, testFiles, catalogPaths) {
 
   for (const sourcePath of productSources) {
     const source = readFileSync(path.join(root, sourcePath), "utf8");
+    const executableSource = sourceWithoutNonExecutableSignalText(source, sourcePath);
     if (
       APPROVAL_OR_LIFECYCLE_PATH_RE.test(sourcePath) ||
-      APPROVAL_OR_LIFECYCLE_SOURCE_RE.test(source)
+      APPROVAL_OR_LIFECYCLE_SOURCE_RE.test(executableSource)
     ) {
       approvalSources.push(sourcePath);
     }
     if (
-      TENANT_RESOLVER_SOURCE_RE.test(source) ||
-      (TENANT_READ_PATH_RE.test(sourcePath) && TENANT_KEY_SOURCE_RE.test(source))
+      TENANT_RESOLVER_SOURCE_RE.test(executableSource) ||
+      (TENANT_READ_PATH_RE.test(sourcePath) &&
+        TENANT_KEY_SOURCE_RE.test(executableSource))
     ) {
       tenantReadSources.push(sourcePath);
     }
@@ -476,23 +606,26 @@ function readWorkflows(root) {
  * verifier asserts on — as a run of that suite, which would *under*-state the
  * gap. And a literal of `'npx jest'` with no argument, which one audit compares
  * workflow lines against, cannot run anything.
+ *
+ * Extraction collapses whitespace but preserves backslashes. Path matching is
+ * normalized later; regex ignore arguments are read from this raw command text.
  */
 function jestInvocationsInScript(source, scriptPath) {
   const invocations = [];
 
   for (const match of source.matchAll(/\[([^[\]]*)\]/g)) {
-    const inner = normalize(match[1]);
+    const inner = collapseWhitespace(match[1]);
     if (/(?:^|[\s"'`,])jest(?:$|[\s"'`,])/.test(inner)) invocations.push(inner);
   }
 
   for (const match of source.matchAll(/(["'`])([^"'`\n]*)\1/g)) {
-    const literal = normalize(match[2]);
+    const literal = collapseWhitespace(match[2]);
     if (/^(?:npx\s+)?jest\s+\S/.test(literal)) invocations.push(literal);
   }
 
   if (scriptPath.endsWith(".sh")) {
     for (const line of source.split(/\r?\n/)) {
-      const normalized = normalize(line);
+      const normalized = collapseWhitespace(line);
       if (
         /(?:^|[;&|(]|\bif\s|\bthen\s|\belif\s|\bdo\s|&&|\|\|)\s*(?:npx\s+)?jest\s+\S/.test(
           normalized,
@@ -592,20 +725,19 @@ export function collectReachableCommands(root, packageScripts) {
         scriptsSeen.add(key);
 
         const source = readFileSync(absolute, "utf8");
-        for (const invocation of jestInvocationsInScript(source, scriptPath)) {
+        for (const rawInvocation of jestInvocationsInScript(source, scriptPath)) {
+          const invocation = normalize(rawInvocation);
           const namesAPath = /(?:^|[\s"'`,[(])src\//.test(invocation);
           if (namesAPath) {
-            // A script's Jest lines reach here already normalized, so any regex
-            // escape inside them has been rewritten and their ignore patterns
-            // cannot be read correctly. No script in this repository passes the
-            // flag today; if one starts to, this records it rather than reading
-            // a mangled pattern and reporting a subtraction that did not happen.
-            if (invocation.includes(IGNORE_FLAG)) {
+            const scriptIgnorePatterns = ignorePatterns(rawInvocation);
+            if (
+              rawInvocation.includes(IGNORE_FLAG) &&
+              scriptIgnorePatterns.length === 0
+            ) {
               unresolvedIgnoreArguments.push({
                 script: scriptPath,
-                source: invocation,
-                reason:
-                  "ignore patterns inside a script file are normalized before they are read",
+                source: rawInvocation,
+                reason: "ignore patterns inside this script invocation could not be parsed",
               });
             }
             reachable.push({
@@ -613,7 +745,9 @@ export function collectReachableCommands(root, packageScripts) {
               source: scriptPath,
               pullRequest,
               command: invocation,
-              ignorePatterns: [],
+              // Paths use the normalized command; regular expressions must
+              // retain their escapes, so the ignore reader receives raw text.
+              ignorePatterns: scriptIgnorePatterns,
             });
             continue;
           }
@@ -657,9 +791,11 @@ export function collectReachableCommands(root, packageScripts) {
 
 function coverageFor(testPath, reachable) {
   const candidates = registrationCandidates(testPath);
-  const hits = reachable.filter(
+  const named = reachable.filter((entry) =>
+    candidates.some((candidate) => commandNamesPath(entry.command, candidate)),
+  );
+  const hits = named.filter(
     (entry) =>
-      candidates.some((candidate) => commandNamesPath(entry.command, candidate)) &&
       // Scoped to the command that passes them. A file one workflow excludes
       // and another runs in full is covered, and subtracting globally would
       // under-state the run set — the error this change exists to remove,
@@ -668,14 +804,32 @@ function coverageFor(testPath, reachable) {
         ignoreMatches(pattern, testPath),
       ),
   );
+  // A file some command names and that same command then excludes by name has
+  // been looked at: somebody wrote it into a quarantine list with a reason. A
+  // file no command names at all has not. Both are equally "uncovered", and
+  // reporting only that conflates triaged work with untriaged work — which is
+  // how a draw from this census's own risk ranking came back with eleven of
+  // twenty files already quarantined.
+  const excludedByNamingCommand = hits.length === 0 && named.length > 0;
   return {
     covered: hits.length > 0,
     pullRequestCovered: hits.some((entry) => entry.pullRequest),
+    declaredQuarantine: excludedByNamingCommand,
     via: [...new Set(hits.map((entry) => entry.via))].sort(),
   };
 }
 
-export function buildCensus(root) {
+/**
+ * `includeUnrunPaths` adds `unrunTestPathsByDirectory` to the returned object.
+ * It is OFF by default and the CLI turns it on only for `--explain`, which
+ * never writes: the committed artifact must stay byte-identical, or `--check`
+ * and the drift line fire on a change that measured nothing.
+ *
+ * The same reason is why the per-directory rows below strip the field back out
+ * before they are published. Those two maps spread `...row`, so a field added
+ * to a row reaches the artifact whether or not anyone intended it to.
+ */
+export function buildCensus(root, { includeUnrunPaths = false } = {}) {
   const packageScripts =
     JSON.parse(readFileSync(path.join(root, "package.json"), "utf8")).scripts ??
     {};
@@ -687,6 +841,7 @@ export function buildCensus(root) {
   const directories = new Map();
   let covered = 0;
   let pullRequestCovered = 0;
+  let declaredQuarantine = 0;
 
   for (const testFile of testFiles) {
     const result = coverageFor(testFile, reachable);
@@ -698,14 +853,21 @@ export function buildCensus(root) {
       directories.set(directory, {
         testFiles: 0,
         covered: 0,
+        declaredQuarantine: 0,
         via: new Set(),
         testPaths: [],
+        unrunPaths: [],
       });
     }
     const entry = directories.get(directory);
     entry.testFiles += 1;
     entry.testPaths.push(testFile);
     if (result.covered) entry.covered += 1;
+    else entry.unrunPaths.push(testFile);
+    if (result.declaredQuarantine) {
+      entry.declaredQuarantine += 1;
+      declaredQuarantine += 1;
+    }
     for (const via of result.via) entry.via.add(via);
   }
 
@@ -715,6 +877,10 @@ export function buildCensus(root) {
       testFiles: entry.testFiles,
       coveredTestFiles: entry.covered,
       unrunTestFiles: entry.testFiles - entry.covered,
+      declaredQuarantineTestFiles: entry.declaredQuarantine,
+      untriagedUnrunTestFiles:
+        entry.testFiles - entry.covered - entry.declaredQuarantine,
+      unrunTestPaths: [...entry.unrunPaths].sort(),
       via: [...entry.via].sort(),
       governedRisk: governedRiskForDirectory(
         root,
@@ -733,8 +899,14 @@ export function buildCensus(root) {
   // two, and in practice excluded every partially covered directory from the
   // queue this ranking exists to order — 257 unrun files across 22
   // directories, none of them visible here, at the time this changed.
+  // Ranked on files that are unrun AND not already in a quarantine somebody
+  // wrote with a reason. Before this filter, ranks 2 and 3 of the critical
+  // band were directories whose entire unrun set was declared quarantine, so
+  // the ordering that exists to say "triage this next" was offering work that
+  // had already been triaged. The full `unrunTestFiles` stays on every row, so
+  // nothing is hidden — only the ordering stops repeating itself.
   const governedRiskRows = rows
-    .filter((row) => row.unrunTestFiles > 0)
+    .filter((row) => row.untriagedUnrunTestFiles > 0)
     .filter((row) => row.governedRisk.score > 0)
     .sort(
       (a, b) =>
@@ -750,6 +922,8 @@ export function buildCensus(root) {
     directory: row.directory,
     testFiles: row.testFiles,
     unrunTestFiles: row.unrunTestFiles,
+    declaredQuarantineTestFiles: row.declaredQuarantineTestFiles,
+    untriagedUnrunTestFiles: row.untriagedUnrunTestFiles,
     governedRisk: {
       score: row.governedRisk.score,
       band: row.governedRisk.band,
@@ -767,7 +941,14 @@ export function buildCensus(root) {
     }));
   const uncoveredDirectories = rows
     .filter((row) => row.coveredTestFiles === 0)
-    .map(({ governedRisk: _governedRisk, unrunTestFiles: _unrun, ...row }) => row);
+    .map(
+      ({
+        governedRisk: _governedRisk,
+        unrunTestFiles: _unrun,
+        unrunTestPaths: _unrunPaths,
+        ...row
+      }) => row,
+    );
   const partialDirectories = rows.filter(
     (row) => row.coveredTestFiles > 0 && row.coveredTestFiles < row.testFiles,
   );
@@ -776,6 +957,13 @@ export function buildCensus(root) {
   // is a subtraction with an unprinted minuend.
   const directoriesWithUnrunTestFiles = rows.filter(
     (row) => row.unrunTestFiles > 0,
+  );
+  // The ranking's own denominator moved with its filter. Subtracting the
+  // ranking from the wider set would have recounted every fully quarantined
+  // governed directory as "unclassified", which is the opposite of what that
+  // number means.
+  const directoriesWithUntriagedUnrunTestFiles = rows.filter(
+    (row) => row.untriagedUnrunTestFiles > 0,
   );
 
   return {
@@ -787,7 +975,8 @@ export function buildCensus(root) {
       "Four hops are followed: workflow run step, npm script (recursively), repo script file, test-ratchet baseline JSON.",
       "pullRequestCovered counts only workflows triggered by pull_request or merge_group, i.e. the set that can block a merge.",
       "While indeterminateInvocations is non-empty, uncoveredTestFiles is an upper bound.",
-      "Every directory holding a file no workflow runs is ranked by governed-surface risk: declared AI controls, approval or lifecycle writes, then tenant-scoped reads; the count of unrun files is only a tie-breaker.",
+      "An unrun file a naming command excludes through its own --testPathIgnorePatterns is a declared quarantine: triaged, with a reason recorded somewhere. An unrun file no command names is untriaged. Both stay in uncoveredTestFiles; only untriagedUnrunTestFiles separates them.",
+      "Every directory holding an UNTRIAGED unrun file is ranked by governed-surface risk: declared AI controls, approval or lifecycle writes, then tenant-scoped reads; the count of unrun files is only a tie-breaker. A directory whose unrun set is entirely declared quarantine is not ranked, because it has already been triaged.",
       "Governed-risk signals come from product modules a test loads at runtime, not from directory names alone; type-only imports are erased before the test runs and are not counted as edges.",
       "Evidence source lists for the top 25 governed-risk directories are sorted and capped at five paths per signal; companion counts preserve the full match cardinality.",
       "No timestamp is recorded, so refreshing this file on an unchanged tree is a no-op.",
@@ -804,6 +993,10 @@ export function buildCensus(root) {
       directoriesPartiallyCovered: partialDirectories.length,
       directoriesUncovered: uncoveredDirectories.length,
       directoriesWithUnrunTestFiles: directoriesWithUnrunTestFiles.length,
+      directoriesWithUntriagedUnrunTestFiles:
+        directoriesWithUntriagedUnrunTestFiles.length,
+      declaredQuarantineTestFiles: declaredQuarantine,
+      untriagedUnrunTestFiles: testFiles.length - covered - declaredQuarantine,
       indeterminateInvocations: indeterminate.length,
       unresolvedIgnoreArguments: unresolvedIgnoreArguments.length,
       criticalGovernedRiskDirectories: governedRiskRanking.filter(
@@ -813,16 +1006,33 @@ export function buildCensus(root) {
         (row) => row.governedRisk.band === "high",
       ).length,
       unclassifiedRiskDirectories:
-        directoriesWithUnrunTestFiles.length - governedRiskRanking.length,
+        directoriesWithUntriagedUnrunTestFiles.length -
+        governedRiskRanking.length,
     },
     indeterminateInvocations: indeterminate,
     unresolvedIgnoreArguments,
     partiallyCoveredDirectories: partialDirectories.map(
-      ({ governedRisk: _governedRisk, unrunTestFiles: _unrun, ...row }) => row,
+      ({
+        governedRisk: _governedRisk,
+        unrunTestFiles: _unrun,
+        unrunTestPaths: _unrunPaths,
+        ...row
+      }) => row,
     ),
     governedRiskRanking,
     governedRiskEvidence,
     uncoveredDirectories,
+    ...(includeUnrunPaths
+      ? {
+          unrunTestPathsByDirectory: directoriesWithUnrunTestFiles.map(
+            (row) => ({
+              directory: row.directory,
+              unrunTestFiles: row.unrunTestFiles,
+              unrunTestPaths: row.unrunTestPaths,
+            }),
+          ),
+        }
+      : {}),
   };
 }
 
@@ -834,7 +1044,8 @@ function summarize(census) {
     `  run by a pull-request workflow: ${c.pullRequestCoveredTestFiles}`,
     `  run by no workflow:             ${c.uncoveredTestFiles}`,
     `  directories with tests:         ${c.directoriesWithTests} (${c.directoriesFullyCovered} fully covered, ${c.directoriesPartiallyCovered} partial, ${c.directoriesUncovered} uncovered)`,
-    `  directories with unrun tests:   ${c.directoriesWithUnrunTestFiles}`,
+    `  run by no workflow, untriaged: ${c.untriagedUnrunTestFiles} (${c.declaredQuarantineTestFiles} are declared quarantines)`,
+    `  directories with unrun tests:   ${c.directoriesWithUnrunTestFiles} (${c.directoriesWithUntriagedUnrunTestFiles} hold an untriaged file)`,
     `  governed risk among them:       ${c.criticalGovernedRiskDirectories} critical, ${c.highGovernedRiskDirectories} high`,
   ];
   if (c.indeterminateInvocations > 0) {
@@ -855,10 +1066,10 @@ function summarize(census) {
   }
   const governedHead = census.governedRiskRanking.slice(0, 5);
   if (governedHead.length > 0) {
-    lines.push("  top governed-risk directories by unrun tests:");
+    lines.push("  top governed-risk directories by untriaged unrun tests:");
     for (const row of governedHead) {
       lines.push(
-        `    ${row.governedRisk.rank}. ${row.directory} (${row.governedRisk.band}; ${row.unrunTestFiles} unrun of ${row.testFiles} tests; ${row.governedRisk.signals.join(", ")})`,
+        `    ${row.governedRisk.rank}. ${row.directory} (${row.governedRisk.band}; ${row.untriagedUnrunTestFiles} untriaged of ${row.unrunTestFiles} unrun of ${row.testFiles} tests; ${row.governedRisk.signals.join(", ")})`,
       );
     }
   }
@@ -893,8 +1104,74 @@ function writeIfChanged(absolutePath, contents) {
  * that fails on disagreement would fire on every unrelated PR that adds a
  * test, or only when the file is genuinely stale. Enforce first and you learn
  * that by being wrong in public.
+ *
+ * Exported so the report can be driven with a known-stale committed census
+ * and a known-current one. Its guard could previously only read this file's
+ * source text and assert that certain strings appeared in it, which is a
+ * check on the prose rather than on the comparison. The bug described below
+ * would have passed that guard: it was a real comparison of the wrong two
+ * fields, and it said all the right things while doing it.
  */
-function describeDrift(measured, committedPath) {
+/**
+ * Drift in the COVERAGE SHAPE — which directories are uncovered or partially
+ * covered — as distinct from drift in the counts.
+ *
+ * This exists because of the question the comment above `describeDrift` left
+ * open: would a check that fails on disagreement fire on every unrelated pull
+ * request that adds a test, or only when the file is genuinely stale? It was
+ * measured rather than argued. Adding one ordinary test to an already-covered
+ * directory moves three counts — `testFiles`, `coveredTestFiles` and
+ * `pullRequestCoveredTestFiles` — and moves these sets by exactly zero.
+ *
+ * So a gate on the counts would fire on nearly every pull request and teach
+ * people to regenerate a two-thousand-line file to get green. A gate on the
+ * sets fires only when the wiring itself changed, which is the thing the
+ * committed census is consulted for. That is what `--check` enforces; the
+ * counts stay a report.
+ */
+export function describeShapeDrift(measured, committedPath) {
+  if (!existsSync(committedPath)) {
+    return { state: "absent", line: `no committed census at ${CENSUS_RELATIVE_PATH}` };
+  }
+
+  let committed;
+  try {
+    committed = JSON.parse(readFileSync(committedPath, "utf8"));
+  } catch (error) {
+    return {
+      state: "unreadable",
+      line: `committed census could not be parsed: ${error.message}`,
+    };
+  }
+
+  const shape = (census) => ({
+    uncovered: new Set((census.uncoveredDirectories ?? []).map((r) => r.directory)),
+    partial: new Set(
+      (census.partiallyCoveredDirectories ?? []).map((r) => r.directory),
+    ),
+  });
+  const was = shape(committed);
+  const now = shape(measured);
+  const missing = (a, b) => [...a].filter((d) => !b.has(d)).sort();
+
+  const changes = [
+    ...missing(now.uncovered, was.uncovered).map((d) => `+uncovered ${d}`),
+    ...missing(was.uncovered, now.uncovered).map((d) => `-uncovered ${d}`),
+    ...missing(now.partial, was.partial).map((d) => `+partial ${d}`),
+    ...missing(was.partial, now.partial).map((d) => `-partial ${d}`),
+  ];
+
+  if (changes.length === 0) {
+    return { state: "current", line: "coverage shape matches the committed census", changes };
+  }
+  return {
+    state: "drifted",
+    line: `coverage shape has drifted in ${changes.length} director${changes.length === 1 ? "y" : "ies"}`,
+    changes,
+  };
+}
+
+export function describeDrift(measured, committedPath) {
   if (!existsSync(committedPath)) {
     return { state: "absent", line: `no committed census at ${CENSUS_RELATIVE_PATH}` };
   }
@@ -951,6 +1228,38 @@ function describeDrift(measured, committedPath) {
 
 function main() {
   const argv = process.argv.slice(2);
+
+  // `--explain` answers the question the summary cannot: WHICH files are the
+  // unrun ones. Every consumer that needed that has so far re-derived it with
+  // a grep over the workflow file, which resolves one of the four hops and
+  // silently disagrees with the census it is meant to be reading.
+  //
+  // It returns before the write and drift blocks on purpose. This is a query,
+  // and a query that rewrites the artifact it is interrogating is the defect
+  // `writeIfChanged` and the `--check` placement already exist to avoid.
+  if (argv.includes("--explain")) {
+    const detailed = buildCensus(REPO_ROOT, { includeUnrunPaths: true });
+    const groups = detailed.unrunTestPathsByDirectory;
+    if (argv.includes("--json")) {
+      console.log(JSON.stringify(groups, null, 2));
+      return;
+    }
+    // Derived from the paths themselves, not from `unrunTestFiles`. Those are
+    // two independent computations, and a header that reads the count while
+    // the body lists the paths can disagree with its own output without
+    // anything failing.
+    const files = groups.reduce((sum, row) => sum + row.unrunTestPaths.length, 0);
+    console.log(
+      `test-ci-coverage-census --explain: ${files} test files no workflow runs, ` +
+        `across ${groups.length} directories`,
+    );
+    for (const row of groups) {
+      console.log(`\n  ${row.directory}  (${row.unrunTestFiles} unrun)`);
+      for (const testPath of row.unrunTestPaths) console.log(`    ${testPath}`);
+    }
+    return;
+  }
+
   const census = buildCensus(REPO_ROOT);
 
   if (argv.includes("--write")) {
@@ -967,15 +1276,35 @@ function main() {
 
   // Always reported, never enforced. `--write` has just made them agree, so
   // after a write this says so rather than repeating a stale number.
-  const drift = describeDrift(census, path.join(REPO_ROOT, CENSUS_RELATIVE_PATH));
+  const committedPath = path.join(REPO_ROOT, CENSUS_RELATIVE_PATH);
+  const drift = describeDrift(census, committedPath);
   if (!argv.includes("--json")) {
     console.log(`\ncensus drift: ${drift.line}`);
     if (drift.state === "drifted") {
       console.log(
         "  Refresh with: npm run audit:test-ci-coverage:write\n" +
-          "  This is a report, not a gate. The committed file is the input to which\n" +
-          "  directory gets wired next, so a stale one mis-ranks that queue.",
+          "  Counts alone are a report, not a gate. The committed file is the input\n" +
+          "  to which directory gets wired next, so a stale one mis-ranks that queue.",
       );
+    }
+  }
+
+  // `--check` gates the coverage SHAPE only. See describeShapeDrift for why
+  // the counts are deliberately not gated: they move on any pull request that
+  // adds a test, and the sets do not.
+  if (argv.includes("--check")) {
+    const shape = describeShapeDrift(census, committedPath);
+    if (!argv.includes("--json")) {
+      console.log(`census shape: ${shape.line}`);
+      for (const change of shape.changes ?? []) console.log(`  ${change}`);
+    }
+    if (shape.state !== "current") {
+      console.error(
+        "\ncensus shape drift: a directory changed coverage state without the " +
+          "committed census being refreshed.\n" +
+          "Refresh with: npm run audit:test-ci-coverage:write",
+      );
+      process.exitCode = 1;
     }
   }
 }

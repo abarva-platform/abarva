@@ -207,6 +207,66 @@ export const SHARED_PATH_DISPOSITIONS: PathDispositionRegister = {
         'on iteration one and the surviving surface after it was never checked.',
     },
   },
+  'src/app/(maestro)/tenant/[tenantSlug]/intelligence/patterns/[patternKey]/page.tsx': {
+    retired: {
+      scope: 'path',
+      commit: '0c6a86c51',
+      slice: 'legacy surface sunset (v1/v2/v3/v4)',
+      replacement: null,
+      note:
+        'A nested route under the tenant-scoped Intelligence tree, added by 5d795a397 and '
+        + 'removed by the same sunset that took its parent. Verified with --diff-filter=A '
+        + 'and D on this branch, not inferred from the parent.',
+    },
+  },
+  'src/components/intelligence/EvidenceDatasetDrawer.tsx': {
+    retired: {
+      scope: 'path',
+      commit: '0c6a86c51',
+      slice: 'legacy surface sunset (v1/v2/v3/v4)',
+      replacement: null,
+      note:
+        'Removed with the rest of src/components/intelligence/. Its suite read this file '
+        + 'at describe-body scope, so the absence threw during collection and took every '
+        + 'healthy case in the same file down with it.',
+    },
+  },
+  'src/components/intelligence/SentinelInteractionRail.tsx': {
+    retired: {
+      scope: 'path',
+      commit: '0c6a86c51',
+      slice: 'legacy surface sunset (v1/v2/v3/v4)',
+      replacement: null,
+      note:
+        'Removed with the rest of src/components/intelligence/. Its suite read this file '
+        + 'at describe-body scope, so the absence threw during collection and took every '
+        + 'healthy case in the same file down with it.',
+    },
+  },
+  'src/components/intelligence/SentinelPatternContentPanel.tsx': {
+    retired: {
+      scope: 'path',
+      commit: '0c6a86c51',
+      slice: 'legacy surface sunset (v1/v2/v3/v4)',
+      replacement: null,
+      note:
+        'Removed with the rest of src/components/intelligence/. Its suite read this file '
+        + 'at describe-body scope, so the absence threw during collection and took every '
+        + 'healthy case in the same file down with it.',
+    },
+  },
+  'src/components/intelligence/SentinelPatternDetail.tsx': {
+    retired: {
+      scope: 'path',
+      commit: '0c6a86c51',
+      slice: 'legacy surface sunset (v1/v2/v3/v4)',
+      replacement: null,
+      note:
+        'Removed with the rest of src/components/intelligence/. Its suite read this file '
+        + 'at describe-body scope, so the absence threw during collection and took every '
+        + 'healthy case in the same file down with it.',
+    },
+  },
   'src/components/intelligence/IntelligenceRouteShell.tsx': {
     retired: {
       scope: 'containing-directory',
@@ -220,6 +280,29 @@ export const SHARED_PATH_DISPOSITIONS: PathDispositionRegister = {
         'removed it: twenty-odd components at 0c6a86c51 and the last two at ' +
         'd5e0ef495. Nothing wraps the surviving /intelligence route in a shell ' +
         'component.',
+    },
+  },
+  'src/__tests__/integration/intelligence/intelligence-int2-pattern-action-canvas.test.ts': {
+    retired: {
+      scope: 'path',
+      commit: '5378805a1',
+      slice: 'intelligence INT2 orphan retirement',
+      replacement: null,
+      note:
+        'The suite asserted a deleted pattern-detail page and an action-canvas ' +
+        'library that had no product or operator importer. The suite and its ' +
+        'test-only library were retired together after the reachability check.',
+    },
+  },
+  'src/lib/intelligence/pattern-action-canvas-view.ts': {
+    retired: {
+      scope: 'path',
+      commit: '5378805a1',
+      slice: 'intelligence INT2 orphan retirement',
+      replacement: null,
+      note:
+        'No product or operator path imported this library; its only importer ' +
+        'was the retired INT2 integration suite.',
     },
   },
 };

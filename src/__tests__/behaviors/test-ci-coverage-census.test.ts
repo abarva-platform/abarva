@@ -3,6 +3,7 @@ import {
   copyFileSync,
   mkdirSync,
   mkdtempSync,
+  symlinkSync,
   readFileSync,
   readdirSync,
   realpathSync,
@@ -51,6 +52,9 @@ type Census = {
     directoriesFullyCovered: number;
     directoriesPartiallyCovered: number;
     directoriesUncovered: number;
+    directoriesWithUnrunTestFiles: number;
+    declaredQuarantineTestFiles: number;
+    untriagedUnrunTestFiles: number;
     indeterminateInvocations: number;
     criticalGovernedRiskDirectories: number;
     highGovernedRiskDirectories: number;
@@ -58,7 +62,13 @@ type Census = {
   };
   indeterminateInvocations: { source: string; invocation: string }[];
   unresolvedIgnoreArguments: { script: string; source: string; reason: string }[];
-  partiallyCoveredDirectories: { directory: string; testFiles: number; coveredTestFiles: number }[];
+  partiallyCoveredDirectories: {
+    directory: string;
+    testFiles: number;
+    coveredTestFiles: number;
+    declaredQuarantineTestFiles: number;
+    untriagedUnrunTestFiles: number;
+  }[];
   governedRiskEvidence: {
     directory: string;
     testFiles: number;
@@ -78,6 +88,8 @@ type Census = {
     directory: string;
     testFiles: number;
     unrunTestFiles: number;
+    declaredQuarantineTestFiles: number;
+    untriagedUnrunTestFiles: number;
     governedRisk: {
       rank: number;
       score: number;
@@ -85,7 +97,12 @@ type Census = {
       signals: string[];
     };
   }[];
-  uncoveredDirectories: { directory: string; testFiles: number }[];
+  uncoveredDirectories: {
+    directory: string;
+    testFiles: number;
+    declaredQuarantineTestFiles: number;
+    untriagedUnrunTestFiles: number;
+  }[];
 };
 
 function write(root: string, relative: string, contents: string): void {
@@ -116,8 +133,34 @@ function makeFixture(files: Record<string, string>, scripts: Record<string, stri
     copyFileSync(path.join(repoRoot, script), path.join(dir, script));
   }
   write(dir, "package.json", `${JSON.stringify({ name: "fixture", scripts }, null, 2)}\n`);
+  // The census resolves imports with TypeScript's scanner rather than with
+  // regular expressions, so the script now has a real dependency. The fixture
+  // copied two files because the script used to need nothing but Node; it
+  // gets the repository's node_modules by symlink so the copy can actually
+  // run. Without it every case in this file fails at module resolution,
+  // which is a fixture gap and not a finding about the census.
+  symlinkSync(path.join(repoRoot, "node_modules"), path.join(dir, "node_modules"), "dir");
   for (const [relative, contents] of Object.entries(files)) write(dir, relative, contents);
   return dir;
+}
+
+/**
+ * The `--check` gate, run as the shell runs it. Returns the exit status,
+ * which is the whole point: the counts report has always printed its finding
+ * and exited 0, and a gate that did the same would be decoration.
+ */
+function runCensusCheck(cwd: string): { status: number; output: string } {
+  try {
+    const stdout = execFileSync(
+      process.execPath,
+      [path.join(cwd, CENSUS_SCRIPT), "--check"],
+      { cwd, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] },
+    );
+    return { status: 0, output: stdout };
+  } catch (error) {
+    const err = error as { status?: number; stdout?: string; stderr?: string };
+    return { status: err.status ?? 1, output: `${err.stdout ?? ""}${err.stderr ?? ""}` };
+  }
 }
 
 function runCensus(cwd: string): { status: number; stdout: string; census: Census } {
@@ -208,6 +251,41 @@ describe("test CI coverage census", () => {
       ].join("\n"),
     });
     expect(runCensus(dir).census.counts.coveredTestFiles).toBe(1);
+  });
+
+  it("preserves regex escapes in a workflow-reachable script's Jest ignore patterns", () => {
+    const dir = fixture({
+      "src/lib/script-ignore/__tests__/kept.test.ts": TEST_FILE,
+      "src/lib/script-ignore/__tests__/excluded.test.ts": TEST_FILE,
+      ".github/workflows/gate.yml": PR_WORKFLOW("bash scripts/ci/run-script-ignore.sh"),
+      "scripts/ci/run-script-ignore.sh": String.raw`npx jest src/lib/script-ignore --testPathIgnorePatterns 'script-ignore/__tests__/excluded\.test\.ts$'`,
+    });
+    const { census } = runCensus(dir);
+    expect(census.counts).toMatchObject({
+      testFiles: 2,
+      coveredTestFiles: 1,
+      uncoveredTestFiles: 1,
+    });
+    expect(census.unresolvedIgnoreArguments).toEqual([]);
+  });
+
+  it("reports a script invocation whose structured ignore arguments cannot be parsed", () => {
+    const dir = fixture({
+      "src/lib/structured-ignore/__tests__/kept.test.ts": TEST_FILE,
+      "src/lib/structured-ignore/__tests__/excluded.test.ts": TEST_FILE,
+      ".github/workflows/gate.yml": PR_WORKFLOW(
+        "node scripts/ci/run-structured-ignore.mjs",
+      ),
+      "scripts/ci/run-structured-ignore.mjs": String.raw`spawnSync("npx", ["jest", "src/lib/structured-ignore", "--testPathIgnorePatterns", "structured-ignore/__tests__/excluded\\.test\\.ts$"]);`,
+    });
+    const { census } = runCensus(dir);
+    expect(census.counts.coveredTestFiles).toBe(2);
+    expect(census.unresolvedIgnoreArguments).toEqual([
+      expect.objectContaining({
+        script: "scripts/ci/run-structured-ignore.mjs",
+        reason: "ignore patterns inside this script invocation could not be parsed",
+      }),
+    ]);
   });
 
   it("follows a ratchet baseline's declared paths", () => {
@@ -361,8 +439,15 @@ describe("test CI coverage census", () => {
     });
     const summary = runSummary(dir);
     // Heading changed with the ranking it labels: partially covered
-    // directories now appear, so "uncovered" would misdescribe the list.
-    expect(summary).toContain("top governed-risk directories by unrun tests:");
+    // directories now appear, so "uncovered" would misdescribe the list. It
+    // moved a second time under T-471, when the ranking's basis narrowed from
+    // every unrun file to only the untriaged ones — a directory whose unrun
+    // set is entirely declared quarantine is no longer ranked, so "by unrun
+    // tests" would now overstate what the list is ordered on. The assertion is
+    // updated rather than relaxed: it still pins an exact heading.
+    expect(summary).toContain(
+      "top governed-risk directories by untriaged unrun tests:",
+    );
     expect(summary.indexOf("src/components/agent/__tests__")).toBeLessThan(
       summary.indexOf("src/app/api/source/action/__tests__"),
     );
@@ -663,6 +748,55 @@ describe("test CI coverage census", () => {
     expect(riskFor("src/app/api/epsilon/__tests__")?.signals ?? []).toEqual([]);
   });
 
+  it("does not promote comments and literals into governed source signals", () => {
+    const dir = fixture({
+      "src/lib/false-positive/query-reader.ts": [
+        'export interface Row { tenantKey: string }',
+        'const note = "transition (one-time) and tenant_key";',
+        '// approve({ value: true }); clientKey',
+        'export function load() { return Promise.reject(new Error(note)); }',
+      ].join("\n"),
+      "src/lib/false-positive/__tests__/query-reader.test.ts": [
+        'import { load } from "../query-reader";',
+        'it("loads", () => expect(typeof load).toBe("function"));',
+      ].join("\n"),
+      ".github/workflows/gate.yml": PR_WORKFLOW("echo nothing"),
+    });
+
+    const { census } = runCensus(dir);
+    const risk = census.governedRiskEvidence.find(
+      (row) => row.directory === "src/lib/false-positive/__tests__",
+    )?.governedRisk;
+    expect(risk?.signals ?? []).not.toContain("approval_or_lifecycle_write");
+    expect(risk?.signals ?? []).not.toContain("tenant_scoped_read");
+  });
+
+  it("keeps executable governance calls and tenant keys as governed signals", () => {
+    const dir = fixture({
+      "src/lib/governed/query-reader.ts": [
+        "declare function approve(value: unknown): void;",
+        "export function load(tenantKey: string) {",
+        "  approve({ tenantKey });",
+        "  return tenantKey;",
+        "}",
+      ].join("\n"),
+      "src/lib/governed/__tests__/query-reader.test.ts": [
+        'import { load } from "../query-reader";',
+        'it("loads", () => expect(load("tenant-a")).toBe("tenant-a"));',
+      ].join("\n"),
+      ".github/workflows/gate.yml": PR_WORKFLOW("echo nothing"),
+    });
+
+    const { census } = runCensus(dir);
+    const risk = census.governedRiskEvidence.find(
+      (row) => row.directory === "src/lib/governed/__tests__",
+    )?.governedRisk;
+    expect(risk?.signals).toEqual([
+      "approval_or_lifecycle_write",
+      "tenant_scoped_read",
+    ]);
+  });
+
   it("subtracts a command's own --testPathIgnorePatterns from what it selects", () => {
     // The census answers "does a workflow reach a command that names this
     // file". A command that names a directory and then excludes a file inside
@@ -687,6 +821,58 @@ describe("test CI coverage census", () => {
         (row) => row.directory === "src/lib/theta/__tests__",
       ),
     ).toMatchObject({ testFiles: 2, coveredTestFiles: 1 });
+  });
+
+  it.each([
+    ["double", '"'],
+    ["single", "'"],
+  ])(
+    "subtracts an ignore pattern the workflow wrote in %s quotes",
+    (_label, quote) => {
+      // The shell strips these quotes before jest sees the argument, so jest
+      // excludes the file either way. The census reads the raw command text,
+      // so without stripping them itself its matcher receives a pattern with
+      // quote characters attached and matches nothing — and it then reports
+      // the file as covered by a command that is explicitly skipping it.
+      //
+      // That is the over-stating direction: a quarantined suite reads as run.
+      // Quoting is the natural way to write an argument in YAML, so this is a
+      // trap laid for whoever writes the next quarantine, not a hypothetical.
+      const pattern = `${quote}lambda/__tests__/excluded\\.test\\.ts$${quote}`;
+      const dir = fixture({
+        "src/lib/lambda/__tests__/kept.test.ts": TEST_FILE,
+        "src/lib/lambda/__tests__/excluded.test.ts": TEST_FILE,
+        ".github/workflows/gate.yml": PR_WORKFLOW(
+          `npx jest src/lib/lambda --testPathIgnorePatterns ${pattern}`,
+        ),
+      });
+      const { census } = runCensus(dir);
+      expect(census.counts).toMatchObject({
+        testFiles: 2,
+        coveredTestFiles: 1,
+        uncoveredTestFiles: 1,
+      });
+    },
+  );
+
+  it("leaves a quote inside a pattern alone", () => {
+    // Only a matched pair wrapping the whole token is shell quoting. A quote
+    // character in the middle is part of the regex, and stripping it would
+    // break a pattern that works today — the repair turning into its own
+    // defect, pointing the other way.
+    const dir = fixture({
+      "src/lib/mu/__tests__/kept.test.ts": TEST_FILE,
+      'src/lib/mu/__tests__/od"d.test.ts': TEST_FILE,
+      ".github/workflows/gate.yml": PR_WORKFLOW(
+        'npx jest src/lib/mu --testPathIgnorePatterns mu/__tests__/od"d\\.test\\.ts$',
+      ),
+    });
+    const { census } = runCensus(dir);
+    expect(census.counts).toMatchObject({
+      testFiles: 2,
+      coveredTestFiles: 1,
+      uncoveredTestFiles: 1,
+    });
   });
 
   it("resolves the ignore patterns a command takes from a $(node …) substitution", () => {
@@ -860,5 +1046,288 @@ describe("test CI coverage census", () => {
     expect(Object.keys(committed.counts).sort()).toEqual(Object.keys(census.counts).sort());
     expect(Array.isArray(committed.uncoveredDirectories)).toBe(true);
     expect(committed.counts.testFiles).toBeGreaterThan(0);
+  });
+
+  it("--check fails when a directory changes coverage state", () => {
+    // The gate's subject: the committed file omits a directory the
+    // measurement finds uncovered. That is the state in which the census
+    // mis-ranks the queue of what to wire next, which is what it is read for.
+    const dir = fixture({
+      "src/lib/nu/__tests__/kept.test.ts": TEST_FILE,
+      ".github/workflows/gate.yml": PR_WORKFLOW("npx jest src/lib/xi"),
+      "docs/architecture/test-ci-coverage-census.json": JSON.stringify(
+        { counts: {}, partiallyCoveredDirectories: [], uncoveredDirectories: [] },
+        null,
+        2,
+      ),
+    });
+    const { status, output } = runCensusCheck(dir);
+    expect(status).toBe(1);
+    expect(output).toContain("src/lib/nu/__tests__");
+  });
+
+  it("--check passes when only the counts moved, which is every PR that adds a test", () => {
+    // The negative control, and the reason this gate is on the shape rather
+    // than on the counts. Adding a test to an already-covered directory moves
+    // `testFiles` and `coveredTestFiles` and moves the directory sets by
+    // nothing. A gate on the counts would fire here -- on an ordinary pull
+    // request that did nothing wrong -- and teach people to regenerate a large
+    // generated file to get green.
+    const dir = fixture({
+      "src/lib/omicron/__tests__/kept.test.ts": TEST_FILE,
+      ".github/workflows/gate.yml": PR_WORKFLOW("npx jest src/lib/omicron"),
+      "docs/architecture/test-ci-coverage-census.json": JSON.stringify(
+        {
+          counts: { testFiles: 999, coveredTestFiles: 999 },
+          partiallyCoveredDirectories: [],
+          uncoveredDirectories: [],
+        },
+        null,
+        2,
+      ),
+    });
+    const { status, output } = runCensusCheck(dir);
+    expect(status).toBe(0);
+    expect(output).toContain("coverage shape matches");
+  });
+
+  it("the committed census still describes this repository's coverage shape", () => {
+    // The enforcement, run here rather than as a workflow step invoking the
+    // script. A step would put `scripts/quality/test-ci-coverage-census.mjs`
+    // into the set of commands a workflow reaches, and the census would then
+    // scan its own source for Jest invocations and find one it cannot resolve
+    // to literal paths -- `["jest", ...paths, …]`, quoted in its own
+    // documentation of the ratchet hop. That single unresolved invocation
+    // makes the census's covered count an upper bound, and three sibling
+    // guards correctly refuse to read a guess. Measured, not guessed at: the
+    // step took `indeterminateInvocations` from 0 to 1.
+    //
+    // So the gate lives where it does not perturb what it measures. `--check`
+    // remains for anyone running it by hand.
+    const { status, output } = runCensusCheck(repoRoot);
+    expect(output).toContain("coverage shape");
+    expect(status).toBe(0);
+  });
+});
+
+/**
+ * `--explain` names the files behind the counts.
+ *
+ * The summary says a directory holds "10 unrun of 45" and stops there, so
+ * every consumer that needed the actual ten re-derived them by grepping the
+ * workflow file. That reads one of the four hops and disagrees with the census
+ * it is meant to be reading — a mistake already made against this very script,
+ * where a two-hop probe produced a false accusation of a defect.
+ *
+ * These cases hold two things:
+ *
+ *   1. the explained set is exactly the unrun set, proved against a fixture
+ *      whose coverage is decided by the fixture rather than read back from the
+ *      census; and
+ *   2. the query does not perturb what it measures — no field reaches the
+ *      committed artifact, and `--explain` never writes.
+ */
+function runExplain(cwd: string): string {
+  return execFileSync(process.execPath, [path.join(cwd, CENSUS_SCRIPT), "--explain"], {
+    cwd,
+    encoding: "utf8",
+    stdio: ["ignore", "pipe", "pipe"],
+  });
+}
+
+describe("test CI coverage census --explain", () => {
+  it("names the unrun file and not the covered one beside it", () => {
+    // Ground truth is the ignore pattern, not anything the census reports:
+    // `kept` is run, `excluded` is not, and they sit in the same directory so
+    // a directory-level answer cannot pass this.
+    const dir = fixture({
+      "src/lib/explain/__tests__/kept.test.ts": TEST_FILE,
+      "src/lib/explain/__tests__/excluded.test.ts": TEST_FILE,
+      ".github/workflows/gate.yml": PR_WORKFLOW("bash scripts/ci/run-explain.sh"),
+      "scripts/ci/run-explain.sh": String.raw`npx jest src/lib/explain --testPathIgnorePatterns 'explain/__tests__/excluded\.test\.ts$'`,
+    });
+
+    const output = runExplain(dir);
+
+    expect(output).toContain("src/lib/explain/__tests__/excluded.test.ts");
+    // The negative half. Listing every file would satisfy the line above.
+    expect(output).not.toContain("src/lib/explain/__tests__/kept.test.ts");
+    expect(output).toContain("1 test files no workflow runs");
+  });
+
+  it("reports nothing to explain when every suite is reached", () => {
+    // Guards against an implementation that always prints something.
+    const dir = fixture({
+      "src/lib/allcovered/__tests__/a.test.ts": TEST_FILE,
+      ".github/workflows/gate.yml": PR_WORKFLOW("npx jest src/lib/allcovered"),
+    });
+    expect(runExplain(dir)).toContain("0 test files no workflow runs, across 0 directories");
+  });
+
+  it("agrees with the counts the census already publishes", () => {
+    // `one` deliberately holds a covered file AND an unrun one. With a single
+    // file per directory, "every file" and "the unrun files" are the same set
+    // everywhere this can look, and the path assertion below cannot fail.
+    const dir = fixture({
+      "src/lib/one/__tests__/a.test.ts": TEST_FILE,
+      "src/lib/one/__tests__/b.test.ts": TEST_FILE,
+      "src/lib/two/__tests__/c.test.ts": TEST_FILE,
+      "src/lib/three/__tests__/d.test.ts": TEST_FILE,
+      ".github/workflows/gate.yml": PR_WORKFLOW(
+        "npx jest src/lib/one/__tests__/a.test.ts",
+      ),
+    });
+    const { census } = runCensus(dir);
+    const output = runExplain(dir);
+
+    // The detail and the published totals are two renderings of one
+    // computation; if they can disagree, one of them is lying.
+    expect(output).toContain(
+      `${census.counts.uncoveredTestFiles} test files no workflow runs, ` +
+        `across ${census.counts.directoriesWithUnrunTestFiles} directories`,
+    );
+
+    // The header alone is not enough: it once read a count derived separately
+    // from the paths, so listing every file in the repository still printed
+    // the right number. Count the paths actually listed.
+    const listed = output
+      .split("\n")
+      .filter((line) => /^ {4}\S+\.test\.tsx?$/.test(line));
+    expect(listed).toHaveLength(census.counts.uncoveredTestFiles);
+  });
+
+  /**
+   * T-471. The draw that produced this case asked for "the next 20 stale
+   * suites to triage", ranked by `governedRiskRanking`, and 11 of the 20 came
+   * back already triaged: seven named in
+   * `scripts/quality/source-integration-quarantine.json`, one in its
+   * `alsoIgnored`, two named in the auth step's `--testPathIgnorePatterns`,
+   * and one recorded as triaged-red in a workflow comment. The census counted
+   * every one of them as simply "uncovered", which is true and useless: an
+   * unrun file that a command names and then deliberately excludes has been
+   * looked at, and an unrun file no command names at all has not. Ranks 2 and
+   * 3 of the critical band were directories whose entire unrun set was
+   * declared quarantine, so the ranking was pointing the next agent at work
+   * that was already done.
+   *
+   * The fixture has to disagree with itself or it cannot fail: one unrun file
+   * that a command names and excludes, one unrun file nothing names, in two
+   * directories carrying the same governed signal. Classifying all unrun
+   * files as quarantine fails the dark half; classifying none fails the
+   * excluded half; dropping the ranking filter fails the first assertion.
+   */
+  it("separates an unrun file a command excludes by name from one nothing names", () => {
+    const dir = fixture({
+      "src/app/api/alpha/action/route.ts":
+        "export async function POST() { return approve({ value: true }); }\n",
+      "src/app/api/alpha/action/__tests__/green.test.ts":
+        'import "../route";\nit("green", () => expect(true).toBe(true));\n',
+      "src/app/api/alpha/action/__tests__/red.test.ts":
+        'import "../route";\nit("red", () => expect(true).toBe(true));\n',
+      "src/app/api/beta/action/route.ts":
+        "export async function POST() { return approve({ value: true }); }\n",
+      "src/app/api/beta/action/__tests__/dark.test.ts":
+        'import "../route";\nit("dark", () => expect(true).toBe(true));\n',
+      ".github/workflows/gate.yml": PR_WORKFLOW(
+        [
+          "npx jest src/app/api/alpha/action/__tests__",
+          "--testPathIgnorePatterns /node_modules/",
+          "src/app/api/alpha/action/__tests__/red.test.ts",
+        ].join(" "),
+      ),
+    });
+
+    const { census } = runCensus(dir);
+
+    // Both files are unrun, and the total is unchanged by the classification.
+    expect(census.counts.uncoveredTestFiles).toBe(2);
+    expect(census.counts.declaredQuarantineTestFiles).toBe(1);
+    expect(census.counts.untriagedUnrunTestFiles).toBe(1);
+
+    const alpha = census.partiallyCoveredDirectories.find(
+      (row) => row.directory === "src/app/api/alpha/action/__tests__",
+    );
+    expect(alpha).toMatchObject({
+      testFiles: 2,
+      coveredTestFiles: 1,
+      declaredQuarantineTestFiles: 1,
+      untriagedUnrunTestFiles: 0,
+    });
+
+    const beta = census.uncoveredDirectories.find(
+      (row) => row.directory === "src/app/api/beta/action/__tests__",
+    );
+    expect(beta).toMatchObject({
+      testFiles: 1,
+      declaredQuarantineTestFiles: 0,
+      untriagedUnrunTestFiles: 1,
+    });
+
+    // The whole point: a directory whose unrun set is entirely declared
+    // quarantine is not offered as work to triage, while the dark one is.
+    expect(census.governedRiskRanking.map((row) => row.directory)).toEqual([
+      "src/app/api/beta/action/__tests__",
+    ]);
+    expect(census.governedRiskRanking[0]).toMatchObject({
+      unrunTestFiles: 1,
+      declaredQuarantineTestFiles: 0,
+      untriagedUnrunTestFiles: 1,
+    });
+  });
+
+  /**
+   * A second command running the same file in full must still count it as
+   * covered rather than as a quarantine. `coverageFor` already scopes the
+   * ignore patterns to the command that passes them; this holds that the new
+   * classification did not reintroduce the global subtraction.
+   */
+  it("does not call a file quarantined when another command runs it in full", () => {
+    const dir = fixture({
+      "src/lib/gamma/__tests__/shared.test.ts": TEST_FILE,
+      ".github/workflows/narrow.yml": PR_WORKFLOW(
+        [
+          "npx jest src/lib/gamma/__tests__",
+          "--testPathIgnorePatterns /node_modules/",
+          "src/lib/gamma/__tests__/shared.test.ts",
+        ].join(" "),
+      ),
+      ".github/workflows/full.yml": PR_WORKFLOW("npx jest src/lib/gamma/__tests__"),
+    });
+
+    const { census } = runCensus(dir);
+
+    expect(census.counts.uncoveredTestFiles).toBe(0);
+    expect(census.counts.declaredQuarantineTestFiles).toBe(0);
+    expect(census.counts.untriagedUnrunTestFiles).toBe(0);
+  });
+
+  it("adds no field to the published artifact and writes nothing", () => {
+    const dir = fixture({
+      "src/lib/artifact/__tests__/a.test.ts": TEST_FILE,
+      "src/lib/artifact/__tests__/b.test.ts": TEST_FILE,
+      ".github/workflows/gate.yml": PR_WORKFLOW(
+        "npx jest src/lib/artifact/__tests__/a.test.ts",
+      ),
+    });
+    const censusPath = path.join(dir, "docs/architecture/test-ci-coverage-census.json");
+    mkdirSync(path.dirname(censusPath), { recursive: true });
+
+    execFileSync(process.execPath, [path.join(dir, CENSUS_SCRIPT), "--write"], {
+      cwd: dir,
+      encoding: "utf8",
+      stdio: ["ignore", "pipe", "pipe"],
+    });
+    const before = readFileSync(censusPath, "utf8");
+
+    runExplain(dir);
+
+    // A query that rewrites the artifact it interrogates would send churn into
+    // whatever pull request happened to be open, which is the defect
+    // `writeIfChanged` already exists to prevent.
+    expect(readFileSync(censusPath, "utf8")).toBe(before);
+    expect(before).not.toContain("unrunTestPathsByDirectory");
+    // The per-directory rows spread `...row`, so a field added to a row reaches
+    // the artifact unless it is explicitly stripped back out.
+    expect(before).not.toContain("unrunTestPaths");
   });
 });

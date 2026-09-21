@@ -65,7 +65,7 @@ Revert the PR. Because this is read-only product/model code with no schema apply
 
 ## Audit Evidence
 
-- PR: To be opened from `codex/source-scorecard-authority-d020-recovery`
+- PR: Superseded by the fresh D-020 no-ranking correction branch because the local recovery branch was not a clean current-main base.
 - Local validation: To be added before merge.
 - Backlog item: D-020.
 

@@ -21,6 +21,10 @@
         {
           "module": "src/lib/intelligence/sentinel-pattern-detections.ts",
           "status": "kept-other-importer"
+        },
+        {
+          "module": "src/lib/qa/path-disposition.ts",
+          "status": "kept-other-importer"
         }
       ]
     },
@@ -129,18 +133,6 @@
       ]
     },
     {
-      "suite": "intelligence-int2-pattern-action-canvas.test.ts",
-      "missing": [
-        "src/components/intelligence/IntelligencePatternDetailPage.tsx"
-      ],
-      "covers": [
-        {
-          "module": "src/lib/intelligence/pattern-action-canvas-view.ts",
-          "status": "goes-with-the-suite"
-        }
-      ]
-    },
-    {
       "suite": "intelligence-library-foundation.test.ts",
       "missing": [
         "src/components/intelligence/IntelligenceIndexPage.tsx"
@@ -171,7 +163,12 @@
       "missing": [
         "src/app/(maestro)/tenant/[tenantSlug]/intelligence/page.tsx"
       ],
-      "covers": []
+      "covers": [
+        {
+          "module": "src/lib/qa/path-disposition.ts",
+          "status": "kept-other-importer"
+        }
+      ]
     },
     {
       "suite": "intelligence-workflow-canvas.test.ts",
@@ -202,6 +199,10 @@
         {
           "module": "src/lib/programs/enhancement-seed-planner.ts",
           "status": "kept-other-importer"
+        },
+        {
+          "module": "src/lib/qa/path-disposition.ts",
+          "status": "kept-other-importer"
         }
       ]
     },
@@ -226,6 +227,10 @@
         {
           "module": "src/lib/intelligence/sentinel-interaction-rail-view.ts",
           "status": "goes-with-the-suite"
+        },
+        {
+          "module": "src/lib/qa/path-disposition.ts",
+          "status": "kept-other-importer"
         }
       ]
     },
@@ -241,6 +246,10 @@
         },
         {
           "module": "src/lib/intelligence/sentinel-pattern-detections.ts",
+          "status": "kept-other-importer"
+        },
+        {
+          "module": "src/lib/qa/path-disposition.ts",
           "status": "kept-other-importer"
         }
       ]
@@ -261,6 +270,10 @@
         },
         {
           "module": "src/lib/programs/enhancement-seed-planner.ts",
+          "status": "kept-other-importer"
+        },
+        {
+          "module": "src/lib/qa/path-disposition.ts",
           "status": "kept-other-importer"
         }
       ]

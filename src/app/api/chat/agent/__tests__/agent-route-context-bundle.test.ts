@@ -210,14 +210,14 @@ describe("agent route · CB-6 context-bundle wiring", () => {
     );
   });
 
-  it("locks the corrected P4-P6 lifecycle labels in the Nexus prompt", () => {
+  it("locks the current lifecycle labels in the Nexus prompt", () => {
     expect(source).toContain("LIFECYCLE LABEL DISCIPLINE");
     expect(source).toContain(
-      "never call P4 'Build', P5 'Activate', or P6 'Operate'",
+      "Never call P4 'Build', P5 'Activate', or P6 'Operate'",
     );
-    expect(source).toContain("P4 Execution Roadmap");
-    expect(source).toContain("P5 Approval & Mobilization");
-    expect(source).toContain("P6 Tower Handoff");
+    expect(source).toContain("P4 Commit");
+    expect(source).toContain("P5 Mobilize");
+    expect(source).toContain("P6 COMPLETION DISCIPLINE");
     expect(source).toContain("completion is a lifecycle_state write");
   });
 
@@ -277,8 +277,8 @@ describe("agent route · CB-6 context-bundle wiring", () => {
     // threads a resolved event-scope guard into this call so
     // `enterprise_context_chunks` rows naming a DIFFERENT Source event never
     // reach the prompt — see source-ava-cross-event-leak-gate.test.ts.
-    expect(source).toContain(
-      "await buildTenantContextBlock(tenantInventoryKey, sourceEventScopeGuard)",
+    expect(source).toMatch(
+      /await buildTenantContextBlock\(\s*tenantInventoryKey,\s*sourceEventScopeGuard,?\s*\)/,
     );
     expect(source).toContain(
       "if (isTenantCurrentStateSurface && activeClientKey)",

@@ -7,12 +7,25 @@ import { POST } from "../route";
 const mockRequireTenancy = jest.fn();
 const mockSensitiveUploadResponse = jest.fn();
 const mockBlobUpload = jest.fn();
+const mockGetAzureWriteFluentClient = jest.fn();
+const mockGetObjectStorageAdapter = jest.fn();
+const mockRunInsightEvaluation = jest.fn();
 const mockDbCalls: Array<{
   table: string;
   operation: string;
   payload: unknown;
+  options?: unknown;
 }> = [];
 const mockRecordIds = new Map<string, string>();
+const mockAllowedTables = new Set([
+  "data_ingestion_runs",
+  "enterprise_context_chunks",
+  "enterprise_context_sources",
+  "enterprise_context_source_files",
+  "enterprise_context_records",
+  "enterprise_context_facts",
+  "context_refresh_events",
+]);
 
 jest.mock("@/lib/auth/tenancy", () => ({
   requireTenancy: (...args: unknown[]) => mockRequireTenancy(...args),
@@ -29,28 +42,106 @@ jest.mock("@/lib/security/sensitive-upload-guard", () => ({
     mockSensitiveUploadResponse(...args),
 }));
 
-jest.mock("@/lib/data-plane/postgresCompat", () => ({
-  getAzureWriteFluentClient: () => ({
-    from(table: string) {
+jest.mock("@/lib/intelligence/insight-engine", () => ({
+  runInsightEvaluation: (...args: unknown[]) => mockRunInsightEvaluation(...args),
+}));
+
+function rowsForMutation(table: string, payload: unknown) {
+  const rows = Array.isArray(payload) ? payload : [payload];
+  if (table === "context_refresh_events") {
+    return rows.map((row, index) => {
+      const event = row as {
+        client_id?: string;
+        tenant_key?: string;
+        triggered_by?: string;
+        source_id?: string | null;
+        source_label?: string | null;
+        period_label?: string | null;
+        rows_seen?: number;
+        rows_accepted?: number;
+        rows_rejected?: number;
+        facts_created?: number;
+        facts_updated?: number;
+        facts_superseded?: number;
+        approval_required?: boolean;
+        affected_surfaces?: string[];
+        receipt_url?: string | null;
+      };
       return {
-        insert(payload: unknown) {
-          mockDbCalls.push({ table, operation: "insert", payload });
+        id: `refresh-event-${index}`,
+        client_id: event.client_id ?? null,
+        tenant_key: event.tenant_key ?? null,
+        triggered_by: event.triggered_by ?? null,
+        source_id: event.source_id ?? null,
+        source_label: event.source_label ?? null,
+        period_label: event.period_label ?? null,
+        rows_seen: event.rows_seen ?? 0,
+        rows_accepted: event.rows_accepted ?? 0,
+        rows_rejected: event.rows_rejected ?? 0,
+        facts_created: event.facts_created ?? 0,
+        facts_updated: event.facts_updated ?? 0,
+        facts_superseded: event.facts_superseded ?? 0,
+        approval_required: event.approval_required ?? false,
+        affected_surfaces: event.affected_surfaces ?? [],
+        receipt_url: event.receipt_url ?? null,
+        created_at: "2026-09-21T00:00:00.000Z",
+      };
+    });
+  }
+  const idPrefix =
+    table === "enterprise_context_sources"
+      ? "source"
+      : table === "enterprise_context_source_files"
+        ? "source-file"
+        : table === "enterprise_context_chunks"
+          ? "chunk"
+          : table === "data_ingestion_runs"
+            ? "ingestion-run"
+            : table === "enterprise_context_facts"
+              ? "fact"
+              : "upsert";
+  return rows.map((row, index) => ({
+    id: `${idPrefix}-${index}`,
+    chunk_id:
+      typeof row === "object" && row !== null && "chunk_id" in row
+        ? (row as { chunk_id?: string }).chunk_id
+        : `chunk-${index}`,
+  }));
+}
+
+function createMockDbClient() {
+  return {
+    from(table: string) {
+      if (!mockAllowedTables.has(table)) {
+        throw new Error(`unmocked_postgres_table:${table}`);
+      }
+      return {
+        insert(payload: unknown, options?: unknown) {
+          mockDbCalls.push({ table, operation: "insert", payload, options });
           return {
             select() {
-              const rows = Array.isArray(payload) ? payload : [payload];
-              return Promise.resolve({
-                data: rows.map((_, index) => ({
-                  id: `id-${index}`,
-                  chunk_id: `chunk-${index}`,
-                })),
-                error: null,
-                count: rows.length,
-              });
+              const rows = rowsForMutation(table, payload);
+              return {
+                then(resolve: (value: unknown) => void) {
+                  resolve({
+                    data: rows,
+                    error: null,
+                    count: rows.length,
+                  });
+                },
+                single() {
+                  return Promise.resolve({
+                    data: rows[0] ?? null,
+                    error: null,
+                    count: rows.length,
+                  });
+                },
+              };
             },
           };
         },
-        upsert(payload: unknown) {
-          mockDbCalls.push({ table, operation: "upsert", payload });
+        upsert(payload: unknown, options?: unknown) {
+          mockDbCalls.push({ table, operation: "upsert", payload, options });
           const rows = Array.isArray(payload) ? payload : [payload];
           if (table === "enterprise_context_records") {
             rows.forEach((row, index) => {
@@ -65,14 +156,9 @@ jest.mock("@/lib/data-plane/postgresCompat", () => ({
           }
           return {
             select() {
-              const idPrefix =
-                table === "enterprise_context_sources"
-                  ? "source"
-                  : table === "enterprise_context_source_files"
-                    ? "source-file"
-                    : "upsert";
+              const mutationRows = rowsForMutation(table, payload);
               return Promise.resolve({
-                data: rows.map((_, index) => ({ id: `${idPrefix}-${index}` })),
+                data: mutationRows,
                 error: null,
                 count: rows.length,
               });
@@ -115,13 +201,15 @@ jest.mock("@/lib/data-plane/postgresCompat", () => ({
         },
       };
     },
-  }),
+  };
+}
+
+jest.mock("@/lib/data-plane/postgresCompat", () => ({
+  getAzureWriteFluentClient: () => mockGetAzureWriteFluentClient(),
 }));
 
 jest.mock("@/lib/data-plane/objectStorage", () => ({
-  getObjectStorageAdapter: () => ({
-    upload: (...args: unknown[]) => mockBlobUpload(...args),
-  }),
+  getObjectStorageAdapter: () => mockGetObjectStorageAdapter(),
 }));
 
 function csvRequest(formData: FormData) {
@@ -142,12 +230,54 @@ function addUploadAttestation(formData: FormData) {
   formData.set("operatorSensitiveDataConfirmed", "true");
 }
 
+function getMutationPayload(table: string) {
+  return mockDbCalls.find((call) => call.table === table)?.payload;
+}
+
+function expectPersistedChunkRows(
+  payload: unknown,
+  expectedRows: Array<Record<string, unknown>>,
+) {
+  expect(payload).toEqual(expectedRows);
+}
+
+function expectTenantMutationToFail(expectedRow: Record<string, unknown>) {
+  expect(() =>
+    expectPersistedChunkRows(
+      [{ ...expectedRow, tenant_key: undefined }],
+      [expectedRow],
+    ),
+  ).toThrow();
+  expect(() =>
+    expectPersistedChunkRows(
+      [
+        {
+          ...expectedRow,
+          provenance: {
+            ...(expectedRow.provenance as Record<string, unknown>),
+            tenant_key: "wrong-tenant",
+          },
+        },
+      ],
+      [expectedRow],
+    ),
+  ).toThrow();
+}
+
 describe("/api/admin/context-layer/csv-upload", () => {
   const originalDatabaseUrl = process.env.DATABASE_URL;
 
   beforeEach(() => {
     mockDbCalls.length = 0;
     mockRecordIds.clear();
+    mockGetAzureWriteFluentClient.mockReset();
+    mockGetAzureWriteFluentClient.mockImplementation(createMockDbClient);
+    mockGetObjectStorageAdapter.mockReset();
+    mockGetObjectStorageAdapter.mockReturnValue({
+      upload: (...args: unknown[]) => mockBlobUpload(...args),
+    });
+    mockRunInsightEvaluation.mockReset();
+    mockRunInsightEvaluation.mockResolvedValue(null);
     mockBlobUpload.mockReset();
     mockBlobUpload.mockResolvedValue(undefined);
     process.env.DATABASE_URL = "postgres://unit-test";
@@ -288,33 +418,136 @@ describe("/api/admin/context-layer/csv-upload", () => {
         }),
       }),
     );
-    const chunkInsert = mockDbCalls.find(
-      (call) => call.table === "enterprise_context_chunks",
+    expect(mockGetObjectStorageAdapter).toHaveBeenCalled();
+    expect(mockGetAzureWriteFluentClient).toHaveBeenCalled();
+    const sourcePath = String(body.sourceBlob.path);
+    const sourceHash = String(body.sourceBlob.sha256);
+    expect(sourcePath).toMatch(
+      /^apex-retail\/_direct-csv\/[a-f0-9]{12}\/\d{8}T\d{6}\/application-portfolio\.csv$/,
     );
-    expect(chunkInsert?.payload).toEqual([
-      expect.objectContaining({
-        client_id: "client-apex",
-        tenant_key: "apex-retail",
+    expect(sourceHash).toMatch(/^[a-f0-9]{64}$/);
+    const expectedChunk = {
+      business_function: null,
+      chunk_id: "ctx:apex-retail:it-landscape:app-1:c0",
+      chunk_index: 0,
+      chunk_metadata: {
+        classification: "confidential",
+        confidence: 0.86,
+        context_dimension: "application_portfolio",
+        csv_headers: [
+          "app_id",
+          "name",
+          "criticality",
+          "owner_role",
+          "system_of_record",
+        ],
+        lifecycle_state: "active",
+        load_batch_id: expect.stringMatching(
+          /^csv:apex-retail:application-portfolio-csv:[a-f0-9]{12}:\d{8}T\d{6}$/,
+        ),
+        record_kind: "csv_upload_row",
+        sensitivity: "confidential",
+        source_basis: "client_provided_upload",
+        source_blob: {
+          bucket: "context-uploads",
+          path: sourcePath,
+          sha256: sourceHash,
+        },
+        source_citation: `blob://context-uploads/${sourcePath}#row=2`,
         source_record_id: "app-1",
-        embedding_status: "pending",
-        lifecycle_state: "review",
-        classification_source: "NEEDS_CLASSIFICATION",
-        domain_segment: null,
-        load_batch_id: expect.stringMatching(/^csv:/),
-        source_path: expect.stringContaining("azure-blob://context-uploads/"),
-        provenance: expect.objectContaining({
-          source_basis: "azure_blob_admin_upload",
-          source_blob: expect.objectContaining({
-            bucket: "context-uploads",
-          }),
-          upload_attestation: expect.objectContaining({
-            version: PILOT_UPLOAD_ATTESTATION_VERSION,
-            accepted: true,
-            note: "CAB approval CAB-42",
-          }),
-        }),
-      }),
+        template_id: "application-portfolio",
+        title: "Claims Core",
+      },
+      chunk_text: [
+        "Template: CMDB / application portfolio",
+        "Row: 2",
+        "Title: Claims Core",
+        "app_id: app-1",
+        "name: Claims Core",
+        "criticality: Tier 1",
+        "owner_role: VP Architecture",
+        "system_of_record: true",
+      ].join("\n"),
+      classification_source: "NEEDS_CLASSIFICATION",
+      client_id: "client-apex",
+      criticality: "TIER_1",
+      domain_segment: null,
+      embedding_error: null,
+      embedding_model: null,
+      embedding_status: "pending",
+      lifecycle_state: "review",
+      load_batch_id: expect.stringMatching(
+        /^csv:apex-retail:application-portfolio-csv:[a-f0-9]{12}:\d{8}T\d{6}$/,
+      ),
+      provenance: {
+        classification: "confidential",
+        client_id: "client-apex",
+        confidence: 0.86,
+        data_classification: "confidential",
+        lifecycle_state: "active",
+        loader: "c5-csv-upload-connector",
+        schema_mapping: {
+          dimension: "application_portfolio",
+          fieldMappings: {
+            app_id: "app_id",
+            criticality: "criticality",
+            name: "name",
+            owner_role: "owner_role",
+            system_of_record: "system_of_record",
+          },
+          sourceRecordIdColumn: "app_id",
+          templateId: "application-portfolio",
+          textColumns: [
+            "app_id",
+            "name",
+            "criticality",
+            "owner_role",
+            "system_of_record",
+          ],
+          titleColumn: "name",
+        },
+        source_basis: "client_provided_upload",
+        source_blob: {
+          bucket: "context-uploads",
+          path: sourcePath,
+          sha256: sourceHash,
+        },
+        source_citation: `blob://context-uploads/${sourcePath}#row=2`,
+        source_doc: "application-portfolio.csv",
+        source_path: `blob://context-uploads/${sourcePath}`,
+        source_row: 2,
+        tenant_key: "apex-retail",
+        upload_attestation: {
+          accepted: true,
+          acceptedAt: expect.stringMatching(
+            /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/,
+          ),
+          authorityConfirmed: true,
+          dataUseConfirmed: true,
+          note: "CAB approval CAB-42",
+          sensitiveDataConfirmed: true,
+          version: PILOT_UPLOAD_ATTESTATION_VERSION,
+        },
+        upload_id: expect.stringMatching(
+          /^csv:apex-retail:application-portfolio-csv:[a-f0-9]{12}:\d{8}T\d{6}$/,
+        ),
+        uploaded_at: expect.stringMatching(
+          /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/,
+        ),
+        uploaded_by: "user-1",
+      },
+      source_doc: "application-portfolio.csv",
+      source_path: `blob://context-uploads/${sourcePath}#row=2`,
+      source_record_id: "app-1",
+      source_segment_id: "it_landscape",
+      source_system: "application-portfolio",
+      tenant_key: "apex-retail",
+      token_count: 42,
+    };
+    expectPersistedChunkRows(getMutationPayload("enterprise_context_chunks"), [
+      expectedChunk,
     ]);
+    expectTenantMutationToFail(expectedChunk);
     const runInsert = mockDbCalls.find(
       (call) => call.table === "data_ingestion_runs",
     );
@@ -388,17 +621,121 @@ describe("/api/admin/context-layer/csv-upload", () => {
         }),
       }),
     );
-    const chunkInsert = mockDbCalls.find(
-      (call) => call.table === "enterprise_context_chunks",
+    expect(mockGetObjectStorageAdapter).toHaveBeenCalled();
+    expect(mockGetAzureWriteFluentClient).toHaveBeenCalled();
+    const sourcePath = String(body.sourceBlob.path);
+    const sourceHash = String(body.sourceBlob.sha256);
+    expect(sourcePath).toMatch(
+      /^meridian-health\/_direct-csv\/[a-f0-9]{12}\/\d{8}T\d{6}\/hl7-fhir-integration-topology\.json$/,
     );
-    expect(chunkInsert?.payload).toEqual([
-      expect.objectContaining({
-        tenant_key: "meridian-health",
-        source_doc: "hl7-fhir-integration-topology.json",
+    expect(sourceHash).toMatch(/^[a-f0-9]{64}$/);
+    const expectedChunk = {
+      business_function: null,
+      chunk_id: "ctx:meridian-health:it-landscape:mr-int-001:c0",
+      chunk_index: 0,
+      chunk_metadata: {
+        classification: "confidential",
+        confidence: 0.86,
+        context_dimension: "interoperability_topology",
+        csv_headers: ["edge_id", "source", "target", "standard", "data_class"],
+        lifecycle_state: "active",
+        load_batch_id: expect.stringMatching(
+          /^csv:meridian-health:hl7-fhir-integration-topology-json:[a-f0-9]{12}:\d{8}T\d{6}$/,
+        ),
+        record_kind: "csv_upload_row",
+        sensitivity: "confidential",
+        source_basis: "client_provided_upload",
+        source_blob: {
+          bucket: "context-uploads",
+          path: sourcePath,
+          sha256: sourceHash,
+        },
+        source_citation: `blob://context-uploads/${sourcePath}#row=2`,
         source_record_id: "MR-INT-001",
-        embedding_status: "pending",
-        source_path: expect.stringContaining("azure-blob://context-uploads/"),
-      }),
+        template_id: "hl7-fhir-integration-topology",
+        title: null,
+      },
+      chunk_text: [
+        "Template: HL7/FHIR integration topology",
+        "Row: 2",
+        "edge_id: MR-INT-001",
+        "source: MR-APP-EPIC",
+        "target: MR-APP-LIS",
+        "standard: HL7 v2 ORU",
+        "data_class: PHI",
+      ].join("\n"),
+      classification_source: "NEEDS_CLASSIFICATION",
+      client_id: "client-meridian",
+      criticality: null,
+      domain_segment: null,
+      embedding_error: null,
+      embedding_model: null,
+      embedding_status: "pending",
+      lifecycle_state: "review",
+      load_batch_id: expect.stringMatching(
+        /^csv:meridian-health:hl7-fhir-integration-topology-json:[a-f0-9]{12}:\d{8}T\d{6}$/,
+      ),
+      provenance: {
+        classification: "confidential",
+        client_id: "client-meridian",
+        confidence: 0.86,
+        data_classification: "confidential",
+        lifecycle_state: "active",
+        loader: "c5-csv-upload-connector",
+        schema_mapping: {
+          dimension: "interoperability_topology",
+          fieldMappings: {
+            data_class: "data_class",
+            edge_id: "edge_id",
+            source: "source",
+            standard: "standard",
+            target: "target",
+          },
+          sourceRecordIdColumn: "edge_id",
+          templateId: "hl7-fhir-integration-topology",
+          textColumns: ["edge_id", "source", "target", "standard", "data_class"],
+          titleColumn: null,
+        },
+        source_basis: "client_provided_upload",
+        source_blob: {
+          bucket: "context-uploads",
+          path: sourcePath,
+          sha256: sourceHash,
+        },
+        source_citation: `blob://context-uploads/${sourcePath}#row=2`,
+        source_doc: "hl7-fhir-integration-topology.json",
+        source_path: `blob://context-uploads/${sourcePath}`,
+        source_row: 2,
+        tenant_key: "meridian-health",
+        upload_attestation: {
+          accepted: true,
+          acceptedAt: expect.stringMatching(
+            /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/,
+          ),
+          authorityConfirmed: true,
+          dataUseConfirmed: true,
+          note: null,
+          sensitiveDataConfirmed: true,
+          version: PILOT_UPLOAD_ATTESTATION_VERSION,
+        },
+        upload_id: expect.stringMatching(
+          /^csv:meridian-health:hl7-fhir-integration-topology-json:[a-f0-9]{12}:\d{8}T\d{6}$/,
+        ),
+        uploaded_at: expect.stringMatching(
+          /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/,
+        ),
+        uploaded_by: "user-meridian",
+      },
+      source_doc: "hl7-fhir-integration-topology.json",
+      source_path: `blob://context-uploads/${sourcePath}#row=2`,
+      source_record_id: "MR-INT-001",
+      source_segment_id: "it_landscape",
+      source_system: "hl7-fhir-integration-topology",
+      tenant_key: "meridian-health",
+      token_count: 36,
+    };
+    expectPersistedChunkRows(getMutationPayload("enterprise_context_chunks"), [
+      expectedChunk,
     ]);
   });
 

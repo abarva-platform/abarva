@@ -72,5 +72,894 @@ jobs:
       - name: Run the unit suites
         run: npx jest src/__tests__/unit --no-coverage --ci
 
+      # `src/lib/admin/broker` is 21 suites / 211 tests that no workflow and no
+      # npm script reached. Measured through the census resolver on `b061a6819`,
+      # not by reading YAML: three directories, 16 + 4 + 1 test files, 0 covered.
+      #
+      # The backlog item that asked for this named 16, which is the top-level
+      # `__tests__` only. `broker/portfolio/__tests__` and
+      # `broker/sentinel/__tests__` are separate census rows and were missing
+      # from the count; naming the parent directory here covers all three and
+      # is why the number in this comment is 21 rather than 16.
+      #
+      # These are not dead modules. 40 non-test files import `admin/broker`,
+      # including webhook routes, cron routes, server actions and admin pages,
+      # so the suites cover code that runs.
+      #
+      # The sibling tree `src/lib/admin/__tests__` (38 files) is deliberately
+      # NOT wired here: run on `b061a6819` it is 5 failed of 62 suites, 9
+      # failing cases. A red directory is wired by fixing it, never by adding
+      # it to a green command. `src/lib/admin/ai-initiatives` (2 files, 8
+      # tests) is green and still unwired -- left for its own item rather than
+      # widened into this one.
+      #
+      # Named as a directory, without a trailing slash, for the two reasons in
+      # the header, so a suite added under `broker` tomorrow runs the day it
+      # lands.
+      - name: Run the admin broker suites
+        run: npx jest src/lib/admin/broker --no-coverage --ci
+
+      # The context-ingestion tree was 24 of 27 suites green before repair.
+      # Triage found one optional-parser assumption, one retired external fixture
+      # dependency, and one document-metadata policy regression. The repaired
+      # tree is 27 suites / 161 tests and is named as a parent so new loader and
+      # intake suites join CI on the commit that adds them.
+      - name: Run the context-ingestion suites
+        run: npx jest src/lib/context-ingestion --no-coverage --ci
+
+      # `src/components/admin` is 31 suites / 171 tests. The first measured
+      # parent run found three stale harness failures: a missing Next router
+      # mock, copy that predated the queued connector-health state, and a
+      # deleted external CSV fixture. After repairing those contracts, the
+      # full parent is green. Naming the parent keeps future nested admin
+      # suites from becoming dark; the small overlap with already-owned
+      # redesign suites is deliberate and keeps this ownership automatic.
+      - name: Run the admin component suites
+        run: npx jest src/components/admin --no-coverage --ci
+
+      # Deliverables was measured before wiring: 86 of 88 suites passed. The
+      # two red suites were stale assertions from source-label normalization
+      # and the document-final renderer release. The green sibling subtrees are
+      # owned below by their measured subdirectory list; this step owns only the
+      # two repaired directories. The synthesis subtree stays unwired because
+      # no product path reaches it.
+      - name: Run the repaired deliverables suites
+        run: >-
+          npx jest
+          src/lib/deliverables/__tests__
+          src/lib/deliverables/orchestrator/__tests__
+          --no-coverage --ci
+
+      - name: Run the uncovered deliverables component suite
+        run: npx jest --runTestsByPath src/components/deliverables/__tests__/ApproveActions.test.tsx --no-coverage --ci
+
+      - name: Run the deliverables route suites
+        run: >-
+          npx jest --runTestsByPath
+          src/app/api/programs/[id]/deliverables/[deliverableId]/content-export/__tests__/route.test.ts
+          src/app/api/programs/[id]/deliverables/[deliverableId]/export/__tests__/route.test.ts
+          src/app/api/v1/deliverables/generate-phase/__tests__/route.test.ts
+          src/app/api/v1/deliverables/generate/__tests__/route.test.ts
+          src/app/api/v1/deliverables/runs/[runId]/__tests__/route.test.ts
+          src/app/api/v1/programs/[programId]/deliverables/[deliverableId]/sign-off/__tests__/route.test.ts
+          src/app/api/v1/programs/[programId]/deliverables/complete/__tests__/route.test.ts
+          --no-coverage --ci
+
+      # Four more library trees that no workflow and no npm script reached.
+      # Measured on `ced75d7c3` by running them, not by reading YAML:
+      #
+      #   expert-kernel            75 suites / 1662 tests / 43 importers
+      #   data-plane/read-adapters 20 suites /  193 tests / 43 importers
+      #   source/data-model        20 suites /  145 tests / 33 importers
+      #   pricing/effort-engine    14 suites /  140 tests /  5 importers
+      #
+      # "importers" counts non-test files outside each tree that import it, so
+      # none of these is coverage over dead code.
+      #
+      # They are four steps rather than one command so that a failure names the
+      # family it came from in the checks list. Pattern choice is measured in
+      # docs/ci/README-suite-wiring.md: queue time is zero either way and a
+      # dedicated workflow pays its own checkout and install, so a step in a job
+      # that already installed is the cheaper half of the trade.
+      #
+      # Three larger trees were measured at the same time and are deliberately
+      # NOT here, because they are red on `ced75d7c3`:
+      #
+      #   src/lib/deliverables     2 failed of 79 suites
+      #   src/lib/context-ingestion 3 failed of 27 suites
+      #   src/components/admin     3 failed of 31 suites
+      #
+      # A red directory is wired by fixing it, never by adding it to a green
+      # command. They are left for their own items with those numbers.
+      #
+      # Each path is named as a directory without a trailing slash, for the two
+      # reasons in the header. None of the four has a sibling sharing its name
+      # as a prefix today, and no other workflow names any of them, so nothing
+      # here runs twice.
+      - name: Run the expert-kernel suites
+        run: npx jest src/lib/programs/expert-kernel --no-coverage --ci
+
+      - name: Run the data-plane read-adapter suites
+        run: npx jest src/lib/data-plane/read-adapters --no-coverage --ci
+
+      - name: Run the Source data-model suites
+        run: npx jest src/lib/source/data-model --no-coverage --ci
+
+      # Widened from `pricing/effort-engine` to the whole `pricing` tree on
+      # `7ff4759ff`: 42 suites / 384 tests, of which effort-engine's 14 were
+      # already running here. Replacing the narrower path rather than adding
+      # beside it is what keeps those 14 from running twice.
+      - name: Run the pricing suites
+        run: npx jest src/lib/pricing --no-coverage --ci
+
+      # src/lib/ingestion: 11 suites / 76 tests / 13 importers, reached by no
+      # workflow and no npm script.
+      - name: Run the ingestion suites
+        run: npx jest src/lib/ingestion --no-coverage --ci
+
+      # Two Source library trees that no workflow and no npm script reached.
+      # Measured on `0b80d8c7a` by running them:
+      #
+      #   source/facts            18 suites / 264 tests / 24 importers
+      #   source/agent-generation 13 suites / 132 tests / 46 importers
+      #
+      # Both are cleanly unwired, which was checked rather than assumed: each
+      # tree's suite count equals the number of test files the census lists as
+      # uncovered beneath it, so naming the parent adds no suite that some other
+      # workflow already runs.
+      #
+      # That check is why `src/components/source/canvas` is NOT here. Its tree
+      # is 48 suites but only 17 files across four rows are uncovered, because
+      # ai-surface-control-catalog.yml already runs `canvas/__tests__` and
+      # `canvas/analytics`. Naming that parent would run 31 already-covered
+      # suites a second time. It needs a decision between a four-directory list
+      # and an accepted overlap, so it is filed separately rather than folded in
+      # here.
+      #
+      # `src/lib/intelligence/ask` is also excluded: 3 failed of 29 suites on
+      # `0b80d8c7a`. A red directory is wired by fixing it, never by adding it
+      # to a green command.
+      - name: Run the Source facts suites
+        run: npx jest src/lib/source/facts --no-coverage --ci
+
+      - name: Run the Source agent-generation suites
+        run: npx jest src/lib/source/agent-generation --no-coverage --ci
+
+      # `src/components/source/canvas` is 48 suites / 227 tests, of which only
+      # 17 files across four census rows were unreached. The rest is already run
+      # by ai-surface-control-catalog.yml, which names `canvas/__tests__` and
+      # `canvas/analytics` individually.
+      #
+      # So this step deliberately runs 31 suites that another workflow already
+      # runs. The alternative was naming the four uncovered subdirectories,
+      # which is the hand-maintained list this repository keeps removing: it
+      # goes stale the day someone adds a fifth, and nothing would notice.
+      #
+      # The choice was made on the duplicated COST, measured on `0dbb766b2`:
+      #
+      #   already-covered portion   31 suites / 183 tests / 2.577s
+      #   the whole tree            48 suites / 227 tests / 2.639s
+      #
+      # ~2.5 seconds per pull request, which is the same order as the 1.8s
+      # AgentDock overlap this repository measured and deliberately kept (see
+      # docs/ci/README-suite-wiring.md). A correction is owed here and is
+      # recorded in the release record: the change that deferred this one
+      # (PR#8074) asserted the overlap was "a different order of magnitude"
+      # before the number existed. It is not. That aside conflated suite COUNT
+      # with COST, and cost is what the decision turns on.
+      #
+      # Naming the parent is also what makes a suite added under `canvas`
+      # tomorrow run the day it lands, which four pinned subdirectories would
+      # not.
+      - name: Run the Source canvas component suites
+        run: npx jest src/components/source/canvas --no-coverage --ci
+
+      # The direct Source core row contains 69 suites: 9 are already owned by
+      # ai-surface-control-catalog.yml and 60 were not reached by any workflow.
+      # The parent also contains 8 nested files, so the actual Jest command is
+      # 77 suites / 736 tests. All pass unchanged.
+      #
+      # Naming the parent deliberately repeats the 9 owned suites. Their
+      # measured cost is ~1 second (9 suites / 71 tests), while the full parent
+      # is ~2.6 seconds. That bounded overlap buys automatic ownership for new
+      # core and specialist tests instead of pinning a 60-file list that would
+      # become stale on the next addition.
+      - name: Run the Source core suites
+        run: npx jest src/lib/source/__tests__ --no-coverage --ci
+
+      # Nineteen approval and approval-adjacent route suites across thirteen
+      # directories were not reached by a pull-request workflow. The narrow
+      # list is deliberate: their common parents also contain unrelated route
+      # trees, so naming a broad parent would hide which governed gate failed.
+      - name: Run governed approval route suites
+        run: >-
+          npx jest --runTestsByPath
+          "src/app/api/v1/programs/[programId]/pricing/__tests__/approve-route.test.ts"
+          "src/app/api/v1/programs/[programId]/pricing/__tests__/estimates-route.test.ts"
+          "src/app/api/v1/programs/[programId]/pricing/__tests__/config-route.test.ts"
+          "src/app/api/v1/programs/[programId]/pricing/__tests__/estimate-detail-routes.test.ts"
+          "src/app/(maestro)/admin/__tests__/page-source.test.ts"
+          "src/app/(maestro)/admin/__tests__/cached-helpers-log-errors.test.ts"
+          "src/app/(maestro)/admin/__tests__/layout-access.test.ts"
+          "src/app/api/admin/programs/approvals/__tests__/_auth.test.ts"
+          "src/app/api/admin/programs/approvals/__tests__/route.test.ts"
+          "src/app/api/admin/pricing/rate-cards/[id]/approve/__tests__/route.test.ts"
+          "src/app/api/admin/programs/approvals/export/__tests__/route.test.ts"
+          "src/app/api/v1/programs/[programId]/artifacts/[artifactId]/client-approval/__tests__/route.test.ts"
+          "src/app/api/v1/programs/[programId]/current-state/evidence/[evidenceId]/approve/__tests__/route.test.ts"
+          "src/app/api/v1/programs/[programId]/phase-gate-approval/__tests__/route.test.ts"
+          "src/app/api/v1/programs/[programId]/solution-options/approve/__tests__/route.test.ts"
+          "src/app/api/v1/source/[eventId]/stage/__tests__/route.test.ts"
+          "src/app/api/v1/source/[eventId]/vendor-proposals/facts/[factId]/reject/__tests__/route.test.ts"
+          "src/app/api/v1/source/events/[eventId]/approve/__tests__/route.test.ts"
+          "src/app/api/v1/source/events/[eventId]/request-approval/__tests__/route.test.ts"
+          --no-coverage --ci
+
+      # The catalog workflow already runs this route's focused approval-gate
+      # contract. The broader route suite was the unowned half of the
+      # directory. The sibling v1 program-advance directory is already covered
+      # by the v1 API parent step and must not be duplicated here.
+      - name: Run phase-advance route suites
+        run: >-
+          npx jest --runTestsByPath
+          "src/app/api/programs/phase-gate/__tests__/route.test.ts"
+          --no-coverage --ci
+
+      # Source export code produces the files a user can download, so this tree
+      # is a control boundary rather than a formatting convenience. Measured on
+      # `4758bb8aa`: 24 suites / 250 tests pass. One suite,
+      # `artifact-verdict-consistency`, is already run by the AI surface control
+      # workflow; naming the parent deliberately duplicates that single suite
+      # so every new export suite is owned on the day it lands.
+      #
+      # Two suites are called out in the release record because they govern
+      # client-facing truth: the narrative quality gate blocks an unreviewed
+      # RFP body, and artifact verdict consistency keeps downloadable outputs
+      # aligned with the Source judgment kernel.
+      - name: Run the Source export suites
+        run: npx jest src/lib/source/exports/__tests__ --no-coverage --ci
+
+      # These three steps name SUBDIRECTORIES rather than a parent, which is the
+      # opposite of every step above, and the reason matters: each of these
+      # parents contains red suites. Naming the parent here would wire a known
+      # failure into a green command.
+      #
+      # It came out of a mistake worth recording. These trees had been written
+      # off as "red" at TREE level, from one run of the whole parent. Checking
+      # WHICH directories actually failed found the failures confined to two
+      # directories in each case, with green siblings behind them:
+      #
+      #   src/lib/deliverables   2 red dirs of 10; 7 green subtrees, 22 suites
+      #   src/components/admin   2 red dirs of  6; 3 green subtrees,  5 suites
+      #   src/lib/admin          all 5 failures in one dir; ai-initiatives green
+      #
+      # `components/admin/tower` was in this list for one commit and has been
+      # removed: the tower test-ratchet baseline (docs/ci/tower-test-baseline.json,
+      # run by home-surface-guard.yml on pull_request) already names it, so
+      # running it here was a duplicate. See the release record for how that was
+      # missed -- the coverage census had it right and the check that doubted it
+      # was the thing at fault.
+      #
+      # 30 suites / 348 tests, measured on `3720e95eb`, hidden behind a label
+      # applied one level too high.
+      #
+      # Still red and still unwired, deliberately:
+      #   src/lib/deliverables/__tests__/golden-regression.test.ts
+      #   src/lib/deliverables/orchestrator/__tests__
+      #   src/components/admin/__tests__ and components/admin/context-layer/__tests__
+      #   src/lib/admin/__tests__ (5 failed of 62 suites)
+      #
+      # And src/lib/deliverables/synthesis is excluded for a different reason:
+      # nothing outside its own tree imports its one file except the failing
+      # golden-regression suite, so no production code reaches it. Running it
+      # would add a number to the census without covering anything.
+      #
+      # Because these are pinned subdirectories, a NEW directory added under
+      # any of these parents will not run here. That is the cost of the parents
+      # being red, and it goes away when they are fixed: the right repair is to
+      # fix those suites and collapse these lists into their parents.
+      - name: Run the green deliverables subtrees
+        run: >-
+          npx jest
+          src/lib/deliverables/decision-model
+          src/lib/deliverables/planning
+          src/lib/deliverables/profiles
+          src/lib/deliverables/quality
+          src/lib/deliverables/shared
+          src/lib/deliverables/story
+          src/lib/deliverables/templates
+          --no-coverage --ci
+
+      - name: Run the green admin component subtrees
+        run: >-
+          npx jest
+          src/components/admin/agent-readiness-redesign
+          src/components/admin/data-trust-redesign
+          src/components/admin/setup
+          --no-coverage --ci
+
+      - name: Run the admin AI-initiatives suites
+        run: npx jest src/lib/admin/ai-initiatives --no-coverage --ci
+
+      # Eight approval/lifecycle-adjacent suites across six small trees were
+      # measured first. Seven were green and import live code; the lifecycle
+      # operating-system suite was red on an authored-contract expectation and
+      # stayed unwired as an exact file-level quarantine.
+      #
+      # That quarantine is lifted here and the suite joins the step. It ranked 7
+      # in the census, band `critical`, the highest-ranked fully unreached
+      # directory in the tree, and it was red for one reason: the case asserted
+      # a `programs:P6` lifecycle contract against a phase-pack registry that
+      # has held six packs since before the suite was written, and whose
+      # `PhaseNumber` type cannot express a seventh. The expectation was
+      # corrected to the six authored phases with that reasoning recorded beside
+      # it. 1 failed / 43 passed before; 44 passed after.
+      #
+      # What the band does NOT mean, stated here so the number is not read as a
+      # guard it is not: the `approval_or_lifecycle_write` signal fires from
+      # `APPROVAL_OR_LIFECYCLE_PATH_RE` matching the word `lifecycle` in the
+      # directory path. No source in the module matches the corresponding
+      # source-level regex, and the module makes no database, network, or async
+      # call at all — it is a pure builder over authored packs. The suite
+      # asserts authored-content shape, never a refused approval or a blocked
+      # transition. Its value is that `buildSourceLifecycleContract` is read on
+      # a live path (`src/app/api/chat/agent/route.ts`); the program half it
+      # also covers has no non-test importer.
+      - name: Run small approval and lifecycle suites
+        run: >-
+          npx jest --runTestsByPath
+          src/lib/nexus/__tests__/context-adapter.test.ts
+          src/lib/nexus/__tests__/gateLifecycle-pack-bound.test.ts
+          src/lib/source/notifications/__tests__/approval-recipient-policy.test.ts
+          src/lib/source/notifications/__tests__/approval-request.test.ts
+          src/components/source/approval/__tests__/EventApprovalCard.test.tsx
+          src/lib/enterprise-knowledge/narratives/__tests__/knowledge-narrative-store.test.ts
+          src/lib/intelligence/insight-engine/rules/__tests__/context-record-rules.test.ts
+          src/lib/lifecycle-operating-system/__tests__/lifecycle-operating-system.test.ts
+          --no-coverage --ci
+
+      # Four Program archetype suites, census rank 13, band `high`, signal
+      # `tenant_scoped_read`, 4 files and 0 covered. All four load, collect and
+      # run; three are green and are owned here. The subjects they exercise have
+      # live non-test importers outside the directory: `registry` 6 (four v1
+      # Programs API routes and two library modules), `resolver` 3,
+      # `method-library` 1, `types` 9 — so this is not coverage of nothing.
+      #
+      # `resolver.test.ts` stays an exact file-level quarantine, and its red is
+      # a real defect rather than a stale assertion: the archetype
+      # `ANALYTICS_CAPABILITY_REPATRIATION` declares two `analysisMethods` keys,
+      # `strategic_control_repatriation_readiness` and
+      # `capability_parity_traceability`, that `ANALYSIS_METHODS` does not
+      # define, so the registry references guidance the method library cannot
+      # resolve. Which side is wrong — author the two methods, or withdraw them
+      # from the archetype — is authored-content authority, so it is filed as
+      # backlog item T-456 rather than guessed at inside a wiring change.
+      # Loaded 4; collected 4; run 4; green 3; newly owned 3.
+      - name: Run the green Program archetype suites
+        run: >-
+          npx jest --runTestsByPath
+          src/lib/programs/archetypes/__tests__/ai-pdlc.test.ts
+          src/lib/programs/archetypes/__tests__/generality.test.ts
+          src/lib/programs/archetypes/__tests__/resolve-program-archetype.test.ts
+          --no-coverage --ci
+
+      # `src/lib/admin/__tests__` was measured as 33 green files and 5 red
+      # files. Four additional green files exercise policy/runbook modules that
+      # no non-test code imports, so they are not counted as live-code CI
+      # coverage here. The red files are quarantined individually so healthy
+      # siblings in the same directory still run.
+      #
+      # `/node_modules/` is restated because passing --testPathIgnorePatterns
+      # replaces Jest's default ignore list.
+      - name: Run live admin library suites
+        run: >-
+          npx jest
+          src/lib/admin/__tests__
+          --testPathIgnorePatterns /node_modules/
+          src/lib/admin/__tests__/setup-acts-registry.test.ts
+          src/lib/admin/__tests__/setup-data-load-center.test.ts
+          src/lib/admin/__tests__/admin-tenant.test.ts
+          src/lib/admin/__tests__/data-layer-explorer.test.ts
+          src/lib/admin/__tests__/agent-readiness-composer.test.ts
+          src/lib/admin/__tests__/pilot-data-plane-security-policy.test.ts
+          src/lib/admin/__tests__/pilot-observability-isolation-smoke.test.ts
+          src/lib/admin/__tests__/setup-ai-governance.test.ts
+          src/lib/admin/__tests__/pilot-private-data-plane-runbook.test.ts
+          --no-coverage --ci
+
+      # The data-plane write-adapter tree is 11 suites / 169 tests. Ten suites
+      # were green on the first measured run; the remaining three failures in
+      # one suite came from a stale Supabase read mock after the production
+      # parent lookup moved to the Azure/Postgres compatibility client. The
+      # repaired directory is named literally so new write-adapter suites join
+      # CI on the commit that adds them.
+      - name: Run the data-plane write-adapter suites
+        run: npx jest src/lib/data-plane/write-adapters/__tests__ --no-coverage --ci
+
+      # src/app/api/admin: 16 suites / 74 tests / ~0.4s, measured on
+      # `4735d934f`. Twelve of its directories were reached by no workflow.
+      #
+      # The two files named in --testPathIgnorePatterns are a QUARANTINE, not
+      # a cleanup: both are red (5 failing tests between them) and this step
+      # would fail on arrival without them. Nothing forces that list to shrink
+      # when they are fixed -- it is two lines with the reason beside them,
+      # which is the best available here and not a guarantee.
+      #
+      # Naming the parent with two exclusions rather than listing ten green
+      # subdirectories is the same trade made elsewhere in this file: a list
+      # of directories goes stale the day an eleventh appears and nothing
+      # notices, while the parent runs it on arrival. The cost is that this
+      # step re-runs the four governed approval suites another step already
+      # owns -- measured at 4 suites / 20 tests / 0.17s, the same order as the
+      # overlaps already accepted in docs/ci/README-suite-wiring.md. Count is
+      # not cost.
+      #
+      # `/node_modules/` is restated because passing --testPathIgnorePatterns
+      # replaces jest's default rather than adding to it.
+      #
+      # The patterns are unquoted. Quoting them is honoured by jest and, since
+      # `4735d934f`, by the coverage census too -- but unquoted stays the
+      # clearer form, and it is what the census's own quarantine generators
+      # emit.
+      #
+      # No path here contains a bracketed route segment. One that did would
+      # need --runTestsByPath, because `[id]` is a character class to a jest
+      # path argument -- the reason the governed approval suites are named by
+      # exact path rather than swept.
+      - name: Run the admin API route suites
+        run: >-
+          npx jest
+          src/app/api/admin
+          --testPathIgnorePatterns /node_modules/
+          src/app/api/admin/context-layer/csv-upload
+          src/app/api/admin/users/provision
+          --no-coverage --ci
+
+      # T-464 repairs the stale row-shape expectation in the structured context
+      # CSV upload route suite and proves both write boundaries are mocked:
+      # postgresCompat is strict to expected tables, object storage is replaced,
+      # and the exact pending chunk row must keep tenant identifiers. Keep this
+      # exact while the sibling user-provisioning suite remains a separate
+      # safety item.
+      - name: Run context CSV upload boundary suite
+        run: >-
+          npx jest --runTestsByPath
+          src/app/api/admin/context-layer/csv-upload/__tests__/route.test.ts
+          --no-coverage --ci
+
+      # T-463 replaces the route's actual read and write boundaries and keeps
+      # the Clerk invitation transport inert. The suite pins the tenant key on
+      # every person upsert and fails when that scope is removed.
+      - name: Run user provisioning boundary suite
+        run: >-
+          npx jest --runTestsByPath
+          src/app/api/admin/users/provision/__tests__/route.test.ts
+          --no-coverage --ci
+
+      # Five subtrees under src/app/api/v1 that no workflow reached: 55 suites
+      # / 328 tests, measured on `e0362a92e`.
+      #
+      #   v1/source     28 suites / 166 tests   21 files newly covered
+      #   v1/programs   24 suites / 128 tests   12 files newly covered
+      #   v1/agent       1 suite  /  20 tests    1
+      #   v1/artifacts   1 suite  /  10 tests    1
+      #   v1/moves       1 suite  /   4 tests    1
+      #
+      # The suite counts exceed the newly-covered counts because other steps
+      # already own some of these files -- notably the governed approval
+      # routes. That overlap is deliberate and cheap: the two large subtrees
+      # run in about 0.74s and 0.72s in total, so the duplicated portion is a
+      # fraction of a second, against a directory list that would need editing
+      # every time a route is added.
+      #
+      # v1/atlas is NOT here: 3 suites, all three failing, 4 of 8 tests red on
+      # `e0362a92e`. A red directory is wired by fixing it, never by adding it
+      # to a green command.
+      #
+      # Every path named here is bracket-free. The directories BELOW them are
+      # full of `[eventId]`, `[programId]` and the like, which is fine -- those
+      # are matched as descendants of a literal prefix. Naming one of them
+      # directly would not be: a jest path argument is a regex, so `[id]` is a
+      # character class. That is why the governed approval routes are run by
+      # exact path with --runTestsByPath, and any future addition naming a
+      # bracketed segment must do the same.
+      - name: Run the v1 API route suites
+        run: >-
+          npx jest
+          src/app/api/v1/source
+          src/app/api/v1/programs
+          src/app/api/v1/agent
+          src/app/api/v1/artifacts
+          src/app/api/v1/moves
+          --no-coverage --ci
+
+      # The auth tree is 19 suites / 206 tests. Thirteen suites (88 tests) are
+      # green and are owned here. Six suites remain red with 11 stale-policy or
+      # fixture failures, so they stay named in an explicit quarantine rather
+      # than making the green tenancy controls dark. A new suite under the
+      # parent runs automatically unless it is deliberately added below.
+      #
+      # `/node_modules/` is restated because passing --testPathIgnorePatterns
+      # replaces Jest's default rather than extending it.
+      - name: Run the green auth and tenancy suites
+        run: >-
+          npx jest
+          src/lib/auth/__tests__
+          --testPathIgnorePatterns /node_modules/
+          src/lib/auth/__tests__/access-routing.test.ts
+          src/lib/auth/__tests__/legacy-tenant-sunset.test.ts
+          src/lib/auth/__tests__/private-browser-proof-session.test.ts
+          src/lib/auth/__tests__/program-access-policy.test.ts
+          src/lib/auth/__tests__/source-access-policy.test.ts
+          src/lib/auth/__tests__/tenant-isolation-probes.test.ts
+          --no-coverage --ci
+
+      # Four more library trees no workflow reached: 38 suites / 487 tests,
+      # measured on `024adb43f`.
+      #
+      #   lib/notifications          10 suites / 127 tests /  9 importers
+      #   programs/phase-packs       10 suites / 187 tests / 11 importers
+      #   programs/discovery          9 suites /  56 tests / 23 importers
+      #   programs/exports            9 suites / 117 tests /  7 importers
+      #
+      # Three neighbours were measured at the same time and are NOT here,
+      # because each is partly red on `024adb43f`:
+      #
+      #   lib/visual-system          1 failed of 10 suites
+      #   lib/enterprise-context     2 failed of  9
+      #   lib/knowledge              3 failed of 31
+      #
+      # A red directory is wired by fixing it, never by adding it to a green
+      # command. Whether each has green subtrees worth naming separately is a
+      # live question, not a settled one.
+      - name: Run the notifications and programs library suites
+        run: >-
+          npx jest
+          src/lib/notifications
+          src/lib/programs/phase-packs
+          src/lib/programs/discovery
+          src/lib/programs/exports
+          --no-coverage --ci
+
+      # src/lib/knowledge: 28 suites / 339 tests / ~0.9s, measured on
+      # `216228cde`. 81 non-test files import this tree.
+      #
+      # Three files are quarantined, and they are named as FILES rather than
+      # as the directories holding them, which is the whole point. Each of the
+      # three red suites sits in a directory of mostly-green ones -- 9, 5 and 4
+      # test files respectively -- so excluding the directories would have
+      # dropped fifteen passing files to quarantine three.
+      #
+      # Naming the five green subtrees instead reaches only 13 suites, because
+      # it abandons those fifteen. The parent plus three file exclusions
+      # reaches 28. Measured both ways before choosing.
+      #
+      # This is a quarantine: nothing forces the list to shrink when those
+      # three are fixed.
+      #
+      # Two neighbours measured alongside are NOT here, and cannot be split the
+      # same way: `visual-system` (1 failed of 10) and `enterprise-context`
+      # (2 failed of 9) each have a single flat test directory, so there is no
+      # green subtree to name and no directory boundary to quarantine along.
+      - name: Run the knowledge suites
+        run: >-
+          npx jest
+          src/lib/knowledge
+          --testPathIgnorePatterns /node_modules/
+          src/lib/knowledge/__tests__/tenant-enterprise-context
+          src/lib/knowledge/context-broker/__tests__/pinecone-client
+          src/lib/knowledge/tenant-data/__tests__/stub-adapter
+          --no-coverage --ci
+
+      # The flat enterprise-context tree contains nine suites. Seven are green
+      # and exercise modules or generated packages consumed outside tests:
+      # chunking (3 importers), the intake loader (7), refresh simulation (1),
+      # schema composition (1), template schema (7), and generated package
+      # inputs consumed by seven loader/generator scripts. Two files stay in an
+      # exact quarantine: derived-enterprise-read currently fails because its
+      # retired local inputs are absent, and intelligence-read-model has two
+      # stale aggregation expectations. Loaded 9; collected 9; run 9; green 7.
+      - name: Run the green enterprise context suites
+        run: >-
+          npx jest --runTestsByPath
+          src/lib/enterprise-context/__tests__/chunking.test.ts
+          src/lib/enterprise-context/__tests__/client-enterprise-context-datasets.test.ts
+          src/lib/enterprise-context/__tests__/meridian-ingestion-plan.test.ts
+          src/lib/enterprise-context/__tests__/meridian-refresh-simulator.test.ts
+          src/lib/enterprise-context/__tests__/meridian-synthetic-dataset.test.ts
+          src/lib/enterprise-context/__tests__/schema.test.ts
+          src/lib/enterprise-context/__tests__/template-schema.test.ts
+          --no-coverage --ci
+
+      # Sixteen tenant/governance suites were measured before wiring: 11 green
+      # and 5 red. One green policy-exceptions suite is already owned by the
+      # context-corpus workflow. The database compatibility suite is also left
+      # out because newly owning its legacy client import violates the
+      # architecture gate. This step adds the remaining 9. The green subjects
+      # have live non-test importer counts of 1, 4, 1, 1, 125, 1, 1, 4, and 1
+      # respectively. Red files remain exact quarantines: three governance
+      # fixtures, active-client display-name drift, and a tenant purity scan
+      # with current findings. Loaded 16; collected 16; run 16; green 11;
+      # newly owned 9.
+      - name: Run the green governance and tenant library suites
+        run: >-
+          npx jest --runTestsByPath
+          src/lib/governance/__tests__/inventory.test.ts
+          src/lib/governance/__tests__/promotion-evaluator.test.ts
+          src/lib/governance/__tests__/readiness-backfill.test.ts
+          src/lib/governance/__tests__/tenant-coverage.test.ts
+          src/lib/__tests__/client-config-canonical.test.ts
+          src/lib/azure-search/__tests__/index-contracts.test.ts
+          src/lib/azure-search/__tests__/index-results.test.ts
+          src/lib/azure-search/__tests__/retriever-parity.test.ts
+          src/lib/azure-search/__tests__/tenant-context-backfill.test.ts
+          --no-coverage --ci
+
+      # Nine Source-adjacent control suites were measured before wiring:
+      # six green and three red. The three corpus subjects have 2, 7, and 8
+      # non-test importers. The contract-optimization subjects have live
+      # importers ranging from 1 to 7. The three Atlas route files remain an
+      # exact file-level quarantine: their stale source-string and return-shape
+      # assertions fail on current main and do not execute an opposite-tenant
+      # refusal. Loaded 9; collected 9; run 9; green 6; newly owned 6.
+      - name: Run the green Source control library suites
+        run: >-
+          npx jest --runTestsByPath
+          src/lib/corpus/azure-search.test.ts
+          src/lib/corpus/industry-scope.test.ts
+          src/lib/corpus/retrieval.test.ts
+          src/lib/source/contract-optimization/__tests__/contract-optimization-mve.test.ts
+          src/lib/source/contract-optimization/__tests__/eligibility.test.ts
+          src/lib/source/contract-optimization/__tests__/read.test.ts
+          --no-coverage --ci
+
+      # Seven previously dark Source suites were measured unchanged: all seven
+      # load, collect, and run; six are green. This step owns the five green,
+      # behavior-bearing files. The four readiness files exercise modules with
+      # direct non-test importer counts from 1 to 3. The route file executes a
+      # Next.js page entry point, which is framework-owned and therefore has no
+      # ordinary importer. The green source-text-only not-found suite and the
+      # red tenant-named source scanner remain exact file-level quarantines.
+      - name: Run Source readiness and route suites
+        run: >-
+          npx jest --runTestsByPath
+          src/lib/source/rfp-readiness/__tests__/ams-section-map.test.ts
+          src/lib/source/rfp-readiness/__tests__/intake.test.ts
+          src/lib/source/rfp-readiness/__tests__/resolver.test.ts
+          src/lib/source/rfp-readiness/__tests__/section-trace.test.ts
+          "src/app/(maestro)/source/__tests__/new-route-optimization-redirect.test.ts"
+          --no-coverage --ci
+
+      # Eight Source contract suites were measured before wiring: all eight
+      # loaded, collected, and ran; seven suites were green and one was red.
+      # Only three green files are owned here. Evidence review has one runtime
+      # importer and executes refusal behavior. Cloud adaptation has one
+      # operator importer and checks structured evidence projection. Education
+      # has two runtime product importers and checks decision-readiness states.
+      # Five files remain exact quarantines: persistence and read-model omit a
+      # register contract identity and cannot reproduce the live identity split;
+      # templates is red; prompt only checks strings and has no importer; and
+      # provenance asserts refusal but its validators have no runtime importer.
+      # Loaded 8; collected 8; run 8; green 7; newly owned 3.
+      - name: Run the owned Source contract suites
+        run: >-
+          npx jest --runTestsByPath
+          src/lib/source/contract-evidence/__tests__/evidence-review.test.ts
+          src/lib/source/contract-intelligence/__tests__/cloud-adapter.test.ts
+          src/lib/source/contract-intelligence/__tests__/education.test.ts
+          --no-coverage --ci
+
+      # Eight previously dark suites were measured before wiring: 8 loaded,
+      # 8 collected, 8 run, 6 green. The two stale setup route harnesses were
+      # repaired by mocking tenancy plus the read/write persistence boundary;
+      # the route itself is unchanged. All 8 are now green, and both setup
+      # suites assert refusal before any mocked data call. The attachment
+      # suites cover successful transfer plus unauthenticated and tenant/access
+      # refusal, with object storage and metadata writes mocked. Framework route
+      # entry points have 0 ordinary importers. Contract adapter/projection have
+      # 2 non-test importers each; File Cabinet blob-store/service/repository
+      # have 5/2/11. The File Cabinet tests cover storage, versioning, tenancy,
+      # and row mapping, not rendered identifiers.
+      - name: Run T-451 Source and Programs suites
+        run: >-
+          npx jest
+          src/app/api/programs/__tests__
+          src/app/api/setup/initiatives/__tests__
+          src/lib/source/contract-depth-package/__tests__
+          src/lib/source/file-cabinet/__tests__
+          --no-coverage --ci
+
+      # Four admin and Source route/action suites were measured unchanged:
+      # loaded 4, collected 4, run 4, green 4 (21 tests). The connector suite
+      # replaces its broker write with a mock. The invitation suite replaces
+      # both the Clerk transport and audit writer with mocks. The financial
+      # access suite proves that a caller without financial visibility cannot
+      # invoke or serialize financial reads. The Source New route suite proves
+      # tenant and event refusal; it does not claim phase-completeness or
+      # rendered-identifier coverage. Action subjects have one non-test
+      # importer each; both page subjects are framework-owned route entries.
+      - name: Run admin and Source action/route control suites
+        run: >-
+          npx jest --runTestsByPath
+          "src/app/(maestro)/admin/connectors/_actions/__tests__/create-pending-connector.test.ts"
+          "src/app/(maestro)/admin/users-access/_actions/__tests__/send-invite.test.ts"
+          "src/app/(maestro)/source/new/[eventId]/page.test.tsx"
+          "src/app/(maestro)/source/optimize/__tests__/page.financial-access.test.tsx"
+          --no-coverage --ci
+
+      # Ten previously dark suites were measured unchanged: all ten loaded,
+      # collected, ran, and passed (69 tests before canonical-key expansion).
+      # The tenant suites now iterate the canonical tenant-key authority rather
+      # than maintaining another list. Their subjects have 101, 11, and 10
+      # direct non-test importers. The Tower projector is a package-script CLI;
+      # its write helper has one runtime importer and both Tower tests use fake
+      # clients. Each notification action has one UI importer and replaces the
+      # Postgres write boundary. The Ask route is a Next.js entry point and both
+      # suites replace model, data, auth, session, and telemetry boundaries.
+      # Exact files are named so a future writer or sender is not adopted
+      # without the same boundary review.
+      - name: Run tenant, Tower, notification, and Intelligence Ask suites
+        run: >-
+          npx jest --runTestsByPath
+          src/lib/tenant/__tests__/aliases.test.ts
+          src/lib/tenant/__tests__/foundation-tenants.test.ts
+          src/lib/tenant/__tests__/resolveTenant.test.ts
+          src/scripts/tower/__tests__/project-tower-mart-client-resolver.test.ts
+          src/scripts/tower/__tests__/project-tower-mart-source-contracts.test.ts
+          src/scripts/tower/__tests__/project-tower-mart-write.test.ts
+          "src/app/(maestro)/admin/users-access/notifications/_actions/__tests__/save-preferences.test.ts"
+          "src/app/(maestro)/admin/users-access/notifications/_actions/__tests__/send-test.test.ts"
+          src/app/api/intelligence/ask/__tests__/route.source-contract-authority.test.ts
+          src/app/api/intelligence/ask/__tests__/route.telemetry.test.ts
+          --no-coverage --ci
+
+      # Four previously dark suites. Measured before any edit: the Atlas
+      # /api/v1 trio was red (4 of 8 cases failing) and the context demo route
+      # was green at 24 of 24. Two of the three Atlas suites asserted their
+      # control by reading route source as text, and both failed on a quote
+      # style while the control they named was intact — so they are rewritten
+      # to invoke the handler rather than requoted. Deleting the header and
+      # leaving its name in a comment now fails three cases; the text version
+      # passed that same mutation. Boundaries: the Atlas suites replace the
+      # tenancy resolver and the orchestrator, the demo route replaces tenancy,
+      # active client and the broker. No suite here can reach Postgres, a
+      # model, or an outbound send. Exact files are named so a later addition
+      # to either directory is not adopted without the same review.
+      - name: Run Atlas v1 auth and context demo route suites
+        run: >-
+          npx jest --runTestsByPath
+          src/app/api/v1/atlas/__tests__/auth-boundary.test.ts
+          src/app/api/v1/atlas/__tests__/auth-user-id-normalization.test.ts
+          src/app/api/v1/atlas/__tests__/mode-visibility.test.ts
+          src/app/api/context/demo/__tests__/route.test.ts
+          --no-coverage --ci
+
+      # The request and strategy authority module. Its logic had no caller and
+      # its own suites ran in no workflow, so both halves of the version
+      # authority were dark at once. Every suite in the module is listed and
+      # every one is green on arrival; the census recorded both directories as
+      # zero-covered before this step.
+      - name: Run the Source New workspace authority suites
+        run: >-
+          npx jest --runTestsByPath
+          src/lib/source/new-workspace/__tests__/authority-version-store.test.ts
+          src/lib/source/new-workspace/__tests__/event-authority.test.ts
+          src/lib/source/new-workspace/source-version-authority.test.ts
+          src/lib/source/new-workspace/request-triage.test.ts
+          src/lib/source/new-workspace/phase-state.test.ts
+          src/lib/source/new-workspace/step-readiness.test.ts
+          src/lib/source/new-workspace/navigation.test.ts
+          src/lib/source/new-workspace/event-intelligence.test.ts
+          --no-coverage --ci
+
+      # The governed Tower answer contract. Measured on origin/main at
+      # 7d19b27ef: 2 collected, 2 FAILED — and not because the routing control
+      # regressed. The suite mocked `@/lib/cio-tower/answer`, which the
+      # orchestrator has not imported since it moved to
+      # `answerCurrentTowerQuestion` in `@/lib/tower/current-layer-answer`
+      # (orchestrator.ts:44, :289). The mock intercepted nothing, so the real
+      # contract ran and tried to open a Postgres session. It failed here only
+      # because no DATABASE_URL is set; anywhere one is, it would have
+      # performed live tenant reads. Repaired against the boundary the
+      # orchestrator actually resolves, so no tenant read is reachable.
+      # Mutation-proved, comment decoy included: deleting the governed branch
+      # fails 3 of 4, routing everything to it fails the negative control,
+      # dropping `answer_current_tower_question` from toolsUsed and leaving the
+      # name in a COMMENT fails 2 of 4, and bypassing canonicalization fails 3
+      # of 4. The rest of src/lib/atlas/__tests__ stays dark on purpose: two of
+      # those suites assert by reading source as text, and a green text-matcher
+      # is worse than a red one. Exact file named for that reason.
+      - name: Run the governed Tower answer contract suite
+        run: >-
+          npx jest --runTestsByPath
+          src/lib/atlas/__tests__/orchestrator-governed-tower.test.ts
+          --no-coverage --ci
+
+      # T-466. Was 2 collected / 2 FAILED on main: it declared a
+      # `mockLoadV7TowerProjection` spy and asserted against it without ever
+      # calling `jest.mock`, so one case could not pass however correct the
+      # code was. Not repaired by installing that spy -- `loadV7TowerProjection`
+      # does not exist anywhere in src/, `buildAtlasTowerCurrentState` imports
+      # no V7 projection, and its `tenantKeyCandidates` input is read by
+      # nothing and passed by nobody at its only call site. That case is
+      # replaced by the tenant-scoping contract that does exist, asserted
+      # through the two projection loaders the function actually imports.
+      # BOUNDARY PROVEN BEFORE WIRING, and the answer differs from the one
+      # assumed for the suite above: an unmocked read here cannot reach
+      # Postgres under jest at all, because postgresCompat loads its driver via
+      # `new Function('specifier','return import(specifier)')`, which the jest
+      # VM refuses without --experimental-vm-modules. Probed against a closed
+      # port with DATABASE_URL set: `{data:null, error:"...
+      # ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING_FLAG"}` in 0 ms, no socket. The
+      # hazard is the SWALLOW, not the read -- an unmocked read is
+      # indistinguishable from an empty one -- so the mock is strict and a case
+      # asserts `clients` is the only table touched. Mutation-proved, comment
+      # decoy included: bypassing canonicalization fails 2 of 5; leaving
+      # `canonicalCioTowerTenantDisplayName` in a COMMENT while deleting the
+      # call still fails 2 of 5; scoping by the caller's clientKey instead of
+      # the row's tenant key fails 2 of 5; adding a second data-plane read
+      # fails all 5.
+      - name: Run the Tower grounding cover-name and tenant-scoping suite
+        run: >-
+          npx jest --runTestsByPath
+          src/lib/atlas/__tests__/tower-grounding-client-name.test.ts
+          --no-coverage --ci
+
+      # T-467. Seven Atlas suites were green and still dark after the governed
+      # Tower and grounding repairs. They are wired by exact file path, not by
+      # directory, because the sibling directory still contains suites that
+      # needed technique triage before ownership. The two source-text controls
+      # are no longer source-text controls: scripted CXO language now drives
+      # `runScriptedAtlasIntent`, and LLM determinism now drives `runAtlasLlm`
+      # through the audited Anthropic boundary and asserts the actual
+      # `messages.create` payload. T-469 supplies the Postgres guard; model
+      # egress is replaced at `@/lib/agent/stream`; scripted data reads are
+      # replaced at `@/lib/atlas/tool-belt`. Mutation-proved across all seven,
+      # including comment decoys for the named client and factual-spine
+      # controls.
+      - name: Run the exact Atlas suite ownership set
+        run: >-
+          npx jest --runTestsByPath
+          src/lib/atlas/__tests__/orchestrator-enterprise-read-enrichment.test.ts
+          src/lib/atlas/__tests__/prompt-client-naming.test.ts
+          src/lib/atlas/__tests__/rendered-response.test.ts
+          src/lib/atlas/__tests__/scripted-cxo-language.test.ts
+          src/lib/atlas/__tests__/tower-budget-rollup-resolution.test.ts
+          src/lib/atlas/__tests__/tower-factual-spine.test.ts
+          src/lib/atlas/llm-determinism.test.ts
+          --no-coverage --ci
+
       - name: Refuse a new dark tree under src/__tests__
         run: npx jest --runTestsByPath src/__tests__/behaviors/unit-directory-ci-coverage.test.ts --no-coverage --ci
+
+      # T-469. The per-client test-time data-plane boundary. Two clients, two
+      # opposite failure modes, both invisible from the test file: the static-pg
+      # clients open a real socket on an unstubbed read (proved here by
+      # ECONNREFUSED against a closed port — a live tenant read anywhere a real
+      # connection string is in the environment), while postgresCompat swallows
+      # its own driver-load refusal into `{data: null}` that a caller reads back
+      # as "no rows". Before this, the answer was re-probed by hand per backlog
+      # item and produced two correct-looking conclusions that contradicted each
+      # other. The verdicts now live in
+      # docs/architecture/data-plane-test-boundary.json and this suite re-proves
+      # every one of them BY EXECUTION on each run, so the artifact cannot
+      # become a document that used to be true.
+      #
+      # Enforcement, not advice: jest maps `^pg$` to src/testing/pg-test-boundary.ts,
+      # so a connecting client with no stand-in throws by name instead of
+      # reading. Blast radius measured over the WHOLE collection rather than
+      # reasoned about — 2,635 suites run twice, 330 failed / 441 tests failed
+      # both before and after, identical failing-suite sets, zero newly failing
+      # and zero newly passing.
+      #
+      # Mutation-proved, comment decoy included: deleting the `^pg$` mapping
+      # fails 3 of 12; gutting the guard while leaving
+      # ABARVA_TEST_DATA_PLANE_CONNECT_BLOCKED in a COMMENT fails 3 of 12;
+      # making the guard always allow fails 3 of 12; relabelling one verdict in
+      # the artifact fails 2; adding a client to the artifact with no probe
+      # fails 3.
+      - name: Run the data-plane test-boundary suite
+        run: >-
+          npx jest --runTestsByPath
+          src/lib/data-plane/__tests__/test-boundary.test.ts
+          --no-coverage --ci

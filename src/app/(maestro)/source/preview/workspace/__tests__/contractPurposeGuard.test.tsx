@@ -51,5 +51,8 @@ it("does not describe concatenated clause states as reviewed scope", () => {
 
   expect(summary.body).not.toContain("termination for convenience");
   expect(summary.body).not.toContain("covering Managed Services - present");
-  expect(summary.evidence).toContain("no reviewed purpose extraction yet");
+  expect(summary.heading).toBe("Purpose review needed");
+  expect(summary.body).toBe(
+    "No reviewed contract-purpose extraction is available.",
+  );
 });

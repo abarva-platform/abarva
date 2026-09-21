@@ -574,14 +574,14 @@ function assertRequiredFieldsMapped(
     (field) => !mappedFields.has(field),
   );
   if (missing.length > 0) {
-    throw new Error(`Missing required field mappings: ${missing.join(", ")}`);
+    throw new Error(`csv_missing_required_fields:${missing.join(",")}`);
   }
 }
 
 export function prepareCsvUploadForTenantContext(
   input: CsvUploadInput,
 ): CsvUploadPreparedBatch {
-  const parsed = parseCsvUpload(input.csvText);
+  const parsed = parseStructuredUpload(input.csvText, input.fileName);
   const template = resolveTemplate(
     input.fileName,
     input.mapping?.templateId,

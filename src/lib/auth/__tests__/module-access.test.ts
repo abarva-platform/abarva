@@ -53,6 +53,18 @@ describe('module access resolver', () => {
     expect(access.noWorkspaceAssigned).toBe(true);
   });
 
+  it('does not let an ordinary client grant itself Setup through module metadata', () => {
+    const access = resolveModuleAccess({
+      role: 'client',
+      email: 'operator@example.com',
+      publicMetadata: { moduleAccess: ['setup', 'source'] },
+    });
+
+    expect(access.modules).toEqual(['source', 'intelligence', 'tower']);
+    expect(access.modules).not.toContain('setup');
+    expect(access.explicit).toBe(true);
+  });
+
   it('keeps Setup limited to client-pinned admin users', () => {
     const access = resolveModuleAccess({
       role: 'client',

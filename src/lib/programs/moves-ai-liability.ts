@@ -46,6 +46,18 @@ export interface MovesGateApprovalDecisionInput {
   readonly alternativesConsidered?: readonly string[];
 }
 
+export interface MovesGateWaiverDecisionInput {
+  readonly instanceId: string;
+  readonly tenantName: string;
+  readonly criterionId: string;
+  readonly humanRationale: string;
+  readonly decisionOwner: AiDecisionOwner;
+  readonly evidenceIds?: readonly string[];
+  readonly missingInputs?: readonly string[];
+  readonly assumptions?: readonly string[];
+  readonly alternativesConsidered?: readonly string[];
+}
+
 export function normalizeMovesHumanRationale(value: unknown): string {
   return typeof value === "string" ? value.trim().replace(/\s+/g, " ") : "";
 }
@@ -179,6 +191,54 @@ export function buildMovesGateApprovalEvidencePacket(
   if (!validation.passed) {
     throw new Error(
       `Moves gate approval evidence packet failed validation: ${validation.failures.join(", ")}`,
+    );
+  }
+
+  return packet;
+}
+
+export function buildMovesGateWaiverEvidencePacket(
+  input: MovesGateWaiverDecisionInput,
+): AiDecisionEvidencePacket {
+  const evidenceIds = input.evidenceIds?.length
+    ? input.evidenceIds
+    : [`reasoning-gate:${input.instanceId}:${input.criterionId}`];
+  const missingInputs = input.missingInputs?.length
+    ? input.missingInputs
+    : ["The waived gate criterion remains unresolved at decision time."];
+  const assumptions = input.assumptions?.length
+    ? input.assumptions
+    : ["The waiver is temporary and does not satisfy the underlying criterion."];
+  const alternativesConsidered = input.alternativesConsidered?.length
+    ? input.alternativesConsidered
+    : [
+        "Hold the gate until the criterion is satisfied.",
+        "Request more evidence instead of granting a waiver.",
+      ];
+
+  const packet = buildAiDecisionEvidencePacket({
+    recommendationId: `moves-gate-waiver:${input.instanceId}:${input.criterionId}`,
+    surface: "Moves gate waiver",
+    agentName: "Nexus",
+    tenantName: input.tenantName,
+    decisionOwner: input.decisionOwner,
+    recommendationText: `Waive gate criterion ${input.criterionId} for ${input.instanceId}`,
+    evidenceIds,
+    missingInputs,
+    assumptions,
+    alternativesConsidered,
+    humanRationale: requireAuditableHumanRationale(
+      input.humanRationale,
+      "Moves gate waiver evidence packet",
+    ),
+    overrideDisposition: "modified",
+    riskDomains: ["financial_commitment", "general_business"],
+  });
+
+  const validation = validateAiDecisionEvidencePacket(packet);
+  if (!validation.passed) {
+    throw new Error(
+      `Moves gate waiver evidence packet failed validation: ${validation.failures.join(", ")}`,
     );
   }
 

@@ -999,6 +999,7 @@ export function WorkspaceExecutiveShell({
       : currentPage;
   const isCommandCenter = !selectedContractId;
   const dateControl = sourceDateControl(portfolio);
+  const datasetVersion = portfolio.workspaceDiagnostics.datasetVersion.trim();
 
   // Keep the canonical /source URL as the single source of navigation truth.
   // The workspace deliberately stays client-side so tab changes do not swap
@@ -1126,6 +1127,12 @@ export function WorkspaceExecutiveShell({
               <span>Scope</span>
               <b>All loaded contracts</b>
             </div>
+            {datasetVersion ? (
+              <div className="sw-v2-control" aria-label="Dataset build">
+                <span>Dataset build</span>
+                <b>{datasetVersion}</b>
+              </div>
+            ) : null}
             <div className="sw-v2-control" aria-label={dateControl.ariaLabel}>
               <span>{dateControl.label}</span>
               <b>{dateControl.value}</b>
@@ -3759,26 +3766,22 @@ export function contractPurposeSummary(
       : null,
   ].filter(Boolean);
 
-  /*
-   * Say where this characterisation came from.
-   *
-   * Both branches compose readable prose from governed fields, which is the
-   * intended behaviour. What was missing is provenance: with no reviewed
-   * purpose the card asserted a characterisation in the same voice as a
-   * reviewed one, directly above the narrative's own line saying the purpose is
-   * not yet reviewed. The two read as a contradiction. Marking the derived case
-   * as derived resolves it without withholding what the header does establish.
-   */
-  const basis = reviewedPurpose
-    ? "Reviewed purpose extraction"
-    : "Derived from the contract header and declared archetype; no reviewed purpose extraction yet";
+  const loadedBasis = evidenceParts.length
+    ? `Loaded basis: ${evidenceParts.join("; ")}.`
+    : "No supporting contract-header evidence is loaded.";
+
+  if (!reviewedPurpose) {
+    return {
+      heading: "Purpose review needed",
+      body: "No reviewed contract-purpose extraction is available.",
+      evidence: loadedBasis,
+    };
+  }
 
   return {
     heading: "What this contract is",
-    body: reviewedPurpose
-      ? `${reviewedPurpose} Read it as ${kind.readAs}: Source is tying the contract document, archetype, economics, renewal timing, usage or scope evidence, and optimization rows together before naming an action.`
-      : `This is ${kind.article} ${kind.label} with ${vendor}${scopePhrase ? ` covering ${scopePhrase}` : ` under ${contractName}`}. Read it as ${kind.readAs}: Source is tying the contract document, archetype, economics, renewal timing, usage or scope evidence, and optimization rows together before naming an action.`,
-    evidence: `${basis}. Loaded basis: ${evidenceParts.join("; ")}.`,
+    body: `${reviewedPurpose} Read it as ${kind.readAs}: Source is tying the contract document, archetype, economics, renewal timing, usage or scope evidence, and optimization rows together before naming an action.`,
+    evidence: `Reviewed purpose extraction. ${loadedBasis}`,
   };
 }
 

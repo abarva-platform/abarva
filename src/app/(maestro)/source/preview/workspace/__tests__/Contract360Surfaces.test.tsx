@@ -41,7 +41,10 @@ const vmWith = (headline: string | null) =>
           ]
         : [],
     },
-    contractEducation: { archetypeLabel: "Cloud consumption commitment" },
+    contractEducation: {
+      archetypeLabel: "Cloud consumption commitment",
+      facetRequirements: { Performance: { state: "required" } },
+    },
     optWorkflow: null,
   }) as unknown as SourceWorkspaceVM;
 
@@ -128,6 +131,23 @@ describe("ContractBriefingHeader", () => {
 });
 
 describe("ContractStoryBriefing", () => {
+  it("renders an explicit review state instead of composing an unreviewed purpose", () => {
+    render(
+      <ContractStoryBriefing
+        contract={contract}
+        coverage={null}
+        scopeRows={[]}
+        vm={vmWith(null)}
+      />,
+    );
+
+    expect(screen.getByText("Purpose review needed")).toBeTruthy();
+    expect(
+      screen.getByText("No reviewed contract-purpose extraction is available."),
+    ).toBeTruthy();
+    expect(screen.queryByText(/This is .*Test Vendor/i)).toBeNull();
+  });
+
   it("does not call an inapplicable performance lane missing evidence", () => {
     const vm = {
       ...vmWith(null),

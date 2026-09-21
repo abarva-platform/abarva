@@ -36,8 +36,6 @@ export default async function DeployCrawlPage() {
       >
         <ContextBar
           tenant={tenant.tenantName}
-          mode="Post-deploy crawl"
-          agent="Steward"
           data="audit-artifacts/post-deploy-crawl/latest.json"
           liveStatus={latest ? 'Latest crawl loaded' : 'No crawl artifact yet'}
           liveStatusKind={latest ? (latest.comparison.p0 > 0 ? 'deferred' : 'live') : 'partial'}

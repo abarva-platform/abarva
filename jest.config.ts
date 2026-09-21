@@ -7,8 +7,45 @@ const config: Config = {
   coverageProvider: 'v8',
   testEnvironment: 'node',
   modulePathIgnorePatterns: ['<rootDir>/.claude/'],
+  // next/jest's default testMatch includes `**/__tests__/**/*`, so every file
+  // under a `__tests__` directory is collected as a suite -- including files
+  // that are not suites. Those then fail with "Your test suite must contain at
+  // least one test", and there are enough of them to drown the real collection
+  // failures: of 14 such failures measured across `src/`, ELEVEN were these.
+  //
+  // Only these three locations are excluded, and each was already failing with
+  // "no tests", so this removes noise rather than coverage:
+  //   • the ESM shims wired up through moduleNameMapper above,
+  //   • the Atlas eval harness (probes plus its runner), which is a script,
+  //   • one standalone helper named `spec.ts`, which the default pattern also
+  //     matches by suffix.
+  //
+  // Deliberately NOT done: narrowing testMatch to require a `.test.`/`.spec.`
+  // suffix. `src/lib/source/__tests__/specialists/specialist-test-utils.ts`
+  // carries no suffix but does contain a real `describe`, so that change would
+  // silently stop running a live suite -- checked before choosing this.
+  testPathIgnorePatterns: [
+    '/node_modules/',
+    '<rootDir>/src/__tests__/__mocks__/',
+    '<rootDir>/src/__tests__/atlas-eval/',
+    '<rootDir>/src/testing/test-users/spec\\.ts$',
+  ],
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1',
+    // T-469. `pg` is remapped so an unstubbed data-plane read fails by name
+    // instead of opening a socket. Measured, not assumed: the static-`pg`
+    // clients (`read-adapters/azureSession.ts`,
+    // `read-adapters/azurePostgresReadAdapter.ts`, the per-domain `db.ts`
+    // pools) each reached `ECONNREFUSED` against a dead port under jest, which
+    // is a live tenant read anywhere DATABASE_URL is real; `postgresCompat.ts`
+    // instead swallows its own driver-load refusal into `{data: null}`, which
+    // a caller reads back as "no rows". Verdicts are recorded per entry point
+    // in `docs/architecture/data-plane-test-boundary.json` and re-proved by
+    // `src/lib/data-plane/__tests__/test-boundary.test.ts`. Opting out is
+    // explicit: stub the boundary the code imports, or set
+    // ABARVA_TEST_ALLOW_DATA_PLANE_CONNECT=1 for a suite meant to reach a
+    // real database.
+    '^pg$': '<rootDir>/src/testing/pg-test-boundary.ts',
     // react-markdown and its remark/rehype plugins ship ESM that
     // next/jest's default transformIgnorePatterns won't transpile.
     // Tests that need to assert markdown rendering should import the

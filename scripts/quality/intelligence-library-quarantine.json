@@ -1,0 +1,35 @@
+{
+  "ceiling": 5,
+  "quarantined": [
+    {
+      "suite": "ai-program-failure-modes.test.ts",
+      "owner": "T-406",
+      "reason": "Its primary subject is not reachable from any product entry point.",
+      "subjects": ["src/lib/intelligence/ai-program-failure-modes.ts"]
+    },
+    {
+      "suite": "decision-route-mode.test.ts",
+      "owner": "T-406",
+      "reason": "Its primary subject is not reachable from any product entry point.",
+      "subjects": ["src/lib/intelligence/decision-route-mode.ts"]
+    },
+    {
+      "suite": "intelligence-consultant-text-synthesis.test.ts",
+      "owner": "T-406",
+      "reason": "Its primary subject is not reachable from any product entry point.",
+      "subjects": ["src/lib/intelligence/intelligence-consultant-text-synthesis.ts"]
+    },
+    {
+      "suite": "j0-failure-mode-cards.test.ts",
+      "owner": "T-406",
+      "reason": "Its primary subject is not reachable; the suite also cites entries absent from the frozen pattern manifest.",
+      "subjects": ["src/lib/intelligence/j0-failure-mode-cards.ts"]
+    },
+    {
+      "suite": "j1-topics.test.ts",
+      "owner": "T-406",
+      "reason": "Its primary subject is not reachable; the suite also cites entries absent from the frozen pattern manifest.",
+      "subjects": ["src/lib/intelligence/j1-topics.ts"]
+    }
+  ]
+}

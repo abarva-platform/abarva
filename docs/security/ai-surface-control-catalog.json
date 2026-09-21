@@ -11,14 +11,22 @@
       "requiredControls": [
         {
           "kind": "ai-label",
-          "evidence": ["AILabel", "status=\"draft\"", "Review before acting"],
+          "evidence": [
+            "AILabel",
+            "status=\"draft\"",
+            "Review before acting"
+          ],
           "behavioralTest": {
             "path": "src/components/agent/__tests__/AgentResponse.controls.test.tsx"
           }
         },
         {
           "kind": "citation",
-          "evidence": ["AgentCitation", "response.citations", "inlineNodes"],
+          "evidence": [
+            "AgentCitation",
+            "response.citations",
+            "inlineNodes"
+          ],
           "behavioralTest": {
             "path": "src/components/agent/__tests__/AgentResponse.citation-control.test.tsx"
           }
@@ -35,14 +43,20 @@
         },
         {
           "kind": "confidence",
-          "evidence": ["AIConfidenceIndicator", "viewModel.confidence.tier"],
+          "evidence": [
+            "AIConfidenceIndicator",
+            "viewModel.confidence.tier"
+          ],
           "behavioralTest": {
             "path": "src/components/agent/__tests__/AgentResponse.controls.test.tsx"
           }
         },
         {
           "kind": "human-approval-gate",
-          "evidence": ["AgentActionApprovalNotice", "follow_up_actions"],
+          "evidence": [
+            "AgentActionApprovalNotice",
+            "follow_up_actions"
+          ],
           "behavioralTest": {
             "path": "src/components/agent/__tests__/AgentResponse.controls.test.tsx"
           }
@@ -58,14 +72,20 @@
       "requiredControls": [
         {
           "kind": "responsibility-footer",
-          "evidence": ["AIResponsibilityFooter", "compact"],
+          "evidence": [
+            "AIResponsibilityFooter",
+            "compact"
+          ],
           "behavioralTest": {
             "path": "src/components/agent/__tests__/AgentDock.test.tsx"
           }
         },
         {
           "kind": "human-approval-gate",
-          "evidence": ["AgentActionApprovalNotice", "compact"],
+          "evidence": [
+            "AgentActionApprovalNotice",
+            "compact"
+          ],
           "behavioralTest": {
             "path": "src/components/agent/__tests__/AgentDock.test.tsx"
           }
@@ -81,28 +101,42 @@
       "requiredControls": [
         {
           "kind": "ai-label",
-          "evidence": ["AILabel", "status=\"draft\"", "Review before acting"],
+          "evidence": [
+            "AILabel",
+            "status=\"draft\"",
+            "Review before acting"
+          ],
           "behavioralTest": {
             "path": "src/components/shell/__tests__/AtlasDrawer.controls.test.tsx"
           }
         },
         {
           "kind": "responsibility-footer",
-          "evidence": ["AIResponsibilityFooter", "tone=\"dark\"", "compact"],
+          "evidence": [
+            "AIResponsibilityFooter",
+            "tone=\"dark\"",
+            "compact"
+          ],
           "behavioralTest": {
             "path": "src/components/shell/__tests__/AtlasDrawer.controls.test.tsx"
           }
         },
         {
           "kind": "citation-gap",
-          "evidence": ["CitationGapNotice", "shouldShowPlainTextCitationGap"],
+          "evidence": [
+            "CitationGapNotice",
+            "shouldShowPlainTextCitationGap"
+          ],
           "behavioralTest": {
             "path": "src/components/shell/__tests__/AtlasDrawer.controls.test.tsx"
           }
         },
         {
           "kind": "human-approval-gate",
-          "evidence": ["AgentActionApprovalNotice", "tone=\"dark\""],
+          "evidence": [
+            "AgentActionApprovalNotice",
+            "tone=\"dark\""
+          ],
           "behavioralTest": {
             "path": "src/components/shell/__tests__/AtlasDrawer.controls.test.tsx"
           }
@@ -176,23 +210,44 @@
           ],
           "behavioralTest": {
             "status": "none",
-            "reason": "No behavioral test yet. The Tower pressure brief has no rendering suite exercising its accountability block."
+            "reason": "No behavioral test yet. src/__tests__/integration/tower/program-pressure-cards.test.ts asserts brief.accountability.watermark on the view model, but nothing mounts ProgramPressureCards, so nothing proves the AI-assisted label reaches a screen.",
+            "knownSuites": [
+              "src/__tests__/behaviors/qa-inventory-tower-route-parity.test.ts",
+              "src/__tests__/integration/agents/agent-mission-surface-wiring.test.ts",
+              "src/__tests__/integration/tower/program-pressure-cards.test.ts"
+            ]
           }
         },
         {
           "kind": "citation",
-          "evidence": ["Evidence basis", "brief.accountability.evidenceBasis"],
+          "evidence": [
+            "Evidence basis",
+            "brief.accountability.evidenceBasis"
+          ],
           "behavioralTest": {
             "status": "none",
-            "reason": "No behavioral test yet. The Tower pressure brief has no rendering suite exercising its evidence basis line."
+            "reason": "No behavioral test yet. src/__tests__/integration/tower/program-pressure-cards.test.ts asserts brief.accountability.evidenceBasis is non-empty on the view model; no suite mounts the component, so nothing proves the evidence basis is rendered to a reader.",
+            "knownSuites": [
+              "src/__tests__/behaviors/qa-inventory-tower-route-parity.test.ts",
+              "src/__tests__/integration/agents/agent-mission-surface-wiring.test.ts",
+              "src/__tests__/integration/tower/program-pressure-cards.test.ts"
+            ]
           }
         },
         {
           "kind": "confidence",
-          "evidence": ["confidence ·", "brief.confidenceLabel"],
+          "evidence": [
+            "confidence ·",
+            "brief.confidenceLabel"
+          ],
           "behavioralTest": {
             "status": "none",
-            "reason": "No behavioral test yet. The Tower pressure brief has no rendering suite exercising its confidence label."
+            "reason": "No behavioral test yet. src/__tests__/integration/tower/program-pressure-cards.test.ts pins brief.confidenceLabel to the canonical enum on the view model; no suite mounts the component, so nothing proves the confidence label is displayed.",
+            "knownSuites": [
+              "src/__tests__/behaviors/qa-inventory-tower-route-parity.test.ts",
+              "src/__tests__/integration/agents/agent-mission-surface-wiring.test.ts",
+              "src/__tests__/integration/tower/program-pressure-cards.test.ts"
+            ]
           }
         },
         {
@@ -203,7 +258,12 @@
           ],
           "behavioralTest": {
             "status": "none",
-            "reason": "No behavioral test yet. The Tower pressure brief has no rendering suite exercising its human-approval statement."
+            "reason": "No behavioral test yet. src/__tests__/integration/tower/program-pressure-cards.test.ts asserts brief.accountability.humanApprovalRequired and sanitizedRecommendation on the view model; nothing mounts the component, so nothing proves a reader is told a human must approve.",
+            "knownSuites": [
+              "src/__tests__/behaviors/qa-inventory-tower-route-parity.test.ts",
+              "src/__tests__/integration/agents/agent-mission-surface-wiring.test.ts",
+              "src/__tests__/integration/tower/program-pressure-cards.test.ts"
+            ]
           }
         },
         {
@@ -214,7 +274,12 @@
           ],
           "behavioralTest": {
             "status": "none",
-            "reason": "No behavioral test yet. The Tower pressure brief has no rendering suite exercising its missing-data banner."
+            "reason": "No behavioral test yet. src/__tests__/integration/tower/program-pressure-cards.test.ts asserts brief.accountability.missingDataBanner on the view model; nothing mounts the component, so nothing proves the missing-data caveat is shown alongside the brief.",
+            "knownSuites": [
+              "src/__tests__/behaviors/qa-inventory-tower-route-parity.test.ts",
+              "src/__tests__/integration/agents/agent-mission-surface-wiring.test.ts",
+              "src/__tests__/integration/tower/program-pressure-cards.test.ts"
+            ]
           }
         }
       ],
@@ -270,7 +335,11 @@
           ],
           "behavioralTest": {
             "status": "none",
-            "reason": "No behavioral test yet. The disclosure component has no rendering suite, so nothing proves the assumptions list renders rather than collapsing to an empty node."
+            "reason": "A rendering suite does exist: src/components/source/__tests__/EstimateAssumptionDisclosure.test.tsx mounts the component and proves the assumptions list renders rather than collapsing to an empty node. The reason recorded here before denied that suite existed, and was false. What stays unproven is the control itself: no route mounts this component, so no Source estimate a user sees is shown to carry the caveat.",
+            "knownSuites": [
+              "src/__tests__/behaviors/uncovered-control-known-suites.test.ts",
+              "src/components/source/__tests__/EstimateAssumptionDisclosure.test.tsx"
+            ]
           }
         }
       ],
@@ -315,6 +384,26 @@
           ],
           "behavioralTest": {
             "path": "src/app/api/programs/phase-gate/__tests__/approval-gate.test.ts"
+          }
+        }
+      ]
+    },
+    {
+      "id": "intelligence-gate-waiver-route",
+      "surface": "Intelligence gate waiver route",
+      "lane": "global-control-lane",
+      "owner": "AbarVa",
+      "path": "src/app/api/reasoning/gate-waiver/route.ts",
+      "requiredControls": [
+        {
+          "kind": "human-approval-gate",
+          "evidence": [
+            "human_rationale_required",
+            "buildMovesGateWaiverEvidencePacket",
+            "aiDecisionEvidencePacket"
+          ],
+          "behavioralTest": {
+            "path": "src/app/api/reasoning/gate-waiver/__tests__/route.controls.test.ts"
           }
         }
       ]
@@ -429,21 +518,30 @@
       "requiredControls": [
         {
           "kind": "ai-label",
-          "evidence": ["MOVES_AI_DRAFT_LABEL", "AI Draft"],
+          "evidence": [
+            "MOVES_AI_DRAFT_LABEL",
+            "AI Draft"
+          ],
           "behavioralTest": {
             "path": "src/lib/programs/__tests__/deliverable-canvas-polish-view.controls.test.ts"
           }
         },
         {
           "kind": "citation",
-          "evidence": ["evidenceCitations"],
+          "evidence": [
+            "evidenceCitations"
+          ],
           "behavioralTest": {
             "path": "src/lib/programs/__tests__/deliverable-canvas-polish-view.controls.test.ts"
           }
         },
         {
           "kind": "confidence",
-          "evidence": ["deriveReadiness", "readinessLabel", "Missing evidence"],
+          "evidence": [
+            "deriveReadiness",
+            "readinessLabel",
+            "Missing evidence"
+          ],
           "behavioralTest": {
             "path": "src/lib/programs/__tests__/deliverable-canvas-polish-view.controls.test.ts"
           }
@@ -469,14 +567,20 @@
         },
         {
           "kind": "citation",
-          "evidence": ["evidenceIds", "buildMovesPhaseDecisionAuditRefs"],
+          "evidence": [
+            "evidenceIds",
+            "buildMovesPhaseDecisionAuditRefs"
+          ],
           "behavioralTest": {
             "path": "src/lib/programs/__tests__/moves-ai-liability.decision-packet.test.ts"
           }
         },
         {
           "kind": "confidence",
-          "evidence": ["assumptions", "alternativesConsidered"],
+          "evidence": [
+            "assumptions",
+            "alternativesConsidered"
+          ],
           "behavioralTest": {
             "path": "src/lib/programs/__tests__/moves-ai-liability.decision-packet.test.ts"
           }
@@ -492,7 +596,10 @@
       "requiredControls": [
         {
           "kind": "ai-label",
-          "evidence": ["Vendor email draft", "draft, not sent"],
+          "evidence": [
+            "Vendor email draft",
+            "draft, not sent"
+          ],
           "behavioralTest": {
             "path": "src/components/source/__tests__/RenewalCockpitActionBar.external-action.test.tsx"
           }
@@ -506,6 +613,46 @@
           ],
           "behavioralTest": {
             "path": "src/components/source/__tests__/RenewalCockpitActionBar.external-action.test.tsx"
+          }
+        }
+      ]
+    },
+    {
+      "id": "source-canonical-artifact-render-export",
+      "surface": "Source canonical d-code artifact render",
+      "lane": "global-control-lane",
+      "owner": "AbarVa",
+      "path": "src/app/api/v1/source/[eventId]/artifacts/[artifactCode]/render/route.ts",
+      "requiredControls": [
+        {
+          "kind": "human-approval-gate",
+          "evidence": [
+            "getLatestArtifactAcceptance",
+            "resolveArtifactAuthority",
+            "export_not_eligible"
+          ],
+          "behavioralTest": {
+            "path": "src/app/api/v1/source/[eventId]/artifacts/[artifactCode]/render/__tests__/route.test.ts"
+          }
+        }
+      ]
+    },
+    {
+      "id": "source-governed-artifact-download-export",
+      "surface": "Source governed d-code artifact download",
+      "lane": "global-control-lane",
+      "owner": "AbarVa",
+      "path": "src/app/api/v1/source/artifacts/[artifactId]/download/route.ts",
+      "requiredControls": [
+        {
+          "kind": "human-approval-gate",
+          "evidence": [
+            "getLatestArtifactAcceptance",
+            "resolveArtifactAuthority",
+            "export_not_eligible"
+          ],
+          "behavioralTest": {
+            "path": "src/app/api/v1/source/artifacts/[artifactId]/download/__tests__/route.test.ts"
           }
         }
       ]
@@ -543,10 +690,16 @@
       "controlKind": "human-approval-gate"
     },
     {
-      "key": "consequential|Source|Vendor-facing artifact renders/exports|human-approval-gate",
-      "status": "deferred",
-      "controlKind": "human-approval-gate",
-      "reason": "Export watermark exists, but artifact routes vary and send/approval enforcement is not universal enough for machine-covered status."
+      "key": "consequential|Source|Canonical d-code artifact render|human-approval-gate",
+      "status": "covered",
+      "surfaceId": "source-canonical-artifact-render-export",
+      "controlKind": "human-approval-gate"
+    },
+    {
+      "key": "consequential|Source|Governed d-code artifact download|human-approval-gate",
+      "status": "covered",
+      "surfaceId": "source-governed-artifact-download-export",
+      "controlKind": "human-approval-gate"
     },
     {
       "key": "consequential|Source|Work item mutation|human-approval-gate",
@@ -555,16 +708,10 @@
       "controlKind": "human-approval-gate"
     },
     {
-      "key": "consequential|Tower|Portfolio data upload/ingest|human-approval-gate",
-      "status": "deferred",
-      "controlKind": "human-approval-gate",
-      "reason": "Catalog claim is access/quarantine coverage, not a completed human decision gate for AI-derived action."
-    },
-    {
       "key": "consequential|Intelligence|Gate waiver / approval|human-approval-gate",
-      "status": "deferred",
-      "controlKind": "human-approval-gate",
-      "reason": "Approval rationale is covered, but waiver remains lighter and needs separate evidence-packet parity before covered status."
+      "status": "covered",
+      "surfaceId": "intelligence-gate-waiver-route",
+      "controlKind": "human-approval-gate"
     },
     {
       "key": "consequential|Intelligence|Pattern to Move promotion|human-approval-gate",
