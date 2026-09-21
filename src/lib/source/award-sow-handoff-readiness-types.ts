@@ -4,6 +4,7 @@ import type { SourceVendorSelectionReadiness } from "./vendor-selection-readines
 export type SourceAwardSowHandoffCheckpointKey =
   | "candidate_selection"
   | "approval_readiness"
+  | "contract_formation_package"
   | "executed_agreement_sow"
   | "contract360_handoff";
 
@@ -17,8 +18,24 @@ export type SourceAwardSowHandoffReadinessStatus =
   | "ready_for_contract360_handoff"
   | "blocked_candidate_selection"
   | "blocked_approval_readiness"
+  | "blocked_contract_formation_package"
   | "blocked_executed_agreement_sow"
   | "blocked_contract360_handoff";
+
+export type SourceContractFormationState =
+  | "draft"
+  | "contract_ready"
+  | "pending_signature"
+  | "executed";
+
+export type SourceContractFormationComponent =
+  | "reviewed_selection_memo"
+  | "approved_pricing"
+  | "governed_clause_library"
+  | "sow_scope"
+  | "named_approval_authority"
+  | "evidence_lineage"
+  | "executed_signature_authority";
 
 export interface SourceAwardSowArtifactInput {
   id: string;
@@ -60,11 +77,20 @@ export interface SourceAwardSowHandoffCheckpoint {
   blockers: string[];
 }
 
+export interface SourceContractFormationPackageReadiness {
+  state: SourceContractFormationState;
+  includedComponents: SourceContractFormationComponent[];
+  missingComponents: SourceContractFormationComponent[];
+  evidence: string[];
+}
+
 export interface SourceAwardSowHandoffReadiness {
   eventId: string;
   eventName: string;
   generatedAt: string;
   readinessStatus: SourceAwardSowHandoffReadinessStatus;
+  contractFormationState: SourceContractFormationState;
+  contractFormationPackage: SourceContractFormationPackageReadiness;
   readyForContract360Handoff: boolean;
   checkpoints: SourceAwardSowHandoffCheckpoint[];
   completedEvidence: string[];

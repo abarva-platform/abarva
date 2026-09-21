@@ -29,6 +29,8 @@ function verdictLabel(status: SourceAwardSowHandoffReadinessStatus): string {
       return "Candidate selection blocked";
     case "blocked_approval_readiness":
       return "Approval readiness blocked";
+    case "blocked_contract_formation_package":
+      return "Contract formation package blocked";
     case "blocked_executed_agreement_sow":
       return "Executed agreement/SOW blocked";
     case "blocked_contract360_handoff":
@@ -84,6 +86,9 @@ export function SourceAwardSowHandoffReadinessPanel({
           </div>
           <div style={BODY_MUTED}>
             Handoff ready: {readiness.readyForContract360Handoff ? "yes" : "no"}
+          </div>
+          <div style={BODY_MUTED}>
+            Contract formation: {readiness.contractFormationState.replaceAll("_", " ")}
           </div>
         </div>
       </div>

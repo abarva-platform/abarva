@@ -82,15 +82,35 @@ describe("Source Stage 08 Award & SOW handoff readiness", () => {
           stage("transition", "active", "ready"),
         ],
         artifacts: [
-          artifact("d27_selection_memo", "Selection memo", "approved"),
           artifact(
-            "d24_decision_brief",
-            "Executive decision brief",
+            "d27_selection_memo",
+            "Reviewed selection memo with evidence lineage",
             "approved",
           ),
           artifact(
+            "approved_pricing",
+            "Approved pricing workbook with evidence lineage",
+            "approved",
+          ),
+          artifact(
+            "governed_clause_library",
+            "Governed clause library references",
+            "approved",
+          ),
+          artifact(
+            "sow_scope",
+            "SOW scope and service boundary",
+            "approved",
+          ),
+          artifact(
+            "d24_decision_brief",
+            "Executive decision brief naming approval authority",
+            "approved",
+            "Approved by named approval authority.",
+          ),
+          artifact(
             "d28_contract_record",
-            "Signed contract record and SOW reference",
+            "Executed contract record and SOW signed by named signature authority",
             "locked",
           ),
           artifact(
@@ -107,8 +127,19 @@ describe("Source Stage 08 Award & SOW handoff readiness", () => {
     expect(readiness.checkpoints.map((checkpoint) => checkpoint.key)).toEqual([
       "candidate_selection",
       "approval_readiness",
+      "contract_formation_package",
       "executed_agreement_sow",
       "contract360_handoff",
+    ]);
+    expect(readiness.contractFormationState).toBe("executed");
+    expect(readiness.contractFormationPackage?.includedComponents).toEqual([
+      "reviewed_selection_memo",
+      "approved_pricing",
+      "governed_clause_library",
+      "sow_scope",
+      "named_approval_authority",
+      "evidence_lineage",
+      "executed_signature_authority",
     ]);
     expect(
       readiness.checkpoints.every(
@@ -135,11 +166,23 @@ describe("Source Stage 08 Award & SOW handoff readiness", () => {
           stage("transition", "active", "ready"),
         ],
         artifacts: [
-          artifact("d27_selection_memo", "Selection memo", "approved"),
+          artifact(
+            "d27_selection_memo",
+            "Reviewed selection memo with evidence lineage",
+            "approved",
+          ),
+          artifact("approved_pricing", "Approved pricing workbook", "approved"),
+          artifact(
+            "governed_clause_library",
+            "Governed clause library references",
+            "approved",
+          ),
+          artifact("sow_scope", "SOW scope", "approved"),
           artifact(
             "d24_decision_brief",
-            "Executive decision brief",
+            "Executive decision brief naming approval authority",
             "approved",
+            "Approved by named approval authority.",
           ),
         ],
       },
@@ -147,10 +190,161 @@ describe("Source Stage 08 Award & SOW handoff readiness", () => {
 
     expect(readiness.readyForContract360Handoff).toBe(false);
     expect(readiness.readinessStatus).toBe("blocked_executed_agreement_sow");
+    expect(readiness.contractFormationState).toBe("contract_ready");
     expect(readiness.blockers).toContain(
-      "Executed agreement or SOW evidence is not approved/locked in the event artifact record.",
+      "Executed agreement or SOW evidence with named signature authority is not approved/locked in the event artifact record.",
     );
     expect(readiness.recommendedNextAction).toBe(readiness.blockers[0]);
+  });
+
+  it("treats missing clause, scope, pricing, approval authority, or lineage as a draft package", () => {
+    const readiness = buildSourceAwardSowHandoffReadiness({
+      generatedAt: GENERATED_AT,
+      selectionReadiness: selectionReadiness(),
+      event: {
+        id: "event-stage08-draft-package",
+        name: "Draft Package Test Event",
+        currentStageKey: "transition",
+        currentStageLabel: "Transition",
+        stages: [
+          stage("executive_decision", "complete"),
+          stage("selection", "complete"),
+          stage("transition", "active", "ready"),
+        ],
+        artifacts: [
+          artifact("d27_selection_memo", "Selection memo", "approved"),
+          artifact(
+            "d28_contract_record",
+            "Executed agreement signed by named signature authority",
+            "locked",
+          ),
+        ],
+      },
+    });
+
+    expect(readiness.readyForContract360Handoff).toBe(false);
+    expect(readiness.readinessStatus).toBe(
+      "blocked_contract_formation_package",
+    );
+    expect(readiness.contractFormationState).toBe("draft");
+    expect(readiness.contractFormationPackage?.missingComponents).toEqual([
+      "approved_pricing",
+      "governed_clause_library",
+      "sow_scope",
+      "named_approval_authority",
+      "evidence_lineage",
+    ]);
+    expect(readiness.blockers).toEqual(
+      expect.arrayContaining([
+        "Approved pricing is missing from the governed contract-formation package.",
+        "Governed clause/library references are missing from the contract-formation package.",
+        "SOW scope is missing from the governed contract-formation package.",
+        "Named approval authority is missing from the contract-formation package.",
+        "Evidence lineage is missing from the contract-formation package.",
+      ]),
+    );
+  });
+
+  it("distinguishes pending signature from executed when signature authority is absent", () => {
+    const readiness = buildSourceAwardSowHandoffReadiness({
+      generatedAt: GENERATED_AT,
+      selectionReadiness: selectionReadiness(),
+      event: {
+        id: "event-stage08-ready-pending-signature",
+        name: "Ready Pending Signature Test Event",
+        currentStageKey: "transition",
+        currentStageLabel: "Transition",
+        stages: [
+          stage("executive_decision", "complete"),
+          stage("selection", "complete"),
+          stage("transition", "active", "ready"),
+        ],
+        artifacts: [
+          artifact(
+            "d27_selection_memo",
+            "Reviewed selection memo with evidence lineage",
+            "approved",
+          ),
+          artifact("approved_pricing", "Approved pricing workbook", "approved"),
+          artifact(
+            "governed_clause_library",
+            "Governed clause library references",
+            "approved",
+          ),
+          artifact("sow_scope", "SOW scope", "approved"),
+          artifact(
+            "d24_decision_brief",
+            "Executive decision brief naming approval authority",
+            "approved",
+            "Named approval authority approved the package.",
+          ),
+          artifact(
+            "d28_contract_record",
+            "Contract-ready pending signature package",
+            "locked",
+            "Contract-ready pending signature; signature authority not yet recorded.",
+          ),
+        ],
+      },
+    });
+
+    expect(readiness.readyForContract360Handoff).toBe(false);
+    expect(readiness.contractFormationState).toBe("pending_signature");
+    expect(readiness.readinessStatus).toBe("blocked_executed_agreement_sow");
+    expect(readiness.blockers).toContain(
+      "Executed agreement or SOW evidence with named signature authority is not approved/locked in the event artifact record.",
+    );
+  });
+
+  it("blocks executed-looking evidence that omits named signature authority", () => {
+    const readiness = buildSourceAwardSowHandoffReadiness({
+      generatedAt: GENERATED_AT,
+      selectionReadiness: selectionReadiness(),
+      event: {
+        id: "event-stage08-executed-no-authority",
+        name: "Executed Without Authority Test Event",
+        currentStageKey: "transition",
+        currentStageLabel: "Transition",
+        stages: [
+          stage("executive_decision", "complete"),
+          stage("selection", "complete"),
+          stage("transition", "active", "ready"),
+        ],
+        artifacts: [
+          artifact(
+            "d27_selection_memo",
+            "Reviewed selection memo with evidence lineage",
+            "approved",
+          ),
+          artifact("approved_pricing", "Approved pricing workbook", "approved"),
+          artifact(
+            "governed_clause_library",
+            "Governed clause library references",
+            "approved",
+          ),
+          artifact("sow_scope", "SOW scope", "approved"),
+          artifact(
+            "d24_decision_brief",
+            "Executive decision brief naming approval authority",
+            "approved",
+            "Named approval authority approved the package.",
+          ),
+          artifact(
+            "d28_contract_record",
+            "Executed agreement and SOW",
+            "locked",
+            "Executed agreement is present, but signer authority is not named.",
+          ),
+        ],
+      },
+    });
+
+    expect(readiness.readyForContract360Handoff).toBe(false);
+    expect(readiness.contractFormationState).toBe("contract_ready");
+    expect(readiness.readinessStatus).toBe("blocked_executed_agreement_sow");
+    expect(readiness.blockers).toContain(
+      "Executed agreement or SOW evidence with named signature authority is not approved/locked in the event artifact record.",
+    );
   });
 
   it("does not treat a pending-signature contract record as executed agreement or SOW evidence", () => {
@@ -185,14 +379,17 @@ describe("Source Stage 08 Award & SOW handoff readiness", () => {
     });
 
     expect(readiness.readyForContract360Handoff).toBe(false);
-    expect(readiness.readinessStatus).toBe("blocked_executed_agreement_sow");
+    expect(readiness.contractFormationState).toBe("draft");
+    expect(readiness.readinessStatus).toBe(
+      "blocked_contract_formation_package",
+    );
     expect(
       readiness.checkpoints.find(
         (checkpoint) => checkpoint.key === "executed_agreement_sow",
       )?.status,
     ).toBe("blocked");
     expect(readiness.blockers).toContain(
-      "Executed agreement or SOW evidence is not approved/locked in the event artifact record.",
+      "Executed agreement or SOW evidence with named signature authority is not approved/locked in the event artifact record.",
     );
   });
 
@@ -218,7 +415,9 @@ describe("Source Stage 08 Award & SOW handoff readiness", () => {
     });
 
     expect(readiness.readyForContract360Handoff).toBe(false);
-    expect(readiness.readinessStatus).toBe("blocked_executed_agreement_sow");
+    expect(readiness.readinessStatus).toBe(
+      "blocked_contract_formation_package",
+    );
   });
 
   it("does not treat stage position as approval when selection readiness is blocked", () => {
@@ -247,7 +446,7 @@ describe("Source Stage 08 Award & SOW handoff readiness", () => {
           ),
           artifact(
             "d28_contract_record",
-            "Signed contract record and SOW reference",
+            "Executed contract record and SOW signed by named signature authority",
             "locked",
           ),
         ],
@@ -277,8 +476,26 @@ describe("Source Stage 08 Award & SOW handoff readiness", () => {
         ],
         artifacts: [
           artifact(
+            "d27_selection_memo",
+            "Reviewed selection memo with evidence lineage",
+            "approved",
+          ),
+          artifact("approved_pricing", "Approved pricing workbook", "approved"),
+          artifact(
+            "governed_clause_library",
+            "Governed clause library references",
+            "approved",
+          ),
+          artifact("sow_scope", "SOW scope", "approved"),
+          artifact(
+            "d24_decision_brief",
+            "Executive decision brief naming approval authority",
+            "approved",
+            "Named approval authority approved the package.",
+          ),
+          artifact(
             "d28_contract_record",
-            "Signed contract record and SOW reference",
+            "Executed contract record and SOW signed by named signature authority",
             "locked",
           ),
         ],
@@ -291,6 +508,8 @@ describe("Source Stage 08 Award & SOW handoff readiness", () => {
       "# Source Stage 08 Award & SOW Handoff Readiness",
     );
     expect(markdown).toContain("Candidate selection");
+    expect(markdown).toContain("Contract formation state:");
+    expect(markdown).toContain("Contract formation package");
     expect(markdown).toContain("- Recommended next action:");
   });
 
