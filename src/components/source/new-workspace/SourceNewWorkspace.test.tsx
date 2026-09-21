@@ -1256,6 +1256,31 @@ describe("SourceNewWorkspace", () => {
     expect(screen.getByRole("button", { name: "Current work" })).toBeTruthy();
   });
 
+  it("names the unmet conditions for previewed phases without exposing an advance action", () => {
+    render(<SourceNewWorkspace event={request} files={[]} />);
+    const phases = within(
+      screen.getByRole("navigation", { name: "Event phases" }),
+    ).getAllByRole("button");
+
+    fireEvent.click(phases[1]);
+    expect(
+      screen.getByText(
+        "Before this phase can open: intake approval must be recorded.",
+      ),
+    ).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Current work" })).toBeTruthy();
+    expect(screen.queryByRole("link", { name: /approve|continue|advance/i })).toBeNull();
+
+    fireEvent.click(phases[3]);
+    expect(
+      screen.getByText(
+        "Before this phase can open: scope, supplier eligibility, and required NDA coverage must be ready.",
+      ),
+    ).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Current work" })).toBeTruthy();
+    expect(screen.queryByRole("link", { name: /approve|continue|advance/i })).toBeNull();
+  });
+
   /**
    * The approvals view told the reader that "the approval record, actor and
    * evidence live in the governed event flow" and then showed none of it —
