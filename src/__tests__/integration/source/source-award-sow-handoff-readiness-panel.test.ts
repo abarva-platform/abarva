@@ -33,6 +33,9 @@ function readiness(): SourceAwardSowHandoffReadiness {
         "approved_pricing",
         "governed_clause_library",
         "sow_scope",
+        "sla_service_level_provenance",
+        "exit_rights_provenance",
+        "change_control_provenance",
         "named_approval_authority",
         "evidence_lineage",
       ],
@@ -40,6 +43,25 @@ function readiness(): SourceAwardSowHandoffReadiness {
       evidence: [
         "reviewed selection memo: Selection gate is approved.",
         "approved pricing: Approved pricing workbook is approved.",
+      ],
+    },
+    publicationPlanner: {
+      state: "blocked_no_accepted_executed_evidence",
+      target: "canonical_contract_and_contract360",
+      publicationAllowed: false,
+      acceptedExecutedEvidence: [],
+      plannedReviewSteps: [
+        "Map accepted executed evidence to the existing canonical contract identity.",
+        "Review clause, SOW, pricing, SLA, exit, and change-control provenance before publication.",
+        "Require a human-approved canonical writer or data-build job before any Contract 360 row is created.",
+      ],
+      blockedWrites: [
+        "canonical_contract_row",
+        "contract360_projection_row",
+        "supplier_notification",
+      ],
+      blockers: [
+        "No accepted executed agreement or SOW evidence with named signature authority is present.",
       ],
     },
     readyForContract360Handoff: false,
@@ -203,6 +225,9 @@ describe("Source Stage 08 Award & SOW handoff readiness panel", () => {
     expect(html).toContain("Contract formation package");
     expect(html).toContain("Executed agreement / SOW");
     expect(html).toContain("Contract 360 handoff");
+    expect(html).toContain("Contract 360 publication planner");
+    expect(html).toContain("blocked no accepted executed evidence");
+    expect(html).toContain("canonical contract row");
     expect(html).toContain("Completed evidence");
     expect(html).toContain("Blockers");
     expect(html.match(/Exactly one next action/g)).toHaveLength(1);
@@ -266,6 +291,33 @@ describe("Source Stage 08 Award & SOW handoff readiness panel", () => {
             kind: "artifact_packet",
             status: "approved",
             summary: "SOW scope and service boundary.",
+            sourceCount: 1,
+            updatedAt: "2026-04-26T00:00:00.000Z",
+          },
+          {
+            id: "sla_provenance",
+            title: "SLA and service-credit provenance",
+            kind: "artifact_packet",
+            status: "approved",
+            summary: "SLA and service credit source evidence.",
+            sourceCount: 1,
+            updatedAt: "2026-04-26T00:00:00.000Z",
+          },
+          {
+            id: "exit_provenance",
+            title: "Exit rights and termination provenance",
+            kind: "artifact_packet",
+            status: "approved",
+            summary: "Exit rights, data return, and termination source evidence.",
+            sourceCount: 1,
+            updatedAt: "2026-04-26T00:00:00.000Z",
+          },
+          {
+            id: "change_control_provenance",
+            title: "Change-control provenance",
+            kind: "artifact_packet",
+            status: "approved",
+            summary: "Change-control and change order source evidence.",
             sourceCount: 1,
             updatedAt: "2026-04-26T00:00:00.000Z",
           },

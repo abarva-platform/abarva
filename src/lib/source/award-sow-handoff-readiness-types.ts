@@ -33,9 +33,26 @@ export type SourceContractFormationComponent =
   | "approved_pricing"
   | "governed_clause_library"
   | "sow_scope"
+  | "sla_service_level_provenance"
+  | "exit_rights_provenance"
+  | "change_control_provenance"
   | "named_approval_authority"
   | "evidence_lineage"
   | "executed_signature_authority";
+
+export type SourceContract360PublicationPlannerState =
+  | "blocked_contract_formation_package"
+  | "blocked_no_accepted_executed_evidence"
+  | "blocked_stage_not_transition"
+  | "ready_for_publication_review";
+
+export type SourceContract360PublicationTarget =
+  "canonical_contract_and_contract360";
+
+export type SourceContract360BlockedWrite =
+  | "canonical_contract_row"
+  | "contract360_projection_row"
+  | "supplier_notification";
 
 export interface SourceAwardSowArtifactInput {
   id: string;
@@ -84,6 +101,16 @@ export interface SourceContractFormationPackageReadiness {
   evidence: string[];
 }
 
+export interface SourceContract360PublicationPlanner {
+  state: SourceContract360PublicationPlannerState;
+  target: SourceContract360PublicationTarget;
+  publicationAllowed: false;
+  acceptedExecutedEvidence: string[];
+  plannedReviewSteps: string[];
+  blockedWrites: SourceContract360BlockedWrite[];
+  blockers: string[];
+}
+
 export interface SourceAwardSowHandoffReadiness {
   eventId: string;
   eventName: string;
@@ -91,6 +118,7 @@ export interface SourceAwardSowHandoffReadiness {
   readinessStatus: SourceAwardSowHandoffReadinessStatus;
   contractFormationState: SourceContractFormationState;
   contractFormationPackage: SourceContractFormationPackageReadiness;
+  publicationPlanner: SourceContract360PublicationPlanner;
   readyForContract360Handoff: boolean;
   checkpoints: SourceAwardSowHandoffCheckpoint[];
   completedEvidence: string[];

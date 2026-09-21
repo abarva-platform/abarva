@@ -136,6 +136,40 @@ export function SourceAwardSowHandoffReadinessPanel({
             {readiness.recommendedNextAction}
           </div>
         </Section>
+        <Section title="Contract 360 publication planner">
+          <div style={BODY_MUTED}>
+            State: {readiness.publicationPlanner.state.replaceAll("_", " ")}
+          </div>
+          <div style={BODY_MUTED}>
+            Target: {readiness.publicationPlanner.target.replaceAll("_", " ")}
+          </div>
+          <div style={BODY_MUTED}>
+            Publication writes:{" "}
+            {readiness.publicationPlanner.publicationAllowed
+              ? "allowed"
+              : "blocked pending human-approved canonical writer"}
+          </div>
+          <div style={{ ...sourceSectionLabel, marginTop: 8 }}>
+            Accepted executed evidence
+          </div>
+          <ul style={LIST}>
+            {readiness.publicationPlanner.acceptedExecutedEvidence.length > 0 ? (
+              readiness.publicationPlanner.acceptedExecutedEvidence.map(
+                (item) => <li key={item}>{item}</li>,
+              )
+            ) : (
+              <li>No accepted executed evidence recorded for publication.</li>
+            )}
+          </ul>
+          <div style={{ ...sourceSectionLabel, marginTop: 8 }}>
+            Blocked writes
+          </div>
+          <ul style={LIST}>
+            {readiness.publicationPlanner.blockedWrites.map((item) => (
+              <li key={item}>{item.replaceAll("_", " ")}</li>
+            ))}
+          </ul>
+        </Section>
         <Section title="Authority and guardrails">
           <div style={BODY_MUTED}>Authority: {readiness.authority}</div>
           <div style={BODY_MUTED}>
