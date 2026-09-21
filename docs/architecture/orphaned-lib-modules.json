@@ -3,14 +3,14 @@
   "watched": "src/lib",
   "entryPointCounts": {
     "product": 635,
-    "tooling": 1978,
-    "test": 2480
+    "tooling": 1989,
+    "test": 2502
   },
   "counts": {
     "scanned": 2928,
     "product": 2132,
-    "tooling": 230,
-    "testOnly": 433,
+    "tooling": 231,
+    "testOnly": 432,
     "unreferenced": 133
   },
   "testOnly": [
@@ -200,7 +200,6 @@
     "src/lib/intelligence/j0-failure-mode-cards.ts",
     "src/lib/intelligence/j1-topics.ts",
     "src/lib/intelligence/knowledge-fabric-health.ts",
-    "src/lib/intelligence/pattern-action-canvas-view.ts",
     "src/lib/intelligence/sentinel-brief-evidence-view.ts",
     "src/lib/intelligence/sentinel-interaction-rail-view.ts",
     "src/lib/intelligence/sentinel-pattern-content.ts",

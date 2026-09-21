@@ -133,18 +133,6 @@
       ]
     },
     {
-      "suite": "intelligence-int2-pattern-action-canvas.test.ts",
-      "missing": [
-        "src/components/intelligence/IntelligencePatternDetailPage.tsx"
-      ],
-      "covers": [
-        {
-          "module": "src/lib/intelligence/pattern-action-canvas-view.ts",
-          "status": "goes-with-the-suite"
-        }
-      ]
-    },
-    {
       "suite": "intelligence-library-foundation.test.ts",
       "missing": [
         "src/components/intelligence/IntelligenceIndexPage.tsx"

@@ -282,6 +282,29 @@ export const SHARED_PATH_DISPOSITIONS: PathDispositionRegister = {
         'component.',
     },
   },
+  'src/__tests__/integration/intelligence/intelligence-int2-pattern-action-canvas.test.ts': {
+    retired: {
+      scope: 'path',
+      commit: '5378805a1',
+      slice: 'intelligence INT2 orphan retirement',
+      replacement: null,
+      note:
+        'The suite asserted a deleted pattern-detail page and an action-canvas ' +
+        'library that had no product or operator importer. The suite and its ' +
+        'test-only library were retired together after the reachability check.',
+    },
+  },
+  'src/lib/intelligence/pattern-action-canvas-view.ts': {
+    retired: {
+      scope: 'path',
+      commit: '5378805a1',
+      slice: 'intelligence INT2 orphan retirement',
+      replacement: null,
+      note:
+        'No product or operator path imported this library; its only importer ' +
+        'was the retired INT2 integration suite.',
+    },
+  },
 };
 
 /**

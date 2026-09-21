@@ -78,7 +78,7 @@ const LIST = path.join(HERE, "intelligence-integration-quarantine.json");
  * exceed the old high-water mark. Moving it is the visible decision in both
  * directions.
  */
-const CEILING = 16;
+const CEILING = 15;
 
 
 // ---------------------------------------------------------------------------
