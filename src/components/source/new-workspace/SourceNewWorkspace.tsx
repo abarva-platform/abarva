@@ -107,6 +107,34 @@ function fact(value: string | null): string {
   return value?.trim() || "Not recorded";
 }
 
+function eligibilityLabel(
+  eligibility: SourceNewStage04VendorPanel["rows"][number]["eligibility"],
+): string {
+  const values = [
+    ...(eligibility?.categoryKeys ?? []),
+    ...(eligibility?.functionKeys ?? []),
+    ...(eligibility?.archetypeKeys ?? []),
+  ].filter((value) => value.trim());
+  return values.length > 0 ? values.join(" / ") : "Not recorded";
+}
+
+function contactPolicyLabel(
+  policy: SourceNewStage04VendorPanel["rows"][number]["contactPolicy"],
+): string {
+  if (policy === "contact_allowed") return "contact allowed";
+  if (policy === "review_required") return "review required";
+  if (policy === "do_not_contact") return "do not contact";
+  return "Not recorded";
+}
+
+function sourceReferencesLabel(row: SourceNewStage04VendorPanel["rows"][number]): string {
+  const values =
+    row.sourceReferences && row.sourceReferences.length > 0
+      ? row.sourceReferences
+      : [row.evidenceReference];
+  return values.join("; ");
+}
+
 function marketPackageLabel(event: SourceNewEventView): string {
   if (event.solicitationMotion === "rfi") return "RFI";
   if (event.solicitationMotion === "rfp") return "RFP";
@@ -706,6 +734,15 @@ function SourceNewStage04VendorPanelView({
               {row.acceptedByName}
               {" on "}
               {row.acceptedAt.slice(0, 10)}
+              {". Eligibility: "}
+              {eligibilityLabel(row.eligibility)}
+              {". Contact policy: "}
+              {contactPolicyLabel(row.contactPolicy)}
+              {row.contactBlocker ? ` (${row.contactBlocker})` : ""}
+              {". Active contacts: "}
+              {row.activeContactCount ?? 0}
+              {". Sources: "}
+              {sourceReferencesLabel(row)}
               {"."}
             </li>
           ))}

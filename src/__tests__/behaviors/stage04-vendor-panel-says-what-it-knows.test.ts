@@ -57,6 +57,31 @@ const FRESH = {
   evidenceReference: "evt-1/panel/auth-2",
 };
 
+const GOVERNED_REGISTRY = {
+  ...FRESH,
+  eligibility: {
+    categoryKeys: ["managed-services"],
+    functionKeys: ["technology"],
+    archetypeKeys: ["application-managed-services"],
+  },
+  contactPolicy: "contact_allowed",
+  contacts: [
+    {
+      contactId: "contact-1",
+      role: "account_executive",
+      email: "contact@example.invalid",
+      state: "active",
+    },
+  ],
+  activeContactCount: 1,
+  registrySource: {
+    system: "supplier-master-template",
+    reference: "EVID-SUPPLIER-2",
+    recordedAt: "2026-09-19",
+    recordedBy: "supplier-master-template.xlsx#row-7",
+  },
+};
+
 beforeEach(() => {
   readAcceptedCandidatesForEvent.mockReset();
   readContractVendorLegalEntityIds.mockReset();
@@ -168,11 +193,42 @@ describe("the stage 04 panel says what it knows and what it does not", () => {
     expect(panel.notRecorded.join(" ")).toContain(
       "makes no claim about who may be contacted",
     );
-    // And no row carries a contactability verdict at all.
+    // And the row carries no contactability verdict that would imply
+    // permission; it shows the policy is missing instead.
     for (const row of panel.rows) {
-      expect(Object.keys(row)).not.toContain("contactBlocker");
+      expect(row.contactPolicy).toBeNull();
+      expect(row.contactBlocker).toContain("review");
       expect(Object.keys(row)).not.toContain("contactReadiness");
     }
+  });
+
+  it("carries explicit registry eligibility, contact policy and source references when recorded", async () => {
+    authorityReturns([GOVERNED_REGISTRY]);
+    contractsReturn("available", []);
+
+    const panel = await readSourceNewStage04VendorPanel(INPUT);
+
+    expect(panel.status).toBe("available");
+    expect(panel.notRecorded.join(" ")).not.toContain(
+      "Category, function and archetype eligibility are not recorded",
+    );
+    expect(panel.notRecorded.join(" ")).not.toContain(
+      "Contact policy is not recorded",
+    );
+    expect(panel.rows[0]).toEqual(
+      expect.objectContaining({
+        legalName: "New Co",
+        eligibility: {
+          categoryKeys: ["managed-services"],
+          functionKeys: ["technology"],
+          archetypeKeys: ["application-managed-services"],
+        },
+        contactPolicy: "contact_allowed",
+        contactBlocker: null,
+        activeContactCount: 1,
+        sourceReferences: ["evt-1/panel/auth-2", "EVID-SUPPLIER-2"],
+      }),
+    );
   });
 
   it("says the selected group is empty by design, not by outcome", async () => {

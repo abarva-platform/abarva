@@ -886,6 +886,15 @@ describe("SourceNewWorkspace", () => {
           acceptedByName: "A. Buyer",
           acceptedAt: "2026-09-02T00:00:00Z",
           evidenceReference: "EVID-PANEL-2",
+          eligibility: {
+            categoryKeys: ["managed-services"],
+            functionKeys: ["technology"],
+            archetypeKeys: ["application-managed-services"],
+          },
+          contactPolicy: "contact_allowed",
+          contactBlocker: null,
+          activeContactCount: 1,
+          sourceReferences: ["EVID-PANEL-2", "EVID-SUPPLIER-2"],
         },
       ],
       counts: {
@@ -929,6 +938,15 @@ describe("SourceNewWorkspace", () => {
     );
     expect(rowText.find((t) => t.includes("New Supplier LLC"))).toContain(
       "not under contract",
+    );
+    expect(rowText.find((t) => t.includes("New Supplier LLC"))).toContain(
+      "Eligibility: managed-services / technology / application-managed-services",
+    );
+    expect(rowText.find((t) => t.includes("New Supplier LLC"))).toContain(
+      "Contact policy: contact allowed",
+    );
+    expect(rowText.find((t) => t.includes("New Supplier LLC"))).toContain(
+      "Sources: EVID-PANEL-2; EVID-SUPPLIER-2",
     );
 
     // Who accepted it, on the screen and not only in the data. A panel row
