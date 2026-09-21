@@ -31,6 +31,16 @@ describe("readNdaAuthorityForEvent", () => {
           effective_from: "2026-01-01",
           effective_to: "2027-01-01",
           uploaded_by_user_id: "user-1",
+          // Signature evidence is given real, distinct values rather than left
+          // absent. Absent columns come back `undefined`, and an expectation of
+          // `undefined` passes whether or not the repository reads the column
+          // at all — it would assert nothing about the mapping it exists to pin.
+          document_sha256: "a".repeat(64),
+          signature_method: "docusign",
+          supplier_signatory_name: "Supplier Signatory",
+          buyer_signatory_name: "Buyer Signatory",
+          certificate_sha256: "b".repeat(64),
+          private_evidence_ref: "private/nda-1/certificate.pdf",
         },
       ])
       .mockResolvedValueOnce([
@@ -62,6 +72,21 @@ describe("readNdaAuthorityForEvent", () => {
           supplierLegalEntityId: "VEN-001",
           templateVersion: "standard-mutual-v3",
           scopeLevel: "event_only",
+          // Asserted, not ignored. `toEqual` stays exhaustive on purpose:
+          // this case's name is its contract, and swapping in
+          // `toMatchObject` would keep it green while deleting the property
+          // that proves nothing extra leaked into the row.
+          signatureEvidence: {
+            documentSha256: "a".repeat(64),
+            signatureMethod: "docusign",
+            // `effective_from` is the signature date; there is no separate
+            // signed_at column, which the repository says in its own comment.
+            signedAt: "2026-01-01",
+            supplierSignatoryName: "Supplier Signatory",
+            buyerSignatoryName: "Buyer Signatory",
+            certificateSha256: "b".repeat(64),
+            privateEvidenceRef: "private/nda-1/certificate.pdf",
+          },
           coveredEventIds: ["11111111-1111-4111-8111-111111111111"],
           coveredAffiliateEntityIds: [],
           effectiveFrom: "2026-01-01",
