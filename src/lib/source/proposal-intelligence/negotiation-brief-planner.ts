@@ -3,6 +3,11 @@ import type {
   EvaluationBafoPricingRow,
   EvaluationBafoReadinessView,
 } from "./evaluation-bafo-readiness";
+import type { ScorecardAuthorityView } from "./scorecard-authority";
+import type {
+  Stage07BafoRoundConcessionView,
+  Stage07BafoReviewState,
+} from "./bafo-round-concession";
 import type {
   VendorBafoInstructionPack,
   VendorBafoQuestion,
@@ -14,14 +19,16 @@ export type Stage07NegotiationBriefState = "candidate" | "refused";
 export type Stage07NegotiationEvidenceFamily =
   | "response"
   | "pricing"
-  | "evaluator";
+  | "evaluator"
+  | "bafo_round";
 
 export type Stage07NegotiationAcceptedFactCategory =
   | "response_package"
   | "pricing_comparability"
   | "governed_blocker"
-  | "bafo_condition"
-  | "evaluator_evidence";
+  | "evaluator_evidence"
+  | "bafo_round"
+  | "bafo_concession";
 
 export interface Stage07NegotiationAcceptedFact {
   factId: string;
@@ -31,6 +38,7 @@ export interface Stage07NegotiationAcceptedFact {
   posture: "accepted_fact";
   statement: string;
   citation: string | null;
+  reviewState?: Stage07BafoReviewState;
 }
 
 export interface Stage07NegotiationProposedAsk {
@@ -65,6 +73,8 @@ export function buildStage07NegotiationBriefCandidate(args: {
   readinessView?: EvaluationBafoReadinessView | null;
   bafoInstructionPack?: VendorBafoInstructionPack | null;
   decisionView?: VendorEvaluationDecisionView | null;
+  scorecardAuthorityView?: ScorecardAuthorityView | null;
+  bafoRoundConcessionView?: Stage07BafoRoundConcessionView | null;
 }): Stage07NegotiationBriefCandidate {
   const view = args.readinessView;
   const guardrails = [
@@ -100,13 +110,18 @@ export function buildStage07NegotiationBriefCandidate(args: {
   const refusals = buildRefusals({
     view,
     decisionView: args.decisionView,
+    scorecardAuthorityView: args.scorecardAuthorityView,
+    bafoRoundConcessionView: args.bafoRoundConcessionView,
   });
   const acceptedFacts = buildAcceptedFacts({
     view,
-    bafoInstructionPack: args.bafoInstructionPack,
     decisionView: args.decisionView,
+    bafoRoundConcessionView: args.bafoRoundConcessionView,
     includeEvaluatorEvidence: !refusals.some(
       (refusal) => refusal.evidenceFamily === "evaluator",
+    ),
+    includeBafoRoundEvidence: !refusals.some(
+      (refusal) => refusal.evidenceFamily === "bafo_round",
     ),
   });
 
@@ -141,6 +156,8 @@ export function buildStage07NegotiationBriefCandidate(args: {
 function buildRefusals(args: {
   view: EvaluationBafoReadinessView;
   decisionView?: VendorEvaluationDecisionView | null;
+  scorecardAuthorityView?: ScorecardAuthorityView | null;
+  bafoRoundConcessionView?: Stage07BafoRoundConcessionView | null;
 }): Stage07NegotiationRefusal[] {
   const refusals: Stage07NegotiationRefusal[] = [];
 
@@ -180,6 +197,18 @@ function buildRefusals(args: {
     return dedupeRefusals(refusals);
   }
 
+  if (!args.scorecardAuthorityView || args.scorecardAuthorityView.state !== "ready") {
+    refusals.push({
+      evidenceFamily: "evaluator",
+      vendorId: null,
+      vendorName: "All vendors",
+      reason:
+        "The governed scorecard authority is blocked or unavailable; advisory evaluator rows cannot be treated as accepted facts.",
+      nextAction:
+        "Load frozen criteria weights, exact approved criterion versions, named evaluator scores, evidence references, override reasons when required, and locked score state before export.",
+    });
+  }
+
   for (const row of args.view.received) {
     const evidence = evaluatorEvidenceForVendor(
       args.decisionView,
@@ -196,14 +225,27 @@ function buildRefusals(args: {
     });
   }
 
+  if (!args.bafoRoundConcessionView || args.bafoRoundConcessionView.state !== "ready") {
+    refusals.push({
+      evidenceFamily: "bafo_round",
+      vendorId: null,
+      vendorName: "All vendors",
+      reason:
+        "BAFO round/concession review is missing, blocked, or not versioned; the planner cannot promote round or concession content into accepted facts.",
+      nextAction:
+        "Load reviewed, versioned BAFO round and concession evidence with named reviewer identity before export.",
+    });
+  }
+
   return dedupeRefusals(refusals);
 }
 
 function buildAcceptedFacts(args: {
   view: EvaluationBafoReadinessView;
-  bafoInstructionPack?: VendorBafoInstructionPack | null;
   decisionView?: VendorEvaluationDecisionView | null;
+  bafoRoundConcessionView?: Stage07BafoRoundConcessionView | null;
   includeEvaluatorEvidence: boolean;
+  includeBafoRoundEvidence: boolean;
 }): Stage07NegotiationAcceptedFact[] {
   const facts: Stage07NegotiationAcceptedFact[] = [];
 
@@ -237,21 +279,6 @@ function buildAcceptedFacts(args: {
     });
   }
 
-  for (const instruction of args.bafoInstructionPack?.vendorInstructions ??
-    []) {
-    for (const condition of instruction.mustResolveBeforeScoring) {
-      facts.push({
-        factId: `${instruction.vendorId}:bafo-condition:${stableSuffix(condition)}`,
-        vendorId: instruction.vendorId,
-        vendorName: instruction.vendorName,
-        category: "bafo_condition",
-        posture: "accepted_fact",
-        statement: condition,
-        citation: args.bafoInstructionPack?.roundLabel ?? null,
-      });
-    }
-  }
-
   if (args.includeEvaluatorEvidence && args.decisionView) {
     for (const row of args.view.received) {
       for (const evidence of evaluatorEvidenceForVendor(
@@ -268,6 +295,35 @@ function buildAcceptedFacts(args: {
           citation: evidence,
         });
       }
+    }
+  }
+
+  if (args.includeBafoRoundEvidence && args.bafoRoundConcessionView) {
+    for (const round of args.bafoRoundConcessionView.roundRows) {
+      facts.push({
+        factId: `bafo-round:${round.roundId}:${round.roundVersion}`,
+        vendorId: round.vendorId,
+        vendorName: round.vendorName,
+        category: "bafo_round",
+        posture: "accepted_fact",
+        statement:
+          `${round.roundLabel} ${round.roundVersion} was reviewed for ${round.vendorName}.`,
+        citation: round.evidenceReference,
+        reviewState: round.reviewState,
+      });
+    }
+    for (const concession of args.bafoRoundConcessionView.concessionRows) {
+      facts.push({
+        factId: `bafo-concession:${concession.concessionId}:${concession.concessionVersion}`,
+        vendorId: concession.vendorId,
+        vendorName: concession.vendorName,
+        category: "bafo_concession",
+        posture: "accepted_fact",
+        statement:
+          `${concession.concessionType} concession ${concession.concessionVersion}: ${concession.summary}`,
+        citation: concession.evidenceReference,
+        reviewState: concession.reviewState,
+      });
     }
   }
 
