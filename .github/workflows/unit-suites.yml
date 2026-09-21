@@ -1006,6 +1006,16 @@ jobs:
           "src/app/(maestro)/source/workspace/__tests__/workspace-impact-read-resilience.test.tsx"
           --no-coverage --ci
 
+      # An entry in TENANT_DATASET_BY_KEY is a claim that a dataset exists.
+      # When it does not, the V6 builders return null and every caller
+      # degrades silently — which is how two dataset roots stayed missing
+      # unnoticed. This suite fails only when the table and the disk disagree.
+      - name: Run the V6 demo tenant pack root invariant
+        run: >-
+          npx jest --runTestsByPath
+          src/lib/module-v6/__tests__/demo-tenant-pack-roots.test.ts
+          --no-coverage --ci
+
       # content next changed. The writer is fixed in this same change, so this
       # step is green on arrival — it is a tripwire for the next one.
       - name: Refuse a test run that modified committed input data
