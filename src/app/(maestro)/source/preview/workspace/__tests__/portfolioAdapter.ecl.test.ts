@@ -593,16 +593,16 @@ describe("loadSourceWorkspacePortfolio ECL projection adapter", () => {
               contract_id: "MER-TECH-M365-001",
               vendor_ref: "vendor-microsoft",
               vendor_name: "Microsoft Corporation",
-	              contract_name: "Microsoft 365 Enterprise Agreement",
-	              spend_rows: 12,
-	              actual_spend_usd: 8587900,
-	              committed_spend_usd: 8600004,
-	              performance_rows: 12,
-	              breach_rows: 3,
-	              credit_calculated_usd: 43000.02,
-	              credit_claimed_usd: 0,
-	              credit_recovered_usd: 0,
-	              unclaimed_credit_usd: 43000.02,
+              contract_name: "Microsoft 365 Enterprise Agreement",
+              spend_rows: 12,
+              actual_spend_usd: 8587900,
+              committed_spend_usd: 8600004,
+              performance_rows: 12,
+              breach_rows: 3,
+              credit_calculated_usd: 43000.02,
+              credit_claimed_usd: 0,
+              credit_recovered_usd: 0,
+              unclaimed_credit_usd: 43000.02,
               opportunity_rows: 1,
               candidate_amount_usd: 1960000,
               finance_confirmation_required_rows: 1,
@@ -818,8 +818,7 @@ describe("loadSourceWorkspacePortfolio ECL projection adapter", () => {
     );
     const canonicalImpactSetConfigCalls = runCalls.filter(
       (call) =>
-        call.sql.includes("set_config") &&
-        call.params[0] === "meridian-health",
+        call.sql.includes("set_config") && call.params[0] === "meridian-health",
     );
     expect(canonicalImpactSetConfigCalls.length).toBeGreaterThanOrEqual(1);
     const legacyImpactSetConfigCalls = runCalls.filter(
@@ -834,9 +833,7 @@ describe("loadSourceWorkspacePortfolio ECL projection adapter", () => {
     expect(
       runCalls
         .filter((call) => call.sql.includes("FROM serving."))
-        .every((call) =>
-          call.sql.includes("AND assessment_id = $2"),
-        ),
+        .every((call) => call.sql.includes("AND assessment_id = $2")),
     ).toBe(true);
     expect(
       runCalls
@@ -846,9 +843,7 @@ describe("loadSourceWorkspacePortfolio ECL projection adapter", () => {
         ),
     ).toBe(true);
     expect(
-      runCalls.find((call) =>
-        call.sql.includes("ecl_projection.cube_slice"),
-      ),
+      runCalls.find((call) => call.sql.includes("ecl_projection.cube_slice")),
     ).toMatchObject({
       params: [
         expect.arrayContaining(["meridian-health"]),
@@ -1173,9 +1168,7 @@ describe("loadSourceWorkspacePortfolio ECL projection adapter", () => {
       isDirectActionCandidateSql(call.sql),
     )?.sql;
     expect(actionSql).toBeDefined();
-    expect(actionSql).not.toContain(
-      "FROM consumption.sourcing_opportunity_v1",
-    );
+    expect(actionSql).not.toContain("FROM consumption.sourcing_opportunity_v1");
     expect(normalizedSql(actionSql ?? "")).toContain(
       "WITH current_action_opportunities AS MATERIALIZED",
     );
@@ -1378,6 +1371,12 @@ describe("loadSourceWorkspacePortfolio ECL projection adapter", () => {
         call.sql.includes("FROM source.sourcing_opportunity legacy"),
       ),
     ).toBe(true);
+    const directActionSql = runCalls.find((call) =>
+      isDirectActionCandidateSql(call.sql),
+    )?.sql;
+    expect(directActionSql).toContain("LEFT JOIN source.vendor legacy_vendor");
+    expect(directActionSql).toContain("LEFT JOIN source.vendor action_vendor");
+    expect(directActionSql).not.toContain("LEFT JOIN source.contract_360");
     expect(
       runCalls.some((call) =>
         call.sql.includes("FROM source.contract_consumption_observation o"),
@@ -1635,9 +1634,9 @@ describe("loadSourceWorkspacePortfolio ECL projection adapter", () => {
       primary_metric_label: "Depth contracts",
       primary_metric_value: "1",
     });
-    expect(
-      portfolio.impact.storyline[0].allowed_executive_statement,
-    ).toContain("separate from the portfolio-register contract count");
+    expect(portfolio.impact.storyline[0].allowed_executive_statement).toContain(
+      "separate from the portfolio-register contract count",
+    );
     expect(portfolio.impact.storyline[0].citation_basis_json).toMatchObject({
       "source.contract_action_candidate_v1": 1,
     });
