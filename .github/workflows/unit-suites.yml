@@ -1078,6 +1078,51 @@ jobs:
 
       # content next changed. The writer is fixed in this same change, so this
       # step is green on arrival — it is a tripwire for the next one.
+      # Four dark directories, wired by exact file path. Every file listed
+      # was run before wiring: 23 suites, 219 tests, 0 failures. Named file
+      # by file rather than by directory so a later addition to any of them
+      # is not adopted into CI without the same check.
+      - name: Run four previously dark Source and Programs suites
+        run: >-
+          npx jest --runTestsByPath
+          src/lib/source/ava/__tests__/export-answer-packet.test.ts
+          src/lib/source/archetypes/__tests__/differentiation.test.ts
+          src/lib/source/archetypes/__tests__/event-archetype-resolver.test.ts
+          src/lib/source/archetypes/__tests__/evidence-readiness.test.ts
+          src/lib/source/archetypes/__tests__/grounded-answer.test.ts
+          src/lib/source/archetypes/__tests__/pricing-engine.test.ts
+          src/lib/source/archetypes/__tests__/readiness.test.ts
+          src/lib/source/archetypes/__tests__/rfp-canon.test.ts
+          src/lib/source/archetypes/__tests__/skyharbor-ams.scenario.test.ts
+          src/lib/programs/archetype-primers/__tests__/ai-coding-primer.test.ts
+          src/lib/programs/archetype-primers/__tests__/cc-ai-primer.test.ts
+          src/lib/programs/archetype-primers/__tests__/cdp-primer.test.ts
+          src/lib/programs/archetype-primers/__tests__/copilot-primer.test.ts
+          src/lib/programs/archetype-primers/__tests__/forecast-primer.test.ts
+          src/lib/programs/archetype-primers/__tests__/loyalty-primer.test.ts
+          src/lib/programs/archetype-primers/__tests__/render-html.test.ts
+          src/lib/source/canvas-substrate/__tests__/event-intake-sync.test.ts
+          src/lib/source/canvas-substrate/__tests__/fact-derived-evidence.test.ts
+          src/lib/source/canvas-substrate/__tests__/queries.test.ts
+          src/lib/source/canvas-substrate/__tests__/scaffold.test.ts
+          src/lib/source/canvas-substrate/__tests__/templates.test.ts
+          src/lib/source/canvas-substrate/__tests__/types.test.ts
+          src/lib/source/canvas-substrate/__tests__/upload-sync.test.ts
+          --no-coverage --ci
+
+      # The context-and-corpus governance contract. These three suites were
+      # 61 of 73 until the stale fixture key was corrected; they are 73 of 73
+      # now, and two governance fences (pii_phi_handling, restricted
+      # downstream context) are provable by them for the first time. Running
+      # nowhere is how they stayed red unnoticed.
+      - name: Run the governance contract suites
+        run: >-
+          npx jest --runTestsByPath
+          src/lib/governance/__tests__/agent-context-bundle.test.ts
+          src/lib/governance/__tests__/context-corpus-policy.test.ts
+          src/lib/governance/__tests__/dataset-manifest.test.ts
+          --no-coverage --ci
+
       - name: Refuse a test run that modified committed input data
         if: always()
         run: node scripts/ci/assert-datasets-unmodified.mjs
