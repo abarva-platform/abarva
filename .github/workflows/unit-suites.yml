@@ -766,5 +766,31 @@ jobs:
           "src/app/(maestro)/source/optimize/__tests__/page.financial-access.test.tsx"
           --no-coverage --ci
 
+      # Ten previously dark suites were measured unchanged: all ten loaded,
+      # collected, ran, and passed (69 tests before canonical-key expansion).
+      # The tenant suites now iterate the canonical tenant-key authority rather
+      # than maintaining another list. Their subjects have 101, 11, and 10
+      # direct non-test importers. The Tower projector is a package-script CLI;
+      # its write helper has one runtime importer and both Tower tests use fake
+      # clients. Each notification action has one UI importer and replaces the
+      # Postgres write boundary. The Ask route is a Next.js entry point and both
+      # suites replace model, data, auth, session, and telemetry boundaries.
+      # Exact files are named so a future writer or sender is not adopted
+      # without the same boundary review.
+      - name: Run tenant, Tower, notification, and Intelligence Ask suites
+        run: >-
+          npx jest --runTestsByPath
+          src/lib/tenant/__tests__/aliases.test.ts
+          src/lib/tenant/__tests__/foundation-tenants.test.ts
+          src/lib/tenant/__tests__/resolveTenant.test.ts
+          src/scripts/tower/__tests__/project-tower-mart-client-resolver.test.ts
+          src/scripts/tower/__tests__/project-tower-mart-source-contracts.test.ts
+          src/scripts/tower/__tests__/project-tower-mart-write.test.ts
+          "src/app/(maestro)/admin/users-access/notifications/_actions/__tests__/save-preferences.test.ts"
+          "src/app/(maestro)/admin/users-access/notifications/_actions/__tests__/send-test.test.ts"
+          src/app/api/intelligence/ask/__tests__/route.source-contract-authority.test.ts
+          src/app/api/intelligence/ask/__tests__/route.telemetry.test.ts
+          --no-coverage --ci
+
       - name: Refuse a new dark tree under src/__tests__
         run: npx jest --runTestsByPath src/__tests__/behaviors/unit-directory-ci-coverage.test.ts --no-coverage --ci
