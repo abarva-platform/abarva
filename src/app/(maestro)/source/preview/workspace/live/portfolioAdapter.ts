@@ -1128,7 +1128,7 @@ async function loadDirectSourceWorkspaceImpactRows(
                  legacy.opportunity_id,
                  legacy.contract_id,
                  legacy.vendor_id AS vendor_ref,
-                 COALESCE(NULLIF(c.vendor_name, ''), 'Vendor name not resolved') AS vendor_name,
+                 COALESCE(NULLIF(legacy_vendor.legal_name, ''), 'Vendor name not resolved') AS vendor_name,
                  legacy.title,
                  legacy.opportunity_type AS action_type,
                  legacy.opportunity_type,
@@ -1171,9 +1171,9 @@ async function loadDirectSourceWorkspaceImpactRows(
                  legacy.load_run_id,
                  1 AS source_rank
                 FROM source.sourcing_opportunity legacy
-                LEFT JOIN source.contract_360 c
-                  ON c.tenant_key = legacy.tenant_key
-                 AND c.contract_id = legacy.contract_id
+                LEFT JOIN source.vendor legacy_vendor
+                  ON legacy_vendor.tenant_key = legacy.tenant_key
+                 AND legacy_vendor.vendor_id = legacy.vendor_id
                 LEFT JOIN current_action_opportunities current_action
                   ON current_action.tenant_key = legacy.tenant_key
                  AND current_action.opportunity_id = legacy.opportunity_id
@@ -1186,7 +1186,7 @@ async function loadDirectSourceWorkspaceImpactRows(
                  o.opportunity_id,
                  o.contract_id,
                  o.vendor_id AS vendor_ref,
-                 COALESCE(NULLIF(c.vendor_name, ''), 'Vendor name not resolved') AS vendor_name,
+                 COALESCE(NULLIF(action_vendor.legal_name, ''), 'Vendor name not resolved') AS vendor_name,
                  COALESCE(NULLIF(o.payload->>'label', ''), NULLIF(o.payload->>'title', ''), o.narrative) AS title,
                  o.value_type AS action_type,
                  o.value_type AS opportunity_type,
@@ -1239,9 +1239,9 @@ async function loadDirectSourceWorkspaceImpactRows(
                   ON current_contract.tenant_key = o.tenant_key
                  AND current_contract.contract_id = o.contract_id
                  AND current_contract.raw_payload->>'dataset_version' = o.dataset_version
-                LEFT JOIN source.contract_360 c
-                  ON c.tenant_key = o.tenant_key
-                 AND c.contract_id = o.contract_id
+                LEFT JOIN source.vendor action_vendor
+                  ON action_vendor.tenant_key = o.tenant_key
+                 AND action_vendor.vendor_id = o.vendor_id
                 LEFT JOIN source.opportunity_claim sizing_claim
                   ON sizing_claim.tenant_key = o.tenant_key
                  AND sizing_claim.dataset_version = o.dataset_version
@@ -1846,7 +1846,7 @@ async function loadDerivedSourceWorkspaceImpactLayer(
              o.opportunity_id,
              o.contract_id,
              o.vendor_ref,
-             COALESCE(NULLIF(c.vendor_name, ''), 'Vendor name not resolved') AS vendor_name,
+             COALESCE(NULLIF(legacy_vendor.legal_name, ''), 'Vendor name not resolved') AS vendor_name,
              o.title,
              o.action_type,
              o.opportunity_type,
@@ -1884,9 +1884,9 @@ async function loadDerivedSourceWorkspaceImpactLayer(
              o.load_run_id,
              1 AS source_rank
             FROM consumption.sourcing_opportunity_v1 o
-            LEFT JOIN source.contract_360 c
-              ON c.tenant_key = o.tenant_key
-             AND c.contract_id = o.contract_id
+            LEFT JOIN source.vendor legacy_vendor
+              ON legacy_vendor.tenant_key = o.tenant_key
+             AND legacy_vendor.vendor_id = o.vendor_ref
             LEFT JOIN current_action_contracts current_action
               ON current_action.tenant_key = o.tenant_key
              AND current_action.contract_id = o.contract_id
@@ -1899,7 +1899,7 @@ async function loadDerivedSourceWorkspaceImpactLayer(
              o.opportunity_id,
              o.contract_id,
              o.vendor_id AS vendor_ref,
-             COALESCE(NULLIF(c.vendor_name, ''), 'Vendor name not resolved') AS vendor_name,
+             COALESCE(NULLIF(action_vendor.legal_name, ''), 'Vendor name not resolved') AS vendor_name,
              COALESCE(NULLIF(o.payload->>'label', ''), NULLIF(o.payload->>'title', ''), o.narrative) AS title,
              o.value_type AS action_type,
              o.value_type AS opportunity_type,
@@ -1952,9 +1952,9 @@ async function loadDerivedSourceWorkspaceImpactLayer(
               ON current_contract.tenant_key = o.tenant_key
              AND current_contract.contract_id = o.contract_id
              AND current_contract.raw_payload->>'dataset_version' = o.dataset_version
-            LEFT JOIN source.contract_360 c
-              ON c.tenant_key = o.tenant_key
-             AND c.contract_id = o.contract_id
+            LEFT JOIN source.vendor action_vendor
+              ON action_vendor.tenant_key = o.tenant_key
+             AND action_vendor.vendor_id = o.vendor_id
             LEFT JOIN source.opportunity_claim sizing_claim
               ON sizing_claim.tenant_key = o.tenant_key
              AND sizing_claim.dataset_version = o.dataset_version
