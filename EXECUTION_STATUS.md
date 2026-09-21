@@ -1,5 +1,8 @@
 # Execution Status
 
+## Source lifecycle D-008 — event-owned stage-plan snapshot · @codex · branch: codex/source-stage-plan-snapshot-D008
+- 2026-09-21 09:40 CDT CLAIM — D-006 remains gated in this checkout: the authority-state and version-authority files do not define a request-activation transition that records both a named actor and an accepted request version, and no local database credentials are available to prove those migrations applied live. Took D-008 instead. Added a read-only Source event stage-plan snapshot projection owned by `{sourceEventId, clientKey}` with a deterministic content hash, no migration, no tenant-data write, and an opposite-tenant fail-closed guard. Focused red-first and mutation checks are recorded in the release record; no signed-in or live runtime proof is claimed.
+
 ## Legacy Clean Cutover PR A — framework overlay runtime unblock · @codex · branch: codex/legacy-cutover-runtime
 - 2026-05-23 14:52 CDT START — converting draft escalation #2280 into the first merge-train slice. Scope is intentionally narrow: add the missing `framework_overlays` DB substrate and a DB-only async Function Pack binding path so the later migration/deletion PR can remove in-code Function Pack content without inventing coexist shims. Confirmed tenant convention remains `clients` / `client_id`.
 - 2026-05-23 15:06 CDT IMPLEMENTATION — added migration `20260523182000_framework_overlays.sql`, with global rows represented by `client_id IS NULL` and client overlays scoped by `clients.id`. Added `resolveFrameworkOverlayFunctionPack` / `bindFrameworkOverlayFunctionPackForArtifact`, plus `bindResolvedFunctionPackForArtifact` so DB-loaded packs can bind artifacts without falling back to the in-code registry.

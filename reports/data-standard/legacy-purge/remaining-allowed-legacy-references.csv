@@ -513,7 +513,6 @@ old-meridian-datacenter-workbook,src/app/(maestro)/platform/admin/data/page.tsx,
 legacy-v-dimension-token,src/app/(maestro)/source/preview/workspace/__tests__/buildViewModel.numeric.test.ts,non-loader historical reference
 legacy-v-dimension-token,src/app/api/intelligence/ask/route.ts,non-loader historical reference
 legacy-v-file-name,src/app/api/intelligence/ask/route.ts,non-loader historical reference
-synthetic-v-folder-reference,src/components/admin/context-layer/__tests__/CsvUploadConnector.test.tsx,non-loader historical reference
 synthetic-v-folder-reference,src/components/home/__tests__/HomeSurface.test.tsx,non-loader historical reference
 legacy-v-dimension-token,src/components/home/__tests__/HomeSurface.test.tsx,non-loader historical reference
 legacy-v-file-name,src/components/home/__tests__/HomeSurface.test.tsx,non-loader historical reference
@@ -524,7 +523,6 @@ legacy-v-dimension-token,src/lib/admin/tenant-manifest-projection-audit.ts,non-l
 legacy-v-file-name,src/lib/admin/tenant-manifest-projection-audit.ts,non-loader historical reference
 legacy-v-dimension-token,src/lib/ava-answer/__tests__/public-answer-scrub.test.ts,non-loader historical reference
 legacy-v-file-name,src/lib/ava-answer/__tests__/public-answer-scrub.test.ts,non-loader historical reference
-synthetic-v-folder-reference,src/lib/context-ingestion/__tests__/csv-upload-connector.test.ts,non-loader historical reference
 synthetic-v-folder-reference,src/lib/demo/demo-dataset-registry.ts,non-loader historical reference
 synthetic-v-folder-reference,src/lib/enterprise-context/derived-enterprise-read.ts,non-loader historical reference
 legacy-v-dimension-token,src/lib/enterprise-data/candidate-generation/tenant-candidate-version-generator.ts,non-loader historical reference
