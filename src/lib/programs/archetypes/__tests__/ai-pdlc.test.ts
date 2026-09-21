@@ -112,4 +112,62 @@ describe("AI-PDLC — deliverable pack + grounded refinement contract", () => {
     for (const m of AI.analysisMethods)
       expect(ANALYSIS_METHODS[m]).toBeDefined();
   });
+
+  /**
+   * The estate-resolution branch was reached thirteen times across the three
+   * wired suites and asserted about zero times, so two mutations escaped it:
+   * forcing `estateResolved` to false, and dropping the
+   * `severity = pred.severityFor(profile)` escalation. Both left 41 of 41
+   * passing. These cases close that.
+   *
+   * The severity fixture only works because the two rules DISAGREE on it:
+   * `eng_performance_dora` is declared `hard` in AI_PDLC's charter phase, and
+   * the estate predicate returns `soft` for a known non-scrum estate. A
+   * fixture whose declared and estate-resolved severities matched would pass
+   * whether or not the escalation ran.
+   */
+  it("lets the estate soften a hard-declared requirement", () => {
+    const resolved = resolveArchetypeRequirements(
+      AI,
+      "charter",
+      profile({ teamArchetypes: ["full_stack_cloud"], deliveryMaturity: "waterfall" }),
+    );
+    const dora = resolved.find((r) => r.family.key === "eng_performance_dora");
+
+    // Declared "hard" in AI_PDLC_PHASES; the estate predicate returns "soft"
+    // for a known estate that is neither scrum nor continuous.
+    expect(dora?.severity).toBe("soft");
+    expect(dora?.estateResolved).toBe(true);
+  });
+
+  it("keeps it hard for a continuous-delivery estate, so the softening is the estate's and not a default", () => {
+    // The other half. Without this, a resolver that always returned "soft"
+    // would satisfy the case above.
+    const resolved = resolveArchetypeRequirements(
+      AI,
+      "charter",
+      profile({ teamArchetypes: ["full_stack_cloud"], deliveryMaturity: "continuous" }),
+    );
+    const dora = resolved.find((r) => r.family.key === "eng_performance_dora");
+
+    expect(dora?.severity).toBe("hard");
+    expect(dora?.estateResolved).toBe(true);
+  });
+
+  it("marks only estate-scoped families as estate-resolved", () => {
+    // Guards the flag against becoming blanket-true: a requirement with no
+    // estate predicate must come back unresolved, or "estate-resolved" stops
+    // meaning anything.
+    const resolved = resolveArchetypeRequirements(
+      AI,
+      "charter",
+      profile({ teamArchetypes: ["full_stack_cloud"], deliveryMaturity: "scrum" }),
+    );
+    const unscoped = resolved.filter((r) => !r.estateResolved);
+
+    expect(unscoped.length).toBeGreaterThan(0);
+    for (const row of unscoped) {
+      expect(row.rationale).not.toContain("estate-resolved severity");
+    }
+  });
 });
