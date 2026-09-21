@@ -814,6 +814,7 @@ function coverageFor(testPath, reachable) {
   return {
     covered: hits.length > 0,
     pullRequestCovered: hits.some((entry) => entry.pullRequest),
+    collected: named.length > 0,
     declaredQuarantine: excludedByNamingCommand,
     via: [...new Set(hits.map((entry) => entry.via))].sort(),
   };
@@ -857,6 +858,7 @@ export function buildCensus(root, { includeUnrunPaths = false } = {}) {
         via: new Set(),
         testPaths: [],
         unrunPaths: [],
+        fileStatuses: [],
       });
     }
     const entry = directories.get(directory);
@@ -868,6 +870,19 @@ export function buildCensus(root, { includeUnrunPaths = false } = {}) {
       entry.declaredQuarantine += 1;
       declaredQuarantine += 1;
     }
+    entry.fileStatuses.push({
+      directory,
+      testPath: testFile,
+      loaded: true,
+      collected: result.collected,
+      run: result.covered,
+      green: result.covered,
+      covered: result.covered,
+      pullRequestCovered: result.pullRequestCovered,
+      declaredQuarantine: result.declaredQuarantine,
+      untriaged: !result.covered && !result.declaredQuarantine,
+      via: result.via,
+    });
     for (const via of result.via) entry.via.add(via);
   }
 
@@ -881,6 +896,9 @@ export function buildCensus(root, { includeUnrunPaths = false } = {}) {
       untriagedUnrunTestFiles:
         entry.testFiles - entry.covered - entry.declaredQuarantine,
       unrunTestPaths: [...entry.unrunPaths].sort(),
+      fileStatuses: entry.fileStatuses.sort((a, b) =>
+        a.testPath.localeCompare(b.testPath),
+      ),
       via: [...entry.via].sort(),
       governedRisk: governedRiskForDirectory(
         root,
@@ -931,6 +949,27 @@ export function buildCensus(root, { includeUnrunPaths = false } = {}) {
       rank: row.governedRisk.rank,
     },
   }));
+  const governedRiskFiles = governedRiskRows.flatMap((row) =>
+    row.fileStatuses.map((file) => ({
+      directory: file.directory,
+      testPath: file.testPath,
+      loaded: file.loaded,
+      collected: file.collected,
+      run: file.run,
+      green: file.green,
+      covered: file.covered,
+      pullRequestCovered: file.pullRequestCovered,
+      declaredQuarantine: file.declaredQuarantine,
+      untriaged: file.untriaged,
+      via: file.via,
+      governedRisk: {
+        score: row.governedRisk.score,
+        band: row.governedRisk.band,
+        signals: row.governedRisk.signals,
+        rank: row.governedRisk.rank,
+      },
+    })),
+  );
   const governedRiskEvidence = governedRiskRows
     .slice(0, 25)
     .map((row) => ({
@@ -946,6 +985,7 @@ export function buildCensus(root, { includeUnrunPaths = false } = {}) {
         governedRisk: _governedRisk,
         unrunTestFiles: _unrun,
         unrunTestPaths: _unrunPaths,
+        fileStatuses: _fileStatuses,
         ...row
       }) => row,
     );
@@ -976,6 +1016,7 @@ export function buildCensus(root, { includeUnrunPaths = false } = {}) {
       "pullRequestCovered counts only workflows triggered by pull_request or merge_group, i.e. the set that can block a merge.",
       "While indeterminateInvocations is non-empty, uncoveredTestFiles is an upper bound.",
       "An unrun file a naming command excludes through its own --testPathIgnorePatterns is a declared quarantine: triaged, with a reason recorded somewhere. An unrun file no command names is untriaged. Both stay in uncoveredTestFiles; only untriagedUnrunTestFiles separates them.",
+      "governedRiskFiles reports each file in a ranked governed-risk directory: loaded means the census found the file, collected means a workflow-reachable command named it before ignore subtraction, run/green/covered mean that command still reaches it after ignore subtraction, and untriaged means no command reaches it and no naming command quarantines it.",
       "Every directory holding an UNTRIAGED unrun file is ranked by governed-surface risk: declared AI controls, approval or lifecycle writes, then tenant-scoped reads; the count of unrun files is only a tie-breaker. A directory whose unrun set is entirely declared quarantine is not ranked, because it has already been triaged.",
       "Governed-risk signals come from product modules a test loads at runtime, not from directory names alone; type-only imports are erased before the test runs and are not counted as edges.",
       "Evidence source lists for the top 25 governed-risk directories are sorted and capped at five paths per signal; companion counts preserve the full match cardinality.",
@@ -1016,9 +1057,11 @@ export function buildCensus(root, { includeUnrunPaths = false } = {}) {
         governedRisk: _governedRisk,
         unrunTestFiles: _unrun,
         unrunTestPaths: _unrunPaths,
+        fileStatuses: _fileStatuses,
         ...row
       }) => row,
     ),
+    governedRiskFiles,
     governedRiskRanking,
     governedRiskEvidence,
     uncoveredDirectories,
