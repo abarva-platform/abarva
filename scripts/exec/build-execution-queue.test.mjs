@@ -517,9 +517,18 @@ console.log("build-execution-queue — staleness guard (T-076)\n");
       "| T-509 | **Measured stale-suite follow-on fixture.** | T | Record a per-file verdict before wiring. |\n" +
       "| T-513 | **Behavioral rewrite follow-on fixture.** | T | Replace source-text scanners with behavior. |\n" +
       "| T-514 | **Generated-count authority decision fixture.** | T | Decide the authoritative count before changing it. |\n" +
-      "| T-515 | **Uncovered-control validator fixture.** | T | Reconcile declared coverage with known suites. |\n",
+      "| T-515 | **Uncovered-control validator fixture.** | T | Reconcile declared coverage with known suites. |\n" +
+      "| C-500 | **Source advisor answer-quality fixture.** | C | Keep the answer-shaping decision visible under the aVa quality capability. |\n" +
+      "| T-516 | **Green-suite CI wiring fixture.** | T | Wire already-green suites without repairing them. |\n" +
+      "| T-517 | **Synthesis header fixture refresh.** | T | Refresh measured route expectations without inventing headers. |\n" +
+      "| T-518 | **Strategic Moves render expectation fixture.** | T | Update measured expectations without loosening render proof. |\n" +
+      "| T-519 | **NDA signature-evidence fixture.** | T | Assert the new signature evidence exhaustively. |\n" +
+      "| T-584 | **Register outcome integrity fixture.** | T | Append exact deploy outcome lines without batch proof. |\n" +
+      "| T-585 | **Contract 360 field-fidelity fixture.** | C | Keep the C7 vendor concession spelling defect under Contract 360 truth. |\n",
   );
   const map = JSON.parse(fs.readFileSync(path.join(dir, "source-stage-map.json"), "utf8"));
+  const stage9 = map.stages.find((stage) => stage.id === 9);
+  const stage9Text = JSON.stringify(stage9);
   check(
     "T-468 is mapped outside the Source lifecycle",
     map.outsideLifecycle.items.includes("T-468") &&
@@ -550,6 +559,37 @@ console.log("build-execution-queue — staleness guard (T-076)\n");
       JSON.stringify(map.platformTrack.items.slice(-24)),
     );
   }
+  for (const id of ["T-516", "T-517", "T-518", "T-519", "T-584"]) {
+    check(
+      `${id} is mapped to platform/test-execution integrity without advancing a lifecycle stage`,
+      map.platformTrack.items.includes(id) &&
+        !map.outsideLifecycle.items.includes(id) &&
+        !JSON.stringify(map.stages).includes(`"${id}"`),
+      JSON.stringify(map.platformTrack.items.slice(-32)),
+    );
+  }
+  check(
+    "C-500 is mapped to the existing Source/aVa answer-quality capability",
+    stage9?.items.includes("C-500") &&
+      stage9.capabilities.some((capability) =>
+        capability.capability === "aVa complete signed-in acceptance set" &&
+        capability.items.includes("C-500"),
+      ) &&
+      !map.platformTrack.items.includes("C-500") &&
+      !map.outsideLifecycle.items.includes("C-500"),
+    stage9Text,
+  );
+  check(
+    "T-585 is mapped to the existing Contract 360 truth and field-fidelity capability",
+    stage9?.items.includes("T-585") &&
+      stage9.capabilities.some((capability) =>
+        capability.capability === "Contract workspace display authority and freshness controls" &&
+        capability.items.includes("T-585"),
+      ) &&
+      !map.platformTrack.items.includes("T-585") &&
+      !map.outsideLifecycle.items.includes("T-585"),
+    stage9Text,
+  );
   const board = run(dir, "build-source-board.mjs", ["--json"]);
   const q = board.status === 0 ? run(dir, "build-execution-queue.mjs") : { status: 1, stdout: "", stderr: "" };
   check(
@@ -562,7 +602,24 @@ console.log("build-execution-queue — staleness guard (T-076)\n");
   fs.rmSync(dir, { recursive: true, force: true });
 }
 
-for (const id of ["T-468", "T-469", "T-508", "T-470", "T-471", "T-509", "T-513", "T-514", "T-515"]) {
+for (const [id, expectedRemoved] of [
+  ["T-468", 1],
+  ["T-469", 1],
+  ["T-508", 1],
+  ["T-470", 1],
+  ["T-471", 1],
+  ["T-509", 1],
+  ["T-513", 1],
+  ["T-514", 1],
+  ["T-515", 1],
+  ["C-500", 2],
+  ["T-516", 1],
+  ["T-517", 1],
+  ["T-518", 1],
+  ["T-519", 1],
+  ["T-584", 1],
+  ["T-585", 2],
+]) {
   const dir = freshFixture();
   fs.appendFileSync(
     path.join(dir, "EXECUTION_BACKLOG_20260918.md"),
@@ -575,7 +632,7 @@ for (const id of ["T-468", "T-469", "T-508", "T-470", "T-471", "T-509", "T-513",
   const board = run(dir, "build-source-board.mjs", ["--json"]);
   check(
     `removing the ${id} map reference fails closed`,
-    removed === 1 && board.status !== 0 && board.stderr.includes(id) && board.stderr.includes("source-stage-map.json"),
+    removed === expectedRemoved && board.status !== 0 && board.stderr.includes(id) && board.stderr.includes("source-stage-map.json"),
     `removed=${removed}\nboard exit=${board.status}\nstderr=${board.stderr.trim()}`,
   );
   fs.rmSync(dir, { recursive: true, force: true });
