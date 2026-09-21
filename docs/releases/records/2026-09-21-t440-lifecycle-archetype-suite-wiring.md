@@ -116,15 +116,21 @@ fails on the dark-directory count (1 of 11 cases). At 21 it passes 11 of 11.
 
 **Census reconciliation, checked by diffing the two dark lists rather than inferred.**
 Exactly one directory left the uncovered set under `src/lib/programs`, and it is
-`archetypes/__tests__`; none joined. Repository-wide: covered test files 1,736 → 1,740;
-uncovered 607 → 603; fully covered directories 239 → 240; partially covered 23 → 24;
-uncovered directories 216 → 214; **critical-band governed-risk directories 7 → 6**. The
-census had already moved since this item was filed — it was filed against 2,342 / 1,723 /
-619 / 220, and the tip measures 2,343 / 1,736 / 607 / 216 — so the filed counts are stale and
-the figures above are read from this run.
+`archetypes/__tests__`; none joined. Repository-wide: covered test files 1,740 → 1,744;
+uncovered 604 → 600; fully covered directories 239 → 240; partially covered 25 → 26;
+uncovered directories 214 → 212; **critical-band governed-risk directories 7 → 6**.
 
-**Scope baseline, same scope before and after:** `src/__tests__/behaviors` — 84 suites /
-742 tests, 0 failing before, 0 failing after. The two newly wired workflow steps run exactly
+The census moved twice while this was in flight, so every figure above is read from the
+current base rather than carried forward. It had already moved before the work started — the
+item was filed against 2,342 / 1,723 / 619 / 220 and the branch point measured 2,343 / 1,736 /
+607 / 216 — and it moved again when #8135 merged during review. The deltas are unchanged by
+that: +4 covered, −4 uncovered, −2 uncovered directories, one directory leaving the programs
+dark set, and the critical band falling by one.
+
+**Scope baseline, same scope before and after:** `src/__tests__/behaviors` — 85 suites /
+744 tests, 0 failing before, 0 failing after (84 / 742 when first measured at the original
+branch point; #8135 added a suite to that directory during review, and the count is restated
+against the current base rather than left stale). The two newly wired workflow steps run exactly
 as continuous integration will invoke them: 8 suites / 106 tests and 3 suites / 41 tests, all
 green.
 
