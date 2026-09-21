@@ -133,6 +133,25 @@ function mapFixtureRef(dir, ref, track = "platformTrack") {
   fs.writeFileSync(file, `${JSON.stringify(map, null, 2)}\n`);
 }
 
+function removeExactStringRef(value, id) {
+  let removed = 0;
+  if (Array.isArray(value)) {
+    for (let i = value.length - 1; i >= 0; i -= 1) {
+      if (value[i] === id) {
+        value.splice(i, 1);
+        removed += 1;
+      } else {
+        removed += removeExactStringRef(value[i], id);
+      }
+    }
+    return removed;
+  }
+  if (value && typeof value === "object") {
+    for (const child of Object.values(value)) removed += removeExactStringRef(child, id);
+  }
+  return removed;
+}
+
 function buildBoardAndQueue(dir) {
   const board = run(dir, "build-source-board.mjs", ["--json"]);
   if (board.status !== 0) throw new Error(`fixture board build failed:\n${board.stderr}`);
@@ -484,7 +503,63 @@ console.log("build-execution-queue — staleness guard (T-076)\n");
 }
 
 /* ------------------------------------------------------------------------ */
-/* 9. Every established append-only claim grammar holds the item. T-600.   */
+/* 9. Newly filed execution-control items are mapped without status.        */
+/* ------------------------------------------------------------------------ */
+{
+  const dir = freshFixture();
+  fs.appendFileSync(
+    path.join(dir, "EXECUTION_BACKLOG_20260918.md"),
+    "\n| T-468 | **Tenant scoping input decision fixture.** | C | Decision needed before product code. |\n" +
+      "| T-469 | **Data-plane safety artifact fixture.** | T | Produce the per-client answer as tooling evidence. |\n",
+  );
+  const map = JSON.parse(fs.readFileSync(path.join(dir, "source-stage-map.json"), "utf8"));
+  check(
+    "T-468 is mapped outside the Source lifecycle",
+    map.outsideLifecycle.items.includes("T-468") &&
+      !map.platformTrack.items.includes("T-468") &&
+      !JSON.stringify(map.stages).includes('"T-468"'),
+    JSON.stringify(map.outsideLifecycle.items),
+  );
+  check(
+    "T-469 is mapped to platform integrity",
+    map.platformTrack.items.includes("T-469") &&
+      !map.outsideLifecycle.items.includes("T-469") &&
+      !JSON.stringify(map.stages).includes('"T-469"'),
+    JSON.stringify(map.platformTrack.items.slice(-24)),
+  );
+  const board = run(dir, "build-source-board.mjs", ["--json"]);
+  const q = board.status === 0 ? run(dir, "build-execution-queue.mjs") : { status: 1, stdout: "", stderr: "" };
+  check(
+    "T-468 and T-469 regenerate with zero unmapped ids",
+    board.status === 0 &&
+      q.status === 0 &&
+      /not placed on the map:\s*0/.test(board.stdout + board.stderr),
+    `board exit=${board.status}\nstdout=${board.stdout.trim()}\nstderr=${board.stderr.trim()}\nqueue=${q.stdout.trim()} ${q.stderr.trim()}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+for (const id of ["T-468", "T-469"]) {
+  const dir = freshFixture();
+  fs.appendFileSync(
+    path.join(dir, "EXECUTION_BACKLOG_20260918.md"),
+    `\n| ${id} | **Injected exact mapping removal fixture.** | T | Be refused when unmapped. |\n`,
+  );
+  const mapPath = path.join(dir, "source-stage-map.json");
+  const map = JSON.parse(fs.readFileSync(mapPath, "utf8"));
+  const removed = removeExactStringRef(map, id);
+  fs.writeFileSync(mapPath, `${JSON.stringify(map, null, 2)}\n`);
+  const board = run(dir, "build-source-board.mjs", ["--json"]);
+  check(
+    `removing the ${id} map reference fails closed`,
+    removed === 1 && board.status !== 0 && board.stderr.includes(id) && board.stderr.includes("source-stage-map.json"),
+    `removed=${removed}\nboard exit=${board.status}\nstderr=${board.stderr.trim()}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+/* ------------------------------------------------------------------------ */
+/* 10. Every established append-only claim grammar holds the item. T-600.  */
 /* ------------------------------------------------------------------------ */
 claimGrammarCase(
   "canonical non-bulleted item claim is honoured",
@@ -508,7 +583,7 @@ claimGrammarCase(
 );
 
 /* ------------------------------------------------------------------------ */
-/* 10. A later explicit release wins for the same item.                    */
+/* 11. A later explicit release wins for the same item.                    */
 /* ------------------------------------------------------------------------ */
 {
   const dir = freshFixture();
@@ -529,7 +604,7 @@ claimGrammarCase(
 }
 
 /* ------------------------------------------------------------------------ */
-/* 11. Claim-like prose before the append-only log is never authoritative. */
+/* 12. Claim-like prose before the append-only log is never authoritative. */
 /* ------------------------------------------------------------------------ */
 {
   const dir = freshFixture();
@@ -551,7 +626,7 @@ claimGrammarCase(
 }
 
 /* ------------------------------------------------------------------------ */
-/* 12. Context about another PR is not status for the current item. T-608. */
+/* 13. Context about another PR is not status for the current item. T-608. */
 /* ------------------------------------------------------------------------ */
 {
   const dir = freshFixture();
@@ -572,7 +647,7 @@ claimGrammarCase(
 }
 
 /* ------------------------------------------------------------------------ */
-/* 13. Describing a fixture is not a request for owner acceptance. T-608.  */
+/* 14. Describing a fixture is not a request for owner acceptance. T-608.  */
 /* ------------------------------------------------------------------------ */
 {
   const dir = freshFixture();
@@ -612,7 +687,7 @@ claimGrammarCase(
 }
 
 /* ------------------------------------------------------------------------ */
-/* 14. A genuine duplicate id is placed by definition, not force-fit.       */
+/* 15. A genuine duplicate id is placed by definition, not force-fit.       */
 /* ------------------------------------------------------------------------ */
 {
   const dir = freshFixture();
