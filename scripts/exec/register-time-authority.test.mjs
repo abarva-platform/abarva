@@ -163,7 +163,7 @@ const SINCE = "2026-09-21T00:00:00Z";
       8142: { mergedAt: "2026-09-21T13:58:07Z" },
     }),
   );
-  const r = run(["--file", file, "--now", NOW, "--since", SINCE, "--authority", authority, "--json"]);
+  const r = run(["--file", file, "--now", NOW, "--since", SINCE, "--authority", authority, "--strict", "--json"]);
   const report = JSON.parse(r.stdout || "{}");
   const before = (report.violations ?? []).filter((v) => v.code === "announced_before_event");
   check(
@@ -322,7 +322,7 @@ const SINCE = "2026-09-21T00:00:00Z";
       8141: { mergedAt: "2026-09-21T13:31:06Z" },
     }),
   );
-  const r = run(["--file", file, "--now", NOW, "--since", SINCE, "--authority", authority, "--json"]);
+  const r = run(["--file", file, "--now", NOW, "--since", SINCE, "--authority", authority, "--strict", "--json"]);
   const report = JSON.parse(r.stdout || "{}");
   const drifted = (report.violations ?? []).filter((v) => v.code === "drifted_without_authority");
   check(
@@ -332,6 +332,78 @@ const SINCE = "2026-09-21T00:00:00Z";
       drifted[0].pr === 8141 &&
       report.drift.find((d) => d.pr === 8137)?.citesAuthority === true,
     `exit=${r.status}\nstdout=${r.stdout}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+// ---------------------------------------------------------------------------
+// 11. The severity split. Attributing a merge announcement to a pull request
+//     means reading prose, and prose parsing is a heuristic. A heuristic
+//     presented as a hard gate is how a control stops being believed. The two
+//     verdicts decided from the line alone fail a run; the three that depend
+//     on attribution are reported and counted, and fail only under --strict.
+// ---------------------------------------------------------------------------
+{
+  const { dir, file } = fixture([
+    "2026-09-21T14:45Z lane-a item T-100 MERGED `eeeeeee` (PR #8141) — no instant quoted.",
+  ]);
+  const authority = path.join(dir, "authority.json");
+  fs.writeFileSync(authority, JSON.stringify({ 8141: { mergedAt: "2026-09-21T13:31:06Z" } }));
+  const lax = run(["--file", file, "--now", NOW, "--since", SINCE, "--authority", authority, "--json"]);
+  const strict = run(["--file", file, "--now", NOW, "--since", SINCE, "--authority", authority, "--strict", "--json"]);
+  const laxReport = JSON.parse(lax.stdout || "{}");
+  check(
+    "a heuristic verdict is reported but advisory by default, and fails under --strict",
+    lax.status === 0 &&
+      laxReport.advisory?.length === 1 &&
+      laxReport.failing?.length === 0 &&
+      laxReport.violations?.length === 1 &&
+      strict.status === 1,
+    `lax=${lax.status} strict=${strict.status}\n${lax.stdout}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+// ---------------------------------------------------------------------------
+// 12. A future stamp still fails without --strict. The severity split must not
+//     have quietly disarmed the one verdict that needs no interpretation.
+// ---------------------------------------------------------------------------
+{
+  const { dir, file } = fixture([
+    "2026-09-21T17:15Z lane-b item T-101 MERGED `bbbbbbb` (PR #8142) — stamped ahead.",
+  ]);
+  const r = run(["--file", file, "--now", NOW, "--since", SINCE, "--json"]);
+  const report = JSON.parse(r.stdout || "{}");
+  check(
+    "the exact verdicts still fail a run with no --strict",
+    r.status === 1 && report.failing?.some((v) => v.code === "future_stamp"),
+    `exit=${r.status}\n${r.stdout}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+// ---------------------------------------------------------------------------
+// 13. The false positive this control produced against its OWN claim line: a
+//     line that opens a pull request while using the word `mergedAt` to
+//     describe the rule was read as announcing that pull request merged. The
+//     nearest merge token to the reference is the negated one, so it is not.
+// ---------------------------------------------------------------------------
+{
+  const { dir, file } = fixture([
+    "2026-09-21T16:18Z lane-a item T-457 PR #8158 commit `ee0b20fec` — opened, NOT MERGED YET, " +
+      "checks running. THE MEASUREMENT: 26 merge announcements resolved to an authoritative " +
+      "`mergedAt`, 17 outside tolerance, from 2026-09-21T12:00:00Z to 2026-09-21T17:14:02Z.",
+  ]);
+  const authority = path.join(dir, "authority.json");
+  fs.writeFileSync(authority, JSON.stringify({ 8158: { mergedAt: "2026-09-21T17:28:21Z" } }));
+  const r = run(["--file", file, "--now", NOW, "--since", SINCE, "--authority", authority, "--strict", "--json"]);
+  const report = JSON.parse(r.stdout || "{}");
+  check(
+    "a line opening a pull request while discussing mergedAt announces nothing",
+    r.status === 0 &&
+      (report.violations ?? []).length === 0 &&
+      (report.drift ?? []).length === 0,
+    `exit=${r.status}\n${r.stdout}`,
   );
   fs.rmSync(dir, { recursive: true, force: true });
 }

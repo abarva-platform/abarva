@@ -51,20 +51,35 @@ node scripts/exec/register-time-authority.mjs \
   --since 2026-09-21T12:00:00Z --github
 ```
 
-Exits 1 with a named verdict per violating line. `--json` emits the same report
+Exits 1 when any **failing** verdict is raised. `--json` emits the same report
 as data. `--authority <file>` injects the authoritative instants from JSON
 instead of calling `gh`, which is how the behavioural suite proves the control
-without a network.
+without a network. `--strict` promotes the advisory verdicts to failing.
 
-Verdicts:
+| code | severity | meaning |
+|---|---|---|
+| `future_stamp` | **fails** | stamped after the clock that read the file — always wrong, needs no network |
+| `unsourced_elapsed` | **fails** | quotes an elapsed duration while naming fewer than two timestamps |
+| `announced_before_event` | advisory | announces a merge more than 60s before GitHub's `mergedAt` (60s of slack covers a minute-precision stamp rounding down through the event) |
+| `drifted_without_authority` | advisory | stamped more than the tolerance after the event **and** does not quote the authoritative instant |
+| `authority_missing` | advisory | announces a merge the control could not resolve — reported rather than skipped, because a lookup that quietly finds nothing must not read as a pass |
 
-| code | meaning |
-|---|---|
-| `future_stamp` | stamped after the clock that read the file — always wrong, needs no network |
-| `announced_before_event` | announces a merge more than 60s before GitHub's `mergedAt` (60s of slack covers a minute-precision stamp rounding down through the event) |
-| `drifted_without_authority` | stamped more than the tolerance after the event **and** does not quote the authoritative instant |
-| `unsourced_elapsed` | quotes an elapsed duration while naming fewer than two timestamps |
-| `authority_missing` | announces a merge the control could not resolve — reported rather than skipped, because a lookup that quietly finds nothing must not read as a pass |
+### Why two severities
+
+The first two verdicts are decided from the line alone: a stamp later than the
+clock that read it is wrong with no interpretation, and a duration with fewer
+than two instants behind it names its own gap.
+
+The other three first have to decide **which** pull request a line is
+announcing as merged, and register lines are long and discursive — one line can
+report opening PR #A while narrating the merge of PR #B, or use the word
+`mergedAt` to describe this very rule. That attribution is a heuristic: the
+merge token *nearest* the reference decides it, and a negated one
+("NOT MERGED YET") disqualifies it. Measured on the real register it is right
+on 72 of 76 references. Right is not exact, so those three are reported and
+counted but do not fail a run unless `--strict` is passed. A heuristic
+presented as a hard gate is how a control stops being believed, and then stops
+being read.
 
 ## Writing a correct line
 
