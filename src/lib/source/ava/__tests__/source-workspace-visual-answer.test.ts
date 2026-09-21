@@ -18,6 +18,7 @@ function sourceContext(): AskSurfaceContext {
         vendorName: "Salesforce",
         contractName: "Salesforce Data Platform Agreement 3",
         annualValueUsd: 43_500_000,
+        committedAnnualSpendUsd: 43_500_000,
         actualAnnualSpendUsd: 37_400_000,
         totalCommittedValueUsd: 173_900_000,
         contractedToActualVarianceUsd: 6_100_000,
@@ -248,10 +249,10 @@ describe("Source Workspace visual aVa answer", () => {
       "| Lever | Action | Value | Owner | Status / evidence gate |",
     );
     expect(answer?.directAnswer).toContain(
-      "| SLA credits earned but not claimed | Prepare recovery claim | $1.3M | Vendor management | Stage quantified; confidence 0.82 (82%); evidence SYSTEM EVIDENCED; gate SLA and invoice extracts reconciled |",
+      "| SLA credits earned but not claimed | Prepare recovery claim | $1.3M | Vendor management | Stage quantified; evidence SYSTEM EVIDENCED; gate SLA and invoice extracts reconciled |",
     );
     expect(answer?.directAnswer).toContain(
-      "| Discount band benchmark signal | Load one accepted benchmark comparable before pricing this as an executive ask | Not sized | Strategic sourcing | Signal-stage; not sized until evidence closes; confidence 0.30 (30%); evidence SYSTEM EVIDENCED; sizing not established; gate Benchmark comparable required before discount-band value can be treated as supported |",
+      "| Discount band benchmark signal | Load one accepted benchmark comparable before pricing this as an executive ask | Not sized | Strategic sourcing | Signal-stage; not sized until evidence closes; evidence SYSTEM EVIDENCED; sizing not established; gate Benchmark comparable required before discount-band value can be treated as supported |",
     );
     expect(answer?.directAnswer).toContain(
       "Commercial posture: Commitment posture = Commitment ahead of usage",
@@ -267,7 +268,7 @@ describe("Source Workspace visual aVa answer", () => {
     );
     expect(answer?.directAnswer).toContain("recorded annual value $43.5M");
     expect(answer?.directAnswer).toContain(
-      "total committed contract value $173.9M",
+      "full-term committed value $173.9M",
     );
     expect(answer?.directAnswer).toContain("actual annual spend $37.4M");
     expect(answer?.directAnswer).toContain(
@@ -302,8 +303,7 @@ describe("Source Workspace visual aVa answer", () => {
     expect(answer?.directAnswer).toContain(
       "These amounts are candidates, not realized savings",
     );
-    expect(answer?.directAnswer).toContain("confidence 0.82 (82%)");
-    expect(answer?.directAnswer).toContain("confidence 0.35 (35%)");
+    expect(answer?.directAnswer).not.toMatch(/confidence\s+0\.\d/i);
     expect(answer?.artifacts.map((artifact) => artifact.artifact)).toEqual([
       "table",
       "chart",
@@ -313,12 +313,12 @@ describe("Source Workspace visual aVa answer", () => {
       artifact: "table",
       id: "source-contract-opportunity-table",
     });
-    expect(JSON.stringify(answer?.artifacts[0])).toContain("Confidence");
+    expect(JSON.stringify(answer?.artifacts[0])).not.toContain("Confidence");
     expect(JSON.stringify(answer?.artifacts[0])).toContain("Stage");
     expect(JSON.stringify(answer?.artifacts[0])).toContain("Evidence grade");
     expect(JSON.stringify(answer?.artifacts[0])).toContain("Blocking gap");
-    expect(JSON.stringify(answer?.artifacts[0])).toContain("0.82 (82%)");
-    expect(JSON.stringify(answer?.artifacts[0])).toContain("0.35 (35%)");
+    expect(JSON.stringify(answer?.artifacts[0])).not.toContain("0.82 (82%)");
+    expect(JSON.stringify(answer?.artifacts[0])).not.toContain("0.35 (35%)");
     expect(JSON.stringify(answer?.artifacts[0])).toContain(
       "Discount band benchmark signal",
     );
@@ -730,7 +730,7 @@ describe("Source Workspace visual aVa answer", () => {
       "SLA credits earned but not claimed",
     );
     expect(answer?.directAnswer).toContain(
-      "| SLA credits earned but not claimed | Prepare recovery claim | $1.3M | Vendor management | Stage quantified; confidence 0.82 (82%); evidence SYSTEM EVIDENCED; gate SLA and invoice extracts reconciled |",
+      "| SLA credits earned but not claimed | Prepare recovery claim | $1.3M | Vendor management | Stage quantified; evidence SYSTEM EVIDENCED; gate SLA and invoice extracts reconciled |",
     );
     expect(answer?.directAnswer).toContain(
       "lines of contract-specific candidate commercial opportunities",
@@ -1204,7 +1204,7 @@ describe("Source Workspace visual aVa answer", () => {
     });
 
     expect(answer?.directAnswer).toContain(
-      "total committed contract value Not established",
+      "full-term committed value Not established",
     );
     expect(answer?.metricsUsed).toEqual(
       expect.arrayContaining([

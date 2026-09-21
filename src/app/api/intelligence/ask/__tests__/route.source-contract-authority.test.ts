@@ -73,6 +73,7 @@ const ownContract = {
   vendor_name: "Example Alpha",
   contract_name: "Example Alpha Agreement",
   annual_value: 300_000,
+  committed_annual_spend: 280_000,
   actual_annual_spend: 250_000,
   total_committed_value: 900_000,
   end_date: null,
@@ -113,6 +114,46 @@ beforeEach(() => {
 });
 
 describe("Source contract answer authority", () => {
+  it.each([
+    "What are we buying under this agreement?",
+    "Have we actually paid $300K under this agreement?",
+    "How much of the annual commitment is unused?",
+    "Why do you say support should be 15%?",
+    "Can we add all six opportunities into one savings total?",
+    "What can we say about CTR-101?",
+  ])("routes ordinary contract-adviser wording through governed Source facts: %s", async (query) => {
+    (getContract360 as jest.Mock).mockResolvedValue(ownContract);
+
+    const { text, answer } = await ask(query, {
+      module: "Source",
+      clientKey: "tenant-one",
+      sourceContract360Mode: true,
+      contractId: "CTR-101",
+    });
+
+    expect(answer?.intent).toBe("source_contract_visual");
+    expect(text).toContain("CTR-101");
+    expect(text).toContain("Example Alpha");
+    expect(text).not.toContain("Generic answer");
+    expect(askIntelligence).not.toHaveBeenCalled();
+  });
+
+  it("distinguishes annual commitment, full-term commitment, spend, and undrawn capacity", async () => {
+    (getContract360 as jest.Mock).mockResolvedValue(ownContract);
+
+    const { text } = await ask("How much of the annual commitment is unused?", {
+      module: "Source",
+      clientKey: "tenant-one",
+      sourceContract360Mode: true,
+      contractId: "CTR-101",
+    });
+
+    expect(text).toContain("annual committed spend $280K");
+    expect(text).toContain("full-term committed value $900K");
+    expect(text).toContain("actual annual spend $250K");
+    expect(text).toContain("$30K of annual committed capacity not drawn on");
+  });
+
   it("keeps a CFO-safe summary on the selected contract", async () => {
     (getContract360 as jest.Mock).mockResolvedValue(ownContract);
 
