@@ -503,9 +503,9 @@ export function buildSourceEventShellView(
             total > 0
               ? completedViewedStage
                 ? artifactReadiness.ready
-                  ? `All ${total} required evidence item${total === 1 ? "" : "s"} ready - review and approve ${viewedStageLabel}.`
-                  : `All ${total} required evidence item${total === 1 ? "" : "s"} ready, but ${artifactReadiness.blockerCount} required/gate artifact${artifactReadiness.blockerCount === 1 ? "" : "s"} still need review before approving ${viewedStageLabel}.`
-                : `${ready} of ${total} required evidence item${total === 1 ? "" : "s"} ready - review the gaps before approving ${viewedStageLabel}.`
+                  ? `All ${total} workflow input${total === 1 ? "" : "s"} complete - review and approve ${viewedStageLabel}.`
+                  : `All ${total} workflow input${total === 1 ? "" : "s"} complete, but ${artifactReadiness.blockerCount} required/gate artifact${artifactReadiness.blockerCount === 1 ? "" : "s"} still need review before approving ${viewedStageLabel}.`
+                : `${ready} of ${total} workflow input${total === 1 ? "" : "s"} complete - review the gaps before approving ${viewedStageLabel}.`
               : normalizedCurrentStageItem.readiness,
           href: stageApprovalWorkspaceHref,
           actionLabel: completedViewedStage
