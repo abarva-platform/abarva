@@ -28,11 +28,18 @@
  *        [--since <ISO>] [--now <ISO>] [--github] [--authority <json>] [--json]
  *   node scripts/exec/register-time-authority.mjs --emit --pr <n> [--github]
  *   node scripts/exec/register-time-authority.mjs --preclaim --file <register> \
- *        --item <id> --identity <base-agent#run-id> [--strict]
+ *        --item <id> --identity <base-agent#run-id> [--files a,b,c] [--strict]
  *
  * `--preclaim` is item T-706: the ownership check an agent runs BEFORE
  * appending a claim, answering take / already-yours / held-by-a-sibling /
  * held-by-another and exiting non-zero on the last two.
+ *
+ * `--files` is item T-707. The protocol's collision unit is one-owner-per-
+ * FILE, not per item: two runs may hold two DIFFERENT items whose file lists
+ * overlap, and the item check says `take` to both. Given this run's intended
+ * file list it refuses when any path is already held by a live claim, naming
+ * the path and the holder. Omitting it leaves that check unrun, and the
+ * output says so rather than reading as a clean result.
  *
  * Exit 1 when any in-window line violates the rule. `--github` resolves the
  * authority with `gh`; `--authority <json>` injects it from a file, which is
@@ -246,6 +253,30 @@ export function itemSubjects(text) {
 }
 
 /**
+ * Whether the line ABSTAINS from its subject rather than claiming it.
+ *
+ * The register writes a decision NOT to take an item as its own record, and
+ * those records are long: at 19:15:17Z one reads `item T-706 NOT TAKEN -
+ * already in open PR #8280 ... touching exactly the two files this item names
+ * (`scripts/exec/register-time-authority.mjs` and its suite)`. The abstention
+ * is at the head; the files it names are six hundred characters later, far
+ * beyond any negator reach, and they are named to say who ELSE is on them.
+ *
+ * Found by running the file gate against the real register rather than a
+ * fixture: it was the one false positive in the live window, and it landed on
+ * this very file. So the rule is the announcement verb at the head of the
+ * message field, which is where the register puts it and where
+ * `announcesRelease` already reads it.
+ */
+export function announcesAbstention(text) {
+  const parts = String(text).split("|");
+  const message = (parts.length > 2 ? parts[2] : parts[parts.length - 1] ?? "").trim();
+  return /^(?:\*\*)?(?:items?\s+(?:\*\*)?`?[A-Za-z]{0,2}-?\d{1,4}(?:\([a-z]\))?`?(?:\*\*)?\s+)?(?:\*\*)?NOT\s+(?:TAKEN|CLAIMED|TAKING)\b/i.test(
+    message,
+  );
+}
+
+/**
  * Whether the line RELEASES its subject rather than claiming it.
  *
  * Not a bare search for the word: nearly every claim line in the register
@@ -375,6 +406,169 @@ export function resolveItemClaim(lines, { itemId, identity, nowMs, windowHours }
     reason: `line ${newest.lineNumber} is held by \`${newest.agent}\``,
     holder,
     refuses: true,
+  };
+}
+
+
+// ---------------------------------------------------------------------------
+// Pre-claim FILE overlap (item T-707).
+//
+// T-706 answers whether a run may take an ITEM. The rule that has actually
+// cost work is one-owner-per-FILE: two runs may hold two DIFFERENT items whose
+// file lists overlap, and the item gate says `take` to both. T-706's own run
+// had to pass over T-705 and T-703 by reading claim lines and comparing file
+// lists by hand — the manual judgement the gate exists to remove, one level
+// down.
+//
+// Two things about the register make this harder than a set intersection, and
+// both are decided here rather than left to chance:
+//
+//   1. `files:` lists are PROSE, and the real known positive does not use one.
+//      At 18:20:29Z `claude-code-cc-a#20260922T1830Z` took T-704 and named
+//      `scripts/exec/build-source-board.mjs` in a backticked Scope sentence
+//      with no `files:` label anywhere on the line. A `files:`-only parser
+//      passes every fixture and misses the one case written down in the item.
+//      So a path is read from anywhere on the line, and `files:` is not a
+//      precondition.
+//   2. Several claims name a DIRECTORY (`docs/releases/records/`) because the
+//      file does not exist yet. A directory is NOT a collision: nearly every
+//      claim in the register names that one, and two runs adding two different
+//      records to it do not contend. Directories and globs are reported as
+//      notes and never refuse, in either position.
+// ---------------------------------------------------------------------------
+
+/**
+ * Extensions that make a slashed token a repo path rather than English.
+ *
+ * The discriminator is deliberate. "A token containing a slash" reads
+ * `Product/Lab`, `and/or` and `24/7` as files — all three are in the register
+ * — and a gate that refuses on those is a gate that gets switched off.
+ */
+const PATH_SUFFIX =
+  /\.(?:mjs|cjs|jsx?|tsx?|json|jsonc|md|mdx|ya?ml|sql|css|scss|html|sh|toml|txt|csv|png|svg)$/i;
+
+/** A candidate path token: at least one `/`, path characters only. */
+const PATH_TOKEN = /(?:^|[\s(`'"|,;])((?:\.{0,2}\/)?[A-Za-z0-9_.@-]+(?:\/[A-Za-z0-9_.@*-]+)*\/?(?:\*\*?)?)/g;
+
+/**
+ * Normalise a path as the register writes it: backticked, comma-separated,
+ * sentence-terminated, sometimes absolute. Returns null when the token is not
+ * a repo path at all.
+ */
+export function normalisePath(raw) {
+  let value = String(raw ?? "").trim();
+  value = value.replace(/^[`'"(\[]+/, "").replace(/[`'")\].,;:]+$/, "");
+  if (!value.includes("/")) return null;
+  value = value.replace(/^\.\//, "");
+  const isScope = value.endsWith("/") || /\/\*\*?$/.test(value);
+  if (!isScope && !PATH_SUFFIX.test(value)) return null;
+  return { path: value, kind: isScope ? "scope" : "file" };
+}
+
+/**
+ * A negator close in front of a path mention disqualifies it, the same reach
+ * discipline `MERGE_NEGATOR` uses above. The register routinely writes
+ * "Avoid `SourceAnalyticsCanvas.tsx` while #8289 is open" and "this claim does
+ * not touch `SourceAnalyticsCanvas.tsx`" — both NAME a file in order to say
+ * they are staying off it, and reading either as a hold would refuse a run
+ * that is entitled to the file.
+ */
+const PATH_NEGATOR =
+  /\b(?:avoid|avoiding|avoids|excluded|excluding|excludes|not|never|no|outside|free|freed|released|releasing|without|rather\s+than|instead\s+of)\b[^.]{0,40}$/i;
+
+/** Every repo path this line HOLDS, with the ones it merely mentions dropped. */
+export function claimedPaths(text) {
+  const line = String(text ?? "");
+  const out = new Map();
+  PATH_TOKEN.lastIndex = 0;
+  for (const match of line.matchAll(PATH_TOKEN)) {
+    const normalised = normalisePath(match[1]);
+    if (!normalised) continue;
+    const before = line.slice(0, match.index + (match[0].length - match[1].length));
+    if (PATH_NEGATOR.test(before)) continue;
+    if (!out.has(normalised.path)) out.set(normalised.path, normalised);
+  }
+  return [...out.values()];
+}
+
+/**
+ * Answer, for one run identity and the file list it intends to touch, whether
+ * any live claim already holds one of those paths.
+ *
+ * @param {ReturnType<typeof parseRegisterLines>} lines
+ * @param {{ files:string[], identity:string, nowMs:number, windowHours?:number }} opts
+ */
+export function resolveFileOverlap(lines, { files, identity, nowMs, windowHours }) {
+  const requested = [];
+  const unparsed = [];
+  for (const raw of files ?? []) {
+    const normalised = normalisePath(raw);
+    if (normalised) requested.push(normalised);
+    else if (String(raw).trim()) unparsed.push(String(raw).trim());
+  }
+
+  const windowMs = (windowHours ?? CLAIM_WINDOW_HOURS) * 3600 * 1000;
+  const conflicts = [];
+  const notes = [];
+
+  const inWindow = lines.filter(
+    (line) =>
+      Number.isFinite(line.stampMs) &&
+      line.stampMs > nowMs - windowMs &&
+      line.stampMs <= nowMs,
+  );
+
+  // The newest line wins, exactly as it does for an item: a release hands the
+  // files back and re-opens them for the next run. The register writes that
+  // release as "RELEASED item T-704 - merged, all files free", so the unit it
+  // frees is the AGENT's hold, not a re-listed path; not honouring it would
+  // lock every released path for three hours after it was handed back.
+  //
+  // The limit, stated rather than left implicit: an agent holding two items at
+  // once and releasing one is read as releasing both. The register's own
+  // release grammar says "all files free", so that is what it means today.
+  const releasedAt = new Map();
+  for (const line of inWindow) {
+    if (!announcesRelease(line.text)) continue;
+    const prior = releasedAt.get(line.agent);
+    if (prior === undefined || line.stampMs > prior) releasedAt.set(line.agent, line.stampMs);
+  }
+
+  for (const line of inWindow) {
+    // An abstention holds nothing. It names files to say who else is on them.
+    if (announcesRelease(line.text) || announcesAbstention(line.text)) continue;
+    const released = releasedAt.get(line.agent);
+    if (released !== undefined && released >= line.stampMs) continue;
+    const ownership = resolveClaimOwnership(line.agent, identity);
+    // Only this exact run may hold its own files. A SIBLING contends: that is
+    // the distinction base-name keying loses, one level down from T-706.
+    if (ownership === "own") continue;
+
+    const held = new Map(claimedPaths(line.text).map((p) => [p.path, p]));
+    for (const want of requested) {
+      const match = held.get(want.path);
+      if (!match) continue;
+      const entry = {
+        path: want.path,
+        lineNumber: line.lineNumber,
+        stamp: line.stamp,
+        agent: line.agent,
+        ownership,
+        excerpt: line.text.slice(0, 200),
+      };
+      // A directory or glob is a SCOPE, not a lock — in either position.
+      if (want.kind === "scope" || match.kind === "scope") notes.push(entry);
+      else conflicts.push(entry);
+    }
+  }
+
+  return {
+    checked: true,
+    requested: requested.map((p) => p.path),
+    unparsed,
+    conflicts,
+    notes,
+    refuses: conflicts.length > 0,
   };
 }
 
@@ -860,24 +1054,83 @@ if (isMain()) {
       process.exit(2);
     }
     const windowHours = Number(flag("--window-hours") ?? CLAIM_WINDOW_HOURS);
-    const result = resolveItemClaim(parseRegisterLines(fs.readFileSync(file, "utf8")), {
+    const registerLines = parseRegisterLines(fs.readFileSync(file, "utf8"));
+    const result = resolveItemClaim(registerLines, {
       itemId: item,
       identity,
       nowMs,
       windowHours,
     });
     const strict = has("--strict");
-    const refuses = result.refuses || (strict && result.advisory === true);
-    const payload = { ...result, item, identity, windowHours, strict, refuses };
+
+    // Item T-707. The file check is opt-in, and when it does not run it says
+    // so: a gate that reports nothing is indistinguishable from a gate that
+    // found nothing, which is the substitution this backlog exists against.
+    const filesArg = flag("--files");
+    let fileOverlap = { checked: false, requested: [], unparsed: [], conflicts: [], notes: [], refuses: false };
+    if (filesArg !== undefined) {
+      const raw = filesArg.startsWith("@")
+        ? fs.readFileSync(filesArg.slice(1), "utf8").split(/[\n,]/)
+        : filesArg.split(",");
+      fileOverlap = resolveFileOverlap(registerLines, {
+        files: raw.map((f) => f.trim()).filter(Boolean),
+        identity,
+        nowMs,
+        windowHours,
+      });
+    }
+
+    // `--files` given but nothing in it was read as a repo path. The check ran
+    // over an empty set and would print "0 requested, 0 contended", which is
+    // indistinguishable from a clean result — the same substitution the
+    // NOT CHECKED line above exists to prevent, one step later. A caller whose
+    // list came out empty by accident must be told, not waved through.
+    if (fileOverlap.checked && fileOverlap.requested.length === 0) {
+      console.error(
+        "--files was given but no entry in it was read as a repo path, so the file gate " +
+          "checked nothing. A path needs a `/` and either a source extension or a trailing " +
+          `\`/\` for a directory.${fileOverlap.unparsed.length ? ` Not read: ${fileOverlap.unparsed.join(", ")}` : ""}`,
+      );
+      process.exit(2);
+    }
+
+    const refuses =
+      result.refuses || fileOverlap.refuses || (strict && result.advisory === true);
+    const payload = { ...result, item, identity, windowHours, strict, refuses, fileOverlap };
     if (has("--json")) {
       console.log(JSON.stringify(payload, null, 1));
     } else {
       console.log(`Pre-claim check — item ${item} as ${identity}`);
-      console.log(`  verdict: ${result.verdict}${refuses ? " (REFUSED)" : ""}`);
+      const refusedBy = [
+        result.refuses || (strict && result.advisory === true) ? "item" : null,
+        fileOverlap.refuses ? "files" : null,
+      ].filter(Boolean);
+      console.log(
+        `  verdict: ${result.verdict}${refuses ? ` (REFUSED by the ${refusedBy.join(" and ")} gate)` : ""}`,
+      );
       console.log(`  reason:  ${result.reason}`);
       if (result.holder) {
         console.log(`  holder:  line ${result.holder.lineNumber} ${result.holder.stamp} ${result.holder.agent}`);
         console.log(`           ${result.holder.excerpt}`);
+      }
+      if (!fileOverlap.checked) {
+        console.log("  files:   NOT CHECKED — pass --files <a,b,c> or --files @list to run the file gate");
+      } else {
+        console.log(
+          `  files:   ${fileOverlap.requested.length} requested, ` +
+            `${fileOverlap.conflicts.length} contended, ${fileOverlap.notes.length} shared-scope note(s)`,
+        );
+        for (const c of fileOverlap.conflicts) {
+          console.log(`    CONTENDED ${c.path}`);
+          console.log(`      held by line ${c.lineNumber} ${c.stamp} ${c.agent} (${c.ownership})`);
+          console.log(`      ${c.excerpt}`);
+        }
+        for (const n of fileOverlap.notes) {
+          console.log(`    [note] ${n.path} is a shared scope, not a lock — also named by ${n.agent} on line ${n.lineNumber}`);
+        }
+        for (const u of fileOverlap.unparsed) {
+          console.log(`    [note] not read as a repo path, so NOT checked: ${u}`);
+        }
       }
     }
     // An unusable identity or item id is a usage error, not a refusal.
