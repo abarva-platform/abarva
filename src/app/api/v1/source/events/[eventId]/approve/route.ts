@@ -47,6 +47,7 @@ import {
   normalizeApprovalReason,
   validateApprovalReason,
 } from "@/lib/source/source-governance-enforcement";
+import { readSourceAuthorityVersionState } from "@/lib/source/new-workspace/authority-version-store";
 
 // Every lifecycle decision gets its own action type, so the activity table can
 // be read without inferring the decision from the reason text.
@@ -67,6 +68,7 @@ interface ApproveBody {
   notes?: string;
   confirmations?: SourceStageConfirmations;
   selfApproveIfAuthorized?: boolean;
+  requestAuthorityVersionId?: string;
 }
 
 /**
@@ -308,6 +310,61 @@ export async function POST(
 
   const fromState = event.lifecycle_state as string;
   const toState = decision.toState!;
+  const acceptsInitialRequest =
+    body.action === "approve" &&
+    fromState === "waiting_on_client" &&
+    (effectiveCurrentStage ?? currentStageKey) === "strategy";
+  let authorityApproval:
+    | {
+        authorityKind: "request";
+        versionId: string;
+        role: "request_acceptor";
+        decision: "approved";
+        actorUserId: string;
+        reason: string;
+      }
+    | undefined;
+  if (acceptsInitialRequest) {
+    const requestAuthority = await readSourceAuthorityVersionState(
+      eventId,
+      normalizedClientKey,
+      "request",
+    );
+    if (
+      requestAuthority.kind !== "available" ||
+      !requestAuthority.currentVersion
+    ) {
+      return Response.json(
+        {
+          error: "request_authority_unavailable",
+          detail:
+            "The current governed Request version is unavailable. Reload or repair the intake before approval.",
+        },
+        { status: 409 },
+      );
+    }
+    if (
+      !body.requestAuthorityVersionId ||
+      body.requestAuthorityVersionId !== requestAuthority.currentVersion.id
+    ) {
+      return Response.json(
+        {
+          error: "request_authority_version_changed",
+          detail:
+            "The Request changed after this page loaded. Review the current version before approving.",
+        },
+        { status: 409 },
+      );
+    }
+    authorityApproval = {
+      authorityKind: "request",
+      versionId: requestAuthority.currentVersion.id,
+      role: "request_acceptor",
+      decision: "approved",
+      actorUserId: tenancy.userId,
+      reason: approvalReason,
+    };
+  }
 
   // DB write routed through the data-plane write seam (Slice 3b): the
   // lifecycle update + the append-only approval record. On Azure the two
@@ -329,6 +386,7 @@ export async function POST(
       isSelfApproval,
     ),
     stageKey: effectiveCurrentStage ?? currentStageKey,
+    authorityApproval,
   });
 
   if (!approvalWrite.ok) {

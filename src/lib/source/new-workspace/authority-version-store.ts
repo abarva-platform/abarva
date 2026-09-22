@@ -1,4 +1,9 @@
 import { getAzureReadFluentClient } from "@/lib/data-plane/postgresCompat";
+import {
+  createTxSession,
+  type SqlRunner,
+  type TxSessionRunner,
+} from "@/lib/data-plane/read-adapters/azureSession";
 
 import type {
   SourceAuthorityApproval,
@@ -6,7 +11,9 @@ import type {
   SourceAuthorityCurrentVersion,
   SourceAuthorityDecision,
   SourceAuthorityKind,
+  JsonValue,
 } from "./source-version-authority";
+import { planSourceAuthorityVersion } from "./source-version-authority";
 
 /**
  * The persistence path for request and strategy authority versions.
@@ -38,11 +45,32 @@ export type SourceAuthorityVersionState =
     }
   | { kind: "unavailable" };
 
+export interface PersistSourceAuthorityVersionInput {
+  eventId: string;
+  clientKey: string;
+  authorityKind: SourceAuthorityKind;
+  payload: JsonValue;
+  createdByUserId: string;
+}
+
+export interface PersistSourceAuthorityVersionResult {
+  action: "create_version" | "reuse_current";
+  versionId: string;
+  versionNumber: number;
+  contentHash: string;
+}
+
 interface VersionRow {
   id: unknown;
   event_id: unknown;
   client_key: unknown;
   authority_kind: unknown;
+  version_number: unknown;
+  content_hash: unknown;
+}
+
+interface CurrentVersionRow {
+  id: unknown;
   version_number: unknown;
   content_hash: unknown;
 }
@@ -129,6 +157,150 @@ function resolveApproval(
   return { versionId, role: row.role, actorId, decision: row.decision };
 }
 
+export async function persistSourceAuthorityVersionWithRun(
+  run: SqlRunner,
+  input: PersistSourceAuthorityVersionInput,
+): Promise<PersistSourceAuthorityVersionResult> {
+  const currentRows = await run<CurrentVersionRow>(
+    `SELECT id, version_number, content_hash
+       FROM source_event_authority_versions
+      WHERE event_id = $1::uuid
+        AND client_key = $2
+        AND authority_kind = $3
+        AND superseded_at IS NULL
+      FOR UPDATE`,
+    [input.eventId, input.clientKey, input.authorityKind],
+  );
+  const currentRow = currentRows[0];
+  const currentId = currentRow ? text(currentRow.id) : null;
+  const currentHash = currentRow ? text(currentRow.content_hash) : null;
+  const currentNumber = currentRow?.version_number;
+  const currentVersion =
+    currentId &&
+    currentHash &&
+    CONTENT_HASH_RE.test(currentHash) &&
+    typeof currentNumber === "number" &&
+    Number.isInteger(currentNumber) &&
+    currentNumber > 0
+      ? {
+          id: currentId,
+          versionNumber: currentNumber,
+          contentHash: currentHash,
+        }
+      : null;
+  if (currentRow && !currentVersion) {
+    throw new Error("current Source authority version is invalid");
+  }
+
+  const plan = planSourceAuthorityVersion({ ...input, currentVersion });
+  if (plan.action === "reuse_current") {
+    return {
+      action: plan.action,
+      versionId: plan.versionId,
+      versionNumber: plan.versionNumber,
+      contentHash: plan.contentHash,
+    };
+  }
+
+  const contentJson = JSON.stringify(plan.contentJson);
+  if (!plan.supersedesVersionId) {
+    const inserted = await run<{ id: string }>(
+      `INSERT INTO source_event_authority_versions
+         (event_id, client_key, authority_kind, version_number, content_hash,
+          content_json, created_by_user_id, supersedes_version_id)
+       VALUES ($1::uuid,$2,$3,$4,$5,$6::jsonb,$7,NULL)
+       RETURNING id`,
+      [
+        input.eventId,
+        input.clientKey,
+        input.authorityKind,
+        plan.versionNumber,
+        plan.contentHash,
+        contentJson,
+        input.createdByUserId,
+      ],
+    );
+    if (!inserted[0]?.id)
+      throw new Error("authority version insert returned no id");
+    return {
+      action: plan.action,
+      versionId: inserted[0].id,
+      versionNumber: plan.versionNumber,
+      contentHash: plan.contentHash,
+    };
+  }
+
+  // The partial unique index permits only one current row. Insert the new row
+  // temporarily superseded, link the old row to it, then promote the new row.
+  // The enclosing transaction keeps that intermediate state invisible.
+  const inserted = await run<{ id: string }>(
+    `INSERT INTO source_event_authority_versions
+       (event_id, client_key, authority_kind, version_number, content_hash,
+        content_json, created_by_user_id, supersedes_version_id,
+        superseded_at, superseded_by_version_id)
+     VALUES ($1::uuid,$2,$3,$4,$5,$6::jsonb,$7,$8::uuid,now(),$8::uuid)
+     RETURNING id`,
+    [
+      input.eventId,
+      input.clientKey,
+      input.authorityKind,
+      plan.versionNumber,
+      plan.contentHash,
+      contentJson,
+      input.createdByUserId,
+      plan.supersedesVersionId,
+    ],
+  );
+  const versionId = inserted[0]?.id;
+  if (!versionId) throw new Error("authority version insert returned no id");
+
+  const superseded = await run<{ id: string }>(
+    `UPDATE source_event_authority_versions
+        SET superseded_at = now(), superseded_by_version_id = $1::uuid
+      WHERE id = $2::uuid
+        AND event_id = $3::uuid
+        AND client_key = $4
+        AND authority_kind = $5
+        AND superseded_at IS NULL
+      RETURNING id`,
+    [
+      versionId,
+      plan.supersedesVersionId,
+      input.eventId,
+      input.clientKey,
+      input.authorityKind,
+    ],
+  );
+  if (!superseded[0]?.id) throw new Error("current authority version changed");
+
+  const promoted = await run<{ id: string }>(
+    `UPDATE source_event_authority_versions
+        SET superseded_at = NULL, superseded_by_version_id = NULL
+      WHERE id = $1::uuid
+        AND event_id = $2::uuid
+        AND client_key = $3
+        AND authority_kind = $4
+      RETURNING id`,
+    [versionId, input.eventId, input.clientKey, input.authorityKind],
+  );
+  if (!promoted[0]?.id)
+    throw new Error("new authority version promotion failed");
+
+  return {
+    action: plan.action,
+    versionId,
+    versionNumber: plan.versionNumber,
+    contentHash: plan.contentHash,
+  };
+}
+
+export async function persistSourceAuthorityVersion(
+  input: PersistSourceAuthorityVersionInput,
+  session: TxSessionRunner = createTxSession("source-authority-version-write"),
+): Promise<PersistSourceAuthorityVersionResult> {
+  return session((run) => persistSourceAuthorityVersionWithRun(run, input));
+}
+
 /**
  * The current (not superseded) authority version for one event and kind, with
  * the approvals recorded against that version.
@@ -149,7 +321,9 @@ export async function readSourceAuthorityVersionState(
 
     const { data: versionData, error: versionError } = await client
       .from("source_event_authority_versions")
-      .select("id,event_id,client_key,authority_kind,version_number,content_hash")
+      .select(
+        "id,event_id,client_key,authority_kind,version_number,content_hash",
+      )
       .eq("event_id", eventId)
       .eq("client_key", clientKey)
       .eq("authority_kind", authorityKind)

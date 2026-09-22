@@ -17,6 +17,7 @@ import { getLatestArtifactAcceptancesByArtifactIds } from "@/lib/source/artifact
 import { listSourceArtifactsForSourceEventId } from "@/lib/source/artifact-registry";
 import { loadApprovalLedger } from "@/lib/source/approval-ledger";
 import { getContractOptimizationProfile } from "@/lib/source/contract-optimization/read";
+import { readSourceAuthorityVersionState } from "@/lib/source/new-workspace/authority-version-store";
 import { formatSourceFinancialValue } from "@/lib/source/financial-display";
 import { parseSourceScopeDescription } from "@/lib/source/intake-summary";
 import {
@@ -96,20 +97,22 @@ export default async function SourceEventApprovalPage({
     }) ?? event.accountName;
   const currentUserCanApprove =
     sourceAccessPolicy?.canApproveSourceStages === true;
-  const [approvalLedger, artifactAcceptances] = await Promise.all([
-    loadApprovalLedger(
-      event.id,
-      effectiveCurrentStageKey,
-      sourceJourney.stages,
-    ).catch((error) => {
-      console.error(
-        "[SourceEventApprovalPage] approval ledger read failed",
-        error instanceof Error ? error.message : String(error),
-      );
-      return [];
-    }),
-    loadArtifactAcceptanceHistory(event.id),
-  ]);
+  const [approvalLedger, artifactAcceptances, requestAuthority] =
+    await Promise.all([
+      loadApprovalLedger(
+        event.id,
+        effectiveCurrentStageKey,
+        sourceJourney.stages,
+      ).catch((error) => {
+        console.error(
+          "[SourceEventApprovalPage] approval ledger read failed",
+          error instanceof Error ? error.message : String(error),
+        );
+        return [];
+      }),
+      loadArtifactAcceptanceHistory(event.id),
+      readSourceAuthorityVersionState(event.id, normalizedClientKey, "request"),
+    ]);
 
   return (
     <AppShell
@@ -149,6 +152,11 @@ export default async function SourceEventApprovalPage({
           currentUserId={tenancy.userId}
           currentUserCanApprove={currentUserCanApprove}
           currentStageHref={currentStageHref}
+          requestAuthorityVersionId={
+            requestAuthority.kind === "available"
+              ? (requestAuthority.currentVersion?.id ?? null)
+              : null
+          }
           generateMemoOnApprove={isFeatureEnabled(
             {
               clientKey: activeClient.key,

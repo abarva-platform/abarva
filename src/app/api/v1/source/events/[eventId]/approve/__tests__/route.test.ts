@@ -17,6 +17,19 @@ const updateStage = jest.fn(async () => ({ ok: true }));
 const insertActivityLog = jest.fn(
   async () => ({ ok: true }) as { ok: boolean; error?: string },
 );
+const requestVersionState = {
+  kind: "available" as const,
+  currentVersion: {
+    id: "request-version-1",
+    versionNumber: 1,
+    contentHash: "a".repeat(64),
+  },
+  approvals: [],
+};
+
+jest.mock("@/lib/source/new-workspace/authority-version-store", () => ({
+  readSourceAuthorityVersionState: jest.fn(async () => requestVersionState),
+}));
 const stageSubstrate = {
   criteria: [] as Array<Record<string, unknown>>,
   artifacts: [],
@@ -160,6 +173,74 @@ describe("POST Source event approve", () => {
       readiness: { ok: true, blockers: [] },
       bypassedGovernanceBlockers: [],
     }));
+  });
+
+  it("binds the initial intake approval to the exact current Request version", async () => {
+    eventRow.current_stage_key = "strategy";
+    const response = await POST(
+      new Request(
+        "https://app.abarva.ai/api/v1/source/events/event-1/approve",
+        {
+          method: "POST",
+          body: JSON.stringify({
+            action: "approve",
+            notes:
+              "Reviewed the governed intake and accept this exact version.",
+            requestAuthorityVersionId: "request-version-1",
+            confirmations: {
+              strategyMemoReviewed: true,
+              valueTargetConfirmed: true,
+              archetypeRigorConfirmed: true,
+            },
+          }),
+        },
+      ),
+      { params: Promise.resolve({ eventId: "event-1" }) },
+    );
+
+    expect(response.status).toBe(200);
+    expect(applyApproval).toHaveBeenCalledWith(
+      expect.objectContaining({
+        authorityApproval: {
+          authorityKind: "request",
+          versionId: "request-version-1",
+          role: "request_acceptor",
+          decision: "approved",
+          actorUserId: "user-1",
+          reason: "Reviewed the governed intake and accept this exact version.",
+        },
+      }),
+    );
+  });
+
+  it("refuses a stale Request version before writing the intake approval", async () => {
+    eventRow.current_stage_key = "strategy";
+    const response = await POST(
+      new Request(
+        "https://app.abarva.ai/api/v1/source/events/event-1/approve",
+        {
+          method: "POST",
+          body: JSON.stringify({
+            action: "approve",
+            notes:
+              "Reviewed the governed intake and accept this exact version.",
+            requestAuthorityVersionId: "request-version-old",
+            confirmations: {
+              strategyMemoReviewed: true,
+              valueTargetConfirmed: true,
+              archetypeRigorConfirmed: true,
+            },
+          }),
+        },
+      ),
+      { params: Promise.resolve({ eventId: "event-1" }) },
+    );
+
+    expect(response.status).toBe(409);
+    expect(await response.json()).toMatchObject({
+      error: "request_authority_version_changed",
+    });
+    expect(applyApproval).not.toHaveBeenCalled();
   });
 
   it("does not approve or advance past a pending strategy criterion on self-approval", async () => {
