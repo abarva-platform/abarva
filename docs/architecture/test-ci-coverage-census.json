@@ -229,6 +229,16 @@
       ]
     },
     {
+      "directory": "src/lib/source/new-workspace/__tests__",
+      "testFiles": 4,
+      "coveredTestFiles": 3,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 1,
+      "via": [
+        "command"
+      ]
+    },
+    {
       "directory": "src/app/(maestro)/source/__tests__",
       "testFiles": 3,
       "coveredTestFiles": 2,
@@ -274,16 +284,6 @@
       "coveredTestFiles": 1,
       "declaredQuarantineTestFiles": 0,
       "untriagedUnrunTestFiles": 2,
-      "via": [
-        "command"
-      ]
-    },
-    {
-      "directory": "src/lib/source/new-workspace/__tests__",
-      "testFiles": 3,
-      "coveredTestFiles": 2,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 1,
       "via": [
         "command"
       ]

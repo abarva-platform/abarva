@@ -45,6 +45,20 @@
 .snw-vendor-readiness-blockers { margin-top: 14px; border: 1px solid #e1ded8; background: #faf9f6; padding: 12px 14px; font-size: 13px; }
 .snw-vendor-readiness-blockers strong { display: block; margin-bottom: 8px; }
 .snw-vendor-readiness-blockers ul { margin: 0; padding-left: 18px; color: #4f4b45; line-height: 1.55; }
+.snw-response-intake { margin-top: 24px; border-top: 1px solid #dededb; padding-top: 18px; }
+.snw-response-intake h3 { font-size: 15px; font-weight: 650; margin: 8px 0; }
+.snw-response-intake p { color: #5e5e5e; font-size: 13px; line-height: 1.55; max-width: 72ch; }
+.snw-response-upload { display: grid; grid-template-columns: minmax(180px, 1fr) minmax(210px, 1fr) auto; gap: 10px; align-items: end; margin-top: 16px; padding: 14px; border: 1px solid #d8ddd9; background: #fff; }
+.snw-response-upload label { display: grid; gap: 5px; color: #5f5f5b; font-size: 11px; font-weight: 650; text-transform: uppercase; }
+.snw-response-upload select, .snw-response-upload input { min-width: 0; border: 1px solid #cfcac1; border-radius: 4px; padding: 9px 10px; font: 13px Inter, system-ui, sans-serif; text-transform: none; background: #fff; }
+.snw-response-upload .snw-primary { width: auto; margin: 0; }
+.snw-response-suppliers { display: grid; gap: 10px; margin-top: 14px; }
+.snw-response-suppliers article { border: 1px solid #e1ded8; background: #faf9f6; padding: 12px 14px; }
+.snw-response-supplier-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.snw-response-supplier-heading span { color: #176b55; font-size: 12px; font-weight: 650; text-transform: uppercase; }
+.snw-response-suppliers dl { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin: 12px 0 0; }
+.snw-response-suppliers dt { color: #707771; font-size: 11px; font-weight: 650; text-transform: uppercase; }
+.snw-response-suppliers dd { margin: 3px 0 0; overflow-wrap: anywhere; }
 .snw-nda-readiness { margin-top: 18px; border: 1px solid #d8ddd9; background: #fff; padding: 16px; }
 .snw-nda-readiness h3 { margin: 0 0 8px; font-size: 17px; color: #1f2b25; }
 .snw-nda-readiness p { margin: 0 0 14px; color: #4f5a54; }
@@ -112,6 +126,8 @@
   .snw-work { grid-template-columns: 1fr; gap: 30px; }
   .snw-nda-grid { grid-template-columns: 1fr; }
   .snw-nda-suppliers dl { grid-template-columns: 1fr; }
+  .snw-response-upload { grid-template-columns: 1fr; }
+  .snw-response-suppliers dl { grid-template-columns: 1fr; }
   .snw-intel-heading { flex-direction: column; gap: 10px; }
   .snw-intel-grid { grid-template-columns: 1fr; }
   .snw-disclosure-control { align-items: stretch; flex-direction: column; }
