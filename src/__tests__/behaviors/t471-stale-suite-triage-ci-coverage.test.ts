@@ -35,6 +35,8 @@ type DirectoryRow = {
   coveredTestFiles?: number;
   declaredQuarantineTestFiles: number;
   untriagedUnrunTestFiles: number;
+  /** How the covered files in this directory are reached: a named command, or a script file. */
+  via?: string[];
 };
 
 type Census = {
@@ -131,21 +133,58 @@ describe("declared quarantines are not offered as work to triage", () => {
    * The limit of the mechanism, held explicitly so it is not mistaken for
    * coverage of something it does not measure.
    *
-   * `MovesPhaseStandaloneClient.test.tsx` was also triaged — a comment in
-   * `ai-surface-control-catalog.yml` records its four red cases and the
-   * workflow names its 13 green siblings instead of the directory. That is
-   * exclusion by OMISSION, and it leaves nothing in any command for the census
-   * to read, so the file stays untriaged here and keeps its directory in the
-   * ranking. Only an exclusion written as `--testPathIgnorePatterns` against a
-   * command that names the path is machine-readable as triage.
+   * When a workflow names SOME files in a directory and simply leaves another
+   * one out, that omission is a triage decision a human made — but it leaves
+   * nothing in any command for the census to read. Only an exclusion written
+   * as `--testPathIgnorePatterns` against a command that names the path is
+   * machine-readable as triage. So the omitted file must stay counted as
+   * untriaged, and its directory must stay in the queue.
+   *
+   * This case used to pin that property to one named example:
+   * `src/components/strategic-moves/__tests__`, where a workflow named 13
+   * green siblings and left `MovesPhaseStandaloneClient.test.tsx` out over its
+   * triaged-red cases. T-518 closed those cases and wired that file, so the
+   * directory is now fully covered and the example evaporated — which is the
+   * right outcome for the repository and a false red here.
+   *
+   * The property is therefore derived from the census rather than pinned to a
+   * directory that can be wired out from under it. `via: ["command"]` is the
+   * signature: a command names at least one file in the directory, so the rest
+   * were left out by omission rather than never looked at.
    */
   it("does not credit an exclusion by omission as a declared quarantine", () => {
-    const row = rows.get("src/components/strategic-moves/__tests__");
-    expect(row).toBeDefined();
-    expect(row!.declaredQuarantineTestFiles).toBe(0);
-    expect(row!.untriagedUnrunTestFiles).toBeGreaterThan(0);
-    expect(
+    const excludedByOmission = census.partiallyCoveredDirectories.filter(
+      (row) =>
+        (row.via ?? []).includes("command") &&
+        row.declaredQuarantineTestFiles === 0 &&
+        row.untriagedUnrunTestFiles > 0,
+    );
+
+    // Refuses a vacuous pass. If the repository ever holds no directory of
+    // this shape, this case stops being evidence and has to say so out loud
+    // rather than going green on an empty list.
+    expect(excludedByOmission.length).toBeGreaterThan(0);
+
+    const ranked = new Set(
       census.governedRiskRanking.map((entry) => entry.directory),
-    ).toContain("src/components/strategic-moves/__tests__");
+    );
+
+    for (const row of excludedByOmission) {
+      // Nothing is credited: every file the command left out is still
+      // untriaged, so the omission bought no coverage.
+      expect(row.untriagedUnrunTestFiles).toBe(
+        row.testFiles - (row.coveredTestFiles ?? 0),
+      );
+      // And the directory stays in the queue whenever it carries governed
+      // risk. A zero-risk directory is not ranked by design, so its absence
+      // is not a failure of this property.
+      if (ranked.has(row.directory)) {
+        expect(
+          census.governedRiskRanking.find(
+            (entry) => entry.directory === row.directory,
+          )!.untriagedUnrunTestFiles,
+        ).toBe(row.untriagedUnrunTestFiles);
+      }
+    }
   });
 });
