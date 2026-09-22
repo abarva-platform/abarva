@@ -424,5 +424,154 @@ console.log("\nbuild-source-board — within-record rung attribution (T-704)\n")
   fs.rmSync(dir, { recursive: true, force: true });
 }
 
+console.log("\nbuild-source-board — the rung-7 veto and what it exposes (T-705)\n");
+
+/* ------------------------------------------------------------------------ *
+ * 11. MARKUP BETWEEN `not` AND THE TERM. The register's habitual form, found
+ *     on four live rows: "Status `deployed`, NOT `live-proven`." A single
+ *     backtick defeats `\s+`, so the sentence that DENIES proof was read as
+ *     asserting it. The row must read Deployed, which is what it says.
+ * ------------------------------------------------------------------------ */
+{
+  const dir = freshFixture();
+  addBacklogItem(dir, "T-930", "**Shipped to the cluster.**", "The register carries its own line.");
+  appendClaims(dir, [
+    "2026-09-22T14:01:00Z | fixture-agent | RELEASED item T-930 — merged and deployed. Status `deployed`, NOT `live-proven`.",
+  ]);
+  buildBoard(dir);
+  const item = summaryItems(dir).out.get("T-930");
+  check(
+    "markup between `not` and the term does not defeat the rung-7 veto",
+    item?.rung === 6,
+    `rung=${item?.rung} (${item?.rungLabel}) quote=${JSON.stringify(item?.quote ?? "")}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+/* ------------------------------------------------------------------------ *
+ * 12. AN INTERVENING WORD. The other live form: "This line does not claim
+ *     deployed or live-proven." — `not` is followed by `claim`, three words
+ *     before the term, so the adjacent-only veto missed it entirely.
+ * ------------------------------------------------------------------------ */
+{
+  const dir = freshFixture();
+  addBacklogItem(dir, "T-931", "**Shipped to the cluster.**", "The register carries its own line.");
+  appendClaims(dir, [
+    "2026-09-22T14:02:00Z | fixture-agent | item T-931 merged and deployed. This line does not claim deployed or live-proven.",
+  ]);
+  buildBoard(dir);
+  const item = summaryItems(dir).out.get("T-931");
+  check(
+    "words between `not` and the term do not defeat the rung-7 veto",
+    item?.rung === 6,
+    `rung=${item?.rung} (${item?.rungLabel}) quote=${JSON.stringify(item?.quote ?? "")}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+/* ------------------------------------------------------------------------ *
+ * 13. THE GUARDRAIL AGAINST TIGHTENING INTO SILENCE. A genuine signed-in
+ *     proof must still reach rung 7. A veto widened until nothing can claim
+ *     proof passes every negation case above and is worthless; this is the
+ *     case that fails when that happens. It passes on unfixed code BY DESIGN.
+ * ------------------------------------------------------------------------ */
+{
+  const dir = freshFixture();
+  addBacklogItem(dir, "T-932", "**Shipped and accepted.**", "The register carries its own line.");
+  appendClaims(dir, [
+    "2026-09-22T14:03:00Z | fixture-agent | RELEASED item T-932 — merged, deployed, and signed-in acceptance PASSED on the deployed SHA.",
+  ]);
+  buildBoard(dir);
+  const item = summaryItems(dir).out.get("T-932");
+  check(
+    "a genuine signed-in proof still reaches rung 7",
+    item?.rung === 7,
+    `rung=${item?.rung} (${item?.rungLabel}) quote=${JSON.stringify(item?.quote ?? "")}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+/* ------------------------------------------------------------------------ *
+ * 13b. THE GUARDRAIL THAT ACTUALLY BITES. Case 13's proof sentence contains
+ *      no `not` at all, so a veto widened to fire on ANY `not` passes it —
+ *      measured, that mutation survived case 13 untouched. Real proof lines
+ *      do carry a negative: the proof ladder's own rung 7 is "signed-in
+ *      acceptance, and opposite-tenant refusal", which is written with one.
+ *      Here the denial word sits AFTER the proof term, so the veto must not
+ *      fire, and a veto keyed on the bare word does.
+ * ------------------------------------------------------------------------ */
+{
+  const dir = freshFixture();
+  addBacklogItem(dir, "T-935", "**Shipped and accepted.**", "The register carries its own line.");
+  appendClaims(dir, [
+    "2026-09-22T14:05:00Z | fixture-agent | RELEASED item T-935 — merged, deployed, signed-in acceptance PASSED and the opposite tenant could not read it.",
+  ]);
+  buildBoard(dir);
+  const item = summaryItems(dir).out.get("T-935");
+  check(
+    "a denial AFTER the proof term does not veto a genuine rung 7",
+    item?.rung === 7,
+    `rung=${item?.rung} (${item?.rungLabel}) quote=${JSON.stringify(item?.quote ?? "")}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+/* ------------------------------------------------------------------------ *
+ * 14. EVALUATION IS PER SENTENCE. A denial in ONE sentence must not veto a
+ *     proof stated in the NEXT one.
+ *
+ *     Stated precisely, because the first version of this comment was wrong
+ *     and a mutation caught it: what protects this is the SPLIT in
+ *     `firstMatchingSentence`, not the veto's own `[^.;\n]` span. The veto
+ *     never sees two sentences at once, so widening its span to cross a full
+ *     stop changes nothing — measured, that mutation passes every case here.
+ *     The `[^.;\n]` is belt-and-braces against a future caller that stops
+ *     splitting; the mutation below removes the split itself, which is what
+ *     this case actually holds shut.
+ * ------------------------------------------------------------------------ */
+{
+  const dir = freshFixture();
+  addBacklogItem(dir, "T-933", "**Shipped and accepted.**", "The register carries its own line.");
+  appendClaims(dir, [
+    "2026-09-22T14:04:00Z | fixture-agent | item T-933 is not a rollback. Signed-in acceptance PASSED on the deployed SHA.",
+  ]);
+  buildBoard(dir);
+  const item = summaryItems(dir).out.get("T-933");
+  check(
+    "a denial in one sentence does not veto proof stated in the next",
+    item?.rung === 7,
+    `rung=${item?.rung} (${item?.rungLabel}) quote=${JSON.stringify(item?.quote ?? "")}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+/* ------------------------------------------------------------------------ *
+ * 15. WHAT THE VETO EXPOSED, and the reason the blocker term ships with it.
+ *
+ *     Correcting the veto drops a live row to rung 0 — correctly; its own
+ *     text says "not merged, not deployed, not applied". That row carries NO
+ *     blocker, so a FALSE rung 7 was the only thing keeping owner-gated work
+ *     out of the claimable bucket. A row that says its work remains out of
+ *     scope until separately approved must carry an owner gate at rung 0, or
+ *     the queue offers it as free work the moment the rung is corrected.
+ * ------------------------------------------------------------------------ */
+{
+  const dir = freshFixture();
+  addBacklogItem(
+    dir,
+    "T-934",
+    "**Implemented locally; not merged, not deployed, not applied.**",
+    "Migration apply, merge and deploy all remain out of scope until separately approved.",
+  );
+  buildBoard(dir);
+  const item = summaryItems(dir).out.get("T-934");
+  check(
+    "a row gated until separately approved carries an owner gate at rung 0",
+    item?.rung === 0 && item?.blocker === "Awaiting approval to apply",
+    `rung=${item?.rung} (${item?.rungLabel}) blocker=${JSON.stringify(item?.blocker ?? null)}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
 console.log(`\n${passes} passed, ${failures} failed`);
 process.exit(failures ? 1 : 0);

@@ -375,8 +375,25 @@ const RULES = [
     test: (t) =>
       /\blive-proven\b/i.test(t) ||
       /signed-in[^.]{0,60}\b(passed|proven|confirmed|resolved)\b/i.test(t),
+    // Item T-705. The veto used to demand `not` and the term ADJACENT, and the
+    // register does not write that way. Two live rows took rung 7 from
+    // sentences that deny it: one reads "This line does not claim deployed or
+    // live-proven." — `not` is followed by `claim`, three words before the
+    // term — and another reads "NOT `live-proven`", where a single backtick
+    // defeats `\s+`. Rung 7 is the queue's `isFinished` test, so both were
+    // excluded from every bucket as finished work.
+    //
+    // The reach is MEASURED, not chosen. Sweeping 20/40/60/80 over the live
+    // register: both known positives move off rung 7 at every value, NOTHING
+    // enters rung 7 at any value, and 40, 60 and 80 are IDENTICAL — the band is
+    // flat above 40. 80 is taken because it is already what the rung-5 and
+    // rung-6 vetoes beside this one use, so the three now read the same and the
+    // choice costs nothing the measurement can see.
+    //
+    // Only the veto moves. The rung-7 TEST is untouched, so the movement is
+    // attributable to this change alone.
     veto: (t) =>
-      /\bnot\s+(?:live-proven|signed-in)\b/i.test(t) ||
+      /\bnot\b[^.;\n]{0,80}\b(?:live-proven|signed-in)\b/i.test(t) ||
       /signed-in[^.]{0,80}\b(pending|owed|not proven|not performed|not claimed|remains? (?:open|unproven))\b/i.test(t),
   },
   {
@@ -582,7 +599,14 @@ for (const [sample, num, expected] of [
 
 const BLOCKER_RULES = [
   { re: /\bnot\s+signed-in\b|(?:^|[.!?]\s+)signed-in\s+check\b|signed-in[^.]{0,80}\b(pending|owed|not proven|not performed|not claimed|remains? (?:open|unproven))\b/i, say: "Signed-in acceptance owed", ownerGate: true },
-  { re: /\brequires? separate approval\b|\bApply requires\b/i, say: "Awaiting approval to apply", ownerGate: true },
+  // The third form is item T-705's, and it sits here rather than in its own
+  // change for one measured reason. Correcting the rung-7 veto below drops one
+  // row to rung 0 — correctly; its own text reads "not merged, not deployed,
+  // not applied" — and that row carries NO blocker, so a false "Signed-in
+  // proven" was the only thing keeping owner-gated work out of the claimable
+  // queue. Shipping the veto alone would have offered it as free work.
+  // Measured, this term changes the blocker of EXACTLY ONE item, that one.
+  { re: /\brequires? separate approval\b|\bApply requires\b|\buntil separately approved\b/i, say: "Awaiting approval to apply", ownerGate: true },
   // An acceptance is written in the imperative, so the decision gate in one
   // usually is too. Recognising only the noun forms and the single literal
   // "Decide first" left T-596 — which opens "Decide per job before pinning
