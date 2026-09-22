@@ -30,12 +30,19 @@ const CENSUS_SCRIPT = "scripts/quality/test-ci-coverage-census.mjs";
 const GOVERNED_ELSEWHERE = "src/__tests__";
 
 /**
- * Measured on `origin/main`, 2026-09-21, from the census's own resolver.
+ * Measured from the census's own resolver.
  *
  * Lower it when you wire a directory. Do not raise it: a new dark directory is
  * what this exists to refuse.
+ *
+ * 2026-09-21: 175 when this ratchet was introduced.
+ * 2026-09-21: 172 after wiring `source/archetypes`, `programs/archetype-primers`
+ *   and `source/canvas-substrate`. Three, not four: the fourth directory wired
+ *   in that change (`source/ava`) was already partially covered, so clearing
+ *   its last unrun file moved it out of the partial set without changing this
+ *   count.
  */
-const DARK_PRODUCT_DIRECTORY_COUNT = 175;
+const DARK_PRODUCT_DIRECTORY_COUNT = 172;
 
 type Census = {
   counts: { indeterminateInvocations: number };

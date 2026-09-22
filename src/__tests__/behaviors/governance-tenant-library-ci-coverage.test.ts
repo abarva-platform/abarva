@@ -92,10 +92,19 @@ describe("governance and tenant library CI ownership", () => {
       census.partiallyCoveredDirectories.find((row) => row.directory === directory);
 
     expect(census.counts.indeterminateInvocations).toBe(0);
-    expect(partial("src/lib/governance/__tests__")).toMatchObject({
-      testFiles: 8,
-      coveredTestFiles: 5,
-    });
+    // 5 of 8 -> ALL 8. T-523 wired the three remaining files by exact path, so
+    // the directory is no longer a split at all and drops out of the partial
+    // bucket. The census publishes only the partial and uncovered buckets, so
+    // "fully covered" is asserted the way this file already asserts it for
+    // `azure-search` below: absent from BOTH. Checking only the partial bucket
+    // would pass equally well for a directory that had vanished from the
+    // census entirely, which is why the uncovered half is asserted too.
+    expect(partial("src/lib/governance/__tests__")).toBeUndefined();
+    expect(
+      census.uncoveredDirectories.some(
+        (row) => row.directory === "src/lib/governance/__tests__",
+      ),
+    ).toBe(false);
     // 1 -> 2: T-559 repaired and wired `active-client.test.ts`. The two still
     // uncovered here are a control-plane tenant-literal floor with live findings
     // and a tenant-database fail-closed suite; both are real, neither is this

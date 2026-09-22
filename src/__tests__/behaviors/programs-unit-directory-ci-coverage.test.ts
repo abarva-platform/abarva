@@ -123,8 +123,15 @@ const WIRED_DIRECTORIES = [
  * `src/lib/programs/queries.azure-read.test.ts` by exact file path. The
  * directory has one test file, so the count moved by one and no sibling was
  * adopted.
+ *
+ * 20 → 19 on 22 Sep for T-523 wiring
+ * `src/lib/programs/archetype-primers/__tests__`. Proved by DIFFING the two
+ * dark lists rather than by comparing totals: exactly one directory left the
+ * set, that one, and none entered. This is a FULL wire — unlike the
+ * `archetypes/__tests__` row above, no file in it is quarantined — so the
+ * number and "directories now fully wired" agree on this row.
  */
-const DARK_DIRECTORY_COUNT = 20;
+const DARK_DIRECTORY_COUNT = 19;
 
 type Census = {
   counts: { indeterminateInvocations: number };

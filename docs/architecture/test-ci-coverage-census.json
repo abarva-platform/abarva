@@ -15,31 +15,31 @@
     "No timestamp is recorded, so refreshing this file on an unchanged tree is a no-op."
   ],
   "counts": {
-    "testFiles": 2385,
-    "coveredTestFiles": 1877,
-    "pullRequestCoveredTestFiles": 1874,
-    "uncoveredTestFiles": 508,
-    "directoriesWithTests": 481,
-    "directoriesFullyCovered": 272,
-    "directoriesPartiallyCovered": 29,
-    "directoriesUncovered": 180,
-    "directoriesWithUnrunTestFiles": 209,
-    "directoriesWithUntriagedUnrunTestFiles": 198,
-    "declaredQuarantineTestFiles": 50,
-    "untriagedUnrunTestFiles": 458,
+    "testFiles": 2390,
+    "coveredTestFiles": 1908,
+    "pullRequestCoveredTestFiles": 1905,
+    "uncoveredTestFiles": 482,
+    "directoriesWithTests": 482,
+    "directoriesFullyCovered": 278,
+    "directoriesPartiallyCovered": 27,
+    "directoriesUncovered": 177,
+    "directoriesWithUnrunTestFiles": 204,
+    "directoriesWithUntriagedUnrunTestFiles": 194,
+    "declaredQuarantineTestFiles": 49,
+    "untriagedUnrunTestFiles": 433,
     "indeterminateInvocations": 0,
     "unresolvedIgnoreArguments": 0,
     "criticalGovernedRiskDirectories": 1,
-    "highGovernedRiskDirectories": 14,
-    "unclassifiedRiskDirectories": 183
+    "highGovernedRiskDirectories": 13,
+    "unclassifiedRiskDirectories": 180
   },
   "indeterminateInvocations": [],
   "unresolvedIgnoreArguments": [],
   "partiallyCoveredDirectories": [
     {
       "directory": "src/__tests__/integration/source",
-      "testFiles": 102,
-      "coveredTestFiles": 94,
+      "testFiles": 105,
+      "coveredTestFiles": 97,
       "declaredQuarantineTestFiles": 8,
       "untriagedUnrunTestFiles": 0,
       "via": [
@@ -129,16 +129,6 @@
       ]
     },
     {
-      "directory": "src/lib/source/ava/__tests__",
-      "testFiles": 23,
-      "coveredTestFiles": 22,
-      "declaredQuarantineTestFiles": 1,
-      "untriagedUnrunTestFiles": 0,
-      "via": [
-        "command"
-      ]
-    },
-    {
       "directory": "src/lib/auth/__tests__",
       "testFiles": 20,
       "coveredTestFiles": 14,
@@ -164,16 +154,6 @@
       "coveredTestFiles": 8,
       "declaredQuarantineTestFiles": 1,
       "untriagedUnrunTestFiles": 0,
-      "via": [
-        "command"
-      ]
-    },
-    {
-      "directory": "src/lib/governance/__tests__",
-      "testFiles": 8,
-      "coveredTestFiles": 5,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 3,
       "via": [
         "command"
       ]
@@ -2900,184 +2880,6 @@
       }
     },
     {
-      "directory": "src/lib/governance/__tests__",
-      "testPath": "src/lib/governance/__tests__/agent-context-bundle.test.ts",
-      "enumerated": true,
-      "collected": false,
-      "run": false,
-      "green": "unknown",
-      "covered": false,
-      "pullRequestCovered": false,
-      "declaredQuarantine": false,
-      "untriaged": true,
-      "via": [],
-      "governedRisk": {
-        "score": 10,
-        "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 4
-      }
-    },
-    {
-      "directory": "src/lib/governance/__tests__",
-      "testPath": "src/lib/governance/__tests__/context-corpus-policy.test.ts",
-      "enumerated": true,
-      "collected": false,
-      "run": false,
-      "green": "unknown",
-      "covered": false,
-      "pullRequestCovered": false,
-      "declaredQuarantine": false,
-      "untriaged": true,
-      "via": [],
-      "governedRisk": {
-        "score": 10,
-        "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 4
-      }
-    },
-    {
-      "directory": "src/lib/governance/__tests__",
-      "testPath": "src/lib/governance/__tests__/dataset-manifest.test.ts",
-      "enumerated": true,
-      "collected": false,
-      "run": false,
-      "green": "unknown",
-      "covered": false,
-      "pullRequestCovered": false,
-      "declaredQuarantine": false,
-      "untriaged": true,
-      "via": [],
-      "governedRisk": {
-        "score": 10,
-        "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 4
-      }
-    },
-    {
-      "directory": "src/lib/governance/__tests__",
-      "testPath": "src/lib/governance/__tests__/inventory.test.ts",
-      "enumerated": true,
-      "collected": true,
-      "run": "unknown",
-      "green": "unknown",
-      "covered": true,
-      "pullRequestCovered": true,
-      "declaredQuarantine": false,
-      "untriaged": false,
-      "via": [
-        "command"
-      ],
-      "governedRisk": {
-        "score": 10,
-        "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 4
-      }
-    },
-    {
-      "directory": "src/lib/governance/__tests__",
-      "testPath": "src/lib/governance/__tests__/policy-exceptions.test.ts",
-      "enumerated": true,
-      "collected": true,
-      "run": "unknown",
-      "green": "unknown",
-      "covered": true,
-      "pullRequestCovered": true,
-      "declaredQuarantine": false,
-      "untriaged": false,
-      "via": [
-        "command"
-      ],
-      "governedRisk": {
-        "score": 10,
-        "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 4
-      }
-    },
-    {
-      "directory": "src/lib/governance/__tests__",
-      "testPath": "src/lib/governance/__tests__/promotion-evaluator.test.ts",
-      "enumerated": true,
-      "collected": true,
-      "run": "unknown",
-      "green": "unknown",
-      "covered": true,
-      "pullRequestCovered": true,
-      "declaredQuarantine": false,
-      "untriaged": false,
-      "via": [
-        "command"
-      ],
-      "governedRisk": {
-        "score": 10,
-        "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 4
-      }
-    },
-    {
-      "directory": "src/lib/governance/__tests__",
-      "testPath": "src/lib/governance/__tests__/readiness-backfill.test.ts",
-      "enumerated": true,
-      "collected": true,
-      "run": "unknown",
-      "green": "unknown",
-      "covered": true,
-      "pullRequestCovered": true,
-      "declaredQuarantine": false,
-      "untriaged": false,
-      "via": [
-        "command"
-      ],
-      "governedRisk": {
-        "score": 10,
-        "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 4
-      }
-    },
-    {
-      "directory": "src/lib/governance/__tests__",
-      "testPath": "src/lib/governance/__tests__/tenant-coverage.test.ts",
-      "enumerated": true,
-      "collected": true,
-      "run": "unknown",
-      "green": "unknown",
-      "covered": true,
-      "pullRequestCovered": true,
-      "declaredQuarantine": false,
-      "untriaged": false,
-      "via": [
-        "command"
-      ],
-      "governedRisk": {
-        "score": 10,
-        "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 4
-      }
-    },
-    {
       "directory": "src/lib/source/contract-evidence/__tests__",
       "testPath": "src/lib/source/contract-evidence/__tests__/evidence-review.test.ts",
       "enumerated": true,
@@ -3097,7 +2899,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 5
+        "rank": 4
       }
     },
     {
@@ -3118,7 +2920,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 5
+        "rank": 4
       }
     },
     {
@@ -3139,7 +2941,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 5
+        "rank": 4
       }
     },
     {
@@ -3160,7 +2962,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 5
+        "rank": 4
       }
     },
     {
@@ -3183,7 +2985,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 6
+        "rank": 5
       }
     },
     {
@@ -3206,7 +3008,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 6
+        "rank": 5
       }
     },
     {
@@ -3227,7 +3029,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 6
+        "rank": 5
       }
     },
     {
@@ -3248,7 +3050,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 6
+        "rank": 5
       }
     },
     {
@@ -3269,7 +3071,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 7
+        "rank": 6
       }
     },
     {
@@ -3290,7 +3092,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 7
+        "rank": 6
       }
     },
     {
@@ -3313,7 +3115,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 7
+        "rank": 6
       }
     },
     {
@@ -3336,7 +3138,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 8
+        "rank": 7
       }
     },
     {
@@ -3359,7 +3161,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 8
+        "rank": 7
       }
     },
     {
@@ -3380,7 +3182,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 8
+        "rank": 7
       }
     },
     {
@@ -3401,7 +3203,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 8
+        "rank": 7
       }
     },
     {
@@ -3424,7 +3226,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 8
+        "rank": 7
       }
     },
     {
@@ -3447,7 +3249,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 8
+        "rank": 7
       }
     },
     {
@@ -3470,7 +3272,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 8
+        "rank": 7
       }
     },
     {
@@ -3493,7 +3295,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 8
+        "rank": 7
       }
     },
     {
@@ -3516,7 +3318,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 8
+        "rank": 7
       }
     },
     {
@@ -3537,7 +3339,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 9
+        "rank": 8
       }
     },
     {
@@ -3558,7 +3360,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 9
+        "rank": 8
       }
     },
     {
@@ -3581,7 +3383,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 10
+        "rank": 9
       }
     },
     {
@@ -3604,7 +3406,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 10
+        "rank": 9
       }
     },
     {
@@ -3625,7 +3427,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 10
+        "rank": 9
       }
     },
     {
@@ -3646,7 +3448,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 10
+        "rank": 9
       }
     },
     {
@@ -3669,7 +3471,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 11
+        "rank": 10
       }
     },
     {
@@ -3692,7 +3494,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 11
+        "rank": 10
       }
     },
     {
@@ -3713,7 +3515,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 11
+        "rank": 10
       }
     },
     {
@@ -3734,7 +3536,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 12
+        "rank": 11
       }
     },
     {
@@ -3755,7 +3557,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 13
+        "rank": 12
       }
     },
     {
@@ -3778,7 +3580,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 14
+        "rank": 13
       }
     },
     {
@@ -3801,7 +3603,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 14
+        "rank": 13
       }
     },
     {
@@ -3824,7 +3626,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 14
+        "rank": 13
       }
     },
     {
@@ -3845,7 +3647,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 14
+        "rank": 13
       }
     },
     {
@@ -3866,7 +3668,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 15
+        "rank": 14
       }
     }
   ],
@@ -3919,21 +3721,6 @@
       }
     },
     {
-      "directory": "src/lib/governance/__tests__",
-      "testFiles": 8,
-      "unrunTestFiles": 3,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 3,
-      "governedRisk": {
-        "score": 10,
-        "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 4
-      }
-    },
-    {
       "directory": "src/lib/source/contract-evidence/__tests__",
       "testFiles": 4,
       "unrunTestFiles": 3,
@@ -3945,7 +3732,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 5
+        "rank": 4
       }
     },
     {
@@ -3960,7 +3747,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 6
+        "rank": 5
       }
     },
     {
@@ -3975,7 +3762,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 7
+        "rank": 6
       }
     },
     {
@@ -3990,7 +3777,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 8
+        "rank": 7
       }
     },
     {
@@ -4005,7 +3792,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 9
+        "rank": 8
       }
     },
     {
@@ -4020,7 +3807,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 10
+        "rank": 9
       }
     },
     {
@@ -4035,7 +3822,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 11
+        "rank": 10
       }
     },
     {
@@ -4050,7 +3837,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 12
+        "rank": 11
       }
     },
     {
@@ -4065,7 +3852,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 13
+        "rank": 12
       }
     },
     {
@@ -4080,7 +3867,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 14
+        "rank": 13
       }
     },
     {
@@ -4095,7 +3882,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 15
+        "rank": 14
       }
     }
   ],
@@ -4168,24 +3955,6 @@
       }
     },
     {
-      "directory": "src/lib/governance/__tests__",
-      "testFiles": 8,
-      "unrunTestFiles": 3,
-      "governedRisk": {
-        "score": 10,
-        "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "tenantScopedReadSourceCount": 2,
-        "tenantScopedReadSources": [
-          "src/lib/governance/context-bundle-adapters.ts",
-          "src/lib/governance/readiness-backfill.ts"
-        ],
-        "rank": 4
-      }
-    },
-    {
       "directory": "src/lib/source/contract-evidence/__tests__",
       "testFiles": 4,
       "unrunTestFiles": 3,
@@ -4199,7 +3968,7 @@
         "tenantScopedReadSources": [
           "src/lib/source/contract-evidence/read-model.ts"
         ],
-        "rank": 5
+        "rank": 4
       }
     },
     {
@@ -4216,7 +3985,7 @@
         "tenantScopedReadSources": [
           "src/lib/active-client.ts"
         ],
-        "rank": 6
+        "rank": 5
       }
     },
     {
@@ -4233,7 +4002,7 @@
         "tenantScopedReadSources": [
           "src/lib/data-plane/read-adapters/azurePostgresReadAdapter.ts"
         ],
-        "rank": 7
+        "rank": 6
       }
     },
     {
@@ -4251,7 +4020,7 @@
           "src/lib/enterprise-context/derived-enterprise-read.ts",
           "src/lib/enterprise-context/intelligence-read-model.ts"
         ],
-        "rank": 8
+        "rank": 7
       }
     },
     {
@@ -4269,7 +4038,7 @@
           "src/lib/source/candidate-suppliers/candidate-supplier-registry-repository.ts",
           "src/lib/source/candidate-suppliers/event-candidate-authority-repository.ts"
         ],
-        "rank": 9
+        "rank": 8
       }
     },
     {
@@ -4286,7 +4055,7 @@
         "tenantScopedReadSources": [
           "src/lib/source/contract-intelligence/cloud-adapter.ts"
         ],
-        "rank": 10
+        "rank": 9
       }
     },
     {
@@ -4307,7 +4076,7 @@
           "src/lib/source/queries.ts",
           "src/lib/tenant/resolveTenant.ts"
         ],
-        "rank": 11
+        "rank": 10
       }
     },
     {
@@ -4324,7 +4093,7 @@
         "tenantScopedReadSources": [
           "src/app/api/programs/synthesis/route.ts"
         ],
-        "rank": 12
+        "rank": 11
       }
     },
     {
@@ -4341,7 +4110,7 @@
         "tenantScopedReadSources": [
           "src/app/api/source/synthesis/route.ts"
         ],
-        "rank": 13
+        "rank": 12
       }
     },
     {
@@ -4358,7 +4127,7 @@
         "tenantScopedReadSources": [
           "src/lib/programs/current-state-readiness.ts"
         ],
-        "rank": 14
+        "rank": 13
       }
     },
     {
@@ -4375,7 +4144,7 @@
         "tenantScopedReadSources": [
           "src/lib/source/nda/nda-authority-repository.ts"
         ],
-        "rank": 15
+        "rank": 14
       }
     }
   ],
@@ -4410,30 +4179,6 @@
       "coveredTestFiles": 0,
       "declaredQuarantineTestFiles": 0,
       "untriagedUnrunTestFiles": 8,
-      "via": []
-    },
-    {
-      "directory": "src/lib/source/archetypes/__tests__",
-      "testFiles": 8,
-      "coveredTestFiles": 0,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 8,
-      "via": []
-    },
-    {
-      "directory": "src/lib/programs/archetype-primers/__tests__",
-      "testFiles": 7,
-      "coveredTestFiles": 0,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 7,
-      "via": []
-    },
-    {
-      "directory": "src/lib/source/canvas-substrate/__tests__",
-      "testFiles": 7,
-      "coveredTestFiles": 0,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 7,
       "via": []
     },
     {
