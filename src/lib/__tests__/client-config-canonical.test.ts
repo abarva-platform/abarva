@@ -1,5 +1,6 @@
 import {
   canonicalClientDisplayName,
+  canonicalClientDisplayNameOrNull,
   demoSafeClientText,
   getClientOption,
 } from "@/lib/client-config";
@@ -126,3 +127,67 @@ describe("canonicalClientDisplayName", () => {
     ).toBe("FS Demo");
   });
 });
+
+/*
+ * U-511. `canonicalClientDisplayName` answers with the default account for any
+ * input it cannot resolve, which is correct for a surface that is already
+ * inside a tenant and wrong for a guard deciding whether it may name one at
+ * all. The strict variant exists for the second case, so it is the one that
+ * has to be unable to invent a name.
+ */
+describe("canonicalClientDisplayNameOrNull", () => {
+  it("resolves every registered key and alias exactly as the lenient form does", () => {
+    for (const args of [
+      { key: "apexretail" },
+      { key: "apex-retail" },
+      { key: "meridian" },
+      { key: "meridian-health" },
+      { key: "arcturus" },
+      { key: "first-capital" },
+      { key: "skyharbor-air" },
+      { key: "northstar" },
+      { key: "lakeshore" },
+      { name: "Apex Retail Group" },
+      { name: "Heliara Health Alliance" },
+      { name: "First Capital Financial" },
+      { name: "Lakeshore Industries" },
+      { key: "meridian", name: "Meridian Health" },
+    ]) {
+      expect(canonicalClientDisplayNameOrNull(args)).toBe(
+        canonicalClientDisplayName(args),
+      );
+      expect(canonicalClientDisplayNameOrNull(args)).not.toBeNull();
+    }
+  });
+
+  it("answers null rather than the default account when nothing resolves", () => {
+    for (const args of [
+      {},
+      { key: null, name: null },
+      { key: undefined, name: undefined },
+      { key: "" },
+      { key: "   " },
+      { key: "not-a-registered-key" },
+    ]) {
+      expect(canonicalClientDisplayNameOrNull(args)).toBeNull();
+      // The lenient form still answers with the default account for the same
+      // input -- that behaviour is relied on across the product and is
+      // deliberately unchanged here. The difference between the two is the fix.
+      expect(canonicalClientDisplayName(args)).toBe(
+        getClientOption(args.key).name,
+      );
+    }
+  });
+
+  it("still passes an unrecognized free-text name through, as the lenient form does", () => {
+    // An unregistered *name* is not an unresolved tenant: something named the
+    // account, and both forms have always echoed it rather than overriding it.
+    expect(canonicalClientDisplayNameOrNull({ name: "Some Other Co" })).toBe(
+      "Some Other Co",
+    );
+    expect(canonicalClientDisplayName({ name: "Some Other Co" })).toBe(
+      "Some Other Co",
+    );
+  });
+});
+
