@@ -268,9 +268,39 @@ export function itemSubjects(text) {
  * message field, which is where the register puts it and where
  * `announcesRelease` already reads it.
  */
-export function announcesAbstention(text) {
+/**
+ * The generated prefix `append-claim.mjs` puts in front of every record it
+ * writes: `item <id> claimed`, optionally `on branch \`x\``, then an em dash.
+ *
+ * Reading past it is a REPAIR, not a widening. T-707 chose head-of-message
+ * deliberately, because nearly every claim line in this register promises "one
+ * public-safe release record" and a loose search for the word would free every
+ * item in flight. This recognises ONE machine-generated string, so an operator
+ * sentence cannot be caught by it.
+ *
+ * It exists because the helper wrote that prefix onto releases too, up to and
+ * including T-712's fix, and those lines are already in the register — which
+ * is append-only, so they cannot be restamped. Without this, a release handed
+ * back at 23:08:45Z still held its files at 23:29Z.
+ *
+ * The limit, stated rather than left implicit: a hand-written record that
+ * genuinely claims one item while OPENING its message with a release of
+ * another would now read as a release. The writer refuses to compose that
+ * line (T-712), so the remaining path to it is an operator writing it out by
+ * hand against the protocol.
+ */
+const GENERATED_CLAIM_PREFIX =
+  /^item\s+[A-Za-z]{0,2}-?\d{1,4}(?:\([a-z]\))?\s+claimed(?:\s+on\s+branch\s+`[^`]*`)?\s*(?:—|--|-)\s*/i;
+
+/** The message field of a register line, with that generated prefix removed. */
+export function messageField(text) {
   const parts = String(text).split("|");
-  const message = (parts.length > 2 ? parts[2] : parts[parts.length - 1] ?? "").trim();
+  const raw = (parts.length > 2 ? parts[2] : parts[parts.length - 1] ?? "").trim();
+  return raw.replace(GENERATED_CLAIM_PREFIX, "").trim();
+}
+
+export function announcesAbstention(text) {
+  const message = messageField(text);
   return /^(?:\*\*)?(?:items?\s+(?:\*\*)?`?[A-Za-z]{0,2}-?\d{1,4}(?:\([a-z]\))?`?(?:\*\*)?\s+)?(?:\*\*)?NOT\s+(?:TAKEN|CLAIMED|TAKING)\b/i.test(
     message,
   );
@@ -285,8 +315,7 @@ export function announcesAbstention(text) {
  * head of the message field, which is where the register puts it.
  */
 export function announcesRelease(text) {
-  const parts = String(text).split("|");
-  const message = (parts.length > 2 ? parts[2] : parts[parts.length - 1] ?? "").trim();
+  const message = messageField(text);
   return (
     /^(?:\*\*)?(?:RELEASED|RELEASING)\b/.test(message) ||
     /^(?:\*\*)?releas(?:ed|ing)\s+items?\b/i.test(message)
@@ -330,6 +359,17 @@ export function resolveItemClaim(lines, { itemId, identity, nowMs, windowHours }
       Number.isFinite(line.stampMs) &&
       line.stampMs > nowMs - windowMs &&
       line.stampMs <= nowMs &&
+      // An abstention holds nothing — it records a decision NOT to take the
+      // item. The FILE half has skipped these since T-707; this half never
+      // did, so `item T-803 NOT TAKEN — already in open PR #8280` refused the
+      // next run that came for it.
+      //
+      // It is SKIPPED rather than answered as a release, and the difference is
+      // not cosmetic: newest-line-wins would otherwise let B's abstention sit
+      // on top of A's live claim and report the item free to a third run. A
+      // first attempt did exactly that and this suite caught it. Transparent,
+      // so the newest line that actually asserts ownership still decides.
+      !announcesAbstention(line.text) &&
       itemSubjects(line.text).some(
         (id) => id.base === wanted.base && (wanted.part === "" || id.part === wanted.part),
       ),
@@ -1049,7 +1089,14 @@ if (isMain()) {
     const identity = flag("--identity");
     if (!file || !item || !identity) {
       console.error(
-        "usage: --preclaim --file <register.md> --item <id> --identity <base-agent#run-id> [--now ISO] [--window-hours 3] [--strict] [--json]",
+        // Every flag this branch READS must appear here. `append-claim.mjs` probes
+        // this text to decide whether a check it forwards would actually run, and
+        // refuses the claim when a flag is unadvertised — correctly, because Node
+        // ignores flags it does not recognise and the check would pass silently.
+        // `--files` shipped in T-707 and was never added here, so from the moment
+        // T-708 wired the helper up, the file half of this gate could not be run
+        // through the sanctioned path at all. Found by execution, not by reading.
+        "usage: --preclaim --file <register.md> --item <id> --identity <base-agent#run-id> [--files a,b,c] [--now ISO] [--window-hours 3] [--strict] [--json]",
       );
       process.exit(2);
     }

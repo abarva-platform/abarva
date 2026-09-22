@@ -34,7 +34,8 @@
  *
  *   node scripts/exec/append-claim.mjs --file <register.md> \
  *        --item <id> --identity <base-agent#run-id> --message <text> \
- *        [--branch <name>] [--files a,b] [--strict] [--dry-run] \
+ *        [--action claim|release|abstain] [--branch <name>] [--files a,b] \
+ *        [--strict] [--dry-run] \
  *        [--now ISO] [--window-hours 3] [--gate <path>] [--gate-arg <flag>]...
  *
  * Exit 0 appended (or shown, under --dry-run); 1 the gate refused; 2 usage,
@@ -46,6 +47,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { execFileSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
+import { announcesRelease, announcesAbstention } from "./register-time-authority.mjs";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const DEFAULT_GATE = path.join(HERE, "register-time-authority.mjs");
@@ -57,7 +59,8 @@ const EXIT_GATE_UNUSABLE = 3;
 
 const USAGE =
   "usage: --file <register.md> --item <id> --identity <base-agent#run-id> --message <text>\n" +
-  "       [--branch <name>] [--files a,b] [--strict] [--dry-run] [--now ISO]\n" +
+  "       [--action claim|release|abstain] [--branch <name>] [--files a,b]\n" +
+  "       [--strict] [--dry-run] [--now ISO]\n" +
   "       [--window-hours 3] [--gate <path>] [--gate-arg <flag>]...";
 
 /**
@@ -76,9 +79,37 @@ export function advertisedFlags(usageText) {
  * attributes — `<stamp> | <identity> | item <id> ...` — because a line that
  * reads as prose holds nothing, however carefully it is worded.
  */
-export function buildClaimLine({ stamp, identity, item, message, branch, files, verdict }) {
+export const ACTIONS = new Set(["claim", "release", "abstain"]);
+
+/**
+ * The head of the message field, in the grammar the register's OWN reader
+ * parses — `announcesRelease` and `announcesAbstention`, imported above rather
+ * than restated here so the writer and the reader cannot drift apart.
+ *
+ * Until T-712 this was the literal `item <id> claimed`, whatever the record
+ * actually said. A run that handed item T-708 back at 23:08:45Z with the words
+ * `RELEASED item T-708 — merged, DEPLOYED ... all files free` got
+ * `item T-708 claimed on branch \`...\` — RELEASED item T-708 — ...`, and
+ * fourteen minutes later the file gate printed that line as the HOLDER of the
+ * files it had just released. Ownership in this register turns on one word,
+ * and the tool was hard-coding it.
+ */
+export function announcementHead(action, item, branch) {
+  if (action === "release") {
+    const parts = [`RELEASED item ${item}`];
+    if (branch) parts.push(`on branch \`${branch}\``);
+    return parts.join(" ");
+  }
+  // An abstention carries no branch: `announcesAbstention` reads NOT TAKEN in
+  // the slot directly after the id, and anything between them hides it.
+  if (action === "abstain") return `item ${item} NOT TAKEN`;
   const parts = [`item ${item} claimed`];
   if (branch) parts.push(`on branch \`${branch}\``);
+  return parts.join(" ");
+}
+
+export function buildClaimLine({ stamp, identity, item, message, branch, files, verdict, action = "claim" }) {
+  const parts = [announcementHead(action, item, branch)];
   let line = `${stamp} | ${identity} | ${parts.join(" ")} — ${message.trim()}`;
   line += ` Stamp is a literal clock read at the instant of writing, per T-457; nothing carried forward.`;
   line += ` Appended through the T-708 gate wiring; pre-claim verdict \`${verdict}\`.`;
@@ -118,6 +149,42 @@ function main(argv) {
   const files = flag("--files");
   if (files !== undefined && !files.trim()) {
     fail(EXIT_USAGE, `--files was given but is empty; omit it or name the paths.\n${USAGE}`);
+  }
+
+  // T-712. What this record ANNOUNCES is not decoration: the register's
+  // ownership reader takes the verb at the head of the message field and
+  // nothing else. A typo here would silently write a claim, so an unknown
+  // action stops rather than falling back to the default.
+  const action = flag("--action") ?? "claim";
+  if (!ACTIONS.has(action)) {
+    fail(
+      EXIT_USAGE,
+      `--action ${action} is not one of ${[...ACTIONS].join(", ")}. The head verb of this record ` +
+        "is what the register's ownership reader parses, so an unrecognised action is refused " +
+        `rather than written as a claim.\n${USAGE}`,
+    );
+  }
+
+  // A message that announces one thing under an action that announces another
+  // is precisely the record that caused this item: the head says `claimed` and
+  // the body says `RELEASED ... all files free`, and the head wins. Refuse,
+  // and name the flag, rather than writing a line that contradicts itself.
+  const asMessage = `x | y | ${message.trim()}`;
+  if (action === "claim" && announcesRelease(asMessage)) {
+    fail(
+      EXIT_USAGE,
+      "this message announces a RELEASE but --action is `claim`, so the record would open " +
+        "`item ... claimed` and the register would keep reading it as a hold. " +
+        "Pass --action release.",
+    );
+  }
+  if (action === "claim" && announcesAbstention(asMessage)) {
+    fail(
+      EXIT_USAGE,
+      "this message announces an ABSTENTION but --action is `claim`, so the record would open " +
+        "`item ... claimed` and the register would read it as a hold on every file it names. " +
+        "Pass --action abstain.",
+    );
   }
   if (!fs.existsSync(file)) fail(EXIT_USAGE, `no register at ${file}`);
 
@@ -195,17 +262,33 @@ function main(argv) {
     return lines.join("\n");
   };
 
-  if (status === EXIT_REFUSED) {
+  // An abstention past a refusal is the ONE case that continues, so it is
+  // named once and consulted by both guards below. The trailing "any exit this
+  // caller does not interpret as permission" guard is a separate statement, not
+  // an else-branch, and a refusal that skipped the first guard still reached it
+  // — which turned the abstention into exit 3 instead of a record.
+  const abstainPastRefusal = status === EXIT_REFUSED && action === "abstain";
+  if (abstainPastRefusal) {
+    // An abstention TAKES nothing, and the moment you most need to record one
+    // is the moment the gate refuses — "not taking T-706, it is in open PR
+    // #8280" is a refused verdict written down. Blocking it would push the
+    // decision back to a hand-written line, which is the path this helper
+    // exists to replace. The refused verdict is carried into the record, so
+    // the register shows why; and the line asserts NOT TAKEN, so nothing is
+    // gained by reaching for this flag to get past the gate.
+    console.error(`Pre-claim refused item ${item}, which is what an abstention records. Continuing.`);
+    console.error(describe());
+  } else if (status === EXIT_REFUSED) {
     console.error(`Pre-claim REFUSED — item ${item} as ${identity}. Nothing was appended.`);
     console.error(describe());
     process.exit(EXIT_REFUSED);
-  }
+  } else
   if (status === EXIT_USAGE) {
     console.error(`The pre-claim gate rejected the request as unusable. Nothing was appended.`);
     console.error(describe());
     process.exit(EXIT_USAGE);
   }
-  if (status !== EXIT_OK) {
+  if (status !== EXIT_OK && !abstainPastRefusal) {
     // An exit this caller does not understand is not a pass. Failing open here
     // is exactly the unwired-control shape T-708 was filed against.
     fail(
@@ -235,6 +318,7 @@ function main(argv) {
     branch: flag("--branch"),
     files,
     verdict,
+    action,
   });
 
   if (has("--dry-run")) {

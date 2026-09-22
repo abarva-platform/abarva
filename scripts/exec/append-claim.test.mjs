@@ -97,6 +97,27 @@ function preclaim(file, item, identity, now) {
   }
 }
 
+/** The file half of the same gate — used to prove a release frees its files. */
+function preclaimFiles(file, item, identity, now, files) {
+  try {
+    const stdout = execFileSync(
+      process.execPath,
+      [GATE, "--preclaim", "--file", file, "--item", item, "--identity", identity,
+        "--now", now, "--files", files, "--json"],
+      { encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] },
+    );
+    return { status: 0, report: JSON.parse(stdout) };
+  } catch (error) {
+    let report = {};
+    try {
+      report = JSON.parse(error.stdout ?? "{}");
+    } catch {
+      /* a crash has no report; the status below carries the verdict */
+    }
+    return { status: error.status ?? 1, report };
+  }
+}
+
 const NOW = "2026-09-22T18:00:00Z";
 const ME = "source-backlog-executor#20260922T175543Z";
 const SIBLING = "source-backlog-executor#20260922T045559Z";
@@ -466,6 +487,309 @@ const base = (args = []) => ["--file", args.file, "--item", args.item, "--identi
     "the appended record carries the file list it was checked against",
     /files: scripts\/exec\/a\.mjs/.test(fs.readFileSync(file, "utf8")),
     fs.readFileSync(file, "utf8").slice(-300),
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+
+// ---------------------------------------------------------------------------
+// Case 10 (item T-712) — THE HELPER MUST NOT ASSERT A VERB THE MESSAGE DENIES.
+//
+// Found by execution on the live register, not by reading this file. At
+// 23:08:45Z a run handed back item T-708 with the words `RELEASED item T-708 —
+// merged, DEPLOYED ... all files free`, and fourteen minutes later the file
+// gate still printed that very line as the holder of the files it had just
+// released. The reason is in `buildClaimLine`: every record this helper writes
+// opens `item <id> claimed`, whatever the operator's message says, and the
+// register's release grammar is read from the ANNOUNCEMENT VERB AT THE HEAD OF
+// THE MESSAGE FIELD — `announcesRelease` and `announcesAbstention` both.
+//
+// So the sanctioned claim path emits lines its own reader cannot release, and
+// the more the helper is adopted the more files stay locked for three hours
+// after they were handed back. That is not a wording problem: the tool is
+// hard-coding the one word the ownership grammar turns on, which is the
+// "satisfy a control with a string literal" shape this backlog exists against.
+//
+// The assertion is deliberately end-to-end over a fixture register: claim,
+// release, then ask the REAL gate whether the next run may take it. Asserting
+// on the emitted string alone would pass a helper that writes a verb no reader
+// accepts.
+// ---------------------------------------------------------------------------
+{
+  const { dir, file } = fixture([]);
+  const HELD = "scripts/exec/append-claim.mjs";
+  // Reads are pinned to a clock taken AFTER each write, never to a fixed past
+  // instant: the helper stamps from the real clock at the moment it appends
+  // (T-457), and a `--now` before that stamp drops the line from the window,
+  // which turns every assertion below into a vacuous pass.
+
+  const claimed = run([
+    ...base({ file, item: "T-801", identity: ME, message: "taking it" }),
+    "--branch", "exec/t-801", "--files", HELD,
+  ]);
+  const T1 = new Date().toISOString().replace(/\.\d{3}Z$/, "Z");
+  check(
+    "setup: the claim is appended",
+    claimed.status === 0,
+    `status=${claimed.status} stderr=${claimed.stderr}`,
+  );
+
+  // A claim, before any release, must hold. Without this the release case
+  // below could pass against a gate that never holds anything.
+  const heldNow = preclaim(file, "T-801", OTHER, T1);
+  check(
+    "negative control — an ordinary claim still HOLDS the item against another run",
+    heldNow.status === 1 && heldNow.report.verdict === "held-by-another",
+    `status=${heldNow.status} report=${JSON.stringify(heldNow.report)}`,
+  );
+  const heldFiles = preclaimFiles(file, "T-802", OTHER, T1, HELD);
+  check(
+    "negative control — an ordinary claim still HOLDS its files against another run",
+    heldFiles.report.fileOverlap?.conflicts?.length === 1,
+    JSON.stringify(heldFiles.report),
+  );
+
+  const released = run([
+    ...base({ file, item: "T-801", identity: ME, message: "merged and deployed; all files free" }),
+    "--action", "release", "--branch", "exec/t-801",
+  ]);
+  const T2 = new Date().toISOString().replace(/\.\d{3}Z$/, "Z");
+  check(
+    "a release is appended through the same gate",
+    released.status === 0,
+    `status=${released.status} stdout=${released.stdout} stderr=${released.stderr}`,
+  );
+  check(
+    "the released record opens with the announcement verb the register's reader parses",
+    /\|\s*RELEASED item T-801\b/.test(fs.readFileSync(file, "utf8")),
+    fs.readFileSync(file, "utf8").slice(-400),
+  );
+
+  const after = preclaim(file, "T-801", OTHER, T2);
+  check(
+    "THE ACCEPTANCE — after a release written by this helper, the next run may TAKE the item",
+    after.status === 0 && after.report.verdict === "take",
+    `status=${after.status} report=${JSON.stringify(after.report)}`,
+  );
+  const afterFiles = preclaimFiles(file, "T-802", OTHER, T2, HELD);
+  check(
+    "THE ACCEPTANCE — after that release the files it held are FREE, not held for three more hours",
+    afterFiles.report.fileOverlap?.conflicts?.length === 0,
+    JSON.stringify(afterFiles.report),
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+// ---------------------------------------------------------------------------
+// Case 11 (item T-712) — an abstention written by the helper holds nothing.
+//
+// Same defect, the other verb. `announcesAbstention` was added by T-707 for
+// exactly the register line shape `item T-706 NOT TAKEN — already in open PR
+// #8280 ... (files named six hundred characters later to say who ELSE is on
+// them)`. A run that records that decision through this helper instead gets
+// `item T-706 claimed — item T-706 NOT TAKEN ...`, and the files it named to
+// disclaim them are read as held.
+// ---------------------------------------------------------------------------
+{
+  const { dir, file } = fixture([]);
+  const OTHERS_FILE = "scripts/exec/register-time-authority.mjs";
+
+  const abstained = run([
+    ...base({
+      file, item: "T-803", identity: ME,
+      message: `already in open PR #8280, which touches ${OTHERS_FILE}; leaving it`,
+    }),
+    "--action", "abstain",
+  ]);
+  const T0 = new Date().toISOString().replace(/\.\d{3}Z$/, "Z");
+  check(
+    "an abstention is appended through the same gate",
+    abstained.status === 0,
+    `status=${abstained.status} stdout=${abstained.stdout} stderr=${abstained.stderr}`,
+  );
+  check(
+    "the abstention record opens with the announcement form the register's reader parses",
+    /\|\s*item T-803 NOT TAKEN\b/.test(fs.readFileSync(file, "utf8")),
+    fs.readFileSync(file, "utf8").slice(-400),
+  );
+  const itemFree = preclaim(file, "T-803", OTHER, T0);
+  check(
+    "an abstention does not hold the item it declined",
+    itemFree.status === 0 && itemFree.report.verdict === "take",
+    `status=${itemFree.status} report=${JSON.stringify(itemFree.report)}`,
+  );
+  const filesFree = preclaimFiles(file, "T-804", OTHER, T0, OTHERS_FILE);
+  check(
+    "an abstention does not hold the files it named to say who else is on them",
+    filesFree.report.fileOverlap?.conflicts?.length === 0,
+    JSON.stringify(filesFree.report),
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+// ---------------------------------------------------------------------------
+// Case 12 (item T-712) — the guard, so the defect cannot be re-entered by hand.
+//
+// An operator who writes a release into `--message` and forgets `--action`
+// would reproduce line 1948 exactly. The helper refuses rather than writing a
+// record whose head word contradicts its own body, and says which flag to use.
+// A refusal writes nothing: asserted by digest, as case 1 does.
+// ---------------------------------------------------------------------------
+{
+  const { dir, file } = fixture([]);
+  const before = digest(file);
+  const r = run([
+    ...base({
+      file, item: "T-805", identity: ME,
+      message: "RELEASED item T-805 — merged, DEPLOYED, all files free",
+    }),
+    "--now", "2026-09-22T17:30:00Z",
+  ]);
+  check(
+    "a release message written as a claim is REFUSED as a usage error",
+    r.status === 2,
+    `status=${r.status} stdout=${r.stdout} stderr=${r.stderr}`,
+  );
+  check(
+    "the refusal names the flag that fixes it",
+    /--action\s+release/.test(`${r.stdout}${r.stderr}`),
+    `${r.stdout}${r.stderr}`,
+  );
+  check(
+    "and nothing was appended — register byte-identical",
+    digest(file) === before,
+    fs.readFileSync(file, "utf8").slice(-300),
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+// ---------------------------------------------------------------------------
+// Case 12b (item T-712) — the same guard, for the other verb.
+//
+// Added because mutation testing said so: deleting the abstention half of the
+// mismatch guard left the suite at 47/0, so the guard was asserted by nothing.
+// The release half was covered and the abstention half was not, which is the
+// shape where a control quietly stops being one.
+// ---------------------------------------------------------------------------
+{
+  const { dir, file } = fixture([]);
+  const before = digest(file);
+  const r = run([
+    ...base({
+      file, item: "T-809", identity: ME,
+      message: "item T-809 NOT TAKEN — already in open PR #8280, which touches scripts/exec/a.mjs",
+    }),
+    "--now", "2026-09-22T17:30:00Z",
+  ]);
+  check(
+    "an abstention message written as a claim is REFUSED as a usage error",
+    r.status === 2,
+    `status=${r.status} stdout=${r.stdout} stderr=${r.stderr}`,
+  );
+  check(
+    "the refusal names the flag that fixes it",
+    /--action\s+abstain/.test(`${r.stdout}${r.stderr}`),
+    `${r.stdout}${r.stderr}`,
+  );
+  check(
+    "and nothing was appended — register byte-identical",
+    digest(file) === before,
+    fs.readFileSync(file, "utf8").slice(-300),
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+// ---------------------------------------------------------------------------
+// Case 13 (item T-712) — a release is still an ownership question.
+//
+// `--action release` must not become a way to hand back an item someone else
+// is holding. The gate already answers this; what is asserted here is that the
+// release path still ASKS it.
+// ---------------------------------------------------------------------------
+{
+  const { dir, file } = fixture([
+    `2026-09-22T17:40:00Z | ${OTHER} | item T-806 claimed — branch \`x\``,
+  ]);
+  const before = digest(file);
+  const r = run([
+    ...base({ file, item: "T-806", identity: ME, message: "handing it back" }),
+    "--action", "release", "--now", NOW,
+  ]);
+  check(
+    "releasing another run's claim is refused by the gate",
+    r.status === 1,
+    `status=${r.status} stdout=${r.stdout} stderr=${r.stderr}`,
+  );
+  check(
+    "and nothing was appended",
+    digest(file) === before,
+    fs.readFileSync(file, "utf8").slice(-300),
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+// ---------------------------------------------------------------------------
+// Case 13b (item T-712) — the moment you most need to record an abstention is
+// the moment the gate refuses.
+//
+// "Not taking T-706, it is in open PR #8280" IS a refused verdict written
+// down. If a refusal stopped it being recorded, the decision would go back to
+// a hand-written line — the path this helper exists to replace. Nothing is
+// gained by reaching for the flag to get past the gate: the record asserts NOT
+// TAKEN, so it holds neither the item nor the files it names, which the two
+// assertions below check rather than assume.
+// ---------------------------------------------------------------------------
+{
+  const OTHERS_FILE = "scripts/exec/build-source-board.mjs";
+  const { dir, file } = fixture([]);
+  const held = run([
+    ...base({ file, item: "T-808", identity: OTHER, message: "taking it" }),
+    "--files", OTHERS_FILE,
+  ]);
+  check("setup: another run holds T-808", held.status === 0, held.stderr);
+
+  const abstained = run([
+    ...base({
+      file, item: "T-808", identity: ME,
+      message: `held by another run, which lists ${OTHERS_FILE}; staying off it`,
+    }),
+    "--action", "abstain",
+  ]);
+  const T = new Date().toISOString().replace(/\.\d{3}Z$/, "Z");
+  check(
+    "an abstention is recorded even though the gate refuses the item",
+    abstained.status === 0 && /\| item T-808 NOT TAKEN\b/.test(fs.readFileSync(file, "utf8")),
+    `status=${abstained.status} stdout=${abstained.stdout} stderr=${abstained.stderr}`,
+  );
+  check(
+    "the record carries the refused verdict, so the register shows why",
+    /pre-claim verdict `held-by-another`/.test(fs.readFileSync(file, "utf8")),
+    fs.readFileSync(file, "utf8").slice(-400),
+  );
+  check(
+    "and the abstention adds no hold of its own — the original holder is still the holder",
+    preclaim(file, "T-808", "third-party#run-1", T).report.holder?.agent === OTHER,
+    JSON.stringify(preclaim(file, "T-808", "third-party#run-1", T).report),
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+// ---------------------------------------------------------------------------
+// Case 14 (item T-712) — an unknown --action is a usage error, not a claim.
+//
+// Failing open here would restore the defect under a typo.
+// ---------------------------------------------------------------------------
+{
+  const { dir, file } = fixture([]);
+  const before = digest(file);
+  const r = run([
+    ...base({ file, item: "T-807", identity: ME, message: "handing it back" }),
+    "--action", "relase", "--now", "2026-09-22T17:30:00Z",
+  ]);
+  check(
+    "a misspelled --action is refused rather than silently treated as a claim",
+    r.status === 2 && digest(file) === before,
+    `status=${r.status} stdout=${r.stdout} stderr=${r.stderr}`,
   );
   fs.rmSync(dir, { recursive: true, force: true });
 }
