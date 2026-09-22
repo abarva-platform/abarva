@@ -526,7 +526,20 @@ console.log("build-execution-queue — staleness guard (T-076)\n");
       "| T-584 | **Register outcome integrity fixture.** | T | Append exact deploy outcome lines without batch proof. |\n" +
       "| T-585 | **Contract 360 field-fidelity fixture.** | C | Keep the C7 vendor concession spelling defect under Contract 360 truth. |\n" +
       "| T-586 | **Per-PR outcome registration fixture.** | T | Keep merge and carrier-deploy evidence attributable per release. |\n" +
-      "| T-587 | **Coverage-census drift fixture.** | T | Keep generated coverage evidence synchronized with its generator. |\n",
+      "| T-587 | **Coverage-census drift fixture.** | T | Keep generated coverage evidence synchronized with its generator. |\n" +
+      "| T-474 | **Release-closeout control fixture.** | T | Keep release closeout mechanics outside lifecycle progress. |\n" +
+      "| T-551 | **Coverage-census execution-status fixture.** | T | Keep coverage evidence honest without advancing product stages. |\n" +
+      "| T-552 | **Coverage-census workflow fixture.** | T | Keep CI wiring work outside lifecycle progress. |\n" +
+      "| T-553 | **Source scanner behavior fixture.** | T | Replace brittle scanners without advancing a lifecycle stage. |\n" +
+      "| T-554 | **Browser red-case fixture.** | T | Preserve browser control proof outside lifecycle progress. |\n" +
+      "| T-588 | **Contract-purpose gate fixture.** | T | Keep review-gate proof outside lifecycle progress. |\n" +
+      "| T-589 | **Reachability input fixture.** | T | Keep route-audit inputs outside lifecycle progress. |\n" +
+      "| T-590 | **Export reachability fixture.** | T | Keep export-grain auditing outside lifecycle progress. |\n" +
+      "| T-591 | **Scope-summary reachability fixture.** | T | Keep guard reachability analysis outside lifecycle progress. |\n" +
+      "| T-592 | **Orphan export fixture.** | T | Keep orphan cleanup outside lifecycle progress. |\n" +
+      "| T-593 | **Behavior-suite wiring fixture.** | T | Keep CI coverage investigation outside lifecycle progress. |\n" +
+      "| T-594 | **Claim-protocol concurrency fixture.** | T | Keep execution coordination outside lifecycle progress. |\n" +
+      "| T-595 | **Required-workflow duplication fixture.** | T | Keep workflow-governance investigation outside lifecycle progress. |\n",
   );
   const map = JSON.parse(fs.readFileSync(path.join(dir, "source-stage-map.json"), "utf8"));
   const stage9 = map.stages.find((stage) => stage.id === 9);
@@ -561,7 +574,28 @@ console.log("build-execution-queue — staleness guard (T-076)\n");
       JSON.stringify(map.platformTrack.items.slice(-24)),
     );
   }
-  for (const id of ["T-516", "T-517", "T-518", "T-519", "T-584", "T-586", "T-587"]) {
+  for (const id of [
+    "T-474",
+    "T-516",
+    "T-517",
+    "T-518",
+    "T-519",
+    "T-551",
+    "T-552",
+    "T-553",
+    "T-554",
+    "T-584",
+    "T-586",
+    "T-587",
+    "T-588",
+    "T-589",
+    "T-590",
+    "T-591",
+    "T-592",
+    "T-593",
+    "T-594",
+    "T-595",
+  ]) {
     check(
       `${id} is mapped to platform/test-execution integrity without advancing a lifecycle stage`,
       map.platformTrack.items.includes(id) &&
@@ -623,6 +657,19 @@ for (const [id, expectedRemoved] of [
   ["T-585", 2],
   ["T-586", 1],
   ["T-587", 1],
+  ["T-474", 1],
+  ["T-551", 1],
+  ["T-552", 1],
+  ["T-553", 1],
+  ["T-554", 1],
+  ["T-588", 1],
+  ["T-589", 1],
+  ["T-590", 1],
+  ["T-591", 1],
+  ["T-592", 1],
+  ["T-593", 1],
+  ["T-594", 1],
+  ["T-595", 1],
 ]) {
   const dir = freshFixture();
   fs.appendFileSync(
