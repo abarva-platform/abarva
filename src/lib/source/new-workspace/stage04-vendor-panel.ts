@@ -6,6 +6,7 @@ import {
   readContractVendorLegalEntityIds,
   toVendorPanelContractInput,
 } from "@/lib/source/candidate-suppliers/contract-vendor-repository";
+import { readCandidateSupplierRegistry } from "@/lib/source/candidate-suppliers/candidate-supplier-registry-repository";
 import {
   buildVendorPanelProjection,
   type VendorPanelGroup,
@@ -17,6 +18,10 @@ import type {
   CandidateSupplierProjectionRow,
   CandidateSupplierRegistrySlice,
 } from "@/lib/source/candidate-suppliers/candidate-supplier-authority";
+import {
+  buildSourceRequestSupplierSuggestions,
+  type SourceRequestSupplierSuggestionProjection,
+} from "@/lib/source/intake/source-request-supplier-suggestions";
 
 /**
  * Stage 04 — the accepted candidate panel, as a surface can render it.
@@ -71,12 +76,15 @@ export type SourceNewStage04VendorPanel = {
   counts: Record<VendorPanelGroup, number>;
   /** Stated on the surface, not buried: what this panel does not know. */
   notRecorded: readonly string[];
+  suggestions: SourceRequestSupplierSuggestionProjection;
   asOf: string;
 };
 
 export type SourceNewStage04PanelInput = {
   clientKey: string;
   eventId: string;
+  categoryId: string | null;
+  archetypeId: string | null;
   asOf: string;
 };
 
@@ -188,12 +196,13 @@ export function asProjectionRow(
 export async function readSourceNewStage04VendorPanel(
   input: SourceNewStage04PanelInput,
 ): Promise<SourceNewStage04VendorPanel> {
-  const [authority, contracts] = await Promise.all([
+  const [authority, contracts, candidateRegistry] = await Promise.all([
     readAcceptedCandidatesForEvent({
       clientKey: input.clientKey,
       eventId: input.eventId,
     }),
     readContractVendorLegalEntityIds(input.clientKey),
+    readCandidateSupplierRegistry(input.clientKey),
   ]);
 
   const slice: CandidateSupplierRegistrySlice = {
@@ -214,9 +223,25 @@ export async function readSourceNewStage04VendorPanel(
     excluded: [],
   };
 
+  const contractInput = toVendorPanelContractInput(contracts);
   const projection = buildVendorPanelProjection({
     slice,
-    ...toVendorPanelContractInput(contracts),
+    ...contractInput,
+  });
+  const suggestions = buildSourceRequestSupplierSuggestions({
+    tenantKey: input.clientKey,
+    eventId: input.eventId,
+    acceptedMapping:
+      input.categoryId?.trim() && input.archetypeId?.trim()
+        ? {
+            categoryId: input.categoryId.trim(),
+            archetypeId: input.archetypeId.trim(),
+          }
+        : null,
+    registryAvailable: candidateRegistry.registryAvailable,
+    registryRows: candidateRegistry.rows,
+    contractVendorLegalEntityIds: contractInput.contractVendorLegalEntityIds,
+    contractEvidenceAvailable: contractInput.contractEvidenceAvailable,
   });
 
   const byEntity = new Map(
@@ -256,6 +281,7 @@ export async function readSourceNewStage04VendorPanel(
     }),
     counts: projection.counts,
     notRecorded: notRecordedNotes(authority.acceptedCandidates),
+    suggestions,
     asOf: input.asOf,
   };
 }

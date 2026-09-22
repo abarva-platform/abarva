@@ -87,6 +87,8 @@ export default async function SourceNewEventPage({
       readSourceNewStage04VendorPanel({
         clientKey: activeClient.key,
         eventId: event.id,
+        categoryId: event.classifiedCategory ?? null,
+        archetypeId: event.archetype ?? null,
         asOf: asOfDate,
       }),
       readSourceNewStage05NdaCoverage({

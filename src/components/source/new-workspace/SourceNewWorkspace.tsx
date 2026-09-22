@@ -729,6 +729,43 @@ function SourceNewStage04VendorPanelView({
         respondents only when human selection evidence is recorded. It sends
         nothing, contacts nobody, and selects no respondent.
       </p>
+      <div className="snw-known">
+        <h4>Suggested for review</h4>
+        {panel.suggestions.status === "blocked" ? (
+          <ul className="snw-blockers">
+            {panel.suggestions.blockers.map((blocker) => (
+              <li key={blocker}>{blocker}</li>
+            ))}
+          </ul>
+        ) : panel.suggestions.status === "empty" ? (
+          <p>
+            No governed candidate matches the accepted category and archetype.
+            Registry coverage must be added before Source can suggest a supplier.
+          </p>
+        ) : (
+          <ul className="snw-panel-rows">
+            {panel.suggestions.rows.map((row) => (
+              <li key={row.supplierId}>
+                <strong>{row.legalName}</strong>
+                {" — "}
+                {row.label}
+                {row.existingContractVendor
+                  ? ". Existing-contract vendor, shown separately from fresh candidates"
+                  : ". Not recorded as an existing-contract vendor"}
+                {`. Eligibility: ${eligibilityLabel(row.eligibility)}`}
+                {`. Contact policy: ${contactPolicyLabel(row.contactPolicy)}`}
+                {`. Contact readiness: ${row.contactReadiness.replaceAll("_", " ")}`}
+                {`. Source: ${row.sourceReference}.`}
+              </li>
+            ))}
+          </ul>
+        )}
+        <p className="snw-note">
+          Suggestions are registry matches only. A named procurement user must
+          separately accept a supplier onto the event panel. No contact action
+          is available here.
+        </p>
+      </div>
       <dl className="snw-facts">
         <div>
           <dt>Accepted, not under contract</dt>
