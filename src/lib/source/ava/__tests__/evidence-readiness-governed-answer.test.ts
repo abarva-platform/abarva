@@ -5,14 +5,23 @@ import {
 } from "@/lib/source/ava/evidence-readiness-governed-answer";
 import { listSourceArtifactsForSourceEventIdWithContent } from "@/lib/source/artifact-registry";
 import type { SourceArtifactRegistryRecordWithContent } from "@/lib/source/artifact-registry";
+import {
+  listArtifactStatesForEventStage,
+  type SourceEventArtifactState,
+} from "@/lib/source/canvas-substrate";
 
 jest.mock("@/lib/source/artifact-registry", () => ({
   listSourceArtifactsForSourceEventIdWithContent: jest.fn(),
 }));
 
+jest.mock("@/lib/source/canvas-substrate", () => ({
+  listArtifactStatesForEventStage: jest.fn(),
+}));
+
 const mockListSourceArtifacts = jest.mocked(
   listSourceArtifactsForSourceEventIdWithContent,
 );
+const mockListArtifactStates = jest.mocked(listArtifactStatesForEventStage);
 
 function artifact(
   overrides: Partial<SourceArtifactRegistryRecordWithContent> = {},
@@ -63,6 +72,33 @@ function artifact(
     deletedAt: null,
     bodyMarkdown:
       "# Scope Memo\n\n## Executive Summary\n\nThis memo names scope, baselines, responsibilities, assumptions, and approval.",
+    ...overrides,
+  };
+}
+
+function artifactState(
+  overrides: Partial<SourceEventArtifactState>,
+): SourceEventArtifactState {
+  return {
+    id: "state-1",
+    sourceEventId: "event-1",
+    tenantKey: "meridian",
+    artifactCode: "d04_app_inv",
+    stage: "scope",
+    family: "scope_document",
+    tier: "rich",
+    status: "drafting",
+    requirementLevel: "required",
+    gateDefining: true,
+    linkedArtifactId: null,
+    notes: null,
+    body: null,
+    bodyFormat: "markdown",
+    bodyAuthoredBy: null,
+    bodyUpdatedAt: null,
+    bodyGenerationMetadata: null,
+    createdAt: "2026-09-22T00:00:00.000Z",
+    updatedAt: "2026-09-22T00:00:00.000Z",
     ...overrides,
   };
 }
@@ -134,6 +170,7 @@ describe("looksLikeSourceStageCompletionQuestion", () => {
 describe("buildEvidenceReadinessGovernedAnswer", () => {
   beforeEach(() => {
     jest.resetAllMocks();
+    mockListArtifactStates.mockResolvedValue([]);
   });
 
   it("emits a governed chart + table from existing registry parse/search states", async () => {
@@ -480,12 +517,111 @@ describe("buildEvidenceReadinessGovernedAnswer", () => {
     expect(answer!.directAnswer).toContain(
       "Ticket History Synthesis: AI draft not accepted as client final",
     );
-    expect(answer!.citations.map((citation) => citation.recordId)).not.toContain(
-      "foreign-tenant-same-event",
+    expect(
+      answer!.citations.map((citation) => citation.recordId),
+    ).not.toContain("foreign-tenant-same-event");
+    expect(
+      answer!.citations.map((citation) => citation.recordId),
+    ).not.toContain("same-tenant-opposite-event");
+  });
+
+  it("uses the mounted Files projection of registry files plus current-stage artifact states", async () => {
+    mockListSourceArtifacts.mockResolvedValue(
+      Array.from({ length: 17 }, (_, index) =>
+        artifact({
+          id: `registry-${index + 1}`,
+          sourceEventId: "event-1",
+          artifactKind:
+            index === 0
+              ? "d04_app_inv"
+              : index === 1
+                ? "d05_scope_memo"
+                : index === 2
+                  ? "d07_ticket_synth"
+                  : `supporting-${index + 1}`,
+          sourceOrigin: index < 3 ? "generated" : "uploaded",
+          approvalState: index < 3 ? "draft" : "not_required",
+          isClientFinal: false,
+          isCurrentAuthoritative: false,
+          parseStatus: index < 6 ? "parsed" : "pending",
+        }),
+      ),
     );
-    expect(answer!.citations.map((citation) => citation.recordId)).not.toContain(
-      "same-tenant-opposite-event",
+    mockListArtifactStates.mockResolvedValue([
+      artifactState({
+        id: "state-app-inventory",
+        linkedArtifactId: "registry-1",
+      }),
+      artifactState({
+        id: "state-scope-memo",
+        artifactCode: "d05_scope_memo",
+        linkedArtifactId: "registry-2",
+      }),
+      artifactState({
+        id: "state-exclusion-log",
+        artifactCode: "d06_excl_log",
+        notes: "Supporting evidence is registered.",
+      }),
+      artifactState({
+        id: "state-ticket-history",
+        artifactCode: "d07_ticket_synth",
+        linkedArtifactId: "registry-3",
+      }),
+      artifactState({
+        id: "state-premortem",
+        artifactCode: "d08_premortem",
+        family: "workshop_output",
+        tier: "outline",
+        requirementLevel: "optional",
+        gateDefining: false,
+      }),
+      artifactState({
+        id: "foreign-event-state",
+        sourceEventId: "event-2",
+        artifactCode: "d06_excl_log",
+        status: "approved",
+      }),
+    ]);
+
+    const answer = await buildEvidenceReadinessGovernedAnswer({
+      eventId: "event-1",
+      clientKey: "meridian",
+      tenantId: "tenant-1",
+      question:
+        "What is blocking this event from advancing from Define, and what exact action should the sourcing lead take next? Do not estimate savings or recommend a supplier.",
+      stageContext: {
+        stageKey: "scope",
+        stageLabel: "Define",
+        nextAction: "Open scope and strategy",
+        missingInputs: [],
+      },
+    });
+
+    expect(mockListArtifactStates).toHaveBeenCalledWith("event-1", "scope");
+    expect(answer).not.toBeNull();
+    expect(answer!.directAnswer).toContain(
+      "22 Source artifact records are stored",
     );
+    expect(answer!.directAnswer).toContain("6 are parsed");
+    expect(answer!.directAnswer).toContain("16 still require parsing");
+    expect(answer!.directAnswer).toContain(
+      "Exclusion Log: evidence is present, but no governed deliverable is accepted",
+    );
+    expect(answer!.directAnswer).not.toContain("Exclusion Log: not registered");
+    expect(answer!.directAnswer).not.toMatch(/\bsavings?\b/i);
+    expect(answer!.directAnswer).not.toMatch(
+      /recommend(?:ed|ation)? a supplier/i,
+    );
+    expect(answer!.artifacts[0]).toMatchObject({
+      artifact: "chart",
+      data: {
+        data: expect.arrayContaining([
+          { metric: "Stored", count: 22 },
+          { metric: "Needs parser", count: 16 },
+          { metric: "Parsed", count: 6 },
+        ]),
+      },
+    });
   });
 
   it("answers honestly when no registry rows exist", async () => {
