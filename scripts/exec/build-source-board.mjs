@@ -373,8 +373,8 @@ function firstMatchingSentence(text, rule) {
 }
 
 const BLOCKER_RULES = [
-  { re: /\bnot\s+signed-in\b|(?:^|[.!?]\s+)signed-in\s+check\b|signed-in[^.]{0,80}\b(pending|owed|not proven|not performed|not claimed|remains? (?:open|unproven))\b/i, say: "Signed-in acceptance owed" },
-  { re: /\brequires? separate approval\b|\bApply requires\b/i, say: "Awaiting approval to apply" },
+  { re: /\bnot\s+signed-in\b|(?:^|[.!?]\s+)signed-in\s+check\b|signed-in[^.]{0,80}\b(pending|owed|not proven|not performed|not claimed|remains? (?:open|unproven))\b/i, say: "Signed-in acceptance owed", ownerGate: true },
+  { re: /\brequires? separate approval\b|\bApply requires\b/i, say: "Awaiting approval to apply", ownerGate: true },
   // An acceptance is written in the imperative, so the decision gate in one
   // usually is too. Recognising only the noun forms and the single literal
   // "Decide first" left T-596 — which opens "Decide per job before pinning
@@ -390,8 +390,13 @@ const BLOCKER_RULES = [
   // owner to decide anything" and "Deciding which suite to wire was settled"
   // out; and the deferral form names who does the deciding rather than
   // matching the verb anywhere it appears.
-  { re: /decision needed|decision required|Content decision|\bproduct call\b|\bowner'?s call\b|blocked on owner policy|(?:^|[.!?;:]\s+|\n\s*|\*\*)Decide\b|\b(?:until|before)\s+(?:a human|an owner|a person|the owner|Anand|someone)\s+decides\b/i, say: "Decision needed", decisionGate: true },
-  { re: /\bblocked\b/i, say: "Blocked (see source)" },
+  { re: /decision needed|decision required|Content decision|\bproduct call\b|\bowner'?s call\b|blocked on owner policy|(?:^|[.!?;:]\s+|\n\s*|\*\*)Decide\b|\b(?:until|before)\s+(?:a human|an owner|a person|the owner|Anand|someone)\s+decides\b/i, say: "Decision needed", decisionGate: true, ownerGate: true },
+  { re: /\bblocked\b/i, say: "Blocked (see source)", ownerGate: true },
+  // NOT an `ownerGate`. This is the fallback, and it asserts the ABSENCE of a
+  // gate rather than one. It must never be promoted over a gate a claim line
+  // records: T-418's body reads "the largest unclaimed critical row in the
+  // census", which is prose about a census and not a status, and promoting it
+  // would move a real signed-in gate out of the never-claim bucket.
   { re: /\bunclaimed\b/i, say: "Unclaimed" },
 ];
 
@@ -424,18 +429,51 @@ const RESOLVED_RUNGS = new Set(["merged", "deployed", "proven"]);
  * at every rung, and an item with no shipping proof still reads its claim
  * lines for a decision gate — that is the direction that would hide live work,
  * and it is left alone.
+ *
+ * ---------------------------------------------------------------------------
+ * Item T-700 — the opposite half, and the more expensive one.
+ *
+ * `BLOCKER_RULES` is ordered, and T-578 left that order deciding which of two
+ * matches wins even when they come from different kinds of evidence. The
+ * signed-in rule is first, so a claim line carrying signed-in language took
+ * the label away from a gate the item declares in its OWN body. Measured on
+ * the live register at `ef261ac74`, 22 items were in that state, and one of
+ * them — `T-598` — had not shipped: its body says `decision needed` in bold,
+ * and it read `Signed-in acceptance owed` because a NEIGHBOURING item's
+ * release paperwork named it. An owner scanning for questions to answer could
+ * not see it.
+ *
+ * So the body wins, regardless of rule order. That is one comparison, not a
+ * re-ranking: each rule is still tried in order, but a rule that matches the
+ * item's own body short-circuits, while a rule that matches only the claim log
+ * is held and used solely if no body gate is found. When there is no claim log
+ * at all the two corpora are identical and the behaviour is unchanged.
+ *
+ * The comparison is deliberately confined to `ownerGate` rules. `Unclaimed` is
+ * the fallback and asserts the ABSENCE of a gate; promoting it over a real
+ * claim-derived gate would move an item OUT of the never-claim bucket, which
+ * is the one direction this file must never take. `T-418` is the live proof —
+ * see the note on that rule.
  */
 function deriveBlocker(body, claims = "", rung = null) {
   const bodyText = body ?? "";
   const claimText = claims ?? "";
   const combined = claimText ? `${bodyText}\n${claimText}` : bodyText;
   const resolved = RESOLVED_RUNGS.has(rung?.key ?? "");
+  let fromClaims = null;
   for (const r of BLOCKER_RULES) {
     const t = r.decisionGate && resolved ? bodyText : combined;
     const m = t.match(r.re);
-    if (m) return { say: r.say, quote: sentenceAround(t, m.index ?? 0) };
+    if (!m) continue;
+    if (r.ownerGate) {
+      const bodyMatch = bodyText.match(r.re);
+      if (bodyMatch) {
+        return { say: r.say, quote: sentenceAround(bodyText, bodyMatch.index ?? 0) };
+      }
+    }
+    fromClaims ??= { say: r.say, quote: sentenceAround(t, m.index ?? 0) };
   }
-  return null;
+  return fromClaims;
 }
 
 function sentenceAround(text, index) {
