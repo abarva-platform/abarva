@@ -85,9 +85,7 @@ describe("SourceNewRequestFirstPage", () => {
       screen.getByRole("heading", { name: "Source requests" }),
     ).toBeTruthy();
     expect(
-      screen.getByText(
-        "No requests are waiting for intake review.",
-      ),
+      screen.getByText("No requests are waiting for intake review."),
     ).toBeTruthy();
     expect(
       screen
@@ -150,7 +148,9 @@ describe("SourceNewRequestFirstPage", () => {
     );
 
     expect(
-      screen.getByText("The request queue could not be read. This is not an empty queue."),
+      screen.getByText(
+        "The request queue could not be read. This is not an empty queue.",
+      ),
     ).toBeTruthy();
     expect(screen.queryByText("Infrastructure services request")).toBeNull();
     expect(screen.getByText("Application services event")).toBeTruthy();
@@ -178,10 +178,14 @@ describe("SourceNewRequestFirstPage", () => {
     const workspaces = screen.getByRole("region", {
       name: "Event workspaces",
     });
-    expect(within(workspaces).getByText("Application services event")).toBeTruthy();
+    expect(
+      within(workspaces).getByText("Application services event"),
+    ).toBeTruthy();
     expect(screen.getByText("Open accepted work")).toBeTruthy();
     expect(
-      within(workspaces).getByRole("link", { name: "Open" }).getAttribute("href"),
+      within(workspaces)
+        .getByRole("link", { name: "Open" })
+        .getAttribute("href"),
     ).toBe("/source/new/event-1");
   });
 
@@ -209,7 +213,9 @@ describe("SourceNewRequestFirstPage", () => {
     expect(within(queue).getByText("Review required")).toBeTruthy();
     expect(screen.getByText("Review pending requests")).toBeTruthy();
     expect(within(queue).getByText("Nothing required is missing")).toBeTruthy();
-    expect(within(queue).getByText("AI proposal only · named review required")).toBeTruthy();
+    expect(
+      within(queue).getByText("AI proposal only · named review required"),
+    ).toBeTruthy();
     expect(
       within(queue).getByText(
         "Held until a named reviewer accepts or overrides the mapping.",
@@ -236,7 +242,11 @@ describe("SourceNewRequestFirstPage", () => {
         importedRequests={[
           {
             ...importedRequest,
-            requiredFactGaps: ["value_target", "baseline_owner", "decision_owner"],
+            requiredFactGaps: [
+              "value_target",
+              "baseline_owner",
+              "decision_owner",
+            ],
           },
         ]}
         eventWorkspaces={[]}
@@ -260,12 +270,15 @@ describe("SourceNewRequestFirstPage", () => {
           {
             ...importedRequest,
             mappingDecision: {
+              decisionId: "mapping-1",
               state: "accepted",
               categoryId: "managed_services_ams",
               archetypeId: "MANAGED_SERVICES_AMS",
+              decidedByUserId: "person-1",
               decidedByName: "Procurement lead",
               decidedAt: "2026-09-22T12:10:00Z",
               rationale: "Scope confirmed.",
+              sourceVersion: "v1",
             },
           },
         ]}
@@ -275,7 +288,9 @@ describe("SourceNewRequestFirstPage", () => {
 
     const queue = screen.getByRole("region", { name: "Request queue" });
     expect(within(queue).getByText("Ready to create event")).toBeTruthy();
-    expect(within(queue).getByText("Reviewed by Procurement lead")).toBeTruthy();
+    expect(
+      within(queue).getByText("Reviewed by Procurement lead"),
+    ).toBeTruthy();
     expect(
       within(queue).getByText(/Contact authority remains separate/),
     ).toBeTruthy();
@@ -293,6 +308,7 @@ describe("SourceNewRequestFirstPage", () => {
             eventLink: {
               eventId: "event-1",
               linkedAt: "2026-09-22T12:20:00Z",
+              sourceVersion: "v1",
             },
           },
         ]}
@@ -301,7 +317,9 @@ describe("SourceNewRequestFirstPage", () => {
     );
 
     const queue = screen.getByRole("region", { name: "Request queue" });
-    expect(within(queue).queryByText("Infrastructure services request")).toBeNull();
+    expect(
+      within(queue).queryByText("Infrastructure services request"),
+    ).toBeNull();
     expect(
       within(queue).getByText("No requests are waiting for intake review."),
     ).toBeTruthy();
