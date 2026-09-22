@@ -251,6 +251,30 @@ describe("buildEvidenceReadinessGovernedAnswer", () => {
     expect(answer!.nextSteps[0]?.label).toContain("Open scope and strategy");
   });
 
+  it("states when the governed event records no blocker or missing phase inputs", async () => {
+    mockListSourceArtifacts.mockResolvedValue([artifact()]);
+
+    const answer = await buildEvidenceReadinessGovernedAnswer({
+      eventId: "event-1",
+      clientKey: "meridian",
+      tenantId: "tenant-1",
+      question:
+        "What do I need to complete Define, and which evidence is still missing?",
+      stageContext: {
+        stageLabel: "Define",
+        nextAction: "Open scope and strategy",
+        missingInputs: [],
+      },
+    });
+
+    expect(answer).not.toBeNull();
+    expect(answer!.directAnswer).toContain("Define completion is not proven");
+    expect(answer!.directAnswer).toContain("No recorded phase blocker");
+    expect(answer!.directAnswer).toContain(
+      "No required phase inputs are recorded as missing",
+    );
+  });
+
   it("answers honestly when no registry rows exist", async () => {
     mockListSourceArtifacts.mockResolvedValue([]);
 

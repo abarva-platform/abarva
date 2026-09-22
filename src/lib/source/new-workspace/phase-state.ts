@@ -21,6 +21,13 @@ export const SOURCE_NEW_PHASE_ORDER: readonly SourceNewPhaseKey[] = [
   "rfi",
 ];
 
+export const SOURCE_NEW_PHASE_DISPLAY_LABELS: Record<SourceNewPhaseKey, string> = {
+  request: "Request",
+  define: "Define",
+  suppliers: "Suppliers & NDA",
+  rfi: "Market package",
+};
+
 /**
  * The public Source New flow has five visible checkpoints: the request-first
  * entry before an event exists, then the four event phases above. Internal
@@ -66,6 +73,11 @@ export interface SourceNewPhasePositionInput {
   lifecycle: string;
 }
 
+export interface SourceNewOperatorContextInput
+  extends SourceNewPhasePositionInput {
+  solicitationMotion?: "rfi" | "rfp" | null;
+}
+
 export function awaitsIntakeReview(lifecycle: string): boolean {
   return lifecycle === "waiting_on_client";
 }
@@ -83,6 +95,69 @@ export function sourceNewCurrentPhase(event: SourceNewPhasePositionInput): Sourc
   if (["intake", "strategy", "sourcing_strategy", "scope"].includes(stage)) return "define";
   if (["rfp", "rfp_rfi_package"].includes(stage)) return "rfi";
   return null;
+}
+
+export function sourceNewMarketPackageLabel(
+  event: Pick<SourceNewOperatorContextInput, "solicitationMotion">,
+): string {
+  if (event.solicitationMotion === "rfi") return "RFI";
+  if (event.solicitationMotion === "rfp") return "RFP";
+  return "Market package";
+}
+
+export function sourceNewCurrentPhaseLabel(
+  event: SourceNewOperatorContextInput,
+): string {
+  const phase = sourceNewCurrentPhase(event);
+  if (!phase) return sourceNewStageLabel(event.currentStage);
+  return phase === "rfi"
+    ? sourceNewMarketPackageLabel(event)
+    : SOURCE_NEW_PHASE_DISPLAY_LABELS[phase];
+}
+
+export function sourceNewNextAction(event: SourceNewOperatorContextInput): {
+  label: string;
+  detail: string;
+} {
+  const packageLabel = sourceNewMarketPackageLabel(event);
+  const stage = event.currentStage.trim().toLowerCase();
+  if (awaitsIntakeReview(event.lifecycle)) {
+    return {
+      label: "Review intake",
+      detail: "Review the recorded request and its approval state.",
+    };
+  }
+  if (event.lifecycle !== "active") {
+    return {
+      label: "Open event",
+      detail: `Current stage: ${sourceNewStageLabel(event.currentStage)}`,
+    };
+  }
+  if (
+    ["strategy", "scope", "sourcing_strategy", "intake"].includes(stage)
+  ) {
+    return {
+      label: "Open scope and strategy",
+      detail:
+        "Review scope, baseline and decision requirements in the governed event.",
+    };
+  }
+  if (["rfp", "rfp_rfi_package"].includes(stage)) {
+    return {
+      label:
+        packageLabel === "Market package"
+          ? "Open market package"
+          : `Open ${packageLabel}`,
+      detail:
+        packageLabel === "Market package"
+          ? "Review the package and its release requirements in the governed event."
+          : `Review the ${packageLabel} and its release requirements in the governed event.`,
+    };
+  }
+  return {
+    label: "Open current stage",
+    detail: `Current stage: ${sourceNewStageLabel(event.currentStage)}`,
+  };
 }
 
 /**

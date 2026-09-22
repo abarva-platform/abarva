@@ -48,6 +48,10 @@ import {
   looksLikeSourceStageCompletionQuestion,
 } from "@/lib/source/ava/evidence-readiness-governed-answer";
 import {
+  sourceNewCurrentPhaseLabel,
+  sourceNewNextAction,
+} from "@/lib/source/new-workspace/phase-state";
+import {
   buildValueLedgerGovernedAnswer,
   looksLikeValueLedgerQuestion,
 } from "@/lib/source/ava/value-ledger-governed-answer";
@@ -575,6 +579,13 @@ export async function POST(
       ) {
         const asksForStageCompletion =
           looksLikeSourceStageCompletionQuestion(normalizedBody.prompt);
+        const sourceNewEventContext = {
+          currentStage:
+            liveEventDetail?.currentStageKey ??
+            stubResponse.context.stageLabel ??
+            "",
+          lifecycle: liveEventDetail?.status ?? "active",
+        };
         agentAnswer = await buildEvidenceReadinessGovernedAnswer({
           eventId: liveEventDetail?.id ?? eventId,
           eventAliases: [
@@ -588,12 +599,10 @@ export async function POST(
           ...(asksForStageCompletion
             ? {
                 stageContext: {
-                  stageLabel:
-                    liveEventDetail?.currentStageLabel ??
-                    liveEventDetail?.currentStageKey ??
-                    stubResponse.context.stageLabel ??
-                    "Current phase",
-                  nextAction: liveEventDetail?.nextAction,
+                  stageLabel: sourceNewCurrentPhaseLabel(
+                    sourceNewEventContext,
+                  ),
+                  nextAction: sourceNewNextAction(sourceNewEventContext).label,
                   blocker: liveEventDetail?.blocker,
                   missingInputs: stubResponse.context.missingInputs,
                 },

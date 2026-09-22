@@ -245,11 +245,11 @@ function directAnswerForReport(
     : "";
   const blocker = stageContext.blocker?.trim()
     ? ` Recorded blocker: ${stageContext.blocker.trim()}.`
-    : "";
+    : " No recorded phase blocker.";
   const missing =
     missingInputs.length > 0
       ? ` Required inputs still missing: ${missingInputs.join("; ")}.`
-      : "";
+      : " No required phase inputs are recorded as missing.";
   return `${phaseStatus}${nextAction}${blocker}${missing} Evidence processing: ${evidenceStatus}`;
 }
 
