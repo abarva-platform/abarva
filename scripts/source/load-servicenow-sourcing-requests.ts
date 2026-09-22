@@ -112,6 +112,11 @@ export function parseServiceNowImportArgs(
     envValue(env, "TENANT_KEY");
   const tenantKey = tenantArg ?? (apply ? "" : "corpus_global");
   if (!tenantKey) throw new Error("Apply mode requires --tenant-key.");
+  if (apply && tenantKey.trim().toLowerCase() === "corpus_global") {
+    throw new Error(
+      "corpus_global cannot be used for apply; select one explicit tenant.",
+    );
+  }
   requireOperatorValue(tenantArg, "--tenant-key or SOURCE_SERVICENOW_REQUEST_TENANT_KEY", operatorJob);
   const datasetVersion =
     argValue(argv, "--dataset-version") ??
