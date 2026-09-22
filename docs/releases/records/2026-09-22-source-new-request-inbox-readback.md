@@ -37,6 +37,10 @@ Release lane: `global-control-lane`.
 
 - `npx jest --runTestsByPath 'src/app/(maestro)/source/__tests__/new-route-optimization-redirect.test.ts' --runInBand` passed: 1 suite, 8 tests.
 - `npx jest src/__tests__/behaviors/source-servicenow-request-acceptance-harness.test.ts src/__tests__/behaviors/source-request-supplier-suggestions.test.ts src/app/api/v1/source/intake/servicenow/review/__tests__/route.test.ts src/__tests__/integration/source/source-servicenow-request-loader.test.ts src/__tests__/integration/source/source-servicenow-request-review.test.ts --runInBand` passed: 5 suites, 30 tests.
+- `NODE_OPTIONS=--max-old-space-size=8192 npm run typecheck` completed with exit code 0.
+- `npx eslint 'src/app/(maestro)/source/new/page.tsx' 'src/app/(maestro)/source/__tests__/new-route-optimization-redirect.test.ts'` passed with no findings.
+- `npm run audit:test-ci-coverage:write` followed by `npm run audit:test-ci-coverage:check` passed; the route regression is covered by the pull-request unit suite through its exact file path.
+- `npm run release:check` passed.
 - Mutation proof: temporarily restoring the old workspace-read coupling made the new regression fail with queue status `unavailable` instead of `loaded`.
 - No migrations were applied and no tenant data was written.
 
