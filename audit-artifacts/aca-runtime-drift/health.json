@@ -1,0 +1,8 @@
+{
+  "ok": true,
+  "checks": {
+    "postgres": true,
+    "direct_postgres": true,
+    "azure_graph": "postgres"
+  }
+}
