@@ -182,11 +182,40 @@ function backlogTableItems(text) {
 }
 
 /** Timestamped append-only entries from EXECUTION_CLAIMS.md. */
+/**
+ * Where one claim record ends and the next begins — item T-702.
+ *
+ * A line that is not a record start is appended to the record above it, which
+ * is right for a wrapped continuation and catastrophic for a line this
+ * function fails to recognise. The boundary used to demand
+ * `^TIMESTAMP | ` at MINUTE precision, and the register does not write that
+ * way. Measured over the live register at 2026-09-22T15:26Z: 1207 lines open
+ * with a stamp, 633 were recognised, and **574 (47.6%) were swallowed** — 207
+ * carrying seconds precision, 367 written in the pipe-less canonical form
+ * `<stamp> <agent> item <id> <branch> — claimed` that this directory's README
+ * documents. One entry therefore carried dozens of unrelated records, and
+ * `claimTextForItem` handed that whole blob to `deriveRung` for any id named
+ * anywhere inside it.
+ *
+ * That is not a reporting nuisance. `rung === 0` is the queue's claimable
+ * filter and `rung === 7` is its `isFinished` test, so an item that absorbed a
+ * neighbour's proof language disappeared from every bucket the queue renders.
+ * Measured across the whole register: 105 items read a rung they had no
+ * evidence for, `Signed-in proven` fell from 129 to 38 once the boundary was
+ * repaired, and the queue went from offering 0 claimable items to 4.
+ *
+ * The grammar below is the one `build-execution-queue.mjs` already accepts in
+ * `parseClaimRecord`; before this change the two repo-owned generators
+ * disagreed about what a record is by 574 lines.
+ */
+const CLAIM_RECORD_START =
+  /^(?:[-*]\s+)?(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2})?Z)\s+(?:\|\s*)?(.*)$/;
+
 function executionClaimEntries(text) {
   const out = [];
   let current = null;
   for (const line of text.split(/\r?\n/)) {
-    const start = line.match(/^(?:[-*]\s+)?(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}Z)\s+\|\s+(.*)$/);
+    const start = line.match(CLAIM_RECORD_START);
     if (start) {
       if (current) out.push(current);
       current = { timestamp: start[1], text: start[2].trim() };
@@ -198,6 +227,21 @@ function executionClaimEntries(text) {
   }
   if (current) out.push(current);
   return out;
+}
+
+// Parser invariants for the boundary, kept beside it so a regex edit cannot
+// quietly re-swallow half the register. Case 4 is the one that matters most:
+// a continuation must still join, or the fix trades a leak for a truncation.
+for (const [sample, expected] of [
+  ["2026-09-22T13:39Z | agent | item T-901 claimed", true],
+  ["2026-09-22T13:39:41Z | agent | item T-901 claimed", true],
+  ["2026-09-22T13:39Z agent item T-901 branch — claimed", true],
+  ["signed-in acceptance PASSED on the deployed SHA.", false],
+  ["- 2026-09-22T13:39:41Z | agent | item T-901 claimed", true],
+]) {
+  if (CLAIM_RECORD_START.test(sample) !== expected) {
+    throw new Error(`Claim record boundary invariant failed for ${JSON.stringify(sample)}`);
+  }
 }
 
 {
@@ -226,10 +270,24 @@ function executionClaimEntries(text) {
  * authority it used. Do not "fix" a disagreement by restamping the register —
  * it is audit history and the correction pattern is append-only.
  */
+/**
+ * Compare two register stamps of possibly different precision — item T-702.
+ *
+ * Once seconds-precision lines are recognised as records, the two precisions
+ * sit side by side, and a raw string compare gets them backwards: `":"` (0x3A)
+ * sorts below `"Z"` (0x5A), so `2026-09-22T13:14:48Z` compares as EARLIER than
+ * `2026-09-22T13:14Z`. Pad to seconds for the comparison only. The stamp the
+ * register wrote is never rewritten — `entry.timestamp` still carries it
+ * exactly as written, because the register is audit history.
+ */
+function stampSortKey(stamp) {
+  return /T\d{2}:\d{2}Z$/.test(stamp ?? "") ? `${stamp.slice(0, -1)}:00Z` : (stamp ?? "");
+}
+
 function latestClaimByStampThenAppend(entries) {
   return entries.reduce((latest, entry) => {
     if (!latest) return entry;
-    return entry.timestamp >= latest.timestamp ? entry : latest;
+    return stampSortKey(entry.timestamp) >= stampSortKey(latest.timestamp) ? entry : latest;
   }, null);
 }
 
@@ -240,6 +298,17 @@ function latestClaimByStampThenAppend(entries) {
   const earlier = { timestamp: "2026-09-21T17:20Z", text: "appended second, stamped earlier" };
   if (latestClaimByStampThenAppend([later, earlier]) !== later) {
     throw new Error("Claim resolver must pick the later STAMP, not the later append position");
+  }
+  // Mixed precision, built to disagree: a raw string compare picks `coarse`.
+  const fine = { timestamp: "2026-09-21T17:30:41Z", text: "stamped 41s into the minute" };
+  const coarse = { timestamp: "2026-09-21T17:30Z", text: "stamped at the minute" };
+  // A raw string compare answers `coarse` BOTH times, because ":" sorts below
+  // "Z"; the correct answer is `fine` both times, whichever order they arrive.
+  if (latestClaimByStampThenAppend([fine, coarse]) !== fine) {
+    throw new Error("Claim resolver must read 17:30:41Z as LATER than 17:30Z appended after it");
+  }
+  if (latestClaimByStampThenAppend([coarse, fine]) !== fine) {
+    throw new Error("Claim resolver must read 17:30:41Z as LATER than 17:30Z appended before it");
   }
   const tieFirst = { timestamp: "2026-09-21T17:30Z", text: "same stamp, appended first" };
   const tieSecond = { timestamp: "2026-09-21T17:30Z", text: "same stamp, appended second" };

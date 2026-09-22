@@ -38,5 +38,21 @@ jobs:
       # CI never reads an operator file it cannot see. Mutation-proved,
       # negated-use case included: the real register's "NOT MERGED YET" line
       # was classified as an announcement until case 9 was added.
+      # T-702. The board's claim-record boundary. `executionClaimEntries`
+      # started a new record only on `^TIMESTAMP | ` at MINUTE precision, so
+      # every line written with seconds, or in the pipe-less canonical form
+      # this directory's README documents, was appended to the record above
+      # it. Measured over the live register: 1207 stamped lines, 633
+      # recognised, 574 swallowed. `rung === 0` is the queue's claimable
+      # filter and `rung === 7` is its `isFinished` test, so an item that
+      # absorbed a neighbour's proof language left every bucket the queue
+      # renders. Repairing the boundary moved 105 items -- every one of them
+      # DOWN the ladder, none up -- and took the queue from 0 claimable to 4.
+      # The suite runs over FIXTURE registers, so CI never reads an operator
+      # file it cannot see. Mutation-proved, including the opposite error: a
+      # fix that made every line its own record fails case 4.
+      - name: Run the source board claim-record boundary contract
+        run: node scripts/exec/build-source-board.test.mjs
+
       - name: Run the register time-authority contract
         run: node scripts/exec/register-time-authority.test.mjs
