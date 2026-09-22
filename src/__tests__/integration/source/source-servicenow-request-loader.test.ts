@@ -128,6 +128,30 @@ describe("ServiceNow sourcing request loader", () => {
     ).toThrow(/--idempotency-key/);
   });
 
+  it("rejects the cross-tenant corpus key for operator apply before database access", () => {
+    expect(() =>
+      parseServiceNowImportArgs(
+        [
+          "--apply",
+          "--operator-job",
+          "--tenant-key",
+          "corpus_global",
+          "--input",
+          inputPath,
+          "--input-source-version",
+          "servicenow-requests-v1",
+          "--input-sha256",
+          csvSha256,
+          "--load-run-id",
+          "servicenow-request-load-20260922",
+          "--idempotency-key",
+          "servicenow-requests:corpus-global:v1",
+        ],
+        testEnv,
+      ),
+    ).toThrow(/corpus_global cannot be used for apply/);
+  });
+
   it("runs a dry plan with no database configuration and writes auditable proof", async () => {
     const outDir = mkdtempSync(path.join(tmpdir(), "source-servicenow-plan-"));
     const priorDatabaseUrl = process.env.DATABASE_URL;
