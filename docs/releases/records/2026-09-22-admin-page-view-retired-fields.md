@@ -59,10 +59,20 @@ Admin read it, and the new guard suite fails if a future change removes it.
 
 - `src/__tests__/integration/admin/admin-page-view-retired-fields.test.ts` (new)
 
-  Builds all six views and asserts, on the built objects rather than on file
-  text, that the retired keys are absent, that the keys the surviving components
-  still destructure are present, and that the shared agent editorial still
-  produces a non-empty `contextUsed`.
+  Builds the four views a product entry point reaches and asserts, on the built
+  objects rather than on file text, that the retired keys are absent, that the
+  keys the surviving components still destructure are present, and that the
+  shared agent editorial still produces a non-empty `contextUsed`.
+
+  It guards four of the six, and the reason is a finding in its own right. A
+  first version imported all six; `audit:lib-orphans` failed the build and was
+  right to. `architecture-page-view.ts` and `build-progress-page-view.ts` are
+  reached by no product entry point — no route builds either — so importing them
+  into a test moved them, and seven modules behind them, from `unreferenced` to
+  `testOnly`, which that gate describes as a test written for code nothing calls.
+  The retired fields are still removed from all six, because the removal is a
+  typechecked deletion; the coverage claim stops where the reachable code stops.
+  The orphan itself is reported, not repaired here.
 
 - `src/__tests__/integration/admin/production-readiness-page-view.test.ts`
 
@@ -80,7 +90,7 @@ baseline on the exact merge base.
   2 suites failing (`admin-visible-vocabulary`, `admin7-visual-lock`). Both
   pre-existing, both unrelated to these fields, both untouched here.
 - **Red first:** the new suite on unmodified code — 3 failed / 10 passed / 13.
-  Each failure names all six views.
+  Each failure names every view it covers.
 - **After:** the new suite 13 / 13. Same scope — 2 failed / 1761 passed /
   1763 total. The same two pre-existing suites, and no others.
 - **Mutations, applied one at a time against the committed fix, each caught:**
@@ -90,10 +100,20 @@ baseline on the exact merge base.
      failed, which is the case that protects the non-Admin readers.
   4. over-reach: drop a field the surviving component still reads — 1 of 13
      failed.
-  Tree restored to 13 / 13 and a clean `git status` after each.
+  Each mutation was confirmed present in the file before its run, and the tree
+  restored to 13 / 13 with a clean `git status` after each. That confirmation is
+  not ceremony: an earlier pass had a mutation silently fail to apply, and its
+  13 / 13 would have been read as a surviving mutation. The same pass reverted
+  with `git checkout --` while the fix was still uncommitted, which restored
+  `HEAD` and deleted the fix on two files. Both were caught, the fix was
+  committed first, and every number above is measured against the commit.
 - `NODE_OPTIONS=--max-old-space-size=6144 npx tsc --noEmit --pretty false` —
   exit 0, zero diagnostics.
-- `npx eslint` over the eight changed files — exit 0.
+- `npx eslint` over the changed files — exit 0.
+- `node scripts/audit/lib-orphan-report.mjs` — exit 1 on the first version of
+  the suite, naming the nine modules that moved; exit 0 and `No change against
+  the baseline` after the guard was narrowed. The baseline was not edited to
+  make it pass.
 
 ## Rollout Plan
 
@@ -133,6 +153,13 @@ no consumer exists.
 - The deploy run and its runtime-invariant proof, after merge.
 
 ## Known Gaps
+
+`src/lib/admin/architecture-page-view.ts` and
+`src/lib/admin/build-progress-page-view.ts` are reached by no product entry
+point, along with seven modules behind them — two adapters, two adapter type
+modules, two fixtures and a barrel. Their retired fields are removed here; their
+reachability is not addressed here and is filed separately. Nothing in this
+change made them orphans, and nothing in it hides that they are.
 
 The two pre-existing failures in this scope — `admin-visible-vocabulary` and
 `admin7-visual-lock` — are untouched and remain failing. They are not caused by
