@@ -77,6 +77,46 @@ describe("ValueWaterfall — honesty invariants", () => {
     expect(screen.getByText(/12–18% of baseline/)).toBeInTheDocument();
   });
 
+  it("states negotiable, protected, and risk-adjusted movements separately", () => {
+    const classified: ValueWaterfallView = {
+      ...waterfall,
+      baselineAmount: 31_800_000,
+      bands: [
+        waterfall.bands[0],
+        {
+          id: "b-protected",
+          valueType: "protected",
+          label: "SLA credit economics",
+          amountLow: 31_000,
+          amountHigh: 45_000,
+          unit: "usd",
+          confidence: "low",
+          state: "quantified",
+          citation: { doc: "Contract terms", locator: "Credit cap" },
+        },
+        {
+          id: "b-risk",
+          valueType: "risk_adjusted",
+          label: "Retained client cost normalization",
+          amountLow: -14_000_000,
+          amountHigh: -10_000_000,
+          unit: "usd",
+          confidence: "low",
+          state: "quantified",
+          citation: { doc: "Workforce model", locator: "Retained roles" },
+        },
+      ],
+    };
+
+    render(<ValueWaterfall waterfall={classified} />);
+
+    expect(screen.getByText(/negotiable value/i)).toBeInTheDocument();
+    expect(screen.getByText(/protected value/i)).toBeInTheDocument();
+    expect(screen.getByText(/risk-adjusted movement/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/-\$14M to -\$10M/).length).toBeGreaterThan(0);
+    expect(screen.queryByText(/-\$13M–-\$8M/)).not.toBeInTheDocument();
+  });
+
   it("ships the sample exemplar marked as sample intelligence (not live)", () => {
     // Guards the default the canvas renders before the live engine wires in.
     expect(SAMPLE_SCOPE_STAGE.intel.provenance).toBe("sample");
@@ -114,8 +154,8 @@ describe("ValueWaterfall — honesty invariants", () => {
     it("omits the '% of baseline' fragment but keeps the classified-value label", () => {
       render(<ValueWaterfall waterfall={noBaseline} />);
       expect(screen.queryByText(/% of baseline/)).not.toBeInTheDocument();
-      // The classified total still renders (label present, plus the range).
-      expect(screen.getByText(/classified value/)).toBeInTheDocument();
+      // The negotiable total still renders (label present, plus the range).
+      expect(screen.getByText(/negotiable value/)).toBeInTheDocument();
       expect(screen.getAllByText(/\$1M–\$2M/).length).toBeGreaterThanOrEqual(1);
     });
 
@@ -164,7 +204,7 @@ describe("ValueWaterfall — honesty invariants", () => {
       ).toBeInTheDocument();
       // ...and the "% of baseline" fragment renders (200–287% for 30–43M / 15M).
       expect(screen.getByText(/200–287% of baseline/)).toBeInTheDocument();
-      expect(screen.getByText(/classified value/)).toBeInTheDocument();
+      expect(screen.getByText(/negotiable value/)).toBeInTheDocument();
     });
 
     it("SUPPRESSES an incredible baseline (baseline 15 vs ~$65M) — both gone, total stays", () => {
@@ -187,8 +227,8 @@ describe("ValueWaterfall — honesty invariants", () => {
       ).not.toBeInTheDocument();
       // ...and no "% of baseline" fragment (would have been ~millions of %).
       expect(screen.queryByText(/% of baseline/)).not.toBeInTheDocument();
-      // But the classified total still renders on its own.
-      expect(screen.getByText(/classified value/)).toBeInTheDocument();
+      // But the negotiable total still renders on its own.
+      expect(screen.getByText(/negotiable value/)).toBeInTheDocument();
     });
   });
 });
