@@ -603,6 +603,13 @@ describe("SourceAnalyticsCanvas stage workflow", () => {
       "href",
       `/source/events/${EVENT.id}?stage=scope&workspace=files`,
     );
+    const approvalsWorkspace = screen.getByTestId("source-shell-v2-approvals");
+    expect(approvalsWorkspace).toHaveTextContent(
+      "All 7 workflow inputs complete",
+    );
+    expect(approvalsWorkspace).not.toHaveTextContent(
+      "All 7 required evidence items ready",
+    );
   });
 
   it("discloses when a stage was approved with required inputs still open", () => {
