@@ -200,6 +200,54 @@ describe("SourceAnalyticsCanvas New Event journey smoke", () => {
     },
   );
 
+  it("does not mark missing supplier history complete on a completed event", () => {
+    const event = {
+      ...makeEvent("value"),
+      status: "completed",
+      statusLabel: "Completed",
+    } as SourcingEventSummary;
+
+    render(
+      <SourceAnalyticsCanvas
+        event={event}
+        viewStage="value"
+        tenantName="AbarVa QA"
+        artifacts={[
+          {
+            id: "strategy-record",
+            artifactCode: "STRATEGY-MEMO",
+            sourcingStage: "strategy",
+            title: "Strategy memo",
+          },
+          {
+            id: "scope-record",
+            artifactCode: "SCOPE-MEMO",
+            sourcingStage: "scope",
+            title: "Scope memo",
+          },
+          {
+            id: "rfp-record",
+            artifactCode: "RFP-PACKAGE",
+            sourcingStage: "rfp",
+            title: "RFP package",
+          },
+        ]}
+      />,
+    );
+
+    const checkpoints = within(
+      screen.getByTestId("source-shell-v2-rail"),
+    ).getAllByTestId("source-reader-journey-checkpoint");
+    const supplierCheckpoint = checkpoints.find((checkpoint) =>
+      checkpoint.textContent?.includes("Suppliers & NDA"),
+    );
+
+    expect(supplierCheckpoint).toBeDefined();
+    expect(within(supplierCheckpoint as HTMLElement).getByText("Historical gap"))
+      .toBeInTheDocument();
+    expect(supplierCheckpoint).not.toHaveTextContent("✓");
+  });
+
   it("keeps supporting workspaces reachable without competing with the active step canvas", () => {
     renderStage("scope");
 
