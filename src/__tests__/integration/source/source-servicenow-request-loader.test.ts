@@ -1,4 +1,6 @@
-import { mkdtempSync, readFileSync, rmSync } from "node:fs";
+import { createHash } from "node:crypto";
+import { spawnSync } from "node:child_process";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { listSourceArchetypes } from "@/lib/source/archetypes/registry";
@@ -13,6 +15,7 @@ const inputPath = path.join(
   "datasets/source-servicenow-sourcing-requests-synthetic-v1/servicenow_sourcing_requests.csv",
 );
 const csvText = readFileSync(inputPath, "utf8");
+const csvSha256 = createHash("sha256").update(csvText, "utf8").digest("hex");
 const testEnv = { NODE_ENV: "test" } as NodeJS.ProcessEnv;
 
 function args(overrides: Partial<ReturnType<typeof parseServiceNowImportArgs>> = {}) {
@@ -76,6 +79,55 @@ describe("ServiceNow sourcing request loader", () => {
     );
   });
 
+  it("requires the full operator job contract before ACA execution", () => {
+    expect(() =>
+      parseServiceNowImportArgs(["--operator-job", "--input", inputPath], testEnv),
+    ).toThrow(/Operator job mode requires --tenant-key/);
+
+    expect(() =>
+      parseServiceNowImportArgs(
+        ["--operator-job", "--tenant-key", "synthetic_test", "--input", inputPath],
+        testEnv,
+      ),
+    ).toThrow(/--input-source-version/);
+
+    expect(() =>
+      parseServiceNowImportArgs(
+        [
+          "--operator-job",
+          "--tenant-key",
+          "synthetic_test",
+          "--input",
+          inputPath,
+          "--input-source-version",
+          "servicenow-requests-v1",
+          "--load-run-id",
+          "servicenow-request-load-20260922",
+        ],
+        testEnv,
+      ),
+    ).toThrow(/--input-sha256/);
+
+    expect(() =>
+      parseServiceNowImportArgs(
+        [
+          "--operator-job",
+          "--tenant-key",
+          "synthetic_test",
+          "--input",
+          inputPath,
+          "--input-source-version",
+          "servicenow-requests-v1",
+          "--input-sha256",
+          "a".repeat(64),
+          "--load-run-id",
+          "servicenow-request-load-20260922",
+        ],
+        testEnv,
+      ),
+    ).toThrow(/--idempotency-key/);
+  });
+
   it("runs a dry plan with no database configuration and writes auditable proof", async () => {
     const outDir = mkdtempSync(path.join(tmpdir(), "source-servicenow-plan-"));
     const priorDatabaseUrl = process.env.DATABASE_URL;
@@ -97,6 +149,83 @@ describe("ServiceNow sourcing request loader", () => {
       else process.env.DATABASE_URL = priorDatabaseUrl;
       if (priorSourceUrl === undefined) delete process.env.SOURCE_CONTEXT_DATABASE_URL;
       else process.env.SOURCE_CONTEXT_DATABASE_URL = priorSourceUrl;
+      rmSync(outDir, { recursive: true, force: true });
+    }
+  });
+
+  it("rejects a mismatched immutable input hash before any apply path can open a database", async () => {
+    const outDir = mkdtempSync(path.join(tmpdir(), "source-servicenow-hash-"));
+    try {
+      await expect(
+        runServiceNowRequestImport(
+          args({
+            operatorJob: true,
+            tenantKey: "synthetic_test",
+            outDir,
+            expectedInputSha256: "0".repeat(64),
+            inputSourceVersion: "servicenow-requests-v1",
+            idempotencyKey: "servicenow-requests:synthetic-test:v1",
+          }),
+        ),
+      ).rejects.toThrow(/input SHA mismatch/);
+      expect(existsSync(path.join(outDir, "servicenow-request-import-plan.json"))).toBe(
+        false,
+      );
+    } finally {
+      rmSync(outDir, { recursive: true, force: true });
+    }
+  });
+
+  it("emits a tarball proof bundle for the ACA wrapper in dry-run mode", async () => {
+    const outDir = mkdtempSync(path.join(tmpdir(), "source-servicenow-proof-"));
+    const bundleOut = path.join(outDir, "decoded-proof");
+    const consoleSpy = jest.spyOn(console, "log").mockImplementation(() => undefined);
+    try {
+      const result = await runServiceNowRequestImport(
+        args({
+          outDir,
+          operatorJob: true,
+          tenantKey: "synthetic_test",
+          inputSourceVersion: "servicenow-requests-v1",
+          expectedInputSha256: csvSha256,
+          idempotencyKey: "servicenow-requests:synthetic-test:v1",
+          emitProofBundle: true,
+        }),
+      );
+      const proofManifest = JSON.parse(
+        readFileSync(path.join(outDir, "proof-manifest.json"), "utf8"),
+      ) as {
+        contract: {
+          tenantKey: string;
+          inputSourceVersion: string;
+          idempotencyKey: string;
+        };
+        blobCompatible: boolean;
+      };
+
+      expect(result.committed).toBe(false);
+      expect(proofManifest.blobCompatible).toBe(true);
+      expect(proofManifest.contract).toMatchObject({
+        tenantKey: "synthetic_test",
+        inputSourceVersion: "servicenow-requests-v1",
+        idempotencyKey: "servicenow-requests:synthetic-test:v1",
+      });
+      mkdirSync(bundleOut, { recursive: true });
+      const tar = spawnSync("tar", ["-xzf", path.join(outDir, "proof-bundle.tgz"), "-C", bundleOut], {
+        encoding: "utf8",
+      });
+      expect(tar.status).toBe(0);
+      expect(
+        existsSync(
+          path.join(
+            bundleOut,
+            path.basename(outDir),
+            "servicenow-request-import-plan.json",
+          ),
+        ),
+      ).toBe(true);
+    } finally {
+      consoleSpy.mockRestore();
       rmSync(outDir, { recursive: true, force: true });
     }
   });
