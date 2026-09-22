@@ -244,7 +244,7 @@ describe("buildSourceEventShellView", () => {
       stageLabel: "Commercial Baseline",
       ask: "Approve advancing out of Commercial Baseline.",
       readiness:
-        "0 of 1 required evidence item ready - review the gaps before approving Commercial Baseline.",
+        "0 of 1 workflow input complete - review the gaps before approving Commercial Baseline.",
       href: `/source/events/${optimizationEvent.id}?stage=pricing&workspace=approvals`,
       actionLabel: "Review & decide",
     });

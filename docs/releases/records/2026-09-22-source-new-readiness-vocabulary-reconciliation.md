@@ -34,6 +34,7 @@ The event approval workspace now labels completed workflow inputs as workflow in
 
 - Red-first rendered test reproduced the conflicting approval wording.
 - Focused Source New stage-approval suite passes after the correction.
+- Full Source core suite passes: 78 suites and 746 tests.
 - Mutation restoring the old evidence wording fails the new assertion.
 - TypeScript, focused ESLint, release control, and hosted CI are required before merge.
 
