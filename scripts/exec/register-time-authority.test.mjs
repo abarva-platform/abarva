@@ -23,7 +23,10 @@ import os from "node:os";
 import path from "node:path";
 import { execFileSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
-import { resolveClaimOwnership } from "./register-time-authority.mjs";
+import {
+  resolveClaimOwnership,
+  parseRegisterLines,
+} from "./register-time-authority.mjs";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const CONTROL = path.join(HERE, "register-time-authority.mjs");
@@ -588,6 +591,195 @@ const SINCE = "2026-09-21T00:00:00Z";
     r.status === 1 &&
       report.failing?.some((v) => v.code === "closeout_authority_empty"),
     `exit=${r.status}\n${r.stdout}${r.stderr}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+// ---------------------------------------------------------------------------
+// Item 34. Two agent sessions sharing one checkout is the defect; "one
+// worktree per session" was the answer, and until now it lived only as prose
+// in the operator protocol. Prose cannot fail, which is the shape this whole
+// backlog exists to repair.
+//
+// The control needs an identity before it can need anything else. T-594's
+// resolver already distinguishes `base#run-id` correctly, and every existing
+// assertion for it passes a string literal in by hand. Measured on the real
+// register, `parseRegisterLines` yields 81 distinct agent tokens and **0 of
+// them carry a run id**, because the agent charset excludes `#`. So the
+// resolver is exercised only on inputs the real pipeline cannot produce: the
+// fixture cannot reach the branch.
+// ---------------------------------------------------------------------------
+{
+  const piped = parseRegisterLines(
+    "2026-09-22T15:28:40Z | source-backlog-executor#20260922T152232Z | item T-702 claimed",
+  );
+  check(
+    "a run id survives parsing of the piped claim grammar",
+    piped[0]?.agent === "source-backlog-executor#20260922T152232Z",
+    `agent=${piped[0]?.agent}`,
+  );
+
+  const pipeless = parseRegisterLines(
+    "2026-09-22T13:06Z source-backlog-executor#20260922T130518Z item T-559 claude/exec-T559 — claimed",
+  );
+  check(
+    "a run id survives parsing of the pipe-less canonical claim grammar",
+    pipeless[0]?.agent === "source-backlog-executor#20260922T130518Z",
+    `agent=${pipeless[0]?.agent}`,
+  );
+
+  // The connecting case. Both prior halves are already correct on their own;
+  // what was never asserted is that the parser's output is an acceptable
+  // input to the resolver. If it is not, the resolver answers "own" for a
+  // sibling's claim and a second run adopts an item a first run is mid-edit
+  // on — exactly the collision item 34 names, one level up.
+  const two = parseRegisterLines(
+    [
+      "2026-09-22T14:58:59Z | source-backlog-executor#20260922T145723Z | item T-701 claimed",
+      "2026-09-22T15:28:40Z | source-backlog-executor#20260922T152232Z | item T-702 claimed",
+    ].join("\n"),
+  );
+  check(
+    "a sibling run's parsed claim does not resolve as this run's own",
+    resolveClaimOwnership(two[0]?.agent, two[1]?.agent) === "sibling",
+    `resolved=${resolveClaimOwnership(two[0]?.agent, two[1]?.agent)} from agent=${two[0]?.agent}`,
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Item 34, the control itself: two distinct run identities working in one
+// worktree. This is the 18 Sep failure — one session's uncommitted edit
+// discarded by the other's branch creation, one session's commit pushed
+// inside the other's pull request.
+// ---------------------------------------------------------------------------
+{
+  const { dir, file } = fixture([
+    "2026-09-21T14:05Z | lane-a#run-1 | item T-100 claimed | branch lane-a/thing in worktree /tmp/exec-shared-20260921 | files: src/a.ts",
+    "2026-09-21T14:20Z | lane-a#run-2 | item T-101 claimed | branch lane-a/other in worktree /tmp/exec-shared-20260921 | files: src/b.ts",
+  ]);
+  const r = run(["--file", file, "--now", NOW, "--since", SINCE, "--json"]);
+  const report = JSON.parse(r.stdout || "{}");
+  check(
+    "two run identities naming one worktree is a failing violation",
+    r.status === 1 &&
+      report.failing?.some((v) => v.code === "worktree_shared"),
+    `exit=${r.status}\n${r.stdout}${r.stderr}`,
+  );
+  check(
+    "the shared-worktree violation names the path and both owners",
+    report.violations?.some(
+      (v) =>
+        v.code === "worktree_shared" &&
+        String(v.detail ?? "").includes("/tmp/exec-shared-20260921") &&
+        String(v.detail ?? "").includes("lane-a#run-1") &&
+        String(v.detail ?? "").includes("lane-a#run-2"),
+    ),
+    JSON.stringify(report.violations ?? []),
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+// ---------------------------------------------------------------------------
+// The negative controls. A detector that fires on one session's own register
+// traffic is worse than none: every run writes a claim line and a release
+// line naming the same worktree, so the common case must stay silent.
+// ---------------------------------------------------------------------------
+{
+  const { dir, file } = fixture([
+    "2026-09-21T14:05Z | lane-a#run-1 | item T-100 claimed | worktree /tmp/exec-mine-20260921 | files: src/a.ts",
+    "2026-09-21T15:30Z | lane-a#run-1 | RELEASED item T-100 — worktree /tmp/exec-mine-20260921 removed",
+  ]);
+  const r = run(["--file", file, "--now", NOW, "--since", SINCE, "--json"]);
+  const report = JSON.parse(r.stdout || "{}");
+  check(
+    "one identity naming its own worktree twice is not a violation",
+    !report.violations?.some((v) => v.code === "worktree_shared"),
+    JSON.stringify(report.violations ?? []),
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+{
+  // The false positive this control actually produced when first written by
+  // hand: a wrapped continuation line carries no stamp, so it belongs to the
+  // record above it. Attributing it to whichever agent was last seen invents
+  // a second owner for a worktree that has one. Measured on the real
+  // register, a naive parser reported exactly one shared path this way, and
+  // it was not shared.
+  // Non-vacuous by construction: the path already has ONE stamped owner
+  // above, so a carry-forward attribution of the unstamped line to the
+  // agent last seen would manufacture a second owner and fire. A fixture
+  // where no stamped line names the path could not fail this way, and would
+  // assert nothing.
+  const { dir, file } = fixture([
+    "2026-09-21T14:05Z | lane-a#run-1 | item T-100 claimed | own worktree /tmp/exec-mine-20260921",
+    "2026-09-21T14:20Z | lane-b#run-9 | item T-200 claimed | files: src/a.ts",
+    "  continued from the line above: we inspected worktree /tmp/exec-mine-20260921 read-only",
+  ]);
+  const r = run(["--file", file, "--now", NOW, "--since", SINCE, "--json"]);
+  const report = JSON.parse(r.stdout || "{}");
+  check(
+    "an unstamped continuation does not invent a second owner for a worktree",
+    !report.violations?.some((v) => v.code === "worktree_shared"),
+    JSON.stringify(report.violations ?? []),
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+{
+  // A legacy line with no run id must not be fused with a suffixed one under
+  // the same base name. `lane-a` is a family; `lane-a#run-1` is a run. If the
+  // control compared base names it would read these as one owner and stay
+  // silent on a genuine collision.
+  const { dir, file } = fixture([
+    "2026-09-21T14:05Z | lane-a | item T-100 claimed | worktree /tmp/exec-legacy-20260921",
+    "2026-09-21T14:20Z | lane-a#run-2 | item T-101 claimed | worktree /tmp/exec-legacy-20260921",
+  ]);
+  const r = run(["--file", file, "--now", NOW, "--since", SINCE, "--json"]);
+  const report = JSON.parse(r.stdout || "{}");
+  check(
+    "an unsuffixed lane and a suffixed run sharing a worktree still collide",
+    report.violations?.some((v) => v.code === "worktree_shared"),
+    JSON.stringify(report.violations ?? []),
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+{
+  // Out-of-window lines are history. The 18 Sep incident itself is quoted in
+  // the register preamble and in this backlog; a control that re-reports it
+  // on every run trains its reader to ignore it.
+  const { dir, file } = fixture([
+    "2026-09-18T14:05Z | lane-a#run-1 | item T-100 claimed | worktree /tmp/exec-old-20260918",
+    "2026-09-18T14:20Z | lane-a#run-2 | item T-101 claimed | worktree /tmp/exec-old-20260918",
+  ]);
+  const r = run(["--file", file, "--now", NOW, "--since", SINCE, "--json"]);
+  const report = JSON.parse(r.stdout || "{}");
+  check(
+    "a collision entirely outside the window is not re-reported",
+    !report.violations?.some((v) => v.code === "worktree_shared"),
+    JSON.stringify(report.violations ?? []),
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+{
+  // Found on the real register, not reasoned about: the first version of this
+  // control fired on a line that QUOTED another run's worktree path while
+  // narrating a false positive it had just diagnosed. The register is
+  // discursive — lanes cite each other's paths constantly — so a bare mention
+  // is not a claim to be working in a checkout. Only a working cue makes it
+  // one. This case is that real line's shape, reduced.
+  const { dir, file } = fixture([
+    "2026-09-21T14:05Z | lane-a#run-1 | item T-100 claimed | own worktree /tmp/exec-quoted-20260921, branched from origin/main",
+    "2026-09-21T15:40Z | lane-b#run-2 | item T-101 claimed | own worktree /tmp/exec-mine-20260921 | a naive parser reported one shared path (`/tmp/exec-quoted-20260921`) and it was a FALSE POSITIVE",
+  ]);
+  const r = run(["--file", file, "--now", NOW, "--since", SINCE, "--json"]);
+  const report = JSON.parse(r.stdout || "{}");
+  check(
+    "quoting another run's worktree path in narrative is not working in it",
+    !report.violations?.some((v) => v.code === "worktree_shared"),
+    JSON.stringify(report.violations ?? []),
   );
   fs.rmSync(dir, { recursive: true, force: true });
 }
