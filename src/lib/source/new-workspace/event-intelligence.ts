@@ -3,7 +3,10 @@ import {
   type GovernedCandidate,
   type ValidatedAgentContextBundle,
 } from "@/lib/governance/agent-context-bundle";
-import { SOURCE_CATEGORY_IDS, type SourceCategoryId } from "@/lib/source/taxonomy/category-taxonomy";
+import {
+  SOURCE_CATEGORY_IDS,
+  type SourceCategoryId,
+} from "@/lib/source/taxonomy/category-taxonomy";
 import { normalizeSourceStageKey } from "@/lib/source/constants";
 import { resolveArchetypeForEvent } from "@/lib/source/archetypes/event-archetype-resolver";
 import { resolveSourceStageRequirements } from "@/lib/source/archetypes/resolver";
@@ -122,10 +125,10 @@ function artifactCandidate(
   const confidence = confidenceLevel(artifact.confidence);
   const hasGovernedTrace = Boolean(
     artifact.sourceBasis &&
-      artifact.contextBundleTraceId &&
-      artifact.citationReady &&
-      confidence &&
-      artifact.lifecycleState === "current",
+    artifact.contextBundleTraceId &&
+    artifact.citationReady &&
+    confidence &&
+    artifact.lifecycleState === "current",
   );
   const citations = [
     artifact.sourceBasis,
@@ -141,15 +144,25 @@ function artifactCandidate(
     source_layer: "artifact",
     source_basis: artifact.sourceBasis,
     classification: "confidential",
-    retrievability: hasGovernedTrace ? "search_indexed" : artifact.sourceBasis ? "committed_not_indexed" : "not_indexed",
-    agent_readiness_status: hasGovernedTrace ? "agent_ready" : artifact.sourceBasis ? "committed_not_indexed" : "not_reviewed",
+    retrievability: hasGovernedTrace
+      ? "search_indexed"
+      : artifact.sourceBasis
+        ? "committed_not_indexed"
+        : "not_indexed",
+    agent_readiness_status: hasGovernedTrace
+      ? "agent_ready"
+      : artifact.sourceBasis
+        ? "committed_not_indexed"
+        : "not_reviewed",
     confidence_level: confidence,
     cited_render_verified_at: hasGovernedTrace ? artifact.generatedAt : null,
     citations,
   };
 }
 
-function artifactFamilies(artifacts: readonly SourceNewEventIntelligenceArtifact[]): Set<string> {
+function artifactFamilies(
+  artifacts: readonly SourceNewEventIntelligenceArtifact[],
+): Set<string> {
   return new Set(
     artifacts
       .filter((artifact) => artifact.lifecycleState === "current")
@@ -161,11 +174,28 @@ function artifactFamilies(artifacts: readonly SourceNewEventIntelligenceArtifact
   );
 }
 
+function loadedArtifactFamilies(
+  artifacts: readonly SourceNewEventIntelligenceArtifact[],
+): Set<string> {
+  return artifactFamilies(
+    artifacts.filter(
+      (artifact) =>
+        artifact.lifecycleState === "current" && Boolean(artifact.sourceBasis),
+    ),
+  );
+}
+
 function stageLabel(stage: string): string {
   return stage
     .split("_")
     .map((part) => `${part.slice(0, 1).toUpperCase()}${part.slice(1)}`)
     .join(" ");
+}
+
+function evidenceReviewTarget(item: SourceNewRequiredEvidenceView): string {
+  return (
+    item.sourceDocHint.replace(/\s*\([^)]*\)\s*$/, "").trim() || item.label
+  );
 }
 
 function allowedStatementFor(args: {
@@ -214,6 +244,7 @@ export function buildSourceNewEventIntelligence(input: {
   const familySet = artifactFamilies(
     input.artifacts.filter((artifact) => usableIds.has(artifact.id)),
   );
+  const loadedFamilySet = loadedArtifactFamilies(input.artifacts);
   const gaps = new Set<string>();
   const refusals = new Set<string>();
 
@@ -243,13 +274,17 @@ export function buildSourceNewEventIntelligence(input: {
         key: item.family,
         label: item.spec?.label ?? item.family,
         severity: item.severity,
-        whyNeeded: item.spec?.whyNeeded ?? "Required by the resolved Source archetype.",
+        whyNeeded:
+          item.spec?.whyNeeded ?? "Required by the resolved Source archetype.",
         sourceDocHint: item.spec?.sourceDocHint ?? "Governed source evidence",
         state,
       };
     });
 
-    industryMetrics = (industryIntelligenceForArchetype(resolution.archetype.id)?.benchmarkMetrics ?? [])
+    industryMetrics = (
+      industryIntelligenceForArchetype(resolution.archetype.id)
+        ?.benchmarkMetrics ?? []
+    )
       .filter((metric) => metric.stages.includes(stage))
       .map((metric) => ({
         key: metric.key,
@@ -281,6 +316,10 @@ export function buildSourceNewEventIntelligence(input: {
   const firstEvidenceGap = requiredEvidence.find(
     (item) => item.state === "gap" && item.severity === "hard",
   );
+  const firstLoadedEvidenceGap =
+    firstEvidenceGap && loadedFamilySet.has(firstEvidenceGap.key)
+      ? firstEvidenceGap
+      : null;
   const availableTitles = bundle.usable.map(
     (candidate) => candidate.title ?? candidate.id,
   );
@@ -300,33 +339,43 @@ export function buildSourceNewEventIntelligence(input: {
       ? "Which governed evidence supports the recorded final value outcome?"
       : stageEvidenceContract === "not_defined"
         ? `Which governed evidence should support the recorded ${stageLabel(stage)} decision?`
-      : firstEvidenceGap
-        ? `Can you provide ${firstEvidenceGap.sourceDocHint}?`
-        : industryMetrics[0]
-          ? `Which comparability fields are valid for ${industryMetrics[0].label}?`
-          : "Which governed evidence should resolve the next sourcing decision?";
-  const nextAction = stageEvidenceContract === "not_defined"
-    ? {
-        label: "Review lifecycle evidence",
-        detail:
-          stage === "value"
-            ? "Review the governed evidence and unresolved gaps from the completed lifecycle before relying on a final value claim."
-            : `Review governed lifecycle evidence before relying on the recorded ${stageLabel(stage)} outcome.`,
-      }
-    : firstEvidenceGap
-    ? {
-        label: "Resolve evidence gap",
-        detail: `Add or review ${firstEvidenceGap.label} before relying on this intelligence.`,
-      }
-    : bundle.usable.length > 0
+        : firstLoadedEvidenceGap
+          ? `${evidenceReviewTarget(firstLoadedEvidenceGap)} is already loaded but not ready. Which governance review or promotion step should clear it?`
+          : firstEvidenceGap
+            ? `Can you provide ${firstEvidenceGap.sourceDocHint}?`
+            : industryMetrics[0]
+              ? `Which comparability fields are valid for ${industryMetrics[0].label}?`
+              : "Which governed evidence should resolve the next sourcing decision?";
+  const nextAction =
+    stageEvidenceContract === "not_defined"
       ? {
-          label: "Open current stage",
-          detail: "Use the current stage to decide which evidence should support the next answer.",
+          label: "Review lifecycle evidence",
+          detail:
+            stage === "value"
+              ? "Review the governed evidence and unresolved gaps from the completed lifecycle before relying on a final value claim."
+              : `Review governed lifecycle evidence before relying on the recorded ${stageLabel(stage)} outcome.`,
         }
-      : {
-          label: "Review governed context",
-          detail: "Review the loaded files and complete their evidence checks before asking for recommendations.",
-        };
+      : firstLoadedEvidenceGap
+        ? {
+            label: "Review loaded evidence",
+            detail: `Complete governance review or promotion for ${firstLoadedEvidenceGap.label} before relying on this intelligence.`,
+          }
+        : firstEvidenceGap
+          ? {
+              label: "Resolve evidence gap",
+              detail: `Add or review ${firstEvidenceGap.label} before relying on this intelligence.`,
+            }
+          : bundle.usable.length > 0
+            ? {
+                label: "Open current stage",
+                detail:
+                  "Use the current stage to decide which evidence should support the next answer.",
+              }
+            : {
+                label: "Review governed context",
+                detail:
+                  "Review the loaded files and complete their evidence checks before asking for recommendations.",
+              };
 
   const posture =
     !resolution.resolved || bundle.usable.length === 0
@@ -354,11 +403,15 @@ export function buildSourceNewEventIntelligence(input: {
       agentReadyCount: bundle.agentReadyCount,
       citationsCount: bundle.citations.length,
       available: bundle.usable.map((candidate) => {
-        const artifact = input.artifacts.find((item) => item.id === candidate.id);
+        const artifact = input.artifacts.find(
+          (item) => item.id === candidate.id,
+        );
         return {
           id: candidate.id,
           title: candidate.title ?? candidate.id,
-          evidenceFamilies: artifact?.evidenceFamiliesUsed ? [...artifact.evidenceFamiliesUsed] : [],
+          evidenceFamilies: artifact?.evidenceFamiliesUsed
+            ? [...artifact.evidenceFamiliesUsed]
+            : [],
           contextBundleTraceId: artifact?.contextBundleTraceId ?? null,
         };
       }),
