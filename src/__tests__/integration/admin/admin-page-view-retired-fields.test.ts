@@ -1,7 +1,5 @@
 import { CANONICAL_TENANT_KEYS } from '@/lib/tenant/aliases';
 
-import { buildArchitecturePageView } from '@/lib/admin/architecture-page-view';
-import { buildBuildProgressPageView } from '@/lib/admin/build-progress-page-view';
 import { buildConnectorsPageView } from '@/lib/admin/connectors-page-view';
 import { buildOverviewPageView } from '@/lib/admin/overview-page-view';
 import { buildProductionReadinessPageView } from '@/lib/admin/production-readiness-page-view';
@@ -20,24 +18,28 @@ import { buildAgentContextAsync } from '@/lib/agent/context-bundle-live';
 //
 // These are runtime key assertions, not source greps: a comment naming the
 // field cannot satisfy them, and neither can a renamed symbol.
+//
+// Four of the six views are guarded here, not all six. `architecture` and
+// `build-progress` are reached by no product entry point — `audit:lib-orphans`
+// classifies both as unreferenced, and importing them here moved them, and
+// seven modules behind them, to `testOnly`. That gate exists to catch exactly
+// this: a test written for code nothing calls. Their retired fields are removed
+// with the rest, because the removal is mechanical and typechecked, but a guard
+// over an unmounted screen would be a coverage number with nothing behind it.
+// Filed separately; see U-502.
 
 const TENANT = CANONICAL_TENANT_KEYS[0];
 
 type AnyRecord = Record<string, unknown>;
 
 async function buildAll(): Promise<ReadonlyArray<readonly [string, AnyRecord]>> {
-  const [architecture, buildProgress, connectors, overview, readiness, usersAccess] =
-    await Promise.all([
-      buildArchitecturePageView(TENANT),
-      buildBuildProgressPageView(),
-      buildConnectorsPageView(TENANT),
-      buildOverviewPageView(),
-      buildProductionReadinessPageView(TENANT, 'Apex Retail Group'),
-      buildUsersAccessPageView(TENANT),
-    ]);
+  const [connectors, overview, readiness, usersAccess] = await Promise.all([
+    buildConnectorsPageView(TENANT),
+    buildOverviewPageView(),
+    buildProductionReadinessPageView(TENANT, 'Apex Retail Group'),
+    buildUsersAccessPageView(TENANT),
+  ]);
   return [
-    ['architecture', architecture as unknown as AnyRecord],
-    ['build-progress', buildProgress as unknown as AnyRecord],
     ['connectors', connectors as unknown as AnyRecord],
     ['overview', overview as unknown as AnyRecord],
     ['production-readiness', readiness as unknown as AnyRecord],
@@ -52,8 +54,8 @@ describe('U-501 — admin page views carry no field retired with the provenance 
     views = await buildAll();
   });
 
-  it('builds all six admin page views', () => {
-    expect(views).toHaveLength(6);
+  it('builds every product-reached admin page view', () => {
+    expect(views).toHaveLength(4);
   });
 
   describe('retired ContextBar inputs are absent from context', () => {
