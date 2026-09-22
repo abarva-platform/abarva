@@ -1,10 +1,25 @@
 import { validateManifest, type DatasetManifest } from "../dataset-manifest";
 
+/**
+ * The fixture's `client_key` must be one the schema still admits, or every
+ * case below fails on that field before reaching the rule it is testing.
+ *
+ * It was a key the schema no longer accepts, so cases that read as tests of
+ * PII/PHI handling, retrieval proof and classification were in fact reporting
+ * a `client_key` enum error. That is a stale fixture, not a governance
+ * regression: the live `validate:context-corpus` gate passes on real data and
+ * runs on every pull request.
+ *
+ * Recorded rather than normalised away: the admitted set is
+ * `corpus_global | meridian-health | skyharbor-air`, which is narrower than
+ * the tenant registry. Whether the schema should admit the rest is a separate
+ * and already-known question, and is not settled here.
+ */
 function manifest(over: Partial<DatasetManifest> = {}): DatasetManifest {
   return {
-    dataset_id: "lakeshore-cloud-posture-2026q2",
-    title: "Lakeshore cloud posture extract",
-    client_key: "lakeshore-holdings",
+    dataset_id: "cloud-posture-2026q2",
+    title: "Cloud posture extract",
+    client_key: "meridian-health",
     source_layer: "tenant_context",
     classification: "internal",
     owner: "anand",
