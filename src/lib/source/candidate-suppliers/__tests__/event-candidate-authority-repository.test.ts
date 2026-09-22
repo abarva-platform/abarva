@@ -45,6 +45,11 @@ describe("event candidate authority repository", () => {
                   state: "active",
                 },
               ],
+              selectionAuthority: {
+                selectedByName: "Named Sourcing Lead",
+                selectedAt: "2026-09-20T03:00:00.000Z",
+                evidenceReference: "event-intake-v3#respondent-selection",
+              },
             },
           },
           accepted_by_name: "Sourcing Owner",
@@ -77,6 +82,11 @@ describe("event candidate authority repository", () => {
           },
           contactPolicy: "contact_allowed",
           activeContactCount: 1,
+          selectionAuthority: {
+            selectedByName: "Named Sourcing Lead",
+            selectedAt: "2026-09-20T03:00:00.000Z",
+            evidenceReference: "event-intake-v3#respondent-selection",
+          },
           registrySource: {
             system: "supplier-master-template",
             reference: "EVID-SUPPLIER-1",
@@ -103,6 +113,42 @@ describe("event candidate authority repository", () => {
       "tenant-alpha",
       "11111111-1111-4111-8111-111111111111",
     ]);
+  });
+
+  it("does not mark a respondent selected unless human selection authority is complete", async () => {
+    runMock
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([
+        {
+          authority_id: "candidate-authority-1",
+          vendor_id: "vendor-1",
+          legal_name: "Example Services LLC",
+          supplier_category: "managed-services",
+          vendor_source_system: "supplier-master-template",
+          vendor_source_record_id: "supplier-master-template.xlsx#row-2",
+          vendor_as_of_date: "2026-09-19",
+          vendor_evidence_reference: "EVID-SUPPLIER-1",
+          vendor_raw_payload: {
+            candidate_supplier_registry: {
+              selectionAuthority: {
+                selectedByName: "Named Sourcing Lead",
+                selectedAt: "2026-09-20T03:00:00.000Z",
+              },
+            },
+          },
+          accepted_by_name: "Sourcing Owner",
+          accepted_at: new Date("2026-09-20T02:00:00.000Z"),
+          acceptance_rationale: "Meets the declared event eligibility criteria",
+          evidence_reference: "event-intake-v3#candidate-review",
+        },
+      ]);
+
+    const result = await readAcceptedCandidatesForEvent({
+      clientKey: "tenant-alpha",
+      eventId: "11111111-1111-4111-8111-111111111111",
+    });
+
+    expect(result.acceptedCandidates[0]?.selectionAuthority).toBeNull();
   });
 
   it("distinguishes an available empty registry slice from an unavailable relation", async () => {

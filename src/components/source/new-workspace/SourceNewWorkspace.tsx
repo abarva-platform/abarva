@@ -180,6 +180,14 @@ function sourceReferencesLabel(row: SourceNewStage04VendorPanel["rows"][number])
   return values.join("; ");
 }
 
+function vendorPanelGroupLabel(
+  group: SourceNewStage04VendorPanel["rows"][number]["group"],
+): string {
+  if (group === "selected_respondent") return "selected respondent";
+  if (group === "existing_contract_vendor") return "already under contract";
+  return "not under contract";
+}
+
 function isResponsesStage(event: SourceNewEventView): boolean {
   return normalizeSourceStageKey(event.currentStage) === "responses";
 }
@@ -717,8 +725,9 @@ function SourceNewStage04VendorPanelView({
       <h3>{posture}</h3>
       <p>
         This read-only panel separates accepted candidates the organization is
-        already under contract with from those it is not. It sends nothing,
-        contacts nobody, and selects no respondent.
+        already under contract with from those it is not, and names selected
+        respondents only when human selection evidence is recorded. It sends
+        nothing, contacts nobody, and selects no respondent.
       </p>
       <dl className="snw-facts">
         <div>
@@ -728,6 +737,10 @@ function SourceNewStage04VendorPanelView({
         <div>
           <dt>Already under contract</dt>
           <dd>{panel.counts.existing_contract_vendor}</dd>
+        </div>
+        <div>
+          <dt>Selected respondents</dt>
+          <dd>{panel.counts.selected_respondent}</dd>
         </div>
         <div>
           <dt>Panel as of</dt>
@@ -746,13 +759,17 @@ function SourceNewStage04VendorPanelView({
             <li key={row.authorityId}>
               <strong>{row.legalName}</strong>
               {" — "}
-              {row.group === "existing_contract_vendor"
-                ? "already under contract"
-                : "not under contract"}
+              {vendorPanelGroupLabel(row.group)}
               {". Accepted by "}
               {row.acceptedByName}
               {" on "}
               {row.acceptedAt.slice(0, 10)}
+              {row.selectedByName && row.selectedAt
+                ? `. Selected by ${row.selectedByName} on ${row.selectedAt.slice(0, 10)}`
+                : ""}
+              {row.selectionEvidenceReference
+                ? `. Selection evidence: ${row.selectionEvidenceReference}`
+                : ""}
               {". Eligibility: "}
               {eligibilityLabel(row.eligibility)}
               {". Contact policy: "}
