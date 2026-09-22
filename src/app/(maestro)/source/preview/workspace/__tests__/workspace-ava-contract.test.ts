@@ -33,13 +33,7 @@ const workspaceCssSource = fs.readFileSync(
   "utf8",
 );
 
-const surfaceRetrieverSource = fs.readFileSync(
-  path.join(
-    process.cwd(),
-    "src/lib/intelligence/ask/retrievers/surface-context.ts",
-  ),
-  "utf8",
-);
+import { retrieveSurfaceContextSources } from "@/lib/intelligence/ask/retrievers/surface-context";
 
 describe("Source Workspace aVa contract", () => {
   it("uses the rich aVa route and passes structured workspace context", () => {
@@ -110,14 +104,56 @@ describe("Source Workspace aVa contract", () => {
   });
 
   it("labels Source citations as Source instead of hardcoding Intelligence", () => {
-    expect(surfaceRetrieverSource).toContain("const activeModule");
-    expect(surfaceRetrieverSource).toContain("Active ${activeModule} surface");
-    expect(surfaceRetrieverSource).toContain(
-      "${activeClient} live ${activeModule} surface",
+    // Executable: the retriever is called and its output inspected. The
+    // previous version asserted the template-literal text in the source file,
+    // which a comment quoting the same string satisfied.
+    const sources = retrieveSurfaceContextSources(
+      {
+        module: "Source",
+        activeClient: "Tenant",
+        activeTab: "contracts",
+        pageFacts: ["Contract count: 12"],
+      } as Parameters<typeof retrieveSurfaceContextSources>[0],
+      "what is on this page",
     );
+
+    expect(sources.length).toBeGreaterThan(0);
+    const blob = JSON.stringify(sources);
+    expect(blob).toContain("Active Source surface");
+    expect(blob).toContain("Tenant live Source surface");
+    // The negative half, and the reason the case exists: the label must come
+    // from the caller's module, not be hardcoded to Intelligence.
+    expect(blob).not.toContain("Active Intelligence surface");
   });
 
-  it("keeps Source 360 navigable without the old fixed-width cockpit canvas", () => {
+  it("falls back to Intelligence only when the caller names no module", () => {
+    // Pins the default, so "reads the module" cannot be satisfied by a
+    // function that ignores its input and happens to say Source.
+    const sources = retrieveSurfaceContextSources(
+      {
+        activeClient: "Tenant",
+        activeTab: "contracts",
+        pageFacts: ["Contract count: 12"],
+      } as Parameters<typeof retrieveSurfaceContextSources>[0],
+      "what is on this page",
+    );
+    expect(JSON.stringify(sources)).toContain("Active Intelligence surface");
+  });
+
+  /**
+   * SOURCE-TEXT BY NECESSITY, and named as one.
+   *
+   * This asserts class names and layout rules in a stylesheet. jsdom does not
+   * apply CSS, so no assertion available in this harness can evaluate what
+   * these rules actually do — `getComputedStyle` would return nothing and a
+   * case built on it would be worse than this one, because it would look
+   * behavioural while proving less.
+   *
+   * It is therefore an honest source-text contract, kept deliberately rather
+   * than converted or deleted. A real check belongs in a browser harness; that
+   * option is open and is not foreclosed here.
+   */
+  it("SOURCE-TEXT: keeps Source 360 navigable without the old fixed-width cockpit canvas", () => {
     expect(workspaceClientSource).not.toContain(
       'width: isVendor360Cockpit ? "min(100%, 1280px)"',
     );
