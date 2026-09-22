@@ -268,7 +268,6 @@ async function resolveReviewContext(
     const { data: parsedArtifacts, error: artifactError } = await db
       .from("source_artifacts")
       .select("id, original_name, parse_status, updated_at")
-      .eq("tenant_key", effectiveClientKey)
       .eq("source_event_row_id", persistedEvent.id)
       .eq("stage_key", requirement.stage)
       .eq("parse_status", "parsed")
