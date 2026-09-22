@@ -1,4 +1,5 @@
 rule,file,reason
+synthetic-v-folder-reference,.github/workflows/source-candidate-supplier-registry-import-job.yml,non-loader historical reference
 synthetic-v-folder-reference,.github/workflows/source-servicenow-request-import-job.yml,non-loader historical reference
 synthetic-v-folder-reference,audit-artifacts/tenant-packet-dry-run/skyharbor/canonical-ingestion-records.json,non-loader historical reference
 legacy-v-dimension-token,audit-artifacts/tenant-packet-dry-run/skyharbor/canonical-ingestion-records.json,non-loader historical reference
@@ -350,6 +351,7 @@ legacy-v-dimension-token,reports/skyharbor-compatibility-snapshot/skyharbor-comp
 legacy-v-file-name,reports/skyharbor-compatibility-snapshot/skyharbor-compatibility-snapshot.json,generated/historical report
 legacy-v-dimension-token,reports/skyharbor-compatibility-snapshot/skyharbor-compatibility-snapshot.md,generated/historical report
 legacy-v-file-name,reports/skyharbor-compatibility-snapshot/skyharbor-compatibility-snapshot.md,generated/historical report
+synthetic-v-folder-reference,reports/source/servicenow-request-acceptance-matrix.json,generated/historical report
 synthetic-v-folder-reference,reports/tenant-candidate-generation/all-tenant-eligibility-matrix.csv,generated/historical report
 v6-v7-current-state,reports/tenant-candidate-generation/all-tenant-eligibility-matrix.csv,generated/historical report
 synthetic-v-folder-reference,reports/tenant-candidate-generation/all-tenant-eligibility-matrix.json,generated/historical report
@@ -504,6 +506,7 @@ synthetic-v-folder-reference,scripts/skyharbor/stages/07_verify/fact_fingerprint
 synthetic-v-folder-reference,scripts/skyharbor/verify-airline-pattern-overlay.mjs,non-loader historical reference
 synthetic-v-folder-reference,scripts/skyharbor/verify-skyharbor-substrate.mjs,non-loader historical reference
 synthetic-v-folder-reference,scripts/source/__tests__/candidate-supplier-registry-package.test.ts,non-loader historical reference
+synthetic-v-folder-reference,scripts/source/load-candidate-supplier-registry.ts,non-loader historical reference
 synthetic-v-folder-reference,scripts/source/load-servicenow-sourcing-requests.ts,non-loader historical reference
 synthetic-v-folder-reference,scripts/source/validate-candidate-supplier-registry-package.ts,non-loader historical reference
 v6-v7-current-state,scripts/tenant-v3/audit-home-v3-runtime-reachability.ts,non-loader historical reference
@@ -516,6 +519,8 @@ synthetic-v-folder-reference,scripts/verify/apex-sentinel-canonical.mjs,non-load
 synthetic-v-folder-reference,scripts/verify/meridian-context-showcase.mjs,non-loader historical reference
 synthetic-v-folder-reference,scripts/verify/meridian-data-pack-scaffold.mjs,non-loader historical reference
 synthetic-v-folder-reference,scripts/verify/northstar-context-layer-scaffold.mjs,non-loader historical reference
+synthetic-v-folder-reference,src/__tests__/behaviors/source-servicenow-request-acceptance-harness.test.ts,non-loader historical reference
+synthetic-v-folder-reference,src/__tests__/integration/source/source-candidate-supplier-registry-loader.test.ts,non-loader historical reference
 synthetic-v-folder-reference,src/__tests__/integration/source/source-servicenow-request-loader.test.ts,non-loader historical reference
 old-meridian-datacenter-workbook,src/app/(maestro)/platform/admin/data/page.tsx,non-loader historical reference
 legacy-v-dimension-token,src/app/(maestro)/source/preview/workspace/__tests__/buildViewModel.numeric.test.ts,non-loader historical reference
