@@ -30,7 +30,8 @@ function artifact(
     originalName: "Client Final Scope Memo.docx",
     blobUri: "inline://source-event-artifact-state/artifact-1",
     uploaderUserId: "user-1",
-    mimeType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    mimeType:
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
     sizeBytes: 1200,
     sha256: "sha",
     parseStatus: "pending",
@@ -194,9 +195,7 @@ describe("buildEvidenceReadinessGovernedAnswer", () => {
     expect(answer!.directAnswer).toContain("1 is parsed");
     expect(answer!.directAnswer).toContain("1 is search-ready");
     expect(answer!.directAnswer).toContain("1 is parser-ready");
-    expect(answer!.directAnswer).toContain(
-      "1 has parser or review exceptions",
-    );
+    expect(answer!.directAnswer).toContain("1 has parser or review exceptions");
     expect(answer!.artifacts[0]).toMatchObject({
       artifact: "chart",
       title: "Evidence processing readiness",
@@ -249,6 +248,49 @@ describe("buildEvidenceReadinessGovernedAnswer", () => {
     expect(answer!.directAnswer).toContain("0 are search-ready");
     expect(answer!.directAnswer).toContain("1 still requires parsing");
     expect(answer!.nextSteps[0]?.label).toContain("Open scope and strategy");
+  });
+
+  it("does not call a registered AI draft missing when recorded missing-input text still says no artifact is registered", async () => {
+    mockListSourceArtifacts.mockResolvedValue([
+      artifact({
+        id: "scope-draft",
+        tenantKey: "corpus_global",
+        artifactKind: "d05_scope_memo",
+        originalName: "Example Client Scope Memo with Boundaries.md",
+        sourceOrigin: "generated",
+        sourceFormat: "markdown",
+        approvalState: "draft",
+        isClientFinal: false,
+        isCurrentAuthoritative: true,
+      }),
+    ]);
+
+    const answer = await buildEvidenceReadinessGovernedAnswer({
+      eventId: "event-1",
+      clientKey: "corpus_global",
+      tenantId: null,
+      question:
+        "What do I need to complete Define, and which evidence is still missing?",
+      stageContext: {
+        stageLabel: "Define",
+        nextAction: "Review generated scope artifacts",
+        missingInputs: [
+          "Scope Memo with Boundaries has no registered artifact yet",
+          "Exclusion Log has no registered artifact yet",
+        ],
+      },
+    });
+
+    expect(answer).not.toBeNull();
+    expect(answer!.directAnswer).toContain(
+      "Scope Memo with Boundaries is registered as AI draft awaiting review",
+    );
+    expect(answer!.directAnswer).toContain(
+      "Exclusion Log has no registered artifact yet",
+    );
+    expect(answer!.directAnswer).not.toContain(
+      "Scope Memo with Boundaries has no registered artifact yet",
+    );
   });
 
   it("states when the governed event records no blocker or missing phase inputs", async () => {
