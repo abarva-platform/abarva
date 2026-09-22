@@ -20,6 +20,7 @@ const RECORD_PATH = "docs/architecture/t550-stale-suite-triage.json";
 
 type Suite = {
   path: string;
+  movedTo?: { path: string; byItem: string; reason: string };
   loaded: boolean;
   collected: boolean;
   run: boolean;
@@ -50,9 +51,33 @@ describe("T-550 stale suite triage record", () => {
     expect(new Set(paths).size).toBe(20);
   });
 
-  it("names only files that exist in the tree", () => {
+  /*
+   * The record is a snapshot of a draw at a base commit, so its paths are
+   * history and are never restamped when a follow-on item moves a file. What
+   * may not happen is a row pointing at nothing: that is how a verdict outlives
+   * the thing it judged and quietly stops meaning anything. A moved row must
+   * therefore say who moved it and where, and the destination must be real.
+   *
+   * This is strictly stronger than the existence check it replaces. A missing
+   * path with no `movedTo` still fails; a `movedTo` whose destination does not
+   * exist fails; a `movedTo` attributed to this record's own item fails, since
+   * a draw may not move what it judges; and a row that still resolves at its
+   * recorded path may not carry a `movedTo` at all, so the field cannot be left
+   * behind as decoration once a move is undone.
+   */
+  it("names files that exist, or records which later item moved them and where", () => {
     for (const suite of record.suites) {
-      expect(existsSync(path.join(process.cwd(), suite.path))).toBe(true);
+      if (existsSync(path.join(process.cwd(), suite.path))) {
+        expect(suite.movedTo).toBeUndefined();
+        continue;
+      }
+      expect(typeof suite.movedTo?.path).toBe("string");
+      expect(suite.movedTo?.byItem).toMatch(/^[A-Z]-\d{3}$/);
+      expect(suite.movedTo?.byItem).not.toBe(record.item);
+      expect(suite.movedTo?.reason.length).toBeGreaterThan(40);
+      expect(
+        existsSync(path.join(process.cwd(), suite.movedTo?.path ?? "")),
+      ).toBe(true);
     }
   });
 
