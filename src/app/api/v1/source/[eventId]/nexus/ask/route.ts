@@ -82,6 +82,7 @@ import {
   looksLikeRfpDesignQuestion,
 } from "@/lib/source/ava/rfp-design-governed-answer";
 import { buildSourceAvaModuleHandoffForRuntime } from "@/lib/source/ava/module-handoff-runtime";
+import { reconcileGovernedAnswerSummary } from "@/lib/source/ava/governed-answer-stream";
 import {
   resolveAuthoritativeArtifactSlots,
   type AuthoritativeArtifactCandidate,
@@ -630,13 +631,10 @@ export async function POST(
           return null;
         });
       }
-      const ndjsonSummary = agentAnswer
-        ? {
-            ...response,
-            summary: agentAnswer.directAnswer,
-            noModel: true,
-          }
-        : response;
+      const ndjsonSummary = reconcileGovernedAnswerSummary(
+        response,
+        agentAnswer,
+      );
       const moduleHandoff = buildSourceAvaModuleHandoffForRuntime({
         sourceAnalyticsEnabled: isFeatureEnabled(
           {
