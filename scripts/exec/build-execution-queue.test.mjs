@@ -1434,5 +1434,150 @@ blockerCase(
   true,
 );
 
+
+/* ------------------------------------------------------------------------ */
+/* 23. AN ITEM'S OWN BODY AND A CLAIM LINE ARE DIFFERENT KINDS OF EVIDENCE   */
+/*     — item T-578.                                                        */
+/*                                                                          */
+/*     `deriveBlocker` was handed one flat string: the item's title,         */
+/*     acceptance and raw section concatenated with every claim-log line     */
+/*     that names it. A claim line narrates INTENT — "claimed | lane T;      */
+/*     decide which vocabulary is authoritative" — so it goes on reading as  */
+/*     an open decision for as long as the line exists, which is forever;    */
+/*     the register is append-only and a line is never restamped.            */
+/*                                                                          */
+/*     Measured on the live backlog at `a1a6b82c8` before this was written:  */
+/*     12 of 411 items read `Decision needed` from a claim line their own    */
+/*     body does not support. All 12 sit at rung merged, deployed or         */
+/*     proven, so the effect today is confined to display buckets — but the  */
+/*     same corpus decides a rung-0 item's fate, and there the same stale    */
+/*     line would hide live work instead of mislabelling finished work.      */
+/*                                                                          */
+/*     So the narrowing is scoped twice over, and both scopes are a case     */
+/*     below that must NOT change: it applies only to the decision rule      */
+/*     (case 23d keeps a claim-derived `Blocked`), and only once the item's  */
+/*     own source records shipping proof (case 23c keeps the gate on an      */
+/*     open item). A fix that simply dropped claim lines from the corpus     */
+/*     passes 23a and fails both of those.                                   */
+/* ------------------------------------------------------------------------ */
+
+/** The generated summary's node for one id: its derived rung and blocker. */
+function summaryNodeFor(dir, id) {
+  const summary = JSON.parse(
+    fs.readFileSync(path.join(dir, "source-board-summary.json"), "utf8"),
+  );
+  let found = null;
+  (function collect(node) {
+    if (found) return;
+    if (Array.isArray(node)) return node.forEach(collect);
+    if (node && typeof node === "object") {
+      if (node.num === id && "blocker" in node) {
+        found = node;
+        return;
+      }
+      Object.values(node).forEach(collect);
+    }
+  })(summary);
+  return found;
+}
+
+/**
+ * One backlog row, its claim-log lines, and an assertion on BOTH the derived
+ * rung and the derived blocker.
+ *
+ * The rung is asserted too because every case here turns on it. A fixture
+ * whose merge line failed to parse would sit at `Open` and then pass case 23a
+ * for the wrong reason, which is the shape of proof this file exists to stop.
+ */
+function blockerCorpusCase(name, id, acceptance, claimLines, expectRung, expectBlocker) {
+  const dir = freshFixture();
+  fs.appendFileSync(
+    path.join(dir, "EXECUTION_BACKLOG_20260918.md"),
+    `\n| ${id} | **Synthetic blocker-corpus fixture.** | T | ${acceptance} |\n`,
+  );
+  mapFixtureId(dir, id);
+  fs.appendFileSync(
+    path.join(dir, "EXECUTION_CLAIMS.md"),
+    `\n${claimLines.join("\n")}\n`,
+  );
+  const q = buildBoardAndQueue(dir);
+  const node = summaryNodeFor(dir, id);
+  fs.rmSync(dir, { recursive: true, force: true });
+  check(
+    name,
+    q.status === 0 &&
+      node !== null &&
+      node.rungLabel === expectRung &&
+      (node.blocker ?? null) === expectBlocker,
+    `exit=${q.status}\nexpected rung=${expectRung} blocker=${expectBlocker}\n` +
+      `actual=${JSON.stringify(node)}`,
+  );
+}
+
+/** An agent's stated intent, in the grammar the live register actually uses. */
+const INTENT_TO_DECIDE =
+  "claimed | lane T; decide which tenant-name vocabulary is authoritative " +
+  "before writing any code";
+
+/* --- 23a. THE DEFECT: a merged item still gated by its own claim line ---- */
+
+blockerCorpusCase(
+  "a claim line's stated intent to decide is not an open gate once the item merged",
+  "T-886",
+  "Reconcile the two display-name vocabularies so one derives from the other.",
+  [
+    `${registerStamp(90)} | lane-a | item T-886 — ${INTENT_TO_DECIDE}`,
+    `${registerStamp(30)} | lane-a | item T-886 MERGED via PR #900, squash \`abc1234\``,
+  ],
+  "Merged",
+  null,
+);
+
+/* --- 23b. The item's OWN body still gates it, merged or not -------------- */
+
+blockerCorpusCase(
+  "a gate the item's own body declares survives the item being merged",
+  "T-887",
+  "**Decide per job before pinning anything: is it still wanted?** Five of the six " +
+    "carry a one-off cutover tag from a dated migration.",
+  [`${registerStamp(30)} | lane-a | item T-887 MERGED via PR #901, squash \`abc1235\``],
+  "Merged",
+  "Decision needed",
+);
+
+/* --- 23c. An OPEN item keeps the gate its claim line records ------------- */
+/*          This is the direction that hides live work, so it is pinned      */
+/*          with the same fixture text as 23a and only the merge line        */
+/*          removed — the two cases differ by exactly the thing under test.  */
+
+blockerCorpusCase(
+  "an item with no shipping proof still reads the gate its claim line records",
+  "T-888",
+  "Reconcile the two display-name vocabularies so one derives from the other.",
+  [`${registerStamp(90)} | lane-a | item T-888 — ${INTENT_TO_DECIDE}`],
+  "Open",
+  "Decision needed",
+);
+
+/* --- 23d. Only the DECISION rule is narrowed, and only for the claims ---- */
+/*          The same claim line carries both a decision narration and a      */
+/*          blocker. Before T-578 the decision rule matched first and the    */
+/*          blocker was never reached; after it, the decision match is       */
+/*          skipped and the REMAINING rules still read the claim corpus.     */
+/*          A corpus-wide fix returns null here.                             */
+
+blockerCorpusCase(
+  "narrowing the decision rule does not stop other rules reading the claim log",
+  "T-889",
+  "Reconcile the two display-name vocabularies so one derives from the other.",
+  [
+    `${registerStamp(90)} | lane-a | item T-889 — ${INTENT_TO_DECIDE}; ` +
+      "blocked on the vendor export until it lands",
+    `${registerStamp(30)} | lane-a | item T-889 MERGED via PR #902, squash \`abc1236\``,
+  ],
+  "Merged",
+  "Blocked (see source)",
+);
+
 console.log(`\n${passes} passed, ${failures} failed`);
 process.exit(failures ? 1 : 0);
