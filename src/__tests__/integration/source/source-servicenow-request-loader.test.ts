@@ -36,6 +36,19 @@ describe("ServiceNow sourcing request loader", () => {
     expect(plan.archetypes).toEqual(expectedArchetypes);
     expect(plan.missingArchetypes).toEqual([]);
     expect(plan.requests).toHaveLength(10);
+    expect(plan.categories).toHaveLength(10);
+    expect(plan.requests.every((request) => request.requiredFactGaps.length === 0)).toBe(
+      true,
+    );
+    expect(
+      plan.requests.every(
+        (request) =>
+          request.mappingProposal.categoryId &&
+          request.mappingProposal.archetypeId &&
+          Array.isArray(request.mappingProposal.reasons) &&
+          request.mappingProposal.reasons.length > 0,
+      ),
+    ).toBe(true);
     expect(plan.requests.every((request) => /^[a-f0-9]{64}$/.test(request.sourceSha256))).toBe(
       true,
     );
