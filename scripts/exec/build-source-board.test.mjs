@@ -292,5 +292,286 @@ console.log("build-source-board — claim-record boundary (T-702)\n");
   fs.rmSync(dir, { recursive: true, force: true });
 }
 
+console.log("\nbuild-source-board — within-record rung attribution (T-704)\n");
+
+/* ------------------------------------------------------------------------ *
+ * 6. THE DEFECT, on the live shape. One record, correctly bounded by T-702,
+ *    claims the fixture item and names ANOTHER item's pull request as context
+ *    in a sentence that exists to say the other item is somebody else's.
+ *    The fixture item has no PR of its own, so rung 4 can only have come from
+ *    the neighbour. This is `T-598` reduced to a fixture.
+ * ------------------------------------------------------------------------ */
+{
+  const dir = freshFixture();
+  addBacklogItem(dir, "T-911", "**Filed, nothing built.**", "Decide the approach first.");
+  appendClaims(dir, [
+    "2026-09-22T13:27:11Z | fixture-agent | item T-911 claimed. T-912 is NOT taken - it is claimed with PR #8255 open.",
+  ]);
+  buildBoard(dir);
+  const item = summaryItems(dir).out.get("T-911");
+  check(
+    "a neighbour's pull request named inside this item's record does not give it a rung",
+    item?.rung === 0,
+    `rung=${item?.rung} (${item?.rungLabel}) quote=${JSON.stringify(item?.quote ?? "")}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+/* ------------------------------------------------------------------------ *
+ * 7. THE GUARDRAIL, and the reason attribution is per TOKEN rather than per
+ *    sentence. This is `T-448`'s real merge line: the item's own squash-merge,
+ *    with two sibling ids in the trailing clause. A rule that drops any
+ *    sentence naming a foreign id passes case 6 and deletes this — measured on
+ *    the live register, that blunt rule dropped 8 own-leading sentences
+ *    carrying real proof. The merge word is nearest to this item's own id, so
+ *    it is this item's merge.
+ * ------------------------------------------------------------------------ */
+{
+  const dir = freshFixture();
+  // The row states no proof of any kind: `attributableStatusText` admits a
+  // title or acceptance that OPENS with a verdict word, so "Merged and
+  // recorded." in this cell would supply rung 5 by itself and the case would
+  // pass whatever the attribution does.
+  addBacklogItem(dir, "T-913", "**A change that lands.**", "The register carries its own line.");
+  appendClaims(dir, [
+    "2026-09-22T13:28:00Z | fixture-agent | item T-913 PR #8139 merge 70e8ebe2 — squash-merged after all 19 required checks completed green on the combined T-914/T-915/T-913 state.",
+  ]);
+  buildBoard(dir);
+  const item = summaryItems(dir).out.get("T-913");
+  check(
+    "an item's own merge survives sibling ids written later in the same sentence",
+    item?.rung === 5,
+    `rung=${item?.rung} (${item?.rungLabel}) quote=${JSON.stringify(item?.quote ?? "")}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+/* ------------------------------------------------------------------------ *
+ * 8. NEAREST, NOT FIRST. The same sentence leads with this item's own id and
+ *    still hands the proof to a neighbour — `T-405`, whose line opens
+ *    "item T-405 CLOSED" and then proves that two OTHER ids sit on a deployed
+ *    carrier. A rule that keeps any sentence whose first id is this item's
+ *    passes case 7 and fails here, so the two cases pull in opposite
+ *    directions on purpose.
+ * ------------------------------------------------------------------------ */
+{
+  const dir = freshFixture();
+  addBacklogItem(dir, "T-916", "**A bookkeeping verdict.**", "Assert ancestry for others.");
+  appendClaims(dir, [
+    "2026-09-22T13:29:00Z | fixture-agent | item T-916 CLOSED — ancestry proves T-917 ab834dd5 and T-918 0b79765e are both contained by deployed carrier 0f166372.",
+  ]);
+  buildBoard(dir);
+  const item = summaryItems(dir).out.get("T-916");
+  check(
+    "leading with its own id does not let an item keep a deploy it attributes to others",
+    item?.rung !== 6,
+    `rung=${item?.rung} (${item?.rungLabel}) quote=${JSON.stringify(item?.quote ?? "")}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+/* ------------------------------------------------------------------------ *
+ * 9. A PULL REQUEST IS NOT AN ID. `#8255` is a PR and `item #59` is a backlog
+ *    item. If the attribution grammar counted bare `#NNNN` as an id, the PR
+ *    number in an item's own merge line would sit nearer the merge word than
+ *    the item does and would steal every merge in the register.
+ * ------------------------------------------------------------------------ */
+{
+  const dir = freshFixture();
+  addBacklogItem(dir, "T-919", "**A change that lands.**", "The register carries its own line.");
+  appendClaims(dir, [
+    // The PR number sits NEARER the merge word than the item id does. A
+    // grammar that counted `#8255` as an id would hand this merge to the pull
+    // request and the item would lose it; with the id written adjacent to the
+    // verb instead, the case passes whatever the grammar says.
+    "2026-09-22T13:30:00Z | fixture-agent | item T-919 was taken on Monday and, after two rounds of review, PR #8255 squash-merged it.",
+  ]);
+  buildBoard(dir);
+  const item = summaryItems(dir).out.get("T-919");
+  check(
+    "a pull request number is not read as a competing item id",
+    item?.rung === 5,
+    `rung=${item?.rung} (${item?.rungLabel}) quote=${JSON.stringify(item?.quote ?? "")}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+/* ------------------------------------------------------------------------ *
+ * 10. THE DIRECTION, asserted rather than trusted. Attribution removes
+ *     matches; it can never create one. Two items share one record — one owns
+ *     the merge, the other is only named in it — and the one that is merely
+ *     named must not end up ABOVE the one that owns it. A change that moves
+ *     any item up needs its own argument, and this case is where that would
+ *     first show.
+ * ------------------------------------------------------------------------ */
+{
+  const dir = freshFixture();
+  addBacklogItem(dir, "T-920", "**The owner of the record.**", "The register carries its own line.");
+  addBacklogItem(dir, "T-921", "**Only mentioned.**", "Nothing shipped.");
+  appendClaims(dir, [
+    "2026-09-22T13:31:00Z | fixture-agent | item T-920 — squash-merged as abc1234.",
+    "2026-09-22T13:31:30Z | fixture-agent | item T-921 claimed; it depends on item T-920 — squash-merged as abc1234.",
+  ]);
+  buildBoard(dir);
+  const { out } = summaryItems(dir);
+  const owner = out.get("T-920");
+  const mentioned = out.get("T-921");
+  check(
+    "the item merely named in a merge does not outrank the item that owns it",
+    owner?.rung === 5 && (mentioned?.rung ?? 0) < 5,
+    `owner=${owner?.rung} (${owner?.rungLabel}) mentioned=${mentioned?.rung} (${mentioned?.rungLabel})`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+console.log("\nbuild-source-board — the rung-7 veto and what it exposes (T-705)\n");
+
+/* ------------------------------------------------------------------------ *
+ * 11. MARKUP BETWEEN `not` AND THE TERM. The register's habitual form, found
+ *     on four live rows: "Status `deployed`, NOT `live-proven`." A single
+ *     backtick defeats `\s+`, so the sentence that DENIES proof was read as
+ *     asserting it. The row must read Deployed, which is what it says.
+ * ------------------------------------------------------------------------ */
+{
+  const dir = freshFixture();
+  addBacklogItem(dir, "T-930", "**Shipped to the cluster.**", "The register carries its own line.");
+  appendClaims(dir, [
+    "2026-09-22T14:01:00Z | fixture-agent | RELEASED item T-930 — merged and deployed. Status `deployed`, NOT `live-proven`.",
+  ]);
+  buildBoard(dir);
+  const item = summaryItems(dir).out.get("T-930");
+  check(
+    "markup between `not` and the term does not defeat the rung-7 veto",
+    item?.rung === 6,
+    `rung=${item?.rung} (${item?.rungLabel}) quote=${JSON.stringify(item?.quote ?? "")}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+/* ------------------------------------------------------------------------ *
+ * 12. AN INTERVENING WORD. The other live form: "This line does not claim
+ *     deployed or live-proven." — `not` is followed by `claim`, three words
+ *     before the term, so the adjacent-only veto missed it entirely.
+ * ------------------------------------------------------------------------ */
+{
+  const dir = freshFixture();
+  addBacklogItem(dir, "T-931", "**Shipped to the cluster.**", "The register carries its own line.");
+  appendClaims(dir, [
+    "2026-09-22T14:02:00Z | fixture-agent | item T-931 merged and deployed. This line does not claim deployed or live-proven.",
+  ]);
+  buildBoard(dir);
+  const item = summaryItems(dir).out.get("T-931");
+  check(
+    "words between `not` and the term do not defeat the rung-7 veto",
+    item?.rung === 6,
+    `rung=${item?.rung} (${item?.rungLabel}) quote=${JSON.stringify(item?.quote ?? "")}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+/* ------------------------------------------------------------------------ *
+ * 13. THE GUARDRAIL AGAINST TIGHTENING INTO SILENCE. A genuine signed-in
+ *     proof must still reach rung 7. A veto widened until nothing can claim
+ *     proof passes every negation case above and is worthless; this is the
+ *     case that fails when that happens. It passes on unfixed code BY DESIGN.
+ * ------------------------------------------------------------------------ */
+{
+  const dir = freshFixture();
+  addBacklogItem(dir, "T-932", "**Shipped and accepted.**", "The register carries its own line.");
+  appendClaims(dir, [
+    "2026-09-22T14:03:00Z | fixture-agent | RELEASED item T-932 — merged, deployed, and signed-in acceptance PASSED on the deployed SHA.",
+  ]);
+  buildBoard(dir);
+  const item = summaryItems(dir).out.get("T-932");
+  check(
+    "a genuine signed-in proof still reaches rung 7",
+    item?.rung === 7,
+    `rung=${item?.rung} (${item?.rungLabel}) quote=${JSON.stringify(item?.quote ?? "")}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+/* ------------------------------------------------------------------------ *
+ * 13b. THE GUARDRAIL THAT ACTUALLY BITES. Case 13's proof sentence contains
+ *      no `not` at all, so a veto widened to fire on ANY `not` passes it —
+ *      measured, that mutation survived case 13 untouched. Real proof lines
+ *      do carry a negative: the proof ladder's own rung 7 is "signed-in
+ *      acceptance, and opposite-tenant refusal", which is written with one.
+ *      Here the denial word sits AFTER the proof term, so the veto must not
+ *      fire, and a veto keyed on the bare word does.
+ * ------------------------------------------------------------------------ */
+{
+  const dir = freshFixture();
+  addBacklogItem(dir, "T-935", "**Shipped and accepted.**", "The register carries its own line.");
+  appendClaims(dir, [
+    "2026-09-22T14:05:00Z | fixture-agent | RELEASED item T-935 — merged, deployed, signed-in acceptance PASSED and the opposite tenant could not read it.",
+  ]);
+  buildBoard(dir);
+  const item = summaryItems(dir).out.get("T-935");
+  check(
+    "a denial AFTER the proof term does not veto a genuine rung 7",
+    item?.rung === 7,
+    `rung=${item?.rung} (${item?.rungLabel}) quote=${JSON.stringify(item?.quote ?? "")}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+/* ------------------------------------------------------------------------ *
+ * 14. EVALUATION IS PER SENTENCE. A denial in ONE sentence must not veto a
+ *     proof stated in the NEXT one.
+ *
+ *     Stated precisely, because the first version of this comment was wrong
+ *     and a mutation caught it: what protects this is the SPLIT in
+ *     `firstMatchingSentence`, not the veto's own `[^.;\n]` span. The veto
+ *     never sees two sentences at once, so widening its span to cross a full
+ *     stop changes nothing — measured, that mutation passes every case here.
+ *     The `[^.;\n]` is belt-and-braces against a future caller that stops
+ *     splitting; the mutation below removes the split itself, which is what
+ *     this case actually holds shut.
+ * ------------------------------------------------------------------------ */
+{
+  const dir = freshFixture();
+  addBacklogItem(dir, "T-933", "**Shipped and accepted.**", "The register carries its own line.");
+  appendClaims(dir, [
+    "2026-09-22T14:04:00Z | fixture-agent | item T-933 is not a rollback. Signed-in acceptance PASSED on the deployed SHA.",
+  ]);
+  buildBoard(dir);
+  const item = summaryItems(dir).out.get("T-933");
+  check(
+    "a denial in one sentence does not veto proof stated in the next",
+    item?.rung === 7,
+    `rung=${item?.rung} (${item?.rungLabel}) quote=${JSON.stringify(item?.quote ?? "")}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+/* ------------------------------------------------------------------------ *
+ * 15. WHAT THE VETO EXPOSED, and the reason the blocker term ships with it.
+ *
+ *     Correcting the veto drops a live row to rung 0 — correctly; its own
+ *     text says "not merged, not deployed, not applied". That row carries NO
+ *     blocker, so a FALSE rung 7 was the only thing keeping owner-gated work
+ *     out of the claimable bucket. A row that says its work remains out of
+ *     scope until separately approved must carry an owner gate at rung 0, or
+ *     the queue offers it as free work the moment the rung is corrected.
+ * ------------------------------------------------------------------------ */
+{
+  const dir = freshFixture();
+  addBacklogItem(
+    dir,
+    "T-934",
+    "**Implemented locally; not merged, not deployed, not applied.**",
+    "Migration apply, merge and deploy all remain out of scope until separately approved.",
+  );
+  buildBoard(dir);
+  const item = summaryItems(dir).out.get("T-934");
+  check(
+    "a row gated until separately approved carries an owner gate at rung 0",
+    item?.rung === 0 && item?.blocker === "Awaiting approval to apply",
+    `rung=${item?.rung} (${item?.rungLabel}) blocker=${JSON.stringify(item?.blocker ?? null)}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
 console.log(`\n${passes} passed, ${failures} failed`);
 process.exit(failures ? 1 : 0);

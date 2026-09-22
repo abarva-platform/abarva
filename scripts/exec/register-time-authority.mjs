@@ -27,6 +27,12 @@
  *   node scripts/exec/register-time-authority.mjs --file <register> \
  *        [--since <ISO>] [--now <ISO>] [--github] [--authority <json>] [--json]
  *   node scripts/exec/register-time-authority.mjs --emit --pr <n> [--github]
+ *   node scripts/exec/register-time-authority.mjs --preclaim --file <register> \
+ *        --item <id> --identity <base-agent#run-id> [--strict]
+ *
+ * `--preclaim` is item T-706: the ownership check an agent runs BEFORE
+ * appending a claim, answering take / already-yours / held-by-a-sibling /
+ * held-by-another and exiting non-zero on the last two.
  *
  * Exit 1 when any in-window line violates the rule. `--github` resolves the
  * authority with `gh`; `--authority <json>` injects it from a file, which is
@@ -186,6 +192,190 @@ export function resolveClaimOwnership(claimAgent, currentRunIdentity) {
   if (!claim) return "legacy_other";
   if (claim.base === current.base) return "sibling";
   return "other";
+}
+
+// ---------------------------------------------------------------------------
+// Pre-claim ownership (item T-706).
+//
+// `resolveClaimOwnership` above has been correct since T-594, and item 34's
+// parser repair finally feeds it real identities — measured on the register,
+// distinct identities 81 -> 99 and identities carrying a run id 0 -> 18. What
+// was still missing is a caller AT THE MOMENT IT MATTERS. Ownership was
+// decided by an agent reading the file and judging for itself, which is the
+// 18 Sep failure verbatim; and `auditWorktreeOwnership` cannot substitute,
+// because it audits a register that already records the collision.
+//
+// This is the gate that runs BEFORE a claim line is appended.
+// ---------------------------------------------------------------------------
+
+/** The claim protocol's liveness window: a claim older than this has expired. */
+export const CLAIM_WINDOW_HOURS = 3;
+
+/**
+ * An item id in SUBJECT position — the one a claim verb governs.
+ *
+ * A register line is long and discursive: one routinely claims item A while
+ * naming item B's pull request, branch or blocker in the same sentence. The
+ * id that holds the item is the one the word `item` introduces, not every id
+ * the line mentions. This is the same nearest-token discipline `RELEASE_SUBJECT`
+ * uses in the queue generator (T-545), narrowed to the one cue the register
+ * actually writes: `item T-800 claimed`, `TAKING item T-704`, `RELEASED item
+ * T-701(a)`, and the legacy `- item 21 | agent | ...` form.
+ */
+const ITEM_SUBJECT = /\bitems?\s+(?:\*\*)?`?([A-Za-z]{1,2}-\d{1,4}|\d{1,4})(\([a-z]\))?/gi;
+
+/** Normalise `t-706`, `**T-706**`, `T-706(a)` to a comparable pair. */
+function splitItemId(value) {
+  const match = String(value ?? "")
+    .trim()
+    .replace(/^\*\*|\*\*$/g, "")
+    .match(/^([A-Za-z]{1,2}-\d{1,4}|\d{1,4})(\([a-z]\))?$/);
+  if (!match) return null;
+  return { base: match[1].toUpperCase(), part: (match[2] ?? "").toLowerCase() };
+}
+
+/** Every item id this line puts in subject position. */
+export function itemSubjects(text) {
+  ITEM_SUBJECT.lastIndex = 0;
+  const out = [];
+  for (const match of String(text).matchAll(ITEM_SUBJECT)) {
+    const id = splitItemId(`${match[1]}${match[2] ?? ""}`);
+    if (id) out.push(id);
+  }
+  return out;
+}
+
+/**
+ * Whether the line RELEASES its subject rather than claiming it.
+ *
+ * Not a bare search for the word: nearly every claim line in the register
+ * promises "one public-safe release record", and reading that as a release
+ * would free every item in flight. The announcement form is the verb at the
+ * head of the message field, which is where the register puts it.
+ */
+export function announcesRelease(text) {
+  const parts = String(text).split("|");
+  const message = (parts.length > 2 ? parts[2] : parts[parts.length - 1] ?? "").trim();
+  return (
+    /^(?:\*\*)?(?:RELEASED|RELEASING)\b/.test(message) ||
+    /^(?:\*\*)?releas(?:ed|ing)\s+items?\b/i.test(message)
+  );
+}
+
+/**
+ * Answer, for one item and one run identity, whether this run may claim it.
+ *
+ * @param {ReturnType<typeof parseRegisterLines>} lines
+ * @param {{ itemId:string, identity:string, nowMs:number, windowHours?:number }} opts
+ * @returns {{ verdict:string, reason:string, holder:(object|null), refuses:boolean }}
+ */
+export function resolveItemClaim(lines, { itemId, identity, nowMs, windowHours }) {
+  const wanted = splitItemId(itemId);
+  if (!wanted) {
+    return {
+      verdict: "invalid-item",
+      reason: `not an item id: ${itemId}`,
+      holder: null,
+      refuses: true,
+    };
+  }
+  // The identity check runs first and unconditionally. A base name with no run
+  // id is not an identity — treating it as one is the defect, not a shortcut
+  // past it.
+  if (resolveClaimOwnership(`${identity}`, identity) === "invalid_current") {
+    return {
+      verdict: "invalid-identity",
+      reason:
+        `\`${identity}\` carries no run id. A scheduled task's name identifies a ` +
+        "FAMILY of runs; stamp claims `<base-agent>#<run-id>`.",
+      holder: null,
+      refuses: true,
+    };
+  }
+
+  const windowMs = (windowHours ?? CLAIM_WINDOW_HOURS) * 3600 * 1000;
+  const live = lines.filter(
+    (line) =>
+      Number.isFinite(line.stampMs) &&
+      line.stampMs > nowMs - windowMs &&
+      line.stampMs <= nowMs &&
+      itemSubjects(line.text).some(
+        (id) => id.base === wanted.base && (wanted.part === "" || id.part === wanted.part),
+      ),
+  );
+
+  if (live.length === 0) {
+    return {
+      verdict: "take",
+      reason: `no live line within ${windowHours ?? CLAIM_WINDOW_HOURS}h names item ${wanted.base}${wanted.part} in subject position`,
+      holder: null,
+      refuses: false,
+    };
+  }
+
+  // The newest line for an item wins — that is the protocol, and it is what
+  // makes a release re-open the item for the next run.
+  const newest = live.reduce((best, line) =>
+    line.stampMs > best.stampMs || (line.stampMs === best.stampMs && line.lineNumber > best.lineNumber)
+      ? line
+      : best,
+  );
+  const holder = {
+    lineNumber: newest.lineNumber,
+    stamp: newest.stamp,
+    agent: newest.agent,
+    excerpt: newest.text.slice(0, 200),
+  };
+
+  if (announcesRelease(newest.text)) {
+    return {
+      verdict: "take",
+      reason: `the newest live line (${newest.stamp}, line ${newest.lineNumber}) releases the item`,
+      holder,
+      refuses: false,
+    };
+  }
+
+  const ownership = resolveClaimOwnership(newest.agent, identity);
+  if (ownership === "own") {
+    return {
+      verdict: "already-yours",
+      reason: `this exact run identity wrote the live claim on line ${newest.lineNumber}`,
+      holder,
+      refuses: false,
+    };
+  }
+  if (ownership === "sibling") {
+    return {
+      verdict: "held-by-a-sibling",
+      reason:
+        `line ${newest.lineNumber} is held by \`${newest.agent}\` — a DIFFERENT run of your own ` +
+        "scheduled task. A shared base name is not shared ownership (T-594).",
+      holder,
+      refuses: true,
+    };
+  }
+  if (ownership === "legacy_other") {
+    // The reach limit item 34 measured: 81 of 99 identities on the real
+    // register carry no run id, so ownership is undecidable for them. Failing
+    // closed here would refuse nearly every historical item and the gate would
+    // be turned off, which is worse than an advisory that is read.
+    return {
+      verdict: "unresolved-legacy",
+      reason:
+        `line ${newest.lineNumber} is held by \`${newest.agent}\`, which carries no run id, so ` +
+        "ownership cannot be resolved. Judge it by the file list; re-run with --strict to refuse.",
+      holder,
+      refuses: false,
+      advisory: true,
+    };
+  }
+  return {
+    verdict: "held-by-another",
+    reason: `line ${newest.lineNumber} is held by \`${newest.agent}\``,
+    holder,
+    refuses: true,
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -659,9 +849,48 @@ if (isMain()) {
     process.exit(0);
   }
 
+  if (has("--preclaim")) {
+    const file = flag("--file");
+    const item = flag("--item");
+    const identity = flag("--identity");
+    if (!file || !item || !identity) {
+      console.error(
+        "usage: --preclaim --file <register.md> --item <id> --identity <base-agent#run-id> [--now ISO] [--window-hours 3] [--strict] [--json]",
+      );
+      process.exit(2);
+    }
+    const windowHours = Number(flag("--window-hours") ?? CLAIM_WINDOW_HOURS);
+    const result = resolveItemClaim(parseRegisterLines(fs.readFileSync(file, "utf8")), {
+      itemId: item,
+      identity,
+      nowMs,
+      windowHours,
+    });
+    const strict = has("--strict");
+    const refuses = result.refuses || (strict && result.advisory === true);
+    const payload = { ...result, item, identity, windowHours, strict, refuses };
+    if (has("--json")) {
+      console.log(JSON.stringify(payload, null, 1));
+    } else {
+      console.log(`Pre-claim check — item ${item} as ${identity}`);
+      console.log(`  verdict: ${result.verdict}${refuses ? " (REFUSED)" : ""}`);
+      console.log(`  reason:  ${result.reason}`);
+      if (result.holder) {
+        console.log(`  holder:  line ${result.holder.lineNumber} ${result.holder.stamp} ${result.holder.agent}`);
+        console.log(`           ${result.holder.excerpt}`);
+      }
+    }
+    // An unusable identity or item id is a usage error, not a refusal.
+    if (result.verdict === "invalid-identity" || result.verdict === "invalid-item") process.exit(2);
+    process.exit(refuses ? 1 : 0);
+  }
+
   const file = flag("--file");
   if (!file) {
-    console.error("usage: --file <register.md> [--since ISO] [--now ISO] [--github|--authority f] [--json]");
+    console.error(
+      "usage: --file <register.md> [--since ISO] [--now ISO] [--github|--authority f] [--json]\n" +
+        "       --preclaim --file <register.md> --item <id> --identity <base-agent#run-id>",
+    );
     process.exit(2);
   }
   const sinceIso = flag("--since") ?? new Date(nowMs - 24 * 3600 * 1000).toISOString();

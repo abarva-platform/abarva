@@ -784,5 +784,215 @@ const SINCE = "2026-09-21T00:00:00Z";
   fs.rmSync(dir, { recursive: true, force: true });
 }
 
+// ---------------------------------------------------------------------------
+// T-706. The run-identity resolver is correct and, since item 34 repaired the
+// parser, it finally receives real identities. But nothing calls it at the
+// moment ownership is actually decided: an agent reads the register and judges
+// for itself, which is precisely the 18 Sep failure T-594 describes. The
+// `worktree_shared` control audits a register that ALREADY records the
+// collision — after the fact, by construction.
+//
+// This is the pre-claim gate: given the register, this run's identity and an
+// item id, it answers take / already-yours / held-by-a-sibling /
+// held-by-another and refuses the last two with a non-zero exit.
+//
+// Every case below drives the real CLI as a child process and reads its exit
+// status, not its prose.
+// ---------------------------------------------------------------------------
+
+const PRECLAIM_NOW = "2026-09-22T18:30:00Z";
+
+function preclaim(file, item, identity, extra = []) {
+  const r = run([
+    "--preclaim",
+    "--file",
+    file,
+    "--item",
+    item,
+    "--identity",
+    identity,
+    "--now",
+    PRECLAIM_NOW,
+    "--json",
+    ...extra,
+  ]);
+  let report = {};
+  try {
+    report = JSON.parse(r.stdout || "{}");
+  } catch {
+    report = {};
+  }
+  return { ...r, report };
+}
+
+{
+  // THE case the control exists for, and the one base-name keying gets wrong.
+  // Two runs of ONE scheduled task. The sibling holds item T-800; this run
+  // must be refused, and refused with a non-zero exit so a script cannot
+  // proceed past it by ignoring the prose.
+  const { dir, file } = fixture([
+    "2026-09-22T18:05:00Z | source-backlog-executor#20260922T175543Z | item T-800 claimed | files: scripts/exec/a.mjs",
+  ]);
+  const r = preclaim(file, "T-800", "source-backlog-executor#20260922T182000Z");
+  check(
+    "a sibling run under the same base agent is refused the item",
+    r.report.verdict === "held-by-a-sibling",
+    `verdict=${r.report.verdict} stdout=${r.stdout} stderr=${r.stderr}`,
+  );
+  check(
+    "refusing a sibling exits non-zero",
+    r.status !== 0,
+    `status=${r.status}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+{
+  // The negative control, and it must be independent of the case above: the
+  // SAME run re-reading its own claim mid-flight is resuming, not colliding,
+  // and a gate that refused it would make every multi-step run unworkable.
+  const { dir, file } = fixture([
+    "2026-09-22T18:05:00Z | source-backlog-executor#20260922T175543Z | item T-800 claimed | files: scripts/exec/a.mjs",
+  ]);
+  const r = preclaim(file, "T-800", "source-backlog-executor#20260922T175543Z");
+  check(
+    "the exact run that wrote the claim may continue on it",
+    r.report.verdict === "already-yours",
+    `verdict=${r.report.verdict} stdout=${r.stdout} stderr=${r.stderr}`,
+  );
+  check(
+    "continuing your own claim exits zero",
+    r.status === 0,
+    `status=${r.status}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+{
+  // A different lane entirely. Same refusal, different reason — the two must
+  // not collapse, because a sibling collision is a bug in THIS task's
+  // scheduling and a foreign claim is ordinary two-lane traffic.
+  const { dir, file } = fixture([
+    "2026-09-22T18:05:00Z | codex-some-item#20260922T175543Z | item T-800 claimed | files: scripts/exec/a.mjs",
+  ]);
+  const r = preclaim(file, "T-800", "source-backlog-executor#20260922T182000Z");
+  check(
+    "another lane's live claim is refused as held-by-another",
+    r.report.verdict === "held-by-another",
+    `verdict=${r.report.verdict} stdout=${r.stdout}`,
+  );
+  check("refusing a foreign claim exits non-zero", r.status !== 0, `status=${r.status}`);
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+{
+  // An item nobody has named is free, and an item whose newest live line
+  // RELEASES it is free again. The second half is not a nicety: items 34,
+  // T-400, T-410 and T-421 were all claimed and released inside one 3-hour
+  // window today, so a gate that read a release as a live claim would have
+  // refused the next run its own work.
+  const { dir, file } = fixture([
+    "2026-09-22T18:05:00Z | source-backlog-executor#20260922T175543Z | item T-800 claimed | files: scripts/exec/a.mjs",
+    "2026-09-22T18:12:00Z | source-backlog-executor#20260922T175543Z | RELEASED item T-800 — merged; all files free",
+  ]);
+  const free = preclaim(file, "T-800", "source-backlog-executor#20260922T182000Z");
+  check(
+    "a released item is free again for a sibling run",
+    free.report.verdict === "take",
+    `verdict=${free.report.verdict} stdout=${free.stdout}`,
+  );
+  check("taking a free item exits zero", free.status === 0, `status=${free.status}`);
+
+  const never = preclaim(file, "T-801", "source-backlog-executor#20260922T182000Z");
+  check(
+    "an item no live line names is free",
+    never.report.verdict === "take",
+    `verdict=${never.report.verdict}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+{
+  // Liveness. A claim older than the 3-hour window is expired by the protocol
+  // and the gate must not resurrect it.
+  const { dir, file } = fixture([
+    "2026-09-22T14:00:00Z | codex-some-item#20260922T140000Z | item T-800 claimed | files: scripts/exec/a.mjs",
+  ]);
+  const r = preclaim(file, "T-800", "source-backlog-executor#20260922T182000Z");
+  check(
+    "a claim older than the liveness window does not hold the item",
+    r.report.verdict === "take",
+    `verdict=${r.report.verdict} stdout=${r.stdout}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+{
+  // The reach limit item 34 measured, stated as a test rather than as prose:
+  // 81 of the register's 99 identities carry NO run id, so ownership cannot be
+  // resolved for them at all. The gate governs the 18 suffixed identities and
+  // must fail OPEN on the rest — a gate that refused every legacy line would
+  // refuse work on nearly every historical item, and would be turned off.
+  const { dir, file } = fixture([
+    "2026-09-22T18:05:00Z | claude-code-executor | item T-800 claimed | files: scripts/exec/a.mjs",
+  ]);
+  const r = preclaim(file, "T-800", "source-backlog-executor#20260922T182000Z");
+  check(
+    "a legacy claim with no run id is reported, not resolved",
+    r.report.verdict === "unresolved-legacy",
+    `verdict=${r.report.verdict} stdout=${r.stdout}`,
+  );
+  check("an unresolvable legacy claim fails open", r.status === 0, `status=${r.status}`);
+  const strict = preclaim(file, "T-800", "source-backlog-executor#20260922T182000Z", [
+    "--strict",
+  ]);
+  check(
+    "--strict turns the legacy advisory into a refusal",
+    strict.status !== 0,
+    `status=${strict.status}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+{
+  // The within-record leak, on this axis. A register line is discursive: this
+  // one claims T-800 while naming T-801's blocker in the same sentence. Only
+  // the id in SUBJECT position — the one the claim verb governs — is the item
+  // being claimed. Attributing the line to every id it mentions would have the
+  // gate refuse T-801 to a run that is entitled to it.
+  const { dir, file } = fixture([
+    "2026-09-22T18:05:00Z | codex-some-item#20260922T175543Z | item T-800 claimed — note T-801 is NOT taken, it is merely blocked behind PR #8255",
+  ]);
+  const subject = preclaim(file, "T-800", "source-backlog-executor#20260922T182000Z");
+  check(
+    "the id the claim verb governs holds the item",
+    subject.report.verdict === "held-by-another",
+    `verdict=${subject.report.verdict}`,
+  );
+  const mentioned = preclaim(file, "T-801", "source-backlog-executor#20260922T182000Z");
+  check(
+    "an id merely mentioned in the same line does not hold the item",
+    mentioned.report.verdict === "take",
+    `verdict=${mentioned.report.verdict} stdout=${mentioned.stdout}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+{
+  // An identity with no run id cannot be a current identity at all. The gate
+  // must say so rather than silently treating the base name as an identity —
+  // that IS the defect.
+  const { dir, file } = fixture([
+    "2026-09-22T18:05:00Z | source-backlog-executor#20260922T175543Z | item T-800 claimed",
+  ]);
+  const r = preclaim(file, "T-800", "source-backlog-executor");
+  check(
+    "a current identity carrying no run id is rejected outright",
+    r.status !== 0 && r.report.verdict === "invalid-identity",
+    `status=${r.status} verdict=${r.report.verdict} stderr=${r.stderr}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
 console.log(`\n${passes} passed, ${failures} failed`);
 process.exit(failures ? 1 : 0);

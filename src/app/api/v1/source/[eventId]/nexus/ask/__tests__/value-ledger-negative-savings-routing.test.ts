@@ -261,8 +261,12 @@ describe("Source nexus/ask value-ledger routing", () => {
       expect.arrayContaining([
         expect.objectContaining({
           type: "summary",
+          answer:
+            "Define is blocked by missing scope approval and evidence review. The sourcing lead should open scope and strategy next.",
           summary:
             "Define is blocked by missing scope approval and evidence review. The sourcing lead should open scope and strategy next.",
+          sourceAnswer: null,
+          agentResponseParts: [],
         }),
       ]),
     );
