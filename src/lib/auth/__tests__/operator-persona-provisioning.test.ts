@@ -7,7 +7,7 @@ jest.mock("@/lib/db/person", () => ({
 
 // Chainable fluent-client mock. Per-table behavior is configured via `state`.
 const state: {
-  existingPerson: { id: string; primary_role?: string } | null;
+  existingPerson: { id: string; name?: string; primary_role?: string } | null;
   existingMembership: { id: string } | null;
   inserts: Array<{ table: string; row: Record<string, unknown> }>;
   updates: Array<{ table: string; row: Record<string, unknown> }>;
@@ -121,14 +121,53 @@ describe("ensureOperatorPersonProvisioned — provisioning", () => {
   });
 
   it("is idempotent: reuses an existing persons row (no duplicate create)", async () => {
-    state.existingPerson = { id: "existing-1", primary_role: "maestro" };
+    state.existingPerson = {
+      id: "existing-1",
+      name: "Anand Sundaram",
+      primary_role: "maestro",
+    };
     const r = await ensureOperatorPersonProvisioned(base);
     expect(r?.personId).toBe("existing-1");
     expect(createPersonMock).not.toHaveBeenCalled();
   });
 
+  it("repairs an existing placeholder name from the authenticated Clerk profile", async () => {
+    state.existingPerson = {
+      id: "existing-1",
+      name: "User",
+      primary_role: "maestro",
+    };
+
+    const r = await ensureOperatorPersonProvisioned(base);
+
+    expect(r?.personId).toBe("existing-1");
+    expect(state.updates).toContainEqual({
+      table: "persons",
+      row: { name: "Anand Sundaram" },
+    });
+  });
+
+  it("does not replace an existing non-placeholder person name", async () => {
+    state.existingPerson = {
+      id: "existing-1",
+      name: "Existing Reviewer",
+      primary_role: "maestro",
+    };
+
+    await ensureOperatorPersonProvisioned(base);
+
+    expect(state.updates).not.toContainEqual({
+      table: "persons",
+      row: { name: "Anand Sundaram" },
+    });
+  });
+
   it("does not insert a second membership when one already exists", async () => {
-    state.existingPerson = { id: "existing-1", primary_role: "maestro" };
+    state.existingPerson = {
+      id: "existing-1",
+      name: "Anand Sundaram",
+      primary_role: "maestro",
+    };
     state.existingMembership = { id: "m-1" };
     await ensureOperatorPersonProvisioned(base);
     expect(
