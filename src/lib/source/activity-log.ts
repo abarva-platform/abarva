@@ -1,4 +1,9 @@
 import { getAzureReadFluentClient } from "@/lib/data-plane/postgresCompat";
+import { specByCode } from "@/lib/source/canonical-specs/artifact-specs";
+import {
+  normalizeSourceStageKey,
+  SOURCE_STAGE_LABELS,
+} from "@/lib/source/constants";
 
 /**
  * One line of the governed decision trail.
@@ -91,9 +96,9 @@ function isoTimestamp(value: unknown): string {
 
 function activityRowToEntry(row: SourceEventActivityRow): ActivityEntry {
   const subject = [
-    row.stage_key ? `Stage: ${row.stage_key}` : null,
-    row.artifact_code ? `Artifact: ${row.artifact_code}` : null,
-    row.criterion_id ? `Criterion: ${row.criterion_id}` : null,
+    row.stage_key ? `Stage: ${stageLabel(row.stage_key)}` : null,
+    row.artifact_code ? `Artifact: ${artifactLabel(row.artifact_code)}` : null,
+    row.criterion_id ? `Criterion: ${humanizeKey(row.criterion_id)}` : null,
   ].filter(Boolean);
   const reason = row.reason?.trim() ? ` Reason: ${row.reason.trim()}` : "";
   const body = [
@@ -112,9 +117,28 @@ function activityRowToEntry(row: SourceEventActivityRow): ActivityEntry {
   };
 }
 
+function stageLabel(stageKey: string): string {
+  const canonical = normalizeSourceStageKey(stageKey);
+  return canonical ? SOURCE_STAGE_LABELS[canonical] : humanizeKey(stageKey);
+}
+
+function artifactLabel(artifactCode: string): string {
+  return specByCode(artifactCode)?.name ?? humanizeKey(artifactCode);
+}
+
+function humanizeKey(value: string): string {
+  const words = value.trim().replace(/[_-]+/g, " ").replace(/\s+/g, " ");
+  return words.length > 0
+    ? `${words[0].toUpperCase()}${words.slice(1).toLowerCase()}`
+    : "Not recorded";
+}
+
 function actorLabel(row: SourceEventActivityRow): string | undefined {
   const name = row.actor_display_name?.trim();
   const role = row.actor_role?.trim();
+  if (role?.toLowerCase() === "maestro") {
+    return name && name.toLowerCase() !== "user" ? `${name} · aVa` : "aVa";
+  }
   if (name && role) return `${name} · ${role}`;
   if (name || role) return name || role;
 

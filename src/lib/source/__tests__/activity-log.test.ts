@@ -89,6 +89,60 @@ describe("listSourceEventActivityEntries", () => {
     expect(result.entries[0].at).toBe("2026-09-18T12:00:00.000Z");
   });
 
+  it("renders the automation actor as aVa instead of internal role vocabulary", async () => {
+    state.rows = [
+      row({
+        actor_display_name: "User",
+        actor_role: "maestro",
+      }),
+    ];
+
+    const result = await listSourceEventActivityEntries("event-1");
+
+    if (!result.ok) throw new Error("expected a successful read");
+    expect(result.entries[0].actor).toBe("aVa");
+    expect(result.entries[0].actor).not.toContain("maestro");
+  });
+
+  it("uses governed stage and artifact names instead of storage keys", async () => {
+    state.rows = [
+      row({
+        stage_key: "scope",
+        artifact_code: "d05_scope_memo",
+        criterion_id: null,
+      }),
+    ];
+
+    const result = await listSourceEventActivityEntries("event-1");
+
+    if (!result.ok) throw new Error("expected a successful read");
+    expect(result.entries[0].body).toContain("Stage: Scope");
+    expect(result.entries[0].body).toContain(
+      "Artifact: Scope Memo with Boundaries",
+    );
+    expect(result.entries[0].body).not.toContain("d05_scope_memo");
+  });
+
+  it("humanizes unknown decision keys instead of exposing snake case", async () => {
+    state.rows = [
+      row({
+        stage_key: "special_review",
+        artifact_code: "custom_packet",
+        criterion_id: "commercial_readiness",
+      }),
+    ];
+
+    const result = await listSourceEventActivityEntries("event-1");
+
+    if (!result.ok) throw new Error("expected a successful read");
+    expect(result.entries[0].body).toContain("Stage: Special review");
+    expect(result.entries[0].body).toContain("Artifact: Custom packet");
+    expect(result.entries[0].body).toContain(
+      "Criterion: Commercial readiness",
+    );
+    expect(result.entries[0].body).not.toContain("_");
+  });
+
   it("does not invent an actor when none was recorded", async () => {
     state.rows = [row({ actor_display_name: null, actor_role: null, actor_user_id: null })];
 
