@@ -150,8 +150,10 @@ async function resolveReviewContext(
       { status: 403 },
     );
   }
+  // requireTenancy may reconcile a stale Clerk-linked person during this request.
+  // Prefer that canonical result over the pre-reconciliation current-user snapshot.
   const resolvedReviewerPersonId =
-    currentUser?.personId ?? canonicalPersonId(tenancy?.userId);
+    canonicalPersonId(tenancy?.userId) ?? currentUser?.personId;
   if (!currentUser || !resolvedReviewerPersonId || !currentUser.email) {
     return Response.json(
       {

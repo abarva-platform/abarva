@@ -86,6 +86,7 @@ let personRow: { id: string; name: string | null; email: string | null } | null 
   name: "Evidence Reviewer",
   email: "reviewer@example.test",
 };
+let queriedPersonId: string | null = null;
 
 function fakeFluentClient() {
   return {
@@ -93,7 +94,12 @@ function fakeFluentClient() {
       let updatePayload: Record<string, unknown> | null = null;
       const chain: Record<string, unknown> = {
         select: () => chain,
-        eq: () => chain,
+        eq: (column: string, value: unknown) => {
+          if (table === "persons" && column === "id") {
+            queriedPersonId = typeof value === "string" ? value : null;
+          }
+          return chain;
+        },
         update: (payload: Record<string, unknown>) => {
           updatePayload = payload;
           writes.push({ table, payload });
@@ -107,7 +113,11 @@ function fakeFluentClient() {
             };
           }
           if (table === "persons") {
-            return { data: personRow, error: null };
+            return {
+              data:
+                personRow && queriedPersonId === personRow.id ? personRow : null,
+              error: null,
+            };
           }
           if (table === "source_event_evidence_states") {
             return { data: existingEvidence, error: null };
@@ -148,6 +158,7 @@ beforeEach(() => {
   existingEvidence = evidenceRow;
   tenancy.userId = "person-1";
   currentUser.personId = "person-1";
+  queriedPersonId = null;
   personRow = {
     id: "person-1",
     name: "Evidence Reviewer",
@@ -272,6 +283,33 @@ describe("Source parsed-evidence availability review", () => {
       expect.objectContaining({
         actorUserId: provisionedPersonId,
         actorDisplayName: "Provisioned Evidence Reviewer",
+      }),
+    );
+  });
+
+  it("prefers the request-resolved tenant person over a stale current-user person id", async () => {
+    const stalePersonId = "00000000-0000-4000-8000-000000000111";
+    const canonicalPersonId = "00000000-0000-4000-8000-000000000321";
+    currentUser.personId = stalePersonId;
+    tenancy.userId = canonicalPersonId;
+    personRow = {
+      id: canonicalPersonId,
+      name: "Canonical Evidence Reviewer",
+      email: "reviewer@example.test",
+    };
+
+    const response = await GET(request(), ctx);
+
+    expect(response.status).toBe(200);
+    expect(queriedPersonId).toBe(canonicalPersonId);
+    await expect(response.json()).resolves.toEqual(
+      expect.objectContaining({
+        review: expect.objectContaining({
+          reviewer: expect.objectContaining({
+            personId: canonicalPersonId,
+            displayName: "Canonical Evidence Reviewer",
+          }),
+        }),
       }),
     );
   });
