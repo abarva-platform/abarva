@@ -1,0 +1,28 @@
+{
+  "changeableAttributes": {
+    "deleteEnabled": true,
+    "listEnabled": true,
+    "readEnabled": true,
+    "writeEnabled": true
+  },
+  "createdTime": "2026-09-22T10:57:10.7262465Z",
+  "digest": "sha256:c61529bfc1bcd4c83520f8393976b845f7fab51323ecac6abca49b920d00242a",
+  "imageSize": 0,
+  "lastUpdateTime": "2026-09-22T10:57:10.7262465Z",
+  "mediaType": "application/vnd.oci.image.index.v1+json",
+  "references": [
+    {
+      "architecture": "amd64",
+      "digest": "sha256:3282e97e14d9a4bce244fdf3fdcf9fce4298352d613b301a684b8f3931e26d14",
+      "os": "linux"
+    },
+    {
+      "architecture": "unknown",
+      "digest": "sha256:312d34fb449b27c3f1bfd9c37b54aac88e73950f279bd439b7b09152dccbbd03",
+      "os": "unknown"
+    }
+  ],
+  "tags": [
+    "main-924d5a0d"
+  ]
+}
