@@ -1405,6 +1405,7 @@ function SourceNewIntelligenceWorkspace({
   const readyEvidence = intelligence?.governedContext.available ?? [];
   const reviewItems = intelligence?.gaps ?? [];
   const excludedEvidence = intelligence?.refusals ?? [];
+  const evidenceReviewHref = `${eventHref}?workspace=files`;
   const visibleRequiredEvidence = requiredEvidenceExpanded
     ? requiredEvidence
     : requiredEvidence.slice(0, INTELLIGENCE_LIST_PREVIEW_COUNT);
@@ -1611,7 +1612,7 @@ function SourceNewIntelligenceWorkspace({
           <strong>{intelligence.nextAction.label}.</strong>{" "}
           {intelligence.nextAction.detail}
         </p>
-        <Link className="snw-primary" href={eventHref}>
+        <Link className="snw-primary" href={evidenceReviewHref}>
           {intelligence.nextAction.label}
         </Link>
       </section>
