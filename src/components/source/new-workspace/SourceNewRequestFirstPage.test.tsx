@@ -44,18 +44,29 @@ const activeEventWorkspaces = [
   },
 ];
 
-const pendingRequest = {
-  id: "request-1",
-  code: "SRC-002",
-  name: "Infrastructure services request",
-  lifecycle: "waiting_on_client",
-  currentStageLabel: "Strategy",
-  lifecycleLabel: "Waiting on Client",
-  trigger: "Confirm the sourcing path before the service decision.",
-  scope:
-    "Scope boundary: Infrastructure operations\nValue target: Establish the decision baseline\nBaseline owner: Technology finance",
-  decisionOwner: "Technology sponsor",
-  href: "/source/new/request-1",
+const importedRequest = {
+  requestId: "servicenow:sn_sourcing_request:request-1",
+  requestNumber: "SRC0010042",
+  sourceSystem: "ServiceNow" as const,
+  sourceStatus: "New",
+  sourceVersion: "v1",
+  extractedAt: "2026-09-22T12:00:00Z",
+  updatedAt: "2026-09-22T11:55:00Z",
+  title: "Infrastructure services request",
+  description: "Confirm the sourcing path before the service decision.",
+  requestedFor: "Enterprise Technology",
+  businessDomain: "it",
+  businessFunction: "Infrastructure",
+  value: { amount: 7850000, currency: "USD", validated: false as const },
+  requiredFactGaps: [] as string[],
+  mappingProposal: {
+    categoryId: "managed_services_ams",
+    archetypeId: "MANAGED_SERVICES_AMS",
+    confidence: "high",
+    reasons: ["Matched managed-services scope"],
+  },
+  mappingDecision: null,
+  eventLink: null,
 };
 
 describe("SourceNewRequestFirstPage", () => {
@@ -65,6 +76,7 @@ describe("SourceNewRequestFirstPage", () => {
         clientName="Example client"
         clientKey="example-client"
         requestQueueStatus="empty"
+        importedRequests={[]}
         eventWorkspaces={[]}
       />,
     );
@@ -94,6 +106,7 @@ describe("SourceNewRequestFirstPage", () => {
         clientName="Example client"
         clientKey="example-client"
         requestQueueStatus="loading"
+        importedRequests={[]}
         eventWorkspaces={[]}
       />,
     );
@@ -110,6 +123,7 @@ describe("SourceNewRequestFirstPage", () => {
         clientName="Example client"
         clientKey="example-client"
         requestQueueStatus="unauthorized"
+        importedRequests={[importedRequest]}
         eventWorkspaces={activeEventWorkspaces}
       />,
     );
@@ -124,13 +138,14 @@ describe("SourceNewRequestFirstPage", () => {
     ).toBeNull();
   });
 
-  it("does not expose cached rows when the request read is unavailable", () => {
+  it("does not expose request rows when intake authority is unavailable but preserves governed event access", () => {
     render(
       <SourceNewRequestFirstPage
         clientName="Example client"
         clientKey="example-client"
         requestQueueStatus="unavailable"
-        eventWorkspaces={[pendingRequest, ...activeEventWorkspaces]}
+        importedRequests={[importedRequest]}
+        eventWorkspaces={activeEventWorkspaces}
       />,
     );
 
@@ -138,7 +153,7 @@ describe("SourceNewRequestFirstPage", () => {
       screen.getByText("The request queue could not be read. This is not an empty queue."),
     ).toBeTruthy();
     expect(screen.queryByText("Infrastructure services request")).toBeNull();
-    expect(screen.queryByText("Application services event")).toBeNull();
+    expect(screen.getByText("Application services event")).toBeTruthy();
   });
 
   it("keeps requests separate from active event workspaces", () => {
@@ -147,6 +162,7 @@ describe("SourceNewRequestFirstPage", () => {
         clientName="Example client"
         clientKey="example-client"
         requestQueueStatus="empty"
+        importedRequests={[]}
         eventWorkspaces={activeEventWorkspaces}
       />,
     );
@@ -175,28 +191,37 @@ describe("SourceNewRequestFirstPage", () => {
         clientName="Example client"
         clientKey="example-client"
         requestQueueStatus="loaded"
-        eventWorkspaces={[pendingRequest]}
+        importedRequests={[importedRequest]}
+        eventWorkspaces={[]}
       />,
     );
 
     const queue = screen.getByRole("region", { name: "Request queue" });
     expect(
       within(queue).getByText(
-        "Confirm the sourcing path before the service decision.",
+        "Enterprise Technology · Infrastructure · Confirm the sourcing path before the service decision.",
       ),
     ).toBeTruthy();
     expect(within(queue).getByText("What was requested")).toBeTruthy();
     expect(within(queue).getByText("What is missing")).toBeTruthy();
-    expect(within(queue).getByText("Who acts next")).toBeTruthy();
-    expect(within(queue).getByText("Ready for Define review")).toBeTruthy();
+    expect(within(queue).getByText("Proposed routing")).toBeTruthy();
+    expect(within(queue).getByText("Supplier pool")).toBeTruthy();
+    expect(within(queue).getByText("Review required")).toBeTruthy();
     expect(screen.getByText("Review pending requests")).toBeTruthy();
     expect(within(queue).getByText("Nothing required is missing")).toBeTruthy();
-    expect(within(queue).getByText("Technology sponsor")).toBeTruthy();
+    expect(within(queue).getByText("AI proposal only · named review required")).toBeTruthy();
+    expect(
+      within(queue).getByText(
+        "Held until a named reviewer accepts or overrides the mapping.",
+      ),
+    ).toBeTruthy();
     expect(
       within(queue)
-        .getByRole("link", { name: "Review for Define" })
+        .getByRole("link", { name: "Review request" })
         .getAttribute("href"),
-    ).toBe("/source/new/request-1");
+    ).toBe(
+      "/source/new?mode=intake&requestId=servicenow%3Asn_sourcing_request%3Arequest-1",
+    );
     expect(
       screen.queryByRole("link", { name: "Infrastructure services request" }),
     ).toBeNull();
@@ -208,24 +233,78 @@ describe("SourceNewRequestFirstPage", () => {
         clientName="Example client"
         clientKey="example-client"
         requestQueueStatus="loaded"
-        eventWorkspaces={[
+        importedRequests={[
           {
-            ...pendingRequest,
-            scope: "Scope boundary: Infrastructure operations",
-            decisionOwner: null,
+            ...importedRequest,
+            requiredFactGaps: ["value_target", "baseline_owner", "decision_owner"],
           },
         ]}
+        eventWorkspaces={[]}
       />,
     );
 
     const queue = screen.getByRole("region", { name: "Request queue" });
-    expect(within(queue).getByText("Value target")).toBeTruthy();
-    expect(within(queue).getByText("Baseline owner")).toBeTruthy();
-    expect(within(queue).getByText("Decision owner")).toBeTruthy();
-    expect(within(queue).getByText("Not ready for Define review")).toBeTruthy();
-    expect(within(queue).getByText("Decision owner not recorded")).toBeTruthy();
+    expect(within(queue).getByText("Value Target")).toBeTruthy();
+    expect(within(queue).getByText("Baseline Owner")).toBeTruthy();
+    expect(within(queue).getByText("Decision Owner")).toBeTruthy();
+    expect(within(queue).getByText("Review required")).toBeTruthy();
+  });
+
+  it("shows a reviewed request as ready without implying supplier contact authority", () => {
+    render(
+      <SourceNewRequestFirstPage
+        clientName="Example client"
+        clientKey="example-client"
+        requestQueueStatus="loaded"
+        importedRequests={[
+          {
+            ...importedRequest,
+            mappingDecision: {
+              state: "accepted",
+              categoryId: "managed_services_ams",
+              archetypeId: "MANAGED_SERVICES_AMS",
+              decidedByName: "Procurement lead",
+              decidedAt: "2026-09-22T12:10:00Z",
+              rationale: "Scope confirmed.",
+            },
+          },
+        ]}
+        eventWorkspaces={[]}
+      />,
+    );
+
+    const queue = screen.getByRole("region", { name: "Request queue" });
+    expect(within(queue).getByText("Ready to create event")).toBeTruthy();
+    expect(within(queue).getByText("Reviewed by Procurement lead")).toBeTruthy();
     expect(
-      within(queue).getByRole("link", { name: "Complete request" }),
+      within(queue).getByText(/Contact authority remains separate/),
     ).toBeTruthy();
+  });
+
+  it("removes a linked request from the intake queue because its governed event is the active workspace", () => {
+    render(
+      <SourceNewRequestFirstPage
+        clientName="Example client"
+        clientKey="example-client"
+        requestQueueStatus="loaded"
+        importedRequests={[
+          {
+            ...importedRequest,
+            eventLink: {
+              eventId: "event-1",
+              linkedAt: "2026-09-22T12:20:00Z",
+            },
+          },
+        ]}
+        eventWorkspaces={activeEventWorkspaces}
+      />,
+    );
+
+    const queue = screen.getByRole("region", { name: "Request queue" });
+    expect(within(queue).queryByText("Infrastructure services request")).toBeNull();
+    expect(
+      within(queue).getByText("No requests are waiting for intake review."),
+    ).toBeTruthy();
+    expect(screen.getByText("Application services event")).toBeTruthy();
   });
 });

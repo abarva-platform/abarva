@@ -10,7 +10,7 @@ import { AppShell } from "@/components/shell/AppShell";
 import { useAtlasPageState } from "@/components/shell/AtlasPageStateProvider";
 import { SourceSubNav } from "@/components/source/SourceSubNav";
 import { SHELL } from "@/lib/shell/shell-tokens";
-import { buildSourceNewRequestTriage } from "@/lib/source/new-workspace/request-triage";
+import type { SourceIntakeRequestSummary } from "@/lib/source/intake/servicenow-sourcing-request-repository";
 import type { CSSProperties, ReactNode } from "react";
 import { useMemo } from "react";
 
@@ -38,24 +38,25 @@ export function SourceNewRequestFirstPage({
   clientName,
   clientKey,
   requestQueueStatus,
+  importedRequests,
   eventWorkspaces,
   intakeHref = "/source/new?mode=intake",
 }: {
   clientName: string;
   clientKey: string;
   requestQueueStatus: SourceNewRequestQueueStatus;
+  importedRequests: readonly SourceIntakeRequestSummary[];
   eventWorkspaces: readonly SourceNewEventWorkspaceSummary[];
   intakeHref?: string;
 }) {
-  const canShowWorkspaces =
+  const canShowRequests =
     requestQueueStatus === "loaded" || requestQueueStatus === "empty";
-  const visibleWorkspaces = canShowWorkspaces ? eventWorkspaces : [];
-  const requests = visibleWorkspaces.filter(
-    (event) => event.lifecycle === "waiting_on_client",
-  );
-  const activeWorkspaces = visibleWorkspaces.filter(
-    (event) => event.lifecycle !== "waiting_on_client",
-  );
+  const visibleWorkspaces =
+    requestQueueStatus === "unauthorized" ? [] : eventWorkspaces;
+  const requests = canShowRequests
+    ? importedRequests.filter((request) => request.eventLink === null)
+    : [];
+  const activeWorkspaces = visibleWorkspaces;
   const nextAction =
     requestQueueStatus === "unauthorized"
       ? {
@@ -178,7 +179,7 @@ function RequestQueueState({
 }: {
   status: SourceNewRequestQueueStatus;
   intakeHref: string;
-  requests: readonly SourceNewEventWorkspaceSummary[];
+  requests: readonly SourceIntakeRequestSummary[];
 }) {
   if (status === "loading") {
     return (
@@ -205,7 +206,7 @@ function RequestQueueState({
     return (
       <ol style={REQUEST_LIST}>
         {requests.slice(0, 6).map((request) => (
-          <RequestTriageRow key={request.id} request={request} />
+          <RequestTriageRow key={request.requestId} request={request} />
         ))}
       </ol>
     );
@@ -228,61 +229,123 @@ function RequestQueueState({
 function RequestTriageRow({
   request,
 }: {
-  request: SourceNewEventWorkspaceSummary;
+  request: SourceIntakeRequestSummary;
 }) {
-  const triage = buildSourceNewRequestTriage(request);
+  const mappingAccepted = request.mappingDecision !== null;
+  const readyForEvent =
+    mappingAccepted && request.requiredFactGaps.length === 0;
+  const requested = [
+    request.requestedFor,
+    request.businessFunction,
+    request.description,
+  ]
+    .filter(Boolean)
+    .join(" · ");
+  const actionHref = request.eventLink
+    ? `/source/new/${encodeURIComponent(request.eventLink.eventId)}`
+    : `/source/new?mode=intake&requestId=${encodeURIComponent(request.requestId)}`;
   return (
-    <li aria-label={`Request ${request.name}`} style={REQUEST_ROW}>
+    <li aria-label={`Request ${request.title}`} style={REQUEST_ROW}>
       <div style={REQUEST_HEADER}>
         <div style={{ minWidth: 0 }}>
-          <div style={REQUEST_TITLE}>{request.name}</div>
-          <div style={EVENT_META}>{request.code} · Stage 01</div>
+          <div style={REQUEST_TITLE}>{request.title}</div>
+          <div style={EVENT_META}>
+            ServiceNow · {request.requestNumber} · {request.sourceStatus}
+          </div>
         </div>
-        <span style={triage.readyForDefine ? READY_BADGE : GAP_BADGE}>
-          {triage.readyForDefine
-            ? "Ready for Define review"
-            : "Not ready for Define review"}
+        <span style={readyForEvent ? READY_BADGE : GAP_BADGE}>
+          {request.eventLink
+            ? "Event created"
+            : readyForEvent
+              ? "Ready to create event"
+              : "Review required"}
         </span>
       </div>
 
       <dl style={TRIAGE_GRID}>
         <div style={TRIAGE_ITEM}>
           <dt style={TRIAGE_LABEL}>What was requested</dt>
-          <dd style={TRIAGE_VALUE}>{triage.requested}</dd>
+          <dd style={TRIAGE_VALUE}>{requested}</dd>
         </div>
         <div style={TRIAGE_ITEM}>
           <dt style={TRIAGE_LABEL}>What is missing</dt>
           <dd style={TRIAGE_VALUE}>
-            {triage.missing.length === 0 ? (
+            {request.requiredFactGaps.length === 0 ? (
               "Nothing required is missing"
             ) : (
               <ul style={MISSING_LIST}>
-                {triage.missing.map((item) => (
-                  <li key={item}>{item}</li>
+                {request.requiredFactGaps.map((item) => (
+                  <li key={item}>{humanize(item)}</li>
                 ))}
               </ul>
             )}
           </dd>
         </div>
         <div style={TRIAGE_ITEM}>
-          <dt style={TRIAGE_LABEL}>Who acts next</dt>
-          <dd style={TRIAGE_VALUE}>{triage.nextActor}</dd>
+          <dt style={TRIAGE_LABEL}>Proposed routing</dt>
+          <dd style={TRIAGE_VALUE}>
+            {request.mappingProposal.archetypeId
+              ? humanize(request.mappingProposal.archetypeId)
+              : "No archetype proposed"}
+            {request.mappingProposal.categoryId
+              ? ` · ${humanize(request.mappingProposal.categoryId)}`
+              : ""}
+            <span style={PROPOSAL_NOTE}>
+              {request.mappingDecision
+                ? `Reviewed by ${request.mappingDecision.decidedByName}`
+                : "AI proposal only · named review required"}
+            </span>
+          </dd>
         </div>
         <div style={TRIAGE_ITEM}>
-          <dt style={TRIAGE_LABEL}>Stage 02</dt>
+          <dt style={TRIAGE_LABEL}>Supplier pool</dt>
           <dd style={TRIAGE_VALUE}>
-            {triage.readyForDefine
-              ? "The request has the recorded facts needed for Define review."
-              : "Complete the missing request facts before Define review."}
+            {request.mappingDecision
+              ? "Eligible suppliers can be proposed from the accepted category, function, and archetype. Contact authority remains separate."
+              : "Held until a named reviewer accepts or overrides the mapping."}
           </dd>
         </div>
       </dl>
 
-      <Link href={request.href} style={PRIMARY_ACTION}>
-        {triage.actionLabel}
+      {request.value ? (
+        <p style={NOTE_COPY}>
+          Requester estimate: {formatMoney(request.value.amount, request.value.currency)} · Not validated
+        </p>
+      ) : null}
+      <Link href={actionHref} style={PRIMARY_ACTION}>
+        {request.eventLink ? "Open event" : "Review request"}
       </Link>
     </li>
   );
+}
+
+function humanize(value: string): string {
+  const acronyms = new Set([
+    "ams",
+    "bpo",
+    "cx",
+    "ehr",
+    "erp",
+    "itsm",
+    "saas",
+    "si",
+  ]);
+  return value
+    .replace(/[_-]+/g, " ")
+    .toLowerCase()
+    .split(" ")
+    .map((word) =>
+      acronyms.has(word) ? word.toUpperCase() : `${word[0]?.toUpperCase() ?? ""}${word.slice(1)}`,
+    )
+    .join(" ");
+}
+
+function formatMoney(amount: number, currency: string): string {
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency,
+    maximumFractionDigits: 0,
+  }).format(amount);
 }
 
 function SourceNewRequestDock({
@@ -566,6 +629,13 @@ const TRIAGE_VALUE: CSSProperties = {
   color: SHELL.INK_SOFT,
   fontSize: 12,
   lineHeight: 1.45,
+};
+
+const PROPOSAL_NOTE: CSSProperties = {
+  display: "block",
+  marginTop: 4,
+  color: SHELL.INK_MUTED,
+  fontSize: 12,
 };
 
 const MISSING_LIST: CSSProperties = {

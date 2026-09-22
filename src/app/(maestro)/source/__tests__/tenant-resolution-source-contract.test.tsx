@@ -67,6 +67,11 @@ const listSourcingEvents = jest.fn();
 jest.mock("@/lib/source/queries", () => ({
   listSourcingEvents: (...args: unknown[]) => listSourcingEvents(...args),
 }));
+const readSourceIntakeRequestQueue = jest.fn();
+jest.mock("@/lib/source/intake/servicenow-sourcing-request-repository", () => ({
+  readSourceIntakeRequestQueue: (...args: unknown[]) =>
+    readSourceIntakeRequestQueue(...args),
+}));
 
 const redirect = jest.fn((href: string) => {
   throw new Error(`NEXT_REDIRECT:${href}`);
@@ -123,6 +128,10 @@ async function redirectHrefFor(
 describe("Source tenant identity binding", () => {
   beforeEach(() => {
     listSourcingEvents.mockResolvedValue([]);
+    readSourceIntakeRequestQueue.mockResolvedValue({
+      registryAvailable: true,
+      requests: [],
+    });
   });
 
   afterEach(() => {
@@ -179,9 +188,11 @@ describe("Source tenant identity binding", () => {
     await renderIntake();
 
     expect(requestFirstProps.requestQueueStatus).toBe("unauthorized");
+    expect(requestFirstProps.importedRequests).toEqual([]);
     expect(requestFirstProps.eventWorkspaces).toEqual([]);
     // The queue read must not be attempted at all without a tenant.
     expect(listSourcingEvents).not.toHaveBeenCalled();
+    expect(readSourceIntakeRequestQueue).not.toHaveBeenCalled();
   });
 
   it("carries the resolved tenant into the intake surface too", async () => {
