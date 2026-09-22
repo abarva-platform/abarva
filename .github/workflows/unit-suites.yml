@@ -1014,6 +1014,34 @@ jobs:
           "src/app/(maestro)/source/workspace/__tests__/workspace-impact-read-resilience.test.tsx"
           --no-coverage --ci
 
+      # T-552. T-550 executed these seventeen Source workspace suites together:
+      # 17 suites, 130 tests, all green, with no pending or todo cases. They
+      # assert behavior or rendered view-model output; the three source-text
+      # scanners from the same draw remain outside this command. Exact paths
+      # are required because `(maestro)` is a regex capture group to Jest when
+      # ordinary path matching is used.
+      - name: Run the T-550 Source workspace behavior suites
+        run: >-
+          npx jest --runTestsByPath
+          "src/app/(maestro)/source/preview/workspace/__tests__/avaComposerGate.test.ts"
+          "src/app/(maestro)/source/preview/workspace/__tests__/buildViewModel.numeric.test.ts"
+          "src/app/(maestro)/source/preview/workspace/__tests__/compositionInvariants.test.tsx"
+          "src/app/(maestro)/source/preview/workspace/__tests__/Contract360Briefing.test.tsx"
+          "src/app/(maestro)/source/preview/workspace/__tests__/Contract360Economics.coverage.test.tsx"
+          "src/app/(maestro)/source/preview/workspace/__tests__/contract360Ledes.test.ts"
+          "src/app/(maestro)/source/preview/workspace/__tests__/Contract360Surfaces.test.tsx"
+          "src/app/(maestro)/source/preview/workspace/__tests__/contractAnatomy.test.tsx"
+          "src/app/(maestro)/source/preview/workspace/__tests__/ContractCanvas.executive-story.test.tsx"
+          "src/app/(maestro)/source/preview/workspace/__tests__/contractEvidenceFamilies.test.tsx"
+          "src/app/(maestro)/source/preview/workspace/__tests__/ContractLeverTable.test.tsx"
+          "src/app/(maestro)/source/preview/workspace/__tests__/contractOptimizeMethod.test.tsx"
+          "src/app/(maestro)/source/preview/workspace/__tests__/contractPerformanceCards.test.tsx"
+          "src/app/(maestro)/source/preview/workspace/__tests__/contractPopulations.test.ts"
+          "src/app/(maestro)/source/preview/workspace/__tests__/contractPurposeGuard.test.tsx"
+          "src/app/(maestro)/source/preview/workspace/__tests__/contractPurposeProse.test.ts"
+          "src/app/(maestro)/source/preview/workspace/__tests__/contractStoryDuplication.test.ts"
+          --no-coverage --ci
+
       # An entry in TENANT_DATASET_BY_KEY is a claim that a dataset exists.
       # When it does not, the V6 builders return null and every caller
       # degrades silently — which is how two dataset roots stayed missing
