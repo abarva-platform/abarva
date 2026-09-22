@@ -623,7 +623,39 @@ const BLOCKER_RULES = [
   // out; and the deferral form names who does the deciding rather than
   // matching the verb anywhere it appears.
   { re: /decision needed|decision required|Content decision|\bproduct call\b|\bowner'?s call\b|blocked on owner policy|(?:^|[.!?;:]\s+|\n\s*|\*\*)Decide\b|\b(?:until|before)\s+(?:a human|an owner|a person|the owner|Anand|someone)\s+decides\b/i, say: "Decision needed", decisionGate: true, ownerGate: true },
-  { re: /\bblocked\b/i, say: "Blocked (see source)", ownerGate: true },
+  // Item T-703. This was a bare `\bblocked\b` — no anchoring, no veto — while
+  // the decision rule directly above has both, added after raw prose made
+  // every descriptive use of a word into an owner gate. T-700 gave this rule
+  // more reach by letting a row be labelled from its own body, which made the
+  // gap load-bearing.
+  //
+  // Measured on the live register, the bare word was labelling, as owner
+  // gates: a FILENAME (`blocked-loader-paths.json`), a contract status enum
+  // whose values are "signed, pending signature, or blocked", an assertion
+  // that a test "must show an infected file blocked", a description of a panel
+  // that "goes blocked rather than available", and a paragraph explaining what
+  // the blocker mechanism itself does. None of those is a gate on anybody.
+  //
+  // The distinction the register actually writes is PREDICATE versus
+  // MODIFIER. A gate is stated — "blocked on", "blocked by", "blocked until",
+  // "is/remains blocked", or the shouted `BLOCKED ON OWNER DECISION` heading.
+  // A description uses the word as an adjective in front of a noun — a blocked
+  // path, a blocked bucket, a blocked read. Anchoring on the predicate forms
+  // keeps every genuine gate and drops the descriptions.
+  //
+  // The veto is separate and covers what anchoring cannot: a sentence that
+  // says the blockage is over. Past-tense and negated forms are the ones the
+  // item named, and they are the ones a future row will write.
+  //
+  // The PATTERN IS NOT WIDENED here. Nothing that failed to match before
+  // matches now; this change only removes matches, so an item can only leave
+  // the blocked bucket, never enter it.
+  {
+    re: /\bblocked\s+(?:on|by|until|pending)\b|\b(?:is|are|was|were|remains?|stays?|still|currently)\s+blocked\b|\bblocked-on-[a-z]/i,
+    veto: /\b(?:not|never|no longer|isn'?t|aren'?t|wasn'?t)\s+blocked\b|\bwas\s+blocked\b[^.;\n]{0,60}\b(?:now|since|and is now|but is now)\b|\bno longer\b[^.;\n]{0,40}\bblocked\b/i,
+    say: "Blocked (see source)",
+    ownerGate: true,
+  },
   // NOT an `ownerGate`. This is the fallback, and it asserts the ABSENCE of a
   // gate rather than one. It must never be promoted over a gate a claim line
   // records: T-418's body reads "the largest unclaimed critical row in the
@@ -695,10 +727,10 @@ function deriveBlocker(body, claims = "", rung = null) {
   let fromClaims = null;
   for (const r of BLOCKER_RULES) {
     const t = r.decisionGate && resolved ? bodyText : combined;
-    const m = t.match(r.re);
+    const m = firstUnvetoedMatch(t, r);
     if (!m) continue;
     if (r.ownerGate) {
-      const bodyMatch = bodyText.match(r.re);
+      const bodyMatch = firstUnvetoedMatch(bodyText, r);
       if (bodyMatch) {
         return { say: r.say, quote: sentenceAround(bodyText, bodyMatch.index ?? 0) };
       }
@@ -706,6 +738,26 @@ function deriveBlocker(body, claims = "", rung = null) {
     fromClaims ??= { say: r.say, quote: sentenceAround(t, m.index ?? 0) };
   }
   return fromClaims;
+}
+
+/**
+ * The first match of `rule.re` in `text` whose own sentence is not vetoed —
+ * item T-703. A rule with no `veto` behaves exactly as before.
+ *
+ * It scans matches rather than taking only the first, because one row can both
+ * describe a past blockage and state a live one; stopping at the first match
+ * would let a vetoed sentence hide a real gate written after it. The veto is
+ * evaluated on the SENTENCE around the match, not the whole corpus, or a
+ * single "no longer blocked" anywhere in a long row would silence every gate
+ * in it.
+ */
+function firstUnvetoedMatch(text, rule) {
+  if (!rule.veto) return text.match(rule.re);
+  const re = new RegExp(rule.re.source, rule.re.flags.includes("g") ? rule.re.flags : `${rule.re.flags}g`);
+  for (const m of text.matchAll(re)) {
+    if (!rule.veto.test(sentenceAround(text, m.index ?? 0))) return m;
+  }
+  return null;
 }
 
 function sentenceAround(text, index) {
