@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useEffect, useId, useMemo, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { AppShell } from "@/components/shell/AppShell";
 import { AgentDock, type ChatMessage } from "@/components/agent/AgentDock";
@@ -36,6 +36,13 @@ import "./workspace.css";
 
 type Phase = SourceNewPhaseKey;
 type View = "work" | "files" | "intelligence" | "approvals";
+type IntelligenceEvidenceItem = NonNullable<
+  SourceNewEventIntelligenceView
+>["requiredEvidence"][number];
+type ActivityTrailEntry = Extract<
+  SourceEventActivityResult,
+  { ok: true }
+>["entries"][number];
 
 function sourceNewAskSourceTypeFromCitation(
   sourceClass: AnswerCitation["sourceClass"],
@@ -114,6 +121,8 @@ const PREVIEW_UNMET_CONDITIONS: Record<Phase, string> = {
     "scope and strategy must advance, then supplier eligibility and required NDA coverage must be recorded.",
   rfi: "scope, supplier eligibility, and required NDA coverage must be ready.",
 };
+const INTELLIGENCE_LIST_PREVIEW_COUNT = 5;
+const DECISION_TRAIL_PREVIEW_COUNT = 6;
 
 /**
  * What each phase actually holds. A phase behind the event is only described
@@ -1021,6 +1030,16 @@ function SourceNewIntelligenceWorkspace({
   eventHref: string;
   intelligence?: SourceNewEventIntelligenceView;
 }) {
+  const requiredEvidenceListId = useId();
+  const readyEvidenceListId = useId();
+  const reviewItemsListId = useId();
+  const excludedEvidenceListId = useId();
+  const [requiredEvidenceExpanded, setRequiredEvidenceExpanded] =
+    useState(false);
+  const [readyEvidenceExpanded, setReadyEvidenceExpanded] = useState(false);
+  const [reviewItemsExpanded, setReviewItemsExpanded] = useState(false);
+  const [excludedEvidenceExpanded, setExcludedEvidenceExpanded] =
+    useState(false);
   const humanizeToken = (value: string): string => {
     if (value === "pct_per_year") return "% per year";
     return value
@@ -1031,6 +1050,22 @@ function SourceNewIntelligenceWorkspace({
   const evidenceFamilyLabel = (family: string): string =>
     intelligence?.requiredEvidence.find((item) => item.key === family)?.label ??
     humanizeToken(family);
+  const requiredEvidence = intelligence?.requiredEvidence ?? [];
+  const readyEvidence = intelligence?.governedContext.available ?? [];
+  const reviewItems = intelligence?.gaps ?? [];
+  const excludedEvidence = intelligence?.refusals ?? [];
+  const visibleRequiredEvidence = requiredEvidenceExpanded
+    ? requiredEvidence
+    : requiredEvidence.slice(0, INTELLIGENCE_LIST_PREVIEW_COUNT);
+  const visibleReadyEvidence = readyEvidenceExpanded
+    ? readyEvidence
+    : readyEvidence.slice(0, INTELLIGENCE_LIST_PREVIEW_COUNT);
+  const visibleReviewItems = reviewItemsExpanded
+    ? reviewItems
+    : reviewItems.slice(0, INTELLIGENCE_LIST_PREVIEW_COUNT);
+  const visibleExcludedEvidence = excludedEvidenceExpanded
+    ? excludedEvidence
+    : excludedEvidence.slice(0, INTELLIGENCE_LIST_PREVIEW_COUNT);
 
   if (!intelligence) {
     return (
@@ -1102,20 +1137,10 @@ function SourceNewIntelligenceWorkspace({
       <div className="snw-intel-grid">
         <section>
           <h3>Required evidence</h3>
-          <ul className="snw-intel-list">
-            {intelligence.requiredEvidence.length > 0 ? (
-              intelligence.requiredEvidence.map((item) => (
-                <li key={item.key}>
-                  <span className={`snw-intel-state is-${item.state}`}>
-                    {item.state === "available" ? "ready" : "needed"}
-                  </span>
-                  <strong>{item.label}</strong>
-                  <small>
-                    {item.severity === "hard" ? "required" : "helpful"} ·{" "}
-                    {item.sourceDocHint}
-                  </small>
-                  <p>{item.whyNeeded}</p>
-                </li>
+          <ul className="snw-intel-list" id={requiredEvidenceListId}>
+            {requiredEvidence.length > 0 ? (
+              visibleRequiredEvidence.map((item) => (
+                <SourceNewRequiredEvidenceItem key={item.key} item={item} />
               ))
             ) : (
               <li>
@@ -1134,13 +1159,23 @@ function SourceNewIntelligenceWorkspace({
               </li>
             )}
           </ul>
+          <SourceNewDisclosureControl
+            expanded={requiredEvidenceExpanded}
+            label="evidence requirements"
+            listId={requiredEvidenceListId}
+            onToggle={() =>
+              setRequiredEvidenceExpanded((expanded) => !expanded)
+            }
+            previewCount={INTELLIGENCE_LIST_PREVIEW_COUNT}
+            total={requiredEvidence.length}
+          />
         </section>
 
         <section>
           <h3>Evidence ready to use</h3>
-          <ul className="snw-intel-list">
-            {intelligence.governedContext.available.length > 0 ? (
-              intelligence.governedContext.available.map((item) => (
+          <ul className="snw-intel-list" id={readyEvidenceListId}>
+            {readyEvidence.length > 0 ? (
+              visibleReadyEvidence.map((item) => (
                 <li key={item.id}>
                   <span className="snw-intel-state is-available">ready</span>
                   <strong>{item.title}</strong>
@@ -1163,32 +1198,58 @@ function SourceNewIntelligenceWorkspace({
               </li>
             )}
           </ul>
+          <SourceNewDisclosureControl
+            expanded={readyEvidenceExpanded}
+            label="ready evidence items"
+            listId={readyEvidenceListId}
+            onToggle={() => setReadyEvidenceExpanded((expanded) => !expanded)}
+            previewCount={INTELLIGENCE_LIST_PREVIEW_COUNT}
+            total={readyEvidence.length}
+          />
         </section>
       </div>
 
       <div className="snw-intel-grid">
         <section>
           <h3>What is missing</h3>
-          <ul className="snw-intel-plain-list">
-            {intelligence.gaps.length > 0 ? (
-              intelligence.gaps.map((gap) => <li key={gap}>{gap}</li>)
+          <ul className="snw-intel-plain-list" id={reviewItemsListId}>
+            {reviewItems.length > 0 ? (
+              visibleReviewItems.map((gap) => <li key={gap}>{gap}</li>)
             ) : (
               <li>No unresolved evidence gap is visible.</li>
             )}
           </ul>
+          <SourceNewDisclosureControl
+            expanded={reviewItemsExpanded}
+            label="review items"
+            listId={reviewItemsListId}
+            onToggle={() => setReviewItemsExpanded((expanded) => !expanded)}
+            previewCount={INTELLIGENCE_LIST_PREVIEW_COUNT}
+            total={reviewItems.length}
+          />
         </section>
         <section>
           <h3>What Source can say now</h3>
           <p className="snw-intel-allowed">{intelligence.allowedStatement}</p>
-          <ul className="snw-intel-plain-list">
-            {intelligence.refusals.length > 0 ? (
-              intelligence.refusals.map((refusal) => (
+          <ul className="snw-intel-plain-list" id={excludedEvidenceListId}>
+            {excludedEvidence.length > 0 ? (
+              visibleExcludedEvidence.map((refusal) => (
                 <li key={refusal}>{refusal}</li>
               ))
             ) : (
               <li>No evidence was excluded.</li>
             )}
           </ul>
+          <SourceNewDisclosureControl
+            expanded={excludedEvidenceExpanded}
+            label="excluded evidence items"
+            listId={excludedEvidenceListId}
+            onToggle={() =>
+              setExcludedEvidenceExpanded((expanded) => !expanded)
+            }
+            previewCount={INTELLIGENCE_LIST_PREVIEW_COUNT}
+            total={excludedEvidence.length}
+          />
         </section>
       </div>
 
@@ -1231,6 +1292,61 @@ function SourceNewIntelligenceWorkspace({
   );
 }
 
+function SourceNewRequiredEvidenceItem({
+  item,
+}: {
+  item: IntelligenceEvidenceItem;
+}) {
+  return (
+    <li>
+      <span className={`snw-intel-state is-${item.state}`}>
+        {item.state === "available" ? "ready" : "needed"}
+      </span>
+      <strong>{item.label}</strong>
+      <small>
+        {item.severity === "hard" ? "required" : "helpful"} ·{" "}
+        {item.sourceDocHint}
+      </small>
+      <p>{item.whyNeeded}</p>
+    </li>
+  );
+}
+
+function SourceNewDisclosureControl({
+  expanded,
+  label,
+  listId,
+  onToggle,
+  previewCount,
+  total,
+}: {
+  expanded: boolean;
+  label: string;
+  listId: string;
+  onToggle: () => void;
+  previewCount: number;
+  total: number;
+}) {
+  if (total <= previewCount) return null;
+  const visibleCount = expanded ? total : previewCount;
+  return (
+    <div className="snw-disclosure-control">
+      <p>
+        {total} {label} ·{" "}
+        {expanded ? "showing all" : `showing first ${visibleCount}`}
+      </p>
+      <button
+        aria-controls={listId}
+        aria-expanded={expanded}
+        type="button"
+        onClick={onToggle}
+      >
+        {expanded ? `Show fewer ${label}` : `Show all ${total} ${label}`}
+      </button>
+    </div>
+  );
+}
+
 /**
  * The governed decision trail for an event.
  *
@@ -1244,6 +1360,8 @@ function SourceNewDecisionTrail({
 }: {
   activity?: SourceEventActivityResult;
 }) {
+  const trailListId = useId();
+  const [expanded, setExpanded] = useState(false);
   if (!activity) {
     return (
       <p className="snw-trail-note" data-decision-trail="not-loaded">
@@ -1281,24 +1399,48 @@ function SourceNewDecisionTrail({
       </p>
     );
   }
+  const visibleEntries = expanded
+    ? entries
+    : entries.slice(0, DECISION_TRAIL_PREVIEW_COUNT);
   return (
-    <ol
-      className="snw-trail"
-      data-decision-trail="entries"
-      aria-label="Decision trail"
-    >
-      {entries.map((entry) => (
-        <li key={entry.id}>
-          <span className="snw-trail-actor">
-            {entry.actor ?? "Actor not recorded"}
-          </span>
-          <span className="snw-trail-body">{entry.body}</span>
-          <time className="snw-trail-at" dateTime={String(entry.at ?? "")}>
-            {String(entry.at ?? "")}
-          </time>
-        </li>
-      ))}
-    </ol>
+    <>
+      <ol
+        className="snw-trail"
+        data-decision-trail="entries"
+        aria-label="Decision trail"
+        id={trailListId}
+      >
+        {visibleEntries.map((entry) => (
+          <SourceNewDecisionTrailEntry key={entry.id} entry={entry} />
+        ))}
+      </ol>
+      <SourceNewDisclosureControl
+        expanded={expanded}
+        label="decision trail entries"
+        listId={trailListId}
+        onToggle={() => setExpanded((current) => !current)}
+        previewCount={DECISION_TRAIL_PREVIEW_COUNT}
+        total={entries.length}
+      />
+    </>
+  );
+}
+
+function SourceNewDecisionTrailEntry({
+  entry,
+}: {
+  entry: ActivityTrailEntry;
+}) {
+  return (
+    <li>
+      <span className="snw-trail-actor">
+        {entry.actor ?? "Actor not recorded"}
+      </span>
+      <span className="snw-trail-body">{entry.body}</span>
+      <time className="snw-trail-at" dateTime={String(entry.at ?? "")}>
+        {String(entry.at ?? "")}
+      </time>
+    </li>
   );
 }
 

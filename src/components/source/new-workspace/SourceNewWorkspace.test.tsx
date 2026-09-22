@@ -806,6 +806,87 @@ describe("SourceNewWorkspace", () => {
     ).toHaveLength(1);
   });
 
+  it("keeps high-volume intelligence review items behind an accessible expansion control", () => {
+    const intelligence: SourceNewEventIntelligenceView = {
+      posture: "limited",
+      archetype: {
+        id: "AMS_MANAGED_SERVICES",
+        name: "IT Outsourcing / AMS / Managed Services",
+        source: "classifier_category",
+        reason:
+          "Resolved archetype AMS_MANAGED_SERVICES from classifier category 'ams'.",
+      },
+      currentStage: "rfp",
+      stageEvidenceContract: "available",
+      requiredEvidence: [],
+      governedContext: {
+        policyVersion: "1.0.0",
+        decision: "warn",
+        usableCount: 0,
+        blockedCount: 12,
+        agentReadyCount: 0,
+        citationsCount: 0,
+        available: [],
+        blocked: [],
+      },
+      industryMetrics: [],
+      allowedStatement:
+        "Source can identify missing evidence without treating it as usable context.",
+      gaps: Array.from(
+        { length: 12 },
+        (_, index) => `Review item ${index + 1} needs governed evidence.`,
+      ),
+      refusals: [],
+      nextQuestion: "Which governed evidence resolves the next review item?",
+      nextAction: {
+        label: "Resolve evidence gap",
+        detail: "Review unresolved evidence before relying on this event.",
+      },
+    };
+
+    render(
+      <SourceNewWorkspace
+        event={{
+          ...request,
+          category: "ams",
+          lifecycle: "completed",
+          currentStage: "value",
+        }}
+        files={[]}
+        intelligence={intelligence}
+      />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Intelligence" }));
+
+    expect(
+      screen.getByText("Review item 1 needs governed evidence."),
+    ).toBeTruthy();
+    expect(
+      screen.getByText("Review item 5 needs governed evidence."),
+    ).toBeTruthy();
+    expect(
+      screen.queryByText("Review item 6 needs governed evidence."),
+    ).toBeNull();
+    expect(
+      screen.queryByText("Review item 12 needs governed evidence."),
+    ).toBeNull();
+
+    const expand = screen.getByRole("button", {
+      name: "Show all 12 review items",
+    });
+    expect(expand.getAttribute("aria-expanded")).toBe("false");
+    fireEvent.click(expand);
+
+    expect(
+      screen.getByText("Review item 12 needs governed evidence."),
+    ).toBeTruthy();
+    expect(
+      screen
+        .getByRole("button", { name: "Show fewer review items" })
+        .getAttribute("aria-expanded"),
+    ).toBe("true");
+  });
+
   it("explains a resolved final stage without calling the archetype unresolved", () => {
     const intelligence: SourceNewEventIntelligenceView = {
       posture: "blocked",
@@ -1631,6 +1712,44 @@ describe("SourceNewWorkspace", () => {
     expect(
       within(trail).getByText(/Scope and baseline confirmed/),
     ).toBeTruthy();
+  });
+
+  it("keeps historical approval activity concise until the trail is expanded", () => {
+    render(
+      <SourceNewWorkspace
+        event={{ ...request, lifecycle: "completed", currentStage: "value" }}
+        files={[]}
+        activity={{
+          ok: true,
+          entries: Array.from({ length: 9 }, (_, index) => ({
+            id: `a${index + 1}`,
+            at: `2026-09-${String(index + 10).padStart(2, "0")}T12:00:00.000Z`,
+            actor: `Reviewer ${index + 1}`,
+            body: `Approval activity ${index + 1}`,
+          })),
+        }}
+      />,
+    );
+    openApprovals();
+
+    const trail = screen.getByRole("list", { name: "Decision trail" });
+    expect(within(trail).getByText("Approval activity 1")).toBeTruthy();
+    expect(within(trail).getByText("Approval activity 6")).toBeTruthy();
+    expect(within(trail).queryByText("Approval activity 7")).toBeNull();
+    expect(within(trail).queryByText("Approval activity 9")).toBeNull();
+
+    const expand = screen.getByRole("button", {
+      name: "Show all 9 decision trail entries",
+    });
+    expect(expand.getAttribute("aria-expanded")).toBe("false");
+    fireEvent.click(expand);
+
+    expect(within(trail).getByText("Approval activity 9")).toBeTruthy();
+    expect(
+      screen
+        .getByRole("button", { name: "Show fewer decision trail entries" })
+        .getAttribute("aria-expanded"),
+    ).toBe("true");
   });
 
   it("says no decisions are recorded when the trail is genuinely empty", () => {
