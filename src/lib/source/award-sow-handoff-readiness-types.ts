@@ -54,6 +54,21 @@ export type SourceContract360BlockedWrite =
   | "contract360_projection_row"
   | "supplier_notification";
 
+export type SourceCanonicalContractProjectionState =
+  | "blocked_contract_formation_package"
+  | "blocked_no_accepted_executed_evidence"
+  | "blocked_stage_not_transition"
+  | "ready_for_identity_review";
+
+export type SourceCanonicalContractProjectionBlockedWrite =
+  | "canonical_contract_identity"
+  | "contract360_projection_row"
+  | "optimize_case";
+
+export type SourceOptimizePathState =
+  | "blocked_canonical_contract_identity"
+  | "ready_for_optimize_review";
+
 export interface SourceAwardSowArtifactInput {
   id: string;
   title: string;
@@ -111,6 +126,27 @@ export interface SourceContract360PublicationPlanner {
   blockers: string[];
 }
 
+export interface SourceCanonicalContractProjectionPlan {
+  state: SourceCanonicalContractProjectionState;
+  candidateIdentityKey: string | null;
+  identityBasis: string[];
+  evidence: string[];
+  reviewSteps: string[];
+  writeAllowed: false;
+  blockedWrites: SourceCanonicalContractProjectionBlockedWrite[];
+  blockers: string[];
+}
+
+export interface SourceOptimizePathPlan {
+  state: SourceOptimizePathState;
+  route: "/source/optimize";
+  prefillContractId: null;
+  launchAllowed: false;
+  evidence: string[];
+  reviewSteps: string[];
+  blockers: string[];
+}
+
 export interface SourceAwardSowHandoffReadiness {
   eventId: string;
   eventName: string;
@@ -119,6 +155,8 @@ export interface SourceAwardSowHandoffReadiness {
   contractFormationState: SourceContractFormationState;
   contractFormationPackage: SourceContractFormationPackageReadiness;
   publicationPlanner: SourceContract360PublicationPlanner;
+  canonicalContractProjection: SourceCanonicalContractProjectionPlan;
+  optimizePath: SourceOptimizePathPlan;
   readyForContract360Handoff: boolean;
   checkpoints: SourceAwardSowHandoffCheckpoint[];
   completedEvidence: string[];
