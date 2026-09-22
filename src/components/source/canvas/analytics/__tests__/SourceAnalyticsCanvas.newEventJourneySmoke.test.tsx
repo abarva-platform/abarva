@@ -14,6 +14,7 @@ import {
   SOURCE_STAGE_LABELS,
   SOURCE_STAGE_ORDER,
 } from "@/lib/source/constants";
+import { SOURCE_NEW_EXTERNAL_CHECKPOINT_ORDER } from "@/lib/source/new-workspace/phase-state";
 import type { SourceStageKey, SourcingEventSummary } from "@/lib/source/types";
 import { SAMPLE_RFP_STAGE } from "../sample-view-model";
 import { SourceAnalyticsCanvas } from "../SourceAnalyticsCanvas";
@@ -108,11 +109,25 @@ describe("SourceAnalyticsCanvas New Event journey smoke", () => {
       expect(screen.getByTestId("source-analytics-canvas")).toBeInTheDocument();
 
       const rail = screen.getByTestId("source-shell-v2-rail");
-      for (const journeyStage of SOURCE_STAGE_ORDER) {
-        expect(
-          within(rail).getByText(SOURCE_STAGE_LABELS[journeyStage]),
-        ).toBeInTheDocument();
-      }
+      const primaryJourneyItems = within(rail).getAllByTestId(
+        "source-reader-journey-checkpoint",
+      );
+      expect(primaryJourneyItems).toHaveLength(
+        SOURCE_NEW_EXTERNAL_CHECKPOINT_ORDER.length,
+      );
+      expect(primaryJourneyItems.map((item) => item.textContent)).toEqual([
+        expect.stringContaining("Request intake"),
+        expect.stringContaining("Request"),
+        expect.stringContaining("Define"),
+        expect.stringContaining("Suppliers & NDA"),
+        expect.stringContaining("Market package"),
+      ]);
+      expect(
+        primaryJourneyItems.map((item) => item.textContent).join(" "),
+      ).not.toContain("Executive Decision");
+      expect(
+        within(rail).getByTestId("source-reader-journey-deep-stage-link"),
+      ).toHaveAttribute("href", `/source/events/evt-src57?stage=${stageKey}`);
 
       expect(screen.getByTestId("source-shell-v2-steps")).toBeInTheDocument();
       expect(screen.getByTestId("source-shell-focused-work-panel")).toHaveStyle(
