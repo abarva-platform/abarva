@@ -687,6 +687,16 @@ jobs:
       # fixtures, active-client display-name drift, and a tenant purity scan
       # with current findings. Loaded 16; collected 16; run 16; green 11;
       # newly owned 9.
+      #
+      # T-559 (2026-09-22) adds `active-client.test.ts`, whose quarantine reason
+      # above -- "active-client display-name drift" -- stopped being true when
+      # its three stale display-name expectations were repaired. It had been red
+      # since 2026-07-01 and no workflow noticed, which is the whole reason it is
+      # named here now. It is the only place the tenant display-name
+      # canonicalization on `getActiveClientRow` and the artifact-download
+      # tenant-lookup retry are asserted together. Measured green on the branch:
+      # 7 tests, and each repaired case was proved to still fail when the
+      # canonicalizer is replaced with a pass-through.
       - name: Run the green governance and tenant library suites
         run: >-
           npx jest --runTestsByPath
@@ -694,6 +704,7 @@ jobs:
           src/lib/governance/__tests__/promotion-evaluator.test.ts
           src/lib/governance/__tests__/readiness-backfill.test.ts
           src/lib/governance/__tests__/tenant-coverage.test.ts
+          src/lib/__tests__/active-client.test.ts
           src/lib/__tests__/client-config-canonical.test.ts
           src/lib/azure-search/__tests__/index-contracts.test.ts
           src/lib/azure-search/__tests__/index-results.test.ts
