@@ -587,6 +587,51 @@ describe("POST Source event approve", () => {
     expect(updateStage).not.toHaveBeenCalled();
   });
 
+  it("refuses terminal completion when computed Value readiness is still open", async () => {
+    eventRow.current_stage_key = "value";
+    eventRow.sourcing_motion = "competitive_rfp";
+    stageSubstrate.criteria = [
+      {
+        criterionId: "GATE-VAL-01",
+        fromStage: "value",
+        toStage: "closed",
+        state: "pending",
+      },
+    ];
+    mockGateAdvance.mockImplementationOnce(
+      jest.requireActual<typeof import("@/lib/source/gate-advance-contract")>(
+        "@/lib/source/gate-advance-contract",
+      ).evaluateSourceGateAdvanceContract,
+    );
+
+    const response = await POST(
+      new Request(
+        "https://app.abarva.ai/api/v1/source/events/event-1/approve",
+        {
+          method: "POST",
+          body: JSON.stringify({
+            action: "approve",
+            notes: "Sponsor confirms the final value gate is complete.",
+            confirmations: {
+              evidenceComplete: true,
+              exclusionsReviewed: true,
+              stageFinal: true,
+            },
+          }),
+        },
+      ),
+      { params: Promise.resolve({ eventId: "event-1" }) },
+    );
+
+    expect(response.status).toBe(409);
+    expect(await response.json()).toMatchObject({
+      error: "gate_criterion_open",
+    });
+    expect(applyApproval).not.toHaveBeenCalled();
+    expect(insertActivityLog).not.toHaveBeenCalled();
+    expect(updateStage).not.toHaveBeenCalled();
+  });
+
   /**
    * Every lifecycle decision on this route is an audit record. Three sibling
    * lifecycle routes (`request-changes`, `route-to-co-approver`, and the event
