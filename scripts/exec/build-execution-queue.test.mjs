@@ -1685,5 +1685,230 @@ blockerCorpusCase(
   "Blocked (see source)",
 );
 
+/* ======================================================================== */
+/* 25. Band capacity is MEASURED, not asserted by a static table (T-701a).  */
+/*                                                                          */
+/*     The defect: the queue hands out the id-band rule — "take the lowest  */
+/*     free number in your own band" — as a three-row table of prose. It    */
+/*     never measures whether a band has a free number left. Measured on    */
+/*     `9f3f7cd39` across the three files the rule itself names — backlog,  */
+/*     claim log, and the repo-owned structure map — `T-500`–`T-599` is     */
+/*     100 of 100 spent, and nothing anywhere reports it. So the next agent */
+/*     to file a T-lane item collides by applying the rule CORRECTLY, which */
+/*     is the exact failure disjoint bands exist to prevent.                */
+/*                                                                          */
+/*     Every assertion below is on the child process's own stdout and on    */
+/*     the rendered file. Nothing asks the generator whether it thinks a    */
+/*     band is full.                                                        */
+/*                                                                          */
+/*     Assertions are DELTAS against a measured baseline, never absolutes.  */
+/*     The fixture copies the real repo-owned structure map, so it already  */
+/*     carries live ids; an absolute expectation here would encode today's  */
+/*     map and fail the next time anyone files an item. A delta states the  */
+/*     claim that actually matters — this id, in this document, moved this  */
+/*     band by exactly one.                                                 */
+/* ======================================================================== */
+
+/** Parse `  band X-500: D 98 free  U 94 free ...` out of the queue's stdout. */
+function bandFree(stdout, band, lane) {
+  const line = stdout.split("\n").find((l) => l.trim().startsWith(`band X-${band}:`));
+  if (!line) return null;
+  const m = new RegExp(`\\b${lane} (\\d+) free\\b`).exec(line);
+  return m ? Number(m[1]) : null;
+}
+
+/**
+ * Build a fixture that spends specific ids in specific documents.
+ *
+ * The three sources are kept separate on purpose: an id spent ONLY in the
+ * claim log is the trap the item names, and a fixture that writes every id to
+ * every file cannot tell a reader that reads all three from one that reads
+ * the backlog alone.
+ */
+function bandFixture({ backlog = [], claimsOnly = [], mapOnly = [] } = {}) {
+  const dir = freshFixture();
+  for (const id of backlog) {
+    addBacklogItem(dir, id);
+    mapFixtureId(dir, id);
+  }
+  for (const id of mapOnly) mapFixtureId(dir, id);
+  for (const id of claimsOnly) {
+    fs.appendFileSync(
+      path.join(dir, "EXECUTION_CLAIMS.md"),
+      `\n${registerStamp(30)} | lane-a | item ${id} filed out of an adjacent change; no backlog row written yet\n`,
+    );
+  }
+  const q = buildBoardAndQueue(dir);
+  const rendered = fs.readFileSync(path.join(dir, "EXECUTION_QUEUE.md"), "utf8");
+  fs.rmSync(dir, { recursive: true, force: true });
+  return { q, rendered };
+}
+
+/**
+ * Ids in a band that the untouched fixture does not already spend.
+ *
+ * This reads the fixture's own documents rather than asking the generator,
+ * so it selects inputs; it never sources an expectation from the subject.
+ */
+function freeIdsInBand(lane, band, count) {
+  const dir = freshFixture();
+  const seen = new Set();
+  for (const f of fs.readdirSync(dir)) {
+    for (const m of fs.readFileSync(path.join(dir, f), "utf8").matchAll(/\b([DUCT])-(\d{3})\b/g)) {
+      seen.add(`${m[1]}-${m[2]}`);
+    }
+  }
+  fs.rmSync(dir, { recursive: true, force: true });
+  const out = [];
+  for (let n = band; n < band + 100 && out.length < count; n += 1) {
+    const id = `${lane}-${n}`;
+    if (!seen.has(id)) out.push(id);
+  }
+  if (out.length < count) throw new Error(`fixture has fewer than ${count} free ids in ${lane}-${band}`);
+  return out;
+}
+
+/** Every id in one lane's band, e.g. T-500 … T-599. */
+function wholeBand(lane, band) {
+  return Array.from({ length: 100 }, (_, n) => `${lane}-${band + n}`);
+}
+
+const BASELINE = bandFixture({});
+
+/* --- 25a. The number moves with the documents --------------------------- */
+/*          A static table cannot do this: spend one more id and the count   */
+/*          must fall by exactly one.                                        */
+{
+  const before = bandFree(BASELINE.q.stdout, 500, "T");
+  const { q } = bandFixture({ backlog: freeIdsInBand("T", 500, 1) });
+  check(
+    "the band table reports a measured free count, not a static rule",
+    BASELINE.q.status === 0 && before !== null && before < 100
+      && bandFree(q.stdout, 500, "T") === before - 1,
+    `baseline T-500 free=${before}, after one more id=${bandFree(q.stdout, 500, "T")}\nstdout=${q.stdout.trim()}`,
+  );
+  const section = BASELINE.rendered.split("### Filing a new item")[1] ?? "";
+  check(
+    "the rendered queue carries the measured capacity, not only the process output",
+    /X-500` to `X-599/.test(section) && new RegExp(`\\b${before}\\b`).test(section),
+    `expected the free count ${before} in the rendered band table\n${section.slice(0, 900)}`,
+  );
+}
+
+/* --- 25b. THE DEFECT, on a fixture of the live band's exact shape -------- */
+/*          T-500…T-599 all spent. The queue must say so loudly, in the      */
+/*          rendered file an agent reads AND on the output an operator       */
+/*          watches. A reporter that only writes the file is one an          */
+/*          unattended run never sees.                                       */
+{
+  const { q, rendered } = bandFixture({ backlog: wholeBand("T", 500) });
+  check(
+    "an exhausted band measures zero free",
+    q.status === 0 && bandFree(q.stdout, 500, "T") === 0,
+    `exit=${q.status}\nT-500 free=${bandFree(q.stdout, 500, "T")}\nstdout=${q.stdout.trim()}`,
+  );
+  check(
+    "an exhausted band is announced loudly on the process output",
+    /BAND EXHAUSTED: `?T-500`?–`?T-599/.test(q.stdout + q.stderr),
+    `stdout=${q.stdout.trim()}\nstderr=${q.stderr.trim()}`,
+  );
+  check(
+    "an exhausted band is announced in the file the agent reads before filing",
+    /EXHAUSTED/.test(rendered) && rendered.includes("T-500"),
+    rendered.split("### Filing a new item")[1]?.slice(0, 1200),
+  );
+}
+
+/* --- 25c. An id spent ONLY in the claim log is spent --------------------- */
+/*          The live known positives are T-574, T-575 and T-576: named in    */
+/*          the register, absent from the backlog and from the map. The      */
+/*          2026-09-22T11:07Z correction recorded this exact trap — an id    */
+/*          absent from the backlog is not thereby free — so a reader that   */
+/*          measures the backlog alone reports capacity that does not exist. */
+{
+  const before = bandFree(BASELINE.q.stdout, 500, "T");
+  const { q } = bandFixture({ claimsOnly: freeIdsInBand("T", 500, 3) });
+  check(
+    "ids spent only in the claim log are counted against the band",
+    bandFree(q.stdout, 500, "T") === before - 3,
+    `baseline=${before}, after three register-only ids=${bandFree(q.stdout, 500, "T")}\nstdout=${q.stdout.trim()}`,
+  );
+}
+
+/* --- 25d. An id spent only in the structure map is spent ----------------- */
+{
+  const before = bandFree(BASELINE.q.stdout, 500, "C");
+  const { q } = bandFixture({ mapOnly: freeIdsInBand("C", 500, 2) });
+  check(
+    "ids spent only in the structure map are counted against the band",
+    bandFree(q.stdout, 500, "C") === before - 2,
+    `baseline C-500=${before}, after two map-only ids=${bandFree(q.stdout, 500, "C")}\nstdout=${q.stdout.trim()}`,
+  );
+}
+
+/* --- 25e. GUARDRAIL: the count is per lane ------------------------------- */
+/*          The cheap wrong fix counts any `-5xx` id and reports one shared  */
+/*          band. It passes 25a, 25b and 25c and tells a C-lane agent its    */
+/*          band is full because the T lane filled up.                       */
+{
+  const { q } = bandFixture({ backlog: wholeBand("T", 500) });
+  check(
+    "one lane's exhausted band does not consume another lane's",
+    // A guardrail against an over-broad fix, so it must not be satisfiable by
+    // the absence of one: two unmeasured lanes are equal to each other.
+    bandFree(q.stdout, 500, "C") !== null
+      && bandFree(q.stdout, 500, "C") === bandFree(BASELINE.q.stdout, 500, "C")
+      && bandFree(q.stdout, 500, "U") === bandFree(BASELINE.q.stdout, 500, "U"),
+    `C=${bandFree(q.stdout, 500, "C")} (baseline ${bandFree(BASELINE.q.stdout, 500, "C")}) `
+      + `U=${bandFree(q.stdout, 500, "U")} (baseline ${bandFree(BASELINE.q.stdout, 500, "U")})\nstdout=${q.stdout.trim()}`,
+  );
+}
+
+/* --- 25f. GUARDRAIL: the count is per band ------------------------------- */
+/*          Ids adjacent to a band must not be drawn into it. One free id    */
+/*          is taken from each neighbouring band and each must move only     */
+/*          its own.                                                         */
+{
+  const [low] = freeIdsInBand("T", 400, 1);
+  const [high] = freeIdsInBand("T", 600, 1);
+  const base500 = bandFree(BASELINE.q.stdout, 500, "T");
+  const base400 = bandFree(BASELINE.q.stdout, 400, "T");
+  const base600 = bandFree(BASELINE.q.stdout, 600, "T");
+  const { q } = bandFixture({ claimsOnly: [low, high] });
+  check(
+    "ids in a neighbouring band are not counted against this one",
+    bandFree(q.stdout, 500, "T") === base500
+      && bandFree(q.stdout, 400, "T") === base400 - 1
+      && bandFree(q.stdout, 600, "T") === base600 - 1,
+    `spent ${low} and ${high}: T-400=${bandFree(q.stdout, 400, "T")} (baseline ${base400}), `
+      + `T-500=${bandFree(q.stdout, 500, "T")} (baseline ${base500}), `
+      + `T-600=${bandFree(q.stdout, 600, "T")} (baseline ${base600})\nstdout=${q.stdout.trim()}`,
+  );
+}
+
+/* --- 25g. GUARDRAIL: a healthy band is not announced --------------------- */
+/*          A warning printed unconditionally is a warning nobody reads.     */
+{
+  check(
+    "a band with capacity left raises no exhaustion warning",
+    !/BAND EXHAUSTED/.test(BASELINE.q.stdout + BASELINE.q.stderr)
+      && !/EXHAUSTED/.test(BASELINE.rendered),
+    `stdout=${BASELINE.q.stdout.trim()}\nstderr=${BASELINE.q.stderr.trim()}`,
+  );
+}
+
+/* --- 25h. A band close to the edge is reported before it is too late ----- */
+/*          Exhaustion is the failure; a band with a handful of numbers left */
+/*          is the last moment at which the range decision is still cheap.   */
+{
+  const before = bandFree(BASELINE.q.stdout, 600, "U");
+  const { q } = bandFixture({ backlog: freeIdsInBand("U", 600, before - 5) });
+  check(
+    "a nearly-spent band is announced before it is spent",
+    bandFree(q.stdout, 600, "U") === 5 && /BAND LOW: `?U-600`?–`?U-699/.test(q.stdout + q.stderr),
+    `U-600 free=${bandFree(q.stdout, 600, "U")} (baseline ${before})\nstdout=${q.stdout.trim()}`,
+  );
+}
+
 console.log(`\n${passes} passed, ${failures} failed`);
 process.exit(failures ? 1 : 0);
