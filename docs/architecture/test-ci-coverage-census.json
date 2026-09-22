@@ -15,9 +15,9 @@
     "No timestamp is recorded, so refreshing this file on an unchanged tree is a no-op."
   ],
   "counts": {
-    "testFiles": 2378,
-    "coveredTestFiles": 1871,
-    "pullRequestCoveredTestFiles": 1868,
+    "testFiles": 2379,
+    "coveredTestFiles": 1872,
+    "pullRequestCoveredTestFiles": 1869,
     "uncoveredTestFiles": 507,
     "directoriesWithTests": 481,
     "directoriesFullyCovered": 272,
@@ -38,8 +38,8 @@
   "partiallyCoveredDirectories": [
     {
       "directory": "src/__tests__/integration/source",
-      "testFiles": 99,
-      "coveredTestFiles": 91,
+      "testFiles": 100,
+      "coveredTestFiles": 92,
       "declaredQuarantineTestFiles": 8,
       "untriagedUnrunTestFiles": 0,
       "via": [
@@ -180,8 +180,8 @@
     },
     {
       "directory": "src/lib/source/new-workspace",
-      "testFiles": 7,
-      "coveredTestFiles": 6,
+      "testFiles": 6,
+      "coveredTestFiles": 5,
       "declaredQuarantineTestFiles": 0,
       "untriagedUnrunTestFiles": 1,
       "via": [
@@ -4260,10 +4260,11 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "tenantScopedReadSourceCount": 4,
+        "tenantScopedReadSourceCount": 5,
         "tenantScopedReadSources": [
           "src/app/(maestro)/source/new/page.tsx",
           "src/app/(maestro)/source/workspace/page.tsx",
+          "src/lib/source/intake/servicenow-sourcing-request-repository.ts",
           "src/lib/source/queries.ts",
           "src/lib/tenant/resolveTenant.ts"
         ],

@@ -33,13 +33,14 @@ Release lane: `global-control-lane`.
 - Additive migration `20260922140000_source_intake_request_authority.sql`, including an immutable SHA-256 for every imported source version.
 - Fail-closed tenant-scoped request queue repository.
 - Source New request queue projection for ServiceNow lineage, mapping review, missing facts, requester-stated value, and event-link status.
+- Remove the superseded event-shaped request triage helper after the canonical imported-request projection replaces its only product consumer.
 - Focused repository, route, and rendered component tests.
 
 ## QA / Validation
 
 - Repository tests were written red-first and failed until the read model existed.
 - Focused tests prove that a proposal never becomes a human decision, relation absence is unavailable rather than empty, and existing event workspaces remain accessible when intake authority is unavailable.
-- TypeScript, scoped ESLint, migration-seal check, release check, focused Jest, and diff check are required before merge.
+- TypeScript, scoped ESLint, migration-seal check, release check, focused Jest, orphan audit, behavior-coverage census, and diff check are required before merge.
 
 ## Rollout Plan
 
