@@ -151,6 +151,12 @@ const blockedStage04: SourceNewStage04VendorPanel = {
     existing_contract_vendor: 0,
   },
   notRecorded: [],
+  suggestions: {
+    status: "blocked",
+    blockers: ["The governed candidate-supplier registry is unavailable."],
+    rows: [],
+    excludedCount: 0,
+  },
   asOf: "2026-03-10",
 };
 
@@ -1215,6 +1221,29 @@ describe("SourceNewWorkspace", () => {
       notRecorded: [
         "Contact policy is not recorded for accepted candidates, so this panel makes no claim about who may be contacted.",
       ],
+      suggestions: {
+        status: "available",
+        blockers: [],
+        rows: [
+          {
+            supplierId: "suggested-1",
+            legalEntityId: "suggested-1",
+            legalName: "Synthetic Registry Supplier LLC",
+            label: "Suggested for review",
+            existingContractVendor: false,
+            eligibility: {
+              categoryKeys: ["managed-services"],
+              functionKeys: ["technology"],
+              archetypeKeys: ["application-managed-services"],
+            },
+            contactPolicy: "review_required",
+            contactReadiness: "review_required",
+            contactActionAvailable: false,
+            sourceReference: "EVID-SUGGESTED-1",
+          },
+        ],
+        excludedCount: 2,
+      },
       asOf: "2026-09-19",
     };
 
@@ -1236,6 +1265,12 @@ describe("SourceNewWorkspace", () => {
     });
     expect(within(region).getByText("Incumbent Supplier LLC")).toBeTruthy();
     expect(within(region).getByText("New Supplier LLC")).toBeTruthy();
+    expect(
+      within(region).getByText("Synthetic Registry Supplier LLC"),
+    ).toBeTruthy();
+    expect(
+      within(region).getAllByText(/Suggested for review/).length,
+    ).toBeGreaterThan(0);
 
     // The distinction itself, not just the names. Read off the rows so the
     // assertion is about which supplier got which label, not about a phrase
@@ -1304,6 +1339,12 @@ describe("SourceNewWorkspace", () => {
         existing_contract_vendor: 0,
       },
       notRecorded: [],
+      suggestions: {
+        status: "blocked",
+        blockers: ["The contract register could not be read."],
+        rows: [],
+        excludedCount: 0,
+      },
       asOf: "2026-09-19",
     };
 
