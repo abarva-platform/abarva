@@ -1,0 +1,17 @@
+{
+  "dataset_id": "source-candidate-supplier-registry-synthetic-v1",
+  "title": "Synthetic Source Candidate Supplier Registry V1",
+  "client_key": "corpus_global",
+  "source_layer": "tenant_context",
+  "classification": "internal",
+  "owner": "AbarVa Product Engineering",
+  "source_basis": "public-safe synthetic candidate supplier registry authored to exercise governed Source supplier suggestion filters across every registered Source archetype",
+  "ingestion_method": "structured_promotion",
+  "retrieval_plan": "not_retrievable",
+  "retrieval_proof_required": true,
+  "pii_phi_handling": null,
+  "expected_object_count": 25,
+  "approved_by": "AbarVa Product Engineering",
+  "approved_at": "2026-09-22",
+  "notes": "Manifest for repository fixture validation only. The package contains twenty eligible fictional supplier legal entities and five fail-closed negative controls. Names, contract references, source records, and profiles are synthetic; no real people, emails, client facts, supplier contact authority, awards, NDAs, Azure load, tenant write, Source event mutation, or production retrieval are authorized."
+}
