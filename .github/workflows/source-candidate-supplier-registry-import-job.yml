@@ -1,0 +1,222 @@
+name: Source candidate supplier registry import job
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "dry_run produces proof only; apply imports reviewed synthetic candidates after separate approval"
+        required: true
+        type: choice
+        options:
+          - dry_run
+          - apply
+        default: dry_run
+      tenant_key:
+        description: "Exact tenant key. corpus_global is never a writable tenant scope."
+        required: true
+        type: string
+      input_source_version:
+        description: "Immutable upstream registry extract version"
+        required: true
+        type: string
+      input_sha256:
+        description: "Exact lowercase SHA-256 of the supplier registry extract"
+        required: true
+        type: string
+      load_run_id:
+        description: "Operator run identity; blank uses the GitHub run id"
+        required: false
+        type: string
+        default: ""
+      idempotency_key:
+        description: "Stable key for this tenant and input version"
+        required: true
+        type: string
+      approval_reference:
+        description: "Required for apply: private approval reference"
+        required: false
+        type: string
+        default: ""
+      confirm_apply:
+        description: "Required for apply: APPLY_CANDIDATE_SUPPLIER_REGISTRY"
+        required: false
+        type: string
+        default: ""
+
+concurrency:
+  group: source-candidate-supplier-registry-import-job
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  supplier-registry-import:
+    name: Candidate supplier registry import operator job
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    environment: production
+    env:
+      CONTAINER_APP_NAME: ${{ vars.AZURE_WEB_CONTAINER_APP_NAME || 'ca-abarva-web-lab-eastus' }}
+      RESOURCE_GROUP: ${{ vars.AZURE_WEB_RESOURCE_GROUP || 'rg-abarva-controlplane-lab-eastus' }}
+      AZURE_DEPLOY_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID || secrets.AZURE_LAB_CLIENT_ID }}
+      AZURE_DEPLOY_TENANT_ID: ${{ vars.AZURE_TENANT_ID || secrets.AZURE_LAB_TENANT_ID }}
+      AZURE_DEPLOY_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID || secrets.AZURE_LAB_SUBSCRIPTION_ID }}
+      SOURCE_CANDIDATE_SUPPLIER_REGISTRY_TENANT_KEY: ${{ inputs.tenant_key }}
+      SOURCE_CANDIDATE_SUPPLIER_REGISTRY_INPUT_SOURCE_VERSION: ${{ inputs.input_source_version }}
+      SOURCE_CANDIDATE_SUPPLIER_REGISTRY_INPUT_SHA256: ${{ inputs.input_sha256 }}
+      SOURCE_CANDIDATE_SUPPLIER_REGISTRY_IDEMPOTENCY_KEY: ${{ inputs.idempotency_key }}
+      SOURCE_CANDIDATE_SUPPLIER_REGISTRY_BUILD_VERSION: ${{ github.sha }}
+      SOURCE_CANDIDATE_SUPPLIER_REGISTRY_INPUT_PATH: datasets/source/candidate-supplier-registry-synthetic-v1/candidate_supplier_registry.csv
+      SOURCE_CANDIDATE_SUPPLIER_REGISTRY_DATASET_ID: source-candidate-supplier-registry-synthetic-v1
+      SOURCE_CANDIDATE_SUPPLIER_REGISTRY_DATASET_VERSION: v1
+      SOURCE_CANDIDATE_SUPPLIER_REGISTRY_OUT_DIR: /tmp/source-candidate-supplier-registry-import-job
+      SOURCE_CANDIDATE_SUPPLIER_REGISTRY_EMIT_PROOF_BUNDLE: "true"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Validate immutable operator scope
+        id: scope
+        shell: bash
+        run: |
+          set -euo pipefail
+          tenant_key="${{ inputs.tenant_key }}"
+          input_sha256="${{ inputs.input_sha256 }}"
+          input_source_version="${{ inputs.input_source_version }}"
+          idempotency_key="${{ inputs.idempotency_key }}"
+          load_run_id="${{ inputs.load_run_id }}"
+          if [[ -z "$tenant_key" || -z "$input_source_version" || -z "$idempotency_key" ]]; then
+            echo "tenant_key, input_source_version, and idempotency_key are required." >&2
+            exit 1
+          fi
+          if [[ ! "$input_sha256" =~ ^[0-9a-f]{64}$ ]]; then
+            echo "input_sha256 must be an exact lowercase SHA-256." >&2
+            exit 1
+          fi
+          if [[ -z "$load_run_id" ]]; then
+            load_run_id="source-candidate-supplier-registry-${GITHUB_RUN_ID}"
+          fi
+          if [[ "${{ inputs.mode }}" == "apply" ]]; then
+            if [[ "$GITHUB_REF" != "refs/heads/main" ]]; then
+              echo "Apply may run only from main." >&2
+              exit 1
+            fi
+            if [[ "$tenant_key" == "corpus_global" ]]; then
+              echo "corpus_global is never a writable tenant scope." >&2
+              exit 1
+            fi
+            if [[ "${{ inputs.confirm_apply }}" != "APPLY_CANDIDATE_SUPPLIER_REGISTRY" ]]; then
+              echo "Apply requires confirm_apply=APPLY_CANDIDATE_SUPPLIER_REGISTRY." >&2
+              exit 1
+            fi
+            if [[ -z "${{ inputs.approval_reference }}" ]]; then
+              echo "approval_reference is required for apply." >&2
+              exit 1
+            fi
+          fi
+          approval_reference_sha256=""
+          if [[ -n "${{ inputs.approval_reference }}" ]]; then
+            approval_reference_sha256="$(printf '%s' "${{ inputs.approval_reference }}" | sha256sum | cut -d' ' -f1)"
+          fi
+          idempotency_key_sha256="$(printf '%s' "$idempotency_key" | sha256sum | cut -d' ' -f1)"
+          echo "load_run_id=$load_run_id" >> "$GITHUB_OUTPUT"
+          mkdir -p audit-artifacts/source-candidate-supplier-registry-import-job
+          jq -n \
+            --arg mode "${{ inputs.mode }}" \
+            --arg tenant_key "$tenant_key" \
+            --arg input_source_version "$input_source_version" \
+            --arg input_sha256 "$input_sha256" \
+            --arg load_run_id "$load_run_id" \
+            --arg approval_reference_sha256 "$approval_reference_sha256" \
+            --arg idempotency_key_sha256 "$idempotency_key_sha256" \
+            '{mode:$mode,tenant_key:$tenant_key,input_source_version:$input_source_version,input_sha256:$input_sha256,load_run_id:$load_run_id,approval_reference_present:($approval_reference_sha256 != ""),approval_reference_sha256:$approval_reference_sha256,idempotency_key_sha256:$idempotency_key_sha256}' \
+            > audit-artifacts/source-candidate-supplier-registry-import-job/workflow-contract.json
+
+      - name: Verify Azure OIDC configuration
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$AZURE_DEPLOY_CLIENT_ID"
+          test -n "$AZURE_DEPLOY_TENANT_ID"
+          test -n "$AZURE_DEPLOY_SUBSCRIPTION_ID"
+
+      - name: Azure login
+        uses: azure/login@v3
+        with:
+          client-id: ${{ env.AZURE_DEPLOY_CLIENT_ID }}
+          tenant-id: ${{ env.AZURE_DEPLOY_TENANT_ID }}
+          subscription-id: ${{ env.AZURE_DEPLOY_SUBSCRIPTION_ID }}
+
+      - name: Resolve current digest-pinned image
+        id: image
+        shell: bash
+        run: |
+          set -euo pipefail
+          app_json="$(az containerapp show --name "$CONTAINER_APP_NAME" --resource-group "$RESOURCE_GROUP" --output json)"
+          printf '%s\n' "$app_json" > audit-artifacts/source-candidate-supplier-registry-import-job/containerapp.json
+          image="$(printf '%s' "$app_json" | jq -r '.properties.template.containers[0].image // empty')"
+          if [[ -z "$image" || "$image" != *@sha256:* ]]; then
+            echo "The deployed web image is not digest-pinned." >&2
+            exit 1
+          fi
+          echo "image=$image" >> "$GITHUB_OUTPUT"
+          printf '%s\n' "$image" > audit-artifacts/source-candidate-supplier-registry-import-job/image.txt
+
+      - name: Run dry-run proof through private operator
+        if: inputs.mode == 'dry_run'
+        shell: bash
+        run: |
+          npm run ops:aca-job -- \
+            --image "${{ steps.image.outputs.image }}" \
+            --script source:candidate-supplier-registry:job \
+            --container db-migrate \
+            --env SOURCE_CANDIDATE_SUPPLIER_REGISTRY_TENANT_KEY="$SOURCE_CANDIDATE_SUPPLIER_REGISTRY_TENANT_KEY" \
+            --env SOURCE_CANDIDATE_SUPPLIER_REGISTRY_INPUT_SOURCE_VERSION="$SOURCE_CANDIDATE_SUPPLIER_REGISTRY_INPUT_SOURCE_VERSION" \
+            --env SOURCE_CANDIDATE_SUPPLIER_REGISTRY_INPUT_SHA256="$SOURCE_CANDIDATE_SUPPLIER_REGISTRY_INPUT_SHA256" \
+            --env SOURCE_CANDIDATE_SUPPLIER_REGISTRY_LOAD_RUN_ID="${{ steps.scope.outputs.load_run_id }}" \
+            --env SOURCE_CANDIDATE_SUPPLIER_REGISTRY_IDEMPOTENCY_KEY="$SOURCE_CANDIDATE_SUPPLIER_REGISTRY_IDEMPOTENCY_KEY" \
+            --env SOURCE_CANDIDATE_SUPPLIER_REGISTRY_BUILD_VERSION="$SOURCE_CANDIDATE_SUPPLIER_REGISTRY_BUILD_VERSION" \
+            --env SOURCE_CANDIDATE_SUPPLIER_REGISTRY_INPUT_PATH="$SOURCE_CANDIDATE_SUPPLIER_REGISTRY_INPUT_PATH" \
+            --env SOURCE_CANDIDATE_SUPPLIER_REGISTRY_DATASET_ID="$SOURCE_CANDIDATE_SUPPLIER_REGISTRY_DATASET_ID" \
+            --env SOURCE_CANDIDATE_SUPPLIER_REGISTRY_DATASET_VERSION="$SOURCE_CANDIDATE_SUPPLIER_REGISTRY_DATASET_VERSION" \
+            --env SOURCE_CANDIDATE_SUPPLIER_REGISTRY_OUT_DIR="$SOURCE_CANDIDATE_SUPPLIER_REGISTRY_OUT_DIR" \
+            --env SOURCE_CANDIDATE_SUPPLIER_REGISTRY_EMIT_PROOF_BUNDLE=true \
+            --out-dir audit-artifacts/source-candidate-supplier-registry-import-job/live-dry-run \
+            --poll-seconds 15 \
+            --idle-verify-wait-seconds 300
+
+      - name: Run approved apply through private operator
+        if: inputs.mode == 'apply'
+        shell: bash
+        run: |
+          npm run ops:aca-job -- \
+            --image "${{ steps.image.outputs.image }}" \
+            --script source:candidate-supplier-registry:apply-job \
+            --container db-migrate \
+            --secret-env DATABASE_URL=azure-postgres-control-database-url \
+            --env SOURCE_CANDIDATE_SUPPLIER_REGISTRY_IMPORT_APPLY_APPROVED=true \
+            --env SOURCE_CANDIDATE_SUPPLIER_REGISTRY_IMPORT_CONFIRMATION=APPLY_CANDIDATE_SUPPLIER_REGISTRY \
+            --env SOURCE_CANDIDATE_SUPPLIER_REGISTRY_TENANT_KEY="$SOURCE_CANDIDATE_SUPPLIER_REGISTRY_TENANT_KEY" \
+            --env SOURCE_CANDIDATE_SUPPLIER_REGISTRY_INPUT_SOURCE_VERSION="$SOURCE_CANDIDATE_SUPPLIER_REGISTRY_INPUT_SOURCE_VERSION" \
+            --env SOURCE_CANDIDATE_SUPPLIER_REGISTRY_INPUT_SHA256="$SOURCE_CANDIDATE_SUPPLIER_REGISTRY_INPUT_SHA256" \
+            --env SOURCE_CANDIDATE_SUPPLIER_REGISTRY_LOAD_RUN_ID="${{ steps.scope.outputs.load_run_id }}" \
+            --env SOURCE_CANDIDATE_SUPPLIER_REGISTRY_IDEMPOTENCY_KEY="$SOURCE_CANDIDATE_SUPPLIER_REGISTRY_IDEMPOTENCY_KEY" \
+            --env SOURCE_CANDIDATE_SUPPLIER_REGISTRY_BUILD_VERSION="$SOURCE_CANDIDATE_SUPPLIER_REGISTRY_BUILD_VERSION" \
+            --env SOURCE_CANDIDATE_SUPPLIER_REGISTRY_INPUT_PATH="$SOURCE_CANDIDATE_SUPPLIER_REGISTRY_INPUT_PATH" \
+            --env SOURCE_CANDIDATE_SUPPLIER_REGISTRY_DATASET_ID="$SOURCE_CANDIDATE_SUPPLIER_REGISTRY_DATASET_ID" \
+            --env SOURCE_CANDIDATE_SUPPLIER_REGISTRY_DATASET_VERSION="$SOURCE_CANDIDATE_SUPPLIER_REGISTRY_DATASET_VERSION" \
+            --env SOURCE_CANDIDATE_SUPPLIER_REGISTRY_OUT_DIR="$SOURCE_CANDIDATE_SUPPLIER_REGISTRY_OUT_DIR" \
+            --env SOURCE_CANDIDATE_SUPPLIER_REGISTRY_EMIT_PROOF_BUNDLE=true \
+            --out-dir audit-artifacts/source-candidate-supplier-registry-import-job/live-apply \
+            --poll-seconds 15 \
+            --idle-verify-wait-seconds 300
+
+      - name: Upload supplier registry import proof
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: source-candidate-supplier-registry-import-job
+          path: audit-artifacts/source-candidate-supplier-registry-import-job*
+          if-no-files-found: error
