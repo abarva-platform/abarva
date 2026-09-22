@@ -51,7 +51,8 @@ Merge to `main`; the normal repo-owned Azure Container Apps deployment workflow 
 - Shared runtime mutators: None.
 - Approved image digest: Pending repo-owned deploy.
 - ACA runtime invariant: Pending repo-owned deploy.
-- Worker image invariant: Not applicable to this read-only UI projection.
+- Worker image invariant: Required after deployment even though worker code is unchanged; both
+  delivery worker images must match the approved web digest.
 - Feature/env flag update path: Not applicable.
 - Live signed-in proof required: Yes, for the Files readiness map if this is claimed live.
 
