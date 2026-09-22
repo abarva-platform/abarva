@@ -1838,45 +1838,150 @@ describe("WorkspaceExecutiveShell performance formatting", () => {
     expect(css).toContain("grid-column: 1 / -1;");
   });
 
+  /*
+   * Both cloud-consumption cases below supply `purpose_summary`.
+   *
+   * They did not, until T-588. They were written against a branch of
+   * `contractPurposeSummary` that, when no purpose had been reviewed,
+   * synthesised one from the contract header — "This is a cloud consumption
+   * commitment with <vendor> covering <scope>" — and `3d2b23f32` (#8128)
+   * deleted that branch on purpose, because a characterisation asserted in the
+   * same voice as a reviewed extraction is the thing a governed surface must
+   * not do. That commit updated the three sibling suites in this directory and
+   * missed this one, which is the only suite here that no workflow runs.
+   *
+   * So the fixtures are updated, not the expectations: a case about how a
+   * reviewed purpose reads has to supply one. What each case asserts about
+   * classification, evidence and identifier leakage is unchanged. The
+   * unreviewed input keeps its own case immediately below, so the deleted
+   * branch stays deleted and cannot return unnoticed.
+   */
+  const cloudConsumptionContract = {
+    contract_id: "MER-TECH-DBX-001",
+    vendor_ref: "MER-VEN-DATABRICKS",
+    vendor_name: "Databricks, Inc.",
+    vendor_category: "cloud_data_platform",
+    contract_name:
+      "Databricks Enterprise Agreement - Platform, Support and Committed Purchase",
+    scope_summary: "Cloud data platform subscription - absent - for_cause_only",
+    annual_value: 1_900_000,
+    resolved_annual_value: null,
+    actual_annual_spend: null,
+  };
+
+  const cloudConsumptionCoverage = {
+    contract_id: "MER-TECH-DBX-001",
+    contract_archetype: "cloud_consumption",
+    actual_spend_usd: 66_000,
+    committed_spend_usd: 1_900_000,
+    scope_rows: 4,
+    spend_rows: 12,
+    document_page_text_rows: 6,
+    opportunity_rows: 6,
+  };
+
   it("summarizes a cloud consumption contract before showing optimization levers", () => {
     const summary = contractPurposeSummary(
       {
-        contract_id: "MER-TECH-DBX-001",
-        vendor_ref: "MER-VEN-DATABRICKS",
-        vendor_name: "Databricks, Inc.",
-        vendor_category: "cloud_data_platform",
-        contract_name:
-          "Databricks Enterprise Agreement - Platform, Support and Committed Purchase",
-        scope_summary:
-          "Cloud data platform subscription - absent - for_cause_only",
-        annual_value: 1_900_000,
-        resolved_annual_value: null,
-        actual_annual_spend: null,
+        ...cloudConsumptionContract,
+        purpose_summary:
+          "Databricks, Inc. supplies the lakehouse platform under Platform, Support and Committed Purchase, drawn down against a committed annual purchase.",
       } as never,
-      {
-        contract_id: "MER-TECH-DBX-001",
-        contract_archetype: "cloud_consumption",
-        actual_spend_usd: 66_000,
-        committed_spend_usd: 1_900_000,
-        scope_rows: 4,
-        spend_rows: 12,
-        document_page_text_rows: 6,
-        opportunity_rows: 6,
-      } as never,
+      cloudConsumptionCoverage as never,
     );
 
     expect(summary.heading).toBe("What this contract is");
-    expect(summary.body).toContain("cloud consumption commitment");
     expect(summary.body).toContain("Databricks, Inc.");
     expect(summary.body).toContain("Platform, Support and Committed Purchase");
+    // `readAs` is the classification the reader actually sees in the body.
     expect(summary.body).toContain("usage-backed commercial commitment");
-    expect(summary.body).not.toContain("for_cause_only");
-    expect(summary.body).not.toContain("absent");
+    expect(summary.evidence).toContain("Reviewed purpose extraction");
     expect(summary.evidence).toContain("Cloud Consumption archetype");
     expect(summary.evidence).toContain("$1.9M annual value");
     expect(summary.evidence).toContain("$66K observed spend");
     expect(summary.evidence).toContain("6 document text rows");
     expect(summary.evidence).toContain("6 opportunity rows");
+  });
+
+  it("refuses to characterise the same contract when no purpose is reviewed", () => {
+    // Same contract, same evidence, no reviewed purpose. The card must say so
+    // rather than assemble a characterisation out of the header — the header
+    // here would classify as cloud consumption perfectly well, which is
+    // precisely why the refusal has to be tested on a contract that would
+    // otherwise read convincingly.
+    const summary = contractPurposeSummary(
+      cloudConsumptionContract as never,
+      cloudConsumptionCoverage as never,
+    );
+
+    expect(summary.heading).toBe("Purpose review needed");
+    expect(summary.body).toBe(
+      "No reviewed contract-purpose extraction is available.",
+    );
+    expect(summary.body).not.toContain("cloud consumption commitment");
+    expect(summary.body).not.toContain("Databricks, Inc.");
+    // The evidence that IS loaded is still reported; refusing to characterise
+    // is not the same as withholding what the header establishes.
+    expect(summary.evidence).toContain("Cloud Consumption archetype");
+    expect(summary.evidence).toContain("$1.9M annual value");
+  });
+
+  it("refuses a purpose extraction that is really concatenated clause enums", () => {
+    /*
+     * The identifier-leak guard, on the one input from which identifiers can
+     * still reach a reader.
+     *
+     * Before T-588 this contract's clause enums were asserted absent from the
+     * body of the *derived* characterisation, which read them off
+     * `scope_summary`. That branch is gone, so nothing on `scope_summary` can
+     * reach the body any more and an assertion about it there could no longer
+     * fail. The live path for the same defect is a stored `purpose_summary`
+     * that is itself column values rather than prose — the loaders write that
+     * field, so it is a real shape, not a contrived one. It must refuse, not
+     * render.
+     */
+    const summary = contractPurposeSummary(
+      {
+        ...cloudConsumptionContract,
+        purpose_summary:
+          "Cloud data platform subscription - absent - for_cause_only",
+      } as never,
+      cloudConsumptionCoverage as never,
+    );
+
+    expect(summary.heading).toBe("Purpose review needed");
+    expect(summary.body).not.toContain("for_cause_only");
+    expect(summary.body).not.toContain("absent");
+  });
+
+  it("refuses a purpose extraction that states a value is absent in prose", () => {
+    /*
+     * The second of `usableScopeSummary`'s two independent rejections, and it
+     * needs its own case because the first one masks it.
+     *
+     * The case above is refused by the `" - absent -"` separator test before
+     * the bare-word list is ever consulted — deleting that word list leaves the
+     * case above green, which a mutation showed rather than a reading. This
+     * fixture carries the bare word in prose with no separator shape, so only
+     * the word list can refuse it.
+     *
+     * Noted while proving this: the word list's `for_cause_only` alternative is
+     * unreachable, because `withoutIdentifierTokens` strips snake_case runs
+     * before the list is applied. That is a dead alternative in a live control,
+     * not a behaviour change, and it is filed rather than repaired here.
+     */
+    const summary = contractPurposeSummary(
+      {
+        ...cloudConsumptionContract,
+        purpose_summary: "Committed purchase detail is absent pending review.",
+      } as never,
+      cloudConsumptionCoverage as never,
+    );
+
+    expect(summary.heading).toBe("Purpose review needed");
+    expect(summary.body).toBe(
+      "No reviewed contract-purpose extraction is available.",
+    );
   });
 
   it("gives Story, Scope, Relationship, and Evidence distinct CXO-ready narratives", () => {
@@ -2005,12 +2110,18 @@ describe("WorkspaceExecutiveShell performance formatting", () => {
   });
 
   it("does not force cloud language onto a generic managed-services contract", () => {
+    // Fixture updated by T-588 for the reason recorded above the cloud case:
+    // a contract whose purpose has been reviewed supplies `purpose_summary`.
+    // The classification assertion moves from `label` to `readAs` because
+    // `readAs` is what a reviewed body actually renders.
     const summary = contractPurposeSummary({
       contract_id: "MER-AMS-001",
       vendor_ref: "VEN-AMS",
       vendor_name: "Service Partner",
       vendor_category: "managed_services",
       contract_name: "Application Managed Services SOW",
+      purpose_summary:
+        "Service Partner provides run support, service desk triage, and change-request governance for the application estate.",
       scope_summary:
         "run support, service desk triage, and change-request governance",
       annual_value: 7_200_000,
@@ -2018,11 +2129,15 @@ describe("WorkspaceExecutiveShell performance formatting", () => {
       actual_annual_spend: 7_100_000,
     } as never);
 
-    expect(summary.body).toContain("managed-services contract");
+    expect(summary.heading).toBe("What this contract is");
     expect(summary.body).toContain(
       "run support, service desk triage, and change-request governance",
     );
+    expect(summary.body).toContain(
+      "service-scope and performance-control agreement",
+    );
     expect(summary.body).not.toContain("cloud consumption commitment");
+    expect(summary.body).not.toContain("usage-backed commercial commitment");
     expect(summary.evidence).toContain("Managed Services archetype");
     expect(summary.evidence).toContain("$7.2M annual value");
   });
