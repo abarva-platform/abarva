@@ -533,17 +533,22 @@ ${Object.entries(byLane).map(([l, v]) => `${l}:${v.length}`).join("  ")}
 
 ## How to take work without asking
 
-1. Take the **first unclaimed row in your lane**. If your lane is empty, take the
+1. Create one identity for this run in the form \`<base-agent>#<run-id>\`. The
+   run id must be a start stamp or scheduler id and must stay unchanged for the
+   whole run. A sibling with the same base agent but a different run id is a
+   different owner: never resume or adopt its claim. Concurrent runs may take
+   different unclaimed items.
+2. Take the **first unclaimed row in your lane**. If your lane is empty, take the
    first unclaimed row in any lane.
-2. Claim it by **appending one line** to \`EXECUTION_CLAIMS.md\` under
+3. Claim it by **appending one line** to \`EXECUTION_CLAIMS.md\` under
    \`## Claim log — append only\`:
-   \`YYYY-MM-DDTHH:MMZ <agent> item <id> <branch> — claimed\`
+   \`YYYY-MM-DDTHH:MMZ <base-agent>#<run-id> item <id> <branch> — claimed\`
    Never rewrite that file. Two agents have lost each other's edits doing so.
-3. Work in **your own git worktree**. Never share a checkout.
-4. When the item is merged and deployed, append a second line with the SHA and
+4. Work in **your own git worktree**. Never share a checkout.
+5. When the item is merged and deployed, append a second line with the SHA and
    the deploy proof. The board reads the backlog, so also record the outcome in
    \`EXECUTION_BACKLOG_20260918.md\`.
-5. Go to step 1. **Do not ask which item is next — this file answers that.**
+6. Go to step 2. **Do not ask which item is next — this file answers that.**
 
 ### Filing a new item: take an id from your own band
 

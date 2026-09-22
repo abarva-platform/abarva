@@ -146,6 +146,32 @@ export function parseRegisterLines(text) {
   return out;
 }
 
+/**
+ * Resolve whether a claim belongs to the exact scheduled run asking to resume
+ * it. The base agent name names a family of runs; it is never an ownership
+ * identity by itself.
+ *
+ * Concurrent runs may take different unclaimed items. Only an exact
+ * `base-agent#run-id` match may resume an existing claim.
+ */
+export function resolveClaimOwnership(claimAgent, currentRunIdentity) {
+  const split = (value) => {
+    const match = String(value ?? "").match(
+      /^([A-Za-z0-9_.-]+)#([A-Za-z0-9_.:-]+)$/,
+    );
+    return match ? { base: match[1], runId: match[2] } : null;
+  };
+
+  const current = split(currentRunIdentity);
+  if (!current) return "invalid_current";
+  if (claimAgent === currentRunIdentity) return "own";
+
+  const claim = split(claimAgent);
+  if (!claim) return "legacy_other";
+  if (claim.base === current.base) return "sibling";
+  return "other";
+}
+
 // ---------------------------------------------------------------------------
 // Auditing.
 // ---------------------------------------------------------------------------
