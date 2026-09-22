@@ -28,7 +28,7 @@ export const CATEGORY_TO_ARCHETYPE_ID: Record<SourceCategoryId, string | null> =
     erp_si_implementation: "ERP_SI_IMPLEMENTATION",
     data_ai_platform: "AI_DATA_PLATFORM",
     saas_renewal: "CONTRACT_RENEWAL",
-    ai_engineering_partner: "DIGITAL_PRODUCT_ENGINEERING",
+    ai_engineering_partner: "AI_ENGINEERING_PARTNER",
     cloud_finops: "CLOUD_FINOPS",
     bpo_contact_centre: "CONTACT_CENTER_CX",
     bpo_shared_services: "BPO_SHARED_SERVICES",

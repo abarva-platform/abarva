@@ -127,7 +127,7 @@
       "businessDomain": "delivery",
       "businessFunction": "digital_product_engineering",
       "categoryId": "ai_engineering_partner",
-      "archetypeId": "DIGITAL_PRODUCT_ENGINEERING",
+      "archetypeId": "AI_ENGINEERING_PARTNER",
       "requiredIntakeDepth": "complete",
       "requesterValueBasis": "requester_stated_unvalidated",
       "requesterValueValidated": false,

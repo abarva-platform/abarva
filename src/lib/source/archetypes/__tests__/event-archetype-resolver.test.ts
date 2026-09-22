@@ -45,7 +45,7 @@ describe("event → archetype resolution (classifier category)", () => {
     expect(
       resolveArchetypeForEvent({ categoryId: "ai_engineering_partner" })
         .archetypeId,
-    ).toBe("DIGITAL_PRODUCT_ENGINEERING");
+    ).toBe("AI_ENGINEERING_PARTNER");
     expect(
       resolveArchetypeForEvent({ categoryId: "bpo_contact_centre" })
         .archetypeId,

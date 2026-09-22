@@ -277,6 +277,57 @@ describe("buildSourceNewEventIntelligence", () => {
     );
   });
 
+  it("uses the dedicated AI engineering partner playbook for agentic build requests", () => {
+    const view = buildSourceNewEventIntelligence({
+      event: {
+        id: "event-ai-engineering-partner",
+        clientId: "client-example",
+        clientKey: TEST_TENANT_KEY,
+        eventType: "consulting",
+        category: "ai_engineering_partner",
+        currentStage: "rfp",
+      },
+      artifacts: [],
+    });
+
+    expect(view.archetype.id).toBe("AI_ENGINEERING_PARTNER");
+    expect(view.archetype.name).toBe("AI Engineering Partner Selection");
+    expect(view.allowedStatement).toContain(
+      "AI Engineering Partner Selection playbook",
+    );
+    expect(view.requiredEvidence).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          key: "ai_use_case_portfolio",
+          label: "AI use-case portfolio and delivery boundaries",
+          severity: "hard",
+        }),
+        expect.objectContaining({
+          key: "eval_harness_baseline",
+          label: "Evaluation harness and acceptance baseline",
+          severity: "hard",
+        }),
+        expect.objectContaining({
+          key: "ip_data_rights_baseline",
+          label: "IP, model, prompt, and data-rights baseline",
+          severity: "hard",
+        }),
+      ]),
+    );
+    expect(view.requiredEvidence.map((item) => item.key)).not.toContain(
+      "velocity_baseline",
+    );
+    expect(view.industryMetrics.map((metric) => metric.key)).toEqual(
+      expect.arrayContaining([
+        "ai_eval_acceptance_coverage",
+        "ai_milestone_holdback",
+      ]),
+    );
+    expect(view.nextQuestion).toBe(
+      "Can you provide AI use-case backlog + delivery-lane decision memo (XLSX/DOCX)?",
+    );
+  });
+
   it("refuses when the event cannot resolve to a shipped archetype", () => {
     const view = buildSourceNewEventIntelligence({
       event: {

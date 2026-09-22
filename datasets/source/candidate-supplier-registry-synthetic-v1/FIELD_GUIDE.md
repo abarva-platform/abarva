@@ -20,7 +20,7 @@ The package contains two eligible synthetic legal entities for each of the ten S
 1. `AMS_MANAGED_SERVICES`
 2. `ERP_SI_IMPLEMENTATION`
 3. `AI_DATA_PLATFORM`
-4. `DIGITAL_PRODUCT_ENGINEERING`
+4. `AI_ENGINEERING_PARTNER`
 5. `CONTRACT_RENEWAL`
 6. `CLOUD_FINOPS`
 7. `CONTACT_CENTER_CX`
