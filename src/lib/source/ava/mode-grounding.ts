@@ -78,8 +78,15 @@ import type {
   ValueType,
 } from "@/components/source/canvas/analytics/view-model";
 import type { SourceArtifactRegistryRecord } from "@/lib/source/artifact-registry/types";
+import {
+  specByCode,
+  specsForStage,
+} from "@/lib/source/canonical-specs/artifact-specs";
 import { resolveAuthoritativeArtifact } from "@/lib/source/client-final-artifacts";
-import type { SourceEventArchetype, ValueLeverRule } from "@/lib/source/archetypes/types";
+import type {
+  SourceEventArchetype,
+  ValueLeverRule,
+} from "@/lib/source/archetypes/types";
 import type { VendorResponseProfile } from "@/lib/source/proposal-intelligence/types";
 import type { SourceAnswerMode } from "./answer-mode";
 
@@ -199,7 +206,9 @@ function valueTypeClassificationLines(
     list.push(row.label);
     byType.set(row.valueType, list);
   }
-  const lines = ["VALUE-TYPE CLASSIFICATION (never claim these as one blended savings figure):"];
+  const lines = [
+    "VALUE-TYPE CLASSIFICATION (never claim these as one blended savings figure):",
+  ];
   for (const [vt, labels] of byType) {
     lines.push(`  ${valueTypeLabel(vt)}: ${labels.join("; ")}.`);
   }
@@ -210,12 +219,16 @@ const BASELINE_LABEL = "Value at stake (event estimate)";
 
 // ── event_status ─────────────────────────────────────────────────────────────
 
-function buildEventStatusGrounding(input: BuildModeGroundingInput): ModeGroundingResult {
+function buildEventStatusGrounding(
+  input: BuildModeGroundingInput,
+): ModeGroundingResult {
   const { event, stageView } = input;
-  const currentStage = normalizeSourceStageKey(event.currentStageKey) ?? "strategy";
+  const currentStage =
+    normalizeSourceStageKey(event.currentStageKey) ?? "strategy";
   const currentIndex = SOURCE_STAGE_ORDER.indexOf(currentStage);
   const stageOfEleven = currentIndex >= 0 ? currentIndex + 1 : 1;
-  const priorStages = currentIndex >= 0 ? SOURCE_STAGE_ORDER.slice(0, currentIndex) : [];
+  const priorStages =
+    currentIndex >= 0 ? SOURCE_STAGE_ORDER.slice(0, currentIndex) : [];
   const approvedStageKeys =
     input.approvedStageKeys === undefined
       ? null
@@ -234,7 +247,8 @@ function buildEventStatusGrounding(input: BuildModeGroundingInput): ModeGroundin
     approvedStageKeys === null
       ? []
       : priorStages.filter((stageKey) => !approvedStageKeys.has(stageKey));
-  const remainingStages = currentIndex >= 0 ? SOURCE_STAGE_ORDER.slice(currentIndex + 1) : [];
+  const remainingStages =
+    currentIndex >= 0 ? SOURCE_STAGE_ORDER.slice(currentIndex + 1) : [];
 
   const lines: string[] = [
     "EVENT STATUS GROUNDING (authoritative — the exact stage-rail state this event is in):",
@@ -259,15 +273,23 @@ function buildEventStatusGrounding(input: BuildModeGroundingInput): ModeGroundin
   ];
 
   if (stageView) {
-    const doneCount = stageView.tasks.filter((t) => t.state === "done" || t.evidenceComplete).length;
+    const doneCount = stageView.tasks.filter(
+      (t) => t.state === "done" || t.evidenceComplete,
+    ).length;
     lines.push(
       `Current-stage task checklist: ${doneCount} of ${stageView.tasks.length} complete.`,
     );
-    const openTasks = stageView.tasks.filter((t) => !(t.state === "done" || t.evidenceComplete));
+    const openTasks = stageView.tasks.filter(
+      (t) => !(t.state === "done" || t.evidenceComplete),
+    );
     if (openTasks.length > 0) {
-      lines.push(`Open on this stage: ${openTasks.map((t) => t.title).join("; ")}.`);
+      lines.push(
+        `Open on this stage: ${openTasks.map((t) => t.title).join("; ")}.`,
+      );
     } else {
-      lines.push("Open on this stage: none — all tasks on this stage are complete.");
+      lines.push(
+        "Open on this stage: none — all tasks on this stage are complete.",
+      );
     }
   }
 
@@ -283,7 +305,9 @@ function buildEventStatusGrounding(input: BuildModeGroundingInput): ModeGroundin
     stageOfEleven: `${stageOfEleven} of ${SOURCE_STAGE_ORDER.length}`,
   };
   if (stageView) {
-    const doneCount = stageView.tasks.filter((t) => t.state === "done" || t.evidenceComplete).length;
+    const doneCount = stageView.tasks.filter(
+      (t) => t.state === "done" || t.evidenceComplete,
+    ).length;
     // Quoted by the quality gate's numeric-contradiction check — an answer
     // stating "N of M tasks/complete" for the current stage must match THIS
     // count, the exact same one the canvas checklist counter renders.
@@ -314,17 +338,28 @@ interface HowToEntry {
 
 const HOW_TO_TABLE: HowToEntry[] = [
   {
-    patterns: [/upload.*(final|reviewed|signed)/, /(final|reviewed|signed).*upload/],
+    patterns: [
+      /upload.*(final|reviewed|signed)/,
+      /(final|reviewed|signed).*upload/,
+    ],
     action:
       "Upload the final reviewed version through the current stage's PROVIDE task dropzone (the task card with an upload control in the task checklist) — the new upload is registered as the client-final artifact for that slot and supersedes any earlier generated draft.",
   },
   {
-    patterns: [/advance (the )?stage/, /move (to|past) (the )?next stage/, /approve (the )?(gate|stage)/],
+    patterns: [
+      /advance (the )?stage/,
+      /move (to|past) (the )?next stage/,
+      /approve (the )?(gate|stage)/,
+    ],
     action:
       "Advance the stage from the stage's gate panel: tick the gate's confirm boxes, then use the Approve button. Approving requires every confirm box this stage's gate declares to be checked first — the gate will not advance with unmet confirmations.",
   },
   {
-    patterns: [/upload/, /attach/, /provide (a |the )?(document|file|evidence)/],
+    patterns: [
+      /upload/,
+      /attach/,
+      /provide (a |the )?(document|file|evidence)/,
+    ],
     action:
       "Use the PROVIDE task's dropzone in the task checklist for the current stage. If the task has a downloadable template, fill and re-upload that template so it also lands as typed evidence, not just a stored file.",
   },
@@ -334,15 +369,22 @@ const HOW_TO_TABLE: HowToEntry[] = [
       "Open the CONFIRM/DECIDE task in the task checklist, review the rows shown, and use the task's confirm button once you've verified the content.",
   },
   {
-    patterns: [/find (a |the )?(document|artifact|file)/, /where.*(document|artifact|file)/],
+    patterns: [
+      /find (a |the )?(document|artifact|file)/,
+      /where.*(document|artifact|file)/,
+    ],
     action:
       "Registered artifacts for this event are listed in the File Cabinet / artifact registry panel, grouped by stage — open the stage the document was uploaded under.",
   },
 ];
 
-function buildWorkflowHowToGrounding(input: BuildModeGroundingInput): ModeGroundingResult {
+function buildWorkflowHowToGrounding(
+  input: BuildModeGroundingInput,
+): ModeGroundingResult {
   const question = (input.question ?? "").toLowerCase();
-  const match = HOW_TO_TABLE.find((entry) => entry.patterns.some((p) => p.test(question)));
+  const match = HOW_TO_TABLE.find((entry) =>
+    entry.patterns.some((p) => p.test(question)),
+  );
   const action =
     match?.action ??
     "Use the task checklist for the current stage (PROVIDE tasks upload evidence, CONFIRM/DECIDE tasks record a review) and the stage's gate panel to advance once its confirm boxes are met.";
@@ -357,7 +399,9 @@ function buildWorkflowHowToGrounding(input: BuildModeGroundingInput): ModeGround
 
 // ── evidence_readiness ────────────────────────────────────────────────────────
 
-function buildEvidenceReadinessGrounding(input: BuildModeGroundingInput): ModeGroundingResult {
+function buildEvidenceReadinessGrounding(
+  input: BuildModeGroundingInput,
+): ModeGroundingResult {
   const { stageView, factInputs = {}, artifacts = [] } = input;
   if (!stageView) {
     return {
@@ -374,11 +418,20 @@ function buildEvidenceReadinessGrounding(input: BuildModeGroundingInput): ModeGr
 
   for (const task of stageView.tasks) {
     if (task.type !== "provide") continue;
+    const matchingArtifact = findRegisteredArtifactForTask(
+      artifacts,
+      stageView.stageKey,
+      task.title,
+    );
     const isPresent = task.factTemplateCode
       ? templateFactsPresent(task.factTemplateCode, factInputs)
       : stagesWithArtifact.has(stageView.stageKey);
     if (isPresent) {
       present.push(task.title);
+    } else if (matchingArtifact) {
+      present.push(
+        formatRegisteredArtifactTaskEvidence(task.title, matchingArtifact),
+      );
     } else {
       missing.push(task.title);
     }
@@ -405,6 +458,97 @@ function buildEvidenceReadinessGrounding(input: BuildModeGroundingInput): ModeGr
 }
 
 // ── artifact_lineage / artifact_finality ─────────────────────────────────────
+
+function findRegisteredArtifactForTask(
+  artifacts: readonly SourceArtifactRegistryRecord[],
+  stageKey: string,
+  taskTitle: string,
+): SourceArtifactRegistryRecord | null {
+  const taskNorm = normalizeEvidenceMatchText(taskTitle);
+  if (!taskNorm) return null;
+  const stageSpecs = specsForStage(
+    normalizeSourceStageKey(stageKey) ?? "strategy",
+  );
+  const candidates = artifacts.filter(
+    (artifact) => artifact.stageKey === stageKey,
+  );
+  for (const artifact of candidates) {
+    const spec =
+      specByCode(artifact.artifactKind) ??
+      stageSpecs.find((stageSpec) => {
+        const artifactKindNorm = normalizeEvidenceMatchText(
+          artifact.artifactKind,
+        );
+        return (
+          stageSpec.code.endsWith(`_${artifact.artifactKind}`) ||
+          normalizeEvidenceMatchText(stageSpec.code).endsWith(
+            artifactKindNorm,
+          ) ||
+          (stageSpec.family === artifact.artifactFamily &&
+            taskNorm.includes(normalizeEvidenceMatchText(stageSpec.name)))
+        );
+      });
+    const labels = [
+      artifact.artifactKind,
+      artifactKindWithoutNumericPrefix(artifact.artifactKind),
+      artifact.originalName,
+      spec?.code,
+      spec ? artifactKindWithoutNumericPrefix(spec.code) : null,
+      spec?.name,
+    ];
+    if (
+      labels.some((label) => {
+        const labelNorm = normalizeEvidenceMatchText(label ?? "");
+        return (
+          labelNorm &&
+          (taskNorm.includes(labelNorm) || labelNorm.includes(taskNorm))
+        );
+      })
+    ) {
+      return artifact;
+    }
+  }
+  return null;
+}
+
+function formatRegisteredArtifactTaskEvidence(
+  taskTitle: string,
+  artifact: SourceArtifactRegistryRecord,
+): string {
+  return `${taskTitle} (registered artifact: ${artifact.originalName}; ${registeredArtifactLifecycleLabel(artifact)})`;
+}
+
+function registeredArtifactLifecycleLabel(
+  artifact: SourceArtifactRegistryRecord,
+): string {
+  if (
+    artifact.sourceOrigin === "generated" &&
+    artifact.approvalState === "draft"
+  ) {
+    return "AI draft awaiting review";
+  }
+  if (artifact.approvalState === "in_review") return "review awaiting decision";
+  if (artifact.approvalState === "approved") return "approved";
+  if (artifact.approvalState === "locked") return "locked";
+  if (artifact.approvalState === "rejected") return "rejected";
+  if (artifact.sourceOrigin === "generated")
+    return `AI ${artifact.approvalState}`;
+  return `${artifact.sourceOrigin} ${artifact.approvalState}`;
+}
+
+function artifactKindWithoutNumericPrefix(value: string): string {
+  return value.replace(/^d\d+_/, "");
+}
+
+function normalizeEvidenceMatchText(value: string): string {
+  return value
+    .toLowerCase()
+    .replace(/^d\d+_/, "")
+    .replace(/[_/.-]+/g, " ")
+    .replace(/[^a-z0-9 ]+/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
 
 interface ArtifactSlotSummary {
   stageKey: string;
@@ -456,17 +600,22 @@ function groupArtifactsBySlot(
   return summaries;
 }
 
-function buildArtifactLineageGrounding(input: BuildModeGroundingInput): ModeGroundingResult {
+function buildArtifactLineageGrounding(
+  input: BuildModeGroundingInput,
+): ModeGroundingResult {
   const { artifacts = [] } = input;
   if (artifacts.length === 0) {
     return {
-      block: "ARTIFACT LINEAGE GROUNDING: no artifacts are registered for this event yet.",
+      block:
+        "ARTIFACT LINEAGE GROUNDING: no artifacts are registered for this event yet.",
       quotableFacts: { artifactCount: "0" },
     };
   }
 
   const slots = groupArtifactsBySlot(artifacts);
-  const lines = ["ARTIFACT LINEAGE GROUNDING (authoritative — the registry's actual upload history):"];
+  const lines = [
+    "ARTIFACT LINEAGE GROUNDING (authoritative — the registry's actual upload history):",
+  ];
   for (const slot of slots) {
     const a = slot.authoritative;
     lines.push(
@@ -487,17 +636,22 @@ function buildArtifactLineageGrounding(input: BuildModeGroundingInput): ModeGrou
   };
 }
 
-function buildArtifactFinalityGrounding(input: BuildModeGroundingInput): ModeGroundingResult {
+function buildArtifactFinalityGrounding(
+  input: BuildModeGroundingInput,
+): ModeGroundingResult {
   const { artifacts = [] } = input;
   if (artifacts.length === 0) {
     return {
-      block: "ARTIFACT FINALITY GROUNDING: no artifacts are registered for this event yet — there is no final/authoritative version to name.",
+      block:
+        "ARTIFACT FINALITY GROUNDING: no artifacts are registered for this event yet — there is no final/authoritative version to name.",
       quotableFacts: { artifactCount: "0" },
     };
   }
 
   const slots = groupArtifactsBySlot(artifacts);
-  const lines = ["ARTIFACT FINALITY GROUNDING (authoritative — which upload is the current authoritative version per slot):"];
+  const lines = [
+    "ARTIFACT FINALITY GROUNDING (authoritative — which upload is the current authoritative version per slot):",
+  ];
   for (const slot of slots) {
     const a = slot.authoritative;
     const finalityBasis = a.isClientFinal
@@ -523,9 +677,13 @@ function buildArtifactFinalityGrounding(input: BuildModeGroundingInput): ModeGro
 
 // ── stage_gate ────────────────────────────────────────────────────────────────
 
-function buildStageGateGrounding(input: BuildModeGroundingInput): ModeGroundingResult {
+function buildStageGateGrounding(
+  input: BuildModeGroundingInput,
+): ModeGroundingResult {
   const { stageView, viewStageKey, event } = input;
-  const stageKey = normalizeSourceStageKey(viewStageKey ?? event.currentStageKey) ?? "strategy";
+  const stageKey =
+    normalizeSourceStageKey(viewStageKey ?? event.currentStageKey) ??
+    "strategy";
 
   if (!stageView) {
     return {
@@ -559,7 +717,9 @@ function buildStageGateGrounding(input: BuildModeGroundingInput): ModeGroundingR
         ? "MET — the stage's task checklist is fully complete."
         : "UNMET — the stage's task checklist still has open tasks."
       : "requires human confirmation (not a data-derived box — the approver must attest it directly).";
-    lines.push(`  ${index + 1}. ${confirm.label}: ${confirm.detail} — ${status}`);
+    lines.push(
+      `  ${index + 1}. ${confirm.label}: ${confirm.detail} — ${status}`,
+    );
   });
   lines.push(
     gate.nextStageName
@@ -567,7 +727,9 @@ function buildStageGateGrounding(input: BuildModeGroundingInput): ModeGroundingR
       : "This is the final stage — approval closes the event.",
   );
   if (gate.generates.length > 0) {
-    lines.push(`Generates on approval: ${gate.generates.map((g) => g.label).join(", ")}.`);
+    lines.push(
+      `Generates on approval: ${gate.generates.map((g) => g.label).join(", ")}.`,
+    );
   }
 
   const metConfirmCount = gate.confirms.filter((confirm) => {
@@ -584,7 +746,8 @@ function buildStageGateGrounding(input: BuildModeGroundingInput): ModeGroundingR
       // stating "N of M complete/confirmed" for the stage's task checklist
       // must match THESE counts, not an invented pair.
       taskChecklistDone: String(
-        stageView.tasks.filter((t) => t.state === "done" || t.evidenceComplete).length,
+        stageView.tasks.filter((t) => t.state === "done" || t.evidenceComplete)
+          .length,
       ),
       taskChecklistTotal: String(stageView.tasks.length),
       gateMetConfirmCount: String(metConfirmCount),
@@ -616,7 +779,9 @@ function buildStageGateGrounding(input: BuildModeGroundingInput): ModeGroundingR
  * that the value bridge is the authoritative source for this mode rather than
  * re-deriving a second view of the same numbers.
  */
-function buildValueAtStakeGrounding(input: BuildModeGroundingInput): ModeGroundingResult {
+function buildValueAtStakeGrounding(
+  input: BuildModeGroundingInput,
+): ModeGroundingResult {
   const { archetype, factInputs = {}, baselineAmount } = input;
   if (!archetype) return EMPTY_RESULT;
   const insight = buildStepInsight({
@@ -628,7 +793,9 @@ function buildValueAtStakeGrounding(input: BuildModeGroundingInput): ModeGroundi
     baselineAmount: baselineAmount ?? 0,
   });
   if (!insight || insight.kind !== "value_bridge") return EMPTY_RESULT;
-  const quantified = insight.waterfall.bands.filter((b) => b.state === "quantified");
+  const quantified = insight.waterfall.bands.filter(
+    (b) => b.state === "quantified",
+  );
   const lines = [
     "VALUE-AT-STAKE GROUNDING (authoritative — the same value bridge the canvas Pricing tab renders):",
     `Provenance: ${insight.provenance === "live" ? "LIVE — computed from this event's cited facts." : "SAMPLE/MODEL — illustrative shape, not a tenant number."}`,
@@ -655,7 +822,9 @@ function buildValueAtStakeGrounding(input: BuildModeGroundingInput): ModeGroundi
  * the cheapest-headline-loses-on-TCO trap). If only one has data, ground what
  * exists and say the other is model/pending — never fabricate the missing one.
  */
-function buildVendorComparisonGrounding(input: BuildModeGroundingInput): ModeGroundingResult {
+function buildVendorComparisonGrounding(
+  input: BuildModeGroundingInput,
+): ModeGroundingResult {
   const {
     archetype,
     factInputs = {},
@@ -699,16 +868,16 @@ function buildVendorComparisonGrounding(input: BuildModeGroundingInput): ModeGro
         profile.responseCompleteness.partialSections[0] ??
         "No open evidence item listed";
       const nextAction =
-        profile.clarificationQuestions[0] ??
-        "Proceed with human score lock.";
+        profile.clarificationQuestions[0] ?? "Proceed with human score lock.";
       lines.push(
         `  ${profile.vendorName}: readiness ${profile.readyForEvaluation}; response completeness ${profile.responseCompleteness.percent}%; unsupported claims ${profile.unsupportedClaims.length}; open evidence: ${openEvidence}; next action: ${nextAction}`,
       );
     }
-    quotableFacts.responseCoverageHeadline =
-      vendorResponseProfiles.some((profile) => profile.unsupportedClaims.length > 0)
-        ? "Visible response profiles include unsupported claims that need evidence closure."
-        : "Visible response profiles have no unsupported-claim count in the profile substrate.";
+    quotableFacts.responseCoverageHeadline = vendorResponseProfiles.some(
+      (profile) => profile.unsupportedClaims.length > 0,
+    )
+      ? "Visible response profiles include unsupported claims that need evidence closure."
+      : "Visible response profiles have no unsupported-claim count in the profile substrate.";
     quotableFacts.responseCoverageIsModel = "false";
   } else if (responseInsight) {
     lines.push(
@@ -723,7 +892,10 @@ function buildVendorComparisonGrounding(input: BuildModeGroundingInput): ModeGro
     }
     lines.push(
       ...valueTypeClassificationLines(
-        responseInsight.rows.map((r) => ({ label: r.label, valueType: r.valueType })),
+        responseInsight.rows.map((r) => ({
+          label: r.label,
+          valueType: r.valueType,
+        })),
       ),
     );
     quotableFacts.responseCoverageHeadline = responseInsight.headline;
@@ -765,7 +937,9 @@ function buildVendorComparisonGrounding(input: BuildModeGroundingInput): ModeGro
  * explanation when the ranking flips — reuses `should_cost_normalization`
  * verbatim (never re-normalizes a bid itself).
  */
-function buildShouldCostGrounding(input: BuildModeGroundingInput): ModeGroundingResult {
+function buildShouldCostGrounding(
+  input: BuildModeGroundingInput,
+): ModeGroundingResult {
   const { archetype, factInputs = {}, vendorBids } = input;
   if (!archetype) return EMPTY_RESULT;
 
@@ -819,7 +993,9 @@ function buildShouldCostGrounding(input: BuildModeGroundingInput): ModeGrounding
  * invents a risk category beyond what the archetype/evidence already states —
  * a lever with no declared `commercialRisk` is named as such, not filled in.
  */
-function buildRiskExposureGrounding(input: BuildModeGroundingInput): ModeGroundingResult {
+function buildRiskExposureGrounding(
+  input: BuildModeGroundingInput,
+): ModeGroundingResult {
   const { archetype, factInputs = {} } = input;
   if (!archetype) return EMPTY_RESULT;
 
@@ -875,7 +1051,9 @@ function buildRiskExposureGrounding(input: BuildModeGroundingInput): ModeGroundi
  * Protected vs exposed levers, cited to the RFP clause checklist facts — reuses
  * `rfp_clause_coverage` verbatim.
  */
-function buildClauseCoverageGrounding(input: BuildModeGroundingInput): ModeGroundingResult {
+function buildClauseCoverageGrounding(
+  input: BuildModeGroundingInput,
+): ModeGroundingResult {
   const { archetype, factInputs = {}, rfpClausePresentLeverKeys } = input;
   if (!archetype) return EMPTY_RESULT;
 
@@ -920,7 +1098,9 @@ function buildClauseCoverageGrounding(input: BuildModeGroundingInput): ModeGroun
  * lever's `bafoAsk` from the archetype rule) the specific ask for each open
  * lever — reuses `bafo_progress` verbatim.
  */
-function buildBafoStrategyGrounding(input: BuildModeGroundingInput): ModeGroundingResult {
+function buildBafoStrategyGrounding(
+  input: BuildModeGroundingInput,
+): ModeGroundingResult {
   const { archetype, factInputs = {}, bafoConcessionByLeverKey } = input;
   if (!archetype) return EMPTY_RESULT;
 
@@ -950,7 +1130,9 @@ function buildBafoStrategyGrounding(input: BuildModeGroundingInput): ModeGroundi
     }
   }
   if (openRows.length > 0) {
-    lines.push("Still open — the specific ask for each (from the archetype's BAFO playbook):");
+    lines.push(
+      "Still open — the specific ask for each (from the archetype's BAFO playbook):",
+    );
     for (const row of openRows) {
       lines.push(
         `  ${row.label} (${valueTypeLabel(row.valueType)}, target ${fmtUsdRange(row.targetLow, row.targetHigh)}): ask — ${row.bafoAsk}`,
@@ -979,7 +1161,9 @@ function buildBafoStrategyGrounding(input: BuildModeGroundingInput): ModeGroundi
  * Committed-vs-target per lever, which levers are awaiting award confirmation —
  * reuses `committed_value` verbatim.
  */
-function buildCommittedValueGrounding(input: BuildModeGroundingInput): ModeGroundingResult {
+function buildCommittedValueGrounding(
+  input: BuildModeGroundingInput,
+): ModeGroundingResult {
   const { archetype, factInputs = {}, committedValueByLeverKey } = input;
   if (!archetype) return EMPTY_RESULT;
 
@@ -1034,7 +1218,9 @@ function buildCommittedValueGrounding(input: BuildModeGroundingInput): ModeGroun
 /**
  * Realized-to-date vs committed per lever — reuses `value_realization` verbatim.
  */
-function buildValueRealizationGrounding(input: BuildModeGroundingInput): ModeGroundingResult {
+function buildValueRealizationGrounding(
+  input: BuildModeGroundingInput,
+): ModeGroundingResult {
   const { archetype, factInputs = {}, realizedValueByLeverKey } = input;
   if (!archetype) return EMPTY_RESULT;
 
@@ -1118,7 +1304,9 @@ function buildExecDecisionFacet(input: BuildModeGroundingInput): {
     `Headline: ${insight.headline}`,
   ];
   for (const slice of insight.slices) {
-    lines.push(`  ${slice.label} (${slice.bucket}): ${fmtUsdRange(slice.low, slice.high)}.`);
+    lines.push(
+      `  ${slice.label} (${slice.bucket}): ${fmtUsdRange(slice.low, slice.high)}.`,
+    );
   }
   lines.push(`Confidence (negotiable slice): ${insight.confidence}.`);
   if (insight.residualRiskLevers.length > 0) {
@@ -1186,11 +1374,16 @@ function buildDecisionRecommendationGrounding(
   if (evidenceReadiness.block) unresolvedLines.push(evidenceReadiness.block);
   if (unresolvedLines.length > 0) {
     sections.push(
-      ["UNRESOLVED AWARD CONDITIONS (from the stage gate + evidence readiness reads):", ...unresolvedLines].join(
-        "\n",
-      ),
+      [
+        "UNRESOLVED AWARD CONDITIONS (from the stage gate + evidence readiness reads):",
+        ...unresolvedLines,
+      ].join("\n"),
     );
-    Object.assign(quotableFacts, stageGate.quotableFacts, evidenceReadiness.quotableFacts);
+    Object.assign(
+      quotableFacts,
+      stageGate.quotableFacts,
+      evidenceReadiness.quotableFacts,
+    );
   }
 
   if (sections.length === 1) {
@@ -1263,7 +1456,10 @@ function buildContractOptimizationGrounding(
     }
     lines.push(
       ...valueTypeClassificationLines(
-        valuePoolInsight.bars.map((b) => ({ label: b.label, valueType: b.valueType })),
+        valuePoolInsight.bars.map((b) => ({
+          label: b.label,
+          valueType: b.valueType,
+        })),
       ),
     );
     quotableFacts.contractOptValuePoolHeadline = valuePoolInsight.headline;
@@ -1276,7 +1472,9 @@ function buildContractOptimizationGrounding(
     );
     const strandedRows = scopeInsight.rows.filter((r) => !r.reachable);
     if (strandedRows.length > 0) {
-      lines.push("Stranded (value exposed, not currently reachable under scope/evidence):");
+      lines.push(
+        "Stranded (value exposed, not currently reachable under scope/evidence):",
+      );
       for (const row of strandedRows) {
         const riskBandFrag = row.potentialAtRisk
           ? " [benchmark-scaled potential-at-risk — illustrative, not a cited figure]"
@@ -1286,7 +1484,9 @@ function buildContractOptimizationGrounding(
         );
       }
     } else {
-      lines.push("Stranded: none — every lever is reachable under current scope/evidence.");
+      lines.push(
+        "Stranded: none — every lever is reachable under current scope/evidence.",
+      );
     }
     quotableFacts.contractOptScopeHeadline = scopeInsight.headline;
     quotableFacts.contractOptScopeIsModel = String(scopeInsight.isModel);
@@ -1316,7 +1516,9 @@ function buildContractOptimizationGrounding(
  * question is actually asking about just because it classified to the
  * catch-all mode.
  */
-function buildGeneralAdvisoryGrounding(input: BuildModeGroundingInput): ModeGroundingResult {
+function buildGeneralAdvisoryGrounding(
+  input: BuildModeGroundingInput,
+): ModeGroundingResult {
   const sections: string[] = [
     "GENERAL ADVISORY ROLL-UP (compact — current stage + stage gate + value headline + top open items, all reused from existing groundings):",
   ];
@@ -1374,7 +1576,9 @@ function buildGeneralAdvisoryGrounding(input: BuildModeGroundingInput): ModeGrou
     );
   }
   if (stageGate.quotableFacts.gateAllTasksComplete === "false") {
-    openItems.push("The current stage's gate is not yet met — open tasks remain.");
+    openItems.push(
+      "The current stage's gate is not yet met — open tasks remain.",
+    );
   }
   if (input.archetype) {
     const bafo = buildBafoStrategyGrounding(input);
@@ -1382,11 +1586,17 @@ function buildGeneralAdvisoryGrounding(input: BuildModeGroundingInput): ModeGrou
       bafo.quotableFacts.bafoOpenLeverCount !== undefined &&
       bafo.quotableFacts.bafoOpenLeverCount !== "0"
     ) {
-      openItems.push(`${bafo.quotableFacts.bafoOpenLeverCount} BAFO lever(s) still open.`);
+      openItems.push(
+        `${bafo.quotableFacts.bafoOpenLeverCount} BAFO lever(s) still open.`,
+      );
     }
   }
   if (openItems.length > 0) {
-    sections.push(["Top open items:", ...openItems.slice(0, 3).map((l) => `  - ${l}`)].join("\n"));
+    sections.push(
+      ["Top open items:", ...openItems.slice(0, 3).map((l) => `  - ${l}`)].join(
+        "\n",
+      ),
+    );
   }
 
   if (sections.length === 1) {
@@ -1403,7 +1613,9 @@ function buildGeneralAdvisoryGrounding(input: BuildModeGroundingInput): ModeGrou
  * function is only ever called when the classifier already resolved an
  * implemented mode.
  */
-export function buildModeGrounding(input: BuildModeGroundingInput): ModeGroundingResult {
+export function buildModeGrounding(
+  input: BuildModeGroundingInput,
+): ModeGroundingResult {
   switch (input.mode) {
     case "event_status":
       return buildEventStatusGrounding(input);

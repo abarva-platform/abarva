@@ -2546,8 +2546,9 @@ export async function POST(request: Request) {
   // (synthesis_violations recorder) for telemetry.
   let bufferedOutput = "";
   // Source aVa output discipline is prompt-first: the model receives the
-  // grounding and answer contract before generation. The quality gate runs as
-  // telemetry only after streaming; it must not rewrite Claude's visible text.
+  // grounding and answer contract before generation. Grounded Source prose is
+  // buffered until the deterministic quality gate runs, then the gated text is
+  // emitted once; non-Source surfaces keep normal streaming.
   const sourceAvaTelemetryGateActive =
     sourceAvaAnswerMode !== null &&
     isGroundedAnswerMode(sourceAvaAnswerMode) &&
@@ -2573,7 +2574,15 @@ export async function POST(request: Request) {
         controller.enqueue(encoder.encode(safeText));
       };
       const flushRestrictedFinancialTail = () => {
-        emitAgentText(autonomousDecisionStreamer.push(restrictedFinancialStreamer.flush()));
+        const safeText = autonomousDecisionStreamer.push(
+          restrictedFinancialStreamer.flush(),
+        );
+        if (!safeText) return;
+        if (sourceAvaTelemetryGateActive) {
+          sourceAvaUngatedOutput += safeText;
+          return;
+        }
+        emitAgentText(safeText);
       };
       // Every agent text delta and every tool-side write passes through this
       // sink, on every surface. The autonomous-decision scrub belongs here and
@@ -2587,12 +2596,42 @@ export async function POST(request: Request) {
       // financial firewall and handed exact money values to a user whose
       // access policy says they may not see them. The streamer already
       // passes entitled users through untouched; the surface has no say.
+      let sourceAvaUngatedOutput = "";
       const writer = {
         write(text: string) {
-          emitAgentText(
-            autonomousDecisionStreamer.push(restrictedFinancialStreamer.push(text)),
+          const safeText = autonomousDecisionStreamer.push(
+            restrictedFinancialStreamer.push(text),
           );
+          if (!safeText) return;
+          if (sourceAvaTelemetryGateActive) {
+            sourceAvaUngatedOutput += safeText;
+            return;
+          }
+          emitAgentText(safeText);
         },
+      };
+      const flushSourceAvaGatedOutput = () => {
+        if (!sourceAvaTelemetryGateActive || !sourceAvaUngatedOutput) return;
+        const gateResult = runSourceAnswerQualityGate({
+          answerText: sourceAvaUngatedOutput,
+          mode: sourceAvaAnswerMode,
+          hasGroundingContext: sourceAvaGroundingBlock !== "",
+          groundingFacts: sourceAvaModeGroundingFacts,
+          evidenceIsIncomplete: sourceAvaModeEvidenceIncomplete,
+          groundingBlockText: sourceAvaModeGroundingBlockText || undefined,
+          groundingHasSpecificAsk: sourceAvaModeHasSpecificAsk,
+        });
+        emitAgentText(gateResult.finalText);
+        if (!gateResult.passed) {
+          console.warn("[source-ava-quality-gate] checks failed before emit", {
+            surface,
+            tenantId: activeClientKey ?? undefined,
+            mode: sourceAvaAnswerMode,
+            unresolvedChecks: gateResult.unresolvedChecks,
+            repaired: gateResult.repaired,
+          });
+        }
+        sourceAvaUngatedOutput = "";
       };
       try {
         // CB-6 / CB-10 · emit the assembled context bundle as the
@@ -2673,12 +2712,16 @@ export async function POST(request: Request) {
         writer.write(`\n\n[stream error: ${errMessage}]`);
       } finally {
         flushRestrictedFinancialTail();
-        emitAgentText(autonomousDecisionStreamer.flush());
+        const autonomousTail = autonomousDecisionStreamer.flush();
+        if (sourceAvaTelemetryGateActive) {
+          sourceAvaUngatedOutput += autonomousTail;
+        } else {
+          emitAgentText(autonomousTail);
+        }
+        flushSourceAvaGatedOutput();
         // Phase A + Phase B quality gate — telemetry-only (2026-08-04). The
-        // full answer text has already streamed live to the client above;
-        // this pass runs the same 12 checks purely to log what would have
-        // failed, so quality regressions stay visible without holding the
-        // turn. Never blocks or re-ships text.
+        // full answer text has been gated before client emission above; this
+        // pass keeps the existing telemetry log against the final text.
         if (sourceAvaTelemetryGateActive) {
           try {
             const gateResult = runSourceAnswerQualityGate({

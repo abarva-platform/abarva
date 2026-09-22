@@ -94,9 +94,7 @@ describe("buildModeGrounding — event_status", () => {
     expect(result.block).toContain(
       "Prior stages without approval evidence: Strategy.",
     );
-    expect(result.block).toContain(
-      "do not say all prior stages are completed",
-    );
+    expect(result.block).toContain("do not say all prior stages are completed");
     expect(result.block).not.toContain("Completed stages: Strategy.");
     expect(result.quotableFacts.approvalEvidencedStageCount).toBe("0");
     expect(result.quotableFacts.priorStagesWithoutApprovalEvidence).toBe("1");
@@ -198,6 +196,67 @@ describe("buildModeGrounding — evidence_readiness", () => {
     });
     expect(result.block).toContain("not been computed");
   });
+
+  it("does not call a registered AI-draft scope memo unregistered while leaving absent exclusion evidence missing", () => {
+    const stageView: StageAnalyticsView = {
+      ...(SAMPLE_SCOPE_STAGE as StageAnalyticsView),
+      stageKey: "scope",
+      stageName: "Define",
+      tasks: [
+        {
+          id: "scope.scope-memo",
+          title: "Scope Memo with Boundaries",
+          subtitle: "Generated draft awaiting review",
+          type: "provide",
+          state: "todo",
+          guide: "Review the generated scope memo.",
+          cta: "Review scope memo",
+          factTemplateCode: "SCOPE_MEMO_V1",
+        },
+        {
+          id: "scope.exclusion-log",
+          title: "Exclusion Log",
+          subtitle: "Explicit exclusions",
+          type: "provide",
+          state: "todo",
+          guide: "Upload or generate the exclusion log.",
+          cta: "Provide exclusion log",
+          factTemplateCode: "EXCLUSION_LOG_V1",
+        },
+      ],
+    };
+
+    const result = buildModeGrounding({
+      mode: "evidence_readiness",
+      event: EVENT,
+      stageView,
+      factInputs: {},
+      artifacts: [
+        artifactFixture({
+          id: "scope-draft",
+          artifactKind: "d05_scope_memo",
+          originalName: "Example Client Scope Memo with Boundaries.md",
+          sourceOrigin: "generated",
+          sourceFormat: "markdown",
+          approvalState: "draft",
+          isClientFinal: false,
+          isCurrentAuthoritative: true,
+        }),
+      ],
+    });
+
+    expect(result.block).toContain(
+      "Scope Memo with Boundaries (registered artifact: Example Client Scope Memo with Boundaries.md; AI draft awaiting review)",
+    );
+    expect(result.block).toContain(
+      "Missing (no persisted fact/artifact yet): Exclusion Log.",
+    );
+    expect(result.block).not.toContain(
+      "Missing (no persisted fact/artifact yet): Scope Memo with Boundaries; Exclusion Log.",
+    );
+    expect(result.quotableFacts.evidencePresentCount).toBe("1");
+    expect(result.quotableFacts.evidenceMissingCount).toBe("1");
+  });
 });
 
 describe("buildModeGrounding — artifact_lineage", () => {
@@ -264,9 +323,13 @@ describe("buildModeGrounding — artifact_finality", () => {
       event: EVENT,
       artifacts: [generated, clientFinal],
     });
-    expect(result.block).toContain("Scope Memo (client final).pdf: AUTHORITATIVE");
+    expect(result.block).toContain(
+      "Scope Memo (client final).pdf: AUTHORITATIVE",
+    );
     expect(result.block).toContain("marked client-final");
-    expect(result.block).toContain("Superseded but remains available in history");
+    expect(result.block).toContain(
+      "Superseded but remains available in history",
+    );
     expect(result.block).toContain("Scope Memo (generated draft).pdf");
   });
 
@@ -308,7 +371,10 @@ describe("buildModeGrounding — stage_gate", () => {
   it("names the gate's confirm items and marks the evidence box MET when all tasks are complete", () => {
     const stageView: StageAnalyticsView = {
       ...(SAMPLE_SCOPE_STAGE as StageAnalyticsView),
-      tasks: SAMPLE_SCOPE_STAGE.tasks.map((t) => ({ ...t, evidenceComplete: true })),
+      tasks: SAMPLE_SCOPE_STAGE.tasks.map((t) => ({
+        ...t,
+        evidenceComplete: true,
+      })),
     };
     const result = buildModeGrounding({
       mode: "stage_gate",
@@ -324,7 +390,11 @@ describe("buildModeGrounding — stage_gate", () => {
   it("marks the evidence box UNMET when a task is still open", () => {
     const stageView: StageAnalyticsView = {
       ...(SAMPLE_SCOPE_STAGE as StageAnalyticsView),
-      tasks: SAMPLE_SCOPE_STAGE.tasks.map((t) => ({ ...t, evidenceComplete: false, state: "todo" as const })),
+      tasks: SAMPLE_SCOPE_STAGE.tasks.map((t) => ({
+        ...t,
+        evidenceComplete: false,
+        state: "todo" as const,
+      })),
     };
     const result = buildModeGrounding({
       mode: "stage_gate",
