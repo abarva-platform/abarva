@@ -26,6 +26,8 @@ import { fileURLToPath } from "node:url";
 import {
   resolveClaimOwnership,
   parseRegisterLines,
+  announcesRelease,
+  announcesAbstention,
 } from "./register-time-authority.mjs";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
@@ -1655,6 +1657,136 @@ function preclaimFiles(file, item, identity, files, extra = []) {
     "one readable path among unreadable entries still runs the check",
     mixed.status === 1 && (mixed.report.fileOverlap?.unparsed ?? []).includes("not-a-path"),
     `status=${mixed.status} overlap=${JSON.stringify(mixed.report.fileOverlap)}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+
+// ---------------------------------------------------------------------------
+// Item T-712 — the announcement verb behind the helper's generated prefix.
+//
+// `append-claim.mjs` opened EVERY record it wrote with `item <id> claimed`,
+// including releases. Measured on the live register at 23:29Z: the release
+// written at 23:08:45Z ("RELEASED item T-708 — merged, DEPLOYED ... all files
+// free") was still printed as the HOLDER of the three files it had handed
+// back, and a run asking for those files got 6 contended. With the prefix read
+// past, the same request on the same register gets 0.
+//
+// T-712 fixed the writer. These lines are already in an append-only register
+// and cannot be restamped, so the reader has to recognise the one generated
+// string — which is a repair of a known machine prefix, NOT a widening of the
+// head-of-message rule T-707 chose on purpose.
+// ---------------------------------------------------------------------------
+{
+  const LIVE_SHAPE =
+    "2026-09-22T18:08:45Z | source-backlog-executor#20260922T215500Z | " +
+    "item T-708 claimed on branch `exec/t-708-claim-append-gate` — RELEASED item T-708 — " +
+    "merged, DEPLOYED, ACA runtime invariant PROVEN; all files free. " +
+    "files: scripts/exec/append-claim.mjs";
+  check(
+    "a release behind the helper's generated prefix reads as a release",
+    announcesRelease(LIVE_SHAPE) === true,
+    LIVE_SHAPE,
+  );
+  check(
+    "an abstention behind the same prefix reads as an abstention",
+    announcesAbstention(
+      "2026-09-22T18:08:45Z | a#b | item T-706 claimed — NOT TAKEN — already in open PR #8280",
+    ) === true,
+  );
+
+  // The negative control T-707 chose the head-of-message rule for. Nearly
+  // every claim line in the register promises a release record; if that read
+  // as a release, every item in flight would be freed. Stripping a known
+  // prefix must not reach it.
+  check(
+    "NEGATIVE CONTROL — an ordinary claim that merely promises a release record still HOLDS",
+    announcesRelease(
+      "2026-09-22T18:08:45Z | a#b | item T-708 claimed on branch `x` — taking it; " +
+        "one public-safe release record per PR, released to CI when green",
+    ) === false,
+  );
+  check(
+    "NEGATIVE CONTROL — the prefix is not stripped off a line that does not carry it",
+    announcesRelease("2026-09-22T18:08:45Z | a#b | item T-708 was claimed earlier — RELEASED now") === false,
+  );
+
+  // The mandatory `claimed` verb below was added because mutation testing said
+  // so: deleting it left the suite green, so nothing constrained it, and a
+  // bare `item <id> —` opening would then be stripped off hand-written lines.
+  //
+  // The `^` anchor is a different story, recorded rather than papered over.
+  // Deleting it ALSO leaves this suite green, and no test can change that:
+  // `String.replace` with a non-global regex removes one match in place, so a
+  // mid-sentence strip leaves the text before it standing and the result still
+  // does not OPEN with the announcement verb. The anchor is therefore correct
+  // but unobservable here — kept as intent, not counted as proven.
+  check(
+    "a prefix appearing only mid-sentence does not produce a release either way",
+    announcesRelease(
+      // No generated prefix at the head — one appears only mid-sentence. An
+      // unanchored rule strips THAT one and reads the tail as a release.
+      "2026-09-22T18:08:45Z | a#b | taking it, superseding " +
+        "item T-700 claimed — RELEASED item T-700 earlier today",
+    ) === false,
+  );
+  check(
+    "NEGATIVE CONTROL — `claimed` is required; a bare `item <id> —` opening is not a generated prefix",
+    announcesRelease(
+      "2026-09-22T18:08:45Z | a#b | item T-799 — RELEASED it yesterday, taking T-800 now",
+    ) === false,
+  );
+
+  // End to end, through the file gate, on the exact shape measured live.
+  const { dir, file } = fixture([
+    // Same identity claims and releases, as the live pair did: a release frees
+    // its OWN agent's hold, never another run's.
+    "2026-09-22T18:00:00Z | source-backlog-executor#20260922T215500Z | item T-708 claimed — taking it | " +
+      "files: scripts/exec/append-claim.mjs",
+    LIVE_SHAPE,
+  ]);
+  const r = preclaimFiles(file, "T-712", "sibling#run-2", "scripts/exec/append-claim.mjs");
+  check(
+    "THE MOVEMENT — a helper-written release frees the files it held, same register, same request",
+    r.status === 0 && r.report.fileOverlap?.conflicts?.length === 0,
+    `status=${r.status} overlap=${JSON.stringify(r.report.fileOverlap)}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+// ---------------------------------------------------------------------------
+// Item T-712 — an abstention is transparent to the item half, not authoritative.
+//
+// The file half has skipped abstentions since T-707; this half never did, so
+// `item T-803 NOT TAKEN — already in open PR #8280` refused the next run that
+// came for it. The repair SKIPS the line rather than answering `take` from it:
+// newest-line-wins would otherwise let B's abstention sit on top of A's live
+// claim and report the item free to a third run. A first attempt did exactly
+// that, and it is asserted here so the distinction cannot be lost again.
+// ---------------------------------------------------------------------------
+{
+  const { dir, file } = fixture([
+    "2026-09-22T18:05:00Z | a#run-1 | item T-810 NOT TAKEN — already in open PR #8280",
+  ]);
+  const free = preclaim(file, "T-810", "b#run-2");
+  check(
+    "an abstention alone does not hold the item it declined",
+    free.status === 0 && free.report.verdict === "take",
+    JSON.stringify(free.report),
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+{
+  const { dir, file } = fixture([
+    "2026-09-22T18:05:00Z | a#run-1 | item T-811 claimed — taking it",
+    "2026-09-22T18:10:00Z | b#run-2 | item T-811 NOT TAKEN — a#run-1 has it",
+  ]);
+  const r = preclaim(file, "T-811", "c#run-3");
+  check(
+    "a LATER abstention does not free an earlier live claim — the real holder still holds",
+    r.status === 1 && r.report.holder?.agent === "a#run-1",
+    JSON.stringify(r.report),
   );
   fs.rmSync(dir, { recursive: true, force: true });
 }
