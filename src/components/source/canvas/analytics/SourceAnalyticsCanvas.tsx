@@ -71,9 +71,10 @@ import {
 import {
   SOURCE_NEW_EXTERNAL_CHECKPOINT_ORDER,
   SOURCE_NEW_PHASE_DISPLAY_LABELS,
-  sourceNewCurrentPhase,
+  sourceNewFilePhase,
+  sourceNewPhaseState,
   type SourceNewExternalCheckpointKey,
-  type SourceNewPhaseKey,
+  type SourceNewPhaseEvidence,
 } from "@/lib/source/new-workspace/phase-state";
 import {
   criteriaForStage,
@@ -963,20 +964,28 @@ function SourceShellRail({
                   display: "grid",
                   placeItems: "center",
                   background:
-                    checkpointState === "past" || checkpointState === "complete"
+                    checkpointState === "past" ||
+                    checkpointState === "complete" ||
+                    checkpointState === "recorded"
                       ? ANALYTICS.INK
+                      : checkpointState === "historical_gap"
+                        ? ANALYTICS.AMBER_TINT
                       : checkpointState === "current"
                         ? ANALYTICS.BLUE
                         : ANALYTICS.CARD,
                   color:
                     checkpointState === "past" ||
                     checkpointState === "complete" ||
+                    checkpointState === "recorded" ||
                     checkpointState === "current"
                       ? "#fff"
+                      : checkpointState === "historical_gap"
+                        ? ANALYTICS.AMBER_TEXT
                       : ANALYTICS.FAINT,
                   border:
                     checkpointState === "past" ||
                     checkpointState === "complete" ||
+                    checkpointState === "recorded" ||
                     checkpointState === "current"
                       ? "none"
                       : `1px solid ${ANALYTICS.LINE_STRONG}`,
@@ -985,23 +994,57 @@ function SourceShellRail({
                   fontWeight: 800,
                 }}
               >
-                {checkpointState === "past" || checkpointState === "complete"
+                {checkpointState === "past" ||
+                checkpointState === "complete" ||
+                checkpointState === "recorded"
                   ? "✓"
+                  : checkpointState === "historical_gap"
+                    ? "!"
+                    : checkpointState === "no_record"
+                      ? "–"
                   : String(index + 1).padStart(2, "0")}
               </span>
               <span
                 style={{
+                  display: "grid",
+                  gap: 2,
                   color:
                     checkpointState === "current" ||
                     checkpointState === "past" ||
-                    checkpointState === "complete"
+                    checkpointState === "complete" ||
+                    checkpointState === "recorded"
                       ? ANALYTICS.INK
                       : ANALYTICS.MUTED,
                   fontSize: 13,
                   fontWeight: checkpointState === "current" ? 700 : 600,
                 }}
               >
-                {checkpoint.label}
+                <span>{checkpoint.label}</span>
+                {checkpointState === "historical_gap" ? (
+                  <span
+                    style={{
+                      color: ANALYTICS.AMBER_TEXT,
+                      fontFamily: ANALYTICS.MONO,
+                      fontSize: 9,
+                      fontWeight: 900,
+                      textTransform: "uppercase",
+                    }}
+                  >
+                    Historical gap
+                  </span>
+                ) : checkpointState === "no_record" ? (
+                  <span
+                    style={{
+                      color: ANALYTICS.MUTED,
+                      fontFamily: ANALYTICS.MONO,
+                      fontSize: 9,
+                      fontWeight: 900,
+                      textTransform: "uppercase",
+                    }}
+                  >
+                    No record
+                  </span>
+                ) : null}
               </span>
             </Link>
           );
@@ -1145,8 +1188,11 @@ function SourceShellRail({
 type SourceReaderCheckpointState =
   | "complete"
   | "past"
+  | "recorded"
   | "current"
-  | "future";
+  | "future"
+  | "historical_gap"
+  | "no_record";
 
 interface SourceReaderJourneyCheckpoint {
   key: string;
@@ -1168,12 +1214,41 @@ function sourceReaderJourneyCheckpoints(
     }));
   }
 
+  const evidence = sourceReaderPhaseEvidence(view);
+
   return SOURCE_NEW_EXTERNAL_CHECKPOINT_ORDER.map((checkpoint) => ({
     key: checkpoint,
     href: sourceReaderCheckpointHref(view, checkpoint),
     label: sourceReaderCheckpointLabel(checkpoint),
-    state: sourceReaderCheckpointState(view, checkpoint),
+    state: sourceReaderCheckpointState(view, checkpoint, evidence),
   }));
+}
+
+function sourceReaderPhaseEvidence(
+  view: SourceEventShellView,
+): SourceNewPhaseEvidence {
+  const recordedFilePhases = new Set(
+    view.files.items.map((item) =>
+      sourceNewFilePhase({
+        sourcingStage: item.stageKey,
+        artifactType: `${item.artifactCode} ${item.name}`,
+      }),
+    ),
+  );
+  const approvedStages = new Set(
+    view.approvals.ledger
+      .filter((row) => row.state === "approved")
+      .map((row) => row.stageKey),
+  );
+
+  return {
+    request:
+      recordedFilePhases.has("request") || approvedStages.has("strategy"),
+    define:
+      recordedFilePhases.has("define") || approvedStages.has("scope"),
+    suppliers: recordedFilePhases.has("suppliers"),
+    rfi: recordedFilePhases.has("rfi") || approvedStages.has("rfp"),
+  };
 }
 
 function sourceReaderCheckpointLabel(
@@ -1205,26 +1280,19 @@ function sourceReaderCheckpointHref(
 function sourceReaderCheckpointState(
   view: SourceEventShellView,
   checkpoint: SourceNewExternalCheckpointKey,
+  evidence: SourceNewPhaseEvidence,
 ): SourceReaderCheckpointState {
   if (checkpoint === "request_intake") return "complete";
-  const currentPhase = sourceNewCurrentPhase({
+  const event = {
     currentStage: view.event.currentStageKey,
-    lifecycle:
-      view.event.statusLabel === "Awaiting intake review"
-        ? "waiting_on_client"
-        : "active",
-  });
-  if (checkpoint === currentPhase) return "current";
-  const checkpointIndex = sourceReaderPhaseIndex(checkpoint);
-  const currentIndex = currentPhase ? sourceReaderPhaseIndex(currentPhase) : -1;
-  if (currentIndex < 0) return "past";
-  return checkpointIndex < currentIndex ? "past" : "future";
-}
-
-function sourceReaderPhaseIndex(
-  checkpoint: SourceNewExternalCheckpointKey | SourceNewPhaseKey,
-): number {
-  return SOURCE_NEW_EXTERNAL_CHECKPOINT_ORDER.indexOf(checkpoint);
+    lifecycle: view.event.lifecycle,
+  };
+  const state = sourceNewPhaseState(checkpoint, event, evidence);
+  if (state === "current" || state === "review_needed") return "current";
+  if (state === "recorded") return "recorded";
+  if (state === "historical_gap") return "historical_gap";
+  if (state === "no_record") return "no_record";
+  return "future";
 }
 
 function SourceWorkspace({

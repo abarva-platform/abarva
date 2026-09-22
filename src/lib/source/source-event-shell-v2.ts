@@ -192,6 +192,7 @@ export interface SourceEventShellView {
     name: string;
     tenantName: string;
     accountName: string;
+    lifecycle: string;
     statusLabel: string;
     valueAtStakeLabel: string;
     currentStageKey: SourceStageKey;
@@ -554,6 +555,7 @@ export function buildSourceEventShellView(
       name: input.event.name,
       tenantName: input.tenantName,
       accountName: input.event.accountName,
+      lifecycle: input.event.status,
       statusLabel: input.event.statusLabel,
       valueAtStakeLabel: formatUsdPerYear(input.event.valueAtStakeUsd),
       currentStageKey: visibleCurrentStageKey,
