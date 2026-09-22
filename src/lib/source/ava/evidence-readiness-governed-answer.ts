@@ -36,6 +36,7 @@ import {
 import { governedCandidateFromSourceArtifact } from "@/lib/source/ava/artifact-quality-governed-answer";
 import { stageArtifactReadinessFor } from "@/lib/source/stage-artifact-readiness";
 import type { SourceStageKey } from "@/lib/source/types";
+import { tenantAliasesFor } from "@/lib/tenant/aliases";
 
 export interface BuildEvidenceReadinessGovernedAnswerInput {
   eventId: string;
@@ -99,6 +100,27 @@ function normalizedAliases(input: BuildEvidenceReadinessGovernedAnswerInput) {
         .filter((value): value is string => Boolean(value)),
     ),
   ];
+}
+
+function normalizedKey(value: string): string {
+  return value.trim().toLowerCase();
+}
+
+function artifactMatchesEventAndTenant(args: {
+  artifact: SourceArtifactRegistryRecordWithContent;
+  eventAliases: ReadonlySet<string>;
+  tenantAliases: ReadonlySet<string>;
+}): boolean {
+  const artifactEventIds = [
+    args.artifact.sourceEventId,
+    args.artifact.sourceEventRowId,
+  ]
+    .filter((value): value is string => Boolean(value?.trim()))
+    .map(normalizedKey);
+  return (
+    artifactEventIds.some((eventId) => args.eventAliases.has(eventId)) &&
+    args.tenantAliases.has(normalizedKey(args.artifact.tenantKey))
+  );
 }
 
 async function listArtifactsForAliases(
@@ -433,10 +455,19 @@ export async function buildEvidenceReadinessGovernedAnswer(
   if (!governedClientKey) return null;
 
   const aliases = normalizedAliases(input);
+  const eventAliasSet = new Set(aliases.map(normalizedKey));
+  const tenantAliasSet = new Set(
+    tenantAliasesFor(input.clientKey)
+      .concat(tenantAliasesFor(governedClientKey))
+      .map(normalizedKey),
+  );
   const artifacts = (await listArtifactsForAliases(aliases)).filter(
     (artifact) =>
-      artifact.tenantKey === input.clientKey ||
-      artifact.tenantKey === governedClientKey,
+      artifactMatchesEventAndTenant({
+        artifact,
+        eventAliases: eventAliasSet,
+        tenantAliases: tenantAliasSet,
+      }),
   );
   const candidates: GovernedCandidate[] = artifacts.map((artifact) =>
     governedCandidateFromSourceArtifact(artifact, {

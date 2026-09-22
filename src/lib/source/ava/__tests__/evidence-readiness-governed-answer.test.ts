@@ -397,6 +397,97 @@ describe("buildEvidenceReadinessGovernedAnswer", () => {
     expect(answer!.directAnswer).not.toContain("No recorded phase blocker");
   });
 
+  it("reconciles accepted tenant aliases without admitting another event or tenant", async () => {
+    mockListSourceArtifacts.mockResolvedValue([
+      artifact({
+        id: "app-inventory-draft",
+        tenantKey: "meridian",
+        sourceEventId: "event-1",
+        artifactKind: "d04_app_inv",
+        originalName: "Application Inventory draft.xlsx",
+        sourceOrigin: "generated",
+        approvalState: "draft",
+        isClientFinal: false,
+      }),
+      artifact({
+        id: "scope-memo-draft",
+        tenantKey: "meridian-health",
+        sourceEventId: "event-1",
+        artifactKind: "d05_scope_memo",
+        originalName: "Scope Memo draft.docx",
+        sourceOrigin: "generated",
+        approvalState: "draft",
+        isClientFinal: false,
+      }),
+      artifact({
+        id: "exclusion-log-evidence",
+        tenantKey: "meridian_health_global",
+        sourceEventId: "event-1",
+        artifactKind: "d06_excl_log",
+        originalName: "Exclusion Log evidence.xlsx",
+        sourceOrigin: "uploaded",
+        approvalState: "not_required",
+        isClientFinal: false,
+      }),
+      artifact({
+        id: "ticket-history-draft",
+        tenantKey: "meridian",
+        sourceEventId: "event-1",
+        artifactKind: "d07_ticket_synth",
+        originalName: "Ticket History draft.xlsx",
+        sourceOrigin: "generated",
+        approvalState: "draft",
+        isClientFinal: false,
+      }),
+      artifact({
+        id: "foreign-tenant-same-event",
+        tenantKey: "other",
+        sourceEventId: "event-1",
+      }),
+      artifact({
+        id: "same-tenant-opposite-event",
+        tenantKey: "meridian",
+        sourceEventId: "event-2",
+      }),
+    ]);
+
+    const answer = await buildEvidenceReadinessGovernedAnswer({
+      eventId: "event-1",
+      eventAliases: ["SRC-001"],
+      clientKey: "meridian_health_global",
+      tenantId: "tenant-1",
+      question:
+        "What is blocking this event from advancing from Define, and what exact action should the sourcing lead take next? Do not estimate savings or recommend a supplier.",
+      stageContext: {
+        stageKey: "scope",
+        stageLabel: "Define",
+        nextAction: "Open scope and strategy",
+        missingInputs: [],
+      },
+    });
+
+    expect(answer).not.toBeNull();
+    expect(answer!.directAnswer).toContain("4 Source files are stored");
+    expect(answer!.directAnswer).toContain(
+      "Application Inventory & Tiering: AI draft not accepted as client final",
+    );
+    expect(answer!.directAnswer).toContain(
+      "Scope Memo with Boundaries: AI draft not accepted as client final",
+    );
+    expect(answer!.directAnswer).toContain(
+      "Exclusion Log: evidence is present, but no governed deliverable is accepted",
+    );
+    expect(answer!.directAnswer).toContain(
+      "Ticket History Synthesis: AI draft not accepted as client final",
+    );
+    expect(answer!.citations.map((citation) => citation.recordId)).not.toContain(
+      "foreign-tenant-same-event",
+    );
+    expect(answer!.citations.map((citation) => citation.recordId)).not.toContain(
+      "same-tenant-opposite-event",
+    );
+  });
+
   it("answers honestly when no registry rows exist", async () => {
     mockListSourceArtifacts.mockResolvedValue([]);
 
@@ -424,7 +515,10 @@ describe("buildEvidenceReadinessGovernedAnswer", () => {
 
   it("blocks instead of rendering restricted evidence rows", async () => {
     mockListSourceArtifacts.mockResolvedValue([
-      artifact({ dataClassification: "Restricted" }),
+      artifact({
+        sourceEventId: "event-restricted",
+        dataClassification: "Restricted",
+      }),
     ]);
 
     const answer = await buildEvidenceReadinessGovernedAnswer({
