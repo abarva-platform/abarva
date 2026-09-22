@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { CSSProperties, ReactNode } from "react";
+import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { AppShell } from "@/components/shell/AppShell";
 import { SourceSubNav } from "@/components/source/SourceSubNav";
@@ -1474,8 +1475,8 @@ export function SourceOriginatePage({
             </div>
           )}
 
-          <a
-            href="/source"
+          <Link
+            href="/source/new"
             style={{
               textAlign: "center",
               fontFamily: SHELL.MONO,
@@ -1486,8 +1487,8 @@ export function SourceOriginatePage({
               textDecoration: "none",
             }}
           >
-            ← Back to Source portfolio
-          </a>
+            ← Back to Source New
+          </Link>
         </div>
       </section>
 
