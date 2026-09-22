@@ -100,10 +100,17 @@ type Census = {
   governedRiskFiles: {
     directory: string;
     testPath: string;
-    loaded: boolean;
+    // `enumerated`, not `loaded`: the census walked the tree and found the
+    // file. It never imports it, and `loaded` invited the one inference these
+    // rows must not support (T-551).
+    enumerated: boolean;
     collected: boolean;
-    run: boolean;
-    green: boolean;
+    // Not booleans. The census executes nothing, so it can never report a pass;
+    // `green` is `"unknown"` for every file and `run` is `false` only where no
+    // reachable command selects the file, which is the one execution fact the
+    // census does know (T-551).
+    run: false | "unknown";
+    green: "unknown";
     covered: boolean;
     declaredQuarantine: boolean;
     untriaged: boolean;
@@ -834,7 +841,14 @@ describe("test CI coverage census", () => {
     ).toMatchObject({ testFiles: 2, coveredTestFiles: 1 });
   });
 
-  it("reports loaded, collected, run, and green status per governed-risk file", () => {
+  /**
+   * Updated for T-551. As written by T-582 this case pinned `run: true` and
+   * `green: true` on the covered file — the defect, recorded as the contract.
+   * It now asserts what the census can honestly answer and what it must refuse;
+   * the refusal itself is proved against a file that cannot pass in the
+   * `refuses to call a covered file green` case below.
+   */
+  it("reports enumerated, collected and covered status per governed-risk file", () => {
     const route =
       "export async function POST() { return approve({ value: true }); }\n";
     const suite =
@@ -865,10 +879,10 @@ describe("test CI coverage census", () => {
       "src/app/api/source/action/__tests__",
     ]);
     expect(files.get("src/app/api/source/action/__tests__/run.test.ts")).toMatchObject({
-      loaded: true,
+      enumerated: true,
       collected: true,
-      run: true,
-      green: true,
+      run: "unknown",
+      green: "unknown",
       covered: true,
       declaredQuarantine: false,
       untriaged: false,
@@ -876,23 +890,193 @@ describe("test CI coverage census", () => {
     expect(
       files.get("src/app/api/source/action/__tests__/quarantined.test.ts"),
     ).toMatchObject({
-      loaded: true,
+      enumerated: true,
       collected: true,
       run: false,
-      green: false,
+      green: "unknown",
       covered: false,
       declaredQuarantine: true,
       untriaged: false,
     });
     expect(files.get("src/app/api/source/action/__tests__/dark.test.ts")).toMatchObject({
-      loaded: true,
+      enumerated: true,
       collected: false,
       run: false,
-      green: false,
+      green: "unknown",
       covered: false,
       declaredQuarantine: false,
       untriaged: true,
     });
+  });
+
+  /**
+   * T-551. The per-file fields that name an EXECUTION, measured against a file
+   * that cannot pass under any runner.
+   *
+   * The census executes nothing. It reads workflows and answers a reachability
+   * question over 2,363 files in about four seconds. Before this, `run` and
+   * `green` were each assigned `result.covered` — three field names carrying one
+   * fact — so `green: true` meant only "a workflow command reaches this file",
+   * and 78 files were published green having never been executed. A run-status
+   * field that cannot report a covered-but-failing file cannot report the one
+   * thing such a field exists for.
+   *
+   * The failing suite below is PROVED failing by a real process rather than
+   * asserted to be. It throws at module scope, so `node` refuses it outright and
+   * no runner can reach a passing outcome from it. Establishing that with the
+   * census — the thing under test — would reproduce the defect inside its own
+   * test: a claim of execution nothing executed.
+   */
+  it("refuses to call a covered file green, because it executes nothing", () => {
+    const route =
+      "export async function POST() { return approve({ value: true }); }\n";
+    // The module-scope statement that makes the suite unable to pass, proved
+    // unable to pass by a real Node process. It is asserted in isolation rather
+    // than as part of the whole fixture file, so the non-zero exit is caused by
+    // THIS statement and not by an unresolved import inside a scratch directory.
+    const throwsAtModuleScope =
+      'throw new Error("T-551: this suite throws at module scope and cannot pass");';
+    let nodeStatus = 0;
+    try {
+      execFileSync(
+        process.execPath,
+        ["--input-type=module", "-e", throwsAtModuleScope],
+        { stdio: "ignore" },
+      );
+    } catch (error) {
+      nodeStatus = (error as { status?: number }).status ?? 1;
+    }
+    expect(nodeStatus).not.toBe(0);
+
+    // The same statement at module scope in the fixture's covered suite, above
+    // the only `it` in the file: nothing can define a test, let alone pass one.
+    const cannotPass = [
+      'import { POST } from "../route";',
+      throwsAtModuleScope,
+      'it("never reached", () => expect(typeof POST).toBe("function"));',
+    ].join("\n");
+    // A sibling no command names. The governed-risk ranking only ranks a
+    // directory that still holds an untriaged unrun file, so without this the
+    // directory is absent from governedRiskFiles and every assertion below
+    // passes against `undefined`.
+    const dark =
+      'import { POST } from "../route";\nit("dark", () => expect(typeof POST).toBe("function"));\n';
+
+    const dir = fixture({
+      "src/app/api/source/action/route.ts": route,
+      "src/app/api/source/action/__tests__/red.test.ts": cannotPass,
+      "src/app/api/source/action/__tests__/dark.test.ts": dark,
+      ".github/workflows/gate.yml": PR_WORKFLOW(
+        "npx jest src/app/api/source/action/__tests__/red.test.ts",
+      ),
+    });
+
+    const { census } = runCensus(dir);
+    const row = census.governedRiskFiles.find(
+      (file) =>
+        file.testPath === "src/app/api/source/action/__tests__/red.test.ts",
+    );
+
+    // What the census does measure: a workflow command reaches this file.
+    expect(row).toMatchObject({
+      enumerated: true,
+      collected: true,
+      covered: true,
+    });
+    // What it has no evidence for, and must therefore refuse.
+    expect(row?.green).toBe("unknown");
+    expect(row?.green).not.toBe(true);
+    expect(row?.run).toBe("unknown");
+    expect(row?.run).not.toBe(true);
+  });
+
+  /**
+   * The same control stated over a whole tree rather than one row, because the
+   * defect was a per-row assignment and a single-row assertion can be satisfied
+   * by a special case. `green` carries no boolean for any file in any state:
+   * the census holds an execution outcome for none of them.
+   *
+   * `run` keeps the one certainty the census genuinely has — a file no reachable
+   * command selects cannot have executed in CI, so `false` there is a true
+   * statement — and refuses the other direction, because selection is not
+   * execution. That asymmetry is deliberate and it is the fail-closed direction:
+   * neither field can ever claim a run or a pass.
+   */
+  it("publishes no boolean green, and no true run, on any file in any state", () => {
+    const route =
+      "export async function POST() { return approve({ value: true }); }\n";
+    const suite =
+      'import { POST } from "../route";\nit("approval", () => expect(typeof POST).toBe("function"));\n';
+    const dir = fixture({
+      "src/app/api/source/action/route.ts": route,
+      "src/app/api/source/action/__tests__/run.test.ts": suite,
+      "src/app/api/source/action/__tests__/quarantined.test.ts": suite,
+      "src/app/api/source/action/__tests__/dark.test.ts": suite,
+      ".github/workflows/gate.yml": [
+        "name: gate",
+        "on:",
+        "  pull_request:",
+        "jobs:",
+        "  verify:",
+        "    steps:",
+        "      - run: npx jest src/app/api/source/action/__tests__/run.test.ts",
+        "      - run: npx jest src/app/api/source/action/__tests__/quarantined.test.ts --testPathIgnorePatterns action/__tests__/quarantined\\.test\\.ts$",
+      ].join("\n"),
+    });
+
+    const { census } = runCensus(dir);
+    const rows = census.governedRiskFiles;
+
+    // Guard the guard: an empty list would satisfy every assertion below.
+    expect(rows).toHaveLength(3);
+    expect(rows.filter((file) => file.covered === true)).toHaveLength(1);
+
+    // Read each row as the untyped JSON it actually is. The declared type is
+    // the contract this case exists to enforce, so comparing its `"unknown"`
+    // against `true` is statically impossible and TypeScript says so — a fair
+    // complaint about the declaration and the wrong one about the check. The
+    // census is a `.mjs` script TypeScript never sees and these rows came from
+    // `JSON.parse`, so the assertion has to test the artifact rather than my
+    // description of it, or it proves only that I typed the field correctly.
+    const raw = (file: Census["governedRiskFiles"][number]) =>
+      file as unknown as Record<string, unknown>;
+
+    expect(rows.filter((file) => raw(file).green === true)).toEqual([]);
+    expect(rows.filter((file) => raw(file).green === false)).toEqual([]);
+    expect([...new Set(rows.map((file) => raw(file).green))]).toEqual([
+      "unknown",
+    ]);
+    expect(rows.filter((file) => raw(file).run === true)).toEqual([]);
+    expect(
+      rows.filter((file) => file.run === "unknown").map((file) => file.testPath),
+    ).toEqual(["src/app/api/source/action/__tests__/run.test.ts"]);
+  });
+
+  /**
+   * `loaded` was the third field naming something the census never does. Unlike
+   * `run` and `green` it had a true measurement underneath — the census did walk
+   * the tree and find the file — so it is renamed to what it measures rather
+   * than re-typed. The old name is asserted GONE, not merely the new one
+   * present: publishing both would leave every reader who greps for `loaded`
+   * with the inference this item exists to remove.
+   */
+  it("names the tree walk `enumerated` and publishes no `loaded` field", () => {
+    const route =
+      "export async function POST() { return approve({ value: true }); }\n";
+    const suite =
+      'import { POST } from "../route";\nit("approval", () => expect(typeof POST).toBe("function"));\n';
+    const dir = fixture({
+      "src/app/api/source/action/route.ts": route,
+      "src/app/api/source/action/__tests__/dark.test.ts": suite,
+      ".github/workflows/gate.yml": PR_WORKFLOW("echo nothing"),
+    });
+
+    const { census } = runCensus(dir);
+    expect(census.governedRiskFiles).toHaveLength(1);
+    for (const row of census.governedRiskFiles) {
+      expect(row).not.toHaveProperty("loaded");
+      expect(row).toHaveProperty("enumerated", true);
+    }
   });
 
   it.each([

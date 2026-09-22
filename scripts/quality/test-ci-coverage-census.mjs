@@ -789,6 +789,26 @@ export function collectReachableCommands(root, packageScripts) {
   };
 }
 
+// T-551. The census EXECUTES NOTHING. It reads workflows and answers a
+// reachability question over the whole tree in about four seconds, and that
+// runtime is the proof rather than a claim about it.
+//
+// Two of the per-file fields name an execution, and both were assigned
+// `result.covered` — three field names carrying one fact. `green: true`
+// therefore meant "a workflow command reaches this file", and 78 files were
+// published green having never been run. A run-status field that cannot report
+// a covered-but-failing file cannot report the one thing such a field exists
+// for, and the next drawer instructed to take work from these rows would skip
+// the running step because the field already said green.
+//
+// So `green` is `"unknown"` for every file, with no exception: the census holds
+// an execution outcome for none of them. `run` keeps the single execution fact
+// the census does know — a file no reachable command selects cannot have
+// executed in CI, so `false` there is true — and refuses the other direction,
+// because selection is not execution. Neither field can ever claim a run or a
+// pass, which is the fail-closed direction.
+const EXECUTION_UNKNOWN = "unknown";
+
 function coverageFor(testPath, reachable) {
   const candidates = registrationCandidates(testPath);
   const named = reachable.filter((entry) =>
@@ -873,10 +893,13 @@ export function buildCensus(root, { includeUnrunPaths = false } = {}) {
     entry.fileStatuses.push({
       directory,
       testPath: testFile,
-      loaded: true,
+      // `enumerated`, not `loaded`: this says the census walked the tree and
+      // found the file. It never imports it, and `loaded` named an import that
+      // does not happen (T-551).
+      enumerated: true,
       collected: result.collected,
-      run: result.covered,
-      green: result.covered,
+      run: result.covered ? EXECUTION_UNKNOWN : false,
+      green: EXECUTION_UNKNOWN,
       covered: result.covered,
       pullRequestCovered: result.pullRequestCovered,
       declaredQuarantine: result.declaredQuarantine,
@@ -953,7 +976,7 @@ export function buildCensus(root, { includeUnrunPaths = false } = {}) {
     row.fileStatuses.map((file) => ({
       directory: file.directory,
       testPath: file.testPath,
-      loaded: file.loaded,
+      enumerated: file.enumerated,
       collected: file.collected,
       run: file.run,
       green: file.green,
@@ -1016,7 +1039,8 @@ export function buildCensus(root, { includeUnrunPaths = false } = {}) {
       "pullRequestCovered counts only workflows triggered by pull_request or merge_group, i.e. the set that can block a merge.",
       "While indeterminateInvocations is non-empty, uncoveredTestFiles is an upper bound.",
       "An unrun file a naming command excludes through its own --testPathIgnorePatterns is a declared quarantine: triaged, with a reason recorded somewhere. An unrun file no command names is untriaged. Both stay in uncoveredTestFiles; only untriagedUnrunTestFiles separates them.",
-      "governedRiskFiles reports each file in a ranked governed-risk directory: loaded means the census found the file, collected means a workflow-reachable command named it before ignore subtraction, run/green/covered mean that command still reaches it after ignore subtraction, and untriaged means no command reaches it and no naming command quarantines it.",
+      "governedRiskFiles reports each file in a ranked governed-risk directory: enumerated means the census walked the tree and found the file, collected means a workflow-reachable command named it before ignore subtraction, covered means that command still reaches it after ignore subtraction, and untriaged means no command reaches it and no naming command quarantines it.",
+      "This census executes no test, so it publishes no pass or fail for any file: green is \"unknown\" for every row without exception, and run is false only where no reachable command selects the file — the one execution fact reachability settles — and \"unknown\" otherwise, because selection is not execution. A file that was never executed cannot appear as green.",
       "Every directory holding an UNTRIAGED unrun file is ranked by governed-surface risk: declared AI controls, approval or lifecycle writes, then tenant-scoped reads; the count of unrun files is only a tie-breaker. A directory whose unrun set is entirely declared quarantine is not ranked, because it has already been triaged.",
       "Governed-risk signals come from product modules a test loads at runtime, not from directory names alone; type-only imports are erased before the test runs and are not counted as edges.",
       "Evidence source lists for the top 25 governed-risk directories are sorted and capped at five paths per signal; companion counts preserve the full match cardinality.",
