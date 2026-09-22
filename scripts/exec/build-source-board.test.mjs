@@ -573,5 +573,131 @@ console.log("\nbuild-source-board — the rung-7 veto and what it exposes (T-705
   fs.rmSync(dir, { recursive: true, force: true });
 }
 
+console.log("\nbuild-source-board — the blocked rule is anchored and vetoed (T-703)\n");
+
+/** The blocker the board wrote for a fixture id. */
+function blockerOf(dir, id) {
+  return summaryItems(dir).out.get(id)?.blocker ?? null;
+}
+
+/* ------------------------------------------------------------------------ *
+ * 16. A FILENAME IS NOT A GATE. The live case: a row naming
+ *     `blocked-loader-paths.json` among its outputs was filed as blocked on
+ *     the owner. The bare word match could not tell a path from a status.
+ * ------------------------------------------------------------------------ */
+{
+  const dir = freshFixture();
+  addBacklogItem(
+    dir,
+    "T-940",
+    "**A generator writes two report files.**",
+    "Both reports/legacy/summary.json and reports/legacy/blocked-loader-paths.json get a fresh stamp and nothing else.",
+  );
+  buildBoard(dir);
+  check(
+    "a filename containing the word is not read as an owner gate",
+    blockerOf(dir, "T-940") !== "Blocked (see source)",
+    `blocker=${JSON.stringify(blockerOf(dir, "T-940"))}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+/* ------------------------------------------------------------------------ *
+ * 17. A DESCRIBED STATE IS NOT A GATE. Also live: a row asking for proof that
+ *     a panel "goes blocked rather than available" is describing the
+ *     behaviour it wants built, not reporting that anybody is stuck.
+ * ------------------------------------------------------------------------ */
+{
+  const dir = freshFixture();
+  addBacklogItem(
+    dir,
+    "T-941",
+    "**The panel must fail closed when its read fails.**",
+    "Prove it by making the reader fail and confirming the panel goes blocked rather than available.",
+  );
+  buildBoard(dir);
+  check(
+    "a described UI state is not read as an owner gate",
+    blockerOf(dir, "T-941") !== "Blocked (see source)",
+    `blocker=${JSON.stringify(blockerOf(dir, "T-941"))}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+/* ------------------------------------------------------------------------ *
+ * 18. THE REGRESSION SET, and the case that fails when the rule is tightened
+ *     into silence. Both forms are live: one row opens `BLOCKED ON OWNER
+ *     DECISION` in bold, another states its wiring is "blocked on the
+ *     unapplied migration". Both pass on unfixed code BY DESIGN — a change
+ *     that drops them is worse than the defect it replaces, because it takes
+ *     an item OUT of the never-claim bucket.
+ * ------------------------------------------------------------------------ */
+{
+  const dir = freshFixture();
+  // The acceptance must NOT use the decision rule's vocabulary: that rule sits
+  // above this one, so "Decide whether ..." here would make the case pass or
+  // fail on a rule this item does not touch. Measured — the first version of
+  // this fixture read `Decision needed` on unfixed code and proved nothing.
+  addBacklogItem(dir, "T-942", "**BLOCKED ON OWNER DECISION** — a retired dependency is still live.", "Restore it or retire it, then record which.");
+  addBacklogItem(dir, "T-943", "**The caller exists but cannot be wired.**", "Wiring is blocked on the unapplied migration; the orphan entry is kept rather than deleted.");
+  buildBoard(dir);
+  check(
+    "a genuine gate keeps its label in both the shouted and the stated form",
+    blockerOf(dir, "T-942") === "Blocked (see source)"
+      && blockerOf(dir, "T-943") === "Blocked (see source)",
+    `T-942=${JSON.stringify(blockerOf(dir, "T-942"))} T-943=${JSON.stringify(blockerOf(dir, "T-943"))}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+/* ------------------------------------------------------------------------ *
+ * 19. THE VETO. A row saying the blockage is over must not be filed as one.
+ *     Anchoring alone cannot do this: "is no longer blocked" is a predicate
+ *     form and matches the anchored pattern exactly.
+ * ------------------------------------------------------------------------ */
+{
+  const dir = freshFixture();
+  // The negated form must be one the ANCHOR matches, or the case passes with
+  // the veto deleted and proves nothing. Measured: "is no longer blocked" is
+  // already rejected by the anchoring, so that mutation survived. "not blocked
+  // on X" matches `blocked\s+on` exactly, so only the veto can reject it.
+  addBacklogItem(dir, "T-944", "**The dependency landed.**", "This work is not blocked on the migration any more.");
+  buildBoard(dir);
+  check(
+    "a row stating the blockage is over is not filed as blocked",
+    blockerOf(dir, "T-944") !== "Blocked (see source)",
+    `blocker=${JSON.stringify(blockerOf(dir, "T-944"))}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+/* ------------------------------------------------------------------------ *
+ * 20. A VETOED SENTENCE MUST NOT HIDE A REAL GATE WRITTEN AFTER IT. One row
+ *     can close an old blockage and open a new one, and a veto applied to the
+ *     first match only — or to the whole row at once — loses the live gate.
+ *     This is why the scan continues past a vetoed match and why the veto is
+ *     evaluated per sentence.
+ * ------------------------------------------------------------------------ */
+{
+  const dir = freshFixture();
+  addBacklogItem(
+    dir,
+    "T-945",
+    "**The first dependency landed; a second one has not.**",
+    // The FIRST anchored match must be the vetoed one, or the scan never has to
+    // continue and the case passes with a stop-at-first-match implementation.
+    // Measured: with "is no longer blocked" first, the anchor skipped it
+    // anyway and that mutation survived.
+    "The loader is not blocked on the migration any more. The projector is blocked on a decision only the owner can make.",
+  );
+  buildBoard(dir);
+  check(
+    "a resolved blockage earlier in the row does not hide a live gate after it",
+    blockerOf(dir, "T-945") === "Blocked (see source)",
+    `blocker=${JSON.stringify(blockerOf(dir, "T-945"))}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
 console.log(`\n${passes} passed, ${failures} failed`);
 process.exit(failures ? 1 : 0);
