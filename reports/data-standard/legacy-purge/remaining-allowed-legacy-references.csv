@@ -40,6 +40,7 @@ synthetic-v-folder-reference,docs/governance/dataset-manifests/first-capital-ric
 v6-v7-current-state,docs/governance/dataset-manifests/meridian-health-v6-v7-current-state-v1.json,non-loader historical reference
 synthetic-v-folder-reference,docs/governance/dataset-manifests/skyharbor-air-rich-synthetic-v3-candidate-20260717.json,non-loader historical reference
 synthetic-v-folder-reference,docs/governance/dataset-manifests/skyharbor-air-synthetic-v2.json,non-loader historical reference
+synthetic-v-folder-reference,docs/governance/dataset-manifests/source-servicenow-sourcing-requests-synthetic-v1.json,non-loader historical reference
 synthetic-v-folder-reference,docs/intelligence-v6/SKYHARBOR_CTO_AIRLINE_DEMO_PACKAGE_2026-06-30.md,non-loader historical reference
 legacy-v-dimension-token,docs/intelligence-v6/SKYHARBOR_V6_CTO_DEMO_DESIGN_AUDIT_2026-06-30.md,non-loader historical reference
 synthetic-v-folder-reference,docs/intelligence-v6/V6_TENANT_PACK_VALIDATION_2026-06-30.json,non-loader historical reference
@@ -565,6 +566,7 @@ legacy-v-file-name,src/lib/programs/__tests__/move-context-extract.test.ts,non-l
 current-state-pack,src/lib/programs/__tests__/move-context-extract.test.ts,non-loader historical reference
 synthetic-v-folder-reference,src/lib/semantic-dossiers/__tests__/universal-dimension-dossier.test.ts,non-loader historical reference
 legacy-v-dimension-token,src/lib/semantic-dossiers/build-universal-dimension-dossier.ts,non-loader historical reference
+synthetic-v-folder-reference,src/lib/source/intake/__tests__/servicenow-sourcing-request-dataset.test.ts,non-loader historical reference
 synthetic-v-folder-reference,src/lib/source/vendor-inference-economics.ts,non-loader historical reference
 synthetic-v-folder-reference,src/scripts/lakeshore/load-cio-tower-facts.ts,non-loader historical reference
 synthetic-v-folder-reference,src/scripts/setup-data/load-apex-p18-data-pack.ts,non-loader historical reference

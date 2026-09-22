@@ -1,8 +1,8 @@
 {
-  "generatedAt": "2026-09-21T23:36:16.683Z",
+  "generatedAt": "2026-09-22T15:08:09.616Z",
   "standard": "standard-2026-07-v3",
   "deletedLegacyFileCount": 0,
-  "remainingAllowedLegacyReferenceCount": 589,
+  "remainingAllowedLegacyReferenceCount": 591,
   "blockedLoaderPathCount": 0,
   "blockedGuardedContentCount": 0,
   "guardrails": {

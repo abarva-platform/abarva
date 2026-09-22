@@ -105,6 +105,105 @@ function assertSummaryIsCurrent(summary) {
 
 assertSummaryIsCurrent(s);
 
+/*
+ * Measure id-band capacity (item T-701a).
+ *
+ * The rule below — "take the lowest free number in your own band" — was
+ * rendered as three rows of static prose. It told an agent where to look and
+ * never checked that anything was there. Measured on `9f3f7cd39` across the
+ * three documents the rule itself names, `T-500`–`T-599` was 100 of 100
+ * spent, and no artifact said so. An agent following the rule correctly would
+ * have collided, which is the exact failure disjoint bands exist to prevent.
+ *
+ * Two deliberate choices:
+ *
+ * 1. The register counts. Three ids in the live band — `T-574`, `T-575`,
+ *    `T-576` — exist only in the claim log: named by an agent, no backlog row
+ *    written yet. A reader that measures the backlog alone reports capacity
+ *    that is already gone, and that is precisely the trap the 2026-09-22T11:07Z
+ *    correction recorded. So every document the board declared it read, plus
+ *    the claim log, is a source.
+ *
+ * 2. Over-inclusion is the safe direction. Counting an id that turns out to be
+ *    free costs one wasted number; reporting a spent id as free costs a
+ *    collision, which is the thing being prevented. A mention anywhere in
+ *    these documents is treated as spent.
+ */
+const BAND_WIDTH = 100;
+const BAND_LANES = ["D", "U", "C", "T"];
+const BANDS = [
+  { start: 500, who: "Claude Code" },
+  { start: 600, who: "Codex" },
+  { start: 400, who: "a human, or anything else" },
+];
+/** Free numbers at which the range decision is still cheap to make. */
+const BAND_LOW_WATER = 10;
+const BAND_ID = /\b([DUCT])-(\d{3})\b/g;
+
+function spentIds() {
+  const files = [...s.inputs.map((i) => path.resolve(OPERATOR_ROOT, i.file)), CLAIMS];
+  const spent = new Set();
+  for (const file of files) {
+    if (!fs.existsSync(file)) continue;
+    for (const m of fs.readFileSync(file, "utf8").matchAll(BAND_ID)) {
+      spent.add(`${m[1]}-${m[2]}`);
+    }
+  }
+  return spent;
+}
+
+function measureBands() {
+  const spent = spentIds();
+  return BANDS.map((band) => {
+    const lanes = {};
+    for (const lane of BAND_LANES) {
+      let used = 0;
+      for (let n = band.start; n < band.start + BAND_WIDTH; n += 1) {
+        if (spent.has(`${lane}-${n}`)) used += 1;
+      }
+      lanes[lane] = { used, free: BAND_WIDTH - used };
+    }
+    return { ...band, lanes };
+  });
+}
+
+const bands = measureBands();
+
+function bandRange(lane, start) {
+  return `\`${lane}-${start}\`–\`${lane}-${start + BAND_WIDTH - 1}\``;
+}
+
+const bandAlerts = [];
+for (const band of bands) {
+  for (const lane of BAND_LANES) {
+    const { free } = band.lanes[lane];
+    if (free > BAND_LOW_WATER) continue;
+    bandAlerts.push({
+      exhausted: free === 0,
+      text: free === 0
+        ? `BAND EXHAUSTED: ${bandRange(lane, band.start)} has 0 of ${BAND_WIDTH} free. ${band.who} cannot file a new ${lane}-lane item by the id-band rule — the next number taken from this band collides with one already spent. This needs a range decision, not a careful reading.`
+        : `BAND LOW: ${bandRange(lane, band.start)} has ${free} of ${BAND_WIDTH} free for ${band.who}. Decide the next range while the decision is still cheap.`,
+    });
+  }
+}
+
+function renderBandTable() {
+  const header = `| who files it | band, in every lane | ${BAND_LANES.map((l) => `${l} free`).join(" | ")} |\n|---|---|${BAND_LANES.map(() => "---").join("|")}|`;
+  const rows = bands.map((band) => {
+    const cells = BAND_LANES.map((lane) => {
+      const { free } = band.lanes[lane];
+      if (free === 0) return "**0 — EXHAUSTED**";
+      if (free <= BAND_LOW_WATER) return `**${free}**`;
+      return String(free);
+    });
+    return `| ${band.who} | \`X-${band.start}\` to \`X-${band.start + BAND_WIDTH - 1}\` | ${cells.join(" | ")} |`;
+  });
+  const alerts = bandAlerts.length
+    ? `\n${bandAlerts.map((a) => `> **${a.text}**`).join("\n>\n")}\n`
+    : "";
+  return `${header}\n${rows.join("\n")}\n${alerts}`;
+}
+
 function userBlockerText(item) {
   // The board already derives a semantic blocker from the full item corpus.
   // Re-scanning raw acceptance prose here made any descriptive use of the
@@ -630,11 +729,11 @@ Ids do not collide because two agents chose badly. They collide because two
 agents applied the **same correct rule** — "one past the highest" — at the same
 time. No amount of care fixes that; only disjoint ranges do.
 
-| who files it | band, in every lane |
-|---|---|
-| Claude Code | \`X-500\` to \`X-599\` |
-| Codex | \`X-600\` to \`X-699\` |
-| a human, or anything else | \`X-400\` to \`X-499\` |
+${renderBandTable()}
+The free counts are measured every run over the documents the rule names — the
+backlog, the append-only claim log, and the repo-owned structure map — not
+asserted by this table. An id named in the register but not yet written into
+the backlog is spent; three ids in the live Claude T band are exactly that.
 
 So Claude's next data-plane item is \`D-500\`, not \`D-042\`. Take the lowest free
 number **in your own band**, and you cannot collide with another agent no
@@ -677,3 +776,15 @@ ${renderOrderDisagreements()}`;
 fs.writeFileSync(OUT, out);
 console.log(`Wrote ${path.basename(OUT)}: ${claimable.length} claimable, ${blockedOnUser.length} blocked on Anand, ${claimed.size} held, ${expiredClaims.length} expired-idle, ${expiredInFlight.length} expired-in-flight, ${releasedClaims.length} released.`);
 for (const [l, v] of Object.entries(byLane)) console.log(`  lane ${l}: ${v.length}`);
+for (const band of bands) {
+  console.log(
+    `  band X-${band.start}: ` +
+      BAND_LANES.map((l) => `${l} ${band.lanes[l].free} free`).join("  "),
+  );
+}
+// Loud on both streams: a generator run unattended has its stdout tailed and
+// its stderr read. A warning only one of them carries is one nobody sees.
+for (const alert of bandAlerts) {
+  console.log(`  ${alert.text}`);
+  if (alert.exhausted) console.error(alert.text);
+}
