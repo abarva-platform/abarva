@@ -10,6 +10,8 @@ export type SourceRequestSupplierSuggestion = {
   supplierId: string;
   legalEntityId: string;
   legalName: string;
+  acceptedCategoryId: string;
+  acceptedArchetypeId: string;
   label: "Suggested for review";
   existingContractVendor: boolean;
   eligibility: CandidateSupplierEligibility;
@@ -66,14 +68,15 @@ export function buildSourceRequestSupplierSuggestions(input: {
       excludedCount: 0,
     };
   }
+  const acceptedMapping = input.acceptedMapping;
 
   const slice = buildCandidateSupplierRegistrySlice({
     registryAvailable: input.registryAvailable,
     tenantKey: input.tenantKey,
     eventId: input.eventId,
     filters: {
-      categoryKey: input.acceptedMapping.categoryId,
-      archetypeKey: input.acceptedMapping.archetypeId,
+      categoryKey: acceptedMapping.categoryId,
+      archetypeKey: acceptedMapping.archetypeId,
     },
     rows: input.registryRows,
     selectedSupplierIds: [],
@@ -92,6 +95,8 @@ export function buildSourceRequestSupplierSuggestions(input: {
     supplierId: candidate.supplierId,
     legalEntityId: candidate.legalEntityId,
     legalName: candidate.legalName,
+    acceptedCategoryId: acceptedMapping.categoryId,
+    acceptedArchetypeId: acceptedMapping.archetypeId,
     label: "Suggested for review" as const,
     existingContractVendor: currentVendors.has(candidate.legalEntityId),
     eligibility: candidate.eligibility,

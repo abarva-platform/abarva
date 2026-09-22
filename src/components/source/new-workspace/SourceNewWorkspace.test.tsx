@@ -1262,6 +1262,8 @@ describe("SourceNewWorkspace", () => {
             supplierId: "suggested-1",
             legalEntityId: "suggested-1",
             legalName: "Synthetic Registry Supplier LLC",
+            acceptedCategoryId: "managed-services",
+            acceptedArchetypeId: "application-managed-services",
             label: "Suggested for review",
             existingContractVendor: false,
             eligibility: {
@@ -1304,6 +1306,29 @@ describe("SourceNewWorkspace", () => {
     expect(
       within(region).getAllByText(/Suggested for review/).length,
     ).toBeGreaterThan(0);
+    const acceptForm = within(region)
+      .getByRole("button", { name: "Accept candidate" })
+      .closest("form");
+    expect(acceptForm?.getAttribute("action")).toBe(
+      "/api/v1/source/event-1/candidate-suppliers/accept",
+    );
+    expect(
+      acceptForm?.querySelector<HTMLInputElement>('input[name="supplierId"]')
+        ?.value,
+    ).toBe("suggested-1");
+    expect(
+      acceptForm?.querySelector<HTMLInputElement>('input[name="categoryId"]')
+        ?.value,
+    ).toBe("managed-services");
+    expect(
+      acceptForm?.querySelector<HTMLInputElement>('input[name="archetypeId"]')
+        ?.value,
+    ).toBe("application-managed-services");
+    expect(
+      acceptForm?.querySelector<HTMLInputElement>(
+        'input[name="sourceReference"]',
+      )?.value,
+    ).toBe("EVID-SUGGESTED-1");
 
     // The distinction itself, not just the names. Read off the rows so the
     // assertion is about which supplier got which label, not about a phrase
@@ -1600,7 +1625,9 @@ describe("SourceNewWorkspace", () => {
     const readiness = screen.getByRole("region", {
       name: "Stage 04 vendor readiness",
     });
-    expect(within(readiness).getByText("Request version accepted")).toBeTruthy();
+    expect(
+      within(readiness).getByText("Request version accepted"),
+    ).toBeTruthy();
     expect(document.body.textContent ?? "").not.toMatch(
       /Changes are requested on the current Request version/,
     );

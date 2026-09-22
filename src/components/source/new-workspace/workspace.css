@@ -36,6 +36,9 @@
 .snw-plain { max-width: 750px; }
 .snw-note { font-size: 13px; color: #925817; padding: 12px 0; }
 .snw-text-action { font-size: 13px; color: #0052a3; }
+.snw-inline-form { display: grid; grid-template-columns: minmax(180px, 1fr) auto; gap: 8px; align-items: end; margin-top: 10px; max-width: 620px; }
+.snw-inline-form label { display: grid; gap: 4px; color: #5f5f5b; font-size: 11px; font-weight: 650; text-transform: uppercase; }
+.snw-inline-form input { min-width: 0; border: 1px solid #cfcac1; border-radius: 4px; padding: 9px 10px; font: 13px Inter, system-ui, sans-serif; text-transform: none; }
 .snw-vendor-readiness { margin-top: 24px; border-top: 1px solid #dededb; padding-top: 18px; }
 .snw-vendor-readiness h3 { font-size: 15px; font-weight: 650; margin: 8px 0; }
 .snw-vendor-readiness p { color: #5e5e5e; font-size: 13px; line-height: 1.55; max-width: 68ch; }
@@ -115,4 +118,5 @@
   .snw-next { position: sticky; bottom: 0; z-index: 3; background: #fff; box-shadow: 0 -8px 18px #fff; padding: 12px 0; }
   .snw-next h2, .snw-next p:not(.snw-eyebrow) { display: none; }
   .snw-next .snw-primary { margin-top: 0; }
+  .snw-inline-form { grid-template-columns: 1fr; }
 }
