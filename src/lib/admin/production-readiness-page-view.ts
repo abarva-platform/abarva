@@ -134,8 +134,6 @@ export interface ProductionReadinessPageView {
   subtitle: string;
   context: {
     tenant: string;
-    mode: string;
-    agent: string;
     data: string;
     liveStatus: string;
     liveStatusKind: ContextLiveStatus;
@@ -143,7 +141,6 @@ export interface ProductionReadinessPageView {
   editorial: {
     title: string;
     body: string;
-    contextUsed: ReadonlyArray<string>;
     evidenceStrength: EvidenceStrength;
     blocker?: string;
     primaryAction: { label: string; href: string };
@@ -481,8 +478,6 @@ export async function buildProductionReadinessPageView(
       'The canvas tells whether AbarVa can be demoed, piloted, or productionized — and what blocks each step.',
     context: {
       tenant: ctx.tenant.name,
-      mode: 'Admin workspace',
-      agent: 'Steward',
       data: 'Manifest + seeds',
       liveStatus: 'Deferred',
       liveStatusKind: 'deferred',
@@ -490,7 +485,6 @@ export async function buildProductionReadinessPageView(
     editorial: {
       title: editorial.title,
       body: editorial.body,
-      contextUsed: editorial.contextUsed,
       evidenceStrength: editorial.evidenceStrength,
       blocker: editorial.blocker ?? undefined,
       primaryAction: editorial.primaryAction,
