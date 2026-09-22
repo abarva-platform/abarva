@@ -64,6 +64,52 @@ function readiness(): SourceAwardSowHandoffReadiness {
         "No accepted executed agreement or SOW evidence with named signature authority is present.",
       ],
     },
+    canonicalContractProjection: {
+      state: "blocked_no_accepted_executed_evidence",
+      candidateIdentityKey: null,
+      identityBasis: [
+        "formation_component:reviewed_selection_memo",
+        "formation_component:approved_pricing",
+        "formation_component:governed_clause_library",
+        "formation_component:sow_scope",
+        "source_event:event-stage08",
+      ],
+      evidence: [
+        "approved pricing: Approved pricing workbook is approved.",
+      ],
+      reviewSteps: [
+        "Human reviewer confirms the candidate canonical contract identity against executed evidence.",
+        "Approved canonical writer or data-build job creates the contract identity and Contract 360 projection.",
+        "Optimize intake may prefill only after the canonical contract identity exists.",
+      ],
+      writeAllowed: false,
+      blockedWrites: [
+        "canonical_contract_identity",
+        "contract360_projection_row",
+        "optimize_case",
+      ],
+      blockers: [
+        "Canonical contract identity review requires accepted executed agreement or SOW evidence with named signature authority.",
+      ],
+    },
+    optimizePath: {
+      state: "blocked_canonical_contract_identity",
+      route: "/source/optimize",
+      prefillContractId: null,
+      launchAllowed: false,
+      evidence: [
+        "approved pricing: Approved pricing workbook is approved.",
+      ],
+      reviewSteps: [
+        "Open Contract 360 review against the human-approved canonical contract identity.",
+        "Confirm Optimize is using the canonical contract id, not the Source event id or artifact filename.",
+        "Launch Optimize only after the governed contract projection exists.",
+      ],
+      blockers: [
+        "Canonical contract identity review requires accepted executed agreement or SOW evidence with named signature authority.",
+        "Optimize cannot be launched from Stage 08 until a human-approved canonical contract identity exists.",
+      ],
+    },
     readyForContract360Handoff: false,
     authority: "source-award-sow-handoff-readiness",
     sourceModulesUsed: ["vendor-selection-readiness", "source-stage-gates"],
@@ -226,8 +272,12 @@ describe("Source Stage 08 Award & SOW handoff readiness panel", () => {
     expect(html).toContain("Executed agreement / SOW");
     expect(html).toContain("Contract 360 handoff");
     expect(html).toContain("Contract 360 publication planner");
+    expect(html).toContain("Canonical contract identity");
+    expect(html).toContain("Optimize path");
     expect(html).toContain("blocked no accepted executed evidence");
     expect(html).toContain("canonical contract row");
+    expect(html).toContain("canonical contract identity");
+    expect(html).toContain("blocked pending canonical contract identity");
     expect(html).toContain("Completed evidence");
     expect(html).toContain("Blockers");
     expect(html.match(/Exactly one next action/g)).toHaveLength(1);

@@ -170,6 +170,68 @@ export function SourceAwardSowHandoffReadinessPanel({
             ))}
           </ul>
         </Section>
+        <Section title="Canonical contract identity">
+          <div style={BODY_MUTED}>
+            State: {readiness.canonicalContractProjection.state.replaceAll("_", " ")}
+          </div>
+          <div style={BODY_MUTED}>
+            Candidate:{" "}
+            {readiness.canonicalContractProjection.candidateIdentityKey ??
+              "none recorded"}
+          </div>
+          <div style={BODY_MUTED}>
+            Identity writes:{" "}
+            {readiness.canonicalContractProjection.writeAllowed
+              ? "allowed"
+              : "blocked pending human-approved canonical writer"}
+          </div>
+          <div style={{ ...sourceSectionLabel, marginTop: 8 }}>
+            Identity basis
+          </div>
+          <ul style={LIST}>
+            {readiness.canonicalContractProjection.identityBasis.length > 0 ? (
+              readiness.canonicalContractProjection.identityBasis.map((item) => (
+                <li key={item}>{item}</li>
+              ))
+            ) : (
+              <li>No canonical identity basis recorded.</li>
+            )}
+          </ul>
+          <div style={{ ...sourceSectionLabel, marginTop: 8 }}>
+            Blocked writes
+          </div>
+          <ul style={LIST}>
+            {readiness.canonicalContractProjection.blockedWrites.map((item) => (
+              <li key={item}>{item.replaceAll("_", " ")}</li>
+            ))}
+          </ul>
+        </Section>
+        <Section title="Optimize path">
+          <div style={BODY_MUTED}>
+            State: {readiness.optimizePath.state.replaceAll("_", " ")}
+          </div>
+          <div style={BODY_MUTED}>Route: {readiness.optimizePath.route}</div>
+          <div style={BODY_MUTED}>
+            Prefill contract id:{" "}
+            {readiness.optimizePath.prefillContractId ?? "none"}
+          </div>
+          <div style={BODY_MUTED}>
+            Launch:{" "}
+            {readiness.optimizePath.launchAllowed
+              ? "allowed"
+              : "blocked pending canonical contract identity"}
+          </div>
+          <div style={{ ...sourceSectionLabel, marginTop: 8 }}>Blockers</div>
+          <ul style={LIST}>
+            {readiness.optimizePath.blockers.length > 0 ? (
+              readiness.optimizePath.blockers.map((item) => (
+                <li key={item}>{item}</li>
+              ))
+            ) : (
+              <li>No Optimize path blockers recorded.</li>
+            )}
+          </ul>
+        </Section>
         <Section title="Authority and guardrails">
           <div style={BODY_MUTED}>Authority: {readiness.authority}</div>
           <div style={BODY_MUTED}>

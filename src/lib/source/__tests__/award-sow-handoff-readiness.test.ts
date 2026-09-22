@@ -179,4 +179,54 @@ describe("buildSourceAwardSowHandoffReadiness", () => {
       "Require a human-approved canonical writer or data-build job before any Contract 360 row is created.",
     ]);
   });
+
+  it("projects a canonical-contract identity and Optimize path only as a blocked human-review plan", () => {
+    const readiness = buildSourceAwardSowHandoffReadiness({
+      event: {
+        id: "SRC-STAGE08-OPTIMIZE",
+        name: "Stage 08 Optimize handoff package",
+        currentStageKey: "transition",
+        currentStageLabel: "Transition",
+        stages: COMPLETE_STAGES,
+        artifacts: [
+          ...BASE_CONTRACT_FORMATION_ARTIFACTS,
+          ...CONTRACT_FORMATION_PROVENANCE_ARTIFACTS,
+          artifact(
+            "EXECUTED-MSA-SOW",
+            "Executed agreement and SOW",
+            "Signed agreement and executed SOW accepted as evidence, with named signature authority and document hash recorded.",
+            "locked",
+          ),
+        ],
+      },
+    });
+
+    expect(readiness).toMatchObject({
+      canonicalContractProjection: {
+        state: "ready_for_identity_review",
+        candidateIdentityKey:
+          "pending_canonical_contract:SRC-STAGE08-OPTIMIZE:EXECUTED-MSA-SOW",
+        writeAllowed: false,
+        blockedWrites: [
+          "canonical_contract_identity",
+          "contract360_projection_row",
+          "optimize_case",
+        ],
+      },
+      optimizePath: {
+        state: "ready_for_optimize_review",
+        launchAllowed: false,
+        route: "/source/optimize",
+        prefillContractId: null,
+      },
+    });
+    expect(readiness.canonicalContractProjection.reviewSteps).toEqual([
+      "Human reviewer confirms the candidate canonical contract identity against executed evidence.",
+      "Approved canonical writer or data-build job creates the contract identity and Contract 360 projection.",
+      "Optimize intake may prefill only after the canonical contract identity exists.",
+    ]);
+    expect(readiness.optimizePath.blockers).toContain(
+      "Optimize cannot be launched from Stage 08 until a human-approved canonical contract identity exists.",
+    );
+  });
 });

@@ -1,10 +1,12 @@
 import { SOURCE_STAGE_ORDER, normalizeSourceStageKey } from "./constants";
 import type {
   SourceAwardSowArtifactInput,
+  SourceCanonicalContractProjectionPlan,
   SourceContract360PublicationPlanner,
   SourceContractFormationComponent,
   SourceContractFormationPackageReadiness,
   SourceContractFormationState,
+  SourceOptimizePathPlan,
   SourceAwardSowHandoffCheckpoint,
   SourceAwardSowHandoffReadiness,
   SourceAwardSowHandoffReadinessInput,
@@ -19,12 +21,26 @@ const SOURCE_MODULES_USED = [
   "event-stage-gate-status",
   "artifact-status-strip",
   "award-sow-publication-planner",
+  "canonical-contract-projection-planner",
+  "source-optimize-path-planner",
 ] as const;
 
 const CONTRACT360_PUBLICATION_REVIEW_STEPS = [
   "Map accepted executed evidence to the existing canonical contract identity.",
   "Review clause, SOW, pricing, SLA, exit, and change-control provenance before publication.",
   "Require a human-approved canonical writer or data-build job before any Contract 360 row is created.",
+] as const;
+
+const CANONICAL_CONTRACT_IDENTITY_REVIEW_STEPS = [
+  "Human reviewer confirms the candidate canonical contract identity against executed evidence.",
+  "Approved canonical writer or data-build job creates the contract identity and Contract 360 projection.",
+  "Optimize intake may prefill only after the canonical contract identity exists.",
+] as const;
+
+const OPTIMIZE_PATH_REVIEW_STEPS = [
+  "Open Contract 360 review against the human-approved canonical contract identity.",
+  "Confirm Optimize is using the canonical contract id, not the Source event id or artifact filename.",
+  "Launch Optimize only after the governed contract projection exists.",
 ] as const;
 
 const EXECUTED_AGREEMENT_OR_FINAL_SOW_PATTERNS = [
@@ -166,6 +182,10 @@ function sortUnique(values: string[]): string[] {
   return Array.from(
     new Set(values.map((value) => value.trim()).filter(Boolean)),
   ).sort();
+}
+
+function identityKeyPart(value: string): string {
+  return value.trim().replace(/\s+/g, "-").replace(/[^A-Za-z0-9:_-]/g, "_");
 }
 
 function artifactIsFinal(status: SourceArtifactStatus): boolean {
@@ -460,6 +480,101 @@ function buildContract360PublicationPlanner({
   };
 }
 
+function buildCanonicalContractProjectionPlan({
+  event,
+  contractFormationPackage,
+  acceptedExecutedEvidence,
+}: {
+  event: SourceAwardSowHandoffReadinessInput["event"];
+  contractFormationPackage: SourceContractFormationPackageReadiness;
+  acceptedExecutedEvidence: readonly SourceAwardSowArtifactInput[];
+}): SourceCanonicalContractProjectionPlan {
+  const stageOpen = stageIsOpen(event.currentStageKey, "transition");
+  const blockers: string[] = [];
+  let state: SourceCanonicalContractProjectionPlan["state"] =
+    "ready_for_identity_review";
+
+  if (contractFormationPackage.missingComponents.length > 0) {
+    state = "blocked_contract_formation_package";
+    blockers.push(
+      "Canonical contract identity review is blocked until the governed contract-formation package is complete.",
+    );
+  } else if (acceptedExecutedEvidence.length === 0) {
+    state = "blocked_no_accepted_executed_evidence";
+    blockers.push(
+      "Canonical contract identity review requires accepted executed agreement or SOW evidence with named signature authority.",
+    );
+  } else if (!stageOpen) {
+    state = "blocked_stage_not_transition";
+    blockers.push(
+      "Canonical contract identity review is blocked until the event reaches Transition.",
+    );
+  }
+
+  const executedEvidence = acceptedExecutedEvidence[0] ?? null;
+  const candidateIdentityKey =
+    state === "ready_for_identity_review" && executedEvidence
+      ? `pending_canonical_contract:${identityKeyPart(event.id)}:${identityKeyPart(executedEvidence.id)}`
+      : null;
+  const executedEvidenceLine = executedEvidence
+    ? `${executedEvidence.title} (${executedEvidence.status})`
+    : "";
+
+  return {
+    state,
+    candidateIdentityKey,
+    identityBasis: checkpointEvidence([
+      `source_event:${event.id}`,
+      executedEvidence ? `executed_evidence:${executedEvidence.id}` : "",
+      ...contractFormationPackage.includedComponents.map(
+        (component) => `formation_component:${component}`,
+      ),
+    ]),
+    evidence: checkpointEvidence([
+      executedEvidenceLine,
+      ...contractFormationPackage.evidence,
+    ]),
+    reviewSteps: [...CANONICAL_CONTRACT_IDENTITY_REVIEW_STEPS],
+    writeAllowed: false,
+    blockedWrites: [
+      "canonical_contract_identity",
+      "contract360_projection_row",
+      "optimize_case",
+    ],
+    blockers: checkpointEvidence(blockers),
+  };
+}
+
+function buildOptimizePathPlan(
+  canonicalContractProjection: SourceCanonicalContractProjectionPlan,
+): SourceOptimizePathPlan {
+  const ready =
+    canonicalContractProjection.state === "ready_for_identity_review" &&
+    canonicalContractProjection.candidateIdentityKey !== null;
+  const launchBlocker =
+    "Optimize cannot be launched from Stage 08 until a human-approved canonical contract identity exists.";
+
+  return {
+    state: ready
+      ? "ready_for_optimize_review"
+      : "blocked_canonical_contract_identity",
+    route: "/source/optimize",
+    prefillContractId: null,
+    launchAllowed: false,
+    evidence: checkpointEvidence([
+      canonicalContractProjection.candidateIdentityKey
+        ? `Candidate identity awaiting review: ${canonicalContractProjection.candidateIdentityKey}`
+        : "",
+      ...canonicalContractProjection.evidence,
+    ]),
+    reviewSteps: [...OPTIMIZE_PATH_REVIEW_STEPS],
+    blockers: checkpointEvidence([
+      ...canonicalContractProjection.blockers,
+      launchBlocker,
+    ]),
+  };
+}
+
 export function buildSourceAwardSowHandoffReadiness(
   input: SourceAwardSowHandoffReadinessInput,
 ): SourceAwardSowHandoffReadiness {
@@ -527,6 +642,12 @@ export function buildSourceAwardSowHandoffReadiness(
     currentStageKey: event.currentStageKey,
     acceptedExecutedEvidence,
   });
+  const canonicalContractProjection = buildCanonicalContractProjectionPlan({
+    event,
+    contractFormationPackage,
+    acceptedExecutedEvidence,
+  });
+  const optimizePath = buildOptimizePathPlan(canonicalContractProjection);
   const contractFormationBlockers =
     contractFormationPackage.missingComponents.map(
       (component) => CONTRACT_FORMATION_BLOCKERS[component],
@@ -639,6 +760,8 @@ export function buildSourceAwardSowHandoffReadiness(
     contractFormationState: contractFormationPackage.state,
     contractFormationPackage,
     publicationPlanner,
+    canonicalContractProjection,
+    optimizePath,
     readyForContract360Handoff:
       readinessStatus === "ready_for_contract360_handoff",
     checkpoints,
@@ -678,6 +801,20 @@ export function formatSourceAwardSowHandoffReadinessAsMarkdown(
     `- Accepted executed evidence: ${readiness.publicationPlanner.acceptedExecutedEvidence.join("; ") || "none"}`,
     `- Blocked writes: ${readiness.publicationPlanner.blockedWrites.join("; ")}`,
     `- Planner blockers: ${readiness.publicationPlanner.blockers.join("; ") || "none"}`,
+    "",
+    "## Canonical Contract Projection",
+    `- State: ${readiness.canonicalContractProjection.state}`,
+    `- Candidate identity: ${readiness.canonicalContractProjection.candidateIdentityKey ?? "none"}`,
+    `- Identity writes allowed: ${readiness.canonicalContractProjection.writeAllowed ? "Yes" : "No"}`,
+    `- Blocked writes: ${readiness.canonicalContractProjection.blockedWrites.join("; ")}`,
+    `- Projection blockers: ${readiness.canonicalContractProjection.blockers.join("; ") || "none"}`,
+    "",
+    "## Optimize Path",
+    `- State: ${readiness.optimizePath.state}`,
+    `- Route: ${readiness.optimizePath.route}`,
+    `- Launch allowed: ${readiness.optimizePath.launchAllowed ? "Yes" : "No"}`,
+    `- Prefill contract id: ${readiness.optimizePath.prefillContractId ?? "none"}`,
+    `- Optimize blockers: ${readiness.optimizePath.blockers.join("; ") || "none"}`,
     "",
     `- Recommended next action: ${readiness.recommendedNextAction}`,
     `- Source modules used: ${readiness.sourceModulesUsed.join(", ")}`,
