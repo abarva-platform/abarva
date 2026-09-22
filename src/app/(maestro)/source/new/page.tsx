@@ -58,7 +58,9 @@ export default async function Page({
   const sourceRequest = params.requestId
     ? await readSourceIntakeRequestQueue(clientKey ?? "").then((read) =>
         read.registryAvailable
-          ? read.requests.find((request) => request.requestId === params.requestId) ?? null
+          ? (read.requests.find(
+              (request) => request.requestId === params.requestId,
+            ) ?? null)
           : null,
       )
     : null;
@@ -94,13 +96,6 @@ async function loadRequestFirstWorkspace(clientKey: string | null): Promise<{
     readSourceIntakeRequestQueue(clientKey),
     listSourcingEvents().catch(() => null),
   ]);
-  if (!events) {
-    return {
-      status: "unavailable",
-      importedRequests: [],
-      eventWorkspaces: [],
-    };
-  }
   return {
     status: !requestRead.registryAvailable
       ? "unavailable"
@@ -108,7 +103,7 @@ async function loadRequestFirstWorkspace(clientKey: string | null): Promise<{
         ? "loaded"
         : "empty",
     importedRequests: requestRead.registryAvailable ? requestRead.requests : [],
-    eventWorkspaces: events.map((event) => ({
+    eventWorkspaces: (events ?? []).map((event) => ({
       id: event.id,
       code: event.code,
       name: event.name,
