@@ -34,6 +34,15 @@ export interface CurrentUser {
   defaultClientId: string | null;
 }
 
+const PLACEHOLDER_PERSON_NAMES = new Set(["user", "unknown", "unknown user"]);
+
+function usablePersonName(value: string | null | undefined): string | null {
+  const trimmed = value?.trim();
+  return trimmed && !PLACEHOLDER_PERSON_NAMES.has(trimmed.toLowerCase())
+    ? trimmed
+    : null;
+}
+
 function normalizeTenantRoles(value: unknown): Record<string, string> {
   if (!value || typeof value !== "object" || Array.isArray(value)) return {};
   const roles: Record<string, string> = {};
@@ -232,8 +241,8 @@ export async function getCurrentUser(): Promise<CurrentUser | null> {
     metadataClientKey,
     tenantRoles,
     name:
-      (person as { name?: string } | null)?.name ??
-      resolvedPerson?.name ??
+      usablePersonName((person as { name?: string } | null)?.name) ??
+      usablePersonName(resolvedPerson?.name) ??
       fallbackName,
     email:
       (person as { email?: string | null } | null)?.email ??
