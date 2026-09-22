@@ -54,6 +54,17 @@ The queue remains backward-compatible with the established timestamped `item`, `
 
 ```bash
 node scripts/exec/build-execution-queue.test.mjs
+node scripts/exec/build-source-board.test.mjs
 ```
 
-The suite runs both generators as child processes against synthetic operator documents. CI never reads a local execution backlog.
+The suites run the generators as child processes against synthetic operator documents. CI never reads a local execution backlog.
+
+`build-source-board.test.mjs` owns the board's claim-record boundary. The claim
+log is written in three grammars — `<stamp> | <agent> | ...` at minute
+precision, the same at seconds precision, and the pipe-less
+`<stamp> <agent> item <id> <branch> — claimed` form documented above. A line the
+board does not recognise as a record start is appended to the record above it,
+which is right for a wrapped continuation and wrong for all three grammars it
+used to miss. Both directions are covered, because a boundary that starts a new
+record on every line truncates the register just as badly as one that starts too
+few.

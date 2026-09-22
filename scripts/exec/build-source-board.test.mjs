@@ -1,0 +1,296 @@
+#!/usr/bin/env node
+/**
+ * Behavioural test for the board's claim-record boundary (item T-702).
+ *
+ * The defect this exists to hold shut: `executionClaimEntries` starts a new
+ * claim entry only on `^TIMESTAMP | ` at MINUTE precision. Every register line
+ * that does not match that shape is appended to the preceding entry's text. A
+ * seconds-precision stamp does not match, and neither does the pipe-less
+ * canonical form `<stamp> <agent> item <id> <branch> — claimed` that
+ * `scripts/exec/README.md` documents. One "entry" therefore carries an
+ * arbitrary number of unrelated register lines, and `claimTextForItem` hands
+ * that whole blob to `deriveRung` for any id named anywhere inside it.
+ *
+ * Measured on the live register at 2026-09-22T15:26Z: 1207 lines begin with a
+ * stamp, 633 parsed as entry starts, 574 (47.6%) were swallowed — 207 for
+ * seconds precision and 367 for the pipe-less form. The consequence is not
+ * cosmetic. `rung === 0` is the claimable filter and `rung === 7` is
+ * `isFinished`, so an item reading a foreign line's proof language vanishes
+ * from every bucket the queue renders. `build-execution-queue.mjs` already
+ * accepts both forms in `parseClaimRecord`, so the two repo-owned generators
+ * disagreed about what a record is.
+ *
+ * Every assertion here is on a real child process and on the rung the board
+ * writes into `source-board-summary.json` for a FIXTURE id. Nothing asks the
+ * code under test whether it thinks it parsed correctly.
+ *
+ * Run:  node scripts/exec/build-source-board.test.mjs
+ */
+
+import fs from "node:fs";
+import os from "node:os";
+import path from "node:path";
+import { execFileSync } from "node:child_process";
+import { fileURLToPath } from "node:url";
+
+const HERE = path.dirname(fileURLToPath(import.meta.url));
+
+const TOOLCHAIN_FILES = ["build-source-board.mjs", "source-stage-map.json"];
+
+const FIXTURE_DOCUMENTS = {
+  "SOURCE_EXECUTION_BOARD_20260917.md": `# Synthetic execution board
+
+## Outcome tracker
+
+| Outcome | Owner | Status |
+|---|---|---|
+| Toolchain is reviewed | test | open |
+`,
+  "EXECUTION_BACKLOG_20260918.md": `# Synthetic execution backlog
+
+## Toolchain
+
+| # | Item | Lane | Acceptance |
+|---|---|---|---|
+| T-507 | **Keep the board executable.** | T | The behavioral suite runs. |
+`,
+  "EXECUTION_CLAIMS.md": `# Synthetic claims
+
+## Claim log — append only
+`,
+  "SOURCE_BACKLOG_MASTER.md": "# Synthetic scope\n",
+};
+
+/**
+ * A register line that states signed-in proof for an id the cases never
+ * declare. Nothing in this line refers to the fixture item; if a fixture item
+ * reads rung 7, it read it from here.
+ */
+const FOREIGN_PROOF =
+  "2026-09-22T02:01Z | codex-other-lane | RELEASED item T-909 — merged, deployed, "
+  + "and signed-in acceptance PASSED on the deployed SHA.";
+
+let failures = 0;
+let passes = 0;
+
+function check(name, ok, detail) {
+  if (ok) {
+    passes += 1;
+    console.log(`  PASS  ${name}`);
+  } else {
+    failures += 1;
+    console.log(`  FAIL  ${name}`);
+    if (detail) console.log(`        ${String(detail).split("\n").join("\n        ")}`);
+  }
+}
+
+function freshFixture() {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "t702-"));
+  for (const f of TOOLCHAIN_FILES) {
+    fs.copyFileSync(path.join(HERE, f), path.join(dir, f));
+  }
+  for (const [file, content] of Object.entries(FIXTURE_DOCUMENTS)) {
+    fs.writeFileSync(path.join(dir, file), content);
+  }
+  return dir;
+}
+
+function run(dir, script, args = []) {
+  try {
+    const stdout = execFileSync(process.execPath, [script, ...args], {
+      cwd: dir,
+      encoding: "utf8",
+      stdio: ["ignore", "pipe", "pipe"],
+    });
+    return { status: 0, stdout, stderr: "" };
+  } catch (err) {
+    return {
+      status: err.status ?? 1,
+      stdout: err.stdout ?? "",
+      stderr: err.stderr ?? String(err.message ?? err),
+    };
+  }
+}
+
+function mapFixtureId(dir, id) {
+  const file = path.join(dir, "source-stage-map.json");
+  const map = JSON.parse(fs.readFileSync(file, "utf8"));
+  map.platformTrack.items.push(id);
+  fs.writeFileSync(file, `${JSON.stringify(map, null, 2)}\n`);
+}
+
+function addBacklogItem(dir, id, body, acceptance) {
+  fs.appendFileSync(
+    path.join(dir, "EXECUTION_BACKLOG_20260918.md"),
+    `\n| ${id} | ${body} | T | ${acceptance} |\n`,
+  );
+  mapFixtureId(dir, id);
+}
+
+function appendClaims(dir, lines) {
+  fs.appendFileSync(path.join(dir, "EXECUTION_CLAIMS.md"), `\n${lines.join("\n")}\n`);
+}
+
+/** Every item the board wrote, keyed by id, from the summary it emits. */
+function summaryItems(dir) {
+  const summary = JSON.parse(
+    fs.readFileSync(path.join(dir, "source-board-summary.json"), "utf8"),
+  );
+  const out = new Map();
+  const walk = (items) => {
+    for (const it of items ?? []) out.set(String(it.num), it);
+  };
+  for (const s of summary.stages ?? []) {
+    walk(s.items);
+    for (const c of s.capabilities ?? []) walk(c.items);
+  }
+  for (const t of summary.tracks ?? []) walk(t.items);
+  return { summary, out };
+}
+
+function buildBoard(dir) {
+  const r = run(dir, "build-source-board.mjs", ["--json"]);
+  if (r.status !== 0) throw new Error(`fixture board build failed:\n${r.stderr}`);
+  return r;
+}
+
+/** `execution claims parsed: N` from the board's own report line. */
+function claimsParsed(stdout) {
+  return Number(stdout.match(/execution claims parsed:\s+(\d+)/)?.[1] ?? -1);
+}
+
+console.log("build-source-board — claim-record boundary (T-702)\n");
+
+/* ------------------------------------------------------------------------ *
+ * 1. THE DEFECT, on the shape the live register actually uses.
+ *    A seconds-precision line claiming the fixture item follows a foreign
+ *    line that states signed-in proof. The fixture item declares no proof of
+ *    its own, so rung 7 can only have come from the foreign line.
+ * ------------------------------------------------------------------------ */
+{
+  const dir = freshFixture();
+  addBacklogItem(
+    dir,
+    "T-901",
+    "**An open question that has shipped nothing.**",
+    "Convert the suite; no proof of any kind exists yet.",
+  );
+  appendClaims(dir, [
+    FOREIGN_PROOF,
+    "2026-09-22T13:39:41Z | fixture-agent | item T-901 claimed; nothing is built yet.",
+  ]);
+  const r = buildBoard(dir);
+  const { out } = summaryItems(dir);
+  const item = out.get("T-901");
+  check(
+    "a seconds-stamped claim line does not inherit the preceding line's signed-in proof",
+    item?.rung === 0,
+    `rung=${item?.rung} (${item?.rungLabel}) quote=${JSON.stringify(item?.quote ?? "")}\n`
+      + `claims parsed=${claimsParsed(r.stdout)}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+/* ------------------------------------------------------------------------ *
+ * 2. THE SAME DEFECT on the pipe-less canonical form the README documents:
+ *    `YYYY-MM-DDTHH:MMZ <agent> item <id> <branch> — claimed`.
+ * ------------------------------------------------------------------------ */
+{
+  const dir = freshFixture();
+  addBacklogItem(
+    dir,
+    "T-902",
+    "**A second open question that has shipped nothing.**",
+    "Nothing is built yet.",
+  );
+  appendClaims(dir, [
+    FOREIGN_PROOF,
+    "2026-09-22T13:40Z fixture-agent item T-902 fixture/branch — claimed",
+  ]);
+  const r = buildBoard(dir);
+  const { out } = summaryItems(dir);
+  const item = out.get("T-902");
+  check(
+    "the pipe-less canonical claim form does not inherit the preceding line's proof",
+    item?.rung === 0,
+    `rung=${item?.rung} (${item?.rungLabel}) quote=${JSON.stringify(item?.quote ?? "")}\n`
+      + `claims parsed=${claimsParsed(r.stdout)}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+/* ------------------------------------------------------------------------ *
+ * 3. NEGATIVE CONTROL. An item whose OWN claim line states signed-in proof
+ *    must still read rung 7. Without this, deleting claim evidence entirely
+ *    — or refusing to parse the register at all — would pass cases 1 and 2.
+ * ------------------------------------------------------------------------ */
+{
+  const dir = freshFixture();
+  addBacklogItem(
+    dir,
+    "T-903",
+    "**A finished item.**",
+    "Proof already happened.",
+  );
+  appendClaims(dir, [
+    "2026-09-22T13:41:02Z | fixture-agent | RELEASED item T-903 — merged, deployed, "
+      + "and signed-in acceptance PASSED on the deployed SHA.",
+  ]);
+  buildBoard(dir);
+  const { out } = summaryItems(dir);
+  const item = out.get("T-903");
+  check(
+    "an item whose own seconds-stamped line states signed-in proof still reads rung 7",
+    item?.rung === 7,
+    `rung=${item?.rung} (${item?.rungLabel}) quote=${JSON.stringify(item?.quote ?? "")}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+/* ------------------------------------------------------------------------ *
+ * 4. GUARDRAIL against the opposite error. A genuine continuation — a wrapped
+ *    line with no leading stamp — must still join the record above it. A fix
+ *    that makes every line its own entry would pass 1, 2 and 3 and silently
+ *    drop the tail of every multi-line record in the register.
+ * ------------------------------------------------------------------------ */
+{
+  const dir = freshFixture();
+  addBacklogItem(dir, "T-904", "**A finished item, recorded over two lines.**", "Proof already happened.");
+  appendClaims(dir, [
+    "2026-09-22T13:42:07Z | fixture-agent | RELEASED item T-904 — merged and deployed;",
+    "signed-in acceptance PASSED on the deployed SHA.",
+  ]);
+  buildBoard(dir);
+  const { out } = summaryItems(dir);
+  const item = out.get("T-904");
+  check(
+    "a wrapped continuation line still joins the record above it",
+    item?.rung === 7,
+    `rung=${item?.rung} (${item?.rungLabel}) quote=${JSON.stringify(item?.quote ?? "")}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+/* ------------------------------------------------------------------------ *
+ * 5. The boundary is counted, not inferred. Three records written in the
+ *    three grammars the register uses must parse as three, not one.
+ * ------------------------------------------------------------------------ */
+{
+  const dir = freshFixture();
+  const before = claimsParsed(buildBoard(dir).stdout);
+  appendClaims(dir, [
+    "2026-09-22T13:43Z | fixture-agent | item T-507 minute-precision with a pipe.",
+    "2026-09-22T13:44:11Z | fixture-agent | item T-507 seconds precision with a pipe.",
+    "2026-09-22T13:45Z fixture-agent item T-507 fixture/branch — claimed",
+  ]);
+  const after = claimsParsed(buildBoard(dir).stdout);
+  check(
+    "all three register grammars parse as separate records",
+    before === 0 && after === 3,
+    `before=${before} after=${after}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+console.log(`\n${passes} passed, ${failures} failed`);
+process.exit(failures ? 1 : 0);
