@@ -133,6 +133,74 @@ const all = [
  */
 const CLAIM_TTL_MS = 3 * 60 * 60 * 1000;
 
+/* ------------------------------------------------------------------------ *
+ * WHICH ID A CLAIM LINE IS ABOUT — item T-510.
+ *
+ * Two grammars used to be recognised, `item <id>` and `CLAIM(ED) <id>`, and
+ * the subject was whichever of them was written first. The register writes a
+ * third form the parser could not see at all: the subject leads the sentence
+ * beside the verdict, with no `item` prefix —
+ *
+ *     RELEASED T-005 | MERGED PR #8013 SHA 57331dc6c | ... item 126 ...
+ *     T-503 MERGED+CLOSED b1a7db782 (PR #8049) | ...
+ *
+ * Measured on the live register at 2026-09-22T09:50Z, over the 1,188
+ * timestamped lines in the claim log:
+ *
+ *   - 928 resolve to an id under the two established grammars;
+ *   - 76 of the remaining 260 carry a RELEASED or MERGED token, and on 53 of
+ *     those a subject id sits directly beside the verdict. Those 53 are 53
+ *     DISTINCT ids whose release the register wrote and the queue cannot
+ *     read — C-007, D-014, D-015, D-023, D-033, D-035, D-038, D-039, D-041,
+ *     D-043, T-002, T-007, T-008, T-011, T-012, T-014, T-021, T-030, T-038,
+ *     T-039, T-046, T-047, T-049, T-050, T-051, T-052, T-053, T-054, T-056,
+ *     T-057, T-058, T-059, T-067, T-073, T-074, T-075, T-077, T-402, T-500,
+ *     T-501, T-502, T-503, T-505, T-523, T-530, T-532, T-533, T-535, T-536,
+ *     T-537, U-006, U-012 and U-014;
+ *   - the other 23 name no subject at all (`RELEASED parallel wave · PR
+ *     #7855 ...`, `RELEASED item 48a`, `RELEASED item D2/D5`). Those are not
+ *     a grammar case and are deliberately left unresolved: inventing a
+ *     subject for a line that names none is how a release gets attributed to
+ *     an item nobody released.
+ *
+ * The item was filed as one line. That count came from the OTHER bucket —
+ * lines that parse, where the verdict's nearest id is not the parsed one —
+ * and T-545's reach plus intervening-id rule already resolves all 12 of those
+ * correctly. The real population is the lines that parse to nothing.
+ *
+ * THE RULE IS THE ONE ALREADY IN FORCE, NOT A NEW PRECEDENCE. The subject is
+ * still whichever grammar is written FIRST on the line; the release form is
+ * simply now one of the candidates in that contest. Making it win outright
+ * would be wrong: a claim line routinely narrates another lane's release in a
+ * parenthetical — `item T-595 · CLAIMED | ... (free — the lane that held b.ts
+ * RELEASED item T-411 at 17:18Z)` — and the claimed item, written first, is
+ * the subject there.
+ *
+ * The new form is anchored to the verdict token and matches `[A-Z]-\d{3}`
+ * only. It is deliberately NOT a scan for an id anywhere on the line: that is
+ * the move that produced T-545, where every id mentioned in passing became a
+ * candidate subject. Bare digits are excluded too — `MERGED PR #8013 SHA
+ * 57331dc6c` is a line full of numbers and none of them is an item.
+ *
+ * Blast radius, measured against the same 1,188 lines: 1,134 unchanged, 53
+ * newly resolved, 0 that stop resolving, and exactly 1 that resolves to a
+ * different id — the `RELEASED T-005 | ... | item 126` line this item was
+ * filed over, which now reads as T-005 rather than as 126.
+ * ------------------------------------------------------------------------ */
+
+/**
+ * The subject-leading release grammar. Either the verdict leads and the id
+ * follows it, or the id leads and the verdict follows. Both are anchored: the
+ * id and the token must be adjacent, so an id further along the line is not a
+ * candidate.
+ */
+const RELEASE_SUBJECT =
+  /\b(?:RELEASED|MERGED)\s+(?:item\s*#?)?([A-Z]-\d{3})\b|\b([A-Z]-\d{3})\s+(?:MERGED|RELEASED)\b/;
+
+/** The two established grammars, unchanged. */
+const ITEM_SUBJECT = /\bitem\s*#?([A-Z]-\d{3}|\d+)\b/i;
+const CLAIM_SUBJECT = /\bCLAIM(?:ED)?\s+#?([A-Z]-\d{3}|\d+)\b/i;
+
 /**
  * Parse only timestamped claim-log records, while accepting the append-only
  * grammars already present in the operator log. The timestamp is the record
@@ -143,11 +211,17 @@ function parseClaimRecord(line) {
   const at = line.match(/(?:^|\s)(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2})?Z)(?:\s|$)/)?.[1];
   if (!at) return null;
 
-  const idMatch =
-    line.match(/\bitem\s*#?([A-Z]-\d{3}|\d+)\b/i) ??
-    line.match(/\bCLAIM(?:ED)?\s+#?([A-Z]-\d{3}|\d+)\b/i);
+  // First written wins, across all three grammars. See the block above.
+  let idMatch = null;
+  for (const pattern of [RELEASE_SUBJECT, ITEM_SUBJECT, CLAIM_SUBJECT]) {
+    const candidate = line.match(pattern);
+    if (!candidate) continue;
+    if (!idMatch || candidate.index < idMatch.index) idMatch = candidate;
+  }
   if (!idMatch) return null;
-  const rawId = idMatch[1];
+  // `RELEASE_SUBJECT` has two alternatives and therefore two capture groups;
+  // exactly one of them is set on any match.
+  const rawId = idMatch[1] ?? idMatch[2];
 
   // Where on the line the id is actually written, so a verdict can be
   // attributed to it rather than to the line as a whole (item T-545).
