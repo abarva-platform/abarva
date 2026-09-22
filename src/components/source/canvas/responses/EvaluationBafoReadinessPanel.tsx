@@ -38,6 +38,15 @@ function packageLabel(
   return "Not score ready";
 }
 
+function questionResponsePriority(
+  row: EvaluationBafoReadinessView["questionResponses"][number],
+): number {
+  if (row.answerState === "missing") return 0;
+  if (row.answerState === "exception") return 1;
+  if (row.answerState === "partial") return 2;
+  return 3;
+}
+
 export function EvaluationBafoReadinessPanel({
   view,
   negotiationBriefCandidate,
@@ -46,6 +55,12 @@ export function EvaluationBafoReadinessPanel({
   negotiationBriefCandidate?: Stage07NegotiationBriefCandidate | null;
 }) {
   if (!view) return null;
+  const visibleQuestionResponses = [...view.questionResponses]
+    .sort((a, b) => questionResponsePriority(a) - questionResponsePriority(b))
+    .slice(0, 6);
+  const visibleEvaluatorScorecards = view.evaluatorScorecards.slice(0, 6);
+  const visibleCommercialComparisons = view.commercialComparison.slice(0, 3);
+  const visibleClarifications = view.clarificationRequests.slice(0, 6);
   const visibleBlockers = view.blockers.slice(0, 5);
   const reviewedFacts =
     negotiationBriefCandidate?.acceptedFacts.filter((fact) => fact.reviewState) ??
@@ -214,6 +229,187 @@ export function EvaluationBafoReadinessPanel({
               No pricing records available for comparison.
             </p>
           )}
+        </div>
+      </div>
+
+      <div style={GRID}>
+        <div style={PANEL}>
+          <div style={PANEL_HEAD}>
+            <span style={EYEBROW}>Normalized question rows</span>
+            <strong>{view.questionResponses.length} row</strong>
+          </div>
+          <div style={STACK}>
+            {visibleQuestionResponses.length > 0 ? (
+              visibleQuestionResponses.map((row) => (
+                <div key={`${row.vendorId}:${row.questionId}`} style={COMPARABLE_ROW}>
+                  <div style={COMPARABLE_HEAD}>
+                    <strong>{row.questionLabel}</strong>
+                    <span
+                      style={{
+                        ...PILL_SMALL,
+                        ...(row.answerState === "complete"
+                          ? GOOD
+                          : row.answerState === "missing"
+                            ? BAD
+                            : WARN),
+                      }}
+                    >
+                      {row.answerState}
+                    </span>
+                  </div>
+                  <span style={ROW_NOTE}>{row.vendorName}</span>
+                  <span style={ROW_NOTE}>{row.normalizedResponse}</span>
+                  <span style={EVIDENCE_NOTE}>
+                    Evidence: {row.evidenceReference}
+                  </span>
+                  <span style={NEXT_ACTION}>{row.evaluatorUse}</span>
+                </div>
+              ))
+            ) : (
+              <p style={EMPTY_COPY}>No normalized question rows available.</p>
+            )}
+          </div>
+        </div>
+
+        <div style={PANEL}>
+          <div style={PANEL_HEAD}>
+            <span style={EYEBROW}>Named evaluator review</span>
+            <strong>{view.evaluatorScorecards.length} score</strong>
+          </div>
+          <div style={STACK}>
+            {visibleEvaluatorScorecards.length > 0 ? (
+              visibleEvaluatorScorecards.map((row) => (
+                <div
+                  key={`${row.vendorId}:${row.criterionId}:${row.evaluatorName}`}
+                  style={COMPARABLE_ROW}
+                >
+                  <div style={COMPARABLE_HEAD}>
+                    <strong>{row.vendorName}</strong>
+                    <span
+                      style={{
+                        ...PILL_SMALL,
+                        ...(row.reviewState === "locked_named_human_review"
+                          ? GOOD
+                          : row.reviewState === "not_loaded"
+                            ? WARN
+                            : BAD),
+                      }}
+                    >
+                      {row.reviewState.replaceAll("_", " ")}
+                    </span>
+                  </div>
+                  <span style={ROW_NOTE}>
+                    {row.criterionLabel}: {row.scoreLabel}
+                  </span>
+                  <span style={ROW_NOTE}>Evaluator: {row.evaluatorName}</span>
+                  <span style={EVIDENCE_NOTE}>
+                    Evidence: {row.evidenceReference}; lock {row.lockState}
+                  </span>
+                </div>
+              ))
+            ) : (
+              <p style={EMPTY_COPY}>No named evaluator review is loaded.</p>
+            )}
+          </div>
+        </div>
+      </div>
+
+      <div style={PRICING_PANEL}>
+        <div style={PANEL_HEAD}>
+          <span style={EYEBROW}>Support-only TCO comparison</span>
+          <strong>{view.commercialComparison.length} vendor basis</strong>
+        </div>
+        <div style={PRICING_GRID}>
+          {visibleCommercialComparisons.length > 0 ? (
+            visibleCommercialComparisons.map((row) => (
+              <article key={row.vendorId} style={PRICING_CARD}>
+                <div style={COMPARABLE_HEAD}>
+                  <strong>{row.vendorName}</strong>
+                  <span
+                    style={{
+                      ...PILL_SMALL,
+                      ...comparabilityStyle(row.comparability),
+                    }}
+                  >
+                    {row.comparability}
+                  </span>
+                </div>
+                <span style={ROW_NOTE}>
+                  Support-only TCO: {row.supportOnlyTcoLabel}
+                </span>
+                <ul style={PLAIN_LIST}>
+                  {row.includedAmountLabels.map((label) => (
+                    <li key={label}>{label}</li>
+                  ))}
+                </ul>
+                <ul style={PLAIN_LIST_MUTED}>
+                  {row.excludedUnsupportedAmountLabels.map((label) => (
+                    <li key={label}>{label}</li>
+                  ))}
+                </ul>
+                <p style={EVIDENCE_NOTE}>{row.guardrail}</p>
+              </article>
+            ))
+          ) : (
+            <p style={EMPTY_COPY}>No support-only TCO basis is available.</p>
+          )}
+        </div>
+      </div>
+
+      <div style={GRID}>
+        <div style={PANEL}>
+          <div style={PANEL_HEAD}>
+            <span style={EYEBROW}>Clarification drafts</span>
+            <strong>{view.clarificationRequests.length} draft</strong>
+          </div>
+          <div style={STACK}>
+            {visibleClarifications.length > 0 ? (
+              visibleClarifications.map((row) => (
+                <div key={row.clarificationId} style={COMPARABLE_ROW}>
+                  <div style={COMPARABLE_HEAD}>
+                    <strong>{row.vendorName}</strong>
+                    <span style={{ ...PILL_SMALL, ...WARN }}>
+                      draft only
+                    </span>
+                  </div>
+                  <span style={ROW_NOTE}>{row.question}</span>
+                  <span style={EVIDENCE_NOTE}>
+                    Source: {row.source}; priority {row.priority}
+                  </span>
+                  {row.evidenceBasis.length > 0 ? (
+                    <span style={EVIDENCE_NOTE}>
+                      Evidence basis: {row.evidenceBasis.join("; ")}
+                    </span>
+                  ) : null}
+                </div>
+              ))
+            ) : (
+              <p style={EMPTY_COPY}>No clarification drafts are available.</p>
+            )}
+          </div>
+        </div>
+
+        <div style={PANEL}>
+          <div style={PANEL_HEAD}>
+            <span style={EYEBROW}>{view.bafoRound.roundLabel}</span>
+            <span style={{ ...PILL_SMALL, ...WARN }}>
+              {view.bafoRound.state === "candidate_not_dispatched"
+                ? "candidate, not dispatched"
+                : "blocked"}
+            </span>
+          </div>
+          <dl style={ROUND_FACTS}>
+            <div>
+              <dt>Vendors</dt>
+              <dd>{view.bafoRound.vendorCount}</dd>
+            </div>
+            <div>
+              <dt>Questions</dt>
+              <dd>{view.bafoRound.questionCount}</dd>
+            </div>
+          </dl>
+          <p style={NEXT_ACTION}>{view.bafoRound.nextAction}</p>
+          <p style={EVIDENCE_NOTE}>{view.bafoRound.guardrail}</p>
         </div>
       </div>
 
@@ -485,6 +681,28 @@ const EVIDENCE_NOTE: CSSProperties = {
   color: CANVAS.INK_MUTED,
   fontSize: 11,
   lineHeight: 1.35,
+};
+
+const PLAIN_LIST: CSSProperties = {
+  margin: 0,
+  paddingLeft: 16,
+  color: CANVAS.INK,
+  fontSize: 12,
+  lineHeight: 1.45,
+};
+
+const PLAIN_LIST_MUTED: CSSProperties = {
+  ...PLAIN_LIST,
+  color: CANVAS.INK_MUTED,
+};
+
+const ROUND_FACTS: CSSProperties = {
+  display: "grid",
+  gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+  gap: 10,
+  margin: "12px 0",
+  color: CANVAS.INK,
+  fontSize: 13,
 };
 
 const BLOCKER_PANEL: CSSProperties = {

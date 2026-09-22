@@ -1,5 +1,6 @@
 import {
   buildEvaluationBafoReadinessView,
+  buildScorecardAuthorityView,
   buildVendorBafoInstructionPack,
   buildVendorChallengeIntelligence,
   buildVendorEvaluationDecisionView,
@@ -22,6 +23,126 @@ describe("evaluation / BAFO readiness decision support", () => {
       }),
     ]);
     expect(view.guardrail).toMatch(/does not select a winner/i);
+  });
+
+  it("exposes normalized question rows, named evaluator review, support-only TCO, clarifications, and one governed BAFO round", () => {
+    const profileSet = buildVendorResponseMveProfiles({
+      id: "client-a-test-event",
+      code: "CLIENT-A-LAKE-AMS-OUTSOURCING-2026",
+      name: "Client A AMS Outsourcing RFP",
+      accountName: "Client A",
+    });
+    if (!profileSet) throw new Error("expected test profile set");
+    const intelligence = buildVendorChallengeIntelligence(profileSet);
+    const bafoPack = buildVendorBafoInstructionPack(intelligence);
+    const decisionView = buildVendorEvaluationDecisionView(
+      profileSet,
+      intelligence,
+      bafoPack,
+    );
+    const scorecardAuthorityView = buildScorecardAuthorityView({
+      tenantKey: profileSet.tenantKey,
+      sourceEventId: profileSet.sourceEventId,
+      criteria: [
+        {
+          tenantKey: profileSet.tenantKey,
+          sourceEventId: profileSet.sourceEventId,
+          criterionId: "transition",
+          criterionVersion: "criteria-v1",
+          label: "Transition certainty",
+          weight: 100,
+          weightsFrozen: true,
+          approvedCriterionVersion: "criteria-v1",
+          approvedBy: "named-procurement-lead",
+          approvedAt: "2026-09-21T18:00:00Z",
+        },
+      ],
+      scores: profileSet.profiles.map((profile) => ({
+        tenantKey: profileSet.tenantKey,
+        sourceEventId: profileSet.sourceEventId,
+        vendorId: profile.vendorId,
+        vendorName: profile.vendorName,
+        criterionId: "transition",
+        criterionVersion: "criteria-v1",
+        evaluatorId: "eval-1",
+        evaluatorName: "Named Evaluator",
+        evaluatorScore: 8,
+        evidenceReference: `EVID-SCORE-${profile.vendorId}`,
+        overrideReason: null,
+        overrideReasonRequired: false,
+        lockState: "locked" as const,
+        lockedBy: "eval-1",
+        lockedAt: "2026-09-21T18:30:00Z",
+      })),
+    });
+
+    const view = buildEvaluationBafoReadinessView({
+      profileSet,
+      challengeIntelligence: intelligence,
+      bafoInstructionPack: bafoPack,
+      decisionView,
+      scorecardAuthorityView,
+    });
+
+    expect(view.questionResponses).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          vendorName: expect.stringContaining("Vendor A"),
+          questionId: "section-7",
+          questionLabel: "Transition Plan",
+          answerState: "partial",
+          evidenceReference: "Narrative pp. 46-58",
+        }),
+      ]),
+    );
+    expect(view.questionResponses.every((row) => row.vendorId)).toBe(true);
+    expect(view.evaluatorScorecards).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          vendorName: expect.stringContaining("Vendor A"),
+          criterionLabel: "Transition certainty",
+          evaluatorName: "Named Evaluator",
+          reviewState: "locked_named_human_review",
+          evidenceReference: expect.stringContaining("EVID-SCORE-"),
+        }),
+      ]),
+    );
+    expect(view.commercialComparison).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          vendorName: expect.stringContaining("Vendor A"),
+          supportOnlyTcoLabel: "$96.4M",
+          includedAmountLabels: [
+            "Five-year TCO: $96.4M",
+            "Year-one run cost: $18.6M",
+          ],
+          excludedUnsupportedAmountLabels: [
+            "Transition cost shown for review only: $4.8M",
+            "One-time cost shown for review only: $1.2M",
+            "Optional cost shown for review only: $2.1M",
+          ],
+        }),
+      ]),
+    );
+    expect(view.clarificationRequests).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          vendorName: expect.stringContaining("Vendor A"),
+          source: expect.stringMatching(/blocker|bafo_question/),
+          dispatchState: "draft_only_not_sent",
+        }),
+      ]),
+    );
+    expect(view.bafoRound).toEqual(
+      expect.objectContaining({
+        roundLabel: "BAFO Round 1",
+        state: "candidate_not_dispatched",
+        nextAction: expect.stringMatching(/named commercial review/i),
+      }),
+    );
+    expect(JSON.stringify(view)).not.toMatch(
+      /award approved|selected vendor|recommended supplier|guaranteed savings|realized savings/i,
+    );
   });
 
   it("summarizes received packages, comparability, blockers, and one next action without award claims", () => {
