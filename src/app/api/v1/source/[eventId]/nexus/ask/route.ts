@@ -373,6 +373,62 @@ export async function POST(
         });
       } else if (
         eventId &&
+        (looksLikeSourceStageCompletionQuestion(normalizedBody.prompt) ||
+          looksLikeEvidenceReadinessQuestion(normalizedBody.prompt))
+      ) {
+        const asksForStageCompletion =
+          looksLikeSourceStageCompletionQuestion(normalizedBody.prompt);
+        const sourceNewEventContext = {
+          currentStage:
+            liveEventDetail?.currentStageKey ??
+            stubResponse.context.stageLabel ??
+            "",
+          lifecycle: liveEventDetail?.status ?? "active",
+        };
+        agentAnswer = await buildEvidenceReadinessGovernedAnswer({
+          eventId: liveEventDetail?.id ?? eventId,
+          eventAliases: [
+            eventId,
+            liveEventDetail?.id,
+            liveEventDetail?.code,
+          ].filter((value): value is string => Boolean(value)),
+          clientKey: activeClientKey,
+          tenantId: tenancy.clientId ?? null,
+          question: normalizedBody.prompt ?? "",
+          ...(asksForStageCompletion
+            ? {
+                stageContext: {
+                  stageLabel: sourceNewCurrentPhaseLabel(
+                    sourceNewEventContext,
+                  ),
+                  nextAction: sourceNewNextAction(sourceNewEventContext).label,
+                  blocker: liveEventDetail?.blocker,
+                  missingInputs: stubResponse.context.missingInputs,
+                },
+              }
+            : {}),
+        }).catch((err) => {
+          const errorMessage =
+            err instanceof Error
+              ? err.message
+              : typeof err === "string"
+                ? err
+                : JSON.stringify(err);
+          console.error(
+            "[source.nexus-ask.evidence-readiness-governed-answer.failed]",
+            JSON.stringify({
+              eventId,
+              resolvedEventId: liveEventDetail?.id ?? eventId,
+              eventCode: liveEventDetail?.code ?? null,
+              clientKey: activeClientKey,
+              message: errorMessage,
+              stack: err instanceof Error ? err.stack : undefined,
+            }),
+          );
+          return null;
+        });
+      } else if (
+        eventId &&
         looksLikeAwardReadinessQuestion(normalizedBody.prompt)
       ) {
         agentAnswer = await buildAwardReadinessGovernedAnswer({
@@ -565,62 +621,6 @@ export async function POST(
             JSON.stringify({
               eventId,
               resolvedEventId: liveEventDetail?.id ?? eventId,
-              clientKey: activeClientKey,
-              message: errorMessage,
-              stack: err instanceof Error ? err.stack : undefined,
-            }),
-          );
-          return null;
-        });
-      } else if (
-        eventId &&
-        (looksLikeSourceStageCompletionQuestion(normalizedBody.prompt) ||
-          looksLikeEvidenceReadinessQuestion(normalizedBody.prompt))
-      ) {
-        const asksForStageCompletion =
-          looksLikeSourceStageCompletionQuestion(normalizedBody.prompt);
-        const sourceNewEventContext = {
-          currentStage:
-            liveEventDetail?.currentStageKey ??
-            stubResponse.context.stageLabel ??
-            "",
-          lifecycle: liveEventDetail?.status ?? "active",
-        };
-        agentAnswer = await buildEvidenceReadinessGovernedAnswer({
-          eventId: liveEventDetail?.id ?? eventId,
-          eventAliases: [
-            eventId,
-            liveEventDetail?.id,
-            liveEventDetail?.code,
-          ].filter((value): value is string => Boolean(value)),
-          clientKey: activeClientKey,
-          tenantId: tenancy.clientId ?? null,
-          question: normalizedBody.prompt ?? "",
-          ...(asksForStageCompletion
-            ? {
-                stageContext: {
-                  stageLabel: sourceNewCurrentPhaseLabel(
-                    sourceNewEventContext,
-                  ),
-                  nextAction: sourceNewNextAction(sourceNewEventContext).label,
-                  blocker: liveEventDetail?.blocker,
-                  missingInputs: stubResponse.context.missingInputs,
-                },
-              }
-            : {}),
-        }).catch((err) => {
-          const errorMessage =
-            err instanceof Error
-              ? err.message
-              : typeof err === "string"
-                ? err
-                : JSON.stringify(err);
-          console.error(
-            "[source.nexus-ask.evidence-readiness-governed-answer.failed]",
-            JSON.stringify({
-              eventId,
-              resolvedEventId: liveEventDetail?.id ?? eventId,
-              eventCode: liveEventDetail?.code ?? null,
               clientKey: activeClientKey,
               message: errorMessage,
               stack: err instanceof Error ? err.stack : undefined,

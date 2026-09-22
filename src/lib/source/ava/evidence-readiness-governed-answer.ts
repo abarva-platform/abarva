@@ -55,7 +55,7 @@ export function looksLikeSourceStageCompletionQuestion(
   if (!prompt) return false;
   const q = prompt.toLowerCase();
   const asksToCompletePhase =
-    /\b(complete|finish|close|done with|move past|advance (?:from|past)?)\b/.test(
+    /\b(complete|finish|close|done with|move past|advanc(?:e|ing) (?:from|past)?)\b/.test(
       q,
     );
   const namesWorkflowContext =

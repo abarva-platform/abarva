@@ -77,6 +77,32 @@ describe("looksLikeValueLedgerQuestion", () => {
       ),
     ).toBe(false);
   });
+
+  it("does not treat a negative savings instruction as value-ledger intent", () => {
+    expect(
+      looksLikeValueLedgerQuestion(
+        "What is blocking this event from advancing from Define, and what exact action should the sourcing lead take next? Do not estimate savings or recommend a supplier.",
+      ),
+    ).toBe(false);
+    expect(
+      looksLikeValueLedgerQuestion(
+        "Do not calculate savings. What evidence is blocking this stage?",
+      ),
+    ).toBe(false);
+    expect(
+      looksLikeValueLedgerQuestion(
+        "Please don't claim value; just list the current blocker.",
+      ),
+    ).toBe(false);
+  });
+
+  it("keeps explicit value-ledger intent even with a no-estimate instruction", () => {
+    expect(
+      looksLikeValueLedgerQuestion(
+        "Show the value ledger for this event, but do not estimate savings.",
+      ),
+    ).toBe(true);
+  });
 });
 
 describe("valueConfidenceToConfidenceLevel", () => {
