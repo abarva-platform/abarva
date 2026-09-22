@@ -60,7 +60,23 @@ client-scoped data or schema in scope and no feature gate.
   (2 byte-matching cases → 5 behavioural cases).
 - `src/app/(maestro)/source/preview/workspace/__tests__/contractDetailRetry.test.tsx`, rewritten
   (6 declaration-matching cases → 6 behavioural cases).
+- `docs/architecture/t550-stale-suite-triage.json` — two rows given a `movedTo` field.
+- `src/__tests__/behaviors/t550-stale-suite-triage-record.test.ts` — its existence check taught to
+  follow a recorded move, and strengthened in four ways while doing so.
 - This release record.
+
+**The rename broke a gate, and the gate was right.** `Behavior coverage floor` failed 1 of 803 on
+the first push: `T-550 stale suite triage record › names only files that exist in the tree`. The
+T-550 triage record names two of these suites by their `.ts` paths, and their rewritten contents
+contain JSX, so they had to become `.tsx`. The record's paths were **not** restamped to the new
+names — that record is an audit snapshot of a draw taken at a base commit, and those files were
+`.ts` at that instant. Instead the two moved rows carry an explicit
+`movedTo { path, byItem, reason }`, and the guard follows it. The control ends up strictly stronger
+than the one it replaces: a missing path with no `movedTo` still fails; a `movedTo` whose
+destination does not exist fails; a `movedTo` attributed to the draw's own item fails, because a
+draw may not move what it judges; a `byItem` that is not a lane-prefixed id fails; and a row that
+still resolves at its recorded path may not carry a `movedTo` at all, so the field cannot be left
+behind as decoration. No verdict, count, execution number or rationale in the record was altered.
 
 One control was **retired rather than rewritten**, with the reason recorded in the file: the case
 that scanned `WorkspaceExecutiveShell.tsx` for its `PAGE_LABELS` array and its two navigation
@@ -104,6 +120,18 @@ status` shows only test files changed).
 10. access guard drops its non-disclosure sentence — caught
 11. access guard sends a refused reader into Moves — caught
 12. access guard stops naming the account the link was refused for — caught
+
+**The strengthened triage guard — 5 mutations, 5 caught, 0 escapes**, each mutating the record and
+reverting it (`git diff` afterwards shows only the two intended `movedTo` blocks):
+
+A. a moved row drops `movedTo` entirely, which is the pre-fix failure — caught
+B. `movedTo` points at a file that does not exist — caught
+C. the draw attributes the move to itself — caught
+D. `movedTo` left as decoration on a row that still resolves — caught
+E. `byItem` is not a lane-prefixed item id — caught
+
+- `npx jest src/__tests__/behaviors` — **96 suites / 803 tests / 0 failing** locally, matching CI's
+  totals with the one failure resolved.
 
 Mutation 6 **escaped the first version of this suite** and is recorded because it changed the work:
 `canonicalClientDisplayName` rewrites a mapped key's display name regardless of the name handed to

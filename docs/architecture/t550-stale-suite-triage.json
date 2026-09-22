@@ -64,7 +64,12 @@
       "ownerItem": "T-553",
       "evidence": "executed by this draw in one jest --runTestsByPath invocation: 2 tests, 0 failed, 0 pending",
       "rationale": "Both tests assert toContain/not.toContain against the raw source of the not-found surface. Green today, but it proves the file's bytes rather than what a signed-out or wrong-tenant reader is shown.",
-      "currentAction": "left exactly as found; rewrite or retire is T-553's call"
+      "currentAction": "left exactly as found; rewrite or retire is T-553's call",
+      "movedTo": {
+        "path": "src/app/(maestro)/source/__tests__/not-found-source.test.tsx",
+        "byItem": "T-553",
+        "reason": "Rewritten from a source-text scanner into a rendering suite; the new contents contain JSX and require the .tsx extension. The verdict, counts and execution numbers recorded above describe the file as drawn at the base commit and are unchanged."
+      }
     },
     {
       "path": "src/app/(maestro)/source/__tests__/tenant-resolution-source-contract.test.ts",
@@ -86,7 +91,12 @@
       "ownerItem": "T-553",
       "evidence": "executed by this draw in one jest --runTestsByPath invocation: 6 tests, 1 failed, 0 pending",
       "rationale": "Every assertion reads the bytes of a component file. It is RED because the product moved: it requires the loading shell to contain \"Preparing Source command center.\", a string that exists nowhere under src/ except this assertion, while the shell now renders aria-label=\"Source 360 is preparing\". Updating the literal would restore green while leaving a control that a comment could satisfy, so the copy drift is the symptom and the scanner is the defect.",
-      "currentAction": "left exactly as found; rewrite or retire is T-553's call"
+      "currentAction": "left exactly as found; rewrite or retire is T-553's call",
+      "movedTo": {
+        "path": "src/app/(maestro)/source/__tests__/tenant-resolution-source-contract.test.tsx",
+        "byItem": "T-553",
+        "reason": "Rewritten from a source-text scanner into a rendering suite; the new contents contain JSX and require the .tsx extension. The verdict, counts and execution numbers recorded above describe the file as drawn at the base commit and are unchanged."
+      }
     },
     {
       "path": "src/app/(maestro)/source/preview/workspace/__tests__/avaComposerGate.test.ts",
