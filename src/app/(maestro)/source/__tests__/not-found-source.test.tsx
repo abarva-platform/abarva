@@ -134,34 +134,51 @@ describe("Source segment not-found state", () => {
   });
 
   /*
-   * Filed as U-511, pinned here rather than repaired.
+   * U-511, fixed 2026-09-22.
    *
-   * `not-found.tsx` reads `canonicalClientDisplayName({...}) ?? "your current
-   * account"`, so on an unresolvable tenant the refusal is meant to name no
-   * account at all. That fallback is unreachable: `canonicalClientDisplayName`
-   * ends `getClientOption(args.key)?.name ?? null`, and `getClientOption`
-   * resolves an unknown key to the `DEFAULT_CLIENT_KEY` option rather than to
-   * `undefined` -- so it returns a real display name for every input. A reader
-   * whose tenant read failed is therefore shown the default account's name on
-   * an access-guard surface.
+   * The guard reads a display name that may legitimately be unresolvable and
+   * falls back to a neutral phrase. That fallback used to be unreachable:
+   * `canonicalClientDisplayName` ends by resolving an unknown key through
+   * `getClientOption`, which returns the DEFAULT_CLIENT_KEY option rather than
+   * `undefined`, so it named a real account for every input it could be given
+   * -- including a tenant read that had just failed. The guard now asks
+   * `canonicalClientDisplayNameOrNull`, which answers `null` when neither the
+   * key nor the name resolves to a registered client.
    *
-   * `it.failing` is deliberate: it passes only while the defect is present and
-   * turns red the moment U-511 lands, which is what forces this block to be
-   * deleted then. It cannot be satisfied by a comment or a renamed symbol.
+   * Both places the name reaches the reader are asserted, because a repair
+   * that fixed only the heading would leave the account named in the chrome.
    */
-  it.failing(
-    "U-511: names no account when the tenant cannot be resolved",
-    async () => {
-      getActiveClientRow.mockRejectedValue(new Error("tenant read failed"));
+  it("names no account when the tenant cannot be resolved", async () => {
+    getActiveClientRow.mockRejectedValue(new Error("tenant read failed"));
 
-      await renderGuard();
+    await renderGuard();
 
-      expect(
-        screen.getByRole("heading", {
-          level: 1,
-          name: "This Source item is not available for your current account.",
-        }),
-      ).toBeTruthy();
-    },
-  );
+    expect(
+      screen.getByRole("heading", {
+        level: 1,
+        name: "This Source item is not available for your current account.",
+      }),
+    ).toBeTruthy();
+    expect(
+      (shellProps.topBarProps as { tenantName?: string } | undefined)
+        ?.tenantName,
+    ).toBe("your current account");
+  });
+
+  it("names no account when the row carries an unregistered key and no name", async () => {
+    // A row that reads successfully but resolves to nothing is the same
+    // disclosure risk as a read that failed: neither one identifies a tenant,
+    // and neither may be answered with the default account's name.
+    getActiveClientRow.mockResolvedValue({ key: "not-a-registered-key" });
+
+    await renderGuard();
+
+    expect(
+      screen.getByRole("heading", {
+        level: 1,
+        name: "This Source item is not available for your current account.",
+      }),
+    ).toBeTruthy();
+  });
+
 });

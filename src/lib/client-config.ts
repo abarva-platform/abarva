@@ -282,7 +282,21 @@ export function getClientOption(
   );
 }
 
-export function canonicalClientDisplayName(args: {
+/**
+ * Canonical display name for a client, or `null` when neither the key nor the
+ * name resolves to a registered one.
+ *
+ * U-511 (2026-09-22): `canonicalClientDisplayName` below answers with the
+ * DEFAULT_CLIENT_KEY option for any input it cannot resolve, so its declared
+ * `| null` could never be returned and every `?? "fallback"` written against it
+ * was dead. That default is right for a surface already inside a tenant and
+ * wrong for one deciding whether it may name a tenant at all: Source's access
+ * guard named the default account to a reader whose tenant read had just
+ * failed. Callers that must be able to say "unresolved" -- guards, refusals,
+ * anything that discloses -- ask this form; everything else keeps the lenient
+ * one, whose behaviour is unchanged.
+ */
+export function canonicalClientDisplayNameOrNull(args: {
   key?: string | null;
   name?: string | null;
 }): string | null {
@@ -402,8 +416,30 @@ export function canonicalClientDisplayName(args: {
   }
 
   if (name) return name;
-  const option = getClientOption(args.key);
-  return option?.name ?? null;
+  // A registered key with no alias branch above still names a real client; an
+  // unregistered or absent one names nothing, and must not be resolved through
+  // `getClientOption`, which answers DEFAULT_CLIENT_KEY for anything it does
+  // not know.
+  if (isClientKey(key)) return getClientOption(key).name;
+  return null;
+}
+
+/**
+ * Canonical display name for a client, falling back to the default account
+ * when nothing resolves. Deliberately unchanged by U-511: ~150 call sites
+ * render a tenant name on a surface the reader is already inside, where the
+ * default is the established behaviour. Its return type stays `string | null`
+ * for the same reason -- narrowing it would churn every caller -- but note that
+ * it does not in practice return `null`, so `?? x` on its result is dead. Use
+ * `canonicalClientDisplayNameOrNull` when the absence has to be visible.
+ */
+export function canonicalClientDisplayName(args: {
+  key?: string | null;
+  name?: string | null;
+}): string | null {
+  return (
+    canonicalClientDisplayNameOrNull(args) ?? getClientOption(args.key).name
+  );
 }
 
 /**

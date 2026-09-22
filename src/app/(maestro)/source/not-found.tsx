@@ -3,14 +3,19 @@ import type { ReactNode } from "react";
 import { AppShell } from "@/components/shell/AppShell";
 import { ANALYTICS } from "@/components/source/canvas/analytics/analytics-tokens";
 import { getActiveClientRow } from "@/lib/active-client";
-import { canonicalClientDisplayName } from "@/lib/client-config";
+import { canonicalClientDisplayNameOrNull } from "@/lib/client-config";
 
 export const dynamic = "force-dynamic";
 
 export default async function SourceNotFound() {
   const activeClient = await getActiveClientRow().catch(() => null);
+  // U-511: this surface refuses a link, so it must be able to refuse without
+  // naming an account. `canonicalClientDisplayName` resolves anything it does
+  // not recognise -- including a tenant read that threw -- to the default
+  // account's name, which made this fallback unreachable and put a real tenant
+  // name on a disclosure guard. The strict form answers null instead.
   const tenantName =
-    canonicalClientDisplayName({
+    canonicalClientDisplayNameOrNull({
       key: activeClient?.key,
       name: activeClient?.name,
     }) ?? "your current account";

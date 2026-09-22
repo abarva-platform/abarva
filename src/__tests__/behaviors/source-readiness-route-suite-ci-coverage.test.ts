@@ -1,5 +1,5 @@
 import { execFileSync } from "node:child_process";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 
 import {
@@ -15,11 +15,15 @@ const ownedFiles = [
   "src/lib/source/rfp-readiness/__tests__/resolver.test.ts",
   "src/lib/source/rfp-readiness/__tests__/section-trace.test.ts",
   "src/app/(maestro)/source/__tests__/new-route-optimization-redirect.test.ts",
+  // U-511 (2026-09-22): the not-found suite joins the owned set. It was
+  // quarantined as "source-text-only", which stopped being true when it was
+  // rewritten to mount the component; it is now the only assertion of Source's
+  // access-guard disclosure behaviour, and it ran nowhere.
+  "src/app/(maestro)/source/__tests__/not-found-source.test.tsx",
 ] as const;
 
 const quarantinedFiles = [
-  "src/app/(maestro)/source/__tests__/not-found-source.test.ts",
-  "src/app/(maestro)/source/__tests__/tenant-resolution-source-contract.test.ts",
+  "src/app/(maestro)/source/__tests__/tenant-resolution-source-contract.test.tsx",
 ] as const;
 
 type CensusRow = {
@@ -64,7 +68,22 @@ function runCensus(): Census {
 }
 
 describe("Source readiness and route suite CI ownership", () => {
-  it("runs the five behavior-bearing suites and leaves both exact quarantines out", () => {
+  // Both lists are checked against the tree first. Until U-511 they were not,
+  // and both quarantine entries had drifted: each named a `.test.ts` path that
+  // no longer existed, because the suites were renamed to `.tsx` when they were
+  // rewritten to render. The assertion still passed -- `.test.tsx` contains
+  // `.test.ts` as a substring -- so the quarantine half of this control was
+  // pinning two filenames that were not in the repository.
+  it("pins paths that exist", () => {
+    for (const file of [...ownedFiles, ...quarantinedFiles]) {
+      expect({ file, exists: existsSync(path.join(repoRoot, file)) }).toEqual({
+        file,
+        exists: true,
+      });
+    }
+  });
+
+  it("runs the six behavior-bearing suites and leaves the exact quarantine out", () => {
     const commands = jestCommands();
     const command = commands.find((candidate) =>
       candidate.includes(ownedFiles[0]),
@@ -90,9 +109,11 @@ describe("Source readiness and route suite CI ownership", () => {
     expect(census.counts.indeterminateInvocations).toBe(0);
     expect(uncovered("src/lib/source/rfp-readiness/__tests__")).toBe(false);
     expect(partial("src/lib/source/rfp-readiness/__tests__")).toBeUndefined();
+    // 1 -> 2 of 3: U-511 wired the not-found suite. The third file, the
+    // tenant-named source scanner, remains the exact quarantine above.
     expect(partial("src/app/(maestro)/source/__tests__")).toMatchObject({
       testFiles: 3,
-      coveredTestFiles: 1,
+      coveredTestFiles: 2,
     });
   });
 });

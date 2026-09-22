@@ -724,8 +724,16 @@ jobs:
       # behavior-bearing files. The four readiness files exercise modules with
       # direct non-test importer counts from 1 to 3. The route file executes a
       # Next.js page entry point, which is framework-owned and therefore has no
-      # ordinary importer. The green source-text-only not-found suite and the
-      # red tenant-named source scanner remain exact file-level quarantines.
+      # ordinary importer. The red tenant-named source scanner remains an exact
+      # file-level quarantine.
+      #
+      # U-511 (2026-09-22) adds the not-found suite, whose quarantine reason
+      # above -- "source-text-only" -- stopped being true when it was rewritten
+      # to render the component. It now mounts Source's access guard and is the
+      # only place the guard's disclosure behaviour is asserted, so leaving it
+      # unwired left that control unrun. Measured green on the branch: 6 tests.
+      # Both paths are quoted because they carry the route-group segment
+      # `(maestro)`, which a bare Jest pattern would read as a capture group.
       - name: Run Source readiness and route suites
         run: >-
           npx jest --runTestsByPath
@@ -734,6 +742,7 @@ jobs:
           src/lib/source/rfp-readiness/__tests__/resolver.test.ts
           src/lib/source/rfp-readiness/__tests__/section-trace.test.ts
           "src/app/(maestro)/source/__tests__/new-route-optimization-redirect.test.ts"
+          "src/app/(maestro)/source/__tests__/not-found-source.test.tsx"
           --no-coverage --ci
 
       # Eight Source contract suites were measured before wiring: all eight
