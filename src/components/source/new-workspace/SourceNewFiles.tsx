@@ -105,7 +105,10 @@ const label = (value: string) => value.replaceAll("_", " ");
  * withholding an unrecorded motion is the point and rewording a recorded fact
  * is not.
  */
-function artifactTypeLabel(artifactType: string, marketPackageLabel: string): string {
+function artifactTypeLabel(
+  artifactType: string,
+  marketPackageLabel: string,
+): string {
   const tokens = artifactType.trim().toLowerCase().split("_").filter(Boolean);
   let index = 0;
   while (tokens[index] === "rfp" || tokens[index] === "rfi") index += 1;
@@ -142,7 +145,10 @@ function recorded(value: string | null | undefined) {
   return value?.trim() || "Not recorded";
 }
 
-function clientFacingRecorded(value: string | null | undefined, unresolved: string) {
+function clientFacingRecorded(
+  value: string | null | undefined,
+  unresolved: string,
+) {
   if (!value?.trim()) return "Not recorded";
   return containsUuidDisplayValue(value) ? unresolved : value.trim();
 }
@@ -173,13 +179,18 @@ function listValue(values: readonly string[]) {
   return values.length > 0 ? values.join(", ") : "Not recorded";
 }
 
-function DetailRow({
-  term,
-  children,
-}: {
-  term: string;
-  children: ReactNode;
-}) {
+function clientFinalAuthorityNote(row: SourceNewFileRow) {
+  if (!row.clientFinalAcceptedBy) return null;
+  const workflowApproval = row.approvedBy
+    ? "approved"
+    : row.approvalState
+      ? label(row.approvalState)
+      : "not recorded";
+  if (workflowApproval === "approved") return null;
+  return `Client-final authority is accepted; workflow approval is ${workflowApproval}.`;
+}
+
+function DetailRow({ term, children }: { term: string; children: ReactNode }) {
   return (
     <>
       <dt>{term}</dt>
@@ -449,7 +460,9 @@ export function SourceNewFiles({
                   <div className="source-new-files__detail-section">
                     <h5>Preview metadata</h5>
                     <dl>
-                      <DetailRow term="File name">{selected.fileName}</DetailRow>
+                      <DetailRow term="File name">
+                        {selected.fileName}
+                      </DetailRow>
                       <DetailRow term="Format">
                         {selected.fileFormat.toUpperCase()}
                         {fileSize(selected.fileSize)
@@ -457,7 +470,10 @@ export function SourceNewFiles({
                           : ""}
                       </DetailRow>
                       <DetailRow term="Type">
-                        {artifactTypeLabel(selected.artifactType, marketPackageLabel)}
+                        {artifactTypeLabel(
+                          selected.artifactType,
+                          marketPackageLabel,
+                        )}
                       </DetailRow>
                       <DetailRow term="Group">
                         {label(selected.artifactGroup)}
@@ -473,7 +489,10 @@ export function SourceNewFiles({
                       </DetailRow>
                       <DetailRow term="Origin">
                         {selected.generatedBy
-                          ? clientFacingRecorded(selected.generatedBy, "Origin name unresolved")
+                          ? clientFacingRecorded(
+                              selected.generatedBy,
+                              "Origin name unresolved",
+                            )
                           : recorded(selected.sourceBasis)}
                       </DetailRow>
                     </dl>
@@ -492,10 +511,16 @@ export function SourceNewFiles({
                           : ""}
                       </DetailRow>
                       <DetailRow term="Supersedes">
-                        {clientFacingRecorded(selected.supersedesArtifactId, "Artifact reference unresolved")}
+                        {clientFacingRecorded(
+                          selected.supersedesArtifactId,
+                          "Artifact reference unresolved",
+                        )}
                       </DetailRow>
                       <DetailRow term="Superseded by">
-                        {clientFacingRecorded(selected.supersededByArtifactId, "Artifact reference unresolved")}
+                        {clientFacingRecorded(
+                          selected.supersededByArtifactId,
+                          "Artifact reference unresolved",
+                        )}
                       </DetailRow>
                       <DetailRow term="Updated">
                         {dateTime(selected.updatedAt)}
@@ -510,7 +535,9 @@ export function SourceNewFiles({
                       </DetailRow>
                       <DetailRow term="Register ID">
                         {selected.sourceRegisterId ? (
-                          containsUuidDisplayValue(selected.sourceRegisterId) ? (
+                          containsUuidDisplayValue(
+                            selected.sourceRegisterId,
+                          ) ? (
                             "Register reference unresolved"
                           ) : (
                             <code>{selected.sourceRegisterId}</code>
@@ -540,23 +567,40 @@ export function SourceNewFiles({
                   <div className="source-new-files__detail-section">
                     <h5>Approvals and comments</h5>
                     <dl>
-                      <DetailRow term="Approval">
+                      <DetailRow term="Workflow approval">
                         {selected.approvedBy
-                          ? actorWithDate("Approved", selected.approvedBy, selected.approvedAt)
+                          ? actorWithDate(
+                              "Approved",
+                              selected.approvedBy,
+                              selected.approvedAt,
+                            )
                           : selected.approvalState
                             ? label(selected.approvalState)
                             : "Not recorded"}
                       </DetailRow>
                       <DetailRow term="Client final">
                         {selected.clientFinalAcceptedBy
-                          ? actorWithDate("Accepted", selected.clientFinalAcceptedBy, selected.clientFinalAcceptedAt)
+                          ? actorWithDate(
+                              "Accepted",
+                              selected.clientFinalAcceptedBy,
+                              selected.clientFinalAcceptedAt,
+                            )
                           : selected.isClientFinal
                             ? "Uploaded, not accepted"
                             : "No"}
                       </DetailRow>
+                      {clientFinalAuthorityNote(selected) && (
+                        <DetailRow term="Authority states">
+                          {clientFinalAuthorityNote(selected)}
+                        </DetailRow>
+                      )}
                       <DetailRow term="Final upload">
                         {selected.clientFinalUploadedBy
-                          ? actorWithDate("Uploaded", selected.clientFinalUploadedBy, selected.clientFinalUploadedAt)
+                          ? actorWithDate(
+                              "Uploaded",
+                              selected.clientFinalUploadedBy,
+                              selected.clientFinalUploadedAt,
+                            )
                           : "Not recorded"}
                       </DetailRow>
                       <DetailRow term="Review group">

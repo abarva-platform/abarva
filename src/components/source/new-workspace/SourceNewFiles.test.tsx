@@ -49,8 +49,22 @@ const base: SourceNewFileRow = {
 
 const rows: SourceNewFileRow[] = [
   base,
-  { ...base, id: "older", version: 2, lifecycleState: "superseded", status: "superseded", blobSha256: "oldhash" },
-  { ...base, id: "request", phase: "request", artifactType: "intake", title: "Intake record", version: 1 },
+  {
+    ...base,
+    id: "older",
+    version: 2,
+    lifecycleState: "superseded",
+    status: "superseded",
+    blobSha256: "oldhash",
+  },
+  {
+    ...base,
+    id: "request",
+    phase: "request",
+    artifactType: "intake",
+    title: "Intake record",
+    version: 1,
+  },
 ];
 
 describe("SourceNewFiles", () => {
@@ -89,7 +103,9 @@ describe("SourceNewFiles", () => {
     render(<SourceNewFiles rows={[supersededOnly]} />);
     fireEvent.click(screen.getByRole("button", { name: "Suppliers" }));
     expect(screen.queryByText("No files here yet")).toBeNull();
-    expect(screen.getByText(/No current version here\. 1 older version is hidden/)).toBeTruthy();
+    expect(
+      screen.getByText(/No current version here\. 1 older version is hidden/),
+    ).toBeTruthy();
     // Turning history on reveals the file rather than changing the message
     fireEvent.click(screen.getByLabelText("Older versions"));
     expect(screen.getAllByRole("option")).toHaveLength(1);
@@ -120,7 +136,9 @@ describe("SourceNewFiles", () => {
     render(<SourceNewFiles rows={[...rows, elsewhere]} />);
     expect(folderNames()).toContain("Other stages");
     fireEvent.click(screen.getByRole("button", { name: "Other stages" }));
-    expect(screen.getByRole("option", { name: /Evaluation score summary/ })).toBeTruthy();
+    expect(
+      screen.getByRole("option", { name: /Evaluation score summary/ }),
+    ).toBeTruthy();
   });
 
   it("filters by folder and search, hiding superseded versions until requested", () => {
@@ -128,10 +146,16 @@ describe("SourceNewFiles", () => {
     expect(screen.getByRole("option", { name: /Intake record/ })).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: "Define" }));
     expect(screen.getAllByRole("option")).toHaveLength(1);
-    expect(screen.getByRole("option", { name: /Strategy brief/ }).getAttribute("aria-selected")).toBe("true");
+    expect(
+      screen
+        .getByRole("option", { name: /Strategy brief/ })
+        .getAttribute("aria-selected"),
+    ).toBe("true");
     fireEvent.click(screen.getByLabelText("Older versions"));
     expect(screen.getAllByRole("option")).toHaveLength(2);
-    fireEvent.change(screen.getByRole("searchbox", { name: "Search files" }), { target: { value: "missing" } });
+    fireEvent.change(screen.getByRole("searchbox", { name: "Search files" }), {
+      target: { value: "missing" },
+    });
     expect(screen.getByText("No matching files")).toBeTruthy();
   });
 
@@ -139,7 +163,14 @@ describe("SourceNewFiles", () => {
     const onPreview = jest.fn();
     const onDownload = jest.fn();
     const onReview = jest.fn();
-    render(<SourceNewFiles rows={rows} onPreview={onPreview} onDownload={onDownload} onReview={onReview} />);
+    render(
+      <SourceNewFiles
+        rows={rows}
+        onPreview={onPreview}
+        onDownload={onDownload}
+        onReview={onReview}
+      />,
+    );
     fireEvent.click(screen.getByRole("button", { name: "Define" }));
     fireEvent.click(screen.getByLabelText("Older versions"));
     fireEvent.click(screen.getByRole("option", { name: /v2/ }));
@@ -202,22 +233,36 @@ describe("SourceNewFiles", () => {
     expect(within(details).getByText("Evidence links")).toBeTruthy();
     expect(within(details).getByText("Approvals and comments")).toBeTruthy();
     expect(within(details).getByText("Authenticity state")).toBeTruthy();
-    expect(within(details).getByText("CIO strategy package preview")).toBeTruthy();
-    expect(within(details).getByText("Recorded request and scope notes")).toBeTruthy();
+    expect(
+      within(details).getByText("CIO strategy package preview"),
+    ).toBeTruthy();
+    expect(
+      within(details).getByText("Recorded request and scope notes"),
+    ).toBeTruthy();
     expect(within(details).getByText("SRC-REG-1")).toBeTruthy();
     expect(within(details).getByText("CTX-TRACE-1")).toBeTruthy();
     expect(within(details).getByText("intake, scope")).toBeTruthy();
     expect(within(details).getByText(/Accepted by Sponsor/)).toBeTruthy();
-    expect(within(details).getByText("Accepted for sourcing kickoff.")).toBeTruthy();
+    expect(
+      within(details).getByText("Accepted for sourcing kickoff."),
+    ).toBeTruthy();
     expect(within(details).getByText("GEN-1")).toBeTruthy();
     expect(within(details).getByText("validated baseline")).toBeTruthy();
-    expect(within(details).queryByRole("button", { name: "Download" })).toBeNull();
+    expect(
+      within(details).queryByRole("button", { name: "Download" }),
+    ).toBeNull();
 
     fireEvent.click(screen.getByRole("option", { name: /Sparse intake note/ }));
     const sparseDetails = screen.getByLabelText("Selected file details");
-    expect(within(sparseDetails).getAllByText("Not recorded").length).toBeGreaterThan(8);
-    expect(within(sparseDetails).getAllByText("No").length).toBeGreaterThanOrEqual(3);
-    expect(within(sparseDetails).queryByRole("button", { name: "Download" })).toBeNull();
+    expect(
+      within(sparseDetails).getAllByText("Not recorded").length,
+    ).toBeGreaterThan(8);
+    expect(
+      within(sparseDetails).getAllByText("No").length,
+    ).toBeGreaterThanOrEqual(3);
+    expect(
+      within(sparseDetails).queryByRole("button", { name: "Download" }),
+    ).toBeNull();
   });
 
   it("renders explicit unresolved states instead of internal UUIDs in client-facing metadata", () => {
@@ -239,11 +284,57 @@ describe("SourceNewFiles", () => {
 
     expect(within(details).queryByText(internalId)).toBeNull();
     expect(within(details).getByText("Origin name unresolved")).toBeTruthy();
-    expect(within(details).getByText("Register reference unresolved")).toBeTruthy();
-    expect(within(details).getAllByText("Artifact reference unresolved")).toHaveLength(2);
-    expect(within(details).getByText(/^Recorded approver; name unresolved ·/)).toBeTruthy();
-    expect(within(details).getByText(/^Accepted by recorded user; name unresolved ·/)).toBeTruthy();
-    expect(within(details).getByText(/^Uploaded by recorded user; name unresolved ·/)).toBeTruthy();
+    expect(
+      within(details).getByText("Register reference unresolved"),
+    ).toBeTruthy();
+    expect(
+      within(details).getAllByText("Artifact reference unresolved"),
+    ).toHaveLength(2);
+    expect(
+      within(details).getByText(/^Recorded approver; name unresolved ·/),
+    ).toBeTruthy();
+    expect(
+      within(details).getByText(
+        /^Accepted by recorded user; name unresolved ·/,
+      ),
+    ).toBeTruthy();
+    expect(
+      within(details).getByText(
+        /^Uploaded by recorded user; name unresolved ·/,
+      ),
+    ).toBeTruthy();
+  });
+
+  it("separates accepted client-final authority from draft workflow approval", () => {
+    render(
+      <SourceNewFiles
+        rows={[
+          {
+            ...base,
+            approvalState: "draft",
+            approvedBy: null,
+            approvedAt: null,
+            isClientFinal: true,
+            isCurrentAuthoritative: true,
+            clientFinalAcceptedBy: "Executive sponsor",
+            clientFinalAcceptedAt: "2026-01-04T00:00:00Z",
+          },
+        ]}
+        initialPhase="define"
+      />,
+    );
+
+    const details = screen.getByLabelText("Selected file details");
+    expect(within(details).getByText("Workflow approval")).toBeTruthy();
+    expect(within(details).getByText("draft")).toBeTruthy();
+    expect(
+      within(details).getByText(/Accepted by Executive sponsor/),
+    ).toBeTruthy();
+    expect(
+      within(details).getByText(
+        "Client-final authority is accepted; workflow approval is draft.",
+      ),
+    ).toBeTruthy();
   });
 
   it("shows a quiet empty state and delegates upload for the selected phase", () => {
@@ -263,44 +354,94 @@ describe("SourceNewFiles", () => {
   });
 
   it("shows distinct current documents even when they share a type", () => {
-    render(<SourceNewFiles rows={[base, { ...base, id: "another", title: "Second strategy brief", fileName: "another.pdf" }]} initialPhase="define" />);
+    render(
+      <SourceNewFiles
+        rows={[
+          base,
+          {
+            ...base,
+            id: "another",
+            title: "Second strategy brief",
+            fileName: "another.pdf",
+          },
+        ]}
+        initialPhase="define"
+      />,
+    );
     expect(screen.getAllByRole("option")).toHaveLength(2);
-    expect(screen.getByRole("option", { name: /Second strategy brief/ })).toBeTruthy();
+    expect(
+      screen.getByRole("option", { name: /Second strategy brief/ }),
+    ).toBeTruthy();
   });
 
   it("returns from mobile details to the same filtered list and scroll position", () => {
     useMobileViewport();
     const restoreScroll = jest.fn();
     window.scrollTo = restoreScroll;
-    Object.defineProperty(window, "scrollY", { configurable: true, value: 420 });
+    Object.defineProperty(window, "scrollY", {
+      configurable: true,
+      value: 420,
+    });
     const onPreview = jest.fn();
-    const { container } = render(<SourceNewFiles rows={rows} onPreview={onPreview} />);
+    const { container } = render(
+      <SourceNewFiles rows={rows} onPreview={onPreview} />,
+    );
     fireEvent.click(screen.getByRole("button", { name: "Define" }));
-    fireEvent.change(screen.getByRole("searchbox", { name: "Search files" }), { target: { value: "strategy" } });
+    fireEvent.change(screen.getByRole("searchbox", { name: "Search files" }), {
+      target: { value: "strategy" },
+    });
     fireEvent.click(screen.getByLabelText("Older versions"));
     const list = screen.getByRole("listbox", { name: "Files in folder" });
     list.scrollTop = 137;
     const older = screen.getByRole("option", { name: /v2/ });
     fireEvent.click(older);
 
-    expect(container.querySelector(".source-new-files")?.getAttribute("data-mobile-detail")).toBe("true");
+    expect(
+      container
+        .querySelector(".source-new-files")
+        ?.getAttribute("data-mobile-detail"),
+    ).toBe("true");
     const details = screen.getByLabelText("Selected file details");
     expect(within(details).getByText("strategy-brief.pdf · v2")).toBeTruthy();
     expect(within(details).getByText("superseded")).toBeTruthy();
     expect(within(details).getByText("Editor")).toBeTruthy();
     expect(within(details).getByText(/Approved by Reviewer/)).toBeTruthy();
     expect(within(details).getByText("oldhash")).toBeTruthy();
-    expect(within(details).getByRole("button", { name: "Preview" })).toBeTruthy();
-    expect(within(details).queryByRole("button", { name: "Download" })).toBeNull();
-    expect(document.activeElement).toBe(within(details).getByRole("button", { name: "Back to files" }));
+    expect(
+      within(details).getByRole("button", { name: "Preview" }),
+    ).toBeTruthy();
+    expect(
+      within(details).queryByRole("button", { name: "Download" }),
+    ).toBeNull();
+    expect(document.activeElement).toBe(
+      within(details).getByRole("button", { name: "Back to files" }),
+    );
 
     fireEvent.click(within(details).getByRole("button", { name: "Preview" }));
     expect(onPreview).toHaveBeenCalledWith(rows[1]);
-    fireEvent.click(within(details).getByRole("button", { name: "Back to files" }));
-    expect(container.querySelector(".source-new-files")?.getAttribute("data-mobile-detail")).toBe("false");
-    expect(screen.getByRole("button", { name: "Define" }).getAttribute("aria-current")).toBe("true");
-    expect((screen.getByRole("searchbox", { name: "Search files" }) as HTMLInputElement).value).toBe("strategy");
-    expect((screen.getByLabelText("Older versions") as HTMLInputElement).checked).toBe(true);
+    fireEvent.click(
+      within(details).getByRole("button", { name: "Back to files" }),
+    );
+    expect(
+      container
+        .querySelector(".source-new-files")
+        ?.getAttribute("data-mobile-detail"),
+    ).toBe("false");
+    expect(
+      screen
+        .getByRole("button", { name: "Define" })
+        .getAttribute("aria-current"),
+    ).toBe("true");
+    expect(
+      (
+        screen.getByRole("searchbox", {
+          name: "Search files",
+        }) as HTMLInputElement
+      ).value,
+    ).toBe("strategy");
+    expect(
+      (screen.getByLabelText("Older versions") as HTMLInputElement).checked,
+    ).toBe(true);
     expect(screen.getAllByRole("option")).toHaveLength(2);
     expect(list.scrollTop).toBe(137);
     expect(restoreScroll).toHaveBeenCalledWith(0, 420);
@@ -310,18 +451,32 @@ describe("SourceNewFiles", () => {
   it("opens mobile details by keyboard and returns focus with Escape", () => {
     useMobileViewport();
     window.scrollTo = jest.fn();
-    const { container } = render(<SourceNewFiles rows={rows} initialPhase="define" />);
+    const { container } = render(
+      <SourceNewFiles rows={rows} initialPhase="define" />,
+    );
     const row = screen.getByRole("option", { name: /Strategy brief/ });
     row.focus();
     fireEvent.keyDown(row, { key: "Enter" });
-    expect(container.querySelector(".source-new-files")?.getAttribute("data-mobile-detail")).toBe("true");
+    expect(
+      container
+        .querySelector(".source-new-files")
+        ?.getAttribute("data-mobile-detail"),
+    ).toBe("true");
     const back = screen.getByRole("button", { name: "Back to files" });
     expect(document.activeElement).toBe(back);
     fireEvent.keyDown(back, { key: "Escape" });
-    expect(container.querySelector(".source-new-files")?.getAttribute("data-mobile-detail")).toBe("false");
+    expect(
+      container
+        .querySelector(".source-new-files")
+        ?.getAttribute("data-mobile-detail"),
+    ).toBe("false");
     expect(document.activeElement).toBe(row);
     fireEvent.keyDown(row, { key: " " });
-    expect(container.querySelector(".source-new-files")?.getAttribute("data-mobile-detail")).toBe("true");
+    expect(
+      container
+        .querySelector(".source-new-files")
+        ?.getAttribute("data-mobile-detail"),
+    ).toBe("true");
   });
 
   // The market-package folder holds artifacts whose recorded type still
@@ -355,7 +510,9 @@ describe("SourceNewFiles", () => {
   }
 
   it("states the accepted RFI motion on a market-package artifact instead of its reused RFP key", () => {
-    render(<SourceNewFiles rows={[marketPackageFile]} marketPackageLabel="RFI" />);
+    render(
+      <SourceNewFiles rows={[marketPackageFile]} marketPackageLabel="RFI" />,
+    );
 
     const detail = openMarketPackageDetail("RFI");
     expect(within(detail).getByText("RFI package")).toBeTruthy();
@@ -363,7 +520,9 @@ describe("SourceNewFiles", () => {
   });
 
   it("states the accepted RFP motion on the same artifact rather than inferring it from the key", () => {
-    render(<SourceNewFiles rows={[marketPackageFile]} marketPackageLabel="RFP" />);
+    render(
+      <SourceNewFiles rows={[marketPackageFile]} marketPackageLabel="RFP" />,
+    );
 
     const detail = openMarketPackageDetail("RFP");
     expect(within(detail).getByText("RFP package")).toBeTruthy();
@@ -419,7 +578,13 @@ describe("SourceNewFiles", () => {
   // against it. Withholding an unrecorded motion is the point; rewording a
   // recorded fact is not.
   it("leaves an artifact that carries no solicitation key on its recorded type", () => {
-    render(<SourceNewFiles rows={[base]} initialPhase="define" marketPackageLabel="RFI" />);
+    render(
+      <SourceNewFiles
+        rows={[base]}
+        initialPhase="define"
+        marketPackageLabel="RFI"
+      />,
+    );
 
     const detail = screen.getByRole("complementary", {
       name: "Selected file details",
