@@ -959,6 +959,14 @@ jobs:
       - name: Refuse a new dark tree under src/__tests__
         run: npx jest --runTestsByPath src/__tests__/behaviors/unit-directory-ci-coverage.test.ts --no-coverage --ci
 
+      # T-590. The route-reachability audit answers "can a route reach this
+      # FILE", and two Source surfaces went dead inside files every Source
+      # route reaches. This proves the export grain still reports a real
+      # exported component with no product importer — a fixture cannot
+      # establish that, because a fixture is written to satisfy the check.
+      - name: Prove export-level route reachability still flags a real orphan
+        run: npx jest --runTestsByPath src/__tests__/behaviors/route-export-reachability.test.ts --no-coverage --ci
+
       # T-469. The per-client test-time data-plane boundary. Two clients, two
       # opposite failure modes, both invisible from the test file: the static-pg
       # clients open a real socket on an unstubbed read (proved here by

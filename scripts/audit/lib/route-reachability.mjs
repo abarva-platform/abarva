@@ -191,3 +191,218 @@ export function computeRouteReachability(repoRoot) {
   }
   return { roots, reachable };
 }
+
+/**
+ * Exports in the watched trees that no route-reachable file imports.
+ *
+ * `computeRouteReachability` answers "can a route reach this FILE", and two
+ * dead surfaces landed inside files every Source route reaches — so the file
+ * was reached, the audit was quiet, and nothing rendered them. The grain the
+ * question needs is the exported symbol, not the file.
+ *
+ * Three rules make the answer honest, and each one was wrong in a first draft:
+ *
+ *   - A test importer is not a mount. The consumed set is built only from
+ *     route-reachable, non-excluded files, so a symbol kept alive by its own
+ *     suite is still reported.
+ *   - A mention in the file's own comment is not a use. Comments and string
+ *     literals are stripped before a symbol's local uses are counted; without
+ *     that, the doc comment above `ContractRefusalChips` scored it as used and
+ *     the known-true positive went unreported.
+ *   - Anything that cannot be resolved by name is treated as reaching every
+ *     export — star imports, dynamic `import()`, `require`, and `export *`
+ *     re-exports. A false negative here costs a missed orphan; a false
+ *     positive costs the gate its credibility, and a gate nobody believes gets
+ *     quarantined.
+ *
+ * Exports inside a file no route reaches are deliberately NOT reported: the
+ * file baseline already names that file, and reporting both would bill one
+ * defect twice.
+ */
+
+/** Exports Next.js itself calls. Nothing imports these, by design. */
+const FRAMEWORK_EXPORTS = new Set([
+  'metadata',
+  'generateMetadata',
+  'generateStaticParams',
+  'generateViewport',
+  'viewport',
+  'dynamic',
+  'dynamicParams',
+  'revalidate',
+  'fetchCache',
+  'runtime',
+  'preferredRegion',
+  'maxDuration',
+  'config',
+  'alt',
+  'size',
+  'contentType',
+  'default',
+]);
+
+function stripCommentsAndStrings(text) {
+  return text
+    .replace(/\/\*[\s\S]*?\*\//g, ' ')
+    .replace(/(^|[^:\\])\/\/[^\n]*/g, '$1 ')
+    .replace(/`(?:[^`\\]|\\[\s\S])*`/g, ' ')
+    .replace(/'(?:[^'\\\n]|\\.)*'/g, ' ')
+    .replace(/"(?:[^"\\\n]|\\.)*"/g, ' ');
+}
+
+/** Value exports declared by a module, by name. Types are not rendered. */
+function exportedNames(text) {
+  const names = new Set();
+  for (const match of text.matchAll(
+    /^\s*export\s+(?:async\s+)?function\s*\*?\s*([A-Za-z0-9_$]+)/gm,
+  )) {
+    names.add(match[1]);
+  }
+  for (const match of text.matchAll(/^\s*export\s+(?:abstract\s+)?class\s+([A-Za-z0-9_$]+)/gm)) {
+    names.add(match[1]);
+  }
+  for (const match of text.matchAll(/^\s*export\s+(?:const|let|var)\s+([A-Za-z0-9_$]+)/gm)) {
+    names.add(match[1]);
+  }
+  for (const match of text.matchAll(/^\s*export\s*\{([^}]*)\}\s*;?\s*$/gm)) {
+    for (const part of match[1].split(',')) {
+      const trimmed = part.trim();
+      if (!trimmed || trimmed.startsWith('type ')) continue;
+      const pieces = trimmed.split(/\s+as\s+/);
+      names.add((pieces[1] ?? pieces[0]).trim());
+    }
+  }
+  return names;
+}
+
+/**
+ * What each imported module has taken from it, as Map<file, Set<name> | '*'>.
+ * `'*'` means "every export", used wherever the specifier cannot be resolved
+ * to individual names.
+ */
+function importedNamesOf(file, srcDir) {
+  let text;
+  try {
+    text = fs.readFileSync(file, 'utf8');
+  } catch {
+    return new Map();
+  }
+  const taken = new Map();
+  const record = (spec, names) => {
+    const target = resolveImport(spec, file, srcDir);
+    if (!target) return;
+    const current = taken.get(target);
+    if (current === '*') return;
+    if (names === '*') {
+      taken.set(target, '*');
+      return;
+    }
+    const merged = current ?? new Set();
+    for (const name of names) merged.add(name);
+    taken.set(target, merged);
+  };
+
+  for (const match of text.matchAll(/\bimport\s+([^'";]*?)\s*from\s*["']([^"']+)["']/g)) {
+    const clause = match[1];
+    if (/\*\s+as\s+/.test(clause)) {
+      record(match[2], '*');
+      continue;
+    }
+    const names = new Set();
+    const braced = clause.match(/\{([^}]*)\}/);
+    if (braced) {
+      for (const part of braced[1].split(',')) {
+        const trimmed = part.trim().replace(/^type\s+/, '');
+        if (!trimmed) continue;
+        names.add(trimmed.split(/\s+as\s+/)[0].trim());
+      }
+    }
+    const withoutBraces = clause.replace(/\{[^}]*\}/, '').replace(/^type\s+/, '');
+    if (withoutBraces.split(',')[0].trim()) names.add('default');
+    record(match[2], names);
+  }
+  for (const match of text.matchAll(/\bexport\s*\{([^}]*)\}\s*from\s*["']([^"']+)["']/g)) {
+    const names = new Set();
+    for (const part of match[1].split(',')) {
+      const trimmed = part.trim().replace(/^type\s+/, '');
+      if (!trimmed) continue;
+      names.add(trimmed.split(/\s+as\s+/)[0].trim());
+    }
+    record(match[2], names);
+  }
+  for (const match of text.matchAll(
+    /\bexport\s*\*\s*(?:as\s+[A-Za-z0-9_$]+\s*)?from\s*["']([^"']+)["']/g,
+  )) {
+    record(match[1], '*');
+  }
+  for (const match of text.matchAll(/\bimport\s*\(\s*["']([^"']+)["']\s*\)/g)) {
+    record(match[1], '*');
+  }
+  for (const match of text.matchAll(/\brequire\s*\(\s*["']([^"']+)["']\s*\)/g)) {
+    record(match[1], '*');
+  }
+  return taken;
+}
+
+export function computeExportReachability(repoRoot, watchedDirs) {
+  const srcDir = path.join(repoRoot, 'src');
+  const { reachable } = computeRouteReachability(repoRoot);
+
+  // Built from the route-reachable set alone, which is what makes a test
+  // importer not a mount: no test file is reachable from a route entry, so a
+  // symbol only its own suite imports never enters this map. Measured rather
+  // than assumed — on this tree, 0 of 3,373 reachable files are excluded — so
+  // no isExcluded() guard is applied here. One would never fire, and a branch
+  // that cannot fire is the shape this control exists to report.
+  const consumed = new Map();
+  for (const file of reachable) {
+    for (const [target, names] of importedNamesOf(file, srcDir)) {
+      const current = consumed.get(target);
+      if (current === '*') continue;
+      if (names === '*') {
+        consumed.set(target, '*');
+        continue;
+      }
+      const merged = current ?? new Set();
+      for (const name of names) merged.add(name);
+      consumed.set(target, merged);
+    }
+  }
+
+  const orphanExports = [];
+  let scannedFiles = 0;
+  for (const dir of watchedDirs) {
+    const absolute = path.join(repoRoot, dir);
+    if (!fs.existsSync(absolute)) continue;
+    for (const file of walk(absolute)) {
+      const relative = path.relative(repoRoot, file);
+      if (isExcluded(relative)) continue;
+      // A file no route reaches is the file baseline's finding, not this one.
+      if (!reachable.has(file)) continue;
+      scannedFiles += 1;
+      const taken = consumed.get(file);
+      if (taken === '*') continue;
+
+      const text = fs.readFileSync(file, 'utf8');
+      const isRouteEntry = ROUTE_ENTRY_NAMES.has(
+        path.basename(file, path.extname(file)),
+      );
+      // Count local uses against code only, with the export clauses that merely
+      // name a symbol removed — naming it is not using it.
+      const body = stripCommentsAndStrings(text).replace(/\bexport\s*\{[^}]*\}/g, ' ');
+
+      for (const name of exportedNames(text)) {
+        if (FRAMEWORK_EXPORTS.has(name)) continue;
+        if (isRouteEntry) continue;
+        if (taken?.has(name)) continue;
+        const uses = [
+          ...body.matchAll(new RegExp(`\\b${name.replace(/\$/g, '\\$')}\\b`, 'g')),
+        ].length;
+        if (uses > 1) continue;
+        orphanExports.push(`${relative}#${name}`);
+      }
+    }
+  }
+  orphanExports.sort();
+  return { orphanExports, scannedFiles };
+}
