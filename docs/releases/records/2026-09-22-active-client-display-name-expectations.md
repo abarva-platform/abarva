@@ -58,6 +58,11 @@ every client equally, with no client-scoped data or schema in scope.
 - `docs/architecture/test-ci-coverage-census.json` — refreshed; the committed
   census is the input that ranks which directory gets wired next, so a stale one
   mis-ranks that queue.
+- `src/__tests__/behaviors/governance-tenant-library-ci-coverage.test.ts` — the
+  control that pins the composition of that workflow step. It caught this change
+  and had to be updated: the suite moves from its quarantine list to its green
+  list, and the directory's covered count from 1 to 2. Both edits carry the
+  reason inline. The five remaining quarantines are untouched.
 
 ## QA / Validation
 
@@ -79,6 +84,26 @@ broken, and the mutations were restored byte-identical afterwards
 | canonicalizer replaced with a pass-through that returns the raw row name | all 3 repaired cases | 3 failed / 4 passed — exactly those 3 by name |
 | first tenant's canonical registry value altered | its 2 cases | 2 failed / 5 passed |
 | second tenant's canonical registry value altered | its 1 case | 1 failed / 6 passed |
+
+**A control caught this change, which is the system working.**
+`src/__tests__/behaviors/governance-tenant-library-ci-coverage.test.ts` pins
+exactly which files that workflow step runs and which it must not, and pins the
+directory's covered count. Wiring the suite failed it two ways, locally and then
+on CI, which agreed. Measured on clean `origin/main` inputs the same suite is
+**2 passed / 0 failed**, so both failures were caused here and neither was
+pre-existing.
+
+It was updated rather than loosened: the file moves from the quarantine list to
+the green list because it was repaired and measured, and the count moves 1 -> 2.
+The updated control was then proved still able to fail, in both directions:
+
+| mutation to the workflow step | observed |
+|---|---|
+| a still-quarantined file added to the step | 2 failed / 0 passed |
+| the newly wired file dropped from the step | 2 failed / 0 passed |
+
+The five files still on the quarantine list stay there. A file leaves that list
+by being fixed and measured, never by being deleted from the list.
 
 One counter-proof, which is why a fixture row name changed rather than only an
 expectation. Repairing that case by the literal minimum — update the expected
@@ -114,6 +139,7 @@ Other gates, all from the branch:
 - `npm run audit:test-ci-coverage:write` — census drift resolved; covered test
   files **1867 → 1868 (+1)**, uncovered **508 → 507 (−1)**, untriaged unrun
   **458 → 457 (−1)**. One file, counted, not "about one".
+- `node scripts/ci/check-behavior-coverage.mjs` — the full behaviors sweep.
 - Workflow YAML parses.
 - `node scripts/release-check.mjs --base origin/main --head HEAD`.
 
