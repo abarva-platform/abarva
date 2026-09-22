@@ -18,7 +18,7 @@ import { getActiveClientKey } from '@/lib/active-client';
 import { clientKeyToInventorySubstrateKey } from '@/lib/agent/tools/intelligence/_shared';
 import { getCrossProgramSignals } from '@/lib/admin/setup-data-broker';
 import { resolveSegmentRef } from '@/lib/admin/setup-acts-registry';
-import { canonicalClientDisplayName } from '@/lib/client-config';
+import { canonicalClientDisplayNameOrNull } from '@/lib/client-config';
 import { AdminCanonShellV2 } from '@/components/admin/AdminCanonShellV2';
 import { AgentRail } from '@/components/admin/AgentRail';
 import { CrossProgramSignalsPanel } from '@/components/admin/setup/CrossProgramSignalsPanel';
@@ -30,9 +30,14 @@ export const revalidate = 0;
 export default async function CrossProgramSignalsPage() {
   const clientKey = await getActiveClientKey().catch(() => null);
   const brokerTenantKey = clientKey ? clientKeyToInventorySubstrateKey(clientKey) : null;
-  const tenantDisplayName = clientKey
-    ? (canonicalClientDisplayName({ key: clientKey }) ?? 'Your tenant')
-    : 'Your tenant';
+  // U-512: the outer ternary handles a failed read; this handles a read that
+  // succeeds and names no registered client. `canonicalClientDisplayName`
+  // could not report that -- it resolves an unknown key through
+  // `getClientOption`, which answers the default account -- so the neutral
+  // literal was unreachable on that path.
+  const tenantDisplayName =
+    (clientKey ? canonicalClientDisplayNameOrNull({ key: clientKey }) : null) ??
+    'Your tenant';
   const signals = brokerTenantKey
     ? await getCrossProgramSignals(brokerTenantKey).catch(() => [])
     : [];

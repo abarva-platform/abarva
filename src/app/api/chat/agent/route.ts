@@ -56,9 +56,10 @@ import {
 // See src/lib/agent/product-truth/.
 import { buildProductTruthSystemPromptBlock } from "@/lib/agent/product-truth";
 import {
-  canonicalClientDisplayName,
+  canonicalClientDisplayNameOrNull,
   demoSafeClientText,
 } from "@/lib/client-config";
+import { resolveTurnTenantName } from "./active-tenant-name";
 import {
   retrieveStageContext,
   retrieveCategoryContext,
@@ -566,13 +567,10 @@ export async function POST(request: Request) {
   const earlyActiveClient = await getActiveClientRow().catch(() => null);
   const earlyActiveClientKey =
     earlyActiveClient?.key ?? (await getActiveClientKey().catch(() => null));
-  const tenantName =
-    canonicalClientDisplayName({
-      key: earlyActiveClientKey,
-      name: earlyActiveClient?.name,
-    }) ??
-    canonicalClientDisplayName({ name: body.tenantName }) ??
-    "Unknown active tenant";
+  const tenantName = resolveTurnTenantName({
+    activeClientKey: earlyActiveClientKey,
+    activeClientName: earlyActiveClient?.name,
+  });
   const agentName = body.agentName ?? null;
   const stage = body.stage ?? null;
   // PR-G surface canonicalization. Two surface-key conventions exist
@@ -711,7 +709,7 @@ export async function POST(request: Request) {
   const activeClient = earlyActiveClient;
   const activeClientKey = earlyActiveClientKey;
   const activeClientDisplayName =
-    canonicalClientDisplayName({
+    canonicalClientDisplayNameOrNull({
       key: activeClientKey,
       name: activeClient?.name,
     }) ?? tenantName;
