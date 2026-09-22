@@ -96,6 +96,27 @@ describe("POST /api/v1/source/intake/servicenow/review", () => {
   });
 
   it("records a named current-version accept decision before event creation", async () => {
+    const persistedDecision = {
+      decisionId: "mapping-persisted",
+      state: "accepted" as const,
+      categoryId: "bpo_contact_centre",
+      archetypeId: "CONTACT_CENTER_CX",
+      decidedByUserId: "person-1",
+      decidedByName: "Procurement Lead",
+      decidedAt: "2026-09-22T13:00:00.000Z",
+      rationale: "Scope and buying motion confirmed.",
+      sourceVersion: "v1",
+    };
+    readSourceIntakeRequestQueue
+      .mockResolvedValueOnce({
+        registryAvailable: true,
+        requests: [importedRequest],
+      })
+      .mockResolvedValueOnce({
+        registryAvailable: true,
+        requests: [{ ...importedRequest, mappingDecision: persistedDecision }],
+      });
+
     const res = await POST(
       new Request("http://localhost/api/v1/source/intake/servicenow/review", {
         method: "POST",
@@ -111,14 +132,7 @@ describe("POST /api/v1/source/intake/servicenow/review", () => {
 
     expect(res.status).toBe(200);
     expect(json.mappingDecision).toEqual(
-      expect.objectContaining({
-        state: "accepted",
-        categoryId: "bpo_contact_centre",
-        archetypeId: "CONTACT_CENTER_CX",
-        decidedByUserId: "person-1",
-        decidedByName: "Procurement Lead",
-        sourceVersion: "v1",
-      }),
+      persistedDecision,
     );
     expect(recordServiceNowRequestMappingDecision).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -127,6 +141,78 @@ describe("POST /api/v1/source/intake/servicenow/review", () => {
         decision: expect.objectContaining({ sourceVersion: "v1" }),
       }),
     );
+    expect(readSourceIntakeRequestQueue).toHaveBeenCalledTimes(2);
+  });
+
+  it("returns the stored authority rather than an optimistic duplicate decision", async () => {
+    const storedDecision = {
+      decisionId: "mapping-existing",
+      state: "accepted" as const,
+      categoryId: "bpo_contact_centre",
+      archetypeId: "CONTACT_CENTER_CX",
+      decidedByUserId: "person-1",
+      decidedByName: "Procurement Lead",
+      decidedAt: "2026-09-22T12:30:00.000Z",
+      rationale: "Previously persisted routing rationale.",
+      sourceVersion: "v1",
+    };
+    readSourceIntakeRequestQueue
+      .mockResolvedValueOnce({
+        registryAvailable: true,
+        requests: [importedRequest],
+      })
+      .mockResolvedValueOnce({
+        registryAvailable: true,
+        requests: [{ ...importedRequest, mappingDecision: storedDecision }],
+      });
+
+    const res = await POST(
+      new Request("http://localhost/api/v1/source/intake/servicenow/review", {
+        method: "POST",
+        body: JSON.stringify({
+          requestId: importedRequest.requestId,
+          sourceVersion: "v1",
+          decisionState: "accepted",
+          rationale: "A newly submitted rationale that conflicts with storage.",
+        }),
+      }),
+    );
+    const json = await res.json();
+
+    expect(res.status).toBe(200);
+    expect(json.mappingDecision).toEqual(storedDecision);
+    expect(json.mappingDecision.rationale).not.toBe(
+      "A newly submitted rationale that conflicts with storage.",
+    );
+  });
+
+  it("keeps event creation locked when the review write cannot be read back", async () => {
+    readSourceIntakeRequestQueue
+      .mockResolvedValueOnce({
+        registryAvailable: true,
+        requests: [importedRequest],
+      })
+      .mockResolvedValueOnce({
+        registryAvailable: true,
+        requests: [importedRequest],
+      });
+
+    const res = await POST(
+      new Request("http://localhost/api/v1/source/intake/servicenow/review", {
+        method: "POST",
+        body: JSON.stringify({
+          requestId: importedRequest.requestId,
+          sourceVersion: "v1",
+          decisionState: "accepted",
+          rationale: "Scope and buying motion confirmed.",
+        }),
+      }),
+    );
+    const json = await res.json();
+
+    expect(res.status).toBe(503);
+    expect(json.error).toBe("source_request_review_not_confirmed");
+    expect(json.mappingDecision).toBeUndefined();
   });
 
   it("rejects stale request versions before recording a mapping decision", async () => {
