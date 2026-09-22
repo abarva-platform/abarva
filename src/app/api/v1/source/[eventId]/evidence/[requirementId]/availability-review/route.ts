@@ -85,6 +85,16 @@ function cleanReviewerName(value: string | null | undefined): string | null {
   return trimmed;
 }
 
+function canonicalPersonId(value: string | null | undefined): string | null {
+  const trimmed = value?.trim();
+  return trimmed &&
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+      trimmed,
+    )
+    ? trimmed
+    : null;
+}
+
 function reviewPreview(context: ReviewContext) {
   return {
     actionType: "evidence_reviewed",
@@ -140,7 +150,9 @@ async function resolveReviewContext(
       { status: 403 },
     );
   }
-  if (!currentUser?.personId || !currentUser.email) {
+  const resolvedReviewerPersonId =
+    currentUser?.personId ?? canonicalPersonId(tenancy?.userId);
+  if (!currentUser || !resolvedReviewerPersonId || !currentUser.email) {
     return Response.json(
       {
         ok: false,
@@ -156,7 +168,7 @@ async function resolveReviewContext(
   const { data: reviewerPerson, error: reviewerError } = await db
     .from("persons")
     .select("id, name, email")
-    .eq("id", currentUser.personId)
+    .eq("id", resolvedReviewerPersonId)
     .maybeSingle<ReviewPersonRow>();
   if (reviewerError) {
     return Response.json(
