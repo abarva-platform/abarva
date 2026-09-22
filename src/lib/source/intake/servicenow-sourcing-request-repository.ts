@@ -10,9 +10,17 @@ export type SourceIntakeRequestSummary = {
   updatedAt: string | null;
   title: string;
   description: string;
+  trigger?: string | null;
+  requestedOutcome?: string | null;
   requestedFor: string | null;
   businessDomain: string | null;
   businessFunction: string | null;
+  decisionOwner?: string | null;
+  baselineOwner?: string | null;
+  scopeIncluded?: string | null;
+  scopeExcluded?: string | null;
+  securityReviewNeeded?: boolean | null;
+  legalReviewNeeded?: boolean | null;
   value: {
     amount: number;
     currency: string;
@@ -84,6 +92,8 @@ function mapRow(row: QueueRow): SourceIntakeRequestSummary {
   const normalized = asRecord(row.normalized_request);
   const organization = asRecord(normalized.organization);
   const rawValue = asRecord(normalized.value);
+  const scope = asRecord(normalized.scope);
+  const governance = asRecord(normalized.governance);
   const proposal = asRecord(row.mapping_proposal);
   const amount = typeof rawValue.amount === "number" ? rawValue.amount : null;
   const currency = text(rawValue.currency);
@@ -105,9 +115,23 @@ function mapRow(row: QueueRow): SourceIntakeRequestSummary {
     updatedAt: row.updated_at ? iso(row.updated_at) : null,
     title: text(normalized.title) ?? row.source_request_number,
     description: text(normalized.description) ?? "No description recorded.",
+    trigger: text(normalized.trigger),
+    requestedOutcome: text(normalized.requestedOutcome),
     requestedFor: text(organization.requestedFor),
     businessDomain: text(organization.businessDomain),
     businessFunction: text(organization.businessFunction),
+    decisionOwner: text(governance.decisionOwner),
+    baselineOwner: text(governance.baselineOwner),
+    scopeIncluded: text(scope.included),
+    scopeExcluded: text(scope.excluded),
+    securityReviewNeeded:
+      typeof governance.securityReviewNeeded === "boolean"
+        ? governance.securityReviewNeeded
+        : null,
+    legalReviewNeeded:
+      typeof governance.legalReviewNeeded === "boolean"
+        ? governance.legalReviewNeeded
+        : null,
     value:
       amount !== null && currency
         ? { amount, currency, validated: false }
