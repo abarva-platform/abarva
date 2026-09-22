@@ -266,5 +266,9 @@ jobs:
       - name: Run the QA integration suites that pass on main
         run: npx jest src/__tests__/integration/qa --no-coverage --ci $(node scripts/quality/qa-integration-ignore-args.mjs)
 
-      - name: Refuse a new integration directory that no workflow reaches
-        run: npx jest --runTestsByPath src/__tests__/behaviors/integration-directory-ci-coverage.test.ts --no-coverage --ci
+      # T-595. `integration-directory-ci-coverage.test.ts` used to be named
+      # here. It lives in `src/__tests__/behaviors`, which the required
+      # `Behavior coverage floor` job sweeps whole, and this job is not a
+      # required check — so the named, quotable run was the one that cannot
+      # block a merge. The step moved into the floor. See
+      # docs/ci/README-suite-wiring.md.

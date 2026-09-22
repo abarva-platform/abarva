@@ -1,0 +1,34 @@
+{
+  "note": "The status-check contexts the `main` ruleset requires, and the directory sweeps a required job performs through a script rather than through a jest argument a workflow can be read for. This file exists because requiredness lives in GitHub repository settings, which no file in the repository can derive. It is therefore a MIRROR, and a mirror can go stale: `scripts/quality/check-named-suite-requiredness.mjs` narrows that risk by refusing any context here that names no job in `.github/workflows`, and by refusing any indirect sweep whose `provenBy` script does not actually pass `directory` to jest. Neither check can see a context ADDED to the ruleset and not written here, so update this file in the same pull request that changes the ruleset.",
+  "rulesetId": 17227397,
+  "readFrom": "GET /repos/abarva-platform/abarva/rulesets/17227397 on 2026-09-22",
+  "requiredContexts": [
+    "AI surface control catalog",
+    "Agent context broker boundary",
+    "Agent tool no-auto-action boundary",
+    "Backend load regression contract",
+    "Behavior coverage floor",
+    "Chrome Firefox Safari mobile smoke",
+    "ESLint",
+    "Gitleaks PR diff",
+    "Lighthouse CI budget",
+    "New migration drift surface",
+    "Next bundle budget",
+    "Production readiness gate",
+    "Public axe accessibility",
+    "Release record and impact note",
+    "Routes and disclaimers",
+    "Run hygiene_gate.sh",
+    "Typecheck + reasoning-layer tests",
+    "Wave 0 harnesses",
+    "npm audit report"
+  ],
+  "indirectSweeps": [
+    {
+      "context": "Behavior coverage floor",
+      "directory": "src/__tests__/behaviors",
+      "provenBy": "scripts/ci/check-behavior-coverage.mjs",
+      "reason": "The floor runs `npm run coverage:behavior-gate`, whose body is `node scripts/ci/check-behavior-coverage.mjs`; the jest argument is inside that script, so no reader of the workflow YAML can see the sweep."
+    }
+  ]
+}

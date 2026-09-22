@@ -66,3 +66,52 @@ hand-maintained list the sweep exists to avoid.
 
 If a future overlap is expensive rather than 1.8 seconds, decide which list owns the file
 rather than deleting whichever is easier to edit.
+
+## The rule: a named suite belongs in a job that can block a merge
+
+The paragraph above settles the *cost* of naming a suite that a sweep runs again. It does
+not settle the question that cost it something, and T-595 is where that surfaced.
+
+> **A workflow step may name an individual test suite by path only if the job hosting that
+> step is a required status check on `main`, whenever a required job already runs that
+> suite.**
+
+Why requiredness and not duplication. Three suites in `src/__tests__/behaviors` were named
+by exact path in `unit-suites.yml` and `integration-suites.yml`. Neither
+`Unit suites that pass on main` nor `Integration suites that pass on main` is a required
+context; `Behavior coverage floor` is, and it sweeps the whole directory. So all three
+blocked a merge — **nothing was unprotected** — but the *named, quotable* line in the log
+belonged to a check that cannot block a merge, and the merge-blocking run was anonymous
+inside a sweep. A closure note then quoted the named step as its CI proof. That is a true
+sentence about a real run being read as evidence of something it does not establish, and no
+amount of care about *which* line you quote fixes it: the log offers the misleading one
+first.
+
+The AgentDock pair above is not an instance of this. Both of its runs — the named steps in
+`coverage-threshold.yml` and the catalog's directory sweep — are inside required jobs, so
+either is honest to quote. Where the name lives is the thing; the duplicated second is not.
+
+What the rule does **not** say. A suite that only a non-required job runs may be named there:
+naming it is how it runs at all, and this rule is not a lever for making every workflow
+required. `unit-suites.yml` names dozens of suites nothing else reaches, and all of them are
+fine.
+
+So, when you want a control's execution self-evident in the log rather than inferable from a
+job's exit code — which is a good reason, and why T-590 named a step in the first place —
+put the named step in a required job. The floor in `coverage-threshold.yml` is the usual
+home: it already runs the whole behaviors directory, so a named step there costs about a
+second and makes the name and the gate the same run.
+
+### The control
+
+`npm run audit:named-suite-requiredness` (`scripts/quality/check-named-suite-requiredness.mjs`)
+enforces it, and runs in the required floor job — for the same reason the steps it polices do.
+Its behaviour is pinned by `src/__tests__/behaviors/named-suite-requiredness.test.ts`.
+
+Requiredness is not derivable from any file in this repository; it lives in GitHub repository
+settings. `docs/ci/required-status-checks.json` mirrors the `main` ruleset, and the control
+narrows the staleness that invites from both sides: a mirrored context that names no job in
+`.github/workflows` fails, and a declared indirect sweep — the floor's sweep lives inside
+`scripts/ci/check-behavior-coverage.mjs`, not in YAML a reader can see — fails unless that
+script still passes the directory to jest. Neither can see a context **added** to the ruleset
+and never written down. Update the mirror in the same pull request that changes the ruleset.

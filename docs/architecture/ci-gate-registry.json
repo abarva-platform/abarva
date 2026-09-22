@@ -423,6 +423,10 @@
     "audit:multi-tenant-runtime-retrieval-proof": {
       "kind": "unclassified"
     },
+    "audit:named-suite-requiredness": {
+      "kind": "pr-gate",
+      "reason": "T-595. Refuses a workflow step that names a test suite by path inside a job that is not a required status check, when a required job already runs that suite. Run by the required `Behavior coverage floor` job."
+    },
     "audit:new-client-onboarding-proof": {
       "kind": "unclassified"
     },
