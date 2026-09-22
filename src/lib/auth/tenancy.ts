@@ -82,16 +82,17 @@ export async function requireTenancy(
   }
   if (!client) throw new TenancyError("no_client");
 
-  // Operator/demo personas can authenticate via Clerk metadata without a graph
-  // `persons` row, leaving userId as a non-UUID "clerk:<id>" fallback — which
-  // breaks uuid-typed actor writes (e.g. the Move phase-advance approver) and
-  // role/access resolution. JIT-provision the identity rows (persons + ONE
-  // membership) for the single active canonical tenant so userId is always a real
-  // UUID. Identity-only and fail-safe: on any failure we keep the clerk fallback
-  // and the downstream "operator person row required" safe error.
+  // Authenticated operator personas may have no person row or an existing row
+  // whose placeholder name predates the governed-review identity contract.
+  // Reconcile both through the same idempotent, canonical-tenant provisioner.
+  // Identity-only and fail-safe: on any failure we keep the resolved identity and
+  // the downstream "operator person row required" safe error.
   let resolvedUserId = userId;
   let resolvedRole = person?.role ?? user?.primaryRole ?? undefined;
-  if (userId.startsWith("clerk:") && user?.clerkUserId) {
+  if (
+    user?.clerkUserId &&
+    !user.clerkUserId.startsWith("private-proof:")
+  ) {
     const provisioned = await ensureOperatorPersonProvisioned({
       clerkUserId: user.clerkUserId,
       email: user.email ?? null,
