@@ -114,6 +114,21 @@ describe("buildApprovalWorkspaceDecisions", () => {
     );
   });
 
+  it("audits a recorded decision without re-applying current-action authorization", () => {
+    const result = decision({
+      ...base,
+      approvalRecorded: true,
+      gateActionArmed: false,
+      approvalRationale: null,
+    });
+
+    expect(result.status).toBe("recorded");
+    expect(result.primaryAction.enabled).toBe(false);
+    expect(result.blockers.map((blocker) => blocker.code)).toEqual([
+      "approval_already_recorded",
+    ]);
+  });
+
   it("enables exactly one primary action when the readiness contract is satisfied", () => {
     const group = buildApprovalWorkspaceDecisions(base)[0]!;
     const enabledActions = group.decisions.filter(

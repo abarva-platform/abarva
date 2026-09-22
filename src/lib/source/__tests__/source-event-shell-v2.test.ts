@@ -657,6 +657,14 @@ describe("buildSourceEventShellView", () => {
     expect(view.approvals.readinessLine).toBe(
       "Value approval is recorded. No further stage decision is required.",
     );
+    expect(view.approvals.pendingDecisionGroups[0]?.decisions[0]).toMatchObject({
+      status: "recorded",
+      versionKey: `${EVENT.id}:value`,
+      reviewerRole: "Source stage approver",
+      blockers: expect.arrayContaining([
+        expect.objectContaining({ code: "approval_already_recorded" }),
+      ]),
+    });
   });
 
   it("does not present completed RFP inputs as cleanly ready when gate artifacts are draft or missing", () => {

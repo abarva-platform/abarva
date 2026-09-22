@@ -885,6 +885,8 @@ describe("SourceAnalyticsCanvas stage workflow", () => {
       ...APPROVAL,
       stageKey: "value",
       stageLabel: "Value",
+      versionKey: `${valueEvent.id}:value`,
+      versionLabel: "Value",
       ask: "Approve advancing out of Value.",
     };
 
@@ -921,6 +923,53 @@ describe("SourceAnalyticsCanvas stage workflow", () => {
     expect(
       screen.queryByText("Approve advancing out of Value."),
     ).not.toBeInTheDocument();
+  });
+
+  it("fails closed when a recorded terminal approval has no bound decision metadata", () => {
+    const completeValueStage = {
+      ...SAMPLE_SCOPE_STAGE,
+      stageKey: "value" as const,
+      stageName: "Value",
+      tasks: SAMPLE_SCOPE_STAGE.tasks.map((task) => ({
+        ...task,
+        state: "done" as const,
+        evidenceComplete: true,
+      })),
+    };
+    const valueEvent: SourcingEventSummary = {
+      ...EVENT,
+      currentStageKey: "value",
+      currentStageLabel: "Value",
+    };
+
+    render(
+      <SourceAnalyticsCanvas
+        event={valueEvent}
+        viewStage="value"
+        tenantName="Demo Client"
+        stageView={completeValueStage}
+        approvalItems={[]}
+        approvalLedger={[
+          {
+            stageKey: "value",
+            stageLabel: "Value",
+            index: 11,
+            state: "approved",
+            approverName: "A. Approver",
+            approvedAtIso: "2026-09-09T00:00:00.000Z",
+            authorizationNote: "Approved by A. Approver.",
+            approverRationale: "Final value record accepted.",
+          },
+        ]}
+        initialWorkspace="approvals"
+      />,
+    );
+
+    const readiness = screen.getByTestId("source-shell-approval-readiness");
+    expect(readiness).toHaveTextContent("Approval recorded; audit gaps open");
+    expect(readiness).toHaveTextContent("Resolve approval record gaps");
+    expect(readiness).not.toHaveTextContent("No further approval required");
+    expect(screen.queryByText("Approve now")).not.toBeInTheDocument();
   });
 
   it("renders a historically approved RFP with current gaps as remediation, not a new approval gate", () => {
