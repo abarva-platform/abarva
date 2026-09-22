@@ -13,12 +13,13 @@ const inputPath = path.join(
   "datasets/source-servicenow-sourcing-requests-synthetic-v1/servicenow_sourcing_requests.csv",
 );
 const csvText = readFileSync(inputPath, "utf8");
+const testEnv = { NODE_ENV: "test" } as NodeJS.ProcessEnv;
 
 function args(overrides: Partial<ReturnType<typeof parseServiceNowImportArgs>> = {}) {
   return {
     ...parseServiceNowImportArgs(
       ["--input", inputPath, "--load-run-id", "test-load-run"],
-      {},
+      testEnv,
     ),
     ...overrides,
   };
@@ -70,7 +71,7 @@ describe("ServiceNow sourcing request loader", () => {
   });
 
   it("requires an explicit tenant for apply mode", () => {
-    expect(() => parseServiceNowImportArgs(["--apply"], {})).toThrow(
+    expect(() => parseServiceNowImportArgs(["--apply"], testEnv)).toThrow(
       "Apply mode requires --tenant-key.",
     );
   });
