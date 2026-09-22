@@ -72,6 +72,44 @@ describe("withoutIdentifierTokens", () => {
   });
 });
 
+describe("contractPurposeSummary — the surface still applies the refusal control", () => {
+  /*
+   * The companion to
+   * `src/__tests__/behaviors/source-contract-purpose-refusal-alternatives.test.ts`.
+   *
+   * That suite holds the control's own behaviour — every alternative in
+   * `UNREVIEWED_PURPOSE_TOKENS` refuses, including the snake_case one that
+   * could never match until T-591 put the list ahead of identifier stripping.
+   * It imports the control from lib, which is what keeps the behaviour floor's
+   * coverage denominator honest, and that leaves one thing it cannot see:
+   * whether this card still calls the control at all.
+   *
+   * So this case asserts the wiring, on the input that regressed. Delete the
+   * `usableScopeSummary` call from `contractPurposeSummary` and the lib suite
+   * stays green while this one fails.
+   */
+  it("refuses a stored purpose whose prose carries a governing clause identifier", () => {
+    const summary = contractPurposeSummary(
+      contractWith({
+        purpose_summary:
+          "Application managed services covering claims analytics for_cause_only.",
+      }),
+      coverage,
+    );
+
+    expect(summary.heading).toBe("Purpose review needed");
+    expect(summary.body).toBe(
+      "No reviewed contract-purpose extraction is available.",
+    );
+    // The failure this guards against is not a leaked identifier — it is the
+    // opposite. The identifier was stripped and the remaining prose was
+    // presented as a reviewed purpose with a governing clause removed from it.
+    expect(summary.body).not.toContain(
+      "Application managed services covering claims analytics",
+    );
+  });
+});
+
 describe("contractPurposeSummary", () => {
   it("never renders a database identifier in the body", () => {
     const purpose = contractPurposeSummary(
