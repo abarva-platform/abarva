@@ -40,8 +40,24 @@ import { execFileSync } from "node:child_process";
 // Parsing. Exported so the suite can assert on structure, not on stdout prose.
 // ---------------------------------------------------------------------------
 
-/** `2026-09-21T16:04Z` or `2026-09-21T16:04:31Z` at the head of a line. */
-const STAMP_HEAD = /^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2})?Z)\s*\|?\s*([A-Za-z0-9_.-]+)?/;
+/**
+ * `2026-09-21T16:04Z` or `2026-09-21T16:04:31Z` at the head of a line,
+ * followed by the agent token.
+ *
+ * That token may carry a run id (`base-agent#run-id`), and it must. A
+ * scheduled task's name identifies a FAMILY of runs; T-594 exists because two
+ * concurrent runs of one task each read a claim written under their shared
+ * base name and each reasonably concluded it was their own.
+ *
+ * `resolveClaimOwnership` below has always drawn that distinction correctly,
+ * and every assertion for it passed a string literal in by hand. Measured on
+ * the real register before `#` was added here, parsing produced 81 distinct
+ * agent tokens and **0 of them carried a run id** — so the resolver was only
+ * ever exercised on inputs the real pipeline could not produce, and on the
+ * register itself all 18 of one task's runs collapsed into a single identity.
+ * The fixture could not reach the branch.
+ */
+const STAMP_HEAD = /^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2})?Z)\s*\|?\s*([A-Za-z0-9_.#-]+)?/;
 
 /** Any ISO instant anywhere in the body — the endpoints an elapsed claim cites. */
 const ISO_ANY = /\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?Z/g;
@@ -114,7 +130,7 @@ export function parseRegisterLines(text) {
   const lines = text.split("\n");
   for (let i = 0; i < lines.length; i += 1) {
     const raw = lines[i];
-    const head = raw.match(STAMP_HEAD) ?? raw.match(/^-\s*item\s.*?\|\s*([A-Za-z0-9_.-]+)\s*\|\s*(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2})?Z)/);
+    const head = raw.match(STAMP_HEAD) ?? raw.match(/^-\s*item\s.*?\|\s*([A-Za-z0-9_.#-]+)\s*\|\s*(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2})?Z)/);
     if (!head) continue;
     const stamp = raw.startsWith("-") ? head[2] : head[1];
     const agent = raw.startsWith("-") ? head[1] : (head[2] ?? "unknown");
@@ -285,6 +301,104 @@ export function auditLines(lines, { nowMs, sinceMs, authority }) {
   return { violations, drift, inWindow, outOfWindow, stampRegressions, total: lines.length };
 }
 
+/**
+ * Item 34 — one worktree per session.
+ *
+ * On 18 Sep two sessions drove one shared checkout at the same time. Its
+ * index, HEAD and working tree are shared state: one session's uncommitted
+ * edit was discarded by the other's branch creation, and one session's commit
+ * was pushed inside the other's pull request. The answer — each session gets
+ * its own `git worktree` — was written into the operator protocol as prose,
+ * and prose cannot fail. This is that rule as something that runs.
+ *
+ * A worktree path named by two different run identities inside the window is
+ * the collision. The same identity naming its own worktree across a claim line
+ * and a release line is the normal case and must stay silent.
+ *
+ * Three boundaries matter, and each was found by measurement rather than
+ * reasoning:
+ *
+ *   - Attribution follows a STAMPED record start only. A wrapped continuation
+ *     carries no stamp and belongs to the record above it; crediting it to
+ *     whichever agent was last seen invents an owner. A throwaway version of
+ *     this detector did exactly that against the real register and reported a
+ *     shared path that was not shared — the same record-boundary defect T-702
+ *     repaired in the board generator, reproduced independently here.
+ *
+ *   - Identity is the WHOLE token, never the base name. `lane-a` and
+ *     `lane-a#run-2` are not one owner: comparing base names would read a
+ *     genuine two-run collision as a single session's own traffic, which is
+ *     the precise failure this control exists to catch.
+ *
+ *   - A path must be CLAIMED, not merely cited. See WORKTREE_CUE.
+ */
+export function auditWorktreeOwnership(lines, { sinceMs }) {
+  const violations = [];
+  const owners = new Map();
+
+  for (const line of lines) {
+    if (!Number.isFinite(line.stampMs) || line.stampMs < sinceMs) continue;
+    for (const path of worktreePaths(line.text)) {
+      if (!owners.has(path)) owners.set(path, new Map());
+      const seen = owners.get(path);
+      if (!seen.has(line.agent)) seen.set(line.agent, line.lineNumber);
+    }
+  }
+
+  for (const [path, seen] of owners) {
+    if (seen.size < 2) continue;
+    const who = [...seen.entries()].sort((a, b) => a[1] - b[1]);
+    violations.push({
+      code: "worktree_shared",
+      stamp: null,
+      agent: who[0][0],
+      lineNumber: who[0][1],
+      detail:
+        `worktree ${path} is named by ${seen.size} run identities — ` +
+        who.map(([agent, at]) => `${agent} (line ${at})`).join(", ") +
+        ". One checkout's index, HEAD and working tree are shared state: see item 34.",
+    });
+  }
+
+  return violations;
+}
+
+/**
+ * Worktree paths as the register actually writes them. Deliberately anchored
+ * to the forms in use rather than to anything path-shaped: the register quotes
+ * `src/...` and `scripts/...` constantly in file lists, and a detector that
+ * read every path as a checkout would fire on those instead.
+ */
+const WORKTREE_PATH =
+  /(?:\/private)?\/tmp\/[A-Za-z0-9._-]*(?:exec|worktree|wt)[A-Za-z0-9._-]*|\.claude\/worktrees\/[A-Za-z0-9._-]+|(?:\/Users\/[A-Za-z0-9._-]+)?\/\.codex\/worktrees\/[A-Za-z0-9._\/-]+/g;
+
+/**
+ * A cue that the path is where this run WORKS, not one it merely cites.
+ *
+ * This is not a refinement anyone reasoned their way to. The first version of
+ * this control had no cue and was run against the real register, where it
+ * reported one shared worktree — fired by a claim line that quoted another
+ * run's path while narrating a false positive it had just diagnosed. The
+ * register is discursive and lanes cite each other's paths constantly, so a
+ * bare mention cannot mean occupancy.
+ *
+ * Short reach, immediately before the path, on the same idiom as
+ * MERGE_NEGATOR above: `own worktree /tmp/...`, `in my own worktree`,
+ * `worktree /tmp/... removed`, `checkout /tmp/...`.
+ */
+const WORKTREE_CUE = /\b(?:worktree|worktrees|checkout)\b[^.]{0,12}$/i;
+
+function worktreePaths(text) {
+  WORKTREE_PATH.lastIndex = 0;
+  const found = [];
+  for (const match of text.matchAll(WORKTREE_PATH)) {
+    const before = text.slice(Math.max(0, match.index - 40), match.index);
+    if (!WORKTREE_CUE.test(before)) continue;
+    found.push(match[0].replace(/[.,;:`)\]]+$/, ""));
+  }
+  return [...new Set(found)];
+}
+
 /** Drift spread, which is the number that says whether a single offset would fix it. */
 export function summariseDrift(drift) {
   if (drift.length === 0) return null;
@@ -440,6 +554,10 @@ export const HARD_CODES = new Set([
   // noise, so it is exact enough to fail a run.
   "closeout_missing",
   "closeout_authority_empty",
+  // Item 34. The failure it names already happened once and cost real work:
+  // discarded edits, and a commit pushed inside another session's pull
+  // request. An advisory line would have read exactly like the 18 Sep one.
+  "worktree_shared",
 ]);
 
 // ---------------------------------------------------------------------------
@@ -563,6 +681,10 @@ if (isMain()) {
   }
 
   const report = auditLines(lines, { nowMs, sinceMs, authority });
+
+  // Item 34. Runs unconditionally: it needs no authority and no network,
+  // only the register it was already handed.
+  report.violations.push(...auditWorktreeOwnership(lines, { sinceMs }));
 
   // Closeout coverage. Off unless asked for, because it needs an authority
   // that says which merges happened and the content audit does not.
