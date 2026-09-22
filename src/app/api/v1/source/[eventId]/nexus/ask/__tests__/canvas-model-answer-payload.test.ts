@@ -147,6 +147,7 @@ function deterministicStubResponse() {
 
 const callSourceCanvasChatModelMock = jest.fn();
 const buildVendorCoverageGovernedAnswerMock = jest.fn();
+const buildEvidenceReadinessGovernedAnswerMock = jest.fn();
 
 jest.mock("@/lib/auth/tenancy", () => ({
   requireTenancy: jest.fn(async () => ({
@@ -261,6 +262,17 @@ jest.mock("@/lib/source/ava/vendor-coverage-governed-answer", () => ({
     buildVendorCoverageGovernedAnswerMock(...args),
 }));
 
+jest.mock("@/lib/source/ava/evidence-readiness-governed-answer", () => {
+  const actual = jest.requireActual(
+    "@/lib/source/ava/evidence-readiness-governed-answer",
+  );
+  return {
+    ...actual,
+    buildEvidenceReadinessGovernedAnswer: (...args: unknown[]) =>
+      buildEvidenceReadinessGovernedAnswerMock(...args),
+  };
+});
+
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const { POST } = require("@/app/api/v1/source/[eventId]/nexus/ask/route") as {
   POST: (
@@ -344,6 +356,52 @@ function supportMetric(parts: AgentResponsePart[]) {
 beforeEach(() => {
   callSourceCanvasChatModelMock.mockReset();
   buildVendorCoverageGovernedAnswerMock.mockReset();
+  buildEvidenceReadinessGovernedAnswerMock.mockReset();
+});
+
+describe("Source canvas chat · Source New phase completion routing", () => {
+  it("passes recorded phase, blocker, next action, and missing inputs to the governed answer", async () => {
+    callSourceCanvasChatModelMock.mockResolvedValue({
+      text: "The event response is available for review.",
+      evidenceCitations: [],
+      warnings: [],
+    });
+    buildEvidenceReadinessGovernedAnswerMock.mockResolvedValue({
+      directAnswer:
+        "Define is not complete. Open scope and strategy; approved scope is missing.",
+      intent: "source_stage_completion",
+      citations: [],
+      artifacts: [],
+    });
+
+    const lines = await askCanvasNdjson(
+      "What do I need to complete Define, and which evidence is still missing?",
+    );
+
+    expect(buildEvidenceReadinessGovernedAnswerMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        eventId: "evt-test",
+        clientKey: "example-tenant",
+        question:
+          "What do I need to complete Define, and which evidence is still missing?",
+        stageContext: {
+          stageLabel: "responses",
+          nextAction: undefined,
+          blocker: undefined,
+          missingInputs: [],
+        },
+      }),
+    );
+    expect(lines).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          type: "summary",
+          summary:
+            "Define is not complete. Open scope and strategy; approved scope is missing.",
+        }),
+      ]),
+    );
+  });
 });
 
 describe("Source canvas chat · the rendered payload describes the answer that is shown", () => {
