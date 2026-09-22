@@ -16,6 +16,9 @@ import { buildSourceNewEventIntelligence } from "@/lib/source/new-workspace/even
 import { buildSourceEventStagePlanSnapshot } from "@/lib/source/new-workspace/stage-plan-snapshot";
 import { readSourceNewStage04VendorPanel } from "@/lib/source/new-workspace/stage04-vendor-panel";
 import { readSourceNewStage05NdaCoverage } from "@/lib/source/new-workspace/stage05-nda-coverage";
+import { buildSourceNewResponseIntake } from "@/lib/source/new-workspace/response-intake";
+import { listSourceArtifactsForStage } from "@/lib/source/artifact-registry";
+import { readNormalizedVendorResponsePackages } from "@/lib/source/vendor-response-persistence";
 import { buildScorecardAuthorityView } from "@/lib/source/proposal-intelligence";
 
 export const dynamic = "force-dynamic";
@@ -73,6 +76,8 @@ export default async function SourceNewEventPage({
     requestVersion,
     stage04VendorPanel,
     stage05NdaCoverage,
+    responseArtifactsResult,
+    normalizedResponsePackagesResult,
   ] = await Promise.all([
     listSourceArtifacts(
       event.id,
@@ -96,6 +101,15 @@ export default async function SourceNewEventPage({
       eventId: event.id,
       asOf: asOfDate,
     }),
+    listSourceArtifactsForStage(activeClient.key, event.id, "responses")
+      .then((data) => ({ kind: "available" as const, data }))
+      .catch(() => ({ kind: "unavailable" as const, data: null })),
+    readNormalizedVendorResponsePackages({
+      tenantKey: activeClient.key,
+      eventId: event.id,
+    })
+      .then((data) => ({ kind: "available" as const, data }))
+      .catch(() => ({ kind: "unavailable" as const, data: null })),
   ]);
 
   // Request authority, read from the persisted version store rather than
@@ -200,6 +214,30 @@ export default async function SourceNewEventPage({
     criteria: [],
     scores: [],
   });
+  const responseReadBlockers = [
+    responseArtifactsResult.kind === "unavailable"
+      ? "The response-stage artifact registry could not be read."
+      : null,
+    normalizedResponsePackagesResult.kind === "unavailable"
+      ? "The normalized response parser output could not be read."
+      : null,
+  ].filter((blocker): blocker is string => Boolean(blocker));
+  const responseIntake = buildSourceNewResponseIntake({
+    eventId: event.id,
+    asOf: asOfDate,
+    uploadActionHref: `/api/v1/source/${encodeURIComponent(event.id)}/artifacts/upload`,
+    vendorPanel: stage04VendorPanel,
+    files,
+    responseArtifacts:
+      responseArtifactsResult.kind === "available"
+        ? responseArtifactsResult.data
+        : null,
+    normalizedPackages:
+      normalizedResponsePackagesResult.kind === "available"
+        ? normalizedResponsePackagesResult.data
+        : null,
+    readBlockers: responseReadBlockers,
+  });
 
   return (
     <SourceNewWorkspace
@@ -235,6 +273,7 @@ export default async function SourceNewEventPage({
       stage04VendorPanel={stage04VendorPanel}
       stage05NdaCoverage={stage05NdaCoverage}
       scorecardAuthority={scorecardAuthority}
+      responseIntake={responseIntake}
     />
   );
 }

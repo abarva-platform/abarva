@@ -870,6 +870,7 @@ jobs:
           src/lib/source/new-workspace/step-readiness.test.ts
           src/lib/source/new-workspace/navigation.test.ts
           src/lib/source/new-workspace/event-intelligence.test.ts
+          src/lib/source/new-workspace/__tests__/response-intake.test.ts
           --no-coverage --ci
 
       # The governed Tower answer contract. Measured on origin/main at

@@ -30,6 +30,7 @@ import {
 } from "@/lib/source/new-workspace/phase-state";
 import { normalizeSourceStageKey } from "@/lib/source/constants";
 import type { SourceNewEventIntelligenceView } from "@/lib/source/new-workspace/event-intelligence";
+import type { SourceNewResponseIntake } from "@/lib/source/new-workspace/response-intake";
 import type { SourceNewStage04VendorPanel } from "@/lib/source/new-workspace/stage04-vendor-panel";
 import type { SourceNewStage05NdaCoverage } from "@/lib/source/new-workspace/stage05-nda-coverage";
 import type { ScorecardAuthorityView } from "@/lib/source/proposal-intelligence";
@@ -255,6 +256,8 @@ export type SourceNewWorkspaceProps = {
   stage05NdaCoverage: SourceNewStage05NdaCoverage;
   /** Required server projection; missing scorecard authority must fail closed. */
   scorecardAuthority: ScorecardAuthorityView;
+  /** Responses-stage supplier workbook intake projection. */
+  responseIntake?: SourceNewResponseIntake;
 };
 
 export function SourceNewWorkspace({
@@ -265,6 +268,7 @@ export function SourceNewWorkspace({
   stage04VendorPanel,
   stage05NdaCoverage,
   scorecardAuthority,
+  responseIntake,
 }: SourceNewWorkspaceProps) {
   const evidence = useMemo(
     () => phaseEvidence(event, files, stage05NdaCoverage),
@@ -442,10 +446,14 @@ export function SourceNewWorkspace({
                     </p>
                   )}
                   {responsesStage && (
-                    <SourceNewStage04VendorReadiness
-                      event={event}
-                      responseRows={responseRows}
-                    />
+                    responseIntake ? (
+                      <SourceNewResponseIntakePanel intake={responseIntake} />
+                    ) : (
+                      <SourceNewStage04VendorReadiness
+                        event={event}
+                        responseRows={responseRows}
+                      />
+                    )
                   )}
                   {phase === "suppliers" && (
                     <SourceNewStage04VendorPanelView
@@ -478,10 +486,14 @@ export function SourceNewWorkspace({
                     </p>
                   )}
                   {responsesStage && (
-                    <SourceNewStage04VendorReadiness
-                      event={event}
-                      responseRows={responseRows}
-                    />
+                    responseIntake ? (
+                      <SourceNewResponseIntakePanel intake={responseIntake} />
+                    ) : (
+                      <SourceNewStage04VendorReadiness
+                        event={event}
+                        responseRows={responseRows}
+                      />
+                    )
                   )}
                   {phase === "suppliers" && (
                     <SourceNewStage04VendorPanelView
@@ -721,6 +733,161 @@ function SourceNewStage04VendorReadiness({
       <p className="snw-note">
         Vendor contact, send, and notification actions stay unavailable until a
         verified participant authority record exists in the governed event.
+      </p>
+    </section>
+  );
+}
+
+function stateLabel(value: string): string {
+  return value
+    .split("_")
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ");
+}
+
+function SourceNewResponseIntakePanel({
+  intake,
+}: {
+  intake: SourceNewResponseIntake;
+}) {
+  const firstSupplier = intake.rows[0] ?? null;
+  return (
+    <section
+      className="snw-response-intake"
+      aria-label="Vendor response intake"
+    >
+      <p className="snw-eyebrow">Responses · Intake</p>
+      <h3>Vendor response intake</h3>
+      <p>
+        Select one accepted fictional supplier and upload that supplier&apos;s
+        synthetic response workbook. This surface records intake state only: it
+        does not contact suppliers, score responses, approve evaluation, or
+        create an award recommendation.
+      </p>
+      {intake.status === "blocked" ? (
+        <div className="snw-vendor-readiness-blockers">
+          <strong>Readback blocked</strong>
+          <ul>
+            {intake.blockers.map((blocker) => (
+              <li key={blocker}>{blocker}</li>
+            ))}
+          </ul>
+        </div>
+      ) : (
+        <>
+          <form
+            className="snw-response-upload"
+            action={intake.uploadActionHref}
+            method="post"
+            encType="multipart/form-data"
+          >
+            <input type="hidden" name="stageKey" value="responses" />
+            <input type="hidden" name="artifactFamily" value="proposal" />
+            <input
+              type="hidden"
+              name="artifactKind"
+              value="vendor_response_workbook"
+            />
+            <input
+              type="hidden"
+              name="dataProtectionClassification"
+              value="Internal"
+            />
+            <label>
+              Accepted supplier
+              <select
+                name="vendorName"
+                defaultValue={firstSupplier?.legalName ?? ""}
+                disabled={intake.rows.length === 0}
+              >
+                {intake.rows.length === 0 ? (
+                  <option value="">No accepted supplier recorded</option>
+                ) : (
+                  intake.rows.map((row) => (
+                    <option key={row.authorityId} value={row.legalName}>
+                      {row.legalName}
+                    </option>
+                  ))
+                )}
+              </select>
+            </label>
+            <label>
+              Synthetic response workbook
+              <input
+                name="file"
+                type="file"
+                accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                disabled={intake.rows.length === 0}
+              />
+            </label>
+            <button
+              className="snw-primary"
+              type="submit"
+              disabled={intake.rows.length === 0}
+            >
+              Upload workbook
+            </button>
+          </form>
+          {intake.blockers.length > 0 && (
+            <div className="snw-vendor-readiness-blockers">
+              <strong>Open intake gaps</strong>
+              <ul>
+                {intake.blockers.map((blocker) => (
+                  <li key={blocker}>{blocker}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+          <div className="snw-response-suppliers">
+            {intake.rows.map((row) => (
+              <article key={row.authorityId}>
+                <div className="snw-response-supplier-heading">
+                  <strong>{row.legalName}</strong>
+                  <span>{stateLabel(row.supplierGroup)}</span>
+                </div>
+                <dl>
+                  <div>
+                    <dt>Upload</dt>
+                    <dd>{stateLabel(row.uploadState)}</dd>
+                  </div>
+                  <div>
+                    <dt>Parse</dt>
+                    <dd>{stateLabel(row.parseState)}</dd>
+                  </div>
+                  <div>
+                    <dt>Availability review</dt>
+                    <dd>{stateLabel(row.availabilityReviewState)}</dd>
+                  </div>
+                  <div>
+                    <dt>Workbook</dt>
+                    <dd>{row.workbookName ?? "Not uploaded"}</dd>
+                  </div>
+                  <div>
+                    <dt>Normalized rows</dt>
+                    <dd>
+                      {row.parsedRequirementCount > 0
+                        ? `${row.parsedRequirementCount} normalized requirement rows`
+                        : "No normalized rows read back"}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt>Reviewer</dt>
+                    <dd>{row.reviewedBy ?? "Not reviewed"}</dd>
+                  </div>
+                </dl>
+              </article>
+            ))}
+          </div>
+        </>
+      )}
+      <div className="snw-nda-next">
+        <strong>{intake.nextAction.label}</strong>
+        <p>{intake.nextAction.detail}</p>
+      </div>
+      <p className="snw-note">
+        Availability review only confirms that parsed evidence is available for
+        workflow use. It is not legal, security, commercial, finance,
+        final-acceptance, scoring, or award approval.
       </p>
     </section>
   );

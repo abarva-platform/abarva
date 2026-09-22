@@ -713,6 +713,76 @@ describe("SourceNewWorkspace", () => {
     ).toBe("/source/events/event-1");
   });
 
+  it("mounts response intake for one accepted supplier without making approval or award claims", () => {
+    render(
+      <SourceNewWorkspace
+        event={{
+          ...request,
+          currentStage: "responses",
+          lifecycle: "waiting_on_vendor",
+        }}
+        files={[]}
+        {...({
+          responseIntake: {
+            status: "available",
+            blockers: [],
+            asOf: "2026-03-10",
+            uploadActionHref: "/api/v1/source/event-1/artifacts/upload",
+            rows: [
+              {
+                supplierId: "supplier-alpha",
+                authorityId: "authority-alpha",
+                legalName: "Northstar Field Services",
+                supplierGroup: "eligible_candidate",
+                acceptedByName: "Named Procurement Reviewer",
+                acceptedAt: "2026-03-09T14:00:00Z",
+                evidenceReference: "candidate-panel-v1",
+                uploadState: "uploaded",
+                parseState: "parsed",
+                availabilityReviewState: "available",
+                workbookName: "northstar-response.xlsx",
+                artifactId: "artifact-response-1",
+                artifactVersion: 1,
+                parsedRequirementCount: 18,
+                uploadedAt: "2026-03-10T10:00:00Z",
+                reviewedBy: "Named Evidence Reviewer",
+                reviewedAt: "2026-03-10T12:00:00Z",
+              },
+            ],
+            nextAction: {
+              label: "Review normalized response availability",
+              detail:
+                "Availability review is recorded; evaluation remains blocked until governed scoring evidence exists.",
+            },
+          },
+        } as Record<string, unknown>)}
+      />,
+    );
+
+    const panel = screen.getByRole("region", {
+      name: "Vendor response intake",
+    });
+    expect(
+      within(panel).getByRole("heading", {
+        name: "Vendor response intake",
+      }),
+    ).toBeTruthy();
+    expect(
+      within(panel).getAllByText("Northstar Field Services").length,
+    ).toBeGreaterThanOrEqual(2);
+    expect(within(panel).getByText("Uploaded")).toBeTruthy();
+    expect(within(panel).getByText("Parsed")).toBeTruthy();
+    expect(within(panel).getByText("Available")).toBeTruthy();
+    expect(
+      within(panel).getByText("18 normalized requirement rows"),
+    ).toBeTruthy();
+    expect(within(panel).getByLabelText("Accepted supplier")).toBeTruthy();
+    expect(within(panel).getByLabelText("Synthetic response workbook")).toBeTruthy();
+    expect(document.body.textContent ?? "").not.toMatch(
+      /selected supplier|award approved|score complete|client-final/i,
+    );
+  });
+
   it("keeps evidence separate from category classification", () => {
     render(
       <SourceNewWorkspace event={{ ...request, category: "ams" }} files={[]} />,

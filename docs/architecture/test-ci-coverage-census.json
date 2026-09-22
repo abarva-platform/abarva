@@ -15,18 +15,18 @@
     "No timestamp is recorded, so refreshing this file on an unchanged tree is a no-op."
   ],
   "counts": {
-    "testFiles": 2394,
-    "coveredTestFiles": 1912,
-    "pullRequestCoveredTestFiles": 1909,
-    "uncoveredTestFiles": 482,
-    "directoriesWithTests": 482,
-    "directoriesFullyCovered": 279,
+    "testFiles": 2397,
+    "coveredTestFiles": 1914,
+    "pullRequestCoveredTestFiles": 1911,
+    "uncoveredTestFiles": 483,
+    "directoriesWithTests": 483,
+    "directoriesFullyCovered": 280,
     "directoriesPartiallyCovered": 26,
     "directoriesUncovered": 177,
     "directoriesWithUnrunTestFiles": 203,
     "directoriesWithUntriagedUnrunTestFiles": 193,
     "declaredQuarantineTestFiles": 49,
-    "untriagedUnrunTestFiles": 433,
+    "untriagedUnrunTestFiles": 434,
     "indeterminateInvocations": 0,
     "unresolvedIgnoreArguments": 0,
     "criticalGovernedRiskDirectories": 1,
@@ -229,6 +229,16 @@
       ]
     },
     {
+      "directory": "src/lib/source/new-workspace/__tests__",
+      "testFiles": 4,
+      "coveredTestFiles": 3,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 1,
+      "via": [
+        "command"
+      ]
+    },
+    {
       "directory": "src/app/(maestro)/source/__tests__",
       "testFiles": 3,
       "coveredTestFiles": 2,
@@ -274,16 +284,6 @@
       "coveredTestFiles": 1,
       "declaredQuarantineTestFiles": 0,
       "untriagedUnrunTestFiles": 2,
-      "via": [
-        "command"
-      ]
-    },
-    {
-      "directory": "src/lib/source/new-workspace/__tests__",
-      "testFiles": 3,
-      "coveredTestFiles": 2,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 1,
       "via": [
         "command"
       ]
@@ -2891,6 +2891,69 @@
       }
     },
     {
+      "directory": "src/lib/source/candidate-suppliers/__tests__",
+      "testPath": "src/lib/source/candidate-suppliers/__tests__/candidate-supplier-registry-repository.test.ts",
+      "enumerated": true,
+      "collected": false,
+      "run": false,
+      "green": "unknown",
+      "covered": false,
+      "pullRequestCovered": false,
+      "declaredQuarantine": false,
+      "untriaged": true,
+      "via": [],
+      "governedRisk": {
+        "score": 10,
+        "band": "high",
+        "signals": [
+          "tenant_scoped_read"
+        ],
+        "rank": 4
+      }
+    },
+    {
+      "directory": "src/lib/source/candidate-suppliers/__tests__",
+      "testPath": "src/lib/source/candidate-suppliers/__tests__/event-candidate-acceptance-repository.test.ts",
+      "enumerated": true,
+      "collected": false,
+      "run": false,
+      "green": "unknown",
+      "covered": false,
+      "pullRequestCovered": false,
+      "declaredQuarantine": false,
+      "untriaged": true,
+      "via": [],
+      "governedRisk": {
+        "score": 10,
+        "band": "high",
+        "signals": [
+          "tenant_scoped_read"
+        ],
+        "rank": 4
+      }
+    },
+    {
+      "directory": "src/lib/source/candidate-suppliers/__tests__",
+      "testPath": "src/lib/source/candidate-suppliers/__tests__/event-candidate-authority-repository.test.ts",
+      "enumerated": true,
+      "collected": false,
+      "run": false,
+      "green": "unknown",
+      "covered": false,
+      "pullRequestCovered": false,
+      "declaredQuarantine": false,
+      "untriaged": true,
+      "via": [],
+      "governedRisk": {
+        "score": 10,
+        "band": "high",
+        "signals": [
+          "tenant_scoped_read"
+        ],
+        "rank": 4
+      }
+    },
+    {
       "directory": "src/lib/source/contract-evidence/__tests__",
       "testPath": "src/lib/source/contract-evidence/__tests__/evidence-review.test.ts",
       "enumerated": true,
@@ -2910,7 +2973,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 4
+        "rank": 5
       }
     },
     {
@@ -2931,7 +2994,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 4
+        "rank": 5
       }
     },
     {
@@ -2952,7 +3015,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 4
+        "rank": 5
       }
     },
     {
@@ -2973,7 +3036,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 4
+        "rank": 5
       }
     },
     {
@@ -2996,7 +3059,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 5
+        "rank": 6
       }
     },
     {
@@ -3019,7 +3082,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 5
+        "rank": 6
       }
     },
     {
@@ -3040,7 +3103,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 5
+        "rank": 6
       }
     },
     {
@@ -3061,7 +3124,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 5
+        "rank": 6
       }
     },
     {
@@ -3082,7 +3145,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 6
+        "rank": 7
       }
     },
     {
@@ -3103,7 +3166,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 6
+        "rank": 7
       }
     },
     {
@@ -3126,7 +3189,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 6
+        "rank": 7
       }
     },
     {
@@ -3149,7 +3212,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 7
+        "rank": 8
       }
     },
     {
@@ -3172,7 +3235,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 7
+        "rank": 8
       }
     },
     {
@@ -3193,7 +3256,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 7
+        "rank": 8
       }
     },
     {
@@ -3214,7 +3277,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 7
+        "rank": 8
       }
     },
     {
@@ -3237,7 +3300,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 7
+        "rank": 8
       }
     },
     {
@@ -3260,7 +3323,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 7
+        "rank": 8
       }
     },
     {
@@ -3283,7 +3346,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 7
+        "rank": 8
       }
     },
     {
@@ -3306,7 +3369,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 7
+        "rank": 8
       }
     },
     {
@@ -3323,48 +3386,6 @@
       "via": [
         "command"
       ],
-      "governedRisk": {
-        "score": 10,
-        "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 7
-      }
-    },
-    {
-      "directory": "src/lib/source/candidate-suppliers/__tests__",
-      "testPath": "src/lib/source/candidate-suppliers/__tests__/candidate-supplier-registry-repository.test.ts",
-      "enumerated": true,
-      "collected": false,
-      "run": false,
-      "green": "unknown",
-      "covered": false,
-      "pullRequestCovered": false,
-      "declaredQuarantine": false,
-      "untriaged": true,
-      "via": [],
-      "governedRisk": {
-        "score": 10,
-        "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 8
-      }
-    },
-    {
-      "directory": "src/lib/source/candidate-suppliers/__tests__",
-      "testPath": "src/lib/source/candidate-suppliers/__tests__/event-candidate-authority-repository.test.ts",
-      "enumerated": true,
-      "collected": false,
-      "run": false,
-      "green": "unknown",
-      "covered": false,
-      "pullRequestCovered": false,
-      "declaredQuarantine": false,
-      "untriaged": true,
-      "via": [],
       "governedRisk": {
         "score": 10,
         "band": "high",
@@ -3642,6 +3663,21 @@
       }
     },
     {
+      "directory": "src/lib/source/candidate-suppliers/__tests__",
+      "testFiles": 3,
+      "unrunTestFiles": 3,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 3,
+      "governedRisk": {
+        "score": 10,
+        "band": "high",
+        "signals": [
+          "tenant_scoped_read"
+        ],
+        "rank": 4
+      }
+    },
+    {
       "directory": "src/lib/source/contract-evidence/__tests__",
       "testFiles": 4,
       "unrunTestFiles": 3,
@@ -3653,7 +3689,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 4
+        "rank": 5
       }
     },
     {
@@ -3668,7 +3704,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 5
+        "rank": 6
       }
     },
     {
@@ -3683,27 +3719,12 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 6
+        "rank": 7
       }
     },
     {
       "directory": "src/lib/enterprise-context/__tests__",
       "testFiles": 9,
-      "unrunTestFiles": 2,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 2,
-      "governedRisk": {
-        "score": 10,
-        "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 7
-      }
-    },
-    {
-      "directory": "src/lib/source/candidate-suppliers/__tests__",
-      "testFiles": 2,
       "unrunTestFiles": 2,
       "declaredQuarantineTestFiles": 0,
       "untriagedUnrunTestFiles": 2,
@@ -3865,6 +3886,25 @@
       }
     },
     {
+      "directory": "src/lib/source/candidate-suppliers/__tests__",
+      "testFiles": 3,
+      "unrunTestFiles": 3,
+      "governedRisk": {
+        "score": 10,
+        "band": "high",
+        "signals": [
+          "tenant_scoped_read"
+        ],
+        "tenantScopedReadSourceCount": 3,
+        "tenantScopedReadSources": [
+          "src/lib/source/candidate-suppliers/candidate-supplier-registry-repository.ts",
+          "src/lib/source/candidate-suppliers/event-candidate-acceptance-repository.ts",
+          "src/lib/source/candidate-suppliers/event-candidate-authority-repository.ts"
+        ],
+        "rank": 4
+      }
+    },
+    {
       "directory": "src/lib/source/contract-evidence/__tests__",
       "testFiles": 4,
       "unrunTestFiles": 3,
@@ -3878,7 +3918,7 @@
         "tenantScopedReadSources": [
           "src/lib/source/contract-evidence/read-model.ts"
         ],
-        "rank": 4
+        "rank": 5
       }
     },
     {
@@ -3895,7 +3935,7 @@
         "tenantScopedReadSources": [
           "src/lib/active-client.ts"
         ],
-        "rank": 5
+        "rank": 6
       }
     },
     {
@@ -3912,7 +3952,7 @@
         "tenantScopedReadSources": [
           "src/lib/data-plane/read-adapters/azurePostgresReadAdapter.ts"
         ],
-        "rank": 6
+        "rank": 7
       }
     },
     {
@@ -3929,24 +3969,6 @@
         "tenantScopedReadSources": [
           "src/lib/enterprise-context/derived-enterprise-read.ts",
           "src/lib/enterprise-context/intelligence-read-model.ts"
-        ],
-        "rank": 7
-      }
-    },
-    {
-      "directory": "src/lib/source/candidate-suppliers/__tests__",
-      "testFiles": 2,
-      "unrunTestFiles": 2,
-      "governedRisk": {
-        "score": 10,
-        "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "tenantScopedReadSourceCount": 2,
-        "tenantScopedReadSources": [
-          "src/lib/source/candidate-suppliers/candidate-supplier-registry-repository.ts",
-          "src/lib/source/candidate-suppliers/event-candidate-authority-repository.ts"
         ],
         "rank": 8
       }
@@ -4355,6 +4377,14 @@
       "via": []
     },
     {
+      "directory": "src/lib/source/candidate-suppliers/__tests__",
+      "testFiles": 3,
+      "coveredTestFiles": 0,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 3,
+      "via": []
+    },
+    {
       "directory": "src/lib/source/renewal-cockpit/__tests__",
       "testFiles": 3,
       "coveredTestFiles": 0,
@@ -4476,14 +4506,6 @@
     },
     {
       "directory": "src/lib/setup/__tests__",
-      "testFiles": 2,
-      "coveredTestFiles": 0,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 2,
-      "via": []
-    },
-    {
-      "directory": "src/lib/source/candidate-suppliers/__tests__",
       "testFiles": 2,
       "coveredTestFiles": 0,
       "declaredQuarantineTestFiles": 0,
