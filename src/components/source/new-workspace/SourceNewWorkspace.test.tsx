@@ -16,6 +16,11 @@ import {
   buildScorecardAuthorityView,
   type ScorecardAuthorityView,
 } from "@/lib/source/proposal-intelligence";
+import type { AtlasPageContextValue } from "@/lib/shell/atlas-page-state";
+import type { AgentDockProps } from "@/components/agent/AgentDock";
+
+const mockUseAtlasPageState = jest.fn();
+const mockAgentDockProps: AgentDockProps[] = [];
 
 jest.mock("@/components/shell/AppShell", () => ({
   AppShell: ({ children }: { children: React.ReactNode }) => (
@@ -24,13 +29,14 @@ jest.mock("@/components/shell/AppShell", () => ({
 }));
 
 jest.mock("@/components/shell/AtlasPageStateProvider", () => ({
-  useAtlasPageState: () => null,
+  useAtlasPageState: () => mockUseAtlasPageState(),
 }));
 
 jest.mock("@/components/agent/AgentDock", () => ({
-  AgentDock: ({ workspace }: { workspace: React.ReactNode }) => (
-    <div>{workspace}</div>
-  ),
+  AgentDock: (props: AgentDockProps) => {
+    mockAgentDockProps.push(props);
+    return <div>{props.workspace}</div>;
+  },
 }));
 
 const request: SourceNewEventView = {
@@ -127,6 +133,11 @@ const unavailableScorecardAuthority = buildScorecardAuthorityView({
   scores: [],
 });
 
+beforeEach(() => {
+  mockUseAtlasPageState.mockReturnValue(null);
+  mockAgentDockProps.length = 0;
+});
+
 // Blocked rather than empty: these cases are about other parts of the
 // workspace, and a panel defaulted to "available with nothing in it" would
 // quietly assert that the candidate authority was read and came back empty.
@@ -167,6 +178,74 @@ function SourceNewWorkspace({
 }
 
 describe("SourceNewWorkspace", () => {
+  it("passes governed aVa citations from settled page-state turns into AgentDock", () => {
+    mockUseAtlasPageState.mockReturnValue({
+      conversation: [
+        {
+          id: "answer-1",
+          role: "agent",
+          text: "Define completion is not proven by the evidence registry alone.",
+          agentName: "aVa",
+          timestamp: Date.parse("2026-09-22T01:20:00Z"),
+          agentAnswer: {
+            surface: "source",
+            mode: "SOURCE",
+            tenantKey: "example-client",
+            question: "Can we complete Define?",
+            intent: "source_stage_completion",
+            status: "answered",
+            directAnswer:
+              "Define completion is not proven by the evidence registry alone.",
+            factsUsed: [],
+            metricsUsed: [],
+            relationshipsUsed: [],
+            artifacts: [],
+            citations: [
+              {
+                id: "c1",
+                label: "Scope notes.pdf",
+                sourceClass: "tenant-fact",
+                recordId: "artifact-1",
+                excerpt: "Stored in the Source artifact registry.",
+                confidence: "medium",
+              },
+            ],
+            gaps: [],
+            caveats: [],
+            nextSteps: [],
+            quality: {
+              confidence: "medium",
+              evidenceStrength: "partial",
+              tenantGrounding: "partial",
+              answerCompleteness: "complete",
+            },
+            safety: {
+              tenantFencePassed: true,
+              rawIdsSuppressed: true,
+              forbiddenLanguagePassed: true,
+              unsupportedClaimsBlocked: true,
+            },
+          },
+        },
+      ],
+      ask: jest.fn(),
+    } satisfies Partial<AtlasPageContextValue>);
+
+    render(<SourceNewWorkspace event={request} files={[]} />);
+
+    const turn = mockAgentDockProps.at(-1)?.thread?.[0];
+    expect(turn?.agentAnswer?.citations).toHaveLength(1);
+    expect(turn?.citations).toEqual([
+      {
+        id: "c1",
+        type: "TENANT",
+        name: "Scope notes.pdf",
+        detail: "Stored in the Source artifact registry.",
+        confidence: 0.65,
+      },
+    ]);
+  });
+
   it("shows one next action for a request without marking missing facts complete", () => {
     render(<SourceNewWorkspace event={request} files={[]} />);
     const action = screen.getByRole("complementary", { name: "Next action" });
