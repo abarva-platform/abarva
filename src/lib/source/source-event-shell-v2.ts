@@ -135,6 +135,12 @@ export interface SourceShellFileItem {
    * action a human took.
    */
   latestAcceptance: ArtifactAcceptanceRecord | null;
+  /**
+   * True when either the append-only acceptance record exists or the artifact
+   * registry already marks this artifact as the accepted client-final,
+   * current-authoritative version.
+   */
+  acceptedAsAuthoritative: boolean;
 }
 
 export interface SourceShellIntelligenceFinding {
@@ -257,6 +263,8 @@ export interface SourceShellArtifactLike {
   evidenceState?: string | null;
   isClientFinal?: boolean | null;
   isCurrentAuthoritative?: boolean | null;
+  clientFinalAcceptedAt?: string | null;
+  clientFinalAcceptedBy?: string | null;
   sourceGeneratedArtifactId?: string | null;
   body?: string | null;
   bodyMarkdown?: string | null;
@@ -900,6 +908,9 @@ function toFileItem(
   );
   const isClientFinal =
     artifact.isClientFinal === true || state === "client_final";
+  const acceptedAsAuthoritative =
+    latestAcceptance !== null ||
+    (isClientFinal && artifact.isCurrentAuthoritative === true);
   const governance = fileGovernanceFor({ group, sourceOrigin, isClientFinal });
   const needsComplianceReview = hasComplianceReviewFlag(artifact.description);
   const artifactRole: "authoritative" | "evidence" = specByCode(artifactCode)
@@ -939,6 +950,7 @@ function toFileItem(
     embeddingStatus: artifact.embeddingStatus ?? null,
     graphStatus: artifact.graphStatus ?? null,
     latestAcceptance,
+    acceptedAsAuthoritative,
   };
 }
 

@@ -674,6 +674,44 @@ describe("SourceAnalyticsCanvas — AskAnythingBar reachability", () => {
     ).toHaveTextContent("REGISTERED ONLY");
   });
 
+  it("counts a parsed client-final current-authoritative gate artifact as ready for workflow use", () => {
+    render(
+      <SourceAnalyticsCanvas
+        event={makeEvent({ currentStageKey: "rfp", currentStageLabel: "RFP" })}
+        viewStage="rfp"
+        tenantName="Demo Client"
+        stageView={SAMPLE_RFP_STAGE}
+        initialWorkspace="files"
+        artifacts={[
+          {
+            id: "rfp-client-final",
+            stageKey: "rfp",
+            artifactKind: "d09_rfp_pack",
+            artifactGroup: "approval",
+            sourceOrigin: "reuploaded",
+            title: "RFP Package - Client Final",
+            fileFormat: "docx",
+            status: "client_final",
+            isClientFinal: true,
+            isCurrentAuthoritative: true,
+            clientFinalAcceptedAt: "2026-09-21T12:00:00.000Z",
+            parseStatus: "parsed",
+            embeddingStatus: "pending",
+            graphStatus: "pending",
+          },
+        ]}
+      />,
+    );
+
+    const fileUseMap = screen.getByTestId("source-file-use-readiness-map");
+    expect(fileUseMap).toHaveTextContent("1/1 ready");
+    expect(fileUseMap).toHaveTextContent("RFP Package - Client Final");
+    expect(fileUseMap).toHaveTextContent("Ready for workflow use");
+    expect(fileUseMap).toHaveTextContent(
+      "Usable locally; index before enterprise search or aVa citation.",
+    );
+  });
+
   it("posts reviewed client-final files from the Files lifecycle matrix", async () => {
     const fetchMock = jest.fn().mockResolvedValueOnce({
       ok: true,

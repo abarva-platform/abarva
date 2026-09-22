@@ -5005,7 +5005,7 @@ function fileReadyForUse(file: SourceShellFileItem): boolean {
   return (
     file.parseStatus === "parsed" &&
     !file.needsComplianceReview &&
-    (file.artifactRole === "evidence" || Boolean(file.latestAcceptance))
+    (file.artifactRole === "evidence" || file.acceptedAsAuthoritative)
   );
 }
 
@@ -5030,7 +5030,7 @@ function fileNextAction(file: SourceShellFileItem): string {
   if (file.parseStatus !== "parsed") {
     return "Run or retry parser before using this file as evidence.";
   }
-  if (file.artifactRole === "authoritative" && !file.latestAcceptance) {
+  if (file.artifactRole === "authoritative" && !file.acceptedAsAuthoritative) {
     return "Accept as client-final before it gates the stage.";
   }
   if (file.embeddingStatus !== "embedded") {
