@@ -654,6 +654,11 @@ describe("SourceAnalyticsCanvas — AskAnythingBar reachability", () => {
     ).toHaveTextContent("Vendor call recording");
     const fileUseMap = screen.getByTestId("source-file-use-readiness-map");
     expect(fileUseMap).toHaveTextContent("File use map");
+    expect(fileUseMap).toHaveTextContent("2/3 workflow-usable");
+    expect(fileUseMap).toHaveTextContent(
+      "Availability review and workflow usability are separate checks",
+    );
+    expect(fileUseMap).not.toHaveTextContent("2/3 ready");
     expect(fileUseMap).toHaveTextContent("Sponsor call notes");
     expect(fileUseMap).toHaveTextContent("Scope workshop output");
     expect(fileUseMap).toHaveTextContent("Vendor call recording");
@@ -704,7 +709,7 @@ describe("SourceAnalyticsCanvas — AskAnythingBar reachability", () => {
     );
 
     const fileUseMap = screen.getByTestId("source-file-use-readiness-map");
-    expect(fileUseMap).toHaveTextContent("1/1 ready");
+    expect(fileUseMap).toHaveTextContent("1/1 workflow-usable");
     expect(fileUseMap).toHaveTextContent("RFP Package - Client Final");
     expect(fileUseMap).toHaveTextContent("Ready for workflow use");
     expect(fileUseMap).toHaveTextContent(
