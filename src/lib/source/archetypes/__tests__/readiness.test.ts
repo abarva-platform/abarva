@@ -4,11 +4,11 @@ import {
 } from '../readiness';
 
 describe('Source archetype readiness', () => {
-  it('reports all ten workflows and industry requirement packs', () => {
+  it('reports every registered workflow and industry requirement pack', () => {
     const summary = sourceArchetypeProgramSummary();
-    expect(summary.totalArchetypes).toBe(10);
-    expect(summary.workflowDefined).toBe(10);
-    expect(summary.industryRequirementsDefined).toBe(10);
+    expect(summary.totalArchetypes).toBeGreaterThan(10);
+    expect(summary.workflowDefined).toBe(summary.totalArchetypes);
+    expect(summary.industryRequirementsDefined).toBe(summary.totalArchetypes);
   });
 
   it('marks only fully implemented deterministic packs analytics-ready', () => {

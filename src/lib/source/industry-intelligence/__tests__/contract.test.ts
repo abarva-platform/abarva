@@ -170,7 +170,7 @@ describe('industry-intelligence contract', () => {
   });
 });
 
-describe('ten-archetype industry-intelligence coverage', () => {
+describe('Source archetype industry-intelligence coverage', () => {
   it('defines benchmark requirements for every registered Source archetype', () => {
     const archetypeIds = listSourceArchetypes()
       .map((item) => item.id)
@@ -191,5 +191,37 @@ describe('ten-archetype industry-intelligence coverage', () => {
         expect(item.sourceAuthorities.length).toBeGreaterThan(0);
       }
     }
+  });
+
+  it('declares AI engineering partner metrics without inventing public benchmarks', () => {
+    const pack = SOURCE_ARCHETYPE_INDUSTRY_INTELLIGENCE.AI_ENGINEERING_PARTNER;
+    const genericProductEngineering =
+      SOURCE_ARCHETYPE_INDUSTRY_INTELLIGENCE.DIGITAL_PRODUCT_ENGINEERING;
+
+    expect(pack.benchmarkMetrics.map((metric) => metric.key)).toEqual([
+      'ai_partner_role_rate',
+      'ai_eval_acceptance_coverage',
+      'ai_milestone_holdback',
+      'ai_modelops_support_ratio',
+    ]);
+    expect(
+      pack.benchmarkMetrics.flatMap((metric) => metric.sourceAuthorities),
+    ).not.toContain('official_public');
+    expect(pack.benchmarkMetrics).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          key: 'ai_eval_acceptance_coverage',
+          requiredComparability: expect.arrayContaining([
+            'serviceScope',
+            'deliveryModel',
+          ]),
+        }),
+      ]),
+    );
+    expect(genericProductEngineering.benchmarkMetrics.map((metric) => metric.key)).toEqual([
+      'dpe_squad_cost',
+      'dpe_release_throughput',
+      'dpe_defect_escape',
+    ]);
   });
 });

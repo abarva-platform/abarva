@@ -3,7 +3,7 @@ import { spawnSync } from "node:child_process";
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
-import { listSourceArchetypes } from "@/lib/source/archetypes/registry";
+import { CATEGORY_TO_ARCHETYPE_ID } from "@/lib/source/archetypes/event-archetype-resolver";
 import {
   buildCandidateSupplierRegistryImportPlan,
   parseCandidateSupplierRegistryImportArgs,
@@ -17,6 +17,16 @@ const inputPath = path.join(
 const csvText = readFileSync(inputPath, "utf8");
 const csvSha256 = createHash("sha256").update(csvText, "utf8").digest("hex");
 const testEnv = { NODE_ENV: "test" } as NodeJS.ProcessEnv;
+
+function categoryRoutedArchetypeIds(): string[] {
+  return [
+    ...new Set(
+      Object.values(CATEGORY_TO_ARCHETYPE_ID).filter(
+        (id): id is string => Boolean(id),
+      ),
+    ),
+  ].sort();
+}
 
 function args(
   overrides: Partial<ReturnType<typeof parseCandidateSupplierRegistryImportArgs>> = {},
@@ -33,9 +43,7 @@ function args(
 describe("candidate supplier registry loader", () => {
   it("plans only validated eligible suppliers without contact or event authority", () => {
     const plan = buildCandidateSupplierRegistryImportPlan({ args: args(), csvText });
-    const expectedArchetypes = listSourceArchetypes()
-      .map((archetype) => archetype.id)
-      .sort();
+    const expectedArchetypes = categoryRoutedArchetypeIds();
 
     expect(plan.rowCount).toBe(25);
     expect(plan.suppliers).toHaveLength(20);

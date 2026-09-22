@@ -15,12 +15,12 @@ Candidate eligibility is not award status, sourcing-event selection, NDA readine
 
 ## Coverage
 
-The package contains two eligible synthetic legal entities for each of the ten Source archetypes currently registered in code:
+The package contains two eligible synthetic legal entities for each Source archetype currently routed from a classifier category:
 
 1. `AMS_MANAGED_SERVICES`
 2. `ERP_SI_IMPLEMENTATION`
 3. `AI_DATA_PLATFORM`
-4. `DIGITAL_PRODUCT_ENGINEERING`
+4. `AI_ENGINEERING_PARTNER`
 5. `CONTRACT_RENEWAL`
 6. `CLOUD_FINOPS`
 7. `CONTACT_CENTER_CX`
@@ -28,7 +28,7 @@ The package contains two eligible synthetic legal entities for each of the ten S
 9. `MSSP_CYBER`
 10. `STAFF_AUGMENTATION`
 
-Coverage is proved by `scripts/source/validate-candidate-supplier-registry-package.ts`, which reads the live Source archetype and category registries instead of a hand-typed denominator.
+Coverage is proved by `scripts/source/validate-candidate-supplier-registry-package.ts`, which reads the live category-to-archetype route registry instead of a hand-typed denominator. Some registered archetypes may remain available for direct registry lookup before a classifier category routes to them.
 
 ## Field semantics
 

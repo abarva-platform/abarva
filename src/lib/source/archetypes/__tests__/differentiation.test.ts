@@ -27,6 +27,7 @@ describe('Source Event Archetype Framework — registry integrity', () => {
     expect(ALL.map((a) => a.id).sort()).toEqual(
       [
         'AI_DATA_PLATFORM',
+        'AI_ENGINEERING_PARTNER',
         'AMS_MANAGED_SERVICES',
         'BPO_SHARED_SERVICES',
         'CLOUD_FINOPS',
@@ -43,6 +44,9 @@ describe('Source Event Archetype Framework — registry integrity', () => {
   it('resolves an archetype by id and by event type without core branching', () => {
     expect(getSourceArchetype('AMS_MANAGED_SERVICES')).toBe(AMS_MANAGED_SERVICES);
     expect(archetypeForEventType('data_platform')).toBe(AI_DATA_PLATFORM);
+    expect(getSourceArchetype('AI_ENGINEERING_PARTNER')?.name).toBe(
+      'AI Engineering Partner Selection',
+    );
     expect(getSourceArchetype('nope')).toBeUndefined();
   });
 
@@ -127,6 +131,41 @@ describe('Source Event Archetype Framework — DIFFERENT DNA per event type', ()
     expect(amsLevers).toContain('productivity_glidepath');
     expect(renewLevers).toContain('renewal_timing');
     expect(renewLevers).not.toContain('productivity_glidepath');
+  });
+
+  it('AI engineering partner uses dedicated AI controls rather than the generic product-engineering pack', () => {
+    const aiEngineering = getSourceArchetype('AI_ENGINEERING_PARTNER');
+    const genericEngineering = getSourceArchetype('DIGITAL_PRODUCT_ENGINEERING');
+
+    expect(aiEngineering).toBeDefined();
+    expect(genericEngineering).toBeDefined();
+    expect(genericEngineering?.requiredEvidenceFamilies.map((item) => item.key)).toEqual(
+      expect.arrayContaining([
+        'product_backlog_roadmap',
+        'velocity_baseline',
+        'quality_baseline',
+        'repo_ip_baseline',
+      ]),
+    );
+    expect(aiEngineering?.requiredEvidenceFamilies.map((item) => item.key)).toEqual(
+      expect.arrayContaining([
+        'ai_use_case_portfolio',
+        'eval_harness_baseline',
+        'ai_security_privacy_controls',
+        'model_ops_runbook',
+        'ip_data_rights_baseline',
+      ]),
+    );
+    expect(aiEngineering?.pricingModel.model).toMatch(/milestone/i);
+    expect(aiEngineering?.evaluationModel.disqualifiers.join(' ')).toMatch(/eval/i);
+    expect(aiEngineering?.riskModel.contractProtections.join(' ')).toMatch(
+      /training/i,
+    );
+    expect(aiEngineering?.negotiationLevers.map((item) => item.key)).toEqual(
+      expect.arrayContaining(['eval_acceptance', 'ip_portability']),
+    );
+    expect(aiEngineering?.agentGuidance.systemFraming).toMatch(/aVa/i);
+    expect(genericEngineering?.agentGuidance.systemFraming).not.toMatch(/aVa/i);
   });
 });
 

@@ -129,6 +129,15 @@ export const SOURCE_ARCHETYPE_INDUSTRY_INTELLIGENCE: Record<
       metric('dpe_defect_escape', 'Defect escape rate', 'pct', ['rfp', 'evaluation', 'value'], ['serviceScope', 'scaleBand']),
     ],
   },
+  AI_ENGINEERING_PARTNER: {
+    archetypeId: 'AI_ENGINEERING_PARTNER',
+    benchmarkMetrics: [
+      metric('ai_partner_role_rate', 'AI engineering partner role rate by specialty', 'usd_per_hour', ['strategy', 'pricing'], ['geography', 'serviceScope', 'deliveryModel']),
+      metric('ai_eval_acceptance_coverage', 'Comparable eval and safety acceptance coverage', 'pct_of_critical_scenarios', ['rfp', 'evaluation', 'bafo'], ['serviceScope', 'deliveryModel']),
+      metric('ai_milestone_holdback', 'Eval-gated milestone holdback', 'pct_of_fees', ['rfp', 'pricing', 'bafo'], ['serviceScope', 'scaleBand']),
+      metric('ai_modelops_support_ratio', 'Model-ops support runway as share of build fees', 'pct_of_build_fees', ['pricing', 'bafo'], ['serviceScope', 'deliveryModel']),
+    ],
+  },
   CONTACT_CENTER_CX: {
     archetypeId: 'CONTACT_CENTER_CX',
     benchmarkMetrics: [

@@ -3,7 +3,7 @@ import { spawnSync } from "node:child_process";
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
-import { listSourceArchetypes } from "@/lib/source/archetypes/registry";
+import { CATEGORY_TO_ARCHETYPE_ID } from "@/lib/source/archetypes/event-archetype-resolver";
 import {
   buildServiceNowImportPlan,
   parseServiceNowImportArgs,
@@ -18,6 +18,16 @@ const csvText = readFileSync(inputPath, "utf8");
 const csvSha256 = createHash("sha256").update(csvText, "utf8").digest("hex");
 const testEnv = { NODE_ENV: "test" } as NodeJS.ProcessEnv;
 
+function categoryRoutedArchetypeIds(): string[] {
+  return [
+    ...new Set(
+      Object.values(CATEGORY_TO_ARCHETYPE_ID).filter(
+        (id): id is string => Boolean(id),
+      ),
+    ),
+  ].sort();
+}
+
 function args(overrides: Partial<ReturnType<typeof parseServiceNowImportArgs>> = {}) {
   return {
     ...parseServiceNowImportArgs(
@@ -29,11 +39,9 @@ function args(overrides: Partial<ReturnType<typeof parseServiceNowImportArgs>> =
 }
 
 describe("ServiceNow sourcing request loader", () => {
-  it("plans the governed fixture across every registered archetype without granting authority", () => {
+  it("plans the governed fixture across every category-routed archetype without granting authority", () => {
     const plan = buildServiceNowImportPlan({ args: args(), csvText });
-    const expectedArchetypes = listSourceArchetypes()
-      .map((archetype) => archetype.id)
-      .sort();
+    const expectedArchetypes = categoryRoutedArchetypeIds();
 
     expect(plan.rowCount).toBe(10);
     expect(plan.domains).toEqual(["delivery", "enterprise", "it", "plan"]);
@@ -69,7 +77,7 @@ describe("ServiceNow sourcing request loader", () => {
     const partialCsv = `${lines.slice(0, -1).join("\n")}\n`;
 
     expect(() => buildServiceNowImportPlan({ args: args(), csvText: partialCsv })).toThrow(
-      /does not cover registered archetypes/,
+      /does not cover category-routed archetypes/,
     );
   });
 

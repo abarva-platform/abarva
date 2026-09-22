@@ -899,6 +899,105 @@ export const STAFF_AUGMENTATION: SourceEventArchetype = {
     { stage: 'bafo', requiredEvidence: [], analysisMethods: ['market_benchmark'], deliverables: ['staffing_negotiation_memo'] },
   ],
 };
+export const AI_ENGINEERING_PARTNER: SourceEventArchetype = {
+  id: 'AI_ENGINEERING_PARTNER',
+  name: 'AI Engineering Partner Selection',
+  description: 'Selecting an accountable AI engineering partner for agentic product build, retrieval/evaluation, MLOps, secure integration, and production handoff — not a generic agile pod or staff-augmentation lane.',
+  version: '1.0.0', status: 'validated', eventType: 'ai_engineering_partner',
+  applicableSpendCategories: ['ai_engineering_partner', 'agentic_build', 'mlops_delivery'],
+  requiredEvidenceFamilies: [
+    f({ key: 'ai_use_case_portfolio', label: 'AI use-case portfolio and delivery boundaries', kind: 'document', whyNeeded: 'Defines which AI workflows the partner will build, what stays internal, and which outcomes are in scope; without it the engagement becomes a generic SI ask.', sourceDocHint: 'AI use-case backlog + delivery-lane decision memo (XLSX/DOCX)', acceptedFormats: ['xlsx', 'docx'], feedsMethods: ['pod_sizing', 'scorecard_weighting'] }),
+    f({ key: 'eval_harness_baseline', label: 'Evaluation harness and acceptance baseline', kind: 'metric_baseline', whyNeeded: 'The governed pass/fail bar for model, retrieval, safety, and workflow quality. Without it vendor demos cannot become acceptance evidence.', sourceDocHint: 'Eval harness results, acceptance rubric, and red-team criteria (CSV/XLSX/DOCX)', acceptedFormats: ['csv', 'xlsx', 'docx'], feedsMethods: ['scorecard_weighting', 'quality_gap'] }),
+    f({ key: 'retrieval_data_inventory', label: 'Retrieval and data-source inventory', kind: 'inventory', whyNeeded: 'Lists the governed sources, indices, APIs, and data boundaries the partner may use; prevents raw-context and cross-tenant leakage.', sourceDocHint: 'Retrieval/source inventory + API/data boundary map (CSV/XLSX)', acceptedFormats: ['csv', 'xlsx'], feedsMethods: ['tco_normalization'] }),
+    f({ key: 'ai_security_privacy_controls', label: 'AI security, privacy, and compliance controls', kind: 'process', whyNeeded: 'Controls model access, data residency, PII/PHI handling, prompt injection defenses, and audit evidence before the partner touches governed context.', sourceDocHint: 'AI security/privacy control map and compliance requirements (DOCX/XLSX)', acceptedFormats: ['docx', 'xlsx'], feedsMethods: ['scorecard_weighting'] }),
+    f({ key: 'model_ops_runbook', label: 'Model-ops and production handoff runbook', kind: 'process', whyNeeded: 'Defines monitoring, drift response, incident response, release cadence, and handoff obligations for day-2 operation.', sourceDocHint: 'MLOps/LLMOps runbook + support model (DOCX)', acceptedFormats: ['docx', 'pdf'], feedsMethods: ['tco_normalization'] }),
+    f({ key: 'ip_data_rights_baseline', label: 'IP, model, prompt, and data-rights baseline', kind: 'commercial', whyNeeded: 'Establishes ownership of prompts, evals, retrieval configs, fine-tunes, generated assets, and data-use restrictions on exit.', sourceDocHint: 'Current IP/data-rights position and required terms (DOCX/PDF)', acceptedFormats: ['docx', 'pdf'], feedsMethods: ['market_benchmark'] }),
+    f({ key: 'current_engineering_capacity', label: 'Current AI/engineering capacity and cost', kind: 'financial', whyNeeded: 'Anchors should-cost and retained-team responsibilities so partner pricing is compared to the actual build/run capacity gap.', sourceDocHint: 'Engineering roster, skill map, and cost baseline (XLSX/CSV)', acceptedFormats: ['xlsx', 'csv'], feedsMethods: ['should_cost', 'pod_sizing'] }),
+    CONTRACT_BASELINE,
+  ],
+  optionalEvidenceFamilies: [
+    f({ key: 'reference_architecture', label: 'Target AI reference architecture', kind: 'document', whyNeeded: 'Clarifies integration patterns, deployment constraints, and platform dependencies before vendors propose incompatible stacks.', sourceDocHint: 'Target architecture / integration diagram (DOCX/PDF)', acceptedFormats: ['docx', 'pdf'] }),
+    f({ key: 'product_telemetry_baseline', label: 'Product telemetry and usage baseline', kind: 'metric_baseline', whyNeeded: 'Connects the AI build to real adoption, quality, and workflow outcomes after launch.', sourceDocHint: 'Product telemetry baseline (CSV/XLSX)', acceptedFormats: ['csv', 'xlsx'] }),
+  ],
+  requiredStakeholders: ['CIO / CTO', 'Product owner', 'AI platform owner', 'Security / Privacy', 'Data governance lead', 'Procurement / Vendor Management', 'Legal / IP counsel'],
+  sourcingStrategyQuestions: [
+    'Is this a true accountable AI engineering partner, or generic product engineering / staff augmentation wearing AI language?',
+    'Which AI use cases are ready enough for a partner to build, and which must stay internal until evidence closes?',
+    'What eval, safety, retrieval-quality, and workflow-acceptance gates must vendors pass before award?',
+    'Who owns prompts, evals, retrieval configuration, fine-tunes, generated code, and model artifacts on exit?',
+    'What MLOps / LLMOps handoff and incident-response obligations are required for production operation?',
+  ],
+  vendorDiscussionGuide: {
+    topics: ['Use-case readiness and delivery lane', 'Evaluation harness and acceptance gates', 'Retrieval/data boundary and tenant safety', 'MLOps/LLMOps production handoff', 'AI security and privacy controls', 'IP, model, prompt, and data rights', 'Named AI engineering team and proof tasks'],
+    ask: ['Show a production AI build where you owned eval, retrieval quality, secure integration, and day-2 handoff — what evidence can we inspect?', 'Will you accept our eval harness as a contractual acceptance gate, including safety and retrieval-quality failures?', 'Which prompts, evals, retrieval configs, generated code, fine-tunes, and telemetry do we own on exit?', 'How do you prevent our data from being used for model training, cross-client assets, or reusable prompt libraries?', 'What named engineers, model-ops leads, and security owners are locked through delivery?'],
+    doNotRevealYet: ['Our internal eval failure thresholds beyond the published acceptance rubric', 'Our walk-away position on IP ownership', 'Which use cases we might keep internal', 'The maximum retained-team capacity we can supply'],
+    likelyPushback: ['Treating eval gates as advisory rather than acceptance criteria', 'Claiming reusable accelerators while keeping prompts/evals/configs proprietary', 'Leaving model monitoring and drift response as post-project support', 'Substituting generic agile roles for named AI engineering and model-ops expertise'],
+    challengeAssumptions: ['Assumed demo accuracy is production quality', 'Assumed retrieval access implies data-use rights', 'Assumed prompt/eval assets belong to the partner', 'Assumed model-ops can be deferred until after launch'],
+  },
+  rfpDocumentStructure: [
+    { key: 'exec_overview', title: 'Executive overview and AI outcomes sought', required: true, evidenceDependencies: [] },
+    { key: 'use_case_scope', title: 'Use-case portfolio, delivery lanes, and retained responsibilities', required: true, evidenceDependencies: ['ai_use_case_portfolio'] },
+    { key: 'eval_acceptance', title: 'Evaluation harness, safety gates, and acceptance criteria', required: true, evidenceDependencies: ['eval_harness_baseline'] },
+    { key: 'retrieval_data_controls', title: 'Retrieval, data boundaries, and governed context controls', required: true, evidenceDependencies: ['retrieval_data_inventory', 'ai_security_privacy_controls'] },
+    { key: 'model_ops_handoff', title: 'MLOps/LLMOps, monitoring, drift, and production handoff', required: true, evidenceDependencies: ['model_ops_runbook'] },
+    { key: 'ip_data_rights', title: 'IP, prompt, eval, model, fine-tune, and data-use terms', required: true, evidenceDependencies: ['ip_data_rights_baseline'] },
+    { key: 'team_proof_tasks', title: 'Named team, proof tasks, and security review', required: true, evidenceDependencies: ['current_engineering_capacity'] },
+    { key: 'pricing_schedule', title: 'Milestone, holdback, support, and change-control pricing', required: true, evidenceDependencies: ['current_engineering_capacity', 'contract_baseline'] },
+    { key: 'response_instructions', title: 'Response instructions and scorecard', required: true, evidenceDependencies: [] },
+  ],
+  pricingModel: {
+    model: 'milestone-based build + eval-gated acceptance holdback + named team rate card + fixed model-ops support runway',
+    costComponents: ['discovery and architecture', 'build milestones by use-case lane', 'retrieval/integration work package', 'eval and red-team work package', 'MLOps/LLMOps support runway', 'cloud/model consumption pass-through', 'change-control pool', 'acceptance holdback'],
+    traps: ['Demo-led fixed price with no eval acceptance gate', 'Partner-owned prompts/evals/configs creating exit lock-in', 'Unbounded model/API consumption passed through without guardrails', 'Model-ops and drift response priced as a later add-on', 'Generic blended rates hiding missing AI/security expertise', 'Reusable accelerators that train on or retain buyer context'],
+    shouldCost: true,
+  },
+  evaluationModel: {
+    criteria: [
+      { key: 'eval_acceptance', label: 'Eval, safety, and acceptance rigor', weight: 0.30 },
+      { key: 'engineering_capability', label: 'AI engineering and secure integration capability', weight: 0.20 },
+      { key: 'modelops_handoff', label: 'MLOps/LLMOps and production handoff', weight: 0.15 },
+      { key: 'commercial_ip', label: 'IP, data-rights, and exit posture', weight: 0.15 },
+      { key: 'price', label: 'Milestone price and support runway normalization', weight: 0.15 },
+      { key: 'team_continuity', label: 'Named team continuity and proof tasks', weight: 0.05 },
+    ],
+    disqualifiers: ['Will not contract to the buyer-owned eval and safety acceptance gate', 'No no-training-on-buyer-data commitment', 'No buyer ownership / portability for prompts, evals, retrieval configs, and generated code', 'No named AI engineering or model-ops lead', 'Cannot evidence production deployment with governed data boundaries'],
+  },
+  riskModel: {
+    dimensions: ['demo-to-production quality risk', 'unsafe retrieval / raw-context exposure', 'model/data-rights lock-in', 'model drift and day-2 support gap', 'prompt/eval ownership ambiguity', 'named-team bait-and-switch', 'unbounded consumption pass-through'],
+    contractProtections: ['buyer-owned eval acceptance gate with holdback', 'no-training-on-buyer-data and no cross-client reuse without approval', 'prompt/eval/retrieval-config/code portability on exit', 'data-residency and tenant-boundary clauses', 'MLOps support runway with monitoring and incident-response obligations', 'named-team continuity with substitution approval', 'model/API consumption caps and alerting', 'security review and audit rights'],
+  },
+  negotiationLevers: [
+    { key: 'eval_acceptance', label: 'Eval-gated acceptance holdback', rationale: 'Makes quality, safety, and retrieval performance the payment gate rather than a demo promise.', timing: 'rfp' },
+    { key: 'ip_portability', label: 'Prompt/eval/retrieval-config portability', rationale: 'Prevents the partner from converting buyer-specific AI assets into renewal lock-in.', timing: 'rfp' },
+    { key: 'no_training_data_rights', label: 'No-training and data-use restrictions', rationale: 'Protects governed context and bars reuse of buyer data in vendor models or accelerators.', timing: 'final_contracting' },
+    { key: 'modelops_runway', label: 'Fixed MLOps support runway', rationale: 'Forces day-2 monitoring, drift response, and incident handling into the base deal.', timing: 'bafo' },
+    { key: 'named_team_proof', label: 'Named team proof task', rationale: 'Separates real AI engineering capacity from sales slides and generic SI staffing.', timing: 'pre_rfp' },
+    { key: 'consumption_guardrails', label: 'Model/API consumption caps', rationale: 'Caps pass-through exposure from model calls, embeddings, and evaluation runs.', timing: 'bafo' },
+  ],
+  deliverablePack: [
+    { key: 'ai_partner_strategy_memo', label: 'AI Engineering Partner Sourcing Strategy Memo', stage: 'strategy', audience: 'CIO · CTO · Product Sponsor', sections: ['Objective', 'Use-case delivery-lane decision', 'Eval and safety acceptance posture', 'Retained vs partner responsibilities', 'IP/data-rights posture', 'Commercial guardrails'], qualityBar: { minSections: 6, requiresCitations: true, altitude: 'exec', rubric: ['Names the actual AI use cases and readiness gaps', 'Every quality/value claim cited or marked missing', 'States eval acceptance and IP posture explicitly'] }, formats: ['html', 'docx'], gateArtifact: true },
+    { key: 'ai_partner_rfp', label: 'AI Engineering Partner RFP', stage: 'rfp', audience: 'AI engineering partners', sections: ['Use-case scope', 'Eval acceptance gates', 'Retrieval/data controls', 'Model-ops handoff', 'IP/data rights', 'Named team and proof tasks', 'Pricing schedule'], qualityBar: { minSections: 7, requiresCitations: true, altitude: 'full', rubric: ['Eval-gated, not demo-led', 'No-training/data-rights terms mandatory', 'Named AI engineering and model-ops ownership explicit'] }, formats: ['docx', 'pdf'], gateArtifact: true },
+    { key: 'ai_partner_negotiation_memo', label: 'AI Partner Pricing & Negotiation Memo', stage: 'bafo', audience: 'CIO · CTO · Procurement', sections: ['Eval and proof-task gaps by vendor', 'Milestone/holdback normalization', 'IP/data-rights exceptions', 'BAFO asks by vendor', 'Walk-away'], qualityBar: { minSections: 5, requiresCitations: true, altitude: 'exec', rubric: ['Vendor-specific eval/IP asks', 'Milestone and support runway normalized', 'Walk-away stated'] }, formats: ['html', 'docx'] },
+  ],
+  gateCriteria: [
+    { key: 'ai_partner_eval_ready', describe: 'Use-case scope, eval baseline, security controls, and IP/data-rights requirements are usable before RFP.', fromStage: 'scope', toStage: 'rfp', severity: 'hard' },
+    { key: 'ai_partner_eval_contractual', describe: 'RFP and responses bind vendors to buyer-owned eval and safety acceptance gates before pricing decisions.', fromStage: 'rfp', toStage: 'pricing', severity: 'hard' },
+    { key: 'ai_partner_price_normalized', describe: 'Proposals normalized for milestone acceptance, holdback, support runway, consumption guardrails, and change control before BAFO.', fromStage: 'pricing', toStage: 'bafo', severity: 'hard' },
+  ],
+  agentGuidance: {
+    systemFraming: 'This is an AI engineering partner selection event for aVa-relevant agentic build, retrieval, evaluation, secure integration, and production handoff. Reason only over committed AI use-case, eval, retrieval/data boundary, security/privacy, model-ops, IP/data-rights, and capacity evidence. Never assert model quality, safety, value, or production readiness without governed eval evidence; never expose raw context to the partner or to aVa; never treat generic product-engineering velocity as proof of AI readiness. Name missing evidence explicitly.',
+    keyQuestions: ['Which use cases are ready for partner delivery?', 'What eval and safety gate decides acceptance?', 'Who owns prompts, evals, retrieval configs, generated code, and fine-tunes?', 'What no-training/data-use restrictions must be contractual?', 'What model-ops handoff keeps aVa-safe production behavior governed?'],
+    requiresGroundedAnswer: true,
+  },
+  stageModel: [
+    { stage: 'strategy', requiredEvidence: [{ family: 'ai_use_case_portfolio', severity: 'hard' }, { family: 'current_engineering_capacity', severity: 'hard' }], analysisMethods: ['pod_sizing', 'should_cost'], deliverables: ['ai_partner_strategy_memo'] },
+    { stage: 'scope', requiredEvidence: [{ family: 'ai_use_case_portfolio', severity: 'hard' }, { family: 'eval_harness_baseline', severity: 'hard' }, { family: 'retrieval_data_inventory', severity: 'hard' }, { family: 'ai_security_privacy_controls', severity: 'hard' }, { family: 'model_ops_runbook', severity: 'soft' }], analysisMethods: ['scorecard_weighting', 'quality_gap'], deliverables: [] },
+    { stage: 'rfp', requiredEvidence: [{ family: 'ai_use_case_portfolio', severity: 'hard' }, { family: 'eval_harness_baseline', severity: 'hard' }, { family: 'ip_data_rights_baseline', severity: 'hard' }, { family: 'ai_security_privacy_controls', severity: 'soft' }], analysisMethods: [], deliverables: ['ai_partner_rfp'] },
+    { stage: 'evaluation', requiredEvidence: [{ family: 'eval_harness_baseline', severity: 'hard' }, { family: 'model_ops_runbook', severity: 'soft' }], analysisMethods: ['scorecard_weighting', 'quality_gap'], deliverables: [] },
+    { stage: 'pricing', requiredEvidence: [{ family: 'current_engineering_capacity', severity: 'hard' }, { family: 'model_ops_runbook', severity: 'soft' }, { family: 'contract_baseline', severity: 'soft' }], analysisMethods: ['tco_normalization', 'should_cost', 'market_benchmark'], deliverables: [] },
+    { stage: 'bafo', requiredEvidence: [{ family: 'ip_data_rights_baseline', severity: 'hard' }], analysisMethods: ['market_benchmark'], deliverables: ['ai_partner_negotiation_memo'] },
+  ],
+};
 export const DIGITAL_PRODUCT_ENGINEERING: SourceEventArchetype = {
   id: 'DIGITAL_PRODUCT_ENGINEERING',
   name: 'Digital Product Engineering Services',
@@ -1110,6 +1209,7 @@ export const SOURCE_ARCHETYPE_REGISTRY: Record<string, SourceEventArchetype> = {
   [MSSP_CYBER.id]: MSSP_CYBER,
   [STAFF_AUGMENTATION.id]: STAFF_AUGMENTATION,
   [DIGITAL_PRODUCT_ENGINEERING.id]: DIGITAL_PRODUCT_ENGINEERING,
+  [AI_ENGINEERING_PARTNER.id]: AI_ENGINEERING_PARTNER,
   [CONTACT_CENTER_CX.id]: CONTACT_CENTER_CX,
   // Add new archetypes here — no Source core code change required.
 };

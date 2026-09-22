@@ -4,7 +4,6 @@ import path from "node:path";
 import Papa from "papaparse";
 
 import { CATEGORY_TO_ARCHETYPE_ID } from "@/lib/source/archetypes/event-archetype-resolver";
-import { listSourceArchetypes } from "@/lib/source/archetypes/registry";
 import type { CandidateSupplierAuthorityRow } from "@/lib/source/candidate-suppliers/candidate-supplier-authority";
 import { buildSourceRequestSupplierSuggestions } from "@/lib/source/intake/source-request-supplier-suggestions";
 import {
@@ -74,6 +73,16 @@ type AcceptanceMatrix = {
   errors: string[];
 };
 
+function categoryRoutedArchetypeIds(): string[] {
+  return [
+    ...new Set(
+      Object.values(CATEGORY_TO_ARCHETYPE_ID).filter(
+        (id): id is string => Boolean(id),
+      ),
+    ),
+  ].sort();
+}
+
 function parseCsv<Row extends Record<string, string>>(
   csvText: string,
   label: string,
@@ -140,7 +149,7 @@ function buildAcceptanceMatrix(input: {
   });
   errors.push(...supplierValidation.errors.map((error) => `supplier_fixture: ${error}`));
 
-  const registeredArchetypes = listSourceArchetypes().map((archetype) => archetype.id);
+  const registeredArchetypes = categoryRoutedArchetypeIds();
   const requests = requestRows.map((row, index) =>
     adaptServiceNowSourcingRequest({
       tenantKey: "synthetic-fixture-tenant",
@@ -322,7 +331,7 @@ function buildAcceptanceMatrix(input: {
 }
 
 describe("Source ServiceNow request acceptance harness", () => {
-  it("emits a deterministic acceptance matrix across all ten sourcing archetypes", () => {
+  it("emits a deterministic acceptance matrix across all ten category-routed sourcing archetypes", () => {
     const matrix = buildAcceptanceMatrix({
       requestCsvText: fs.readFileSync(requestCsvPath, "utf8"),
       supplierCsvText: fs.readFileSync(supplierCsvPath, "utf8"),

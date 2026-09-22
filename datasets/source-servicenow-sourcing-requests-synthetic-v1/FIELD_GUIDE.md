@@ -8,12 +8,12 @@ One row is one ServiceNow requested item version. The stable upstream identity i
 
 ## Coverage
 
-The file contains ten detailed requests covering all ten Source archetypes currently registered in code:
+The file contains ten detailed requests covering all ten Source archetypes currently routed from classifier categories:
 
 1. Application Managed Services
 2. ERP / SI Implementation
 3. AI / Data Platform
-4. Digital Product Engineering
+4. AI Engineering Partner
 5. Contract Renewal
 6. Cloud FinOps
 7. Contact Center / CX
@@ -32,4 +32,3 @@ The originating domains are Plan, Delivery, Enterprise, and IT. Domain and funct
 - `regulated_data_flags` drive review needs; they contain no regulated data.
 - `decision_owner` and `baseline_owner` are role labels, not real people.
 - No row authorizes supplier contact, selection, NDA execution, award, or external communication.
-

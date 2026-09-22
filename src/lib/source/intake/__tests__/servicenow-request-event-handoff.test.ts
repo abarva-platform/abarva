@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import Papa from "papaparse";
-import { listSourceArchetypes } from "../../archetypes/registry";
+import { CATEGORY_TO_ARCHETYPE_ID } from "../../archetypes/event-archetype-resolver";
 import {
   adaptServiceNowSourcingRequest,
   type ServiceNowSourcingRequestRow,
@@ -13,6 +13,14 @@ const datasetPath = path.join(
   process.cwd(),
   "datasets/source-servicenow-sourcing-requests-synthetic-v1/servicenow_sourcing_requests.csv",
 );
+
+function categoryRoutedArchetypeIds(): Set<string> {
+  return new Set(
+    Object.values(CATEGORY_TO_ARCHETYPE_ID).filter(
+      (id): id is string => Boolean(id),
+    ),
+  );
+}
 
 const request: SourceIntakeRequestSummary = {
   requestId: "servicenow:sn_sourcing_request:request-1",
@@ -118,7 +126,7 @@ describe("ServiceNow request event handoff", () => {
     expect(handoffs).toHaveLength(10);
     expect(
       new Set(handoffs.map((item) => item.mappingDecision.archetypeId)),
-    ).toEqual(new Set(listSourceArchetypes().map((item) => item.id)));
+    ).toEqual(categoryRoutedArchetypeIds());
     for (const handoff of handoffs) {
       expect(handoff.eventInput.categoryId).toBe(
         handoff.mappingDecision.categoryId,
