@@ -41,6 +41,7 @@ type AcceptanceMatrix = {
     requestRows: number;
     eligibleSupplierRows: number;
     negativeControlRows: number;
+    decisionGradeRequestRows: number;
   };
   authority: {
     readOnlyHarness: true;
@@ -62,6 +63,12 @@ type AcceptanceMatrix = {
     requesterValueBasis: string | null;
     requesterValueValidated: boolean | null;
     requesterValuePromotedToGovernedSavings: false;
+    requesterValueRange: null | { low: number; high: number };
+    requesterValueTimeBasis: string | null;
+    serviceVolumes: string[];
+    sourceSystemReferences: string[];
+    evidenceReferences: string[];
+    depthGaps: string[];
     eligibleSupplierIds: string[];
     eligibleSupplierNames: string[];
     existingContractVendorIds: string[];
@@ -209,6 +216,31 @@ function buildAcceptanceMatrix(input: {
       errors.push(`${request.source.requestNumber} promoted requester value as validated.`);
     }
 
+    const depthGaps: string[] = [];
+    if (!request.value?.range) depthGaps.push("requester_value_range");
+    if (!request.value?.timeBasis) depthGaps.push("requester_value_time_basis");
+    if (!request.incumbent.context) depthGaps.push("incumbent_context");
+    if (request.serviceVolumes.length < 3) depthGaps.push("service_volumes");
+    if (request.sourceSystemReferences.length < 2) {
+      depthGaps.push("source_system_references");
+    }
+    if (request.evidenceReferences.length < 2) {
+      depthGaps.push("evidence_references");
+    }
+    const attachmentIds = new Set(request.attachments);
+    if (
+      request.evidenceReferences.some(
+        (reference) => !attachmentIds.has(reference.attachmentId),
+      )
+    ) {
+      depthGaps.push("evidence_attachment_lineage");
+    }
+    if (depthGaps.length > 0) {
+      errors.push(
+        `${request.source.requestNumber} has decision-grade depth gaps: ${depthGaps.join(", ")}.`,
+      );
+    }
+
     const projection = buildSourceRequestSupplierSuggestions({
       tenantKey: "synthetic-fixture-tenant",
       eventId: request.requestId,
@@ -261,7 +293,9 @@ function buildAcceptanceMatrix(input: {
     }
 
     const requiredIntakeDepth: "complete" | "gapped" =
-      request.requiredFactGaps.length === 0 ? "complete" : "gapped";
+      request.requiredFactGaps.length === 0 && depthGaps.length === 0
+        ? "complete"
+        : "gapped";
 
     return {
       requestNumber: request.source.requestNumber,
@@ -274,6 +308,15 @@ function buildAcceptanceMatrix(input: {
       requesterValueBasis: request.value?.basis ?? null,
       requesterValueValidated: request.value?.validated ?? null,
       requesterValuePromotedToGovernedSavings: false as const,
+      requesterValueRange: request.value?.range ?? null,
+      requesterValueTimeBasis: request.value?.timeBasis ?? null,
+      serviceVolumes: [...request.serviceVolumes],
+      sourceSystemReferences: [...request.sourceSystemReferences],
+      evidenceReferences: request.evidenceReferences.map(
+        (reference) =>
+          `${reference.attachmentId}:${reference.evidenceType}:${reference.sourceBasis}`,
+      ),
+      depthGaps,
       eligibleSupplierIds: projection.rows.map((row) => row.supplierId),
       eligibleSupplierNames: projection.rows.map((row) => row.legalName),
       existingContractVendorIds: projection.rows
@@ -315,6 +358,9 @@ function buildAcceptanceMatrix(input: {
       requestRows: matrixRows.length,
       eligibleSupplierRows: supplierValidation.summary.eligibleCandidateRows,
       negativeControlRows: supplierValidation.summary.negativeControlRows,
+      decisionGradeRequestRows: matrixRows.filter(
+        (row) => row.requiredIntakeDepth === "complete",
+      ).length,
     },
     authority: {
       readOnlyHarness: true,
@@ -345,6 +391,7 @@ describe("Source ServiceNow request acceptance harness", () => {
       requestRows: 10,
       eligibleSupplierRows: 20,
       negativeControlRows: 5,
+      decisionGradeRequestRows: 10,
     });
     for (const row of matrix.rows) {
       expect(row.requiredIntakeDepth).toBe("complete");
@@ -363,6 +410,12 @@ describe("Source ServiceNow request acceptance harness", () => {
       expect(row.requesterValuePromotedToGovernedSavings).toBe(false);
       expect(row.requesterValueBasis).toBe("requester_stated_unvalidated");
       expect(row.requesterValueValidated).toBe(false);
+      expect(row.requesterValueRange).not.toBeNull();
+      expect(row.requesterValueTimeBasis).not.toBeNull();
+      expect(row.serviceVolumes.length).toBeGreaterThanOrEqual(3);
+      expect(row.sourceSystemReferences.length).toBeGreaterThanOrEqual(2);
+      expect(row.evidenceReferences.length).toBeGreaterThanOrEqual(2);
+      expect(row.depthGaps).toEqual([]);
     }
 
     fs.mkdirSync(path.dirname(reportPath), { recursive: true });
@@ -400,6 +453,23 @@ describe("Source ServiceNow request acceptance harness", () => {
     );
     expect(matrix.errors).toContain(
       "REQ0010001 has 1 eligible fictional supplier candidate(s); expected at least 2.",
+    );
+  });
+
+  it("fails when an archetype fixture loses its service-volume depth", () => {
+    const rows = parseCsv<ServiceNowSourcingRequestRow>(
+      fs.readFileSync(requestCsvPath, "utf8"),
+      "ServiceNow request",
+    );
+    rows[0] = { ...rows[0], service_volume_summary: "74 applications" };
+    const matrix = buildAcceptanceMatrix({
+      requestCsvText: Papa.unparse(rows, { newline: "\n" }),
+      supplierCsvText: fs.readFileSync(supplierCsvPath, "utf8"),
+    });
+
+    expect(matrix.status).toBe("fail");
+    expect(matrix.errors).toContain(
+      "REQ0010001 has decision-grade depth gaps: service_volumes.",
     );
   });
 });

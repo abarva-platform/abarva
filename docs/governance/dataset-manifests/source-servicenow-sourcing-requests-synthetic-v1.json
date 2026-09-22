@@ -5,7 +5,7 @@
   "source_layer": "tenant_context",
   "classification": "internal",
   "owner": "AbarVa Product Engineering",
-  "source_basis": "synthetic native-shaped ServiceNow sc_req_item export authored to exercise every registered Source archetype without representing client facts",
+  "source_basis": "synthetic native-shaped ServiceNow sc_req_item export with requester-stated value ranges, quantified service volumes, source-system references, and typed evidence references authored to exercise every category-routed Source archetype without representing client facts",
   "ingestion_method": "structured_promotion",
   "retrieval_plan": "not_retrievable",
   "retrieval_proof_required": true,
@@ -13,5 +13,5 @@
   "expected_object_count": 10,
   "approved_by": "AbarVa Product Engineering",
   "approved_at": "2026-09-22",
-  "notes": "Public-safe planning fixture with ten synthetic sourcing-help requests across Plan, Delivery, Enterprise, and IT. Names are role labels; supplier, contract, attachment, ticket, and user identifiers are synthetic. No email addresses, real people, real suppliers, real contracts, PII, PHI, approvals, savings facts, or contact authority. This manifest authorizes repository fixture validation only and does not authorize an Azure/Postgres load. A later load requires a separate governed data-plane approval, canonical request authority, tenant assignment, quality gate, and signed-in proof."
+  "notes": "Public-safe planning fixture with ten synthetic sourcing-help requests across Plan, Delivery, Enterprise, and IT. Every request declares a planning range and time basis, at least three quantified service-volume measures, at least two source-system references, typed evidence references, and explicit incumbent or net-new context. All amounts and volumes remain requester-stated and unvalidated. Names are role labels; supplier, contract, attachment, ticket, and user identifiers are synthetic. No email addresses, real people, real suppliers, real contracts, PII, PHI, approvals, savings facts, or contact authority. This manifest authorizes repository fixture validation only and does not authorize an Azure/Postgres load. A later load requires a separate governed data-plane approval, canonical request authority, tenant assignment, quality gate, and signed-in proof."
 }

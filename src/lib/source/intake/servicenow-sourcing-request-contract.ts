@@ -37,6 +37,12 @@ export type SourceRequestMappingProposal = {
   proposalVersion: "servicenow-request-mapping/v1";
 };
 
+export type SourceRequestEvidenceReference = {
+  attachmentId: string;
+  evidenceType: string;
+  sourceBasis: "source_extract" | "source_report" | "planning_document";
+};
+
 export type CanonicalSourceIntakeRequest = {
   tenantKey: string;
   requestId: string;
@@ -80,10 +86,16 @@ export type CanonicalSourceIntakeRequest = {
     currency: string;
     basis: string;
     validated: false;
+    range: null | {
+      low: number;
+      high: number;
+    };
+    timeBasis: string | null;
   } | null;
   incumbent: {
     supplierName: string | null;
     contractReference: string | null;
+    context: string | null;
   };
   scope: {
     included: string | null;
@@ -101,6 +113,9 @@ export type CanonicalSourceIntakeRequest = {
     legalReviewNeeded: boolean | null;
   };
   attachments: readonly string[];
+  serviceVolumes: readonly string[];
+  sourceSystemReferences: readonly string[];
+  evidenceReferences: readonly SourceRequestEvidenceReference[];
   requiredFactGaps: readonly (
     | "trigger"
     | "decision_owner"
