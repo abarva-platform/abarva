@@ -27,8 +27,11 @@ something that fails rather than something that can be skipped.
 It also fixes how the gap was being measured. Every prior pass counted it by
 grepping the register for the merge SHA — but a claim line saying which commit
 it *branched from* contains that SHA and reports no outcome at all, so the grep
-scored those as present. Measured on the real register, that method
-under-reported by more than half.
+scored those as present. Run head-to-head over the same register file at the
+same instant, across fifteen merges, the grep method reported **fifteen
+recorded and nothing missing** — a perfectly clean register — where the control
+found **seven recorded and seven missing**. Eight of the grep's fifteen hits
+were lines that mention the commit and report no outcome whatever.
 
 ## Layer Impact
 
@@ -88,8 +91,9 @@ afterwards.
 
 | | merged in window | recorded | missing | pending in grace |
 |---|---|---|---|---|
-| before | 15 | 3 | 11 | 1 |
+| before the four lines below were appended | 15 | 3 | 11 | 1 |
 | after | 15 | 7 | 7 | 1 |
+| *grep by merge SHA, same file, same instant as `after`* | 15 | *15* | *0* | — |
 
 The four that moved are exactly the four this item named. The control still
 exits 1, which is correct and is the point: seven merges in one two-hour window
