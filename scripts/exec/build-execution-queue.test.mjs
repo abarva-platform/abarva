@@ -885,6 +885,11 @@ function heldSection(rendered) {
   return rendered.match(/## Already claimed or in flight\n\n(.*)\n/)?.[1] ?? "";
 }
 
+/** The ids the queue renders on the "Expired but WORK IN FLIGHT" line. */
+function inFlightSection(rendered) {
+  return rendered.match(/\*\*Expired but WORK IN FLIGHT — do not take \(\d+\):\*\*(.*)/)?.[1] ?? "";
+}
+
 /** The ids the queue renders on the "Explicitly released" line. */
 function releasedSection(rendered) {
   return rendered.match(/\*\*Explicitly released \(\d+\):\*\*(.*)/)?.[1] ?? "";
@@ -1130,6 +1135,175 @@ function oneLineClaimFixture(id, line) {
     q.status === 0 &&
       releasedSection(rendered).includes(id) &&
       !heldSection(rendered).includes(id),
+    `exit=${q.status}\nheld=${heldSection(rendered)}\nreleased=${releasedSection(rendered)}`,
+  );
+}
+
+/* ------------------------------------------------------------------------ */
+/* 21. THE SUBJECT MAY LEAD THE SENTENCE — item T-510.                      */
+/*                                                                          */
+/*     The register writes releases in a form the parser could not see:     */
+/*     the id leads, beside the verdict, with no `item` prefix.             */
+/*                                                                          */
+/*         RELEASED T-005 | MERGED PR #8013 | ... item 126 ...             */
+/*                                                                          */
+/*     Measured on the live register at 2026-09-22T09:50Z: 53 distinct ids  */
+/*     carry a release or merge the queue could not read, against 23        */
+/*     further verdict lines that genuinely name no subject and are left    */
+/*     unresolved on purpose. The subject is still whichever grammar is     */
+/*     written FIRST — the release form is a new candidate in that          */
+/*     contest, not a new precedence over it, which is what case 21c pins.  */
+/* ------------------------------------------------------------------------ */
+
+/**
+ * Two ids, one claim line each plus one release line that names the first as
+ * its subject and the second only in passing. Returns the rendered queue.
+ *
+ * Two ids are the point: the acceptance for T-510 says a fixture with one id
+ * on the line cannot fail, because a parser that simply took the last id
+ * would satisfy it.
+ */
+function subjectLeadingFixture(subjectId, mentionedId, releaseLine) {
+  const dir = freshFixture();
+  for (const id of [subjectId, mentionedId]) {
+    addBacklogItem(dir, id);
+    mapFixtureId(dir, id);
+  }
+  fs.appendFileSync(
+    path.join(dir, "EXECUTION_CLAIMS.md"),
+    `\n${registerStamp(20)} | lane-a | item ${subjectId} · CLAIMED | branch codex/${subjectId}-fixture\n` +
+      `${registerStamp(15)} | lane-b | item ${mentionedId} · CLAIMED | branch codex/${mentionedId}-fixture\n` +
+      `${releaseLine}\n`,
+  );
+  const q = buildBoardAndQueue(dir);
+  const rendered = fs.readFileSync(path.join(dir, "EXECUTION_QUEUE.md"), "utf8");
+  fs.rmSync(dir, { recursive: true, force: true });
+  return { q, rendered };
+}
+
+/* 21a. THE DEFECT, in the exact shape found live: the subject leads and a   */
+/*      DIFFERENT id is mentioned later under the `item` grammar. Before     */
+/*      the fix the line resolved to the mention and the subject's release   */
+/*      was silently unrecorded. Both halves are asserted, because the       */
+/*      mention staying held is what separates this from a parser that just  */
+/*      grabs any id near a verdict.                                         */
+{
+  const subject = "T-596";
+  const mentioned = "T-597";
+  const line =
+    `${registerStamp(0)} | lane-a | RELEASED ${subject} | MERGED PR #8013 SHA 57331dc6c | ` +
+    `enum sweep reads annotated constants; mapping is never inferred from the name. ` +
+    `Filed while closing item ${mentioned}, which another lane still holds.`;
+  const { q, rendered } = subjectLeadingFixture(subject, mentioned, line);
+  check(
+    "a release whose subject LEADS the sentence releases that id, not the id mentioned later",
+    q.status === 0 &&
+      releasedSection(rendered).includes(subject) &&
+      !heldSection(rendered).includes(subject) &&
+      heldSection(rendered).includes(mentioned) &&
+      !releasedSection(rendered).includes(mentioned),
+    `exit=${q.status}\nheld=${heldSection(rendered)}\nreleased=${releasedSection(rendered)}`,
+  );
+}
+
+/* 21b. The other half of the same grammar: the id LEADS and the verdict     */
+/*      follows — `T-503 MERGED+CLOSED b1a7db782 (PR #8049)`. All 17 live    */
+/*      lines in this form carry MERGED and none carries RELEASED, so what   */
+/*      the alternative fixes is not the release bucket but WHICH LINE IS    */
+/*      NEWEST for the id: an item whose claim has aged past the TTL and     */
+/*      whose merge line the parser could not attribute reads as expired     */
+/*      work in flight, when the register's last word on it was written a    */
+/*      minute ago. Without this case the id-leading alternative can be      */
+/*      deleted and 21a still passes.                                        */
+{
+  const subject = "T-598";
+  const mentioned = "T-599";
+  const dir = freshFixture();
+  for (const id of [subject, mentioned]) {
+    addBacklogItem(dir, id);
+    mapFixtureId(dir, id);
+  }
+  fs.appendFileSync(
+    path.join(dir, "EXECUTION_CLAIMS.md"),
+    // Aged past the 3-hour TTL, and naming a branch, so the claim alone reads
+    // as expired-but-in-flight.
+    `\n${registerStamp(260)} | lane-a | item ${subject} · CLAIMED | branch codex/${subject}-fixture\n` +
+      `${registerStamp(20)} | lane-b | item ${mentioned} · CLAIMED | branch codex/${mentioned}-fixture\n` +
+      `${registerStamp(0)} | lane-a | ${subject} MERGED+CLOSED b1a7db782 (PR #8049) | ` +
+      `measured independently before any string was edited; supersedes nothing in item ${mentioned}.\n`,
+  );
+  const q = buildBoardAndQueue(dir);
+  const rendered = fs.readFileSync(path.join(dir, "EXECUTION_QUEUE.md"), "utf8");
+  fs.rmSync(dir, { recursive: true, force: true });
+  check(
+    "a merge whose id LEADS the verdict is the newest line for THAT id, not for the id mentioned later",
+    q.status === 0 &&
+      heldSection(rendered).includes(subject) &&
+      !inFlightSection(rendered).includes(subject) &&
+      heldSection(rendered).includes(mentioned),
+    `exit=${q.status}\nheld=${heldSection(rendered)}\ninFlight=${inFlightSection(rendered)}`,
+  );
+}
+
+/* 21c. FIRST WRITTEN STILL WINS. This is the case that stops the new        */
+/*      grammar being given precedence, and it is the one that would let a   */
+/*      claim line release an item it merely narrates. The claimed item is   */
+/*      written first; the release of ANOTHER lane's item sits later in a    */
+/*      parenthetical. The claim must hold and the narrated id must not      */
+/*      move — case 20a asserts the first half on one id, this asserts both  */
+/*      halves on two.                                                       */
+{
+  const claimed = "T-600";
+  const narrated = "T-601";
+  const dir = freshFixture();
+  for (const id of [claimed, narrated]) {
+    addBacklogItem(dir, id);
+    mapFixtureId(dir, id);
+  }
+  fs.appendFileSync(
+    path.join(dir, "EXECUTION_CLAIMS.md"),
+    `\n${registerStamp(20)} | lane-b | item ${narrated} · CLAIMED | branch codex/${narrated}-fixture\n` +
+      `${registerStamp(0)} | lane-a | item ${claimed} · CLAIMED | branch codex/${claimed}-fixture | ` +
+      `files: a.ts, b.ts (free — the lane that held b.ts RELEASED item ${narrated} at 17:18Z)\n`,
+  );
+  const q = buildBoardAndQueue(dir);
+  const rendered = fs.readFileSync(path.join(dir, "EXECUTION_QUEUE.md"), "utf8");
+  fs.rmSync(dir, { recursive: true, force: true });
+  check(
+    "a claim written before a narrated release keeps the line, and the narrated id is not released",
+    q.status === 0 &&
+      heldSection(rendered).includes(claimed) &&
+      !releasedSection(rendered).includes(claimed) &&
+      heldSection(rendered).includes(narrated) &&
+      !releasedSection(rendered).includes(narrated),
+    `exit=${q.status}\nheld=${heldSection(rendered)}\nreleased=${releasedSection(rendered)}`,
+  );
+}
+
+/* 21d. A VERDICT LINE THAT NAMES NO SUBJECT STAYS UNRESOLVED. 23 of the 76 */
+/*      live verdict lines are wave announcements carrying PR numbers and    */
+/*      SHAs and no item id. A grammar loose enough to find a subject in     */
+/*      one of those would attribute a release to whatever number it landed  */
+/*      on, which is the T-545 failure in a new costume.                     */
+{
+  const id = "T-602";
+  const dir = freshFixture();
+  addBacklogItem(dir, id);
+  mapFixtureId(dir, id);
+  fs.appendFileSync(
+    path.join(dir, "EXECUTION_CLAIMS.md"),
+    `\n${registerStamp(20)} | lane-a | item ${id} · CLAIMED | branch codex/${id}-fixture\n` +
+      `${registerStamp(0)} | lane-b | RELEASED parallel wave · PR #7855 verdict kernel (\`f7fbc83bb\`), ` +
+      `#7856 grounding dead export (\`3873b2ce6\`), #7857 stage 04 readiness (\`b6ddc5f11\`)\n`,
+  );
+  const q = buildBoardAndQueue(dir);
+  const rendered = fs.readFileSync(path.join(dir, "EXECUTION_QUEUE.md"), "utf8");
+  fs.rmSync(dir, { recursive: true, force: true });
+  check(
+    "a release line naming no item id releases nothing",
+    q.status === 0 &&
+      heldSection(rendered).includes(id) &&
+      !releasedSection(rendered).includes(id),
     `exit=${q.status}\nheld=${heldSection(rendered)}\nreleased=${releasedSection(rendered)}`,
   );
 }
