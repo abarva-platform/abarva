@@ -5,6 +5,8 @@ import {
   buildProductionReadinessPageView,
   type ProductionReadinessPageView,
 } from '@/lib/admin/production-readiness-page-view';
+import { buildAgentContextAsync } from '@/lib/agent/context-bundle-live';
+import { generateStewardEditorial } from '@/lib/agent/editorial';
 
 const root = process.cwd();
 
@@ -24,7 +26,12 @@ describe('ADMIN5 — Production Readiness page view', () => {
       expect(s).toContain('pilot');
       expect(s).toContain('production');
     });
-    it('agent is Steward', () => expect(view.context.agent).toBe('Steward'));
+    // U-501: `context.agent` fed ContextBar's `agent` prop, retired with the
+    // provenance chips (e49e6d5f2, #2653) and removed from the component by
+    // U-010 (#8104). The view no longer carries it. The agent name that does
+    // reach a rendered surface is `primaryAgentLabel`, read by AgentRail, so
+    // the assertion moves there rather than being dropped.
+    it('agent rail label is Steward', () => expect(view.primaryAgentLabel).toBe('Steward'));
     it('liveStatus is Deferred', () => expect(view.context.liveStatus).toBe('Deferred'));
     it('liveStatusKind is deferred', () => expect(view.context.liveStatusKind).toBe('deferred'));
     it('editorial mentions readiness decision', () =>
@@ -67,8 +74,15 @@ describe('ADMIN5 — Production Readiness page view', () => {
         expect(b.impactedComponent).toBeDefined();
       });
     });
-    it('contextUsed has at least 2 entries', () =>
-      expect(view.editorial.contextUsed.length).toBeGreaterThanOrEqual(2));
+    // U-501: `editorial.contextUsed` fed StewardEditorial's retired
+    // `contextUsed` prop and is no longer part of the admin view shape. The
+    // field still exists on the shared agent editorial, which non-admin
+    // surfaces read, so the same assertion at the same strength now runs
+    // against the layer that still owns it.
+    it('the shared agent editorial still has at least 2 contextUsed entries', async () => {
+      const ctx = await buildAgentContextAsync('apex-retail', 'admin', 'production-readiness');
+      expect(generateStewardEditorial(ctx).contextUsed.length).toBeGreaterThanOrEqual(2);
+    });
     it('production tile blockerCount matches productionImpact blockers', () => {
       const tile = view.tiles.find((t) => t.id === 'production');
       expect(tile?.blockerCount).toBeGreaterThanOrEqual(0);
