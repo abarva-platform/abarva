@@ -513,6 +513,9 @@ export function buildSourceEventShellView(
             : "Review & decide",
         }
       : normalizedCurrentStageItem;
+  const approvalDecisionItem = viewedStageIsCurrent
+    ? normalizedCurrentStageItem
+    : null;
   const pendingDecisionGroups = viewedStageIsCurrent
     ? buildApprovalWorkspaceDecisions({
         eventId: input.event.id,
@@ -523,7 +526,9 @@ export function buildSourceEventShellView(
           input.journey,
           visibleCurrentStageKey,
         ),
-        currentStageItem,
+        currentStageItem: currentStageApprovalRecorded
+          ? approvalDecisionItem
+          : currentStageItem,
         approvalRecorded: currentStageApprovalRecorded,
         workflowComplete: completedViewedStage,
         artifactsReady: artifactReadiness.ready,

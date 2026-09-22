@@ -6784,6 +6784,17 @@ function currentApprovalDecision(
   return view.approvals.pendingDecisionGroups[0]?.decisions[0] ?? null;
 }
 
+function recordedApprovalAuditBlockers(
+  decision: ApprovalDecisionForCard | null,
+): ApprovalDecisionForCard["blockers"] {
+  if (!decision || decision.status !== "recorded") return [];
+  return decision.blockers.filter((blocker) =>
+    ["approval_item_missing", "stale_version", "reviewer_role_missing"].includes(
+      blocker.code,
+    ),
+  );
+}
+
 function PendingDecisionGroups({ view }: { view: SourceEventShellView }) {
   if (view.approvals.pendingDecisionGroups.length === 0) return null;
 
@@ -6884,6 +6895,10 @@ function PendingDecisionGroups({ view }: { view: SourceEventShellView }) {
 
 function ApprovalReadinessBrief({ view }: { view: SourceEventShellView }) {
   const stageApproved = view.stage.approvalRecorded;
+  const approvalDecision = currentApprovalDecision(view);
+  const approvalAuditBlockers = recordedApprovalAuditBlockers(approvalDecision);
+  const approvalAuditGapsOpen =
+    stageApproved && approvalAuditBlockers.length > 0;
   const workflowComplete = view.stage.ready >= view.stage.total;
   const filesReady = view.stage.artifactReadiness.ready;
   const ready = !stageApproved && workflowComplete && filesReady;
@@ -6892,12 +6907,16 @@ function ApprovalReadinessBrief({ view }: { view: SourceEventShellView }) {
   )}?stage=${encodeURIComponent(view.stage.key)}`;
   const filesHref = `${stageHref}&workspace=files`;
   const decision = stageApproved
-    ? `${view.stage.label} approval is recorded.`
+    ? approvalAuditGapsOpen
+      ? `${view.stage.label} approval is recorded, but ${approvalAuditBlockers.length} audit metadata gap${approvalAuditBlockers.length === 1 ? " remains" : "s remain"}.`
+      : `${view.stage.label} approval is recorded.`
     : view.approvals.currentStageItem != null
       ? `${view.stage.label} gate decision routed.`
       : `No approval item is currently routed for ${view.stage.label}.`;
   const nextAction = stageApproved
-    ? "No further approval required."
+    ? approvalAuditGapsOpen
+      ? "Resolve approval record gaps."
+      : "No further approval required."
     : !workflowComplete
       ? "Return to steps."
       : !filesReady
@@ -6905,7 +6924,9 @@ function ApprovalReadinessBrief({ view }: { view: SourceEventShellView }) {
         : (view.approvals.currentStageItem?.actionLabel ??
           "No approval action.");
   const readinessTitle = stageApproved
-    ? !filesReady && view.stage.approvalTraceState === "historical"
+    ? approvalAuditGapsOpen
+      ? "Approval recorded; audit gaps open"
+      : !filesReady && view.stage.approvalTraceState === "historical"
       ? "Historically approved; remediation open"
       : "Stage approved"
     : ready
@@ -6914,7 +6935,9 @@ function ApprovalReadinessBrief({ view }: { view: SourceEventShellView }) {
         ? "Artifact queue blocks the gate"
         : "Workflow inputs still open";
   const readinessStatus = stageApproved
-    ? "Approved"
+    ? approvalAuditGapsOpen
+      ? "Recorded with gaps"
+      : "Approved"
     : ready
       ? "Ready"
       : workflowComplete
@@ -6952,7 +6975,7 @@ function ApprovalReadinessBrief({ view }: { view: SourceEventShellView }) {
           style={{
             ...SMALL_STATUS_PILL,
             color:
-              ready || stageApproved
+              ready || (stageApproved && !approvalAuditGapsOpen)
                 ? ANALYTICS.GREEN_TEXT
                 : ANALYTICS.AMBER_TEXT,
           }}

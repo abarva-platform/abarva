@@ -140,7 +140,7 @@ function buildDecision(
     });
   }
 
-  if (!input.gateActionArmed) {
+  if (!input.approvalRecorded && !input.gateActionArmed) {
     blockers.push({
       code: "unauthorized_viewer",
       detail:
@@ -150,6 +150,7 @@ function buildDecision(
 
   const rationale = normalizeApprovalReason(input.approvalRationale);
   if (
+    !input.approvalRecorded &&
     input.gateActionArmed &&
     rationale.length < SOURCE_APPROVAL_REASON_MIN_LENGTH
   ) {
