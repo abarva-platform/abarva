@@ -39,8 +39,12 @@ Layer 4 product projection: the historical Request phase renders a compact read-
 ## QA / Validation
 
 - Red-first tests: the projection suite initially failed because the summary module did not exist, and the intake-reader suite failed because the requester identity was discarded.
-- Mutation: allowing generic requester and reviewer identities was caught by the projection suite; the guard was restored.
-- Final focused Jest, mounted behavior, TypeScript, scoped ESLint, release control, and test-census results will be recorded on the pull request.
+- Mounted red-first tests: the historical Request region was absent before the workspace mount, and both the governed-origin and no-origin cases failed until the summary was mounted.
+- Mutation proof: allowing generic requester and reviewer identities, reversing the source-version equality guard, and mounting the summary on Define instead of Request were each caught by the focused suites; every guard was restored.
+- Focused Jest: 4 suites and 71 tests passed, covering the authority projection, intake repository, mounted workspace, and signed-in route composition boundary.
+- TypeScript: `NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit --pretty false` passed.
+- Scoped ESLint passed for every changed TypeScript and TSX file.
+- Release control and test-census validation are required again after the final rebase onto `main` and before the pull request opens.
 
 ## Rollout Plan
 

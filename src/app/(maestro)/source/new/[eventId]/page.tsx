@@ -17,6 +17,11 @@ import { buildSourceEventStagePlanSnapshot } from "@/lib/source/new-workspace/st
 import { readSourceNewStage04VendorPanel } from "@/lib/source/new-workspace/stage04-vendor-panel";
 import { readSourceNewStage05NdaCoverage } from "@/lib/source/new-workspace/stage05-nda-coverage";
 import { buildSourceNewResponseIntake } from "@/lib/source/new-workspace/response-intake";
+import {
+  buildHistoricalRequestSummary,
+  historicalRequestOriginForEvent,
+} from "@/lib/source/new-workspace/historical-request-summary";
+import { readSourceIntakeRequestQueue } from "@/lib/source/intake/servicenow-sourcing-request-repository";
 import { listSourceArtifactsForStage } from "@/lib/source/artifact-registry";
 import { readNormalizedVendorResponsePackages } from "@/lib/source/vendor-response-persistence";
 import { buildScorecardAuthorityView } from "@/lib/source/proposal-intelligence";
@@ -78,6 +83,7 @@ export default async function SourceNewEventPage({
     stage05NdaCoverage,
     responseArtifactsResult,
     normalizedResponsePackagesResult,
+    intakeRequestQueue,
   ] = await Promise.all([
     listSourceArtifacts(
       event.id,
@@ -110,6 +116,7 @@ export default async function SourceNewEventPage({
     })
       .then((data) => ({ kind: "available" as const, data }))
       .catch(() => ({ kind: "unavailable" as const, data: null })),
+    readSourceIntakeRequestQueue(activeClient.key),
   ]);
 
   // Request authority, read from the persisted version store rather than
@@ -238,6 +245,19 @@ export default async function SourceNewEventPage({
         : null,
     readBlockers: responseReadBlockers,
   });
+  const historicalRequestSummary = buildHistoricalRequestSummary({
+    event: {
+      trigger: event.triggerDescription ?? null,
+      scope: event.scopeDescription ?? null,
+      category: event.classifiedCategory ?? null,
+      decisionOwner: event.decisionOwner ?? null,
+    },
+    origin: historicalRequestOriginForEvent({
+      eventId: event.id,
+      registryAvailable: intakeRequestQueue.registryAvailable,
+      requests: intakeRequestQueue.requests,
+    }),
+  });
 
   return (
     <SourceNewWorkspace
@@ -274,6 +294,7 @@ export default async function SourceNewEventPage({
       stage05NdaCoverage={stage05NdaCoverage}
       scorecardAuthority={scorecardAuthority}
       responseIntake={responseIntake}
+      historicalRequestSummary={historicalRequestSummary}
     />
   );
 }

@@ -31,6 +31,10 @@ import {
 import { normalizeSourceStageKey } from "@/lib/source/constants";
 import type { SourceNewEventIntelligenceView } from "@/lib/source/new-workspace/event-intelligence";
 import type { SourceNewResponseIntake } from "@/lib/source/new-workspace/response-intake";
+import {
+  buildHistoricalRequestSummary,
+  type HistoricalRequestSummary,
+} from "@/lib/source/new-workspace/historical-request-summary";
 import type { SourceNewStage04VendorPanel } from "@/lib/source/new-workspace/stage04-vendor-panel";
 import type { SourceNewStage05NdaCoverage } from "@/lib/source/new-workspace/stage05-nda-coverage";
 import type { ScorecardAuthorityView } from "@/lib/source/proposal-intelligence";
@@ -222,6 +226,43 @@ function isCompletedEvent(event: SourceNewEventView): boolean {
   return event.lifecycle === "completed";
 }
 
+function SourceNewHistoricalRequestSummary({
+  summary,
+}: {
+  summary: HistoricalRequestSummary;
+}) {
+  const facts = (rows: readonly HistoricalRequestSummary["requestFacts"][number][]) => (
+    <dl>
+      {rows.map((row) => (
+        <div key={row.key}>
+          <dt>{row.label}</dt>
+          <dd>{row.value}</dd>
+        </div>
+      ))}
+    </dl>
+  );
+
+  return (
+    <section className="snw-known" aria-label="Historical Request summary">
+      <h3>Request record</h3>
+      {facts(summary.requestFacts)}
+      {summary.originFacts.length > 0 && (
+        <>
+          <h3>Intake authority</h3>
+          {facts(summary.originFacts)}
+        </>
+      )}
+      {summary.mappingFacts.length > 0 && (
+        <>
+          <h3>Mapping authority</h3>
+          {facts(summary.mappingFacts)}
+        </>
+      )}
+      {summary.mappingGap && <p className="snw-note">{summary.mappingGap}</p>}
+    </section>
+  );
+}
+
 function phasesFor(
   event: SourceNewEventView,
 ): readonly { key: Phase; label: string }[] {
@@ -258,6 +299,8 @@ export type SourceNewWorkspaceProps = {
   scorecardAuthority: ScorecardAuthorityView;
   /** Responses-stage supplier workbook intake projection. */
   responseIntake?: SourceNewResponseIntake;
+  /** Governed summary for the historical Request phase. */
+  historicalRequestSummary?: HistoricalRequestSummary;
 };
 
 export function SourceNewWorkspace({
@@ -269,6 +312,7 @@ export function SourceNewWorkspace({
   stage05NdaCoverage,
   scorecardAuthority,
   responseIntake,
+  historicalRequestSummary,
 }: SourceNewWorkspaceProps) {
   const evidence = useMemo(
     () => phaseEvidence(event, files, stage05NdaCoverage),
@@ -304,6 +348,17 @@ export function SourceNewWorkspace({
   const responsesStage = isResponsesStage(event);
   const scorecardAuthorityStage = isScorecardAuthorityStage(event);
   const responseRows = responseEvidenceRows(files);
+  const requestSummary =
+    historicalRequestSummary ??
+    buildHistoricalRequestSummary({
+      event: {
+        trigger: event.trigger,
+        scope: event.scope,
+        category: event.category,
+        decisionOwner: event.decisionOwner,
+      },
+      origin: null,
+    });
   const content = (
     <main className="snw" aria-label="Source New event workspace">
       <div className="snw-inner">
@@ -480,6 +535,9 @@ export function SourceNewWorkspace({
                     This phase holds recorded work. Viewing it does not mark it
                     complete, approve any gate, or change the current stage.
                   </p>
+                  {phase === "request" && (
+                    <SourceNewHistoricalRequestSummary summary={requestSummary} />
+                  )}
                   {advancedBeyondPhases && (
                     <p className="snw-note">
                       {completedEvent ? completedNote : advancedNote}
