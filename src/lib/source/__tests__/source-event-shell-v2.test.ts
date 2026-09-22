@@ -727,6 +727,45 @@ describe("buildSourceEventShellView", () => {
     });
   });
 
+  it("carries client-final current-authoritative metadata into file readiness items", () => {
+    const view = buildSourceEventShellView({
+      event: {
+        ...EVENT,
+        currentStageKey: "rfp",
+        currentStageLabel: "RFP",
+      },
+      tenantName: "Demo Client",
+      viewedStageKey: "rfp",
+      stageView: SAMPLE_RFP_STAGE as StageAnalyticsView,
+      artifacts: [
+        {
+          id: "rfp-client-final",
+          artifactCode: "d09_rfp_pack",
+          artifactGroup: "approval",
+          sourceOrigin: "reuploaded",
+          stageKey: "rfp",
+          status: "client_final",
+          isClientFinal: true,
+          isCurrentAuthoritative: true,
+          clientFinalAcceptedAt: "2026-09-21T12:00:00.000Z",
+          title: "RFP Package - Client Final",
+          parseStatus: "parsed",
+          embeddingStatus: "pending",
+          graphStatus: "pending",
+        },
+      ],
+    });
+
+    expect(view.files.items).toEqual([
+      expect.objectContaining({
+        id: "rfp-client-final",
+        artifactRole: "authoritative",
+        latestAcceptance: null,
+        acceptedAsAuthoritative: true,
+      }),
+    ]);
+  });
+
   it("presents an inferred past-stage approval as historical while keeping current artifact gaps visible", () => {
     const completeRfpStage: StageAnalyticsView = {
       ...(SAMPLE_SCOPE_STAGE as StageAnalyticsView),
