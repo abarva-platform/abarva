@@ -9,7 +9,7 @@ import { syncPersonToGraph } from "@/lib/graph/mutations";
 import { getCurrentMaestro } from "@/lib/auth/maestro";
 import { logAudit } from "@/lib/audit/log";
 import { assignTopic } from "@/lib/topics/db";
-import { canonicalClientDisplayName } from "@/lib/client-config";
+import { canonicalClientDisplayNameOrNull } from "@/lib/client-config";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -48,13 +48,20 @@ export async function POST(req: NextRequest) {
     getAllPersons(),
     getActiveClientRow(),
   ]);
+  // U-513: `canonicalClientDisplayName` resolves anything unrecognised through
+  // `getClientOption`, so it never returned `null` and the two links behind it
+  // were dead. That mattered here beyond the label: the first token of this name
+  // scopes the sponsor candidate list below, so a request whose tenant did not
+  // resolve filtered candidates by the default account's organization. Asking
+  // the `OrNull` form makes the declared `null` end reachable, and `|| null`
+  // closes the second hole -- a blank row name is not nullish, so `??` alone
+  // would have let `""` through as a keyword.
   const activeClientDisplayName =
-    canonicalClientDisplayName({
+    canonicalClientDisplayNameOrNull({
       key: activeClient?.key,
       name: activeClient?.name,
     }) ??
-    activeClient?.name ??
-    null;
+    (activeClient?.name?.trim() || null);
   // Scope sponsor candidates to the active client's organization when
   // we can identify one. Case-insensitive substring match handles the
   // 'Meridian Health' vs 'Meridian Health System' variance.

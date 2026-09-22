@@ -7,7 +7,7 @@ import {
   getResponsibleAiAcknowledgmentStatus,
   getResponsibleAiAcknowledgmentSubjectForRequest,
 } from "@/lib/ai-liability/responsible-ai-acknowledgment";
-import { canonicalClientDisplayName } from "@/lib/client-config";
+import { resolveConsentClientName } from "@/lib/ai-liability/consent-client-name";
 
 export const metadata: Metadata = {
   title: "Responsible AI Acknowledgment | AbarVa",
@@ -41,14 +41,10 @@ export default async function ResponsibleAiAcknowledgmentPage() {
       };
   if (!status.required) redirect("/home");
 
-  const clientName =
-    foundationClientDisplayName(subject?.clientKey) ??
-    canonicalClientDisplayName({
-      key: activeClient?.key,
-      name: activeClient?.name,
-    }) ??
-    activeClient?.name ??
-    "your workspace";
+  const clientName = resolveConsentClientName({
+    subjectClientKey: subject?.clientKey,
+    activeClient,
+  });
 
   return (
     <main
@@ -111,10 +107,4 @@ export default async function ResponsibleAiAcknowledgmentPage() {
       </section>
     </main>
   );
-}
-
-function foundationClientDisplayName(clientKey: string | null | undefined) {
-  if (clientKey === "airline-demo-new") return "Airline Demo New";
-  if (clientKey === "healthcare-demo-new") return "Healthcare Demo New";
-  return null;
 }
