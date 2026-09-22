@@ -615,6 +615,20 @@ const BLOCKER_RULES = [
   // as free agent work. Two imperative forms are added here, each with its
   // own case in the suite.
   //
+  // A THIRD FORM, added with the U-502 placement and for the same measured
+  // reason the approval term shipped with the rung-7 veto: placing that id
+  // made it CLAIMABLE, and its acceptance opens "A decision, then the work
+  // that follows from it: mount or retire." That is an owner gate stated as
+  // plainly as any noun form here, and none of the patterns above match it —
+  // it says "A decision", not "decision needed", and never uses the
+  // imperative. Shipping the placement without this term would have offered
+  // an owner decision to the next agent as free work.
+  //
+  // It is anchored exactly as `Decide` is, so the phrase must OPEN a sentence
+  // or follow bold markup; "a decision was taken", "the decision belongs to
+  // the owner" and any mid-sentence mention stay out. Measured on the live
+  // register, it changes the blocker of EXACTLY ONE item, that one.
+  //
   // This is a WIDENING, and the detector was narrowed once before for good
   // reason: re-scanning raw prose made every descriptive use of "signed-in"
   // an owner gate. So both forms are anchored. `Decide` must open a sentence
@@ -622,7 +636,7 @@ const BLOCKER_RULES = [
   // owner to decide anything" and "Deciding which suite to wire was settled"
   // out; and the deferral form names who does the deciding rather than
   // matching the verb anywhere it appears.
-  { re: /decision needed|decision required|Content decision|\bproduct call\b|\bowner'?s call\b|blocked on owner policy|(?:^|[.!?;:]\s+|\n\s*|\*\*)Decide\b|\b(?:until|before)\s+(?:a human|an owner|a person|the owner|Anand|someone)\s+decides\b/i, say: "Decision needed", decisionGate: true, ownerGate: true },
+  { re: /decision needed|decision required|Content decision|\bproduct call\b|\bowner'?s call\b|blocked on owner policy|(?:^|[.!?;:]\s+|\n\s*|\*\*)Decide\b|\b(?:until|before)\s+(?:a human|an owner|a person|the owner|Anand|someone)\s+decides\b|(?:^|[.!?;:]\s+|\n\s*|\*\*)A decision\b/i, say: "Decision needed", decisionGate: true, ownerGate: true },
   // Item T-703. This was a bare `\bblocked\b` — no anchoring, no veto — while
   // the decision rule directly above has both, added after raw prose made
   // every descriptive use of a word into an owner gate. T-700 gave this rule

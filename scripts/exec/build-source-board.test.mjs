@@ -699,5 +699,63 @@ function blockerOf(dir, id) {
   fs.rmSync(dir, { recursive: true, force: true });
 }
 
+console.log("\nbuild-source-board — an owner decision stated as a noun phrase (U-502)\n");
+
+/* ------------------------------------------------------------------------ *
+ * 21. A DECISION THAT NEVER SAYS "decision needed". The live row that forced
+ *     this: its acceptance opens "A decision, then the work that follows from
+ *     it: mount or retire." Placing that id on the map made it rung 0 with NO
+ *     blocker, which is CLAIMABLE — the queue would have offered an owner
+ *     decision to the next agent as free work.
+ * ------------------------------------------------------------------------ */
+{
+  const dir = freshFixture();
+  addBacklogItem(
+    dir,
+    "T-950",
+    // The title must end with a PLAIN full stop, as the live row does. The
+    // anchor accepts `**` only when it sits immediately before the phrase, so
+    // a title ending `.**` puts bold between the stop and the words and the
+    // case then fails for a reason that has nothing to do with the rule. That
+    // is a real limit of the anchor, shared with the `Decide` form beside it,
+    // and it is recorded as a known gap rather than papered over here.
+    "Nine modules are reached by no product entry point.",
+    "A decision, then the work that follows from it: mount them or retire them.",
+  );
+  buildBoard(dir);
+  const item = summaryItems(dir).out.get("T-950");
+  check(
+    "an owner decision written as a noun phrase is not offered as free work",
+    item?.blocker === "Decision needed",
+    `rung=${item?.rung} (${item?.rungLabel}) blocker=${JSON.stringify(item?.blocker ?? null)}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+/* ------------------------------------------------------------------------ *
+ * 22. THE ANCHOR, which is what keeps this from swallowing ordinary prose.
+ *     The phrase must OPEN a sentence or follow bold markup. A row that
+ *     merely mentions a decision in passing is not a gate, and a rule that
+ *     read it as one would move finished work into the never-claim bucket.
+ *     Passes on unfixed code BY DESIGN — it is the guardrail, not the defect.
+ * ------------------------------------------------------------------------ */
+{
+  const dir = freshFixture();
+  addBacklogItem(
+    dir,
+    "T-951",
+    "**The work is done.**",
+    "The owner already took a decision here and the change follows it; nothing is outstanding.",
+  );
+  buildBoard(dir);
+  const item = summaryItems(dir).out.get("T-951");
+  check(
+    "a decision mentioned mid-sentence is not read as an owner gate",
+    item?.blocker !== "Decision needed",
+    `blocker=${JSON.stringify(item?.blocker ?? null)}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
 console.log(`\n${passes} passed, ${failures} failed`);
 process.exit(failures ? 1 : 0);
