@@ -11,7 +11,8 @@ describe("readSourceIntakeRequestQueue", () => {
   beforeEach(() => jest.clearAllMocks());
 
   it("returns the latest imported version with proposal, human decision, and event link kept distinct", async () => {
-    const run = jest.fn()
+    const run = jest
+      .fn()
       .mockResolvedValueOnce([])
       .mockResolvedValueOnce([
         {
@@ -23,9 +24,11 @@ describe("readSourceIntakeRequestQueue", () => {
           updated_at: "2026-09-22T11:55:00Z",
           normalized_request: {
             title: "Replace member contact center platform",
-            description: "Plan member services needs a new platform and operations partner.",
+            description:
+              "Plan member services needs a new platform and operations partner.",
             trigger: "Current platform contract expires in nine months.",
-            requestedOutcome: "Select a platform and managed operations partner.",
+            requestedOutcome:
+              "Select a platform and managed operations partner.",
             organization: {
               requestedFor: "Health Plan",
               businessDomain: "plan",
@@ -33,7 +36,8 @@ describe("readSourceIntakeRequestQueue", () => {
             },
             value: { amount: 12500000, currency: "USD", validated: false },
             scope: {
-              included: "Member calls, chat, quality monitoring, and workforce management.",
+              included:
+                "Member calls, chat, quality monitoring, and workforce management.",
               excluded: "Clinical triage.",
             },
             governance: {
@@ -50,13 +54,17 @@ describe("readSourceIntakeRequestQueue", () => {
             reasons: ["Matched contact-center scope"],
           },
           required_fact_gaps: ["baseline_owner"],
+          decision_id: "mapping-1",
           decision_state: "accepted",
+          decision_source_version: "2026-09-22T12:00:00Z",
           decision_category_id: "contact_center_cx",
           decision_archetype_id: "CONTACT_CENTER_CX",
+          decided_by_user_id: "person-1",
           decided_by_name: "Procurement lead",
           decided_at: "2026-09-22T12:10:00Z",
           decision_rationale: "Scope and buying motion confirmed.",
           source_event_id: "11111111-1111-4111-8111-111111111111",
+          event_source_version: "2026-09-22T12:00:00Z",
           linked_at: "2026-09-22T12:20:00Z",
         },
       ]);
@@ -74,7 +82,8 @@ describe("readSourceIntakeRequestQueue", () => {
         requestedOutcome: "Select a platform and managed operations partner.",
         decisionOwner: "VP Member Services",
         baselineOwner: "Contact center operations",
-        scopeIncluded: "Member calls, chat, quality monitoring, and workforce management.",
+        scopeIncluded:
+          "Member calls, chat, quality monitoring, and workforce management.",
         scopeExcluded: "Clinical triage.",
         securityReviewNeeded: true,
         legalReviewNeeded: true,
@@ -85,11 +94,15 @@ describe("readSourceIntakeRequestQueue", () => {
           archetypeId: "CONTACT_CENTER_CX",
         }),
         mappingDecision: expect.objectContaining({
+          decisionId: "mapping-1",
           state: "accepted",
+          decidedByUserId: "person-1",
           decidedByName: "Procurement lead",
+          sourceVersion: "2026-09-22T12:00:00Z",
         }),
         eventLink: expect.objectContaining({
           eventId: "11111111-1111-4111-8111-111111111111",
+          sourceVersion: "2026-09-22T12:00:00Z",
         }),
       }),
     ]);
@@ -102,7 +115,9 @@ describe("readSourceIntakeRequestQueue", () => {
   });
 
   it("fails closed when the authority table is unavailable", async () => {
-    withSession.mockRejectedValue(Object.assign(new Error("missing"), { code: "42P01" }));
+    withSession.mockRejectedValue(
+      Object.assign(new Error("missing"), { code: "42P01" }),
+    );
 
     await expect(readSourceIntakeRequestQueue("tenant-a")).resolves.toEqual({
       registryAvailable: false,
@@ -119,7 +134,8 @@ describe("readSourceIntakeRequestQueue", () => {
   });
 
   it("does not promote a proposal into a human mapping decision", async () => {
-    const run = jest.fn()
+    const run = jest
+      .fn()
       .mockResolvedValueOnce([])
       .mockResolvedValueOnce([
         {
@@ -149,7 +165,9 @@ describe("readSourceIntakeRequestQueue", () => {
 
     const result = await readSourceIntakeRequestQueue("tenant-a");
 
-    expect(result.requests[0].mappingProposal.archetypeId).toBe("CLOUD_CONSUMPTION");
+    expect(result.requests[0].mappingProposal.archetypeId).toBe(
+      "CLOUD_CONSUMPTION",
+    );
     expect(result.requests[0].mappingDecision).toBeNull();
     expect(result.requests[0].eventLink).toBeNull();
   });

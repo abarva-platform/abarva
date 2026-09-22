@@ -59,6 +59,13 @@ type SourceEventCreatePayload = {
   error?: string;
 };
 
+type SourceRequestReviewPayload = {
+  ok?: boolean;
+  mappingDecision?: NonNullable<SourceIntakeRequestSummary["mappingDecision"]>;
+  detail?: string;
+  error?: string;
+};
+
 interface IntakeFieldDefinition {
   id: IntakeFieldId;
   label: string;
@@ -611,7 +618,8 @@ function intakeStateFromSourceRequest(
 function categoryIdFromSourceRequest(
   request: SourceIntakeRequestSummary,
 ): SourceCategoryId | null {
-  const categoryId = request.mappingProposal.categoryId;
+  const categoryId =
+    request.mappingDecision?.categoryId ?? request.mappingProposal.categoryId;
   return SOURCE_CATEGORIES.some((category) => category.id === categoryId)
     ? (categoryId as SourceCategoryId)
     : null;
@@ -916,7 +924,9 @@ export function SourceOriginatePage({
         : "New sourcing event";
 
   const [intake, setIntake] = useState<IntakeState>(() =>
-    sourceRequest ? intakeStateFromSourceRequest(sourceRequest) : initialIntakeState,
+    sourceRequest
+      ? intakeStateFromSourceRequest(sourceRequest)
+      : initialIntakeState,
   );
   const [selectedCategoryId, setSelectedCategoryId] =
     useState<SourceCategoryId | null>(() =>
@@ -933,6 +943,20 @@ export function SourceOriginatePage({
   const [sourceReviewRationale, setSourceReviewRationale] = useState(
     sourceRequest?.mappingDecision?.rationale ?? "",
   );
+  const [persistedSourceReview, setPersistedSourceReview] =
+    useState<NonNullable<SourceIntakeRequestSummary["mappingDecision"]> | null>(
+      () =>
+        sourceRequest &&
+        sourceRequest.mappingDecision?.sourceVersion ===
+          sourceRequest.sourceVersion &&
+        (sourceRequest.mappingDecision.state === "accepted" ||
+          sourceRequest.mappingDecision.state === "overridden")
+          ? sourceRequest.mappingDecision
+          : null,
+    );
+  const [reviewSubmitState, setReviewSubmitState] = useState<SubmitState>({
+    status: "idle",
+  });
   const [submitState, setSubmitState] = useState<SubmitState>({
     status: "idle",
   });
@@ -1034,12 +1058,25 @@ export function SourceOriginatePage({
     (sourceRequest.requiredFactGaps.length === 0 &&
       proposedSourceCategory !== null &&
       Boolean(sourceRequest.mappingProposal.archetypeId));
-  const sourceReviewReady =
+  const sourceReviewDraftReady =
     !sourceRequest ||
     (sourceProposalReviewable &&
       sourceReviewDecision !== null &&
       sourceReviewRationale.trim().length >= 12 &&
       (sourceReviewDecision === "accepted" || selectedCategory !== null));
+  const persistedSourceReviewMatchesDraft =
+    !sourceRequest ||
+    (persistedSourceReview !== null &&
+      persistedSourceReview.sourceVersion === sourceRequest.sourceVersion &&
+      persistedSourceReview.state === sourceReviewDecision &&
+      persistedSourceReview.rationale === sourceReviewRationale.trim() &&
+      (sourceReviewDecision === "accepted"
+        ? persistedSourceReview.categoryId ===
+          sourceRequest.mappingProposal.categoryId
+        : persistedSourceReview.categoryId === selectedCategory?.id));
+  const sourceReviewReady =
+    !sourceRequest ||
+    (sourceProposalReviewable && persistedSourceReviewMatchesDraft);
   const canCreate =
     allFactsCaptured &&
     sourceReviewReady &&
@@ -1090,6 +1127,72 @@ export function SourceOriginatePage({
     });
   }, []);
 
+  async function recordSourceRequestReview() {
+    if (!sourceRequest || !sourceReviewDraftReady || !sourceReviewDecision) {
+      return;
+    }
+    setReviewSubmitState({ status: "submitting" });
+    const body =
+      sourceReviewDecision === "overridden"
+        ? {
+            requestId: sourceRequest.requestId,
+            sourceVersion: sourceRequest.sourceVersion,
+            decisionState: sourceReviewDecision,
+            categoryId: selectedCategory?.id,
+            rationale: sourceReviewRationale,
+          }
+        : {
+            requestId: sourceRequest.requestId,
+            sourceVersion: sourceRequest.sourceVersion,
+            decisionState: sourceReviewDecision,
+            rationale: sourceReviewRationale,
+          };
+
+    let response: Response;
+    let payload: SourceRequestReviewPayload | null = null;
+    try {
+      response = await fetch("/api/v1/source/intake/servicenow/review", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      payload = (await response
+        .json()
+        .catch(() => null)) as SourceRequestReviewPayload | null;
+    } catch (error) {
+      setReviewSubmitState({
+        status: "error",
+        message:
+          error instanceof Error
+            ? error.message
+            : "Request review failed before the server responded.",
+      });
+      return;
+    }
+
+    if (!response.ok || !payload?.mappingDecision) {
+      setReviewSubmitState({
+        status: "error",
+        message:
+          payload?.detail ??
+          payload?.error ??
+          "Request review could not be recorded.",
+      });
+      return;
+    }
+
+    setPersistedSourceReview(payload.mappingDecision);
+    setSourceReviewDecision(
+      payload.mappingDecision.state === "accepted" ||
+        payload.mappingDecision.state === "overridden"
+        ? payload.mappingDecision.state
+        : null,
+    );
+    setSourceReviewRationale(payload.mappingDecision.rationale);
+    setReviewSubmitState({ status: "idle" });
+    setSubmitState({ status: "idle" });
+  }
+
   async function createEvent() {
     if (contractOptimizationRequiresSelection) {
       setSubmitState({
@@ -1134,17 +1237,14 @@ export function SourceOriginatePage({
                   sourceRequest: {
                     requestId: sourceRequest.requestId,
                     sourceVersion: sourceRequest.sourceVersion,
-                    decisionState: sourceReviewDecision,
-                    categoryId:
-                      sourceReviewDecision === "overridden"
-                        ? selectedCategory?.id
-                        : undefined,
-                    rationale: sourceReviewRationale,
                   },
                 }
               : {
                   eventName,
-                  eventType: inferEventType(intake.scopeBoundary, selectedCategory),
+                  eventType: inferEventType(
+                    intake.scopeBoundary,
+                    selectedCategory,
+                  ),
                   triggerDescription: intake.trigger,
                   decisionOwner: intake.decisionOwner || undefined,
                   scopeDescription: intake.scopeBoundary || undefined,
@@ -1204,7 +1304,12 @@ export function SourceOriginatePage({
         : `/source/events/${sourceEventId}/approval`;
     // The guided tour stays on its existing route; regular creation opens
     // the event workspace with approval as its next governed action.
-    const finalUrl = createdEventDestination(sourceEventId, approvalUrl, tourActive, sourcingMotion);
+    const finalUrl = createdEventDestination(
+      sourceEventId,
+      approvalUrl,
+      tourActive,
+      sourcingMotion,
+    );
     router.push(finalUrl);
     window.setTimeout(() => {
       if (window.location.pathname === "/source/new") {
@@ -1324,7 +1429,10 @@ export function SourceOriginatePage({
         )}
 
         {sourceRequest ? (
-          <section aria-label="Imported request review" style={SOURCE_REQUEST_REVIEW}>
+          <section
+            aria-label="Imported request review"
+            style={SOURCE_REQUEST_REVIEW}
+          >
             <div style={REQUEST_REVIEW_HEADER}>
               <div>
                 <div style={SECTION_LABEL}>Imported request review</div>
@@ -1333,18 +1441,22 @@ export function SourceOriginatePage({
                 </div>
               </div>
               <span style={STATUS_CHIP}>
-                {sourceReviewDecision
-                  ? "Routing reviewed"
-                  : "Named review required"}
+                {sourceReviewReady
+                  ? "Routing recorded"
+                  : sourceReviewDecision
+                    ? "Review not recorded"
+                    : "Named review required"}
               </span>
             </div>
             <p style={REQUEST_REVIEW_COPY}>
-              Proposed {sourceRequest.mappingProposal.archetypeId ?? "unmapped archetype"}
+              Proposed{" "}
+              {sourceRequest.mappingProposal.archetypeId ??
+                "unmapped archetype"}
               {sourceRequest.mappingProposal.categoryId
                 ? ` · ${sourceRequest.mappingProposal.categoryId}`
                 : ""}
-              . Supplier contact remains blocked; this review only confirms how the
-              request should enter Source.
+              . Supplier contact remains blocked; this review only confirms how
+              the request should enter Source.
             </p>
             <ul style={REQUEST_REVIEW_REASONS}>
               {sourceRequest.mappingProposal.reasons.map((reason) => (
@@ -1360,6 +1472,7 @@ export function SourceOriginatePage({
                   setSelectedCategoryId(proposedSourceCategory);
                   setSourceReviewDecision("accepted");
                   setSubmitState({ status: "idle" });
+                  setReviewSubmitState({ status: "idle" });
                 }}
                 aria-pressed={sourceReviewDecision === "accepted"}
                 style={{
@@ -1382,12 +1495,54 @@ export function SourceOriginatePage({
                 onChange={(event) => {
                   setSourceReviewRationale(event.target.value);
                   setSubmitState({ status: "idle" });
+                  setReviewSubmitState({ status: "idle" });
                 }}
                 rows={2}
                 placeholder="Why is this category and archetype the right route?"
                 style={REQUEST_REVIEW_TEXTAREA}
               />
             </label>
+            <div style={REQUEST_REVIEW_ACTIONS}>
+              <button
+                type="button"
+                disabled={
+                  !sourceReviewDraftReady ||
+                  sourceReviewReady ||
+                  reviewSubmitState.status === "submitting"
+                }
+                onClick={recordSourceRequestReview}
+                style={{
+                  ...SECONDARY_ACTION_BUTTON,
+                  opacity:
+                    sourceReviewDraftReady &&
+                    !sourceReviewReady &&
+                    reviewSubmitState.status !== "submitting"
+                      ? 1
+                      : 0.55,
+                  cursor:
+                    sourceReviewDraftReady &&
+                    !sourceReviewReady &&
+                    reviewSubmitState.status !== "submitting"
+                      ? "pointer"
+                      : "not-allowed",
+                }}
+              >
+                {reviewSubmitState.status === "submitting"
+                  ? "Recording review..."
+                  : sourceReviewReady
+                    ? "Review recorded"
+                    : "Record mapping review"}
+              </button>
+              <span style={REQUEST_REVIEW_HINT}>
+                Create event unlocks after this current source version is
+                recorded.
+              </span>
+            </div>
+            {reviewSubmitState.status === "error" ? (
+              <div role="alert" style={REVIEW_REQUIRED_NOTICE}>
+                {reviewSubmitState.message}
+              </div>
+            ) : null}
           </section>
         ) : null}
 
@@ -1570,6 +1725,7 @@ export function SourceOriginatePage({
                       );
                     }
                     setSubmitState({ status: "idle" });
+                    setReviewSubmitState({ status: "idle" });
                   }}
                 />
               ))}
@@ -1601,10 +1757,16 @@ export function SourceOriginatePage({
             )}
 
           {sourceRequest && allFactsCaptured && !sourceReviewReady ? (
-            <div role="status" aria-live="polite" style={REVIEW_REQUIRED_NOTICE}>
-              {sourceProposalReviewable
-                ? "Accept the proposed route or choose an override, then record the review rationale."
-                : "Resolve the request's missing facts or routing proposal before creating an event."}
+            <div
+              role="status"
+              aria-live="polite"
+              style={REVIEW_REQUIRED_NOTICE}
+            >
+              {sourceReviewDraftReady
+                ? "Record the mapping review before creating an event."
+                : sourceProposalReviewable
+                  ? "Accept the proposed route or choose an override, then record the review rationale."
+                  : "Resolve the request's missing facts or routing proposal before creating an event."}
             </div>
           ) : null}
 

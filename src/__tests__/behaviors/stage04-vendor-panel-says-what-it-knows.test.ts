@@ -1,5 +1,6 @@
 const readAcceptedCandidatesForEvent = jest.fn();
 const readContractVendorLegalEntityIds = jest.fn();
+const readCandidateSupplierRegistry = jest.fn();
 
 jest.mock(
   "@/lib/source/candidate-suppliers/event-candidate-authority-repository",
@@ -19,6 +20,14 @@ jest.mock("@/lib/source/candidate-suppliers/contract-vendor-repository", () => {
       readContractVendorLegalEntityIds(key),
   };
 });
+
+jest.mock(
+  "@/lib/source/candidate-suppliers/candidate-supplier-registry-repository",
+  () => ({
+    readCandidateSupplierRegistry: (key: string) =>
+      readCandidateSupplierRegistry(key),
+  }),
+);
 
 import {
   asProjectionRow,
@@ -99,6 +108,11 @@ const SELECTED_RESPONDENT = {
 beforeEach(() => {
   readAcceptedCandidatesForEvent.mockReset();
   readContractVendorLegalEntityIds.mockReset();
+  readCandidateSupplierRegistry.mockReset();
+  readCandidateSupplierRegistry.mockResolvedValue({
+    registryAvailable: true,
+    rows: [],
+  });
 });
 
 function authorityReturns(
@@ -127,6 +141,8 @@ function contractsReturn(
 const INPUT = {
   clientKey: "t1",
   eventId: "evt-1",
+  categoryId: "ams",
+  archetypeId: "AMS_MANAGED_SERVICES",
   asOf: "2026-09-19",
 };
 
@@ -193,6 +209,48 @@ describe("the stage 04 panel says what it knows and what it does not", () => {
 
     expect(panel.status).toBe("empty");
     expect(panel.rows).toEqual([]);
+  });
+
+  it("keeps registry suggestions separate from accepted event candidates", async () => {
+    authorityReturns([]);
+    contractsReturn("available", ["v-inc"]);
+    readCandidateSupplierRegistry.mockResolvedValue({
+      registryAvailable: true,
+      rows: [
+        {
+          tenantKey: "t1",
+          supplierId: "v-new",
+          legalEntityId: "v-new",
+          legalName: "Suggested Supplier LLC",
+          authorityState: "accepted",
+          eligibility: {
+            categoryKeys: ["ams"],
+            functionKeys: ["application_operations"],
+            archetypeKeys: ["AMS_MANAGED_SERVICES"],
+          },
+          contactPolicy: "review_required",
+          contacts: [],
+          source: {
+            system: "supplier-master-template",
+            reference: "EVID-SUGGESTED-1",
+            recordedAt: "2026-09-19T00:00:00.000Z",
+            recordedBy: "Named Supplier Data Steward",
+          },
+        },
+      ],
+    });
+
+    const panel = await readSourceNewStage04VendorPanel(INPUT);
+
+    expect(panel.rows).toEqual([]);
+    expect(panel.suggestions.status).toBe("available");
+    expect(panel.suggestions.rows).toEqual([
+      expect.objectContaining({
+        legalName: "Suggested Supplier LLC",
+        label: "Suggested for review",
+        contactActionAvailable: false,
+      }),
+    ]);
   });
 
   it("makes no claim about who may be contacted", async () => {

@@ -34,16 +34,20 @@ export type SourceIntakeRequestSummary = {
     reasons: string[];
   };
   mappingDecision: {
+    decisionId: string;
     state: "accepted" | "overridden" | "unmapped";
     categoryId: string | null;
     archetypeId: string | null;
+    decidedByUserId: string;
     decidedByName: string;
     decidedAt: string;
     rationale: string;
+    sourceVersion: string;
   } | null;
   eventLink: {
     eventId: string;
     linkedAt: string;
+    sourceVersion: string;
   } | null;
 };
 
@@ -62,13 +66,17 @@ type QueueRow = {
   normalized_request: unknown;
   mapping_proposal: unknown;
   required_fact_gaps: string[] | null;
+  decision_id?: string | null;
   decision_state: string | null;
   decision_category_id?: string | null;
   decision_archetype_id?: string | null;
+  decision_source_version?: string | null;
+  decided_by_user_id?: string | null;
   decided_by_name?: string | null;
   decided_at?: string | Date | null;
   decision_rationale?: string | null;
   source_event_id: string | null;
+  event_source_version?: string | null;
   linked_at?: string | Date | null;
 };
 
@@ -86,7 +94,9 @@ const text = (value: unknown): string | null =>
 const iso = (value: string | Date): string =>
   value instanceof Date ? value.toISOString() : value;
 const textList = (value: unknown): string[] =>
-  Array.isArray(value) ? value.flatMap((item) => (text(item) ? [text(item)!] : [])) : [];
+  Array.isArray(value)
+    ? value.flatMap((item) => (text(item) ? [text(item)!] : []))
+    : [];
 
 function mapRow(row: QueueRow): SourceIntakeRequestSummary {
   const normalized = asRecord(row.normalized_request);
@@ -145,21 +155,33 @@ function mapRow(row: QueueRow): SourceIntakeRequestSummary {
     },
     mappingDecision:
       validDecisionState &&
+      text(row.decision_id) &&
+      text(row.decided_by_user_id) &&
       text(row.decided_by_name) &&
       row.decided_at &&
-      text(row.decision_rationale)
+      text(row.decision_rationale) &&
+      text(row.decision_source_version)
         ? {
+            decisionId: text(row.decision_id)!,
             state: validDecisionState,
             categoryId: text(row.decision_category_id),
             archetypeId: text(row.decision_archetype_id),
+            decidedByUserId: text(row.decided_by_user_id)!,
             decidedByName: text(row.decided_by_name)!,
             decidedAt: iso(row.decided_at),
             rationale: text(row.decision_rationale)!,
+            sourceVersion: text(row.decision_source_version)!,
           }
         : null,
     eventLink:
-      text(row.source_event_id) && row.linked_at
-        ? { eventId: text(row.source_event_id)!, linkedAt: iso(row.linked_at) }
+      text(row.source_event_id) &&
+      row.linked_at &&
+      text(row.event_source_version)
+        ? {
+            eventId: text(row.source_event_id)!,
+            linkedAt: iso(row.linked_at),
+            sourceVersion: text(row.event_source_version)!,
+          }
         : null,
   };
 }
@@ -193,13 +215,17 @@ export async function readSourceIntakeRequestQueue(
                 latest.normalized_request,
                 latest.mapping_proposal,
                 latest.required_fact_gaps,
+                decision.decision_id,
                 decision.decision_state,
+                decision.source_version AS decision_source_version,
                 decision.category_id AS decision_category_id,
                 decision.archetype_id AS decision_archetype_id,
+                decision.decided_by_user_id,
                 decision.decided_by_name,
                 decision.decided_at,
                 decision.rationale AS decision_rationale,
                 event_link.source_event_id,
+                event_link.source_version AS event_source_version,
                 event_link.linked_at
          FROM latest
          LEFT JOIN LATERAL (

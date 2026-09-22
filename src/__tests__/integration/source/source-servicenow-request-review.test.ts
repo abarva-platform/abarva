@@ -35,9 +35,11 @@ const importedRequest: SourceIntakeRequestSummary = {
   extractedAt: "2026-09-22T12:00:00.000Z",
   updatedAt: "2026-09-22T11:45:00.000Z",
   title: "Cloud consumption optimization",
-  description: "Stand up a sourcing event for cloud commitment and rate optimization.",
+  description:
+    "Stand up a sourcing event for cloud commitment and rate optimization.",
   trigger: "Cloud commitment renewal is due within six months.",
-  requestedOutcome: "Reduce annual run rate by $1.2M while preserving resilience.",
+  requestedOutcome:
+    "Reduce annual run rate by $1.2M while preserving resilience.",
   requestedFor: "Enterprise Technology",
   businessDomain: "enterprise",
   businessFunction: "Cloud operations",
@@ -68,11 +70,30 @@ describe("ServiceNow request review handoff", () => {
     window.localStorage.clear();
   });
 
-  it("blocks event creation until a person accepts the proposed route with rationale", async () => {
-    const fetchMock = jest.fn().mockResolvedValue({
-      ok: true,
-      json: async () => ({ event: { id: "event-from-request" } }),
-    });
+  it("blocks event creation until a person persists the proposed route with rationale", async () => {
+    const fetchMock = jest
+      .fn()
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          mappingDecision: {
+            decisionId: "mapping-version-3",
+            state: "accepted",
+            categoryId: "cloud_finops",
+            archetypeId: "CLOUD_FINOPS",
+            decidedByUserId: "person-1",
+            decidedByName: "Procurement Lead",
+            decidedAt: "2026-09-22T13:00:00.000Z",
+            rationale:
+              "The cloud category matches the recorded scope and baseline owner.",
+            sourceVersion: "version-3",
+          },
+        }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ event: { id: "event-from-request" } }),
+      });
     global.fetch = fetchMock;
 
     render(
@@ -85,11 +106,19 @@ describe("ServiceNow request review handoff", () => {
     );
 
     expect(screen.getByLabelText("Imported request review")).toBeTruthy();
-    expect(screen.getByDisplayValue(importedRequest.trigger ?? "")).toBeTruthy();
-    expect(screen.getByDisplayValue(importedRequest.decisionOwner ?? "")).toBeTruthy();
-    expect(screen.getByDisplayValue(/AWS consumption, commitments/)).toBeTruthy();
+    expect(
+      screen.getByDisplayValue(importedRequest.trigger ?? ""),
+    ).toBeTruthy();
+    expect(
+      screen.getByDisplayValue(importedRequest.decisionOwner ?? ""),
+    ).toBeTruthy();
+    expect(
+      screen.getByDisplayValue(/AWS consumption, commitments/),
+    ).toBeTruthy();
     expect(screen.getByDisplayValue(/Reduce annual run rate/)).toBeTruthy();
-    expect(screen.getByDisplayValue(importedRequest.baselineOwner ?? "")).toBeTruthy();
+    expect(
+      screen.getByDisplayValue(importedRequest.baselineOwner ?? ""),
+    ).toBeTruthy();
 
     const createButton = screen.getByTestId("source-intake-open-event");
     expect(createButton.hasAttribute("disabled")).toBe(true);
@@ -99,28 +128,51 @@ describe("ServiceNow request review handoff", () => {
       ),
     ).toBeTruthy();
 
-    fireEvent.click(screen.getByRole("button", { name: "Accept proposed routing" }));
+    fireEvent.click(
+      screen.getByRole("button", { name: "Accept proposed routing" }),
+    );
     expect(createButton.hasAttribute("disabled")).toBe(true);
     fireEvent.change(screen.getByLabelText("Mapping review rationale"), {
       target: {
-        value: "The cloud category matches the recorded scope and baseline owner.",
+        value:
+          "The cloud category matches the recorded scope and baseline owner.",
       },
     });
-    expect(createButton.hasAttribute("disabled")).toBe(false);
-    fireEvent.click(createButton);
+    expect(createButton.hasAttribute("disabled")).toBe(true);
+    fireEvent.click(
+      screen.getByRole("button", { name: "Record mapping review" }),
+    );
 
     await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
-    const request = fetchMock.mock.calls[0]?.[1] as { body?: string };
+    const reviewRequest = fetchMock.mock.calls[0]?.[1] as { body?: string };
+    expect(fetchMock.mock.calls[0]?.[0]).toBe(
+      "/api/v1/source/intake/servicenow/review",
+    );
+    expect(JSON.parse(reviewRequest.body ?? "{}")).toEqual({
+      requestId: importedRequest.requestId,
+      sourceVersion: importedRequest.sourceVersion,
+      decisionState: "accepted",
+      rationale:
+        "The cloud category matches the recorded scope and baseline owner.",
+    });
+
+    await waitFor(() =>
+      expect(createButton.hasAttribute("disabled")).toBe(false),
+    );
+    fireEvent.click(createButton);
+
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
+    const request = fetchMock.mock.calls[1]?.[1] as { body?: string };
     const payload = JSON.parse(request.body ?? "{}") as Record<string, unknown>;
 
     expect(payload).toEqual({
       sourceRequest: {
         requestId: importedRequest.requestId,
         sourceVersion: importedRequest.sourceVersion,
-        decisionState: "accepted",
-        rationale: "The cloud category matches the recorded scope and baseline owner.",
       },
     });
-    expect(mockRouterPush).toHaveBeenCalledWith("/source/new/event-from-request");
+    expect(mockRouterPush).toHaveBeenCalledWith(
+      "/source/new/event-from-request",
+    );
   });
 });
