@@ -683,7 +683,7 @@ function topVendorShareLabel(
 }
 
 
-function sourceDateControl(portfolio: SourceWorkspacePortfolioData) {
+export function sourceDateControl(portfolio: SourceWorkspacePortfolioData) {
   /*
    * Read the recorded completion, do not infer one.
    *
