@@ -262,7 +262,14 @@ export async function POST(
     );
   }
 
-  if (body.action === "approve" && decision.advanceStageTo) {
+  const isTerminalClosure =
+    body.action === "approve" &&
+    effectiveCurrentStage !== null &&
+    nextStage === null;
+  if (
+    body.action === "approve" &&
+    (decision.advanceStageTo || isTerminalClosure)
+  ) {
     if (!effectiveCurrentStage) {
       return Response.json(
         {
@@ -277,7 +284,8 @@ export async function POST(
     const substrate = await getStageSubstrate(eventId, effectiveCurrentStage);
     const gateContract = evaluateSourceGateAdvanceContract({
       currentStage: effectiveCurrentStage,
-      targetStage: decision.advanceStageTo,
+      targetStage: decision.advanceStageTo ?? null,
+      isTerminalClosure,
       stageOrder: sourceJourneyStageKeys(journey),
       confirmations: body.confirmations,
       criteria: substrate.criteria,

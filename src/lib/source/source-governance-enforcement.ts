@@ -145,6 +145,13 @@ export function evaluateStagePromotionReadiness(input: {
   currentStage: SourceStageKey;
   targetStage: SourceStageKey;
   stageOrder?: readonly SourceStageKey[];
+  /**
+   * A terminal approval closes the current stage instead of promoting to a
+   * successor. It must still satisfy the same computed gate readiness, so the
+   * caller represents closure as currentStage === targetStage and opts in
+   * explicitly. Ordinary callers cannot use a same-stage transition.
+   */
+  allowTerminalClosure?: boolean;
   criteria: SourceEventGateCriterion[];
   artifacts?: SourceEventArtifactState[];
   evidence?: SourceEventEvidence[];
@@ -163,7 +170,13 @@ export function evaluateStagePromotionReadiness(input: {
       detail:
         "Current and target stages must both be valid stages in this Source journey.",
     });
-  } else if (targetIndex !== currentIndex + 1) {
+  } else if (
+    !(
+      input.allowTerminalClosure === true &&
+      input.targetStage === input.currentStage
+    ) &&
+    targetIndex !== currentIndex + 1
+  ) {
     blockers.push({
       code: "non_adjacent_stage_promotion",
       detail: `Stage promotion must move exactly one step from ${input.currentStage}; requested ${input.targetStage}.`,

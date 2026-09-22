@@ -78,6 +78,28 @@ describe("evaluateSourceGateAdvanceContract", () => {
     expect(verdict.bypassedGovernanceBlockers).toEqual([]);
   });
 
+  it("requires computed readiness when closing the terminal stage", () => {
+    const verdict = evaluateSourceGateAdvanceContract({
+      currentStage: "value",
+      targetStage: null,
+      isTerminalClosure: true,
+      confirmations: WORKED_STAGE_CONFIRMED,
+      criteria: [
+        criterion({
+          criterionId: "GATE-VAL-01",
+          fromStage: "value",
+          toStage: "closed",
+          state: "pending",
+        }),
+      ],
+      reason: REVIEW_REASON,
+    });
+
+    expect(verdict.ok).toBe(false);
+    expect(verdict.status).toBe(409);
+    expect(verdict.error).toBe("gate_criterion_open");
+  });
+
   it("preserves pilot computed-readiness bypass without bypassing confirmations", () => {
     const withConfirmations = evaluateSourceGateAdvanceContract({
       currentStage: "scope",

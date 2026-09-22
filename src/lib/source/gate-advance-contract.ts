@@ -18,7 +18,9 @@ import type { SourceStageKey } from "./types";
 
 export interface SourceGateAdvanceContractInput {
   currentStage: SourceStageKey;
-  targetStage: SourceStageKey;
+  /** Null only when a journey-aware caller is closing its terminal stage. */
+  targetStage: SourceStageKey | null;
+  isTerminalClosure?: boolean;
   stageOrder?: readonly SourceStageKey[];
   confirmations?: SourceStageConfirmations | null;
   criteria: SourceEventGateCriterion[];
@@ -60,12 +62,14 @@ export function evaluateSourceGateAdvanceContract(
       currentStageKey: input.currentStage,
       requiredConfirmationKeys: confirmationKeysForStage(input.currentStage),
       nextStageKey: input.targetStage,
+      isTerminalStage: input.isTerminalClosure === true,
     },
   );
   const readiness = evaluateStagePromotionReadiness({
     currentStage: input.currentStage,
-    targetStage: input.targetStage,
+    targetStage: input.targetStage ?? input.currentStage,
     stageOrder: input.stageOrder,
+    allowTerminalClosure: input.isTerminalClosure === true,
     criteria: input.criteria,
     artifacts: input.artifacts,
     evidence: input.evidence,
@@ -84,12 +88,18 @@ export function evaluateSourceGateAdvanceContract(
     };
   }
 
-  if (approval.advanceStageTo !== input.targetStage) {
+  const transitionMatches = input.isTerminalClosure === true
+    ? approval.advanceStageTo === null && approval.toState === "completed"
+    : approval.advanceStageTo === input.targetStage;
+  if (!transitionMatches) {
     return {
       ok: false,
       status: 409,
       error: "stage_transition_mismatch",
-      detail: `Approval would advance ${input.currentStage} to ${approval.advanceStageTo ?? "closed"}, not ${input.targetStage}.`,
+      detail:
+        input.isTerminalClosure === true
+          ? `Approval would not close terminal stage ${input.currentStage}.`
+          : `Approval would advance ${input.currentStage} to ${approval.advanceStageTo ?? "closed"}, not ${input.targetStage}.`,
       readiness,
       bypassedGovernanceBlockers: [],
     };
