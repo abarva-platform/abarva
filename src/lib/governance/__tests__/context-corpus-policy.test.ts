@@ -10,7 +10,7 @@ function ready(over: Partial<GovernedObject> = {}): GovernedObject {
   return {
     id: "obj-1",
     tenant_id: "tenant-uuid-1",
-    client_key: "lakeshore-holdings",
+    client_key: "meridian-health",
     object_type: "enterprise_context_chunk",
     source_layer: "tenant_context",
     industry: "DIVERSIFIED",
