@@ -9,6 +9,7 @@ import {
   CONTACT_CENTER_AGENT_ASSIST,
   IT_SOURCING_EVENT,
 } from "../registry";
+import { ANALYSIS_METHODS } from "../method-library";
 import { resolveArchetypeRequirements } from "../resolver";
 import { emptyProfile } from "@/lib/programs/current-state-readiness";
 
@@ -238,6 +239,35 @@ describe("ANALYTICS_CAPABILITY_REPATRIATION — registry shape", () => {
       expect.arrayContaining([
         "strategic_control_repatriation_readiness",
         "capability_parity_traceability",
+      ]),
+    );
+  });
+
+  it("resolves its distinct control-readiness and parity-traceability methods", () => {
+    const controlReadiness =
+      ANALYSIS_METHODS.strategic_control_repatriation_readiness;
+    const parityTraceability =
+      ANALYSIS_METHODS.capability_parity_traceability;
+
+    expect(controlReadiness).toMatchObject({
+      key: "strategic_control_repatriation_readiness",
+      producesArtifact: "repatriation_readiness_assessment",
+    });
+    expect(parityTraceability).toMatchObject({
+      key: "capability_parity_traceability",
+      producesArtifact: "capability_parity_trace",
+    });
+    expect(controlReadiness.label).not.toBe(parityTraceability.label);
+    expect(controlReadiness.consumesFamilies).toEqual(
+      expect.arrayContaining([
+        "analytics_capability_inventory",
+        "contract_ip_data_return_exit",
+      ]),
+    );
+    expect(parityTraceability.consumesFamilies).toEqual(
+      expect.arrayContaining([
+        "business_rules_measure_logic",
+        "data_quality_identity_conformance",
       ]),
     );
   });

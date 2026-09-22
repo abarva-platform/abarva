@@ -426,26 +426,21 @@ jobs:
 
       # Four Program archetype suites, census rank 13, band `high`, signal
       # `tenant_scoped_read`, 4 files and 0 covered. All four load, collect and
-      # run; three are green and are owned here. The subjects they exercise have
+      # run. The subjects they exercise have
       # live non-test importers outside the directory: `registry` 6 (four v1
       # Programs API routes and two library modules), `resolver` 3,
       # `method-library` 1, `types` 9 — so this is not coverage of nothing.
       #
-      # `resolver.test.ts` stays an exact file-level quarantine, and its red is
-      # a real defect rather than a stale assertion: the archetype
-      # `ANALYTICS_CAPABILITY_REPATRIATION` declares two `analysisMethods` keys,
-      # `strategic_control_repatriation_readiness` and
-      # `capability_parity_traceability`, that `ANALYSIS_METHODS` does not
-      # define, so the registry references guidance the method library cannot
-      # resolve. Which side is wrong — author the two methods, or withdraw them
-      # from the archetype — is authored-content authority, so it is filed as
-      # backlog item T-456 rather than guessed at inside a wiring change.
-      # Loaded 4; collected 4; run 4; green 3; newly owned 3.
+      # The former exact-file quarantine for `resolver.test.ts` is closed: the
+      # `ANALYTICS_CAPABILITY_REPATRIATION` method declarations now resolve to
+      # distinct `ANALYSIS_METHODS` entries instead of dangling authored keys.
+      # Loaded 4; collected 4; run 4; green 4; newly owned 4.
       - name: Run the green Program archetype suites
         run: >-
           npx jest --runTestsByPath
           src/lib/programs/archetypes/__tests__/ai-pdlc.test.ts
           src/lib/programs/archetypes/__tests__/generality.test.ts
+          src/lib/programs/archetypes/__tests__/resolver.test.ts
           src/lib/programs/archetypes/__tests__/resolve-program-archetype.test.ts
           --no-coverage --ci
 
