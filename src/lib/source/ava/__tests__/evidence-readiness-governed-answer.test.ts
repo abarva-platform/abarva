@@ -115,6 +115,11 @@ describe("looksLikeSourceStageCompletionQuestion", () => {
         "What do I need to complete Define, and which evidence is still missing?",
       ),
     ).toBe(true);
+    expect(
+      looksLikeSourceStageCompletionQuestion(
+        "What is blocking this event from advancing from Define, and what exact action should the sourcing lead take next? Do not estimate savings or recommend a supplier.",
+      ),
+    ).toBe(true);
   });
 
   it("does not steal a pure evidence-processing question", () => {

@@ -43,7 +43,7 @@ export function looksLikeValueLedgerQuestion(
   prompt: string | undefined,
 ): boolean {
   if (!prompt) return false;
-  const q = prompt.toLowerCase();
+  const q = stripNegativeValueInstructions(prompt.toLowerCase());
   const hasStrongValueSignal =
     /\b(value|savings?|benefit|benefits|financial|finance|roi|waterfall|ledger|realized|realised|claimable|at stake|how much)\b/.test(
       q,
@@ -53,6 +53,13 @@ export function looksLikeValueLedgerQuestion(
     /\b(waterfall|ledger|value|savings?|benefit|benefits|projected|realized|realised|committed|measured|claimable|show|chart|table|status|at stake|how much)\b/.test(
       q,
     )
+  );
+}
+
+function stripNegativeValueInstructions(prompt: string): string {
+  return prompt.replace(
+    /\b(?:please\s+)?(?:do\s+not|don't|dont|never|avoid|without|no\s+need\s+to)\s+(?:[^.!?;\n]{0,80}\b)?(?:estimate|estimating|calculate|calculating|compute|computing|claim|claiming|assert|asserting|project|projecting|recommend|recommending|show|display)\s+(?:[^.!?;\n]{0,80}\b)?(?:savings?|value|benefits?|roi|financials?|waterfall|ledger)\b[^.!?;\n]*/g,
+    " ",
   );
 }
 
