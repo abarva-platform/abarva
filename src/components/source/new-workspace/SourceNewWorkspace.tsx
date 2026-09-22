@@ -8,6 +8,7 @@ import { useAtlasPageState } from "@/components/shell/AtlasPageStateProvider";
 import { SourceNewFiles, type SourceNewFileRow } from "./SourceNewFiles";
 import type { SourceEventActivityResult } from "@/lib/source/activity-log";
 import {
+  SOURCE_NEW_PHASE_DISPLAY_LABELS,
   SOURCE_NEW_PHASE_ORDER,
   awaitsIntakeReview,
   isPastSourceNewPhases,
@@ -15,6 +16,8 @@ import {
   sourceNewCurrentPhase,
   sourceNewEventTypeLabel,
   sourceNewLifecycleLabel,
+  sourceNewMarketPackageLabel,
+  sourceNewNextAction,
   sourceNewPhaseState,
   sourceNewPhaseStateLabel,
   sourceNewStageLabel,
@@ -58,12 +61,6 @@ export interface SourceNewEventView {
   requestVersionApproval?: "accepted" | "pending" | "changes_requested" | null;
 }
 
-const BASE_PHASE_LABELS: Record<Phase, string> = {
-  request: "Request",
-  define: "Define",
-  suppliers: "Suppliers & NDA",
-  rfi: "Market package",
-};
 const VIEWS: readonly { key: View; label: string }[] = [
   { key: "work", label: "Work" },
   { key: "files", label: "Files" },
@@ -135,12 +132,6 @@ function sourceReferencesLabel(row: SourceNewStage04VendorPanel["rows"][number])
   return values.join("; ");
 }
 
-function marketPackageLabel(event: SourceNewEventView): string {
-  if (event.solicitationMotion === "rfi") return "RFI";
-  if (event.solicitationMotion === "rfp") return "RFP";
-  return "Market package";
-}
-
 function isResponsesStage(event: SourceNewEventView): boolean {
   return normalizeSourceStageKey(event.currentStage) === "responses";
 }
@@ -173,12 +164,13 @@ function isCompletedEvent(event: SourceNewEventView): boolean {
 function phasesFor(
   event: SourceNewEventView,
 ): readonly { key: Phase; label: string }[] {
-  const packageLabel = marketPackageLabel(event);
+  const packageLabel = sourceNewMarketPackageLabel(event);
   // The rail order is the shared one, so the rail and the state resolver can
   // never disagree about which phase is behind which.
   return SOURCE_NEW_PHASE_ORDER.map((key) => ({
     key,
-    label: key === "rfi" ? packageLabel : BASE_PHASE_LABELS[key],
+    label:
+      key === "rfi" ? packageLabel : SOURCE_NEW_PHASE_DISPLAY_LABELS[key],
   }));
 }
 
@@ -187,48 +179,6 @@ export function sourceNewFileDownloadHref(
 ): string {
   const base = `/api/v1/source/artifacts/${encodeURIComponent(file.id)}/download`;
   return file.lifecycleState === "current" ? base : `${base}?includeHistory=1`;
-}
-
-function nextAction(event: SourceNewEventView): {
-  label: string;
-  detail: string;
-} {
-  const packageLabel = marketPackageLabel(event);
-  if (awaitsIntakeReview(event.lifecycle))
-    return {
-      label: "Review intake",
-      detail: "Review the recorded request and its approval state.",
-    };
-  if (event.lifecycle !== "active")
-    return {
-      label: "Open event",
-      detail: `Current stage: ${sourceNewStageLabel(event.currentStage)}`,
-    };
-  if (
-    ["strategy", "scope", "sourcing_strategy", "intake"].includes(
-      event.currentStage,
-    )
-  )
-    return {
-      label: "Open scope and strategy",
-      detail:
-        "Review scope, baseline and decision requirements in the governed event.",
-    };
-  if (["rfp", "rfp_rfi_package"].includes(event.currentStage))
-    return {
-      label:
-        packageLabel === "Market package"
-          ? "Open market package"
-          : `Open ${packageLabel}`,
-      detail:
-        packageLabel === "Market package"
-          ? "Review the package and its release requirements in the governed event."
-          : `Review the ${packageLabel} and its release requirements in the governed event.`,
-    };
-  return {
-    label: "Open current stage",
-    detail: `Current stage: ${sourceNewStageLabel(event.currentStage)}`,
-  };
 }
 
 export type SourceNewWorkspaceProps = {
@@ -273,7 +223,7 @@ export function SourceNewWorkspace({
   const reviewPending = awaitsIntakeReview(event.lifecycle);
   const completedEvent = isCompletedEvent(event);
   const phases = phasesFor(event);
-  const packageLabel = marketPackageLabel(event);
+  const packageLabel = sourceNewMarketPackageLabel(event);
   // With no phase current, the rail shows no live step. Say where the event
   // actually is rather than leaving the operator to infer it.
   const advancedBeyondPhases = current === null && isPastSourceNewPhases(event);
@@ -283,7 +233,7 @@ export function SourceNewWorkspace({
   const approvalHref = `/source/events/${encodeURIComponent(event.id)}/approval`;
   const eventHref = `/source/events/${encodeURIComponent(event.id)}`;
   const actionHref = reviewPending ? approvalHref : eventHref;
-  const action = nextAction(event);
+  const action = sourceNewNextAction(event);
   const actionLabel = action.label;
   const isCurrentPhase = phase === current;
   const responsesStage = isResponsesStage(event);

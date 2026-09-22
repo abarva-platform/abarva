@@ -3,10 +3,12 @@ import {
   SOURCE_NEW_PHASE_ORDER,
   isPastSourceNewPhases,
   sourceNewCategoryDisplay,
+  sourceNewCurrentPhaseLabel,
   sourceNewCurrentPhase,
   sourceNewEventTypeLabel,
   sourceNewFilePhase,
   sourceNewLifecycleLabel,
+  sourceNewNextAction,
   sourceNewPhaseState,
   sourceNewPhaseStateLabel,
   sourceNewStageLabel,
@@ -53,6 +55,26 @@ describe("sourceNewCurrentPhase", () => {
 
   it("does not place an event whose stage is past the market package", () => {
     expect(sourceNewCurrentPhase({ currentStage: "evaluation", lifecycle: "active" })).toBeNull();
+  });
+});
+
+describe("Source New operator context", () => {
+  it("projects scope into the reader-facing Define phase and action", () => {
+    const event = { currentStage: "scope", lifecycle: "active" };
+
+    expect(sourceNewCurrentPhaseLabel(event)).toBe("Define");
+    expect(sourceNewNextAction(event)).toEqual({
+      label: "Open scope and strategy",
+      detail:
+        "Review scope, baseline and decision requirements in the governed event.",
+    });
+  });
+
+  it("uses neutral package wording when solicitation authority is absent", () => {
+    const event = { currentStage: "rfp", lifecycle: "active" };
+
+    expect(sourceNewCurrentPhaseLabel(event)).toBe("Market package");
+    expect(sourceNewNextAction(event).label).toBe("Open market package");
   });
 });
 

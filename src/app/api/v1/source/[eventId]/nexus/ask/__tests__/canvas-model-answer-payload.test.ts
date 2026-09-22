@@ -180,8 +180,9 @@ jest.mock("@/lib/source/queries", () => ({
     code: "SRC-TEST-001",
     name: "Renewal test event",
     accountName: "Example Tenant",
-    currentStageKey: "responses",
-    stage: "responses",
+    currentStageKey: "scope",
+    currentStageLabel: "Scope",
+    stage: "scope",
     status: "active",
     owner: "Category lead",
     problemStatement: "The renewal window opens in 60 days.",
@@ -385,8 +386,8 @@ describe("Source canvas chat · Source New phase completion routing", () => {
         question:
           "What do I need to complete Define, and which evidence is still missing?",
         stageContext: {
-          stageLabel: "responses",
-          nextAction: undefined,
+          stageLabel: "Define",
+          nextAction: "Open scope and strategy",
           blocker: undefined,
           missingInputs: [],
         },
