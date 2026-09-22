@@ -110,6 +110,38 @@ const summaryInputs = [
   sha256: crypto.createHash("sha256").update(text, "utf8").digest("hex"),
 }));
 
+/*
+ * Who derived the summary, not only what from (item T-711).
+ *
+ * `summaryInputs` above answers WHAT this run read. It cannot answer WHICH
+ * generator read it, and that is the half that failed: superseded copies of
+ * this file sit in the operator root, they still run, and they have drifted.
+ * On 2026-09-22 the live EXECUTION_QUEUE.md that both lanes read to pick work
+ * had been produced by one of them. Measured on identical inputs, the copy
+ * offered 61 claimable items against this generator's 1, and seven of the rows
+ * it offered are recorded CLOSED in the backlog it had just parsed. Nothing in
+ * either artifact disagreed with the other, because neither said who wrote it.
+ *
+ * T-535 answered the same drift with a warning in the README. That is the
+ * shape this audit exists to refuse: an instruction an operator has to
+ * remember, with nothing that fails when they do not.
+ *
+ * Hashed over this file's own bytes, for the same reason the inputs are: a
+ * copy or a restore moves an mtime without moving content. `ranFrom` is the
+ * path this run executed from and is carried for the refusal message only --
+ * the queue compares hashes, never paths, because the same file legitimately
+ * runs from a worktree, a fixture directory and a CI checkout.
+ */
+const SELF_PATH = fileURLToPath(import.meta.url);
+const summaryGenerator = {
+  script: path.basename(SELF_PATH),
+  ranFrom: SELF_PATH,
+  sha256: crypto
+    .createHash("sha256")
+    .update(fs.readFileSync(SELF_PATH, "utf8"), "utf8")
+    .digest("hex"),
+};
+
 /* ---------------------------------------------------------------- parsing */
 
 /** Rows of every GitHub-flavoured pipe table under a given `## heading`. */
@@ -1721,6 +1753,9 @@ if (process.argv.includes("--json")) {
     sources: map.sources,
     // Consumed by build-execution-queue.mjs to refuse a stale summary.
     inputs: summaryInputs,
+    // Consumed by build-execution-queue.mjs to refuse a summary written by a
+    // superseded copy of this generator (item T-711).
+    generator: summaryGenerator,
     vision: {
       ...visionCoverage,
       crossCutting: crossCutting
