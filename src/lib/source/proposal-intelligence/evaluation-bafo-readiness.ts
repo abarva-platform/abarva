@@ -1,4 +1,5 @@
 import type {
+  VendorBafoQuestion,
   VendorBafoInstructionPack,
   VendorChallengeIntelligence,
   VendorEvaluationDecisionView,
@@ -6,6 +7,7 @@ import type {
   VendorResponseProfile,
 } from "./types";
 import type { VendorResponseProfileSet } from "./mve-profile";
+import type { ScorecardAuthorityView } from "./scorecard-authority";
 
 export type EvaluationBafoReadinessState =
   | "no_records"
@@ -52,6 +54,63 @@ export interface EvaluationBafoPricingRow {
   rationale: string;
 }
 
+export interface EvaluationBafoQuestionResponseRow {
+  vendorId: string;
+  vendorName: string;
+  questionId: string;
+  questionLabel: string;
+  answerState: VendorResponseProfile["sectionMap"][number]["status"];
+  normalizedResponse: string;
+  evidenceReference: string;
+  evaluatorUse: string;
+}
+
+export interface EvaluationBafoEvaluatorScorecardRow {
+  vendorId: string;
+  vendorName: string;
+  criterionId: string;
+  criterionLabel: string;
+  evaluatorName: string;
+  scoreLabel: string;
+  lockState: ScorecardAuthorityView["scoreRows"][number]["lockState"] | "not_loaded";
+  reviewState:
+    | "locked_named_human_review"
+    | "blocked_missing_named_review"
+    | "not_loaded";
+  evidenceReference: string;
+}
+
+export interface EvaluationBafoCommercialComparisonRow {
+  vendorId: string;
+  vendorName: string;
+  comparability: EvaluationBafoVendorComparability;
+  supportOnlyTcoLabel: string;
+  includedAmountLabels: string[];
+  excludedUnsupportedAmountLabels: string[];
+  basis: string;
+  guardrail: string;
+}
+
+export interface EvaluationBafoClarificationRequest {
+  clarificationId: string;
+  vendorId: string | null;
+  vendorName: string;
+  source: "blocker" | "bafo_question";
+  priority: "must_resolve" | "should_improve";
+  question: string;
+  evidenceBasis: string[];
+  dispatchState: "draft_only_not_sent";
+}
+
+export interface EvaluationBafoGovernedRound {
+  roundLabel: string;
+  state: "candidate_not_dispatched" | "blocked_missing_questions";
+  vendorCount: number;
+  questionCount: number;
+  nextAction: string;
+  guardrail: string;
+}
+
 export interface EvaluationBafoBlocker {
   blockerId: string;
   vendorId: string | null;
@@ -68,8 +127,13 @@ export interface EvaluationBafoReadinessView {
   contextLine: string;
   archetypeLine: string;
   received: EvaluationBafoReceivedRow[];
+  questionResponses: EvaluationBafoQuestionResponseRow[];
   comparable: EvaluationBafoComparableRow[];
+  evaluatorScorecards: EvaluationBafoEvaluatorScorecardRow[];
   pricing: EvaluationBafoPricingRow[];
+  commercialComparison: EvaluationBafoCommercialComparisonRow[];
+  clarificationRequests: EvaluationBafoClarificationRequest[];
+  bafoRound: EvaluationBafoGovernedRound;
   blockers: EvaluationBafoBlocker[];
   singleNextAction: string;
   guardrail: string;
@@ -80,6 +144,7 @@ export function buildEvaluationBafoReadinessView(args: {
   challengeIntelligence?: VendorChallengeIntelligence | null;
   bafoInstructionPack?: VendorBafoInstructionPack | null;
   decisionView?: VendorEvaluationDecisionView | null;
+  scorecardAuthorityView?: ScorecardAuthorityView | null;
 }): EvaluationBafoReadinessView {
   const profiles = args.profileSet?.profiles ?? [];
   if (profiles.length === 0) {
@@ -90,8 +155,22 @@ export function buildEvaluationBafoReadinessView(args: {
         "No normalized vendor response profiles are loaded for this event, so Source cannot compare vendors or prepare BAFO asks.",
       archetypeLine: "No archetype-specific response profile is available yet.",
       received: [],
+      questionResponses: [],
       comparable: [],
+      evaluatorScorecards: [],
       pricing: [],
+      commercialComparison: [],
+      clarificationRequests: [],
+      bafoRound: {
+        roundLabel: "BAFO Round 1",
+        state: "blocked_missing_questions",
+        vendorCount: 0,
+        questionCount: 0,
+        nextAction:
+          "Load normalized vendor response packages before preparing a BAFO round.",
+        guardrail:
+          "No BAFO round exists, has been sent, or can be treated as approved from this read.",
+      },
       blockers: [
         {
           blockerId: "no-vendor-response-profiles",
@@ -130,7 +209,13 @@ export function buildEvaluationBafoReadinessView(args: {
   );
 
   const received = profiles.map((profile) => buildReceivedRow(profile));
+  const questionResponses = profiles.flatMap((profile) =>
+    buildQuestionResponseRows(profile),
+  );
   const pricing = profiles.map((profile) => buildPricingRow(profile));
+  const commercialComparison = pricing.map((row) =>
+    buildCommercialComparisonRow(row),
+  );
   const comparable = profiles.map((profile) => {
     const summary = summariesByVendor.get(profile.vendorId);
     const scoreEvidence = scoreRows
@@ -155,6 +240,10 @@ export function buildEvaluationBafoReadinessView(args: {
       scoreRows,
     }),
   );
+  const evaluatorScorecards = buildEvaluatorScorecards(
+    profiles,
+    args.scorecardAuthorityView,
+  );
   const pricingBlockers = pricing
     .filter((row) => row.comparability === "blocked")
     .map((row) => ({
@@ -167,6 +256,16 @@ export function buildEvaluationBafoReadinessView(args: {
       nextAction: `Load a normalized pricing workbook for ${row.vendorName} with five-year TCO, year-one run cost, and pricing basis before comparison.`,
     }));
   const allBlockers = dedupeBlockers([...blockers, ...pricingBlockers]);
+  const clarificationRequests = buildClarificationRequests(
+    allBlockers,
+    args.bafoInstructionPack?.vendorInstructions.flatMap(
+      (instruction) => instruction.questions,
+    ) ?? [],
+  );
+  const bafoRound = buildBafoRound({
+    pack: args.bafoInstructionPack,
+    clarificationRequests,
+  });
 
   const state = deriveState({
     blockers: allBlockers,
@@ -193,13 +292,38 @@ export function buildEvaluationBafoReadinessView(args: {
       `${blockedCount} held from BAFO-ready scoring.`,
     archetypeLine: archetypeLine(args.profileSet),
     received,
+    questionResponses,
     comparable,
+    evaluatorScorecards,
     pricing,
+    commercialComparison,
+    clarificationRequests,
+    bafoRound,
     blockers: allBlockers,
     singleNextAction: nextActionFor({ blockers: allBlockers, state }),
     guardrail:
       "Deterministic read: this panel only summarizes governed response, pricing, evidence, scorecard, and BAFO-instruction records. It does not select a winner or create benchmark claims.",
   };
+}
+
+function buildQuestionResponseRows(
+  profile: VendorResponseProfile,
+): EvaluationBafoQuestionResponseRow[] {
+  return profile.sectionMap.map((section) => ({
+    vendorId: profile.vendorId,
+    vendorName: profile.vendorName,
+    questionId: `section-${section.sectionNumber}`,
+    questionLabel: section.rfpSection,
+    answerState: section.status,
+    normalizedResponse: section.notes.trim() || "No normalized response note recorded.",
+    evidenceReference: section.responseReference.trim() || "Not recorded",
+    evaluatorUse:
+      section.status === "complete"
+        ? "Usable for evaluator review with cited response evidence."
+        : section.status === "missing"
+          ? "Missing response; exclude from scoring until clarified."
+          : "Use only as a clarification prompt before final scoring.",
+  }));
 }
 
 function buildReceivedRow(
@@ -270,6 +394,100 @@ function buildPricingRow(
           ? `Pricing is present, but ${basisSentence} keeps the TCO read conditional until BAFO clarification.`
           : "Five-year TCO, year-one run cost, and pricing basis are present for comparison.",
   };
+}
+
+function buildCommercialComparisonRow(
+  row: EvaluationBafoPricingRow,
+): EvaluationBafoCommercialComparisonRow {
+  const includedAmountLabels = [
+    `Five-year TCO: ${row.fiveYearTcoLabel}`,
+    `Year-one run cost: ${row.yearOneRunCostLabel}`,
+  ];
+  const excludedUnsupportedAmountLabels = [
+    `Transition cost shown for review only: ${row.transitionCostLabel}`,
+    `One-time cost shown for review only: ${row.oneTimeCostLabel}`,
+    `Optional cost shown for review only: ${row.optionalCostLabel}`,
+  ];
+  return {
+    vendorId: row.vendorId,
+    vendorName: row.vendorName,
+    comparability: row.comparability,
+    supportOnlyTcoLabel: row.fiveYearTcoLabel,
+    includedAmountLabels,
+    excludedUnsupportedAmountLabels,
+    basis: row.pricingBasis,
+    guardrail:
+      "Only normalized five-year TCO and year-one run cost are comparison inputs; transition, one-time, and optional amounts are shown for review and clarification only.",
+  };
+}
+
+function buildEvaluatorScorecards(
+  profiles: readonly VendorResponseProfile[],
+  authority: ScorecardAuthorityView | null | undefined,
+): EvaluationBafoEvaluatorScorecardRow[] {
+  if (!authority) {
+    return profiles.map((profile) => ({
+      vendorId: profile.vendorId,
+      vendorName: profile.vendorName,
+      criterionId: "not_loaded",
+      criterionLabel: "Scorecard authority not loaded",
+      evaluatorName: "Not recorded",
+      scoreLabel: "Not recorded",
+      lockState: "not_loaded",
+      reviewState: "not_loaded",
+      evidenceReference: "Not recorded",
+    }));
+  }
+
+  const labelByCriterion = new Map(
+    authority.criteria.map((criterion) => [
+      criterion.criterionId,
+      criterion.label,
+    ]),
+  );
+  return profiles.flatMap<EvaluationBafoEvaluatorScorecardRow>((profile) => {
+    const rows = authority.scoreRows.filter(
+      (score) => score.vendorId === profile.vendorId,
+    );
+    if (rows.length === 0) {
+      return [
+        {
+          vendorId: profile.vendorId,
+          vendorName: profile.vendorName,
+          criterionId: "missing",
+          criterionLabel: "Named evaluator score missing",
+          evaluatorName: "Not recorded",
+          scoreLabel: "Not recorded",
+          lockState: "not_loaded" as const,
+          reviewState: "blocked_missing_named_review" as const,
+          evidenceReference: "Not recorded",
+        },
+      ];
+    }
+    return rows.map<EvaluationBafoEvaluatorScorecardRow>((score) => {
+      const named = Boolean(score.evaluatorName?.trim());
+      const locked = score.lockState === "locked";
+      const evidence = Boolean(score.evidenceReference?.trim());
+      return {
+        vendorId: score.vendorId,
+        vendorName: score.vendorName,
+        criterionId: score.criterionId,
+        criterionLabel:
+          labelByCriterion.get(score.criterionId) ?? score.criterionId,
+        evaluatorName: score.evaluatorName?.trim() || "Not recorded",
+        scoreLabel:
+          score.evaluatorScore === null
+            ? "Not recorded"
+            : `${score.evaluatorScore}/10`,
+        lockState: score.lockState,
+        reviewState:
+          named && locked && evidence
+            ? "locked_named_human_review"
+            : "blocked_missing_named_review",
+        evidenceReference: score.evidenceReference?.trim() || "Not recorded",
+      };
+    });
+  });
 }
 
 function buildComparableRow(
@@ -404,6 +622,56 @@ function buildVendorBlockers(args: {
   return dedupeBlockers(blockers);
 }
 
+function buildClarificationRequests(
+  blockers: readonly EvaluationBafoBlocker[],
+  bafoQuestions: readonly VendorBafoQuestion[],
+): EvaluationBafoClarificationRequest[] {
+  const blockerRequests = blockers.slice(0, 8).map((blocker) => ({
+    clarificationId: `blocker:${blocker.blockerId}`,
+    vendorId: blocker.vendorId,
+    vendorName: blocker.vendorName,
+    source: "blocker" as const,
+    priority: blocker.severity === "blocker" ? "must_resolve" as const : "should_improve" as const,
+    question: blocker.nextAction,
+    evidenceBasis: [blocker.detail].filter(hasText),
+    dispatchState: "draft_only_not_sent" as const,
+  }));
+  const bafoRequests = bafoQuestions.slice(0, 8).map((question) => ({
+    clarificationId: `bafo:${question.questionId}`,
+    vendorId: question.vendorId,
+    vendorName: question.vendorName,
+    source: "bafo_question" as const,
+    priority: question.priority,
+    question: question.question,
+    evidenceBasis: [question.evidenceLabel, question.buyerRisk].filter(hasText),
+    dispatchState: "draft_only_not_sent" as const,
+  }));
+  return dedupeClarifications([...blockerRequests, ...bafoRequests]);
+}
+
+function buildBafoRound(args: {
+  pack?: VendorBafoInstructionPack | null;
+  clarificationRequests: readonly EvaluationBafoClarificationRequest[];
+}): EvaluationBafoGovernedRound {
+  const questionCount = args.pack?.questionCount ?? 0;
+  const vendorCount = args.pack?.vendorCount ?? 0;
+  const roundLabel = (
+    args.pack?.roundLabel ?? "BAFO Round 1"
+  ).replace(/\s+instruction pack$/i, "");
+  const hasQuestions = questionCount > 0 || args.clarificationRequests.length > 0;
+  return {
+    roundLabel,
+    state: hasQuestions ? "candidate_not_dispatched" : "blocked_missing_questions",
+    vendorCount,
+    questionCount,
+    nextAction: hasQuestions
+      ? "Route the BAFO round candidate to named commercial review; do not dispatch supplier communications from this read."
+      : "Add governed clarification questions before preparing a BAFO round candidate.",
+    guardrail:
+      "This is a read-only BAFO round candidate. It does not send supplier communications, approve concessions, select a supplier, or claim savings.",
+  };
+}
+
 function deriveState(args: {
   blockers: EvaluationBafoBlocker[];
   comparable: EvaluationBafoComparableRow[];
@@ -522,6 +790,27 @@ function dedupeBlockers(
 
 function unique<T>(value: T, index: number, array: T[]): boolean {
   return array.indexOf(value) === index;
+}
+
+function hasText(value: string | null | undefined): value is string {
+  return Boolean(value?.trim());
+}
+
+function dedupeClarifications(
+  requests: EvaluationBafoClarificationRequest[],
+): EvaluationBafoClarificationRequest[] {
+  const seen = new Set<string>();
+  return requests.filter((request) => {
+    const key = [
+      request.vendorId,
+      request.source,
+      request.question,
+      request.evidenceBasis.join(";"),
+    ].join("|");
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
 }
 
 function moneyLabel(value: number | null): string {

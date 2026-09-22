@@ -27,24 +27,26 @@ describe("EvaluationBafoReadinessPanel", () => {
       intelligence,
       bafoPack,
     );
+    const scorecardAuthorityView = buildReadyScorecardAuthorityView(
+      profileSet?.tenantKey ?? "tenant-a",
+      profileSet?.sourceEventId ?? "event-1",
+      profileSet?.profiles.map((profile) => ({
+        vendorId: profile.vendorId,
+        vendorName: profile.vendorName,
+      })) ?? [],
+    );
     const view = buildEvaluationBafoReadinessView({
       profileSet,
       challengeIntelligence: intelligence,
       bafoInstructionPack: bafoPack,
       decisionView,
+      scorecardAuthorityView,
     });
     const negotiationBriefCandidate = buildStage07NegotiationBriefCandidate({
       readinessView: view,
       bafoInstructionPack: bafoPack,
       decisionView,
-      scorecardAuthorityView: buildReadyScorecardAuthorityView(
-        profileSet?.tenantKey ?? "tenant-a",
-        profileSet?.sourceEventId ?? "event-1",
-        profileSet?.profiles.map((profile) => ({
-          vendorId: profile.vendorId,
-          vendorName: profile.vendorName,
-        })) ?? [],
-      ),
+      scorecardAuthorityView,
       bafoRoundConcessionView: buildReadyBafoRoundConcessionView(
         profileSet?.tenantKey ?? "tenant-a",
         profileSet?.sourceEventId ?? "event-1",
@@ -69,6 +71,16 @@ describe("EvaluationBafoReadinessPanel", () => {
     expect(html).toContain("Pricing comparability");
     expect(html).toContain("$96.4M");
     expect(html).toContain("$91.8M");
+    expect(html).toContain("Normalized question rows");
+    expect(html).toContain("Transition Plan");
+    expect(html).toContain("Named evaluator review");
+    expect(html).toContain("Named Evaluator");
+    expect(html).toContain("Support-only TCO comparison");
+    expect(html).toContain("shown for review only");
+    expect(html).toContain("Clarification drafts");
+    expect(html).toContain("draft only");
+    expect(html).toContain("BAFO Round 1");
+    expect(html).toContain("candidate, not dispatched");
     expect(html).toContain("Blockers and evidence gaps");
     expect(html).toContain("Negotiation brief candidate");
     expect(html).toContain("Accepted facts");
