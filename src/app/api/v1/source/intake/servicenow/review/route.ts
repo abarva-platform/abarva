@@ -163,9 +163,30 @@ export async function POST(request: Request) {
       requestId: importedRequest.requestId,
       decision: handoff.mappingDecision,
     });
+
+    const persistedQueue = await readSourceIntakeRequestQueue(activeClient.key);
+    const persistedRequest = persistedQueue.requests.find(
+      (candidate) => candidate.requestId === importedRequest.requestId,
+    );
+    const persistedDecision = persistedRequest?.mappingDecision;
+    if (
+      !persistedQueue.registryAvailable ||
+      !persistedDecision ||
+      persistedDecision.sourceVersion !== importedRequest.sourceVersion
+    ) {
+      return Response.json(
+        {
+          error: "source_request_review_not_confirmed",
+          detail:
+            "The mapping review write could not be confirmed from request authority.",
+        },
+        { status: 503 },
+      );
+    }
+
     return Response.json({
       ok: true,
-      mappingDecision: handoff.mappingDecision,
+      mappingDecision: persistedDecision,
     });
   } catch (error) {
     return Response.json(
