@@ -844,14 +844,39 @@ claimGrammarCase(
 
   const q = buildBoardAndQueue(dir);
   const rendered = fs.readFileSync(path.join(dir, "EXECUTION_QUEUE.md"), "utf8");
-  const rowCount = (rendered.match(new RegExp(`\\| ${id} \\|`, "g")) ?? []).length;
+  // This case is about PLACEMENT — that two real definitions of one id stay
+  // distinct instead of being force-fit onto one row. It used to prove that by
+  // counting the id's rows in the rendered CLAIMABLE table, which only worked
+  // while both definitions happened to be claimable. Under item T-597 the
+  // second definition — "Decide the non-Source product scope", acceptance
+  // "Decide before coding" — is correctly read as a decision gate and leaves
+  // the claimable table, so the proxy dropped to 1 while placement was still
+  // right. The assertion is not loosened here: it is moved onto the surface
+  // that actually owns placement, where it is stronger than the row count was,
+  // because it also pins the two definitions to their two different lanes.
+  const summary = JSON.parse(
+    fs.readFileSync(path.join(dir, "source-board-summary.json"), "utf8"),
+  );
+  const definitions = [];
+  (function collect(node) {
+    if (Array.isArray(node)) return node.forEach(collect);
+    if (node && typeof node === "object") {
+      if (node.num === id && typeof node.lane === "string") {
+        definitions.push({ lane: node.lane, blocker: node.blocker ?? null });
+      }
+      Object.values(node).forEach(collect);
+    }
+  })(summary);
+  const lanes = [...new Set(definitions.map((d) => d.lane))].sort();
   check(
     "definedIn lets two real definitions of one id stay distinct",
     q.status === 0 &&
-      rowCount === 2 &&
+      definitions.length === 2 &&
+      lanes.join(",") === "C,T" &&
       !/not placed on the map:\s*[1-9]/.test(q.stdout + q.stderr) &&
       !rendered.includes("AMBIGUOUS"),
-    `exit=${q.status}\nstdout=${q.stdout.trim()}\nstderr=${q.stderr.trim()}\nqueue=${rendered}`,
+    `exit=${q.status}\nstdout=${q.stdout.trim()}\nstderr=${q.stderr.trim()}\n` +
+      `definitions=${JSON.stringify(definitions)}\nqueue=${rendered}`,
   );
   fs.rmSync(dir, { recursive: true, force: true });
 }
@@ -1307,6 +1332,107 @@ function subjectLeadingFixture(subjectId, mentionedId, releaseLine) {
     `exit=${q.status}\nheld=${heldSection(rendered)}\nreleased=${releasedSection(rendered)}`,
   );
 }
+
+/* 22. A DECISION PHRASED AS AN IMPERATIVE IS STILL A DECISION — item T-597.  */
+/*                                                                           */
+/*     The derived blocker recognised "decision needed" and "Decide first"   */
+/*     but not the ordinary imperative an acceptance actually gets written   */
+/*     in. T-596's acceptance opens "Decide per job before pinning           */
+/*     anything" and closes "this item is read-only until a human decides",  */
+/*     and the board still read it `Unclaimed`, so the queue offered a job-  */
+/*     runtime change that mutates tenant data as free work for an agent.    */
+/*                                                                           */
+/*     The sentences below are T-596's OWN prose, copied verbatim. A         */
+/*     fixture invented to match the new pattern would pass while the real   */
+/*     item stayed claimable, which is the shape of proof this repository    */
+/*     has already been burned by once.                                      */
+/*                                                                           */
+/*     The detector was narrowed once before, when re-scanning raw prose     */
+/*     made any descriptive use of "signed-in" an owner gate. This is a      */
+/*     widening, so every case below that must NOT become a blocker is as    */
+/*     much the subject of the test as the two that must.                    */
+
+/** Put one item in the fixture backlog with a chosen acceptance, then build. */
+function blockerCase(name, id, acceptance, expectClaimable) {
+  const dir = freshFixture();
+  fs.appendFileSync(
+    path.join(dir, "EXECUTION_BACKLOG_20260918.md"),
+    `\n| ${id} | **Synthetic blocker-derivation fixture.** | T | ${acceptance} |\n`,
+  );
+  mapFixtureId(dir, id);
+  const q = buildBoardAndQueue(dir);
+  const rendered = fs.readFileSync(path.join(dir, "EXECUTION_QUEUE.md"), "utf8");
+  fs.rmSync(dir, { recursive: true, force: true });
+  const offered = claimableRegion(rendered).includes(id);
+  check(
+    name,
+    q.status === 0 && offered === expectClaimable,
+    `exit=${q.status}\nexpected claimable=${expectClaimable}, offered=${offered}\n` +
+      `claimable region=${claimableRegion(rendered).replace(/\n/g, " ").slice(0, 400)}`,
+  );
+}
+
+/** Everything the queue renders as takeable: the lane tables, and only those. */
+function claimableRegion(rendered) {
+  const start = rendered.indexOf("### Lane ");
+  const end = rendered.indexOf("## Blocked on Anand");
+  if (start < 0 || end < 0 || end < start) return "";
+  return rendered.slice(start, end);
+}
+
+/* --- the two real forms, verbatim from T-596, must gate the item --------- */
+
+blockerCase(
+  "an imperative opening a sentence — T-596's own words — is a decision, not free work",
+  "T-880",
+  "**Decide per job before pinning anything: is it still wanted?** Five of the six carry a " +
+    "one-off cutover tag from a dated migration and a sixth a stale `main-` tag, so `retire` " +
+    "is a live answer for some of them.",
+  false,
+);
+
+blockerCase(
+  "an item held read-only until a human decides is a decision, not free work",
+  "T-881",
+  "For each job that stays, resolve its current tag to a digest and pin it. Do not run any " +
+    "of these jobs to find out — several are ingest/backfill jobs that mutate tenant data, " +
+    "and this item is read-only until a human decides.",
+  false,
+);
+
+/* --- the narrowing has to survive: descriptive and negated uses are not --- */
+
+blockerCase(
+  "a past-tense report that a decision was already taken is not a blocker",
+  "T-882",
+  "The owner decided the taxonomy on 18 Sep and the decision is recorded in the release " +
+    "record; carry it into the loader without re-deriving it.",
+  true,
+);
+
+blockerCase(
+  "a negated decision sentence is not a blocker",
+  "T-883",
+  "No decision is needed here. Nothing in this item requires the owner to decide anything, " +
+    "so implement it against the value the record already names.",
+  true,
+);
+
+blockerCase(
+  "the word deciding inside a description of finished work is not a blocker",
+  "T-884",
+  "Deciding which suite to wire was settled by the T-556 triage, so wire the four files it " +
+    "named and measure the coverage floor either side.",
+  true,
+);
+
+blockerCase(
+  "the earlier signed-in narrowing still holds — describing a signed-in fixture is not a gate",
+  "T-885",
+  "Build a signed-in-shaped fixture so the route's tenant fence is exercised under a real " +
+    "session shape, and assert the fence rejects the second tenant.",
+  true,
+);
 
 console.log(`\n${passes} passed, ${failures} failed`);
 process.exit(failures ? 1 : 0);

@@ -375,7 +375,22 @@ function firstMatchingSentence(text, rule) {
 const BLOCKER_RULES = [
   { re: /\bnot\s+signed-in\b|(?:^|[.!?]\s+)signed-in\s+check\b|signed-in[^.]{0,80}\b(pending|owed|not proven|not performed|not claimed|remains? (?:open|unproven))\b/i, say: "Signed-in acceptance owed" },
   { re: /\brequires? separate approval\b|\bApply requires\b/i, say: "Awaiting approval to apply" },
-  { re: /decision needed|Decide first|decision required|Content decision|\bproduct call\b|\bowner'?s call\b|blocked on owner policy/i, say: "Decision needed" },
+  // An acceptance is written in the imperative, so the decision gate in one
+  // usually is too. Recognising only the noun forms and the single literal
+  // "Decide first" left T-596 — which opens "Decide per job before pinning
+  // anything" and closes "read-only until a human decides" — reading
+  // `Unclaimed`, and the queue offered a Container Apps Jobs runtime change
+  // as free agent work. Two imperative forms are added here, each with its
+  // own case in the suite.
+  //
+  // This is a WIDENING, and the detector was narrowed once before for good
+  // reason: re-scanning raw prose made every descriptive use of "signed-in"
+  // an owner gate. So both forms are anchored. `Decide` must open a sentence
+  // or follow bold markup, which keeps "the owner decided", "requires the
+  // owner to decide anything" and "Deciding which suite to wire was settled"
+  // out; and the deferral form names who does the deciding rather than
+  // matching the verb anywhere it appears.
+  { re: /decision needed|decision required|Content decision|\bproduct call\b|\bowner'?s call\b|blocked on owner policy|(?:^|[.!?;:]\s+|\n\s*|\*\*)Decide\b|\b(?:until|before)\s+(?:a human|an owner|a person|the owner|Anand|someone)\s+decides\b/i, say: "Decision needed" },
   { re: /\bblocked\b/i, say: "Blocked (see source)" },
   { re: /\bunclaimed\b/i, say: "Unclaimed" },
 ];
