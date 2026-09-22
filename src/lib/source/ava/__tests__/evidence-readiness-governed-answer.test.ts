@@ -322,6 +322,81 @@ describe("buildEvidenceReadinessGovernedAnswer", () => {
     );
   });
 
+  it("uses the mounted artifact gate to answer the signed-in Define completion question", async () => {
+    mockListSourceArtifacts.mockResolvedValue([
+      artifact({
+        id: "app-inventory-draft",
+        tenantKey: "corpus_global",
+        artifactKind: "d04_app_inv",
+        originalName: "Application Inventory draft.xlsx",
+        sourceOrigin: "generated",
+        approvalState: "draft",
+        isClientFinal: false,
+      }),
+      artifact({
+        id: "scope-memo-draft",
+        tenantKey: "corpus_global",
+        artifactKind: "d05_scope_memo",
+        originalName: "Scope Memo draft.docx",
+        sourceOrigin: "generated",
+        approvalState: "draft",
+        isClientFinal: false,
+      }),
+      artifact({
+        id: "exclusion-log-evidence",
+        tenantKey: "corpus_global",
+        artifactKind: "d06_excl_log",
+        originalName: "Exclusion Log evidence.xlsx",
+        sourceOrigin: "uploaded",
+        approvalState: "not_required",
+        isClientFinal: false,
+      }),
+      artifact({
+        id: "ticket-history-draft",
+        tenantKey: "corpus_global",
+        artifactKind: "d07_ticket_synth",
+        originalName: "Ticket History draft.xlsx",
+        sourceOrigin: "generated",
+        approvalState: "draft",
+        isClientFinal: false,
+      }),
+    ]);
+
+    const answer = await buildEvidenceReadinessGovernedAnswer({
+      eventId: "event-1",
+      clientKey: "corpus_global",
+      tenantId: null,
+      question:
+        "What is blocking this event from advancing from Define, and what exact action should the sourcing lead take next? Do not estimate savings or recommend a supplier.",
+      stageContext: {
+        stageKey: "scope",
+        stageLabel: "Define",
+        nextAction: "Open scope and strategy",
+        missingInputs: [],
+      },
+    });
+
+    expect(answer).not.toBeNull();
+    expect(answer!.directAnswer).toContain("Define is not complete");
+    expect(answer!.directAnswer).toContain(
+      "Next action: Review and accept the blocked artifacts in Files",
+    );
+    expect(answer!.directAnswer).toContain("4 required/gate artifacts");
+    expect(answer!.directAnswer).toContain(
+      "Application Inventory & Tiering: AI draft not accepted as client final",
+    );
+    expect(answer!.directAnswer).toContain(
+      "Scope Memo with Boundaries: AI draft not accepted as client final",
+    );
+    expect(answer!.directAnswer).toContain(
+      "Exclusion Log: evidence is present, but no governed deliverable is accepted",
+    );
+    expect(answer!.directAnswer).toContain(
+      "Ticket History Synthesis: AI draft not accepted as client final",
+    );
+    expect(answer!.directAnswer).not.toContain("No recorded phase blocker");
+  });
+
   it("answers honestly when no registry rows exist", async () => {
     mockListSourceArtifacts.mockResolvedValue([]);
 

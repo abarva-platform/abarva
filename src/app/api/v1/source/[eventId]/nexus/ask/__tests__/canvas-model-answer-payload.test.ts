@@ -386,6 +386,7 @@ describe("Source canvas chat · Source New phase completion routing", () => {
         question:
           "What do I need to complete Define, and which evidence is still missing?",
         stageContext: {
+          stageKey: "scope",
           stageLabel: "Define",
           nextAction: "Open scope and strategy",
           blocker: undefined,

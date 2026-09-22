@@ -34,6 +34,8 @@ import {
   governedClientKeyForSourceClientKey,
 } from "@/lib/source/ava/vendor-coverage-governed-answer";
 import { governedCandidateFromSourceArtifact } from "@/lib/source/ava/artifact-quality-governed-answer";
+import { stageArtifactReadinessFor } from "@/lib/source/stage-artifact-readiness";
+import type { SourceStageKey } from "@/lib/source/types";
 
 export interface BuildEvidenceReadinessGovernedAnswerInput {
   eventId: string;
@@ -42,6 +44,7 @@ export interface BuildEvidenceReadinessGovernedAnswerInput {
   tenantId: string | null;
   question: string;
   stageContext?: {
+    stageKey?: SourceStageKey | null;
     stageLabel: string;
     nextAction?: string | null;
     blocker?: string | null;
@@ -311,16 +314,25 @@ function directAnswerForReport(
     missingInputs: stageContext.missingInputs ?? [],
     artifacts,
   });
+  const artifactReadiness = stageContext.stageKey
+    ? stageArtifactReadinessFor(
+        buildSourceArtifactLifecycleSummary(artifacts),
+        stageContext.stageKey,
+      )
+    : null;
   const hasRecordedOpenCondition = Boolean(
     stageContext.blocker?.trim() ||
     artifactAwareInputs.missing.length > 0 ||
-    artifactAwareInputs.registeredOpen.length > 0,
+    artifactAwareInputs.registeredOpen.length > 0 ||
+    artifactReadiness?.ready === false,
   );
   const phaseStatus = hasRecordedOpenCondition
     ? `${stageContext.stageLabel} is not complete.`
     : `${stageContext.stageLabel} completion is not proven by the evidence registry alone.`;
-  const nextAction = stageContext.nextAction?.trim()
-    ? ` Next action: ${stageContext.nextAction.trim()}.`
+  const effectiveNextAction =
+    artifactReadiness?.nextAction ?? stageContext.nextAction?.trim();
+  const nextAction = effectiveNextAction
+    ? ` Next action: ${effectiveNextAction}.`
     : "";
   const blocker = stageContext.blocker?.trim()
     ? ` Recorded blocker: ${stageContext.blocker.trim()}.`
@@ -333,7 +345,15 @@ function directAnswerForReport(
     artifactAwareInputs.registeredOpen.length > 0
       ? ` Registered artifact states requiring action: ${artifactAwareInputs.registeredOpen.join("; ")}.`
       : "";
-  return `${phaseStatus}${nextAction}${blocker}${missing}${registeredOpen} Evidence processing: ${evidenceStatus}`;
+  const artifactGate =
+    artifactReadiness?.ready === false
+      ? ` Artifact gate: ${artifactReadiness.line} Blockers: ${artifactReadiness.blockers.join("; ")}.`
+      : "";
+  const recordedBlocker =
+    artifactReadiness?.ready === false && !stageContext.blocker?.trim()
+      ? ""
+      : blocker;
+  return `${phaseStatus}${nextAction}${recordedBlocker}${missing}${registeredOpen}${artifactGate} Evidence processing: ${evidenceStatus}`;
 }
 
 function businessImplicationForReport(

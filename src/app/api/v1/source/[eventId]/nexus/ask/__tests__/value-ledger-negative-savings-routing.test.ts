@@ -244,6 +244,7 @@ describe("Source nexus/ask value-ledger routing", () => {
         clientKey: "example-tenant",
         question: prompt,
         stageContext: expect.objectContaining({
+          stageKey: "strategy",
           stageLabel: "Define",
           nextAction: "Open scope and strategy",
           blocker:
