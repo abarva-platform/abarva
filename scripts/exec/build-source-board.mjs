@@ -347,6 +347,14 @@ function backlogProseItems(text) {
  * number or a deploy run on its own, and nothing is ever upgraded to rung 7 by
  * this script.
  */
+/**
+ * The unit `deriveRung` reasons in. Named once rather than written twice
+ * because item T-704 drops sentences from the rung corpus before
+ * `firstMatchingSentence` scans it: if the two split differently, the dropped
+ * unit is not the scanned unit and the filter cuts in the wrong place.
+ */
+const SENTENCE_SPLIT = /(?<=[.;])\s+|\n+/;
+
 const LADDER = [
   { rung: 0, key: "closed", label: "Closed" },
   { rung: 0, key: "open", label: "Open" },
@@ -361,6 +369,9 @@ const RULES = [
     rung: 7,
     key: "proven",
     why: "source states signed-in proof passed",
+    // The proof word itself, for attribution only (item T-704). It never
+    // decides whether the rule fires — `test` does — only who it belongs to.
+    token: /\blive-proven\b|\bsigned-in\b/gi,
     test: (t) =>
       /\blive-proven\b/i.test(t) ||
       /signed-in[^.]{0,60}\b(passed|proven|confirmed|resolved)\b/i.test(t),
@@ -372,6 +383,7 @@ const RULES = [
     rung: 6,
     key: "deployed",
     why: "source states deployed",
+    token: /\bdeployed\b/gi,
     test: (t) => /\bdeployed\b/i.test(t),
     veto: (t) =>
       /\bnot\b[^.;\n]{0,80}\bdeployed\b/i.test(t) ||
@@ -381,6 +393,7 @@ const RULES = [
     rung: 5,
     key: "merged",
     why: "source states merged",
+    token: /\b(?:squash-)?merged\b/gi,
     test: (t) => /\b(squash-)?merged\b/i.test(t),
     veto: (t) =>
       /\bnot\b[^.;\n]{0,80}\b(?:squash-)?merged\b/i.test(t) ||
@@ -390,11 +403,17 @@ const RULES = [
     rung: 4,
     key: "pr",
     why: "source names an open PR",
+    token: /#\d{4}\b/g,
     test: (t) => /#\d{4}\b/.test(t),
   },
 ];
 
-function deriveRung(text) {
+/**
+ * `attributeTo`, when given, is the id this corpus is supposed to be about.
+ * Sentences whose proof word belongs to a neighbouring id are then skipped —
+ * item T-704. Callers that pass nothing behave exactly as before.
+ */
+function deriveRung(text, attributeTo) {
   const t = text ?? "";
   if (/\bANALYSIS CLOSED\b/i.test(t)) {
     return {
@@ -405,7 +424,7 @@ function deriveRung(text) {
     };
   }
   for (const rule of RULES) {
-    const quote = firstMatchingSentence(t, rule);
+    const quote = firstMatchingSentence(t, rule, attributeTo);
     if (!quote) continue;
     return { rung: rule.rung, key: rule.key, why: rule.why, quote };
   }
@@ -434,11 +453,131 @@ for (const [sample, expected] of [
   }
 }
 
-function firstMatchingSentence(text, rule) {
-  for (const s of text.split(/(?<=[.;])\s+|\n+/)) {
-    if (rule.test(s) && !rule.veto?.(s)) return s.trim().replace(/\s+/g, " ").slice(0, 200);
+/* ------------------------------------------------------------------------ *
+ * ATTRIBUTING A RUNG WITHIN A RECORD — item T-704.
+ *
+ * T-702 fixed the boundary BETWEEN claim records. This is the other half. A
+ * register record is long and discursive, and one routinely claims item A
+ * while naming item B's branch, pull request or verdict as context.
+ * `claimTextForItem` matches an id anywhere in a record and hands the WHOLE
+ * record to `deriveRung`, which then takes the highest rung ANY sentence in it
+ * states — including the sentences that are about somebody else.
+ *
+ * Measured on the register frozen at 2026-09-22T18:20Z, after T-702: `T-598`
+ * reads rung 4 `PR / CI`, quoting
+ *
+ *     "T-578 is NOT taken - it is claimed with PR #8255 open."
+ *
+ * `#8255` is T-578's pull request and the sentence exists to say that T-578 is
+ * somebody else's work. `T-598` is not named in it at all.
+ *
+ * THE RULE IS T-545's, and the first attempt at this proved why it has to be.
+ * Dropping any sentence that names a foreign id looks right on `T-598` and is
+ * wrong on `T-448`, whose own merge reads
+ *
+ *     "codex item T-448 PR #8139 merge 70e8ebe… — squash-merged after all 19
+ *      required checks completed green on the combined T-451/T-453/T-448 state"
+ *
+ * — a genuine merge of T-448 with two sibling ids in the trailing clause. A
+ * sentence-wide veto deletes it and the item falls to `PR / CI`. Measured, that
+ * blunt rule dropped 8 own-leading sentences carrying real proof.
+ *
+ * So attribution is per TOKEN, exactly as `build-execution-queue.mjs` proved
+ * for release verdicts: find the proof word the rule fired on, and read the
+ * NEAREST id reference to it. If that id is this item, the rung is its own; if
+ * it is a neighbour, the sentence is speaking about the neighbour. A sentence
+ * naming no id at all belongs to the record's subject, which is the item whose
+ * claim grammar matched the record in the first place, so it is kept.
+ *
+ * That rule gets both live cases right on the same measurement: `T-448`'s token
+ * `squash-merged` is nearest to `item T-448`, so it survives; `T-405`'s token
+ * `deployed` is nearest to `T-537` rather than to its own leading `item T-405`,
+ * so the borrowed deploy goes. Neither is decided by which id came first.
+ *
+ * The reach is the sentence, not a character count — the sentence is the unit
+ * `deriveRung` already reasons in, so the filter cuts exactly where the scan
+ * looks. `SENTENCE_SPLIT` is named once for that reason.
+ *
+ * DIRECTION, which is the safety argument. Filtering can only remove matches,
+ * never create one, so an item's rung can only fall. T-702's repair moved 105
+ * items and every one moved down; this one has the same property by
+ * construction, and the behavioural suite asserts it rather than trusting it.
+ *
+ * Attribution is OPT-IN: `deriveRung` filters only when given an id. The
+ * outcome and narrative corpora pass none and are untouched, and `claimCorpus`
+ * — which the blocker rules T-700 reworked read — is deliberately still the
+ * whole record, so the rung movement here can be attributed to this change
+ * alone.
+ *
+ * PR numbers are NOT ids. `#8255` is a pull request; `item #59` is a backlog
+ * item. The grammar below is the one `claimTextForItem` already uses to decide
+ * which records belong to a numeric id, so the two cannot disagree.
+ * ------------------------------------------------------------------------ */
+
+/** Any backlog id written in the register's grammar. Never a bare `#1234`. */
+const CLAIM_ID_REFERENCE = /\b(?:[A-Z]-\d{3}|item\s*#?\d+)\b/gi;
+
+/** Whether an id reference token names `num` itself rather than a neighbour. */
+function isOwnIdReference(token, num) {
+  if (typeof num === "number") {
+    const digits = token.match(/^item\s*#?(\d+)$/i)?.[1];
+    return digits === String(num);
+  }
+  return token.toUpperCase() === String(num).toUpperCase();
+}
+
+/**
+ * Whether the proof word this rule fired on in `sentence` belongs to `num`.
+ *
+ * True when the sentence names no id, or when the id nearest to the proof word
+ * is `num`. A rule with no `token` cannot be attributed and is left alone.
+ */
+function sentenceSpeaksFor(sentence, rule, num) {
+  if (!rule.token) return true;
+  rule.token.lastIndex = 0;
+  const tokens = [...sentence.matchAll(rule.token)];
+  if (tokens.length === 0) return true;
+  CLAIM_ID_REFERENCE.lastIndex = 0;
+  const ids = [...sentence.matchAll(CLAIM_ID_REFERENCE)];
+  if (ids.length === 0) return true;
+
+  // A sentence may state the same proof twice. It speaks for this item if ANY
+  // occurrence does, which is the same "nearest, not any" test applied per
+  // token rather than once for the sentence.
+  return tokens.some((token) => {
+    let nearest = ids[0];
+    for (const id of ids) {
+      if (Math.abs(id.index - token.index) < Math.abs(nearest.index - token.index)) nearest = id;
+    }
+    return isOwnIdReference(nearest[0], num);
+  });
+}
+
+function firstMatchingSentence(text, rule, attributeTo) {
+  for (const s of text.split(SENTENCE_SPLIT)) {
+    if (!rule.test(s) || rule.veto?.(s)) continue;
+    if (attributeTo !== undefined && !sentenceSpeaksFor(s, rule, attributeTo)) continue;
+    return s.trim().replace(/\s+/g, " ").slice(0, 200);
   }
   return "";
+}
+
+// Parser invariants for the attribution, kept beside it. The first two are the
+// live cases above and they pull in opposite directions; the third is the
+// guardrail the acceptance names — a record that says nothing about anyone else
+// must survive whole, or the filter has tightened itself into silence and only
+// looks correct on the positive.
+for (const [sample, num, expected] of [
+  ["T-578 is NOT taken - it is claimed with PR #8255 open.", "T-598", false],
+  ["codex item T-448 PR #8139 merge 70e8ebe — squash-merged green on the combined T-451/T-453/T-448 state.", "T-448", true],
+  ["Squash-merged after every required check passed.", "T-448", true],
+  ["cx-a item T-405 CLOSED — proves T-402 ab834dd59 and T-537 0b79765eb are contained by deployed carrier 0f166372f;", "T-405", false],
+]) {
+  const rule = RULES.find((r) => r.test(sample) && !r.veto?.(sample));
+  if (!rule) throw new Error(`Attribution invariant is unreachable — no rule fires on ${JSON.stringify(sample)}`);
+  if (sentenceSpeaksFor(sample, rule, num) !== expected) {
+    throw new Error(`Claim attribution invariant failed for ${num} on rule ${rule.key}: ${JSON.stringify(sample)}`);
+  }
 }
 
 const BLOCKER_RULES = [
@@ -779,7 +918,12 @@ function buildItem(ref) {
   ].join("\n");
   const bodyCorpus = defs.map((d) => `${d.title} ${d.acceptance} ${d.raw}`).join("\n");
   const claimCorpus = claims.map((c) => c.status).join("\n");
-  const rung = deriveRung(statusCorpus);
+  // Item T-704: the corpus is unchanged, and the id is passed so a sentence
+  // whose proof word belongs to a NEIGHBOURING item cannot supply this item's
+  // rung. `claimCorpus` above is deliberately left un-attributed — the blocker
+  // rules T-700 reworked read that one, and narrowing both in one change would
+  // make the rung movement unattributable.
+  const rung = deriveRung(statusCorpus, num);
   return {
     num,
     definedIn,
