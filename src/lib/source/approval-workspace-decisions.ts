@@ -84,9 +84,12 @@ function buildDecision(
   input: BuildApprovalWorkspaceDecisionsInput,
 ): ApprovalDecisionSummary {
   const item = input.currentStageItem;
-  const versionKey = clean(item?.versionKey);
-  const versionLabel = clean(item?.versionLabel) ?? input.stageLabel;
-  const reviewerRole = clean(item?.requiredReviewerRole) ?? null;
+  const decisionEvidenceItem = input.approvalRecorded ? null : item;
+  const versionKey = clean(decisionEvidenceItem?.versionKey);
+  const versionLabel =
+    clean(decisionEvidenceItem?.versionLabel) ?? input.stageLabel;
+  const reviewerRole =
+    clean(decisionEvidenceItem?.requiredReviewerRole) ?? null;
   const expectedVersionKey = `${input.eventId}:${input.currentStageKey}`;
   const blockers: ApprovalDecisionBlocker[] = [];
 

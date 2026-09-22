@@ -124,10 +124,54 @@ describe("buildApprovalWorkspaceDecisions", () => {
 
     expect(result.status).toBe("recorded");
     expect(result.primaryAction.enabled).toBe(false);
-    expect(result.blockers.map((blocker) => blocker.code)).toEqual([
-      "approval_already_recorded",
-    ]);
+    expect(result.blockers.map((blocker) => blocker.code)).not.toContain(
+      "unauthorized_viewer",
+    );
+    expect(result.blockers.map((blocker) => blocker.code)).not.toContain(
+      "approval_reason_required",
+    );
   });
+
+  it.each([
+    ["scope", "Scope"],
+    ["responses", "Responses"],
+    ["evaluation", "Evaluation"],
+    ["pricing", "Pricing"],
+    ["bafo", "BAFO"],
+    ["executive_decision", "Executive Decision"],
+    ["selection", "Selection"],
+    ["transition", "Transition"],
+    ["value", "Value"],
+  ] as const)(
+    "does not use a %s routed action to prove a historical approval",
+    (stageKey, stageLabel) => {
+      const result = decision({
+        ...base,
+        currentStageKey: stageKey,
+        stageLabel,
+        approvalRecorded: true,
+        currentStageItem: item({
+          stageKey,
+          stageLabel,
+          versionKey: `evt-1:${stageKey}`,
+          versionLabel: stageLabel,
+          requiredReviewerRole: "Source stage approver",
+        }),
+        gateActionArmed: false,
+        approvalRationale: null,
+      });
+
+      expect(result.status).toBe("recorded");
+      expect(result.versionKey).toBeNull();
+      expect(result.reviewerRole).toBeNull();
+      expect(result.primaryAction.enabled).toBe(false);
+      expect(result.blockers.map((blocker) => blocker.code)).toEqual([
+        "approval_already_recorded",
+        "stale_version",
+        "reviewer_role_missing",
+      ]);
+    },
+  );
 
   it("enables exactly one primary action when the readiness contract is satisfied", () => {
     const group = buildApprovalWorkspaceDecisions(base)[0]!;

@@ -659,10 +659,12 @@ describe("buildSourceEventShellView", () => {
     );
     expect(view.approvals.pendingDecisionGroups[0]?.decisions[0]).toMatchObject({
       status: "recorded",
-      versionKey: `${EVENT.id}:value`,
-      reviewerRole: "Source stage approver",
+      versionKey: null,
+      reviewerRole: null,
       blockers: expect.arrayContaining([
         expect.objectContaining({ code: "approval_already_recorded" }),
+        expect.objectContaining({ code: "stale_version" }),
+        expect.objectContaining({ code: "reviewer_role_missing" }),
       ]),
     });
   });
@@ -838,6 +840,18 @@ describe("buildSourceEventShellView", () => {
     expect(view.stage.gateReadinessLine).toContain(
       "no duplicate approval is required",
     );
+    expect(view.approvals.pendingDecisionGroups).toHaveLength(1);
+    expect(view.approvals.pendingDecisionGroups[0]?.decisions[0]).toMatchObject({
+      status: "recorded",
+      versionKey: null,
+      reviewerRole: null,
+      blockers: expect.arrayContaining([
+        expect.objectContaining({ code: "approval_item_missing" }),
+        expect.objectContaining({ code: "stale_version" }),
+        expect.objectContaining({ code: "reviewer_role_missing" }),
+        expect.objectContaining({ code: "artifact_review_open" }),
+      ]),
+    });
   });
 
   it("scopes the Approvals workspace to this event only, and never renders the featured item twice", () => {
