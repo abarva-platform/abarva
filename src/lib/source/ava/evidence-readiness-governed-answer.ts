@@ -39,6 +39,28 @@ export interface BuildEvidenceReadinessGovernedAnswerInput {
   clientKey: string;
   tenantId: string | null;
   question: string;
+  stageContext?: {
+    stageLabel: string;
+    nextAction?: string | null;
+    blocker?: string | null;
+    missingInputs?: readonly string[];
+  };
+}
+
+export function looksLikeSourceStageCompletionQuestion(
+  prompt: string | undefined,
+): boolean {
+  if (!prompt) return false;
+  const q = prompt.toLowerCase();
+  const asksToCompletePhase =
+    /\b(complete|finish|close|done with|move past|advance (?:from|past)?)\b/.test(
+      q,
+    );
+  const namesWorkflowContext =
+    /\b(stage|step|phase|request|define|supplier|suppliers|nda|rfi|rfp|market package)\b/.test(
+      q,
+    );
+  return asksToCompletePhase && namesWorkflowContext;
 }
 
 export function looksLikeEvidenceReadinessQuestion(
@@ -185,12 +207,50 @@ function buildEvidenceReadinessTable(args: {
   };
 }
 
-function directAnswerForReport(report: SourceArtifactParseBacklogReport): string {
+function evidenceStatusForReport(
+  report: SourceArtifactParseBacklogReport,
+): string {
   const c = report.counts;
   if (c.totalArtifacts === 0) {
     return "No Source evidence files are registered for this event yet. Uploaded is the first proof layer; parsing, search indexing, enterprise-context promotion, and agent-ready status remain unavailable until evidence is captured.";
   }
-  return `${c.totalArtifacts} Source files are stored. ${c.parsedArtifacts} are parsed, ${c.searchReadyArtifacts} are search-ready, ${c.parserReadyArtifacts} are parser-ready, and ${countAttention(report)} need attention. I am not claiming OCR, vector indexing, enterprise-context promotion, or agent-ready status unless those states already exist in the registry.`;
+  const parsingGap = Math.max(c.totalArtifacts - c.parsedArtifacts, 0);
+  const searchGap = Math.max(c.totalArtifacts - c.searchReadyArtifacts, 0);
+  const isAre = (count: number) => (count === 1 ? "is" : "are");
+  const hasHave = (count: number) => (count === 1 ? "has" : "have");
+  const requiresRequire = (count: number) =>
+    count === 1 ? "requires" : "require";
+  const exceptionCount = countAttention(report);
+  return `${c.totalArtifacts} Source files are stored. ${c.parsedArtifacts} ${isAre(c.parsedArtifacts)} parsed, ${c.searchReadyArtifacts} ${isAre(c.searchReadyArtifacts)} search-ready, ${c.parserReadyArtifacts} ${isAre(c.parserReadyArtifacts)} parser-ready, and ${exceptionCount} ${hasHave(exceptionCount)} parser or review exceptions. ${parsingGap} still ${requiresRequire(parsingGap)} parsing and ${searchGap} still ${requiresRequire(searchGap)} search indexing. I am not claiming OCR, vector indexing, enterprise-context promotion, or agent-ready status unless those states already exist in the registry.`;
+}
+
+function directAnswerForReport(
+  report: SourceArtifactParseBacklogReport,
+  stageContext?: BuildEvidenceReadinessGovernedAnswerInput["stageContext"],
+): string {
+  const evidenceStatus = evidenceStatusForReport(report);
+  if (!stageContext) return evidenceStatus;
+
+  const missingInputs = (stageContext.missingInputs ?? [])
+    .map((input) => input.trim())
+    .filter(Boolean);
+  const hasRecordedOpenCondition = Boolean(
+    stageContext.blocker?.trim() || missingInputs.length > 0,
+  );
+  const phaseStatus = hasRecordedOpenCondition
+    ? `${stageContext.stageLabel} is not complete.`
+    : `${stageContext.stageLabel} completion is not proven by the evidence registry alone.`;
+  const nextAction = stageContext.nextAction?.trim()
+    ? ` Next action: ${stageContext.nextAction.trim()}.`
+    : "";
+  const blocker = stageContext.blocker?.trim()
+    ? ` Recorded blocker: ${stageContext.blocker.trim()}.`
+    : "";
+  const missing =
+    missingInputs.length > 0
+      ? ` Required inputs still missing: ${missingInputs.join("; ")}.`
+      : "";
+  return `${phaseStatus}${nextAction}${blocker}${missing} Evidence processing: ${evidenceStatus}`;
 }
 
 function businessImplicationForReport(
@@ -306,12 +366,15 @@ export async function buildEvidenceReadinessGovernedAnswer(
     mode: "SOURCE",
     tenantKey: governedClientKey,
     question: input.question,
-    intent: "evidence_processing_readiness",
+    intent: input.stageContext
+      ? "source_stage_completion"
+      : "evidence_processing_readiness",
     status: report.status === "empty" ? "no_data" : "answered",
     tenantFencePassed: true,
-    directAnswer: directAnswerForReport(report),
+    directAnswer: directAnswerForReport(report, input.stageContext),
     businessImplication: businessImplicationForReport(report),
-    recommendation: recommendationForReport(report),
+    recommendation:
+      input.stageContext?.nextAction?.trim() || recommendationForReport(report),
     artifacts: [
       {
         ...buildEvidenceReadinessChart({ report, citationIds }),
@@ -323,6 +386,17 @@ export async function buildEvidenceReadinessGovernedAnswer(
       },
     ],
     citations,
+    nextSteps: input.stageContext?.nextAction?.trim()
+      ? [
+          {
+            id: "source-stage-recorded-next-action",
+            label: input.stageContext.nextAction.trim(),
+            rationale:
+              "This is the next action recorded on the governed Source event.",
+            targetSurface: "source",
+          },
+        ]
+      : [],
     gaps:
       report.status === "empty"
         ? [

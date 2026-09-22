@@ -1,6 +1,7 @@
 import {
   buildEvidenceReadinessGovernedAnswer,
   looksLikeEvidenceReadinessQuestion,
+  looksLikeSourceStageCompletionQuestion,
 } from "@/lib/source/ava/evidence-readiness-governed-answer";
 import { listSourceArtifactsForSourceEventIdWithContent } from "@/lib/source/artifact-registry";
 import type { SourceArtifactRegistryRecordWithContent } from "@/lib/source/artifact-registry";
@@ -106,6 +107,24 @@ describe("looksLikeEvidenceReadinessQuestion", () => {
   });
 });
 
+describe("looksLikeSourceStageCompletionQuestion", () => {
+  it("recognizes the signed-in Source New completion-and-evidence question", () => {
+    expect(
+      looksLikeSourceStageCompletionQuestion(
+        "What do I need to complete Define, and which evidence is still missing?",
+      ),
+    ).toBe(true);
+  });
+
+  it("does not steal a pure evidence-processing question", () => {
+    expect(
+      looksLikeSourceStageCompletionQuestion(
+        "Which uploaded evidence is parsed and search-ready?",
+      ),
+    ).toBe(false);
+  });
+});
+
 describe("buildEvidenceReadinessGovernedAnswer", () => {
   beforeEach(() => {
     jest.resetAllMocks();
@@ -172,10 +191,12 @@ describe("buildEvidenceReadinessGovernedAnswer", () => {
     ]);
     expect(answer!.citations).toHaveLength(3);
     expect(answer!.directAnswer).toContain("3 Source files are stored");
-    expect(answer!.directAnswer).toContain("1 are parsed");
-    expect(answer!.directAnswer).toContain("1 are search-ready");
-    expect(answer!.directAnswer).toContain("1 are parser-ready");
-    expect(answer!.directAnswer).toContain("1 need attention");
+    expect(answer!.directAnswer).toContain("1 is parsed");
+    expect(answer!.directAnswer).toContain("1 is search-ready");
+    expect(answer!.directAnswer).toContain("1 is parser-ready");
+    expect(answer!.directAnswer).toContain(
+      "1 has parser or review exceptions",
+    );
     expect(answer!.artifacts[0]).toMatchObject({
       artifact: "chart",
       title: "Evidence processing readiness",
@@ -189,6 +210,45 @@ describe("buildEvidenceReadinessGovernedAnswer", () => {
     );
     expect(answer!.safety.tenantFencePassed).toBe(true);
     expect(answer!.safety.forbiddenLanguagePassed).toBe(true);
+  });
+
+  it("answers phase completion and evidence readiness together from recorded context", async () => {
+    mockListSourceArtifacts.mockResolvedValue([
+      artifact(),
+      artifact({
+        id: "artifact-2",
+        originalName: "Parsed Scope Workbook.xlsx",
+        parseStatus: "parsed",
+        embeddingStatus: "pending",
+      }),
+    ]);
+
+    const answer = await buildEvidenceReadinessGovernedAnswer({
+      eventId: "event-1",
+      clientKey: "meridian",
+      tenantId: "tenant-1",
+      question:
+        "What do I need to complete Define, and which evidence is still missing?",
+      stageContext: {
+        stageLabel: "Define",
+        nextAction: "Open scope and strategy",
+        blocker: "Scope owner approval is not recorded",
+        missingInputs: ["Approved scope", "Decision owner"],
+      },
+    });
+
+    expect(answer).not.toBeNull();
+    expect(answer!.directAnswer).toContain("Define is not complete");
+    expect(answer!.directAnswer).toContain("Open scope and strategy");
+    expect(answer!.directAnswer).toContain(
+      "Scope owner approval is not recorded",
+    );
+    expect(answer!.directAnswer).toContain("Approved scope");
+    expect(answer!.directAnswer).toContain("Decision owner");
+    expect(answer!.directAnswer).toContain("2 Source files are stored");
+    expect(answer!.directAnswer).toContain("0 are search-ready");
+    expect(answer!.directAnswer).toContain("1 still requires parsing");
+    expect(answer!.nextSteps[0]?.label).toContain("Open scope and strategy");
   });
 
   it("answers honestly when no registry rows exist", async () => {

@@ -45,6 +45,7 @@ import {
 import {
   buildEvidenceReadinessGovernedAnswer,
   looksLikeEvidenceReadinessQuestion,
+  looksLikeSourceStageCompletionQuestion,
 } from "@/lib/source/ava/evidence-readiness-governed-answer";
 import {
   buildValueLedgerGovernedAnswer,
@@ -569,8 +570,11 @@ export async function POST(
         });
       } else if (
         eventId &&
-        looksLikeEvidenceReadinessQuestion(normalizedBody.prompt)
+        (looksLikeSourceStageCompletionQuestion(normalizedBody.prompt) ||
+          looksLikeEvidenceReadinessQuestion(normalizedBody.prompt))
       ) {
+        const asksForStageCompletion =
+          looksLikeSourceStageCompletionQuestion(normalizedBody.prompt);
         agentAnswer = await buildEvidenceReadinessGovernedAnswer({
           eventId: liveEventDetail?.id ?? eventId,
           eventAliases: [
@@ -581,6 +585,20 @@ export async function POST(
           clientKey: activeClientKey,
           tenantId: tenancy.clientId ?? null,
           question: normalizedBody.prompt ?? "",
+          ...(asksForStageCompletion
+            ? {
+                stageContext: {
+                  stageLabel:
+                    liveEventDetail?.currentStageLabel ??
+                    liveEventDetail?.currentStageKey ??
+                    stubResponse.context.stageLabel ??
+                    "Current phase",
+                  nextAction: liveEventDetail?.nextAction,
+                  blocker: liveEventDetail?.blocker,
+                  missingInputs: stubResponse.context.missingInputs,
+                },
+              }
+            : {}),
         }).catch((err) => {
           const errorMessage =
             err instanceof Error
