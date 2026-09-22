@@ -56,3 +56,26 @@ jobs:
 
       - name: Run the register time-authority contract
         run: node scripts/exec/register-time-authority.test.mjs
+
+      # T-708. The claim-append gate wiring. T-706 shipped `--preclaim`, the
+      # ownership check an agent runs BEFORE appending a claim: correct,
+      # proven on the real register, and called by nobody. An available
+      # control and a wired one are the same shape from outside, which is the
+      # defect this whole directory exists against -- a gate that could not
+      # fail went green for ten weeks because a comment carried the name of
+      # the control someone had deleted.
+      #
+      # So the contract asserted here is deliberately NOT "the gate returns
+      # the right verdict"; T-706 proved that, and re-proving it is the
+      # substitution that lets unwired wiring look wired. It is: a claim the
+      # gate refuses is NOT APPENDED, compared by digest over a fixture
+      # register. The helper fails closed on a gate it cannot run, cannot
+      # trust, or whose exit code it does not interpret, and refuses to
+      # forward a flag the installed gate does not advertise -- an unknown
+      # flag parses to nothing, so asking an older gate for a check it does
+      # not implement would otherwise pass silently. Sixteen mutations,
+      # sixteen caught; two of them survived their first fixture and are
+      # recorded in the suite, because a case that passes through the wrong
+      # branch cannot fail for the right reason.
+      - name: Run the claim-append gate wiring contract
+        run: node scripts/exec/append-claim.test.mjs
