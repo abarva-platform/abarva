@@ -37,9 +37,8 @@ import "./workspace.css";
 
 type Phase = SourceNewPhaseKey;
 type View = "work" | "files" | "intelligence" | "approvals";
-type IntelligenceEvidenceItem = NonNullable<
-  SourceNewEventIntelligenceView
->["requiredEvidence"][number];
+type IntelligenceEvidenceItem =
+  NonNullable<SourceNewEventIntelligenceView>["requiredEvidence"][number];
 type ActivityTrailEntry = Extract<
   SourceEventActivityResult,
   { ok: true }
@@ -106,6 +105,8 @@ export interface SourceNewEventView {
    * render differently and only one of them is a blocker.
    */
   requestVersionApproval?: "accepted" | "pending" | "changes_requested" | null;
+  /** Current immutable Request authority version used to fence Stage 04 writes. */
+  requestAuthorityVersionId?: string | null;
 }
 
 const VIEWS: readonly { key: View; label: string }[] = [
@@ -173,7 +174,9 @@ function contactPolicyLabel(
   return "Not recorded";
 }
 
-function sourceReferencesLabel(row: SourceNewStage04VendorPanel["rows"][number]): string {
+function sourceReferencesLabel(
+  row: SourceNewStage04VendorPanel["rows"][number],
+): string {
   const values =
     row.sourceReferences && row.sourceReferences.length > 0
       ? row.sourceReferences
@@ -226,8 +229,7 @@ function phasesFor(
   // never disagree about which phase is behind which.
   return SOURCE_NEW_PHASE_ORDER.map((key) => ({
     key,
-    label:
-      key === "rfi" ? packageLabel : SOURCE_NEW_PHASE_DISPLAY_LABELS[key],
+    label: key === "rfi" ? packageLabel : SOURCE_NEW_PHASE_DISPLAY_LABELS[key],
   }));
 }
 
@@ -415,6 +417,7 @@ export function SourceNewWorkspace({
                   <p className="snw-note">{completedNote}</p>
                   {phase === "suppliers" && (
                     <SourceNewStage04VendorPanelView
+                      event={event}
                       panel={stage04VendorPanel}
                     />
                   )}
@@ -446,6 +449,7 @@ export function SourceNewWorkspace({
                   )}
                   {phase === "suppliers" && (
                     <SourceNewStage04VendorPanelView
+                      event={event}
                       panel={stage04VendorPanel}
                     />
                   )}
@@ -481,6 +485,7 @@ export function SourceNewWorkspace({
                   )}
                   {phase === "suppliers" && (
                     <SourceNewStage04VendorPanelView
+                      event={event}
                       panel={stage04VendorPanel}
                     />
                   )}
@@ -722,8 +727,10 @@ function SourceNewStage04VendorReadiness({
 }
 
 function SourceNewStage04VendorPanelView({
+  event,
   panel,
 }: {
+  event: SourceNewEventView;
   panel: SourceNewStage04VendorPanel;
 }) {
   const posture =
@@ -753,7 +760,8 @@ function SourceNewStage04VendorPanelView({
         ) : panel.suggestions.status === "empty" ? (
           <p>
             No governed candidate matches the accepted category and archetype.
-            Registry coverage must be added before Source can suggest a supplier.
+            Registry coverage must be added before Source can suggest a
+            supplier.
           </p>
         ) : (
           <ul className="snw-panel-rows">
@@ -769,6 +777,57 @@ function SourceNewStage04VendorPanelView({
                 {`. Contact policy: ${contactPolicyLabel(row.contactPolicy)}`}
                 {`. Contact readiness: ${row.contactReadiness.replaceAll("_", " ")}`}
                 {`. Source: ${row.sourceReference}.`}
+                {event.requestAuthorityVersionId &&
+                event.requestVersionApproval === "accepted" ? (
+                  <form
+                    className="snw-inline-form"
+                    action={`/api/v1/source/${encodeURIComponent(event.id)}/candidate-suppliers/accept`}
+                    method="post"
+                  >
+                    <input
+                      type="hidden"
+                      name="supplierId"
+                      value={row.supplierId}
+                    />
+                    <input
+                      type="hidden"
+                      name="categoryId"
+                      value={row.acceptedCategoryId}
+                    />
+                    <input
+                      type="hidden"
+                      name="archetypeId"
+                      value={row.acceptedArchetypeId}
+                    />
+                    <input
+                      type="hidden"
+                      name="eventVersionId"
+                      value={event.requestAuthorityVersionId}
+                    />
+                    <input
+                      type="hidden"
+                      name="sourceReference"
+                      value={row.sourceReference}
+                    />
+                    <label>
+                      <span>Rationale</span>
+                      <input
+                        name="rationale"
+                        minLength={12}
+                        required
+                        placeholder="Why this supplier belongs on the panel"
+                      />
+                    </label>
+                    <button className="snw-primary" type="submit">
+                      Accept candidate
+                    </button>
+                  </form>
+                ) : (
+                  <p className="snw-note">
+                    The current Request version must be readable and accepted
+                    before this supplier can be accepted.
+                  </p>
+                )}
               </li>
             ))}
           </ul>
@@ -1493,11 +1552,7 @@ function SourceNewDecisionTrail({
   );
 }
 
-function SourceNewDecisionTrailEntry({
-  entry,
-}: {
-  entry: ActivityTrailEntry;
-}) {
+function SourceNewDecisionTrailEntry({ entry }: { entry: ActivityTrailEntry }) {
   return (
     <li>
       <span className="snw-trail-actor">
