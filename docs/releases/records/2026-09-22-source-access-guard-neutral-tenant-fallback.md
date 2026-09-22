@@ -69,6 +69,9 @@ not gated by a feature flag.
 - `.github/workflows/unit-suites.yml` — runs the not-found suite. Its recorded quarantine reason
   ("source-text-only") stopped being true when the suite was rewritten to render the component,
   and the comment is corrected in place rather than deleted.
+- `src/__tests__/behaviors/source-readiness-route-suite-ci-coverage.test.ts` — the control that pins
+  that step's ownership. It failed in CI on this branch, correctly: it recorded the suite as
+  quarantined. Its record is updated to match the wiring, and a third case is added — see below.
 
 ## QA / Validation
 
@@ -88,18 +91,39 @@ The four failures are pre-existing and identical by test name on both sides (dif
 eyeballed): one control-plane hardcoded-reference purity scan and three `getActiveClientRow`
 cases. None is caused or repaired here.
 
-**Mutations: 5 constructed, 5 caught, 0 escapes.**
+**Mutations: 8 constructed, 8 caught, 0 escapes.**
 
 1. Guard calls the lenient helper again → 2 failed.
 2. Strict form returns the default instead of `null` → 3 failed.
 3. Strict form drops its `isClientKey` guard → 3 failed.
 4. Lenient wrapper loses its default fallback (i.e. the ~150 other callers change behaviour) → 1 failed.
 5. Heading fixed but the chrome still names the account → 1 failed.
+6. Workflow wiring removed again → 2 failed.
+7. Quarantine list returned to the stale `.test.ts` path it actually carried → 1 failed.
+8. Census expectation left at the old covered count → 1 failed.
+
+Mutation 7 is run against the real historical defect rather than a constructed one: the stale path
+is the one that was in the file.
+
+**A gate caught a real omission on this branch, and it is recorded rather than smoothed over.**
+The first push failed `Behavior coverage floor`: `source-readiness-route-suite-ci-coverage.test.ts`
+pins exactly which files that workflow step owns and which are quarantined, and the workflow edit
+above moved one file across that line. The local floor run had been made *before* the workflow was
+edited and was therefore stale — the control, not the local run, is what noticed. Updating the
+control's record is not weakening it: the record has to move with the wiring, and the two mutations
+above prove it still fails when the wiring and the record disagree.
+
+Updating it surfaced a second, older defect in the same control. **Both quarantine entries named
+`.test.ts` paths that did not exist** — the two suites were renamed to `.tsx` when they were
+rewritten to render — and the assertion passed anyway, because it tests `command.includes(path)`
+and `.test.tsx` contains `.test.ts` as a substring. So the quarantine half of the control was
+pinning two filenames that were not in the repository, and would have gone on passing if the real
+files had been wired. A third case now asserts every pinned path exists before the other two run.
 
 Gates: `NODE_OPTIONS=--max-old-space-size=6144 npx tsc --noEmit --pretty false` **exit 0**, judged
 by exit code and with an empty diagnostic file, not by grep. `npx eslint` over the four changed
 source files exit 0. `npm run coverage:behavior-gate` (the required `Behavior coverage floor`
-check) exit 0: 97 suites, 818 tests, all passing. The edited workflow step was run verbatim as
+check) exit 0 **re-run after the final edit**: 97 suites, 819 tests, all passing. The edited workflow step was run verbatim as
 CI will run it — 6 suites, 49 tests, all passing — and both `(maestro)` paths are quoted, so the
 route-group parentheses cannot be read as a regex capture group.
 
