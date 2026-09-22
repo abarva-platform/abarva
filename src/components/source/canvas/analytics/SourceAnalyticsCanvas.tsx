@@ -99,6 +99,10 @@ import {
 } from "@/lib/source/gate-auto-assessment";
 import { computeStageRequirementCoverage } from "@/lib/source/requirement-coverage";
 import {
+  buildGovernedStageEvidenceReadinessBrief,
+  type GovernedStageEvidenceReadinessBrief,
+} from "@/lib/source/stage-evidence-readiness-brief";
+import {
   resolveSimpleStageScreen,
   type SimpleStageScreenView,
 } from "@/lib/source/simple-front";
@@ -1344,7 +1348,13 @@ function SourceWorkspace({
     );
   }
   if (workspace === "intelligence") {
-    return <IntelligenceWorkspace view={view} stageView={stageView} />;
+    return (
+      <IntelligenceWorkspace
+        view={view}
+        stageView={stageView}
+        evidenceStates={evidenceStates ?? []}
+      />
+    );
   }
   if (workspace === "approvals")
     return (
@@ -6658,10 +6668,20 @@ function groupLifecycleRows(rows: SourceArtifactLifecycleRow[]) {
 function IntelligenceWorkspace({
   view,
   stageView,
+  evidenceStates,
 }: {
   view: SourceEventShellView;
   stageView: StageAnalyticsView;
+  evidenceStates: readonly SourceEventEvidence[];
 }) {
+  const evidenceReadiness = buildGovernedStageEvidenceReadinessBrief(
+    buildStageEvidenceRequirementRows(view, evidenceStates).map((row) => ({
+      label: row.requirement.label,
+      required: row.requirement.level === "required",
+      ready: row.ready,
+    })),
+  );
+
   return (
     <section data-testid="source-shell-v2-intelligence">
       <WorkspaceTitle
@@ -6678,7 +6698,10 @@ function IntelligenceWorkspace({
         }}
       >
         <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-          <IntelligenceReadinessBrief view={view} />
+          <IntelligenceReadinessBrief
+            view={view}
+            evidenceReadiness={evidenceReadiness}
+          />
           {view.intelligence.stepInsight ? (
             <StepInsightPanel insight={view.intelligence.stepInsight} />
           ) : null}
@@ -6693,11 +6716,25 @@ function IntelligenceWorkspace({
   );
 }
 
-function IntelligenceReadinessBrief({ view }: { view: SourceEventShellView }) {
+function IntelligenceReadinessBrief({
+  view,
+  evidenceReadiness,
+}: {
+  view: SourceEventShellView;
+  evidenceReadiness: GovernedStageEvidenceReadinessBrief | null;
+}) {
   const currentStageFiles =
     view.files.byStage.find((stage) => stage.stageKey === view.stage.key)
       ?.items ?? [];
-  const missing = intelligenceMissingLine(view);
+  const workflowOpen = view.stage.ready < view.stage.total;
+  const governedEvidenceOpen = Boolean(
+    evidenceReadiness && evidenceReadiness.missingLabels.length > 0,
+  );
+  const missing = governedEvidenceOpen
+    ? workflowOpen
+      ? `${intelligenceMissingLine(view)}. ${evidenceReadiness!.missingLine}`
+      : evidenceReadiness!.missingLine
+    : intelligenceMissingLine(view);
   const produced = view.intelligence.stepInsight
     ? "Stage insight produced"
     : `${view.intelligence.findings.length} finding${view.intelligence.findings.length === 1 ? "" : "s"} produced`;
@@ -6708,7 +6745,9 @@ function IntelligenceReadinessBrief({ view }: { view: SourceEventShellView }) {
           .map((file) => file.name)
           .join(", ")
       : intelligenceBasisLabel(view.intelligence.sourceBasis);
-  const nextAction = view.stage.approvalRecorded
+  const nextAction = governedEvidenceOpen && !workflowOpen
+    ? evidenceReadiness!.nextAction
+    : view.stage.approvalRecorded
     ? view.stage.artifactReadiness.blockerCount > 0
       ? "Remediate current artifact gaps; approval remains recorded."
       : "No further approval required."
