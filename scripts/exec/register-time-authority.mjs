@@ -277,6 +277,117 @@ export function summariseDrift(drift) {
 }
 
 /**
+ * The grace period before an unwritten merge counts as skipped rather than in
+ * flight. A deploy takes roughly ten to sixteen minutes on this repo, and an
+ * outcome line cannot honestly name a digest before its run has produced one,
+ * so a merge from four minutes ago is not a gap.
+ */
+export const CLOSEOUT_GRACE_SECONDS = 900;
+
+/**
+ * Closeout coverage (item T-474) — the complement of `auditLines`.
+ *
+ * `auditLines` judges the content of lines that exist. The failure four
+ * consecutive pulses filed is lines that do not exist: a merge nobody writes
+ * down is invisible to a content audit, so the audit stayed green straight
+ * through it. T-581, T-584 and T-586 each reconciled a batch by hand and each
+ * was re-filed verbatim within the hour, because reconciling is not a step
+ * anything runs. This is.
+ *
+ * A pull request counts as closed out when some register line announces THAT
+ * pull request by number as merged — the `prAnnounced` attribution already
+ * used above, which reads the merge token nearest the reference rather than
+ * any token on the line. Two things that look like a record are therefore not
+ * one, and both were measured on the real register:
+ *
+ *   - a claim line naming the commit it BRANCHED FROM contains that merge SHA
+ *     and reports no outcome at all. Every pulse that filed this shape
+ *     measured it by grepping for the SHA, which scores those lines present;
+ *     on 2026-09-22 four merges were mentioned only that way.
+ *   - a line announcing the pull request as OPENED, NOT MERGED is the line
+ *     written before the event this is looking for.
+ *
+ * Severity, deliberately unlike the codes above: attribution is a heuristic,
+ * and the codes that depend on it are advisory there because over-triggering
+ * would raise false violations. Here the same heuristic fails the other way
+ * round — a false attribution CREDITS a pull request and makes the gate pass,
+ * while a missed one costs an agent a re-read and an appended line, which is
+ * the behaviour wanted anyway. So `closeout_missing` is exact enough to fail a
+ * run, and it is in HARD_CODES.
+ *
+ * @param {ReturnType<typeof parseRegisterLines>} lines
+ * @param {{ merged:Record<string,{mergedAt?:string,sha?:string}>|null, nowMs:number, graceSeconds?:number }} opts
+ */
+export function auditCloseout(lines, { merged, nowMs, graceSeconds = CLOSEOUT_GRACE_SECONDS }) {
+  const violations = [];
+  const closeout = [];
+  const prs = Object.keys(merged ?? {})
+    .map(Number)
+    .filter((n) => Number.isFinite(n))
+    .sort((a, b) => a - b);
+
+  // The exemption branch, and the one that decides whether this is a gate at
+  // all. An empty authority is what a broken lookup, an expired credential or
+  // a window with no overlap all return, and the obvious implementation reads
+  // every one of them as a closed-out day. It fails closed instead.
+  if (prs.length === 0) {
+    violations.push({
+      code: "closeout_authority_empty",
+      stamp: new Date(nowMs).toISOString(),
+      agent: "unknown",
+      lineNumber: null,
+      detail:
+        "resolved no merged pull requests to check, so nothing was verified; " +
+        "an empty authority is a failed lookup or a wrong window, not a clean register",
+    });
+    return { violations, closeout };
+  }
+
+  /** First line that announces each pull request as merged. */
+  const announced = new Map();
+  for (const line of lines) {
+    for (const pr of line.prAnnounced) {
+      if (!announced.has(pr)) announced.set(pr, line);
+    }
+  }
+
+  for (const pr of prs) {
+    const entry = merged[String(pr)] ?? {};
+    const mergedMs = Date.parse(entry.mergedAt ?? "");
+    const line = announced.get(pr) ?? null;
+    const recorded = line !== null;
+    const ageSeconds = Number.isFinite(mergedMs) ? Math.round((nowMs - mergedMs) / 1000) : null;
+    // An unparseable mergedAt is not evidence of youth: no age means no grace.
+    const pending = !recorded && ageSeconds !== null && ageSeconds < graceSeconds;
+    closeout.push({
+      pr,
+      mergedAt: entry.mergedAt ?? null,
+      sha: entry.sha ?? null,
+      recorded,
+      recordedLine: line?.lineNumber ?? null,
+      recordedStamp: line?.stamp ?? null,
+      ageSeconds,
+      pending,
+    });
+    if (recorded || pending) continue;
+    violations.push({
+      code: "closeout_missing",
+      stamp: entry.mergedAt ?? "unknown",
+      agent: "unwritten",
+      pr,
+      lineNumber: null,
+      detail:
+        `PR #${pr} merged ${entry.mergedAt ?? "at an unknown instant"}` +
+        `${entry.sha ? ` as \`${entry.sha}\`` : ""}` +
+        `${ageSeconds === null ? "" : ` (${ageSeconds}s ago, past the ${graceSeconds}s grace)`}` +
+        " and no register line announces it — the merge happened, the record did not",
+    });
+  }
+
+  return { violations, closeout };
+}
+
+/**
  * The stated tolerance. A line is written after the event it reports, so a
  * small positive drift is the writing delay and is expected; anything beyond
  * this, in either direction, is the lane's clock rather than its typing speed.
@@ -296,7 +407,14 @@ export const TOLERANCE_SECONDS = 300;
  * is passed. A heuristic presented as a hard gate is how a control stops being
  * believed, and then stops being read.
  */
-export const HARD_CODES = new Set(["future_stamp", "unsourced_elapsed"]);
+export const HARD_CODES = new Set([
+  "future_stamp",
+  "unsourced_elapsed",
+  // See auditCloseout: this heuristic errs towards passing, not towards
+  // noise, so it is exact enough to fail a run.
+  "closeout_missing",
+  "closeout_authority_empty",
+]);
 
 // ---------------------------------------------------------------------------
 // Authority resolution.
@@ -321,6 +439,30 @@ function githubMergedAt(prNumbers, repo) {
     }
   }
   return authority;
+}
+
+/**
+ * The merged pull requests in a window, from GitHub — the only thing that
+ * knows a merge happened. Deliberately NOT derived from the register: an
+ * authority read out of the artifact it is auditing cannot report an omission,
+ * which is the shape T-460 and T-467 were filed against.
+ */
+function githubMergedInWindow(repo, sinceMs, nowMs, limit = 60) {
+  const raw = execFileSync(
+    "gh",
+    [
+      "pr", "list", "--repo", repo, "--state", "merged",
+      "--limit", String(limit), "--json", "number,mergedAt,mergeCommit",
+    ],
+    { encoding: "utf8", env: { ...process.env, GH_TOKEN: "" }, stdio: ["ignore", "pipe", "pipe"] },
+  );
+  const merged = {};
+  for (const row of JSON.parse(raw)) {
+    const ms = Date.parse(row.mergedAt ?? "");
+    if (!Number.isFinite(ms) || ms < sinceMs || ms > nowMs) continue;
+    merged[String(row.number)] = { mergedAt: row.mergedAt, sha: row.mergeCommit?.oid ?? null };
+  }
+  return merged;
 }
 
 // ---------------------------------------------------------------------------
@@ -395,6 +537,31 @@ if (isMain()) {
   }
 
   const report = auditLines(lines, { nowMs, sinceMs, authority });
+
+  // Closeout coverage. Off unless asked for, because it needs an authority
+  // that says which merges happened and the content audit does not.
+  if (has("--closeout")) {
+    const mergedFile = flag("--merged");
+    let merged = null;
+    if (mergedFile) {
+      merged = JSON.parse(fs.readFileSync(mergedFile, "utf8"));
+    } else {
+      try {
+        merged = githubMergedInWindow(repo, sinceMs, nowMs);
+      } catch (error) {
+        // Left null on purpose: auditCloseout reports the empty authority as a
+        // violation rather than letting a failed lookup read as a clean run.
+        merged = null;
+        report.closeoutLookupError = String(error?.message ?? error).split("\n")[0];
+      }
+    }
+    const graceSeconds = Number(flag("--grace") ?? CLOSEOUT_GRACE_SECONDS);
+    const result = auditCloseout(lines, { merged, nowMs, graceSeconds });
+    report.violations.push(...result.violations);
+    report.closeout = result.closeout;
+    report.closeoutGraceSeconds = graceSeconds;
+  }
+
   const strict = has("--strict");
   report.strict = strict;
   report.failing = report.violations.filter((v) => strict || HARD_CODES.has(v.code));
@@ -421,6 +588,23 @@ if (isMain()) {
           `    PR #${d2.pr} ${d2.agent}: line ${d2.stamp} vs mergedAt ${d2.mergedAt} = ` +
             `${d2.driftSeconds >= 0 ? "+" : ""}${d2.driftSeconds}s${d2.citesAuthority ? " (quotes the instant)" : ""}`,
         );
+      }
+    }
+    if (report.closeout) {
+      const missing = report.closeout.filter((c) => !c.recorded && !c.pending);
+      const pending = report.closeout.filter((c) => c.pending);
+      console.log(
+        `  closeout:          ${report.closeout.length} merged in window, ` +
+          `${report.closeout.filter((c) => c.recorded).length} recorded, ` +
+          `${missing.length} missing, ${pending.length} inside the ${report.closeoutGraceSeconds}s grace`,
+      );
+      for (const c of report.closeout) {
+        const state = c.recorded
+          ? `recorded on line ${c.recordedLine} (${c.recordedStamp})`
+          : c.pending
+            ? "pending — inside grace"
+            : "MISSING";
+        console.log(`    PR #${c.pr} ${c.sha ?? "<sha>"} merged ${c.mergedAt}: ${state}`);
       }
     }
     console.log(
