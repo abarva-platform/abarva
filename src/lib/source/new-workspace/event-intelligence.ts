@@ -12,6 +12,7 @@ import { resolveArchetypeForEvent } from "@/lib/source/archetypes/event-archetyp
 import { resolveSourceStageRequirements } from "@/lib/source/archetypes/resolver";
 import { industryIntelligenceForArchetype } from "@/lib/source/industry-intelligence/archetype-registry";
 import type { ConfidenceLevel } from "@/lib/governance/context-corpus-policy";
+import { matchEvidenceRequirementForUpload } from "@/lib/source/canvas-substrate/upload-sync";
 
 export interface SourceNewEventIntelligenceEvent {
   id: string;
@@ -25,6 +26,7 @@ export interface SourceNewEventIntelligenceEvent {
 export interface SourceNewEventIntelligenceArtifact {
   id: string;
   title: string;
+  fileName?: string | null;
   artifactType: string;
   artifactFamily: string | null;
   lifecycleState: string;
@@ -174,15 +176,41 @@ function artifactFamilies(
   );
 }
 
+const ARCHETYPE_FAMILY_BY_REQUIREMENT_ID: Readonly<Record<string, string>> = {
+  "EVID-SRC-SCOPE-APP-INV": "application_inventory",
+  "EVID-SRC-SCOPE-TICKET-HISTORY": "ticket_volumes",
+  "EVID-SRC-SCOPE-SLA-BASELINE": "sla_baseline",
+  "EVID-SRC-SCOPE-WORKFORCE": "staffing_baseline",
+};
+
 function loadedArtifactFamilies(
+  stage: string,
   artifacts: readonly SourceNewEventIntelligenceArtifact[],
 ): Set<string> {
-  return artifactFamilies(
-    artifacts.filter(
-      (artifact) =>
-        artifact.lifecycleState === "current" && Boolean(artifact.sourceBasis),
-    ),
+  const loadedArtifacts = artifacts.filter(
+    (artifact) =>
+      artifact.lifecycleState === "current" && Boolean(artifact.sourceBasis),
   );
+  const families = artifactFamilies(loadedArtifacts);
+
+  for (const artifact of loadedArtifacts) {
+    for (const candidateName of [artifact.fileName, artifact.title]) {
+      if (!candidateName) continue;
+      const requirement = matchEvidenceRequirementForUpload({
+        stageKey: stage,
+        filename: candidateName,
+      });
+      const archetypeFamily = requirement
+        ? ARCHETYPE_FAMILY_BY_REQUIREMENT_ID[requirement.requirementId]
+        : null;
+      if (archetypeFamily) {
+        families.add(archetypeFamily);
+        break;
+      }
+    }
+  }
+
+  return families;
 }
 
 function stageLabel(stage: string): string {
@@ -244,7 +272,7 @@ export function buildSourceNewEventIntelligence(input: {
   const familySet = artifactFamilies(
     input.artifacts.filter((artifact) => usableIds.has(artifact.id)),
   );
-  const loadedFamilySet = loadedArtifactFamilies(input.artifacts);
+  const loadedFamilySet = loadedArtifactFamilies(stage, input.artifacts);
   const gaps = new Set<string>();
   const refusals = new Set<string>();
 

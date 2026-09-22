@@ -4,6 +4,55 @@ import { CANONICAL_TENANT_KEYS } from "@/config/tenants/CANONICAL_TENANTS";
 const TEST_TENANT_KEY = CANONICAL_TENANT_KEYS[0]!;
 
 describe("buildSourceNewEventIntelligence", () => {
+  it("recognizes a current loaded scope artifact through the canonical filename contract", () => {
+    const view = buildSourceNewEventIntelligence({
+      event: {
+        id: "event-live-shaped",
+        clientId: "client-example",
+        clientKey: TEST_TENANT_KEY,
+        eventType: "managed_service",
+        category: null,
+        currentStage: "scope",
+      },
+      artifacts: [
+        {
+          id: "artifact-app-inventory",
+          title: "Application Inventory & Tiering",
+          fileName: "Application_Inventory-example.md",
+          artifactType: "d04_app_inv",
+          artifactFamily: "minimum_data_request",
+          lifecycleState: "current",
+          sourceBasis: "source_event_artifact_states:artifact-app-inventory",
+          confidence: null,
+          citationReady: false,
+          evidenceFamiliesUsed: ["minimum_data_request"],
+          sourceRegisterId: null,
+          contextBundleTraceId: null,
+          missingInputs: [],
+          generatedAt: "2026-09-01T00:00:00Z",
+        },
+      ],
+    });
+
+    expect(view.requiredEvidence).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          key: "application_inventory",
+          state: "gap",
+        }),
+      ]),
+    );
+    expect(view.governedContext.available).toEqual([]);
+    expect(view.nextQuestion).toBe(
+      "CMDB export / application portfolio is already loaded but not ready. Which governance review or promotion step should clear it?",
+    );
+    expect(view.nextAction).toEqual({
+      label: "Review loaded evidence",
+      detail:
+        "Complete governance review or promotion for Application & system inventory before relying on this intelligence.",
+    });
+  });
+
   it("uses the registered archetype, industry metrics, and governed bundle instead of raw context", () => {
     const view = buildSourceNewEventIntelligence({
       event: {
