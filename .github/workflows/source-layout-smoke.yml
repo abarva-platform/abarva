@@ -48,8 +48,15 @@ jobs:
       - name: Run Source stage shell layout harness
         run: npm run qa:source-stage-shell-layout
 
-      - name: Run Source New Event journey smoke
-        run: npm run qa:source-new-event-journey-smoke
+      # T-595. This step ran `qa:source-new-event-journey-smoke`, whose body is
+      # `npx jest src/components/source/canvas/analytics/__tests__/SourceAnalyticsCanvas.newEventJourneySmoke.test.tsx --runInBand`.
+      # The required `AI surface control catalog` job already sweeps that whole
+      # directory with the same `--runInBand`, and this job is not a required
+      # check, so the named line here was the quotable one while the line that
+      # gates had no name. Unlike the other two steps in this job it needs no
+      # browser, so it has no reason to run beside them: the required sweep is
+      # the only run, and the npm script stays for local use. See
+      # docs/ci/README-suite-wiring.md.
 
       - name: Upload Source layout reports
         if: always()

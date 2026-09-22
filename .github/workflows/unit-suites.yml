@@ -965,16 +965,21 @@ jobs:
           src/lib/source/stage-guidebooks/__tests__/repository.test.ts
           --no-coverage --ci
 
-      - name: Refuse a new dark tree under src/__tests__
-        run: npx jest --runTestsByPath src/__tests__/behaviors/unit-directory-ci-coverage.test.ts --no-coverage --ci
+      # T-595. `unit-directory-ci-coverage.test.ts` used to be named here. It
+      # lives in `src/__tests__/behaviors`, which the required `Behavior
+      # coverage floor` job sweeps whole, and this job is not a required check.
+      # A named step in a job that cannot block a merge is the line a closure
+      # note quotes, while the line that actually gates has no name — so the
+      # step moved into the floor rather than being deleted. The rule is in
+      # docs/ci/README-suite-wiring.md and `npm run audit:named-suite-requiredness`
+      # enforces it.
 
-      # T-590. The route-reachability audit answers "can a route reach this
-      # FILE", and two Source surfaces went dead inside files every Source
-      # route reaches. This proves the export grain still reports a real
-      # exported component with no product importer — a fixture cannot
-      # establish that, because a fixture is written to satisfy the check.
-      - name: Prove export-level route reachability still flags a real orphan
-        run: npx jest --runTestsByPath src/__tests__/behaviors/route-export-reachability.test.ts --no-coverage --ci
+      # T-590, moved by T-595. `route-export-reachability.test.ts` used to be
+      # named here for a good reason — a named step makes a control's execution
+      # self-evident in the log instead of inferable from a job's exit code.
+      # The reason survives; the location did not. It now sits in the required
+      # `Behavior coverage floor` job, where the name and the gate are the same
+      # run. See docs/ci/README-suite-wiring.md.
 
       # T-469. The per-client test-time data-plane boundary. Two clients, two
       # opposite failure modes, both invisible from the test file: the static-pg

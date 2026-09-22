@@ -44,6 +44,34 @@ jobs:
       - name: Check enum comparisons against their CHECK constraints
         run: npm run audit:enum-reachability
 
+      # T-595. The three steps below were named in `unit-suites.yml` and
+      # `integration-suites.yml`, neither of which is a required status check,
+      # while the behavior gate above ran all three anonymously inside its
+      # directory sweep. Nothing was unprotected — the floor blocked a merge on
+      # every one of them — but the line anyone could quote belonged to a run
+      # that cannot block, and the blocking run had no line to quote. The
+      # repository's rule is now that a step may name a suite individually only
+      # inside a required job, so the names live here, where the name and the
+      # gate are the same run. Each costs about a second; the sweep above runs
+      # them a second time and that is the deliberate part, not the accident.
+      - name: Refuse a new dark tree under src/__tests__
+        run: npx jest --runTestsByPath src/__tests__/behaviors/unit-directory-ci-coverage.test.ts --no-coverage --ci
+
+      - name: Refuse a new integration directory that no workflow reaches
+        run: npx jest --runTestsByPath src/__tests__/behaviors/integration-directory-ci-coverage.test.ts --no-coverage --ci
+
+      # T-590's reason, kept: the route-reachability audit answers "can a route
+      # reach this FILE", and two Source surfaces went dead inside files every
+      # Source route reaches. A named step proves the export grain still flags a
+      # real orphan instead of leaving it inferable from a job's exit code.
+      - name: Prove export-level route reachability still flags a real orphan
+        run: npx jest --runTestsByPath src/__tests__/behaviors/route-export-reachability.test.ts --no-coverage --ci
+
+      # T-595's own control. It must run in a required job for the same reason
+      # the three steps above moved here.
+      - name: Check a named suite step sits in a job that can block a merge
+        run: npm run audit:named-suite-requiredness
+
       - name: Upload coverage summary
         if: always()
         uses: actions/upload-artifact@v7
