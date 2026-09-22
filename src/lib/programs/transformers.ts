@@ -50,31 +50,12 @@ import {
 import { evaluateGate, gateCriteriaForPhase } from "./governance";
 import { PHASE_LABELS } from "./types.db";
 import { getPhaseLabel } from "./phase-labels";
-import { canonicalClientDisplayName } from "@/lib/client-config";
+import { canonicalProgramClientName } from "./client-name";
 
 type TransformerOptions = {
   supabase?: unknown;
   evaluateGateCriteria?: boolean;
 };
-
-// ── Client name mapping ────────────────────────────────────────────────
-// Delegate to the canonical resolver (src/lib/client-config.ts), which knows
-// every tenant (Meridian, First Capital, Apex, Lakeshore, SkyHarbor Air,
-// Northstar Clinical, …). NEVER default to a specific tenant: an unresolved
-// client falls back to its own raw name, then a neutral dash. Previously this
-// hardcoded "Apex Retail Group" as the catch-all default, so any tenant not in
-// a stale closed list (SkyHarbor, Northstar) rendered as "Apex Retail Group" —
-// a cross-tenant name leak on every Move card/detail.
-function canonicalProgramClientName(args: {
-  clientId?: string | null;
-  name?: string | null;
-}): ProgramSummary["clientName"] {
-  return (
-    canonicalClientDisplayName({ key: args.clientId, name: args.name }) ??
-    args.name?.trim() ??
-    "—"
-  );
-}
 
 function displayText(value: unknown, fallback = "—"): string {
   if (typeof value === "string" && value.trim()) return value;
