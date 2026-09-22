@@ -21,6 +21,59 @@ jest.mock("@/lib/auth/source-access-policy", () => ({
   })),
 }));
 
+jest.mock("@/lib/auth/current-user", () => ({
+  getCurrentUser: jest.fn(async () => ({
+    personId: "person-1",
+    clerkUserId: "clerk-1",
+    name: "Procurement Lead",
+  })),
+}));
+
+const importedRequest = {
+  requestId: "servicenow:sn_sourcing_request:request-1",
+  requestNumber: "REQ0010007",
+  sourceSystem: "ServiceNow" as const,
+  sourceStatus: "New",
+  sourceVersion: "v1",
+  extractedAt: "2026-09-22T12:00:00Z",
+  updatedAt: null,
+  title: "Member services contact center replacement",
+  description: "Replace the member contact center platform.",
+  trigger: "Current agreement expires in nine months.",
+  requestedOutcome: "Select a platform and managed operations partner.",
+  requestedFor: "Health Plan",
+  businessDomain: "plan",
+  businessFunction: "Member Services",
+  decisionOwner: "VP Member Services",
+  baselineOwner: "Contact center operations",
+  scopeIncluded: "Member calls, chat, and workforce management.",
+  scopeExcluded: "Clinical triage.",
+  securityReviewNeeded: true,
+  legalReviewNeeded: true,
+  value: { amount: 12500000, currency: "USD", validated: false as const },
+  requiredFactGaps: [] as string[],
+  mappingProposal: {
+    categoryId: "bpo_contact_centre",
+    archetypeId: "CONTACT_CENTER_CX",
+    confidence: "high",
+    reasons: ["Matched contact-center scope"],
+  },
+  mappingDecision: null,
+  eventLink: null,
+};
+
+jest.mock("@/lib/source/intake/servicenow-sourcing-request-repository", () => ({
+  readSourceIntakeRequestQueue: jest.fn(async () => ({
+    registryAvailable: true,
+    requests: [importedRequest],
+  })),
+}));
+
+jest.mock("@/lib/source/intake/servicenow-request-event-authority", () => ({
+  recordServiceNowRequestMappingDecision: jest.fn(async () => undefined),
+  linkServiceNowRequestToEvent: jest.fn(async () => undefined),
+}));
+
 jest.mock("@/lib/source/queries", () => ({
   createSourcingEvent: jest.fn(async () => ({
     id: "evt-123",
@@ -37,6 +90,10 @@ jest.mock("@/lib/data-plane/write-adapters/sourceWriteAdapter", () => ({
 
 import { POST } from "../route";
 import { createSourcingEvent } from "@/lib/source/queries";
+import {
+  linkServiceNowRequestToEvent,
+  recordServiceNowRequestMappingDecision,
+} from "@/lib/source/intake/servicenow-request-event-authority";
 
 describe("POST /api/v1/source/events", () => {
   beforeEach(() => {
@@ -66,5 +123,64 @@ describe("POST /api/v1/source/events", () => {
         sourcingMotion: "competitive_rfp",
       }),
     );
+  });
+
+  it("creates and links an event from server-read request facts after named mapping review", async () => {
+    const res = await POST(
+      new Request("http://localhost/api/v1/source/events", {
+        method: "POST",
+        body: JSON.stringify({
+          sourceRequest: {
+            requestId: importedRequest.requestId,
+            sourceVersion: "v1",
+            decisionState: "accepted",
+            rationale: "Scope and buying motion confirmed.",
+          },
+        }),
+      }),
+    );
+
+    expect(res.status).toBe(200);
+    expect(recordServiceNowRequestMappingDecision).toHaveBeenCalledWith(
+      expect.objectContaining({
+        tenantKey: "skyharbor-air",
+        requestId: importedRequest.requestId,
+      }),
+    );
+    expect(createSourcingEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        clientKey: "skyharbor-air",
+        eventName: importedRequest.title,
+        categoryId: "bpo_contact_centre",
+        creationRequestId: importedRequest.requestId,
+      }),
+    );
+    expect(linkServiceNowRequestToEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        requestId: importedRequest.requestId,
+        sourceVersion: "v1",
+        sourceEventId: "evt-123",
+        linkedByName: "Procurement Lead",
+      }),
+    );
+  });
+
+  it("refuses a stale request version before creating an event", async () => {
+    const res = await POST(
+      new Request("http://localhost/api/v1/source/events", {
+        method: "POST",
+        body: JSON.stringify({
+          sourceRequest: {
+            requestId: importedRequest.requestId,
+            sourceVersion: "stale-version",
+            decisionState: "accepted",
+            rationale: "Scope and buying motion confirmed.",
+          },
+        }),
+      }),
+    );
+
+    expect(res.status).toBe(409);
+    expect(createSourcingEvent).not.toHaveBeenCalled();
   });
 });

@@ -151,6 +151,53 @@ describe("Source new-event route optimization redirect", () => {
     expect(listSourcingEvents).not.toHaveBeenCalled();
   });
 
+  it("opens a selected imported request on the governed review surface", async () => {
+    const selectedRequest = {
+      requestId: "servicenow:sn_sourcing_request:request-1",
+      requestNumber: "SRC0010042",
+      sourceSystem: "ServiceNow" as const,
+      sourceStatus: "approved_for_triage",
+      sourceVersion: "v3",
+      extractedAt: "2026-09-22T12:00:00Z",
+      updatedAt: null,
+      title: "Cloud sourcing request",
+      description: "A recorded business need.",
+      requestedFor: "Enterprise Technology",
+      businessDomain: "enterprise",
+      businessFunction: "Cloud operations",
+      value: null,
+      requiredFactGaps: [],
+      mappingProposal: {
+        categoryId: "cloud_finops",
+        archetypeId: "CLOUD_FINOPS",
+        confidence: "high",
+        reasons: ["Matched cloud consumption scope"],
+      },
+      mappingDecision: null,
+      eventLink: null,
+    };
+    jest.mocked(readSourceIntakeRequestQueue).mockResolvedValue({
+      registryAvailable: true,
+      requests: [selectedRequest],
+    });
+
+    const result = await Page({
+      searchParams: Promise.resolve({
+        mode: "intake",
+        requestId: selectedRequest.requestId,
+      }),
+    });
+
+    expect(isValidElement(result)).toBe(true);
+    expect(isValidElement(result) ? result.type : null).toBe(SourceOriginatePage);
+    expect(
+      isValidElement<{ sourceRequest: unknown }>(result)
+        ? result.props.sourceRequest
+        : null,
+    ).toEqual(selectedRequest);
+    expect(listSourcingEvents).not.toHaveBeenCalled();
+  });
+
   it("keeps intent-shaped intake routes on the existing intake surface", async () => {
     const result = await Page({
       searchParams: Promise.resolve({ intent: "renewal" }),

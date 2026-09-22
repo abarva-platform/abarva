@@ -25,6 +25,7 @@ export default async function Page({
     contractId?: string;
     opportunityId?: string;
     mode?: string;
+    requestId?: string;
   }>;
 }) {
   const tenant = await resolveTenant().catch(() => null);
@@ -54,11 +55,23 @@ export default async function Page({
     );
   }
 
+  const sourceRequest = params.requestId
+    ? await readSourceIntakeRequestQueue(clientKey ?? "").then((read) =>
+        read.registryAvailable
+          ? read.requests.find((request) => request.requestId === params.requestId) ?? null
+          : null,
+      )
+    : null;
+  if (params.requestId && !sourceRequest) {
+    redirect("/source/new");
+  }
+
   return (
     <SourceOriginatePage
       clientName={activeClientDisplayName}
       clientShortName={clientOption.shortName}
       clientKey={clientOption.id}
+      sourceRequest={sourceRequest}
     />
   );
 }

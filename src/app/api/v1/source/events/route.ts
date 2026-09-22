@@ -7,6 +7,7 @@
 import { requireTenancy, tenancyErrorResponse } from '@/lib/auth/tenancy';
 import { getActiveClientRow } from '@/lib/active-client';
 import { loadUserSourceAccessPolicy } from '@/lib/auth/source-access-policy';
+import { getCurrentUser } from '@/lib/auth/current-user';
 import { createSourcingEvent } from '@/lib/source/queries';
 import { buildSourceScopeDescription } from '@/lib/source/intake-summary';
 import { selectSourceWriteAdapter } from '@/lib/data-plane/write-adapters/sourceWriteAdapter';
@@ -15,6 +16,12 @@ import {
   SOURCE_CATEGORY_IDS,
   type SourceCategoryId,
 } from '@/lib/source/taxonomy/category-taxonomy';
+import { readSourceIntakeRequestQueue } from '@/lib/source/intake/servicenow-sourcing-request-repository';
+import { buildServiceNowRequestEventHandoff } from '@/lib/source/intake/servicenow-request-event-handoff';
+import {
+  linkServiceNowRequestToEvent,
+  recordServiceNowRequestMappingDecision,
+} from '@/lib/source/intake/servicenow-request-event-authority';
 
 interface CreateSourceEventBody {
   eventName?: string;
@@ -30,6 +37,13 @@ interface CreateSourceEventBody {
   creationRequestId?: string;
   linkedProgramId?: string;
   estimatedValueUsd?: number;
+  sourceRequest?: {
+    requestId?: string;
+    sourceVersion?: string;
+    decisionState?: 'accepted' | 'overridden';
+    categoryId?: string;
+    rationale?: string;
+  };
 }
 
 function parseSourcingMotion(value: unknown): SourceSourcingMotion | undefined {
@@ -105,9 +119,10 @@ export async function POST(request: Request) {
     return Response.json({ error: 'invalid_json' }, { status: 400 });
   }
 
+  const sourceRequestInput = body.sourceRequest;
   const eventName = parseOptionalString(body.eventName);
   const triggerDescription = parseOptionalString(body.triggerDescription);
-  if (!eventName || !triggerDescription) {
+  if (!sourceRequestInput && (!eventName || !triggerDescription)) {
     return Response.json({
       error: 'missing_required_fields',
       detail: 'eventName and triggerDescription are required.',
@@ -115,6 +130,80 @@ export async function POST(request: Request) {
   }
 
   try {
+    let sourceHandoff: ReturnType<typeof buildServiceNowRequestEventHandoff> | null = null;
+    if (sourceRequestInput) {
+      const requestId = parseOptionalString(sourceRequestInput.requestId);
+      const sourceVersion = parseOptionalString(sourceRequestInput.sourceVersion);
+      const rationale = parseOptionalString(sourceRequestInput.rationale);
+      if (!requestId || !sourceVersion || !rationale) {
+        return Response.json({
+          error: 'invalid_source_request_review',
+          detail: 'requestId, sourceVersion, and rationale are required.',
+        }, { status: 400 });
+      }
+      const queue = await readSourceIntakeRequestQueue(activeClient.key);
+      if (!queue.registryAvailable) {
+        return Response.json({
+          error: 'source_request_registry_unavailable',
+          detail: 'The request authority could not be read. No event was created.',
+        }, { status: 503 });
+      }
+      const importedRequest = queue.requests.find(
+        (candidate) => candidate.requestId === requestId,
+      );
+      if (!importedRequest) {
+        return Response.json({ error: 'source_request_not_found' }, { status: 404 });
+      }
+      if (importedRequest.sourceVersion !== sourceVersion) {
+        return Response.json({
+          error: 'source_request_version_changed',
+          detail: 'The imported request changed. Review the latest version before creating an event.',
+        }, { status: 409 });
+      }
+      const user = await getCurrentUser();
+      if (!user?.personId) {
+        return Response.json({
+          error: 'reviewer_identity_required',
+          detail: 'A named canonical person is required to review request routing.',
+        }, { status: 409 });
+      }
+      const decision = sourceRequestInput.decisionState === 'overridden'
+        ? {
+            state: 'overridden' as const,
+            categoryId: parseCategoryId(sourceRequestInput.categoryId),
+            rationale,
+          }
+        : sourceRequestInput.decisionState === 'accepted'
+          ? { state: 'accepted' as const, rationale }
+          : null;
+      if (!decision || (decision.state === 'overridden' && !decision.categoryId)) {
+        return Response.json({
+          error: 'invalid_mapping_decision',
+          detail: 'Accept the proposal or choose a supported override category.',
+        }, { status: 400 });
+      }
+      try {
+        sourceHandoff = buildServiceNowRequestEventHandoff({
+          request: importedRequest,
+          decision: decision.state === 'overridden'
+            ? { ...decision, categoryId: decision.categoryId! }
+            : decision,
+          reviewer: { userId: user.personId, name: user.name },
+          decidedAt: new Date().toISOString(),
+        });
+      } catch (error) {
+        return Response.json({
+          error: 'source_request_review_blocked',
+          detail: error instanceof Error ? error.message : 'Request review is incomplete.',
+        }, { status: 409 });
+      }
+      await recordServiceNowRequestMappingDecision({
+        tenantKey: activeClient.key,
+        requestId: importedRequest.requestId,
+        decision: sourceHandoff.mappingDecision,
+      });
+    }
+
     const rawScopeDescription = parseOptionalString(body.scopeDescription);
     const valueTargetDescription = parseOptionalString(
       body.valueTargetDescription,
@@ -133,20 +222,24 @@ export async function POST(request: Request) {
           })
         : rawScopeDescription;
 
-    const event = await createSourcingEvent({
-      clientKey: activeClient.key,
-      eventName,
-      eventType: parseEventType(body.eventType),
-      triggerDescription,
-      decisionOwner: parseOptionalString(body.decisionOwner),
-      scopeDescription,
-      linkedProgramId: parseOptionalString(body.linkedProgramId),
-      estimatedValueUsd: parseOptionalNumber(body.estimatedValueUsd),
-      createdByUserId: tenancy.userId,
-      creationRequestId: parseOptionalString(body.creationRequestId),
-      sourcingMotion: parseSourcingMotion(body.sourcingMotion),
-      categoryId: parseCategoryId(body.categoryId),
-    });
+    const event = await createSourcingEvent(
+      sourceHandoff
+        ? { clientKey: activeClient.key, ...sourceHandoff.eventInput }
+        : {
+            clientKey: activeClient.key,
+            eventName: eventName!,
+            eventType: parseEventType(body.eventType),
+            triggerDescription: triggerDescription!,
+            decisionOwner: parseOptionalString(body.decisionOwner),
+            scopeDescription,
+            linkedProgramId: parseOptionalString(body.linkedProgramId),
+            estimatedValueUsd: parseOptionalNumber(body.estimatedValueUsd),
+            createdByUserId: tenancy.userId,
+            creationRequestId: parseOptionalString(body.creationRequestId),
+            sourcingMotion: parseSourcingMotion(body.sourcingMotion),
+            categoryId: parseCategoryId(body.categoryId),
+          },
+    );
 
     if (tenancy.userId) {
       // DB write routed through the data-plane write seam (Slice 3b). The
@@ -162,6 +255,19 @@ export async function POST(request: Request) {
       if (!participantWrite.ok) {
         throw new Error(participantWrite.error ?? 'source participant assignment failed');
       }
+    }
+
+    if (sourceHandoff && sourceRequestInput?.requestId) {
+      await linkServiceNowRequestToEvent({
+        tenantKey: activeClient.key,
+        requestId: sourceRequestInput.requestId,
+        sourceVersion: sourceHandoff.mappingDecision.sourceVersion,
+        sourceEventId: event.id,
+        linkedByUserId: sourceHandoff.mappingDecision.decidedByUserId,
+        linkedByName: sourceHandoff.mappingDecision.decidedByName,
+        linkedAt: new Date().toISOString(),
+        rationale: sourceHandoff.linkRationale,
+      });
     }
 
     return Response.json({

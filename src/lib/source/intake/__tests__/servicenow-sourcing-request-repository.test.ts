@@ -24,12 +24,24 @@ describe("readSourceIntakeRequestQueue", () => {
           normalized_request: {
             title: "Replace member contact center platform",
             description: "Plan member services needs a new platform and operations partner.",
+            trigger: "Current platform contract expires in nine months.",
+            requestedOutcome: "Select a platform and managed operations partner.",
             organization: {
               requestedFor: "Health Plan",
               businessDomain: "plan",
               businessFunction: "Member Services",
             },
             value: { amount: 12500000, currency: "USD", validated: false },
+            scope: {
+              included: "Member calls, chat, quality monitoring, and workforce management.",
+              excluded: "Clinical triage.",
+            },
+            governance: {
+              decisionOwner: "VP Member Services",
+              baselineOwner: "Contact center operations",
+              securityReviewNeeded: true,
+              legalReviewNeeded: true,
+            },
           },
           mapping_proposal: {
             categoryId: "contact_center_cx",
@@ -58,6 +70,14 @@ describe("readSourceIntakeRequestQueue", () => {
         requestId: "servicenow:sn_sourcing_request:abc",
         requestNumber: "SRC0010042",
         title: "Replace member contact center platform",
+        trigger: "Current platform contract expires in nine months.",
+        requestedOutcome: "Select a platform and managed operations partner.",
+        decisionOwner: "VP Member Services",
+        baselineOwner: "Contact center operations",
+        scopeIncluded: "Member calls, chat, quality monitoring, and workforce management.",
+        scopeExcluded: "Clinical triage.",
+        securityReviewNeeded: true,
+        legalReviewNeeded: true,
         sourceSystem: "ServiceNow",
         requiredFactGaps: ["baseline_owner"],
         mappingProposal: expect.objectContaining({
