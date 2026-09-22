@@ -316,19 +316,24 @@ describe("agent route · Source Contract 360 selected-context prompt", () => {
     expect(source).toContain("buildSourcePortfolioFallbackAnswer({");
   });
 
-  it("runs Source answer quality checks as telemetry without rewriting Claude output", () => {
+  it("emits gated Source answer text instead of the ungated primary advisor stream", () => {
     expect(source).toContain("const sourceAvaTelemetryGateActive =");
+    expect(source).toContain('let sourceAvaUngatedOutput = ""');
+    expect(source).toContain("sourceAvaUngatedOutput += safeText");
+    expect(source).toContain("const flushSourceAvaGatedOutput = () =>");
+    expect(source).toContain("answerText: sourceAvaUngatedOutput");
+    expect(source).toContain("emitAgentText(gateResult.finalText)");
+    expect(source).toContain("flushSourceAvaGatedOutput();");
     expect(source).toContain("answerText: bufferedOutput");
     expect(source).toContain(
       "[source-ava-quality-gate] telemetry checks failed",
     );
-    expect(source).toContain("repairedWouldHaveRun: gateResult.repaired");
+    expect(source).toContain(
+      "[source-ava-quality-gate] checks failed before emit",
+    );
     expect(source).not.toContain("let heldAgentText");
     expect(source).not.toContain("heldAgentText +=");
-    expect(source).not.toContain("const finalText = gateResult.finalText");
-    expect(source).not.toContain(
-      "controller.enqueue(encoder.encode(finalText))",
-    );
+    expect(source).not.toContain("it must not rewrite Claude's visible text");
   });
 
   it("injects a selected-contract optimization export contract for PDF/client-sample asks", () => {
