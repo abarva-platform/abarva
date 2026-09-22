@@ -47,7 +47,11 @@ the governed readiness path clears it.
   passed after the implementation.
 - Scoped lint: `npx eslint src/lib/source/new-workspace/event-intelligence.ts src/lib/source/new-workspace/event-intelligence.test.ts`
   passed.
-- Additional TypeScript, release control, and mutation checks are required before release.
+- TypeScript: `NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit --pretty false`
+  passed.
+- Release control: `npm run release:check` passed.
+- Mutation proof: temporarily disabling loaded-family detection restored the duplicate-upload wording
+  and failed the focused suite; restoring the guard returned the suite to green.
 
 ## Rollout Plan
 
