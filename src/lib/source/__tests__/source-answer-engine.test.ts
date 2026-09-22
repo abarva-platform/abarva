@@ -1282,6 +1282,69 @@ describe("Source answer engine", () => {
     expect(rendered).not.toContain("Retained organization design");
   });
 
+  it("routes an event-scoped blocker question with a savings prohibition to stage readiness", () => {
+    const answer = buildSourceAnswerEngine({
+      prompt:
+        "What is blocking this event from advancing from Define, and what exact action should the sourcing lead take next? Do not estimate savings or recommend a supplier.",
+      contextBundle: {
+        ...contextBundle,
+        sourcingArchetype: "ams_outsourcing",
+        sourcingEvent: {
+          ...contextBundle.sourcingEvent!,
+          currentStageKey: "strategy",
+        },
+        blockers: ["Missing approved scope memo."],
+        missingInputs: ["No current gate approval recorded."],
+      },
+      userRole: "cio",
+    });
+
+    const rendered = JSON.stringify(answer?.responseParts ?? []);
+    expect(answer?.title).toBe("Source stage readiness answer");
+    expect(answer?.answerText).toContain("requested stage is define");
+    expect(answer?.answerText).toContain("event lifecycle is currently strategy");
+    expect(answer?.answerText).toContain("Missing approved scope memo");
+    expect(answer?.recommendedNextAction).toContain(
+      "Review the visible stage gate",
+    );
+    expect(answer?.answerText).not.toContain("Commercial basis");
+    expect(rendered).not.toContain("Value Realization Ledger");
+    expect(rendered).not.toContain("No vendor proposals submitted");
+  });
+
+  it("still answers explicit value-ledger artifact standard questions", () => {
+    const valueLedgerStandard: SourceLiveTenantContextSnapshot["retrievedEvidence"][number] =
+      {
+        id: "source-artifact-standard:d32_value_ledger",
+        segmentId: "artifact_standards",
+        recordId: "d32_value_ledger",
+        title: "Value Realization Ledger",
+        sourceType: "contextChunk",
+        sourceDoc: "Source artifact standards registry",
+        excerpt:
+          "Artifact standard: Value Realization Ledger (d32_value_ledger) is required and gate-defining for value. Purpose and guideline: Tracks projected, committed, measured, and realized value with finance evidence. Audience: CFO and sourcing lead. Structure: Value rows, maturity states, owners, and evidence references. Page guidance: No fixed page cap. Controls: Do not present projected value as realized savings. Generation contract: narrative leader, 128k max. Export: xlsx, docx, pdf. Lifecycle state for this event: client final required. Approval rule: Human finance review required.",
+        confidence: "high",
+        score: 15,
+      };
+    const answer = buildSourceAnswerEngine({
+      prompt:
+        "What standard and required exhibits apply to the value ledger workbook?",
+      contextBundle: {
+        ...contextBundle,
+        liveTenantContext: {
+          ...liveTenantContext,
+          retrievedEvidence: [valueLedgerStandard],
+        },
+      },
+      userRole: "cio",
+    });
+
+    expect(answer?.title).toBe("Artifact standards answer");
+    expect(answer?.answerText).toContain("Value Realization Ledger");
+    expect(answer?.answerText).toContain("projected, committed, measured");
+    expect(answer?.answerText).toContain("Human review is required");
+  });
+
   it("grounds Apex AMS BAFO savings questions in the expanded Source corpus doctrine", () => {
     const apexAmsBundle: SourceAgentContextBundle = {
       ...contextBundle,

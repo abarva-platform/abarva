@@ -1172,11 +1172,7 @@ function buildSourceStageReadinessAnswer(args: {
   recommendedNextAction: string;
 } | null {
   const text = args.prompt.toLowerCase();
-  if (
-    !/\b(current stage|stage readiness|(?:strategy|scope|rfp|responses?|evaluation|pricing|bafo|executive decision|selection|award|transition|value) readiness|what'?s blocking the gate|what is blocking the current stage|blocking the current stage|stage blocker|gate blocker|blocking the gate)\b/.test(
-      text,
-    )
-  ) {
+  if (!isSourceStageReadinessPrompt(text)) {
     return null;
   }
 
@@ -1216,10 +1212,20 @@ function buildSourceStageReadinessAnswer(args: {
   };
 }
 
-function inferRequestedSourceStage(prompt: string): string | null {
-  const match = prompt.match(
-    /\b(strategy|scope|rfp|responses?|evaluation|pricing|bafo|executive decision|selection|award|transition|value)\s+readiness\b/,
+function isSourceStageReadinessPrompt(text: string): boolean {
+  return /\b(current stage|stage readiness|(?:define|strategy|scope|rfp|responses?|evaluation|pricing|bafo|executive decision|selection|award|transition|value) readiness|what'?s blocking the gate|what is blocking (?:this event|the current stage|the gate)|blocking (?:this event|the current stage|the gate)|stage blocker|gate blocker|advanc(?:e|ing) from (?:define|strategy|scope|rfp|responses?|evaluation|pricing|bafo|executive decision|selection|award|transition|value))\b/.test(
+    text,
   );
+}
+
+function inferRequestedSourceStage(prompt: string): string | null {
+  const match =
+    prompt.match(
+      /\b(define|strategy|scope|rfp|responses?|evaluation|pricing|bafo|executive decision|selection|award|transition|value)\s+readiness\b/,
+    ) ??
+    prompt.match(
+      /\badvanc(?:e|ing) from (define|strategy|scope|rfp|responses?|evaluation|pricing|bafo|executive decision|selection|award|transition|value)\b/,
+    );
   if (!match?.[1]) return null;
   return match[1] === "response" ? "responses" : match[1];
 }
