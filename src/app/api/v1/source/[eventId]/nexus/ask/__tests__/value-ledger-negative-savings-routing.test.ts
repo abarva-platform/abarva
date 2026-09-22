@@ -2,6 +2,8 @@ import type { NextRequest } from "next/server";
 
 const buildEvidenceReadinessGovernedAnswerMock = jest.fn();
 const buildValueLedgerGovernedAnswerMock = jest.fn();
+const buildCrossPhaseAuditGovernedAnswerMock = jest.fn();
+const readSourceNewStage05NdaCoverageMock = jest.fn();
 const callSourceCanvasChatModelMock = jest.fn();
 
 function deterministicStubResponse() {
@@ -79,7 +81,14 @@ jest.mock("@/lib/source/queries", () => ({
     owner: "Sourcing lead",
     blocker: "Approved scope and evidence availability review are missing.",
     problemStatement: "The event is still in Define.",
-    synopsis: "Scope and evidence readiness must be completed before advancement.",
+    synopsis:
+      "Scope and evidence readiness must be completed before advancement.",
+    triggerDescription: "Renew the managed-services estate.",
+    scopeDescription: "Infrastructure and platform operations.",
+    decisionOwner: "Sourcing lead",
+    stages: [],
+    artifacts: [],
+    valueLedger: { updatedAt: "2026-09-22T00:00:00.000Z" },
     scorecard: { decisionOwner: "Sourcing lead", criteria: [] },
   })),
   sourceEventRowToDetail: jest.fn(() => null),
@@ -138,7 +147,9 @@ jest.mock("@/lib/source/nexus-api", () => {
   const actual = jest.requireActual("@/lib/source/nexus-api");
   return {
     ...actual,
-    createSourceNexusApiStubResponse: jest.fn(() => deterministicStubResponse()),
+    createSourceNexusApiStubResponse: jest.fn(() =>
+      deterministicStubResponse(),
+    ),
   };
 });
 
@@ -169,6 +180,22 @@ jest.mock("@/lib/source/ava/value-ledger-governed-answer", () => {
       buildValueLedgerGovernedAnswerMock(...args),
   };
 });
+
+jest.mock("@/lib/source/ava/cross-phase-audit-governed-answer", () => {
+  const actual = jest.requireActual(
+    "@/lib/source/ava/cross-phase-audit-governed-answer",
+  );
+  return {
+    ...actual,
+    buildCrossPhaseAuditGovernedAnswer: (...args: unknown[]) =>
+      buildCrossPhaseAuditGovernedAnswerMock(...args),
+  };
+});
+
+jest.mock("@/lib/source/new-workspace/stage05-nda-coverage", () => ({
+  readSourceNewStage05NdaCoverage: (...args: unknown[]) =>
+    readSourceNewStage05NdaCoverageMock(...args),
+}));
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const { POST } = require("@/app/api/v1/source/[eventId]/nexus/ask/route") as {
@@ -210,6 +237,8 @@ describe("Source nexus/ask value-ledger routing", () => {
   beforeEach(() => {
     buildEvidenceReadinessGovernedAnswerMock.mockReset();
     buildValueLedgerGovernedAnswerMock.mockReset();
+    buildCrossPhaseAuditGovernedAnswerMock.mockReset();
+    readSourceNewStage05NdaCoverageMock.mockReset();
     callSourceCanvasChatModelMock.mockResolvedValue({
       text: "The event response is available for review.",
       evidenceCitations: [],
@@ -227,6 +256,23 @@ describe("Source nexus/ask value-ledger routing", () => {
         "No event-scoped Source value ledger rows are available for this event.",
       intent: "value_ledger_waterfall",
       status: "no_data",
+      citations: [],
+      artifacts: [],
+    });
+    readSourceNewStage05NdaCoverageMock.mockResolvedValue({
+      status: "empty",
+      asOf: "2026-09-22",
+      suppliers: [],
+      nextAction: {
+        label: "Accept candidate panel",
+        detail: "No accepted suppliers are recorded.",
+      },
+    });
+    buildCrossPhaseAuditGovernedAnswerMock.mockReturnValue({
+      directAnswer:
+        "No. Audit completion is not proven. Suppliers & NDA is a historical gap. Stage 08 handoff is blocked. One next action: Reconstruct Suppliers & NDA history.",
+      intent: "source_cross_phase_audit_readiness",
+      status: "blocked",
       citations: [],
       artifacts: [],
     });
@@ -249,10 +295,7 @@ describe("Source nexus/ask value-ledger routing", () => {
           nextAction: "Open scope and strategy",
           blocker:
             "Approved scope and evidence availability review are missing.",
-          missingInputs: [
-            "Approved scope",
-            "Evidence availability review",
-          ],
+          missingInputs: ["Approved scope", "Evidence availability review"],
         }),
       }),
     );
@@ -286,5 +329,64 @@ describe("Source nexus/ask value-ledger routing", () => {
       }),
     );
     expect(buildEvidenceReadinessGovernedAnswerMock).not.toHaveBeenCalled();
+  });
+
+  it("routes an audit-complete Contract 360 and Optimize question through the cross-phase governed answer", async () => {
+    const prompt =
+      "Is this sourcing event audit-complete and ready for Contract 360 and Optimize? Reconcile the governed supplier and NDA history, current evidence readiness, and Stage 08 handoff blockers. State what is missing and the one next action.";
+
+    const lines = await askCanvasNdjson(prompt);
+
+    expect(buildEvidenceReadinessGovernedAnswerMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        eventId: "evt-test",
+        clientKey: "example-tenant",
+        question: prompt,
+      }),
+    );
+    expect(
+      buildEvidenceReadinessGovernedAnswerMock.mock.calls[0]?.[0],
+    ).not.toHaveProperty("stageContext");
+    expect(readSourceNewStage05NdaCoverageMock).toHaveBeenCalledWith({
+      clientKey: "example-tenant",
+      eventId: "evt-test",
+      asOf: "2026-09-22",
+    });
+    expect(buildCrossPhaseAuditGovernedAnswerMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        question: prompt,
+        event: expect.objectContaining({
+          id: "evt-test",
+          currentStageKey: "strategy",
+          lifecycle: "active",
+        }),
+        evidence: expect.objectContaining({
+          intent: "source_stage_completion",
+        }),
+        ndaCoverage: expect.objectContaining({ status: "empty" }),
+      }),
+    );
+    expect(buildValueLedgerGovernedAnswerMock).not.toHaveBeenCalled();
+    expect(lines).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          type: "summary",
+          answer: expect.stringContaining(
+            "Suppliers & NDA is a historical gap",
+          ),
+          summary: expect.stringContaining(
+            "Suppliers & NDA is a historical gap",
+          ),
+          sourceAnswer: null,
+          agentResponseParts: [],
+        }),
+        expect.objectContaining({
+          type: "agent-answer",
+          answer: expect.objectContaining({
+            intent: "source_cross_phase_audit_readiness",
+          }),
+        }),
+      ]),
+    );
   });
 });
