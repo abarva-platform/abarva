@@ -1,6 +1,6 @@
 /** @jest-environment jsdom */
 
-import { render, screen, within } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import { SourceNewRequestFirstPage } from "./SourceNewRequestFirstPage";
 
 jest.mock("@/components/shell/AppShell", () => ({
@@ -137,6 +137,7 @@ describe("SourceNewRequestFirstPage", () => {
   });
 
   it("does not expose request rows when intake authority is unavailable but preserves governed event access", () => {
+    const onRetryRequestQueue = jest.fn();
     render(
       <SourceNewRequestFirstPage
         clientName="Example client"
@@ -144,6 +145,7 @@ describe("SourceNewRequestFirstPage", () => {
         requestQueueStatus="unavailable"
         importedRequests={[importedRequest]}
         eventWorkspaces={activeEventWorkspaces}
+        onRetryRequestQueue={onRetryRequestQueue}
       />,
     );
 
@@ -154,6 +156,15 @@ describe("SourceNewRequestFirstPage", () => {
     ).toBeTruthy();
     expect(screen.queryByText("Infrastructure services request")).toBeNull();
     expect(screen.getByText("Application services event")).toBeTruthy();
+    fireEvent.click(
+      screen.getByRole("button", { name: "Retry request queue" }),
+    );
+    expect(onRetryRequestQueue).toHaveBeenCalledTimes(1);
+    expect(
+      screen.getByText(
+        "The request queue could not be read. This is not an empty queue.",
+      ),
+    ).toBeTruthy();
   });
 
   it("keeps requests separate from active event workspaces", () => {

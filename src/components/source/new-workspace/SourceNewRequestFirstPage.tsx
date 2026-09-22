@@ -41,6 +41,7 @@ export function SourceNewRequestFirstPage({
   importedRequests,
   eventWorkspaces,
   intakeHref = "/source/new?mode=intake",
+  onRetryRequestQueue = () => window.location.reload(),
 }: {
   clientName: string;
   clientKey: string;
@@ -48,6 +49,7 @@ export function SourceNewRequestFirstPage({
   importedRequests: readonly SourceIntakeRequestSummary[];
   eventWorkspaces: readonly SourceNewEventWorkspaceSummary[];
   intakeHref?: string;
+  onRetryRequestQueue?: () => void;
 }) {
   const canShowRequests =
     requestQueueStatus === "loaded" || requestQueueStatus === "empty";
@@ -114,6 +116,7 @@ export function SourceNewRequestFirstPage({
             status={requestQueueStatus}
             intakeHref={intakeHref}
             requests={requests}
+            onRetryRequestQueue={onRetryRequestQueue}
           />
         </section>
 
@@ -176,10 +179,12 @@ function RequestQueueState({
   status,
   intakeHref,
   requests,
+  onRetryRequestQueue,
 }: {
   status: SourceNewRequestQueueStatus;
   intakeHref: string;
   requests: readonly SourceIntakeRequestSummary[];
+  onRetryRequestQueue: () => void;
 }) {
   if (status === "loading") {
     return (
@@ -198,7 +203,16 @@ function RequestQueueState({
   if (status === "unavailable") {
     return (
       <div style={STATE_BOX}>
-        The request queue could not be read. This is not an empty queue.
+        <p style={EMPTY_COPY}>
+          The request queue could not be read. This is not an empty queue.
+        </p>
+        <button
+          type="button"
+          onClick={onRetryRequestQueue}
+          style={PRIMARY_BUTTON}
+        >
+          Retry request queue
+        </button>
       </div>
     );
   }
@@ -542,6 +556,13 @@ const PRIMARY_ACTION: CSSProperties = {
   fontSize: 12,
   fontWeight: 700,
   textDecoration: "none",
+};
+
+const PRIMARY_BUTTON: CSSProperties = {
+  ...PRIMARY_ACTION,
+  border: 0,
+  cursor: "pointer",
+  fontFamily: SHELL.SANS,
 };
 
 const EVENT_LIST: CSSProperties = {
