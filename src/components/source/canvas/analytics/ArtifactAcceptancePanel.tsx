@@ -10,6 +10,7 @@ import {
 } from "@/lib/source/contracts/blocker-copy";
 import { ArtifactBlockerList } from "../ArtifactBlockerList";
 import type { SourceArtifactOperation } from "@/lib/source/artifact-operations";
+import { containsUuidDisplayValue } from "@/lib/source/display-identifiers";
 
 // SOURCE-SHELL-004 — the "Artifact status" panel: an explicit, reasoned
 // "accept this artifact as authoritative" action, distinct from the stage
@@ -74,6 +75,11 @@ export function ArtifactAcceptancePanel({
   const [authority, setAuthority] = useState<ArtifactAuthorityDecision | null>(
     null,
   );
+  const acceptedByLabel = latestAcceptance
+    ? containsUuidDisplayValue(latestAcceptance.acceptedBy)
+      ? "Recorded user; name unresolved"
+      : latestAcceptance.acceptedBy
+    : null;
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -188,7 +194,7 @@ export function ArtifactAcceptancePanel({
             </span>
           </div>
           <div style={{ color: ANALYTICS.INK_2 }}>
-            Accepted by {latestAcceptance.acceptedBy} on{" "}
+            Accepted by {acceptedByLabel} on{" "}
             {new Date(latestAcceptance.acceptedAt).toLocaleDateString()}
           </div>
           <div style={{ color: ANALYTICS.MUTED, lineHeight: 1.4 }}>

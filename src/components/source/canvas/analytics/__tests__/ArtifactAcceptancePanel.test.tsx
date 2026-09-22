@@ -129,6 +129,24 @@ describe("ArtifactAcceptancePanel", () => {
     expect(screen.getByText("Re-accept with a new reason")).toBeInTheDocument();
   });
 
+  it("does not expose an internal UUID when the acceptance has no display identity", () => {
+    const internalId = "288d0e2f-da24-4f95-9419-1820ca3ab254";
+    render(
+      <ArtifactAcceptancePanel
+        eventId="event-1"
+        artifactCode="d11_response_checklist"
+        artifactName="Response coverage matrix"
+        latestAcceptance={{ ...LATEST, acceptedBy: internalId }}
+      />,
+    );
+
+    const panel = screen.getByTestId(
+      "source-shell-artifact-status-d11_response_checklist",
+    );
+    expect(panel).toHaveTextContent("Accepted by Recorded user; name unresolved");
+    expect(panel).not.toHaveTextContent(internalId);
+  });
+
   it("shows the artifact context manifest so acceptance is tied to source, parser, agent use, and the next gap", () => {
     render(
       <ArtifactAcceptancePanel
