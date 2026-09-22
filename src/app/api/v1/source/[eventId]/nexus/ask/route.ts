@@ -398,6 +398,7 @@ export async function POST(
           ...(asksForStageCompletion
             ? {
                 stageContext: {
+                  stageKey: liveEventDetail?.currentStageKey,
                   stageLabel: sourceNewCurrentPhaseLabel(
                     sourceNewEventContext,
                   ),
