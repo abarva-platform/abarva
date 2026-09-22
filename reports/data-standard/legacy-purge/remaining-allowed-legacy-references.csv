@@ -1,4 +1,5 @@
 rule,file,reason
+synthetic-v-folder-reference,.github/workflows/source-servicenow-request-import-job.yml,non-loader historical reference
 synthetic-v-folder-reference,audit-artifacts/tenant-packet-dry-run/skyharbor/canonical-ingestion-records.json,non-loader historical reference
 legacy-v-dimension-token,audit-artifacts/tenant-packet-dry-run/skyharbor/canonical-ingestion-records.json,non-loader historical reference
 legacy-v-file-name,audit-artifacts/tenant-packet-dry-run/skyharbor/canonical-ingestion-records.json,non-loader historical reference
