@@ -97,8 +97,15 @@ describe("buildSourceNewEventIntelligence", () => {
     );
     expect(view.refusals.join(" ")).toContain("Unpromoted SLA schedule");
     expect(view.refusals.join(" ")).not.toContain("agent_readiness_status");
-    expect(view.nextQuestion).toContain("Current SLA schedule");
-    expect(view.nextAction.label).toBe("Resolve evidence gap");
+    expect(view.nextQuestion).toBe(
+      "Current SLA schedule is already loaded but not ready. Which governance review or promotion step should clear it?",
+    );
+    expect(view.nextQuestion).not.toContain("Can you provide");
+    expect(view.nextAction).toEqual({
+      label: "Review loaded evidence",
+      detail:
+        "Complete governance review or promotion for SLA baseline before relying on this intelligence.",
+    });
   });
 
   it("does not convert reviewed artifact metadata into governed confidence", () => {
@@ -177,6 +184,14 @@ describe("buildSourceNewEventIntelligence", () => {
     expect(view.requiredEvidence.map((item) => item.key)).not.toContain(
       "current_contract",
     );
+    expect(view.nextQuestion).toBe(
+      "Can you provide Tower scope matrix (XLSX)?",
+    );
+    expect(view.nextAction).toEqual({
+      label: "Resolve evidence gap",
+      detail:
+        "Add or review Service tower scope before relying on this intelligence.",
+    });
   });
 
   it("keeps renewal-category inputs on the renewal evidence contract", () => {
