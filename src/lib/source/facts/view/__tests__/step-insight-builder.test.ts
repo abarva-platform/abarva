@@ -135,6 +135,32 @@ describe('buildScopeCoverageInsight — Scope', () => {
     expect(insight.headline).toMatch(/nothing stranded/i);
   });
 
+  it('states negative risk-adjusted movements apart from negotiable value', () => {
+    const insight = buildScopeCoverageInsight(AMS_MANAGED_SERVICES, {
+      annual_change_order_spend: 4_000_000,
+      recurring_avoidable_pct: 0.35,
+      annual_run_cost: 12_000_000,
+      projected_volume_decline_pct: 0.2,
+      variable_cost_share_pct: 0.6,
+      automatable_effort_pool: 3_000_000,
+      committed_credit_pct: 0.1,
+      retained_fte_delta: -30,
+      loaded_fte_cost: 195_000,
+      at_risk_fee_pool: 5_000_000,
+      credit_cap_pct: 0.1,
+      chronic_miss_rate: 0.05,
+      transition_fee: 2_000_000,
+      overrun_probability: 0.3,
+      term_years: 3,
+    });
+
+    expect(insight.headline).toMatch(/negotiable/i);
+    expect(insight.headline).toMatch(/protected/i);
+    expect(insight.headline).toMatch(/risk-adjusted/i);
+    expect(insight.headline).toMatch(/-\$\d+M to -\$\d+M/);
+    expect(insight.headline).not.toMatch(/-\$\d+M–-\$\d+M across all/);
+  });
+
   it('no facts → honest MODEL badge, no fabricated tenant numbers', () => {
     const insight = buildScopeCoverageInsight(AMS_MANAGED_SERVICES, {});
     expect(insight.provenance).toBe('sample');

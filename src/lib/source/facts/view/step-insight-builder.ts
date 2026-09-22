@@ -84,7 +84,43 @@ function fmtUsd(value: number): string {
 
 function fmtUsdRange(low: number, high: number): string {
   if (low === high) return fmtUsd(low);
+  if (low < 0 || high < 0) return `${fmtUsd(low)} to ${fmtUsd(high)}`;
   return `${fmtUsd(low)}–${fmtUsd(high)}`;
+}
+
+const NEGOTIABLE_VALUE_TYPES: readonly ValueType[] = [
+  'expected_concession',
+  'incremental_negotiated',
+  'solution_tightening',
+];
+
+function classifiedMovementSummary(
+  rows: readonly ScopeCoverageRowView[],
+): string {
+  const bandFor = (types: readonly ValueType[]) => {
+    const selected = rows.filter((row) => types.includes(row.valueType));
+    return {
+      count: selected.length,
+      low: selected.reduce((sum, row) => sum + row.low, 0),
+      high: selected.reduce((sum, row) => sum + row.high, 0),
+    };
+  };
+  const negotiable = bandFor(NEGOTIABLE_VALUE_TYPES);
+  const protectedValue = bandFor(['protected']);
+  const riskAdjusted = bandFor(['risk_adjusted']);
+  const segments = [
+    negotiable.count > 0
+      ? `Negotiable ${fmtUsdRange(negotiable.low, negotiable.high)}`
+      : null,
+    protectedValue.count > 0
+      ? `Protected ${fmtUsdRange(protectedValue.low, protectedValue.high)}`
+      : null,
+    riskAdjusted.count > 0
+      ? `Risk-adjusted ${fmtUsdRange(riskAdjusted.low, riskAdjusted.high)}`
+      : null,
+  ]
+    .filter((value): value is string => Boolean(value));
+  return segments.length > 0 ? segments.join('; ') : 'No classified movements';
 }
 
 // ── which stage keys map to which insight kind ───────────────────────────────
@@ -723,22 +759,16 @@ function scopeCoverageHeadline(
   if (rows.length === 0) return 'No value levers are wired for this archetype yet.';
   const reachable = rows.filter((r) => r.reachable);
   const stranded = rows.filter((r) => !r.reachable);
-  const reachableLow = reachable.reduce((s, r) => s + r.low, 0);
-  const reachableHigh = reachable.reduce((s, r) => s + r.high, 0);
-  const totalLow = rows.reduce((s, r) => s + r.low, 0);
-  const totalHigh = rows.reduce((s, r) => s + r.high, 0);
 
   if (isModel) {
     return (
-      `A complete scope unlocks ${fmtUsdRange(totalLow, totalHigh)} across ${rows.length} ` +
+      `A complete scope covers ${classifiedMovementSummary(rows)} across ${rows.length} ` +
       `levers — every lever left out of scope is a lever you can't recover in RFP or BAFO.`
     );
   }
   if (stranded.length === 0) {
-    return `${fmtUsdRange(reachableLow, reachableHigh)} across all ${rows.length} levers is reachable under current scope — nothing stranded.`;
+    return `${classifiedMovementSummary(reachable)} across all ${rows.length} levers is reachable under current scope — nothing stranded.`;
   }
-  const strandedLow = stranded.reduce((s, r) => s + r.low, 0);
-  const strandedHigh = stranded.reduce((s, r) => s + r.high, 0);
   const worst = [...stranded].sort((a, b) => b.high - a.high)[0];
   const why =
     worst.missingEvidence.length > 0 ? worst.missingEvidence[0] : 'missing evidence';
@@ -747,10 +777,10 @@ function scopeCoverageHeadline(
   // stranded number is a benchmark-scaled potential-if-unblocked, not a tenant claim.
   const anyPotential = stranded.some((r) => r.potentialAtRisk);
   const strandedFrag = anyPotential
-    ? `${fmtUsdRange(strandedLow, strandedHigh)} at risk, benchmark-scaled, if unblocked`
-    : `${fmtUsdRange(strandedLow, strandedHigh)} stranded`;
+    ? `${classifiedMovementSummary(stranded)} at risk, benchmark-scaled, if unblocked`
+    : `${classifiedMovementSummary(stranded)} stranded`;
   return (
-    `${fmtUsdRange(reachableLow, reachableHigh)} of ${fmtUsdRange(totalLow, totalHigh)} reachable under current scope; ` +
+    `${classifiedMovementSummary(reachable)} reachable under current scope; ` +
     `${strandedFrag} — biggest is ${worst.label}, blocked on ${why}.`
   );
 }
