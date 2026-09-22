@@ -86,6 +86,32 @@ here so the next reader does not re-measure them.
 - `src/__tests__/behaviors/product-directory-ci-coverage.test.ts` — ratchet
   lowered 175 → 172, with both readings dated in the constant's comment.
 - `docs/architecture/test-ci-coverage-census.json` — regenerated.
+- `src/__tests__/behaviors/programs-unit-directory-ci-coverage.test.ts` —
+  ratchet lowered 20 → 19.
+- `src/__tests__/behaviors/governance-tenant-library-ci-coverage.test.ts` —
+  a split assertion replaced by a full-coverage one.
+
+## Two other ratchets this change moved, found by CI rather than by me
+
+Both failed on the first full run and both were consequences of the wiring
+above. Recording them because a ratchet moved quietly is worth less than one
+moved with its reason.
+
+- **The Programs dark-directory count, 20 → 19.** Proved by diffing the two
+  dark lists rather than by comparing totals: exactly one directory left the
+  set — `src/lib/programs/archetype-primers/__tests__` — and none entered. It
+  is a full wire, so on this row the count and "directories now fully wired"
+  agree. Re-checked by under-stating the constant, which fails as loudly as
+  over-stating it.
+- **The governance split, 5 of 8 → all 8.** The directory is no longer a split
+  at all and drops out of the partial bucket. The census publishes only the
+  partial and uncovered buckets, so full coverage is asserted the way that file
+  already asserts it for `azure-search`: **absent from both**. Asserting only
+  the partial half would pass equally well for a directory that had vanished
+  from the census entirely.
+
+Both moves are in the tightening direction. Neither weakens or removes an
+assertion.
 
 ## QA / Validation
 
