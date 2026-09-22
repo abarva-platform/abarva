@@ -1,10 +1,14 @@
+import type { SourceIntakeRequestSummary } from "@/lib/source/intake/servicenow-sourcing-request-repository";
+
 jest.mock("@/lib/auth/tenancy", () => ({
   requireTenancy: jest.fn(async () => ({
     clientId: "client-1",
     clientKey: "skyharbor-air",
     userId: "user-1",
   })),
-  tenancyErrorResponse: jest.fn(() => Response.json({ error: "auth" }, { status: 401 })),
+  tenancyErrorResponse: jest.fn(() =>
+    Response.json({ error: "auth" }, { status: 401 }),
+  ),
 }));
 
 jest.mock("@/lib/active-client", () => ({
@@ -29,7 +33,7 @@ jest.mock("@/lib/auth/current-user", () => ({
   })),
 }));
 
-const importedRequest = {
+const importedRequest: SourceIntakeRequestSummary = {
   requestId: "servicenow:sn_sourcing_request:request-1",
   requestNumber: "REQ0010007",
   sourceSystem: "ServiceNow" as const,
@@ -58,15 +62,31 @@ const importedRequest = {
     confidence: "high",
     reasons: ["Matched contact-center scope"],
   },
-  mappingDecision: null,
+  mappingDecision: {
+    decisionId: "mapping-1",
+    state: "accepted" as const,
+    categoryId: "bpo_contact_centre",
+    archetypeId: "CONTACT_CENTER_CX",
+    decidedByUserId: "person-1",
+    decidedByName: "Procurement Lead",
+    decidedAt: "2026-09-22T13:00:00.000Z",
+    rationale: "Scope and buying motion confirmed.",
+    sourceVersion: "v1",
+  },
   eventLink: null,
 };
 
-jest.mock("@/lib/source/intake/servicenow-sourcing-request-repository", () => ({
-  readSourceIntakeRequestQueue: jest.fn(async () => ({
+const readSourceIntakeRequestQueue = jest.fn(async (tenantKey: string) => {
+  void tenantKey;
+  return {
     registryAvailable: true,
     requests: [importedRequest],
-  })),
+  };
+});
+
+jest.mock("@/lib/source/intake/servicenow-sourcing-request-repository", () => ({
+  readSourceIntakeRequestQueue: (tenantKey: string) =>
+    readSourceIntakeRequestQueue(tenantKey),
 }));
 
 jest.mock("@/lib/source/intake/servicenow-request-event-authority", () => ({
@@ -98,6 +118,10 @@ import {
 describe("POST /api/v1/source/events", () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    readSourceIntakeRequestQueue.mockResolvedValue({
+      registryAvailable: true,
+      requests: [importedRequest],
+    });
   });
 
   it("returns an event-specific approval URL and persists the selected category", async () => {
@@ -125,7 +149,7 @@ describe("POST /api/v1/source/events", () => {
     );
   });
 
-  it("creates and links an event from server-read request facts after named mapping review", async () => {
+  it("creates and links an event from the persisted current-version mapping decision", async () => {
     const res = await POST(
       new Request("http://localhost/api/v1/source/events", {
         method: "POST",
@@ -133,20 +157,14 @@ describe("POST /api/v1/source/events", () => {
           sourceRequest: {
             requestId: importedRequest.requestId,
             sourceVersion: "v1",
-            decisionState: "accepted",
-            rationale: "Scope and buying motion confirmed.",
+            categoryId: "cloud_finops",
           },
         }),
       }),
     );
 
     expect(res.status).toBe(200);
-    expect(recordServiceNowRequestMappingDecision).toHaveBeenCalledWith(
-      expect.objectContaining({
-        tenantKey: "skyharbor-air",
-        requestId: importedRequest.requestId,
-      }),
-    );
+    expect(recordServiceNowRequestMappingDecision).not.toHaveBeenCalled();
     expect(createSourcingEvent).toHaveBeenCalledWith(
       expect.objectContaining({
         clientKey: "skyharbor-air",
@@ -163,6 +181,63 @@ describe("POST /api/v1/source/events", () => {
         linkedByName: "Procurement Lead",
       }),
     );
+  });
+
+  it("rejects event creation when the current request version has no persisted mapping decision", async () => {
+    readSourceIntakeRequestQueue.mockResolvedValueOnce({
+      registryAvailable: true,
+      requests: [{ ...importedRequest, mappingDecision: null }],
+    });
+
+    const res = await POST(
+      new Request("http://localhost/api/v1/source/events", {
+        method: "POST",
+        body: JSON.stringify({
+          sourceRequest: {
+            requestId: importedRequest.requestId,
+            sourceVersion: "v1",
+          },
+        }),
+      }),
+    );
+
+    expect(res.status).toBe(409);
+    expect(createSourcingEvent).not.toHaveBeenCalled();
+    expect(linkServiceNowRequestToEvent).not.toHaveBeenCalled();
+  });
+
+  it("returns the already-linked event on repeated current-version create commands", async () => {
+    readSourceIntakeRequestQueue.mockResolvedValueOnce({
+      registryAvailable: true,
+      requests: [
+        {
+          ...importedRequest,
+          eventLink: {
+            eventId: "evt-linked",
+            linkedAt: "2026-09-22T13:10:00.000Z",
+            sourceVersion: "v1",
+          },
+        },
+      ],
+    });
+
+    const res = await POST(
+      new Request("http://localhost/api/v1/source/events", {
+        method: "POST",
+        body: JSON.stringify({
+          sourceRequest: {
+            requestId: importedRequest.requestId,
+            sourceVersion: "v1",
+          },
+        }),
+      }),
+    );
+    const json = await res.json();
+
+    expect(res.status).toBe(200);
+    expect(json.event.id).toBe("evt-linked");
+    expect(createSourcingEvent).not.toHaveBeenCalled();
+    expect(linkServiceNowRequestToEvent).not.toHaveBeenCalled();
   });
 
   it("refuses a stale request version before creating an event", async () => {

@@ -4,28 +4,30 @@
 // the chat tool. The chat tool and this route intentionally write the same
 // `source_events` shape so approval and detail-canvas behavior stays unified.
 
-import { requireTenancy, tenancyErrorResponse } from '@/lib/auth/tenancy';
-import { getActiveClientRow } from '@/lib/active-client';
-import { loadUserSourceAccessPolicy } from '@/lib/auth/source-access-policy';
-import { getCurrentUser } from '@/lib/auth/current-user';
-import { createSourcingEvent } from '@/lib/source/queries';
-import { buildSourceScopeDescription } from '@/lib/source/intake-summary';
-import { selectSourceWriteAdapter } from '@/lib/data-plane/write-adapters/sourceWriteAdapter';
-import type { SourceSourcingMotion } from '@/lib/source/sourcing-motion-journeys';
+import { requireTenancy, tenancyErrorResponse } from "@/lib/auth/tenancy";
+import { getActiveClientRow } from "@/lib/active-client";
+import { loadUserSourceAccessPolicy } from "@/lib/auth/source-access-policy";
+import { createSourcingEvent } from "@/lib/source/queries";
+import { buildSourceScopeDescription } from "@/lib/source/intake-summary";
+import { selectSourceWriteAdapter } from "@/lib/data-plane/write-adapters/sourceWriteAdapter";
+import type { SourceSourcingMotion } from "@/lib/source/sourcing-motion-journeys";
 import {
   SOURCE_CATEGORY_IDS,
   type SourceCategoryId,
-} from '@/lib/source/taxonomy/category-taxonomy';
-import { readSourceIntakeRequestQueue } from '@/lib/source/intake/servicenow-sourcing-request-repository';
-import { buildServiceNowRequestEventHandoff } from '@/lib/source/intake/servicenow-request-event-handoff';
-import {
-  linkServiceNowRequestToEvent,
-  recordServiceNowRequestMappingDecision,
-} from '@/lib/source/intake/servicenow-request-event-authority';
+} from "@/lib/source/taxonomy/category-taxonomy";
+import { readSourceIntakeRequestQueue } from "@/lib/source/intake/servicenow-sourcing-request-repository";
+import { buildServiceNowRequestEventHandoffFromPersistedDecision } from "@/lib/source/intake/servicenow-request-event-handoff";
+import { linkServiceNowRequestToEvent } from "@/lib/source/intake/servicenow-request-event-authority";
 
 interface CreateSourceEventBody {
   eventName?: string;
-  eventType?: 'managed_service' | 'software' | 'staffing' | 'infrastructure' | 'consulting' | 'other';
+  eventType?:
+    | "managed_service"
+    | "software"
+    | "staffing"
+    | "infrastructure"
+    | "consulting"
+    | "other";
   triggerDescription?: string;
   decisionOwner?: string;
   scopeDescription?: string;
@@ -40,39 +42,40 @@ interface CreateSourceEventBody {
   sourceRequest?: {
     requestId?: string;
     sourceVersion?: string;
-    decisionState?: 'accepted' | 'overridden';
-    categoryId?: string;
-    rationale?: string;
   };
 }
 
 function parseSourcingMotion(value: unknown): SourceSourcingMotion | undefined {
-  if (value === 'competitive_rfp' || value === 'contract_optimization') {
+  if (value === "competitive_rfp" || value === "contract_optimization") {
     return value;
   }
   return undefined;
 }
 
-function parseEventType(value: unknown): NonNullable<CreateSourceEventBody['eventType']> {
+function parseEventType(
+  value: unknown,
+): NonNullable<CreateSourceEventBody["eventType"]> {
   if (
-    value === 'managed_service' ||
-    value === 'software' ||
-    value === 'staffing' ||
-    value === 'infrastructure' ||
-    value === 'consulting' ||
-    value === 'other'
+    value === "managed_service" ||
+    value === "software" ||
+    value === "staffing" ||
+    value === "infrastructure" ||
+    value === "consulting" ||
+    value === "other"
   ) {
     return value;
   }
-  return 'other';
+  return "other";
 }
 
 function parseOptionalString(value: unknown): string | undefined {
-  return typeof value === 'string' && value.trim().length > 0 ? value.trim() : undefined;
+  return typeof value === "string" && value.trim().length > 0
+    ? value.trim()
+    : undefined;
 }
 
 function parseCategoryId(value: unknown): SourceCategoryId | undefined {
-  if (typeof value !== 'string') return undefined;
+  if (typeof value !== "string") return undefined;
   const trimmed = value.trim();
   return (SOURCE_CATEGORY_IDS as readonly string[]).includes(trimmed)
     ? (trimmed as SourceCategoryId)
@@ -80,9 +83,9 @@ function parseCategoryId(value: unknown): SourceCategoryId | undefined {
 }
 
 function parseOptionalNumber(value: unknown): number | undefined {
-  if (typeof value === 'number' && Number.isFinite(value)) return value;
-  if (typeof value === 'string' && value.trim().length > 0) {
-    const normalized = Number(value.replace(/[$,]/g, ''));
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+  if (typeof value === "string" && value.trim().length > 0) {
+    const normalized = Number(value.replace(/[$,]/g, ""));
     return Number.isFinite(normalized) ? normalized : undefined;
   }
   return undefined;
@@ -98,7 +101,13 @@ export async function POST(request: Request) {
 
   const activeClient = await getActiveClientRow();
   if (!activeClient) {
-    return Response.json({ error: 'no_client', detail: 'No active client for Source event creation' }, { status: 403 });
+    return Response.json(
+      {
+        error: "no_client",
+        detail: "No active client for Source event creation",
+      },
+      { status: 403 },
+    );
   }
 
   const accessPolicy = await loadUserSourceAccessPolicy(tenancy, {
@@ -106,102 +115,121 @@ export async function POST(request: Request) {
   }).catch(() => null);
 
   if (!accessPolicy?.canCreateSourceEvents) {
-    return Response.json({
-      error: 'forbidden_source_create_required',
-      detail: 'Source create access is required to create sourcing events.',
-    }, { status: 403 });
+    return Response.json(
+      {
+        error: "forbidden_source_create_required",
+        detail: "Source create access is required to create sourcing events.",
+      },
+      { status: 403 },
+    );
   }
 
   let body: CreateSourceEventBody;
   try {
     body = (await request.json()) as CreateSourceEventBody;
   } catch {
-    return Response.json({ error: 'invalid_json' }, { status: 400 });
+    return Response.json({ error: "invalid_json" }, { status: 400 });
   }
 
   const sourceRequestInput = body.sourceRequest;
   const eventName = parseOptionalString(body.eventName);
   const triggerDescription = parseOptionalString(body.triggerDescription);
   if (!sourceRequestInput && (!eventName || !triggerDescription)) {
-    return Response.json({
-      error: 'missing_required_fields',
-      detail: 'eventName and triggerDescription are required.',
-    }, { status: 400 });
+    return Response.json(
+      {
+        error: "missing_required_fields",
+        detail: "eventName and triggerDescription are required.",
+      },
+      { status: 400 },
+    );
   }
 
   try {
-    let sourceHandoff: ReturnType<typeof buildServiceNowRequestEventHandoff> | null = null;
+    let sourceHandoff: ReturnType<
+      typeof buildServiceNowRequestEventHandoffFromPersistedDecision
+    > | null = null;
     if (sourceRequestInput) {
       const requestId = parseOptionalString(sourceRequestInput.requestId);
-      const sourceVersion = parseOptionalString(sourceRequestInput.sourceVersion);
-      const rationale = parseOptionalString(sourceRequestInput.rationale);
-      if (!requestId || !sourceVersion || !rationale) {
-        return Response.json({
-          error: 'invalid_source_request_review',
-          detail: 'requestId, sourceVersion, and rationale are required.',
-        }, { status: 400 });
+      const sourceVersion = parseOptionalString(
+        sourceRequestInput.sourceVersion,
+      );
+      if (!requestId || !sourceVersion) {
+        return Response.json(
+          {
+            error: "invalid_source_request_review",
+            detail: "requestId and sourceVersion are required.",
+          },
+          { status: 400 },
+        );
       }
       const queue = await readSourceIntakeRequestQueue(activeClient.key);
       if (!queue.registryAvailable) {
-        return Response.json({
-          error: 'source_request_registry_unavailable',
-          detail: 'The request authority could not be read. No event was created.',
-        }, { status: 503 });
+        return Response.json(
+          {
+            error: "source_request_registry_unavailable",
+            detail:
+              "The request authority could not be read. No event was created.",
+          },
+          { status: 503 },
+        );
       }
       const importedRequest = queue.requests.find(
         (candidate) => candidate.requestId === requestId,
       );
       if (!importedRequest) {
-        return Response.json({ error: 'source_request_not_found' }, { status: 404 });
+        return Response.json(
+          { error: "source_request_not_found" },
+          { status: 404 },
+        );
       }
       if (importedRequest.sourceVersion !== sourceVersion) {
-        return Response.json({
-          error: 'source_request_version_changed',
-          detail: 'The imported request changed. Review the latest version before creating an event.',
-        }, { status: 409 });
+        return Response.json(
+          {
+            error: "source_request_version_changed",
+            detail:
+              "The imported request changed. Review the latest version before creating an event.",
+          },
+          { status: 409 },
+        );
       }
-      const user = await getCurrentUser();
-      if (!user?.personId) {
+      if (importedRequest.eventLink) {
+        if (importedRequest.eventLink.sourceVersion !== sourceVersion) {
+          return Response.json(
+            {
+              error: "source_request_event_link_version_changed",
+              detail:
+                "This request is already linked from a different source version.",
+            },
+            { status: 409 },
+          );
+        }
         return Response.json({
-          error: 'reviewer_identity_required',
-          detail: 'A named canonical person is required to review request routing.',
-        }, { status: 409 });
-      }
-      const decision = sourceRequestInput.decisionState === 'overridden'
-        ? {
-            state: 'overridden' as const,
-            categoryId: parseCategoryId(sourceRequestInput.categoryId),
-            rationale,
-          }
-        : sourceRequestInput.decisionState === 'accepted'
-          ? { state: 'accepted' as const, rationale }
-          : null;
-      if (!decision || (decision.state === 'overridden' && !decision.categoryId)) {
-        return Response.json({
-          error: 'invalid_mapping_decision',
-          detail: 'Accept the proposal or choose a supported override category.',
-        }, { status: 400 });
+          ok: true,
+          event: { id: importedRequest.eventLink.eventId },
+          approvalAuthority:
+            "Tenant admin reviews the intake record; S0 exit is co-signed by the decision owner and sourcing lead.",
+          approvalUrl: `/source/events/${importedRequest.eventLink.eventId}/approval`,
+          eventUrl: `/source/events/${importedRequest.eventLink.eventId}?stage=strategy`,
+        });
       }
       try {
-        sourceHandoff = buildServiceNowRequestEventHandoff({
-          request: importedRequest,
-          decision: decision.state === 'overridden'
-            ? { ...decision, categoryId: decision.categoryId! }
-            : decision,
-          reviewer: { userId: user.personId, name: user.name },
-          decidedAt: new Date().toISOString(),
-        });
+        sourceHandoff = buildServiceNowRequestEventHandoffFromPersistedDecision(
+          {
+            request: importedRequest,
+          },
+        );
       } catch (error) {
-        return Response.json({
-          error: 'source_request_review_blocked',
-          detail: error instanceof Error ? error.message : 'Request review is incomplete.',
-        }, { status: 409 });
+        return Response.json(
+          {
+            error: "source_request_mapping_decision_required",
+            detail:
+              error instanceof Error
+                ? error.message
+                : "Request review is incomplete.",
+          },
+          { status: 409 },
+        );
       }
-      await recordServiceNowRequestMappingDecision({
-        tenantKey: activeClient.key,
-        requestId: importedRequest.requestId,
-        decision: sourceHandoff.mappingDecision,
-      });
     }
 
     const rawScopeDescription = parseOptionalString(body.scopeDescription);
@@ -253,7 +281,9 @@ export async function POST(request: Request) {
         userId: tenancy.userId,
       });
       if (!participantWrite.ok) {
-        throw new Error(participantWrite.error ?? 'source participant assignment failed');
+        throw new Error(
+          participantWrite.error ?? "source participant assignment failed",
+        );
       }
     }
 
@@ -274,14 +304,20 @@ export async function POST(request: Request) {
       ok: true,
       event,
       approvalAuthority:
-        'Tenant admin reviews the intake record; S0 exit is co-signed by the decision owner and sourcing lead.',
+        "Tenant admin reviews the intake record; S0 exit is co-signed by the decision owner and sourcing lead.",
       approvalUrl: `/source/events/${event.id}/approval`,
       eventUrl: `/source/events/${event.id}?stage=strategy`,
     });
   } catch (error) {
-    return Response.json({
-      error: 'db_write_failed',
-      detail: error instanceof Error ? error.message : 'failed to create Source event',
-    }, { status: 500 });
+    return Response.json(
+      {
+        error: "db_write_failed",
+        detail:
+          error instanceof Error
+            ? error.message
+            : "failed to create Source event",
+      },
+      { status: 500 },
+    );
   }
 }

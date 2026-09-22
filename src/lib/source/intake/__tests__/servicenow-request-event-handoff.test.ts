@@ -23,7 +23,8 @@ const request: SourceIntakeRequestSummary = {
   extractedAt: "2026-09-22T12:00:00Z",
   updatedAt: "2026-09-22T11:55:00Z",
   title: "Member services contact center replacement",
-  description: "Replace the member contact center platform and operations model.",
+  description:
+    "Replace the member contact center platform and operations model.",
   trigger: "Current agreement expires in nine months.",
   requestedOutcome: "Select a platform and managed operations partner.",
   requestedFor: "Health Plan",
@@ -31,7 +32,8 @@ const request: SourceIntakeRequestSummary = {
   businessFunction: "Member Services",
   decisionOwner: "VP Member Services",
   baselineOwner: "Contact center operations",
-  scopeIncluded: "Member calls, chat, quality monitoring, and workforce management.",
+  scopeIncluded:
+    "Member calls, chat, quality monitoring, and workforce management.",
   scopeExcluded: "Clinical triage.",
   securityReviewNeeded: true,
   legalReviewNeeded: true,
@@ -105,7 +107,8 @@ describe("ServiceNow request event handoff", () => {
         request: summary,
         decision: {
           state: "accepted",
-          rationale: "The recorded scope and baseline support this proposed route.",
+          rationale:
+            "The recorded scope and baseline support this proposed route.",
         },
         reviewer: { userId: "person-1", name: "Procurement Lead" },
         decidedAt: "2026-09-22T13:00:00Z",
@@ -113,9 +116,9 @@ describe("ServiceNow request event handoff", () => {
     });
 
     expect(handoffs).toHaveLength(10);
-    expect(new Set(handoffs.map((item) => item.mappingDecision.archetypeId))).toEqual(
-      new Set(listSourceArchetypes().map((item) => item.id)),
-    );
+    expect(
+      new Set(handoffs.map((item) => item.mappingDecision.archetypeId)),
+    ).toEqual(new Set(listSourceArchetypes().map((item) => item.id)));
     for (const handoff of handoffs) {
       expect(handoff.eventInput.categoryId).toBe(
         handoff.mappingDecision.categoryId,
@@ -131,7 +134,10 @@ describe("ServiceNow request event handoff", () => {
     expect(
       buildServiceNowRequestEventHandoff({
         request,
-        decision: { state: "accepted", rationale: "Scope and buying motion confirmed." },
+        decision: {
+          state: "accepted",
+          rationale: "Scope and buying motion confirmed.",
+        },
         reviewer: { userId: "person-1", name: "Procurement Lead" },
         decidedAt: "2026-09-22T13:00:00Z",
       }),
@@ -162,7 +168,8 @@ describe("ServiceNow request event handoff", () => {
       decision: {
         state: "overridden",
         categoryId: "bpo_shared_services",
-        rationale: "The work is back-office shared services, not member contact operations.",
+        rationale:
+          "The work is back-office shared services, not member contact operations.",
       },
       reviewer: { userId: "person-1", name: "Procurement Lead" },
       decidedAt: "2026-09-22T13:00:00Z",
@@ -198,7 +205,11 @@ describe("ServiceNow request event handoff", () => {
       buildServiceNowRequestEventHandoff({
         request: {
           ...request,
-          eventLink: { eventId: "event-1", linkedAt: "2026-09-22T12:30:00Z" },
+          eventLink: {
+            eventId: "event-1",
+            linkedAt: "2026-09-22T12:30:00Z",
+            sourceVersion: "v1",
+          },
         },
         decision: { state: "accepted", rationale: "Scope reviewed." },
         reviewer: { userId: "person-1", name: "Procurement Lead" },
