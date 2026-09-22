@@ -41,10 +41,9 @@ import type {
  * wrong. It is reported as not recorded.
  *
  * **Selection is a later stage.** Nothing here records that a candidate was
- * selected as a respondent; acceptance onto the panel is what this table
- * holds. The selected-respondent group is therefore always empty, and the
- * surface says so rather than letting an empty group read as "nobody was
- * selected".
+ * selected as a respondent unless the candidate registry carries a named
+ * selector, timestamp, and evidence reference. Acceptance onto the panel alone
+ * never promotes a supplier into the selected-respondent group.
  */
 
 export type SourceNewStage04PanelRow = {
@@ -59,6 +58,9 @@ export type SourceNewStage04PanelRow = {
   contactPolicy?: CandidateSupplierContactPolicy | null;
   contactBlocker?: string | null;
   activeContactCount?: number;
+  selectedByName?: string | null;
+  selectedAt?: string | null;
+  selectionEvidenceReference?: string | null;
   sourceReferences?: readonly string[];
 };
 
@@ -81,11 +83,11 @@ export type SourceNewStage04PanelInput = {
 const NOT_RECORDED = [
   "Contact policy is not recorded for accepted candidates, so this panel makes no claim about who may be contacted.",
   "Category, function and archetype eligibility are not recorded on the acceptance record.",
-  "Respondent selection happens after this stage, so the selected group is empty by design rather than by outcome.",
+  "Respondent selection is not recorded on any accepted candidate, so the selected group is empty by evidence rather than by outcome.",
 ] as const;
 
 const RESPONDENT_SELECTION_NOTE =
-  "Respondent selection happens after this stage, so the selected group is empty by design rather than by outcome.";
+  "Respondent selection is not recorded on any accepted candidate, so the selected group is empty by evidence rather than by outcome.";
 
 function hasEligibility(
   eligibility: CandidateSupplierEligibility | null | undefined,
@@ -117,6 +119,21 @@ function contactReadiness(
     : "missing_contact";
 }
 
+function selectionAuthority(
+  candidate: AcceptedEventCandidate,
+): NonNullable<AcceptedEventCandidate["selectionAuthority"]> | null {
+  const selection = candidate.selectionAuthority;
+  if (
+    !selection?.selectedByName.trim() ||
+    !selection.selectedAt.trim() ||
+    Number.isNaN(Date.parse(selection.selectedAt)) ||
+    !selection.evidenceReference.trim()
+  ) {
+    return null;
+  }
+  return selection;
+}
+
 function notRecordedNotes(
   candidates: readonly AcceptedEventCandidate[],
 ): readonly string[] {
@@ -127,7 +144,9 @@ function notRecordedNotes(
     candidates.some((candidate) => !hasEligibility(candidate.eligibility))
       ? NOT_RECORDED[1]
       : null,
-    RESPONDENT_SELECTION_NOTE,
+    candidates.some((candidate) => selectionAuthority(candidate))
+      ? null
+      : RESPONDENT_SELECTION_NOTE,
   ].filter((note): note is string => Boolean(note));
 }
 
@@ -142,6 +161,7 @@ function notRecordedNotes(
 export function asProjectionRow(
   candidate: AcceptedEventCandidate,
 ): CandidateSupplierProjectionRow {
+  const selection = selectionAuthority(candidate);
   return {
     supplierId: candidate.supplierId,
     legalEntityId: candidate.legalEntityId,
@@ -155,7 +175,7 @@ export function asProjectionRow(
     contactReadiness: contactReadiness(candidate),
     activeContacts: activeContacts(candidate.contacts ?? []),
     // Acceptance onto the panel is not selection as a respondent.
-    selectedForEvent: false,
+    selectedForEvent: Boolean(selection),
     source: {
       system: "source_event_candidate_supplier_authority",
       reference: candidate.evidenceReference,
@@ -209,6 +229,7 @@ export async function readSourceNewStage04VendorPanel(
     rows: projection.rows.flatMap((row) => {
       const candidate = byEntity.get(row.legalEntityId);
       if (!candidate) return [];
+      const selection = selectionAuthority(candidate);
       return [
         {
           authorityId: candidate.authorityId,
@@ -222,9 +243,13 @@ export async function readSourceNewStage04VendorPanel(
           contactPolicy: candidate.contactPolicy ?? null,
           contactBlocker: row.contactBlocker,
           activeContactCount: candidate.activeContactCount ?? 0,
+          selectedByName: selection?.selectedByName ?? null,
+          selectedAt: selection?.selectedAt ?? null,
+          selectionEvidenceReference: selection?.evidenceReference ?? null,
           sourceReferences: [
             candidate.evidenceReference,
             candidate.registrySource?.reference,
+            selection?.evidenceReference,
           ].filter((item): item is string => Boolean(item)),
         },
       ];

@@ -82,6 +82,20 @@ const GOVERNED_REGISTRY = {
   },
 };
 
+const SELECTED_RESPONDENT = {
+  ...GOVERNED_REGISTRY,
+  authorityId: "auth-3",
+  supplierId: "v-selected",
+  legalEntityId: "v-selected",
+  legalName: "Selected Respondent LLC",
+  evidenceReference: "evt-1/panel/auth-3",
+  selectionAuthority: {
+    selectedByName: "Named Sourcing Lead",
+    selectedAt: "2026-09-20T03:00:00.000Z",
+    evidenceReference: "evt-1/respondent-selection",
+  },
+};
+
 beforeEach(() => {
   readAcceptedCandidatesForEvent.mockReset();
   readContractVendorLegalEntityIds.mockReset();
@@ -231,16 +245,54 @@ describe("the stage 04 panel says what it knows and what it does not", () => {
     );
   });
 
-  it("says the selected group is empty by design, not by outcome", async () => {
-    // Respondent selection happens after this stage. An empty group that
-    // looks like "nobody was selected" is a different claim.
+  it("says the selected group is empty by evidence, not by outcome", async () => {
+    // Respondent selection requires named selection authority. An empty group
+    // that looks like "nobody was selected" is a different claim.
     authorityReturns([CANDIDATE, FRESH]);
     contractsReturn("available", ["v-inc"]);
 
     const panel = await readSourceNewStage04VendorPanel(INPUT);
 
     expect(panel.counts.selected_respondent).toBe(0);
-    expect(panel.notRecorded.join(" ")).toContain("empty by design");
+    expect(panel.notRecorded.join(" ")).toContain("empty by evidence");
+  });
+
+  it("surfaces a respondent only when a human selection record is present", async () => {
+    authorityReturns([CANDIDATE, SELECTED_RESPONDENT]);
+    contractsReturn("available", ["v-inc"]);
+
+    const panel = await readSourceNewStage04VendorPanel(INPUT);
+    const selected = panel.rows.find((r) => r.legalEntityId === "v-selected");
+
+    expect(panel.counts.selected_respondent).toBe(1);
+    expect(selected).toEqual(
+      expect.objectContaining({
+        group: "selected_respondent",
+        selectedByName: "Named Sourcing Lead",
+        selectedAt: "2026-09-20T03:00:00.000Z",
+        selectionEvidenceReference: "evt-1/respondent-selection",
+      }),
+    );
+    expect(panel.notRecorded.join(" ")).not.toContain("empty by evidence");
+  });
+
+  it("does not promote an incomplete selection marker into a respondent", async () => {
+    authorityReturns([
+      {
+        ...GOVERNED_REGISTRY,
+        selectionAuthority: {
+          selectedByName: "Named Sourcing Lead",
+          selectedAt: "2026-09-20T03:00:00.000Z",
+          evidenceReference: "",
+        },
+      },
+    ]);
+    contractsReturn("available", []);
+
+    const panel = await readSourceNewStage04VendorPanel(INPUT);
+
+    expect(panel.counts.selected_respondent).toBe(0);
+    expect(panel.rows[0]?.group).toBe("eligible_candidate");
   });
 
   it("claims the least for every field the acceptance record does not carry", () => {

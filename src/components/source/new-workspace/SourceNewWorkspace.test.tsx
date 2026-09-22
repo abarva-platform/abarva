@@ -1181,10 +1181,35 @@ describe("SourceNewWorkspace", () => {
           activeContactCount: 1,
           sourceReferences: ["EVID-PANEL-2", "EVID-SUPPLIER-2"],
         },
+        {
+          authorityId: "auth-3",
+          legalEntityId: "v-selected",
+          legalName: "Selected Supplier LLC",
+          group: "selected_respondent",
+          acceptedByName: "A. Buyer",
+          acceptedAt: "2026-09-02T00:00:00Z",
+          evidenceReference: "EVID-PANEL-3",
+          eligibility: {
+            categoryKeys: ["managed-services"],
+            functionKeys: ["technology"],
+            archetypeKeys: ["application-managed-services"],
+          },
+          contactPolicy: "contact_allowed",
+          contactBlocker: null,
+          activeContactCount: 1,
+          selectedByName: "Named Sourcing Lead",
+          selectedAt: "2026-09-20T03:00:00.000Z",
+          selectionEvidenceReference: "EVID-SELECTION-3",
+          sourceReferences: [
+            "EVID-PANEL-3",
+            "EVID-SUPPLIER-3",
+            "EVID-SELECTION-3",
+          ],
+        },
       ],
       counts: {
         eligible_candidate: 1,
-        selected_respondent: 0,
+        selected_respondent: 1,
         existing_contract_vendor: 1,
       },
       notRecorded: [
@@ -1232,6 +1257,15 @@ describe("SourceNewWorkspace", () => {
     );
     expect(rowText.find((t) => t.includes("New Supplier LLC"))).toContain(
       "Sources: EVID-PANEL-2; EVID-SUPPLIER-2",
+    );
+    expect(rowText.find((t) => t.includes("Selected Supplier LLC"))).toContain(
+      "selected respondent",
+    );
+    expect(rowText.find((t) => t.includes("Selected Supplier LLC"))).toContain(
+      "Selected by Named Sourcing Lead on 2026-09-20",
+    );
+    expect(rowText.find((t) => t.includes("Selected Supplier LLC"))).toContain(
+      "Selection evidence: EVID-SELECTION-3",
     );
 
     // Who accepted it, on the screen and not only in the data. A panel row

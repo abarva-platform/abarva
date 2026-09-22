@@ -34,6 +34,11 @@ export type AcceptedEventCandidate = {
   contactPolicy?: CandidateSupplierContactPolicy | null;
   contacts?: readonly CandidateSupplierContact[];
   activeContactCount?: number;
+  selectionAuthority?: {
+    selectedByName: string;
+    selectedAt: string;
+    evidenceReference: string;
+  } | null;
   registrySource?: {
     system: string;
     reference: string;
@@ -113,6 +118,38 @@ function registryPayload(row: CandidateAuthorityRow): Record<string, unknown> {
   return objectRecord(
     raw.candidate_supplier_registry ?? raw.candidateSupplierRegistry,
   );
+}
+
+function selectionAuthority(
+  row: CandidateAuthorityRow,
+): AcceptedEventCandidate["selectionAuthority"] {
+  const registry = registryPayload(row);
+  const raw = objectRecord(
+    registry.selectionAuthority ??
+      registry.selection_authority ??
+      registry.respondentSelection ??
+      registry.respondent_selection,
+  );
+  const selectedByName = optionalText(
+    raw.selectedByName ?? raw.selected_by_name,
+  );
+  const selectedAt = optionalText(raw.selectedAt ?? raw.selected_at);
+  const evidenceReference = optionalText(
+    raw.evidenceReference ?? raw.evidence_reference,
+  );
+  if (
+    !selectedByName ||
+    !selectedAt ||
+    Number.isNaN(Date.parse(selectedAt)) ||
+    !evidenceReference
+  ) {
+    return null;
+  }
+  return {
+    selectedByName,
+    selectedAt: iso(selectedAt),
+    evidenceReference,
+  };
 }
 
 function eligibility(row: CandidateAuthorityRow): CandidateSupplierEligibility | null {
@@ -212,6 +249,7 @@ export async function readAcceptedCandidatesForEvent(input: {
         activeContactCount: contacts(registryPayload(row).contacts).filter(
           (contact) => contact.state === "active",
         ).length,
+        selectionAuthority: selectionAuthority(row),
         registrySource: registrySource(row),
       }));
 
