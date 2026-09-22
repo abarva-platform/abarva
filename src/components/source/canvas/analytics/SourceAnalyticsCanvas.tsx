@@ -5100,11 +5100,13 @@ function FileUseReadinessMap({
           >
             Shows what each file can do next: gate-defining artifact, supporting
             evidence, parser state, search readiness, graph projection, and the
-            next action.
+            next action. Availability review and workflow usability are separate
+            checks.
           </p>
         </div>
         <span style={SMALL_STATUS_PILL}>
-          {rows.filter((row) => row.readyForUse).length}/{rows.length} ready
+          {rows.filter((row) => row.readyForUse).length}/{rows.length}{" "}
+          workflow-usable
         </span>
       </div>
       {rows.length === 0 ? (
