@@ -26,6 +26,10 @@ describe("readSourceIntakeRequestQueue", () => {
             title: "Replace member contact center platform",
             description:
               "Plan member services needs a new platform and operations partner.",
+            requestedBy: {
+              userId: "person-requester-1",
+              displayName: "IT Service Portfolio Lead",
+            },
             trigger: "Current platform contract expires in nine months.",
             requestedOutcome:
               "Select a platform and managed operations partner.",
@@ -80,6 +84,8 @@ describe("readSourceIntakeRequestQueue", () => {
         title: "Replace member contact center platform",
         trigger: "Current platform contract expires in nine months.",
         requestedOutcome: "Select a platform and managed operations partner.",
+        requestedByUserId: "person-requester-1",
+        requestedByDisplayName: "IT Service Portfolio Lead",
         decisionOwner: "VP Member Services",
         baselineOwner: "Contact center operations",
         scopeIncluded:
