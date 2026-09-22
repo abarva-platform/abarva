@@ -2918,24 +2918,37 @@ describe("MovesPhaseStandaloneClient", () => {
     expect(
       screen.getByRole("heading", { name: "Gate approval" }),
     ).toBeInTheDocument();
+    // T-518, second pass. The two expectations below read
+    // `1 required next-phase prep item` and `These items are carried forward as
+    // next-phase preparation`. Both are re-pointed at the current render, and
+    // the reason is the same for both: #6662 (`adfb848d9`, 2026-08-22)
+    // deliberately rewrote this block in `PhaseApproveAndBuild.tsx`, collapsing
+    // it into a `<details>` whose release record states it "only simplifies how
+    // the phase build state is presented". Product copy moved; these two did
+    // not.
+    //
+    // The earlier pass recorded that the block "does not render in this state
+    // at all" and left the case red on that basis. That reading was wrong, and
+    // the mechanism is worth naming because it will mislead the next reader
+    // too: the summary's copy is emitted as FOUR sibling text nodes
+    // (`{count}`, ` prep item`, the plural suffix, ` carrying forward`), so it
+    // is present in the DOM but matches no matcher written against the old
+    // single-phrase wording. Testing Library joins a node's own text children
+    // before matching, so a matcher spanning the whole summary line does find
+    // it — which is what the two below now do.
     expect(
-      // LEFT RED DELIBERATELY, and it is not the copy drift it was filed as.
-      //
-      // The next-phase readiness block does not render in this state at all:
-      // the DOM for this case contains no prep-item text, no "readiness"
-      // label and no "carried forward" line. So there is no current wording
-      // to re-point this at, and every candidate matcher tried here was
-      // satisfied only by jest echoing this file's own source back in the
-      // failure output — not by anything the component rendered.
-      //
-      // Whether the block was deliberately removed from this state or stopped
-      // rendering by regression is not established, and guessing a matcher to
-      // make the case green would assert something no one has decided.
-      screen.getByText(/1 required next-phase prep item/i),
+      // Was `/1 required next-phase prep item/i`. The count and the
+      // carry-forward meaning are both still asserted, so a render that drops
+      // the block or reports the wrong number still fails.
+      screen.getByText(/1 prep item carrying forward/i),
     ).toBeInTheDocument();
     expect(
+      // Was `/These items are carried forward as next-phase preparation/i`.
+      // The replacement keeps the load-bearing half of the sentence — that
+      // these items do NOT block this build — rather than matching on the
+      // lead-in alone, so it cannot pass on an empty or truncated render.
       screen.getByText(
-        /These items are carried forward as next-phase preparation/i,
+        /These items inform the next phase\. They do not block this build/i,
       ),
     ).toBeInTheDocument();
     expect(
