@@ -39,8 +39,8 @@ Release lane: `client-data-lane`.
 
 ## QA / Validation
 
-- PASS - Red-first focused loader expectations added for complete operator contract, immutable input hash mismatch, and tarball proof emission.
-- PASS - `jest src/__tests__/integration/source/source-servicenow-request-loader.test.ts --runInBand` using the shared dependency tree: 8 tests passed.
+- PASS - Red-first focused loader expectations added for complete operator contract, immutable input hash mismatch, cross-tenant corpus apply rejection, and tarball proof emission.
+- PASS - `jest src/__tests__/integration/source/source-servicenow-request-loader.test.ts --runInBand` using the shared dependency tree: 9 tests passed.
 - PASS - Dry-run job invocation with explicit tenant, input source version, input SHA, load run ID, idempotency key, and build version wrote `servicenow-request-import-plan.json`, `proof-manifest.json`, and `proof-bundle.tgz`.
 - PASS - Apply-job invocation with the operator contract but without write approval/token refused before database access.
 - PASS - `npm run ops:aca-job -- --plan-only ... --script source:servicenow-requests:job ...` wrote the expected plan-only ACA command shape with sanitized env evidence.
