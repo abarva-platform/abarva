@@ -108,16 +108,13 @@ const WIRED_DIRECTORIES = [
  * set of directories that left the uncovered set, and each is a descendant of
  * one of the three names.
  *
- * 22 → 21 on 21 Sep for `archetypes/__tests__`, and this one is a PARTIAL wire,
- * which no entry above is. Three of its four suites are owned; the fourth,
- * `resolver.test.ts`, is red on a real registry-vs-method-library mismatch and
- * remains an exact file-level quarantine, so the directory left the uncovered
- * set by becoming partially covered rather than by being reached in full. The
- * count moved by one and exactly one directory left the set — checked by
- * diffing the two dark lists, not inferred — but a reader comparing this
- * number against "directories now fully wired" would be off by this row.
- * Finishing it means repairing the red, not renaming it; that repair is
- * backlog item T-456.
+ * 22 → 21 on 21 Sep for `archetypes/__tests__`, initially as a PARTIAL wire:
+ * three of its four suites were owned while `resolver.test.ts` stayed an exact
+ * file-level quarantine for a real registry-vs-method-library mismatch. T-456
+ * repaired that mismatch by authoring the two missing analysis methods and
+ * adding the fourth suite to the same workflow step. The dark-directory count
+ * does not move a second time, because the directory had already left the dark
+ * set when it became partially covered.
  *
  * 21 → 20 on 21 Sep for T-516 wiring
  * `src/lib/programs/queries.azure-read.test.ts` by exact file path. The
