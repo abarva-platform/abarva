@@ -1,0 +1,343 @@
+{
+  "event": "source_servicenow_request_acceptance_harness",
+  "status": "pass",
+  "inputs": {
+    "requests": {
+      "path": "datasets/source-servicenow-sourcing-requests-synthetic-v1/servicenow_sourcing_requests.csv",
+      "rows": 10
+    },
+    "candidateSuppliers": {
+      "path": "datasets/source/candidate-supplier-registry-synthetic-v1/candidate_supplier_registry.csv",
+      "rows": 25
+    }
+  },
+  "summary": {
+    "expectedArchetypes": 10,
+    "coveredArchetypes": 10,
+    "requestRows": 10,
+    "eligibleSupplierRows": 20,
+    "negativeControlRows": 5
+  },
+  "authority": {
+    "readOnlyHarness": true,
+    "usesMergedFixtureFiles": true,
+    "tenantWriteAuthorized": false,
+    "supplierContactAuthorized": false,
+    "invitationAuthorized": false,
+    "awardAuthorized": false,
+    "governedSavingsPromoted": false
+  },
+  "rows": [
+    {
+      "requestNumber": "REQ0010001",
+      "sourceIdentity": "sc_req_item:snreq000000000000000000000001:2026-09-15T120000Z",
+      "businessDomain": "it",
+      "businessFunction": "application_operations",
+      "categoryId": "ams",
+      "archetypeId": "AMS_MANAGED_SERVICES",
+      "requiredIntakeDepth": "complete",
+      "requesterValueBasis": "requester_stated_unvalidated",
+      "requesterValueValidated": false,
+      "requesterValuePromotedToGovernedSavings": false,
+      "eligibleSupplierIds": [
+        "SYN-SUP-AMS-001",
+        "SYN-SUP-AMS-002"
+      ],
+      "eligibleSupplierNames": [
+        "Fictional Aster Ridge Managed Services LLC",
+        "Fictional Harborline Application Operations Inc."
+      ],
+      "existingContractVendorIds": [],
+      "rejectedNegativeControlReasons": [
+        "draft_authority",
+        "duplicate_identity",
+        "mismatched_eligibility",
+        "missing_contact_authority",
+        "missing_lineage"
+      ],
+      "contactActionAvailable": false,
+      "invitationClaimed": false,
+      "awardClaimed": false
+    },
+    {
+      "requestNumber": "REQ0010002",
+      "sourceIdentity": "sc_req_item:snreq000000000000000000000002:2026-09-15T120000Z",
+      "businessDomain": "enterprise",
+      "businessFunction": "finance_transformation",
+      "categoryId": "erp_si_implementation",
+      "archetypeId": "ERP_SI_IMPLEMENTATION",
+      "requiredIntakeDepth": "complete",
+      "requesterValueBasis": "requester_stated_unvalidated",
+      "requesterValueValidated": false,
+      "requesterValuePromotedToGovernedSavings": false,
+      "eligibleSupplierIds": [
+        "SYN-SUP-ERP-001",
+        "SYN-SUP-ERP-002"
+      ],
+      "eligibleSupplierNames": [
+        "Fictional Caldera ERP Delivery LLC",
+        "Fictional Ledgerwave Integration Partners LLP"
+      ],
+      "existingContractVendorIds": [],
+      "rejectedNegativeControlReasons": [
+        "draft_authority",
+        "duplicate_identity",
+        "mismatched_eligibility",
+        "missing_contact_authority",
+        "missing_lineage"
+      ],
+      "contactActionAvailable": false,
+      "invitationClaimed": false,
+      "awardClaimed": false
+    },
+    {
+      "requestNumber": "REQ0010003",
+      "sourceIdentity": "sc_req_item:snreq000000000000000000000003:2026-09-15T120000Z",
+      "businessDomain": "plan",
+      "businessFunction": "data_and_analytics",
+      "categoryId": "data_ai_platform",
+      "archetypeId": "AI_DATA_PLATFORM",
+      "requiredIntakeDepth": "complete",
+      "requesterValueBasis": "requester_stated_unvalidated",
+      "requesterValueValidated": false,
+      "requesterValuePromotedToGovernedSavings": false,
+      "eligibleSupplierIds": [
+        "SYN-SUP-DATA-002",
+        "SYN-SUP-DATA-001"
+      ],
+      "eligibleSupplierNames": [
+        "Fictional Beacon Forge Analytics Inc.",
+        "Fictional Clearwell Data Platforms LLC"
+      ],
+      "existingContractVendorIds": [],
+      "rejectedNegativeControlReasons": [
+        "draft_authority",
+        "duplicate_identity",
+        "mismatched_eligibility",
+        "missing_contact_authority",
+        "missing_lineage"
+      ],
+      "contactActionAvailable": false,
+      "invitationClaimed": false,
+      "awardClaimed": false
+    },
+    {
+      "requestNumber": "REQ0010004",
+      "sourceIdentity": "sc_req_item:snreq000000000000000000000004:2026-09-15T120000Z",
+      "businessDomain": "delivery",
+      "businessFunction": "digital_product_engineering",
+      "categoryId": "ai_engineering_partner",
+      "archetypeId": "DIGITAL_PRODUCT_ENGINEERING",
+      "requiredIntakeDepth": "complete",
+      "requesterValueBasis": "requester_stated_unvalidated",
+      "requesterValueValidated": false,
+      "requesterValuePromotedToGovernedSavings": false,
+      "eligibleSupplierIds": [
+        "SYN-SUP-AIENG-002",
+        "SYN-SUP-AIENG-001"
+      ],
+      "eligibleSupplierNames": [
+        "Fictional Keystone Product Labs Inc.",
+        "Fictional Orbitlane AI Engineering LLC"
+      ],
+      "existingContractVendorIds": [],
+      "rejectedNegativeControlReasons": [
+        "draft_authority",
+        "duplicate_identity",
+        "mismatched_eligibility",
+        "missing_contact_authority",
+        "missing_lineage"
+      ],
+      "contactActionAvailable": false,
+      "invitationClaimed": false,
+      "awardClaimed": false
+    },
+    {
+      "requestNumber": "REQ0010005",
+      "sourceIdentity": "sc_req_item:snreq000000000000000000000005:2026-09-15T120000Z",
+      "businessDomain": "enterprise",
+      "businessFunction": "enterprise_applications",
+      "categoryId": "saas_renewal",
+      "archetypeId": "CONTRACT_RENEWAL",
+      "requiredIntakeDepth": "complete",
+      "requesterValueBasis": "requester_stated_unvalidated",
+      "requesterValueValidated": false,
+      "requesterValuePromotedToGovernedSavings": false,
+      "eligibleSupplierIds": [
+        "SYN-SUP-SAAS-002",
+        "SYN-SUP-SAAS-001"
+      ],
+      "eligibleSupplierNames": [
+        "Fictional North Vale Subscription Services Inc.",
+        "Fictional Prism SaaS Holdings LLC"
+      ],
+      "existingContractVendorIds": [],
+      "rejectedNegativeControlReasons": [
+        "draft_authority",
+        "duplicate_identity",
+        "mismatched_eligibility",
+        "missing_contact_authority",
+        "missing_lineage"
+      ],
+      "contactActionAvailable": false,
+      "invitationClaimed": false,
+      "awardClaimed": false
+    },
+    {
+      "requestNumber": "REQ0010006",
+      "sourceIdentity": "sc_req_item:snreq000000000000000000000006:2026-09-15T120000Z",
+      "businessDomain": "it",
+      "businessFunction": "cloud_finops",
+      "categoryId": "cloud_finops",
+      "archetypeId": "CLOUD_FINOPS",
+      "requiredIntakeDepth": "complete",
+      "requesterValueBasis": "requester_stated_unvalidated",
+      "requesterValueValidated": false,
+      "requesterValuePromotedToGovernedSavings": false,
+      "eligibleSupplierIds": [
+        "SYN-SUP-CLOUD-002",
+        "SYN-SUP-CLOUD-001"
+      ],
+      "eligibleSupplierNames": [
+        "Fictional Copper Peak FinOps Advisors Inc.",
+        "Fictional Skybridge Cloud Economics LLC"
+      ],
+      "existingContractVendorIds": [],
+      "rejectedNegativeControlReasons": [
+        "draft_authority",
+        "duplicate_identity",
+        "mismatched_eligibility",
+        "missing_contact_authority",
+        "missing_lineage"
+      ],
+      "contactActionAvailable": false,
+      "invitationClaimed": false,
+      "awardClaimed": false
+    },
+    {
+      "requestNumber": "REQ0010007",
+      "sourceIdentity": "sc_req_item:snreq000000000000000000000007:2026-09-15T120000Z",
+      "businessDomain": "plan",
+      "businessFunction": "member_services",
+      "categoryId": "bpo_contact_centre",
+      "archetypeId": "CONTACT_CENTER_CX",
+      "requiredIntakeDepth": "complete",
+      "requesterValueBasis": "requester_stated_unvalidated",
+      "requesterValueValidated": false,
+      "requesterValuePromotedToGovernedSavings": false,
+      "eligibleSupplierIds": [
+        "SYN-SUP-CX-002",
+        "SYN-SUP-CX-001"
+      ],
+      "eligibleSupplierNames": [
+        "Fictional Civicline Contact Solutions Inc.",
+        "Fictional Echo Harbor CX Operations LLC"
+      ],
+      "existingContractVendorIds": [],
+      "rejectedNegativeControlReasons": [
+        "draft_authority",
+        "duplicate_identity",
+        "mismatched_eligibility",
+        "missing_contact_authority",
+        "missing_lineage"
+      ],
+      "contactActionAvailable": false,
+      "invitationClaimed": false,
+      "awardClaimed": false
+    },
+    {
+      "requestNumber": "REQ0010008",
+      "sourceIdentity": "sc_req_item:snreq000000000000000000000008:2026-09-15T120000Z",
+      "businessDomain": "enterprise",
+      "businessFunction": "finance_shared_services",
+      "categoryId": "bpo_shared_services",
+      "archetypeId": "BPO_SHARED_SERVICES",
+      "requiredIntakeDepth": "complete",
+      "requesterValueBasis": "requester_stated_unvalidated",
+      "requesterValueValidated": false,
+      "requesterValuePromotedToGovernedSavings": false,
+      "eligibleSupplierIds": [
+        "SYN-SUP-BPO-002",
+        "SYN-SUP-BPO-001"
+      ],
+      "eligibleSupplierNames": [
+        "Fictional Bluecourt Process Operations Inc.",
+        "Fictional Ledger Grove Shared Services LLC"
+      ],
+      "existingContractVendorIds": [],
+      "rejectedNegativeControlReasons": [
+        "draft_authority",
+        "duplicate_identity",
+        "mismatched_eligibility",
+        "missing_contact_authority",
+        "missing_lineage"
+      ],
+      "contactActionAvailable": false,
+      "invitationClaimed": false,
+      "awardClaimed": false
+    },
+    {
+      "requestNumber": "REQ0010009",
+      "sourceIdentity": "sc_req_item:snreq000000000000000000000009:2026-09-15T120000Z",
+      "businessDomain": "it",
+      "businessFunction": "cyber_security",
+      "categoryId": "cyber_grc",
+      "archetypeId": "MSSP_CYBER",
+      "requiredIntakeDepth": "complete",
+      "requesterValueBasis": "requester_stated_unvalidated",
+      "requesterValueValidated": false,
+      "requesterValuePromotedToGovernedSavings": false,
+      "eligibleSupplierIds": [
+        "SYN-SUP-CYBER-002",
+        "SYN-SUP-CYBER-001"
+      ],
+      "eligibleSupplierNames": [
+        "Fictional Redstone Trust Operations Inc.",
+        "Fictional Signal Yard Cyber Defense LLC"
+      ],
+      "existingContractVendorIds": [],
+      "rejectedNegativeControlReasons": [
+        "draft_authority",
+        "duplicate_identity",
+        "mismatched_eligibility",
+        "missing_contact_authority",
+        "missing_lineage"
+      ],
+      "contactActionAvailable": false,
+      "invitationClaimed": false,
+      "awardClaimed": false
+    },
+    {
+      "requestNumber": "REQ0010010",
+      "sourceIdentity": "sc_req_item:snreq000000000000000000000010:2026-09-15T120000Z",
+      "businessDomain": "delivery",
+      "businessFunction": "delivery_capacity",
+      "categoryId": "staff_aug_vs_managed_service",
+      "archetypeId": "STAFF_AUGMENTATION",
+      "requiredIntakeDepth": "complete",
+      "requesterValueBasis": "requester_stated_unvalidated",
+      "requesterValueValidated": false,
+      "requesterValuePromotedToGovernedSavings": false,
+      "eligibleSupplierIds": [
+        "SYN-SUP-STAFF-002",
+        "SYN-SUP-STAFF-001"
+      ],
+      "eligibleSupplierNames": [
+        "Fictional Bridgepoint Delivery Capacity Inc.",
+        "Fictional Talent Loom Technology Staffing LLC"
+      ],
+      "existingContractVendorIds": [],
+      "rejectedNegativeControlReasons": [
+        "draft_authority",
+        "duplicate_identity",
+        "mismatched_eligibility",
+        "missing_contact_authority",
+        "missing_lineage"
+      ],
+      "contactActionAvailable": false,
+      "invitationClaimed": false,
+      "awardClaimed": false
+    }
+  ],
+  "errors": []
+}
