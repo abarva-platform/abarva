@@ -153,6 +153,23 @@ Code-complete is **not** done. **Done = you navigated the real deployed app and 
 - If you cannot run a browser: label the PR **`code-complete`** (not `click-verified`) and hand
   back the exact steps + expected result. Never report success on an unverified UI claim.
 
+### Content truth standard — verify the DELIVERABLE, not just that a file appeared
+A file existing is **not** a deliverable being right. Per AGENTS.md context-ingestion truth standard,
+keep these as **separate states** and never collapse them into "generated" or "done":
+`generated` · `quality-gated` · `committed to the Azure Postgres data plane` · `staged to Azure
+Blob / File Cabinet as a rendered file` · `at the prescribed tier/detail` · `content verified vs the
+artifact spec`. For ANY slice that generates, persists, or renders a deliverable:
+- **Read the persisted content** and check it against the artifact spec's prescribed sections/detail
+  — do not stop at `body != null`. "A draft appeared" ≠ "the draft is a correct, complete scope memo."
+- **State where it landed, precisely:** Postgres `body` column is NOT the same as an Azure Blob
+  object. `inline://...` URIs are synthetic DB references, not staged files. If nothing is rendered
+  to Blob, say so — don't imply "persisted in Azure" means a document exists.
+- **Name the quality gate that ran (or didn't).** The consulting-grade gate currently covers only
+  `d09_rfp_pack`; auto-drafted `d01`/`d05` get no gate. If a deliverable wasn't validated, say so.
+- **Distinguish real LLM output from the deterministic fallback** (no `ANTHROPIC_API_KEY` → stub).
+  Confirm which one the live deploy produced before calling a draft "generated at quality."
+- In the reporting contract, the verification status must cover **content**, not just creation.
+
 ### Reporting contract (every slice's final message)
 - **Files changed** (new vs modified). **Behavior added** (what a CXO now sees that they didn't).
 - **Verification status** — `click-verified` (with observations/screenshots) or `code-complete`
