@@ -15,10 +15,10 @@
     "No timestamp is recorded, so refreshing this file on an unchanged tree is a no-op."
   ],
   "counts": {
-    "testFiles": 2373,
-    "coveredTestFiles": 1852,
-    "pullRequestCoveredTestFiles": 1849,
-    "uncoveredTestFiles": 521,
+    "testFiles": 2375,
+    "coveredTestFiles": 1867,
+    "pullRequestCoveredTestFiles": 1864,
+    "uncoveredTestFiles": 508,
     "directoriesWithTests": 480,
     "directoriesFullyCovered": 271,
     "directoriesPartiallyCovered": 29,
@@ -26,7 +26,7 @@
     "directoriesWithUnrunTestFiles": 209,
     "directoriesWithUntriagedUnrunTestFiles": 198,
     "declaredQuarantineTestFiles": 50,
-    "untriagedUnrunTestFiles": 471,
+    "untriagedUnrunTestFiles": 458,
     "indeterminateInvocations": 0,
     "unresolvedIgnoreArguments": 0,
     "criticalGovernedRiskDirectories": 1,
@@ -90,9 +90,9 @@
     {
       "directory": "src/app/(maestro)/source/preview/workspace/__tests__",
       "testFiles": 33,
-      "coveredTestFiles": 19,
+      "coveredTestFiles": 29,
       "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 14,
+      "untriagedUnrunTestFiles": 4,
       "via": [
         "command",
         "script-file"
@@ -101,9 +101,9 @@
     {
       "directory": "src/lib/agent/__tests__",
       "testFiles": 33,
-      "coveredTestFiles": 2,
+      "coveredTestFiles": 5,
       "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 31,
+      "untriagedUnrunTestFiles": 28,
       "via": [
         "command"
       ]
@@ -1449,14 +1449,16 @@
       "directory": "src/lib/agent/__tests__",
       "testPath": "src/lib/agent/__tests__/admin-editorial-tenant-isolation.test.ts",
       "enumerated": true,
-      "collected": false,
-      "run": false,
+      "collected": true,
+      "run": "unknown",
       "green": "unknown",
-      "covered": false,
-      "pullRequestCovered": false,
+      "covered": true,
+      "pullRequestCovered": true,
       "declaredQuarantine": false,
-      "untriaged": true,
-      "via": [],
+      "untriaged": false,
+      "via": [
+        "command"
+      ],
       "governedRisk": {
         "score": 10,
         "band": "high",
@@ -1470,14 +1472,16 @@
       "directory": "src/lib/agent/__tests__",
       "testPath": "src/lib/agent/__tests__/agent-mission-derived.test.ts",
       "enumerated": true,
-      "collected": false,
-      "run": false,
+      "collected": true,
+      "run": "unknown",
       "green": "unknown",
-      "covered": false,
-      "pullRequestCovered": false,
+      "covered": true,
+      "pullRequestCovered": true,
       "declaredQuarantine": false,
-      "untriaged": true,
-      "via": [],
+      "untriaged": false,
+      "via": [
+        "command"
+      ],
       "governedRisk": {
         "score": 10,
         "band": "high",
@@ -1491,14 +1495,16 @@
       "directory": "src/lib/agent/__tests__",
       "testPath": "src/lib/agent/__tests__/artifacts.test.ts",
       "enumerated": true,
-      "collected": false,
-      "run": false,
+      "collected": true,
+      "run": "unknown",
       "green": "unknown",
-      "covered": false,
-      "pullRequestCovered": false,
+      "covered": true,
+      "pullRequestCovered": true,
       "declaredQuarantine": false,
-      "untriaged": true,
-      "via": [],
+      "untriaged": false,
+      "via": [
+        "command"
+      ],
       "governedRisk": {
         "score": 10,
         "band": "high",
@@ -2558,14 +2564,16 @@
       "directory": "src/app/(maestro)/source/preview/workspace/__tests__",
       "testPath": "src/app/(maestro)/source/preview/workspace/__tests__/governedDirectives.test.ts",
       "enumerated": true,
-      "collected": false,
-      "run": false,
+      "collected": true,
+      "run": "unknown",
       "green": "unknown",
-      "covered": false,
-      "pullRequestCovered": false,
+      "covered": true,
+      "pullRequestCovered": true,
       "declaredQuarantine": false,
-      "untriaged": true,
-      "via": [],
+      "untriaged": false,
+      "via": [
+        "command"
+      ],
       "governedRisk": {
         "score": 10,
         "band": "high",
@@ -2579,14 +2587,16 @@
       "directory": "src/app/(maestro)/source/preview/workspace/__tests__",
       "testPath": "src/app/(maestro)/source/preview/workspace/__tests__/moneyPrecision.test.ts",
       "enumerated": true,
-      "collected": false,
-      "run": false,
+      "collected": true,
+      "run": "unknown",
       "green": "unknown",
-      "covered": false,
-      "pullRequestCovered": false,
+      "covered": true,
+      "pullRequestCovered": true,
       "declaredQuarantine": false,
-      "untriaged": true,
-      "via": [],
+      "untriaged": false,
+      "via": [
+        "command"
+      ],
       "governedRisk": {
         "score": 10,
         "band": "high",
@@ -2646,14 +2656,16 @@
       "directory": "src/app/(maestro)/source/preview/workspace/__tests__",
       "testPath": "src/app/(maestro)/source/preview/workspace/__tests__/portfolioTruth.test.tsx",
       "enumerated": true,
-      "collected": false,
-      "run": false,
+      "collected": true,
+      "run": "unknown",
       "green": "unknown",
-      "covered": false,
-      "pullRequestCovered": false,
+      "covered": true,
+      "pullRequestCovered": true,
       "declaredQuarantine": false,
-      "untriaged": true,
-      "via": [],
+      "untriaged": false,
+      "via": [
+        "command"
+      ],
       "governedRisk": {
         "score": 10,
         "band": "high",
@@ -2688,14 +2700,16 @@
       "directory": "src/app/(maestro)/source/preview/workspace/__tests__",
       "testPath": "src/app/(maestro)/source/preview/workspace/__tests__/VendorCanvas.cockpit.test.tsx",
       "enumerated": true,
-      "collected": false,
-      "run": false,
+      "collected": true,
+      "run": "unknown",
       "green": "unknown",
-      "covered": false,
-      "pullRequestCovered": false,
+      "covered": true,
+      "pullRequestCovered": true,
       "declaredQuarantine": false,
-      "untriaged": true,
-      "via": [],
+      "untriaged": false,
+      "via": [
+        "command"
+      ],
       "governedRisk": {
         "score": 10,
         "band": "high",
@@ -2709,14 +2723,16 @@
       "directory": "src/app/(maestro)/source/preview/workspace/__tests__",
       "testPath": "src/app/(maestro)/source/preview/workspace/__tests__/viewModel.explore.test.ts",
       "enumerated": true,
-      "collected": false,
-      "run": false,
+      "collected": true,
+      "run": "unknown",
       "green": "unknown",
-      "covered": false,
-      "pullRequestCovered": false,
+      "covered": true,
+      "pullRequestCovered": true,
       "declaredQuarantine": false,
-      "untriaged": true,
-      "via": [],
+      "untriaged": false,
+      "via": [
+        "command"
+      ],
       "governedRisk": {
         "score": 10,
         "band": "high",
@@ -2772,14 +2788,16 @@
       "directory": "src/app/(maestro)/source/preview/workspace/__tests__",
       "testPath": "src/app/(maestro)/source/preview/workspace/__tests__/WorkspaceClient.ecl-browser.test.tsx",
       "enumerated": true,
-      "collected": false,
-      "run": false,
+      "collected": true,
+      "run": "unknown",
       "green": "unknown",
-      "covered": false,
-      "pullRequestCovered": false,
+      "covered": true,
+      "pullRequestCovered": true,
       "declaredQuarantine": false,
-      "untriaged": true,
-      "via": [],
+      "untriaged": false,
+      "via": [
+        "command"
+      ],
       "governedRisk": {
         "score": 10,
         "band": "high",
@@ -2793,14 +2811,16 @@
       "directory": "src/app/(maestro)/source/preview/workspace/__tests__",
       "testPath": "src/app/(maestro)/source/preview/workspace/__tests__/WorkspaceExecutiveShell.evidence.test.tsx",
       "enumerated": true,
-      "collected": false,
-      "run": false,
+      "collected": true,
+      "run": "unknown",
       "green": "unknown",
-      "covered": false,
-      "pullRequestCovered": false,
+      "covered": true,
+      "pullRequestCovered": true,
       "declaredQuarantine": false,
-      "untriaged": true,
-      "via": [],
+      "untriaged": false,
+      "via": [
+        "command"
+      ],
       "governedRisk": {
         "score": 10,
         "band": "high",
@@ -2814,14 +2834,16 @@
       "directory": "src/app/(maestro)/source/preview/workspace/__tests__",
       "testPath": "src/app/(maestro)/source/preview/workspace/__tests__/WorkspaceExecutiveShell.performance.test.ts",
       "enumerated": true,
-      "collected": false,
-      "run": false,
+      "collected": true,
+      "run": "unknown",
       "green": "unknown",
-      "covered": false,
-      "pullRequestCovered": false,
+      "covered": true,
+      "pullRequestCovered": true,
       "declaredQuarantine": false,
-      "untriaged": true,
-      "via": [],
+      "untriaged": false,
+      "via": [
+        "command"
+      ],
       "governedRisk": {
         "score": 10,
         "band": "high",
@@ -2835,14 +2857,16 @@
       "directory": "src/app/(maestro)/source/preview/workspace/__tests__",
       "testPath": "src/app/(maestro)/source/preview/workspace/__tests__/workspaceNavigation.test.ts",
       "enumerated": true,
-      "collected": false,
-      "run": false,
+      "collected": true,
+      "run": "unknown",
       "green": "unknown",
-      "covered": false,
-      "pullRequestCovered": false,
+      "covered": true,
+      "pullRequestCovered": true,
       "declaredQuarantine": false,
-      "untriaged": true,
-      "via": [],
+      "untriaged": false,
+      "via": [
+        "command"
+      ],
       "governedRisk": {
         "score": 10,
         "band": "high",
@@ -2856,14 +2880,16 @@
       "directory": "src/app/(maestro)/source/preview/workspace/__tests__",
       "testPath": "src/app/(maestro)/source/preview/workspace/__tests__/workspaceUrlState.test.ts",
       "enumerated": true,
-      "collected": false,
-      "run": false,
+      "collected": true,
+      "run": "unknown",
       "green": "unknown",
-      "covered": false,
-      "pullRequestCovered": false,
+      "covered": true,
+      "pullRequestCovered": true,
       "declaredQuarantine": false,
-      "untriaged": true,
-      "via": [],
+      "untriaged": false,
+      "via": [
+        "command"
+      ],
       "governedRisk": {
         "score": 10,
         "band": "high",
@@ -3842,9 +3868,9 @@
     {
       "directory": "src/lib/agent/__tests__",
       "testFiles": 33,
-      "unrunTestFiles": 31,
+      "unrunTestFiles": 28,
       "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 31,
+      "untriagedUnrunTestFiles": 28,
       "governedRisk": {
         "score": 10,
         "band": "high",
@@ -3857,9 +3883,9 @@
     {
       "directory": "src/app/(maestro)/source/preview/workspace/__tests__",
       "testFiles": 33,
-      "unrunTestFiles": 14,
+      "unrunTestFiles": 4,
       "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 14,
+      "untriagedUnrunTestFiles": 4,
       "governedRisk": {
         "score": 10,
         "band": "high",
@@ -4087,7 +4113,7 @@
     {
       "directory": "src/lib/agent/__tests__",
       "testFiles": 33,
-      "unrunTestFiles": 31,
+      "unrunTestFiles": 28,
       "governedRisk": {
         "score": 10,
         "band": "high",
@@ -4104,7 +4130,7 @@
     {
       "directory": "src/app/(maestro)/source/preview/workspace/__tests__",
       "testFiles": 33,
-      "unrunTestFiles": 14,
+      "unrunTestFiles": 4,
       "governedRisk": {
         "score": 10,
         "band": "high",

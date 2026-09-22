@@ -450,3 +450,86 @@ jobs:
           src/__tests__/integration/source/source-award-sow-handoff-readiness.test.ts
           src/__tests__/integration/source/source-award-sow-handoff-readiness-panel.test.ts
           --runInBand
+
+      # Not catalog controls. T-556 drew twenty untriaged unrun suites from the
+      # census's own governed-risk ranking — band `high`, score 10, signal
+      # `tenant_scoped_read` — and verdicted fifteen of them `wire_into_ci`.
+      # The three steps below are that wiring (T-557). All fifteen were
+      # executed before being wired, on `9afed2c6f`: 15 suites, 280 tests, 280
+      # passed, 2.3s. No failure is imported.
+      #
+      # EXACT PATHS, not the directory, and that is the whole point of the
+      # shape. `src/app/(maestro)/source/preview/workspace/__tests__` holds 33
+      # suites, 14 of which no workflow runs: the ten below, `contractDetailRetry`
+      # which T-556's draw of twenty did not reach, and the three T-556
+      # verdicted `rewrite_as_behavior` — suites that assert substrings of
+      # source files instead of running them. A directory sweep would be
+      # shorter and would wire those three as well, admitting byte-matching
+      # into a required job as though it were behaviour. T-558 owns rewriting
+      # them; until it does, they stay unrun deliberately.
+      # `src/__tests__/behaviors/t557-unrun-suite-wiring.test.ts` asserts both
+      # halves — these fifteen reached, those three still not — through the
+      # census's four-hop resolver rather than a grep over this file.
+      #
+      # The route-group paths are quoted because bash reads an unquoted
+      # `(maestro)` as a subshell, and `--runTestsByPath` because jest reads a
+      # bare path argument as a regex, in which the same parentheses are a
+      # capture group.
+      - name: Exercise the Source preview workspace suites
+        run: >-
+          npx jest --runTestsByPath
+          "src/app/(maestro)/source/preview/workspace/__tests__/VendorCanvas.cockpit.test.tsx"
+          "src/app/(maestro)/source/preview/workspace/__tests__/WorkspaceClient.ecl-browser.test.tsx"
+          "src/app/(maestro)/source/preview/workspace/__tests__/WorkspaceExecutiveShell.evidence.test.tsx"
+          "src/app/(maestro)/source/preview/workspace/__tests__/WorkspaceExecutiveShell.performance.test.ts"
+          "src/app/(maestro)/source/preview/workspace/__tests__/governedDirectives.test.ts"
+          "src/app/(maestro)/source/preview/workspace/__tests__/moneyPrecision.test.ts"
+          "src/app/(maestro)/source/preview/workspace/__tests__/portfolioTruth.test.tsx"
+          "src/app/(maestro)/source/preview/workspace/__tests__/viewModel.explore.test.ts"
+          "src/app/(maestro)/source/preview/workspace/__tests__/workspaceNavigation.test.ts"
+          "src/app/(maestro)/source/preview/workspace/__tests__/workspaceUrlState.test.ts"
+          --runInBand
+
+      # THIRTEEN of T-556's fifteen are wired here, not fifteen. Two are held
+      # out, and deliberately so: in both cases an EARLIER record already
+      # quarantines the file for a reason T-556 did not read, and wiring past a
+      # stated reason on the strength of "it is green" is the shape of defect
+      # this backlog exists to stop. Both are filed as T-599.
+      #
+      # 1. `(maestro)/source/__tests__/tenant-resolution-source-contract.test.tsx`.
+      #    `docs/releases/records/2026-09-21-source-readiness-route-suite-ownership.md`
+      #    holds it unwired "until it is green, derives expectations from the
+      #    chosen canonical tenant authority, and proves opposite-tenant
+      #    refusal". Only the first third is discharged: the suite was rewritten
+      #    to render rather than scan source text and it is green, but it
+      #    derives from neither of the two `CANONICAL_TENANT_KEYS` exports, and
+      #    its strongest isolation case proves an UNRESOLVED tenant fails
+      #    closed — not that one tenant is refused another's data.
+      #
+      # 2. The legacy-compatibility database client's suite under
+      #    `src/lib/__tests__/` — named exactly in the `WITHHELD` constant of
+      #    the guard suite, which this file may not repeat, for the reason that
+      #    follows. The record that wired its siblings,
+      #    `2026-09-20-wire-governance-tenant-green-suites.md`, left it out
+      #    because "the architecture gate rejects newly owned legacy client
+      #    dependencies". That reason is live, not stale, and it was measured
+      #    rather than taken on trust: adding the step and running
+      #    `npm run audit:architecture-rules` returns one violation of
+      #    `NO_SUPABASE_RUNTIME` against this workflow file. The rule is a line
+      #    scan over `.github/workflows`, so the step could not be added here
+      #    even to be quarantined — which is also why the paragraph above
+      #    describes the path instead of printing it. A required check forbids
+      #    it; this one is not a judgement call at all.
+
+      # Agent-side suites from the same draw: artifact sentinel parsing, the
+      # mission text derived for a tenant, and the editorial admin surface that
+      # must not leak one tenant's content into another's. Named individually
+      # rather than sweeping `src/lib/agent/__tests__`, which holds unrelated
+      # untriaged debt this item did not measure.
+      - name: Exercise agent artifact, mission and editorial-isolation suites
+        run: >-
+          npx jest --runTestsByPath
+          src/lib/agent/__tests__/admin-editorial-tenant-isolation.test.ts
+          src/lib/agent/__tests__/agent-mission-derived.test.ts
+          src/lib/agent/__tests__/artifacts.test.ts
+          --runInBand
