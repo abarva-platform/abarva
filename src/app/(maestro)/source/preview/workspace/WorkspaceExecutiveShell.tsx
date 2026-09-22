@@ -3401,7 +3401,39 @@ function ContractPage({
           provenance line, and states its figures once.
         */}
         {tab === "Optimize" ? (
-          <ContractOptimizeContent vm={vm} />
+          <>
+            <ContractOptimizeContent vm={vm} />
+            {/*
+              The value-type ledger and the evidence gate follow the Optimize
+              body because Optimize no longer has a column for them to sit
+              beside.
+
+              Both used to render in the right-hand context panel. That panel is
+              not built on this tab any more — Optimize took the full three
+              columns — and both Optimize branches were left behind inside it,
+              each under a `tab === "Optimize"` test nested in a
+              `tab !== "Optimize"` one. Neither could run, so the tab lost them
+              silently rather than by decision.
+
+              They are the two claims with no other home here. The lever table
+              renders the levers and the sequence view renders their order, but
+              only the ledger keeps candidate, claimed and realized value in
+              separate columns that never sum, and only the gate names what a
+              signal row still needs before it can carry value at all. Both are
+              standing context for every sub-tab, so they close the tab rather
+              than flanking it.
+            */}
+            {vm.opportunityView ? (
+              <>
+                <PanelHead
+                  eyebrow="Optimization gates"
+                  title="What can be claimed"
+                />
+                <ContractValueTypeStack view={vm.opportunityView} />
+                <ContractOptimizeGateStatement vm={vm} />
+              </>
+            ) : null}
+          </>
         ) : null}
         {tab === "Economics" && detailReady && vm.detail?.spendMonths?.length ? (
           // One chart of these rows, not two. The briefing carries the
@@ -3528,33 +3560,25 @@ function ContractPage({
           reads as a quiet statement beside the tab instead.
         */}
         {/*
-          Optimize keeps its gate and loses its restatement.
+          Optimize is not one of the tabs that reaches this panel.
 
-          The statement is keyed on the Contract 360 tab, not the Optimize
-          sub-tab, so the same paragraph stood on Levers, Sequence and
-          Comparator alike. On each of them it restated what the reader was
-          already looking at: the reviewed body is the lever list and the ask
-          sequence written as prose, plus a row-count line. The lever table
-          renders those levers with their asks, the sequence view renders their
-          order, and the refusal chips render the gates — all in structured
-          form, three feet to the left.
-
-          What only the statement says is the evidence gate: the one sentence
-          naming what a signal row still needs before it can carry value. That
-          survives here on its own.
+          This used to be a `tab === "Optimize" ? gate : statement` choice, and
+          the comment here described the gate as surviving "here on its own".
+          Neither is true any more: this whole section is skipped on Optimize,
+          so the Optimize arm of that choice could never be taken and the gate
+          it named rendered nowhere at all. The gate now renders at the end of
+          the Optimize body, where the tab can actually show it; every tab that
+          does reach this panel wants the statement, so there is no longer a
+          choice to make here.
         */}
-        {tab === "Optimize" && vm.opportunityView ? (
-          <ContractOptimizeGateStatement vm={vm} />
-        ) : (
-          <ContractGovernedStatement
-            contract={contract}
-            coverage={coverage}
-            headlineOnly={narrativeBodyIsAlreadyOnScreen(tab, vm)}
-            scopeRows={scopeRows}
-            tab={tab}
-            vm={vm}
-          />
-        )}
+        <ContractGovernedStatement
+          contract={contract}
+          coverage={coverage}
+          headlineOnly={narrativeBodyIsAlreadyOnScreen(tab, vm)}
+          scopeRows={scopeRows}
+          tab={tab}
+          vm={vm}
+        />
       </section> : null}
 
       {tab === "Story" ? <ProductShellCommercialPostureStrip vm={vm} /> : null}
