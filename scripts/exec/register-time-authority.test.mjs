@@ -23,6 +23,7 @@ import os from "node:os";
 import path from "node:path";
 import { execFileSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
+import { resolveClaimOwnership } from "./register-time-authority.mjs";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const CONTROL = path.join(HERE, "register-time-authority.mjs");
@@ -67,6 +68,35 @@ function run(args) {
 
 const NOW = "2026-09-21T17:00:00Z";
 const SINCE = "2026-09-21T00:00:00Z";
+
+// ---------------------------------------------------------------------------
+// T-594. A scheduled task name identifies a family of runs, not one owner.
+// Resume authority belongs only to the exact run identity that wrote a claim.
+// Parallel siblings may take other work, but neither may adopt the other's
+// item merely because their base agent names match.
+// ---------------------------------------------------------------------------
+{
+  const current = "source-backlog-executor#20260922T054050Z";
+  check(
+    "the exact run identity may resume its own claim",
+    resolveClaimOwnership(current, current) === "own",
+  );
+  check(
+    "a sibling run under the same base agent cannot adopt the claim",
+    resolveClaimOwnership(
+      "source-backlog-executor#20260922T045559Z",
+      current,
+    ) === "sibling",
+  );
+  check(
+    "an unsuffixed base-agent claim is not treated as this run's claim",
+    resolveClaimOwnership("source-backlog-executor", current) === "legacy_other",
+  );
+  check(
+    "an invalid current run identity fails closed",
+    resolveClaimOwnership(current, "source-backlog-executor") === "invalid_current",
+  );
+}
 
 // ---------------------------------------------------------------------------
 // 1. A stamp in the future of the moment the file is read is always wrong, and
