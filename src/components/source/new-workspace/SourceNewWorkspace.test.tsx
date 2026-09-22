@@ -914,6 +914,11 @@ describe("SourceNewWorkspace", () => {
     expect(
       screen.getAllByRole("link", { name: "Resolve evidence gap" }),
     ).toHaveLength(1);
+    expect(
+      screen
+        .getByRole("link", { name: "Resolve evidence gap" })
+        .getAttribute("href"),
+    ).toBe("/source/events/event-1?workspace=files");
   });
 
   it("keeps high-volume intelligence review items behind an accessible expansion control", () => {
