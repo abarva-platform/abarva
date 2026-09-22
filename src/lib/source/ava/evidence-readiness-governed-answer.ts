@@ -22,6 +22,8 @@ import {
   listSourceArtifactsForSourceEventIdWithContent,
   type SourceArtifactRegistryRecordWithContent,
 } from "@/lib/source/artifact-registry";
+import { buildSourceArtifactLifecycleSummary } from "@/lib/source/artifact-lifecycle-matrix";
+import type { SourceArtifactLifecycleRow } from "@/lib/source/artifact-lifecycle-matrix";
 import {
   buildSourceArtifactParseBacklogReport,
   type SourceArtifactParseBacklogItem,
@@ -101,7 +103,8 @@ async function listArtifactsForAliases(
 ): Promise<SourceArtifactRegistryRecordWithContent[]> {
   const byId = new Map<string, SourceArtifactRegistryRecordWithContent>();
   for (const alias of aliases) {
-    const artifacts = await listSourceArtifactsForSourceEventIdWithContent(alias);
+    const artifacts =
+      await listSourceArtifactsForSourceEventIdWithContent(alias);
     for (const artifact of artifacts) {
       if (!byId.has(artifact.id)) byId.set(artifact.id, artifact);
     }
@@ -115,7 +118,9 @@ function citationIdsForArtifacts(
 ): string[] {
   const artifactIds = new Set(artifacts.map((artifact) => artifact.id));
   return citations
-    .filter((citation) => citation.recordId && artifactIds.has(citation.recordId))
+    .filter(
+      (citation) => citation.recordId && artifactIds.has(citation.recordId),
+    )
     .map((citation) => citation.id);
 }
 
@@ -147,9 +152,15 @@ function buildEvidenceReadinessChart(args: {
       type: "horizontal-bar",
       data: [
         { metric: "Stored", count: args.report.counts.totalArtifacts },
-        { metric: "Parser-ready", count: args.report.counts.parserReadyArtifacts },
+        {
+          metric: "Parser-ready",
+          count: args.report.counts.parserReadyArtifacts,
+        },
         { metric: "Parsed", count: args.report.counts.parsedArtifacts },
-        { metric: "Search-ready", count: args.report.counts.searchReadyArtifacts },
+        {
+          metric: "Search-ready",
+          count: args.report.counts.searchReadyArtifacts,
+        },
         {
           metric: "Graph-projected",
           count: args.report.counts.graphProjectedArtifacts,
@@ -201,8 +212,7 @@ function buildEvidenceReadinessTable(args: {
       graph: label(item.graphReadiness),
       nextAction: item.note,
     })),
-    note:
-      "This is a registry status view, not proof that evidence has been parsed, indexed, promoted, or made agent-ready.",
+    note: "This is a registry status view, not proof that evidence has been parsed, indexed, promoted, or made agent-ready.",
     citationIds: args.citationIds,
   };
 }
@@ -224,18 +234,87 @@ function evidenceStatusForReport(
   return `${c.totalArtifacts} Source files are stored. ${c.parsedArtifacts} ${isAre(c.parsedArtifacts)} parsed, ${c.searchReadyArtifacts} ${isAre(c.searchReadyArtifacts)} search-ready, ${c.parserReadyArtifacts} ${isAre(c.parserReadyArtifacts)} parser-ready, and ${exceptionCount} ${hasHave(exceptionCount)} parser or review exceptions. ${parsingGap} still ${requiresRequire(parsingGap)} parsing and ${searchGap} still ${requiresRequire(searchGap)} search indexing. I am not claiming OCR, vector indexing, enterprise-context promotion, or agent-ready status unless those states already exist in the registry.`;
 }
 
+function reconcileMissingInputsWithArtifactRegistry(args: {
+  missingInputs: readonly string[];
+  artifacts: readonly SourceArtifactRegistryRecordWithContent[];
+}): { missing: string[]; registeredOpen: string[] } {
+  const lifecycleRows = buildSourceArtifactLifecycleSummary(
+    args.artifacts,
+  ).rows;
+  const missing: string[] = [];
+  const registeredOpen: string[] = [];
+
+  for (const rawInput of args.missingInputs) {
+    const input = rawInput.trim();
+    if (!input) continue;
+
+    const matchedRow = lifecycleRows.find((row) =>
+      missingInputMentionsArtifact(input, row),
+    );
+    if (
+      matchedRow &&
+      matchedRow.lifecycleState !== "not_registered" &&
+      looksLikeMissingArtifactClaim(input)
+    ) {
+      registeredOpen.push(
+        `${matchedRow.name} is registered as ${matchedRow.lifecycleLabel} (${matchedRow.approvalLabel})`,
+      );
+      continue;
+    }
+
+    missing.push(input);
+  }
+
+  return {
+    missing: uniqueStrings(missing),
+    registeredOpen: uniqueStrings(registeredOpen),
+  };
+}
+
+function looksLikeMissingArtifactClaim(input: string): boolean {
+  return /\b(no|not|missing|without)\b.*\b(registered|artifact|file|document)\b/i.test(
+    input,
+  );
+}
+
+function missingInputMentionsArtifact(
+  input: string,
+  row: SourceArtifactLifecycleRow,
+): boolean {
+  const normalizedInput = normalizeArtifactMatchText(input);
+  return [row.code, row.name, row.name.replace(/\bwith\b.*$/i, "").trim()]
+    .map(normalizeArtifactMatchText)
+    .filter(Boolean)
+    .some((needle) => normalizedInput.includes(needle));
+}
+
+function normalizeArtifactMatchText(value: string): string {
+  return value
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
+}
+
+function uniqueStrings(values: readonly string[]): string[] {
+  return [...new Set(values)];
+}
+
 function directAnswerForReport(
   report: SourceArtifactParseBacklogReport,
   stageContext?: BuildEvidenceReadinessGovernedAnswerInput["stageContext"],
+  artifacts: readonly SourceArtifactRegistryRecordWithContent[] = [],
 ): string {
   const evidenceStatus = evidenceStatusForReport(report);
   if (!stageContext) return evidenceStatus;
 
-  const missingInputs = (stageContext.missingInputs ?? [])
-    .map((input) => input.trim())
-    .filter(Boolean);
+  const artifactAwareInputs = reconcileMissingInputsWithArtifactRegistry({
+    missingInputs: stageContext.missingInputs ?? [],
+    artifacts,
+  });
   const hasRecordedOpenCondition = Boolean(
-    stageContext.blocker?.trim() || missingInputs.length > 0,
+    stageContext.blocker?.trim() ||
+    artifactAwareInputs.missing.length > 0 ||
+    artifactAwareInputs.registeredOpen.length > 0,
   );
   const phaseStatus = hasRecordedOpenCondition
     ? `${stageContext.stageLabel} is not complete.`
@@ -247,10 +326,14 @@ function directAnswerForReport(
     ? ` Recorded blocker: ${stageContext.blocker.trim()}.`
     : " No recorded phase blocker.";
   const missing =
-    missingInputs.length > 0
-      ? ` Required inputs still missing: ${missingInputs.join("; ")}.`
+    artifactAwareInputs.missing.length > 0
+      ? ` Required inputs still missing: ${artifactAwareInputs.missing.join("; ")}.`
       : " No required phase inputs are recorded as missing.";
-  return `${phaseStatus}${nextAction}${blocker}${missing} Evidence processing: ${evidenceStatus}`;
+  const registeredOpen =
+    artifactAwareInputs.registeredOpen.length > 0
+      ? ` Registered artifact states requiring action: ${artifactAwareInputs.registeredOpen.join("; ")}.`
+      : "";
+  return `${phaseStatus}${nextAction}${blocker}${missing}${registeredOpen} Evidence processing: ${evidenceStatus}`;
 }
 
 function businessImplicationForReport(
@@ -324,7 +407,9 @@ function blockedAnswer(args: {
 export async function buildEvidenceReadinessGovernedAnswer(
   input: BuildEvidenceReadinessGovernedAnswerInput,
 ): Promise<AvaAnswerPacket | null> {
-  const governedClientKey = governedClientKeyForSourceClientKey(input.clientKey);
+  const governedClientKey = governedClientKeyForSourceClientKey(
+    input.clientKey,
+  );
   if (!governedClientKey) return null;
 
   const aliases = normalizedAliases(input);
@@ -371,7 +456,7 @@ export async function buildEvidenceReadinessGovernedAnswer(
       : "evidence_processing_readiness",
     status: report.status === "empty" ? "no_data" : "answered",
     tenantFencePassed: true,
-    directAnswer: directAnswerForReport(report, input.stageContext),
+    directAnswer: directAnswerForReport(report, input.stageContext, artifacts),
     businessImplication: businessImplicationForReport(report),
     recommendation:
       input.stageContext?.nextAction?.trim() || recommendationForReport(report),
