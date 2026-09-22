@@ -855,6 +855,7 @@ export function SourceAnalyticsCanvas({
               negotiationBriefCandidate={negotiationBriefCandidate}
               vendorResponseParseReports={vendorResponseParseReports}
               normalizedResponsePackages={normalizedResponsePackages}
+              artifacts={artifacts}
               awardSowHandoffReadiness={
                 awardSowHandoffReadiness ?? computedAwardSowHandoffReadiness
               }
@@ -1312,6 +1313,7 @@ function SourceWorkspace({
   negotiationBriefCandidate,
   vendorResponseParseReports,
   normalizedResponsePackages,
+  artifacts,
   awardSowHandoffReadiness,
   evidenceStates,
   eventDisplayName,
@@ -1331,6 +1333,7 @@ function SourceWorkspace({
   negotiationBriefCandidate?: Stage07NegotiationBriefCandidate | null;
   vendorResponseParseReports?: VendorResponseParseReport[];
   normalizedResponsePackages?: readonly NormalizedVendorResponsePackage[];
+  artifacts: readonly SourceShellArtifactLike[];
   awardSowHandoffReadiness?: SourceAwardSowHandoffReadiness | null;
   evidenceStates?: readonly SourceEventEvidence[];
   eventDisplayName?: string;
@@ -1406,6 +1409,14 @@ function SourceWorkspace({
             evaluationDecisionView={vendorEvaluationDecisionView}
             parseReports={vendorResponseParseReports}
             normalizedResponsePackages={normalizedResponsePackages}
+            artifacts={artifacts}
+            responseProposalAvailabilityState={
+              evidenceStates?.find(
+                (state) =>
+                  state.requirementId === "EVID-SRC-RESP-PROPOSALS",
+              )?.currentState ?? null
+            }
+            onResponseUploaded={onClientFinalAccepted}
             contractOptimizationProfile={contractOptimizationProfile}
             eventDisplayName={eventDisplayName}
             documentWorkspace={null}

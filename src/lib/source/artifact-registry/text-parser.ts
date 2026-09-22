@@ -10,6 +10,7 @@ import 'server-only';
 
 import { getAzureWriteFluentClient } from '@/lib/data-plane/postgresCompat';
 import type { SourceStageKey } from '../types';
+import { vendorIdFromResponseArtifactKind } from '../vendor-response-intake';
 import { updateSourceArtifactProcessingState } from './index';
 import type {
   SourceArtifactFamily,
@@ -198,6 +199,7 @@ export async function parseSourceTextArtifact(
   const labeledLines = extractLabeledLines(text);
   const pricing = isPricingFamily(artifact.artifactFamily) ? extractPricingComponents(text) : [];
   const provenance = provenanceFor(artifact);
+  const vendorId = vendorIdFromResponseArtifactKind(artifact.artifactKind);
 
   const chunkRows = chunks.map((chunk, index) => ({
     artifact_id: artifact.id,
@@ -300,7 +302,7 @@ export async function parseSourceTextArtifact(
         artifact_id: artifact.id,
         tenant_key: artifact.tenantKey,
         source_event_id: artifact.sourceEventId,
-        vendor_id: null,
+        vendor_id: vendorId,
         commitment_type: line.kind,
         commitment_text: line.text,
         metric: {},
@@ -318,7 +320,7 @@ export async function parseSourceTextArtifact(
       artifact_id: artifact.id,
       tenant_key: artifact.tenantKey,
       source_event_id: artifact.sourceEventId,
-      vendor_id: null,
+      vendor_id: vendorId,
       component_key: `PRICE-${String(index + 1).padStart(3, '0')}`,
       component_label: component.label,
       amount_usd: component.amountUsd,

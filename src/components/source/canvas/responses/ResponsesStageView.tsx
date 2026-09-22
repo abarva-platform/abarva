@@ -1,6 +1,8 @@
 "use client";
 
 import type { CSSProperties, ReactNode } from "react";
+import type { SourceShellArtifactLike } from "@/lib/source/source-event-shell-v2";
+import type { SourceEventEvidenceCurrentState } from "@/lib/source/canvas-substrate";
 import type { SourceVendorResponseCompleteness } from "@/lib/source/vendor-response-types";
 import type {
   VendorBafoInstructionPack,
@@ -25,6 +27,7 @@ import { VendorResponseIntelligenceBrief } from "./VendorResponseIntelligenceBri
 import { VendorResponsePackageCockpit } from "./VendorResponsePackageCockpit";
 import { VendorResponseProfilesPanel } from "./VendorResponseProfilesPanel";
 import { NormalizedResponseQualityPanel } from "./NormalizedResponseQualityPanel";
+import { VendorResponseIntakePanel } from "./VendorResponseIntakePanel";
 import type { NormalizedVendorResponsePackage } from "@/lib/source/vendor-response-matrix";
 
 export function ResponsesStageView({
@@ -40,6 +43,9 @@ export function ResponsesStageView({
   eventDisplayName,
   documentWorkspace,
   normalizedResponsePackages,
+  artifacts = [],
+  responseProposalAvailabilityState = null,
+  onResponseUploaded,
 }: {
   readiness?: SourceVendorResponseCompleteness;
   profileSet?: VendorResponseProfileSet | null;
@@ -53,6 +59,9 @@ export function ResponsesStageView({
   eventDisplayName?: string;
   documentWorkspace: ReactNode;
   normalizedResponsePackages?: readonly NormalizedVendorResponsePackage[];
+  artifacts?: readonly SourceShellArtifactLike[];
+  responseProposalAvailabilityState?: SourceEventEvidenceCurrentState | null;
+  onResponseUploaded?: () => void;
 }) {
   const records = readiness?.records ?? [];
   const blocker = readiness?.blockers[0];
@@ -89,6 +98,18 @@ export function ResponsesStageView({
 
       {!isContractOptimization ? (
         <>
+          <VendorResponseIntakePanel
+            eventId={readiness?.eventId ?? ""}
+            suppliers={records.map((record) => ({
+              vendorId: record.vendorId,
+              vendorName: record.vendorName,
+            }))}
+            artifacts={artifacts}
+            responseProposalAvailabilityState={
+              responseProposalAvailabilityState
+            }
+            onUploaded={onResponseUploaded}
+          />
           <div style={STATUS_ROW}>
             {records.length === 0 ? (
               <StatusCard
