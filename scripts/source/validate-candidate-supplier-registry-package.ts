@@ -46,6 +46,14 @@ const REQUIRED_NEGATIVE_REASONS = [
   "missing_contact_authority",
 ] as const;
 
+function categoryRoutedArchetypeIds(): Set<string> {
+  return new Set(
+    Object.values(CATEGORY_TO_ARCHETYPE_ID).filter(
+      (id): id is string => Boolean(id),
+    ),
+  );
+}
+
 const APPROVED_AUTHORITY_STATES = new Set([
   "candidate_authority_reviewed",
   "candidate_authority_restricted",
@@ -241,7 +249,9 @@ export function buildCandidateSupplierRegistryValidation(input: {
   inputPath?: string;
 }): CandidateSupplierRegistryValidation {
   const rows = parseRows(input.csvText);
+  const routedArchetypeIds = categoryRoutedArchetypeIds();
   const registeredArchetypes = listSourceArchetypes()
+    .filter((archetype) => routedArchetypeIds.has(archetype.id))
     .map((archetype) => ({ id: archetype.id, name: archetype.name }))
     .sort((left, right) => left.id.localeCompare(right.id));
   const categoriesByArchetype = new Map<string, string[]>();

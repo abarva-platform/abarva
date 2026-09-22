@@ -195,6 +195,8 @@ describe('Source archetype industry-intelligence coverage', () => {
 
   it('declares AI engineering partner metrics without inventing public benchmarks', () => {
     const pack = SOURCE_ARCHETYPE_INDUSTRY_INTELLIGENCE.AI_ENGINEERING_PARTNER;
+    const genericProductEngineering =
+      SOURCE_ARCHETYPE_INDUSTRY_INTELLIGENCE.DIGITAL_PRODUCT_ENGINEERING;
 
     expect(pack.benchmarkMetrics.map((metric) => metric.key)).toEqual([
       'ai_partner_role_rate',
@@ -216,5 +218,10 @@ describe('Source archetype industry-intelligence coverage', () => {
         }),
       ]),
     );
+    expect(genericProductEngineering.benchmarkMetrics.map((metric) => metric.key)).toEqual([
+      'dpe_squad_cost',
+      'dpe_release_throughput',
+      'dpe_defect_escape',
+    ]);
   });
 });

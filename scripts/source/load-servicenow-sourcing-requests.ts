@@ -5,7 +5,7 @@ import path from "node:path";
 import { pathToFileURL } from "node:url";
 import Papa from "papaparse";
 import { Client } from "pg";
-import { listSourceArchetypes } from "../../src/lib/source/archetypes/registry";
+import { CATEGORY_TO_ARCHETYPE_ID } from "../../src/lib/source/archetypes/event-archetype-resolver";
 import {
   adaptServiceNowSourcingRequestExtract,
   type ServiceNowSourcingRequestRow,
@@ -15,6 +15,16 @@ import { postgresClientOptions } from "../../src/scripts/postgres-client-options
 const DEFAULT_INPUT =
   "datasets/source-servicenow-sourcing-requests-synthetic-v1/servicenow_sourcing_requests.csv";
 const APPLY_CONFIRMATION = "APPLY_SERVICENOW_REQUESTS";
+
+function categoryRoutedArchetypeIds(): string[] {
+  return [
+    ...new Set(
+      Object.values(CATEGORY_TO_ARCHETYPE_ID).filter(
+        (id): id is string => Boolean(id),
+      ),
+    ),
+  ].sort();
+}
 
 export type ServiceNowImportArgs = {
   apply: boolean;
@@ -225,9 +235,7 @@ export function buildServiceNowImportPlan(input: {
     rows: parsed.data.map((row, index) => ({ row, sourceRow: index + 2 })),
     loadedSegments: [],
   });
-  const expectedArchetypes = listSourceArchetypes()
-    .map((archetype) => archetype.id)
-    .sort();
+  const expectedArchetypes = categoryRoutedArchetypeIds();
   const archetypes = [
     ...new Set(
       requests.flatMap((request) =>
@@ -242,7 +250,7 @@ export function buildServiceNowImportPlan(input: {
   );
   if (input.args.requireAllArchetypes && missingArchetypes.length > 0) {
     throw new Error(
-      `Synthetic ServiceNow extract does not cover registered archetypes: ${missingArchetypes.join(", ")}`,
+      `Synthetic ServiceNow extract does not cover category-routed archetypes: ${missingArchetypes.join(", ")}`,
     );
   }
 

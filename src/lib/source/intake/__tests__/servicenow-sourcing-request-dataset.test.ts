@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import Papa from "papaparse";
-import { listSourceArchetypes } from "../../archetypes/registry";
+import { CATEGORY_TO_ARCHETYPE_ID } from "../../archetypes/event-archetype-resolver";
 import {
   adaptServiceNowSourcingRequest,
   type ServiceNowSourcingRequestRow,
@@ -11,6 +11,14 @@ const datasetPath = path.join(
   process.cwd(),
   "datasets/source-servicenow-sourcing-requests-synthetic-v1/servicenow_sourcing_requests.csv",
 );
+
+function categoryRoutedArchetypeIds(): Set<string> {
+  return new Set(
+    Object.values(CATEGORY_TO_ARCHETYPE_ID).filter(
+      (id): id is string => Boolean(id),
+    ),
+  );
+}
 
 describe("synthetic ServiceNow sourcing-request pack", () => {
   const csv = fs.readFileSync(datasetPath, "utf8");
@@ -35,7 +43,7 @@ describe("synthetic ServiceNow sourcing-request pack", () => {
     );
   });
 
-  it("maps detailed request input across every registered Source archetype", () => {
+  it("maps detailed request input across every category-routed Source archetype", () => {
     const requests = parsed.data.map((row, index) =>
       adaptServiceNowSourcingRequest({
         tenantKey: "internal-golden",
@@ -47,7 +55,7 @@ describe("synthetic ServiceNow sourcing-request pack", () => {
     const resolved = new Set(
       requests.map((request) => request.mappingProposal.archetypeId),
     );
-    const registered = new Set(listSourceArchetypes().map((item) => item.id));
+    const registered = categoryRoutedArchetypeIds();
 
     expect(resolved).toEqual(registered);
     for (const request of requests) {
@@ -58,4 +66,3 @@ describe("synthetic ServiceNow sourcing-request pack", () => {
     }
   });
 });
-

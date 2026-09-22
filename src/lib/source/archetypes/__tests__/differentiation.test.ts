@@ -33,6 +33,7 @@ describe('Source Event Archetype Framework — registry integrity', () => {
         'CLOUD_FINOPS',
         'CONTACT_CENTER_CX',
         'CONTRACT_RENEWAL',
+        'DIGITAL_PRODUCT_ENGINEERING',
         'ERP_SI_IMPLEMENTATION',
         'MSSP_CYBER',
         'STAFF_AUGMENTATION',
@@ -137,7 +138,15 @@ describe('Source Event Archetype Framework — DIFFERENT DNA per event type', ()
     const genericEngineering = getSourceArchetype('DIGITAL_PRODUCT_ENGINEERING');
 
     expect(aiEngineering).toBeDefined();
-    expect(genericEngineering).toBeUndefined();
+    expect(genericEngineering).toBeDefined();
+    expect(genericEngineering?.requiredEvidenceFamilies.map((item) => item.key)).toEqual(
+      expect.arrayContaining([
+        'product_backlog_roadmap',
+        'velocity_baseline',
+        'quality_baseline',
+        'repo_ip_baseline',
+      ]),
+    );
     expect(aiEngineering?.requiredEvidenceFamilies.map((item) => item.key)).toEqual(
       expect.arrayContaining([
         'ai_use_case_portfolio',
@@ -156,6 +165,7 @@ describe('Source Event Archetype Framework — DIFFERENT DNA per event type', ()
       expect.arrayContaining(['eval_acceptance', 'ip_portability']),
     );
     expect(aiEngineering?.agentGuidance.systemFraming).toMatch(/aVa/i);
+    expect(genericEngineering?.agentGuidance.systemFraming).not.toMatch(/aVa/i);
   });
 });
 

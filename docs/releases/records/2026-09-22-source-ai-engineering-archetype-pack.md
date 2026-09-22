@@ -10,13 +10,13 @@
 
 ## Plain-English Summary
 
-Adds a dedicated Source event archetype for AI engineering partner selection. The existing category was previously routed through the generic digital product engineering pack; this release replaces that active generic route with its own evidence contract, scorecard, pricing model, clause protections, negotiation levers, industry-intelligence metric contract, governed aVa context, and synthetic candidate-row coverage so Source does not substitute a generic product-engineering playbook for an AI partner event.
+Adds a dedicated Source event archetype for AI engineering partner selection. The existing category was previously routed through the generic digital product engineering pack; this release adds a separate AI evidence contract, scorecard, pricing model, clause protections, negotiation levers, industry-intelligence metric contract, governed aVa context, and synthetic candidate-row coverage so Source does not substitute a generic product-engineering playbook for an AI partner event.
 
 ## Layer Impact
 
 - Release lane: `public-demo`.
-- Layer 3 / governed contract model: adds one static Source archetype declaration, removes the prior generic engineering pack from the active registry, updates the tenant-neutral industry-intelligence requirements declaration, and realigns the public synthetic candidate registry rows to the active archetype. It does not add or load any client facts, benchmarks, suppliers, pricing observations, or evidence.
-- Layer 4 Source projection: Source New event intelligence now resolves the existing AI engineering partner category to the dedicated playbook and surfaces its evidence gaps and metric requirements. No UI, route, event state, or write path changes.
+- Layer 3 / governed contract model: adds one static Source archetype declaration, keeps the generic product-engineering pack registered, adds separate tenant-neutral industry-intelligence requirements for the AI pack, and realigns the public synthetic candidate registry rows to the active archetype. It does not add or load any client facts, benchmarks, suppliers, pricing observations, or evidence.
+- Layer 4 Source projection: Source New event intelligence now resolves the existing AI engineering partner category to the dedicated playbook and surfaces its evidence gaps and metric requirements. Fixture completeness checks now use the category-routed archetype denominator so registry-only packs can remain available without pretending they have a live classifier route. No UI, route, event state, or write path changes.
 
 ## Client Applicability
 
@@ -34,6 +34,7 @@ Adds a dedicated Source event archetype for AI engineering partner selection. Th
 - `datasets/source/candidate-supplier-registry-synthetic-v1/candidate_supplier_registry.csv`
 - `datasets/source/candidate-supplier-registry-synthetic-v1/FIELD_GUIDE.md`
 - `reports/source/servicenow-request-acceptance-matrix.json`
+- Fixture completeness checks and tests for category-routed archetype coverage.
 - Focused tests for resolver, registry differentiation, industry-intelligence coverage, and Source New event intelligence.
 
 ## QA / Validation
@@ -43,7 +44,7 @@ Adds a dedicated Source event archetype for AI engineering partner selection. Th
 - Pass: `npx jest src/__tests__/integration/source/source-servicenow-request-loader.test.ts src/lib/source/intake/__tests__/servicenow-request-event-handoff.test.ts src/lib/source/intake/__tests__/servicenow-sourcing-request-dataset.test.ts src/__tests__/integration/source/source-candidate-supplier-registry-loader.test.ts --runInBand`.
 - Pass: `npx jest src/__tests__/behaviors/source-servicenow-request-acceptance-harness.test.ts --runInBand`.
 - Pass: mutation changing the category mapping back to the generic digital product engineering pack failed the resolver and Source New event-intelligence tests.
-- Pass: mutation removing the new pack from the shipped registry failed registry integrity and industry-intelligence coverage tests.
+- Pass: registry and industry-intelligence coverage tests require both generic product engineering and AI engineering partner packs to stay registered.
 - Pass: mutation allowing official-public source authority for AI partner metrics failed the industry-intelligence benchmark-governance test.
 - Pass: `npm run typecheck` exited 0.
 - Pass: `npx eslint src/` exited 0 with existing warnings and no errors.
@@ -66,7 +67,7 @@ Squash-merge after validation and hosted checks pass. The repo-owned Azure Conta
 
 ## Rollback Plan
 
-Revert the PR. This restores the prior category-to-archetype mapping and removes the static archetype/industry declarations and tests. No database rollback, tenant data repair, supplier communication cleanup, or event-state repair is required.
+Revert the PR. This restores the prior category-to-archetype mapping and removes the new static AI archetype/industry declarations and tests. No database rollback, tenant data repair, supplier communication cleanup, or event-state repair is required.
 
 ## Audit Evidence
 
