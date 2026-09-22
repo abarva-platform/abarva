@@ -12,6 +12,8 @@ export type SourceIntakeRequestSummary = {
   description: string;
   trigger?: string | null;
   requestedOutcome?: string | null;
+  requestedByUserId?: string | null;
+  requestedByDisplayName?: string | null;
   requestedFor: string | null;
   businessDomain: string | null;
   businessFunction: string | null;
@@ -100,6 +102,7 @@ const textList = (value: unknown): string[] =>
 
 function mapRow(row: QueueRow): SourceIntakeRequestSummary {
   const normalized = asRecord(row.normalized_request);
+  const requestedBy = asRecord(normalized.requestedBy);
   const organization = asRecord(normalized.organization);
   const rawValue = asRecord(normalized.value);
   const scope = asRecord(normalized.scope);
@@ -127,6 +130,8 @@ function mapRow(row: QueueRow): SourceIntakeRequestSummary {
     description: text(normalized.description) ?? "No description recorded.",
     trigger: text(normalized.trigger),
     requestedOutcome: text(normalized.requestedOutcome),
+    requestedByUserId: text(requestedBy.userId),
+    requestedByDisplayName: text(requestedBy.displayName),
     requestedFor: text(organization.requestedFor),
     businessDomain: text(organization.businessDomain),
     businessFunction: text(organization.businessFunction),

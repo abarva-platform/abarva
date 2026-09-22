@@ -15,10 +15,10 @@
     "No timestamp is recorded, so refreshing this file on an unchanged tree is a no-op."
   ],
   "counts": {
-    "testFiles": 2397,
-    "coveredTestFiles": 1914,
-    "pullRequestCoveredTestFiles": 1911,
-    "uncoveredTestFiles": 483,
+    "testFiles": 2399,
+    "coveredTestFiles": 1915,
+    "pullRequestCoveredTestFiles": 1912,
+    "uncoveredTestFiles": 484,
     "directoriesWithTests": 483,
     "directoriesFullyCovered": 280,
     "directoriesPartiallyCovered": 26,
@@ -26,7 +26,7 @@
     "directoriesWithUnrunTestFiles": 203,
     "directoriesWithUntriagedUnrunTestFiles": 193,
     "declaredQuarantineTestFiles": 49,
-    "untriagedUnrunTestFiles": 434,
+    "untriagedUnrunTestFiles": 435,
     "indeterminateInvocations": 0,
     "unresolvedIgnoreArguments": 0,
     "criticalGovernedRiskDirectories": 1,
@@ -179,6 +179,16 @@
       ]
     },
     {
+      "directory": "src/lib/source/new-workspace/__tests__",
+      "testFiles": 5,
+      "coveredTestFiles": 3,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 2,
+      "via": [
+        "command"
+      ]
+    },
+    {
       "directory": "src/lib/__tests__",
       "testFiles": 4,
       "coveredTestFiles": 2,
@@ -224,16 +234,6 @@
       "coveredTestFiles": 2,
       "declaredQuarantineTestFiles": 0,
       "untriagedUnrunTestFiles": 2,
-      "via": [
-        "command"
-      ]
-    },
-    {
-      "directory": "src/lib/source/new-workspace/__tests__",
-      "testFiles": 4,
-      "coveredTestFiles": 3,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 1,
       "via": [
         "command"
       ]

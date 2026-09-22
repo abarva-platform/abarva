@@ -12,6 +12,7 @@ import type { SourceEventActivityResult } from "@/lib/source/activity-log";
 import type { SourceNewEventIntelligenceView } from "@/lib/source/new-workspace/event-intelligence";
 import type { SourceNewStage04VendorPanel } from "@/lib/source/new-workspace/stage04-vendor-panel";
 import type { SourceNewStage05NdaCoverage } from "@/lib/source/new-workspace/stage05-nda-coverage";
+import type { HistoricalRequestSummary } from "@/lib/source/new-workspace/historical-request-summary";
 import {
   buildScorecardAuthorityView,
   type ScorecardAuthorityView,
@@ -1925,6 +1926,123 @@ describe("SourceNewWorkspace", () => {
     expect(screen.queryByText("Recorded earlier in this event")).toBeNull();
     // Sidebar still offers one return action
     expect(screen.getByRole("button", { name: "Current work" })).toBeTruthy();
+  });
+
+  it("mounts the governed historical Request summary and keeps one return action", () => {
+    const historicalRequestSummary: HistoricalRequestSummary = {
+      requestFacts: [
+        { key: "need", label: "Need", value: request.trigger! },
+        {
+          key: "scope",
+          label: "Scope",
+          value: "Run and enhance the application estate.",
+        },
+        {
+          key: "category",
+          label: "Category",
+          value: "Application Managed Services (AMS)",
+        },
+        {
+          key: "decision-owner",
+          label: "Decision owner",
+          value: "VP Technology Operations",
+        },
+      ],
+      originFacts: [
+        {
+          key: "source-request",
+          label: "Source request",
+          value: "ServiceNow · SRC0010042",
+        },
+        {
+          key: "requester",
+          label: "Requester",
+          value: "IT Service Portfolio Lead",
+        },
+      ],
+      mappingFacts: [
+        {
+          key: "mapping-archetype",
+          label: "Mapping archetype",
+          value: "AMS_MANAGED_SERVICES",
+        },
+        {
+          key: "mapping-decision",
+          label: "Mapping decision",
+          value: "Accepted by Procurement Lead",
+        },
+      ],
+      mappingGap: null,
+    };
+
+    render(
+      <SourceNewWorkspace
+        event={{
+          ...request,
+          currentStage: "strategy",
+          lifecycle: "active",
+          category: "ams",
+          scope: "Run and enhance the application estate.",
+          decisionOwner: "VP Technology Operations",
+        }}
+        files={[]}
+        historicalRequestSummary={historicalRequestSummary}
+      />,
+    );
+
+    const phases = within(
+      screen.getByRole("navigation", { name: "Event phases" }),
+    ).getAllByRole("button");
+    fireEvent.click(phases[0]);
+
+    const summary = screen.getByRole("region", {
+      name: "Historical Request summary",
+    });
+    expect(within(summary).getByText("A contract is nearing renewal.")).toBeTruthy();
+    expect(
+      within(summary).getByText("Run and enhance the application estate."),
+    ).toBeTruthy();
+    expect(
+      within(summary).getByText("Application Managed Services (AMS)"),
+    ).toBeTruthy();
+    expect(within(summary).getByText("VP Technology Operations")).toBeTruthy();
+    expect(within(summary).getByText("ServiceNow · SRC0010042")).toBeTruthy();
+    expect(
+      within(summary).getByText("IT Service Portfolio Lead"),
+    ).toBeTruthy();
+    expect(within(summary).getByText("AMS_MANAGED_SERVICES")).toBeTruthy();
+    expect(
+      within(summary).getByText("Accepted by Procurement Lead"),
+    ).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Current work" })).toBeTruthy();
+    expect(screen.queryByRole("link", { name: /approve|continue|advance/i })).toBeNull();
+  });
+
+  it("does not infer ServiceNow origin for historical Request work", () => {
+    render(
+      <SourceNewWorkspace
+        event={{ ...request, currentStage: "strategy", lifecycle: "active" }}
+        files={[]}
+        historicalRequestSummary={{
+          requestFacts: [
+            { key: "need", label: "Need", value: request.trigger! },
+          ],
+          originFacts: [],
+          mappingFacts: [],
+          mappingGap: null,
+        }}
+      />,
+    );
+
+    const phases = within(
+      screen.getByRole("navigation", { name: "Event phases" }),
+    ).getAllByRole("button");
+    fireEvent.click(phases[0]);
+
+    expect(
+      screen.getByRole("region", { name: "Historical Request summary" }),
+    ).toBeTruthy();
+    expect(document.body.textContent ?? "").not.toContain("ServiceNow");
   });
 
   it("names the unmet conditions for previewed phases without exposing an advance action", () => {
