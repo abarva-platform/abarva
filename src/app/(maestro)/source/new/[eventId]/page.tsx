@@ -178,6 +178,7 @@ export default async function SourceNewEventPage({
     artifacts: artifacts.map((artifact) => ({
       id: artifact.id,
       title: artifact.title,
+      fileName: artifact.fileName,
       artifactType: artifact.artifactType,
       artifactFamily: artifact.artifactFamily,
       lifecycleState: artifact.lifecycleState,
