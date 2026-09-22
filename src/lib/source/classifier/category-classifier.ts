@@ -132,6 +132,7 @@ export interface CategoryClassification {
  */
 const PATTERN_TO_CATEGORY: Readonly<Record<string, SourceCategoryId>> = {
   'PAT-SRC-AMS-001': 'ams',
+  'PAT-SRC-ERP-SI-001': 'erp_si_implementation',
   'PAT-SRC-RENEWAL-001': 'saas_renewal',
   'PAT-SRC-CAT-FINOPS-001': 'cloud_finops',
   'PAT-SRC-CAT-CDP-001': 'data_ai_platform',
@@ -161,6 +162,18 @@ const CATEGORY_KEYWORDS: Readonly<Record<SourceCategoryId, readonly RegExp[]>> =
     /l[123]\/l[123]/,
     /tier [123] (?:support|service)/,
     /service desk/,
+  ],
+  erp_si_implementation: [
+    /\berp\b/,
+    /enterprise resource planning/,
+    /systems? integrat(?:or|ion)/,
+    /implementation partner/,
+    /sap s\/?4hana/,
+    /oracle fusion/,
+    /workday implementation/,
+    /finance transformation/,
+    /global template rollout/,
+    /data migration and cutover/,
   ],
   data_ai_platform: [
     /\bcdp\b/,
@@ -247,6 +260,7 @@ const CATEGORY_KEYWORDS: Readonly<Record<SourceCategoryId, readonly RegExp[]>> =
  */
 const CATEGORY_DEFAULT_MOTION: Readonly<Record<SourceCategoryId, BuyingMotion>> = {
   ams: 'competitive_rfp',
+  erp_si_implementation: 'competitive_rfp',
   data_ai_platform: 'competitive_rfp',
   ai_engineering_partner: 'partner_selection',
   saas_renewal: 'renewal_renegotiation',
@@ -272,6 +286,7 @@ const MOTION_OVERRIDES: ReadonlyArray<{ pattern: RegExp; motion: BuyingMotion }>
  */
 const HIGH_BASELINE_RISK: ReadonlySet<SourceCategoryId> = new Set<SourceCategoryId>([
   'ams',
+  'erp_si_implementation',
   'data_ai_platform',
   'ai_engineering_partner',
   'bpo_contact_centre',

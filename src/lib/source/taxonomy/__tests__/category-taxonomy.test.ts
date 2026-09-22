@@ -21,10 +21,10 @@ const VALID_SEGMENTS: readonly TenantContextSegment[] = [
 ];
 
 describe('SOURCE_CATEGORY_TAXONOMY — structure', () => {
-  it('encodes exactly the 9 sourcing categories from the Wave 0 plan', () => {
-    expect(SOURCE_CATEGORY_IDS).toHaveLength(9);
-    expect(SOURCE_CATEGORIES).toHaveLength(9);
-    expect(Object.keys(SOURCE_CATEGORY_TAXONOMY)).toHaveLength(9);
+  it('encodes every registered sourcing category', () => {
+    expect(SOURCE_CATEGORY_IDS).toHaveLength(10);
+    expect(SOURCE_CATEGORIES).toHaveLength(10);
+    expect(Object.keys(SOURCE_CATEGORY_TAXONOMY)).toHaveLength(10);
   });
 
   it('keys every registry entry by its own id (discriminant integrity)', () => {
@@ -118,6 +118,7 @@ describe('discriminated union exhaustiveness', () => {
     function classify(category: SourceCategory): string {
       switch (category.id) {
         case 'ams':
+        case 'erp_si_implementation':
         case 'data_ai_platform':
         case 'ai_engineering_partner':
         case 'saas_renewal':

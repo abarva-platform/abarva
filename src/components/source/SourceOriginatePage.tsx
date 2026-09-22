@@ -149,6 +149,7 @@ export const SOURCE_INTAKE_CATEGORY_PICKER_DEFAULT_OPEN = true;
 
 const CATEGORY_EVENT_TYPE_BY_ID: Record<SourceCategoryId, CategoryEventType> = {
   ams: "managed_service",
+  erp_si_implementation: "software",
   data_ai_platform: "software",
   ai_engineering_partner: "consulting",
   saas_renewal: "software",

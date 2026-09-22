@@ -1,0 +1,17 @@
+{
+  "dataset_id": "source-servicenow-sourcing-requests-synthetic-v1",
+  "title": "Synthetic ServiceNow Sourcing-Help Requests V1",
+  "client_key": "corpus_global",
+  "source_layer": "tenant_context",
+  "classification": "internal",
+  "owner": "AbarVa Product Engineering",
+  "source_basis": "synthetic native-shaped ServiceNow sc_req_item export authored to exercise every registered Source archetype without representing client facts",
+  "ingestion_method": "structured_promotion",
+  "retrieval_plan": "not_retrievable",
+  "retrieval_proof_required": true,
+  "pii_phi_handling": null,
+  "expected_object_count": 10,
+  "approved_by": "AbarVa Product Engineering",
+  "approved_at": "2026-09-22",
+  "notes": "Public-safe planning fixture with ten synthetic sourcing-help requests across Plan, Delivery, Enterprise, and IT. Names are role labels; supplier, contract, attachment, ticket, and user identifiers are synthetic. No email addresses, real people, real suppliers, real contracts, PII, PHI, approvals, savings facts, or contact authority. This manifest authorizes repository fixture validation only and does not authorize an Azure/Postgres load. A later load requires a separate governed data-plane approval, canonical request authority, tenant assignment, quality gate, and signed-in proof."
+}
