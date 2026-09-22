@@ -16,7 +16,8 @@
     "coveredArchetypes": 10,
     "requestRows": 10,
     "eligibleSupplierRows": 20,
-    "negativeControlRows": 5
+    "negativeControlRows": 5,
+    "decisionGradeRequestRows": 10
   },
   "authority": {
     "readOnlyHarness": true,
@@ -39,6 +40,28 @@
       "requesterValueBasis": "requester_stated_unvalidated",
       "requesterValueValidated": false,
       "requesterValuePromotedToGovernedSavings": false,
+      "requesterValueRange": {
+        "low": 11500000,
+        "high": 13500000
+      },
+      "requesterValueTimeBasis": "annual_run_rate",
+      "serviceVolumes": [
+        "74 applications",
+        "6400 incidents and requests per month",
+        "1150 production changes per year",
+        "320 minor-enhancement backlog items"
+      ],
+      "sourceSystemReferences": [
+        "ServiceNow ITSM",
+        "ServiceNow CMDB",
+        "ERP accounts payable ledger",
+        "Contract repository"
+      ],
+      "evidenceReferences": [
+        "ATT-SYN-AMS-001:itsm_volume_baseline:source_extract",
+        "ATT-SYN-AMS-002:application_and_contract_scope:source_report"
+      ],
+      "depthGaps": [],
       "eligibleSupplierIds": [
         "SYN-SUP-AMS-001",
         "SYN-SUP-AMS-002"
@@ -70,6 +93,30 @@
       "requesterValueBasis": "requester_stated_unvalidated",
       "requesterValueValidated": false,
       "requesterValuePromotedToGovernedSavings": false,
+      "requesterValueRange": {
+        "low": 42000000,
+        "high": 50000000
+      },
+      "requesterValueTimeBasis": "implementation_program",
+      "serviceVolumes": [
+        "8 deployment countries",
+        "12 legal entities",
+        "96 integrations",
+        "41 data objects",
+        "3800 business users"
+      ],
+      "sourceSystemReferences": [
+        "ERP application portfolio",
+        "Integration catalog",
+        "Finance transformation business case",
+        "Program plan"
+      ],
+      "evidenceReferences": [
+        "ATT-SYN-ERP-001:application_and_integration_inventory:source_extract",
+        "ATT-SYN-ERP-002:data_migration_inventory:source_extract",
+        "ATT-SYN-ERP-003:approved_program_business_case:planning_document"
+      ],
+      "depthGaps": [],
       "eligibleSupplierIds": [
         "SYN-SUP-ERP-001",
         "SYN-SUP-ERP-002"
@@ -101,6 +148,28 @@
       "requesterValueBasis": "requester_stated_unvalidated",
       "requesterValueValidated": false,
       "requesterValuePromotedToGovernedSavings": false,
+      "requesterValueRange": {
+        "low": 7200000,
+        "high": 9200000
+      },
+      "requesterValueTimeBasis": "annual_platform_run_rate",
+      "serviceVolumes": [
+        "210 terabytes active data",
+        "9.5 terabytes ingested per day",
+        "420 production pipelines",
+        "1800 analytics users"
+      ],
+      "sourceSystemReferences": [
+        "Cloud billing export",
+        "Data platform workload telemetry",
+        "Data catalog",
+        "Architecture repository"
+      ],
+      "evidenceReferences": [
+        "ATT-SYN-DATA-001:workload_and_consumption_baseline:source_extract",
+        "ATT-SYN-DATA-002:platform_architecture_and_data_scope:source_report"
+      ],
+      "depthGaps": [],
       "eligibleSupplierIds": [
         "SYN-SUP-DATA-002",
         "SYN-SUP-DATA-001"
@@ -132,6 +201,28 @@
       "requesterValueBasis": "requester_stated_unvalidated",
       "requesterValueValidated": false,
       "requesterValuePromotedToGovernedSavings": false,
+      "requesterValueRange": {
+        "low": 5400000,
+        "high": 6800000
+      },
+      "requesterValueTimeBasis": "delivery_program",
+      "serviceVolumes": [
+        "1200000 member-service interactions per year",
+        "35 knowledge domains",
+        "18 governed integrations",
+        "4 production releases in year one"
+      ],
+      "sourceSystemReferences": [
+        "Product roadmap",
+        "Contact-center interaction baseline",
+        "Integration catalog",
+        "AI risk register"
+      ],
+      "evidenceReferences": [
+        "ATT-SYN-AIENG-001:product_scope_and_interaction_baseline:planning_document",
+        "ATT-SYN-AIENG-002:integration_and_ai_control_requirements:source_report"
+      ],
+      "depthGaps": [],
       "eligibleSupplierIds": [
         "SYN-SUP-AIENG-002",
         "SYN-SUP-AIENG-001"
@@ -163,6 +254,28 @@
       "requesterValueBasis": "requester_stated_unvalidated",
       "requesterValueValidated": false,
       "requesterValuePromotedToGovernedSavings": false,
+      "requesterValueRange": {
+        "low": 8600000,
+        "high": 10100000
+      },
+      "requesterValueTimeBasis": "annual_subscription_run_rate",
+      "serviceVolumes": [
+        "14200 assigned subscriptions",
+        "2650 inactive seats over 90 days",
+        "37 sandboxes",
+        "180 active integrations"
+      ],
+      "sourceSystemReferences": [
+        "SaaS administration export",
+        "Identity access report",
+        "Accounts payable ledger",
+        "Contract repository"
+      ],
+      "evidenceReferences": [
+        "ATT-SYN-SAAS-001:license_entitlement_and_usage_baseline:source_extract",
+        "ATT-SYN-SAAS-002:subscription_pricing_and_notice_terms:source_report"
+      ],
+      "depthGaps": [],
       "eligibleSupplierIds": [
         "SYN-SUP-SAAS-002",
         "SYN-SUP-SAAS-001"
@@ -194,6 +307,29 @@
       "requesterValueBasis": "requester_stated_unvalidated",
       "requesterValueValidated": false,
       "requesterValuePromotedToGovernedSavings": false,
+      "requesterValueRange": {
+        "low": 16500000,
+        "high": 20500000
+      },
+      "requesterValueTimeBasis": "annual_consumption_envelope",
+      "serviceVolumes": [
+        "84 payer-linked accounts",
+        "12600 active resources",
+        "8200000 compute hours per year",
+        "1700 terabytes stored"
+      ],
+      "sourceSystemReferences": [
+        "AWS Cost and Usage Report",
+        "AWS Cost Explorer",
+        "Cloud resource inventory",
+        "Contract repository"
+      ],
+      "evidenceReferences": [
+        "ATT-SYN-CLOUD-001:consumption_and_coverage_baseline:source_extract",
+        "ATT-SYN-CLOUD-002:workload_growth_forecast:planning_document",
+        "ATT-SYN-CLOUD-003:commitment_and_pricing_terms:source_report"
+      ],
+      "depthGaps": [],
       "eligibleSupplierIds": [
         "SYN-SUP-CLOUD-002",
         "SYN-SUP-CLOUD-001"
@@ -225,6 +361,28 @@
       "requesterValueBasis": "requester_stated_unvalidated",
       "requesterValueValidated": false,
       "requesterValuePromotedToGovernedSavings": false,
+      "requesterValueRange": {
+        "low": 20000000,
+        "high": 24500000
+      },
+      "requesterValueTimeBasis": "annual_run_rate",
+      "serviceVolumes": [
+        "5800000 contacts per year",
+        "3200 peak-season agents",
+        "14 service queues",
+        "35 percent seasonal peak uplift"
+      ],
+      "sourceSystemReferences": [
+        "Contact-center platform report",
+        "Workforce management forecast",
+        "Quality monitoring report",
+        "Contract repository"
+      ],
+      "evidenceReferences": [
+        "ATT-SYN-CX-001:contact_volume_and_service_baseline:source_extract",
+        "ATT-SYN-CX-002:workforce_and_contract_scope:source_report"
+      ],
+      "depthGaps": [],
       "eligibleSupplierIds": [
         "SYN-SUP-CX-002",
         "SYN-SUP-CX-001"
@@ -256,6 +414,29 @@
       "requesterValueBasis": "requester_stated_unvalidated",
       "requesterValueValidated": false,
       "requesterValuePromotedToGovernedSavings": false,
+      "requesterValueRange": {
+        "low": 14000000,
+        "high": 17500000
+      },
+      "requesterValueTimeBasis": "annual_run_rate",
+      "serviceVolumes": [
+        "1800000 invoices per year",
+        "420000 journal lines per month",
+        "95000 payroll cases per year",
+        "18000 vendor-master changes per year"
+      ],
+      "sourceSystemReferences": [
+        "ERP transaction export",
+        "Accounts payable workflow report",
+        "Payroll case report",
+        "Internal controls register"
+      ],
+      "evidenceReferences": [
+        "ATT-SYN-BSS-001:transaction_volume_baseline:source_extract",
+        "ATT-SYN-BSS-002:process_quality_and_rework_baseline:source_report",
+        "ATT-SYN-BSS-003:controls_and_retained_scope:planning_document"
+      ],
+      "depthGaps": [],
       "eligibleSupplierIds": [
         "SYN-SUP-BPO-002",
         "SYN-SUP-BPO-001"
@@ -287,6 +468,28 @@
       "requesterValueBasis": "requester_stated_unvalidated",
       "requesterValueValidated": false,
       "requesterValuePromotedToGovernedSavings": false,
+      "requesterValueRange": {
+        "low": 10000000,
+        "high": 12500000
+      },
+      "requesterValueTimeBasis": "annual_run_rate",
+      "serviceVolumes": [
+        "28000 security alerts per day",
+        "1150 investigated incidents per month",
+        "18000 protected endpoints",
+        "34 governed log-source families"
+      ],
+      "sourceSystemReferences": [
+        "SIEM telemetry report",
+        "Incident response case export",
+        "Endpoint inventory",
+        "Cyber control register"
+      ],
+      "evidenceReferences": [
+        "ATT-SYN-MSSP-001:alert_and_incident_baseline:source_extract",
+        "ATT-SYN-MSSP-002:coverage_and_control_requirements:source_report"
+      ],
+      "depthGaps": [],
       "eligibleSupplierIds": [
         "SYN-SUP-CYBER-002",
         "SYN-SUP-CYBER-001"
@@ -318,6 +521,28 @@
       "requesterValueBasis": "requester_stated_unvalidated",
       "requesterValueValidated": false,
       "requesterValuePromotedToGovernedSavings": false,
+      "requesterValueRange": {
+        "low": 6500000,
+        "high": 8200000
+      },
+      "requesterValueTimeBasis": "annual_capacity_envelope",
+      "serviceVolumes": [
+        "165 requested roles",
+        "28 product teams",
+        "45000 contractor days per year",
+        "12 role families"
+      ],
+      "sourceSystemReferences": [
+        "Vendor management system extract",
+        "Portfolio demand plan",
+        "Contingent labor rate card",
+        "Workforce plan"
+      ],
+      "evidenceReferences": [
+        "ATT-SYN-STAFF-001:role_demand_and_assignment_baseline:source_extract",
+        "ATT-SYN-STAFF-002:portfolio_capacity_and_rate_assumptions:planning_document"
+      ],
+      "depthGaps": [],
       "eligibleSupplierIds": [
         "SYN-SUP-STAFF-002",
         "SYN-SUP-STAFF-001"

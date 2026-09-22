@@ -44,6 +44,13 @@ export type ServiceNowSourcingRequestRow = {
   security_review_needed: string;
   legal_review_needed: string;
   attachment_references: string;
+  estimated_value_low: string;
+  estimated_value_high: string;
+  value_time_basis: string;
+  incumbent_context: string;
+  service_volume_summary: string;
+  source_system_references: string;
+  evidence_references: string;
   source_table: string;
   extract_timestamp: string;
   extract_version: string;
@@ -105,6 +112,59 @@ function list(value: string | null | undefined): string[] {
     .filter(Boolean);
 }
 
+function nonNegativeMoney(
+  value: string | null | undefined,
+  label: string,
+): number | null {
+  const normalized = clean(value);
+  if (!normalized) return null;
+  const amount = Number(normalized.replace(/[$,]/g, ""));
+  if (!Number.isFinite(amount) || amount < 0) {
+    throw new Error(`ServiceNow ${label} must be a non-negative number`);
+  }
+  return amount;
+}
+
+function valueRange(
+  row: ServiceNowSourcingRequestRow,
+): { low: number; high: number } | null {
+  const low = nonNegativeMoney(row.estimated_value_low, "estimated_value_low");
+  const high = nonNegativeMoney(row.estimated_value_high, "estimated_value_high");
+  if (low === null && high === null) return null;
+  if (low === null || high === null || low > high) {
+    throw new Error(
+      "ServiceNow estimated value range requires low <= high with both bounds recorded",
+    );
+  }
+  return { low, high };
+}
+
+function evidenceReferences(value: string | null | undefined) {
+  return list(value).map((reference) => {
+    const [attachmentId, evidenceType, sourceBasis, ...extra] = reference.split(":");
+    if (
+      !attachmentId ||
+      !evidenceType ||
+      extra.length > 0 ||
+      !["source_extract", "source_report", "planning_document"].includes(
+        sourceBasis,
+      )
+    ) {
+      throw new Error(
+        `ServiceNow evidence reference '${reference}' must use attachment:type:source_basis`,
+      );
+    }
+    return {
+      attachmentId,
+      evidenceType,
+      sourceBasis: sourceBasis as
+        | "source_extract"
+        | "source_report"
+        | "planning_document",
+    };
+  });
+}
+
 function domain(value: string): SourceRequestBusinessDomain {
   const normalized = value.trim().toLowerCase() as SourceRequestBusinessDomain;
   if (!DOMAINS.has(normalized)) {
@@ -116,15 +176,21 @@ function domain(value: string): SourceRequestBusinessDomain {
 function money(row: ServiceNowSourcingRequestRow): CanonicalSourceIntakeRequest["value"] {
   const raw = clean(row.estimated_annual_value);
   if (!raw) return null;
-  const amount = Number(raw.replace(/[$,]/g, ""));
-  if (!Number.isFinite(amount) || amount < 0) {
-    throw new Error("ServiceNow estimated_annual_value must be a non-negative number");
+  const amount = nonNegativeMoney(raw, "estimated_annual_value");
+  if (amount === null) return null;
+  const range = valueRange(row);
+  if (range && (amount < range.low || amount > range.high)) {
+    throw new Error(
+      "ServiceNow estimated_annual_value must fall within the requester value range",
+    );
   }
   return {
     amount,
     currency: required(row.currency, "currency").toUpperCase(),
     basis: clean(row.value_confidence) ?? "requester_stated_unvalidated",
     validated: false,
+    range,
+    timeBasis: clean(row.value_time_basis),
   };
 }
 
@@ -226,6 +292,7 @@ export function adaptServiceNowSourcingRequest(input: {
     incumbent: {
       supplierName: clean(input.row.incumbent_supplier_name),
       contractReference: clean(input.row.existing_contract_reference),
+      context: clean(input.row.incumbent_context),
     },
     scope: {
       included: scopeIn,
@@ -243,6 +310,12 @@ export function adaptServiceNowSourcingRequest(input: {
       legalReviewNeeded: booleanOrNull(input.row.legal_review_needed),
     },
     attachments: list(input.row.attachment_references),
+    serviceVolumes: (input.row.service_volume_summary ?? "")
+      .split(";")
+      .map((item) => item.trim())
+      .filter(Boolean),
+    sourceSystemReferences: list(input.row.source_system_references),
+    evidenceReferences: evidenceReferences(input.row.evidence_references),
     requiredFactGaps,
     loadedSegments: [...input.loadedSegments],
     mappingProposal: {

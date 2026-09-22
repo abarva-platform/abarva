@@ -46,6 +46,17 @@ const completeRow: ServiceNowSourcingRequestRow = {
   security_review_needed: "true",
   legal_review_needed: "true",
   attachment_references: "ATT-SYN-AMS-001|ATT-SYN-AMS-002",
+  estimated_value_low: "11500000",
+  estimated_value_high: "13500000",
+  value_time_basis: "annual_run_rate",
+  incumbent_context:
+    "Incumbent supports the current application estate under a synthetic contract reference.",
+  service_volume_summary:
+    "74 applications; 6400 incidents and requests per month; 1150 production changes per year",
+  source_system_references:
+    "ServiceNow ITSM|ServiceNow CMDB|ERP accounts payable ledger",
+  evidence_references:
+    "ATT-SYN-AMS-001:itsm_volume_baseline:source_extract|ATT-SYN-AMS-002:application_and_contract_scope:source_report",
   source_table: "sc_req_item",
   extract_timestamp: "2026-09-15T12:00:00Z",
   extract_version: "2026-09-15T120000Z",
@@ -85,10 +96,38 @@ describe("ServiceNow sourcing-request adapter", () => {
       currency: "USD",
       basis: "requester_stated_unvalidated",
       validated: false,
+      range: {
+        low: 11_500_000,
+        high: 13_500_000,
+      },
+      timeBasis: "annual_run_rate",
     });
     expect(request.attachments).toEqual([
       "ATT-SYN-AMS-001",
       "ATT-SYN-AMS-002",
+    ]);
+    expect(request.incumbent.context).toMatch(/synthetic contract reference/i);
+    expect(request.serviceVolumes).toEqual([
+      "74 applications",
+      "6400 incidents and requests per month",
+      "1150 production changes per year",
+    ]);
+    expect(request.sourceSystemReferences).toEqual([
+      "ServiceNow ITSM",
+      "ServiceNow CMDB",
+      "ERP accounts payable ledger",
+    ]);
+    expect(request.evidenceReferences).toEqual([
+      {
+        attachmentId: "ATT-SYN-AMS-001",
+        evidenceType: "itsm_volume_baseline",
+        sourceBasis: "source_extract",
+      },
+      {
+        attachmentId: "ATT-SYN-AMS-002",
+        evidenceType: "application_and_contract_scope",
+        sourceBasis: "source_report",
+      },
     ]);
     expect(request.rawSource.short_description).toBe(
       completeRow.short_description,
@@ -197,5 +236,25 @@ describe("ServiceNow sourcing-request adapter", () => {
         ],
       }),
     ).toThrow(/conflicting servicenow rows/i);
+  });
+
+  it("rejects an incomplete or internally inconsistent requester value range", () => {
+    expect(() =>
+      adaptServiceNowSourcingRequest({
+        tenantKey: "internal-golden",
+        sourceRow: 2,
+        row: { ...completeRow, estimated_value_high: "" },
+        loadedSegments: [],
+      }),
+    ).toThrow(/value range/i);
+
+    expect(() =>
+      adaptServiceNowSourcingRequest({
+        tenantKey: "internal-golden",
+        sourceRow: 2,
+        row: { ...completeRow, estimated_value_low: "13000000" },
+        loadedSegments: [],
+      }),
+    ).toThrow(/fall within/i);
   });
 });
