@@ -1965,10 +1965,15 @@ describe("WorkspaceExecutiveShell performance formatting", () => {
      * fixture carries the bare word in prose with no separator shape, so only
      * the word list can refuse it.
      *
-     * Noted while proving this: the word list's `for_cause_only` alternative is
-     * unreachable, because `withoutIdentifierTokens` strips snake_case runs
-     * before the list is applied. That is a dead alternative in a live control,
-     * not a behaviour change, and it is filed rather than repaired here.
+     * Noted while proving this: the word list's `for_cause_only` alternative
+     * was unreachable, because `withoutIdentifierTokens` stripped snake_case
+     * runs before the list was applied. T-591 repaired it by consulting the
+     * list on the raw value first. The alternatives now live in
+     * `@/lib/source/contract-purpose-refusal`, and
+     * `src/__tests__/behaviors/source-contract-purpose-refusal-alternatives.test.ts`
+     * enumerates them so a future alternative the stripper would swallow fails
+     * a required check rather than becoming dead — this suite is named by no
+     * workflow, which is why the enumeration does not live here.
      */
     const summary = contractPurposeSummary(
       {

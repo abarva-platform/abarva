@@ -47,6 +47,16 @@ import { ContractOptimizeMethod } from "./ContractOptimizeMethod";
 import { asSentence, fmtDate, money, pct, type WorkspaceViewModel } from "./viewModel";
 import { focusableContractRows } from "./contractDiscovery";
 import {
+  usableScopeSummary,
+  usableText,
+  withoutIdentifierTokens,
+} from "@/lib/source/contract-purpose-refusal";
+// Re-exported because this file is where the helper has always been imported
+// from. The implementation moved to lib with the refusal control it belongs
+// to; the public symbol stays put so importers and the export-reachability
+// baseline see no change (T-591).
+export { withoutIdentifierTokens };
+import {
   contractBookAnnualValueForContract,
   contractBookAnnualValue,
   contractPopulations,
@@ -3809,40 +3819,8 @@ export function contractPurposeSummary(
   };
 }
 
-function usableText(value: string | null | undefined) {
-  const text = value?.trim();
-  if (
-    !text ||
-    /^(not established|unknown|unresolved|none|null|n\/a)$/i.test(text)
-  ) {
-    return null;
-  }
-  return text;
-}
 
-function usableScopeSummary(value: string | null | undefined) {
-  if (/\s[-–—]\s(?:present|absent)(?:\b|_)/i.test(value ?? "")) return null;
-  const text = withoutIdentifierTokens(usableText(value));
-  if (!text) return null;
-  if (
-    /\b(absent|unknown|unresolved|none|null|n\/a|for_cause_only)\b/i.test(text)
-  ) {
-    return null;
-  }
-  return text;
-}
 
-/**
- * Drop snake_case database values from a string meant to read as English.
- *
- * A scope summary arrived as "Managed Services - present_with_annual_right -
- * present_after_year_2_with_90_days_notice" — the clause and exit-rights enum
- * values concatenated onto a real phrase. Rendered whole, an executive read
- * column values as a sentence.
- *
- * The prose that survives is kept; if nothing usable remains, the caller falls
- * through to its next source rather than showing identifiers.
- */
 /**
  * The governed record's review status, in words a reader can use.
  *
@@ -3872,21 +3850,6 @@ export function reviewStatusInWords(value: string | null | undefined): string {
   return withoutIdentifierTokens(raw) ?? "review status not recorded";
 }
 
-export function withoutIdentifierTokens(
-  value: string | null | undefined,
-): string | null {
-  if (!value) return null;
-  const cleaned = value
-    // A lowercase run joined by underscores is an identifier, never prose.
-    .replace(/\b[a-z0-9]+(?:_[a-z0-9]+)+\b/g, " ")
-    // Tidy the separators the removal leaves behind.
-    .replace(/\s*[-–—]\s*(?=\s*[-–—]|$)/g, " ")
-    .replace(/[-–—]\s*$/g, " ")
-    .replace(/\s{2,}/g, " ")
-    .trim()
-    .replace(/[,;:]\s*$/g, "");
-  return cleaned.length > 0 ? cleaned : null;
-}
 
 function scopeFromContractName(contractName: string) {
   const [, scope] = contractName.split(/\s[-–—]\s(.+)/);
