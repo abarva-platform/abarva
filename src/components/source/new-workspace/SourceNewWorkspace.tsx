@@ -7,6 +7,8 @@ import { AgentDock, type ChatMessage } from "@/components/agent/AgentDock";
 import { useAtlasPageState } from "@/components/shell/AtlasPageStateProvider";
 import { SourceNewFiles, type SourceNewFileRow } from "./SourceNewFiles";
 import type { SourceEventActivityResult } from "@/lib/source/activity-log";
+import type { AskSource } from "@/lib/intelligence/ask/types";
+import type { AnswerCitation } from "@/lib/ava-answer/contract";
 import {
   SOURCE_NEW_PHASE_DISPLAY_LABELS,
   SOURCE_NEW_PHASE_ORDER,
@@ -34,6 +36,43 @@ import "./workspace.css";
 
 type Phase = SourceNewPhaseKey;
 type View = "work" | "files" | "intelligence" | "approvals";
+
+function sourceNewAskSourceTypeFromCitation(
+  sourceClass: AnswerCitation["sourceClass"],
+): AskSource["type"] {
+  switch (sourceClass) {
+    case "tenant-fact":
+    case "tenant-chunk":
+      return "TENANT";
+    case "graph":
+      return "GRAPH";
+    case "corpus-pattern":
+      return "PATTERN";
+    case "worldview":
+      return "WORLDVIEW";
+    default:
+      return "GENERAL";
+  }
+}
+
+function sourceNewAskSourcesFromCitations(
+  citations: readonly AnswerCitation[] | undefined,
+): AskSource[] | undefined {
+  if (!citations || citations.length === 0) return undefined;
+  return citations.map((citation) => ({
+    id: citation.id,
+    type: sourceNewAskSourceTypeFromCitation(citation.sourceClass),
+    name: citation.label,
+    detail: citation.excerpt ?? "",
+    url: citation.url,
+    confidence:
+      citation.confidence === "high"
+        ? 0.9
+        : citation.confidence === "medium"
+          ? 0.65
+          : 0.35,
+  }));
+}
 
 export interface SourceNewEventView {
   id: string;
@@ -1287,6 +1326,11 @@ function SourceNewAvaDock({
         role: turn.role,
         body: turn.text,
         at: new Date(turn.timestamp).toISOString(),
+        parts: turn.responseParts,
+        citations: sourceNewAskSourcesFromCitations(
+          turn.agentAnswer?.citations,
+        ),
+        agentAnswer: turn.agentAnswer,
       })) ?? [],
     [pageState?.conversation],
   );
