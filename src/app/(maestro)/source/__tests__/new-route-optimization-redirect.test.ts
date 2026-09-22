@@ -140,6 +140,54 @@ describe("Source new-event route optimization redirect", () => {
     expect(props?.requestQueueStatus).toBe("loaded");
   });
 
+  it("keeps a loaded ServiceNow request queue visible when accepted-workspace readback fails", async () => {
+    const selectedRequest = {
+      requestId: "servicenow:sn_sourcing_request:request-1",
+      requestNumber: "SRC0010042",
+      sourceSystem: "ServiceNow" as const,
+      sourceStatus: "New",
+      sourceVersion: "v1",
+      extractedAt: "2026-09-22T12:00:00Z",
+      updatedAt: null,
+      title: "Example request",
+      description: "A recorded business need.",
+      requestedFor: "Enterprise Technology",
+      businessDomain: "it",
+      businessFunction: "Infrastructure",
+      value: null,
+      requiredFactGaps: [],
+      mappingProposal: {
+        categoryId: "managed_services_ams",
+        archetypeId: "MANAGED_SERVICES_AMS",
+        confidence: "high",
+        reasons: ["Matched managed-services scope"],
+      },
+      mappingDecision: null,
+      eventLink: null,
+    };
+    jest.mocked(readSourceIntakeRequestQueue).mockResolvedValue({
+      registryAvailable: true,
+      requests: [selectedRequest],
+    });
+    jest
+      .mocked(listSourcingEvents)
+      .mockRejectedValue(new Error("event_workspace_read_failed"));
+
+    const result = await Page({ searchParams: Promise.resolve({}) });
+    expect(isValidElement(result)).toBe(true);
+    const props = isValidElement<{
+      importedRequests: Array<Record<string, unknown>>;
+      eventWorkspaces: Array<Record<string, unknown>>;
+      requestQueueStatus: string;
+    }>(result)
+      ? result.props
+      : null;
+
+    expect(props?.requestQueueStatus).toBe("loaded");
+    expect(props?.importedRequests).toEqual([selectedRequest]);
+    expect(props?.eventWorkspaces).toEqual([]);
+  });
+
   it("keeps the existing create intake behind an explicit route mode", async () => {
     const result = await Page({
       searchParams: Promise.resolve({ mode: "intake" }),
@@ -189,7 +237,9 @@ describe("Source new-event route optimization redirect", () => {
     });
 
     expect(isValidElement(result)).toBe(true);
-    expect(isValidElement(result) ? result.type : null).toBe(SourceOriginatePage);
+    expect(isValidElement(result) ? result.type : null).toBe(
+      SourceOriginatePage,
+    );
     expect(
       isValidElement<{ sourceRequest: unknown }>(result)
         ? result.props.sourceRequest
