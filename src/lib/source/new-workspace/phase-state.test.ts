@@ -9,6 +9,7 @@ import {
   sourceNewFilePhase,
   sourceNewLifecycleLabel,
   sourceNewNextAction,
+  sourceNewHistoricalGapPhases,
   sourceNewPhaseState,
   sourceNewPhaseStateLabel,
   sourceNewStageLabel,
@@ -156,6 +157,31 @@ describe("sourceNewPhaseState", () => {
     const event = { currentStage: "not_a_stage", lifecycle: "active" };
     expect(sourceNewPhaseState("define", event, nothingRecorded)).toBe("no_record");
     expect(sourceNewPhaseState("rfi", event, { ...nothingRecorded, rfi: true })).toBe("recorded");
+  });
+});
+
+describe("sourceNewHistoricalGapPhases", () => {
+  it("returns every missing governed phase on a completed event", () => {
+    expect(
+      sourceNewHistoricalGapPhases(
+        { currentStage: "value", lifecycle: "completed" },
+        {
+          request: true,
+          define: false,
+          suppliers: false,
+          rfi: true,
+        },
+      ),
+    ).toEqual(["define", "suppliers"]);
+  });
+
+  it("does not turn an active-event evidence gap into completion review", () => {
+    expect(
+      sourceNewHistoricalGapPhases(
+        { currentStage: "evaluation", lifecycle: "active" },
+        nothingRecorded,
+      ),
+    ).toEqual([]);
   });
 });
 
