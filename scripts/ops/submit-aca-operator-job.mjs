@@ -492,6 +492,11 @@ function extractProofBundle(logText, outDir) {
       marker: "source_l4_cube",
     },
     {
+      begin: "__SOURCE_SERVICENOW_REQUEST_IMPORT_PROOF_TGZ_BEGIN__",
+      end: "__SOURCE_SERVICENOW_REQUEST_IMPORT_PROOF_TGZ_END__",
+      marker: "source_servicenow_request_import",
+    },
+    {
       begin: "__ECL_SUBSTRATE_BASELINE_TGZ_BEGIN__",
       end: "__ECL_SUBSTRATE_BASELINE_TGZ_END__",
       marker: "ecl_substrate_baseline",
