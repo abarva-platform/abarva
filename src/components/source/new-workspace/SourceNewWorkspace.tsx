@@ -17,6 +17,7 @@ import {
   sourceNewCategoryDisplay,
   sourceNewCurrentPhase,
   sourceNewEventTypeLabel,
+  sourceNewHistoricalGapPhases,
   sourceNewLifecycleLabel,
   sourceNewMarketPackageLabel,
   sourceNewNextAction,
@@ -278,6 +279,8 @@ export function SourceNewWorkspace({
   const [view, setView] = useState<View>("work");
   const reviewPending = awaitsIntakeReview(event.lifecycle);
   const completedEvent = isCompletedEvent(event);
+  const historicalGapPhases = sourceNewHistoricalGapPhases(event, evidence);
+  const completionReviewNeeded = historicalGapPhases.length > 0;
   const phases = phasesFor(event);
   const packageLabel = sourceNewMarketPackageLabel(event);
   // With no phase current, the rail shows no live step. Say where the event
@@ -504,7 +507,9 @@ export function SourceNewWorkspace({
               </p>
               <h2>
                 {completedEvent
-                  ? "Event completed"
+                  ? completionReviewNeeded
+                    ? "Completion review needed"
+                    : "Event completed"
                   : current === null
                     ? actionLabel
                     : isCurrentPhase
@@ -513,14 +518,22 @@ export function SourceNewWorkspace({
               </h2>
               <p>
                 {completedEvent
-                  ? "The governed event is complete. No next action is pending in Source New."
+                  ? completionReviewNeeded
+                    ? `${historicalGapPhases.length} ${historicalGapPhases.length === 1 ? "phase has" : "phases have"} no governed history. Record the missing evidence or a named waiver before treating the event record as complete.`
+                    : "The governed event is complete. No next action is pending in Source New."
                   : current === null || isCurrentPhase
                     ? action.detail
                     : stateOf(phase) === "not_open"
                       ? "This phase is locked. The event must advance to open it."
                       : "You are reviewing a phase the event has moved past. No gate is changed here."}
               </p>
-              {completedEvent ? null : current === null || isCurrentPhase ? (
+              {completedEvent ? (
+                completionReviewNeeded ? (
+                  <Link className="snw-primary" href={eventHref}>
+                    Resolve historical gaps
+                  </Link>
+                ) : null
+              ) : current === null || isCurrentPhase ? (
                 <Link className="snw-primary" href={actionHref}>
                   {actionLabel}
                 </Link>

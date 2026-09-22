@@ -378,7 +378,7 @@ describe("SourceNewWorkspace", () => {
     expect(document.body.textContent ?? "").not.toMatch(/BAFO ready/i);
   });
 
-  it("shows completed events as terminal without a pending next action", () => {
+  it("requires completion review when a completed event has historical gaps", () => {
     render(
       <SourceNewWorkspace
         event={{ ...request, currentStage: "value", lifecycle: "completed" }}
@@ -399,17 +399,50 @@ describe("SourceNewWorkspace", () => {
       screen.queryByRole("complementary", { name: "Next action" }),
     ).toBeNull();
     const status = screen.getByRole("complementary", { name: "Event status" });
+    expect(within(status).getByText("Completion review needed")).toBeTruthy();
+    expect(
+      within(status).getByText(
+        "3 phases have no governed history. Record the missing evidence or a named waiver before treating the event record as complete.",
+      ),
+    ).toBeTruthy();
+    expect(
+      within(status)
+        .getByRole("link", { name: "Resolve historical gaps" })
+        .getAttribute("href"),
+    ).toBe("/source/events/event-1");
+  });
+
+  it("keeps a completed event terminal when every visible phase has governed history", () => {
+    const supplierFile: SourceNewFileRow = {
+      ...responseFile,
+      id: "supplier-evidence-1",
+      phase: "suppliers",
+      artifactType: "nda_executed",
+      title: "Supplier readiness evidence",
+      fileName: "supplier-readiness.pdf",
+      blobSha256: "sha-supplier-evidence",
+    };
+
+    render(
+      <SourceNewWorkspace
+        event={{
+          ...request,
+          currentStage: "value",
+          lifecycle: "completed",
+          scope: "Managed application services scope",
+        }}
+        files={[supplierFile, marketPackageFile]}
+      />,
+    );
+
+    const status = screen.getByRole("complementary", { name: "Event status" });
     expect(within(status).getByText("Event completed")).toBeTruthy();
     expect(
       within(status).getByText(
         "The governed event is complete. No next action is pending in Source New.",
       ),
     ).toBeTruthy();
-    expect(
-      within(status).queryByRole("link", {
-        name: /Open event|Open current stage/i,
-      }),
-    ).toBeNull();
+    expect(within(status).queryByRole("link")).toBeNull();
   });
 
   it("labels a missing completed-event phase as a historical gap", () => {

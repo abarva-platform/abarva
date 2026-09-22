@@ -204,6 +204,21 @@ export function sourceNewPhaseState(
   return index < currentIndex ? behind() : "not_open";
 }
 
+/**
+ * Missing governed history on a terminal event is still operator work. Keep
+ * that distinct from ordinary evidence gaps on an event that is in flight so
+ * the workspace does not present a historically incomplete record as done.
+ */
+export function sourceNewHistoricalGapPhases(
+  event: SourceNewPhasePositionInput,
+  evidence: SourceNewPhaseEvidence,
+): SourceNewPhaseKey[] {
+  if (event.lifecycle !== "completed") return [];
+  return SOURCE_NEW_PHASE_ORDER.filter(
+    (phase) => sourceNewPhaseState(phase, event, evidence) === "historical_gap",
+  );
+}
+
 export function sourceNewPhaseStateLabel(state: SourceNewPhaseState): string {
   return SOURCE_NEW_PHASE_STATE_LABELS[state];
 }
