@@ -89,6 +89,9 @@ let personRow: { id: string; name: string | null; email: string | null } | null 
 let queriedPersonId: string | null = null;
 let parsedArtifacts: Array<{
   id: string;
+  tenant_key: string;
+  source_event_row_id: string;
+  stage_key: string;
   original_name: string;
   parse_status: string;
   updated_at: string;
@@ -98,9 +101,11 @@ function fakeFluentClient() {
   return {
     from(table: string) {
       let updatePayload: Record<string, unknown> | null = null;
+      const equalityFilters = new Map<string, unknown>();
       const chain: Record<string, unknown> = {
         select: () => chain,
         eq: (column: string, value: unknown) => {
+          equalityFilters.set(column, value);
           if (table === "persons" && column === "id") {
             queriedPersonId = typeof value === "string" ? value : null;
           }
@@ -115,7 +120,16 @@ function fakeFluentClient() {
         ) => {
           if (table === "source_artifacts") {
             return Promise.resolve(
-              resolve({ data: parsedArtifacts, error: null }),
+              resolve({
+                data: parsedArtifacts.filter((artifact) =>
+                  Array.from(equalityFilters.entries()).every(
+                    ([column, value]) =>
+                      !(column in artifact) ||
+                      artifact[column as keyof typeof artifact] === value,
+                  ),
+                ),
+                error: null,
+              }),
             );
           }
           return Promise.resolve(resolve({ data: [], error: null }));
@@ -267,6 +281,9 @@ describe("Source parsed-evidence availability review", () => {
     parsedArtifacts = [
       {
         id: "artifact-parsed-legacy",
+        tenant_key: "client-one",
+        source_event_row_id: "evt-1",
+        stage_key: "rfp",
         original_name: "source-legal-template.docx",
         parse_status: "parsed",
         updated_at: "2026-09-21T00:00:00.000Z",
@@ -314,6 +331,9 @@ describe("Source parsed-evidence availability review", () => {
     parsedArtifacts = [
       {
         id: "artifact-other-requirement",
+        tenant_key: "client-one",
+        source_event_row_id: "evt-1",
+        stage_key: "rfp",
         original_name: "supplier-market-intelligence.pdf",
         parse_status: "parsed",
         updated_at: "2026-09-21T00:00:00.000Z",
@@ -321,6 +341,79 @@ describe("Source parsed-evidence availability review", () => {
     ];
 
     const response = await GET(request(), ctx);
+
+    expect(response.status).toBe(409);
+    await expect(response.json()).resolves.toEqual(
+      expect.objectContaining({ error: "parsed_evidence_required" }),
+    );
+  });
+
+  it("reconciles an exact event artifact across an accepted tenant-key alias", async () => {
+    existingEvidence = {
+      ...evidenceRow,
+      requirement_id: "EVID-SRC-SCOPE-FY-CONTRACT",
+      stage_key: "scope",
+      current_state: "Not Requested",
+      source_artifact_id: null,
+    };
+    parsedArtifacts = [
+      {
+        id: "artifact-fiscal-baseline",
+        tenant_key: "client-one-global",
+        source_event_row_id: "evt-1",
+        stage_key: "scope",
+        original_name: "meridian-prior-fiscal-run-cost-baseline_spend.csv",
+        parse_status: "parsed",
+        updated_at: "2026-09-22T00:00:00.000Z",
+      },
+    ];
+    const scopeCtx = {
+      params: Promise.resolve({
+        eventId: "evt-1",
+        requirementId: "EVID-SRC-SCOPE-FY-CONTRACT",
+      }),
+    };
+
+    const response = await GET(request(), scopeCtx);
+
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toEqual(
+      expect.objectContaining({
+        review: expect.objectContaining({
+          currentState: "Parsed",
+          targetState: "Available",
+        }),
+      }),
+    );
+  });
+
+  it("never reconciles a matching artifact from another event", async () => {
+    existingEvidence = {
+      ...evidenceRow,
+      requirement_id: "EVID-SRC-SCOPE-FY-CONTRACT",
+      stage_key: "scope",
+      current_state: "Not Requested",
+      source_artifact_id: null,
+    };
+    parsedArtifacts = [
+      {
+        id: "artifact-other-event",
+        tenant_key: "client-one-global",
+        source_event_row_id: "evt-other",
+        stage_key: "scope",
+        original_name: "meridian-prior-fiscal-run-cost-baseline_spend.csv",
+        parse_status: "parsed",
+        updated_at: "2026-09-22T00:00:00.000Z",
+      },
+    ];
+    const scopeCtx = {
+      params: Promise.resolve({
+        eventId: "evt-1",
+        requirementId: "EVID-SRC-SCOPE-FY-CONTRACT",
+      }),
+    };
+
+    const response = await GET(request(), scopeCtx);
 
     expect(response.status).toBe(409);
     await expect(response.json()).resolves.toEqual(
