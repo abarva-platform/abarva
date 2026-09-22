@@ -16,9 +16,9 @@
   ],
   "counts": {
     "testFiles": 2375,
-    "coveredTestFiles": 1867,
-    "pullRequestCoveredTestFiles": 1864,
-    "uncoveredTestFiles": 508,
+    "coveredTestFiles": 1868,
+    "pullRequestCoveredTestFiles": 1865,
+    "uncoveredTestFiles": 507,
     "directoriesWithTests": 480,
     "directoriesFullyCovered": 271,
     "directoriesPartiallyCovered": 29,
@@ -26,7 +26,7 @@
     "directoriesWithUnrunTestFiles": 209,
     "directoriesWithUntriagedUnrunTestFiles": 198,
     "declaredQuarantineTestFiles": 50,
-    "untriagedUnrunTestFiles": 458,
+    "untriagedUnrunTestFiles": 457,
     "indeterminateInvocations": 0,
     "unresolvedIgnoreArguments": 0,
     "criticalGovernedRiskDirectories": 1,
@@ -201,9 +201,9 @@
     {
       "directory": "src/lib/__tests__",
       "testFiles": 4,
-      "coveredTestFiles": 1,
+      "coveredTestFiles": 2,
       "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 3,
+      "untriagedUnrunTestFiles": 2,
       "via": [
         "command"
       ]
@@ -2900,92 +2900,6 @@
       }
     },
     {
-      "directory": "src/lib/__tests__",
-      "testPath": "src/lib/__tests__/active-client.test.ts",
-      "enumerated": true,
-      "collected": false,
-      "run": false,
-      "green": "unknown",
-      "covered": false,
-      "pullRequestCovered": false,
-      "declaredQuarantine": false,
-      "untriaged": true,
-      "via": [],
-      "governedRisk": {
-        "score": 10,
-        "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 4
-      }
-    },
-    {
-      "directory": "src/lib/__tests__",
-      "testPath": "src/lib/__tests__/client-config-canonical.test.ts",
-      "enumerated": true,
-      "collected": true,
-      "run": "unknown",
-      "green": "unknown",
-      "covered": true,
-      "pullRequestCovered": true,
-      "declaredQuarantine": false,
-      "untriaged": false,
-      "via": [
-        "command"
-      ],
-      "governedRisk": {
-        "score": 10,
-        "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 4
-      }
-    },
-    {
-      "directory": "src/lib/__tests__",
-      "testPath": "src/lib/__tests__/control-plane-tenant-purity.test.ts",
-      "enumerated": true,
-      "collected": false,
-      "run": false,
-      "green": "unknown",
-      "covered": false,
-      "pullRequestCovered": false,
-      "declaredQuarantine": false,
-      "untriaged": true,
-      "via": [],
-      "governedRisk": {
-        "score": 10,
-        "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 4
-      }
-    },
-    {
-      "directory": "src/lib/__tests__",
-      "testPath": "src/lib/__tests__/supabase-server.test.ts",
-      "enumerated": true,
-      "collected": false,
-      "run": false,
-      "green": "unknown",
-      "covered": false,
-      "pullRequestCovered": false,
-      "declaredQuarantine": false,
-      "untriaged": true,
-      "via": [],
-      "governedRisk": {
-        "score": 10,
-        "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 4
-      }
-    },
-    {
       "directory": "src/lib/governance/__tests__",
       "testPath": "src/lib/governance/__tests__/agent-context-bundle.test.ts",
       "enumerated": true,
@@ -3003,7 +2917,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 5
+        "rank": 4
       }
     },
     {
@@ -3024,7 +2938,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 5
+        "rank": 4
       }
     },
     {
@@ -3045,7 +2959,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 5
+        "rank": 4
       }
     },
     {
@@ -3068,7 +2982,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 5
+        "rank": 4
       }
     },
     {
@@ -3091,7 +3005,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 5
+        "rank": 4
       }
     },
     {
@@ -3114,7 +3028,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 5
+        "rank": 4
       }
     },
     {
@@ -3137,7 +3051,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 5
+        "rank": 4
       }
     },
     {
@@ -3160,7 +3074,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 5
+        "rank": 4
       }
     },
     {
@@ -3183,7 +3097,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 6
+        "rank": 5
       }
     },
     {
@@ -3204,7 +3118,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 6
+        "rank": 5
       }
     },
     {
@@ -3225,12 +3139,100 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 6
+        "rank": 5
       }
     },
     {
       "directory": "src/lib/source/contract-evidence/__tests__",
       "testPath": "src/lib/source/contract-evidence/__tests__/templates.test.ts",
+      "enumerated": true,
+      "collected": false,
+      "run": false,
+      "green": "unknown",
+      "covered": false,
+      "pullRequestCovered": false,
+      "declaredQuarantine": false,
+      "untriaged": true,
+      "via": [],
+      "governedRisk": {
+        "score": 10,
+        "band": "high",
+        "signals": [
+          "tenant_scoped_read"
+        ],
+        "rank": 5
+      }
+    },
+    {
+      "directory": "src/lib/__tests__",
+      "testPath": "src/lib/__tests__/active-client.test.ts",
+      "enumerated": true,
+      "collected": true,
+      "run": "unknown",
+      "green": "unknown",
+      "covered": true,
+      "pullRequestCovered": true,
+      "declaredQuarantine": false,
+      "untriaged": false,
+      "via": [
+        "command"
+      ],
+      "governedRisk": {
+        "score": 10,
+        "band": "high",
+        "signals": [
+          "tenant_scoped_read"
+        ],
+        "rank": 6
+      }
+    },
+    {
+      "directory": "src/lib/__tests__",
+      "testPath": "src/lib/__tests__/client-config-canonical.test.ts",
+      "enumerated": true,
+      "collected": true,
+      "run": "unknown",
+      "green": "unknown",
+      "covered": true,
+      "pullRequestCovered": true,
+      "declaredQuarantine": false,
+      "untriaged": false,
+      "via": [
+        "command"
+      ],
+      "governedRisk": {
+        "score": 10,
+        "band": "high",
+        "signals": [
+          "tenant_scoped_read"
+        ],
+        "rank": 6
+      }
+    },
+    {
+      "directory": "src/lib/__tests__",
+      "testPath": "src/lib/__tests__/control-plane-tenant-purity.test.ts",
+      "enumerated": true,
+      "collected": false,
+      "run": false,
+      "green": "unknown",
+      "covered": false,
+      "pullRequestCovered": false,
+      "declaredQuarantine": false,
+      "untriaged": true,
+      "via": [],
+      "governedRisk": {
+        "score": 10,
+        "band": "high",
+        "signals": [
+          "tenant_scoped_read"
+        ],
+        "rank": 6
+      }
+    },
+    {
+      "directory": "src/lib/__tests__",
+      "testPath": "src/lib/__tests__/supabase-server.test.ts",
       "enumerated": true,
       "collected": false,
       "run": false,
@@ -3896,8 +3898,8 @@
       }
     },
     {
-      "directory": "src/lib/__tests__",
-      "testFiles": 4,
+      "directory": "src/lib/governance/__tests__",
+      "testFiles": 8,
       "unrunTestFiles": 3,
       "declaredQuarantineTestFiles": 0,
       "untriagedUnrunTestFiles": 3,
@@ -3911,8 +3913,8 @@
       }
     },
     {
-      "directory": "src/lib/governance/__tests__",
-      "testFiles": 8,
+      "directory": "src/lib/source/contract-evidence/__tests__",
+      "testFiles": 4,
       "unrunTestFiles": 3,
       "declaredQuarantineTestFiles": 0,
       "untriagedUnrunTestFiles": 3,
@@ -3926,11 +3928,11 @@
       }
     },
     {
-      "directory": "src/lib/source/contract-evidence/__tests__",
+      "directory": "src/lib/__tests__",
       "testFiles": 4,
-      "unrunTestFiles": 3,
+      "unrunTestFiles": 2,
       "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 3,
+      "untriagedUnrunTestFiles": 2,
       "governedRisk": {
         "score": 10,
         "band": "high",
@@ -4145,23 +4147,6 @@
       }
     },
     {
-      "directory": "src/lib/__tests__",
-      "testFiles": 4,
-      "unrunTestFiles": 3,
-      "governedRisk": {
-        "score": 10,
-        "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "tenantScopedReadSourceCount": 1,
-        "tenantScopedReadSources": [
-          "src/lib/active-client.ts"
-        ],
-        "rank": 4
-      }
-    },
-    {
       "directory": "src/lib/governance/__tests__",
       "testFiles": 8,
       "unrunTestFiles": 3,
@@ -4176,7 +4161,7 @@
           "src/lib/governance/context-bundle-adapters.ts",
           "src/lib/governance/readiness-backfill.ts"
         ],
-        "rank": 5
+        "rank": 4
       }
     },
     {
@@ -4192,6 +4177,23 @@
         "tenantScopedReadSourceCount": 1,
         "tenantScopedReadSources": [
           "src/lib/source/contract-evidence/read-model.ts"
+        ],
+        "rank": 5
+      }
+    },
+    {
+      "directory": "src/lib/__tests__",
+      "testFiles": 4,
+      "unrunTestFiles": 2,
+      "governedRisk": {
+        "score": 10,
+        "band": "high",
+        "signals": [
+          "tenant_scoped_read"
+        ],
+        "tenantScopedReadSourceCount": 1,
+        "tenantScopedReadSources": [
+          "src/lib/active-client.ts"
         ],
         "rank": 6
       }
