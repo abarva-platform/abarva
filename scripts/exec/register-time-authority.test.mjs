@@ -994,5 +994,670 @@ function preclaim(file, item, identity, extra = []) {
   fs.rmSync(dir, { recursive: true, force: true });
 }
 
+
+// ---------------------------------------------------------------------------
+// Item T-707. The pre-claim gate answers ITEM ownership; the protocol's actual
+// collision unit is the FILE.
+//
+// T-706 shipped a gate that decides whether a run may take an item. But the
+// rule that has cost real work is one-owner-per-FILE: two runs may hold two
+// DIFFERENT items whose file lists overlap, and the item gate says `take` to
+// both. T-706's own run had to pass over T-705 and T-703 by reading claim
+// lines and comparing file lists by hand — precisely the manual judgement the
+// gate exists to remove, one level down.
+//
+// Every case here drives the real CLI as a child process and reads its exit
+// status. The register is a fixture except where a case says otherwise; the
+// one case that reads the REAL register is marked, and it is there because a
+// detector proven only on fixtures it was written beside has never met the
+// shape it was filed against.
+// ---------------------------------------------------------------------------
+
+function preclaimFiles(file, item, identity, files, extra = []) {
+  return preclaim(file, item, identity, ["--files", files, ...extra]);
+}
+
+{
+  // The declared contract of the protocol: a claim line's `files:` list. A
+  // second run asking for a path on that list is refused, and the refusal
+  // names the path and the holder — an unattributed refusal cannot be acted
+  // on.
+  const { dir, file } = fixture([
+    "2026-09-22T18:20:29Z | claude-code-cc-a#20260922T1830Z | item T-704 claimed | files: scripts/exec/build-source-board.mjs, scripts/exec/build-source-board.test.mjs",
+  ]);
+  const r = preclaimFiles(
+    file,
+    "T-705",
+    "source-backlog-executor#20260922T182000Z",
+    "scripts/exec/build-source-board.mjs,scripts/exec/register-time-authority.mjs",
+  );
+  check(
+    "a path on another live claim's files: list refuses the run",
+    r.status === 1 && r.report.fileOverlap?.refuses === true,
+    `status=${r.status} overlap=${JSON.stringify(r.report.fileOverlap)}`,
+  );
+  check(
+    "the refusal names the contended path",
+    (r.report.fileOverlap?.conflicts ?? []).some(
+      (c) => c.path === "scripts/exec/build-source-board.mjs",
+    ),
+    JSON.stringify(r.report.fileOverlap?.conflicts),
+  );
+  check(
+    "the refusal names the holder identity and its line",
+    (r.report.fileOverlap?.conflicts ?? []).some(
+      (c) => c.agent === "claude-code-cc-a#20260922T1830Z" && c.lineNumber > 0,
+    ),
+    JSON.stringify(r.report.fileOverlap?.conflicts),
+  );
+  check(
+    "the uncontended path in the same request is not reported as a conflict",
+    !(r.report.fileOverlap?.conflicts ?? []).some(
+      (c) => c.path === "scripts/exec/register-time-authority.mjs",
+    ),
+    JSON.stringify(r.report.fileOverlap?.conflicts),
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+{
+  // The item gate and the file gate are independent, and the file gate must be
+  // able to refuse a run the item gate waves through. That composition IS the
+  // defect: two different items, one shared file.
+  const { dir, file } = fixture([
+    "2026-09-22T18:20:29Z | claude-code-cc-a#20260922T1830Z | item T-704 claimed | files: scripts/exec/build-source-board.mjs",
+  ]);
+  const itemOnly = preclaim(file, "T-705", "source-backlog-executor#20260922T182000Z");
+  check(
+    "the item gate alone says take — a DIFFERENT item is free",
+    itemOnly.status === 0 && itemOnly.report.verdict === "take",
+    `status=${itemOnly.status} verdict=${itemOnly.report.verdict}`,
+  );
+  const withFiles = preclaimFiles(
+    file,
+    "T-705",
+    "source-backlog-executor#20260922T182000Z",
+    "scripts/exec/build-source-board.mjs",
+  );
+  check(
+    "the same run is refused once its file list is declared",
+    withFiles.status === 1 && withFiles.report.verdict === "take",
+    `status=${withFiles.status} verdict=${withFiles.report.verdict}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+{
+  // A fixture whose two claims share no path cannot fail this control, so it
+  // is here only to hold the other direction shut: a disjoint list still runs.
+  const { dir, file } = fixture([
+    "2026-09-22T18:20:29Z | claude-code-cc-a#20260922T1830Z | item T-704 claimed | files: scripts/exec/build-source-board.mjs",
+  ]);
+  const r = preclaimFiles(
+    file,
+    "T-705",
+    "source-backlog-executor#20260922T182000Z",
+    "scripts/exec/register-time-authority.mjs",
+  );
+  check(
+    "a disjoint file list is not refused",
+    r.status === 0 && r.report.fileOverlap?.refuses === false,
+    `status=${r.status} overlap=${JSON.stringify(r.report.fileOverlap)}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+{
+  // THE PARSING LIMIT THE ITEM NAMES, DECIDED RATHER THAN LEFT TO CHANCE.
+  // Several claim lines name a DIRECTORY — `docs/releases/records/` — because
+  // the file inside it does not exist yet. A directory is not a collision:
+  // nearly every claim in the register names that one, and two runs adding two
+  // DIFFERENT records to it do not contend. So a directory never refuses, in
+  // either position, and it is reported as a note instead of swallowed.
+  const { dir, file } = fixture([
+    "2026-09-22T18:20:29Z | claude-code-cc-a#20260922T1830Z | item T-704 claimed | files: docs/releases/records/, scripts/exec/build-source-board.mjs",
+  ]);
+  const bothDirs = preclaimFiles(
+    file,
+    "T-705",
+    "source-backlog-executor#20260922T182000Z",
+    "docs/releases/records/",
+  );
+  check(
+    "a directory named by both claims is not a collision",
+    bothDirs.status === 0 && bothDirs.report.fileOverlap?.refuses === false,
+    `status=${bothDirs.status} overlap=${JSON.stringify(bothDirs.report.fileOverlap)}`,
+  );
+  check(
+    "the shared directory is reported as a note rather than dropped",
+    (bothDirs.report.fileOverlap?.notes ?? []).some(
+      (n) => n.path === "docs/releases/records/",
+    ),
+    JSON.stringify(bothDirs.report.fileOverlap?.notes),
+  );
+  const fileInDir = preclaimFiles(
+    file,
+    "T-705",
+    "source-backlog-executor#20260922T182000Z",
+    "docs/releases/records/2026-09-22-t707.md",
+  );
+  check(
+    "a claimed directory does not lock the files beneath it",
+    fileInDir.status === 0 && fileInDir.report.fileOverlap?.refuses === false,
+    `status=${fileInDir.status} overlap=${JSON.stringify(fileInDir.report.fileOverlap)}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+{
+  // A glob is a scope statement, not a file. `src/**` appears in the register
+  // where a lane is describing its blast radius; refusing on it would refuse
+  // every run that touches any source file.
+  const { dir, file } = fixture([
+    "2026-09-22T18:20:29Z | codex-lane | item T-704 claimed | files: src/**, .github/workflows/unit-suites.yml",
+  ]);
+  const glob = preclaimFiles(
+    file,
+    "T-705",
+    "source-backlog-executor#20260922T182000Z",
+    "src/lib/source/thing.ts",
+  );
+  check(
+    "a glob scope in another claim does not refuse a file under it",
+    glob.status === 0 && glob.report.fileOverlap?.refuses === false,
+    `status=${glob.status} overlap=${JSON.stringify(glob.report.fileOverlap)}`,
+  );
+  const exact = preclaimFiles(
+    file,
+    "T-705",
+    "source-backlog-executor#20260922T182000Z",
+    ".github/workflows/unit-suites.yml",
+  );
+  check(
+    "a dotfile-rooted path on the same list still refuses",
+    exact.status === 1,
+    `status=${exact.status} overlap=${JSON.stringify(exact.report.fileOverlap)}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+{
+  // This run's OWN earlier line does not block it. A run appends progress
+  // lines to its own claim; reading those as contention would refuse every
+  // run its second time through.
+  const { dir, file } = fixture([
+    "2026-09-22T18:20:29Z | source-backlog-executor#20260922T182000Z | item T-705 claimed | files: scripts/exec/build-source-board.mjs",
+  ]);
+  const r = preclaimFiles(
+    file,
+    "T-705",
+    "source-backlog-executor#20260922T182000Z",
+    "scripts/exec/build-source-board.mjs",
+  );
+  check(
+    "this run's own file list does not block this run",
+    r.status === 0 && r.report.fileOverlap?.refuses === false,
+    `status=${r.status} overlap=${JSON.stringify(r.report.fileOverlap)}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+{
+  // A SIBLING — same scheduled task, different run id — is a different owner,
+  // and its file list contends exactly as a stranger's does. This is the
+  // distinction base-name keying loses, one level down from T-706.
+  const { dir, file } = fixture([
+    "2026-09-22T18:20:29Z | source-backlog-executor#20260922T045559Z | item T-704 claimed | files: scripts/exec/build-source-board.mjs",
+  ]);
+  const r = preclaimFiles(
+    file,
+    "T-705",
+    "source-backlog-executor#20260922T182000Z",
+    "scripts/exec/build-source-board.mjs",
+  );
+  check(
+    "a sibling run's file list contends",
+    r.status === 1 && (r.report.fileOverlap?.conflicts ?? []).some((c) => c.ownership === "sibling"),
+    `status=${r.status} overlap=${JSON.stringify(r.report.fileOverlap)}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+{
+  // DELIBERATELY DIFFERENT FROM THE ITEM GATE, and the reason is worth the
+  // line: T-706 fails OPEN on a legacy holder because 81 of 99 identities on
+  // the real register carry no run id, so refusing them would refuse nearly
+  // every item and the gate would be switched off. The file gate has no such
+  // blast radius — it fires only when a path actually overlaps — and an
+  // overlapping path held by anyone who is not this exact run is a collision
+  // whether or not the holder can be named. So it fails CLOSED.
+  const { dir, file } = fixture([
+    "2026-09-22T18:20:29Z | codex-some-lane | item T-704 claimed | files: scripts/exec/build-source-board.mjs",
+  ]);
+  const r = preclaimFiles(
+    file,
+    "T-705",
+    "source-backlog-executor#20260922T182000Z",
+    "scripts/exec/build-source-board.mjs",
+  );
+  check(
+    "a legacy holder with no run id still contends on files",
+    r.status === 1 && (r.report.fileOverlap?.conflicts ?? []).some((c) => c.ownership === "legacy_other"),
+    `status=${r.status} overlap=${JSON.stringify(r.report.fileOverlap)}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+{
+  // A release line frees its files — that is what the register's release
+  // grammar means, and the item gate already honours it. Not honouring it
+  // here would leave every released file locked for three hours.
+  const { dir, file } = fixture([
+    "2026-09-22T18:10:00Z | claude-code-cc-a#20260922T1830Z | item T-704 claimed | files: scripts/exec/build-source-board.mjs",
+    "2026-09-22T18:20:29Z | claude-code-cc-a#20260922T1830Z | RELEASED item T-704 — merged, all files free | files: scripts/exec/build-source-board.mjs",
+  ]);
+  const r = preclaimFiles(
+    file,
+    "T-705",
+    "source-backlog-executor#20260922T182000Z",
+    "scripts/exec/build-source-board.mjs",
+  );
+  check(
+    "a released claim's file list does not contend",
+    r.status === 0 && r.report.fileOverlap?.refuses === false,
+    `status=${r.status} overlap=${JSON.stringify(r.report.fileOverlap)}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+{
+  // The 3h window governs files exactly as it governs items.
+  const { dir, file } = fixture([
+    "2026-09-22T14:00:00Z | claude-code-cc-a#20260922T1830Z | item T-704 claimed | files: scripts/exec/build-source-board.mjs",
+  ]);
+  const r = preclaimFiles(
+    file,
+    "T-705",
+    "source-backlog-executor#20260922T182000Z",
+    "scripts/exec/build-source-board.mjs",
+  );
+  check(
+    "an expired claim's file list does not contend",
+    r.status === 0 && r.report.fileOverlap?.refuses === false,
+    `status=${r.status} overlap=${JSON.stringify(r.report.fileOverlap)}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+{
+  // `files:` lists are prose. They arrive backticked, comma-separated,
+  // sentence-terminated and pipe-terminated, and a parser that takes the raw
+  // token refuses nothing because nothing ever matches.
+  const { dir, file } = fixture([
+    "2026-09-22T18:20:29Z | claude-code-cc-a#20260922T1830Z | item T-704 claimed | files: `scripts/exec/build-source-board.mjs`, `scripts/exec/build-source-board.test.mjs`. | more prose",
+  ]);
+  const r = preclaimFiles(
+    file,
+    "T-705",
+    "source-backlog-executor#20260922T182000Z",
+    "scripts/exec/build-source-board.test.mjs",
+  );
+  check(
+    "a backticked, sentence-terminated path is normalised before comparison",
+    r.status === 1,
+    `status=${r.status} overlap=${JSON.stringify(r.report.fileOverlap)}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+{
+  // A slash is not a path. The register is full of `Product/Lab`, `and/or`
+  // and `24/7`, and a token-with-a-slash rule reads all three as files.
+  const { dir, file } = fixture([
+    "2026-09-22T18:20:29Z | claude-code-cc-a#20260922T1830Z | item T-704 claimed — shared Product/Lab traffic, and/or the 24/7 lane | files: scripts/exec/build-source-board.mjs",
+  ]);
+  for (const notAPath of ["Product/Lab", "and/or", "24/7"]) {
+    const r = preclaimFiles(
+      file,
+      "T-705",
+      "source-backlog-executor#20260922T182000Z",
+      `${notAPath},scripts/exec/register-time-authority.mjs`,
+    );
+    check(
+      `a bare slashed word is not read as a path: ${notAPath}`,
+      r.status === 0 &&
+        (r.report.fileOverlap?.unparsed ?? []).includes(notAPath) &&
+        (r.report.fileOverlap?.conflicts ?? []).length === 0,
+      `status=${r.status} overlap=${JSON.stringify(r.report.fileOverlap)}`,
+    );
+  }
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+{
+  // Usage: the file gate is opt-in, so a run that declares no file list gets
+  // the item gate's answer unchanged and is told the file check did not run.
+  const { dir, file } = fixture([
+    "2026-09-22T18:20:29Z | claude-code-cc-a#20260922T1830Z | item T-704 claimed | files: scripts/exec/build-source-board.mjs",
+  ]);
+  const r = preclaim(file, "T-705", "source-backlog-executor#20260922T182000Z");
+  check(
+    "with no --files the file gate reports that it did not run",
+    r.status === 0 && r.report.fileOverlap?.checked === false,
+    `status=${r.status} overlap=${JSON.stringify(r.report.fileOverlap)}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+{
+  // THE REAL KNOWN POSITIVE, read from the register itself rather than from a
+  // fixture written beside the detector. At 18:20:29Z `claude-code-cc-a#
+  // 20260922T1830Z` took item T-704 and named `scripts/exec/build-source-
+  // board.mjs` as its scope — in PROSE, in backticks, with no `files:` list on
+  // the line at all. A `files:`-only parser passes every fixture above and
+  // MISSES this, which is the shape T-467 was filed against.
+  //
+  // Skipped, loudly, when the operator register is not on this machine: CI has
+  // no `~/Downloads`. It is not skipped silently, because a case that quietly
+  // vanishes proves nothing.
+  const register = path.join(
+    process.env.SOURCE_EXECUTION_HOME ?? path.join(os.homedir(), "Downloads"),
+    "EXECUTION_CLAIMS.md",
+  );
+  if (!fs.existsSync(register)) {
+    console.log(`  SKIP  real known positive — no operator register at ${register}`);
+  } else {
+    const r = run([
+      "--preclaim",
+      "--file",
+      register,
+      "--item",
+      "T-705",
+      "--identity",
+      "source-backlog-executor#20260922T182100Z",
+      "--files",
+      "scripts/exec/build-source-board.mjs",
+      "--now",
+      "2026-09-22T18:21:00Z",
+      "--json",
+    ]);
+    let report = {};
+    try {
+      report = JSON.parse(r.stdout || "{}");
+    } catch {
+      report = {};
+    }
+    const conflicts = report.fileOverlap?.conflicts ?? [];
+    check(
+      "the real 18:20:29Z scope mention is caught on the real register",
+      r.status === 1 &&
+        conflicts.some(
+          (c) =>
+            c.path === "scripts/exec/build-source-board.mjs" &&
+            c.agent === "claude-code-cc-a#20260922T1830Z",
+        ),
+      `status=${r.status} conflicts=${JSON.stringify(conflicts)}`,
+    );
+
+    // A SECOND REAL KNOWN POSITIVE, and the one that settles whether this
+    // control earns its place: replay the register at 2026-09-22T20:33:00Z,
+    // the instant a run took U-502 and the structure map with it. The ITEM
+    // gate says `take` and is right — U-502 was genuinely unclaimed. The file
+    // gate refuses, naming two live holders of
+    // `scripts/exec/source-stage-map.json`. That collision then happened, and
+    // was found by hand 34 minutes later at a cost of one flagged pull
+    // request and a bucket re-measurement.
+    const replay = run([
+      "--preclaim",
+      "--file",
+      register,
+      "--item",
+      "U-502",
+      "--identity",
+      "a-run-that-did-not-check#20260922T203300Z",
+      "--files",
+      "scripts/exec/source-stage-map.json",
+      "--now",
+      "2026-09-22T20:33:00Z",
+      "--json",
+    ]);
+    let replayed = {};
+    try {
+      replayed = JSON.parse(replay.stdout || "{}");
+    } catch {
+      replayed = {};
+    }
+    check(
+      "the item gate alone waves the real 20:33Z map collision through",
+      replayed.verdict === "take",
+      `verdict=${replayed.verdict}`,
+    );
+    check(
+      "the file gate refuses it, naming a live holder of the structure map",
+      replay.status === 1 &&
+        (replayed.fileOverlap?.conflicts ?? []).some(
+          (c) =>
+            c.path === "scripts/exec/source-stage-map.json" &&
+            c.agent === "claude-code-cc-a#20260922T1830Z",
+        ),
+      `status=${replay.status} conflicts=${JSON.stringify(replayed.fileOverlap?.conflicts)}`,
+    );
+  }
+}
+
+
+{
+  // REACHING THE NEGATOR VETO. Written because the mutation that deletes it
+  // SURVIVED the cases above: every fixture there names a file in order to
+  // hold it, so a rule that drops disclaimed mentions had nothing to drop and
+  // asserted nothing. The forms below are both live in the register right now
+  // — a claim names a file precisely to say it is staying off it, and reading
+  // either as a hold refuses a run that is entitled to the file.
+  const { dir, file } = fixture([
+    "2026-09-22T18:20:29Z | codex-lane-a#20260922T1800Z | item T-704 claimed | files: scripts/exec/build-source-board.mjs. Avoid `src/components/source/SourceAnalyticsCanvas.tsx` while PR #8291 is open.",
+    "2026-09-22T18:20:30Z | codex-lane-b#20260922T1801Z | item T-709 claimed — this claim does not touch `src/lib/source/shell.ts`, and the work is outside `src/lib/source/canvas.ts`.",
+  ]);
+  for (const [label, wanted] of [
+    ["Avoid `x` while …", "src/components/source/SourceAnalyticsCanvas.tsx"],
+    ["does not touch `x`", "src/lib/source/shell.ts"],
+    ["outside `x`", "src/lib/source/canvas.ts"],
+  ]) {
+    const r = preclaimFiles(
+      file,
+      "T-710",
+      "source-backlog-executor#20260922T182000Z",
+      wanted,
+    );
+    check(
+      `a file named in order to DISCLAIM it is not held: ${label}`,
+      r.status === 0 && r.report.fileOverlap?.refuses === false,
+      `status=${r.status} overlap=${JSON.stringify(r.report.fileOverlap)}`,
+    );
+  }
+  // …and the veto must not swallow the holds on the same lines. A negator
+  // rule wide enough to free everything is the same defect in the other
+  // direction.
+  const stillHeld = preclaimFiles(
+    file,
+    "T-710",
+    "source-backlog-executor#20260922T182000Z",
+    "scripts/exec/build-source-board.mjs",
+  );
+  check(
+    "the veto does not free the path the same line genuinely holds",
+    stillHeld.status === 1,
+    `status=${stillHeld.status} overlap=${JSON.stringify(stillHeld.report.fileOverlap)}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+
+{
+  // AN ABSTENTION HOLDS NOTHING, and this case exists because the gate found
+  // the false positive on the REAL register, not in a fixture: the one live
+  // line it wrongly read as a hold was `item T-706 NOT TAKEN - already in open
+  // PR #8280 ... touching exactly the two files this item names (...)`. The
+  // negator is at the head of a six-hundred-character line and the paths are
+  // at the end, so no reach-based veto can join them; the announcement verb at
+  // the head of the message field can, which is where the register puts it.
+  const { dir, file } = fixture([
+    "2026-09-22T18:20:29Z | claude-code-cc-a#20260922T1830Z | item T-704 NOT TAKEN — already in open PR #8280, found before any code was written. Nothing built, nothing duplicated, no branch pushed. " +
+      "A".repeat(400) +
+      " touching exactly the two files this item names (`scripts/exec/register-time-authority.mjs` and `scripts/exec/register-time-authority.test.mjs`).",
+  ]);
+  const r = preclaimFiles(
+    file,
+    "T-705",
+    "source-backlog-executor#20260922T182000Z",
+    "scripts/exec/register-time-authority.mjs",
+  );
+  check(
+    "a NOT TAKEN line holds none of the files it names",
+    r.status === 0 && r.report.fileOverlap?.refuses === false,
+    `status=${r.status} overlap=${JSON.stringify(r.report.fileOverlap)}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+{
+  // The abstention verb is read at the HEAD of the message field, so a claim
+  // that merely says elsewhere that something was not taken still holds its
+  // own files. A rule wide enough to free those is the same defect reversed.
+  const { dir, file } = fixture([
+    "2026-09-22T18:20:29Z | claude-code-cc-a#20260922T1830Z | item T-704 claimed, files: scripts/exec/build-source-board.mjs — note in passing that T-705 was NOT TAKEN by anyone.",
+  ]);
+  const r = preclaimFiles(
+    file,
+    "T-705",
+    "source-backlog-executor#20260922T182000Z",
+    "scripts/exec/build-source-board.mjs",
+  );
+  check(
+    "an abstention mentioned mid-line does not free the line's own hold",
+    r.status === 1,
+    `status=${r.status} overlap=${JSON.stringify(r.report.fileOverlap)}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+{
+  // The refusal must say WHICH gate refused. The item gate answering
+  // `already-yours` while the file gate refuses is the live shape — a run
+  // re-reading its own claim with a contended file list — and printing a bare
+  // "(REFUSED)" beside `already-yours` reads as a contradiction.
+  const { dir, file } = fixture([
+    "2026-09-22T18:10:00Z | source-backlog-executor#20260922T182000Z | item T-705 claimed",
+    "2026-09-22T18:20:29Z | codex-other#20260922T1830Z | item T-704 claimed | files: scripts/exec/build-source-board.mjs",
+  ]);
+  const r = run([
+    "--preclaim",
+    "--file",
+    file,
+    "--item",
+    "T-705",
+    "--identity",
+    "source-backlog-executor#20260922T182000Z",
+    "--files",
+    "scripts/exec/build-source-board.mjs",
+    "--now",
+    PRECLAIM_NOW,
+  ]);
+  check(
+    "the refusal names the gate that produced it",
+    r.status === 1 &&
+      /verdict: already-yours \(REFUSED by the files gate\)/.test(r.stdout),
+    `status=${r.status} stdout=${r.stdout}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+
+{
+  // THE PROSE SHAPE, AS A COMMITTED FIXTURE, because the two cases that read
+  // the real register skip wherever it is absent — and CI is exactly where it
+  // is absent. Without this, the mutation that reads paths only from an
+  // explicit `files:` label passes every case a runner can execute.
+  //
+  // This is the real known positive's shape and nothing of its content: a
+  // claim that names its file in a backticked Scope sentence, with no `files:`
+  // label anywhere on the line.
+  const { dir, file } = fixture([
+    "2026-09-22T18:20:29Z | lane-a#20260922T1830Z | TAKING item T-800 — within-record rung attribution leak. Branch to be cut from exact `origin/main`. Scope: `scripts/exec/build-source-board.mjs` rung attribution only, plus its behavioral suite and one release record.",
+  ]);
+  const r = preclaimFiles(
+    file,
+    "T-801",
+    "lane-b#20260922T182000Z",
+    "scripts/exec/build-source-board.mjs",
+  );
+  check(
+    "a path named in prose with no files: label still holds the file",
+    r.status === 1 &&
+      (r.report.fileOverlap?.conflicts ?? []).some(
+        (c) => c.path === "scripts/exec/build-source-board.mjs" && c.agent === "lane-a#20260922T1830Z",
+      ),
+    `status=${r.status} overlap=${JSON.stringify(r.report.fileOverlap)}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+{
+  // THE COLLISION SHAPE, AS A COMMITTED FIXTURE, for the same reason: two
+  // identities holding one file across two DIFFERENT items, which the item
+  // gate waves through and the file gate must not.
+  const { dir, file } = fixture([
+    "2026-09-22T17:51:19Z | lane-a#20260922T1830Z | TAKEN AND AT PR/CI — placement of the unmapped ids on `scripts/exec/source-stage-map.json`. PR #8282 OPENED, auto-merge armed, NOT merged.",
+    "2026-09-22T17:59:26Z | lane-b#20260922T185540Z | TAKING new item T-802 | files: scripts/exec/source-stage-map.json",
+  ]);
+  const r = preclaimFiles(
+    file,
+    "T-803",
+    "lane-c#20260922T203300Z",
+    "scripts/exec/source-stage-map.json",
+  );
+  check(
+    "one file held under two different items by two identities refuses a third",
+    r.status === 1 && r.report.verdict === "take" && (r.report.fileOverlap?.conflicts ?? []).length === 2,
+    `status=${r.status} verdict=${r.report.verdict} overlap=${JSON.stringify(r.report.fileOverlap)}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+
+{
+  // `--files` given, nothing in it readable as a path. The check then ran over
+  // an EMPTY set and would print "0 requested, 0 contended" — indistinguishable
+  // from a clean result, which is the substitution the NOT CHECKED line exists
+  // to prevent, one step later. A list that came out empty by accident is a
+  // usage error, not a pass.
+  const { dir, file } = fixture([
+    "2026-09-22T18:20:29Z | lane-a#20260922T1830Z | item T-800 claimed | files: scripts/exec/build-source-board.mjs",
+  ]);
+  for (const [label, arg] of [
+    ["an empty --files value", ""],
+    ["a value with no readable path", "not-a-path, Product/Lab"],
+  ]) {
+    const r = preclaimFiles(file, "T-801", "lane-b#20260922T182000Z", arg);
+    check(
+      `${label} is a usage error, not a clean run`,
+      r.status === 2,
+      `status=${r.status} stdout=${r.stdout} stderr=${r.stderr}`,
+    );
+  }
+  // …and a list with one readable path among the noise still runs.
+  const mixed = preclaimFiles(
+    file,
+    "T-801",
+    "lane-b#20260922T182000Z",
+    "not-a-path, scripts/exec/build-source-board.mjs",
+  );
+  check(
+    "one readable path among unreadable entries still runs the check",
+    mixed.status === 1 && (mixed.report.fileOverlap?.unparsed ?? []).includes("not-a-path"),
+    `status=${mixed.status} overlap=${JSON.stringify(mixed.report.fileOverlap)}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
 console.log(`\n${passes} passed, ${failures} failed`);
 process.exit(failures ? 1 : 0);
