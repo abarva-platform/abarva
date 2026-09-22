@@ -651,6 +651,8 @@
     "moves:smoke:evidence-review:approve": "npx tsx scripts/programs/approve-smoke-evidence-review.ts",
     "ops:archive-existing-moves": "npx tsx scripts/ops/archive-existing-moves.ts",
     "source:servicenow-requests:plan": "npx tsx scripts/source/load-servicenow-sourcing-requests.ts",
+    "source:servicenow-requests:job": "npx tsx scripts/source/load-servicenow-sourcing-requests.ts --operator-job --emit-proof-bundle",
+    "source:servicenow-requests:apply-job": "npx tsx scripts/source/load-servicenow-sourcing-requests.ts --operator-job --apply --emit-proof-bundle",
     "source:contract-optimization:load-skyharbor": "npx tsx scripts/source/load-skyharbor-contract-optimization.ts --apply",
     "source:skyharbor-v3:load-current-state": "npx tsx scripts/source/load-skyharbor-v3-current-state.ts",
     "source:skyharbor-v3:load-current-state:apply": "npx tsx scripts/source/load-skyharbor-v3-current-state.ts --apply",

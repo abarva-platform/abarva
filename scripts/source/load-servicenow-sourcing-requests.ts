@@ -1,3 +1,4 @@
+import { spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
@@ -23,9 +24,15 @@ export type ServiceNowImportArgs = {
   inputPath: string;
   datasetId: string;
   datasetVersion: string;
+  inputSourceVersion: string;
+  expectedInputSha256: string | null;
   loadRunId: string;
+  idempotencyKey: string;
+  buildVersion: string;
   outDir: string;
   requireAllArchetypes: boolean;
+  operatorJob: boolean;
+  emitProofBundle: boolean;
 };
 
 export type ServiceNowImportPlan = {
@@ -34,7 +41,10 @@ export type ServiceNowImportPlan = {
   tenantKey: string;
   datasetId: string;
   datasetVersion: string;
+  inputSourceVersion: string;
+  buildVersion: string;
   loadRunId: string;
+  idempotencyKey: string;
   inputPath: string;
   inputSha256: string;
   rowCount: number;
@@ -70,31 +80,107 @@ function argValue(argv: readonly string[], name: string): string | null {
   return argv.find((arg) => arg.startsWith(`${name}=`))?.slice(name.length + 1) ?? null;
 }
 
+function envValue(env: NodeJS.ProcessEnv, name: string): string | null {
+  const value = env[name];
+  return value && value.trim() ? value.trim() : null;
+}
+
+function requireOperatorValue(
+  value: string | null,
+  label: string,
+  operatorJob: boolean,
+): string | null {
+  if (operatorJob && !value) {
+    throw new Error(`Operator job mode requires ${label}.`);
+  }
+  return value;
+}
+
 export function parseServiceNowImportArgs(
   argv = process.argv.slice(2),
   env = process.env,
 ): ServiceNowImportArgs {
-  const apply = argv.includes("--apply");
-  const tenantArg = argValue(argv, "--tenant-key");
+  const apply =
+    argv.includes("--apply") ||
+    env.SOURCE_SERVICENOW_REQUEST_IMPORT_APPLY === "true";
+  const operatorJob =
+    argv.includes("--operator-job") ||
+    env.SOURCE_SERVICENOW_REQUEST_IMPORT_OPERATOR_JOB === "true";
+  const tenantArg =
+    argValue(argv, "--tenant-key") ??
+    envValue(env, "SOURCE_SERVICENOW_REQUEST_TENANT_KEY") ??
+    envValue(env, "TENANT_KEY");
   const tenantKey = tenantArg ?? (apply ? "" : "corpus_global");
   if (!tenantKey) throw new Error("Apply mode requires --tenant-key.");
+  requireOperatorValue(tenantArg, "--tenant-key or SOURCE_SERVICENOW_REQUEST_TENANT_KEY", operatorJob);
+  const datasetVersion =
+    argValue(argv, "--dataset-version") ??
+    envValue(env, "SOURCE_SERVICENOW_REQUEST_DATASET_VERSION") ??
+    "v1";
+  const inputSourceVersion =
+    requireOperatorValue(
+      argValue(argv, "--input-source-version") ??
+        envValue(env, "SOURCE_SERVICENOW_REQUEST_INPUT_SOURCE_VERSION"),
+      "--input-source-version or SOURCE_SERVICENOW_REQUEST_INPUT_SOURCE_VERSION",
+      operatorJob,
+    ) ?? datasetVersion;
+  const expectedInputSha256 = requireOperatorValue(
+    argValue(argv, "--input-sha256") ??
+      envValue(env, "SOURCE_SERVICENOW_REQUEST_INPUT_SHA256"),
+    "--input-sha256 or SOURCE_SERVICENOW_REQUEST_INPUT_SHA256",
+    operatorJob,
+  );
+  const loadRunId =
+    requireOperatorValue(
+      argValue(argv, "--load-run-id") ??
+        envValue(env, "SOURCE_SERVICENOW_REQUEST_LOAD_RUN_ID"),
+      "--load-run-id or SOURCE_SERVICENOW_REQUEST_LOAD_RUN_ID",
+      operatorJob,
+    ) ??
+    `source-servicenow-request-${new Date().toISOString().replace(/[-:.]/g, "")}`;
+  const idempotencyKey =
+    requireOperatorValue(
+      argValue(argv, "--idempotency-key") ??
+        envValue(env, "SOURCE_SERVICENOW_REQUEST_IDEMPOTENCY_KEY"),
+      "--idempotency-key or SOURCE_SERVICENOW_REQUEST_IDEMPOTENCY_KEY",
+      operatorJob,
+    ) ?? `source-servicenow-request:${tenantKey}:${inputSourceVersion}:${loadRunId}`;
   return {
     apply,
     approved: env.SOURCE_SERVICENOW_REQUEST_IMPORT_APPLY_APPROVED === "true",
-    confirmation: argValue(argv, "--confirm"),
+    confirmation:
+      argValue(argv, "--confirm") ??
+      envValue(env, "SOURCE_SERVICENOW_REQUEST_IMPORT_CONFIRMATION"),
     tenantKey,
-    inputPath: path.resolve(argValue(argv, "--input") ?? DEFAULT_INPUT),
+    inputPath: path.resolve(
+      argValue(argv, "--input") ??
+        envValue(env, "SOURCE_SERVICENOW_REQUEST_INPUT_PATH") ??
+        DEFAULT_INPUT,
+    ),
     datasetId:
       argValue(argv, "--dataset-id") ??
+      envValue(env, "SOURCE_SERVICENOW_REQUEST_DATASET_ID") ??
       "source-servicenow-sourcing-requests-synthetic-v1",
-    datasetVersion: argValue(argv, "--dataset-version") ?? "v1",
-    loadRunId:
-      argValue(argv, "--load-run-id") ??
-      `source-servicenow-request-${new Date().toISOString().replace(/[-:.]/g, "")}`,
+    datasetVersion,
+    inputSourceVersion,
+    expectedInputSha256,
+    loadRunId,
+    idempotencyKey,
+    buildVersion:
+      argValue(argv, "--build-version") ??
+      envValue(env, "SOURCE_SERVICENOW_REQUEST_BUILD_VERSION") ??
+      "local-dry-run",
     outDir: path.resolve(
-      argValue(argv, "--out-dir") ?? "/tmp/source-servicenow-request-import",
+      argValue(argv, "--out-dir") ??
+        envValue(env, "SOURCE_SERVICENOW_REQUEST_OUT_DIR") ??
+        "/tmp/source-servicenow-request-import",
     ),
     requireAllArchetypes: !argv.includes("--allow-partial-archetype-set"),
+    operatorJob,
+    emitProofBundle:
+      argv.includes("--emit-proof-bundle") ||
+      env.SOURCE_SERVICENOW_REQUEST_EMIT_PROOF_BUNDLE === "true" ||
+      env.EMIT_ACA_PROOF_BUNDLE === "true",
   };
 }
 
@@ -161,7 +247,10 @@ export function buildServiceNowImportPlan(input: {
     tenantKey: input.args.tenantKey,
     datasetId: input.args.datasetId,
     datasetVersion: input.args.datasetVersion,
+    inputSourceVersion: input.args.inputSourceVersion,
+    buildVersion: input.args.buildVersion,
     loadRunId: input.args.loadRunId,
+    idempotencyKey: input.args.idempotencyKey,
     inputPath: input.args.inputPath,
     inputSha256: sha256(input.csvText),
     rowCount: requests.length,
@@ -205,6 +294,95 @@ export function buildServiceNowImportPlan(input: {
       suppliersContacted: false,
     },
   };
+}
+
+function assertExpectedInputSha(args: ServiceNowImportArgs, actualSha256: string): void {
+  if (!args.expectedInputSha256) return;
+  const expected = args.expectedInputSha256.toLowerCase();
+  if (!/^[a-f0-9]{64}$/.test(expected)) {
+    throw new Error("--input-sha256 must be a 64-character lowercase hex SHA-256.");
+  }
+  if (actualSha256 !== expected) {
+    throw new Error(
+      `ServiceNow request input SHA mismatch: expected ${expected}, got ${actualSha256}.`,
+    );
+  }
+}
+
+function assertOperatorContract(args: ServiceNowImportArgs): void {
+  if (!args.operatorJob) return;
+  const missing = [
+    ["tenantKey", args.tenantKey],
+    ["expectedInputSha256", args.expectedInputSha256],
+    ["inputSourceVersion", args.inputSourceVersion],
+    ["loadRunId", args.loadRunId],
+    ["idempotencyKey", args.idempotencyKey],
+  ].flatMap(([label, value]) =>
+    typeof value === "string" && value.trim() ? [] : [label],
+  );
+  if (missing.length > 0) {
+    throw new Error(
+      `Operator job mode requires a complete contract: ${missing.join(", ")}.`,
+    );
+  }
+}
+
+function writeProofManifest(args: ServiceNowImportArgs, plan: ServiceNowImportPlan, result: {
+  inserted: number;
+  committed: boolean;
+}): void {
+  writeFileSync(
+    path.join(args.outDir, "proof-manifest.json"),
+    `${JSON.stringify(
+      {
+        event: "source_servicenow_request_import_proof",
+        status: result.committed ? "committed" : "dry_run",
+        blobCompatible: true,
+        proofBundleFile: "proof-bundle.tgz",
+        blobProofBundleLocation: `local-only:${path.join(args.outDir, "proof-bundle.tgz")}`,
+        contract: {
+          tenantKey: args.tenantKey,
+          datasetId: args.datasetId,
+          datasetVersion: args.datasetVersion,
+          inputSourceVersion: args.inputSourceVersion,
+          inputSha256: plan.inputSha256,
+          loadRunId: args.loadRunId,
+          idempotencyKey: args.idempotencyKey,
+          buildVersion: args.buildVersion,
+          apply: args.apply,
+        },
+        authority: plan.authority,
+        summary: {
+          rowCount: plan.rowCount,
+          inserted: result.inserted,
+          committed: result.committed,
+          missingArchetypeCount: plan.missingArchetypes.length,
+        },
+      },
+      null,
+      2,
+    )}\n`,
+  );
+}
+
+function emitProofBundle(outDir: string): void {
+  const parent = path.dirname(outDir);
+  const base = path.basename(outDir);
+  const tarPath = path.join(parent, `${base}.tgz`);
+  const tar = spawnSync("tar", ["-czf", tarPath, "-C", parent, base], {
+    encoding: "utf8",
+    stdio: ["ignore", "pipe", "pipe"],
+  });
+  if (tar.status !== 0) {
+    throw new Error(tar.stderr || tar.stdout || "Failed to build proof bundle");
+  }
+  const encoded = readFileSync(tarPath).toString("base64");
+  writeFileSync(path.join(outDir, "proof-bundle.tgz"), readFileSync(tarPath));
+  console.log("__SEMANTIC2_PROOF_TGZ_BEGIN__");
+  for (let index = 0; index < encoded.length; index += 7600) {
+    console.log(encoded.slice(index, index + 7600));
+  }
+  console.log("__SEMANTIC2_PROOF_TGZ_END__");
 }
 
 function databaseUrl(env = process.env): string {
@@ -297,20 +475,29 @@ async function applyPlan(plan: ServiceNowImportPlan, args: ServiceNowImportArgs)
 }
 
 export async function runServiceNowRequestImport(args: ServiceNowImportArgs) {
+  assertOperatorContract(args);
   const csvText = readFileSync(args.inputPath, "utf8");
+  assertExpectedInputSha(args, sha256(csvText));
   const plan = buildServiceNowImportPlan({ args, csvText });
   mkdirSync(args.outDir, { recursive: true });
   writeFileSync(
     path.join(args.outDir, "servicenow-request-import-plan.json"),
     `${JSON.stringify(plan, null, 2)}\n`,
   );
-  if (!args.apply) return { ...plan, inserted: 0, committed: false };
+  if (!args.apply) {
+    const result = { ...plan, inserted: 0, committed: false };
+    writeProofManifest(args, plan, result);
+    if (args.emitProofBundle) emitProofBundle(args.outDir);
+    return result;
+  }
   const inserted = await applyPlan(plan, args);
   const result = { ...plan, inserted, committed: true };
   writeFileSync(
     path.join(args.outDir, "servicenow-request-import-result.json"),
     `${JSON.stringify(result, null, 2)}\n`,
   );
+  writeProofManifest(args, plan, result);
+  if (args.emitProofBundle) emitProofBundle(args.outDir);
   return result;
 }
 
