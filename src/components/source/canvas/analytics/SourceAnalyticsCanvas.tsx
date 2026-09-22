@@ -69,6 +69,13 @@ import {
   normalizeSourceStageKey,
 } from "@/lib/source/constants";
 import {
+  SOURCE_NEW_EXTERNAL_CHECKPOINT_ORDER,
+  SOURCE_NEW_PHASE_DISPLAY_LABELS,
+  sourceNewCurrentPhase,
+  type SourceNewExternalCheckpointKey,
+  type SourceNewPhaseKey,
+} from "@/lib/source/new-workspace/phase-state";
+import {
   criteriaForStage,
   evidenceForStage,
   requiredEvidenceForStage,
@@ -921,38 +928,28 @@ function SourceShellRail({
 
       <RailLabel>Journey</RailLabel>
       <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-        {view.journey.map((stage) => {
-          const currentStageHasArtifactBlockers =
-            stage.current &&
-            view.stage.ready >= view.stage.total &&
-            view.stage.artifactReadiness.blockerCount > 0;
-          const stageProgressLabel = stage.viewed
-            ? currentStageHasArtifactBlockers
-              ? "review files"
-              : `${stage.done}/${stage.total}`
-            : "";
-
+        {SOURCE_NEW_EXTERNAL_CHECKPOINT_ORDER.map((checkpoint, index) => {
+          const checkpointState = sourceReaderCheckpointState(
+            view,
+            checkpoint,
+          );
           return (
             <Link
-              key={stage.key}
-              href={`/source/events/${view.event.id}?stage=${stage.key}`}
-              data-approval-evidenced={String(stage.approvalEvidenced)}
-              title={
-                stage.state === "past" && stage.approvalEvidenced === false
-                  ? `${stage.label}: the case moved past this stage, but no approval record backs it.`
-                  : undefined
-              }
+              key={checkpoint}
+              href={sourceReaderCheckpointHref(view, checkpoint)}
+              data-testid="source-reader-journey-checkpoint"
               style={{
                 display: "grid",
-                gridTemplateColumns: "22px 1fr auto",
+                gridTemplateColumns: "22px 1fr",
                 gap: 9,
                 alignItems: "center",
                 padding: "8px 9px",
                 borderRadius: 8,
-                border: stage.viewed
+                border: checkpointState === "current"
                   ? `1px solid ${ANALYTICS.LINE}`
                   : "1px solid transparent",
-                background: stage.viewed ? ANALYTICS.CARD : "transparent",
+                background:
+                  checkpointState === "current" ? ANALYTICS.CARD : "transparent",
                 textDecoration: "none",
               }}
             >
@@ -964,21 +961,21 @@ function SourceShellRail({
                   display: "grid",
                   placeItems: "center",
                   background:
-                    stage.state === "past" || stage.state === "complete"
+                    checkpointState === "past" || checkpointState === "complete"
                       ? ANALYTICS.INK
-                      : stage.current
+                      : checkpointState === "current"
                         ? ANALYTICS.BLUE
                         : ANALYTICS.CARD,
                   color:
-                    stage.state === "past" ||
-                    stage.state === "complete" ||
-                    stage.current
+                    checkpointState === "past" ||
+                    checkpointState === "complete" ||
+                    checkpointState === "current"
                       ? "#fff"
                       : ANALYTICS.FAINT,
                   border:
-                    stage.state === "past" ||
-                    stage.state === "complete" ||
-                    stage.current
+                    checkpointState === "past" ||
+                    checkpointState === "complete" ||
+                    checkpointState === "current"
                       ? "none"
                       : `1px solid ${ANALYTICS.LINE_STRONG}`,
                   fontFamily: ANALYTICS.MONO,
@@ -986,46 +983,100 @@ function SourceShellRail({
                   fontWeight: 800,
                 }}
               >
-                {(stage.state === "past" || stage.state === "complete") &&
-                stage.approvalEvidenced !== false
+                {checkpointState === "past" || checkpointState === "complete"
                   ? "✓"
-                  : String(stage.index).padStart(2, "0")}
+                  : String(index + 1).padStart(2, "0")}
               </span>
               <span
                 style={{
                   color:
-                    stage.viewed ||
-                    stage.current ||
-                    stage.state === "past" ||
-                    stage.state === "complete"
+                    checkpointState === "current" ||
+                    checkpointState === "past" ||
+                    checkpointState === "complete"
                       ? ANALYTICS.INK
                       : ANALYTICS.MUTED,
                   fontSize: 13,
-                  fontWeight: stage.viewed ? 700 : 600,
+                  fontWeight: checkpointState === "current" ? 700 : 600,
                 }}
               >
-                {stage.label}
-              </span>
-              <span
-                data-testid={
-                  stage.current
-                    ? "source-journey-current-stage-status"
-                    : undefined
-                }
-                style={{
-                  color: currentStageHasArtifactBlockers
-                    ? ANALYTICS.AMBER_TEXT
-                    : ANALYTICS.FAINT,
-                  fontFamily: ANALYTICS.MONO,
-                  fontSize: 10,
-                  fontWeight: 700,
-                }}
-              >
-                {stageProgressLabel}
+                {sourceReaderCheckpointLabel(checkpoint)}
               </span>
             </Link>
           );
         })}
+      </div>
+
+      <div
+        style={{
+          marginTop: 14,
+          paddingTop: 12,
+          borderTop: `1px solid ${ANALYTICS.LINE_SOFT}`,
+        }}
+      >
+        <RailLabel>Stage detail</RailLabel>
+        <Link
+          href={`/source/events/${view.event.id}?stage=${view.stage.key}`}
+          data-testid="source-reader-journey-deep-stage-link"
+          style={{
+            display: "grid",
+            gridTemplateColumns: "22px 1fr auto",
+            gap: 9,
+            alignItems: "center",
+            padding: "8px 9px",
+            borderRadius: 8,
+            border: `1px solid ${ANALYTICS.LINE}`,
+            background: ANALYTICS.CARD,
+            textDecoration: "none",
+          }}
+        >
+          <span
+            style={{
+              width: 20,
+              height: 20,
+              borderRadius: 999,
+              display: "grid",
+              placeItems: "center",
+              background: ANALYTICS.BLUE,
+              color: "#fff",
+              fontFamily: ANALYTICS.MONO,
+              fontSize: 9,
+              fontWeight: 800,
+            }}
+          >
+            ↗
+          </span>
+          <span
+            style={{
+              color: ANALYTICS.INK,
+              fontSize: 13,
+              fontWeight: 700,
+            }}
+          >
+            {view.stage.label}
+          </span>
+          <span
+            data-testid={
+              view.event.viewedStageKey === view.event.currentStageKey
+                ? "source-journey-current-stage-status"
+                : undefined
+            }
+            style={{
+              color:
+                view.stage.ready >= view.stage.total &&
+                view.stage.artifactReadiness.blockerCount > 0
+                  ? ANALYTICS.AMBER_TEXT
+                  : ANALYTICS.FAINT,
+              fontFamily: ANALYTICS.MONO,
+              fontSize: 10,
+              fontWeight: 700,
+            }}
+          >
+            {view.stage.ready >= view.stage.total &&
+            view.stage.artifactReadiness.blockerCount > 0
+              ? "review files"
+              : `${view.stage.ready}/${view.stage.total}`}
+          </span>
+        </Link>
       </div>
 
       <div
@@ -1085,6 +1136,63 @@ function SourceShellRail({
       </div>
     </aside>
   );
+}
+
+type SourceReaderCheckpointState =
+  | "complete"
+  | "past"
+  | "current"
+  | "future";
+
+function sourceReaderCheckpointLabel(
+  checkpoint: SourceNewExternalCheckpointKey,
+): string {
+  if (checkpoint === "request_intake") return "Request intake";
+  return SOURCE_NEW_PHASE_DISPLAY_LABELS[checkpoint];
+}
+
+function sourceReaderCheckpointHref(
+  view: SourceEventShellView,
+  checkpoint: SourceNewExternalCheckpointKey,
+): string {
+  const eventId = encodeURIComponent(view.event.id);
+  switch (checkpoint) {
+    case "request_intake":
+      return "/source/new";
+    case "request":
+      return `/source/events/${eventId}?stage=strategy`;
+    case "define":
+      return `/source/events/${eventId}?stage=scope`;
+    case "suppliers":
+      return `/source/events/${eventId}?stage=scope&workspace=files`;
+    case "rfi":
+      return `/source/events/${eventId}?stage=rfp`;
+  }
+}
+
+function sourceReaderCheckpointState(
+  view: SourceEventShellView,
+  checkpoint: SourceNewExternalCheckpointKey,
+): SourceReaderCheckpointState {
+  if (checkpoint === "request_intake") return "complete";
+  const currentPhase = sourceNewCurrentPhase({
+    currentStage: view.event.currentStageKey,
+    lifecycle:
+      view.event.statusLabel === "Awaiting intake review"
+        ? "waiting_on_client"
+        : "active",
+  });
+  if (checkpoint === currentPhase) return "current";
+  const checkpointIndex = sourceReaderPhaseIndex(checkpoint);
+  const currentIndex = currentPhase ? sourceReaderPhaseIndex(currentPhase) : -1;
+  if (currentIndex < 0) return "past";
+  return checkpointIndex < currentIndex ? "past" : "future";
+}
+
+function sourceReaderPhaseIndex(
+  checkpoint: SourceNewExternalCheckpointKey | SourceNewPhaseKey,
+): number {
+  return SOURCE_NEW_EXTERNAL_CHECKPOINT_ORDER.indexOf(checkpoint);
 }
 
 function SourceWorkspace({
