@@ -408,5 +408,159 @@ const SINCE = "2026-09-21T00:00:00Z";
   fs.rmSync(dir, { recursive: true, force: true });
 }
 
+// ---------------------------------------------------------------------------
+// Closeout coverage (item T-474). The five cases below are the complement of
+// everything above: cases 1-13 judge the CONTENT of lines that exist, and the
+// gap four consecutive pulses filed is lines that do not exist at all. A merge
+// that nobody writes down is invisible to a content audit, which is why the
+// audit stayed green through it.
+// ---------------------------------------------------------------------------
+
+// 14. The defect itself: a merge older than the grace period with nothing in
+//     the register naming it must fail the run and name the pull request.
+{
+  const { dir, file } = fixture([
+    "2026-09-21T14:05Z lane-a item T-100 claimed | branch lane-a/thing | files: src/a.ts",
+  ]);
+  const merged = path.join(dir, "merged.json");
+  fs.writeFileSync(
+    merged,
+    JSON.stringify({ 8191: { mergedAt: "2026-09-21T13:14:59Z", sha: "7df034637" } }),
+  );
+  const r = run(["--closeout", "--file", file, "--now", NOW, "--since", SINCE, "--merged", merged, "--json"]);
+  const report = JSON.parse(r.stdout || "{}");
+  check(
+    "a merged pull request with no register line at all fails the run",
+    r.status === 1 &&
+      report.failing?.some((v) => v.code === "closeout_missing" && v.pr === 8191),
+    `exit=${r.status}\n${r.stdout}${r.stderr}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+// 15. The cleared case. One line announcing that pull request by number is the
+//     whole requirement; the control must not also demand a shape.
+{
+  const { dir, file } = fixture([
+    "2026-09-21T13:20Z lane-a item T-100 PR #8191 squash-merged as `7df034637` — GitHub " +
+      "`mergedAt` **2026-09-21T13:14:59Z**, carried by run 35667064982, digest sha256:67b12ebe.",
+  ]);
+  const merged = path.join(dir, "merged.json");
+  fs.writeFileSync(
+    merged,
+    JSON.stringify({ 8191: { mergedAt: "2026-09-21T13:14:59Z", sha: "7df034637" } }),
+  );
+  const r = run(["--closeout", "--file", file, "--now", NOW, "--since", SINCE, "--merged", merged, "--json"]);
+  const report = JSON.parse(r.stdout || "{}");
+  check(
+    "one line announcing the pull request by number clears it",
+    r.status === 0 &&
+      report.closeout?.find((c) => c.pr === 8191)?.recorded === true &&
+      !report.violations?.some((v) => v.code === "closeout_missing"),
+    `exit=${r.status}\n${r.stdout}${r.stderr}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+// 16. The measurement defect that made the gap look smaller than it is. Every
+//     pulse that filed this shape measured it by grepping the register for the
+//     merge SHA. A claim line saying which commit it BRANCHED FROM contains
+//     that SHA and reports no outcome whatever, so the grep scores it present.
+//     Measured on the real register on 2026-09-22, four merges were mentioned
+//     only this way. Naming the base commit must not close a merge out.
+{
+  const { dir, file } = fixture([
+    "2026-09-21T13:40Z lane-b item T-101 claimed | branch lane-b/next from origin/main " +
+      "`7df034637` | files: src/b.ts",
+  ]);
+  const merged = path.join(dir, "merged.json");
+  fs.writeFileSync(
+    merged,
+    JSON.stringify({ 8191: { mergedAt: "2026-09-21T13:14:59Z", sha: "7df034637" } }),
+  );
+  const r = run(["--closeout", "--file", file, "--now", NOW, "--since", SINCE, "--merged", merged, "--json"]);
+  const report = JSON.parse(r.stdout || "{}");
+  check(
+    "naming a commit as the branch point does not close its merge out",
+    r.status === 1 &&
+      report.failing?.some((v) => v.code === "closeout_missing" && v.pr === 8191),
+    `exit=${r.status}\n${r.stdout}${r.stderr}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+// 17. The other way a line can mention a pull request without closing it out:
+//     announcing that it is open. The register says "OPENED, NOT MERGED" as
+//     often as it says "merged", and that line is the one written BEFORE the
+//     event this control is looking for.
+{
+  const { dir, file } = fixture([
+    "2026-09-21T13:05Z lane-a item T-100 PR #8191 commit `abcdef123` OPENED, NOT MERGED, checks running.",
+  ]);
+  const merged = path.join(dir, "merged.json");
+  fs.writeFileSync(
+    merged,
+    JSON.stringify({ 8191: { mergedAt: "2026-09-21T13:14:59Z", sha: "7df034637" } }),
+  );
+  const r = run(["--closeout", "--file", file, "--now", NOW, "--since", SINCE, "--merged", merged, "--json"]);
+  const report = JSON.parse(r.stdout || "{}");
+  check(
+    "a line announcing the pull request as open does not close its merge out",
+    r.status === 1 &&
+      report.failing?.some((v) => v.code === "closeout_missing" && v.pr === 8191),
+    `exit=${r.status}\n${r.stdout}${r.stderr}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+// 18. The grace period. A merge from ninety seconds ago has not been skipped,
+//     it is in flight — its deploy has not finished and the outcome line
+//     cannot honestly be written yet. Reported as pending, never as recorded,
+//     so the distinction stays visible rather than being rounded into a pass.
+{
+  const { dir, file } = fixture([
+    "2026-09-21T14:05Z lane-a item T-100 claimed | branch lane-a/thing | files: src/a.ts",
+  ]);
+  const merged = path.join(dir, "merged.json");
+  fs.writeFileSync(
+    merged,
+    JSON.stringify({ 8191: { mergedAt: "2026-09-21T16:58:30Z", sha: "7df034637" } }),
+  );
+  const r = run(["--closeout", "--file", file, "--now", NOW, "--since", SINCE, "--merged", merged, "--json"]);
+  const report = JSON.parse(r.stdout || "{}");
+  const entry = report.closeout?.find((c) => c.pr === 8191);
+  check(
+    "a merge inside the grace period is pending, not recorded, and does not fail",
+    r.status === 0 &&
+      entry?.recorded === false &&
+      entry?.pending === true &&
+      !report.violations?.some((v) => v.code === "closeout_missing"),
+    `exit=${r.status}\n${r.stdout}${r.stderr}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+// 19. The exemption branch, which is the one that decides whether this is a
+//     gate at all. If the authority resolves no merged pull requests, there is
+//     nothing to check and the obvious implementation returns clean — so a
+//     broken lookup, an expired credential or a wrong window would read
+//     exactly like a closed-out day. It must fail closed instead.
+{
+  const { dir, file } = fixture([
+    "2026-09-21T14:05Z lane-a item T-100 claimed | branch lane-a/thing | files: src/a.ts",
+  ]);
+  const merged = path.join(dir, "merged.json");
+  fs.writeFileSync(merged, JSON.stringify({}));
+  const r = run(["--closeout", "--file", file, "--now", NOW, "--since", SINCE, "--merged", merged, "--json"]);
+  const report = JSON.parse(r.stdout || "{}");
+  check(
+    "an authority that resolves no merges fails closed rather than reading as clean",
+    r.status === 1 &&
+      report.failing?.some((v) => v.code === "closeout_authority_empty"),
+    `exit=${r.status}\n${r.stdout}${r.stderr}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
 console.log(`\n${passes} passed, ${failures} failed`);
 process.exit(failures ? 1 : 0);

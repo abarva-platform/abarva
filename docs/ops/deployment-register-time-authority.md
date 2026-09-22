@@ -90,6 +90,84 @@ node scripts/exec/register-time-authority.mjs --emit --pr 8155
 prints a line prefix built from GitHub's `mergedAt` and a `date -u` read, with
 both named in the line, so the right thing is the easy thing.
 
+## Closing a merge out (item T-474)
+
+The rule above judges the **content** of lines that exist. It says nothing
+about a merge nobody writes down, and a content audit stays green straight
+through one — which is how four consecutive watcher pulses (T-581, T-584,
+T-586, T-474) each filed the same shape, each reconciled a batch by hand, and
+each was re-filed inside the hour.
+
+**Every merge gets one line, naming that pull request.** The line carries the
+PR number, its own merge SHA, the run that actually carried it to the runtime,
+and the digest read from that run's own invariant proof. Where the run keyed to
+the merge was cancelled by concurrency, name the **carrier** run and say that
+is what it is. One line per pull request; a batch line covering several is how
+the next reader loses which digest belongs to which merge.
+
+Check it with:
+
+```
+node scripts/exec/register-time-authority.mjs \
+  --file ~/Downloads/EXECUTION_CLAIMS.md --since <ISO> --closeout --github
+```
+
+`--closeout` asks GitHub which pull requests merged in the window and reports
+each as `recorded`, `MISSING`, or `pending` inside the grace period. It exits 1
+on any `MISSING`.
+
+### What does not count as closing a merge out
+
+Both of these were measured on the real register, and both are why the gap
+looked smaller than it was:
+
+- **Naming the commit you branched from.** Every prior pulse measured this gap
+  by grepping the register for the merge SHA. A claim line reading
+  `branch lane/x from origin/main <sha>` contains that SHA and reports no
+  outcome at all, so the grep scores it present. On 2026-09-22 four merges in
+  one two-hour window were mentioned only that way.
+- **Announcing the pull request as open.** `PR #N OPENED, NOT MERGED, checks
+  running` is the line written *before* the event this is looking for.
+
+The control credits a pull request only when a line announces **that PR number**
+as merged, using the same nearest-token attribution the time rule uses.
+
+### The grace period, and the empty-authority branch
+
+A merge from four minutes ago is in flight, not skipped: its deploy has not
+finished and no honest line can name a digest yet. Inside 900 seconds a merge
+reports `pending` and does not fail the run. It is never reported as
+`recorded` — rounding the two together is how a gap becomes invisible.
+
+An authority that resolves **no** merged pull requests fails the run rather
+than passing it. A failed `gh` lookup, an expired credential and a window with
+no overlap all return the same empty set as a genuinely closed-out day, and the
+obvious implementation reads every one of them as clean.
+
+### Severity, and why this one is not advisory
+
+Attribution by prose is a heuristic, which is why the three time codes that
+depend on it are advisory. Here the same heuristic errs the other way: a false
+attribution **credits** a pull request and makes the gate pass, while a missed
+one costs an agent a re-read and an appended line — the behaviour wanted
+anyway. So `closeout_missing` and `closeout_authority_empty` are hard codes and
+fail a run without `--strict`.
+
+### The standing question: whose step writes the line
+
+T-586's release record answered it in prose — *"the queue-driven execution
+supervisor owns a mandatory post-deployment closeout step"* — and four merges
+from the eighteen minutes before that record merged went unrecorded anyway. A
+sentence in a record is not a step that can fail.
+
+Neither option T-474 proposed is possible as literally written, for the reason
+the section below already gives: **the register is an operator file outside the
+repository**, so no workflow can emit a line into it and no CI check can read
+one. The enforceable step is this control, run by whoever holds the register,
+in the same pre-PR path as `release-check`. Until the register itself moves
+into the repository, that is the honest ceiling, and this document says so
+rather than implying CI is holding it shut.
+
 ## Why the control cannot be run in CI against the real register
 
 The register is an operator file outside the repository, so no workflow can
