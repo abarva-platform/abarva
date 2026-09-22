@@ -146,6 +146,7 @@ beforeEach(() => {
   jest.clearAllMocks();
   writes.length = 0;
   existingEvidence = evidenceRow;
+  tenancy.userId = "person-1";
   currentUser.personId = "person-1";
   personRow = {
     id: "person-1",
@@ -231,6 +232,47 @@ describe("Source parsed-evidence availability review", () => {
     expect(response.status).toBe(409);
     await expect(response.json()).resolves.toEqual(
       expect.objectContaining({ error: "reviewer_identity_required" }),
+    );
+  });
+
+  it("uses the canonical person provisioned by tenancy during the request", async () => {
+    const provisionedPersonId = "00000000-0000-4000-8000-000000000321";
+    currentUser.personId = null;
+    tenancy.userId = provisionedPersonId;
+    personRow = {
+      id: provisionedPersonId,
+      name: "Provisioned Evidence Reviewer",
+      email: "reviewer@example.test",
+    };
+
+    const response = await GET(request(), ctx);
+
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toEqual(
+      expect.objectContaining({
+        review: expect.objectContaining({
+          reviewer: expect.objectContaining({
+            personId: provisionedPersonId,
+            displayName: "Provisioned Evidence Reviewer",
+          }),
+        }),
+      }),
+    );
+
+    const writeResponse = await POST(
+      request({
+        rationale:
+          "Reviewed the parsed evidence for workflow availability during the synthetic smoke test.",
+        stage: "rfp",
+      }),
+      ctx,
+    );
+    expect(writeResponse.status).toBe(200);
+    expect(writeAdapter.insertActivityLog).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        actorUserId: provisionedPersonId,
+        actorDisplayName: "Provisioned Evidence Reviewer",
+      }),
     );
   });
 
