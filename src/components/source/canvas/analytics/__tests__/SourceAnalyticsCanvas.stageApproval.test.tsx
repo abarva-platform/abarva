@@ -865,7 +865,7 @@ describe("SourceAnalyticsCanvas stage workflow", () => {
     );
   });
 
-  it("renders a completed terminal approval without another approve action", () => {
+  it("keeps a completed terminal approval audit gap open without another approve action", () => {
     const completeValueStage = {
       ...SAMPLE_SCOPE_STAGE,
       stageKey: "value" as const,
@@ -913,12 +913,11 @@ describe("SourceAnalyticsCanvas stage workflow", () => {
       />,
     );
 
-    expect(
-      screen.getByTestId("source-shell-approval-readiness"),
-    ).toHaveTextContent("Stage approved");
-    expect(
-      screen.getByTestId("source-shell-approval-readiness"),
-    ).toHaveTextContent("No further approval required");
+    const readiness = screen.getByTestId("source-shell-approval-readiness");
+    expect(readiness).toHaveTextContent("Approval recorded; audit gaps open");
+    expect(readiness).toHaveTextContent("Resolve approval record gaps");
+    expect(readiness).not.toHaveTextContent("Stage approved");
+    expect(readiness).not.toHaveTextContent("No further approval required");
     expect(screen.queryByText("Approve now")).not.toBeInTheDocument();
     expect(
       screen.queryByText("Approve advancing out of Value."),

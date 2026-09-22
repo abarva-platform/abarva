@@ -517,24 +517,27 @@ export function buildSourceEventShellView(
   const approvalDecisionItem = viewedStageIsCurrent
     ? normalizedCurrentStageItem
     : null;
-  const pendingDecisionGroups = viewedStageIsCurrent
+  const pendingDecisionGroups =
+    viewedStageIsCurrent || viewedStageApprovalRecorded
     ? buildApprovalWorkspaceDecisions({
         eventId: input.event.id,
         eventCode: input.event.code,
         eventName: input.event.name,
-        currentStageKey: visibleCurrentStageKey,
-        stageLabel: sourceJourneyLabelForStage(
-          input.journey,
-          visibleCurrentStageKey,
-        ),
-        currentStageItem: currentStageApprovalRecorded
-          ? approvalDecisionItem
-          : currentStageItem,
-        approvalRecorded: currentStageApprovalRecorded,
+        currentStageKey: input.viewedStageKey,
+        stageLabel: viewedStageLabel,
+        currentStageItem: viewedStageIsCurrent
+          ? currentStageApprovalRecorded
+            ? approvalDecisionItem
+            : currentStageItem
+          : null,
+        approvalRecorded: viewedStageApprovalRecorded,
         workflowComplete: completedViewedStage,
         artifactsReady: artifactReadiness.ready,
-        gateActionArmed: Boolean(input.stageView.gate.action),
-        approvalRationale: input.stageView.gate.action?.rationale ?? null,
+        gateActionArmed:
+          viewedStageIsCurrent && Boolean(input.stageView.gate.action),
+        approvalRationale: viewedStageIsCurrent
+          ? (input.stageView.gate.action?.rationale ?? null)
+          : null,
       })
     : [];
   // currentStageItem already renders featured above the list — exclude it
