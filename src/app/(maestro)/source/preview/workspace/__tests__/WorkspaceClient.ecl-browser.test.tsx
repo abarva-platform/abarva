@@ -585,22 +585,32 @@ describe("Source workspace ECL browser-surface proof", () => {
 
     fireEvent.click(screen.getByRole("tab", { name: "Optimize" }));
 
-    // Optimize's right column no longer restates the tab body. This fixture
-    // has no governed lever view, so the column falls back to the narrative
-    // branch and the statement keeps only its headline — the side panel below
-    // it owns the body and blocker, and rendering both put the same two
-    // paragraphs on screen twice.
+    // Optimize has no right column at all. It takes the full three columns,
+    // so the context panel beside every other tab is not built here.
+    //
+    // This block used to assert that panel's contents on Optimize — "Contract
+    // readout", the governed statement trimmed to its headline, "Decision
+    // consequence". Those assertions were written for the two-column Optimize
+    // and outlived it: the tab went full-width and the panel stopped being
+    // rendered on it. They are asserted as absent rather than deleted, because
+    // the layout is the claim and an assertion that cannot fail is not one.
     expect(screen.queryByText("Deterministic cards")).toBeNull();
-    expect(screen.getByText("Contract readout")).toBeTruthy();
-    {
-      const statement = screen
-        .getByText("What Source can state")
-        .closest(".sw-c3-governed-statement");
-      expect(
-        statement?.querySelectorAll(".sw-c3-governed-blocker").length,
-      ).toBe(0);
-    }
-    expect(screen.getByText("Decision consequence")).toBeTruthy();
+    expect(screen.queryByText("Contract readout")).toBeNull();
+    expect(screen.queryByText("Decision consequence")).toBeNull();
+    expect(screen.queryByText("What Source can state")).toBeNull();
+    // This fixture loads no governed opportunity rows, so the two surfaces the
+    // full-width tab does own are absent with it — and the tab refuses rather
+    // than inventing a play, which is the control worth pinning here.
+    expect(screen.queryByText("What can be claimed")).toBeNull();
+    expect(screen.queryByText("What still gates value")).toBeNull();
+    expect(
+      screen.getByText("No contract-specific optimization levers loaded."),
+    ).toBeTruthy();
+    expect(
+      screen.getByText(
+        /will not invent an optimization play until governed opportunity rows exist/,
+      ),
+    ).toBeTruthy();
     expect(screen.getByRole("tab", { name: "Story" })).toBeTruthy();
 
     // Story's side panel has its own context stack rather than the tab
@@ -1267,8 +1277,15 @@ describe("Source workspace ECL browser-surface proof", () => {
     expect(
       screen.getByText("No contract-specific optimization levers loaded."),
     ).toBeTruthy();
-    expect(screen.getByText("Contract readout")).toBeTruthy();
-    expect(screen.getByText("Decision consequence")).toBeTruthy();
+    // Same reason as the Optimize block above: the full-width tab renders no
+    // context panel, so "Contract readout" and "Decision consequence" are
+    // asserted absent here rather than present. This contract loads no
+    // governed opportunity rows either, so the ledger and the gate stay off
+    // the tab with them.
+    expect(screen.queryByText("Contract readout")).toBeNull();
+    expect(screen.queryByText("Decision consequence")).toBeNull();
+    expect(screen.queryByText("What can be claimed")).toBeNull();
+    expect(screen.queryByText("What still gates value")).toBeNull();
     expect(screen.queryByText(/Savings realized/i)).toBeNull();
 
     fireEvent.click(screen.getByRole("tab", { name: "Performance" }));
@@ -1707,6 +1724,11 @@ describe("Source workspace ECL browser-surface proof", () => {
     // The value-type ledger is the standing context that earns its place on
     // every sub-tab: the three ledgers never sum, whichever view is open.
     expect(screen.getByText("What can be claimed")).toBeTruthy();
+    // "What can be claimed" is the ledger's heading, and a heading is not the
+    // ledger. Deleting the stack underneath it left this block green, so the
+    // ledger's own content is asserted too — the finance-confirmed line is the
+    // one that keeps booked dollars in a column of their own.
+    expect(screen.getByText("Finance confirmed")).toBeTruthy();
     expect(screen.queryByText("Deterministic cards")).toBeNull();
     expect(
       screen.getByText(
