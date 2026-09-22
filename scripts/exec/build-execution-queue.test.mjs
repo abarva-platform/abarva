@@ -1579,5 +1579,111 @@ blockerCorpusCase(
   "Blocked (see source)",
 );
 
+/* ------------------------------------------------------------------------ */
+/* 24. A GATE THE ITEM'S OWN BODY DECLARES OUTRANKS ONE A CLAIM LINE         */
+/*     CARRIES — item T-700, the opposite half of T-578.                     */
+/*                                                                          */
+/*     `BLOCKER_RULES` is ordered and the signed-in rule is first, so when   */
+/*     a claim line carried signed-in language it took the label away from   */
+/*     a gate the item states in its own body. T-578 narrowed the corpus     */
+/*     for the decision rule; it did not touch the order, and the order is   */
+/*     what decides between two matches from different evidence.             */
+/*                                                                          */
+/*     This is the direction that HIDES an owner gate rather than inventing  */
+/*     one. Measured on the live register at `ef261ac74`, 22 items read a    */
+/*     claim-derived `Signed-in acceptance owed` over a gate their own body  */
+/*     declares, and `T-598` — which has not shipped — was one of them: it   */
+/*     was moved into the wrong bucket by a NEIGHBOURING item's release      */
+/*     paperwork naming it.                                                  */
+/*                                                                          */
+/*     A fixture whose body and claim line AGREE cannot fail any of this,    */
+/*     so every case below is built with the two in genuine disagreement.    */
+/*     24c and 24d are controls that pass on unfixed code by design: they    */
+/*     are the two things an over-broad fix breaks.                          */
+/* ------------------------------------------------------------------------ */
+
+/** A claim line that records a signed-in gate — rule 1, the one that was winning. */
+const CLAIMS_SIGNED_IN = "signed-in acceptance owed";
+
+/* --- 24a. THE DEFECT, at a shipped rung --------------------------------- */
+
+blockerCorpusCase(
+  "a decision the item's own body declares outranks a claim line's signed-in gate",
+  "T-890",
+  "**Decide** which tenant-name vocabulary is authoritative, then make the map express it.",
+  [
+    `${registerStamp(90)} | lane-a | item T-890 claimed`,
+    `${registerStamp(30)} | lane-a | item T-890 MERGED via PR #903, squash \`abc1237\`; ${CLAIMS_SIGNED_IN}`,
+  ],
+  "Merged",
+  "Decision needed",
+);
+
+/* --- 24b. THE DEFECT at rung 0, which is what it actually costs ---------- */
+/*          Same body, same claim language, no shipping proof. This is the   */
+/*          `T-598` shape: an open item with a question nobody can see,      */
+/*          because the register names it in someone else's paperwork.       */
+
+blockerCorpusCase(
+  "an OPEN item's own decision gate is not hidden by a claim line about something else",
+  "T-891",
+  "**Decide** which tenant-name vocabulary is authoritative, then make the map express it.",
+  [
+    `${registerStamp(60)} | lane-a | item T-891 named in passing; ${CLAIMS_SIGNED_IN} for the neighbouring change`,
+  ],
+  "Open",
+  "Decision needed",
+);
+
+/* --- 24c. CONTROL: `Unclaimed` is the fallback, never a body gate -------- */
+/*          The live known positive is T-418, whose body reads "the largest  */
+/*          unclaimed critical row in the census" — prose about a census,    */
+/*          not a status. A fix that promotes ANY body match returns         */
+/*          `Unclaimed` here and moves a real gate OUT of the never-claim    */
+/*          bucket, which is the one direction this file must never take.    */
+
+blockerCorpusCase(
+  "descriptive prose using the word unclaimed does not outrank a real claim-log gate",
+  "T-892",
+  "Wire the largest unclaimed critical tree in the census; 9 of its 69 files already run.",
+  [
+    `${registerStamp(30)} | lane-a | item T-892 MERGED via PR #904, squash \`abc1238\`; ${CLAIMS_SIGNED_IN}`,
+  ],
+  "Merged",
+  "Signed-in acceptance owed",
+);
+
+/* --- 24d. CONTROL: a body that declares nothing still reads the claims --- */
+/*          The obvious wrong fix is to stop reading the claim log. It       */
+/*          passes 24a, 24b and 24e, and silently blanks every item whose    */
+/*          only gate was ever recorded by an agent rather than by the row.  */
+
+blockerCorpusCase(
+  "an item whose body declares no gate still reads the one its claim line records",
+  "T-893",
+  "Reconcile the two display-name vocabularies so one derives from the other.",
+  [`${registerStamp(60)} | lane-a | item T-893 claimed; ${CLAIMS_SIGNED_IN}`],
+  "Open",
+  "Signed-in acceptance owed",
+);
+
+/* --- 24e. The precedence is by EVIDENCE, not by rule rank ---------------- */
+/*          `Blocked` is rule 4 and signed-in is rule 1. The body carries    */
+/*          the lower-ranked rule and still wins, which is the whole claim:  */
+/*          one comparison, not a re-ranking. A fix that merely moved the    */
+/*          decision rule above the signed-in rule passes 24a and 24b and    */
+/*          fails here.                                                      */
+
+blockerCorpusCase(
+  "a lower-ranked rule matching the body outranks a higher-ranked one matching the claims",
+  "T-894",
+  "The vendor export is blocked on the schema freeze upstream.",
+  [
+    `${registerStamp(30)} | lane-a | item T-894 MERGED via PR #905, squash \`abc1239\`; ${CLAIMS_SIGNED_IN}`,
+  ],
+  "Merged",
+  "Blocked (see source)",
+);
+
 console.log(`\n${passes} passed, ${failures} failed`);
 process.exit(failures ? 1 : 0);
