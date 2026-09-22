@@ -27,6 +27,13 @@ describe("event → archetype resolution (classifier category)", () => {
     ).toBe("CONTRACT_RENEWAL");
   });
 
+  it("resolves ERP implementation to its authored SI archetype", () => {
+    expect(
+      resolveArchetypeForEvent({ categoryId: "erp_si_implementation" })
+        .archetypeId,
+    ).toBe("ERP_SI_IMPLEMENTATION");
+  });
+
   it("resolves the newly-shipped archetype categories", () => {
     expect(
       resolveArchetypeForEvent({ categoryId: "cyber_grc" }).archetypeId,
@@ -119,6 +126,7 @@ describe("resolver integrity", () => {
       "cloud_finops",
       "cyber_grc",
       "data_ai_platform",
+      "erp_si_implementation",
       "saas_renewal",
       "staff_aug_vs_managed_service",
     ]);

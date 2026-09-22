@@ -28,12 +28,19 @@ function event(name: string, extra?: Partial<SourcingEventAttributes>): Sourcing
   return { name, ...extra };
 }
 
-describe('classifySourcingEvent — category coverage (all 9)', () => {
+describe('classifySourcingEvent — category coverage (all 10)', () => {
   const cases: Array<{ label: string; attrs: SourcingEventAttributes; expected: SourceCategoryId }> = [
     {
       label: 'AMS',
       attrs: event('AMS RFP — application support for the SAP estate, L2/L3 support'),
       expected: 'ams',
+    },
+    {
+      label: 'ERP / SI implementation',
+      attrs: event(
+        'SAP S/4HANA ERP implementation partner for global finance transformation and data migration',
+      ),
+      expected: 'erp_si_implementation',
     },
     {
       label: 'data / AI platform',

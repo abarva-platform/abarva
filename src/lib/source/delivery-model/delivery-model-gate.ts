@@ -161,6 +161,7 @@ const DELIVERY_MODEL_LABEL: Readonly<Record<DeliveryModel, string>> = {
  */
 const CATEGORY_DEFAULT_MODEL: Readonly<Record<SourceCategoryId, DeliveryModel>> = {
   ams: 'partner', // Run/maintain is a vendor-operated service.
+  erp_si_implementation: 'si', // ERP transformation is an accountable systems-integrator engagement.
   data_ai_platform: 'buy', // Platforms are licensed products, not built.
   ai_engineering_partner: 'si', // Bespoke AI build is an SI engagement.
   saas_renewal: 'buy', // Already a bought product — renewal stays buy.

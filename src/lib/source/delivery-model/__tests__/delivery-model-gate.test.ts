@@ -120,6 +120,10 @@ describe('runDeliveryModelGate — tenant behavior examples', () => {
 describe('runDeliveryModelGate — category priors', () => {
   const expectations: Array<{ name: string; expected: DeliveryModel }> = [
     { name: 'AMS RFP — application support for the SAP estate', expected: 'partner' },
+    {
+      name: 'SAP S/4HANA ERP implementation partner and systems integrator',
+      expected: 'si',
+    },
     { name: 'Customer Data Platform selection — CDP', expected: 'buy' },
     { name: 'Contact center outsourcing — BPO for tier-1 customer service', expected: 'partner' },
     { name: 'SIEM and security operations sourcing — MSSP cyber evaluation', expected: 'buy' },
