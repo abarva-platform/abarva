@@ -47,6 +47,9 @@ archetype declarations or merging non-equivalent methods together.
 | Formerly quarantined resolver suite | 9 passed / 0 failed |
 | Exact Program archetype workflow command | 4 suites / 54 tests passed |
 | Programs unit-directory behavior guard | 11 passed / 0 failed |
+| `npm run audit:test-ci-coverage:write` | updated committed census; workflow-covered test files 1882 -> 1883 |
+| `npm run audit:test-ci-coverage:check` | passed; committed census matches current coverage shape |
+| Census behavior tests | 2 suites / 52 tests passed |
 | Mutation: renamed `capability_parity_traceability` library key | 30 passed / 1 failed; new analytics method case caught undefined parity method |
 | `npm run audit:named-suite-requiredness` | passed |
 | `npm run typecheck` | exit 0; clean |

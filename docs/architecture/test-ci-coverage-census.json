@@ -15,22 +15,22 @@
     "No timestamp is recorded, so refreshing this file on an unchanged tree is a no-op."
   ],
   "counts": {
-    "testFiles": 2390,
-    "coveredTestFiles": 1908,
-    "pullRequestCoveredTestFiles": 1905,
+    "testFiles": 2391,
+    "coveredTestFiles": 1909,
+    "pullRequestCoveredTestFiles": 1906,
     "uncoveredTestFiles": 482,
     "directoriesWithTests": 482,
-    "directoriesFullyCovered": 278,
-    "directoriesPartiallyCovered": 27,
+    "directoriesFullyCovered": 279,
+    "directoriesPartiallyCovered": 26,
     "directoriesUncovered": 177,
-    "directoriesWithUnrunTestFiles": 204,
-    "directoriesWithUntriagedUnrunTestFiles": 194,
+    "directoriesWithUnrunTestFiles": 203,
+    "directoriesWithUntriagedUnrunTestFiles": 193,
     "declaredQuarantineTestFiles": 49,
     "untriagedUnrunTestFiles": 433,
     "indeterminateInvocations": 0,
     "unresolvedIgnoreArguments": 0,
     "criticalGovernedRiskDirectories": 1,
-    "highGovernedRiskDirectories": 13,
+    "highGovernedRiskDirectories": 12,
     "unclassifiedRiskDirectories": 180
   },
   "indeterminateInvocations": [],
@@ -89,10 +89,10 @@
     },
     {
       "directory": "src/app/(maestro)/source/preview/workspace/__tests__",
-      "testFiles": 33,
+      "testFiles": 34,
       "coveredTestFiles": 29,
       "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 4,
+      "untriagedUnrunTestFiles": 5,
       "via": [
         "command",
         "script-file"
@@ -204,16 +204,6 @@
       "coveredTestFiles": 3,
       "declaredQuarantineTestFiles": 1,
       "untriagedUnrunTestFiles": 0,
-      "via": [
-        "command"
-      ]
-    },
-    {
-      "directory": "src/lib/programs/archetypes/__tests__",
-      "testFiles": 4,
-      "coveredTestFiles": 3,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 1,
       "via": [
         "command"
       ]
@@ -2745,6 +2735,27 @@
     },
     {
       "directory": "src/app/(maestro)/source/preview/workspace/__tests__",
+      "testPath": "src/app/(maestro)/source/preview/workspace/__tests__/workspace-explicit-client-api-routing.browser.test.tsx",
+      "enumerated": true,
+      "collected": false,
+      "run": false,
+      "green": "unknown",
+      "covered": false,
+      "pullRequestCovered": false,
+      "declaredQuarantine": false,
+      "untriaged": true,
+      "via": [],
+      "governedRisk": {
+        "score": 10,
+        "band": "high",
+        "signals": [
+          "tenant_scoped_read"
+        ],
+        "rank": 3
+      }
+    },
+    {
+      "directory": "src/app/(maestro)/source/preview/workspace/__tests__",
       "testPath": "src/app/(maestro)/source/preview/workspace/__tests__/workspace-explicit-client-api-routing.test.ts",
       "enumerated": true,
       "collected": false,
@@ -3561,96 +3572,6 @@
       }
     },
     {
-      "directory": "src/lib/programs/archetypes/__tests__",
-      "testPath": "src/lib/programs/archetypes/__tests__/ai-pdlc.test.ts",
-      "enumerated": true,
-      "collected": true,
-      "run": "unknown",
-      "green": "unknown",
-      "covered": true,
-      "pullRequestCovered": true,
-      "declaredQuarantine": false,
-      "untriaged": false,
-      "via": [
-        "command"
-      ],
-      "governedRisk": {
-        "score": 10,
-        "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 13
-      }
-    },
-    {
-      "directory": "src/lib/programs/archetypes/__tests__",
-      "testPath": "src/lib/programs/archetypes/__tests__/generality.test.ts",
-      "enumerated": true,
-      "collected": true,
-      "run": "unknown",
-      "green": "unknown",
-      "covered": true,
-      "pullRequestCovered": true,
-      "declaredQuarantine": false,
-      "untriaged": false,
-      "via": [
-        "command"
-      ],
-      "governedRisk": {
-        "score": 10,
-        "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 13
-      }
-    },
-    {
-      "directory": "src/lib/programs/archetypes/__tests__",
-      "testPath": "src/lib/programs/archetypes/__tests__/resolve-program-archetype.test.ts",
-      "enumerated": true,
-      "collected": true,
-      "run": "unknown",
-      "green": "unknown",
-      "covered": true,
-      "pullRequestCovered": true,
-      "declaredQuarantine": false,
-      "untriaged": false,
-      "via": [
-        "command"
-      ],
-      "governedRisk": {
-        "score": 10,
-        "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 13
-      }
-    },
-    {
-      "directory": "src/lib/programs/archetypes/__tests__",
-      "testPath": "src/lib/programs/archetypes/__tests__/resolver.test.ts",
-      "enumerated": true,
-      "collected": false,
-      "run": false,
-      "green": "unknown",
-      "covered": false,
-      "pullRequestCovered": false,
-      "declaredQuarantine": false,
-      "untriaged": true,
-      "via": [],
-      "governedRisk": {
-        "score": 10,
-        "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 13
-      }
-    },
-    {
       "directory": "src/lib/source/nda/__tests__",
       "testPath": "src/lib/source/nda/__tests__/nda-authority-repository.test.ts",
       "enumerated": true,
@@ -3668,7 +3589,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 14
+        "rank": 13
       }
     }
   ],
@@ -3707,10 +3628,10 @@
     },
     {
       "directory": "src/app/(maestro)/source/preview/workspace/__tests__",
-      "testFiles": 33,
-      "unrunTestFiles": 4,
+      "testFiles": 34,
+      "unrunTestFiles": 5,
       "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 4,
+      "untriagedUnrunTestFiles": 5,
       "governedRisk": {
         "score": 10,
         "band": "high",
@@ -3856,21 +3777,6 @@
       }
     },
     {
-      "directory": "src/lib/programs/archetypes/__tests__",
-      "testFiles": 4,
-      "unrunTestFiles": 1,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 1,
-      "governedRisk": {
-        "score": 10,
-        "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 13
-      }
-    },
-    {
       "directory": "src/lib/source/nda/__tests__",
       "testFiles": 1,
       "unrunTestFiles": 1,
@@ -3882,7 +3788,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 14
+        "rank": 13
       }
     }
   ],
@@ -3939,17 +3845,21 @@
     },
     {
       "directory": "src/app/(maestro)/source/preview/workspace/__tests__",
-      "testFiles": 33,
-      "unrunTestFiles": 4,
+      "testFiles": 34,
+      "unrunTestFiles": 5,
       "governedRisk": {
         "score": 10,
         "band": "high",
         "signals": [
           "tenant_scoped_read"
         ],
-        "tenantScopedReadSourceCount": 1,
+        "tenantScopedReadSourceCount": 5,
         "tenantScopedReadSources": [
-          "src/app/(maestro)/source/preview/workspace/live/portfolioAdapter.ts"
+          "src/app/(maestro)/source/preview/workspace/live/portfolioAdapter.ts",
+          "src/app/api/source/workspace/contract/[contractId]/optimization/route.ts",
+          "src/app/api/source/workspace/contract/[contractId]/route.ts",
+          "src/lib/auth/tenancy.ts",
+          "src/lib/source/data-model/read-adapter.ts"
         ],
         "rank": 3
       }
@@ -4114,23 +4024,6 @@
       }
     },
     {
-      "directory": "src/lib/programs/archetypes/__tests__",
-      "testFiles": 4,
-      "unrunTestFiles": 1,
-      "governedRisk": {
-        "score": 10,
-        "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "tenantScopedReadSourceCount": 1,
-        "tenantScopedReadSources": [
-          "src/lib/programs/current-state-readiness.ts"
-        ],
-        "rank": 13
-      }
-    },
-    {
       "directory": "src/lib/source/nda/__tests__",
       "testFiles": 1,
       "unrunTestFiles": 1,
@@ -4144,7 +4037,7 @@
         "tenantScopedReadSources": [
           "src/lib/source/nda/nda-authority-repository.ts"
         ],
-        "rank": 14
+        "rank": 13
       }
     }
   ],
