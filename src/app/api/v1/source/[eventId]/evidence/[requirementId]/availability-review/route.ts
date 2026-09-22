@@ -14,6 +14,7 @@ import {
   type SourceEventEvidenceStateRow,
 } from "@/lib/source/canvas-substrate/types";
 import { normalizeSourceStageKey } from "@/lib/source/constants";
+import { matchEvidenceRequirementForUpload } from "@/lib/source/canvas-substrate/upload-sync";
 import { resolveSourceEventUuidForClient } from "@/lib/source/queries";
 
 export const runtime = "nodejs";
@@ -41,6 +42,13 @@ type ReviewPersonRow = {
   id: string;
   name: string | null;
   email: string | null;
+};
+
+type ParsedSourceArtifactRow = {
+  id: string;
+  original_name: string;
+  parse_status: string;
+  updated_at: string;
 };
 
 const STATE_RANK: Record<SourceEventEvidenceCurrentState, number> = {
@@ -255,7 +263,49 @@ async function resolveReviewContext(
       { status: 500 },
     );
   }
-  if (!evidence || STATE_RANK[evidence.current_state] < STATE_RANK.Parsed) {
+  let reviewEvidence = evidence;
+  if (evidence && STATE_RANK[evidence.current_state] < STATE_RANK.Parsed) {
+    const { data: parsedArtifacts, error: artifactError } = await db
+      .from("source_artifacts")
+      .select("id, original_name, parse_status, updated_at")
+      .eq("tenant_key", effectiveClientKey)
+      .eq("source_event_row_id", persistedEvent.id)
+      .eq("stage_key", requirement.stage)
+      .eq("parse_status", "parsed")
+      .is("deleted_at", null);
+    if (artifactError) {
+      return Response.json(
+        { ok: false, error: "lookup_failed", detail: artifactError.message },
+        { status: 500 },
+      );
+    }
+    const matchedArtifact = (
+      (parsedArtifacts ?? []) as ParsedSourceArtifactRow[]
+    )
+      .filter(
+        (artifact) =>
+          matchEvidenceRequirementForUpload({
+            stageKey: requirement.stage,
+            filename: artifact.original_name,
+          })?.requirementId === requirementId,
+      )
+      .sort(
+        (left, right) =>
+          new Date(right.updated_at).getTime() -
+          new Date(left.updated_at).getTime(),
+      )[0];
+    if (matchedArtifact) {
+      reviewEvidence = {
+        ...evidence,
+        current_state: "Parsed",
+        source_artifact_id: matchedArtifact.id,
+      };
+    }
+  }
+  if (
+    !reviewEvidence ||
+    STATE_RANK[reviewEvidence.current_state] < STATE_RANK.Parsed
+  ) {
     return Response.json(
       {
         ok: false,
@@ -271,7 +321,7 @@ async function resolveReviewContext(
     currentUser,
     effectiveClientKey,
     eventId: persistedEvent.id,
-    evidence,
+    evidence: reviewEvidence,
     reviewer: {
       personId: reviewerPersonId,
       displayName: reviewerName,
@@ -345,6 +395,7 @@ export async function POST(request: NextRequest, { params }: RouteCtx) {
       .from("source_event_evidence_states")
       .update({
         current_state: targetState,
+        source_artifact_id: context.evidence.source_artifact_id,
         notes,
         last_synced_at: nowIso,
         updated_at: nowIso,
