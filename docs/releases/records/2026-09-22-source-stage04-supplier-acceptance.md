@@ -10,13 +10,13 @@
 
 ## Plain-English Summary
 
-Source New Stage 04 now has a governed human acceptance path from an eligible supplier suggestion to the event candidate-supplier authority table. A signed-in reviewer can accept one currently eligible registry supplier onto one event panel with a rationale. The path does not contact suppliers, invite suppliers, select respondents, infer approvals, make awards, or change tenant source data.
+Source New Stage 04 now has a governed human acceptance path from an eligible supplier suggestion to the event candidate-supplier authority table. A signed-in, linked reviewer can accept one currently eligible registry supplier onto one event panel with a rationale after the current immutable Request version is accepted. The write is bound to that Request version and rejects a stale form when the event mapping, Request version, Request acceptance, supplier eligibility, or supplier source reference has changed. The path does not contact suppliers, invite suppliers, select respondents, infer approvals, make awards, or change tenant source data.
 
 ## Layer Impact
 
 Release lane: `global-control-lane`.
 
-Layer 3 canonical model: appends one event-scoped authority record only when the supplier is already present in the governed supplier registry and still matches the event category/archetype mapping.
+Layer 3 canonical model: appends one event-scoped authority record only when the supplier is already present in the governed supplier registry and still matches the event category/archetype mapping and current Request authority version. The version identifier is retained in the authority identity. The existing partial unique index on tenant, event, and supplier prevents concurrent requests from creating multiple active rows; a unique collision is returned as `already_accepted`.
 
 Layer 4 product projection: mounts a readiness-gated Stage 04 acceptance form beside eligible Source New supplier suggestions and then reuses the existing read-only panel projection.
 
@@ -30,7 +30,7 @@ Layer 4 product projection: mounts a readiness-gated Stage 04 acceptance form be
 
 ## Changes Included
 
-- `src/lib/source/candidate-suppliers/event-candidate-acceptance-repository.ts` adds the tenant/event/mapping/registry-fenced append path.
+- `src/lib/source/candidate-suppliers/event-candidate-acceptance-repository.ts` adds the tenant/event/version/mapping/registry-fenced append path and deterministic duplicate handling.
 - `src/app/api/v1/source/[eventId]/candidate-suppliers/accept/route.ts` adds the signed-in POST route.
 - `src/components/source/new-workspace/SourceNewWorkspace.tsx` mounts the Stage 04 accept form for eligible suggestions.
 - `src/lib/source/intake/source-request-supplier-suggestions.ts` carries the accepted category/archetype ids into each suggestion for stale-form rejection.
@@ -38,7 +38,10 @@ Layer 4 product projection: mounts a readiness-gated Stage 04 acceptance form be
 
 ## QA / Validation
 
-- `npm test -- src/lib/source/candidate-suppliers/__tests__/event-candidate-acceptance-repository.test.ts 'src/app/api/v1/source/[eventId]/candidate-suppliers/accept/__tests__/route.test.ts' src/components/source/new-workspace/SourceNewWorkspace.test.tsx src/__tests__/behaviors/source-request-supplier-suggestions.test.ts --runInBand` — pass, 68 tests.
+- `npx jest --runTestsByPath src/lib/source/candidate-suppliers/__tests__/event-candidate-acceptance-repository.test.ts 'src/app/api/v1/source/[eventId]/candidate-suppliers/accept/__tests__/route.test.ts' src/components/source/new-workspace/SourceNewWorkspace.test.tsx src/__tests__/behaviors/source-request-supplier-suggestions.test.ts --runInBand` — pass, 75 tests.
+- Mutation: reverse the current-version comparison — caught by 3 repository cases.
+- Mutation: reverse the Request-acceptance guard — caught by 3 repository cases.
+- Mutation: expose the form when the Request version is unreadable — caught by the mounted workspace behavior test.
 
 ## Rollout Plan
 

@@ -11,6 +11,11 @@ type SourceEventMappingRow = {
   classified_category: string | null;
 };
 
+type CurrentEventVersionRow = {
+  id: string;
+  request_accepted: boolean;
+};
+
 type SupplierRegistryRow = {
   vendor_id: string;
   legal_name: string;
@@ -34,6 +39,7 @@ export type AcceptEventCandidateSupplierInput = {
   supplierId: string;
   expectedCategoryId: string;
   expectedArchetypeId: string;
+  expectedEventVersionId: string;
   expectedSourceReference: string;
   acceptedByUserId: string;
   acceptedByName: string;
@@ -53,6 +59,8 @@ export type AcceptEventCandidateSupplierResult =
         | "rationale_required"
         | "event_mapping_required"
         | "stale_event_mapping"
+        | "stale_event_version"
+        | "event_version_not_accepted"
         | "supplier_not_eligible"
         | "stale_supplier_reference"
         | "already_accepted"
@@ -115,6 +123,7 @@ function missingRequired(input: AcceptEventCandidateSupplierInput): boolean {
     input.supplierId,
     input.expectedCategoryId,
     input.expectedArchetypeId,
+    input.expectedEventVersionId,
     input.expectedSourceReference,
   ].every((value) => value.trim());
 }
@@ -133,6 +142,15 @@ function reviewerMissing(input: AcceptEventCandidateSupplierInput): boolean {
     name === "user" ||
     name === "unknown" ||
     name === "unknown user"
+  );
+}
+
+function isUniqueViolation(error: unknown): boolean {
+  return Boolean(
+    error &&
+    typeof error === "object" &&
+    "code" in error &&
+    (error as { code?: unknown }).code === "23505",
   );
 }
 
@@ -220,6 +238,53 @@ export async function acceptEventCandidateSupplier(
           };
         }
 
+        const versionRows = await run<CurrentEventVersionRow>(
+          `SELECT version.id,
+                  EXISTS (
+                    SELECT 1
+                      FROM source_event_authority_version_approvals approval
+                     WHERE approval.version_id = version.id
+                       AND approval.client_key = version.client_key
+                       AND approval.event_id = version.event_id
+                       AND approval.authority_kind = version.authority_kind
+                       AND approval.role = 'request_acceptor'
+                       AND approval.decision = 'approved'
+                  )
+                  AND NOT EXISTS (
+                    SELECT 1
+                      FROM source_event_authority_version_approvals approval
+                     WHERE approval.version_id = version.id
+                       AND approval.client_key = version.client_key
+                       AND approval.event_id = version.event_id
+                       AND approval.authority_kind = version.authority_kind
+                       AND approval.role = 'request_acceptor'
+                       AND approval.decision = 'changes_requested'
+                  ) AS request_accepted
+             FROM source_event_authority_versions version
+            WHERE version.client_key = $1
+              AND version.event_id = $2::uuid
+              AND version.authority_kind = 'request'
+              AND version.superseded_at IS NULL
+          LIMIT 1`,
+          [input.clientKey, input.eventId],
+        );
+        if (versionRows[0]?.id !== input.expectedEventVersionId.trim()) {
+          return {
+            ok: false,
+            code: "stale_event_version",
+            detail:
+              "The posted Request version is no longer the current event authority.",
+          };
+        }
+        if (!versionRows[0].request_accepted) {
+          return {
+            ok: false,
+            code: "event_version_not_accepted",
+            detail:
+              "The current Request version must be accepted before a supplier can join the candidate panel.",
+          };
+        }
+
         const existing = await run<ExistingAuthorityRow>(
           `SELECT authority_id
            FROM source_event_candidate_supplier_authority
@@ -281,7 +346,7 @@ export async function acceptEventCandidateSupplier(
           };
         }
 
-        const authorityId = `stage04:${input.eventId}:${input.supplierId}`;
+        const authorityId = `stage04:${input.eventId}:${input.expectedEventVersionId.trim()}:${input.supplierId}`;
         const inserted = await run<InsertedAuthorityRow>(
           `INSERT INTO source_event_candidate_supplier_authority (
             authority_id,
@@ -316,6 +381,14 @@ export async function acceptEventCandidateSupplier(
       },
     );
   } catch (error) {
+    if (isUniqueViolation(error)) {
+      return {
+        ok: false,
+        code: "already_accepted",
+        detail:
+          "This supplier already has active candidate authority for the event.",
+      };
+    }
     return {
       ok: false,
       code: "write_failed",

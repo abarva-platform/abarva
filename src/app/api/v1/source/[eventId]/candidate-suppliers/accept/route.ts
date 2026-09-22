@@ -22,6 +22,12 @@ function namedReviewerName(
   return user?.name?.trim() ?? "";
 }
 
+function namedReviewerId(
+  user: Awaited<ReturnType<typeof getCurrentUser>>,
+): string {
+  return user?.personId?.trim() ?? "";
+}
+
 export async function POST(request: Request, { params }: RouteContext) {
   const { eventId } = await params;
   let tenancy;
@@ -55,14 +61,26 @@ export async function POST(request: Request, { params }: RouteContext) {
 
   const formData = await request.formData();
   const acceptedByName = namedReviewerName(user);
+  const acceptedByUserId = namedReviewerId(user);
+  if (!acceptedByUserId || !acceptedByName) {
+    return Response.json(
+      {
+        ok: false,
+        error: "reviewer_identity_required",
+        detail: "A named linked procurement reviewer is required.",
+      },
+      { status: 409 },
+    );
+  }
   const result = await acceptEventCandidateSupplier({
     clientKey: activeClient.key,
     eventId,
     supplierId: formText(formData, "supplierId"),
     expectedCategoryId: formText(formData, "categoryId"),
     expectedArchetypeId: formText(formData, "archetypeId"),
+    expectedEventVersionId: formText(formData, "eventVersionId"),
     expectedSourceReference: formText(formData, "sourceReference"),
-    acceptedByUserId: tenancy.userId,
+    acceptedByUserId,
     acceptedByName,
     rationale: formText(formData, "rationale"),
   });

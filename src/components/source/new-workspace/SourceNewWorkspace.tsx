@@ -105,6 +105,8 @@ export interface SourceNewEventView {
    * render differently and only one of them is a blocker.
    */
   requestVersionApproval?: "accepted" | "pending" | "changes_requested" | null;
+  /** Current immutable Request authority version used to fence Stage 04 writes. */
+  requestAuthorityVersionId?: string | null;
 }
 
 const VIEWS: readonly { key: View; label: string }[] = [
@@ -775,44 +777,57 @@ function SourceNewStage04VendorPanelView({
                 {`. Contact policy: ${contactPolicyLabel(row.contactPolicy)}`}
                 {`. Contact readiness: ${row.contactReadiness.replaceAll("_", " ")}`}
                 {`. Source: ${row.sourceReference}.`}
-                <form
-                  className="snw-inline-form"
-                  action={`/api/v1/source/${encodeURIComponent(event.id)}/candidate-suppliers/accept`}
-                  method="post"
-                >
-                  <input
-                    type="hidden"
-                    name="supplierId"
-                    value={row.supplierId}
-                  />
-                  <input
-                    type="hidden"
-                    name="categoryId"
-                    value={row.acceptedCategoryId}
-                  />
-                  <input
-                    type="hidden"
-                    name="archetypeId"
-                    value={row.acceptedArchetypeId}
-                  />
-                  <input
-                    type="hidden"
-                    name="sourceReference"
-                    value={row.sourceReference}
-                  />
-                  <label>
-                    <span>Rationale</span>
+                {event.requestAuthorityVersionId &&
+                event.requestVersionApproval === "accepted" ? (
+                  <form
+                    className="snw-inline-form"
+                    action={`/api/v1/source/${encodeURIComponent(event.id)}/candidate-suppliers/accept`}
+                    method="post"
+                  >
                     <input
-                      name="rationale"
-                      minLength={12}
-                      required
-                      placeholder="Why this supplier belongs on the panel"
+                      type="hidden"
+                      name="supplierId"
+                      value={row.supplierId}
                     />
-                  </label>
-                  <button className="snw-primary" type="submit">
-                    Accept candidate
-                  </button>
-                </form>
+                    <input
+                      type="hidden"
+                      name="categoryId"
+                      value={row.acceptedCategoryId}
+                    />
+                    <input
+                      type="hidden"
+                      name="archetypeId"
+                      value={row.acceptedArchetypeId}
+                    />
+                    <input
+                      type="hidden"
+                      name="eventVersionId"
+                      value={event.requestAuthorityVersionId}
+                    />
+                    <input
+                      type="hidden"
+                      name="sourceReference"
+                      value={row.sourceReference}
+                    />
+                    <label>
+                      <span>Rationale</span>
+                      <input
+                        name="rationale"
+                        minLength={12}
+                        required
+                        placeholder="Why this supplier belongs on the panel"
+                      />
+                    </label>
+                    <button className="snw-primary" type="submit">
+                      Accept candidate
+                    </button>
+                  </form>
+                ) : (
+                  <p className="snw-note">
+                    The current Request version must be readable and accepted
+                    before this supplier can be accepted.
+                  </p>
+                )}
               </li>
             ))}
           </ul>

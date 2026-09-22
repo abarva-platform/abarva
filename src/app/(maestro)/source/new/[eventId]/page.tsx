@@ -74,29 +74,29 @@ export default async function SourceNewEventPage({
     stage04VendorPanel,
     stage05NdaCoverage,
   ] = await Promise.all([
-      listSourceArtifacts(
-        event.id,
-        {
-          tenantKey: clientKeyToInventorySubstrateKey(activeClient.key),
-        },
-        { includeHistory: true },
-      ),
-      listSourceEventActivityEntries(event.id),
-      readSourceEventAuthority(event.id, activeClient.key),
-      readSourceAuthorityVersionState(event.id, activeClient.key, "request"),
-      readSourceNewStage04VendorPanel({
-        clientKey: activeClient.key,
-        eventId: event.id,
-        categoryId: event.classifiedCategory ?? null,
-        archetypeId: event.archetype ?? null,
-        asOf: asOfDate,
-      }),
-      readSourceNewStage05NdaCoverage({
-        clientKey: activeClient.key,
-        eventId: event.id,
-        asOf: asOfDate,
-      }),
-    ]);
+    listSourceArtifacts(
+      event.id,
+      {
+        tenantKey: clientKeyToInventorySubstrateKey(activeClient.key),
+      },
+      { includeHistory: true },
+    ),
+    listSourceEventActivityEntries(event.id),
+    readSourceEventAuthority(event.id, activeClient.key),
+    readSourceAuthorityVersionState(event.id, activeClient.key, "request"),
+    readSourceNewStage04VendorPanel({
+      clientKey: activeClient.key,
+      eventId: event.id,
+      categoryId: event.classifiedCategory ?? null,
+      archetypeId: event.archetype ?? null,
+      asOf: asOfDate,
+    }),
+    readSourceNewStage05NdaCoverage({
+      clientKey: activeClient.key,
+      eventId: event.id,
+      asOf: asOfDate,
+    }),
+  ]);
 
   // Request authority, read from the persisted version store rather than
   // inferred from the current stage or from navigation. `null` means the store
@@ -226,6 +226,10 @@ export default async function SourceNewEventPage({
         solicitationMotionAcceptedByUserId:
           authority.kind === "available" ? authority.acceptedByUserId : null,
         requestVersionApproval,
+        requestAuthorityVersionId:
+          requestVersion.kind === "available"
+            ? (requestVersion.currentVersion?.id ?? null)
+            : null,
       }}
       files={files}
       stage04VendorPanel={stage04VendorPanel}

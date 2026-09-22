@@ -40,6 +40,7 @@ function request() {
   body.set("supplierId", "supplier-1");
   body.set("categoryId", "managed-services");
   body.set("archetypeId", "application-managed-services");
+  body.set("eventVersionId", "22222222-2222-4222-8222-222222222222");
   body.set("sourceReference", "EVID-SUPPLIER-1");
   body.set("rationale", "Meets the governed Stage 04 eligibility review.");
   return new Request(
@@ -59,6 +60,7 @@ beforeEach(() => {
     name: "Example client",
   });
   getCurrentUserMock.mockResolvedValue({
+    personId: "person-1",
     name: "Named Procurement Reviewer",
   });
   loadPolicyMock.mockResolvedValue({ canApproveSourceStages: true });
@@ -76,6 +78,7 @@ describe("candidate supplier acceptance route", () => {
       supplierId: "supplier-1",
       expectedCategoryId: "managed-services",
       expectedArchetypeId: "application-managed-services",
+      expectedEventVersionId: "22222222-2222-4222-8222-222222222222",
       expectedSourceReference: "EVID-SUPPLIER-1",
       acceptedByUserId: "person-1",
       acceptedByName: "Named Procurement Reviewer",
@@ -92,6 +95,21 @@ describe("candidate supplier acceptance route", () => {
     const response = await POST(request(), params);
 
     expect(response.status).toBe(403);
+    expect(acceptMock).not.toHaveBeenCalled();
+  });
+
+  it("fails closed when the signed-in reviewer has no canonical person identity", async () => {
+    getCurrentUserMock.mockResolvedValue({
+      personId: null,
+      name: "Named Procurement Reviewer",
+    });
+
+    const response = await POST(request(), params);
+
+    expect(response.status).toBe(409);
+    await expect(response.json()).resolves.toEqual(
+      expect.objectContaining({ error: "reviewer_identity_required" }),
+    );
     expect(acceptMock).not.toHaveBeenCalled();
   });
 });

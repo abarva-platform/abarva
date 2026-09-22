@@ -1284,7 +1284,13 @@ describe("SourceNewWorkspace", () => {
 
     render(
       <SourceNewWorkspace
-        event={{ ...request, currentStage: "rfp", lifecycle: "active" }}
+        event={{
+          ...request,
+          currentStage: "rfp",
+          lifecycle: "active",
+          requestAuthorityVersionId: "22222222-2222-4222-8222-222222222222",
+          requestVersionApproval: "accepted",
+        }}
         files={[]}
         stage04VendorPanel={panel}
       />,
@@ -1329,6 +1335,11 @@ describe("SourceNewWorkspace", () => {
         'input[name="sourceReference"]',
       )?.value,
     ).toBe("EVID-SUGGESTED-1");
+    expect(
+      acceptForm?.querySelector<HTMLInputElement>(
+        'input[name="eventVersionId"]',
+      )?.value,
+    ).toBe("22222222-2222-4222-8222-222222222222");
 
     // The distinction itself, not just the names. Read off the rows so the
     // assertion is about which supplier got which label, not about a phrase
@@ -1380,6 +1391,71 @@ describe("SourceNewWorkspace", () => {
     expect(
       within(region).queryByRole("link", { name: /send|contact|select/i }),
     ).toBeNull();
+  });
+
+  it("withholds supplier acceptance when the current Request version is unreadable", () => {
+    const panel: SourceNewStage04VendorPanel = {
+      status: "empty",
+      blockers: [],
+      rows: [],
+      counts: {
+        eligible_candidate: 0,
+        selected_respondent: 0,
+        existing_contract_vendor: 0,
+      },
+      notRecorded: [],
+      suggestions: {
+        status: "available",
+        blockers: [],
+        rows: [
+          {
+            supplierId: "suggested-1",
+            legalEntityId: "suggested-1",
+            legalName: "Synthetic Registry Supplier LLC",
+            acceptedCategoryId: "managed-services",
+            acceptedArchetypeId: "application-managed-services",
+            label: "Suggested for review",
+            existingContractVendor: false,
+            eligibility: {
+              categoryKeys: ["managed-services"],
+              functionKeys: [],
+              archetypeKeys: ["application-managed-services"],
+            },
+            contactPolicy: "review_required",
+            contactReadiness: "review_required",
+            contactActionAvailable: false,
+            sourceReference: "EVID-SUGGESTED-1",
+          },
+        ],
+        excludedCount: 0,
+      },
+      asOf: "2026-09-19",
+    };
+
+    render(
+      <SourceNewWorkspace
+        event={{ ...request, currentStage: "rfp", lifecycle: "active" }}
+        files={[]}
+        stage04VendorPanel={panel}
+      />,
+    );
+
+    const buttons = within(
+      screen.getByRole("navigation", { name: "Event phases" }),
+    ).getAllByRole("button");
+    fireEvent.click(buttons[2]);
+
+    const region = screen.getByRole("region", {
+      name: "Stage 04 vendor panel",
+    });
+    expect(
+      within(region).queryByRole("button", { name: "Accept candidate" }),
+    ).toBeNull();
+    expect(
+      within(region).getByText(
+        /current Request version must be readable and accepted/i,
+      ),
+    ).toBeTruthy();
   });
 
   it("shows the stage 04 blocker instead of a panel when a read failed", () => {
