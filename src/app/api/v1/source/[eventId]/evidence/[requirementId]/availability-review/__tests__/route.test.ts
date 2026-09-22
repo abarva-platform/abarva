@@ -87,6 +87,12 @@ let personRow: { id: string; name: string | null; email: string | null } | null 
   email: "reviewer@example.test",
 };
 let queriedPersonId: string | null = null;
+let parsedArtifacts: Array<{
+  id: string;
+  original_name: string;
+  parse_status: string;
+  updated_at: string;
+}> = [];
 
 function fakeFluentClient() {
   return {
@@ -99,6 +105,20 @@ function fakeFluentClient() {
             queriedPersonId = typeof value === "string" ? value : null;
           }
           return chain;
+        },
+        is: () => chain,
+        then: (
+          resolve: (value: {
+            data: typeof parsedArtifacts;
+            error: null;
+          }) => unknown,
+        ) => {
+          if (table === "source_artifacts") {
+            return Promise.resolve(
+              resolve({ data: parsedArtifacts, error: null }),
+            );
+          }
+          return Promise.resolve(resolve({ data: [], error: null }));
         },
         update: (payload: Record<string, unknown>) => {
           updatePayload = payload;
@@ -159,6 +179,7 @@ beforeEach(() => {
   tenancy.userId = "person-1";
   currentUser.personId = "person-1";
   queriedPersonId = null;
+  parsedArtifacts = [];
   personRow = {
     id: "person-1",
     name: "Evidence Reviewer",
@@ -231,6 +252,76 @@ describe("Source parsed-evidence availability review", () => {
   it("rejects review when parsed evidence does not exist", async () => {
     existingEvidence = { ...evidenceRow, current_state: "Loaded" };
     const response = await GET(request(), ctx);
+    expect(response.status).toBe(409);
+    await expect(response.json()).resolves.toEqual(
+      expect.objectContaining({ error: "parsed_evidence_required" }),
+    );
+  });
+
+  it("reconciles a parsed artifact that deterministically matches a legacy evidence row", async () => {
+    existingEvidence = {
+      ...evidenceRow,
+      current_state: "Not Requested",
+      source_artifact_id: null,
+    };
+    parsedArtifacts = [
+      {
+        id: "artifact-parsed-legacy",
+        original_name: "source-legal-template.docx",
+        parse_status: "parsed",
+        updated_at: "2026-09-21T00:00:00.000Z",
+      },
+    ];
+
+    const previewResponse = await GET(request(), ctx);
+    expect(previewResponse.status).toBe(200);
+    await expect(previewResponse.json()).resolves.toEqual(
+      expect.objectContaining({
+        review: expect.objectContaining({
+          currentState: "Parsed",
+          targetState: "Available",
+        }),
+      }),
+    );
+
+    const writeResponse = await POST(
+      request({
+        rationale:
+          "Reviewed the parsed legacy artifact for workflow availability only.",
+        stage: "rfp",
+      }),
+      ctx,
+    );
+
+    expect(writeResponse.status).toBe(200);
+    expect(writes).toContainEqual(
+      expect.objectContaining({
+        table: "source_event_evidence_states",
+        payload: expect.objectContaining({
+          current_state: "Available",
+          source_artifact_id: "artifact-parsed-legacy",
+        }),
+      }),
+    );
+  });
+
+  it("does not reconcile a parsed artifact that maps to another requirement", async () => {
+    existingEvidence = {
+      ...evidenceRow,
+      current_state: "Not Requested",
+      source_artifact_id: null,
+    };
+    parsedArtifacts = [
+      {
+        id: "artifact-other-requirement",
+        original_name: "supplier-market-intelligence.pdf",
+        parse_status: "parsed",
+        updated_at: "2026-09-21T00:00:00.000Z",
+      },
+    ];
+
+    const response = await GET(request(), ctx);
+
     expect(response.status).toBe(409);
     await expect(response.json()).resolves.toEqual(
       expect.objectContaining({ error: "parsed_evidence_required" }),
