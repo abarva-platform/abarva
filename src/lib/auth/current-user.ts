@@ -95,6 +95,19 @@ export async function getCurrentUser(): Promise<CurrentUser | null> {
     claims?.emailAddresses?.[0]?.emailAddress ??
     claims?.email_addresses?.[0]?.emailAddress ??
     null;
+  const claimName = [claims?.firstName, claims?.lastName]
+    .filter(Boolean)
+    .join(" ")
+    .trim();
+  let authoritativeClerkUser: Awaited<ReturnType<typeof clerkCurrentUser>> =
+    null;
+  if (!claimEmail || !claimName) {
+    try {
+      authoritativeClerkUser = await clerkCurrentUser();
+    } catch {
+      authoritativeClerkUser = null;
+    }
+  }
   // Clerk session JWTs do not always include an email claim. For demo
   // /clerk_test accounts in particular, the JWT payload often only carries
   // the `sub` (Clerk user id) and publicMetadata. When that happens, the
@@ -103,17 +116,10 @@ export async function getCurrentUser(): Promise<CurrentUser | null> {
   // Clerk's authoritative user record to recover the email.
   let fallbackEmail = claimEmail;
   if (!fallbackEmail) {
-    try {
-      const clerkUser = await clerkCurrentUser();
-      fallbackEmail =
-        clerkUser?.primaryEmailAddress?.emailAddress ??
-        clerkUser?.emailAddresses?.[0]?.emailAddress ??
-        null;
-    } catch {
-      // Clerk currentUser may throw outside a request context. Leave email
-      // null — downstream code will treat the user as un-emailed and fall
-      // back to publicMetadata.clientId.
-    }
+    fallbackEmail =
+      authoritativeClerkUser?.primaryEmailAddress?.emailAddress ??
+      authoritativeClerkUser?.emailAddresses?.[0]?.emailAddress ??
+      null;
   }
   const legacyRole = resolveSessionRole(
     claims?.publicMetadata?.role ?? null,
@@ -123,7 +129,8 @@ export async function getCurrentUser(): Promise<CurrentUser | null> {
   let tenantRoles = normalizeTenantRoles(claims?.publicMetadata?.tenantRoles);
   if (Object.keys(tenantRoles).length === 0) {
     try {
-      const clerkUser = await clerkCurrentUser();
+      const clerkUser = authoritativeClerkUser ?? (await clerkCurrentUser());
+      authoritativeClerkUser = clerkUser;
       tenantRoles = normalizeTenantRoles(
         clerkUser?.publicMetadata?.tenantRoles,
       );
@@ -132,7 +139,11 @@ export async function getCurrentUser(): Promise<CurrentUser | null> {
     }
   }
   const fallbackName =
-    [claims?.firstName, claims?.lastName].filter(Boolean).join(" ") ||
+    claimName ||
+    authoritativeClerkUser?.fullName ||
+    [authoritativeClerkUser?.firstName, authoritativeClerkUser?.lastName]
+      .filter(Boolean)
+      .join(" ") ||
     claims?.emailAddress ||
     "User";
   const resolvedPerson = personIdFromClaims ? null : await getCurrentPerson();
