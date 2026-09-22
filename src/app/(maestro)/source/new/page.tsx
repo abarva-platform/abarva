@@ -11,6 +11,7 @@ import {
   type SourceNewRequestQueueStatus,
 } from "@/components/source/new-workspace/SourceNewRequestFirstPage";
 import { buildSourceOptimizeContractHref } from "@/lib/source/optimize-routing";
+import { readSourceIntakeRequestQueue } from "@/lib/source/intake/servicenow-sourcing-request-repository";
 import { listSourcingEvents } from "@/lib/source/queries";
 import { resolveTenant } from "@/lib/tenant/resolveTenant";
 
@@ -40,14 +41,14 @@ export default async function Page({
     }) ?? clientOption.name;
 
   if (params.mode !== "intake" && !params.intent) {
-    const { status, eventWorkspaces } = await loadRequestFirstWorkspace(
-      Boolean(tenant),
-    );
+    const { status, importedRequests, eventWorkspaces } =
+      await loadRequestFirstWorkspace(clientKey);
     return (
       <SourceNewRequestFirstPage
         clientName={activeClientDisplayName}
         clientKey={clientOption.id}
         requestQueueStatus={status}
+        importedRequests={importedRequests}
         eventWorkspaces={eventWorkspaces}
       />
     );
@@ -62,21 +63,38 @@ export default async function Page({
   );
 }
 
-async function loadRequestFirstWorkspace(hasTenant: boolean): Promise<{
+async function loadRequestFirstWorkspace(clientKey: string | null): Promise<{
   status: SourceNewRequestQueueStatus;
+  importedRequests: Awaited<
+    ReturnType<typeof readSourceIntakeRequestQueue>
+  >["requests"];
   eventWorkspaces: SourceNewEventWorkspaceSummary[];
 }> {
-  if (!hasTenant) {
-    return { status: "unauthorized", eventWorkspaces: [] };
+  if (!clientKey) {
+    return {
+      status: "unauthorized",
+      importedRequests: [],
+      eventWorkspaces: [],
+    };
   }
-  const events = await listSourcingEvents().catch(() => null);
+  const [requestRead, events] = await Promise.all([
+    readSourceIntakeRequestQueue(clientKey),
+    listSourcingEvents().catch(() => null),
+  ]);
   if (!events) {
-    return { status: "unavailable", eventWorkspaces: [] };
+    return {
+      status: "unavailable",
+      importedRequests: [],
+      eventWorkspaces: [],
+    };
   }
   return {
-    status: events.some((event) => event.status === "waiting_on_client")
-      ? "loaded"
-      : "empty",
+    status: !requestRead.registryAvailable
+      ? "unavailable"
+      : requestRead.requests.length > 0
+        ? "loaded"
+        : "empty",
+    importedRequests: requestRead.registryAvailable ? requestRead.requests : [],
     eventWorkspaces: events.map((event) => ({
       id: event.id,
       code: event.code,

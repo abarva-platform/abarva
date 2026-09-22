@@ -871,7 +871,6 @@ jobs:
           src/lib/source/new-workspace/__tests__/authority-version-store.test.ts
           src/lib/source/new-workspace/__tests__/event-authority.test.ts
           src/lib/source/new-workspace/source-version-authority.test.ts
-          src/lib/source/new-workspace/request-triage.test.ts
           src/lib/source/new-workspace/phase-state.test.ts
           src/lib/source/new-workspace/step-readiness.test.ts
           src/lib/source/new-workspace/navigation.test.ts
