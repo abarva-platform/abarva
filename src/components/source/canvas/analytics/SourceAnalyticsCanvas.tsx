@@ -817,6 +817,7 @@ export function SourceAnalyticsCanvas({
             rail={
               <SourceShellRail
                 view={shellView}
+                journey={journey}
                 workspace={workspace}
                 onWorkspaceChange={setWorkspace}
               />
@@ -879,13 +880,17 @@ export function SourceAnalyticsCanvas({
 
 function SourceShellRail({
   view,
+  journey,
   workspace,
   onWorkspaceChange,
 }: {
   view: SourceEventShellView;
+  journey?: SourceJourneyDefinition;
   workspace: SourceShellWorkspace;
   onWorkspaceChange: (workspace: SourceShellWorkspace) => void;
 }) {
+  const readerJourney = sourceReaderJourneyCheckpoints(view, journey);
+
   return (
     <aside
       data-testid="source-shell-v2-rail"
@@ -928,15 +933,12 @@ function SourceShellRail({
 
       <RailLabel>Journey</RailLabel>
       <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-        {SOURCE_NEW_EXTERNAL_CHECKPOINT_ORDER.map((checkpoint, index) => {
-          const checkpointState = sourceReaderCheckpointState(
-            view,
-            checkpoint,
-          );
+        {readerJourney.map((checkpoint, index) => {
+          const checkpointState = checkpoint.state;
           return (
             <Link
-              key={checkpoint}
-              href={sourceReaderCheckpointHref(view, checkpoint)}
+              key={checkpoint.key}
+              href={checkpoint.href}
               data-testid="source-reader-journey-checkpoint"
               style={{
                 display: "grid",
@@ -999,85 +1001,87 @@ function SourceShellRail({
                   fontWeight: checkpointState === "current" ? 700 : 600,
                 }}
               >
-                {sourceReaderCheckpointLabel(checkpoint)}
+                {checkpoint.label}
               </span>
             </Link>
           );
         })}
       </div>
 
-      <div
-        style={{
-          marginTop: 14,
-          paddingTop: 12,
-          borderTop: `1px solid ${ANALYTICS.LINE_SOFT}`,
-        }}
-      >
-        <RailLabel>Stage detail</RailLabel>
-        <Link
-          href={`/source/events/${view.event.id}?stage=${view.stage.key}`}
-          data-testid="source-reader-journey-deep-stage-link"
+      {journey?.id !== "contract_optimization" ? (
+        <div
           style={{
-            display: "grid",
-            gridTemplateColumns: "22px 1fr auto",
-            gap: 9,
-            alignItems: "center",
-            padding: "8px 9px",
-            borderRadius: 8,
-            border: `1px solid ${ANALYTICS.LINE}`,
-            background: ANALYTICS.CARD,
-            textDecoration: "none",
+            marginTop: 14,
+            paddingTop: 12,
+            borderTop: `1px solid ${ANALYTICS.LINE_SOFT}`,
           }}
         >
-          <span
+          <RailLabel>Stage detail</RailLabel>
+          <Link
+            href={`/source/events/${view.event.id}?stage=${view.stage.key}`}
+            data-testid="source-reader-journey-deep-stage-link"
             style={{
-              width: 20,
-              height: 20,
-              borderRadius: 999,
               display: "grid",
-              placeItems: "center",
-              background: ANALYTICS.BLUE,
-              color: "#fff",
-              fontFamily: ANALYTICS.MONO,
-              fontSize: 9,
-              fontWeight: 800,
+              gridTemplateColumns: "22px 1fr auto",
+              gap: 9,
+              alignItems: "center",
+              padding: "8px 9px",
+              borderRadius: 8,
+              border: `1px solid ${ANALYTICS.LINE}`,
+              background: ANALYTICS.CARD,
+              textDecoration: "none",
             }}
           >
-            ↗
-          </span>
-          <span
-            style={{
-              color: ANALYTICS.INK,
-              fontSize: 13,
-              fontWeight: 700,
-            }}
-          >
-            {view.stage.label}
-          </span>
-          <span
-            data-testid={
-              view.event.viewedStageKey === view.event.currentStageKey
-                ? "source-journey-current-stage-status"
-                : undefined
-            }
-            style={{
-              color:
-                view.stage.ready >= view.stage.total &&
-                view.stage.artifactReadiness.blockerCount > 0
-                  ? ANALYTICS.AMBER_TEXT
-                  : ANALYTICS.FAINT,
-              fontFamily: ANALYTICS.MONO,
-              fontSize: 10,
-              fontWeight: 700,
-            }}
-          >
-            {view.stage.ready >= view.stage.total &&
-            view.stage.artifactReadiness.blockerCount > 0
-              ? "review files"
-              : `${view.stage.ready}/${view.stage.total}`}
-          </span>
-        </Link>
-      </div>
+            <span
+              style={{
+                width: 20,
+                height: 20,
+                borderRadius: 999,
+                display: "grid",
+                placeItems: "center",
+                background: ANALYTICS.BLUE,
+                color: "#fff",
+                fontFamily: ANALYTICS.MONO,
+                fontSize: 9,
+                fontWeight: 800,
+              }}
+            >
+              ↗
+            </span>
+            <span
+              style={{
+                color: ANALYTICS.INK,
+                fontSize: 13,
+                fontWeight: 700,
+              }}
+            >
+              {view.stage.label}
+            </span>
+            <span
+              data-testid={
+                view.event.viewedStageKey === view.event.currentStageKey
+                  ? "source-journey-current-stage-status"
+                  : undefined
+              }
+              style={{
+                color:
+                  view.stage.ready >= view.stage.total &&
+                  view.stage.artifactReadiness.blockerCount > 0
+                    ? ANALYTICS.AMBER_TEXT
+                    : ANALYTICS.FAINT,
+                fontFamily: ANALYTICS.MONO,
+                fontSize: 10,
+                fontWeight: 700,
+              }}
+            >
+              {view.stage.ready >= view.stage.total &&
+              view.stage.artifactReadiness.blockerCount > 0
+                ? "review files"
+                : `${view.stage.ready}/${view.stage.total}`}
+            </span>
+          </Link>
+        </div>
+      ) : null}
 
       <div
         style={{
@@ -1143,6 +1147,34 @@ type SourceReaderCheckpointState =
   | "past"
   | "current"
   | "future";
+
+interface SourceReaderJourneyCheckpoint {
+  key: string;
+  href: string;
+  label: string;
+  state: SourceReaderCheckpointState;
+}
+
+function sourceReaderJourneyCheckpoints(
+  view: SourceEventShellView,
+  journey?: SourceJourneyDefinition,
+): SourceReaderJourneyCheckpoint[] {
+  if (journey?.id === "contract_optimization") {
+    return view.journey.map((stage) => ({
+      key: stage.key,
+      href: `/source/events/${encodeURIComponent(view.event.id)}?stage=${stage.key}`,
+      label: stage.label,
+      state: stage.state,
+    }));
+  }
+
+  return SOURCE_NEW_EXTERNAL_CHECKPOINT_ORDER.map((checkpoint) => ({
+    key: checkpoint,
+    href: sourceReaderCheckpointHref(view, checkpoint),
+    label: sourceReaderCheckpointLabel(checkpoint),
+    state: sourceReaderCheckpointState(view, checkpoint),
+  }));
+}
 
 function sourceReaderCheckpointLabel(
   checkpoint: SourceNewExternalCheckpointKey,

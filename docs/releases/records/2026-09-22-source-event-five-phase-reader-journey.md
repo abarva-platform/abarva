@@ -48,6 +48,11 @@ included.
 - Mutation proof: reversing only the implementation patch restored the legacy rail and the focused
   suite failed, 11 failed / 4 passed, on the missing `source-reader-journey-checkpoint` assertion.
   Reapplying the implementation returned the same suite to green.
+- The initial CI run correctly caught that the simplified reader rail had also replaced the
+  contract-optimization journey. The implementation now preserves that journey's Negotiation Plan
+  and omits competitive-market checkpoints; disabling that motion-specific branch makes the
+  existing contract-optimization behavior test fail again.
+- Full Source canvas component suite after the correction: 28 suites and 176 tests passed.
 - Focused projection/render regression: `npx jest src/components/source/canvas/analytics/__tests__/SourceAnalyticsCanvas.newEventJourneySmoke.test.tsx src/lib/source/new-workspace/phase-state.test.ts --runInBand` passed, 46 tests.
 - Scoped ESLint: `npx eslint src/components/source/canvas/analytics/SourceAnalyticsCanvas.tsx src/components/source/canvas/analytics/__tests__/SourceAnalyticsCanvas.newEventJourneySmoke.test.tsx src/lib/source/new-workspace/phase-state.ts src/lib/source/new-workspace/phase-state.test.ts` passed.
 - TypeScript: `npm run typecheck` passed clean.
