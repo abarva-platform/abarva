@@ -1,6 +1,10 @@
 # Unresolved-client fallbacks: classification of all 40 call sites
 
-**Item:** U-512 · filed out of U-511 · classified and partly repaired 2026-09-22.
+**Items:** U-512 · filed out of U-511 · all 40 classified and 6 repaired 2026-09-22.
+**Closed by:** U-513 · the 3 sites U-512 left as repair-owed, repaired the same day.
+
+All 9 guard-class sites are now repaired. The remaining 31 are `inside` or
+`dead-by-construction` and are recorded here rather than changed.
 
 ## The mechanism, stated once
 
@@ -29,12 +33,12 @@ visible. This file is the record of which callers those are.
 | `inside` | the reader is already inside this tenant; the surface is labelling chrome it is entitled to label, and the default account is the established answer | left as-is; this file is the note that the `??` is dead |
 | `dead-by-construction` | the key passed can never be unregistered (a literal, or a value that came out of `getClientOption`/`ALL_CLIENTS`), so the fallback is unreachable for a second, independent reason | left as-is |
 | `guard` | the surface refuses, or tells a reader (or a model) *which* tenant it is talking about on a path where resolution may have failed | repointed to `canonicalClientDisplayNameOrNull`, proved by rendering/invoking with the tenant unresolved |
-| `guard — repair owed` | same class, but proving it needs a harness this change does not build | filed as a follow-up; named below, not silently left |
+| `guard — repair owed` | same class, but proving it needs a harness U-512 did not build | filed as U-513 and **since repaired** — see the section below |
 
 A call-site diff is not evidence for any of these. The defect was never visible
 in the call site — only in what reached the reader.
 
-## Repaired in this change (6 call sites, 5 files)
+## Guard class — repaired by U-512 (6 call sites, 5 files)
 
 | file:line | fallback the author wrote | why it is a guard |
 |---|---|---|
@@ -95,16 +99,59 @@ it moved this prompt block off the request body. The fallback was unreachable,
 so removing it changes no behaviour that was ever observable, and
 `resolveTurnTenantName` takes no request-supplied name at all. A case pins that.
 
-## Guard class, repair owed — filed as U-513 (3 call sites)
+## Guard class — repaired by U-513 (3 call sites, 3 files)
 
-Named here rather than swept, because each needs a harness this change does not
-build and an unproven repair is not a repair.
+U-512 named these three and left them, because each needed a harness it did not
+build and an unproven repair is not a repair. U-513 built the harnesses and
+repaired all three. Each was proved by rendering or invoking with the tenant
+unresolved, never by a call-site diff.
 
-| file:line | fallback | why it is a guard | what proving it needs |
+| file:line | fallback the author wrote | why it is a guard | how it was proved |
 |---|---|---|---|
-| `src/app/(public)/responsible-ai/acknowledgment/page.tsx:46` | `?? activeClient?.name ?? "your workspace"` | A consent surface. The account named is the one the acknowledgment is recorded against. | The page redirects on two paths before the name is computed; needs its own render harness. |
-| `src/app/(public)/responsible-ai/training/page.tsx:57` | `?? activeClient?.name ?? "your workspace"` | Same surface family, same fallback, duplicated `foundationClientDisplayName` helper. | As above. |
-| `src/app/api/engagements/create/turn/route.ts:52` | `?? activeClient?.name ?? null` | Not only display: the resolved name's first token is used at `:62` to **scope sponsor candidates to the active client's organization**, and is written as `active_client` at `:252` and `:259`. A default account name leaking in filters by the wrong org. | A POST harness for the route; the declared `null` end means downstream already handles absence. |
+| `src/app/(public)/responsible-ai/acknowledgment/page.tsx:44` | `?? activeClient?.name ?? "your workspace"` | A consent surface. The form renders **“I accept it for my access to *{clientName}*.”** — the account named is the one the acceptance is filed against. | A jsdom render harness that steps past both redirects (subject present, acknowledgment still required) and renders the **real** form, then reads the consent sentence out of the page. Before the repair it read “…for my access to *<the default account>*.” |
+| `src/app/(public)/responsible-ai/training/page.tsx:55` | `?? activeClient?.name ?? "your workspace"` | Same family. Renders **“Required training for *{clientName}*”**. Needs *both* redirects stepped past — acknowledgment satisfied, training still required. | Same harness. Before the repair it read “Required training for *<the default account>*”. |
+| `src/app/api/engagements/create/turn/route.ts:50` | `?? activeClient?.name ?? null` | **Not a label.** The first token of the resolved name is an organization keyword that filters the sponsor candidate list at `:62`, and the name is written as `active_client` at `:252`/`:259`. | A POST harness against the real route, draining the response stream and reading back the candidate set handed to the prompt assembler. See below — this is the one with a tenant-scoping outcome. |
+
+### The turn route filtered by the wrong organization, and the harness shows it
+
+The other 39 sites are about what a reader is told. This one changes *who the
+model is offered as a sponsor*. Measured before the repair, with three
+candidates and the active client's key resolving to nothing:
+
+```
+expected 3 candidates, received 2 — and not the 3 it started from
+```
+
+The keyword was the first token of the **default account's** display name. It
+dropped the candidate that actually belonged to the tenant under test, kept an
+unrelated candidate whose organisation name happens to contain that token, and
+pulled in a second unrelated one. A request whose tenancy never resolved was
+handed a candidate list filtered by a tenant it had nothing to do with, and that
+list is what the model is offered. After the repair the list is unfiltered — all
+three — and `active_client` is emitted as `null` rather than the default
+account's name. The exact fixtures are in the suite; they are named there rather
+than here.
+
+### Both repairs exposed the same second dead branch U-512 hit in `transformers.ts`
+
+Once the canonical link can answer `null`, the author's next link becomes
+reachable for the first time — and `activeClient?.name` of `"   "` is **not
+nullish**, so `??` alone let a blank name through. On the consent pages that
+rendered a consent sentence naming nothing at all; on the turn route it emitted a blank `active_client`. Both now guard with `|| null` / a `trimmedOrNull` helper,
+and both are pinned by a case: dropping the two guards fails 2 of the 15.
+
+### The duplicated helper is one helper
+
+Both consent pages carried a byte-identical local `foundationClientDisplayName`,
+so the item's question was whether to decide it twice or once. It is now
+`src/lib/ai-liability/consent-client-name.ts`, next to the only resolution that
+uses it, exported alongside `resolveConsentClientName` and
+`UNRESOLVED_CONSENT_CLIENT_NAME`. The two pages call one function.
+
+That module is deliberately small and imports nothing server-only, for the
+reason U-512 measured: the cases live under `src/__tests__/behaviors`, which the
+required `Behavior coverage floor` sweeps as a directory, so whatever a case
+imports lands in that gate's denominator.
 
 ## `inside` — left as-is (28 call sites)
 

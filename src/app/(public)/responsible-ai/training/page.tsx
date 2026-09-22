@@ -13,7 +13,7 @@ import {
   AIRLINE_FOUNDATION_TRAINING_MODULES,
   getResponsibleAiTrainingStatus,
 } from "@/lib/ai-liability/responsible-ai-training";
-import { canonicalClientDisplayName } from "@/lib/client-config";
+import { resolveConsentClientName } from "@/lib/ai-liability/consent-client-name";
 
 export const metadata: Metadata = {
   title: "Responsible AI Training | AbarVa",
@@ -52,14 +52,10 @@ export default async function ResponsibleAiTrainingPage() {
       };
   if (!trainingStatus.required) redirect("/home");
 
-  const clientName =
-    foundationClientDisplayName(subject?.clientKey) ??
-    canonicalClientDisplayName({
-      key: activeClient?.key,
-      name: activeClient?.name,
-    }) ??
-    activeClient?.name ??
-    "your workspace";
+  const clientName = resolveConsentClientName({
+    subjectClientKey: subject?.clientKey,
+    activeClient,
+  });
   const isAirlineFoundation = subject?.clientKey === "airline-demo-new";
 
   return (
@@ -284,10 +280,4 @@ export default async function ResponsibleAiTrainingPage() {
       </section>
     </main>
   );
-}
-
-function foundationClientDisplayName(clientKey: string | null | undefined) {
-  if (clientKey === "airline-demo-new") return "Airline Demo New";
-  if (clientKey === "healthcare-demo-new") return "Healthcare Demo New";
-  return null;
 }
