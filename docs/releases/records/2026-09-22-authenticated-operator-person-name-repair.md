@@ -37,7 +37,8 @@ Signed-in operator accounts can have a valid Clerk profile even when their sessi
 - Red-first unit coverage proved both prior failures: missing JWT names returned `User`, and an existing placeholder person name was not repaired.
 - Focused Jest suite: 12 tests passed.
 - Mutation proof removed the authoritative profile fallback and the `User` placeholder classification; both new tests failed.
-- TypeScript, focused ESLint, release check, and diff check are required before PR creation.
+- TypeScript, focused ESLint, release check, and diff check passed before PR creation.
+- The repository-owned test census was refreshed after the new auth test changed the measured directory total; the census check and its behavior ratchet pass at 20 auth tests with 14 covered by pull-request workflows.
 
 ## Rollout Plan
 
