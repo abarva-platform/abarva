@@ -85,6 +85,13 @@ export * from "./source-commercial-hub-view";
 export * from "./source-commercial-demo-scenario";
 export * from "./award-sow-handoff-readiness";
 export * from "./award-sow-handoff-readiness-types";
+export type {
+  SourceStage08AcceptanceSpine,
+  SourceStage08AcceptanceStep,
+  SourceStage08AcceptanceStepKey,
+  SourceStage08AcceptanceStepStatus,
+  SourceStage08AcceptanceWriteAuthority,
+} from "./stage08-acceptance-spine";
 export * from "./vendor-selection-readiness";
 export * from "./vendor-selection-readiness-types";
 export * from "./source-commercial-executive-brief";

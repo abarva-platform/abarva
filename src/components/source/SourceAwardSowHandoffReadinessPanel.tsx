@@ -5,6 +5,7 @@ import type {
   SourceAwardSowHandoffReadiness,
   SourceAwardSowHandoffReadinessStatus,
 } from "@/lib/source/award-sow-handoff-readiness-types";
+import type { SourceStage08AcceptanceSpine } from "@/lib/source/stage08-acceptance-spine";
 
 const sourceSectionLabel = {
   fontFamily: SHELL.MONO,
@@ -49,13 +50,18 @@ function Section({ title, children }: { title: string; children: ReactNode }) {
 
 export function SourceAwardSowHandoffReadinessPanel({
   readiness,
+  acceptanceSpine,
 }: {
   readiness: SourceAwardSowHandoffReadiness;
+  acceptanceSpine?: SourceStage08AcceptanceSpine;
 }) {
   return (
     <section
       style={PANEL}
       aria-label="Stage 08 Award and SOW handoff readiness panel"
+      data-stage08-acceptance-status={
+        acceptanceSpine?.status ?? "not_evaluated"
+      }
     >
       <div style={HEADER}>
         <div>
@@ -90,6 +96,11 @@ export function SourceAwardSowHandoffReadinessPanel({
           <div style={BODY_MUTED}>
             Contract formation: {readiness.contractFormationState.replaceAll("_", " ")}
           </div>
+          {acceptanceSpine ? (
+            <div style={BODY_MUTED}>
+              Acceptance spine: {acceptanceSpine.status.replaceAll("_", " ")}
+            </div>
+          ) : null}
         </div>
       </div>
 

@@ -28,6 +28,10 @@ import { StageDecisionLensPanel } from "@/components/source/canvas/workspace-tab
 import { SourceWorkflowFrame } from "@/components/source/SourceWorkflowFrame";
 import { SourceAwardSowHandoffReadinessPanel } from "@/components/source/SourceAwardSowHandoffReadinessPanel";
 import { buildSourceAwardSowHandoffReadiness } from "@/lib/source/award-sow-handoff-readiness";
+import {
+  buildSourceStage08AcceptanceSpine,
+  type SourceStage08AcceptanceSpine,
+} from "@/lib/source/stage08-acceptance-spine";
 import type {
   SourceAwardSowArtifactInput,
   SourceAwardSowHandoffReadiness,
@@ -794,6 +798,25 @@ export function SourceAnalyticsCanvas({
     () => buildAwardSowHandoffReadinessForCanvas(event, shellView),
     [event, shellView],
   );
+  const computedStage08AcceptanceSpine = useMemo(
+    () =>
+      buildStage08AcceptanceSpineForCanvas(event, shellView, {
+        profileSet: vendorResponseProfiles,
+        challengeIntelligence: vendorChallengeIntelligence,
+        bafoInstructionPack: vendorBafoInstructionPack,
+        decisionView: vendorEvaluationDecisionView,
+      }),
+    [
+      event,
+      shellView,
+      vendorBafoInstructionPack,
+      vendorChallengeIntelligence,
+      vendorEvaluationDecisionView,
+      vendorResponseProfiles,
+    ],
+  );
+  const resolvedAwardSowHandoffReadiness =
+    awardSowHandoffReadiness ?? computedAwardSowHandoffReadiness;
 
   const stageLabel =
     sourceJourneyLabelForStage(journey, viewStage) ??
@@ -856,9 +879,8 @@ export function SourceAnalyticsCanvas({
               vendorResponseParseReports={vendorResponseParseReports}
               normalizedResponsePackages={normalizedResponsePackages}
               artifacts={artifacts}
-              awardSowHandoffReadiness={
-                awardSowHandoffReadiness ?? computedAwardSowHandoffReadiness
-              }
+              awardSowHandoffReadiness={resolvedAwardSowHandoffReadiness}
+              stage08AcceptanceSpine={computedStage08AcceptanceSpine}
               evidenceStates={evidenceStates}
               eventDisplayName={event.name}
               contractOptimizationProfile={contractOptimizationProfile}
@@ -1315,6 +1337,7 @@ function SourceWorkspace({
   normalizedResponsePackages,
   artifacts,
   awardSowHandoffReadiness,
+  stage08AcceptanceSpine,
   evidenceStates,
   eventDisplayName,
   contractOptimizationProfile,
@@ -1335,6 +1358,7 @@ function SourceWorkspace({
   normalizedResponsePackages?: readonly NormalizedVendorResponsePackage[];
   artifacts: readonly SourceShellArtifactLike[];
   awardSowHandoffReadiness?: SourceAwardSowHandoffReadiness | null;
+  stage08AcceptanceSpine?: SourceStage08AcceptanceSpine | null;
   evidenceStates?: readonly SourceEventEvidence[];
   eventDisplayName?: string;
   contractOptimizationProfile?: ContractOptimizationMveProfile | null;
@@ -1390,12 +1414,14 @@ function SourceWorkspace({
       <FocusedWorkPanel
         view={view}
         evidenceStates={evidenceStates ?? []}
+        awardSowHandoffReadiness={awardSowHandoffReadiness}
         onWorkspaceChange={onWorkspaceChange}
       />
       {view.stage.key === "transition" && awardSowHandoffReadiness ? (
         <div style={{ marginTop: 16, maxWidth: 1120 }}>
           <SourceAwardSowHandoffReadinessPanel
             readiness={awardSowHandoffReadiness}
+            acceptanceSpine={stage08AcceptanceSpine ?? undefined}
           />
         </div>
       ) : null}
@@ -1492,6 +1518,38 @@ function buildAwardSowHandoffReadinessForCanvas(
       currentStageLabel: event.currentStageLabel,
       stages: stageInputsForAwardSow(event, view),
       artifacts: artifactInputsForAwardSow(event, view),
+    },
+  });
+}
+
+function buildStage08AcceptanceSpineForCanvas(
+  event: SourcingEventSummary,
+  view: SourceEventShellView,
+  evaluation: {
+    profileSet?: VendorResponseProfileSet | null;
+    challengeIntelligence?: VendorChallengeIntelligence | null;
+    bafoInstructionPack?: VendorBafoInstructionPack | null;
+    decisionView?: VendorEvaluationDecisionView | null;
+  },
+): SourceStage08AcceptanceSpine | null {
+  if (
+    view.stage.key !== "transition" &&
+    view.stage.key !== "contract_mobilization"
+  ) {
+    return null;
+  }
+
+  return buildSourceStage08AcceptanceSpine({
+    evaluation,
+    handoff: {
+      event: {
+        id: event.id,
+        name: event.name,
+        currentStageKey: event.currentStageKey,
+        currentStageLabel: event.currentStageLabel,
+        stages: stageInputsForAwardSow(event, view),
+        artifacts: artifactInputsForAwardSow(event, view),
+      },
     },
   });
 }
@@ -1972,10 +2030,12 @@ function StageOperatingStatusPanel({
 function FocusedWorkPanel({
   view,
   evidenceStates,
+  awardSowHandoffReadiness,
   onWorkspaceChange,
 }: {
   view: SourceEventShellView;
   evidenceStates: readonly SourceEventEvidence[];
+  awardSowHandoffReadiness?: SourceAwardSowHandoffReadiness | null;
   onWorkspaceChange: (workspace: SourceShellWorkspace) => void;
 }) {
   const router = useRouter();
@@ -2238,6 +2298,7 @@ function FocusedWorkPanel({
           <StageReadyPanel
             view={view}
             stageOperatingStatus={stageOperatingStatus}
+            awardSowHandoffReadiness={awardSowHandoffReadiness}
             onOpenApprovalPage={openApprovalPage}
             onOpenFiles={() => onWorkspaceChange("files")}
           />
@@ -2425,16 +2486,22 @@ function plainStageStepGroupLabel(label: string) {
 function StageReadyPanel({
   view,
   stageOperatingStatus,
+  awardSowHandoffReadiness,
   onOpenApprovalPage,
   onOpenFiles,
 }: {
   view: SourceEventShellView;
   stageOperatingStatus: StageOperatingStatus | null;
+  awardSowHandoffReadiness?: SourceAwardSowHandoffReadiness | null;
   onOpenApprovalPage: () => void;
   onOpenFiles: () => void;
 }) {
   const approvalRecorded = view.stage.approvalRecorded;
   const hasArtifactGaps = view.stage.artifactReadiness.blockerCount > 0;
+  const stage08HandoffBlocked =
+    awardSowHandoffReadiness !== null &&
+    awardSowHandoffReadiness !== undefined &&
+    !awardSowHandoffReadiness.readyForContract360Handoff;
   const primaryActionLabel = approvalRecorded
     ? "View approval record"
     : hasArtifactGaps
@@ -2465,7 +2532,7 @@ function StageReadyPanel({
       <div>
         <div
           style={{
-            color: hasArtifactGaps
+            color: hasArtifactGaps || stage08HandoffBlocked
               ? ANALYTICS.AMBER_TEXT
               : ANALYTICS.GREEN_TEXT,
             fontFamily: ANALYTICS.MONO,
@@ -2477,7 +2544,9 @@ function StageReadyPanel({
           }}
         >
           {approvalRecorded
-            ? "Stage approved"
+            ? stage08HandoffBlocked
+              ? "Stage approval recorded"
+              : "Stage approved"
             : hasArtifactGaps
               ? "Inputs ready - artifact review open"
               : "Stage ready"}
@@ -2499,7 +2568,9 @@ function StageReadyPanel({
           }}
         >
           {approvalRecorded
-            ? hasArtifactGaps
+            ? stage08HandoffBlocked
+              ? "The stage approval remains recorded. Stage 08 handoff remains blocked until the contract-formation evidence gaps are resolved; this does not reopen or replace the approval."
+              : hasArtifactGaps
               ? view.stage.approvalTraceState === "historical"
                 ? "The event advanced before stage-level approval tracking captured a complete decision record. Current artifact gaps are follow-up remediation under today's controls; no duplicate approval is required."
                 : "The stage decision is complete. Current artifact-review gaps remain visible for remediation; no duplicate approval is required."
@@ -2537,14 +2608,16 @@ function StageReadyPanel({
           label="Next"
           value={
             approvalRecorded
-              ? hasArtifactGaps
+              ? stage08HandoffBlocked
+                ? "Resolve Stage 08 handoff blockers"
+                : hasArtifactGaps
                 ? "Remediate current review gaps"
                 : "No further approval required"
               : hasArtifactGaps
                 ? "Accept artifacts in Files"
                 : "Open approval gate"
           }
-          tone={hasArtifactGaps ? "warn" : "good"}
+          tone={hasArtifactGaps || stage08HandoffBlocked ? "warn" : "good"}
         />
       </div>
       {hasArtifactGaps && !approvalRecorded ? (

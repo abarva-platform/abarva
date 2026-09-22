@@ -33,6 +33,7 @@ import {
   SAMPLE_BAFO_STAGE,
   SAMPLE_PRICING_STAGE,
   SAMPLE_SCOPE_STAGE,
+  SAMPLE_TRANSITION_STAGE,
 } from "../sample-view-model";
 import type { ApprovalsInboxItem } from "@/lib/source/approvals-inbox";
 import type { SourcingEventSummary } from "@/lib/source/types";
@@ -922,6 +923,94 @@ describe("SourceAnalyticsCanvas stage workflow", () => {
     expect(
       screen.queryByText("Approve advancing out of Value."),
     ).not.toBeInTheDocument();
+  });
+
+  it("keeps a recorded Transition approval while surfacing blocked Stage 08 handoff work", () => {
+    const completeTransitionStage = {
+      ...SAMPLE_TRANSITION_STAGE,
+      tasks: SAMPLE_TRANSITION_STAGE.tasks.map((task) => ({
+        ...task,
+        state: "done" as const,
+        evidenceComplete: true,
+      })),
+    };
+    const transitionEvent: SourcingEventSummary = {
+      ...EVENT,
+      currentStageKey: "transition",
+      currentStageLabel: "Transition",
+      nextAction: "Complete canonical handoff evidence",
+    };
+    const transitionApproval: ApprovalsInboxItem = {
+      ...APPROVAL,
+      stageKey: "transition",
+      stageLabel: "Transition",
+      versionKey: `${transitionEvent.id}:transition`,
+      versionLabel: "Transition",
+      ask: "Approve advancing out of Transition.",
+    };
+
+    render(
+      <SourceAnalyticsCanvas
+        event={transitionEvent}
+        viewStage="transition"
+        tenantName="Demo Client"
+        stageView={completeTransitionStage}
+        artifacts={[
+          {
+            id: "transition-plan-final",
+            artifactCode: "d29_transition_plan",
+            stageKey: "transition",
+            sourceOrigin: "uploaded",
+            status: "client_final",
+            isClientFinal: true,
+          },
+          {
+            id: "checkpoint-log-final",
+            artifactCode: "d30_checkpoint_log",
+            stageKey: "transition",
+            sourceOrigin: "uploaded",
+            status: "client_final",
+            isClientFinal: true,
+          },
+          {
+            id: "kt-evidence-final",
+            artifactCode: "d31_kt_evidence",
+            stageKey: "transition",
+            sourceOrigin: "uploaded",
+            status: "client_final",
+            isClientFinal: true,
+          },
+        ]}
+        approvalItems={[transitionApproval]}
+        approvalLedger={[
+          {
+            stageKey: "transition",
+            stageLabel: "Transition",
+            index: 10,
+            state: "approved",
+            approverName: "A. Approver",
+            approvedAtIso: "2026-09-09T00:00:00.000Z",
+            authorizationNote: "Approved by A. Approver.",
+            approverRationale: "Transition stage decision accepted.",
+          },
+        ]}
+        initialWorkspace="steps"
+      />,
+    );
+
+    const readyPanel = screen.getByTestId("source-shell-stage-ready-panel");
+    expect(readyPanel).toHaveTextContent("Stage approval recorded");
+    expect(readyPanel).toHaveTextContent("Stage 08 handoff remains blocked");
+    expect(readyPanel).toHaveTextContent("Resolve Stage 08 handoff blockers");
+    expect(readyPanel).not.toHaveTextContent("No further approval required");
+
+    const handoffPanel = screen.getByLabelText(
+      "Stage 08 Award and SOW handoff readiness panel",
+    );
+    expect(handoffPanel).toHaveTextContent(
+      /Contract formation package\s*blocked/,
+    );
+    expect(handoffPanel).toHaveTextContent("Handoff ready: no");
   });
 
   it("fails closed when a recorded terminal approval has no bound decision metadata", () => {

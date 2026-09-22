@@ -15,9 +15,9 @@
     "No timestamp is recorded, so refreshing this file on an unchanged tree is a no-op."
   ],
   "counts": {
-    "testFiles": 2400,
-    "coveredTestFiles": 1916,
-    "pullRequestCoveredTestFiles": 1913,
+    "testFiles": 2401,
+    "coveredTestFiles": 1917,
+    "pullRequestCoveredTestFiles": 1914,
     "uncoveredTestFiles": 484,
     "directoriesWithTests": 483,
     "directoriesFullyCovered": 280,
