@@ -390,14 +390,48 @@ const BLOCKER_RULES = [
   // owner to decide anything" and "Deciding which suite to wire was settled"
   // out; and the deferral form names who does the deciding rather than
   // matching the verb anywhere it appears.
-  { re: /decision needed|decision required|Content decision|\bproduct call\b|\bowner'?s call\b|blocked on owner policy|(?:^|[.!?;:]\s+|\n\s*|\*\*)Decide\b|\b(?:until|before)\s+(?:a human|an owner|a person|the owner|Anand|someone)\s+decides\b/i, say: "Decision needed" },
+  { re: /decision needed|decision required|Content decision|\bproduct call\b|\bowner'?s call\b|blocked on owner policy|(?:^|[.!?;:]\s+|\n\s*|\*\*)Decide\b|\b(?:until|before)\s+(?:a human|an owner|a person|the owner|Anand|someone)\s+decides\b/i, say: "Decision needed", decisionGate: true },
   { re: /\bblocked\b/i, say: "Blocked (see source)" },
   { re: /\bunclaimed\b/i, say: "Unclaimed" },
 ];
 
-function deriveBlocker(text) {
-  const t = text ?? "";
+/**
+ * Rungs at which the item's OWN source records shipping proof.
+ *
+ * `closed` is deliberately not here. A closed verdict states that the item was
+ * stale or misdescribed and asserts nothing about shipping, so an agent's
+ * stated intent to decide something is not obviously spent; leaving it alone
+ * keeps this narrowing to the case it was measured on. No closed-rung item is
+ * affected today either way — measured, not assumed.
+ */
+const RESOLVED_RUNGS = new Set(["merged", "deployed", "proven"]);
+
+/**
+ * Derive the blocker from two DIFFERENT kinds of evidence — item T-578.
+ *
+ * These used to arrive as one flat string. The item's body is a statement
+ * about the item; a claim-log line is a run log, and it narrates intent. A
+ * line reading "claimed | lane T; decide which vocabulary is authoritative"
+ * therefore goes on asserting an open decision for as long as the line exists,
+ * which is forever: the register is append-only and a line is never restamped.
+ * Measured on the live backlog before this changed, 12 of 411 items read
+ * `Decision needed` from a claim line their body does not support.
+ *
+ * What changes is the INPUT, not the patterns — the patterns were right. Once
+ * the item's own source records shipping proof, the decision gate is read from
+ * the body alone. Two things stay exactly as they were, and both are pinned by
+ * a case in the behavioural suite: every OTHER rule still reads the claim log
+ * at every rung, and an item with no shipping proof still reads its claim
+ * lines for a decision gate — that is the direction that would hide live work,
+ * and it is left alone.
+ */
+function deriveBlocker(body, claims = "", rung = null) {
+  const bodyText = body ?? "";
+  const claimText = claims ?? "";
+  const combined = claimText ? `${bodyText}\n${claimText}` : bodyText;
+  const resolved = RESOLVED_RUNGS.has(rung?.key ?? "");
   for (const r of BLOCKER_RULES) {
+    const t = r.decisionGate && resolved ? bodyText : combined;
     const m = t.match(r.re);
     if (m) return { say: r.say, quote: sentenceAround(t, m.index ?? 0) };
   }
@@ -636,7 +670,9 @@ function buildItem(ref) {
     ...defs.map(attributableStatusText).filter(Boolean),
     ...claims.map((c) => c.status),
   ].join("\n");
-  const blockerCorpus = [...defs.map((d) => `${d.title} ${d.acceptance} ${d.raw}`), ...claims.map((c) => c.status)].join("\n");
+  const bodyCorpus = defs.map((d) => `${d.title} ${d.acceptance} ${d.raw}`).join("\n");
+  const claimCorpus = claims.map((c) => c.status).join("\n");
+  const rung = deriveRung(statusCorpus);
   return {
     num,
     definedIn,
@@ -658,8 +694,8 @@ function buildItem(ref) {
       [...substantive, ...defs].map((d) => d.acceptance).find(Boolean) ?? "",
     ),
     owner: claims.map((c) => c.owner).find(Boolean) ?? "",
-    rung: deriveRung(statusCorpus),
-    blocker: deriveBlocker(blockerCorpus),
+    rung,
+    blocker: deriveBlocker(bodyCorpus, claimCorpus, rung),
   };
 }
 
