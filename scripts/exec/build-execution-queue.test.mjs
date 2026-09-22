@@ -1910,5 +1910,128 @@ const BASELINE = bandFixture({});
   );
 }
 
+
+/* --- 26. PROVENANCE: the queue refuses a summary it did not produce ------
+ *
+ * T-711. Before this, the queue validated WHAT the summary was derived from
+ * and never WHO derived it. A superseded copy of the board generator left in
+ * the operator root writes a summary the queue accepted without comment — and
+ * on 2026-09-22 that is what happened to the live queue both lanes read to
+ * pick work: 61 claimable against the repo-owned pair's 1, and seven rows it
+ * offered were recorded CLOSED in the backlog itself.
+ *
+ * The board now stamps itself into the summary and the queue compares that
+ * stamp against its own sibling. Three cases, and the third is load-bearing:
+ * a guard whose unknown case passes is opt-in, and every summary written
+ * before this existed is exactly that unknown case.
+ */
+
+/**
+ * A stated refusal, not merely a non-zero exit.
+ *
+ * Measured while mutation-testing this guard: disabling the missing-stamp
+ * branch did NOT make the queue render -- the next branch dereferenced the
+ * absent stamp and the process died with a TypeError. Exit code 1 and no
+ * output file, which satisfies every refusal check written in terms of those
+ * two. A crash is not a control, so the cases below require the sentence and
+ * forbid the stack.
+ */
+function isStatedRefusal(result) {
+  return (
+    result.status !== 0
+    && /^Refusing to build the queue:/m.test(result.stderr)
+    && !/\n\s+at .+:\d+:\d+/.test(result.stderr)
+  );
+}
+
+/** Rewrite the fixture's summary, as a differently-versioned board would. */
+function rewriteSummary(dir, mutate) {
+  const file = path.join(dir, "source-board-summary.json");
+  const summary = JSON.parse(fs.readFileSync(file, "utf8"));
+  mutate(summary);
+  fs.writeFileSync(file, `${JSON.stringify(summary, null, 2)}\n`);
+}
+
+/* --- 26a. A summary carrying no generator stamp is refused --------------- */
+/*          This is the shape every pre-T-711 copy writes, including the one */
+/*          that produced the live queue.                                    */
+{
+  const dir = freshFixture();
+  const board = run(dir, "build-source-board.mjs", ["--json"]);
+  rewriteSummary(dir, (s) => {
+    delete s.generator;
+  });
+  const q = run(dir, "build-execution-queue.mjs");
+  check(
+    "an unstamped summary is refused rather than rendered",
+    board.status === 0 && isStatedRefusal(q) && !COUNTS_LINE.test(q.stdout),
+    `board=${board.status} queue=${q.status}\nstdout=${q.stdout.trim()}\nstderr=${q.stderr.trim()}`,
+  );
+  check(
+    "the refusal names the superseded copy as the cause",
+    /superseded|operator root/i.test(q.stderr),
+    `stderr=${q.stderr.trim()}`,
+  );
+  check(
+    "the refusal writes no queue over the previous one",
+    !fs.existsSync(path.join(dir, "EXECUTION_QUEUE.md")),
+    "EXECUTION_QUEUE.md was written by a refusing run",
+  );
+}
+
+/* --- 26b. A summary stamped by a DIFFERENT board generator is refused ---- */
+/*          A drifted copy that does stamp itself is the harder case: the    */
+/*          field is present and wrong, which reads as fine to a presence    */
+/*          check.                                                           */
+{
+  const dir = freshFixture();
+  run(dir, "build-source-board.mjs", ["--json"]);
+  rewriteSummary(dir, (s) => {
+    // Spread rather than assign, so this case reports a FAIL against an
+    // unstamped summary instead of throwing and taking the rest with it.
+    s.generator = {
+      ...(s.generator ?? {}),
+      sha256: "0".repeat(64),
+      ranFrom: "/Users/someone/Downloads/build-source-board.mjs",
+    };
+  });
+  const q = run(dir, "build-execution-queue.mjs");
+  check(
+    "a summary stamped by a different board generator is refused",
+    isStatedRefusal(q) && !COUNTS_LINE.test(q.stdout),
+    `queue=${q.status}\nstdout=${q.stdout.trim()}\nstderr=${q.stderr.trim()}`,
+  );
+  check(
+    "the refusal names the path the summary says wrote it",
+    q.stderr.includes("/Users/someone/Downloads/build-source-board.mjs"),
+    `stderr=${q.stderr.trim()}`,
+  );
+}
+
+/* --- 26c. GUARDRAIL: the matching pair still renders --------------------- */
+/*          A refusal that fires on the correct path is removed by the first */
+/*          agent it blocks, so the passing case is asserted too -- and the  */
+/*          rendered queue says which generator wrote it, because the only   */
+/*          tell before this was the wording of a regenerate block.          */
+{
+  const dir = freshFixture();
+  const q = buildBoardAndQueue(dir);
+  const rendered = fs.existsSync(path.join(dir, "EXECUTION_QUEUE.md"))
+    ? fs.readFileSync(path.join(dir, "EXECUTION_QUEUE.md"), "utf8")
+    : "";
+  check(
+    "the repo-owned pair renders with no provenance complaint",
+    q.status === 0 && COUNTS_LINE.test(q.stdout),
+    `queue=${q.status}\nstdout=${q.stdout.trim()}\nstderr=${q.stderr.trim()}`,
+  );
+  check(
+    "the rendered queue names the generators that produced it",
+    rendered.includes("scripts/exec/build-execution-queue.mjs")
+      && rendered.includes("scripts/exec/build-source-board.mjs")
+      && /Generated by/.test(rendered),
+    rendered.split("\n").slice(0, 14).join("\n"),
+  );
+}
+
 console.log(`\n${passes} passed, ${failures} failed`);
 process.exit(failures ? 1 : 0);
