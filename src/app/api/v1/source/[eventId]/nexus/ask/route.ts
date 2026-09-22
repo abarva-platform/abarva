@@ -74,6 +74,11 @@ import {
   looksLikeAwardReadinessQuestion,
 } from "@/lib/source/ava/award-readiness-governed-answer";
 import {
+  buildCrossPhaseAuditGovernedAnswer,
+  looksLikeCrossPhaseAuditQuestion,
+} from "@/lib/source/ava/cross-phase-audit-governed-answer";
+import { readSourceNewStage05NdaCoverage } from "@/lib/source/new-workspace/stage05-nda-coverage";
+import {
   combineSourceEventDecisionAndValueAnswers,
   looksLikeSourceEventDecisionAndValueQuestion,
 } from "@/lib/source/ava/source-event-summary-governed-answer";
@@ -374,11 +379,86 @@ export async function POST(
         });
       } else if (
         eventId &&
+        liveEventDetail &&
+        looksLikeCrossPhaseAuditQuestion(normalizedBody.prompt)
+      ) {
+        const resolvedEventId = liveEventDetail.id ?? eventId;
+        const question = normalizedBody.prompt ?? "";
+        const asOf = liveEventDetail.valueLedger.updatedAt.slice(0, 10);
+        const evidenceAnswer = await buildEvidenceReadinessGovernedAnswer({
+          eventId: resolvedEventId,
+          eventAliases: [
+            eventId,
+            liveEventDetail.id,
+            liveEventDetail.code,
+          ].filter((value): value is string => Boolean(value)),
+          clientKey: activeClientKey,
+          tenantId: tenancy.clientId ?? null,
+          question,
+        }).catch((err) => {
+          console.error(
+            "[source.nexus-ask.cross-phase-evidence-readiness.failed]",
+            JSON.stringify({
+              eventId,
+              resolvedEventId,
+              clientKey: activeClientKey,
+              message: err instanceof Error ? err.message : String(err),
+            }),
+          );
+          return null;
+        });
+        const ndaCoverage = await readSourceNewStage05NdaCoverage({
+          clientKey: activeClientKey,
+          eventId: resolvedEventId,
+          asOf,
+        }).catch((err) => {
+          console.error(
+            "[source.nexus-ask.cross-phase-nda-readiness.failed]",
+            JSON.stringify({
+              eventId,
+              resolvedEventId,
+              clientKey: activeClientKey,
+              message: err instanceof Error ? err.message : String(err),
+            }),
+          );
+          return {
+            status: "unavailable" as const,
+            asOf,
+            suppliers: [],
+            nextAction: {
+              label: "Restore candidate and NDA authority",
+              detail:
+                "Supplier and NDA authority could not be read, so cross-phase audit readiness remains blocked.",
+            },
+          };
+        });
+        agentAnswer = evidenceAnswer
+          ? buildCrossPhaseAuditGovernedAnswer({
+              question,
+              event: {
+                id: resolvedEventId,
+                name: liveEventDetail.name,
+                lifecycle: liveEventDetail.status,
+                currentStageKey: liveEventDetail.currentStageKey,
+                currentStageLabel: liveEventDetail.currentStageLabel,
+                triggerDescription: liveEventDetail.triggerDescription,
+                scopeDescription: liveEventDetail.scopeDescription,
+                decisionOwner: liveEventDetail.decisionOwner,
+                stages: liveEventDetail.stages,
+                artifacts: liveEventDetail.artifacts,
+              },
+              evidence: evidenceAnswer,
+              ndaCoverage,
+            })
+          : null;
+      } else if (
+        eventId &&
         (looksLikeSourceStageCompletionQuestion(normalizedBody.prompt) ||
           looksLikeEvidenceReadinessQuestion(normalizedBody.prompt))
       ) {
-        const asksForStageCompletion =
-          looksLikeSourceStageCompletionQuestion(normalizedBody.prompt);
+        const asksForStageCompletion = looksLikeSourceStageCompletionQuestion(
+          normalizedBody.prompt,
+        );
         const sourceNewEventContext = {
           currentStage:
             liveEventDetail?.currentStageKey ??
@@ -400,9 +480,7 @@ export async function POST(
             ? {
                 stageContext: {
                   stageKey: liveEventDetail?.currentStageKey,
-                  stageLabel: sourceNewCurrentPhaseLabel(
-                    sourceNewEventContext,
-                  ),
+                  stageLabel: sourceNewCurrentPhaseLabel(sourceNewEventContext),
                   nextAction: sourceNewNextAction(sourceNewEventContext).label,
                   blocker: liveEventDetail?.blocker,
                   missingInputs: stubResponse.context.missingInputs,
@@ -514,10 +592,7 @@ export async function POST(
           );
           return null;
         });
-      } else if (
-        eventId &&
-        looksLikeRfpDesignQuestion(normalizedBody.prompt)
-      ) {
+      } else if (eventId && looksLikeRfpDesignQuestion(normalizedBody.prompt)) {
         agentAnswer = await buildRfpDesignGovernedAnswer({
           eventId: liveEventDetail?.id ?? eventId,
           eventName: liveEventDetail?.name ?? null,
