@@ -26,6 +26,29 @@ import path from "node:path";
 import crypto from "node:crypto";
 import { fileURLToPath } from "node:url";
 
+import { isDirectInvocation } from "./cli-entry.mjs";
+
+/**
+ * Everything below is the CLI, and until item T-728 it ran on `import` (item
+ * T-723 gave the shared guard to four modules in this directory and never
+ * looked at the two generators). The unknown case answers "imported", which is
+ * the inversion `cli-entry.mjs` documents: refusing to run costs one rerun,
+ * whereas answering "run" on an unknown case makes every importer execute a
+ * generator over whatever documents it happens to be pointed at.
+ *
+ * **The body keeps its module indentation on purpose.** Re-indenting roughly
+ * 1,900 lines would have made this a whole-file rewrite, and this file's bytes
+ * are read as data, not only as code: the summary this generator writes is
+ * stamped with the sha256 of its OWN bytes (`SELF_PATH`, below), and
+ * `assertSummaryProvenance` in `build-execution-queue.mjs` refuses any summary
+ * whose stamp does not equal the hash of the `build-source-board.mjs` sitting
+ * beside it. So editing this file invalidates every existing summary until the
+ * board is re-run -- which is the control working, not a regression. Left at
+ * column zero, the diff is the four lines of the guard, so a reviewer can see
+ * the body is unchanged and the moved digest is fully attributable to them.
+ */
+function runCli() {
+
 const SCRIPT_ROOT = path.dirname(fileURLToPath(import.meta.url));
 
 function valueAfter(flag) {
@@ -1839,3 +1862,6 @@ if (process.argv.includes("--json")) {
 
 fs.writeFileSync(OUT, html);
 console.log(`\nWrote ${path.relative(OPERATOR_ROOT, OUT)} (${(html.length / 1024).toFixed(1)} KB)`);
+} // end runCli
+
+if (isDirectInvocation(import.meta.url)) runCli();

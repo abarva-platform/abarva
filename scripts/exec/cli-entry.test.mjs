@@ -309,16 +309,26 @@ function symlinkedCopy({ toolchain = false } = {}) {
 /* hand-written one is the defect T-726 is about and a new module is        */
 /* exactly what it misses.                                                  */
 /*                                                                          */
-/* TWO MODULES ARE EXEMPT AND THE EXEMPTION RETIRES ITSELF. T-723 gave      */
-/* four modules the shared guard and never looked at the two generators:    */
-/* they have no guard at all, so importing either RUNS it. That is item     */
-/* T-727, filed rather than fixed here -- those files are not in this        */
-/* change. The case below asserts each exempt module still runs on import,  */
-/* so the day one of them gains a guard this list fails until the name is   */
-/* removed from it. An exemption that cannot go stale is the point.         */
+/* THE EXEMPTION RETIRED ITSELF, WHICH IS WHY THE MACHINERY STAYS. T-723    */
+/* gave four modules the shared guard and never looked at the two           */
+/* generators, so importing either RAN it; both were exempt here, and the   */
+/* case below asserted each exempt module STILL had the defect, so the day  */
+/* one of them gained a guard the list failed until the name came out. That */
+/* is exactly what happened: item T-728 guarded both generators and emptied */
+/* the list in the same change, because it had to. The list and both cases  */
+/* are kept for the next module that arrives unguarded.                     */
+/*                                                                          */
+/* An empty list, though, makes those two cases assert nothing -- `every`   */
+/* is true of no elements and `0 === 0` compares two empty lists. So the    */
+/* empty case has a case of its own rather than inheriting two unfailable   */
+/* ones; see the comment at the branch below.                               */
 /* ------------------------------------------------------------------------ */
 {
-  const EXEMPT_UNGUARDED = ["build-execution-queue.mjs", "build-source-board.mjs"];
+  // Item T-728 emptied this list: both generators now take the shared guard.
+  // The list and its two cases are kept rather than deleted -- the next module
+  // that arrives unguarded goes here, and the machinery that retires the
+  // exemption has to be standing when it does.
+  const EXEMPT_UNGUARDED = [];
 
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "t726-import-all-"));
   const modules = fs
@@ -348,24 +358,49 @@ function symlinkedCopy({ toolchain = false } = {}) {
       "output other than IMPORTED_CLEANLY means a module ran its CLI on import",
   );
 
-  check(
-    "every exempt module is a module that exists",
-    EXEMPT_UNGUARDED.every((m) => modules.includes(m)),
-    `exempt=${EXEMPT_UNGUARDED.join(", ")} present=${modules.join(", ")}`,
-  );
+  if (EXEMPT_UNGUARDED.length === 0) {
+    // An empty exemption makes the two cases in the `else` assert NOTHING:
+    // `Array.every` is true of an empty list and `0 === 0` is true of two of
+    // them. Emptying the list would therefore have turned two green cases
+    // into two unfailable ones -- the exact shape this directory exists
+    // against. So the empty case gets a case of its own, and it is STRONGER
+    // than the batch above rather than a restatement of it: the batch
+    // importer stops at the first module that exits, so a second offender
+    // standing behind the first is invisible to it. This imports every module
+    // ON ITS OWN and names all of them.
+    const runsOnImport = modules.filter((m) => {
+      const one = importOnly([m], m.replace(/\W/g, "-"));
+      return !(one.status === 0 && one.stdout.trim() === "IMPORTED_CLEANLY");
+    });
 
-  const stillUnguarded = EXEMPT_UNGUARDED.filter((m) => {
-    const one = importOnly([m], m.replace(/\W/g, "-"));
-    return !(one.status === 0 && one.stdout.trim() === "IMPORTED_CLEANLY");
-  });
+    check(
+      `NO EXEMPTION REMAINS: each of the ${modules.length} modules, imported ON ITS OWN, runs no CLI`,
+      modules.length > 0 && runsOnImport.length === 0,
+      `modules=${modules.join(", ")}\n` +
+        `runs its CLI on import=${runsOnImport.join(", ") || "none"}\n` +
+        "the module count is asserted too: a directory read that returned\n" +
+        "nothing would otherwise satisfy every check in this block",
+    );
+  } else {
+    check(
+      "every exempt module is a module that exists",
+      EXEMPT_UNGUARDED.every((m) => modules.includes(m)),
+      `exempt=${EXEMPT_UNGUARDED.join(", ")} present=${modules.join(", ")}`,
+    );
 
-  check(
-    "THE EXEMPTION RETIRES ITSELF: every exempt module still runs on import",
-    stillUnguarded.length === EXEMPT_UNGUARDED.length,
-    `exempt=${EXEMPT_UNGUARDED.join(", ")} still unguarded=${stillUnguarded.join(", ")}\n` +
-      "a module here that no longer runs on import has been fixed (item T-727);\n" +
-      "remove it from EXEMPT_UNGUARDED so the case above covers it",
-  );
+    const stillUnguarded = EXEMPT_UNGUARDED.filter((m) => {
+      const one = importOnly([m], m.replace(/\W/g, "-"));
+      return !(one.status === 0 && one.stdout.trim() === "IMPORTED_CLEANLY");
+    });
+
+    check(
+      "THE EXEMPTION RETIRES ITSELF: every exempt module still runs on import",
+      stillUnguarded.length === EXEMPT_UNGUARDED.length,
+      `exempt=${EXEMPT_UNGUARDED.join(", ")} still unguarded=${stillUnguarded.join(", ")}\n` +
+        "a module here that no longer runs on import has been fixed;\n" +
+        "remove it from EXEMPT_UNGUARDED so the case above covers it",
+    );
+  }
 
   fs.rmSync(root, { recursive: true, force: true });
 }

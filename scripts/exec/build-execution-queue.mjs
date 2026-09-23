@@ -18,6 +18,25 @@ import crypto from "node:crypto";
 import { fileURLToPath } from "node:url";
 
 import { formatQueueProvenance, queueProvenanceStamp } from "./queue-provenance.mjs";
+import { isDirectInvocation } from "./cli-entry.mjs";
+
+/**
+ * Everything below is the CLI, and until item T-728 it ran on `import` (item
+ * T-723 gave the shared guard to four modules in this directory and never
+ * looked at the two generators). The unknown case answers "imported", which is
+ * the inversion `cli-entry.mjs` documents: refusing to run costs one rerun,
+ * whereas answering "run" on an unknown case makes every importer execute a
+ * generator over whatever documents it happens to be pointed at.
+ *
+ * **The body keeps its module indentation on purpose.** Re-indenting roughly 800
+ * lines would have made this a whole-file rewrite, and two things here are read
+ * byte-for-byte: two suites assert this generator's output exactly, and the
+ * T-720 queue-provenance stamp is the sha256 of `build-execution-queue.mjs`'s own bytes,
+ * which every fixture and the live queue compare against. Left at column zero,
+ * the diff is the four lines of the guard, so a reviewer can see the body is
+ * unchanged and the moved digest is fully attributable to them.
+ */
+function runCli() {
 
 const SCRIPT_ROOT = path.dirname(fileURLToPath(import.meta.url));
 const SELF_PATH = fileURLToPath(import.meta.url);
@@ -885,3 +904,6 @@ for (const alert of bandAlerts) {
   console.log(`  ${alert.text}`);
   if (alert.exhausted) console.error(alert.text);
 }
+} // end runCli
+
+if (isDirectInvocation(import.meta.url)) runCli();
