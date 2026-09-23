@@ -122,6 +122,7 @@ function matchesAcceptedAssertion(
     assertion.factKey === fact.fact_key &&
     assertion.source.system === SOURCE_CONTEXT_SOURCE_SYSTEM &&
     assertion.source.artifactId === citationDoc(fact) &&
+    assertion.source.versionId === fact.source_citation?.version_id &&
     assertion.source.location === citationLocator(fact) &&
     assertion.observedAt === fact.captured_at &&
     (value?.factType === "number"

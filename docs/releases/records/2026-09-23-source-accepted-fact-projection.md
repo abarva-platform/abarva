@@ -29,14 +29,14 @@ Source facts require an accepted, named, current, event-bound assertion before t
 ## Changes Included
 
 - Accepted-assertion projection with tenant, event, review, provenance, confidence, effective-time, freshness, conflict, and supersession checks.
-- The context writeback planner requires an accepted assertion bound to the exact fact, citation, capture time, and value. Wrong-event and review-missing outcomes have explicit skip reasons.
+- The context writeback planner requires an accepted assertion bound to the exact fact, artifact version, citation, capture time, and value. Wrong-event and review-missing outcomes have explicit skip reasons.
 - The persistence boundary passes accepted assertions when an authorized caller has obtained them; the current operator script supplies none and therefore skips canonical publication.
-- Behavioral tests cover both previously admitted unreviewed and wrong-event rows, positive projection, and rejection of mismatched review evidence.
+- Behavioral tests cover both previously admitted unreviewed and wrong-event rows, positive projection, and rejection of mismatched or missing artifact-version review evidence.
 - No migration, tenant data build, or live data mutation is included.
 
 ## QA / Validation
 
-- Red-first tests reproduced canonical drafts from an unreviewed row and a same-tenant wrong-event row before the fix.
+- Red-first tests reproduced canonical drafts from unreviewed, same-tenant wrong-event, and artifact-version-mismatched rows before the fix.
 - Focused Jest suites, scoped ESLint, and TypeScript typecheck passed locally.
 - Signed-in Source acceptance remains separate and has not been claimed from these unit tests.
 

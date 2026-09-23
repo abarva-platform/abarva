@@ -26,6 +26,7 @@ function fact(overrides: Partial<SourceEventFactRow> = {}): SourceEventFactRow {
     source_citation: {
       doc: "AMS intake template",
       locator: "Spend!B4",
+      version_id: "version-1",
     },
     confidence: "high",
     captured_at: "2026-07-22T12:00:00.000Z",
@@ -169,6 +170,41 @@ describe("buildSourceContextWritebackPlan", () => {
         factId: "fact-1",
         reason: "review_not_verified",
       }),
+    ]);
+  });
+
+  it("does not publish a review of a different artifact version", () => {
+    const plan = buildSourceContextWritebackPlan({
+      event,
+      facts: [fact()],
+      acceptedAssertions: [
+        acceptedAssertion({
+          source: {
+            system: "source_event_facts",
+            artifactId: "AMS intake template",
+            versionId: "version-2",
+            location: "Spend!B4",
+          },
+        }),
+      ],
+      committedAt: "2026-07-22T13:00:00.000Z",
+    });
+    expect(plan.records).toEqual([]);
+    expect(plan.skippedFacts).toEqual([
+      expect.objectContaining({ factId: "fact-1", reason: "review_not_verified" }),
+    ]);
+  });
+
+  it("does not publish when the fact citation has no version to bind", () => {
+    const plan = buildSourceContextWritebackPlan({
+      event,
+      facts: [fact({ source_citation: { doc: "AMS intake template", locator: "Spend!B4" } })],
+      acceptedAssertions: [acceptedAssertion()],
+      committedAt: "2026-07-22T13:00:00.000Z",
+    });
+    expect(plan.records).toEqual([]);
+    expect(plan.skippedFacts).toEqual([
+      expect.objectContaining({ factId: "fact-1", reason: "review_not_verified" }),
     ]);
   });
 
