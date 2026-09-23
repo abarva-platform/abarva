@@ -34,6 +34,9 @@ const TOOLCHAIN_FILES = [
   // T-720) and imports the stamp's writer from here, so a fixture that copies
   // the generator without this module cannot run it at all.
   "queue-provenance.mjs",
+  // queue-provenance.mjs imports the shared CLI entry guard (item T-723), so a
+  // fixture without it cannot load the generator at all.
+  "cli-entry.mjs",
   "source-stage-map.json",
 ];
 

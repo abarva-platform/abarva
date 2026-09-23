@@ -199,6 +199,59 @@ worktree list are not the operator's, and a gate asserting on a subject it
 cannot see is the unfailable kind. So `--check` is an operator control in the
 shape of `--preclaim`: available, and only as good as its being invoked.
 
+## Was I run, or imported? One predicate, not four
+
+Every script here is a module with a CLI attached, so each must answer that
+question. Four of them answered it four different ways and only one was right:
+
+| script | guard | verdict |
+|---|---|---|
+| `append-claim.mjs` | `fs.realpathSync` both sides | correct |
+| `queue-provenance.mjs` | `path.resolve` both sides | **broken** |
+| `worktree-retention.mjs` | `import.meta.url === \`file://${process.argv[1]}\`` | **broken** |
+| `register-time-authority.mjs` | `argv[1].endsWith("<name>.mjs")` | loose |
+
+`path.resolve` normalises a path; it does **not** follow symlinks. On macOS
+`/tmp` is a symlink to `/private/tmp`, and `import.meta.url` is always the
+realpath while `process.argv[1]` is the path as typed. So both broken guards
+answered "imported", did nothing, and **exited 0** whenever the script was
+invoked through `/tmp` — and the operator task file instructs agents to work in
+`/tmp/exec-<item>-<timestamp>`, which makes the broken path the likely one.
+
+Measured on 2026-09-23, both through a `/tmp` path:
+
+```
+node <dir>/queue-provenance.mjs --register <register>          -> no output, exit 0
+node <dir>/worktree-retention.mjs --check --free-floor-gib 9999 -> no output, exit 0
+```
+
+The second is the one that matters. That control's whole contract is to exit `1`
+below the free-space floor, and it had shipped earlier the same day *because* a
+run died `ENOSPC`. A control that exits 0 having done nothing is the shape this
+directory exists against, reached from the quietest direction available.
+
+So `cli-entry.mjs` holds one predicate for all of them:
+
+```js
+import { isDirectInvocation } from "./cli-entry.mjs";
+if (isDirectInvocation(import.meta.url)) main(process.argv.slice(2));
+```
+
+It resolves both sides with `fs.realpathSync` and compares **files**, never
+composed strings — which also recovers a path containing a space, lost by the
+`file://${argv[1]}` form because `import.meta.url` percent-encodes it.
+
+**Its unknown case answers "imported", which inverts this directory's fail-closed
+rule on purpose.** Everywhere else an unknown refuses, because refusing costs one
+rerun. This is not a gate: it decides whether to *execute* a CLI, and answering
+"run" on an unknown would make `import` execute it. `append-claim.mjs` imports
+`queue-provenance.mjs` on every claim.
+
+`register-time-authority.mjs` is left as it is. Its suffix match runs correctly
+under a symlink, so it is loose rather than broken — it would also run for any
+file whose name ends the same way — and it is recorded here rather than changed.
+A fifth script should use the predicate rather than invent a fifth answer.
+
 ## Verify
 
 ```bash
@@ -208,6 +261,7 @@ node scripts/exec/register-time-authority.test.mjs
 node scripts/exec/append-claim.test.mjs
 node scripts/exec/worktree-retention.test.mjs
 node scripts/exec/queue-provenance.test.mjs
+node scripts/exec/cli-entry.test.mjs
 ```
 
 The suites run the generators as child processes against synthetic operator documents. CI never reads a local execution backlog.

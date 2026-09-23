@@ -268,6 +268,8 @@ function repoOwnedQueueBody() {
   // that the stamp is bound to the generator's bytes.
   fs.copyFileSync(path.join(HERE, "source-stage-map.json"), path.join(fixtureDir, "source-stage-map.json"));
   fs.copyFileSync(path.join(HERE, "queue-provenance.mjs"), path.join(fixtureDir, "queue-provenance.mjs"));
+  // The shared CLI entry guard (item T-723); queue-provenance.mjs imports it.
+  fs.copyFileSync(path.join(HERE, "cli-entry.mjs"), path.join(fixtureDir, "cli-entry.mjs"));
   // Byte-identical, so T-711's board-provenance guard is satisfied and the only
   // variable under test is the QUEUE generator's own identity.
   fs.copyFileSync(path.join(HERE, "build-source-board.mjs"), path.join(fixtureDir, "build-source-board.mjs"));
