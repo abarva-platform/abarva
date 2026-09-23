@@ -124,6 +124,29 @@ function addBacklogItem(dir, id, body, acceptance) {
   mapFixtureId(dir, id);
 }
 
+/**
+ * A `# | Verdict | Proof` row, header and all — item T-737. The backlog's other
+ * item convention, and the one that has no lane column: 236 of the 691 rows the
+ * board parses are this shape, and reading their third cell as a lane is the
+ * defect the cases below hold shut.
+ */
+function addVerdictRow(dir, id, verdict, proof, { map = true } = {}) {
+  fs.appendFileSync(
+    path.join(dir, "EXECUTION_BACKLOG_20260918.md"),
+    `\n| # | Verdict | Proof |\n|---|---|---|\n| ${id} | ${verdict} | ${proof} |\n`,
+  );
+  if (map) mapFixtureId(dir, id);
+}
+
+/** An item row that declares a lane of the caller's choosing, header and all. */
+function addBacklogItemInLane(dir, id, body, lane, acceptance) {
+  fs.appendFileSync(
+    path.join(dir, "EXECUTION_BACKLOG_20260918.md"),
+    `\n| # | Item | Lane | Acceptance |\n|---|---|---|---|\n| ${id} | ${body} | ${lane} | ${acceptance} |\n`,
+  );
+  mapFixtureId(dir, id);
+}
+
 function appendClaims(dir, lines) {
   fs.appendFileSync(path.join(dir, "EXECUTION_CLAIMS.md"), `\n${lines.join("\n")}\n`);
 }
@@ -750,6 +773,136 @@ console.log("\nbuild-source-board — an owner decision stated as a noun phrase 
     "a decision mentioned mid-sentence is not read as an owner gate",
     item?.blocker !== "Decision needed",
     `blocker=${JSON.stringify(item?.blocker ?? null)}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+console.log("\nbuild-source-board — the lane comes from the named column (T-737)\n");
+
+/* ------------------------------------------------------------------------ *
+ * 23. THE DEFECT, on the live shape. An id whose only parsed definition is a
+ *     `# | Verdict | Proof` row takes the PROOF cell as its lane, because the
+ *     lane was read from position 2 and that convention has no lane column.
+ *     `T-025` on the live board reads lane `PR #7957` by exactly this path,
+ *     and it is one of 35 items in that state. `build-execution-queue.mjs`
+ *     partitions claimable work by this field and sends anything it does not
+ *     recognise to `Lane ? — unassigned lane`.
+ * ------------------------------------------------------------------------ */
+{
+  const dir = freshFixture();
+  addVerdictRow(dir, "T-960", "**Merged**", "PR #7957, merge SHA `58f572683`.");
+  buildBoard(dir);
+  const item = summaryItems(dir).out.get("T-960");
+  check(
+    "a verdict row's Proof cell is not read as the item's lane",
+    item !== undefined && !String(item?.lane ?? "").includes("#7957"),
+    `lane=${JSON.stringify(item?.lane ?? null)}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+/* ------------------------------------------------------------------------ *
+ * 24. THE SAME DEFECT where it decides ROUTING. The id carries a real item row
+ *     declaring lane `U`, and a verdict row that happens to sit ABOVE it. The
+ *     lane is resolved as the first non-empty across an id's definitions in
+ *     document order, so the proof sentence wins and the declared lane is
+ *     never reached. An item with a real acceptance and an unreadable lane is
+ *     the one that reaches the queue and is offered to nobody.
+ * ------------------------------------------------------------------------ */
+{
+  const dir = freshFixture();
+  addVerdictRow(dir, "T-961", "**Deployed**", "Merge `793e515a2`; revision healthy.", { map: false });
+  addBacklogItemInLane(
+    dir,
+    "T-961",
+    "**A surface nobody can reach.**",
+    "U",
+    "Mount it or retire it once the owner decides.",
+  );
+  buildBoard(dir);
+  const item = summaryItems(dir).out.get("T-961");
+  check(
+    "a declared lane is not shadowed by a verdict row that precedes it",
+    item?.lane === "U",
+    `lane=${JSON.stringify(item?.lane ?? null)}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+/* ------------------------------------------------------------------------ *
+ * 25. THE GUARDRAIL. Reading the named column must not stop reading the lane
+ *     that is actually there. 454 of the 691 rows are the four-column item
+ *     convention and every one of them must keep its letter. Passes on
+ *     unfixed code BY DESIGN — it is what stops the fix from zeroing the field.
+ * ------------------------------------------------------------------------ */
+{
+  const dir = freshFixture();
+  addBacklogItemInLane(
+    dir,
+    "T-962",
+    "**An ordinary item row.**",
+    "C",
+    "The agent control gets a behavioral test.",
+  );
+  buildBoard(dir);
+  const item = summaryItems(dir).out.get("T-962");
+  check(
+    "a four-column item row still yields its declared lane",
+    item?.lane === "C",
+    `lane=${JSON.stringify(item?.lane ?? null)}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+/* ------------------------------------------------------------------------ *
+ * 26. THE CONTRADICTION IS REPORTED, and only the contradicting id is named.
+ *     A `T-` id declaring lane `D` and a `C-` id declaring lane `C` sit in one
+ *     fixture. The live instance is `T-458`, which prints under `### Lane D` as
+ *     one of the queue's claimable rows. This asserts the report exists, counts
+ *     one, names the contradiction and does NOT name the agreeing id — an
+ *     over-broad report would be as useless as none.
+ * ------------------------------------------------------------------------ */
+{
+  const dir = freshFixture();
+  addBacklogItemInLane(dir, "T-963", "**Register reconciliation.**", "D", "One line per item.");
+  addBacklogItemInLane(dir, "C-963", "**An agent control.**", "C", "A behavioral test exists.");
+  const r = buildBoard(dir);
+  const line = r.stdout.split("\n").find((l) => l.includes("lane contradicts its id")) ?? "";
+  check(
+    "an id whose declared lane contradicts its own prefix is reported by name",
+    /\b1\b/.test(line) && line.includes("T-963") && !line.includes("C-963"),
+    `line=${JSON.stringify(line)}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+/* ------------------------------------------------------------------------ *
+ * 27. AN UNUSABLE LANE IS ITS OWN VERDICT, not a contradiction. Reading the
+ *     named column leaves 14 live items whose Lane cell genuinely holds
+ *     something that is not a lane — a regex fragment, `...`, a sentence —
+ *     because an unescaped `|` inside a code span shifts the row's cells. That
+ *     is a separate defect and it is now reported rather than routed on. This
+ *     case exists because without it the `KNOWN_LANES` guard in the
+ *     contradiction filter is unfalsifiable: removing it moves all 14 into the
+ *     contradiction list and every other case here stays green.
+ * ------------------------------------------------------------------------ */
+{
+  const dir = freshFixture();
+  addBacklogItemInLane(
+    dir,
+    "T-964",
+    "**A row whose lane cell is not a lane.**",
+    "`grep -q \"error TS\"` with no heap option",
+    "The suite runs under the heap option.",
+  );
+  const r = buildBoard(dir);
+  const lines = r.stdout.split("\n");
+  const unusable = lines.find((l) => l.includes("lane cell is not a lane")) ?? "";
+  const contradicts = lines.find((l) => l.includes("lane contradicts its id")) ?? "";
+  check(
+    "a lane cell that is not a lane is reported as unusable and not as a contradiction",
+    unusable.includes("T-964") && !contradicts.includes("T-964"),
+    `unusable=${JSON.stringify(unusable)}\ncontradicts=${JSON.stringify(contradicts)}`,
   );
   fs.rmSync(dir, { recursive: true, force: true });
 }

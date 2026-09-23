@@ -197,6 +197,26 @@ function tablesUnderHeading(text, headingRe) {
   return rows;
 }
 
+/**
+ * The declared lane of one backlog row, read from the column its own header
+ * names — item T-737. Returns `""` when the table has no lane column at all,
+ * which is the whole of the `# | Verdict | Proof` convention.
+ */
+function laneCell(header, cells) {
+  const at = (header ?? []).findIndex((h) => (h ?? "").trim().toLowerCase() === "lane");
+  if (at < 0) return "";
+  return cells[at] ?? "";
+}
+
+/**
+ * The lane a lane-prefixed id declares about itself. `T-458` says lane `T` by
+ * the forward-only identifier rule; a historical bare number says nothing.
+ */
+function lanePrefixOf(num) {
+  const m = String(num ?? "").match(/^([DUCT])-\d{3}$/);
+  return m ? m[1] : "";
+}
+
 /** Every `| # | Item | Lane | Acceptance |` row in the backlog, with its section. */
 function backlogTableItems(text) {
   const lines = text.split(/\r?\n/);
@@ -228,7 +248,23 @@ function backlogTableItems(text) {
       num,
       section,
       title: cells[1] ?? "",
-      lane: cells[2] ?? "",
+      // Item T-737. The lane comes from the column the HEADER names `Lane`,
+      // never from position 2. The two conventions do not agree about what
+      // sits there: `# | Item | Lane | Acceptance` puts the lane letter in it,
+      // and `# | Verdict | Proof` puts the PROOF SENTENCE in it. Reading the
+      // position gave 236 verdict rows a "lane" that was a merge SHA, a regex
+      // fragment, `...` or a whole paragraph, and 35 of the 422 items on the
+      // board carried one — every one of them an id whose only parsed
+      // definition, or whose first, was a verdict row. `build-execution-queue`
+      // partitions claimable work by this field and sends anything it does not
+      // recognise to `Lane ? — unassigned lane`, which no lane's "take the
+      // first unclaimed row in your lane" reaches.
+      //
+      // A verdict table has no lane column, so it contributes NO lane and the
+      // next definition of that id supplies it. Absent beats wrong here: an
+      // item with no lane is visibly unassigned, an item whose lane is a
+      // sentence is invisibly unassignable.
+      lane: laneCell(header, cells),
       acceptance: cells[3] ?? "",
       raw: cells.join(" | "),
     });
@@ -1334,6 +1370,33 @@ const mappedNums = new Set([
 const unmapped = [...byNum.keys()]
   .filter((n) => !mappedNums.has(n))
   .sort((a, b) => String(a).localeCompare(String(b), undefined, { numeric: true }));
+/**
+ * Where an id's own lane prefix and its declared lane cell disagree — item
+ * T-737.
+ *
+ * This REPORTS and does not resolve, deliberately. `T-458` is filed twice: one
+ * filing is a Files-pane surface that declares lane `U`, where the id is the
+ * wrong one; the other is deploy-register reconciliation that declares lane
+ * `D`, where the cell is the wrong one. The two go opposite ways, so which
+ * side is authoritative is a per-row filing call and not a rule this generator
+ * gets to invent. Picking one silently is what produced the state being
+ * reported: a `T-` id printing under `### Lane D` while the Claude lane's three
+ * sections read empty.
+ *
+ * Reported over every id, mapped or not, so an id the queue cannot offer yet
+ * still shows its contradiction.
+ */
+const laneOfNum = (defs) => (defs ?? []).map((d) => d.lane).find(Boolean) ?? "";
+const KNOWN_LANES = new Set(["D", "U", "C", "T"]);
+const laneContradictions = [...byNum.entries()]
+  .map(([num, defs]) => ({ num, lane: laneOfNum(defs).trim(), prefix: lanePrefixOf(num) }))
+  .filter((r) => r.prefix && KNOWN_LANES.has(r.lane) && r.lane !== r.prefix)
+  .sort((a, b) => String(a.num).localeCompare(String(b.num), undefined, { numeric: true }));
+const laneUnusable = [...byNum.entries()]
+  .map(([num, defs]) => ({ num, lane: laneOfNum(defs).trim() }))
+  .filter((r) => r.lane && !KNOWN_LANES.has(r.lane))
+  .sort((a, b) => String(a.num).localeCompare(String(b.num), undefined, { numeric: true }));
+
 const tracks = sideTracks.map((t) => ({
   ...t,
   built: (t.items ?? []).map(buildItem).filter(Boolean),
@@ -1349,6 +1412,8 @@ const report = {
   backlogDefinitions: items.length,
   duplicateNums,
   unmapped,
+  laneContradictions,
+  laneUnusable,
   stagesWithNothingMapped: stages.filter((s) => s.items.length === 0 && s.outcomeRows.length === 0 && s.stageClaims.length === 0).map((s) => s.id),
   rungCounts: stages.reduce((acc, s) => { acc[s.rung.key] = (acc[s.rung.key] ?? 0) + 1; return acc; }, {}),
 };
@@ -1411,6 +1476,16 @@ fs.writeFileSync(
 );
 console.log(`  numbers with status notes: ${updatedNums.length} (same item, appended updates \u2014 not ambiguous)`);
 console.log(`  not placed on the map:    ${unmapped.length}${unmapped.length ? " -> " + unmapped.join(", ") : ""}`);
+console.log(
+  `  lane contradicts its id:  ${laneContradictions.length}` +
+    (laneContradictions.length
+      ? " -> " + laneContradictions.map((r) => `${displayItemId(r.num)} says lane ${r.lane}`).join(", ")
+      : ""),
+);
+console.log(
+  `  lane cell is not a lane:  ${laneUnusable.length}` +
+    (laneUnusable.length ? " -> " + laneUnusable.map((r) => displayItemId(r.num)).join(", ") : ""),
+);
 
 // An unmapped id is invisible to the queue: it is not offered to any agent,
 // and the only sign was this line in a wall of output that nothing required
@@ -1855,6 +1930,8 @@ if (process.argv.includes("--json")) {
       .reduce((a, i) => { if (i.blocker) a[i.blocker.say] = (a[i.blocker.say] ?? 0) + 1; return a; }, {}),
     duplicateNums,
     unmapped,
+    laneContradictions,
+    laneUnusable,
   };
   fs.writeFileSync(path.join(OPERATOR_ROOT, "source-board-summary.json"), JSON.stringify(summary, null, 2) + "\n");
   console.log("Wrote source-board-summary.json");
