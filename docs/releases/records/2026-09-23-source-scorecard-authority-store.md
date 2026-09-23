@@ -10,7 +10,7 @@
 
 ## Plain-English Summary
 
-Adds a tenant- and event-bound read contract for scorecard criteria and evaluator scores, with an authored but unapplied schema. Missing schema, malformed rows, and mismatched ownership fail closed.
+Adds a tenant- and event-bound read contract for scorecard criteria and evaluator scores, with an authored but unapplied schema. The Stage 07 workspace can request that authority through a read-only, authenticated route. Missing schema, malformed rows, and mismatched ownership fail closed.
 
 ## Layer Impact
 
@@ -29,17 +29,19 @@ Release lane: `client-data-lane`. The proposed Layer 3 tables hold versioned cri
 - Author criterion and score tables with event/tenant keys, version and lock constraints, and tenant-read RLS.
 - Read current rows only and recheck tenant/event identity after the database query.
 - Distinguish no rows from unavailable schema and normalize finite database decimal values.
+- Mount the read through an authenticated event-scoped route and the Stage 07 workspace; no ranking, BAFO, award, or score write is enabled.
 
 ## QA / Validation
 
 - Red-first tests proved missing read implementation, missing current-row filters, and database decimal handling before their fixes.
 - Removing the score event-identity check made the opposite-event test fail; restoring it made the test pass.
 - A red-first schema check caught SQL three-valued logic accepting an approved criterion row with a null approved version; the authored constraint now requires a non-null approved version. This is a source-level check, not a database migration execution.
+- Red-first route and workspace tests caught the missing product path. Removing the workspace event-identity guard made the opposite-event test fail; the guard was restored.
 - Focused Jest, scoped ESLint and TypeScript were run locally. No shared migration apply or data-plane readback was performed.
 
 ## Rollout Plan
 
-This is not ready for merge until schema and read-contract review, applicable CI, and an authorized migration plan. The new read adapter has no mounted product consumer in this candidate. A later release must connect the approved authority to the Stage 07 view and prove signed-in behavior on a legitimately advanced event.
+This remains a draft until schema and read-contract review, applicable CI, and an authorized migration plan. The mounted Stage 07 view fails closed while the schema is unapplied. Positive signed-in behavior on a legitimately advanced event remains owed.
 
 ## Deployment Authority
 
@@ -60,4 +62,4 @@ The reviewed PR, red/green tests, mutation run, later migration-apply proof, run
 
 ## Known Gaps
 
-There is no writer, approved criterion-version transition, mounted Stage 07 consumer, shared schema apply, or positive scorecard readback yet. This is a D-020 foundation, not D-020 acceptance or permission to rank, advance, send BAFO, or award.
+There is no writer, approved criterion-version transition, shared schema apply, or positive scorecard readback yet. This is a D-020 foundation, not D-020 acceptance or permission to rank, advance, send BAFO, or award.

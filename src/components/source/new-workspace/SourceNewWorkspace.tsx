@@ -37,7 +37,10 @@ import {
 } from "@/lib/source/new-workspace/historical-request-summary";
 import type { SourceNewStage04VendorPanel } from "@/lib/source/new-workspace/stage04-vendor-panel";
 import type { SourceNewStage05NdaCoverage } from "@/lib/source/new-workspace/stage05-nda-coverage";
-import type { ScorecardAuthorityView } from "@/lib/source/proposal-intelligence";
+import {
+  buildScorecardAuthorityView,
+  type ScorecardAuthorityView,
+} from "@/lib/source/proposal-intelligence";
 import "./workspace.css";
 
 type Phase = SourceNewPhaseKey;
@@ -362,6 +365,77 @@ export function SourceNewWorkspace({
   const isCurrentPhase = phase === current;
   const responsesStage = isResponsesStage(event);
   const scorecardAuthorityStage = isScorecardAuthorityStage(event);
+  const [scorecardReadback, setScorecardReadback] = useState<{
+    eventId: string;
+    clientKey: string;
+    authority: ScorecardAuthorityView | null;
+  } | null>(null);
+  useEffect(() => {
+    if (!scorecardAuthorityStage || typeof fetch !== "function") return;
+    const controller = new AbortController();
+    const readUrl = `/api/v1/source/events/${encodeURIComponent(event.id)}/scorecard-authority`;
+    fetch(readUrl, { cache: "no-store", signal: controller.signal })
+      .then(async (response) => (response.ok ? response.json() : null))
+      .then((payload: unknown) => {
+        if (controller.signal.aborted) return;
+        const value = payload as {
+          eventId?: unknown;
+          clientKey?: unknown;
+          authority?: unknown;
+        } | null;
+        const authority = value?.authority as ScorecardAuthorityView | null;
+        setScorecardReadback({
+          eventId: event.id,
+          clientKey: event.clientKey,
+          authority:
+            value?.eventId === event.id &&
+            value.clientKey === event.clientKey &&
+            (authority?.state === "ready" || authority?.state === "blocked") &&
+            Array.isArray(authority.criteria) &&
+            Array.isArray(authority.scoreRows) &&
+            Array.isArray(authority.vendorRows) &&
+            Array.isArray(authority.blockers) &&
+            authority.rankAllowed === false &&
+            authority.advanceAllowed === false &&
+            authority.bafoReady === false
+              ? authority
+              : null,
+        });
+      })
+      .catch(() => {
+        if (!controller.signal.aborted) {
+          setScorecardReadback({
+            eventId: event.id,
+            clientKey: event.clientKey,
+            authority: null,
+          });
+        }
+      });
+    return () => controller.abort();
+  }, [event.id, event.clientKey, scorecardAuthorityStage]);
+  const currentScorecardReadback =
+    scorecardReadback?.eventId === event.id &&
+    scorecardReadback.clientKey === event.clientKey
+      ? scorecardReadback
+      : null;
+  const displayedScorecardAuthority = currentScorecardReadback
+    ? currentScorecardReadback.authority ?? {
+        ...buildScorecardAuthorityView({
+          tenantKey: event.clientKey,
+          sourceEventId: event.id,
+          criteria: [],
+          scores: [],
+        }),
+        blockers: [
+          {
+            blockerId: "scorecard-authority-unavailable",
+            label: "Scorecard authority unavailable",
+            detail: "The governed scorecard authority could not be read.",
+            nextAction: "Restore the scorecard authority read before review.",
+          },
+        ],
+      }
+    : scorecardAuthority;
   const responseRows = responseEvidenceRows(files);
   const requestSummary =
     historicalRequestSummary ??
@@ -584,7 +658,7 @@ export function SourceNewWorkspace({
                   )}
                   {scorecardAuthorityStage && (
                     <SourceNewStage07ScorecardAuthority
-                      authority={scorecardAuthority}
+                      authority={displayedScorecardAuthority}
                     />
                   )}
                 </>
@@ -627,7 +701,7 @@ export function SourceNewWorkspace({
                   )}
                   {scorecardAuthorityStage && (
                     <SourceNewStage07ScorecardAuthority
-                      authority={scorecardAuthority}
+                      authority={displayedScorecardAuthority}
                     />
                   )}
                 </>
