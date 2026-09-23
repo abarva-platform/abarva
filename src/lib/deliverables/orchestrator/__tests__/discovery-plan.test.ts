@@ -45,6 +45,38 @@ describe("discovery blueprint", () => {
     expect(bp.interviewRoster.some((r) => r.side === "it")).toBe(true);
   });
 
+  it("does not treat every healthcare move as member-service agent assist", () => {
+    const bp = getDiscoveryBlueprint(
+      "Healthcare executive reporting dashboard for finance KPI review",
+    );
+
+    expect(bp.blueprintId).toBe("general_default");
+    expect(bp.evidenceFamilies.map((f) => f.id)).not.toEqual(
+      expect.arrayContaining([
+        "contact_center_kpis",
+        "phi_privacy_security_controls",
+        "human_in_loop_model",
+        "model_risk_responsible_ai_controls",
+      ]),
+    );
+  });
+
+  it("resolves healthcare member-service agent assist to the dedicated blueprint", () => {
+    const bp = getDiscoveryBlueprint(
+      "Healthcare member service contact center agent assist across claims, eligibility, benefits, CRM, and prior authorization",
+    );
+
+    expect(bp.blueprintId).toBe("healthcare_contact_center_agent_assist");
+    expect(bp.evidenceFamilies.map((f) => f.id)).toEqual(
+      expect.arrayContaining([
+        "contact_center_kpis",
+        "claims_eligibility_benefits_data_access",
+        "phi_privacy_security_controls",
+        "human_in_loop_model",
+      ]),
+    );
+  });
+
   it("every evidence family states what it grounds", () => {
     for (const f of getDiscoveryBlueprint("AI_OPERATIONS_DECISION_SUPPORT")
       .evidenceFamilies) {

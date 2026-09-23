@@ -639,10 +639,16 @@ export function getDiscoveryBlueprint(
     /agent.?assist|agentic.?assist|ai.?assist|document.?intelligence|onboarding|workflow|operations?/.test(
       a,
     );
-  const hasHealthcareMemberServiceSignals =
-    /health|meridian|member.?service|member.?experience|contact.?center|call.?center|customer.?service.?ai|claims?|eligibility|benefits?|prior.?auth|authorization/.test(
+  const hasHealthcareDomainSignals =
+    /health|meridian|clinical|provider|payer|patient|member|claims?|eligibility|benefits?|prior.?auth|authorization|phi/.test(
       a,
     );
+  const hasMemberServiceAgentAssistSignals =
+    /member.?service|member.?experience|contact.?center|call.?center|customer.?service|agent.?assist|agentic.?assist|assisted.?agent|crm/.test(
+      a,
+    );
+  const hasHealthcareMemberServiceSignals =
+    hasHealthcareDomainSignals && hasMemberServiceAgentAssistSignals;
 
   if (hasHealthcareMemberServiceSignals) {
     return HEALTHCARE_CONTACT_CENTER_AGENT_ASSIST;

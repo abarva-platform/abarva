@@ -1,0 +1,15 @@
+
+> abarva@0.1.0 audit:moves-agent-assist-blueprint
+> node scripts/audit/moves-agent-assist-blueprint.mjs
+
+file:///Users/anand/.codex/worktrees/64c1/nexus/scripts/audit/moves-agent-assist-blueprint.mjs:27
+    throw new Error(`Agent Assist blueprint token missing from ${file}: ${token}`);
+          ^
+
+Error: Agent Assist blueprint token missing from src/lib/deliverables/orchestrator/briefs/discovery-blueprint.ts: health|meridian|member.?service|member.?experience|contact.?center|call.?center|agent.?assist
+    at file:///Users/anand/.codex/worktrees/64c1/nexus/scripts/audit/moves-agent-assist-blueprint.mjs:27:11
+    at ModuleJob.run (node:internal/modules/esm/module_job:437:25)
+    at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:639:26)
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5)
+
+Node.js v25.9.0

@@ -1,0 +1,14 @@
+
+> abarva@0.1.0 release:check
+> node scripts/release-check.mjs
+
+migration-seals: verified 1 sealed migration
+Azure deployment lane check passed.
+[audit:no-legacy-tenant-inputs] pass
+Deleted legacy files in diff: 0
+Allowed historical references: 605
+Release record template contract passed.
+Release Control Gate failed.
+
+- docs/releases/records/2026-09-23-moves-discovery-blueprint-routing.md: line 13 names a registry tenant in release-record prose. Use mechanism-level wording, or wrap only real repo paths, commands, and identifiers in code spans.
+- docs/releases/records/2026-09-23-moves-discovery-blueprint-routing.md: Layer Impact must name the release lane this change ships in. Declared lanes (AGENTS.md): global-control-lane, client-data-lane, internal-admin, public-demo, experimental.
