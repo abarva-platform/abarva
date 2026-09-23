@@ -3,7 +3,7 @@
 import { execFileSync } from "node:child_process";
 import { readFileSync, readdirSync } from "node:fs";
 import path from "node:path";
-import { fileURLToPath } from "node:url";
+import { isDirectInvocation } from "../exec/cli-entry.mjs";
 
 const INTEGRATION_ROOT = "src/__tests__/integration";
 
@@ -219,5 +219,4 @@ function main() {
   );
 }
 
-const invokedPath = process.argv[1] ? path.resolve(process.argv[1]) : "";
-if (invokedPath === fileURLToPath(import.meta.url)) main();
+if (isDirectInvocation(import.meta.url)) main();

@@ -31,6 +31,7 @@ import { readFileSync } from "node:fs";
 import path from "node:path";
 
 import { loadTenantNarrativeTerms } from "./release-record-tenant-narrative-guard.mjs";
+import { isDirectInvocation } from "../exec/cli-entry.mjs";
 
 const COMMITTED_PATH = "docs/architecture/tenant-narrative-single-word-terms.json";
 
@@ -96,6 +97,6 @@ function main() {
   );
 }
 
-if (import.meta.url === `file://${process.argv[1]}`) {
+if (isDirectInvocation(import.meta.url)) {
   main();
 }
