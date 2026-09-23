@@ -3091,5 +3091,236 @@ function preclaimFiles(file, item, identity, files, extra = []) {
 }
 
 
+// ---------------------------------------------------------------------------
+// item T-724 — an id a line NARRATES is not an id a line CLAIMS.
+//
+// T-716 catches a narration with a third-party SUBJECT in front of the verb
+// (`Sibling run `#…` merged item 34`) and the copular cross-reference (`that
+// is item T-614`). T-722 catches a NEGATION in front of the id. The register
+// also writes narration with neither, in two voices measured on it:
+//
+//   `Item 26 MERGED mid-flight - PR #8318 squashed to a292fc656`   (line 2027)
+//   `refused item 26's genuine owner`                              (line 2075)
+//
+// Both sit inside a line that has ALREADY declared a different subject at its
+// head — `item C-502 claimed on branch …` and `item T-722 claimed on branch …`
+// — and both refused item 26 to a run that came for it. The second refusal
+// happened to THIS suite's own author while claiming T-724.
+//
+// THE CUE IS POSITION, NOT THE VERB, and T-716 measured why the verb cannot be
+// it: `merged item <id>` occurs five times and FOUR are a run announcing its
+// own merge at the head of its message, so a verb rule frees four genuine
+// records — a false PASS, the worse direction.
+//
+// EVERY FIXTURE BELOW DECLARES A HEAD SUBJECT THAT DIFFERS FROM THE ID IT
+// NARRATES. That is not decoration: a fixture whose narration and claim agree
+// passes with the rule absent and asserts nothing, which the item says in as
+// many words.
+{
+  console.log("\n-- T-724: a narrated id is not a claimed id --");
+
+  // The two known positives, at the shape the register writes them.
+  const LIVE_2027 =
+    "2026-09-23T04:48:01Z | source-backlog-executor#20260923T0422Z | " +
+    "item C-502 claimed on branch `exec/c-502-prose-compaction-loss` — SECOND AMENDMENT. " +
+    "At 04:24Z I said I would touch none of item 26s files and I meant it. " +
+    "Item 26 MERGED mid-flight - PR #8318 squashed to a292fc656, which is origin/main now.";
+  const LIVE_2075 =
+    "2026-09-23T07:38:33Z | source-backlog-executor#20260923T0649Z | " +
+    "item T-722 claimed on branch `exec/t-722-disclaimer-read-as-claim` — " +
+    "my 07:12:11Z line writes `refused item 26's genuine owner`, where the id is the OBJECT.";
+
+  check(
+    "KNOWN POSITIVE 1 — `Item 26 MERGED mid-flight` does not hold item 26",
+    itemSubjects(LIVE_2027).some((id) => id.base === "26") === false,
+    JSON.stringify(itemSubjects(LIVE_2027)),
+  );
+  check(
+    "KNOWN POSITIVE 2 — `refused item 26's genuine owner` does not hold item 26",
+    itemSubjects(LIVE_2075).some((id) => id.base === "26") === false,
+    JSON.stringify(itemSubjects(LIVE_2075)),
+  );
+
+  // THE OTHER DIRECTION, on the same two lines. A veto that freed the head
+  // subject too would read as a fix and hand two live claims away.
+  check(
+    "NEGATIVE CONTROL — the same line still holds the subject it declared (C-502)",
+    itemSubjects(LIVE_2027).some((id) => id.base === "C-502") === true,
+    JSON.stringify(itemSubjects(LIVE_2027)),
+  );
+  check(
+    "NEGATIVE CONTROL — the same line still holds the subject it declared (T-722)",
+    itemSubjects(LIVE_2075).some((id) => id.base === "T-722") === true,
+    JSON.stringify(itemSubjects(LIVE_2075)),
+  );
+
+  // THE VERB IS NOT THE CUE. These four are the genuine `MERGED item <id>`
+  // announcements T-716 counted; each declares that id as its OWN subject, so
+  // each must go on holding. A rule keyed to the verb fails every one.
+  const OWN_MERGE =
+    "2026-09-19T03:12Z | claude-code-executor | " +
+    "MERGED item 86 through PR #7876, squash `615b5ec9b`, 25 checks passed.";
+  check(
+    "THE VERB IS NOT THE CUE — a run announcing its OWN merge still holds item 86",
+    itemSubjects(OWN_MERGE).some((id) => id.base === "86") === true,
+    JSON.stringify(itemSubjects(OWN_MERGE)),
+  );
+  check(
+    "THE VERB IS NOT THE CUE — `RELEASED item T-701(a)` still holds it",
+    itemSubjects(
+      "2026-09-22T18:00:00Z | agent#run-1 | RELEASED item T-701(a) — files free",
+    ).some((id) => id.base === "T-701") === true,
+  );
+
+  // THE ONE GENUINE SECOND CLAIM ON THE REGISTER. Line 455 declares item 41 at
+  // its head and then TAKES a second id in the same line. Counted rather than
+  // imagined: `also item <id>` occurs ONCE in 2,079 lines and this is it,
+  // while `and item <id>` occurs four times and is narration in all four. So
+  // `also` is the exemption, measured, and it is not a verb.
+  const LIVE_455 =
+    "- 2026-09-19T14:55Z | claude-code-executor | item 41 [P2] (the `no behavioral test` " +
+    "item, NOT the closed shared-shaper item 41) · also item 25 · CLAIMED.";
+  check(
+    "NEGATIVE CONTROL — a genuine second claim (`also item 25 · CLAIMED`) still holds",
+    itemSubjects(LIVE_455).some((id) => id.base === "25") === true,
+    JSON.stringify(itemSubjects(LIVE_455)),
+  );
+  check(
+    "VOCABULARY — `and item 24 activity reader` is narration and does NOT hold 24",
+    itemSubjects(
+      "2026-09-18T19:19Z | codex-c1 | item 23 claimed — excludes src/lib/source/** " +
+        "and item 24 activity reader.",
+    ).some((id) => id.base === "24") === false,
+  );
+
+  // A PLURAL HEAD DECLARES NOTHING, so it subordinates nothing. The register
+  // writes `items 60, 85, and 91 · DEPLOY VERIFIED` and ten more of that
+  // shape; reading the first id as the only subject would free the rest.
+  //
+  // THE ASSERTION BELOW PINS WHAT THE CONTROL ACTUALLY DOES, and a first draft
+  // of it asserted what the shape SUGGESTS instead — that all three are
+  // subjects — and was red on unfixed `main` for a reason that has nothing to
+  // do with T-724. `ITEM_SUBJECT` keys on the literal word `item`, which sits
+  // in front of `60` and nowhere else on that line, so `85` and `91` have
+  // never been subjects of it. That is a real gap and it is NOT this item's:
+  // closing it would ADD held ids, which is the false-PASS direction, and it
+  // needs its own measurement. Recorded, not fixed here.
+  //
+  // THE FIXTURE IS REGISTER LINE 317 AND THE TAIL IS NOT DECORATION. A first
+  // draft stopped at the head, and a mutation accepting `items?` SURVIVED it:
+  // with no later `item <id>` on the line there is nothing for the rule to
+  // subordinate, so the case asserted nothing. That line does carry one — it
+  // names `item 85` again 1.5kB later — and under the widened pattern the
+  // head declares 60 and 85 is freed, which is a false PASS on an id the line
+  // genuinely holds. The mutation is caught by the real text, not by a shape.
+  const PLURAL =
+    "- 2026-09-19T05:56Z | source-backlog-parallel-executor | " +
+    "items 60, 85, and 91 · DEPLOY VERIFIED on exact current-main SHA `8ed2cb60d`. " +
+    "Revision `ca-abarva-web-lab-eastus--m8ed2cb60` is Healthy at 100% traffic; " +
+    "commit `6fdd43404` and item 85 merge `a7eba6d11` are included.";
+  check(
+    "NEGATIVE CONTROL — a plural head declares nothing and subordinates nothing",
+    itemSubjects(PLURAL).some((id) => id.base === "85") === true &&
+      itemSubjects(PLURAL).some((id) => id.base === "60") === true,
+    JSON.stringify(itemSubjects(PLURAL)),
+  );
+
+  // THE ANNOUNCEMENT VERBS THAT OPEN A DECLARATION, each pinned by a real
+  // register line rather than carried on assumption. Measured contribution to
+  // the 115: `RELEASED` 46, `TAKING` 1, the `**` emphasis 2. `RELEASING`
+  // contributes ZERO and is deliberately absent — a mutation deleting it
+  // survived, the tell T-709's `no longer claimed` gave.
+  check(
+    "HEAD FORM — a `RELEASED item <id>` declaration subordinates what it narrates",
+    itemSubjects(
+      "2026-09-18T22:17Z | claude-code-executor | RELEASED item 36 · the Moves " +
+        "evidence-packet builder — merged as #7841. Overlaps item 38, untouched.",
+    ).some((id) => id.base === "38") === false,
+  );
+  check(
+    "HEAD FORM — and still holds the id it released",
+    itemSubjects(
+      "2026-09-18T22:17Z | claude-code-executor | RELEASED item 36 · the Moves " +
+        "evidence-packet builder — merged as #7841. Overlaps item 38, untouched.",
+    ).some((id) => id.base === "36") === true,
+  );
+  check(
+    "HEAD FORM — `TAKING item <id>` declares a subject (live line 1806)",
+    itemSubjects(
+      "2026-09-22T12:00:00Z | claude-code-executor#r1 | TAKING item T-705 — the rung-7 " +
+        "veto is narrower than item 59's negations.",
+    ).some((id) => id.base === "59") === false,
+  );
+  check(
+    "HEAD FORM — the `**` emphasis the register writes does not defeat it (live line 629)",
+    itemSubjects(
+      "2026-09-19T20:00Z | codex-t063 | **RELEASED item T-063 (partly closed) · " +
+        "CLOSED-AND-DEPLOY-VERIFIED**, which is backlog item 31's prediction.",
+    ).some((id) => id.base === "31") === false,
+  );
+
+  // A LINE THAT DECLARES NO SUBJECT IS UNTOUCHED — the rule keys on the
+  // declaration, so where there is none nothing is subordinated.
+  check(
+    "NEGATIVE CONTROL — a line with no declared head subject is unchanged",
+    itemSubjects("TAKING item T-704 on branch `exec/y`").some((id) => id.base === "T-704") ===
+      true,
+  );
+
+  // THE LEGACY GRAMMAR DECLARES ITS SUBJECT IN FIELD ONE, not in the message.
+  const LEGACY =
+    "- item 21 | claude-code-executor | 2026-09-19T05:35Z | claude/exec-item21 | " +
+    "REASON_MIN_LENGTH gates approve/reject/send back, from item 22's fix.";
+  check(
+    "LEGACY GRAMMAR — `- item 21 | …` still holds item 21",
+    itemSubjects(LEGACY).some((id) => id.base === "21") === true,
+    JSON.stringify(itemSubjects(LEGACY)),
+  );
+  check(
+    "LEGACY GRAMMAR — and does not hold item 22, which it only cites",
+    itemSubjects(LEGACY).some((id) => id.base === "22") === false,
+    JSON.stringify(itemSubjects(LEGACY)),
+  );
+
+  // INDEPENDENCE FROM T-716 AND T-722. Neither veto can reach these: there is
+  // no negation anywhere in the line and no third-party subject or copula in
+  // front of the id. Each case below fails if this rule is the missing one.
+  check(
+    "INDEPENDENCE — no negation and no third-party subject, still narration",
+    itemSubjects(
+      "2026-09-23T01:00:00Z | agent#run-1 | item T-880 claimed — rebased onto the " +
+        "item 881 remediation SHA `6a6df1686`.",
+    ).some((id) => id.base === "881") === false,
+  );
+  check(
+    "INDEPENDENCE — an affirmative report of someone else's claim does not hold it",
+    itemSubjects(
+      "2026-09-23T01:00:00Z | agent#run-1 | item T-882 claimed — every one of them is in " +
+        "the live file list of item 883 (claimed 2026-09-23T04:04:23Z, PR #8318 still OPEN).",
+    ).some((id) => id.base === "883") === false,
+  );
+
+  // END TO END THROUGH THE REAL CLI, on the live shape: one line claims one id
+  // and narrates another's merge. The gate must split them.
+  const { dir, file } = fixture([
+    "2026-09-22T18:00:00Z | other-lane#run-1 | item C-884 claimed on branch `exec/x` — " +
+      "Item 885 MERGED mid-flight - PR #8318 squashed to a292fc656, which is origin/main now.",
+  ]);
+  const narrated = preclaim(file, "885", "source-backlog-executor#run-2");
+  check(
+    "THE MOVEMENT — the id that line only narrates is claimable by the next run",
+    narrated.status === 0 && narrated.report.verdict === "take",
+    JSON.stringify(narrated.report),
+  );
+  const declared = preclaim(file, "C-884", "source-backlog-executor#run-2");
+  check(
+    "THE GUARD — the id that line declared is still refused, same register, same run",
+    declared.status === 1 && declared.report.holder?.agent === "other-lane#run-1",
+    JSON.stringify(declared.report),
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+
 console.log(`\n${passes} passed, ${failures} failed`);
 process.exit(failures ? 1 : 0);

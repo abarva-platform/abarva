@@ -513,6 +513,107 @@ function narratesItem(before) {
   return ITEM_COPULA.test(reach) || ITEM_THIRD_PARTY.test(reach);
 }
 
+/**
+ * The id a register line DECLARES as its own subject, or `null` (item T-724).
+ *
+ * THE DEFECT. T-716 reads a third-party SUBJECT in front of the verb, and
+ * T-722 reads a NEGATION in front of the id. The register also narrates other
+ * people's items with neither, in two voices measured on it:
+ *
+ *   `Item 26 MERGED mid-flight - PR #8318 squashed to a292fc656`   (line 2027)
+ *   `refused item 26's genuine owner`                              (line 2075)
+ *
+ * The first is an affirmative report of somebody else's merge with no
+ * third-party word in front of it; the second puts the id in OBJECT position
+ * under a verb whose subject is the gate. Both refused item 26 to a run that
+ * came for it, the second of them to the author of this rule, mid-claim.
+ *
+ * THE CUE IS POSITION, AND THE VERB EXPLICITLY IS NOT — T-716 measured why.
+ * `merged item <id>` occurs five times on the register and FOUR are a run
+ * announcing its OWN merge at the head of its message (`MERGED item 86 through
+ * PR #7876`). A rule keyed to the verb frees four genuine records while their
+ * authors are still proving the deploy: a false PASS, and this whole family of
+ * repairs exists because a false pass is the worse direction.
+ *
+ * So the cue is the one the register already uses to say what a line is ABOUT.
+ * Every record declares its subject once, at a fixed place, in one of two
+ * grammars — the generated `item <id> claimed on branch \`x\` —` that
+ * `append-claim.mjs` composes, and the legacy `- item <id> | agent | stamp`.
+ * An id that appears ANYWHERE ELSE on a line that has already declared its
+ * subject is being talked about, not taken.
+ *
+ * MEASURED ON THE REAL REGISTER, and in both directions. 650 lines declare a
+ * singular subject; 110 further id occurrences sit on those lines, and reading
+ * every one of them by hand, 109 are narration and ONE is a genuine second
+ * claim. Movement is 109 held→free and 0 free→held, which is structural rather
+ * than lucky: this veto only ever REMOVES an id from a line's subjects.
+ *
+ * THE ONE GENUINE SECOND CLAIM is register line 455, and the exemption is
+ * counted rather than invented: `· also item 25 · CLAIMED`. Over 2,079 lines
+ * `also item <id>` occurs EXACTLY ONCE and that is it, while `and item <id>`
+ * occurs four times and is narration in all four. So the exemption is `also`,
+ * a single adjacent word — and deliberately not the claim verb beside it,
+ * because keying on the verb is the thing T-716 measured as unsafe, and
+ * because the register writes affirmative `claimed` inside narration too
+ * (`in the live file list of item 883 (claimed 2026-09-23T04:04:23Z …)`).
+ *
+ * A PLURAL HEAD DECLARES NOTHING. `items 60, 85, and 91 · DEPLOY VERIFIED` and
+ * ten more of that shape name several subjects at once, and treating the first
+ * as the only one would free the others. The singular `item` in the pattern
+ * below refuses to match them, so those lines keep exactly the subjects they
+ * have always had — fail-closed by construction rather than by a special case.
+ *
+ * `ITEM_SUBJECT` itself is untouched, as in T-709, T-710, T-714, T-716 and
+ * T-722, so movement on the real register is attributable to this veto alone.
+ *
+ * THE ANNOUNCEMENT VERBS ARE COUNTED, like everything else here. `RELEASED`
+ * opens 142 declarations and frees 46 of the 115; `TAKING` opens 3 and frees
+ * 1; the bare `item <id> …` form opens 474 and the legacy field-one form 33.
+ * A fourth candidate, `RELEASING`, opens ZERO and frees zero — a mutation
+ * deleting it survives the suite, which is the tell T-709's `no longer
+ * claimed` gave, so it is not here. The optional `**` emphasis is worth 2 and
+ * is pinned by a case, not carried on the assumption that the register shouts.
+ *
+ * THE LIMIT, stated rather than left implicit: a run that declares one subject
+ * at its head and genuinely takes a second id later in the same line, without
+ * writing `also`, now has the second read as narration. One line in 2,079 has
+ * ever taken a second id, and it writes `also`. The sanctioned helper composes
+ * one item per line and cannot produce the shape at all.
+ */
+const DECLARED_SUBJECT_HEAD =
+  /^(?:\*\*)?(?:RELEASED|TAKING)?\s*item\s*#?([A-Za-z]{0,2}-?\d{1,4}(?:\([a-z]\))?)\b/i;
+
+/** The legacy grammar declares its subject in field one, not in the message. */
+const LEGACY_DECLARED_SUBJECT =
+  /^-\s*item\s*#?([A-Za-z]{0,2}-?\d{1,4}(?:\([a-z]\))?)$/i;
+
+export function declaredItemSubject(text) {
+  const parts = String(text).split("|");
+  // Fewer than three fields is not a register record; a prose paragraph that
+  // happens to open with the word `item` declares nothing and must not
+  // subordinate anything.
+  if (parts.length < 3) return null;
+  const legacy = splitItemId(parts[0].trim().match(LEGACY_DECLARED_SUBJECT)?.[1] ?? "");
+  if (legacy) return legacy;
+  return splitItemId(parts[2].trim().match(DECLARED_SUBJECT_HEAD)?.[1] ?? "");
+}
+
+/**
+ * The one adjacent word that marks a genuine SECOND claim on a line that has
+ * already declared its subject. Counted, not chosen — see above.
+ */
+const ITEM_CO_CLAIM = /\balso\s+$/i;
+
+/**
+ * Whether this occurrence is subordinate to a subject the line already
+ * declared — narrated rather than claimed.
+ */
+function subordinateToDeclaredSubject(declared, id, before) {
+  if (!declared) return false;
+  if (declared.base === id.base) return false;
+  return !ITEM_CO_CLAIM.test(itemAttributiveReach(before));
+}
+
 
 /** How far past the id the negation may sit and still govern it. */
 const NEGATION_REACH_TOKENS = 6;
@@ -545,6 +646,7 @@ function deniesClaim(line, afterIndex) {
 /** Every item id this line puts in subject position. */
 export function itemSubjects(text) {
   const line = String(text);
+  const declared = declaredItemSubject(line);
   ITEM_SUBJECT.lastIndex = 0;
   const out = [];
   for (const match of line.matchAll(ITEM_SUBJECT)) {
@@ -554,7 +656,9 @@ export function itemSubjects(text) {
     if (disclaimsItem(before)) continue;
     if (deniesClaim(line, match.index + match[0].length)) continue;
     const id = splitItemId(`${match[1]}${match[2] ?? ""}`);
-    if (id) out.push(id);
+    if (!id) continue;
+    if (subordinateToDeclaredSubject(declared, id, before)) continue;
+    out.push(id);
   }
   return out;
 }
