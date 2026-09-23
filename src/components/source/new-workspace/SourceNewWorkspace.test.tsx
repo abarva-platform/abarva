@@ -547,6 +547,38 @@ describe("SourceNewWorkspace", () => {
     expect(document.body.textContent ?? "").not.toMatch(/BAFO ready/i);
   });
 
+  it("does not count draft criteria or unfrozen weights as approved authority", () => {
+    const authority = buildScorecardAuthorityView({
+      tenantKey: request.clientKey,
+      sourceEventId: request.id,
+      criteria: [{
+        tenantKey: request.clientKey,
+        sourceEventId: request.id,
+        criterionId: "quality",
+        criterionVersion: "v1",
+        label: "Quality",
+        weight: 80,
+        weightsFrozen: false,
+        approvedCriterionVersion: null,
+        approvedBy: null,
+        approvedAt: null,
+      }],
+      scores: [],
+    });
+    render(
+      <SourceNewWorkspace
+        event={{ ...request, currentStage: "evaluation", lifecycle: "active" }}
+        files={[]}
+        scorecardAuthority={authority}
+      />,
+    );
+    const panel = screen.getByRole("region", {
+      name: "Stage 07 scorecard authority",
+    });
+    expect(within(panel).getByText("Approved criteria").parentElement?.querySelector("dd")?.textContent).toBe("0");
+    expect(within(panel).getByText("Frozen weight total").parentElement?.querySelector("dd")?.textContent).toBe("0");
+  });
+
   it("requires completion review when a completed event has historical gaps", () => {
     render(
       <SourceNewWorkspace

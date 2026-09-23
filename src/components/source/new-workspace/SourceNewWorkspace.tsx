@@ -1435,6 +1435,15 @@ function SourceNewStage07ScorecardAuthority({
 }: {
   authority: ScorecardAuthorityView;
 }) {
+  const approvedCriteria = authority.criteria.filter(
+    (criterion) =>
+      criterion.approvedCriterionVersion === criterion.criterionVersion &&
+      Boolean(criterion.approvedBy?.trim()) &&
+      Boolean(criterion.approvedAt?.trim()),
+  );
+  const frozenWeightTotal = approvedCriteria
+    .filter((criterion) => criterion.weightsFrozen)
+    .reduce((total, criterion) => total + criterion.weight, 0);
   const lockedScoreCount = authority.vendorRows.reduce(
     (total, row) => total + row.lockedScoreCount,
     0,
@@ -1462,11 +1471,11 @@ function SourceNewStage07ScorecardAuthority({
         </div>
         <div>
           <dt>Approved criteria</dt>
-          <dd>{authority.criteria.length}</dd>
+          <dd>{approvedCriteria.length}</dd>
         </div>
         <div>
           <dt>Frozen weight total</dt>
-          <dd>{authority.weightTotal}</dd>
+          <dd>{frozenWeightTotal}</dd>
         </div>
         <div>
           <dt>Locked evaluator scores</dt>

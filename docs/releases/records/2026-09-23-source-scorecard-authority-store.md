@@ -37,6 +37,7 @@ Release lane: `client-data-lane`. The proposed Layer 3 tables hold versioned cri
 - Removing the score event-identity check made the opposite-event test fail; restoring it made the test pass.
 - A red-first schema check caught SQL three-valued logic accepting an approved criterion row with a null approved version; the authored constraint now requires a non-null approved version. This is a source-level check, not a database migration execution.
 - Red-first route and workspace tests caught the missing product path. Removing the workspace event-identity guard made the opposite-event test fail; the guard was restored.
+- A red-first rendered test caught draft criteria counted as approved; the Stage 07 counts now include only named, version-matched approvals and their frozen weights.
 - Focused Jest, scoped ESLint and TypeScript were run locally. No shared migration apply or data-plane readback was performed.
 
 ## Rollout Plan
