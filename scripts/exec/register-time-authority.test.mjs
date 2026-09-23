@@ -28,6 +28,7 @@ import {
   parseRegisterLines,
   announcesRelease,
   announcesAbstention,
+  claimedPaths,
 } from "./register-time-authority.mjs";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
@@ -1661,6 +1662,226 @@ function preclaimFiles(file, item, identity, files, extra = []) {
   fs.rmSync(dir, { recursive: true, force: true });
 }
 
+
+// ---------------------------------------------------------------------------
+// Item T-710 — a line that ATTRIBUTES a path to another lane does not hold it.
+//
+// T-707 gave the file gate two vetoes: a short-reach negator in front of the
+// path, and an abstention verb at the head of the message. Neither reaches the
+// form the register actually writes when one lane surveys the others before
+// choosing what to touch — an attributive relative clause, mid-paragraph, with
+// no negator anywhere near the path:
+//
+//   ... the only two naming any file below are 19:15:17Z (`claude-code-cc-a#...`,
+//   which names `scripts/exec/register-time-authority.mjs` ...) and 21:23:30Z
+//   (`codex-source-new-response-intake`, which lists
+//   `docs/architecture/test-ci-coverage-census.json`) — so I am deliberately
+//   NOT touching the census file
+//
+// That line is live register line 1887 at 21:28:22Z, and the gate read it as a
+// holder of both paths. The disclaimer is four hundred characters downstream
+// of the first path, so no reach-based negator can join them; what CAN join
+// them is the attributive verb four words in front, which is the cue the
+// register uses precisely because it is attributing the path to someone else.
+//
+// THE OTHER OPTION IN THE ITEM WAS RULED OUT BY MEASUREMENT, not by taste.
+// Narrowing held paths to each line's own `files:` list needs a majority of
+// live claims to carry one; re-measured on the live register at 00:15Z,
+// 9 of 62 live lines do. A `files:`-only parser would stop reading the paths
+// that 53 of those lines name in prose, which is a false PASS — a collision
+// rather than a look.
+//
+// The direction of error matters and decides how tight the rule is. A missed
+// veto costs a reader one look at a printed holder; an over-wide veto frees a
+// path someone is genuinely editing. So the cue is not a bare verb — "this
+// claim holds `x`" must still hold `x` — it is the verb in a form that names a
+// THIRD party: a relative clause (`which names`), an explicit agent (`held by`),
+// or a third-party subject (`that sibling holds`).
+// ---------------------------------------------------------------------------
+
+{
+  // The real known positive, verbatim in shape from live register line 1887,
+  // including the distance between the paths and the disclaimer that follows
+  // them. Both attributed paths must stop holding.
+  const { dir, file } = fixture([
+    "2026-09-22T18:20:29Z | source-backlog-executor#20260922T212500Z | item T-707 claimed — over the 53 register lines stamped inside the live 3h window, " +
+      "the only two naming any file below are 19:15:17Z (`claude-code-cc-a#20260922T1830Z`, which names " +
+      "`scripts/exec/register-time-authority.mjs` while saying `item T-706 NOT TAKEN`) and 21:23:30Z " +
+      "(`codex-source-new-response-intake`, which lists `docs/architecture/test-ci-coverage-census.json`) — " +
+      "B".repeat(400) +
+      " so I am deliberately NOT touching the census file. files: scripts/exec/append-claim.mjs",
+  ]);
+
+  const named = preclaimFiles(
+    file,
+    "T-800",
+    "codex-other-lane#20260922T182500Z",
+    "scripts/exec/register-time-authority.mjs",
+  );
+  check(
+    "`which names <path>` attributes the path to another lane and does not hold it",
+    named.status === 0 && named.report.fileOverlap?.refuses === false,
+    `status=${named.status} overlap=${JSON.stringify(named.report.fileOverlap)}`,
+  );
+
+  const listed = preclaimFiles(
+    file,
+    "T-800",
+    "codex-other-lane#20260922T182500Z",
+    "docs/architecture/test-ci-coverage-census.json",
+  );
+  check(
+    "`which lists <path>` attributes the path to another lane and does not hold it",
+    listed.status === 0 && listed.report.fileOverlap?.refuses === false,
+    `status=${listed.status} overlap=${JSON.stringify(listed.report.fileOverlap)}`,
+  );
+
+  // The same line's OWN file list is four hundred characters past the
+  // attributive clause and is not attributed to anyone. A veto that freed it
+  // too would be the defect reversed, and this is the assertion that pins the
+  // rule to the cue rather than to the line.
+  const own = preclaimFiles(
+    file,
+    "T-800",
+    "codex-other-lane#20260922T182500Z",
+    "scripts/exec/append-claim.mjs",
+  );
+  check(
+    "the attributive veto does not free the path the same line genuinely holds",
+    own.status === 1,
+    `status=${own.status} overlap=${JSON.stringify(own.report.fileOverlap)}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+{
+  // The second live form, from register line 1911 at 21:57:36Z: a third-party
+  // SUBJECT rather than a relative pronoun. `that sibling holds <path>` is one
+  // run reporting where another run already is.
+  const { dir, file } = fixture([
+    "2026-09-22T18:21:36Z | source-backlog-executor#20260922T215500Z | item T-711 claimed — one live line stamped since 18:55Z: " +
+      "that sibling holds `scripts/exec/register-time-authority.mjs`, so I am reimplementing nothing. files: scripts/exec/build-execution-queue.mjs",
+  ]);
+  const r = preclaimFiles(
+    file,
+    "T-800",
+    "codex-other-lane#20260922T182500Z",
+    "scripts/exec/register-time-authority.mjs",
+  );
+  check(
+    "`<third party> holds <path>` reports another run's hold and does not create one",
+    r.status === 0 && r.report.fileOverlap?.refuses === false,
+    `status=${r.status} overlap=${JSON.stringify(r.report.fileOverlap)}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+{
+  // The two attributive forms the item names that today's live window does not
+  // exercise. They are proven by FIXTURE, and that is said rather than left to
+  // be assumed observed. Both are written here in the position the rule
+  // governs — the cue in FRONT of the path. A postfix attribution
+  // (`` `a.mjs` is held by X ``) is NOT covered and is recorded as a known gap
+  // rather than asserted away: the reach discipline this veto inherits from
+  // `PATH_NEGATOR` looks backwards only.
+  //
+  // The agent id between the verb and the path is longer than the 40-character
+  // reach, which is why `attributiveReach` collapses backticked spans; that is
+  // the behaviour this case actually pins.
+  const { dir, file } = fixture([
+    "2026-09-22T18:22:00Z | codex-survey-lane#20260922T214000Z | item T-801 claimed — files held by `codex-cpo-source-new-smoke`: " +
+      "`docs/architecture/test-ci-coverage-census.json`, and claimed by `source-backlog-executor#20260922T215500Z`: " +
+      "`scripts/exec/append-claim.mjs`, so I am on neither. files: scripts/exec/build-source-board.mjs",
+  ]);
+  for (const [label, path] of [
+    ["held by", "docs/architecture/test-ci-coverage-census.json"],
+    ["claimed by", "scripts/exec/append-claim.mjs"],
+  ]) {
+    const r = preclaimFiles(file, "T-800", "codex-other-lane#20260922T182500Z", path);
+    check(
+      `\`${label} <agent>\` attributes the path away and does not hold it`,
+      r.status === 0 && r.report.fileOverlap?.refuses === false,
+      `status=${r.status} overlap=${JSON.stringify(r.report.fileOverlap)}`,
+    );
+  }
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+{
+  // THE FALSE-PASS GUARD, and the reason the cue is not a bare verb. A line
+  // that holds its files by writing the verb about ITSELF must keep holding
+  // them. `this claim holds`, `I hold`, `this run names` are the self-referential
+  // forms, and none of them attributes anything to a third party.
+  const selfForms = [
+    "this claim holds `scripts/exec/a.mjs`",
+    "I hold `scripts/exec/a.mjs` for the duration",
+    "the branch names `scripts/exec/a.mjs` as its only edit",
+  ];
+  for (const form of selfForms) {
+    const { dir, file } = fixture([
+      `2026-09-22T18:22:00Z | codex-survey-lane#20260922T214000Z | item T-801 claimed — ${form}.`,
+    ]);
+    const r = preclaimFiles(
+      file,
+      "T-800",
+      "codex-other-lane#20260922T182500Z",
+      "scripts/exec/a.mjs",
+    );
+    check(
+      `a self-referential hold still holds: ${form.slice(0, 28)}...`,
+      r.status === 1,
+      `status=${r.status} overlap=${JSON.stringify(r.report.fileOverlap)}`,
+    );
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+}
+
+{
+  // Reach. The attributive cue governs the path it introduces, not every path
+  // later in the sentence, and a sentence boundary ends its reach — the same
+  // discipline `PATH_NEGATOR` uses. Without this the first `which names` on a
+  // discursive line would free everything after it.
+  const { dir, file } = fixture([
+    "2026-09-22T18:22:00Z | codex-survey-lane#20260922T214000Z | item T-801 claimed — the sibling names `scripts/exec/register-time-authority.mjs`. " +
+      "My own edit is `scripts/exec/build-source-board.mjs`.",
+  ]);
+  const attributed = preclaimFiles(
+    file,
+    "T-800",
+    "codex-other-lane#20260922T182500Z",
+    "scripts/exec/register-time-authority.mjs",
+  );
+  check(
+    "the attributed path in the first sentence does not hold",
+    attributed.status === 0,
+    `status=${attributed.status} overlap=${JSON.stringify(attributed.report.fileOverlap)}`,
+  );
+  const next = preclaimFiles(
+    file,
+    "T-800",
+    "codex-other-lane#20260922T182500Z",
+    "scripts/exec/build-source-board.mjs",
+  );
+  check(
+    "a path in the NEXT sentence is out of the attributive cue's reach and still holds",
+    next.status === 1,
+    `status=${next.status} overlap=${JSON.stringify(next.report.fileOverlap)}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+{
+  // `claimedPaths` is exported and is where the rule lives; assert it directly
+  // as well as through the process, so a failure says which layer moved.
+  const attributed = claimedPaths(
+    "item T-801 claimed — (`codex-other`, which lists `scripts/exec/a.mjs`) and my own `scripts/exec/b.mjs`",
+  ).map((p) => p.path);
+  check(
+    "claimedPaths drops the attributed path and keeps the line's own",
+    !attributed.includes("scripts/exec/a.mjs") && attributed.includes("scripts/exec/b.mjs"),
+    `paths=${JSON.stringify(attributed)}`,
+  );
+}
 
 // ---------------------------------------------------------------------------
 // Item T-712 — the announcement verb behind the helper's generated prefix.
