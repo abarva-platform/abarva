@@ -2469,5 +2469,290 @@ function preclaimFiles(file, item, identity, files, extra = []) {
   fs.rmSync(dir, { recursive: true, force: true });
 }
 
+
+// ---------------------------------------------------------------------------
+// T-716. An id a line only NARRATES is not an id that line holds.
+//
+// `ITEM_SUBJECT` reads the cue `item <id>` and, since T-709/T-710/T-714, three
+// vetoes sit in front of it. None of them reads the case where the id is the
+// OBJECT of somebody else's action, or a cross-reference to where a topic is
+// already filed. The line asserts nothing about its own ownership of that id,
+// and under T-713 — which stopped a foreign release from freeing an item —
+// these stopped being masked and became live refusals.
+//
+// BOTH real positives the item names had aged out of the 3h window by the time
+// this was taken, so they are reached here with the stamps they actually carry
+// and asserted on `itemSubjects`, which is clock-free. The CLI cases at the end
+// of this block prove the same shapes end to end.
+//
+// WHY A VERB VOCABULARY WAS REJECTED, measured rather than reasoned: the bare
+// past-tense announcement verb `merged item <id>` occurs 5 times in the
+// register and 4 of them are a run announcing ITS OWN merge at the head of its
+// message (`MERGED item 86 through PR #7876`). A rule keying on the verb would
+// free four genuine records — a false PASS, which is the worse direction. So
+// the cue is a THIRD-PARTY SUBJECT in front of the verb, exactly the shape
+// T-710 gave paths, or a COPULAR cross-reference, which the register writes 7
+// times and which is narration in all 7 of them.
+//
+// `ITEM_SUBJECT` itself is untouched, as in T-709, T-710 and T-714.
+// ---------------------------------------------------------------------------
+{
+  // Register line 1751, 2026-09-22T16:34:05Z. Genuinely claims T-400 at its
+  // head; the numeric id it names belongs to a sibling and the sentence says
+  // so twice over.
+  const LIVE_1751 =
+    "item T-400 claimed — the first claimable row in the queue generated 16:31Z. " +
+    "If the evidence turns out to require a repo change I will append a superseding " +
+    "claim naming those paths before touching them. Sibling run `#20260922T155500Z` " +
+    "merged item 34 at 16:18:28Z and is still proving its deploy; I am a different " +
+    "owner and take a different item.";
+  check(
+    "REAL POSITIVE — register line 1751 narrates a sibling's merge, so it does not hold item 34",
+    itemSubjects(LIVE_1751).some((id) => id.base === "34") === false,
+    JSON.stringify(itemSubjects(LIVE_1751)),
+  );
+  check(
+    "THE GUARD — that same line still holds T-400, which it actually claimed",
+    itemSubjects(LIVE_1751).some((id) => id.base === "T-400") === true,
+    JSON.stringify(itemSubjects(LIVE_1751)),
+  );
+
+  // Register line 1718, 2026-09-22T14:22:29Z. Reports its own item's PR at the
+  // head and cross-references where a piece of work is already filed.
+  const LIVE_1718 =
+    "item T-700 PR #8258 head `849476f3576639c74c078531a82ab3a1c98c8997` OPENED, " +
+    "NOT MERGED, checks running | mapping them would move the claimable count, " +
+    "which is the one number this item asks me to pin, and map placement is " +
+    "already item T-614.";
+  check(
+    "REAL POSITIVE — register line 1718 cross-references T-614, so it does not hold it",
+    itemSubjects(LIVE_1718).some((id) => id.base === "T-614") === false,
+    JSON.stringify(itemSubjects(LIVE_1718)),
+  );
+  check(
+    "THE GUARD — that same line still holds T-700, which it actually reports on",
+    itemSubjects(LIVE_1718).some((id) => id.base === "T-700") === true,
+    JSON.stringify(itemSubjects(LIVE_1718)),
+  );
+
+  // Register line 1737, 2026-09-22T15:32:10Z. The SAME cross-reference written
+  // by the same run an hour later, with the copula spelled `that is`.
+  const LIVE_1737 =
+    "RELEASED item T-701(a) — merged, DEPLOYED, ACA runtime invariant proven. " +
+    "The board still exits non-zero on four unplaced ids — that is item T-614 " +
+    "and mapping moves the claimable count; (3) I filed no new backlog rows.";
+  check(
+    "REAL POSITIVE — register line 1737 cross-references T-614 the same way",
+    itemSubjects(LIVE_1737).some((id) => id.base === "T-614") === false,
+    JSON.stringify(itemSubjects(LIVE_1737)),
+  );
+  check(
+    "THE GUARD — line 1737 still names T-701(a) as its own subject",
+    itemSubjects(LIVE_1737).some((id) => id.base === "T-701" && id.part === "(a)") === true,
+    JSON.stringify(itemSubjects(LIVE_1737)),
+  );
+
+  // Register line 264, 2026-09-19T03:33Z. A comparison: this situation is of
+  // the same class as a numbered item, not a claim on it.
+  const LIVE_264 =
+    "item 63 · NOTE: another agent amended and FORCE-PUSHED my claimed branch. " +
+    "Record repaired in `ee0f1377d`. This is item 34 class and worse than the " +
+    "shared-worktree case it names";
+  check(
+    "REAL POSITIVE — register line 264 compares itself to item 34 and does not hold it",
+    itemSubjects(LIVE_264).some((id) => id.base === "34") === false,
+    JSON.stringify(itemSubjects(LIVE_264)),
+  );
+  check(
+    "THE GUARD — line 264 still holds item 63, its own subject",
+    itemSubjects(LIVE_264).some((id) => id.base === "63") === true,
+    JSON.stringify(itemSubjects(LIVE_264)),
+  );
+
+  // Register line 421, 2026-09-19T12:47Z. The plural copula, and a possessive
+  // after the id — both are narration about a lesson, not a claim.
+  const LIVE_421 =
+    "RELEASED item T-003 · **CLOSED and DEPLOY VERIFIED**, all files released. " +
+    "So a name-only match is a guess. Both are item 49's lesson in a new costume.";
+  check(
+    "REAL POSITIVE — register line 421 cites item 49's lesson and does not hold it",
+    itemSubjects(LIVE_421).some((id) => id.base === "49") === false,
+    JSON.stringify(itemSubjects(LIVE_421)),
+  );
+  check(
+    "THE GUARD — line 421 still names T-003, the item it released",
+    itemSubjects(LIVE_421).some((id) => id.base === "T-003") === true,
+    JSON.stringify(itemSubjects(LIVE_421)),
+  );
+
+  // Register line 629, 2026-09-20T00:02Z. Same shape again, a year of practice
+  // apart from the others: the register writes this constantly.
+  const LIVE_629 =
+    "**RELEASED item T-063 (partly closed) · CLOSED-AND-DEPLOY-VERIFIED for the " +
+    "three rows. Against a 6-entry method library; this is item 31's prediction " +
+    "and T-064 is right that the test is its acceptance criterion";
+  check(
+    "REAL POSITIVE — register line 629 cites item 31's prediction and does not hold it",
+    itemSubjects(LIVE_629).some((id) => id.base === "31") === false,
+    JSON.stringify(itemSubjects(LIVE_629)),
+  );
+  check(
+    "THE GUARD — line 629 still names T-063, the item it released",
+    itemSubjects(LIVE_629).some((id) => id.base === "T-063") === true,
+    JSON.stringify(itemSubjects(LIVE_629)),
+  );
+
+  // THE CONTROL THAT DECIDED THE DESIGN. Four register lines announce the
+  // run's OWN merge with the same verb the sibling case uses. If the verb were
+  // the cue, all four would be freed while their author was still proving the
+  // deploy. Register lines 278, 283, 292 and 296, one shape.
+  const LIVE_278 =
+    "MERGED item 86 through PR #7876 as exact squash SHA `eb077d313a3714b8a`";
+  check(
+    "NEGATIVE CONTROL — a run announcing its OWN merge still holds the item (register line 278)",
+    itemSubjects(LIVE_278).some((id) => id.base === "86") === true,
+    JSON.stringify(itemSubjects(LIVE_278)),
+  );
+  check(
+    "NEGATIVE CONTROL — and the same verb with a qualifier after it (register line 296)",
+    itemSubjects("MERGED item 68 CI enforcement through PR #7881").some(
+      (id) => id.base === "68",
+    ) === true,
+  );
+
+  // NEGATIVE CONTROLS on every genuine claim form the register writes. Freeing
+  // one of these would be two runs on one item.
+  check(
+    "NEGATIVE CONTROL — the helper-generated prefix still holds its item",
+    itemSubjects("item T-800 claimed on branch `exec/x` — taking it").some(
+      (id) => id.base === "T-800",
+    ) === true,
+  );
+  check(
+    "NEGATIVE CONTROL — `TAKING item T-704` still holds",
+    itemSubjects("TAKING item T-704 on branch `exec/y`").some((id) => id.base === "T-704") === true,
+  );
+  check(
+    "NEGATIVE CONTROL — `RELEASED item T-701(a)` still names its subject",
+    itemSubjects("RELEASED item T-701(a) — files free").some(
+      (id) => id.base === "T-701" && id.part === "(a)",
+    ) === true,
+  );
+  check(
+    "NEGATIVE CONTROL — the legacy `- item 21 | agent` form still holds",
+    itemSubjects("- item 21 | claude-code-executor | 2026-09-19T12:58Z | branch").some(
+      (id) => id.base === "21",
+    ) === true,
+  );
+  check(
+    "NEGATIVE CONTROL — a first-person verb with no third party still holds",
+    itemSubjects("I merged item T-810 at 04:05Z and am proving the deploy").some(
+      (id) => id.base === "T-810",
+    ) === true,
+  );
+  check(
+    "NEGATIVE CONTROL — `this claim holds item T-811` is about ITSELF and goes on holding",
+    itemSubjects("this claim holds item T-811 for the window").some(
+      (id) => id.base === "T-811",
+    ) === true,
+  );
+
+  // THE COPULA IS ADJACENT, not a reach. A copula anywhere earlier in the
+  // sentence must not free an id the line claims afterwards — pinned from both
+  // sides, because a bound asserted only where it fires is a bound no test
+  // constrains (the lesson T-714's redundant quantifier taught).
+  check(
+    "BOUND — the copula frees the id it introduces",
+    itemSubjects("the placement is already item T-820").some((id) => id.base === "T-820") === false,
+  );
+  check(
+    "BOUND — a copula one clause earlier does NOT free the id claimed after it",
+    itemSubjects("the branch is ready; I have claimed item T-821 on it").some(
+      (id) => id.base === "T-821",
+    ) === true,
+  );
+
+  // THE THIRD-PARTY REACH, pinned from both sides on the same principle. The
+  // live positive puts a run id between the subject and its verb, so the reach
+  // must span it; it must not span a sentence boundary.
+  check(
+    "REACH — a third-party subject reaches its verb across an intervening run id",
+    itemSubjects("Sibling run `#20260922T155500Z` merged item T-822 at 16:18Z").some(
+      (id) => id.base === "T-822",
+    ) === false,
+  );
+  check(
+    "REACH — it does not cross a full stop into the next sentence",
+    itemSubjects("Another lane is proving its deploy. I claimed item T-823 at 02:00Z").some(
+      (id) => id.base === "T-823",
+    ) === true,
+  );
+
+  // THE TOKEN BOUND, pinned from BOTH sides. Two words between the third-party
+  // subject and its verb is the live shape (`run` and a backticked run id);
+  // three is somebody else's sentence and must not reach. A bound asserted
+  // only on the side that fires is a bound no test constrains.
+  check(
+    "BOUND — two words between the third-party subject and its verb still vetoes",
+    itemSubjects("another lane run merged item T-827 this morning").some(
+      (id) => id.base === "T-827",
+    ) === false,
+  );
+  // THE ANCHOR. The third-party verb must be the one immediately introducing
+  // the id, not merely present somewhere in front of it. Without that, a line
+  // that mentions a sibling's merge and then takes an item of its own would be
+  // read as narrating the item it actually took — a false PASS.
+  check(
+    "ANCHOR — a third-party verb earlier in the sentence does not reach an id THIS run took",
+    itemSubjects("another run merged PR #1 before I took item T-829 myself").some(
+      (id) => id.base === "T-829",
+    ) === true,
+  );
+  check(
+    "BOUND — three words does NOT reach, so the id goes on being held",
+    itemSubjects("another lane run today merged item T-828 this morning").some(
+      (id) => id.base === "T-828",
+    ) === true,
+  );
+
+  // SYNTHETIC, AND LABELLED AS SUCH. Only `merged` has a real positive on this
+  // register today; these three alternatives are written from the shapes the
+  // protocol asks runs to write about each other, and each is pinned by a case
+  // so that deleting it from the rule fails this suite rather than surviving.
+  for (const [verb, id] of [
+    ["claimed", "T-824"],
+    ["holds", "T-825"],
+    ["closed", "T-826"],
+  ]) {
+    check(
+      `SYNTHETIC — a third-party subject with \`${verb}\` does not claim the id it names`,
+      itemSubjects(`another run ${verb} item ${id} earlier today`).some(
+        (subject) => subject.base === id,
+      ) === false,
+    );
+  }
+
+  // END TO END through the real CLI. One fixture line claims one id and
+  // narrates another; the gate must split them.
+  const { dir, file } = fixture([
+    "2026-09-22T18:00:00Z | other-lane#run-1 | item T-850 claimed — taking T-850. " +
+      "Sibling run `#20260922T155500Z` merged item T-851 at 16:18:28Z and is still " +
+      "proving its deploy; I am a different owner",
+  ]);
+  const narrated = preclaim(file, "T-851", "source-backlog-executor#run-2");
+  check(
+    "THE MOVEMENT — the id that line only narrates is claimable by the next run",
+    narrated.status === 0 && narrated.report.verdict === "take",
+    JSON.stringify(narrated.report),
+  );
+  const own = preclaim(file, "T-850", "source-backlog-executor#run-2");
+  check(
+    "THE GUARD — the id that line actually claimed is still refused, same register, same run",
+    own.status === 1 && own.report.holder?.agent === "other-lane#run-1",
+    JSON.stringify(own.report),
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
 console.log(`\n${passes} passed, ${failures} failed`);
 process.exit(failures ? 1 : 0);
