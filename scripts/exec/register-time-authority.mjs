@@ -516,6 +516,63 @@ export function normalisePath(raw) {
 const PATH_NEGATOR =
   /\b(?:avoid|avoiding|avoids|excluded|excluding|excludes|not|never|no|outside|free|freed|released|releasing|without|rather\s+than|instead\s+of)\b[^.]{0,40}$/i;
 
+/**
+ * An ATTRIBUTIVE cue in front of a path mention disqualifies it (item T-710).
+ *
+ * `PATH_NEGATOR` above catches a line that says it is staying OFF a file. It
+ * does not catch the other thing the register does constantly: one lane
+ * surveying the others before choosing what to touch, and naming their files
+ * in order to say whose they are. Live line 1887 at 21:28:22Z writes
+ * `(\`claude-code-cc-a#...\`, which names \`scripts/exec/register-time-authority.mjs\`)`
+ * and `(\`codex-source-new-response-intake\`, which lists \`docs/architecture/test-ci-coverage-census.json\`)`
+ * and line 1911 writes `that sibling holds \`scripts/exec/register-time-authority.mjs\``.
+ * Every one of those was read as a hold by the lane doing the surveying.
+ *
+ * The disclaimer on line 1887 — "so I am deliberately NOT touching the census
+ * file" — sits four hundred characters downstream of the first path, so no
+ * reach-based negator can reach it. The attributive verb four words IN FRONT
+ * can, and it is the more reliable cue anyway: it is written precisely because
+ * the path is being attributed to somebody else.
+ *
+ * The other repair the item offered — read only each line's own `files:` list
+ * — was ruled out by measurement rather than by preference: re-measured on the
+ * live register, 9 of 62 live lines carry a `files:` label. A `files:`-only
+ * parser would stop reading the paths the other 53 name in prose, and that is
+ * a false PASS. This is a false REFUSAL, which costs a reader one look.
+ *
+ * So the cue is deliberately not a bare verb. `this claim holds \`x\`` must go
+ * on holding `x`. The veto fires only on a form that names a THIRD party: a
+ * relative clause (`which names`), an explicit agent (`held by`), or a
+ * third-party subject (`that sibling holds`).
+ */
+const PATH_ATTRIBUTIVE = new RegExp(
+  "\\b(?:" +
+    // a relative clause: `(\`agent\`, which names ...)`
+    "(?:which|who|that)\\s+(?:also\\s+)?(?:names?|lists?|holds?|claims?|carries)" +
+    "|" +
+    // a third-party subject: `that sibling holds ...`, `the other lane lists ...`
+    "(?:siblings?|another|other|others|else)\\s+(?:\\w+\\s+){0,2}(?:names?|lists?|holds?|claims?)" +
+    "|" +
+    // an explicit agent: `held by \`codex-...\`: ...`
+    "(?:held|claimed|owned|taken)\\s+by" +
+    ")\\b[^.]{0,40}$",
+  "i",
+);
+
+/**
+ * The text in front of a path, with backticked spans reduced so that reach is
+ * measured in words rather than in the length of whoever's run id sits between
+ * the verb and the file.
+ *
+ * A backticked span that is ITSELF a path becomes a full stop, not a blank:
+ * it ends the cue's reach exactly as a sentence boundary would. Without that,
+ * `which names \`a.mjs\` and my own \`b.mjs\`` would free `b.mjs` too, which is
+ * this item's own defect reversed.
+ */
+function attributiveReach(before) {
+  return before.replace(/`([^`]*)`/g, (_, inner) => (normalisePath(inner) ? "." : "``"));
+}
+
 /** Every repo path this line HOLDS, with the ones it merely mentions dropped. */
 export function claimedPaths(text) {
   const line = String(text ?? "");
@@ -526,6 +583,7 @@ export function claimedPaths(text) {
     if (!normalised) continue;
     const before = line.slice(0, match.index + (match[0].length - match[1].length));
     if (PATH_NEGATOR.test(before)) continue;
+    if (PATH_ATTRIBUTIVE.test(attributiveReach(before))) continue;
     if (!out.has(normalised.path)) out.set(normalised.path, normalised);
   }
   return [...out.values()];

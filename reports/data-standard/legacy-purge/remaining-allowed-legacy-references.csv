@@ -115,6 +115,7 @@ current-state-pack,docs/releases/records/2026-07-15-legacy-template-purge-pr1.md
 v6-v7-current-state,docs/releases/records/2026-07-16-multi-tenant-v3-cxo-context.md,release record
 legacy-v-dimension-token,docs/releases/records/2026-08-19-v6-v7-dead-code-sweep.md,release record
 legacy-v-file-name,docs/releases/records/2026-08-19-v6-v7-dead-code-sweep.md,release record
+synthetic-v-folder-reference,docs/releases/records/2026-09-22-source-ai-engineering-archetype-pack.md,release record
 synthetic-v-folder-reference,docs/releases/records/2026-09-22-source-candidate-supplier-registry-synthetic-v1.md,release record
 synthetic-v-folder-reference,docs/skyharbor/AZURE_PRIVATE_LOAD_RUNBOOK.md,non-loader historical reference
 synthetic-v-folder-reference,docs/source/SKYHARBOR_DATASET_AND_INGESTION_PLAN.md,non-loader historical reference
