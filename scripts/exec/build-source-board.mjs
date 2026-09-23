@@ -167,6 +167,72 @@ const summaryGenerator = {
 
 /* ---------------------------------------------------------------- parsing */
 
+/**
+ * One markdown table row, split into cells the way GitHub splits it — item
+ * T-738.
+ *
+ * The rule is GFM's, not this file's, and the distinction is the whole item.
+ * A backslash-escaped pipe is CONTENT anywhere in a row, including inside a
+ * code span; a BARE pipe is a cell delimiter, also including inside a code
+ * span. Splitting on every pipe read the first as a delimiter, which ended
+ * the cell it sat in and shifted every cell after it. Eleven live items
+ * carried a `Lane` cell holding a regex fragment or a shell snippet for that
+ * reason, and their acceptance — the field that decides claimable versus
+ * blocked — was wrong in the same rows and silently so, because a regex in
+ * the lane column is visible and a truncated sentence is not.
+ *
+ * T-738 was filed asking for "pipes that are NOT inside a backtick span", and
+ * that is a DIFFERENT rule which this deliberately does not implement. Under
+ * it, `C-009` and `T-545` — the two rows carrying a bare pipe inside
+ * backticks — would parse here and nowhere else, because GitHub renders those
+ * two rows shifted as well. A reader and a writer of one grammar have to
+ * round-trip; those rows are malformed at source, the repair belongs in the
+ * document, and what this file owes them is to say so by name.
+ *
+ * Backslashes are counted rather than pattern-replaced: `\\|` is an escaped
+ * backslash followed by a REAL delimiter, which a blanket replace of `\|`
+ * gets wrong.
+ */
+function splitTableRow(line) {
+  const body = line.slice(1, line.endsWith("|") ? -1 : undefined);
+  const cells = [];
+  let cur = "";
+  for (let i = 0; i < body.length; i += 1) {
+    const ch = body[i];
+    if (ch === "\\" && i + 1 < body.length && (body[i + 1] === "|" || body[i + 1] === "\\")) {
+      // An escaped pipe renders as a pipe; an escaped backslash is kept
+      // verbatim so the cell still reads as the markdown it was written as.
+      cur += body[i + 1] === "|" ? "|" : "\\\\";
+      i += 1;
+      continue;
+    }
+    if (ch === "|") {
+      cells.push(cur);
+      cur = "";
+      continue;
+    }
+    cur += ch;
+  }
+  cells.push(cur);
+  return cells.map((c) => c.trim());
+}
+
+/**
+ * Whether a row carries a bare pipe inside a balanced code span — the
+ * malformed shape above. Escaped pipes are removed first so they cannot be
+ * mistaken for the defect, and an UNBALANCED span answers `false`: there is
+ * no span to be inside of, the row is malformed in a different way, and
+ * guessing at where the author meant the span to end would be inventing
+ * content. The live corpus contains no such row, so the branch is held by a
+ * fixture rather than by data.
+ */
+function hasBarePipeInCodeSpan(line) {
+  const withoutEscapes = line.split("\\|").join("\u0000").split("\\\\").join("\u0000");
+  const ticks = (withoutEscapes.match(/`/g) ?? []).length;
+  if (ticks % 2 === 1) return false;
+  return (withoutEscapes.match(/`[^`]*`/g) ?? []).some((span) => span.includes("|"));
+}
+
 /** Rows of every GitHub-flavoured pipe table under a given `## heading`. */
 function tablesUnderHeading(text, headingRe) {
   const lines = text.split(/\r?\n/);
@@ -184,7 +250,7 @@ function tablesUnderHeading(text, headingRe) {
       header = null;
       continue;
     }
-    const cells = line.slice(1, line.endsWith("|") ? -1 : undefined).split("|").map((c) => c.trim());
+    const cells = splitTableRow(line);
     if (/^-{2,}$/.test(cells[0]?.replace(/\s/g, "") ?? "")) continue;
     if (!header) {
       header = cells;
@@ -227,7 +293,7 @@ function backlogTableItems(text) {
     const h = line.match(/^##+\s+(.*)$/);
     if (h) { section = h[1].trim(); header = null; continue; }
     if (!line.startsWith("|")) continue;
-    const cells = line.slice(1, line.endsWith("|") ? -1 : undefined).split("|").map((c) => c.trim());
+    const cells = splitTableRow(line);
     if (/^-{2,}$/.test(cells[0]?.replace(/\s/g, "") ?? "")) continue;
     if (cells[0] === "#") { header = cells; continue; }
     if (!header) continue;
@@ -267,6 +333,11 @@ function backlogTableItems(text) {
       lane: laneCell(header, cells),
       acceptance: cells[3] ?? "",
       raw: cells.join(" | "),
+      // Item T-738. Recorded per definition so the report can name the id.
+      // GitHub splits this row the same way, so it is a defect in the
+      // document rather than in the reader, and it stays visible until the
+      // row is repaired there.
+      barePipeInCodeSpan: hasBarePipeInCodeSpan(line),
     });
   }
   return out;
@@ -1396,6 +1467,18 @@ const laneUnusable = [...byNum.entries()]
   .map(([num, defs]) => ({ num, lane: laneOfNum(defs).trim() }))
   .filter((r) => r.lane && !KNOWN_LANES.has(r.lane))
   .sort((a, b) => String(a.num).localeCompare(String(b.num), undefined, { numeric: true }));
+/**
+ * Rows carrying a BARE pipe inside a code span — item T-738. The escaped
+ * pipes are handled by `splitTableRow` and never appear here; these are the
+ * rows GitHub itself renders shifted, so the repair is to escape the pipe in
+ * the backlog. Named rather than absorbed, because a parser quietly
+ * disagreeing with the document its readers see is the failure mode this
+ * generator exists against.
+ */
+const barePipeRows = [...byNum.entries()]
+  .filter(([, defs]) => (defs ?? []).some((d) => d.barePipeInCodeSpan))
+  .map(([num]) => num)
+  .sort((a, b) => String(a).localeCompare(String(b), undefined, { numeric: true }));
 
 const tracks = sideTracks.map((t) => ({
   ...t,
@@ -1485,6 +1568,13 @@ console.log(
 console.log(
   `  lane cell is not a lane:  ${laneUnusable.length}` +
     (laneUnusable.length ? " -> " + laneUnusable.map((r) => displayItemId(r.num)).join(", ") : ""),
+);
+console.log(
+  `  bare pipe in a code span: ${barePipeRows.length}` +
+    (barePipeRows.length
+      ? " -> " + barePipeRows.map((n) => displayItemId(n)).join(", ")
+        + "  (malformed in the backlog, not here \u2014 GitHub shifts these rows too; escape the pipe)"
+      : ""),
 );
 
 // An unmapped id is invisible to the queue: it is not offered to any agent,
