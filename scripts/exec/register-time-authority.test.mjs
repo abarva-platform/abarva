@@ -3322,5 +3322,353 @@ function preclaimFiles(file, item, identity, files, extra = []) {
 }
 
 
+// ---------------------------------------------------------------------------
+// Item T-725 — a path LIST is decided one path at a time, so a cue that
+// disqualifies the list reaches only its first member.
+//
+// The item dimension of this family closed in T-722 and T-724. The path half
+// was left open and it lands on the sanctioned release path, which is the
+// worst target a false refusal has: a release is the act that frees files.
+//
+// THE REAL KNOWN POSITIVE IS A LIVE REGISTER LINE, not a fixture. At 06:59Z a
+// run's release of T-720 was REFUSED because a sibling's claim line names that
+// run's three files in order to say it is staying off them:
+//
+//   The one live sibling claim, <agent> on T-720, names <a>, <b> and <c>
+//   - none of which I touch, and I will not add the workflow to my list ...
+//
+// Two separate reasons the current reader holds all three, and the fix has to
+// answer both or the known positive does not move:
+//
+//   1. THE FRONT CUE STOPS AT THE FIRST COMMA. `PATH_NEGATOR` and
+//      `PATH_ATTRIBUTIVE` are both anchored `[^.]{0,40}$` — a CHARACTER bound
+//      that may not cross a full stop. Every repo path contains a full stop,
+//      so once one path has been written no cue in front of the list can
+//      reach any later member. `Files released: a.ts, b.ts and c.ts` frees
+//      `a.ts` today and holds the other two, which is not a reading anybody
+//      chose; it is the unit of the bound deciding the grammar. This is the
+//      same defect in the same shape as the word-versus-character bound
+//      T-709 and T-722 each had to repair one dimension over.
+//
+//   2. THE DISCLAIMER IS ON THE RIGHT. The item asked for "the left-governing
+//      disclaimer `itemSubjects` now has", and that is a correction of record
+//      rather than a quibble: measured on the line itself, there is no
+//      negation in FRONT of those paths at all. The sentence attributes them
+//      with `names` and then disclaims the whole list behind it. A purely
+//      left-governing repair passes every fixture and leaves the one case the
+//      item was filed for exactly where it was.
+//
+// So the unit of decision becomes the LIST: consecutive paths joined by
+// nothing but list punctuation are one object, the existing front cues are
+// evaluated once at its head, and a new tail veto reads the disclaimer behind
+// it. The tail vocabulary is counted off the real register rather than
+// brainstormed — `of which` occurs six times and `none of them` twenty-six,
+// and only three of those thirty-two disclaim a path: `none of which I
+// touch`, `neither of which is in my list`, `and I touch none of them`. All
+// three carry a first-person marker and the other twenty-nine do not, so the
+// veto requires one. `none of which resolve in ...`, `none of which any
+// workflow runs` and `Authorities, none of them my clock` are the negative
+// controls that requirement exists for, and they are asserted below.
+// ---------------------------------------------------------------------------
+{
+  // (1) THE KNOWN POSITIVE, transcribed from live register line 2059 with the
+  // run id and the item number kept, because the gap between the third-party
+  // subject and its verb is exactly what defeats the attributive cue.
+  const LIVE_LINE =
+    "2026-09-23T06:52:18Z | source-backlog-executor#20260923T0649Z | " +
+    "item T-722 claimed on branch `exec/t-722-disclaimer-read-as-claim` — FILE OVERLAP CHECKED, NOT ASSUMED: " +
+    "The one live sibling claim, source-backlog-executor#20260923T0620Z on T-720, names " +
+    "scripts/exec/build-execution-queue.mjs, scripts/exec/README.md and " +
+    ".github/workflows/execution-queue-toolchain.yml - none of which I touch, and I will not add " +
+    "the workflow to my list for that reason. " +
+    "files: scripts/exec/register-time-authority.mjs,scripts/exec/register-time-authority.test.mjs";
+  const held = claimedPaths(LIVE_LINE).map((p) => p.path);
+  check(
+    "KNOWN POSITIVE — the first disclaimed path in the narrated list does not hold",
+    !held.includes("scripts/exec/build-execution-queue.mjs"),
+    `paths=${JSON.stringify(held)}`,
+  );
+  check(
+    "KNOWN POSITIVE — the middle disclaimed path does not hold either",
+    !held.includes("scripts/exec/README.md"),
+    `paths=${JSON.stringify(held)}`,
+  );
+  check(
+    "KNOWN POSITIVE — the last disclaimed path, behind `and`, does not hold",
+    !held.includes(".github/workflows/execution-queue-toolchain.yml"),
+    `paths=${JSON.stringify(held)}`,
+  );
+  check(
+    "NEGATIVE CONTROL — the same line's own `files:` list still holds, both members",
+    held.includes("scripts/exec/register-time-authority.mjs") &&
+      held.includes("scripts/exec/register-time-authority.test.mjs"),
+    `paths=${JSON.stringify(held)}`,
+  );
+}
+
+{
+  // (2) The front cue and the comma. Nothing about this is new vocabulary:
+  // `released` is already in `PATH_NEGATOR` and already frees the first path.
+  const freed = claimedPaths("item T-801 claimed — Files released: a/one.ts, b/two.ts and c/three.ts").map(
+    (p) => p.path,
+  );
+  check(
+    "a front negator governs the whole list, not only its first member",
+    freed.length === 0,
+    `paths=${JSON.stringify(freed)}`,
+  );
+
+  const attributed = claimedPaths(
+    "item T-801 claimed — (`codex-other`, which lists `a/one.mjs`, `b/two.mjs` and `c/three.mjs`)",
+  ).map((p) => p.path);
+  check(
+    "a front attributive governs the whole list, not only its first member",
+    attributed.length === 0,
+    `paths=${JSON.stringify(attributed)}`,
+  );
+}
+
+{
+  // (3) The tail disclaimer, in each of the three forms the register writes.
+  const ofWhich = claimedPaths(
+    "item T-801 claimed — the sibling names a/one.ts and b/two.ts - none of which I touch",
+  ).map((p) => p.path);
+  check(
+    "a trailing `none of which I touch` frees the list it follows",
+    ofWhich.length === 0,
+    `paths=${JSON.stringify(ofWhich)}`,
+  );
+
+  const neither = claimedPaths(
+    "item T-801 claimed — cc-a touched scripts/quality/a.mjs and scripts/quality/b.mjs, " +
+      "neither of which is in my list",
+  ).map((p) => p.path);
+  check(
+    "a trailing `neither of which is in my list` frees the list it follows",
+    neither.length === 0,
+    `paths=${JSON.stringify(neither)}`,
+  );
+
+  const inverted = claimedPaths(
+    "item T-801 claimed — the sibling names `a/one.mjs` (4) and `b/two.mjs` (2), and I touch none of them.",
+  ).map((p) => p.path);
+  check(
+    "a trailing `and I touch none of them` frees the list it follows",
+    inverted.length === 0,
+    `paths=${JSON.stringify(inverted)}`,
+  );
+}
+
+{
+  // (4) THE NEGATIVE CONTROLS FOR THE TAIL VETO. All four are real register
+  // sentences. A veto that frees a genuine file claim puts two runs on one
+  // file, which is the failure this whole gate exists to prevent, so each of
+  // these must go on holding.
+  const resolves = claimedPaths(
+    "item T-801 claimed — that id is one of 20 in `src/lib/source/artifact-gate-map.ts`, " +
+      "none of which resolve in `SOURCE_GATE_CRITERIA`",
+  ).map((p) => p.path);
+  check(
+    "NEGATIVE CONTROL — `none of which resolve` has no first person and still HOLDS",
+    resolves.includes("src/lib/source/artifact-gate-map.ts"),
+    `paths=${JSON.stringify(resolves)}`,
+  );
+
+  const runsNowhere = claimedPaths(
+    "item T-801 claimed — NINE files (8 in `src/lib/atlas/__tests__` + `src/lib/atlas/llm-determinism.test.ts`), " +
+      "none of which any workflow runs",
+  ).map((p) => p.path);
+  check(
+    "NEGATIVE CONTROL — `none of which any workflow runs` still HOLDS",
+    runsNowhere.includes("src/lib/atlas/llm-determinism.test.ts"),
+    `paths=${JSON.stringify(runsNowhere)}`,
+  );
+
+  const thirdParty = claimedPaths(
+    "item T-801 claimed — no overlap with the two live claims (T-454 12:58Z, T-575 13:17Z), " +
+      "neither of which touches src/components/shell/WorkspaceExecutiveShell.tsx",
+  ).map((p) => p.path);
+  check(
+    "NEGATIVE CONTROL — a path that is the OBJECT of the disclaimer is the writer's own and HOLDS",
+    thirdParty.includes("src/components/shell/WorkspaceExecutiveShell.tsx"),
+    `paths=${JSON.stringify(thirdParty)}`,
+  );
+
+  const authorities = claimedPaths(
+    "item T-801 claimed — files: scripts/exec/a.mjs. Authorities, none of them my clock: PR #8325",
+  ).map((p) => p.path);
+  check(
+    "NEGATIVE CONTROL — `Authorities, none of them my clock` is not behind a path list and frees nothing",
+    authorities.includes("scripts/exec/a.mjs"),
+    `paths=${JSON.stringify(authorities)}`,
+  );
+
+  // The quantifier alone is NOT the cue, and this pins why. `none` and
+  // `neither` occur 193 times on the register outside `none of which/them` —
+  // `1,904 run by none`, `status: none`, `and none of them landed` — and the
+  // register counts things in the first person constantly. Without the
+  // `of which|them` half, a line stating a count frees the files it claims.
+  const counted = claimedPaths(
+    "item T-801 claimed — files: a/one.ts and b/two.ts, and I wired none of the four suites",
+  ).map((p) => p.path);
+  check(
+    "NEGATIVE CONTROL — a first-person COUNT behind the list is not a disclaimer and it HOLDS",
+    counted.includes("a/one.ts") && counted.includes("b/two.ts"),
+    `paths=${JSON.stringify(counted)}`,
+  );
+}
+
+{
+  // (5) THE LIST IS PUNCTUATION ONLY, which is what keeps T-710's own guard
+  // standing. `which names \`a\` and my own \`b\`` must still hold `b`: the
+  // words `my own` are not a list joiner, so `b` opens a new list whose head
+  // is read from the top of the sentence, exactly as it is today.
+  const myOwn = claimedPaths(
+    "item T-801 claimed — (`codex-other`, which lists `a/one.mjs`) and my own `b/two.mjs`",
+  ).map((p) => p.path);
+  check(
+    "NEGATIVE CONTROL — `and my own` breaks the list and the writer's own path HOLDS",
+    !myOwn.includes("a/one.mjs") && myOwn.includes("b/two.mjs"),
+    `paths=${JSON.stringify(myOwn)}`,
+  );
+
+  // A sentence boundary between two lists keeps the disclaimer off the second.
+  const twoLists = claimedPaths(
+    "item T-801 claimed — the sibling names a/one.ts and b/two.ts - none of which I touch. " +
+      "My own edit is c/three.ts",
+  ).map((p) => p.path);
+  check(
+    "NEGATIVE CONTROL — a list in the NEXT sentence is out of the tail veto's reach and HOLDS",
+    twoLists.length === 1 && twoLists[0] === "c/three.ts",
+    `paths=${JSON.stringify(twoLists)}`,
+  );
+
+  // The tail reach is bounded, and pinned from BOTH sides so a mutation that
+  // widens it fails rather than passing unnoticed.
+  const farAway = claimedPaths(
+    "item T-801 claimed — files: a/one.ts and b/two.ts which I rebuilt from the branch point " +
+      "after the queue toolchain job reported clean, none of which I touch",
+  ).map((p) => p.path);
+  check(
+    "NEGATIVE CONTROL — a disclaimer far past the end of the list does NOT reach back",
+    farAway.includes("a/one.ts") && farAway.includes("b/two.ts"),
+    `paths=${JSON.stringify(farAway)}`,
+  );
+}
+
+{
+  // (6) Through the PROCESS, not only the unit, and on the shape that was
+  // actually refused: a sibling's claim line narrating my files, and my
+  // release asking for them back.
+  const { dir, file } = fixture([
+    "2026-09-22T18:22:00Z | source-backlog-executor#20260922T182200Z | " +
+      "item T-722 claimed on branch `exec/t-722` — FILE OVERLAP CHECKED, NOT ASSUMED: " +
+      "The one live sibling claim, source-backlog-executor#20260922T180000Z on T-720, names " +
+      "scripts/exec/build-execution-queue.mjs, scripts/exec/README.md and " +
+      ".github/workflows/execution-queue-toolchain.yml - none of which I touch. " +
+      "files: scripts/exec/register-time-authority.mjs",
+  ]);
+  const release = preclaimFiles(
+    file,
+    "T-720",
+    "source-backlog-executor#20260922T180000Z",
+    "scripts/exec/build-execution-queue.mjs,scripts/exec/README.md,.github/workflows/execution-queue-toolchain.yml",
+  );
+  check(
+    "THE MOVEMENT — the release of the narrated files is no longer refused",
+    release.status === 0 && (release.report.fileOverlap?.conflicts ?? []).length === 0,
+    `status=${release.status} overlap=${JSON.stringify(release.report.fileOverlap)}`,
+  );
+  const own = preclaimFiles(
+    file,
+    "T-801",
+    "codex-other-lane#20260922T182500Z",
+    "scripts/exec/register-time-authority.mjs",
+  );
+  check(
+    "THE GUARD — the same line's own declared file is still refused, same register, same run",
+    own.status === 1 && (own.report.fileOverlap?.conflicts ?? []).length === 1,
+    `status=${own.status} overlap=${JSON.stringify(own.report.fileOverlap)}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+
+{
+  // (7) The hyphen. Letting a cue govern a whole list means a WRONG head
+  // verdict is amplified, so the one wrong head on the real register is
+  // repaired rather than propagated. Live line 1356 reads
+  // `not an ordinary no-record state; files limited to <a>, <b>, <c>` — the
+  // `no` inside `no-record` already freed the first of three genuinely
+  // claimed paths before this item existed.
+  const compound = claimedPaths(
+    "item T-801 claimed — not an ordinary no-record state; files limited to a/one.ts, b/two.ts",
+  ).map((p) => p.path);
+  check(
+    "a negator inside a hyphenated compound disclaims nothing, and the list HOLDS",
+    compound.includes("a/one.ts") && compound.includes("b/two.ts"),
+    `paths=${JSON.stringify(compound)}`,
+  );
+
+  const flag = claimedPaths(
+    "item T-801 claimed — ran `npx tsc --noEmit` and `jest --no-coverage --ci`; files: a/one.ts, b/two.ts",
+  ).map((p) => p.path);
+  check(
+    "NEGATIVE CONTROL — a `--no-coverage` style flag does not free the files: list behind it",
+    flag.includes("a/one.ts") && flag.includes("b/two.ts"),
+    `paths=${JSON.stringify(flag)}`,
+  );
+
+  // THE GUARD ON THE GUARD: the un-hyphenated vocabulary must still veto, or
+  // `(?!-)` would have turned the whole negator off rather than narrowed it.
+  const plain = claimedPaths("item T-801 claimed — I will not touch a/one.ts or b/two.ts").map(
+    (p) => p.path,
+  );
+  check(
+    "NEGATIVE CONTROL — the plain negator still frees what it governs",
+    plain.length === 0,
+    `paths=${JSON.stringify(plain)}`,
+  );
+}
+
+
+{
+  // (8) The cue's PRONOUN object, the second wrong head the propagation would
+  // otherwise have amplified. Live line 2027, a run declaring two files it
+  // holds that its `--files` list omits:
+  //   ... I AM NAMING THEM HERE RATHER THAN OMITTING THEM: <a> and <b>
+  const declared = claimedPaths(
+    "item C-801 claimed — TWO FILES I TOUCHED ARE ABSENT FROM THE --files LIST ABOVE AND I AM " +
+      "NAMING THEM HERE RATHER THAN OMITTING THEM: scripts/quality/a.json and scripts/quality/b.mjs",
+  ).map((p) => p.path);
+  check(
+    "a cue whose object is a pronoun before the colon does not free the list after it",
+    declared.includes("scripts/quality/a.json") && declared.includes("scripts/quality/b.mjs"),
+    `paths=${JSON.stringify(declared)}`,
+  );
+
+  // THE GUARD ON THE GUARD, both directions. The same cue with the LIST as its
+  // object must still free, or the pronoun rule would have switched `rather
+  // than` off rather than narrowed it; and the colon form the register uses
+  // for genuine hand-backs must still free.
+  const realObject = claimedPaths(
+    "item T-801 claimed — I edited a/one.ts rather than b/two.ts",
+  ).map((p) => p.path);
+  check(
+    "NEGATIVE CONTROL — `rather than` still frees a path that is its own object",
+    !realObject.includes("b/two.ts"),
+    `paths=${JSON.stringify(realObject)}`,
+  );
+  const handBack = claimedPaths(
+    "item T-801 claimed — RELEASED. Files released: a/one.ts, b/two.ts and c/three.ts",
+  ).map((p) => p.path);
+  check(
+    "NEGATIVE CONTROL — a colon that introduces the cue's OWN list still frees all of it",
+    handBack.length === 0,
+    `paths=${JSON.stringify(handBack)}`,
+  );
+}
+
+
 console.log(`\n${passes} passed, ${failures} failed`);
 process.exit(failures ? 1 : 0);
