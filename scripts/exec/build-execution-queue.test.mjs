@@ -2030,5 +2030,195 @@ function rewriteSummary(dir, mutate) {
   );
 }
 
+
+/* ------------------------------------------------------------------------ */
+/* 27. WHY THE QUEUE IS EMPTY (item T-731).                                  */
+/*                                                                           */
+/*     Measured on the live documents at origin/main `3b8e0dc99`, the         */
+/*     claimable funnel is 424 -> 83 -> 62 -> 15 -> 14 -> 14 -> 0: fourteen   */
+/*     of fourteen surviving candidates are removed by the in-flight rule     */
+/*     alone. The rendered file said "0 items are claimable" and nothing      */
+/*     else, so an agent could not tell an exhausted backlog from one         */
+/*     filter having eaten the list, and the difference decides whether it    */
+/*     stops or goes looking.                                                 */
+/*                                                                           */
+/*     These cases assert on the RENDERED FILE, never on the generator's      */
+/*     own opinion of its counts.                                             */
+/* ------------------------------------------------------------------------ */
+
+/** The ids the queue names as candidates the in-flight rule alone suppresses. */
+function suppressedCandidateSection(rendered) {
+  return rendered.match(
+    /\*\*Suppressed CANDIDATES — the only ids between this queue and a claimable row \((\d+) of (\d+)\):\*\*(.*)/,
+  ) ?? null;
+}
+
+/** The rendered funnel rows, as `label -> remaining` pairs. */
+function funnelRows(rendered) {
+  // Bound the block by the NEXT heading, not by the first blank line: the
+  // block has a blank line after its own heading, so a lazy `\n\n` bound
+  // reads an empty table and every count assertion below it passes vacuously
+  // on zero rows.
+  const block = rendered.match(/## Why that number\n[\s\S]*?(?=\n## )/)?.[0] ?? "";
+  return [...block.matchAll(/^\| (.+?) \| (\d+) \| (\d+) \|$/gm)].map((m) => ({
+    label: m[1],
+    removed: Number(m[2]),
+    remaining: Number(m[3]),
+  }));
+}
+
+/**
+ * A fixture with three expired in-flight claims of which exactly ONE is a
+ * claimable candidate.
+ *
+ * The other two are the dilution this item is about: on the live documents
+ * 132 ids sit on the in-flight line and only 14 of them would become
+ * claimable if freed, so "check its branch and PR" costs 132 lookups to
+ * recover 14 rows and is therefore never performed.
+ */
+function suppressedFixture({ alsoSuppressBase = false } = {}) {
+  const dir = freshFixture();
+  // The candidate: ordinary open item, states an acceptance, nobody's gate.
+  addBacklogItem(dir, "T-901");
+  mapFixtureId(dir, "T-901");
+  // Not a candidate: its acceptance is a decision, so it is blocked on Anand.
+  fs.appendFileSync(
+    path.join(dir, "EXECUTION_BACKLOG_20260918.md"),
+    `\n| T-902 | **Synthetic owner-gated fixture.** | T | Decision needed: which taxonomy applies. |\n`,
+  );
+  mapFixtureId(dir, "T-902");
+  // Not a candidate: no acceptance at all, so there is nothing to finish.
+  fs.appendFileSync(
+    path.join(dir, "EXECUTION_BACKLOG_20260918.md"),
+    // An empty acceptance cell, not an em dash: the filter tests the trimmed
+    // string, and "—" is a character like any other. A fixture writing the
+    // dash asserts nothing about the rule it is aimed at.
+    `\n| T-903 | **Synthetic note, not work.** | T |  |\n`,
+  );
+  mapFixtureId(dir, "T-903");
+  fs.appendFileSync(
+    path.join(dir, "EXECUTION_CLAIMS.md"),
+    [
+      "",
+      `${registerStamp(2600)} | lane-a | item T-901 · CLAIMED | branch codex/t901-fixture`,
+      `${registerStamp(2600)} | lane-a | item T-902 · CLAIMED | branch codex/t902-fixture`,
+      `${registerStamp(2600)} | lane-a | item T-903 · CLAIMED | branch codex/t903-fixture`,
+      // The base fixture ships one ordinary claimable item, T-507. Suppressing
+      // it too is what reproduces the live shape: a queue whose claimable list
+      // is empty ONLY because every survivor sits behind the in-flight rule.
+      ...(alsoSuppressBase
+        ? [`${registerStamp(2600)} | lane-a | item T-507 · CLAIMED | branch codex/t507-fixture`]
+        : []),
+      "",
+    ].join("\n"),
+  );
+  return dir;
+}
+
+/* --- 27a. The suppressed CANDIDATES are named apart from the rest -------- */
+/*          Without this the file names all three ids and the reader has no  */
+/*          way to know which one is worth a GitHub lookup.                  */
+{
+  const dir = suppressedFixture();
+  const q = buildBoardAndQueue(dir);
+  const rendered = fs.readFileSync(path.join(dir, "EXECUTION_QUEUE.md"), "utf8");
+  fs.rmSync(dir, { recursive: true, force: true });
+  const m = suppressedCandidateSection(rendered);
+  check(
+    "the in-flight ids that would be claimable are named apart from those that would not",
+    q.status === 0 && m !== null
+      && m[1] === "1" && m[2] === "3"
+      && m[3].includes("T-901")
+      && !m[3].includes("T-902")
+      && !m[3].includes("T-903"),
+    `exit=${q.status}\nmatched=${m ? m[0] : "(no suppressed-candidate line)"}\ninFlight=${inFlightSection(rendered)}`,
+  );
+}
+
+/* --- 27b. The full in-flight list is NOT replaced by the subset ---------- */
+/*          The collision warning the subset came from still has to reach    */
+/*          the reader: an id whose claim is live work must stay named even  */
+/*          when it could never be claimable.                                */
+{
+  const dir = suppressedFixture();
+  const q = buildBoardAndQueue(dir);
+  const rendered = fs.readFileSync(path.join(dir, "EXECUTION_QUEUE.md"), "utf8");
+  fs.rmSync(dir, { recursive: true, force: true });
+  const full = inFlightSection(rendered);
+  check(
+    "narrowing the list to candidates does not stop the other in-flight ids being reported",
+    q.status === 0 && full.includes("T-901") && full.includes("T-902") && full.includes("T-903"),
+    `exit=${q.status}\ninFlight=${full}`,
+  );
+}
+
+/* --- 27c. NEGATIVE CONTROL: nothing suppressed, no section -------------- */
+/*          A section rendered unconditionally would pass 27a on its header  */
+/*          alone. `Array.every` of nothing is true and `0 of 0` compares    */
+/*          two empty lists, so the absent case is asserted explicitly.      */
+{
+  const dir = freshFixture();
+  addBacklogItem(dir, "T-904");
+  mapFixtureId(dir, "T-904");
+  const q = buildBoardAndQueue(dir);
+  const rendered = fs.readFileSync(path.join(dir, "EXECUTION_QUEUE.md"), "utf8");
+  fs.rmSync(dir, { recursive: true, force: true });
+  check(
+    "NEGATIVE CONTROL — with nothing suppressed the candidate line is absent, not empty",
+    q.status === 0
+      && suppressedCandidateSection(rendered) === null
+      && !rendered.includes("Suppressed CANDIDATES")
+      && rendered.includes("| T-904 |"),
+    `exit=${q.status}\nrendered tail=${rendered.slice(-600)}`,
+  );
+}
+
+/* --- 27d. The funnel explains the number, and it is computed ------------ */
+/*          from the same predicates the filter uses. A report derived a     */
+/*          second time from a parallel copy of the rules can disagree with  */
+/*          the filter it describes, which is the defect family this whole   */
+/*          directory exists against.                                        */
+{
+  const dir = suppressedFixture();
+  const q = buildBoardAndQueue(dir);
+  const rendered = fs.readFileSync(path.join(dir, "EXECUTION_QUEUE.md"), "utf8");
+  fs.rmSync(dir, { recursive: true, force: true });
+  const rows = funnelRows(rendered);
+  const inFlightRow = rows.find((r) => /in flight/i.test(r.label));
+  const blockedRow = rows.find((r) => /Anand|owner/i.test(r.label));
+  const acceptanceRow = rows.find((r) => /acceptance/i.test(r.label));
+  check(
+    "the rendered funnel accounts for every item the claimable filter removed",
+    q.status === 0
+      && rows.length >= 6
+      && inFlightRow?.removed === 1
+      && inFlightRow?.remaining === 1
+      && blockedRow?.removed === 1
+      && acceptanceRow?.removed === 1,
+    `exit=${q.status}\nrows=${JSON.stringify(rows, null, 2)}`,
+  );
+}
+
+/* --- 27e. Zero claimable says so in words, and the count agrees --------- */
+/*          The summary sentence and the funnel are two renderings of one    */
+/*          number; if they can disagree the reader learns nothing from      */
+/*          either.                                                          */
+{
+  const dir = suppressedFixture({ alsoSuppressBase: true });
+  const q = buildBoardAndQueue(dir);
+  const rendered = fs.readFileSync(path.join(dir, "EXECUTION_QUEUE.md"), "utf8");
+  fs.rmSync(dir, { recursive: true, force: true });
+  const rows = funnelRows(rendered);
+  const last = rows[rows.length - 1];
+  check(
+    "an empty queue states which filter emptied it and agrees with its own count",
+    q.status === 0
+      && rendered.includes("**0 items are claimable right now")
+      && /every remaining candidate was removed by/i.test(rendered)
+      && last?.remaining === 0,
+    `exit=${q.status}\nrows=${JSON.stringify(rows)}\nhead=${rendered.slice(0, 1400)}`,
+  );
+}
+
 console.log(`\n${passes} passed, ${failures} failed`);
 process.exit(failures ? 1 : 0);

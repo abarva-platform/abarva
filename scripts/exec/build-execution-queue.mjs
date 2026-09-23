@@ -670,26 +670,99 @@ function formatItemId(id) {
   return typeof id === "number" ? `#${id}` : String(id);
 }
 
-const claimable = all
-  .filter((i) => i.rung === 0)
+/**
+ * The claimable filter, as a list rather than a chain (item T-731).
+ *
+ * It was a `.filter().filter()` chain, which is the same arithmetic and tells
+ * the reader nothing. Measured on the live documents at `3b8e0dc99` the chain
+ * ran 424 -> 83 -> 62 -> 15 -> 14 -> 14 -> **0**: every one of the fourteen
+ * survivors was removed by the last predicate, and the rendered file said only
+ * "0 items are claimable". An agent cannot act on that, because an exhausted
+ * backlog and a single filter eating the list look identical and imply
+ * opposite next moves — stop, or go and check fourteen branches.
+ *
+ * The stages are declared once and both the filter and the report read THIS
+ * list. A report re-deriving the rules a second time can disagree with the
+ * filter it claims to describe, which is the failure this directory exists
+ * against.
+ */
+const CLAIMABLE_STAGES = [
+  { label: "already has proof (not at rung 0)", keep: (i) => i.rung === 0 },
   // Closed is rung 0 because it proves nothing, but it is not work.
-  .filter((i) => i.rungLabel !== "Closed")
-  .filter((i) => !userBlockerText(i))
+  { label: "closed", keep: (i) => i.rungLabel !== "Closed" },
+  { label: "blocked on Anand", keep: (i) => !userBlockerText(i) },
   // An entry with no acceptance criterion states no demonstrable outcome, so
   // there is nothing for an agent to finish or for anyone to check. Item 49 was
   // a rationale note — written to stop someone re-deriving a wrong answer — and
   // it sat in this queue as claimable work with acceptance "—". The backlog is
   // prose, and anything with an `### Item N` heading parses as an item, so the
   // queue has to be the thing that refuses to offer a note as work.
-  .filter((i) => (i.acceptance ?? "").trim().length > 0)
-  .filter((i) => !claimed.has(normalizeItemId(i.num)))
+  { label: "states no acceptance, so it is a note rather than work", keep: (i) => (i.acceptance ?? "").trim().length > 0 },
+  { label: "held by a live claim", keep: (i) => !claimed.has(normalizeItemId(i.num)) },
   // An expired claim whose line names a branch or a PR is work in flight, not
   // free work. Offering it invites the collision the claim log exists to stop.
-  .filter((i) => !inFlightSet.has(normalizeItemId(i.num)));
+  { label: "suppressed as work in flight", keep: (i) => !inFlightSet.has(normalizeItemId(i.num)) },
+];
+
+const claimableFunnel = [];
+const claimable = CLAIMABLE_STAGES.reduce((survivors, stage) => {
+  const kept = survivors.filter(stage.keep);
+  claimableFunnel.push({
+    label: stage.label,
+    removed: survivors.filter((i) => !stage.keep(i)),
+    remaining: kept.length,
+  });
+  return kept;
+}, all);
+
+/**
+ * The ids the in-flight rule alone stands between and a claimable row.
+ *
+ * The in-flight line already named every suppressed id, and told the reader to
+ * check each branch and PR before taking one. On the live documents that is
+ * **132 ids of which 14 are candidates**, so the instruction costs 132 lookups
+ * to recover 14 rows and is therefore never carried out. Four of the fourteen
+ * were checked against GitHub by hand on 2026-09-23 and all four had merged
+ * 37 hours earlier with their branches deleted.
+ *
+ * This does not decide whether a branch is alive — that needs a live GitHub
+ * read the generator deliberately does not do — it only says which ids are
+ * worth the lookup.
+ */
+const suppressedCandidates = claimableFunnel[claimableFunnel.length - 1].removed
+  .map((i) => i.num)
+  .sort(compareItemIds);
 
 // Order: lifecycle work before platform work, then by item number so the
 // ordering is stable across runs and two agents derive the same sequence.
 claimable.sort((a, b) => (Number(b.isLifecycle) - Number(a.isLifecycle)) || compareItemIds(normalizeItemId(a.num), normalizeItemId(b.num)));
+
+/**
+ * Say why the claimable count is the number it is (item T-731).
+ *
+ * Rendered on every run rather than only when the count is zero: a block that
+ * appears only in the failing case is exercised only in the failing case, and
+ * this directory has already paid twice for branches nothing ever ran.
+ */
+function renderClaimableFunnel() {
+  const rows = claimableFunnel
+    .map((f) => `| ${f.label} | ${f.removed.length} | ${f.remaining} |`)
+    .join("\n");
+  const decisive = [...claimableFunnel].reverse().find((f) => f.removed.length > 0);
+  const verdict = claimable.length === 0 && decisive
+    ? `**Zero is a filter's answer, not necessarily an empty backlog.** Every remaining candidate was removed by _${decisive.label}_ — ${decisive.removed.length} item${decisive.removed.length === 1 ? "" : "s"}. Read that row before concluding there is nothing to do.`
+    : "";
+  return `## Why that number
+
+${all.length} items enter the filter; each row says what the next rule removed.
+
+| removed because it is | removed | left |
+|---|---|---|
+| — | — | ${all.length} |
+${rows}
+
+${verdict}`;
+}
 
 const LANES = {
   D: "data-plane — loaders, migrations (authoring only), adapters, projections",
@@ -820,6 +893,8 @@ SOURCE_EXECUTION_HOME=~/Downloads node scripts/exec/build-execution-queue.mjs
 **${claimable.length} items are claimable right now with no input from Anand.**
 ${Object.entries(byLane).map(([l, v]) => `${l}:${v.length}`).join("  ")}
 
+${renderClaimableFunnel()}
+
 ## How to take work without asking
 
 1. Create one identity for this run in the form \`<base-agent>#<run-id>\`. The
@@ -885,7 +960,7 @@ product decision. Surface it and take the next queue item instead.
 
 ${claimed.size ? [...claimed].sort(compareItemIds).map(formatItemId).join(" ") : "_None held. Every claim in the log is released or expired._"}
 
-${expiredInFlight.length ? `**Expired but WORK IN FLIGHT — do not take (${expiredInFlight.length}):** ${expiredInFlight.map(formatItemId).join(" ")} — the 3-hour rule lapsed, but each of these names a branch or an open PR, so its owner is still on it. Measured over 48 completed cycles the median hold is 21 minutes and the p90 is 362, so the TTL cannot tell a slow claim from an abandoned one. Take one only after checking its branch and PR are genuinely dead.`+"\n" : ""}${expiredClaims.length ? `\n**Expired with no branch or PR, free to take (${expiredClaims.length}):** ${expiredClaims.map(formatItemId).join(" ")} — re-claim with a fresh line.` : ""}
+${expiredInFlight.length ? `**Expired but WORK IN FLIGHT — do not take (${expiredInFlight.length}):** ${expiredInFlight.map(formatItemId).join(" ")} — the 3-hour rule lapsed, but each of these names a branch or an open PR, so its owner is still on it. Measured over 48 completed cycles the median hold is 21 minutes and the p90 is 362, so the TTL cannot tell a slow claim from an abandoned one. Take one only after checking its branch and PR are genuinely dead.`+"\n" : ""}${suppressedCandidates.length ? `\n**Suppressed CANDIDATES — the only ids between this queue and a claimable row (${suppressedCandidates.length} of ${expiredInFlight.length}):** ${suppressedCandidates.map(formatItemId).join(" ")} — every other id on the line above fails some other test as well, so freeing it changes nothing. These are the ones worth a lookup. Check the branch and the pull request the claim line names: if the branch is gone from \`git ls-remote --heads origin\` and the PR is merged or closed, the work is done and the claim is a fossil — append a release line for it rather than re-taking the item. This generator does not read GitHub, so it can say which ids are worth checking and not whether any of them is alive.`+"\n" : ""}${expiredClaims.length ? `\n**Expired with no branch or PR, free to take (${expiredClaims.length}):** ${expiredClaims.map(formatItemId).join(" ")} — re-claim with a fresh line.` : ""}
 ${releasedClaims.length ? `\n**Explicitly released (${releasedClaims.length}):** ${releasedClaims.map(formatItemId).join(" ")}` : ""}
 ${renderOrderDisagreements()}`;
 
