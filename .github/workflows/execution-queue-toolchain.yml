@@ -215,10 +215,10 @@ jobs:
       # two collisions that are genuinely on disk, by id, by line number and by
       # subject -- the item asked for proof on real positives rather than on
       # fixtures. On this runner those three cases SKIP, and skips are counted
-      # separately so a skipped case can never read as a passing one: 59 / 0 /
-      # 3 here against 69 / 0 / 0 locally. Red first against a reader stripped
-      # back to the status quo: 43 passed, 20 failed. Seventeen mutations,
-      # seventeen caught -- three of them only after a first attempt survived,
+      # separately so a skipped case can never read as a passing one: 60 / 0 /
+      # 3 here against 70 / 0 / 0 locally. Red first against a reader stripped
+      # back to the status quo: 43 passed, 20 failed. Eighteen mutations,
+      # eighteen caught -- three of them only after a first attempt survived,
       # and one of those survived because the grouping the case asserted on
       # collapsed the difference rather than because the guard was covered.
       #

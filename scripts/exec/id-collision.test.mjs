@@ -592,8 +592,23 @@ console.log("\nthe CLI");
     bad.stdout,
   );
 
-  const filtered = run(["--backlog", dirty, "--id", "T-917", "--json"]);
-  check("--id narrows to one id", filtered.status === 0, filtered.stdout.slice(0, 200));
+  // Both directions. The negative alone would pass for a filter that dropped
+  // everything it was given, which is the same "cannot fail" shape as a filter
+  // that was never applied.
+  const away = run(["--backlog", dirty, "--id", "T-917", "--json"]);
+  check(
+    "--id narrows away an id with no findings, and the run goes quiet",
+    away.status === 0 && JSON.parse(away.stdout).duplicates.length === 0,
+    away.stdout.slice(0, 200),
+  );
+  const onto = run(["--backlog", dirty, "--id", "T-916", "--json"]);
+  check(
+    "--id narrows ONTO the id that has one, and the finding survives the filter",
+    onto.status === 1 &&
+      JSON.parse(onto.stdout).duplicates.length === 1 &&
+      JSON.parse(onto.stdout).duplicates[0].id === "T-916",
+    onto.stdout.slice(0, 300),
+  );
 
   const missing = run(["--backlog", path.join(os.tmpdir(), "does-not-exist-idc.md")]);
   check(

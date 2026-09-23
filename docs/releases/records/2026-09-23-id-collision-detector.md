@@ -81,7 +81,7 @@ suite. Nothing this release adds runs in any request path.
   claim register; reports duplicate filings and live holds on ambiguous ids.
   Exits 1 when it reports anything, 0 when it does not, 2 when an input is
   missing. Entry-guarded through the shared `isDirectInvocation` predicate.
-- `scripts/exec/id-collision.test.mjs` — new. 69 behavioural cases.
+- `scripts/exec/id-collision.test.mjs` — new. 70 behavioural cases.
 - `.github/workflows/execution-queue-toolchain.yml` — one appended step running
   that suite. The detector itself is **not** wired into CI; see Known Gaps.
 - `scripts/exec/README.md` — how to run it, what it is not a replacement for,
@@ -99,10 +99,10 @@ copied and reduced to the sibling reader's behaviour — level-three headings
 only, `#` header cells only, no section governance, prefix-only status
 vocabulary — and the suite run against it unchanged: **43 passed, 20 failed.**
 The twenty include both real-corpus cases, which is the item's own acceptance
-replayed rather than described. Against the shipped reader: **69 passed, 0
+replayed rather than described. Against the shipped reader: **70 passed, 0
 failed, 0 skipped.**
 
-**On a runner, where the operator documents do not exist: 59 passed, 0 failed,
+**On a runner, where the operator documents do not exist: 60 passed, 0 failed,
 3 skipped.** Skips are counted and printed separately, so a skipped case can
 never be mistaken for a passing one.
 
@@ -119,9 +119,9 @@ never be mistaken for a passing one.
 | `toolchain-manifest` | 17 / 0 | 17 / 0 |
 | `worktree-retention` | 22 / 0 | 22 / 0 |
 
-560 passed / 0 failed before, 629 / 0 after.
+560 passed / 0 failed before, 630 / 0 after.
 
-**Seventeen mutations, seventeen caught**, each one first checked to have
+**Eighteen mutations, eighteen caught**, each one first checked to have
 actually changed behaviour — a no-op mutation reads exactly like a coverage gap.
 Three survived a first measurement and are the part worth recording:
 
@@ -138,6 +138,11 @@ Three survived a first measurement and are the part worth recording:
   asserted on grouped filings, and the grouping collapsed the difference. A
   second guard absorbing the first is how a survivor reads as coverage; the case
   now asserts on occurrences.
+
+A fourth was added after the fact rather than left as a gap: the `--id` filter
+was covered only in the direction that narrows a finding AWAY, which passes
+equally for a filter that discards everything it is given. Both directions are
+covered now, and a mutation emptying the filtered list is caught.
 
 **One guard was deleted rather than covered.** A filter for a table's `|---|`
 rule row changed nothing under mutation, on the corpus or in the suite, because
