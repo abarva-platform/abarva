@@ -31,9 +31,16 @@ import crypto from "node:crypto";
 import { execFileSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 
+import {
+  QUEUE_FILENAME,
+  formatQueueProvenance,
+  queueProvenanceStamp,
+} from "./queue-provenance.mjs";
+
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const HELPER = path.join(HERE, "append-claim.mjs");
 const GATE = path.join(HERE, "register-time-authority.mjs");
+const QUEUE_GENERATOR = path.join(HERE, "build-execution-queue.mjs");
 
 let passes = 0;
 let failures = 0;
@@ -53,6 +60,15 @@ function fixture(lines) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "append-claim-"));
   const file = path.join(dir, "EXECUTION_CLAIMS.md");
   fs.writeFileSync(file, `# Claims\n\n## Claim log — append only\n\n${lines.join("\n")}\n`);
+  // A claim asserts its item is a row of the generated queue, so since item
+  // T-720 the helper refuses one unless the queue beside the register was
+  // written by the repo-owned generator. An operator root without a current
+  // queue is a real refusal, covered by queue-provenance.test.mjs; every case
+  // in THIS file is about the register, so each fixture carries a current one.
+  fs.writeFileSync(
+    path.join(dir, QUEUE_FILENAME),
+    `# Execution queue — generated\n\n${formatQueueProvenance(queueProvenanceStamp(QUEUE_GENERATOR))}\n`,
+  );
   return { dir, file };
 }
 

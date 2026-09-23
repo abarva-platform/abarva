@@ -102,3 +102,35 @@ jobs:
       # assert on. Fifteen mutations, fifteen caught, each by a named case.
       - name: Run the worktree retention contract
         run: node scripts/exec/worktree-retention.test.mjs
+
+      # T-720. Which generator wrote the queue a claim was taken from. T-507
+      # moved this toolchain into the repository and left the superseded copies
+      # standing in the operator root. T-711 shipped a guard for the MIXED case
+      # -- the repo-owned queue refuses a summary the repo-owned board did not
+      # write -- but the superseded PAIR is self-consistent: its board writes an
+      # unstamped summary and its queue never asks, so the guard never fires on
+      # it. That left one defence between reading a queue row and claiming it: a
+      # prose line in the artifact saying a file without it is stale on sight.
+      #
+      # Measured on 2026-09-23, two consecutive runs missed that line. On
+      # byte-identical inputs the superseded pair offered 61 claimable rows where
+      # the repo-owned pair offers 1, reported no live claims while three were
+      # live, and classified 110 rows whose only remaining work needs an
+      # operator as claimable. One run re-verified three long-closed items
+      # before noticing -- the same three ids T-711 had already named as its
+      # evidence.
+      #
+      # So the queue now stamps the sha256 of the generator's own file, read at
+      # run time, and the claim helper refuses a claim whose queue does not
+      # match the generator beside it. Hash, not path, because the same
+      # generator legitimately runs from a worktree, a fixture directory and a
+      # CI checkout. Every verdict other than repo_owned fails closed, including
+      # the ones that mean "could not tell", and ONLY a claim is gated: a
+      # release and an abstention take nothing, and a stale queue is exactly
+      # when a holder most needs to hand work back.
+      #
+      # What runs here is the behavioural suite over synthetic operator roots,
+      # including one that runs a DRIFTED COPY of the generator and asserts the
+      # queue it writes is refused. Fourteen mutations, fourteen caught.
+      - name: Run the queue provenance contract
+        run: node scripts/exec/queue-provenance.test.mjs

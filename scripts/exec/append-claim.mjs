@@ -48,9 +48,16 @@ import path from "node:path";
 import { execFileSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { announcesRelease, announcesAbstention } from "./register-time-authority.mjs";
+import {
+  describeQueueProvenance,
+  evaluateQueueProvenance,
+  isRepoOwned,
+  queuePathBesideRegister,
+} from "./queue-provenance.mjs";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const DEFAULT_GATE = path.join(HERE, "register-time-authority.mjs");
+const DEFAULT_QUEUE_GENERATOR = path.join(HERE, "build-execution-queue.mjs");
 
 const EXIT_OK = 0;
 const EXIT_REFUSED = 1;
@@ -60,7 +67,7 @@ const EXIT_GATE_UNUSABLE = 3;
 const USAGE =
   "usage: --file <register.md> --item <id> --identity <base-agent#run-id> --message <text>\n" +
   "       [--action claim|release|abstain] [--branch <name>] [--files a,b]\n" +
-  "       [--strict] [--dry-run] [--now ISO]\n" +
+  "       [--strict] [--dry-run] [--now ISO] [--queue <EXECUTION_QUEUE.md>]\n" +
   "       [--window-hours 3] [--gate <path>] [--gate-arg <flag>]...";
 
 /**
@@ -187,6 +194,45 @@ function main(argv) {
     );
   }
   if (!fs.existsSync(file)) fail(EXIT_USAGE, `no register at ${file}`);
+
+  /*
+   * Which generator wrote the queue this item came from (item T-720).
+   *
+   * A claim asserts that its item is the first unclaimed row of a lane in the
+   * generated queue. That assertion is only worth anything if the queue was
+   * written by the generator this repository reviews. The superseded copies in
+   * the operator root still run and have drifted: on 2026-09-23 one of them had
+   * written the live queue, which offered 61 claimable rows where the repo-owned
+   * pair offers 1 and reported no live claims while three were live. The only
+   * defence was a prose line in the artifact, and two consecutive runs missed
+   * it. So the check runs here, on the sanctioned path, rather than remaining an
+   * instruction — T-708 measured what an available-and-uninvoked control is
+   * worth from the register's side, and the answer was nothing.
+   *
+   * ONLY a claim is gated, and the asymmetry is the point. A release and an
+   * abstention TAKE nothing; the moment a queue is stale is exactly the moment a
+   * holder most needs to hand work back, and refusing that would strand a live
+   * claim behind a regeneration and push the correction into a hand-written
+   * line. This is the same reasoning that lets an abstention past a refused
+   * gate below.
+   *
+   * Before the gate, so a stale queue costs no register read.
+   */
+  if (action === "claim") {
+    const provenance = evaluateQueueProvenance({
+      queuePath: path.resolve(flag("--queue") ?? queuePathBesideRegister(file)),
+      generatorPath: DEFAULT_QUEUE_GENERATOR,
+    });
+    if (!isRepoOwned(provenance)) {
+      fail(
+        EXIT_REFUSED,
+        `the generated queue this claim would be taken from is \`${provenance.verdict}\`, so the row it ` +
+          "names may not be work this backlog still holds. Nothing was appended.\n" +
+          `${describeQueueProvenance(provenance)}\n` +
+          "A release or an abstention is not gated on this; only a claim is.",
+      );
+    }
+  }
 
   const gate = flag("--gate") ?? DEFAULT_GATE;
   if (!fs.existsSync(gate)) {

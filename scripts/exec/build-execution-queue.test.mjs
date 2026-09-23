@@ -30,6 +30,10 @@ const HERE = path.dirname(fileURLToPath(import.meta.url));
 const TOOLCHAIN_FILES = [
   "build-source-board.mjs",
   "build-execution-queue.mjs",
+  // The queue generator stamps its own sha256 into the file it writes (item
+  // T-720) and imports the stamp's writer from here, so a fixture that copies
+  // the generator without this module cannot run it at all.
+  "queue-provenance.mjs",
   "source-stage-map.json",
 ];
 

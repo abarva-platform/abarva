@@ -40,6 +40,59 @@ So: run the copies in this directory, and map ids in `scripts/exec/source-stage-
 which means mapping is now a pull request rather than a local edit. Delete or rename the
 copies in the operator root when convenient; nothing here depends on them.
 
+That last sentence was, for a day, the whole of the defence — and it is an
+instruction, which is the shape this directory exists against. What closes it is
+below.
+
+## Which generator wrote the queue you took your item from
+
+`build-execution-queue.mjs` writes the sha256 of its **own file**, read at run
+time, into the queue it generates:
+
+```text
+<!-- queue-provenance v1 sha256=<64 hex> script=<the generator that wrote it> -->
+```
+
+A superseded copy cannot produce that stamp without being byte-identical to the
+repo-owned generator, and then it is not superseded. **Hash, not path**, for
+T-711's reason: the same generator legitimately runs from a worktree, from a
+fixture directory a suite copied it into, and from a CI checkout, and a path
+comparison would refuse all three.
+
+```bash
+node scripts/exec/queue-provenance.mjs --register ~/Downloads/EXECUTION_CLAIMS.md
+node scripts/exec/queue-provenance.mjs --queue <file> --json
+```
+
+Exit `0` only for `repo_owned`. Every other verdict — `superseded`, `unstamped`,
+`absent`, `unreadable`, `generator_missing` — fails closed, **including the ones
+that mean "could not tell"**, because a guard whose unknown case passes is
+opt-in and the first file to reach it is by definition the one that predates it.
+Every refusal prints the one-line regenerate command, because a control this
+cheap to satisfy should not send anyone looking it up.
+
+**This one is wired, not merely available.** `append-claim.mjs` runs it before
+the ownership gate and refuses a claim whose queue does not match — T-706 and
+T-711 both shipped correct controls that nothing invoked, and from outside the
+register that is the same as not having them.
+
+**Only a claim is gated.** A release and an abstention take nothing, and the
+moment a queue is stale is the moment a holder most needs to hand work back;
+refusing that would strand a live claim behind a regeneration and push the
+correction into a hand-written line. Same asymmetry as an abstention past a
+refused pre-claim gate.
+
+Why it exists, measured rather than argued (item T-720). On 2026-09-23 the live
+queue had been written by the superseded pair. On byte-identical inputs that pair
+offered **61** claimable rows where this one offers **1**, reported *"None held.
+Every claim in the log is released or expired"* while **three** claims were live,
+and counted **110** rows whose only remaining work needs an operator as
+claimable. The regenerate block it printed names the generators by bare
+filename, which resolves back to the superseded copies — so following the
+artifact's own instructions reproduces the fault. A run that did exactly that
+re-verified three long-closed items in lane order before noticing, and they were
+the same three ids T-711 had already recorded as its evidence.
+
 An explicit `--operator-root <dir>` takes precedence over the environment variable. Use `--map <file>` only for a controlled alternate structure map, such as the synthetic CI fixture.
 
 ## Appending a claim — run the helper, do not hand-write the line
@@ -154,6 +207,7 @@ node scripts/exec/build-source-board.test.mjs
 node scripts/exec/register-time-authority.test.mjs
 node scripts/exec/append-claim.test.mjs
 node scripts/exec/worktree-retention.test.mjs
+node scripts/exec/queue-provenance.test.mjs
 ```
 
 The suites run the generators as child processes against synthetic operator documents. CI never reads a local execution backlog.
