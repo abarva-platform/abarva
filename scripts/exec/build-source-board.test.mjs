@@ -31,6 +31,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { execFileSync } from "node:child_process";
+import { fileURLToPath } from "node:url";
 
 import { copyToolchainInto } from "./toolchain-manifest.mjs";
 
@@ -112,6 +113,11 @@ function run(dir, script, args = []) {
 function mapFixtureId(dir, id) {
   const file = path.join(dir, "source-stage-map.json");
   const map = JSON.parse(fs.readFileSync(file, "utf8"));
+  // The real structure map already places most live ids, and it rejects a
+  // repeat outright. Cases that replay REAL rows by id (T-738) would
+  // otherwise crash the build rather than assert anything.
+  const placed = JSON.stringify(map).includes(`"${id}"`);
+  if (placed) return;
   map.platformTrack.items.push(id);
   fs.writeFileSync(file, `${JSON.stringify(map, null, 2)}\n`);
 }
@@ -166,6 +172,26 @@ function summaryItems(dir) {
   }
   for (const t of summary.tracks ?? []) walk(t.items);
   return { summary, out };
+}
+
+/**
+ * The lane the board resolved for one id, from every place the summary
+ * records one — item T-738.
+ *
+ * `summaryItems` walks stage, capability and track `items`, and an id the
+ * structure map places on a CAPABILITY appears there as a `declaredIds`
+ * entry with no `items` row of its own, so that walk alone cannot see its
+ * lane. `T-429` is exactly that id, and reading it through the walk alone
+ * reported `null` for a lane the board had resolved correctly. An unusable
+ * or contradicting lane is still a lane for this purpose: both lists carry
+ * the letter the parser produced, which is what these cases are about.
+ */
+function resolvedLane(dir, id) {
+  const { summary, out } = summaryItems(dir);
+  if (out.has(id)) return out.get(id).lane;
+  const seen = [...(summary.laneContradictions ?? []), ...(summary.laneUnusable ?? [])]
+    .find((r) => String(r.num) === id);
+  return seen ? seen.lane : undefined;
 }
 
 function buildBoard(dir) {
@@ -903,6 +929,257 @@ console.log("\nbuild-source-board — the lane comes from the named column (T-73
     "a lane cell that is not a lane is reported as unusable and not as a contradiction",
     unusable.includes("T-964") && !contradicts.includes("T-964"),
     `unusable=${JSON.stringify(unusable)}\ncontradicts=${JSON.stringify(contradicts)}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+
+/* ------------------------------------------------------------------------ *
+ * 28. THE DEFECT (item T-738). A row splits on EVERY pipe, so an ESCAPED
+ *     pipe — `\|`, which GFM defines as literal content anywhere in a row,
+ *     including inside a code span — ends the cell it sits in and shifts
+ *     every cell after it. The lane is the visible symptom because it is the
+ *     routing field: 11 live items carry a Lane cell holding a regex
+ *     fragment or a shell snippet for exactly this reason.
+ * ------------------------------------------------------------------------ */
+{
+  const dir = freshFixture();
+  addBacklogItemInLane(
+    dir,
+    "T-970",
+    "**A row whose title quotes a regex.** The pattern is `/\\bfrom\\s*\\|\\bimport\\b/g` and it is content.",
+    "T",
+    "The suite reads the lane, not the second half of the regex.",
+  );
+  buildBoard(dir);
+  const item = summaryItems(dir).out.get("T-970");
+  check(
+    "an escaped pipe inside a code span does not end the cell it sits in",
+    item?.lane === "T",
+    `lane=${JSON.stringify(item?.lane ?? null)}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+/* ------------------------------------------------------------------------ *
+ * 29. THE ELEVEN REAL ROWS, BY ID. The acceptance asks for proof on the real
+ *     rows rather than on a fixture alone, so these are the live backlog
+ *     rows copied VERBATIM — whole, including the trailing delimiter, since
+ *     that is what the property is about.
+ *
+ *     They are FROZEN into a repo-owned fixture rather than read from the
+ *     operator backlog at test time, and that is item T-739's finding, not a
+ *     convenience: four sibling suites assert a property of that MUTABLE
+ *     document, so they go red locally the day it improves and SKIP on the
+ *     runner, where nothing gates them. A case that cannot fail where it runs
+ *     is the shape this whole directory exists against.
+ * ------------------------------------------------------------------------ */
+const KNOWN_LANE_LETTERS = new Set(["D", "U", "C", "T"]);
+
+// Beside this module rather than under `__fixtures__/`, and that is not a
+// style choice. `copyToolchainInto` takes every non-suite FILE in this
+// directory and no subdirectory, so a suite run from a copied toolchain —
+// which `toolchain-manifest.test.mjs` does to four suites — would find no
+// such directory and crash. Measured: 16/1 to 15/2 on that suite.
+const REAL_ROWS = fs
+  .readFileSync(path.join(path.dirname(fileURLToPath(import.meta.url)), "t738-real-rows.md"), "utf8")
+  .split(/\r?\n/);
+
+/** The frozen rows, as `{ id, expect, line }` read from the fixture's own comments. */
+function frozenRows() {
+  const out = [];
+  for (let i = 0; i < REAL_ROWS.length; i += 1) {
+    const m = REAL_ROWS[i].match(/^<!--\s+(\S+)\s+\|\s+source line (\d+)\s+\|\s+expect lane (\S+)\s+-->$/);
+    if (!m) continue;
+    out.push({ id: m[1], sourceLine: Number(m[2]), expect: m[3], line: REAL_ROWS[i + 1] });
+  }
+  return out;
+}
+
+{
+  const rows = frozenRows();
+  const recoverable = rows.filter((r) => r.expect !== "MALFORMED");
+  const dir = freshFixture();
+  for (const r of recoverable) {
+    fs.appendFileSync(
+      path.join(dir, "EXECUTION_BACKLOG_20260918.md"),
+      `\n| # | Item | Lane | Acceptance |\n|---|---|---|---|\n${r.line}\n`,
+    );
+    mapFixtureId(dir, r.id);
+  }
+  buildBoard(dir);
+  const wrong = recoverable
+    .map((r) => ({ ...r, got: resolvedLane(dir, r.id) }))
+    .filter((r) => r.got !== r.expect);
+  check(
+    `all ${recoverable.length} real escaped-pipe rows recover their declared lane`,
+    recoverable.length === 11 && wrong.length === 0,
+    `count=${recoverable.length}\n` +
+      wrong.map((r) => `${r.id} (backlog line ${r.sourceLine}) want ${r.expect} got ${JSON.stringify(r.got ?? null)}`).join("\n"),
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+/* ------------------------------------------------------------------------ *
+ * 30. THE ACCEPTANCE SHIFTS IN THE SAME ROWS, and it is the half that
+ *     decides whether an item is claimable or `blocked on Anand`. A splitter
+ *     repaired only far enough to recover cell 2 would leave this wrong and
+ *     case 28 would still pass, so this asserts the LAST cell rather than the
+ *     lane.
+ * ------------------------------------------------------------------------ */
+{
+  const dir = freshFixture();
+  addBacklogItemInLane(
+    dir,
+    "T-971",
+    "**Two escaped pipes, so the acceptance lands two cells early.** See `a \\| b \\| c`.",
+    "T",
+    "Write the behavioral test and record the mutation count.",
+  );
+  buildBoard(dir);
+  const item = summaryItems(dir).out.get("T-971");
+  check(
+    "the acceptance cell survives an escaped pipe earlier in the row",
+    (item?.acceptance ?? "").startsWith("Write the behavioral test"),
+    `acceptance=${JSON.stringify((item?.acceptance ?? "").slice(0, 90))}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+/* ------------------------------------------------------------------------ *
+ * 31. A BARE PIPE INSIDE A CODE SPAN IS STILL A DELIMITER, and the row is
+ *     REPORTED rather than recovered.
+ *
+ *     This is the case that makes the T-738 verdict falsifiable. GFM says an
+ *     escaped pipe is content anywhere and a BARE pipe delimits even inside a
+ *     code span — so GitHub renders these two rows shifted as well. Teaching
+ *     the parser to skip code spans, which is what T-738 was filed asking
+ *     for, would make this board disagree with the document a human reads.
+ *     The rows are malformed at SOURCE; the fix belongs in the backlog, and
+ *     what the generator owes is to NAME them.
+ * ------------------------------------------------------------------------ */
+{
+  const malformed = frozenRows().filter((r) => r.expect === "MALFORMED");
+  const dir = freshFixture();
+  for (const r of malformed) {
+    fs.appendFileSync(
+      path.join(dir, "EXECUTION_BACKLOG_20260918.md"),
+      `\n| # | Item | Lane | Acceptance |\n|---|---|---|---|\n${r.line}\n`,
+    );
+    mapFixtureId(dir, r.id);
+  }
+  const r = buildBoard(dir);
+  const reported = r.stdout.split("\n").find((l) => l.includes("bare pipe in a code span")) ?? "";
+  check(
+    "a bare pipe inside a code span still delimits, and the row is reported by name",
+    malformed.length === 2 &&
+      malformed.every((m) => reported.includes(m.id)) &&
+      malformed.every((m) => !KNOWN_LANE_LETTERS.has(resolvedLane(dir, m.id))),
+    `reported=${JSON.stringify(reported)}\n` +
+      malformed.map((m) => `${m.id} lane=${JSON.stringify(resolvedLane(dir, m.id) ?? null)}`).join("\n"),
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+/* ------------------------------------------------------------------------ *
+ * 32. THE GUARDRAIL ON THE FIX ITSELF. A backslash that is itself escaped
+ *     does not escape the pipe after it: `\\|` is a literal backslash and
+ *     then a REAL delimiter. A splitter written as a blanket
+ *     `replace(/\\\|/g, …)` gets this wrong and nothing else here would say
+ *     so. Passes on unfixed code by design — it exists to stop the repair
+ *     from over-reaching, exactly as case 25 does.
+ * ------------------------------------------------------------------------ */
+{
+  const dir = freshFixture();
+  fs.appendFileSync(
+    path.join(dir, "EXECUTION_BACKLOG_20260918.md"),
+    "\n| # | Item | Lane | Acceptance |\n|---|---|---|---|\n"
+      + "| T-972 | **A row ending in an escaped backslash.** The path is `C:` and then \\\\| T | The delimiter after it is a delimiter. |\n",
+  );
+  mapFixtureId(dir, "T-972");
+  buildBoard(dir);
+  const item = summaryItems(dir).out.get("T-972");
+  check(
+    "an escaped backslash does not escape the delimiter that follows it",
+    item?.lane === "T",
+    `lane=${JSON.stringify(item?.lane ?? null)}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+
+/* ------------------------------------------------------------------------ *
+ * 33. THE UNBALANCED-BACKTICK VERDICT, which T-738's acceptance asks to be
+ *     decided explicitly rather than left to fall out.
+ *
+ *     VERDICT: an odd number of backticks means there is no code span to be
+ *     inside of, so the row is split by the ordinary rule — escapes are
+ *     content, bare pipes delimit — and it is NOT named as a
+ *     bare-pipe-in-a-code-span row. Guessing where the author meant the span
+ *     to close would be inventing content.
+ *
+ *     The live backlog contains ZERO unbalanced rows, measured over every
+ *     id-bearing row, so this branch has no data to hold it and a fixture is
+ *     the only thing that can. Without this case the `ticks % 2` guard is
+ *     unfalsifiable: deleting it leaves every other case here green.
+ * ------------------------------------------------------------------------ */
+{
+  const dir = freshFixture();
+  fs.appendFileSync(
+    path.join(dir, "EXECUTION_BACKLOG_20260918.md"),
+    "\n| # | Item | Lane | Acceptance |\n|---|---|---|---|\n"
+      + "| T-973 | **A row with three backticks.** `a|b` and then a stray ` opens a span that never closes. | T | Not named as a shifted row. |\n",
+  );
+  mapFixtureId(dir, "T-973");
+  const r = buildBoard(dir);
+  const reported = r.stdout.split("\n").find((l) => l.includes("bare pipe in a code span")) ?? "";
+  check(
+    "an unbalanced backtick span splits by the ordinary rule and is not named as a shifted row",
+    !reported.includes("T-973") && (resolvedLane(dir, "T-973") ?? "").startsWith("b`"),
+    `lane=${JSON.stringify(resolvedLane(dir, "T-973") ?? null)}\nreported=${JSON.stringify(reported)}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+
+/* ------------------------------------------------------------------------ *
+ * 34. THE SECOND CALL SITE. `splitTableRow` has two users — the backlog's
+ *     item tables and `tablesUnderHeading`, which reads the BOARD's
+ *     `Vision to acceptance` table. Cases 28-33 exercise only the first: a
+ *     mutation that reverted just this one to split-on-every-pipe left the
+ *     whole suite green, so the call site was being changed on faith.
+ *
+ *     Here an escaped pipe sits in the `Current evidence` cell and the
+ *     assertion is on `Next acceptance gate`, which follows it — the cell a
+ *     stage publishes as its next gate. The live board carries no escaped
+ *     pipe today, so this is a guard on a reachable path rather than a
+ *     repair of live data, and it is written as a fixture for that reason.
+ * ------------------------------------------------------------------------ */
+{
+  const dir = freshFixture();
+  fs.writeFileSync(
+    path.join(dir, "SOURCE_EXECUTION_BOARD_20260917.md"),
+    "# Synthetic execution board\n\n## Vision to acceptance\n\n"
+      + "| Outcome the user should experience | Backlog IDs | Current evidence | Next acceptance gate | Owner lane |\n"
+      + "|---|---|---|---|---|\n"
+      + "| Source New is a simple five-phase journey | E1 | Matched with `a \\| b` and nothing else. | Persist the accepted motion before labels. | Claude Code |\n",
+  );
+  const rr = buildBoard(dir);
+  // `nextGate` is rendered, not serialised into the summary, so the assertion
+  // is on the board the generator actually writes.
+  const html = fs.readFileSync(path.join(dir, "source-board.html"), "utf8");
+  // Assert the DESTINATION, not merely that the text is somewhere on the page.
+  // Split on every pipe and this same sentence still appears — one field to
+  // the left, rendered as the stage's Owner — so "the board contains it" is
+  // satisfied by the defect. The tail of the shifted cell is checked with its
+  // backticks removed, because `stripMd` has already taken them off by the
+  // time it reaches the page.
+  const gateRendered = html.includes("<ul><li>Persist the accepted motion before labels.</li></ul>");
+  const shiftedTail = html.includes("b and nothing else.");
+  check(
+    "an escaped pipe in a board outcome row does not shift the next-gate cell",
+    rr.stdout.includes("board outcomes parsed:    1") && gateRendered && !shiftedTail,
+    `gate rendered as the next action=${gateRendered}; shifted tail present=${shiftedTail}`,
   );
   fs.rmSync(dir, { recursive: true, force: true });
 }
