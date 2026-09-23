@@ -137,22 +137,65 @@ export function projectAcceptedSourceFacts(
   const reasons: Array<string | null> = assertions.map((assertion) =>
     exclusionReason(scope, assertion),
   );
+  const byAssertionId = new Map<string, number[]>();
   const byFactId = new Map<string, number[]>();
   for (let index = 0; index < assertions.length; index += 1) {
     if (reasons[index] !== null) continue;
-    const factId = assertions[index]!.factId;
+    const { assertionId, factId } = assertions[index]!;
+    byAssertionId.set(assertionId, [
+      ...(byAssertionId.get(assertionId) ?? []),
+      index,
+    ]);
     byFactId.set(factId, [...(byFactId.get(factId) ?? []), index]);
   }
 
-  const projectedIndexes: number[] = [];
+  const parent = assertions.map((_assertion, index) => index);
+  function root(index: number): number {
+    if (parent[index] !== index) parent[index] = root(parent[index]!);
+    return parent[index]!;
+  }
+  function connect(a: number, b: number): void {
+    parent[root(a)] = root(b);
+  }
+  for (const indexes of byAssertionId.values()) {
+    if (indexes.length > 1) {
+      for (const index of indexes) reasons[index] = "unresolved_conflict";
+    }
+  }
   for (const indexes of byFactId.values()) {
-    const byAssertionId = new Map(
+    for (const index of indexes.slice(1)) connect(indexes[0]!, index);
+  }
+  for (let index = 0; index < assertions.length; index += 1) {
+    if (reasons[index] !== null) continue;
+    const predecessorId = assertions[index]!.supersedesAssertionId;
+    if (!predecessorId) continue;
+    const predecessor = byAssertionId.get(predecessorId);
+    if (
+      !predecessor ||
+      predecessor.length !== 1 ||
+      reasons[predecessor[0]!] !== null
+    ) {
+      reasons[index] = "unresolved_conflict";
+      continue;
+    }
+    connect(index, predecessor[0]!);
+  }
+
+  const groups = new Map<number, number[]>();
+  for (let index = 0; index < assertions.length; index += 1) {
+    if (reasons[index] !== null) continue;
+    const groupId = root(index);
+    groups.set(groupId, [...(groups.get(groupId) ?? []), index]);
+  }
+  const projectedIndexes: number[] = [];
+  for (const indexes of groups.values()) {
+    const groupByAssertionId = new Map(
       indexes.map((index) => [assertions[index]!.assertionId, index]),
     );
     const factKeys = new Set(
       indexes.map((index) => assertions[index]!.factKey),
     );
-    if (byAssertionId.size !== indexes.length || factKeys.size !== 1) {
+    if (groupByAssertionId.size !== indexes.length || factKeys.size !== 1) {
       for (const index of indexes) reasons[index] = "unresolved_conflict";
       continue;
     }
@@ -175,7 +218,7 @@ export function projectAcceptedSourceFacts(
     while (cursor !== undefined && !visited.has(cursor)) {
       visited.add(cursor);
       const parentId: string | null = assertions[cursor]!.supersedesAssertionId;
-      cursor = parentId ? byAssertionId.get(parentId) : undefined;
+      cursor = parentId ? groupByAssertionId.get(parentId) : undefined;
     }
     if (cursor !== undefined || visited.size !== indexes.length) {
       for (const index of indexes) reasons[index] = "unresolved_conflict";

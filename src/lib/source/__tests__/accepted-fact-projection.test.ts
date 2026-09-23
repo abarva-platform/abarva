@@ -143,4 +143,36 @@ describe("accepted Source fact projection", () => {
       { assertionId: "assertion-1", reason: "superseded" },
     ]);
   });
+
+  it("does not project the old source fact when a reviewed replacement has a new fact ID", () => {
+    const result = projectAcceptedSourceFacts(scope, [
+      assertion(),
+      assertion({
+        assertionId: "assertion-2",
+        factId: "fact-2",
+        value: 125000,
+        supersedesAssertionId: "assertion-1",
+      }),
+    ]);
+    expect(result.facts.map((fact) => fact.assertionId)).toEqual([
+      "assertion-2",
+    ]);
+    expect(result.excluded).toEqual([
+      { assertionId: "assertion-1", reason: "superseded" },
+    ]);
+  });
+
+  it("fails closed when the predecessor of a replacement is missing", () => {
+    const result = projectAcceptedSourceFacts(scope, [
+      assertion({
+        assertionId: "assertion-2",
+        factId: "fact-2",
+        supersedesAssertionId: "unavailable-assertion",
+      }),
+    ]);
+    expect(result.facts).toEqual([]);
+    expect(result.excluded).toEqual([
+      { assertionId: "assertion-2", reason: "unresolved_conflict" },
+    ]);
+  });
 });
