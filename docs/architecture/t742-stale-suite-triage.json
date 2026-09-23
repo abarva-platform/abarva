@@ -358,6 +358,19 @@
       "partialSourceTextCaseNames": [
         "module V6 answer contract :: keeps Source and Moves synthesis caches versioned by the V6 contract"
       ],
+      "partialSourceTextCasesResolved": {
+        "byItem": "T-744",
+        "recordedAt": "2026-09-23T21:00:59Z",
+        "clearedCaseNames": [
+          "module V6 answer contract :: keeps Source and Moves synthesis caches versioned by the V6 contract"
+        ],
+        "replacedWith": [
+          "module V6 answer contract :: Source and Moves synthesis routes carry the V6 contract on the wire :: $surface answers with the contract version and the placement-only renderer policy",
+          "module V6 answer contract :: Source and Moves synthesis routes carry the V6 contract on the wire :: $surface sends the V6 packet prompt block to the audited egress boundary"
+        ],
+        "how": "Both routes are invoked. X-AbarVa-V6-Contract and X-AbarVa-Renderer-Policy are read off the Response, and the V6 packet prompt block is read off the argument the route hands the audited AI egress preflight, which is the single boundary every prompt passes through. Nothing is read out of the route source.",
+        "provenMutations": "Two mutations that the cleared case SURVIVES and the replacements do not: (1) the header constant stays intact but stops being spread into the error response -- all five asserted tokens remain in the file; (2) the packet block is still computed by moduleV6PacketPromptBlock and simply not placed in the message sent to egress. Under each, the old case passed 1/1 and the new suite failed 1 of 7."
+      },
       "verdict": "wire_into_ci",
       "ownerItem": "T-744",
       "rationale": "Three of its four cases execute the module: the packet contract and prompt block are built and read, visible-section parity is computed byte-for-byte except whitespace, and renderer-visible mutation is flagged. The fourth is a byte match: it readFileSyncs src/app/api/source/synthesis/route.ts and src/app/api/programs/synthesis/route.ts and asserts five string tokens appear in them. That case's SUBJECT is route behaviour -- the headers a response carries and the prompt block it sends -- which is executable, so it is a proxy and not a text-is-the-subject case. Wired under the T-556 precedent for a mostly-executing suite with named byte-matching cases, with the one case handed to T-744 for rewrite rather than left unrecorded."
@@ -515,6 +528,15 @@
       "verdict": "wire_into_ci",
       "ownerItem": "T-743",
       "rationale": "Forty-six cases and the widest guard in the draw: it executes the shaper per surface and asserts Brief A, B and C prose is passed through rather than templated, that internal retrieval language, raw pattern ids and bare UUIDs are scrubbed from visible copy, that no next action is manufactured where the prose has no action cue, and that percentile formatting cannot produce a naked ordinal without metric, cohort and sample size. Several of these are declared AI-surface obligations and none of them runs in CI."
+    }
+  ],
+  "followUps": [
+    {
+      "item": "T-744",
+      "recordedAt": "2026-09-23T21:00:59Z",
+      "appliesTo": "src/lib/agent/__tests__/module-v6-answer-contract.test.ts",
+      "what": "Cleared the one byte-matching case this draw named, by rewriting it as two executed cases over both synthesis routes.",
+      "whyAppendedNotRestamped": "The row is a snapshot at base 2e4960904 and it was accurate there; restamping its counts would erase the finding that produced this item and would silently move jestEvidence.totals, which the guard recomputes from the rows. The resolution is therefore ADDED beside the snapshot and the guard verifies it against the live suite file."
     }
   ]
 }
