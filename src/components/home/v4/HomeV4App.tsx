@@ -15,6 +15,7 @@ import type {
   TechRecordType,
   TechObjectType,
 } from "@/lib/home/preview/types";
+import { sanitizeHomeReviewBundleNarrative } from "@/lib/home/preview/stale-claim-guard";
 import { ArchitecturePage } from "./ArchitecturePage";
 import { ChapterPage, type BriefingOpening } from "./ChapterPage";
 import { sectionId } from "./TableSet";
@@ -219,10 +220,15 @@ export function HomeV4App({
   recordSource?: HomeRecordRenderSource;
   tenantKey: HomePreviewTenantKey;
 }) {
+  const displayBundle = useMemo(
+    () => sanitizeHomeReviewBundleNarrative(bundle),
+    [bundle],
+  );
   // Home opens on the briefing: chapter one, the first question a new executive arrives with.
   // Nothing stands in front of it.
   const [activeView, setActiveView] = useState<ActiveView>(
-    () => (bundle.chapters[0]?.chapterId as ActiveView) ?? "browse-the-data",
+    () =>
+      (displayBundle.chapters[0]?.chapterId as ActiveView) ?? "browse-the-data",
   );
   /**
    * A filter carried from a figure to the rows behind it.
@@ -234,12 +240,12 @@ export function HomeV4App({
    */
   const [recordFilter, setRecordFilter] = useState<string | null>(null);
 
-  const chapters = bundle.chapters;
+  const chapters = displayBundle.chapters;
   const activeChapter = chapters.find((c) => c.chapterId === activeView);
   const activeIndex = chapters.findIndex((c) => c.chapterId === activeView);
   const techRecordTypes = useMemo(
-    () => bundle.technologyEstate?.recordTypes ?? [],
-    [bundle.technologyEstate],
+    () => displayBundle.technologyEstate?.recordTypes ?? [],
+    [displayBundle.technologyEstate],
   );
   const activeTechRecordType = activeView.startsWith("tech:")
     ? techRecordTypes.find((t) => `tech:${t.objectType}` === activeView)
@@ -266,7 +272,7 @@ export function HomeV4App({
   const infrastructure = techRecordTypes.find(
     (r) => r.objectType === "infrastructure_platform",
   );
-  const signalPacket = bundle.thesis.signalPacket;
+  const signalPacket = displayBundle.thesis.signalPacket;
   const visualDatasets = signalPacket.visualDatasets ?? {};
   const businessBriefing = useMemo(
     () => buildBusinessBriefing(signalPacket),
@@ -275,7 +281,7 @@ export function HomeV4App({
 
   useEffect(() => {
     const syncFromHash = () => {
-      const hashView = resolveHashView(window.location.hash, bundle);
+      const hashView = resolveHashView(window.location.hash, displayBundle);
       if (hashView) {
         setActiveView(hashView);
       }
@@ -284,10 +290,10 @@ export function HomeV4App({
     syncFromHash();
     window.addEventListener("hashchange", syncFromHash);
     return () => window.removeEventListener("hashchange", syncFromHash);
-  }, [bundle]);
+  }, [displayBundle]);
 
   const selectActiveView = (id: string, filter?: string) => {
-    const nextView = resolveHashView(`#${id}`, bundle);
+    const nextView = resolveHashView(`#${id}`, displayBundle);
     if (!nextView) {
       return;
     }
@@ -352,7 +358,7 @@ export function HomeV4App({
   // Built once for the rail so a chapter's sections and its exposure mark come from the same rows
   // the chapter itself renders, rather than from a second, drifting source.
   const estateForRail = {
-    asOf: bundle.provenance?.generated_at?.slice(0, 10),
+    asOf: displayBundle.provenance?.generated_at?.slice(0, 10),
     applications: applications?.rows as EstateRow[] | undefined,
     vendors: techRecordTypes.find((r) => r.objectType === "vendor_contract")
       ?.rows as EstateRow[] | undefined,
@@ -447,7 +453,7 @@ export function HomeV4App({
     ]),
   ];
 
-  const provenance = bundle.provenance;
+  const provenance = displayBundle.provenance;
   const canonicalSnapshotHash =
     provenance.canonical_snapshot_hash ?? "reviewed-snapshot-unhashed";
   const renderedRecordSource =
@@ -522,7 +528,7 @@ export function HomeV4App({
                       )?.rows
                     : undefined
                 }
-                asOf={bundle.provenance?.generated_at?.slice(0, 10)}
+                asOf={displayBundle.provenance?.generated_at?.slice(0, 10)}
                 queue={
                   activeChapter.chapterId === "what_needs_attention"
                     ? {
@@ -543,7 +549,10 @@ export function HomeV4App({
                   activeBriefingOpening
                     ? undefined
                     : chapterDepth(activeChapter.chapterId, {
-                        asOf: bundle.provenance?.generated_at?.slice(0, 10),
+                        asOf: displayBundle.provenance?.generated_at?.slice(
+                          0,
+                          10,
+                        ),
                         applications: applications?.rows,
                         vendors: techRecordTypes.find(
                           (r) => r.objectType === "vendor_contract",
@@ -581,7 +590,7 @@ export function HomeV4App({
                 guidingQuestion={activeChapter.guidingQuestion}
                 onOpenRows={openRecordRows}
                 depth={chapterDepth(activeChapter.chapterId, {
-                  asOf: bundle.provenance?.generated_at?.slice(0, 10),
+                  asOf: displayBundle.provenance?.generated_at?.slice(0, 10),
                   applications: applications?.rows,
                   vendors: techRecordTypes.find(
                     (r) => r.objectType === "vendor_contract",
@@ -630,7 +639,7 @@ export function HomeV4App({
               applications={applications}
               integrations={integrations}
               infrastructure={infrastructure}
-              canonicalBuild={bundle.provenance.canonical_snapshot_hash}
+              canonicalBuild={displayBundle.provenance.canonical_snapshot_hash}
             />
           ) : null}
 
@@ -640,7 +649,7 @@ export function HomeV4App({
               tenantDisplayName={TENANT_LABEL[tenantKey]}
               integrations={dataMovementRecordType}
               applications={applications}
-              canonicalBuild={bundle.provenance.canonical_snapshot_hash}
+              canonicalBuild={displayBundle.provenance.canonical_snapshot_hash}
             />
           ) : null}
 
