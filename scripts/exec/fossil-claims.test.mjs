@@ -52,11 +52,13 @@ import {
   releaseCommandFor,
   resolve,
   suppressedCandidateIds,
+  CORPUS_MODES,
+  liveCorpusPlan,
+  liveCorpusRoot,
 } from "./fossil-claims.mjs";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const CLI = path.join(HERE, "fossil-claims.mjs");
-const DOWNLOADS = path.join(os.homedir(), "Downloads");
 
 let passes = 0;
 let failures = 0;
@@ -781,25 +783,178 @@ console.log("\nthe abandoned verdict's executable move (item T-736)");
 }
 
 /* ========================================================================= */
+console.log("\nthe live-corpus replay contract (item T-739)");
+/* ========================================================================= */
+
+/*
+ * WHY THIS CONTRACT IS A FUNCTION AND NOT AN `if` IN EACH SUITE.
+ *
+ * Four cases across three suites required the live suppressed-candidate bucket
+ * to be NON-EMPTY — "the live corpus has suppressed candidates to replay, so
+ * this case is not vacuous". An empty bucket is the healthy state for that
+ * bucket: it empties when the abandoned claims in it get resolved, which is
+ * the work those very suites exist to prove. So the suites went red for a
+ * corpus that had IMPROVED, and on a runner, where the operator documents are
+ * absent, the same cases skipped. A case that fails only where nothing gates
+ * it and cannot fail where it runs is the unfailable gate this backlog was
+ * opened against, pointing the other way.
+ *
+ * The verdict taken here: the live corpus is an OPPORTUNISTIC replay, never a
+ * precondition. Three states, and only one of them may produce a pass — which
+ * is the whole point of making the decision a value this file can pin, rather
+ * than an `if` in two suites that each read "no candidates" as "nothing to
+ * assert, carry on".
+ */
+
+check(
+  "a corpus naming candidates is replayed",
+  (() => {
+    const plan = liveCorpusPlan({ documentsPresent: true, candidateIds: ["T-901", "T-902"] });
+    return (
+      plan.mode === CORPUS_MODES.REPLAY &&
+      plan.replay === true &&
+      plan.skip === false &&
+      JSON.stringify(plan.candidates) === JSON.stringify(["T-901", "T-902"])
+    );
+  })(),
+  JSON.stringify(liveCorpusPlan({ documentsPresent: true, candidateIds: ["T-901", "T-902"] })),
+);
+
+check(
+  "AN EMPTY CORPUS IS NOT A PASS: it is a counted skip with a reason",
+  (() => {
+    const plan = liveCorpusPlan({ documentsPresent: true, candidateIds: [] });
+    return (
+      plan.mode === CORPUS_MODES.EMPTY &&
+      plan.replay === false &&
+      plan.skip === true &&
+      typeof plan.reason === "string" &&
+      plan.reason.length > 0
+    );
+  })(),
+  JSON.stringify(liveCorpusPlan({ documentsPresent: true, candidateIds: [] })),
+);
+
+check(
+  "and its reason says the bucket is empty rather than implying the code is broken",
+  /empt/i.test(liveCorpusPlan({ documentsPresent: true, candidateIds: [] }).reason),
+  liveCorpusPlan({ documentsPresent: true, candidateIds: [] }).reason,
+);
+
+check(
+  "absent operator documents are a counted skip too, and say which state they are",
+  (() => {
+    const plan = liveCorpusPlan({ documentsPresent: false, candidateIds: [] });
+    return (
+      plan.mode === CORPUS_MODES.ABSENT &&
+      plan.replay === false &&
+      plan.skip === true &&
+      plan.reason.length > 0 &&
+      plan.mode !== liveCorpusPlan({ documentsPresent: true, candidateIds: [] }).mode
+    );
+  })(),
+  JSON.stringify(liveCorpusPlan({ documentsPresent: false, candidateIds: [] })),
+);
+
+check(
+  "EXACTLY ONE of replay/skip is true in every state — a plan can neither assert nothing nor both",
+  [
+    liveCorpusPlan({ documentsPresent: true, candidateIds: ["T-901"] }),
+    liveCorpusPlan({ documentsPresent: true, candidateIds: [] }),
+    liveCorpusPlan({ documentsPresent: false, candidateIds: ["T-901"] }),
+    liveCorpusPlan({ documentsPresent: false, candidateIds: [] }),
+  ].every((plan) => plan.replay !== plan.skip),
+  "this is the invariant that stops `empty` from resolving to the old vacuous pass",
+);
+
+check(
+  "documents absent OUTRANKS a candidate list, because that list cannot have been read from them",
+  liveCorpusPlan({ documentsPresent: false, candidateIds: ["T-901"] }).mode === CORPUS_MODES.ABSENT,
+  JSON.stringify(liveCorpusPlan({ documentsPresent: false, candidateIds: ["T-901"] })),
+);
+
+check(
+  "a missing or malformed candidate list is empty, never a replay over garbage",
+  liveCorpusPlan({ documentsPresent: true }).mode === CORPUS_MODES.EMPTY &&
+    liveCorpusPlan({ documentsPresent: true, candidateIds: "T-901" }).mode === CORPUS_MODES.EMPTY &&
+    liveCorpusPlan({ documentsPresent: true, candidateIds: null }).mode === CORPUS_MODES.EMPTY,
+  JSON.stringify([
+    liveCorpusPlan({ documentsPresent: true }).mode,
+    liveCorpusPlan({ documentsPresent: true, candidateIds: "T-901" }).mode,
+  ]),
+);
+
+check(
+  "the candidate list is copied, so a suite cannot mutate the plan it was handed",
+  (() => {
+    const ids = ["T-901"];
+    const plan = liveCorpusPlan({ documentsPresent: true, candidateIds: ids });
+    plan.candidates.push("T-902");
+    return ids.length === 1;
+  })(),
+);
+
+/*
+ * The root is resolvable because that is the other half of "able to fail where
+ * it runs". With the root fixed to `~/Downloads`, the replay could never be
+ * pointed at a corpus that HOLDS a candidate — so the direction the item asks
+ * for second, that the case fails when given a real candidate it mishandles,
+ * was not demonstrable on this machine at all. An override makes both the CI
+ * runner and a deliberate mutation able to supply one.
+ */
+check(
+  "the replay root honours EXEC_OPERATOR_ROOT, so a fixture corpus can be supplied",
+  liveCorpusRoot({ env: { EXEC_OPERATOR_ROOT: "/tmp/fixture-corpus" }, home: "/home/x" }) ===
+    "/tmp/fixture-corpus",
+  liveCorpusRoot({ env: { EXEC_OPERATOR_ROOT: "/tmp/fixture-corpus" }, home: "/home/x" }),
+);
+
+check(
+  "and falls back to the operator's Downloads when it is unset or blank",
+  liveCorpusRoot({ env: {}, home: "/home/x" }) === path.join("/home/x", "Downloads") &&
+    liveCorpusRoot({ env: { EXEC_OPERATOR_ROOT: "   " }, home: "/home/x" }) ===
+      path.join("/home/x", "Downloads"),
+  liveCorpusRoot({ env: {}, home: "/home/x" }),
+);
+
+/* ========================================================================= */
 console.log("\nreal corpus — the extraction half, with no network call");
 /* ========================================================================= */
 
+/*
+ * THE CASE DELETED HERE, AND WHY, because the reason has to survive the diff.
+ *
+ * `the live queue names a non-empty suppressed-candidate list` asserted a
+ * property of a MUTABLE operator document: that the bucket is not empty. It is
+ * gone rather than repaired. Nothing about this module's behaviour is proven by
+ * the bucket being full — extraction, newest-claim precedence and the branch
+ * grammar are each pinned by hermetic cases above, composed from `candidateLine`
+ * and `claimLine` fixtures — while an empty bucket is that bucket's HEALTHY
+ * state, reached by resolving the claims in it. So the only thing that case
+ * could report was "the corpus improved", and it reported it as a failure.
+ *
+ * The two checks that remain are a real audit of the live documents, and they
+ * used to pass VACUOUSLY over zero ids, which is the silent direction. They now
+ * run only under a `replay` plan, and an empty or absent corpus is a COUNTED
+ * skip naming the state.
+ */
 {
-  const queueFile = path.join(DOWNLOADS, "EXECUTION_QUEUE.md");
-  const registerFile = path.join(DOWNLOADS, "EXECUTION_CLAIMS.md");
-  if (!fs.existsSync(queueFile) || !fs.existsSync(registerFile)) {
-    skip("the live queue names a non-empty suppressed-candidate list", "operator documents absent");
-    skip("the live queue's candidates each resolve to a claim line", "operator documents absent");
-    skip("and a branch is extracted for all but the one that declares none", "operator documents absent");
+  const operatorRoot = liveCorpusRoot();
+  const queueFile = path.join(operatorRoot, "EXECUTION_QUEUE.md");
+  const registerFile = path.join(operatorRoot, "EXECUTION_CLAIMS.md");
+  const documentsPresent = fs.existsSync(queueFile) && fs.existsSync(registerFile);
+  const plan = liveCorpusPlan({
+    documentsPresent,
+    candidateIds: documentsPresent
+      ? suppressedCandidateIds(fs.readFileSync(queueFile, "utf8"))
+      : [],
+  });
+  if (plan.skip) {
+    skip("the live queue's candidates each resolve to a claim line", plan.reason);
+    skip("and a branch is extracted for all but the one that declares none", plan.reason);
   } else {
-    const queue = fs.readFileSync(queueFile, "utf8");
     const reg = fs.readFileSync(registerFile, "utf8");
-    const ids = suppressedCandidateIds(queue);
-    check(
-      "the live queue names a non-empty suppressed-candidate list",
-      ids.length > 0,
-      `read ${ids.length} ids`,
-    );
+    const ids = plan.candidates;
     const unmatched = ids.filter((id) => newestClaimFor(reg, id) === null);
     check(
       "every candidate the queue names resolves to a claim line in the register",

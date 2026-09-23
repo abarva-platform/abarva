@@ -67,6 +67,7 @@
  */
 
 import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
 import { execFileSync } from "node:child_process";
 import { isDirectInvocation } from "./cli-entry.mjs";
@@ -81,6 +82,87 @@ export const VERDICTS = Object.freeze({
 /** Every verdict but `alive` means the suppression bucket's label is wrong. */
 export function isStale(verdict) {
   return verdict !== VERDICTS.ALIVE;
+}
+
+/* ------------------------------------------------------------------------- */
+/* The live-corpus replay contract (item T-739)                              */
+/* ------------------------------------------------------------------------- */
+
+/**
+ * The three states a live-corpus replay can be in. `replay` is the only one
+ * that may produce a passing assertion.
+ */
+export const CORPUS_MODES = Object.freeze({
+  ABSENT: "absent",
+  EMPTY: "empty",
+  REPLAY: "replay",
+});
+
+/**
+ * Decide what a suite should do with the live suppressed-candidate bucket.
+ *
+ * Four cases across `build-execution-queue.test.mjs`, `fossil-claims.test.mjs`
+ * and `toolchain-manifest.test.mjs` treated a NON-EMPTY bucket as a
+ * precondition — "so this case is not vacuous". The bucket empties when the
+ * claims in it are resolved, which is the outcome those suites exist to prove,
+ * so they went red because the corpus had improved. Where the operator
+ * documents are absent, the same cases skipped. That is a case which cannot
+ * fail where it runs and fails only where nothing gates it.
+ *
+ * So the bucket stops being a precondition. It is replayed when it holds
+ * something, and when it does not the suite records a COUNTED skip naming the
+ * state — never a vacuous pass over zero ids, which is what the second of
+ * those four cases did and why it survived the defect it was written against.
+ * The behaviour itself is pinned hermetically in both suites and does not
+ * depend on the corpus at all.
+ *
+ * `absent` outranks the candidate list: if the documents were not read, any
+ * list handed in cannot have come from them.
+ */
+export function liveCorpusPlan({ documentsPresent, candidateIds } = {}) {
+  const ids = Array.isArray(candidateIds) ? candidateIds.slice() : [];
+  if (!documentsPresent) {
+    return {
+      mode: CORPUS_MODES.ABSENT,
+      replay: false,
+      skip: true,
+      candidates: [],
+      reason:
+        "the operator documents are not on this filesystem, so there is no live corpus to replay",
+    };
+  }
+  if (ids.length === 0) {
+    return {
+      mode: CORPUS_MODES.EMPTY,
+      replay: false,
+      skip: true,
+      candidates: [],
+      reason:
+        "the live suppressed-candidate bucket is empty, which is its healthy state — " +
+        "the behaviour is pinned by the hermetic cases above, so this is a skip and NOT a pass",
+    };
+  }
+  return {
+    mode: CORPUS_MODES.REPLAY,
+    replay: true,
+    skip: false,
+    candidates: ids,
+    reason: `the live corpus names ${ids.length} suppressed candidate(s) to replay`,
+  };
+}
+
+/**
+ * Where a suite looks for the live corpus.
+ *
+ * Fixed to `~/Downloads`, the replay could never be pointed at a corpus that
+ * HOLDS a candidate, so "this case fails when handed a real candidate it
+ * mishandles" was not demonstrable on an operator machine whose bucket is
+ * empty — and not runnable at all on a CI runner. The override makes both
+ * possible without moving the default.
+ */
+export function liveCorpusRoot({ env = process.env, home = os.homedir() } = {}) {
+  const override = typeof env.EXEC_OPERATOR_ROOT === "string" ? env.EXEC_OPERATOR_ROOT.trim() : "";
+  return override || path.join(home, "Downloads");
 }
 
 /* ------------------------------------------------------------------------- */

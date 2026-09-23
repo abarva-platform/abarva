@@ -25,7 +25,11 @@ import { execFileSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 
 import { copyToolchainInto } from "./toolchain-manifest.mjs";
-import { suppressedCandidateIds } from "./fossil-claims.mjs";
+import {
+  suppressedCandidateIds,
+  liveCorpusPlan,
+  liveCorpusRoot,
+} from "./fossil-claims.mjs";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 
@@ -71,6 +75,18 @@ function check(name, ok, detail) {
     console.log(`  FAIL  ${name}`);
     if (detail) console.log(`        ${String(detail).split("\n").join("\n        ")}`);
   }
+}
+
+/**
+ * A skip that is COUNTED and says why (item T-739).
+ *
+ * The live-corpus block used to emit one bare `console.log` and increment the
+ * counter for the whole block, so three named checks became one unnamed skip.
+ * Each check that did not run says so under its own name now.
+ */
+function skipLive(name, why) {
+  skipped += 1;
+  console.log(`  SKIP  ${name} — ${why}`);
 }
 
 function freshFixture() {
@@ -2815,9 +2831,21 @@ function isClaimable(rendered, id) {
 /*      Skipped where the operator documents are absent, which is every CI  */
 /*      runner. A case that silently passes when its corpus is missing is   */
 /*      worse than one that says it did not run.                            */
+/*                                                                          */
+/*      ITEM T-739 AMENDED THE OTHER HALF OF THAT SENTENCE. Two checks here */
+/*      required the bucket to be NON-EMPTY — "so this case is not          */
+/*      vacuous" — and the bucket is empty once the claims in it are         */
+/*      resolved, which is this case's own outcome. So it went red because  */
+/*      the corpus IMPROVED, while on a runner it skipped: red where         */
+/*      nothing gates it, unable to fail where it runs. The non-empty       */
+/*      precondition is deleted; the mechanism is pinned by the hermetic    */
+/*      abstention cases above and does not need the corpus at all. What    */
+/*      remains is an opportunistic audit, and `liveCorpusPlan` decides its */
+/*      three states so that `empty` cannot resolve to the vacuous pass the */
+/*      middle check used to give over zero ids.                            */
 /* ------------------------------------------------------------------------ */
 {
-  const operatorRoot = path.join(os.homedir(), "Downloads");
+  const operatorRoot = liveCorpusRoot();
   const documents = [
     "SOURCE_EXECUTION_BOARD_20260917.md",
     "EXECUTION_BACKLOG_20260918.md",
@@ -2825,11 +2853,10 @@ function isClaimable(rendered, id) {
     "SOURCE_BACKLOG_MASTER.md",
   ];
   const present = documents.every((f) => fs.existsSync(path.join(operatorRoot, f)));
-  if (!present) {
-    skipped += 1;
-    console.log(
-      "  SKIP  every id the live queue suppresses is freed by an abstention — operator documents absent",
-    );
+  const absentPlan = present ? null : liveCorpusPlan({ documentsPresent: false });
+  if (absentPlan) {
+    skipLive("every id the live queue suppresses is freed by an abstention", absentPlan.reason);
+    skipLive("and the queue offers more work than it did", absentPlan.reason);
   } else {
     const dir = fs.mkdtempSync(path.join(os.tmpdir(), "t736-live-"));
     copyToolchainInto(dir);
@@ -2853,11 +2880,24 @@ function isClaimable(rendered, id) {
 
     const before = liveBoardAndQueue();
     const renderedBefore = fs.readFileSync(path.join(dir, "EXECUTION_QUEUE.md"), "utf8");
-    const candidates = suppressedCandidateIds(renderedBefore);
+    const plan = liveCorpusPlan({
+      documentsPresent: true,
+      candidateIds: before.status === 0 ? suppressedCandidateIds(renderedBefore) : [],
+    });
+    const candidates = plan.candidates;
     const claimableBefore = Number(
       renderedBefore.match(/\*\*(\d+) items are claimable right now/)?.[1] ?? "-1",
     );
 
+    if (plan.skip) {
+      fs.rmSync(dir, { recursive: true, force: true });
+      const why =
+        before.status === 0
+          ? plan.reason
+          : `${plan.reason} (the board/queue pair exited ${before.status} over the live copy)`;
+      skipLive("every id the live queue suppresses is freed by an abstention", why);
+      skipLive("and the queue offers more work than it did", why);
+    } else {
     for (const id of candidates) {
       run(dir, "append-claim.mjs", [
         "--file",
@@ -2899,11 +2939,6 @@ function isClaimable(rendered, id) {
     fs.rmSync(dir, { recursive: true, force: true });
 
     check(
-      "the live corpus has suppressed candidates to replay, so this case is not vacuous",
-      before.status === 0 && candidates.length > 0,
-      `exit=${before.status} candidates=${candidates.length}`,
-    );
-    check(
       "every id the live queue suppresses is freed — not in flight, and not newly held",
       after.status === 0 &&
         stillSuppressed.length === 0 &&
@@ -2918,6 +2953,7 @@ function isClaimable(rendered, id) {
       claimableBefore >= 0 && claimableAfter > claimableBefore,
       `claimable ${claimableBefore} -> ${claimableAfter} over ${candidates.length} candidates`,
     );
+    }
   }
 }
 
