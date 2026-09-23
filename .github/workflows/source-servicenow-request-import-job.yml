@@ -213,6 +213,22 @@ jobs:
             --poll-seconds 15 \
             --idle-verify-wait-seconds 300
 
+      - name: Validate dry-run request proof
+        if: inputs.mode == 'dry_run'
+        shell: bash
+        run: |
+          node scripts/source/validate-servicenow-request-proof.mjs \
+            audit-artifacts/source-servicenow-request-import-job/workflow-contract.json \
+            audit-artifacts/source-servicenow-request-import-job/live-dry-run/summary.json
+
+      - name: Validate approved request apply proof
+        if: inputs.mode == 'apply'
+        shell: bash
+        run: |
+          node scripts/source/validate-servicenow-request-proof.mjs \
+            audit-artifacts/source-servicenow-request-import-job/workflow-contract.json \
+            audit-artifacts/source-servicenow-request-import-job/live-apply/summary.json
+
       - name: Upload request import proof
         if: always()
         uses: actions/upload-artifact@v7

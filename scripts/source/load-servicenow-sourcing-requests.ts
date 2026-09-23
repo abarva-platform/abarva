@@ -398,6 +398,30 @@ function emitProofBundle(outDir: string): void {
   console.log("__SEMANTIC2_PROOF_TGZ_END__");
 }
 
+function emitCompactProofSummary(result: ServiceNowImportPlan & {
+  inserted: number;
+  committed: boolean;
+}): void {
+  const summary = {
+    schemaVersion: 1,
+    event: "source_servicenow_request_import_proof_summary",
+    mode: result.apply ? "apply" : "dry_run",
+    requestCount: result.rowCount,
+    archetypeCount: result.archetypes.length,
+    requiredFactGapCount: result.requests.reduce(
+      (count, request) => count + request.requiredFactGaps.length,
+      0,
+    ),
+    missingArchetypeCount: result.missingArchetypes.length,
+    inputSha256: result.inputSha256,
+    inputSourceVersion: result.inputSourceVersion,
+    inserted: result.inserted,
+    committed: result.committed,
+    authority: result.authority,
+  };
+  console.log(`__SOURCE_SERVICENOW_REQUEST_PROOF_SUMMARY__${JSON.stringify(summary)}`);
+}
+
 function databaseUrl(env = process.env): string {
   const value = env.SOURCE_CONTEXT_DATABASE_URL ?? env.DATABASE_URL;
   if (!value) throw new Error("Apply mode requires SOURCE_CONTEXT_DATABASE_URL or DATABASE_URL.");
@@ -501,6 +525,7 @@ export async function runServiceNowRequestImport(args: ServiceNowImportArgs) {
     const result = { ...plan, inserted: 0, committed: false };
     writeProofManifest(args, plan, result);
     if (args.emitProofBundle) emitProofBundle(args.outDir);
+    if (args.operatorJob) emitCompactProofSummary(result);
     return result;
   }
   const inserted = await applyPlan(plan, args);
@@ -511,6 +536,7 @@ export async function runServiceNowRequestImport(args: ServiceNowImportArgs) {
   );
   writeProofManifest(args, plan, result);
   if (args.emitProofBundle) emitProofBundle(args.outDir);
+  if (args.operatorJob) emitCompactProofSummary(result);
   return result;
 }
 
@@ -518,8 +544,11 @@ const isDirect = process.argv[1]
   ? import.meta.url === pathToFileURL(path.resolve(process.argv[1])).href
   : false;
 if (isDirect) {
-  runServiceNowRequestImport(parseServiceNowImportArgs())
-    .then((result) => console.log(JSON.stringify(result, null, 2)))
+  const args = parseServiceNowImportArgs();
+  runServiceNowRequestImport(args)
+    .then((result) => {
+      if (!args.operatorJob) console.log(JSON.stringify(result, null, 2));
+    })
     .catch((error) => {
       console.error(error instanceof Error ? error.message : String(error));
       process.exitCode = 1;
