@@ -2,6 +2,7 @@ import { createHash } from "node:crypto";
 import { getAzureReadFluentClient } from "@/lib/data-plane/postgresCompat";
 import { normalizeSourceStageKey } from "@/lib/source/constants";
 import type { SourceStageKey } from "@/lib/source/types";
+import { confirmationKeysForStage } from "@/lib/source/stage-gate-confirmations";
 import {
   coerceStageToSourceJourney,
   getSourceJourneyForEvent,
@@ -10,6 +11,8 @@ import {
 } from "@/lib/source/sourcing-motion-journeys";
 
 export const SOURCE_STAGE_PLAN_SNAPSHOT_VERSION = "source-stage-plan-v1";
+export const SOURCE_STAGE_CATALOG_VERSION = "source-stage-catalog-v1";
+export const SOURCE_GATE_POLICY_VERSION = "source-gate-confirmations-v1";
 
 export type SourceStagePlanSnapshotStatus =
   | "completed"
@@ -38,6 +41,10 @@ export interface SourceStagePlanSnapshot {
     readonly skippedStageKeys: readonly SourceStageKey[];
   };
   readonly stages: readonly SourceStagePlanSnapshotStage[];
+  readonly archetypeId: string | null;
+  readonly catalogVersion: typeof SOURCE_STAGE_CATALOG_VERSION;
+  readonly policyVersion: typeof SOURCE_GATE_POLICY_VERSION;
+  readonly gateCriteria: Readonly<Partial<Record<SourceStageKey, readonly string[]>>>;
   readonly contentHash: string;
 }
 
@@ -155,16 +162,30 @@ export function buildSourceEventStagePlanSnapshot(
   const stages = buildStages(journey, currentStageKey);
   if (stages.length === 0) return { kind: "unavailable" };
 
-  const payload = {
+  const gateCriteria = Object.fromEntries(
+    journey.stages.map((stage) => [stage.key, confirmationKeysForStage(stage.key)]),
+  ) as Partial<Record<SourceStageKey, readonly string[]>>;
+  const archetypeId =
+    nonempty(row.classified_category) ?? nonempty(row.event_type);
+  const plan = {
     snapshotVersion: SOURCE_STAGE_PLAN_SNAPSHOT_VERSION,
     owner: { sourceEventId, clientKey },
-    currentStageKey,
-    lifecycleState,
+    archetypeId,
     journey: {
       id: journey.id,
       label: journey.label,
       skippedStageKeys: journey.skippedStageKeys,
     },
+    catalogVersion: SOURCE_STAGE_CATALOG_VERSION,
+    policyVersion: SOURCE_GATE_POLICY_VERSION,
+    stages: journey.stages.map((stage, index) => ({ ...stage, sequence: index + 1 })),
+    gateCriteria,
+  } as const;
+
+  const payload = {
+    ...plan,
+    currentStageKey,
+    lifecycleState,
     stages,
   } satisfies Omit<SourceStagePlanSnapshot, "contentHash">;
 
@@ -172,7 +193,7 @@ export function buildSourceEventStagePlanSnapshot(
     kind: "available",
     snapshot: deepFreeze({
       ...payload,
-      contentHash: sha256(payload),
+      contentHash: sha256(plan),
     }),
   };
 }
