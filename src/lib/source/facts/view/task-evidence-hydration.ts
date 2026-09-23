@@ -16,9 +16,9 @@
 //   • a `provide` task bound to a `factTemplateCode` is complete when ANY of that
 //     template's column fact keys already exists in the event's committed facts
 //     (the same facts that flip the step insight LIVE); and
-//   • a `provide` task with no template (its evidence is a stored document, e.g. the
-//     signed sponsor letter) is complete when at least one artifact is registered
-//     for the task's stage; and
+//   • a `provide` task with no template needs an exact governed evidence binding;
+//     an arbitrary artifact registered for the stage cannot prove its content
+//     or signature; and
 //   • a `confirm` / `decide` task is complete only when it has an explicit task →
 //     evidence-requirement mapping and that governed evidence row meets the
 //     requirement's minimum readiness state.
@@ -60,11 +60,7 @@ export interface HydrateTaskEvidenceInput {
    * task is complete when ANY of its bound column fact keys is present here.
    */
   factInputs: EvaluatorInputs;
-  /**
-   * The event's registered artifacts (from `listSourceArtifactsForSourceEventId`).
-   * A template-less `provide` task is complete when at least one artifact exists
-   * for its stage. Empty / omitted → no artifact-derived completion.
-   */
+  /** The event's registered artifacts (from `listSourceArtifactsForSourceEventId`). */
   artifacts?: readonly HydrationArtifact[];
   /**
    * Effective evidence states for this event (persisted evidence plus
@@ -75,10 +71,7 @@ export interface HydrateTaskEvidenceInput {
     SourceEventEvidence,
     "requirementId" | "currentState"
   >[];
-  /**
-   * The canonical stage key being rendered. Used to match artifacts to a
-   * template-less `provide` task (the artifact carries the stage it landed under).
-   */
+  /** The canonical stage key being rendered; retained for the caller contract. */
   stageKey?: string;
 }
 
@@ -113,15 +106,7 @@ export function hydrateTaskEvidenceState(
     factInputs,
     artifacts = [],
     evidenceStates = [],
-    stageKey,
   } = input;
-
-  // Which stages have at least one registered artifact — for template-less
-  // `provide` tasks whose evidence is a stored document, not typed facts.
-  const stagesWithArtifact = new Set<string>();
-  for (const artifact of artifacts) {
-    if (artifact.stageKey) stagesWithArtifact.add(artifact.stageKey);
-  }
 
   const evidenceStateByRequirementId = new Map<
     string,
@@ -173,12 +158,8 @@ export function hydrateTaskEvidenceState(
       return task;
     }
 
-    // Template-less `provide` task → its evidence is a stored artifact. Complete
-    // when at least one artifact is registered for this task's stage.
-    const taskStage = stageKey ?? undefined;
-    if (taskStage && stagesWithArtifact.has(taskStage)) {
-      return { ...task, evidenceComplete: true };
-    }
+    // Without an exact task/evidence binding, neither a stage match nor a
+    // filename can establish that a document was reviewed or signed.
     return task;
   });
 }

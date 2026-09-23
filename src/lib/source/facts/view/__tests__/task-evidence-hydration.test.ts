@@ -168,14 +168,36 @@ describe("hydrateTaskEvidenceState", () => {
     expect(hydrated[1].file).toBeUndefined();
   });
 
-  it("marks a template-less provide task complete from a stored artifact", () => {
+  it("does not treat an unrelated stage artifact as the signed sponsor letter", () => {
     const hydrated = hydrateTaskEvidenceState({
       tasks: [SPONSOR_LETTER_TASK],
       factInputs: {},
-      artifacts: [{ stageKey: "scope" }],
+      artifacts: [
+        {
+          stageKey: "scope",
+          artifactKind: "scope_document",
+          originalName: "application-inventory.csv",
+        },
+      ],
       stageKey: "scope",
     });
-    expect(hydrated[0].evidenceComplete).toBe(true);
+    expect(hydrated[0].evidenceComplete).toBeUndefined();
+  });
+
+  it("does not infer a signed commitment from a sponsor-named file alone", () => {
+    const hydrated = hydrateTaskEvidenceState({
+      tasks: [SPONSOR_LETTER_TASK],
+      factInputs: {},
+      artifacts: [
+        {
+          stageKey: "scope",
+          artifactKind: "sponsor_commitment",
+          originalName: "sponsor-commitment.pdf",
+        },
+      ],
+      stageKey: "scope",
+    });
+    expect(hydrated[0].evidenceComplete).toBeUndefined();
   });
 
   it("does not mark a template-less provide task complete when the artifact is for another stage", () => {
