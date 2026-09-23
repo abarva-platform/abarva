@@ -1131,6 +1131,170 @@ function disclaimsPathList(after) {
 }
 
 /**
+ * AN ATTRIBUTION BEHIND THE PATH (item T-747).
+ *
+ * `PATH_ATTRIBUTIVE` above vetoes an attribution written in FRONT of a path.
+ * T-710 shipped it and recorded the other direction as a known gap in its own
+ * suite — "a postfix attribution (`` `a.mjs` is held by X ``) is NOT covered".
+ * The register then went on writing the gap: counted over its 623 record
+ * lines, 23 paths are followed by a relative pronoun and 7 of those clauses
+ * attribute the path to somebody else. The gate therefore refused a run for a
+ * file whose only mention on the holding line DISCLAIMS it and names a
+ * different owner:
+ *
+ *   ... NOT claiming it: it lands in `<path>`, which T-740 has held since ...
+ *
+ * That is not a disclaimer in `disclaimsPathList`'s sense — there is no set
+ * negation and no first person — and the left-governing negator cannot help
+ * either: its object is the pronoun in `claiming it:`, which item T-725
+ * deliberately excludes. What identifies the sentence is the attribution
+ * behind the path, so that is what is read here. `disclaimsPathList` is left
+ * exactly as T-725 shipped it.
+ *
+ * THE VOCABULARY IS COUNTED OFF THE REGISTER, not brainstormed, and the seven
+ * real clauses fall into two grammars:
+ *
+ *   HOLDER BEFORE VERB   `which codex named live at 19:03Z`
+ *                        `which codex holds under a live claim stamped 19:03Z`
+ *                        `which T-740 has held since 17:43:09Z`   (x2)
+ *   HOLDER AFTER VERB    `which is named in codex-t516-...'s live claim`
+ *                        `which is repo-owned by another lane`
+ *                        `held by codex under a live claim stamped 19:03Z`
+ *                        `held by the live T-704 claim`
+ *                        `held by a SIBLING at line 2265`
+ *                        `which IS held by the live T-460 claim`
+ *
+ * THE COPULA IS OPTIONAL in the second grammar because three of those five
+ * live clauses drop it. T-710's suite recorded `` `a.mjs` is held by X `` as
+ * the uncovered form; the register writes the reduced relative more often
+ * than the full one, and they are one grammar.
+ *
+ * MEASURED, on the whole live register rather than on fixtures: this veto
+ * frees 8 (line, path) holds and creates ZERO. Every one of the eight is a
+ * sentence whose subject is reporting where another lane already is, and four
+ * of them name a file the writing run went out of its way to say it was not
+ * taking. The DELTA is what is recorded and not the two totals: the register
+ * is append-only, so an absolute hold count is stale the next time any lane
+ * writes a line, and a comment that drifts is one nobody can re-measure.
+ *
+ * `has held` is NOT spelled out, and that is a correction to the item rather
+ * than an oversight. It reads as two words, `has` then `held`, and the filler
+ * slot between holder and verb already carries the auxiliary — so adding the
+ * pair as its own alternative is dead vocabulary. Proven the way this file
+ * proves every other alternative: a mutation deleting it differs on ZERO of
+ * the 623 live register lines and the whole suite stays green, which is the
+ * tell T-709's `no longer claimed` gave. `was taking`, `have held` and
+ * `had held` occur zero times and are not here either.
+ *
+ * Nor is any of this added to the FRONT cue `PATH_ATTRIBUTIVE`: all three
+ * `has held` occurrences on the register sit behind the path, so a
+ * front-position one is a shape this corpus cannot constrain. Recorded as a
+ * measured residual rather than widened blind.
+ *
+ * THE HOLDER MUST BE A THIRD PARTY, and that is the whole safety of the rule.
+ * The other 16 relative clauses in the same position must keep holding, and
+ * the sharpest of them is `<path>, which holds 33 test files of which 5 are
+ * covered`: the PATH is the subject of `holds`. A bare verb behind a relative
+ * pronoun therefore vetoes nothing; a verb needs a named holder — a backticked
+ * agent, an item id, an agent-name token, or `another`/`other`/`sibling` — in
+ * one of the two positions above. `which I do not need to touch`, `which my
+ * claim did not name in advance` and `which this lane built earlier today` are
+ * all live lines that must go on holding, and none of them names a third
+ * party, so no first-person guard is written: one would be redundant, and a
+ * redundant guard survives its own mutation (item T-714).
+ */
+const PATH_TAIL_HOLDER =
+  "(?:ref" +
+  "|[A-Za-z]{1,2}-\\d{1,4}" +
+  "|(?:codex|claude)[a-z0-9]*(?:-[a-z0-9]+)*" +
+  "|(?:another|other|sibling|siblings)\\s+\\w+" +
+  ")";
+
+/**
+ * The holding verbs, present/perfect/past. `repo-owned` is spelled out
+ * because a hyphen is not a word character and the live line writes it.
+ */
+const PATH_TAIL_HOLDING_VERB =
+  "(?:held|holds|names|named|lists|listed|claims|claimed|carries|carried|owns|owned|took|takes|repo-owned)";
+
+/** `which <holder> <verb>` — the holder is the clause's own subject. */
+const PATH_TAIL_ATTRIB_SUBJECT = new RegExp(
+  `^(?:which|that|who)\\s+(?:\\w+\\s+){0,2}${PATH_TAIL_HOLDER}\\s+(?:\\w+\\s+){0,2}${PATH_TAIL_HOLDING_VERB}\\b`,
+  "i",
+);
+
+/**
+ * `<verb> by|in <holder>` — the holder is the agent of a passive.
+ *
+ * The relative pronoun is OPTIONAL here and deliberately so: `` `a.mjs` is
+ * held by X `` with no pronoun at all is the exact form T-710's suite recorded
+ * as uncovered, and it is the form this alternation exists to reach.
+ */
+const PATH_TAIL_ATTRIB_AGENT = new RegExp(
+  `^(?:(?:which|that|who)\\s+)?(?:(?:is|are|was|were)\\s+(?:\\w+\\s+){0,1})?${PATH_TAIL_HOLDING_VERB}\\s+(?:by|in)\\s+(?:\\w+\\s+){0,2}${PATH_TAIL_HOLDER}`,
+  "i",
+);
+
+/**
+ * How far past the list the attribution may begin, in WORDS.
+ *
+ * Counted in words for the reason item T-747 filed and T-717 first found: the
+ * two front cues are bounded `[^.]{0,40}` — a CHARACTER bound, which cannot
+ * cross the full stop inside any filename, so it reaches only as far as the
+ * first path of a list.
+ *
+ * THE NUMBER IS DERIVED, NOT CHOSEN, and the honest half is which side of it
+ * a test can constrain. Both patterns below are anchored at the head of the
+ * tail and have `{0,2}` filler slots, so the longest string either can match
+ * is eight tokens: `which is <filler> <verb> by <filler> <filler> <holder>`.
+ * Eight is therefore the grammar's own ceiling, and a budget above it cannot
+ * change a verdict — swept over the live register at 4, 5, 6, 7, 8, 9, 10,
+ * 12, 16 and 24, the freed count rises 3, 6, 7, 8 and then never moves again.
+ *
+ * So the suite pins the side that can move — the lower one — and says so
+ * rather than asserting a false upper bound. The longest real clause is live
+ * line 1200, `` `<path>`, which IS held by the live T-460 claim ``, whose
+ * holder sits at token eight; a first draft of this rule stopped at six and
+ * left that genuine attribution holding, which a sweep caught and no fixture
+ * would have. Above the ceiling the bound is a work bound, nothing more.
+ */
+const PATH_TAIL_ATTRIBUTION_REACH_TOKENS = 8;
+
+/**
+ * The text a path list governs to its RIGHT for ATTRIBUTION, in words.
+ *
+ * Backticked spans are collapsed before the words are counted, exactly as
+ * `attributiveReach` does for the front cues and for the same reason: the
+ * length of whoever's run id sits in the clause is not a property of the
+ * grammar.
+ *
+ * WHAT IS DELIBERATELY NOT HERE. A first draft also cut the tail at the first
+ * clause break, and turned a backticked span that is itself a PATH into a
+ * clause break, so that an attribution about the next file could not reach
+ * back over this one. Both are what `pathGovernedTail` does for the T-725
+ * disclaimer, and both were REMOVED because mutations deleting them differed
+ * on zero live register lines and left the suite green. They were unreachable:
+ * the two patterns below are anchored at the head of the tail, so anything
+ * that is not the attribution itself — a full stop, a semicolon, another
+ * file — already fails to match before any boundary rule is consulted. An
+ * unreachable branch that looks like a safety rule is the shape item T-714
+ * recorded, so it is gone rather than left carrying a claim no test can check.
+ * The anchor is what does this work, and the suite pins the anchor.
+ */
+function pathAttributionTail(after) {
+  const cleaned = String(after)
+    .replace(/^[`'")\]*,\s]+/, "")
+    .replace(/`[^`]*`/g, "ref");
+  return cleaned.split(/\s+/).slice(0, PATH_TAIL_ATTRIBUTION_REACH_TOKENS).join(" ");
+}
+
+/** Whether an attribution behind the list hands the whole list to somebody else. */
+function attributesPathListAway(after) {
+  const tail = pathAttributionTail(after);
+  return PATH_TAIL_ATTRIB_SUBJECT.test(tail) || PATH_TAIL_ATTRIB_AGENT.test(tail);
+}
+
+/**
  * Only list punctuation may sit between two paths for them to be ONE list.
  *
  * Deliberately strict, and it is what keeps T-710's own guard standing: in
@@ -1193,10 +1357,12 @@ export function claimedPaths(text) {
     }
 
     const before = line.slice(0, occurrences[i].start);
+    const after = occurrences[last].trailer + line.slice(occurrences[last].end);
     const disqualified =
       negatesPathList(before) ||
       PATH_ATTRIBUTIVE.test(attributiveReach(before)) ||
-      disclaimsPathList(occurrences[last].trailer + line.slice(occurrences[last].end));
+      disclaimsPathList(after) ||
+      attributesPathListAway(after);
 
     if (!disqualified) {
       for (let k = i; k <= last; k += 1) {
@@ -1217,6 +1383,146 @@ export function claimedPaths(text) {
  * @param {ReturnType<typeof parseRegisterLines>} lines
  * @param {{ files:string[], identity:string, nowMs:number, windowHours?:number }} opts
  */
+/**
+ * THE TWO HALVES' CUE SURFACE, as a table (item T-747, closing T-717's ask).
+ *
+ * The gate reads two kinds of subject — item ids and repo paths — and each has
+ * grown its own vetoes, one filing at a time, on whichever side the register
+ * happened to write the cue that week. T-717 found the item half reading four
+ * narrative shapes and the path half two; nobody reconciled them, and the next
+ * divergence was discovered the only way an unpublished divergence ever is —
+ * by a correct claim being refused, which cost one run its chosen item.
+ *
+ * So the comparison is published here as data and RECOMPUTED by the suite:
+ * every cell below is re-derived by exercising `itemSubjects` and
+ * `claimedPaths` with a probe written in that cell's grammar, and the declared
+ * `covered` flag must equal what the probe observes. Adding a veto to one half
+ * without declaring it here fails; declaring one that does not fire fails.
+ * `open` names what is still asymmetric, so the next divergence is a row in a
+ * table rather than a refusal somebody has to debug.
+ *
+ * `unit` is stated because it is itself a divergence: the item half bounds its
+ * front cues in WORDS and the path half in CHARACTERS, and a character bound
+ * cannot cross the full stop inside a filename — so the path half's front cues
+ * reach only as far as the first path of a list. That is recorded, not fixed
+ * here: widening a front cue moves live holds and belongs to its own item.
+ */
+export const CUE_SURFACE = [
+  {
+    half: "item",
+    cue: "negation",
+    governs: "left",
+    covered: true,
+    unit: "words",
+    bound: 3,
+    item: "T-722",
+    probe: "not item T-800",
+  },
+  {
+    half: "item",
+    cue: "negation",
+    governs: "right",
+    covered: true,
+    unit: "words",
+    bound: 6,
+    item: "T-707",
+    probe: "item T-800 is not claimed",
+  },
+  {
+    half: "item",
+    cue: "attribution",
+    governs: "left",
+    covered: true,
+    unit: "words",
+    bound: 2,
+    item: "T-716",
+    probe: "another run merged item T-800",
+  },
+  {
+    half: "item",
+    cue: "attribution",
+    governs: "right",
+    covered: false,
+    unit: null,
+    bound: null,
+    item: null,
+    probe: "item T-800, which `codex-other#1` has held since 17:43:09Z",
+  },
+  {
+    half: "path",
+    cue: "negation",
+    governs: "left",
+    covered: true,
+    unit: "characters",
+    bound: 40,
+    item: "T-707",
+    probe: "I am not editing scripts/exec/probe-a.mjs",
+  },
+  {
+    half: "path",
+    cue: "negation",
+    governs: "right",
+    covered: true,
+    unit: "words",
+    bound: 8,
+    item: "T-725",
+    probe: "the sibling names scripts/exec/probe-a.mjs, none of which I touch",
+  },
+  {
+    half: "path",
+    cue: "attribution",
+    governs: "left",
+    covered: true,
+    unit: "characters",
+    bound: 40,
+    item: "T-710",
+    probe: "held by `codex-other#1`: scripts/exec/probe-a.mjs",
+  },
+  {
+    half: "path",
+    cue: "attribution",
+    governs: "right",
+    covered: true,
+    unit: "words",
+    bound: 8,
+    item: "T-747",
+    probe: "it lands in scripts/exec/probe-a.mjs, which T-800 has held since 17:43:09Z",
+  },
+];
+
+/** The id and the path every `CUE_SURFACE` probe is written about. */
+export const CUE_SURFACE_SUBJECTS = { item: "T-800", path: "scripts/exec/probe-a.mjs" };
+
+/**
+ * Re-derive each row's `covered` by running the probe through the real veto.
+ *
+ * A row is covered when the probe's subject does NOT survive — that is the
+ * veto firing. Nothing here asks the module what it believes; the verdict is
+ * the exported parser's own output over the row's own sentence.
+ */
+export function recomputeCueSurface() {
+  return CUE_SURFACE.map((row) => {
+    const observed =
+      row.half === "item"
+        ? !itemSubjects(row.probe).some((id) => id.base === CUE_SURFACE_SUBJECTS.item)
+        : !claimedPaths(row.probe).some((p) => p.path === CUE_SURFACE_SUBJECTS.path);
+    return { ...row, observed };
+  });
+}
+
+/** The cells one half covers and the other does not — the open asymmetries. */
+export function cueSurfaceDivergences() {
+  const key = (r) => `${r.cue}/${r.governs}`;
+  const by = new Map(CUE_SURFACE.map((r) => [`${r.half}:${key(r)}`, r]));
+  const out = [];
+  for (const r of CUE_SURFACE) {
+    const other = r.half === "item" ? "path" : "item";
+    const mirror = by.get(`${other}:${key(r)}`);
+    if (mirror && r.covered && !mirror.covered) out.push(`${other}/${key(r)}`);
+  }
+  return out.sort();
+}
+
 export function resolveFileOverlap(lines, { files, identity, nowMs, windowHours }) {
   const requested = [];
   const unparsed = [];
