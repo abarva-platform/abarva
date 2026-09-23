@@ -112,6 +112,39 @@ const WIRED = VERDICTED_WIRE.filter(
 );
 const NOT_YET_BEHAVIOUR = pathsWithVerdict("rewrite_as_behavior");
 
+/**
+ * The directory T-743 wired WHOLESALE, superseding the exact-path step that
+ * carried three of the files above.
+ *
+ * This is a mechanism change, not a withdrawal, and the distinction is the
+ * whole of why these three move rather than drop out. T-557's cases demand the
+ * exact path because, for its own draw, an ancestor sweep would have run three
+ * suites T-556 had verdicted `rewrite_as_behavior` — "reached" had to mean
+ * "named individually" or the negative cases meant nothing. That reasoning is
+ * intact and still governs the other ten.
+ *
+ * It does not govern this directory. `src/lib/agent/__tests__` holds no
+ * withheld and no `rewrite_as_behavior` file; all 33 of its suites were
+ * executed before the sweep was written (T-742's 19, T-743's remaining 9, then
+ * the directory as a unit) and all 33 are green. What the exact-path step DID
+ * carry here was the defect: 5 of 33 files were reached and 28 were reached by
+ * nothing, because a named command cannot name a file written after it.
+ *
+ * So the subject of every case below is unchanged for these three — still on
+ * disk, still not in the unrun set, still reached by a pull-request command —
+ * and only the shape of the command that reaches them is allowed to be an
+ * ancestor directory. `src/__tests__/behaviors/t743-agent-tests-directory-ci.test.ts`
+ * is what holds the sweep itself in place, including the case that adds a file
+ * the workflow has never heard of and re-measures.
+ */
+const DIRECTORY_WIRED_ROOT = "src/lib/agent/__tests__";
+const WIRED_BY_DIRECTORY = WIRED.filter((testPath) =>
+  testPath.startsWith(`${DIRECTORY_WIRED_ROOT}/`),
+);
+const WIRED_BY_EXACT_PATH = WIRED.filter(
+  (testPath) => !testPath.startsWith(`${DIRECTORY_WIRED_ROOT}/`),
+);
+
 type Probe = {
   indeterminateInvocations: number;
   unrun: string[];
@@ -188,11 +221,18 @@ describe("the fifteen suites T-556 verdicted wire_into_ci", () => {
       wiredHere: WIRED.length,
       withheld: WITHHELD.length,
       notYet: NOT_YET_BEHAVIOUR.length,
+      // Split out so the partition itself is non-vacuous: if the directory
+      // constant stopped matching, every ancestor case below would silently
+      // become a case about nothing.
+      byExactPath: WIRED_BY_EXACT_PATH.length,
+      byDirectory: WIRED_BY_DIRECTORY.length,
     }).toEqual({
       verdictedWire: 15,
       wiredHere: 13,
       withheld: 2,
       notYet: 3,
+      byExactPath: 10,
+      byDirectory: 3,
     });
   });
 
@@ -226,24 +266,55 @@ describe("the fifteen suites T-556 verdicted wire_into_ci", () => {
     },
   );
 
-  it.each(WIRED)(
+  it.each(WIRED_BY_EXACT_PATH)(
     "reaches %s from a workflow that gates a pull request, naming the exact path",
     (testPath) => {
       const naming = probe.pullRequestCommands.filter((command) =>
         commandNamesExactly(command, testPath),
       );
       // The exact path, not an ancestor directory. A directory sweep would
-      // cover the file and leave this empty, which is the distinction the
-      // acceptance turns on.
+      // cover the file and leave this empty, which is the distinction T-557's
+      // acceptance turns on — see WIRED_BY_DIRECTORY for the one directory
+      // where a later item settled it the other way, and why.
       expect(naming.length).toBeGreaterThan(0);
     },
   );
 
-  it.each(WIRED)("names %s in the wiring workflow itself", (testPath) => {
-    // So the step cannot drift into a job that does not run on a pull request
-    // while the case above stays green on some other workflow's command.
+  it.each(WIRED_BY_EXACT_PATH)(
+    "names %s in the wiring workflow itself",
+    (testPath) => {
+      // So the step cannot drift into a job that does not run on a pull request
+      // while the case above stays green on some other workflow's command.
+      expect(
+        readFileSync(path.join(repoRoot, WIRING_WORKFLOW), "utf8"),
+      ).toContain(testPath);
+    },
+  );
+
+  it.each(WIRED_BY_DIRECTORY)(
+    "reaches %s from a pull-request workflow through the directory that owns it",
+    (testPath) => {
+      // The file may still be named — nothing here forbids it — but the
+      // command that must exist is the one that also reaches the file nobody
+      // has written yet. Asserted against the census's pull-request commands,
+      // so a step in a workflow that does not gate a pull request cannot
+      // satisfy it.
+      const sweeping = probe.pullRequestCommands.filter((command) =>
+        commandNamesExactly(command, DIRECTORY_WIRED_ROOT),
+      );
+      expect(sweeping.length).toBeGreaterThan(0);
+
+      // And the file is genuinely inside what that command selects, rather
+      // than merely sharing a prefix with it.
+      expect(path.dirname(testPath)).toBe(DIRECTORY_WIRED_ROOT);
+    },
+  );
+
+  it("names the swept directory in the wiring workflow itself", () => {
+    // One case, not one per file: the directory is named once, which is the
+    // property being held.
     expect(readFileSync(path.join(repoRoot, WIRING_WORKFLOW), "utf8")).toContain(
-      testPath,
+      `jest ${DIRECTORY_WIRED_ROOT} `,
     );
   });
 

@@ -521,15 +521,27 @@ jobs:
       #    describes the path instead of printing it. A required check forbids
       #    it; this one is not a judgement call at all.
 
-      # Agent-side suites from the same draw: artifact sentinel parsing, the
-      # mission text derived for a tenant, and the editorial admin surface that
-      # must not leak one tenant's content into another's. Named individually
-      # rather than sweeping `src/lib/agent/__tests__`, which holds unrelated
-      # untriaged debt this item did not measure.
-      - name: Exercise agent artifact, mission and editorial-isolation suites
-        run: >-
-          npx jest --runTestsByPath
-          src/lib/agent/__tests__/admin-editorial-tenant-isolation.test.ts
-          src/lib/agent/__tests__/agent-mission-derived.test.ts
-          src/lib/agent/__tests__/artifacts.test.ts
-          --runInBand
+      # The agent-runtime unit directory, named ONCE (T-743).
+      #
+      # Three files from this directory used to be named here, and the step said
+      # why: sweeping the directory would have picked up "unrelated untriaged
+      # debt this item did not measure". That was true when it was written and
+      # it is no longer, so the reason is discharged rather than dropped —
+      # T-742 executed 19 of the 28 unrun suites individually and recorded
+      # `wire_into_ci` for every one, T-743 executed the remaining 9 the same
+      # way (73 tests, 73 passed), and the directory then ran as a unit: 33
+      # suites, 592 tests, 592 passed, under a second.
+      #
+      # Naming the directory rather than its files is the whole point. Five of
+      # 33 suites here were reached by CI and 28 by nothing, with no quarantine
+      # declared against any of them — nobody chose that, it is what named-file
+      # wiring does to every file added after the command was written. This
+      # workflow runs on every pull request with no `paths:` filter, so a suite
+      # added tomorrow is reached without editing anything.
+      #
+      # Jest reads a bare path argument as a regex, so this also selects any
+      # sibling whose name STARTS with `__tests__`; there is none, and
+      # `src/__tests__/behaviors/t743-agent-tests-directory-ci.test.ts` fails if
+      # one appears.
+      - name: Exercise the agent-runtime unit suites
+        run: npx jest src/lib/agent/__tests__ --runInBand

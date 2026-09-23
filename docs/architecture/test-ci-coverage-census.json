@@ -15,25 +15,47 @@
     "No timestamp is recorded, so refreshing this file on an unchanged tree is a no-op."
   ],
   "counts": {
-    "testFiles": 2401,
-    "coveredTestFiles": 1917,
-    "pullRequestCoveredTestFiles": 1914,
-    "uncoveredTestFiles": 484,
-    "directoriesWithTests": 483,
-    "directoriesFullyCovered": 280,
-    "directoriesPartiallyCovered": 26,
+    "testFiles": 2409,
+    "coveredTestFiles": 1954,
+    "pullRequestCoveredTestFiles": 1951,
+    "uncoveredTestFiles": 455,
+    "directoriesWithTests": 484,
+    "directoriesFullyCovered": 282,
+    "directoriesPartiallyCovered": 25,
     "directoriesUncovered": 177,
-    "directoriesWithUnrunTestFiles": 203,
-    "directoriesWithUntriagedUnrunTestFiles": 193,
+    "directoriesWithUnrunTestFiles": 202,
+    "directoriesWithUntriagedUnrunTestFiles": 192,
     "declaredQuarantineTestFiles": 49,
-    "untriagedUnrunTestFiles": 435,
+    "untriagedUnrunTestFiles": 406,
     "indeterminateInvocations": 0,
     "unresolvedIgnoreArguments": 0,
     "criticalGovernedRiskDirectories": 1,
-    "highGovernedRiskDirectories": 12,
+    "highGovernedRiskDirectories": 11,
     "unclassifiedRiskDirectories": 180
   },
   "indeterminateInvocations": [],
+  "mentionedInvocations": [
+    {
+      "source": "scripts/quality/admin-integration-ignore-args.mjs",
+      "mention": "/** * Print the `--testPathIgnorePatterns` arguments for the Admin integration * directory, derived from admin-integration-quarantine.json. * * The workflow runs jest directly and names the directory literally: * * npx jest ... src/__tests__/integration/admin ... $(node scripts/quality/admin-integration-ignore-args.mjs) * * That shape is deliberate, and it is the same one source-integration.yml and * the Intelligence step already use. The \"Changed integration suites have a CI * owner\" gate counts a suite as registered only when a workflow command * mentions a test runner AND names the suite or a containing directory. Moving * the run behind a wrapper script satisfies neither, so wrapping it would leave * every new Admin integration suite failing that gate while the workflow * appeared to work. Only the flags come from here; the runner and the path stay * in the command where the gate can see them. */"
+    },
+    {
+      "source": "scripts/quality/check-integration-root-quarantine.mjs",
+      "mention": "/** * Keep the integration ROOT carve-out honest. * * Every sibling list in this directory guards a directory a workflow NAMES, so * the default there is INCLUDED and a new suite runs the day it lands. The * root of `src/__tests__/integration` is different, for a reason recorded in * `integration-suites.yml`: naming that path as a directory would also run * every red subdirectory under it, so its root-level files are enumerated one * by one, by exact path. * * That inverts the default to EXCLUDED, and an inverted default needs a * control the sibling lists never needed. Until this file existed, the only * record of the carve-out was a workflow comment reading \"10 are still red and * stay out of the green job\" — a count, with no per-file reason, no owner, and * nothing that could fail. Five root files were still unrun and untriaged when * this landed, and one of them was red because a governed Source answer had * started dropping two of three recommended vendors. Nobody saw it, because * nothing ran it, because nothing checked that everything ran. * * Four ways the carve-out rots, and the first is the one the enumeration * cannot notice by itself: * * 1. A root file is unrun and UNDECLARED. With the default inverted, that is * what silence looks like: no failure, no mention, no coverage. * 2. A declared file is RUN again. The exclusion no longer excludes anything * but still reads as live to the next person who counts the list. * 3. A declared file no longer exists, is named twice, or carries no reason, * owner or triage verdict. * 4. THE REASON EXPIRED — `--rerun` runs every quarantined suite and fails if * one PASSES. That is the direction that matters: repair the suite and * this exits 1 until the entry is deleted and the file is wired back into * the workflow. * * \"Is this test file run by any workflow\" is NOT re-implemented here. It is * asked of `test-ci-coverage-census.mjs`, which already resolves package * scripts, jest invocations, ignore arguments and directory-regex collisions — * and gets the collisions right, which a naive read of the workflow would not: * `npx jest src/__tests__/integration/programs` is a regex that also selects * root files beginning `programs-`. Two audits asking the same question must * not be able to disagree about the answer. */"
+    },
+    {
+      "source": "scripts/quality/intelligence-integration-ignore-args.mjs",
+      "mention": "/** * Print the `--testPathIgnorePatterns` arguments for the Intelligence * integration directory, derived from intelligence-integration-quarantine.json. * * The workflow runs jest directly and names the directory literally: * * npx jest ... src/__tests__/integration/intelligence ... $(node scripts/quality/intelligence-integration-ignore-args.mjs) * * That shape is deliberate, and it is the same one source-integration.yml uses. * The \"Changed integration suites have a CI owner\" gate counts a suite as * registered only when a workflow command mentions a test runner AND names the * suite or a containing directory. Moving the run behind a wrapper script * satisfies neither, so wrapping it would leave every new Intelligence * integration suite failing that gate while the workflow appeared to work. * Only the flags come from here; the runner and the path stay in the command * where the gate can see them. */"
+    },
+    {
+      "source": "scripts/quality/qa-integration-ignore-args.mjs",
+      "mention": "/** * Print the `--testPathIgnorePatterns` arguments for the QA integration * directory, derived from qa-integration-quarantine.json. * * The workflow runs jest directly and names the directory literally: * * npx jest src/__tests__/integration/qa --no-coverage --ci $(node scripts/quality/qa-integration-ignore-args.mjs) * * That shape is deliberate, and it matches the Admin, Source and Intelligence * steps. The \"Changed integration suites have a CI owner\" gate counts a suite * as registered only when a workflow command mentions a test runner AND names * the suite or a containing directory. Moving the run behind a wrapper script * satisfies neither, so wrapping it would leave every new QA integration suite * failing that gate while the workflow appeared to work. Only the flags come * from here; the runner and the path stay in the command where the gate can * see them. * * There is no `alsoIgnored` list: `src/__tests__/integration/qa` as a jest * path pattern has no sibling directory it can also select — unlike * `integration/agent`, which selects `integration/agents/` too. Checked, not * assumed. */"
+    },
+    {
+      "source": "scripts/quality/source-integration-ignore-args.mjs",
+      "mention": "/** * Print the `--testPathIgnorePatterns` arguments for the Source integration * workflow, derived from source-integration-quarantine.json. * * The workflow runs jest directly and names the suite directory literally: * * npx jest src/__tests__/integration/source ... $(node scripts/quality/source-integration-ignore-args.mjs) * * That shape is deliberate. The \"Changed integration suites have a CI owner\" * gate counts a suite as registered only when a workflow command mentions a * test runner AND names the suite or a containing directory. Moving the run * behind a wrapper script satisfies neither, so wrapping it would have left * every new Source integration suite failing that gate while the workflow * appeared to work. Only the flags come from here; the runner and the path * stay in the command where the gate can see them. * * Keeping the list in JSON rather than as a 24-line literal in the YAML means * it has one home, and the sibling checker can refuse it when it goes stale. */"
+    }
+  ],
   "unresolvedIgnoreArguments": [],
   "partiallyCoveredDirectories": [
     {
@@ -59,9 +81,9 @@
     {
       "directory": "src/__tests__/integration",
       "testFiles": 45,
-      "coveredTestFiles": 40,
+      "coveredTestFiles": 41,
       "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 5,
+      "untriagedUnrunTestFiles": 4,
       "via": [
         "command"
       ]
@@ -96,16 +118,6 @@
       "via": [
         "command",
         "script-file"
-      ]
-    },
-    {
-      "directory": "src/lib/agent/__tests__",
-      "testFiles": 33,
-      "coveredTestFiles": 5,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 28,
-      "via": [
-        "command"
       ]
     },
     {
@@ -1246,14 +1258,16 @@
       "directory": "src/__tests__/integration",
       "testPath": "src/__tests__/integration/source-chat-shape.test.ts",
       "enumerated": true,
-      "collected": false,
-      "run": false,
+      "collected": true,
+      "run": "unknown",
       "green": "unknown",
-      "covered": false,
-      "pullRequestCovered": false,
+      "covered": true,
+      "pullRequestCovered": true,
       "declaredQuarantine": false,
-      "untriaged": true,
-      "via": [],
+      "untriaged": false,
+      "via": [
+        "command"
+      ],
       "governedRisk": {
         "score": 1110,
         "band": "critical",
@@ -1416,709 +1430,6 @@
       }
     },
     {
-      "directory": "src/lib/agent/__tests__",
-      "testPath": "src/lib/agent/__tests__/admin-editorial-tenant-isolation.test.ts",
-      "enumerated": true,
-      "collected": true,
-      "run": "unknown",
-      "green": "unknown",
-      "covered": true,
-      "pullRequestCovered": true,
-      "declaredQuarantine": false,
-      "untriaged": false,
-      "via": [
-        "command"
-      ],
-      "governedRisk": {
-        "score": 10,
-        "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 2
-      }
-    },
-    {
-      "directory": "src/lib/agent/__tests__",
-      "testPath": "src/lib/agent/__tests__/agent-mission-derived.test.ts",
-      "enumerated": true,
-      "collected": true,
-      "run": "unknown",
-      "green": "unknown",
-      "covered": true,
-      "pullRequestCovered": true,
-      "declaredQuarantine": false,
-      "untriaged": false,
-      "via": [
-        "command"
-      ],
-      "governedRisk": {
-        "score": 10,
-        "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 2
-      }
-    },
-    {
-      "directory": "src/lib/agent/__tests__",
-      "testPath": "src/lib/agent/__tests__/artifacts.test.ts",
-      "enumerated": true,
-      "collected": true,
-      "run": "unknown",
-      "green": "unknown",
-      "covered": true,
-      "pullRequestCovered": true,
-      "declaredQuarantine": false,
-      "untriaged": false,
-      "via": [
-        "command"
-      ],
-      "governedRisk": {
-        "score": 10,
-        "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 2
-      }
-    },
-    {
-      "directory": "src/lib/agent/__tests__",
-      "testPath": "src/lib/agent/__tests__/attachments.test.ts",
-      "enumerated": true,
-      "collected": false,
-      "run": false,
-      "green": "unknown",
-      "covered": false,
-      "pullRequestCovered": false,
-      "declaredQuarantine": false,
-      "untriaged": true,
-      "via": [],
-      "governedRisk": {
-        "score": 10,
-        "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 2
-      }
-    },
-    {
-      "directory": "src/lib/agent/__tests__",
-      "testPath": "src/lib/agent/__tests__/capture-field-artifact.test.ts",
-      "enumerated": true,
-      "collected": false,
-      "run": false,
-      "green": "unknown",
-      "covered": false,
-      "pullRequestCovered": false,
-      "declaredQuarantine": false,
-      "untriaged": true,
-      "via": [],
-      "governedRisk": {
-        "score": 10,
-        "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 2
-      }
-    },
-    {
-      "directory": "src/lib/agent/__tests__",
-      "testPath": "src/lib/agent/__tests__/citation-gap.test.ts",
-      "enumerated": true,
-      "collected": false,
-      "run": false,
-      "green": "unknown",
-      "covered": false,
-      "pullRequestCovered": false,
-      "declaredQuarantine": false,
-      "untriaged": true,
-      "via": [],
-      "governedRisk": {
-        "score": 10,
-        "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 2
-      }
-    },
-    {
-      "directory": "src/lib/agent/__tests__",
-      "testPath": "src/lib/agent/__tests__/context-bundle-scoring.test.ts",
-      "enumerated": true,
-      "collected": false,
-      "run": false,
-      "green": "unknown",
-      "covered": false,
-      "pullRequestCovered": false,
-      "declaredQuarantine": false,
-      "untriaged": true,
-      "via": [],
-      "governedRisk": {
-        "score": 10,
-        "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 2
-      }
-    },
-    {
-      "directory": "src/lib/agent/__tests__",
-      "testPath": "src/lib/agent/__tests__/context-bundle-tenant-resolve.test.ts",
-      "enumerated": true,
-      "collected": false,
-      "run": false,
-      "green": "unknown",
-      "covered": false,
-      "pullRequestCovered": false,
-      "declaredQuarantine": false,
-      "untriaged": true,
-      "via": [],
-      "governedRisk": {
-        "score": 10,
-        "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 2
-      }
-    },
-    {
-      "directory": "src/lib/agent/__tests__",
-      "testPath": "src/lib/agent/__tests__/editorial-tenant-aware.test.ts",
-      "enumerated": true,
-      "collected": false,
-      "run": false,
-      "green": "unknown",
-      "covered": false,
-      "pullRequestCovered": false,
-      "declaredQuarantine": false,
-      "untriaged": true,
-      "via": [],
-      "governedRisk": {
-        "score": 10,
-        "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 2
-      }
-    },
-    {
-      "directory": "src/lib/agent/__tests__",
-      "testPath": "src/lib/agent/__tests__/honest-disclosure.test.ts",
-      "enumerated": true,
-      "collected": false,
-      "run": false,
-      "green": "unknown",
-      "covered": false,
-      "pullRequestCovered": false,
-      "declaredQuarantine": false,
-      "untriaged": true,
-      "via": [],
-      "governedRisk": {
-        "score": 10,
-        "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 2
-      }
-    },
-    {
-      "directory": "src/lib/agent/__tests__",
-      "testPath": "src/lib/agent/__tests__/markdownRenderer.test.tsx",
-      "enumerated": true,
-      "collected": false,
-      "run": false,
-      "green": "unknown",
-      "covered": false,
-      "pullRequestCovered": false,
-      "declaredQuarantine": false,
-      "untriaged": true,
-      "via": [],
-      "governedRisk": {
-        "score": 10,
-        "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 2
-      }
-    },
-    {
-      "directory": "src/lib/agent/__tests__",
-      "testPath": "src/lib/agent/__tests__/markdownTokens.test.tsx",
-      "enumerated": true,
-      "collected": false,
-      "run": false,
-      "green": "unknown",
-      "covered": false,
-      "pullRequestCovered": false,
-      "declaredQuarantine": false,
-      "untriaged": true,
-      "via": [],
-      "governedRisk": {
-        "score": 10,
-        "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 2
-      }
-    },
-    {
-      "directory": "src/lib/agent/__tests__",
-      "testPath": "src/lib/agent/__tests__/module-context-contract.test.ts",
-      "enumerated": true,
-      "collected": false,
-      "run": false,
-      "green": "unknown",
-      "covered": false,
-      "pullRequestCovered": false,
-      "declaredQuarantine": false,
-      "untriaged": true,
-      "via": [],
-      "governedRisk": {
-        "score": 10,
-        "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 2
-      }
-    },
-    {
-      "directory": "src/lib/agent/__tests__",
-      "testPath": "src/lib/agent/__tests__/module-routing.test.ts",
-      "enumerated": true,
-      "collected": false,
-      "run": false,
-      "green": "unknown",
-      "covered": false,
-      "pullRequestCovered": false,
-      "declaredQuarantine": false,
-      "untriaged": true,
-      "via": [],
-      "governedRisk": {
-        "score": 10,
-        "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 2
-      }
-    },
-    {
-      "directory": "src/lib/agent/__tests__",
-      "testPath": "src/lib/agent/__tests__/module-v6-answer-contract.test.ts",
-      "enumerated": true,
-      "collected": false,
-      "run": false,
-      "green": "unknown",
-      "covered": false,
-      "pullRequestCovered": false,
-      "declaredQuarantine": false,
-      "untriaged": true,
-      "via": [],
-      "governedRisk": {
-        "score": 10,
-        "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 2
-      }
-    },
-    {
-      "directory": "src/lib/agent/__tests__",
-      "testPath": "src/lib/agent/__tests__/paperclip-abuse-guard.test.ts",
-      "enumerated": true,
-      "collected": false,
-      "run": false,
-      "green": "unknown",
-      "covered": false,
-      "pullRequestCovered": false,
-      "declaredQuarantine": false,
-      "untriaged": true,
-      "via": [],
-      "governedRisk": {
-        "score": 10,
-        "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 2
-      }
-    },
-    {
-      "directory": "src/lib/agent/__tests__",
-      "testPath": "src/lib/agent/__tests__/persona-army-harness.test.ts",
-      "enumerated": true,
-      "collected": false,
-      "run": false,
-      "green": "unknown",
-      "covered": false,
-      "pullRequestCovered": false,
-      "declaredQuarantine": false,
-      "untriaged": true,
-      "via": [],
-      "governedRisk": {
-        "score": 10,
-        "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 2
-      }
-    },
-    {
-      "directory": "src/lib/agent/__tests__",
-      "testPath": "src/lib/agent/__tests__/rendered-response-metadata.test.ts",
-      "enumerated": true,
-      "collected": false,
-      "run": false,
-      "green": "unknown",
-      "covered": false,
-      "pullRequestCovered": false,
-      "declaredQuarantine": false,
-      "untriaged": true,
-      "via": [],
-      "governedRisk": {
-        "score": 10,
-        "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 2
-      }
-    },
-    {
-      "directory": "src/lib/agent/__tests__",
-      "testPath": "src/lib/agent/__tests__/response-parts.test.ts",
-      "enumerated": true,
-      "collected": false,
-      "run": false,
-      "green": "unknown",
-      "covered": false,
-      "pullRequestCovered": false,
-      "declaredQuarantine": false,
-      "untriaged": true,
-      "via": [],
-      "governedRisk": {
-        "score": 10,
-        "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 2
-      }
-    },
-    {
-      "directory": "src/lib/agent/__tests__",
-      "testPath": "src/lib/agent/__tests__/response-shape-regression.test.ts",
-      "enumerated": true,
-      "collected": false,
-      "run": false,
-      "green": "unknown",
-      "covered": false,
-      "pullRequestCovered": false,
-      "declaredQuarantine": false,
-      "untriaged": true,
-      "via": [],
-      "governedRisk": {
-        "score": 10,
-        "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 2
-      }
-    },
-    {
-      "directory": "src/lib/agent/__tests__",
-      "testPath": "src/lib/agent/__tests__/response-shape-truncation-artifacts.test.ts",
-      "enumerated": true,
-      "collected": false,
-      "run": false,
-      "green": "unknown",
-      "covered": false,
-      "pullRequestCovered": false,
-      "declaredQuarantine": false,
-      "untriaged": true,
-      "via": [],
-      "governedRisk": {
-        "score": 10,
-        "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 2
-      }
-    },
-    {
-      "directory": "src/lib/agent/__tests__",
-      "testPath": "src/lib/agent/__tests__/response-shape.test.ts",
-      "enumerated": true,
-      "collected": false,
-      "run": false,
-      "green": "unknown",
-      "covered": false,
-      "pullRequestCovered": false,
-      "declaredQuarantine": false,
-      "untriaged": true,
-      "via": [],
-      "governedRisk": {
-        "score": 10,
-        "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 2
-      }
-    },
-    {
-      "directory": "src/lib/agent/__tests__",
-      "testPath": "src/lib/agent/__tests__/restricted-financial-streamer.test.ts",
-      "enumerated": true,
-      "collected": false,
-      "run": false,
-      "green": "unknown",
-      "covered": false,
-      "pullRequestCovered": false,
-      "declaredQuarantine": false,
-      "untriaged": true,
-      "via": [],
-      "governedRisk": {
-        "score": 10,
-        "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 2
-      }
-    },
-    {
-      "directory": "src/lib/agent/__tests__",
-      "testPath": "src/lib/agent/__tests__/restricted-output-policy.test.ts",
-      "enumerated": true,
-      "collected": false,
-      "run": false,
-      "green": "unknown",
-      "covered": false,
-      "pullRequestCovered": false,
-      "declaredQuarantine": false,
-      "untriaged": true,
-      "via": [],
-      "governedRisk": {
-        "score": 10,
-        "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 2
-      }
-    },
-    {
-      "directory": "src/lib/agent/__tests__",
-      "testPath": "src/lib/agent/__tests__/retrieval-tenant-leak.test.ts",
-      "enumerated": true,
-      "collected": false,
-      "run": false,
-      "green": "unknown",
-      "covered": false,
-      "pullRequestCovered": false,
-      "declaredQuarantine": false,
-      "untriaged": true,
-      "via": [],
-      "governedRisk": {
-        "score": 10,
-        "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 2
-      }
-    },
-    {
-      "directory": "src/lib/agent/__tests__",
-      "testPath": "src/lib/agent/__tests__/retrieval.azure-context.test.ts",
-      "enumerated": true,
-      "collected": true,
-      "run": "unknown",
-      "green": "unknown",
-      "covered": true,
-      "pullRequestCovered": true,
-      "declaredQuarantine": false,
-      "untriaged": false,
-      "via": [
-        "command"
-      ],
-      "governedRisk": {
-        "score": 10,
-        "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 2
-      }
-    },
-    {
-      "directory": "src/lib/agent/__tests__",
-      "testPath": "src/lib/agent/__tests__/source-ava-polish-gate-response-shape.test.ts",
-      "enumerated": true,
-      "collected": false,
-      "run": false,
-      "green": "unknown",
-      "covered": false,
-      "pullRequestCovered": false,
-      "declaredQuarantine": false,
-      "untriaged": true,
-      "via": [],
-      "governedRisk": {
-        "score": 10,
-        "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 2
-      }
-    },
-    {
-      "directory": "src/lib/agent/__tests__",
-      "testPath": "src/lib/agent/__tests__/surface.test.ts",
-      "enumerated": true,
-      "collected": false,
-      "run": false,
-      "green": "unknown",
-      "covered": false,
-      "pullRequestCovered": false,
-      "declaredQuarantine": false,
-      "untriaged": true,
-      "via": [],
-      "governedRisk": {
-        "score": 10,
-        "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 2
-      }
-    },
-    {
-      "directory": "src/lib/agent/__tests__",
-      "testPath": "src/lib/agent/__tests__/system-prompt-guardrails.test.ts",
-      "enumerated": true,
-      "collected": false,
-      "run": false,
-      "green": "unknown",
-      "covered": false,
-      "pullRequestCovered": false,
-      "declaredQuarantine": false,
-      "untriaged": true,
-      "via": [],
-      "governedRisk": {
-        "score": 10,
-        "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 2
-      }
-    },
-    {
-      "directory": "src/lib/agent/__tests__",
-      "testPath": "src/lib/agent/__tests__/tenant-guardrails.test.ts",
-      "enumerated": true,
-      "collected": false,
-      "run": false,
-      "green": "unknown",
-      "covered": false,
-      "pullRequestCovered": false,
-      "declaredQuarantine": false,
-      "untriaged": true,
-      "via": [],
-      "governedRisk": {
-        "score": 10,
-        "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 2
-      }
-    },
-    {
-      "directory": "src/lib/agent/__tests__",
-      "testPath": "src/lib/agent/__tests__/untrusted-content.test.ts",
-      "enumerated": true,
-      "collected": false,
-      "run": false,
-      "green": "unknown",
-      "covered": false,
-      "pullRequestCovered": false,
-      "declaredQuarantine": false,
-      "untriaged": true,
-      "via": [],
-      "governedRisk": {
-        "score": 10,
-        "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 2
-      }
-    },
-    {
-      "directory": "src/lib/agent/__tests__",
-      "testPath": "src/lib/agent/__tests__/userContext.test.ts",
-      "enumerated": true,
-      "collected": false,
-      "run": false,
-      "green": "unknown",
-      "covered": false,
-      "pullRequestCovered": false,
-      "declaredQuarantine": false,
-      "untriaged": true,
-      "via": [],
-      "governedRisk": {
-        "score": 10,
-        "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 2
-      }
-    },
-    {
-      "directory": "src/lib/agent/__tests__",
-      "testPath": "src/lib/agent/__tests__/visible-answer-contract.test.ts",
-      "enumerated": true,
-      "collected": true,
-      "run": "unknown",
-      "green": "unknown",
-      "covered": true,
-      "pullRequestCovered": true,
-      "declaredQuarantine": false,
-      "untriaged": false,
-      "via": [
-        "command"
-      ],
-      "governedRisk": {
-        "score": 10,
-        "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 2
-      }
-    },
-    {
       "directory": "src/app/(maestro)/source/preview/workspace/__tests__",
       "testPath": "src/app/(maestro)/source/preview/workspace/__tests__/avaComposerGate.test.ts",
       "enumerated": true,
@@ -2138,7 +1449,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 3
+        "rank": 2
       }
     },
     {
@@ -2161,7 +1472,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 3
+        "rank": 2
       }
     },
     {
@@ -2184,7 +1495,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 3
+        "rank": 2
       }
     },
     {
@@ -2207,7 +1518,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 3
+        "rank": 2
       }
     },
     {
@@ -2230,7 +1541,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 3
+        "rank": 2
       }
     },
     {
@@ -2253,7 +1564,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 3
+        "rank": 2
       }
     },
     {
@@ -2276,7 +1587,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 3
+        "rank": 2
       }
     },
     {
@@ -2299,7 +1610,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 3
+        "rank": 2
       }
     },
     {
@@ -2322,7 +1633,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 3
+        "rank": 2
       }
     },
     {
@@ -2343,7 +1654,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 3
+        "rank": 2
       }
     },
     {
@@ -2366,7 +1677,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 3
+        "rank": 2
       }
     },
     {
@@ -2389,7 +1700,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 3
+        "rank": 2
       }
     },
     {
@@ -2412,7 +1723,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 3
+        "rank": 2
       }
     },
     {
@@ -2435,7 +1746,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 3
+        "rank": 2
       }
     },
     {
@@ -2458,7 +1769,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 3
+        "rank": 2
       }
     },
     {
@@ -2481,7 +1792,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 3
+        "rank": 2
       }
     },
     {
@@ -2504,7 +1815,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 3
+        "rank": 2
       }
     },
     {
@@ -2527,7 +1838,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 3
+        "rank": 2
       }
     },
     {
@@ -2550,7 +1861,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 3
+        "rank": 2
       }
     },
     {
@@ -2573,7 +1884,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 3
+        "rank": 2
       }
     },
     {
@@ -2596,7 +1907,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 3
+        "rank": 2
       }
     },
     {
@@ -2619,7 +1930,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 3
+        "rank": 2
       }
     },
     {
@@ -2642,7 +1953,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 3
+        "rank": 2
       }
     },
     {
@@ -2663,7 +1974,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 3
+        "rank": 2
       }
     },
     {
@@ -2686,7 +1997,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 3
+        "rank": 2
       }
     },
     {
@@ -2709,7 +2020,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 3
+        "rank": 2
       }
     },
     {
@@ -2730,7 +2041,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 3
+        "rank": 2
       }
     },
     {
@@ -2751,7 +2062,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 3
+        "rank": 2
       }
     },
     {
@@ -2772,7 +2083,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 3
+        "rank": 2
       }
     },
     {
@@ -2795,7 +2106,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 3
+        "rank": 2
       }
     },
     {
@@ -2818,7 +2129,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 3
+        "rank": 2
       }
     },
     {
@@ -2841,7 +2152,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 3
+        "rank": 2
       }
     },
     {
@@ -2864,7 +2175,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 3
+        "rank": 2
       }
     },
     {
@@ -2887,7 +2198,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 3
+        "rank": 2
       }
     },
     {
@@ -2908,7 +2219,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 4
+        "rank": 3
       }
     },
     {
@@ -2929,7 +2240,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 4
+        "rank": 3
       }
     },
     {
@@ -2950,7 +2261,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 4
+        "rank": 3
       }
     },
     {
@@ -2973,7 +2284,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 5
+        "rank": 4
       }
     },
     {
@@ -2994,7 +2305,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 5
+        "rank": 4
       }
     },
     {
@@ -3015,7 +2326,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 5
+        "rank": 4
       }
     },
     {
@@ -3036,7 +2347,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 5
+        "rank": 4
       }
     },
     {
@@ -3059,7 +2370,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 6
+        "rank": 5
       }
     },
     {
@@ -3082,7 +2393,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 6
+        "rank": 5
       }
     },
     {
@@ -3103,7 +2414,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 6
+        "rank": 5
       }
     },
     {
@@ -3124,7 +2435,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 6
+        "rank": 5
       }
     },
     {
@@ -3145,7 +2456,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 7
+        "rank": 6
       }
     },
     {
@@ -3166,7 +2477,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 7
+        "rank": 6
       }
     },
     {
@@ -3189,7 +2500,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 7
+        "rank": 6
       }
     },
     {
@@ -3212,7 +2523,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 8
+        "rank": 7
       }
     },
     {
@@ -3235,7 +2546,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 8
+        "rank": 7
       }
     },
     {
@@ -3256,7 +2567,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 8
+        "rank": 7
       }
     },
     {
@@ -3277,7 +2588,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 8
+        "rank": 7
       }
     },
     {
@@ -3300,7 +2611,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 8
+        "rank": 7
       }
     },
     {
@@ -3323,7 +2634,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 8
+        "rank": 7
       }
     },
     {
@@ -3346,7 +2657,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 8
+        "rank": 7
       }
     },
     {
@@ -3369,7 +2680,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 8
+        "rank": 7
       }
     },
     {
@@ -3392,7 +2703,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 8
+        "rank": 7
       }
     },
     {
@@ -3415,7 +2726,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 9
+        "rank": 8
       }
     },
     {
@@ -3438,7 +2749,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 9
+        "rank": 8
       }
     },
     {
@@ -3459,7 +2770,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 9
+        "rank": 8
       }
     },
     {
@@ -3480,7 +2791,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 9
+        "rank": 8
       }
     },
     {
@@ -3503,7 +2814,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 10
+        "rank": 9
       }
     },
     {
@@ -3526,7 +2837,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 10
+        "rank": 9
       }
     },
     {
@@ -3547,7 +2858,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 10
+        "rank": 9
       }
     },
     {
@@ -3568,7 +2879,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 11
+        "rank": 10
       }
     },
     {
@@ -3589,7 +2900,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 12
+        "rank": 11
       }
     },
     {
@@ -3610,7 +2921,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 13
+        "rank": 12
       }
     }
   ],
@@ -3618,9 +2929,9 @@
     {
       "directory": "src/__tests__/integration",
       "testFiles": 45,
-      "unrunTestFiles": 5,
+      "unrunTestFiles": 4,
       "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 5,
+      "untriagedUnrunTestFiles": 4,
       "governedRisk": {
         "score": 1110,
         "band": "critical",
@@ -3630,21 +2941,6 @@
           "tenant_scoped_read"
         ],
         "rank": 1
-      }
-    },
-    {
-      "directory": "src/lib/agent/__tests__",
-      "testFiles": 33,
-      "unrunTestFiles": 28,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 28,
-      "governedRisk": {
-        "score": 10,
-        "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 2
       }
     },
     {
@@ -3659,7 +2955,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 3
+        "rank": 2
       }
     },
     {
@@ -3674,7 +2970,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 4
+        "rank": 3
       }
     },
     {
@@ -3689,7 +2985,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 5
+        "rank": 4
       }
     },
     {
@@ -3704,7 +3000,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 6
+        "rank": 5
       }
     },
     {
@@ -3719,7 +3015,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 7
+        "rank": 6
       }
     },
     {
@@ -3734,7 +3030,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 8
+        "rank": 7
       }
     },
     {
@@ -3749,7 +3045,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 9
+        "rank": 8
       }
     },
     {
@@ -3764,7 +3060,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 10
+        "rank": 9
       }
     },
     {
@@ -3779,7 +3075,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 11
+        "rank": 10
       }
     },
     {
@@ -3794,7 +3090,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 12
+        "rank": 11
       }
     },
     {
@@ -3809,7 +3105,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 13
+        "rank": 12
       }
     }
   ],
@@ -3817,7 +3113,7 @@
     {
       "directory": "src/__tests__/integration",
       "testFiles": 45,
-      "unrunTestFiles": 5,
+      "unrunTestFiles": 4,
       "governedRisk": {
         "score": 1110,
         "band": "critical",
@@ -3848,23 +3144,6 @@
       }
     },
     {
-      "directory": "src/lib/agent/__tests__",
-      "testFiles": 33,
-      "unrunTestFiles": 28,
-      "governedRisk": {
-        "score": 10,
-        "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "tenantScopedReadSourceCount": 1,
-        "tenantScopedReadSources": [
-          "src/lib/agent/context-bundle.ts"
-        ],
-        "rank": 2
-      }
-    },
-    {
       "directory": "src/app/(maestro)/source/preview/workspace/__tests__",
       "testFiles": 34,
       "unrunTestFiles": 5,
@@ -3882,7 +3161,7 @@
           "src/lib/auth/tenancy.ts",
           "src/lib/source/data-model/read-adapter.ts"
         ],
-        "rank": 3
+        "rank": 2
       }
     },
     {
@@ -3901,7 +3180,7 @@
           "src/lib/source/candidate-suppliers/event-candidate-acceptance-repository.ts",
           "src/lib/source/candidate-suppliers/event-candidate-authority-repository.ts"
         ],
-        "rank": 4
+        "rank": 3
       }
     },
     {
@@ -3918,7 +3197,7 @@
         "tenantScopedReadSources": [
           "src/lib/source/contract-evidence/read-model.ts"
         ],
-        "rank": 5
+        "rank": 4
       }
     },
     {
@@ -3935,7 +3214,7 @@
         "tenantScopedReadSources": [
           "src/lib/active-client.ts"
         ],
-        "rank": 6
+        "rank": 5
       }
     },
     {
@@ -3952,7 +3231,7 @@
         "tenantScopedReadSources": [
           "src/lib/data-plane/read-adapters/azurePostgresReadAdapter.ts"
         ],
-        "rank": 7
+        "rank": 6
       }
     },
     {
@@ -3970,7 +3249,7 @@
           "src/lib/enterprise-context/derived-enterprise-read.ts",
           "src/lib/enterprise-context/intelligence-read-model.ts"
         ],
-        "rank": 8
+        "rank": 7
       }
     },
     {
@@ -3987,7 +3266,7 @@
         "tenantScopedReadSources": [
           "src/lib/source/contract-intelligence/cloud-adapter.ts"
         ],
-        "rank": 9
+        "rank": 8
       }
     },
     {
@@ -4008,7 +3287,7 @@
           "src/lib/source/queries.ts",
           "src/lib/tenant/resolveTenant.ts"
         ],
-        "rank": 10
+        "rank": 9
       }
     },
     {
@@ -4025,7 +3304,7 @@
         "tenantScopedReadSources": [
           "src/app/api/programs/synthesis/route.ts"
         ],
-        "rank": 11
+        "rank": 10
       }
     },
     {
@@ -4042,7 +3321,7 @@
         "tenantScopedReadSources": [
           "src/app/api/source/synthesis/route.ts"
         ],
-        "rank": 12
+        "rank": 11
       }
     },
     {
@@ -4059,7 +3338,7 @@
         "tenantScopedReadSources": [
           "src/lib/source/nda/nda-authority-repository.ts"
         ],
-        "rank": 13
+        "rank": 12
       }
     }
   ],
