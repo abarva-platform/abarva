@@ -96,6 +96,56 @@ YYYY-MM-DDTHH:MMZ <agent> item <id> <branch> — claimed
 
 The queue remains backward-compatible with the established timestamped `item`, `CLAIM`, and `CLAIMED` forms already present in the append-only claim log. Text above the `## Claim log` marker is never authoritative.
 
+## Worktree retention — check before you create one, not after ENOSPC
+
+"Remove it when the item is merged" has been in the operator task file since
+18 Sep. Two runs of that same task did not follow it. At `2026-09-23T03:57Z` a
+run could not start at all: 580 MiB free of 926 GiB and `git worktree add`
+dying `ENOSPC` mid-checkout, with **798** registered worktrees on disk and
+`git worktree prune` removing **none** of them, because every one still exists.
+A rule nothing can fail is the shape this directory exists against, so the rule
+now has a control.
+
+```bash
+node scripts/exec/worktree-retention.mjs --claims ~/Downloads/EXECUTION_CLAIMS.md
+node scripts/exec/worktree-retention.mjs --check --free-floor-gib 10
+node scripts/exec/worktree-retention.mjs --emit-removals /tmp/removals.sh
+```
+
+**It never removes anything**, and that is deliberate rather than cautious.
+Removing another agent's checkout is the destructive version of the collision
+the claim protocol exists to prevent, so the burden is on proof and the
+asymmetry is explicit:
+
+> a worktree wrongly called `keep` costs one item's disk.
+> a worktree wrongly called `removable` costs someone's uncommitted work.
+
+`removable` therefore needs **three independent proofs**, and anything short of
+all three is `unknown`, never `removable`:
+
+1. **the branch is merged by PR `mergedAt`** — not by ancestry. A squash merge
+   is not an ancestor of the branch it closed, so `merge-base --is-ancestor`
+   would call every squash-merged branch unmerged and leave the disk full.
+2. **`git status --porcelain` is empty.** Read with `--no-optional-locks`, so
+   measuring a checkout never takes the index lock of the run working in it.
+3. **no live claim names the branch or the path.** A claim states its branch in
+   prose and lists source files, never its checkout — so this reads the whole
+   line, not the `files:` list. A claim stamped *ahead* of the clock still
+   holds: T-457 measured six such lines in one day, they are real claims with a
+   wrong stamp, and skipping them would free exactly the checkouts in use.
+
+`--check` exits `1` when free space is below the floor, `0` above it, and `2`
+when free space cannot be read — failing closed, since a control that cannot
+measure its subject must not report success. The floor alone decides it: a disk
+that cannot hold the next checkout is the hazard, and `removable: 0` below the
+floor is the case that needs a person, not the case that needs silence.
+
+**Where the wiring stops, stated rather than implied.** CI runs the behavioural
+suite; it cannot run `--check`, because a GitHub runner's free space and
+worktree list are not the operator's, and a gate asserting on a subject it
+cannot see is the unfailable kind. So `--check` is an operator control in the
+shape of `--preclaim`: available, and only as good as its being invoked.
+
 ## Verify
 
 ```bash
@@ -103,6 +153,7 @@ node scripts/exec/build-execution-queue.test.mjs
 node scripts/exec/build-source-board.test.mjs
 node scripts/exec/register-time-authority.test.mjs
 node scripts/exec/append-claim.test.mjs
+node scripts/exec/worktree-retention.test.mjs
 ```
 
 The suites run the generators as child processes against synthetic operator documents. CI never reads a local execution backlog.
