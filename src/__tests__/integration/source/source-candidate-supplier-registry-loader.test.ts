@@ -253,6 +253,21 @@ describe("candidate supplier registry loader", () => {
           ),
         ),
       ).toBe(true);
+      const marker = consoleSpy.mock.calls
+        .map(([line]) => String(line))
+        .find((line) => line.startsWith("__SOURCE_CANDIDATE_SUPPLIER_PROOF_SUMMARY__"));
+      expect(marker).toBeDefined();
+      expect(JSON.parse(marker!.split("__SOURCE_CANDIDATE_SUPPLIER_PROOF_SUMMARY__")[1])).toMatchObject({
+        event: "source_candidate_supplier_registry_import_proof_summary",
+        mode: "dry_run",
+        rowCount: 25,
+        supplierCount: 20,
+        archetypeCount: 10,
+        failClosedControlCount: 5,
+        inputSha256: csvSha256,
+        inserted: 0,
+        committed: false,
+      });
     } finally {
       consoleSpy.mockRestore();
       rmSync(outDir, { recursive: true, force: true });
