@@ -2016,7 +2016,7 @@ function SourceOriginateDock({
       initialQuote={
         intakeShape
           ? intakeShape.initialQuote
-          : `Ready to stand up a new IT sourcing event for ${clientName}. Tell me the trigger and I will help you capture the five facts needed for approval.`
+          : `Ready to stand up a new sourcing event for ${clientName}. Tell me the trigger and I will help you capture the five facts needed for approval.`
       }
       thread={thread}
       onMessage={onMessage}
