@@ -50,6 +50,9 @@ export function formatMovesAvaChatPacketForPrompt(
     lines.push(
       "Terminal handoff state: current P5 handoff is complete. Do not describe evidence needs, feed-forward items, or preparation gaps as blockers, prerequisites, acceptance conditions, or required work before Tower can start. If relevant, frame them only as post-handoff caveats or follow-up work.",
     );
+    lines.push(
+      "Terminal P5 answer rule: do not ask the user to capture Tower acceptance, confirm a named receiving party, close P5, or complete the handoff package. Those conditions are already satisfied in the live Move state. For next-step questions, start after handoff: Tower execution cadence, metric monitoring, owner follow-through, and caveat burn-down.",
+    );
   }
 
   if (packet.evidenceNeedPackets.length > 0) {
