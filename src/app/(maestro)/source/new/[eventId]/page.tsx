@@ -234,6 +234,7 @@ export default async function SourceNewEventPage({
   ].filter((blocker): blocker is string => Boolean(blocker));
   const responseIntake = buildSourceNewResponseIntake({
     eventId: event.id,
+    tenantKey: activeClient.key,
     asOf: asOfDate,
     uploadActionHref: `/api/v1/source/${encodeURIComponent(event.id)}/artifacts/upload`,
     vendorPanel: stage04VendorPanel,
