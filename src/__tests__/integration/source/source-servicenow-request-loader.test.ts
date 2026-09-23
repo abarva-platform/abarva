@@ -242,6 +242,33 @@ describe("ServiceNow sourcing request loader", () => {
         inputSourceVersion: "servicenow-requests-v1",
         idempotencyKey: "servicenow-requests:synthetic-test:v1",
       });
+      const finalLog = consoleSpy.mock.calls.at(-1)?.[0] as string;
+      expect(finalLog).toMatch(/^__SOURCE_SERVICENOW_REQUEST_PROOF_SUMMARY__\{/);
+      const summary = JSON.parse(
+        finalLog.slice("__SOURCE_SERVICENOW_REQUEST_PROOF_SUMMARY__".length),
+      );
+      expect(summary).toEqual({
+        schemaVersion: 1,
+        event: "source_servicenow_request_import_proof_summary",
+        mode: "dry_run",
+        requestCount: 10,
+        archetypeCount: 10,
+        requiredFactGapCount: 0,
+        missingArchetypeCount: 0,
+        inputSha256: csvSha256,
+        inputSourceVersion: "servicenow-requests-v1",
+        inserted: 0,
+        committed: false,
+        authority: {
+          requestVersionsOnly: true,
+          mappingDecisionsWritten: false,
+          eventsCreated: false,
+          suppliersContacted: false,
+        },
+      });
+      expect(finalLog).not.toContain("synthetic_test");
+      expect(finalLog).not.toContain("idempotency");
+      expect(finalLog).not.toContain("rawSource");
       mkdirSync(bundleOut, { recursive: true });
       const tar = spawnSync("tar", ["-xzf", path.join(outDir, "proof-bundle.tgz"), "-C", bundleOut], {
         encoding: "utf8",
@@ -258,6 +285,66 @@ describe("ServiceNow sourcing request loader", () => {
       ).toBe(true);
     } finally {
       consoleSpy.mockRestore();
+      rmSync(outDir, { recursive: true, force: true });
+    }
+  });
+
+  it("keeps the operator summary extractable from a real CLI log tail", async () => {
+    const outDir = mkdtempSync(path.join(tmpdir(), "source-servicenow-cli-proof-"));
+    const wrapper = await import("../../../../scripts/ops/submit-aca-operator-job.mjs");
+    try {
+      const run = spawnSync(
+        process.execPath,
+        [
+          path.join(process.cwd(), "node_modules/tsx/dist/cli.mjs"),
+          "scripts/source/load-servicenow-sourcing-requests.ts",
+          "--operator-job",
+          "--emit-proof-bundle",
+          "--tenant-key", "synthetic_test",
+          "--input", inputPath,
+          "--input-source-version", "extract-v1",
+          "--input-sha256", csvSha256,
+          "--load-run-id", "test-load-run",
+          "--idempotency-key", "test-idempotency-key",
+          "--out-dir", outDir,
+        ],
+        {
+          encoding: "utf8",
+          maxBuffer: 16 * 1024 * 1024,
+          env: { ...process.env, DATABASE_URL: "", SOURCE_CONTEXT_DATABASE_URL: "" },
+        },
+      );
+      expect(run.status).toBe(0);
+      expect(run.stderr).toBe("");
+      const logLines = run.stdout.trimEnd().split("\n");
+      expect(logLines.at(-1)).toMatch(/^__SOURCE_SERVICENOW_REQUEST_PROOF_SUMMARY__\{/);
+      expect(run.stdout).not.toContain("synthetic_test");
+      const tail = logLines.slice(-300).join("\n");
+      const proof = wrapper.extractProofBundle(tail, outDir);
+      expect(proof).toMatchObject({
+        extracted: true,
+        summary: {
+          mode: "dry_run",
+          requestCount: 10,
+          archetypeCount: 10,
+          requiredFactGapCount: 0,
+          missingArchetypeCount: 0,
+          inputSha256: csvSha256,
+          inputSourceVersion: "extract-v1",
+          inserted: 0,
+          committed: false,
+        },
+      });
+      const fullOutDir = path.join(outDir, "full-extraction");
+      mkdirSync(fullOutDir);
+      expect(wrapper.extractProofBundle(run.stdout, fullOutDir)).toMatchObject({
+        extracted: true,
+        extractionKind: "proof_bundle",
+        proofBundleExtracted: true,
+        summary: { requestCount: 10, archetypeCount: 10 },
+      });
+      expect(existsSync(path.join(fullOutDir, "proof.tgz"))).toBe(true);
+    } finally {
       rmSync(outDir, { recursive: true, force: true });
     }
   });

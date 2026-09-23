@@ -479,7 +479,67 @@ function extractStructuredEvents(logText, outDir) {
   };
 }
 
-function extractProofBundle(logText, outDir) {
+function extractServiceNowRequestSummary(lines, outDir) {
+  const prefix = "__SOURCE_SERVICENOW_REQUEST_PROOF_SUMMARY__";
+  const line = lines.map((rawLine) => stripLogPrefix(rawLine).trim())
+    .findLast((value) => value.startsWith(prefix));
+  if (!line) return null;
+
+  let parsed;
+  try {
+    parsed = JSON.parse(line.slice(prefix.length));
+  } catch {
+    return { extracted: false, reason: "Invalid Source ServiceNow request proof summary JSON." };
+  }
+  const keys = [
+    "schemaVersion", "event", "mode", "requestCount", "archetypeCount",
+    "requiredFactGapCount", "missingArchetypeCount", "inputSha256",
+    "inputSourceVersion", "inserted", "committed", "authority",
+  ];
+  const authorityKeys = [
+    "requestVersionsOnly", "mappingDecisionsWritten", "eventsCreated", "suppliersContacted",
+  ];
+  const validKeys = (value, expected) =>
+    value && typeof value === "object" && !Array.isArray(value) &&
+    Object.keys(value).length === expected.length &&
+    expected.every((key) => Object.hasOwn(value, key));
+  const nonnegativeInteger = (value) => Number.isSafeInteger(value) && value >= 0;
+  const valid =
+    validKeys(parsed, keys) &&
+    parsed.schemaVersion === 1 &&
+    parsed.event === "source_servicenow_request_import_proof_summary" &&
+    ["dry_run", "apply"].includes(parsed.mode) &&
+    nonnegativeInteger(parsed.requestCount) &&
+    nonnegativeInteger(parsed.archetypeCount) &&
+    nonnegativeInteger(parsed.requiredFactGapCount) &&
+    nonnegativeInteger(parsed.missingArchetypeCount) &&
+    nonnegativeInteger(parsed.inserted) &&
+    /^[a-f0-9]{64}$/.test(parsed.inputSha256) &&
+    typeof parsed.inputSourceVersion === "string" &&
+    parsed.inputSourceVersion.length > 0 &&
+    typeof parsed.committed === "boolean" &&
+    validKeys(parsed.authority, authorityKeys) &&
+    parsed.authority.requestVersionsOnly === true &&
+    parsed.authority.mappingDecisionsWritten === false &&
+    parsed.authority.eventsCreated === false &&
+    parsed.authority.suppliersContacted === false &&
+    (parsed.mode !== "dry_run" || (parsed.inserted === 0 && parsed.committed === false)) &&
+    (parsed.mode !== "apply" || parsed.committed === true);
+  if (!valid) {
+    return { extracted: false, reason: "Invalid Source ServiceNow request proof summary contract." };
+  }
+  const summaryPath = path.join(outDir, "05-source-servicenow-proof-summary.json");
+  writeJson(summaryPath, parsed);
+  return {
+    extracted: true,
+    extractionKind: "source_servicenow_request_summary",
+    proofBundleExtracted: false,
+    summaryPath,
+    summary: parsed,
+  };
+}
+
+export function extractProofBundle(logText, outDir) {
   const markerPairs = [
     {
       begin: "__SEMANTIC2_PROOF_TGZ_BEGIN__",
@@ -503,9 +563,12 @@ function extractProofBundle(logText, outDir) {
     },
   ];
   const lines = logText.split(/\r?\n/);
+  const sourceSummary = extractServiceNowRequestSummary(lines, outDir);
+  if (sourceSummary && !sourceSummary.extracted) return sourceSummary;
   const payload = [];
   let activeMarker = null;
   let collecting = false;
+  let complete = false;
   for (const rawLine of lines) {
     const line = stripLogPrefix(rawLine).trim();
     if (!collecting) {
@@ -516,11 +579,18 @@ function extractProofBundle(logText, outDir) {
         continue;
       }
     }
-    if (collecting && activeMarker && line === activeMarker.end) break;
+    if (collecting && activeMarker && line === activeMarker.end) {
+      complete = true;
+      break;
+    }
     if (collecting && line) payload.push(line);
   }
+  if (collecting && !complete) {
+    return sourceSummary ?? { extracted: false, reason: "Proof bundle marker incomplete in logs." };
+  }
   if (!payload.length) {
-    return extractStructuredEvents(logText, outDir) ?? { extracted: false, reason: "No proof bundle marker found in logs." };
+    return sourceSummary ?? extractStructuredEvents(logText, outDir) ??
+      { extracted: false, reason: "No proof bundle marker found in logs." };
   }
 
   const tarPath = path.join(outDir, "proof.tgz");
@@ -532,9 +602,21 @@ function extractProofBundle(logText, outDir) {
     stdio: ["ignore", "pipe", "pipe"],
   });
   if (result.status !== 0) {
-    return { extracted: false, tarPath, reason: result.stderr || result.stdout || "tar extraction failed" };
+    return sourceSummary ??
+      { extracted: false, tarPath, reason: result.stderr || result.stdout || "tar extraction failed" };
   }
-  return { extracted: true, tarPath, extractDir, marker: activeMarker?.marker ?? "unknown" };
+  return {
+    extracted: true,
+    tarPath,
+    extractDir,
+    marker: activeMarker?.marker ?? "unknown",
+    ...(sourceSummary ? {
+      extractionKind: "proof_bundle",
+      proofBundleExtracted: true,
+      summaryPath: sourceSummary.summaryPath,
+      summary: sourceSummary.summary,
+    } : {}),
+  };
 }
 
 function restoreIdle(options, outDir) {
