@@ -280,6 +280,105 @@ check(
 );
 
 /* ========================================================================= */
+console.log("\nthe two guards inside that extraction, each pinned by the mutation it survives");
+/* ========================================================================= */
+
+/*
+ * Item T-735. Both guards below were mutated on `origin/main` and BOTH
+ * mutations left this suite 49/0 and `build-execution-queue.test.mjs` 157/0.
+ * Neither mutation is a no-op — each was run against the real function and
+ * changes its answer on the inputs below — so the green was a coverage gap
+ * and not a redundant guard. The slash requirement now has a second caller
+ * (`build-execution-queue.mjs` reads it to decide an item is in flight), so
+ * an unfalsifiable guard there hides claimable work rather than only
+ * mis-reporting a probe.
+ */
+
+/* ---- GUARD 1: a declared branch must look like a path. ------------------ */
+
+/*
+ * THE VERDICT ON THE SLASH QUESTION T-735 ASKED, and it is measured rather
+ * than asserted. `\bbranch\s+(\S+)` matches English, not just fields, and on
+ * the live register at 2026-09-23T14:26Z the no-slash values it captures are
+ * prose in every single case: `branch deleted` 44 times, then `is` 13, `was`
+ * 9, `and` 9, `merged` 7, `pushed` 5, `rebased` 3. Not one is a branch name.
+ * Dropping the slash requirement turns 19 register lines that are not in
+ * flight today into lines that are — including a parseable claim line whose
+ * sentence "the Claude-owned branch has no PR" would yield the branch names
+ * `has` and `left`.
+ *
+ * So: a declared branch with no `/` is NOT read as a branch, deliberately,
+ * and `branch wip` is therefore not a branch here. That is a real limit and
+ * it is the right trade only because this register's branches are all
+ * prefixed — `codex/`, `claude/`, `exec/`. A convention that ever ships an
+ * unprefixed branch name must change this guard, not work around it.
+ */
+check(
+  "`branch deleted` is prose, not a branch — the live register's commonest no-slash value",
+  branchesInClaim("item T-901 | the branch deleted after merge | files: x").length === 0,
+  "44 lines on the live register say `branch deleted`; the absence list does " +
+    "NOT contain `deleted`, so only the slash requirement can reject it — " +
+    "which is what makes this case fail when that requirement is dropped",
+);
+
+check(
+  "a declared branch with no `/` is not a branch: the answer to T-735's `branch wip`",
+  branchesInClaim("item T-901 | branch wip | files: x").length === 0,
+  JSON.stringify(branchesInClaim("item T-901 | branch wip | files: x")),
+);
+
+/* ---- GUARD 2: an absence declaration blocks the prose fallback. --------- */
+
+/*
+ * The existing `branch none` and `branch n/a` cases do NOT reach this guard.
+ * Their lines carry no `codex|claude|exec/…` token, so with the veto removed
+ * the fallback finds nothing and they stay green — T-734's release notes
+ * recorded exactly that, "a different guard was absorbing the mutation".
+ * A case that fails when the veto is removed has to give the fallback
+ * something to find.
+ */
+check(
+  "`branch none` blocks the FALLBACK too, not just the declared field",
+  branchesInClaim(
+    "item T-901 | branch none | files: none | read-only reconciliation; the " +
+      "codex/source-thing-t901 work it reconciles merged two days ago",
+  ).length === 0,
+  JSON.stringify(
+    branchesInClaim(
+      "item T-901 | branch none | files: none | read-only reconciliation; the " +
+        "codex/source-thing-t901 work it reconciles merged two days ago",
+    ),
+  ) +
+    " — without the veto this falls through to the in-flight token and " +
+    "reports a branch the claim explicitly said it does not have",
+);
+
+/*
+ * ...and the veto must lose to a branch the same line really declares.
+ * Found while pinning it, on the live register: the T-733 release line
+ * declares `on branch \`exec/t-733-fossil-claim-resolver\`` and later
+ * NARRATES the fixture value `branch n/a` in a sentence about this very
+ * guard. The veto returned early and discarded the real branch it had
+ * already read. One line today, and on that line it is harmless because a
+ * release outranks in-flight — but the same shape on a CLAIM line drops a
+ * held item into "free to take" and hands live work to a second agent,
+ * which is the failure this register exists to prevent.
+ */
+check(
+  "a later absence phrase does not discard a branch the line already declared",
+  branchesInClaim(
+    "RELEASED item T-901 on branch `exec/t-901-real-work` — an absence list " +
+      "that looked redundant until `branch n/a` was tried against it",
+  ).join(",") === "exec/t-901-real-work",
+  JSON.stringify(
+    branchesInClaim(
+      "RELEASED item T-901 on branch `exec/t-901-real-work` — an absence list " +
+        "that looked redundant until `branch n/a` was tried against it",
+    ),
+  ),
+);
+
+/* ========================================================================= */
 console.log("\nthe verdict — and the split this item exists for");
 /* ========================================================================= */
 
