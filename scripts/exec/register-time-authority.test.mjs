@@ -2321,5 +2321,153 @@ function preclaimFiles(file, item, identity, files, extra = []) {
   fs.rmSync(dir, { recursive: true, force: true });
 }
 
+// ---------------------------------------------------------------------------
+// T-713. A release is authoritative for its OWN author, and for nobody else.
+//
+// The two halves of this gate disagreed. `resolveFileOverlap` keys its
+// `releasedAt` map by agent, so a release frees only the records of the
+// identity that wrote it. `resolveItemClaim` took the newest live line naming
+// the item and honoured `announcesRelease` on it regardless of author, so B
+// writing `RELEASED item X` handed A's live claim away to the next run that
+// came for X.
+//
+// The repair is the one T-712 used for abstentions: SKIP the foreign record
+// rather than answer from it, so the newest line by the actual holder still
+// decides. Skipping is not the same as refusing — a third run must not be
+// blocked by a record that holds nothing either way.
+// ---------------------------------------------------------------------------
+{
+  // THE DEFECT. A holds X; B announces a release of X; C asks for X.
+  const { dir, file } = fixture([
+    "2026-09-22T18:05:00Z | lane-a#run-1 | item T-840 claimed | files: scripts/exec/a.mjs",
+    "2026-09-22T18:12:00Z | lane-b#run-2 | RELEASED item T-840 — all files free",
+  ]);
+  const r = preclaim(file, "T-840", "lane-c#run-3");
+  check(
+    "THE DEFECT — a release written by someone other than the holder does not free the item",
+    r.report.verdict === "held-by-another",
+    JSON.stringify(r.report),
+  );
+  check(
+    "the refused run is pointed at the ACTUAL holder, not at the releasing lane",
+    r.report.holder?.agent === "lane-a#run-1",
+    JSON.stringify(r.report.holder),
+  );
+  check("a foreign release does not open the item, and exits non-zero", r.status !== 0, `status=${r.status}`);
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+{
+  // THE NEGATIVE CONTROL, independent of the case above: the holder's OWN
+  // release must still free the item, or every released item locks for three
+  // hours. Same shape as the defect fixture, one field different — the agent
+  // on the release line.
+  const { dir, file } = fixture([
+    "2026-09-22T18:05:00Z | lane-a#run-1 | item T-840 claimed | files: scripts/exec/a.mjs",
+    "2026-09-22T18:12:00Z | lane-a#run-1 | RELEASED item T-840 — all files free",
+  ]);
+  const r = preclaim(file, "T-840", "lane-c#run-3");
+  check(
+    "THE CONTROL — the holder's own release still frees the item for the next run",
+    r.status === 0 && r.report.verdict === "take",
+    JSON.stringify(r.report),
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+{
+  // TRANSPARENT, NOT AUTHORITATIVE. B's foreign release sits NEWEST on an item
+  // A has already released. Answering from the newest line would be right here
+  // by luck; skipping it is right because A's own release is what decides.
+  const { dir, file } = fixture([
+    "2026-09-22T18:05:00Z | lane-a#run-1 | item T-841 claimed | files: scripts/exec/a.mjs",
+    "2026-09-22T18:12:00Z | lane-a#run-1 | RELEASED item T-841 — all files free",
+    "2026-09-22T18:20:00Z | lane-b#run-2 | RELEASED item T-841 — noting the lane is clear",
+  ]);
+  const r = preclaim(file, "T-841", "lane-c#run-3");
+  check(
+    "a foreign release stacked on the holder's own release leaves the item free",
+    r.status === 0 && r.report.verdict === "take",
+    JSON.stringify(r.report),
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+{
+  // ORDER. The foreign release lands BEFORE the holder's claim, which is the
+  // case a released-at-any-time map would get wrong: a release cannot free a
+  // claim that did not exist when it was written.
+  const { dir, file } = fixture([
+    "2026-09-22T18:05:00Z | lane-b#run-2 | RELEASED item T-842 — handing it back",
+    "2026-09-22T18:12:00Z | lane-a#run-1 | item T-842 claimed | files: scripts/exec/a.mjs",
+  ]);
+  const r = preclaim(file, "T-842", "lane-c#run-3");
+  check(
+    "ORDER — a release older than the claim it precedes does not free it",
+    r.status !== 0 && r.report.holder?.agent === "lane-a#run-1",
+    JSON.stringify(r.report),
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+{
+  // RE-CLAIM AFTER RELEASE, one agent. This is the branch the ORDER case above
+  // cannot reach, because there the release and the claim have different
+  // authors and the per-agent map never sees them together. A run that
+  // released an item and then took it back again HOLDS it: keying the release
+  // by agent is not enough on its own, the release must also be older than the
+  // record it frees.
+  const { dir, file } = fixture([
+    "2026-09-22T18:05:00Z | lane-a#run-1 | item T-845 claimed | files: scripts/exec/a.mjs",
+    "2026-09-22T18:12:00Z | lane-a#run-1 | RELEASED item T-845 — handing it back",
+    "2026-09-22T18:20:00Z | lane-a#run-1 | item T-845 claimed | files: scripts/exec/a.mjs",
+  ]);
+  const other = preclaim(file, "T-845", "lane-c#run-3");
+  check(
+    "RE-CLAIM — an agent's own earlier release does not free the claim it wrote afterwards",
+    other.status !== 0 && other.report.holder?.stamp === "2026-09-22T18:20:00Z",
+    JSON.stringify(other.report),
+  );
+  const self = preclaim(file, "T-845", "lane-a#run-1");
+  check(
+    "RE-CLAIM — and the run that wrote it may still continue on it",
+    self.status === 0 && self.report.verdict === "already-yours",
+    JSON.stringify(self.report),
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+{
+  // A SIBLING IS NOT THE AUTHOR. Two runs of one scheduled task: the sibling's
+  // release must not free this run's claim, for the same reason a sibling may
+  // not adopt it (T-594).
+  const { dir, file } = fixture([
+    "2026-09-22T18:05:00Z | source-backlog-executor#20260922T175543Z | item T-843 claimed | files: scripts/exec/a.mjs",
+    "2026-09-22T18:12:00Z | source-backlog-executor#20260922T182000Z | RELEASED item T-843 — all files free",
+  ]);
+  const r = preclaim(file, "T-843", "codex-other#run-9");
+  check(
+    "a SIBLING run's release does not free the holder's claim either",
+    r.status !== 0 && r.report.holder?.agent === "source-backlog-executor#20260922T175543Z",
+    JSON.stringify(r.report),
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+{
+  // NOTHING TO SKIP. A foreign release on an item nobody holds leaves it free —
+  // a skipped record must not become a refusal by absence.
+  const { dir, file } = fixture([
+    "2026-09-22T18:12:00Z | lane-b#run-2 | RELEASED item T-844 — nobody was on it",
+  ]);
+  const r = preclaim(file, "T-844", "lane-c#run-3");
+  check(
+    "a lone foreign release holds nothing and leaves the item claimable",
+    r.status === 0 && r.report.verdict === "take",
+    JSON.stringify(r.report),
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
 console.log(`\n${passes} passed, ${failures} failed`);
 process.exit(failures ? 1 : 0);
