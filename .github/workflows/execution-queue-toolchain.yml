@@ -161,3 +161,35 @@ jobs:
       # Eleven mutations, eleven caught.
       - name: Run the CLI entry guard contract
         run: node scripts/exec/cli-entry.test.mjs
+
+      # T-726. What this toolchain needs in order to run, declared once.
+      #
+      # Four suites here each kept their OWN hand-written list of the files a
+      # fixture must contain, and nothing declared the real answer. Two of those
+      # lists went stale loudly inside one session: T-720 crashed the queue
+      # suite on collection when the generator began importing
+      # queue-provenance.mjs, and T-723 crashed it again -- and took
+      # queue-provenance.test.mjs from 30/0 to 27/3 -- when that began importing
+      # cli-entry.mjs. Loud is cheap. The same list also decides what a
+      # fixture's executables can SEE, and the quiet version was already on main
+      # when this item was filed: cli-entry.test.mjs copied three files, and
+      # queue-provenance.mjs reaches build-execution-queue.mjs through a sibling
+      # PATH rather than an import. Over a queue file that exists, the repo
+      # directory answered `unstamped` and that three-file copy answered
+      # `generator_missing` -- a different verdict from the same input, in a
+      # suite that stayed green because its cases drove only the branch where
+      # both collapse to `absent`.
+      #
+      # An import closure is the obvious fix and the wrong one: a missing static
+      # import throws on load, and all three silent dependencies in this
+      # directory are not imports. So a fixture gets the DIRECTORY, not a list.
+      #
+      # The acceptance cases are deliberately expensive: each adds a real new
+      # module to a copy of this directory, makes a real executable import it,
+      # and runs a real sibling suite from that copy -- T-720 and T-723 replayed
+      # as a control rather than described in a comment. Red first 13/4, green
+      # 17/0. Twelve mutations, twelve caught; the twelfth was caught only after
+      # it was found to survive, and closing it turned up two generators in this
+      # directory that have no entry guard at all (item T-727).
+      - name: Run the toolchain manifest contract
+        run: node scripts/exec/toolchain-manifest.test.mjs
