@@ -25,6 +25,7 @@ import { execFileSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 
 import { copyToolchainInto } from "./toolchain-manifest.mjs";
+import { suppressedCandidateIds } from "./fossil-claims.mjs";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 
@@ -59,6 +60,7 @@ const NOW = new Date().toISOString().replace(/:\d{2}\.\d{3}Z$/, "Z");
 
 let failures = 0;
 let passes = 0;
+let skipped = 0;
 
 function check(name, ok, detail) {
   if (ok) {
@@ -2494,5 +2496,430 @@ function idleSection(rendered) {
   );
 }
 
-console.log(`\n${passes} passed, ${failures} failed`);
+
+/* ------------------------------------------------------------------------ */
+/* 29.  AN ABSTENTION IS A REGISTER VERB THIS GENERATOR COULD NOT READ       */
+/*      — item T-736.                                                       */
+/*                                                                          */
+/*      `fossil-claims.mjs` resolves a suppressed candidate to `abandoned`   */
+/*      when the branch is gone from `origin` and NO pull request was ever   */
+/*      opened: the claim produced nothing. It deliberately offers no        */
+/*      release line for that verdict, because a release would say the work  */
+/*      merged. So the verdict was correct and had no move, and the          */
+/*      suppression it describes never expired.                             */
+/*                                                                          */
+/*      Measured on the live documents at 2026-09-23T14:58Z: the queue       */
+/*      offered 0 claimable rows and named 9 suppressed candidates, of       */
+/*      which the resolver answered 8 `abandoned` — every one claimed on     */
+/*      2026-09-19 and suppressed for four days — and 1 `unknown`. The whole */
+/*      of that zero was eight claims a repo-owned control had already       */
+/*      judged dead.                                                        */
+/*                                                                          */
+/*      `append-claim.mjs --action abstain` writes `item <id> NOT TAKEN`,    */
+/*      and this generator had ZERO matches for that string. It read the     */
+/*      line as an ordinary claim, so the one verb that could free an item   */
+/*      HELD it for the full three-hour TTL first.                          */
+/*                                                                          */
+/*      THE RULE, and it is narrower than "an abstention frees the item":    */
+/*      an abstention TAKES nothing, so it is TRANSPARENT — the item still   */
+/*      resolves from the newest line that actually asserts ownership. What  */
+/*      it does is VETO the in-flight suppression of the expired claim it    */
+/*      supersedes. A live holder is therefore untouched by a sibling's      */
+/*      abstention (29d), which is the direction this register exists to     */
+/*      protect, and a dead claim is cleared the instant the line lands      */
+/*      (29a) rather than three hours later.                                */
+/* ------------------------------------------------------------------------ */
+
+/** The ids the queue renders on the "Claim LAPSED" line. */
+function lapsedSection(rendered) {
+  return rendered.match(/\*\*Claim LAPSED[^*]*\(\d+\):\*\*(.*)/)?.[1] ?? "";
+}
+
+/** Whether the queue offers this id as a claimable row. */
+function isClaimable(rendered, id) {
+  return rendered.includes(`| ${id} |`);
+}
+
+/* 29a. THE DEFECT. An expired in-flight claim, then an abstention. The     */
+/*      item must be claimable IMMEDIATELY — the abstention is stamped NOW, */
+/*      so asserting this at zero elapsed time is what distinguishes the    */
+/*      repair from one that only takes effect after the TTL.               */
+{
+  const id = "D-508";
+  const dead =
+    `${registerStamp(5760)} | codex-executor#20260919T0000Z | ` +
+    `item ${id} claimed on branch \`codex/source-${id.toLowerCase()}-plan\` — taken.`;
+  const abstain =
+    `${registerStamp(0)} | source-backlog-executor#run | item ${id} NOT TAKEN — ` +
+    "the claim above is ABANDONED: its branch is gone from origin and no pull " +
+    "request was ever opened. NOT taking it here; the item is UNVERIFIED.";
+  const { q, rendered } = twoLineClaimFixture(id, dead, abstain);
+  check(
+    "an abstention over an expired in-flight claim makes the item claimable at once",
+    q.status === 0 &&
+      isClaimable(rendered, id) &&
+      lapsedSection(rendered).includes(id) &&
+      !inFlightSection(rendered).includes(id) &&
+      !heldSection(rendered).includes(id),
+    `exit=${q.status}\nclaimable=${isClaimable(rendered, id)}\nlapsed=${lapsedSection(rendered)}\n` +
+      `inFlight=${inFlightSection(rendered)}\nheld=${heldSection(rendered)}`,
+  );
+}
+
+/* 29b. THE PRECEDENCE GUARD, and it is not hypothetical: the command       */
+/*      `fossil-claims.mjs` emits QUOTES the dead branch name inside the    */
+/*      abstention's own message, because that is the evidence for the      */
+/*      verdict. Read as an ordinary claim, that line re-suppresses the     */
+/*      very item it was written to free.                                   */
+{
+  const id = "D-509";
+  const dead =
+    `${registerStamp(5760)} | codex-executor#20260919T0000Z | ` +
+    `item ${id} claimed on branch \`codex/source-${id.toLowerCase()}-plan\` — taken.`;
+  const abstain =
+    `${registerStamp(0)} | source-backlog-executor#run | item ${id} NOT TAKEN — ` +
+    `the claim of ${registerStamp(5760)} is ABANDONED: ` +
+    `codex/source-${id.toLowerCase()}-plan is gone from origin and NO pull request ` +
+    "was ever opened from it.";
+  const { q, rendered } = twoLineClaimFixture(id, dead, abstain);
+  check(
+    "an abstention that QUOTES the dead branch still clears the suppression",
+    q.status === 0 &&
+      isClaimable(rendered, id) &&
+      lapsedSection(rendered).includes(id) &&
+      !inFlightSection(rendered).includes(id),
+    `exit=${q.status}\nclaimable=${isClaimable(rendered, id)}\nlapsed=${lapsedSection(rendered)}\n` +
+      `inFlight=${inFlightSection(rendered)}`,
+  );
+}
+
+/* 29c. AN ABSTENTION MUST NOT PROMOTE THE ITEM. `abandoned` is a verdict   */
+/*      about the CLAIM; whether the work shipped from some other branch is */
+/*      still open. This generator attributes a release by PROXIMITY to the */
+/*      id, not by the head of the message field, so an abstention whose    */
+/*      evidence narrates the word RELEASED near the id would land in       */
+/*      "Explicitly released" — laundering undone work into a closed item,  */
+/*      which is the direction this backlog keeps losing things in.         */
+{
+  const id = "D-510";
+  const dead =
+    `${registerStamp(5760)} | codex-executor#20260919T0000Z | ` +
+    `item ${id} claimed on branch \`codex/source-${id.toLowerCase()}-plan\` — taken.`;
+  const abstain =
+    `${registerStamp(0)} | source-backlog-executor#run | item ${id} NOT TAKEN — ` +
+    "nothing was RELEASED for this claim and nothing merged from it; it is ABANDONED.";
+  const { q, rendered } = twoLineClaimFixture(id, dead, abstain);
+  check(
+    "an abstention is not a release, however its evidence is worded",
+    q.status === 0 &&
+      !releasedSection(rendered).includes(id) &&
+      lapsedSection(rendered).includes(id),
+    `exit=${q.status}\nreleased=${releasedSection(rendered)}\nlapsed=${lapsedSection(rendered)}`,
+  );
+}
+
+/* 29d. THE NEGATIVE CONTROL, and the one that makes the rest safe. A LIVE  */
+/*      claim by one run, then an abstention by a DIFFERENT one. If the     */
+/*      abstention freed it, any sibling could evict a live holder by       */
+/*      declining work it never had — the collision this register exists to */
+/*      prevent, reached through the repair for the opposite defect.        */
+{
+  const id = "D-511";
+  const live =
+    `${registerStamp(4)} | codex-executor#20260923T1400Z | ` +
+    `item ${id} claimed on branch \`codex/source-${id.toLowerCase()}-plan\` — working it now.`;
+  const abstain =
+    `${registerStamp(0)} | source-backlog-executor#run | item ${id} NOT TAKEN — ` +
+    "held by another run; not taking it.";
+  const { q, rendered } = twoLineClaimFixture(id, live, abstain);
+  check(
+    "a sibling's abstention does not evict a LIVE holder",
+    q.status === 0 &&
+      heldSection(rendered).includes(id) &&
+      !isClaimable(rendered, id) &&
+      !lapsedSection(rendered).includes(id),
+    `exit=${q.status}\nheld=${heldSection(rendered)}\nclaimable=${isClaimable(rendered, id)}\n` +
+      `lapsed=${lapsedSection(rendered)}`,
+  );
+}
+
+/* 29e. ORDER. An abstention that PRECEDES the claim it is read against      */
+/*      says nothing about it. Without this, "an abstention exists for this  */
+/*      id" would free every item any run has ever declined, whatever was    */
+/*      claimed afterwards.                                                  */
+{
+  const id = "D-512";
+  const abstain =
+    `${registerStamp(5800)} | source-backlog-executor#old | item ${id} NOT TAKEN — ` +
+    "declined on 19 Sep; someone else may want it.";
+  const dead =
+    `${registerStamp(5760)} | codex-executor#20260919T0000Z | ` +
+    `item ${id} claimed on branch \`codex/source-${id.toLowerCase()}-plan\` — taken afterwards.`;
+  const { q, rendered } = twoLineClaimFixture(id, abstain, dead);
+  check(
+    "an abstention OLDER than the claim does not clear it",
+    q.status === 0 &&
+      inFlightSection(rendered).includes(id) &&
+      !lapsedSection(rendered).includes(id) &&
+      !isClaimable(rendered, id),
+    `exit=${q.status}\ninFlight=${inFlightSection(rendered)}\nlapsed=${lapsedSection(rendered)}\n` +
+      `claimable=${isClaimable(rendered, id)}`,
+  );
+}
+
+/* 29f. AN ABSTENTION ALONE TAKES NOTHING. No prior claim at all: the item   */
+/*      is simply free, and the abstaining run must not appear to hold it.   */
+/*      This is the three-hour hold the item was filed against, in its       */
+/*      simplest shape.                                                      */
+{
+  const id = "D-513";
+  const line =
+    `${registerStamp(0)} | source-backlog-executor#run | item ${id} NOT TAKEN — ` +
+    "out of my lane; recording the decision rather than leaving it silent.";
+  const { q, rendered } = oneLineClaimFixture(id, line);
+  check(
+    "an abstention with no prior claim holds nothing and the item stays claimable",
+    q.status === 0 &&
+      isClaimable(rendered, id) &&
+      !heldSection(rendered).includes(id),
+    `exit=${q.status}\nclaimable=${isClaimable(rendered, id)}\nheld=${heldSection(rendered)}`,
+  );
+}
+
+/* 29g. THE OTHER NEGATIVE CONTROL. An expired claim naming NO branch and    */
+/*      no PR is already free to take. An abstention over it must not move   */
+/*      it into the lapsed bucket, because there was no suppression to       */
+/*      veto — the new rule is a veto on one signal, not a relabelling of    */
+/*      every line it follows.                                               */
+{
+  const id = "D-514";
+  const dead =
+    `${registerStamp(5760)} | codex-executor#20260919T0000Z | ` +
+    `item ${id} reconciliation | branch none | files: none | read-only, nothing cut.`;
+  const abstain =
+    `${registerStamp(0)} | source-backlog-executor#run | item ${id} NOT TAKEN — ` +
+    "not mine to finish.";
+  const { q, rendered } = twoLineClaimFixture(id, dead, abstain);
+  check(
+    "an abstention over an idle expired claim leaves it idle, not lapsed",
+    q.status === 0 &&
+      idleSection(rendered).includes(id) &&
+      !lapsedSection(rendered).includes(id) &&
+      isClaimable(rendered, id),
+    `exit=${q.status}\nidle=${idleSection(rendered)}\nlapsed=${lapsedSection(rendered)}\n` +
+      `claimable=${isClaimable(rendered, id)}`,
+  );
+}
+
+/* 29i. THE SAME-STAMP CASE, which is ordinary rather than exotic: register   */
+/*      stamps are minute-precision, so two lines sharing one is common. The  */
+/*      abstention is written FIRST and the claim SECOND, both at the same    */
+/*      stamp. Resolving that by stamp alone would let the earlier abstention */
+/*      clear a claim appended after it — so append position breaks the tie,  */
+/*      the same authority this file already documents for choosing a line.   */
+{
+  const id = "D-516";
+  const stamp = registerStamp(5760);
+  const abstain =
+    `${stamp} | source-backlog-executor#old | item ${id} NOT TAKEN — passing on it.`;
+  const dead =
+    `${stamp} | codex-executor#20260919T0000Z | ` +
+    `item ${id} claimed on branch \`codex/source-${id.toLowerCase()}-plan\` — ` +
+    "taken in the same minute, after that line.";
+  const { q, rendered } = twoLineClaimFixture(id, abstain, dead);
+  check(
+    "an abstention sharing a stamp with a LATER claim does not clear it",
+    q.status === 0 &&
+      inFlightSection(rendered).includes(id) &&
+      !lapsedSection(rendered).includes(id) &&
+      !isClaimable(rendered, id),
+    `exit=${q.status}\ninFlight=${inFlightSection(rendered)}\nlapsed=${lapsedSection(rendered)}\n` +
+      `claimable=${isClaimable(rendered, id)}`,
+  );
+}
+
+/* 29h. THE ROUND TRIP, through the REAL writer.                            */
+/*                                                                          */
+/*      Every case above hand-writes the abstention line. A hand-written    */
+/*      fixture proves this reader against a grammar I chose; it cannot     */
+/*      prove it against the grammar `append-claim.mjs` actually emits, and */
+/*      a writer and a reader of one grammar that never round-trip can both */
+/*      be green while the composition is broken from the first day. So the */
+/*      line under test here is produced by running the sanctioned writer,  */
+/*      with the flags `fossil-claims.mjs --action abstain` names, and the  */
+/*      queue is regenerated over its output.                              */
+{
+  const id = "D-515";
+  const dir = freshFixture();
+  addBacklogItem(dir, id);
+  mapFixtureId(dir, id);
+  fs.appendFileSync(
+    path.join(dir, "EXECUTION_CLAIMS.md"),
+    `\n${registerStamp(5760)} | codex-executor#20260919T0000Z | ` +
+      `item ${id} claimed on branch \`codex/source-${id.toLowerCase()}-plan\` — taken.\n`,
+  );
+  const before = buildBoardAndQueue(dir);
+  const renderedBefore = fs.readFileSync(path.join(dir, "EXECUTION_QUEUE.md"), "utf8");
+
+  const wrote = run(dir, "append-claim.mjs", [
+    "--file",
+    path.join(dir, "EXECUTION_CLAIMS.md"),
+    "--item",
+    id,
+    "--identity",
+    "source-backlog-executor#roundtrip",
+    "--action",
+    "abstain",
+    "--message",
+    `the claim of ${registerStamp(5760)} is ABANDONED: codex/source-${id.toLowerCase()}-plan ` +
+      "is gone from origin and NO pull request was ever opened from it. NOT TAKING it here; " +
+      "the item is UNVERIFIED and must be re-verified on `main` before it is re-taken.",
+  ]);
+  const after = buildBoardAndQueue(dir);
+  const renderedAfter = fs.readFileSync(path.join(dir, "EXECUTION_QUEUE.md"), "utf8");
+  fs.rmSync(dir, { recursive: true, force: true });
+
+  check(
+    "the line `append-claim.mjs --action abstain` writes is read as an abstention",
+    before.status === 0 &&
+      wrote.status === 0 &&
+      after.status === 0 &&
+      !isClaimable(renderedBefore, id) &&
+      inFlightSection(renderedBefore).includes(id) &&
+      isClaimable(renderedAfter, id) &&
+      lapsedSection(renderedAfter).includes(id),
+    `before=${before.status} write=${wrote.status} after=${after.status}\n` +
+      `writeErr=${wrote.stderr.trim()}\n` +
+      `claimableBefore=${isClaimable(renderedBefore, id)} inFlightBefore=${inFlightSection(renderedBefore)}\n` +
+      `claimableAfter=${isClaimable(renderedAfter, id)} lapsedAfter=${lapsedSection(renderedAfter)}`,
+  );
+}
+
+/* ------------------------------------------------------------------------ */
+/* 30.  THE REAL IDS, not a fixture — item T-736.                           */
+/*                                                                          */
+/*      Every case above builds its own register, which means every case    */
+/*      above proves this reader against lines I wrote. The eight ids that  */
+/*      caused this item are on disk in the operator root, they are four    */
+/*      days old, and they are the entire reason the live queue offers      */
+/*      nothing. A repair that cannot move THEM is the unfailable-gate      */
+/*      shape this directory exists against, however green the fixtures.    */
+/*                                                                          */
+/*      No network and no verdict is asserted here: whether a given claim   */
+/*      is genuinely abandoned is `fossil-claims.mjs`'s answer and needs    */
+/*      git and GitHub. What is asserted is the MECHANISM, on the real      */
+/*      corpus — for every id the live queue currently suppresses, an       */
+/*      abstention written by the real writer removes it from the in-flight */
+/*      bucket and from the candidate list, at zero elapsed time.           */
+/*                                                                          */
+/*      Skipped where the operator documents are absent, which is every CI  */
+/*      runner. A case that silently passes when its corpus is missing is   */
+/*      worse than one that says it did not run.                            */
+/* ------------------------------------------------------------------------ */
+{
+  const operatorRoot = path.join(os.homedir(), "Downloads");
+  const documents = [
+    "SOURCE_EXECUTION_BOARD_20260917.md",
+    "EXECUTION_BACKLOG_20260918.md",
+    "EXECUTION_CLAIMS.md",
+    "SOURCE_BACKLOG_MASTER.md",
+  ];
+  const present = documents.every((f) => fs.existsSync(path.join(operatorRoot, f)));
+  if (!present) {
+    skipped += 1;
+    console.log(
+      "  SKIP  every id the live queue suppresses is freed by an abstention — operator documents absent",
+    );
+  } else {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "t736-live-"));
+    copyToolchainInto(dir);
+    for (const f of documents) fs.copyFileSync(path.join(operatorRoot, f), path.join(dir, f));
+
+    /*
+     * The board is run directly rather than through `buildBoardAndQueue`,
+     * which throws on a non-zero board exit. The live backlog carries ids
+     * that are not yet in the repo-owned structure map — 13 of them as this
+     * was written, including this item — and `--json` reports that as a
+     * failure AFTER writing the summary. That is a pre-existing condition of
+     * the corpus, not of this repair, and it must not stop the replay. The
+     * queue's own staleness guard is what keeps this honest: if the summary
+     * had NOT been written, the queue below would refuse to render and these
+     * assertions would fail rather than pass on stale counts.
+     */
+    const liveBoardAndQueue = () => {
+      run(dir, "build-source-board.mjs", ["--json"]);
+      return run(dir, "build-execution-queue.mjs");
+    };
+
+    const before = liveBoardAndQueue();
+    const renderedBefore = fs.readFileSync(path.join(dir, "EXECUTION_QUEUE.md"), "utf8");
+    const candidates = suppressedCandidateIds(renderedBefore);
+    const claimableBefore = Number(
+      renderedBefore.match(/\*\*(\d+) items are claimable right now/)?.[1] ?? "-1",
+    );
+
+    for (const id of candidates) {
+      run(dir, "append-claim.mjs", [
+        "--file",
+        path.join(dir, "EXECUTION_CLAIMS.md"),
+        "--item",
+        id,
+        "--identity",
+        "suite#t736-real-corpus",
+        "--action",
+        "abstain",
+        "--message",
+        "replayed by the T-736 suite against a COPY of the operator register: this asserts only " +
+          "that an abstention clears the suppression, never that the claim is abandoned — that " +
+          "verdict is `fossil-claims.mjs`'s and needs a network this suite does not use.",
+      ]);
+    }
+
+    const after = liveBoardAndQueue();
+    const renderedAfter = fs.readFileSync(path.join(dir, "EXECUTION_QUEUE.md"), "utf8");
+    const stillSuppressed = candidates.filter((id) =>
+      inFlightSection(renderedAfter).includes(id),
+    );
+    /*
+     * LEAVING THE IN-FLIGHT BUCKET IS NOT ENOUGH, and finding that out is why
+     * this case is mutation-checked rather than merely written. With the
+     * abstention branch disabled — the behaviour on `main` — every id here
+     * still left the in-flight bucket, because the abstention was read as a
+     * FRESH CLAIM and the ids moved to `held` instead. The assertion passed
+     * against the exact defect it exists to catch. So the destination is
+     * asserted too: an abstention takes nothing, and an id that is held by
+     * the run that declined it is the three-hour hold this item was filed
+     * against.
+     */
+    const nowHeld = candidates.filter((id) => heldSection(renderedAfter).includes(id));
+    const stillCandidates = suppressedCandidateIds(renderedAfter);
+    const claimableAfter = Number(
+      renderedAfter.match(/\*\*(\d+) items are claimable right now/)?.[1] ?? "-1",
+    );
+    fs.rmSync(dir, { recursive: true, force: true });
+
+    check(
+      "the live corpus has suppressed candidates to replay, so this case is not vacuous",
+      before.status === 0 && candidates.length > 0,
+      `exit=${before.status} candidates=${candidates.length}`,
+    );
+    check(
+      "every id the live queue suppresses is freed — not in flight, and not newly held",
+      after.status === 0 &&
+        stillSuppressed.length === 0 &&
+        stillCandidates.length === 0 &&
+        nowHeld.length === 0,
+      `exit=${after.status}\nstill in flight: ${stillSuppressed.join(" ")}\n` +
+        `now held by the abstaining run: ${nowHeld.join(" ")}\n` +
+        `still candidates: ${stillCandidates.join(" ")}`,
+    );
+    check(
+      "and the queue offers more work than it did, which is the outcome the item asked for",
+      claimableBefore >= 0 && claimableAfter > claimableBefore,
+      `claimable ${claimableBefore} -> ${claimableAfter} over ${candidates.length} candidates`,
+    );
+  }
+}
+
+console.log(`\n${passes} passed, ${failures} failed${skipped ? `, ${skipped} skipped` : ""}`);
 process.exit(failures ? 1 : 0);

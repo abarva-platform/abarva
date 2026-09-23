@@ -48,6 +48,7 @@ import {
   classify,
   isStale,
   newestClaimFor,
+  abstainCommandFor,
   releaseCommandFor,
   resolve,
   suppressedCandidateIds,
@@ -588,6 +589,196 @@ check(
   "asserted by construction: the import at the top of this file produced no " +
     "report above, and the shared guard is covered by cli-entry.test.mjs",
 );
+
+/* ========================================================================= */
+console.log("\nthe abandoned verdict's executable move (item T-736)");
+/* ========================================================================= */
+
+/*
+ * THE DEFECT: `abandoned` was a correct verdict with no next move. The
+ * resolver refused a release line — rightly, since a release asserts the work
+ * merged — and offered a SENTENCE in its place: "re-verify the item on
+ * `main`". Re-verifying changes nothing in the register, and the register is
+ * the only thing `build-execution-queue.mjs` reads, so the suppression the
+ * verdict describes could never expire. Measured on the live documents at
+ * 2026-09-23T14:58Z: 8 abandoned claims, all four days old, and the queue
+ * offered 0 claimable rows.
+ *
+ * Every case below is on the COMMAND, not on prose: what an operator can
+ * paste, which flags it carries, and — in `build-execution-queue.test.mjs`
+ * case 29h — that the line the writer then produces is read back as an
+ * abstention by the generator that raised the suppression.
+ */
+{
+  const queue = candidateLine(["T-911", "T-912", "T-913", "T-914"]);
+  const reg = register(
+    claimLine("2026-09-19T15:04Z", "T-911", "| branch codex/merged-t911 — claimed"),
+    claimLine("2026-09-19T15:05Z", "T-912", "| branch codex/abandoned-t912 — claimed"),
+    claimLine("2026-09-19T15:06Z", "T-913", "| branch codex/live-t913 — claimed"),
+    claimLine("2026-09-19T15:07Z", "T-914", "| branch none — claimed"),
+  );
+  const probe = (branch) => {
+    if (branch === "codex/merged-t911") {
+      return { remoteExists: false, pullRequests: [{ number: 9011, state: "MERGED" }] };
+    }
+    if (branch === "codex/abandoned-t912") return { remoteExists: false, pullRequests: [] };
+    if (branch === "codex/live-t913") return { remoteExists: true, pullRequests: [] };
+    throw new Error(`fixture probe asked about an unexpected branch: ${branch}`);
+  };
+  const report = resolve({ queue, register: reg, probe });
+  const entry = (id) => report.entries.find((e) => e.id === id);
+  const abandoned = entry("T-912");
+  const command = abstainCommandFor(abandoned);
+
+  check(
+    "an abandoned claim is handed a command, not a sentence",
+    typeof command === "string" && command.startsWith("node scripts/exec/append-claim.mjs"),
+    String(command),
+  );
+  check(
+    "the command abstains — it never releases, which would say the work merged",
+    command.includes("--action abstain") && !command.includes("--action release"),
+    command,
+  );
+  check(
+    "it names the abandoned item and no other",
+    command.includes("--item T-912") && !command.includes("T-911") && !command.includes("T-913"),
+    command,
+  );
+  check(
+    "it carries the evidence, so the register records WHY the claim was judged dead",
+    command.includes("codex/abandoned-t912") && command.includes("ABANDONED"),
+    command,
+  );
+  check(
+    "it says the item is UNVERIFIED — the verdict is about the claim, not the work",
+    command.includes("UNVERIFIED") && command.includes("re-verified on `main`"),
+    command,
+  );
+
+  /*
+   * `--branch` and `--files` are absent on purpose and are asserted, because
+   * either one would quietly undo the command. A branch sits between the id
+   * and `NOT TAKEN`, where `announcesAbstention` looks for it; a file list is
+   * read by the ownership gate as a claim on those paths, and an abstention
+   * that held files would take exactly what it says it is not taking.
+   */
+  check(
+    "it passes no --branch, which would hide NOT TAKEN from the register's reader",
+    !command.includes("--branch"),
+    command,
+  );
+  check(
+    "it passes no --files, because an abstention must hold nothing",
+    !command.includes("--files"),
+    command,
+  );
+
+  /*
+   * The split is the item. A verdict that could answer both would let an
+   * operator close undone work with whichever line came to hand.
+   */
+  check(
+    "a fossil gets a release command and NO abstention command",
+    releaseCommandFor(entry("T-911")) !== null && abstainCommandFor(entry("T-911")) === null,
+  );
+  check(
+    "an abandoned claim gets an abstention command and NO release command",
+    abstainCommandFor(abandoned) !== null && releaseCommandFor(abandoned) === null,
+  );
+  for (const id of ["T-913", "T-914"]) {
+    check(
+      `neither command is offered for ${id}, which is ${entry(id).verdict}`,
+      releaseCommandFor(entry(id)) === null && abstainCommandFor(entry(id)) === null,
+    );
+  }
+  check(
+    "no entry is ever offered both commands",
+    report.entries.every((e) => !(releaseCommandFor(e) && abstainCommandFor(e))),
+  );
+  check(
+    "a missing or malformed entry yields no command rather than a broken one",
+    abstainCommandFor(null) === null && abstainCommandFor({}) === null,
+  );
+
+  /*
+   * The stamp of the claim being superseded is quoted, so the register says
+   * which line the abstention answers. A line written four days after the
+   * claim carries the reader nothing otherwise — T-457's rule, applied to the
+   * one field this command controls.
+   */
+  check(
+    "the claim's own stamp is quoted, so the line names what it supersedes",
+    command.includes("2026-09-19T15:05Z"),
+    command,
+  );
+  const stampless = abstainCommandFor({ ...abandoned, stamp: null }) ?? "";
+  check(
+    "an entry with no stamp produces a command that says so, not one reading `null`",
+    stampless.includes("--action abstain") &&
+      !/\bnull\b|\bundefined\b/.test(stampless) &&
+      stampless.includes("the claim this supersedes"),
+    stampless,
+  );
+}
+
+/*
+ * The CLI half, and it is asserted POSITIVELY. A command that exists only as
+ * an export is the shape this directory has already paid for twice:
+ * available, correct, and invoked by nobody. An assertion that the command is
+ * ABSENT for the other verdicts would pass just as well against a resolver
+ * that never printed it at all, so the reachable case is the one that has to
+ * run: a real child process, a real `abandoned` verdict, and the command in
+ * its stdout.
+ *
+ * `abandoned` needs a probe that answers "branch gone, no pull request ever",
+ * and the CLI's probe shells out to `git` and `gh`. So the probe is answered
+ * by two stub executables on PATH rather than by injection — which also
+ * pins the flags `gitHubProbe` sends, since a stub that was never called
+ * would leave the verdict `unknown` and redden this case.
+ */
+{
+  const bin = tmpdir();
+  fs.writeFileSync(path.join(bin, "git"), "#!/bin/sh\nexit 0\n", { mode: 0o755 });
+  fs.writeFileSync(path.join(bin, "gh"), "#!/bin/sh\necho '[]'\n", { mode: 0o755 });
+
+  const dir = tmpdir();
+  fs.writeFileSync(path.join(dir, "EXECUTION_QUEUE.md"), candidateLine(["T-916"]));
+  fs.writeFileSync(
+    path.join(dir, "EXECUTION_CLAIMS.md"),
+    register(claimLine("2026-09-19T15:05Z", "T-916", "| branch codex/abandoned-t916 — claimed")),
+  );
+  const stubbed = run(["--operator-root", dir], {
+    env: { ...process.env, PATH: `${bin}:${process.env.PATH}` },
+  });
+  check(
+    "the CLI prints the abstention command for an abandoned candidate",
+    stubbed.status === 1 &&
+      stubbed.stdout.includes("T-916   abandoned") &&
+      stubbed.stdout.includes("clear it:") &&
+      stubbed.stdout.includes("--action abstain") &&
+      stubbed.stdout.includes("--item T-916"),
+    `status=${stubbed.status}\n${stubbed.stdout.slice(0, 900)}\n${stubbed.stderr.slice(0, 300)}`,
+  );
+  check(
+    "and it still says the verdict is about the claim rather than the item",
+    stubbed.stdout.includes("NOT a fossil") && !stubbed.stdout.includes("retire it:"),
+    stubbed.stdout.slice(0, 900),
+  );
+
+  const dir2 = tmpdir();
+  fs.writeFileSync(path.join(dir2, "EXECUTION_QUEUE.md"), candidateLine(["T-915"]));
+  fs.writeFileSync(
+    path.join(dir2, "EXECUTION_CLAIMS.md"),
+    register(claimLine("2026-09-19T15:05Z", "T-915", "| branch none — claimed")),
+  );
+  const offline = run(["--operator-root", dir2, "--no-probe"]);
+  check(
+    "an `unknown` candidate is offered no abstention command by the CLI",
+    offline.status === 1 && !offline.stdout.includes("clear it:"),
+    offline.stdout.slice(0, 400),
+  );
+}
 
 /* ========================================================================= */
 console.log("\nreal corpus — the extraction half, with no network call");

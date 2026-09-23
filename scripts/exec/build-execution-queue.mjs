@@ -20,6 +20,7 @@ import { fileURLToPath } from "node:url";
 import { formatQueueProvenance, queueProvenanceStamp } from "./queue-provenance.mjs";
 import { isDirectInvocation } from "./cli-entry.mjs";
 import { branchesInClaim } from "./fossil-claims.mjs";
+import { announcesAbstention } from "./register-time-authority.mjs";
 
 /**
  * Everything below is the CLI, and until item T-728 it ran on `import` (item
@@ -523,10 +524,10 @@ function announcesReleaseOf(line, idIndex, idLength) {
 }
 
 function readClaims() {
-  if (!fs.existsSync(CLAIMS)) return { held: new Set(), expired: [], released: [] };
+  if (!fs.existsSync(CLAIMS)) return { held: new Set(), expired: [], expiredInFlight: [], lapsed: [], released: [] };
   const text = fs.readFileSync(CLAIMS, "utf8");
   const start = text.indexOf("## Claim log");
-  if (start < 0) return { held: new Set(), expired: [], released: [] };
+  if (start < 0) return { held: new Set(), expired: [], expiredInFlight: [], lapsed: [], released: [] };
 
   // A claim line that names a branch or a PR is evidence the work exists
   // somewhere other than in the log. That is the signal the TTL cannot carry.
@@ -593,17 +594,75 @@ function readClaims() {
    * collected and reported, so a bucket that contradicts the register's last
    * written word says so rather than being taken on trust.
    */
+  /* ---------------------------------------------------------------------- *
+   * AN ABSTENTION IS TRANSPARENT, AND IT VETOES ONE SIGNAL — item T-736.
+   *
+   * `append-claim.mjs --action abstain` writes `item <id> NOT TAKEN`. Until
+   * this item, that string appeared nowhere in this file: the line parsed as
+   * an ordinary claim, so the one verb that can say "this claim is dead"
+   * HELD the item for the full three-hour TTL before releasing it. The verb
+   * that could free an item hid it first.
+   *
+   * That mattered because `fossil-claims.mjs` resolves a suppressed candidate
+   * to `abandoned` — branch gone from `origin`, no pull request ever opened —
+   * and correctly refuses to emit a release line for it, since a release
+   * would assert the work merged. Measured on the live documents at
+   * 2026-09-23T14:58Z, that verdict held for eight ids claimed on 2026-09-19,
+   * and those eight were the whole of the queue's `0 claimable`.
+   *
+   * THE RULE IS NARROWER THAN "AN ABSTENTION FREES THE ITEM", deliberately:
+   *
+   *   TRANSPARENT  An abstention takes nothing, so it is never a claim and
+   *                never resolves an item. The item still resolves from the
+   *                newest line that asserts ownership. This is the shape
+   *                `resolveItemClaim` in register-time-authority.mjs already
+   *                gives abstentions, and for the same reason — newest-line-
+   *                wins would otherwise let one run's declining of work evict
+   *                another run's LIVE claim, which is the collision this
+   *                register exists to prevent.
+   *
+   *   VETO         What it does do is cancel the IN-FLIGHT suppression of the
+   *                expired claim it supersedes. In flight is evidence the
+   *                work exists outside the log; an abstention naming the same
+   *                item after that claim expired is the register's answer
+   *                that it does not.
+   *
+   * So a dead claim clears the instant the line lands — not after another
+   * TTL — while a live holder is untouched. The veto applies only where a
+   * suppression existed: an expired claim with no branch and no PR is
+   * already free, and stays in the bucket it was in.
+   *
+   * IT DOES NOT PROMOTE THE ITEM. `abandoned` is a verdict about the CLAIM.
+   * Whether the work shipped from some other branch is an open question, so
+   * these ids render under their own heading saying the item is UNVERIFIED,
+   * and the abstention is checked BEFORE the release attribution below —
+   * which is proximity-based over the whole line and would otherwise read
+   * the word RELEASED out of the abstention's own evidence.
+   * ---------------------------------------------------------------------- */
   const latest = new Map(); // item id -> { at, released, inFlight }
   const byAppendOrder = new Map(); // item id -> the LAST line appended for it
+  const abstentions = new Map(); // item id -> the NEWEST abstention for it
+  let ordinal = 0;
   for (const line of text.slice(start).split(/\r?\n/)) {
     const record = parseClaimRecord(line);
     if (!record) continue;
     const { at, rawId } = record;
     const when = Date.parse(at);
     const key = /^\d+$/.test(rawId) ? Number(rawId) : rawId.toUpperCase();
+    ordinal += 1;
+
+    if (announcesAbstention(line)) {
+      const prevAbstention = abstentions.get(key);
+      if (!prevAbstention || when >= prevAbstention.at) {
+        abstentions.set(key, { at: when, stamp: at, ordinal });
+      }
+      continue;
+    }
+
     const resolved = {
       at: when,
       stamp: at,
+      ordinal,
       released: announcesReleaseOf(line, record.idIndex, rawId.length),
       inFlight: IN_FLIGHT.test(line),
     };
@@ -611,6 +670,20 @@ function readClaims() {
     const prev = latest.get(key);
     if (!prev || when >= prev.at) latest.set(key, resolved);
   }
+
+  /*
+   * Whether an abstention supersedes this resolved line. Stamp first, append
+   * position breaking an equal stamp — the same authority, and the same
+   * tie-break, the block above documents for choosing a line at all. Register
+   * stamps are minute-precision, so a same-stamp pair is ordinary rather than
+   * exotic, and answering it by position is what keeps a claim appended after
+   * an abstention in the same minute from being cleared by it.
+   */
+  const abstainedAfter = (key, v) => {
+    const a = abstentions.get(key);
+    if (!a) return false;
+    return a.at > v.at || (a.at === v.at && a.ordinal > v.ordinal);
+  };
 
   /*
    * An id disagrees when the stamp authority and the append authority select
@@ -631,16 +704,23 @@ function readClaims() {
   const held = new Set();
   const expiredIdle = [];
   const expiredInFlight = [];
+  const lapsed = [];
   const released = [];
 
   /** The bucket a single resolved line would put its item in. */
-  const bucketOf = (v) => {
+  const bucketOf = (v, key) => {
     if (v.released) return "released";
-    if (now - v.at > CLAIM_TTL_MS) return v.inFlight ? "expired-in-flight" : "expired-idle";
+    if (now - v.at > CLAIM_TTL_MS) {
+      if (!v.inFlight) return "expired-idle";
+      // T-736: the in-flight signal is evidence, and an abstention appended
+      // after this claim expired is the register contradicting it.
+      return abstainedAfter(key, v) ? "lapsed" : "expired-in-flight";
+    }
     return "held";
   };
 
   for (const [num, v] of latest) {
+    if (bucketOf(v, num) === "lapsed") { lapsed.push(num); continue; }
     if (v.released) { released.push(num); continue; }
     if (now - v.at > CLAIM_TTL_MS) {
       // The TTL alone cannot tell an abandoned claim from a slow one. Measured
@@ -660,14 +740,15 @@ function readClaims() {
     held,
     expired: expiredIdle.sort(compareItemIds),
     expiredInFlight: expiredInFlight.sort(compareItemIds),
+    lapsed: lapsed.sort(compareItemIds),
     released: released.sort(compareItemIds),
     orderDisagreements: disagreements
       .map((d) => ({
         num: d.num,
         stampAt: d.stampWinner.stamp,
         appendAt: d.appendWinner.stamp,
-        stampBucket: bucketOf(d.stampWinner),
-        appendBucket: bucketOf(d.appendWinner),
+        stampBucket: bucketOf(d.stampWinner, d.num),
+        appendBucket: bucketOf(d.appendWinner, d.num),
       }))
       .sort((a, b) => compareItemIds(a.num, b.num)),
   };
@@ -677,6 +758,7 @@ const {
   held: claimed,
   expired: expiredClaims,
   expiredInFlight,
+  lapsed: lapsedClaims,
   released: releasedClaims,
   orderDisagreements,
 } = readClaims();
@@ -990,12 +1072,12 @@ product decision. Surface it and take the next queue item instead.
 
 ${claimed.size ? [...claimed].sort(compareItemIds).map(formatItemId).join(" ") : "_None held. Every claim in the log is released or expired._"}
 
-${expiredInFlight.length ? `**Expired but WORK IN FLIGHT — do not take (${expiredInFlight.length}):** ${expiredInFlight.map(formatItemId).join(" ")} — the 3-hour rule lapsed, but each of these names a branch or an open PR, so its owner is still on it. Measured over 48 completed cycles the median hold is 21 minutes and the p90 is 362, so the TTL cannot tell a slow claim from an abandoned one. Take one only after checking its branch and PR are genuinely dead.`+"\n" : ""}${suppressedCandidates.length ? `\n**Suppressed CANDIDATES — the only ids between this queue and a claimable row (${suppressedCandidates.length} of ${expiredInFlight.length}):** ${suppressedCandidates.map(formatItemId).join(" ")} — every other id on the line above fails some other test as well, so freeing it changes nothing. These are the ones worth a lookup. Check the branch and the pull request the claim line names: if the branch is gone from \`git ls-remote --heads origin\` and the PR is merged or closed, the work is done and the claim is a fossil — append a release line for it rather than re-taking the item. This generator does not read GitHub, so it can say which ids are worth checking and not whether any of them is alive.`+"\n" : ""}${expiredClaims.length ? `\n**Expired with no branch or PR, free to take (${expiredClaims.length}):** ${expiredClaims.map(formatItemId).join(" ")} — re-claim with a fresh line.` : ""}
+${expiredInFlight.length ? `**Expired but WORK IN FLIGHT — do not take (${expiredInFlight.length}):** ${expiredInFlight.map(formatItemId).join(" ")} — the 3-hour rule lapsed, but each of these names a branch or an open PR, so its owner is still on it. Measured over 48 completed cycles the median hold is 21 minutes and the p90 is 362, so the TTL cannot tell a slow claim from an abandoned one. Take one only after checking its branch and PR are genuinely dead.`+"\n" : ""}${suppressedCandidates.length ? `\n**Suppressed CANDIDATES — the only ids between this queue and a claimable row (${suppressedCandidates.length} of ${expiredInFlight.length}):** ${suppressedCandidates.map(formatItemId).join(" ")} — every other id on the line above fails some other test as well, so freeing it changes nothing. These are the ones worth a lookup. Check the branch and the pull request the claim line names: if the branch is gone from \`git ls-remote --heads origin\` and the PR is merged or closed, the work is done and the claim is a fossil — append a release line for it rather than re-taking the item. If the branch is gone and NO pull request was ever opened, the claim is ABANDONED and produced nothing: append an ABSTENTION (\`--action abstain\`), which withdraws this suppression without asserting the work is finished. \`node scripts/exec/fossil-claims.mjs --operator-root ~/Downloads\` answers both and prints the exact command. This generator does not read GitHub, so it can say which ids are worth checking and not whether any of them is alive.`+"\n" : ""}${lapsedClaims.length ? `\n**Claim LAPSED — abstained, and the item is UNVERIFIED (${lapsedClaims.length}):** ${lapsedClaims.map(formatItemId).join(" ")} — the newest register line for each of these is an abstention (\`item <id> NOT TAKEN\`) appended after an expired claim that named a branch or a PR, so the register itself has withdrawn the work-in-flight signal and these are claimable now. An abstention takes nothing and proves nothing: it is a verdict about the CLAIM, not about the item. Whether the work shipped from some other branch is still open, so **re-verify the item on \`main\` before re-taking it** — and do not read this bucket as progress.` : ""}${expiredClaims.length ? `\n**Expired with no branch or PR, free to take (${expiredClaims.length}):** ${expiredClaims.map(formatItemId).join(" ")} — re-claim with a fresh line.` : ""}
 ${releasedClaims.length ? `\n**Explicitly released (${releasedClaims.length}):** ${releasedClaims.map(formatItemId).join(" ")}` : ""}
 ${renderOrderDisagreements()}`;
 
 fs.writeFileSync(OUT, out);
-console.log(`Wrote ${path.basename(OUT)}: ${claimable.length} claimable, ${blockedOnUser.length} blocked on Anand, ${claimed.size} held, ${expiredClaims.length} expired-idle, ${expiredInFlight.length} expired-in-flight, ${releasedClaims.length} released.`);
+console.log(`Wrote ${path.basename(OUT)}: ${claimable.length} claimable, ${blockedOnUser.length} blocked on Anand, ${claimed.size} held, ${expiredClaims.length} expired-idle, ${expiredInFlight.length} expired-in-flight, ${lapsedClaims.length} lapsed, ${releasedClaims.length} released.`);
 for (const [l, v] of Object.entries(byLane)) console.log(`  lane ${l}: ${v.length}`);
 for (const band of bands) {
   console.log(

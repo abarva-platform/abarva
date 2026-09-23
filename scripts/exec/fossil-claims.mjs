@@ -41,8 +41,12 @@
  * identical to the generator, and they need opposite next moves:
  *
  *   fossil     this claim's work merged   -> append a release line, do not re-take
- *   abandoned  this claim produced nothing -> no release line; re-verify the item
- *                                            on `main`, then re-take it if undone
+ *   abandoned  this claim produced nothing -> no release line. Append an
+ *                                            ABSTENTION, which withdraws the
+ *                                            dead claim's in-flight signal and
+ *                                            asserts nothing about the item;
+ *                                            then re-verify it on `main`
+ *                                            (item T-736)
  *
  * So `releaseCommandFor` offers a release line for a fossil and refuses one for
  * an abandoned claim. A resolver that collapsed the two would launder undone
@@ -358,6 +362,55 @@ export function releaseCommandFor(entry) {
   );
 }
 
+/**
+ * The append-claim invocation that clears an ABANDONED claim — item T-736.
+ *
+ * For its first day this verdict was a sentence and not a move. The resolver
+ * answered `abandoned`, correctly refused a release line, and then told the
+ * reader to "re-verify the item on `main`" — which changes nothing in the
+ * register, and the register is the only thing the queue reads. So the
+ * suppression the verdict describes could not expire: measured on the live
+ * documents at 2026-09-23T14:58Z, eight ids claimed on 2026-09-19 had been
+ * suppressed for four days and were the whole of the queue's `0 claimable`.
+ *
+ * A verdict with no executable next move is the shape this directory exists
+ * against — an available control invoked by nobody is, from the register's
+ * side, a control that does not exist. So the verdict now hands back the
+ * command, exactly as `releaseCommandFor` does for a fossil.
+ *
+ * THE VERB IS DELIBERATELY NOT A RELEASE, and the two commands never both
+ * answer for one entry. An abstention asserts `item <id> NOT TAKEN`: it
+ * withdraws the dead claim's work-in-flight signal and asserts nothing
+ * whatever about the item, which is exactly what is known. A release would
+ * say the work merged, and laundering undone work into a closed item is the
+ * direction this backlog keeps losing things in.
+ *
+ * Three flags are absent on purpose:
+ *
+ *   --branch  an abstention names none. `announcesAbstention` reads NOT TAKEN
+ *             in the slot straight after the id, and `append-claim.mjs` puts
+ *             a branch between them.
+ *   --files   a line naming files is read by the ownership gate as a claim on
+ *             them. An abstention takes nothing, so it must hold nothing.
+ *   --action release  see above.
+ *
+ * The message QUOTES the branch as evidence, which is why the queue's reader
+ * has to treat an abstention as transparent rather than scan it for a branch
+ * token: a line that re-suppressed the item it was written to free would be
+ * worse than no command at all.
+ */
+export function abstainCommandFor(entry) {
+  if (!entry || entry.verdict !== VERDICTS.ABANDONED) return null;
+  const claimedAt = entry.stamp ? `the claim of ${entry.stamp}` : "the claim this supersedes";
+  return (
+    "node scripts/exec/append-claim.mjs --file <register> " +
+    `--item ${entry.id} --identity '<base-agent>#<run-id>' --action abstain ` +
+    `--message '${claimedAt} is ABANDONED: ${entry.because}. ` +
+    "NOT TAKING it here; this clears the work-in-flight signal and says nothing about the " +
+    "item, which is UNVERIFIED and must be re-verified on `main` before it is re-taken.'"
+  );
+}
+
 /* ------------------------------------------------------------------------- */
 /* The real probe                                                             */
 /* ------------------------------------------------------------------------- */
@@ -476,12 +529,15 @@ function print(report) {
     console.log(`${entry.id.padEnd(7)} ${entry.verdict.padEnd(10)} ${entry.because}`);
     const command = releaseCommandFor(entry);
     if (command) console.log(`        retire it:  ${command}`);
-    if (entry.verdict === VERDICTS.ABANDONED) {
+    const abstain = abstainCommandFor(entry);
+    if (abstain) {
       console.log(
         "        NOT a fossil — no release line. The verdict is about the CLAIM, not the item: " +
           "the work may still have shipped from some other branch, so re-verify the item on " +
-          "`main` before re-taking it.",
+          "`main` before re-taking it. Clear the dead claim's in-flight signal with an " +
+          "ABSTENTION, which asserts nothing about the item:",
       );
+      console.log(`        clear it:   ${abstain}`);
     }
   }
 }
