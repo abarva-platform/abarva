@@ -27,7 +27,7 @@ import {
   UnsupportedViews,
   sectionId,
 } from "./TableSet";
-import type { EstateRow, TableSpec } from "./page-tables";
+import type { EstateRow, Finding, TableSpec } from "./page-tables";
 import { DecisionQueue } from "./DecisionQueue";
 import { MetricDistance } from "./MetricDistance";
 import { RenewalTimeline } from "./RenewalTimeline";
@@ -114,16 +114,16 @@ export function ChapterPage({
   const headline = briefingOpening
     ? briefingOpening.headline
     : deferred
-    ? (strongest?.claim ??
-      `${chapter.title} is not yet answered by this record.`)
-    : chapter.headline;
+      ? (strongest?.claim ??
+        `${chapter.title} is not yet answered by this record.`)
+      : chapter.headline;
   const standfirst = briefingOpening
     ? briefingOpening.standfirst
     : deferred
-    ? strongest
-      ? strongest.because
-      : `Nothing in the loaded record speaks to this question yet. The chapters either side of it draw on families that are present; this one draws on families that are not, and that absence is reported here rather than filled.`
-    : chapter.executive_synthesis;
+      ? strongest
+        ? strongest.because
+        : `Nothing in the loaded record speaks to this question yet. The chapters either side of it draw on families that are present; this one draws on families that are not, and that absence is reported here rather than filled.`
+      : chapter.executive_synthesis;
 
   return (
     <>
@@ -148,6 +148,7 @@ export function ChapterPage({
           chapter={chapter}
           bands={bands}
           signalPacket={signalPacket}
+          depth={depth}
         />
       )}
 
@@ -266,10 +267,12 @@ function ChapterExecutiveReadout({
   chapter,
   bands,
   signalPacket,
+  depth,
 }: {
   chapter: ChapterView;
   bands: ReturnType<typeof splitChapterIntoBands>;
   signalPacket: EnterpriseSignalPacket;
+  depth?: ChapterDepth;
 }) {
   const primaryRecord = firstStatement(bands.record);
   const primaryInference = firstStatement(bands.follows);
@@ -318,6 +321,10 @@ function ChapterExecutiveReadout({
     ...signal,
     statement: cxoText(signal.statement ?? ""),
   }));
+  const leadershipEvidenceNotice =
+    chapter.chapterId === "leadership_perspective"
+      ? leadershipBasisNotice(depth?.findings)
+      : null;
 
   return (
     <section style={{ padding: `24px ${PAGE_X}px 0` }}>
@@ -364,6 +371,9 @@ function ChapterExecutiveReadout({
             ) : null}
           </div>
         ) : null}
+        {leadershipEvidenceNotice ? (
+          <LeadershipEvidenceNotice text={leadershipEvidenceNotice} />
+        ) : null}
         {leadershipSignals.length > 0 ? (
           chapter.chapterId === "leadership_perspective" ? (
             <LeadershipVoiceFull signals={leadershipSignals} />
@@ -373,6 +383,27 @@ function ChapterExecutiveReadout({
         ) : null}
       </div>
     </section>
+  );
+}
+
+function leadershipBasisNotice(findings: Finding[] | undefined): string | null {
+  const basis = findings?.find((finding) =>
+    /interview responses are modelled|modelled rather than transcribed/i.test(
+      finding.claim,
+    ),
+  );
+  if (!basis) return null;
+  return `${basis.claim} Read the leadership chapter for patterns and named concerns; do not treat modelled responses as verbatim testimony.`;
+}
+
+function LeadershipEvidenceNotice({ text }: { text: string }) {
+  return (
+    <aside data-leadership-basis-note style={leadershipBasisNoticeStyle}>
+      <span style={{ ...eyebrow(V4.amber), fontSize: 10 }}>
+        Interview basis
+      </span>
+      <p style={leadershipBasisNoticeTextStyle}>{text}</p>
+    </aside>
   );
 }
 
@@ -550,6 +581,22 @@ const provenanceTextStyle = {
   fontSize: 12.5,
   lineHeight: 1.5,
   color: V4.slate,
+  maxWidth: "78ch",
+} as const;
+
+const leadershipBasisNoticeStyle = {
+  gridColumn: "1 / -1",
+  borderTop: `1px solid ${V4.rule}`,
+  borderBottom: `1px solid ${V4.rule}`,
+  padding: "12px 0",
+} as const;
+
+const leadershipBasisNoticeTextStyle = {
+  margin: "6px 0 0",
+  fontFamily: SANS,
+  fontSize: 13.5,
+  lineHeight: 1.55,
+  color: V4.inkSoft,
   maxWidth: "78ch",
 } as const;
 
