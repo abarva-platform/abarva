@@ -126,6 +126,55 @@ describe("Source event stage-plan snapshot", () => {
     expect(changed.snapshot.contentHash).not.toBe(first.snapshot.contentHash);
   });
 
+  it("keeps the accepted plan hash stable as the event advances", () => {
+    const row = {
+      id: "event-1",
+      client_key: "tenant-1",
+      current_stage_key: "strategy",
+      lifecycle_state: "waiting_on_client",
+      sourcing_motion: "competitive_rfp",
+      event_type: "sourcing",
+      classified_category: "ams",
+      event_name: "Market event",
+      event_code: "EVT-1",
+      trigger_description: "Competitive sourcing",
+    };
+    const before = buildSourceEventStagePlanSnapshot(row, "tenant-1");
+    const after = buildSourceEventStagePlanSnapshot(
+      { ...row, current_stage_key: "scope", lifecycle_state: "active" },
+      "tenant-1",
+    );
+    expect(before.kind).toBe("available");
+    expect(after.kind).toBe("available");
+    if (before.kind !== "available" || after.kind !== "available") return;
+    expect(after.snapshot.contentHash).toBe(before.snapshot.contentHash);
+    expect(after.snapshot.stages.find((stage) => stage.key === "scope")?.status).toBe("current");
+  });
+
+  it("changes the plan hash when the archetype changes within the same journey", () => {
+    const row = {
+      id: "event-1",
+      client_key: "tenant-1",
+      current_stage_key: "strategy",
+      lifecycle_state: "active",
+      sourcing_motion: "competitive_rfp",
+      event_type: "sourcing",
+      classified_category: "ams",
+      event_name: "Market event",
+      event_code: "EVT-1",
+      trigger_description: null,
+    };
+    const before = buildSourceEventStagePlanSnapshot(row, "tenant-1");
+    const after = buildSourceEventStagePlanSnapshot(
+      { ...row, classified_category: "staffing" },
+      "tenant-1",
+    );
+    expect(before.kind).toBe("available");
+    expect(after.kind).toBe("available");
+    if (before.kind !== "available" || after.kind !== "available") return;
+    expect(after.snapshot.contentHash).not.toBe(before.snapshot.contentHash);
+  });
+
   it("fails closed when the row lacks event ownership or a valid stage", () => {
     expect(
       buildSourceEventStagePlanSnapshot(
