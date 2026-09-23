@@ -1,6 +1,8 @@
 import type { SourceNewFileRow } from "@/components/source/new-workspace/SourceNewFiles";
 import type { SourceArtifactRegistryRecord } from "@/lib/source/artifact-registry/types";
 import type { NormalizedVendorResponsePackage } from "@/lib/source/vendor-response-matrix";
+import { tenantAliasesFor } from "@/lib/tenant/aliases";
+import { extractAcceptedResponseQuestions } from "@/lib/source/vendor-response-extraction-contract";
 import type { SourceNewStage04VendorPanel } from "./stage04-vendor-panel";
 
 export type SourceNewResponseIntakeState =
@@ -53,6 +55,7 @@ export type SourceNewResponseIntake = {
 
 export type BuildSourceNewResponseIntakeInput = {
   eventId: string;
+  tenantKey: string;
   asOf: string;
   uploadActionHref: string;
   vendorPanel: SourceNewStage04VendorPanel;
@@ -81,6 +84,18 @@ export function buildSourceNewResponseIntake(
     ]);
   }
 
+  const tenantKeys = new Set(tenantAliasesFor(input.tenantKey));
+  const eventArtifacts = input.responseArtifacts.filter(
+    (artifact) =>
+      artifact.sourceEventId === input.eventId &&
+      tenantKeys.has(artifact.tenantKey) &&
+      artifact.deletedAt === null,
+  );
+  const eventArtifactIds = new Set(eventArtifacts.map((artifact) => artifact.id));
+  const eventPackages = input.normalizedPackages.filter((pkg) =>
+    eventArtifactIds.has(pkg.artifactId),
+  );
+
   const suppliers = input.vendorPanel.rows.filter(
     (row) => row.group !== "selected_respondent",
   );
@@ -102,13 +117,22 @@ export function buildSourceNewResponseIntake(
   const rows = suppliers.map((supplier) => {
     const normalizedPackage = matchNormalizedPackage(
       supplier,
-      input.normalizedPackages ?? [],
+      eventPackages,
     );
     const artifact = matchResponseArtifact(
       supplier,
       normalizedPackage,
-      input.responseArtifacts ?? [],
+      eventArtifacts,
     );
+    const questionExtraction = extractAcceptedResponseQuestions({
+      eventId: input.eventId,
+      tenantKey: input.tenantKey,
+      supplierId: supplier.legalEntityId,
+      roundId: null,
+      parserConfidence: null,
+      artifact,
+      responsePackage: normalizedPackage,
+    });
     const file = matchFileCabinetRow(supplier, artifact, input.files);
     return {
       supplierId: supplier.legalEntityId,
@@ -131,7 +155,7 @@ export function buildSourceNewResponseIntake(
         null,
       artifactId: artifact?.id ?? file?.sourceRegisterId ?? file?.id ?? null,
       artifactVersion: artifact?.version ?? file?.version ?? null,
-      parsedRequirementCount: normalizedPackage?.rows.length ?? 0,
+      parsedRequirementCount: questionExtraction.rows.length,
       uploadedAt: artifact?.createdAt ?? file?.createdAt ?? null,
       reviewedBy: file?.approvedBy ?? null,
       reviewedAt: file?.approvedAt ?? null,
@@ -284,6 +308,11 @@ function rowBlockers(
     rows.some((row) => row.parseState !== "parsed")
       ? "At least one uploaded workbook has no parsed normalized response output."
       : null,
+    rows.some(
+      (row) => row.parseState === "parsed" && row.parsedRequirementCount === 0,
+    )
+      ? "At least one parsed workbook cannot be bound to an accepted supplier identity."
+      : null,
     rows.some((row) => row.availabilityReviewState !== "available")
       ? "At least one parsed workbook still needs availability-only review."
       : null,
@@ -304,6 +333,17 @@ function nextAction(rows: readonly SourceNewResponseIntakeRow[]) {
       label: "Confirm workbook parser output",
       detail:
         "The uploaded workbook must produce normalized response rows before evaluation can inspect it.",
+    };
+  }
+  if (
+    rows.some(
+      (row) => row.parseState === "parsed" && row.parsedRequirementCount === 0,
+    )
+  ) {
+    return {
+      label: "Resolve response identity",
+      detail:
+        "Bind the parsed response to an accepted supplier and its source artifact before using question-level facts.",
     };
   }
   if (rows.some((row) => row.availabilityReviewState !== "available")) {

@@ -172,6 +172,7 @@ describe("buildSourceNewResponseIntake", () => {
   it("keeps upload, parse and availability-only review as separate states", () => {
     const intake = buildSourceNewResponseIntake({
       eventId: "event-1",
+      tenantKey: "example-client",
       asOf: "2026-03-10",
       uploadActionHref: "/api/v1/source/event-1/artifacts/upload",
       vendorPanel: acceptedPanel,
@@ -199,6 +200,7 @@ describe("buildSourceNewResponseIntake", () => {
   it("fails closed when the artifact readback is unavailable", () => {
     const intake = buildSourceNewResponseIntake({
       eventId: "event-1",
+      tenantKey: "example-client",
       asOf: "2026-03-10",
       uploadActionHref: "/api/v1/source/event-1/artifacts/upload",
       vendorPanel: acceptedPanel,
@@ -217,6 +219,7 @@ describe("buildSourceNewResponseIntake", () => {
   it("does not treat an uploaded parsed workbook as availability-reviewed", () => {
     const intake = buildSourceNewResponseIntake({
       eventId: "event-1",
+      tenantKey: "example-client",
       asOf: "2026-03-10",
       uploadActionHref: "/api/v1/source/event-1/artifacts/upload",
       vendorPanel: acceptedPanel,
@@ -234,5 +237,53 @@ describe("buildSourceNewResponseIntake", () => {
       "At least one parsed workbook still needs availability-only review.",
     );
     expect(intake.nextAction.label).toBe("Record availability-only review");
+  });
+
+  it("does not credit a normalized response backed by another event or tenant", () => {
+    const input = {
+      eventId: "event-1",
+      tenantKey: "example-client",
+      asOf: "2026-03-10",
+      uploadActionHref: "/api/v1/source/event-1/artifacts/upload",
+      vendorPanel: acceptedPanel,
+      files: [],
+      responseArtifacts: [artifact],
+      normalizedPackages: [normalizedPackage],
+    };
+
+    for (const foreignArtifact of [
+      { ...artifact, sourceEventId: "event-2" },
+      { ...artifact, tenantKey: "other-client" },
+    ]) {
+      const intake = buildSourceNewResponseIntake({
+        ...input,
+        responseArtifacts: [foreignArtifact],
+      });
+      expect(intake.rows[0]).toMatchObject({
+        uploadState: "not_uploaded",
+        parseState: "not_parsed",
+        parsedRequirementCount: 0,
+      });
+    }
+  });
+
+  it("does not treat a filename/name match as supplier identity authority", () => {
+    const intake = buildSourceNewResponseIntake({
+      eventId: "event-1",
+      tenantKey: "example-client",
+      asOf: "2026-03-10",
+      uploadActionHref: "/api/v1/source/event-1/artifacts/upload",
+      vendorPanel: acceptedPanel,
+      files: [fileRow],
+      responseArtifacts: [artifact],
+      normalizedPackages: [
+        { ...normalizedPackage, vendorId: "different-supplier" },
+      ],
+    });
+
+    expect(intake.rows[0].parsedRequirementCount).toBe(0);
+    expect(intake.blockers).toContain(
+      "At least one parsed workbook cannot be bound to an accepted supplier identity.",
+    );
   });
 });
