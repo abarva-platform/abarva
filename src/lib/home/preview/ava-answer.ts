@@ -52,6 +52,13 @@ interface PlottableDataset {
   rows: Array<{ label: string; value: number }>;
 }
 
+interface VendorEvidenceSummary {
+  totalSpend: number;
+  supplierAliases: Map<string, string>;
+  topSuppliers: Array<{ name: string; spend: number; sharePct: number }>;
+  hasContractEvidence: boolean;
+}
+
 interface GroundingContext {
   tenantDisplayName: string;
   promptContextJson: string;
@@ -59,6 +66,7 @@ interface GroundingContext {
   citationIndex: Map<string, TaggedClaim>;
   plottableDatasets: Map<string, PlottableDataset>;
   recordCountsByObjectType: Map<TechObjectType, number>;
+  vendorEvidence: VendorEvidenceSummary | null;
 }
 
 const TENANT_DISPLAY_NAMES: Record<string, string> = {
@@ -240,7 +248,10 @@ function claimTagsForChapter(chapter: ChapterView): string[] {
   ];
 }
 
-function buildEnterpriseContextSpine(bundle: AvaAnswerBundleSlice) {
+function buildEnterpriseContextSpine(
+  bundle: AvaAnswerBundleSlice,
+  allowedClaimTags?: Set<string>,
+) {
   const chaptersById = new Map(
     bundle.chapters.map((chapter) => [chapter.chapterId, chapter]),
   );
@@ -283,7 +294,9 @@ function buildEnterpriseContextSpine(bundle: AvaAnswerBundleSlice) {
         title: chapter.title,
         guidingQuestion: chapter.guidingQuestion,
         headline: chapter.headline,
-        claim_tags: claimTagsForChapter(chapter).slice(0, 10),
+        claim_tags: claimTagsForChapter(chapter)
+          .filter((tag) => !allowedClaimTags || allowedClaimTags.has(tag))
+          .slice(0, 10),
         limitations: chapter.limitations.slice(0, 3),
       })),
       record_summaries: recordSummaries,
@@ -334,14 +347,246 @@ function matchedQuestionDomains(question: string): string[] {
   );
 }
 
+interface StaleClaimContext {
+  recordCountsByObjectType: Map<TechObjectType, number>;
+  vendorEvidence: VendorEvidenceSummary | null;
+}
+
+function summarizeVendorEvidence(
+  bundle: AvaAnswerBundleSlice,
+): VendorEvidenceSummary | null {
+  const recordType = bundle.technologyEstate?.recordTypes.find(
+    (rt) => rt.objectType === "vendor_contract",
+  );
+  if (!recordType) return null;
+
+  const spendBySupplier = new Map<string, number>();
+  const displayNameBySupplier = new Map<string, string>();
+  const supplierAliases = new Map<string, string>();
+  let hasContractEvidence = false;
+
+  for (const row of recordType.rows) {
+    const supplierName = normalizedCellText(row.vendorName);
+    if (supplierName) {
+      const key = normalizeSupplierAlias(supplierName);
+      displayNameBySupplier.set(key, supplierName);
+      spendBySupplier.set(
+        key,
+        (spendBySupplier.get(key) ?? 0) + numberCellValue(row.annualSpendUsd),
+      );
+      for (const alias of supplierNameAliases(supplierName)) {
+        supplierAliases.set(alias, key);
+      }
+    }
+    if (
+      [
+        "pricingHistory",
+        "utilizationEvidence",
+        "contractTermsDetail",
+        "renegotiationLevers",
+        "benchmarkClause",
+      ].some((key) => Boolean(normalizedCellText(row[key])))
+    ) {
+      hasContractEvidence = true;
+    }
+  }
+
+  const totalSpend = Array.from(spendBySupplier.values()).reduce(
+    (sum, value) => sum + value,
+    0,
+  );
+  const topSuppliers = Array.from(spendBySupplier.entries())
+    .map(([key, spend]) => ({
+      name: displayNameBySupplier.get(key) ?? key,
+      spend,
+      sharePct: totalSpend > 0 ? (spend / totalSpend) * 100 : 0,
+    }))
+    .sort((a, b) => b.spend - a.spend)
+    .slice(0, 5);
+
+  return {
+    totalSpend,
+    supplierAliases,
+    topSuppliers,
+    hasContractEvidence,
+  };
+}
+
+function normalizedCellText(value: unknown): string {
+  if (value === null || value === undefined) return "";
+  return String(value).trim();
+}
+
+function numberCellValue(value: unknown): number {
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+  if (typeof value !== "string") return 0;
+  const parsed = Number(value.replace(/[$,\s]/g, ""));
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+
+function normalizeSupplierAlias(value: string): string {
+  return value
+    .toLowerCase()
+    .replace(/\b(corporation|corp\.?|inc\.?|llc|ltd\.?|company|co\.?)\b/g, "")
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
+}
+
+function supplierNameAliases(name: string): string[] {
+  const normalized = normalizeSupplierAlias(name);
+  const aliases = new Set<string>();
+  if (normalized) aliases.add(normalized);
+  const firstToken = normalized.split(/\s+/)[0];
+  if (firstToken && firstToken.length >= 3) aliases.add(firstToken);
+  return Array.from(aliases);
+}
+
+function isStaleAvaClaim(
+  statement: string,
+  context: StaleClaimContext,
+): boolean {
+  const vendorContracts =
+    context.recordCountsByObjectType.get("vendor_contract");
+  if (
+    vendorContracts !== undefined &&
+    containsConflictingVendorContractTotal(statement, vendorContracts)
+  ) {
+    return true;
+  }
+
+  const dataAssets = context.recordCountsByObjectType.get(
+    "data_asset_or_integration",
+  );
+  if (
+    dataAssets !== undefined &&
+    containsConflictingDataAssetTotal(statement, dataAssets)
+  ) {
+    return true;
+  }
+
+  if (
+    context.vendorEvidence?.hasContractEvidence &&
+    /\b(no|none of the|absent|unavailable)\b/i.test(statement) &&
+    /\b(vendor contracts?|contracts?|pricing|SLA|terms?|performance evidence|contract-level evidence|document-level evidence)\b/i.test(
+      statement,
+    )
+  ) {
+    return true;
+  }
+
+  if (
+    context.vendorEvidence &&
+    /\b(over|more than|at least)\s+(?:a\s+)?quarter\b/i.test(statement) &&
+    /\b(vendor|supplier|contract)\s+spend\b/i.test(statement)
+  ) {
+    return vendorPairConcentrationConflicts(statement, context.vendorEvidence);
+  }
+
+  return false;
+}
+
+function containsConflictingVendorContractTotal(
+  statement: string,
+  expected: number,
+): boolean {
+  return [
+    ...statement.matchAll(/\b(\d+)\s+vendor contracts?\b/gi),
+    ...statement.matchAll(/\b(\d+)\s+declared\s+contracts?\b/gi),
+  ].some((match) => Number(match[1]) !== expected);
+}
+
+function containsConflictingDataAssetTotal(
+  statement: string,
+  expected: number,
+): boolean {
+  return [
+    ...statement.matchAll(
+      /\b\d+\s+of\s+(\d+)\s+(?:tracked\s+)?data assets(?:\s*(?:and|\/)\s*integrations)?\b/gi,
+    ),
+    ...statement.matchAll(
+      /\b(\d+)\s+(?:tracked\s+)?data assets(?:\s*(?:and|\/)\s*integrations)?\b/gi,
+    ),
+  ].some((match) => Number(match[1]) !== expected);
+}
+
+function vendorPairConcentrationConflicts(
+  statement: string,
+  vendorEvidence: VendorEvidenceSummary,
+): boolean {
+  if (
+    vendorEvidence.totalSpend <= 0 ||
+    vendorEvidence.topSuppliers.length < 2
+  ) {
+    return false;
+  }
+  const normalizedStatement = normalizeSupplierAlias(statement);
+  const mentionedSupplierKeys = new Set<string>();
+  for (const [alias, supplierKey] of vendorEvidence.supplierAliases) {
+    const escaped = alias.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    if (new RegExp(`\\b${escaped}\\b`, "i").test(normalizedStatement)) {
+      mentionedSupplierKeys.add(supplierKey);
+    }
+  }
+  if (mentionedSupplierKeys.size < 2) return false;
+
+  const topTwoKeys = new Set(
+    vendorEvidence.topSuppliers
+      .slice(0, 2)
+      .map((supplier) => normalizeSupplierAlias(supplier.name)),
+  );
+  const mentionsOnlyTopTwo =
+    mentionedSupplierKeys.size === topTwoKeys.size &&
+    Array.from(mentionedSupplierKeys).every((key) => topTwoKeys.has(key));
+  const topTwoShare = vendorEvidence.topSuppliers
+    .slice(0, 2)
+    .reduce((sum, supplier) => sum + supplier.sharePct, 0);
+
+  return !mentionsOnlyTopTwo || topTwoShare < 25;
+}
+
+function sanitizeContextNarrative(
+  text: string,
+  context: StaleClaimContext,
+): string {
+  return dropStaleEvidenceSentences(text, context).trim();
+}
+
+function dropStaleEvidenceSentences(
+  text: string,
+  context: StaleClaimContext,
+): string {
+  if (!text) return text;
+  const sentences = text
+    .match(/[^.!?]+[.!?]+(?:["')\]]+)?|[^.!?]+$/g)
+    ?.map((sentence) => sentence.trim())
+    .filter(Boolean) ?? [text];
+  return sentences
+    .filter((sentence) => !isStaleAvaClaim(sentence, context))
+    .join(" ");
+}
+
 function buildGroundingContext(
   bundle: AvaAnswerBundleSlice,
   tenantKey: string,
   activeChapterId: string | undefined,
   question: string,
 ): GroundingContext {
-  const taggedClaims = tagClaims(bundle.chapters);
+  const recordCountsByObjectType = new Map(
+    (bundle.technologyEstate?.recordTypes ?? []).map((recordType) => [
+      recordType.objectType,
+      recordType.rows.length,
+    ]),
+  );
+  const vendorEvidence = summarizeVendorEvidence(bundle);
+  const taggedClaims = tagClaims(bundle.chapters).filter(
+    (taggedClaim) =>
+      !isStaleAvaClaim(taggedClaim.claim.statement, {
+        recordCountsByObjectType,
+        vendorEvidence,
+      }),
+  );
   const citationIndex = new Map(taggedClaims.map((t) => [t.tag, t]));
+  const allowedClaimTags = new Set(taggedClaims.map((t) => t.tag));
 
   const plottableDatasets = new Map<string, PlottableDataset>();
   for (const recordType of bundle.technologyEstate?.recordTypes ?? []) {
@@ -364,27 +609,49 @@ function buildGroundingContext(
       active_focus: chapter.chapterId === activeChapterId,
       title: chapter.title,
       guidingQuestion: chapter.guidingQuestion,
-      headline: chapter.headline,
-      executive_synthesis: chapter.executive_synthesis,
-      key_insights: chapter.key_insights.map((c, i) => ({
-        tag: `${abbrev}-K${i + 1}`,
-        statement: c.statement,
-        claim_type: c.claim_type,
-        confidence: c.confidence,
-      })),
-      tensions: chapter.tensions.map((c, i) => ({
-        tag: `${abbrev}-T${i + 1}`,
-        statement: c.statement,
-        claim_type: c.claim_type,
-        confidence: c.confidence,
-      })),
-      what_to_watch: chapter.what_to_watch.map((c, i) => ({
-        tag: `${abbrev}-W${i + 1}`,
-        statement: c.statement,
-        claim_type: c.claim_type,
-        confidence: c.confidence,
-      })),
-      limitations: chapter.limitations,
+      headline: sanitizeContextNarrative(chapter.headline, {
+        recordCountsByObjectType,
+        vendorEvidence,
+      }),
+      executive_synthesis: sanitizeContextNarrative(
+        chapter.executive_synthesis,
+        {
+          recordCountsByObjectType,
+          vendorEvidence,
+        },
+      ),
+      key_insights: chapter.key_insights
+        .map((c, i) => ({
+          tag: `${abbrev}-K${i + 1}`,
+          statement: c.statement,
+          claim_type: c.claim_type,
+          confidence: c.confidence,
+        }))
+        .filter((claim) => allowedClaimTags.has(claim.tag)),
+      tensions: chapter.tensions
+        .map((c, i) => ({
+          tag: `${abbrev}-T${i + 1}`,
+          statement: c.statement,
+          claim_type: c.claim_type,
+          confidence: c.confidence,
+        }))
+        .filter((claim) => allowedClaimTags.has(claim.tag)),
+      what_to_watch: chapter.what_to_watch
+        .map((c, i) => ({
+          tag: `${abbrev}-W${i + 1}`,
+          statement: c.statement,
+          claim_type: c.claim_type,
+          confidence: c.confidence,
+        }))
+        .filter((claim) => allowedClaimTags.has(claim.tag)),
+      limitations: chapter.limitations
+        .map((limitation) =>
+          sanitizeContextNarrative(limitation, {
+            recordCountsByObjectType,
+            vendorEvidence,
+          }),
+        )
+        .filter(Boolean),
     };
   });
 
@@ -403,7 +670,10 @@ function buildGroundingContext(
   const contextPayload = {
     tenant: TENANT_DISPLAY_NAMES[tenantKey] ?? tenantKey,
     question_context_plan: buildQuestionContextPlan(question, activeChapterId),
-    enterprise_context_spine: buildEnterpriseContextSpine(bundle),
+    enterprise_context_spine: buildEnterpriseContextSpine(
+      bundle,
+      allowedClaimTags,
+    ),
     chapters: chaptersForContext,
     technology_estate_summary: technologyEstateSummary,
     plottable_datasets: Array.from(plottableDatasets.entries()).map(
@@ -422,12 +692,8 @@ function buildGroundingContext(
     taggedClaims,
     citationIndex,
     plottableDatasets,
-    recordCountsByObjectType: new Map(
-      (bundle.technologyEstate?.recordTypes ?? []).map((recordType) => [
-        recordType.objectType,
-        recordType.rows.length,
-      ]),
-    ),
+    recordCountsByObjectType,
+    vendorEvidence,
   };
 }
 
@@ -753,19 +1019,13 @@ function packageModelResponse(
     if (recovered) return recovered;
   }
 
-  const directAnswer = scrubPublicAvaAnswerText(
-    sanitizeRecordCountContradictions(
-      compactAnswerText(directAnswerRaw, MAX_DIRECT_ANSWER_WORDS),
-      context,
-    ),
+  const directAnswer = sanitizeAvaVisibleText(
+    directAnswerRaw,
+    context,
+    MAX_DIRECT_ANSWER_WORDS,
   );
   const prose = proseRaw
-    ? scrubPublicAvaAnswerText(
-        sanitizeRecordCountContradictions(
-          compactAnswerText(proseRaw, MAX_PROSE_PARAGRAPH_WORDS),
-          context,
-        ),
-      )
+    ? sanitizeAvaVisibleText(proseRaw, context, MAX_PROSE_PARAGRAPH_WORDS)
     : undefined;
 
   const packet: AvaAnswerPacket = {
@@ -936,11 +1196,36 @@ function sanitizeAvaVisibleText(
   maxWordsPerParagraph: number,
 ): string {
   return scrubPublicAvaAnswerText(
-    sanitizeRecordCountContradictions(
-      compactAnswerText(text, maxWordsPerParagraph),
+    sanitizeVisibleStaleClaims(
+      sanitizeRecordCountContradictions(
+        compactAnswerText(text, maxWordsPerParagraph),
+        context,
+      ),
       context,
     ),
   );
+}
+
+function sanitizeVisibleStaleClaims(
+  text: string,
+  context: StaleClaimContext,
+): string {
+  if (!text) return text;
+  const replacement =
+    "Use the current Vendor Contracts table for supplier concentration; the live record does not support the older supplier-pair concentration wording.";
+  const paragraphs = text.split(/\n{2,}/).map((paragraph) => {
+    const sentences = paragraph
+      .match(/[^.!?]+[.!?]+(?:["')\]]+)?|[^.!?]+$/g)
+      ?.map((sentence) => sentence.trim())
+      .filter(Boolean) ?? [paragraph];
+    const next = sentences
+      .map((sentence) =>
+        isStaleAvaClaim(sentence, context) ? replacement : sentence,
+      )
+      .filter(Boolean);
+    return Array.from(new Set(next)).join(" ");
+  });
+  return paragraphs.join("\n\n").trim();
 }
 
 function sanitizeRecordCountContradictions(
@@ -1121,8 +1406,10 @@ function buildClaimBackedRecoveryAnswer(input: {
     status: "partial",
     directAnswer:
       "Home can answer this directionally from cited enterprise claims, with evidence limits called out.",
-    prose: scrubPublicAvaAnswerText(
-      sanitizeRecordCountContradictions(prose, input.context),
+    prose: sanitizeAvaVisibleText(
+      prose,
+      input.context,
+      MAX_PROSE_PARAGRAPH_WORDS,
     ),
     factsUsed: [],
     metricsUsed: [],
