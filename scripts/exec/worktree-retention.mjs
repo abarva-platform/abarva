@@ -32,6 +32,8 @@ import { execFileSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
 
+import { isDirectInvocation } from "./cli-entry.mjs";
+
 export const CLAIM_WINDOW_MS = 3 * 60 * 60 * 1000;
 
 /** Verdicts, ordered from most to least conservative. */
@@ -309,6 +311,12 @@ function main(argv) {
   return 0;
 }
 
-if (import.meta.url === `file://${process.argv[1]}`) {
+// Resolved through `fs.realpathSync` on both sides (item T-723). The composed
+// `file://${process.argv[1]}` string lost two cases: `import.meta.url` is the
+// realpath, so a symlinked directory such as macOS `/tmp` never matched, and it
+// percent-encodes a space where the composed form does not. Through a `/tmp`
+// path this control — whose whole contract is to exit 1 below the free-space
+// floor — printed nothing and exited 0.
+if (isDirectInvocation(import.meta.url)) {
   process.exit(main(process.argv.slice(2)));
 }

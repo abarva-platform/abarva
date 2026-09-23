@@ -46,6 +46,8 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
+import { isDirectInvocation } from "./cli-entry.mjs";
+
 export const REPO_OWNED = "repo_owned";
 export const SUPERSEDED = "superseded";
 export const UNSTAMPED = "unstamped";
@@ -237,6 +239,10 @@ function cli(argv) {
   process.exit(isRepoOwned(result) ? 0 : 1);
 }
 
-if (process.argv[1] && path.resolve(process.argv[1]) === path.resolve(fileURLToPath(import.meta.url))) {
+// Resolved through `fs.realpathSync` on both sides, not `path.resolve` (item
+// T-723). `path.resolve` normalises a path and does not follow symlinks, and
+// `import.meta.url` is always the realpath — so through a symlinked directory
+// such as macOS `/tmp` this CLI silently declined to run and exited 0.
+if (isDirectInvocation(import.meta.url)) {
   cli(process.argv.slice(2));
 }
