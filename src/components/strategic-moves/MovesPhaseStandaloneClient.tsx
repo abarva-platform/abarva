@@ -147,6 +147,18 @@ interface MovesPhaseStandaloneClientProps {
   currentUser?: { email: string | null; role: string | null } | null;
 }
 
+interface MoveArtifactApiRow {
+  artifactId: string;
+  artifactType: string;
+  family: string;
+  title: string;
+  phase: number | null;
+  status: string;
+  lifecycleState: string;
+  version: number;
+  downloadUrl: string;
+}
+
 type WorkspaceView =
   | "phase"
   | "files"
@@ -600,6 +612,40 @@ function moneyRange(valueAtStake: StrategicMove["valueAtStake"]): string {
   return `${formatter.format(projected.low)}-${formatter.format(projected.high)}`;
 }
 
+function mapArtifactApiRowToBuildArtifact(
+  artifact: MoveArtifactApiRow,
+): PhaseBuildArtifact {
+  return {
+    artifactId: artifact.artifactId,
+    deliverableTypeKey: artifact.artifactType,
+    documentTitle: artifact.title,
+    phase: artifact.phase,
+    status: artifact.status,
+    version: artifact.version,
+    downloadUrl: artifact.downloadUrl,
+  };
+}
+
+function mergePhaseBuildArtifacts(
+  artifacts: PhaseBuildArtifact[],
+): PhaseBuildArtifact[] {
+  const byId = new Map<string, PhaseBuildArtifact>();
+  for (const artifact of artifacts) {
+    byId.set(artifact.artifactId, artifact);
+  }
+  return Array.from(byId.values());
+}
+
+function samePhaseBuildArtifactIds(
+  left: PhaseBuildArtifact[],
+  right: PhaseBuildArtifact[],
+): boolean {
+  if (left.length !== right.length) return false;
+  return left.every(
+    (artifact, index) => artifact.artifactId === right[index]?.artifactId,
+  );
+}
+
 export function MovesPhaseStandaloneClient({
   initialPhaseCaptureValues,
   initialPhaseCaptureRevision,
@@ -674,6 +720,9 @@ export function MovesPhaseStandaloneClient({
   const [avaDraftSaveErrors, setAvaDraftSaveErrors] = useState<
     Record<string, string>
   >({});
+  const [clientLoadedPhaseBuildArtifacts, setClientLoadedPhaseBuildArtifacts] =
+    useState<PhaseBuildArtifact[]>([]);
+  const clientLoadedPhaseBuildArtifactsRef = useRef<PhaseBuildArtifact[]>([]);
   const avaThreadRef = useRef<AvaChatMessage[]>([]);
   avaThreadRef.current = avaThread;
   // P3 recommendations may be highlighted, but no option is selected until the
@@ -783,6 +832,61 @@ export function MovesPhaseStandaloneClient({
       displayMoveName,
     ],
   );
+  const visiblePhaseBuildArtifacts = useMemo(
+    () =>
+      mergePhaseBuildArtifacts([
+        ...phaseBuildArtifacts,
+        ...clientLoadedPhaseBuildArtifacts,
+      ]),
+    [clientLoadedPhaseBuildArtifacts, phaseBuildArtifacts],
+  );
+
+  useEffect(() => {
+    let cancelled = false;
+    async function loadGeneratedArtifacts() {
+      try {
+        const response = await fetch(
+          `/api/v1/programs/${encodeURIComponent(move.id)}/artifacts`,
+          { credentials: "include" },
+        );
+        if (!response.ok) return;
+        const payload = (await response.json().catch(() => ({}))) as {
+          artifacts?: MoveArtifactApiRow[];
+        };
+        if (cancelled || !Array.isArray(payload.artifacts)) return;
+        const nextArtifacts = payload.artifacts
+          .filter(
+            (artifact) =>
+              artifact.family === "generated_deliverable" &&
+              artifact.lifecycleState === "current" &&
+              artifact.phase === phase.phase,
+          )
+          .map(mapArtifactApiRowToBuildArtifact);
+        if (
+          samePhaseBuildArtifactIds(
+            clientLoadedPhaseBuildArtifactsRef.current,
+            nextArtifacts,
+          )
+        ) {
+          return;
+        }
+        clientLoadedPhaseBuildArtifactsRef.current = nextArtifacts;
+        setClientLoadedPhaseBuildArtifacts(nextArtifacts);
+      } catch {
+        if (
+          !cancelled &&
+          clientLoadedPhaseBuildArtifactsRef.current.length > 0
+        ) {
+          clientLoadedPhaseBuildArtifactsRef.current = [];
+          setClientLoadedPhaseBuildArtifacts([]);
+        }
+      }
+    }
+    void loadGeneratedArtifacts();
+    return () => {
+      cancelled = true;
+    };
+  }, [move.id, phase.phase]);
   const p3OptionSet = useMemo(
     () =>
       assembleP3SolutionOptions({
@@ -2396,7 +2500,7 @@ export function MovesPhaseStandaloneClient({
                           nextOpenPhaseContract={nextOpenPhaseContract}
                           p3OptionSet={p3OptionSet}
                           phase={phase}
-                          phaseBuildArtifacts={phaseBuildArtifacts}
+                          phaseBuildArtifacts={visiblePhaseBuildArtifacts}
                           phaseCaptureBlocker={phaseCaptureBlocker}
                           phaseCaptureCompleteCount={phaseCaptureCompleteCount}
                           persistedPhaseCaptureValues={
@@ -2457,7 +2561,7 @@ export function MovesPhaseStandaloneClient({
                           nextOpenPhaseContract={nextOpenPhaseContract}
                           p3OptionSet={p3OptionSet}
                           phase={phase}
-                          phaseBuildArtifacts={phaseBuildArtifacts}
+                          phaseBuildArtifacts={visiblePhaseBuildArtifacts}
                           phaseCaptureBlocker={phaseCaptureBlocker}
                           phaseCaptureCompleteCount={phaseCaptureCompleteCount}
                           persistedPhaseCaptureValues={

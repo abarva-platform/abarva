@@ -312,6 +312,19 @@ describe("MovesPhaseStandaloneClient", () => {
     createdAt: string;
     downloadUrl: string;
   }>;
+  let generatedDeliverableArtifacts: Array<{
+    artifactId: string;
+    artifactType: string;
+    family: string;
+    title: string;
+    phase: number;
+    version: number;
+    status: string;
+    lifecycleState: string;
+    qualityScore: number | null;
+    createdAt: string;
+    downloadUrl: string;
+  }>;
   let structuredFamilyIngests: Array<{
     family: string;
     fileName: string;
@@ -334,6 +347,7 @@ describe("MovesPhaseStandaloneClient", () => {
     window.scrollTo = jest.fn();
     window.open = jest.fn(() => ({}) as Window);
     uploadedEvidenceArtifacts = [];
+    generatedDeliverableArtifacts = [];
     currentStateFamilyIngests = [];
     structuredFamilyIngests = [];
     structuredIngestResponse = { parsedRows: 10, committedRows: 10 };
@@ -416,6 +430,35 @@ describe("MovesPhaseStandaloneClient", () => {
             ok: true,
             status: 200,
             json: async () => ({ artifacts: uploadedEvidenceArtifacts }),
+          } as Response;
+        }
+
+        if (url.includes("/api/v1/programs/") && url.endsWith("/artifacts")) {
+          return {
+            ok: true,
+            status: 200,
+            json: async () => ({
+              ok: true,
+              count:
+                generatedDeliverableArtifacts.length +
+                uploadedEvidenceArtifacts.length,
+              artifacts: [
+                ...generatedDeliverableArtifacts,
+                ...uploadedEvidenceArtifacts.map((artifact) => ({
+                  ...artifact,
+                  artifactType: "uploaded_evidence",
+                  family: "uploaded_evidence",
+                  title: artifact.title || artifact.fileName,
+                  fileFormat: "csv",
+                  fileName: artifact.fileName,
+                  unsupportedClaims: 0,
+                  generatedBy: null,
+                  fileSize: null,
+                  stored: "azure_blob",
+                  openItems: [],
+                })),
+              ],
+            }),
           } as Response;
         }
 
@@ -2862,6 +2905,85 @@ describe("MovesPhaseStandaloneClient", () => {
     const decisionSurface = screen.getByTestId("mxw-decision-surface");
     expect(decisionSurface).toHaveTextContent("2 generated artifacts");
     expect(decisionSurface).not.toHaveTextContent("0 evidence items");
+  });
+
+  it("hydrates the gate panel from current artifact vault rows when server preload is empty", async () => {
+    generatedDeliverableArtifacts = [
+      {
+        artifactId: "artifact-1",
+        artifactType: "handoff_package",
+        family: "generated_deliverable",
+        title: "Execution Handoff Package",
+        phase: 5,
+        version: 1,
+        status: "board_ready",
+        lifecycleState: "current",
+        qualityScore: 100,
+        createdAt: "2026-09-11T00:00:00.000Z",
+        downloadUrl: "/api/v1/artifacts/artifact-1",
+      },
+      {
+        artifactId: "artifact-2",
+        artifactType: "value_measurement_contract",
+        family: "generated_deliverable",
+        title: "Value Measurement Contract",
+        phase: 5,
+        version: 1,
+        status: "board_ready",
+        lifecycleState: "current",
+        qualityScore: 100,
+        createdAt: "2026-09-11T00:00:00.000Z",
+        downloadUrl: "/api/v1/artifacts/artifact-2",
+      },
+      {
+        artifactId: "artifact-3",
+        artifactType: "business_case",
+        family: "generated_deliverable",
+        title: "Prior Phase Business Case",
+        phase: 4,
+        version: 1,
+        status: "board_ready",
+        lifecycleState: "current",
+        qualityScore: 100,
+        createdAt: "2026-09-11T00:00:00.000Z",
+        downloadUrl: "/api/v1/artifacts/artifact-3",
+      },
+    ];
+
+    render(
+      <MovesPhaseStandaloneClient
+        carriesForwardContent={[]}
+        evidenceNeedPackets={[]}
+        initialSubstepKey="approve"
+        move={makeMove({
+          currentPhase: 5,
+          gateCriteria: [
+            {
+              id: "g1",
+              label: "Execution package signed off",
+              completed: true,
+              severity: "hard",
+              verified: true,
+            },
+          ],
+          linkedEvidence: [],
+          phaseLabel: "P5 Prepare to Execute",
+          terminalComplete: true,
+        })}
+        phaseBuildArtifacts={[]}
+        phaseNum={5}
+        phaseTallies={[...phaseTallies]}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId("mxw-decision-surface")).toHaveTextContent(
+        "2 generated artifacts",
+      );
+    });
+    expect(screen.getByTestId("mxw-decision-surface")).not.toHaveTextContent(
+      "0 evidence items",
+    );
   });
 
   it("does not load the legacy facilitated session playbook on the Prepare tab", () => {
