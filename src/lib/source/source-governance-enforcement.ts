@@ -25,6 +25,10 @@ export interface SourceGovernanceVerdict {
 }
 
 const PASSING_ARTIFACT_STATUSES = new Set(["approved", "locked"]);
+const SIGNER_PROOF_REQUIRED_CRITERIA = new Set([
+  "GATE-SCOPE-02",
+  "GATE-SCOPE-04",
+]);
 
 const EVIDENCE_RANK: Record<SourceEventEvidence["currentState"], number> = {
   "Not Requested": 0,
@@ -106,6 +110,13 @@ export function evaluateCriterionMetReadiness(input: {
         detail: `${artifactCode} must be authored and approved or locked before this gate can be marked met.`,
       });
     }
+  }
+
+  if (SIGNER_PROOF_REQUIRED_CRITERIA.has(input.criterion.criterionId)) {
+    blockers.push({
+      code: "signer_proof_not_verified",
+      detail: `Verified ${input.criterion.criterionId === "GATE-SCOPE-04" ? "sponsor and EA" : "sponsor"} signer proof is required. An uploaded or approved scope memo alone cannot satisfy this criterion.`,
+    });
   }
 
   const requiredEvidence = requiredEvidenceForStage(input.criterion.fromStage);

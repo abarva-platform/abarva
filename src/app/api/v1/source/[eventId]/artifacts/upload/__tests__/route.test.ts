@@ -92,12 +92,15 @@ jest.mock('@/lib/data-plane/postgresCompat', () => ({
 const insertActivityLogMock = jest.fn(async (_args: unknown[]) => ({
   ok: true,
 }));
+const updateGateCriterionMock = jest.fn<Promise<{ ok: boolean }>, [unknown]>(
+  async () => ({ ok: true }),
+);
 jest.mock('@/lib/data-plane/write-adapters/sourceWriteAdapter', () => ({
   selectSourceWriteAdapter: () => ({
     insertActivityLog: (...args: unknown[]) =>
       insertActivityLogMock(args),
     updateArtifactBody: async () => ({ ok: true }),
-    updateGateCriterion: async () => ({ ok: true }),
+    updateGateCriterion: (args: unknown) => updateGateCriterionMock(args),
   }),
 }));
 
@@ -116,6 +119,7 @@ jest.mock('@/lib/source/artifact-registry', () => ({
   isAllowedSourceArtifactMimeType: (mime: string) =>
     [
       'text/csv',
+      'application/pdf',
       'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
     ].includes(mime),
   isWithinSourceArtifactSizeLimit: (size: number) =>
@@ -133,7 +137,7 @@ jest.mock('@/lib/source/artifact-registry', () => ({
 jest.mock('@/lib/source/artifact-registry/upload-contract', () => ({
   inferSourceArtifactFamily: () => 'pricing_workbook',
   sourceArtifactFormatFromMime: (mime: string) =>
-    mime.includes('spreadsheet') ? 'xlsx' : 'csv',
+    mime.includes('spreadsheet') ? 'xlsx' : mime === 'application/pdf' ? 'pdf' : 'csv',
 }));
 
 const mockParseSourceTextArtifact = jest.fn(
@@ -145,8 +149,11 @@ jest.mock('@/lib/source/artifact-registry/text-parser', () => ({
     mockParseSourceTextArtifact(input),
 }));
 
+const criteriaByArtifactCodeMock = jest.fn<{ criterionId: string }[], [string]>(
+  () => [],
+);
 jest.mock('@/lib/source/canonical-specs/gate-criteria', () => ({
-  criteriaByArtifactCode: () => [],
+  criteriaByArtifactCode: (code: string) => criteriaByArtifactCodeMock(code),
 }));
 
 jest.mock('@/lib/source/artifact-registry/upload-text-extraction', () => ({
@@ -209,6 +216,7 @@ function makeMultipartRequest(
 
 beforeEach(() => {
   jest.clearAllMocks();
+  maybeSingleMock.mockReset();
   requireTenancyMock.mockResolvedValue({
     clientId: 'c-1',
     userId: 'u-1',
@@ -308,6 +316,45 @@ describe('POST /api/v1/source/[eventId]/artifacts/upload', () => {
         text: 'Pricing: fixed transition fee $1.2M.',
       }),
     );
+  });
+
+  it('keeps sponsor-signature Scope gates open when a scope memo PDF is merely uploaded', async () => {
+    criteriaByArtifactCodeMock.mockReturnValueOnce([
+      { criterionId: 'GATE-SCOPE-02' },
+      { criterionId: 'GATE-SCOPE-04' },
+    ]);
+    maybeSingleMock.mockResolvedValueOnce({
+      data: { id: EVENT_ID, client_key: 'synthetic-client', current_stage_key: 'scope' },
+      error: null,
+    });
+    maybeSingleMock.mockResolvedValueOnce({
+      data: { id: 'scope-artifact', tier: 'outline', status: 'draft' },
+      error: null,
+    });
+    maybeSingleMock.mockResolvedValueOnce({
+      data: { id: 'sponsor-gate', state: 'pending' },
+      error: null,
+    });
+    maybeSingleMock.mockResolvedValueOnce({
+      data: { id: 'dual-signature-gate', state: 'pending' },
+      error: null,
+    });
+
+    const res = await POST(
+      makeMultipartRequest('scope-memo.pdf', 'application/pdf', 64, {
+        stageKey: 'scope',
+        artifactCode: 'd05_scope_memo',
+      }),
+      EVENT_PARAMS,
+    );
+
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as {
+      landing?: { satisfiedCriteria: string[] };
+    };
+    expect(registerSourceArtifactUploadMock).toHaveBeenCalledTimes(1);
+    expect(body.landing?.satisfiedCriteria).toEqual([]);
+    expect(updateGateCriterionMock).not.toHaveBeenCalled();
   });
 
   it('surfaces structured database parse errors instead of hiding them', async () => {
