@@ -29,7 +29,8 @@ CREATE TABLE IF NOT EXISTS source_scorecard_criteria (
   CONSTRAINT source_scorecard_criteria_approval_check CHECK (
     (approved_criterion_version IS NULL AND approved_by IS NULL AND approved_at IS NULL)
     OR
-    (approved_criterion_version = criterion_version AND weights_frozen
+    (approved_criterion_version IS NOT NULL
+      AND approved_criterion_version = criterion_version AND weights_frozen
       AND NULLIF(BTRIM(approved_by), '') IS NOT NULL AND approved_at IS NOT NULL)
   )
 );

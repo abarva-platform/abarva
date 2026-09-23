@@ -34,6 +34,7 @@ Release lane: `client-data-lane`. The proposed Layer 3 tables hold versioned cri
 
 - Red-first tests proved missing read implementation, missing current-row filters, and database decimal handling before their fixes.
 - Removing the score event-identity check made the opposite-event test fail; restoring it made the test pass.
+- A red-first schema check caught SQL three-valued logic accepting an approved criterion row with a null approved version; the authored constraint now requires a non-null approved version. This is a source-level check, not a database migration execution.
 - Focused Jest, scoped ESLint and TypeScript were run locally. No shared migration apply or data-plane readback was performed.
 
 ## Rollout Plan

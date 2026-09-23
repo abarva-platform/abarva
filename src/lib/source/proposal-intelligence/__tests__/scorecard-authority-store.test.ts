@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { getAzureReadFluentClient } from "@/lib/data-plane/postgresCompat";
 import { readSourceScorecardAuthorityRecords } from "../scorecard-authority-store";
 
@@ -206,5 +208,21 @@ describe("Source scorecard authority store", () => {
     await expect(
       readSourceScorecardAuthorityRecords("event-1", "tenant-1"),
     ).resolves.toEqual({ kind: "unavailable" });
+  });
+});
+
+describe("Source scorecard authority schema", () => {
+  it("requires a non-null approved version before criterion approval can pass", () => {
+    const sql = readFileSync(
+      join(
+        process.cwd(),
+        "supabase/migrations/20260923214500_source_scorecard_authority.sql",
+      ),
+      "utf8",
+    );
+    const approvalCheck = sql.match(
+      /CONSTRAINT source_scorecard_criteria_approval_check CHECK \(([\s\S]*?)\n  \)/,
+    )?.[1];
+    expect(approvalCheck).toContain("approved_criterion_version IS NOT NULL");
   });
 });
