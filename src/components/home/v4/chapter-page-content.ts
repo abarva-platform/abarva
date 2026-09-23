@@ -16,6 +16,7 @@ import {
   organizationFindings,
   interviewTables,
   interviewFindings,
+  crossFamilyFindings,
   infrastructureTables,
   infrastructureFindings,
   dataTables,
@@ -107,6 +108,7 @@ export interface EstateRecordTypes {
   vendors?: EstateRow[];
   infrastructure?: EstateRow[];
   data?: EstateRow[];
+  relationships?: EstateRow[];
 }
 
 export interface ChapterDepth {
@@ -227,8 +229,19 @@ export function chapterDepth(
   estate: EstateRecordTypes,
 ): ChapterDepth {
   const depth = depthForSources(CHAPTER_SOURCES[chapterId] ?? [], estate);
+  const crossFamily =
+    chapterId === "what_needs_attention" ? crossFamilyFindings(estate) : [];
   const extra = EXTRA_FINDING_SOURCES[chapterId];
-  if (!extra) return depth;
+  if (!extra) {
+    const seen = new Set(depth.findings.map((f) => f.claim));
+    return {
+      ...depth,
+      findings: [
+        ...depth.findings,
+        ...crossFamily.filter((f) => !seen.has(f.claim)),
+      ],
+    };
+  }
   const seen = new Set(depth.findings.map((f) => f.claim));
   return {
     ...depth,
@@ -237,6 +250,7 @@ export function chapterDepth(
       ...depthForSources(extra, estate).findings.filter(
         (f) => !seen.has(f.claim),
       ),
+      ...crossFamily.filter((f) => !seen.has(f.claim)),
     ],
   };
 }

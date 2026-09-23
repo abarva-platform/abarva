@@ -242,6 +242,227 @@ export function label(value: string): string {
   return value.replace(/_/g, " ").replace(/^\w/, (c) => c.toUpperCase());
 }
 
+type CrossFamilyEstate = {
+  applications?: EstateRow[];
+  vendors?: EstateRow[];
+  infrastructure?: EstateRow[];
+  data?: EstateRow[];
+  risks?: EstateRow[];
+  programs?: EstateRow[];
+  relationships?: EstateRow[];
+};
+
+function norm(value: string): string {
+  return value.trim().toLowerCase().replace(/\s+/g, " ");
+}
+
+function splitValues(value: string): string[] {
+  return value
+    .split(/[;,]/)
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
+
+function containsDeclaredName(value: string, name: string): boolean {
+  if (!value || !name) return false;
+  const wanted = norm(name);
+  return splitValues(value).some((item) => norm(item) === wanted);
+}
+
+function isHigh(value: string): boolean {
+  return /^(critical|high|tier\s*1|mission critical)$/i.test(value.trim());
+}
+
+function isTruthish(value: string): boolean {
+  return /^(true|yes|y|1)$/i.test(value.trim());
+}
+
+function riskProgramFinding(
+  risks: EstateRow[],
+  programs: EstateRow[],
+  relationships: EstateRow[],
+): Finding | null {
+  const riskByName = new Map(
+    risks
+      .filter((row) => isHigh(str(row, "severity")))
+      .map((row) => [norm(str(row, "riskOrControlName")), row]),
+  );
+  const programByName = new Map(
+    programs.map((row) => [norm(str(row, "programName")), row]),
+  );
+  const joined: Array<{ risk: EstateRow; program: EstateRow }> = [];
+
+  for (const edge of relationships) {
+    const verb = str(edge, "relationshipType");
+    if (!/impact|depend|remediat|mitigat|address|block/i.test(verb)) continue;
+    const from = norm(str(edge, "fromObjectName"));
+    const to = norm(str(edge, "toObjectName"));
+    const leftRisk = riskByName.get(from);
+    const rightRisk = riskByName.get(to);
+    const leftProgram = programByName.get(from);
+    const rightProgram = programByName.get(to);
+    const risk = leftRisk ?? rightRisk;
+    const program = leftProgram ?? rightProgram;
+    if (!risk || !program) continue;
+
+    const percent = num(program, "pctComplete");
+    const status = str(program, "status");
+    if (percent >= 80 || /complete|closed|done/i.test(status)) continue;
+    joined.push({ risk, program });
+  }
+
+  if (joined.length === 0) return null;
+  const first = joined[0];
+  const riskName = str(first.risk, "riskOrControlName");
+  const programName = str(first.program, "programName");
+  const percent = num(first.program, "pctComplete");
+  const progress =
+    percent > 0
+      ? ` and that program is ${percent}% complete`
+      : str(first.program, "phase")
+        ? ` and that program is in ${cellText(str(first.program, "phase"))}`
+        : "";
+
+  return {
+    kind: "exposure",
+    rated: "high",
+    claim:
+      joined.length === 1
+        ? `${riskName} is a high-severity risk tied to ${programName}${progress}.`
+        : `${joined.length} high-severity risks are tied to named remediation programs that are not complete.`,
+    owner:
+      str(first.risk, "controlOwner") ||
+      str(first.program, "businessSponsor") ||
+      "Chief Risk Officer",
+    because:
+      "This finding crosses the risk register, program register and declared relationship edges. It only fires where the relationship endpoint names match served rows exactly.",
+    trace: {
+      file: "07_risks_controls.csv + 08_programs_initiatives.csv + 12_relationships.csv",
+      grain: "one declared risk-program relationship",
+      rule: "high severity risk endpoint joins to a program endpoint whose status is not complete",
+    },
+    openRows: {
+      objectType: "relationship_edge",
+      filter: riskName,
+    },
+  };
+}
+
+function regulatedDataResilienceFinding(
+  dataRows: EstateRow[],
+  platforms: EstateRow[],
+): Finding | null {
+  const platformByName = new Map(
+    platforms.map((row) => [norm(str(row, "platformName")), row]),
+  );
+  const affected = dataRows.filter((row) => {
+    if (!isTruthish(str(row, "regulatedDataFlag"))) return false;
+    const platform =
+      platformByName.get(norm(str(row, "platformName"))) ??
+      platformByName.get(norm(str(row, "platformOrDatabase")));
+    if (!platform) return false;
+    return /backup|restore only|manual/i.test(str(platform, "drTier"));
+  });
+  if (affected.length === 0) return null;
+  const platformsNamed = new Set(
+    affected
+      .map((row) => str(row, "platformName") || str(row, "platformOrDatabase"))
+      .filter(Boolean)
+      .map(cellText),
+  );
+  const platformPhrase =
+    platformsNamed.size === 1
+      ? [...platformsNamed][0]
+      : `${platformsNamed.size} platforms`;
+  return {
+    kind: "exposure",
+    claim: `${affected.length} regulated data ${plural(affected.length, "asset sits", "assets sit")} on ${platformPhrase} whose recovery is declared as backup or manual restore.`,
+    owner: "Chief Data Officer",
+    because:
+      "This joins regulated-data flags from the data estate to named infrastructure recovery posture. It does not infer platform identity beyond exact served names.",
+    trace: {
+      file: "09_data_assets_integrations.csv + 06_infrastructure_platforms.csv",
+      grain: "one regulated data asset on a named platform",
+      rule: "regulatedDataFlag is true and platformName/platformOrDatabase matches a platform with backup/manual DR tier",
+    },
+    openRows: {
+      objectType: "data_asset_or_integration",
+      filter: "regulated",
+    },
+  };
+}
+
+function vendorCriticalSystemsFinding(
+  applications: EstateRow[],
+  vendors: EstateRow[],
+): Finding | null {
+  const exposedVendors = vendors.filter(
+    (row) =>
+      isHigh(str(row, "riskRating")) || isTruthish(str(row, "autoRenewFlag")),
+  );
+  if (exposedVendors.length === 0) return null;
+  const exposedApps = new Map<string, EstateRow>();
+
+  for (const contract of exposedVendors) {
+    const vendorName = str(contract, "vendorName");
+    const supportedSystems = str(contract, "supportedSystems");
+    for (const app of applications) {
+      if (!isHigh(str(app, "criticality"))) continue;
+      const systemName = str(app, "systemName");
+      const sameVendor =
+        vendorName && norm(str(app, "vendor")) === norm(vendorName);
+      const scopedSystem = containsDeclaredName(supportedSystems, systemName);
+      if (sameVendor || scopedSystem) {
+        exposedApps.set(systemName || `${vendorName}-${exposedApps.size}`, app);
+      }
+    }
+  }
+
+  if (exposedApps.size === 0) return null;
+  const firstVendor = exposedVendors[0];
+  return {
+    kind: "exposure",
+    rated: isHigh(str(firstVendor, "riskRating")) ? "high" : undefined,
+    claim: `${exposedApps.size} critical ${plural(exposedApps.size, "system is", "systems are")} tied to vendor contracts that are high-risk or auto-renewing.`,
+    owner: "Chief Procurement Officer",
+    because:
+      "This joins critical systems to contract rows through exact vendor names or declared supported-system lists. It is a sourcing exposure, not a legal conclusion.",
+    trace: {
+      file: "03_applications_systems.csv + 10_vendor_contracts.csv",
+      grain: "one critical application matched to one contract row",
+      rule: "application criticality is high/critical and vendor name or supportedSystems matches a high-risk or auto-renewing contract",
+    },
+    openRows: {
+      objectType: "vendor_contract",
+      filter: str(firstVendor, "vendorName") || "high",
+    },
+  };
+}
+
+export function crossFamilyFindings(estate: CrossFamilyEstate): Finding[] {
+  const findings: Finding[] = [];
+  const riskProgram = riskProgramFinding(
+    estate.risks ?? [],
+    estate.programs ?? [],
+    estate.relationships ?? [],
+  );
+  if (riskProgram) findings.push(riskProgram);
+
+  const regulatedResilience = regulatedDataResilienceFinding(
+    estate.data ?? [],
+    estate.infrastructure ?? [],
+  );
+  if (regulatedResilience) findings.push(regulatedResilience);
+
+  const vendorSystems = vendorCriticalSystemsFinding(
+    estate.applications ?? [],
+    estate.vendors ?? [],
+  );
+  if (vendorSystems) findings.push(vendorSystems);
+
+  return findings;
+}
+
 /* ------------------------------------------------------------------------------------------------
  * Applications — the estate page
  * ---------------------------------------------------------------------------------------------- */
