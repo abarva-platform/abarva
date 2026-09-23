@@ -74,6 +74,11 @@ Added:
 - `.github/workflows/quality-cli-invocation-guard.yml` — runs that sweep on any change under
   `scripts/quality/**`, `scripts/release-control/**` or to the shared helper.
 - `package.json`: `check:cli-invocation-guard`.
+- `docs/architecture/ci-gate-registry.json`: the new script classified `pr-gate`. This was not
+  foresight — the first CI run of this PR failed on `audit:ci-gate-registry`, which refuses any
+  newly added `check:` script that has not been classified. A gate nobody runs looks exactly like
+  a tool nobody needs to run, and that registry is where the difference is written down; it did
+  its job on this PR.
 
 Two gates in the same directories were already correct (`check-named-suite-requiredness.mjs`
 and `enum-reachability.mjs`, which resolve both sides). They are unchanged and are swept, which
