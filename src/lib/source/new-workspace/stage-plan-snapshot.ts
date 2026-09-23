@@ -180,7 +180,7 @@ export function buildSourceEventStagePlanSnapshot(
     policyVersion: SOURCE_GATE_POLICY_VERSION,
     stages: journey.stages.map((stage, index) => ({ ...stage, sequence: index + 1 })),
     gateCriteria,
-  };
+  } as const;
 
   const payload = {
     ...plan,
