@@ -79,22 +79,29 @@ const TENANT_KEY_SOURCE_RE =
 const TENANT_READ_PATH_RE =
   /(?:read|query|queries|adapter|route|repository|lookup|search|fetch)/i;
 
-function sourceWithoutNonExecutableSignalText(source, fileName) {
+function scriptKindFor(fileName) {
   const lowerFileName = fileName.toLowerCase();
-  const scriptKind = lowerFileName.endsWith(".tsx")
+  return lowerFileName.endsWith(".tsx")
     ? ts.ScriptKind.TSX
     : lowerFileName.endsWith(".jsx")
       ? ts.ScriptKind.JSX
       : /\.[cm]?ts$/.test(lowerFileName)
         ? ts.ScriptKind.TS
         : ts.ScriptKind.JS;
-  const sourceFile = ts.createSourceFile(
+}
+
+function parseScript(source, fileName) {
+  return ts.createSourceFile(
     fileName,
     source,
     ts.ScriptTarget.Latest,
     true,
-    scriptKind,
+    scriptKindFor(fileName),
   );
+}
+
+function sourceWithoutNonExecutableSignalText(source, fileName) {
+  const sourceFile = parseScript(source, fileName);
   const spans = [];
 
   const addCommentsAt = (position) => {
@@ -590,53 +597,277 @@ function readWorkflows(root) {
 }
 
 /**
- * Jest invocations inside a script file, as narrowly as they can be identified.
- * Three shapes, and nothing else:
+ * Child-process functions. A runner token inside one of these calls is being
+ * executed; the same token anywhere else is being talked about.
+ */
+const SPAWN_FUNCTIONS = new Set([
+  "exec",
+  "execFile",
+  "execFileSync",
+  "execSync",
+  "fork",
+  "spawn",
+  "spawnSync",
+]);
+
+/**
+ * Object properties that hold a command for something else to spawn. The
+ * predeploy gate declares its checks as `{ key, command }` data and maps a
+ * spawn over them, so its invocations are never written at a call site; a rule
+ * that read only call arguments would lose every suite that gate runs.
+ */
+const COMMAND_PROPERTIES = new Set(["args", "argv", "cmd", "command", "commandLine"]);
+
+/** The runner as an element of an argument array — `["jest", "src/…"]`. */
+const RUNNER_ELEMENT_RE = /(?:^|[\s"'`,])jest(?:$|[\s"'`,])/;
+/** The runner at the head of a whole command line — `npx jest src/…`. */
+const RUNNER_COMMAND_LINE_RE = /^(?:npx\s+)?jest\s+\S/;
+/** The runner with an argument, wherever it sits — used for mentions only. */
+const RUNNER_ANYWHERE_RE = /(?:^|[\s"'`([{,])(?:npx\s+)?jest\s+\S/;
+/** The runner in command position on a shell line. */
+const RUNNER_SHELL_LINE_RE =
+  /(?:^|[;&|(]|\bif\s|\bthen\s|\belif\s|\bdo\s|&&|\|\|)\s*(?:npx\s+)?jest\s+\S/;
+/** A `src/` path, in the form the census credits coverage from. */
+const NAMES_A_SOURCE_PATH_RE = /(?:^|[\s"'`,[(])src\//;
+
+/** The callee's own name, whether it is bare or a property access. */
+function calleeName(expression) {
+  if (ts.isPropertyAccessExpression(expression)) return expression.name.text;
+  if (ts.isIdentifier(expression)) return expression.text;
+  return null;
+}
+
+function isSpawnCall(node) {
+  if (!ts.isCallExpression(node)) return false;
+  const name = calleeName(node.expression);
+  return name !== null && SPAWN_FUNCTIONS.has(name);
+}
+
+/**
+ * Nodes a command can be wrapped in without ceasing to be that command: array
+ * nesting, a spread, parentheses, a type assertion, a ternary, a concatenation
+ * or a template. Anything else ends the walk.
+ */
+function isTransparentWrapper(node) {
+  return (
+    ts.isArrayLiteralExpression(node) ||
+    ts.isSpreadElement(node) ||
+    ts.isParenthesizedExpression(node) ||
+    ts.isAsExpression(node) ||
+    ts.isSatisfiesExpression(node) ||
+    ts.isConditionalExpression(node) ||
+    ts.isBinaryExpression(node) ||
+    ts.isTemplateExpression(node) ||
+    ts.isTemplateSpan(node)
+  );
+}
+
+function propertyKeyName(name) {
+  if (ts.isIdentifier(name) || ts.isStringLiteralLike(name)) return name.text;
+  return null;
+}
+
+/**
+ * Whether this node is where a command gets handed to the operating system.
+ * Three accepting positions, and the walk stops at the first node that is
+ * neither one of them nor a transparent wrapper — so a command quoted in an
+ * assertion, stored in a `reason` field, or written in a comment reaches none
+ * of them.
+ */
+function isCommandPosition(node, spawnArgumentNames) {
+  let current = node;
+  for (let parent = current.parent; parent; parent = parent.parent) {
+    if (ts.isCallExpression(parent)) {
+      return parent.arguments.includes(current) && isSpawnCall(parent);
+    }
+    if (ts.isPropertyAssignment(parent)) {
+      if (parent.initializer !== current) return false;
+      const key = propertyKeyName(parent.name);
+      return key !== null && COMMAND_PROPERTIES.has(key);
+    }
+    if (ts.isVariableDeclaration(parent)) {
+      if (parent.initializer !== current) return false;
+      return (
+        ts.isIdentifier(parent.name) && spawnArgumentNames.has(parent.name.text)
+      );
+    }
+    if (!isTransparentWrapper(parent)) return false;
+    current = parent;
+  }
+  return false;
+}
+
+/** Every comment in a parsed file, as text. */
+function commentTexts(source, sourceFile) {
+  const seen = new Set();
+  const texts = [];
+  const add = (ranges) => {
+    for (const range of ranges ?? []) {
+      const key = `${range.pos}:${range.end}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      texts.push(source.slice(range.pos, range.end));
+    }
+  };
+  const visit = (node) => {
+    add(ts.getLeadingCommentRanges(source, node.getFullStart()));
+    add(ts.getTrailingCommentRanges(source, node.getEnd()));
+    ts.forEachChild(node, visit);
+  };
+  visit(sourceFile);
+  return texts;
+}
+
+/**
+ * Jest invocations inside a script file, separated from Jest invocations the
+ * file merely talks about.
  *
- *   1. a bracketed argument list carrying `jest` as an element —
- *      `spawnSync("npx", ["jest", "src/…"])`, and the ECL gate's `command:` arrays;
- *   2. a quoted string that *begins* with the runner and has an argument —
- *      `execSync("npx jest src/…")`;
- *   3. in a shell script only, a line where the runner sits in command position.
+ * T-727. This read source TEXT, and text cannot tell a command being run from
+ * a command being quoted. One runner invocation written as data in a test
+ * fixture was counted as real, could not be resolved to a directory, landed in
+ * `indeterminateInvocations` — and twenty-five behaviour suites that assert
+ * that count is zero went red on a census they do not own, with a message
+ * naming none of them.
  *
- * Each exclusion is there because something in this repository would otherwise
- * be misread. A bare line scan over JavaScript reports `jest.status !== 0` and
- * `// jest reads a bare pattern as a regex` as invocations. An unanchored string
- * match credits `"Pass: \`npx jest src/…\`"` — a release-record snippet a
- * verifier asserts on — as a run of that suite, which would *under*-state the
- * gap. And a literal of `'npx jest'` with no argument, which one audit compares
- * workflow lines against, cannot run anything.
+ * The over-crediting direction was already live and masked.
+ * `check-integration-root-quarantine.mjs` explains in a JSDoc paragraph that
+ * naming a directory selects root files sharing its prefix, and spells an
+ * invocation out to say so. That sentence was read as a run of that suite. It
+ * did no damage only because a workflow line genuinely names the same
+ * directory — which is the state in which a false credit is never found.
+ *
+ * So the cue is POSITION, not text. In JavaScript and TypeScript the file is
+ * parsed and a runner token counts only from `isCommandPosition`; in a shell
+ * script, which has no tree to walk, it counts only from command position on a
+ * line, and a `#` comment is a comment.
+ *
+ * MENTIONS ARE RETURNED, NOT DROPPED. A position rule that wrongly demoted a
+ * real invocation would take a suite out of the covered set and print the same
+ * shape as before, so every declined match that names a `src/` path is carried
+ * out of here and reported by the census. Silence would make the reverse
+ * failure — the one that stops a suite being counted at all — invisible.
  *
  * Extraction collapses whitespace but preserves backslashes. Path matching is
  * normalized later; regex ignore arguments are read from this raw command text.
  */
-function jestInvocationsInScript(source, scriptPath) {
-  const invocations = [];
+export function jestInvocationsInScript(source, scriptPath) {
+  if (scriptPath.endsWith(".sh")) return shellInvocations(source);
 
-  for (const match of source.matchAll(/\[([^[\]]*)\]/g)) {
-    const inner = collapseWhitespace(match[1]);
-    if (/(?:^|[\s"'`,])jest(?:$|[\s"'`,])/.test(inner)) invocations.push(inner);
-  }
+  const sourceFile = parseScript(source, scriptPath);
 
-  for (const match of source.matchAll(/(["'`])([^"'`\n]*)\1/g)) {
-    const literal = collapseWhitespace(match[2]);
-    if (/^(?:npx\s+)?jest\s+\S/.test(literal)) invocations.push(literal);
-  }
-
-  if (scriptPath.endsWith(".sh")) {
-    for (const line of source.split(/\r?\n/)) {
-      const normalized = collapseWhitespace(line);
-      if (
-        /(?:^|[;&|(]|\bif\s|\bthen\s|\belif\s|\bdo\s|&&|\|\|)\s*(?:npx\s+)?jest\s+\S/.test(
-          normalized,
-        )
-      ) {
-        invocations.push(normalized);
+  // Pass one: names handed straight to a spawn, so that an argument array
+  // bound to a `const` first is still recognised as one.
+  const spawnArgumentNames = new Set();
+  const collectSpawnArguments = (node) => {
+    if (isSpawnCall(node)) {
+      for (const argument of node.arguments) {
+        if (ts.isIdentifier(argument)) spawnArgumentNames.add(argument.text);
       }
+    }
+    ts.forEachChild(node, collectSpawnArguments);
+  };
+  collectSpawnArguments(sourceFile);
+
+  // Pass two: every node whose text carries the runner, with its span, so that
+  // an outer array wrapping a matching inner one can be dropped.
+  const candidates = [];
+  const collectCandidates = (node) => {
+    if (ts.isArrayLiteralExpression(node)) {
+      const inner = collapseWhitespace(
+        node.elements.map((element) => element.getText(sourceFile)).join(", "),
+      );
+      if (RUNNER_ELEMENT_RE.test(inner)) {
+        candidates.push({
+          node,
+          text: inner,
+          start: node.getStart(sourceFile),
+          end: node.getEnd(),
+          array: true,
+        });
+      }
+    } else if (ts.isStringLiteralLike(node)) {
+      const literal = collapseWhitespace(node.text);
+      if (RUNNER_COMMAND_LINE_RE.test(literal)) {
+        candidates.push({
+          node,
+          text: literal,
+          start: node.getStart(sourceFile),
+          end: node.getEnd(),
+          array: false,
+        });
+      }
+    } else if (ts.isTemplateExpression(node)) {
+      const raw = node.getText(sourceFile);
+      const literal = collapseWhitespace(raw.replace(/^`/, "").replace(/`$/, ""));
+      if (RUNNER_COMMAND_LINE_RE.test(literal)) {
+        candidates.push({
+          node,
+          text: literal,
+          start: node.getStart(sourceFile),
+          end: node.getEnd(),
+          array: false,
+        });
+      }
+    }
+    ts.forEachChild(node, collectCandidates);
+  };
+  collectCandidates(sourceFile);
+
+  // An array of `{ command: [...] }` objects matches on the runner inside its
+  // own element, so the outer array would be counted as a second invocation of
+  // the same suites. Only the innermost matching array is read — the reading
+  // the previous text scan arrived at by accident, its bracket class being
+  // unable to span a nested pair.
+  const innermost = candidates.filter(
+    (candidate) =>
+      !candidate.array ||
+      !candidates.some(
+        (other) =>
+          other !== candidate &&
+          other.array &&
+          other.start >= candidate.start &&
+          other.end <= candidate.end,
+      ),
+  );
+
+  const commands = [];
+  const mentions = [];
+  for (const candidate of innermost) {
+    if (isCommandPosition(candidate.node, spawnArgumentNames)) {
+      commands.push(candidate.text);
+    } else if (NAMES_A_SOURCE_PATH_RE.test(candidate.text)) {
+      mentions.push(candidate.text);
     }
   }
 
-  return [...new Set(invocations)];
+  for (const comment of commentTexts(source, sourceFile)) {
+    const text = collapseWhitespace(comment);
+    if (!RUNNER_ANYWHERE_RE.test(text)) continue;
+    if (!NAMES_A_SOURCE_PATH_RE.test(text)) continue;
+    mentions.push(text);
+  }
+
+  return { commands: [...new Set(commands)], mentions: [...new Set(mentions)] };
+}
+
+/**
+ * A shell script has no tree, so position is the line: the runner has to sit
+ * where the shell would execute it. A `#` comment is a comment — one of them
+ * carrying `&& jest src/…` matched the command-position rule through the `&&`.
+ */
+function shellInvocations(source) {
+  const commands = [];
+  const mentions = [];
+  for (const line of source.split(/\r?\n/)) {
+    const normalized = collapseWhitespace(line);
+    if (!RUNNER_SHELL_LINE_RE.test(normalized)) continue;
+    if (normalized.startsWith("#")) {
+      if (NAMES_A_SOURCE_PATH_RE.test(normalized)) mentions.push(normalized);
+      continue;
+    }
+    commands.push(normalized);
+  }
+  return { commands: [...new Set(commands)], mentions: [...new Set(mentions)] };
 }
 
 function jsonPathArguments(root, command) {
@@ -668,6 +899,7 @@ function jsonPathArguments(root, command) {
 export function collectReachableCommands(root, packageScripts) {
   const reachable = [];
   const indeterminate = [];
+  const mentioned = [];
   const unresolvedIgnoreArguments = [];
   const scriptsSeen = new Set();
   const ignoreCache = new Map();
@@ -725,7 +957,11 @@ export function collectReachableCommands(root, packageScripts) {
         scriptsSeen.add(key);
 
         const source = readFileSync(absolute, "utf8");
-        for (const rawInvocation of jestInvocationsInScript(source, scriptPath)) {
+        const scanned = jestInvocationsInScript(source, scriptPath);
+        for (const text of scanned.mentions) {
+          mentioned.push({ source: scriptPath, mention: normalize(text) });
+        }
+        for (const rawInvocation of scanned.commands) {
           const invocation = normalize(rawInvocation);
           const namesAPath = /(?:^|[\s"'`,[(])src\//.test(invocation);
           if (namesAPath) {
@@ -768,6 +1004,13 @@ export function collectReachableCommands(root, packageScripts) {
 
   return {
     reachable,
+    mentioned: [
+      ...new Map(
+        mentioned.map((entry) => [`${entry.source}::${entry.mention}`, entry]),
+      ).values(),
+    ].sort((a, b) =>
+      `${a.source}${a.mention}`.localeCompare(`${b.source}${b.mention}`),
+    ),
     unresolvedIgnoreArguments: [
       ...new Map(
         unresolvedIgnoreArguments.map((entry) => [
@@ -854,7 +1097,7 @@ export function buildCensus(root, { includeUnrunPaths = false } = {}) {
   const packageScripts =
     JSON.parse(readFileSync(path.join(root, "package.json"), "utf8")).scripts ??
     {};
-  const { reachable, indeterminate, unresolvedIgnoreArguments } =
+  const { reachable, indeterminate, mentioned, unresolvedIgnoreArguments } =
     collectReachableCommands(root, packageScripts);
   const testFiles = collectTestFiles(root);
   const catalogPaths = controlPaths(root);
@@ -1075,6 +1318,11 @@ export function buildCensus(root, { includeUnrunPaths = false } = {}) {
         governedRiskRanking.length,
     },
     indeterminateInvocations: indeterminate,
+    // Every runner invocation a workflow-reachable script TALKS ABOUT without
+    // running: a comment, an assertion, a data field. Published because the
+    // position rule that separates these could demote a real invocation, and a
+    // demotion with nothing to read would look exactly like nothing happening.
+    mentionedInvocations: mentioned,
     unresolvedIgnoreArguments,
     partiallyCoveredDirectories: partialDirectories.map(
       ({
@@ -1121,6 +1369,26 @@ function summarize(census) {
     );
     for (const entry of census.indeterminateInvocations) {
       lines.push(`    ${entry.source}: ${entry.invocation}`);
+    }
+  }
+
+  // Printed unconditionally when non-empty, and named as declined rather than
+  // as a problem. It is the only place a wrongly demoted invocation would show
+  // up: the coverage numbers above would simply be smaller and say nothing.
+  const mentions = census.mentionedInvocations ?? [];
+  if (mentions.length > 0) {
+    lines.push(
+      `  quoted, not run:                ${mentions.length} — named in a comment, assertion or data field; credited to nobody`,
+    );
+    for (const entry of mentions) {
+      // A quoted invocation usually sits in a paragraph explaining why the
+      // real one is shaped as it is, so the full text is in the JSON and the
+      // summary gets the first clause of it.
+      const shown =
+        entry.mention.length > 120
+          ? `${entry.mention.slice(0, 117)}...`
+          : entry.mention;
+      lines.push(`    ${entry.source}: ${shown}`);
     }
   }
   if (c.unresolvedIgnoreArguments > 0) {
