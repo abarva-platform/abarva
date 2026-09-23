@@ -2833,5 +2833,263 @@ function preclaimFiles(file, item, identity, files, extra = []) {
   fs.rmSync(dir, { recursive: true, force: true });
 }
 
+// ---------------------------------------------------------------------------
+// A DISCLAIMER IS NOT A CLAIM — a negation that governs the id FROM THE LEFT
+// (item T-722).
+//
+// The three vetoes above read what sits AFTER the id, the two characters in
+// front of it, or a third-party subject. `deniesClaim` is the only one that
+// reads negation, and it reads `governedTail(line.slice(afterIndex))` — only
+// what sits AFTER the id. So a negation placed in FRONT of it is structurally
+// unreachable, whatever the vocabulary: widening `CLAIM_STATE_NEGATOR` alone
+// moves none of the six cases below and that is asserted here, not assumed.
+//
+// Found by execution, and the reproduction was live at the moment it was
+// written: `--preclaim --item 26` refused item 26's GENUINE owner (claim
+// 2026-09-23T04:04:23Z, PR #8318, merged `a292fc656`) because a sibling run's
+// line says in passing that it touches none of item 26's files. A run that
+// went out of its way to declare non-overlap was recorded as having taken the
+// item, and the item's real owner could not write its own release line — which
+// recreates the merged-with-no-register-line gap that T-446, T-452, T-458 and
+// T-470 each closed, arriving this time through a control rather than through
+// forgetfulness.
+//
+// THE REACH IS 3 WORDS AND THE BOUND IS MEASURED, not chosen. Over the real
+// register, the left veto frees 1 occurrence at reach 1, 9 at reach 2, 10 at
+// reach 3 and 14 at reach 4 — and reach 4 is where it first frees an id a line
+// GENUINELY claims: register line 455 disambiguates `NOT the closed
+// shared-shaper item 41` while claiming the other item 41 in the same
+// sentence. A false PASS is the worse direction, so the bound stops at 3 and
+// is pinned from both sides below.
+//
+// THE VOCABULARY IS `not` AND `none`, COUNTED off the register rather than
+// brainstormed. Adding `no` frees an eleventh occurrence and it is the wrong
+// one: register line 220 reads `run by no npm script and no workflow (item
+// 26's fifth instance)`, where the negation is about the workflow and not
+// about the item. `never`, `neither` and `nor` move nothing at all, and an
+// alternative no test on this register can constrain is one a mutation deletes
+// and survives — T-709's `no longer claimed` lesson.
+//
+// `ITEM_SUBJECT` is untouched, as in T-709, T-710, T-714 and T-716, so the
+// movement on the real register is attributable to this veto alone.
+// ---------------------------------------------------------------------------
+{
+  // REAL POSITIVES, transcribed from the register. The first is the line that
+  // refused item 26's owner; the rest are every other occurrence the measured
+  // rule frees, each one a genuine hand-back.
+  const LIVE_2022 =
+    "item C-502 claimed on branch `exec/c-502-prose-compaction-loss` — a control whose " +
+    "truth is the declared list rather than my change should do. I still touch NONE of " +
+    "item 26s files. Stamp is a literal clock read at the instant of writing";
+  check(
+    "REAL POSITIVE — the line that refused item 26's owner does not hold item 26",
+    itemSubjects(LIVE_2022).some((id) => id.base === "26") === false,
+    JSON.stringify(itemSubjects(LIVE_2022)),
+  );
+  check(
+    "THE SAME LINE STILL HOLDS WHAT IT ACTUALLY CLAIMED — C-502",
+    itemSubjects(LIVE_2022).some((id) => id.base === "C-502") === true,
+    JSON.stringify(itemSubjects(LIVE_2022)),
+  );
+
+  // Register line 131. A standing instruction, not a claim.
+  check(
+    "REAL POSITIVE — `do not reopen item 40` does not hold item 40",
+    itemSubjects(
+      "no code files claimed unless a reproducible load-bearing mechanism is proven; " +
+        "do not reopen item 40",
+    ).some((id) => id.base === "40") === false,
+  );
+
+  // Register line 160, and register line 181 in the same shape.
+  const LIVE_160 =
+    "docs/releases/records/2026-09-18-release-record-layer-impact-lane-gate.md — " +
+    "NOT taking item 50 (release-record template `## Known Gaps`): re-verified on `main`";
+  check(
+    "REAL POSITIVE — `NOT taking item 50` does not hold item 50",
+    itemSubjects(LIVE_160).some((id) => id.base === "50") === false,
+    JSON.stringify(itemSubjects(LIVE_160)),
+  );
+
+  // Register line 421. The id is the object of a sweep's reach.
+  check(
+    "REAL POSITIVE — `it would not catch item 126` does not hold item 126",
+    itemSubjects(
+      "the sweep cannot see a vocabulary held in a TS const — so it would not catch " +
+        "item 126 in its repaired form",
+    ).some((id) => id.base === "126") === false,
+  );
+
+  // Register line 1332. Two disclaimers in one sentence, one of them adjacent.
+  const LIVE_1332 =
+    "a literal `date -u` read at the instant of writing per T-457, nothing carried " +
+    "forward. NOT item 25 and NOT blocked behind items 38/39: I am not writing a " +
+    "rendering test for either unreachable surface";
+  check(
+    "REAL POSITIVE — an adjacent `NOT item 25` does not hold item 25",
+    itemSubjects(LIVE_1332).some((id) => id.base === "25") === false,
+    JSON.stringify(itemSubjects(LIVE_1332)),
+  );
+  check(
+    "REAL POSITIVE — `NOT blocked behind items 38` does not hold item 38",
+    itemSubjects(LIVE_1332).some((id) => id.base === "38") === false,
+    JSON.stringify(itemSubjects(LIVE_1332)),
+  );
+
+  // THE BOUND, PINNED FROM BOTH SIDES. Three words reach; four do not. The
+  // second case is register line 455's real shape, which is why the bound
+  // stops here: it disambiguates one item 41 while claiming the other.
+  check(
+    "BOUND — a negator three words in front of the id reaches it",
+    itemSubjects("I will not be taking item T-860 this run").some(
+      (id) => id.base === "T-860",
+    ) === false,
+  );
+  check(
+    "BOUND — four words does NOT reach, so the id goes on being held",
+    itemSubjects("this is not the closed shared-shaper item T-861").some(
+      (id) => id.base === "T-861",
+    ) === true,
+  );
+
+  // A CLAUSE BREAK STOPS IT, exactly as it stops `governedTail`. Every case
+  // here carries a negator the vocabulary DOES know, because the first pair
+  // written for this rule used `no` — which the vocabulary deliberately
+  // excludes — so neither could reach the branch it was named for, and both
+  // survived every mutation of it. A fixture whose negator is out of
+  // vocabulary cannot fail a clause-break rule.
+  check(
+    "CLAUSE BREAK — a negation across a colon does not reach the id",
+    itemSubjects("NOT a decision: item 16's re-verification records the drop").some(
+      (id) => id.base === "16",
+    ) === true,
+  );
+  check(
+    "CLAUSE BREAK — a negation across a full stop does not reach the id",
+    itemSubjects("the surface is not reachable. Item T-867 closed on `main`").some(
+      (id) => id.base === "T-867",
+    ) === true,
+  );
+  check(
+    "CLAUSE BREAK — a negation across an em dash does not reach the id",
+    itemSubjects("this is not the same defect — item T-868 merged at 16:18Z").some(
+      (id) => id.base === "T-868",
+    ) === true,
+  );
+  check(
+    "CLAUSE BREAK — a negation across a semicolon does not reach the id",
+    itemSubjects("the route is not reachable; item T-872 stays open").some(
+      (id) => id.base === "T-872",
+    ) === true,
+  );
+
+  // A BACKTICKED SPAN COSTS ONE SLOT, not its own length. Register line 160 is
+  // the shape: a quoted release-record path sits between the negator and the
+  // id, and the path carries a full stop of its own. Without the reduction
+  // that path reads as a clause break and the disclaimer never reaches the id.
+  check(
+    "a quoted path between the negator and the id costs one word, not three",
+    itemSubjects(
+      "NOT taking `docs/releases/records/2026-09-18-release-record.md` item T-869 this run",
+    ).some((id) => id.base === "T-869") === false,
+  );
+
+  // THE VOCABULARY IS EXACTLY `not` AND `none`. Register line 220 is the
+  // measured reason `no` is excluded: its negation is about the workflow.
+  check(
+    "VOCABULARY — `no` is not a disclaimer, so register line 220 goes on holding item 26",
+    itemSubjects("a suite run by no npm script and no workflow (item 26's fifth instance)").some(
+      (id) => id.base === "26",
+    ) === true,
+  );
+
+  // NEGATIVE CONTROLS. Every genuine claim form must go on holding.
+  check(
+    "NEGATIVE CONTROL — the helper-generated prefix still holds its item",
+    itemSubjects("item T-862 claimed on branch `exec/x` — taking it").some(
+      (id) => id.base === "T-862",
+    ) === true,
+  );
+  check(
+    "NEGATIVE CONTROL — `TAKING item T-863` still holds",
+    itemSubjects("TAKING item T-863 on branch `exec/y`").some((id) => id.base === "T-863") === true,
+  );
+  check(
+    "NEGATIVE CONTROL — the legacy `- item 21 | agent` form still holds",
+    itemSubjects("- item 21 | claude-code-executor | 2026-09-19T12:58Z | branch").some(
+      (id) => id.base === "21",
+    ) === true,
+  );
+
+  // THE OTHER HALF, PROVEN SEPARATELY (item T-722, vocabulary). `not taken`
+  // and `not mine` are hand-backs the register writes AFTER the id, and
+  // `CLAIM_STATE_NEGATOR` reached neither: it knows only negated forms of the
+  // verb `claim`. Seven occurrences of `not taken` govern a subject-position
+  // id on the real register; the left veto above moves none of them, which is
+  // why the two halves are asserted apart.
+  const LIVE_457 =
+    "1130 → 1140 passing. Typecheck exit 0; eslint exit 0. **Item 24 was NOT taken — " +
+    "re-verified already closed on `main`** (see the 14:55Z claim)";
+  check(
+    "REAL POSITIVE — `Item 24 was NOT taken` does not hold item 24",
+    itemSubjects(LIVE_457).some((id) => id.base === "24") === false,
+    JSON.stringify(itemSubjects(LIVE_457)),
+  );
+  check(
+    "REAL POSITIVE — `item C-003 recorded, not taken` does not hold C-003",
+    itemSubjects("**Second new item C-003 recorded, not taken:** `compactConsultantChatText`").some(
+      (id) => id.base === "C-003",
+    ) === false,
+  );
+  check(
+    "REAL POSITIVE — `item T-461 EVIDENCE ONLY, decision NOT taken` does not hold T-461",
+    itemSubjects("2026-09-21T17:42Z cc-a item T-461 EVIDENCE ONLY, decision NOT taken and").some(
+      (id) => id.base === "T-461",
+    ) === false,
+  );
+  check(
+    "VOCABULARY — `item 26 is not mine` does not hold item 26",
+    itemSubjects("item 26 is not mine").some((id) => id.base === "26") === false,
+  );
+  check(
+    "NEGATIVE CONTROL — `taken` without a negator still holds its item",
+    itemSubjects("item T-864 taken on branch `exec/z`").some((id) => id.base === "T-864") === true,
+  );
+
+  // THE TWO HALVES ARE INDEPENDENT, asserted rather than claimed in prose: the
+  // left veto cannot reach a tail-side hand-back, and the tail vocabulary
+  // cannot reach a left-side disclaimer. Each case below fails if the other
+  // half is the only one implemented.
+  check(
+    "INDEPENDENCE — a tail-only hand-back has no negator in front of the id",
+    itemSubjects("item T-865 was NOT taken").some((id) => id.base === "T-865") === false,
+  );
+  check(
+    "INDEPENDENCE — a head-only disclaimer has no negator behind the id",
+    itemSubjects("I do not touch item T-866 at all").some((id) => id.base === "T-866") === false,
+  );
+
+  // END TO END through the real CLI, on the live shape: one line claims one id
+  // and disclaims another, and the gate must split them.
+  const { dir, file } = fixture([
+    "2026-09-22T18:00:00Z | other-lane#run-1 | item C-870 claimed — taking C-870. " +
+      "I still touch NONE of item 871s files",
+  ]);
+  const disclaimed = preclaim(file, "871", "source-backlog-executor#run-2");
+  check(
+    "THE MOVEMENT — the id that line disclaims is claimable by the next run",
+    disclaimed.status === 0 && disclaimed.report.verdict === "take",
+    JSON.stringify(disclaimed.report),
+  );
+  const held = preclaim(file, "C-870", "source-backlog-executor#run-2");
+  check(
+    "THE GUARD — the id that line actually claimed is still refused, same register, same run",
+    held.status === 1 && held.report.holder?.agent === "other-lane#run-1",
+    JSON.stringify(held.report),
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+
 console.log(`\n${passes} passed, ${failures} failed`);
 process.exit(failures ? 1 : 0);
