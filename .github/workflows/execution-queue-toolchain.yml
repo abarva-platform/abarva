@@ -134,3 +134,30 @@ jobs:
       # queue it writes is refused. Fourteen mutations, fourteen caught.
       - name: Run the queue provenance contract
         run: node scripts/exec/queue-provenance.test.mjs
+
+      # T-723. The entry guard every CLI in this directory needs, because every
+      # script here is a module with a CLI attached and each must answer "was I
+      # run, or imported". Four of them answered four different ways and only
+      # append-claim.mjs was right. `path.resolve` normalises a path without
+      # following symlinks, and `import.meta.url` is always the realpath -- so on
+      # macOS, where /tmp is a symlink to /private/tmp, two guards answered
+      # "imported", did nothing and EXITED 0. The operator task file instructs
+      # agents to work in /tmp/exec-<item>-<timestamp>, which makes the broken
+      # path the likely one.
+      #
+      # Measured, both through a /tmp path: `queue-provenance.mjs --register`
+      # produced no output and exit 0, and `worktree-retention.mjs --check
+      # --free-floor-gib 9999` did the same -- a control whose entire contract is
+      # to exit 1 below the floor, shipped hours earlier BECAUSE a run had died
+      # ENOSPC. A control that exits 0 having done nothing is this directory's
+      # founding defect reached from the quietest direction.
+      #
+      # The two acceptance cases invoke a REAL CLI through a REAL symlink that
+      # the suite creates itself -- /tmp is a symlink on macOS and not on Linux,
+      # so a suite relying on that would silently stop testing anything on this
+      # runner, which is the same "passes because it never ran" shape. The
+      # opposite error is held down too: importing either module must not run its
+      # CLI, since append-claim.mjs imports queue-provenance.mjs on every claim.
+      # Eleven mutations, eleven caught.
+      - name: Run the CLI entry guard contract
+        run: node scripts/exec/cli-entry.test.mjs
