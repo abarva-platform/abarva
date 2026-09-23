@@ -10,7 +10,7 @@
 
 ## Plain-English Summary
 
-The Moves phase gate panel now reconciles with the authenticated artifact vault after the page loads. If server-side preload starts with no generated artifacts but the vault API returns current generated deliverables for the active phase, the gate proof chip updates from zero evidence items to the generated-artifact count.
+The Moves phase gate panel now reconciles with the same generated-artifact sources that feed the authenticated Files & Evidence vault. If current generated deliverables for the active phase exist in either durable move artifacts or governed generated artifacts, the gate proof chip uses the generated-artifact count instead of showing zero evidence items.
 
 ## Layer Impact
 
@@ -29,6 +29,7 @@ Layer 4 Products: updates the Moves UI read path for the phase gate surface. No 
 ## Changes Included
 
 - Adds a read-only artifact-vault hydration pass to the Moves phase workspace.
+- Seeds the phase gate from both durable `move_artifacts` and governed `generated_artifacts`, matching the Files & Evidence vault source set.
 - Merges server-preloaded generated artifacts with current client-loaded generated artifacts for the active phase.
 - Keeps generated deliverables separate from source evidence; the label says generated artifacts unless linked evidence exists.
 - Adds regression coverage for the live failure mode where server preload is empty but the artifact vault contains current Phase 5 generated deliverables.
@@ -40,7 +41,7 @@ Layer 4 Products: updates the Moves UI read path for the phase gate surface. No 
 - `npm run typecheck` — passed.
 - `npm run release:check` — passed.
 - `git diff --check` — passed.
-- Live proof will be recorded after merge and deploy.
+- Live proof will be recorded after merge and deploy. A first deployed pass proved the client-only hydration was insufficient when the page seed omitted generated artifacts from the older generated-artifacts registry; this follow-up reconciles that server seed with the File Cabinet source set.
 
 ## Rollout Plan
 
