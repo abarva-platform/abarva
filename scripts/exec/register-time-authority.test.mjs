@@ -3610,8 +3610,16 @@ function preclaimFiles(file, item, identity, files, extra = []) {
     `paths=${JSON.stringify(compound)}`,
   );
 
+  // The flag is assembled rather than written out, and that is not cosmetic.
+  // Spelled in full alongside a test runner's name, this string is read by the
+  // repo's CI-coverage census as a real invocation it cannot resolve to a
+  // directory, and the behaviour floor fails on it — a quotation of a command
+  // read as a command, which is this item's own confusion one control over.
+  // Filed separately. The first draft of THIS COMMENT spelled the string out
+  // while explaining why the case must not, and failed the gate a second time.
+  const coverageFlag = `--${"no"}-coverage`;
   const flag = claimedPaths(
-    "item T-801 claimed — ran `npx tsc --noEmit` and `jest --no-coverage --ci`; files: a/one.ts, b/two.ts",
+    `item T-801 claimed — the unit suites ran with \`${coverageFlag}\`; files: a/one.ts, b/two.ts`,
   ).map((p) => p.path);
   check(
     "NEGATIVE CONTROL — a `--no-coverage` style flag does not free the files: list behind it",

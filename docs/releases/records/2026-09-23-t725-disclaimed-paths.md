@@ -84,12 +84,30 @@ Measured over the same scope on both sides; no number here is absolute.
 | `scripts/exec/register-time-authority.test.mjs` on clean `origin/main` `64633102f` | 233 passed, 0 failed | — |
 | the same suite with the 25 new cases and **no** fix | 243 passed, **15 failed** | — |
 | the same suite with the fix | — | **258 passed, 0 failed** |
+| the same suite with the operator register unreachable, as on a runner | 230 passed, 0 failed | **255 passed, 0 failed** |
 | `scripts/exec/append-claim.test.mjs` | 50 passed, 0 failed | 50 passed, 0 failed |
 | `scripts/exec/build-execution-queue.test.mjs` | 140 passed, 0 failed | 140 passed, 0 failed |
 | `scripts/exec/build-source-board.test.mjs` | 23 passed, 0 failed | 23 passed, 0 failed |
 | `scripts/exec/queue-provenance.test.mjs` | 30 passed, 0 failed | 30 passed, 0 failed |
 | `scripts/exec/worktree-retention.test.mjs` | 22 passed, 0 failed | 22 passed, 0 failed |
 | `scripts/exec/cli-entry.test.mjs` | 17 passed, 0 failed | 17 passed, 0 failed |
+
+**The runner's number is not the local one, and it is stated rather than substituted.** Three
+pre-existing cases in this suite read the operator register, which is not in this repository and
+does not exist on a runner. Measured on both sides rather than assumed, with the register made
+unreachable: clean `origin/main` reads **230** and this branch reads **255**, the identical gap of
+three, and none of the 25 cases added here is among them — every one runs from a fixture.
+
+**The behaviour floor failed on the first push, and the cause was this change's own test fixture.**
+A negative control quoted a test-runner invocation as a literal string, and the repo's CI-coverage
+census reads any such string in a repo file as a real invocation it cannot resolve to a directory:
+`indeterminateInvocations` went 0 → 1 and 25 behaviour suites asserting it is zero went red. The
+gate was right and the fixture was wrong; the string is now assembled at runtime and the count is
+back to 0. Proven over the same scope rather than by the count alone: the two named suites read
+**2 failed / 2 passed** with the committed fixture and **4 passed / 0 failed** after. *A quotation
+of a command read as a command is this item's own confusion one control over, and it is filed
+separately as `T-727` rather than repaired here.* The first draft of the code comment explaining
+why the fixture must not spell the string out spelled it out, and failed the gate a second time.
 
 **Red first, then the fix, then the fix broken on purpose.** 15 of the 25 new cases failed
 before any edit to the control; the other 10 are the guardrails an over-broad fix would
@@ -211,3 +229,6 @@ control returns to its previous verdicts immediately for any agent that pulls th
   of the grammar.
 - **The gate still reads one line at a time.** A run that claims files on one line and
   disclaims them on the next is read as holding them.
+- **The CI-coverage census cannot tell an invocation from a quotation of one**, which is how this
+  change's first push failed the behaviour floor. Filed as `T-727`; not repaired here, because it
+  is a different control and widening two at once makes neither movement attributable.
