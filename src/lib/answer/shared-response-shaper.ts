@@ -65,10 +65,37 @@ function sentenceSplit(text: string): string[] {
     .filter(Boolean);
 }
 
+// Backlog item C-503 — this splits on a BLANK line only.
+//
+// It used to split on `/\n\s*\n|\n/`, so a soft line break inside a
+// paragraph started a new "paragraph" and spent a slot of `maxParagraphs`.
+// An answer inside both declared limits — under the character target, at or
+// under the paragraph budget — was compacted anyway, for a reason that was
+// not the stated one. Measured on the fixture the `C-009` comment in
+// `src/__tests__/integration/intelligence-chat-shape.test.ts` names: 861
+// characters (under the 900-char target) in 5 paragraphs (at the
+// 5-paragraph budget) but 6 lines.
+//
+// Not every count in this module wants paragraphs — see `lineSplit` below,
+// which is what the two line-shaped readers use. The distinction is the
+// whole of the fix: a budget called `maxParagraphs` is measured in
+// paragraphs, and a rebuild whose parts are joined by single newlines is
+// measured in lines.
 function paragraphSplit(text: string): string[] {
   return text
-    .split(/\n\s*\n|\n/)
+    .split(/\n\s*\n/)
     .map((paragraph) => paragraph.trim())
+    .filter(Boolean);
+}
+
+// The line-shaped counterpart, carrying the behaviour `paragraphSplit` used
+// to provide to its two line-shaped readers. Kept separate rather than
+// folded back in: both readers below would be WRONG on paragraphs, and one
+// of them would be silently unfailable.
+function lineSplit(text: string): string[] {
+  return text
+    .split(/\n/)
+    .map((line) => line.trim())
     .filter(Boolean);
 }
 
@@ -108,8 +135,27 @@ function isStockInstruction(text: string): boolean {
   );
 }
 
-function countVisibleParagraphs(text: string): number {
-  return paragraphSplit(text).length;
+// Counts LINES, and must. Its only caller checks the rebuilt compact answer
+// below, which is assembled as `lines.slice(0, maxParagraphs).join("\n")` —
+// single newlines, no blank lines. Counting paragraphs there would return 1
+// for every input the rebuild can produce.
+//
+// RECORDED RATHER THAN QUIETLY FIXED: today that is true of the line count
+// too. `lines` is capped at `maxParagraphs` entries and every entry is
+// single-line by construction (`trimWords` joins on spaces, the table and
+// bullet summaries join on "; "), so this half of its caller's `&&` has no
+// reachable FALSE case and the gate's real work is the character check
+// beside it. A mutation swapping this for a paragraph count therefore
+// SURVIVES the C-503 suite, and that is reported in the pull request rather
+// than papered over with a test that pins nothing. The one insertion path
+// that could add a line — `normalizeAssemblyArtifacts` rewriting
+// " — Breakdown:" to a newline — was tried against this rebuild and is
+// consumed upstream by `cleanLeadLine`, measured, not assumed. Filed as
+// backlog item C-505; removing a redundant guard is not C-503's change to
+// make, and the line unit is the correct one to leave standing while the
+// thing being measured is spelled in lines.
+function countCompactLines(text: string): number {
+  return lineSplit(text).length;
 }
 
 function tableToCompactLines(text: string): string[] {
@@ -280,7 +326,12 @@ function compactForChat(
     removeMarkdownTables(normalizeAssemblyArtifacts(normalized)),
   );
   const sentences = sentenceSplit(proseOnly.replace(/\n+/g, " "));
-  const paragraphs = paragraphSplit(proseOnly);
+  // Lead candidates, not paragraphs: this list feeds a `.find()` for the
+  // first non-heading LINE to promote into the opening sentence, and it is
+  // then word-trimmed to 34 words. A blank-line paragraph here would hand
+  // `trimWords` a multi-line block. C-503 kept this reader on lines
+  // deliberately rather than sweeping it along with the budget fix.
+  const leadCandidateLines = lineSplit(proseOnly);
   const lead = trimWords(
     cleanLeadLine(
       sentences.find((sentence) =>
@@ -288,10 +339,10 @@ function compactForChat(
           sentence,
         ),
       ) ??
-        paragraphs.find(
-          (paragraph) =>
+        leadCandidateLines.find(
+          (line) =>
             !/^(?:Inspect in this order|Spend comparison|Outliers worth flagging|Evidence gaps)\b/i.test(
-              paragraph,
+              line,
             ),
         ) ??
         sentences[0] ??
@@ -334,7 +385,7 @@ function compactForChat(
   );
   if (
     compact.length <= targetChars &&
-    countVisibleParagraphs(compact) <= maxParagraphs
+    countCompactLines(compact) <= maxParagraphs
   ) {
     return compact;
   }

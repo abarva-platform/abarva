@@ -68,6 +68,32 @@ describe("shapeSharedAdvisorResponse", () => {
     expect(result.issues).toEqual([]);
   });
 
+  // C-503 — this case's TRIGGER changed; its subject did not.
+  //
+  // The fixture is six LINES in ONE paragraph, and 393 characters against
+  // the 900-character target it used to be given. It was collapsed because
+  // `paragraphSplit` counted its six lines as six paragraphs and called a
+  // one-paragraph answer over a five-paragraph budget. Now that the budget
+  // counts paragraphs, six bullets inside the character target are inside
+  // both declared limits and are returned whole — so the old parameters no
+  // longer exercise collapsing at all.
+  //
+  // The case is kept and re-aimed rather than deleted: what it is FOR is
+  // that a ranked list, once genuinely over budget, comes back as compact
+  // evidence lines and not as a restructured essay. `targetChars` is
+  // lowered to 320 — under the fixture's 393 characters — so the character
+  // limit, the other half of the same gate and the half that was always
+  // doing the real work here, is what fires. The output is the same
+  // collapsed text the case has always asserted, and every assertion below
+  // is the original one, unweakened. 320 rather than something tighter on
+  // purpose: below about 260 the rebuilt answer is itself over target and a
+  // second, harder pass drops the evidence line this case exists to check.
+  //
+  // Worth knowing while reading it: this input cannot reach the compactor
+  // through the product at all. `shapeAgentResponseForSurface` is the only
+  // production caller, and `looksAlreadyStructured` recognises three or
+  // more bullet lines, so a four-bullet list is passed through with
+  // `preserveStructure: true`. The case exercises the module's direct API.
   it("collapses compact ranked lists into chat-sized evidence lines", () => {
     const result = shapeSharedAdvisorResponse({
       text: [
@@ -78,7 +104,7 @@ describe("shapeSharedAdvisorResponse", () => {
         "- AWS is also the only vendor spanning more than one portfolio company.",
         "Next: ask aVa to inspect the supporting evidence, compare options, or shape the next CIO action.",
       ].join("\n"),
-      targetChars: 900,
+      targetChars: 320,
       hardMaxChars: 1100,
       maxParagraphs: 5,
     });
