@@ -2,8 +2,8 @@
   "note": "Source integration suites that are RED on clean main and are therefore excluded from the Source integration workflow. This directory held 92 suites that no workflow ran; running it for the first time found 24 red. Wiring all 92 would have made every PR red on day one and the workflow would have been switched off within a day, so the green 68 run now and these are named here instead of being silently dropped. Default is INCLUDED: a new suite in this directory runs unless it is added to this list, which is what makes the workflow cover work that has not been written yet. Removing an entry is the fix; adding one needs a reason and an owner.",
   "howToClear": "Run the suite locally, fix it, delete its entry here, and confirm the Source integration workflow stays green.",
   "clusters": {
-    "null-event-object": "The largest cluster, roughly 40 of the 68 failing tests. Product components read properties off an event object the harness supplies as null \u2014 SourceScopeStageWorkspace.tsx:365 reading `dataReadiness`, and the same shape reading `stages`, `id`, `vendorResponses` and `name`. This is product code throwing, not only a stale assertion, so it is a defect to triage rather than a fixture to patch.",
-    "next-navigation-stub": "`(0, _navigation.notFound) is not a function` \u2014 the Next.js navigation module is not stubbed for these route-level suites.",
+    "null-event-object": "The largest cluster, roughly 40 of the 68 failing tests. Product components read properties off an event object the harness supplies as null — SourceScopeStageWorkspace.tsx:365 reading `dataReadiness`, and the same shape reading `stages`, `id`, `vendorResponses` and `name`. This is product code throwing, not only a stale assertion, so it is a defect to triage rather than a fixture to patch.",
+    "next-navigation-stub": "`(0, _navigation.notFound) is not a function` — the Next.js navigation module is not stubbed for these route-level suites.",
     "stale-copy-assertions": "Suites asserting literal on-screen copy that has since changed, e.g. 'Capture the five basics' and 'Captured facts checklist'.",
     "unverified-remainder": "The remaining `toContain` / `toBe` / `toMatch` failures have not been clustered individually. They are counted, not explained, and saying so is more useful than implying a triage that has not happened."
   },
@@ -80,17 +80,7 @@
       ]
     }
   ],
-  "alsoIgnored": [
-    {
-      "path": "src/__tests__/integration/source-chat-shape.test.ts",
-      "reason": "The Source workflow path is a Jest regex and sweeps in this root-level sibling; it still fails on the Brief C vendor-shortlist shaping contract.",
-      "owner": "T-047",
-      "expectedFailurePatterns": [
-        "Expected substring: \"Daisy Intelligence is a credible second\"",
-        "Received string:    \"Three credible vendors"
-      ]
-    }
-  ],
-  "alsoIgnoredNote": "The workflow command names src/__tests__/integration/source without a trailing slash, because the CI-visibility gate requires the path to be followed by whitespace or end-of-command \u2014 a trailing slash makes the gate stop seeing it. Jest reads that path as a pattern rather than a directory, so it can also match sibling files at the integration root whose names start with \"source\". source-chat-shape.test.ts is one of those swept-in siblings and is owned here, with an executable failure reason, rather than as a bare string.",
-  "alsoIgnoredCeiling": 1
+  "alsoIgnored": [],
+  "alsoIgnoredNote": "The workflow command names src/__tests__/integration/source without a trailing slash, because the CI-visibility gate requires the path to be followed by whitespace or end-of-command — a trailing slash makes the gate stop seeing it. Jest reads that path as a pattern rather than a directory, so it can also match sibling files at the integration root whose names start with \"source\". That sweep-in is still how this list can acquire an entry, so the mechanism is kept here. The list is now EMPTY and the ceiling is 0: source-chat-shape.test.ts was the only entry, it was excluded for the Brief C vendor-shortlist shaping contract, and C-502 fixed the shaper so it passes. Both moved in the same change because the ratchet refuses headroom — clearing an entry without lowering the ceiling would have left room for the next exclusion to arrive unexamined.",
+  "alsoIgnoredCeiling": 0
 }

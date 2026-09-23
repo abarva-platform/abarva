@@ -249,4 +249,112 @@ describe('Atlas /tower response-shaper · HI-3 damage regressions', () => {
       expect(shaped).not.toContain('Next: Next:');
     });
   });
+
+  // C-502 / C-501 / C-500 — the SECOND compactor.
+  //
+  // `shouldCompactSurface` was narrowed so that advisor surfaces (Source,
+  // Tower, Strategic Moves, Intelligence) never run the
+  // compactConsultantChatText template. That narrowing is real and the
+  // guard in response-shape.test.ts holds it. But it only ever governed
+  // ONE of the two compactors this module reaches.
+  //
+  // `shapeAgentResponseForSurface` also calls `shapeSharedAdvisorResponse`,
+  // which runs `compactForChat(text, targetChars=900, maxParagraphs=5)`
+  // whenever `preserveStructure` is false. `preserveStructure` was computed
+  // from `looksAlreadyStructured()` alone — a detector that only recognises
+  // pipe tables, Atlas section headers, 3+ bullets or 3+ numbered lines.
+  //
+  // A Brief C advisor answer is none of those by design: it is prose
+  // paragraphs. So a multi-paragraph advisor answer longer than 900 chars
+  // took the shared compactor by construction, on a surface whose whole
+  // contract is that it must not be compacted. Measured on the verbatim
+  // Brief C vendor shortlist: 1,361 chars in, 229 chars out — the second
+  // vendor, the third vendor and the closing recommendation absent from
+  // the output entirely.
+  //
+  // These cases are written against the two surfaces, not against the one
+  // fixture, so the guard cannot drift back per-surface: the same defect
+  // is latent on /tower for any prose answer over the target, and the
+  // existing /tower cases above never reached it because every one of
+  // their fixtures is under 900 chars or already structured.
+  describe('Damage class 4 · shared-shaper compaction of advisor prose (C-502)', () => {
+    // Three options, each a paragraph, no list markup — the shape Brief C
+    // asks for. 1,000+ chars, so it is over the shared shaper's 900-char
+    // target and under no circumstance may be summarised away.
+    const MULTI_OPTION_ADVISOR_PROSE = [
+      'Three credible vendors for your specific situation, with my read on each:',
+      '',
+      "Northwind Analytics is the strongest fit at the capability level. They have the most mature multi-banner specialty retail playbook, the customer evidence is deep, and they have been at this long enough to have real implementation patterns rather than learning on your budget. The trade-off is that they are a bigger ship and less likely to customise deeply for your specific banner structure.",
+      '',
+      'Harborline Systems is a credible second. Strong work in adjacent retail, and their assortment work specifically is more recent, with fewer documented case studies at multi-banner specialty. Their financial health appears stable and customer references are strong. Worth shortlisting if you want a partner that will customise more aggressively.',
+      '',
+      'Kestrel Forecasting is the credible third. Forecasting and assortment combined, which matches the integrated work you described. The caveat is a smaller team and a narrower customer base, so I would shortlist them for a competitive bid but be careful about depending on them as the sole vendor.',
+      '',
+      'I would drop the bigger horizontal players. Capability is broader but assortment is not their lead, and you would be paying for things you do not need.',
+    ].join('\n');
+
+    it('preserves every option of a multi-option shortlist on the source surface', () => {
+      expect(MULTI_OPTION_ADVISOR_PROSE.length).toBeGreaterThan(900);
+
+      const shaped = shapeAgentResponseForSurface('source', MULTI_OPTION_ADVISOR_PROSE);
+
+      // Every option the model recommended reaches the reader. Pre-fix the
+      // output stopped after the first option's opening sentence.
+      expect(shaped).toContain('Northwind Analytics is the strongest fit');
+      expect(shaped).toContain('Harborline Systems is a credible second');
+      expect(shaped).toContain('Kestrel Forecasting is the credible third');
+      expect(shaped).toContain('I would drop the bigger horizontal players');
+      // Not restructured into the shared shaper's lead-plus-bullets shape.
+      expect(shaped).not.toMatch(/^- (?:Evidence|Missing|Next|Question):/m);
+    });
+
+    it('preserves the same prose on /tower, where the defect is latent rather than reported', () => {
+      // The /tower cases above pass today only because their fixtures are
+      // short or already structured. Nothing in the shaper treats /tower
+      // differently from source, so the same input must survive here.
+      const shaped = shapeAgentResponseForSurface('/tower', MULTI_OPTION_ADVISOR_PROSE);
+
+      expect(shaped).toContain('Harborline Systems is a credible second');
+      expect(shaped).toContain('Kestrel Forecasting is the credible third');
+      expect(shaped).toContain('I would drop the bigger horizontal players');
+    });
+
+    it('does not lose content merely because the answer crosses the 900-char target', () => {
+      // States the rule the fix must satisfy independently of any one
+      // phrase: for a non-compacting surface, no span of the input is
+      // dropped. Compared span by span rather than by length, so a fix
+      // that merely raised the target would still have to preserve each.
+      //
+      // Compared with whitespace collapsed, and that distinction is
+      // deliberate rather than a loosened assertion. The shaper DOES
+      // re-wrap: a downstream paragraph pass moves the closing sentence of
+      // the second option onto its own line, so the output is one
+      // character longer than the input (1,262 vs 1,261) and no paragraph
+      // matches verbatim. That is re-wrapping, which this case is not
+      // about; a verbatim comparison would report it as content loss and
+      // hide the thing the case exists to measure. Every character of
+      // every span still has to be present, in order, so a genuine drop
+      // still fails here.
+      const collapse = (value: string) => value.replace(/\s+/g, ' ').trim();
+      const shaped = collapse(shapeAgentResponseForSurface('source', MULTI_OPTION_ADVISOR_PROSE));
+      const spans = MULTI_OPTION_ADVISOR_PROSE.split('\n')
+        .map(collapse)
+        .filter(Boolean);
+      const dropped = spans.filter((span) => !shaped.includes(span));
+
+      expect(dropped).toEqual([]);
+    });
+
+    it('STILL compacts a declared form surface — the fix must not widen past advisor surfaces', () => {
+      // Negative control. `setup` is one of the four surfaces
+      // `shouldCompactSurface` deliberately KEEPS ("dashboard / form, not
+      // advisor chat"). Its truth is that declared list, not this fix. If a
+      // repair disables compaction globally instead of per-surface, this
+      // fails.
+      const shaped = shapeAgentResponseForSurface('setup', MULTI_OPTION_ADVISOR_PROSE);
+
+      expect(shaped.length).toBeLessThan(MULTI_OPTION_ADVISOR_PROSE.length);
+      expect(shaped).not.toContain('Kestrel Forecasting is the credible third');
+    });
+  });
 });

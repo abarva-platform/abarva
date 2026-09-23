@@ -80,8 +80,19 @@ describe("the Source quarantine ceilings are ratchets in both directions", () =>
   });
 
   it("refuses a cleared swept-in path that left its ceiling where it was", () => {
+    // Rewritten by C-502, and the reason is the point of the case rather
+    // than an accommodation to it. This used to empty `alsoIgnored` while
+    // the ceiling stood at 1. The list is now EMPTY and the ceiling is 0
+    // — C-502 fixed the shaper, so its one entry was removed and the
+    // ceiling lowered in the same change, which is exactly the move this
+    // case exists to require. Emptying an already-empty list creates no
+    // headroom and would assert nothing, so the case now raises the
+    // ceiling above the list instead. That is the same condition stated
+    // from the other side: a ceiling above what the list holds is the
+    // headroom, however it got there.
     const result = withList((doc) => {
       doc.alsoIgnored = [];
+      doc.alsoIgnoredCeiling = 1;
     });
 
     expect(result.code).not.toBe(0);
@@ -100,7 +111,10 @@ describe("the Source quarantine ceilings are ratchets in both directions", () =>
     });
 
     expect(result.code).not.toBe(0);
-    expect(result.output).toContain("ceiling is 1");
+    // "ceiling is 0" since C-502 emptied the list and lowered the ceiling
+    // with it. The direction under test is unchanged: one entry against a
+    // ceiling of zero is over the ceiling exactly as two against one was.
+    expect(result.output).toContain("ceiling is 0");
   });
 
   it("puts the list back after each case", () => {
@@ -114,7 +128,7 @@ describe("the Source quarantine ceilings are ratchets in both directions", () =>
     };
 
     expect(doc.quarantined).toHaveLength(8);
-    expect(doc.alsoIgnored).toHaveLength(1);
-    expect(doc.alsoIgnoredCeiling).toBe(1);
+    expect(doc.alsoIgnored).toHaveLength(0);
+    expect(doc.alsoIgnoredCeiling).toBe(0);
   });
 });

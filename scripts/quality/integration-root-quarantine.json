@@ -30,13 +30,6 @@
       "reason": "The case renders SignInShell with signInMode='demo-code' and expects the Password and Access code fields immediately. DemoCodeSignIn has since gained its own email/demo toggle whose internal state defaults to 'email', so those fields now appear one click later. The control the case is about — legacy demo-code sign-in sits behind an explicit mode — still holds, and arguably holds harder. The rewrite is to click the toggle and then assert, which keeps the assertion meaningful rather than deleting it.",
       "owner": "26",
       "verdict": "update"
-    },
-    {
-      "suite": "source-chat-shape.test.ts",
-      "failingCase": "Source chat surface · render contract > shapeAgentResponseForSurface(surface=source, ...) > does not apply the compactConsultantChatText template to the Brief C vendor shortlist",
-      "reason": "NOT a stale assertion. shapeAgentResponseForSurface('source', ...) compacts a three-option shortlist down to the first option and one bullet: the second and third recommendations and the closing guidance are all absent from the shaped output. The suite's own comment states the intent it is defending — the full reasoning round-trips, not just an 18-word headline — and that is exactly what stopped being true. This is content loss on a governed answer surface, and this suite is the only thing that catches it. It was not caught earlier because nothing ran it. The shaper was last touched by two later changes; attribution between them is NOT established, because the module's exports moved and the suite does not load against either older copy.",
-      "owner": "C-502",
-      "verdict": "real"
     }
   ]
 }
