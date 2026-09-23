@@ -608,6 +608,12 @@ describe("answerHomeAvaQuestion", () => {
     expect(answer.prose).toContain("Confidence:");
     expect(answer.prose).toContain("Support:");
     expect(answer.prose).not.toContain("try rephrasing");
+    expect(answer.prose).not.toMatch(
+      /\b(advisor model|unparseable|JSON|parser)\b/i,
+    );
+    expect(answer.caveats[0].detail).not.toMatch(
+      /\b(advisor model|unparseable|JSON|parser)\b/i,
+    );
     expect(answer.citations.length).toBeGreaterThan(0);
   });
 
