@@ -507,6 +507,8 @@ const ALLOWED_STATUS = new Set(["answered", "partial", "no_data"]);
 const ALLOWED_CHART_KIND = new Set(["bar", "horizontal-bar"]);
 const MAX_DIRECT_ANSWER_WORDS = 55;
 const MAX_PROSE_PARAGRAPH_WORDS = 70;
+const GRAPH_EXHIBIT_REQUEST_RE =
+  /\b(show|draw|render|create|display|visuali[sz]e|graph|map)\b.*\b(graph|network|relationship map|connections?|dependencies)\b|\b(graph|network|relationship map)\b.*\b(risks?|vendors?|applications?|systems?|data|programs?|contracts?|connect|connections?|dependencies)\b/i;
 
 /** Same fence-stripping tolerance as build-enterprise-thesis.ts's parseJsonLoose -- inlined
  * rather than imported so this route doesn't drag the data-build script's pg/papaparse/fs
@@ -547,6 +549,14 @@ export async function answerHomeAvaQuestion(args: {
     args.activeChapterId,
     question,
   );
+
+  if (isGraphExhibitRequest(question)) {
+    return buildGraphUnavailablePacket({
+      context,
+      tenantKey: args.tenantKey,
+      question,
+    });
+  }
 
   const userMessage = `Tenant: ${context.tenantDisplayName}\nQuestion: ${question}\n\nContext (JSON):\n${context.promptContextJson}`;
 
@@ -707,7 +717,9 @@ function packageModelResponse(
         .filter(
           (c): c is string => typeof c === "string" && c.trim().length > 0,
         )
-        .map((caveat) => sanitizeRecordCountContradictions(caveat, context))
+        .map((caveat) =>
+          sanitizeAvaVisibleText(caveat, context, MAX_PROSE_PARAGRAPH_WORDS),
+        )
     : [];
   const gaps =
     status === "partial" || status === "no_data"
@@ -826,12 +838,105 @@ function packageModelResponse(
   );
 }
 
+function isGraphExhibitRequest(question: string): boolean {
+  return GRAPH_EXHIBIT_REQUEST_RE.test(question);
+}
+
+function buildGraphUnavailablePacket(input: {
+  context: GroundingContext;
+  tenantKey: string;
+  question: string;
+}): AvaAnswerPacket {
+  const selected = selectRecoveryClaims(input.context, input.question).slice(
+    0,
+    4,
+  );
+  const citations: AvaCitation[] = selected.map(({ tag, claim }) => ({
+    id: tag,
+    label: claim.statement.slice(0, 96),
+    sourceClass: "tenant-fact",
+    excerpt: claim.statement,
+    confidence:
+      claim.confidence === "low"
+        ? "low"
+        : claim.confidence === "medium"
+          ? "medium"
+          : "high",
+  }));
+  const bullets = selected.map(
+    ({ claim }) => `- ${compactStatement(claim.statement)}`,
+  );
+  const caveat =
+    "A graph view is not available from Home aVa for this record yet. Use this as a cited narrative read, not as a relationship exhibit.";
+  const prose = [
+    "Short answer: Home aVa cannot render a graph for this question yet.",
+    bullets.length > 0
+      ? bullets.join("\n\n")
+      : "- I can answer from cited Home claims, but I cannot turn those claims into a graph view yet.",
+    `Confidence: ${recoveryConfidence(citations)}. Support: ${citations.length} cited Home claim${citations.length === 1 ? "" : "s"}.`,
+    `Caveat: ${caveat}`,
+  ].join("\n\n");
+
+  return {
+    surface: "home",
+    mode: "KNOW",
+    tenantKey: input.tenantKey,
+    question: input.question,
+    intent: "home_preview_qa",
+    status: "partial",
+    directAnswer:
+      "Home aVa cannot render a graph for this question yet; it can only provide a cited narrative read.",
+    prose,
+    factsUsed: [],
+    metricsUsed: [],
+    relationshipsUsed: [],
+    artifacts: [],
+    citations,
+    gaps: [
+      {
+        id: "home-ava-graph-gap",
+        label: "Graph view unavailable",
+        detail: caveat,
+        severity: "medium",
+        citationIds: citations.map((citation) => citation.id),
+      },
+    ],
+    caveats: [{ id: "home-ava-caveat-1", label: "Caveat", detail: caveat }],
+    nextSteps: [],
+    quality: {
+      confidence: citations.length > 0 ? "medium" : "low",
+      evidenceStrength: citations.length > 0 ? "partial" : "thin",
+      tenantGrounding: "complete",
+      answerCompleteness: "partial",
+    },
+    safety: {
+      tenantFencePassed: true,
+      rawIdsSuppressed: true,
+      forbiddenLanguagePassed: true,
+      unsupportedClaimsBlocked: true,
+    },
+  };
+}
+
 function compactAnswerText(text: string, maxWordsPerParagraph: number): string {
   return text
     .split(/\n{2,}/)
     .flatMap((paragraph) => splitLongParagraph(paragraph, maxWordsPerParagraph))
     .join("\n\n")
     .trim();
+}
+
+function sanitizeAvaVisibleText(
+  text: string,
+  context: GroundingContext,
+  maxWordsPerParagraph: number,
+): string {
+  return scrubPublicAvaAnswerText(
+    sanitizeRecordCountContradictions(
+      compactAnswerText(text, maxWordsPerParagraph),
+      context,
+    ),
+  );
 }
 
 function sanitizeRecordCountContradictions(

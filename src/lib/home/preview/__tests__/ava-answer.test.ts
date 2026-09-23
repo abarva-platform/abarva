@@ -17,11 +17,9 @@ function mockClaudeJson(payload: unknown) {
   mockGetAuditedAnthropicClient.mockResolvedValue({
     client: {
       messages: {
-        create: jest
-          .fn()
-          .mockResolvedValue({
-            content: [{ type: "text", text: JSON.stringify(payload) }],
-          }),
+        create: jest.fn().mockResolvedValue({
+          content: [{ type: "text", text: JSON.stringify(payload) }],
+        }),
       },
     },
     auditId: "audit-test",
@@ -291,6 +289,23 @@ describe("answerHomeAvaQuestion", () => {
     expect(answer.artifacts).toHaveLength(0);
   });
 
+  it("does not ask the model to fabricate a graph when Home has no graph view", async () => {
+    const answer = await answerHomeAvaQuestion({
+      bundle: { chapters: CHAPTERS, technologyEstate: TECHNOLOGY_ESTATE },
+      tenantKey: "meridian-health",
+      question:
+        "Show me the graph of how risks, vendors, applications, data and programs connect.",
+    });
+
+    expect(mockGetAuditedAnthropicClient).not.toHaveBeenCalled();
+    expect(answer.status).toBe("partial");
+    expect(answer.directAnswer).toContain("cannot render a graph");
+    expect(answer.artifacts).toHaveLength(0);
+    expect(answer.gaps[0].label).toBe("Graph view unavailable");
+    expect(answer.prose).toContain("Confidence:");
+    expect(validateAvaAnswerPacket(answer).passed).toBe(true);
+  });
+
   it("scrubs stale family counts in model caveats against the served record counts", async () => {
     mockClaudeJson({
       status: "answered",
@@ -314,6 +329,35 @@ describe("answerHomeAvaQuestion", () => {
       "all 230 declared vendor contracts",
     );
     expect(answer.caveats[0].detail).not.toContain("72 declared");
+  });
+
+  it("scrubs internal terms from model caveats before the UI renders them", async () => {
+    mockClaudeJson({
+      status: "answered",
+      direct_answer:
+        "Commercial exposure is concentrated in vendor dependencies.",
+      prose: "",
+      cited_claim_tags: ["TD-K1"],
+      visual: { type: "none", dataset_ref: null, chart_kind: null },
+      caveats: [
+        "The ECL projection and source rows are incomplete for all 72 declared vendor contracts.",
+      ],
+    });
+
+    const answer = await answerHomeAvaQuestion({
+      bundle: { chapters: CHAPTERS, technologyEstate: TECHNOLOGY_ESTATE },
+      tenantKey: "meridian-health",
+      question: "Where are we commercially exposed?",
+    });
+
+    expect(answer.caveats[0].detail).toContain(
+      "all 230 declared vendor contracts",
+    );
+    expect(answer.caveats[0].detail).not.toMatch(
+      /\b(ECL|projection|source rows|72 declared)\b/i,
+    );
+    expect(answer.gaps).toHaveLength(0);
+    expect(validateAvaAnswerPacket(answer).passed).toBe(true);
   });
 
   it("scrubs stale family counts in claim-backed recovery answers", async () => {
@@ -521,11 +565,9 @@ describe("answerHomeAvaQuestion", () => {
     mockGetAuditedAnthropicClient.mockResolvedValue({
       client: {
         messages: {
-          create: jest
-            .fn()
-            .mockResolvedValue({
-              content: [{ type: "text", text: "not json at all" }],
-            }),
+          create: jest.fn().mockResolvedValue({
+            content: [{ type: "text", text: "not json at all" }],
+          }),
         },
       },
       auditId: "audit-test",
@@ -546,11 +588,9 @@ describe("answerHomeAvaQuestion", () => {
     mockGetAuditedAnthropicClient.mockResolvedValue({
       client: {
         messages: {
-          create: jest
-            .fn()
-            .mockResolvedValue({
-              content: [{ type: "text", text: "not json at all" }],
-            }),
+          create: jest.fn().mockResolvedValue({
+            content: [{ type: "text", text: "not json at all" }],
+          }),
         },
       },
       auditId: "audit-test",
