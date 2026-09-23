@@ -18,6 +18,7 @@ import {
   type StageReadinessReviewGateStatus,
 } from "@/lib/programs/phase-navigation-status";
 import { listMoveArtifacts } from "@/lib/programs/deliverables/move-artifacts";
+import { listGeneratedArtifactsForMoveAllRefs } from "@/lib/artifacts/repository";
 import { STAGE_READINESS_PROPOSAL_REVIEW_ARTIFACT_TYPE } from "@/lib/programs/stage-readiness-workbooks/proposals";
 import { requireTenancy } from "@/app/api/v1/programs/_auth";
 import { loadDiscoveryEvidenceReadiness } from "@/lib/programs/discovery/evidence-readiness";
@@ -26,7 +27,10 @@ import {
   type MoveEvidenceNeedPacket,
 } from "@/lib/programs/evidence-readiness/move-evidence-need-packet";
 import { getMovePhaseTallies } from "@/lib/programs/phase-explorer-tallies";
-import { getGateArtifacts } from "@/lib/programs/deliverable-registry";
+import {
+  DELIVERABLE_REGISTRY,
+  getGateArtifacts,
+} from "@/lib/programs/deliverable-registry";
 import {
   readDeliverableContentSignals,
   type DeliverableContentSignal,
@@ -77,6 +81,51 @@ function p1ToP2ReviewStatusFromMetadata(
     insufficientEvidence: numberFromMetadata(readiness, "insufficientEvidence"),
     unknown: numberFromMetadata(readiness, "unknown"),
   };
+}
+
+function objectMetadata(value: unknown): Record<string, unknown> {
+  return value && typeof value === "object" && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : {};
+}
+
+function phaseFromGeneratedArtifactMetadata(
+  metadata: Record<string, unknown>,
+): number | null {
+  const directPhase = metadata.phase;
+  if (typeof directPhase === "number" && Number.isInteger(directPhase)) {
+    return directPhase;
+  }
+  if (typeof directPhase === "string" && directPhase.trim()) {
+    const parsed = Number(directPhase);
+    if (Number.isInteger(parsed)) return parsed;
+  }
+
+  const renderableDoc = objectMetadata(metadata.renderableDoc);
+  const candidates = [
+    metadata.deliverableTypeKey,
+    metadata.registryKey,
+    metadata.deliverableType,
+    renderableDoc.deliverableTypeKey,
+    renderableDoc.deliverableType,
+  ];
+  for (const candidate of candidates) {
+    if (typeof candidate !== "string" || !candidate.trim()) continue;
+    const spec = DELIVERABLE_REGISTRY.find(
+      (item) => item.deliverableTypeKey === candidate.trim(),
+    );
+    if (spec) return spec.phase;
+  }
+
+  return null;
+}
+
+function generatedArtifactTitle(
+  metadata: Record<string, unknown>,
+): string | null {
+  const renderableDoc = objectMetadata(metadata.renderableDoc);
+  const title = renderableDoc.title ?? metadata.title;
+  return typeof title === "string" && title.trim() ? title.trim() : null;
 }
 
 export default async function StrategicMovePhaseWorkspacePage({
@@ -188,13 +237,17 @@ export default async function StrategicMovePhaseWorkspacePage({
   }> = [];
   try {
     const tctx = await requireTenancy();
+    const artifactsById = new Map<
+      string,
+      (typeof phaseBuildArtifacts)[number]
+    >();
     const generatedArtifacts = await listMoveArtifacts(tctx, moveId, {
       family: "generated_deliverable",
       currentOnly: true,
     });
-    phaseBuildArtifacts = generatedArtifacts
-      .filter((artifact) => artifact.phase === parsedPhase)
-      .map((artifact) => ({
+    for (const artifact of generatedArtifacts) {
+      if (artifact.phase !== parsedPhase) continue;
+      artifactsById.set(artifact.artifact_id, {
         artifactId: artifact.artifact_id,
         deliverableTypeKey: artifact.artifact_type,
         documentTitle: artifact.title,
@@ -202,7 +255,36 @@ export default async function StrategicMovePhaseWorkspacePage({
         status: artifact.status,
         version: artifact.version,
         downloadUrl: `/api/v1/programs/${moveId}/artifacts/${artifact.artifact_id}/download`,
-      }));
+      });
+    }
+
+    const legacyGeneratedArtifacts = await listGeneratedArtifactsForMoveAllRefs(
+      {
+        clientId: tctx.clientId,
+        clientIds: [tctx.clientKey].filter(
+          (clientId): clientId is string => typeof clientId === "string",
+        ),
+        moveId,
+      },
+    );
+    for (const artifact of legacyGeneratedArtifacts) {
+      if (artifact.supersededBy) continue;
+      const artifactPhase = phaseFromGeneratedArtifactMetadata(
+        artifact.metadata,
+      );
+      if (artifactPhase !== parsedPhase) continue;
+      artifactsById.set(artifact.id, {
+        artifactId: artifact.id,
+        deliverableTypeKey: artifact.artifactType,
+        documentTitle:
+          generatedArtifactTitle(artifact.metadata) ?? artifact.artifactType,
+        phase: artifactPhase,
+        status: artifact.quarantineReason ? "quarantined" : "board_ready",
+        version: 1,
+        downloadUrl: `/api/v1/artifacts/${artifact.id}`,
+      });
+    }
+    phaseBuildArtifacts = Array.from(artifactsById.values());
   } catch {
     phaseBuildArtifacts = [];
   }
