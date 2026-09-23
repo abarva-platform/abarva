@@ -79,7 +79,13 @@ describe("Source New event route authorization", () => {
         realized: [],
       },
     } as never);
-    await SourceNewEventPage(params);
+    const demoPage = await SourceNewEventPage({
+      ...params,
+      searchParams: Promise.resolve({ demo: "1" }),
+    });
+    expect(demoPage.props.demoMode).toBe(true);
+    const governedPage = await SourceNewEventPage(params);
+    expect(governedPage.props.demoMode).toBe(false);
     expect(listSourceArtifacts).toHaveBeenCalledWith(
       "event-1",
       { tenantKey: "tenant-a" },

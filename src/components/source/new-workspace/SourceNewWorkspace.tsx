@@ -284,6 +284,8 @@ export function sourceNewFileDownloadHref(
 
 export type SourceNewWorkspaceProps = {
   event: SourceNewEventView;
+  /** Presentation-only decisions; never writes governed event state. */
+  demoMode?: boolean;
   files: readonly SourceNewFileRow[];
   /**
    * The governed decision trail. Optional so existing callers and tests that
@@ -305,6 +307,7 @@ export type SourceNewWorkspaceProps = {
 
 export function SourceNewWorkspace({
   event,
+  demoMode = false,
   files,
   activity,
   intelligence,
@@ -327,8 +330,20 @@ export function SourceNewWorkspace({
     () => sourceNewCurrentPhase(event) ?? "rfi",
   );
   const [view, setView] = useState<View>("work");
+  const [demoAcknowledged, setDemoAcknowledged] = useState<Phase[]>([]);
   const reviewPending = awaitsIntakeReview(event.lifecycle);
   const completedEvent = isCompletedEvent(event);
+  const demoActive = demoMode && current !== null && !completedEvent;
+  const currentIndex =
+    current === null ? -1 : SOURCE_NEW_PHASE_ORDER.indexOf(current);
+  const demoIndex = Math.min(
+    currentIndex + demoAcknowledged.length,
+    SOURCE_NEW_PHASE_ORDER.length - 1,
+  );
+  const demoPhase = demoActive ? SOURCE_NEW_PHASE_ORDER[demoIndex] : null;
+  const demoFinished =
+    demoActive &&
+    demoAcknowledged.length >= SOURCE_NEW_PHASE_ORDER.length - currentIndex;
   const historicalGapPhases = sourceNewHistoricalGapPhases(event, evidence);
   const completionReviewNeeded = historicalGapPhases.length > 0;
   const phases = phasesFor(event);
@@ -381,6 +396,15 @@ export function SourceNewWorkspace({
           </span>
         </header>
 
+        {demoActive && (
+          <section className="snw-note" aria-label="Demo mode">
+            <strong>Demo walkthrough.</strong> Self-acknowledgements stay in this
+            browser only. The governed stage remains{" "}
+            {sourceNewStageLabel(event.currentStage)}; this demo records no sponsor
+            signature. No approval, evidence state, or supplier action is changed.
+          </section>
+        )}
+
         <nav className="snw-phases" aria-label="Event phases">
           {phases.map((item, index) => (
             <button
@@ -397,7 +421,13 @@ export function SourceNewWorkspace({
               </span>
               <span className="snw-phase-copy">
                 <strong>{item.label}</strong>
-                <small>{sourceNewPhaseStateLabel(stateOf(item.key))}</small>
+                <small>
+                  {demoActive && demoAcknowledged.includes(item.key)
+                    ? "Demo acknowledged"
+                    : demoActive && item.key === demoPhase && item.key !== current
+                      ? "Demo preview"
+                      : sourceNewPhaseStateLabel(stateOf(item.key))}
+                </small>
               </span>
             </button>
           ))}
@@ -451,6 +481,36 @@ export function SourceNewWorkspace({
                       </div>
                     </dl>
                   </div>
+                </>
+              ) : demoActive &&
+                phase === demoPhase &&
+                stateOf(phase) === "not_open" ? (
+                <>
+                  <h2>
+                    {phases.find((item) => item.key === phase)?.label} demo
+                    preview
+                  </h2>
+                  <p className="snw-lede">
+                    This is a presentation preview. The governed phase is still
+                    closed, and this decision does not meet its approval or
+                    evidence requirements.
+                  </p>
+                  <p className="snw-note">
+                    Before this phase can open in a real event:{" "}
+                    {PREVIEW_UNMET_CONDITIONS[phase]}
+                  </p>
+                  {phase === "suppliers" && (
+                    <SourceNewStage04VendorPanelView
+                      event={event}
+                      panel={stage04VendorPanel}
+                    />
+                  )}
+                  {phase === "suppliers" && (
+                    <SourceNewStage05NdaReadiness
+                      coverage={stage05NdaCoverage}
+                      eventHref={eventHref}
+                    />
+                  )}
                 </>
               ) : stateOf(phase) === "not_open" ? (
                 <>
@@ -581,7 +641,11 @@ export function SourceNewWorkspace({
                 {completedEvent ? "Event status" : "Next action"}
               </p>
               <h2>
-                {completedEvent
+                {demoActive && phase === demoPhase
+                  ? demoFinished
+                    ? "Demo walkthrough complete"
+                    : "Self-approve for demo"
+                  : completedEvent
                   ? completionReviewNeeded
                     ? "Completion review needed"
                     : "Event completed"
@@ -592,7 +656,11 @@ export function SourceNewWorkspace({
                       : "Return to current work"}
               </h2>
               <p>
-                {completedEvent
+                {demoActive && phase === demoPhase
+                  ? demoFinished
+                    ? "Only the presentation rail is complete. The governed event remains at its recorded stage."
+                    : "Acknowledge this step to preview the next phase. This does not record a governed approval."
+                  : completedEvent
                   ? completionReviewNeeded
                     ? `${historicalGapPhases.length} ${historicalGapPhases.length === 1 ? "phase has" : "phases have"} no governed history. Record the missing evidence or a named waiver before treating the event record as complete.`
                     : "The governed event is complete. No next action is pending in Source New."
@@ -602,7 +670,32 @@ export function SourceNewWorkspace({
                       ? "This phase is locked. The event must advance to open it."
                       : "You are reviewing a phase the event has moved past. No gate is changed here."}
               </p>
-              {completedEvent ? (
+              {demoActive && phase === demoPhase ? (
+                demoFinished ? (
+                  <button
+                    className="snw-primary"
+                    type="button"
+                    onClick={() => {
+                      setDemoAcknowledged([]);
+                      setPhase(current);
+                    }}
+                  >
+                    Restart demo
+                  </button>
+                ) : (
+                  <button
+                    className="snw-primary"
+                    type="button"
+                    onClick={() => {
+                      setDemoAcknowledged((previous) => [...previous, phase]);
+                      const next = SOURCE_NEW_PHASE_ORDER[demoIndex + 1];
+                      if (next) setPhase(next);
+                    }}
+                  >
+                    Self-approve for demo
+                  </button>
+                )
+              ) : completedEvent ? (
                 completionReviewNeeded ? (
                   <Link className="snw-primary" href={eventHref}>
                     Resolve historical gaps
@@ -661,6 +754,22 @@ export function SourceNewWorkspace({
             <Link className="snw-primary" href={actionHref}>
               {reviewPending ? "Open approval" : "Open event"}
             </Link>
+            {demoActive && demoAcknowledged.length > 0 && (
+              <section aria-label="Demo acknowledgements" className="snw-known">
+                <h3>Demo acknowledgements</h3>
+                <p>
+                  Browser-only presentation choices. These are not governed
+                  decisions.
+                </p>
+                <ul>
+                  {demoAcknowledged.map((item) => (
+                    <li key={item}>
+                      {phases.find((entry) => entry.key === item)?.label}
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            )}
             <SourceNewDecisionTrail activity={activity} />
           </section>
         )}
