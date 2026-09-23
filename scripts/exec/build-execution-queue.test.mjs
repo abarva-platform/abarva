@@ -24,21 +24,9 @@ import path from "node:path";
 import { execFileSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 
-const HERE = path.dirname(fileURLToPath(import.meta.url));
+import { copyToolchainInto } from "./toolchain-manifest.mjs";
 
-/** Repo-owned executable inputs copied into an isolated operator fixture. */
-const TOOLCHAIN_FILES = [
-  "build-source-board.mjs",
-  "build-execution-queue.mjs",
-  // The queue generator stamps its own sha256 into the file it writes (item
-  // T-720) and imports the stamp's writer from here, so a fixture that copies
-  // the generator without this module cannot run it at all.
-  "queue-provenance.mjs",
-  // queue-provenance.mjs imports the shared CLI entry guard (item T-723), so a
-  // fixture without it cannot load the generator at all.
-  "cli-entry.mjs",
-  "source-stage-map.json",
-];
+const HERE = path.dirname(fileURLToPath(import.meta.url));
 
 /** Synthetic operator documents. CI never reads the real Downloads backlog. */
 const FIXTURE_DOCUMENTS = {
@@ -85,9 +73,11 @@ function check(name, ok, detail) {
 
 function freshFixture() {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "t076-"));
-  for (const f of TOOLCHAIN_FILES) {
-    fs.copyFileSync(path.join(HERE, f), path.join(dir, f));
-  }
+  // The toolchain is declared once (item T-726), not listed here. This list was
+  // hand-maintained and went stale twice in one session -- when the generator
+  // began importing queue-provenance.mjs, and again when that began importing
+  // cli-entry.mjs. Both times the suite found out by crashing.
+  copyToolchainInto(dir);
   for (const [file, content] of Object.entries(FIXTURE_DOCUMENTS)) {
     fs.writeFileSync(path.join(dir, file), content);
   }

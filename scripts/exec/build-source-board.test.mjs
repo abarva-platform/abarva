@@ -31,11 +31,8 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { execFileSync } from "node:child_process";
-import { fileURLToPath } from "node:url";
 
-const HERE = path.dirname(fileURLToPath(import.meta.url));
-
-const TOOLCHAIN_FILES = ["build-source-board.mjs", "source-stage-map.json"];
+import { copyToolchainInto } from "./toolchain-manifest.mjs";
 
 const FIXTURE_DOCUMENTS = {
   "SOURCE_EXECUTION_BOARD_20260917.md": `# Synthetic execution board
@@ -86,9 +83,9 @@ function check(name, ok, detail) {
 
 function freshFixture() {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "t702-"));
-  for (const f of TOOLCHAIN_FILES) {
-    fs.copyFileSync(path.join(HERE, f), path.join(dir, f));
-  }
+  // Declared once (item T-726) rather than listed here, so a module added to
+  // the toolchain reaches this fixture without anyone remembering to add it.
+  copyToolchainInto(dir);
   for (const [file, content] of Object.entries(FIXTURE_DOCUMENTS)) {
     fs.writeFileSync(path.join(dir, file), content);
   }

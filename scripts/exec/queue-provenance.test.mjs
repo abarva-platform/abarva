@@ -51,6 +51,8 @@ import {
   regenerateCommand,
 } from "./queue-provenance.mjs";
 
+import { copyToolchainInto } from "./toolchain-manifest.mjs";
+
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const GENERATOR = path.join(HERE, "build-execution-queue.mjs");
 const BOARD = path.join(HERE, "build-source-board.mjs");
@@ -266,13 +268,11 @@ function repoOwnedQueueBody() {
   // invented one. The real copy in the operator root differs from the repo-owned
   // generator by 651 diff lines; one line of drift is enough to make the point
   // that the stamp is bound to the generator's bytes.
-  fs.copyFileSync(path.join(HERE, "source-stage-map.json"), path.join(fixtureDir, "source-stage-map.json"));
-  fs.copyFileSync(path.join(HERE, "queue-provenance.mjs"), path.join(fixtureDir, "queue-provenance.mjs"));
-  // The shared CLI entry guard (item T-723); queue-provenance.mjs imports it.
-  fs.copyFileSync(path.join(HERE, "cli-entry.mjs"), path.join(fixtureDir, "cli-entry.mjs"));
-  // Byte-identical, so T-711's board-provenance guard is satisfied and the only
-  // variable under test is the QUEUE generator's own identity.
-  fs.copyFileSync(path.join(HERE, "build-source-board.mjs"), path.join(fixtureDir, "build-source-board.mjs"));
+  // The whole toolchain, declared once (item T-726) rather than listed here.
+  // The board arrives byte-identical, so T-711's board-provenance guard is
+  // satisfied and the only variable under test is the QUEUE generator's own
+  // identity -- which the next statement overwrites on purpose.
+  copyToolchainInto(fixtureDir);
   const supersededCopy = path.join(fixtureDir, "build-execution-queue.mjs");
   fs.writeFileSync(
     supersededCopy,

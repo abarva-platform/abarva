@@ -80,12 +80,30 @@ function run(script, args, cwd) {
  * in CI — which is the same "passes because it never ran" shape this item is
  * about. `realDir` and `linkDir` name the same files on every platform.
  */
-function symlinkedCopy(files) {
+function symlinkedCopy({ toolchain = false } = {}) {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "t723-"));
   const realDir = path.join(root, "real");
   const linkDir = path.join(root, "link");
   fs.mkdirSync(realDir);
-  for (const f of files) fs.copyFileSync(path.join(HERE, f), path.join(realDir, f));
+  // `toolchain` copies the whole declared toolchain (item T-726). It used to be
+  // a hand-written list of three names, and `queue-provenance.mjs` reaches
+  // `build-execution-queue.mjs` through a sibling PATH rather than an import --
+  // so the short copy threw nothing and silently answered `generator_missing`
+  // where the repo directory answers `unstamped`. The cases here never drove
+  // that branch, so the list was wrong and the suite was green.
+  //
+  // The list is asked for by RUNNING the manifest CLI rather than importing it.
+  // This suite is the one that has to stay runnable when an entry guard in this
+  // directory is wrong: a module whose guard answers "run" prints and exits
+  // during import, which would take this suite down with it and leave exit 0
+  // and no cases -- the exact defect it exists against.
+  if (toolchain) {
+    const listed = run(path.join(HERE, "toolchain-manifest.mjs"), ["--json"], root);
+    if (listed.status !== 0) throw new Error(`toolchain-manifest.mjs --json failed: ${listed.stderr}`);
+    for (const f of JSON.parse(listed.stdout).files) {
+      fs.copyFileSync(path.join(HERE, f), path.join(realDir, f));
+    }
+  }
   fs.symlinkSync(realDir, linkDir, "dir");
   return { root, realDir, linkDir };
 }
@@ -94,7 +112,7 @@ function symlinkedCopy(files) {
 /* 1-4. The predicate itself, including the symlink case.                   */
 /* ------------------------------------------------------------------------ */
 {
-  const { root, realDir, linkDir } = symlinkedCopy([]);
+  const { root, realDir, linkDir } = symlinkedCopy();
   const target = path.join(realDir, "thing.mjs");
   fs.writeFileSync(target, "// a module\n");
   const viaLink = path.join(linkDir, "thing.mjs");
@@ -133,7 +151,7 @@ function symlinkedCopy(files) {
 /* inverted on purpose rather than by omission.                              */
 /* ------------------------------------------------------------------------ */
 {
-  const { root, realDir } = symlinkedCopy([]);
+  const { root, realDir } = symlinkedCopy();
   const target = path.join(realDir, "thing.mjs");
   fs.writeFileSync(target, "// a module\n");
   const url = `file://${target}`;
@@ -189,11 +207,7 @@ function symlinkedCopy(files) {
 /* its verdict, not that it exited 0 — a silent exit 0 is the defect.        */
 /* ------------------------------------------------------------------------ */
 {
-  const { root, realDir, linkDir } = symlinkedCopy([
-    "cli-entry.mjs",
-    "queue-provenance.mjs",
-    "worktree-retention.mjs",
-  ]);
+  const { root, realDir, linkDir } = symlinkedCopy({ toolchain: true });
 
   // queue-provenance: point it at a queue that does not exist. The verdict is
   // `absent` and the exit code is 1 — a CLI that declined to run gives neither.
@@ -259,11 +273,7 @@ function symlinkedCopy(files) {
 /* always run". append-claim.mjs imports queue-provenance.mjs on every claim.*/
 /* ------------------------------------------------------------------------ */
 {
-  const { root, realDir, linkDir } = symlinkedCopy([
-    "cli-entry.mjs",
-    "queue-provenance.mjs",
-    "worktree-retention.mjs",
-  ]);
+  const { root, realDir, linkDir } = symlinkedCopy({ toolchain: true });
 
   for (const [label, dir] of [["real", realDir], ["symlinked", linkDir]]) {
     const importer = path.join(root, `import-${label}.mjs`);
@@ -280,6 +290,82 @@ function symlinkedCopy(files) {
       `status=${r.status} stdout=${r.stdout.slice(0, 300)} stderr=${r.stderr.slice(0, 200)}`,
     );
   }
+
+  fs.rmSync(root, { recursive: true, force: true });
+}
+
+/* ------------------------------------------------------------------------ */
+/* 15-17. EVERY module in this directory, not two named ones.               */
+/*                                                                          */
+/* Cases 13-14 name `queue-provenance.mjs` and `worktree-retention.mjs`,    */
+/* which were the two modules that had the defect on the day. A guard that  */
+/* wrongly answers "run" makes the module print and exit during import --   */
+/* so any suite importing it reports nothing and EXITS 0, which CI reads as */
+/* a pass. Measured while item T-726 was in flight: with the guard in       */
+/* `toolchain-manifest.mjs` forced to true, three suites exited 0 having    */
+/* run zero cases.                                                          */
+/*                                                                          */
+/* The list is read from the directory, not written here, because a         */
+/* hand-written one is the defect T-726 is about and a new module is        */
+/* exactly what it misses.                                                  */
+/*                                                                          */
+/* TWO MODULES ARE EXEMPT AND THE EXEMPTION RETIRES ITSELF. T-723 gave      */
+/* four modules the shared guard and never looked at the two generators:    */
+/* they have no guard at all, so importing either RUNS it. That is item     */
+/* T-727, filed rather than fixed here -- those files are not in this        */
+/* change. The case below asserts each exempt module still runs on import,  */
+/* so the day one of them gains a guard this list fails until the name is   */
+/* removed from it. An exemption that cannot go stale is the point.         */
+/* ------------------------------------------------------------------------ */
+{
+  const EXEMPT_UNGUARDED = ["build-execution-queue.mjs", "build-source-board.mjs"];
+
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "t726-import-all-"));
+  const modules = fs
+    .readdirSync(HERE, { withFileTypes: true })
+    .filter((e) => e.isFile() && e.name.endsWith(".mjs") && !e.name.endsWith(".test.mjs"))
+    .map((e) => e.name)
+    .sort();
+
+  const importOnly = (names, label) => {
+    const importer = path.join(root, `import-${label}.mjs`);
+    fs.writeFileSync(
+      importer,
+      `${names.map((m) => `import "${path.join(HERE, m)}";`).join("\n")}\n` +
+        `console.log("IMPORTED_CLEANLY");\n`,
+    );
+    return run(importer, [], root);
+  };
+
+  const guarded = modules.filter((m) => !EXEMPT_UNGUARDED.includes(m));
+  const r = importOnly(guarded, "guarded");
+
+  check(
+    `importing all ${guarded.length} guarded modules in this directory runs no CLI`,
+    r.status === 0 && r.stdout.trim() === "IMPORTED_CLEANLY",
+    `status=${r.status}\nstdout=${r.stdout.slice(0, 400)}\nstderr=${r.stderr.slice(0, 300)}\n` +
+      `modules=${guarded.join(", ")}\n` +
+      "output other than IMPORTED_CLEANLY means a module ran its CLI on import",
+  );
+
+  check(
+    "every exempt module is a module that exists",
+    EXEMPT_UNGUARDED.every((m) => modules.includes(m)),
+    `exempt=${EXEMPT_UNGUARDED.join(", ")} present=${modules.join(", ")}`,
+  );
+
+  const stillUnguarded = EXEMPT_UNGUARDED.filter((m) => {
+    const one = importOnly([m], m.replace(/\W/g, "-"));
+    return !(one.status === 0 && one.stdout.trim() === "IMPORTED_CLEANLY");
+  });
+
+  check(
+    "THE EXEMPTION RETIRES ITSELF: every exempt module still runs on import",
+    stillUnguarded.length === EXEMPT_UNGUARDED.length,
+    `exempt=${EXEMPT_UNGUARDED.join(", ")} still unguarded=${stillUnguarded.join(", ")}\n` +
+      "a module here that no longer runs on import has been fixed (item T-727);\n" +
+      "remove it from EXEMPT_UNGUARDED so the case above covers it",
+  );
 
   fs.rmSync(root, { recursive: true, force: true });
 }
