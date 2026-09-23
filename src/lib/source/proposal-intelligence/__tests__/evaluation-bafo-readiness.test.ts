@@ -6,8 +6,137 @@ import {
   buildVendorEvaluationDecisionView,
   buildVendorResponseMveProfiles,
 } from "@/lib/source/proposal-intelligence";
+import { deriveVendorResponseProfilesFromNormalized } from "@/lib/source/vendor-response-completeness-from-normalized";
+import type { NormalizedVendorResponsePackage } from "@/lib/source/vendor-response-matrix";
+import { createElement } from "react";
+import { renderToStaticMarkup } from "react-dom/server";
+import { EvaluationBafoReadinessPanel } from "@/components/source/canvas/responses/EvaluationBafoReadinessPanel";
+
+const acceptedPackage: NormalizedVendorResponsePackage = {
+  artifactId: "accepted-artifact-1",
+  originalName: "supplier-response.xlsx",
+  receivedAt: "2026-09-22T12:00:00Z",
+  vendorId: "supplier-1",
+  vendorName: "Example Supplier",
+  rows: [
+    {
+      questionId: "question:supplier-1:REQ-1",
+      requirementId: "REQ-1",
+      category: "service scope",
+      section: "Service model",
+      requirement: "Describe service coverage.",
+      requirementLevel: "Scored",
+      responseType: "Narrative",
+      evidenceRequired: true,
+      evaluationCriterionId: "coverage",
+      responseDisposition: "Comply",
+      responseNarrative: "Twenty-four hour coverage.",
+      evidenceRefs: ["exhibit-1"],
+      reviewState: "accepted",
+      provenance: {
+        artifactId: "accepted-artifact-1",
+        artifactName: "supplier-response.xlsx",
+        receivedAt: "2026-09-22T12:00:00Z",
+        parser: "source_normalized_vendor_response_v1",
+        factKey: "fact-1",
+      },
+    },
+    {
+      questionId: "question:supplier-1:REQ-2",
+      requirementId: "REQ-2",
+      category: "service scope",
+      section: "Service model",
+      requirement: "Describe regional handoff.",
+      requirementLevel: "Mandatory",
+      responseType: "Narrative",
+      evidenceRequired: false,
+      responseDisposition: null,
+      responseNarrative: null,
+      reviewState: "accepted",
+      provenance: {
+        artifactId: "accepted-artifact-1",
+        artifactName: "supplier-response.xlsx",
+        receivedAt: "2026-09-22T12:00:00Z",
+        parser: "source_normalized_vendor_response_v1",
+        factKey: "fact-2",
+      },
+    },
+  ],
+  analytics: {
+    requirementCount: 2,
+    requirementCoverageScore: 50,
+    mandatoryCompletenessScore: 0,
+    evidenceCoverageScore: 50,
+    pricingTraceabilityScore: 0,
+    slaTraceabilityScore: 0,
+    exceptionDisclosureScore: 100,
+    criterionLinkageScore: 50,
+    readyForEvaluation: "no",
+    nonConformances: [],
+    clarificationQuestions: [],
+  },
+  parserWarnings: [],
+  syntheticDemo: false,
+  reviewState: "accepted",
+  authority: {
+    acceptedArtifactOnly: true,
+    source: "artifact_acceptance",
+    acceptedAt: "2026-09-22T13:00:00Z",
+    downstreamContextPolicy: "include",
+  },
+};
 
 describe("evaluation / BAFO readiness decision support", () => {
+  it("renders accepted requirement questions with stable IDs without promoting them to evaluator scores", () => {
+    const profileSet = deriveVendorResponseProfilesFromNormalized({
+      packages: [acceptedPackage],
+      event: { id: "event-1" },
+      tenantKey: "example-client",
+    });
+    const view = buildEvaluationBafoReadinessView({
+      profileSet,
+      normalizedPackages: [acceptedPackage],
+    });
+
+    expect(view.questionResponses).toEqual([
+      expect.objectContaining({
+        questionId: "question:supplier-1:REQ-1",
+        questionLabel: "Describe service coverage.",
+        answerState: "complete",
+        normalizedResponse: "Twenty-four hour coverage.",
+        evidenceReference: "exhibit-1",
+      }),
+      expect.objectContaining({
+        questionId: "question:supplier-1:REQ-2",
+        questionLabel: "Describe regional handoff.",
+        answerState: "missing",
+        normalizedResponse: "No response recorded.",
+      }),
+    ]);
+    expect(view.evaluatorScorecards[0].reviewState).toBe("not_loaded");
+    expect(view.state).not.toBe("ready_for_evaluator_review");
+    const html = renderToStaticMarkup(
+      createElement(EvaluationBafoReadinessPanel, { view }),
+    );
+    expect(html).toContain("Describe service coverage.");
+    expect(html).toContain("Twenty-four hour coverage.");
+    expect(html).toContain("Describe regional handoff.");
+    expect(html).not.toContain("2 requirement row(s)");
+  });
+
+  it("does not label unaccepted parsed rows as governed questions", () => {
+    const profileSet = deriveVendorResponseProfilesFromNormalized({
+      packages: [acceptedPackage],
+      event: { id: "event-1" },
+      tenantKey: "example-client",
+    });
+    const view = buildEvaluationBafoReadinessView({
+      profileSet,
+      normalizedPackages: [{ ...acceptedPackage, authority: undefined }],
+    });
+    expect(view.questionResponses).toEqual([]);
+  });
+
   it("fails closed when no governed vendor response profiles are loaded", () => {
     const view = buildEvaluationBafoReadinessView({});
 
