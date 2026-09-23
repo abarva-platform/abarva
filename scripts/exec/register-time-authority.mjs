@@ -959,13 +959,54 @@ export function normalisePath(raw) {
  * they are staying off it, and reading either as a hold would refuse a run
  * that is entitled to the file.
  */
-const PATH_NEGATOR =
-  /\b(?:avoid|avoiding|avoids|excluded|excluding|excludes|not|never|no|outside|free|freed|released|releasing|without|rather\s+than|instead\s+of)\b[^.]{0,40}$/i;
+/*
+ * `(?!-)` is item T-725's, and it is the cost of letting a cue govern a whole
+ * list rather than one path. Hyphenated, the vocabulary is not a disclaimer
+ * at all: the register writes `no-op`, `not-found`, `--no-emit`,
+ * `--no-coverage`, `no-record`, `free-text` — 60-odd compound adjectives and
+ * CLI flags, and not one of them disclaims a file. Un-hyphenated it already
+ * freed one genuinely claimed path on the real register (`not an ordinary
+ * no-record state; files limited to <three paths>`), and propagating a head's
+ * verdict to its list would have carried that false PASS onto the other two.
+ * A false pass puts two runs on one file, so it is repaired here rather than
+ * inherited.
+ */
+const PATH_NEGATOR_WORD =
+  /\b(?:avoid|avoiding|avoids|excluded|excluding|excludes|not|never|no|outside|free|freed|released|releasing|without|rather\s+than|instead\s+of)\b(?!-)/gi;
+
+/** Unchanged from T-707: the cue reaches 40 characters and may not cross a full stop. */
+const PATH_NEGATOR_REACH = 40;
+
+/*
+ * The cue's object, when it is a PRONOUN and the list follows a colon, is the
+ * pronoun and not the list — also item T-725's, and also the cost of letting a
+ * cue govern a whole list. Live register line 2027 reads
+ * `TWO FILES I TOUCHED ARE DELIBERATELY ABSENT FROM THE --files LIST ABOVE AND
+ * I AM NAMING THEM HERE RATHER THAN OMITTING THEM: <a> and <b>` — a run going
+ * out of its way to declare two files it holds. `rather than` sits 29
+ * characters in front of the list, so the cue reaches, and its object is
+ * `THEM`. Before this item that cost the head only, which a second mention of
+ * the same path later on the line happened to repair; propagating the head's
+ * verdict would have freed the other file outright, with its owner still live.
+ */
+const PATH_NEGATOR_OBJECT = /\b(?:them|it|those|these)\b\s*:/i;
+
+/** Whether a cue in front of a path list hands the whole list back. */
+function negatesPathList(before) {
+  for (const match of before.matchAll(PATH_NEGATOR_WORD)) {
+    const gap = before.slice(match.index + match[0].length);
+    if (gap.length > PATH_NEGATOR_REACH) continue;
+    if (gap.includes(".")) continue;
+    if (PATH_NEGATOR_OBJECT.test(gap)) continue;
+    return true;
+  }
+  return false;
+}
 
 /**
  * An ATTRIBUTIVE cue in front of a path mention disqualifies it (item T-710).
  *
- * `PATH_NEGATOR` above catches a line that says it is staying OFF a file. It
+ * `negatesPathList` above catches a line that says it is staying OFF a file. It
  * does not catch the other thing the register does constantly: one lane
  * surveying the others before choosing what to touch, and naming their files
  * in order to say whose they are. Live line 1887 at 21:28:22Z writes
@@ -1019,19 +1060,153 @@ function attributiveReach(before) {
   return before.replace(/`([^`]*)`/g, (_, inner) => (normalisePath(inner) ? "." : "``"));
 }
 
-/** Every repo path this line HOLDS, with the ones it merely mentions dropped. */
-export function claimedPaths(text) {
-  const line = String(text ?? "");
-  const out = new Map();
+/**
+ * A DISCLAIMER BEHIND THE LIST (item T-725).
+ *
+ * Both cues above read what sits in FRONT of a path. The register's own
+ * disclaimer of somebody else's files is written the other way round, and the
+ * real known positive is one: a claim line surveys the live siblings, names
+ * their three files with `names`, and then says `- none of which I touch`.
+ * A purely left-governing repair — which is what the item asked for — passes
+ * every fixture and leaves that line holding all three, so the item's
+ * "left-governing" is recorded in the suite as a correction rather than
+ * followed.
+ *
+ * THE VOCABULARY IS COUNTED OFF THE REGISTER, not brainstormed. `of which`
+ * occurs 6 times and `none of them` 26. Exactly three of those 32 disclaim a
+ * path — `none of which I touch`, `neither of which is in my list`, and
+ * `and I touch none of them` — and all three carry a first person. The other
+ * 29 predicate something else entirely (`none of which resolve in ...`,
+ * `none of which any workflow runs`, `Authorities, none of them my clock`),
+ * so BOTH halves are required: the set negation and a first-person marker.
+ * Dropping the first-person half frees `artifact-gate-map.ts` and the eight
+ * atlas suites, which is a false PASS — two runs on one file — and the suite
+ * pins each of those as a negative control.
+ */
+const PATH_TAIL_SET_NEGATION = /\b(?:none|neither)\s+of\s+(?:which|them)\b/i;
+const PATH_TAIL_FIRST_PERSON = /\bI\b|\b(?:my|mine)\b/;
+
+/**
+ * How far past the end of the list the disclaimer may begin, in WORDS.
+ *
+ * Measured, and pinned from both sides in the suite. The three real forms need
+ * 5, 7 and 7 tokens; the first text that must NOT reach is a live-shaped line
+ * whose `none of which` sits 15 tokens behind its list. 8 is one past the
+ * longest real case and half the distance to the first false pass.
+ *
+ * It is counted in words and not in characters on purpose: the two front cues
+ * are both bounded `[^.]{0,40}`, and since every repo path carries a full stop
+ * that bound cannot cross one — which is the other half of this same item.
+ */
+const PATH_TAIL_REACH_TOKENS = 8;
+
+/**
+ * The text a path list governs to its RIGHT, in words, cut at a clause break.
+ *
+ * The leading strip drops the quoting a path is written inside and the comma
+ * that joins it to the next clause. It deliberately does NOT drop `.`, `;` or
+ * `:` — those ARE the clause break, and stripping them was a false PASS the
+ * suite caught: `files: a.mjs. Authorities, none of them my clock` freed
+ * `a.mjs`, because the sentence ended and the veto read on past it.
+ */
+function pathGovernedTail(after) {
+  const words = [];
+  const cleaned = String(after).replace(/^[`'")\]*,\s]+/, "");
+  for (const token of cleaned.split(/\s+/).slice(0, PATH_TAIL_REACH_TOKENS)) {
+    // No `cut === 0` early break: one was written here and the mutation
+    // deleting it SURVIVED, because pushing `token.slice(0, 0)` and then
+    // breaking on `cut !== -1` is the same output. An unreachable branch is
+    // the shape T-714 recorded, so it is gone rather than left unconstrained.
+    const cut = token.search(CLAUSE_BREAK);
+    words.push(cut === -1 ? token : token.slice(0, cut));
+    if (cut !== -1) break;
+  }
+  return words.join(" ");
+}
+
+/** Whether a disclaimer behind the list hands the whole list back. */
+function disclaimsPathList(after) {
+  const tail = pathGovernedTail(after);
+  return PATH_TAIL_SET_NEGATION.test(tail) && PATH_TAIL_FIRST_PERSON.test(tail);
+}
+
+/**
+ * Only list punctuation may sit between two paths for them to be ONE list.
+ *
+ * Deliberately strict, and it is what keeps T-710's own guard standing: in
+ * `which names \`a.mjs\` and my own \`b.mjs\`` the words `my own` are not a
+ * joiner, so `b.mjs` opens a new list whose head is read from the top of the
+ * sentence exactly as it is today, and the writer's own file goes on holding.
+ */
+const PATH_LIST_JOINER =
+  /^[`'")\]*]*\s*(?:[,;·+&]\s*)?(?:(?:and|or|plus)\s*)?[`'"(\[*]*$/i;
+
+/**
+ * Every path occurrence on the line, in order, with its span.
+ *
+ * `trailer` is the punctuation `normalisePath` strips off the end of the
+ * token, and it is carried rather than discarded because `.` is inside
+ * `PATH_TOKEN`'s character class: a path at the end of a sentence swallows the
+ * full stop, and a tail veto reading from `end` would start in the NEXT
+ * sentence without ever seeing the boundary.
+ */
+function pathOccurrences(line) {
+  const out = [];
   PATH_TOKEN.lastIndex = 0;
   for (const match of line.matchAll(PATH_TOKEN)) {
     const normalised = normalisePath(match[1]);
     if (!normalised) continue;
-    const before = line.slice(0, match.index + (match[0].length - match[1].length));
-    if (PATH_NEGATOR.test(before)) continue;
-    if (PATH_ATTRIBUTIVE.test(attributiveReach(before))) continue;
-    if (!out.has(normalised.path)) out.set(normalised.path, normalised);
+    const start = match.index + (match[0].length - match[1].length);
+    out.push({
+      ...normalised,
+      start,
+      end: start + match[1].length,
+      trailer: match[1].match(/[`'")\].,;:]+$/)?.[0] ?? "",
+    });
   }
+  return out;
+}
+
+/**
+ * Every repo path this line HOLDS, with the ones it merely mentions dropped.
+ *
+ * The unit of decision is the LIST, not the path (item T-725). Consecutive
+ * paths joined by nothing but list punctuation are one object: the front cues
+ * are evaluated once at the list's head and the tail veto once behind its
+ * last member, and a cue that disqualifies the list disqualifies all of it.
+ * Per-path evaluation made `Files released: a.ts, b.ts and c.ts` free `a.ts`
+ * and hold the other two — a reading nobody chose, produced by a character
+ * bound that cannot cross the full stop inside a filename.
+ */
+export function claimedPaths(text) {
+  const line = String(text ?? "");
+  const out = new Map();
+  const occurrences = pathOccurrences(line);
+
+  for (let i = 0; i < occurrences.length; ) {
+    let last = i;
+    while (
+      last + 1 < occurrences.length &&
+      PATH_LIST_JOINER.test(line.slice(occurrences[last].end, occurrences[last + 1].start))
+    ) {
+      last += 1;
+    }
+
+    const before = line.slice(0, occurrences[i].start);
+    const disqualified =
+      negatesPathList(before) ||
+      PATH_ATTRIBUTIVE.test(attributiveReach(before)) ||
+      disclaimsPathList(occurrences[last].trailer + line.slice(occurrences[last].end));
+
+    if (!disqualified) {
+      for (let k = i; k <= last; k += 1) {
+        const { path, kind } = occurrences[k];
+        if (!out.has(path)) out.set(path, { path, kind });
+      }
+    }
+    i = last + 1;
+  }
+
   return [...out.values()];
 }
 
