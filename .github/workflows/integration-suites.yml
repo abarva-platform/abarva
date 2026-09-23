@@ -173,6 +173,17 @@ name: Integration suites
 # mixed across admin, auth, Atlas, shell, evidence, portfolio, strategic moves
 # and Tower contracts, and moving root files into nominal directories would be a
 # structure refactor rather than a CI ownership fix.
+#
+# 2026-09-23 · that paragraph was the ONLY record of the carve-out, and a
+# paragraph counting exclusions cannot fail. Enumerating by exact path inverts
+# this directory's default to EXCLUDED, so a root file nobody adds below is
+# silently unrun — which is how five of them, one red for real content loss on
+# a governed answer surface, stayed invisible. The exclusions are now named,
+# with a failing case, a reason, an owner and a triage verdict, in
+# scripts/quality/integration-root-quarantine.json, and
+# check:integration-root-quarantine fails three ways the comment could not: a
+# root file that is unrun and undeclared, a declared file that is run again,
+# and a declared suite that PASSES when re-run. Backlog item 26.
 
 on:
   merge_group:
@@ -233,6 +244,15 @@ jobs:
 
       - name: Refuse a stale or growing Admin quarantine list
         run: npm run check:admin-integration-quarantine
+
+      # The root-level carve-out, which is the one whose default is EXCLUDED.
+      # This fails when a root file is unrun and undeclared, when a declared
+      # file is wired back in but left on the list, and when a declared suite
+      # passes on re-run. It asks the coverage census which root files no
+      # workflow runs rather than re-reading the command above, so the two
+      # cannot disagree about a directory-regex collision.
+      - name: Refuse an undeclared or expired integration-root exclusion
+        run: npm run check:integration-root-quarantine
 
       # A separate step for the same reason the Intelligence one is separate:
       # its exclusion flags name Admin suites, and folding them into the green
