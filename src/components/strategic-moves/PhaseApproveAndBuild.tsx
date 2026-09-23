@@ -41,6 +41,11 @@ const ATTENTION = "#B5852A"; // blocked / below gate
 const STALE = "#B4513C"; // error / failed
 const RUNNING = "#1D4ED8"; // queued / running
 
+function finalDownloadUrl(url: string): string {
+  if (!url.startsWith("/api/v1/artifacts/")) return url;
+  return `${url}${url.includes("?") ? "&" : "?"}format=docx`;
+}
+
 type RunStatus =
   | "queued"
   | "running"
@@ -732,7 +737,7 @@ export function PhaseApproveAndBuild({
             </span>
             {r.status === "succeeded" && r.blobUrl && (
               <Link
-                href={r.blobUrl}
+                href={finalDownloadUrl(r.blobUrl)}
                 style={{
                   gridColumn: "2 / -1",
                   justifySelf: "start",

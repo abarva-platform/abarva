@@ -1,5 +1,7 @@
 import {
+  artifactFinalDownloadUrl,
   artifactFormatLabel,
+  artifactInlinePreviewUrl,
   artifactOutputRoleLabel,
   artifactStatusLabel,
   buildContextExtractReviewModel,
@@ -84,6 +86,28 @@ describe("FileCabinetPanel artifact labels", () => {
         "move-1",
       ),
     ).toBe(true);
+  });
+
+  it("requests editable downloads for generated artifacts instead of their HTML default", () => {
+    expect(
+      artifactFinalDownloadUrl({
+        downloadUrl: "/api/v1/artifacts/generated-charter-1",
+        fileFormat: "docx",
+        outputRole: "docx_editable_phase_record",
+      }),
+    ).toBe("/api/v1/artifacts/generated-charter-1?format=docx");
+    expect(
+      artifactFinalDownloadUrl({
+        downloadUrl: "/api/v1/artifacts/generated-deck-1?source=vault",
+        fileFormat: "pptx",
+        outputRole: "pptx_final",
+      }),
+    ).toBe("/api/v1/artifacts/generated-deck-1?source=vault&format=pptx");
+    expect(
+      artifactInlinePreviewUrl({
+        downloadUrl: "/api/v1/artifacts/generated-charter-1",
+      }),
+    ).toBe("/api/v1/artifacts/generated-charter-1?format=html&inline=1");
   });
 
   it("recognizes and summarizes Move Context Extract artifacts", () => {

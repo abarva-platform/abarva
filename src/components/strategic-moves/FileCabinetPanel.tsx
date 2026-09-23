@@ -581,6 +581,44 @@ async function fetchArtifact(url: string): Promise<Blob> {
   return res.blob();
 }
 
+export function artifactFinalDownloadUrl(
+  artifact: Pick<Artifact, "downloadUrl" | "fileFormat" | "outputRole">,
+): string {
+  if (!artifact.downloadUrl.startsWith("/api/v1/artifacts/")) {
+    return artifact.downloadUrl;
+  }
+  const format =
+    artifact.fileFormat === "pptx" || artifact.outputRole === "pptx_final"
+      ? "pptx"
+      : artifact.fileFormat === "xlsx"
+        ? "xlsx"
+        : "docx";
+  return `${artifact.downloadUrl}${artifact.downloadUrl.includes("?") ? "&" : "?"}format=${format}`;
+}
+
+export function artifactInlinePreviewUrl(
+  artifact: Pick<Artifact, "downloadUrl">,
+): string {
+  const params = artifact.downloadUrl.startsWith("/api/v1/artifacts/")
+    ? "format=html&inline=1"
+    : "inline=1";
+  return `${artifact.downloadUrl}${artifact.downloadUrl.includes("?") ? "&" : "?"}${params}`;
+}
+
+function textFromArtifactPreview(html: string): string {
+  try {
+    const parsed = new DOMParser().parseFromString(html, "text/html");
+    return (parsed.body.textContent ?? "").replace(/\s+/g, " ").trim();
+  } catch {
+    return html
+      .replace(/<script[\s\S]*?<\/script>/gi, " ")
+      .replace(/<style[\s\S]*?<\/style>/gi, " ")
+      .replace(/<[^>]+>/g, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+  }
+}
+
 function ArtifactRow({
   a,
   moveId,
@@ -603,6 +641,11 @@ function ArtifactRow({
   const [missingEvidenceText, setMissingEvidenceText] = useState("");
   const [clientApprovalReason, setClientApprovalReason] = useState("");
   const [clientApprovalBusy, setClientApprovalBusy] = useState(false);
+  const [draftPreviewText, setDraftPreviewText] = useState<string | null>(null);
+  const [draftPreviewLoading, setDraftPreviewLoading] = useState(false);
+  const [draftPreviewError, setDraftPreviewError] = useState<string | null>(
+    null,
+  );
   const [actionErr, setActionErr] = useState<string | null>(null);
   const reviewPanelRef = useRef<HTMLDivElement | null>(null);
   const approvedFileInputRef = useRef<HTMLInputElement | null>(null);
@@ -618,12 +661,8 @@ function ArtifactRow({
     setBusy("open");
     setActionErr(null);
     try {
-      const openParams = isGeneratedArtifactRoute
-        ? "format=html&inline=1"
-        : "inline=1";
-      const inlineUrl = `${a.downloadUrl}${a.downloadUrl.includes("?") ? "&" : "?"}${openParams}`;
       const win = window.open(
-        inlineUrl,
+        artifactInlinePreviewUrl(a),
         `moves-artifact-${a.artifactId}`,
         "noopener,noreferrer",
       );
@@ -635,13 +674,13 @@ function ArtifactRow({
     } finally {
       setBusy(null);
     }
-  }, [a.artifactId, a.downloadUrl, isGeneratedArtifactRoute]);
+  }, [a]);
 
   const downloadArtifact = useCallback(async () => {
     setBusy("download");
     setActionErr(null);
     try {
-      const blob = await fetchArtifact(a.downloadUrl);
+      const blob = await fetchArtifact(artifactFinalDownloadUrl(a));
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
@@ -657,7 +696,7 @@ function ArtifactRow({
     } finally {
       setBusy(null);
     }
-  }, [a.downloadUrl, a.fileName, a.title, a.fileFormat]);
+  }, [a]);
 
   const submitReviewFeedback = useCallback(async () => {
     const text = feedbackText.trim();
@@ -736,6 +775,43 @@ function ArtifactRow({
     });
   }, [reviewOpen]);
 
+  useEffect(() => {
+    let cancelled = false;
+    setDraftPreviewText(null);
+    setDraftPreviewError(null);
+    if (!reviewOpen || !canApproveGeneratedDraft || !isGeneratedArtifactRoute) {
+      setDraftPreviewLoading(false);
+      return;
+    }
+    setDraftPreviewLoading(true);
+    void fetch(artifactInlinePreviewUrl(a), { credentials: "include" })
+      .then(async (res) => {
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return res.text();
+      })
+      .then((html) => {
+        if (cancelled) return;
+        const text = textFromArtifactPreview(html);
+        if (!text) {
+          throw new Error("Draft preview has no readable body.");
+        }
+        setDraftPreviewText(text.slice(0, 6000));
+      })
+      .catch((err) => {
+        if (!cancelled) {
+          setDraftPreviewError(
+            err instanceof Error ? err.message : "Draft preview failed",
+          );
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setDraftPreviewLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [a, canApproveGeneratedDraft, isGeneratedArtifactRoute, reviewOpen]);
+
   const submitSponsorDecision = useCallback(
     async (decision: SponsorReviewDecision) => {
       if (reviewBusy) return;
@@ -808,7 +884,13 @@ function ArtifactRow({
   );
 
   const acceptGeneratedDraft = useCallback(async () => {
-    if (!canApproveGeneratedDraft || clientApprovalBusy) return;
+    if (
+      !canApproveGeneratedDraft ||
+      clientApprovalBusy ||
+      (isGeneratedArtifactRoute && !draftPreviewText)
+    ) {
+      return;
+    }
     setClientApprovalBusy(true);
     setActionErr(null);
     try {
@@ -845,6 +927,8 @@ function ArtifactRow({
     canApproveGeneratedDraft,
     clientApprovalBusy,
     clientApprovalReason,
+    draftPreviewText,
+    isGeneratedArtifactRoute,
     moveId,
     onChanged,
   ]);
@@ -1451,6 +1535,46 @@ function ArtifactRow({
                 a human reviewer accepts it as authoritative or uploads an
                 edited client-approved final.
               </p>
+              {isGeneratedArtifactRoute && (
+                <div
+                  style={{
+                    border: "1px solid #D7EFE5",
+                    borderRadius: 7,
+                    background: "#FFFFFF",
+                    padding: 10,
+                    marginBottom: 10,
+                  }}
+                >
+                  <div
+                    style={{
+                      fontSize: 10.5,
+                      fontWeight: 800,
+                      color: "#0F766E",
+                      textTransform: "uppercase",
+                      letterSpacing: "0.06em",
+                      marginBottom: 6,
+                    }}
+                  >
+                    Draft body
+                  </div>
+                  <div
+                    style={{
+                      maxHeight: 180,
+                      overflow: "auto",
+                      whiteSpace: "pre-wrap",
+                      fontSize: 12,
+                      lineHeight: 1.45,
+                      color: "#334155",
+                    }}
+                  >
+                    {draftPreviewLoading
+                      ? "Loading draft preview..."
+                      : draftPreviewError
+                        ? `Preview unavailable: ${draftPreviewError}`
+                        : draftPreviewText}
+                  </div>
+                </div>
+              )}
               <textarea
                 value={clientApprovalReason}
                 onChange={(e) => setClientApprovalReason(e.target.value)}
@@ -1487,12 +1611,19 @@ function ArtifactRow({
               >
                 <button
                   onClick={acceptGeneratedDraft}
-                  disabled={clientApprovalBusy}
+                  disabled={
+                    clientApprovalBusy ||
+                    (isGeneratedArtifactRoute && !draftPreviewText)
+                  }
                   style={{
                     fontSize: 11.5,
                     fontWeight: 700,
                     color: "#fff",
-                    background: clientApprovalBusy ? "#9AA3B2" : "#166534",
+                    background:
+                      clientApprovalBusy ||
+                      (isGeneratedArtifactRoute && !draftPreviewText)
+                        ? "#9AA3B2"
+                        : "#166534",
                     border: "none",
                     borderRadius: 5,
                     padding: "7px 12px",
