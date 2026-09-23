@@ -202,22 +202,44 @@ export function newestClaimFor(registerText, id) {
  * this tool looks at the same evidence that produced the bucket.
  *
  * `branch none` is a DECLARATION OF ABSENCE and yields nothing: a claim that
- * says it has no branch is not a claim whose branch we failed to find.
+ * says it has no branch is not a claim whose branch we failed to find. Its job
+ * is to block the PROSE FALLBACK below, so that a line saying it has no branch
+ * cannot be given one by a token it merely mentions.
+ *
+ * That absence LOSES to a branch the same line really declares (item T-735).
+ * Until it did, the veto returned early and threw away branches it had already
+ * read: the T-733 release line declares `on branch \`exec/t-733-…\`` and then
+ * NARRATES the fixture value `branch n/a` in a sentence about this very guard,
+ * and the whole line resolved to no branch at all. One line on the live
+ * register today, harmless there because a release outranks in-flight — but on
+ * a CLAIM line the same shape drops a held item into "free to take".
  *
  * A `files:` list is full of slashes and must never be read as a branch, which
  * is why nothing here matches a bare `a/b` shape.
+ *
+ * Conversely a declared value with no `/` is not a branch. `\bbranch\s+(\S+)`
+ * matches English as readily as a field, and on the live register every
+ * no-slash value it captures is prose: `branch deleted` 44 times, then `is`,
+ * `was`, `and`, `merged`, `pushed`, `rebased`. The slash requirement is what
+ * keeps those out of a probe — and, since `build-execution-queue.mjs` reads
+ * this function to decide an item is in flight, out of the suppression bucket.
  */
 export function branchesInClaim(line) {
   if (typeof line !== "string") return [];
   const found = [];
+  let declaredAbsent = false;
 
   const declared = /\bbranch\s+`?([^\s`|,]+)`?/gi;
   for (const match of line.matchAll(declared)) {
     const name = match[1].replace(/[.,;)]+$/, "");
-    if (/^(?:none|n\/a|unset|tbd)$/i.test(name)) return [];
+    if (/^(?:none|n\/a|unset|tbd)$/i.test(name)) {
+      declaredAbsent = true;
+      continue;
+    }
     if (name.includes("/")) found.push(name);
   }
   if (found.length) return dedupe(found);
+  if (declaredAbsent) return [];
 
   const inFlightToken = /\b(?:codex|claude|exec)\/[\w./-]+/g;
   for (const match of line.matchAll(inFlightToken)) {
