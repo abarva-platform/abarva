@@ -8,6 +8,7 @@
 import { buildValidatedAgentContextBundle } from "@/lib/governance/agent-context-bundle";
 import {
   buildGovernedEventContextBundle,
+  compareEventContextAdoption,
   eventContextFenceHolds,
   summarizeEventContextRefusals,
   type EventContextCandidate,
@@ -534,6 +535,53 @@ describe("C-008 · the fence post-condition, tested where it can fail", () => {
         IDENTITY,
       ),
     ).toBe(false);
+  });
+});
+
+describe("C-008 · shadow adoption comparison", () => {
+  it("reports agreement when the fence admits exactly what the read path uses", () => {
+    const bundle = buildGovernedEventContextBundle(
+      [ACCEPTED_ARTIFACT],
+      IDENTITY,
+    );
+    const comparison = compareEventContextAdoption(["ART-1@v3"], bundle);
+    expect(comparison).toMatchObject({
+      currentCount: 1,
+      fencedCount: 1,
+      wouldRemove: [],
+      wouldAdd: [],
+      agrees: true,
+    });
+  });
+
+  it("names what adoption would remove, and why, without removing it", () => {
+    const bundle = buildGovernedEventContextBundle(
+      [
+        ACCEPTED_ARTIFACT,
+        { ...ACCEPTED_ARTIFACT, id: "ART-9@v1", artifactId: "ART-9" },
+      ],
+      IDENTITY,
+    );
+    const comparison = compareEventContextAdoption(
+      ["ART-1@v3", "ART-9@v1"],
+      bundle,
+    );
+    expect(comparison.wouldRemove).toEqual(["ART-9@v1"]);
+    expect(comparison.refusalsByCode.unreviewed_evidence).toBe(1);
+    expect(comparison.agrees).toBe(false);
+    // The shadow comparison is a measurement, not an edit: the bundle it was
+    // computed from is unchanged and the caller keeps its own list.
+    expect(bundle.admitted.map((c) => c.id)).toEqual(["ART-1@v3"]);
+  });
+
+  it("reports an admission the read path does not have, which should be empty in practice", () => {
+    const bundle = buildGovernedEventContextBundle(
+      [ACCEPTED_ARTIFACT],
+      IDENTITY,
+    );
+    expect(compareEventContextAdoption([], bundle).wouldAdd).toEqual([
+      "ART-1@v3",
+    ]);
   });
 });
 

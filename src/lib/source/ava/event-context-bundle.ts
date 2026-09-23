@@ -454,3 +454,48 @@ export function summarizeEventContextRefusals(
   }
   return counts;
 }
+
+// ── Shadow adoption ──────────────────────────────────────────────────────────
+
+export interface EventContextAdoptionComparison {
+  /** How many artifacts the existing read path treats as authoritative today. */
+  currentCount: number;
+  /** How many survive the acceptance-bound fence. */
+  fencedCount: number;
+  /** Ids the fence would remove from the model context, if it were adopted. */
+  wouldRemove: string[];
+  /** Ids the fence admits that the current path does not use. Expected: none. */
+  wouldAdd: string[];
+  refusalsByCode: Record<EventContextRefusalCode, number>;
+  /** True when adopting the fence would change nothing. */
+  agrees: boolean;
+}
+
+/**
+ * Compare the fence against the read path already in production, without
+ * touching it.
+ *
+ * AGENTS.md's module-adoption rule: run a new substrate in shadow first,
+ * compare it with the current read path, and adopt only when answer quality,
+ * tenant safety and latency are same-or-better. Whether an artifact with no
+ * acceptance row should keep reaching a model is a product decision — today the
+ * authority resolver falls back to `status`/`is_current_authoritative`, and this
+ * fence would not — so this measures the divergence rather than deciding it.
+ */
+export function compareEventContextAdoption(
+  currentAuthoritativeIds: readonly string[],
+  bundle: GovernedEventContextBundle,
+): EventContextAdoptionComparison {
+  const current = new Set(currentAuthoritativeIds);
+  const fenced = new Set(bundle.admitted.map((candidate) => candidate.id));
+  const wouldRemove = [...current].filter((id) => !fenced.has(id));
+  const wouldAdd = [...fenced].filter((id) => !current.has(id));
+  return {
+    currentCount: current.size,
+    fencedCount: fenced.size,
+    wouldRemove,
+    wouldAdd,
+    refusalsByCode: summarizeEventContextRefusals(bundle),
+    agrees: wouldRemove.length === 0 && wouldAdd.length === 0,
+  };
+}

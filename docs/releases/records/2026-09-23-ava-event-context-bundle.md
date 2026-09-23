@@ -39,8 +39,10 @@ Release lane: `global-control-lane` — a shared control that any client's Sourc
 would flow through once a caller is wired to it. It is not client-scoped data, not an
 AbarVa-only admin capability, not a public or demo path, and it is not behind a flag.
 
-- **Layer 4 — Products (Source):** adds a contract module under the Source answer layer.
-  No product surface imports it yet, so no rendered behaviour changes in this release.
+- **Layer 4 — Products (Source):** adds a contract module under the Source answer layer
+  and calls it from the event-answer route in shadow mode. The route's model context is
+  byte-for-byte what it was; the only new output is a server log line, emitted solely when
+  the fence and the production read path disagree.
 - **Layer 3 — Canonical model:** unchanged. The module reads the acceptance grammar's
   published types rather than restating them, so the reader cannot drift from the writer.
 - **Layers 1 and 2 — intake and adapters:** untouched. No loader, migration, projection
@@ -48,10 +50,11 @@ AbarVa-only admin capability, not a public or demo path, and it is not behind a 
 
 ## Client Applicability
 
-- All clients: no behaviour change in this release — nothing under `src/` imports the
-  new module yet.
+- All clients: no answer changes. The event-answer route gains a read-only measurement
+  that can narrow nothing and emits a server-side log line on divergence.
 - Specific clients: none.
-- Internal only: yes in effect — this is a governance contract plus its test suite.
+- Internal only: yes in effect — a governance contract, its test suite, and a shadow
+  measurement whose only consumer is a server log.
 - Public/demo only: no.
 - Feature flag: none.
 
@@ -60,7 +63,11 @@ AbarVa-only admin capability, not a public or demo path, and it is not behind a 
 - `src/lib/source/ava/event-context-bundle.ts` — new. `buildGovernedEventContextBundle`,
   `eventContextFenceHolds`, `summarizeEventContextRefusals`, and the admissible-kind
   allowlist.
-- `src/lib/source/ava/__tests__/event-context-bundle.test.ts` — new, 42 cases.
+- `src/lib/source/ava/__tests__/event-context-bundle.test.ts` — new, 45 cases.
+- `src/app/api/v1/source/[eventId]/nexus/ask/route.ts` — the fence wired in shadow mode
+  beside the existing artifact-authority resolution. Adds `reportEventContextFenceShadow`,
+  which returns `void`, is wrapped so a measurement can never fail an answer, and does not
+  touch the `artifactIds` the route sends to the model.
 - This record.
 
 No migration, no schema change, no data write, no auth or RLS change, no deploy-affecting
@@ -74,14 +81,24 @@ fence a no-op.
 
 | | tests | failing | passing |
 |---|---|---|---|
-| before — policy seam only | 42 | **25** | 17 |
-| after | 42 | **0** | 42 |
+| before — policy seam only | 45 | **26** | 19 |
+| after | 45 | **0** | 45 |
 
-**Same scope, wider:** `jest src/lib/source/ava src/lib/governance` — 33 suites /
-404 tests passing before, 34 suites / 446 tests passing after. No pre-existing suite
-changed verdict; the only movement is the new file.
+**Same scope, wider:** `jest src/lib/source/ava src/lib/governance src/app/api/v1/source`
+— 64 suites / 595 tests passing before, 65 suites / 640 tests passing after. No
+pre-existing suite changed verdict; the only movement is the new file.
 
-**Mutation proof — 17 mutations, 17 caught, 0 escaped.** Each mutation was confirmed to
+**The orphan gate found the gap this record originally deferred, and it was right.**
+The first push failed CI on `audit:lib-orphans` — *"no `src/lib` module is reached only by
+its own test"* — because the module had no caller. That gate exists for exactly the
+answer this record first gave, so the module is now wired into the live event-answer
+route (`/api/v1/source/[eventId]/nexus/ask`) in **shadow mode**, per AGENTS.md's
+module-adoption rule. It measures the fence against the artifact set that route already
+sends to the model and logs the divergence; it returns nothing, no caller reads its
+result, and `artifactIds` is the unchanged production list. The gate now reports "no
+change against the baseline" — 2156 product-reached modules before, 2157 after.
+
+**Mutation proof — 20 mutations, 20 caught, 0 escaped.** Each mutation was confirmed to
 change the source before it was run (a no-op mutation reads exactly like a coverage gap),
 and the file was byte-restored and `cmp`-verified after each.
 
@@ -104,6 +121,9 @@ and the file was byte-restored and `cmp`-verified after each.
 | M15 | fence post-condition hardcoded true | 3 |
 | M16 | post-condition drops the event half | 1 |
 | M17 | post-condition drops the tenant-id half | 1 |
+| M18 | shadow comparison hardcodes agreement | 1 |
+| M19 | shadow comparison never reports a removal | 1 |
+| M20 | shadow comparison never reports an addition | 1 |
 
 **One escape was found and repaired rather than reported.** On the first pass M15
 escaped: the post-condition was recomputed only inside the function that guarantees it,
@@ -138,10 +158,11 @@ flag to turn on: the module is a pure function with no importer.
   the digest of the single 100%-traffic revision, revision active/Healthy/Running.
 - Worker image invariant: unaffected; no worker job changes.
 - Feature/env flag update path: none.
-- Live signed-in proof required: **no, and this is a property of the change rather than an
-  omission.** Nothing under `src/` imports the module, so no product surface can observe
-  it and a signed-in session would have nothing to look at. It becomes owed at the moment
-  an answer path is wired to it — see Known Gaps.
+- Live signed-in proof required: **no for this release, and that is a property of the
+  change rather than an omission.** The shadow call returns `void`, nothing reads it, and
+  the list the route sends to the model is untouched, so a signed-in session would see an
+  identical answer. It becomes owed the moment the fence is *adopted* — which is item
+  C-506 and is deliberately not this PR.
 
 ## Rollback Plan
 
@@ -157,11 +178,17 @@ is a deletion with no call sites to repair. No migration to unwind and no data t
 
 ## Known Gaps
 
-- **The module has no caller.** This release ships the contract and its proof; wiring the
-  per-mode answer builders to it is deliberately separate, because changing a live answer
-  path needs a signed-in acceptance that an unattended run may not perform. Stated plainly
-  rather than implied: until that wiring lands, the fences described here protect nothing
-  that a user can see.
+- **The fence is measured, not enforced.** Shadow mode means these refusals change no
+  answer today. Stated plainly rather than implied: until adoption lands, the fences
+  described here protect nothing a user can see. Adoption is item C-506 and needs a
+  product decision first — the current authority resolver admits an artifact with no
+  acceptance row, falling back to `status`/`is_current_authoritative`, and this fence would
+  not. Ending that fallback is a call about answer quality, not a bug fix, and an
+  unattended run must not make it.
+- **The shadow mapping is deliberately coarse.** The route models each authoritative
+  artifact as `accepted_artifact` with `contractId: null`, so the cross-contract fence is
+  inert there and the cross-event fence is trivially satisfied by construction. What the
+  log measures is the acceptance/version/review divergence, which is the open question.
 - **The caller must supply a true `acceptedArtifactVersions` map.** The module checks a
   candidate against the map it is given; it does not read
   `source_artifact_acceptances` itself, by design — it is pure and DB-free. A caller that
