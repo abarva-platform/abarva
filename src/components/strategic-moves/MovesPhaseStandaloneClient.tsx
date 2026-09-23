@@ -4153,6 +4153,17 @@ function PhaseBody({
   });
   const phaseInputsReady = phase.phase === 0 || !phaseCaptureBlocker;
   const evidenceReady = evidenceCount > 0 || isHistoricalPhase || gateApproved;
+  const generatedArtifactCount = phaseBuildArtifacts.length;
+  const gateProofCount = evidenceCount || generatedArtifactCount;
+  const gateProofNoun =
+    evidenceCount > 0
+      ? "evidence item"
+      : generatedArtifactCount > 0
+        ? "generated artifact"
+        : "evidence item";
+  const gateProofLabel = `${gateProofCount} ${gateProofNoun}${
+    gateProofCount === 1 ? "" : "s"
+  }`;
   const gateAttestationRows = [
     {
       item:
@@ -4278,9 +4289,9 @@ function PhaseBody({
                 type="button"
                 className="mxw-evidence-count-link"
                 onClick={onOpenFiles}
-                aria-label={`${evidenceCount} evidence items — open Files & Evidence`}
+                aria-label={`${gateProofLabel} — open Files & Evidence`}
               >
-                {evidenceCount} evidence item{evidenceCount === 1 ? "" : "s"}
+                {gateProofLabel}
               </button>
               <span>{nextActionLabel}</span>
             </div>
@@ -4299,9 +4310,9 @@ function PhaseBody({
                 type="button"
                 className="mxw-evidence-count-link mxw-evidence-count-link-strong"
                 onClick={onOpenFiles}
-                aria-label={`${evidenceCount} approved or agent-ready items — open Files & Evidence`}
+                aria-label={`${gateProofLabel} — open Files & Evidence`}
               >
-                {evidenceCount} evidence item{evidenceCount === 1 ? "" : "s"}
+                {gateProofLabel}
               </button>
               <span>{readinessPack.nextPhaseLabel}</span>
             </div>
