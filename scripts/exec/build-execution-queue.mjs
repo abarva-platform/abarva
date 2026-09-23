@@ -19,6 +19,7 @@ import { fileURLToPath } from "node:url";
 
 import { formatQueueProvenance, queueProvenanceStamp } from "./queue-provenance.mjs";
 import { isDirectInvocation } from "./cli-entry.mjs";
+import { branchesInClaim } from "./fossil-claims.mjs";
 
 /**
  * Everything below is the CLI, and until item T-728 it ran on `import` (item
@@ -529,7 +530,36 @@ function readClaims() {
 
   // A claim line that names a branch or a PR is evidence the work exists
   // somewhere other than in the log. That is the signal the TTL cannot carry.
-  const IN_FLIGHT = /\b(?:codex|claude)\/[\w./-]+|\bPR\s*#?\d{4}\b|#\d{4}\b/;
+  //
+  // WHAT COUNTS AS NAMING A BRANCH — item T-734. This was a PREFIX ALLOWLIST
+  // spelled out here, `codex/…` or `claude/…`. The operator task file
+  // instructs every run to cut its own worktree with
+  // `git worktree add -b <your-branch>`, and the runs that follow it name
+  // branches `exec/…`. None of those matched. Such a claim reached
+  // `expired-in-flight` only if its prose happened to mention a four-digit PR
+  // number, and `expired-idle` — printed as FREE TO TAKE — if it did not.
+  // That is the dangerous direction: it offers live work to a second agent,
+  // which is the collision this register exists to prevent. Measured on the
+  // live register at 2026-09-23T13:29Z, 31 lines were missed this way,
+  // including the claim line for this item, written thirty seconds earlier.
+  //
+  // The grammar is NOT re-spelled here. `fossil-claims.mjs` already owns it —
+  // it prefers the claim's explicit `branch <name>` field, which
+  // `append-claim.mjs --branch` writes and which is the claim's own answer;
+  // it reads `branch none` as a declaration of absence rather than a name;
+  // and only then does it fall back to a prefix token. That module's copy
+  // already knew about `exec/` while this one did not, which is the drift
+  // itself: two tools in this directory answering "does this line name a
+  // branch?" must not be able to disagree, so there is one answer and both
+  // call it. A mutation to the shared grammar now reddens both suites.
+  //
+  // A PR number is not a branch, so it stays here, unioned: the two signals
+  // together can only move an item toward `do not take`, never toward
+  // FREE TO TAKE.
+  const PR_REFERENCE = /\bPR\s*#?\d{4}\b|#\d{4}\b/;
+  const IN_FLIGHT = {
+    test: (line) => branchesInClaim(line).length > 0 || PR_REFERENCE.test(line),
+  };
 
   /*
    * WHICH LINE IS "THE NEWEST LINE FOR AN ITEM" — the authority is named here
