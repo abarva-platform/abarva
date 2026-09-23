@@ -133,8 +133,10 @@ on this branch:
 | `worktree-retention` | 22 / 0 | 22 / 0 |
 
 The four failures are **identical on both sides and pre-existing on `main`** —
-they are not caused by this change and are not repaired by it. All four have one
-cause and it is named under Known Gaps.
+they are not caused by this change and are not repaired by it. They appear only
+against the live operator documents; on this PR's own runner the same suites
+report `166 / 0 / 1 skipped` and `68 / 0 / 3 skipped`. All four have one cause
+and it is named under Known Gaps.
 
 - `node scripts/exec/build-source-board.test.mjs` → `28 passed, 0 failed`
 - `npx eslint scripts/exec/` → exit 0
@@ -196,12 +198,20 @@ answers, which for today's nine claimable rows are the same answers.
   pre-existing rows, which is the pattern of a gate that arrives already
   failing. What a gate could honestly hold is the *rate*, and that decision is
   not taken here.
-- **Four suites in `scripts/exec/` fail on `main` right now, for one cause, and
-  this change neither causes nor fixes them.** `build-execution-queue` (2),
-  `fossil-claims` (1) and `toolchain-manifest` (1, which runs the queue suite)
-  all assert that the **live** operator register still contains at least one
-  suppressed candidate to replay — "the live corpus has suppressed candidates to
-  replay, so this case is not vacuous". It no longer does: the bucket was
-  emptied earlier the same day by the work those suites exist to prove. A suite
-  whose subject is a mutable document outside the repository goes red when that
-  document improves. Filed as its own item, with the verdict left to its owner.
+- **Four suites in `scripts/exec/` fail against the live operator documents
+  right now, for one cause, and this change neither causes nor fixes them.**
+  `build-execution-queue` (2), `fossil-claims` (1) and `toolchain-manifest` (1,
+  which runs the queue suite as its acceptance) all assert that the **live**
+  operator register still contains at least one suppressed candidate to replay —
+  "the live corpus has suppressed candidates to replay, so this case is not
+  vacuous". It no longer does: the bucket was emptied earlier the same day by
+  the work those suites exist to prove.
+
+  **The runner's own result, quoted rather than inferred** — this PR's
+  `Execution queue behavioral contract` job, run `35886749393`:
+  `build-execution-queue` **166 / 0 / 1 skipped** against **167 / 2** locally,
+  and `fossil-claims` **68 / 0 / 3 skipped** against **70 / 1**. So the cases do
+  not fail where they run; they skip, and the suite is green on a machine that
+  cannot see the corpus. That is the more serious half: a case that cannot fail
+  where it runs, and fails only where nothing gates it. Filed as its own item,
+  with the verdict left to its owner.
