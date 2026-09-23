@@ -113,6 +113,40 @@ const TECHNOLOGY_ESTATE: TechnologyEstateBundle = {
   ],
 };
 
+const TECHNOLOGY_ESTATE_WITH_VENDOR_SPEND: TechnologyEstateBundle = {
+  recordTypes: [
+    {
+      objectType: "vendor_contract",
+      label: "Vendor Contracts",
+      columns: ["vendorName", "annualSpendUsd", "pricingHistory"],
+      rows: [
+        {
+          vendorName: "Current Supplier Alpha",
+          annualSpendUsd: 100,
+          pricingHistory: "Current year pricing available.",
+        },
+        {
+          vendorName: "Current Supplier Beta",
+          annualSpendUsd: 90,
+          pricingHistory: "Current year pricing available.",
+        },
+        {
+          vendorName: "Outdated Supplier",
+          annualSpendUsd: 5,
+          pricingHistory: "Current year pricing available.",
+        },
+        {
+          vendorName: "Legacy Supplier",
+          annualSpendUsd: 4,
+          pricingHistory: "Current year pricing available.",
+        },
+      ],
+      primaryDimension: "vendorName",
+      dimensionCounts: [],
+    },
+  ],
+};
+
 function maxParagraphWords(text: string | undefined): number {
   return Math.max(
     0,
@@ -217,6 +251,77 @@ describe("answerHomeAvaQuestion", () => {
     expect(prompt).not.toContain("scoped_to_active_chapter");
   });
 
+  it("does not send stale supplier-pair concentration claims to the model", async () => {
+    mockClaudeJson({
+      status: "answered",
+      direct_answer: "Use the current vendor register.",
+      prose: "",
+      cited_claim_tags: ["TD-K1"],
+      visual: { type: "none", dataset_ref: null, chart_kind: null },
+      caveats: [],
+    });
+
+    const chapters: ChapterView[] = [
+      {
+        ...CHAPTERS[0],
+        key_insights: [
+          CHAPTERS[0].key_insights[0],
+          {
+            statement:
+              "Outdated Supplier and Legacy Supplier together represent over a quarter of vendor spend.",
+            evidence_ids: ["ctx_stale"],
+            confidence: "high",
+            claim_type: "FACT",
+          },
+        ],
+        executive_synthesis:
+          "Outdated Supplier and Legacy Supplier together represent over a quarter of vendor spend. Current supplier concentration should be checked separately.",
+      },
+    ];
+
+    await answerHomeAvaQuestion({
+      bundle: {
+        chapters,
+        technologyEstate: TECHNOLOGY_ESTATE_WITH_VENDOR_SPEND,
+      },
+      tenantKey: "meridian-health",
+      question: "Where are we commercially exposed?",
+    });
+
+    const prompt = mockGetAuditedAnthropicClient.mock.calls[0][0].prompt;
+    expect(prompt).not.toContain("Outdated Supplier and Legacy Supplier");
+    expect(prompt).not.toContain('"TD-K2"');
+    expect(prompt).toContain("Current supplier concentration");
+  });
+
+  it("scrubs stale supplier-pair concentration wording from visible model prose", async () => {
+    mockClaudeJson({
+      status: "answered",
+      direct_answer:
+        "Outdated Supplier and Legacy Supplier together represent over a quarter of vendor spend.",
+      prose:
+        "Outdated Supplier and Legacy Supplier together represent over a quarter of vendor spend.",
+      cited_claim_tags: ["TD-K1"],
+      visual: { type: "none", dataset_ref: null, chart_kind: null },
+      caveats: [],
+    });
+
+    const answer = await answerHomeAvaQuestion({
+      bundle: {
+        chapters: CHAPTERS,
+        technologyEstate: TECHNOLOGY_ESTATE_WITH_VENDOR_SPEND,
+      },
+      tenantKey: "meridian-health",
+      question: "Where are we commercially exposed?",
+    });
+
+    expect(answer.directAnswer).not.toContain(
+      "Outdated Supplier and Legacy Supplier",
+    );
+    expect(answer.prose).not.toContain("Outdated Supplier and Legacy Supplier");
+    expect(answer.directAnswer).toContain("current Vendor Contracts table");
+  });
+
   it("drops a cited tag the model invented instead of trusting it", async () => {
     mockClaudeJson({
       status: "answered",
@@ -304,6 +409,38 @@ describe("answerHomeAvaQuestion", () => {
     expect(answer.gaps[0].label).toBe("Graph view unavailable");
     expect(answer.prose).toContain("Confidence:");
     expect(validateAvaAnswerPacket(answer).passed).toBe(true);
+  });
+
+  it("does not use stale supplier-pair concentration claims in the graph fallback", async () => {
+    const chapters: ChapterView[] = [
+      {
+        ...CHAPTERS[0],
+        key_insights: [
+          {
+            statement:
+              "Outdated Supplier and Legacy Supplier together represent over a quarter of vendor spend.",
+            evidence_ids: ["ctx_stale"],
+            confidence: "high",
+            claim_type: "FACT",
+          },
+          CHAPTERS[0].key_insights[0],
+        ],
+      },
+    ];
+
+    const answer = await answerHomeAvaQuestion({
+      bundle: {
+        chapters,
+        technologyEstate: TECHNOLOGY_ESTATE_WITH_VENDOR_SPEND,
+      },
+      tenantKey: "meridian-health",
+      question:
+        "Show me the graph of how risks, vendors, applications, data and programs connect.",
+    });
+
+    expect(mockGetAuditedAnthropicClient).not.toHaveBeenCalled();
+    expect(answer.prose).not.toContain("Outdated Supplier and Legacy Supplier");
+    expect(answer.citations.map((citation) => citation.id)).toEqual(["TD-K2"]);
   });
 
   it("scrubs stale family counts in model caveats against the served record counts", async () => {
