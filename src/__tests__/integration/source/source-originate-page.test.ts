@@ -32,15 +32,13 @@ jest.mock("@/components/shell/AppShell", () => ({
   AppShell: ({
     children,
     onArtifact,
-    surfaceContext,
   }: {
     children: ReactNode;
     onArtifact?: (artifact: unknown) => void;
-    surfaceContext?: { context?: string };
   }) =>
     createElement(
       "div",
-      { "data-source-advisor-context": surfaceContext?.context },
+      null,
       createElement(
         "button",
         {
@@ -148,35 +146,6 @@ describe("SourceOriginatePage (SRC-FLW-INTAKE)", () => {
     expect(html).toContain("Scope boundary");
     expect(html).toContain("Value or savings target");
     expect(html).toContain("Minimum data / baseline owner");
-  });
-
-  it("keeps generic intake and advisor guidance usable across business domains", () => {
-    render(
-      createElement(SourceOriginatePage, {
-        clientName: "Example Organization",
-        clientShortName: "Example",
-        clientKey: "example",
-      }),
-    );
-
-    expect(
-      screen.getByText("Who is accountable for the sourcing decision?"),
-    ).toBeTruthy();
-    expect(
-      screen.getByText(
-        "Which services, products, capabilities, or business functions are in and out?",
-      ),
-    ).toBeTruthy();
-    expect(
-      screen.getByPlaceholderText(/member services operations/i),
-    ).toBeTruthy();
-    expect(
-      screen
-        .getByTestId("source-originate-canvas")
-        .parentElement?.getAttribute("data-source-advisor-context"),
-    ).toBe(
-      "New sourcing event intake - aVa guided",
-    );
   });
 
   it("renders intake basics before the optional category selector", () => {

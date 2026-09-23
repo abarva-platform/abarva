@@ -36,9 +36,10 @@ selection, imported-request review, and event-creation gates are unchanged.
 
 ## QA / Validation
 
-- Red-first rendered intake test failed on the prior wording and passes after
-  the change.
-- A deliberate advisor-context mutation made that test fail; restoration passes.
+- Red-first rendered intake test in the CI-run Source component suite failed
+  on the prior wording and passes after the change.
+- A deliberate advisor-context mutation made that same suite fail; restoration
+  passes. Adjacent imported-request review tests pass.
 - Scoped ESLint, Node 24 TypeScript, and `npm run release:check` pass.
 - The broader legacy intake integration suite has pre-existing failures and is
   not represented as passing by this focused test.
