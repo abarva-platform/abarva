@@ -193,3 +193,38 @@ jobs:
       # directory that have no entry guard at all (item T-727).
       - name: Run the toolchain manifest contract
         run: node scripts/exec/toolchain-manifest.test.mjs
+
+      # T-729. Two findings, one item id -- a detector, not an allocator.
+      #
+      # Three times in one day two overlapping runs of this scheduled task each
+      # reached for "the next free number" and each got it, and every time it
+      # was found by a human reading the file. The item was filed as "nothing
+      # detects a duplicate item id", and that is false in the direction that
+      # matters: build-source-board.mjs has had a collision detector for longer
+      # than the item has, it prints a count and a trend on every run, and it
+      # reports 59 collisions among 434 ids while naming NONE of the three that
+      # actually happened. Probed against its own parser, two of those ids have
+      # ZERO definitions in it -- invisible, not misclassified. It accepts a
+      # table only when the first header cell is literally `#`, and 22 headers
+      # on disk are written `id | finding | lane | status`; and it requires a
+      # level-three heading, where those filings are level-two. A report loud
+      # enough that nobody notices what it cannot see is this directory's
+      # founding shape from a new direction.
+      #
+      # Two of the cases run over the REAL operator documents and require the
+      # two collisions that are genuinely on disk, by id, by line number and by
+      # subject -- the item asked for proof on real positives rather than on
+      # fixtures. On this runner those three cases SKIP, and skips are counted
+      # separately so a skipped case can never read as a passing one: 59 / 0 /
+      # 3 here against 69 / 0 / 0 locally. Red first against a reader stripped
+      # back to the status quo: 43 passed, 20 failed. Seventeen mutations,
+      # seventeen caught -- three of them only after a first attempt survived,
+      # and one of those survived because the grouping the case asserted on
+      # collapsed the difference rather than because the guard was covered.
+      #
+      # The detector itself is NOT wired into CI, deliberately. Its subject is
+      # an operator document outside this repository, and a control that takes
+      # its truth from a file the pull request never saw cannot fail. It is
+      # agent-invoked, like --preclaim, and its refusal is advisory.
+      - name: Run the item id collision detector contract
+        run: node scripts/exec/id-collision.test.mjs

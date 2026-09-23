@@ -262,6 +262,8 @@ node scripts/exec/append-claim.test.mjs
 node scripts/exec/worktree-retention.test.mjs
 node scripts/exec/queue-provenance.test.mjs
 node scripts/exec/cli-entry.test.mjs
+node scripts/exec/toolchain-manifest.test.mjs
+node scripts/exec/id-collision.test.mjs
 ```
 
 The suites run the generators as child processes against synthetic operator documents. CI never reads a local execution backlog.
@@ -275,3 +277,40 @@ which is right for a wrapped continuation and wrong for all three grammars it
 used to miss. Both directions are covered, because a boundary that starts a new
 record on every line truncates the register just as badly as one that starts too
 few.
+
+## Is this id already taken?
+
+```bash
+node scripts/exec/id-collision.mjs --operator-root "$HOME/Downloads"
+node scripts/exec/id-collision.mjs --operator-root "$HOME/Downloads" --id T-729 --json
+```
+
+Two overlapping runs of the same scheduled task both reach for "the next free
+number" and both get it. It happened three times in one day, and every time it
+was found by a human reading the file or by an unrelated gate refusing an
+unrelated append. This reports, for every id the backlog introduces more than
+once, both line numbers and both subjects — and, reading the register too,
+whether anyone is holding such an id **right now**.
+
+**A detector, not an allocator, and the split is the point.** Allocating ids
+safely across runs that overlap is a coordination problem. Noticing that one id
+carries two findings is a file read, and the file is already on disk when it
+happens.
+
+**It is not a CI gate, deliberately.** Its subject is an operator document that
+lives outside this repository, and a control taking its truth from a file the
+pull request never saw cannot fail. Only its own behavioural suite runs in CI.
+Invoke it the way you invoke `--preclaim`: before you write.
+
+Note what it is NOT a replacement for. `build-source-board.mjs` reports
+collisions too, in a different unit and for a different purpose — it decides
+whether a mapped id is too ambiguous to promote a stage. It is also blind to
+every filing written in the `id | finding | lane | status` convention, and to
+every filing under a level-two heading, which between them account for the
+three collisions this item was filed about. The two readers share the id
+grammar and the claim-record boundary on purpose; if either ever changes, it
+changes in both.
+
+**Resolution, when it reports something:** the earlier filing keeps the id and
+the later one moves, renumbered by whoever claims it. That is what the register
+already did once, by hand.
