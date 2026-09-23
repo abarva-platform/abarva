@@ -37,7 +37,7 @@ import path from "node:path";
 import { execFileSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 
-import { isDirectInvocation } from "./cli-entry.mjs";
+import { isDirectInvocation, unknownFlags } from "./cli-entry.mjs";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 
@@ -403,6 +403,274 @@ function symlinkedCopy({ toolchain = false } = {}) {
   }
 
   fs.rmSync(root, { recursive: true, force: true });
+}
+
+
+/*
+ * ---------------------------------------------------------------------------
+ * The shared argv expectation (item T-748)
+ * ---------------------------------------------------------------------------
+ *
+ * The second question every CLI in this directory has to answer: is this an
+ * argument I read? Ten hand-written `process.argv` readers, and on 2026-09-23
+ * not one of them noticed a flag it did not recognise. Measured by execution on
+ * `main` `7e74fe7a0`, `append-claim.mjs` accepted `--release`,
+ * `--totally-made-up-flag` and `--wrong-flag-two=x` and produced a normal
+ * `item <id> claimed` line at exit 0 for each. `--release` is not a flag; the
+ * sanctioned spelling is `--action release`. So a run that believed it had
+ * handed work back left a LIVE CLAIM on its files.
+ *
+ * The three invocations below are those three, verbatim, because a fixture in a
+ * shape somebody already thought of proves less than the case that actually
+ * happened (T-718, T-721). The negative controls are the two real actions that
+ * must keep working, so the repair cannot be a blanket rejection of anything
+ * unfamiliar.
+ */
+{
+  console.log("\nT-748 — a flag the reader does not read is reported, not dropped");
+
+  // append-claim.mjs's own vocabulary, restated here as the spec a caller
+  // passes. The suite beside that CLI asserts this list equals its USAGE text.
+  const SPEC = {
+    value: [
+      "--file", "--item", "--identity", "--message", "--files", "--action",
+      "--branch", "--now", "--window-hours", "--gate", "--gate-arg", "--queue",
+    ],
+    boolean: ["--strict", "--dry-run"],
+  };
+  const BASE = [
+    "--file", "/tmp/r.md", "--item", "T-999", "--identity", "a#b",
+    "--message", "probe", "--branch", "probe", "--dry-run",
+  ];
+
+  // The three real invocations.
+  for (const bad of ["--release", "--totally-made-up-flag", "--wrong-flag-two=x"]) {
+    const found = unknownFlags([...BASE, bad], SPEC);
+    check(
+      `the real invocation \`${bad}\` is reported`,
+      found.length === 1 && found[0] === bad,
+      `reported ${JSON.stringify(found)}; this is the invocation that produced a\n` +
+        "normal `claimed` line at exit 0 on main 7e74fe7a0",
+    );
+  }
+
+  // Negative controls: what must still be accepted.
+  check(
+    "NEGATIVE CONTROL: `--action release` is not a flag error",
+    unknownFlags([...BASE, "--action", "release"], SPEC).length === 0,
+    "the sanctioned release path must not be refused by the repair for it",
+  );
+  check(
+    "NEGATIVE CONTROL: `--action abstain` is not a flag error",
+    unknownFlags([...BASE, "--action", "abstain"], SPEC).length === 0,
+    "an abstention is the one record that survives a refused gate; it must not die here",
+  );
+  check(
+    "NEGATIVE CONTROL: the full legitimate invocation reports nothing",
+    unknownFlags(
+      [...BASE, "--files", "a.mjs,b.mjs", "--strict", "--window-hours", "3",
+        "--now", "2026-09-23T22:00:00Z", "--queue", "/tmp/q.md", "--gate", "/tmp/g.mjs"],
+      SPEC,
+    ).length === 0,
+    "every flag this CLI advertises must pass",
+  );
+
+  // A value is a value, whatever it looks like. This is the case a naive
+  // "every token starting with -- must be known" check gets wrong, and both
+  // shapes are in real use: `--gate-arg --github` is how a gate check is
+  // forwarded, and a claim message quoting a flag is ordinary prose.
+  check(
+    "a forwarded flag VALUE (`--gate-arg --github`) is not itself read as a flag",
+    unknownFlags([...BASE, "--gate-arg", "--github"], SPEC).length === 0,
+    "the token after a value flag is skipped, whatever it looks like",
+  );
+  check(
+    "a message whose TEXT begins with `--` is not read as a flag",
+    unknownFlags(
+      ["--file", "/tmp/r.md", "--item", "T-999", "--identity", "a#b",
+        "--message", "--action release was already done"],
+      SPEC,
+    ).length === 0,
+    "a claim message is free text and may quote a flag",
+  );
+
+  // `=` spellings. None of these readers parses them: `argv.indexOf("--file")`
+  // does not match `--file=x`, so the value is silently dropped and the flag
+  // reads as absent. Reporting it is the whole point of the item.
+  check(
+    "`--file=x` is reported, because this reader does not parse `=`",
+    unknownFlags(["--file=x", "--item", "T-999", "--identity", "a#b", "--message", "m"], SPEC)
+      .join() === "--file=x",
+    "a spelling the reader does not read is the silent no-op this item is about",
+  );
+
+  check(
+    "`--` ends the flags",
+    unknownFlags(["--strict", "--", "--not-a-flag"], SPEC).length === 0,
+    "everything after `--` is positional",
+  );
+
+  // The guard has to be able to fail. A spec that accidentally matched
+  // everything would pass every case above.
+  check(
+    "MUTATION SHAPE: an empty spec reports every flag given",
+    unknownFlags(["--file", "x", "--strict"], {}).join() === "--file,--strict",
+    "with nothing declared, nothing is recognised",
+  );
+}
+
+/*
+ * ---------------------------------------------------------------------------
+ * The census (item T-748) — which CLIs in this directory refuse a flag they do
+ * not read, and which still swallow it.
+ * ---------------------------------------------------------------------------
+ *
+ * "A defect in an argument reader is almost never in one reader only." All ten
+ * scripts here parse `process.argv` by hand with `indexOf`/`includes`, and on
+ * 2026-09-23 not one noticed an argument it did not recognise. Repairing the
+ * one with a measured cost — `append-claim.mjs`, the path the claim protocol
+ * sanctions — and leaving the rest unrecorded would put the residual in prose,
+ * where the last eight weeks of this backlog says it does not survive.
+ *
+ * So the residual lives here, in a control that runs, and the exemption
+ * RETIRES ITSELF: a module that starts refusing while still listed fails the
+ * second case below and has to be removed from the list. That is the same
+ * machinery T-726 left standing for the import guard, reused rather than
+ * reinvented.
+ *
+ * CLASSIFICATION IS BY DIFFERENCE, not by exit code. A CLI given an unknown
+ * flag is run twice with identical arguments — with the flag and without —
+ * inside a sandbox. It REFUSES only if the two runs differ AND the flag's own
+ * name appears in its output. Anything else is ignoring it. That discriminates
+ * correctly even for an invocation that was going to fail anyway, which is
+ * what the generators do against an empty operator root: a gate proved by an
+ * exit code it would have produced regardless is the unfailable kind.
+ */
+{
+  const EXEMPT_SWALLOWS_UNKNOWN_FLAGS = [
+    "build-execution-queue.mjs",
+    "build-source-board.mjs",
+    "fossil-claims.mjs",
+    "id-collision.mjs",
+    "queue-provenance.mjs",
+    "register-time-authority.mjs",
+    "toolchain-manifest.mjs",
+    "worktree-retention.mjs",
+  ];
+
+  const BAD = "--totally-made-up-flag";
+  const sandbox = fs.mkdtempSync(path.join(os.tmpdir(), "t748-census-"));
+  const emptyRegister = path.join(sandbox, "EXECUTION_CLAIMS.md");
+  fs.writeFileSync(emptyRegister, "# Claims\n\n## Claim log — append only\n");
+  const emptyPrIndex = path.join(sandbox, "pr-index.json");
+  fs.writeFileSync(emptyPrIndex, "[]");
+  // A real but empty git repository, so `worktree-retention.mjs` answers in a
+  // moment instead of walking every checkout on the machine.
+  const tinyRepo = path.join(sandbox, "repo");
+  fs.mkdirSync(tinyRepo);
+  try {
+    execFileSync("git", ["init", "-q"], { cwd: tinyRepo, stdio: "ignore" });
+  } catch {
+    /* without git the worktree case still runs; it just fails earlier, and
+       failing identically with and without the flag is still "ignores" */
+  }
+
+  /*
+   * A harmless invocation for each CLI that has a useful one: read-only,
+   * pointed at the sandbox, never at an operator document. Two are generators,
+   * so the sandbox is where anything they write lands. A module absent from
+   * this table is still measured — with no arguments.
+   */
+  const INVOCATIONS = {
+    "append-claim.mjs": ["--file", emptyRegister, "--item", "T-999", "--identity", "a#b",
+      "--message", "census probe", "--dry-run"],
+    "build-execution-queue.mjs": ["--operator-root", sandbox],
+    "build-source-board.mjs": ["--operator-root", sandbox, "--out", path.join(sandbox, "b.html")],
+    "fossil-claims.mjs": ["--operator-root", sandbox, "--no-probe", "--quiet"],
+    "id-collision.mjs": ["--id", "T-999", "--operator-root", sandbox, "--quiet"],
+    "queue-provenance.mjs": ["--register", emptyRegister],
+    "register-time-authority.mjs": ["--file", emptyRegister, "--limit", "1"],
+    "toolchain-manifest.mjs": ["--json"],
+    "worktree-retention.mjs": ["--repo", tinyRepo, "--claims", emptyRegister,
+      "--pr-index", emptyPrIndex, "--json"],
+  };
+
+  const modules = fs
+    .readdirSync(HERE, { withFileTypes: true })
+    .filter((e) => e.isFile() && e.name.endsWith(".mjs") && !e.name.endsWith(".test.mjs"))
+    .map((e) => e.name)
+    .filter((m) => m !== "cli-entry.mjs") // a module with no CLI of its own
+    .sort();
+
+  /*
+   * The census is driven by the DIRECTORY, not by `INVOCATIONS`. A module that
+   * arrives tomorrow is measured with no arguments at all rather than skipped:
+   * a hand-written list that silently omits what it has not heard of is the
+   * shape `toolchain-manifest.test.mjs` exists to catch, and it catches this
+   * one — `probe-sibling.mjs` is added to a copy of this directory precisely to
+   * see whether a suite here notices. `INVOCATIONS` only supplies a *cheaper or
+   * more meaningful* invocation where one exists; `worktree-retention.mjs` with
+   * no arguments would walk every checkout on the machine.
+   */
+  const refuses = [];
+  const ignores = [];
+  const noCli = [];
+  for (const m of modules) {
+    const args = INVOCATIONS[m] ?? [];
+    const script = path.join(HERE, m);
+    const clean = run(script, args, sandbox);
+    const dirty = run(script, [...args, BAD], sandbox);
+
+    // A module that does nothing observable when invoked has no CLI to
+    // protect. It is reported rather than assumed away.
+    const silent = (r) => r.status === 0 && r.stdout.trim() === "" && r.stderr.trim() === "";
+    if (silent(clean) && silent(dirty)) {
+      noCli.push(m);
+      continue;
+    }
+
+    const differs =
+      clean.status !== dirty.status ||
+      clean.stdout !== dirty.stdout ||
+      clean.stderr !== dirty.stderr;
+    const named = `${dirty.stdout}${dirty.stderr}`.includes(BAD);
+    // Non-zero AND different AND naming the flag. Each clause removes a way of
+    // looking like a refusal without being one: an exit code the invocation
+    // would have produced anyway, an unchanged run, and a flag echoed inside
+    // some other error.
+    (dirty.status !== 0 && differs && named ? refuses : ignores).push(m);
+  }
+
+  check(
+    "every CLI in this directory was classified by the census",
+    refuses.length + ignores.length + noCli.length === modules.length,
+    `modules=${modules.length} refuses=${refuses.length} ignores=${ignores.length} noCli=${noCli.length}`,
+  );
+
+  check(
+    "every CLI that still swallows an unknown flag is on the exemption list",
+    ignores.every((m) => EXEMPT_SWALLOWS_UNKNOWN_FLAGS.includes(m)),
+    `swallows: ${ignores.join(", ")}\nexempt:   ${EXEMPT_SWALLOWS_UNKNOWN_FLAGS.join(", ")}\n` +
+      "a CLI here that ignores an argument it does not read runs a different\n" +
+      "command from the one it was asked for, and says nothing",
+  );
+
+  check(
+    "THE EXEMPTION RETIRES ITSELF: no exempt CLI has quietly started refusing",
+    EXEMPT_SWALLOWS_UNKNOWN_FLAGS.every((m) => ignores.includes(m)),
+    `exempt: ${EXEMPT_SWALLOWS_UNKNOWN_FLAGS.join(", ")}\nrefuses: ${refuses.join(", ")}\n` +
+      "a module listed here that now refuses has been repaired;\n" +
+      "remove it from EXEMPT_SWALLOWS_UNKNOWN_FLAGS so the case above covers it",
+  );
+
+  check(
+    "POSITIVE CONTROL: the one repaired CLI is measured as refusing",
+    refuses.includes("append-claim.mjs"),
+    `refuses: ${refuses.join(", ")}\nswallows: ${ignores.join(", ")}\n` +
+      "if the census cannot see the one repair that exists, it cannot see the next",
+  );
+
+  fs.rmSync(sandbox, { recursive: true, force: true });
 }
 
 console.log(`\n${passes} passed, ${failures} failed`);

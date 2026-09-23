@@ -48,6 +48,7 @@ import path from "node:path";
 import { execFileSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { announcesRelease, announcesAbstention } from "./register-time-authority.mjs";
+import { unknownFlags } from "./cli-entry.mjs";
 import {
   describeQueueProvenance,
   evaluateQueueProvenance,
@@ -64,11 +65,32 @@ const EXIT_REFUSED = 1;
 const EXIT_USAGE = 2;
 const EXIT_GATE_UNUSABLE = 3;
 
-const USAGE =
+export const USAGE =
   "usage: --file <register.md> --item <id> --identity <base-agent#run-id> --message <text>\n" +
   "       [--action claim|release|abstain] [--branch <name>] [--files a,b]\n" +
   "       [--strict] [--dry-run] [--now ISO] [--queue <EXECUTION_QUEUE.md>]\n" +
   "       [--window-hours 3] [--gate <path>] [--gate-arg <flag>]...";
+
+/**
+ * This CLI's own vocabulary (item T-748).
+ *
+ * `value` flags take the NEXT argv token — which is therefore never read as a
+ * flag itself, so `--gate-arg --github` and a `--message` quoting a flag both
+ * behave. `boolean` flags stand alone. Anything else in flag position is
+ * refused below rather than ignored.
+ *
+ * Declared, not derived from USAGE: the usage text cannot say which flags take
+ * a value, and deriving the answer from its punctuation would make a
+ * documentation typo into a parsing change. The two lists are pinned to each
+ * other by the suite instead.
+ */
+export const FLAG_SPEC = {
+  value: [
+    "--file", "--item", "--identity", "--message", "--files", "--action",
+    "--branch", "--now", "--window-hours", "--gate", "--gate-arg", "--queue",
+  ],
+  boolean: ["--strict", "--dry-run"],
+};
 
 /**
  * The flags the installed gate names in its own usage text.
@@ -130,6 +152,37 @@ function fail(code, message) {
 }
 
 function main(argv) {
+  /*
+   * T-748. Before anything else, because the cost of getting this wrong is
+   * measured in what was WRITTEN, not in what was read.
+   *
+   * Node ignores an argument it does not recognise, so `--release` — which is
+   * not a flag; the spelling is `--action release` — passed every gate below
+   * and produced a normal `item <id> claimed` line at exit 0. The run believed
+   * it had handed its work back and left a LIVE CLAIM on its files, and every
+   * sibling for the next three hours was refused those files by a holder that
+   * was finished. That is the false-`pending` shape, reached from the one path
+   * the protocol sanctions precisely so the line cannot be got wrong by hand.
+   *
+   * This helper already refused a `--gate-arg` the installed gate does not
+   * advertise, for exactly this reason and in almost these words. It simply
+   * never asked the question of its own argv.
+   *
+   * Fail closed, same as every other control here: name the flag, exit
+   * non-zero, append nothing.
+   */
+  const unrecognised = unknownFlags(argv, FLAG_SPEC);
+  if (unrecognised.length) {
+    fail(
+      EXIT_USAGE,
+      `${unrecognised.join(", ")} ${unrecognised.length > 1 ? "are not flags" : "is not a flag"} ` +
+        "this command reads. An unrecognised flag is parsed as nothing, so the thing you asked " +
+        "for would not happen and the default action would be recorded instead — a claim, if you " +
+        "meant `--action release`. Nothing was appended.\n" +
+        USAGE,
+    );
+  }
+
   const has = (name) => argv.includes(name);
   const flag = (name) => {
     const i = argv.indexOf(name);
