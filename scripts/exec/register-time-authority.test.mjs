@@ -22,6 +22,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { execFileSync } from "node:child_process";
+import crypto from "node:crypto";
 import { fileURLToPath } from "node:url";
 import {
   resolveClaimOwnership,
@@ -30,6 +31,8 @@ import {
   announcesAbstention,
   claimedPaths,
   itemSubjects,
+  recomputeCueSurface,
+  cueSurfaceDivergences,
 } from "./register-time-authority.mjs";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
@@ -3677,6 +3680,326 @@ function preclaimFiles(file, item, identity, files, extra = []) {
   );
 }
 
+
+// ---------------------------------------------------------------------------
+// Item T-747 — an attribution BEHIND a path hands it to the holder it names.
+//
+// T-710 gave the path half an attributive veto and read only what sits in
+// FRONT of the path. Its own suite recorded the other direction as a known
+// gap: "a postfix attribution (`` `a.mjs` is held by X ``) is NOT covered".
+// The register kept writing the gap, and on 2026-09-23 the gate refused a run
+// its chosen item because the only line mentioning the file DISCLAIMS it and
+// names a different owner:
+//
+//   ... NOT claiming it: it lands in <path>, which T-740 has held since ...
+//
+// Nothing else could reach that sentence. There is no set negation and no
+// first person, so `disclaimsPathList` (T-725) does not apply and is left
+// exactly as it shipped; the left negator's object is the pronoun in
+// `claiming it:`, which T-725 excludes on purpose. What identifies the
+// sentence is the attribution behind the path.
+//
+// THE REAL LINE IS THE KNOWN POSITIVE, not a transcription of it (item T-718).
+// The fragment below is a byte copy taken from the live register at
+// 2026-09-23T21:37Z, line 2265, whose sha256 is recorded beside it. The paths
+// and run ids in it are the real ones. The suite asserts the fragment's
+// BEHAVIOUR unconditionally — it is committed, so it is present on every
+// runner — and separately asserts the fragment is still byte-present in the
+// live register WHEN that file is readable. CI has no `~/Downloads`, so that
+// second assertion cannot gate anything; it is reported as not-run rather than
+// counted as a pass, and the behavioural cases above it do not depend on it.
+// A precondition that turns a missing corpus into a green tick is the shape
+// that has cost this backlog twice.
+// ---------------------------------------------------------------------------
+
+/** Byte copy from live EXECUTION_CLAIMS.md line 2265 (stamp 2026-09-23T20:32:18Z). */
+const T747_LIVE_FRAGMENT =
+  "I am filing that 26-id half as T-746 and NOT claiming it: it lands in " +
+  "scripts/exec/build-source-board.mjs, which T-740 has held since 17:43:09Z.";
+/** sha256 of the WHOLE register line that fragment was cut from. */
+const T747_LIVE_LINE_SHA256 =
+  "9f8f8e444a7fa9c7f42da537b7ac93b3e15f5c3b7ba16c7ecfa8fda0febf2d5a";
+
+{
+  const { dir, file } = fixture([
+    // The stamp is the suite's fixed `PRECLAIM_NOW` window, not the register's
+    // own 2026-09-23T20:32:18Z: only the MESSAGE is the known positive, and a
+    // fixture line outside the 3h window would be freed by its age rather than
+    // by the veto under test — a pass that proves nothing.
+    "2026-09-22T18:20:29Z | source-backlog-executor#20260923T202535Z | item T-743 claimed — " +
+      T747_LIVE_FRAGMENT +
+      " files: src/lib/agent/__tests__/module-v6-answer-contract.test.ts",
+  ]);
+  const refused = preclaimFiles(
+    file,
+    "T-746",
+    "source-backlog-executor#20260923T205539Z",
+    "scripts/exec/build-source-board.mjs",
+  );
+  check(
+    "THE REAL LINE — `which <item id> has held` does not hold the path it disclaims",
+    refused.status === 0 && refused.report.fileOverlap?.refuses === false,
+    `status=${refused.status} overlap=${JSON.stringify(refused.report.fileOverlap)}`,
+  );
+
+  // The same line's OWN files: list is untouched by the new veto. Without this
+  // the repair would be the defect reversed — a line that frees everything.
+  const own = preclaimFiles(
+    file,
+    "T-746",
+    "source-backlog-executor#20260923T205539Z",
+    "src/lib/agent/__tests__/module-v6-answer-contract.test.ts",
+  );
+  check(
+    "the tail attribution does not free the path the same line genuinely holds",
+    own.status === 1,
+    `status=${own.status} overlap=${JSON.stringify(own.report.fileOverlap)}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+{
+  // THE FRAGMENT IS FAITHFUL, proven against the live file when it is there.
+  // Absent — which is every CI runner — this reports and asserts nothing, so a
+  // missing corpus cannot manufacture a pass. `passes` is deliberately not
+  // incremented on the not-run path.
+  const live = path.join(os.homedir(), "Downloads", "EXECUTION_CLAIMS.md");
+  if (fs.existsSync(live)) {
+    const lines = fs.readFileSync(live, "utf8").split("\n");
+    const hit = lines.find((l) => l.includes(T747_LIVE_FRAGMENT));
+    check(
+      "the committed fragment is byte-present in the live register",
+      hit !== undefined,
+      "the fragment was cut from register line 2265; the register is append-only, " +
+        "so its absence means the line was rewritten, not that the defect is fixed",
+    );
+    if (hit !== undefined) {
+      const sha = crypto.createHash("sha256").update(hit).digest("hex");
+      check(
+        "the register line the fragment was cut from is unchanged (sha256)",
+        sha === T747_LIVE_LINE_SHA256,
+        `sha256=${sha} expected=${T747_LIVE_LINE_SHA256}`,
+      );
+    }
+  } else {
+    console.log(
+      "  ....  NOT RUN  live-register faithfulness — no ~/Downloads/EXECUTION_CLAIMS.md " +
+        "on this runner; the behavioural cases above do not depend on it",
+    );
+  }
+}
+
+{
+  // THE FIVE OTHER LIVE CLAUSES, each a byte copy in shape from a register
+  // line that is named. Together with the one above they are the 7 (line,
+  // path) holds this veto frees on the whole live register; it creates zero.
+  const attributed = [
+    ["L1340 `which <agent> holds`", "which codex holds under a live claim stamped 19:03Z"],
+    [
+      "L1424 `which is named in <agent>`",
+      "which is named in codex-t516-green-suite-ci-wiring's live 22:16Z claim",
+    ],
+    ["L1639 `which is repo-owned by another lane`", "which is repo-owned by another lane."],
+    ["L1348 reduced `held by <agent>`", "held by codex under a live claim stamped 19:03Z;"],
+    ["L1843 reduced `held by the live <item id> claim`", "held by the live T-704 claim."],
+    ["L2273 reduced `held by a SIBLING`", "held by a SIBLING at line 2265, whose own files:"],
+    ["T-710's recorded gap `is held by <agent>`", "is held by `codex-other-lane#20260922T182500Z`"],
+  ];
+  for (const [label, clause] of attributed) {
+    const { dir, file } = fixture([
+      "2026-09-22T18:22:00Z | codex-survey-lane#20260922T214000Z | item T-801 claimed — " +
+        `the item needs \`scripts/exec/probe-a.mjs\`, ${clause}`,
+    ]);
+    const r = preclaimFiles(
+      file,
+      "T-800",
+      "codex-other#20260922T182500Z",
+      "scripts/exec/probe-a.mjs",
+    );
+    check(
+      `an attribution behind the path frees it: ${label}`,
+      r.status === 0 && r.report.fileOverlap?.refuses === false,
+      `status=${r.status} overlap=${JSON.stringify(r.report.fileOverlap)}`,
+    );
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+}
+
+{
+  // NEGATIVE CONTROLS — pinned BEFORE the veto was widened, and every one of
+  // them is a live relative clause in exactly the same position. The sharpest
+  // is the first: the PATH is the subject of `holds`, so a bare verb behind a
+  // relative pronoun must veto nothing. If it did, a run describing its own
+  // file would stop holding it and two runs would land on one file.
+  const mustHold = [
+    ["the path is the verb's own subject", ", which holds 33 test files of which 5 are covered"],
+    ["first person", ", which I do not need to touch."],
+    ["first person possessive", ", which my claim did not name in advance because CI forced it"],
+    ["this lane", ", which this lane built earlier today and whose purpose is to fail closed"],
+    ["a predicate, not a holder", ", which is the item itself in use. Operator-side wiring"],
+    ["a predicate about the file", ", which sits on the candidate-supplier authority"],
+    ["a hand-back tag", ", which a terse hand-back tag does not write"],
+    ["nothing behind it at all", "."],
+  ];
+  for (const [label, tail] of mustHold) {
+    const { dir, file } = fixture([
+      "2026-09-22T18:22:00Z | codex-survey-lane#20260922T214000Z | item T-801 claimed — " +
+        `this run rewrites scripts/exec/probe-a.mjs${tail}`,
+    ]);
+    const r = preclaimFiles(
+      file,
+      "T-800",
+      "codex-other#20260922T182500Z",
+      "scripts/exec/probe-a.mjs",
+    );
+    check(
+      `NEGATIVE CONTROL — the path still holds: ${label}`,
+      r.status === 1,
+      `status=${r.status} overlap=${JSON.stringify(r.report.fileOverlap)}`,
+    );
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+
+  // The three forms the item itself required to keep holding, written as the
+  // register writes them and measured holding BEFORE the widening.
+  const declaredHolds = [
+    "files: scripts/exec/probe-a.mjs",
+    "I am rewriting scripts/exec/probe-a.mjs this run",
+    "this claim holds `scripts/exec/probe-a.mjs`",
+  ];
+  for (const form of declaredHolds) {
+    const { dir, file } = fixture([
+      `2026-09-22T18:22:00Z | codex-survey-lane#20260922T214000Z | item T-801 claimed — ${form}`,
+    ]);
+    const r = preclaimFiles(
+      file,
+      "T-800",
+      "codex-other#20260922T182500Z",
+      "scripts/exec/probe-a.mjs",
+    );
+    check(
+      `NEGATIVE CONTROL — a declared hold still holds: ${form.slice(0, 30)}...`,
+      r.status === 1,
+      `status=${r.status} overlap=${JSON.stringify(r.report.fileOverlap)}`,
+    );
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+}
+
+{
+  // THE REACH, counted in WORDS, and pinned on the side a test can constrain.
+  //
+  // Both tail patterns are anchored at the head of the tail, so the bound only
+  // ever decides whether a clause that STARTS there can finish. Eight is the
+  // longest string either pattern can match, which is why a sweep over the
+  // live register at 4, 5, 6, 7, 8, 9, 10, 12, 16 and 24 tokens moves the
+  // freed count 3, 6, 7, 8 and then never again. The lower side is real and is
+  // what these cases hold shut; above the ceiling there is nothing to assert
+  // and none is asserted.
+  //
+  // The case below is live line 1200 and it is why the bound is not 6. A first
+  // draft stopped at six and left this genuine attribution holding — the
+  // holder sits at token EIGHT. No fixture found it; the sweep did.
+  const longest = claimedPaths(
+    "the item needs `scripts/exec/probe-a.mjs`, which IS held by the live T-460 claim.",
+  ).map((p) => p.path);
+  check(
+    "the longest real attribution reaches its holder at token 8 and still frees",
+    !longest.includes("scripts/exec/probe-a.mjs"),
+    `paths=${JSON.stringify(longest)}`,
+  );
+  const inReach = claimedPaths(
+    "the item needs scripts/exec/probe-a.mjs, which is repo-owned by another lane",
+  ).map((p) => p.path);
+  check(
+    "a shorter real attribution is inside the reach too",
+    !inReach.includes("scripts/exec/probe-a.mjs"),
+    `paths=${JSON.stringify(inReach)}`,
+  );
+  const unanchored = claimedPaths(
+    "this run rewrites scripts/exec/probe-a.mjs today and the census file is held by `codex-other#1`",
+  ).map((p) => p.path);
+  check(
+    "an attribution that does not OPEN the tail does not free the path",
+    unanchored.includes("scripts/exec/probe-a.mjs"),
+    `paths=${JSON.stringify(unanchored)}`,
+  );
+  // THE ANCHOR is what separates one path's clause from the next one's, and
+  // these two cases say so rather than crediting a boundary rule. A first
+  // draft carried a clause-break cut and a path-ends-the-reach rule here;
+  // mutations deleting each of them differed on zero live register lines and
+  // both cases below stayed green, so the rules were unreachable and are gone.
+  // Deleting the ANCHOR instead turns both of these red.
+  const nextSentence = claimedPaths(
+    "this run rewrites scripts/exec/probe-a.mjs. The census is held by `codex-other#1`",
+  ).map((p) => p.path);
+  check(
+    "an attribution opening the NEXT sentence does not free this one's path",
+    nextSentence.includes("scripts/exec/probe-a.mjs"),
+    `paths=${JSON.stringify(nextSentence)}`,
+  );
+  // The SUBJECT pattern is anchored for the same reason as the AGENT one, and
+  // this case is constructed rather than live because no register line puts a
+  // third party's relative clause that far behind another lane's file yet.
+  // Said plainly: the corpus does not constrain this anchor, the symmetry of
+  // the two patterns does, and without the case a mutation deleting it
+  // survives. A run naming its own file and then remarking on somebody else's
+  // must keep its own.
+  const trailingClause = claimedPaths(
+    "this run rewrites scripts/exec/probe-a.mjs today, unlike the census which codex holds",
+  ).map((p) => p.path);
+  check(
+    "a third party's clause later in the sentence does not free the path it opens with",
+    trailingClause.includes("scripts/exec/probe-a.mjs"),
+    `paths=${JSON.stringify(trailingClause)}`,
+  );
+  const overAPath = claimedPaths(
+    "this run rewrites `scripts/exec/probe-a.mjs` unlike `docs/architecture/probe-b.json` held by `codex-other#1`",
+  ).map((p) => p.path);
+  check(
+    "an attribution about a LATER path frees that path and not this one",
+    overAPath.includes("scripts/exec/probe-a.mjs") &&
+      !overAPath.includes("docs/architecture/probe-b.json"),
+    `paths=${JSON.stringify(overAPath)}`,
+  );
+}
+
+{
+  // THE TWO HALVES' CUE SURFACE, recomputed rather than narrated (T-717's ask).
+  // Every row's `covered` flag is re-derived by running that row's own probe
+  // through the real parser. A veto added to one half without a row here fails
+  // this block; a row claiming coverage that does not fire fails it too.
+  const recomputed = recomputeCueSurface();
+  const wrong = recomputed.filter((r) => r.covered !== r.observed);
+  check(
+    "every declared cue-surface cell matches what its probe actually observes",
+    wrong.length === 0,
+    wrong.map((r) => `${r.half}/${r.cue}/${r.governs} declared=${r.covered} observed=${r.observed}`).join("\n"),
+  );
+  check(
+    "the cue surface names all eight cells, one per half x cue x direction",
+    recomputed.length === 8 &&
+      new Set(recomputed.map((r) => `${r.half}/${r.cue}/${r.governs}`)).size === 8,
+    `rows=${recomputed.length}`,
+  );
+  // The one asymmetry still open, published as a row rather than left to be
+  // found by a refused claim. When the item half grows a right-governing
+  // attribution veto this goes empty and this assertion is what says so.
+  check(
+    "the only open asymmetry is the item half's missing right-governing attribution veto",
+    JSON.stringify(cueSurfaceDivergences()) === JSON.stringify(["item/attribution/right"]),
+    `divergences=${JSON.stringify(cueSurfaceDivergences())}`,
+  );
+  // The table is not free to disagree with the module's own bounds.
+  const pathRight = recomputed.find(
+    (r) => r.half === "path" && r.cue === "attribution" && r.governs === "right",
+  );
+  check(
+    "the new cell records its unit as WORDS, which is the divergence T-747 repaired",
+    pathRight.unit === "words" && pathRight.bound === 8 && pathRight.item === "T-747",
+    JSON.stringify(pathRight),
+  );
+}
 
 console.log(`\n${passes} passed, ${failures} failed`);
 process.exit(failures ? 1 : 0);
