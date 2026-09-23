@@ -328,6 +328,18 @@ const ITEM_FLAG_CUE = /(?:^|[^A-Za-z0-9_])-$/;
  *
  * `ITEM_SUBJECT` itself is untouched, as in T-710 and T-714, so movement on
  * the real register is attributable to this veto alone.
+ *
+ * CASE, re-measured 2026-09-23 (item T-715). The flag is case-insensitive and
+ * the register shouts these words, but the two have never met: over the
+ * register as it stood at its `2026-09-23T03:45:37Z` line, 67 negator
+ * occurrences carry an upper-case letter and NONE of them is governed by a
+ * subject-position id — 14 govern a bare mention, 53 reach no id at all — so
+ * dropping the flag would move no verdict on any line written to date. The
+ * reason is structural rather than lucky: `ITEM_SUBJECT` keys on the literal
+ * word `item`/`items`, and the shouted form is a terse hand-back tag that does
+ * not write it. The flag stays, because `items T-703 ... remain UNCLAIMED` is
+ * one word away from a line the register already writes; the suite carries
+ * that one word as a named edit to real text, not as an invented line.
  */
 const CLAIM_STATE_NEGATOR = /\b(?:unclaimed|not\s+(?:yet\s+)?claimed|never\s+claimed)\b/i;
 

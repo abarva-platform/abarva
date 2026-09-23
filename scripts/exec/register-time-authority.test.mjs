@@ -2269,16 +2269,95 @@ function preclaimFiles(file, item, identity, files, extra = []) {
     ) === false,
   );
 
-  // CASE. The register shouts this word — `T-703 and T-706 remain UNCLAIMED`,
-  // `records T-703 as UNCLAIMED`, `T-455 and T-456 filed ... and UNCLAIMED`.
-  // None of those sit within the reach of a subject-position id TODAY, so
-  // this one case is synthetic and is labelled as such rather than dressed up
-  // as a transcription; it is here because dropping the case-insensitive flag
-  // was the one mutation nothing else caught, and because `item T-703 remains
-  // UNCLAIMED` is the obvious next line someone writes.
+  // CASE, re-measured on the live register (item T-715).
+  //
+  // T-709 shipped the case-insensitive flag with ONE invented line, `item
+  // T-814 remains UNCLAIMED`, and a comment beside it saying no real positive
+  // existed. That is the shape T-715 was filed against: the suite asserted a
+  // fact about the register in a comment, where nothing checks it and nothing
+  // notices when it stops being true.
+  //
+  // Re-measured over the register as it stood at its `2026-09-23T03:45:37Z`
+  // line — 1563 non-empty lines, 1263 subject-position occurrences — by
+  // diffing `itemSubjects` against a copy of the control whose ONLY difference
+  // is the dropped `i` flag. Counted per negator occurrence:
+  //
+  //   upper-case-bearing negators                     67
+  //     governed by a subject-position id              0   <- the flag's reach
+  //     governed by a bare id mention                 14   (20 (id, negator)
+  //                                                         pairs; one shout
+  //                                                         often governs
+  //                                                         two or three ids)
+  //     no id within reach                            53
+  //   lower-case negators                            156
+  //     governed by a subject-position id              8   <- register lines
+  //                                                         152, 153, 171,
+  //                                                         439, 1881, 1887,
+  //                                                         1961, 1963
+  //   lines where the flag changes a verdict           0
+  //
+  // The detector was proved on a known positive before the zero was believed:
+  // three lines appended to a copy of the register — `item T-991 remains
+  // UNCLAIMED`, the same in lower case, and a genuine claim — and it reported
+  // exactly the first. So the zero is the register's, not the measurement's.
+  //
+  // There is still no untouched real positive, so the finding stands; what
+  // changes is that it is now a CHECK. Two real transcriptions carry it, and
+  // the invented line is gone: the flag's positive is real register text with
+  // ONE word inserted, and the insertion is named.
+  const LIVE_1792 =
+    "Files: scripts/exec/build-source-board.mjs, one release record. " +
+    "T-703, T-705 and T-706 remain UNCLAIMED; T-701(b) remains an open owner decision.";
+  const LIVE_1205 =
+    "RELEASED item T-460 — all thirteen files free. Nothing held. " +
+    "T-462, T-463 and T-464 are filed and UNCLAIMED.";
+
+  // WHY the count is zero, pinned rather than asserted. Every shout on this
+  // register governs a BARE mention, and `ITEM_SUBJECT` keys on the literal
+  // word `item`/`items`, which a terse hand-back tag does not write. These ids
+  // are free for want of a subject cue; the veto never runs on them, so its
+  // case cannot be what freed them.
   check(
-    "CASE — an upper-case UNCLAIMED frees the item just as the lower-case form does",
-    itemSubjects("item T-814 remains UNCLAIMED").some((id) => id.base === "T-814") === false,
+    "REAL — register line 1792 shouts UNCLAIMED at three ids and holds none of them",
+    ["T-703", "T-705", "T-706"].every(
+      (id) => itemSubjects(LIVE_1792).some((x) => x.base === id) === false,
+    ),
+  );
+  check(
+    "REAL — register line 1205 shouts UNCLAIMED at three bare ids while still holding its own subject",
+    itemSubjects(LIVE_1205).some((x) => x.base === "T-460") === true &&
+      ["T-462", "T-463", "T-464"].every(
+        (id) => itemSubjects(LIVE_1205).some((x) => x.base === id) === false,
+      ),
+  );
+  // THE DIFFERENTIAL, which is what makes the two above a measurement rather
+  // than a tautology: delete the shout from each line and no verdict moves. A
+  // check that only asserted "not held" would pass for either reason and could
+  // not tell the two apart.
+  check(
+    "THE REASON — deleting UNCLAIMED from either line moves no verdict, so the veto is not what freed those ids",
+    itemSubjects(LIVE_1792.replace(" remain UNCLAIMED", " remain")).some((x) =>
+      ["T-703", "T-705", "T-706"].includes(x.base),
+    ) === false &&
+      itemSubjects(LIVE_1205.replace(" and UNCLAIMED", "")).some((x) =>
+        ["T-462", "T-463", "T-464"].includes(x.base),
+      ) === false,
+  );
+  // THE FLAG'S POSITIVE — real register text, ONE word inserted, and the word
+  // is named. `items` is the subject cue the shout omits; with it the clause is
+  // a line the register could write tomorrow, and the shout then sits at
+  // exactly six tokens, the reach bound's firing edge. This is the check that
+  // dropping the `i` flag fails.
+  const LIVE_1792_AS_SUBJECT = LIVE_1792.replace("T-703, T-705", "items T-703, T-705");
+  check(
+    "CASE — an upper-case UNCLAIMED frees the item as the lower-case form does (register line 1792, `items` inserted)",
+    itemSubjects(LIVE_1792_AS_SUBJECT).some((id) => id.base === "T-703") === false,
+  );
+  check(
+    "CASE — the same clause with the shout removed DOES hold it, so the shout is what freed it",
+    itemSubjects(LIVE_1792_AS_SUBJECT.replace(" remain UNCLAIMED", " remain")).some(
+      (id) => id.base === "T-703",
+    ) === true,
   );
 
   // The reach counts WORDS, so the markdown the register wraps its ids in
