@@ -879,7 +879,7 @@ describe("SourceNewWorkspace", () => {
       },
     };
 
-    render(
+    const view = render(
       <SourceNewWorkspace
         event={{
           ...request,
@@ -892,6 +892,10 @@ describe("SourceNewWorkspace", () => {
       />,
     );
     fireEvent.click(screen.getByRole("button", { name: "Intelligence" }));
+
+    expect(
+      screen.getByText("Matched from the event's recorded category."),
+    ).toBeTruthy();
 
     expect(
       screen.getByRole("region", { name: "Event intelligence workspace" }),
@@ -919,6 +923,33 @@ describe("SourceNewWorkspace", () => {
         .getByRole("link", { name: "Resolve evidence gap" })
         .getAttribute("href"),
     ).toBe("/source/events/event-1?workspace=files");
+
+    view.rerender(
+      <SourceNewWorkspace
+        event={{
+          ...request,
+          category: null,
+          lifecycle: "active",
+          currentStage: "rfp",
+        }}
+        files={[]}
+        intelligence={{
+          ...intelligence,
+          archetype: {
+            ...intelligence.archetype,
+            source: "event_type_fallback",
+          },
+        }}
+      />,
+    );
+    expect(
+      screen.getByText(
+        "Using the recorded event type as a fallback. A category mapping is not recorded.",
+      ),
+    ).toBeTruthy();
+    expect(
+      screen.queryByText("Matched from the event's recorded category."),
+    ).toBeNull();
   });
 
   it("keeps high-volume intelligence review items behind an accessible expansion control", () => {
