@@ -228,3 +228,46 @@ jobs:
       # agent-invoked, like --preclaim, and its refusal is advisory.
       - name: Run the item id collision detector contract
         run: node scripts/exec/id-collision.test.mjs
+
+      # T-733. Resolving the queue's suppressed candidates against git and
+      # GitHub, because until now a human did it or nobody did.
+      #
+      # `build-execution-queue.mjs` suppresses a candidate whose newest claim
+      # line names a branch or a PR, and that signal never expires. The rendered
+      # queue therefore hands the reader the rest of the job in prose: check the
+      # branch and the pull request each claim names, and if the branch is gone
+      # and the PR is merged, append a release line. T-732 filed the gap and
+      # called that remedy "a protocol sentence rather than an implementation".
+      # A protocol sentence invoked by nobody is exactly the shape T-706/T-708
+      # had to wire, twice.
+      #
+      # Executed for all fourteen live candidates on 2026-09-23: ZERO were in
+      # flight. Four were fossils whose pull requests had merged 37 hours
+      # earlier with their branches deleted, nine had no branch on origin and no
+      # pull request that ever existed, and one declares no branch at all. Six
+      # of the nine have no implementation on `main` by path or by symbol -- so
+      # the bucket had been hiding genuinely unclaimed work for four days, one
+      # item of it in this lane.
+      #
+      # The verdict SPLIT is the contract, not the listing. `fossil` authorises
+      # a release line saying the work is done; `abandoned` refuses one, because
+      # three of the nine real abandoned claims name work that did land from
+      # some other branch and three name work that never landed at all. A
+      # resolver that collapsed the two would launder undone work into a closed
+      # item, silently.
+      #
+      # Every probe in the suite is INJECTED and this step makes no network
+      # call: a runner has neither `origin` nor a credential, and a suite that
+      # degraded to "could not check, therefore fine" would be the unfailable
+      # gate again. The real-corpus cases assert only the extraction half and
+      # SKIP when the operator documents are absent, counted separately so a
+      # skip cannot read as a pass. Eleven mutations, eleven caught; two
+      # survived their first fixture -- one guard that looked redundant until
+      # `branch n/a` was tried against it, and one whose risk today's prose
+      # happens not to contain.
+      #
+      # The generator is untouched. Letting the board read the repository is
+      # T-732's shape (b), which would make rendering the queue require a
+      # network; this is a separate CLI, in the shape of `--preclaim`.
+      - name: Run the fossil-claim resolver contract
+        run: node scripts/exec/fossil-claims.test.mjs
