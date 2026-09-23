@@ -113,30 +113,26 @@ export function buildStage07NegotiationBriefCandidate(args: {
     scorecardAuthorityView: args.scorecardAuthorityView,
     bafoRoundConcessionView: args.bafoRoundConcessionView,
   });
-  const acceptedFacts = buildAcceptedFacts({
-    view,
-    decisionView: args.decisionView,
-    bafoRoundConcessionView: args.bafoRoundConcessionView,
-    includeEvaluatorEvidence: !refusals.some(
-      (refusal) => refusal.evidenceFamily === "evaluator",
-    ),
-    includeBafoRoundEvidence: !refusals.some(
-      (refusal) => refusal.evidenceFamily === "bafo_round",
-    ),
-  });
-
   if (refusals.length > 0) {
     return {
       state: "refused",
       exportReadiness: "refused_missing_evidence",
       headline:
         "Negotiation brief candidate refused; required Stage 07 evidence is missing.",
-      acceptedFacts,
+      acceptedFacts: [],
       proposedAsks: [],
       refusals,
       guardrails,
     };
   }
+
+  const acceptedFacts = buildAcceptedFacts({
+    view,
+    decisionView: args.decisionView,
+    bafoRoundConcessionView: args.bafoRoundConcessionView,
+    includeEvaluatorEvidence: true,
+    includeBafoRoundEvidence: true,
+  });
 
   return {
     state: "candidate",

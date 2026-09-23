@@ -197,6 +197,7 @@ describe("Stage 07 negotiation brief planner", () => {
       ]),
     );
     expect(candidate.proposedAsks).toEqual([]);
+    expect(candidate.acceptedFacts).toEqual([]);
   });
 
   it("refuses when governed response evidence is missing", () => {
@@ -242,6 +243,7 @@ describe("Stage 07 negotiation brief planner", () => {
     expect(candidate.acceptedFacts.map((fact) => fact.category)).not.toContain(
       "evaluator_evidence",
     );
+    expect(candidate.acceptedFacts).toEqual([]);
   });
 
   it("refuses when scorecard authority is blocked for evaluator identity or weight lock", () => {
@@ -288,6 +290,7 @@ describe("Stage 07 negotiation brief planner", () => {
       ]),
     );
     expect(candidate.proposedAsks).toEqual([]);
+    expect(candidate.acceptedFacts).toEqual([]);
   });
 
   it("refuses until BAFO rounds and concessions are versioned and reviewed", () => {
@@ -347,6 +350,7 @@ describe("Stage 07 negotiation brief planner", () => {
       "bafo_round",
     );
     expect(candidate.proposedAsks).toEqual([]);
+    expect(candidate.acceptedFacts).toEqual([]);
   });
 });
 
