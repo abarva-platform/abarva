@@ -3,6 +3,7 @@ import {
   type PostgresCompatClient,
 } from "@/lib/data-plane/postgresCompat";
 import type { SourceEventFactRow } from "@/lib/source/facts/fact-types";
+import type { SourceAssertionInput } from "@/lib/source/accepted-fact-projection";
 import { buildSourceContextWritebackPlan } from "./build-writeback";
 import {
   SOURCE_CONTEXT_FACTS_TABLE,
@@ -102,6 +103,7 @@ export async function writeSourceFactsToEnterpriseContext(
   input: {
     readonly event: SourceContextWritebackEvent;
     readonly facts: readonly SourceEventFactRow[];
+    readonly acceptedAssertions?: readonly SourceAssertionInput[];
     readonly committedAt?: string;
   },
   store: SourceContextWritebackStore = azureSourceContextWritebackStore(),
@@ -109,6 +111,7 @@ export async function writeSourceFactsToEnterpriseContext(
   const plan = buildSourceContextWritebackPlan({
     event: input.event,
     facts: input.facts,
+    acceptedAssertions: input.acceptedAssertions,
     committedAt: input.committedAt ?? new Date().toISOString(),
   });
 

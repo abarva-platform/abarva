@@ -1,4 +1,5 @@
 import type { SourceEventFactRow } from "@/lib/source/facts/fact-types";
+import type { SourceAssertionInput } from "@/lib/source/accepted-fact-projection";
 import {
   SOURCE_CONTEXT_RECORD_TYPE,
   buildSourceContextWritebackPlan,
@@ -25,6 +26,7 @@ function fact(overrides: Partial<SourceEventFactRow> = {}): SourceEventFactRow {
     source_citation: {
       doc: "AMS intake template",
       locator: "Spend!B4",
+      version_id: "version-1",
     },
     confidence: "high",
     captured_at: "2026-07-22T12:00:00.000Z",
@@ -41,6 +43,37 @@ const event = {
   clientKey: "apexretail",
   stageKey: "responses",
 };
+
+function acceptedAssertion(
+  overrides: Partial<SourceAssertionInput> = {},
+): SourceAssertionInput {
+  return {
+    assertionId: "assertion-1",
+    factId: "fact-1",
+    tenantKey: "apex-retail",
+    eventId: "event-1",
+    factKey: "annual_baseline_spend_usd",
+    value: 1_200_000,
+    source: {
+      system: "source_event_facts",
+      artifactId: "AMS intake template",
+      versionId: "version-1",
+      location: "Spend!B4",
+    },
+    confidence: "high",
+    reviewStatus: "accepted",
+    reviewedBy: "reviewer-1",
+    reviewedAt: "2026-07-22T12:30:00.000Z",
+    extractionState: "reviewed",
+    conflictStatus: "clear",
+    effectiveFrom: "2026-07-22T12:00:00.000Z",
+    effectiveTo: null,
+    observedAt: "2026-07-22T12:00:00.000Z",
+    staleAfter: "2026-08-22T12:00:00.000Z",
+    supersedesAssertionId: null,
+    ...overrides,
+  };
+}
 
 function fakeStore(
   opts: { fail?: boolean } = {},
@@ -78,10 +111,108 @@ function fakeStore(
 }
 
 describe("buildSourceContextWritebackPlan", () => {
+  it("does not publish a cited but unreviewed Source fact as canonical context", () => {
+    const plan = buildSourceContextWritebackPlan({
+      event,
+      facts: [fact()],
+      committedAt: "2026-07-22T13:00:00.000Z",
+    });
+
+    expect(plan.records).toEqual([]);
+    expect(plan.factDrafts).toEqual([]);
+    expect(plan.skippedFacts).toEqual([
+      expect.objectContaining({
+        factId: "fact-1",
+        reason: "review_not_verified",
+      }),
+    ]);
+  });
+
+  it("does not publish a fact from another event in the same tenant", () => {
+    const plan = buildSourceContextWritebackPlan({
+      event,
+      facts: [fact({ source_event_id: "event-2" })],
+      committedAt: "2026-07-22T13:00:00.000Z",
+    });
+
+    expect(plan.records).toEqual([]);
+    expect(plan.skippedFacts).toEqual([
+      expect.objectContaining({ factId: "fact-1", reason: "wrong_event" }),
+    ]);
+  });
+
+  it.each([
+    ["rejected review", { reviewStatus: "rejected" }],
+    ["generic reviewer", { reviewedBy: "User" }],
+    [
+      "different citation",
+      {
+        source: {
+          system: "source_event_facts",
+          artifactId: "Other file",
+          versionId: "version-1",
+          location: "Spend!B4",
+        },
+      },
+    ],
+    ["different value", { value: 900_000 }],
+    ["different captured time", { observedAt: "2026-07-21T12:00:00.000Z" }],
+  ])("does not publish with %s", (_label, overrides) => {
+    const plan = buildSourceContextWritebackPlan({
+      event,
+      facts: [fact()],
+      acceptedAssertions: [acceptedAssertion(overrides)],
+      committedAt: "2026-07-22T13:00:00.000Z",
+    });
+    expect(plan.records).toEqual([]);
+    expect(plan.skippedFacts).toEqual([
+      expect.objectContaining({
+        factId: "fact-1",
+        reason: "review_not_verified",
+      }),
+    ]);
+  });
+
+  it("does not publish a review of a different artifact version", () => {
+    const plan = buildSourceContextWritebackPlan({
+      event,
+      facts: [fact()],
+      acceptedAssertions: [
+        acceptedAssertion({
+          source: {
+            system: "source_event_facts",
+            artifactId: "AMS intake template",
+            versionId: "version-2",
+            location: "Spend!B4",
+          },
+        }),
+      ],
+      committedAt: "2026-07-22T13:00:00.000Z",
+    });
+    expect(plan.records).toEqual([]);
+    expect(plan.skippedFacts).toEqual([
+      expect.objectContaining({ factId: "fact-1", reason: "review_not_verified" }),
+    ]);
+  });
+
+  it("does not publish when the fact citation has no version to bind", () => {
+    const plan = buildSourceContextWritebackPlan({
+      event,
+      facts: [fact({ source_citation: { doc: "AMS intake template", locator: "Spend!B4" } })],
+      acceptedAssertions: [acceptedAssertion()],
+      committedAt: "2026-07-22T13:00:00.000Z",
+    });
+    expect(plan.records).toEqual([]);
+    expect(plan.skippedFacts).toEqual([
+      expect.objectContaining({ factId: "fact-1", reason: "review_not_verified" }),
+    ]);
+  });
+
   it("projects a cited Source fact into an enterprise context record and fact draft", () => {
     const plan = buildSourceContextWritebackPlan({
       event,
       facts: [fact()],
+      acceptedAssertions: [acceptedAssertion()],
       committedAt: "2026-07-22T13:00:00.000Z",
     });
 
@@ -115,11 +246,13 @@ describe("buildSourceContextWritebackPlan", () => {
     const a = buildSourceContextWritebackPlan({
       event,
       facts: [fact()],
+      acceptedAssertions: [acceptedAssertion()],
       committedAt: "2026-07-22T13:00:00.000Z",
     });
     const b = buildSourceContextWritebackPlan({
       event,
       facts: [fact()],
+      acceptedAssertions: [acceptedAssertion()],
       committedAt: "2026-07-22T13:00:00.000Z",
     });
     expect(a.records[0].canonical_record_id).toBe(
@@ -135,6 +268,7 @@ describe("buildSourceContextWritebackPlan", () => {
     const plan = buildSourceContextWritebackPlan({
       event,
       facts: [fact({ value_numeric: "8400000" as unknown as number })],
+      acceptedAssertions: [acceptedAssertion({ value: 8400000 })],
       committedAt: "2026-07-22T13:00:00.000Z",
     });
     expect(plan.skippedFacts).toEqual([]);
@@ -185,6 +319,7 @@ describe("buildSourceContextWritebackPlan", () => {
     const plan = buildSourceContextWritebackPlan({
       event,
       facts: [fact()],
+      acceptedAssertions: [acceptedAssertion()],
       committedAt: "2026-07-22T13:00:00.000Z",
     });
     expect(plan.readinessDrafts[0]).toMatchObject({
@@ -208,6 +343,7 @@ describe("writeSourceFactsToEnterpriseContext", () => {
       {
         event,
         facts: [fact()],
+        acceptedAssertions: [acceptedAssertion()],
         committedAt: "2026-07-22T13:00:00.000Z",
       },
       store,
@@ -247,6 +383,7 @@ describe("writeSourceFactsToEnterpriseContext", () => {
       {
         event,
         facts: [fact()],
+        acceptedAssertions: [acceptedAssertion()],
         committedAt: "2026-07-22T13:00:00.000Z",
       },
       fakeStore({ fail: true }),
