@@ -36,7 +36,7 @@ The Source New response-intake view no longer credits a parsed supplier workbook
 
 - Red-first tests reproduced cross-event/tenant artifact credit and supplier-name-only question credit; both pass after the fix.
 - Deliberately removing the tenant fence made the wrong-tenant test fail, then the guard was restored.
-- Five focused Jest suites: 23 tests pass locally, including wrong-event, wrong-tenant, mismatched supplier, missing round/confidence, and unreviewed-question refusal.
+- Five focused Jest suites: 24 tests pass locally, including wrong-event, wrong-tenant, mismatched supplier, missing round/confidence, and package-atomic refusal when one question lacks provenance or review.
 - TypeScript with an 8 GB Node heap and scoped ESLint pass locally. CI is pending.
 
 ## Rollout Plan

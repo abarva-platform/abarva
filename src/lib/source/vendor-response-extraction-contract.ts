@@ -118,6 +118,8 @@ export function extractAcceptedResponseQuestions(input: {
   return {
     state: rows.length === 0 ? "blocked" : blockers.length ? "review_required" : "available",
     blockers: [...new Set(blockers)],
-    rows,
+    rows: blockers.length
+      ? rows.map((row) => ({ ...row, downstreamEligible: false }))
+      : rows,
   };
 }

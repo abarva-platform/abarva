@@ -138,4 +138,25 @@ describe("extractAcceptedResponseQuestions", () => {
       downstreamEligible: false,
     });
   });
+
+  it("holds every question when one question lacks provenance", () => {
+    const result = extractAcceptedResponseQuestions({
+      ...input,
+      responsePackage: {
+        ...responsePackage,
+        rows: [
+          responsePackage.rows[0],
+          {
+            ...responsePackage.rows[0],
+            questionId: "question-2",
+            requirementId: "REQ-2",
+            provenance: undefined,
+          },
+        ],
+      },
+    });
+    expect(result.state).toBe("review_required");
+    expect(result.rows).toHaveLength(1);
+    expect(result.rows[0].downstreamEligible).toBe(false);
+  });
 });
