@@ -1824,7 +1824,10 @@ describe("MovesPhaseStandaloneClient", () => {
 
     await waitFor(() => {
       expect(structuredFamilyIngests).toEqual([
-        { family: "eng_performance_dora", fileName: "dora_delivery_baseline.csv" },
+        {
+          family: "eng_performance_dora",
+          fileName: "dora_delivery_baseline.csv",
+        },
       ]);
     });
     // NEGATIVE: it must not also travel the document path, which would create a
@@ -1833,9 +1836,9 @@ describe("MovesPhaseStandaloneClient", () => {
     // The success row is set after an awaited fetch, so retry until React has
     // flushed it. Flexible matcher because label and detail are sibling nodes.
     await waitFor(() => {
-      expect(
-        document.body.textContent?.replace(/\s+/g, " ") ?? "",
-      ).toMatch(/Committed 10 of 10 parsed rows to readiness/i);
+      expect(document.body.textContent?.replace(/\s+/g, " ") ?? "").toMatch(
+        /Committed 10 of 10 parsed rows to readiness/i,
+      );
     });
   });
 
@@ -1877,9 +1880,9 @@ describe("MovesPhaseStandaloneClient", () => {
     );
 
     await waitFor(() => {
-      expect(
-        document.body.textContent?.replace(/\s+/g, " ") ?? "",
-      ).toMatch(/criticality required.*parsed 10 rows, committed 0/i);
+      expect(document.body.textContent?.replace(/\s+/g, " ") ?? "").toMatch(
+        /criticality required.*parsed 10 rows, committed 0/i,
+      );
     });
   });
 
@@ -2760,8 +2763,14 @@ describe("MovesPhaseStandaloneClient", () => {
     expect(screen.getByTestId("mxw-decision-surface")).toHaveTextContent(
       "P2 cannot advance yet",
     );
-    expect(screen.getByText(/Left-side checks mean the step inputs are captured/i)).toBeInTheDocument();
-    expect(screen.getByText(/gate advances only after required evidence, outputs, and approvals pass/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/Left-side checks mean the step inputs are captured/i),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        /gate advances only after required evidence, outputs, and approvals pass/i,
+      ),
+    ).toBeInTheDocument();
     expect(screen.getByTestId("mxw-decision-surface")).toHaveTextContent(
       "Resolve 1 hard gate blocker before advancing",
     );
@@ -2802,6 +2811,57 @@ describe("MovesPhaseStandaloneClient", () => {
         screen.getByRole("heading", { name: "Files & Evidence" }),
       ).toBeInTheDocument();
     });
+  });
+
+  it("shows current generated artifacts on the gate panel when linked evidence is empty", () => {
+    render(
+      <MovesPhaseStandaloneClient
+        carriesForwardContent={[]}
+        evidenceNeedPackets={[]}
+        initialSubstepKey="approve"
+        move={makeMove({
+          currentPhase: 5,
+          gateCriteria: [
+            {
+              id: "g1",
+              label: "Execution package signed off",
+              completed: true,
+              severity: "hard",
+              verified: true,
+            },
+          ],
+          linkedEvidence: [],
+          phaseLabel: "P5 Prepare to Execute",
+          terminalComplete: true,
+        })}
+        phaseBuildArtifacts={[
+          {
+            artifactId: "artifact-1",
+            deliverableTypeKey: "handoff_package",
+            documentTitle: "Execution Handoff Package",
+            phase: 5,
+            status: "board_ready",
+            version: 1,
+            downloadUrl: "/api/v1/programs/move/artifacts/artifact-1/download",
+          },
+          {
+            artifactId: "artifact-2",
+            deliverableTypeKey: "value_measurement_contract",
+            documentTitle: "Value Measurement Contract",
+            phase: 5,
+            status: "board_ready",
+            version: 1,
+            downloadUrl: "/api/v1/programs/move/artifacts/artifact-2/download",
+          },
+        ]}
+        phaseNum={5}
+        phaseTallies={[...phaseTallies]}
+      />,
+    );
+
+    const decisionSurface = screen.getByTestId("mxw-decision-surface");
+    expect(decisionSurface).toHaveTextContent("2 generated artifacts");
+    expect(decisionSurface).not.toHaveTextContent("0 evidence items");
   });
 
   it("does not load the legacy facilitated session playbook on the Prepare tab", () => {
