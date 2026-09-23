@@ -1,0 +1,520 @@
+{
+  "item": "T-742",
+  "title": "Fifth triage draw of twenty untriaged unrun suites; the draw lands almost entirely inside the agent runtime's own unit directory",
+  "recordedAt": "2026-09-23T19:24:16.949Z",
+  "base": "5cb905487a3c119cca93edc2ecd842261ed0a91e",
+  "scope": {
+    "drawnFrom": "governedRiskFiles from scripts/quality/test-ci-coverage-census.mjs, rows with untriaged true and covered false, band before score before path",
+    "drawSize": 20,
+    "poolUntriagedAndUncovered": 55,
+    "poolAfterExcludingPriorRecords": 41,
+    "remainingAfterThisDraw": 21,
+    "bandsInThisDraw": {
+      "critical": 0,
+      "high": 20
+    },
+    "whyNoCriticalRows": "T-550 drew the critical band to exhaustion and T-556 recorded the same. Every row left in the pool at this base is band high, score 10, signal tenant_scoped_read, so the draw is decided by path order alone and is reproducible from the census without judgement. T-556 predicted 42 remaining; the census at this base reports 41, a one-row drift from coverage changes merged since, so the pool is reproducible rather than asserted.",
+    "disjointFrom": [
+      "docs/architecture/t472-stale-suite-triage.json",
+      "docs/architecture/t509-stale-suite-triage.json",
+      "docs/architecture/t550-stale-suite-triage.json",
+      "docs/architecture/t556-stale-suite-triage.json"
+    ],
+    "disjointnessIsAsserted": "src/__tests__/behaviors/t742-stale-suite-triage-record.test.ts reads all four sibling records and fails if any path appears in two."
+  },
+  "verdictVocabulary": [
+    "wire_into_ci",
+    "rewrite_as_behavior",
+    "update_with_reason_recorded",
+    "repair"
+  ],
+  "jestEvidence": {
+    "how": "Each of the twenty was executed on its own with npx jest --runTestsByPath <path> --no-coverage --ci --json --outputFile, and every count in suites[] is read out of that run's JSON by scripts rather than typed. --runTestsByPath is used for all twenty because the first path contains the bracketed-and-parenthesised segment (maestro), which jest would read as a regex group.",
+    "executedAt": "2026-09-23T19:20:32Z to 2026-09-23T19:20:48Z, before any verdict below was written",
+    "harnessFoundTests": "Asserted rather than assumed: every one of the twenty runs reports numTotalTestSuites 1, exactly one entry in testResults, and numTotalTests greater than zero. A run that matched no file would report zero and is the failure mode a green exit code hides.",
+    "totals": {
+      "suitesExecuted": 20,
+      "green": 20,
+      "red": 0,
+      "testsRun": 313,
+      "testsPassed": 313,
+      "testsFailed": 0,
+      "testsPending": 0
+    }
+  },
+  "drawConcentration": {
+    "byDirectory": {
+      "src/app/(maestro)/source/preview/workspace/__tests__": 1,
+      "src/lib/agent/__tests__": 19
+    },
+    "dominantDirectory": "src/lib/agent/__tests__",
+    "dominantDirectoryCount": 19,
+    "whyItMatters": "The pool is one band and one score, so the ranking collapses to path order and the draw becomes an alphabetical sweep of one directory rather than a spread across the tree. That is not a flaw in the draw rule, but a reader who sees 'twenty suites, highest risk first' will picture a spread. The census at this base reports src/lib/agent/__tests__ holds 33 test files of which 5 are covered and 28 are untriaged and unrun, with zero declared quarantines: the directory is reached by NAMED-FILE commands, so every file added to it since falls outside CI by omission. This draw judges 19 of those 28. Among the 9 it does not reach are untrusted-content, tenant-guardrails, system-prompt-guardrails, restricted-output-policy and retrieval-tenant-leak."
+  },
+  "counts": {
+    "wire_into_ci": 20,
+    "rewrite_as_behavior": 0,
+    "update_with_reason_recorded": 0,
+    "repair": 0
+  },
+  "forbiddenEdits": "No file judged in suites[] is edited by this item. The triage records a verdict and hands it on; wiring, rewriting and repair are the follow-on items' work.",
+  "followOnItems": {
+    "T-743": "Wire the suites this record marks wire_into_ci into CI, by directory rather than by named file, so a suite added to src/lib/agent/__tests__ tomorrow cannot fall outside CI by omission the way 28 of 33 have.",
+    "T-744": "Rewrite the one byte-matching case named in partialSourceTextCaseNames so it invokes the two synthesis routes and reads the headers and prompt block off the response, instead of readFileSync-ing the route source and matching five string tokens."
+  },
+  "claimedWriteFiles": [
+    "docs/architecture/t742-stale-suite-triage.json",
+    "src/__tests__/behaviors/t742-stale-suite-triage-record.test.ts",
+    "docs/releases/records/2026-09-23-t742-stale-suite-triage.md"
+  ],
+  "vacuousControlsDeclared": {
+    "sourceTextScanner": "ZERO of the twenty is a source-text scanner, so the control forbidding a scanner from being wired into CI is VACUOUS for this draw. T-556's guard asserted at least one scanner was present as a precondition; carrying that assertion forward would make this record fail for containing no scanners, which is the healthy state. The rule is kept and the precondition is dropped, and the count is published here so a reader is told the control did not fire rather than left to assume it did.",
+    "redSuites": "ZERO of the twenty is red, so the control requiring a non-green suite to carry a verdict that does not assume it passes is VACUOUS for this draw. T-556 had two red. The guard asserts this record's declared red count equals the rows that are actually non-green, so the vacuity cannot drift into a false claim."
+  },
+  "suites": [
+    {
+      "path": "src/app/(maestro)/source/preview/workspace/__tests__/workspace-explicit-client-api-routing.browser.test.tsx",
+      "draw": "T-742",
+      "governedRiskBand": "high",
+      "governedRiskScore": 10,
+      "governedRiskSignals": [
+        "tenant_scoped_read"
+      ],
+      "loaded": true,
+      "collected": true,
+      "run": true,
+      "green": true,
+      "totalTests": 3,
+      "failedTests": 0,
+      "passedTests": 3,
+      "pendingTests": 0,
+      "todoTests": 0,
+      "sourceTextScanner": false,
+      "verdict": "wire_into_ci",
+      "ownerItem": "T-743",
+      "rationale": "Drives the real WorkspaceClient and reads the URL the component itself built, so it proves the resolved client reaches the wire rather than that a call was written. Its own header records that these cases used to be a regular expression over WorkspaceClient.tsx and were converted; the conversion is exactly the direction this triage pushes, and nothing runs the result. The third case is the one that matters: it asserts the client parameter is OMITTED when no client resolves, so a session default cannot be silently substituted for an explicit client."
+    },
+    {
+      "path": "src/lib/agent/__tests__/attachments.test.ts",
+      "draw": "T-742",
+      "governedRiskBand": "high",
+      "governedRiskScore": 10,
+      "governedRiskSignals": [
+        "tenant_scoped_read"
+      ],
+      "loaded": true,
+      "collected": true,
+      "run": true,
+      "green": true,
+      "totalTests": 9,
+      "failedTests": 0,
+      "passedTests": 9,
+      "pendingTests": 0,
+      "todoTests": 0,
+      "sourceTextScanner": false,
+      "verdict": "wire_into_ci",
+      "ownerItem": "T-743",
+      "rationale": "Executes the attachment parser against mocked Azure Document Intelligence and pdf-parse, and proves the fallback path, the page/table metadata, the native-ready thresholds and the raw-mode escape hatch that requires explicit approval and carries a cost warning. The raw-mode case is a consequential-action control: it asserts raw mode is not offered for non-PDF uploads at all. No workflow runs it."
+    },
+    {
+      "path": "src/lib/agent/__tests__/capture-field-artifact.test.ts",
+      "draw": "T-742",
+      "governedRiskBand": "high",
+      "governedRiskScore": 10,
+      "governedRiskSignals": [
+        "tenant_scoped_read"
+      ],
+      "loaded": true,
+      "collected": true,
+      "run": true,
+      "green": true,
+      "totalTests": 29,
+      "failedTests": 0,
+      "passedTests": 29,
+      "pendingTests": 0,
+      "todoTests": 0,
+      "sourceTextScanner": false,
+      "verdict": "wire_into_ci",
+      "ownerItem": "T-743",
+      "rationale": "Twenty-nine cases over the capture-field artifact parser, and the citation block is the reason to wire it: a proposal with no citations, an empty array, all-empty strings, or non-string citations is DROPPED rather than accepted uncited. It also pins the phase guard closed against -1, 6, 1.5, the string \"1\" and null, and proves the payload never leaks into visible chat text. Every case executes the parser."
+    },
+    {
+      "path": "src/lib/agent/__tests__/citation-gap.test.ts",
+      "draw": "T-742",
+      "governedRiskBand": "high",
+      "governedRiskScore": 10,
+      "governedRiskSignals": [
+        "tenant_scoped_read"
+      ],
+      "loaded": true,
+      "collected": true,
+      "run": true,
+      "green": true,
+      "totalTests": 4,
+      "failedTests": 0,
+      "passedTests": 4,
+      "pendingTests": 0,
+      "todoTests": 0,
+      "sourceTextScanner": false,
+      "verdict": "wire_into_ci",
+      "ownerItem": "T-743",
+      "rationale": "Four cases executing the citation-gap detector, including both directions: it recognises grounded-engine citation forms so no false 'no citations' banner is raised, and it still raises the banner on a genuinely uncited response. A detector proven in only one direction is the defect this backlog keeps finding; this one is proven in both and is run by nothing."
+    },
+    {
+      "path": "src/lib/agent/__tests__/context-bundle-scoring.test.ts",
+      "draw": "T-742",
+      "governedRiskBand": "high",
+      "governedRiskScore": 10,
+      "governedRiskSignals": [
+        "tenant_scoped_read"
+      ],
+      "loaded": true,
+      "collected": true,
+      "run": true,
+      "green": true,
+      "totalTests": 39,
+      "failedTests": 0,
+      "passedTests": 39,
+      "pendingTests": 0,
+      "todoTests": 0,
+      "sourceTextScanner": false,
+      "verdict": "wire_into_ci",
+      "ownerItem": "T-743",
+      "rationale": "Thirty-nine cases executing the context-bundle scorers and the response gate they feed. The gate mapping is the governed part: blocked maps to refuse_or_defer and encodes the blocking input ids, insufficient maps to ask_for_missing_context, and a bundle with no identity can never classify as anything but blocked. That is the agent's fail-closed boundary, executed rather than described, and outside every CI scope."
+    },
+    {
+      "path": "src/lib/agent/__tests__/context-bundle-tenant-resolve.test.ts",
+      "draw": "T-742",
+      "governedRiskBand": "high",
+      "governedRiskScore": 10,
+      "governedRiskSignals": [
+        "tenant_scoped_read"
+      ],
+      "loaded": true,
+      "collected": true,
+      "run": true,
+      "green": true,
+      "totalTests": 51,
+      "failedTests": 0,
+      "passedTests": 51,
+      "pendingTests": 0,
+      "todoTests": 0,
+      "sourceTextScanner": false,
+      "verdict": "wire_into_ci",
+      "ownerItem": "T-743",
+      "rationale": "Fifty-one cases calling buildAgentContext across every canonical tenant key and every declared alias, asserting in both directions: the requested slug is echoed back, and the resolution NEVER produces another tenant's display name. It also pins an unknown slug to shell_only rather than to a tenant. This is the agent-side half of the tenant fence and the census reports it reached by no CI command."
+    },
+    {
+      "path": "src/lib/agent/__tests__/editorial-tenant-aware.test.ts",
+      "draw": "T-742",
+      "governedRiskBand": "high",
+      "governedRiskScore": 10,
+      "governedRiskSignals": [
+        "tenant_scoped_read"
+      ],
+      "loaded": true,
+      "collected": true,
+      "run": true,
+      "green": true,
+      "totalTests": 7,
+      "failedTests": 0,
+      "passedTests": 7,
+      "pendingTests": 0,
+      "todoTests": 0,
+      "sourceTextScanner": false,
+      "verdict": "wire_into_ci",
+      "ownerItem": "T-743",
+      "rationale": "Executes the Steward editorial body generator once per canonical tenant and asserts the produced prose names the resolved tenant and leaks no other canonical tenant into it, plus an unknown slug producing shell_only prose that names no tenant at all. A cross-tenant leak in generated prose is precisely the class of defect a signed-in check finds late and a unit suite finds immediately; nothing runs it."
+    },
+    {
+      "path": "src/lib/agent/__tests__/honest-disclosure.test.ts",
+      "draw": "T-742",
+      "governedRiskBand": "high",
+      "governedRiskScore": 10,
+      "governedRiskSignals": [
+        "tenant_scoped_read"
+      ],
+      "loaded": true,
+      "collected": true,
+      "run": true,
+      "green": true,
+      "totalTests": 25,
+      "failedTests": 0,
+      "passedTests": 25,
+      "pendingTests": 0,
+      "todoTests": 0,
+      "sourceTextScanner": false,
+      "verdict": "wire_into_ci",
+      "ownerItem": "T-743",
+      "rationale": "Twenty-five cases over the disclosure derivation the agent attaches to every answer: confidence downgrades when vanilla-response risk is elevated, the canonical message per state, missing inputs named for usable_with_gaps and pattern_only, and non-permissive language on the blocked state. It also pins backwards compatibility with legacy responses that carry no honest_disclosure block. All executed, none run by CI."
+    },
+    {
+      "path": "src/lib/agent/__tests__/markdownRenderer.test.tsx",
+      "draw": "T-742",
+      "governedRiskBand": "high",
+      "governedRiskScore": 10,
+      "governedRiskSignals": [
+        "tenant_scoped_read"
+      ],
+      "loaded": true,
+      "collected": true,
+      "run": true,
+      "green": true,
+      "totalTests": 21,
+      "failedTests": 0,
+      "passedTests": 21,
+      "pendingTests": 0,
+      "todoTests": 0,
+      "sourceTextScanner": false,
+      "verdict": "wire_into_ci",
+      "ownerItem": "T-743",
+      "rationale": "Twenty-one cases rendering agent markdown and asserting the produced nodes: id auto-linking, citation chips and their precedence over bare ids, custom entity tags rendered as readable links with the id kept in hover text only, and inline-node substitution that survives regex-special characters in placeholder keys. The citation chip cases are a declared AI-surface control rendered rather than described."
+    },
+    {
+      "path": "src/lib/agent/__tests__/markdownTokens.test.tsx",
+      "draw": "T-742",
+      "governedRiskBand": "high",
+      "governedRiskScore": 10,
+      "governedRiskSignals": [
+        "tenant_scoped_read"
+      ],
+      "loaded": true,
+      "collected": true,
+      "run": true,
+      "green": true,
+      "totalTests": 6,
+      "failedTests": 0,
+      "passedTests": 6,
+      "pendingTests": 0,
+      "todoTests": 0,
+      "sourceTextScanner": false,
+      "verdict": "wire_into_ci",
+      "ownerItem": "T-743",
+      "rationale": "Six cases executing the markdown table normaliser, including the two that matter for executive surfaces: a separator row that would otherwise render as table data is removed, and a pipe table the model emitted without a separator is given a valid GFM one. A malformed table reaching a CXO reader is a visible-quality defect with no other guard in CI."
+    },
+    {
+      "path": "src/lib/agent/__tests__/module-context-contract.test.ts",
+      "draw": "T-742",
+      "governedRiskBand": "high",
+      "governedRiskScore": 10,
+      "governedRiskSignals": [
+        "tenant_scoped_read"
+      ],
+      "loaded": true,
+      "collected": true,
+      "run": true,
+      "green": true,
+      "totalTests": 4,
+      "failedTests": 0,
+      "passedTests": 4,
+      "pendingTests": 0,
+      "todoTests": 0,
+      "sourceTextScanner": false,
+      "verdict": "wire_into_ci",
+      "ownerItem": "T-743",
+      "rationale": "Four cases executing classifyAgentContextMix and buildAgentContextContractBlock and asserting the produced prompt block, including the negative: the Intelligence block contains AVA / INTELLIGENCE and does NOT contain SENTINEL / INTELLIGENCE. Asserting which agent persona is absent is what makes this a contract rather than a smoke test."
+    },
+    {
+      "path": "src/lib/agent/__tests__/module-routing.test.ts",
+      "draw": "T-742",
+      "governedRiskBand": "high",
+      "governedRiskScore": 10,
+      "governedRiskSignals": [
+        "tenant_scoped_read"
+      ],
+      "loaded": true,
+      "collected": true,
+      "run": true,
+      "green": true,
+      "totalTests": 4,
+      "failedTests": 0,
+      "passedTests": 4,
+      "pendingTests": 0,
+      "todoTests": 0,
+      "sourceTextScanner": false,
+      "verdict": "wire_into_ci",
+      "ownerItem": "T-743",
+      "rationale": "Executes the aVa module routing registry: product routes resolve to executable surface scopes, the implemented expert contracts are exposed, a Source opportunity is routed to Moves P0 with its payload, and the scope registry REJECTS an unsupported handoff target. The rejection case is the control; a handoff router proven only on its happy path is a router with no boundary."
+    },
+    {
+      "path": "src/lib/agent/__tests__/module-v6-answer-contract.test.ts",
+      "draw": "T-742",
+      "governedRiskBand": "high",
+      "governedRiskScore": 10,
+      "governedRiskSignals": [
+        "tenant_scoped_read"
+      ],
+      "loaded": true,
+      "collected": true,
+      "run": true,
+      "green": true,
+      "totalTests": 4,
+      "failedTests": 0,
+      "passedTests": 4,
+      "pendingTests": 0,
+      "todoTests": 0,
+      "sourceTextScanner": false,
+      "partialSourceTextCases": 1,
+      "partialSourceTextCaseNames": [
+        "module V6 answer contract :: keeps Source and Moves synthesis caches versioned by the V6 contract"
+      ],
+      "verdict": "wire_into_ci",
+      "ownerItem": "T-744",
+      "rationale": "Three of its four cases execute the module: the packet contract and prompt block are built and read, visible-section parity is computed byte-for-byte except whitespace, and renderer-visible mutation is flagged. The fourth is a byte match: it readFileSyncs src/app/api/source/synthesis/route.ts and src/app/api/programs/synthesis/route.ts and asserts five string tokens appear in them. That case's SUBJECT is route behaviour -- the headers a response carries and the prompt block it sends -- which is executable, so it is a proxy and not a text-is-the-subject case. Wired under the T-556 precedent for a mostly-executing suite with named byte-matching cases, with the one case handed to T-744 for rewrite rather than left unrecorded."
+    },
+    {
+      "path": "src/lib/agent/__tests__/paperclip-abuse-guard.test.ts",
+      "draw": "T-742",
+      "governedRiskBand": "high",
+      "governedRiskScore": 10,
+      "governedRiskSignals": [
+        "tenant_scoped_read"
+      ],
+      "loaded": true,
+      "collected": true,
+      "run": true,
+      "green": true,
+      "totalTests": 6,
+      "failedTests": 0,
+      "passedTests": 6,
+      "pendingTests": 0,
+      "todoTests": 0,
+      "sourceTextScanner": false,
+      "verdict": "wire_into_ci",
+      "ownerItem": "T-743",
+      "rationale": "Executes assessPaperclipAbuse against declared fixtures and asserts the refusal shape, not just a boolean: fifty rapid-fire uploads in sixty seconds yield rate_limit with storage, parsing and queueing all false and a retry-after; a thousand-page PDF is held for manual review with storage allowed but parsing and queueing denied; an executable disguised as a PDF is quarantined BEFORE storage or parsing. A positive control is present too -- a normal attachment continues -- so the guard is capable of allowing."
+    },
+    {
+      "path": "src/lib/agent/__tests__/persona-army-harness.test.ts",
+      "draw": "T-742",
+      "governedRiskBand": "high",
+      "governedRiskScore": 10,
+      "governedRiskSignals": [
+        "tenant_scoped_read"
+      ],
+      "loaded": true,
+      "collected": true,
+      "run": true,
+      "green": true,
+      "totalTests": 4,
+      "failedTests": 0,
+      "passedTests": 4,
+      "pendingTests": 0,
+      "todoTests": 0,
+      "sourceTextScanner": false,
+      "verdict": "wire_into_ci",
+      "ownerItem": "T-743",
+      "rationale": "Executes buildPersonaArmyPlan and summarizePersonaArmyCoverage and asserts the produced plan: ten distinct personas, the coverage summary's agent/tenant/risk counts, a schedule of exactly ten slots per hour at fixed minutes for twenty-four hours, and every persona anchored to a named golden fixture. Wired on what it proves, with the limit stated rather than implied: it proves the PLAN is well-formed, not that any persona run ever executes. That second question is a different item and is not claimed here."
+    },
+    {
+      "path": "src/lib/agent/__tests__/rendered-response-metadata.test.ts",
+      "draw": "T-742",
+      "governedRiskBand": "high",
+      "governedRiskScore": 10,
+      "governedRiskSignals": [
+        "tenant_scoped_read"
+      ],
+      "loaded": true,
+      "collected": true,
+      "run": true,
+      "green": true,
+      "totalTests": 15,
+      "failedTests": 0,
+      "passedTests": 15,
+      "pendingTests": 0,
+      "todoTests": 0,
+      "sourceTextScanner": false,
+      "verdict": "wire_into_ci",
+      "ownerItem": "T-743",
+      "rationale": "Fifteen cases executing getHonestDisclosureViewModel, the function that decides what a reader is actually shown: which banner kind appears per bundle state, that an explicit quality_issues block wins even when the state would suppress the banner, that a cannot_help banner is raised on a blocked bundle, and that the call is deterministic and does not mutate its input. This is the render side of the disclosure control and no workflow reaches it."
+    },
+    {
+      "path": "src/lib/agent/__tests__/response-parts.test.ts",
+      "draw": "T-742",
+      "governedRiskBand": "high",
+      "governedRiskScore": 10,
+      "governedRiskSignals": [
+        "tenant_scoped_read"
+      ],
+      "loaded": true,
+      "collected": true,
+      "run": true,
+      "green": true,
+      "totalTests": 3,
+      "failedTests": 0,
+      "passedTests": 3,
+      "pendingTests": 0,
+      "todoTests": 0,
+      "sourceTextScanner": false,
+      "verdict": "wire_into_ci",
+      "ownerItem": "T-743",
+      "rationale": "Three cases executing parseAgentResponseParts, including the fail-closed one: an abarva-chart block whose body is not JSON is left as markdown rather than becoming a broken chart part. Small, but it is the only executable guard on the boundary where model output becomes a rendered chart directive."
+    },
+    {
+      "path": "src/lib/agent/__tests__/response-shape-regression.test.ts",
+      "draw": "T-742",
+      "governedRiskBand": "high",
+      "governedRiskScore": 10,
+      "governedRiskSignals": [
+        "tenant_scoped_read"
+      ],
+      "loaded": true,
+      "collected": true,
+      "run": true,
+      "green": true,
+      "totalTests": 14,
+      "failedTests": 0,
+      "passedTests": 14,
+      "pendingTests": 0,
+      "todoTests": 0,
+      "sourceTextScanner": false,
+      "verdict": "wire_into_ci",
+      "ownerItem": "T-743",
+      "rationale": "Fourteen cases executing the shared response shaper against four named damage classes from live output: a step phrase duplicated by the compact fallback, pre-formed structure preserved instead of repacked, sentences not split across broken table cells, and the C-502 compaction that dropped shortlist options. The last group carries its own negative control -- a declared form surface STILL compacts -- so the fix cannot be widened past advisor surfaces without turning this red. Nothing runs it."
+    },
+    {
+      "path": "src/lib/agent/__tests__/response-shape-truncation-artifacts.test.ts",
+      "draw": "T-742",
+      "governedRiskBand": "high",
+      "governedRiskScore": 10,
+      "governedRiskSignals": [
+        "tenant_scoped_read"
+      ],
+      "loaded": true,
+      "collected": true,
+      "run": true,
+      "green": true,
+      "totalTests": 19,
+      "failedTests": 0,
+      "passedTests": 19,
+      "pendingTests": 0,
+      "todoTests": 0,
+      "sourceTextScanner": false,
+      "verdict": "wire_into_ci",
+      "ownerItem": "T-743",
+      "rationale": "Nineteen cases executing the truncation-artifact cleanup in both directions: nine finished sentences whose final word must survive, and three genuine cuts that must still be removed, including a word that merely ends in a coordinator. A cleanup rule proven only on what it should delete is how a correct sentence loses its last word; this proves both sides and is outside every CI scope."
+    },
+    {
+      "path": "src/lib/agent/__tests__/response-shape.test.ts",
+      "draw": "T-742",
+      "governedRiskBand": "high",
+      "governedRiskScore": 10,
+      "governedRiskSignals": [
+        "tenant_scoped_read"
+      ],
+      "loaded": true,
+      "collected": true,
+      "run": true,
+      "green": true,
+      "totalTests": 46,
+      "failedTests": 0,
+      "passedTests": 46,
+      "pendingTests": 0,
+      "todoTests": 0,
+      "sourceTextScanner": false,
+      "verdict": "wire_into_ci",
+      "ownerItem": "T-743",
+      "rationale": "Forty-six cases and the widest guard in the draw: it executes the shaper per surface and asserts Brief A, B and C prose is passed through rather than templated, that internal retrieval language, raw pattern ids and bare UUIDs are scrubbed from visible copy, that no next action is manufactured where the prose has no action cue, and that percentile formatting cannot produce a naked ordinal without metric, cohort and sample size. Several of these are declared AI-surface obligations and none of them runs in CI."
+    }
+  ]
+}
