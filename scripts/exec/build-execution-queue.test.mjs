@@ -2220,5 +2220,279 @@ function suppressedFixture({ alsoSuppressBase = false } = {}) {
   );
 }
 
+
+/* ------------------------------------------------------------------------ */
+/* 28. THE IN-FLIGHT TEST READS THE CLAIM'S OWN BRANCH FIELD — item T-734.  */
+/*                                                                          */
+/*     The defect: in-flight was decided by a PREFIX ALLOWLIST over the     */
+/*     whole line — `codex/…` or `claude/…`, plus a four-digit PR number.   */
+/*     The operator task file instructs every run to cut its own worktree   */
+/*     with `git worktree add -b <your-branch>`, and the runs that follow   */
+/*     it name branches `exec/…`. None of those matched.                    */
+/*                                                                          */
+/*     A prefix list is a guess about naming that goes stale the moment a    */
+/*     convention changes; the `on branch \`x\`` field is the claim's own    */
+/*     answer, and `append-claim.mjs --branch` already writes it. So the    */
+/*     field is read directly and the allowlist is kept BESIDE it for the   */
+/*     legacy pipe-delimited lines that predate the helper. The two signals */
+/*     union, which is the safe direction: a claim can only move from       */
+/*     `expired-idle` (printed as FREE TO TAKE) toward `expired-in-flight`  */
+/*     (do not take), never the reverse.                                    */
+/*                                                                          */
+/*     Measured on the live register at 2026-09-23T13:29Z: 721 lines parse  */
+/*     as claims, 561 matched the allowlist, and 31 carried an explicit      */
+/*     `on branch \`exec/…\`` field that it missed — including the claim     */
+/*     line for this very item, written thirty seconds earlier.             */
+/* ------------------------------------------------------------------------ */
+
+/** The ids the queue renders on the "free to take" line. */
+function idleSection(rendered) {
+  return rendered.match(/\*\*Expired with no branch or PR, free to take \(\d+\):\*\*(.*)/)?.[1] ?? "";
+}
+
+/* 28a. THE DEFECT, in the exact shape the helper writes it.                */
+/*      An EXPIRED claim naming an `exec/…` branch and no PR number. It     */
+/*      must not be offered as free to take.                                */
+{
+  const id = "T-596";
+  const line =
+    `${registerStamp(400)} | source-backlog-executor#20260923T0000Z | ` +
+    `item ${id} claimed on branch \`exec/${id.toLowerCase()}-worktree-convention\` — ` +
+    `taken from the queue; no pull request opened yet. ` +
+    `files: scripts/exec/build-execution-queue.mjs`;
+  const { q, rendered } = oneLineClaimFixture(id, line);
+  check(
+    "an expired claim naming an `exec/…` branch is in flight, not free to take",
+    q.status === 0 &&
+      inFlightSection(rendered).includes(id) &&
+      !idleSection(rendered).includes(id),
+    `exit=${q.status}\ninFlight=${inFlightSection(rendered)}\nidle=${idleSection(rendered)}`,
+  );
+}
+
+/* 28b. ANY branch name, not a second allowlist.                            */
+/*      Adding `exec` to the prefix list would pass 28a and leave the next  */
+/*      convention change to be found the same way. The field is read, so   */
+/*      a name belonging to no known prefix is still a branch.              */
+{
+  const id = "T-597";
+  const line =
+    `${registerStamp(400)} | some-other-agent#run | ` +
+    `item ${id} claimed on branch \`wip/${id.toLowerCase()}-unfamiliar-prefix\` — held.`;
+  const { q, rendered } = oneLineClaimFixture(id, line);
+  check(
+    "a branch field with an unfamiliar prefix is still a branch",
+    q.status === 0 &&
+      inFlightSection(rendered).includes(id) &&
+      !idleSection(rendered).includes(id),
+    `exit=${q.status}\ninFlight=${inFlightSection(rendered)}\nidle=${idleSection(rendered)}`,
+  );
+}
+
+/* 28c. THE NEGATIVE CONTROL, and it is the one that makes 28a mean         */
+/*      anything. `branch none` is written by real lines in this register   */
+/*      for read-only reconciliation work that cut no branch at all. If     */
+/*      the field were read as "present therefore in flight", every one of  */
+/*      those would be hidden from the queue forever.                       */
+{
+  const id = "T-598";
+  const line =
+    `${registerStamp(400)} | some-agent#run | item ${id} reconciliation | branch none | ` +
+    `files: none | read-only, nothing cut.`;
+  const { q, rendered } = oneLineClaimFixture(id, line);
+  check(
+    "`branch none` is not a branch, so the item stays free to take",
+    q.status === 0 &&
+      idleSection(rendered).includes(id) &&
+      !inFlightSection(rendered).includes(id),
+    `exit=${q.status}\ninFlight=${inFlightSection(rendered)}\nidle=${idleSection(rendered)}`,
+  );
+}
+
+/* 28b2. THE PULL-REQUEST SIGNAL IS THE OTHER HALF OF THE UNION.            */
+/*       Found by mutation: deleting it left every case green, because      */
+/*       every fixture that leaned on it also named a branch. A claim can   */
+/*       carry a PR number and no branch at all — an agent reporting a      */
+/*       merge from a branch it has already deleted — and that is still     */
+/*       evidence the work exists outside the log.                          */
+{
+  const id = "T-605";
+  const line =
+    `${registerStamp(400)} | some-agent#run | item ${id} · PR #8311 opened, ` +
+    "awaiting checks. No branch named here; it was deleted on merge.";
+  const { q, rendered } = oneLineClaimFixture(id, line);
+  check(
+    "a claim naming a PR and no branch is in flight",
+    q.status === 0 &&
+      inFlightSection(rendered).includes(id) &&
+      !idleSection(rendered).includes(id),
+    `exit=${q.status}\ninFlight=${inFlightSection(rendered)}\nidle=${idleSection(rendered)}`,
+  );
+}
+
+/* 28c2. THE SAME VETO, IN THE FORM THE HELPER WRITES.                      */
+/*       28c above uses the pipe-delimited `| branch none |` shape, which    */
+/*       is a real register line but which the FIELD regex never matches —   */
+/*       so it passes whether the veto exists or not. A mutation caught      */
+/*       that: deleting the veto outright left 28c green. This case is the   */
+/*       one the veto is actually load-bearing for, because                  */
+/*       `append-claim.mjs --branch none` renders exactly this.              */
+{
+  const id = "T-602";
+  const line =
+    `${registerStamp(400)} | some-agent#run | item ${id} reconciliation ` +
+    "on branch `none` — read-only, nothing cut.";
+  const { q, rendered } = oneLineClaimFixture(id, line);
+  check(
+    "a backticked `none` branch field is not a branch",
+    q.status === 0 &&
+      idleSection(rendered).includes(id) &&
+      !inFlightSection(rendered).includes(id),
+    `exit=${q.status}\ninFlight=${inFlightSection(rendered)}\nidle=${idleSection(rendered)}`,
+  );
+}
+
+/* 28c3. AND THE VETO SURVIVES HAND-WRITTEN PADDING.                        */
+/*       Claim lines are still written by hand as well as by the helper, so  */
+/*       the field's value is trimmed before it is judged. Without this the  */
+/*       trim is a guard no case can fail, which is the shape this backlog   */
+/*       exists against.                                                     */
+{
+  const id = "T-603";
+  const line =
+    `${registerStamp(400)} | some-agent#run | item ${id} reconciliation ` +
+    "on branch ` none ` — read-only, nothing cut.";
+  const { q, rendered } = oneLineClaimFixture(id, line);
+  check(
+    "a padded `none` branch field is still not a branch",
+    q.status === 0 &&
+      idleSection(rendered).includes(id) &&
+      !inFlightSection(rendered).includes(id),
+    `exit=${q.status}\ninFlight=${inFlightSection(rendered)}\nidle=${idleSection(rendered)}`,
+  );
+}
+
+/* 28c4. AND IT IS NOT CASE-SENSITIVE.                                      */
+/*       Found by mutation: dropping the `i` flag left every case above      */
+/*       green, so the flag was a guard nothing could fail. Hand-written     */
+/*       lines capitalise freely, and `NONE` read as a branch name would     */
+/*       hide a free item from the queue for good.                           */
+{
+  const id = "T-604";
+  const line =
+    `${registerStamp(400)} | some-agent#run | item ${id} reconciliation ` +
+    "on branch `NONE` — read-only, nothing cut.";
+  const { q, rendered } = oneLineClaimFixture(id, line);
+  check(
+    "an upper-case `NONE` branch field is not a branch either",
+    q.status === 0 &&
+      idleSection(rendered).includes(id) &&
+      !inFlightSection(rendered).includes(id),
+    `exit=${q.status}\ninFlight=${inFlightSection(rendered)}\nidle=${idleSection(rendered)}`,
+  );
+}
+
+/* 28c5. THE VETO, PROVEN WHERE IT IS THE ONLY THING DECIDING.              */
+/*       Mutation found that 28c2-28c4 above do NOT prove the absence veto.  */
+/*       `none` carries no slash, and the shared grammar drops a name with   */
+/*       no slash anyway, so deleting the veto outright left all three       */
+/*       green. `n/a` is the case the veto alone decides: it has a slash, so */
+/*       without the veto it reads as a branch name and the item is hidden   */
+/*       from the queue for good. The three cases above stay as regression   */
+/*       guards on the rendered outcome; this one is the guard on the guard. */
+{
+  const id = "T-606";
+  const line =
+    `${registerStamp(400)} | some-agent#run | item ${id} reconciliation ` +
+    "on branch `n/a` — read-only, nothing cut.";
+  const { q, rendered } = oneLineClaimFixture(id, line);
+  check(
+    "a slash-bearing absence marker is vetoed rather than read as a branch",
+    q.status === 0 &&
+      idleSection(rendered).includes(id) &&
+      !inFlightSection(rendered).includes(id),
+    `exit=${q.status}\ninFlight=${inFlightSection(rendered)}\nidle=${idleSection(rendered)}`,
+  );
+}
+
+/* 28c6. AND CASE-INSENSITIVELY, for the same reason.                       */
+{
+  const id = "T-607";
+  const line =
+    `${registerStamp(400)} | some-agent#run | item ${id} reconciliation ` +
+    "on branch `N/A` — read-only, nothing cut.";
+  const { q, rendered } = oneLineClaimFixture(id, line);
+  check(
+    "the absence veto is case-insensitive where it is the only thing deciding",
+    q.status === 0 &&
+      idleSection(rendered).includes(id) &&
+      !inFlightSection(rendered).includes(id),
+    `exit=${q.status}\ninFlight=${inFlightSection(rendered)}\nidle=${idleSection(rendered)}`,
+  );
+}
+
+/* 28c7. THE FALLBACK TOKEN, AND `exec/` INSIDE IT.                         */
+/*       Not every line puts the word `branch` in front of the name. On the */
+/*       live register 161 lines mention an `exec/…` name and 87 of them do */
+/*       so without that keyword, so the prose fallback still carries real  */
+/*       weight — and `exec` was already in the shared grammar's fallback   */
+/*       while the queue's own copy had never heard of it. Mutation found   */
+/*       this unpinned: removing `exec` from the fallback left every other  */
+/*       case green, because they all reach the declared field first.       */
+{
+  const id = "T-608";
+  const line =
+    `${registerStamp(400)} | some-agent#run | item ${id} — work is on ` +
+    "exec/t-608-prose-only in my own worktree; no field, no PR yet.";
+  const { q, rendered } = oneLineClaimFixture(id, line);
+  check(
+    "an `exec/…` name in prose, with no branch field, is still in flight",
+    q.status === 0 &&
+      inFlightSection(rendered).includes(id) &&
+      !idleSection(rendered).includes(id),
+    `exit=${q.status}\ninFlight=${inFlightSection(rendered)}\nidle=${idleSection(rendered)}`,
+  );
+}
+
+/* 28d. THE LEGACY LINES STILL RESOLVE.                                     */
+/*      The pipe-delimited form predates `append-claim.mjs` and carries no  */
+/*      `on branch \`x\`` field. Replacing the allowlist rather than adding  */
+/*      to it would move hundreds of historical claims into `free to take`  */
+/*      — the dangerous direction, and the reason this is a union.          */
+{
+  const id = "T-599";
+  const line =
+    `- item ${id} | claude-code-executor | ${registerStamp(400)} | ` +
+    `claude/${id}-legacy-shape | files: src/lib/example.ts`;
+  const { q, rendered } = oneLineClaimFixture(id, line);
+  check(
+    "a legacy pipe-delimited claim naming a `claude/…` branch is still in flight",
+    q.status === 0 &&
+      inFlightSection(rendered).includes(id) &&
+      !idleSection(rendered).includes(id),
+    `exit=${q.status}\ninFlight=${inFlightSection(rendered)}\nidle=${idleSection(rendered)}`,
+  );
+}
+
+/* 28e. A RELEASE STILL RELEASES.                                           */
+/*      In-flight is only consulted for an EXPIRED claim. A released line   */
+/*      naming a branch must not be dragged back into the in-flight bucket  */
+/*      by the wider signal — otherwise every finished item this tooling    */
+/*      has ever produced would be hidden.                                  */
+{
+  const id = "T-601";
+  const line =
+    `${registerStamp(400)} | source-backlog-executor#run | ` +
+    `RELEASED item ${id} on branch \`exec/${id.toLowerCase()}-done\` — merged and deployed.`;
+  const { q, rendered } = oneLineClaimFixture(id, line);
+  check(
+    "a released claim naming a branch is released, not in flight",
+    q.status === 0 &&
+      releasedSection(rendered).includes(id) &&
+      !inFlightSection(rendered).includes(id),
+    `exit=${q.status}\nreleased=${releasedSection(rendered)}\ninFlight=${inFlightSection(rendered)}`,
+  );
+}
+
 console.log(`\n${passes} passed, ${failures} failed`);
 process.exit(failures ? 1 : 0);
