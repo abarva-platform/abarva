@@ -52,6 +52,7 @@ export interface SaveMoveArtifactInput {
   confidence?: string;
   citationReady?: boolean;
   metadata?: Record<string, unknown>;
+  requireBlobStored?: boolean;
 }
 
 export interface MoveArtifactRow {
@@ -146,6 +147,10 @@ export async function saveMoveArtifact(
     blobStored = true;
   } catch {
     blobStored = false;
+  }
+
+  if (!blobStored && input.requireBlobStored) {
+    throw new Error("artifact_blob_storage_unavailable");
   }
 
   const meta = {

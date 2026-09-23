@@ -10,6 +10,13 @@ const mockGetGeneratedArtifactById = jest.fn();
 const mockExtractProgramEvidenceFromUploadBuffer = jest.fn();
 const mockLoadApprovedSolutionApproach = jest.fn();
 const mockLoadCurrentMoveContextExtractFreshness = jest.fn();
+const mockPackerToBuffer = jest.fn();
+const mockRenderDeliverableDocx = jest.fn();
+const mockRenderDeliverablePptx = jest.fn();
+
+jest.mock("docx", () => ({
+  Packer: { toBuffer: (doc: unknown) => mockPackerToBuffer(doc) },
+}));
 
 jest.mock("../../../../../_auth", () => ({
   requireTenancy: () => mockRequireTenancy(),
@@ -34,8 +41,12 @@ jest.mock("@/lib/programs/programs-auth-mode-server", () => ({
 }));
 
 jest.mock("@/lib/programs/governance", () => ({
-  hasAuthority: (ctx: unknown, programId: string, required: string, opts: unknown) =>
-    mockHasAuthority(ctx, programId, required, opts),
+  hasAuthority: (
+    ctx: unknown,
+    programId: string,
+    required: string,
+    opts: unknown,
+  ) => mockHasAuthority(ctx, programId, required, opts),
 }));
 
 jest.mock("@/lib/programs/nexus", () => ({
@@ -44,8 +55,12 @@ jest.mock("@/lib/programs/nexus", () => ({
 }));
 
 jest.mock("@/lib/programs/mutations", () => ({
-  signOffDeliverable: (ctx: unknown, programId: string, deliverableId: string, opts: unknown) =>
-    mockSignOffDeliverable(ctx, programId, deliverableId, opts),
+  signOffDeliverable: (
+    ctx: unknown,
+    programId: string,
+    deliverableId: string,
+    opts: unknown,
+  ) => mockSignOffDeliverable(ctx, programId, deliverableId, opts),
 }));
 
 jest.mock("@/lib/programs/deliverables/move-artifacts", () => ({
@@ -56,10 +71,12 @@ jest.mock("@/lib/programs/deliverables/move-artifacts", () => ({
 jest.mock("@/lib/artifacts/repository", () => ({
   getGeneratedArtifactById: (artifactId: string, opts: unknown) =>
     mockGetGeneratedArtifactById(artifactId, opts),
-  renderableDocFromGeneratedArtifact: (artifact: { metadata?: Record<string, unknown> }) =>
-    artifact.metadata?.renderableDoc ?? null,
-  renderedHtmlFromGeneratedArtifact: (artifact: { metadata?: Record<string, unknown> }) =>
-    artifact.metadata?.renderedHtml ?? null,
+  renderableDocFromGeneratedArtifact: (artifact: {
+    metadata?: Record<string, unknown>;
+  }) => artifact.metadata?.renderableDoc ?? null,
+  renderedHtmlFromGeneratedArtifact: (artifact: {
+    metadata?: Record<string, unknown>;
+  }) => artifact.metadata?.renderedHtml ?? null,
 }));
 
 jest.mock("@/lib/programs/deliverable-registry", () => ({
@@ -104,6 +121,11 @@ jest.mock("@/lib/programs/approved-solution-approach", () => ({
 jest.mock("@/lib/programs/move-context-extract", () => ({
   loadCurrentMoveContextExtractFreshness: (input: unknown) =>
     mockLoadCurrentMoveContextExtractFreshness(input),
+}));
+
+jest.mock("@/lib/deliverables/orchestrator/renderers", () => ({
+  renderDeliverableDocx: (doc: unknown) => mockRenderDeliverableDocx(doc),
+  renderDeliverablePptx: (doc: unknown) => mockRenderDeliverablePptx(doc),
 }));
 
 jest.mock("@/lib/deliverables/quality/deliverable-key-map", () => ({
@@ -154,7 +176,8 @@ const generatedArtifact = {
       generatedSections: [
         {
           title: "Scope",
-          bodyMarkdown: "Commercial lending onboarding and KYC exception handling.",
+          bodyMarkdown:
+            "Commercial lending onboarding and KYC exception handling.",
         },
       ],
     },
@@ -181,14 +204,20 @@ function makeSupabase() {
 }
 
 function request(body: Record<string, unknown>): Request {
-  return new Request("http://test/api/v1/programs/prog-1/artifacts/artifact-1/client-approval", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
-  });
+  return new Request(
+    "http://test/api/v1/programs/prog-1/artifacts/artifact-1/client-approval",
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    },
+  );
 }
 
-const params = Promise.resolve({ programId: "prog-1", artifactId: "artifact-1" });
+const params = Promise.resolve({
+  programId: "prog-1",
+  artifactId: "artifact-1",
+});
 
 beforeEach(() => {
   jest.resetModules();
@@ -204,6 +233,16 @@ beforeEach(() => {
     versionId: "version-1",
   });
   mockSignOffDeliverable.mockResolvedValue(true);
+  mockSaveMoveArtifact.mockResolvedValue({
+    artifactId: "stored-final-artifact-1",
+    version: 1,
+    blobPath:
+      "moves/arcturus/prog-1/generated/p1/charter/v1/Program Charter.docx",
+    blobStored: true,
+  });
+  mockRenderDeliverableDocx.mockReturnValue({ doc: "docx" });
+  mockRenderDeliverablePptx.mockResolvedValue(Buffer.from("pptx"));
+  mockPackerToBuffer.mockResolvedValue(Buffer.from("docx"));
   mockLoadApprovedSolutionApproach.mockResolvedValue({
     decisionHash: "decision-hash",
     selectedOptionId: "option-2",
@@ -249,6 +288,73 @@ describe("POST /api/v1/programs/[programId]/artifacts/[artifactId]/client-approv
       }),
     );
     expect(mockSignOffDeliverable).toHaveBeenCalled();
+    expect(mockSaveMoveArtifact).toHaveBeenCalledWith(
+      ctx,
+      expect.objectContaining({
+        moveId: "prog-1",
+        phase: 1,
+        artifactType: "charter",
+        artifactFamily: "generated_deliverable",
+        fileFormat: "docx",
+        status: "approved",
+        sourceBasis: "generated_artifact_acceptance",
+        requireBlobStored: true,
+      }),
+    );
+    expect(mockSignOffDeliverable).toHaveBeenCalledWith(
+      ctx,
+      "prog-1",
+      "deliverable-1",
+      expect.objectContaining({
+        approvedArtifactId: "stored-final-artifact-1",
+        approvedContent: undefined,
+      }),
+    );
+  });
+
+  it("does not sign off an accepted AI draft when final artifact storage is unavailable", async () => {
+    mockSaveMoveArtifact.mockRejectedValue(
+      new Error("artifact_blob_storage_unavailable"),
+    );
+    const { POST } = await import("../route");
+
+    const res = await POST(
+      request({ reason: "Client reviewer accepts this AI draft." }) as never,
+      { params },
+    );
+    const json = (await res.json()) as Record<string, unknown>;
+
+    expect(res.status).toBe(503);
+    expect(json).toMatchObject({
+      error: "artifact_storage_unavailable",
+    });
+    expect(mockDraftModuleDeliverable).not.toHaveBeenCalled();
+    expect(mockSignOffDeliverable).not.toHaveBeenCalled();
+  });
+
+  it("refuses AI-draft acceptance when no final editable artifact can be rendered", async () => {
+    mockGetGeneratedArtifactById.mockResolvedValue({
+      ...generatedArtifact,
+      metadata: {
+        deliverableTypeKey: "charter",
+        renderedHtml: "<h1>Program Charter</h1><p>Preview only.</p>",
+      },
+    });
+    const { POST } = await import("../route");
+
+    const res = await POST(
+      request({ reason: "Client reviewer accepts this AI draft." }) as never,
+      { params },
+    );
+    const json = (await res.json()) as Record<string, unknown>;
+
+    expect(res.status).toBe(422);
+    expect(json).toMatchObject({
+      error: "generated_artifact_final_not_available",
+    });
+    expect(mockSaveMoveArtifact).not.toHaveBeenCalled();
+    expect(mockDraftModuleDeliverable).not.toHaveBeenCalled();
+    expect(mockSignOffDeliverable).not.toHaveBeenCalled();
   });
 
   it("finds generated artifacts persisted under the tenant key alias", async () => {
@@ -270,18 +376,28 @@ describe("POST /api/v1/programs/[programId]/artifacts/[artifactId]/client-approv
       artifactId: "artifact-1",
       deliverableTypeKey: "charter",
     });
-    expect(mockGetGeneratedArtifactById).toHaveBeenNthCalledWith(1, "artifact-1", {
-      clientId: ctx.clientId,
-    });
-    expect(mockGetGeneratedArtifactById).toHaveBeenNthCalledWith(2, "artifact-1", {
-      clientId: ctx.clientKey,
-    });
+    expect(mockGetGeneratedArtifactById).toHaveBeenNthCalledWith(
+      1,
+      "artifact-1",
+      {
+        clientId: ctx.clientId,
+      },
+    );
+    expect(mockGetGeneratedArtifactById).toHaveBeenNthCalledWith(
+      2,
+      "artifact-1",
+      {
+        clientId: ctx.clientKey,
+      },
+    );
     expect(mockDraftModuleDeliverable).toHaveBeenCalled();
     expect(mockSignOffDeliverable).toHaveBeenCalled();
   });
 
   it("still denies callers without policy or participant approval authority", async () => {
-    mockLoadUserProgramAccessPolicy.mockResolvedValue({ canApproveGates: false });
+    mockLoadUserProgramAccessPolicy.mockResolvedValue({
+      canApproveGates: false,
+    });
     const { POST } = await import("../route");
 
     const res = await POST(
@@ -309,7 +425,8 @@ describe("POST /api/v1/programs/[programId]/artifacts/[artifactId]/client-approv
         renderableDoc: {
           title: "FS Demo — Onboarding & KYC Agent-Assist Discovery",
           deliverableTypeKey: "root_cause_worksheet",
-          recommendation: "Use this root-cause worksheet to separate process, data, and control drivers.",
+          recommendation:
+            "Use this root-cause worksheet to separate process, data, and control drivers.",
           generatedSections: [
             {
               title: "Root causes",
@@ -323,7 +440,9 @@ describe("POST /api/v1/programs/[programId]/artifacts/[artifactId]/client-approv
     const { POST } = await import("../route");
 
     const res = await POST(
-      request({ reason: "Client accepts the reviewed root-cause worksheet." }) as never,
+      request({
+        reason: "Client accepts the reviewed root-cause worksheet.",
+      }) as never,
       { params },
     );
     const json = (await res.json()) as Record<string, unknown>;
@@ -367,7 +486,9 @@ describe("POST /api/v1/programs/[programId]/artifacts/[artifactId]/client-approv
     const { POST } = await import("../route");
 
     const res = await POST(
-      request({ reason: "Client accepts the reviewed discovery diagnostic." }) as never,
+      request({
+        reason: "Client accepts the reviewed discovery diagnostic.",
+      }) as never,
       { params },
     );
     const json = (await res.json()) as Record<string, unknown>;
@@ -399,14 +520,24 @@ describe("POST /api/v1/programs/[programId]/artifacts/[artifactId]/client-approv
         renderableDoc: {
           title: "Target Architecture",
           deliverableTypeKey: "target_state_architecture",
-          generatedSections: [{ title: "Architecture", bodyMarkdown: "Approved option architecture." }],
+          generatedSections: [
+            {
+              title: "Architecture",
+              bodyMarkdown: "Approved option architecture.",
+            },
+          ],
         },
       },
     });
     const { POST } = await import("../route");
-    const res = await POST(request({ reason: "Approve stale architecture." }) as never, { params });
+    const res = await POST(
+      request({ reason: "Approve stale architecture." }) as never,
+      { params },
+    );
     expect(res.status).toBe(409);
-    expect(await res.json()).toMatchObject({ error: "architecture_lineage_not_current" });
+    expect(await res.json()).toMatchObject({
+      error: "architecture_lineage_not_current",
+    });
     expect(mockDraftModuleDeliverable).not.toHaveBeenCalled();
   });
 
@@ -430,12 +561,20 @@ describe("POST /api/v1/programs/[programId]/artifacts/[artifactId]/client-approv
         renderableDoc: {
           title: "Target Architecture",
           deliverableTypeKey: "target_state_architecture",
-          generatedSections: [{ title: "Architecture", bodyMarkdown: "Approved option architecture." }],
+          generatedSections: [
+            {
+              title: "Architecture",
+              bodyMarkdown: "Approved option architecture.",
+            },
+          ],
         },
       },
     });
     const { POST } = await import("../route");
-    const res = await POST(request({ reason: "Architecture reviewed." }) as never, { params });
+    const res = await POST(
+      request({ reason: "Architecture reviewed." }) as never,
+      { params },
+    );
     expect(res.status).toBe(200);
     expect(mockDraftModuleDeliverable).toHaveBeenCalledWith(
       ctx,

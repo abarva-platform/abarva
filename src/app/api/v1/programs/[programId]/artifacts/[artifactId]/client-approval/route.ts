@@ -7,6 +7,7 @@
 
 import "server-only";
 
+import { Packer } from "docx";
 import { NextRequest } from "next/server";
 import { requireTenancy, tenancyErrorResponse } from "../../../../_auth";
 import { loadUserProgramAccessPolicy } from "@/lib/auth/program-access-policy";
@@ -36,6 +37,11 @@ import {
   validateArchitectureGenerationLineage,
 } from "@/lib/programs/approved-solution-approach";
 import { loadCurrentMoveContextExtractFreshness } from "@/lib/programs/move-context-extract";
+import {
+  renderDeliverableDocx,
+  renderDeliverablePptx,
+} from "@/lib/deliverables/orchestrator/renderers";
+import type { RenderableDeliverable } from "@/lib/deliverables/orchestrator/types";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -44,6 +50,11 @@ export const maxDuration = 120;
 type ProgramMutationClient = Awaited<
   ReturnType<typeof getProgramsRouteSupabase>
 >["supabase"];
+
+const DOCX_CONTENT_TYPE =
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+const PPTX_CONTENT_TYPE =
+  "application/vnd.openxmlformats-officedocument.presentationml.presentation";
 
 const PHASE_TO_MODULE_KEY: Record<number, string> = {
   1: "charter",
@@ -75,7 +86,8 @@ async function ensureSponsorAuthorityForP1ClientApproval(
     .limit(1);
   if (currentError) throw currentError;
 
-  const currentParticipant = ((currentRows as Array<{ id: string }> | null) ?? [])[0];
+  const currentParticipant = ((currentRows as Array<{ id: string }> | null) ??
+    [])[0];
   if (currentParticipant) {
     const { error } = await sb
       .from("engagement_participants")
@@ -219,7 +231,10 @@ function titleFromDoc(doc: Record<string, unknown> | null, fallback: string) {
     : fallback;
 }
 
-function contentFromDoc(doc: Record<string, unknown> | null, html: string | null) {
+function contentFromDoc(
+  doc: Record<string, unknown> | null,
+  html: string | null,
+) {
   if (doc) {
     const sections = Array.isArray(doc.generatedSections)
       ? doc.generatedSections
@@ -249,6 +264,50 @@ function contentFromDoc(doc: Record<string, unknown> | null, html: string | null
   return html ? stripHtml(html) : "";
 }
 
+function safeArtifactFileName(title: string, ext: string): string {
+  const stem =
+    title
+      .replace(/[\\/:*?"<>|]+/g, " ")
+      .replace(/[^\x20-\x7e]+/g, "-")
+      .replace(/\s+/g, " ")
+      .trim()
+      .slice(0, 120) || "move-deliverable";
+  return `${stem}.${ext}`;
+}
+
+async function renderAcceptedGeneratedDraft(args: {
+  artifact: GeneratedArtifactRecord;
+  doc: Record<string, unknown> | null;
+  title: string;
+}): Promise<{
+  body: Buffer;
+  fileName: string;
+  fileFormat: "docx" | "pptx";
+  mimeType: string;
+  parseMethod: string;
+} | null> {
+  if (!args.doc) return null;
+  const structuredDoc = args.doc as unknown as RenderableDeliverable;
+  if (args.artifact.outputFormat === "pptx") {
+    const pptx = await renderDeliverablePptx(structuredDoc);
+    return {
+      body: Buffer.from(pptx),
+      fileName: safeArtifactFileName(args.title, "pptx"),
+      fileFormat: "pptx",
+      mimeType: PPTX_CONTENT_TYPE,
+      parseMethod: "generated_renderable_deliverable_pptx",
+    };
+  }
+  const docx = await Packer.toBuffer(renderDeliverableDocx(structuredDoc));
+  return {
+    body: Buffer.from(docx),
+    fileName: safeArtifactFileName(args.title, "docx"),
+    fileFormat: "docx",
+    mimeType: DOCX_CONTENT_TYPE,
+    parseMethod: "generated_renderable_deliverable_docx",
+  };
+}
+
 export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ programId: string; artifactId: string }> },
@@ -269,8 +328,11 @@ export async function POST(
             clientId: ctx.clientKey,
           })
         : null);
-    if (!artifact) return Response.json({ error: "not_found" }, { status: 404 });
-    if (!generatedArtifactBelongsToMove(artifact.sourceArtifactRef, programId)) {
+    if (!artifact)
+      return Response.json({ error: "not_found" }, { status: 404 });
+    if (
+      !generatedArtifactBelongsToMove(artifact.sourceArtifactRef, programId)
+    ) {
       return Response.json(
         {
           error: "wrong_move",
@@ -298,16 +360,25 @@ export async function POST(
     const phase = spec?.phase ?? 0;
     if (phase < 1 || phase > 5) {
       return Response.json(
-        { error: "unsupported_phase", detail: "Only P1-P5 artifacts can be approved here." },
+        {
+          error: "unsupported_phase",
+          detail: "Only P1-P5 artifacts can be approved here.",
+        },
         { status: 422 },
       );
     }
 
     let verifiedGenerationLineage: Record<string, unknown> | null = null;
-    if (phase === 3 && P3_ARCHITECTURE_DELIVERABLE_KEYS.has(deliverableTypeKey)) {
+    if (
+      phase === 3 &&
+      P3_ARCHITECTURE_DELIVERABLE_KEYS.has(deliverableTypeKey)
+    ) {
       if (!ctx.clientKey) {
         return Response.json(
-          { error: "architecture_lineage_not_current", detail: "The active tenant key is unavailable." },
+          {
+            error: "architecture_lineage_not_current",
+            detail: "The active tenant key is unavailable.",
+          },
           { status: 409 },
         );
       }
@@ -324,7 +395,8 @@ export async function POST(
         return Response.json(
           {
             error: "architecture_lineage_not_current",
-            detail: "The current approved option or P3 context snapshot is unavailable. Rebuild the architecture chain before approval.",
+            detail:
+              "The current approved option or P3 context snapshot is unavailable. Rebuild the architecture chain before approval.",
           },
           { status: 409 },
         );
@@ -336,11 +408,17 @@ export async function POST(
       });
       if (!validation.ok) {
         return Response.json(
-          { error: "architecture_lineage_not_current", detail: validation.detail },
+          {
+            error: "architecture_lineage_not_current",
+            detail: validation.detail,
+          },
           { status: 409 },
         );
       }
-      verifiedGenerationLineage = validation.lineage as unknown as Record<string, unknown>;
+      verifiedGenerationLineage = validation.lineage as unknown as Record<
+        string,
+        unknown
+      >;
     }
 
     if (phase === 1) {
@@ -376,7 +454,8 @@ export async function POST(
 
     const contentType = req.headers.get("content-type") ?? "";
     const isFileUploadApproval = contentType.includes("multipart/form-data");
-    let reason = "Client reviewed the AI-prepared draft and accepted it as the authoritative phase deliverable.";
+    let reason =
+      "Client reviewed the AI-prepared draft and accepted it as the authoritative phase deliverable.";
     let approvedArtifactId: string | undefined;
     let approvedContent:
       | {
@@ -398,7 +477,10 @@ export async function POST(
       const file = form.get("file");
       if (!(file instanceof File) || file.size === 0) {
         return Response.json(
-          { error: "file_required", detail: "A client-approved file is required." },
+          {
+            error: "file_required",
+            detail: "A client-approved file is required.",
+          },
           { status: 400 },
         );
       }
@@ -432,11 +514,11 @@ export async function POST(
             error: "approved_upload_not_extractable",
             detail:
               "Client-approved replacement files must contain extractable text before they can become the downstream source of truth.",
-          parseMethod: parsed.extractedStructured.parse_method,
-          warnings: parsed.extractedStructured.warnings,
-          ...(verifiedGenerationLineage
-            ? { generationLineage: verifiedGenerationLineage }
-            : {}),
+            parseMethod: parsed.extractedStructured.parse_method,
+            warnings: parsed.extractedStructured.warnings,
+            ...(verifiedGenerationLineage
+              ? { generationLineage: verifiedGenerationLineage }
+              : {}),
           },
           { status: 422 },
         );
@@ -449,7 +531,8 @@ export async function POST(
         artifactType: deliverableTypeKey,
         artifactFamily: "generated_deliverable",
         title: spec?.documentTitle ?? titleFromDoc(doc, deliverableTypeKey),
-        description: "Client-approved replacement — uploaded to replace the AI draft.",
+        description:
+          "Client-approved replacement — uploaded to replace the AI draft.",
         fileName: file.name,
         fileFormat: ext,
         body,
@@ -487,6 +570,93 @@ export async function POST(
     }
 
     const title = spec?.documentTitle ?? titleFromDoc(doc, deliverableTypeKey);
+    if (!isFileUploadApproval) {
+      let renderedFinal: Awaited<
+        ReturnType<typeof renderAcceptedGeneratedDraft>
+      > | null = null;
+      try {
+        renderedFinal = await renderAcceptedGeneratedDraft({
+          artifact,
+          doc,
+          title,
+        });
+      } catch (err) {
+        return Response.json(
+          {
+            error: "generated_artifact_final_render_failed",
+            detail:
+              err instanceof Error
+                ? err.message
+                : "The generated artifact could not be rendered as a final editable file.",
+          },
+          { status: 422 },
+        );
+      }
+      if (!renderedFinal) {
+        return Response.json(
+          {
+            error: "generated_artifact_final_not_available",
+            detail:
+              "Accepting an AI draft requires a structured generated artifact that can render to a final DOCX or PPTX and be stored in the artifact vault.",
+          },
+          { status: 422 },
+        );
+      }
+
+      let saved: Awaited<ReturnType<typeof saveMoveArtifact>>;
+      try {
+        saved = await saveMoveArtifact(ctx, {
+          moveId: programId,
+          phase,
+          artifactType: deliverableTypeKey,
+          artifactFamily: "generated_deliverable",
+          title,
+          description:
+            "Client-reviewed generated draft accepted as the authoritative phase deliverable.",
+          fileName: renderedFinal.fileName,
+          fileFormat: renderedFinal.fileFormat,
+          body: renderedFinal.body,
+          status: "approved",
+          sourceBasis: "generated_artifact_acceptance",
+          confidence: "high",
+          citationReady: true,
+          generatedBy: ctx.email ?? "client-approval",
+          qualityScore: artifact.qualityScore,
+          requireBlobStored: true,
+          metadata: {
+            deliverableTypeKey,
+            generatedArtifactId: artifact.id,
+            generatedArtifactType: artifact.artifactType,
+            sourceArtifactRef: artifact.sourceArtifactRef,
+            clientAcceptedGeneratedDraft: true,
+            approvalReason: reason,
+            finalFormat: renderedFinal.fileFormat,
+            mimeType: renderedFinal.mimeType,
+            parseMethod: renderedFinal.parseMethod,
+            ...(verifiedGenerationLineage
+              ? { generationLineage: verifiedGenerationLineage }
+              : {}),
+          },
+        });
+      } catch (err) {
+        if (
+          err instanceof Error &&
+          err.message === "artifact_blob_storage_unavailable"
+        ) {
+          return Response.json(
+            {
+              error: "artifact_storage_unavailable",
+              detail:
+                "The final editable artifact could not be stored. Approval was not recorded; retry after artifact storage is available.",
+            },
+            { status: 503 },
+          );
+        }
+        throw err;
+      }
+      approvedArtifactId = saved.artifactId;
+    }
+
     const drafted = await draftModuleDeliverable(ctx, {
       programId,
       moduleKey: PHASE_TO_MODULE_KEY[phase] ?? deliverableTypeKey,
@@ -514,14 +684,22 @@ export async function POST(
       },
     });
 
-    const signedOff = await signOffDeliverable(ctx, programId, drafted.deliverableId, {
-      supabase,
-      approvedArtifactId,
-      approvedContent,
-    });
+    const signedOff = await signOffDeliverable(
+      ctx,
+      programId,
+      drafted.deliverableId,
+      {
+        supabase,
+        approvedArtifactId,
+        approvedContent,
+      },
+    );
     if (!signedOff) {
       return Response.json(
-        { error: "sign_off_failed", detail: "Deliverable could not be signed off." },
+        {
+          error: "sign_off_failed",
+          detail: "Deliverable could not be signed off.",
+        },
         { status: 409 },
       );
     }
