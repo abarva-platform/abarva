@@ -3,7 +3,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { isFoundationPreviewOperatorSession } from "@/lib/auth/foundation-preview-session";
 import { isPlatformAdminSession } from "@/lib/auth/platform-admin-session";
 import { answerHomeAvaQuestion } from "@/lib/home/preview/ava-answer";
-import { getHomeReviewBundle, isHomePreviewTenantKey } from "@/lib/home/preview/golden-snapshot";
+import { getHomeEclProjectionBundleOrReviewedSnapshotWithSource } from "@/lib/home/preview/ecl-projection-bundle";
+import { isHomePreviewTenantKey } from "@/lib/home/preview/golden-snapshot";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -15,11 +16,11 @@ interface AskBody {
   activeChapterId?: string;
 }
 
-/** Ask aVa, scoped to the Home preview surface: answers are grounded ONLY in the requested
- * tenant's already-verified golden-snapshot HomeReviewBundle -- no live DB query, no external
- * retrieval. Gated behind the same access check as the preview page itself (see
- * src/app/(maestro)/home/preview/page.tsx) since this route can only ever see preview data, not
- * production tenant data. */
+/** Ask aVa, scoped to the Home preview surface: answers are grounded in the same served bundle
+ * resolver that renders /home. When the governed projection is unavailable, the resolver keeps the
+ * reviewed-snapshot fallback but returns that record source explicitly so the fallback is never
+ * silent. Gated behind the same access check as the preview page itself (see
+ * src/app/(maestro)/home/page.tsx). */
 export async function POST(req: NextRequest) {
   const hasPlatformAdmin = await isPlatformAdminSession();
   const hasFoundationOperator = await isFoundationPreviewOperatorSession();
@@ -43,10 +44,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "question_required" }, { status: 400 });
   }
 
-  const bundle = getHomeReviewBundle(tenantKey);
-  if (!bundle) {
-    return NextResponse.json({ error: "missing_golden_snapshot" }, { status: 500 });
-  }
+  const { bundle, recordSource } =
+    await getHomeEclProjectionBundleOrReviewedSnapshotWithSource(tenantKey);
 
   const answer = await answerHomeAvaQuestion({
     bundle,
@@ -55,5 +54,5 @@ export async function POST(req: NextRequest) {
     activeChapterId: body.activeChapterId,
   });
 
-  return NextResponse.json({ answer });
+  return NextResponse.json({ answer, recordSource });
 }
