@@ -861,16 +861,19 @@ export async function POST(request: Request) {
             const hardGateOpen = hardGateTotal - hardGateMet;
             const visibleEvidenceCount =
               liveMove?.linkedEvidence.length ?? evidence.length;
-            const evidenceReadiness = await loadDiscoveryEvidenceReadiness(
-              tenancy,
-              programId,
-            );
-            const evidenceNeedPackets = buildMoveEvidenceNeedPackets({
-              moveId: programId,
-              moveName: engagement.name,
-              currentPhase: promptPhase,
-              readiness: evidenceReadiness,
-            });
+            const terminalHandoffComplete =
+              promptPhase === 5 && Boolean(liveMove?.terminalComplete);
+            const evidenceNeedPackets = terminalHandoffComplete
+              ? []
+              : buildMoveEvidenceNeedPackets({
+                  moveId: programId,
+                  moveName: engagement.name,
+                  currentPhase: promptPhase,
+                  readiness: await loadDiscoveryEvidenceReadiness(
+                    tenancy,
+                    programId,
+                  ),
+                });
             const packet = buildMovesAvaChatPacket(
               {
                 tenant: tenantName,
@@ -901,8 +904,7 @@ export async function POST(request: Request) {
                   met: criterion.completed,
                   severity: criterion.severity,
                 })),
-                terminalHandoffComplete:
-                  promptPhase === 5 && Boolean(liveMove?.terminalComplete),
+                terminalHandoffComplete,
               },
               message,
             );
