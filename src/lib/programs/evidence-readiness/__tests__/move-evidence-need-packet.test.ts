@@ -1,5 +1,7 @@
 import { buildMoveEvidenceNeedPackets } from "../move-evidence-need-packet";
 import type { DiscoveryEvidenceReadiness } from "@/lib/programs/discovery/evidence-readiness";
+import { buildMovesAvaChatPacket } from "@/lib/programs/ava-chat/packet";
+import { buildDeterministicMovesAvaStatusAnswer } from "@/lib/programs/ava-chat/deterministic-answer";
 
 function readiness(): DiscoveryEvidenceReadiness {
   return {
@@ -92,7 +94,9 @@ describe("buildMoveEvidenceNeedPackets", () => {
     expect(packets[0]?.exampleContent.join(" ")).toMatch(/cash positioning/i);
     expect(packets[0]?.exampleContent.join(" ")).toMatch(/SOX evidence/i);
     expect(packets[1]?.exampleContent.join(" ")).toMatch(/forecast accuracy/i);
-    expect(packets[1]?.exampleContent.join(" ")).not.toMatch(/duplicate payment rate/i);
+    expect(packets[1]?.exampleContent.join(" ")).not.toMatch(
+      /duplicate payment rate/i,
+    );
   });
 
   it("keeps generic finance moves out of AP invoice language unless the move is AP/invoice-specific", () => {
@@ -105,7 +109,9 @@ describe("buildMoveEvidenceNeedPackets", () => {
 
     expect(packets[0]?.nextAction).toMatch(/current-state process document/i);
     expect(packets[0]?.exampleContent.join(" ")).not.toMatch(/AP invoice/i);
-    expect(packets[1]?.exampleContent.join(" ")).not.toMatch(/duplicate payment rate/i);
+    expect(packets[1]?.exampleContent.join(" ")).not.toMatch(
+      /duplicate payment rate/i,
+    );
   });
 
   it("turns Contact Center Agent Assist readiness gaps into member-service-specific client actions", () => {
@@ -145,7 +151,8 @@ describe("buildMoveEvidenceNeedPackets", () => {
           likelySource: "Operations Analytics / CCaaS reporting",
           format: "CSV/XLSX",
           grounds: "Value Hypothesis · Business Case · Tower Metrics",
-          remediation: "Upload CSV/XLSX from Operations Analytics / CCaaS reporting.",
+          remediation:
+            "Upload CSV/XLSX from Operations Analytics / CCaaS reporting.",
         },
         {
           familyId: "call_recording_transcript_availability",
@@ -154,7 +161,8 @@ describe("buildMoveEvidenceNeedPackets", () => {
           likelySource: "CCaaS / Speech Analytics / Compliance",
           format: "Retention policy + sample inventory",
           grounds: "Intent Taxonomy · Training/Evaluation Data · Compliance",
-          remediation: "Upload retention policy + sample inventory from CCaaS / Speech Analytics / Compliance.",
+          remediation:
+            "Upload retention policy + sample inventory from CCaaS / Speech Analytics / Compliance.",
         },
       ],
     };
@@ -169,7 +177,9 @@ describe("buildMoveEvidenceNeedPackets", () => {
     expect(packets).toHaveLength(2);
     // Real, specific guidance -- not the generic "Evidence packet" fallback.
     expect(packets[0]?.exampleTemplate).toBe("Contact center baseline KPIs");
-    expect(packets[0]?.exampleContent.join(" ")).toMatch(/AHT, FCR, transfer rate/i);
+    expect(packets[0]?.exampleContent.join(" ")).toMatch(
+      /AHT, FCR, transfer rate/i,
+    );
     expect(packets[0]?.nextAction).toMatch(/CCaaS\/operations analytics/i);
     expect(
       packets[0]?.blockedArtifacts.map((artifact) => artifact.artifactType),
@@ -177,9 +187,105 @@ describe("buildMoveEvidenceNeedPackets", () => {
     expect(packets[1]?.exampleTemplate).toBe(
       "Call transcript/recording availability",
     );
-    expect(packets[1]?.exampleContent.join(" ")).toMatch(/redacted call transcripts/i);
+    expect(packets[1]?.exampleContent.join(" ")).toMatch(
+      /redacted call transcripts/i,
+    );
     // Never DORA/ITSM/engineering-delivery language for this archetype.
-    expect(packets[0]?.exampleContent.join(" ")).not.toMatch(/DORA|CI\/CD|sprint/i);
-    expect(packets[1]?.exampleContent.join(" ")).not.toMatch(/DORA|CI\/CD|sprint/i);
+    expect(packets[0]?.exampleContent.join(" ")).not.toMatch(
+      /DORA|CI\/CD|sprint/i,
+    );
+    expect(packets[1]?.exampleContent.join(" ")).not.toMatch(
+      /DORA|CI\/CD|sprint/i,
+    );
+  });
+
+  it("keeps P5 aVa evidence needs in the healthcare lane despite stale lending classification text", () => {
+    const contactCenterReadiness: DiscoveryEvidenceReadiness = {
+      blueprintId: "healthcare_contact_center_agent_assist",
+      blueprintVersion: "2026-07-17",
+      archetypeLabel: "Healthcare Contact Center Agent Assist",
+      requiredTotal: 3,
+      requiredCovered: 0,
+      requiredMissing: 3,
+      optionalCovered: 0,
+      readinessScore: 0,
+      readyForP3: false,
+      families: [
+        {
+          familyId: "current_state_workflow_map",
+          label: "Current-state member-service workflow map",
+          required: true,
+          status: "missing",
+          evidenceIds: [],
+          evidenceTitles: [],
+        },
+        {
+          familyId: "crm_contact_center_system_map",
+          label: "CRM/contact-center system and integration map",
+          required: true,
+          status: "missing",
+          evidenceIds: [],
+          evidenceTitles: [],
+        },
+        {
+          familyId: "phi_privacy_security_controls",
+          label: "PHI, privacy, security, and audit controls",
+          required: true,
+          status: "missing",
+          evidenceIds: [],
+          evidenceTitles: [],
+        },
+      ],
+      gapRegister: [],
+    };
+    const evidenceNeedPackets = buildMoveEvidenceNeedPackets({
+      moveId: "move-1",
+      moveName:
+        "COMMERCIAL_LENDING_AGENT_ASSIST Integrated health plan member service contact center agent assist",
+      currentPhase: 5,
+      readiness: contactCenterReadiness,
+    }).map((packet) => {
+      const priority = packet.priority.toUpperCase();
+      const status = packet.status.replace(/_/g, " ");
+      return `${priority}: ${packet.evidenceSlot} — ${status}. Next: ${packet.nextAction}`;
+    });
+    const packet = buildMovesAvaChatPacket(
+      {
+        tenant: "Integrated Health Plan",
+        moveId: "move-1",
+        moveTitle:
+          "Integrated health plan member service contact center agent assist",
+        currentPhase: 5,
+        currentPhaseClientLabel: "P5 Mobilize",
+        checklistStatus: {
+          evidenceDone: false,
+          evidenceLabel: "8 evidence items visible",
+          gateDone: false,
+          gateLabel: "1 hard gate open",
+          canAdvance: false,
+          nextPhaseLabel: "Tower",
+        },
+        evidenceNeedPackets,
+        gateCriteria: [
+          {
+            label: "Execution readiness signed off",
+            met: false,
+            severity: "hard",
+          },
+        ],
+      },
+      "What should we do next to be ready for execution?",
+    );
+
+    const answer =
+      buildDeterministicMovesAvaStatusAnswer(packet, "next_phase_readiness") ??
+      "";
+
+    expect(answer).toContain("member-service workflow map");
+    expect(answer).toContain("CRM/contact-center system and integration map");
+    expect(answer).toContain("PHI, privacy, security, and audit controls");
+    expect(answer).not.toMatch(
+      /commercial lending|loan onboarding|LOS|KYC|sanctions|core banking/i,
+    );
   });
 });

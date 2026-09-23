@@ -390,7 +390,8 @@ const HEALTHCARE_CONTACT_CENTER_AGENT_ASSIST: DiscoveryBlueprint = {
     {
       role: "Enterprise architect / contact-center platform owner",
       side: "it",
-      objectives: "CRM, CCaaS, claims/auth/benefits integration and target architecture",
+      objectives:
+        "CRM, CCaaS, claims/auth/benefits integration and target architecture",
       questions: [
         "Which systems must the agent-assist layer read from at answer time?",
         "What is batch versus real-time today, and where are the API or data-product gaps?",
@@ -400,7 +401,8 @@ const HEALTHCARE_CONTACT_CENTER_AGENT_ASSIST: DiscoveryBlueprint = {
     {
       role: "Security / Privacy / Compliance / Responsible AI lead",
       side: "it",
-      objectives: "PHI controls, auditability, model-risk gates, and human review",
+      objectives:
+        "PHI controls, auditability, model-risk gates, and human review",
       questions: [
         "Where can PHI appear in transcripts, CRM notes, claims data, or generated responses?",
         "What answer types require human approval, suppression, or escalation?",
@@ -451,7 +453,8 @@ const FINANCIAL_SERVICES_COMMERCIAL_LENDING_AGENT_ASSIST: DiscoveryBlueprint = {
     {
       id: "document_intake_quality",
       label: "Document intake, collateral, and data-quality evidence",
-      grounds: "Data Foundation · Exception Reduction · Agent Assist Retrieval Scope",
+      grounds:
+        "Data Foundation · Exception Reduction · Agent Assist Retrieval Scope",
       required: true,
       likelySource: "Loan Ops / Collateral / Document Management",
       format: "Document inventory + quality sample",
@@ -466,7 +469,8 @@ const FINANCIAL_SERVICES_COMMERCIAL_LENDING_AGENT_ASSIST: DiscoveryBlueprint = {
     },
     {
       id: "relationship_manager_credit_ops_org",
-      label: "RM, credit analyst, KYC, collateral, and servicing operating model",
+      label:
+        "RM, credit analyst, KYC, collateral, and servicing operating model",
       grounds: "Operating Model · Adoption Risk · Change Plan",
       required: false,
       likelySource: "Commercial Bank Leadership / Workforce Planning",
@@ -515,7 +519,8 @@ const FINANCIAL_SERVICES_COMMERCIAL_LENDING_AGENT_ASSIST: DiscoveryBlueprint = {
     {
       role: "Enterprise architect / lending technology owner",
       side: "it",
-      objectives: "LOS, CRM, document management, core banking, data, and integration scope",
+      objectives:
+        "LOS, CRM, document management, core banking, data, and integration scope",
       questions: [
         "Which systems are sources of record for customer, loan, document, approval, collateral, covenant, and servicing data?",
         "Which systems can be read in near real time, and which remain batch or manual?",
@@ -627,22 +632,23 @@ export function getDiscoveryBlueprint(
   useCaseArchetype: string,
 ): DiscoveryBlueprint {
   const a = (useCaseArchetype || "").toLowerCase();
-  if (
+  const hasFinancialLendingSignals =
     /financial|bank|banking|commercial.?lend|loan|lending|credit|kyc|sanctions?|collateral|covenant|booking|servicing|relationship.?manager|los|core.?bank/.test(
       a,
     ) &&
     /agent.?assist|agentic.?assist|ai.?assist|document.?intelligence|onboarding|workflow|operations?/.test(
       a,
-    )
-  ) {
-    return FINANCIAL_SERVICES_COMMERCIAL_LENDING_AGENT_ASSIST;
-  }
-  if (
-    /health|meridian|member.?service|member.?experience|contact.?center|call.?center|agent.?assist|agentic.?assist|customer.?service.?ai|claims?|eligibility|benefits?|prior.?auth|authorization|crm/.test(
+    );
+  const hasHealthcareMemberServiceSignals =
+    /health|meridian|member.?service|member.?experience|contact.?center|call.?center|customer.?service.?ai|claims?|eligibility|benefits?|prior.?auth|authorization/.test(
       a,
-    )
-  ) {
+    );
+
+  if (hasHealthcareMemberServiceSignals) {
     return HEALTHCARE_CONTACT_CENTER_AGENT_ASSIST;
+  }
+  if (hasFinancialLendingSignals) {
+    return FINANCIAL_SERVICES_COMMERCIAL_LENDING_AGENT_ASSIST;
   }
   if (
     /irops|re-?accom|recovery|disrupt|operation|ai_ops|ai-operations|customer.?digital|operational_optimization|ai_operations/.test(

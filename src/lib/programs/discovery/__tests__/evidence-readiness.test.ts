@@ -112,7 +112,9 @@ describe("discovery evidence readiness", () => {
     expect(agentAssistBlueprint.blueprintId).toBe(
       "healthcare_contact_center_agent_assist",
     );
-    expect(agentAssistBlueprint.evidenceFamilies.map((family) => family.id)).toEqual(
+    expect(
+      agentAssistBlueprint.evidenceFamilies.map((family) => family.id),
+    ).toEqual(
       expect.arrayContaining([
         "current_state_workflow_map",
         "contact_center_kpis",
@@ -138,6 +140,39 @@ describe("discovery evidence readiness", () => {
     ).toBe("contact_center_kpis");
   });
 
+  it("keeps healthcare member-service context authoritative when stale lending tokens are present", () => {
+    const mixedBlueprint = getDiscoveryBlueprint(
+      [
+        "COMMERCIAL_LENDING_AGENT_ASSIST",
+        "Integrated health plan synthetic evidence E2E",
+        "Healthcare IDN member service contact center agent assist",
+        "claims, benefits, eligibility, CRM, prior authorization, PHI controls",
+      ].join(" "),
+    );
+
+    expect(mixedBlueprint.blueprintId).toBe(
+      "healthcare_contact_center_agent_assist",
+    );
+    expect(mixedBlueprint.evidenceFamilies.map((family) => family.id)).toEqual(
+      expect.arrayContaining([
+        "current_state_workflow_map",
+        "contact_center_kpis",
+        "crm_contact_center_system_map",
+        "claims_eligibility_benefits_data_access",
+        "phi_privacy_security_controls",
+      ]),
+    );
+    expect(
+      mixedBlueprint.evidenceFamilies.map((family) => family.id),
+    ).not.toEqual(
+      expect.arrayContaining([
+        "commercial_lending_workflow_map",
+        "los_crm_core_system_map",
+        "kyc_sanctions_credit_policy_controls",
+      ]),
+    );
+  });
+
   it("uses a financial-services lending Agent Assist blueprint before the broad agent-assist matcher", () => {
     const lendingBlueprint = getDiscoveryBlueprint(
       "First Capital commercial lending agent assist for loan onboarding, KYC, sanctions, collateral, credit policy, LOS, CRM, document management, and core banking handoffs",
@@ -146,7 +181,9 @@ describe("discovery evidence readiness", () => {
     expect(lendingBlueprint.blueprintId).toBe(
       "financial_services_commercial_lending_agent_assist",
     );
-    expect(lendingBlueprint.evidenceFamilies.map((family) => family.id)).toEqual(
+    expect(
+      lendingBlueprint.evidenceFamilies.map((family) => family.id),
+    ).toEqual(
       expect.arrayContaining([
         "commercial_lending_workflow_map",
         "loan_onboarding_kpis",
