@@ -1419,8 +1419,12 @@ describe("AgentDock · thread render", () => {
       />,
     );
 
+    expect(screen.getByText("Chat export")).toBeInTheDocument();
+
     fireEvent.click(
-      screen.getByRole("button", { name: "Export chat session as HTML" }),
+      screen.getByRole("button", {
+        name: "Export aVa chat session only as HTML",
+      }),
     );
 
     await waitFor(() => expect(submitSpy).toHaveBeenCalledTimes(1));
@@ -1467,8 +1471,14 @@ describe("AgentDock · thread render", () => {
       />,
     );
 
+    expect(
+      screen.getByLabelText("Export aVa chat session only"),
+    ).toBeInTheDocument();
+
     fireEvent.click(
-      screen.getByRole("button", { name: "Export chat session as HTML" }),
+      screen.getByRole("button", {
+        name: "Export aVa chat session only as HTML",
+      }),
     );
 
     await waitFor(() => expect(submitSpy).toHaveBeenCalledTimes(1));

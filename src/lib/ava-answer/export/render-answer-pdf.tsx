@@ -47,6 +47,17 @@ const styles = StyleSheet.create({
     color: "#6b7280",
     marginBottom: 16,
   },
+  scopeNote: {
+    borderColor: "#fed7aa",
+    borderWidth: 1,
+    borderRadius: 4,
+    backgroundColor: "#fff7ed",
+    color: "#7c2d12",
+    fontSize: 8,
+    lineHeight: 1.4,
+    padding: 7,
+    marginBottom: 14,
+  },
   prose: {
     fontSize: 10,
     lineHeight: 1.55,
@@ -271,7 +282,8 @@ function formatCell(
   if (value === null) return "-";
   const numeric = parseNumericCellValue(value);
   const format = inferredCellFormat(column);
-  if (numeric !== null && format === "currency") return formatCompactUsd(numeric);
+  if (numeric !== null && format === "currency")
+    return formatCompactUsd(numeric);
   if (numeric !== null && format === "percent") return formatPercent(numeric);
   if (numeric !== null && format === "number") {
     return new Intl.NumberFormat("en-US", { maximumFractionDigits: 2 }).format(
@@ -306,7 +318,9 @@ function tableBlock(table: AnswerTable): ReactElement {
   );
 }
 
-function quadrantPoints(chart: AnswerChart): Array<{ label: string; x: number; y: number }> {
+function quadrantPoints(
+  chart: AnswerChart,
+): Array<{ label: string; x: number; y: number }> {
   const data = chart.data as { points?: unknown };
   if (!Array.isArray(data?.points)) return [];
   return data.points.flatMap((point) => {
@@ -377,17 +391,24 @@ function chartBlock(chart: AnswerChart): ReactElement {
   if (chart.kind !== "quadrant-matrix" && chart.kind !== "2x2-matrix") {
     const rows = chartSeriesRows(chart).slice(0, 12);
     const maxValue = Math.max(
-      ...rows.flatMap((row) => (row.value !== null ? [Math.abs(row.value)] : [])),
+      ...rows.flatMap((row) =>
+        row.value !== null ? [Math.abs(row.value)] : [],
+      ),
       1,
     );
     return (
       <View style={styles.card} wrap={false}>
         <Text style={styles.cardTitle}>{chart.title ?? chart.kind}</Text>
-        {chart.subtitle ? <Text style={styles.note}>{chart.subtitle}</Text> : null}
+        {chart.subtitle ? (
+          <Text style={styles.note}>{chart.subtitle}</Text>
+        ) : null}
         {rows.length > 0 ? (
           <View>
             {rows.map((row) => (
-              <View key={`${row.label}-${row.displayValue}`} style={styles.chartRow}>
+              <View
+                key={`${row.label}-${row.displayValue}`}
+                style={styles.chartRow}
+              >
                 <Text style={styles.chartLabel}>{row.label}</Text>
                 <View style={styles.chartTrack}>
                   <View
@@ -417,7 +438,9 @@ function chartBlock(chart: AnswerChart): ReactElement {
             tabular series was available for PDF rendering.
           </Text>
         )}
-        {chart.sourceNote ? <Text style={styles.note}>{chart.sourceNote}</Text> : null}
+        {chart.sourceNote ? (
+          <Text style={styles.note}>{chart.sourceNote}</Text>
+        ) : null}
       </View>
     );
   }
@@ -442,7 +465,9 @@ function chartBlock(chart: AnswerChart): ReactElement {
   ];
   return (
     <View style={styles.card} wrap={false}>
-      <Text style={styles.cardTitle}>{chart.title ?? "Value / Complexity Matrix"}</Text>
+      <Text style={styles.cardTitle}>
+        {chart.title ?? "Value / Complexity Matrix"}
+      </Text>
       <View style={styles.quadrantGrid}>
         {cells.map((cell) => (
           <View key={cell.title} style={styles.quadrant}>
@@ -464,17 +489,24 @@ function chartBlock(chart: AnswerChart): ReactElement {
 }
 
 function graphBlock(graph: AnswerGraph): ReactElement {
-  const nodeLabelById = new Map(graph.nodes.map((node) => [node.id, node.label]));
+  const nodeLabelById = new Map(
+    graph.nodes.map((node) => [node.id, node.label]),
+  );
   const edges = graph.edges.slice(0, 16);
   return (
     <View style={styles.card} wrap={false}>
-      <Text style={styles.cardTitle}>{graph.title ?? "Relationship graph"}</Text>
+      <Text style={styles.cardTitle}>
+        {graph.title ?? "Relationship graph"}
+      </Text>
       <Text style={styles.note}>
         {graph.nodes.length} nodes | {graph.edges.length} relationships
       </Text>
       {edges.length > 0 ? (
         edges.map((edge, index) => (
-          <View key={`${edge.from}-${edge.to}-${index}`} style={styles.graphEdge}>
+          <View
+            key={`${edge.from}-${edge.to}-${index}`}
+            style={styles.graphEdge}
+          >
             <Text style={styles.graphEdgeMain}>
               {text(nodeLabelById.get(edge.from) ?? edge.from)}
               {" -> "}
@@ -542,7 +574,8 @@ export function buildAvaAnswerPdf(
 ): ReactElement<DocumentProps> {
   const display = sanitizeAvaAnswerForRender(answer);
   const generatedAt = new Date().toISOString();
-  const surfaceLabel = display.surface.charAt(0).toUpperCase() + display.surface.slice(1);
+  const surfaceLabel =
+    display.surface.charAt(0).toUpperCase() + display.surface.slice(1);
 
   return (
     <Document
@@ -555,7 +588,12 @@ export function buildAvaAnswerPdf(
         <Text style={styles.eyebrow}>aVa {surfaceLabel} Export</Text>
         <Text style={styles.title}>{display.question}</Text>
         <Text style={styles.meta}>
-          {display.tenantKey} | {display.status} | {display.quality.confidence} confidence | {generatedAt}
+          {display.tenantKey} | {display.status} | {display.quality.confidence}{" "}
+          confidence | {generatedAt}
+        </Text>
+        <Text style={styles.scopeNote}>
+          This export contains the aVa answer only. It is not a full workspace
+          or Home walkthrough export.
         </Text>
         {answerBlocks(display)}
       </Page>
@@ -567,7 +605,9 @@ export function buildAvaChatSessionPdf(
   session: AvaChatSessionExport,
 ): ReactElement<DocumentProps> {
   const generatedAt = new Date().toISOString();
-  const answers = session.turns.flatMap((turn) => (turn.answer ? [turn.answer] : []));
+  const answers = session.turns.flatMap((turn) =>
+    turn.answer ? [turn.answer] : [],
+  );
   const artifacts = answers.flatMap((answer) =>
     sanitizeAvaAnswerForRender(answer).artifacts.filter(isVisibleAvaArtifact),
   );
@@ -583,8 +623,14 @@ export function buildAvaChatSessionPdf(
     ["aVa turns", session.turns.filter((turn) => turn.role === "agent").length],
     ["Governed answers", answers.length],
     ["Visual artifacts", artifacts.length],
-    ["Evidence refs", answers.reduce((sum, answer) => sum + answer.citations.length, 0)],
-    ["Blocked answers", answers.filter((answer) => answer.status === "blocked").length],
+    [
+      "Evidence refs",
+      answers.reduce((sum, answer) => sum + answer.citations.length, 0),
+    ],
+    [
+      "Blocked answers",
+      answers.filter((answer) => answer.status === "blocked").length,
+    ],
   ] as const;
 
   return (
@@ -598,7 +644,12 @@ export function buildAvaChatSessionPdf(
         <Text style={styles.eyebrow}>aVa {surfaceLabel} Session Export</Text>
         <Text style={styles.title}>{title}</Text>
         <Text style={styles.meta}>
-          {tenant} | {session.surface} | {session.turns.length} turns | {generatedAt}
+          {tenant} | {session.surface} | {session.turns.length} turns |{" "}
+          {generatedAt}
+        </Text>
+        <Text style={styles.scopeNote}>
+          This export contains the aVa chat session only. It is not a full
+          workspace or Home walkthrough export.
         </Text>
         <View style={styles.statGrid}>
           {stats.map(([label, value]) => (
@@ -617,17 +668,16 @@ export function buildAvaChatSessionPdf(
             ]}
           >
             <Text style={styles.turnLabel}>
-              {turn.role === "user" ? "User prompt" : "aVa response"} {index + 1}
+              {turn.role === "user" ? "User prompt" : "aVa response"}{" "}
+              {index + 1}
             </Text>
-            {turn.answer ? (
-              answerBlocks(turn.answer)
-            ) : (
-              paragraphs(turn.body).map((paragraph, paragraphIndex) => (
-                <Text key={paragraphIndex} style={styles.prose}>
-                  {paragraph}
-                </Text>
-              ))
-            )}
+            {turn.answer
+              ? answerBlocks(turn.answer)
+              : paragraphs(turn.body).map((paragraph, paragraphIndex) => (
+                  <Text key={paragraphIndex} style={styles.prose}>
+                    {paragraph}
+                  </Text>
+                ))}
           </View>
         ))}
         <Text style={styles.note}>

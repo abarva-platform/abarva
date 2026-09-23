@@ -66,7 +66,11 @@ function answerFixture(): AvaAnswerPacket {
         title: "Decision Dependency Graph",
         nodes: [
           { id: "demand", label: "Demand sensing", kind: "AI bet" },
-          { id: "forecast", label: "Forecast data product", kind: "Data asset" },
+          {
+            id: "forecast",
+            label: "Forecast data product",
+            kind: "Data asset",
+          },
         ],
         edges: [
           {
@@ -247,7 +251,8 @@ Use the typed artifact if available.`;
 
   it("decodes basic escaped characters before export escaping", () => {
     const answer = answerFixture();
-    answer.directAnswer = "Finance &amp; Procurement shouldn&#39;t see raw entities.";
+    answer.directAnswer =
+      "Finance &amp; Procurement shouldn&#39;t see raw entities.";
 
     const html = renderAvaAnswerStandaloneHtml(answer);
 
@@ -292,7 +297,8 @@ Use the typed artifact if available.`;
                 id: "c1",
                 label: "Supply chain benchmark pack",
                 sourceClass: "corpus-pattern",
-                excerpt: "Demand sensing has strong evidence in volatile networks.",
+                excerpt:
+                  "Demand sensing has strong evidence in volatile networks.",
               },
             ],
           },
@@ -302,6 +308,12 @@ Use the typed artifact if available.`;
 
     expect(html).toContain("aVa Intelligence Session Export");
     expect(html).toContain("Supply chain AI investment session");
+    expect(html).toContain(
+      "This export contains the aVa answer or chat session only.",
+    );
+    expect(html).toContain(
+      "It is not a full workspace or Home walkthrough export.",
+    );
     expect(html).toContain("User prompt 1");
     expect(html).toContain("Give me the top 5 supply chain AI bets.");
     expect(html).toContain("aVa response 2");
@@ -323,12 +335,18 @@ describe("aVa answer PDF export", () => {
     const pdfText = buffer.toString("latin1");
 
     expect(pdfText).toContain("aVa Home Export");
+    expect(pdfText).toContain("This export contains the aVa answer only.");
+    expect(pdfText).toContain(
+      "It is not a full workspace or Home walkthrough export.",
+    );
     expect(pdfText).toContain("Supply Chain AI Matrix");
     expect(pdfText).toContain("Decision Dependency Graph");
     expect(pdfText).toContain("Forecast data product");
     expect(pdfText).toContain("Ranked Use Cases");
     expect(pdfText).toContain("Demand sensing");
-    expect(pdfText).not.toContain("Use the HTML export for the full inline SVG chart");
+    expect(pdfText).not.toContain(
+      "Use the HTML export for the full inline SVG chart",
+    );
   });
 
   it("preserves session export artifact labels for downstream sharing", async () => {
@@ -351,6 +369,12 @@ describe("aVa answer PDF export", () => {
     const pdfText = buffer.toString("latin1");
 
     expect(pdfText).toContain("Home aVa context session");
+    expect(pdfText).toContain(
+      "This export contains the aVa chat session only.",
+    );
+    expect(pdfText).toContain(
+      "It is not a full workspace or Home walkthrough export.",
+    );
     expect(pdfText).toContain("Visual artifacts");
     expect(pdfText).toContain("Decision Dependency Graph");
   });

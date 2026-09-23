@@ -1742,27 +1742,30 @@ function SessionExportActions({
   onExport,
 }: SessionExportActionsProps) {
   return (
-    <div aria-label="Export chat session" style={SESSION_EXPORT_STYLE}>
-      <button
-        type="button"
-        aria-label="Export chat session as HTML"
-        title="Export session as HTML"
-        disabled={pending !== null}
-        onClick={() => void onExport("html")}
-        style={SESSION_EXPORT_BUTTON_STYLE}
-      >
-        {pending === "html" ? "..." : "HTML"}
-      </button>
-      <button
-        type="button"
-        aria-label="Export chat session as PDF"
-        title="Export session as PDF"
-        disabled={pending !== null}
-        onClick={() => void onExport("pdf")}
-        style={SESSION_EXPORT_BUTTON_STYLE}
-      >
-        {pending === "pdf" ? "..." : "PDF"}
-      </button>
+    <div aria-label="Export aVa chat session only" style={SESSION_EXPORT_STYLE}>
+      <span style={SESSION_EXPORT_LABEL_STYLE}>Chat export</span>
+      <div style={SESSION_EXPORT_BUTTON_GROUP_STYLE}>
+        <button
+          type="button"
+          aria-label="Export aVa chat session only as HTML"
+          title="Export aVa chat session only as HTML"
+          disabled={pending !== null}
+          onClick={() => void onExport("html")}
+          style={SESSION_EXPORT_BUTTON_STYLE}
+        >
+          {pending === "html" ? "..." : "HTML"}
+        </button>
+        <button
+          type="button"
+          aria-label="Export aVa chat session only as PDF"
+          title="Export aVa chat session only as PDF"
+          disabled={pending !== null}
+          onClick={() => void onExport("pdf")}
+          style={SESSION_EXPORT_BUTTON_STYLE}
+        >
+          {pending === "pdf" ? "..." : "PDF"}
+        </button>
+      </div>
       {status ? (
         <span style={SESSION_EXPORT_STATUS_STYLE}>{status}</span>
       ) : null}
@@ -2280,6 +2283,20 @@ const MODE_PICKER_STYLE: CSSProperties = {
 };
 
 const SESSION_EXPORT_STYLE: CSSProperties = {
+  display: "inline-flex",
+  alignItems: "center",
+  gap: 4,
+};
+
+const SESSION_EXPORT_LABEL_STYLE: CSSProperties = {
+  color: CANVAS.GRAY_DK,
+  fontFamily: CANVAS.SANS,
+  fontSize: 10,
+  fontWeight: 700,
+  whiteSpace: "nowrap",
+};
+
+const SESSION_EXPORT_BUTTON_GROUP_STYLE: CSSProperties = {
   display: "inline-flex",
   alignItems: "center",
   gap: 4,
