@@ -185,6 +185,69 @@ function SourceNewWorkspace({
 }
 
 describe("SourceNewWorkspace", () => {
+  it("keeps demo self-acknowledgements separate from governed stage and decisions", () => {
+    const originalFetch = global.fetch;
+    const fetchSpy = jest.fn(() => {
+      throw new Error("Demo acknowledgement must not write an event");
+    });
+    global.fetch = fetchSpy as typeof fetch;
+    try {
+      render(
+        <SourceNewWorkspace
+          event={{ ...request, currentStage: "scope", lifecycle: "active" }}
+          files={[]}
+          activity={{ ok: true, entries: [] }}
+          demoMode
+        />,
+      );
+
+      expect(screen.getByText(/governed stage remains Scope/i)).toBeTruthy();
+      expect(screen.getByText(/demo records no sponsor signature/i)).toBeTruthy();
+      fireEvent.click(
+        screen.getByRole("button", { name: "Self-approve for demo" }),
+      );
+
+      expect(
+        screen.getByRole("heading", { name: "Suppliers & NDA demo preview" }),
+      ).toBeTruthy();
+      expect(screen.getByText(/governed stage remains Scope/i)).toBeTruthy();
+      expect(screen.getByText(/candidate authority could not be read/i)).toBeTruthy();
+      fireEvent.click(
+        screen.getByRole("button", { name: "Self-approve for demo" }),
+      );
+      expect(
+        screen.getByRole("heading", { name: "Market package demo preview" }),
+      ).toBeTruthy();
+      fireEvent.click(
+        screen.getByRole("button", { name: "Self-approve for demo" }),
+      );
+      expect(
+        screen.getByRole("heading", { name: "Demo walkthrough complete" }),
+      ).toBeTruthy();
+      fireEvent.click(screen.getByRole("button", { name: "Approvals" }));
+      const acknowledgements = screen.getByRole("region", {
+        name: "Demo acknowledgements",
+      });
+      expect(within(acknowledgements).getAllByRole("listitem")).toHaveLength(3);
+      expect(screen.getByText(/No decisions have been recorded/i)).toBeTruthy();
+      expect(fetchSpy).not.toHaveBeenCalled();
+    } finally {
+      global.fetch = originalFetch;
+    }
+  });
+
+  it("does not offer demo self-approval on the governed workspace by default", () => {
+    render(
+      <SourceNewWorkspace
+        event={{ ...request, currentStage: "scope", lifecycle: "active" }}
+        files={[]}
+      />,
+    );
+    expect(
+      screen.queryByRole("button", { name: "Self-approve for demo" }),
+    ).toBeNull();
+  });
+
   it("passes governed aVa citations from settled page-state turns into AgentDock", () => {
     mockUseAtlasPageState.mockReturnValue({
       conversation: [

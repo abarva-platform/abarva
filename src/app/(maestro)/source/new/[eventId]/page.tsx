@@ -31,10 +31,13 @@ export const metadata = { title: "Source New · AbarVa" };
 
 export default async function SourceNewEventPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ eventId: string }>;
+  searchParams?: Promise<{ demo?: string | string[] }>;
 }) {
   const { eventId } = await params;
+  const demoMode = (await searchParams)?.demo === "1";
   const [activeClient, tenancy] = await Promise.all([
     getActiveClientRow().catch(() => null),
     requireTenancy().catch(() => null),
@@ -261,6 +264,7 @@ export default async function SourceNewEventPage({
 
   return (
     <SourceNewWorkspace
+      demoMode={demoMode}
       activity={activity}
       intelligence={intelligence}
       event={{
