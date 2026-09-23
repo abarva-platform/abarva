@@ -381,6 +381,9 @@ export function HomeV4App({
     interviews: techRecordTypes.find(
       (r) => r.objectType === "executive_interview",
     )?.rows as EstateRow[] | undefined,
+    relationships: techRecordTypes.find(
+      (r) => r.objectType === "relationship_edge",
+    )?.rows as EstateRow[] | undefined,
   };
 
   const group = (title: string, items: RailItem[]): RailGroup => ({
@@ -579,6 +582,9 @@ export function HomeV4App({
                         interviews: techRecordTypes.find(
                           (r) => r.objectType === "executive_interview",
                         )?.rows,
+                        relationships: techRecordTypes.find(
+                          (r) => r.objectType === "relationship_edge",
+                        )?.rows,
                       })
                 }
                 briefingOpening={activeBriefingOpening}
@@ -616,6 +622,9 @@ export function HomeV4App({
                   )?.rows,
                   interviews: techRecordTypes.find(
                     (r) => r.objectType === "executive_interview",
+                  )?.rows,
+                  relationships: techRecordTypes.find(
+                    (r) => r.objectType === "relationship_edge",
                   )?.rows,
                 })}
               />
