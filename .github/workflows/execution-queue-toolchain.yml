@@ -79,3 +79,26 @@ jobs:
       # branch cannot fail for the right reason.
       - name: Run the claim-append gate wiring contract
         run: node scripts/exec/append-claim.test.mjs
+
+      # T-719. Worktree retention. The instruction "remove it when the item is
+      # merged" has been in the operator task file since 18 Sep. Two runs of
+      # that same task did not follow it, and at 2026-09-23T03:57Z a run could
+      # not start at all: 580 MiB free of 926 GiB, `git worktree add` dying
+      # ENOSPC mid-checkout, with 798 registered worktrees on disk and `git
+      # worktree prune` removing none of them. A rule nothing can fail is the
+      # shape this directory exists against, so the rule now has a control.
+      #
+      # The control reports; it never removes. The asymmetry it is built around
+      # is that a worktree wrongly called `keep` costs one item's disk, while a
+      # worktree wrongly called `removable` costs someone's uncommitted work —
+      # so `removable` needs three independent proofs (branch merged by PR
+      # `mergedAt`, NOT by ancestry, because a squash merge is not an ancestor;
+      # `git status --porcelain` empty; no live claim naming the branch or the
+      # path) and everything else is `unknown`.
+      #
+      # What runs here is the behavioural suite over FIXTURES and over real
+      # worktrees git creates in a temp directory — never the operator's
+      # machine, whose free space and checkouts CI cannot see and must not
+      # assert on. Fifteen mutations, fifteen caught, each by a named case.
+      - name: Run the worktree retention contract
+        run: node scripts/exec/worktree-retention.test.mjs
