@@ -1,4 +1,7 @@
-import { readFileSync } from "node:fs";
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import path from "node:path";
+import { spawnSync } from "node:child_process";
 
 const WORKFLOW_PATH =
   ".github/workflows/source-servicenow-request-import-job.yml";
@@ -46,5 +49,72 @@ describe("ServiceNow request import workflow", () => {
     expect(source).toMatch(/SOURCE_SERVICENOW_REQUEST_TENANT_KEY/);
     expect(source).not.toMatch(/load-servicenow-sourcing-requests-job/);
     expect(source).not.toMatch(/source:servicenow-requests:proof-job/);
+  });
+
+  it("requires matching, no-write proof before the dry run can pass", () => {
+    const source = workflow();
+    expect(source).toMatch(/Validate dry-run request proof/);
+    expect(source).toMatch(/validate-servicenow-request-proof\.mjs/);
+
+    const outDir = mkdtempSync(path.join(tmpdir(), "servicenow-workflow-proof-"));
+    const contractPath = path.join(outDir, "workflow-contract.json");
+    const summaryPath = path.join(outDir, "summary.json");
+    const inputSha256 = "a".repeat(64);
+    const contract = {
+      mode: "dry_run", input_sha256: inputSha256,
+      input_source_version: "extract-v1",
+    };
+    const summary = {
+      status: "Succeeded", ok: true,
+      restored: { restored: true, idleVerification: { idleVerified: true, problems: [] } },
+      proof: { extracted: true, extractionKind: "source_servicenow_request_summary",
+        proofBundleExtracted: false, summary: {
+          schemaVersion: 1, event: "source_servicenow_request_import_proof_summary",
+          mode: "dry_run", requestCount: 10, archetypeCount: 10,
+          requiredFactGapCount: 0, missingArchetypeCount: 0,
+          inputSha256, inputSourceVersion: "extract-v1", inserted: 0,
+          committed: false, authority: { requestVersionsOnly: true,
+            mappingDecisionsWritten: false, eventsCreated: false,
+            suppliersContacted: false },
+        } },
+    };
+    const run = (value: unknown) => {
+      writeFileSync(contractPath, JSON.stringify(contract));
+      writeFileSync(summaryPath, JSON.stringify(value));
+      return spawnSync(process.execPath, [
+        "scripts/source/validate-servicenow-request-proof.mjs",
+        contractPath, summaryPath,
+      ], { encoding: "utf8" });
+    };
+    try {
+      expect(run(summary).status).toBe(0);
+      expect(run({ ...summary, proof: { extracted: false } }).status).not.toBe(0);
+      expect(run({ ...summary, proof: { ...summary.proof, summary: {
+        ...summary.proof.summary, inputSha256: "b".repeat(64),
+      } } }).status).not.toBe(0);
+      expect(run({ ...summary, proof: { ...summary.proof, summary: {
+        ...summary.proof.summary, committed: true,
+      } } }).status).not.toBe(0);
+      expect(run({ ...summary, proof: { ...summary.proof, summary: {
+        ...summary.proof.summary, requestCount: 0,
+      } } }).status).not.toBe(0);
+      expect(run({ ...summary, proof: { ...summary.proof, summary: {
+        ...summary.proof.summary, requiredFactGapCount: 1,
+      } } }).status).not.toBe(0);
+      expect(run({ ...summary, restored: { ...summary.restored,
+        idleVerification: { idleVerified: false, problems: [] },
+      } }).status).not.toBe(0);
+
+      contract.mode = "apply";
+      const applySummary = { ...summary, proof: { ...summary.proof, summary: {
+        ...summary.proof.summary, mode: "apply", inserted: 10, committed: true,
+      } } };
+      expect(run(applySummary).status).toBe(0);
+      expect(run({ ...applySummary, proof: { ...applySummary.proof, summary: {
+        ...applySummary.proof.summary, committed: false,
+      } } }).status).not.toBe(0);
+    } finally {
+      rmSync(outDir, { recursive: true, force: true });
+    }
   });
 });

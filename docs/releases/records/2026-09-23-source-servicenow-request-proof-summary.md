@@ -11,6 +11,7 @@
 ## Plain-English Summary
 
 The request import operator job now ends with a compact, deterministic proof summary. The ACA job wrapper can retain request counts, archetype coverage, gaps, input identity, mode, and write authority when a large proof archive falls outside the captured log tail. The wrapper distinguishes a summary-only extraction from a complete archive extraction.
+The workflow fails if the resulting proof is absent, mismatches the dispatched input, has quality gaps, or contradicts dry-run/no-contact authority.
 
 ## Layer Impact
 
@@ -32,7 +33,10 @@ Release lane: `client-data-lane`.
 
 - `scripts/source/load-servicenow-sourcing-requests.ts`
 - `scripts/ops/submit-aca-operator-job.mjs`
+- `scripts/source/validate-servicenow-request-proof.mjs`
+- `.github/workflows/source-servicenow-request-import-job.yml`
 - Focused loader and wrapper behavior tests.
+- Workflow proof validator and behavior tests.
 
 ## QA / Validation
 
@@ -44,6 +48,7 @@ Release lane: `client-data-lane`.
 - PASS - `npm run release:check` passed the release record, deploy authority, and data loader gates.
 - PASS - `npm run ops:aca-job -- --self-test` passed without Azure access.
 - PASS - Final `git diff --check` completed without whitespace errors.
+- A red-first workflow test reproduced the previous green-without-proof result. All three focused suites now pass (30 tests). The workflow runs a behavioral validator after either operator mode; it requires a succeeded, idle-verified job and proof matching the immutable dispatch. Missing proof, mismatched input, zero coverage, fact gaps, or a purported dry-run write fails validation. Removing the input-hash comparison made the mismatch test fail; the comparison was restored.
 - No live ACA job, database apply, migration apply, tenant-data write, or signed-in product check was run.
 
 ## Rollout Plan
