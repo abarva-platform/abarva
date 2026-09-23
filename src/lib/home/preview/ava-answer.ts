@@ -506,6 +506,9 @@ function containsConflictingDataAssetTotal(
     ...statement.matchAll(
       /\b(\d+)\s+(?:tracked\s+)?data assets(?:\s*(?:and|\/)\s*integrations)?\b/gi,
     ),
+    ...statement.matchAll(
+      /\bdata assets(?:\s*(?:and|\/)\s*integrations)?\s*\(\d+\s+of\s+(\d+)\)/gi,
+    ),
   ].some((match) => Number(match[1]) !== expected);
 }
 

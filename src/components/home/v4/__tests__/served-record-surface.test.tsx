@@ -142,6 +142,63 @@ function servedBundleWithPublishedTechnology(): HomeReviewBundle {
   );
 }
 
+function bundleWithReviewedNarrativeAndLiveRows(): HomeReviewBundle {
+  const base = getHomeReviewBundle("meridian-health");
+  if (!base) throw new Error("stored copy missing");
+  const value = JSON.parse(JSON.stringify(base)) as HomeReviewBundle;
+  const estate = value.technologyEstate;
+  if (!estate) throw new Error("technology estate missing");
+
+  estate.recordTypes = estate.recordTypes.map((recordType) => {
+    if (recordType.objectType === "vendor_contract") {
+      const vendors = [
+        ["IBM Corporation", 12200000],
+        ["Oracle Corporation", 12100000],
+        ["Epic Systems Corporation", 8400000],
+        ["Microsoft Corporation", 7600000],
+      ] as const;
+      return {
+        ...recordType,
+        rows: Array.from({ length: 230 }, (_value, index) => {
+          const [vendorName, annualSpendUsd] = vendors[index] ?? [
+            `Supplier ${index + 1}`,
+            264159.29203539825,
+          ];
+          return {
+            vendorName,
+            contractName: `${vendorName} agreement ${index + 1}`,
+            annualSpendUsd,
+            serviceCategory: "Managed Services",
+            pricingHistory: index === 0 ? "Loaded pricing history" : "",
+          };
+        }),
+      };
+    }
+    if (recordType.objectType === "data_asset_or_integration") {
+      return {
+        ...recordType,
+        rows: Array.from({ length: 1710 }, (_value, index) => ({
+          assetName: `Data asset ${index + 1}`,
+          integrationPattern: index % 2 === 0 ? "api" : "etl",
+        })),
+      };
+    }
+    return recordType;
+  });
+
+  value.thesis.signalPacket.visualDatasets = {
+    ...(value.thesis.signalPacket.visualDatasets ?? {}),
+    vendor_spend_concentration: [
+      { vendor: "IBM Corporation", sharePct: 12.2 },
+      { vendor: "Oracle Corporation", sharePct: 12.1 },
+      { vendor: "Epic Systems Corporation", sharePct: 8.4 },
+      { vendor: "Microsoft Corporation", sharePct: 7.6 },
+    ],
+  };
+
+  return value;
+}
+
 function servedBundleWithModelledInterview(): HomeReviewBundle {
   const base = getHomeReviewBundle("meridian-health");
   if (!base) throw new Error("stored copy missing");
@@ -297,6 +354,28 @@ describe("the served path", () => {
     expect(text).not.toMatch(/\bprojection\b/i);
     expect(text).not.toMatch(/\bloaded\b/i);
     expect(text).not.toMatch(/306-row legacy snapshot/i);
+  });
+
+  it("does not render stale authored counts or concentration copy over live rows", () => {
+    window.location.hash = "technology_data";
+    const { container } = render(
+      <HomeV4App
+        bundle={bundleWithReviewedNarrativeAndLiveRows()}
+        tenantKey="meridian-health"
+      />,
+    );
+    document.querySelectorAll("style").forEach((n) => n.remove());
+    const text = container.textContent ?? "";
+
+    expect(text).toContain("230 contracts");
+    expect(text).toContain(
+      "IBM Corporation is the largest supplier group at 12.2% of the current contract value.",
+    );
+    expect(text).not.toMatch(/\b72 declared vendor contracts\b/i);
+    expect(text).not.toMatch(/\b395 of 540 tracked data assets/i);
+    expect(text).not.toMatch(
+      /Epic(?: Systems Corporation)?[^.]{0,120}Microsoft(?: Corporation)?[^.]{0,120}(?:over|more than)[^.]{0,80}quarter/i,
+    );
   });
 
   it("states the leadership response basis before modelled interview content can be read as testimony", () => {
