@@ -954,6 +954,19 @@ function sanitizeRecordCountContradictions(
     context.recordCountsByObjectType.get("vendor_contract");
   if (vendorContracts !== undefined) {
     sanitized = sanitized.replace(
+      /\bnone\s+of\s+the\s+\d+\s+vendor contracts?\b/gi,
+      `none of the ${vendorContracts} vendor contracts`,
+    );
+    sanitized = sanitized.replace(
+      /\b(all|every|no)\s+(?:of\s+the\s+)?\d+\s+vendor contracts?\b/gi,
+      (_match, quantifier: string) =>
+        `${quantifier} ${vendorContracts} vendor contracts`,
+    );
+    sanitized = sanitized.replace(
+      /\bthe\s+\d+\s+vendor contracts?\b/gi,
+      `the ${vendorContracts} vendor contracts`,
+    );
+    sanitized = sanitized.replace(
       /\ball\s+\d+\s+declared\s+vendor contracts?\b/gi,
       `all ${vendorContracts} declared vendor contracts`,
     );
@@ -981,6 +994,17 @@ function sanitizeRecordCountContradictions(
     "data_asset_or_integration",
   );
   if (dataAssets !== undefined) {
+    sanitized = sanitized.replace(
+      /\b(\d+)\s+of\s+(\d+)\s+(tracked\s+)?data assets(?:\s*(?:and|\/)\s*integrations)?\b/gi,
+      (match, _subset: string, total: string) =>
+        Number(total) === dataAssets
+          ? match
+          : `a subset of the ${dataAssets} tracked data assets/integrations`,
+    );
+    sanitized = sanitized.replace(
+      /\bthe\s+\d+\s+(tracked\s+)?data assets(?:\s*(?:and|\/)\s*integrations)?\b/gi,
+      `the ${dataAssets} tracked data assets/integrations`,
+    );
     sanitized = sanitized.replace(
       /\b(\d+)\s+of\s+(\d+)\s+tracked\s+data assets\/integrations\b/gi,
       (match, _subset: string, total: string) =>

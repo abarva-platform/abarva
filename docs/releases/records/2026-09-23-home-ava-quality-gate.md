@@ -10,12 +10,12 @@
 
 ## Plain-English Summary
 
-Home aVa now handles unsupported graph requests explicitly instead of letting the advisor imply a graph can be rendered. It also applies the public-language scrubber to visible caveats and recovery answers so internal serving, parser, or packaging terms do not appear in walkthrough copy.
+Home aVa now handles unsupported graph requests explicitly instead of letting the advisor imply a graph can be rendered. It also applies the public-language scrubber to visible caveats and recovery answers so internal serving, parser, or packaging terms do not appear in walkthrough copy. A follow-up guard keeps visible family-count references aligned to the served Home bundle when older narrative claims mention a prior record universe.
 
 ## Layer Impact
 
 - Release lane: `global-control-lane`
-- Products: Home aVa answer packaging is tightened for unsupported graph requests and visible caveat copy.
+- Products: Home aVa answer packaging is tightened for unsupported graph requests, visible caveat copy, and stale family-count wording in advisor prose.
 - Control plane: No change.
 - Data plane: No change; no tenant data is written or regenerated.
 
@@ -38,6 +38,7 @@ Home aVa now handles unsupported graph requests explicitly instead of letting th
 - PASS: `npm test -- --runTestsByPath src/lib/home/preview/__tests__/ava-answer.test.ts src/app/api/home/preview/ask/__tests__/route.test.ts`
 - PASS: `npm test -- --runTestsByPath src/lib/home/preview/__tests__/ava-answer.test.ts`
 - PASS: `npx eslint src/lib/home/preview/ava-answer.ts src/lib/home/preview/__tests__/ava-answer.test.ts src/lib/ava-answer/public-answer-scrub.ts src/app/api/home/preview/ask/route.ts src/app/api/home/preview/ask/__tests__/route.test.ts`
+- POST-MERGE REQUIRED: rerun Home aVa smoke after deploy to confirm visible vendor-contract and data-asset counts match the served Home rail.
 
 ## Rollout Plan
 
