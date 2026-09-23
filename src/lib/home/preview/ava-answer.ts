@@ -2,14 +2,27 @@ import "server-only";
 
 import { getAuditedAnthropicClient } from "@/lib/agent/stream";
 import { scrubPublicAvaAnswerText } from "@/lib/ava-answer/public-answer-scrub";
-import type { AvaAnswerPacket, AvaArtifact, AvaCitation } from "@/lib/ava-answer/contract";
+import type {
+  AvaAnswerPacket,
+  AvaArtifact,
+  AvaCitation,
+} from "@/lib/ava-answer/contract";
 import { validateAvaAnswerPacket } from "@/lib/ava-answer/validateAvaAnswerPacket";
-import type { ChapterId, ChapterView, GroundedClaim, HomeReviewBundle, TechObjectType } from "@/lib/home/preview/types";
+import type {
+  ChapterId,
+  ChapterView,
+  GroundedClaim,
+  HomeReviewBundle,
+  TechObjectType,
+} from "@/lib/home/preview/types";
 
 /** Narrower than HomeReviewBundle so tests don't need to fabricate unrelated payload. The route
  * passes the full bundle, so thesis is available when the serving packet carries it; older fixtures
  * still degrade to chapter and technology summaries. */
-type AvaAnswerBundleSlice = Pick<HomeReviewBundle, "chapters" | "technologyEstate"> &
+type AvaAnswerBundleSlice = Pick<
+  HomeReviewBundle,
+  "chapters" | "technologyEstate"
+> &
   Partial<Pick<HomeReviewBundle, "thesis">>;
 
 const PROMPT_VERSION = "home-preview-ava-answer-v1";
@@ -45,6 +58,7 @@ interface GroundingContext {
   taggedClaims: TaggedClaim[];
   citationIndex: Map<string, TaggedClaim>;
   plottableDatasets: Map<string, PlottableDataset>;
+  recordCountsByObjectType: Map<TechObjectType, number>;
 }
 
 const TENANT_DISPLAY_NAMES: Record<string, string> = {
@@ -59,9 +73,27 @@ function tagClaims(chapters: ChapterView[]): TaggedClaim[] {
   const tagged: TaggedClaim[] = [];
   for (const chapter of chapters) {
     const abbrev = CHAPTER_ABBREV[chapter.chapterId];
-    chapter.key_insights.forEach((claim, i) => tagged.push({ tag: `${abbrev}-K${i + 1}`, claim, chapterId: chapter.chapterId }));
-    chapter.tensions.forEach((claim, i) => tagged.push({ tag: `${abbrev}-T${i + 1}`, claim, chapterId: chapter.chapterId }));
-    chapter.what_to_watch.forEach((claim, i) => tagged.push({ tag: `${abbrev}-W${i + 1}`, claim, chapterId: chapter.chapterId }));
+    chapter.key_insights.forEach((claim, i) =>
+      tagged.push({
+        tag: `${abbrev}-K${i + 1}`,
+        claim,
+        chapterId: chapter.chapterId,
+      }),
+    );
+    chapter.tensions.forEach((claim, i) =>
+      tagged.push({
+        tag: `${abbrev}-T${i + 1}`,
+        claim,
+        chapterId: chapter.chapterId,
+      }),
+    );
+    chapter.what_to_watch.forEach((claim, i) =>
+      tagged.push({
+        tag: `${abbrev}-W${i + 1}`,
+        claim,
+        chapterId: chapter.chapterId,
+      }),
+    );
   }
   return tagged;
 }
@@ -72,34 +104,131 @@ const SPINE_AREAS: Array<{
   chapters: ChapterId[];
   objectTypes?: TechObjectType[];
 }> = [
-  { key: "enterprise_profile", label: "Enterprise profile", chapters: ["executive_brief", "our_business"] },
-  { key: "business_model", label: "Business model and books of business", chapters: ["our_business"] },
-  { key: "strategy_priorities", label: "Strategy and priorities", chapters: ["strategy_value_creation"] },
-  { key: "operating_model", label: "Operating model, organization and ownership", chapters: ["how_we_operate"], objectTypes: ["organization_ownership"] },
-  { key: "programs_transformation", label: "Major programs and transformation agenda", chapters: ["strategy_value_creation", "performance_value"], objectTypes: ["program_initiative"] },
-  { key: "applications_technology", label: "Applications and technology estate", chapters: ["technology_data"], objectTypes: ["application_system"] },
-  { key: "data_analytics_ai", label: "Data, analytics and AI estate", chapters: ["technology_data"], objectTypes: ["data_asset_or_integration", "ai_use_case"] },
-  { key: "infrastructure_hosting", label: "Infrastructure and hosting", chapters: ["technology_data"], objectTypes: ["infrastructure_platform"] },
-  { key: "vendors_contracts", label: "Vendors, contracts and commercial dependencies", chapters: ["technology_data", "what_needs_attention"], objectTypes: ["vendor_contract"] },
-  { key: "financials_value", label: "Financials, spend, value and outcomes", chapters: ["performance_value"], objectTypes: ["metric_outcome"] },
-  { key: "risks_controls", label: "Risks, controls and resilience", chapters: ["what_needs_attention"], objectTypes: ["risk_control"] },
-  { key: "leadership_themes", label: "Leadership themes and disagreements", chapters: ["leadership_perspective"] },
-  { key: "known_gaps", label: "Known gaps, conflicts and evidence limitations", chapters: ["executive_brief", "our_business", "what_needs_attention"] },
-  { key: "attention_decisions", label: "Current major decisions and attention areas", chapters: ["executive_brief", "what_needs_attention"] },
+  {
+    key: "enterprise_profile",
+    label: "Enterprise profile",
+    chapters: ["executive_brief", "our_business"],
+  },
+  {
+    key: "business_model",
+    label: "Business model and books of business",
+    chapters: ["our_business"],
+  },
+  {
+    key: "strategy_priorities",
+    label: "Strategy and priorities",
+    chapters: ["strategy_value_creation"],
+  },
+  {
+    key: "operating_model",
+    label: "Operating model, organization and ownership",
+    chapters: ["how_we_operate"],
+    objectTypes: ["organization_ownership"],
+  },
+  {
+    key: "programs_transformation",
+    label: "Major programs and transformation agenda",
+    chapters: ["strategy_value_creation", "performance_value"],
+    objectTypes: ["program_initiative"],
+  },
+  {
+    key: "applications_technology",
+    label: "Applications and technology estate",
+    chapters: ["technology_data"],
+    objectTypes: ["application_system"],
+  },
+  {
+    key: "data_analytics_ai",
+    label: "Data, analytics and AI estate",
+    chapters: ["technology_data"],
+    objectTypes: ["data_asset_or_integration", "ai_use_case"],
+  },
+  {
+    key: "infrastructure_hosting",
+    label: "Infrastructure and hosting",
+    chapters: ["technology_data"],
+    objectTypes: ["infrastructure_platform"],
+  },
+  {
+    key: "vendors_contracts",
+    label: "Vendors, contracts and commercial dependencies",
+    chapters: ["technology_data", "what_needs_attention"],
+    objectTypes: ["vendor_contract"],
+  },
+  {
+    key: "financials_value",
+    label: "Financials, spend, value and outcomes",
+    chapters: ["performance_value"],
+    objectTypes: ["metric_outcome"],
+  },
+  {
+    key: "risks_controls",
+    label: "Risks, controls and resilience",
+    chapters: ["what_needs_attention"],
+    objectTypes: ["risk_control"],
+  },
+  {
+    key: "leadership_themes",
+    label: "Leadership themes and disagreements",
+    chapters: ["leadership_perspective"],
+  },
+  {
+    key: "known_gaps",
+    label: "Known gaps, conflicts and evidence limitations",
+    chapters: ["executive_brief", "our_business", "what_needs_attention"],
+  },
+  {
+    key: "attention_decisions",
+    label: "Current major decisions and attention areas",
+    chapters: ["executive_brief", "what_needs_attention"],
+  },
 ];
 
 const QUESTION_DOMAIN_RULES: Array<{ key: string; test: RegExp }> = [
-  { key: "applications_technology", test: /\b(applications?|systems?|technology|moderni[sz]ation|estate|platform)\b/i },
-  { key: "data_analytics_ai", test: /\b(data|analytics|ai|automation|reporting|etl|integration|lineage)\b/i },
-  { key: "vendors_contracts", test: /\b(vendors?|contracts?|commercial|renewal|sourcing|third[- ]party)\b/i },
-  { key: "financials_value", test: /\b(cfo|finance|financial|commercial|spend|cost|budget|value|savings|outcome|metric|roi|revenue)\b/i },
-  { key: "risks_controls", test: /\b(risk|control|resilien|security|privacy|compliance|exposure)\b/i },
-  { key: "operating_model", test: /\b(operating model|ownership|owner|organization|organisation|accountab|decision rights?)\b/i },
-  { key: "programs_transformation", test: /\b(program|initiative|transformation|portfolio|delivery|roadmap)\b/i },
-  { key: "strategy_priorities", test: /\b(strategy|priority|bet|direction|where are we going)\b/i },
-  { key: "leadership_themes", test: /\b(leader|leadership|interview|agree|disagree|concern|worr)\b/i },
-  { key: "known_gaps", test: /\b(mislead|caveat|gap|missing|unknown|do not know|don't know|not know|evidence limit|board recommendation)\b/i },
-  { key: "attention_decisions", test: /\b(ceo|board|leadership|decision|friday|first|address|recommendation|attention)\b/i },
+  {
+    key: "applications_technology",
+    test: /\b(applications?|systems?|technology|moderni[sz]ation|estate|platform)\b/i,
+  },
+  {
+    key: "data_analytics_ai",
+    test: /\b(data|analytics|ai|automation|reporting|etl|integration|lineage)\b/i,
+  },
+  {
+    key: "vendors_contracts",
+    test: /\b(vendors?|contracts?|commercial|renewal|sourcing|third[- ]party)\b/i,
+  },
+  {
+    key: "financials_value",
+    test: /\b(cfo|finance|financial|commercial|spend|cost|budget|value|savings|outcome|metric|roi|revenue)\b/i,
+  },
+  {
+    key: "risks_controls",
+    test: /\b(risk|control|resilien|security|privacy|compliance|exposure)\b/i,
+  },
+  {
+    key: "operating_model",
+    test: /\b(operating model|ownership|owner|organization|organisation|accountab|decision rights?)\b/i,
+  },
+  {
+    key: "programs_transformation",
+    test: /\b(program|initiative|transformation|portfolio|delivery|roadmap)\b/i,
+  },
+  {
+    key: "strategy_priorities",
+    test: /\b(strategy|priority|bet|direction|where are we going)\b/i,
+  },
+  {
+    key: "leadership_themes",
+    test: /\b(leader|leadership|interview|agree|disagree|concern|worr)\b/i,
+  },
+  {
+    key: "known_gaps",
+    test: /\b(mislead|caveat|gap|missing|unknown|do not know|don't know|not know|evidence limit|board recommendation)\b/i,
+  },
+  {
+    key: "attention_decisions",
+    test: /\b(ceo|board|leadership|decision|friday|first|address|recommendation|attention)\b/i,
+  },
 ];
 
 function claimTagsForChapter(chapter: ChapterView): string[] {
@@ -112,14 +241,28 @@ function claimTagsForChapter(chapter: ChapterView): string[] {
 }
 
 function buildEnterpriseContextSpine(bundle: AvaAnswerBundleSlice) {
-  const chaptersById = new Map(bundle.chapters.map((chapter) => [chapter.chapterId, chapter]));
-  const recordsByType = new Map((bundle.technologyEstate?.recordTypes ?? []).map((recordType) => [recordType.objectType, recordType]));
+  const chaptersById = new Map(
+    bundle.chapters.map((chapter) => [chapter.chapterId, chapter]),
+  );
+  const recordsByType = new Map(
+    (bundle.technologyEstate?.recordTypes ?? []).map((recordType) => [
+      recordType.objectType,
+      recordType,
+    ]),
+  );
 
   return SPINE_AREAS.map((area) => {
-    const areaChapters = area.chapters.map((id) => chaptersById.get(id)).filter((chapter): chapter is ChapterView => Boolean(chapter));
+    const areaChapters = area.chapters
+      .map((id) => chaptersById.get(id))
+      .filter((chapter): chapter is ChapterView => Boolean(chapter));
     const recordSummaries = (area.objectTypes ?? [])
       .map((objectType) => recordsByType.get(objectType))
-      .filter((recordType): recordType is NonNullable<ReturnType<typeof recordsByType.get>> => Boolean(recordType))
+      .filter(
+        (
+          recordType,
+        ): recordType is NonNullable<ReturnType<typeof recordsByType.get>> =>
+          Boolean(recordType),
+      )
       .map((recordType) => ({
         objectType: recordType.objectType,
         label: recordType.label,
@@ -131,7 +274,10 @@ function buildEnterpriseContextSpine(bundle: AvaAnswerBundleSlice) {
     return {
       key: area.key,
       label: area.label,
-      status: areaChapters.length > 0 || recordSummaries.length > 0 ? "available" : "not_available",
+      status:
+        areaChapters.length > 0 || recordSummaries.length > 0
+          ? "available"
+          : "not_available",
       chapter_refs: areaChapters.map((chapter) => ({
         chapterId: chapter.chapterId,
         title: chapter.title,
@@ -145,19 +291,32 @@ function buildEnterpriseContextSpine(bundle: AvaAnswerBundleSlice) {
   });
 }
 
-function buildQuestionContextPlan(question: string, activeChapterId: string | undefined) {
+function buildQuestionContextPlan(
+  question: string,
+  activeChapterId: string | undefined,
+) {
   const matched = matchedQuestionDomains(question);
-  const primaryDomains = matched.length > 0 ? matched.slice(0, 2) : ["enterprise_profile", "attention_decisions"];
+  const primaryDomains =
+    matched.length > 0
+      ? matched.slice(0, 2)
+      : ["enterprise_profile", "attention_decisions"];
   return {
     active_chapter_focus: activeChapterId ?? null,
     focus_is_not_a_context_limit: true,
-    answer_depth: /\b(complete|deep|full|comprehensive|detailed|assessment|recommend)\b/i.test(question)
-      ? "deep_dive"
-      : /\b(why|how|should|concern|risk|compare|implication|means?|recommend)\b/i.test(question)
-        ? "executive"
-        : "quick",
+    answer_depth:
+      /\b(complete|deep|full|comprehensive|detailed|assessment|recommend)\b/i.test(
+        question,
+      )
+        ? "deep_dive"
+        : /\b(why|how|should|concern|risk|compare|implication|means?|recommend)\b/i.test(
+              question,
+            )
+          ? "executive"
+          : "quick",
     primary_domains: primaryDomains,
-    secondary_domains: matched.filter((key) => !primaryDomains.includes(key)).slice(0, 6),
+    secondary_domains: matched
+      .filter((key) => !primaryDomains.includes(key))
+      .slice(0, 6),
     always_include: [
       "enterprise_profile",
       "business_model",
@@ -170,20 +329,31 @@ function buildQuestionContextPlan(question: string, activeChapterId: string | un
 }
 
 function matchedQuestionDomains(question: string): string[] {
-  return QUESTION_DOMAIN_RULES.filter((rule) => rule.test.test(question)).map((rule) => rule.key);
+  return QUESTION_DOMAIN_RULES.filter((rule) => rule.test.test(question)).map(
+    (rule) => rule.key,
+  );
 }
 
-function buildGroundingContext(bundle: AvaAnswerBundleSlice, tenantKey: string, activeChapterId: string | undefined, question: string): GroundingContext {
+function buildGroundingContext(
+  bundle: AvaAnswerBundleSlice,
+  tenantKey: string,
+  activeChapterId: string | undefined,
+  question: string,
+): GroundingContext {
   const taggedClaims = tagClaims(bundle.chapters);
   const citationIndex = new Map(taggedClaims.map((t) => [t.tag, t]));
 
   const plottableDatasets = new Map<string, PlottableDataset>();
   for (const recordType of bundle.technologyEstate?.recordTypes ?? []) {
-    if (!recordType.primaryDimension || recordType.dimensionCounts.length === 0) continue;
+    if (!recordType.primaryDimension || recordType.dimensionCounts.length === 0)
+      continue;
     const key = `tech.${recordType.objectType}.by_${recordType.primaryDimension}`;
     plottableDatasets.set(key, {
       label: `${recordType.label} by ${recordType.primaryDimension}`,
-      rows: recordType.dimensionCounts.map((d) => ({ label: d.value, value: d.count })),
+      rows: recordType.dimensionCounts.map((d) => ({
+        label: d.value,
+        value: d.count,
+      })),
     });
   }
 
@@ -196,19 +366,38 @@ function buildGroundingContext(bundle: AvaAnswerBundleSlice, tenantKey: string, 
       guidingQuestion: chapter.guidingQuestion,
       headline: chapter.headline,
       executive_synthesis: chapter.executive_synthesis,
-      key_insights: chapter.key_insights.map((c, i) => ({ tag: `${abbrev}-K${i + 1}`, statement: c.statement, claim_type: c.claim_type, confidence: c.confidence })),
-      tensions: chapter.tensions.map((c, i) => ({ tag: `${abbrev}-T${i + 1}`, statement: c.statement, claim_type: c.claim_type, confidence: c.confidence })),
-      what_to_watch: chapter.what_to_watch.map((c, i) => ({ tag: `${abbrev}-W${i + 1}`, statement: c.statement, claim_type: c.claim_type, confidence: c.confidence })),
+      key_insights: chapter.key_insights.map((c, i) => ({
+        tag: `${abbrev}-K${i + 1}`,
+        statement: c.statement,
+        claim_type: c.claim_type,
+        confidence: c.confidence,
+      })),
+      tensions: chapter.tensions.map((c, i) => ({
+        tag: `${abbrev}-T${i + 1}`,
+        statement: c.statement,
+        claim_type: c.claim_type,
+        confidence: c.confidence,
+      })),
+      what_to_watch: chapter.what_to_watch.map((c, i) => ({
+        tag: `${abbrev}-W${i + 1}`,
+        statement: c.statement,
+        claim_type: c.claim_type,
+        confidence: c.confidence,
+      })),
       limitations: chapter.limitations,
     };
   });
 
-  const technologyEstateSummary = (bundle.technologyEstate?.recordTypes ?? []).map((rt) => ({
+  const technologyEstateSummary = (
+    bundle.technologyEstate?.recordTypes ?? []
+  ).map((rt) => ({
     objectType: rt.objectType,
     label: rt.label,
     totalRecords: rt.rows.length,
     primaryDimension: rt.primaryDimension,
-    datasetRefIfAvailable: rt.primaryDimension ? `tech.${rt.objectType}.by_${rt.primaryDimension}` : null,
+    datasetRefIfAvailable: rt.primaryDimension
+      ? `tech.${rt.objectType}.by_${rt.primaryDimension}`
+      : null,
   }));
 
   const contextPayload = {
@@ -217,12 +406,14 @@ function buildGroundingContext(bundle: AvaAnswerBundleSlice, tenantKey: string, 
     enterprise_context_spine: buildEnterpriseContextSpine(bundle),
     chapters: chaptersForContext,
     technology_estate_summary: technologyEstateSummary,
-    plottable_datasets: Array.from(plottableDatasets.entries()).map(([ref, d]) => ({
-      dataset_ref: ref,
-      label: d.label,
-      segment_count: d.rows.length,
-      segments_preview: d.rows.slice(0, 6),
-    })),
+    plottable_datasets: Array.from(plottableDatasets.entries()).map(
+      ([ref, d]) => ({
+        dataset_ref: ref,
+        label: d.label,
+        segment_count: d.rows.length,
+        segments_preview: d.rows.slice(0, 6),
+      }),
+    ),
   };
 
   return {
@@ -231,6 +422,12 @@ function buildGroundingContext(bundle: AvaAnswerBundleSlice, tenantKey: string, 
     taggedClaims,
     citationIndex,
     plottableDatasets,
+    recordCountsByObjectType: new Map(
+      (bundle.technologyEstate?.recordTypes ?? []).map((recordType) => [
+        recordType.objectType,
+        recordType.rows.length,
+      ]),
+    ),
   };
 }
 
@@ -266,7 +463,11 @@ interface ModelResponseShape {
   direct_answer?: string;
   prose?: string;
   cited_claim_tags?: string[];
-  visual?: { type?: string; dataset_ref?: string | null; chart_kind?: string | null };
+  visual?: {
+    type?: string;
+    dataset_ref?: string | null;
+    chart_kind?: string | null;
+  };
   caveats?: string[];
 }
 
@@ -282,13 +483,19 @@ function extractMessageText(message: unknown): string {
     .join("");
 }
 
-async function withTimeout<T>(promise: Promise<T>, timeoutMs: number): Promise<T> {
+async function withTimeout<T>(
+  promise: Promise<T>,
+  timeoutMs: number,
+): Promise<T> {
   let timeout: ReturnType<typeof setTimeout> | null = null;
   try {
     return await Promise.race([
       promise,
       new Promise<T>((_resolve, reject) => {
-        timeout = setTimeout(() => reject(new Error("home_preview_ava_answer_timeout")), timeoutMs);
+        timeout = setTimeout(
+          () => reject(new Error("home_preview_ava_answer_timeout")),
+          timeoutMs,
+        );
       }),
     ]);
   } finally {
@@ -305,7 +512,10 @@ const MAX_PROSE_PARAGRAPH_WORDS = 70;
  * rather than imported so this route doesn't drag the data-build script's pg/papaparse/fs
  * dependencies into the Next.js server bundle for one small utility function. */
 function parseJsonLoose<T>(text: string, label: string): T | null {
-  const cleaned = text.trim().replace(/^```(?:json)?\s*/, "").replace(/\s*```$/, "");
+  const cleaned = text
+    .trim()
+    .replace(/^```(?:json)?\s*/, "")
+    .replace(/\s*```$/, "");
   try {
     return JSON.parse(cleaned) as T;
   } catch (error) {
@@ -331,7 +541,12 @@ export async function answerHomeAvaQuestion(args: {
   userId?: string | null;
 }): Promise<AvaAnswerPacket> {
   const question = args.question.trim();
-  const context = buildGroundingContext(args.bundle, args.tenantKey, args.activeChapterId, question);
+  const context = buildGroundingContext(
+    args.bundle,
+    args.tenantKey,
+    args.activeChapterId,
+    question,
+  );
 
   const userMessage = `Tenant: ${context.tenantDisplayName}\nQuestion: ${question}\n\nContext (JSON):\n${context.promptContextJson}`;
 
@@ -358,9 +573,15 @@ export async function answerHomeAvaQuestion(args: {
       },
     });
 
-    const message = await withTimeout(client.messages.create(requestPayload), TIMEOUT_MS);
+    const message = await withTimeout(
+      client.messages.create(requestPayload),
+      TIMEOUT_MS,
+    );
     const rawText = extractMessageText(message).trim();
-    const parsed = parseJsonLoose<ModelResponseShape>(rawText, "home-preview-ava-answer");
+    const parsed = parseJsonLoose<ModelResponseShape>(
+      rawText,
+      "home-preview-ava-answer",
+    );
 
     if (!parsed) {
       const recovered = shouldRecoverFromRelevantClaims(question)
@@ -374,7 +595,13 @@ export async function answerHomeAvaQuestion(args: {
           })
         : null;
       if (recovered) return recovered;
-      return buildFallbackPacket(args.tenantKey, question, "no_data", "I couldn't produce a grounded answer to that just now -- try rephrasing the question.", []);
+      return buildFallbackPacket(
+        args.tenantKey,
+        question,
+        "no_data",
+        "I couldn't produce a grounded answer to that just now -- try rephrasing the question.",
+        [],
+      );
     }
 
     return packageModelResponse(parsed, context, args.tenantKey, question);
@@ -407,11 +634,18 @@ function packageModelResponse(
   tenantKey: string,
   question: string,
 ): AvaAnswerPacket {
-  const status = ALLOWED_STATUS.has(parsed.status ?? "") ? (parsed.status as "answered" | "partial" | "no_data") : "partial";
-  const directAnswerRaw = typeof parsed.direct_answer === "string" && parsed.direct_answer.trim() ? parsed.direct_answer.trim() : "I don't have a grounded answer for that yet.";
+  const status = ALLOWED_STATUS.has(parsed.status ?? "")
+    ? (parsed.status as "answered" | "partial" | "no_data")
+    : "partial";
+  const directAnswerRaw =
+    typeof parsed.direct_answer === "string" && parsed.direct_answer.trim()
+      ? parsed.direct_answer.trim()
+      : "I don't have a grounded answer for that yet.";
   const proseRaw = typeof parsed.prose === "string" ? parsed.prose.trim() : "";
 
-  const citedTags = Array.isArray(parsed.cited_claim_tags) ? parsed.cited_claim_tags.filter((t): t is string => typeof t === "string") : [];
+  const citedTags = Array.isArray(parsed.cited_claim_tags)
+    ? parsed.cited_claim_tags.filter((t): t is string => typeof t === "string")
+    : [];
   const citations: AvaCitation[] = [];
   for (const tag of citedTags) {
     const entry = context.citationIndex.get(tag);
@@ -421,7 +655,12 @@ function packageModelResponse(
       label: entry.claim.statement.slice(0, 96),
       sourceClass: "tenant-fact",
       excerpt: entry.claim.statement,
-      confidence: entry.claim.confidence === "low" ? "low" : entry.claim.confidence === "medium" ? "medium" : "high",
+      confidence:
+        entry.claim.confidence === "low"
+          ? "low"
+          : entry.claim.confidence === "medium"
+            ? "medium"
+            : "high",
     });
   }
 
@@ -432,7 +671,9 @@ function packageModelResponse(
     const dataset = context.plottableDatasets.get(datasetRef);
     if (dataset) {
       if (visualType === "chart") {
-        const kind = ALLOWED_CHART_KIND.has(parsed.visual?.chart_kind ?? "") ? (parsed.visual!.chart_kind as "bar" | "horizontal-bar") : "horizontal-bar";
+        const kind = ALLOWED_CHART_KIND.has(parsed.visual?.chart_kind ?? "")
+          ? (parsed.visual!.chart_kind as "bar" | "horizontal-bar")
+          : "horizontal-bar";
         artifacts.push({
           artifact: "chart",
           id: `home-ava-${datasetRef}`,
@@ -461,7 +702,13 @@ function packageModelResponse(
     // same "missing is never zero" discipline as the rest of this pipeline's visual contract.
   }
 
-  const caveats = Array.isArray(parsed.caveats) ? parsed.caveats.filter((c): c is string => typeof c === "string" && c.trim().length > 0) : [];
+  const caveats = Array.isArray(parsed.caveats)
+    ? parsed.caveats
+        .filter(
+          (c): c is string => typeof c === "string" && c.trim().length > 0,
+        )
+        .map((caveat) => sanitizeRecordCountContradictions(caveat, context))
+    : [];
   const gaps =
     status === "partial" || status === "no_data"
       ? [
@@ -471,12 +718,16 @@ function packageModelResponse(
             detail:
               caveats[0] ??
               "This Home answer is directional and needs source-owner confirmation before it is used for approval.",
-            severity: status === "no_data" ? ("high" as const) : ("medium" as const),
+            severity:
+              status === "no_data" ? ("high" as const) : ("medium" as const),
           },
         ]
       : [];
 
-  if ((status === "no_data" || citations.length === 0) && shouldRecoverFromRelevantClaims(question)) {
+  if (
+    (status === "no_data" || citations.length === 0) &&
+    shouldRecoverFromRelevantClaims(question)
+  ) {
     const recovered = buildClaimBackedRecoveryAnswer({
       context,
       tenantKey,
@@ -486,9 +737,19 @@ function packageModelResponse(
     if (recovered) return recovered;
   }
 
-  const directAnswer = scrubPublicAvaAnswerText(compactAnswerText(directAnswerRaw, MAX_DIRECT_ANSWER_WORDS));
+  const directAnswer = scrubPublicAvaAnswerText(
+    sanitizeRecordCountContradictions(
+      compactAnswerText(directAnswerRaw, MAX_DIRECT_ANSWER_WORDS),
+      context,
+    ),
+  );
   const prose = proseRaw
-    ? scrubPublicAvaAnswerText(compactAnswerText(proseRaw, MAX_PROSE_PARAGRAPH_WORDS))
+    ? scrubPublicAvaAnswerText(
+        sanitizeRecordCountContradictions(
+          compactAnswerText(proseRaw, MAX_PROSE_PARAGRAPH_WORDS),
+          context,
+        ),
+      )
     : undefined;
 
   const packet: AvaAnswerPacket = {
@@ -506,13 +767,32 @@ function packageModelResponse(
     artifacts,
     citations,
     gaps,
-    caveats: caveats.map((detail, i) => ({ id: `home-ava-caveat-${i + 1}`, label: "Caveat", detail })),
+    caveats: caveats.map((detail, i) => ({
+      id: `home-ava-caveat-${i + 1}`,
+      label: "Caveat",
+      detail,
+    })),
     nextSteps: [],
     quality: {
-      confidence: status === "answered" ? "high" : status === "partial" ? "medium" : "low",
-      evidenceStrength: citations.length > 0 ? "strong" : status === "no_data" ? "thin" : "partial",
+      confidence:
+        status === "answered"
+          ? "high"
+          : status === "partial"
+            ? "medium"
+            : "low",
+      evidenceStrength:
+        citations.length > 0
+          ? "strong"
+          : status === "no_data"
+            ? "thin"
+            : "partial",
       tenantGrounding: "complete",
-      answerCompleteness: status === "answered" ? "complete" : status === "partial" ? "partial" : "blocked",
+      answerCompleteness:
+        status === "answered"
+          ? "complete"
+          : status === "partial"
+            ? "partial"
+            : "blocked",
     },
     safety: {
       tenantFencePassed: true,
@@ -534,12 +814,15 @@ function packageModelResponse(
         ],
       })
     : null;
-  return recovered ?? buildFallbackPacket(
-    tenantKey,
-    question,
-    "no_data",
-    "I could not package that answer safely for display and export.",
-    [],
+  return (
+    recovered ??
+    buildFallbackPacket(
+      tenantKey,
+      question,
+      "no_data",
+      "I could not package that answer safely for display and export.",
+      [],
+    )
   );
 }
 
@@ -551,12 +834,73 @@ function compactAnswerText(text: string, maxWordsPerParagraph: number): string {
     .trim();
 }
 
+function sanitizeRecordCountContradictions(
+  text: string,
+  context: GroundingContext,
+): string {
+  if (!text) return text;
+  let sanitized = text;
+
+  const vendorContracts =
+    context.recordCountsByObjectType.get("vendor_contract");
+  if (vendorContracts !== undefined) {
+    sanitized = sanitized.replace(
+      /\ball\s+\d+\s+declared\s+vendor contracts?\b/gi,
+      `all ${vendorContracts} declared vendor contracts`,
+    );
+    sanitized = sanitized.replace(
+      /\ball\s+\d+\s+declared\s+contracts?\b/gi,
+      `all ${vendorContracts} declared vendor contracts`,
+    );
+    sanitized = sanitized.replace(
+      /\b(\d+)\s+declared\s+vendor contracts?\b/gi,
+      (match, count: string) =>
+        Number(count) === vendorContracts
+          ? match
+          : `${vendorContracts} declared vendor contracts`,
+    );
+    sanitized = sanitized.replace(
+      /\b(\d+)\s+declared\s+contracts?\b/gi,
+      (match, count: string) =>
+        Number(count) === vendorContracts
+          ? match
+          : `${vendorContracts} declared vendor contracts`,
+    );
+  }
+
+  const dataAssets = context.recordCountsByObjectType.get(
+    "data_asset_or_integration",
+  );
+  if (dataAssets !== undefined) {
+    sanitized = sanitized.replace(
+      /\b(\d+)\s+of\s+(\d+)\s+tracked\s+data assets\/integrations\b/gi,
+      (match, _subset: string, total: string) =>
+        Number(total) === dataAssets
+          ? match
+          : `a subset of the ${dataAssets} tracked data assets/integrations`,
+    );
+    sanitized = sanitized.replace(
+      /\b(\d+)\s+tracked\s+data assets\/integrations\b/gi,
+      (match, count: string) =>
+        Number(count) === dataAssets
+          ? match
+          : `${dataAssets} tracked data assets/integrations`,
+    );
+  }
+
+  return sanitized;
+}
+
 function splitLongParagraph(paragraph: string, maxWords: number): string[] {
   const cleaned = paragraph.replace(/[ \t]+/g, " ").trim();
-  if (!cleaned || wordCount(cleaned) <= maxWords) return cleaned ? [cleaned] : [];
+  if (!cleaned || wordCount(cleaned) <= maxWords)
+    return cleaned ? [cleaned] : [];
   if (/^\s*[-*]\s+/.test(cleaned)) return chunkWords(cleaned, maxWords);
 
-  const sentences = cleaned.match(/[^.!?]+[.!?]+(?:["')\]]+)?|[^.!?]+$/g)?.map((part) => part.trim()).filter(Boolean) ?? [cleaned];
+  const sentences = cleaned
+    .match(/[^.!?]+[.!?]+(?:["')\]]+)?|[^.!?]+$/g)
+    ?.map((part) => part.trim())
+    .filter(Boolean) ?? [cleaned];
   const chunks: string[] = [];
   let current = "";
   for (const sentence of sentences) {
@@ -619,7 +963,10 @@ function buildClaimBackedRecoveryAnswer(input: {
           ? "medium"
           : "high",
   }));
-  const caveat = recoveryCaveat(input.question, input.context, input.modelCaveats);
+  const caveat = sanitizeRecordCountContradictions(
+    recoveryCaveat(input.question, input.context, input.modelCaveats),
+    input.context,
+  );
   const bullets = selected
     .slice(0, 4)
     .map(({ claim }) => `- ${compactStatement(claim.statement)}`);
@@ -640,7 +987,9 @@ function buildClaimBackedRecoveryAnswer(input: {
     status: "partial",
     directAnswer:
       "Home can answer this directionally from cited enterprise claims, with evidence limits called out.",
-    prose: scrubPublicAvaAnswerText(prose),
+    prose: scrubPublicAvaAnswerText(
+      sanitizeRecordCountContradictions(prose, input.context),
+    ),
     factsUsed: [],
     metricsUsed: [],
     relationshipsUsed: [],
@@ -672,7 +1021,10 @@ function buildClaimBackedRecoveryAnswer(input: {
   };
 }
 
-function selectRecoveryClaims(context: GroundingContext, question: string): TaggedClaim[] {
+function selectRecoveryClaims(
+  context: GroundingContext,
+  question: string,
+): TaggedClaim[] {
   const domains = matchedQuestionDomains(question);
   const chapterOrder = new Set<ChapterId>();
   for (const domain of [
@@ -685,22 +1037,44 @@ function selectRecoveryClaims(context: GroundingContext, question: string): Tagg
     for (const chapter of area?.chapters ?? []) chapterOrder.add(chapter);
   }
   const ordered = context.taggedClaims
-    .filter((entry) => chapterOrder.size === 0 || chapterOrder.has(entry.chapterId))
-    .sort((a, b) => recoveryClaimScore(b, question) - recoveryClaimScore(a, question));
-  return ordered.length > 0 ? ordered.slice(0, 5) : context.taggedClaims.slice(0, 5);
+    .filter(
+      (entry) => chapterOrder.size === 0 || chapterOrder.has(entry.chapterId),
+    )
+    .sort(
+      (a, b) =>
+        recoveryClaimScore(b, question) - recoveryClaimScore(a, question),
+    );
+  return ordered.length > 0
+    ? ordered.slice(0, 5)
+    : context.taggedClaims.slice(0, 5);
 }
 
 function recoveryClaimScore(entry: TaggedClaim, question: string): number {
   const normalized = question.toLowerCase();
   const statement = entry.claim.statement.toLowerCase();
   let score = 0;
-  for (const token of normalized.split(/[^a-z0-9]+/).filter((part) => part.length > 3)) {
+  for (const token of normalized
+    .split(/[^a-z0-9]+/)
+    .filter((part) => part.length > 3)) {
     if (statement.includes(token)) score += 2;
   }
   if (entry.claim.confidence === "high") score += 2;
-  if (/\b(risk|gap|exposure|mislead|caveat|control)\b/.test(statement)) score += 2;
-  if (/\b(cfo|finance|financial|commercial|value|revenue|cost|spend)\b/.test(normalized) && /\b(finance|financial|commercial|value|revenue|cost|spend|budget)\b/.test(statement)) score += 4;
-  if (/\b(ceo|board|leadership|decision)\b/.test(normalized) && /\b(leadership|priority|decision|program|risk|value)\b/.test(statement)) score += 3;
+  if (/\b(risk|gap|exposure|mislead|caveat|control)\b/.test(statement))
+    score += 2;
+  if (
+    /\b(cfo|finance|financial|commercial|value|revenue|cost|spend)\b/.test(
+      normalized,
+    ) &&
+    /\b(finance|financial|commercial|value|revenue|cost|spend|budget)\b/.test(
+      statement,
+    )
+  )
+    score += 4;
+  if (
+    /\b(ceo|board|leadership|decision)\b/.test(normalized) &&
+    /\b(leadership|priority|decision|program|risk|value)\b/.test(statement)
+  )
+    score += 3;
   return score;
 }
 
@@ -711,8 +1085,11 @@ function compactStatement(statement: string): string {
   return `${words.slice(0, 42).join(" ")}.`;
 }
 
-function recoveryConfidence(citations: AvaCitation[]): "low" | "medium" | "high" {
-  return citations.length >= 4 && citations.every((citation) => citation.confidence === "high")
+function recoveryConfidence(
+  citations: AvaCitation[],
+): "low" | "medium" | "high" {
+  return citations.length >= 4 &&
+    citations.every((citation) => citation.confidence === "high")
     ? "high"
     : citations.length >= 2
       ? "medium"
@@ -767,13 +1144,26 @@ function buildFallbackPacket(
       {
         id: "home-ava-gap-1",
         label: "Evidence limit",
-        detail: "The requested answer was not available in a safely exportable form.",
+        detail:
+          "The requested answer was not available in a safely exportable form.",
         severity: "high",
       },
     ],
-    caveats: errorDetail ? [{ id: "home-ava-error", label: "Advisor error", detail: errorDetail }] : [],
+    caveats: errorDetail
+      ? [{ id: "home-ava-error", label: "Advisor error", detail: errorDetail }]
+      : [],
     nextSteps: [],
-    quality: { confidence: "low", evidenceStrength: "thin", tenantGrounding: "missing", answerCompleteness: "blocked" },
-    safety: { tenantFencePassed: true, rawIdsSuppressed: true, forbiddenLanguagePassed: true, unsupportedClaimsBlocked: true },
+    quality: {
+      confidence: "low",
+      evidenceStrength: "thin",
+      tenantGrounding: "missing",
+      answerCompleteness: "blocked",
+    },
+    safety: {
+      tenantFencePassed: true,
+      rawIdsSuppressed: true,
+      forbiddenLanguagePassed: true,
+      unsupportedClaimsBlocked: true,
+    },
   };
 }
