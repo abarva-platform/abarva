@@ -31,6 +31,8 @@ interface EventApprovalCardProps {
   currentUserId: string | null;
   currentUserCanApprove: boolean;
   currentStageHref: string;
+  /** Exact immutable Request version shown on this approval page. */
+  requestAuthorityVersionId?: string | null;
   /** When true, approving also generates the strategy memo (Strategy-at-P0). */
   generateMemoOnApprove?: boolean;
 }
@@ -85,6 +87,7 @@ export function EventApprovalCard({
   currentUserId,
   currentUserCanApprove,
   currentStageHref,
+  requestAuthorityVersionId = null,
   generateMemoOnApprove = false,
 }: EventApprovalCardProps) {
   const router = useRouter();
@@ -107,7 +110,11 @@ export function EventApprovalCard({
     ? strategyGate.sponsor && strategyGate.value && strategyGate.archetype
     : confirmed;
   const actionReady =
-    currentUserCanApprove && reasonReady && gateReady && !busyAction;
+    currentUserCanApprove &&
+    Boolean(requestAuthorityVersionId) &&
+    reasonReady &&
+    gateReady &&
+    !busyAction;
   const isSelfApproval = Boolean(
     currentUserId && createdBy.userId && currentUserId === createdBy.userId,
   );
@@ -125,13 +132,15 @@ export function EventApprovalCard({
   );
   const blockerLabel = !currentUserCanApprove
     ? "You do not have approval rights for this event."
-    : !reasonReady
-      ? `Add an audit rationale of at least ${SOURCE_APPROVAL_REASON_MIN_LENGTH} characters.`
-      : !gateReady
-        ? generateMemoOnApprove
-          ? "Confirm all three strategy-gate checks."
-          : "Confirm the accountable human decision."
-        : "Ready to approve.";
+    : !requestAuthorityVersionId
+      ? "The current Request version is unavailable. Reload or repair the governed intake before approval."
+      : !reasonReady
+        ? `Add an audit rationale of at least ${SOURCE_APPROVAL_REASON_MIN_LENGTH} characters.`
+        : !gateReady
+          ? generateMemoOnApprove
+            ? "Confirm all three strategy-gate checks."
+            : "Confirm the accountable human decision."
+          : "Ready to approve.";
 
   async function submitAction(action: ApprovalAction) {
     if (!actionReady) return;
@@ -176,6 +185,7 @@ export function EventApprovalCard({
           // the client sends).
           selfApproveIfAuthorized:
             action === "approve" && isSelfApproval && pilotMode,
+          requestAuthorityVersionId,
         }),
       });
       const payload = (await response.json().catch(() => ({}))) as ActionResult;

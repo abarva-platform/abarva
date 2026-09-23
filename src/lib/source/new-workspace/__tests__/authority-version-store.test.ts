@@ -1,7 +1,11 @@
 import { getAzureReadFluentClient } from "@/lib/data-plane/postgresCompat";
 
-import { readSourceAuthorityVersionState } from "../authority-version-store";
 import {
+  persistSourceAuthorityVersion,
+  readSourceAuthorityVersionState,
+} from "../authority-version-store";
+import {
+  computeSourceAuthorityContentHash,
   evaluateRequestVersionApproval,
   evaluateStrategyVersionApprovals,
 } from "../source-version-authority";
@@ -30,12 +34,23 @@ type Chain = {
  * would still pass if the two queries were issued in the wrong order.
  */
 function serve(byTable: Record<string, Result>) {
-  const calls: { table: string; eq: Record<string, unknown>; is: Record<string, unknown> }[] = [];
+  const calls: {
+    table: string;
+    eq: Record<string, unknown>;
+    is: Record<string, unknown>;
+  }[] = [];
 
   const from = jest.fn((table: string) => {
-    const record = { table, eq: {} as Record<string, unknown>, is: {} as Record<string, unknown> };
+    const record = {
+      table,
+      eq: {} as Record<string, unknown>,
+      is: {} as Record<string, unknown>,
+    };
     calls.push(record);
-    const result = byTable[table] ?? { data: null, error: { message: `no fixture for ${table}` } };
+    const result = byTable[table] ?? {
+      data: null,
+      error: { message: `no fixture for ${table}` },
+    };
     // Built first, chained after: referencing `query` inside its own
     // initializer leaves it implicitly `any`, which ts-jest accepts and `tsc`
     // rejects.
@@ -46,7 +61,8 @@ function serve(byTable: Record<string, Result>) {
       maybeSingle: jest.fn().mockResolvedValue(result),
       // The approvals read is awaited without `maybeSingle`, so the builder
       // has to be thenable to stand in for it.
-      then: (resolve: (value: Result) => unknown) => Promise.resolve(result).then(resolve),
+      then: (resolve: (value: Result) => unknown) =>
+        Promise.resolve(result).then(resolve),
     };
     query.select.mockReturnValue(query);
     query.eq.mockImplementation((column: string, value: unknown) => {
@@ -119,7 +135,9 @@ describe("Source authority version store", () => {
 
     await readSourceAuthorityVersionState("event-1", "tenant-1", "request");
 
-    const versionCall = calls.find((c) => c.table === "source_event_authority_versions");
+    const versionCall = calls.find(
+      (c) => c.table === "source_event_authority_versions",
+    );
     expect(versionCall?.eq).toEqual({
       event_id: "event-1",
       client_key: "tenant-1",
@@ -132,7 +150,10 @@ describe("Source authority version store", () => {
     const approvalCall = calls.find(
       (c) => c.table === "source_event_authority_version_approvals",
     );
-    expect(approvalCall?.eq).toEqual({ version_id: "version-1", client_key: "tenant-1" });
+    expect(approvalCall?.eq).toEqual({
+      version_id: "version-1",
+      client_key: "tenant-1",
+    });
   });
 
   it("refuses a version row belonging to another tenant", async () => {
@@ -174,12 +195,18 @@ describe("Source authority version store", () => {
 
     await expect(
       readSourceAuthorityVersionState("event-1", "tenant-1", "request"),
-    ).resolves.toEqual({ kind: "available", currentVersion: null, approvals: [] });
+    ).resolves.toEqual({
+      kind: "available",
+      currentVersion: null,
+      approvals: [],
+    });
   });
 
   it("fails closed while the migration is unapplied", async () => {
     serve({
-      ...versions(null, { message: 'relation "source_event_authority_versions" does not exist' }),
+      ...versions(null, {
+        message: 'relation "source_event_authority_versions" does not exist',
+      }),
       ...approvals([]),
     });
 
@@ -200,7 +227,10 @@ describe("Source authority version store", () => {
   });
 
   it("fails closed on a version number the table's own CHECK would have refused", async () => {
-    serve({ ...versions({ ...VERSION_ROW, version_number: 0 }), ...approvals([]) });
+    serve({
+      ...versions({ ...VERSION_ROW, version_number: 0 }),
+      ...approvals([]),
+    });
 
     await expect(
       readSourceAuthorityVersionState("event-1", "tenant-1", "request"),
@@ -251,9 +281,14 @@ describe("Source authority version store", () => {
       ]),
     });
 
-    const state = await readSourceAuthorityVersionState("event-1", "tenant-1", "strategy");
+    const state = await readSourceAuthorityVersionState(
+      "event-1",
+      "tenant-1",
+      "strategy",
+    );
     expect(state.kind).toBe("available");
-    if (state.kind !== "available" || !state.currentVersion) throw new Error("unreachable");
+    if (state.kind !== "available" || !state.currentVersion)
+      throw new Error("unreachable");
 
     expect(
       evaluateStrategyVersionApprovals({
@@ -289,8 +324,13 @@ describe("Source authority version store", () => {
       ]),
     });
 
-    const state = await readSourceAuthorityVersionState("event-1", "tenant-1", "strategy");
-    if (state.kind !== "available" || !state.currentVersion) throw new Error("unreachable");
+    const state = await readSourceAuthorityVersionState(
+      "event-1",
+      "tenant-1",
+      "strategy",
+    );
+    if (state.kind !== "available" || !state.currentVersion)
+      throw new Error("unreachable");
 
     expect(
       evaluateStrategyVersionApprovals({
@@ -303,8 +343,13 @@ describe("Source authority version store", () => {
   it("reports a request version with no acceptance as pending", async () => {
     serve({ ...versions(VERSION_ROW), ...approvals([]) });
 
-    const state = await readSourceAuthorityVersionState("event-1", "tenant-1", "request");
-    if (state.kind !== "available" || !state.currentVersion) throw new Error("unreachable");
+    const state = await readSourceAuthorityVersionState(
+      "event-1",
+      "tenant-1",
+      "request",
+    );
+    if (state.kind !== "available" || !state.currentVersion)
+      throw new Error("unreachable");
 
     expect(
       evaluateRequestVersionApproval({
@@ -312,5 +357,126 @@ describe("Source authority version store", () => {
         approvals: state.approvals,
       }),
     ).toEqual({ status: "pending", missing: ["Request acceptance pending"] });
+  });
+
+  it("persists the first immutable Request version with its canonical hash", async () => {
+    const calls: Array<{ sql: string; params: unknown[] }> = [];
+    const session = jest.fn(
+      async (work: (run: jest.Mock) => Promise<unknown>) =>
+        work(
+          jest.fn(async (sql: string, params: unknown[]) => {
+            calls.push({ sql, params });
+            if (sql.includes("SELECT id, version_number, content_hash"))
+              return [];
+            if (sql.includes("INSERT INTO source_event_authority_versions")) {
+              return [{ id: "version-1" }];
+            }
+            return [];
+          }),
+        ),
+    );
+
+    const result = await persistSourceAuthorityVersion(
+      {
+        eventId: "event-1",
+        clientKey: "tenant-1",
+        authorityKind: "request",
+        payload: { trigger: "Renewal", owner: "CPO" },
+        createdByUserId: "user-1",
+      },
+      session as never,
+    );
+
+    expect(result.action).toBe("create_version");
+    expect(result.versionNumber).toBe(1);
+    expect(result.versionId).toBe("version-1");
+    const insert = calls.find((call) =>
+      call.sql.includes("INSERT INTO source_event_authority_versions"),
+    );
+    expect(insert?.params).toEqual(
+      expect.arrayContaining([
+        "event-1",
+        "tenant-1",
+        "request",
+        1,
+        expect.stringMatching(/^[a-f0-9]{64}$/),
+        JSON.stringify({ owner: "CPO", trigger: "Renewal" }),
+        "user-1",
+      ]),
+    );
+  });
+
+  it("supersedes a material edit inside one transaction before exposing the new current version", async () => {
+    const statements: string[] = [];
+    const session = jest.fn(
+      async (work: (run: jest.Mock) => Promise<unknown>) =>
+        work(
+          jest.fn(async (sql: string) => {
+            statements.push(sql);
+            if (sql.includes("SELECT id, version_number, content_hash")) {
+              return [
+                { id: "version-1", version_number: 1, content_hash: HASH },
+              ];
+            }
+            if (sql.includes("INSERT INTO source_event_authority_versions")) {
+              return [{ id: "version-2" }];
+            }
+            return [{ id: "updated" }];
+          }),
+        ),
+    );
+
+    const result = await persistSourceAuthorityVersion(
+      {
+        eventId: "event-1",
+        clientKey: "tenant-1",
+        authorityKind: "request",
+        payload: { trigger: "Materially changed" },
+        createdByUserId: "user-2",
+      },
+      session as never,
+    );
+
+    expect(result).toMatchObject({
+      action: "create_version",
+      versionNumber: 2,
+    });
+    expect(
+      statements.filter((sql) =>
+        sql.includes("UPDATE source_event_authority_versions"),
+      ),
+    ).toHaveLength(2);
+    expect(statements.at(-1)).toContain("superseded_at = NULL");
+  });
+
+  it("reuses identical current content without writing another version", async () => {
+    const payload = { owner: "CPO", trigger: "Renewal" } as const;
+    const hash = computeSourceAuthorityContentHash(payload);
+    const run = jest.fn(async (sql: string) => {
+      if (sql.includes("SELECT id, version_number, content_hash")) {
+        return [{ id: "version-1", version_number: 1, content_hash: hash }];
+      }
+      throw new Error("unexpected write");
+    });
+    const session = jest.fn(
+      async (work: (run: jest.Mock) => Promise<unknown>) => work(run),
+    );
+
+    await expect(
+      persistSourceAuthorityVersion(
+        {
+          eventId: "event-1",
+          clientKey: "tenant-1",
+          authorityKind: "request",
+          payload,
+          createdByUserId: "user-1",
+        },
+        session as never,
+      ),
+    ).resolves.toMatchObject({
+      action: "reuse_current",
+      versionId: "version-1",
+    });
+    expect(run).toHaveBeenCalledTimes(1);
   });
 });

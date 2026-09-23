@@ -30,6 +30,37 @@ export type SourceAuthorityApproval = {
   decision: SourceAuthorityDecision;
 };
 
+export type SourceRequestAuthorityPayloadInput = {
+  eventName: string;
+  eventType: string;
+  triggerDescription: string;
+  decisionOwner?: string | null;
+  scopeDescription?: string | null;
+  estimatedValueUsd?: number | null;
+  sourcingMotion?: string | null;
+  classifiedCategory?: string | null;
+};
+
+/**
+ * The material Request fields whose exact content is accepted at the intake
+ * gate. Keeping this projection shared prevents create, edit, and approval
+ * paths from hashing subtly different representations of the same request.
+ */
+export function buildSourceRequestAuthorityPayload(
+  input: SourceRequestAuthorityPayloadInput,
+): JsonValue {
+  return {
+    eventName: input.eventName.trim(),
+    eventType: input.eventType.trim(),
+    triggerDescription: input.triggerDescription.trim(),
+    decisionOwner: input.decisionOwner?.trim() || null,
+    scopeDescription: input.scopeDescription?.trim() || null,
+    estimatedValueUsd: input.estimatedValueUsd ?? null,
+    sourcingMotion: input.sourcingMotion?.trim() || null,
+    classifiedCategory: input.classifiedCategory?.trim() || null,
+  };
+}
+
 export type SourceAuthorityVersionPlanInput = {
   eventId: string;
   clientKey: string;

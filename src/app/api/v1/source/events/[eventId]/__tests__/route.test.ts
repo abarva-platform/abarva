@@ -1,6 +1,10 @@
 const eventRow = {
   id: "event-1",
   client_key: "apex-retail",
+  event_name: "Infrastructure sourcing",
+  event_type: "managed_service",
+  sourcing_motion: "competitive_rfp",
+  classified_category: "ams",
   trigger_description: "Old trigger.",
   scope_description: "Existing scope.",
   decision_owner: "CIO",
@@ -8,6 +12,9 @@ const eventRow = {
 };
 
 const updateEventIntake = jest.fn(async () => ({ ok: true }));
+const updateEventIntakeWithRequestAuthority = jest.fn(async () => ({
+  ok: true,
+}));
 const insertActivityLog = jest.fn(async () => ({ ok: true }));
 const maybeSingle = jest.fn(
   async (): Promise<{ data: typeof eventRow | null; error: null }> => ({
@@ -54,6 +61,7 @@ jest.mock("@/lib/data-plane/postgresCompat", () => ({
 jest.mock("@/lib/data-plane/write-adapters/sourceWriteAdapter", () => ({
   selectSourceWriteAdapter: jest.fn(() => ({
     updateEventIntake,
+    updateEventIntakeWithRequestAuthority,
     insertActivityLog,
   })),
 }));
@@ -84,6 +92,7 @@ function correctionRequest(body: Record<string, unknown>) {
 describe("PATCH Source event intake", () => {
   beforeEach(() => {
     updateEventIntake.mockClear();
+    updateEventIntakeWithRequestAuthority.mockClear();
     insertActivityLog.mockClear();
     maybeSingle.mockClear();
     maybeSingle.mockResolvedValue({ data: eventRow, error: null });
@@ -114,14 +123,23 @@ describe("PATCH Source event intake", () => {
       { params: Promise.resolve({ eventId: "event-1" }) },
     );
     expect(response.status).toBe(200);
-    expect(updateEventIntake).toHaveBeenCalledWith(
+    expect(updateEventIntakeWithRequestAuthority).toHaveBeenCalledWith(
       expect.objectContaining({
         eventId: "event-1",
         clientKey: "apex-retail",
         triggerDescription: "Corrected renewal trigger.",
         estimatedValueUsd: 2_000_000,
+        requestAuthority: expect.objectContaining({
+          authorityKind: "request",
+          createdByUserId: "user-1",
+          payload: expect.objectContaining({
+            triggerDescription: "Corrected renewal trigger.",
+            estimatedValueUsd: 2_000_000,
+          }),
+        }),
       }),
     );
+    expect(updateEventIntake).not.toHaveBeenCalled();
     expect(mockSyncEventIntakeEvidence).toHaveBeenCalledWith(
       expect.objectContaining({
         sourceEventId: "event-1",

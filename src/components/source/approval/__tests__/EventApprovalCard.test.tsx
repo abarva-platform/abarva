@@ -49,6 +49,7 @@ const baseProps = {
   currentUserId: "user-1",
   currentUserCanApprove: true,
   currentStageHref: "/source/events/evt-1?stage=strategy",
+  requestAuthorityVersionId: "request-version-1",
 };
 
 describe("EventApprovalCard", () => {
@@ -76,6 +77,19 @@ describe("EventApprovalCard", () => {
     expect(screen.getByText("Other decisions")).not.toBeNull();
     expect(
       screen.getByText("Self-approval notice", { exact: false }),
+    ).not.toBeNull();
+  });
+
+  it("fails closed when the mounted page has no current Request version", () => {
+    render(
+      <EventApprovalCard {...baseProps} requestAuthorityVersionId={null} />,
+    );
+    expect(
+      (screen.getByRole("button", { name: "Approve" }) as HTMLButtonElement)
+        .disabled,
+    ).toBe(true);
+    expect(
+      screen.getByText(/current Request version is unavailable/i),
     ).not.toBeNull();
   });
 
@@ -264,7 +278,12 @@ describe("EventApprovalCard", () => {
       ok: true,
       json: async () => ({ ok: true }),
     });
-    render(<EventApprovalCard {...baseProps} />);
+    render(
+      <EventApprovalCard
+        {...baseProps}
+        requestAuthorityVersionId="request-version-7"
+      />,
+    );
 
     fireEvent.change(screen.getByTestId("source-approval-rationale"), {
       target: {
@@ -280,6 +299,7 @@ describe("EventApprovalCard", () => {
     const [, requestInit] = (global.fetch as jest.Mock).mock.calls[0];
     const body = JSON.parse(requestInit.body as string);
     expect(body.selfApproveIfAuthorized).toBe(true);
+    expect(body.requestAuthorityVersionId).toBe("request-version-7");
   });
 
   it("does not send selfApproveIfAuthorized when the approver is not the event creator", async () => {

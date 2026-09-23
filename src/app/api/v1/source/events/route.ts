@@ -18,6 +18,8 @@ import {
 import { readSourceIntakeRequestQueue } from "@/lib/source/intake/servicenow-sourcing-request-repository";
 import { buildServiceNowRequestEventHandoffFromPersistedDecision } from "@/lib/source/intake/servicenow-request-event-handoff";
 import { linkServiceNowRequestToEvent } from "@/lib/source/intake/servicenow-request-event-authority";
+import { persistSourceAuthorityVersion } from "@/lib/source/new-workspace/authority-version-store";
+import { buildSourceRequestAuthorityPayload } from "@/lib/source/new-workspace/source-version-authority";
 
 interface CreateSourceEventBody {
   eventName?: string;
@@ -269,6 +271,26 @@ export async function POST(request: Request) {
           },
     );
 
+    if (!tenancy.userId) {
+      throw new Error("named Source event creator is required");
+    }
+    const requestAuthority = await persistSourceAuthorityVersion({
+      eventId: event.id,
+      clientKey: activeClient.key,
+      authorityKind: "request",
+      payload: buildSourceRequestAuthorityPayload({
+        eventName: event.event_name,
+        eventType: event.event_type,
+        triggerDescription: event.trigger_description ?? "",
+        decisionOwner: event.decision_owner,
+        scopeDescription: event.scope_description,
+        estimatedValueUsd: event.estimated_value_usd,
+        sourcingMotion: event.sourcing_motion,
+        classifiedCategory: event.classified_category,
+      }),
+      createdByUserId: tenancy.userId,
+    });
+
     if (tenancy.userId) {
       // DB write routed through the data-plane write seam (Slice 3b). The
       // adapter tolerates a missing participants table, exactly as before.
@@ -303,6 +325,7 @@ export async function POST(request: Request) {
     return Response.json({
       ok: true,
       event,
+      requestAuthorityVersionId: requestAuthority.versionId,
       approvalAuthority:
         "Tenant admin reviews the intake record; S0 exit is co-signed by the decision owner and sourcing lead.",
       approvalUrl: `/source/events/${event.id}/approval`,

@@ -84,6 +84,15 @@ const readSourceIntakeRequestQueue = jest.fn(async (tenantKey: string) => {
   };
 });
 
+jest.mock("@/lib/source/new-workspace/authority-version-store", () => ({
+  persistSourceAuthorityVersion: jest.fn(async () => ({
+    action: "create_version",
+    versionId: "request-version-1",
+    versionNumber: 1,
+    contentHash: "a".repeat(64),
+  })),
+}));
+
 jest.mock("@/lib/source/intake/servicenow-sourcing-request-repository", () => ({
   readSourceIntakeRequestQueue: (tenantKey: string) =>
     readSourceIntakeRequestQueue(tenantKey),
@@ -99,6 +108,15 @@ jest.mock("@/lib/source/queries", () => ({
     id: "evt-123",
     code: "SRC-123",
     name: "Data platform sourcing",
+    event_code: "SRC-123",
+    event_name: "Data platform sourcing",
+    event_type: "software",
+    sourcing_motion: "competitive_rfp",
+    classified_category: "data_ai_platform",
+    trigger_description: "Analytics platform renewal needs review.",
+    scope_description: null,
+    decision_owner: null,
+    estimated_value_usd: null,
   })),
 }));
 
@@ -110,6 +128,7 @@ jest.mock("@/lib/data-plane/write-adapters/sourceWriteAdapter", () => ({
 
 import { POST } from "../route";
 import { createSourcingEvent } from "@/lib/source/queries";
+import { persistSourceAuthorityVersion } from "@/lib/source/new-workspace/authority-version-store";
 import {
   linkServiceNowRequestToEvent,
   recordServiceNowRequestMappingDecision,
@@ -122,6 +141,7 @@ describe("POST /api/v1/source/events", () => {
       registryAvailable: true,
       requests: [importedRequest],
     });
+    jest.mocked(persistSourceAuthorityVersion).mockClear();
   });
 
   it("returns an event-specific approval URL and persists the selected category", async () => {
@@ -145,6 +165,14 @@ describe("POST /api/v1/source/events", () => {
       expect.objectContaining({
         categoryId: "data_ai_platform",
         sourcingMotion: "competitive_rfp",
+      }),
+    );
+    expect(persistSourceAuthorityVersion).toHaveBeenCalledWith(
+      expect.objectContaining({
+        eventId: "evt-123",
+        clientKey: "skyharbor-air",
+        authorityKind: "request",
+        createdByUserId: "user-1",
       }),
     );
   });
