@@ -8,13 +8,20 @@ jest.mock("@/lib/agent/stream", () => ({
   getAuditedAnthropicClient: jest.fn(),
 }));
 
-const mockGetAuditedAnthropicClient = getAuditedAnthropicClient as jest.MockedFunction<typeof getAuditedAnthropicClient>;
+const mockGetAuditedAnthropicClient =
+  getAuditedAnthropicClient as jest.MockedFunction<
+    typeof getAuditedAnthropicClient
+  >;
 
 function mockClaudeJson(payload: unknown) {
   mockGetAuditedAnthropicClient.mockResolvedValue({
     client: {
       messages: {
-        create: jest.fn().mockResolvedValue({ content: [{ type: "text", text: JSON.stringify(payload) }] }),
+        create: jest
+          .fn()
+          .mockResolvedValue({
+            content: [{ type: "text", text: JSON.stringify(payload) }],
+          }),
       },
     },
     auditId: "audit-test",
@@ -28,9 +35,16 @@ const CHAPTERS: ChapterView[] = [
     title: "Technology & Data",
     guidingQuestion: "What runs the enterprise?",
     headline: "A concentrated, aging estate.",
-    executive_synthesis: "Epic Hyperspace is the backbone of clinical operations.",
+    executive_synthesis:
+      "Epic Hyperspace is the backbone of clinical operations.",
     key_insights: [
-      { statement: "Epic Hyperspace Production integrates with 80 other systems.", evidence_ids: ["ctx_1"], confidence: "high", claim_type: "FACT" },
+      {
+        statement:
+          "Epic Hyperspace Production integrates with 80 other systems.",
+        evidence_ids: ["ctx_1"],
+        confidence: "high",
+        claim_type: "FACT",
+      },
     ],
     tensions: [],
     what_to_watch: [],
@@ -45,7 +59,12 @@ const CHAPTERS: ChapterView[] = [
     headline: "Value proof is incomplete.",
     executive_synthesis: "Finance has attested only part of the claimed value.",
     key_insights: [
-      { statement: "Only 23 of 50 tracked metrics are claimable or ready.", evidence_ids: ["ctx_2"], confidence: "high", claim_type: "FACT" },
+      {
+        statement: "Only 23 of 50 tracked metrics are claimable or ready.",
+        evidence_ids: ["ctx_2"],
+        confidence: "high",
+        claim_type: "FACT",
+      },
     ],
     tensions: [],
     what_to_watch: [],
@@ -61,12 +80,37 @@ const TECHNOLOGY_ESTATE: TechnologyEstateBundle = {
       objectType: "application_system",
       label: "Applications & Systems",
       columns: ["systemName", "businessFunction"],
-      rows: [{ systemName: "Epic Hyperspace — Production", businessFunction: "Acute Care Clinical Operations" }],
+      rows: [
+        {
+          systemName: "Epic Hyperspace — Production",
+          businessFunction: "Acute Care Clinical Operations",
+        },
+      ],
       primaryDimension: "businessFunction",
       dimensionCounts: [
         { value: "Acute Care Clinical Operations", count: 56 },
         { value: "Clinical Informatics", count: 99 },
       ],
+    },
+    {
+      objectType: "vendor_contract",
+      label: "Vendor Contracts",
+      columns: ["vendorName"],
+      rows: Array.from({ length: 230 }, (_value, index) => ({
+        vendorName: `Vendor ${index + 1}`,
+      })),
+      primaryDimension: "serviceCategory",
+      dimensionCounts: [],
+    },
+    {
+      objectType: "data_asset_or_integration",
+      label: "Data Assets & Integrations",
+      columns: ["dataAssetName"],
+      rows: Array.from({ length: 1710 }, (_value, index) => ({
+        dataAssetName: `Data asset ${index + 1}`,
+      })),
+      primaryDimension: "dataDomain",
+      dimensionCounts: [],
     },
   ],
 };
@@ -88,7 +132,8 @@ describe("answerHomeAvaQuestion", () => {
   it("packages a grounded answer, resolving a cited tag to its real claim text", async () => {
     mockClaudeJson({
       status: "answered",
-      direct_answer: "Epic Hyperspace Production is the most connected system, with 80 integrations.",
+      direct_answer:
+        "Epic Hyperspace Production is the most connected system, with 80 integrations.",
       prose: "",
       cited_claim_tags: ["TD-K1"],
       visual: { type: "none", dataset_ref: null, chart_kind: null },
@@ -104,7 +149,9 @@ describe("answerHomeAvaQuestion", () => {
     expect(answer.status).toBe("answered");
     expect(answer.citations).toHaveLength(1);
     expect(answer.citations[0].id).toBe("TD-K1");
-    expect(answer.citations[0].excerpt).toBe("Epic Hyperspace Production integrates with 80 other systems.");
+    expect(answer.citations[0].excerpt).toBe(
+      "Epic Hyperspace Production integrates with 80 other systems.",
+    );
     expect(answer.artifacts).toHaveLength(0);
   });
 
@@ -125,8 +172,13 @@ describe("answerHomeAvaQuestion", () => {
       activeChapterId: "technology_data",
     });
 
-    expect(answer.citations.map((citation) => citation.id)).toEqual(["TD-K1", "PV-K1"]);
-    expect(answer.citations[1].excerpt).toBe("Only 23 of 50 tracked metrics are claimable or ready.");
+    expect(answer.citations.map((citation) => citation.id)).toEqual([
+      "TD-K1",
+      "PV-K1",
+    ]);
+    expect(answer.citations[1].excerpt).toBe(
+      "Only 23 of 50 tracked metrics are claimable or ready.",
+    );
   });
 
   it("sends an enterprise context spine and active focus hint instead of a chapter-only payload", async () => {
@@ -154,9 +206,15 @@ describe("answerHomeAvaQuestion", () => {
     expect(prompt).toContain('"chapterId": "performance_value"');
     expect(prompt).toContain('"data_analytics_ai"');
     expect(prompt).toContain('"strategy_priorities"');
-    expect(prompt).toContain("enterprise_context_spine and record_summaries are orientation and routing context");
-    expect(prompt).toContain("Tagged chapter claims are factual answer material");
-    expect(prompt).toContain("Deterministic plottable_datasets are quantitative exhibit material");
+    expect(prompt).toContain(
+      "enterprise_context_spine and record_summaries are orientation and routing context",
+    );
+    expect(prompt).toContain(
+      "Tagged chapter claims are factual answer material",
+    );
+    expect(prompt).toContain(
+      "Deterministic plottable_datasets are quantitative exhibit material",
+    );
     expect(prompt).toContain("Use compact consulting structure");
     expect(prompt).not.toContain("scoped_to_active_chapter");
   });
@@ -216,7 +274,11 @@ describe("answerHomeAvaQuestion", () => {
       status: "answered",
       direct_answer: "Some answer.",
       cited_claim_tags: [],
-      visual: { type: "chart", dataset_ref: "tech.vendor_contract.by_vendorTier", chart_kind: "bar" },
+      visual: {
+        type: "chart",
+        dataset_ref: "tech.vendor_contract.by_vendorTier",
+        chart_kind: "bar",
+      },
       caveats: [],
     });
 
@@ -229,8 +291,62 @@ describe("answerHomeAvaQuestion", () => {
     expect(answer.artifacts).toHaveLength(0);
   });
 
+  it("scrubs stale family counts in model caveats against the served record counts", async () => {
+    mockClaudeJson({
+      status: "answered",
+      direct_answer:
+        "Commercial exposure is concentrated in vendor dependencies.",
+      prose: "",
+      cited_claim_tags: ["TD-K1"],
+      visual: { type: "none", dataset_ref: null, chart_kind: null },
+      caveats: [
+        "Vendor contract evidence is absent for all 72 declared vendor contracts.",
+      ],
+    });
+
+    const answer = await answerHomeAvaQuestion({
+      bundle: { chapters: CHAPTERS, technologyEstate: TECHNOLOGY_ESTATE },
+      tenantKey: "meridian-health",
+      question: "Where are we commercially exposed?",
+    });
+
+    expect(answer.caveats[0].detail).toContain(
+      "all 230 declared vendor contracts",
+    );
+    expect(answer.caveats[0].detail).not.toContain("72 declared");
+  });
+
+  it("scrubs stale family counts in claim-backed recovery answers", async () => {
+    mockClaudeJson({
+      status: "no_data",
+      direct_answer: "Not enough data.",
+      prose: "",
+      cited_claim_tags: [],
+      visual: { type: "none", dataset_ref: null, chart_kind: null },
+      caveats: [
+        "Vendor contract evidence (pricing, SLA history) is absent for all 72 declared contracts, so exposure beyond spend concentration cannot be quantified.",
+      ],
+    });
+
+    const answer = await answerHomeAvaQuestion({
+      bundle: { chapters: CHAPTERS, technologyEstate: TECHNOLOGY_ESTATE },
+      tenantKey: "meridian-health",
+      question: "Where are we commercially exposed?",
+    });
+
+    expect(answer.status).toBe("partial");
+    expect(answer.prose).toContain("all 230 declared vendor contracts");
+    expect(answer.prose).not.toContain("72 declared");
+    expect(answer.caveats[0].detail).toContain(
+      "all 230 declared vendor contracts",
+    );
+  });
+
   it("compacts overlong model paragraphs before packaging the preview answer", async () => {
-    const longSentence = Array.from({ length: 145 }, (_value, index) => `word${index + 1}`).join(" ");
+    const longSentence = Array.from(
+      { length: 145 },
+      (_value, index) => `word${index + 1}`,
+    ).join(" ");
     mockClaudeJson({
       status: "answered",
       direct_answer: longSentence,
@@ -243,14 +359,18 @@ describe("answerHomeAvaQuestion", () => {
     const answer = await answerHomeAvaQuestion({
       bundle: { chapters: CHAPTERS, technologyEstate: TECHNOLOGY_ESTATE },
       tenantKey: "meridian-health",
-      question: "Where are we commercially exposed, and what evidence supports that?",
+      question:
+        "Where are we commercially exposed, and what evidence supports that?",
     });
 
     expect(answer.status).toBe("answered");
     expect(maxParagraphWords(answer.directAnswer)).toBeLessThanOrEqual(55);
     expect(maxParagraphWords(answer.prose)).toBeLessThanOrEqual(70);
     expect(answer.prose).toContain("\n\n");
-    expect(answer.citations.map((citation) => citation.id)).toEqual(["TD-K1", "PV-K1"]);
+    expect(answer.citations.map((citation) => citation.id)).toEqual([
+      "TD-K1",
+      "PV-K1",
+    ]);
   });
 
   it("recovers broad model answers that would fail export validation", async () => {
@@ -258,7 +378,8 @@ describe("answerHomeAvaQuestion", () => {
       status: "answered",
       direct_answer:
         "Commercial exposure is concentrated where unsupported economics reach 70% of the business.",
-      prose: "Use the cited material for direction, but do not treat this as final approval evidence.",
+      prose:
+        "Use the cited material for direction, but do not treat this as final approval evidence.",
       cited_claim_tags: ["TD-K1", "PV-K1"],
       visual: { type: "none", dataset_ref: null, chart_kind: null },
       caveats: [],
@@ -267,7 +388,8 @@ describe("answerHomeAvaQuestion", () => {
     const answer = await answerHomeAvaQuestion({
       bundle: { chapters: CHAPTERS, technologyEstate: TECHNOLOGY_ESTATE },
       tenantKey: "meridian-health",
-      question: "Where are we commercially exposed, and what evidence supports that?",
+      question:
+        "Where are we commercially exposed, and what evidence supports that?",
     });
 
     expect(answer.status).toBe("partial");
@@ -280,7 +402,8 @@ describe("answerHomeAvaQuestion", () => {
   it("honors an honest no_data status rather than forcing an answer", async () => {
     mockClaudeJson({
       status: "no_data",
-      direct_answer: "That isn't covered in what I have available for this tenant yet.",
+      direct_answer:
+        "That isn't covered in what I have available for this tenant yet.",
       cited_claim_tags: [],
       visual: { type: "none", dataset_ref: null, chart_kind: null },
       caveats: [],
@@ -299,7 +422,8 @@ describe("answerHomeAvaQuestion", () => {
   it("recovers broad CXO questions from cited chapter claims instead of returning generic no_data", async () => {
     mockClaudeJson({
       status: "no_data",
-      direct_answer: "I couldn't produce a grounded answer to that just now -- try rephrasing the question.",
+      direct_answer:
+        "I couldn't produce a grounded answer to that just now -- try rephrasing the question.",
       prose: "",
       cited_claim_tags: [],
       visual: { type: "none", dataset_ref: null, chart_kind: null },
@@ -397,7 +521,11 @@ describe("answerHomeAvaQuestion", () => {
     mockGetAuditedAnthropicClient.mockResolvedValue({
       client: {
         messages: {
-          create: jest.fn().mockResolvedValue({ content: [{ type: "text", text: "not json at all" }] }),
+          create: jest
+            .fn()
+            .mockResolvedValue({
+              content: [{ type: "text", text: "not json at all" }],
+            }),
         },
       },
       auditId: "audit-test",
@@ -418,7 +546,11 @@ describe("answerHomeAvaQuestion", () => {
     mockGetAuditedAnthropicClient.mockResolvedValue({
       client: {
         messages: {
-          create: jest.fn().mockResolvedValue({ content: [{ type: "text", text: "not json at all" }] }),
+          create: jest
+            .fn()
+            .mockResolvedValue({
+              content: [{ type: "text", text: "not json at all" }],
+            }),
         },
       },
       auditId: "audit-test",
@@ -440,7 +572,9 @@ describe("answerHomeAvaQuestion", () => {
   });
 
   it("falls back gracefully when the audited client call throws", async () => {
-    mockGetAuditedAnthropicClient.mockRejectedValue(new Error("no ANTHROPIC_API_KEY"));
+    mockGetAuditedAnthropicClient.mockRejectedValue(
+      new Error("no ANTHROPIC_API_KEY"),
+    );
 
     const answer = await answerHomeAvaQuestion({
       bundle: { chapters: CHAPTERS, technologyEstate: TECHNOLOGY_ESTATE },
@@ -449,6 +583,8 @@ describe("answerHomeAvaQuestion", () => {
     });
 
     expect(answer.status).toBe("no_data");
-    expect(answer.caveats.some((c) => c.detail.includes("no ANTHROPIC_API_KEY"))).toBe(true);
+    expect(
+      answer.caveats.some((c) => c.detail.includes("no ANTHROPIC_API_KEY")),
+    ).toBe(true);
   });
 });
