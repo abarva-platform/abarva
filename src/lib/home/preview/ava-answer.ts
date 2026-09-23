@@ -509,6 +509,10 @@ const MAX_DIRECT_ANSWER_WORDS = 55;
 const MAX_PROSE_PARAGRAPH_WORDS = 70;
 const GRAPH_EXHIBIT_REQUEST_RE =
   /\b(show|draw|render|create|display|visuali[sz]e|graph|map)\b.*\b(graph|network|relationship map|connections?|dependencies)\b|\b(graph|network|relationship map)\b.*\b(risks?|vendors?|applications?|systems?|data|programs?|contracts?|connect|connections?|dependencies)\b/i;
+const INTERNAL_RECOVERY_CAVEAT_RE =
+  /\b(advisor model|advisor engine|unparseable|could not be exported|exported safely|packag(?:e|ed|ing)|JSON|parser|parse)\b/i;
+const DEFAULT_RECOVERY_CAVEAT =
+  "This is a Home-level read. It is suitable for walkthrough and triage, not for final approval without source-owner confirmation.";
 
 /** Same fence-stripping tolerance as build-enterprise-thesis.ts's parseJsonLoose -- inlined
  * rather than imported so this route doesn't drag the data-build script's pg/papaparse/fs
@@ -1068,9 +1072,10 @@ function buildClaimBackedRecoveryAnswer(input: {
           ? "medium"
           : "high",
   }));
-  const caveat = sanitizeRecordCountContradictions(
+  const caveat = sanitizeAvaVisibleText(
     recoveryCaveat(input.question, input.context, input.modelCaveats),
     input.context,
+    MAX_PROSE_PARAGRAPH_WORDS,
   );
   const bullets = selected
     .slice(0, 4)
@@ -1206,7 +1211,9 @@ function recoveryCaveat(
   context: GroundingContext,
   modelCaveats: string[],
 ): string {
-  const explicit = modelCaveats.find((item) => item.trim().length > 0);
+  const explicit = modelCaveats.find(
+    (item) => item.trim().length > 0 && !INTERNAL_RECOVERY_CAVEAT_RE.test(item),
+  );
   if (explicit) return explicit.trim();
   const selectedChapters = new Set(
     selectRecoveryClaims(context, question).map((entry) => entry.chapterId),
@@ -1218,10 +1225,7 @@ function recoveryCaveat(
     ?.filter((chapter) => selectedChapters.has(chapter.chapterId as ChapterId))
     .flatMap((chapter) => chapter.limitations ?? [])
     .find((item) => item.trim().length > 0);
-  return (
-    limitation?.trim() ??
-    "This is a Home-level read. It is suitable for walkthrough and triage, not for final approval without source-owner confirmation."
-  );
+  return limitation?.trim() ?? DEFAULT_RECOVERY_CAVEAT;
 }
 
 function buildFallbackPacket(

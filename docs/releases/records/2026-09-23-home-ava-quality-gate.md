@@ -10,7 +10,7 @@
 
 ## Plain-English Summary
 
-Home aVa now handles unsupported graph requests explicitly instead of letting the advisor imply a graph can be rendered. It also applies the public-language scrubber to visible caveats so internal serving terms do not appear in walkthrough copy.
+Home aVa now handles unsupported graph requests explicitly instead of letting the advisor imply a graph can be rendered. It also applies the public-language scrubber to visible caveats and recovery answers so internal serving, parser, or packaging terms do not appear in walkthrough copy.
 
 ## Layer Impact
 
@@ -36,6 +36,7 @@ Home aVa now handles unsupported graph requests explicitly instead of letting th
 ## QA / Validation
 
 - PASS: `npm test -- --runTestsByPath src/lib/home/preview/__tests__/ava-answer.test.ts src/app/api/home/preview/ask/__tests__/route.test.ts`
+- PASS: `npm test -- --runTestsByPath src/lib/home/preview/__tests__/ava-answer.test.ts`
 - PASS: `npx eslint src/lib/home/preview/ava-answer.ts src/lib/home/preview/__tests__/ava-answer.test.ts src/lib/ava-answer/public-answer-scrub.ts src/app/api/home/preview/ask/route.ts src/app/api/home/preview/ask/__tests__/route.test.ts`
 
 ## Rollout Plan
