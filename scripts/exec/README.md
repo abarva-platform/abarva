@@ -264,6 +264,7 @@ node scripts/exec/queue-provenance.test.mjs
 node scripts/exec/cli-entry.test.mjs
 node scripts/exec/toolchain-manifest.test.mjs
 node scripts/exec/id-collision.test.mjs
+node scripts/exec/fossil-claims.test.mjs
 ```
 
 The suites run the generators as child processes against synthetic operator documents. CI never reads a local execution backlog.
@@ -314,3 +315,51 @@ changes in both.
 **Resolution, when it reports something:** the earlier filing keeps the id and
 the later one moves, renumbered by whoever claims it. That is what the register
 already did once, by hand.
+
+## The queue says 0 claimable — is the suppression bucket telling the truth?
+
+```bash
+node scripts/exec/fossil-claims.mjs --operator-root "$HOME/Downloads"
+node scripts/exec/fossil-claims.mjs --operator-root "$HOME/Downloads" --json
+```
+
+`build-execution-queue.mjs` calls a claim *work in flight* when its newest line
+names a branch or a pull request, and that signal **never expires**. The TTL
+cannot replace it — item 24 measured the hold distribution and found it bimodal,
+median 21 minutes against a p90 of 362, so no multiple of the TTL separates a
+slow claim from an abandoned one. The rendered queue therefore hands the reader
+the rest of the job in prose: check the branch and the pull request each claim
+names, and retire the dead ones.
+
+Nobody did. Run for all fourteen live candidates on 2026-09-23, **none of them
+was in flight**:
+
+| verdict | n | what it means | next move |
+|---|---|---|---|
+| `fossil` | 4 | branch gone from `origin`, its pull requests all settled | append a release line; do not re-take |
+| `abandoned` | 9 | branch gone, and **no pull request ever existed** | no release line — re-verify the item on `main`, then re-take it if undone |
+| `alive` | 0 | branch still on `origin`, or a PR still open | leave it alone |
+| `unknown` | 1 | the claim names no branch, or a probe did not complete | a human looks |
+
+Four had merged 37 hours earlier. Six of the nine abandoned ones have no
+implementation on `main` by path or by symbol, so the bucket had been hiding
+genuinely unclaimed work for four days — one item of it in the Claude lane.
+
+**`fossil` and `abandoned` must never collapse into one verdict.** A fossil
+verdict authorises a line saying the work is done. Three of the nine abandoned
+claims name work that *did* land, from some other branch; three name work that
+never landed at all. Saying "finished" about either group without looking would
+launder undone work into a closed item, in the silent direction.
+
+**Everything that is not a completed observation is `unknown`, and `unknown`
+counts as stale.** No branch named, `git` unreachable, no GitHub credential —
+all answer `unknown`, never `fossil`. Exit is 1 whenever any candidate is not
+`alive`, because each of those means the bucket's label is wrong.
+
+**It does not touch the generator.** Letting the board read the repository was
+the other candidate remedy, and it would make rendering the queue require a
+network and a credential. This is a separate CLI, in the shape of
+`register-time-authority.mjs --preclaim`: the board stays hermetic, the lookup
+becomes executable. The verdict is advisory — it prints the `append-claim.mjs`
+invocation for a fossil and refuses to print one for anything else. Appending
+the line is still a decision someone takes.

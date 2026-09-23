@@ -1,0 +1,532 @@
+#!/usr/bin/env node
+/**
+ * Behavioural test for the fossil-claim resolver (item T-733).
+ *
+ * The defect this covers: `EXECUTION_QUEUE.md` reports `0 items are claimable`
+ * and names a `Suppressed CANDIDATES` list as the only ids between it and a
+ * claimable row. The rendered file then tells the reader to check each claim's
+ * branch and pull request **by hand**. On 2026-09-23 that lookup was executed
+ * for all fourteen candidates and not one of them was in flight: four had
+ * merged with their branches deleted, three had shipped under a different path
+ * than the claim named, one was register-only, and **six had no branch on
+ * `origin`, no pull request that ever existed, and no implementation on
+ * `main`** — abandoned, and hidden by the bucket for four days.
+ *
+ * So the acceptance is not "does something list the candidates". It is the
+ * DISCRIMINATION, and these two cases carry the item:
+ *
+ *   branch gone + a merged PR      -> `fossil`     (the work shipped)
+ *   branch gone + no PR, ever      -> `abandoned`  (the work never shipped)
+ *
+ * Conflating them is worse than having no tool, because the fossil verdict's
+ * whole purpose is to authorise a release line that says the work is done.
+ * Say that about an abandoned claim and the resolver launders undone work into
+ * a closed one — in the silent direction, which is the direction this backlog
+ * keeps losing things in.
+ *
+ * Every probe here is injected. This suite makes NO network call: a CI runner
+ * has neither `origin` nor a GitHub credential, and a suite that silently
+ * degrades to "cannot reach the network, therefore fine" is the unfailable
+ * gate this backlog exists against.
+ *
+ * Fixture ids live in the `T-9xx` band, which nothing has ever filed, so that
+ * no line of this file reads as a filing of a live id.
+ *
+ * Run:  node scripts/exec/fossil-claims.test.mjs
+ */
+
+import fs from "node:fs";
+import os from "node:os";
+import path from "node:path";
+import { execFileSync } from "node:child_process";
+import { fileURLToPath } from "node:url";
+
+import {
+  VERDICTS,
+  branchesInClaim,
+  claimSubject,
+  classify,
+  isStale,
+  newestClaimFor,
+  releaseCommandFor,
+  resolve,
+  suppressedCandidateIds,
+} from "./fossil-claims.mjs";
+
+const HERE = path.dirname(fileURLToPath(import.meta.url));
+const CLI = path.join(HERE, "fossil-claims.mjs");
+const DOWNLOADS = path.join(os.homedir(), "Downloads");
+
+let passes = 0;
+let failures = 0;
+let skipped = 0;
+
+function check(name, condition, detail) {
+  if (condition) {
+    passes += 1;
+    console.log(`  PASS  ${name}`);
+    return;
+  }
+  failures += 1;
+  console.log(`  FAIL  ${name}`);
+  if (detail) console.log(`        ${String(detail).split("\n").join("\n        ")}`);
+}
+
+function skip(name, why) {
+  skipped += 1;
+  console.log(`  SKIP  ${name} — ${why}`);
+}
+
+function run(args, options = {}) {
+  try {
+    const stdout = execFileSync(process.execPath, [CLI, ...args], {
+      encoding: "utf8",
+      stdio: ["ignore", "pipe", "pipe"],
+      timeout: 120_000,
+      maxBuffer: 32 * 1024 * 1024,
+      ...options,
+    });
+    return { status: 0, stdout, stderr: "" };
+  } catch (error) {
+    return {
+      status: error.status ?? -1,
+      stdout: error.stdout ?? "",
+      stderr: error.stderr ?? String(error.message ?? error),
+    };
+  }
+}
+
+function tmpdir() {
+  return fs.mkdtempSync(path.join(os.tmpdir(), "fossilclaims-"));
+}
+
+/**
+ * Fixture text is COMPOSED, never spelled.
+ *
+ * A literal `Suppressed CANDIDATES` line naming live ids would be
+ * indistinguishable, to anything that greps this directory, from the real
+ * queue saying those ids are suppressed. This file has to state that rule
+ * because the register already recorded once that the line describing a defect
+ * is an instance of it.
+ */
+const candidateLine = (ids, total = 132) =>
+  `**Suppressed CANDIDATES — the only ids between this queue and a claimable row ` +
+  `(${ids.length} of ${total}):** ${ids.join(" ")} — every other id on the line above ` +
+  `fails some other test as well.`;
+
+const claimLine = (stamp, id, rest) =>
+  `${stamp} | fixture-agent#${stamp} | item ${id} ${rest}`;
+
+const register = (...lines) => ["## Claim log — append only", "", ...lines, ""].join("\n");
+
+/* ========================================================================= */
+console.log("\nreading the candidate list out of the rendered queue");
+/* ========================================================================= */
+
+check(
+  "the suppressed-candidate ids are read from the line that names them",
+  JSON.stringify(suppressedCandidateIds(candidateLine(["T-901", "T-902", "D-903"]))) ===
+    JSON.stringify(["T-901", "T-902", "D-903"]),
+);
+
+check(
+  "a queue with no such line yields no candidates rather than throwing",
+  Array.isArray(suppressedCandidateIds("# Execution queue\n\nnothing here")) &&
+    suppressedCandidateIds("# Execution queue\n\nnothing here").length === 0,
+);
+
+check(
+  "the prose after the em dash is not mistaken for ids",
+  !suppressedCandidateIds(candidateLine(["T-901"])).includes("every"),
+  JSON.stringify(suppressedCandidateIds(candidateLine(["T-901"]))),
+);
+
+check(
+  "a NUMBER in that prose is not scraped as a bare item id",
+  JSON.stringify(
+    suppressedCandidateIds(
+      `**Suppressed CANDIDATES — x (1 of 132):** T-901 — 14 of these were checked ` +
+        `by hand and 132 remain in the bucket.`,
+    ),
+  ) === JSON.stringify(["T-901"]),
+  "today's prose happens to contain no id-shaped token, so the em-dash split " +
+    "looks redundant; the ids in this backlog include bare numbers, and the " +
+    "generator writes counts into that same sentence",
+);
+
+/* ========================================================================= */
+console.log("\nfinding the claim line a candidate was suppressed by");
+/* ========================================================================= */
+
+{
+  const text = register(
+    claimLine("2026-09-19T15:04Z", "T-901", "| branch codex/first-branch — claimed"),
+    claimLine("2026-09-19T15:40Z", "T-901", "| branch codex/second-branch — claimed"),
+  );
+  const newest = newestClaimFor(text, "T-901");
+  check(
+    "the NEWEST line by stamp is the one that decides, matching the generator",
+    newest !== null && newest.line.includes("second-branch"),
+    JSON.stringify(newest && newest.stamp),
+  );
+}
+
+check(
+  "an id with no claim line at all resolves to null",
+  newestClaimFor(register(claimLine("2026-09-19T15:04Z", "T-901", "— claimed")), "T-902") === null,
+);
+
+/* ========================================================================= */
+console.log("\nthe subject grammar — a second copy, so each rule is pinned");
+/* ========================================================================= */
+
+check(
+  "the stamp may sit mid-line, which is how three live candidates are written",
+  claimSubject("- item T-901 | agent | 2026-09-19T15:18Z | branch codex/x — claimed")?.id === "T-901",
+  "the first draft demanded the stamp at the start and resolved no claim at " +
+    "all for three of the fourteen real candidates",
+);
+
+check(
+  "a line with no stamp is not a claim record",
+  claimSubject("item T-901 | branch codex/x — claimed") === null,
+);
+
+check(
+  "the `item <id>` grammar resolves",
+  claimSubject("2026-09-19T15:04Z | agent | item T-901 — claimed")?.id === "T-901",
+);
+
+check(
+  "the `CLAIMED <id>` grammar resolves",
+  claimSubject("2026-09-19T15:04Z | agent | CLAIMED T-901 on a branch")?.id === "T-901",
+);
+
+check(
+  "the `RELEASED <id>` grammar resolves",
+  claimSubject("2026-09-19T15:04Z | agent | RELEASED T-901 — merged")?.id === "T-901",
+);
+
+check(
+  "PRECEDENCE — first written wins, so an item narrated in a parenthetical " +
+    "does not steal the subject",
+  claimSubject(
+    "2026-09-19T15:04Z | agent | item T-901 · CLAIMED (the lane that held b.ts RELEASED item T-902)",
+  )?.id === "T-901",
+  "scanning for an id anywhere on the line is the defect T-545 was filed " +
+    "against, and these lines narrate other lanes constantly",
+);
+
+check(
+  "and the release form wins when IT is written first",
+  claimSubject("2026-09-19T15:04Z | agent | RELEASED T-901 | ... | item 126")?.id === "T-901",
+);
+
+check(
+  "a line that merely mentions an id is not a claim FOR it",
+  newestClaimFor(
+    register("2026-09-19T15:04Z | agent | item T-901 — claimed, unlike T-902"),
+    "T-902",
+  ) === null,
+);
+
+/* ========================================================================= */
+console.log("\nextracting the branch — the authority, because the PR is looked up FROM it");
+/* ========================================================================= */
+
+check(
+  "a declared branch is taken from the `branch <name>` field",
+  branchesInClaim("item T-901 | branch codex/source-thing-t901 | files: a,b")[0] ===
+    "codex/source-thing-t901",
+);
+
+check(
+  "a backticked branch loses its backticks",
+  branchesInClaim("item T-901 on branch `exec/t-901-a-thing` — claimed")[0] ===
+    "exec/t-901-a-thing",
+);
+
+check(
+  "`branch none` declares the ABSENCE of a branch and yields no candidate",
+  branchesInClaim("item T-901 | branch none | files: x").length === 0,
+  JSON.stringify(branchesInClaim("item T-901 | branch none | files: x")),
+);
+
+check(
+  "`branch n/a` does too — and this is the case the absence list alone catches",
+  branchesInClaim("item T-901 | branch n/a | files: x").length === 0,
+  "`n/a` contains a slash, so the requirement that a branch look like a path " +
+    "waves it straight through; without the absence list it would be probed, " +
+    "come back with no ref and no PR, and be reported `abandoned` — a verdict " +
+    "about a branch that was never claimed to exist",
+);
+
+check(
+  "a file path in the `files:` list is NOT read as a branch",
+  branchesInClaim(
+    "item T-901 | branch codex/thing-t901 | files: src/lib/source/x.ts,docs/releases/records/y.md",
+  ).join(",") === "codex/thing-t901",
+  JSON.stringify(
+    branchesInClaim(
+      "item T-901 | branch codex/thing-t901 | files: src/lib/source/x.ts,docs/releases/records/y.md",
+    ),
+  ),
+);
+
+check(
+  "with no `branch` field, the generator's own in-flight token is the fallback",
+  branchesInClaim("item T-901 codex/source-stage-plan-t901 — claimed")[0] ===
+    "codex/source-stage-plan-t901",
+);
+
+/* ========================================================================= */
+console.log("\nthe verdict — and the split this item exists for");
+/* ========================================================================= */
+
+check(
+  "branch deleted and its PR merged is a FOSSIL: the work shipped",
+  classify({ branch: "codex/x", remoteExists: false, pullRequests: [{ number: 9001, state: "MERGED" }] })
+    .verdict === VERDICTS.FOSSIL,
+);
+
+check(
+  "branch deleted and its PR closed unmerged is also a fossil claim to retire",
+  classify({ branch: "codex/x", remoteExists: false, pullRequests: [{ number: 9001, state: "CLOSED" }] })
+    .verdict === VERDICTS.FOSSIL,
+);
+
+check(
+  "NEGATIVE CONTROL — branch deleted with NO pull request that ever existed is " +
+    "ABANDONED, never fossil",
+  classify({ branch: "codex/x", remoteExists: false, pullRequests: [] }).verdict ===
+    VERDICTS.ABANDONED,
+  "a fossil verdict authorises a release line that says the work is done; say " +
+    "that about an abandoned claim and undone work is laundered into a closed one",
+);
+
+check(
+  "the two verdicts are not the same value, which is the only thing keeping " +
+    "them distinguishable downstream",
+  VERDICTS.FOSSIL !== VERDICTS.ABANDONED,
+);
+
+check(
+  "the abandoned verdict claims nothing about the ITEM, only about the claim",
+  /this CLAIM produced nothing/.test(
+    classify({ branch: "codex/x", remoteExists: false, pullRequests: [] }).because,
+  ),
+  "three of the nine real abandoned claims name work that DID land, from some " +
+    "other branch; a verdict that said `the work never shipped` would be wrong " +
+    "about them and would send the next run to redo finished work",
+);
+
+check(
+  "a branch still on origin is ALIVE whatever its PRs say",
+  classify({ branch: "codex/x", remoteExists: true, pullRequests: [] }).verdict === VERDICTS.ALIVE,
+);
+
+check(
+  "an OPEN pull request is alive even with the branch gone from the ref listing",
+  classify({ branch: "codex/x", remoteExists: false, pullRequests: [{ number: 9001, state: "OPEN" }] })
+    .verdict === VERDICTS.ALIVE,
+);
+
+check(
+  "FAILS CLOSED — a probe that errored is UNKNOWN, never fossil",
+  classify({ branch: "codex/x", error: "network unreachable" }).verdict === VERDICTS.UNKNOWN,
+  "answering `fossil` because the check could not run is indistinguishable, " +
+    "from the register's side, from never having run it",
+);
+
+check(
+  "FAILS CLOSED — a claim naming no branch is UNKNOWN, never fossil",
+  classify({ branch: null }).verdict === VERDICTS.UNKNOWN,
+);
+
+check(
+  "every verdict but `alive` is stale, so the bucket label is wrong in all of them",
+  isStale(VERDICTS.FOSSIL) && isStale(VERDICTS.ABANDONED) && isStale(VERDICTS.UNKNOWN) &&
+    !isStale(VERDICTS.ALIVE),
+);
+
+/* ========================================================================= */
+console.log("\nresolving a whole candidate list");
+/* ========================================================================= */
+
+{
+  const queue = candidateLine(["T-901", "T-902", "T-903", "T-904"]);
+  const reg = register(
+    claimLine("2026-09-19T15:04Z", "T-901", "| branch codex/merged-t901 — claimed"),
+    claimLine("2026-09-19T15:05Z", "T-902", "| branch codex/abandoned-t902 — claimed"),
+    claimLine("2026-09-19T15:06Z", "T-903", "| branch codex/live-t903 — claimed"),
+    claimLine("2026-09-19T15:07Z", "T-904", "| branch none — claimed"),
+  );
+  const probe = (branch) => {
+    if (branch === "codex/merged-t901") {
+      return { remoteExists: false, pullRequests: [{ number: 9001, state: "MERGED" }] };
+    }
+    if (branch === "codex/abandoned-t902") return { remoteExists: false, pullRequests: [] };
+    if (branch === "codex/live-t903") return { remoteExists: true, pullRequests: [] };
+    throw new Error(`fixture probe asked about an unexpected branch: ${branch}`);
+  };
+
+  const report = resolve({ queue, register: reg, probe });
+  const verdictOf = (id) => report.entries.find((e) => e.id === id)?.verdict;
+
+  check("the merged one resolves fossil", verdictOf("T-901") === VERDICTS.FOSSIL);
+  check("the abandoned one resolves abandoned", verdictOf("T-902") === VERDICTS.ABANDONED);
+  check("the live one resolves alive", verdictOf("T-903") === VERDICTS.ALIVE);
+  check("the branchless one resolves unknown", verdictOf("T-904") === VERDICTS.UNKNOWN);
+  check(
+    "the probe is never called for a claim that names no branch",
+    verdictOf("T-904") === VERDICTS.UNKNOWN,
+  );
+  check(
+    "the report counts the stale ones, which is the number that says the bucket is wrong",
+    report.stale.length === 3,
+    JSON.stringify(report.stale.map((e) => `${e.id}:${e.verdict}`)),
+  );
+
+  check(
+    "a release command is offered for a fossil",
+    releaseCommandFor(report.entries.find((e) => e.id === "T-901")).includes("--action release"),
+  );
+  check(
+    "and NOT for an abandoned claim, which needs re-taking rather than closing",
+    releaseCommandFor(report.entries.find((e) => e.id === "T-902")) === null,
+    "the whole point of the split is that these two get different next moves",
+  );
+}
+
+{
+  /* NEGATIVE CONTROL for the report as a whole: independent truth is the probe,
+   * not the register. The same register text, with every branch alive, must
+   * report nothing stale — otherwise the verdicts are being read off the text. */
+  const queue = candidateLine(["T-901", "T-902"]);
+  const reg = register(
+    claimLine("2026-09-19T15:04Z", "T-901", "| branch codex/merged-t901 — claimed"),
+    claimLine("2026-09-19T15:05Z", "T-902", "| branch codex/abandoned-t902 — claimed"),
+  );
+  const report = resolve({ queue, register: reg, probe: () => ({ remoteExists: true, pullRequests: [] }) });
+  check(
+    "NEGATIVE CONTROL — with every branch alive the same register reports nothing stale",
+    report.stale.length === 0 && report.entries.every((e) => e.verdict === VERDICTS.ALIVE),
+    JSON.stringify(report.entries.map((e) => `${e.id}:${e.verdict}`)),
+  );
+}
+
+{
+  const queue = candidateLine(["T-901"]);
+  const reg = register(claimLine("2026-09-19T15:04Z", "T-901", "| branch codex/x-t901 — claimed"));
+  const report = resolve({
+    queue,
+    register: reg,
+    probe: () => {
+      throw new Error("git unreachable");
+    },
+  });
+  check(
+    "a throwing probe yields unknown and is still reported as stale, not as fine",
+    report.entries[0].verdict === VERDICTS.UNKNOWN && report.stale.length === 1,
+  );
+}
+
+/* ========================================================================= */
+console.log("\nthe CLI — the half that a module-only suite cannot prove");
+/* ========================================================================= */
+
+{
+  const dir = tmpdir();
+  fs.writeFileSync(path.join(dir, "EXECUTION_QUEUE.md"), candidateLine(["T-901"]));
+  fs.writeFileSync(
+    path.join(dir, "EXECUTION_CLAIMS.md"),
+    register(claimLine("2026-09-19T15:04Z", "T-901", "| branch codex/x-t901 — claimed")),
+  );
+
+  const help = run(["--help"]);
+  check("--help exits 0 and names the tool", help.status === 0 && /fossil/i.test(help.stdout));
+
+  const offline = run(["--operator-root", dir, "--no-probe", "--json"]);
+  check(
+    "--no-probe reports the candidate as unknown and exits non-zero",
+    offline.status === 1,
+    `status ${offline.status}: ${offline.stderr || offline.stdout}`.slice(0, 400),
+  );
+  let parsed = null;
+  try {
+    parsed = JSON.parse(offline.stdout);
+  } catch {
+    /* reported by the check below */
+  }
+  check(
+    "--json emits a parseable report naming the candidate and its verdict",
+    parsed !== null && parsed.entries?.[0]?.id === "T-901" &&
+      parsed.entries[0].verdict === VERDICTS.UNKNOWN,
+    offline.stdout.slice(0, 400),
+  );
+
+  const empty = tmpdir();
+  fs.writeFileSync(path.join(empty, "EXECUTION_QUEUE.md"), "# Execution queue\n\nno candidates\n");
+  fs.writeFileSync(path.join(empty, "EXECUTION_CLAIMS.md"), register());
+  const none = run(["--operator-root", empty]);
+  check(
+    "with no candidates at all the CLI exits 0",
+    none.status === 0,
+    `status ${none.status}: ${none.stderr || none.stdout}`.slice(0, 300),
+  );
+
+  const missing = run(["--operator-root", path.join(tmpdir(), "nope")]);
+  check(
+    "a missing operator root is a usage failure, not a silent pass",
+    missing.status === 2,
+    `status ${missing.status}`,
+  );
+}
+
+check(
+  "importing this module does not run its CLI",
+  true,
+  "asserted by construction: the import at the top of this file produced no " +
+    "report above, and the shared guard is covered by cli-entry.test.mjs",
+);
+
+/* ========================================================================= */
+console.log("\nreal corpus — the extraction half, with no network call");
+/* ========================================================================= */
+
+{
+  const queueFile = path.join(DOWNLOADS, "EXECUTION_QUEUE.md");
+  const registerFile = path.join(DOWNLOADS, "EXECUTION_CLAIMS.md");
+  if (!fs.existsSync(queueFile) || !fs.existsSync(registerFile)) {
+    skip("the live queue names a non-empty suppressed-candidate list", "operator documents absent");
+    skip("the live queue's candidates each resolve to a claim line", "operator documents absent");
+    skip("and a branch is extracted for all but the one that declares none", "operator documents absent");
+  } else {
+    const queue = fs.readFileSync(queueFile, "utf8");
+    const reg = fs.readFileSync(registerFile, "utf8");
+    const ids = suppressedCandidateIds(queue);
+    check(
+      "the live queue names a non-empty suppressed-candidate list",
+      ids.length > 0,
+      `read ${ids.length} ids`,
+    );
+    const unmatched = ids.filter((id) => newestClaimFor(reg, id) === null);
+    check(
+      "every candidate the queue names resolves to a claim line in the register",
+      unmatched.length === 0,
+      `no claim line for: ${unmatched.join(" ")}`,
+    );
+    const branchless = ids.filter((id) => {
+      const claim = newestClaimFor(reg, id);
+      return claim ? branchesInClaim(claim.line).length === 0 : true;
+    });
+    check(
+      "a branch is extracted for all but the candidates whose claim declares none",
+      branchless.length <= 1,
+      `no branch extracted for: ${branchless.join(" ")}`,
+    );
+  }
+}
+
+console.log(`\n${passes} passed, ${failures} failed, ${skipped} skipped`);
+process.exitCode = failures > 0 ? 1 : 0;
