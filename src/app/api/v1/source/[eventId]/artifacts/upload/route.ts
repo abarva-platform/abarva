@@ -56,6 +56,10 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 
 const STORAGE_BUCKET = "source-artifacts";
+const SCOPE_SIGNATURE_CRITERIA = new Set([
+  "GATE-SCOPE-02",
+  "GATE-SCOPE-04",
+]);
 
 type SourceUploadRouteContext = {
   params: Promise<{ eventId?: string }>;
@@ -195,10 +199,10 @@ interface UploadLandingResult {
 
 /**
  * Land an artifact-scoped upload on the canvas: replace the target artifact's
- * body with the extracted text and mark every gate criterion linked to that
- * artifact as met (chosen product semantics — an uploaded document satisfies
- * its gate). Best-effort and non-fatal: any miss is returned as a warning so
- * the upload still succeeds as a registry document.
+ * body with the extracted text and mark linked gate criteria as met, except
+ * Scope commitments that require independent signer proof. Best-effort and
+ * non-fatal: any miss is returned as a warning so the upload still succeeds
+ * as a registry document.
  */
 async function landUploadOnArtifact(args: {
   eventId: string;
@@ -260,6 +264,10 @@ async function landUploadOnArtifact(args: {
   // 2. Auto-satisfy the gate criteria this artifact is linked to.
   const satisfiedCriteria: string[] = [];
   for (const criterion of criteriaByArtifactCode(args.artifactCode)) {
+    if (
+      args.artifactCode === "d05_scope_memo" &&
+      SCOPE_SIGNATURE_CRITERIA.has(criterion.criterionId)
+    ) continue;
     const { data: criterionRow } = await supabase
       .from("source_event_gate_criterion_states")
       .select("id, state")
@@ -482,11 +490,9 @@ export async function POST(
       mimeType,
     });
 
-    // Artifact-scoped landing (chosen semantics: an uploaded document satisfies
-    // its gate). When the upload targets a specific canvas artifact, land the
-    // extracted text on that artifact's body and mark the gate criteria it is
-    // linked to as met. Falls through harmlessly to registry-only when no
-    // artifactCode is supplied or the format can't be extracted.
+    // Land extracted text on the targeted canvas artifact and satisfy linked
+    // criteria only where upload alone is sufficient. Falls through to
+    // registry-only when no artifact code is supplied.
     const artifactCode = parseOptionalString(formData.get("artifactCode"));
     const landing = artifactCode
       ? await landUploadOnArtifact({

@@ -251,6 +251,69 @@ describe("Source governance enforcement", () => {
     expect(verdict.ok).toBe(true);
   });
 
+  it.each(["GATE-SCOPE-02", "GATE-SCOPE-04"])(
+    "does not treat an approved scope memo as signer proof for %s",
+    (criterionId) => {
+      const verdict = evaluateCriterionMetReadiness({
+        criterion: criterion({
+          criterionId,
+          fromStage: "scope",
+          toStage: "rfp",
+          state: "met",
+        }),
+        artifacts: [
+          artifact({
+            artifactCode: "d05_scope_memo",
+            stage: "scope",
+            status: "approved",
+            linkedArtifactId: "uploaded-scope-memo",
+            body: "Reviewed scope memo body.",
+          }),
+        ],
+        evidence: [],
+        reason: REVIEW_REASON,
+      });
+
+      expect(verdict.ok).toBe(false);
+      expect(verdict.blockers).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ code: "signer_proof_not_verified" }),
+        ]),
+      );
+    },
+  );
+
+  it("blocks promotion when a legacy scope signer criterion was marked met from a memo", () => {
+    const verdict = evaluateStagePromotionReadiness({
+      currentStage: "scope",
+      targetStage: "rfp",
+      criteria: [
+        criterion({
+          criterionId: "GATE-SCOPE-02",
+          fromStage: "scope",
+          toStage: "rfp",
+          state: "met",
+          notes: REVIEW_REASON,
+        }),
+      ],
+      artifacts: [
+        artifact({
+          artifactCode: "d05_scope_memo",
+          stage: "scope",
+          status: "locked",
+          linkedArtifactId: "uploaded-scope-memo",
+        }),
+      ],
+      evidence: [],
+      reason: REVIEW_REASON,
+    });
+
+    expect(verdict.ok).toBe(false);
+    expect(verdict.blockers.map((blocker) => blocker.code)).toContain(
+      "signer_proof_not_verified",
+    );
+  });
+
   it("does not treat an AI-only generated body as human-reviewed artifact evidence", () => {
     expect(
       isArtifactHumanReviewed(
