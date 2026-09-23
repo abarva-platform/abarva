@@ -36,6 +36,7 @@ import {
   formatQueueProvenance,
   queueProvenanceStamp,
 } from "./queue-provenance.mjs";
+import { FLAG_SPEC, USAGE, advertisedFlags } from "./append-claim.mjs";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const HELPER = path.join(HERE, "append-claim.mjs");
@@ -808,6 +809,139 @@ const base = (args = []) => ["--file", args.file, "--item", args.item, "--identi
     `status=${r.status} stdout=${r.stdout} stderr=${r.stderr}`,
   );
   fs.rmSync(dir, { recursive: true, force: true });
+}
+
+// ---------------------------------------------------------------------------
+// Cases 15-21 (item T-748) — an unrecognised flag is refused, not ignored.
+//
+// Node's argv parsing ignores what it does not recognise, and until this item
+// so did every reader in this directory. Measured by execution on `main`
+// `7e74fe7a0`: `--release`, `--totally-made-up-flag` and `--wrong-flag-two=x`
+// each passed every gate here and produced a normal `item <id> claimed` line at
+// exit 0. `--release` is not a flag — the sanctioned spelling is
+// `--action release` — so a run that believed it had handed work back left a
+// LIVE CLAIM on its files, and every sibling for the next three hours was
+// refused those files by a holder that was finished. One instance is in the
+// register at 22:10:50Z, corrected by an appended line sixteen seconds later.
+//
+// The helper already refused a `--gate-arg` the installed gate does not
+// advertise, in these words: "An unrecognised flag is parsed as nothing and the
+// check you asked for would not run, so this is refused rather than passed
+// silently." It never applied that sentence to its own argv.
+//
+// Every case runs the REAL CLI over a fixture register and compares the file by
+// DIGEST, because the assertion that matters is not the exit code — it is that
+// nothing was written. A refusal that still appends is the defect, restated.
+//
+// The three invocations are the three real ones, verbatim. The negative
+// controls are the two sanctioned actions, so the repair cannot be a blanket
+// rejection of anything unfamiliar.
+// ---------------------------------------------------------------------------
+for (const bad of ["--release", "--totally-made-up-flag", "--wrong-flag-two=x"]) {
+  const { dir, file } = fixture([]);
+  const before = digest(file);
+  const r = run([
+    ...base({ file, item: "T-748", identity: ME, message: "handing it back" }),
+    "--branch", "exec/t-748", "--now", "2026-09-22T17:30:00Z", bad,
+  ]);
+  check(
+    `\`${bad}\` is refused and NOTHING is appended`,
+    r.status !== 0 && digest(file) === before,
+    `status=${r.status} (expected non-zero)\n` +
+      `register changed: ${digest(file) !== before}\n` +
+      `stdout=${r.stdout}\nstderr=${r.stderr}`,
+  );
+  check(
+    `\`${bad}\` is NAMED in the refusal`,
+    `${r.stdout}${r.stderr}`.includes(bad),
+    "a refusal that does not say which flag leaves the run guessing\n" +
+      `stdout=${r.stdout}\nstderr=${r.stderr}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+// NEGATIVE CONTROL — the sanctioned release still writes its line.
+{
+  const { dir, file } = fixture([]);
+  const before = digest(file);
+  const r = run([
+    ...base({ file, item: "T-748", identity: ME, message: "handing it back, all files free" }),
+    "--action", "release", "--branch", "exec/t-748", "--now", "2026-09-22T17:30:00Z",
+  ]);
+  check(
+    "NEGATIVE CONTROL: `--action release` still appends",
+    r.status === 0 && digest(file) !== before &&
+      fs.readFileSync(file, "utf8").includes("RELEASED item T-748"),
+    `status=${r.status} appended=${digest(file) !== before}\nstdout=${r.stdout}\nstderr=${r.stderr}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+// NEGATIVE CONTROL — the sanctioned abstention still writes its line.
+{
+  const { dir, file } = fixture([]);
+  const before = digest(file);
+  const r = run([
+    ...base({ file, item: "T-748", identity: ME, message: "NOT TAKEN this run; recording why" }),
+    "--action", "abstain", "--now", "2026-09-22T17:30:00Z",
+  ]);
+  check(
+    "NEGATIVE CONTROL: `--action abstain` still appends",
+    r.status === 0 && digest(file) !== before &&
+      fs.readFileSync(file, "utf8").includes("item T-748 NOT TAKEN"),
+    `status=${r.status} appended=${digest(file) !== before}\nstdout=${r.stdout}\nstderr=${r.stderr}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+// NEGATIVE CONTROL — a forwarded gate flag is a VALUE, not an unknown flag.
+// `--gate-arg --github` is the one place this CLI is handed a token that looks
+// exactly like a flag and must not be read as one.
+{
+  const { dir, file } = fixture([]);
+  const r = run([
+    ...base({ file, item: "T-748", identity: ME }),
+    "--branch", "exec/t-748", "--now", "2026-09-22T17:30:00Z", "--gate-arg", "--github",
+  ]);
+  check(
+    "NEGATIVE CONTROL: `--gate-arg --github` is not reported as an unknown flag",
+    !`${r.stdout}${r.stderr}`.includes("not a flag"),
+    `stdout=${r.stdout}\nstderr=${r.stderr}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+// NEGATIVE CONTROL — a message quoting a flag is free text.
+{
+  const { dir, file } = fixture([]);
+  const before = digest(file);
+  const r = run([
+    ...base({ file, item: "T-748", identity: ME, message: "--action release was already recorded above" }),
+    "--branch", "exec/t-748", "--now", "2026-09-22T17:30:00Z",
+  ]);
+  check(
+    "NEGATIVE CONTROL: a message beginning `--action` is text, and the claim is written",
+    r.status === 0 && digest(file) !== before,
+    `status=${r.status} appended=${digest(file) !== before}\nstdout=${r.stdout}\nstderr=${r.stderr}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+// The declared vocabulary and the printed one are the same list.
+//
+// The item is explicit that the usage string was already correct and was
+// already there when the flag was accepted, so a usage string is not the
+// repair. It is still worth pinning the two together: a flag added to the spec
+// and not to USAGE is undocumented, and one added to USAGE and not to the spec
+// is refused at runtime while being advertised.
+{
+  const declared = [...FLAG_SPEC.value, ...FLAG_SPEC.boolean].sort();
+  const printed = [...advertisedFlags(USAGE)].sort();
+  check(
+    "the declared flag spec equals the flags USAGE names",
+    declared.join() === printed.join(),
+    `declared: ${declared.join(" ")}\nprinted:  ${printed.join(" ")}`,
+  );
 }
 
 console.log(`\n${passes} passed, ${failures} failed`);
