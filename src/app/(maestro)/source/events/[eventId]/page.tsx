@@ -257,6 +257,7 @@ export default async function SourceEventDetailPage({
     )
       ? buildEvaluationBafoReadinessView({
           profileSet: vendorResponseProfiles,
+          normalizedPackages: normalizedProductionResponsePackages,
           challengeIntelligence: vendorChallengeIntelligence,
           bafoInstructionPack: vendorBafoInstructionPack,
           decisionView: vendorEvaluationDecisionView,

@@ -8,6 +8,7 @@ import type {
 } from "./types";
 import type { VendorResponseProfileSet } from "./mve-profile";
 import type { ScorecardAuthorityView } from "./scorecard-authority";
+import type { NormalizedVendorResponsePackage } from "../vendor-response-matrix";
 
 export type EvaluationBafoReadinessState =
   | "no_records"
@@ -141,6 +142,7 @@ export interface EvaluationBafoReadinessView {
 
 export function buildEvaluationBafoReadinessView(args: {
   profileSet?: VendorResponseProfileSet | null;
+  normalizedPackages?: readonly NormalizedVendorResponsePackage[];
   challengeIntelligence?: VendorChallengeIntelligence | null;
   bafoInstructionPack?: VendorBafoInstructionPack | null;
   decisionView?: VendorEvaluationDecisionView | null;
@@ -209,9 +211,15 @@ export function buildEvaluationBafoReadinessView(args: {
   );
 
   const received = profiles.map((profile) => buildReceivedRow(profile));
-  const questionResponses = profiles.flatMap((profile) =>
-    buildQuestionResponseRows(profile),
-  );
+  const questionResponses = profiles.flatMap((profile) => {
+    const responsePackage = args.normalizedPackages?.find(
+      (candidate) => candidate.vendorId === profile.vendorId,
+    );
+    if (responsePackage) {
+      return buildNormalizedQuestionResponseRows(profile, responsePackage);
+    }
+    return profile.syntheticDemo ? buildQuestionResponseRows(profile) : [];
+  });
   const pricing = profiles.map((profile) => buildPricingRow(profile));
   const commercialComparison = pricing.map((row) =>
     buildCommercialComparisonRow(row),
@@ -324,6 +332,61 @@ function buildQuestionResponseRows(
           ? "Missing response; exclude from scoring until clarified."
           : "Use only as a clarification prompt before final scoring.",
   }));
+}
+
+function buildNormalizedQuestionResponseRows(
+  profile: VendorResponseProfile,
+  responsePackage: NormalizedVendorResponsePackage,
+): EvaluationBafoQuestionResponseRow[] {
+  if (
+    responsePackage.reviewState !== "accepted" ||
+    responsePackage.authority?.acceptedArtifactOnly !== true ||
+    responsePackage.authority.downstreamContextPolicy !== "include" ||
+    responsePackage.syntheticDemo === true
+  ) {
+    return [];
+  }
+  return responsePackage.rows.flatMap((row) => {
+    if (
+      row.reviewState !== "accepted" ||
+      !row.questionId?.trim() ||
+      row.provenance?.artifactId !== responsePackage.artifactId
+    ) {
+      return [];
+    }
+    const answerState: EvaluationBafoQuestionResponseRow["answerState"] =
+      !row.responseDisposition || !row.responseNarrative?.trim()
+        ? "missing"
+        : row.responseDisposition === "Exception"
+          ? "exception"
+          : row.responseDisposition === "Partially Comply"
+            ? "partial"
+            : "complete";
+    const evidence = [
+      ...(row.evidenceRefs ?? []),
+      row.pricingRef,
+      row.slaRef,
+      row.exceptionRef,
+    ].filter((value): value is string => Boolean(value?.trim()));
+    return [{
+      vendorId: profile.vendorId,
+      vendorName: profile.vendorName,
+      questionId: row.questionId,
+      questionLabel: row.requirement.trim() || row.requirementId,
+      answerState,
+      normalizedResponse: row.responseNarrative?.trim() || "No response recorded.",
+      evidenceReference:
+        evidence.length > 0
+          ? evidence.join("; ")
+          : `No exhibit cited in accepted artifact ${responsePackage.artifactId}, ${row.requirementId}`,
+      evaluatorUse:
+        answerState === "missing"
+          ? "Missing response; exclude from scoring until clarified."
+          : answerState === "complete"
+            ? "Accepted response for named evaluator review; no score is inferred."
+            : "Use only as a clarification prompt before final scoring.",
+    }];
+  });
 }
 
 function buildReceivedRow(
