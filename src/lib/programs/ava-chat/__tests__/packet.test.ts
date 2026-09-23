@@ -258,4 +258,40 @@ describe("buildMovesAvaChatPacket — no blank-prompt chat", () => {
     expect(answer).toContain("The live Move page is the source of truth");
     expect(answer).not.toMatch(/all four|four hard|all seven|seven criteria/i);
   });
+
+  it("labels evidence needs as post-handoff caveats after terminal P5 completion", () => {
+    const packet = buildMovesAvaChatPacket(
+      {
+        ...BASE_INPUT,
+        currentPhase: 5,
+        currentPhaseClientLabel: "P5 Mobilize",
+        terminalHandoffComplete: true,
+        checklistStatus: {
+          evidenceDone: true,
+          evidenceLabel: "12 evidence items visible",
+          gateDone: true,
+          gateLabel: "0 hard gates open",
+          canAdvance: true,
+          nextPhaseLabel: "Tower",
+        },
+        evidenceNeedPackets: [
+          "REQUIRED: Measurement owner and cadence - missing. Next: confirm Tower owner.",
+        ],
+        gateCriteria: [
+          { label: "Tower handoff accepted", met: true, severity: "hard" },
+        ],
+      },
+      "What should the client team do next?",
+    );
+
+    const prompt = formatMovesAvaChatPacketForPrompt(
+      packet,
+      "tower_measurement",
+    );
+
+    expect(prompt).toContain("Terminal handoff state");
+    expect(prompt).toContain("Post-handoff caveats/follow-up candidates");
+    expect(prompt).not.toContain("Evidence needs:");
+    expect(prompt).not.toMatch(/required-before-acceptance/i);
+  });
 });

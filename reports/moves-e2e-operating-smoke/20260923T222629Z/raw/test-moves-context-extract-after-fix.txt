@@ -1,0 +1,10 @@
+
+> abarva@0.1.0 test:moves-context-extract
+> jest src/lib/programs/__tests__/move-context-extract.test.ts src/app/api/v1/deliverables/generate-phase/__tests__/route.test.ts --runInBand
+
+
+Test Suites: 2 passed, 2 total
+Tests:       18 passed, 18 total
+Snapshots:   0 total
+Time:        0.167 s, estimated 1 s
+Ran all test suites matching src/lib/programs/__tests__/move-context-extract.test.ts|src/app/api/v1/deliverables/generate-phase/__tests__/route.test.ts.

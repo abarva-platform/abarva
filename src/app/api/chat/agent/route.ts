@@ -901,6 +901,8 @@ export async function POST(request: Request) {
                   met: criterion.completed,
                   severity: criterion.severity,
                 })),
+                terminalHandoffComplete:
+                  promptPhase === 5 && Boolean(liveMove?.terminalComplete),
               },
               message,
             );

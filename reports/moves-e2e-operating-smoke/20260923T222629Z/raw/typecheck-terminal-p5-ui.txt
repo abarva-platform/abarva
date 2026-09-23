@@ -1,0 +1,5 @@
+
+> abarva@0.1.0 typecheck
+> node scripts/quality/typecheck.mjs
+
+typecheck: clean.

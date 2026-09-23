@@ -1,0 +1,169 @@
+Home
+Intelligence
+Moves
+Source Optimize
+Source New
+Tower
+AP
+AbarVa Prod QA
+Sign out
+MOVES
+HEALTHCARE_IDN-Meridian Health-2026
+Meridian Health · AI PRODUCT ENABLEMENT · HEALTHCARE_IDN
+P4 WORKFLOW
+Phase 5 of 6 · Build the Plan
+«
+← All Moves
+Meridian Health Synthetic Rich Evidence E2E 2026-09-11T05-13
+
+Meridian Health · AI PRODUCT ENABLEMENT · HEALTHCARE_IDN
+
+PHASES
+✓
+Originate
+3 of 3
+✓
+Charter
+2 of 2
+✓
+Understand Current State
+5 of 5
+✓
+Choose the Approach
+2 of 2
+✓
+Build the Plan
+5 of 5
+✓
+Prepare to Execute
+4 of 4
+WORKSPACE
+▦
+Stage workspace
+▣
+Files & Evidence
+◈
+Phase Intelligence
+✓
+Approvals
+
+aVa guides P0-P4 · Atlas takes over P5 Execute.
+
+Meridian Health Synthetic Rich Evidence E2E 2026-09-11T05-13/P4 · Build the Plan
+AVA · MOVES
+Build the Plan
+What plan, value case, and sequencing should leadership approve?
+
+Convert the chosen approach into workstreams, delivery scenarios, economics, and dependencies. Shape the executive commit package.
+
+Download P5 readiness workbook
+Preview completed workbook
+P4
+INPUTS
+7/7
+GATE
+Complete
+NEXT
+Prepare
+No required input blockers for the current step. Workbook available · acceptance required before next phase
+Steps
+Files
+Intelligence
+INPUTS
+✓
+Roadmap & sequencing
+✓
+Estimates & capacity
+✓
+Value plan & business case
+✓
+Risks & dependencies
+✓
+Funding ask & governance
+✓
+Source / Tower handoff
+✓
+Recommendation to fund
+WORKFLOW
+Prepare
+Value Case
+Plan Workstreams
+Approve & Build
+What P5 Prepare to Execute will need
+Measurement owner and cadence
+Operational change and adoption owner
+Use the left steps in order. Approve & Build remains the governed close; it is not a visual-only button.
+✓
+Step 8 of 11
+Prepare
+DONE
+P4 STAGE PLAN
+Tower handoff complete
+
+This Move is complete. Tower is now the execution and value-tracking surface.
+
+P4
+Purpose
+
+Confirm what P4 must prove before the next gate can carry the work forward.
+
+Build the Plan
+Do now
+
+Check the sessions, templates, evidence slots, and open blockers below before uploading files or approving anything.
+
+Prepare
+Done when
+
+The team knows exactly which outputs to upload, which gaps can carry, and what Approve & Build will generate.
+
+Ready for next tab
+Live state
+
+7 missing or partial evidence items · 0 hard gates open.
+
+P5 · Prepare to Execute
+RECOMMENDED SESSIONS
+Value case workshop
+Delivery scenario review
+Roadmap sequencing
+Executive commit review
+TEMPLATES TO COMPLETE
+Roadmap & Business Case PPTX
+Delivery Scenario Model XLSX
+Workstream Plan XLSX
+Executive Commit Packet DOCX
+CURRENT BLOCKERS
+7 evidence items missing or partial
+0 hard gates open
+Next phase: P5 · Prepare to Execute
+EVIDENCE NEEDED
+WHY IT MATTERS
+STATUS
+Current-state member-service workflow map
+
+This input anchors the artifact in client evidence instead of unsupported assumptions.
+
+Covered
+Contact center baseline KPIs
+
+This input anchors the artifact in client evidence instead of unsupported assumptions.
+
+Covered
+CRM/contact-center system and integration map
+
+This input anchors the artifact in client evidence instead of unsupported assumptions.
+
+Covered
+Claims, eligibility, benefits, and prior-auth data access
+
+This input anchors the artifact in client evidence instead of unsupported assumptions.
+
+Covered
+Knowledge base ownership and freshness
+
+This input anchors the artifact in client evidence instead of unsupported assumptions.
+
+Missing
++7more in Upload & review
+Ask aVa

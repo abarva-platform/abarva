@@ -1,0 +1,5 @@
+
+> abarva@0.1.0 moves:scan-artifacts
+> npx tsx scripts/moves/scan-artifacts.ts
+
+usage: npm run moves:scan-artifacts -- <path|dir> [more paths...]

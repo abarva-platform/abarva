@@ -19,7 +19,10 @@ interface MovesChatPhaseSummary {
 }
 
 interface BuildMovesChatAvaAnswerPacketInput {
-  move: Pick<StrategicMove, "tenant" | "name" | "displayCode">;
+  move: Pick<
+    StrategicMove,
+    "tenant" | "name" | "displayCode" | "terminalComplete"
+  >;
   phase: MovesChatPhaseSummary;
   question: string;
   visibleText: string;
@@ -207,12 +210,17 @@ export function buildMovesChatAvaAnswerPacket({
   }
 
   const readinessRows = buildReadinessRows(phaseTallies);
+  const terminalHandoffComplete =
+    Boolean(move.terminalComplete) && phase.phase === 5;
+  const effectiveOpenNeeds = terminalHandoffComplete
+    ? []
+    : readinessPack.openNeeds;
   const currentRow = readinessRows.find(
     (row) =>
       row.phase === `P${phase.phase}` ||
       row.phase.startsWith(`P${phase.phase}`),
   );
-  const openNeeds = readinessPack.openNeeds.length;
+  const openNeeds = effectiveOpenNeeds.length;
   const readinessChart = {
     artifact: "chart" as const,
     id: "moves_gate_readiness_by_phase",
@@ -235,7 +243,7 @@ export function buildMovesChatAvaAnswerPacket({
   };
   const tables: AnswerTable[] = [
     buildPhaseTallyTable(readinessRows),
-    buildNextReadinessTable(readinessPack),
+    terminalHandoffComplete ? null : buildNextReadinessTable(readinessPack),
     buildStreamArtifactTable(streamArtifacts),
   ].filter((table): table is AnswerTable => table !== null);
 
@@ -275,7 +283,7 @@ export function buildMovesChatAvaAnswerPacket({
       citationIds: ["moves-next-phase-readiness"],
     },
   ];
-  const nextSteps: AvaNextStep[] = readinessPack.openNeeds
+  const nextSteps: AvaNextStep[] = effectiveOpenNeeds
     .slice(0, 3)
     .map((need, index) => ({
       id: `moves_next_need_${index + 1}`,
@@ -293,10 +301,12 @@ export function buildMovesChatAvaAnswerPacket({
     status: "answered",
     directAnswer,
     interpretation: `${phase.code} ${phase.title} is shown with the same readiness counts and next-step evidence needs visible in the workspace.`,
-    businessImplication:
-      "Use the chart to separate completed phases from current decision work, then use the preparation table to decide what evidence must be gathered before the next phase starts.",
-    recommendation:
-      openNeeds > 0
+    businessImplication: terminalHandoffComplete
+      ? "Use the chart to confirm phase closure. Post-handoff caveats can be tracked in Tower, but they should not be presented as blockers to an already completed handoff."
+      : "Use the chart to separate completed phases from current decision work, then use the preparation table to decide what evidence must be gathered before the next phase starts.",
+    recommendation: terminalHandoffComplete
+      ? "Use Tower as the execution and value-tracking surface; treat any remaining evidence notes as follow-up caveats, not gate blockers."
+      : openNeeds > 0
         ? "Resolve the highest-priority preparation needs before treating the next phase as ready."
         : "Use the current phase decision work as the primary checkpoint before advancing.",
     artifacts,

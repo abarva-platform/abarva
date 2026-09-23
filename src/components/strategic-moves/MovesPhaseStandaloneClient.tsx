@@ -1040,7 +1040,8 @@ export function MovesPhaseStandaloneClient({
   const phaseCaptureMissingCount =
     phaseCaptureSections.length - phaseCaptureCompleteCount;
   const blockedPhaseRequest = phaseNavigationStatus?.blockedRequest ?? null;
-  const phaseStoryNextAction =
+  const terminalP5Complete = terminalComplete && phase.phase === 5;
+  const nextOpenAction =
     blockedPhaseRequest?.nextActionLabel ??
     (phaseCaptureMissingCount > 0
       ? `Complete ${phaseCaptureMissingCount} required input${
@@ -1051,23 +1052,30 @@ export function MovesPhaseStandaloneClient({
           ? "Run Approve & Build"
           : "Resolve hard gate blockers"
         : substep.label);
-  const phaseStoryArtifactStatus =
-    blockedPhaseRequest && phase.phase === 1
+  const phaseStoryNextAction = terminalP5Complete
+    ? "Open Tower"
+    : nextOpenAction;
+  const phaseStoryArtifactStatus = terminalP5Complete
+    ? "Tower handoff complete"
+    : blockedPhaseRequest && phase.phase === 1
       ? "Workbook uploaded/previewed is not acceptance"
       : phase.phase < 5
         ? "Workbook available · acceptance required before next phase"
         : "Tower handoff artifacts";
   const phaseStoryRemaining = blockedPhaseRequest
     ? blockedPhaseRequest.reason
-    : phaseCaptureMissingCount > 0
-      ? `${phaseCaptureMissingCount} phase input${
-          phaseCaptureMissingCount === 1 ? "" : "s"
-        } still missing from persisted server state.`
-      : substep.key === "approve" && topLevelHardGateMet < topLevelHardGateTotal
-        ? `${topLevelHardGateTotal - topLevelHardGateMet} hard gate blocker${
-            topLevelHardGateTotal - topLevelHardGateMet === 1 ? "" : "s"
-          } remain.`
-        : "No required input blockers for the current step.";
+    : terminalP5Complete
+      ? "Move handed off to Tower."
+      : phaseCaptureMissingCount > 0
+        ? `${phaseCaptureMissingCount} phase input${
+            phaseCaptureMissingCount === 1 ? "" : "s"
+          } still missing from persisted server state.`
+        : substep.key === "approve" &&
+            topLevelHardGateMet < topLevelHardGateTotal
+          ? `${topLevelHardGateTotal - topLevelHardGateMet} hard gate blocker${
+              topLevelHardGateTotal - topLevelHardGateMet === 1 ? "" : "s"
+            } remain.`
+          : "No required input blockers for the current step.";
   const phaseProgressSignals = [
     {
       label: "Inputs",
@@ -2516,6 +2524,7 @@ export function MovesPhaseStandaloneClient({
                         />
                       }
                       substepIndex={substepIndex}
+                      terminalComplete={terminalComplete}
                     />
                   ) : (
                     <FinderStepsColumns
@@ -3206,6 +3215,7 @@ function PhaseContractStepsCanvas({
   selectedSectionKey,
   substepBody,
   substepIndex,
+  terminalComplete,
 }: {
   avaDraftProposalsByKey: Map<string, AvaPhaseInputProposal>;
   avaDraftSaveStatus: Record<string, AvaDraftSaveStatus>;
@@ -3228,7 +3238,9 @@ function PhaseContractStepsCanvas({
   selectedSectionKey: string | null;
   substepBody: ReactNode;
   substepIndex: number;
+  terminalComplete: boolean;
 }) {
+  const terminalP5Complete = terminalComplete && phase.phase === 5;
   const selectedSection = selectedSectionKey
     ? (phaseCaptureSections.find(
         (section) => section.key === selectedSectionKey,
@@ -3255,9 +3267,11 @@ function PhaseContractStepsCanvas({
         persistedPhaseCaptureValues,
         phaseCaptureSaveStatus,
       ).complete
-    : substepIndex < phase.substeps.length - 1
+    : terminalP5Complete
       ? true
-      : false;
+      : substepIndex < phase.substeps.length - 1
+        ? true
+        : false;
   const detailStatus = selectedSection
     ? phaseCaptureStatusForSection(
         selectedSection,
@@ -3339,7 +3353,7 @@ function PhaseContractStepsCanvas({
             const active = selectedWorkflow
               ? index === substepIndex
               : index === activeWorkflowIndex;
-            const complete = index < substepIndex;
+            const complete = terminalP5Complete || index < substepIndex;
             return (
               <button
                 className={`mxw-contract-step ${active ? "active" : ""}`}

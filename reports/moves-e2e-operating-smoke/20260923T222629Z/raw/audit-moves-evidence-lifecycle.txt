@@ -1,0 +1,5 @@
+
+> abarva@0.1.0 audit:moves-evidence-lifecycle
+> node scripts/audit/moves-evidence-lifecycle.mjs
+
+PASS audit:moves-evidence-lifecycle

@@ -1,0 +1,11 @@
+
+> abarva@0.1.0 audit:moves-context-extract
+> node scripts/audit/moves-context-extract.mjs
+
+PASS active mode requires agent_ready filter
+PASS candidate preview is not read by default
+PASS suggested context is not written as generation evidence
+PASS extract attaches move-scoped program evidence rows
+PASS generation does not self-cite context extract evidence rows
+PASS existing extracts are not silently overwritten
+PASS no raw filesystem input read by extractor

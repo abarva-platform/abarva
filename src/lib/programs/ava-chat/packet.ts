@@ -19,7 +19,10 @@ import {
   type MovesAvaFeedForwardSummary,
   type MovesAvaGateCriterion,
 } from "./types";
-import { detectSourceAwareness, detectTowerAwareness } from "./source-tower-awareness";
+import {
+  detectSourceAwareness,
+  detectTowerAwareness,
+} from "./source-tower-awareness";
 
 export interface BuildMovesAvaChatPacketInput {
   tenant: string;
@@ -39,6 +42,7 @@ export interface BuildMovesAvaChatPacketInput {
   gateCriteria?: MovesAvaGateCriterion[];
   nextPhaseFeedForwardPack?: MovesAvaFeedForwardSummary | null;
   approvedInputsPackPresent?: boolean;
+  terminalHandoffComplete?: boolean;
 }
 
 const OPTIONAL_FIELD_LABELS: ReadonlyArray<
@@ -57,7 +61,10 @@ export function buildMovesAvaChatPacket(
   input: BuildMovesAvaChatPacketInput,
   questionText: string,
 ): MovesAvaChatPacket {
-  const missingInputs = collectMissingAvaModuleInputs(input, OPTIONAL_FIELD_LABELS);
+  const missingInputs = collectMissingAvaModuleInputs(
+    input,
+    OPTIONAL_FIELD_LABELS,
+  );
   const caveats = buildAvaModuleCaveats(missingInputs);
 
   return {
@@ -79,6 +86,7 @@ export function buildMovesAvaChatPacket(
     gateCriteria: input.gateCriteria ?? [],
     nextPhaseFeedForwardPack: input.nextPhaseFeedForwardPack ?? null,
     approvedInputsPackPresent: input.approvedInputsPackPresent ?? false,
+    terminalHandoffComplete: input.terminalHandoffComplete ?? false,
     sourceImplication: detectSourceAwareness(questionText),
     towerMeasurement: detectTowerAwareness(questionText),
     missingInputs,
