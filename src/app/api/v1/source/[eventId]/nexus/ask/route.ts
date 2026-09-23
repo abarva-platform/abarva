@@ -93,6 +93,11 @@ import {
   type AuthoritativeArtifactCandidate,
 } from "@/lib/source/client-final-artifacts";
 import { getLatestArtifactAcceptancesByArtifactIds } from "@/lib/source/artifact-acceptances";
+import {
+  buildGovernedEventContextBundle,
+  compareEventContextAdoption,
+  type EventContextCandidate,
+} from "@/lib/source/ava/event-context-bundle";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -951,7 +956,11 @@ async function buildEventIntakeTenantContextSnapshot(args: {
     clientKey === APEX_RETAIL_BROKER_TENANT_KEY
       ? APEX_RETAIL_BROKER_TENANT_KEY
       : clientKey;
-  const artifactContext = await loadSourceEventArtifactContext(args.event.id);
+  const artifactContext = await loadSourceEventArtifactContext(args.event.id, {
+    clientKey: brokerTenantKey,
+    tenantId: args.activeClientKey ?? null,
+    stageKey: args.event.currentStageKey ?? "unknown",
+  });
   const artifactStandards = buildSourceArtifactStandardsContext({
     artifacts: artifactContext.artifacts.map((artifact) => ({
       artifactKind: artifact.artifact_kind,
@@ -1290,7 +1299,96 @@ function sourceEventEvidenceDoc(item: unknown): string {
     : "Source intake record";
 }
 
-async function loadSourceEventArtifactContext(sourceEventId: string): Promise<{
+/**
+ * Measure the acceptance-bound event-context fence (item C-008) against the
+ * artifact set this route already sends to the model, and log the difference.
+ * Read-only by construction: it returns nothing and no caller uses its result.
+ */
+function reportEventContextFenceShadow(input: {
+  sourceEventId: string;
+  identity: { clientKey: string; tenantId: string | null; stageKey: string };
+  artifacts: SourceArtifactContextRow[];
+  acceptanceByArtifactId: Map<
+    string,
+    { authoritativeVersionId: string; contentDriftStatus: string; downstreamContextPolicy: string }
+  >;
+  currentAuthoritativeIds: string[];
+}): void {
+  try {
+    const accepted: Record<string, string> = {};
+    for (const [artifactId, acceptance] of input.acceptanceByArtifactId) {
+      accepted[artifactId] = acceptance.authoritativeVersionId;
+    }
+    const candidates: EventContextCandidate[] = input.artifacts.map(
+      (artifact) => {
+        const acceptance = input.acceptanceByArtifactId.get(artifact.id);
+        return {
+          id: artifact.id,
+          kind: "accepted_artifact",
+          tenantId: input.identity.tenantId,
+          clientKey: input.identity.clientKey,
+          eventId: input.sourceEventId,
+          contractId: null,
+          artifactId: artifact.id,
+          // The accept route stores the source artifact row id as the
+          // authoritative version id, so a superseded row is a different id and
+          // fails the binding — which is the behaviour being measured.
+          versionId: artifact.id,
+          contentDriftStatus:
+            acceptance?.contentDriftStatus === "current" ||
+            acceptance?.contentDriftStatus === "stale"
+              ? acceptance.contentDriftStatus
+              : "unknown",
+          downstreamContextPolicy:
+            acceptance?.downstreamContextPolicy === "exclude" ||
+            acceptance?.downstreamContextPolicy === "restricted"
+              ? acceptance.downstreamContextPolicy
+              : "include",
+          reviewState: acceptance ? "accepted" : "unreviewed",
+          sourceLayer: "artifact",
+          sourceBasis: "source_artifacts",
+          classification: "internal",
+          retrievability: "committed_not_indexed",
+          agentReadinessStatus: "committed_not_indexed",
+          confidenceLevel: "medium",
+          citedRenderVerifiedAt: null,
+        };
+      },
+    );
+    const bundle = buildGovernedEventContextBundle(candidates, {
+      tenantId: input.identity.tenantId ?? "",
+      clientKey: input.identity.clientKey,
+      eventId: input.sourceEventId,
+      contractId: null,
+      currentStageKey: input.identity.stageKey,
+      acceptedArtifactVersions: accepted,
+    });
+    const comparison = compareEventContextAdoption(
+      input.currentAuthoritativeIds,
+      bundle,
+    );
+    if (comparison.agrees) return;
+    console.info("[source-nexus-ask] C-008 event-context fence (shadow)", {
+      sourceEventId: input.sourceEventId,
+      currentCount: comparison.currentCount,
+      fencedCount: comparison.fencedCount,
+      wouldRemoveCount: comparison.wouldRemove.length,
+      wouldAddCount: comparison.wouldAdd.length,
+      refusalsByCode: comparison.refusalsByCode,
+    });
+  } catch (error) {
+    // A measurement must never be able to fail an answer.
+    console.warn("[source-nexus-ask] C-008 shadow comparison skipped", {
+      sourceEventId: input.sourceEventId,
+      message: error instanceof Error ? error.message : String(error),
+    });
+  }
+}
+
+async function loadSourceEventArtifactContext(
+  sourceEventId: string,
+  identity: { clientKey: string; tenantId: string | null; stageKey: string },
+): Promise<{
   artifacts: SourceArtifactContextRow[];
   chunks: SourceArtifactChunkContextRow[];
   facts: SourceArtifactFactContextRow[];
@@ -1390,6 +1488,22 @@ async function loadSourceEventArtifactContext(sourceEventId: string): Promise<{
     (artifact) => !authoritativeArtifactIdSet.has(artifact.id),
   );
   const artifactIds = authoritativeArtifacts.map((artifact) => artifact.id);
+  // C-008, SHADOW ONLY — this changes nothing about what the model reads.
+  //
+  // The authority resolver above admits an artifact with no acceptance row at
+  // all, falling back to `status`/`is_current_authoritative`. The
+  // acceptance-bound fence would not. Whether that fallback should end is a
+  // product decision, so AGENTS.md's module-adoption rule applies: run the new
+  // path in shadow, measure the divergence against the read path already in
+  // production, and adopt only once answer quality and tenant safety are
+  // same-or-better. `artifactIds` below is the unchanged production list.
+  reportEventContextFenceShadow({
+    sourceEventId,
+    identity,
+    artifacts: authoritativeArtifacts,
+    acceptanceByArtifactId,
+    currentAuthoritativeIds: artifactIds,
+  });
   if (!artifactIds.length) {
     return { artifacts, chunks: [], facts: [], artifactEvidence: [] };
   }
