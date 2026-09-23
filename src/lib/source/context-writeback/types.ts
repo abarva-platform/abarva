@@ -120,9 +120,11 @@ export interface SourceContextWritebackSkip {
   readonly factKey: string;
   readonly reason:
     | "wrong_client"
+    | "wrong_event"
     | "stale"
     | "missing_value"
-    | "missing_citation";
+    | "missing_citation"
+    | "review_not_verified";
 }
 
 export type SourceContextWritebackResult =
