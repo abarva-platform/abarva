@@ -1,6 +1,6 @@
 /** @jest-environment jsdom */
 
-import { fireEvent, render, screen, within } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import {
   SourceNewWorkspace as SourceNewWorkspaceImplementation,
   sourceNewFileDownloadHref,
@@ -376,6 +376,111 @@ describe("SourceNewWorkspace", () => {
     );
   });
 
+  it("renders a current tenant-bound scorecard readback without enabling rank or BAFO", async () => {
+    const originalFetch = global.fetch;
+    const authority = buildScorecardAuthorityView({
+      tenantKey: request.clientKey,
+      sourceEventId: request.id,
+      criteria: [{
+        tenantKey: request.clientKey,
+        sourceEventId: request.id,
+        criterionId: "quality",
+        criterionVersion: "v1",
+        label: "Quality",
+        weight: 100,
+        weightsFrozen: true,
+        approvedCriterionVersion: "v1",
+        approvedBy: "reviewer-1",
+        approvedAt: "2026-09-23T00:00:00Z",
+      }],
+      scores: [{
+        tenantKey: request.clientKey,
+        sourceEventId: request.id,
+        vendorId: "vendor-1",
+        vendorName: "Vendor One",
+        criterionId: "quality",
+        criterionVersion: "v1",
+        evaluatorId: "reviewer-2",
+        evaluatorName: "Reviewer Two",
+        evaluatorScore: 4,
+        evidenceReference: "artifact-1:v1",
+        overrideReason: null,
+        overrideReasonRequired: false,
+        lockState: "locked",
+        lockedBy: "reviewer-2",
+        lockedAt: "2026-09-23T00:00:00Z",
+      }],
+    });
+    global.fetch = jest.fn(async () => ({
+      ok: true,
+      json: async () => ({
+        eventId: request.id,
+        clientKey: request.clientKey,
+        authority,
+      }),
+    })) as unknown as typeof fetch;
+    try {
+      render(
+        <SourceNewWorkspace
+          event={{ ...request, currentStage: "evaluation", lifecycle: "active" }}
+          files={[]}
+        />,
+      );
+      const panel = screen.getByRole("region", {
+        name: "Stage 07 scorecard authority",
+      });
+      await waitFor(() => {
+        expect(
+          within(panel).getByText("Ready for governed scorecard inspection"),
+        ).toBeTruthy();
+      });
+      expect(global.fetch).toHaveBeenCalledWith(
+        "/api/v1/source/events/event-1/scorecard-authority",
+        expect.objectContaining({ cache: "no-store" }),
+      );
+      expect(document.body.textContent ?? "").not.toMatch(/BAFO ready|award approved/i);
+    } finally {
+      global.fetch = originalFetch;
+    }
+  });
+
+  it("refuses a scorecard readback for another event", async () => {
+    const originalFetch = global.fetch;
+    global.fetch = jest.fn(async () => ({
+      ok: true,
+      json: async () => ({
+        eventId: "other-event",
+        clientKey: request.clientKey,
+        authority: {
+          ...unavailableScorecardAuthority,
+          state: "ready",
+          blockers: [],
+        },
+      }),
+    })) as unknown as typeof fetch;
+    try {
+      render(
+        <SourceNewWorkspace
+          event={{ ...request, currentStage: "evaluation", lifecycle: "active" }}
+          files={[]}
+        />,
+      );
+      const panel = screen.getByRole("region", {
+        name: "Stage 07 scorecard authority",
+      });
+      await waitFor(() => {
+        expect(
+          within(panel).getByText(
+            "The governed scorecard authority could not be read.",
+          ),
+        ).toBeTruthy();
+      });
+      expect(within(panel).queryByText("Ready for governed scorecard inspection")).toBeNull();
+    } finally {
+      global.fetch = originalFetch;
+    }
+  });
+
   it("keeps opposite-tenant scorecard authority from clearing Stage 07 readiness", () => {
     const authority = buildScorecardAuthorityView({
       tenantKey: "example-client",
@@ -440,6 +545,38 @@ describe("SourceNewWorkspace", () => {
     ).toBeTruthy();
     expect(within(panel).queryByText("Vendor A")).toBeNull();
     expect(document.body.textContent ?? "").not.toMatch(/BAFO ready/i);
+  });
+
+  it("does not count draft criteria or unfrozen weights as approved authority", () => {
+    const authority = buildScorecardAuthorityView({
+      tenantKey: request.clientKey,
+      sourceEventId: request.id,
+      criteria: [{
+        tenantKey: request.clientKey,
+        sourceEventId: request.id,
+        criterionId: "quality",
+        criterionVersion: "v1",
+        label: "Quality",
+        weight: 80,
+        weightsFrozen: false,
+        approvedCriterionVersion: null,
+        approvedBy: null,
+        approvedAt: null,
+      }],
+      scores: [],
+    });
+    render(
+      <SourceNewWorkspace
+        event={{ ...request, currentStage: "evaluation", lifecycle: "active" }}
+        files={[]}
+        scorecardAuthority={authority}
+      />,
+    );
+    const panel = screen.getByRole("region", {
+      name: "Stage 07 scorecard authority",
+    });
+    expect(within(panel).getByText("Approved criteria").parentElement?.querySelector("dd")?.textContent).toBe("0");
+    expect(within(panel).getByText("Frozen weight total").parentElement?.querySelector("dd")?.textContent).toBe("0");
   });
 
   it("requires completion review when a completed event has historical gaps", () => {
