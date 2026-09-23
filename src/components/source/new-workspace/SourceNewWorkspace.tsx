@@ -1474,7 +1474,11 @@ function SourceNewIntelligenceWorkspace({
         <div>
           <dt>Why this playbook</dt>
           <dd>
-            Matched from the event&apos;s recorded category and sourcing motion.
+            {intelligence.archetype.source === "classifier_category"
+              ? "Matched from the event's recorded category."
+              : intelligence.archetype.source === "event_type_fallback"
+                ? "Using the recorded event type as a fallback. A category mapping is not recorded."
+                : "No shipped archetype resolves from the event's recorded category or type."}
           </dd>
         </div>
         <div>
