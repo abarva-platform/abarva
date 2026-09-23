@@ -49,6 +49,10 @@ describe("SourceOriginatePage contract optimization intake", () => {
     expect(html).toContain(
       'data-advisor-context="New sourcing event intake - aVa guided"',
     );
+    expect(html).toContain(
+      "Ready to stand up a new sourcing event for Example Organization.",
+    );
+    expect(html).not.toContain("new IT sourcing event");
     expect(html).not.toContain("technology sourcing decision");
   });
 
