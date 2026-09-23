@@ -48,6 +48,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 import ts from "typescript";
+import { isDirectInvocation } from "../exec/cli-entry.mjs";
 
 import {
   extractWorkflowRunCommands,
@@ -1644,5 +1645,4 @@ function main() {
   }
 }
 
-const invokedPath = process.argv[1] ? path.resolve(process.argv[1]) : "";
-if (invokedPath === fileURLToPath(import.meta.url)) main();
+if (isDirectInvocation(import.meta.url)) main();

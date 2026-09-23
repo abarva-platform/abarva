@@ -1,8 +1,9 @@
 #!/usr/bin/env node
 import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
-import { fileURLToPath, pathToFileURL } from "node:url";
+import { fileURLToPath } from "node:url";
 import { computeRouteReachability } from "../audit/lib/route-reachability.mjs";
+import { isDirectInvocation } from "../exec/cli-entry.mjs";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const repo = path.resolve(here, "../..");
@@ -62,7 +63,7 @@ export function evaluateRealRepository() {
   });
 }
 
-if (import.meta.url === pathToFileURL(process.argv[1]).href) {
+if (isDirectInvocation(import.meta.url)) {
   const problems = evaluateRealRepository();
   if (problems.length > 0) {
     console.error(problems.join("\n"));
