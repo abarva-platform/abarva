@@ -1,0 +1,109 @@
+Home
+Intelligence
+Moves
+Source Optimize
+Source New
+Tower
+AP
+AbarVa Prod QA
+Sign out
+MOVES
+HEALTHCARE_IDN-Meridian Health-2026
+Meridian Health · AI PRODUCT ENABLEMENT · HEALTHCARE_IDN
+P0 WORKFLOW
+Phase 1 of 6 · Originate
+«
+← All Moves
+Meridian Health Synthetic Rich Evidence E2E 2026-09-11T05-13
+
+Meridian Health · AI PRODUCT ENABLEMENT · HEALTHCARE_IDN
+
+PHASES
+✓
+Originate
+3 of 3
+✓
+Charter
+2 of 2
+✓
+Understand Current State
+5 of 5
+✓
+Choose the Approach
+2 of 2
+✓
+Build the Plan
+5 of 5
+✓
+Prepare to Execute
+4 of 4
+WORKSPACE
+▦
+Stage workspace
+▣
+Files & Evidence
+◈
+Phase Intelligence
+✓
+Approvals
+
+aVa guides P0-P4 · Atlas takes over P5 Execute.
+
+Meridian Health Synthetic Rich Evidence E2E 2026-09-11T05-13/P0 · Originate
+AVA · MOVES
+Originate
+What business bet should become a governed Move?
+
+Capture intent, sponsor, value hypothesis, and the first evidence family. Do this before the work becomes a program.
+
+Download P1 readiness workbook
+Preview completed workbook
+P0
+INPUTS
+11/11
+GATE
+Complete
+NEXT
+Prepare
+No required input blockers for the current step. Workbook available · acceptance required before next phase
+Steps
+Files
+Intelligence
+P0 INPUTS
+Business trigger
+CAPTURED
+Problem statement
+CAPTURED
+In scope
+CAPTURED
+Out of scope
+CAPTURED
+Initial value hypothesis
+CAPTURED
+Intended outcomes / success criteria
+CAPTURED
+Discovery questions / hypotheses to test
+CAPTURED
+Stakeholder / owner view
+CAPTURED
+Known evidence
+CAPTURED
+Missing evidence / open questions
+CAPTURED
+Recommendation to advance
+CAPTURED
+WORKFLOW
+Prepare
+now
+Frame
+Gate approval
+What P1 Charter will need
+P0 ORIGINATION CAPTURED
+Review the captured Move brief and approve the gate
+
+The seven-question P0 origination flow now lives in the dedicated Start a Move workspace. This phase route is the governed shell for review, attestation, Files & Evidence, and gate approval.
+
+MOVE
+Meridian Health Synthetic Rich Evidence E2E 2026-09-11T05-13
+Use the step navigation above to continue to Gate approval when the brief, sponsor role, scope, value hypothesis, evidence families, and readiness assumptions are ready to carry into P1 Charter.
+Ask aVa

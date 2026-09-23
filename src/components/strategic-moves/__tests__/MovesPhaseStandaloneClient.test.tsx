@@ -1406,6 +1406,16 @@ describe("MovesPhaseStandaloneClient", () => {
     expect(
       screen.getByText(/P5 is already approved and handed off to Tower/i),
     ).toBeInTheDocument();
+    expect(screen.getByLabelText("Phase progress")).toHaveTextContent(
+      "Open Tower",
+    );
+    expect(screen.getByLabelText("Phase progress")).toHaveTextContent(
+      "Tower handoff complete",
+    );
+    expect(screen.getByLabelText("Phase progress")).not.toHaveTextContent(
+      "Run Approve & Build",
+    );
+    expect(screen.queryByText(/^Open$/)).not.toBeInTheDocument();
     expect(screen.queryByText(/Complete this phase/i)).not.toBeInTheDocument();
     expect(
       screen.queryByText(/Attest and advance to Tower handoff/i),

@@ -1,0 +1,175 @@
+Home
+Intelligence
+Moves
+Source Optimize
+Source New
+Tower
+AP
+AbarVa Prod QA
+Sign out
+MOVES
+HEALTHCARE_IDN-Meridian Health-2026
+Meridian Health · AI PRODUCT ENABLEMENT · HEALTHCARE_IDN
+P3 WORKFLOW
+Phase 4 of 6 · Choose the Approach
+«
+← All Moves
+Meridian Health Synthetic Rich Evidence E2E 2026-09-11T05-13
+
+Meridian Health · AI PRODUCT ENABLEMENT · HEALTHCARE_IDN
+
+PHASES
+✓
+Originate
+3 of 3
+✓
+Charter
+2 of 2
+✓
+Understand Current State
+5 of 5
+✓
+Choose the Approach
+2 of 2
+✓
+Build the Plan
+5 of 5
+✓
+Prepare to Execute
+4 of 4
+WORKSPACE
+▦
+Stage workspace
+▣
+Files & Evidence
+◈
+Phase Intelligence
+✓
+Approvals
+!
+Risk Assessment
+◆
+Solutioning
+
+aVa guides P0-P4 · Atlas takes over P5 Execute.
+
+Meridian Health Synthetic Rich Evidence E2E 2026-09-11T05-13/P3 · Choose the Approach
+AVA · MOVES
+Choose the Approach
+Which solution approach should we use?
+
+Design each lane enough to estimate effort, sequence the roadmap, and map risk. aVa recommends; your SMEs decide and approve.
+
+Download P4 readiness workbook
+Preview completed workbook
+P3
+INPUTS
+7/7
+GATE
+Complete
+NEXT
+Prepare
+No required input blockers for the current step. Workbook available · acceptance required before next phase
+Steps
+Files
+Intelligence
+INPUTS
+✓
+Solution approach & options
+✓
+Operating model & work split
+✓
+Process / workflow design
+✓
+Controls & AI governance
+✓
+Architecture & integration
+✓
+Evidence confidence
+✓
+Recommended approach
+WORKFLOW
+Prepare
+Compare Options
+Record Decision
+Design Canvas
+Approve & Build
+What P4 Build the Plan will need
+Measurement owner and cadence
+Use the left steps in order. Approve & Build remains the governed close; it is not a visual-only button.
+✓
+Step 8 of 12
+Prepare
+DONE
+P3 STAGE PLAN
+Tower handoff complete
+
+This Move is complete. Tower is now the execution and value-tracking surface.
+
+P3
+Purpose
+
+Confirm what P3 must prove before the next gate can carry the work forward.
+
+Choose the Approach
+Do now
+
+Check the sessions, templates, evidence slots, and open blockers below before uploading files or approving anything.
+
+Prepare
+Done when
+
+The team knows exactly which outputs to upload, which gaps can carry, and what Approve & Build will generate.
+
+Ready for next tab
+Live state
+
+7 missing or partial evidence items · 0 hard gates open.
+
+P4 · Build the Plan
+RECOMMENDED SESSIONS
+Solution options workshop
+Architecture constraints review
+Human + AI work-split review
+Controls & guardrails review
+TEMPLATES TO COMPLETE
+Solution Options Canvas DOCX
+Pros / Cons & Tradeoff Matrix XLSX
+Human + AI Work Split DOCX
+Controls & Guardrails Review DOCX
+Solution Approach Decision Summary DOCX
+Design-Lane Risk Register XLSX
+CURRENT BLOCKERS
+7 evidence items missing or partial
+0 hard gates open
+Next phase: P4 · Build the Plan
+EVIDENCE NEEDED
+WHY IT MATTERS
+STATUS
+Current-state member-service workflow map
+
+This input anchors the artifact in client evidence instead of unsupported assumptions.
+
+Covered
+Contact center baseline KPIs
+
+This input anchors the artifact in client evidence instead of unsupported assumptions.
+
+Covered
+CRM/contact-center system and integration map
+
+This input anchors the artifact in client evidence instead of unsupported assumptions.
+
+Covered
+Claims, eligibility, benefits, and prior-auth data access
+
+This input anchors the artifact in client evidence instead of unsupported assumptions.
+
+Covered
+Knowledge base ownership and freshness
+
+This input anchors the artifact in client evidence instead of unsupported assumptions.
+
+Missing
++7more in Upload & review
+Ask aVa
