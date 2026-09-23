@@ -331,6 +331,32 @@ describe("answerHomeAvaQuestion", () => {
     expect(answer.caveats[0].detail).not.toContain("72 declared");
   });
 
+  it("scrubs stale total-universe vendor contract wording in visible model caveats", async () => {
+    mockClaudeJson({
+      status: "answered",
+      direct_answer:
+        "Commercial exposure is concentrated in vendor dependencies.",
+      prose: "",
+      cited_claim_tags: ["TD-K1"],
+      visual: { type: "none", dataset_ref: null, chart_kind: null },
+      caveats: [
+        "None of the 72 vendor contracts have extractable pricing or SLA evidence.",
+      ],
+    });
+
+    const answer = await answerHomeAvaQuestion({
+      bundle: { chapters: CHAPTERS, technologyEstate: TECHNOLOGY_ESTATE },
+      tenantKey: "meridian-health",
+      question:
+        "I'm on Technology & Data. What should the CFO care about first?",
+    });
+
+    expect(answer.caveats[0].detail).toContain(
+      "none of the 230 vendor contracts",
+    );
+    expect(answer.caveats[0].detail).not.toContain("72 vendor contracts");
+  });
+
   it("scrubs internal terms from model caveats before the UI renders them", async () => {
     mockClaudeJson({
       status: "answered",
