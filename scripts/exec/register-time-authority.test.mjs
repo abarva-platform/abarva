@@ -2123,5 +2123,203 @@ function preclaimFiles(file, item, identity, files, extra = []) {
   fs.rmSync(dir, { recursive: true, force: true });
 }
 
+// ---------------------------------------------------------------------------
+// Item T-709 — a sentence that DENIES an item is claimed does not claim it.
+//
+// `ITEM_SUBJECT` reads the English cue `item <id>`. The register uses that
+// same cue to hand items BACK: `that is items T-707 and T-708, both still
+// unclaimed`, `Items **T-713** filed and left unclaimed`. The id sits in
+// subject position either way, so the words announcing an item is free are
+// read as taking it, and it locks for the full three-hour window.
+//
+// Same shape as T-703 and T-705 on two other rules — a sentence that denies a
+// state read as asserting it — and not latent: T-707 and T-708 were the only
+// two claimable lane-T rows in the queue when it fired, and the run that took
+// T-707 did so by checking all four register mentions BY HAND, which is the
+// manual judgement this gate exists to remove.
+//
+// The strings below are transcribed from the live register, not invented. A
+// fixture writing `item T-800 is not claimed` with the words adjacent would
+// pass a rule far too narrow for the real form, where the negation is four or
+// five tokens past the id and applies to a conjoined pair (T-720's lesson
+// about proving a detector on a real positive).
+//
+// `ITEM_SUBJECT` itself is untouched, as in T-710 and T-714, so movement on
+// the real register is attributable to this veto alone.
+// ---------------------------------------------------------------------------
+{
+  // Register line 1881, 2026-09-22T21:07:07Z. Its only words about T-707.
+  const LIVE_1881 =
+    "COLLISION FOUND AND FLAGGED, no branch touched — the pre-claim gate that " +
+    "would catch it automatically merged only hours ago and nothing calls it " +
+    "at claim time — that is items T-707 and T-708, both still unclaimed. " +
+    "THE DIFFERENCE IS NOT COSMETIC";
+  check(
+    "REAL POSITIVE — register line 1881 declares T-707 unclaimed, so it does not hold it",
+    itemSubjects(LIVE_1881).some((id) => id.base === "T-707") === false,
+    JSON.stringify(itemSubjects(LIVE_1881)),
+  );
+
+  // Register line 1963, 2026-09-23T00:10:46Z. Its only mention of T-713.
+  const LIVE_1963 =
+    "**Not claimed:** any product behaviour change, any tenant write, any " +
+    "data-plane effect. Items **T-713** filed and left unclaimed; **T-709** " +
+    "and **T-710** remain open, and T-709 notably cannot be taken";
+  check(
+    "REAL POSITIVE — register line 1963 declares T-713 unclaimed, so it does not hold it",
+    itemSubjects(LIVE_1963).some((id) => id.base === "T-713") === false,
+    JSON.stringify(itemSubjects(LIVE_1963)),
+  );
+
+  // Register line 1887, 2026-09-22T21:28:22Z. Genuinely claims T-707 at its
+  // head AND quotes the negated sentence later. The veto is per OCCURRENCE,
+  // so the head claim must survive its own line. This is the guard that
+  // separates a repair from a hole: a veto reading whole lines would free an
+  // item somebody is actively working.
+  const LIVE_1887 =
+    "item T-707 claimed — the pre-claim gate resolves ITEM ownership; the " +
+    "protocol's actual collision unit is the FILE and nothing checks it. The " +
+    "refusal I hit reads `that is items T-707 and T-708, both still unclaimed` " +
+    "and is filed as T-709";
+  check(
+    "THE GUARD — a line that claims T-707 at its head keeps it despite quoting the negated form",
+    itemSubjects(LIVE_1887).some((id) => id.base === "T-707") === true,
+    JSON.stringify(itemSubjects(LIVE_1887)),
+  );
+
+  // NEGATIVE CONTROLS. Every genuine claim form must go on holding; freeing
+  // one would be two runs on one item, far worse than the false refusal.
+  check(
+    "NEGATIVE CONTROL — the helper-generated prefix still holds its item",
+    itemSubjects("item T-800 claimed on branch `exec/x` — taking it").some(
+      (id) => id.base === "T-800",
+    ) === true,
+  );
+  check(
+    "NEGATIVE CONTROL — `TAKING item T-704` still holds",
+    itemSubjects("TAKING item T-704 on branch `exec/y`").some((id) => id.base === "T-704") === true,
+  );
+  check(
+    "NEGATIVE CONTROL — a claim whose NEGATION is about something else still holds",
+    itemSubjects(
+      "item T-801 claimed on branch `exec/z` — the runtime digest is OWED and NOT claimed",
+    ).some((id) => id.base === "T-801") === true,
+  );
+  // This one must carry a REAL negator on the far side of the break, close
+  // enough to be inside the reach. A control whose far side has nothing to
+  // find would pass with the truncation deleted — it did, and a mutation
+  // removing the clause break survived the first draft of this suite.
+  // This one must carry a COMPLETE negator on the far side of the break and
+  // inside the reach, or the reach alone would account for the pass. A
+  // control that fell short on both counts survived a mutation deleting the
+  // truncation outright, twice, before this form was measured rather than
+  // assumed.
+  const BREAK_SHAPE = "item T-802 claimed; item T-803 is still unclaimed";
+  check(
+    "NEGATIVE CONTROL — a negator inside the reach but past a clause break does not free the item",
+    itemSubjects(BREAK_SHAPE).some((id) => id.base === "T-802") === true,
+    JSON.stringify(itemSubjects(BREAK_SHAPE)),
+  );
+  check(
+    "THE SAME LINE — the id the negator actually governs is still freed",
+    itemSubjects(BREAK_SHAPE).some((id) => id.base === "T-803") === false,
+    JSON.stringify(itemSubjects(BREAK_SHAPE)),
+  );
+
+  // THE REACH, pinned from both sides. The live forms need five tokens
+  // (`and T-708, both still unclaimed`) and four (`filed and left
+  // unclaimed`); a rule that stopped at three would miss both, and one that
+  // ran to the end of the line would free items named in passing paragraphs
+  // later. Asserting only the vetoing side would leave the bound itself
+  // unconstrained, which is how T-714's redundant quantifier survived.
+  check(
+    "THE REACH — a negator six words past the id still vetoes",
+    itemSubjects("item T-803 one two three four five unclaimed").some(
+      (id) => id.base === "T-803",
+    ) === false,
+  );
+  check(
+    "THE REACH — a negator seven words past the id is out of range and the item holds",
+    itemSubjects("item T-804 one two three four five six unclaimed").some(
+      (id) => id.base === "T-804",
+    ) === true,
+  );
+
+  // THE NEGATOR VOCABULARY. Every alternative needs a positive of its own or
+  // it is an unreached branch that survives mutation. Counted on the live
+  // register: `not claimed` 105, `not yet claimed` 22, `never claimed` 1.
+  // A fourth candidate, `no longer claimed`, occurs zero times and is
+  // deliberately NOT in the rule.
+  const LIVE_439 = "Signed-in acceptance for item 59 is OWED and not claimed.";
+  check(
+    "REAL POSITIVE — `not claimed` on register line 439 does not hold item 59",
+    itemSubjects(LIVE_439).some((id) => id.base === "59") === false,
+    JSON.stringify(itemSubjects(LIVE_439)),
+  );
+  check(
+    "`item T-812 is not yet claimed` does not hold it",
+    itemSubjects("item T-812 is not yet claimed by anyone").some(
+      (id) => id.base === "T-812",
+    ) === false,
+  );
+  check(
+    "`item T-813 was never claimed` does not hold it",
+    itemSubjects("item T-813 was never claimed in this window").some(
+      (id) => id.base === "T-813",
+    ) === false,
+  );
+
+  // CASE. The register shouts this word — `T-703 and T-706 remain UNCLAIMED`,
+  // `records T-703 as UNCLAIMED`, `T-455 and T-456 filed ... and UNCLAIMED`.
+  // None of those sit within the reach of a subject-position id TODAY, so
+  // this one case is synthetic and is labelled as such rather than dressed up
+  // as a transcription; it is here because dropping the case-insensitive flag
+  // was the one mutation nothing else caught, and because `item T-703 remains
+  // UNCLAIMED` is the obvious next line someone writes.
+  check(
+    "CASE — an upper-case UNCLAIMED frees the item just as the lower-case form does",
+    itemSubjects("item T-814 remains UNCLAIMED").some((id) => id.base === "T-814") === false,
+  );
+
+  // The reach counts WORDS, so the markdown the register wraps its ids in
+  // does not eat a slot. Without this the live form `Items **T-713** filed
+  // and left unclaimed` spends one of its six on `**`.
+  check(
+    "THE REACH — trailing markdown on the id does not consume a word of the reach",
+    itemSubjects("item T-805** one two three four five unclaimed").some(
+      (id) => id.base === "T-805",
+    ) === false,
+  );
+
+  // The veto skips the OCCURRENCE and keeps reading. A denied id early in a
+  // line must not stop the line holding what it claims afterwards.
+  check(
+    "THE GUARD — a denial early in a line does not hide a genuine claim later in it",
+    itemSubjects(
+      "items T-806 and T-807, both still unclaimed. I have taken item T-808 instead",
+    ).some((id) => id.base === "T-808") === true,
+  );
+
+  // End to end through the real CLI. Both ids are named on one fixture line;
+  // one is claimed and one is declared free, and the gate must split them.
+  const { dir, file } = fixture([
+    "2026-09-22T18:00:00Z | other-lane#run-1 | item T-830 claimed — taking T-830. " +
+      "That is items T-831 and T-832, both still unclaimed",
+  ]);
+  const free = preclaim(file, "T-831", "source-backlog-executor#run-2");
+  check(
+    "THE MOVEMENT — the id the line declares unclaimed is claimable",
+    free.status === 0 && free.report.verdict === "take",
+    JSON.stringify(free.report),
+  );
+  const held = preclaim(file, "T-830", "source-backlog-executor#run-2");
+  check(
+    "THE GUARD — the id that line actually claimed is still refused, same register, same run",
+    held.status === 1 && held.report.holder?.agent === "other-lane#run-1",
+    JSON.stringify(held.report),
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
 console.log(`\n${passes} passed, ${failures} failed`);
 process.exit(failures ? 1 : 0);
