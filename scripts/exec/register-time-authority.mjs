@@ -340,8 +340,88 @@ const ITEM_FLAG_CUE = /(?:^|[^A-Za-z0-9_])-$/;
  * not write it. The flag stays, because `items T-703 ... remain UNCLAIMED` is
  * one word away from a line the register already writes; the suite carries
  * that one word as a named edit to real text, not as an invented line.
+ *
+ * VOCABULARY, extended 2026-09-23 (item T-722). The forms above are all
+ * negations of the verb `claim`, and the register hands work back in two
+ * others that sit in the same place: `Item 24 was NOT taken`, `item C-003
+ * recorded, not taken`, and `item 26 is not mine`. Counted on the register,
+ * `not taken` governs 7 subject-position ids and `not mine` 1. A third
+ * candidate, `not yet taken`, occurs ZERO times and was dropped after a
+ * mutation deleting it survived the suite — the same tell `no longer claimed`
+ * gave. The left-governing half of T-722 reaches none of these, which is why
+ * the two halves are proven apart.
  */
-const CLAIM_STATE_NEGATOR = /\b(?:unclaimed|not\s+(?:yet\s+)?claimed|never\s+claimed)\b/i;
+const CLAIM_STATE_NEGATOR =
+  /\b(?:unclaimed|not\s+(?:yet\s+)?claimed|never\s+claimed|not\s+taken|not\s+mine)\b/i;
+
+/**
+ * A negation that governs the id FROM THE LEFT (item T-722).
+ *
+ * `deniesClaim` above is the only veto that reads negation, and it reads
+ * `governedTail(line.slice(afterIndex))` — ONLY what sits after the id. So a
+ * negation placed in FRONT of it is structurally unreachable, whatever the
+ * vocabulary: widening `CLAIM_STATE_NEGATOR` moves none of the forms this
+ * rule exists for, and the suite asserts that rather than asserting it here.
+ *
+ * Found by execution with the reproduction live: `--preclaim --item 26`
+ * refused item 26's GENUINE owner, because a sibling run's line says in
+ * passing that it touches none of item 26's files. A run that went out of its
+ * way to declare non-overlap was recorded as having taken the item, and the
+ * item's real owner could not write its own release line — which recreates
+ * the merged-with-no-register-line gap that T-446, T-452, T-458 and T-470
+ * each closed, arriving this time through a control rather than forgetfulness.
+ *
+ * THE REACH IS MEASURED, not chosen. Over the real register the veto frees
+ * 1 occurrence at reach 1, 9 at reach 2, 10 at reach 3 and 14 at reach 4 —
+ * and reach 4 is where it first frees an id a line GENUINELY claims, because
+ * the register disambiguates in this voice: `the "no behavioral test" item,
+ * NOT the closed shared-shaper item 41) · also item 25 · CLAIMED`. Four words
+ * reaches past that negation onto an id the same sentence takes. A false PASS
+ * — two runs on one item — is the worse direction, so the bound stops at 3
+ * and the suite pins it from BOTH sides, as T-709 pins the tail's six.
+ *
+ * THE VOCABULARY IS `not` AND `none`, counted off the register rather than
+ * brainstormed: `not` governs 7 occurrences and `none` 3. Adding `no` frees
+ * an eleventh and it is the wrong one — `run by no npm script and no workflow
+ * (item 26's fifth instance)` negates the workflow, not the item. `never`,
+ * `neither` and `nor` move nothing at all, and an alternative no test on this
+ * register can constrain is one a mutation deletes and survives, which is
+ * what T-709's `no longer claimed` taught.
+ *
+ * `ITEM_SUBJECT` is untouched, as in T-709, T-710, T-714 and T-716, so any
+ * movement on the real register is attributable to this veto alone.
+ */
+const ITEM_DISCLAIMER = /\b(?:not|none)\b/i;
+
+/** How far in FRONT of the id a negation may sit and still govern it. */
+const DISCLAIMER_REACH_TOKENS = 3;
+
+/**
+ * The text an id governs to its LEFT: up to `DISCLAIMER_REACH_TOKENS` words
+ * in front of it, truncated at the nearest clause break — the mirror of
+ * `governedTail`, and bounded in WORDS for the same reason, because the length
+ * of whoever's branch name or run id sits in between is not a property of the
+ * grammar. Backticked spans are reduced to one word exactly as
+ * `itemAttributiveReach` reduces them, so a quoted path costs one slot.
+ */
+function governedHead(before) {
+  // No empty-string guard: one was written here and a mutation deleting it
+  // SURVIVED, because splitting "" yields [""], which carries no clause break
+  // and joins back to "". The branch was unreachable rather than untested —
+  // the shape T-714 recorded — so it is gone rather than left unconstrained.
+  const words = [];
+  const cleaned = itemAttributiveReach(before).trimEnd();
+  for (const token of cleaned.split(/\s+/).reverse().slice(0, DISCLAIMER_REACH_TOKENS)) {
+    if (CLAUSE_BREAK.test(token)) break;
+    words.unshift(token);
+  }
+  return words.join(" ");
+}
+
+/** Whether this occurrence of an id is disclaimed by a negation in front of it. */
+function disclaimsItem(before) {
+  return ITEM_DISCLAIMER.test(governedHead(before));
+}
 
 /**
  * An id this line only NARRATES, rather than claims (item T-716).
@@ -471,6 +551,7 @@ export function itemSubjects(text) {
     const before = line.slice(0, match.index);
     if (ITEM_FLAG_CUE.test(before)) continue;
     if (narratesItem(before)) continue;
+    if (disclaimsItem(before)) continue;
     if (deniesClaim(line, match.index + match[0].length)) continue;
     const id = splitItemId(`${match[1]}${match[2] ?? ""}`);
     if (id) out.push(id);
