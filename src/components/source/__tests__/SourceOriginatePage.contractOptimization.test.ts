@@ -1,4 +1,7 @@
+import { createElement, type ReactNode } from "react";
+import { renderToStaticMarkup } from "react-dom/server";
 import {
+  SourceOriginatePage,
   buildContractOptimizationCandidateHref,
   isCapturedApprovalFact,
   isReviewableContractScope,
@@ -7,7 +10,48 @@ import {
 } from "../SourceOriginatePage";
 import { SOURCE_CATEGORY_IDS } from "@/lib/source/taxonomy/category-taxonomy";
 
+jest.mock("next/navigation", () => ({
+  usePathname: () => "/source/new",
+  useRouter: () => ({ push: jest.fn(), replace: jest.fn() }),
+  useSearchParams: () => new URLSearchParams(),
+}));
+
+jest.mock("@/components/shell/AppShell", () => ({
+  AppShell: ({
+    children,
+    surfaceContext,
+  }: {
+    children: ReactNode;
+    surfaceContext?: { context?: string };
+  }) =>
+    createElement(
+      "div",
+      { "data-advisor-context": surfaceContext?.context },
+      children,
+    ),
+}));
+
 describe("SourceOriginatePage contract optimization intake", () => {
+  it("renders domain-neutral default intake and advisor context", () => {
+    const html = renderToStaticMarkup(
+      createElement(SourceOriginatePage, {
+        clientName: "Example Organization",
+        clientShortName: "Example",
+        clientKey: "example",
+      }),
+    );
+
+    expect(html).toContain("Who is accountable for the sourcing decision?");
+    expect(html).toContain(
+      "Which services, products, capabilities, or business functions are in and out?",
+    );
+    expect(html).toContain("In: member services operations.");
+    expect(html).toContain(
+      'data-advisor-context="New sourcing event intake - aVa guided"',
+    );
+    expect(html).not.toContain("technology sourcing decision");
+  });
+
   it("uses the canonical Source taxonomy categories for the intake picker", () => {
     expect(SOURCE_INTAKE_CATEGORIES.map((category) => category.id)).toEqual([
       ...SOURCE_CATEGORY_IDS,

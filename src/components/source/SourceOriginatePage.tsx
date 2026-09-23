@@ -109,18 +109,18 @@ const INTAKE_FIELDS: IntakeFieldDefinition[] = [
   {
     id: "decisionOwner",
     label: "Decision owner",
-    prompt: "Who can make or sponsor the technology sourcing decision?",
+    prompt: "Who is accountable for the sourcing decision?",
     placeholder:
-      "CIO, CTO, VP Infrastructure, app owner, procurement sponsor...",
+      "Plan leader, hospital operations, shared-services owner, CIO, procurement sponsor...",
     agent: "aVa",
   },
   {
     id: "scopeBoundary",
     label: "Scope boundary",
     prompt:
-      "Which IT services, platforms, software, cloud, data, or delivery towers are in and out?",
+      "Which services, products, capabilities, or business functions are in and out?",
     placeholder:
-      "In: AMS for SAP and eCommerce. Out: security operations and deskside support.",
+      "In: member services operations. Out: claims processing and clinical decisions.",
     agent: "aVa",
   },
   {
@@ -137,7 +137,7 @@ const INTAKE_FIELDS: IntakeFieldDefinition[] = [
     prompt:
       "Who owns the minimum baseline Source can use without pretending evidence is ready?",
     placeholder:
-      "Finance owns spend baseline; ServiceNow owner owns ticket volume extract by May 8.",
+      "Finance owns spend baseline; operations owner owns volume and service data.",
     agent: "aVa",
   },
 ];
@@ -1855,7 +1855,7 @@ export function SourceOriginatePage({
         sourceSourcingMotion: sourcingMotion,
         context: intakeShape
           ? `Source intake — ${intakeContextLabel} (aVa guided)`
-          : "New IT sourcing event intake — aVa guided",
+          : "New sourcing event intake - aVa guided",
       }}
       topBarProps={{
         tenantName: clientName,
