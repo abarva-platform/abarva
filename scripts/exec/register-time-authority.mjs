@@ -331,6 +331,97 @@ const ITEM_FLAG_CUE = /(?:^|[^A-Za-z0-9_])-$/;
  */
 const CLAIM_STATE_NEGATOR = /\b(?:unclaimed|not\s+(?:yet\s+)?claimed|never\s+claimed)\b/i;
 
+/**
+ * An id this line only NARRATES, rather than claims (item T-716).
+ *
+ * The three vetoes above read what sits AFTER the id, or the two characters in
+ * front of it. Neither reads the case where the id is the OBJECT of somebody
+ * else's action, or a cross-reference to where a topic is already filed. The
+ * line asserts nothing whatever about its own ownership, and until T-713 these
+ * were masked: a later foreign release freed the item anyway. Scoping releases
+ * to their author made them surface as refusals, which is how they were found.
+ *
+ * Two shapes, both counted off the register rather than brainstormed.
+ *
+ * 1. A THIRD-PARTY SUBJECT in front of the verb. Register line 1751 at
+ *    16:34:05Z genuinely claims T-400 at its head and then writes
+ *    `Sibling run \`#20260922T155500Z\` merged item 34 at 16:18:28Z and is
+ *    still proving its deploy; I am a different owner` — a sentence whose
+ *    entire point is that the id belongs to someone else.
+ *
+ * 2. A COPULAR CROSS-REFERENCE. Register line 1718 writes `map placement is
+ *    already item T-614`, line 1737 writes `that is item T-614`, and lines
+ *    264, 421 and 629 write `This is item 34 class`, `Both are item 49's
+ *    lesson` and `this is item 31's prediction`. Seven occurrences of the
+ *    copular form in the register, narration in all seven, and not one genuine
+ *    claim written that way — the claim forms are `item X claimed`,
+ *    `TAKING item X`, `MERGED item X`, `RELEASED item X` and the legacy
+ *    `- item 21 | agent`, none of them copular.
+ *
+ * THE VERB IS NOT THE CUE, and that is the item's own open question answered
+ * by measurement rather than preference. `merged item <id>` occurs 5 times;
+ * FOUR of them are a run announcing its OWN merge at the head of its message
+ * (`MERGED item 86 through PR #7876`, register lines 278, 283, 292, 296). A
+ * rule keying on the verb would free four genuine records while their authors
+ * were still proving the deploy — a false PASS, and this whole family of
+ * repairs exists because a false pass is the worse direction. So the cue is
+ * the third party in front of the verb, exactly the shape T-710 gave paths.
+ *
+ * The copula is ADJACENT rather than a reach, because a reach would free an id
+ * claimed later in the same line; the third-party subject needs a bounded one,
+ * because the live positive puts a run id between the subject and its verb.
+ * Both bounds are pinned from both sides in the suite.
+ *
+ * Deliberately NOT included: the explicit-agent form `held by \`agent\``, which
+ * T-710 gives paths. For items the register writes it after the id, not in
+ * front, so there is nothing in front for this layer to read — and an
+ * alternative no test on this register can constrain is one a mutation
+ * deletes and survives, which is what T-709's `no longer claimed` taught.
+ *
+ * `ITEM_SUBJECT` itself is untouched, as in T-709, T-710 and T-714, so any
+ * movement on the real register is attributable to this veto alone.
+ *
+ * THE LIMIT, stated rather than left implicit: a run that writes its own claim
+ * in the copular voice — `the work I am taking is item T-500` — now reads as
+ * narration and does not hold it. No line in 872 has been written that way,
+ * and the sanctioned helper composes `item <id> claimed`, so the remaining
+ * path to it is an operator writing it out by hand in a voice the protocol
+ * does not use.
+ */
+const ITEM_COPULA = /\b(?:is|are)\s+(?:already\s+)?$/i;
+
+/**
+ * At most two words may sit between the third-party subject and its verb —
+ * the same token bound `PATH_ATTRIBUTIVE` uses, and for the same reason: a
+ * bound measured in CHARACTERS is one no test constrains, because the length
+ * of whoever's run id sits in the middle is not a property of the grammar.
+ * The live positive puts exactly two there, `run` and a backticked run id.
+ */
+const ITEM_THIRD_PARTY = new RegExp(
+  "\\b(?:siblings?|another|other|others|else)\\s+(?:\\w+\\s+){0,2}" +
+    "(?:merged|claimed|holds?|held|closed)\\s+$",
+  "i",
+);
+
+/**
+ * The text in front of an id, with each backticked span reduced to ONE word so
+ * that the bound above counts words rather than characters. `attributiveReach`
+ * performs the same reduction for paths, and this is where it earns its place:
+ * without it, `Sibling run \`#20260922T155500Z\` merged` has a span the word
+ * class cannot cross, and the live positive on register line 1751 goes on
+ * being read as a claim.
+ */
+function itemAttributiveReach(before) {
+  return before.replace(/`[^`]*`/g, "ref");
+}
+
+/** Whether this occurrence of an id is narrated about rather than claimed. */
+function narratesItem(before) {
+  const reach = itemAttributiveReach(before);
+  return ITEM_COPULA.test(reach) || ITEM_THIRD_PARTY.test(reach);
+}
+
+
 /** How far past the id the negation may sit and still govern it. */
 const NEGATION_REACH_TOKENS = 6;
 
@@ -365,7 +456,9 @@ export function itemSubjects(text) {
   ITEM_SUBJECT.lastIndex = 0;
   const out = [];
   for (const match of line.matchAll(ITEM_SUBJECT)) {
-    if (ITEM_FLAG_CUE.test(line.slice(0, match.index))) continue;
+    const before = line.slice(0, match.index);
+    if (ITEM_FLAG_CUE.test(before)) continue;
+    if (narratesItem(before)) continue;
     if (deniesClaim(line, match.index + match[0].length)) continue;
     const id = splitItemId(`${match[1]}${match[2] ?? ""}`);
     if (id) out.push(id);
