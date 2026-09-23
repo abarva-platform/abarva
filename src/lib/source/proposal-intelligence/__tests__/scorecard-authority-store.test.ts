@@ -187,6 +187,27 @@ describe("Source scorecard authority store", () => {
     ).resolves.toEqual({ kind: "unavailable" });
   });
 
+  it("normalizes driver Date timestamps for approved and locked authority", async () => {
+    serve({
+      source_scorecard_criteria: {
+        data: [{ ...criterion, approved_at: new Date("2026-09-23T00:00:00Z") }],
+        error: null,
+      },
+      source_scorecard_scores: {
+        data: [{ ...score, locked_at: new Date("2026-09-23T00:00:00Z") }],
+        error: null,
+      },
+    });
+
+    await expect(
+      readSourceScorecardAuthorityRecords("event-1", "tenant-1"),
+    ).resolves.toEqual({
+      kind: "available",
+      criteria: [expect.objectContaining({ approvedAt: "2026-09-23T00:00:00.000Z" })],
+      scores: [expect.objectContaining({ lockedAt: "2026-09-23T00:00:00.000Z" })],
+    });
+  });
+
   it("distinguishes absent authority from an unapplied schema", async () => {
     serve({
       source_scorecard_criteria: { data: [], error: null },

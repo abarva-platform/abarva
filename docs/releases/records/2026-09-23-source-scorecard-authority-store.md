@@ -29,6 +29,7 @@ Release lane: `client-data-lane`. The proposed Layer 3 tables hold versioned cri
 - Author criterion and score tables with event/tenant keys, version and lock constraints, and tenant-read RLS.
 - Read current rows only and recheck tenant/event identity after the database query.
 - Distinguish no rows from unavailable schema and normalize finite database decimal values.
+- Normalize driver-returned timestamp objects into stable ISO readback values.
 - Mount the read through an authenticated event-scoped route and the Stage 07 workspace; no ranking, BAFO, award, or score write is enabled.
 
 ## QA / Validation
@@ -38,6 +39,7 @@ Release lane: `client-data-lane`. The proposed Layer 3 tables hold versioned cri
 - A red-first schema check caught SQL three-valued logic accepting an approved criterion row with a null approved version; the authored constraint now requires a non-null approved version. This is a source-level check, not a database migration execution.
 - Red-first route and workspace tests caught the missing product path. Removing the workspace event-identity guard made the opposite-event test fail; the guard was restored.
 - A red-first rendered test caught draft criteria counted as approved; the Stage 07 counts now include only named, version-matched approvals and their frozen weights.
+- A driver-shaped test failed first when Postgres timestamp columns arrived as `Date` objects; approved and locked timestamps now normalize to ISO text for the authority view.
 - Focused Jest, scoped ESLint and TypeScript were run locally. No shared migration apply or data-plane readback was performed.
 
 ## Rollout Plan

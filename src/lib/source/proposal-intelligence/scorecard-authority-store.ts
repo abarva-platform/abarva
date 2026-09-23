@@ -20,6 +20,13 @@ function optionalText(value: unknown): string | null | undefined {
   return value === null ? null : (requiredText(value) ?? undefined);
 }
 
+function optionalTimestamp(value: unknown): string | null | undefined {
+  if (value instanceof Date) {
+    return Number.isFinite(value.getTime()) ? value.toISOString() : undefined;
+  }
+  return optionalText(value);
+}
+
 function record(value: unknown): Record<string, unknown> | null {
   return value !== null && typeof value === "object" && !Array.isArray(value)
     ? (value as Record<string, unknown>)
@@ -48,7 +55,7 @@ function criterionFromRow(
   const label = requiredText(row.label);
   const approvedCriterionVersion = optionalText(row.approved_criterion_version);
   const approvedBy = optionalText(row.approved_by);
-  const approvedAt = optionalText(row.approved_at);
+  const approvedAt = optionalTimestamp(row.approved_at);
   const weight = finiteDecimal(row.weight);
   if (
     !criterionId ||
@@ -92,7 +99,7 @@ function scoreFromRow(
   const evidenceReference = optionalText(row.evidence_reference);
   const overrideReason = optionalText(row.override_reason);
   const lockedBy = optionalText(row.locked_by);
-  const lockedAt = optionalText(row.locked_at);
+  const lockedAt = optionalTimestamp(row.locked_at);
   const evaluatorScore =
     row.evaluator_score === null ? null : finiteDecimal(row.evaluator_score);
   if (
