@@ -281,6 +281,84 @@ function splitItemId(value) {
  */
 const ITEM_FLAG_CUE = /(?:^|[^A-Za-z0-9_])-$/;
 
+/**
+ * A sentence that DENIES an item is claimed (item T-709).
+ *
+ * The register hands items back in the same English the gate reads as taking
+ * them. `ITEM_SUBJECT` sees `item <id>` and calls the id claimed; but the
+ * register writes `that is items T-707 and T-708, both still unclaimed` and
+ * `Items **T-713** filed and left unclaimed`, and those are the words for
+ * FREE. So announcing an item is available locks it for the full window, and
+ * the more conscientiously a run hands work on, the more it takes with it.
+ *
+ * Found by execution before any code was written for T-707, on the real
+ * register: T-707 and T-708 were the only two claimable lane-T rows in the
+ * queue, and the gate refused both. The run took T-707 anyway after checking
+ * all four register mentions by hand — which is the manual judgement this
+ * gate exists to remove. Same shape as T-703 and T-705 on two other rules.
+ *
+ * Three decisions worth stating, because each is the difference between a
+ * repair and a hole:
+ *
+ * 1. PER OCCURRENCE, never per line. Register line 1887 genuinely claims
+ *    T-707 at its head and quotes the negated sentence three hundred
+ *    characters later. A veto reading whole lines would free an item somebody
+ *    is actively working — a false PASS, two runs on one item, far worse than
+ *    the false refusal being repaired.
+ *
+ * 2. A BOUNDED REACH, measured off the live forms rather than guessed. The
+ *    negation is five tokens past the id in the first (`and T-708, both still
+ *    unclaimed`) and four in the second (`filed and left unclaimed`); a rule
+ *    demanding adjacency misses both. Six is the limit, and the suite pins it
+ *    from BOTH sides — six vetoes, seven does not — because a bound asserted
+ *    only on the side that fires is a bound no test constrains, which is how
+ *    T-714's redundant quantifier survived mutation.
+ *
+ * 3. CLAUSE BREAKS STOP IT. `item T-801 claimed on branch `x` — the runtime
+ *    digest is OWED and NOT claimed` is a real register shape, and its
+ *    negation is about the digest, not the item. A comma does not stop the
+ *    reach, because the live form conjoins a pair across one.
+ *
+ * The vocabulary is counted off the register rather than brainstormed:
+ * `not claimed` 105 occurrences, `not yet claimed` 22, `unclaimed` in the
+ * subject forms above, `never claimed` 1. A fourth candidate, `no longer
+ * claimed`, occurs zero times and was dropped — it is an alternative no test
+ * on this register can constrain, and a mutation deleting it survived the
+ * suite, which is the tell.
+ *
+ * `ITEM_SUBJECT` itself is untouched, as in T-710 and T-714, so movement on
+ * the real register is attributable to this veto alone.
+ */
+const CLAIM_STATE_NEGATOR = /\b(?:unclaimed|not\s+(?:yet\s+)?claimed|never\s+claimed)\b/i;
+
+/** How far past the id the negation may sit and still govern it. */
+const NEGATION_REACH_TOKENS = 6;
+
+/** A clause boundary the negation may not reach back across. */
+const CLAUSE_BREAK = /[.;:|!?]|—|--/;
+
+/**
+ * The text an id governs: up to `NEGATION_REACH_TOKENS` words after it,
+ * truncated at the first clause break.
+ */
+function governedTail(tail) {
+  const cleaned = tail.replace(/^(?:\*+|`+)/, "").trim();
+  if (cleaned === "") return "";
+  const words = [];
+  for (const token of cleaned.split(/\s+/).slice(0, NEGATION_REACH_TOKENS)) {
+    const cut = token.search(CLAUSE_BREAK);
+    if (cut === 0) break;
+    words.push(cut === -1 ? token : token.slice(0, cut));
+    if (cut !== -1) break;
+  }
+  return words.join(" ");
+}
+
+/** Whether this occurrence of an id is denied rather than claimed. */
+function deniesClaim(line, afterIndex) {
+  return CLAIM_STATE_NEGATOR.test(governedTail(line.slice(afterIndex)));
+}
+
 /** Every item id this line puts in subject position. */
 export function itemSubjects(text) {
   const line = String(text);
@@ -288,6 +366,7 @@ export function itemSubjects(text) {
   const out = [];
   for (const match of line.matchAll(ITEM_SUBJECT)) {
     if (ITEM_FLAG_CUE.test(line.slice(0, match.index))) continue;
+    if (deniesClaim(line, match.index + match[0].length)) continue;
     const id = splitItemId(`${match[1]}${match[2] ?? ""}`);
     if (id) out.push(id);
   }
