@@ -90,34 +90,41 @@ describe('Intelligence chat surface · render contract (INT-VOICE.STRAT-2026-05-
       expect(shaped).toContain("What's driving the question");
     });
 
-    // KNOWN RED, DELIBERATELY RUN. `it.failing` passes while the body fails
-    // and FAILS the moment the body starts passing — so this is not an
-    // exclusion, it is a marker that clears itself. It is here because the
-    // assertions below describe a live rendering path that is wrong today,
-    // and the honest thing is to run them rather than leave the whole suite
-    // unexecuted.
+    // THE MARKER HAS CLEARED. This was `it.failing` — a case that passes
+    // while its body fails and fails the moment its body starts passing.
+    // It is now a plain `it`, because C-502 fixed the product code its
+    // comment was waiting on and the body passes. Promoting it is the whole
+    // point of the construct: leaving it as `it.failing` after the fix
+    // would turn a self-clearing marker into a permanently red one.
     //
-    // The template this suite was written against is genuinely off for
+    // What it was waiting on, kept because it is the clearest statement of
+    // the mechanism anywhere in the tree and it was written first. The
+    // template this suite was written against is genuinely off for
     // /intelligence: `shouldCompactSurface('/intelligence')` returns false
     // (src/lib/agent/response-shape.ts), and the four negative assertions in
-    // the case above pass. A SECOND compactor takes the answer apart anyway.
+    // the case above pass. A SECOND compactor took the answer apart anyway.
     // `shapeAgentResponseForSurface` ends in `shapeSharedAdvisorResponse`,
     // which calls `compactForChat(text, targetChars = 900, maxParagraphs = 5)`
     // — and `paragraphSplit` (src/lib/answer/shared-response-shaper.ts)
     // splits on `\n\s*\n` OR a bare `\n`, so it counts LINES, not
     // paragraphs. This fixture is 861 characters (under the 900 target) in 5
-    // paragraphs (at the budget), but 6 lines — so it is over budget by a
-    // line break inside a paragraph, and gets fully destructured. The
-    // restructure then picks its lead sentence by keyword match
-    // (`vendor|risk|value|…`), which selects the CLOSING QUESTION and
-    // promotes it to the first line, and keeps one supporting bullet. Three
-    // of this fixture's five load-bearing fragments are dropped.
+    // paragraphs (at the budget), but 6 lines — so it was over budget by a
+    // line break inside a paragraph, and got fully destructured. The
+    // restructure then picked its lead sentence by keyword match
+    // (`vendor|risk|value|…`), which selected the CLOSING QUESTION and
+    // promoted it to the first line, keeping one supporting bullet. Three
+    // of this fixture's five load-bearing fragments were dropped.
     //
-    // Whether the fix is to count paragraphs as paragraphs, to raise the
-    // budget, or to leave advisor surfaces unshaped is a product decision
-    // about agent answer rendering, not a test decision — so no product code
-    // is changed here. Filed as backlog item C-009.
-    it.failing('round-trips the full Brief A reasoning, not just a lead and one bullet', () => {
+    // The comment named three candidate fixes — count paragraphs as
+    // paragraphs, raise the budget, or leave advisor surfaces unshaped —
+    // and called the choice a product decision. C-502 took the third: the
+    // shared compactor is now gated on the same `shouldCompactSurface`
+    // that already governs the other one, so a surface declared
+    // non-compacting is non-compacting for both. The line-counting
+    // `paragraphSplit` bug this comment identified is REAL and still
+    // present; it no longer reaches an advisor surface, and it is filed
+    // separately rather than fixed here. Filed as backlog item C-009.
+    it('round-trips the full Brief A reasoning, not just a lead and one bullet', () => {
       const shaped = shapeAgentResponseForSurface('/intelligence', BRIEF_A_GOOD_RESPONSE_RETAIL);
 
       expect(shaped).toContain('high confidence on that');

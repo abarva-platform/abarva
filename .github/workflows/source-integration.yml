@@ -50,5 +50,15 @@ jobs:
       # The runner and directories are named literally here, and only the
       # exclusion flags are generated. The paths deliberately have no trailing
       # slash: the visibility gate requires whitespace or end-of-command.
+      #
+      # source-chat-shape.test.ts is named by exact path as well (C-502). It is
+      # a loose file at the integration ROOT, not inside the directory, and the
+      # directory argument is a jest regex, so it was already swept into this
+      # run — which is why it was carried in the quarantine's `alsoIgnored`
+      # while it was red. It is green now, so the exclusion is gone; naming it
+      # here is what registers it with the CI-visibility gate rather than
+      # leaving it selected-but-invisible. Same second state the Intelligence
+      # root files were moved into after T-044 triaged them. Jest de-duplicates
+      # the overlap, so it is selected once.
       - name: Run the Source integration suites that pass on main
-        run: npx jest src/__tests__/integration/source src/lib/source/intake/__tests__ --no-coverage --ci $(node scripts/quality/source-integration-ignore-args.mjs)
+        run: npx jest src/__tests__/integration/source src/__tests__/integration/source-chat-shape.test.ts src/lib/source/intake/__tests__ --no-coverage --ci $(node scripts/quality/source-integration-ignore-args.mjs)

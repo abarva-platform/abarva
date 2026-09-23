@@ -60,7 +60,15 @@ const QUARANTINED_WIRED_DIRECTORIES = [
     directory: "source",
     workflow: ".github/workflows/source-integration.yml",
     ignoreArgsScript: "scripts/quality/source-integration-ignore-args.mjs",
-    excludedRootFiles: ["source-chat-shape.test.ts"],
+    // Was `["source-chat-shape.test.ts"]`. That file is a loose root file
+    // swept in by the `source` directory pattern, and it sat in the FIRST
+    // acceptable state — excluded by the workflow's own ignore args — because
+    // it was red on the Brief C vendor-shortlist shaping contract. C-502 fixed
+    // the shaper, so the quarantine ratchet required the entry to go; the file
+    // is now named by exact path in the same workflow's command, which is the
+    // SECOND acceptable state. Empty here because nothing is in the first, the
+    // same move T-044 made for the two Intelligence root files.
+    excludedRootFiles: [],
   },
   {
     // 2026-09-19 (T-032). 51 suites, of which one workflow reached one file by

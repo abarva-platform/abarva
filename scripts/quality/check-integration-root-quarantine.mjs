@@ -57,7 +57,14 @@ const LIST = path.join(HERE, "integration-root-quarantine.json");
  * silent headroom for the next one. Lower it in the same change that wires a
  * suite back in.
  */
-const CEILING = 5;
+// 5 -> 4 (C-502). `source-chat-shape.test.ts` was the one entry on this
+// list whose verdict was `real` rather than `update`: the suite was correct
+// and the product was wrong. C-502 fixed the shaper, so the entry is gone
+// and the file is named by exact path in the Source integration workflow.
+// Lowered in the SAME change that removed the entry, which is what this
+// file's own ratchet requires — a ceiling left above the list is headroom
+// the next exclusion would pass through unexamined.
+const CEILING = 4;
 
 /** The only triage verdicts item 26 recognises. */
 const VERDICTS = ["update", "delete", "real"];
