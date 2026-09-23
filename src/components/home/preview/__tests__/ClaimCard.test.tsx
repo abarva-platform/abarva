@@ -16,30 +16,49 @@ import { getHomeReviewBundle } from "@/lib/home/preview/golden-snapshot";
  */
 describe("ClaimCard", () => {
   const bundle = getHomeReviewBundle("meridian-health")!;
-  const claim = bundle.chapters.flatMap((c) => c.key_insights).find((c) => c.evidence_ids.length > 0)!;
+  const claim = bundle.chapters
+    .flatMap((c) => c.key_insights)
+    .find((c) => c.evidence_ids.length > 0)!;
 
   it("does not show evidence text until expanded", () => {
-    render(<ClaimCard claim={claim} signalPacket={bundle.thesis.signalPacket} />);
+    render(
+      <ClaimCard claim={claim} signalPacket={bundle.thesis.signalPacket} />,
+    );
     expect(screen.getByText(claim.statement)).toBeInTheDocument();
     expect(screen.queryByText(claim.evidence_ids[0])).not.toBeInTheDocument();
   });
 
   it("reveals resolved evidence statements on click", () => {
-    render(<ClaimCard claim={claim} signalPacket={bundle.thesis.signalPacket} />);
-    fireEvent.click(screen.getByRole("button", { name: /why do we believe this/i }));
+    render(
+      <ClaimCard claim={claim} signalPacket={bundle.thesis.signalPacket} />,
+    );
+    fireEvent.click(
+      screen.getByRole("button", { name: /why do we believe this/i }),
+    );
     expect(screen.queryByText(claim.evidence_ids[0])).not.toBeInTheDocument();
     const firstEvidenceId = claim.evidence_ids[0];
     const resolvedStatement =
-      bundle.thesis.signalPacket.signals.find((s) => s.id === firstEvidenceId)?.statement ??
-      bundle.thesis.signalPacket.contextItems.find((c) => c.id === firstEvidenceId)?.statement;
+      bundle.thesis.signalPacket.signals.find((s) => s.id === firstEvidenceId)
+        ?.statement ??
+      bundle.thesis.signalPacket.contextItems.find(
+        (c) => c.id === firstEvidenceId,
+      )?.statement;
     expect(resolvedStatement).toBeTruthy();
     expect(screen.getByText(resolvedStatement!)).toBeInTheDocument();
-    expect(screen.getAllByText(/Derived evidence signal|Governed record|Leadership testimony/).length).toBeGreaterThan(0);
+    expect(
+      screen.getAllByText(
+        /Derived from governed records|Governed record|Leadership interviews/,
+      ).length,
+    ).toBeGreaterThan(0);
   });
 
   it("toggles back to hidden on a second click", () => {
-    render(<ClaimCard claim={claim} signalPacket={bundle.thesis.signalPacket} />);
-    const button = screen.getByRole("button", { name: /why do we believe this/i });
+    render(
+      <ClaimCard claim={claim} signalPacket={bundle.thesis.signalPacket} />,
+    );
+    const button = screen.getByRole("button", {
+      name: /why do we believe this/i,
+    });
     fireEvent.click(button);
     fireEvent.click(screen.getByRole("button", { name: /hide evidence/i }));
     expect(screen.queryByText(claim.evidence_ids[0])).not.toBeInTheDocument();

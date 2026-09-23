@@ -1,4 +1,7 @@
-import type { EnterpriseSignalPacket, GroundedClaim } from "@/lib/home/preview/types";
+import type {
+  EnterpriseSignalPacket,
+  GroundedClaim,
+} from "@/lib/home/preview/types";
 import { resolveEvidence } from "@/components/home/preview/evidence-resolver";
 
 /**
@@ -45,13 +48,19 @@ export interface ClaimSource {
   hasUnresolved: boolean;
 }
 
-export function claimSource(claim: GroundedClaim, signalPacket: EnterpriseSignalPacket): ClaimSource {
+export function claimSource(
+  claim: GroundedClaim,
+  signalPacket: EnterpriseSignalPacket,
+): ClaimSource {
   return sourceForIds(claim.evidence_ids, signalPacket);
 }
 
 /** Same resolution for anything that cites evidence without being a claim -- an exhibit, for
  * instance. Kept separate so callers never have to fake a claim shape to name a source. */
-export function sourceForIds(evidenceIds: string[], signalPacket: EnterpriseSignalPacket): ClaimSource {
+export function sourceForIds(
+  evidenceIds: string[],
+  signalPacket: EnterpriseSignalPacket,
+): ClaimSource {
   const resolved = resolveEvidence(evidenceIds, signalPacket);
   const labels: string[] = [];
   for (const item of resolved) {
@@ -65,19 +74,22 @@ export function sourceForIds(evidenceIds: string[], signalPacket: EnterpriseSign
     // annotates; beyond that the count is more honest than a truncated list.
     label:
       labels.length === 0
-        ? "Evidence reference needs resolution"
+        ? "Evidence source mapping pending"
         : labels.length <= 2
           ? labels.join(" · ")
           : `${labels[0]} · ${labels[1]} + ${labels.length - 2} more`,
-    ids: evidenceReferenceSummary(evidenceIds.length, resolved.filter((item) => item.unresolved).length),
+    ids: evidenceReferenceSummary(
+      evidenceIds.length,
+      resolved.filter((item) => item.unresolved).length,
+    ),
     hasUnresolved: resolved.some((r) => r.unresolved),
   };
 }
 
 function evidenceReferenceSummary(total: number, unresolved: number): string {
-  if (total === 0) return "No cited evidence references";
+  if (total === 0) return "No cited evidence yet";
   if (unresolved > 0) {
-    return `${total.toLocaleString()} cited ${total === 1 ? "reference" : "references"}, ${unresolved.toLocaleString()} unresolved`;
+    return `${total.toLocaleString()} cited ${total === 1 ? "reference" : "references"} · ${unresolved.toLocaleString()} need source mapping`;
   }
   return `${total.toLocaleString()} governed ${total === 1 ? "reference" : "references"}`;
 }

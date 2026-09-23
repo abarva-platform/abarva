@@ -146,7 +146,7 @@ function ClaimRow({
           }}
         >
           {source.ids}
-          {source.hasUnresolved ? " · one citation does not resolve" : ""}
+          {source.hasUnresolved ? " · source mapping needed" : ""}
         </p>
       </aside>
     </>
