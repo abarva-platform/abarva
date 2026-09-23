@@ -79,6 +79,16 @@ Added:
   newly added `check:` script that has not been classified. A gate nobody runs looks exactly like
   a tool nobody needs to run, and that registry is where the difference is written down; it did
   its job on this PR.
+- `src/__tests__/behaviors/test-ci-coverage-census.test.ts`: the fixture now copies the **import
+  closure** of the scripts it runs, instead of a hand-written list of two. Also not foresight —
+  the first CI run failed 1 suite and 37 cases with
+  `ERR_MODULE_NOT_FOUND: .../scripts/exec/cli-entry.mjs`, because this fixture copies the real
+  census script into a temp repository and runs it there, and the guard it now imports was not in
+  the list. The list was correct only for as long as neither script grew a dependency; a list
+  cannot notice that it is stale, so it was replaced rather than extended by one. Relative
+  specifiers only, resolved statically — sound for the modules it reaches, which import node
+  builtins and nothing else, and explicitly NOT sound for a module that composes a path at run
+  time. If one is ever added, its directory should be copied rather than this widened.
 
 Two gates in the same directories were already correct (`check-named-suite-requiredness.mjs`
 and `enum-reachability.mjs`, which resolve both sides). They are unchanged and are swept, which
@@ -115,6 +125,13 @@ naming 7 gates. After: 3 of 3 passing.**
    drops from 23.6s to 2.1s because every gate short-circuits. That is the case an
    import-shaped assertion about the predicate cannot reach: a guard inverted this way passes
    every such assertion and leaves every CLI dead.
+
+`npx jest src/__tests__/behaviors --no-coverage --ci` — **111 suites / 991 tests, all passing.**
+Same totals CI reported when it was failing (111 and 991, of which 1 suite and 37 cases were red
+on `ERR_MODULE_NOT_FOUND`), so this is the same scope before and after rather than a smaller one.
+The fixture repair was then broken deliberately — `relativeImportClosure` reduced to returning its
+seeds, which is the old hand list — and the suite reproduced CI's exact error, so the closure is
+load-bearing and not decoration.
 
 Regression, all exit 0 after the change:
 

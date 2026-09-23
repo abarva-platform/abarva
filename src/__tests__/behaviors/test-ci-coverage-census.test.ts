@@ -1,6 +1,7 @@
 import { execFileSync } from "node:child_process";
 import {
   copyFileSync,
+  existsSync,
   mkdirSync,
   mkdtempSync,
   symlinkSync,
@@ -141,13 +142,53 @@ function collectTestFilesIn(absolute: string, relative: string): string[] {
     .sort();
 }
 
+/**
+ * Every repository file the given scripts reach through a relative import,
+ * including the seeds themselves, as repo-relative paths.
+ *
+ * The fixture used to copy a hand-written list of two. That list was correct
+ * only for as long as neither script grew a dependency, and when both of them
+ * took the shared invocation guard from `scripts/exec/` the list said nothing
+ * and every case here died at module resolution — a fixture gap wearing the
+ * costume of a finding about the census. A list cannot notice that it is
+ * stale; a closure has nothing to keep up to date.
+ *
+ * Relative specifiers only: a bare specifier is a package and arrives through
+ * the `node_modules` symlink below. This resolves static imports, which is
+ * sound for the modules it actually reaches (they import node builtins and
+ * nothing else) but is NOT sound in general — a module that composes a path at
+ * run time is invisible to it. If one is ever added, copy its directory rather
+ * than widening this.
+ */
+function relativeImportClosure(seeds: readonly string[]): string[] {
+  const seen = new Set<string>();
+  const queue = [...seeds];
+  while (queue.length > 0) {
+    const relativePath = queue.shift() as string;
+    if (seen.has(relativePath)) continue;
+    seen.add(relativePath);
+    const source = readFileSync(path.join(repoRoot, relativePath), "utf8");
+    for (const match of source.matchAll(/\bfrom\s+["'](\.[^"']*)["']/g)) {
+      const target = path.posix.normalize(
+        path.posix.join(path.posix.dirname(relativePath), match[1]),
+      );
+      if (!existsSync(path.join(repoRoot, target))) {
+        throw new Error(`${relativePath} imports ${match[1]}, which does not exist at ${target}`);
+      }
+      queue.push(target);
+    }
+  }
+  return [...seen].sort();
+}
+
 /** A fixture repository carrying the real census script and its real import. */
 function makeFixture(files: Record<string, string>, scripts: Record<string, string> = {}): string {
   // realpath, because the script gates its own entry point on argv[1] matching
   // its module path and the macOS temp directory is reached through a symlink.
   const dir = realpathSync(mkdtempSync(path.join(tmpdir(), "test-ci-census-")));
   mkdirSync(path.join(dir, "scripts", "quality"), { recursive: true });
-  for (const script of [CENSUS_SCRIPT, SIBLING_SCRIPT]) {
+  for (const script of relativeImportClosure([CENSUS_SCRIPT, SIBLING_SCRIPT])) {
+    mkdirSync(path.dirname(path.join(dir, script)), { recursive: true });
     copyFileSync(path.join(repoRoot, script), path.join(dir, script));
   }
   write(dir, "package.json", `${JSON.stringify({ name: "fixture", scripts }, null, 2)}\n`);
