@@ -1,18 +1,18 @@
 import type { NextRequest } from "next/server";
 import { getActiveClientRow } from "@/lib/active-client";
-import { getSourcingEvent } from "@/lib/source/queries";
+import { getSourcingEventForResolvedClient } from "@/lib/source/queries";
 import { readSourceScorecardAuthorityRecords } from "@/lib/source/proposal-intelligence/scorecard-authority-store";
 import { GET } from "../route";
 
 jest.mock("@/lib/auth/tenancy", () => ({
-  requireTenancy: jest.fn(async () => ({ userId: "user-1" })),
+  requireTenancy: jest.fn(async () => ({ userId: "user-1", clientKey: "tenant-1" })),
   tenancyErrorResponse: jest.fn(() => Response.json({ error: "unauthorized" }, { status: 401 })),
 }));
 jest.mock("@/lib/active-client", () => ({
-  getActiveClientRow: jest.fn(async () => ({ key: "tenant-1" })),
+  getActiveClientRow: jest.fn(async () => ({ key: "tenant-1", name: "Tenant 1" })),
 }));
 jest.mock("@/lib/source/queries", () => ({
-  getSourcingEvent: jest.fn(async () => ({ id: "event-1" })),
+  getSourcingEventForResolvedClient: jest.fn(async () => ({ id: "event-1" })),
 }));
 jest.mock("@/lib/source/proposal-intelligence/scorecard-authority-store", () => ({
   readSourceScorecardAuthorityRecords: jest.fn(async () => ({
@@ -23,7 +23,7 @@ jest.mock("@/lib/source/proposal-intelligence/scorecard-authority-store", () => 
 }));
 
 const activeClient = jest.mocked(getActiveClientRow);
-const getEvent = jest.mocked(getSourcingEvent);
+const getEvent = jest.mocked(getSourcingEventForResolvedClient);
 const readAuthority = jest.mocked(readSourceScorecardAuthorityRecords);
 
 function request() {
@@ -41,7 +41,7 @@ describe("GET Source event scorecard authority", () => {
     activeClient.mockClear();
     getEvent.mockClear();
     readAuthority.mockClear();
-    activeClient.mockResolvedValue({ key: "tenant-1" } as never);
+    activeClient.mockResolvedValue({ key: "tenant-1", name: "Tenant 1" } as never);
     getEvent.mockResolvedValue({ id: "event-1" } as never);
     readAuthority.mockResolvedValue({
       kind: "available",
@@ -54,7 +54,11 @@ describe("GET Source event scorecard authority", () => {
     const response = await GET(request(), context());
     expect(response.status).toBe(200);
     expect(response.headers.get("Cache-Control")).toBe("no-store");
-    expect(getEvent).toHaveBeenCalledWith("event-1");
+    expect(getEvent).toHaveBeenCalledWith("event-1", {
+      activeClientKey: "tenant-1",
+      activeClientName: "Tenant 1",
+      tenancy: expect.objectContaining({ userId: "user-1", clientKey: "tenant-1" }),
+    });
     expect(readAuthority).toHaveBeenCalledWith("event-1", "tenant-1");
     expect(await response.json()).toEqual(
       expect.objectContaining({

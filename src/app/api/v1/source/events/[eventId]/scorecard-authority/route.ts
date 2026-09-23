@@ -1,7 +1,7 @@
 import type { NextRequest } from "next/server";
 import { requireTenancy, tenancyErrorResponse } from "@/lib/auth/tenancy";
 import { getActiveClientRow } from "@/lib/active-client";
-import { getSourcingEvent } from "@/lib/source/queries";
+import { getSourcingEventForResolvedClient } from "@/lib/source/queries";
 import { buildScorecardAuthorityView } from "@/lib/source/proposal-intelligence/scorecard-authority";
 import { readSourceScorecardAuthorityRecords } from "@/lib/source/proposal-intelligence/scorecard-authority-store";
 
@@ -11,8 +11,9 @@ export const dynamic = "force-dynamic";
 type RouteCtx = { params: Promise<{ eventId: string }> };
 
 export async function GET(_request: NextRequest, { params }: RouteCtx) {
+  let tenancy: Awaited<ReturnType<typeof requireTenancy>>;
   try {
-    await requireTenancy();
+    tenancy = await requireTenancy();
   } catch (error) {
     return tenancyErrorResponse(error);
   }
@@ -23,7 +24,11 @@ export async function GET(_request: NextRequest, { params }: RouteCtx) {
   }
 
   const { eventId } = await params;
-  const event = await getSourcingEvent(eventId).catch(() => null);
+  const event = await getSourcingEventForResolvedClient(eventId, {
+    activeClientKey: activeClient.key,
+    activeClientName: activeClient.name ?? activeClient.key,
+    tenancy,
+  }).catch(() => null);
   if (!event || event.id !== eventId) {
     return Response.json({ error: "not_found" }, { status: 404 });
   }

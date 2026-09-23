@@ -31,6 +31,7 @@ Release lane: `client-data-lane`. The proposed Layer 3 tables hold versioned cri
 - Distinguish no rows from unavailable schema and normalize finite database decimal values.
 - Normalize driver-returned timestamp objects into stable ISO readback values.
 - Mount the read through an authenticated event-scoped route and the Stage 07 workspace; no ranking, BAFO, award, or score write is enabled.
+- Resolve the event through the tenant-bound Source access policy before querying scorecard records.
 
 ## QA / Validation
 
@@ -40,11 +41,12 @@ Release lane: `client-data-lane`. The proposed Layer 3 tables hold versioned cri
 - Red-first route and workspace tests caught the missing product path. Removing the workspace event-identity guard made the opposite-event test fail; the guard was restored.
 - A red-first rendered test caught draft criteria counted as approved; the Stage 07 counts now include only named, version-matched approvals and their frozen weights.
 - A driver-shaped test failed first when Postgres timestamp columns arrived as `Date` objects; approved and locked timestamps now normalize to ISO text for the authority view.
+- A route test failed first when the route used the general event lookup; the route now requires the tenant-resolved, policy-enforcing lookup and passes the authenticated actor context.
 - Focused Jest, scoped ESLint and TypeScript were run locally. No shared migration apply or data-plane readback was performed.
 
 ## Rollout Plan
 
-This remains a draft until schema and read-contract review, applicable CI, and an authorized migration plan. The mounted Stage 07 view fails closed while the schema is unapplied. Positive signed-in behavior on a legitimately advanced event remains owed.
+The code-only release may merge after review and applicable CI. The repo-owned ACA workflow does not apply database migrations; the authored schema must be reviewed and applied through a separately authorized database workflow. Until then, the mounted Stage 07 view reports authority unavailable and remains fail closed. No writer is enabled, and positive data-plane readback and signed-in behavior on a legitimately advanced event remain owed. Do not treat the code deployment as permission to advance evaluation.
 
 ## Deployment Authority
 
