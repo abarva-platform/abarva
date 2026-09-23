@@ -40,18 +40,29 @@ stale or unavailable version.
 - Atomic intake-correction plus Request-version supersession on Azure Postgres.
 - Exact-current-version check and named Request acceptance in the approval
   transaction.
+- Event-then-version row locking shared with the intake-correction writer, so
+  concurrent corrections serialize with an approval of the exact current version.
 - Mounted approval page and card fail-closed behavior.
 
 ## QA / Validation
 
-- Node.js 24 focused Jest suites: 100 tests passed across the authority store,
-  event create/edit routes, mounted approval component, approval route, and
-  Source write adapter.
-- TypeScript project validation: clean.
+- Node.js 24 focused Jest suites: 8 suites / 112 tests passed across the
+  authority store, event create/edit routes, mounted approval component,
+  approval route, gate persistence, and Source write adapter.
+- Concurrency regression on the Azure write adapter: 40 passed / 1 failed
+  before the row lock; 41 passed / 0 failed after. A coordinated competing
+  edit committed before approval in the failing run and only after approval
+  when the current-version row was locked.
+- Lock-order regression: 2 focused cases failed before approval acquired the
+  event row ahead of the version row; the adapter suite passed 41 / 41 after
+  matching the intake-correction transaction's order.
+- TypeScript project validation: clean on Node.js 24.
 - Mutation proof: removing the stale-page version comparison makes the stale
   Request route test fail; removing the write-adapter current-version check
-  makes the no-lifecycle-mutation test fail.
-- Scoped ESLint and release validation are required before PR review.
+  makes the no-lifecycle-mutation test fail. Removing `FOR UPDATE` from the
+  transactional current-version read makes the new concurrency test fail at
+  `editCommittedAtApprovalCommit` (expected false, received true).
+- Scoped ESLint and `npm run release:check` passed.
 
 ## Rollout Plan
 

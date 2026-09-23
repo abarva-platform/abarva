@@ -558,6 +558,35 @@ export function createAzureSourceWriteAdapter(
       try {
         await session(async (run) => {
           if (input.authorityApproval) {
+            // Intake corrections lock the event before its version; use that order.
+            const eventRows = await run<{ id: string }>(
+              `SELECT id FROM source_events
+                WHERE id = $1::uuid AND client_key = $2
+                FOR UPDATE`,
+              [input.eventId, input.clientKey],
+            );
+            if (!eventRows[0]?.id) {
+              throw new Error("Source event not found for approval");
+            }
+            // The version writer locks this row too; hold it through approval commit.
+            const currentRows = await run<{ id: string }>(
+              `SELECT id FROM source_event_authority_versions
+                WHERE id = $1::uuid
+                  AND event_id = $2::uuid
+                  AND client_key = $3
+                  AND authority_kind = $4
+                  AND superseded_at IS NULL
+                FOR UPDATE`,
+              [
+                input.authorityApproval.versionId,
+                input.eventId,
+                input.clientKey,
+                input.authorityApproval.authorityKind,
+              ],
+            );
+            if (!currentRows[0]?.id) {
+              throw new Error("request authority version is not current");
+            }
             const authorityRows = await run<{ id: string }>(
               `INSERT INTO source_event_authority_version_approvals
                  (event_id, client_key, authority_kind, version_id, role,

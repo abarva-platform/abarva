@@ -501,7 +501,8 @@ describe("azure source write adapter", () => {
   });
 
   it("binds an authority approval to the exact current version before lifecycle mutation", async () => {
-    const { session, statements } = fakeTxSession((sql) =>
+    const { session, statements, paramSets } = fakeTxSession((sql) =>
+      sql.includes("FOR UPDATE") ||
       sql.includes("source_event_authority_version_approvals")
         ? [{ id: "authority-approval-1" }]
         : [],
@@ -525,15 +526,98 @@ describe("azure source write adapter", () => {
       },
     });
     expect(result.ok).toBe(true);
-    expect(statements[0]).toContain(
+    expect(statements[0]).toContain("SELECT id FROM source_events");
+    expect(statements[0]).toContain("FOR UPDATE");
+    expect(paramSets[0]).toEqual(["evt-1", "apex-retail"]);
+    expect(statements[1]).toContain("source_event_authority_versions");
+    expect(statements[1]).toContain("FOR UPDATE");
+    expect(statements[1]).toContain("superseded_at IS NULL");
+    expect(paramSets[1]).toEqual([
+      "request-version-1",
+      "evt-1",
+      "apex-retail",
+      "request",
+    ]);
+    expect(statements[2]).toContain(
       "INSERT INTO source_event_authority_version_approvals",
     );
-    expect(statements[0]).toContain("superseded_at IS NULL");
-    expect(statements[1]).toContain("UPDATE source_events");
+    expect(statements[3]).toContain("UPDATE source_events");
+  });
+
+  it("serializes a competing Request edit before committing exact-current approval", async () => {
+    const statements: string[] = [];
+    let current = true;
+    let versionLocked = false;
+    let editCommitted = false;
+    let editCommittedAtApprovalCommit = false;
+    let releaseVersionLock = () => {};
+    const versionLockReleased = new Promise<void>((resolve) => {
+      releaseVersionLock = resolve;
+    });
+    let competingEdit: Promise<void> | undefined;
+    const session: TxSessionRunner = async (fn) => {
+      try {
+        const result = await fn(async <R>(sql: string) => {
+          statements.push(sql);
+          if (sql.trimStart().startsWith("SELECT id FROM source_events")) {
+            return [{ id: "evt-1" }] as R[];
+          }
+          if (
+            sql
+              .trimStart()
+              .startsWith("SELECT id FROM source_event_authority_versions")
+          ) {
+            versionLocked = sql.includes("FOR UPDATE");
+            return [{ id: "request-version-1" }] as R[];
+          }
+          if (sql.includes("INSERT INTO source_event_authority_version_approvals")) {
+            const matchedAtStatementStart = current;
+            competingEdit = (async () => {
+              if (versionLocked) await versionLockReleased;
+              current = false;
+              editCommitted = true;
+            })();
+            await Promise.resolve();
+            return (matchedAtStatementStart ? [{ id: "approval-1" }] : []) as R[];
+          }
+          return [] as R[];
+        });
+        editCommittedAtApprovalCommit = editCommitted;
+        return result;
+      } finally {
+        releaseVersionLock();
+        await competingEdit;
+      }
+    };
+    const adapter = createAzureSourceWriteAdapter(session);
+    const result = await adapter.applyApproval({
+      eventId: "evt-1",
+      clientKey: "apex-retail",
+      fromState: "waiting_on_client",
+      toState: "active",
+      approvalAction: "admin_review",
+      approvedByUserId: "admin-1",
+      notes: "Reviewed the current Request version.",
+      authorityApproval: {
+        authorityKind: "request",
+        versionId: "request-version-1",
+        role: "request_acceptor",
+        decision: "approved",
+        actorUserId: "admin-1",
+        reason: "Reviewed the current Request version.",
+      },
+    });
+    expect(result.ok).toBe(true);
+    expect(editCommittedAtApprovalCommit).toBe(false);
+    expect(editCommitted).toBe(true);
+    expect(statements[0]).toContain("SELECT id FROM source_events");
+    expect(statements[1]).toContain("source_event_authority_versions");
   });
 
   it("does not mutate lifecycle when the authority version is stale", async () => {
-    const { session, statements } = fakeTxSession(() => []);
+    const { session, statements } = fakeTxSession((sql) =>
+      sql.includes("SELECT id FROM source_events") ? [{ id: "evt-1" }] : [],
+    );
     const adapter = createAzureSourceWriteAdapter(session);
     const result = await adapter.applyApproval({
       eventId: "evt-1",
@@ -556,8 +640,9 @@ describe("azure source write adapter", () => {
       ok: false,
       error: "request authority version is not current",
     });
-    expect(statements).toHaveLength(1);
-    expect(statements[0]).not.toContain("UPDATE source_events");
+    expect(statements).toHaveLength(2);
+    expect(statements[0]).toContain("FOR UPDATE");
+    expect(statements[1]).not.toContain("UPDATE source_events");
   });
 
   it("insertCriterionApproval returns the Azure approval id", async () => {
