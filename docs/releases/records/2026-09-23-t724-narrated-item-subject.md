@@ -88,6 +88,15 @@ Measured over the same scope on both sides; no number here is absolute.
 | `scripts/exec/worktree-retention.test.mjs` | 22 passed, 0 failed | 22 passed, 0 failed |
 | `scripts/exec/cli-entry.test.mjs` | 17 passed, 0 failed | 17 passed, 0 failed |
 
+**The suite is confirmed executing on a real runner, and the runner's number is not the
+local one.** Run `35834667303`, job `Execution queue behavioral contract`, logs
+`-- T-724: a narrated id is not a claimed id --` and `230 passed, 0 failed`. The gap to the
+local 233 is **three pre-existing cases that read the operator register**, which is not in
+this repository and does not exist on a runner, so they are skipped there. Measured on
+clean `origin/main` rather than assumed: the same suite reads **210** with the register
+absent and **213** with it present, the identical gap of three. None of the 20 cases added
+here is among them — every one runs from a fixture, and all 20 executed in CI.
+
 **Red first, then the fix, then the fix broken on purpose.** 8 of the 20 new cases failed
 before any product edit; the other 12 are the guardrails an over-broad fix would break, and
 they pass on unfixed code by design.
