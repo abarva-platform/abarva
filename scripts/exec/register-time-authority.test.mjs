@@ -29,6 +29,7 @@ import {
   announcesRelease,
   announcesAbstention,
   claimedPaths,
+  itemSubjects,
 } from "./register-time-authority.mjs";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
@@ -2008,6 +2009,116 @@ function preclaimFiles(file, item, identity, files, extra = []) {
     "a LATER abstention does not free an earlier live claim — the real holder still holds",
     r.status === 1 && r.report.holder?.agent === "a#run-1",
     JSON.stringify(r.report),
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+// ---------------------------------------------------------------------------
+// Item T-714 — a quoted command-line flag is not a claim on the id it names.
+//
+// `ITEM_SUBJECT` matches the English cue `item <id>`, and the register quotes
+// its own commands constantly: `--preclaim --item T-709 --files ...`. The flag
+// spelling satisfies the same cue, so NARRATING that you ran the gate on an id
+// records you as HOLDING it — and it is self-reinforcing, because the more
+// carefully a run documents the checks it performed, the more ids it locks for
+// the full three-hour window.
+//
+// Found by execution on the live register, not by reading: it is what refused
+// T-709 to three consecutive runs. The two shapes asserted below are the real
+// known positives, transcribed from register lines 1896 and 1965 — a fixture
+// that invented an easier sentence could not have failed here (T-720's lesson
+// about proving a detector on a real positive).
+//
+// The veto is deliberately exact rather than heuristic: the cue is the one or
+// two hyphens immediately in front of the word, with a non-word character
+// before them. That distinguishes a flag (`--item`, `-item`) from an English
+// compound (`line-item`, `sub-item`) without reading any further context, and
+// it leaves `ITEM_SUBJECT` itself untouched so the movement is attributable to
+// the veto alone.
+// ---------------------------------------------------------------------------
+{
+  // Register line 1896, 2026-09-22T21:44:01Z. Its ONLY mention of T-709.
+  const LIVE_1896 =
+    "I ran `--preclaim --item T-709 --files scripts/exec/source-stage-map.json` " +
+    "against the live register and it exited 1, naming THREE live holds";
+  check(
+    "REAL POSITIVE — the quoted invocation on register line 1896 does not hold T-709",
+    itemSubjects(LIVE_1896).some((id) => id.base === "T-709") === false,
+    JSON.stringify(itemSubjects(LIVE_1896)),
+  );
+
+  // Register line 1965, 2026-09-23T00:17:00Z. Mentions T-709 twice, both
+  // times inside a quoted invocation, while genuinely claiming T-710.
+  const LIVE_1965 =
+    "item T-710 claimed on branch `exec/t-709-item-subject-negation-veto` — " +
+    "NOTE ON WHY THIS ITEM AND NOT T-709: T-709 is higher in the file but the " +
+    "sanctioned gate refuses it to me — `--preclaim --item T-709` returns " +
+    "held-by-a-sibling on line 1896, whose only mention of T-709 is the CLI " +
+    "string `--item T-709` inside a narration saying the item is nobody else's";
+  check(
+    "REAL POSITIVE — register line 1965 does not hold T-709 through its two quoted flags",
+    itemSubjects(LIVE_1965).some((id) => id.base === "T-709") === false,
+    JSON.stringify(itemSubjects(LIVE_1965)),
+  );
+  check(
+    "THE SAME LINE STILL HOLDS WHAT IT ACTUALLY CLAIMED — T-710",
+    itemSubjects(LIVE_1965).some((id) => id.base === "T-710") === true,
+    JSON.stringify(itemSubjects(LIVE_1965)),
+  );
+
+  // A single-dash flag is the same thing spelled shorter.
+  check(
+    "a single-dash `-item T-802` is a flag too",
+    itemSubjects("ran `-item T-802` for the check").some((id) => id.base === "T-802") === false,
+  );
+
+  // NEGATIVE CONTROLS. Every genuine claim form the register writes must go on
+  // holding. A veto that freed these would be a false PASS — two runs on one
+  // item — which is far worse than the false refusal it repairs.
+  check(
+    "NEGATIVE CONTROL — the helper-generated prefix still holds its item",
+    itemSubjects("item T-800 claimed on branch `exec/x` — taking it").some(
+      (id) => id.base === "T-800",
+    ) === true,
+  );
+  check(
+    "NEGATIVE CONTROL — the legacy `- item 21 | agent` form still holds",
+    itemSubjects("- item 21 | claude-code-executor | 2026-09-19T12:58Z | branch").some(
+      (id) => id.base === "21",
+    ) === true,
+  );
+  check(
+    "NEGATIVE CONTROL — `TAKING item T-704` still holds",
+    itemSubjects("TAKING item T-704 on branch `exec/y`").some((id) => id.base === "T-704") === true,
+  );
+  check(
+    "NEGATIVE CONTROL — a hyphenated English compound is not a flag",
+    itemSubjects("the line-item T-806 is claimed here").some((id) => id.base === "T-806") === true,
+  );
+  check(
+    "NEGATIVE CONTROL — `RELEASED item T-701(a)` keeps its part suffix",
+    itemSubjects("RELEASED item T-701(a) — files free").some(
+      (id) => id.base === "T-701" && id.part === "(a)",
+    ) === true,
+  );
+
+  // End to end through the real CLI, on the shape that refused T-709 live: the
+  // only live line naming the item quotes a flag, and the item is free.
+  const { dir, file } = fixture([
+    "2026-09-22T18:00:00Z | other-lane#run-1 | item T-820 claimed — taking T-820; " +
+      "I ran `--preclaim --item T-821` against the live register first and it passed",
+  ]);
+  const free = preclaim(file, "T-821", "source-backlog-executor#run-2");
+  check(
+    "THE MOVEMENT — the id named only by a quoted flag is claimable",
+    free.status === 0 && free.report.verdict === "take",
+    JSON.stringify(free.report),
+  );
+  const held = preclaim(file, "T-820", "source-backlog-executor#run-2");
+  check(
+    "THE GUARD — the id that line actually claimed is still refused, same register, same run",
+    held.status === 1 && held.report.holder?.agent === "other-lane#run-1",
+    JSON.stringify(held.report),
   );
   fs.rmSync(dir, { recursive: true, force: true });
 }

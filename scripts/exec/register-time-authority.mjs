@@ -241,11 +241,53 @@ function splitItemId(value) {
   return { base: match[1].toUpperCase(), part: (match[2] ?? "").toLowerCase() };
 }
 
+/**
+ * The `item` cue spelled as a COMMAND-LINE FLAG rather than the English word
+ * (item T-714).
+ *
+ * `ITEM_SUBJECT` above reads the English cue the register writes: `item T-800
+ * claimed`, `TAKING item T-704`. The register also quotes its own commands,
+ * constantly and correctly, because a run that says which checks it performed
+ * is doing the thing this backlog asks for: `--preclaim --item T-709 --files
+ * ...`. The flag `--item` satisfies `\bitem\b`, so narrating that you RAN the
+ * gate on an id records you as HOLDING it.
+ *
+ * Found by execution on the live register, not by reading: it is what refused
+ * T-709 to three consecutive runs. Line 1896 at 21:44:01Z mentions T-709 once,
+ * inside a quoted invocation; line 1965 at 00:17:00Z mentions it twice, both
+ * times inside one. Neither line ever asserted anything about T-709 — which is
+ * what separates this from T-709 itself, where a sentence DENIES the state it
+ * names. And it is self-reinforcing: the more carefully a run documents its
+ * gate checks, the more ids it locks for the full window.
+ *
+ * The cue is a hyphen immediately in front of the word whose own left
+ * neighbour is not a word character. That is exact rather than heuristic, and
+ * it is deliberately narrow enough to leave an English compound alone:
+ * `line-item T-806` has a word character in front of its hyphen and goes on
+ * holding. The legacy register form `- item 21 | agent` has a SPACE between
+ * the dash and the word and is likewise untouched.
+ *
+ * ONE hyphen, not `-{1,2}`, and that is a correction rather than a shortcut.
+ * The first draft wrote `-{1,2}` to spell out "`-item` or `--item`", and a
+ * mutation widening it to `-{1,3}` survived the suite. The reason is that the
+ * class in front admits a hyphen, so a run of any length already matches on
+ * its last character: the quantifier was redundant, and a redundant quantifier
+ * is one no test can constrain. Recorded because a surviving mutation is
+ * usually an unreached branch and here it was an unreachable one.
+ *
+ * Placed here, in the veto layer, exactly as T-710's attributive rule was:
+ * `ITEM_SUBJECT` is not widened or narrowed in the same change, so any
+ * movement on the real register is attributable to this rule alone.
+ */
+const ITEM_FLAG_CUE = /(?:^|[^A-Za-z0-9_])-$/;
+
 /** Every item id this line puts in subject position. */
 export function itemSubjects(text) {
+  const line = String(text);
   ITEM_SUBJECT.lastIndex = 0;
   const out = [];
-  for (const match of String(text).matchAll(ITEM_SUBJECT)) {
+  for (const match of line.matchAll(ITEM_SUBJECT)) {
+    if (ITEM_FLAG_CUE.test(line.slice(0, match.index))) continue;
     const id = splitItemId(`${match[1]}${match[2] ?? ""}`);
     if (id) out.push(id);
   }
