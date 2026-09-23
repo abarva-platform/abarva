@@ -46,13 +46,25 @@ export function formatMovesAvaChatPacketForPrompt(
     lines.push(`Gate criteria: ${criteriaText}`);
   }
 
+  if (packet.terminalHandoffComplete) {
+    lines.push(
+      "Terminal handoff state: current P5 handoff is complete. Do not describe evidence needs, feed-forward items, or preparation gaps as blockers, prerequisites, acceptance conditions, or required work before Tower can start. If relevant, frame them only as post-handoff caveats or follow-up work.",
+    );
+  }
+
   if (packet.evidenceNeedPackets.length > 0) {
-    lines.push(`Evidence needs: ${packet.evidenceNeedPackets.join("; ")}`);
+    lines.push(
+      packet.terminalHandoffComplete
+        ? `Post-handoff caveats/follow-up candidates: ${packet.evidenceNeedPackets.join("; ")}`
+        : `Evidence needs: ${packet.evidenceNeedPackets.join("; ")}`,
+    );
   }
 
   if (packet.nextPhaseFeedForwardPack) {
     lines.push(
-      `Feed-forward to next phase: ${packet.nextPhaseFeedForwardPack.headline} — ${packet.nextPhaseFeedForwardPack.carriesForward.join("; ")}`,
+      packet.terminalHandoffComplete
+        ? `Tower handoff context already completed: ${packet.nextPhaseFeedForwardPack.headline} — ${packet.nextPhaseFeedForwardPack.carriesForward.join("; ")}`
+        : `Feed-forward to next phase: ${packet.nextPhaseFeedForwardPack.headline} — ${packet.nextPhaseFeedForwardPack.carriesForward.join("; ")}`,
     );
   }
 

@@ -1,0 +1,6 @@
+
+Test Suites: 2 passed, 2 total
+Tests:       13 passed, 13 total
+Snapshots:   0 total
+Time:        0.132 s, estimated 1 s
+Ran all test suites matching src/lib/programs/ava-chat/__tests__/packet.test.ts|src/lib/programs/__tests__/moves-chat-answer-packet.test.ts.

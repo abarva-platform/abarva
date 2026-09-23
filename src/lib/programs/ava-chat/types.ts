@@ -72,6 +72,7 @@ export interface MovesAvaChatPacket extends AvaModulePacketBase<"moves"> {
   gateCriteria: MovesAvaGateCriterion[];
   nextPhaseFeedForwardPack: MovesAvaFeedForwardSummary | null;
   approvedInputsPackPresent: boolean;
+  terminalHandoffComplete: boolean;
   sourceImplication: MovesAvaTopicAwareness;
   towerMeasurement: MovesAvaTopicAwareness;
 }

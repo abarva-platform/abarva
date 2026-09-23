@@ -14,7 +14,7 @@ Current status: in progress.
 | -------------------- | ----------- | ----------------------------------------------------------------------------- |
 | P0-P5 workflow       | In progress | Baseline inventory complete; terminal P5 handoff status defect fixed locally. |
 | Upload/parse/state   | In progress | Will validate parsed content and persisted state, not metadata only.          |
-| aVa guidance         | In progress | Will test guidance, draft behavior, citations, and no silent writes.          |
+| aVa guidance         | In progress | P5 guidance contradiction fixed locally; broader aVa prompts still in scope.  |
 | Gates/approvals      | In progress | Will validate completion vs gate status and self-approval policy.             |
 | Artifact quality     | In progress | Will score each artifact against client-deliverable criteria.                 |
 | Office exports       | In progress | Will inspect DOCX/PPTX/XLSX outputs where generated.                          |
@@ -26,3 +26,4 @@ Current status: in progress.
 | ------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------- | --------------------------------- |
 | MOVES-E2E-001 | P1 serious | Adaptive discovery blueprint routing over-selected contact-center agent-assist requirements for broad healthcare wording.        | Fixed locally; PR/deploy pending. |
 | MOVES-E2E-002 | P1 serious | Terminal P5 handoff page showed complete/handoff evidence while still labelling the next step as `Run Approve & Build` / `Open`. | Fixed locally; PR/deploy pending. |
+| MOVES-E2E-003 | P1 serious | P5 aVa guidance could call evidence notes required before acceptance after terminal handoff was already complete.                | Fixed locally; PR/deploy pending. |
