@@ -856,6 +856,35 @@ claimable.sort((a, b) => (Number(b.isLifecycle) - Number(a.isLifecycle)) || comp
  * appears only in the failing case is exercised only in the failing case, and
  * this directory has already paid twice for branches nothing ever ran.
  */
+/*
+ * Ids the board could not place (item T-745).
+ *
+ * The pool above is `stages` + `tracks` — only ids the structure map places.
+ * An id the board could not place is dropped BEFORE this pool exists, so the
+ * census opened at a number that had already been reduced and no row in the
+ * table said so. Measured on the live corpus at `748d34604`: a pool of 424,
+ * 16 dropped ids, an intersection of zero, a true population of 440, and not
+ * one of the 160 rendered lines mentioning any of it.
+ *
+ * The board reports them on stderr and exits 1. Neither reaches this file,
+ * which is the one the claim protocol tells agents to read, and the exit code
+ * carries no information on its own: the note under T-731 records that gate as
+ * structurally red at all times, because every newly filed item is unmapped
+ * the moment it is filed and mapping is a repo-owned pull request.
+ *
+ * Whether an unmapped id should FAIL the board is a decision that note
+ * reserves to the operator; nothing here touches it. This only makes the
+ * census describe its own pool honestly.
+ *
+ * A MISSING FIELD IS NOT A ZERO. `unmapped` is written by
+ * `build-source-board.mjs`. If that generator stops emitting it, printing "0
+ * could not be placed" would assert a completeness nobody measured, so the
+ * absent case renders as `not recorded` and the opening sentence stops
+ * claiming the population is known.
+ */
+const unplaceable = Array.isArray(s.unmapped) ? s.unmapped.map(String) : null;
+const UNPLACEABLE_LABEL = "not on the structure map, so the board could not place it";
+
 function renderClaimableFunnel() {
   const rows = claimableFunnel
     .map((f) => `| ${f.label} | ${f.removed.length} | ${f.remaining} |`)
@@ -864,14 +893,35 @@ function renderClaimableFunnel() {
   const verdict = claimable.length === 0 && decisive
     ? `**Zero is a filter's answer, not necessarily an empty backlog.** Every remaining candidate was removed by _${decisive.label}_ — ${decisive.removed.length} item${decisive.removed.length === 1 ? "" : "s"}. Read that row before concluding there is nothing to do.`
     : "";
+
+  // Rendered on every run, including at zero. A row that appears only when the
+  // count is non-zero is a branch exercised only in the failing case, and this
+  // table's own comment was already written against that shape.
+  const unplaceableRow = unplaceable === null
+    ? `| ${UNPLACEABLE_LABEL} | not recorded | not recorded |`
+    : `| ${UNPLACEABLE_LABEL} | ${unplaceable.length} | ${all.length} |`;
+
+  const opening = unplaceable === null
+    ? `${all.length} items reach the filter. The board that wrote this summary recorded no count of ids it could not place, so the population this table starts from is **not recorded** and the census below cannot claim to be complete.`
+    : `${all.length + unplaceable.length} items enter the filter; each row says what the next rule removed.`;
+
+  const named = unplaceable === null
+    ? "**Which ids those are is not recorded** by the board that wrote this summary, so this file cannot name them. Run the board and read its own output."
+    : unplaceable.length === 0
+      ? "No id was dropped before the table: every id in the backlog is placed on the structure map."
+      : `**${unplaceable.length} id${unplaceable.length === 1 ? " was" : "s were"} dropped before the table and ${unplaceable.length === 1 ? "is" : "are"} offered to nobody:** ${unplaceable.map((id) => `\`${id}\``).join(" ")}. They are in the backlog and in no entry of \`scripts/exec/source-stage-map.json\`, which is repo-owned — mapping a copy in the operator root changes nothing. Until one is placed it cannot appear in any bucket of this file, claimable or blocked.`;
+
   return `## Why that number
 
-${all.length} items enter the filter; each row says what the next rule removed.
+${opening}
 
 | removed because it is | removed | left |
 |---|---|---|
-| — | — | ${all.length} |
+| — | — | ${unplaceable === null ? all.length : all.length + unplaceable.length} |
+${unplaceableRow}
 ${rows}
+
+${named}
 
 ${verdict}`;
 }

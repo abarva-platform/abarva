@@ -2957,5 +2957,166 @@ function isClaimable(rendered, id) {
   }
 }
 
+
+/* ------------------------------------------------------------------------ *
+ * Ids the board could not place are removed BEFORE the census opens         *
+ * (item T-745).                                                             *
+ *                                                                           *
+ * The funnel T-731 built promises "N items enter the filter; each row says  *
+ * what the next rule removed". It opened at the pool the queue assembles    *
+ * from `stages` + `tracks`, and the board drops every id it cannot place on *
+ * the structure map before that pool exists. On the live corpus at          *
+ * `748d34604` that was 16 ids against a pool of 424: a true population of   *
+ * 440, an intersection of zero, and not one of the 160 rendered lines       *
+ * mentioning any of it.                                                     *
+ *                                                                           *
+ * The board does say so — on stderr, and by exiting 1. Neither reaches the  *
+ * file the claim protocol tells agents to read, and the exit code carries   *
+ * no information anyway: the note under T-731 records that gate as          *
+ * structurally red at all times, because every newly filed item is unmapped *
+ * the moment it is filed.                                                   *
+ *                                                                           *
+ * The truth these cases measure against is the BOARD's own summary — a      *
+ * different program's output — never the queue's opinion of its own pool.   *
+ * ------------------------------------------------------------------------ */
+
+/**
+ * Build the board and the queue while TOLERATING the unmapped-id gate.
+ *
+ * `buildBoardAndQueue` throws on a non-zero board, which is right for every
+ * other case here. This one needs the state that gate describes: the board
+ * exits 1 and writes the summary first, deliberately, so the queue is built
+ * from a summary whose pool is already short. Refusing to reproduce that
+ * would leave the defect untestable in the one corpus where it lives.
+ */
+function buildQueueOverUnplaceableIds(dir) {
+  const board = run(dir, "build-source-board.mjs", ["--json"]);
+  if (!fs.existsSync(path.join(dir, "source-board-summary.json"))) {
+    throw new Error(`fixture board wrote no summary (exit ${board.status}):\n${board.stderr}`);
+  }
+  return { board, queue: run(dir, "build-execution-queue.mjs") };
+}
+
+/** What the BOARD recorded: the ids it dropped, and the pool it handed on. */
+function boardTruth(dir) {
+  const s = JSON.parse(fs.readFileSync(path.join(dir, "source-board-summary.json"), "utf8"));
+  const pool = [
+    ...s.stages.flatMap((st) => st.items),
+    ...s.tracks.flatMap((t) => t.items),
+  ].length;
+  return { unmapped: s.unmapped ?? [], pool };
+}
+
+/** The population the rendered funnel claims to have started from. */
+function funnelOpeningTotal(rendered) {
+  const n = rendered.match(/^(\d+) items enter the filter/m)?.[1];
+  return n === undefined ? -1 : Number(n);
+}
+
+/*
+ * The row is identified by its LABEL, not by its position.
+ *
+ * Asserting only `rows[0].removed === 0` made the clean case pass before the
+ * generator rendered any such row at all: the pre-existing first row
+ * ("already has proof") removes nothing in a one-item fixture, so 0 === 0 and
+ * `remaining` already equalled the pool. A case that green on the exact
+ * defect it exists to catch proves nothing about it, so the label is part of
+ * every assertion below.
+ */
+const UNPLACED_ROW = /could not place/i;
+
+{
+  const dir = freshFixture();
+  // Two ids the fixture map does not place. The backlog carries them, so the
+  // board sees them and drops them.
+  addBacklogItem(dir, "T-901");
+  addBacklogItem(dir, "T-902");
+  const { board, queue } = buildQueueOverUnplaceableIds(dir);
+  const rendered = fs.readFileSync(path.join(dir, "EXECUTION_QUEUE.md"), "utf8");
+  const truth = boardTruth(dir);
+  const rows = funnelRows(rendered);
+  const opening = funnelOpeningTotal(rendered);
+
+  check(
+    "the queue NAMES the ids the board could not place",
+    queue.status === 0 && truth.unmapped.length === 2
+      && truth.unmapped.every((id) => rendered.includes(id)),
+    `board exit=${board.status}\nqueue exit=${queue.status}\n` +
+      `board dropped ${JSON.stringify(truth.unmapped)}\n` +
+      `named in the queue: ${truth.unmapped.filter((id) => rendered.includes(id)).join(" ") || "none"}`,
+  );
+  check(
+    "the funnel OPENS at the full population the board saw, not at the pool it handed on",
+    opening === truth.pool + truth.unmapped.length && truth.unmapped.length > 0,
+    `rendered opening=${opening}; board pool=${truth.pool} + dropped=${truth.unmapped.length}` +
+      ` = ${truth.pool + truth.unmapped.length}`,
+  );
+  check(
+    "and its FIRST removal row is that drop, BY LABEL, so the arithmetic closes onto the pool",
+    UNPLACED_ROW.test(rows[0]?.label ?? "") && rows[0]?.removed === truth.unmapped.length
+      && rows[0]?.remaining === truth.pool,
+    `first row=${JSON.stringify(rows[0])}; expected removed=${truth.unmapped.length}` +
+      ` remaining=${truth.pool}\nall rows=${JSON.stringify(rows)}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+{
+  // The clean state renders the row too. A block that appears only when the
+  // count is non-zero is a branch exercised only in the failing case, which is
+  // the shape the funnel's own comment was already written against.
+  const dir = freshFixture();
+  const { board, queue } = buildQueueOverUnplaceableIds(dir);
+  const rendered = fs.readFileSync(path.join(dir, "EXECUTION_QUEUE.md"), "utf8");
+  const truth = boardTruth(dir);
+  const rows = funnelRows(rendered);
+  check(
+    "a corpus the board placed in full still renders the row, by label, at zero",
+    board.status === 0 && queue.status === 0 && truth.unmapped.length === 0
+      && UNPLACED_ROW.test(rows[0]?.label ?? "")
+      && rows[0]?.removed === 0 && rows[0]?.remaining === truth.pool
+      && funnelOpeningTotal(rendered) === truth.pool,
+    `board exit=${board.status}; board dropped ${truth.unmapped.length}; ` +
+      `first row=${JSON.stringify(rows[0])}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+{
+  /*
+   * A MISSING FIELD IS NOT A ZERO.
+   *
+   * `unmapped` is written by `build-source-board.mjs`, which this item does
+   * not own and another lane is editing. If that generator ever stops
+   * emitting the field, rendering "0 could not be placed" would be a false
+   * clean: the queue would assert a completeness nobody measured. It has to
+   * say it does not know.
+   */
+  const dir = freshFixture();
+  const board = run(dir, "build-source-board.mjs", ["--json"]);
+  if (board.status !== 0) throw new Error(`fixture board build failed:\n${board.stderr}`);
+  const summaryFile = path.join(dir, "source-board-summary.json");
+  const summary = JSON.parse(fs.readFileSync(summaryFile, "utf8"));
+  delete summary.unmapped;
+  fs.writeFileSync(summaryFile, `${JSON.stringify(summary, null, 2)}\n`);
+  const queue = run(dir, "build-execution-queue.mjs");
+  const rendered = fs.readFileSync(path.join(dir, "EXECUTION_QUEUE.md"), "utf8");
+  const rows = funnelRows(rendered);
+  check(
+    "a summary carrying no `unmapped` field renders as NOT RECORDED, never as zero",
+    queue.status === 0
+      // The claim is on one line: the row that would have carried a count says
+      // instead that nothing recorded one. A "not recorded" sentence elsewhere
+      // in the file would satisfy a two-part test while the row still read 0.
+      && /^\|.*could not place.*not recorded.*\|$/im.test(rendered)
+      && !rows.some((r) => UNPLACED_ROW.test(r.label)),
+    `queue exit=${queue.status}\n` +
+      `row saying both: ${/^\|.*could not place.*not recorded.*\|$/im.test(rendered)}\n` +
+      `numeric unplaced row present: ${rows.some((r) => UNPLACED_ROW.test(r.label))}\n` +
+      `all rows=${JSON.stringify(rows)}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
 console.log(`\n${passes} passed, ${failures} failed${skipped ? `, ${skipped} skipped` : ""}`);
 process.exit(failures ? 1 : 0);
