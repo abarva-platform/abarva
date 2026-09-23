@@ -298,3 +298,63 @@ describe('Source ServiceNow request proof summary', () => {
     expect(fs.existsSync(path.join(outDir, 'proof.tgz'))).toBe(false)
   })
 })
+
+describe('Source candidate supplier proof summary', () => {
+  let outDir: string
+
+  beforeEach(() => {
+    outDir = fs.mkdtempSync(path.join(os.tmpdir(), 'aca-supplier-proof-test-'))
+  })
+
+  afterEach(() => {
+    fs.rmSync(outDir, { recursive: true, force: true })
+  })
+
+  const summary = {
+    schemaVersion: 1,
+    event: 'source_candidate_supplier_registry_import_proof_summary',
+    mode: 'dry_run',
+    rowCount: 25,
+    supplierCount: 20,
+    archetypeCount: 10,
+    failClosedControlCount: 5,
+    inputSha256: 'a'.repeat(64),
+    inputSourceVersion: 'v1',
+    inserted: 0,
+    committed: false,
+    authority: {
+      dryRunDefault: true,
+      supplierRegistryRowsOnly: true,
+      candidateSupplierAuthoritiesWritten: false,
+      eventsCreated: false,
+      suppliersContacted: false,
+      emailsSent: false,
+    },
+  }
+
+  test('extracts a trailing supplier summary after a truncated proof bundle', async () => {
+    const mod = await import(WRAPPER)
+    const logLines = [
+      '2026-01-01 stdout F __SEMANTIC2_PROOF_TGZ_BEGIN__',
+      ...Array.from({ length: 450 }, (_, index) => `2026-01-01 stdout F report line ${index}`),
+      `2026-01-01 stdout F __SOURCE_CANDIDATE_SUPPLIER_PROOF_SUMMARY__${JSON.stringify(summary)}`,
+    ]
+    const proof = mod.extractProofBundle(logLines.slice(-300).join('\n'), outDir)
+    expect(proof).toMatchObject({
+      extracted: true,
+      extractionKind: 'source_candidate_supplier_summary',
+      proofBundleExtracted: false,
+      summary,
+    })
+    expect(fs.readFileSync(path.join(outDir, '05-source-candidate-supplier-proof-summary.json'), 'utf8')).not.toContain('tenantKey')
+  })
+
+  test('rejects a dry-run supplier marker that claims a write or contact', async () => {
+    const mod = await import(WRAPPER)
+    const marker = (value: unknown) => `__SOURCE_CANDIDATE_SUPPLIER_PROOF_SUMMARY__${JSON.stringify(value)}`
+    expect(mod.extractProofBundle(marker({ ...summary, committed: true }), outDir)).toMatchObject({ extracted: false })
+    expect(mod.extractProofBundle(marker({ ...summary, authority: {
+      ...summary.authority, suppliersContacted: true,
+    } }), outDir)).toMatchObject({ extracted: false })
+  })
+})

@@ -444,6 +444,27 @@ function emitProofBundle(outDir: string): void {
   console.log("__SEMANTIC2_PROOF_TGZ_END__");
 }
 
+function emitCompactProofSummary(result: CandidateSupplierRegistryImportPlan & {
+  inserted: number;
+  committed: boolean;
+}): void {
+  const summary = {
+    schemaVersion: 1,
+    event: "source_candidate_supplier_registry_import_proof_summary",
+    mode: result.apply ? "apply" : "dry_run",
+    rowCount: result.rowCount,
+    supplierCount: result.supplierCount,
+    archetypeCount: result.archetypes.length,
+    failClosedControlCount: result.failClosedControls.length,
+    inputSha256: result.inputSha256,
+    inputSourceVersion: result.inputSourceVersion,
+    inserted: result.inserted,
+    committed: result.committed,
+    authority: result.authority,
+  };
+  console.log(`__SOURCE_CANDIDATE_SUPPLIER_PROOF_SUMMARY__${JSON.stringify(summary)}`);
+}
+
 function databaseUrl(env = process.env): string {
   const value = env.SOURCE_CONTEXT_DATABASE_URL ?? env.DATABASE_URL;
   if (!value) throw new Error("Apply mode requires SOURCE_CONTEXT_DATABASE_URL or DATABASE_URL.");
@@ -553,6 +574,7 @@ export async function runCandidateSupplierRegistryImport(
     const result = { ...plan, inserted: 0, committed: false };
     writeProofManifest(args, plan, result);
     if (args.emitProofBundle) emitProofBundle(args.outDir);
+    if (args.operatorJob) emitCompactProofSummary(result);
     return result;
   }
   const inserted = await applyPlan(plan, args);
@@ -563,6 +585,7 @@ export async function runCandidateSupplierRegistryImport(
   );
   writeProofManifest(args, plan, result);
   if (args.emitProofBundle) emitProofBundle(args.outDir);
+  if (args.operatorJob) emitCompactProofSummary(result);
   return result;
 }
 
@@ -570,8 +593,11 @@ const isDirect = process.argv[1]
   ? import.meta.url === pathToFileURL(path.resolve(process.argv[1])).href
   : false;
 if (isDirect) {
-  runCandidateSupplierRegistryImport(parseCandidateSupplierRegistryImportArgs())
-    .then((result) => console.log(JSON.stringify(result, null, 2)))
+  const args = parseCandidateSupplierRegistryImportArgs();
+  runCandidateSupplierRegistryImport(args)
+    .then((result) => {
+      if (!args.operatorJob) console.log(JSON.stringify(result, null, 2));
+    })
     .catch((error) => {
       console.error(error instanceof Error ? error.message : String(error));
       process.exitCode = 1;

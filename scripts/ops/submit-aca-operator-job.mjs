@@ -539,6 +539,71 @@ function extractServiceNowRequestSummary(lines, outDir) {
   };
 }
 
+function extractCandidateSupplierSummary(lines, outDir) {
+  const prefix = "__SOURCE_CANDIDATE_SUPPLIER_PROOF_SUMMARY__";
+  const line = lines.map((rawLine) => stripLogPrefix(rawLine).trim())
+    .findLast((value) => value.startsWith(prefix));
+  if (!line) return null;
+
+  let parsed;
+  try {
+    parsed = JSON.parse(line.slice(prefix.length));
+  } catch {
+    return { extracted: false, reason: "Invalid Source candidate supplier proof summary JSON." };
+  }
+  const keys = [
+    "schemaVersion", "event", "mode", "rowCount", "supplierCount",
+    "archetypeCount", "failClosedControlCount", "inputSha256",
+    "inputSourceVersion", "inserted", "committed", "authority",
+  ];
+  const authorityKeys = [
+    "dryRunDefault", "supplierRegistryRowsOnly", "candidateSupplierAuthoritiesWritten",
+    "eventsCreated", "suppliersContacted", "emailsSent",
+  ];
+  const validKeys = (value, expected) =>
+    value && typeof value === "object" && !Array.isArray(value) &&
+    Object.keys(value).length === expected.length &&
+    expected.every((key) => Object.hasOwn(value, key));
+  const nonnegativeInteger = (value) => Number.isSafeInteger(value) && value >= 0;
+  const valid =
+    validKeys(parsed, keys) &&
+    parsed.schemaVersion === 1 &&
+    parsed.event === "source_candidate_supplier_registry_import_proof_summary" &&
+    ["dry_run", "apply"].includes(parsed.mode) &&
+    nonnegativeInteger(parsed.rowCount) &&
+    nonnegativeInteger(parsed.supplierCount) &&
+    nonnegativeInteger(parsed.archetypeCount) &&
+    nonnegativeInteger(parsed.failClosedControlCount) &&
+    parsed.supplierCount > 0 && parsed.archetypeCount > 0 &&
+    parsed.rowCount === parsed.supplierCount + parsed.failClosedControlCount &&
+    nonnegativeInteger(parsed.inserted) &&
+    /^[a-f0-9]{64}$/.test(parsed.inputSha256) &&
+    typeof parsed.inputSourceVersion === "string" &&
+    parsed.inputSourceVersion.length > 0 &&
+    typeof parsed.committed === "boolean" &&
+    validKeys(parsed.authority, authorityKeys) &&
+    parsed.authority.dryRunDefault === true &&
+    parsed.authority.supplierRegistryRowsOnly === true &&
+    parsed.authority.candidateSupplierAuthoritiesWritten === false &&
+    parsed.authority.eventsCreated === false &&
+    parsed.authority.suppliersContacted === false &&
+    parsed.authority.emailsSent === false &&
+    (parsed.mode !== "dry_run" || (parsed.inserted === 0 && parsed.committed === false)) &&
+    (parsed.mode !== "apply" || parsed.committed === true);
+  if (!valid) {
+    return { extracted: false, reason: "Invalid Source candidate supplier proof summary contract." };
+  }
+  const summaryPath = path.join(outDir, "05-source-candidate-supplier-proof-summary.json");
+  writeJson(summaryPath, parsed);
+  return {
+    extracted: true,
+    extractionKind: "source_candidate_supplier_summary",
+    proofBundleExtracted: false,
+    summaryPath,
+    summary: parsed,
+  };
+}
+
 export function extractProofBundle(logText, outDir) {
   const markerPairs = [
     {
@@ -563,7 +628,8 @@ export function extractProofBundle(logText, outDir) {
     },
   ];
   const lines = logText.split(/\r?\n/);
-  const sourceSummary = extractServiceNowRequestSummary(lines, outDir);
+  const sourceSummary = extractServiceNowRequestSummary(lines, outDir) ??
+    extractCandidateSupplierSummary(lines, outDir);
   if (sourceSummary && !sourceSummary.extracted) return sourceSummary;
   const payload = [];
   let activeMarker = null;

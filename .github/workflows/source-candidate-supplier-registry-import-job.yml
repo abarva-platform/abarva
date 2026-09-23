@@ -213,6 +213,22 @@ jobs:
             --poll-seconds 15 \
             --idle-verify-wait-seconds 300
 
+      - name: Validate dry-run supplier proof
+        if: inputs.mode == 'dry_run'
+        shell: bash
+        run: |
+          node scripts/source/validate-candidate-supplier-proof.mjs \
+            audit-artifacts/source-candidate-supplier-registry-import-job/workflow-contract.json \
+            audit-artifacts/source-candidate-supplier-registry-import-job/live-dry-run/summary.json
+
+      - name: Validate approved supplier apply proof
+        if: inputs.mode == 'apply'
+        shell: bash
+        run: |
+          node scripts/source/validate-candidate-supplier-proof.mjs \
+            audit-artifacts/source-candidate-supplier-registry-import-job/workflow-contract.json \
+            audit-artifacts/source-candidate-supplier-registry-import-job/live-apply/summary.json
+
       - name: Upload supplier registry import proof
         if: always()
         uses: actions/upload-artifact@v7
