@@ -505,9 +505,53 @@ export function resolveItemClaim(lines, { itemId, identity, nowMs, windowHours }
     };
   }
 
-  // The newest line for an item wins — that is the protocol, and it is what
-  // makes a release re-open the item for the next run.
-  const newest = live.reduce((best, line) =>
+  // A release is authoritative for its OWN author, and for nobody else
+  // (T-713). This is the keying the FILE half has always used: `releasedAt` is
+  // per agent, so a release frees the records of the identity that wrote it.
+  // This half read the newest line instead and honoured any release on it, so
+  // B writing `RELEASED item X` handed A's live claim to the next run.
+  //
+  // A foreign release is SKIPPED, not answered from — the same shape T-712
+  // gave abstentions, and for the same reason: newest-line-wins would
+  // otherwise let B's record sit on top of A's claim and report the item free.
+  // Transparent, so the newest line that actually asserts ownership decides.
+  const releasedAt = new Map();
+  for (const line of live) {
+    if (!announcesRelease(line.text)) continue;
+    const prior = releasedAt.get(line.agent);
+    if (prior === undefined || line.stampMs > prior) releasedAt.set(line.agent, line.stampMs);
+  }
+
+  // A release frees only the records its author wrote BEFORE it. A release
+  // cannot hand back a claim that did not exist when it was written.
+  const holding = live.filter((line) => {
+    if (announcesRelease(line.text)) return false;
+    const released = releasedAt.get(line.agent);
+    return released === undefined || released < line.stampMs;
+  });
+
+  if (holding.length === 0) {
+    const newestRelease = live.reduce((best, line) =>
+      line.stampMs > best.stampMs ||
+      (line.stampMs === best.stampMs && line.lineNumber > best.lineNumber)
+        ? line
+        : best,
+    );
+    return {
+      verdict: "take",
+      reason: `every live line naming the item was released by its own author; the newest is line ${newestRelease.lineNumber} (${newestRelease.stamp}, \`${newestRelease.agent}\`)`,
+      holder: {
+        lineNumber: newestRelease.lineNumber,
+        stamp: newestRelease.stamp,
+        agent: newestRelease.agent,
+        excerpt: newestRelease.text.slice(0, 200),
+      },
+      refuses: false,
+    };
+  }
+
+  // The newest line that still asserts ownership wins — that is the protocol.
+  const newest = holding.reduce((best, line) =>
     line.stampMs > best.stampMs || (line.stampMs === best.stampMs && line.lineNumber > best.lineNumber)
       ? line
       : best,
@@ -518,15 +562,6 @@ export function resolveItemClaim(lines, { itemId, identity, nowMs, windowHours }
     agent: newest.agent,
     excerpt: newest.text.slice(0, 200),
   };
-
-  if (announcesRelease(newest.text)) {
-    return {
-      verdict: "take",
-      reason: `the newest live line (${newest.stamp}, line ${newest.lineNumber}) releases the item`,
-      holder,
-      refuses: false,
-    };
-  }
 
   const ownership = resolveClaimOwnership(newest.agent, identity);
   if (ownership === "own") {
