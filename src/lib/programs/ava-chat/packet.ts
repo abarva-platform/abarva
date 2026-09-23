@@ -61,6 +61,7 @@ export function buildMovesAvaChatPacket(
   input: BuildMovesAvaChatPacketInput,
   questionText: string,
 ): MovesAvaChatPacket {
+  const terminalHandoffComplete = input.terminalHandoffComplete ?? false;
   const missingInputs = collectMissingAvaModuleInputs(
     input,
     OPTIONAL_FIELD_LABELS,
@@ -79,14 +80,18 @@ export function buildMovesAvaChatPacket(
     phaseTemplates: input.phaseTemplates ?? [],
     recommendedSessions: input.recommendedSessions ?? [],
     checklistStatus: input.checklistStatus ?? null,
-    evidenceNeedPackets: input.evidenceNeedPackets ?? [],
+    evidenceNeedPackets: terminalHandoffComplete
+      ? []
+      : (input.evidenceNeedPackets ?? []),
     currentStateAssessment: input.currentStateAssessment ?? null,
     uploadedTemplateMappings: input.uploadedTemplateMappings ?? [],
     whatChangedSummary: input.whatChangedSummary ?? null,
     gateCriteria: input.gateCriteria ?? [],
-    nextPhaseFeedForwardPack: input.nextPhaseFeedForwardPack ?? null,
+    nextPhaseFeedForwardPack: terminalHandoffComplete
+      ? null
+      : (input.nextPhaseFeedForwardPack ?? null),
     approvedInputsPackPresent: input.approvedInputsPackPresent ?? false,
-    terminalHandoffComplete: input.terminalHandoffComplete ?? false,
+    terminalHandoffComplete,
     sourceImplication: detectSourceAwareness(questionText),
     towerMeasurement: detectTowerAwareness(questionText),
     missingInputs,

@@ -259,7 +259,7 @@ describe("buildMovesAvaChatPacket — no blank-prompt chat", () => {
     expect(answer).not.toMatch(/all four|four hard|all seven|seven criteria/i);
   });
 
-  it("labels evidence needs as post-handoff caveats after terminal P5 completion", () => {
+  it("suppresses evidence-need packets after terminal P5 completion", () => {
     const packet = buildMovesAvaChatPacket(
       {
         ...BASE_INPUT,
@@ -284,13 +284,16 @@ describe("buildMovesAvaChatPacket — no blank-prompt chat", () => {
       "What should the client team do next?",
     );
 
+    expect(packet.evidenceNeedPackets).toEqual([]);
+
     const prompt = formatMovesAvaChatPacketForPrompt(
       packet,
       "tower_measurement",
     );
 
     expect(prompt).toContain("Terminal handoff state");
-    expect(prompt).toContain("Post-handoff caveats/follow-up candidates");
+    expect(prompt).not.toContain("Measurement owner and cadence");
+    expect(prompt).not.toContain("Post-handoff caveats/follow-up candidates");
     expect(prompt).not.toContain("Evidence needs:");
     expect(prompt).not.toMatch(/required-before-acceptance/i);
   });
