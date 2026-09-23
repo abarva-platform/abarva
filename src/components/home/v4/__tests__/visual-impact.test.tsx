@@ -134,7 +134,7 @@ describe("the page states its own shape", () => {
     const line =
       document.querySelector("[data-home-page-shape]")?.textContent ?? "";
     expect(line).toBe(
-      "1 table · 3 findings · 1 the record says is wrong now · 1 view this page cannot build",
+      "1 table · 3 findings · 1 the record says is wrong now · 1 evidence view pending",
     );
   });
 

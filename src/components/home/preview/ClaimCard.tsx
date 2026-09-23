@@ -5,7 +5,10 @@ import { useId, useState } from "react";
 import { HOME_HEX } from "./visuals/home-chart-kit";
 import { resolveEvidence } from "./evidence-resolver";
 import type { ResolvedEvidence } from "./evidence-resolver";
-import type { EnterpriseSignalPacket, GroundedClaim } from "@/lib/home/preview/types";
+import type {
+  EnterpriseSignalPacket,
+  GroundedClaim,
+} from "@/lib/home/preview/types";
 
 /** Reader-facing wording, not the internal taxonomy. A CXO does not need to know a claim is a
  * CROSS_DOMAIN_INSIGHT; they need to know whether they are being told a fact about their own
@@ -51,12 +54,29 @@ export function ClaimCard({
         background: "#FFFFFF",
       }}
     >
-      <p style={{ margin: 0, fontFamily: "var(--font-body-sans)", fontSize: 14, lineHeight: 1.55, color: HOME_HEX.textPrimary }}>
+      <p
+        style={{
+          margin: 0,
+          fontFamily: "var(--font-body-sans)",
+          fontSize: 14,
+          lineHeight: 1.55,
+          color: HOME_HEX.textPrimary,
+        }}
+      >
         {claim.statement}
       </p>
-      <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 8 }}>
-        <span style={{ fontFamily: "var(--font-body-sans)", fontSize: 11, color: HOME_HEX.textDisabled }}>
-          {CLAIM_TYPE_LABEL[claim.claim_type]} · {CONFIDENCE_LABEL[claim.confidence]}
+      <div
+        style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 8 }}
+      >
+        <span
+          style={{
+            fontFamily: "var(--font-body-sans)",
+            fontSize: 11,
+            color: HOME_HEX.textDisabled,
+          }}
+        >
+          {CLAIM_TYPE_LABEL[claim.claim_type]} ·{" "}
+          {CONFIDENCE_LABEL[claim.confidence]}
         </span>
         <button
           type="button"
@@ -75,35 +95,85 @@ export function ClaimCard({
             cursor: "pointer",
           }}
         >
-          {expanded ? "Hide evidence" : `Why do we believe this? (${claim.evidence_ids.length})`}
+          {expanded
+            ? "Hide evidence"
+            : `Why do we believe this? (${claim.evidence_ids.length})`}
         </button>
       </div>
       {expanded ? (
-        <ul id={detailId} style={{ listStyle: "none", margin: "10px 0 0", padding: 0, borderTop: `1px solid ${HOME_HEX.border}`, paddingTop: 10 }}>
+        <ul
+          id={detailId}
+          style={{
+            listStyle: "none",
+            margin: "10px 0 0",
+            padding: 0,
+            borderTop: `1px solid ${HOME_HEX.border}`,
+            paddingTop: 10,
+          }}
+        >
           {evidence.map((item) => (
-            <li key={item.id} style={{ marginBottom: 8, fontFamily: "var(--font-body-sans)", fontSize: 12.5 }}>
+            <li
+              key={item.id}
+              style={{
+                marginBottom: 8,
+                fontFamily: "var(--font-body-sans)",
+                fontSize: 12.5,
+              }}
+            >
               <div style={{ display: "flex", gap: 6, alignItems: "baseline" }}>
                 <span
                   style={{
                     fontFamily: "var(--font-body-mono)",
                     fontSize: 10.5,
-                    color: item.unresolved ? HOME_HEX.red : HOME_HEX.textDisabled,
+                    color: item.unresolved
+                      ? HOME_HEX.red
+                      : HOME_HEX.textDisabled,
                     flexShrink: 0,
                   }}
                 >
                   {evidenceLabel(item)}
                 </span>
                 {item.signalKind === "testimony" ? (
-                  <span style={{ fontSize: 10, color: HOME_HEX.indigo, fontWeight: 600 }}>From leadership interviews</span>
+                  <span
+                    style={{
+                      fontSize: 10,
+                      color: HOME_HEX.indigo,
+                      fontWeight: 600,
+                    }}
+                  >
+                    From leadership interviews
+                  </span>
                 ) : item.origin === "context" ? (
-                  <span style={{ fontSize: 10, color: HOME_HEX.textDisabled, fontWeight: 600 }}>From your systems</span>
+                  <span
+                    style={{
+                      fontSize: 10,
+                      color: HOME_HEX.textDisabled,
+                      fontWeight: 600,
+                    }}
+                  >
+                    From your systems
+                  </span>
                 ) : null}
               </div>
-              <p style={{ margin: "2px 0 0", color: item.unresolved ? HOME_HEX.red : HOME_HEX.textSecondary, lineHeight: 1.5 }}>
+              <p
+                style={{
+                  margin: "2px 0 0",
+                  color: item.unresolved
+                    ? HOME_HEX.red
+                    : HOME_HEX.textSecondary,
+                  lineHeight: 1.5,
+                }}
+              >
                 {item.statement}
               </p>
               {item.evidenceRefs && item.evidenceRefs.length > 0 ? (
-                <p style={{ margin: "2px 0 0", color: HOME_HEX.textDisabled, fontSize: 11 }}>
+                <p
+                  style={{
+                    margin: "2px 0 0",
+                    color: HOME_HEX.textDisabled,
+                    fontSize: 11,
+                  }}
+                >
                   Records: {evidenceReferenceSummary(item.evidenceRefs)}
                 </p>
               ) : null}
@@ -116,8 +186,11 @@ export function ClaimCard({
 }
 
 function evidenceLabel(item: ResolvedEvidence): string {
-  if (item.unresolved) return "Evidence reference needs resolution";
-  if (item.origin === "signal") return item.signalKind === "testimony" ? "Leadership testimony" : "Derived evidence signal";
+  if (item.unresolved) return "Evidence source mapping pending";
+  if (item.origin === "signal")
+    return item.signalKind === "testimony"
+      ? "Leadership interviews"
+      : "Derived from governed records";
   return "Governed record";
 }
 

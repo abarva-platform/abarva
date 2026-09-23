@@ -1,4 +1,8 @@
-import type { ContextItem, EnterpriseSignalPacket, Signal } from "@/lib/home/preview/types";
+import type {
+  ContextItem,
+  EnterpriseSignalPacket,
+  Signal,
+} from "@/lib/home/preview/types";
 
 /** One resolved piece of evidence behind a claim -- the thing a reader actually sees when they
  * ask "why does Abarva believe this." Distinguishes a computed signal (sig_*) from a plain
@@ -19,9 +23,16 @@ export interface ResolvedEvidence {
   unresolved?: true;
 }
 
-export function resolveEvidence(evidenceIds: string[], signalPacket: EnterpriseSignalPacket): ResolvedEvidence[] {
-  const signalsById = new Map<string, Signal>(signalPacket.signals.map((s) => [s.id, s]));
-  const contextById = new Map<string, ContextItem>(signalPacket.contextItems.map((c) => [c.id, c]));
+export function resolveEvidence(
+  evidenceIds: string[],
+  signalPacket: EnterpriseSignalPacket,
+): ResolvedEvidence[] {
+  const signalsById = new Map<string, Signal>(
+    signalPacket.signals.map((s) => [s.id, s]),
+  );
+  const contextById = new Map<string, ContextItem>(
+    signalPacket.contextItems.map((c) => [c.id, c]),
+  );
   return evidenceIds.map((id) => {
     const signal = signalsById.get(id);
     if (signal) {
@@ -36,8 +47,20 @@ export function resolveEvidence(evidenceIds: string[], signalPacket: EnterpriseS
     }
     const context = contextById.get(id);
     if (context) {
-      return { id, statement: context.statement, origin: "context", domains: context.domains };
+      return {
+        id,
+        statement: context.statement,
+        origin: "context",
+        domains: context.domains,
+      };
     }
-    return { id, statement: "This evidence reference needs resolution before it can support the claim.", origin: "signal", domains: [], unresolved: true };
+    return {
+      id,
+      statement:
+        "This cited evidence is listed in the record but is not mapped to a visible source yet.",
+      origin: "signal",
+      domains: [],
+      unresolved: true,
+    };
   });
 }

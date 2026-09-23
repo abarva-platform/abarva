@@ -206,7 +206,9 @@ describe("a chapter never shows the generator's status", () => {
       const { container } = render(
         <HomeV4App bundle={value} tenantKey="meridian-health" />,
       );
-      expect(container.querySelector("[data-home-briefing-opening]")).not.toBeNull();
+      expect(
+        container.querySelector("[data-home-briefing-opening]"),
+      ).not.toBeNull();
       expect(container.querySelector("[data-home-findings]")).toBeNull();
       expect(container.querySelector("h1")?.textContent ?? "").not.toMatch(
         /applications carry|estate is self-hosted|contracts carry|records carry/i,
@@ -233,7 +235,7 @@ describe("the visual grammar", () => {
     );
   });
 
-  it("marks an absence as absence, with the view it cannot build", () => {
+  it("marks an absence as absence, with the view still visible", () => {
     window.location.hash = "technology_data";
     const { container } = render(
       <HomeV4App bundle={bundle()} tenantKey="meridian-health" />,
@@ -244,7 +246,9 @@ describe("the visual grammar", () => {
       ),
     ];
     expect(marks.length).toBeGreaterThan(0);
-    expect(marks[0].textContent ?? "").toMatch(/not carried by the record/i);
+    expect(marks[0].textContent ?? "").toMatch(
+      /record does not carry this yet|evidence not yet served/i,
+    );
   });
 
   // Written against the shape, not one expression of it. The original assertion matched only the
