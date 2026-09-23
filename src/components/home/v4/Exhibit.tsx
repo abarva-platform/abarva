@@ -1,6 +1,10 @@
 import type { ReactNode } from "react";
 
-import type { EnterpriseSignalPacket, VisualOpportunity } from "@/lib/home/preview/types";
+import type {
+  EnterpriseSignalPacket,
+  VisualOpportunity,
+} from "@/lib/home/preview/types";
+import { cxoText } from "./cxo-language";
 import { sourceForIds } from "./source-label";
 import { MONO, PAGE_X, SANS, SERIF, V4, eyebrow } from "./tokens";
 
@@ -45,15 +49,30 @@ const DATASET_SUBJECT: Record<string, string> = {
  * visual datasets actually publish. Returns null when a row cannot be read, so a malformed row is
  * dropped visibly rather than rendered as a zero-length bar that reads as "no spend". */
 function readRow(row: Record<string, unknown>): Row | null {
-  const labelKey = ["vendor", "system", "program", "theme", "function", "label", "name", "metric"].find(
-    (k) => typeof row[k] === "string",
+  const labelKey = [
+    "vendor",
+    "system",
+    "program",
+    "theme",
+    "function",
+    "label",
+    "name",
+    "metric",
+  ].find((k) => typeof row[k] === "string");
+  const shareKey = ["sharePct", "share_pct", "pct", "percent"].find(
+    (k) => typeof row[k] === "number",
   );
-  const shareKey = ["sharePct", "share_pct", "pct", "percent"].find((k) => typeof row[k] === "number");
   if (!labelKey || !shareKey) return null;
   return { label: row[labelKey] as string, sharePct: row[shareKey] as number };
 }
 
-export function ExhibitBars({ rows, dark = false }: { rows: Array<Record<string, unknown>>; dark?: boolean }) {
+export function ExhibitBars({
+  rows,
+  dark = false,
+}: {
+  rows: Array<Record<string, unknown>>;
+  dark?: boolean;
+}) {
   const parsed = rows.map(readRow).filter((r): r is Row => r !== null);
   if (parsed.length === 0) return null;
   const widest = Math.max(...parsed.map((r) => r.sharePct));
@@ -110,7 +129,14 @@ export function ExhibitBars({ rows, dark = false }: { rows: Array<Record<string,
                   }}
                 />
               </span>
-              <span style={{ fontFamily: MONO, fontSize: 13, textAlign: "right", color: lead ? labelLead : labelRest }}>
+              <span
+                style={{
+                  fontFamily: MONO,
+                  fontSize: 13,
+                  textAlign: "right",
+                  color: lead ? labelLead : labelRest,
+                }}
+              >
                 {row.sharePct.toFixed(1)}%
               </span>
             </div>
@@ -129,17 +155,38 @@ export function ExhibitBars({ rows, dark = false }: { rows: Array<Record<string,
           flexWrap: "wrap",
         }}
       >
-        <span style={{ fontFamily: SANS, fontSize: 14, color: dark ? "rgba(250,247,241,0.82)" : V4.slate }}>
+        <span
+          style={{
+            fontFamily: SANS,
+            fontSize: 14,
+            color: dark ? "rgba(250,247,241,0.82)" : V4.slate,
+          }}
+        >
           {remainder > 0.05 ? (
             <>
-              Everything not drawn holds <strong style={{ color: dark ? V4.paper : V4.ink, fontWeight: 600 }}>{remainder.toFixed(1)}%</strong>{" "}
-              between it. None of it exceeds {parsed[parsed.length - 1].sharePct.toFixed(1)}%.
+              Everything not drawn holds{" "}
+              <strong
+                style={{ color: dark ? V4.paper : V4.ink, fontWeight: 600 }}
+              >
+                {remainder.toFixed(1)}%
+              </strong>{" "}
+              between it. None of it exceeds{" "}
+              {parsed[parsed.length - 1].sharePct.toFixed(1)}%.
             </>
           ) : (
-            <>These are all of the records in this measure. Nothing is omitted.</>
+            <>
+              These are all of the records in this measure. Nothing is omitted.
+            </>
           )}
         </span>
-        <span style={{ fontFamily: MONO, fontSize: 11, letterSpacing: "0.08em", color: dark ? "rgba(250,247,241,0.75)" : V4.slate }}>
+        <span
+          style={{
+            fontFamily: MONO,
+            fontSize: 11,
+            letterSpacing: "0.08em",
+            color: dark ? "rgba(250,247,241,0.75)" : V4.slate,
+          }}
+        >
           BARS COMPARE THE {parsed.length} LARGEST ONLY
         </span>
       </div>
@@ -165,6 +212,8 @@ export function Exhibit({
   children: ReactNode;
 }) {
   const source = sourceForIds(visual.evidence_ids, signalPacket);
+  const title = cxoText(visual.title);
+  const keyMessage = cxoText(visual.key_message);
   const fg = dark ? "rgba(250,247,241,0.86)" : V4.slate;
   const eyebrowColor = dark ? "rgba(250,247,241,0.62)" : V4.blue;
 
@@ -188,10 +237,21 @@ export function Exhibit({
       >
         <span style={eyebrow(eyebrowColor)}>
           Exhibit {String(index).padStart(2, "0")}
-          {DATASET_SUBJECT[visual.dataset_ref] ? ` · ${DATASET_SUBJECT[visual.dataset_ref]}` : ""}
+          {DATASET_SUBJECT[visual.dataset_ref]
+            ? ` · ${DATASET_SUBJECT[visual.dataset_ref]}`
+            : ""}
         </span>
         {meta ? (
-          <span style={{ fontFamily: MONO, fontSize: 11, letterSpacing: "0.08em", color: fg }}>{meta}</span>
+          <span
+            style={{
+              fontFamily: MONO,
+              fontSize: 11,
+              letterSpacing: "0.08em",
+              color: fg,
+            }}
+          >
+            {meta}
+          </span>
         ) : null}
       </div>
       <h2
@@ -207,7 +267,7 @@ export function Exhibit({
           color: dark ? V4.paper : V4.ink,
         }}
       >
-        {visual.key_message}
+        {keyMessage}
       </h2>
       {children}
       <figcaption
@@ -216,16 +276,35 @@ export function Exhibit({
           paddingTop: 20,
           borderTop: `1px solid ${dark ? "rgba(250,247,241,0.18)" : V4.rule}`,
           display: "grid",
-          gridTemplateColumns: "repeat(auto-fit,minmax(min(100%,max(24rem,40%)),1fr))",
+          gridTemplateColumns:
+            "repeat(auto-fit,minmax(min(100%,max(24rem,40%)),1fr))",
           gap: "clamp(20px,3vw,48px)",
         }}
       >
-        <p style={{ margin: 0, fontFamily: SANS, fontSize: 14.5, lineHeight: 1.6, color: fg, maxWidth: "54ch", textWrap: "pretty" }}>
-          {visual.title}
+        <p
+          style={{
+            margin: 0,
+            fontFamily: SANS,
+            fontSize: 14.5,
+            lineHeight: 1.6,
+            color: fg,
+            maxWidth: "54ch",
+            textWrap: "pretty",
+          }}
+        >
+          {title}
         </p>
         <div>
           <div style={{ ...eyebrow(fg), marginBottom: 9 }}>Source</div>
-          <p style={{ margin: 0, fontFamily: MONO, fontSize: 11, lineHeight: 1.7, color: fg }}>
+          <p
+            style={{
+              margin: 0,
+              fontFamily: MONO,
+              fontSize: 11,
+              lineHeight: 1.7,
+              color: fg,
+            }}
+          >
             {source.label}
             <br />
             {source.ids}

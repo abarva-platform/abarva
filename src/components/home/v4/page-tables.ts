@@ -791,7 +791,7 @@ export function infrastructureTables(platforms: EstateRow[]): TableSpec[] {
   return [
     {
       caption: "Recovery posture",
-      section: "Where it runs",
+      section: "Operational resilience",
       barColumn: "Platforms",
       columns: ["Recovery tier", "Platforms", "Share"],
       rows: byDr.map((d) => [
@@ -804,7 +804,7 @@ export function infrastructureTables(platforms: EstateRow[]): TableSpec[] {
     },
     {
       caption: "Hosting and headroom",
-      section: "Where it runs",
+      section: "Operational resilience",
       columns: ["Hosting", "Platforms", "Annual cost"],
       rows: byHosting.map((h) => [
         label(h.value),
@@ -848,7 +848,7 @@ function infrastructureCrossings(platforms: EstateRow[]): TableSpec[] {
       // Neither column alone shows the exposure: a tier-1 platform recovering from backup is the
       // finding, and it exists only where the two are put against each other.
       caption: "Criticality × recovery tier",
-      section: "Where it runs",
+      section: "Operational resilience",
       columns: ["Criticality", ...tiers.map(label), "Platforms"],
       rows: crits.map((c) => {
         const rows = platforms.filter((p) => str(p, "criticality") === c);
@@ -881,7 +881,7 @@ function infrastructureCrossings(platforms: EstateRow[]): TableSpec[] {
     }
     out.push({
       caption: "When platforms reach end of life",
-      section: "Lifecycle & exposure",
+      section: "Platform lifecycle",
       columns: ["Year", "Platforms", "Annual cost"],
       rows: [...byYear.entries()]
         .sort((a, b) => a[0].localeCompare(b[0]))

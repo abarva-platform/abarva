@@ -1441,6 +1441,7 @@ function buildEclSignalPacket(
   const contracts = rowsForType(estate, "vendor_contract");
   const infrastructure = rowsForType(estate, "infrastructure_platform");
   const dataRecords = rowsForType(estate, "data_asset_or_integration");
+  const interviews = rowsForType(estate, "executive_interview");
   const dataFlows = dataRecords.filter(
     (row) => row.recordKind !== "data_analytics_workload",
   );
@@ -1492,7 +1493,7 @@ function buildEclSignalPacket(
     {
       id: "sig_ecl_estate_001",
       kind: "portfolio",
-      statement: `The ECL projection contains ${applications.length.toLocaleString()} applications, ${contracts.length.toLocaleString()} contracts, ${infrastructure.length.toLocaleString()} infrastructure/platform records, ${dataFlows.length.toLocaleString()} data-flow rows, and ${dataWorkloads.length.toLocaleString()} data/BI/ETL workload segments.`,
+      statement: `The governed Home record contains ${applications.length.toLocaleString()} applications, ${contracts.length.toLocaleString()} contracts, ${infrastructure.length.toLocaleString()} infrastructure/platform records, ${dataFlows.length.toLocaleString()} data-flow rows, and ${dataWorkloads.length.toLocaleString()} data/BI/ETL workload segments.`,
       domains: [
         "application_system",
         "vendor_contract",
@@ -1523,8 +1524,8 @@ function buildEclSignalPacket(
       id: "sig_ecl_vendor_concentration_004",
       kind: "concentration",
       statement: topVendor
-        ? `${String(topVendor.label)} is the largest visible supplier group at ${Number(topVendor.sharePct).toFixed(1)}% of the loaded contract value.`
-        : "No supplier group carries annualized contract value in the loaded Home contract view.",
+        ? `${String(topVendor.label)} is the largest supplier group at ${Number(topVendor.sharePct).toFixed(1)}% of the current contract value.`
+        : "No supplier group carries annualized contract value in the current Home contract view.",
       domains: ["vendor_contract"],
       evidenceRefs: ["serving.home_vendor_contracts"],
     },
@@ -1642,7 +1643,7 @@ function buildEclSignalPacket(
     {
       id: "sig_ecl_source_breadth_guardrail_019",
       kind: "data_quality",
-      statement: `This narrative packet is built from ${rows.filter((row) => row.row_type !== "summary" && row.row_type !== "chapter_claim").length.toLocaleString()} governed projection rows; source-family summaries describe intake breadth but are not evidence for a business claim by themselves.`,
+      statement: `This narrative packet is built from ${rows.filter((row) => row.row_type !== "summary" && row.row_type !== "chapter_claim").length.toLocaleString()} governed Home records; source-family summaries describe intake breadth but are not evidence for a business claim by themselves.`,
       domains: ["evidence_sources"],
       evidenceRefs: ["serving.home_executive_brief"],
     },
@@ -1650,15 +1651,15 @@ function buildEclSignalPacket(
       id: "sig_ecl_vendor_002",
       kind: "concentration",
       statement: topVendor
-        ? `The ECL contract view shows ${contracts.length.toLocaleString()} contracts with $${(contractSpend / 1_000_000).toFixed(1)}M annualized value; ${String(topVendor.label)} is the largest visible supplier group at ${Number(topVendor.sharePct).toFixed(1)}% of the loaded contract value.`
-        : "The ECL contract view has no supplier spend rows loaded.",
+        ? `The contract register shows ${contracts.length.toLocaleString()} contracts with $${(contractSpend / 1_000_000).toFixed(1)}M annualized value; ${String(topVendor.label)} is the largest supplier group at ${Number(topVendor.sharePct).toFixed(1)}% of the current contract value.`
+        : "The contract register has no supplier spend rows.",
       domains: ["vendor_contract"],
       evidenceRefs: ["serving.home_vendor_contracts"],
     },
     {
       id: "sig_ecl_data_flow_003",
       kind: "complexity",
-      statement: `The ECL data-flow view carries ${dataFlows.length.toLocaleString()} source-target movement rows, so architecture and data-flow pages should render from topology evidence instead of from static snapshot counts.`,
+      statement: `The data-flow record carries ${dataFlows.length.toLocaleString()} source-target movement rows, so architecture and data-flow pages should render from topology evidence instead of from static snapshot counts.`,
       domains: ["data_asset_or_integration", "application_system"],
       evidenceRefs: ["serving.home_current_state_data_flow"],
     },
@@ -1666,7 +1667,7 @@ function buildEclSignalPacket(
       id: "sig_ecl_gap_004",
       kind: "gap",
       statement:
-        "This Home preview is served from governed ECL rows by default; retrieval indexing, client attestation, and narrative-quality review remain separate gates.",
+        "This Home page is served from governed records by default; retrieval indexing, client attestation, and narrative-quality review remain separate gates.",
       domains: ["evidence_sources"],
       evidenceRefs: ["serving.home_executive_brief"],
     },
@@ -1698,12 +1699,18 @@ function buildEclSignalPacket(
         "Declared strategic priorities, funded programs, and program-to-outcome linkage are not supplied by the current Home narrative input; strategy chapters should treat strategy as an evidence gap rather than infer a transformation agenda.",
       domains: ["spend_value_fact", "vendor_contract", "evidence_sources"],
     },
-    {
-      id: "ctx_ecl_scope_leadership_001",
-      statement:
-        "Leadership interview excerpts are not supplied by the current Home narrative input; leadership perspective should remain deferred until cited interview evidence is loaded.",
-      domains: ["evidence_sources"],
-    },
+    interviews.length > 0
+      ? {
+          id: "ctx_ecl_scope_leadership_001",
+          statement: `Leadership interview records are supplied in the current Home readout: ${interviews.length.toLocaleString()} responses. Their response basis must be read before treating any excerpt as testimony.`,
+          domains: ["executive_interview", "evidence_sources"],
+        }
+      : {
+          id: "ctx_ecl_scope_leadership_001",
+          statement:
+            "Leadership interview excerpts are not supplied by the current Home narrative input; leadership perspective should remain deferred until cited interview evidence is loaded.",
+          domains: ["evidence_sources"],
+        },
     ...projectionContextItems(rows),
   ];
   const sourceSummaries = buildEclSourceSummaries(estate);
@@ -2128,13 +2135,13 @@ function publishedThesisFromRows(rows: HomeProjectionRow[]): EnterpriseThesis {
       visual(
         "application_landscape_by_function",
         "Applications grouped by business function",
-        "The loaded ECL estate is function-segmented, not a 306-row legacy snapshot.",
+        "The application estate is counted by business function from the record on screen.",
         ["sig_ecl_estate_001"],
       ),
       visual(
         "vendor_spend_concentration",
-        "Supplier concentration in loaded contract value",
-        "Commercial concentration is now visible in the ECL contract projection.",
+        "Supplier concentration in current contract value",
+        "Supplier concentration is calculated from the current contract register.",
         ["sig_ecl_vendor_002"],
       ),
     ],
@@ -2209,13 +2216,13 @@ function buildPublishedChapters(
               visual(
                 "application_landscape_by_function",
                 "Applications grouped by business function",
-                "The loaded ECL estate is function-segmented, not a 306-row legacy snapshot.",
+                "The application estate is counted by business function from the record on screen.",
                 ["sig_ecl_estate_001"],
               ),
               visual(
                 "vendor_spend_concentration",
-                "Supplier concentration in loaded contract value",
-                "Commercial concentration is now visible in the ECL contract projection.",
+                "Supplier concentration in current contract value",
+                "Supplier concentration is calculated from the current contract register.",
                 ["sig_ecl_vendor_002"],
               ),
             ]
@@ -2224,7 +2231,7 @@ function buildPublishedChapters(
                 visual(
                   "application_landscape_by_function",
                   "Applications grouped by business function",
-                  "The loaded ECL estate is function-segmented, not a 306-row legacy snapshot.",
+                  "The application estate is counted by business function from the record on screen.",
                   ["sig_ecl_estate_001"],
                 ),
               ]

@@ -309,6 +309,9 @@ export function HomeV4App({
    * worse than a missing one. */
   const exhibitMeta = useMemo(() => {
     const meta: Record<string, string> = {};
+    if (applications) {
+      meta.application_landscape_by_function = `${applications.rows.length.toLocaleString()} applications`;
+    }
     const contracts = techRecordTypes.find(
       (t) => t.objectType === "vendor_contract",
     );
@@ -321,8 +324,17 @@ export function HomeV4App({
         meta.vendor_spend_concentration = `${contracts.rows.length} contracts · $${(total / 1_000_000).toFixed(1)}M`;
       }
     }
+    if (integrations) {
+      const workloads = integrations.rows.filter(
+        (row) => row.recordKind === "data_analytics_workload",
+      );
+      if (workloads.length > 0) {
+        meta.data_workload_by_function = `${workloads.length.toLocaleString()} workload segments`;
+        meta.data_workload_by_technology = `${workloads.length.toLocaleString()} workload segments`;
+      }
+    }
     return meta;
-  }, [techRecordTypes]);
+  }, [applications, integrations, techRecordTypes]);
 
   /** A chapter counts as drafted when the writer produced a headline for it. That is a property of
    * the generated record, not an inference from empty arrays -- a chapter can legitimately hold
@@ -453,13 +465,13 @@ export function HomeV4App({
   ];
   const activeBriefingOpening =
     activeChapter && isGeneratorDeferral(activeChapter.headline)
-    ? businessBriefingOpening({
-        chapterId: activeChapter.chapterId,
-        briefing: businessBriefing,
-        signalPacket,
-        techRecordTypes,
-      })
-    : undefined;
+      ? businessBriefingOpening({
+          chapterId: activeChapter.chapterId,
+          briefing: businessBriefing,
+          signalPacket,
+          techRecordTypes,
+        })
+      : undefined;
 
   return (
     <HomeAvaChat

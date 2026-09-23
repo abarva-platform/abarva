@@ -57,6 +57,116 @@ function servedBundle(): HomeReviewBundle {
   );
 }
 
+const CHAPTER_IDS = [
+  "executive_brief",
+  "our_business",
+  "strategy_value_creation",
+  "how_we_operate",
+  "technology_data",
+  "performance_value",
+  "leadership_perspective",
+  "what_needs_attention",
+] as const;
+
+function chapterSummaries(): HomeProjectionRow[] {
+  return CHAPTER_IDS.map(
+    (chapterId) =>
+      ({
+        page_key: chapterId,
+        row_key: `${chapterId}_summary`,
+        row_type: "summary",
+        title: `${chapterId} headline`,
+        summary: `${chapterId} summary.`,
+        display_payload_json: {},
+      }) as HomeProjectionRow,
+  );
+}
+
+function servedBundleWithPublishedTechnology(): HomeReviewBundle {
+  const base = getHomeReviewBundle("meridian-health");
+  if (!base) throw new Error("stored copy missing");
+  const rows: HomeProjectionRow[] = [
+    ...chapterSummaries(),
+    {
+      page_key: "technology_data",
+      row_key: "technology_data_claim_001",
+      row_type: "chapter_claim",
+      title: "Application and contract evidence is current",
+      summary: "Applications and contracts are counted from the served record.",
+      display_payload_json: {
+        evidence_ids: ["sig_ecl_estate_001"],
+        claim_type: "FACT",
+      },
+    } as HomeProjectionRow,
+    ...["Claims Platform", "Member Portal"].map(
+      (name, index) =>
+        ({
+          page_key: "applications_systems",
+          row_key: `APP-${index + 1}`,
+          row_type: "application",
+          title: name,
+          summary: null,
+          display_payload_json: {
+            application_name: name,
+            business_function:
+              index === 0 ? "Claims Operations" : "Member Services",
+            hosting_model: "saas",
+            annual_cost_usd: "1000000",
+          },
+        }) as HomeProjectionRow,
+    ),
+    ...[
+      ["CTR-1", "Epic Systems Corporation", "1000000"],
+      ["CTR-2", "AWS", "250000"],
+    ].map(
+      ([id, supplier, value]) =>
+        ({
+          page_key: "vendor_contracts",
+          row_key: id,
+          row_type: "contract",
+          title: supplier,
+          summary: null,
+          display_payload_json: {
+            contract_id: id,
+            supplier_name: supplier,
+            contract_name: `${supplier} agreement`,
+            annualized_value_usd: value,
+          },
+        }) as HomeProjectionRow,
+    ),
+  ];
+  return buildHomeReviewBundleFromEclProjectionRows(
+    base,
+    rows,
+    "assessment-test",
+  );
+}
+
+function servedBundleWithModelledInterview(): HomeReviewBundle {
+  const base = getHomeReviewBundle("meridian-health");
+  if (!base) throw new Error("stored copy missing");
+  return buildHomeReviewBundleFromEclProjectionRows(
+    base,
+    [
+      {
+        page_key: "executive_interviews",
+        row_key: "INT-001",
+        row_type: "interview",
+        title: "CFO interview response",
+        summary: null,
+        display_payload_json: {
+          interview_id: "INT-001",
+          executive_area: "CFO / Finance",
+          stakeholder_role: "Chief Financial Officer",
+          priority_theme: "value realization",
+          synthetic_answer: "The value story needs clearer proof.",
+        },
+      } as HomeProjectionRow,
+    ],
+    "assessment-test",
+  );
+}
+
 function open(hash: string) {
   window.location.hash = hash;
   return render(
@@ -170,6 +280,42 @@ describe("the served path", () => {
     }
   });
 
+  it("renders served exhibits in executive language with counts from the same record", () => {
+    window.location.hash = "technology_data";
+    const { container } = render(
+      <HomeV4App
+        bundle={servedBundleWithPublishedTechnology()}
+        tenantKey="meridian-health"
+      />,
+    );
+    document.querySelectorAll("style").forEach((n) => n.remove());
+    const text = container.textContent ?? "";
+
+    expect(text).toContain("2 applications");
+    expect(text).toContain("2 contracts · $1.3M");
+    expect(text).not.toMatch(/\bECL\b/);
+    expect(text).not.toMatch(/\bprojection\b/i);
+    expect(text).not.toMatch(/\bloaded\b/i);
+    expect(text).not.toMatch(/306-row legacy snapshot/i);
+  });
+
+  it("states the leadership response basis before modelled interview content can be read as testimony", () => {
+    window.location.hash = "leadership_perspective";
+    const { container } = render(
+      <HomeV4App
+        bundle={servedBundleWithModelledInterview()}
+        tenantKey="meridian-health"
+      />,
+    );
+    const note = container.querySelector("[data-leadership-basis-note]");
+
+    expect(note).not.toBeNull();
+    expect(note?.textContent ?? "").toMatch(/modelled, not transcribed/i);
+    expect(note?.textContent ?? "").toMatch(
+      /not treat modelled responses as verbatim testimony/i,
+    );
+  });
+
   it("opens the Executive Brief as an executive orientation, not a raw finding", () => {
     const { container } = open("executive_brief");
     const text = container.textContent ?? "";
@@ -178,7 +324,9 @@ describe("the served path", () => {
     expect(headline).toContain("strategic program");
     expect(headline).not.toContain("100% of the estate is self-hosted.");
     expect(text).not.toMatch(/Executive Brief is not yet answered/i);
-    expect(text).not.toMatch(/Nothing in the loaded record speaks to this question yet/i);
+    expect(text).not.toMatch(
+      /Nothing in the loaded record speaks to this question yet/i,
+    );
     expect(text).not.toMatch(/Nothing established here yet/i);
     expect(container.querySelector("[data-home-briefing-opening]")).toBeNull();
     expect(text).toContain("In your first ten minutes");
@@ -191,10 +339,14 @@ describe("the served path", () => {
 
     expect(headline).toContain("provider/health-plan model");
     expect(text).not.toMatch(/Our Business is not yet answered/i);
-    expect(text).not.toMatch(/Nothing in the loaded record speaks to this question yet/i);
+    expect(text).not.toMatch(
+      /Nothing in the loaded record speaks to this question yet/i,
+    );
     expect(text).not.toMatch(/Nothing established here yet/i);
     expect(container.querySelector("[data-home-briefing-opening]")).toBeNull();
-    expect(text).toContain("This enterprise creates value through a 60/40 split");
+    expect(text).toContain(
+      "This enterprise creates value through a 60/40 split",
+    );
   });
 });
 

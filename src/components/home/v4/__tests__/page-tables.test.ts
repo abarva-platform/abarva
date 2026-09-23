@@ -159,6 +159,25 @@ describe("chapter depth", () => {
   });
 });
 
+describe("operating-model table contract", () => {
+  it("groups platform evidence as operating posture rather than a generic technology inventory", () => {
+    const tables = infrastructureTables([
+      {
+        platformName: "Claims hosting",
+        hostingModel: "cloud",
+        drTier: "tier3_backup_only",
+        criticality: "tier1",
+        endOfLifeDate: "2027-12-31",
+      },
+    ]);
+
+    expect(tables.map((table) => table.section)).toEqual(
+      expect.arrayContaining(["Operational resilience", "Platform lifecycle"]),
+    );
+    expect(tables.map((table) => table.section)).not.toContain("Where it runs");
+  });
+});
+
 describe("money formatting", () => {
   it.each([
     [1.5e9, "$1.5B"],

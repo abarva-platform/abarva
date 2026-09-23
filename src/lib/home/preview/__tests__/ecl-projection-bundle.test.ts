@@ -545,6 +545,37 @@ describe("buildTechnologyEstateFromHomeProjectionRows", () => {
     });
   });
 
+  it("does not tell Home that leadership interviews are absent when the served record carries them", () => {
+    const base = getHomeReviewBundle("meridian-health");
+    expect(base).toBeTruthy();
+
+    const bundle = buildHomeReviewBundleFromEclProjectionRows(base!, [
+      row({
+        page_key: "executive_interviews",
+        row_key: "INT-001",
+        row_type: "interview",
+        title: "CFO interview response",
+        display_payload_json: {
+          interview_id: "INT-001",
+          executive_area: "CFO / Finance",
+          stakeholder_role: "Chief Financial Officer",
+          priority_theme: "value realization",
+          synthetic_answer: "The value story needs clearer proof.",
+        },
+      }),
+    ]);
+
+    const leadershipScope = bundle.thesis.signalPacket.contextItems.find(
+      (item) => item.id === "ctx_ecl_scope_leadership_001",
+    );
+    expect(leadershipScope?.statement).toContain(
+      "Leadership interview records are supplied",
+    );
+    expect(leadershipScope?.statement).toContain("1 responses");
+    expect(leadershipScope?.statement).not.toMatch(/not supplied/i);
+    expect(leadershipScope?.domains).toContain("executive_interview");
+  });
+
   it("rejects a story plan that references a dropped or missing chapter claim", () => {
     const base = getHomeReviewBundle("meridian-health");
     expect(base).toBeTruthy();
