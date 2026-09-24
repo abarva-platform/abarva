@@ -96,7 +96,7 @@ const OVERRIDES: Record<string, QualityBarOverride> = {
     // Word band reconciled 2026-07-25 with golden-bar's DEPTH_BY_ARTIFACT
     // (they previously contradicted: golden-bar's ceiling equalled this
     // pipeline's floor) — see P3_P4_WORD_BAND_CONTRACTS in artifact-contracts.ts.
-    minSections: 6,
+    minSections: 5,
     ...wordBandFrom("business_case"),
     requiresCentralTension: true,
     requiresOptionsConsidered: true,
@@ -109,7 +109,7 @@ const OVERRIDES: Record<string, QualityBarOverride> = {
     // Word band reconciled 2026-07-25 — golden-bar's ceiling (6,000) previously
     // sat below this pipeline's own floor (9,000); both now read the same
     // numbers from P3_P4_WORD_BAND_CONTRACTS in artifact-contracts.ts.
-    minSections: 7,
+    minSections: 4,
     ...wordBandFrom("target_state_architecture"),
     requiresCentralTension: true,
     requiresOptionsConsidered: true,
@@ -118,7 +118,7 @@ const OVERRIDES: Record<string, QualityBarOverride> = {
   "moves::solution_design": {
     // 5-10 visual, decision-led pages. This is a specification of the accepted
     // architecture, not a second architecture report or implementation manual.
-    minSections: 6,
+    minSections: 4,
     ...wordBandFrom("solution_design"),
     requiresCentralTension: true,
     requiresEvidenceGapsNoted: true,
@@ -126,7 +126,7 @@ const OVERRIDES: Record<string, QualityBarOverride> = {
   "moves::operating_model_design": {
     // 5-8 table/diagram-rich pages. Reader energy belongs on work split,
     // accountability, controls, cadence, and adoption decisions.
-    minSections: 6,
+    minSections: 4,
     ...wordBandFrom("operating_model_design"),
     requiresCentralTension: true,
     requiresEvidenceGapsNoted: true,
@@ -134,7 +134,7 @@ const OVERRIDES: Record<string, QualityBarOverride> = {
   "moves::sourcing_strategy": {
     // 4-7 page options paper. It chooses a sourcing posture; it does not become
     // an RFP, vendor landscape, contract, or restatement of the full design.
-    minSections: 5,
+    minSections: 4,
     ...wordBandFrom("sourcing_strategy"),
     requiresOptionsConsidered: true,
     requiresEvidenceGapsNoted: true,
@@ -160,7 +160,7 @@ const OVERRIDES: Record<string, QualityBarOverride> = {
     // Canonical orchestrator key used by the P3 `operating_model_design`
     // registry artifact. It must resolve to the same concise control as the
     // registry-facing alias above.
-    minSections: 6,
+    minSections: 4,
     ...wordBandFrom("operating_model_design"),
     requiresCentralTension: true,
     requiresEvidenceGapsNoted: true,

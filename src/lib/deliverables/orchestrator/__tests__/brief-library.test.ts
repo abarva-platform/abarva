@@ -10,6 +10,7 @@ import {
   DELIVERABLE_STRUCTURES,
   getDeliverableStructure,
 } from "../briefs/deliverable-structures";
+import { resolveQualityBar } from "../quality-bar-registry";
 import { amsRfpRequest } from "../__fixtures__/ams-rfp";
 import type { DeliverableIntelligenceRequest } from "../types";
 
@@ -334,6 +335,9 @@ describe("deliverable structures", () => {
       "risks",
     ]);
     expect(brief.optionalSections).toEqual(["options"]);
+    expect(resolveQualityBar("moves", "business_case").minSections).toBe(
+      structure.requiredSectionKeys.length,
+    );
     expect(structure.sections.map((section) => section.key)).not.toEqual(
       expect.arrayContaining([
         "problem_opportunity",
@@ -346,6 +350,25 @@ describe("deliverable structures", () => {
       /Do not add separate Problem \/ Opportunity, Cost Model, Financial Summary, or Recommendation sections/,
     );
   });
+
+  it.each([
+    "business_case",
+    "target_state_architecture",
+    "solution_design",
+    "operating_model",
+    "sourcing_strategy",
+  ] as const)(
+    "%s quality floor follows required sections, not optional section count",
+    (deliverableType) => {
+      const structure = getDeliverableStructure("moves", deliverableType)!;
+      expect(structure.sections.length).toBeGreaterThan(
+        structure.requiredSectionKeys.length,
+      );
+      expect(resolveQualityBar("moves", deliverableType).minSections).toBe(
+        structure.requiredSectionKeys.length,
+      );
+    },
+  );
 
   it("keeps P4 estimate, value, and readiness instruments fixed, compact, and evidence-gated", () => {
     const estimate = getDeliverableStructure("moves", "estimate_model")!;
