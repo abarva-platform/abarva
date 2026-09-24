@@ -31,6 +31,7 @@ export type FindingKind =
   | "content_hash"
   | "model_name"
   | "schema_identifier"
+  | "render_package_payload"
   | "internal_enum_pair"
   | "internal_type_key"
   | "pipeline_vocabulary"
@@ -212,6 +213,13 @@ const RULES: readonly Rule[] = [
     severity: "blocker",
     pattern: new RegExp(`\\b(?:${alternation(SCHEMA_IDENTIFIERS)})\\b`, "gi"),
     why: "A table or column name is internal structure leaking into a client document.",
+  },
+  {
+    kind: "render_package_payload",
+    severity: "blocker",
+    pattern:
+      /"?\b(?:bodyMarkdown|rawBodyMarkdown|generatedSections|groundingMode|citationsUsed)\b"?\s*:/g,
+    why: "A render-package field is structured generation payload, not client-facing narrative.",
   },
   {
     kind: "internal_enum_pair",
