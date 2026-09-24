@@ -271,3 +271,24 @@ jobs:
       # network; this is a separate CLI, in the shape of `--preclaim`.
       - name: Run the fossil-claim resolver contract
         run: node scripts/exec/fossil-claims.test.mjs
+
+      # The `LIVE_<n>` transcription verifier (item T-718).
+      #
+      # ONLY THE SUITE RUNS HERE, and that is the whole design. The verifier
+      # itself reads the operator register, which a runner does not have and
+      # must not have: `register-time-authority.test.mjs` proves its rules
+      # against hand-copied fragments of that register precisely so the control
+      # cannot take its truth from its own subject. Wiring the verifier into CI
+      # would rebuild the thing it exists to avoid.
+      #
+      # So the suite below is entirely synthetic -- every case builds a register
+      # in a temp directory -- and the live reading is a report an agent runs
+      # beside `--preclaim`. Twenty-two cases, seven mutations, seven caught.
+      #
+      # What the first live run found is why the tool is not merely
+      # preventative: of 22 citations in the suite, ONE resolved at the line it
+      # names and it won on a tie at 1 of 3 segments; 18 resolved four lines
+      # below, every one of them at the same +4; 3 were unlocatable. T-718 was
+      # filed on a hand measurement of seven that all still resolved.
+      - name: Run the register-citation transcription verifier contract
+        run: node scripts/exec/register-citation-check.test.mjs
