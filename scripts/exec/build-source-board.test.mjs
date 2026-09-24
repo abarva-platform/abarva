@@ -1398,5 +1398,265 @@ for (const [header, cells, lane, label] of [
   fs.rmSync(dir, { recursive: true, force: true });
 }
 
+
+/* ------------------------------------------------------------------------ *
+ * HELPERS for item T-750 — a verdict written under `##`.
+ * ------------------------------------------------------------------------ */
+
+/** A `## <heading>` section carrying one `# | Item | Lane | Acceptance` row. */
+function addSectionedItem(dir, heading, id, body, lane, acceptance) {
+  fs.appendFileSync(
+    path.join(dir, "EXECUTION_BACKLOG_20260918.md"),
+    `\n## ${heading}\n\n| # | Item | Lane | Acceptance |\n|---|---|---|---|\n`
+      + `| ${id} | ${body} | ${lane} | ${acceptance} |\n`,
+  );
+}
+
+/** A verdict note written as a heading of the caller's chosen depth. */
+function addVerdictHeading(dir, depth, headingText, prose) {
+  fs.appendFileSync(
+    path.join(dir, "EXECUTION_BACKLOG_20260918.md"),
+    `\n${"#".repeat(depth)} ${headingText}\n\n${prose}\n`,
+  );
+}
+
+/** Place one id on the map pinned to a section, without disturbing the rest. */
+function mapPinnedFixtureId(dir, id, definedIn, where) {
+  const file = path.join(dir, "source-stage-map.json");
+  const map = JSON.parse(fs.readFileSync(file, "utf8"));
+  const list = where === "outsideLifecycle" ? map.outsideLifecycle : map.platformTrack;
+  list.items.push({ num: id, definedIn });
+  fs.writeFileSync(file, `${JSON.stringify(map, null, 2)}\n`);
+}
+
+/**
+ * EVERY summary entry for one id, not the last one written.
+ *
+ * `summaryItems` keys by id, so two pinned definitions of one number collapse
+ * to whichever the walk reached second — which is precisely the pair these
+ * cases are about.
+ */
+function allSummaryEntriesFor(dir, id) {
+  const summary = JSON.parse(
+    fs.readFileSync(path.join(dir, "source-board-summary.json"), "utf8"),
+  );
+  const hits = [];
+  const walk = (o) => {
+    if (Array.isArray(o)) { o.forEach(walk); return; }
+    if (!o || typeof o !== "object") return;
+    if (String(o.num) === id && o.rung !== undefined) hits.push(o);
+    for (const k of Object.keys(o)) walk(o[k]);
+  };
+  walk(summary);
+  return hits;
+}
+
+/* ------------------------------------------------------------------------ *
+ * 23. THE DEFECT (item T-750). A verdict note under `##` reaches nothing.
+ *
+ *     `backlogProseItems` requires `^### Item <id>`, and this backlog writes
+ *     its verdicts under `##` — 62 of them on the live document. Most also
+ *     carry a table row for their own id inside the note, so the verdict
+ *     lands anyway and the gap is invisible; where the note is prose only,
+ *     the verdict reaches no corpus and the item stays at rung 0.
+ *
+ *     `unparsedItemIds` cannot report it either: that list is a set
+ *     difference over IDS, and this id is produced by its own table row, so
+ *     the residual is empty while the verdict is lost. Case 22's arithmetic
+ *     passes over exactly this case — which is the same shape as the gate
+ *     that proved a control existed by finding its name in the file.
+ *
+ *     Measured on the live backlog at 2026-09-24T03:45Z: five ids carry a
+ *     `##` verdict heading and read rung 0, `T-458` among them — the ONLY
+ *     non-data-plane row the claimable queue offered, already marked closed
+ *     by a run at 07:14Z the same day.
+ * ------------------------------------------------------------------------ */
+{
+  const dir = freshFixture();
+  addSectionedItem(
+    dir,
+    "T-750 fixture — the item as originally filed",
+    "T-960",
+    "**A control that does not run.**",
+    "T",
+    "A behavioral test drives the real handler.",
+  );
+  mapFixtureId(dir, "T-960");
+  addVerdictHeading(
+    dir,
+    2,
+    "Item T-960 — CLOSED 2026-09-24 (fixture). The item was right and the fix shipped.",
+    "Prose only: no table row, no `###` subsection. This is the shape the live backlog uses.",
+  );
+  const r = run(dir, "build-source-board.mjs", ["--json"]);
+  const { out } = summaryItems(dir);
+  const item = out.get("T-960");
+  check(
+    "a verdict written under `## Item <id>` closes the item it names",
+    item !== undefined && item.rungLabel === "Closed",
+    `exit=${r.status}\nrungLabel=${JSON.stringify(item?.rungLabel)} rung=${JSON.stringify(item?.rung)}\n`
+      + "Closed and Open are BOTH rung 0 — the label is the only field that tells them apart, "
+      + "and `build-execution-queue.mjs` filters on exactly that (`rungLabel !== \"Closed\"`).",
+  );
+  const summary = JSON.parse(
+    fs.readFileSync(path.join(dir, "source-board-summary.json"), "utf8"),
+  );
+  check(
+    "and the board reports it as Closed rather than merely off rung 0",
+    (summary.allItemsByRung ?? {}).Closed >= 1,
+    `allItemsByRung=${JSON.stringify(summary.allItemsByRung)}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+/* ------------------------------------------------------------------------ *
+ * 24. The lane suffix is the only thing that tells two items apart.
+ *
+ *     `buildItem` lets an update note through EVERY `definedIn` pin
+ *     (`... || isUpdateNote(d)`), which is right for a number with one item
+ *     and wrong for a collision: on the live board `T-458` is two different
+ *     items in two lanes, and the operator disambiguates by writing
+ *     `T-458(D)`. Attributing that verdict to both would close a lane-U item
+ *     that is explicitly still open on a held decision.
+ *
+ *     So the suffix must SCOPE the verdict, not merely survive parsing.
+ * ------------------------------------------------------------------------ */
+{
+  const dir = freshFixture();
+  addSectionedItem(
+    dir,
+    "T-750 fixture D-lane origin",
+    "T-961",
+    "**The data-plane half.**",
+    "D",
+    "Write the register line.",
+  );
+  addSectionedItem(
+    dir,
+    "T-750 fixture U-lane origin",
+    "T-961",
+    "**The surface half, on a held decision.**",
+    "U",
+    "Decide first, do not code first.",
+  );
+  mapPinnedFixtureId(dir, "T-961", "T-750 fixture D-lane origin", "platformTrack");
+  mapPinnedFixtureId(dir, "T-961", "T-750 fixture U-lane origin", "outsideLifecycle");
+  addVerdictHeading(
+    dir,
+    2,
+    "Item T-961(D) — CLOSED 2026-09-24 (fixture). The register lines were written two days ago.",
+    "Prose only. This verdict speaks for the D-lane half and for nothing else.",
+  );
+  const r = run(dir, "build-source-board.mjs", ["--json"]);
+  const entries = allSummaryEntriesFor(dir, "T-961");
+  const dLane = entries.find((e) => e.lane === "D");
+  const uLane = entries.find((e) => e.lane === "U");
+  const shown = JSON.stringify(entries.map((e) => ({ lane: e.lane, rungLabel: e.rungLabel })));
+  check(
+    "a `(D)`-suffixed verdict closes the D-lane definition",
+    dLane !== undefined && dLane.rungLabel === "Closed",
+    `exit=${r.status}\nentries=${shown}`,
+  );
+  check(
+    "and leaves the U-lane definition of the same number open",
+    uLane !== undefined && uLane.rungLabel === "Open",
+    `entries=${shown}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+/* ------------------------------------------------------------------------ *
+ * 25. A lane suffix no definition answers to fails CLOSED, and is NAMED.
+ *
+ *     The fail-open reading — "the lane does not match, so attribute it
+ *     anyway" — would close an item on a verdict written about a different
+ *     one. The fail-closed reading alone is not enough either: it is silence,
+ *     which is the defect in case 23. So the verdict is withheld AND the
+ *     board says whose it could not be.
+ * ------------------------------------------------------------------------ */
+{
+  const dir = freshFixture();
+  addSectionedItem(
+    dir,
+    "T-750 fixture — a lane-U item only",
+    "T-962",
+    "**One definition, lane U.**",
+    "U",
+    "Decide first.",
+  );
+  mapFixtureId(dir, "T-962");
+  addVerdictHeading(
+    dir,
+    2,
+    "Item T-962(D) — CLOSED 2026-09-24 (fixture). A suffix naming a lane this id does not have.",
+    "Prose only.",
+  );
+  const r = run(dir, "build-source-board.mjs", ["--json"]);
+  const { summary, out } = summaryItems(dir);
+  check(
+    "a verdict whose lane suffix matches no definition does NOT close the item",
+    out.get("T-962")?.rungLabel === "Open",
+    `exit=${r.status}\nrungLabel=${JSON.stringify(out.get("T-962")?.rungLabel)}`,
+  );
+  const unattributed = (summary.laneScopedVerdictsUnattributed ?? []).map((v) => `${v.num}(${v.laneScope})`);
+  check(
+    "and the board names the withheld verdict instead of dropping it in silence",
+    unattributed.includes("T-962(D)"),
+    `laneScopedVerdictsUnattributed=${JSON.stringify(summary.laneScopedVerdictsUnattributed)}`,
+  );
+  check(
+    "and says so on its own stdout, where the operator reads it",
+    /T-962\(D\)/.test(r.stdout),
+    `stdout tail:\n${r.stdout.split("\n").slice(-25).join("\n")}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+/* ------------------------------------------------------------------------ *
+ * 26. THE GUARD. Widening the heading depth must not widen what counts as a
+ *     DEFINITION.
+ *
+ *     The live backlog carries 348 `## Item` headings against 128 `###`.
+ *     Reading every one as a substantive definition would invent a second
+ *     definition for hundreds of ids, suppress them all as ambiguous, and
+ *     take the lifecycle stages down with them — the `# | Mutation` failure
+ *     of case 21 reached from the heading side. Only a verdict-shaped title
+ *     may be read, and a note is never substantive.
+ * ------------------------------------------------------------------------ */
+{
+  const dir = freshFixture();
+  addSectionedItem(
+    dir,
+    "T-750 fixture — the guard",
+    "T-963",
+    "**One definition only.**",
+    "T",
+    "Stay unambiguous.",
+  );
+  mapFixtureId(dir, "T-963");
+  // A heading about the item that states no verdict: commentary, not status.
+  addVerdictHeading(
+    dir,
+    2,
+    "Item T-963 — notes on the approach, and why the obvious fix is wrong",
+    "Prose only. Nothing here is a verdict.",
+  );
+  const r = run(dir, "build-source-board.mjs", ["--json"]);
+  const { summary, out } = summaryItems(dir);
+  check(
+    "a `##` heading that states no verdict does not become a second definition",
+    !(summary.duplicateNums ?? []).some((d) => String(d.num) === "T-963")
+      && out.get("T-963")?.ambiguous === false,
+    `exit=${r.status}\nduplicateNums=${JSON.stringify((summary.duplicateNums ?? []).map((d) => d.num))}\n`
+      + `ambiguous=${JSON.stringify(out.get("T-963")?.ambiguous)}`,
+  );
+  check(
+    "and it leaves the item at the rung its own text earns",
+    out.get("T-963")?.rungLabel === "Open",
+    `rungLabel=${JSON.stringify(out.get("T-963")?.rungLabel)}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
 console.log(`\n${passes} passed, ${failures} failed`);
 process.exit(failures ? 1 : 0);
