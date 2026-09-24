@@ -1,0 +1,682 @@
+{
+  "item": "T-475",
+  "title": "Sixth and last stale-suite draw the governed-risk ranking can supply: twelve suites, three of them red, and one green suite that a mutation proved is not load-bearing",
+  "recordedAt": "2026-09-24T08:10:53.057Z",
+  "base": "15e0e99945fde5b9fc52b3cdc6cc3466dea60900",
+  "scope": {
+    "drawnFrom": "governedRiskFiles from scripts/quality/test-ci-coverage-census.mjs re-derived at this base, rows with untriaged true and covered false, band before score before path",
+    "drawSize": 12,
+    "poolUntriagedAndUncovered": 26,
+    "poolAfterExcludingPriorRecords": 12,
+    "remainingAfterThisDraw": 0,
+    "bandsInThisDraw": {
+      "critical": 0,
+      "high": 12
+    },
+    "whyTwelveAndNotTwenty": "The pool at this base is 26 files. Excluding by exact path the 85 distinct paths already judged in the five committed records leaves 12, and every one is band high, score 10, signal tenant_scoped_read, so the order is path order and nothing else. The item predicted this list exactly and it reproduced exactly, which is why this draw took it as filed rather than re-deriving a different twelve.",
+    "correctionToTheClaimLine": "This run's claim line said 14 of the 26 were band critical. That is WRONG and is corrected here rather than restamped: the 26 split 3 critical / 23 high, and it is 14 rows — 3 critical and 11 high — that are excluded because a prior record already judged them. The 14 is a real number attached to the wrong property.",
+    "disjointFrom": [
+      "docs/architecture/t472-stale-suite-triage.json",
+      "docs/architecture/t509-stale-suite-triage.json",
+      "docs/architecture/t550-stale-suite-triage.json",
+      "docs/architecture/t556-stale-suite-triage.json",
+      "docs/architecture/t742-stale-suite-triage.json"
+    ],
+    "disjointnessIsAsserted": "src/__tests__/behaviors/t475-stale-suite-triage-record.test.ts reads all five sibling records and fails if any path appears in two."
+  },
+  "verdictVocabulary": [
+    "wire_into_ci",
+    "rewrite_as_behavior",
+    "update_with_reason_recorded",
+    "repair"
+  ],
+  "jestEvidence": {
+    "how": "Each of the twelve was executed on its own with npx jest --runTestsByPath <path> --no-coverage --ci --json --outputFile, and every count in suites[] is read out of that run's JSON by a script rather than typed.",
+    "executedAt": "2026-09-24T07:42:45Z to 2026-09-24T07:42:54Z, before any verdict below was written",
+    "harnessFoundTests": "Asserted rather than assumed: every one of the twelve runs reports numTotalTestSuites 1, exactly one entry in testResults, and numTotalTests greater than zero. A run that matched no file would report zero, and a green exit code hides that.",
+    "totals": {
+      "suitesExecuted": 12,
+      "green": 9,
+      "red": 3,
+      "testsRun": 64,
+      "testsPassed": 59,
+      "testsFailed": 5,
+      "testsPending": 0
+    }
+  },
+  "mutationEvidence": {
+    "why": "The acceptance requires a green suite to be mutation-checked before it is credited, because green is not the same as load-bearing. Each of the nine green suites had one behaviour-changing edit applied to the product module it imports, was re-run, and the edit was reverted with the tree verified clean afterwards. Red suites were not mutated: their failure is already the measurement.",
+    "greenSuitesMutated": 9,
+    "caught": 8,
+    "escaped": 1,
+    "escapeIsNotCreditedAsProof": "The one escape is src/lib/source/contract-evidence/__tests__/persistence.test.ts and it carries verdict repair, not wire_into_ci. The guard beside this record enforces that rule so a future edit cannot quietly promote it.",
+    "noOpMutationsRuledOut": "The escape was proven to be a real behaviour change rather than a no-op edit: a throwaway probe built the payload under the mutation and printed the row-level tenant_key as the injected constant while the manifest still carried the fixture's own tenant key. A no-op mutation reads exactly like a coverage gap, and this one is not a no-op."
+  },
+  "riskAttribution": {
+    "question": "The item asks the honest next question: is the governed-risk ranking exhausted because the work is done, or because the classifier is narrow? Both halves are measured here rather than asserted.",
+    "howMeasured": "scripts/quality/test-ci-coverage-census.mjs computes governedRiskForDirectory(root, testFiles, catalogPaths) over ALL test files in a directory, so a file inherits its directory's band. This record calls that same exported function twice per row — once with the directory's file list, once with the single file — so the two numbers come from one implementation and not from a second copy of the rule.",
+    "filesCarryingTheSignalOnTheirOwnImports": 6,
+    "filesInheritingItFromADirectorySibling": 6,
+    "whatThatMeans": "Half this draw was ranked high because a neighbour in the same directory imports a tenant-scoped source, not because the file does. Directory grain can only inflate a file's band, never deflate it, so the ranking over-attributes at file level and the phrase 'twelve highest-risk untriaged suites' should be read as 'twelve suites in the highest-risk untriaged directories'.",
+    "coverageOfTheRankingItself": {
+      "untriagedUnrunTestFiles": 407,
+      "directoriesWithUntriagedUnrunTestFiles": 192,
+      "criticalGovernedRiskDirectories": 1,
+      "highGovernedRiskDirectories": 11,
+      "unclassifiedRiskDirectories": 180,
+      "rankedShareOfTheUnrunPopulation": "26 of 407 files, 6.4%"
+    },
+    "theAnswer": "The ranking is not exhausted because the debt is retired. It is exhausted because it can only rank files in the 12 of 192 directories it assigns any signal to — 6.4% of the untriaged unrun population. 180 directories carry no signal at all, and this measurement cannot tell whether that is because they are genuinely low risk or because their imports do not resolve to a source the three regexes match. Distinguishing those two needs the census to publish a resolved-product-source count per directory, which is a change to its output shape and is filed as T-758 rather than made here."
+  },
+  "drawConcentration": {
+    "byDirectory": {
+      "src/lib/data-plane/__tests__": 2,
+      "src/lib/enterprise-context/__tests__": 2,
+      "src/lib/source/candidate-suppliers/__tests__": 3,
+      "src/lib/source/contract-evidence/__tests__": 3,
+      "src/lib/source/contract-intelligence/__tests__": 2
+    },
+    "dominantDirectory": "src/lib/source/candidate-suppliers/__tests__",
+    "dominantDirectoryCount": 3,
+    "whyItMatters": "The pool is one band and one score, so ranking collapses to path order and the draw becomes an alphabetical sweep. Unlike T-742, which landed nineteen of twenty in a single directory, this draw spreads across six directories in three product areas — the data plane, enterprise context, and Source contract and candidate-supplier repositories. That is not an improvement in the draw rule; it is what the remaining tail happened to contain, and a reader should not read it as coverage of those areas."
+  },
+  "forbiddenEdits": "No file judged in suites[] is edited by this item. The triage records a verdict and hands it on; wiring, rewriting and repair are the follow-on items' work. The mutations above were applied, measured and reverted, and the tree was verified clean with git status before anything was written.",
+  "followOnItems": {
+    "T-754": "Wire the eight credited suites into a CI job, proven by the wiring mutation the five prior draws used: replacing the new workflow step with `echo skipped` must move the census's workflow-reached count by exactly eight.",
+    "T-755": "Assert the per-row tenant fence in the contract-evidence persistence payload, then credit and wire the suite. The escape is recorded above with its probe.",
+    "T-756": "Re-baseline the two stale expectations and wire both suites: the intelligence-read-model composite case against #7795, which deliberately separated configuration items from applications and services and renamed the copy; and the contract-evidence templates family list against e38e5b4f5, which added an application_inventory family to the AMS pack. Neither is a product defect and neither may be deleted to make a count fall.",
+    "T-757": "Decide the fate of src/lib/enterprise-context/derived-enterprise-read.ts — retire it or re-wire it against a canonical dataset — and update its suite to whichever is chosen. Two suites still carry a jest.mock of this module although nothing imports it at runtime, so those mocks are vestigial and should go with it.",
+    "T-758": "Publish a resolved-product-source count per directory in the census so an unclassified directory can be told apart from one whose imports the resolver could not follow. 180 of 192 directories holding untriaged unrun suites carry no governed-risk signal, and today nothing distinguishes 'low risk' from 'invisible'.",
+    "T-759": "A behavioural suite writes a real test file into src/lib/agent/__tests__/ mid-run and deletes it in a finally block; four suites that enumerate and then read every test file under src/ race against it. Found while baselining this draw, not looked for.",
+    "T-760": "The census drift check exists as an npm script and runs in no workflow. The committed census is the input that decides which directory is triaged next, and it is stale by eleven files at this base with nothing failing."
+  },
+  "foundWhileExecuting": {
+    "T-759": {
+      "what": "src/__tests__/behaviors is CI-gated and is non-deterministically red. src/__tests__/behaviors/t743-agent-tests-directory-ci.test.ts deliberately writes src/lib/agent/__tests__/t743-coverage-probe.generated.test.ts during its run — that is its point, it proves the workflow reaches a file it has never heard of — and removes it in a finally block. Four suites enumerate every test file under src/ and then read each one, directly or by spawning the census, and observe the file between its creation and its deletion: test-success-guard-assertions, rendered-ai-controls-ci-coverage, liability-product-truth-ci-coverage and admin-source-action-route-suite-ci-coverage. They fail with ENOENT naming that exact path.",
+      "measured": "Warm jest cache: 0 of 114 suites failed, four runs out of four. Cold cache (npx jest --clearCache first): 4, 4 and 3 suites failed in three runs out of three, every failure naming the probe file. The count moves between runs, which is what distinguishes a race from a broken assertion. This is pre-existing and was measured on a tree reverted to origin/main, not on this change.",
+      "whyItIsNotFixedHere": "It is a different item in a file this claim does not hold, and the fix is a design choice — give the probe its own temporary directory, or make the four readers tolerate a file that disappears — which should be made once for all of them rather than guessed here."
+    },
+    "T-760": {
+      "what": "scripts/quality/test-ci-coverage-census.mjs --check reports drift between the committed census and the measured one, and no workflow runs it. At this base the committed file is stale: testFiles 2409 against 2420 measured, coveredTestFiles 1954 against 1964.",
+      "whyItMatters": "Every stale-suite draw, including this one, is ranked from that census. The item that opened this draw already warned a taker to re-derive it rather than trust the snapshot, which is a rule a person must remember. A gate would not need remembering.",
+      "whyItIsNotFixedHere": "Refreshing the committed census mid-flight changes the ranking input other agents are drawing from, and wiring the check is a workflow change outside this claim."
+    }
+  },
+  "claimedWriteFiles": [
+    "docs/architecture/t475-stale-suite-triage.json",
+    "src/__tests__/behaviors/t475-stale-suite-triage-record.test.ts",
+    "scripts/quality/test-ci-coverage-census.mjs",
+    "docs/releases/records/2026-09-24-t475-stale-suite-triage.md",
+    "scripts/exec/source-stage-map.json"
+  ],
+  "vacuousControlsDeclared": {
+    "sourceTextScanner": "VACUOUS for this draw. Not one of the twelve reads a source file as text — every row scores zero for readFileSync and readFile — so the control that forbids wiring a source-text scanner never fires here. The RULE is kept in full because a future draw will need it; what is removed is the non-empty precondition T-556 attached to it, which would turn a clean draw red for being clean.",
+    "redSuites": "NOT VACUOUS for this draw, and this is the first draw since T-472 where it is not. Three of the twelve are red and the control that forbids a pass-assuming verdict on a non-green suite fires on all three. The declaration is kept in the same shape as T-742's so the two records can be read side by side."
+  },
+  "counts": {
+    "wire_into_ci": 8,
+    "rewrite_as_behavior": 0,
+    "update_with_reason_recorded": 3,
+    "repair": 1
+  },
+  "suites": [
+    {
+      "path": "src/lib/data-plane/__tests__/azure-read.test.ts",
+      "draw": "T-475",
+      "governedRiskBandAsRanked": "high",
+      "governedRiskScoreAsRanked": 10,
+      "governedRiskSignalsAsRanked": [
+        "tenant_scoped_read"
+      ],
+      "governedRiskBandFromItsOwnImports": "unclassified",
+      "governedRiskScoreFromItsOwnImports": 0,
+      "governedRiskSignalsFromItsOwnImports": [],
+      "loaded": true,
+      "collected": true,
+      "run": true,
+      "green": true,
+      "totalTests": 6,
+      "failedTests": 0,
+      "passedTests": 6,
+      "pendingTests": 0,
+      "todoTests": 0,
+      "sourceTextScanner": false,
+      "verdict": "wire_into_ci",
+      "ownerItem": "T-754",
+      "rationale": "Drives the real azureRead client through an injected session and proves the guards that stand between a caller and the database: a non-SELECT statement is rejected before it reaches the session, multi-statement SQL is rejected, and table and column identifiers are validated rather than interpolated. These are injection and read-only controls on the data plane, and they run in no CI job today.",
+      "mutationCheck": {
+        "applied": "The select-only guard in assertSelectOnly returns instead of throwing.",
+        "subject": "src/lib/data-plane/azureRead.ts",
+        "caught": true,
+        "failedCasesUnderMutation": 1
+      },
+      "caseNames": [
+        "azureRead runs typed SELECT queries through the injected session",
+        "azureRead rejects non-read SQL before it reaches the session",
+        "azureRead builds identifier-safe SELECT statements for row reads",
+        "azureRead rejects unsafe table or column identifiers",
+        "azureRead returns null for maybeSingle when no rows match",
+        "azureRead returns zero or empty rows for missing optional tables when requested"
+      ],
+      "literalCaseTitles": [
+        "runs typed SELECT queries through the injected session",
+        "rejects non-read SQL before it reaches the session",
+        "builds identifier-safe SELECT statements for row reads",
+        "rejects unsafe table or column identifiers",
+        "returns null for maybeSingle when no rows match",
+        "returns zero or empty rows for missing optional tables when requested"
+      ],
+      "generatedCaseTitles": 0,
+      "generatedCaseTitlesReason": null
+    },
+    {
+      "path": "src/lib/data-plane/__tests__/objectStorage.test.ts",
+      "draw": "T-475",
+      "governedRiskBandAsRanked": "high",
+      "governedRiskScoreAsRanked": 10,
+      "governedRiskSignalsAsRanked": [
+        "tenant_scoped_read"
+      ],
+      "governedRiskBandFromItsOwnImports": "unclassified",
+      "governedRiskScoreFromItsOwnImports": 0,
+      "governedRiskSignalsFromItsOwnImports": [],
+      "loaded": true,
+      "collected": true,
+      "run": true,
+      "green": true,
+      "totalTests": 3,
+      "failedTests": 0,
+      "passedTests": 3,
+      "pendingTests": 0,
+      "todoTests": 0,
+      "sourceTextScanner": false,
+      "verdict": "wire_into_ci",
+      "ownerItem": "T-754",
+      "rationale": "Drives the real blob upload path against a mocked Azure SDK and asserts the two behaviours that matter when a container cannot be created: the upload still proceeds, and an authorization failure on the upload itself is still surfaced rather than swallowed. It also pins that upsert uploads are unconditional while non-upsert uploads carry ifNoneMatch, which is the difference between overwriting a tenant artifact and refusing to.",
+      "mutationCheck": {
+        "applied": "The upsert conditional is inverted, so an upsert upload carries ifNoneMatch and a non-upsert upload does not.",
+        "subject": "src/lib/data-plane/objectStorage.ts",
+        "caught": true,
+        "failedCasesUnderMutation": 2
+      },
+      "caseNames": [
+        "Azure object storage adapter continues to blob upload when container-create is not authorized",
+        "Azure object storage adapter still surfaces upload authorization failures after container-create fallback",
+        "Azure object storage adapter uses unconditional upload when upsert is enabled"
+      ],
+      "literalCaseTitles": [
+        "continues to blob upload when container-create is not authorized",
+        "still surfaces upload authorization failures after container-create fallback",
+        "uses unconditional upload when upsert is enabled"
+      ],
+      "generatedCaseTitles": 0,
+      "generatedCaseTitlesReason": null
+    },
+    {
+      "path": "src/lib/enterprise-context/__tests__/derived-enterprise-read.test.ts",
+      "draw": "T-475",
+      "governedRiskBandAsRanked": "high",
+      "governedRiskScoreAsRanked": 10,
+      "governedRiskSignalsAsRanked": [
+        "tenant_scoped_read"
+      ],
+      "governedRiskBandFromItsOwnImports": "high",
+      "governedRiskScoreFromItsOwnImports": 10,
+      "governedRiskSignalsFromItsOwnImports": [
+        "tenant_scoped_read"
+      ],
+      "loaded": true,
+      "collected": true,
+      "run": true,
+      "green": false,
+      "totalTests": 3,
+      "failedTests": 3,
+      "passedTests": 0,
+      "pendingTests": 0,
+      "todoTests": 0,
+      "sourceTextScanner": false,
+      "verdict": "update_with_reason_recorded",
+      "ownerItem": "T-757",
+      "rationale": "Red, and stale rather than a finding about today's code. All three cases load a tenant's V4 derived enterprise read from datasets/<tenant>-synthetic-v4/derived-intelligence/enterprise-reads.json; every one of those dataset roots was deleted deliberately by #4767 (4a7ebcd85, 2026-07-13) when the canonical tenant input standard replaced them. getDerivedEnterpriseReadForTenant therefore returns null for every tenant and has done for 73 days. The suite must be updated to the contract that is actually true — the loader fails closed and returns null when its dataset is absent — with that reason recorded. The larger question belongs to the owner item, not here: the module's three exports have no runtime caller left in src/ or scripts/ (only two type-only imports in src/lib/atlas), so this is retire-or-rewire, which is a decision.",
+      "mutationCheck": {
+        "notApplicable": "The suite is red. Its failure is the measurement; a mutation would add nothing."
+      },
+      "caseNames": [
+        "derived enterprise read accessor loads generated V4 Enterprise Reads by tenant alias",
+        "derived enterprise read accessor converts Enterprise Reads into Sentinel ask sources",
+        "derived enterprise read accessor converts Enterprise Reads into Atlas Tower facts"
+      ],
+      "literalCaseTitles": [
+        "loads generated V4 Enterprise Reads by tenant alias",
+        "converts Enterprise Reads into Sentinel ask sources",
+        "converts Enterprise Reads into Atlas Tower facts"
+      ],
+      "generatedCaseTitles": 0,
+      "generatedCaseTitlesReason": null
+    },
+    {
+      "path": "src/lib/enterprise-context/__tests__/intelligence-read-model.test.ts",
+      "draw": "T-475",
+      "governedRiskBandAsRanked": "high",
+      "governedRiskScoreAsRanked": 10,
+      "governedRiskSignalsAsRanked": [
+        "tenant_scoped_read"
+      ],
+      "governedRiskBandFromItsOwnImports": "high",
+      "governedRiskScoreFromItsOwnImports": 10,
+      "governedRiskSignalsFromItsOwnImports": [
+        "tenant_scoped_read"
+      ],
+      "loaded": true,
+      "collected": true,
+      "run": true,
+      "green": false,
+      "totalTests": 27,
+      "failedTests": 1,
+      "passedTests": 26,
+      "pendingTests": 0,
+      "todoTests": 0,
+      "sourceTextScanner": false,
+      "verdict": "update_with_reason_recorded",
+      "ownerItem": "T-756",
+      "rationale": "Red, and the item this draw was taken under would have had it repaired as a live defect. It is stale, and the proof is inside the same file. One case of 27 fails: a composite fixture from #3298 (6758dc044, 2026-06-08) expects '2 systems/services loaded' from a cmdb_application plus a configuration_item. Eleven weeks later #7795 (8fe274ed8, 2026-09-18) — the alias-counting change — deliberately separated the two and renamed the copy, and it added a case asserting exactly the opposite, 'does not count a configuration item as an application or service', which passes today. Two cases in one file now contradict each other and the later, deliberate one is right. #7795 also added an 18-row it.each table, one per documented alias pair, and all eighteen are green, so the 'a test per aliased pair' half of backlog item 9 is met. Re-baseline the composite case against #7795 rather than editing one string: it fails at its first assertion, so the expectations after it are unverified. Nothing caught this for six days because the suite runs in no CI job.",
+      "mutationCheck": {
+        "notApplicable": "The suite is red. Its failure is the measurement, and the measurement is that the expectation is behind the product."
+      },
+      "caseNames": [
+        "enterprise context Intelligence read model summarizes internal context into CXO-readable cards and Sentinel facts",
+        "enterprise context Intelligence read model groups Admin-promoted record types into Enterprise Context cards",
+        "enterprise context Intelligence read model counts org_decision_rights and org_role as recorded rows",
+        "enterprise context Intelligence read model counts org_decision_rights and decision_right as recorded rows",
+        "enterprise context Intelligence read model counts facilities_business_units and facility as recorded rows",
+        "enterprise context Intelligence read model counts facilities_business_units and business_unit as recorded rows",
+        "enterprise context Intelligence read model counts cmdb_applications_services and cmdb_application as recorded rows",
+        "enterprise context Intelligence read model counts cmdb_applications_services and cmdb_service as recorded rows",
+        "enterprise context Intelligence read model counts incidents and incident as recorded rows",
+        "enterprise context Intelligence read model counts problems and problem as recorded rows",
+        "enterprise context Intelligence read model counts changes and change as recorded rows",
+        "enterprise context Intelligence read model counts renewal_calendar and renewal as recorded rows",
+        "enterprise context Intelligence read model counts vendors_contract_inventory and contract as recorded rows",
+        "enterprise context Intelligence read model counts financial_kpis and kpi_metric as recorded rows",
+        "enterprise context Intelligence read model counts policies_procedures and policy as recorded rows",
+        "enterprise context Intelligence read model counts policies_procedures and procedure as recorded rows",
+        "enterprise context Intelligence read model counts initiative_portfolio and initiative as recorded rows",
+        "enterprise context Intelligence read model counts data_domains_stewardship and data_domain as recorded rows",
+        "enterprise context Intelligence read model counts risk_compliance_register and risk as recorded rows",
+        "enterprise context Intelligence read model counts risk_compliance_register and compliance_finding as recorded rows",
+        "enterprise context Intelligence read model does not count a configuration item as an application or service",
+        "enterprise context Intelligence read model does not present vendor and data-asset rows as contracts or data domains",
+        "enterprise context Intelligence read model loads overview tables sequentially to avoid session-mode pool bursts",
+        "enterprise context Intelligence read model counts committed chunks as evidence for Admin-promoted records when normalized evidence is empty",
+        "enterprise context Intelligence read model falls back to Admin-loaded context chunks when normalized records are empty",
+        "enterprise context Intelligence read model canonicalizes legacy app tenant aliases before reading chunk-backed context",
+        "enterprise context Intelligence read model summarizes chunk-backed context with source-doc domain counts"
+      ],
+      "literalCaseTitles": [
+        "summarizes internal context into CXO-readable cards and Sentinel facts",
+        "groups Admin-promoted record types into Enterprise Context cards",
+        "does not count a configuration item as an application or service",
+        "does not present vendor and data-asset rows as contracts or data domains",
+        "loads overview tables sequentially to avoid session-mode pool bursts",
+        "counts committed chunks as evidence for Admin-promoted records when normalized evidence is empty",
+        "falls back to Admin-loaded context chunks when normalized records are empty",
+        "canonicalizes legacy app tenant aliases before reading chunk-backed context",
+        "summarizes chunk-backed context with source-doc domain counts"
+      ],
+      "generatedCaseTitles": 18,
+      "generatedCaseTitlesReason": "Titles produced by an it.each table, so the string jest reports is interpolated and is not in the file. They are counted rather than pinned; the literal titles beside them are pinned."
+    },
+    {
+      "path": "src/lib/source/candidate-suppliers/__tests__/candidate-supplier-registry-repository.test.ts",
+      "draw": "T-475",
+      "governedRiskBandAsRanked": "high",
+      "governedRiskScoreAsRanked": 10,
+      "governedRiskSignalsAsRanked": [
+        "tenant_scoped_read"
+      ],
+      "governedRiskBandFromItsOwnImports": "high",
+      "governedRiskScoreFromItsOwnImports": 10,
+      "governedRiskSignalsFromItsOwnImports": [
+        "tenant_scoped_read"
+      ],
+      "loaded": true,
+      "collected": true,
+      "run": true,
+      "green": true,
+      "totalTests": 2,
+      "failedTests": 0,
+      "passedTests": 2,
+      "pendingTests": 0,
+      "todoTests": 0,
+      "sourceTextScanner": false,
+      "verdict": "wire_into_ci",
+      "ownerItem": "T-754",
+      "rationale": "A tenant-fence suite in the strict sense: it asserts the registry read sets app.tenant_key, filters FROM source.vendor by tenant_key = $1 with the tenant as the bound parameter, and — the case that matters — that an empty tenant identity returns UNAVAILABLE without opening a session at all. Fails-closed-before-query is the control, and nothing runs it.",
+      "mutationCheck": {
+        "applied": "The empty-tenant fail-closed guard is removed, so a blank tenant key opens a session.",
+        "subject": "src/lib/source/candidate-suppliers/candidate-supplier-registry-repository.ts",
+        "caught": true,
+        "failedCasesUnderMutation": 1
+      },
+      "caseNames": [
+        "candidate supplier registry repository reads tenant-scoped candidate authority without inferring contact permission",
+        "candidate supplier registry repository fails closed for missing tenant identity or an unavailable registry"
+      ],
+      "literalCaseTitles": [
+        "reads tenant-scoped candidate authority without inferring contact permission",
+        "fails closed for missing tenant identity or an unavailable registry"
+      ],
+      "generatedCaseTitles": 0,
+      "generatedCaseTitlesReason": null
+    },
+    {
+      "path": "src/lib/source/candidate-suppliers/__tests__/event-candidate-acceptance-repository.test.ts",
+      "draw": "T-475",
+      "governedRiskBandAsRanked": "high",
+      "governedRiskScoreAsRanked": 10,
+      "governedRiskSignalsAsRanked": [
+        "tenant_scoped_read"
+      ],
+      "governedRiskBandFromItsOwnImports": "high",
+      "governedRiskScoreFromItsOwnImports": 10,
+      "governedRiskSignalsFromItsOwnImports": [
+        "tenant_scoped_read"
+      ],
+      "loaded": true,
+      "collected": true,
+      "run": true,
+      "green": true,
+      "totalTests": 7,
+      "failedTests": 0,
+      "passedTests": 7,
+      "pendingTests": 0,
+      "todoTests": 0,
+      "sourceTextScanner": false,
+      "verdict": "wire_into_ci",
+      "ownerItem": "T-754",
+      "rationale": "Seven cases over supplier acceptance, which is a lifecycle write: it refuses a stale event mapping, a changed registry source reference, a stale request version, an unaccepted current version, and — the human-approval control — an acceptance without a named signed-in reviewer and a rationale of at least twelve characters. It also pins that a concurrent active-authority collision maps to already-accepted rather than to a second authority row.",
+      "mutationCheck": {
+        "applied": "The acceptance rationale minimum is lowered so any rationale, including an empty one, is accepted.",
+        "subject": "src/lib/source/candidate-suppliers/event-candidate-acceptance-repository.ts",
+        "caught": true,
+        "failedCasesUnderMutation": 1
+      },
+      "caseNames": [
+        "event candidate acceptance repository appends accepted authority for a current eligible registry suggestion only",
+        "event candidate acceptance repository rejects a stale event mapping before supplier authority is inserted",
+        "event candidate acceptance repository rejects a supplier whose registry source reference changed",
+        "event candidate acceptance repository rejects a stale request version before supplier authority is inserted",
+        "event candidate acceptance repository rejects a current Request version that is not accepted",
+        "event candidate acceptance repository requires a named signed-in reviewer and rationale",
+        "event candidate acceptance repository maps a concurrent active-authority collision to already accepted"
+      ],
+      "literalCaseTitles": [
+        "appends accepted authority for a current eligible registry suggestion only",
+        "rejects a stale event mapping before supplier authority is inserted",
+        "rejects a supplier whose registry source reference changed",
+        "rejects a stale request version before supplier authority is inserted",
+        "rejects a current Request version that is not accepted",
+        "requires a named signed-in reviewer and rationale",
+        "maps a concurrent active-authority collision to already accepted"
+      ],
+      "generatedCaseTitles": 0,
+      "generatedCaseTitlesReason": null
+    },
+    {
+      "path": "src/lib/source/candidate-suppliers/__tests__/event-candidate-authority-repository.test.ts",
+      "draw": "T-475",
+      "governedRiskBandAsRanked": "high",
+      "governedRiskScoreAsRanked": 10,
+      "governedRiskSignalsAsRanked": [
+        "tenant_scoped_read"
+      ],
+      "governedRiskBandFromItsOwnImports": "high",
+      "governedRiskScoreFromItsOwnImports": 10,
+      "governedRiskSignalsFromItsOwnImports": [
+        "tenant_scoped_read"
+      ],
+      "loaded": true,
+      "collected": true,
+      "run": true,
+      "green": true,
+      "totalTests": 4,
+      "failedTests": 0,
+      "passedTests": 4,
+      "pendingTests": 0,
+      "todoTests": 0,
+      "sourceTextScanner": false,
+      "verdict": "wire_into_ci",
+      "ownerItem": "T-754",
+      "rationale": "Reads only explicitly accepted candidate authority for one event and proves three separations a product surface depends on: a respondent is not marked selected unless human selection authority is complete; an empty registry slice is distinguished from an unavailable relation, so missing never renders as zero; and the read fails closed before querying when tenant or event identity is missing.",
+      "mutationCheck": {
+        "applied": "The pre-query identity fence is weakened from OR to AND, so one missing identity is enough to proceed.",
+        "subject": "src/lib/source/candidate-suppliers/event-candidate-authority-repository.ts",
+        "caught": true,
+        "failedCasesUnderMutation": 1
+      },
+      "caseNames": [
+        "event candidate authority repository reads only explicit accepted authority joined to the governed legal entity",
+        "event candidate authority repository does not mark a respondent selected unless human selection authority is complete",
+        "event candidate authority repository distinguishes an available empty registry slice from an unavailable relation",
+        "event candidate authority repository fails closed before querying when tenant or event identity is missing"
+      ],
+      "literalCaseTitles": [
+        "reads only explicit accepted authority joined to the governed legal entity",
+        "does not mark a respondent selected unless human selection authority is complete",
+        "distinguishes an available empty registry slice from an unavailable relation",
+        "fails closed before querying when tenant or event identity is missing"
+      ],
+      "generatedCaseTitles": 0,
+      "generatedCaseTitlesReason": null
+    },
+    {
+      "path": "src/lib/source/contract-evidence/__tests__/persistence.test.ts",
+      "draw": "T-475",
+      "governedRiskBandAsRanked": "high",
+      "governedRiskScoreAsRanked": 10,
+      "governedRiskSignalsAsRanked": [
+        "tenant_scoped_read"
+      ],
+      "governedRiskBandFromItsOwnImports": "unclassified",
+      "governedRiskScoreFromItsOwnImports": 0,
+      "governedRiskSignalsFromItsOwnImports": [],
+      "loaded": true,
+      "collected": true,
+      "run": true,
+      "green": true,
+      "totalTests": 3,
+      "failedTests": 0,
+      "passedTests": 3,
+      "pendingTests": 0,
+      "todoTests": 0,
+      "sourceTextScanner": false,
+      "verdict": "repair",
+      "ownerItem": "T-755",
+      "rationale": "Green, and NOT credited, because the mutation check found a real escape rather than confirming the suite. Replacing the per-row tenant_key in toStructuredRows() with a constant leaves all three cases passing: the probe run under the mutation shows every structured evidence row carrying the injected constant while the manifest still carries the fixture's own tenant key, so the mutation changed behaviour and the suite did not see it. The manifest's own fence IS asserted — the same substitution at the manifest fails one case — so the gap is exactly the row level, which is the level that reaches the evidence table. The suite is worth wiring once it asserts the row fence; wiring it first would credit a tenant control that is not tested.",
+      "mutationCheck": {
+        "applied": "The per-row tenant_key in toStructuredRows() is replaced with a constant, and separately the manifest tenant_key is replaced with the same constant.",
+        "subject": "src/lib/source/contract-evidence/persistence.ts",
+        "caught": false,
+        "failedCasesUnderMutation": 0,
+        "escape": "Row-level fence: 0 of 3 cases failed. Manifest-level fence (control mutation, same substitution one level up): 1 of 3 cases failed, so the suite is not blind in general. Behaviour-change proof: a throwaway probe built the payload under the row mutation and printed a single distinct row-level tenant_key equal to the injected constant, against a manifest tenant_key still equal to the fixture's own; the probe file was deleted and the tree verified clean."
+      },
+      "caseNames": [
+        "Source contract evidence persistence payload builds a tenant-scoped manifest, structured rows, and deterministic rollups",
+        "Source contract evidence persistence payload uses explicit breach direction and credit state for SLA metrics",
+        "Source contract evidence persistence payload marks incomplete packs partial and calls out synthetic demo evidence"
+      ],
+      "literalCaseTitles": [
+        "builds a tenant-scoped manifest, structured rows, and deterministic rollups",
+        "uses explicit breach direction and credit state for SLA metrics",
+        "marks incomplete packs partial and calls out synthetic demo evidence"
+      ],
+      "generatedCaseTitles": 0,
+      "generatedCaseTitlesReason": null
+    },
+    {
+      "path": "src/lib/source/contract-evidence/__tests__/read-model.test.ts",
+      "draw": "T-475",
+      "governedRiskBandAsRanked": "high",
+      "governedRiskScoreAsRanked": 10,
+      "governedRiskSignalsAsRanked": [
+        "tenant_scoped_read"
+      ],
+      "governedRiskBandFromItsOwnImports": "high",
+      "governedRiskScoreFromItsOwnImports": 10,
+      "governedRiskSignalsFromItsOwnImports": [
+        "tenant_scoped_read"
+      ],
+      "loaded": true,
+      "collected": true,
+      "run": true,
+      "green": true,
+      "totalTests": 1,
+      "failedTests": 0,
+      "passedTests": 1,
+      "pendingTests": 0,
+      "todoTests": 0,
+      "sourceTextScanner": false,
+      "verdict": "wire_into_ci",
+      "ownerItem": "T-754",
+      "rationale": "One case, but it is the projection a client reads: persisted evidence rows become family coverage, a user-facing sentence with counts, supported findings with their implications, and formatted metric values. It is pure and deterministic, so it is cheap to run and it fails when the projection drifts.",
+      "mutationCheck": {
+        "applied": "The USD branch of formatMetricValue is made unreachable, so a dollar metric renders as a bare number with a unit suffix.",
+        "subject": "src/lib/source/contract-evidence/read-model.ts",
+        "caught": true,
+        "failedCasesUnderMutation": 1
+      },
+      "caseNames": [
+        "Source contract evidence runtime summary projects persisted evidence into coverage, metrics, and supported findings"
+      ],
+      "literalCaseTitles": [
+        "projects persisted evidence into coverage, metrics, and supported findings"
+      ],
+      "generatedCaseTitles": 0,
+      "generatedCaseTitlesReason": null
+    },
+    {
+      "path": "src/lib/source/contract-evidence/__tests__/templates.test.ts",
+      "draw": "T-475",
+      "governedRiskBandAsRanked": "high",
+      "governedRiskScoreAsRanked": 10,
+      "governedRiskSignalsAsRanked": [
+        "tenant_scoped_read"
+      ],
+      "governedRiskBandFromItsOwnImports": "unclassified",
+      "governedRiskScoreFromItsOwnImports": 0,
+      "governedRiskSignalsFromItsOwnImports": [],
+      "loaded": true,
+      "collected": true,
+      "run": true,
+      "green": false,
+      "totalTests": 3,
+      "failedTests": 1,
+      "passedTests": 2,
+      "pendingTests": 0,
+      "todoTests": 0,
+      "sourceTextScanner": false,
+      "verdict": "update_with_reason_recorded",
+      "ownerItem": "T-756",
+      "rationale": "Red since e38e5b4f5 (2026-09-08, 'Bind structured evidence to Source artifact generation'), which added an application_inventory family to the AMS minimum viable evidence pack. The suite pins the family list with toEqual on an ordered array and was last touched by #6273 on 2026-08-14, so it has been red for sixteen days in a suite no CI job runs. The product change is deliberate and the expectation is behind by one family; update it with that reason. The two cases either side — that the operating rule asks for summarized extracts and refuses full raw invoices — still pass and are worth keeping.",
+      "mutationCheck": {
+        "notApplicable": "The suite is red. Its failure is the measurement."
+      },
+      "caseNames": [
+        "Source contract evidence templates prescribes the AMS minimum viable evidence pack without asking for raw invoice dumps",
+        "Source contract evidence templates marks only evidence references as optional for AMS contract optimization",
+        "Source contract evidence templates drops staffing from SaaS renewal optimization but keeps usage demand evidence"
+      ],
+      "literalCaseTitles": [
+        "prescribes the AMS minimum viable evidence pack without asking for raw invoice dumps",
+        "marks only evidence references as optional for AMS contract optimization",
+        "drops staffing from SaaS renewal optimization but keeps usage demand evidence"
+      ],
+      "generatedCaseTitles": 0,
+      "generatedCaseTitlesReason": null
+    },
+    {
+      "path": "src/lib/source/contract-intelligence/__tests__/prompt.test.ts",
+      "draw": "T-475",
+      "governedRiskBandAsRanked": "high",
+      "governedRiskScoreAsRanked": 10,
+      "governedRiskSignalsAsRanked": [
+        "tenant_scoped_read"
+      ],
+      "governedRiskBandFromItsOwnImports": "unclassified",
+      "governedRiskScoreFromItsOwnImports": 0,
+      "governedRiskSignalsFromItsOwnImports": [],
+      "loaded": true,
+      "collected": true,
+      "run": true,
+      "green": true,
+      "totalTests": 1,
+      "failedTests": 0,
+      "passedTests": 1,
+      "pendingTests": 0,
+      "todoTests": 0,
+      "sourceTextScanner": false,
+      "verdict": "wire_into_ci",
+      "ownerItem": "T-754",
+      "rationale": "Builds the real contract-intelligence prompt and asserts the property that makes it a control rather than a string: the non-negotiable evidence rules appear BEFORE the governed record, so the model reads the restrictions first. It also pins the rule that candidate, draft and finance-unconfirmed amounts are not realized savings, and the rule against silently rewriting an authored sentence after generation. These are answer-liability controls on a client-facing path.",
+      "mutationCheck": {
+        "applied": "The rule that candidate, signal-stage, draft, pending, approval-required and finance-unconfirmed amounts are not savings is deleted from the prompt.",
+        "subject": "src/lib/source/contract-intelligence/prompt.ts",
+        "caught": true,
+        "failedCasesUnderMutation": 1
+      },
+      "caseNames": [
+        "buildContractIntelligencePrompt puts the governing restrictions before the record and preserves prompt-first output ownership"
+      ],
+      "literalCaseTitles": [
+        "puts the governing restrictions before the record and preserves prompt-first output ownership"
+      ],
+      "generatedCaseTitles": 0,
+      "generatedCaseTitlesReason": null
+    },
+    {
+      "path": "src/lib/source/contract-intelligence/__tests__/provenance.test.ts",
+      "draw": "T-475",
+      "governedRiskBandAsRanked": "high",
+      "governedRiskScoreAsRanked": 10,
+      "governedRiskSignalsAsRanked": [
+        "tenant_scoped_read"
+      ],
+      "governedRiskBandFromItsOwnImports": "unclassified",
+      "governedRiskScoreFromItsOwnImports": 0,
+      "governedRiskSignalsFromItsOwnImports": [],
+      "loaded": true,
+      "collected": true,
+      "run": true,
+      "green": true,
+      "totalTests": 4,
+      "failedTests": 0,
+      "passedTests": 4,
+      "pendingTests": 0,
+      "todoTests": 0,
+      "sourceTextScanner": false,
+      "verdict": "wire_into_ci",
+      "ownerItem": "T-754",
+      "rationale": "Four cases over the provenance gate that decides whether a governed claim may be presented at all: a client_record claim needs a resolvable source ref, a calculated claim needs a calculation run id, a benchmark claim needs a benchmark id, Claude-authored content needs generation metadata, and a partial range or an unreviewed claim may not be presented as approved. This is the anti-fabrication boundary for contract intelligence.",
+      "mutationCheck": {
+        "applied": "A client_record claim no longer requires a resolvable source ref.",
+        "subject": "src/lib/source/contract-intelligence/provenance.ts",
+        "caught": true,
+        "failedCasesUnderMutation": 1
+      },
+      "caseNames": [
+        "contract intelligence provenance requires a resolvable basis for each governed claim",
+        "contract intelligence provenance requires generation metadata for Claude-authored content",
+        "contract intelligence provenance rejects partial ranges and unreviewed claims presented as approved",
+        "contract intelligence provenance accepts declared arithmetic and rejects policy prose"
+      ],
+      "literalCaseTitles": [
+        "requires a resolvable basis for each governed claim",
+        "requires generation metadata for Claude-authored content",
+        "rejects partial ranges and unreviewed claims presented as approved",
+        "accepts declared arithmetic and rejects policy prose"
+      ],
+      "generatedCaseTitles": 0,
+      "generatedCaseTitlesReason": null
+    }
+  ]
+}
