@@ -1,13 +1,13 @@
 # Phase-by-Phase Results
 
-| Phase | Capture/Persistence | Upload/Parse | Carry-forward | aVa Guidance | Gate Behavior | Artifact Context | Artifact Quality | Office Export | Review Flow | File Cabinet | Phase Guidance | Result      |
-| ----- | ------------------- | ------------ | ------------- | ------------ | ------------- | ---------------- | ---------------- | ------------- | ----------- | ------------ | -------------- | ----------- |
-| P0    | Pending             | Pending      | Pending       | Pending      | Pending       | Pending          | Pending          | Pending       | Pending     | Pending      | Pending        | Pending     |
-| P1    | Pending             | Pending      | Pending       | Pending      | Pending       | Pending          | Pending          | Pending       | Pending     | Pending      | Pending        | Pending     |
-| P2    | Pending             | Pending      | Pending       | Pending      | Pending       | Pending          | Pending          | Pending       | Pending     | Pending      | Pending        | Pending     |
-| P3    | Pending             | Pending      | Pending       | Pending      | Pending       | Pending          | Pending          | Pending       | Pending     | Pending      | Pending        | Pending     |
-| P4    | Pending             | Pending      | Pending       | Pending      | Pending       | Pending          | Pending          | Pending       | Pending     | Pending      | Pending        | Pending     |
-| P5    | In progress         | In progress  | Pending       | Pending      | Pass          | Pending          | Pending          | Pending       | Pending     | Pass w/note  | Pending        | In progress |
+| Phase | Capture/Persistence | Upload/Parse | Carry-forward | aVa Guidance | Gate Behavior | Artifact Context | Artifact Quality | Office Export | Review Flow | File Cabinet | Phase Guidance | Result |
+| ----- | ------------------- | ------------ | ------------- | ------------ | ------------- | ---------------- | ---------------- | ------------- | ----------- | ------------ | -------------- | ------ |
+| P0    | Readback only       | Not rerun    | Readback only | Not sampled in this pass | Pass readback | N/A              | N/A              | N/A           | N/A         | N/A          | Pass readback  | Complete status observed |
+| P1    | Readback only       | Not rerun    | Readback only | Not sampled in this pass | Pass readback | Artifact present | Review-ready sample inspected | DOCX inspected | Not rerun | Present in File Cabinet | Pass readback | Complete status observed |
+| P2    | Readback only       | Not rerun    | Readback only | Not sampled in this pass | Pass readback | Artifacts present | Mixed: Root Cause strong; Discovery Report blocked by raw payload | DOCX inspected | Not rerun | Present in File Cabinet | Pass readback | Complete status observed with artifact defect |
+| P3    | Readback only       | Not rerun    | Readback only | Not sampled in this pass | Pass readback | Artifacts present | Mixed: traceability/operating model strong; PPTX quality weak | DOCX/PPTX inspected | Not rerun | Present in File Cabinet | Pass readback | Complete status observed with PPTX quality gap |
+| P4    | Readback only       | Not rerun    | Readback only | Not sampled in this pass | Pass readback | Artifacts present | Business case/operating model strong; some stale review markers remain | DOCX/XLSX/PPTX inspected | Not rerun | Present in File Cabinet | Pass readback | Complete status observed |
+| P5    | Readback only       | Not rerun    | Pass readback | Pass after fixes | Pass browser-proof | Artifacts present | Review-ready drafts; not client-final | DOCX/XLSX inspected | Not rerun | Pass after fixes | Pass browser-proof | Complete; handed off to Tower |
 
 ## P5 Live Read-Only Proof
 
