@@ -124,6 +124,7 @@ export function Rail({
   onSelect,
   compiledLine,
   recordSource,
+  exportHrefBase,
 }: {
   clientLabel: string;
   groups: RailGroup[];
@@ -131,6 +132,7 @@ export function Rail({
   onSelect: (id: string) => void;
   compiledLine: string[];
   recordSource: HomeRecordRenderSource;
+  exportHrefBase?: string;
 }) {
   return (
     <nav
@@ -403,6 +405,53 @@ export function Rail({
           ))}
         </p>
       </div>
+
+      {exportHrefBase ? (
+        <div
+          aria-label="Home walkthrough export"
+          style={{ borderTop: `1px solid ${V4.rule}`, paddingTop: 13 }}
+        >
+          <div style={{ ...eyebrow(V4.slate), marginBottom: 7 }}>
+            Home export
+          </div>
+          <p
+            style={{
+              margin: "0 0 9px",
+              fontFamily: SANS,
+              fontSize: 12,
+              lineHeight: 1.45,
+              color: V4.slate,
+            }}
+          >
+            Walkthrough export: chapters, tables, exhibits, evidence labels and
+            record-source state.
+          </p>
+          <div style={{ display: "flex", gap: 7 }}>
+            {(["html", "pdf"] as const).map((format) => (
+              <a
+                key={format}
+                href={`${exportHrefBase}&format=${format}`}
+                aria-label={`Export full Home walkthrough as ${format.toUpperCase()}`}
+                title={`Export full Home walkthrough as ${format.toUpperCase()}`}
+                style={{
+                  fontFamily: MONO,
+                  fontSize: 11,
+                  fontWeight: 700,
+                  textTransform: "uppercase",
+                  textDecoration: "none",
+                  color: V4.ink,
+                  border: `1px solid ${V4.rule}`,
+                  background: V4.surface,
+                  borderRadius: 6,
+                  padding: "5px 8px",
+                }}
+              >
+                {format}
+              </a>
+            ))}
+          </div>
+        </div>
+      ) : null}
     </nav>
   );
 }

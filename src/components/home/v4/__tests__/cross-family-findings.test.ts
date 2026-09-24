@@ -54,10 +54,12 @@ const estate: EstateRecordTypes = {
 
 describe("cross-family executive findings", () => {
   it("adds relationship-backed findings to What Needs Attention", () => {
-    const claims = chapterDepth("what_needs_attention", estate).findings.map(
-      (finding) => finding.claim,
-    );
+    const depth = chapterDepth("what_needs_attention", estate);
+    const claims = depth.findings.map((finding) => finding.claim);
 
+    expect(claims).toContain(
+      "1 relationship-backed path crosses a rated exposure, critical system, regulated data asset, or program; 0 still carry at least one declared-only endpoint.",
+    );
     expect(claims).toContain(
       "Standing privileged credentials outside PAM coverage is a high-severity risk tied to Privileged Access Management Rollout and that program is 20% complete.",
     );
@@ -66,6 +68,9 @@ describe("cross-family executive findings", () => {
     );
     expect(claims).toContain(
       "1 critical system is tied to vendor contracts that are high-risk or auto-renewing.",
+    );
+    expect(depth.tables.map((table) => table.caption)).toContain(
+      "Relationship-backed exposure paths",
     );
   });
 
