@@ -568,22 +568,89 @@ function latestClaimByStampThenAppend(entries) {
   }
 }
 
-/** Every `### Item NN [P?] — title` prose item in the backlog. */
+const UPDATE_TITLE = /^(closed\b|confirmed\b|deploy verified\b|deployed\b|shipped\b|(?:squash-)?merged\b|pr(?:\s*\/\s*ci)?\b|pr\s*#?\d+\b|live-proven\b|signed-in\b|re-?verified\b|verified\b|misdescribed\b|resolved\b|superseded\b|[-\u2014\s]*closed\b)/i;
+
+/**
+ * Every `Item <id> — title` prose item in the backlog, at any heading depth.
+ *
+ * ITEM T-750. This used to require `^### Item <id>`, and the document does not
+ * write its verdicts that way: 348 `## Item` headings against 128 `###`, and
+ * 62 of the `##` ones state a verdict — `CLOSED`, `deploy verified`,
+ * `re-verified`. Where such a note happens to carry a table row for its own id
+ * the verdict lands through the TABLE reader and the gap is invisible; where
+ * the note is prose only, it reached no corpus at all and the item stayed at
+ * rung 0 with a closure written above it.
+ *
+ * `unparsedItemIds` could not report that either. It is a set difference over
+ * IDS, and each of these ids is produced by its own table row elsewhere, so
+ * the residual was empty while the verdict was lost — item T-746’s arithmetic
+ * passing over exactly the population it cannot see. Measured on the live
+ * backlog at 2026-09-24T03:45Z: five ids carried a `##` verdict heading and
+ * read rung 0, `T-458` among them, which was the only non-data-plane row the
+ * claimable queue offered and had been marked closed nine hours earlier.
+ *
+ * Two narrowings, because the widening is the dangerous half:
+ *
+ *   - At depth 3 or deeper, any title, exactly as before.
+ *   - At depth 2, ONLY a verdict-shaped title (`UPDATE_TITLE`). Reading all
+ *     348 `## Item` headings as definitions would invent a second definition
+ *     for hundreds of ids and suppress every one as ambiguous — the
+ *     `# | Mutation | Failing cases` failure of item T-737 reached from the
+ *     heading side. A note is never substantive: `isUpdateNote` classifies it
+ *     by the same regex, which is why the two now live side by side.
+ *
+ * A trailing `(D)`/`(U)`/`(C)`/`(T)` on the id is the operator’s own
+ * disambiguator for a number that holds two different items, and it is carried
+ * out as `laneScope` rather than discarded. `buildItem` needs it: an update
+ * note is admitted through EVERY `definedIn` pin, so an unscoped `T-458(D)`
+ * verdict would also close the lane-U item of that number, which is open on a
+ * held decision.
+ */
 function backlogProseItems(text) {
   const out = [];
   const lines = text.split(/\r?\n/);
   for (let i = 0; i < lines.length; i += 1) {
-    const m = lines[i].match(/^###\s+Item\s+(\d+|[DUCT]-\d{3})\s*(?:\[(P\d)\])?\s*[—-]\s*(.*)$/);
+    const m = lines[i].match(
+      /^(#{3,6}|##)\s+Item\s+(\d+|[DUCT]-\d{3})(\([DUCT]\))?\s*(?:\[(P\d)\])?\s*(?:\([^)]*\)\s*)?[—-]\s*(.*)$/,
+    );
     if (!m) continue;
+    const [, hashes, id, laneSuffix, priority, rawTitle] = m;
+    const title = rawTitle.trim();
+    // The depth-2 narrowing. `stripMd` so a bolded verdict reads the same as a
+    // bare one; the document writes both.
+    if (hashes === "##" && !UPDATE_TITLE.test(stripMd(title))) continue;
+    // A section ends at the next heading of the SAME depth or shallower, which
+    // for `###` is `/^#{2,3}\s/` — byte-for-byte the old terminator, so no
+    // existing item’s body changes size.
+    const ends = new RegExp(`^#{2,${hashes.length}}\\s`);
     const body = [];
-    for (let j = i + 1; j < lines.length && !/^#{2,3}\s/.test(lines[j]); j += 1) body.push(lines[j]);
+    for (let j = i + 1; j < lines.length && !ends.test(lines[j]); j += 1) body.push(lines[j]);
     out.push({
-      num: parseBacklogId(m[1]),
-      section: "prose",
-      priority: m[2] ?? "",
-      title: m[3].trim(),
+      num: parseBacklogId(id),
+      section: hashes === "##" ? "verdict heading" : "prose",
+      priority: priority ?? "",
+      title,
       lane: "",
       acceptance: "",
+      // The lane this verdict speaks for, or null when it speaks for the id
+      // outright. Only a heading can carry one.
+      laneScope: laneSuffix ? laneSuffix.slice(1, -1) : null,
+      /*
+       * For a depth-2 note the VERDICT IS THE HEADING, and the body is not
+       * status. Measured over the live backlog with the body included:
+       * `T-593` moved from `Closed` to `PR / CI`, because its closure note
+       * cites the run and PR that closed it and `deriveRung` tests the
+       * `#\d{4}` rule BEFORE the `CLOSED|MISDESCRIBED|closed-false` fallback
+       * — so a closure narrating its own PR reads as an OPEN one. Three more
+       * items rose from `Deployed` to `Signed-in proven` the same way, off
+       * sentences in a narrative about neighbouring work.
+       *
+       * Restricting status to the heading is also the claim this item can
+       * actually support: the heading is the operator’s verdict, written in
+       * the vocabulary `UPDATE_TITLE` already recognises. The body still
+       * reaches `bodyCorpus`, which is context and blockers, not rung.
+       */
+      statusScope: hashes === "##" ? "heading" : "all",
       raw: body.join("\n"),
     });
   }
@@ -1172,7 +1239,9 @@ for (const it of items) {
  * Reporting the raw repeat count conflates them and overstates the problem,
  * which is the same counting error this page exists to stop.
  */
-const UPDATE_TITLE = /^(closed\b|confirmed\b|deploy verified\b|deployed\b|shipped\b|(?:squash-)?merged\b|pr(?:\s*\/\s*ci)?\b|pr\s*#?\d+\b|live-proven\b|signed-in\b|re-?verified\b|verified\b|misdescribed\b|resolved\b|superseded\b|[-\u2014\s]*closed\b)/i;
+// Defined beside `backlogProseItems` (item T-750), which needs it: the reader
+// that decides whether a HEADING is a verdict and the reader that decides
+// whether a PARSED DEFINITION is one must agree, and two regexes drift.
 // Classified by what the entry SAYS, not where it sits: a "CLOSED — fixed
 // by #7800" verdict row is an update whether it lands in prose or in a table.
 const isUpdateNote = (d) =>
@@ -1181,7 +1250,11 @@ const isUpdateNote = (d) =>
 
 function attributableStatusText(definition) {
   if (isUpdateNote(definition)) {
-    return `${definition.section} ${definition.title} ${definition.acceptance} ${definition.raw}`;
+    // Item T-750: a depth-2 verdict note contributes its HEADING only. See
+    // `statusScope` in `backlogProseItems` for what including the body cost.
+    return definition.statusScope === "heading"
+      ? `${definition.section} ${definition.title}`
+      : `${definition.section} ${definition.title} ${definition.acceptance} ${definition.raw}`;
   }
 
   // Many older table rows were updated in place by putting the verdict at the
@@ -1275,6 +1348,14 @@ for (const [sample, item, expected] of [
  * Pinning a section that matches more than one definition is still ambiguous
  * and is still refused.
  */
+/**
+ * Verdicts withheld because their lane suffix matched no definition — item
+ * T-750. Reported, never silently dropped: a suffix that names a lane the id
+ * does not have is either a typo in the note or a lane the board read wrongly,
+ * and both are things a human has to see.
+ */
+const laneScopedVerdictsUnattributed = [];
+
 function resolveItemRef(ref) {
   if (ref !== null && typeof ref === "object") {
     return { num: ref.num, definedIn: ref.definedIn ?? null };
@@ -1327,9 +1408,40 @@ function buildItem(ref) {
   const pinned = definedIn
     ? all.filter((d) => (d.section ?? "").includes(definedIn) || isUpdateNote(d))
     : all;
-  const defs = pinned.length ? pinned : all;
-  const substantive = defs.filter((d) => !isUpdateNote(d));
+  const withScopes = pinned.length ? pinned : all;
+  const substantive = withScopes.filter((d) => !isUpdateNote(d));
   const pinnedCleanly = Boolean(definedIn) && substantive.length === 1;
+
+  /*
+   * ITEM T-750. A lane-scoped verdict speaks for ONE of the items sharing a
+   * number, and the filter above cannot hold it: `isUpdateNote` admits every
+   * update note through every `definedIn` pin, deliberately, so a pinned item
+   * still reads its own verdicts. On the live board `T-458` is two items in two
+   * lanes and the operator disambiguates by writing `T-458(D)`; attributing
+   * that to both would close a lane-U item that is open on a held decision.
+   *
+   * The lane comes from the SUBSTANTIVE definitions only — a note carries no
+   * lane of its own, so reading the merged list would let the note answer the
+   * question it is being asked about.
+   *
+   * It fails CLOSED. A suffix naming a lane no definition answers to withholds
+   * the verdict rather than attributing it on the theory that it was probably
+   * meant. Fail-closed alone would be silence, which is the defect this item
+   * repairs, so the withheld verdict is named in the summary and on stdout.
+   */
+  const itemLane = substantive.map((d) => d.lane).find(Boolean) ?? "";
+  const defs = withScopes.filter((d) => {
+    if (!d.laneScope) return true;
+    if (itemLane && d.laneScope === itemLane) return true;
+    laneScopedVerdictsUnattributed.push({
+      num: displayItemId(num),
+      laneScope: d.laneScope,
+      itemLane: itemLane || null,
+      definedIn: definedIn ?? null,
+      title: stripMd(d.title ?? "").slice(0, 120),
+    });
+    return false;
+  });
 
   const claims = claimTextForItem(num);
   // Status is attributable only when the item owns an explicit update/verdict
@@ -1755,6 +1867,26 @@ console.log(
 console.log(
   `  lane cell is not a lane:  ${laneUnusable.length}` +
     (laneUnusable.length ? " -> " + laneUnusable.map((r) => displayItemId(r.num)).join(", ") : ""),
+);
+
+/**
+ * Item T-750. Deduped because a capability list may cite the same id as its
+ * parent stage, so `buildItem` runs more than once for one reference and would
+ * otherwise report one withheld verdict several times.
+ */
+const laneScopedVerdictsWithheld = [
+  ...new Map(
+    laneScopedVerdictsUnattributed.map((v) => [`${v.num}(${v.laneScope})|${v.definedIn ?? ""}`, v]),
+  ).values(),
+];
+console.log(
+  `  verdict lane suffix unmatched: ${laneScopedVerdictsWithheld.length}` +
+    (laneScopedVerdictsWithheld.length
+      ? " -> " + laneScopedVerdictsWithheld
+        .map((v) => `${v.num}(${v.laneScope}) over an item in lane ${v.itemLane ?? "?"}`)
+        .join(", ")
+        + "  (verdict WITHHELD: it names a lane no definition of that id answers to)"
+      : ""),
 );
 console.log(
   `  bare pipe in a code span: ${barePipeRows.length}` +
@@ -2234,6 +2366,9 @@ if (process.argv.includes("--json")) {
     unrecognisedItemTableKinds: report.unrecognisedItemTableKinds,
     laneContradictions,
     laneUnusable,
+    // Item T-750. A MISSING FIELD IS NOT A ZERO, so this is written on every
+    // run including at zero -- the same rule item T-746 set for the residual.
+    laneScopedVerdictsUnattributed: laneScopedVerdictsWithheld,
   };
   fs.writeFileSync(path.join(OPERATOR_ROOT, "source-board-summary.json"), JSON.stringify(summary, null, 2) + "\n");
   console.log("Wrote source-board-summary.json");
