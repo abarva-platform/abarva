@@ -1533,10 +1533,39 @@ function buildItem(ref) {
    * it would have to be attributed first, the way T-704 attributed the rung
    * corpus, and doing both at once makes neither movement attributable.
    */
+  /*
+   * ITEM T-762. The three cells are joined by a NEWLINE, not a space, because
+   * a space is not a boundary and every anchored rule below needs one.
+   *
+   * `deriveBlocker`'s terms all anchor: a gate phrase must sit at `^`, after a
+   * sentence terminator, after a newline, or immediately after bold markup.
+   * That anchoring is deliberate and was added twice, after raw prose made
+   * every descriptive mention of "signed-in", "blocked" and "decision" into an
+   * owner gate. Joined by a space, the head of the acceptance cell — the field
+   * that states what an item NEEDS — is none of those positions, so nothing
+   * written there could ever anchor. A row reached the rule only by accident,
+   * when its TITLE happened to end in a full stop and supplied the anchor.
+   *
+   * Measured over the live corpus rather than argued: repairing this moves 33
+   * items, and 32 of them anchor on the imperative `Decide` at the head of
+   * their acceptance — the form the rule's own comment names as the one an
+   * acceptance usually writes. `C-504` is the 33rd. Eleven of the 33 REPLACE a
+   * blocker rather than fill an empty one, and ten of those eleven were
+   * labelled from the CLAIM LOG, which is item T-700's rule ("the body wins")
+   * failing for want of a reachable body match.
+   *
+   * ONLY THE ACCEPTANCE BOUNDARY MOVES, and that is measured rather than
+   * chosen for restraint. Joining `raw` the same way moves EXACTLY the same 33
+   * ids and no others, because `raw` for a table row is the whole row joined
+   * by " | " and its head is the id — never a gate. A prose definition reaches
+   * the same repair through this separator already: its acceptance is empty,
+   * so the join leaves `\n` immediately before the body. A change nothing can
+   * distinguish is a change no case can hold, so it is left alone.
+   */
   const bodyCorpus = defs
     .map((d) => (d.statusScope === "heading"
       ? `${d.title}`
-      : `${d.title} ${d.acceptance} ${d.raw}`))
+      : `${d.title}\n${d.acceptance} ${d.raw}`))
     .join("\n");
   const claimCorpus = claims.map((c) => c.status).join("\n");
   // Item T-704: the corpus is unchanged, and the id is passed so a sentence
