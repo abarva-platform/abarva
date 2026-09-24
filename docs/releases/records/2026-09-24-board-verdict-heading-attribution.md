@@ -17,14 +17,15 @@ next is derived from the rungs.
 
 One of the shapes the documents use to record an outcome is a heading: `Item <id> — CLOSED`,
 `Item <id> — deploy verified`, `Item <id> — re-verified`. The reader accepted that shape only
-at heading depth three (`###`). The documents write it at depth two. Measured on the live
-backlog: **348 `## Item` headings against 128 `###`, and 62 of the depth-two ones state an
-outcome.**
+at heading depth three (`###`). The documents write it at depth two. Measured on the live backlog
+with the reader’s own grammar: **298 depth-two `Item <id> — title` headings against 106 at depth
+three or deeper, and 123 of the depth-two ones, over 119 ids, state an outcome.**
 
 Most of those depth-two notes happen to carry a table row for their own id inside the note,
 and the *table* reader picks the outcome up from there — so the gap did not show. Where the
-note is prose only, the outcome reached no corpus at all and the item stayed at the bottom
-rung with a closure written directly above it. **Five ids were in that state.**
+note is prose only, the outcome reached no corpus at all and the item stayed at the bottom rung
+with a closure written directly above it. **Five of the 119 ids were in that state** — reading
+`Open`, or absent from the board entirely: `5`, `C-502`, `T-458`, `T-742`, `T-743`.
 
 The residual report could not name them either. It is a set difference over *ids*: an id the
 extractor never produced is reported as unparsed, and each of these ids **was** produced, by
@@ -41,8 +42,8 @@ Three things changed:
 
 1. **The reader accepts the shape at any heading depth.** At depth three and deeper, any
    title, exactly as before. At depth two, only a title the outcome vocabulary already
-   recognises — reading all 348 depth-two headings as item *definitions* would invent a second
-   definition for hundreds of ids and suppress every one of them as ambiguous.
+   recognises — reading all 298 depth-two headings as item *definitions* would invent a second
+   definition for 175 ids that state no outcome and suppress them as ambiguous.
 2. **A depth-two note contributes its heading, not its body.** This was measured, not
    assumed: with the body included, four items rose a rung off sentences in a narrative about
    neighbouring work, and one item moved from `Closed` to `PR / CI` because its closure note
@@ -204,6 +205,11 @@ including its blindness to a depth-two verdict.
 
 ## Known Gaps
 
+- **Two of the five ids still do not read a rung from their heading, and both are correct or
+  out of scope.** Measured after the change: `5`, whose heading is a re-verification ending
+  "`decision needed`: RETIRE" and is not a closure, so `Open` is right; and `C-502`, which is
+  absent from the board because it is **unmapped**, a different condition the generator already
+  reports by name. The other three — `T-458`, `T-742`, `T-743` — now read their own verdicts.
 - **The outcome vocabulary is not widened, deliberately.** A closure that states its verdict
   in words the reader does not recognise still reads as open. One live note said "re-verified
   ALREADY SATISFIED" and nothing else, and no heading-depth repair can read that; the operator

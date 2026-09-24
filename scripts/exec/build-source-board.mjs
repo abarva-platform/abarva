@@ -574,9 +574,10 @@ const UPDATE_TITLE = /^(closed\b|confirmed\b|deploy verified\b|deployed\b|shippe
  * Every `Item <id> — title` prose item in the backlog, at any heading depth.
  *
  * ITEM T-750. This used to require `^### Item <id>`, and the document does not
- * write its verdicts that way: 348 `## Item` headings against 128 `###`, and
- * 62 of the `##` ones state a verdict — `CLOSED`, `deploy verified`,
- * `re-verified`. Where such a note happens to carry a table row for its own id
+ * write its verdicts that way. Measured with the grammar below: 298 depth-two
+ * `Item <id> — title` headings against 106 at depth three or deeper, and 123
+ * of the depth-two ones — over 119 ids — state a verdict (`CLOSED`,
+ * `deploy verified`, `re-verified`). Where such a note happens to carry a table row for its own id
  * the verdict lands through the TABLE reader and the gap is invisible; where
  * the note is prose only, it reached no corpus at all and the item stayed at
  * rung 0 with a closure written above it.
@@ -585,16 +586,17 @@ const UPDATE_TITLE = /^(closed\b|confirmed\b|deploy verified\b|deployed\b|shippe
  * IDS, and each of these ids is produced by its own table row elsewhere, so
  * the residual was empty while the verdict was lost — item T-746’s arithmetic
  * passing over exactly the population it cannot see. Measured on the live
- * backlog at 2026-09-24T03:45Z: five ids carried a `##` verdict heading and
- * read rung 0, `T-458` among them, which was the only non-data-plane row the
- * claimable queue offered and had been marked closed nine hours earlier.
+ * backlog at 2026-09-24T03:45Z: five of those 119 ids read `Open`, or were
+ * absent from the board entirely — `5`, `C-502`, `T-458`, `T-742`, `T-743`.
+ * `T-458` was the only non-data-plane row the claimable queue offered, and it
+ * had been marked closed nine hours earlier.
  *
  * Two narrowings, because the widening is the dangerous half:
  *
  *   - At depth 3 or deeper, any title, exactly as before.
  *   - At depth 2, ONLY a verdict-shaped title (`UPDATE_TITLE`). Reading all
- *     348 `## Item` headings as definitions would invent a second definition
- *     for hundreds of ids and suppress every one as ambiguous — the
+ *     298 depth-two headings as definitions would invent a second definition
+ *     for the 175 that state no outcome and suppress them as ambiguous — the
  *     `# | Mutation | Failing cases` failure of item T-737 reached from the
  *     heading side. A note is never substantive: `isUpdateNote` classifies it
  *     by the same regex, which is why the two now live side by side.
