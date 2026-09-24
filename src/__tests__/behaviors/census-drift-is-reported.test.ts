@@ -2,7 +2,10 @@ import { mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 
-import { describeDrift } from "../../../scripts/quality/test-ci-coverage-census.mjs";
+import {
+  describeDrift,
+  describeShapeDrift,
+} from "../../../scripts/quality/test-ci-coverage-census.mjs";
 
 /**
  * The committed coverage census is a derived file refreshed by hand, by a
@@ -53,10 +56,21 @@ function measured(counts: Counts): { counts: Counts } {
   return { counts };
 }
 
+/**
+ * The fields `describeDrift` compares, which is the whole of what this suite is
+ * about. The last two arrived with the unclassified split (T-758): the census
+ * gained two counts saying how many of its unclassified directories resolved no
+ * product module at all, and a count this report does not name is a count that
+ * goes stale under a line reading "matches this run". They are in the baseline
+ * rather than in a case of their own so that every case below — the fall, the
+ * one-field move, the partial shape — is exercised over the real field list.
+ */
 const BASELINE: Counts = {
   testFiles: 2300,
   coveredTestFiles: 890,
   uncoveredTestFiles: 1410,
+  unclassifiedRiskDirectoriesWithResolvedProductSources: 174,
+  unclassifiedRiskDirectoriesWithNoResolvedProductSource: 6,
 };
 
 describe("the coverage census reports its own drift", () => {
@@ -72,7 +86,7 @@ describe("the coverage census reports its own drift", () => {
 
   it("names every field that moved, with its direction", () => {
     const result = describeDrift(
-      measured({ testFiles: 2320, coveredTestFiles: 910, uncoveredTestFiles: 1410 }),
+      measured({ ...BASELINE, testFiles: 2320, coveredTestFiles: 910 }),
       committedCensus({ counts: { ...BASELINE } }),
     );
 
@@ -126,17 +140,53 @@ describe("the coverage census reports its own drift", () => {
     expect(result.line).toContain("testFiles");
   });
 
-  it("refuses when only one of the three fields is missing", () => {
-    // A partial shape change is the easy one to skip over: two fields compare
-    // fine and the third is quietly dropped, so the report speaks with
-    // authority about two thirds of the question.
-    const partial = { ...BASELINE };
-    delete (partial as Partial<Counts>).uncoveredTestFiles;
+  it("refuses when any one of the compared fields is missing", () => {
+    // A partial shape change is the easy one to skip over: the rest compare
+    // fine and one is quietly dropped, so the report speaks with authority
+    // about most of the question. Driven over every field rather than over a
+    // chosen one, so a field added to the comparison and forgotten here cannot
+    // sit outside the case that exists to protect it.
+    for (const field of Object.keys(BASELINE)) {
+      const partial = { ...BASELINE };
+      delete partial[field];
 
-    const result = describeDrift(measured(BASELINE), committedCensus({ counts: partial }));
+      const result = describeDrift(measured(BASELINE), committedCensus({ counts: partial }));
 
-    expect(result.state).toBe("unreadable");
-    expect(result.line).toContain("uncoveredTestFiles");
+      expect(result.state).toBe("unreadable");
+      expect(result.line).toContain(field);
+    }
+  });
+
+  it("catches drift in the unclassified split, in both directions", () => {
+    // The split is the number that says which half of `unclassified` a
+    // directory is in, and it is read by whoever is choosing what to triage
+    // next. Asserted in both directions because a comparison that only noticed
+    // the resolver getting worse would call an improvement agreement (T-758).
+    const worse = describeDrift(
+      measured({
+        ...BASELINE,
+        unclassifiedRiskDirectoriesWithResolvedProductSources: 170,
+        unclassifiedRiskDirectoriesWithNoResolvedProductSource: 10,
+      }),
+      committedCensus({ counts: { ...BASELINE } }),
+    );
+    expect(worse.state).toBe("drifted");
+    expect(worse.line).toContain(
+      "unclassifiedRiskDirectoriesWithNoResolvedProductSource 6 -> 10 (+4)",
+    );
+
+    const better = describeDrift(
+      measured({
+        ...BASELINE,
+        unclassifiedRiskDirectoriesWithResolvedProductSources: 179,
+        unclassifiedRiskDirectoriesWithNoResolvedProductSource: 1,
+      }),
+      committedCensus({ counts: { ...BASELINE } }),
+    );
+    expect(better.state).toBe("drifted");
+    expect(better.line).toContain(
+      "unclassifiedRiskDirectoriesWithNoResolvedProductSource 6 -> 1 (-5)",
+    );
   });
 
   it("reports an absent committed census as absent, not as agreement", () => {
@@ -170,6 +220,56 @@ describe("the coverage census reports its own drift", () => {
 
     const current = cases.filter(([, r]) => r.state === "current").map(([name]) => name);
     expect(current).toEqual(["agreeing"]);
+  });
+
+  /**
+   * The counts above are a report. `describeShapeDrift` is the gate, and it
+   * compares SETS of directories rather than counts, because a set moves when a
+   * directory changes state and not on every pull request that adds a test.
+   *
+   * The unmeasured set joined it with the unclassified split (T-758). A
+   * directory that stops resolving its imports slides from "measured, matched
+   * no signal" to "the census followed nothing out of here" while every other
+   * published field stays identical — which is how one word came to cover 180
+   * directories without anyone noticing. Gated in both directions: a directory
+   * that starts resolving has to move the gate too, or the census can only ever
+   * be refreshed into a worse state.
+   */
+  describe("and gates the unmeasured set", () => {
+    const directoryRow = (directory: string, productSourceCount: number) => ({
+      directory,
+      governedRisk: { score: 0, band: "unclassified", signals: [], productSourceCount },
+    });
+    const withUnmeasured = (rows: ReturnType<typeof directoryRow>[]) => ({
+      uncoveredDirectories: [],
+      partiallyCoveredDirectories: [],
+      unclassifiedRiskDirectories: rows,
+    });
+
+    it("says current when the unmeasured directories are the same set", () => {
+      const both = withUnmeasured([
+        directoryRow("src/lib/a/__tests__", 0),
+        directoryRow("src/lib/b/__tests__", 3),
+      ]);
+      const result = describeShapeDrift(both, committedCensus(both));
+      expect(result.state).toBe("current");
+    });
+
+    it("names a directory that stopped resolving its imports", () => {
+      const was = withUnmeasured([directoryRow("src/lib/a/__tests__", 3)]);
+      const now = withUnmeasured([directoryRow("src/lib/a/__tests__", 0)]);
+      const result = describeShapeDrift(now, committedCensus(was));
+      expect(result.state).toBe("drifted");
+      expect(result.changes).toContain("+unmeasured src/lib/a/__tests__");
+    });
+
+    it("names a directory that started resolving them again", () => {
+      const was = withUnmeasured([directoryRow("src/lib/a/__tests__", 0)]);
+      const now = withUnmeasured([directoryRow("src/lib/a/__tests__", 2)]);
+      const result = describeShapeDrift(now, committedCensus(was));
+      expect(result.state).toBe("drifted");
+      expect(result.changes).toContain("-unmeasured src/lib/a/__tests__");
+    });
   });
 
   it("still reports rather than gates", () => {
