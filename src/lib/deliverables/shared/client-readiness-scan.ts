@@ -36,6 +36,7 @@ export type FindingKind =
   | "pipeline_vocabulary"
   | "internal_reference_code"
   | "vendor_claim_without_state"
+  | "fixture_control_language"
   | "unresolved_placeholder"
   | "filler_language";
 
@@ -145,6 +146,13 @@ const FILLER_PHRASES = [
   "move the needle",
 ];
 
+const FIXTURE_CONTROL_PHRASES = [
+  "simulated client approved upload",
+  "synthetic aggregate evidence only",
+  "must mention in generated output",
+  "must not claim:",
+];
+
 const VENDOR_STATE_BOUNDARY_PATTERN =
   /\b(?:vendor[-\s]published|public[-\s]hypothesis|public vendor|vendor materials?|public materials?|not proof of (?:a )?client deployment|not client truth|contract[-\s]confirmed|implementation[-\s]confirmed|client[-\s]observed|client evidence|client-side assertion|client[-\s]confirmed)\b/i;
 
@@ -237,6 +245,12 @@ const RULES: readonly Rule[] = [
     severity: "review",
     pattern: new RegExp(`(?:${alternation(PIPELINE_VOCABULARY)})`, "gi"),
     why: "This describes how the document was produced rather than what the client should decide.",
+  },
+  {
+    kind: "fixture_control_language",
+    severity: "blocker",
+    pattern: new RegExp(`(?:${alternation(FIXTURE_CONTROL_PHRASES)})`, "gi"),
+    why: "Smoke-test control language is not client evidence or a deliverable; it must stay in test fixtures and audit notes.",
   },
   {
     kind: "unresolved_placeholder",
