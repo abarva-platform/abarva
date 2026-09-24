@@ -1,0 +1,7027 @@
+{
+  "subject": "every route under src/app/api/** that CALLS a tenancy fence, and what kind of proof its covering suites offer",
+  "method": [
+    "A route fences when a CallExpression's callee is a binding imported from a fence module. An import with no call, a mention in a comment and a mention in a string are all `none` — that distinction is the defect class this census exists to measure, so it is decided by TypeScript's parser rather than by a text scan.",
+    "The fence surface grows from src/lib/auth/tenancy.ts to a fixpoint: a module that calls a fence symbol has its own exported value names marked as fence symbols, which is how the `_auth` wrappers under src/app/api/** are found without a hand-kept list. A route reaching a fence through a wrapper is `indirect` and names the hop in fenceVia.",
+    "requireTenancy and tenancyErrorResponse are the seed symbols. TenancyError is not: narrowing an error type is reading a fence, not applying one. C-507's mutation M-B deleted only the mapper and both byte-scanner suites stayed green, which is why the mapper counts.",
+    "reachesFenceModule is import-graph reach at any depth and is reported separately from `fence` on purpose. The two numbers disagree by a wide margin, and a route that reaches tenancy through a library it imports for other reasons fences on nothing.",
+    "A suite is `behavioral` when it loads the route module and calls an HTTP-method handler, `byte-scanner` when it names the route's path in a string literal and calls a file read, `none` otherwise. Where a suite does both, behavioral wins: a byte assertion beside a real response assertion is not what this census is hunting.",
+    "coverage is the strongest verdict among a route's covering suites. `byte-scanner` therefore means EVERY covering suite asserts the route by its bytes, and that is the population C-507 showed can stay green through an inverted fence.",
+    "This census ranks and does not repair. Each repair is its own backlog item so that a sweep finding twenty routes is not one change nobody reads."
+  ],
+  "counts": {
+    "routes": 387,
+    "fenced": 213,
+    "fencedDirect": 89,
+    "fencedIndirect": 124,
+    "unfenced": 174,
+    "unfencedButReachesFenceModule": 93,
+    "behavioral": 66,
+    "byteScannerOnly": 7,
+    "none": 140
+  },
+  "ranking": [
+    {
+      "route": "src/app/api/corpus/[id]/approve/route.ts",
+      "coverage": "none",
+      "fence": "indirect",
+      "fenceVia": [
+        "src/app/api/corpus/_route-utils.ts"
+      ]
+    },
+    {
+      "route": "src/app/api/corpus/[id]/publish/route.ts",
+      "coverage": "none",
+      "fence": "indirect",
+      "fenceVia": [
+        "src/app/api/corpus/_route-utils.ts"
+      ]
+    },
+    {
+      "route": "src/app/api/corpus/[id]/retire/route.ts",
+      "coverage": "none",
+      "fence": "indirect",
+      "fenceVia": [
+        "src/app/api/corpus/_route-utils.ts"
+      ]
+    },
+    {
+      "route": "src/app/api/corpus/[id]/review/route.ts",
+      "coverage": "none",
+      "fence": "indirect",
+      "fenceVia": [
+        "src/app/api/corpus/_route-utils.ts"
+      ]
+    },
+    {
+      "route": "src/app/api/instruments/[id]/approve/route.ts",
+      "coverage": "none",
+      "fence": "indirect",
+      "fenceVia": [
+        "src/app/api/instruments/_route-utils.ts"
+      ]
+    },
+    {
+      "route": "src/app/api/instruments/[id]/publish/route.ts",
+      "coverage": "none",
+      "fence": "indirect",
+      "fenceVia": [
+        "src/app/api/instruments/_route-utils.ts"
+      ]
+    },
+    {
+      "route": "src/app/api/instruments/[id]/retire/route.ts",
+      "coverage": "none",
+      "fence": "indirect",
+      "fenceVia": [
+        "src/app/api/instruments/_route-utils.ts"
+      ]
+    },
+    {
+      "route": "src/app/api/instruments/[id]/review/route.ts",
+      "coverage": "none",
+      "fence": "indirect",
+      "fenceVia": [
+        "src/app/api/instruments/_route-utils.ts"
+      ]
+    },
+    {
+      "route": "src/app/api/templates/[id]/approve/route.ts",
+      "coverage": "none",
+      "fence": "indirect",
+      "fenceVia": [
+        "src/app/api/templates/_route-utils.ts"
+      ]
+    },
+    {
+      "route": "src/app/api/templates/[id]/publish/route.ts",
+      "coverage": "none",
+      "fence": "indirect",
+      "fenceVia": [
+        "src/app/api/templates/_route-utils.ts"
+      ]
+    },
+    {
+      "route": "src/app/api/templates/[id]/retire/route.ts",
+      "coverage": "none",
+      "fence": "indirect",
+      "fenceVia": [
+        "src/app/api/templates/_route-utils.ts"
+      ]
+    },
+    {
+      "route": "src/app/api/templates/[id]/review/route.ts",
+      "coverage": "none",
+      "fence": "indirect",
+      "fenceVia": [
+        "src/app/api/templates/_route-utils.ts"
+      ]
+    },
+    {
+      "route": "src/app/api/v1/source/[eventId]/artifacts/[artifactCode]/render-pdf/route.ts",
+      "coverage": "none",
+      "fence": "indirect",
+      "fenceVia": [
+        "src/lib/source/exports/payloads/demand-challenge-payload.ts",
+        "src/lib/source/exports/payloads/narrative-docx-payload.ts",
+        "src/lib/source/exports/payloads/sourcing-approach-payload.ts",
+        "src/lib/source/exports/payloads/vendor-risk-pack-payload.ts"
+      ]
+    },
+    {
+      "route": "src/app/api/workshops/[id]/approve/route.ts",
+      "coverage": "none",
+      "fence": "indirect",
+      "fenceVia": [
+        "src/app/api/workshops/_route-utils.ts"
+      ]
+    },
+    {
+      "route": "src/app/api/workshops/[id]/publish/route.ts",
+      "coverage": "none",
+      "fence": "indirect",
+      "fenceVia": [
+        "src/app/api/workshops/_route-utils.ts"
+      ]
+    },
+    {
+      "route": "src/app/api/workshops/[id]/retire/route.ts",
+      "coverage": "none",
+      "fence": "indirect",
+      "fenceVia": [
+        "src/app/api/workshops/_route-utils.ts"
+      ]
+    },
+    {
+      "route": "src/app/api/workshops/[id]/review/route.ts",
+      "coverage": "none",
+      "fence": "indirect",
+      "fenceVia": [
+        "src/app/api/workshops/_route-utils.ts"
+      ]
+    },
+    {
+      "route": "src/app/api/corpus/[id]/route.ts",
+      "coverage": "none",
+      "fence": "indirect",
+      "fenceVia": [
+        "src/app/api/corpus/_route-utils.ts"
+      ]
+    },
+    {
+      "route": "src/app/api/corpus/route.ts",
+      "coverage": "none",
+      "fence": "indirect",
+      "fenceVia": [
+        "src/app/api/corpus/_route-utils.ts"
+      ]
+    },
+    {
+      "route": "src/app/api/instruments/[id]/route.ts",
+      "coverage": "none",
+      "fence": "indirect",
+      "fenceVia": [
+        "src/app/api/instruments/_route-utils.ts"
+      ]
+    },
+    {
+      "route": "src/app/api/instruments/discovery-kit/[moveId]/evidence/route.ts",
+      "coverage": "none",
+      "fence": "indirect",
+      "fenceVia": [
+        "src/app/api/instruments/_route-utils.ts"
+      ]
+    },
+    {
+      "route": "src/app/api/instruments/route.ts",
+      "coverage": "none",
+      "fence": "indirect",
+      "fenceVia": [
+        "src/app/api/instruments/_route-utils.ts"
+      ]
+    },
+    {
+      "route": "src/app/api/reasoning/gate-approval/route.ts",
+      "coverage": "none",
+      "fence": "indirect",
+      "fenceVia": [
+        "src/app/api/reasoning/_auth.ts"
+      ]
+    },
+    {
+      "route": "src/app/api/templates/[id]/route.ts",
+      "coverage": "none",
+      "fence": "indirect",
+      "fenceVia": [
+        "src/app/api/templates/_route-utils.ts"
+      ]
+    },
+    {
+      "route": "src/app/api/templates/route.ts",
+      "coverage": "none",
+      "fence": "indirect",
+      "fenceVia": [
+        "src/app/api/templates/_route-utils.ts"
+      ]
+    },
+    {
+      "route": "src/app/api/workshops/[id]/assets/route.ts",
+      "coverage": "none",
+      "fence": "indirect",
+      "fenceVia": [
+        "src/app/api/workshops/_route-utils.ts"
+      ]
+    },
+    {
+      "route": "src/app/api/workshops/[id]/route.ts",
+      "coverage": "none",
+      "fence": "indirect",
+      "fenceVia": [
+        "src/app/api/workshops/_route-utils.ts"
+      ]
+    },
+    {
+      "route": "src/app/api/workshops/instances/route.ts",
+      "coverage": "none",
+      "fence": "indirect",
+      "fenceVia": [
+        "src/app/api/workshops/_route-utils.ts"
+      ]
+    },
+    {
+      "route": "src/app/api/workshops/route.ts",
+      "coverage": "none",
+      "fence": "indirect",
+      "fenceVia": [
+        "src/app/api/workshops/_route-utils.ts"
+      ]
+    },
+    {
+      "route": "src/app/api/corpus/[id]/submit/route.ts",
+      "coverage": "none",
+      "fence": "indirect",
+      "fenceVia": [
+        "src/app/api/corpus/_route-utils.ts"
+      ]
+    },
+    {
+      "route": "src/app/api/dependencies/route.ts",
+      "coverage": "none",
+      "fence": "indirect",
+      "fenceVia": [
+        "src/app/api/dependencies/_route-utils.ts"
+      ]
+    },
+    {
+      "route": "src/app/api/dependencies/siblings/accept/route.ts",
+      "coverage": "none",
+      "fence": "indirect",
+      "fenceVia": [
+        "src/app/api/dependencies/_route-utils.ts"
+      ]
+    },
+    {
+      "route": "src/app/api/dependencies/siblings/route.ts",
+      "coverage": "none",
+      "fence": "indirect",
+      "fenceVia": [
+        "src/app/api/dependencies/_route-utils.ts"
+      ]
+    },
+    {
+      "route": "src/app/api/instruments/[id]/submit/route.ts",
+      "coverage": "none",
+      "fence": "indirect",
+      "fenceVia": [
+        "src/app/api/instruments/_route-utils.ts"
+      ]
+    },
+    {
+      "route": "src/app/api/reasoning/audit/route.ts",
+      "coverage": "none",
+      "fence": "indirect",
+      "fenceVia": [
+        "src/app/api/reasoning/_auth.ts"
+      ]
+    },
+    {
+      "route": "src/app/api/reasoning/demo-scenarios/route.ts",
+      "coverage": "none",
+      "fence": "indirect",
+      "fenceVia": [
+        "src/app/api/reasoning/_auth.ts"
+      ]
+    },
+    {
+      "route": "src/app/api/reasoning/gate-history/[instanceId]/route.ts",
+      "coverage": "none",
+      "fence": "indirect",
+      "fenceVia": [
+        "src/app/api/reasoning/_auth.ts"
+      ]
+    },
+    {
+      "route": "src/app/api/templates/[id]/clone/route.ts",
+      "coverage": "none",
+      "fence": "indirect",
+      "fenceVia": [
+        "src/app/api/templates/_route-utils.ts"
+      ]
+    },
+    {
+      "route": "src/app/api/templates/[id]/instantiate/route.ts",
+      "coverage": "none",
+      "fence": "indirect",
+      "fenceVia": [
+        "src/app/api/templates/_route-utils.ts"
+      ]
+    },
+    {
+      "route": "src/app/api/templates/[id]/submit/route.ts",
+      "coverage": "none",
+      "fence": "indirect",
+      "fenceVia": [
+        "src/app/api/templates/_route-utils.ts"
+      ]
+    },
+    {
+      "route": "src/app/api/v1/source/[eventId]/artifacts/[artifactCode]/body/route.ts",
+      "coverage": "none",
+      "fence": "indirect",
+      "fenceVia": [
+        "src/lib/source/queries.ts"
+      ]
+    },
+    {
+      "route": "src/app/api/v1/source/[eventId]/test-reset/route.ts",
+      "coverage": "none",
+      "fence": "indirect",
+      "fenceVia": [
+        "src/lib/source/queries.ts"
+      ]
+    },
+    {
+      "route": "src/app/api/workshops/[id]/submit/route.ts",
+      "coverage": "none",
+      "fence": "indirect",
+      "fenceVia": [
+        "src/app/api/workshops/_route-utils.ts"
+      ]
+    },
+    {
+      "route": "src/app/api/ai-liability/system-role-acknowledgment/route.ts",
+      "coverage": "none",
+      "fence": "indirect",
+      "fenceVia": [
+        "src/lib/ai-liability/system-role-acknowledgment.ts"
+      ]
+    },
+    {
+      "route": "src/app/api/corpus/search/route.ts",
+      "coverage": "none",
+      "fence": "indirect",
+      "fenceVia": [
+        "src/app/api/corpus/_route-utils.ts"
+      ]
+    },
+    {
+      "route": "src/app/api/dependencies/[id]/route.ts",
+      "coverage": "none",
+      "fence": "indirect",
+      "fenceVia": [
+        "src/app/api/dependencies/_route-utils.ts"
+      ]
+    },
+    {
+      "route": "src/app/api/instruments/[id]/download/route.ts",
+      "coverage": "none",
+      "fence": "indirect",
+      "fenceVia": [
+        "src/app/api/instruments/_route-utils.ts"
+      ]
+    },
+    {
+      "route": "src/app/api/instruments/discovery-kit/[moveId]/route.ts",
+      "coverage": "none",
+      "fence": "indirect",
+      "fenceVia": [
+        "src/app/api/instruments/_route-utils.ts"
+      ]
+    },
+    {
+      "route": "src/app/api/reasoning/demo-reset/route.ts",
+      "coverage": "none",
+      "fence": "indirect",
+      "fenceVia": [
+        "src/app/api/reasoning/_auth.ts"
+      ]
+    },
+    {
+      "route": "src/app/api/v1/source/[eventId]/artifacts/[artifactCode]/render-docx/route.ts",
+      "coverage": "none",
+      "fence": "indirect",
+      "fenceVia": [
+        "src/lib/source/exports/payloads/narrative-docx-payload.ts"
+      ]
+    },
+    {
+      "route": "src/app/api/v1/source/[eventId]/artifacts/[artifactCode]/render-html/route.ts",
+      "coverage": "none",
+      "fence": "indirect",
+      "fenceVia": [
+        "src/lib/source/exports/payloads/narrative-docx-payload.ts"
+      ]
+    },
+    {
+      "route": "src/app/api/v1/source/[eventId]/artifacts/[artifactCode]/status/route.ts",
+      "coverage": "none",
+      "fence": "indirect",
+      "fenceVia": [
+        "src/lib/source/queries.ts"
+      ]
+    },
+    {
+      "route": "src/app/api/v1/source/[eventId]/contract-evidence/import/route.ts",
+      "coverage": "none",
+      "fence": "indirect",
+      "fenceVia": [
+        "src/lib/source/queries.ts"
+      ]
+    },
+    {
+      "route": "src/app/api/v1/source/[eventId]/cxo-report/route.ts",
+      "coverage": "none",
+      "fence": "indirect",
+      "fenceVia": [
+        "src/lib/source/exports/deal-pack/assemble-deal-pack.ts"
+      ]
+    },
+    {
+      "route": "src/app/api/v1/source/[eventId]/deal-pack/route.ts",
+      "coverage": "none",
+      "fence": "indirect",
+      "fenceVia": [
+        "src/lib/source/exports/deal-pack/assemble-deal-pack.ts"
+      ]
+    },
+    {
+      "route": "src/app/api/v1/source/[eventId]/door1/diagnose/route.ts",
+      "coverage": "none",
+      "fence": "indirect",
+      "fenceVia": [
+        "src/lib/source/queries.ts"
+      ]
+    },
+    {
+      "route": "src/app/api/v1/source/[eventId]/evidence/[requirementId]/review/route.ts",
+      "coverage": "none",
+      "fence": "indirect",
+      "fenceVia": [
+        "src/lib/source/queries.ts"
+      ]
+    },
+    {
+      "route": "src/app/api/v1/source/[eventId]/evidence/[requirementId]/template/route.ts",
+      "coverage": "none",
+      "fence": "indirect",
+      "fenceVia": [
+        "src/lib/source/queries.ts"
+      ]
+    },
+    {
+      "route": "src/app/api/workshops/[id]/render/route.ts",
+      "coverage": "none",
+      "fence": "indirect",
+      "fenceVia": [
+        "src/app/api/workshops/_route-utils.ts"
+      ]
+    },
+    {
+      "route": "src/app/api/admin/context-layer/bulk-upload/review/route.ts",
+      "coverage": "none",
+      "fence": "direct",
+      "fenceVia": []
+    },
+    {
+      "route": "src/app/api/admin/context-layer/loader/commit/route.ts",
+      "coverage": "none",
+      "fence": "direct",
+      "fenceVia": []
+    },
+    {
+      "route": "src/app/api/admin/context-layer/loader/landing-zone/route.ts",
+      "coverage": "none",
+      "fence": "direct",
+      "fenceVia": []
+    },
+    {
+      "route": "src/app/api/admin/context-layer/loader/steward-chat/route.ts",
+      "coverage": "none",
+      "fence": "direct",
+      "fenceVia": []
+    },
+    {
+      "route": "src/app/api/admin/context-layer/loader/understand/route.ts",
+      "coverage": "none",
+      "fence": "direct",
+      "fenceVia": []
+    },
+    {
+      "route": "src/app/api/admin/context-layer/triage/[id]/route.ts",
+      "coverage": "none",
+      "fence": "direct",
+      "fenceVia": []
+    },
+    {
+      "route": "src/app/api/admin/context-layer/triage/route.ts",
+      "coverage": "none",
+      "fence": "direct",
+      "fenceVia": []
+    },
+    {
+      "route": "src/app/api/admin/evidence-quality-export/route.ts",
+      "coverage": "none",
+      "fence": "direct",
+      "fenceVia": []
+    },
+    {
+      "route": "src/app/api/admin/pricing/client-profiles/[id]/approve/route.ts",
+      "coverage": "none",
+      "fence": "direct",
+      "fenceVia": []
+    },
+    {
+      "route": "src/app/api/admin/pricing/client-profiles/import/route.ts",
+      "coverage": "none",
+      "fence": "direct",
+      "fenceVia": []
+    },
+    {
+      "route": "src/app/api/admin/pricing/client-profiles/route.ts",
+      "coverage": "none",
+      "fence": "direct",
+      "fenceVia": []
+    },
+    {
+      "route": "src/app/api/admin/quarantine/[id]/hard-delete/route.ts",
+      "coverage": "none",
+      "fence": "direct",
+      "fenceVia": []
+    },
+    {
+      "route": "src/app/api/admin/quarantine/[id]/release/route.ts",
+      "coverage": "none",
+      "fence": "direct",
+      "fenceVia": []
+    },
+    {
+      "route": "src/app/api/data/upload/route.ts",
+      "coverage": "none",
+      "fence": "direct",
+      "fenceVia": []
+    },
+    {
+      "route": "src/app/api/intelligence/ask/export/route.ts",
+      "coverage": "none",
+      "fence": "direct",
+      "fenceVia": []
+    },
+    {
+      "route": "src/app/api/intelligence/context-summary/route.ts",
+      "coverage": "none",
+      "fence": "direct",
+      "fenceVia": []
+    },
+    {
+      "route": "src/app/api/intelligence/insights/evaluate/route.ts",
+      "coverage": "none",
+      "fence": "direct",
+      "fenceVia": []
+    },
+    {
+      "route": "src/app/api/intelligence/insights/route.ts",
+      "coverage": "none",
+      "fence": "direct",
+      "fenceVia": []
+    },
+    {
+      "route": "src/app/api/intelligence/qa/route.ts",
+      "coverage": "none",
+      "fence": "direct",
+      "fenceVia": []
+    },
+    {
+      "route": "src/app/api/intelligence/refresh-events/route.ts",
+      "coverage": "none",
+      "fence": "direct",
+      "fenceVia": []
+    },
+    {
+      "route": "src/app/api/knowledge/ava/route.ts",
+      "coverage": "none",
+      "fence": "direct",
+      "fenceVia": []
+    },
+    {
+      "route": "src/app/api/notifications/route.ts",
+      "coverage": "none",
+      "fence": "direct",
+      "fenceVia": []
+    },
+    {
+      "route": "src/app/api/onboarding/[session]/commit/route.ts",
+      "coverage": "none",
+      "fence": "direct",
+      "fenceVia": []
+    },
+    {
+      "route": "src/app/api/onboarding/[session]/status/route.ts",
+      "coverage": "none",
+      "fence": "direct",
+      "fenceVia": []
+    },
+    {
+      "route": "src/app/api/onboarding/upload/route.ts",
+      "coverage": "none",
+      "fence": "direct",
+      "fenceVia": []
+    },
+    {
+      "route": "src/app/api/reasoning/evidence/ingest/route.ts",
+      "coverage": "none",
+      "fence": "indirect",
+      "fenceVia": [
+        "src/app/api/reasoning/_auth.ts"
+      ]
+    },
+    {
+      "route": "src/app/api/reasoning/explain/route.ts",
+      "coverage": "none",
+      "fence": "indirect",
+      "fenceVia": [
+        "src/app/api/reasoning/_auth.ts"
+      ]
+    },
+    {
+      "route": "src/app/api/reasoning/playground/evaluate/route.ts",
+      "coverage": "none",
+      "fence": "indirect",
+      "fenceVia": [
+        "src/app/api/reasoning/_auth.ts"
+      ]
+    },
+    {
+      "route": "src/app/api/reasoning/synthesis-preview/route.ts",
+      "coverage": "none",
+      "fence": "indirect",
+      "fenceVia": [
+        "src/app/api/reasoning/_auth.ts"
+      ]
+    },
+    {
+      "route": "src/app/api/reasoning/synthesis/export/[instanceId]/route.ts",
+      "coverage": "none",
+      "fence": "indirect",
+      "fenceVia": [
+        "src/app/api/reasoning/_auth.ts"
+      ]
+    },
+    {
+      "route": "src/app/api/tower/value-states/[moveId]/attest/route.ts",
+      "coverage": "none",
+      "fence": "direct",
+      "fenceVia": []
+    },
+    {
+      "route": "src/app/api/tower/value-states/[moveId]/route.ts",
+      "coverage": "none",
+      "fence": "direct",
+      "fenceVia": []
+    },
+    {
+      "route": "src/app/api/tower/value-states/route.ts",
+      "coverage": "none",
+      "fence": "direct",
+      "fenceVia": []
+    },
+    {
+      "route": "src/app/api/turn/[turnId]/trace/route.ts",
+      "coverage": "none",
+      "fence": "direct",
+      "fenceVia": []
+    },
+    {
+      "route": "src/app/api/v1/atlas/observations/route.ts",
+      "coverage": "none",
+      "fence": "indirect",
+      "fenceVia": [
+        "src/app/api/v1/atlas/_auth.ts"
+      ]
+    },
+    {
+      "route": "src/app/api/v1/atlas/signals/[signalId]/route.ts",
+      "coverage": "none",
+      "fence": "indirect",
+      "fenceVia": [
+        "src/app/api/v1/atlas/_auth.ts"
+      ]
+    },
+    {
+      "route": "src/app/api/v1/intelligence/brief/render-docx/route.ts",
+      "coverage": "none",
+      "fence": "direct",
+      "fenceVia": []
+    },
+    {
+      "route": "src/app/api/v1/intelligence/brief/render-pdf/route.ts",
+      "coverage": "none",
+      "fence": "direct",
+      "fenceVia": []
+    },
+    {
+      "route": "src/app/api/v1/moves/[moveId]/artifacts/execution-roadmap/build/route.ts",
+      "coverage": "none",
+      "fence": "direct",
+      "fenceVia": []
+    },
+    {
+      "route": "src/app/api/v1/moves/[moveId]/artifacts/execution-roadmap/current/[format]/route.ts",
+      "coverage": "none",
+      "fence": "direct",
+      "fenceVia": []
+    },
+    {
+      "route": "src/app/api/v1/moves/[moveId]/artifacts/execution-roadmap/versions/[version]/[format]/route.ts",
+      "coverage": "none",
+      "fence": "direct",
+      "fenceVia": []
+    },
+    {
+      "route": "src/app/api/v1/programs/[programId]/approve-brief/route.ts",
+      "coverage": "none",
+      "fence": "direct",
+      "fenceVia": []
+    },
+    {
+      "route": "src/app/api/v1/programs/originate/extract-brief/route.ts",
+      "coverage": "none",
+      "fence": "direct",
+      "fenceVia": []
+    },
+    {
+      "route": "src/app/api/v1/source/[eventId]/artifacts/[artifactCode]/enqueue-worker/route.ts",
+      "coverage": "none",
+      "fence": "direct",
+      "fenceVia": []
+    },
+    {
+      "route": "src/app/api/v1/source/[eventId]/artifacts/[artifactCode]/render-comparison-xlsx/route.ts",
+      "coverage": "none",
+      "fence": "direct",
+      "fenceVia": []
+    },
+    {
+      "route": "src/app/api/v1/source/[eventId]/artifacts/[artifactCode]/render-xlsx/route.ts",
+      "coverage": "none",
+      "fence": "direct",
+      "fenceVia": []
+    },
+    {
+      "route": "src/app/api/v1/source/[eventId]/vendor-proposals/[vendorKey]/facts/route.ts",
+      "coverage": "none",
+      "fence": "direct",
+      "fenceVia": []
+    },
+    {
+      "route": "src/app/api/v1/source/events/[eventId]/gate/route.ts",
+      "coverage": "none",
+      "fence": "direct",
+      "fenceVia": []
+    },
+    {
+      "route": "src/app/api/knowledge/consumption/enterprise-brief/route.ts",
+      "coverage": "none",
+      "fence": "indirect",
+      "fenceVia": [
+        "src/app/api/knowledge/consumption/_shared.ts"
+      ]
+    },
+    {
+      "route": "src/app/api/knowledge/consumption/entity-detail/route.ts",
+      "coverage": "none",
+      "fence": "indirect",
+      "fenceVia": [
+        "src/app/api/knowledge/consumption/_shared.ts"
+      ]
+    },
+    {
+      "route": "src/app/api/knowledge/consumption/evidence-gaps/route.ts",
+      "coverage": "none",
+      "fence": "indirect",
+      "fenceVia": [
+        "src/app/api/knowledge/consumption/_shared.ts"
+      ]
+    },
+    {
+      "route": "src/app/api/knowledge/consumption/explore/route.ts",
+      "coverage": "none",
+      "fence": "indirect",
+      "fenceVia": [
+        "src/app/api/knowledge/consumption/_shared.ts"
+      ]
+    },
+    {
+      "route": "src/app/api/knowledge/consumption/module-handoff-preview/route.ts",
+      "coverage": "none",
+      "fence": "indirect",
+      "fenceVia": [
+        "src/app/api/knowledge/consumption/_shared.ts"
+      ]
+    },
+    {
+      "route": "src/app/api/knowledge/consumption/relationships/route.ts",
+      "coverage": "none",
+      "fence": "indirect",
+      "fenceVia": [
+        "src/app/api/knowledge/consumption/_shared.ts"
+      ]
+    },
+    {
+      "route": "src/app/api/knowledge/consumption/search/route.ts",
+      "coverage": "none",
+      "fence": "indirect",
+      "fenceVia": [
+        "src/app/api/knowledge/consumption/_shared.ts"
+      ]
+    },
+    {
+      "route": "src/app/api/knowledge/consumption/suggested-questions/route.ts",
+      "coverage": "none",
+      "fence": "indirect",
+      "fenceVia": [
+        "src/app/api/knowledge/consumption/_shared.ts"
+      ]
+    },
+    {
+      "route": "src/app/api/reasoning/alerts/route.ts",
+      "coverage": "none",
+      "fence": "indirect",
+      "fenceVia": [
+        "src/app/api/reasoning/_auth.ts"
+      ]
+    },
+    {
+      "route": "src/app/api/reasoning/alerts/state/route.ts",
+      "coverage": "none",
+      "fence": "indirect",
+      "fenceVia": [
+        "src/app/api/reasoning/_auth.ts"
+      ]
+    },
+    {
+      "route": "src/app/api/reasoning/ask/route.ts",
+      "coverage": "none",
+      "fence": "indirect",
+      "fenceVia": [
+        "src/app/api/reasoning/_auth.ts"
+      ]
+    },
+    {
+      "route": "src/app/api/reasoning/cascades/route.ts",
+      "coverage": "none",
+      "fence": "indirect",
+      "fenceVia": [
+        "src/app/api/reasoning/_auth.ts"
+      ]
+    },
+    {
+      "route": "src/app/api/reasoning/contradiction-templates/override/route.ts",
+      "coverage": "none",
+      "fence": "indirect",
+      "fenceVia": [
+        "src/app/api/reasoning/_auth.ts"
+      ]
+    },
+    {
+      "route": "src/app/api/reasoning/contradictions/resolve/route.ts",
+      "coverage": "none",
+      "fence": "indirect",
+      "fenceVia": [
+        "src/app/api/reasoning/_auth.ts"
+      ]
+    },
+    {
+      "route": "src/app/api/reasoning/digest/weekly/route.ts",
+      "coverage": "none",
+      "fence": "indirect",
+      "fenceVia": [
+        "src/app/api/reasoning/_auth.ts"
+      ]
+    },
+    {
+      "route": "src/app/api/reasoning/feedback/route.ts",
+      "coverage": "none",
+      "fence": "indirect",
+      "fenceVia": [
+        "src/app/api/reasoning/_auth.ts"
+      ]
+    },
+    {
+      "route": "src/app/api/reasoning/health-snapshot/route.ts",
+      "coverage": "none",
+      "fence": "indirect",
+      "fenceVia": [
+        "src/app/api/reasoning/_auth.ts"
+      ]
+    },
+    {
+      "route": "src/app/api/reasoning/health/route.ts",
+      "coverage": "none",
+      "fence": "indirect",
+      "fenceVia": [
+        "src/app/api/reasoning/_auth.ts"
+      ]
+    },
+    {
+      "route": "src/app/api/reasoning/missions/state/route.ts",
+      "coverage": "none",
+      "fence": "indirect",
+      "fenceVia": [
+        "src/app/api/reasoning/_auth.ts"
+      ]
+    },
+    {
+      "route": "src/app/api/reasoning/patterns/[patternId]/override/route.ts",
+      "coverage": "none",
+      "fence": "indirect",
+      "fenceVia": [
+        "src/app/api/reasoning/_auth.ts"
+      ]
+    },
+    {
+      "route": "src/app/api/reasoning/synthesis-cache/info/route.ts",
+      "coverage": "none",
+      "fence": "indirect",
+      "fenceVia": [
+        "src/app/api/reasoning/_auth.ts"
+      ]
+    },
+    {
+      "route": "src/app/api/reasoning/telemetry/export/route.ts",
+      "coverage": "none",
+      "fence": "indirect",
+      "fenceVia": [
+        "src/app/api/reasoning/_auth.ts"
+      ]
+    },
+    {
+      "route": "src/app/api/reasoning/telemetry/route.ts",
+      "coverage": "none",
+      "fence": "indirect",
+      "fenceVia": [
+        "src/app/api/reasoning/_auth.ts"
+      ]
+    },
+    {
+      "route": "src/app/api/tower/decision/route.ts",
+      "coverage": "none",
+      "fence": "direct",
+      "fenceVia": []
+    },
+    {
+      "route": "src/app/api/v1/moves/audit-pack/route.ts",
+      "coverage": "none",
+      "fence": "indirect",
+      "fenceVia": [
+        "src/lib/programs/board-artifacts/load-move-business-case-input.ts"
+      ]
+    },
+    {
+      "route": "src/app/api/v1/moves/board-grade-business-case/route.ts",
+      "coverage": "none",
+      "fence": "indirect",
+      "fenceVia": [
+        "src/lib/programs/board-artifacts/load-move-business-case-input.ts"
+      ]
+    },
+    {
+      "route": "src/app/api/v1/moves/board-grade-cfo-pack/route.ts",
+      "coverage": "none",
+      "fence": "indirect",
+      "fenceVia": [
+        "src/lib/programs/board-artifacts/load-move-business-case-input.ts"
+      ]
+    },
+    {
+      "route": "src/app/api/v1/moves/board-grade-charter-skeleton/route.ts",
+      "coverage": "none",
+      "fence": "indirect",
+      "fenceVia": [
+        "src/lib/programs/board-artifacts/load-move-business-case-input.ts"
+      ]
+    },
+    {
+      "route": "src/app/api/v1/moves/board-grade-discover-brief/route.ts",
+      "coverage": "none",
+      "fence": "indirect",
+      "fenceVia": [
+        "src/lib/programs/board-artifacts/load-move-business-case-input.ts"
+      ]
+    },
+    {
+      "route": "src/app/api/v1/moves/board-grade-estimate-model/route.ts",
+      "coverage": "none",
+      "fence": "indirect",
+      "fenceVia": [
+        "src/lib/programs/board-artifacts/load-move-business-case-input.ts"
+      ]
+    },
+    {
+      "route": "src/app/api/v1/moves/board-grade-master-dossier/route.ts",
+      "coverage": "none",
+      "fence": "indirect",
+      "fenceVia": [
+        "src/lib/programs/board-artifacts/load-move-business-case-input.ts"
+      ]
+    },
+    {
+      "route": "src/app/api/v1/moves/board-grade-mobilize-packet/route.ts",
+      "coverage": "none",
+      "fence": "indirect",
+      "fenceVia": [
+        "src/lib/programs/board-artifacts/load-move-business-case-input.ts"
+      ]
+    },
+    {
+      "route": "src/app/api/v1/moves/board-grade-solution-architecture/route.ts",
+      "coverage": "none",
+      "fence": "indirect",
+      "fenceVia": [
+        "src/lib/programs/board-artifacts/load-move-business-case-input.ts"
+      ]
+    },
+    {
+      "route": "src/app/api/v1/source/[eventId]/artifacts/[artifactCode]/generate/route.ts",
+      "coverage": "byte-scanner",
+      "fence": "indirect",
+      "fenceVia": [
+        "src/lib/source/queries.ts"
+      ]
+    },
+    {
+      "route": "src/app/api/v1/source/[eventId]/evidence-requests/route.ts",
+      "coverage": "byte-scanner",
+      "fence": "indirect",
+      "fenceVia": [
+        "src/lib/source/queries.ts"
+      ]
+    },
+    {
+      "route": "src/app/api/chat/agent/route.ts",
+      "coverage": "byte-scanner",
+      "fence": "indirect",
+      "fenceVia": [
+        "src/lib/source/queries.ts"
+      ]
+    },
+    {
+      "route": "src/app/api/tower/synthesis/route.ts",
+      "coverage": "byte-scanner",
+      "fence": "direct",
+      "fenceVia": []
+    },
+    {
+      "route": "src/app/api/v1/source/[eventId]/communications/draft/route.ts",
+      "coverage": "byte-scanner",
+      "fence": "direct",
+      "fenceVia": []
+    },
+    {
+      "route": "src/app/api/v1/source/events/[eventId]/request-changes/route.ts",
+      "coverage": "byte-scanner",
+      "fence": "direct",
+      "fenceVia": []
+    },
+    {
+      "route": "src/app/api/v1/source/events/[eventId]/route-to-co-approver/route.ts",
+      "coverage": "byte-scanner",
+      "fence": "direct",
+      "fenceVia": []
+    }
+  ],
+  "mutationProof": {
+    "note": "A classification that was never executed is the same kind of claim this item exists against. Each sample below was proved by applying the named mutation to the route on the recorded commit and running the covering suites: a `byte-scanner` or `none` row is proved when the suites stay GREEN under a mutation that breaks the fence. Sampled, not generalised — the counts say how many of how many.",
+    "sampled": [
+      {
+        "route": "src/app/api/tower/synthesis/route.ts",
+        "coverageWhenSampled": "byte-scanner",
+        "coveringSuites": [
+          "src/__tests__/integration/atlas/atlas-invariants.test.ts"
+        ],
+        "mutation": "The fence DELETED: `tenancy = await requireTenancy()` replaced with a hard-coded foreign tenant, and the catch arm's `tenancyErrorResponse(err)` replaced with a 200.",
+        "result": "green",
+        "evidence": "3 suites, 16 passed / 4 skipped / 0 failed -- identical to the clean baseline of the same command."
+      },
+      {
+        "route": "src/app/api/v1/source/[eventId]/communications/draft/route.ts",
+        "coverageWhenSampled": "byte-scanner",
+        "coveringSuites": [
+          "src/__tests__/integration/source/source-communication-draft-flow-static.test.ts"
+        ],
+        "mutation": "Fail OPEN: the fence still runs and its refusal path is removed -- `if (tenancyError) return tenancyErrorResponse(tenancyError)` neutered.",
+        "result": "green",
+        "evidence": "Same invocation as the row above: 16 passed / 0 failed, unchanged from the clean baseline."
+      },
+      {
+        "route": "src/app/api/admin/context-layer/triage/route.ts",
+        "coverageWhenSampled": "none",
+        "coveringSuites": [],
+        "mutation": "The fence DELETED: `tenancy = await requireTenancy()` replaced with a hard-coded foreign tenant.",
+        "result": "green",
+        "evidence": "A routine gate scope, `jest src/__tests__/behaviors`: 120 suites / 1114 passed clean, and 120 suites / 1114 passed with the fence gone. The mutation was verified to change observable behavior rather than being a no-op -- a throwaway probe calling the handler with an unauthenticated caller answered 401 on the real route and 403 on the mutated one -- so the unchanged gate is a coverage gap and not an inert edit."
+      }
+    ],
+    "commit": "f383dcd6b2e668297eb40ebb751bb4f33ab34165",
+    "sampledOf": {
+      "byteScannerRowsSampled": 2,
+      "byteScannerRowsTotal": 7,
+      "noneRowsSampled": 1,
+      "noneRowsTotal": 140,
+      "note": "Sampled, not generalised. 3 of 147 unproven rows were executed; the other 144 carry the classification the parser gave them and nothing more."
+    },
+    "calibration": {
+      "subject": "src/app/api/chat/step/route.ts",
+      "mutation": "C-507's M-A: the active-tenant comparison inverted from !== to ===, so a FOREIGN clientId passes the fence and a legitimate one is refused.",
+      "result": "src/__tests__/behaviors/c507-route-tenant-fence-behavior.test.ts went RED (3 failed) in the SAME jest command that left the two byte-scanner rows green, and the byte-scanner suite for that same route, src/app/api/chat/step/__tests__/route-boundary.test.ts, stayed green beside it.",
+      "why": "Without this the greens below would be unreadable: a command that detects nothing proves nothing about the suites it ran. One inversion detected and two not, inside one invocation, is what makes the greens evidence."
+    },
+    "independentReader": {
+      "command": "npx jest --listTests --findRelatedTests <route>",
+      "result": "jest's own reverse-dependency reader agrees in both directions: for src/app/api/chat/step/route.ts it lists exactly the C-507 behavioral suite; for src/app/api/admin/context-layer/triage/route.ts it lists nothing.",
+      "population": "Measured over the whole census: 0 of the 140 `none` routes is imported by any test file, and 0 has its URL stem named in any of the 130 specs under tests/. The `none` verdict is therefore not an artefact of the handler-call heuristic -- nothing loads these routes at all."
+    }
+  },
+  "routes": [
+    {
+      "route": "src/app/api/admin/connectors/[id]/test/route.ts",
+      "fence": "none",
+      "fenceSymbols": [],
+      "fenceVia": [],
+      "reachesFenceModule": false,
+      "coverage": null,
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/admin/context-layer/bulk-upload/review/route.ts",
+      "fence": "direct",
+      "fenceSymbols": [
+        "requireTenancy",
+        "tenancyErrorResponse"
+      ],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": "none",
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/admin/context-layer/bulk-upload/route.ts",
+      "fence": "direct",
+      "fenceSymbols": [
+        "requireTenancy",
+        "tenancyErrorResponse"
+      ],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": "behavioral",
+      "suites": {
+        "behavioral": [
+          "src/app/api/admin/context-layer/bulk-upload/__tests__/route.test.ts"
+        ],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/admin/context-layer/bulk-upload/status/route.ts",
+      "fence": "direct",
+      "fenceSymbols": [
+        "requireTenancy",
+        "tenancyErrorResponse"
+      ],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": "behavioral",
+      "suites": {
+        "behavioral": [
+          "src/app/api/admin/context-layer/bulk-upload/status/__tests__/route.test.ts"
+        ],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/admin/context-layer/corpus-import/route.ts",
+      "fence": "direct",
+      "fenceSymbols": [
+        "requireTenancy",
+        "tenancyErrorResponse"
+      ],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": "behavioral",
+      "suites": {
+        "behavioral": [
+          "src/app/api/admin/context-layer/corpus-import/__tests__/route.test.ts"
+        ],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/admin/context-layer/csv-upload/route.ts",
+      "fence": "direct",
+      "fenceSymbols": [
+        "requireTenancy",
+        "tenancyErrorResponse"
+      ],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": "behavioral",
+      "suites": {
+        "behavioral": [
+          "src/app/api/admin/context-layer/csv-upload/__tests__/route.test.ts"
+        ],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/admin/context-layer/loader/commit/route.ts",
+      "fence": "direct",
+      "fenceSymbols": [
+        "requireTenancy",
+        "tenancyErrorResponse"
+      ],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": "none",
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/admin/context-layer/loader/landing-zone/route.ts",
+      "fence": "direct",
+      "fenceSymbols": [
+        "requireTenancy",
+        "tenancyErrorResponse"
+      ],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": "none",
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/admin/context-layer/loader/steward-chat/route.ts",
+      "fence": "direct",
+      "fenceSymbols": [
+        "requireTenancy",
+        "tenancyErrorResponse"
+      ],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": "none",
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/admin/context-layer/loader/understand/route.ts",
+      "fence": "direct",
+      "fenceSymbols": [
+        "requireTenancy",
+        "tenancyErrorResponse"
+      ],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": "none",
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/admin/context-layer/manifest-load/route.ts",
+      "fence": "direct",
+      "fenceSymbols": [
+        "requireTenancy",
+        "tenancyErrorResponse"
+      ],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": "behavioral",
+      "suites": {
+        "behavioral": [
+          "src/app/api/admin/context-layer/manifest-load/__tests__/route.test.ts"
+        ],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/admin/context-layer/triage/[id]/route.ts",
+      "fence": "direct",
+      "fenceSymbols": [
+        "requireTenancy",
+        "tenancyErrorResponse"
+      ],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": "none",
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/admin/context-layer/triage/route.ts",
+      "fence": "direct",
+      "fenceSymbols": [
+        "requireTenancy",
+        "tenancyErrorResponse"
+      ],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": "none",
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/admin/diagnostics/enterprise-context/route.ts",
+      "fence": "none",
+      "fenceSymbols": [],
+      "fenceVia": [],
+      "reachesFenceModule": false,
+      "coverage": null,
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/admin/evidence-quality-export/route.ts",
+      "fence": "direct",
+      "fenceSymbols": [
+        "requireTenancy",
+        "tenancyErrorResponse"
+      ],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": "none",
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/admin/home-knowledge-v4/approve/route.ts",
+      "fence": "none",
+      "fenceSymbols": [],
+      "fenceVia": [],
+      "reachesFenceModule": false,
+      "coverage": null,
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/admin/home-knowledge-v4/history/route.ts",
+      "fence": "none",
+      "fenceSymbols": [],
+      "fenceVia": [],
+      "reachesFenceModule": false,
+      "coverage": null,
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/admin/home-knowledge-v4/reject/route.ts",
+      "fence": "none",
+      "fenceSymbols": [],
+      "fenceVia": [],
+      "reachesFenceModule": false,
+      "coverage": null,
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/admin/home-knowledge-v4/retire/route.ts",
+      "fence": "none",
+      "fenceSymbols": [],
+      "fenceVia": [],
+      "reachesFenceModule": false,
+      "coverage": null,
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/admin/home-knowledge-v4/rollback/route.ts",
+      "fence": "none",
+      "fenceSymbols": [],
+      "fenceVia": [],
+      "reachesFenceModule": false,
+      "coverage": null,
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/admin/inbox/route.ts",
+      "fence": "none",
+      "fenceSymbols": [],
+      "fenceVia": [],
+      "reachesFenceModule": false,
+      "coverage": null,
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/admin/invite/route.ts",
+      "fence": "none",
+      "fenceSymbols": [],
+      "fenceVia": [],
+      "reachesFenceModule": false,
+      "coverage": null,
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/admin/parallel-run-invariants/route.ts",
+      "fence": "none",
+      "fenceSymbols": [],
+      "fenceVia": [],
+      "reachesFenceModule": false,
+      "coverage": null,
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/admin/pricing/client-profiles/[id]/approve/route.ts",
+      "fence": "direct",
+      "fenceSymbols": [
+        "requireTenancy",
+        "tenancyErrorResponse"
+      ],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": "none",
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/admin/pricing/client-profiles/import/route.ts",
+      "fence": "direct",
+      "fenceSymbols": [
+        "requireTenancy",
+        "tenancyErrorResponse"
+      ],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": "none",
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/admin/pricing/client-profiles/route.ts",
+      "fence": "direct",
+      "fenceSymbols": [
+        "requireTenancy",
+        "tenancyErrorResponse"
+      ],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": "none",
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/admin/pricing/rate-cards/[id]/approve/route.ts",
+      "fence": "direct",
+      "fenceSymbols": [
+        "requireTenancy",
+        "tenancyErrorResponse"
+      ],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": "behavioral",
+      "suites": {
+        "behavioral": [
+          "src/app/api/admin/pricing/rate-cards/[id]/approve/__tests__/route.test.ts"
+        ],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/admin/pricing/rate-cards/import/route.ts",
+      "fence": "direct",
+      "fenceSymbols": [
+        "requireTenancy",
+        "tenancyErrorResponse"
+      ],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": "behavioral",
+      "suites": {
+        "behavioral": [
+          "src/app/api/admin/pricing/rate-cards/import/__tests__/route.test.ts"
+        ],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/admin/pricing/rate-cards/route.ts",
+      "fence": "direct",
+      "fenceSymbols": [
+        "requireTenancy",
+        "tenancyErrorResponse"
+      ],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": "behavioral",
+      "suites": {
+        "behavioral": [
+          "src/app/api/admin/pricing/rate-cards/__tests__/route.test.ts"
+        ],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/admin/production-readiness/deployment-status/route.ts",
+      "fence": "none",
+      "fenceSymbols": [],
+      "fenceVia": [],
+      "reachesFenceModule": false,
+      "coverage": null,
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/admin/production-readiness/route.ts",
+      "fence": "none",
+      "fenceSymbols": [],
+      "fenceVia": [],
+      "reachesFenceModule": false,
+      "coverage": null,
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/admin/programs/approvals/[requestId]/route.ts",
+      "fence": "indirect",
+      "fenceSymbols": [
+        "adminAuthErrorResponse",
+        "requireAdminAuth",
+        "requireAdminDecide"
+      ],
+      "fenceVia": [
+        "src/app/api/admin/programs/approvals/_auth.ts"
+      ],
+      "reachesFenceModule": true,
+      "coverage": "behavioral",
+      "suites": {
+        "behavioral": [
+          "src/app/api/admin/programs/approvals/__tests__/route.test.ts"
+        ],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/admin/programs/approvals/export/route.ts",
+      "fence": "indirect",
+      "fenceSymbols": [
+        "adminAuthErrorResponse",
+        "requireAdminAuth"
+      ],
+      "fenceVia": [
+        "src/app/api/admin/programs/approvals/_auth.ts"
+      ],
+      "reachesFenceModule": true,
+      "coverage": "behavioral",
+      "suites": {
+        "behavioral": [
+          "src/app/api/admin/programs/approvals/export/__tests__/route.test.ts"
+        ],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/admin/programs/approvals/route.ts",
+      "fence": "indirect",
+      "fenceSymbols": [
+        "adminAuthErrorResponse",
+        "requireAdminAuth"
+      ],
+      "fenceVia": [
+        "src/app/api/admin/programs/approvals/_auth.ts"
+      ],
+      "reachesFenceModule": true,
+      "coverage": "behavioral",
+      "suites": {
+        "behavioral": [
+          "src/app/api/admin/programs/approvals/__tests__/route.test.ts"
+        ],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/admin/quarantine/[id]/hard-delete/route.ts",
+      "fence": "direct",
+      "fenceSymbols": [
+        "requireTenancy",
+        "tenancyErrorResponse"
+      ],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": "none",
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/admin/quarantine/[id]/release/route.ts",
+      "fence": "direct",
+      "fenceSymbols": [
+        "requireTenancy",
+        "tenancyErrorResponse"
+      ],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": "none",
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/admin/seed-clerk-metadata/route.ts",
+      "fence": "none",
+      "fenceSymbols": [],
+      "fenceVia": [],
+      "reachesFenceModule": false,
+      "coverage": null,
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/admin/setup-control/route.ts",
+      "fence": "none",
+      "fenceSymbols": [],
+      "fenceVia": [],
+      "reachesFenceModule": false,
+      "coverage": null,
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/admin/steward-stats/route.ts",
+      "fence": "none",
+      "fenceSymbols": [],
+      "fenceVia": [],
+      "reachesFenceModule": false,
+      "coverage": null,
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/admin/switch-tenant/route.ts",
+      "fence": "none",
+      "fenceSymbols": [],
+      "fenceVia": [],
+      "reachesFenceModule": false,
+      "coverage": null,
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/admin/upload-dataset/route.ts",
+      "fence": "direct",
+      "fenceSymbols": [
+        "requireTenancy",
+        "tenancyErrorResponse"
+      ],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": "behavioral",
+      "suites": {
+        "behavioral": [
+          "src/app/api/admin/upload-dataset/__tests__/route-metric-ingestion.test.ts"
+        ],
+        "byteScanner": [
+          "src/__tests__/integration/architecture/northstar-postgres-cutover.test.ts"
+        ]
+      }
+    },
+    {
+      "route": "src/app/api/admin/users/provision/route.ts",
+      "fence": "none",
+      "fenceSymbols": [],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": null,
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/ai-liability/responsible-ai-acknowledgment/route.ts",
+      "fence": "none",
+      "fenceSymbols": [],
+      "fenceVia": [],
+      "reachesFenceModule": false,
+      "coverage": null,
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/ai-liability/responsible-ai-training/route.ts",
+      "fence": "none",
+      "fenceSymbols": [],
+      "fenceVia": [],
+      "reachesFenceModule": false,
+      "coverage": null,
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/ai-liability/system-role-acknowledgment/route.ts",
+      "fence": "indirect",
+      "fenceSymbols": [
+        "currentUserCanSignSystemRoleAcknowledgment",
+        "getSystemRoleAcknowledgmentSubjectForRequest",
+        "recordSystemRoleAcknowledgment"
+      ],
+      "fenceVia": [
+        "src/lib/ai-liability/system-role-acknowledgment.ts"
+      ],
+      "reachesFenceModule": true,
+      "coverage": "none",
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/auth/access-eligibility/route.ts",
+      "fence": "none",
+      "fenceSymbols": [],
+      "fenceVia": [],
+      "reachesFenceModule": false,
+      "coverage": null,
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/auth/demo-code-sign-in/route.ts",
+      "fence": "none",
+      "fenceSymbols": [],
+      "fenceVia": [],
+      "reachesFenceModule": false,
+      "coverage": null,
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/auth/private-browser-proof/route.ts",
+      "fence": "none",
+      "fenceSymbols": [],
+      "fenceVia": [],
+      "reachesFenceModule": false,
+      "coverage": null,
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/chat/agent/route.ts",
+      "fence": "indirect",
+      "fenceSymbols": [
+        "getSourcingEvent",
+        "listSourcingEvents"
+      ],
+      "fenceVia": [
+        "src/lib/source/queries.ts"
+      ],
+      "reachesFenceModule": true,
+      "coverage": "byte-scanner",
+      "suites": {
+        "behavioral": [],
+        "byteScanner": [
+          "scripts/smoke/foundation-fix-2-session-memory.spec.ts",
+          "scripts/smoke/p22-decision-dossier.spec.ts",
+          "scripts/smoke/sentinel-tenant-pin.spec.ts",
+          "src/__tests__/integration/knowledge/agent-context-broker.test.ts",
+          "src/__tests__/integration/source/source-access-control-static.test.ts",
+          "src/__tests__/integration/source/source-route-shell-enforcement.test.ts",
+          "src/__tests__/unit/programs-deliverable-failure-honesty.test.ts",
+          "src/__tests__/unit/programs-success-copy.test.ts",
+          "src/app/api/chat/agent/__tests__/agent-quality-answer-key.test.ts",
+          "src/app/api/chat/agent/__tests__/agent-route-context-bundle.test.ts",
+          "src/app/api/chat/agent/__tests__/agent-visible-stream-controls.test.ts",
+          "src/app/api/chat/agent/__tests__/moves-ava-scoped-context-gate.test.ts",
+          "src/app/api/chat/agent/__tests__/restricted-financial-redaction.test.ts",
+          "src/app/api/chat/agent/__tests__/source-ava-cross-event-leak-gate.test.ts",
+          "src/app/api/chat/agent/__tests__/source-ava-polish-gate.test.ts",
+          "src/app/api/chat/agent/__tests__/source-ava-tenant-broker-leak-gate.test.ts",
+          "src/app/api/chat/agent/__tests__/source-l7-discipline.test.ts",
+          "src/app/api/chat/agent/__tests__/steward-trust-spine-wiring.test.ts"
+        ]
+      }
+    },
+    {
+      "route": "src/app/api/chat/step/route.ts",
+      "fence": "direct",
+      "fenceSymbols": [
+        "requireTenancy",
+        "tenancyErrorResponse"
+      ],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": "behavioral",
+      "suites": {
+        "behavioral": [
+          "src/__tests__/behaviors/c507-route-tenant-fence-behavior.test.ts"
+        ],
+        "byteScanner": [
+          "scripts/quality/tenancy-fence-coverage.test.mjs",
+          "src/app/api/chat/step/__tests__/route-boundary.test.ts"
+        ]
+      }
+    },
+    {
+      "route": "src/app/api/contact/route.ts",
+      "fence": "none",
+      "fenceSymbols": [],
+      "fenceVia": [],
+      "reachesFenceModule": false,
+      "coverage": null,
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/context-ingestion/northstar/route.ts",
+      "fence": "none",
+      "fenceSymbols": [],
+      "fenceVia": [],
+      "reachesFenceModule": false,
+      "coverage": null,
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/context/demo/route.ts",
+      "fence": "none",
+      "fenceSymbols": [],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": null,
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/corpus/[id]/approve/route.ts",
+      "fence": "indirect",
+      "fenceSymbols": [
+        "canReviewCorpus",
+        "errorResponse",
+        "fail",
+        "mutationCtx",
+        "ok",
+        "requireCorpusCtx"
+      ],
+      "fenceVia": [
+        "src/app/api/corpus/_route-utils.ts"
+      ],
+      "reachesFenceModule": true,
+      "coverage": "none",
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/corpus/[id]/publish/route.ts",
+      "fence": "indirect",
+      "fenceSymbols": [
+        "canReviewCorpus",
+        "errorResponse",
+        "fail",
+        "mutationCtx",
+        "ok",
+        "requireCorpusCtx"
+      ],
+      "fenceVia": [
+        "src/app/api/corpus/_route-utils.ts"
+      ],
+      "reachesFenceModule": true,
+      "coverage": "none",
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/corpus/[id]/retire/route.ts",
+      "fence": "indirect",
+      "fenceSymbols": [
+        "canReviewCorpus",
+        "errorResponse",
+        "fail",
+        "mutationCtx",
+        "ok",
+        "requireCorpusCtx"
+      ],
+      "fenceVia": [
+        "src/app/api/corpus/_route-utils.ts"
+      ],
+      "reachesFenceModule": true,
+      "coverage": "none",
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/corpus/[id]/review/route.ts",
+      "fence": "indirect",
+      "fenceSymbols": [
+        "canReviewCorpus",
+        "errorResponse",
+        "fail",
+        "mutationCtx",
+        "ok",
+        "requireCorpusCtx"
+      ],
+      "fenceVia": [
+        "src/app/api/corpus/_route-utils.ts"
+      ],
+      "reachesFenceModule": true,
+      "coverage": "none",
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/corpus/[id]/route.ts",
+      "fence": "indirect",
+      "fenceSymbols": [
+        "errorResponse",
+        "fail",
+        "mutationCtx",
+        "ok",
+        "requireCorpusCtx"
+      ],
+      "fenceVia": [
+        "src/app/api/corpus/_route-utils.ts"
+      ],
+      "reachesFenceModule": true,
+      "coverage": "none",
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/corpus/[id]/submit/route.ts",
+      "fence": "indirect",
+      "fenceSymbols": [
+        "errorResponse",
+        "mutationCtx",
+        "ok",
+        "requireCorpusCtx"
+      ],
+      "fenceVia": [
+        "src/app/api/corpus/_route-utils.ts"
+      ],
+      "reachesFenceModule": true,
+      "coverage": "none",
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/corpus/route.ts",
+      "fence": "indirect",
+      "fenceSymbols": [
+        "errorResponse",
+        "fail",
+        "mutationCtx",
+        "ok",
+        "requireCorpusCtx"
+      ],
+      "fenceVia": [
+        "src/app/api/corpus/_route-utils.ts"
+      ],
+      "reachesFenceModule": true,
+      "coverage": "none",
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/corpus/search/route.ts",
+      "fence": "indirect",
+      "fenceSymbols": [
+        "errorResponse",
+        "ok",
+        "requireCorpusCtx"
+      ],
+      "fenceVia": [
+        "src/app/api/corpus/_route-utils.ts"
+      ],
+      "reachesFenceModule": true,
+      "coverage": "none",
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/cron/board-pack/route.ts",
+      "fence": "none",
+      "fenceSymbols": [],
+      "fenceVia": [],
+      "reachesFenceModule": false,
+      "coverage": null,
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/cron/notifications-tick/health/route.ts",
+      "fence": "none",
+      "fenceSymbols": [],
+      "fenceVia": [],
+      "reachesFenceModule": false,
+      "coverage": null,
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/cron/notifications-tick/route.ts",
+      "fence": "none",
+      "fenceSymbols": [],
+      "fenceVia": [],
+      "reachesFenceModule": false,
+      "coverage": null,
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/data/turn/route.ts",
+      "fence": "none",
+      "fenceSymbols": [],
+      "fenceVia": [],
+      "reachesFenceModule": false,
+      "coverage": null,
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/data/upload/route.ts",
+      "fence": "direct",
+      "fenceSymbols": [
+        "requireTenancy",
+        "tenancyErrorResponse"
+      ],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": "none",
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/debug/tower-substrate/route.ts",
+      "fence": "none",
+      "fenceSymbols": [],
+      "fenceVia": [],
+      "reachesFenceModule": false,
+      "coverage": null,
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/debug/vip/route.ts",
+      "fence": "none",
+      "fenceSymbols": [],
+      "fenceVia": [],
+      "reachesFenceModule": false,
+      "coverage": null,
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/dependencies/[id]/route.ts",
+      "fence": "indirect",
+      "fenceSymbols": [
+        "errorResponse",
+        "ok",
+        "requireDependenciesCtx"
+      ],
+      "fenceVia": [
+        "src/app/api/dependencies/_route-utils.ts"
+      ],
+      "reachesFenceModule": true,
+      "coverage": "none",
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/dependencies/route.ts",
+      "fence": "indirect",
+      "fenceSymbols": [
+        "errorResponse",
+        "fail",
+        "ok",
+        "requireDependenciesCtx"
+      ],
+      "fenceVia": [
+        "src/app/api/dependencies/_route-utils.ts"
+      ],
+      "reachesFenceModule": true,
+      "coverage": "none",
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/dependencies/siblings/accept/route.ts",
+      "fence": "indirect",
+      "fenceSymbols": [
+        "errorResponse",
+        "fail",
+        "ok",
+        "requireDependenciesCtx"
+      ],
+      "fenceVia": [
+        "src/app/api/dependencies/_route-utils.ts"
+      ],
+      "reachesFenceModule": true,
+      "coverage": "none",
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/dependencies/siblings/route.ts",
+      "fence": "indirect",
+      "fenceSymbols": [
+        "errorResponse",
+        "fail",
+        "ok",
+        "requireDependenciesCtx"
+      ],
+      "fenceVia": [
+        "src/app/api/dependencies/_route-utils.ts"
+      ],
+      "reachesFenceModule": true,
+      "coverage": "none",
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/engage/[engagementId]/turn/route.ts",
+      "fence": "none",
+      "fenceSymbols": [],
+      "fenceVia": [],
+      "reachesFenceModule": false,
+      "coverage": null,
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/engagements/create/turn/route.ts",
+      "fence": "none",
+      "fenceSymbols": [],
+      "fenceVia": [],
+      "reachesFenceModule": false,
+      "coverage": null,
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/evidence/url-meta/route.ts",
+      "fence": "none",
+      "fenceSymbols": [],
+      "fenceVia": [],
+      "reachesFenceModule": false,
+      "coverage": null,
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/health/azure-connectivity/route.ts",
+      "fence": "none",
+      "fenceSymbols": [],
+      "fenceVia": [],
+      "reachesFenceModule": false,
+      "coverage": null,
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/health/postgres-disruption/route.ts",
+      "fence": "none",
+      "fenceSymbols": [],
+      "fenceVia": [],
+      "reachesFenceModule": false,
+      "coverage": null,
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/health/route.ts",
+      "fence": "none",
+      "fenceSymbols": [],
+      "fenceVia": [],
+      "reachesFenceModule": false,
+      "coverage": null,
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/home/architecture-review/[diagramId]/route.ts",
+      "fence": "none",
+      "fenceSymbols": [],
+      "fenceVia": [],
+      "reachesFenceModule": false,
+      "coverage": null,
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/home/know/ask/route.ts",
+      "fence": "none",
+      "fenceSymbols": [],
+      "fenceVia": [],
+      "reachesFenceModule": false,
+      "coverage": null,
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/home/preview/ask/route.ts",
+      "fence": "none",
+      "fenceSymbols": [],
+      "fenceVia": [],
+      "reachesFenceModule": false,
+      "coverage": null,
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/home/summary-snapshot/route.ts",
+      "fence": "none",
+      "fenceSymbols": [],
+      "fenceVia": [],
+      "reachesFenceModule": false,
+      "coverage": null,
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/home/walkthrough-export/route.ts",
+      "fence": "direct",
+      "fenceSymbols": [
+        "requireTenancy",
+        "tenancyErrorResponse"
+      ],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": "behavioral",
+      "suites": {
+        "behavioral": [
+          "src/app/api/home/walkthrough-export/__tests__/route.test.ts"
+        ],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/identity/turn/route.ts",
+      "fence": "none",
+      "fenceSymbols": [],
+      "fenceVia": [],
+      "reachesFenceModule": false,
+      "coverage": null,
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/instruments/[id]/approve/route.ts",
+      "fence": "indirect",
+      "fenceSymbols": [
+        "canReviewInstruments",
+        "errorResponse",
+        "fail",
+        "mutationCtx",
+        "ok",
+        "requireInstrumentCtx"
+      ],
+      "fenceVia": [
+        "src/app/api/instruments/_route-utils.ts"
+      ],
+      "reachesFenceModule": true,
+      "coverage": "none",
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/instruments/[id]/download/route.ts",
+      "fence": "indirect",
+      "fenceSymbols": [
+        "errorResponse",
+        "fail",
+        "requireInstrumentCtx"
+      ],
+      "fenceVia": [
+        "src/app/api/instruments/_route-utils.ts"
+      ],
+      "reachesFenceModule": true,
+      "coverage": "none",
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/instruments/[id]/publish/route.ts",
+      "fence": "indirect",
+      "fenceSymbols": [
+        "canReviewInstruments",
+        "errorResponse",
+        "fail",
+        "mutationCtx",
+        "ok",
+        "requireInstrumentCtx"
+      ],
+      "fenceVia": [
+        "src/app/api/instruments/_route-utils.ts"
+      ],
+      "reachesFenceModule": true,
+      "coverage": "none",
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/instruments/[id]/retire/route.ts",
+      "fence": "indirect",
+      "fenceSymbols": [
+        "canReviewInstruments",
+        "errorResponse",
+        "fail",
+        "mutationCtx",
+        "ok",
+        "requireInstrumentCtx"
+      ],
+      "fenceVia": [
+        "src/app/api/instruments/_route-utils.ts"
+      ],
+      "reachesFenceModule": true,
+      "coverage": "none",
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/instruments/[id]/review/route.ts",
+      "fence": "indirect",
+      "fenceSymbols": [
+        "canReviewInstruments",
+        "errorResponse",
+        "fail",
+        "mutationCtx",
+        "ok",
+        "requireInstrumentCtx"
+      ],
+      "fenceVia": [
+        "src/app/api/instruments/_route-utils.ts"
+      ],
+      "reachesFenceModule": true,
+      "coverage": "none",
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/instruments/[id]/route.ts",
+      "fence": "indirect",
+      "fenceSymbols": [
+        "errorResponse",
+        "fail",
+        "mutationCtx",
+        "ok",
+        "requireInstrumentCtx"
+      ],
+      "fenceVia": [
+        "src/app/api/instruments/_route-utils.ts"
+      ],
+      "reachesFenceModule": true,
+      "coverage": "none",
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/instruments/[id]/submit/route.ts",
+      "fence": "indirect",
+      "fenceSymbols": [
+        "errorResponse",
+        "mutationCtx",
+        "ok",
+        "requireInstrumentCtx"
+      ],
+      "fenceVia": [
+        "src/app/api/instruments/_route-utils.ts"
+      ],
+      "reachesFenceModule": true,
+      "coverage": "none",
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/instruments/discovery-kit/[moveId]/evidence/route.ts",
+      "fence": "indirect",
+      "fenceSymbols": [
+        "errorResponse",
+        "fail",
+        "mutationCtx",
+        "ok",
+        "requireInstrumentCtx"
+      ],
+      "fenceVia": [
+        "src/app/api/instruments/_route-utils.ts"
+      ],
+      "reachesFenceModule": true,
+      "coverage": "none",
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/instruments/discovery-kit/[moveId]/route.ts",
+      "fence": "indirect",
+      "fenceSymbols": [
+        "errorResponse",
+        "ok",
+        "requireInstrumentCtx"
+      ],
+      "fenceVia": [
+        "src/app/api/instruments/_route-utils.ts"
+      ],
+      "reachesFenceModule": true,
+      "coverage": "none",
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/instruments/route.ts",
+      "fence": "indirect",
+      "fenceSymbols": [
+        "errorResponse",
+        "fail",
+        "mutationCtx",
+        "ok",
+        "requireInstrumentCtx"
+      ],
+      "fenceVia": [
+        "src/app/api/instruments/_route-utils.ts"
+      ],
+      "reachesFenceModule": true,
+      "coverage": "none",
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/intelligence/ask/export/route.ts",
+      "fence": "direct",
+      "fenceSymbols": [
+        "requireTenancy",
+        "tenancyErrorResponse"
+      ],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": "none",
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/intelligence/ask/route.ts",
+      "fence": "none",
+      "fenceSymbols": [],
+      "fenceVia": [],
+      "reachesFenceModule": false,
+      "coverage": null,
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/intelligence/context-summary/route.ts",
+      "fence": "direct",
+      "fenceSymbols": [
+        "requireTenancy",
+        "tenancyErrorResponse"
+      ],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": "none",
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/intelligence/insights/evaluate/route.ts",
+      "fence": "direct",
+      "fenceSymbols": [
+        "requireTenancy",
+        "tenancyErrorResponse"
+      ],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": "none",
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/intelligence/insights/route.ts",
+      "fence": "direct",
+      "fenceSymbols": [
+        "requireTenancy",
+        "tenancyErrorResponse"
+      ],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": "none",
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/intelligence/pattern/[code]/route.ts",
+      "fence": "none",
+      "fenceSymbols": [],
+      "fenceVia": [],
+      "reachesFenceModule": false,
+      "coverage": null,
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/intelligence/qa/route.ts",
+      "fence": "direct",
+      "fenceSymbols": [
+        "requireTenancy",
+        "tenancyErrorResponse"
+      ],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": "none",
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/intelligence/query/route.ts",
+      "fence": "direct",
+      "fenceSymbols": [
+        "requireTenancy",
+        "tenancyErrorResponse"
+      ],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": "behavioral",
+      "suites": {
+        "behavioral": [
+          "src/__tests__/behaviors/c507-route-tenant-fence-behavior.test.ts"
+        ],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/intelligence/refresh-events/route.ts",
+      "fence": "direct",
+      "fenceSymbols": [
+        "requireTenancy",
+        "tenancyErrorResponse"
+      ],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": "none",
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/knowledge/ava/route.ts",
+      "fence": "direct",
+      "fenceSymbols": [
+        "requireTenancy",
+        "tenancyErrorResponse"
+      ],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": "none",
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/knowledge/chunk/route.ts",
+      "fence": "none",
+      "fenceSymbols": [],
+      "fenceVia": [],
+      "reachesFenceModule": false,
+      "coverage": null,
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/knowledge/consumption/enterprise-brief/route.ts",
+      "fence": "indirect",
+      "fenceSymbols": [
+        "handleConsumption"
+      ],
+      "fenceVia": [
+        "src/app/api/knowledge/consumption/_shared.ts"
+      ],
+      "reachesFenceModule": true,
+      "coverage": "none",
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/knowledge/consumption/entity-detail/route.ts",
+      "fence": "indirect",
+      "fenceSymbols": [
+        "handleConsumption"
+      ],
+      "fenceVia": [
+        "src/app/api/knowledge/consumption/_shared.ts"
+      ],
+      "reachesFenceModule": true,
+      "coverage": "none",
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/knowledge/consumption/evidence-gaps/route.ts",
+      "fence": "indirect",
+      "fenceSymbols": [
+        "handleConsumption"
+      ],
+      "fenceVia": [
+        "src/app/api/knowledge/consumption/_shared.ts"
+      ],
+      "reachesFenceModule": true,
+      "coverage": "none",
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/knowledge/consumption/explore/route.ts",
+      "fence": "indirect",
+      "fenceSymbols": [
+        "handleConsumption"
+      ],
+      "fenceVia": [
+        "src/app/api/knowledge/consumption/_shared.ts"
+      ],
+      "reachesFenceModule": true,
+      "coverage": "none",
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/knowledge/consumption/module-handoff-preview/route.ts",
+      "fence": "indirect",
+      "fenceSymbols": [
+        "handleConsumption"
+      ],
+      "fenceVia": [
+        "src/app/api/knowledge/consumption/_shared.ts"
+      ],
+      "reachesFenceModule": true,
+      "coverage": "none",
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/knowledge/consumption/relationships/route.ts",
+      "fence": "indirect",
+      "fenceSymbols": [
+        "handleConsumption"
+      ],
+      "fenceVia": [
+        "src/app/api/knowledge/consumption/_shared.ts"
+      ],
+      "reachesFenceModule": true,
+      "coverage": "none",
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/knowledge/consumption/search/route.ts",
+      "fence": "indirect",
+      "fenceSymbols": [
+        "handleConsumption"
+      ],
+      "fenceVia": [
+        "src/app/api/knowledge/consumption/_shared.ts"
+      ],
+      "reachesFenceModule": true,
+      "coverage": "none",
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/knowledge/consumption/suggested-questions/route.ts",
+      "fence": "indirect",
+      "fenceSymbols": [
+        "handleConsumption"
+      ],
+      "fenceVia": [
+        "src/app/api/knowledge/consumption/_shared.ts"
+      ],
+      "reachesFenceModule": true,
+      "coverage": "none",
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/notifications/dispatch/route.ts",
+      "fence": "none",
+      "fenceSymbols": [],
+      "fenceVia": [],
+      "reachesFenceModule": false,
+      "coverage": null,
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/notifications/route.ts",
+      "fence": "direct",
+      "fenceSymbols": [
+        "requireTenancy",
+        "tenancyErrorResponse"
+      ],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": "none",
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/onboarding/[session]/commit/route.ts",
+      "fence": "direct",
+      "fenceSymbols": [
+        "requireTenancy",
+        "tenancyErrorResponse"
+      ],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": "none",
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/onboarding/[session]/status/route.ts",
+      "fence": "direct",
+      "fenceSymbols": [
+        "requireTenancy",
+        "tenancyErrorResponse"
+      ],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": "none",
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/onboarding/upload/route.ts",
+      "fence": "direct",
+      "fenceSymbols": [
+        "requireTenancy",
+        "tenancyErrorResponse"
+      ],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": "none",
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/operator/candidate-preview/route.ts",
+      "fence": "none",
+      "fenceSymbols": [],
+      "fenceVia": [],
+      "reachesFenceModule": false,
+      "coverage": null,
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/org-search/route.ts",
+      "fence": "none",
+      "fenceSymbols": [],
+      "fenceVia": [],
+      "reachesFenceModule": false,
+      "coverage": null,
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/programs/[id]/attachments/[attachmentId]/route.ts",
+      "fence": "none",
+      "fenceSymbols": [],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": null,
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/programs/[id]/attachments/route.ts",
+      "fence": "none",
+      "fenceSymbols": [],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": null,
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/programs/[id]/attachments/upload/route.ts",
+      "fence": "none",
+      "fenceSymbols": [],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": null,
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/programs/[id]/deliverables/[deliverableId]/content-export/route.ts",
+      "fence": "none",
+      "fenceSymbols": [],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": null,
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/programs/[id]/deliverables/[deliverableId]/export/route.ts",
+      "fence": "none",
+      "fenceSymbols": [],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": null,
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/programs/[id]/discovery/template/route.ts",
+      "fence": "none",
+      "fenceSymbols": [],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": null,
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/programs/[id]/primer-html/route.ts",
+      "fence": "none",
+      "fenceSymbols": [],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": null,
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/programs/approve/route.ts",
+      "fence": "none",
+      "fenceSymbols": [],
+      "fenceVia": [],
+      "reachesFenceModule": false,
+      "coverage": null,
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/programs/data-readiness/route.ts",
+      "fence": "none",
+      "fenceSymbols": [],
+      "fenceVia": [],
+      "reachesFenceModule": false,
+      "coverage": null,
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/programs/expert-kernel/export/route.ts",
+      "fence": "none",
+      "fenceSymbols": [],
+      "fenceVia": [],
+      "reachesFenceModule": false,
+      "coverage": null,
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/programs/origination-draft/route.ts",
+      "fence": "none",
+      "fenceSymbols": [],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": null,
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/programs/origination-submit/route.ts",
+      "fence": "none",
+      "fenceSymbols": [],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": null,
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/programs/phase-gate/route.ts",
+      "fence": "direct",
+      "fenceSymbols": [
+        "requireTenancy"
+      ],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": "behavioral",
+      "suites": {
+        "behavioral": [
+          "src/app/api/programs/phase-gate/__tests__/approval-gate.test.ts",
+          "src/app/api/programs/phase-gate/__tests__/route.test.ts"
+        ],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/programs/sponsor-commitment/route.ts",
+      "fence": "none",
+      "fenceSymbols": [],
+      "fenceVia": [],
+      "reachesFenceModule": false,
+      "coverage": null,
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/programs/stakeholder-success/route.ts",
+      "fence": "none",
+      "fenceSymbols": [],
+      "fenceVia": [],
+      "reachesFenceModule": false,
+      "coverage": null,
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/programs/synthesis/route.ts",
+      "fence": "none",
+      "fenceSymbols": [],
+      "fenceVia": [],
+      "reachesFenceModule": false,
+      "coverage": null,
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/programs/workspace/[moveId]/approved-inputs-pack/route.ts",
+      "fence": "none",
+      "fenceSymbols": [],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": null,
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/programs/workspace/[moveId]/artifact/route.ts",
+      "fence": "none",
+      "fenceSymbols": [],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": null,
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/programs/workspace/[moveId]/assemble-pattern/route.ts",
+      "fence": "none",
+      "fenceSymbols": [],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": null,
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/programs/workspace/[moveId]/charter-preflight/route.ts",
+      "fence": "none",
+      "fenceSymbols": [],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": null,
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/programs/workspace/[moveId]/evidence-readiness/route.ts",
+      "fence": "none",
+      "fenceSymbols": [],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": null,
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/programs/workspace/[moveId]/upload/route.ts",
+      "fence": "none",
+      "fenceSymbols": [],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": null,
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/reasoning/alerts/route.ts",
+      "fence": "indirect",
+      "fenceSymbols": [
+        "guardReasoning"
+      ],
+      "fenceVia": [
+        "src/app/api/reasoning/_auth.ts"
+      ],
+      "reachesFenceModule": true,
+      "coverage": "none",
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/reasoning/alerts/state/route.ts",
+      "fence": "indirect",
+      "fenceSymbols": [
+        "guardReasoning"
+      ],
+      "fenceVia": [
+        "src/app/api/reasoning/_auth.ts"
+      ],
+      "reachesFenceModule": true,
+      "coverage": "none",
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/reasoning/ask/route.ts",
+      "fence": "indirect",
+      "fenceSymbols": [
+        "guardReasoning"
+      ],
+      "fenceVia": [
+        "src/app/api/reasoning/_auth.ts"
+      ],
+      "reachesFenceModule": true,
+      "coverage": "none",
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/reasoning/audit/route.ts",
+      "fence": "indirect",
+      "fenceSymbols": [
+        "isInstanceInTenant",
+        "reasoningTenantId",
+        "requireReasoningTenancy",
+        "tenancyErrorResponse"
+      ],
+      "fenceVia": [
+        "src/app/api/reasoning/_auth.ts"
+      ],
+      "reachesFenceModule": true,
+      "coverage": "none",
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/reasoning/cascades/route.ts",
+      "fence": "indirect",
+      "fenceSymbols": [
+        "guardReasoning"
+      ],
+      "fenceVia": [
+        "src/app/api/reasoning/_auth.ts"
+      ],
+      "reachesFenceModule": true,
+      "coverage": "none",
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/reasoning/contradiction-templates/override/route.ts",
+      "fence": "indirect",
+      "fenceSymbols": [
+        "guardReasoning"
+      ],
+      "fenceVia": [
+        "src/app/api/reasoning/_auth.ts"
+      ],
+      "reachesFenceModule": true,
+      "coverage": "none",
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/reasoning/contradictions/resolve/route.ts",
+      "fence": "indirect",
+      "fenceSymbols": [
+        "guardReasoning"
+      ],
+      "fenceVia": [
+        "src/app/api/reasoning/_auth.ts"
+      ],
+      "reachesFenceModule": true,
+      "coverage": "none",
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/reasoning/demo-reset/route.ts",
+      "fence": "indirect",
+      "fenceSymbols": [
+        "requireGateApprovalRole",
+        "requireReasoningTenancy",
+        "tenancyErrorResponse"
+      ],
+      "fenceVia": [
+        "src/app/api/reasoning/_auth.ts"
+      ],
+      "reachesFenceModule": true,
+      "coverage": "none",
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/reasoning/demo-scenarios/route.ts",
+      "fence": "indirect",
+      "fenceSymbols": [
+        "reasoningTenantId",
+        "requireGateApprovalRole",
+        "requireReasoningTenancy",
+        "tenancyErrorResponse"
+      ],
+      "fenceVia": [
+        "src/app/api/reasoning/_auth.ts"
+      ],
+      "reachesFenceModule": true,
+      "coverage": "none",
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/reasoning/digest/weekly/route.ts",
+      "fence": "indirect",
+      "fenceSymbols": [
+        "guardReasoning"
+      ],
+      "fenceVia": [
+        "src/app/api/reasoning/_auth.ts"
+      ],
+      "reachesFenceModule": true,
+      "coverage": "none",
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/reasoning/evidence/ingest/route.ts",
+      "fence": "indirect",
+      "fenceSymbols": [
+        "guardReasoning",
+        "isInstanceInTenant"
+      ],
+      "fenceVia": [
+        "src/app/api/reasoning/_auth.ts"
+      ],
+      "reachesFenceModule": true,
+      "coverage": "none",
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/reasoning/explain/route.ts",
+      "fence": "indirect",
+      "fenceSymbols": [
+        "guardReasoning",
+        "isInstanceInTenant"
+      ],
+      "fenceVia": [
+        "src/app/api/reasoning/_auth.ts"
+      ],
+      "reachesFenceModule": true,
+      "coverage": "none",
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/reasoning/feedback/route.ts",
+      "fence": "indirect",
+      "fenceSymbols": [
+        "guardReasoning"
+      ],
+      "fenceVia": [
+        "src/app/api/reasoning/_auth.ts"
+      ],
+      "reachesFenceModule": true,
+      "coverage": "none",
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/reasoning/gate-approval/route.ts",
+      "fence": "indirect",
+      "fenceSymbols": [
+        "assertInstanceInTenant",
+        "reasoningTenantId",
+        "requireGateApprovalRole",
+        "requireReasoningTenancy",
+        "tenancyErrorResponse"
+      ],
+      "fenceVia": [
+        "src/app/api/reasoning/_auth.ts"
+      ],
+      "reachesFenceModule": true,
+      "coverage": "none",
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/reasoning/gate-history/[instanceId]/route.ts",
+      "fence": "indirect",
+      "fenceSymbols": [
+        "assertInstanceInTenant",
+        "reasoningTenantId",
+        "requireReasoningTenancy",
+        "tenancyErrorResponse"
+      ],
+      "fenceVia": [
+        "src/app/api/reasoning/_auth.ts"
+      ],
+      "reachesFenceModule": true,
+      "coverage": "none",
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/reasoning/gate-waiver/route.ts",
+      "fence": "indirect",
+      "fenceSymbols": [
+        "assertInstanceInTenant",
+        "reasoningTenantId",
+        "requireGateApprovalRole",
+        "requireReasoningTenancy",
+        "tenancyErrorResponse"
+      ],
+      "fenceVia": [
+        "src/app/api/reasoning/_auth.ts"
+      ],
+      "reachesFenceModule": true,
+      "coverage": "behavioral",
+      "suites": {
+        "behavioral": [
+          "src/app/api/reasoning/gate-waiver/__tests__/route.controls.test.ts"
+        ],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/reasoning/health-snapshot/route.ts",
+      "fence": "indirect",
+      "fenceSymbols": [
+        "guardReasoning"
+      ],
+      "fenceVia": [
+        "src/app/api/reasoning/_auth.ts"
+      ],
+      "reachesFenceModule": true,
+      "coverage": "none",
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/reasoning/health/route.ts",
+      "fence": "indirect",
+      "fenceSymbols": [
+        "guardReasoning"
+      ],
+      "fenceVia": [
+        "src/app/api/reasoning/_auth.ts"
+      ],
+      "reachesFenceModule": true,
+      "coverage": "none",
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/reasoning/missions/state/route.ts",
+      "fence": "indirect",
+      "fenceSymbols": [
+        "guardReasoning"
+      ],
+      "fenceVia": [
+        "src/app/api/reasoning/_auth.ts"
+      ],
+      "reachesFenceModule": true,
+      "coverage": "none",
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/reasoning/patterns/[patternId]/override/route.ts",
+      "fence": "indirect",
+      "fenceSymbols": [
+        "guardReasoning"
+      ],
+      "fenceVia": [
+        "src/app/api/reasoning/_auth.ts"
+      ],
+      "reachesFenceModule": true,
+      "coverage": "none",
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/reasoning/playground/evaluate/route.ts",
+      "fence": "indirect",
+      "fenceSymbols": [
+        "guardReasoning",
+        "isInstanceInTenant"
+      ],
+      "fenceVia": [
+        "src/app/api/reasoning/_auth.ts"
+      ],
+      "reachesFenceModule": true,
+      "coverage": "none",
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/reasoning/stage-synthesis/route.ts",
+      "fence": "none",
+      "fenceSymbols": [],
+      "fenceVia": [],
+      "reachesFenceModule": false,
+      "coverage": null,
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/reasoning/synthesis-cache/info/route.ts",
+      "fence": "indirect",
+      "fenceSymbols": [
+        "guardReasoning"
+      ],
+      "fenceVia": [
+        "src/app/api/reasoning/_auth.ts"
+      ],
+      "reachesFenceModule": true,
+      "coverage": "none",
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/reasoning/synthesis-preview/route.ts",
+      "fence": "indirect",
+      "fenceSymbols": [
+        "guardReasoning",
+        "isInstanceInTenant"
+      ],
+      "fenceVia": [
+        "src/app/api/reasoning/_auth.ts"
+      ],
+      "reachesFenceModule": true,
+      "coverage": "none",
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/reasoning/synthesis/export/[instanceId]/route.ts",
+      "fence": "indirect",
+      "fenceSymbols": [
+        "guardReasoning",
+        "isInstanceInTenant"
+      ],
+      "fenceVia": [
+        "src/app/api/reasoning/_auth.ts"
+      ],
+      "reachesFenceModule": true,
+      "coverage": "none",
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/reasoning/telemetry/export/route.ts",
+      "fence": "indirect",
+      "fenceSymbols": [
+        "guardReasoning"
+      ],
+      "fenceVia": [
+        "src/app/api/reasoning/_auth.ts"
+      ],
+      "reachesFenceModule": true,
+      "coverage": "none",
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/reasoning/telemetry/route.ts",
+      "fence": "indirect",
+      "fenceSymbols": [
+        "guardReasoning"
+      ],
+      "fenceVia": [
+        "src/app/api/reasoning/_auth.ts"
+      ],
+      "reachesFenceModule": true,
+      "coverage": "none",
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/request-access/route.ts",
+      "fence": "none",
+      "fenceSymbols": [],
+      "fenceVia": [],
+      "reachesFenceModule": false,
+      "coverage": null,
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/setup/files/[scope]/[artifactId]/download/route.ts",
+      "fence": "direct",
+      "fenceSymbols": [
+        "requireTenancy",
+        "tenancyErrorResponse"
+      ],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": "behavioral",
+      "suites": {
+        "behavioral": [
+          "src/app/api/setup/files/[scope]/[artifactId]/download/__tests__/route.test.ts"
+        ],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/setup/initiatives/route.ts",
+      "fence": "direct",
+      "fenceSymbols": [
+        "requireTenancy",
+        "tenancyErrorResponse"
+      ],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": "behavioral",
+      "suites": {
+        "behavioral": [
+          "src/app/api/setup/initiatives/__tests__/route-post.test.ts",
+          "src/app/api/setup/initiatives/__tests__/route.test.ts"
+        ],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/source/intake/servicenow/preview/route.ts",
+      "fence": "direct",
+      "fenceSymbols": [
+        "requireTenancy"
+      ],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": "behavioral",
+      "suites": {
+        "behavioral": [
+          "src/__tests__/integration/source/source-servicenow-intake-preview-route.test.ts"
+        ],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/source/optimize/contract/[contractId]/workflow/route.ts",
+      "fence": "direct",
+      "fenceSymbols": [
+        "requireTenancy",
+        "tenancyErrorResponse"
+      ],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": "behavioral",
+      "suites": {
+        "behavioral": [
+          "src/app/api/source/optimize/contract/[contractId]/workflow/__tests__/route.test.ts"
+        ],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/source/synthesis/route.ts",
+      "fence": "none",
+      "fenceSymbols": [],
+      "fenceVia": [],
+      "reachesFenceModule": false,
+      "coverage": null,
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/source/workspace/contract/[contractId]/optimization/route.ts",
+      "fence": "indirect",
+      "fenceSymbols": [
+        "createSourcingEvent",
+        "requireTenancy"
+      ],
+      "fenceVia": [
+        "src/lib/source/queries.ts"
+      ],
+      "reachesFenceModule": true,
+      "coverage": "behavioral",
+      "suites": {
+        "behavioral": [
+          "src/app/(maestro)/source/preview/workspace/__tests__/workspace-explicit-client-api-routing.test.ts"
+        ],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/source/workspace/contract/[contractId]/route.ts",
+      "fence": "direct",
+      "fenceSymbols": [
+        "requireTenancy"
+      ],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": "behavioral",
+      "suites": {
+        "behavioral": [
+          "src/app/(maestro)/source/preview/workspace/__tests__/workspace-explicit-client-api-routing.test.ts",
+          "src/app/api/source/workspace/contract/[contractId]/__tests__/route.test.ts"
+        ],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/source/workspace/portfolio/route.ts",
+      "fence": "direct",
+      "fenceSymbols": [
+        "requireTenancy"
+      ],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": "behavioral",
+      "suites": {
+        "behavioral": [
+          "src/app/api/source/workspace/portfolio/__tests__/route.test.ts"
+        ],
+        "byteScanner": [
+          "src/app/(maestro)/source/preview/workspace/__tests__/page-tenant-routing.test.ts"
+        ]
+      }
+    },
+    {
+      "route": "src/app/api/tasks/route.ts",
+      "fence": "none",
+      "fenceSymbols": [],
+      "fenceVia": [],
+      "reachesFenceModule": false,
+      "coverage": null,
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/templates/[id]/approve/route.ts",
+      "fence": "indirect",
+      "fenceSymbols": [
+        "canReviewTemplates",
+        "errorResponse",
+        "fail",
+        "mutationCtx",
+        "ok",
+        "requireTemplatesCtx"
+      ],
+      "fenceVia": [
+        "src/app/api/templates/_route-utils.ts"
+      ],
+      "reachesFenceModule": true,
+      "coverage": "none",
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/templates/[id]/clone/route.ts",
+      "fence": "indirect",
+      "fenceSymbols": [
+        "errorResponse",
+        "mutationCtx",
+        "ok",
+        "requireTemplatesCtx"
+      ],
+      "fenceVia": [
+        "src/app/api/templates/_route-utils.ts"
+      ],
+      "reachesFenceModule": true,
+      "coverage": "none",
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/templates/[id]/instantiate/route.ts",
+      "fence": "indirect",
+      "fenceSymbols": [
+        "errorResponse",
+        "mutationCtx",
+        "ok",
+        "requireTemplatesCtx"
+      ],
+      "fenceVia": [
+        "src/app/api/templates/_route-utils.ts"
+      ],
+      "reachesFenceModule": true,
+      "coverage": "none",
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/templates/[id]/publish/route.ts",
+      "fence": "indirect",
+      "fenceSymbols": [
+        "canReviewTemplates",
+        "errorResponse",
+        "fail",
+        "mutationCtx",
+        "ok",
+        "requireTemplatesCtx"
+      ],
+      "fenceVia": [
+        "src/app/api/templates/_route-utils.ts"
+      ],
+      "reachesFenceModule": true,
+      "coverage": "none",
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/templates/[id]/retire/route.ts",
+      "fence": "indirect",
+      "fenceSymbols": [
+        "canReviewTemplates",
+        "errorResponse",
+        "fail",
+        "mutationCtx",
+        "ok",
+        "requireTemplatesCtx"
+      ],
+      "fenceVia": [
+        "src/app/api/templates/_route-utils.ts"
+      ],
+      "reachesFenceModule": true,
+      "coverage": "none",
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/templates/[id]/review/route.ts",
+      "fence": "indirect",
+      "fenceSymbols": [
+        "canReviewTemplates",
+        "errorResponse",
+        "fail",
+        "mutationCtx",
+        "ok",
+        "requireTemplatesCtx"
+      ],
+      "fenceVia": [
+        "src/app/api/templates/_route-utils.ts"
+      ],
+      "reachesFenceModule": true,
+      "coverage": "none",
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/templates/[id]/route.ts",
+      "fence": "indirect",
+      "fenceSymbols": [
+        "errorResponse",
+        "fail",
+        "mutationCtx",
+        "ok",
+        "requireTemplatesCtx"
+      ],
+      "fenceVia": [
+        "src/app/api/templates/_route-utils.ts"
+      ],
+      "reachesFenceModule": true,
+      "coverage": "none",
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/templates/[id]/submit/route.ts",
+      "fence": "indirect",
+      "fenceSymbols": [
+        "errorResponse",
+        "mutationCtx",
+        "ok",
+        "requireTemplatesCtx"
+      ],
+      "fenceVia": [
+        "src/app/api/templates/_route-utils.ts"
+      ],
+      "reachesFenceModule": true,
+      "coverage": "none",
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/templates/route.ts",
+      "fence": "indirect",
+      "fenceSymbols": [
+        "errorResponse",
+        "fail",
+        "mutationCtx",
+        "ok",
+        "requireTemplatesCtx"
+      ],
+      "fenceVia": [
+        "src/app/api/templates/_route-utils.ts"
+      ],
+      "reachesFenceModule": true,
+      "coverage": "none",
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/tower/ask/route.ts",
+      "fence": "direct",
+      "fenceSymbols": [
+        "requireTenancy",
+        "tenancyErrorResponse"
+      ],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": "behavioral",
+      "suites": {
+        "behavioral": [
+          "src/app/api/tower/ask/route.test.ts"
+        ],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/tower/chat/route.ts",
+      "fence": "direct",
+      "fenceSymbols": [
+        "requireTenancy",
+        "tenancyErrorResponse"
+      ],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": "behavioral",
+      "suites": {
+        "behavioral": [
+          "src/app/api/tower/chat/route.test.ts"
+        ],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/tower/decision/route.ts",
+      "fence": "direct",
+      "fenceSymbols": [
+        "requireTenancy"
+      ],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": "none",
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/tower/initiative-detail/route.ts",
+      "fence": "none",
+      "fenceSymbols": [],
+      "fenceVia": [],
+      "reachesFenceModule": false,
+      "coverage": null,
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/tower/seed-demo/route.ts",
+      "fence": "direct",
+      "fenceSymbols": [
+        "requireTenancy",
+        "tenancyErrorResponse"
+      ],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": "behavioral",
+      "suites": {
+        "behavioral": [
+          "src/app/api/tower/__tests__/seed-demo-route.test.ts"
+        ],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/tower/synthesis/route.ts",
+      "fence": "direct",
+      "fenceSymbols": [
+        "requireTenancy",
+        "tenancyErrorResponse"
+      ],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": "byte-scanner",
+      "suites": {
+        "behavioral": [],
+        "byteScanner": [
+          "src/__tests__/integration/atlas/atlas-invariants.test.ts"
+        ]
+      }
+    },
+    {
+      "route": "src/app/api/tower/upload/route.ts",
+      "fence": "direct",
+      "fenceSymbols": [
+        "requireTenancy",
+        "tenancyErrorResponse"
+      ],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": "behavioral",
+      "suites": {
+        "behavioral": [
+          "src/app/api/tower/upload/__tests__/route.test.ts"
+        ],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/tower/value-states/[moveId]/attest/route.ts",
+      "fence": "direct",
+      "fenceSymbols": [
+        "requireTenancy",
+        "tenancyErrorResponse"
+      ],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": "none",
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/tower/value-states/[moveId]/route.ts",
+      "fence": "direct",
+      "fenceSymbols": [
+        "requireTenancy",
+        "tenancyErrorResponse"
+      ],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": "none",
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/tower/value-states/route.ts",
+      "fence": "direct",
+      "fenceSymbols": [
+        "requireTenancy",
+        "tenancyErrorResponse"
+      ],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": "none",
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/turn/[turnId]/trace/route.ts",
+      "fence": "direct",
+      "fenceSymbols": [
+        "requireTenancy",
+        "tenancyErrorResponse"
+      ],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": "none",
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/v1/agent/attachments/[id]/route.ts",
+      "fence": "none",
+      "fenceSymbols": [],
+      "fenceVia": [],
+      "reachesFenceModule": false,
+      "coverage": null,
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/v1/agent/attachments/route.ts",
+      "fence": "none",
+      "fenceSymbols": [],
+      "fenceVia": [],
+      "reachesFenceModule": false,
+      "coverage": null,
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/v1/artifacts/[artifactId]/promote/route.ts",
+      "fence": "none",
+      "fenceSymbols": [],
+      "fenceVia": [],
+      "reachesFenceModule": false,
+      "coverage": null,
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/v1/artifacts/[artifactId]/route.ts",
+      "fence": "none",
+      "fenceSymbols": [],
+      "fenceVia": [],
+      "reachesFenceModule": false,
+      "coverage": null,
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/v1/atlas/ask/route.ts",
+      "fence": "indirect",
+      "fenceSymbols": [
+        "requireAtlasTenancy",
+        "tenancyErrorResponse"
+      ],
+      "fenceVia": [
+        "src/app/api/v1/atlas/_auth.ts"
+      ],
+      "reachesFenceModule": true,
+      "coverage": "behavioral",
+      "suites": {
+        "behavioral": [
+          "src/__tests__/integration/atlas-ask-route.test.ts",
+          "src/app/api/v1/atlas/__tests__/mode-visibility.test.ts"
+        ],
+        "byteScanner": [
+          "src/__tests__/behaviors/t460-atlas-context-demo-suite-ci-coverage.test.ts"
+        ]
+      }
+    },
+    {
+      "route": "src/app/api/v1/atlas/chat/route.ts",
+      "fence": "indirect",
+      "fenceSymbols": [
+        "requireAtlasTenancy",
+        "tenancyErrorResponse"
+      ],
+      "fenceVia": [
+        "src/app/api/v1/atlas/_auth.ts"
+      ],
+      "reachesFenceModule": true,
+      "coverage": "behavioral",
+      "suites": {
+        "behavioral": [
+          "src/app/api/v1/atlas/__tests__/mode-visibility.test.ts"
+        ],
+        "byteScanner": [
+          "src/__tests__/behaviors/t460-atlas-context-demo-suite-ci-coverage.test.ts"
+        ]
+      }
+    },
+    {
+      "route": "src/app/api/v1/atlas/observations/route.ts",
+      "fence": "indirect",
+      "fenceSymbols": [
+        "requireAtlasTenancy",
+        "tenancyErrorResponse"
+      ],
+      "fenceVia": [
+        "src/app/api/v1/atlas/_auth.ts"
+      ],
+      "reachesFenceModule": true,
+      "coverage": "none",
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/v1/atlas/signals/[signalId]/route.ts",
+      "fence": "indirect",
+      "fenceSymbols": [
+        "requireAtlasTenancy",
+        "tenancyErrorResponse"
+      ],
+      "fenceVia": [
+        "src/app/api/v1/atlas/_auth.ts"
+      ],
+      "reachesFenceModule": true,
+      "coverage": "none",
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/v1/deliverables/[deliverableId]/patterns/route.ts",
+      "fence": "none",
+      "fenceSymbols": [],
+      "fenceVia": [],
+      "reachesFenceModule": false,
+      "coverage": null,
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/v1/deliverables/generate-phase/route.ts",
+      "fence": "direct",
+      "fenceSymbols": [
+        "requireTenancy",
+        "tenancyErrorResponse"
+      ],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": "behavioral",
+      "suites": {
+        "behavioral": [
+          "src/app/api/v1/deliverables/generate-phase/__tests__/route.test.ts"
+        ],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/v1/deliverables/generate/route.ts",
+      "fence": "direct",
+      "fenceSymbols": [
+        "requireTenancy",
+        "tenancyErrorResponse"
+      ],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": "behavioral",
+      "suites": {
+        "behavioral": [
+          "src/app/api/v1/deliverables/generate/__tests__/route.test.ts"
+        ],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/v1/deliverables/runs/[runId]/route.ts",
+      "fence": "direct",
+      "fenceSymbols": [
+        "requireTenancy",
+        "tenancyErrorResponse"
+      ],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": "behavioral",
+      "suites": {
+        "behavioral": [
+          "src/app/api/v1/deliverables/runs/[runId]/__tests__/route.test.ts"
+        ],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/v1/emergent/cohort/route.ts",
+      "fence": "none",
+      "fenceSymbols": [],
+      "fenceVia": [],
+      "reachesFenceModule": false,
+      "coverage": null,
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/v1/intelligence/brief/render-docx/route.ts",
+      "fence": "direct",
+      "fenceSymbols": [
+        "requireTenancy",
+        "tenancyErrorResponse"
+      ],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": "none",
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/v1/intelligence/brief/render-pdf/route.ts",
+      "fence": "direct",
+      "fenceSymbols": [
+        "requireTenancy",
+        "tenancyErrorResponse"
+      ],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": "none",
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/v1/intelligence/foundation/browse/route.ts",
+      "fence": "none",
+      "fenceSymbols": [],
+      "fenceVia": [],
+      "reachesFenceModule": false,
+      "coverage": null,
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/v1/intelligence/foundation/route.ts",
+      "fence": "none",
+      "fenceSymbols": [],
+      "fenceVia": [],
+      "reachesFenceModule": false,
+      "coverage": null,
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/v1/intelligence/signals/route.ts",
+      "fence": "none",
+      "fenceSymbols": [],
+      "fenceVia": [],
+      "reachesFenceModule": false,
+      "coverage": null,
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/v1/moves/[moveId]/artifacts/execution-roadmap/build/route.ts",
+      "fence": "direct",
+      "fenceSymbols": [
+        "requireTenancy",
+        "tenancyErrorResponse"
+      ],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": "none",
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/v1/moves/[moveId]/artifacts/execution-roadmap/current/[format]/route.ts",
+      "fence": "direct",
+      "fenceSymbols": [
+        "requireTenancy",
+        "tenancyErrorResponse"
+      ],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": "none",
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/v1/moves/[moveId]/artifacts/execution-roadmap/versions/[version]/[format]/route.ts",
+      "fence": "direct",
+      "fenceSymbols": [
+        "requireTenancy",
+        "tenancyErrorResponse"
+      ],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": "none",
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/v1/moves/audit-pack/route.ts",
+      "fence": "indirect",
+      "fenceSymbols": [
+        "loadMoveBusinessCaseInput"
+      ],
+      "fenceVia": [
+        "src/lib/programs/board-artifacts/load-move-business-case-input.ts"
+      ],
+      "reachesFenceModule": true,
+      "coverage": "none",
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/v1/moves/board-grade-business-case/route.ts",
+      "fence": "indirect",
+      "fenceSymbols": [
+        "loadMoveBusinessCaseInput"
+      ],
+      "fenceVia": [
+        "src/lib/programs/board-artifacts/load-move-business-case-input.ts"
+      ],
+      "reachesFenceModule": true,
+      "coverage": "none",
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/v1/moves/board-grade-cfo-pack/route.ts",
+      "fence": "indirect",
+      "fenceSymbols": [
+        "loadMoveBusinessCaseInput"
+      ],
+      "fenceVia": [
+        "src/lib/programs/board-artifacts/load-move-business-case-input.ts"
+      ],
+      "reachesFenceModule": true,
+      "coverage": "none",
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/v1/moves/board-grade-charter-skeleton/route.ts",
+      "fence": "indirect",
+      "fenceSymbols": [
+        "loadMoveBusinessCaseInput"
+      ],
+      "fenceVia": [
+        "src/lib/programs/board-artifacts/load-move-business-case-input.ts"
+      ],
+      "reachesFenceModule": true,
+      "coverage": "none",
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/v1/moves/board-grade-discover-brief/route.ts",
+      "fence": "indirect",
+      "fenceSymbols": [
+        "loadMoveBusinessCaseInput"
+      ],
+      "fenceVia": [
+        "src/lib/programs/board-artifacts/load-move-business-case-input.ts"
+      ],
+      "reachesFenceModule": true,
+      "coverage": "none",
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/v1/moves/board-grade-estimate-model/route.ts",
+      "fence": "indirect",
+      "fenceSymbols": [
+        "loadMoveBusinessCaseInput"
+      ],
+      "fenceVia": [
+        "src/lib/programs/board-artifacts/load-move-business-case-input.ts"
+      ],
+      "reachesFenceModule": true,
+      "coverage": "none",
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/v1/moves/board-grade-master-dossier/route.ts",
+      "fence": "indirect",
+      "fenceSymbols": [
+        "loadMoveBusinessCaseInput"
+      ],
+      "fenceVia": [
+        "src/lib/programs/board-artifacts/load-move-business-case-input.ts"
+      ],
+      "reachesFenceModule": true,
+      "coverage": "none",
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/v1/moves/board-grade-mobilize-packet/route.ts",
+      "fence": "indirect",
+      "fenceSymbols": [
+        "loadMoveBusinessCaseInput"
+      ],
+      "fenceVia": [
+        "src/lib/programs/board-artifacts/load-move-business-case-input.ts"
+      ],
+      "reachesFenceModule": true,
+      "coverage": "none",
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/v1/moves/board-grade-solution-architecture/route.ts",
+      "fence": "indirect",
+      "fenceSymbols": [
+        "loadMoveBusinessCaseInput"
+      ],
+      "fenceVia": [
+        "src/lib/programs/board-artifacts/load-move-business-case-input.ts"
+      ],
+      "reachesFenceModule": true,
+      "coverage": "none",
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/v1/moves/meridian-command-center/generate/route.ts",
+      "fence": "direct",
+      "fenceSymbols": [
+        "requireTenancy",
+        "tenancyErrorResponse"
+      ],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": "behavioral",
+      "suites": {
+        "behavioral": [
+          "src/app/api/v1/moves/meridian-command-center/generate/__tests__/route.test.ts"
+        ],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/v1/nexus/counter/route.ts",
+      "fence": "none",
+      "fenceSymbols": [],
+      "fenceVia": [],
+      "reachesFenceModule": false,
+      "coverage": null,
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/v1/nexus/persona/route.ts",
+      "fence": "none",
+      "fenceSymbols": [],
+      "fenceVia": [],
+      "reachesFenceModule": false,
+      "coverage": null,
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/v1/nexus/query/route.ts",
+      "fence": "none",
+      "fenceSymbols": [],
+      "fenceVia": [],
+      "reachesFenceModule": false,
+      "coverage": null,
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/v1/nexus/upload/route.ts",
+      "fence": "none",
+      "fenceSymbols": [],
+      "fenceVia": [],
+      "reachesFenceModule": false,
+      "coverage": null,
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/v1/patterns/[patternSlug]/deliverables/route.ts",
+      "fence": "none",
+      "fenceSymbols": [],
+      "fenceVia": [],
+      "reachesFenceModule": false,
+      "coverage": null,
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/v1/programs/[programId]/advance/route.ts",
+      "fence": "none",
+      "fenceSymbols": [],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": null,
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/v1/programs/[programId]/approvals/[approvalId]/decide/route.ts",
+      "fence": "none",
+      "fenceSymbols": [],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": null,
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/v1/programs/[programId]/approvals/route.ts",
+      "fence": "none",
+      "fenceSymbols": [],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": null,
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/v1/programs/[programId]/approve-brief/route.ts",
+      "fence": "direct",
+      "fenceSymbols": [
+        "requireTenancy",
+        "tenancyErrorResponse"
+      ],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": "none",
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/v1/programs/[programId]/artifacts/[artifactId]/client-approval/route.ts",
+      "fence": "none",
+      "fenceSymbols": [],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": null,
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/v1/programs/[programId]/artifacts/[artifactId]/download/route.ts",
+      "fence": "none",
+      "fenceSymbols": [],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": null,
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/v1/programs/[programId]/artifacts/[artifactId]/review-decision/route.ts",
+      "fence": "none",
+      "fenceSymbols": [],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": null,
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/v1/programs/[programId]/artifacts/[artifactId]/review-regenerate/route.ts",
+      "fence": "none",
+      "fenceSymbols": [],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": null,
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/v1/programs/[programId]/artifacts/[artifactId]/trace/route.ts",
+      "fence": "none",
+      "fenceSymbols": [],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": null,
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/v1/programs/[programId]/artifacts/backfill/route.ts",
+      "fence": "none",
+      "fenceSymbols": [],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": null,
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/v1/programs/[programId]/artifacts/route.ts",
+      "fence": "none",
+      "fenceSymbols": [],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": null,
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/v1/programs/[programId]/artifacts/upload/route.ts",
+      "fence": "none",
+      "fenceSymbols": [],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": null,
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/v1/programs/[programId]/charter-capture/route.ts",
+      "fence": "none",
+      "fenceSymbols": [],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": null,
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/v1/programs/[programId]/current-state/deliverable/board/route.ts",
+      "fence": "none",
+      "fenceSymbols": [],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": null,
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/v1/programs/[programId]/current-state/deliverable/narrative/route.ts",
+      "fence": "none",
+      "fenceSymbols": [],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": null,
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/v1/programs/[programId]/current-state/deliverable/orchestrate/route.ts",
+      "fence": "none",
+      "fenceSymbols": [],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": null,
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/v1/programs/[programId]/current-state/deliverable/persist/route.ts",
+      "fence": "none",
+      "fenceSymbols": [],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": null,
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/v1/programs/[programId]/current-state/deliverable/route.ts",
+      "fence": "none",
+      "fenceSymbols": [],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": null,
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/v1/programs/[programId]/current-state/evidence/[evidenceId]/approve/route.ts",
+      "fence": "none",
+      "fenceSymbols": [],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": null,
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/v1/programs/[programId]/current-state/grounded-answer/route.ts",
+      "fence": "none",
+      "fenceSymbols": [],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": null,
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/v1/programs/[programId]/current-state/ingest-doc/route.ts",
+      "fence": "none",
+      "fenceSymbols": [],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": null,
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/v1/programs/[programId]/current-state/ingest/route.ts",
+      "fence": "none",
+      "fenceSymbols": [],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": null,
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/v1/programs/[programId]/current-state/plan/route.ts",
+      "fence": "none",
+      "fenceSymbols": [],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": null,
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/v1/programs/[programId]/current-state/readiness/route.ts",
+      "fence": "none",
+      "fenceSymbols": [],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": null,
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/v1/programs/[programId]/current-state/recommendation/route.ts",
+      "fence": "none",
+      "fenceSymbols": [],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": null,
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/v1/programs/[programId]/decision-options/route.ts",
+      "fence": "none",
+      "fenceSymbols": [],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": null,
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/v1/programs/[programId]/deliverables/[deliverableId]/publish/route.ts",
+      "fence": "none",
+      "fenceSymbols": [],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": null,
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/v1/programs/[programId]/deliverables/[deliverableId]/roadmap/[format]/route.ts",
+      "fence": "none",
+      "fenceSymbols": [],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": null,
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/v1/programs/[programId]/deliverables/[deliverableId]/role-approvals/route.ts",
+      "fence": "none",
+      "fenceSymbols": [],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": null,
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/v1/programs/[programId]/deliverables/[deliverableId]/sign-off/route.ts",
+      "fence": "none",
+      "fenceSymbols": [],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": null,
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/v1/programs/[programId]/deliverables/complete/route.ts",
+      "fence": "none",
+      "fenceSymbols": [],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": null,
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/v1/programs/[programId]/design/intake/route.ts",
+      "fence": "none",
+      "fenceSymbols": [],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": null,
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/v1/programs/[programId]/diagnose/intake/route.ts",
+      "fence": "none",
+      "fenceSymbols": [],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": null,
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/v1/programs/[programId]/execute/route.ts",
+      "fence": "none",
+      "fenceSymbols": [],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": null,
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/v1/programs/[programId]/flags/[flagId]/resolve/route.ts",
+      "fence": "none",
+      "fenceSymbols": [],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": null,
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/v1/programs/[programId]/flags/route.ts",
+      "fence": "none",
+      "fenceSymbols": [],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": null,
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/v1/programs/[programId]/generate/route.ts",
+      "fence": "none",
+      "fenceSymbols": [],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": null,
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/v1/programs/[programId]/milestones/[milestoneId]/route.ts",
+      "fence": "none",
+      "fenceSymbols": [],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": null,
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/v1/programs/[programId]/milestones/route.ts",
+      "fence": "none",
+      "fenceSymbols": [],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": null,
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/v1/programs/[programId]/module/[key]/route.ts",
+      "fence": "none",
+      "fenceSymbols": [],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": null,
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/v1/programs/[programId]/module/[key]/status/route.ts",
+      "fence": "none",
+      "fenceSymbols": [],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": null,
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/v1/programs/[programId]/nexus/ask/route.ts",
+      "fence": "none",
+      "fenceSymbols": [],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": null,
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/v1/programs/[programId]/nexus/current-state-brief/route.ts",
+      "fence": "none",
+      "fenceSymbols": [],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": null,
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/v1/programs/[programId]/nexus/cxo-takeover/route.ts",
+      "fence": "none",
+      "fenceSymbols": [],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": null,
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/v1/programs/[programId]/nexus/draft/route.ts",
+      "fence": "none",
+      "fenceSymbols": [],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": null,
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/v1/programs/[programId]/nexus/threads/route.ts",
+      "fence": "none",
+      "fenceSymbols": [],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": null,
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/v1/programs/[programId]/p0-brief/route.ts",
+      "fence": "none",
+      "fenceSymbols": [],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": null,
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/v1/programs/[programId]/phase-capture/route.ts",
+      "fence": "none",
+      "fenceSymbols": [],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": null,
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/v1/programs/[programId]/phase-gate-approval/route.ts",
+      "fence": "none",
+      "fenceSymbols": [],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": null,
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/v1/programs/[programId]/phase-input-draft/route.ts",
+      "fence": "none",
+      "fenceSymbols": [],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": null,
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/v1/programs/[programId]/phase-intelligence/route.ts",
+      "fence": "none",
+      "fenceSymbols": [],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": null,
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/v1/programs/[programId]/phase-success-package/route.ts",
+      "fence": "none",
+      "fenceSymbols": [],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": null,
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/v1/programs/[programId]/phase/route.ts",
+      "fence": "none",
+      "fenceSymbols": [],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": null,
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/v1/programs/[programId]/playbook/route.ts",
+      "fence": "none",
+      "fenceSymbols": [],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": null,
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/v1/programs/[programId]/pricing/config/route.ts",
+      "fence": "none",
+      "fenceSymbols": [],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": null,
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/v1/programs/[programId]/pricing/estimates/[estimateId]/approve/route.ts",
+      "fence": "none",
+      "fenceSymbols": [],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": null,
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/v1/programs/[programId]/pricing/estimates/[estimateId]/inputs/route.ts",
+      "fence": "none",
+      "fenceSymbols": [],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": null,
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/v1/programs/[programId]/pricing/estimates/[estimateId]/route.ts",
+      "fence": "none",
+      "fenceSymbols": [],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": null,
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/v1/programs/[programId]/pricing/estimates/[estimateId]/run/route.ts",
+      "fence": "none",
+      "fenceSymbols": [],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": null,
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/v1/programs/[programId]/pricing/estimates/[estimateId]/validate/route.ts",
+      "fence": "none",
+      "fenceSymbols": [],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": null,
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/v1/programs/[programId]/pricing/estimates/route.ts",
+      "fence": "none",
+      "fenceSymbols": [],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": null,
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/v1/programs/[programId]/risk-assessment/route.ts",
+      "fence": "none",
+      "fenceSymbols": [],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": null,
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/v1/programs/[programId]/risks/[riskId]/route.ts",
+      "fence": "none",
+      "fenceSymbols": [],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": null,
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/v1/programs/[programId]/risks/route.ts",
+      "fence": "none",
+      "fenceSymbols": [],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": null,
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/v1/programs/[programId]/route.ts",
+      "fence": "none",
+      "fenceSymbols": [],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": null,
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/v1/programs/[programId]/solution-options/approve/route.ts",
+      "fence": "none",
+      "fenceSymbols": [],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": null,
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/v1/programs/[programId]/solution-pattern/route.ts",
+      "fence": "none",
+      "fenceSymbols": [],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": null,
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/v1/programs/[programId]/stage-readiness-workbook/route.ts",
+      "fence": "none",
+      "fenceSymbols": [],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": null,
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/v1/programs/[programId]/work-items/[workItemId]/route.ts",
+      "fence": "none",
+      "fenceSymbols": [],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": null,
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/v1/programs/[programId]/work-items/route.ts",
+      "fence": "none",
+      "fenceSymbols": [],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": null,
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/v1/programs/archive/restore/route.ts",
+      "fence": "none",
+      "fenceSymbols": [],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": null,
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/v1/programs/archive/route.ts",
+      "fence": "none",
+      "fenceSymbols": [],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": null,
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/v1/programs/expert-kernel/export/route.ts",
+      "fence": "none",
+      "fenceSymbols": [],
+      "fenceVia": [],
+      "reachesFenceModule": false,
+      "coverage": null,
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/v1/programs/originate/extract-brief/route.ts",
+      "fence": "direct",
+      "fenceSymbols": [
+        "requireTenancy",
+        "tenancyErrorResponse"
+      ],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": "none",
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/v1/programs/originate/from-thread/route.ts",
+      "fence": "none",
+      "fenceSymbols": [],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": null,
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/v1/programs/originate/route.ts",
+      "fence": "none",
+      "fenceSymbols": [],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": null,
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/v1/programs/patterns/route.ts",
+      "fence": "none",
+      "fenceSymbols": [],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": null,
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/v1/programs/route.ts",
+      "fence": "none",
+      "fenceSymbols": [],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": null,
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/v1/sentinel/query/route.ts",
+      "fence": "none",
+      "fenceSymbols": [],
+      "fenceVia": [],
+      "reachesFenceModule": false,
+      "coverage": null,
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/v1/source/[eventId]/artifacts/[artifactCode]/accept/route.ts",
+      "fence": "indirect",
+      "fenceSymbols": [
+        "requireTenancy",
+        "scaffoldNewEventSubstrate",
+        "tenancyErrorResponse"
+      ],
+      "fenceVia": [
+        "src/lib/source/queries.ts"
+      ],
+      "reachesFenceModule": true,
+      "coverage": "behavioral",
+      "suites": {
+        "behavioral": [
+          "src/app/api/v1/source/[eventId]/artifacts/[artifactCode]/accept/__tests__/route.test.ts"
+        ],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/v1/source/[eventId]/artifacts/[artifactCode]/body/route.ts",
+      "fence": "indirect",
+      "fenceSymbols": [
+        "getSourcingEvent",
+        "requireTenancy",
+        "resolveSourceEventUuidForClient",
+        "tenancyErrorResponse"
+      ],
+      "fenceVia": [
+        "src/lib/source/queries.ts"
+      ],
+      "reachesFenceModule": true,
+      "coverage": "none",
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/v1/source/[eventId]/artifacts/[artifactCode]/client-final/route.ts",
+      "fence": "none",
+      "fenceSymbols": [],
+      "fenceVia": [],
+      "reachesFenceModule": false,
+      "coverage": null,
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/v1/source/[eventId]/artifacts/[artifactCode]/enqueue-worker/route.ts",
+      "fence": "direct",
+      "fenceSymbols": [
+        "requireTenancy",
+        "tenancyErrorResponse"
+      ],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": "none",
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/v1/source/[eventId]/artifacts/[artifactCode]/generate/route.ts",
+      "fence": "indirect",
+      "fenceSymbols": [
+        "ensurePersistedSourceEventForClient",
+        "requireTenancy",
+        "scaffoldNewEventSubstrate",
+        "tenancyErrorResponse"
+      ],
+      "fenceVia": [
+        "src/lib/source/queries.ts"
+      ],
+      "reachesFenceModule": true,
+      "coverage": "byte-scanner",
+      "suites": {
+        "behavioral": [],
+        "byteScanner": [
+          "src/__tests__/integration/source/source-access-control-static.test.ts"
+        ]
+      }
+    },
+    {
+      "route": "src/app/api/v1/source/[eventId]/artifacts/[artifactCode]/render-comparison-xlsx/route.ts",
+      "fence": "direct",
+      "fenceSymbols": [
+        "requireTenancy",
+        "tenancyErrorResponse"
+      ],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": "none",
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/v1/source/[eventId]/artifacts/[artifactCode]/render-docx/route.ts",
+      "fence": "indirect",
+      "fenceSymbols": [
+        "buildNarrativeDocxPayloadFromContext",
+        "requireTenancy",
+        "tenancyErrorResponse"
+      ],
+      "fenceVia": [
+        "src/lib/source/exports/payloads/narrative-docx-payload.ts"
+      ],
+      "reachesFenceModule": true,
+      "coverage": "none",
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/v1/source/[eventId]/artifacts/[artifactCode]/render-html/route.ts",
+      "fence": "indirect",
+      "fenceSymbols": [
+        "buildNarrativeDocxPayloadFromContext",
+        "requireTenancy",
+        "tenancyErrorResponse"
+      ],
+      "fenceVia": [
+        "src/lib/source/exports/payloads/narrative-docx-payload.ts"
+      ],
+      "reachesFenceModule": true,
+      "coverage": "none",
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/v1/source/[eventId]/artifacts/[artifactCode]/render-pdf/route.ts",
+      "fence": "indirect",
+      "fenceSymbols": [
+        "buildDemandChallengePayloadFromContext",
+        "buildNarrativeDocxPayloadFromContext",
+        "buildSourcingApproachPayloadFromContext",
+        "buildVendorRiskPackPayloadFromContext",
+        "requireTenancy",
+        "tenancyErrorResponse"
+      ],
+      "fenceVia": [
+        "src/lib/source/exports/payloads/demand-challenge-payload.ts",
+        "src/lib/source/exports/payloads/narrative-docx-payload.ts",
+        "src/lib/source/exports/payloads/sourcing-approach-payload.ts",
+        "src/lib/source/exports/payloads/vendor-risk-pack-payload.ts"
+      ],
+      "reachesFenceModule": true,
+      "coverage": "none",
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/v1/source/[eventId]/artifacts/[artifactCode]/render-xlsx/route.ts",
+      "fence": "direct",
+      "fenceSymbols": [
+        "requireTenancy",
+        "tenancyErrorResponse"
+      ],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": "none",
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/v1/source/[eventId]/artifacts/[artifactCode]/render/route.ts",
+      "fence": "indirect",
+      "fenceSymbols": [
+        "buildSourceDeliverableSpec",
+        "canonicalArtifactCodeFor",
+        "kindForArtifactCode",
+        "requireTenancy",
+        "tenancyErrorResponse"
+      ],
+      "fenceVia": [
+        "src/lib/source/exports/spec-builder.ts"
+      ],
+      "reachesFenceModule": true,
+      "coverage": "behavioral",
+      "suites": {
+        "behavioral": [
+          "src/__tests__/integration/source/source-pricing-upload-download-routes.test.ts",
+          "src/app/api/v1/source/[eventId]/artifacts/[artifactCode]/render/__tests__/route.test.ts"
+        ],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/v1/source/[eventId]/artifacts/[artifactCode]/safe-repair/route.ts",
+      "fence": "indirect",
+      "fenceSymbols": [
+        "requireTenancy",
+        "scaffoldNewEventSubstrate",
+        "tenancyErrorResponse"
+      ],
+      "fenceVia": [
+        "src/lib/source/queries.ts"
+      ],
+      "reachesFenceModule": true,
+      "coverage": "behavioral",
+      "suites": {
+        "behavioral": [
+          "src/app/api/v1/source/[eventId]/artifacts/[artifactCode]/safe-repair/__tests__/route.test.ts"
+        ],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/v1/source/[eventId]/artifacts/[artifactCode]/status/route.ts",
+      "fence": "indirect",
+      "fenceSymbols": [
+        "requireTenancy",
+        "scaffoldNewEventSubstrate",
+        "tenancyErrorResponse"
+      ],
+      "fenceVia": [
+        "src/lib/source/queries.ts"
+      ],
+      "reachesFenceModule": true,
+      "coverage": "none",
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/v1/source/[eventId]/artifacts/[artifactCode]/vendor-submission/route.ts",
+      "fence": "direct",
+      "fenceSymbols": [
+        "requireTenancy",
+        "tenancyErrorResponse"
+      ],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": "behavioral",
+      "suites": {
+        "behavioral": [
+          "src/__tests__/integration/source/source-pricing-upload-download-routes.test.ts"
+        ],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/v1/source/[eventId]/artifacts/[artifactCode]/vendor-submissions/route.ts",
+      "fence": "direct",
+      "fenceSymbols": [
+        "requireTenancy",
+        "tenancyErrorResponse"
+      ],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": "behavioral",
+      "suites": {
+        "behavioral": [
+          "src/__tests__/integration/source/source-pricing-upload-download-routes.test.ts"
+        ],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/v1/source/[eventId]/artifacts/generate/route.ts",
+      "fence": "indirect",
+      "fenceSymbols": [
+        "getSourcingEvent"
+      ],
+      "fenceVia": [
+        "src/lib/source/queries.ts"
+      ],
+      "reachesFenceModule": true,
+      "coverage": "behavioral",
+      "suites": {
+        "behavioral": [
+          "src/app/api/v1/source/[eventId]/artifacts/generate/__tests__/route.test.ts"
+        ],
+        "byteScanner": [
+          "src/__tests__/integration/source/source-access-control-static.test.ts"
+        ]
+      }
+    },
+    {
+      "route": "src/app/api/v1/source/[eventId]/artifacts/upload/route.ts",
+      "fence": "indirect",
+      "fenceSymbols": [
+        "getSourcingEvent"
+      ],
+      "fenceVia": [
+        "src/lib/source/queries.ts"
+      ],
+      "reachesFenceModule": true,
+      "coverage": "behavioral",
+      "suites": {
+        "behavioral": [
+          "src/app/api/v1/source/[eventId]/artifacts/upload/__tests__/route.test.ts"
+        ],
+        "byteScanner": [
+          "src/__tests__/integration/source/source-vendor-response-pack-flow-static.test.ts"
+        ]
+      }
+    },
+    {
+      "route": "src/app/api/v1/source/[eventId]/candidate-suppliers/accept/route.ts",
+      "fence": "direct",
+      "fenceSymbols": [
+        "requireTenancy",
+        "tenancyErrorResponse"
+      ],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": "behavioral",
+      "suites": {
+        "behavioral": [
+          "src/app/api/v1/source/[eventId]/candidate-suppliers/accept/__tests__/route.test.ts"
+        ],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/v1/source/[eventId]/communications/draft/route.ts",
+      "fence": "direct",
+      "fenceSymbols": [
+        "requireTenancy",
+        "tenancyErrorResponse"
+      ],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": "byte-scanner",
+      "suites": {
+        "behavioral": [],
+        "byteScanner": [
+          "src/__tests__/integration/source/source-communication-draft-flow-static.test.ts"
+        ]
+      }
+    },
+    {
+      "route": "src/app/api/v1/source/[eventId]/contract-evidence/import/route.ts",
+      "fence": "indirect",
+      "fenceSymbols": [
+        "getSourcingEventForResolvedClient",
+        "requireTenancy",
+        "tenancyErrorResponse"
+      ],
+      "fenceVia": [
+        "src/lib/source/queries.ts"
+      ],
+      "reachesFenceModule": true,
+      "coverage": "none",
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/v1/source/[eventId]/contract-optimization/brief/route.ts",
+      "fence": "indirect",
+      "fenceSymbols": [
+        "getSourcingEvent"
+      ],
+      "fenceVia": [
+        "src/lib/source/queries.ts"
+      ],
+      "reachesFenceModule": true,
+      "coverage": "behavioral",
+      "suites": {
+        "behavioral": [
+          "src/app/api/v1/source/[eventId]/contract-optimization/brief/__tests__/route.test.ts"
+        ],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/v1/source/[eventId]/cxo-report/route.ts",
+      "fence": "indirect",
+      "fenceSymbols": [
+        "assembleDealPack",
+        "requireTenancy",
+        "tenancyErrorResponse"
+      ],
+      "fenceVia": [
+        "src/lib/source/exports/deal-pack/assemble-deal-pack.ts"
+      ],
+      "reachesFenceModule": true,
+      "coverage": "none",
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/v1/source/[eventId]/deal-pack/route.ts",
+      "fence": "indirect",
+      "fenceSymbols": [
+        "assembleDealPack",
+        "requireTenancy",
+        "tenancyErrorResponse"
+      ],
+      "fenceVia": [
+        "src/lib/source/exports/deal-pack/assemble-deal-pack.ts"
+      ],
+      "reachesFenceModule": true,
+      "coverage": "none",
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/v1/source/[eventId]/door1/diagnose/route.ts",
+      "fence": "indirect",
+      "fenceSymbols": [
+        "getSourcingEvent",
+        "requireTenancy",
+        "tenancyErrorResponse"
+      ],
+      "fenceVia": [
+        "src/lib/source/queries.ts"
+      ],
+      "reachesFenceModule": true,
+      "coverage": "none",
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/v1/source/[eventId]/evidence-requests/route.ts",
+      "fence": "indirect",
+      "fenceSymbols": [
+        "requireTenancy",
+        "resolveSourceEventUuidForClient",
+        "tenancyErrorResponse"
+      ],
+      "fenceVia": [
+        "src/lib/source/queries.ts"
+      ],
+      "reachesFenceModule": true,
+      "coverage": "byte-scanner",
+      "suites": {
+        "behavioral": [],
+        "byteScanner": [
+          "src/__tests__/integration/source/source-evidence-request-flow-static.test.ts"
+        ]
+      }
+    },
+    {
+      "route": "src/app/api/v1/source/[eventId]/evidence/[requirementId]/answer/route.ts",
+      "fence": "indirect",
+      "fenceSymbols": [
+        "requireTenancy",
+        "resolveSourceEventUuidForClient",
+        "tenancyErrorResponse"
+      ],
+      "fenceVia": [
+        "src/lib/source/queries.ts"
+      ],
+      "reachesFenceModule": true,
+      "coverage": "behavioral",
+      "suites": {
+        "behavioral": [
+          "src/app/api/v1/source/[eventId]/evidence/[requirementId]/answer/__tests__/route.test.ts"
+        ],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/v1/source/[eventId]/evidence/[requirementId]/availability-review/route.ts",
+      "fence": "indirect",
+      "fenceSymbols": [
+        "requireTenancy",
+        "resolveSourceEventUuidForClient",
+        "tenancyErrorResponse"
+      ],
+      "fenceVia": [
+        "src/lib/source/queries.ts"
+      ],
+      "reachesFenceModule": true,
+      "coverage": "behavioral",
+      "suites": {
+        "behavioral": [
+          "src/app/api/v1/source/[eventId]/evidence/[requirementId]/availability-review/__tests__/route.test.ts"
+        ],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/v1/source/[eventId]/evidence/[requirementId]/review/route.ts",
+      "fence": "indirect",
+      "fenceSymbols": [
+        "requireTenancy",
+        "resolveSourceEventUuidForClient",
+        "tenancyErrorResponse"
+      ],
+      "fenceVia": [
+        "src/lib/source/queries.ts"
+      ],
+      "reachesFenceModule": true,
+      "coverage": "none",
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/v1/source/[eventId]/evidence/[requirementId]/template/route.ts",
+      "fence": "indirect",
+      "fenceSymbols": [
+        "requireTenancy",
+        "resolveSourceEventUuidForClient",
+        "tenancyErrorResponse"
+      ],
+      "fenceVia": [
+        "src/lib/source/queries.ts"
+      ],
+      "reachesFenceModule": true,
+      "coverage": "none",
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/v1/source/[eventId]/facts/ingest-file/route.ts",
+      "fence": "direct",
+      "fenceSymbols": [
+        "requireTenancy",
+        "tenancyErrorResponse"
+      ],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": "behavioral",
+      "suites": {
+        "behavioral": [
+          "src/app/api/v1/source/[eventId]/facts/ingest-file/__tests__/route.test.ts"
+        ],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/v1/source/[eventId]/facts/ingest/route.ts",
+      "fence": "direct",
+      "fenceSymbols": [
+        "requireTenancy",
+        "tenancyErrorResponse"
+      ],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": "behavioral",
+      "suites": {
+        "behavioral": [
+          "src/app/api/v1/source/[eventId]/facts/ingest/__tests__/route.test.ts"
+        ],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/v1/source/[eventId]/facts/parse/commit/route.ts",
+      "fence": "indirect",
+      "fenceSymbols": [
+        "requireTenancy",
+        "resolveSourceEventUuidForClient",
+        "tenancyErrorResponse"
+      ],
+      "fenceVia": [
+        "src/lib/source/queries.ts"
+      ],
+      "reachesFenceModule": true,
+      "coverage": "behavioral",
+      "suites": {
+        "behavioral": [
+          "src/app/api/v1/source/[eventId]/facts/parse/commit/__tests__/route.test.ts"
+        ],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/v1/source/[eventId]/facts/parse/route.ts",
+      "fence": "indirect",
+      "fenceSymbols": [
+        "requireTenancy",
+        "resolveSourceEventUuidForClient",
+        "tenancyErrorResponse"
+      ],
+      "fenceVia": [
+        "src/lib/source/queries.ts"
+      ],
+      "reachesFenceModule": true,
+      "coverage": "behavioral",
+      "suites": {
+        "behavioral": [
+          "src/app/api/v1/source/[eventId]/facts/parse/__tests__/route.test.ts"
+        ],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/v1/source/[eventId]/gate-criteria/[criterionId]/state/route.ts",
+      "fence": "indirect",
+      "fenceSymbols": [
+        "requireTenancy",
+        "scaffoldNewEventSubstrate",
+        "tenancyErrorResponse"
+      ],
+      "fenceVia": [
+        "src/lib/source/queries.ts"
+      ],
+      "reachesFenceModule": true,
+      "coverage": "behavioral",
+      "suites": {
+        "behavioral": [
+          "src/app/api/v1/source/[eventId]/gate-criteria/[criterionId]/state/__tests__/route.test.ts"
+        ],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/v1/source/[eventId]/nexus/ask/route.ts",
+      "fence": "indirect",
+      "fenceSymbols": [
+        "getSourcingEvent",
+        "getSourcingEventForResolvedClient",
+        "requireTenancy",
+        "sourceEventRowToDetail",
+        "tenancyErrorResponse"
+      ],
+      "fenceVia": [
+        "src/lib/source/queries.ts"
+      ],
+      "reachesFenceModule": true,
+      "coverage": "behavioral",
+      "suites": {
+        "behavioral": [
+          "src/app/api/v1/source/[eventId]/nexus/ask/__tests__/canvas-model-answer-payload.test.ts",
+          "src/app/api/v1/source/[eventId]/nexus/ask/__tests__/value-ledger-negative-savings-routing.test.ts"
+        ],
+        "byteScanner": [
+          "src/__tests__/integration/source/source-nexus-api-stub.test.ts"
+        ]
+      }
+    },
+    {
+      "route": "src/app/api/v1/source/[eventId]/stage/route.ts",
+      "fence": "indirect",
+      "fenceSymbols": [
+        "requireTenancy",
+        "resolveSourceEventUuidForClient",
+        "scaffoldNewEventSubstrate",
+        "tenancyErrorResponse"
+      ],
+      "fenceVia": [
+        "src/lib/source/queries.ts"
+      ],
+      "reachesFenceModule": true,
+      "coverage": "behavioral",
+      "suites": {
+        "behavioral": [
+          "src/app/api/v1/source/[eventId]/stage/__tests__/route.test.ts"
+        ],
+        "byteScanner": [
+          "src/__tests__/integration/source/source-access-control-static.test.ts"
+        ]
+      }
+    },
+    {
+      "route": "src/app/api/v1/source/[eventId]/test-reset/route.ts",
+      "fence": "indirect",
+      "fenceSymbols": [
+        "requireTenancy",
+        "resolveSourceEventUuidForClient",
+        "scaffoldNewEventSubstrate",
+        "tenancyErrorResponse"
+      ],
+      "fenceVia": [
+        "src/lib/source/queries.ts"
+      ],
+      "reachesFenceModule": true,
+      "coverage": "none",
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/v1/source/[eventId]/vendor-proposals/[vendorKey]/facts/route.ts",
+      "fence": "direct",
+      "fenceSymbols": [
+        "requireTenancy",
+        "tenancyErrorResponse"
+      ],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": "none",
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/v1/source/[eventId]/vendor-proposals/[vendorKey]/ingest/route.ts",
+      "fence": "direct",
+      "fenceSymbols": [
+        "requireTenancy",
+        "tenancyErrorResponse"
+      ],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": "behavioral",
+      "suites": {
+        "behavioral": [
+          "src/app/api/v1/source/[eventId]/vendor-proposals/[vendorKey]/ingest/__tests__/route.test.ts"
+        ],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/v1/source/[eventId]/vendor-proposals/facts/[factId]/accept/route.ts",
+      "fence": "direct",
+      "fenceSymbols": [
+        "requireTenancy",
+        "tenancyErrorResponse"
+      ],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": "behavioral",
+      "suites": {
+        "behavioral": [
+          "src/app/api/v1/source/[eventId]/vendor-proposals/facts/[factId]/accept/__tests__/route.test.ts"
+        ],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/v1/source/[eventId]/vendor-proposals/facts/[factId]/reject/route.ts",
+      "fence": "direct",
+      "fenceSymbols": [
+        "requireTenancy",
+        "tenancyErrorResponse"
+      ],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": "behavioral",
+      "suites": {
+        "behavioral": [
+          "src/app/api/v1/source/[eventId]/vendor-proposals/facts/[factId]/reject/__tests__/route.test.ts"
+        ],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/v1/source/artifacts/[artifactId]/download/route.ts",
+      "fence": "direct",
+      "fenceSymbols": [
+        "requireTenancy",
+        "tenancyErrorResponse"
+      ],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": "behavioral",
+      "suites": {
+        "behavioral": [
+          "src/app/api/v1/source/artifacts/[artifactId]/download/__tests__/route.test.ts"
+        ],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/v1/source/events/[eventId]/approve/route.ts",
+      "fence": "direct",
+      "fenceSymbols": [
+        "requireTenancy",
+        "tenancyErrorResponse"
+      ],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": "behavioral",
+      "suites": {
+        "behavioral": [
+          "src/app/api/v1/source/events/[eventId]/approve/__tests__/route.test.ts"
+        ],
+        "byteScanner": [
+          "src/__tests__/integration/source/source-access-control-static.test.ts"
+        ]
+      }
+    },
+    {
+      "route": "src/app/api/v1/source/events/[eventId]/artifacts/route.ts",
+      "fence": "direct",
+      "fenceSymbols": [
+        "requireTenancy",
+        "tenancyErrorResponse"
+      ],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": "behavioral",
+      "suites": {
+        "behavioral": [
+          "src/app/api/v1/source/events/[eventId]/artifacts/__tests__/route.test.ts"
+        ],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/v1/source/events/[eventId]/gate-decision/route.ts",
+      "fence": "direct",
+      "fenceSymbols": [
+        "requireTenancy",
+        "tenancyErrorResponse"
+      ],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": "behavioral",
+      "suites": {
+        "behavioral": [
+          "src/app/api/v1/source/events/[eventId]/gate-decision/__tests__/route.test.ts"
+        ],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/v1/source/events/[eventId]/gate/route.ts",
+      "fence": "direct",
+      "fenceSymbols": [
+        "requireTenancy",
+        "tenancyErrorResponse"
+      ],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": "none",
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/v1/source/events/[eventId]/request-approval/route.ts",
+      "fence": "direct",
+      "fenceSymbols": [
+        "requireTenancy",
+        "tenancyErrorResponse"
+      ],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": "behavioral",
+      "suites": {
+        "behavioral": [
+          "src/app/api/v1/source/events/[eventId]/request-approval/__tests__/route.test.ts"
+        ],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/v1/source/events/[eventId]/request-changes/route.ts",
+      "fence": "direct",
+      "fenceSymbols": [
+        "requireTenancy",
+        "tenancyErrorResponse"
+      ],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": "byte-scanner",
+      "suites": {
+        "behavioral": [],
+        "byteScanner": [
+          "tests/e2e/source/approval-page.spec.ts"
+        ]
+      }
+    },
+    {
+      "route": "src/app/api/v1/source/events/[eventId]/route-to-co-approver/route.ts",
+      "fence": "direct",
+      "fenceSymbols": [
+        "requireTenancy",
+        "tenancyErrorResponse"
+      ],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": "byte-scanner",
+      "suites": {
+        "behavioral": [],
+        "byteScanner": [
+          "tests/e2e/source/approval-page.spec.ts"
+        ]
+      }
+    },
+    {
+      "route": "src/app/api/v1/source/events/[eventId]/route.ts",
+      "fence": "indirect",
+      "fenceSymbols": [
+        "getSourcingEvent",
+        "requireTenancy",
+        "tenancyErrorResponse"
+      ],
+      "fenceVia": [
+        "src/lib/source/queries.ts"
+      ],
+      "reachesFenceModule": true,
+      "coverage": "behavioral",
+      "suites": {
+        "behavioral": [
+          "src/app/api/v1/source/events/[eventId]/__tests__/route.test.ts"
+        ],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/v1/source/events/[eventId]/scorecard-authority/route.ts",
+      "fence": "indirect",
+      "fenceSymbols": [
+        "getSourcingEventForResolvedClient",
+        "requireTenancy",
+        "tenancyErrorResponse"
+      ],
+      "fenceVia": [
+        "src/lib/source/queries.ts"
+      ],
+      "reachesFenceModule": true,
+      "coverage": "behavioral",
+      "suites": {
+        "behavioral": [
+          "src/app/api/v1/source/events/[eventId]/scorecard-authority/__tests__/route.test.ts"
+        ],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/v1/source/events/route.ts",
+      "fence": "indirect",
+      "fenceSymbols": [
+        "createSourcingEvent",
+        "requireTenancy",
+        "tenancyErrorResponse"
+      ],
+      "fenceVia": [
+        "src/lib/source/queries.ts"
+      ],
+      "reachesFenceModule": true,
+      "coverage": "behavioral",
+      "suites": {
+        "behavioral": [
+          "src/app/api/v1/source/events/__tests__/route.test.ts"
+        ],
+        "byteScanner": [
+          "src/__tests__/integration/source/source-access-control-static.test.ts"
+        ]
+      }
+    },
+    {
+      "route": "src/app/api/v1/source/intake/servicenow/review/route.ts",
+      "fence": "direct",
+      "fenceSymbols": [
+        "requireTenancy",
+        "tenancyErrorResponse"
+      ],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": "behavioral",
+      "suites": {
+        "behavioral": [
+          "src/app/api/v1/source/intake/servicenow/review/__tests__/route.test.ts"
+        ],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/v1/source/work-items/route.ts",
+      "fence": "direct",
+      "fenceSymbols": [
+        "requireTenancy",
+        "tenancyErrorResponse"
+      ],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": "behavioral",
+      "suites": {
+        "behavioral": [
+          "src/app/api/v1/source/work-items/__tests__/external-action-gate.test.ts"
+        ],
+        "byteScanner": [
+          "src/__tests__/integration/source/source-external-action-gate.test.ts"
+        ]
+      }
+    },
+    {
+      "route": "src/app/api/v1/threads/[threadId]/attach/route.ts",
+      "fence": "none",
+      "fenceSymbols": [],
+      "fenceVia": [],
+      "reachesFenceModule": false,
+      "coverage": null,
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/v1/threads/[threadId]/route.ts",
+      "fence": "none",
+      "fenceSymbols": [],
+      "fenceVia": [],
+      "reachesFenceModule": false,
+      "coverage": null,
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/v1/threads/[threadId]/save/route.ts",
+      "fence": "none",
+      "fenceSymbols": [],
+      "fenceVia": [],
+      "reachesFenceModule": false,
+      "coverage": null,
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/v1/tower/outcome-report/route.ts",
+      "fence": "direct",
+      "fenceSymbols": [
+        "requireTenancy",
+        "tenancyErrorResponse"
+      ],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": "behavioral",
+      "suites": {
+        "behavioral": [
+          "src/app/api/v1/tower/outcome-report/__tests__/route.test.ts"
+        ],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/v1/users/me/preferences/route.ts",
+      "fence": "none",
+      "fenceSymbols": [],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": null,
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/webhooks/clerk/route.ts",
+      "fence": "none",
+      "fenceSymbols": [],
+      "fenceVia": [],
+      "reachesFenceModule": false,
+      "coverage": null,
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/webhooks/resend/health/route.ts",
+      "fence": "none",
+      "fenceSymbols": [],
+      "fenceVia": [],
+      "reachesFenceModule": false,
+      "coverage": null,
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/webhooks/resend/route.ts",
+      "fence": "none",
+      "fenceSymbols": [],
+      "fenceVia": [],
+      "reachesFenceModule": false,
+      "coverage": null,
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/webhooks/stripe/route.ts",
+      "fence": "none",
+      "fenceSymbols": [],
+      "fenceVia": [],
+      "reachesFenceModule": false,
+      "coverage": null,
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/workshops/[id]/approve/route.ts",
+      "fence": "indirect",
+      "fenceSymbols": [
+        "canReviewWorkshops",
+        "errorResponse",
+        "fail",
+        "mutationCtx",
+        "ok",
+        "requireWorkshopCtx"
+      ],
+      "fenceVia": [
+        "src/app/api/workshops/_route-utils.ts"
+      ],
+      "reachesFenceModule": true,
+      "coverage": "none",
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/workshops/[id]/assets/route.ts",
+      "fence": "indirect",
+      "fenceSymbols": [
+        "errorResponse",
+        "fail",
+        "mutationCtx",
+        "ok",
+        "requireWorkshopCtx"
+      ],
+      "fenceVia": [
+        "src/app/api/workshops/_route-utils.ts"
+      ],
+      "reachesFenceModule": true,
+      "coverage": "none",
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/workshops/[id]/publish/route.ts",
+      "fence": "indirect",
+      "fenceSymbols": [
+        "canReviewWorkshops",
+        "errorResponse",
+        "fail",
+        "mutationCtx",
+        "ok",
+        "requireWorkshopCtx"
+      ],
+      "fenceVia": [
+        "src/app/api/workshops/_route-utils.ts"
+      ],
+      "reachesFenceModule": true,
+      "coverage": "none",
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/workshops/[id]/render/route.ts",
+      "fence": "indirect",
+      "fenceSymbols": [
+        "errorResponse",
+        "ok",
+        "requireWorkshopCtx"
+      ],
+      "fenceVia": [
+        "src/app/api/workshops/_route-utils.ts"
+      ],
+      "reachesFenceModule": true,
+      "coverage": "none",
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/workshops/[id]/retire/route.ts",
+      "fence": "indirect",
+      "fenceSymbols": [
+        "canReviewWorkshops",
+        "errorResponse",
+        "fail",
+        "mutationCtx",
+        "ok",
+        "requireWorkshopCtx"
+      ],
+      "fenceVia": [
+        "src/app/api/workshops/_route-utils.ts"
+      ],
+      "reachesFenceModule": true,
+      "coverage": "none",
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/workshops/[id]/review/route.ts",
+      "fence": "indirect",
+      "fenceSymbols": [
+        "canReviewWorkshops",
+        "errorResponse",
+        "fail",
+        "mutationCtx",
+        "ok",
+        "requireWorkshopCtx"
+      ],
+      "fenceVia": [
+        "src/app/api/workshops/_route-utils.ts"
+      ],
+      "reachesFenceModule": true,
+      "coverage": "none",
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/workshops/[id]/route.ts",
+      "fence": "indirect",
+      "fenceSymbols": [
+        "errorResponse",
+        "fail",
+        "mutationCtx",
+        "ok",
+        "requireWorkshopCtx"
+      ],
+      "fenceVia": [
+        "src/app/api/workshops/_route-utils.ts"
+      ],
+      "reachesFenceModule": true,
+      "coverage": "none",
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/workshops/[id]/submit/route.ts",
+      "fence": "indirect",
+      "fenceSymbols": [
+        "errorResponse",
+        "mutationCtx",
+        "ok",
+        "requireWorkshopCtx"
+      ],
+      "fenceVia": [
+        "src/app/api/workshops/_route-utils.ts"
+      ],
+      "reachesFenceModule": true,
+      "coverage": "none",
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/workshops/instances/route.ts",
+      "fence": "indirect",
+      "fenceSymbols": [
+        "errorResponse",
+        "fail",
+        "mutationCtx",
+        "ok",
+        "requireWorkshopCtx"
+      ],
+      "fenceVia": [
+        "src/app/api/workshops/_route-utils.ts"
+      ],
+      "reachesFenceModule": true,
+      "coverage": "none",
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/workshops/route.ts",
+      "fence": "indirect",
+      "fenceSymbols": [
+        "errorResponse",
+        "fail",
+        "mutationCtx",
+        "ok",
+        "requireWorkshopCtx"
+      ],
+      "fenceVia": [
+        "src/app/api/workshops/_route-utils.ts"
+      ],
+      "reachesFenceModule": true,
+      "coverage": "none",
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    }
+  ]
+}

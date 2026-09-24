@@ -512,6 +512,18 @@
     "audit:target-writer-dry-run": {
       "kind": "unclassified"
     },
+    "audit:tenancy-fence-coverage": {
+      "kind": "report",
+      "reason": "Default mode prints the census and the top of the ranking and asserts nothing. It is the mode a person runs to read the current state; the ranking it prints is what the next fence-repair item is drawn from."
+    },
+    "audit:tenancy-fence-coverage:check": {
+      "kind": "pr-gate",
+      "reason": "Runs the census suite and then fails on per-route drift against docs/security/tenancy-fence-coverage.json, in either direction \u2014 a route whose coverage got worse, got better, appeared or disappeared. Invoked by tenancy-fence-coverage.yml. Unlike the test-CI coverage census it is safe to invoke directly from a workflow: this census reads the route tree and the test tree, not the set of commands workflows reach, so running it from CI does not alter the measurement it takes."
+    },
+    "audit:tenancy-fence-coverage:write": {
+      "kind": "operator",
+      "reason": "Regenerates the committed census after a route gains or loses a fence, or gains or loses proof. It carries the executed mutation evidence forward rather than discarding it, and the suite asserts every carried sample still describes the tree, so a stale exemption cannot survive a regeneration quietly. The author of the change owns the refresh."
+    },
     "audit:tenant-candidate-version": {
       "kind": "unclassified"
     },

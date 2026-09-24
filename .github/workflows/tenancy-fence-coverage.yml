@@ -1,0 +1,83 @@
+# Tenancy fence coverage census — C-508
+#
+# C-507 proved two governed route tenant fences behaviorally. Both were found
+# by accident, by a draw derived from something that was not looking for
+# tenancy at all. The census this job checks enumerates the routes that CALL a
+# tenancy fence and classifies the proof each one has, so the next repair is
+# read off a ranking rather than chosen by whoever happens to be looking.
+#
+# WHY THE JOB EXISTS AND NOT ONLY THE SCRIPT. `scripts/quality/` already holds
+# a `--check` that ran in no workflow for weeks (T-760), and an artifact that
+# ranks the queue is worth exactly as much as its currency. A census nobody
+# regenerates mis-ranks the queue silently, which is the failure mode this
+# whole backlog was opened against.
+#
+# WHAT FAILS THIS JOB. Per-route drift in either direction: a route whose
+# fence classification changed, a route whose coverage changed — including a
+# route that got BETTER — a route added, a route removed. An improvement has
+# to fail, because the artifact is the ranking: one that lags behind its own
+# repairs is wrong in the direction that reads like good news. Regenerating is
+# one command and the failure prints it.
+#
+# It deliberately does NOT fail on the counts. They are a function of the rows,
+# so asserting them adds a second thing to regenerate and no coverage.
+#
+# NO `paths:` FILTER, ON PURPOSE, for the reason the coverage census records
+# one directory over: the inputs are the whole route tree, the whole test tree
+# and the import graph between them, and an enumeration of those inputs is the
+# exemption branch that the one PR nobody listed slips through. The check is a
+# few seconds' read of the tree.
+
+name: Tenancy fence coverage
+
+on:
+  pull_request:
+  merge_group:
+  workflow_dispatch:
+
+jobs:
+  fence-census:
+    name: Fence coverage matches the committed census
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: "npm"
+
+      # The census resolves imports and decides "is this a call" with the real
+      # TypeScript compiler, so it needs the dependency tree, not just node.
+      - name: Install dependencies
+        run: npm ci
+
+      # `shell: bash` AND an explicit `set -o pipefail`: the default `run:`
+      # shell on Linux is `bash -e {0}` with no pipefail, so a piped command
+      # would exit with the status of the LAST stage and this gate would be
+      # green on every drift it detected.
+      #
+      # The npm script runs the unit suite before the check. That order is the
+      # point: the suite holds the real known positives — the route C-507
+      # proved must read `behavioral`, and the byte-scanner suite beside it
+      # must still be recognised as one — so a census rewired into agreeing
+      # with a stale artifact goes red here before the artifact does.
+      - name: Census suite and committed census are both current
+        shell: bash
+        run: |
+          set -o pipefail
+          npm run audit:tenancy-fence-coverage:check | tee fence-census.log
+
+      - name: Report the ranking
+        if: always()
+        run: |
+          {
+            echo '### Tenancy fence coverage'
+            echo
+            echo '```'
+            grep -E '^fence census:' fence-census.log || echo 'census did not report'
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
