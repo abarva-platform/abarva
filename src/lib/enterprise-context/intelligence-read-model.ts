@@ -494,10 +494,17 @@ function buildVendorSpendRows(input: {
         contract.payload.ttm_spend_usd,
         contract.payload.run_rate_usd,
         contract.payload.contract_value_usd,
+        // `annual_value_usd` is the key Admin-structured vendor contracts carry.
+        // PR #3316 added both of these reads; a bad merge left the pre-#3316 copy
+        // of this function live and a post-#3316 copy orphaned in dead code, and
+        // deleting the dead code removed the last copy of the binding. Restored
+        // 2026-09-24 under item T-756, in #3316's own position in the chain.
+        contract.payload.annual_value_usd,
         contract.payload.estimated_annual_value_usd,
         contract.payload.estimated_value_usd,
         renewal?.payload.estimated_value_usd,
         renewal?.payload.contract_value_usd,
+        renewal?.payload.annual_value_usd,
       );
       const health = healthFor(contract, renewal);
       return {

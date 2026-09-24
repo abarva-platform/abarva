@@ -658,13 +658,18 @@ jobs:
       # schema composition (1), template schema (7), and generated package
       # inputs consumed by seven loader/generator scripts. Two files stay in an
       # exact quarantine: derived-enterprise-read currently fails because its
-      # retired local inputs are absent, and intelligence-read-model has two
-      # stale aggregation expectations. Loaded 9; collected 9; run 9; green 7.
+      # retired local inputs are absent, and it is held by its own open item as
+      # a decision rather than a repair. The eighth, intelligence-read-model,
+      # was re-baselined under item T-756 against the record-type separation
+      # that made it red and is wired here; its subject has three non-test
+      # importers including a diagnostics route and the pilot dashboard
+      # aggregates. Loaded 9; collected 9; run 9; green 8.
       - name: Run the green enterprise context suites
         run: >-
           npx jest --runTestsByPath
           src/lib/enterprise-context/__tests__/chunking.test.ts
           src/lib/enterprise-context/__tests__/client-enterprise-context-datasets.test.ts
+          src/lib/enterprise-context/__tests__/intelligence-read-model.test.ts
           src/lib/enterprise-context/__tests__/meridian-ingestion-plan.test.ts
           src/lib/enterprise-context/__tests__/meridian-refresh-simulator.test.ts
           src/lib/enterprise-context/__tests__/meridian-synthetic-dataset.test.ts
@@ -757,15 +762,23 @@ jobs:
       # importer and executes refusal behavior. Cloud adaptation has one
       # operator importer and checks structured evidence projection. Education
       # has two runtime product importers and checks decision-readiness states.
-      # Five files remain exact quarantines: persistence and read-model omit a
+      # Four files remain exact quarantines: persistence and read-model omit a
       # register contract identity and cannot reproduce the live identity split;
-      # templates is red; prompt only checks strings and has no importer; and
-      # provenance asserts refusal but its validators have no runtime importer.
-      # Loaded 8; collected 8; run 8; green 7; newly owned 3.
+      # prompt only checks strings and has no importer; and provenance asserts
+      # refusal but its validators have no runtime importer. Loaded 8;
+      # collected 8; run 8; green 7; newly owned 3 — that measurement is the
+      # original draw and is not restated.
+      #
+      # templates was the fifth quarantine, and its recorded reason was "the
+      # current suite is red after application inventory became required". Item
+      # T-756 re-baselined it against the change that added that family, so the
+      # reason no longer describes anything and the entry is retired rather than
+      # deleted around: an exemption that outlives its defect is worse than none.
       - name: Run the owned Source contract suites
         run: >-
           npx jest --runTestsByPath
           src/lib/source/contract-evidence/__tests__/evidence-review.test.ts
+          src/lib/source/contract-evidence/__tests__/templates.test.ts
           src/lib/source/contract-intelligence/__tests__/cloud-adapter.test.ts
           src/lib/source/contract-intelligence/__tests__/education.test.ts
           --no-coverage --ci

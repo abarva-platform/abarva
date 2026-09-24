@@ -11,6 +11,11 @@ const repoRoot = path.resolve(__dirname, "../../..");
 
 const ownedFiles = [
   "src/lib/source/contract-evidence/__tests__/evidence-review.test.ts",
+  // Wired 2026-09-24 under item T-756. Its quarantine reason was "the current
+  // suite is red after application inventory became required"; the suite is
+  // re-baselined against the commit that added that family, so the reason is
+  // discharged rather than worked around.
+  "src/lib/source/contract-evidence/__tests__/templates.test.ts",
   "src/lib/source/contract-intelligence/__tests__/cloud-adapter.test.ts",
   "src/lib/source/contract-intelligence/__tests__/education.test.ts",
 ] as const;
@@ -23,10 +28,6 @@ const quarantinedFiles = [
   {
     path: "src/lib/source/contract-evidence/__tests__/read-model.test.ts",
     reason: "the fixture has no register contract identity, so it cannot reproduce the live identity split",
-  },
-  {
-    path: "src/lib/source/contract-evidence/__tests__/templates.test.ts",
-    reason: "the current suite is red after application inventory became required",
   },
   {
     path: "src/lib/source/contract-intelligence/__tests__/prompt.test.ts",
@@ -79,7 +80,7 @@ function runCensus(): Census {
 }
 
 describe("Source contract suite CI ownership", () => {
-  it("runs only the three green, imported, behavior-bearing suites", () => {
+  it("runs only the four green, imported, behavior-bearing suites", () => {
     const commands = jestCommands();
     const command = commands.find((candidate) => candidate.includes(ownedFiles[0]));
 
@@ -102,7 +103,7 @@ describe("Source contract suite CI ownership", () => {
     expect(uncovered("src/lib/source/contract-evidence/__tests__")).toBe(false);
     expect(partial("src/lib/source/contract-evidence/__tests__")).toMatchObject({
       testFiles: 4,
-      coveredTestFiles: 1,
+      coveredTestFiles: 2,
     });
     expect(uncovered("src/lib/source/contract-intelligence/__tests__")).toBe(false);
     expect(partial("src/lib/source/contract-intelligence/__tests__")).toMatchObject({
