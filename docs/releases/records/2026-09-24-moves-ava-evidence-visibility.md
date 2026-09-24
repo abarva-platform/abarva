@@ -30,12 +30,15 @@ Moves aVa now counts evidence already loaded for the active workspace when build
 - `src/app/api/chat/agent/route.ts`
 - `src/app/api/chat/agent/__tests__/moves-ava-scoped-context-gate.test.ts`
 - `src/app/(maestro)/strategic-moves/[moveId]/phase/[phaseNum]/page.tsx`
+- `src/components/strategic-moves/MovesPhaseStandaloneClient.tsx`
+- `src/components/strategic-moves/__tests__/MovesPhaseStandaloneClient.test.tsx`
 - `src/lib/programs/ava-chat/evidence-count.ts`
 - `src/lib/programs/ava-chat/__tests__/evidence-count.test.ts`
 
 ## QA / Validation
 
 - `npm run test -- --runTestsByPath src/lib/programs/ava-chat/__tests__/evidence-count.test.ts src/lib/programs/ava-chat/__tests__/packet.test.ts src/app/api/chat/agent/__tests__/moves-ava-scoped-context-gate.test.ts --runInBand` — passed.
+- `npm run test -- --runTestsByPath src/components/strategic-moves/__tests__/MovesPhaseStandaloneClient.test.tsx src/lib/programs/ava-chat/__tests__/evidence-count.test.ts src/app/api/chat/agent/__tests__/moves-ava-scoped-context-gate.test.ts --runInBand` — passed.
 - `npx eslint src/app/api/chat/agent/route.ts 'src/app/(maestro)/strategic-moves/[moveId]/phase/[phaseNum]/page.tsx' src/lib/programs/ava-chat/evidence-count.ts src/lib/programs/ava-chat/__tests__/evidence-count.test.ts src/app/api/chat/agent/__tests__/moves-ava-scoped-context-gate.test.ts` — passed.
 - `npm run typecheck` — passed.
 - `git diff --check` — passed.
@@ -67,3 +70,4 @@ Revert the PR and redeploy through the repo-owned ACA main deploy workflow.
 ## Known Gaps
 
 This does not change evidence storage or gate decisions; it only fixes the aVa packet count used for chat guidance. The current page route now forwards the Move context extract attached-evidence count into chat surface context so guidance no longer depends only on legacy linked evidence or request evidence arrays.
+The standalone Moves phase aVa composer also forwards the same count; this closes the separate local chat path used by the phase page's embedded aVa panel.

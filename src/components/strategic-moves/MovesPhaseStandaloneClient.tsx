@@ -133,6 +133,13 @@ interface MovesPhaseStandaloneClientProps {
   phaseBuildArtifacts?: PhaseBuildArtifact[];
   phaseNavigationStatus?: PhaseNavigationStatus;
   currentStateReadiness?: ReadinessReport | null;
+  /**
+   * Count of attached evidence found inside the current Move context extract.
+   * The phase page and File Cabinet can show evidence before legacy linked
+   * evidence relations exist, so the local phase aVa composer must forward the
+   * same count as the AppShell provider.
+   */
+  moveContextExtractEvidenceCount?: number;
   initialSubstepKey?: SubstepKey;
   /** `moves_pricing_engine` feature flag, resolved server-side (tenant-gated, default OFF) — see the phase page. Gates the "Cost & Effort" rail entry point entirely; when false the button does not render at all. */
   pricingEngineEnabled?: boolean;
@@ -657,6 +664,7 @@ export function MovesPhaseStandaloneClient({
   phaseBuildArtifacts = [],
   phaseNavigationStatus,
   currentStateReadiness = null,
+  moveContextExtractEvidenceCount = 0,
   initialSubstepKey,
   pricingEngineEnabled = false,
   riskAssessmentEnabled = false,
@@ -1580,6 +1588,8 @@ export function MovesPhaseStandaloneClient({
               programId: move.id,
               moveId: move.id,
               phase: phaseNum,
+              moveContextExtractEvidenceCount,
+              moveEvidenceCount: moveContextExtractEvidenceCount,
               moveDisplayCode: move.displayCode,
               moveName: displayMoveName,
               phaseLabel: phase.title,
@@ -1687,6 +1697,7 @@ export function MovesPhaseStandaloneClient({
       phaseCaptureValues,
       phaseTallies,
       phaseNum,
+      moveContextExtractEvidenceCount,
       finderReadinessPack,
     ],
   );
