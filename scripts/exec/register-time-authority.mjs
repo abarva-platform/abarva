@@ -27,6 +27,7 @@
  *   node scripts/exec/register-time-authority.mjs --file <register> \
  *        [--since <ISO>] [--now <ISO>] [--github] [--authority <json>] [--json]
  *   node scripts/exec/register-time-authority.mjs --emit --pr <n> [--github]
+ *   node scripts/exec/register-time-authority.mjs --cross-cues [--file <register.md>]
  *   node scripts/exec/register-time-authority.mjs --preclaim --file <register> \
  *        --item <id> --identity <base-agent#run-id> [--files a,b,c] [--strict]
  *
@@ -1523,6 +1524,507 @@ export function cueSurfaceDivergences() {
   return out.sort();
 }
 
+/**
+ * THE TWO HALVES' CUE VOCABULARIES, FORM BY FORM (item T-717).
+ *
+ * `CUE_SURFACE` above answers whether each half has a veto for each
+ * `cue x direction` cell. It does not answer whether the two halves read the
+ * same WORDS in the cells they both cover, and they do not: the item half's
+ * negation vocabulary is `not` and `none`, counted off the register by T-722;
+ * the path half's is a twelve-lemma list T-707 counted off the same register
+ * for paths. Seven of eight cells are "covered" in the surface and five of
+ * the narrative forms below still change verdict depending on which half is
+ * asked. That is the divergence T-717 filed, and until this table existed
+ * nothing measured it — the surface compares coverage booleans.
+ *
+ * WHY A TABLE OF FORMS RATHER THAN A TABLE OF WORDS. A word list copied out
+ * of a regex rots the moment either regex moves, and this file has already
+ * learned that a control whose truth comes from its own subject cannot fail.
+ * So each row is a narrative FORM with two renderings — one about an item id,
+ * one about a repo path, the cue in the same position in both — and the
+ * reading is RECOMPUTED by putting each rendering through the real parser.
+ * A half that grows a cue without a row here disagrees with its declaration
+ * and fails; a row claiming a reading the parser does not produce fails too.
+ *
+ * `reads` is the declaration, `observed` is what the parser does. The suite
+ * asserts they are equal, which is the only reason to write `reads` at all.
+ *
+ * NOTHING HERE WIDENS A VETO. The item's acceptance forbids that without the
+ * measurement, and this is the measurement.
+ */
+export const CUE_FORMS = [
+  // ---- negation, cue in FRONT of the subject -------------------------------
+  {
+    form: "negator-not",
+    cue: "negation",
+    governs: "left",
+    reads: { item: true, path: true },
+    rendering: { item: "not item T-800", path: "not scripts/exec/probe-a.mjs" },
+    note: "the one negation lemma both halves share",
+  },
+  {
+    form: "negator-none",
+    cue: "negation",
+    governs: "left",
+    reads: { item: true, path: false },
+    rendering: {
+      item: "none of item T-800's files",
+      path: "none of scripts/exec/probe-a.mjs",
+    },
+    note: "the path half reads `no` but a word boundary keeps it out of `none`",
+  },
+  {
+    form: "negator-avoiding",
+    cue: "negation",
+    governs: "left",
+    reads: { item: false, path: true },
+    rendering: {
+      item: "avoiding item T-800",
+      path: "avoiding scripts/exec/probe-a.mjs",
+    },
+  },
+  {
+    form: "negator-excluding",
+    cue: "negation",
+    governs: "left",
+    reads: { item: false, path: true },
+    rendering: {
+      item: "excluding item T-800",
+      path: "excluding scripts/exec/probe-a.mjs",
+    },
+  },
+  {
+    form: "negator-never",
+    cue: "negation",
+    governs: "left",
+    reads: { item: false, path: true },
+    rendering: {
+      item: "never touching item T-800",
+      path: "never touching scripts/exec/probe-a.mjs",
+    },
+    note: "T-722 measured `never` as moving nothing on the register for items",
+  },
+  {
+    form: "negator-no",
+    cue: "negation",
+    governs: "left",
+    reads: { item: false, path: true },
+    rendering: {
+      item: "no work in item T-800",
+      path: "no work in scripts/exec/probe-a.mjs",
+    },
+    note: "T-722 measured `no` as freeing the WRONG id and excluded it deliberately",
+  },
+  {
+    form: "negator-outside",
+    cue: "negation",
+    governs: "left",
+    reads: { item: false, path: true },
+    rendering: {
+      item: "outside item T-800",
+      path: "outside scripts/exec/probe-a.mjs",
+    },
+  },
+  {
+    form: "negator-freed",
+    cue: "negation",
+    governs: "left",
+    reads: { item: false, path: true },
+    rendering: { item: "freed item T-800", path: "freed scripts/exec/probe-a.mjs" },
+  },
+  {
+    form: "negator-released",
+    cue: "negation",
+    governs: "left",
+    reads: { item: false, path: true },
+    rendering: {
+      item: "released item T-800",
+      path: "released scripts/exec/probe-a.mjs",
+    },
+    note: "for items a release is a LINE-level verb (`announcesRelease`), not a cue in front of the id",
+  },
+  {
+    form: "negator-without",
+    cue: "negation",
+    governs: "left",
+    reads: { item: false, path: true },
+    rendering: {
+      item: "without item T-800",
+      path: "without scripts/exec/probe-a.mjs",
+    },
+  },
+  {
+    form: "negator-rather-than",
+    cue: "negation",
+    governs: "left",
+    reads: { item: false, path: true },
+    rendering: {
+      item: "rather than item T-800",
+      path: "rather than scripts/exec/probe-a.mjs",
+    },
+  },
+  {
+    form: "negator-instead-of",
+    cue: "negation",
+    governs: "left",
+    reads: { item: false, path: true },
+    rendering: {
+      item: "instead of item T-800",
+      path: "instead of scripts/exec/probe-a.mjs",
+    },
+  },
+  // ---- negation, cue BEHIND the subject ------------------------------------
+  {
+    form: "state-unclaimed",
+    cue: "negation",
+    governs: "right",
+    reads: { item: true, path: false },
+    rendering: {
+      item: "item T-800 unclaimed",
+      path: "scripts/exec/probe-a.mjs unclaimed",
+    },
+  },
+  {
+    form: "state-not-yet-claimed",
+    cue: "negation",
+    governs: "right",
+    reads: { item: true, path: false },
+    rendering: {
+      item: "item T-800 is not yet claimed",
+      path: "scripts/exec/probe-a.mjs is not yet claimed",
+    },
+  },
+  {
+    form: "state-not-taken",
+    cue: "negation",
+    governs: "right",
+    reads: { item: true, path: false },
+    rendering: {
+      item: "item T-800 not taken",
+      path: "scripts/exec/probe-a.mjs not taken",
+    },
+  },
+  {
+    form: "set-negation-none-of-which",
+    cue: "negation",
+    governs: "right",
+    reads: { item: false, path: true },
+    rendering: {
+      item: "item T-800, none of which I touch",
+      path: "scripts/exec/probe-a.mjs, none of which I touch",
+    },
+    note: "T-725's shape; the item half's tail vocabulary is claim-state only",
+  },
+  // ---- attribution, cue in FRONT of the subject ----------------------------
+  {
+    form: "copula-is-already",
+    cue: "attribution",
+    governs: "left",
+    reads: { item: true, path: false },
+    rendering: {
+      item: "the placement is already item T-800",
+      path: "the placement is already scripts/exec/probe-a.mjs",
+    },
+    note: "T-717 filed this one by name: the same sentence about a path still HOLDS it",
+  },
+  {
+    form: "third-party-merged",
+    cue: "attribution",
+    governs: "left",
+    reads: { item: true, path: false },
+    rendering: {
+      item: "another run merged item T-800",
+      path: "another run merged scripts/exec/probe-a.mjs",
+    },
+    note: "the two third-party verb sets differ: `merged` and `closed` are item-only",
+  },
+  {
+    form: "third-party-holds",
+    cue: "attribution",
+    governs: "left",
+    reads: { item: true, path: true },
+    rendering: {
+      item: "another run holds item T-800",
+      path: "another run holds scripts/exec/probe-a.mjs",
+    },
+    note: "the one attribution form both halves share",
+  },
+  {
+    form: "explicit-agent-held-by",
+    cue: "attribution",
+    governs: "left",
+    reads: { item: false, path: true },
+    rendering: {
+      item: "held by `codex-other#1`: item T-800",
+      path: "held by `codex-other#1`: scripts/exec/probe-a.mjs",
+    },
+    note: "T-717 filed this one by name; T-710 shipped it for paths and T-716 declined it for items",
+  },
+  {
+    form: "relative-clause-which-names",
+    cue: "attribution",
+    governs: "left",
+    reads: { item: false, path: true },
+    rendering: {
+      item: "`codex-other#1`, which names item T-800",
+      path: "`codex-other#1`, which names scripts/exec/probe-a.mjs",
+    },
+  },
+  // ---- attribution, cue BEHIND the subject ---------------------------------
+  {
+    form: "tail-attribution-has-held",
+    cue: "attribution",
+    governs: "right",
+    reads: { item: false, path: true },
+    rendering: {
+      item: "item T-800, which `codex-other#1` has held since 17:43:09Z",
+      path: "scripts/exec/probe-a.mjs, which `codex-other#1` has held since 17:43:09Z",
+    },
+    note: "the cell the surface reports open; T-747 shipped it for paths only",
+  },
+  {
+    form: "tail-attribution-is-held-by",
+    cue: "attribution",
+    governs: "right",
+    reads: { item: false, path: true },
+    rendering: {
+      item: "item T-800 is held by `codex-other#1`",
+      path: "scripts/exec/probe-a.mjs is held by `codex-other#1`",
+    },
+  },
+];
+
+/**
+ * Re-derive each form's per-half reading by running its own rendering through
+ * the real parser. A reading is `true` when the veto FIRES — that is, when the
+ * subject does not survive the sentence.
+ */
+export function recomputeCueVocabulary() {
+  return CUE_FORMS.map((form) => ({
+    ...form,
+    observed: {
+      item: !itemSubjects(form.rendering.item).some(
+        (id) => id.base === CUE_SURFACE_SUBJECTS.item,
+      ),
+      path: !claimedPaths(form.rendering.path).some(
+        (p) => p.path === CUE_SURFACE_SUBJECTS.path,
+      ),
+    },
+  }));
+}
+
+/**
+ * The forms one half reads and the other does not, from the RECOMPUTED
+ * reading rather than the declaration, in both directions.
+ */
+export function cueVocabularyDivergences() {
+  return recomputeCueVocabulary()
+    .filter((f) => f.observed.item !== f.observed.path)
+    .map((f) => ({
+      form: f.form,
+      cue: f.cue,
+      governs: f.governs,
+      readBy: f.observed.item ? "item" : "path",
+      missingFrom: f.observed.item ? "path" : "item",
+    }));
+}
+
+/** A non-global twin of the path negator list; `matchAll` needs the global one. */
+const PATH_NEGATOR_WORD_TEST = new RegExp(PATH_NEGATOR_WORD.source, "i");
+
+/**
+ * The eight cells, each carrying the OTHER half's cue test for that
+ * `cue x direction`, evaluated over THIS half's own governed span.
+ *
+ * Only the vocabulary crosses over. The reach stays each half's own, because
+ * the item asks what changes "if it read the other's cues" — and because the
+ * units are not interchangeable anyway: the path half's front cues are bounded
+ * in CHARACTERS and cannot cross the full stop inside a filename, which is a
+ * separate divergence the surface already records and no cell here repairs.
+ *
+ * One consequence, stated rather than buried: two of the borrowed patterns
+ * (`PATH_ATTRIBUTIVE`, `PATH_NEGATOR_WORD`) carry their own reach INSIDE the
+ * pattern, so borrowing the cue necessarily borrows that much of its bound.
+ */
+const CROSS_CELLS = [
+  {
+    half: "item",
+    cue: "negation",
+    governs: "left",
+    borrowable: true,
+    from: "path",
+    test: ({ before }) => PATH_NEGATOR_WORD_TEST.test(governedHead(before)),
+  },
+  {
+    half: "item",
+    cue: "negation",
+    governs: "right",
+    borrowable: true,
+    from: "path",
+    test: ({ after }) => {
+      const tail = governedTail(after);
+      return PATH_TAIL_SET_NEGATION.test(tail) && PATH_TAIL_FIRST_PERSON.test(tail);
+    },
+  },
+  {
+    half: "item",
+    cue: "attribution",
+    governs: "left",
+    borrowable: true,
+    from: "path",
+    test: ({ before }) => PATH_ATTRIBUTIVE.test(itemAttributiveReach(before)),
+  },
+  {
+    half: "item",
+    cue: "attribution",
+    governs: "right",
+    borrowable: true,
+    from: "path",
+    test: ({ after }) => attributesPathListAway(after),
+  },
+  {
+    half: "path",
+    cue: "negation",
+    governs: "left",
+    borrowable: true,
+    from: "item",
+    test: ({ before }) => ITEM_DISCLAIMER.test(governedHead(before)),
+  },
+  {
+    half: "path",
+    cue: "negation",
+    governs: "right",
+    borrowable: true,
+    from: "item",
+    test: ({ after }) => CLAIM_STATE_NEGATOR.test(governedTail(after)),
+  },
+  {
+    half: "path",
+    cue: "attribution",
+    governs: "left",
+    borrowable: true,
+    from: "item",
+    test: ({ before }) => narratesItem(before),
+  },
+  {
+    // NOT AN OMISSION. The item half has no right-governing attribution veto
+    // at all — it is the one cell `cueSurfaceDivergences` reports open — so
+    // there is nothing for the path half to borrow here. When that cell is
+    // closed this becomes borrowable and the suite says so.
+    half: "path",
+    cue: "attribution",
+    governs: "right",
+    borrowable: false,
+    from: "item",
+    test: () => false,
+  },
+];
+
+/** Whether this occurrence of an item id is held by the real item half. */
+function itemHeldAt(line, match, declared) {
+  const before = line.slice(0, match.index);
+  if (ITEM_FLAG_CUE.test(before)) return null;
+  if (narratesItem(before)) return null;
+  if (disclaimsItem(before)) return null;
+  if (deniesClaim(line, match.index + match[0].length)) return null;
+  const id = splitItemId(`${match[1]}${match[2] ?? ""}`);
+  if (!id) return null;
+  if (subordinateToDeclaredSubject(declared, id, before)) return null;
+  return { id, before, after: line.slice(match.index + match[0].length) };
+}
+
+function excerpt(line, at) {
+  const from = Math.max(0, at - 48);
+  return `${from > 0 ? "…" : ""}${line.slice(from, at + 48).trim()}${at + 48 < line.length ? "…" : ""}`;
+}
+
+/**
+ * WHAT CONVERGING WOULD COST, counted (item T-717).
+ *
+ * For each cell, every subject the gate HOLDS today that the other half's
+ * vocabulary would hand back. Reading the other half's cues is a UNION, so
+ * the only direction a verdict can move is hold → free; a currently-free
+ * subject stays free whatever else is added. That is why one number per cell
+ * is the whole measurement.
+ *
+ * The number is not the decision. A freed subject is a repair when the line
+ * genuinely narrates somebody else's work and a FALSE PASS when the line
+ * claims it — two runs on one file — so every occurrence is returned with its
+ * line index and an excerpt, to be read rather than totalled.
+ *
+ * @param {string[]} texts register message texts, or any lines
+ */
+export function crossHalfCueMovement(texts) {
+  const lines = (Array.isArray(texts) ? texts : []).map((t) => String(t ?? ""));
+  const cells = CROSS_CELLS.map((cell) => ({
+    half: cell.half,
+    cue: cell.cue,
+    governs: cell.governs,
+    from: cell.from,
+    borrowable: cell.borrowable,
+    freed: [],
+  }));
+
+  lines.forEach((line, index) => {
+    const declared = declaredItemSubject(line);
+    ITEM_SUBJECT.lastIndex = 0;
+    for (const match of line.matchAll(ITEM_SUBJECT)) {
+      const held = itemHeldAt(line, match, declared);
+      if (!held) continue;
+      for (let c = 0; c < CROSS_CELLS.length; c += 1) {
+        if (CROSS_CELLS[c].half !== "item" || !CROSS_CELLS[c].borrowable) continue;
+        if (CROSS_CELLS[c].test(held)) {
+          cells[c].freed.push({ index, subject: held.id.base, excerpt: excerpt(line, match.index) });
+        }
+      }
+    }
+
+    // The path half decides per LIST, exactly as `claimedPaths` does, so the
+    // spans handed to a borrowed cue are the same spans the real cues see.
+    const occurrences = pathOccurrences(line);
+    for (let i = 0; i < occurrences.length; ) {
+      let last = i;
+      while (
+        last + 1 < occurrences.length &&
+        PATH_LIST_JOINER.test(line.slice(occurrences[last].end, occurrences[last + 1].start))
+      ) {
+        last += 1;
+      }
+      const before = line.slice(0, occurrences[i].start);
+      const after = occurrences[last].trailer + line.slice(occurrences[last].end);
+      const heldNow =
+        !negatesPathList(before) &&
+        !PATH_ATTRIBUTIVE.test(attributiveReach(before)) &&
+        !disclaimsPathList(after) &&
+        !attributesPathListAway(after);
+      if (heldNow) {
+        for (let c = 0; c < CROSS_CELLS.length; c += 1) {
+          if (CROSS_CELLS[c].half !== "path" || !CROSS_CELLS[c].borrowable) continue;
+          if (!CROSS_CELLS[c].test({ before, after })) continue;
+          for (let k = i; k <= last; k += 1) {
+            cells[c].freed.push({
+              index,
+              subject: occurrences[k].path,
+              excerpt: excerpt(line, occurrences[k].start),
+            });
+          }
+        }
+      }
+      i = last + 1;
+    }
+  });
+
+  return {
+    lines: lines.length,
+    cells,
+    totals: {
+      freed: cells.reduce((n, c) => n + c.freed.length, 0),
+      itemHalf: cells.filter((c) => c.half === "item").reduce((n, c) => n + c.freed.length, 0),
+      pathHalf: cells.filter((c) => c.half === "path").reduce((n, c) => n + c.freed.length, 0),
+    },
+  };
+}
+
 export function resolveFileOverlap(lines, { files, identity, nowMs, windowHours }) {
   const requested = [];
   const unparsed = [];
@@ -2043,6 +2545,84 @@ if (isMain()) {
     process.exit(2);
   }
   const minuteNow = new Date(nowMs).toISOString().replace(/:\d{2}\.\d+Z$/, "Z");
+
+  // THE VOCABULARY MEASUREMENT, on demand (item T-717).
+  //
+  // Read-only, and a register is OPTIONAL: the form table is recomputed from
+  // the parser either way, and the live movement is an opportunistic replay
+  // rather than a precondition (T-739). Given no `--file`, it prints the form
+  // table and says the live half was not measured, rather than exiting non-zero
+  // and inverting a gate the moment a register is unavailable.
+  if (has("--cross-cues")) {
+    const forms = recomputeCueVocabulary();
+    const divergent = cueVocabularyDivergences();
+    const file = flag("--file");
+    let movement = null;
+    if (file) {
+      const parsed = parseRegisterLines(fs.readFileSync(file, "utf8"));
+      const windowOnly = has("--window-only");
+      const windowMs = Number(flag("--window-hours") ?? CLAIM_WINDOW_HOURS) * 3600 * 1000;
+      const scoped = windowOnly
+        ? parsed.filter((l) => l.stampMs > nowMs - windowMs && l.stampMs <= nowMs)
+        : parsed;
+      movement = {
+        scope: windowOnly ? `lines inside the ${windowMs / 3600000}h claim window` : "every parsed register line",
+        registerLines: parsed.length,
+        measuredLines: scoped.length,
+        ...crossHalfCueMovement(scoped.map((l) => l.text)),
+        lineNumbers: scoped.map((l) => l.lineNumber),
+      };
+    }
+    if (has("--json")) {
+      console.log(JSON.stringify({ forms, divergent, movement }, null, 2));
+      process.exit(0);
+    }
+    console.log("CUE VOCABULARY — recomputed per form per half, not declared\n");
+    for (const f of forms) {
+      console.log(
+        `  ${f.cue.padEnd(11)} ${f.governs.padEnd(5)} ${f.form.padEnd(28)} ` +
+          `item:${f.observed.item ? "reads" : "  -  "}  path:${f.observed.path ? "reads" : "  -  "}`,
+      );
+    }
+    console.log(
+      `\n  ${divergent.length} of ${forms.length} forms are read by ONE half only.` +
+        `\n    item half only: ${divergent.filter((d) => d.readBy === "item").map((d) => d.form).join(", ") || "none"}` +
+        `\n    path half only: ${divergent.filter((d) => d.readBy === "path").map((d) => d.form).join(", ") || "none"}`,
+    );
+    if (!movement) {
+      console.log(
+        "\nLIVE MOVEMENT — NOT MEASURED. Pass `--file <register.md>` to measure it." +
+          "\nThe form table above stands on its own; the movement half is an opportunistic replay.",
+      );
+      process.exit(0);
+    }
+    console.log(
+      `\nVERDICT MOVEMENT if each half also read the other's cues — ${movement.scope}` +
+        ` (${movement.measuredLines} of ${movement.registerLines} lines)\n`,
+    );
+    for (const c of movement.cells) {
+      console.log(
+        `  ${c.half.padEnd(5)} ${c.cue.padEnd(11)} ${c.governs.padEnd(5)} borrowing from ${c.from}: ` +
+          `${String(c.freed.length).padStart(4)} held subject(s) would be freed` +
+          `${c.borrowable ? "" : "   (nothing to borrow — that cell is open in the other half)"}`,
+      );
+    }
+    console.log(
+      `\n  total ${movement.totals.freed} — item half ${movement.totals.itemHalf}, path half ${movement.totals.pathHalf}.` +
+        "\n  A freed subject is a REPAIR when the line narrates somebody else's work and a" +
+        "\n  FALSE PASS when the line claims it. Read the occurrences; do not total them.",
+    );
+    for (const c of movement.cells.filter((x) => x.freed.length)) {
+      console.log(`\n  --- ${c.half}/${c.cue}/${c.governs}, borrowed from ${c.from} ---`);
+      for (const f of c.freed.slice(0, Number(flag("--show") ?? 8))) {
+        console.log(`    line ${movement.lineNumbers[f.index]}  ${f.subject}\n      ${f.excerpt}`);
+      }
+      if (c.freed.length > Number(flag("--show") ?? 8)) {
+        console.log(`    … ${c.freed.length - Number(flag("--show") ?? 8)} more; raise --show or use --json`);
+      }
+    }
+    process.exit(0);
+  }
 
   if (has("--emit")) {
     const pr = Number(flag("--pr"));
