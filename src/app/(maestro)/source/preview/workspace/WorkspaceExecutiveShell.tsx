@@ -6330,7 +6330,7 @@ type EvidenceLaneVisualRow = {
   readonly state: string;
 };
 
-function EvidenceLaneBarChart({
+export function EvidenceLaneBarChart({
   rows,
 }: {
   rows: readonly EvidenceLaneVisualRow[];

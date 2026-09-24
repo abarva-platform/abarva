@@ -1,5 +1,122 @@
 import { readFileSync } from "node:fs";
 
+/*
+ * T-555. Every `readFileSync` in this file used to be scanned with a bare
+ * `toContain`, which made each of them a control a COMMENT could satisfy:
+ * write the asserted text into a comment in the component and the positive
+ * passes with the affordance gone; write the forbidden text into a comment
+ * and the negative fails with nothing wrong. That is the defect class of
+ * T-513 and T-553, and it is worse here than in either, because this suite is
+ * named by exact path in `.github/workflows/ai-surface-control-catalog.yml`
+ * and therefore runs in a required job.
+ *
+ * Three answers were applied, one per control, and which one is recorded
+ * beside the control:
+ *
+ *   RENDERED   — the control names something a reader sees, the component
+ *                that draws it is actually MOUNTED, and a rendered tree can
+ *                fail on it. Moved to
+ *                `WorkspaceExecutiveShell.shell-behaviour.test.tsx`, which
+ *                mutation-proves each one.
+ *   RETIRED    — the control has no subject worth holding: either a render
+ *                elsewhere already proves it, or the thing it describes is
+ *                not reachable by any reader. Deleted here, with the reason
+ *                and, where there is one, the suite and query that replace
+ *                it. The second kind is the more important finding of T-555
+ *                and is recorded on the graph block below.
+ *   HYGIENE    — the control is a rule about the CODE, not about a frame:
+ *                a pattern that must not appear anywhere in 8421 lines, or a
+ *                stylesheet declaration jsdom never applies. A render cannot
+ *                express it. These stay, but they now read `sourceCode()` and
+ *                `styleSheet()`, which blank every comment before the scan,
+ *                so a comment can neither satisfy a positive nor trip a
+ *                negative. `stripComments` preserves offsets, so index
+ *                arithmetic over the result still points at real code.
+ */
+
+const WORKSPACE_DIR = `${__dirname}/..`;
+
+function stripComments(
+  text: string,
+  { lineComments = true }: { lineComments?: boolean } = {},
+): string {
+  const out = text.split("");
+  const n = text.length;
+  let state: "code" | "line" | "block" | "sq" | "dq" | "tpl" = "code";
+  let i = 0;
+  while (i < n) {
+    const c = text[i];
+    const d = text[i + 1];
+    if (state === "code") {
+      if (lineComments && c === "/" && d === "/") {
+        out[i] = " ";
+        out[i + 1] = " ";
+        state = "line";
+        i += 2;
+        continue;
+      }
+      if (c === "/" && d === "*") {
+        out[i] = " ";
+        out[i + 1] = " ";
+        state = "block";
+        i += 2;
+        continue;
+      }
+      if (c === "'") state = "sq";
+      else if (c === '"') state = "dq";
+      else if (c === "`") state = "tpl";
+      i += 1;
+      continue;
+    }
+    if (state === "line") {
+      if (c === "\n") state = "code";
+      else out[i] = " ";
+      i += 1;
+      continue;
+    }
+    if (state === "block") {
+      if (c === "*" && d === "/") {
+        out[i] = " ";
+        out[i + 1] = " ";
+        state = "code";
+        i += 2;
+        continue;
+      }
+      if (c !== "\n") out[i] = " ";
+      i += 1;
+      continue;
+    }
+    // inside a string literal: only its own closing quote ends it.
+    if (c === "\\") {
+      i += 2;
+      continue;
+    }
+    if (
+      (state === "sq" && c === "'") ||
+      (state === "dq" && c === '"') ||
+      (state === "tpl" && c === "`")
+    ) {
+      state = "code";
+    }
+    i += 1;
+  }
+  return out.join("");
+}
+
+/** `WorkspaceExecutiveShell.tsx` with every comment blanked. */
+function sourceCode() {
+  return stripComments(
+    readFileSync(`${WORKSPACE_DIR}/WorkspaceExecutiveShell.tsx`, "utf8"),
+  );
+}
+
+/** `workspace.css` with every comment blanked. CSS has no `//` comment. */
+function styleSheet() {
+  return stripComments(readFileSync(`${WORKSPACE_DIR}/workspace.css`, "utf8"), {
+    lineComments: false,
+  });
+}
+
 import {
   SOURCE_CHART_PALETTE,
   consumptionRampRows,
@@ -41,12 +158,12 @@ describe("WorkspaceExecutiveShell performance formatting", () => {
     expect(rows.map((row) => row.action_candidate_id)).toEqual(["z-ramp", "a-marketplace"]);
   });
   it("keeps Source charts on semantic palette tokens instead of hard-black slabs", () => {
+    // The first assertion reads the exported value, not the file.
     expect(Object.values(SOURCE_CHART_PALETTE)).not.toContain("#0a0a0b");
 
-    const source = readFileSync(
-      `${__dirname}/../WorkspaceExecutiveShell.tsx`,
-      "utf8",
-    );
+    // HYGIENE. "the slab colour appears nowhere in the component" is a claim
+    // about 8421 lines; no single render can make it.
+    const source = sourceCode();
 
     expect(source).not.toContain('fill="#0a0a0b"');
     expect(source).not.toContain('stroke="#0a0a0b"');
@@ -55,13 +172,21 @@ describe("WorkspaceExecutiveShell performance formatting", () => {
   });
 
   it("keeps Source navigation singular and avoids duplicate toolbar actions", () => {
-    const source = readFileSync(
-      `${__dirname}/../WorkspaceExecutiveShell.tsx`,
-      "utf8",
-    );
-    const css = readFileSync(`${__dirname}/../workspace.css`, "utf8");
+    /*
+     * RETIRED: `expect(source).toContain('aria-label="Source workspace
+     * navigation"')` — the line T-555 names. It is proved by a render, five
+     * times, in `WorkspaceClient.ecl-browser.test.tsx`, which mounts the real
+     * shell and resolves the nav by ACCESSIBLE NAME:
+     * `getByRole("navigation", { name: "Source workspace navigation" })` at
+     * lines 411, 545, 797, 1183 and 1914. An accessible-name query fails when
+     * the label is removed and cannot be satisfied by a comment, so keeping
+     * the byte-scan beside it added no control at all — only the illusion of
+     * one. The NEGATIVES below are not redundant with it and stay: they say
+     * the two retired labels appear NOWHERE, which no render asserts.
+     */
+    const source = sourceCode();
+    const css = styleSheet();
 
-    expect(source).toContain('aria-label="Source workspace navigation"');
     expect(source).not.toContain('aria-label="Source workspace header"');
     expect(source).not.toContain(
       'aria-label="Persistent Source workspace toolbar"',
@@ -80,10 +205,17 @@ describe("WorkspaceExecutiveShell performance formatting", () => {
   });
 
   it("renders commercial posture on the product-shell Contract 360 page", () => {
-    const source = readFileSync(
-      `${__dirname}/../WorkspaceExecutiveShell.tsx`,
-      "utf8",
-    );
+    /*
+     * HYGIENE, deliberately not retired. `WorkspaceClient.ecl-browser.test.tsx`
+     * line 1244 proves the posture eyebrow RENDERS on the product shell, so
+     * "the reader sees it" is covered. What it does not pin is WHICH
+     * component draws it — the four scans below say the product shell reaches
+     * it through `ProductShellCommercialPostureStrip` over `posture.items`,
+     * and a rewrite that satisfied the render from some other path would not
+     * trip that suite. The scans are a composition rule, so they stay and are
+     * comment-proofed rather than moved.
+     */
+    const source = sourceCode();
 
     expect(source).toContain("<ProductShellCommercialPostureStrip vm={vm} />");
     expect(source).toContain('aria-label="Commercial posture"');
@@ -92,10 +224,9 @@ describe("WorkspaceExecutiveShell performance formatting", () => {
   });
 
   it("keeps Contract 360 Optimize table-first", () => {
-    const source = readFileSync(
-      `${__dirname}/../WorkspaceExecutiveShell.tsx`,
-      "utf8",
-    );
+    // HYGIENE. Three of the five assertions are absence claims over the whole
+    // component, which is not a statement any one rendered frame can carry.
+    const source = sourceCode();
 
     expect(source).toContain("<ContractOptimizeContent vm={vm} />");
     expect(source).toContain("<ContractLeverTableContent vm={vm} />");
@@ -633,29 +764,42 @@ describe("WorkspaceExecutiveShell performance formatting", () => {
     ).toEqual(["vendor-register"]);
   });
 
-  it("keeps the contract graph tab as a real lineage visual with drill-down subtabs", () => {
-    const source = readFileSync(
-      `${__dirname}/../WorkspaceExecutiveShell.tsx`,
-      "utf8",
-    );
-    const css = readFileSync(`${__dirname}/../workspace.css`, "utf8");
-
-    expect(source).toContain(
-      'const GRAPH_SUBTABS = ["Flow", "Volume", "Mapping spine"]',
-    );
-    expect(source).toContain('aria-label="Source contract graph flow"');
-    expect(source).toContain('className="sw-v2-graph-links"');
-    expect(source).toContain("GraphVolumeTable");
-    expect(source).toContain("GraphSpineTable");
-    expect(source).toContain("GraphVolumeBars");
-    expect(source).toContain("GraphMappingFlow");
-    expect(source).toContain('aria-label="Source graph row volume"');
-    expect(source).toContain('aria-label="Source mapping flow"');
-    expect(css).toContain(".sw-v2-graph");
-    expect(css).toContain(".sw-v2-graph-node");
-    expect(css).toContain(".sw-v2-graph-volume-visual");
-    expect(css).toContain(".sw-v2-mapping-flow");
-  });
+  /*
+   * RETIRED, and not rewritten as a render. This case used to scan thirteen
+   * strings — the `GRAPH_SUBTABS` tuple, `aria-label="Source contract graph
+   * flow"`, `aria-label="Source graph row volume"`, `aria-label="Source
+   * mapping flow"`, `className="sw-v2-graph-links"`, the four sub-component
+   * names, and four `.sw-v2-graph*` / `.sw-v2-mapping-flow` stylesheet
+   * classes — under the title "keeps the contract graph tab as a real
+   * lineage visual with drill-down subtabs".
+   *
+   * There is no contract graph tab. `ContractGraphPage` is declared in
+   * `WorkspaceExecutiveShell.tsx` and mounted by nothing: the component
+   * carries its own
+   * `// eslint-disable-next-line @typescript-eslint/no-unused-vars --
+   * Legacy graph renderer is no longer reachable from the Source command
+   * IA`, added by `4b3c2b569` on 2026-09-10, and a search of `src/` finds
+   * no `<ContractGraphPage` anywhere. The thirteen assertions were green
+   * for the whole fortnight after the tab left the IA, because bytes on
+   * disk are exactly what survives a component becoming unreachable.
+   *
+   * So this was never only a control a comment could satisfy. It was a
+   * control asserting the shape of a renderer no reader can open, under a
+   * title claiming the tab was kept. Both available repairs make it worse:
+   * mounting `ContractGraphPage` in a test manufactures five green cases
+   * over dead code and pins it against the cleanup its own eslint comment
+   * schedules, and exporting it to do so would make it reachable to the
+   * export baseline as well. Scanning it more strictly would keep a control
+   * whose subject does not exist.
+   *
+   * The four stylesheet classes go with it: they style that renderer.
+   *
+   * The renderer and its CSS are filed for deletion as U-503. No placeholder
+   * case is left in their place: a case that asserts nothing still counts as
+   * coverage to every census that reads this directory, which is the same
+   * lie in a different font. This comment is the record instead, and it sits
+   * exactly where the case was.
+   */
 
   it("derives graph row volumes from loaded impact coverage before old snapshots", () => {
     const coverage = [
@@ -685,24 +829,32 @@ describe("WorkspaceExecutiveShell performance formatting", () => {
     );
   });
 
-  it("keeps the Evidence page visual before the row-detail tables", () => {
-    const source = readFileSync(
-      `${__dirname}/../WorkspaceExecutiveShell.tsx`,
-      "utf8",
-    );
-    const css = readFileSync(`${__dirname}/../workspace.css`, "utf8");
+  it("keeps the Evidence page visual's stylesheet classes present", () => {
+    /*
+     * RENDERED. `EvidenceLaneBarChart` and its `aria-label` are mounted and
+     * mutation-proved in `WorkspaceExecutiveShell.shell-behaviour.test.tsx`,
+     * which also pins the behaviour neither scan reached: a lane with zero
+     * rows is still DRAWN, so a missing lane reports itself instead of
+     * disappearing.
+     *
+     * The two CSS classes stay HYGIENE: jsdom parses no stylesheet, so a
+     * mounted tree cannot tell a present rule from a missing one.
+     * `styleSheet()` at least means a commented-out rule no longer reads as
+     * a live one, which a bare `toContain` could not tell apart.
+     */
+    const css = styleSheet();
 
-    expect(source).toContain("EvidenceLaneBarChart");
-    expect(source).toContain('aria-label="Evidence lane row counts"');
     expect(css).toContain(".sw-v2-visual-bars");
     expect(css).toContain(".sw-v2-visual-bar-row");
   });
 
   it("does not print raw vendor names in executive-facing labels", () => {
-    const source = readFileSync(
-      `${__dirname}/../WorkspaceExecutiveShell.tsx`,
-      "utf8",
-    );
+    // HYGIENE, and the one case here where comment-proofing changes the
+    // control's meaning most: eight of these eleven assertions say a raw
+    // identifier is printed NOWHERE. A negative over a whole file is exactly
+    // the assertion a stray comment can turn red for no reason, and exactly
+    // the assertion no render can make.
+    const source = sourceCode();
 
     expect(source).not.toContain("<b>{vendor.vendor_name}</b>");
     expect(source).not.toContain("<span>{contract.vendor_name}</span>");
@@ -1815,10 +1967,10 @@ describe("WorkspaceExecutiveShell performance formatting", () => {
   });
 
   it("keeps portfolio-level facts off a single-contract view", () => {
-    const source = readFileSync(
-      new URL("../WorkspaceExecutiveShell.tsx", import.meta.url),
-      "utf8",
-    );
+    // HYGIENE. `stripComments` preserves offsets, so the window arithmetic
+    // below still indexes real code — and a commented-out guard no longer
+    // reads as a live one, which is the failure this window was blind to.
+    const source = sourceCode();
     const marker = source.indexOf("<SourceCommandKpiStrip");
     expect(marker).toBeGreaterThan(-1);
     // The portfolio strip must sit behind a selected-contract guard so a
@@ -1829,10 +1981,8 @@ describe("WorkspaceExecutiveShell performance formatting", () => {
   });
 
   it("gives full-width command panels a real grid span", () => {
-    const css = readFileSync(
-      new URL("../workspace.css", import.meta.url),
-      "utf8",
-    );
+    // HYGIENE. jsdom applies no stylesheet, so this cannot become a render.
+    const css = styleSheet();
 
     expect(css).toContain(".sw-v2-span-3");
     expect(css).toContain("grid-column: 1 / -1;");
@@ -2246,5 +2396,117 @@ describe("WorkspaceExecutiveShell performance formatting", () => {
     expect(summary?.peerMedianPct).toBeNull();
     expect(summary?.basis).toContain("cannot benchmark the rate");
     expect(summary?.factLine).toContain("Evidence gate");
+  });
+});
+
+/*
+ * The scanner that the HYGIENE controls above now depend on, proved in both
+ * directions. Without this block, `stripComments` is itself an unproved
+ * control: if it were inverted — or if it silently blanked nothing — every
+ * assertion above would keep passing and the comment hole would be open
+ * again with a comment claiming it was closed.
+ */
+describe("the source-hygiene scanner is comment-proof", () => {
+  it("does not find a control that appears only in a comment", () => {
+    const code = [
+      'const real = <nav aria-label="Source workspace navigation" />;',
+      '// aria-label="Source workspace header"',
+      "/* aria-label=\"Persistent Source workspace toolbar\" */",
+    ].join("\n");
+    const stripped = stripComments(code);
+
+    expect(stripped).toContain('aria-label="Source workspace navigation"');
+    expect(stripped).not.toContain('aria-label="Source workspace header"');
+    expect(stripped).not.toContain(
+      'aria-label="Persistent Source workspace toolbar"',
+    );
+  });
+
+  it("leaves a comment marker that is inside a string literal alone", () => {
+    const code = [
+      'const keep = "// not a comment";',
+      "const alsoKeep = `/* not a comment either */`;",
+      "const single = '/* nor this */';",
+      '// const gone = "erased";',
+    ].join("\n");
+    const stripped = stripComments(code);
+
+    expect(stripped).toContain('"// not a comment"');
+    expect(stripped).toContain("`/* not a comment either */`");
+    expect(stripped).toContain("'/* nor this */'");
+    expect(stripped).not.toContain("erased");
+  });
+
+  it("preserves every offset so index arithmetic still points at real code", () => {
+    const code = 'const a = 1; /* xx */ const b = 2;';
+    const stripped = stripComments(code);
+
+    expect(stripped).toHaveLength(code.length);
+    expect(stripped.indexOf("const b")).toBe(code.indexOf("const b"));
+    expect(stripped).not.toContain("xx");
+  });
+
+  it("does not read a CSS url or a regex slash as the start of a comment", () => {
+    const css = stripComments(
+      '.a { background: url(//cdn/x.png); } /* .gone {} */ .b { color: red; }',
+      { lineComments: false },
+    );
+
+    expect(css).toContain("url(//cdn/x.png)");
+    expect(css).toContain(".b { color: red; }");
+    expect(css).not.toContain(".gone");
+  });
+
+  /*
+   * The two cases below are the real known positives, not synthetic ones: a
+   * phrase that exists in each shipped file ONLY inside a comment. If either
+   * comment is ever reworded these will fail — that is the intended cost, and
+   * the repair is to pick another comment-only phrase from the same file, not
+   * to delete the case.
+   */
+  it("blanks a phrase that exists only in a comment in the real component", () => {
+    const raw = readFileSync(
+      `${WORKSPACE_DIR}/WorkspaceExecutiveShell.tsx`,
+      "utf8",
+    );
+
+    expect(raw).toContain("export-reachability");
+    expect(sourceCode()).not.toContain("export-reachability");
+    expect(sourceCode()).toContain("export function performanceActual");
+  });
+
+  it("blanks a phrase that exists only in a comment in the real stylesheet", () => {
+    const raw = readFileSync(`${WORKSPACE_DIR}/workspace.css`, "utf8");
+
+    expect(raw).toContain("Source Workspace design preview");
+    expect(styleSheet()).not.toContain("Source Workspace design preview");
+    expect(styleSheet()).toContain(".sw-v2-horizontal-tabs");
+  });
+
+  /*
+   * A runaway scanner is the failure mode that would NOT announce itself: a
+   * mis-detected block-comment opener blanks everything up to the next
+   * closer, which for the positives above simply reads as "the control is
+   * gone". These anchors are
+   * spread across the file so a swallowed region is caught here rather than
+   * mis-reported as a missing affordance.
+   */
+  it("blanks only comments, not the code between them", () => {
+    const raw = readFileSync(
+      `${WORKSPACE_DIR}/WorkspaceExecutiveShell.tsx`,
+      "utf8",
+    );
+    const stripped = sourceCode();
+
+    expect(stripped).toHaveLength(raw.length);
+    for (const anchor of [
+      "export const SOURCE_CHART_PALETTE",
+      "export function orderedActionRows",
+      "export function contractPurposeSummary",
+      "export function EvidenceLaneBarChart",
+      "export function performanceActual",
+    ]) {
+      expect(stripped).toContain(anchor);
+    }
   });
 });
