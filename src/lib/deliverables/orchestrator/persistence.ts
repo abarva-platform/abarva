@@ -46,7 +46,7 @@ import {
   type StorylineDeck,
 } from "@/lib/visual-system/storyline-deck";
 import type { ExhibitId } from "@/lib/deliverables/profiles/types";
-import type { OutputFormat } from "./types";
+import type { OutputFormat, QualityValidationResult } from "./types";
 
 const UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -108,11 +108,92 @@ function artifactTypeFor(module: string): GeneratedArtifactType {
   return "dossier_board_pack";
 }
 
+const COMPOSITION_SIGNAL_REASON =
+  "a pass/fail composition signal whose failure already reaches the record as a blocker or warning and is counted there; persisting the signal itself is a metric-series change, declared here rather than shown by absence";
+
 /** Quality → 0..1 score: starts at 1.0, small penalty per advisory warning. */
 function qualityScore(result: OrchestrationResult): number {
   const warnings = result.quality?.warnings.length ?? 0;
   return Math.max(0.5, Math.round((1 - warnings * 0.1) * 100) / 100);
 }
+
+type QualityMetrics = QualityValidationResult["metrics"];
+
+/**
+ * Whether a quality metric is written to the per-generation metrics record, and
+ * when it is not, the reason — stated here rather than shown by absence.
+ */
+export type QualityMetricPersistence =
+  | { readonly persist: true }
+  | { readonly persist: false; readonly reason: string };
+
+/**
+ * The persistence policy for every field the quality gate measures.
+ *
+ * This is a `Record<keyof QualityMetrics, …>`, so a field added to the metrics
+ * type and not named here does not compile. That is the point of the shape. The
+ * previous writer was a hand-written object literal naming ten fields, and an
+ * allowlist over a growing type cannot fail: three fields were added to the
+ * metrics type for the expected-exhibit shortfall and were dropped here in
+ * silence, so a generation that asked for three exhibits and received one
+ * recorded a docked `qualityScore` and an incremented `warningCount` with no
+ * record of how many were asked for or which did not arrive — the omission rate
+ * was not trendable. The mechanism, not that instance, is what this closes: the
+ * next field added to the metrics type must state its intent here or fail the
+ * build, and a field deliberately not persisted says so in one place.
+ */
+export const QUALITY_METRIC_PERSISTENCE: Readonly<
+  Record<keyof QualityMetrics, QualityMetricPersistence>
+> = {
+  sectionCount: { persist: true },
+  bodyWordCount: { persist: true },
+  tableCount: { persist: true },
+  readingTimeMinutes: { persist: true },
+  manualEditNeeded: { persist: true },
+  wordBand: { persist: true },
+
+  // How many exhibits the brief asked for, how many of those arrived, and which
+  // did not. Persisted so the omission rate can be trended: the synthesis pass
+  // may legitimately omit an exhibit rather than emit a placeholder one, so an
+  // absence nobody counted reads exactly like a deliverable that never wanted
+  // the visual.
+  expectedExhibitCount: { persist: true },
+  receivedExpectedExhibitCount: { persist: true },
+  missingExpectedExhibits: { persist: true },
+
+  // The values ARE the leaked internal identifiers. Persisting them would copy
+  // internal tags into a stored artifact record, which is the thing the check
+  // exists to keep out of one; the count of the leak reaches the record through
+  // `blockerCount`.
+  leakedInternalTags: {
+    persist: false,
+    reason:
+      "the values are the leaked internal identifiers themselves; persisting them would copy internal tags into a stored artifact record",
+  },
+
+  // Composition checks. Each one that fails raises a blocker or a warning, and
+  // that failure is already counted in `blockerCount` / `warningCount` and
+  // docked from `qualityScore`. Persisting the individual signal is a
+  // metric-series change and is outside the item that introduced this policy;
+  // it is named here so the omission is declared rather than silent.
+  hasSourceRegister: { persist: false, reason: COMPOSITION_SIGNAL_REASON },
+  hasDecisionSection: { persist: false, reason: COMPOSITION_SIGNAL_REASON },
+  hasRecommendation: { persist: false, reason: COMPOSITION_SIGNAL_REASON },
+  hasRiskTable: { persist: false, reason: COMPOSITION_SIGNAL_REASON },
+  hasCentralTension: { persist: false, reason: COMPOSITION_SIGNAL_REASON },
+  hasOptionsConsidered: { persist: false, reason: COMPOSITION_SIGNAL_REASON },
+  hasEvidenceGapsNoted: { persist: false, reason: COMPOSITION_SIGNAL_REASON },
+  clientCompleteCount: { persist: false, reason: COMPOSITION_SIGNAL_REASON },
+  unsupportedClaimCount: { persist: false, reason: COMPOSITION_SIGNAL_REASON },
+  requiredEvidenceSignalCount: {
+    persist: false,
+    reason: COMPOSITION_SIGNAL_REASON,
+  },
+  missingRequiredEvidenceSignalCount: {
+    persist: false,
+    reason: COMPOSITION_SIGNAL_REASON,
+  },
+};
 
 /**
  * Per-generation metrics captured on every artifact, regardless of pass/block
@@ -120,21 +201,33 @@ function qualityScore(result: OrchestrationResult): number {
  * reviewed empirically before the word-count bands are tightened further
  * (see advisoryBandMax in quality-bar-registry.ts). `pageEstimate` is a rough
  * ~500-words-per-executive-page heuristic, not a real pagination result.
+ *
+ * The metric fields are copied by walking QUALITY_METRIC_PERSISTENCE rather
+ * than by naming them, so this function cannot drift from the type again.
  */
 function buildGenerationMetrics(
   result: OrchestrationResult,
 ): Record<string, unknown> | undefined {
   const m = result.quality?.metrics;
   if (!m) return undefined;
+
+  const persisted: Record<string, unknown> = {};
+  for (const key of Object.keys(QUALITY_METRIC_PERSISTENCE) as Array<
+    keyof QualityMetrics
+  >) {
+    if (!QUALITY_METRIC_PERSISTENCE[key].persist) continue;
+    const value = m[key];
+    // Absent stays absent. A brief that declared no expected exhibits must not
+    // record `expectedExhibitCount: 0` — "not measured" and "measured, none
+    // expected" are different facts, and a zero here reads as the second.
+    if (value === undefined) continue;
+    persisted[key] = value;
+  }
+
   return {
-    bodyWordCount: m.bodyWordCount,
-    sectionCount: m.sectionCount,
-    tableCount: m.tableCount,
+    ...persisted,
     pageEstimate: Math.max(1, Math.ceil(m.bodyWordCount / 500)),
-    readingTimeMinutes: m.readingTimeMinutes,
     qualityScore: qualityScore(result),
-    wordBand: m.wordBand,
-    manualEditNeeded: m.manualEditNeeded,
     warningCount: result.quality?.warnings.length ?? 0,
     blockerCount: result.quality?.blockers.length ?? 0,
   };
