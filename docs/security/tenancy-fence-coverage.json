@@ -2399,7 +2399,8 @@
       "coverage": "behavioral",
       "suites": {
         "behavioral": [
-          "src/app/api/home/walkthrough-export/__tests__/route.test.ts"
+          "src/app/api/home/walkthrough-export/__tests__/route.test.ts",
+          "src/app/api/home/walkthrough-export/__tests__/tenancy-fence.test.ts"
         ],
         "byteScanner": []
       }
