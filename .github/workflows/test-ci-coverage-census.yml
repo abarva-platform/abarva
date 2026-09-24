@@ -1,0 +1,87 @@
+# Test CI coverage census — T-760
+#
+# `scripts/quality/test-ci-coverage-census.mjs --check` has existed as
+# `npm run audit:test-ci-coverage:check` and run in NO workflow. The only
+# workflow that named the census named it in three comments. So "refresh the
+# census when you change the wiring" was a rule a person had to remember, and
+# the committed file is the input that ranks which directory gets wired next:
+# when it lags, that queue is mis-ranked and nothing says so.
+#
+# WHAT THIS GATES, AND WHAT IT DELIBERATELY DOES NOT. `--check` fails on drift
+# in the coverage SHAPE — a directory changing between covered, partial and
+# uncovered — and never on the counts. That is not a gap; it is a measured
+# decision recorded above `describeShapeDrift` in the script, and T-760's own
+# acceptance asked for the mutation the counts would catch. Re-measured on
+# `origin/main` `d3d8a198c` before this file was written, both directions:
+#
+#   adding a test file to an already-covered directory
+#     -> testFiles +1, coveredTestFiles +1, shape unchanged, --check exits 0
+#   adding a test file in a directory no workflow reaches
+#     -> +uncovered <dir>, --check exits 1
+#
+# A gate on the counts would therefore fire on nearly every pull request that
+# adds a test, and the way to get green would be to regenerate a
+# two-thousand-line artifact — which is how a control stops being read. The
+# counts remain a report, printed in this job's log and surfaced in the step
+# summary so the lag is visible rather than invisible. Turning the counts into
+# a failure is a policy change against that written decision and belongs to
+# Anand, not to a run.
+#
+# NO `paths:` FILTER, ON PURPOSE. The shape is a function of the test tree
+# (`src/**`), the workflow files, `package.json` and the repo scripts those
+# resolve to. An enumeration of those inputs is exactly the exemption branch
+# this backlog exists against: the one PR that changes an input nobody listed
+# is the one the gate must not miss, and it is unobservable when it happens.
+# The check is a 5-second read of the tree; paying it on every pull request is
+# cheaper than being wrong once.
+
+name: Test CI coverage census
+
+on:
+  pull_request:
+  merge_group:
+  workflow_dispatch:
+
+jobs:
+  census-shape:
+    name: Coverage shape matches the committed census
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: "npm"
+
+      # The census parses TypeScript with the real compiler to resolve
+      # imports, so it needs the dependency tree, not just node.
+      - name: Install dependencies
+        run: npm ci
+
+      # `shell: bash` AND an explicit `set -o pipefail`. The default shell for
+      # a `run:` block on Linux is `bash -e {0}` with no pipefail, so
+      # `npm run ... | tee` would exit with tee's status and this gate would
+      # be green on every drift it detected. A pipe swallowing an exit status
+      # is one of the shapes this backlog was opened against; it is written
+      # twice here because the second one is asserted by the behavioral test.
+      - name: Coverage shape is current
+        shell: bash
+        run: |
+          set -o pipefail
+          npm run audit:test-ci-coverage:check | tee census.log
+
+      # The counts are the half `--check` does not enforce. Reporting them
+      # here is what makes the lag visible at the moment it is created rather
+      # than when somebody next regenerates the file.
+      - name: Report count drift
+        if: always()
+        run: |
+          {
+            echo '### Test CI coverage census'
+            echo
+            grep -E '^census (drift|shape):' census.log || echo 'census did not report'
+          } >> "$GITHUB_STEP_SUMMARY"
