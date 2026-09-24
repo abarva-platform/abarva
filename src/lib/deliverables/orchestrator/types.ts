@@ -454,6 +454,13 @@ export interface RenderableDeliverable {
   clientDisplayName: string;
   initiativeDisplayName: string;
   generatedSections: RenderableSection[];
+  /**
+   * Optional authored deck layer for PPTX output. When present, each slide is a
+   * model-authored executive argument with explicit supporting points, notes,
+   * and an optional link to a typed exhibit payload. The PPTX renderer should
+   * prefer this over inferring slides from document sections.
+   */
+  deckSlides?: RenderableDeckSlide[];
   tables: RenderableTable[];
   exhibits: RenderableExhibit[];
   sourceRegister: SourceRegisterEntry[];
@@ -461,6 +468,20 @@ export interface RenderableDeliverable {
   clientCompleteChecklist: ClientCompleteItem[];
   recommendation: string;
   nextActions: string[];
+}
+
+export interface RenderableDeckSlide {
+  key?: string;
+  title?: string;
+  /** One sentence: the argument this slide makes, not a topic label. */
+  governingMessage: string;
+  /** Short support points visible on the slide face. */
+  points?: string[];
+  /** Key of an exhibit in `exhibits`; the exhibit carries the drawable data. */
+  exhibitKey?: string;
+  /** Evidence, traceability, and facilitation notes stay off the slide face. */
+  speakerNotes?: string;
+  citationsUsed?: number[];
 }
 
 export interface RenderableSection {
@@ -492,10 +513,87 @@ export interface RenderableTable {
   targetFormat: OutputFormat;
 }
 
+export interface ExhibitFlowNode {
+  id: string;
+  label: string;
+  role?: string;
+}
+
+export interface ExhibitFlowEdge {
+  from: string;
+  to: string;
+  label?: string;
+}
+
+export interface ExhibitMatrixCell {
+  x: string;
+  y: string;
+  label: string;
+  value?: string;
+  weight?: number;
+}
+
+export interface ExhibitTimelineItem {
+  label: string;
+  start: string;
+  end?: string;
+}
+
+export interface ExhibitTimelineLane {
+  label: string;
+  items: ExhibitTimelineItem[];
+}
+
+export interface ExhibitArchitectureLane {
+  label: string;
+  items: string[];
+}
+
+export type ExhibitData =
+  | {
+      kind: "flow";
+      nodes: ExhibitFlowNode[];
+      edges: ExhibitFlowEdge[];
+    }
+  | {
+      kind: "matrix" | "heatmap" | "comparison";
+      axes?: { x: string; y: string };
+      cells: ExhibitMatrixCell[];
+    }
+  | {
+      kind: "timeline" | "roadmap";
+      lanes: ExhibitTimelineLane[];
+    }
+  | {
+      kind: "value_tree";
+      root: { label: string; value?: string };
+      branches: Array<{
+        label: string;
+        value?: string;
+        children?: Array<{ label: string; value?: string }>;
+      }>;
+    }
+  | {
+      kind:
+        | "conceptual_architecture"
+        | "logical_architecture"
+        | "physical_architecture"
+        | "agent_orchestration";
+      lanes: ExhibitArchitectureLane[];
+      legend?: string[];
+    };
+
 export interface RenderableExhibit {
   key: string;
   title: string;
   kind: ExpectedExhibit["kind"];
   description: string;
   targetFormat: OutputFormat;
+  /**
+   * Structured values the renderer can draw. A title + description is not
+   * enough to create a client-ready exhibit; if this is absent, the renderer
+   * must not invent a generic diagram and the quality gate should surface the
+   * missing visual.
+   */
+  data?: ExhibitData;
 }

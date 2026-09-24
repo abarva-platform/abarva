@@ -168,164 +168,7 @@ export function buildHandoffDeck(input: HandoffInput): StorylineDeck {
   };
 }
 
-const PPTX_COLOR = {
-  cream: "F8F7F4",
-  paper: "FBFAF7",
-  ink: "1A1A1A",
-  muted: "6B6B66",
-  line: "E2E0D9",
-  accent: "0B4A91",
-  dark: "1A1A1A",
-  white: "FFFFFF",
-  data: "2F6F6A",
-} as const;
-
-function safeText(s: string): string {
-  return s.replace(/\s+/g, " ").trim();
-}
-
-/**
- * Render the storyline deck as a native editable PPTX. Text stays native and
- * exhibit references render as structured visual placeholders until each
- * profile-specific visual renderer supplies the final exhibit SVG.
- */
-export async function renderStorylineDeckPptx(
-  deck: StorylineDeck,
-): Promise<Buffer> {
-  const { default: PptxGenJS } = await import("pptxgenjs");
-  const pptx = new PptxGenJS();
-  pptx.layout = "LAYOUT_16x9";
-  pptx.author = "AbarVa";
-  pptx.company = "AbarVa";
-  pptx.subject = deck.title;
-  pptx.title = `${deck.engagement} — ${deck.title}`;
-
-  deck.slides.forEach((s, i) => {
-    const slide = pptx.addSlide();
-    const dark = s.kind === "decision_headline";
-    slide.background = { color: dark ? PPTX_COLOR.dark : PPTX_COLOR.cream };
-    const ink = dark ? PPTX_COLOR.white : PPTX_COLOR.ink;
-    const muted = dark ? "BEB9AE" : PPTX_COLOR.muted;
-
-    slide.addText(
-      `${deck.client.toUpperCase()} · ${deck.title.toUpperCase()}`,
-      {
-        x: 0.55,
-        y: 0.28,
-        w: 9.8,
-        h: 0.24,
-        fontFace: "Arial",
-        fontSize: 8,
-        bold: true,
-        color: muted,
-        charSpacing: 1,
-      },
-    );
-    slide.addText(`${i + 1}/${deck.slides.length}`, {
-      x: 11.7,
-      y: 0.28,
-      w: 1,
-      h: 0.24,
-      fontFace: "Arial",
-      fontSize: 8,
-      color: muted,
-      align: "right",
-    });
-    slide.addShape("line", {
-      x: 0.55,
-      y: 0.62,
-      w: 12.2,
-      h: 0,
-      line: { color: dark ? "3A3A3A" : PPTX_COLOR.line, width: 0.75 },
-    });
-    slide.addText(safeText(s.governingMessage), {
-      x: 0.72,
-      y: 1.05,
-      w: 10.7,
-      h: 1.25,
-      fontFace: "Georgia",
-      fontSize: dark ? 25 : 23,
-      color: ink,
-      breakLine: false,
-      fit: "shrink",
-      margin: 0,
-    });
-    if (s.points?.length) {
-      slide.addText(
-        s.points.slice(0, MAX_POINTS_PER_SLIDE).map((p) => ({
-          text: safeText(p),
-          options: { bullet: { type: "bullet" } },
-        })),
-        {
-          x: 0.95,
-          y: 2.55,
-          w: 6.1,
-          h: 2.8,
-          fontFace: "Arial",
-          fontSize: 14,
-          color: ink,
-          fit: "shrink",
-          breakLine: false,
-        },
-      );
-    }
-    if (s.exhibit) {
-      slide.addShape("roundRect", {
-        x: 7.45,
-        y: 2.42,
-        w: 4.7,
-        h: 2.72,
-        rectRadius: 0.12,
-        fill: { color: dark ? "252525" : PPTX_COLOR.paper },
-        line: { color: dark ? "454545" : PPTX_COLOR.line, width: 1 },
-      });
-      slide.addText("VISUAL EXHIBIT", {
-        x: 7.75,
-        y: 2.72,
-        w: 4.1,
-        h: 0.22,
-        fontFace: "Arial",
-        fontSize: 8,
-        bold: true,
-        color: PPTX_COLOR.accent,
-        charSpacing: 1.2,
-      });
-      slide.addText(s.exhibit.replace(/_/g, " "), {
-        x: 7.75,
-        y: 3.1,
-        w: 4.1,
-        h: 0.72,
-        fontFace: "Georgia",
-        fontSize: 18,
-        color: ink,
-        fit: "shrink",
-      });
-      slide.addShape("line", {
-        x: 7.75,
-        y: 4.18,
-        w: 3.8,
-        h: 0,
-        line: { color: PPTX_COLOR.data, width: 2 },
-      });
-      slide.addText("Exhibit is sourced from the structured visual model.", {
-        x: 7.75,
-        y: 4.42,
-        w: 4,
-        h: 0.3,
-        fontFace: "Arial",
-        fontSize: 9,
-        color: muted,
-      });
-    }
-    if (s.speakerNotes) {
-      slide.addNotes(s.speakerNotes);
-    }
-  });
-
-  return (await pptx.write({ outputType: "nodebuffer" })) as Buffer;
-}
-
-/** Exhibit ids actually placed on the deck (for the visual-completeness gate). */
+/** Exhibit ids declared by the slide model; visual credit is decided by the rendered artifact. */
 export function deckExhibits(deck: StorylineDeck): ExhibitId[] {
   return deck.slides
     .map((s) => s.exhibit)
@@ -337,6 +180,10 @@ function esc(s: string | undefined): string {
   return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
 
+function escAttr(s: string | undefined): string {
+  return esc(s).replace(/"/g, "&quot;");
+}
+
 /** Render the storyline deck as a premium self-contained HTML deck. */
 export function renderDeckHtml(deck: StorylineDeck): string {
   const slides = deck.slides
@@ -345,7 +192,7 @@ export function renderDeckHtml(deck: StorylineDeck): string {
         ? `<ul>${s.points.map((p) => `<li>${esc(p)}</li>`).join("")}</ul>`
         : "";
       const exhibit = s.exhibit
-        ? `<div class="exhibit">Exhibit · ${esc(s.exhibit.replace(/_/g, " "))}</div>`
+        ? `<div class="exhibit" data-exhibit="${escAttr(s.exhibit)}">Exhibit · ${esc(s.exhibit.replace(/_/g, " "))}</div>`
         : "";
       const notes = s.speakerNotes
         ? `<div class="notes"><span>Speaker notes</span> ${esc(s.speakerNotes)}</div>`

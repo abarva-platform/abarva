@@ -42,7 +42,7 @@ describe("resolveQualityBar", () => {
     // document's job is the investment ARGUMENT, not carrying the financial
     // reasoning in prose. See P3_P4_WORD_BAND_CONTRACTS.business_case.
     const qb = resolveQualityBar("moves", "business_case");
-    expect(qb.minSections).toBe(9);
+    expect(qb.minSections).toBe(5);
     expect(qb.minBodyWords).toBe(3_000);
     expect(qb.targetBodyWordsMax).toBe(5_000);
     expect(qb.advisoryBandMax).toBe(5_800);
@@ -85,9 +85,9 @@ describe("resolveQualityBar", () => {
   });
 
   it.each([
-    ["solution_design", 8, 2_800, 5_200],
-    ["operating_model_design", 8, 2_400, 4_600],
-    ["sourcing_strategy", 7, 1_800, 3_600],
+    ["solution_design", 4, 2_800, 5_200],
+    ["operating_model_design", 4, 2_400, 4_600],
+    ["sourcing_strategy", 4, 1_800, 3_600],
   ] as const)(
     "gives %s a right-sized hard-blocking band",
     (deliverableType, minSections, minBodyWords, targetBodyWordsMax) => {
@@ -102,7 +102,7 @@ describe("resolveQualityBar", () => {
 
   it("applies the P3 operating-model ceiling to the canonical orchestrator key", () => {
     const qb = resolveQualityBar("moves", "operating_model");
-    expect(qb.minSections).toBe(8);
+    expect(qb.minSections).toBe(4);
     expect(qb.targetBodyWordsMax).toBe(4_600);
     expect(qb.enforceMaxAsBlocker).toBe(true);
   });

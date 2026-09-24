@@ -227,6 +227,28 @@ function repairStructuredChecklist(
   }));
 }
 
+function repairStructuredDeckSlides(
+  deckSlides: RenderableDeliverable["deckSlides"] | undefined,
+): RenderableDeliverable["deckSlides"] | undefined {
+  const repaired = (deckSlides ?? [])
+    .map((slide) => ({
+      ...slide,
+      ...(slide.title
+        ? { title: repairStructuredClientFactText(slide.title) }
+        : {}),
+      governingMessage: repairStructuredClientFactText(slide.governingMessage),
+      points: (slide.points ?? []).map(repairStructuredClientFactText),
+      ...(slide.speakerNotes
+        ? { speakerNotes: repairStructuredClientFactText(slide.speakerNotes) }
+        : {}),
+      citationsUsed: (slide.citationsUsed ?? []).filter((n) =>
+        Number.isFinite(n),
+      ),
+    }))
+    .filter((slide) => slide.governingMessage.trim().length > 0);
+  return repaired.length > 0 ? repaired : undefined;
+}
+
 /**
  * Sections are generated independently (one bounded-parallel model call each), so a
  * section may legitimately mark its OWN missing input inline per the prompt's own
@@ -351,6 +373,7 @@ export interface SynthesisResult {
   subtitle?: string;
   recommendation?: string;
   nextActions?: string[];
+  deckSlides?: RenderableDeliverable["deckSlides"];
   tables?: RenderableTable[];
   exhibits?: RenderableExhibit[];
   clientCompleteChecklist?: RenderableDeliverable["clientCompleteChecklist"];
@@ -420,6 +443,20 @@ function openInputsTable(
 const GENERIC_EXHIBIT_DESCRIPTION =
   /profile-required view|populated from cited evidence|shows the user, ai, human decision|decision implication to confirm/i;
 
+function repairStructuredValue(value: unknown): unknown {
+  if (typeof value === "string") return repairStructuredClientFactText(value);
+  if (Array.isArray(value)) return value.map((item) => repairStructuredValue(item));
+  if (value && typeof value === "object") {
+    return Object.fromEntries(
+      Object.entries(value).map(([key, nested]) => [
+        key,
+        repairStructuredValue(nested),
+      ]),
+    );
+  }
+  return value;
+}
+
 function repairStructuredExhibit(exhibit: RenderableExhibit): RenderableExhibit {
   return {
     key: repairStructuredClientFactText(String(exhibit.key ?? "")),
@@ -429,10 +466,58 @@ function repairStructuredExhibit(exhibit: RenderableExhibit): RenderableExhibit 
       String(exhibit.description ?? ""),
     ),
     targetFormat: exhibit.targetFormat,
+    ...(exhibit.data
+      ? { data: repairStructuredValue(exhibit.data) as RenderableExhibit["data"] }
+      : {}),
   };
 }
 
+function exhibitHasStructuredData(exhibit: RenderableExhibit): boolean {
+  const data = exhibit.data;
+  if (!data || typeof data !== "object") return false;
+  switch (data.kind) {
+    case "flow":
+      return (
+        Array.isArray(data.nodes) &&
+        data.nodes.length >= 2 &&
+        Array.isArray(data.edges) &&
+        data.edges.length >= 1
+      );
+    case "matrix":
+    case "heatmap":
+    case "comparison":
+      return Array.isArray(data.cells) && data.cells.length >= 2;
+    case "timeline":
+    case "roadmap":
+      return (
+        Array.isArray(data.lanes) &&
+        data.lanes.some(
+          (lane) => Array.isArray(lane.items) && lane.items.length > 0,
+        )
+      );
+    case "value_tree":
+      return Boolean(
+        data.root?.label &&
+          Array.isArray(data.branches) &&
+          data.branches.length > 0,
+      );
+    case "conceptual_architecture":
+    case "logical_architecture":
+    case "physical_architecture":
+    case "agent_orchestration":
+      return (
+        Array.isArray(data.lanes) &&
+        data.lanes.some(
+          (lane) => Array.isArray(lane.items) && lane.items.length > 0,
+        )
+      );
+    default:
+      return false;
+  }
+}
+
 function exhibitHasDiagramReadyContent(exhibit: RenderableExhibit): boolean {
+  if (!exhibitHasStructuredData(exhibit)) return false;
   const description = exhibit.description?.trim() ?? "";
   if (!exhibit.key?.trim() || !exhibit.title?.trim() || !description) {
     return false;
@@ -746,6 +831,7 @@ export function assembleDeliverable(
     clientDisplayName: req.clientDisplayName,
     initiativeDisplayName: req.initiativeDisplayName,
     generatedSections,
+    deckSlides: repairStructuredDeckSlides(synth.deckSlides),
     tables,
     exhibits: renderableExhibitsFromSynthesis(synth),
     sourceRegister: buildSourceRegister(evidence, sectionsWithSignals),

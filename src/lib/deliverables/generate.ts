@@ -8,6 +8,7 @@ import { getRecentTurns } from '@/lib/db/turn';
 import { getActivePatterns, getPeerDecisionsForPhase } from '@/lib/graph/retrieval';
 import { getAzureWriteFluentClient } from '@/lib/data-plane/postgresCompat';
 import { generateDeliverable as generateDeliverableV2 } from './v2-generator';
+import { assertDeliverablePolicy } from '@/lib/ai/document-generation-policy';
 
 export interface EngagementCharter {
   problem_statement: string;
@@ -358,25 +359,32 @@ async function loadEngagementClientId(engagementId: string): Promise<string | nu
   return (data as { client_id?: string | null } | null)?.client_id ?? null;
 }
 
-async function runHaiku(args: {
+async function runLegacyDeliverableModel(args: {
   prompt: string;
   tenantId: string;
   workflow: string;
   artifactType: string;
+  deliverableType: string;
   metadata?: Record<string, unknown>;
 }): Promise<Record<string, unknown> | null> {
+  const policy = assertDeliverablePolicy(args.deliverableType);
   const { client } = await getAuditedAnthropicClient({
     tenantId: args.tenantId,
     workflow: args.workflow,
-    model: 'claude-haiku-4-5-20251001',
+    model: policy.model,
     prompt: args.prompt,
     dataClass: 'confidential',
     artifactType: args.artifactType,
-    metadata: args.metadata,
+    metadata: {
+      ...args.metadata,
+      docGenTier: policy.tier,
+      docGenQualityProfile: policy.qualityProfile,
+      maxTokens: policy.maxTokens,
+    },
   });
   const response = await client.messages.create({
-    model: 'claude-haiku-4-5-20251001',
-    max_tokens: 2048,
+    model: policy.model,
+    max_tokens: policy.maxTokens,
     messages: [{ role: 'user', content: args.prompt }],
   });
   const text = response.content
@@ -402,11 +410,12 @@ async function generateLegacyDeliverableForPhase(engagementId: string, phase: nu
 
   if (phase === 0) {
     deliverableType = 'engagement_charter';
-    deliverable = await runHaiku({
+    deliverable = await runLegacyDeliverableModel({
       prompt: assembleCharterPrompt(engagement.name, turnHistory),
       tenantId: clientId,
       workflow: 'legacy-deliverable:engagement_charter',
       artifactType: 'legacy_deliverable',
+      deliverableType,
       metadata: { engagementId, phase, deliverableType: 'engagement_charter' },
     });
     if (deliverable) {
@@ -418,7 +427,7 @@ async function generateLegacyDeliverableForPhase(engagementId: string, phase: nu
   } else if (phase === 1) {
     deliverableType = 'diagnostic_charter';
     const activePatterns = await getActivePatterns(engagement.graph_node_id);
-    deliverable = await runHaiku({
+    deliverable = await runLegacyDeliverableModel({
       prompt: assembleDiagnosticPrompt({
         engagementName: engagement.name,
         charterSummary: engagement.charter
@@ -434,6 +443,7 @@ async function generateLegacyDeliverableForPhase(engagementId: string, phase: nu
       tenantId: clientId,
       workflow: 'legacy-deliverable:diagnostic_charter',
       artifactType: 'legacy_deliverable',
+      deliverableType,
       metadata: { engagementId, phase, deliverableType: 'diagnostic_charter' },
     });
   } else if (phase === 2) {
@@ -441,7 +451,7 @@ async function generateLegacyDeliverableForPhase(engagementId: string, phase: nu
     const deliverables = ((engagement.deliverables as Array<Record<string, unknown>> | null) ?? []);
     const diagnostic = deliverables.find((d) => d.type === 'diagnostic_charter');
     const peerDecisions = await getPeerDecisionsForPhase(engagement.graph_node_id, 2);
-    deliverable = await runHaiku({
+    deliverable = await runLegacyDeliverableModel({
       prompt: assembleSolutionDesignPrompt({
         engagementName: engagement.name,
         diagnosticSummary: diagnostic ? JSON.stringify(diagnostic.content).slice(0, 1500) : 'No diagnostic available',
@@ -455,6 +465,7 @@ async function generateLegacyDeliverableForPhase(engagementId: string, phase: nu
       tenantId: clientId,
       workflow: 'legacy-deliverable:solution_design',
       artifactType: 'legacy_deliverable',
+      deliverableType,
       metadata: { engagementId, phase, deliverableType: 'solution_design' },
     });
     // Also mirror baseline_metrics_proposed into engagements.baseline_metrics
@@ -473,7 +484,7 @@ async function generateLegacyDeliverableForPhase(engagementId: string, phase: nu
       ? JSON.stringify((design.content as { roadmap?: unknown }).roadmap ?? []).slice(0, 1500)
       : 'No roadmap available';
     const decisions = (engagement.decisions as unknown[] | null) ?? [];
-    deliverable = await runHaiku({
+    deliverable = await runLegacyDeliverableModel({
       prompt: assembleExecutionPrompt({
         engagementName: engagement.name,
         roadmap,
@@ -483,6 +494,7 @@ async function generateLegacyDeliverableForPhase(engagementId: string, phase: nu
       tenantId: clientId,
       workflow: 'legacy-deliverable:execution_dashboard',
       artifactType: 'legacy_deliverable',
+      deliverableType,
       metadata: { engagementId, phase, deliverableType: 'execution_dashboard' },
     });
   } else if (phase === 4) {
@@ -495,7 +507,7 @@ async function generateLegacyDeliverableForPhase(engagementId: string, phase: nu
       : 'No fee proposed yet';
     const startedAt = engagement.phase_0_started_at ? new Date(engagement.phase_0_started_at) : new Date(engagement.created_at);
     const durationDays = Math.max(1, Math.floor((Date.now() - startedAt.getTime()) / 86_400_000));
-    deliverable = await runHaiku({
+    deliverable = await runLegacyDeliverableModel({
       prompt: assembleVerificationPrompt({
         engagementName: engagement.name,
         baselineItems: baseline.map((m) => `- ${m.metric}: ${m.baseline_value}`).join('\n') || '- none',
@@ -507,6 +519,7 @@ async function generateLegacyDeliverableForPhase(engagementId: string, phase: nu
       tenantId: clientId,
       workflow: 'legacy-deliverable:outcome_verification',
       artifactType: 'legacy_deliverable',
+      deliverableType,
       metadata: { engagementId, phase, deliverableType: 'outcome_verification' },
     });
     // On successful generation, transition to completed + fee approved

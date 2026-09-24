@@ -290,6 +290,18 @@ describe("HTML preview", () => {
         description:
           "Intake aligns demand; triage routes the right owner; approval records the decision",
         targetFormat: "pptx",
+        data: {
+          kind: "flow",
+          nodes: [
+            { id: "intake", label: "Intake aligns demand" },
+            { id: "triage", label: "Triage routes the right owner" },
+            { id: "approval", label: "Approval records the decision" },
+          ],
+          edges: [
+            { from: "intake", to: "triage" },
+            { from: "triage", to: "approval" },
+          ],
+        },
       },
       {
         key: "choices",
@@ -298,6 +310,32 @@ describe("HTML preview", () => {
         description:
           "Reuse accepted pattern; isolate material exceptions; escalate unresolved gaps; confirm control owner",
         targetFormat: "pptx",
+        data: {
+          kind: "matrix",
+          axes: { x: "Option", y: "Decision implication" },
+          cells: [
+            {
+              x: "Reuse accepted pattern",
+              y: "Lower delivery risk",
+              label: "Reuse accepted pattern",
+            },
+            {
+              x: "Isolate material exceptions",
+              y: "Focused governance",
+              label: "Isolate material exceptions",
+            },
+            {
+              x: "Escalate unresolved gaps",
+              y: "Executive decision needed",
+              label: "Escalate unresolved gaps",
+            },
+            {
+              x: "Confirm control owner",
+              y: "Named accountability",
+              label: "Confirm control owner",
+            },
+          ],
+        },
       },
     ];
 
@@ -308,6 +346,26 @@ describe("HTML preview", () => {
     expect(out).toContain("Decision implication");
     expect(out).not.toContain(">flow</text>");
     expect(out).not.toContain("Implication: matrix");
+  });
+
+  it("does not draw a generic exhibit when structured exhibit data is missing", () => {
+    const doc = goodDocument();
+    doc.exhibits = [
+      {
+        key: "missing_payload",
+        title: "Missing Payload Exhibit",
+        kind: "flow",
+        description:
+          "Intake aligns demand; triage routes the right owner; approval records the decision",
+        targetFormat: "pptx",
+      },
+    ];
+
+    const out = renderDeliverableHtml(doc);
+
+    expect(out).not.toMatch(/class="visual-exhibit"/);
+    expect(out).not.toMatch(/<svg class="exhibit-svg"/);
+    expect(out).not.toContain("Missing Payload Exhibit");
   });
 
   it("renders client-to-complete reason labels, not internal reason codes", () => {
@@ -352,6 +410,39 @@ describe("HTML renderer — roadmap exhibit (REF_EXECUTIVE_ROADMAP)", () => {
         description:
           "Governance cadence set. Core platform integration proven. Agent-assist deployed to one function. Enterprise adoption program.",
         targetFormat: "docx",
+        data: {
+          kind: "roadmap",
+          lanes: [
+            {
+              label: "Governance & Controls",
+              items: [{ label: "Governance cadence set", start: "Mobilize" }],
+            },
+            {
+              label: "Technology",
+              items: [
+                {
+                  label: "Core platform integration proven",
+                  start: "Establish Foundation",
+                },
+              ],
+            },
+            {
+              label: "AI / Automation",
+              items: [
+                {
+                  label: "Agent-assist deployed to one function",
+                  start: "Deliver Priority Outcomes",
+                },
+              ],
+            },
+            {
+              label: "Change & Adoption",
+              items: [
+                { label: "Enterprise adoption program", start: "Scale" },
+              ],
+            },
+          ],
+        },
       },
     ];
     return doc;
@@ -405,7 +496,7 @@ describe("DOCX renderer — visual exhibits", () => {
     );
   });
 
-  it("falls back to a text notice (not a thrown error) when rasterisation fails", async () => {
+  it("omits the exhibit instead of shipping a fallback notice when rasterisation fails", async () => {
     jest.resetModules();
     jest.doMock(
       "@/lib/programs/expert-kernel/exports/board-grade/svg-raster",
@@ -425,7 +516,8 @@ describe("DOCX renderer — visual exhibits", () => {
     );
     const zip = await JSZip.loadAsync(buf);
     const documentXml = await zip.file("word/document.xml")!.async("string");
-    expect(documentXml).toMatch(/exhibit could not be rendered as an image/);
+    expect(documentXml).not.toMatch(/exhibit could not be rendered as an image/);
+    expect(documentXml).not.toMatch(/Service Tower Scope Map/);
     const mediaFiles = Object.keys(zip.files).filter((f) =>
       /^word\/media\//.test(f),
     );
@@ -479,7 +571,7 @@ describe("PDF renderer (MOVES-QUALITY-001)", () => {
     expect(text).toContain("Towers × services.");
   });
 
-  it("falls back to a text notice (not a thrown error) when rasterisation fails", async () => {
+  it("omits the exhibit instead of shipping a fallback notice when rasterisation fails", async () => {
     jest.resetModules();
     jest.doMock(
       "@/lib/programs/expert-kernel/exports/board-grade/svg-raster",
@@ -501,7 +593,8 @@ describe("PDF renderer (MOVES-QUALITY-001)", () => {
     );
     const text = buf.toString("latin1");
     expect(text.startsWith("%PDF-")).toBe(true);
-    expect(text).toContain("exhibit could not be rendered as an image");
+    expect(text).not.toContain("exhibit could not be rendered as an image");
+    expect(text).not.toContain("Service Tower Scope Map");
 
     jest.dontMock(
       "@/lib/programs/expert-kernel/exports/board-grade/svg-raster",
@@ -572,6 +665,43 @@ describe("PPTX renderer (MOVES-QUALITY-003 / Track D)", () => {
     );
     expect(exhibitSlide).toBeDefined();
     expect(exhibitSlide).toContain("Towers");
+
+    const mediaFiles = Object.keys(zip.files).filter((f) =>
+      /^ppt\/media\/.*\.png$/i.test(f),
+    );
+    expect(mediaFiles.length).toBeGreaterThan(0);
+  });
+
+  it("uses authored deck slides instead of deriving PPTX slides from section prose", async () => {
+    const doc = goodDocument();
+    doc.deckSlides = [
+      {
+        key: "decision-story",
+        title: "Decision Story",
+        governingMessage:
+          "Approve the sourcing package because the service scope is decision-ready",
+        points: [
+          "Use the tower scope as the vendor-facing sizing spine.",
+          "Keep transition constraints in the open-input list until confirmed.",
+        ],
+        exhibitKey: "tower_scope_map",
+        speakerNotes: "Evidence traceability stays in speaker notes, not bullets.",
+        citationsUsed: [1, 2],
+      },
+    ];
+
+    const buf = await renderDeliverablePptx(doc);
+    const zip = await JSZip.loadAsync(buf);
+    const slides = await slideXmlFiles(buf);
+    const inDeckTables = doc.tables.filter((t) => t.targetFormat !== "xlsx");
+    expect(slides).toHaveLength(1 + doc.deckSlides.length + inDeckTables.length + 1);
+    const authoredSlide = slides.find((s) =>
+      s.includes("Approve the sourcing package"),
+    );
+    expect(authoredSlide).toBeDefined();
+    expect(authoredSlide).toContain("Use the tower scope");
+    expect(authoredSlide).toContain("Service Tower Scope Map");
+    expect(slides.join("\n")).not.toContain("Executive Overview");
 
     const mediaFiles = Object.keys(zip.files).filter((f) =>
       /^ppt\/media\/.*\.png$/i.test(f),
@@ -667,7 +797,7 @@ describe("PPTX renderer (MOVES-QUALITY-003 / Track D)", () => {
     ).toHaveLength(1);
   });
 
-  it("falls back to a text notice (not a thrown error) when exhibit rasterisation fails", async () => {
+  it("omits the exhibit slide instead of shipping a fallback notice when rasterisation fails", async () => {
     jest.resetModules();
     jest.doMock(
       "@/lib/programs/expert-kernel/exports/board-grade/svg-raster",
@@ -689,7 +819,7 @@ describe("PPTX renderer (MOVES-QUALITY-003 / Track D)", () => {
     const exhibitSlide = slides.find((s) =>
       s.includes("Service Tower Scope Map"),
     );
-    expect(exhibitSlide).toContain("exhibit could not be rendered as an image");
+    expect(exhibitSlide).toBeUndefined();
     const mediaFiles = Object.keys(zip.files).filter((f) =>
       /^ppt\/media\/.+\.(png|jpe?g)$/i.test(f),
     );

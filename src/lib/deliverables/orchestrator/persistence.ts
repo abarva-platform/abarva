@@ -141,13 +141,25 @@ function buildGenerationMetrics(
 }
 
 function renderedVisualsPresent(html: string): boolean {
-  return (
-    /class=["'][^"']*\bvisual-exhibit\b/i.test(html) ||
-    /<svg\b/i.test(html) ||
-    /<table\b/i.test(html) ||
-    /data-exhibit=/i.test(html) ||
-    /class=["'][^"']*\bdeck-exhibit\b/i.test(html)
-  );
+  return /<(?:svg|img|table)\b/i.test(html);
+}
+
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+export function deckExhibitsRenderedAsVisual(
+  html: string,
+  deck: StorylineDeck,
+): ExhibitId[] {
+  return deckExhibits(deck).filter((exhibitId) => {
+    const pattern = new RegExp(
+      `<div\\b[^>]*\\bdata-exhibit=["']${escapeRegExp(exhibitId)}["'][^>]*>[\\s\\S]*?<\\/div>`,
+      "i",
+    );
+    const match = html.match(pattern);
+    return match ? renderedVisualsPresent(match[0]) : false;
+  });
 }
 
 function visibleTextFromHtml(html: string): string {
@@ -275,10 +287,10 @@ export async function persistDeliverable(
     const additionalExhibits: ExhibitId[] = [];
     if (architectureSignals.exhibitsRenderedAsVisual === true)
       additionalExhibits.push(...ARCHITECTURE_RENDERED_EXHIBITS);
-    if (opts.structuredModels?.storylineDeck)
-      additionalExhibits.push(
-        ...deckExhibits(opts.structuredModels.storylineDeck),
-      );
+    const renderedDeckExhibits = opts.structuredModels?.storylineDeck
+      ? deckExhibitsRenderedAsVisual(html, opts.structuredModels.storylineDeck)
+      : [];
+    additionalExhibits.push(...renderedDeckExhibits);
 
     const contractInput = buildContractInput({
       doc,
@@ -298,7 +310,9 @@ export async function persistDeliverable(
       ...contractInput,
       exhibitsRenderedAsVisual:
         architectureSignals.exhibitsRenderedAsVisual ??
-        renderedVisualsPresent(html),
+        (opts.structuredModels?.storylineDeck
+          ? renderedDeckExhibits.length > 0
+          : renderedVisualsPresent(html)),
       ...architectureSignals,
       deliverableKey: contractDeliverableKey,
     });

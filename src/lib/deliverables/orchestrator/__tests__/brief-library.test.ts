@@ -10,6 +10,7 @@ import {
   DELIVERABLE_STRUCTURES,
   getDeliverableStructure,
 } from "../briefs/deliverable-structures";
+import { resolveQualityBar } from "../quality-bar-registry";
 import { amsRfpRequest } from "../__fixtures__/ams-rfp";
 import type { DeliverableIntelligenceRequest } from "../types";
 
@@ -110,7 +111,7 @@ describe("deliverable structures", () => {
   it.each([
     [
       "target_state_architecture",
-      14,
+      7,
       [
         "conceptual_architecture",
         "logical_architecture",
@@ -120,12 +121,12 @@ describe("deliverable structures", () => {
     ],
     [
       "solution_design",
-      8,
+      6,
       ["experience_flow", "component_interaction", "exception_control_flow"],
     ],
-    ["operating_model", 8, ["human_ai_work_split", "decision_rights"]],
+    ["operating_model", 6, ["human_ai_work_split", "decision_rights"]],
     ["requirements_traceability", 5, []],
-    ["sourcing_strategy", 7, ["sourcing_options_matrix"]],
+    ["sourcing_strategy", 5, ["sourcing_options_matrix"]],
   ] as const)(
     "%s has a fixed, purpose-specific structure instead of the generic Moves binder",
     (deliverableType, sectionCount, exhibitKeys) => {
@@ -160,35 +161,21 @@ describe("deliverable structures", () => {
     expect(structure.fixedStructure).toBe(true);
     expect(structure.sections.map((section) => section.key)).toEqual([
       "exec_summary",
-      "decision_required",
       "options_considered",
       "current_state",
       "target_state",
-      "conceptual_architecture",
-      "logical_architecture",
-      "physical_architecture",
-      "agent_orchestration",
-      "data_integration",
-      "security_controls",
-      "implementation_path",
-      "risks",
+      "platform_controls",
+      "implementation_risks",
       "recommendation",
     ]);
     expect(structure.sections.map((section) => section.expertLatitude)).toEqual(
       [
-        "Keep under 450 words. Lead with the architecture decision, why now, and material open inputs.",
-        "Keep under 350 words using a compact decision box.",
-        "Keep under 700 words using an options matrix. Compare at least maintain-status-quo, point-solution automation, and governed intelligence-layer options.",
-        "Keep under 650 words. State only the baseline facts that change the architecture decision.",
-        "Keep under 800 words. Summarize the architecture thesis; do not repeat the exhibits.",
-        "Keep under 900 words plus the conceptual architecture exhibit.",
-        "Keep under 950 words plus the logical architecture exhibit.",
-        "Keep under 1,000 words plus the physical architecture exhibit. Mark unknown provider/service choices as open inputs, not defaults.",
-        "Keep under 900 words plus one orchestration flow exhibit.",
-        "Keep under 750 words using an integration-contract table.",
-        "Keep under 700 words using a controls table.",
-        "Keep under 650 words. Sequence architecture decisions only; do not become a project plan.",
-        "Keep under 650 words using a risk/dependency table.",
+        "Keep under 450 words. State the decision once; do not preview every later section.",
+        "Keep under 650 words using an options matrix. Do not invent three options when only one credible pattern exists.",
+        "Keep under 500 words. State only facts that change the architecture decision; put missing facts in open inputs.",
+        "Keep under 750 words plus the required architecture exhibits. Explain what each exhibit proves; do not repeat its labels as prose.",
+        "Keep under 650 words using one compact controls/integration table. Mark provider/service choices as selected, illustrative, or open input.",
+        "Keep under 600 words using a risk/dependency table. Sequence architecture decisions only; do not become a project plan.",
         "Keep under 250 words. End with approve / revise / hold and named next actions.",
       ],
     );
@@ -196,40 +183,72 @@ describe("deliverable structures", () => {
       const n = section.expertLatitude.match(/under ([\d,]+) words/i)?.[1];
       return sum + (n ? Number(n.replace(/,/g, "")) : 0);
     }, 0);
-    expect(authoredBudget).toBeLessThan(16_000);
-    expect(structure.requiredSectionKeys).toContain("options_considered");
+    expect(authoredBudget).toBeLessThan(5_000);
+    expect(structure.requiredSectionKeys).toEqual([
+      "exec_summary",
+      "current_state",
+      "target_state",
+      "recommendation",
+    ]);
+    expect(structure.requiredSectionKeys).not.toContain("options_considered");
   });
 
   it("keeps solution-design authoring budgets below the hard export ceiling", () => {
     const structure = getDeliverableStructure("moves", "solution_design")!;
+    expect(structure.sections.map((section) => section.key)).toEqual([
+      "exec_decision",
+      "journey_workflow",
+      "solution_components",
+      "controls_operability",
+      "acceptance_traceability",
+      "recommendation",
+    ]);
     expect(structure.sections.map((section) => section.expertLatitude)).toEqual(
       [
         "Keep under 300 words; lead with the decision and do not restate the full architecture.",
         "Keep under 450 words plus one workflow exhibit.",
-        "Keep under 550 words plus a component interaction exhibit.",
-        "Keep under 500 words; use a compact contract table.",
-        "Keep under 450 words plus one exception/control exhibit.",
-        "Keep under 450 words; distinguish confirmed requirements from open decisions.",
+        "Keep under 700 words plus a component interaction exhibit. Use one compact responsibility/contract table; do not write separate component and data essays.",
+        "Keep under 650 words plus one exception/control exhibit. Distinguish confirmed requirements from open decisions.",
         "Keep under 450 words using concise tables.",
         "Keep under 150 words.",
       ],
     );
+    expect(structure.requiredSectionKeys).toEqual([
+      "exec_decision",
+      "solution_components",
+      "acceptance_traceability",
+      "recommendation",
+    ]);
+    expect(structure.requiredSectionKeys).not.toContain("journey_workflow");
   });
 
   it("keeps operating-model authoring budgets below the hard export ceiling", () => {
     const structure = getDeliverableStructure("moves", "operating_model")!;
+    expect(structure.sections.map((section) => section.key)).toEqual([
+      "exec_decision",
+      "work_split_controls",
+      "roles_cadence",
+      "adoption",
+      "risks_open",
+      "recommendation",
+    ]);
     expect(structure.sections.map((section) => section.expertLatitude)).toEqual(
       [
         "Keep under 300 words.",
-        "Keep under 500 words plus one exhibit.",
-        "Keep under 600 words using role and RACI tables.",
-        "Keep under 550 words plus one decision-rights exhibit.",
-        "Keep under 500 words using a cadence table.",
+        "Keep under 750 words plus both operating exhibits. Use one compact work-split table and one decision-rights table.",
+        "Keep under 700 words using role/RACI and cadence tables; no narrative role biographies.",
         "Keep under 450 words; tie each action to the changed process and measure.",
         "Keep under 400 words using concise tables.",
         "Keep under 120 words.",
       ],
     );
+    expect(structure.requiredSectionKeys).toEqual([
+      "exec_decision",
+      "work_split_controls",
+      "roles_cadence",
+      "recommendation",
+    ]);
+    expect(structure.requiredSectionKeys).not.toContain("adoption");
   });
 
   it("keeps requirements-traceability as a compact control matrix below its hard ceiling", () => {
@@ -256,18 +275,100 @@ describe("deliverable structures", () => {
 
   it("keeps sourcing-strategy authoring budgets below the hard export ceiling", () => {
     const structure = getDeliverableStructure("moves", "sourcing_strategy")!;
+    expect(structure.sections.map((section) => section.key)).toEqual([
+      "exec_decision",
+      "scope_options",
+      "evaluation_guardrails",
+      "delivery_risks",
+      "recommendation",
+    ]);
     expect(structure.sections.map((section) => section.expertLatitude)).toEqual(
       [
         "Keep under 200 words.",
-        "Keep under 325 words using a capability table.",
-        "Keep under 425 words plus one options matrix.",
+        "Keep under 650 words plus one options matrix. Use a capability/options table; do not split capability boundary and options into separate essays.",
         "Keep under 350 words using compact criteria and guardrail tables.",
-        "Keep under 325 words.",
-        "Keep under 275 words using a single table.",
+        "Keep under 500 words using one delivery/risk/input table.",
         "Keep under 80 words.",
       ],
     );
+    expect(structure.requiredSectionKeys).toEqual([
+      "exec_decision",
+      "scope_options",
+      "evaluation_guardrails",
+      "recommendation",
+    ]);
+    expect(structure.requiredSectionKeys).not.toContain("delivery_risks");
   });
+
+  it("keeps business-case structure concise and avoids duplicated decision sections", () => {
+    const structure = getDeliverableStructure("moves", "business_case")!;
+    const brief = getArtifactBrief(
+      req({
+        module: "moves",
+        deliverableType: "business_case",
+        useCaseArchetype: "AI_PDLC",
+      }),
+    );
+
+    expect(structure.sections.map((section) => section.key)).toEqual([
+      "exec_summary",
+      "decision_required",
+      "current_state",
+      "options",
+      "value_hypothesis",
+      "risks",
+    ]);
+    expect(structure.sections.map((section) => section.title)).toEqual([
+      "Executive Answer",
+      "Funding Decision & Recommendation",
+      "Baseline, Problem & Opportunity",
+      "Options, Trade-Offs & Recommended Path",
+      "Economics & Value Case",
+      "Risks, Conditions & Evidence Gaps",
+    ]);
+    expect(brief.recommendedStructure).toHaveLength(6);
+    expect(structure.requiredSectionKeys).toEqual([
+      "exec_summary",
+      "decision_required",
+      "current_state",
+      "value_hypothesis",
+      "risks",
+    ]);
+    expect(brief.optionalSections).toEqual(["options"]);
+    expect(resolveQualityBar("moves", "business_case").minSections).toBe(
+      structure.requiredSectionKeys.length,
+    );
+    expect(structure.sections.map((section) => section.key)).not.toEqual(
+      expect.arrayContaining([
+        "problem_opportunity",
+        "cost_model",
+        "financials",
+        "recommendation",
+      ]),
+    );
+    expect((structure.prohibitedContent ?? []).join(" ")).toMatch(
+      /Do not add separate Problem \/ Opportunity, Cost Model, Financial Summary, or Recommendation sections/,
+    );
+  });
+
+  it.each([
+    "business_case",
+    "target_state_architecture",
+    "solution_design",
+    "operating_model",
+    "sourcing_strategy",
+  ] as const)(
+    "%s quality floor follows required sections, not optional section count",
+    (deliverableType) => {
+      const structure = getDeliverableStructure("moves", deliverableType)!;
+      expect(structure.sections.length).toBeGreaterThan(
+        structure.requiredSectionKeys.length,
+      );
+      expect(resolveQualityBar("moves", deliverableType).minSections).toBe(
+        structure.requiredSectionKeys.length,
+      );
+    },
+  );
 
   it("keeps P4 estimate, value, and readiness instruments fixed, compact, and evidence-gated", () => {
     const estimate = getDeliverableStructure("moves", "estimate_model")!;

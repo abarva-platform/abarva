@@ -1,9 +1,16 @@
 export {};
 
-import { persistDeliverable } from "../persistence";
+import {
+  deckExhibitsRenderedAsVisual,
+  persistDeliverable,
+} from "../persistence";
 import type { OrchestrationResult } from "../orchestrator";
 import type { RenderableDeliverable } from "../types";
 import type { TenantAiPolicy } from "@/lib/integrations/ai-egress";
+import {
+  renderDeckHtml,
+  type StorylineDeck,
+} from "@/lib/visual-system/storyline-deck";
 
 function doc(): RenderableDeliverable {
   return {
@@ -59,16 +66,59 @@ const opts = (extra: Record<string, unknown>) => ({
 });
 
 function captureSave() {
-  const captured: { html?: string; outputFormat?: string } = {};
+  const captured: {
+    html?: string;
+    outputFormat?: string;
+    quarantined?: boolean;
+    quarantineReason?: string | null;
+  } = {};
   const save = (async (
     _input: unknown,
-    rendered: { html: string; outputFormat: string },
+    rendered: {
+      html: string;
+      outputFormat: string;
+      quarantined?: boolean;
+      quarantineReason?: string | null;
+    },
   ) => {
     captured.html = rendered.html;
     captured.outputFormat = rendered.outputFormat;
+    captured.quarantined = rendered.quarantined;
+    captured.quarantineReason = rendered.quarantineReason;
     return { id: "a1", outputFormat: rendered.outputFormat } as never;
   }) as never;
   return { captured, save };
+}
+
+function storylineDeck(): StorylineDeck {
+  return {
+    engagement: "Synthetic operating move",
+    client: "Synthetic cover tenant",
+    title: "Executive Handoff",
+    slides: [
+      {
+        kind: "decision_headline",
+        governingMessage:
+          "The evidence supports moving from pilot to controlled execution",
+        exhibit: "decision_headline",
+      },
+      {
+        kind: "value",
+        governingMessage: "The value story depends on adoption and controls",
+        exhibit: "value_story",
+      },
+      {
+        kind: "roadmap",
+        governingMessage: "Delivery should sequence foundation before scale",
+        exhibit: "roadmap_lanes",
+      },
+      {
+        kind: "risks",
+        governingMessage: "Risk mitigation must be owned from day one",
+        exhibit: "risks_and_mitigations",
+      },
+    ],
+  };
 }
 
 describe("persistDeliverable — flag-gated decision-storytelling deck", () => {
@@ -90,5 +140,45 @@ describe("persistDeliverable — flag-gated decision-storytelling deck", () => {
     await persistDeliverable(result(), opts({}), { save });
     expect(captured.outputFormat).toBe("docx"); // business_case prescribed format, unchanged
     expect(captured.html).not.toContain("AbarVa · Moves"); // not the deck chrome
+  });
+
+  it("does not count deck exhibit labels as rendered visuals", () => {
+    const deck = storylineDeck();
+    const html = renderDeckHtml(deck);
+    expect(html).toContain('data-exhibit="decision_headline"');
+    expect(deckExhibitsRenderedAsVisual(html, deck)).toEqual([]);
+  });
+
+  it("credits only visuals inside the matching exhibit block", () => {
+    const deck = storylineDeck();
+    const html = renderDeckHtml(deck);
+    const outsideVisual = `<svg aria-label="unrelated"></svg>${html}`;
+    expect(deckExhibitsRenderedAsVisual(outsideVisual, deck)).toEqual([]);
+
+    const inlineVisual = html.replace(
+      'data-exhibit="decision_headline">Exhibit',
+      'data-exhibit="decision_headline"><svg aria-label="real exhibit"></svg>Exhibit',
+    );
+    expect(deckExhibitsRenderedAsVisual(inlineVisual, deck)).toEqual([
+      "decision_headline",
+    ]);
+  });
+
+  it("quarantines a profile-rendered storyline deck when exhibits are labels only", async () => {
+    const { captured, save } = captureSave();
+    await persistDeliverable(
+      result(),
+      opts({
+        deliverableTypeKey: "handoff_package",
+        outputFormat: "pptx",
+        renderViaProfile: true,
+        structuredModels: { storylineDeck: storylineDeck() },
+      }),
+      { save },
+    );
+
+    expect(captured.outputFormat).toBe("pptx");
+    expect(captured.quarantined).toBe(true);
+    expect(captured.quarantineReason).toMatch(/blocked_missing/);
   });
 });

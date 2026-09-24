@@ -126,12 +126,44 @@ describe("persistDeliverable — quality contract enforcement", () => {
         "exception_handling",
         "control_points",
         "data_flow",
-      ].map((key) => ({
+      ].map((key, index) => ({
         key,
         title: key.replaceAll("_", " "),
         kind: "flow" as const,
         description: `Governed ${key.replaceAll("_", " ")} view.`,
         targetFormat: "html" as const,
+        data: {
+          kind: "flow" as const,
+          nodes: [
+            {
+              id: `${key}-start`,
+              label: key.replaceAll("_", " "),
+              role: "start",
+            },
+            {
+              id: `${key}-control`,
+              label: `Control point ${index + 1}`,
+              role: "review",
+            },
+            {
+              id: `${key}-done`,
+              label: "Accepted output",
+              role: "decision",
+            },
+          ],
+          edges: [
+            {
+              from: `${key}-start`,
+              to: `${key}-control`,
+              label: "passes through",
+            },
+            {
+              from: `${key}-control`,
+              to: `${key}-done`,
+              label: "approves",
+            },
+          ],
+        },
       })),
     };
 
