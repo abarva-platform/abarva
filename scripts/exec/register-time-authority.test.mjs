@@ -34,6 +34,7 @@ import {
   recomputeCueSurface,
   cueSurfaceDivergences,
 } from "./register-time-authority.mjs";
+import * as control from "./register-time-authority.mjs";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const CONTROL = path.join(HERE, "register-time-authority.mjs");
@@ -3999,6 +4000,294 @@ const T747_LIVE_LINE_SHA256 =
     pathRight.unit === "words" && pathRight.bound === 8 && pathRight.item === "T-747",
     JSON.stringify(pathRight),
   );
+}
+
+
+{
+  // ------------------------------------------------------------------
+  // T-717 — THE TWO HALVES' VOCABULARIES, MEASURED RATHER THAN DECIDED.
+  //
+  // T-747 published the coverage surface: eight `half x cue x direction`
+  // cells, seven covered, one open. Coverage is not vocabulary. A cell can
+  // be covered in BOTH halves and still read different words, which is the
+  // divergence T-717 filed and which no assertion in this file constrains
+  // today — so the item's `Measure first` clause is the undelivered half.
+  //
+  // Every observation below is re-derived by running a rendering of the same
+  // narrative form through the real parser, once about an item id and once
+  // about a repo path. Nothing asks the module what it believes.
+  // ------------------------------------------------------------------
+  const forms = control.recomputeCueVocabulary?.();
+  check(
+    "the cue vocabulary is recomputed form by form, both halves per form",
+    Array.isArray(forms) &&
+      forms.length >= 20 &&
+      forms.every(
+        (f) =>
+          typeof f.form === "string" &&
+          ["negation", "attribution"].includes(f.cue) &&
+          ["left", "right"].includes(f.governs) &&
+          typeof f.observed?.item === "boolean" &&
+          typeof f.observed?.path === "boolean",
+      ),
+    `forms=${Array.isArray(forms) ? forms.length : typeof forms}`,
+  );
+
+  // A DECLARED reading that the parser does not produce is the same defect
+  // the cue surface exists against, one level down. Declared vs observed,
+  // per form per half.
+  // Each of the three assertions below filters a list, so each is a VACUOUS
+  // PASS while that list is empty — which is exactly the state before the
+  // export exists. Every one carries its own non-emptiness in the condition.
+  const mismatched = (forms ?? []).filter(
+    (f) => f.reads.item !== f.observed.item || f.reads.path !== f.observed.path,
+  );
+  check(
+    "every declared per-half reading matches what that half's parser observes",
+    (forms?.length ?? 0) > 0 && mismatched.length === 0,
+    mismatched
+      .map(
+        (f) =>
+          `${f.form} declared item=${f.reads.item}/path=${f.reads.path} observed item=${f.observed.item}/path=${f.observed.path}`,
+      )
+      .join("\n"),
+  );
+
+  // A PROBE WITH NO SUBJECT IN IT cannot be evidence of anything: the veto
+  // "fires" because the parser never found the thing to veto. One of T-555's
+  // nine byte-scan cases was exactly that, so each rendering is required to
+  // contain the subject it is written about.
+  const subjectless = (forms ?? []).filter(
+    (f) =>
+      !f.rendering.item.includes(control.CUE_SURFACE_SUBJECTS.item) ||
+      !f.rendering.path.includes(control.CUE_SURFACE_SUBJECTS.path),
+  );
+  check(
+    "every rendering contains the subject it is written about",
+    (forms?.length ?? 0) > 0 && subjectless.length === 0,
+    subjectless.map((f) => `${f.form}: ${f.rendering.item} | ${f.rendering.path}`).join("\n"),
+  );
+
+  // A form neither half reads is not either half's vocabulary and constrains
+  // nothing — the shape T-709's `no longer claimed` taught.
+  const deadForms = (forms ?? []).filter((f) => !f.observed.item && !f.observed.path);
+  check(
+    "no form is dead vocabulary in both halves at once",
+    (forms?.length ?? 0) > 0 && deadForms.length === 0,
+    deadForms.map((f) => f.form).join(", "),
+  );
+
+  // THE MEASUREMENT THE ITEM ASKS FOR, at form level: which forms one half
+  // reads and the other does not. The count is not asserted as a constant —
+  // it moves when either half is widened, which is the point — but the two
+  // forms the item filed BY NAME must be in it, and their direction matters.
+  const divergent = control.cueVocabularyDivergences?.() ?? [];
+  check(
+    "the copular cross-reference is read by the item half and NOT by the path half",
+    divergent.some(
+      (d) => d.form === "copula-is-already" && d.readBy === "item" && d.missingFrom === "path",
+    ),
+    JSON.stringify(divergent.filter((d) => d.form === "copula-is-already")),
+  );
+  check(
+    "the explicit-agent attribution is read by the path half and NOT by the item half",
+    divergent.some(
+      (d) => d.form === "explicit-agent-held-by" && d.readBy === "path" && d.missingFrom === "item",
+    ),
+    JSON.stringify(divergent.filter((d) => d.form === "explicit-agent-held-by")),
+  );
+  check(
+    "divergence is reported in both directions, not only from one half",
+    new Set(divergent.map((d) => d.readBy)).size === 2,
+    JSON.stringify([...new Set(divergent.map((d) => d.readBy))]),
+  );
+
+  // ------------------------------------------------------------------
+  // VERDICT MOVEMENT. A form-level table says the vocabularies differ; it
+  // does not say what converging would COST. That is a count of subjects
+  // whose hold changes, and the item forbids widening either half without
+  // it. Measured over a fixture here — a control whose truth comes from its
+  // own subject cannot fail (T-460, T-467) — and over the live register
+  // opportunistically from the CLI, never as a precondition (T-739).
+  // ------------------------------------------------------------------
+  const moved = control.crossHalfCueMovement?.([
+    // 1. an item the item half HOLDS, which the path half's negator vocabulary
+    //    would free: `excluding` is in one list and not the other.
+    "item T-800 claimed — excluding item T-801 entirely",
+    // 2. a path the path half HOLDS, which the item half's copula would free.
+    "the placement is already scripts/exec/probe-b.mjs",
+    // 3. NEGATIVE CONTROL: a genuine files list. Nothing may free this.
+    "item T-802 claimed — files: scripts/exec/probe-c.mjs",
+    // 4. NEGATIVE CONTROL: a genuine claim in the sanctioned voice.
+    "item T-803 claimed on branch `exec/x` — taking it",
+    // 5 and 6. NEGATIVE CONTROLS FOR THE MEASUREMENT'S OWN MEANING. Each of
+    //    these is ALREADY free under its own half's cue, and the borrowed cue
+    //    fires on it too — `not` is the one lemma both negation vocabularies
+    //    share. A subject that is already free cannot MOVE, so counting it
+    //    would inflate the cost of converging with subjects convergence does
+    //    not touch. A mutation dropping the held-today guard survived every
+    //    other case in this block, which is how these two were found.
+    "not scripts/exec/probe-d.mjs",
+    "not item T-804",
+  ]);
+  const cellFor = (half, cue, governs) =>
+    (moved?.cells ?? []).find(
+      (c) => c.half === half && c.cue === cue && c.governs === governs,
+    );
+  check(
+    "movement is reported per cell, one cell per half x cue x direction",
+    (moved?.cells?.length ?? 0) === 8 &&
+      new Set(moved.cells.map((c) => `${c.half}/${c.cue}/${c.governs}`)).size === 8,
+    `cells=${moved?.cells?.length}`,
+  );
+  check(
+    "an item the path half's negator vocabulary would free is reported, with its line",
+    cellFor("item", "negation", "left")?.freed.some(
+      (f) => f.subject === "T-801" && f.index === 0,
+    ) === true,
+    JSON.stringify(cellFor("item", "negation", "left")?.freed),
+  );
+  check(
+    "a path the item half's copula would free is reported, with its line",
+    cellFor("path", "attribution", "left")?.freed.some(
+      (f) => f.subject === "scripts/exec/probe-b.mjs" && f.index === 1,
+    ) === true,
+    JSON.stringify(cellFor("path", "attribution", "left")?.freed),
+  );
+  // THE NEGATIVE CONTROLS, pinned across EVERY cell rather than the one
+  // under test: a measurement that frees a genuine claim would be read as a
+  // reason to converge, and converging on it is two runs editing one file.
+  const everyFreed = (moved?.cells ?? []).flatMap((c) =>
+    c.freed.map((f) => `${c.half}/${c.cue}/${c.governs}:${f.subject}`),
+  );
+  check(
+    "no genuine files: list is freed by any cell",
+    (moved?.cells?.length ?? 0) === 8 && !everyFreed.some((k) => k.endsWith("scripts/exec/probe-c.mjs")),
+    everyFreed.filter((k) => k.endsWith("probe-c.mjs")).join(", "),
+  );
+  check(
+    "a subject already free under its own cue is not counted as moving",
+    (moved?.cells?.length ?? 0) === 8 &&
+      !everyFreed.some((k) => k.endsWith("scripts/exec/probe-d.mjs") || k.endsWith(":T-804")),
+    everyFreed.filter((k) => /probe-d\.mjs$|:T-804$/.test(k)).join(", "),
+  );
+  check(
+    "no genuine claim in the sanctioned voice is freed by any cell",
+    (moved?.cells?.length ?? 0) === 8 && !everyFreed.some((k) => k.endsWith(":T-803") || k.endsWith(":T-800") || k.endsWith(":T-802")),
+    everyFreed.filter((k) => /T-80[023]$/.test(k)).join(", "),
+  );
+  // The item half has no right-governing attribution cue at all, so the
+  // PATH half can borrow nothing for that cell. An empty cell here is a
+  // consequence of the open asymmetry and not an absence of measurement —
+  // asserted so that closing the asymmetry fails this line loudly.
+  check(
+    "the path half's right-attribution cell is empty because the item half has no such cue",
+    cellFor("path", "attribution", "right")?.borrowable === false,
+    JSON.stringify(cellFor("path", "attribution", "right")),
+  );
+}
+
+{
+  // ------------------------------------------------------------------
+  // T-717 — WHY CONVERGENCE IS REFUSED, pinned as a mechanism rather than
+  // recorded as an opinion.
+  //
+  // The path half's negation vocabulary contains `released` and `releasing`.
+  // For a PATH that is correct: a path named in a release is being handed
+  // back. For an ITEM it is destructive, because an item named in a release
+  // IS the release's subject — `resolveItemClaim` finds a release only among
+  // the lines whose subject set contains the item. Veto the subject and the
+  // release stops existing, the older claim line decides, and the item reads
+  // as held by an owner who has already let it go. A false refusal on the act
+  // that frees work is the worst direction in this family (T-725).
+  //
+  // Demonstrated below with the item half's EXISTING vocabulary — no veto is
+  // widened to show it — so the assertion stands on the parser as shipped.
+  // ------------------------------------------------------------------
+  const nowMs = Date.parse("2026-09-24T02:00:00Z");
+  const claimLine =
+    "2026-09-24T01:00:00Z | other-agent#1 | item T-900 claimed on branch `x` — taking it";
+  const parse = (lines) => parseRegisterLines(lines.join("\n"));
+  const ask = (lines) =>
+    control.resolveItemClaim(parse(lines), {
+      itemId: "T-900",
+      identity: "me#1",
+      nowMs,
+      windowHours: 3,
+    });
+
+  const visible = ask([
+    claimLine,
+    "2026-09-24T01:30:00Z | other-agent#1 | RELEASED item T-900 — merged, all files free",
+  ]);
+  check(
+    "a release whose subject the item half still names frees the item",
+    visible.verdict === "take" && visible.refuses === false,
+    `${visible.verdict} / ${visible.reason}`,
+  );
+  const vetoed = ask([
+    claimLine,
+    "2026-09-24T01:30:00Z | other-agent#1 | RELEASED — another run holds item T-900, merged, all files free",
+  ]);
+  check(
+    "a release whose subject ANY item-half cue vetoes stops freeing the item — the cost of converging",
+    vetoed.verdict === "held-by-another" && vetoed.refuses === true,
+    `${vetoed.verdict} / ${vetoed.reason}`,
+  );
+
+  // So the lemma is pinned OUT of the item half, with its reason attached.
+  // If a later item widens the item half's negation vocabulary to include it,
+  // this fails rather than 103 ids quietly becoming unreleasable.
+  check(
+    "the item half does NOT read `released` in front of an id, and must not",
+    itemSubjects("RELEASED item T-900 — merged").some((id) => id.base === "T-900"),
+    JSON.stringify(itemSubjects("RELEASED item T-900 — merged")),
+  );
+  check(
+    "the path half DOES read `released` in front of a path, which is correct for a path",
+    claimedPaths("released scripts/exec/probe-a.mjs").length === 0,
+    JSON.stringify(claimedPaths("released scripts/exec/probe-a.mjs")),
+  );
+
+  // ------------------------------------------------------------------
+  // The CLI, because a measurement nobody can re-run is a paragraph.
+  // Read-only, and a register is OPTIONAL — a live corpus is an opportunistic
+  // replay, never a precondition (T-739), so the no-register path must exit 0
+  // rather than inverting the control the moment the file is unavailable.
+  // ------------------------------------------------------------------
+  const noFile = run(["--cross-cues"]);
+  check(
+    "--cross-cues with no register prints the form table and exits 0",
+    noFile.status === 0 &&
+      /CUE VOCABULARY/.test(noFile.stdout) &&
+      /NOT MEASURED/.test(noFile.stdout),
+    `status=${noFile.status}`,
+  );
+  const fx = fixture([
+    "2026-09-24T01:00:00Z | other-agent#1 | item T-901 claimed — excluding item T-902 entirely",
+    "2026-09-24T01:05:00Z | other-agent#1 | the placement is already scripts/exec/probe-b.mjs",
+  ]);
+  const withFile = run(["--cross-cues", "--file", fx.file, "--json"]);
+  let payload = null;
+  try {
+    payload = JSON.parse(withFile.stdout);
+  } catch {
+    payload = null;
+  }
+  check(
+    "--cross-cues --json over a register reports both halves and its own scope",
+    withFile.status === 0 &&
+      payload?.movement?.cells?.length === 8 &&
+      payload.movement.measuredLines === 2 &&
+      typeof payload.movement.scope === "string",
+    `status=${withFile.status} lines=${payload?.movement?.measuredLines}`,
+  );
+  check(
+    "the register is read, never written — its bytes are unchanged afterwards",
+    fs.readFileSync(fx.file, "utf8").includes("excluding item T-902"),
+    "register was modified",
+  );
+  fs.rmSync(fx.dir, { recursive: true, force: true });
 }
 
 console.log(`\n${passes} passed, ${failures} failed`);
