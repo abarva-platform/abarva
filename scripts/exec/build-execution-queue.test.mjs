@@ -3101,7 +3101,6 @@ const UNPLACED_ROW = /could not place/i;
   const { board, queue } = buildQueueOverUnplaceableIds(dir);
   const rendered = fs.readFileSync(path.join(dir, "EXECUTION_QUEUE.md"), "utf8");
   const truth = boardTruth(dir);
-  const rows = funnelRows(rendered);
   const zeroRow = funnelRow(rendered, UNPLACED_ROW);
   const zeroUnparsedRow = funnelRow(rendered, UNPARSED_ROW);
   check(
