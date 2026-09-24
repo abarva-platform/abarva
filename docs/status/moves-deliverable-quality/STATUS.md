@@ -1,9 +1,9 @@
 # Moves Deliverable Quality - Status
 
-**Updated:** 2026-09-24T14:07:00Z
+**Updated:** 2026-09-24T14:38:00Z
 **Agent:** codex
 **Branch:** codex/moves-deliverable-quality-rebuild
-**Head:** f8ab86d37
+**Head:** PR #8421 branch head
 
 ## Now
 
@@ -19,8 +19,8 @@ slice. No deployment, data-plane mutation, or live tenant write is in scope for 
 | 2 | Structured exhibit data and no generic visual fallback | pr_open | PR #8421; `RenderableExhibit` now carries typed `data`; prompt asks for concrete drawable values; renderers omit missing-data exhibits instead of inventing generic diagrams; generated HTML/DOCX/PPTX proof confirms missing-data exhibit is omitted. |
 | 3 | Model-authored storyline slides | pr_open | PR #8421 adds optional authored `deckSlides` to the renderable artifact contract; PPTX uses authored slide message/points/notes/exhibit links when present. Generated proof: `/tmp/moves-deliverable-quality-proof/authored-slide-proof-summary.json`. |
 | 4 | Section elasticity for over-sectioned structures | pr_open | PR #8421 compresses Target Architecture from 14 sections / 10 required to 7 sections / 4 required while preserving architecture exhibits. `brief-library` and adaptive-depth tests pass. |
-| 5 | Red-test diagnosis | not_started | Pre-existing red suites named in the brief have not yet been diagnosed in this branch. |
-| 6 | Legacy small-model document route reachability | not_started | No production reachability check in this branch. |
+| 5 | Red-test diagnosis | pr_open | PR #8421; the named visual-gate/storyline/render preview suites now pass on this branch without widening the visual-credit gate. |
+| 6 | Legacy small-model document route reachability | pr_open | PR #8421; code inspection confirms `POST /api/engage/[engagementId]/turn` still calls `generateDeliverableForPhase()` after gate approval. The legacy fallback now resolves through central document-generation policy instead of a hardcoded small model / 2,048-token call. |
 | 7 | Golden-bar signal measurement before enforcement | pr_open | PR #8421 adds report-only `moves:measure-golden-bar-signals` runner over caller-provided artifact exports. Production corpus measurement not run in this branch. |
 | 8 | Human exemplars, judge, and calibration corpus | not_started | Requires human-owned exemplars before judge work can be meaningful. |
 
@@ -28,10 +28,11 @@ slice. No deployment, data-plane mutation, or live tenant write is in scope for 
 
 | Metric | Value | Notes |
 |--------|-------|-------|
-| Focused orchestrator tests | 65/65 passing | `persistence-deck`, `renderers`, and `section-generation` suites |
+| Focused quality tests | 123/123 passing | `persistence-deck`, `renderers`, `section-generation`, `brief-library`, adaptive-depth, legacy policy, storyline-deck, and story-visual-gate suites |
 | Targeted ESLint | passing | Changed orchestrator/storyline files only |
 | Generated artifact proof | passed | `/tmp/moves-deliverable-quality-proof/proof-summary.json`; structured exhibit rendered, missing-data exhibit omitted |
 | Authored-slide artifact proof | passed | `/tmp/moves-deliverable-quality-proof/authored-slide-proof-summary.json`; authored slide rendered with linked exhibit and speaker notes |
+| Legacy route model policy | passed | Code inspection confirmed route reachability; regression test covers legacy fallback policy and forbids the hardcoded small-model / 2,048-token path |
 | Production data-plane writes | 0 | Not in scope |
 | Deployments | 0 | Not in scope |
 

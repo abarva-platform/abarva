@@ -41,6 +41,8 @@ or unsupported exhibit data is reported as a gap instead of being replaced by a 
   of separate generated essays.
 - Adds focused negative tests for label-only and out-of-scope exhibit markers.
 - Adds a report-only golden-bar signal measurement runner over caller-provided artifact exports.
+- Routes the reachable legacy engagement-deliverable fallback through central document-generation
+  policy instead of a hardcoded small-model / 2,048-token call.
 - Adds a status ledger under `docs/status/moves-deliverable-quality/STATUS.md`.
 
 ## QA / Validation
@@ -50,6 +52,8 @@ or unsupported exhibit data is reported as a gap instead of being replaced by a 
 - `./node_modules/.bin/eslint scripts/moves/measure-golden-bar-signals.ts` — passed.
 - `NODE_OPTIONS=--max-old-space-size=8192 ./node_modules/.bin/tsc --noEmit -p tsconfig.json --pretty false` — passed.
 - `./node_modules/.bin/jest --runTestsByPath src/lib/deliverables/orchestrator/__tests__/brief-library.test.ts src/lib/deliverables/__tests__/adaptive-depth.test.ts --runInBand` — passed, 37/37 tests.
+- `./node_modules/.bin/jest --runTestsByPath src/lib/deliverables/__tests__/legacy-generate-policy.test.ts --runInBand` — passed, 2/2 tests.
+- `./node_modules/.bin/jest --runTestsByPath src/lib/deliverables/orchestrator/__tests__/persistence-deck.test.ts src/lib/deliverables/orchestrator/__tests__/renderers.test.ts src/lib/deliverables/orchestrator/__tests__/section-generation.test.ts src/lib/deliverables/orchestrator/__tests__/brief-library.test.ts src/lib/deliverables/__tests__/adaptive-depth.test.ts src/lib/deliverables/__tests__/legacy-generate-policy.test.ts src/lib/visual-system/__tests__/storyline-deck.test.ts src/lib/deliverables/quality/__tests__/story-visual-gate.test.ts --runInBand` — passed, 123/123 tests.
 - `npm run moves:measure-golden-bar-signals -- --input /tmp/moves-golden-bar-sample.json --out /tmp/moves-golden-bar-report.json --since-days 90` — passed on a local two-record sample; detected duplicate headings and unsupported quantified claims only on the in-window artifact.
 - Generated artifact proof under `/tmp/moves-deliverable-quality-proof`: structured exhibit generated HTML/DOCX/PPTX with rendered visual content; missing-data exhibit did not appear in generated HTML/DOCX/PPTX and no rasterisation-failure notice was shipped.
 - Authored-slide artifact proof under `/tmp/moves-deliverable-quality-proof/authored-slide-proof-summary.json`: generated PPTX contained the authored governing message, authored support point, linked exhibit title, speaker notes, and suppressed section-derived slides.
