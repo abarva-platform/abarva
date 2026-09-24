@@ -300,4 +300,45 @@ describe("buildMovesAvaChatPacket — no blank-prompt chat", () => {
     expect(prompt).not.toContain("Evidence needs:");
     expect(prompt).not.toMatch(/required-before-acceptance/i);
   });
+
+  it("answers terminal P5 next-step prompts with execution handoff guidance, not only status", () => {
+    const packet = buildMovesAvaChatPacket(
+      {
+        ...BASE_INPUT,
+        moveTitle: "Synthetic healthcare execution handoff",
+        currentPhase: 5,
+        currentPhaseClientLabel: "P5 Mobilize",
+        terminalHandoffComplete: true,
+        checklistStatus: {
+          evidenceDone: true,
+          evidenceLabel: "8 evidence items visible",
+          gateDone: true,
+          gateLabel: "0 hard gates open",
+          canAdvance: true,
+          nextPhaseLabel: "Tower",
+        },
+        gateCriteria: [
+          { label: "Tower handoff accepted", met: true, severity: "hard" },
+          { label: "Execution owner named", met: true, severity: "hard" },
+        ],
+      },
+      "What should the client team do next? Name workshops, evidence to collect, blockers, and Tower metrics.",
+    );
+
+    const answer = buildDeterministicMovesAvaStatusAnswer(
+      packet,
+      "evidence_gap",
+    );
+
+    expect(answer).toContain("8 evidence items visible");
+    expect(answer).toContain("0 hard gates open");
+    expect(answer).toContain("Execution readiness answer");
+    expect(answer).toContain("Tower kickoff");
+    expect(answer).toContain("Metric baseline lock");
+    expect(answer).toContain("Caveat burn-down");
+    expect(answer).toContain("Metrics to carry into Tower");
+    expect(answer).toContain("do not reopen P5 for new collection");
+    expect(answer).not.toContain("Evidence still needed");
+    expect(answer).not.toMatch(/blocked before Tower/i);
+  });
 });
