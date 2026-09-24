@@ -61,8 +61,13 @@ Three things changed:
 Release lane: **`internal-admin`**. AbarVa-only operator tooling. No client, no product
 surface, no data plane.
 
-- **Layer 4 (products):** none. Nothing under `src/` imports `scripts/exec/*`. No route,
-  component, prompt, read model, migration or tenant record is in scope.
+- **Layer 4 (products):** none. No route, component, prompt, read model, migration or tenant
+  record is in scope. No application code imports `scripts/exec/*`. Two behaviour suites under
+  `src/__tests__/` do reference that directory by **path at run time** —
+  `census-reads-invocations-by-position.test.ts` reads `scripts/exec/cli-entry.mjs`, and
+  `test-ci-coverage-census.test.ts` names the directory in a comment — which an import-closure
+  check would miss. Neither file this change touches is among their subjects; both were run and
+  pass (2 suites, 60 tests).
 - **Control/tooling (not a data-operating-model layer):** the board generator and the
   structure map it reads. The queue generator is unchanged; it consumes the summary the board
   writes and inherits the corrected rungs.
@@ -141,6 +146,17 @@ item of the same number reads the verdict.
 30/0, `toolchain-manifest` 17/0, `id-collision` 70/0, `register-citation-check` 22/0,
 `fossil-claims` 89/0/2 skipped, `append-claim` 61/0.
 
+The two behaviour suites that reference `scripts/exec/` by run-time path
+(`census-reads-invocations-by-position.test.ts`, `test-ci-coverage-census.test.ts`): **2 suites
+passed, 60 tests passed.** They are named explicitly because an import-closure check would not
+have found them.
+
+**Census arithmetic, both versions:** every id discovered in item position is on the board, in
+the residual, or in the unmapped drop list — **0 unaccounted before and 0 after**. Two ids
+(`T-429`, `T-445`) are placed on a capability and appear only as `declaredIds`, which an
+items-only walk misses; counting them as absent was a measurement error in the first pass of
+this check, not a board defect.
+
 `npx eslint` on both changed files: clean, exit 0.
 `NODE_OPTIONS=--max-old-space-size=6144 npx tsc --noEmit --pretty false`: **exit 0**, judged by
 exit code rather than by grep, because a bare run exits 134 on this machine with no
@@ -154,7 +170,7 @@ remaining are all data-plane rows, which is a different problem and is not this 
 ## Rollout Plan
 
 Merge to `main`. No runtime rollout: operator CLI scripts, their suite, and one structure-map
-entry. Nothing under `src/` imports them, so no image, revision, flag or environment variable
+entry. No application code imports them, so no image, revision, flag or environment variable
 changes. The next board run picks the change up; the existing summary is invalidated by the
 generator's own self-hash, which is that control working rather than a regression.
 
