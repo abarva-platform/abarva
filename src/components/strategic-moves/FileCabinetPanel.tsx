@@ -205,6 +205,49 @@ export function supportsGeneratedClientApproval(
   );
 }
 
+const FINAL_READY_STATUSES = new Set(["approved", "board_ready", "ready"]);
+
+export function fileCabinetDownloadSummary(
+  artifacts: ReadonlyArray<
+    Pick<Artifact, "family" | "fileFormat" | "lifecycleState" | "status">
+  >,
+): string {
+  const current = artifacts.filter((a) => a.lifecycleState === "current");
+  const deliverables = current.filter(
+    (a) => a.family === "generated_deliverable",
+  );
+  const finalReady = deliverables.filter(
+    (a) =>
+      (a.fileFormat === "docx" || a.fileFormat === "pptx") &&
+      FINAL_READY_STATUSES.has(a.status),
+  ).length;
+  const needsReview = deliverables.filter((a) => {
+    const label = artifactStatusLabel(a.status);
+    return (
+      label.includes("needs review") ||
+      label.includes("draft") ||
+      label.includes("blocked") ||
+      label.includes("quarantined")
+    );
+  }).length;
+  const models = deliverables.filter((a) => a.fileFormat === "xlsx").length;
+
+  const parts = [`${current.length} current files`];
+  if (finalReady > 0) {
+    parts.push(`${finalReady} final-ready DOCX/PPTX deliverables`);
+  }
+  if (needsReview > 0) {
+    parts.push(
+      `${needsReview} deliverable${needsReview === 1 ? "" : "s"} need review`,
+    );
+  }
+  if (models > 0) {
+    parts.push(`${models} model${models === 1 ? "" : "s"}`);
+  }
+
+  return `${parts.join(" · ")}.`;
+}
+
 function fmtBytes(n: number | null): string {
   if (!n) return "—";
   if (n < 1024) return `${n} B`;
@@ -1797,6 +1840,10 @@ export function FileCabinetPanel({
   const totalCurrent = artifacts.filter(
     (a) => a.lifecycleState === "current",
   ).length;
+  const downloadSummary = useMemo(
+    () => fileCabinetDownloadSummary(artifacts),
+    [artifacts],
+  );
 
   return (
     <div style={{ padding: "0 4px" }}>
@@ -1821,8 +1868,8 @@ export function FileCabinetPanel({
             Downloads
           </h2>
           <p style={{ fontSize: 12, color: "#9AA3B2", margin: "3px 0 0" }}>
-            Client-final DOCX/PPTX files and HTML previews for review.{" "}
-            {totalCurrent} current.
+            Current Move files, final-ready deliverables, and review items.{" "}
+            {downloadSummary || `${totalCurrent} current files.`}
           </p>
         </div>
         <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
