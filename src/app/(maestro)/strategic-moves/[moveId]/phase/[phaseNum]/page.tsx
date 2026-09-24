@@ -128,6 +128,18 @@ function generatedArtifactTitle(
   return typeof title === "string" && title.trim() ? title.trim() : null;
 }
 
+function contextExtractAttachedEvidenceCount(
+  metadata: Record<string, unknown>,
+): number {
+  const extract = objectMetadata(metadata.moveContextExtract);
+  const attached = extract.attachedEvidenceItems;
+  return Array.isArray(attached) ? attached.length : 0;
+}
+
+function isMoveContextExtractArtifact(artifactType: string): boolean {
+  return artifactType.startsWith("move_context_extract_p");
+}
+
 export default async function StrategicMovePhaseWorkspacePage({
   params,
   searchParams,
@@ -224,6 +236,29 @@ export default async function StrategicMovePhaseWorkspacePage({
     });
   } catch {
     evidenceNeedPackets = [];
+  }
+
+  let moveContextExtractEvidenceCount = 0;
+  try {
+    const tctx = await requireTenancy();
+    const contextExtractArtifacts = await listMoveArtifacts(tctx, moveId, {
+      family: "session_artifact",
+      currentOnly: true,
+    });
+    const phaseExtract =
+      contextExtractArtifacts.find(
+        (artifact) =>
+          artifact.phase === parsedPhase &&
+          isMoveContextExtractArtifact(artifact.artifact_type),
+      ) ??
+      contextExtractArtifacts.find((artifact) =>
+        isMoveContextExtractArtifact(artifact.artifact_type),
+      );
+    moveContextExtractEvidenceCount = phaseExtract
+      ? contextExtractAttachedEvidenceCount(phaseExtract.metadata)
+      : 0;
+  } catch {
+    moveContextExtractEvidenceCount = 0;
   }
 
   let phaseBuildArtifacts: Array<{
@@ -358,6 +393,7 @@ export default async function StrategicMovePhaseWorkspacePage({
         moveName: move.name,
         phase: parsedPhase,
         currentPhase,
+        moveContextExtractEvidenceCount,
       }}
     >
       <MovesPhaseStandaloneClient

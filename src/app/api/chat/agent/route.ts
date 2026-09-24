@@ -860,9 +860,19 @@ export async function POST(request: Request) {
             ).length;
             const hardGateTotal = blockingGateScope.length;
             const hardGateOpen = hardGateTotal - hardGateMet;
+            const surfaceContextEvidenceCount =
+              typeof surfaceContext.moveContextExtractEvidenceCount ===
+                "number" &&
+              Number.isFinite(surfaceContext.moveContextExtractEvidenceCount)
+                ? surfaceContext.moveContextExtractEvidenceCount
+                : typeof surfaceContext.moveEvidenceCount === "number" &&
+                    Number.isFinite(surfaceContext.moveEvidenceCount)
+                  ? surfaceContext.moveEvidenceCount
+                  : null;
             const visibleEvidenceCount = resolveMovesAvaVisibleEvidenceCount({
               liveLinkedEvidenceCount: liveMove?.linkedEvidence.length,
               pageEvidenceCount: evidence.length,
+              surfaceContextEvidenceCount,
             });
             const terminalHandoffComplete =
               promptPhase === 5 && Boolean(liveMove?.terminalComplete);
