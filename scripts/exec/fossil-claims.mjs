@@ -301,7 +301,13 @@ export function newestClaimFor(registerText, id) {
  * a CLAIM line the same shape drops a held item into "free to take".
  *
  * A `files:` list is full of slashes and must never be read as a branch, which
- * is why nothing here matches a bare `a/b` shape.
+ * is why nothing here matches a bare `a/b` shape. That rule held only for
+ * paths whose FIRST SEGMENT is not a branch prefix, and item T-732 is the
+ * segment it missed: `scripts/exec/x.mjs` ends in `exec/x.mjs`, so the
+ * fallback below needs a left boundary and not merely a word boundary. The
+ * consequences ran in both readers — a phantom branch made
+ * `build-execution-queue.mjs` call an item in flight that declared no branch
+ * at all, and made `resolve` report `abandoned` about a file.
  *
  * Conversely a declared value with no `/` is not a branch. `\bbranch\s+(\S+)`
  * matches English as readily as a field, and on the live register every
@@ -327,7 +333,22 @@ export function branchesInClaim(line) {
   if (found.length) return dedupe(found);
   if (declaredAbsent) return [];
 
-  const inFlightToken = /\b(?:codex|claude|exec)\/[\w./-]+/g;
+  /*
+   * The left boundary is the whole of the repair for item T-732, and `\b`
+   * was not it. `\b` sits happily between `scripts/` and `exec/`, so every
+   * `scripts/exec/<file>` a claim lists in its `files:` field yielded the
+   * phantom branch `exec/<file>` — a SUFFIX of a path, matched because this
+   * repository has a directory whose name is also one of the three branch
+   * prefixes. Measured over the live register before the fix: 28 of 1248
+   * claim records named at least one phantom and 17 named one FIRST, which
+   * is the only one `resolve` probes.
+   *
+   * Calibrated in both directions over that register rather than over
+   * fixtures: the boundary adds NOTHING (0 new tokens) and drops 73
+   * occurrences of 9 distinct tokens, every one of them a file under
+   * `scripts/exec/`. No `origin/<branch>` shape exists there to lose.
+   */
+  const inFlightToken = /(?<![\w./-])(?:codex|claude|exec)\/[\w./-]+/g;
   for (const match of line.matchAll(inFlightToken)) {
     found.push(match[0].replace(/[.,;)`]+$/, ""));
   }
