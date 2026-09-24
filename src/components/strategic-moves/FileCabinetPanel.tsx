@@ -259,7 +259,7 @@ export function fileCabinetDownloadSummary(
   }
   if (needsReview > 0) {
     parts.push(
-      `${needsReview} deliverable${needsReview === 1 ? "" : "s"} need review`,
+      `${needsReview} deliverable${needsReview === 1 ? " needs" : "s need"} review`,
     );
   }
   if (models > 0) {
