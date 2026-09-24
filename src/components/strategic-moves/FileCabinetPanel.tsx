@@ -566,34 +566,24 @@ function ContextExtractReviewPanel({
   );
 }
 
-// Fetch an artifact with a short retry on 503 (transient tenant-lookup outage). A bare
-// <a href> top-level navigation that hit a one-off 503 previously dead-ended Open/Download;
-// fetching the bytes here lets us retry, then open/save via an object URL so the file is
-// reliably delivered regardless of format/cookie quirks.
-async function fetchArtifact(url: string): Promise<Blob> {
-  const backoffMs = [250, 700];
-  let res = await fetch(url, { credentials: "include" });
-  for (let i = 0; res.status === 503 && i < backoffMs.length; i += 1) {
-    await new Promise((r) => setTimeout(r, backoffMs[i]));
-    res = await fetch(url, { credentials: "include" });
-  }
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  return res.blob();
-}
-
 export function artifactFinalDownloadUrl(
   artifact: Pick<Artifact, "downloadUrl" | "fileFormat" | "outputRole">,
 ): string {
   if (!artifact.downloadUrl.startsWith("/api/v1/artifacts/")) {
     return artifact.downloadUrl;
   }
-  const format =
-    artifact.fileFormat === "pptx" || artifact.outputRole === "pptx_final"
-      ? "pptx"
-      : artifact.fileFormat === "xlsx"
-        ? "xlsx"
-        : "docx";
+  const format = artifactFinalDownloadFormat(artifact);
   return `${artifact.downloadUrl}${artifact.downloadUrl.includes("?") ? "&" : "?"}format=${format}`;
+}
+
+function artifactFinalDownloadFormat(
+  artifact: Pick<Artifact, "fileFormat" | "outputRole">,
+): "docx" | "pptx" | "xlsx" {
+  if (artifact.fileFormat === "pptx" || artifact.outputRole === "pptx_final") {
+    return "pptx";
+  }
+  if (artifact.fileFormat === "xlsx") return "xlsx";
+  return "docx";
 }
 
 export function artifactInlinePreviewUrl(
@@ -603,6 +593,19 @@ export function artifactInlinePreviewUrl(
     ? "format=html&inline=1"
     : "inline=1";
   return `${artifact.downloadUrl}${artifact.downloadUrl.includes("?") ? "&" : "?"}${params}`;
+}
+
+function artifactDownloadFileName(
+  artifact: Pick<
+    Artifact,
+    "downloadUrl" | "fileName" | "fileFormat" | "outputRole" | "title"
+  >,
+): string {
+  if (artifact.fileName) return artifact.fileName;
+  const extension = artifact.downloadUrl.startsWith("/api/v1/artifacts/")
+    ? artifactFinalDownloadFormat(artifact)
+    : artifact.fileFormat || "bin";
+  return `${artifact.title.replace(/[\\/:*?"<>|]+/g, "_")}.${extension}`;
 }
 
 function textFromArtifactPreview(html: string): string {
@@ -629,7 +632,6 @@ function ArtifactRow({
   onChanged: () => Promise<void>;
 }) {
   const stored = a.stored === "azure_blob";
-  const [busy, setBusy] = useState<null | "open" | "download">(null);
   const [reviewOpen, setReviewOpen] = useState(false);
   const [feedbackText, setFeedbackText] = useState("");
   const [reviewBusy, setReviewBusy] = useState(false);
@@ -656,47 +658,6 @@ function ArtifactRow({
     a.fileFormat === "html" || a.outputRole === "html_visual_review_companion";
   const isGeneratedArtifactRoute =
     a.downloadUrl.startsWith("/api/v1/artifacts/");
-
-  const openArtifact = useCallback(async () => {
-    setBusy("open");
-    setActionErr(null);
-    try {
-      const win = window.open(
-        artifactInlinePreviewUrl(a),
-        `moves-artifact-${a.artifactId}`,
-        "noopener,noreferrer",
-      );
-      if (!win) {
-        setActionErr("Browser blocked the artifact tab. Use Download instead.");
-      }
-    } catch (e) {
-      setActionErr(e instanceof Error ? e.message : "open failed");
-    } finally {
-      setBusy(null);
-    }
-  }, [a]);
-
-  const downloadArtifact = useCallback(async () => {
-    setBusy("download");
-    setActionErr(null);
-    try {
-      const blob = await fetchArtifact(artifactFinalDownloadUrl(a));
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download =
-        a.fileName ||
-        `${a.title.replace(/[\\/:*?"<>|]+/g, "_")}.${a.fileFormat || "bin"}`;
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      setTimeout(() => URL.revokeObjectURL(url), 60_000);
-    } catch (e) {
-      setActionErr(e instanceof Error ? e.message : "download failed");
-    } finally {
-      setBusy(null);
-    }
-  }, [a]);
 
   const submitReviewFeedback = useCallback(async () => {
     const text = feedbackText.trim();
@@ -1160,9 +1121,10 @@ function ArtifactRow({
           >
             Review
           </button>
-          <button
-            onClick={openArtifact}
-            disabled={busy !== null}
+          <a
+            href={artifactInlinePreviewUrl(a)}
+            target="_blank"
+            rel="noopener noreferrer"
             style={{
               fontSize: 11.5,
               fontWeight: 600,
@@ -1172,28 +1134,30 @@ function ArtifactRow({
               borderRadius: 5,
               padding: "5px 11px",
               whiteSpace: "nowrap",
-              cursor: busy ? "default" : "pointer",
+              textDecoration: "none",
+              cursor: "pointer",
             }}
           >
-            {busy === "open" ? "Opening…" : "Open"}
-          </button>
-          <button
-            onClick={downloadArtifact}
-            disabled={busy !== null}
+            Open
+          </a>
+          <a
+            href={artifactFinalDownloadUrl(a)}
+            download={artifactDownloadFileName(a)}
             style={{
               fontSize: 11.5,
               fontWeight: 600,
               color: "#fff",
-              background: busy ? "#9AA3B2" : "#1B2B5C",
+              background: "#1B2B5C",
               border: "none",
               borderRadius: 5,
               padding: "5px 11px",
               whiteSpace: "nowrap",
-              cursor: busy ? "default" : "pointer",
+              textDecoration: "none",
+              cursor: "pointer",
             }}
           >
-            {busy === "download" ? "Downloading…" : "Download"}
-          </button>
+            Download
+          </a>
         </div>
       </div>
       {hasReviewSignals && (
