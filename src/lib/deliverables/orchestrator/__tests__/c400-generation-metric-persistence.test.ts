@@ -31,15 +31,15 @@ jest.mock("@/lib/deliverables/deck-from-result", () => ({
 import {
   persistDeliverable,
   QUALITY_METRIC_PERSISTENCE,
-} from "@/lib/deliverables/orchestrator/persistence";
-import { validateDeliverableQuality } from "@/lib/deliverables/orchestrator/quality-validator";
-import { getArtifactBrief } from "@/lib/deliverables/orchestrator/artifact-brief-registry";
+} from "../persistence";
+import { validateDeliverableQuality } from "../quality-validator";
+import { getArtifactBrief } from "../artifact-brief-registry";
 import {
   amsRfpRequest,
   goodDocument,
-} from "@/lib/deliverables/orchestrator/__fixtures__/ams-rfp";
-import type { OrchestrationResult } from "@/lib/deliverables/orchestrator/orchestrator";
-import type { ExpectedExhibit } from "@/lib/deliverables/orchestrator/types";
+} from "../__fixtures__/ams-rfp";
+import type { OrchestrationResult } from "../orchestrator";
+import type { ExpectedExhibit } from "../types";
 import type { GeneratedArtifactRecord } from "@/lib/artifacts/repository";
 import type { TenantAiPolicy } from "@/lib/integrations/ai-egress";
 
