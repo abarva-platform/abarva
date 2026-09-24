@@ -120,10 +120,10 @@ describe("deliverable structures", () => {
     ],
     [
       "solution_design",
-      8,
+      6,
       ["experience_flow", "component_interaction", "exception_control_flow"],
     ],
-    ["operating_model", 8, ["human_ai_work_split", "decision_rights"]],
+    ["operating_model", 6, ["human_ai_work_split", "decision_rights"]],
     ["requirements_traceability", 5, []],
     ["sourcing_strategy", 7, ["sourcing_options_matrix"]],
   ] as const)(
@@ -194,34 +194,60 @@ describe("deliverable structures", () => {
 
   it("keeps solution-design authoring budgets below the hard export ceiling", () => {
     const structure = getDeliverableStructure("moves", "solution_design")!;
+    expect(structure.sections.map((section) => section.key)).toEqual([
+      "exec_decision",
+      "journey_workflow",
+      "solution_components",
+      "controls_operability",
+      "acceptance_traceability",
+      "recommendation",
+    ]);
     expect(structure.sections.map((section) => section.expertLatitude)).toEqual(
       [
         "Keep under 300 words; lead with the decision and do not restate the full architecture.",
         "Keep under 450 words plus one workflow exhibit.",
-        "Keep under 550 words plus a component interaction exhibit.",
-        "Keep under 500 words; use a compact contract table.",
-        "Keep under 450 words plus one exception/control exhibit.",
-        "Keep under 450 words; distinguish confirmed requirements from open decisions.",
+        "Keep under 700 words plus a component interaction exhibit. Use one compact responsibility/contract table; do not write separate component and data essays.",
+        "Keep under 650 words plus one exception/control exhibit. Distinguish confirmed requirements from open decisions.",
         "Keep under 450 words using concise tables.",
         "Keep under 150 words.",
       ],
     );
+    expect(structure.requiredSectionKeys).toEqual([
+      "exec_decision",
+      "solution_components",
+      "acceptance_traceability",
+      "recommendation",
+    ]);
+    expect(structure.requiredSectionKeys).not.toContain("journey_workflow");
   });
 
   it("keeps operating-model authoring budgets below the hard export ceiling", () => {
     const structure = getDeliverableStructure("moves", "operating_model")!;
+    expect(structure.sections.map((section) => section.key)).toEqual([
+      "exec_decision",
+      "work_split_controls",
+      "roles_cadence",
+      "adoption",
+      "risks_open",
+      "recommendation",
+    ]);
     expect(structure.sections.map((section) => section.expertLatitude)).toEqual(
       [
         "Keep under 300 words.",
-        "Keep under 500 words plus one exhibit.",
-        "Keep under 600 words using role and RACI tables.",
-        "Keep under 550 words plus one decision-rights exhibit.",
-        "Keep under 500 words using a cadence table.",
+        "Keep under 750 words plus both operating exhibits. Use one compact work-split table and one decision-rights table.",
+        "Keep under 700 words using role/RACI and cadence tables; no narrative role biographies.",
         "Keep under 450 words; tie each action to the changed process and measure.",
         "Keep under 400 words using concise tables.",
         "Keep under 120 words.",
       ],
     );
+    expect(structure.requiredSectionKeys).toEqual([
+      "exec_decision",
+      "work_split_controls",
+      "roles_cadence",
+      "recommendation",
+    ]);
+    expect(structure.requiredSectionKeys).not.toContain("adoption");
   });
 
   it("keeps requirements-traceability as a compact control matrix below its hard ceiling", () => {

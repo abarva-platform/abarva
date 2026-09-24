@@ -37,8 +37,9 @@ or unsupported exhibit data is reported as a gap instead of being replaced by a 
   inside the matching exhibit block.
 - Adds optional authored `deckSlides` to the renderable artifact contract and makes PPTX output use
   authored slide messages, points, notes, and linked exhibit payloads when present.
-- Compresses the target-architecture prose structure so architecture views remain exhibits instead
-  of separate generated essays.
+- Compresses the target-architecture, solution-design, and operating-model prose structures so
+  visuals, work-split, decision-rights, component, data, control, and operability detail are carried
+  by focused exhibits/tables instead of forced generated essays.
 - Adds focused negative tests for label-only and out-of-scope exhibit markers.
 - Adds a report-only golden-bar signal measurement runner over caller-provided artifact exports.
 - Routes the reachable legacy engagement-deliverable fallback through central document-generation
@@ -88,6 +89,6 @@ database, tenant data, migration, or runtime configuration rollback is required.
 
 ## Known Gaps
 
-This candidate applies section elasticity to Target Architecture only. It does not implement
-section elasticity across all remaining structures, legacy route retirement, golden-bar
-enforcement, or model-judge calibration.
+This candidate applies section elasticity to Target Architecture, Solution Design, and Operating
+Model only. It does not implement section elasticity across all remaining structures, legacy route
+retirement, golden-bar enforcement, or model-judge calibration.
