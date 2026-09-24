@@ -1,6 +1,6 @@
 # Moves Deliverable Quality - Status
 
-**Updated:** 2026-09-24T14:36:38Z
+**Updated:** 2026-09-24T14:42:24Z
 **Agent:** codex
 **Branch:** codex/moves-deliverable-quality-rebuild
 **Head:** PR #8421 branch head
@@ -29,6 +29,7 @@ slice. No deployment, data-plane mutation, or live tenant write is in scope for 
 | Metric | Value | Notes |
 |--------|-------|-------|
 | Focused quality tests | 154/154 passing | `persistence-deck`, `renderers`, `section-generation`, `brief-library`, `quality-bar-registry`, `prompt-story-spine`, adaptive-depth, legacy policy, storyline-deck, story-visual-gate, and exemplar-audit suites |
+| CI deliverables command | 565/565 passing | `npx jest src/lib/deliverables/__tests__ src/lib/deliverables/orchestrator/__tests__ --no-coverage --ci`; includes the suites that initially failed remotely after the exhibit-data contract. |
 | Targeted ESLint | passing | Changed orchestrator/storyline files only |
 | Generated artifact proof | passed | `/tmp/moves-deliverable-quality-proof/proof-summary.json`; structured exhibit rendered, missing-data exhibit omitted |
 | Authored-slide artifact proof | passed | `/tmp/moves-deliverable-quality-proof/authored-slide-proof-summary.json`; authored slide rendered with linked exhibit and speaker notes |
