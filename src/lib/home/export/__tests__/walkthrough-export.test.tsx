@@ -120,6 +120,7 @@ describe("Home walkthrough export", () => {
     expect(html).toContain("Data Assets &amp; Integrations");
     expect(html).toContain("What Needs Attention");
     expect(html).toContain("Relationship-backed exposure paths");
+    expect(html).toContain("Serving-row marker");
     expect(html).toContain("This export is a Home walkthrough export");
     expect(html).not.toContain(
       "This export contains the aVa chat session only",
