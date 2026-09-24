@@ -656,10 +656,11 @@ function svgFlowExhibit(exhibit: RenderableExhibit, domId: string): string {
         i < clauses.length - 1
           ? `<path d="M${x + 116} 72 L${x + 154} 72" stroke="var(--fresh)" stroke-width="2" marker-end="url(#arrow-${domId})"/>`
           : "";
+      const stepLabel = i === 0 ? "Start" : `Step ${i + 1}`;
       return `${arrow}<g>
         <rect x="${x}" y="38" width="118" height="68" rx="8" fill="#fff" stroke="var(--line)"/>
         <text x="${x + 59}" y="65" text-anchor="middle" font-size="11" font-weight="700">${esc(clause.slice(0, 28))}</text>
-        <text x="${x + 59}" y="84" text-anchor="middle" font-size="9" fill="var(--muted)">${esc(exhibit.kind)}</text>
+        <text x="${x + 59}" y="84" text-anchor="middle" font-size="9" fill="var(--muted)">${esc(stepLabel)}</text>
       </g>`;
     })
     .join("");
@@ -678,7 +679,7 @@ function svgMatrixExhibit(exhibit: RenderableExhibit): string {
       return `<g>
         <rect x="${x}" y="${y}" width="300" height="66" rx="8" fill="#fff" stroke="var(--line)"/>
         <text x="${x + 16}" y="${y + 28}" font-size="12" font-weight="700">${esc(clause.slice(0, 36))}</text>
-        <text x="${x + 16}" y="${y + 48}" font-size="10" fill="var(--muted)">Implication: ${esc(exhibit.kind)}</text>
+        <text x="${x + 16}" y="${y + 48}" font-size="10" fill="var(--muted)">Decision implication</text>
       </g>`;
     })
     .join("");
