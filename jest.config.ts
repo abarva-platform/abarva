@@ -6,6 +6,16 @@ const createJestConfig = nextJest({ dir: './' })
 const config: Config = {
   coverageProvider: 'v8',
   testEnvironment: 'node',
+  // Item T-759. A suite that needs a file to exist for part of a run adds it
+  // and leaves it; these two hooks are the only place it may be removed.
+  // Deleting it inside the run is what made `src/__tests__/behaviors`
+  // non-deterministically red -- 31 suites there enumerate the test files under
+  // `src/` and then read each one, and a file that disappears between those two
+  // steps kills the reader with an unhandled ENOENT. Setup clears a copy leaked
+  // by a killed run before any worker starts; teardown removes it after every
+  // worker has exited. The registry is `src/testing/transient-probe-files.ts`.
+  globalSetup: '<rootDir>/src/testing/jest-global-setup.ts',
+  globalTeardown: '<rootDir>/src/testing/jest-global-teardown.ts',
   modulePathIgnorePatterns: ['<rootDir>/.claude/'],
   // next/jest's default testMatch includes `**/__tests__/**/*`, so every file
   // under a `__tests__` directory is collected as a suite -- including files
