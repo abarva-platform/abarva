@@ -569,6 +569,41 @@ describe("PPTX renderer (MOVES-QUALITY-003 / Track D)", () => {
     expect(closing).toContain("Final evaluation weights");
   });
 
+  it("keeps document-length prose out of PPTX slide faces", async () => {
+    const doc = goodDocument();
+    doc.generatedSections = [
+      {
+        key: "dense_section",
+        title: "Dense Section",
+        bodyMarkdown: [
+          [
+            "This opening paragraph is intentionally long so the renderer must treat it as a governing slide message",
+            "rather than reflowing the entire document paragraph onto the presentation face where it would overflow",
+            "and look like a landscape document instead of an executive deck.",
+          ].join(" "),
+          "",
+          [
+            "- This supporting bullet is also intentionally long and includes the unique token",
+            "unchecked-overflow-tail-token that should never appear because the bullet must be shortened before rendering.",
+          ].join(" "),
+          "- A concise supporting point remains visible.",
+        ].join("\n"),
+        groundingMode: "mixed",
+        citationsUsed: [],
+      },
+    ];
+
+    const slides = await slideXmlFiles(await renderDeliverablePptx(doc));
+    const denseSlide = slides.find((s) => s.includes("Dense Section"));
+
+    expect(denseSlide).toBeDefined();
+    expect(denseSlide).toContain("A concise supporting point remains visible");
+    expect(denseSlide).not.toContain("unchecked-overflow-tail-token");
+    expect(denseSlide).not.toContain(
+      "look like a landscape document instead of an executive deck",
+    );
+  });
+
   it("falls back to a text notice (not a thrown error) when exhibit rasterisation fails", async () => {
     jest.resetModules();
     jest.doMock(
