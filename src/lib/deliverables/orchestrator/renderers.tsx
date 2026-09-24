@@ -1503,15 +1503,25 @@ const PPTX_COLOR = {
 } as const;
 
 const MAX_BULLETS_PER_SLIDE = 6;
+const MAX_PPTX_GOVERNING_WORDS = 18;
+const MAX_PPTX_BULLET_WORDS = 12;
 
 function safePptxText(s: string): string {
   return s.replace(/\s+/g, " ").trim();
+}
+
+function truncateWords(text: string, maxWords: number): string {
+  const clean = safePptxText(text);
+  const words = clean.split(" ").filter(Boolean);
+  if (words.length <= maxWords) return clean;
+  return `${words.slice(0, maxWords).join(" ")}...`;
 }
 
 /** Condense a section's authored markdown into a handful of slide bullets —
  *  a slide is scanned, not read, so full prose paragraphs never belong on
  *  the face of it (the full text still lives in the DOCX/PDF/HTML export). */
 function condensedBulletsFromMarkdown(markdown: string, max: number): string[] {
+  const governingLine = firstMarkdownLine(markdown);
   const lines = markdown
     .split("\n")
     .map((line) => line.trim())
@@ -1523,8 +1533,9 @@ function condensedBulletsFromMarkdown(markdown: string, max: number): string[] {
       line.replace(/\*\*([^*]+)\*\*/g, "$1").replace(/\*([^*]+)\*/g, "$1"),
     )
     .map(safePptxText)
-    .filter(Boolean);
-  return lines.slice(0, max);
+    .filter(Boolean)
+    .filter((line) => line !== governingLine);
+  return lines.slice(0, max).map((line) => truncateWords(line, MAX_PPTX_BULLET_WORDS));
 }
 
 /** First non-empty, non-heading line of a section's markdown — used as the
@@ -1850,7 +1861,10 @@ export async function renderDeliverablePptx(
       section.bodyMarkdown,
       section.title,
     );
-    const governing = firstMarkdownLine(sectionMarkdown) ?? section.title;
+    const governing = truncateWords(
+      firstMarkdownLine(sectionMarkdown) ?? section.title,
+      MAX_PPTX_GOVERNING_WORDS,
+    );
     slide.addText(safePptxText(section.title), {
       x: 0.72,
       y: 0.85,
