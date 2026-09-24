@@ -6,6 +6,7 @@ import {
   artifactStatusLabel,
   buildContextExtractReviewModel,
   fileCabinetDownloadSummary,
+  isGeneratedExportArtifact,
   isContextExtractArtifact,
   supportsGeneratedClientApproval,
   supportsSponsorReviewDecisionArtifact,
@@ -43,45 +44,106 @@ describe("FileCabinetPanel artifact labels", () => {
     expect(
       fileCabinetDownloadSummary([
         {
+          downloadUrl: "/api/v1/artifacts/generated-charter-1",
           family: "generated_deliverable",
           fileFormat: "docx",
           lifecycleState: "current",
+          outputRole: "docx_editable_phase_record",
+          provenanceCategory: "abarva_generated_deliverable",
           status: "board_ready",
         },
         {
+          downloadUrl: "/api/v1/artifacts/generated-deck-1",
           family: "generated_deliverable",
           fileFormat: "pptx",
           lifecycleState: "current",
+          outputRole: "pptx_final",
+          provenanceCategory: "abarva_generated_deliverable",
           status: "approved",
         },
         {
+          downloadUrl: "/api/v1/artifacts/generated-report-1",
           family: "generated_deliverable",
           fileFormat: "docx",
           lifecycleState: "current",
+          outputRole: "docx_editable_phase_record",
+          provenanceCategory: "abarva_generated_deliverable",
           status: "review_required",
         },
         {
+          downloadUrl: "/api/v1/artifacts/generated-model-1",
           family: "generated_deliverable",
           fileFormat: "xlsx",
           lifecycleState: "current",
+          outputRole: "xlsx_model",
+          provenanceCategory: "abarva_generated_deliverable",
           status: "board_ready",
         },
         {
+          downloadUrl: "/api/v1/programs/move-1/artifacts/evidence-1/download",
           family: "uploaded_evidence",
           fileFormat: "csv",
           lifecycleState: "current",
+          outputRole: null,
+          provenanceCategory: null,
           status: "aligned",
         },
         {
+          downloadUrl: "/api/v1/artifacts/generated-old-1",
           family: "generated_deliverable",
           fileFormat: "docx",
           lifecycleState: "superseded",
+          outputRole: "docx_editable_phase_record",
+          provenanceCategory: "abarva_generated_deliverable",
           status: "review_required",
         },
       ]),
     ).toBe(
       "5 current files · 2 review-ready DOCX/PPTX exports · 1 deliverable need review · 1 model.",
     );
+  });
+
+  it("does not count uploaded aggregate packets as generated exports", () => {
+    expect(
+      isGeneratedExportArtifact({
+        family: "generated_deliverable",
+        outputRole: "docx_editable_phase_record",
+        provenanceCategory: "abarva_generated_deliverable",
+        downloadUrl: "/api/v1/artifacts/generated-charter-1",
+      }),
+    ).toBe(true);
+    expect(
+      isGeneratedExportArtifact({
+        family: "generated_deliverable",
+        outputRole: null,
+        provenanceCategory: null,
+        downloadUrl:
+          "/api/v1/programs/move-1/artifacts/uploaded-approved-packet/download",
+      }),
+    ).toBe(false);
+    expect(
+      fileCabinetDownloadSummary([
+        {
+          downloadUrl: "/api/v1/artifacts/generated-charter-1",
+          family: "generated_deliverable",
+          fileFormat: "docx",
+          lifecycleState: "current",
+          outputRole: "docx_editable_phase_record",
+          provenanceCategory: "abarva_generated_deliverable",
+          status: "board_ready",
+        },
+        {
+          downloadUrl:
+            "/api/v1/programs/move-1/artifacts/client-approved-packet/download",
+          family: "generated_deliverable",
+          fileFormat: "docx",
+          lifecycleState: "current",
+          outputRole: null,
+          provenanceCategory: null,
+          status: "board_ready",
+        },
+      ]),
+    ).toBe("2 current files · 1 review-ready DOCX/PPTX exports.");
   });
 
   it("does not load P2 sponsor review packets for direct generated artifacts", () => {

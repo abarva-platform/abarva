@@ -207,15 +207,36 @@ export function supportsGeneratedClientApproval(
 
 const REVIEW_READY_STATUSES = new Set(["approved", "board_ready", "ready"]);
 
+export function isGeneratedExportArtifact(
+  artifact: Pick<
+    Artifact,
+    "downloadUrl" | "family" | "outputRole" | "provenanceCategory"
+  >,
+): boolean {
+  if (artifact.family !== "generated_deliverable") return false;
+  if (artifact.outputRole === "html_visual_review_companion") return false;
+  return (
+    artifact.provenanceCategory === "abarva_generated_deliverable" ||
+    artifact.downloadUrl.startsWith("/api/v1/artifacts/")
+  );
+}
+
 export function fileCabinetDownloadSummary(
   artifacts: ReadonlyArray<
-    Pick<Artifact, "family" | "fileFormat" | "lifecycleState" | "status">
+    Pick<
+      Artifact,
+      | "downloadUrl"
+      | "family"
+      | "fileFormat"
+      | "lifecycleState"
+      | "outputRole"
+      | "provenanceCategory"
+      | "status"
+    >
   >,
 ): string {
   const current = artifacts.filter((a) => a.lifecycleState === "current");
-  const deliverables = current.filter(
-    (a) => a.family === "generated_deliverable",
-  );
+  const deliverables = current.filter(isGeneratedExportArtifact);
   const reviewReady = deliverables.filter(
     (a) =>
       (a.fileFormat === "docx" || a.fileFormat === "pptx") &&
