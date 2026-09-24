@@ -125,7 +125,7 @@ describe("deliverable structures", () => {
     ],
     ["operating_model", 6, ["human_ai_work_split", "decision_rights"]],
     ["requirements_traceability", 5, []],
-    ["sourcing_strategy", 7, ["sourcing_options_matrix"]],
+    ["sourcing_strategy", 5, ["sourcing_options_matrix"]],
   ] as const)(
     "%s has a fixed, purpose-specific structure instead of the generic Moves binder",
     (deliverableType, sectionCount, exhibitKeys) => {
@@ -274,17 +274,29 @@ describe("deliverable structures", () => {
 
   it("keeps sourcing-strategy authoring budgets below the hard export ceiling", () => {
     const structure = getDeliverableStructure("moves", "sourcing_strategy")!;
+    expect(structure.sections.map((section) => section.key)).toEqual([
+      "exec_decision",
+      "scope_options",
+      "evaluation_guardrails",
+      "delivery_risks",
+      "recommendation",
+    ]);
     expect(structure.sections.map((section) => section.expertLatitude)).toEqual(
       [
         "Keep under 200 words.",
-        "Keep under 325 words using a capability table.",
-        "Keep under 425 words plus one options matrix.",
+        "Keep under 650 words plus one options matrix. Use a capability/options table; do not split capability boundary and options into separate essays.",
         "Keep under 350 words using compact criteria and guardrail tables.",
-        "Keep under 325 words.",
-        "Keep under 275 words using a single table.",
+        "Keep under 500 words using one delivery/risk/input table.",
         "Keep under 80 words.",
       ],
     );
+    expect(structure.requiredSectionKeys).toEqual([
+      "exec_decision",
+      "scope_options",
+      "evaluation_guardrails",
+      "recommendation",
+    ]);
+    expect(structure.requiredSectionKeys).not.toContain("delivery_risks");
   });
 
   it("keeps P4 estimate, value, and readiness instruments fixed, compact, and evidence-gated", () => {

@@ -39,9 +39,9 @@ or unsupported exhibit data is reported as a gap instead of being replaced by a 
   authored slide messages, points, notes, and linked exhibit payloads when present.
 - Removes an unused storyline PPTX renderer that could only draw placeholder exhibit boxes; the
   live generated-deliverable PPTX path remains the orchestrator renderer.
-- Compresses the target-architecture, solution-design, and operating-model prose structures so
-  visuals, work-split, decision-rights, component, data, control, and operability detail are carried
-  by focused exhibits/tables instead of forced generated essays.
+- Compresses the target-architecture, solution-design, operating-model, and sourcing-strategy prose
+  structures so visuals, work-split, decision-rights, component, data, control, operability, and
+  sourcing-option detail are carried by focused exhibits/tables instead of forced generated essays.
 - Adds focused negative tests for label-only and out-of-scope exhibit markers.
 - Adds a report-only golden-bar signal measurement runner over caller-provided artifact exports.
 - Adds a report-only golden-exemplar coverage auditor so judge readiness is based on approved
@@ -97,6 +97,6 @@ database, tenant data, migration, or runtime configuration rollback is required.
 
 ## Known Gaps
 
-This candidate applies section elasticity to Target Architecture, Solution Design, and Operating
-Model only. It does not implement section elasticity across all remaining structures, legacy route
-retirement, golden-bar enforcement, or model-judge calibration.
+This candidate applies section elasticity to Target Architecture, Solution Design, Operating Model,
+and Sourcing Strategy only. It does not implement section elasticity across all remaining
+structures, legacy route retirement, golden-bar enforcement, or model-judge calibration.

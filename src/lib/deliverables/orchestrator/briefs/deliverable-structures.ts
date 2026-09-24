@@ -985,6 +985,7 @@ const MOVES_SOURCING_STRATEGY: DeliverableStructure = {
   prohibitedContent: [
     "Do not reopen or replace the approved solution approach.",
     "Do not invent vendors, prices, contract facts, shortlist status, or platform selections. Unknowns remain open decisions or market-test requirements.",
+    "Do not create a separate sourcing section for every procurement topic. If there is no real vendor, partner, build/buy, or configure decision, the artifact should be omitted by applicability rather than padded.",
   ],
   expectedExhibits: [
     {
@@ -1014,23 +1015,15 @@ const MOVES_SOURCING_STRATEGY: DeliverableStructure = {
       "Keep under 200 words.",
     ),
     s(
-      "capability_boundary",
-      "Capability & Sourcing Boundary",
-      "Capabilities inherited from the architecture, what is reusable, what requires market capacity, and explicit exclusions.",
+      "scope_options",
+      "Capability Boundary & Sourcing Options",
+      "Capabilities inherited from the architecture, what is reusable, what requires market capacity, explicit exclusions, and build/buy/configure/partner options assessed without naming unsupported vendors.",
       "mixed",
       [],
-      "Keep under 325 words using a capability table.",
+      "Keep under 650 words plus one options matrix. Use a capability/options table; do not split capability boundary and options into separate essays.",
     ),
     s(
-      "options",
-      "Sourcing Options & Trade-Offs",
-      "Build, buy, configure, partner, and hybrid options assessed without naming unsupported vendors.",
-      "mixed",
-      [],
-      "Keep under 425 words plus one options matrix.",
-    ),
-    s(
-      "evaluation_commercial",
+      "evaluation_guardrails",
       "Evaluation & Commercial Guardrails",
       "Decision criteria, evidence required, commercial principles, risk protections, and market-test questions.",
       "mixed",
@@ -1038,20 +1031,12 @@ const MOVES_SOURCING_STRATEGY: DeliverableStructure = {
       "Keep under 350 words using compact criteria and guardrail tables.",
     ),
     s(
-      "delivery_governance",
-      "Delivery Model, Governance & Dependencies",
-      "Retained ownership, partner boundaries, transition responsibilities, architecture conformance, and dependencies.",
+      "delivery_risks",
+      "Delivery Model, Risks & Required Inputs",
+      "Retained ownership, partner boundaries, transition responsibilities, architecture conformance, material sourcing risks, unresolved decisions, and evidence required before an event or award.",
       "mixed",
       [],
-      "Keep under 325 words.",
-    ),
-    s(
-      "risks_open",
-      "Risks, Open Decisions & Required Inputs",
-      "Material sourcing risks, unresolved platform/vendor decisions, and evidence required before an event or award.",
-      "mixed",
-      [],
-      "Keep under 275 words using a single table.",
+      "Keep under 500 words using one delivery/risk/input table.",
     ),
     s(
       "recommendation",
@@ -1064,11 +1049,8 @@ const MOVES_SOURCING_STRATEGY: DeliverableStructure = {
   ],
   requiredSectionKeys: [
     "exec_decision",
-    "capability_boundary",
-    "options",
-    "evaluation_commercial",
-    "delivery_governance",
-    "risks_open",
+    "scope_options",
+    "evaluation_guardrails",
     "recommendation",
   ],
 };
