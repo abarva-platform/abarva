@@ -17,7 +17,10 @@ import {
   isEclProductProvider,
   resolveEclProductProvider,
 } from "@/lib/ecl/product-provider";
-import { canonicalTenantKey } from "@/lib/tenant/aliases";
+import {
+  appClientKeyForTenant,
+  canonicalTenantKey,
+} from "@/lib/tenant/aliases";
 import { resolveTenant } from "@/lib/tenant/resolveTenant";
 import {
   buildHomeWalkthroughPdf,
@@ -60,7 +63,10 @@ export async function GET(req: NextRequest) {
   try {
     await requireTenancy(
       requestedTenantKey
-        ? { requestedClientKey: requestedTenantKey as ClientKey }
+        ? {
+            requestedClientKey: (appClientKeyForTenant(requestedTenantKey) ??
+              requestedTenantKey) as ClientKey,
+          }
         : undefined,
     );
   } catch (err) {
