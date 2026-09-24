@@ -324,6 +324,8 @@ describe("MovesPhaseStandaloneClient", () => {
     qualityScore: number | null;
     createdAt: string;
     downloadUrl: string;
+    fileFormat?: string;
+    fileName?: string | null;
   }>;
   let structuredFamilyIngests: Array<{
     family: string;
@@ -2931,6 +2933,7 @@ describe("MovesPhaseStandaloneClient", () => {
         qualityScore: 100,
         createdAt: "2026-09-11T00:00:00.000Z",
         downloadUrl: "/api/v1/artifacts/artifact-1",
+        fileFormat: "docx",
       },
       {
         artifactId: "artifact-2",
@@ -2993,6 +2996,64 @@ describe("MovesPhaseStandaloneClient", () => {
     });
     expect(screen.getByTestId("mxw-decision-surface")).not.toHaveTextContent(
       "0 evidence items",
+    );
+  });
+
+  it("renders File Cabinet generated artifact open and download controls as real links", async () => {
+    generatedDeliverableArtifacts = [
+      {
+        artifactId: "artifact-1",
+        artifactType: "handoff_package",
+        family: "generated_deliverable",
+        title: "Execution Handoff Package",
+        phase: 5,
+        version: 1,
+        status: "board_ready",
+        lifecycleState: "current",
+        qualityScore: 100,
+        createdAt: "2026-09-11T00:00:00.000Z",
+        downloadUrl: "/api/v1/artifacts/artifact-1",
+      },
+    ];
+
+    render(
+      <MovesPhaseStandaloneClient
+        carriesForwardContent={[]}
+        evidenceNeedPackets={[]}
+        move={makeMove({
+          currentPhase: 5,
+          phaseLabel: "P5 Prepare to Execute",
+          terminalComplete: true,
+        })}
+        phaseBuildArtifacts={[]}
+        phaseNum={5}
+        phaseTallies={[...phaseTallies]}
+      />,
+    );
+
+    fireEvent.click(
+      screen.getAllByRole("button", { name: /Open Files & Evidence/i })[0]!,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText("Execution Handoff Package")).toBeInTheDocument();
+    });
+
+    const openLink = screen.getByRole("link", { name: "Open" });
+    const downloadLink = screen.getByRole("link", { name: "Download" });
+
+    expect(openLink).toHaveAttribute(
+      "href",
+      "/api/v1/artifacts/artifact-1?format=html&inline=1",
+    );
+    expect(openLink).toHaveAttribute("target", "_blank");
+    expect(downloadLink).toHaveAttribute(
+      "href",
+      "/api/v1/artifacts/artifact-1?format=docx",
+    );
+    expect(downloadLink).toHaveAttribute(
+      "download",
+      "Execution Handoff Package.docx",
     );
   });
 
@@ -3212,19 +3273,16 @@ describe("MovesPhaseStandaloneClient", () => {
       ).toBeInTheDocument();
     });
 
-    // Real click on the real "Open" action must open the stable artifact route
-    // in a separate tab. It must never navigate the Moves workspace away.
-    fireEvent.click(screen.getByRole("button", { name: /^Open$/i }));
-    await waitFor(() => {
-      expect(window.open).toHaveBeenCalledWith(
-        // The product moved and the test was left behind: the artifact link
-        // now requests an explicit render format. Asserted in full, including
-        // `format=html`, so a silent change back to a bare inline link fails.
-        "/api/v1/artifacts/d74ed94a-a600-46ee-ad5d-a505556c4cac?format=html&inline=1",
-        "moves-artifact-d74ed94a-a600-46ee-ad5d-a505556c4cac",
-        "noopener,noreferrer",
-      );
-    });
+    // Real "Open" action must be a stable browser link. It must never depend
+    // on a button-side window.open side effect that can silently no-op.
+    expect(screen.getByRole("link", { name: /^Open$/i })).toHaveAttribute(
+      "href",
+      "/api/v1/artifacts/d74ed94a-a600-46ee-ad5d-a505556c4cac?format=html&inline=1",
+    );
+    expect(screen.getByRole("link", { name: /^Open$/i })).toHaveAttribute(
+      "target",
+      "_blank",
+    );
   });
 
   it("supports the explorer, upload, aVa launcher, and gate ceremony interactions", async () => {
