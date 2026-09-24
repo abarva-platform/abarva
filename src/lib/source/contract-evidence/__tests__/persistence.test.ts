@@ -1,8 +1,24 @@
 import { buildContractEvidencePersistencePayload } from "../persistence";
 import type { SourceContractEvidencePackInput } from "../types";
 
+const TENANT_KEY = "lakeshore";
+const OPPOSITE_TENANT_KEY = "skyharbor-air";
+
+// The manifest fence was asserted here from the start; the per-row and per-metric
+// fences were not, so replacing `input.tenantKey` inside `toStructuredRows()` or
+// `metric()` with a constant left all three cases green while every structured row
+// and every derived metric went to the wrong tenant (item T-755). Collapsing to the
+// distinct set asserts EVERY element rather than a sampled one -- a `toMatchObject`
+// on `rows[1]` is how this was missed -- and the accompanying length assertion is
+// what stops an empty array from satisfying it vacuously.
+function distinctTenantKeys(
+  rows: ReadonlyArray<{ tenant_key: string }>,
+): string[] {
+  return [...new Set(rows.map((row) => row.tenant_key))];
+}
+
 const baseInput: SourceContractEvidencePackInput = {
-  tenantKey: "lakeshore",
+  tenantKey: TENANT_KEY,
   sourceEventId: "LAKE-AMS-CONTRACT-OPT-2026",
   sourceArtifactId: "11111111-1111-4111-8111-111111111111",
   archetypeKey: "ams_contract_optimization",
@@ -99,7 +115,7 @@ describe("Source contract evidence persistence payload", () => {
     const payload = buildContractEvidencePersistencePayload(baseInput);
 
     expect(payload.manifest).toMatchObject({
-      tenant_key: "lakeshore",
+      tenant_key: TENANT_KEY,
       source_event_id: "LAKE-AMS-CONTRACT-OPT-2026",
       source_type: "client_uploaded",
       validation_status: "accepted",
@@ -112,6 +128,9 @@ describe("Source contract evidence persistence payload", () => {
       "Structured sourcing-critical extracts only",
     );
     expect(payload.rows).toHaveLength(8);
+    expect(distinctTenantKeys(payload.rows)).toEqual([TENANT_KEY]);
+    expect(payload.metrics.length).toBeGreaterThan(0);
+    expect(distinctTenantKeys(payload.metrics)).toEqual([TENANT_KEY]);
     expect(payload.rows[0]?.row_hash).toHaveLength(64);
     expect(payload.rows[1]).toMatchObject({
       evidence_family: "invoice_summary",
@@ -169,6 +188,12 @@ describe("Source contract evidence persistence payload", () => {
       ],
     });
 
+    expect(payload.manifest.tenant_key).toBe(TENANT_KEY);
+    expect(payload.rows).toHaveLength(9);
+    expect(distinctTenantKeys(payload.rows)).toEqual([TENANT_KEY]);
+    expect(payload.metrics.length).toBeGreaterThan(0);
+    expect(distinctTenantKeys(payload.metrics)).toEqual([TENANT_KEY]);
+
     const metrics = Object.fromEntries(
       payload.metrics.map((metric) => [metric.metric_key, metric.metric_value]),
     );
@@ -183,11 +208,47 @@ describe("Source contract evidence persistence payload", () => {
       rows: baseInput.rows.filter((row) => row.family !== "staffing_model"),
     });
 
+    expect(payload.manifest.tenant_key).toBe(TENANT_KEY);
+    expect(payload.rows).toHaveLength(7);
+    expect(distinctTenantKeys(payload.rows)).toEqual([TENANT_KEY]);
+    expect(payload.metrics.length).toBeGreaterThan(0);
+    expect(distinctTenantKeys(payload.metrics)).toEqual([TENANT_KEY]);
     expect(payload.manifest.validation_status).toBe("partial");
     expect(payload.manifest.missing_required_families).toEqual(["staffing_model"]);
     expect(payload.manifest.warnings).toContain(
       "Synthetic demo evidence; do not treat as client-approved truth.",
     );
     expect(payload.rows[0]?.confidence).toBe(0.7);
+  });
+
+  it("carries the caller's tenant into the manifest, every row and every metric", () => {
+    // The three cases above all run under one tenant, so a fence replaced by the
+    // literal "lakeshore" rather than by a foreign constant would still satisfy
+    // them. Building the identical pack under a second tenant is what makes these
+    // assertions prove the value is DERIVED FROM THE INPUT rather than merely equal
+    // to the one string the fixture happens to use.
+    expect(OPPOSITE_TENANT_KEY).not.toBe(TENANT_KEY);
+
+    const payload = buildContractEvidencePersistencePayload({
+      ...baseInput,
+      tenantKey: OPPOSITE_TENANT_KEY,
+    });
+
+    expect(payload.manifest.tenant_key).toBe(OPPOSITE_TENANT_KEY);
+    expect(payload.rows).toHaveLength(8);
+    expect(distinctTenantKeys(payload.rows)).toEqual([OPPOSITE_TENANT_KEY]);
+    expect(payload.metrics.length).toBeGreaterThan(0);
+    expect(distinctTenantKeys(payload.metrics)).toEqual([OPPOSITE_TENANT_KEY]);
+
+    // Same input but for the tenant key: nothing else in the payload may move, or
+    // an "opposite tenant" case would be proving a different pack rather than the
+    // same pack under a different fence.
+    const home = buildContractEvidencePersistencePayload(baseInput);
+    expect(payload.rows.map((row) => row.row_hash)).toEqual(
+      home.rows.map((row) => row.row_hash),
+    );
+    expect(payload.metrics.map((metric) => metric.metric_value)).toEqual(
+      home.metrics.map((metric) => metric.metric_value),
+    );
   });
 });
