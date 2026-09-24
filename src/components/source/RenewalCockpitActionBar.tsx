@@ -625,7 +625,13 @@ export function RenewalCockpitActionBar({ cockpit }: { cockpit: RenewalCockpit }
       {emailDraft ? (
         <div style={PANEL}>
           <span style={LABEL}>
-            Vendor email draft · {emailDraft.posture} tone · draft, not sent
+            {/*
+              Item U-400. `emailDraft.posture` is the raw `RenewalPosture` key
+              — it reached this label as `decline_renewal`. The cockpit already
+              carries the client-facing wording for the same value, so use it.
+            */}
+            Vendor email draft · {cockpit.postureLabel.toLowerCase()} tone ·
+            draft, not sent
           </span>
           <h3 style={HEADING}>{emailDraft.subject}</h3>
           <pre
@@ -722,8 +728,8 @@ export function RenewalCockpitActionBar({ cockpit }: { cockpit: RenewalCockpit }
                   {cockpit.vendorName} — {cockpit.product}
                 </strong>
                 . It is a real, tenant-scoped record — the Tower portfolio
-                reads <code>tower_watch</code> work items, so the renewal
-                becomes visible there.
+                reads Tower watch work items, so the renewal becomes visible
+                there.
               </p>
               <div style={{ display: 'flex', gap: 8 }}>
                 <button
