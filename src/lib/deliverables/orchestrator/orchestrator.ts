@@ -317,8 +317,12 @@ export async function runDeliverableOrchestration(
     },
   );
 
-  // Quality gate
-  const quality = validateDeliverableQuality(document, req);
+  // Quality gate. The brief is passed so the gate can count the exhibits it
+  // asked for against the ones that arrived (C-514) — the request side lives
+  // only here, and the gate cannot recover it from `req`.
+  const quality = validateDeliverableQuality(document, req, {
+    expectedExhibits: brief.expectedExhibits,
+  });
   const ok = enforceQualityGate ? quality.pass : true;
   return {
     ok,

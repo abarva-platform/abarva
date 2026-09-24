@@ -8,8 +8,10 @@
 
 import type {
   DeliverableIntelligenceRequest,
+  ExpectedExhibit,
   QualityValidationResult,
   RenderableDeliverable,
+  RenderableExhibit,
 } from "./types";
 import { carriesRequiredEvidenceSignal } from "./evidence-signals";
 import { scanForInternalLeaks } from "./source-register";
@@ -159,9 +161,37 @@ function collectUnsupportedClaims(body: string): string[] {
   return claims;
 }
 
+/**
+ * Greedy one-to-one match of expected exhibits against produced ones, by kind.
+ *
+ * One-to-one and not merely "is a matrix present": a brief that asks for two
+ * matrices and receives one would otherwise report both satisfied, and the
+ * shortfall would disappear in exactly the case it exists to catch.
+ */
+function matchExpectedExhibits(
+  expected: readonly ExpectedExhibit[],
+  produced: readonly RenderableExhibit[],
+): { received: number; missing: string[] } {
+  const unconsumed = produced.map((e) => e.kind);
+  const missing: string[] = [];
+  let received = 0;
+
+  for (const want of expected) {
+    const at = unconsumed.indexOf(want.kind);
+    if (at === -1) {
+      missing.push(want.title);
+      continue;
+    }
+    unconsumed.splice(at, 1);
+    received += 1;
+  }
+  return { received, missing };
+}
+
 export function validateDeliverableQuality(
   doc: RenderableDeliverable,
   req: DeliverableIntelligenceRequest,
+  opts: { expectedExhibits?: readonly ExpectedExhibit[] } = {},
 ): QualityValidationResult {
   const blockers: string[] = [];
   const warnings: string[] = [];
@@ -339,6 +369,23 @@ export function validateDeliverableQuality(
     warnings.push(
       "document lacks exhibits — consider decision/architecture/roadmap visuals",
     );
+  // ── expected-exhibit shortfall (C-514) ──
+  // The warning above fires only when the document has NO exhibits at all. A
+  // brief that asked for three and received one produced no signal of any kind,
+  // and since the synthesis pass is now allowed to omit an exhibit rather than
+  // fabricate one, that partial case is the likely one. `RenderableExhibit.data`
+  // already says the gate "should surface the missing visual"; this is where it
+  // does. Advisory on purpose — refusing the export is a product decision.
+  const exhibitMatch = opts.expectedExhibits
+    ? matchExpectedExhibits(opts.expectedExhibits, doc.exhibits)
+    : null;
+  if (exhibitMatch && exhibitMatch.missing.length > 0) {
+    warnings.push(
+      `expected exhibits: ${exhibitMatch.received} of ${opts.expectedExhibits!.length} received — missing: ${exhibitMatch.missing
+        .map((t) => `"${t}"`)
+        .join(", ")}`,
+    );
+  }
   // ── reference-contract enforcement (REF_EXECUTIVE_ROADMAP pilot) ──
   // requiredExhibitElements were only ever read into the prompt before this;
   // this is the first real check that the generated exhibit actually
@@ -448,6 +495,13 @@ export function validateDeliverableQuality(
       hasEvidenceGapsNoted,
       requiredEvidenceSignalCount: req.requiredEvidenceSignals?.length ?? 0,
       missingRequiredEvidenceSignalCount: missingRequiredEvidenceSignals.length,
+      ...(exhibitMatch
+        ? {
+            expectedExhibitCount: opts.expectedExhibits!.length,
+            receivedExpectedExhibitCount: exhibitMatch.received,
+            missingExpectedExhibits: exhibitMatch.missing,
+          }
+        : {}),
       readingTimeMinutes: Math.max(1, Math.round(bodyWordCount / 200)),
       manualEditNeeded: warnings.length > 0 || blockers.length > 0,
       wordBand,

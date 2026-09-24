@@ -436,6 +436,20 @@ export interface QualityValidationResult {
     hasEvidenceGapsNoted: boolean;
     requiredEvidenceSignalCount?: number;
     missingRequiredEvidenceSignalCount?: number;
+    /**
+     * How many exhibits the artifact brief asked for, and how many of those
+     * arrived. Since the synthesis pass may legitimately OMIT an exhibit rather
+     * than emit a placeholder one, absence is the expected failure mode, and an
+     * absence nobody counted reads exactly like a deliverable that never wanted
+     * the visual. These make the shortfall a number.
+     *
+     * Absent (not zero) when the caller supplied no expected-exhibit list —
+     * "not measured" and "measured, none expected" are different facts.
+     */
+    expectedExhibitCount?: number;
+    receivedExpectedExhibitCount?: number;
+    /** Titles of the expected exhibits that no produced exhibit matched. */
+    missingExpectedExhibits?: string[];
     /** ~200 words/minute executive reading pace, rounded up to at least 1. */
     readingTimeMinutes: number;
     /** true whenever any advisory/warning fired — a signal to track whether the
