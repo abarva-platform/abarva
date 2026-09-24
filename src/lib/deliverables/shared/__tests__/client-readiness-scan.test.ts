@@ -96,6 +96,23 @@ describe("implementation detail", () => {
     expect(kinds(text)).not.toContain("schema_identifier");
   });
 
+  it("blocks raw render-package payload fields in client-facing artifacts", () => {
+    const result = scanClientReadiness(
+      '8. Maturity Assessment { "key": "maturity", "title": "8. Maturity Assessment", "bodyMarkdown": "## 8. Maturity Assessment\\nThe document body belongs here." }',
+    );
+
+    expect(result.findings).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          kind: "render_package_payload",
+          match: '"bodyMarkdown":',
+          severity: "blocker",
+        }),
+      ]),
+    );
+    expect(result.blockers).toBeGreaterThan(0);
+  });
+
   it("blocks generated-artifact enum pairs in client-facing source registers", () => {
     const result = scanClientReadiness(
       "Source Register: Delivery Handoff Pack generated_artifact:handoff_package high.",
