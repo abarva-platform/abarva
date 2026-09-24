@@ -16,9 +16,9 @@
     "No timestamp is recorded, so refreshing this file on an unchanged tree is a no-op."
   ],
   "counts": {
-    "testFiles": 2422,
-    "coveredTestFiles": 1973,
-    "pullRequestCoveredTestFiles": 1970,
+    "testFiles": 2423,
+    "coveredTestFiles": 1974,
+    "pullRequestCoveredTestFiles": 1971,
     "uncoveredTestFiles": 449,
     "directoriesWithTests": 487,
     "directoriesFullyCovered": 287,
@@ -57,6 +57,14 @@
     {
       "source": "scripts/quality/source-integration-ignore-args.mjs",
       "mention": "/** * Print the `--testPathIgnorePatterns` arguments for the Source integration * workflow, derived from source-integration-quarantine.json. * * The workflow runs jest directly and names the suite directory literally: * * npx jest src/__tests__/integration/source ... $(node scripts/quality/source-integration-ignore-args.mjs) * * That shape is deliberate. The \"Changed integration suites have a CI owner\" * gate counts a suite as registered only when a workflow command mentions a * test runner AND names the suite or a containing directory. Moving the run * behind a wrapper script satisfies neither, so wrapping it would have left * every new Source integration suite failing that gate while the workflow * appeared to work. Only the flags come from here; the runner and the path * stay in the command where the gate can see them. * * Keeping the list in JSON rather than as a 24-line literal in the YAML means * it has one home, and the sibling checker can refuse it when it goes stale. */"
+    },
+    {
+      "source": "scripts/quality/test-ci-coverage-census.mjs",
+      "mention": "/** * A shell script has no tree, so position is the line: the runner has to sit * where the shell would execute it. A `#` comment is a comment — one of them * carrying `&& jest src/…` matched the command-position rule through the `&&`. */"
+    },
+    {
+      "source": "scripts/quality/test-ci-coverage-census.mjs",
+      "mention": "/** The runner at the head of a whole command line — `npx jest src/…`. */"
     }
   ],
   "unresolvedIgnoreArguments": [],
