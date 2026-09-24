@@ -1879,7 +1879,54 @@ const barePipeRows = [...byNum.entries()]
   .map(([num]) => num)
   .sort((a, b) => String(a).localeCompare(String(b), undefined, { numeric: true }));
 
-const tracks = sideTracks.map((t) => ({
+/**
+ * The track the generator builds rather than the map declaring it — item
+ * C-515.
+ *
+ * `placedRefs` above is the structure map alone, so an id the backlog DEFINES
+ * and the map does not place became no item at all: absent from `tracks`,
+ * absent from the summary, and therefore absent from every bucket of
+ * `EXECUTION_QUEUE.md` — not claimable, not blocked, not held. The gate below
+ * names that state and fails the run, and its comment calls the harm by its
+ * name: "An unmapped id is invisible to the queue: it is not offered to any
+ * agent."
+ *
+ * Failing the run has not fixed it, and cannot. Filing is a local edit to an
+ * operator-owned document; mapping is a pull request against this repository.
+ * The two come apart the instant an item is filed, so the gate is red by
+ * construction — `build-execution-queue.mjs` records exactly that. Measured
+ * twice on the live corpus: `C-509` placed 17 such ids at 15:50Z on
+ * 2026-09-24, and 12 more had accumulated eight hours later. On both
+ * occasions the queue offered zero rows in lanes U, C and T while filed,
+ * unclaimed, executable work sat in the backlog behind the drop.
+ *
+ * So the id is built and offered, and mapping stays owed. Three things are
+ * deliberately NOT touched, because "whether an unmapped id should FAIL the
+ * board" is reserved to the operator and this is not that decision: the exit
+ * code, the stderr line, and `unmapped` in the summary. `mappedNums` is
+ * computed above from `sideTracks` and is not extended here, so this track
+ * cannot make an id read as placed.
+ *
+ * It carries no capability and belongs to no stage, so it credits nothing:
+ * `coverageOf` reads capabilities alone and the vision figure cannot move for
+ * this reason. And it exists only when something is unplaced — a section
+ * rendered empty on every run would say nothing about whether mapping is
+ * owed, and would be a branch exercised only in the failing case.
+ */
+const unplacedTrack = unmapped.length
+  ? {
+      name: "Unplaced — filed, not yet on the structure map",
+      why:
+        "Defined in the backlog and placed by no entry of the repo-owned "
+        + "`scripts/exec/source-stage-map.json`. Offered here so filed work is not hidden "
+        + "behind a pull request, and still reported as unmapped: mapping these onto the "
+        + "stage or track they belong to is owed, and this run exits non-zero until it is done.",
+      items: unmapped,
+      unplaced: true,
+    }
+  : null;
+
+const tracks = [...sideTracks, unplacedTrack].filter(Boolean).map((t) => ({
   ...t,
   built: (t.items ?? []).map(buildItem).filter(Boolean),
 }));
