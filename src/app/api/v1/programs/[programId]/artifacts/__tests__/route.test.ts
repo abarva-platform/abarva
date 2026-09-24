@@ -181,6 +181,56 @@ describe("GET /api/v1/programs/[programId]/artifacts — Cabinet merge", () => {
     expect(json.artifacts[0]!.title).toBe("Charter (vault)"); // the vault row wins
   });
 
+  it("quarantines smoke-test control packets that otherwise look approved", async () => {
+    moveRows = [
+      {
+        artifact_id: "fixture-packet",
+        artifact_type: "client_approved_deliverables_packet",
+        artifact_family: "generated_deliverable",
+        title: "Client Approved Deliverables Packet APPROVED v1",
+        phase: 5,
+        file_format: "docx",
+        file_name: "Client_Approved_Deliverables_Packet_APPROVED_v1.docx",
+        version: 1,
+        status: "approved",
+        lifecycle_state: "current",
+        quality_score: null,
+        unsupported_claims_count: 0,
+        generated_by: "u",
+        created_at: "2026-09-23T00:00:00Z",
+        file_size: 1013,
+        metadata: {
+          storage: "azure_blob",
+          openItems: ["Original upload marked approved."],
+        },
+      },
+    ];
+
+    const res = await GET(
+      req("family=generated_deliverable&currentOnly=1"),
+      params("move-x"),
+    );
+    const json = (await res.json()) as {
+      count: number;
+      artifacts: Array<Record<string, unknown>>;
+    };
+
+    expect(res.status).toBe(200);
+    expect(json.count).toBe(1);
+    expect(json.artifacts[0]).toEqual(
+      expect.objectContaining({
+        artifactId: "fixture-packet",
+        status: "quarantined",
+        artifactStatus: "fixture_control_quarantined",
+        preliminaryCaveat: expect.stringContaining("not a client deliverable"),
+        openItems: expect.arrayContaining([
+          expect.stringContaining("Smoke-test control language detected"),
+          "Original upload marked approved.",
+        ]),
+      }),
+    );
+  });
+
   it("excludes generated docs when a non-deliverable family is selected", async () => {
     generatedRecs = [
       {

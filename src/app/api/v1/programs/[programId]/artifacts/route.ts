@@ -255,6 +255,37 @@ function normalizedArtifactTitle(value: string): string {
   return value.replace(/\s+/g, " ").trim().toLowerCase();
 }
 
+const FIXTURE_CONTROL_MARKERS = [
+  /client[\s_-]+approved[\s_-]+deliverables[\s_-]+packet/i,
+  /simulated client approved upload/i,
+  /synthetic aggregate evidence only/i,
+  /must mention in generated output/i,
+  /must not claim:/i,
+];
+
+function compactJson(value: unknown): string {
+  try {
+    return JSON.stringify(value ?? {});
+  } catch {
+    return "";
+  }
+}
+
+function isFixtureControlArtifact(value: {
+  artifact_family?: unknown;
+  title?: unknown;
+  file_name?: unknown;
+  metadata?: unknown;
+}): boolean {
+  if (value.artifact_family !== "generated_deliverable") return false;
+  const haystack = [
+    typeof value.title === "string" ? value.title : "",
+    typeof value.file_name === "string" ? value.file_name : "",
+    compactJson(value.metadata),
+  ].join("\n");
+  return FIXTURE_CONTROL_MARKERS.some((pattern) => pattern.test(haystack));
+}
+
 function filterCurrentCabinetArtifacts(
   artifacts: readonly CabinetArtifact[],
 ): CabinetArtifact[] {
@@ -323,6 +354,7 @@ export async function GET(
     });
 
     const moveArtifacts: CabinetArtifact[] = rows.map((r) => {
+      const fixtureControl = isFixtureControlArtifact(r);
       const meta = r.metadata as {
         storage?: string;
         openItems?: string[];
@@ -351,7 +383,7 @@ export async function GET(
         fileFormat: r.file_format,
         fileName: r.file_name,
         version: r.version,
-        status: r.status,
+        status: fixtureControl ? "quarantined" : r.status,
         lifecycleState: r.lifecycle_state,
         qualityScore: r.quality_score,
         unsupportedClaims: r.unsupported_claims_count,
@@ -359,15 +391,24 @@ export async function GET(
         createdAt: r.created_at,
         fileSize: r.file_size,
         stored: meta?.storage ?? null,
-        openItems: meta?.openItems ?? [],
+        openItems: fixtureControl
+          ? [
+              "Smoke-test control language detected; keep this packet in test evidence, not client deliverables.",
+              ...(meta?.openItems ?? []),
+            ]
+          : (meta?.openItems ?? []),
         reviewStatus: meta?.reviewStatus ?? null,
         feedbackStatus: meta?.feedbackStatus ?? null,
         feedbackItemCount: meta?.feedbackItemCount ?? null,
         regeneratedFromArtifactId: meta?.regeneratedFromArtifactId ?? null,
         qualityStatus: meta?.qualityStatus ?? null,
         goldenBarStatus: meta?.goldenBarStatus ?? null,
-        artifactStatus: meta?.artifactStatus ?? null,
-        preliminaryCaveat: meta?.preliminaryCaveat ?? null,
+        artifactStatus: fixtureControl
+          ? "fixture_control_quarantined"
+          : (meta?.artifactStatus ?? null),
+        preliminaryCaveat: fixtureControl
+          ? "This packet contains smoke-test control instructions. It is not a client deliverable until replaced by evidence-backed content."
+          : (meta?.preliminaryCaveat ?? null),
         clientFacingVersionLabel: meta?.clientFacingVersionLabel ?? null,
         outputRole: meta?.outputRole ?? null,
         provenanceCategory: meta?.provenanceCategory ?? null,
