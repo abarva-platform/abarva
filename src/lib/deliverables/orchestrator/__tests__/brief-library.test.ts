@@ -110,7 +110,7 @@ describe("deliverable structures", () => {
   it.each([
     [
       "target_state_architecture",
-      14,
+      7,
       [
         "conceptual_architecture",
         "logical_architecture",
@@ -160,35 +160,21 @@ describe("deliverable structures", () => {
     expect(structure.fixedStructure).toBe(true);
     expect(structure.sections.map((section) => section.key)).toEqual([
       "exec_summary",
-      "decision_required",
       "options_considered",
       "current_state",
       "target_state",
-      "conceptual_architecture",
-      "logical_architecture",
-      "physical_architecture",
-      "agent_orchestration",
-      "data_integration",
-      "security_controls",
-      "implementation_path",
-      "risks",
+      "platform_controls",
+      "implementation_risks",
       "recommendation",
     ]);
     expect(structure.sections.map((section) => section.expertLatitude)).toEqual(
       [
-        "Keep under 450 words. Lead with the architecture decision, why now, and material open inputs.",
-        "Keep under 350 words using a compact decision box.",
-        "Keep under 700 words using an options matrix. Compare at least maintain-status-quo, point-solution automation, and governed intelligence-layer options.",
-        "Keep under 650 words. State only the baseline facts that change the architecture decision.",
-        "Keep under 800 words. Summarize the architecture thesis; do not repeat the exhibits.",
-        "Keep under 900 words plus the conceptual architecture exhibit.",
-        "Keep under 950 words plus the logical architecture exhibit.",
-        "Keep under 1,000 words plus the physical architecture exhibit. Mark unknown provider/service choices as open inputs, not defaults.",
-        "Keep under 900 words plus one orchestration flow exhibit.",
-        "Keep under 750 words using an integration-contract table.",
-        "Keep under 700 words using a controls table.",
-        "Keep under 650 words. Sequence architecture decisions only; do not become a project plan.",
-        "Keep under 650 words using a risk/dependency table.",
+        "Keep under 450 words. State the decision once; do not preview every later section.",
+        "Keep under 650 words using an options matrix. Do not invent three options when only one credible pattern exists.",
+        "Keep under 500 words. State only facts that change the architecture decision; put missing facts in open inputs.",
+        "Keep under 750 words plus the required architecture exhibits. Explain what each exhibit proves; do not repeat its labels as prose.",
+        "Keep under 650 words using one compact controls/integration table. Mark provider/service choices as selected, illustrative, or open input.",
+        "Keep under 600 words using a risk/dependency table. Sequence architecture decisions only; do not become a project plan.",
         "Keep under 250 words. End with approve / revise / hold and named next actions.",
       ],
     );
@@ -196,8 +182,14 @@ describe("deliverable structures", () => {
       const n = section.expertLatitude.match(/under ([\d,]+) words/i)?.[1];
       return sum + (n ? Number(n.replace(/,/g, "")) : 0);
     }, 0);
-    expect(authoredBudget).toBeLessThan(16_000);
-    expect(structure.requiredSectionKeys).toContain("options_considered");
+    expect(authoredBudget).toBeLessThan(5_000);
+    expect(structure.requiredSectionKeys).toEqual([
+      "exec_summary",
+      "current_state",
+      "target_state",
+      "recommendation",
+    ]);
+    expect(structure.requiredSectionKeys).not.toContain("options_considered");
   });
 
   it("keeps solution-design authoring budgets below the hard export ceiling", () => {

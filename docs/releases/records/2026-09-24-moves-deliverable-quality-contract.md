@@ -37,6 +37,8 @@ or unsupported exhibit data is reported as a gap instead of being replaced by a 
   inside the matching exhibit block.
 - Adds optional authored `deckSlides` to the renderable artifact contract and makes PPTX output use
   authored slide messages, points, notes, and linked exhibit payloads when present.
+- Compresses the target-architecture prose structure so architecture views remain exhibits instead
+  of separate generated essays.
 - Adds focused negative tests for label-only and out-of-scope exhibit markers.
 - Adds a report-only golden-bar signal measurement runner over caller-provided artifact exports.
 - Adds a status ledger under `docs/status/moves-deliverable-quality/STATUS.md`.
@@ -47,6 +49,7 @@ or unsupported exhibit data is reported as a gap instead of being replaced by a 
 - `./node_modules/.bin/eslint src/lib/deliverables/orchestrator/persistence.ts src/lib/visual-system/storyline-deck.ts src/lib/deliverables/orchestrator/types.ts src/lib/deliverables/orchestrator/section-generation.ts src/lib/deliverables/orchestrator/prompt-builder.ts src/lib/deliverables/orchestrator/renderers.tsx src/lib/deliverables/orchestrator/__tests__/persistence-deck.test.ts src/lib/deliverables/orchestrator/__tests__/renderers.test.ts src/lib/deliverables/orchestrator/__tests__/section-generation.test.ts src/lib/deliverables/orchestrator/__fixtures__/ams-rfp.ts` — passed.
 - `./node_modules/.bin/eslint scripts/moves/measure-golden-bar-signals.ts` — passed.
 - `NODE_OPTIONS=--max-old-space-size=8192 ./node_modules/.bin/tsc --noEmit -p tsconfig.json --pretty false` — passed.
+- `./node_modules/.bin/jest --runTestsByPath src/lib/deliverables/orchestrator/__tests__/brief-library.test.ts src/lib/deliverables/__tests__/adaptive-depth.test.ts --runInBand` — passed, 37/37 tests.
 - `npm run moves:measure-golden-bar-signals -- --input /tmp/moves-golden-bar-sample.json --out /tmp/moves-golden-bar-report.json --since-days 90` — passed on a local two-record sample; detected duplicate headings and unsupported quantified claims only on the in-window artifact.
 - Generated artifact proof under `/tmp/moves-deliverable-quality-proof`: structured exhibit generated HTML/DOCX/PPTX with rendered visual content; missing-data exhibit did not appear in generated HTML/DOCX/PPTX and no rasterisation-failure notice was shipped.
 - Authored-slide artifact proof under `/tmp/moves-deliverable-quality-proof/authored-slide-proof-summary.json`: generated PPTX contained the authored governing message, authored support point, linked exhibit title, speaker notes, and suppressed section-derived slides.
@@ -81,5 +84,6 @@ database, tenant data, migration, or runtime configuration rollback is required.
 
 ## Known Gaps
 
-This candidate does not implement section elasticity across all structures, legacy route
-retirement, golden-bar enforcement, or model-judge calibration.
+This candidate applies section elasticity to Target Architecture only. It does not implement
+section elasticity across all remaining structures, legacy route retirement, golden-bar
+enforcement, or model-judge calibration.
