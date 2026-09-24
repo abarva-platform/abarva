@@ -277,6 +277,196 @@ function isTruthish(value: string): boolean {
   return /^(true|yes|y|1)$/i.test(value.trim());
 }
 
+type RelationshipEndpoint = {
+  name: string;
+  type: string;
+  row?: EstateRow;
+  posture:
+    | "rated exposure"
+    | "critical system"
+    | "regulated data"
+    | "program"
+    | "declared only";
+};
+
+type RelationshipPath = {
+  left: RelationshipEndpoint;
+  verb: string;
+  right: RelationshipEndpoint;
+  strength: string;
+  confidence: string;
+  evidenceBasis: string;
+  gap: string;
+};
+
+function rowName(row: EstateRow, keys: string[]): string {
+  for (const key of keys) {
+    const value = str(row, key);
+    if (value) return value;
+  }
+  return "";
+}
+
+function indexRows(
+  rows: EstateRow[] | undefined,
+  keys: string[],
+): Map<string, EstateRow> {
+  const index = new Map<string, EstateRow>();
+  for (const row of rows ?? []) {
+    const name = rowName(row, keys);
+    if (name) index.set(norm(name), row);
+  }
+  return index;
+}
+
+function endpointPosture(row: EstateRow | undefined, fallbackType: string) {
+  if (!row) return "declared only" as const;
+  if (isHigh(str(row, "severity")) || isHigh(str(row, "riskRating"))) {
+    return "rated exposure" as const;
+  }
+  if (isHigh(str(row, "criticality"))) return "critical system" as const;
+  if (isTruthish(str(row, "regulatedDataFlag")))
+    return "regulated data" as const;
+  if (
+    /program|initiative/i.test(fallbackType) ||
+    str(row, "programName") ||
+    str(row, "status")
+  ) {
+    return "program" as const;
+  }
+  return "declared only" as const;
+}
+
+function relationshipEndpoint(
+  name: string,
+  type: string,
+  indexes: ReadonlyArray<Map<string, EstateRow>>,
+): RelationshipEndpoint {
+  const key = norm(name);
+  const row = indexes.map((index) => index.get(key)).find(Boolean);
+  return {
+    name,
+    type,
+    row,
+    posture: endpointPosture(row, type),
+  };
+}
+
+function relationshipPaths(estate: CrossFamilyEstate): RelationshipPath[] {
+  const indexes = [
+    indexRows(estate.risks, ["riskOrControlName"]),
+    indexRows(estate.programs, ["programName"]),
+    indexRows(estate.applications, ["systemName"]),
+    indexRows(estate.vendors, ["vendorName", "contractName"]),
+    indexRows(estate.data, ["dataAssetName", "sourceSystem", "targetSystem"]),
+    indexRows(estate.infrastructure, ["platformName"]),
+  ];
+  const rows = estate.relationships ?? [];
+  const paths: RelationshipPath[] = [];
+
+  for (const edge of rows) {
+    const from = str(edge, "fromObjectName");
+    const to = str(edge, "toObjectName");
+    const verb = str(edge, "relationshipType");
+    if (!from || !to || !verb) continue;
+
+    const left = relationshipEndpoint(
+      from,
+      str(edge, "fromObjectType"),
+      indexes,
+    );
+    const right = relationshipEndpoint(to, str(edge, "toObjectType"), indexes);
+    const touchesAttention =
+      left.posture !== "declared only" ||
+      right.posture !== "declared only" ||
+      /risk|control|program|initiative|vendor|contract|application|system|data/i.test(
+        `${left.type} ${right.type}`,
+      );
+    if (!touchesAttention) continue;
+
+    paths.push({
+      left,
+      verb,
+      right,
+      strength: str(edge, "relationshipStrength") || "declared",
+      confidence: str(edge, "confidence") || "not declared",
+      evidenceBasis: str(edge, "evidenceBasis") || "relationship row",
+      gap: str(edge, "knownGaps") || "No additional gap declared on the edge.",
+    });
+  }
+
+  return paths
+    .sort((a, b) => {
+      const score = (path: RelationshipPath) =>
+        [path.left, path.right].filter(
+          (endpoint) => endpoint.posture !== "declared only",
+        ).length;
+      return (
+        score(b) - score(a) ||
+        a.left.name.localeCompare(b.left.name) ||
+        a.right.name.localeCompare(b.right.name)
+      );
+    })
+    .slice(0, 8);
+}
+
+export function relationshipPathTables(estate: CrossFamilyEstate): TableSpec[] {
+  const paths = relationshipPaths(estate);
+  if (paths.length === 0) return [];
+  return [
+    {
+      caption: "Relationship-backed exposure paths",
+      section: "Cross-family executive findings",
+      columns: ["Declared path", "Why it matters", "Evidence state"],
+      rows: paths.map((path) => [
+        `${cellText(path.left.name)} → ${cellText(path.verb)} → ${cellText(path.right.name)}`,
+        [path.left, path.right]
+          .map((endpoint) =>
+            endpoint.posture === "declared only"
+              ? `${cellText(endpoint.name)} is relationship-declared`
+              : `${cellText(endpoint.name)} is ${endpoint.posture}`,
+          )
+          .join("; "),
+        `${cellText(path.strength)} · ${cellText(path.confidence)} · ${cellText(path.evidenceBasis)} · ${cellText(path.gap)}`,
+      ]),
+      note: "Built only from served relationship rows and exact endpoint matches to served estate rows. Declared-only endpoints remain labelled as declared-only rather than resolved by inference.",
+      wide: true,
+    },
+  ];
+}
+
+function relationshipGraphFinding(estate: CrossFamilyEstate): Finding | null {
+  const paths = relationshipPaths(estate);
+  const material = paths.filter((path) =>
+    [path.left, path.right].some(
+      (endpoint) => endpoint.posture !== "declared only",
+    ),
+  );
+  if (material.length === 0) return null;
+  const declaredOnly = paths.filter(
+    (path) =>
+      path.left.posture === "declared only" ||
+      path.right.posture === "declared only",
+  ).length;
+  return {
+    kind: "exposure",
+    claim: `${material.length} relationship-backed ${plural(material.length, "path crosses", "paths cross")} a rated exposure, critical system, regulated data asset, or program; ${declaredOnly} still carry at least one declared-only endpoint.`,
+    owner: "Enterprise Architecture",
+    because:
+      "This is a graph-backed synthesis over served relationship rows. It keeps unresolved endpoints visible and does not create near-match relationships.",
+    trace: {
+      file: "12_relationships.csv + served Home estate rows",
+      grain:
+        "one declared relationship edge and any exact matched endpoint rows",
+      rule: "relationship endpoint is declared, then exact-matched to high-risk, critical, regulated-data or program rows where possible",
+    },
+    openRows: {
+      objectType: "relationship_edge",
+      filter: material[0]?.left.name ?? "",
+    },
+  };
+}
+
 function riskProgramFinding(
   risks: EstateRow[],
   programs: EstateRow[],
@@ -441,6 +631,9 @@ function vendorCriticalSystemsFinding(
 
 export function crossFamilyFindings(estate: CrossFamilyEstate): Finding[] {
   const findings: Finding[] = [];
+  const graph = relationshipGraphFinding(estate);
+  if (graph) findings.push(graph);
+
   const riskProgram = riskProgramFinding(
     estate.risks ?? [],
     estate.programs ?? [],

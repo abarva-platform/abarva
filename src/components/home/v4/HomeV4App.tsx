@@ -472,6 +472,9 @@ export function HomeV4App({
     `from ${signalPacket.signals.length} signals`,
     `and ${signalPacket.contextItems.length} governed facts`,
   ];
+  const exportHrefBase = `/api/home/walkthrough-export?tenant=${encodeURIComponent(
+    tenantKey,
+  )}&provider=ecl`;
   const activeBriefingOpening =
     activeChapter && isGeneratorDeferral(activeChapter.headline)
       ? businessBriefingOpening({
@@ -511,6 +514,7 @@ export function HomeV4App({
           onSelect={selectActiveView}
           compiledLine={compiledLine}
           recordSource={renderedRecordSource}
+          exportHrefBase={exportHrefBase}
         />
 
         <main style={{ minWidth: 0, overflowY: "auto", padding: "0 0 60px" }}>
