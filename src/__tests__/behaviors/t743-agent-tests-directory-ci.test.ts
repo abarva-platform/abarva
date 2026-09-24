@@ -1,5 +1,5 @@
 import { execFileSync } from "node:child_process";
-import { existsSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import path from "node:path";
 
 import yaml from "js-yaml";
@@ -8,6 +8,10 @@ import {
   expandWorkflowCommands,
   extractWorkflowRunCommands,
 } from "../../../scripts/quality/check-integration-ci-visibility.mjs";
+import {
+  TRANSIENT_PROBE_FILES,
+  writeTransientProbeFile,
+} from "../../testing/transient-probe-files";
 
 /**
  * `src/lib/agent/__tests__` holds 33 suites. Five ran in CI and 28 ran nowhere,
@@ -33,11 +37,19 @@ import {
  *   3. a file that does not exist yet is reached. Case 3 creates one and
  *      re-measures, so "covered" is an answer about the next file rather than
  *      about today's 33.
+ *
+ * Case 3 used to delete that file in a `finally`, and that deletion was item
+ * T-759: thirty-one suites in this directory enumerate the test files under
+ * `src/` and then read each one, so a file that disappears between those two
+ * steps kills whichever of them is mid-read. The probe now leaves its file for
+ * the run and `src/testing/transient-probe-files.ts` removes it in the run's
+ * globalTeardown, after every worker has exited.
  */
 
 const repoRoot = path.resolve(__dirname, "../../..");
 const CENSUS_SCRIPT = "scripts/quality/test-ci-coverage-census.mjs";
 const AGENT_UNIT_DIRECTORY = "src/lib/agent/__tests__";
+const PROBE_FILE = `${AGENT_UNIT_DIRECTORY}/t743-coverage-probe.generated.test.ts`;
 const WIRING_WORKFLOW = ".github/workflows/ai-surface-control-catalog.yml";
 
 /**
@@ -200,35 +212,37 @@ describe("the agent-runtime unit directory CI reaches by directory", () => {
     // files on disk right now, and file-by-file wiring answers all of them
     // correctly on the day it is written — that is how 28 suites came to run
     // nowhere. So: add a file the workflow has never heard of and re-measure.
-    const probe = path.join(
-      repoRoot,
-      AGENT_UNIT_DIRECTORY,
-      "t743-coverage-probe.generated.test.ts",
-    );
+    const probe = path.join(repoRoot, PROBE_FILE);
     const before = testFilesDirectlyIn(AGENT_UNIT_DIRECTORY).length;
-    try {
-      writeFileSync(
-        probe,
-        [
-          "// Written and deleted by t743-agent-tests-directory-ci.test.ts.",
-          "// It passes, so a leaked copy is harmless to the directory it probes.",
-          'it("is reached by whatever command owns this directory", () => {',
-          "  expect(true).toBe(true);",
-          "});",
-          "",
-        ].join("\n"),
-        "utf8",
-      );
-      expect(testFilesDirectlyIn(AGENT_UNIT_DIRECTORY).length).toBe(before + 1);
+    writeTransientProbeFile(
+      PROBE_FILE,
+      [
+        "// Written by t743-agent-tests-directory-ci.test.ts and removed by the",
+        "// run's globalTeardown — never inside the run (item T-759).",
+        "// It passes, so a leaked copy is harmless to the directory it probes.",
+        'it("is reached by whatever command owns this directory", () => {',
+        "  expect(true).toBe(true);",
+        "});",
+        "",
+      ].join("\n"),
+      repoRoot,
+    );
+    expect(testFilesDirectlyIn(AGENT_UNIT_DIRECTORY).length).toBe(before + 1);
 
-      const remeasured = runCensus();
-      expect(gapRowsFor(remeasured, AGENT_UNIT_DIRECTORY)).toEqual({
-        partiallyCovered: null,
-        uncovered: null,
-      });
-    } finally {
-      rmSync(probe, { force: true });
-    }
-    expect(existsSync(probe)).toBe(false);
+    const remeasured = runCensus();
+    expect(gapRowsFor(remeasured, AGENT_UNIT_DIRECTORY)).toEqual({
+      partiallyCovered: null,
+      uncovered: null,
+    });
+
+    // Item T-759, and this is the half that used to read `toBe(false)`. The
+    // probe must still be on disk when this case ends: 31 suites in this
+    // directory enumerate the test files under `src/` and then read each one,
+    // and removing this file while any of them is between those two steps
+    // kills it with ENOENT. Measured at `origin/main` 15e0e9994 with a cold
+    // cache, three runs of three: 4, 3 and 4 suites failing of 114. Whoever
+    // re-adds a removal here fails this expectation first.
+    expect(existsSync(probe)).toBe(true);
+    expect(TRANSIENT_PROBE_FILES).toContain(PROBE_FILE);
   });
 });
