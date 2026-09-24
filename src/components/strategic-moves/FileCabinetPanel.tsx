@@ -205,7 +205,7 @@ export function supportsGeneratedClientApproval(
   );
 }
 
-const FINAL_READY_STATUSES = new Set(["approved", "board_ready", "ready"]);
+const REVIEW_READY_STATUSES = new Set(["approved", "board_ready", "ready"]);
 
 export function fileCabinetDownloadSummary(
   artifacts: ReadonlyArray<
@@ -216,10 +216,10 @@ export function fileCabinetDownloadSummary(
   const deliverables = current.filter(
     (a) => a.family === "generated_deliverable",
   );
-  const finalReady = deliverables.filter(
+  const reviewReady = deliverables.filter(
     (a) =>
       (a.fileFormat === "docx" || a.fileFormat === "pptx") &&
-      FINAL_READY_STATUSES.has(a.status),
+      REVIEW_READY_STATUSES.has(a.status),
   ).length;
   const needsReview = deliverables.filter((a) => {
     const label = artifactStatusLabel(a.status);
@@ -233,8 +233,8 @@ export function fileCabinetDownloadSummary(
   const models = deliverables.filter((a) => a.fileFormat === "xlsx").length;
 
   const parts = [`${current.length} current files`];
-  if (finalReady > 0) {
-    parts.push(`${finalReady} final-ready DOCX/PPTX deliverables`);
+  if (reviewReady > 0) {
+    parts.push(`${reviewReady} review-ready DOCX/PPTX exports`);
   }
   if (needsReview > 0) {
     parts.push(
@@ -1868,7 +1868,7 @@ export function FileCabinetPanel({
             Downloads
           </h2>
           <p style={{ fontSize: 12, color: "#9AA3B2", margin: "3px 0 0" }}>
-            Current Move files, final-ready deliverables, and review items.{" "}
+            Current Move files, review-ready exports, and review items.{" "}
             {downloadSummary || `${totalCurrent} current files.`}
           </p>
         </div>

@@ -39,7 +39,7 @@ describe("FileCabinetPanel artifact labels", () => {
     expect(artifactStatusLabel("board_ready")).toBe("ready");
   });
 
-  it("summarizes final-ready and review-state files without over-claiming every download is final", () => {
+  it("summarizes review-ready and review-state files without over-claiming every download is final", () => {
     expect(
       fileCabinetDownloadSummary([
         {
@@ -80,7 +80,7 @@ describe("FileCabinetPanel artifact labels", () => {
         },
       ]),
     ).toBe(
-      "5 current files · 2 final-ready DOCX/PPTX deliverables · 1 deliverable need review · 1 model.",
+      "5 current files · 2 review-ready DOCX/PPTX exports · 1 deliverable need review · 1 model.",
     );
   });
 
