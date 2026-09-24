@@ -1455,7 +1455,26 @@ function buildItem(ref) {
     ...defs.map(attributableStatusText).filter(Boolean),
     ...claims.map((c) => c.status),
   ].join("\n");
-  const bodyCorpus = defs.map((d) => `${d.title} ${d.acceptance} ${d.raw}`).join("\n");
+  /*
+   * ITEM T-750. A depth-two verdict note contributes its heading here too, not
+   * only to the status corpus. `deriveBlocker` reads this text UN-attributed —
+   * a decision sentence anywhere in it sets the blocker — and these notes are
+   * long narratives that name neighbouring items by the paragraph. Measured
+   * with their bodies included: **17 blockers moved**, `Decision needed` from
+   * 70 to 76, with no per-item justification available for any of them. An
+   * item whose blocker becomes `Decision needed` leaves the claimable queue
+   * for the bucket no agent may take, so that is the direction that hides
+   * work.
+   *
+   * Widening the blocker corpus may well be right, and it is not this change:
+   * it would have to be attributed first, the way T-704 attributed the rung
+   * corpus, and doing both at once makes neither movement attributable.
+   */
+  const bodyCorpus = defs
+    .map((d) => (d.statusScope === "heading"
+      ? `${d.title}`
+      : `${d.title} ${d.acceptance} ${d.raw}`))
+    .join("\n");
   const claimCorpus = claims.map((c) => c.status).join("\n");
   // Item T-704: the corpus is unchanged, and the id is passed so a sentence
   // whose proof word belongs to a NEIGHBOURING item cannot supply this item's

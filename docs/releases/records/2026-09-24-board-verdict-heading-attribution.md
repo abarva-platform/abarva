@@ -117,8 +117,11 @@ tree returns to 51/0.
 | lane-scope filter made fail-**open** (`if (true) return true`) | 47 passed, **4 failed** — the lane-U item closes, and the withheld verdict is neither withheld nor named |
 | depth-2 title narrowing removed (`if (false) continue`) | 48 passed, **3 failed** — including two pre-existing residual cases, which is why the narrowing is there |
 
-**Measured against the live corpus, not only fixtures.** Both generator versions run over a
-copy of the live operator documents, and every item's rung diffed:
+**Measured against the live corpus, not only fixtures.** Both generator versions run over a copy
+of the live operator documents, every item's rung and blocker diffed. The code change and the one
+document rewording are measured **separately**, so neither is credited with the other's movement.
+
+*Code only — new generator, unmodified documents:*
 
 | rung | before | after |
 |---|---|---|
@@ -132,9 +135,31 @@ copy of the live operator documents, and every item's rung diffed:
 Three items move, and each move is the document's own word:
 
 - **`67`** `Merged` → `Deployed`. Its note is headed `deployed 2026-09-19`.
-- **`T-742`**, **`T-743`** absent → `Deployed`. Both had no parsed definition at all and sat
-  in the residual; their rung comes from their own claim records, which already said deployed.
-  The residual shrinks from four ids to two, and the census arithmetic still balances.
+- **`T-742`**, **`T-743`** absent → `Deployed`. Both had no parsed definition at all and sat in
+  the residual; their rung comes from their own claim records, which already said deployed. The
+  residual shrinks from four ids to two, and the census arithmetic still balances.
+
+*Plus the reworded `T-458(D)` heading:* `Open` 53 → **52**, `Closed` 21 → **22**. That one item,
+and nothing else.
+
+**Derived blockers, which the first version of this change moved and should not have.** An item's
+blocker decides whether the queue files it under *Blocked on Anand*, a bucket no agent may take,
+so a blocker that moves without justification hides work. `deriveBlocker` reads its corpus
+**un-attributed** — a decision sentence anywhere in the text sets the blocker — and these notes
+are long narratives naming neighbouring items by the paragraph. With their bodies in that corpus:
+**17 blockers moved and `Decision needed` went from 70 to 76.** Confining a depth-two note to its
+heading in the body corpus as well as the status corpus:
+
+| blocker | before | after |
+|---|---|---|
+| Signed-in acceptance owed | 161 | 163 |
+| Decision needed | 70 | 70 |
+| Blocked (see source) | 23 | 23 |
+| Awaiting approval to apply | 3 | 3 |
+| Unclaimed | 17 | 17 |
+
+The only two that move are `T-742` and `T-743`, which had no board entry before and take their
+blocker from their own claim records. **No existing item's blocker changes.**
 
 Collision count is unchanged at 65 of 472, which is the guard in the third mutation above
 holding: no depth-two heading became a second *definition*.
@@ -219,6 +244,11 @@ including its blindness to a depth-two verdict.
   on is one of 38 rows whose declared lane contradicts its id prefix. Where a definition
   carries no lane at all the scoped verdict is withheld and named, which is the safe answer
   and not a complete one.
+- **The blocker corpus is deliberately not widened.** Including a depth-two note's body in it
+  may well be right — the note is the richest statement about its item — but `deriveBlocker` would
+  have to be attributed first, the way item T-704 attributed the rung corpus. Doing both in one
+  change makes neither movement attributable, and the 17 blockers it moved on the first attempt
+  are the evidence for that rather than an argument against it.
 - **The rule order inside the rung deriver is untouched.** It tests for an open pull request
   before it tests for a closure, which is why a depth-two note's body is excluded from status
   here rather than filtered sentence by sentence. Reordering those rules would move items this
