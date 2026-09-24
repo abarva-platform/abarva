@@ -1,0 +1,183 @@
+{
+  "item": "26",
+  "title": "Triage of the six directories the governed-risk ranking structurally cannot rank: every one of them proves its subject by reading the subject's bytes",
+  "recordedAt": "2026-09-24T12:48:05.000Z",
+  "base": "bf43785b9428de499b833627fac9aafe08dc899e",
+  "scope": {
+    "drawnFrom": "docs/architecture/test-ci-coverage-census.json, unclassifiedRiskDirectories rows with governedRisk.productSourceCount === 0",
+    "drawSize": 6,
+    "whyThisPopulation": "T-758 (merged 2026-09-24T12:06:06Z) published a resolved-product-source count per census directory so that a directory which is genuinely low risk could be told apart from one whose imports the risk resolver could not follow. counts.unclassifiedRiskDirectoriesWithNoResolvedProductSource is 6. Those six are the ones the governed-risk ranking can never draw, because score, band and signals are all derived from the product sources a suite reaches, and these reach none. Every prior draw (T-472, T-509, T-550, T-556, T-742, T-475) was taken from the ranked pool, so this population has never been triaged.",
+    "whyTheyResolveNothing": "Measured, and it is one cause for all six rather than six accidents: each suite reads its subject with fs.readFileSync and asserts with toContain, so it has no import edge to any product source. The six directories the ranking cannot see and the six suites that prove their subject by its bytes are the same six. That is the finding, not a coincidence to be noted.",
+    "disjointFrom": [
+      "docs/architecture/t472-stale-suite-triage.json",
+      "docs/architecture/t475-stale-suite-triage.json",
+      "docs/architecture/t509-stale-suite-triage.json",
+      "docs/architecture/t550-stale-suite-triage.json",
+      "docs/architecture/t556-stale-suite-triage.json",
+      "docs/architecture/t742-stale-suite-triage.json"
+    ],
+    "disjointnessIsAsserted": "src/__tests__/behaviors/zero-product-source-suite-triage.test.ts reads all six sibling records and fails if any path appears in two."
+  },
+  "verdictVocabulary": [
+    "real",
+    "repair",
+    "update_with_reason_recorded",
+    "vacuous_control_proof"
+  ],
+  "verdictMeanings": {
+    "real": "The suite executes a control rather than transcribing one, and a mutation of its subject makes it fail.",
+    "repair": "The suite was red and the product was right; the assertion was repaired in this change, and the repair is mutation-proven.",
+    "update_with_reason_recorded": "The suite pinned wording or shape a later deliberate change superseded; re-baselined here with the superseding commit named in the file.",
+    "vacuous_control_proof": "The suite is green and a mutation shows it cannot fail on the control it names. It is not evidence for that control. No such suite may be wired into CI or credited on the strength of being green."
+  },
+  "jestEvidence": {
+    "how": "All six executed with npx jest --runTestsByPath <paths> --json --outputFile, counts read out of the run's JSON rather than typed. --runTestsByPath is required because four of the six paths contain the parenthesised segment (maestro), which a bare jest pattern reads as a regex group.",
+    "baseMeasuredBefore": "2026-09-24T12:38Z, on bf43785b9 before any edit: 6 suites, 14 tests, 2 failed.",
+    "afterThisChange": "6 suites, 57 tests, 0 failed, 0 pending.",
+    "harnessFoundTests": "Asserted rather than assumed: the JSON reports numTotalTestSuites 6 and every row carries a non-zero assertion count. A run that found no tests would report zero and is not what these numbers are read from.",
+    "mutationProtocol": "Every mutation writes the subject, runs the suite, restores the original bytes and verifies the restored file's sha256 equals the pre-mutation hash. The harness aborts if the substitution is a no-op, because a no-op mutation reads exactly like a coverage gap."
+  },
+  "counts": {
+    "suites": 6,
+    "sourceTextScanners": 6,
+    "redAtBase": 2,
+    "repairedInThisChange": 2,
+    "verdictReal": 1,
+    "verdictRepair": 1,
+    "verdictUpdateWithReasonRecorded": 1,
+    "verdictVacuousControlProof": 3,
+    "wiredIntoCiByThisChange": 0
+  },
+  "wiringDeclaration": {
+    "wired": 0,
+    "why": "Wiring is deliberately not taken here, for two separate reasons. First, T-754's rule is that a suite is credited before it is wired, and three of these six are proven here to be vacuous about the control they name — wiring them would put a green step in CI over an assertion that cannot fail, which is the defect this backlog exists against. Second, wiring moves the committed coverage census, and T-760 holds the census drift check on a live claim; a change that moves the artifact while another lane is wiring its drift check is a collision, not a contribution.",
+    "owed": "The two repaired suites and the one `real` suite qualify for wiring under T-754's rule once T-760 lands. The three vacuous ones do not qualify until their controls are re-proven behaviorally."
+  },
+  "editedInThisChange": {
+    "declared": "This record does pass judgement on two files it also edits, which prior triage records forbade. The prior rule exists so that a triage cannot make its own verdict true by rewriting the subject. It is not violated here and the distinction is recorded rather than assumed: the two edited files are the TEST files, and no file under judgement as a SUBJECT was edited. Every product file named below is byte-identical to bf43785b9.",
+    "testFilesEdited": [
+      "src/app/(maestro)/admin/context-layer/__tests__/layout-source.test.ts",
+      "src/app/(maestro)/admin/data-layer-explorer/__tests__/page-source.test.ts"
+    ],
+    "productFilesEdited": []
+  },
+  "suites": [
+    {
+      "path": "src/__tests__/guardrails/anthropic-only-reasoning.test.ts",
+      "directory": "src/__tests__/guardrails",
+      "sourceTextScanner": true,
+      "coveredByWorkflow": false,
+      "baseResult": { "passed": 4, "failed": 0 },
+      "afterResult": { "passed": 4, "failed": 0 },
+      "verdict": "real",
+      "reason": "The only one of the six that executes the control instead of describing it: its first case shells out to scripts/guardrails/anthropic-only-reasoning.mjs and fails if the guard throws. Proven by mutation M-D — one OPENAI_API_KEY reference added to src/lib/intelligence/ask/classifier.ts, a file inside the reasoning path the Anthropic-only standard governs, made 2 of its 4 cases fail, including the script-driven one. Subject restored, sha256 f977129e60f8e82e… verified byte-identical. Its other two cases assert two deletions have stayed deleted, which is a claim about a file's absence and is correctly made by reading the filesystem.",
+      "mutation": {
+        "id": "M-D",
+        "subject": "src/lib/intelligence/ask/classifier.ts",
+        "change": "prepend `const openAiKey = process.env.OPENAI_API_KEY;`",
+        "result": "2 of 4 failed — the guard-script case and the ask-path case"
+      }
+    },
+    {
+      "path": "src/app/(maestro)/admin/context-layer/__tests__/layout-source.test.ts",
+      "directory": "src/app/(maestro)/admin/context-layer/__tests__",
+      "sourceTextScanner": true,
+      "coveredByWorkflow": false,
+      "baseResult": { "passed": 1, "failed": 1 },
+      "afterResult": { "passed": 4, "failed": 0 },
+      "verdict": "repair",
+      "reason": "Red, and the product was right in all six cases. The scroll-frame assertion pinned the single-quoted literal `minHeight: '100%'` against a hand-written list of six pages; all six set that property and four write it with double quotes. Two consequences and the second is the one that matters: the case failed at the first page so the five after it were never evaluated, and the paired negative guard `not.toContain(\"minHeight: '100vh'\")` could not fail for those same four — a page that broke the Admin scroll frame by writing minHeight: \"100vh\" would have passed the guard that exists to catch it. Mechanism check, independent of any suite: the string `<main style={{ background: \"#F8F7F4\", minHeight: \"100vh\", padding: 32 }}>` satisfies the pre-image's negative assertion and is caught by the repaired one. Both halves now match the property in either spelling, every page is evaluated and all violations are reported together. The page list is enumerated from the subtree rather than written down: a seventh page (triage/page.tsx, added by 0490e3afd) had appeared since the list was written and was covered by nothing.",
+      "mutations": [
+        { "id": "M1", "subject": "context-layer/uploads/page.tsx", "change": "double-quoted 100% to double-quoted 100vh", "result": "2 of 4 failed" },
+        { "id": "M2", "subject": "context-layer/syncs/page.tsx", "change": "single-quoted 100% to single-quoted 100vh", "result": "2 of 4 failed" },
+        { "id": "M3", "subject": "context-layer/triage/page.tsx", "change": "remove the minHeight property", "result": "1 of 4 failed, naming the scroll-frame case" },
+        { "id": "M4", "subject": "the repaired suite itself", "change": "collapse the directory walk so it returns no pages", "result": "1 of 4 failed, naming the enumeration guard — without this case every assertion above it would be vacuously true on an empty sweep" }
+      ]
+    },
+    {
+      "path": "src/app/(maestro)/admin/context-layer/templates/__tests__/page-source.test.ts",
+      "directory": "src/app/(maestro)/admin/context-layer/templates/__tests__",
+      "sourceTextScanner": true,
+      "coveredByWorkflow": false,
+      "baseResult": { "passed": 1, "failed": 0 },
+      "afterResult": { "passed": 1, "failed": 0 },
+      "verdict": "vacuous_control_proof",
+      "reason": "Green, and green tells you nothing here. Mutation M-C made the canonical heading branch unreachable — the ternary that renders it was changed so the fallback can never be taken — while leaving every scanned literal in the file. The suite stayed green. It asserts that four strings appear in a page's source, which is true of a page that renders none of them. Not repaired in this change: a real proof mounts the page, and that is behavioral work on an Admin server component rather than a re-baselining. Named as a follow-on rather than folded in.",
+      "mutation": {
+        "id": "M-C",
+        "subject": "src/app/(maestro)/admin/context-layer/templates/page.tsx",
+        "change": "make the canonical-label branch of the heading ternary unreachable, every scanned literal preserved",
+        "result": "1 of 1 passed — the suite did not notice",
+        "restoredSha256": "adca0df3381f50541c3c4fcf8f61c929e892531297fa3ea9df4c3acd925c4485"
+      }
+    },
+    {
+      "path": "src/app/(maestro)/admin/data-layer-explorer/__tests__/page-source.test.ts",
+      "directory": "src/app/(maestro)/admin/data-layer-explorer/__tests__",
+      "sourceTextScanner": true,
+      "coveredByWorkflow": false,
+      "baseResult": { "passed": 2, "failed": 1 },
+      "afterResult": { "passed": 44, "failed": 0 },
+      "verdict": "update_with_reason_recorded",
+      "supersededBy": "28e425db38f877a47a231139d5c2cb4ab28e0639",
+      "reason": "One assertion of forty-four was stale and had been for 69 days. A panel heading was renamed when demo tenant display labels were standardised to a neutral product label (28e425db3, 2026-07-17); this file was last touched four days earlier (6a7d58964, 2026-07-13) and has pinned the superseded wording ever since. The rename is deliberate and the assertion follows it — pinning the old wording would keep asking the product to put a fixture tenant's name back on a display surface. The other 43 were re-evaluated independently and every one held; they were also unverified before this change, because the stale one sat at position 20 of 30 inside a single case and the 24 after it never ran. Each token is now its own case, named by the token it looks for.",
+      "mutations": [
+        { "id": "M5", "subject": "data-layer-explorer/page.tsx", "change": "rename one asserted label", "result": "exactly 1 of 44 failed, naming that token — under the pre-image it sat behind the stale assertion and was unverified" },
+        { "id": "M7", "subject": "data-layer-explorer/page.tsx", "change": "reintroduce a forbidden shell import", "result": "exactly 1 of 44 failed, naming that shell" }
+      ]
+    },
+    {
+      "path": "src/app/api/chat/step/__tests__/route-boundary.test.ts",
+      "directory": "src/app/api/chat/step/__tests__",
+      "sourceTextScanner": true,
+      "coveredByWorkflow": false,
+      "baseResult": { "passed": 2, "failed": 0 },
+      "afterResult": { "passed": 2, "failed": 0 },
+      "verdict": "vacuous_control_proof",
+      "reason": "This is the one that matters. The case is titled 'enforces active-tenant matching before building RAG context' and it enforces nothing: it asserts that two strings appear in the route's source and that one appears at a lower character index than another. Mutation M-A inverted the fence itself — `!==` to `===` on both sides of the tenant comparison, so a request naming a foreign tenant passes and a legitimate one is refused — and the suite stayed 2 of 2 green. Every string it reads is still present and still in the same order. A tenant fence asserted by the order of two substrings in a file is not a tenant fence that is tested.",
+      "mutation": {
+        "id": "M-A",
+        "subject": "src/app/api/chat/step/route.ts",
+        "change": "invert both comparisons in the active-tenant guard",
+        "result": "2 of 2 passed — the suite did not notice",
+        "restoredSha256": "8f2072c4d603aeccfe8008ae48a949d8b77f9c02786a2c9e6aad20f17f473a56"
+      }
+    },
+    {
+      "path": "src/app/api/intelligence/query/__tests__/route-boundary.test.ts",
+      "directory": "src/app/api/intelligence/query/__tests__",
+      "sourceTextScanner": true,
+      "coveredByWorkflow": false,
+      "baseResult": { "passed": 2, "failed": 0 },
+      "afterResult": { "passed": 2, "failed": 0 },
+      "verdict": "vacuous_control_proof",
+      "reason": "The same shape on a second governed route. The case is titled 'leaves tenancy enforcement in the route shell' and asserts that the identifiers requireTenancy and tenancyErrorResponse appear in the file. Mutation M-B removed the enforcement while leaving both identifiers present — the catch branch no longer returns the tenancy error response, so a failed tenancy resolution falls through into the handler — and the suite stayed 2 of 2 green. The route's broker-boundary cases in the same file are negative assertions about imports and are sound; the tenancy case is not evidence.",
+      "mutation": {
+        "id": "M-B",
+        "subject": "src/app/api/intelligence/query/route.ts",
+        "change": "stop returning tenancyErrorResponse from the catch branch, both identifiers preserved",
+        "result": "2 of 2 passed — the suite did not notice",
+        "restoredSha256": "a22bd37c5f4af5d24f5cd5fdc250c7926b4eb9dcbc1e173ebbf864ed50db6c69"
+      }
+    }
+  ],
+  "followUps": [
+    {
+      "subject": "Two governed route tenant fences are asserted only by substring presence and substring order",
+      "detail": "src/app/api/chat/step/route.ts and src/app/api/intelligence/query/route.ts each hold a real tenant fence and each is covered only by a suite that survives the fence being removed. Both mutations are recorded above with the exact substitution, so the work starts from a reproducible failure rather than from a reading. A real proof drives the exported route handler with a request naming a tenant other than the resolved one and asserts the refusal.",
+      "notFiledAsAnId": "The Claude Code T band T-500 to T-599 reads 0 of 100 free in the generated queue, which the queue itself marks a range decision rather than a reading. Taking a number from another agent's band or from the human band to get around that would be the collision the band rule exists to prevent."
+    },
+    {
+      "subject": "A source-text scanner cannot prove a rendered label",
+      "detail": "src/app/(maestro)/admin/context-layer/templates/__tests__/page-source.test.ts survives its subject's heading being made unreachable. The same is true in principle of the surviving byte-matching cases in the two suites repaired here; the difference is that those now match on a property in any spelling and over every file, so they can at least fail on the thing they name."
+    },
+    {
+      "subject": "Five Admin pages outside this subtree size themselves to the viewport",
+      "detail": "The scroll-frame contract repaired here is asserted only for the context-layer subtree. Measured across src/app/(maestro)/admin at this base, five other page.tsx files set minHeight to 100vh. Whether that is a defect or those pages are deliberately outside the Admin scroll frame is a product question this triage did not open, and a repo-wide control asserting the contract today would be red on arrival."
+    },
+    {
+      "subject": "The catalog's remaining uncovered controls cannot be closed by writing a test",
+      "detail": "docs/security/ai-surface-control-catalog.json has 6 of 40 requiredControls with no behavioral test. All six sit on two surfaces whose own entries record routeReachable false, and both unreachableReason fields say the fix is to mount the component or retire the entry. Writing mount tests for them would add green assertions over components no route renders."
+    }
+  ]
+}
