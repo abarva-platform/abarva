@@ -61,6 +61,12 @@ function escapeHtml(value: unknown): string {
     .replace(/'/g, "&#39;");
 }
 
+function markerScope(recordSource: HomeRecordRenderSource): string {
+  return recordSource.kind === "ecl_serving_projection"
+    ? "Serving-row marker; governed facts are counted separately from the exported record families above."
+    : "Record-source marker for the exported Home bundle.";
+}
+
 function text(value: unknown): string {
   return String(value ?? "")
     .replace(/\s+/g, " ")
@@ -247,7 +253,7 @@ export function renderHomeWalkthroughHtml({
   <p class="meta">Compiled ${escapeHtml(compiled)} from ${signalCount.toLocaleString()} signals and ${factCount.toLocaleString()} governed facts.</p>
   <section class="scope">
     <strong>Record on screen: ${escapeHtml(sourceLabel)}</strong>
-    <p>Canonical marker: ${escapeHtml(recordSource.canonicalSnapshotHash)}. This export is a Home walkthrough export: chapters, deterministic tables, findings, evidence labels, architecture/data-flow summaries, and record-source state. It is not an aVa chat transcript.</p>
+    <p>Canonical marker: ${escapeHtml(recordSource.canonicalSnapshotHash)}. ${escapeHtml(markerScope(recordSource))} This export is a Home walkthrough export: chapters, deterministic tables, findings, evidence labels, architecture/data-flow summaries, and record-source state. It is not an aVa chat transcript.</p>
   </section>
   ${familySummaryHtml(bundle)}
   ${architectureSummaryHtml(bundle)}
@@ -450,6 +456,7 @@ export function buildHomeWalkthroughPdf({
           <Text style={pdfStyles.meta}>
             Canonical marker: {recordSource.canonicalSnapshotHash}
           </Text>
+          <Text style={pdfStyles.meta}>{markerScope(recordSource)}</Text>
           <Text style={pdfStyles.meta}>
             This export contains Home chapters, deterministic tables, findings,
             evidence labels, architecture/data-flow summaries, and record-source
