@@ -406,6 +406,7 @@ export default async function StrategicMovePhaseWorkspacePage({
         evidenceNeedPackets={evidenceNeedPackets}
         initialPhaseCaptureRevision={initialPhaseCaptureRevision}
         initialPhaseCaptureValues={initialPhaseCaptureValues}
+        moveContextExtractEvidenceCount={moveContextExtractEvidenceCount}
         phaseBuildArtifacts={phaseBuildArtifacts}
         initialSubstepKey={
           parsedPhase === 0 && resolvedSearchParams.focus === "gate"

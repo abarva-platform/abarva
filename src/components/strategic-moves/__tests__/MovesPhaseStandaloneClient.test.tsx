@@ -3712,6 +3712,7 @@ describe("MovesPhaseStandaloneClient", () => {
         carriesForwardContent={[]}
         evidenceNeedPackets={[]}
         move={makeMove()}
+        moveContextExtractEvidenceCount={8}
         phaseNum={3}
         phaseTallies={[...phaseTallies]}
       />,
@@ -3750,6 +3751,8 @@ describe("MovesPhaseStandaloneClient", () => {
       "37ee2d85-5dc0-4d1f-862e-ab8eff60fdd4",
     );
     expect(chatBody.surfaceContext.phase).toBe(3);
+    expect(chatBody.surfaceContext.moveContextExtractEvidenceCount).toBe(8);
+    expect(chatBody.surfaceContext.moveEvidenceCount).toBe(8);
   });
 
   it("gets cited aVa drafts without writing, then persists only after Save changes", async () => {
