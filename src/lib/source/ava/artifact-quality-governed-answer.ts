@@ -8,10 +8,7 @@
 // It never claims OCR, vector indexing, or enterprise-context promotion.
 // ─────────────────────────────────────────────────────────────────────────────
 
-import {
-  buildValidatedAgentContextBundle,
-  type GovernedCandidate,
-} from "@/lib/governance/agent-context-bundle";
+import type { GovernedCandidate } from "@/lib/governance/agent-context-bundle";
 import type {
   Classification,
   ConfidenceLevel,
@@ -36,6 +33,12 @@ import {
   avaCitationsFromGovernedCandidates,
   governedClientKeyForSourceClientKey,
 } from "@/lib/source/ava/vendor-coverage-governed-answer";
+import { getLatestArtifactAcceptancesByArtifactIds } from "@/lib/source/artifact-acceptances";
+import type { ArtifactAcceptanceRecord } from "@/lib/source/artifact-acceptances";
+import {
+  buildGovernedEventContextBundle,
+  type EventContextCandidate,
+} from "@/lib/source/ava/event-context-bundle";
 
 export interface BuildArtifactQualityGovernedAnswerInput {
   eventId: string;
@@ -126,6 +129,95 @@ export function governedCandidateFromSourceArtifact(
     title: artifact.originalName,
     citations: [`${artifact.originalName} — ${locator}`],
   };
+}
+
+/**
+ * artifactId -> the version the acceptance record names as authoritative.
+ *
+ * Read from `authoritative_version_id`, never from the artifact it is about:
+ * the two are equal today for a first acceptance and differ the moment a
+ * superseding version is accepted, which is precisely the case the fence has
+ * to catch. The fence module is pure and cannot tell a map built correctly
+ * from one built out of the wrong column, so this is where that is decided.
+ */
+export function acceptedArtifactVersionsFor(
+  acceptances: ReadonlyMap<string, ArtifactAcceptanceRecord>,
+): Record<string, string> {
+  const accepted: Record<string, string> = {};
+  for (const [artifactId, acceptance] of acceptances) {
+    accepted[artifactId] = acceptance.authoritativeVersionId;
+  }
+  return accepted;
+}
+
+/**
+ * Map registry rows to event-context candidates for the fence.
+ *
+ * Every row is handed over, including rows belonging to another tenant or
+ * another event, and each candidate carries the tenancy and event it asserts
+ * for itself. That is deliberate: a pre-filter here would decide the isolation
+ * question before the fence saw it, leaving the fence's tenant and event rules
+ * unreachable and therefore unfalsifiable.
+ */
+export function eventContextCandidatesForArtifactQuality(
+  artifacts: readonly SourceArtifactRegistryRecordWithContent[],
+  acceptances: ReadonlyMap<string, ArtifactAcceptanceRecord>,
+  /**
+   * The authenticated tenant id. A registry row asserts a tenant KEY and no
+   * tenant id, so the key is the leg of the fence's tenancy rule that decides
+   * anything here; the id is carried through so the rule reads the same as it
+   * does for candidate kinds that do assert one.
+   */
+  scope: { tenantId: string | null },
+): EventContextCandidate[] {
+  return artifacts.map((artifact) => {
+    const acceptance = acceptances.get(artifact.id);
+    const locator = [
+      artifact.stageKey,
+      artifact.artifactKind,
+      `v${artifact.version}`,
+      artifact.updatedAt ? `updated ${artifact.updatedAt}` : null,
+    ]
+      .filter(Boolean)
+      .join(" · ");
+
+    return {
+      id: artifact.id,
+      kind: "accepted_artifact",
+      title: artifact.originalName,
+      // Canonicalised at the boundary, from the row's OWN key — so a row from
+      // another tenant resolves to another governed key (or to none) and is
+      // refused, rather than being handed the authorized identity's key.
+      clientKey:
+        governedClientKeyForSourceClientKey(artifact.tenantKey) ??
+        artifact.tenantKey,
+      tenantId: scope.tenantId,
+      eventId: artifact.sourceEventId,
+      contractId: null,
+      artifactId: artifact.id,
+      // The accept route stores the source artifact row id as the
+      // authoritative version id, so a superseded row is a different id and
+      // fails the binding.
+      versionId: artifact.id,
+      stageKey: artifact.stageKey,
+      reviewState: acceptance ? "accepted" : "unreviewed",
+      contentDriftStatus: acceptance?.contentDriftStatus ?? "unknown",
+      downstreamContextPolicy: acceptance?.downstreamContextPolicy ?? "restricted",
+      sourceLayer: "artifact",
+      sourceBasis: artifact.originalName,
+      classification: sourceDataClassificationToClassification(
+        artifact.dataClassification,
+      ),
+      retrievability: retrievabilityForArtifact(artifact),
+      agentReadinessStatus:
+        artifact.embeddingStatus === "embedded"
+          ? "committed_not_indexed"
+          : "not_reviewed",
+      confidenceLevel: confidenceForArtifact(artifact),
+      citedRenderVerifiedAt: null,
+      citations: [`${artifact.originalName} — ${locator}`],
+    };
+  });
 }
 
 function lifecycleInputFromArtifact(
@@ -246,23 +338,44 @@ export async function buildArtifactQualityGovernedAnswer(
   const governedClientKey = governedClientKeyForSourceClientKey(input.clientKey);
   if (!governedClientKey) return null;
 
-  const artifacts = (
-    await listSourceArtifactsForSourceEventIdWithContent(input.eventId)
-  ).filter(
+  const registered = await listSourceArtifactsForSourceEventIdWithContent(
+    input.eventId,
+  );
+  // The deterministic lifecycle view — counts, table, chart — stays scoped the
+  // way it already was. It reports what is registered for this tenant; it
+  // quotes nothing, so it is not the evidence path.
+  const artifacts = registered.filter(
     (artifact) =>
       artifact.tenantKey === input.clientKey ||
       artifact.tenantKey === governedClientKey,
   );
 
-  const candidates = artifacts.map((artifact) =>
-    governedCandidateFromSourceArtifact(artifact, {
-      clientKey: governedClientKey,
-      tenantId: input.tenantId,
-    }),
+  // C-506 · the evidence path now runs through the acceptance-bound event
+  // fence, and every registered file is handed to it — including files of
+  // another tenant or another event, so the fence's isolation rules decide
+  // rather than a filter above them.
+  const acceptances = await getLatestArtifactAcceptancesByArtifactIds(
+    registered.map((artifact) => artifact.id),
   );
-  const bundle = buildValidatedAgentContextBundle(candidates, {
-    requireAgentReady: false,
-  });
+  const declaredTenantId = input.tenantId ?? "";
+  const fenced = buildGovernedEventContextBundle(
+    eventContextCandidatesForArtifactQuality(registered, acceptances, {
+      tenantId: declaredTenantId,
+    }),
+    {
+      tenantId: declaredTenantId,
+      clientKey: governedClientKey,
+      eventId: input.eventId,
+      contractId: null,
+      // No `stage_plan` candidate is produced here, so no rule reads this.
+      // Empty rather than a guessed stage: a guess would become load-bearing
+      // the day this mode starts offering plans.
+      currentStageKey: "",
+      acceptedArtifactVersions: acceptedArtifactVersionsFor(acceptances),
+    },
+    { requireAgentReady: false },
+  );
+  const bundle = fenced.bundle;
 
   if (bundle.decision === "block") {
     return composeAvaAnswer({
@@ -292,6 +405,13 @@ export async function buildArtifactQualityGovernedAnswer(
   );
   const citations = avaCitationsFromGovernedCandidates(bundle.usable);
   const citationIds = artifactCitationMap(artifacts, citations);
+  // Only this tenant's own files are reportable as a gap: a refusal that fired
+  // because the file belongs to another tenant or another event is an
+  // isolation result, and naming it here would describe someone else's data.
+  const tenantArtifactIds = new Set(artifacts.map((artifact) => artifact.id));
+  const unboundEvidenceCount = fenced.refused.filter((refusal) =>
+    tenantArtifactIds.has(refusal.candidate.id),
+  ).length;
   const registeredCount =
     summary.aiDraftCount + summary.clientFinalCount + summary.evidenceOnlyCount;
   const directAnswer =
@@ -337,18 +457,29 @@ export async function buildArtifactQualityGovernedAnswer(
       },
     ],
     citations,
-    gaps:
-      registeredCount === 0
+    gaps: [
+      ...(registeredCount === 0
         ? [
             {
               id: "artifact-quality-required-files-missing",
               label: "Required artifact capture has not started",
               detail:
                 "Source has the expected artifact standard for this event, but no accepted files are available yet. Upload or accept the required workshop and decision files before using this answer as a readiness view.",
-              severity: "high",
+              severity: "high" as const,
             },
           ]
-        : [],
+        : []),
+      ...(unboundEvidenceCount > 0
+        ? [
+            {
+              id: "artifact-quality-evidence-not-acceptance-bound",
+              label: "Some files are not attributable yet",
+              detail: `${unboundEvidenceCount} of this event's files are not bound to an accepted, current version, so nothing in this answer is attributed to them. Accept the current version of each file to make it quotable.`,
+              severity: "medium" as const,
+            },
+          ]
+        : []),
+    ],
     caveats: [
       {
         id: "artifact-quality-canonical-standards",
