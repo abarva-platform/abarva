@@ -41,6 +41,7 @@ import path from "node:path";
 import { execFileSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 
+import { announcesAbstention, announcesRelease } from "./register-time-authority.mjs";
 import {
   VERDICTS,
   branchesInClaim,
@@ -281,6 +282,109 @@ check(
   branchesInClaim("item T-901 codex/source-stage-plan-t901 — claimed")[0] ===
     "codex/source-stage-plan-t901",
 );
+
+/* ========================================================================= */
+console.log("\nthe path shape the fallback cannot tell from a branch (item T-732)");
+/* ========================================================================= */
+
+/*
+ * The `files:` case above passes on unfixed code and always did, because
+ * neither `src/lib/…` nor `docs/releases/…` begins with a token the prose
+ * fallback matches. `branchesInClaim`'s doc comment reads that green as a
+ * general rule — "a `files:` list is full of slashes and must never be read as
+ * a branch, which is why nothing here matches a bare `a/b` shape" — and the
+ * rule holds only for paths whose FIRST SEGMENT is not a branch prefix.
+ *
+ * The execution toolchain lives in `scripts/exec/`, and `exec` is one of the
+ * three prefixes the fallback matches, so the fallback finds `exec/<file>` as
+ * a suffix of every such path a claim lists. Measured over the live register
+ * before the fix: 1248 claim records, 28 naming at least one of these, 17
+ * naming one FIRST — and `resolve` probes `branches[0]` only.
+ *
+ * Both readers are affected, which is why the repair is here rather than in
+ * the caller. `build-execution-queue.mjs` imports this function to decide an
+ * item is in flight, so a phantom branch suppresses an id that declared no
+ * branch at all, in the direction that hides work; and `resolve` probes the
+ * phantom, finds no ref and no pull request, and reports `abandoned` — a
+ * COMPLETED-OBSERVATION verdict about a file.
+ */
+
+const listsFilesInThisDirectory =
+  "item T-901 claimed | files: scripts/exec/source-stage-map.json,scripts/exec/build-source-board.mjs";
+
+check(
+  "a file under a directory whose name is also a branch prefix is NOT read as a branch",
+  branchesInClaim(listsFilesInThisDirectory).length === 0,
+  JSON.stringify(branchesInClaim(listsFilesInThisDirectory)) +
+    " — each of these is the tail of a path in the `files:` list, not a ref",
+);
+
+check(
+  "a declared branch still wins over such a path, and the path does not join it",
+  branchesInClaim(
+    "item T-901 | branch exec/t-901-a-thing | files: scripts/exec/source-stage-map.json",
+  ).join(",") === "exec/t-901-a-thing",
+  JSON.stringify(
+    branchesInClaim(
+      "item T-901 | branch exec/t-901-a-thing | files: scripts/exec/source-stage-map.json",
+    ),
+  ),
+);
+
+/*
+ * The guardrail an over-broad repair breaks. `exec/…` is the prefix at issue,
+ * and a real branch under it must still be the fallback's answer — excluding
+ * the prefix, or requiring a `branch` field, would pass the case above and
+ * blind the generator to every branch this scheduled task creates.
+ */
+check(
+  "a genuine `exec/…` branch named in prose is still found without a `branch` field",
+  branchesInClaim("item T-901 taken, pushing exec/run-20260101T000000Z — claimed")[0] ===
+    "exec/run-20260101T000000Z",
+  JSON.stringify(branchesInClaim("item T-901 taken, pushing exec/run-20260101T000000Z — claimed")),
+);
+
+check(
+  "and a path whose own first segment IS a branch prefix is still read as a branch",
+  branchesInClaim("item T-901 claimed | files: codex/whatever.mjs").length === 1,
+  "this is deliberately unchanged: the fix is a LEFT BOUNDARY on the token, not a " +
+    "judgement about file extensions. A bare `codex/x.mjs` is indistinguishable from a " +
+    "branch named `codex/x.mjs`, and guessing by extension would be the over-broad repair.",
+);
+
+/*
+ * And the consequence in `resolve`, which is the half that can act. `unknown`
+ * is stale and offers no move; `abandoned` authorises an abstention that
+ * WITHDRAWS an in-flight signal. Reaching that from a filename is how one run
+ * frees an item another run is holding.
+ */
+{
+  const register =
+    "## Claim log — append only\n\n" +
+    claimLine("2026-01-01T00:00Z", "T-901", "claimed | files: scripts/exec/source-stage-map.json") +
+    "\n";
+  const queue = `${candidateLine(["T-901"], 1)}\n`;
+  const probe = () => ({ remoteExists: false, pullRequests: [] });
+  const entry = resolve({ queue, register, probe }).entries[0];
+
+  check(
+    "a candidate whose claim names only such paths resolves to `unknown`, never `abandoned`",
+    entry.verdict === VERDICTS.UNKNOWN,
+    `${entry.verdict}: ${entry.because}`,
+  );
+
+  check(
+    "and so it offers no abstention — the move that would withdraw a live in-flight signal",
+    abstainCommandFor(entry) === null,
+    String(abstainCommandFor(entry)).slice(0, 200),
+  );
+
+  check(
+    "nor a release line, which is the other direction the same phantom could be read in",
+    releaseCommandFor(entry) === null,
+    String(releaseCommandFor(entry)).slice(0, 200),
+  );
+}
 
 /* ========================================================================= */
 console.log("\nthe two guards inside that extraction, each pinned by the mutation it survives");
@@ -916,6 +1020,128 @@ check(
       path.join("/home/x", "Downloads"),
   liveCorpusRoot({ env: {}, home: "/home/x" }),
 );
+
+/* ========================================================================= */
+console.log("\nreplaying the four real fossils the item names (item T-732)");
+/* ========================================================================= */
+
+/*
+ * T-732's acceptance is unconditional about its proof: "prove it by replaying
+ * the four real fossils — T-463, T-516, T-519, T-583 — and report how many ids
+ * move bucket on the live register". Nothing replayed them. Every case above
+ * proves the resolver on invented `T-9xx` ids while the acceptance names four
+ * real ones, which is exactly the shape where the fixtures all pass and the
+ * one real positive is missed.
+ *
+ * Their branch-and-pull-request facts are HISTORICAL: all four branches were
+ * deleted and all four pull requests merged on 2026-09-21/22, and the claims
+ * were retired by hand on 2026-09-23 before this resolver existed. So the
+ * probe is stubbed with that observation and this suite still makes no network
+ * call.
+ *
+ * What is replayed from the live register is the half no fixture can stand in
+ * for: whether these four lines, in the grammars their authors actually used,
+ * yield a subject and the claim's OWN branch at all. This resolver's first
+ * draft found no claim line for three of the fourteen live candidates because
+ * it required the stamp at the start of the line — and one of these four is
+ * written in the pipe-less grammar that caused it.
+ *
+ * Opportunistic, per item T-739: absent operator documents are a counted skip,
+ * never a vacuous pass.
+ */
+
+const REAL_FOSSILS = ["T-463", "T-516", "T-519", "T-583"];
+
+{
+  const registerFile = path.join(liveCorpusRoot(), "EXECUTION_CLAIMS.md");
+  const plan = liveCorpusPlan({
+    documentsPresent: fs.existsSync(registerFile),
+    candidateIds: REAL_FOSSILS,
+  });
+
+  if (plan.skip) {
+    skip("the four real fossils each resolve to a claim line of their own", plan.reason);
+    skip("a branch is extracted from each, including the pipe-less one", plan.reason);
+    skip("none of the four is a phantom read off a path in its own `files:` list", plan.reason);
+    skip("each classifies `fossil` under the historical observation", plan.reason);
+  } else {
+    const text = fs.readFileSync(registerFile, "utf8");
+    const start = text.indexOf("## Claim log");
+    const body = start < 0 ? text : text.slice(start);
+
+    /*
+     * The newest line ABOUT each id that is not itself the retirement. A
+     * release announcement is what took these four out of the bucket, so
+     * reading `newestClaimFor` here would replay the fix rather than the
+     * defect it was applied to.
+     */
+    const newest = new Map();
+    for (const raw of body.split(/\r?\n/)) {
+      const subject = claimSubject(raw);
+      if (!subject || !REAL_FOSSILS.includes(subject.id)) continue;
+      if (announcesRelease(raw) || announcesAbstention(raw)) continue;
+      const at = Date.parse(subject.at);
+      if (Number.isNaN(at)) continue;
+      const held = newest.get(subject.id);
+      if (!held || at >= held.at) newest.set(subject.id, { at, stamp: subject.at, line: raw });
+    }
+
+    const missing = REAL_FOSSILS.filter((id) => !newest.has(id));
+    check(
+      "the four real fossils each resolve to a claim line of their own",
+      missing.length === 0,
+      `no claim line for: ${missing.join(" ")}`,
+    );
+
+    const replayed = REAL_FOSSILS.map((id) => {
+      const row = newest.get(id) ?? null;
+      const branch = row ? (branchesInClaim(row.line)[0] ?? null) : null;
+      return {
+        id,
+        branch,
+        line: row?.line ?? "",
+        ...classify({
+          branch,
+          remoteExists: false,
+          pullRequests: [{ number: 0, state: "MERGED" }],
+        }),
+      };
+    });
+
+    const unbranched = replayed.filter((entry) => !entry.branch);
+    check(
+      "a branch is extracted from each, including the pipe-less one",
+      unbranched.length === 0,
+      `no branch extracted for: ${unbranched.map((entry) => entry.id).join(" ")}`,
+    );
+
+    /*
+     * A branch that occurs in its line ONLY after a path character was read
+     * off a longer path — the defect the hermetic cases above pin. None of
+     * these four is one, and that is worth asserting rather than assuming:
+     * one of them lists files under `scripts/exec/` in the same line.
+     */
+    const phantom = replayed.filter((entry) => {
+      if (!entry.branch) return false;
+      for (let at = entry.line.indexOf(entry.branch); at !== -1; at = entry.line.indexOf(entry.branch, at + 1)) {
+        if (at === 0 || !/[\w./-]/.test(entry.line[at - 1])) return false;
+      }
+      return true;
+    });
+    check(
+      "none of the four is a phantom read off a path in its own `files:` list",
+      phantom.length === 0,
+      phantom.map((entry) => `${entry.id} -> ${entry.branch}`).join("; "),
+    );
+
+    const notFossil = replayed.filter((entry) => entry.verdict !== VERDICTS.FOSSIL);
+    check(
+      "each classifies `fossil` under the historical observation",
+      notFossil.length === 0,
+      notFossil.map((entry) => `${entry.id} ${entry.branch} -> ${entry.verdict}`).join("; "),
+    );
+  }
+}
 
 /* ========================================================================= */
 console.log("\nreal corpus — the extraction half, with no network call");
