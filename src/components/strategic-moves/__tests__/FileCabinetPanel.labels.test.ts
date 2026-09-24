@@ -5,6 +5,7 @@ import {
   artifactOutputRoleLabel,
   artifactStatusLabel,
   buildContextExtractReviewModel,
+  fileCabinetDownloadSummary,
   isContextExtractArtifact,
   supportsGeneratedClientApproval,
   supportsSponsorReviewDecisionArtifact,
@@ -36,6 +37,51 @@ describe("FileCabinetPanel artifact labels", () => {
   it("translates quarantined artifacts into client-facing review language", () => {
     expect(artifactStatusLabel("quarantined")).toBe("needs review");
     expect(artifactStatusLabel("board_ready")).toBe("ready");
+  });
+
+  it("summarizes final-ready and review-state files without over-claiming every download is final", () => {
+    expect(
+      fileCabinetDownloadSummary([
+        {
+          family: "generated_deliverable",
+          fileFormat: "docx",
+          lifecycleState: "current",
+          status: "board_ready",
+        },
+        {
+          family: "generated_deliverable",
+          fileFormat: "pptx",
+          lifecycleState: "current",
+          status: "approved",
+        },
+        {
+          family: "generated_deliverable",
+          fileFormat: "docx",
+          lifecycleState: "current",
+          status: "review_required",
+        },
+        {
+          family: "generated_deliverable",
+          fileFormat: "xlsx",
+          lifecycleState: "current",
+          status: "board_ready",
+        },
+        {
+          family: "uploaded_evidence",
+          fileFormat: "csv",
+          lifecycleState: "current",
+          status: "aligned",
+        },
+        {
+          family: "generated_deliverable",
+          fileFormat: "docx",
+          lifecycleState: "superseded",
+          status: "review_required",
+        },
+      ]),
+    ).toBe(
+      "5 current files · 2 final-ready DOCX/PPTX deliverables · 1 deliverable need review · 1 model.",
+    );
   });
 
   it("does not load P2 sponsor review packets for direct generated artifacts", () => {
