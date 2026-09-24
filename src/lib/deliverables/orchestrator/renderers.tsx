@@ -57,6 +57,7 @@ import {
 } from "@/lib/exports-shared/pdf-base";
 import { markdownToHtml } from "@/lib/programs/deliverables/orchestrated/render-html";
 import type {
+  RenderableDeckSlide,
   RenderableDeliverable,
   RenderableExhibit,
   RenderableTable,
@@ -1728,6 +1729,123 @@ function addPptxExhibitSlide(
   return true;
 }
 
+function addPptxAuthoredSlide(
+  pptx: PptxGenJSInstance,
+  authoredSlide: RenderableDeckSlide,
+  doc: RenderableDeliverable,
+  slideNumber: number,
+  totalSlides: number,
+  exhibitByKey: ReadonlyMap<string, { exhibit: RenderableExhibit; index: number }>,
+): void {
+  const slide = pptx.addSlide();
+  slide.background = { color: PPTX_COLOR.cream };
+  addPptxChrome(slide, doc, slideNumber, totalSlides);
+  if (authoredSlide.title) {
+    slide.addText(safePptxText(authoredSlide.title), {
+      x: 0.72,
+      y: 0.85,
+      w: 11.8,
+      h: 0.4,
+      fontFace: "Arial",
+      fontSize: 11,
+      bold: true,
+      color: PPTX_COLOR.accent,
+      charSpacing: 0.5,
+    });
+  }
+  slide.addText(safePptxText(authoredSlide.governingMessage), {
+    x: 0.72,
+    y: authoredSlide.title ? 1.3 : 1.05,
+    w: authoredSlide.exhibitKey ? 6.2 : 11.8,
+    h: 1.25,
+    fontFace: "Georgia",
+    fontSize: 22,
+    color: PPTX_COLOR.ink,
+    fit: "shrink",
+  });
+  const points = (authoredSlide.points ?? [])
+    .slice(0, MAX_BULLETS_PER_SLIDE)
+    .map(safePptxText);
+  if (points.length > 0) {
+    slide.addText(
+      points.map(
+        (point) =>
+          ({
+            text: point,
+            options: { bullet: { type: "bullet" as const } },
+          }) as const,
+      ),
+      {
+        x: 0.95,
+        y: 2.75,
+        w: authoredSlide.exhibitKey ? 5.7 : 11.1,
+        h: 3.8,
+        fontFace: "Arial",
+        fontSize: 13.5,
+        color: PPTX_COLOR.ink,
+        fit: "shrink",
+        breakLine: false,
+      },
+    );
+  }
+
+  const exhibit = authoredSlide.exhibitKey
+    ? exhibitByKey.get(authoredSlide.exhibitKey)
+    : undefined;
+  if (exhibit) {
+    const rawSvg = exhibitSvg(exhibit.exhibit, exhibit.index);
+    if (rawSvg) {
+      try {
+        const { png, aspect } = rasteriseSvg(
+          withXmlns(resolveSvgTokens(rawSvg)),
+          3,
+        );
+        const maxW = 5.25;
+        const maxH = 4.35;
+        let w = maxW;
+        let h = w / aspect;
+        if (h > maxH) {
+          h = maxH;
+          w = h * aspect;
+        }
+        slide.addText(safePptxText(exhibit.exhibit.title), {
+          x: 7.05,
+          y: 1.12,
+          w: 5.2,
+          h: 0.35,
+          fontFace: "Arial",
+          fontSize: 10,
+          bold: true,
+          color: PPTX_COLOR.accent,
+          fit: "shrink",
+        });
+        slide.addImage({
+          data: `data:image/png;base64,${png.toString("base64")}`,
+          x: 7.05 + (maxW - w) / 2,
+          y: 1.55,
+          w,
+          h,
+        });
+      } catch (err) {
+        console.error(
+          "[renderDeliverablePptx] authored slide exhibit rasterisation failed",
+          exhibit.exhibit.key,
+          err,
+        );
+      }
+    }
+  }
+
+  const notes = [
+    authoredSlide.speakerNotes,
+    authoredSlide.citationsUsed?.length
+      ? `Citations: [${authoredSlide.citationsUsed.join(", ")}]`
+      : undefined,
+    authoredSlide.exhibitKey ? `Exhibit: ${authoredSlide.exhibitKey}` : undefined,
+  ].filter(Boolean);
+  if (notes.length > 0) slide.addNotes(notes.join("\n"));
+}
+
 function addPptxTableSlide(
   pptx: PptxGenJSInstance,
   table: RenderableTable,
@@ -1823,10 +1941,14 @@ export async function renderDeliverablePptx(
   const renderableExhibits = doc.exhibits
     .map((exhibit, index) => ({ exhibit, index }))
     .filter(({ exhibit, index }) => exhibitSvg(exhibit, index) !== null);
+  const authoredSlides = (doc.deckSlides ?? []).filter(
+    (slide) => slide.governingMessage.trim().length > 0,
+  );
   const totalSlides =
     1 +
-    doc.generatedSections.length +
-    renderableExhibits.length +
+    (authoredSlides.length > 0
+      ? authoredSlides.length
+      : doc.generatedSections.length + renderableExhibits.length) +
     inDeckTables.length +
     1;
   let slideNumber = 1;
@@ -1908,79 +2030,102 @@ export async function renderDeliverablePptx(
   titleSlide.addNotes(`Recommendation: ${doc.recommendation}`);
   slideNumber += 1;
 
-  // One condensed slide per generated section.
-  for (const section of doc.generatedSections) {
-    const slide = pptx.addSlide();
-    slide.background = { color: PPTX_COLOR.cream };
-    addPptxChrome(slide, doc, slideNumber, totalSlides);
-    const sectionMarkdown = normalizeSectionMarkdown(
-      section.bodyMarkdown,
-      section.title,
-    );
-    const governing = truncateWords(
-      firstMarkdownLine(sectionMarkdown) ?? section.title,
-      MAX_PPTX_GOVERNING_WORDS,
-    );
-    slide.addText(safePptxText(section.title), {
-      x: 0.72,
-      y: 0.85,
-      w: 11.8,
-      h: 0.5,
-      fontFace: "Arial",
-      fontSize: 11,
-      bold: true,
-      color: PPTX_COLOR.accent,
-      charSpacing: 0.5,
-    });
-    slide.addText(governing, {
-      x: 0.72,
-      y: 1.35,
-      w: 11.8,
-      h: 1.1,
-      fontFace: "Georgia",
-      fontSize: 22,
-      color: PPTX_COLOR.ink,
-      fit: "shrink",
-    });
-    const bullets = condensedBulletsFromMarkdown(
-      sectionMarkdown,
-      MAX_BULLETS_PER_SLIDE,
-    );
-    if (bullets.length > 0) {
-      slide.addText(
-        bullets.map(
-          (b) =>
-            ({
-              text: b,
-              options: { bullet: { type: "bullet" as const } },
-            }) as const,
-        ),
-        {
-          x: 0.95,
-          y: 2.6,
-          w: 11.1,
-          h: 4,
-          fontFace: "Arial",
-          fontSize: 14,
-          color: PPTX_COLOR.ink,
-          fit: "shrink",
-          breakLine: false,
-        },
-      );
-    }
-    if (section.citationsUsed.length > 0) {
-      slide.addNotes(
-        `Grounding: ${section.groundingMode}; citations [${section.citationsUsed.join(", ")}]`,
-      );
-    }
-    slideNumber += 1;
-  }
+  const exhibitByKey = new Map(
+    renderableExhibits.map(({ exhibit, index }) => [
+      exhibit.key,
+      { exhibit, index },
+    ]),
+  );
 
-  // One rasterised-image slide per exhibit.
-  renderableExhibits.forEach(({ exhibit, index }) => {
-    if (addPptxExhibitSlide(pptx, exhibit, index, doc, slideNumber, totalSlides))
+  if (authoredSlides.length > 0) {
+    authoredSlides.forEach((authoredSlide) => {
+      addPptxAuthoredSlide(
+        pptx,
+        authoredSlide,
+        doc,
+        slideNumber,
+        totalSlides,
+        exhibitByKey,
+      );
       slideNumber += 1;
-  });
+    });
+  } else {
+    // One condensed slide per generated section.
+    for (const section of doc.generatedSections) {
+      const slide = pptx.addSlide();
+      slide.background = { color: PPTX_COLOR.cream };
+      addPptxChrome(slide, doc, slideNumber, totalSlides);
+      const sectionMarkdown = normalizeSectionMarkdown(
+        section.bodyMarkdown,
+        section.title,
+      );
+      const governing = truncateWords(
+        firstMarkdownLine(sectionMarkdown) ?? section.title,
+        MAX_PPTX_GOVERNING_WORDS,
+      );
+      slide.addText(safePptxText(section.title), {
+        x: 0.72,
+        y: 0.85,
+        w: 11.8,
+        h: 0.5,
+        fontFace: "Arial",
+        fontSize: 11,
+        bold: true,
+        color: PPTX_COLOR.accent,
+        charSpacing: 0.5,
+      });
+      slide.addText(governing, {
+        x: 0.72,
+        y: 1.35,
+        w: 11.8,
+        h: 1.1,
+        fontFace: "Georgia",
+        fontSize: 22,
+        color: PPTX_COLOR.ink,
+        fit: "shrink",
+      });
+      const bullets = condensedBulletsFromMarkdown(
+        sectionMarkdown,
+        MAX_BULLETS_PER_SLIDE,
+      );
+      if (bullets.length > 0) {
+        slide.addText(
+          bullets.map(
+            (b) =>
+              ({
+                text: b,
+                options: { bullet: { type: "bullet" as const } },
+              }) as const,
+          ),
+          {
+            x: 0.95,
+            y: 2.6,
+            w: 11.1,
+            h: 4,
+            fontFace: "Arial",
+            fontSize: 14,
+            color: PPTX_COLOR.ink,
+            fit: "shrink",
+            breakLine: false,
+          },
+        );
+      }
+      if (section.citationsUsed.length > 0) {
+        slide.addNotes(
+          `Grounding: ${section.groundingMode}; citations [${section.citationsUsed.join(", ")}]`,
+        );
+      }
+      slideNumber += 1;
+    }
+
+    // One rasterised-image slide per exhibit.
+    renderableExhibits.forEach(({ exhibit, index }) => {
+      if (
+        addPptxExhibitSlide(pptx, exhibit, index, doc, slideNumber, totalSlides)
+      )
+        slideNumber += 1;
+    });
+  }
 
   // One native table slide per in-deck table (xlsx-targeted tables live only in the Excel companion).
   inDeckTables.forEach((table) => {

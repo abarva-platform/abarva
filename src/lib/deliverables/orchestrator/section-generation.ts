@@ -227,6 +227,28 @@ function repairStructuredChecklist(
   }));
 }
 
+function repairStructuredDeckSlides(
+  deckSlides: RenderableDeliverable["deckSlides"] | undefined,
+): RenderableDeliverable["deckSlides"] | undefined {
+  const repaired = (deckSlides ?? [])
+    .map((slide) => ({
+      ...slide,
+      ...(slide.title
+        ? { title: repairStructuredClientFactText(slide.title) }
+        : {}),
+      governingMessage: repairStructuredClientFactText(slide.governingMessage),
+      points: (slide.points ?? []).map(repairStructuredClientFactText),
+      ...(slide.speakerNotes
+        ? { speakerNotes: repairStructuredClientFactText(slide.speakerNotes) }
+        : {}),
+      citationsUsed: (slide.citationsUsed ?? []).filter((n) =>
+        Number.isFinite(n),
+      ),
+    }))
+    .filter((slide) => slide.governingMessage.trim().length > 0);
+  return repaired.length > 0 ? repaired : undefined;
+}
+
 /**
  * Sections are generated independently (one bounded-parallel model call each), so a
  * section may legitimately mark its OWN missing input inline per the prompt's own
@@ -351,6 +373,7 @@ export interface SynthesisResult {
   subtitle?: string;
   recommendation?: string;
   nextActions?: string[];
+  deckSlides?: RenderableDeliverable["deckSlides"];
   tables?: RenderableTable[];
   exhibits?: RenderableExhibit[];
   clientCompleteChecklist?: RenderableDeliverable["clientCompleteChecklist"];
@@ -808,6 +831,7 @@ export function assembleDeliverable(
     clientDisplayName: req.clientDisplayName,
     initiativeDisplayName: req.initiativeDisplayName,
     generatedSections,
+    deckSlides: repairStructuredDeckSlides(synth.deckSlides),
     tables,
     exhibits: renderableExhibitsFromSynthesis(synth),
     sourceRegister: buildSourceRegister(evidence, sectionsWithSignals),

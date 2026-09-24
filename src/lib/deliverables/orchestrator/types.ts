@@ -454,6 +454,13 @@ export interface RenderableDeliverable {
   clientDisplayName: string;
   initiativeDisplayName: string;
   generatedSections: RenderableSection[];
+  /**
+   * Optional authored deck layer for PPTX output. When present, each slide is a
+   * model-authored executive argument with explicit supporting points, notes,
+   * and an optional link to a typed exhibit payload. The PPTX renderer should
+   * prefer this over inferring slides from document sections.
+   */
+  deckSlides?: RenderableDeckSlide[];
   tables: RenderableTable[];
   exhibits: RenderableExhibit[];
   sourceRegister: SourceRegisterEntry[];
@@ -461,6 +468,20 @@ export interface RenderableDeliverable {
   clientCompleteChecklist: ClientCompleteItem[];
   recommendation: string;
   nextActions: string[];
+}
+
+export interface RenderableDeckSlide {
+  key?: string;
+  title?: string;
+  /** One sentence: the argument this slide makes, not a topic label. */
+  governingMessage: string;
+  /** Short support points visible on the slide face. */
+  points?: string[];
+  /** Key of an exhibit in `exhibits`; the exhibit carries the drawable data. */
+  exhibitKey?: string;
+  /** Evidence, traceability, and facilitation notes stay off the slide face. */
+  speakerNotes?: string;
+  citationsUsed?: number[];
 }
 
 export interface RenderableSection {

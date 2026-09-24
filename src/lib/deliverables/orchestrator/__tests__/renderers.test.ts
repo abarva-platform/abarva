@@ -672,6 +672,43 @@ describe("PPTX renderer (MOVES-QUALITY-003 / Track D)", () => {
     expect(mediaFiles.length).toBeGreaterThan(0);
   });
 
+  it("uses authored deck slides instead of deriving PPTX slides from section prose", async () => {
+    const doc = goodDocument();
+    doc.deckSlides = [
+      {
+        key: "decision-story",
+        title: "Decision Story",
+        governingMessage:
+          "Approve the sourcing package because the service scope is decision-ready",
+        points: [
+          "Use the tower scope as the vendor-facing sizing spine.",
+          "Keep transition constraints in the open-input list until confirmed.",
+        ],
+        exhibitKey: "tower_scope_map",
+        speakerNotes: "Evidence traceability stays in speaker notes, not bullets.",
+        citationsUsed: [1, 2],
+      },
+    ];
+
+    const buf = await renderDeliverablePptx(doc);
+    const zip = await JSZip.loadAsync(buf);
+    const slides = await slideXmlFiles(buf);
+    const inDeckTables = doc.tables.filter((t) => t.targetFormat !== "xlsx");
+    expect(slides).toHaveLength(1 + doc.deckSlides.length + inDeckTables.length + 1);
+    const authoredSlide = slides.find((s) =>
+      s.includes("Approve the sourcing package"),
+    );
+    expect(authoredSlide).toBeDefined();
+    expect(authoredSlide).toContain("Use the tower scope");
+    expect(authoredSlide).toContain("Service Tower Scope Map");
+    expect(slides.join("\n")).not.toContain("Executive Overview");
+
+    const mediaFiles = Object.keys(zip.files).filter((f) =>
+      /^ppt\/media\/.*\.png$/i.test(f),
+    );
+    expect(mediaFiles.length).toBeGreaterThan(0);
+  });
+
   it("renders an in-deck (non-xlsx) table as a native table slide", async () => {
     const slides = await slideXmlFiles(
       await renderDeliverablePptx(goodDocument()),
