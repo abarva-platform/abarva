@@ -427,6 +427,176 @@ const MERGED_ENTRY = {
 }
 
 // ---------------------------------------------------------------------------
+// Cases 20-23 — the per-worktree status bound (item T-721).
+//
+// The defect is not a wrong verdict. It is that the control DOES NOT RETURN:
+// `readDirtyPaths` ran `git status` per worktree with no bound, so one checkout
+// whose reads block makes the whole classification run forever, and a control
+// that does not return is a control that does not run — the family this backlog
+// exists against. Measured on the live population: 212 of 798 worktrees in
+// ~31 minutes, then a single checkout under `~/Documents/Codex/2026-04-28/`
+// advanced 119 tracked files in 120 seconds on 0.03 s of CPU. Its files carry
+// the macOS `dataless` flag, so every read git makes is a network fault. Four
+// registered worktrees sit under that root, and a second run died ENOSPC on
+// 2026-09-24 because no classification had ever completed.
+//
+// THE SLOW PATH HERE IS REAL, NOT MOCKED, AND IT GENUINELY EXCEEDS THE BOUND.
+// A `git` shim earlier on PATH passes every subcommand through to the real git
+// except `status`, which sleeps 3 s against a 300 ms bound — ten times over,
+// so nothing here turns on a race. The sleep is FINITE on purpose: with the
+// bound deleted the shim returns clean output after 3 s and the merged+clean
+// worktree goes back to `removable`, so the mutation FAILS these cases instead
+// of hanging them, which is the difference between a mutation check and a
+// stuck run.
+// ---------------------------------------------------------------------------
+{
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "worktree-retention-timeout-"));
+  const repo = path.join(dir, "repo");
+  const realGit = execFileSync("sh", ["-c", "command -v git"], { encoding: "utf8" }).trim();
+  const git = (args, cwd = repo) => execFileSync("git", args, { cwd, encoding: "utf8" });
+
+  fs.mkdirSync(repo);
+  git(["init", "-q", "-b", "main"]);
+  git(["config", "user.email", "test@example.invalid"]);
+  git(["config", "user.name", "test"]);
+  fs.writeFileSync(path.join(repo, "a.txt"), "one\n");
+  git(["add", "."]);
+  git(["commit", "-qm", "one"]);
+  git(["worktree", "add", "-q", "-b", "exec/slow", path.join(dir, "slow")]);
+
+  const prIndex = path.join(dir, "prs.json");
+  fs.writeFileSync(prIndex, JSON.stringify([
+    { number: 1, headRefName: "exec/slow", mergedAt: "2026-09-22T10:00:00Z" },
+  ]));
+  const claims = path.join(dir, "EXECUTION_CLAIMS.md");
+  fs.writeFileSync(claims, "# Claims\n\n## Claim log — append only\n\n");
+
+  // Pass-through for everything but `status`. `main` needs a real
+  // `git worktree list --porcelain` from this same binary, so a shim that
+  // swallowed every subcommand would prove nothing about the bound.
+  const shimDir = path.join(dir, "bin");
+  fs.mkdirSync(shimDir);
+  const shim = path.join(shimDir, "git");
+  fs.writeFileSync(shim, [
+    "#!/bin/sh",
+    "for arg in \"$@\"; do",
+    "  if [ \"$arg\" = \"status\" ]; then",
+    "    sleep 3",
+    "    exit 0",
+    "  fi",
+    "done",
+    `exec ${JSON.stringify(realGit)} "$@"`,
+  ].join("\n") + "\n");
+  fs.chmodSync(shim, 0o755);
+
+  const runSlow = (extra) => {
+    const started = Date.now();
+    let status = 0;
+    let stdout = "";
+    let stderr = "";
+    try {
+      stdout = execFileSync(process.execPath, [
+        CLI, "--repo", repo, "--pr-index", prIndex, "--claims", claims,
+        "--now", "2026-09-23T06:00:00Z", ...extra,
+      ], {
+        cwd: repo,
+        encoding: "utf8",
+        stdio: ["ignore", "pipe", "pipe"],
+        env: { ...process.env, PATH: `${shimDir}${path.delimiter}${process.env.PATH}` },
+        // A bound on the whole control, so a regression that reintroduces the
+        // unbounded wait fails this suite rather than hanging the runner that
+        // is checking for it.
+        timeout: 90_000,
+      });
+    } catch (error) {
+      status = error.status ?? -1;
+      stdout = String(error.stdout ?? "");
+      stderr = String(error.stderr ?? "");
+    }
+    return { status, stdout, stderr, elapsedMs: Date.now() - started };
+  };
+
+  const slowJson = runSlow(["--json", "--status-timeout-ms", "300"]);
+  let slowReport = null;
+  try { slowReport = JSON.parse(slowJson.stdout); } catch { /* reported below */ }
+  const slowPath = fs.realpathSync(path.join(dir, "slow"));
+  const slowResult = (slowReport?.results ?? []).find((r) => r.path === slowPath);
+
+  // THE SAFETY PROPERTY. This worktree is merged and its tree is in fact clean,
+  // so every other proof is present: only the unread status stands between it
+  // and `removable`. A bound that let an unread tree through would delete
+  // someone's uncommitted work, which is the one error this control must not
+  // make.
+  check(
+    "T-721: a status read that exceeds the bound yields unknown, NEVER removable, on an otherwise-removable worktree",
+    slowJson.status === 0 && slowResult?.verdict === UNKNOWN,
+    `status=${slowJson.status} verdict=${slowResult?.verdict} reasons=${JSON.stringify(slowResult?.reasons)} stderr=${slowJson.stderr}`,
+  );
+
+  // "37 worktrees could not be read" is a finding about the machine; silence is
+  // not. Unknown is a safe verdict and a useless one if nobody learns which.
+  //
+  // The shim slows `status` everywhere, so BOTH probed checkouts time out — the
+  // fixture repo as well as the worktree under test — and both must be named.
+  // A first draft of this case asserted a count of 1 and failed against correct
+  // code: the repository itself is a registered worktree whose status is read
+  // like any other, and its verdict is `keep` for an unrelated reason. Naming
+  // only the ones whose verdict the timeout changed would hide exactly the
+  // checkout an operator needs to hear about.
+  const repoPath = fs.realpathSync(repo);
+  check(
+    "T-721: every worktree that exceeded the bound is reported BY NAME, not folded into a silent unknown",
+    Array.isArray(slowReport?.timedOut) &&
+      slowReport.timedOut.includes(slowPath) &&
+      slowReport.timedOut.includes(repoPath) &&
+      slowReport.summary.timedOut === slowReport.timedOut.length &&
+      slowReport.summary.timedOut === 2,
+    `timedOut=${JSON.stringify(slowReport?.timedOut)} summary=${JSON.stringify(slowReport?.summary)}`,
+  );
+
+  // The human-readable path carries the names too. `--json` is read by tooling;
+  // the default output is what an operator actually runs, and the bound's whole
+  // purpose is defeated if the unreadable checkouts are visible only in JSON.
+  const slowText = runSlow(["--status-timeout-ms", "300"]);
+  check(
+    "T-721: the default (non-JSON) report names the timed-out paths and states they are never removable",
+    slowText.status === 0 &&
+      slowText.stdout.includes(slowPath) &&
+      /exceeded the 300 ms status bound/.test(slowText.stdout) &&
+      /never removable/.test(slowText.stdout),
+    `status=${slowText.status} stdout=${slowText.stdout}`,
+  );
+
+  // The control has to RETURN. Two worktrees at 3 s each is 6 s unbounded;
+  // under a 300 ms bound the whole run is well inside two seconds of work.
+  check(
+    "T-721: the control returns instead of waiting out the blocked reads",
+    slowJson.elapsedMs < 10_000,
+    `elapsedMs=${slowJson.elapsedMs}`,
+  );
+
+  // The guardrail against an over-broad repair: returning `null` for every
+  // worktree would pass all three cases above and destroy the control.
+  const fastJson = (() => {
+    try {
+      return JSON.parse(execFileSync(process.execPath, [
+        CLI, "--repo", repo, "--pr-index", prIndex, "--claims", claims,
+        "--now", "2026-09-23T06:00:00Z", "--json", "--status-timeout-ms", "300",
+      ], { cwd: repo, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"], timeout: 90_000 }));
+    } catch { return null; }
+  })();
+  const fastResult = (fastJson?.results ?? []).find((r) => r.path === slowPath);
+  check(
+    "T-721: without the slow shim the same bound reads the same worktree fine and it is removable again",
+    fastResult?.verdict === REMOVABLE && fastJson?.summary.timedOut === 0 && fastJson?.timedOut.length === 0,
+    `verdict=${fastResult?.verdict} summary=${JSON.stringify(fastJson?.summary)}`,
+  );
+
+  execFileSync("git", ["worktree", "remove", path.join(dir, "slow"), "--force"], { cwd: repo });
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+// ---------------------------------------------------------------------------
 // Case 19 — summarise is a partition, not three independent filters.
 // ---------------------------------------------------------------------------
 {
