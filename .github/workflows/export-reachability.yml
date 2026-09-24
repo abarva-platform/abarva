@@ -1,0 +1,48 @@
+name: No component holds an unreachable renderer
+
+on:
+  pull_request:
+    paths:
+      # The component corpus itself. This is the part that matters: a gate that
+      # only ran when its own script changed could never see the defect it
+      # exists for, which arrives in a component file (item U-504).
+      - "src/app/**"
+      - "src/components/**"
+      - "scripts/quality/export-reachability.mjs"
+      - "scripts/quality/export-reachability.test.mjs"
+      - "scripts/quality/export-reachability-baseline.json"
+      - "scripts/exec/cli-entry.mjs"
+      - ".github/workflows/export-reachability.yml"
+  merge_group:
+  workflow_dispatch:
+
+jobs:
+  verify:
+    # A component can lose its mount site, keep compiling and keep linting:
+    # `no-unused-vars` is satisfied the moment one dead declaration references
+    # another, which is why a closure of ten declarations and 567 lines lived
+    # for a fortnight in `WorkspaceExecutiveShell.tsx` (item U-503) while
+    # thirteen assertions about it stayed green.
+    #
+    # This walks each component's own reference graph out from its exports. It
+    # never asks who imports a FILE — a route module is reached by the router
+    # and a test-only component by a suite, and flagging either would make this
+    # a gate someone disables.
+    name: Export-reachability census and baseline
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Set up Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Walk every component and compare with the recorded baseline
+        run: npm run check:export-reachability

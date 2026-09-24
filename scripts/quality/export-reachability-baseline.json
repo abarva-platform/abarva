@@ -1,0 +1,42 @@
+{
+  "item": "U-504",
+  "recorded": "2026-09-24",
+  "what": "Top-level declarations that no export of their own module can reach. Measured by scripts/quality/export-reachability.mjs over src/app and src/components. Every entry below was verified by counting occurrences of the name in its own file: the declaration is the only occurrence, so nothing in the module refers to it.",
+  "rules": [
+    "A NEW finding fails the check. Mount it, export it, delete it, or add it here with a reason.",
+    "A finding recorded here that is no longer unreachable ALSO fails the check. An exemption that outlives its defect protects nothing and hides the next one, so a cleanup must delete its line in the same change.",
+    "Nothing here is scheduled for deletion by this file. U-504 excludes deleting what the census finds: each removal is its own bounded item with its own unreachability proof, because a deletion justified only by a bulk report is how a live surface gets removed."
+  ],
+  "findings": [
+    {
+      "file": "src/components/source/SourceCommercialSummarySurface.tsx",
+      "unreachable": ["DARK", "TEXT"],
+      "reason": "unused colour constants; pre-existing when the control was introduced"
+    },
+    {
+      "file": "src/app/(maestro)/platform/page.tsx",
+      "unreachable": ["PANEL_SOFT"],
+      "reason": "unused colour constant; pre-existing when the control was introduced"
+    },
+    {
+      "file": "src/app/demo/explore/page.tsx",
+      "unreachable": ["MUTED"],
+      "reason": "unused colour constant; pre-existing when the control was introduced"
+    },
+    {
+      "file": "src/app/investors/page.tsx",
+      "unreachable": ["PAGE_SKY"],
+      "reason": "unused colour constant; pre-existing when the control was introduced"
+    },
+    {
+      "file": "src/components/ModuleHeader.tsx",
+      "unreachable": ["SANS"],
+      "reason": "unused font-family constant; pre-existing when the control was introduced"
+    },
+    {
+      "file": "src/components/source/SourcePricingComparisonPanel.tsx",
+      "unreachable": ["DARK"],
+      "reason": "unused colour constant; pre-existing when the control was introduced"
+    }
+  ]
+}

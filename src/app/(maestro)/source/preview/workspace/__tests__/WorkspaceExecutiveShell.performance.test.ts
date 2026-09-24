@@ -1,5 +1,7 @@
 import { readFileSync } from "node:fs";
 
+import { unreachableTopLevelDeclarations } from "../../../../../../../scripts/quality/export-reachability.mjs";
+
 /*
  * T-555. Every `readFileSync` in this file used to be scanned with a bare
  * `toContain`, which made each of them a control a COMMENT could satisfy:
@@ -36,84 +38,27 @@ import { readFileSync } from "node:fs";
 
 const WORKSPACE_DIR = `${__dirname}/..`;
 
-/**
- * Top-level declarations of `WorkspaceExecutiveShell.tsx` that nothing
- * exported by the module can reach, by walking the file's own reference
- * graph from its exports.
+/*
+ * The reachability walk this suite used to define now lives in
+ * `scripts/quality/export-reachability.mjs` — item U-504.
  *
- * This is deliberately NOT a scan for a name. A name scan over a deleted
- * renderer is the defect U-503 exists to repair — thirteen assertions stayed
- * green for a fortnight because bytes on disk survive a component becoming
- * unreachable, and a scan asserting a name is ABSENT has the mirror problem:
- * it outlives its subject and passes forever over a file it no longer
- * describes. This control's subject is whatever the file declares at the
- * moment it runs, so it cannot go stale, and it fails the day anyone adds a
- * component the product cannot mount. It reads `sourceCode()`, so a comment
- * mentioning `<ContractGraphPage` cannot manufacture an edge.
+ * It was moved rather than copied. A control shipped inside one component's
+ * test file reads exactly one path, and the defect it repaired here was not
+ * special to this file: any component can lose its mount site, keep compiling
+ * and keep linting, because `no-unused-vars` is satisfied the moment one dead
+ * declaration references another. Copying the helper into a second test file is
+ * the shape item T-723 was filed against, so there is one module and both this
+ * suite and the repository-wide census import it.
+ *
+ * The move also fixed it. Measured over 1611 component files, the line-and-
+ * regex version this file held reported 22 unreachable declarations of which
+ * **15 were false positives**: a `<Code>src/lib/reasoning/*</Code>` in JSX text
+ * opens a block comment to a hand-written stripper, which blanked the whole
+ * component body below it and so every reference the page made to its own
+ * tables and styles. The shared walk asks the TypeScript parser instead. It
+ * still returns exactly the ten declarations U-503 deleted when run against
+ * that file's content at `c26e0c219`, so the true positive is unchanged.
  */
-function topLevelSymbolsUnreachableFromExports(source: string): string[] {
-  const lines = source.split("\n");
-  const declaration =
-    /^(export\s+)?(?:default\s+)?(?:async\s+)?(?:function|const|let|var|type|interface|class|enum)\s+([A-Za-z_$][\w$]*)/;
-  const declared: { name: string; line: number; exported: boolean }[] = [];
-  const reExported = new Set<string>();
-
-  lines.forEach((line, index) => {
-    const match = declaration.exec(line);
-    if (match) {
-      declared.push({
-        name: match[2],
-        line: index + 1,
-        exported: Boolean(match[1]),
-      });
-      return;
-    }
-    // `export { a, b };` — a root that declares nothing of its own.
-    const reExport = /^export\s*\{([^}]*)\}/.exec(line);
-    if (reExport) {
-      for (const part of reExport[1].split(",")) {
-        const name = part
-          .trim()
-          .split(/\s+as\s+/)[0]
-          .trim();
-        if (name) reExported.add(name);
-      }
-    }
-  });
-
-  const span = new Map<string, [number, number]>();
-  declared.forEach((decl, index) => {
-    const end =
-      index + 1 < declared.length ? declared[index + 1].line - 1 : lines.length;
-    span.set(decl.name, [decl.line, end]);
-  });
-
-  const edges = new Map<string, Set<string>>();
-  for (const [name, [start, end]] of span) {
-    const body = lines.slice(start - 1, end).join("\n");
-    const referenced = new Set<string>();
-    for (const identifier of body.match(/[A-Za-z_$][\w$]*/g) ?? []) {
-      if (identifier !== name && span.has(identifier))
-        referenced.add(identifier);
-    }
-    edges.set(name, referenced);
-  }
-
-  const reached = new Set<string>();
-  const queue = declared
-    .filter((decl) => decl.exported || reExported.has(decl.name))
-    .map((decl) => decl.name);
-  while (queue.length > 0) {
-    const name = queue.pop() as string;
-    if (reached.has(name)) continue;
-    reached.add(name);
-    for (const next of edges.get(name) ?? []) {
-      if (!reached.has(next)) queue.push(next);
-    }
-  }
-
-  return [...span.keys()].filter((name) => !reached.has(name)).sort();
-}
 
 function stripComments(
   text: string,
@@ -862,7 +807,7 @@ describe("WorkspaceExecutiveShell performance formatting", () => {
      * day a renderer the product cannot mount is added back, and unlike a
      * scan for an absent name it cannot outlive its subject.
      */
-    expect(topLevelSymbolsUnreachableFromExports(sourceCode())).toEqual([]);
+    expect(unreachableTopLevelDeclarations(sourceCode())).toEqual([]);
   });
 
   it("derives graph row volumes from loaded impact coverage before old snapshots", () => {
