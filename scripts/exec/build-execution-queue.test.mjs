@@ -3239,5 +3239,238 @@ const UNPLACED_ROW = /could not place/i;
   fs.rmSync(dir, { recursive: true, force: true });
 }
 
+/* ------------------------------------------------------------------------ *
+ * The census reconciles against the board's own scan — item T-753.
+ *
+ * The opening number used to be DERIVED as `all.length + unplaceable +
+ * unparsed`, and `all` is `stages[].items` + `tracks[].items`, so it counts a
+ * PLACEMENT and not an id. `assertUniqueMappedRefs` enforces uniqueness
+ * inside each list and deliberately not across them, because one item can
+ * legitimately serve two stages — so a twice-placed id inflated the
+ * population of a table whose entire job is to say honestly what was dropped.
+ *
+ * Measured on the live corpus at `d86f4c6cc`: 470 placements over 468
+ * distinct ids (`D-006` in stages 1 and 2, `T-458` in the Platform integrity
+ * and Cross-cutting tracks), so the census opened at 470 + 15 + 2 = 487
+ * against the board's independently scanned 485.
+ *
+ * EVERY CASE BELOW THAT MATTERS RUNS OVER A CORPUS THAT CONTAINS A DOUBLE
+ * PLACEMENT. A fixture where the derived sum and the scan agree is exactly
+ * the corpus that hid this defect for as long as it hid, and a case written
+ * only against one proves nothing about the number it is checking.
+ */
+
+/** Placement versus identity in the summary: rows, distinct ids, and duplicates. */
+function boardPlacement(dir) {
+  const s = JSON.parse(fs.readFileSync(path.join(dir, "source-board-summary.json"), "utf8"));
+  const rows = [
+    ...s.stages.flatMap((st) => st.items),
+    ...s.tracks.flatMap((t) => t.items),
+  ].map((i) => String(i.num));
+  const counts = new Map();
+  for (const id of rows) counts.set(id, (counts.get(id) ?? 0) + 1);
+  return {
+    rows: rows.length,
+    distinct: counts.size,
+    duplicated: [...counts].filter(([, n]) => n > 1).map(([id]) => id),
+    scanned: Array.isArray(s.itemPositionIds) ? s.itemPositionIds.map(String) : null,
+  };
+}
+
+/*
+ * The add-back row is read with its OWN matcher rather than through
+ * `funnelRows`, whose `removed` column is `(\d+)` and cannot hold a signed
+ * cell. That is deliberate: the row adds placements rather than removing
+ * ids, so it is not a funnel stage and must not be counted as one.
+ */
+function duplicatePlacementRow(rendered) {
+  const block = rendered.match(/## Why that number\n[\s\S]*?(?=\n## )/)?.[0] ?? "";
+  const m = block.match(/^\| (.*placed in more than one.*?) \| \+(\d+) \| (\d+) \|$/im);
+  return m ? { label: m[1], added: Number(m[2]), remaining: Number(m[3]) } : null;
+}
+
+const RECONCILED = /\*\*Reconciled\*\*/;
+const DISAGREE = /\*\*The census and the board's own scan DISAGREE/;
+
+{
+  /*
+   * The negative control. One id placed in two lists, so the derived sum and
+   * the scan disagree by exactly one — the live corpus in miniature.
+   */
+  const dir = freshFixture();
+  addBacklogItem(dir, "T-904");
+  mapFixtureId(dir, "T-904");
+  mapFixtureRef(dir, "T-904");
+  const { board, queue } = buildQueueOverUnplaceableIds(dir);
+  const rendered = fs.readFileSync(path.join(dir, "EXECUTION_QUEUE.md"), "utf8");
+  const p = boardPlacement(dir);
+  const truth = boardTruth(dir);
+  const unparsed = boardUnparsed(dir);
+  const opening = funnelOpeningTotal(rendered);
+  const derivedFromRows = truth.pool + truth.unmapped.length + unparsed.length;
+
+  check(
+    "T-753 — the fixture really does place one id in two lists, so the two numbers genuinely disagree",
+    p.duplicated.includes("T-904") && p.rows === p.distinct + 1
+      && p.scanned !== null && derivedFromRows === p.scanned.length + 1,
+    `board exit=${board.status}; queue exit=${queue.status}\n` +
+      `rows=${p.rows} distinct=${p.distinct} duplicated=${JSON.stringify(p.duplicated)}\n` +
+      `derived-from-rows=${derivedFromRows} scanned=${p.scanned?.length}`,
+  );
+  check(
+    "T-753 — the census OPENS at the ids the board scanned, NOT at a sum that counts a twice-placed id twice",
+    queue.status === 0 && opening === p.scanned.length && opening !== derivedFromRows,
+    `opening=${opening}; scanned=${p.scanned?.length}; derived-from-rows=${derivedFromRows}`,
+  );
+  check(
+    "T-753 — and the drop rows close onto the DISTINCT placed ids, not onto the placement count",
+    funnelRow(rendered, UNPARSED_ROW)?.remaining === p.scanned.length - unparsed.length
+      && funnelRow(rendered, UNPLACED_ROW)?.remaining === p.distinct,
+    `unparsed row=${JSON.stringify(funnelRow(rendered, UNPARSED_ROW))}\n` +
+      `unplaced row=${JSON.stringify(funnelRow(rendered, UNPLACED_ROW))}\n` +
+      `expected remaining: ${p.scanned.length - unparsed.length} then ${p.distinct}`,
+  );
+  check(
+    "T-753 — the row-versus-id choice is STATED on the file's own face, with the twice-placed id named",
+    duplicatePlacementRow(rendered)?.added === p.rows - p.distinct
+      && duplicatePlacementRow(rendered)?.remaining === p.rows
+      && rendered.includes("T-904"),
+    `add-back row=${JSON.stringify(duplicatePlacementRow(rendered))}; ` +
+      `expected added=${p.rows - p.distinct} remaining=${p.rows}; ` +
+      `T-904 named: ${rendered.includes("T-904")}`,
+  );
+  check(
+    "T-753 — and the census says it reconciled, because after the correction it does",
+    RECONCILED.test(rendered) && !DISAGREE.test(rendered),
+    `reconciled=${RECONCILED.test(rendered)} disagree=${DISAGREE.test(rendered)}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+{
+  /*
+   * The clean direction, which the mutation record calls M2: an id that
+   * STOPS being double-counted must move the number. Same fixture, one
+   * placement, and every quantity above shifts by exactly one.
+   */
+  const dir = freshFixture();
+  addBacklogItem(dir, "T-904");
+  mapFixtureId(dir, "T-904");
+  const { queue } = buildQueueOverUnplaceableIds(dir);
+  const rendered = fs.readFileSync(path.join(dir, "EXECUTION_QUEUE.md"), "utf8");
+  const p = boardPlacement(dir);
+  check(
+    "T-753 — placed ONCE, the same id leaves no duplicate, and the add-back row still renders at zero",
+    queue.status === 0 && p.duplicated.length === 0 && p.rows === p.distinct
+      && duplicatePlacementRow(rendered)?.added === 0
+      && duplicatePlacementRow(rendered)?.remaining === p.rows
+      && funnelOpeningTotal(rendered) === p.scanned.length
+      && RECONCILED.test(rendered),
+    `rows=${p.rows} distinct=${p.distinct} duplicated=${JSON.stringify(p.duplicated)}\n` +
+      `add-back row=${JSON.stringify(duplicatePlacementRow(rendered))}\n` +
+      `opening=${funnelOpeningTotal(rendered)} scanned=${p.scanned?.length}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+{
+  /*
+   * The disagreement has to be visible ON THE FILE, not merely absent.
+   *
+   * A reconciliation that can only ever agree is the unfailable gate this
+   * directory keeps paying for, so a summary whose scan genuinely omits a
+   * placed id must produce the block and NAME the id on each side.
+   */
+  const dir = freshFixture();
+  addBacklogItem(dir, "T-905");
+  mapFixtureId(dir, "T-905");
+  const board = run(dir, "build-source-board.mjs", ["--json"]);
+  rewriteSummary(dir, (s) => {
+    s.itemPositionIds = s.itemPositionIds.filter((id) => String(id) !== "T-905");
+  });
+  const queue = run(dir, "build-execution-queue.mjs");
+  const rendered = fs.readFileSync(path.join(dir, "EXECUTION_QUEUE.md"), "utf8");
+  check(
+    "T-753 — a scan that omits a placed id produces the DISAGREEMENT block and names the id",
+    board.status === 0 && queue.status === 0
+      && DISAGREE.test(rendered) && !RECONCILED.test(rendered)
+      && /T-905/.test(rendered.match(/\*\*The census and the board's own scan DISAGREE[\s\S]*?(?=\n\| removed because)/)?.[0] ?? ""),
+    `board=${board.status} queue=${queue.status}\n` +
+      `disagree=${DISAGREE.test(rendered)} reconciled=${RECONCILED.test(rendered)}\n` +
+      `block=${rendered.match(/\*\*The census and the board's own scan DISAGREE[\s\S]*?(?=\n\| removed because)/)?.[0] ?? "(none)"}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+{
+  /*
+   * TWO SETS OF THE SAME SIZE ARE NOT THE SAME SET.
+   *
+   * A reconciliation that compares totals alone calls this agreement, which
+   * is the exact shape of unfailable gate this directory keeps paying for.
+   * The scan here SWAPS one id for another it never saw, so the counts match
+   * to the unit and the populations do not.
+   */
+  const dir = freshFixture();
+  addBacklogItem(dir, "T-907");
+  mapFixtureId(dir, "T-907");
+  const board = run(dir, "build-source-board.mjs", ["--json"]);
+  let before = 0;
+  rewriteSummary(dir, (s) => {
+    before = s.itemPositionIds.length;
+    s.itemPositionIds = s.itemPositionIds.map((id) => (String(id) === "T-907" ? "T-908" : id));
+  });
+  const queue = run(dir, "build-execution-queue.mjs");
+  const rendered = fs.readFileSync(path.join(dir, "EXECUTION_QUEUE.md"), "utf8");
+  const block = rendered.match(/\*\*The census and the board's own scan DISAGREE[\s\S]*?(?=\n\| removed because)/)?.[0] ?? "";
+  const p = boardPlacement(dir);
+  check(
+    "T-753 — a scan of the SAME SIZE but a different set is a disagreement, and both sides are named",
+    board.status === 0 && queue.status === 0
+      && p.scanned.length === before
+      && DISAGREE.test(rendered) && !RECONCILED.test(rendered)
+      && /T-907/.test(block) && /T-908/.test(block),
+    `queue=${queue.status}; scanned=${p.scanned?.length} before=${before}\n` +
+      `disagree=${DISAGREE.test(rendered)} reconciled=${RECONCILED.test(rendered)}\n` +
+      `block=${block || "(none)"}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+{
+  /*
+   * A MISSING FIELD IS NOT A ZERO, and it is not an agreement either.
+   *
+   * `itemPositionIds` is written by the other generator. If it stops being
+   * emitted, printing a reconciled census would assert an agreement with a
+   * number nobody supplied.
+   */
+  const dir = freshFixture();
+  addBacklogItem(dir, "T-906");
+  mapFixtureId(dir, "T-906");
+  mapFixtureRef(dir, "T-906");
+  const board = run(dir, "build-source-board.mjs", ["--json"]);
+  rewriteSummary(dir, (s) => {
+    delete s.itemPositionIds;
+  });
+  const queue = run(dir, "build-execution-queue.mjs");
+  const rendered = fs.readFileSync(path.join(dir, "EXECUTION_QUEUE.md"), "utf8");
+  const p = boardPlacement(dir);
+  check(
+    "T-753 — a summary carrying no `itemPositionIds` says it CANNOT be reconciled, and claims no agreement",
+    board.status === 0 && queue.status === 0
+      && /cannot be reconciled/i.test(rendered)
+      && !RECONCILED.test(rendered) && !DISAGREE.test(rendered)
+      // It still refuses to count the twice-placed id twice: the correction
+      // does not depend on the scan, only the reconciliation does.
+      && duplicatePlacementRow(rendered)?.added === p.rows - p.distinct,
+    `queue=${queue.status}\n` +
+      `cannot-be-reconciled=${/cannot be reconciled/i.test(rendered)} ` +
+      `reconciled=${RECONCILED.test(rendered)} disagree=${DISAGREE.test(rendered)}\n` +
+      `add-back row=${JSON.stringify(duplicatePlacementRow(rendered))}; expected added=${p.rows - p.distinct}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
 console.log(`\n${passes} passed, ${failures} failed${skipped ? `, ${skipped} skipped` : ""}`);
 process.exit(failures ? 1 : 0);

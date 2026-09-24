@@ -908,6 +908,116 @@ const UNPLACEABLE_LABEL = "not on the structure map, so the board could not plac
 const unparsed = Array.isArray(s.unparsedItemIds) ? s.unparsedItemIds.map(String) : null;
 const UNPARSED_LABEL = "in item position in the backlog but in a shape the board cannot parse";
 
+/* ------------------------------------------------------------------------ *
+ * PLACEMENT IS NOT IDENTITY — item T-753.
+ *
+ * `all` is `stages[].items` + `tracks[].items`, so an item mapped to two
+ * stages, or to a stage and a track, is TWO ROWS. Both placements are
+ * legitimate: `assertUniqueMappedRefs` enforces uniqueness inside each list
+ * and deliberately not across them, because one item can serve two stages.
+ *
+ * The census opened at `all.length + unplaceable + unparsed`, which is a
+ * count of PLACEMENTS pretending to be a count of ids, and the table whose
+ * whole job is to say honestly what was dropped was therefore the thing that
+ * was wrong. Measured on the live corpus at `d86f4c6cc`: 470 placements over
+ * 468 distinct ids — `D-006` in stages 1 and 2, `T-458` in the Platform
+ * integrity and Cross-cutting tracks — so the census printed 487 against the
+ * board's independently scanned 485.
+ *
+ * It read correctly before T-752 only by coincidence: two duplicates and two
+ * missing items cancelled exactly.
+ *
+ * THE CHOICE, STATED RATHER THAN IMPLIED: the census counts DISTINCT IDS,
+ * because that is the population the board scans independently and the thing
+ * an agent takes as one piece of work. The filter below it keeps counting
+ * PLACEMENTS, because every other bucket in this file is built from `all` and
+ * re-deriving them would change what the queue offers. The two meet at one
+ * explicit add-back row that names the duplicated ids, rather than at a
+ * silent jump.
+ *
+ * `all` is NOT deduped here. That would change `all` for every bucket agents
+ * take work from, to repair a number in one table.
+ */
+const placementCounts = new Map();
+for (const item of all) {
+  const id = normalizeItemId(item.num);
+  placementCounts.set(id, (placementCounts.get(id) ?? 0) + 1);
+}
+const distinctPlaced = placementCounts.size;
+const duplicatedIds = [...placementCounts]
+  .filter(([, n]) => n > 1)
+  .map(([id]) => id)
+  .sort(compareItemIds);
+const extraPlacements = all.length - distinctPlaced;
+const DUPLICATE_LABEL =
+  "placed in more than one stage or track, so it reaches the filter below as more than one row";
+
+/**
+ * The board's own scan of ids in item position — the number this census is
+ * reconciled AGAINST rather than derived from.
+ *
+ * A MISSING FIELD IS NOT A ZERO, and it is not an agreement either. If the
+ * board stops emitting it, printing a reconciled census would assert
+ * agreement with a number nobody supplied, so the absent case says the
+ * census cannot be reconciled and the opening stops claiming a scanned
+ * population.
+ */
+const scanned = Array.isArray(s.itemPositionIds) ? s.itemPositionIds.map(String) : null;
+
+/** distinct ids + the two dropped buckets — what the census claims to cover. */
+const derivedTotal = unplaceable === null || unparsed === null
+  ? null
+  : distinctPlaced + unplaceable.length + unparsed.length;
+
+/**
+ * Reconcile in BOTH directions, never by count alone.
+ *
+ * Two sets of the same size can still be different sets, and a census that
+ * compares only totals would call that agreement. So the ids are diffed each
+ * way and both sides are named.
+ */
+function reconcileCensus() {
+  if (scanned === null || derivedTotal === null) {
+    return {
+      verdict: "unavailable",
+      say: "**This census cannot be reconciled.** The board that wrote this summary recorded no independent scan of ids in item position, so the number above is derived from the three buckets below and has nothing to check itself against. Run the board and read its own output.",
+    };
+  }
+  const derivedSet = new Map();
+  for (const id of placementCounts.keys()) derivedSet.set(id, "placed on the structure map");
+  for (const id of unplaceable) derivedSet.set(normalizeItemId(id), "dropped as not on the structure map");
+  for (const id of unparsed) derivedSet.set(normalizeItemId(id), "dropped as unparsed");
+  const scannedSet = new Set(scanned.map((id) => normalizeItemId(id)));
+  const onlyDerived = [...derivedSet.keys()].filter((id) => !scannedSet.has(id)).sort(compareItemIds);
+  const onlyScanned = [...scannedSet].filter((id) => !derivedSet.has(id)).sort(compareItemIds);
+  if (onlyDerived.length === 0 && onlyScanned.length === 0 && derivedTotal === scanned.length) {
+    return {
+      verdict: "reconciled",
+      say: `**Reconciled**: the ${derivedTotal} distinct ids this census accounts for — placed, unplaceable, or unparsed — are the same ${scanned.length} the board scanned independently in item position, id for id in both directions.`,
+    };
+  }
+  const lines = [
+    `**The census and the board's own scan DISAGREE: ${derivedTotal} accounted for against ${scanned.length} scanned in item position.** The table below is the census's own arithmetic and its rows will not close; this block is the difference rather than a repair of it.`,
+  ];
+  if (onlyDerived.length) {
+    lines.push(`Accounted for here but NOT scanned in item position (${onlyDerived.length}): ${onlyDerived.map((id) => `\`${displayId(id)}\``).join(" ")} — ${onlyDerived.map((id) => derivedSet.get(id)).filter((v, i, a) => a.indexOf(v) === i).join("; ")}.`);
+  }
+  if (onlyScanned.length) {
+    lines.push(`Scanned in item position but in NONE of the three buckets (${onlyScanned.length}): ${onlyScanned.map((id) => `\`${displayId(id)}\``).join(" ")} — these reach no line of this file at all.`);
+  }
+  if (!onlyDerived.length && !onlyScanned.length) {
+    lines.push("The two id sets match, so the difference is in the counts alone — one of the buckets is carrying a repeat.");
+  }
+  return { verdict: "disagree", say: lines.join("\n\n") };
+}
+
+/** Render an id the way the backlog writes it. */
+function displayId(id) {
+  return String(id);
+}
+
+const censusReconciliation = reconcileCensus();
+
 function renderClaimableFunnel() {
   const rows = claimableFunnel
     .map((f) => `| ${f.label} | ${f.removed.length} | ${f.remaining} |`)
@@ -920,27 +1030,45 @@ function renderClaimableFunnel() {
   // Rendered on every run, including at zero. A row that appears only when the
   // count is non-zero is a branch exercised only in the failing case, and this
   // table's own comment was already written against that shape.
+  // Every "left" cell below counts DISTINCT IDS until the add-back row, which
+  // is where the census hands over to a filter that counts placements (item
+  // T-753). `distinctPlaced`, not `all.length`, is therefore what the drop
+  // rows close onto.
   const unplaceableRow = unplaceable === null
     ? `| ${UNPLACEABLE_LABEL} | not recorded | not recorded |`
-    : `| ${UNPLACEABLE_LABEL} | ${unplaceable.length} | ${all.length} |`;
+    : `| ${UNPLACEABLE_LABEL} | ${unplaceable.length} | ${distinctPlaced} |`;
 
   // Rendered above the unplaceable row because it happens first: an id the
   // reader never produced cannot then be placed or not placed. At zero it
   // still renders, for the reason the comment above the unplaceable row gives.
-  const afterUnparsed = unplaceable === null ? null : all.length + unplaceable.length;
+  const afterUnparsed = unplaceable === null ? null : distinctPlaced + unplaceable.length;
   const unparsedRow = unparsed === null
     ? `| ${UNPARSED_LABEL} | not recorded | not recorded |`
     : `| ${UNPARSED_LABEL} | ${unparsed.length} | ${afterUnparsed === null ? "not recorded" : afterUnparsed} |`;
 
+  /*
+   * The one row where the census stops counting ids and the filter starts
+   * counting placements. It ADDS rather than removes, so its cell is signed
+   * and it is not a funnel stage; rendered on every run, including at zero,
+   * because a row that appears only when the count is non-zero is a branch
+   * exercised only in the failing case.
+   */
+  const duplicateRow = `| ${DUPLICATE_LABEL} | +${extraPlacements} | ${all.length} |`;
+  const duplicateNote = extraPlacements === 0
+    ? "Every id the board placed is placed exactly once, so the filter below counts the same population the census does."
+    : `**The census counts distinct ids; the filter below counts placements.** ${duplicatedIds.length} id${duplicatedIds.length === 1 ? " is" : "s are"} placed in more than one stage or track — ${duplicatedIds.map((id) => `\`${displayId(id)}\``).join(" ")} — which is legitimate, because one item can serve two stages and uniqueness is enforced inside each list rather than across them. They reach the filter as ${extraPlacements} extra row${extraPlacements === 1 ? "" : "s"}, and the add-back row above is where that happens.`;
+
   const truePopulation = unplaceable === null || unparsed === null
     ? null
-    : all.length + unplaceable.length + unparsed.length;
+    : scanned === null ? derivedTotal : scanned.length;
 
   const opening = unplaceable === null
     ? `${all.length} items reach the filter. The board that wrote this summary recorded no count of ids it could not place, so the population this table starts from is **not recorded** and the census below cannot claim to be complete.`
     : truePopulation === null
-      ? `${all.length + unplaceable.length} items reach the filter. The board recorded no count of ids it could not PARSE, so the population above that number is **not recorded** and this census cannot claim to be complete.`
-      : `${truePopulation} ids sit in item position in the backlog; each row says what the next rule removed.`;
+      ? `${distinctPlaced + unplaceable.length} items reach the filter. The board recorded no count of ids it could not PARSE, so the population above that number is **not recorded** and this census cannot claim to be complete.`
+      : scanned === null
+        ? `${truePopulation} ids are accounted for by this census — placed, unplaceable, or unparsed — and each row says what the next rule removed. The population is derived here rather than scanned, for the reason directly below.`
+        : `${truePopulation} ids sit in item position in the backlog; each row says what the next rule removed.`;
 
   const namedUnparsed = unparsed === null
     ? "**Whether any id was dropped before it could be parsed is not recorded** by the board that wrote this summary, so this file cannot say. Run the board and read its own output."
@@ -958,12 +1086,17 @@ function renderClaimableFunnel() {
 
 ${opening}
 
+${censusReconciliation.say}
+
 | removed because it is | removed | left |
 |---|---|---|
-| — | — | ${truePopulation ?? (unplaceable === null ? all.length : all.length + unplaceable.length)} |
+| — | — | ${truePopulation ?? (unplaceable === null ? all.length : distinctPlaced + unplaceable.length)} |
 ${unparsedRow}
 ${unplaceableRow}
+${duplicateRow}
 ${rows}
+
+${duplicateNote}
 
 ${namedUnparsed}
 
