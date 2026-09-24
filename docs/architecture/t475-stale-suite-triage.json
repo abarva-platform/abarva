@@ -1,7 +1,7 @@
 {
   "item": "T-475",
   "title": "Sixth and last stale-suite draw the governed-risk ranking can supply: twelve suites, three of them red, and one green suite that a mutation proved is not load-bearing",
-  "recordedAt": "2026-09-24T08:06:29.353Z",
+  "recordedAt": "2026-09-24T08:10:53.057Z",
   "base": "15e0e99945fde5b9fc52b3cdc6cc3466dea60900",
   "scope": {
     "drawnFrom": "governedRiskFiles from scripts/quality/test-ci-coverage-census.mjs re-derived at this base, rows with untriaged true and covered false, band before score before path",
@@ -106,7 +106,8 @@
     "docs/architecture/t475-stale-suite-triage.json",
     "src/__tests__/behaviors/t475-stale-suite-triage-record.test.ts",
     "scripts/quality/test-ci-coverage-census.mjs",
-    "docs/releases/records/2026-09-24-t475-stale-suite-triage.md"
+    "docs/releases/records/2026-09-24-t475-stale-suite-triage.md",
+    "scripts/exec/source-stage-map.json"
   ],
   "vacuousControlsDeclared": {
     "sourceTextScanner": "VACUOUS for this draw. Not one of the twelve reads a source file as text — every row scores zero for readFileSync and readFile — so the control that forbids wiring a source-text scanner never fires here. The RULE is kept in full because a future draw will need it; what is removed is the non-empty precondition T-556 attached to it, which would turn a clean draw red for being clean.",
