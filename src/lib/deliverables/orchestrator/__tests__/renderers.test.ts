@@ -604,6 +604,39 @@ describe("PPTX renderer (MOVES-QUALITY-003 / Track D)", () => {
     );
   });
 
+  it("does not repeat the governing sentence as a bullet when markdown emphasis differs", async () => {
+    const doc = goodDocument();
+    doc.generatedSections = [
+      {
+        key: "solution",
+        title: "Service & Component Design",
+        bodyMarkdown: [
+          "The design works *within* the accepted architecture and keeps clinical approval as the control point.",
+          "",
+          "- The design works within the accepted architecture and keeps clinical approval as the control point.",
+          "- Reconciliation resolves source authority before care-gap ranking.",
+        ].join("\n"),
+        groundingMode: "mixed",
+        citationsUsed: [],
+      },
+    ];
+
+    const slides = await slideXmlFiles(await renderDeliverablePptx(doc));
+    const solutionSlide = slides.find((s) =>
+      s.includes("Service &amp; Component Design"),
+    );
+
+    expect(solutionSlide).toBeDefined();
+    expect(solutionSlide).toContain(
+      "Reconciliation resolves source authority before care-gap ranking",
+    );
+    expect(
+      solutionSlide!.match(
+        /The design works within the accepted architecture/g,
+      ) ?? [],
+    ).toHaveLength(1);
+  });
+
   it("falls back to a text notice (not a thrown error) when exhibit rasterisation fails", async () => {
     jest.resetModules();
     jest.doMock(

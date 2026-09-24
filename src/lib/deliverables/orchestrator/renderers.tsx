@@ -1517,6 +1517,17 @@ function truncateWords(text: string, maxWords: number): string {
   return `${words.slice(0, maxWords).join(" ")}...`;
 }
 
+function cleanMarkdownForSlideText(line: string): string {
+  return safePptxText(
+    line
+      .replace(/^[-*]\s+/, "")
+      .replace(/^\d+[.)]\s+/, "")
+      .replace(/\*\*([^*]+)\*\*/g, "$1")
+      .replace(/\*([^*]+)\*/g, "$1")
+      .replace(/`([^`]+)`/g, "$1"),
+  );
+}
+
 /** Condense a section's authored markdown into a handful of slide bullets —
  *  a slide is scanned, not read, so full prose paragraphs never belong on
  *  the face of it (the full text still lives in the DOCX/PDF/HTML export). */
@@ -1528,11 +1539,7 @@ function condensedBulletsFromMarkdown(markdown: string, max: number): string[] {
     .filter(Boolean)
     .filter((line) => !/^#{1,6}\s/.test(line)) // headings become the slide title elsewhere, not a bullet
     .filter((line) => !/^\|.*\|$/.test(line)) // skip raw markdown table rows
-    .map((line) => line.replace(/^[-*]\s+/, "").replace(/^\d+[.)]\s+/, ""))
-    .map((line) =>
-      line.replace(/\*\*([^*]+)\*\*/g, "$1").replace(/\*([^*]+)\*/g, "$1"),
-    )
-    .map(safePptxText)
+    .map(cleanMarkdownForSlideText)
     .filter(Boolean)
     .filter((line) => line !== governingLine);
   return lines.slice(0, max).map((line) => truncateWords(line, MAX_PPTX_BULLET_WORDS));
@@ -1545,11 +1552,7 @@ function firstMarkdownLine(markdown: string): string | null {
     .split("\n")
     .map((l) => l.trim())
     .find((l) => l.length > 0 && !/^#{1,6}\s/.test(l) && !/^\|.*\|$/.test(l));
-  return line
-    ? safePptxText(
-        line.replace(/^[-*]\s+/, "").replace(/\*\*([^*]+)\*\*/g, "$1"),
-      )
-    : null;
+  return line ? cleanMarkdownForSlideText(line) : null;
 }
 
 type PptxGenJSCtor = (typeof import("pptxgenjs"))["default"];

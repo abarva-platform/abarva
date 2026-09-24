@@ -171,6 +171,80 @@ describe("assembleDeliverable", () => {
     expect(doc.clientDisplayName).toBe(req.clientDisplayName);
   });
 
+  it("does not fabricate profile-required exhibits when the synthesis pass omits real diagram content", () => {
+    const req = amsRfpRequest({
+      module: "moves",
+      deliverableType: "solution_design",
+    });
+    const sections: RenderableSection[] = [
+      {
+        key: "solution_design",
+        title: "Solution Design",
+        bodyMarkdown:
+          "The design needs a workflow view, but the synthesis pass did not provide diagram-ready exhibit content [1].",
+        groundingMode: "mixed",
+        citationsUsed: [1],
+      },
+    ];
+
+    const doc = assembleDeliverable(
+      req,
+      sections,
+      {},
+      req.governedEvidenceBundle,
+    );
+
+    expect(doc.exhibits).toHaveLength(0);
+  });
+
+  it("keeps only synthesis-provided exhibits with diagram-ready content", () => {
+    const req = amsRfpRequest({
+      module: "moves",
+      deliverableType: "solution_design",
+    });
+    const sections: RenderableSection[] = [
+      {
+        key: "solution_design",
+        title: "Solution Design",
+        bodyMarkdown: "The design view is evidence-backed [1].",
+        groundingMode: "mixed",
+        citationsUsed: [1],
+      },
+    ];
+
+    const doc = assembleDeliverable(
+      req,
+      sections,
+      {
+        exhibits: [
+          {
+            key: "experience_flow",
+            title: "End-to-End Experience Flow",
+            kind: "flow",
+            description:
+              "Care manager reviews reconciled care-gap queue; AI resolves provider-plan source authority and ranks advisory signals; named clinical owner approves before any outreach action",
+            targetFormat: "pptx",
+          },
+          {
+            key: "agent_workflow",
+            title: "Agent Workflow",
+            kind: "flow",
+            description:
+              "Profile-required view for Solution Design; populated from cited evidence, assumptions, and open inputs.",
+            targetFormat: "pptx",
+          },
+        ],
+      },
+      req.governedEvidenceBundle,
+    );
+
+    expect(doc.exhibits).toHaveLength(1);
+    expect(doc.exhibits[0]).toMatchObject({
+      key: "experience_flow",
+      title: "End-to-End Experience Flow",
+    });
+  });
+
   it("adds conservative recommendation and risk-table fallbacks for concise Moves charters", () => {
     const req = amsRfpRequest({
       module: "moves",
