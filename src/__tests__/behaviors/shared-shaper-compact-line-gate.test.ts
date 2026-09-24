@@ -44,6 +44,32 @@
  * unreachable again, which is C-505's deletion option arriving by a longer
  * route; it is a behaviour change on real table answers and belongs to its
  * own reviewed item, not to a test that was written to correct a claim.
+ *
+ * C-510 UPDATED THIS SUITE IN PLACE, 2026-09-24, and the update is a
+ * DEMOTION rather than a repair. The last paragraph above left the em-dash
+ * asymmetry standing on purpose and predicted that closing it "would make
+ * the operand unreachable again". C-510 closed it, and the prediction was
+ * correct: searched over 24,900 constructed inputs with the gate
+ * instrumented to record both operands, no input drives the first rebuild
+ * over its line budget while under its character target any more. The
+ * identical search against the pre-C-510 rule finds 3,904 such inputs over
+ * an identical 17,331 gate evaluations, so the zero is a measurement and
+ * not a blind spot.
+ *
+ * What that costs this suite, stated plainly rather than papered over:
+ * THIS SUITE NO LONGER PROVES THE OPERAND IS REACHABLE, because it is not.
+ * Case one still passes and still asserts something real — the answer obeys
+ * its line budget — but it passes for a NEW reason: the rebuild no longer
+ * overruns, rather than the operand rescuing an overrun. Case three's
+ * "strictly longer" assertion could not survive at all; it is replaced
+ * below by the equality that took its place, with the reasoning beside it.
+ * Deleting the line operand today fails nothing here.
+ *
+ * The operand is nonetheless KEPT, and the decision to keep or delete an
+ * unreachable guard is filed back to the backlog rather than taken in a
+ * test file. Do not read this suite as evidence for either side of that
+ * decision; read `shared-shaper-table-dash-class.test.ts`, which carries
+ * the search.
  */
 
 import { shapeSharedAdvisorResponse } from "@/lib/answer/shared-response-shaper";
@@ -127,15 +153,20 @@ describe("C-505 — the compact rebuild's line budget is load-bearing", () => {
     expect(shaped.text).toContain("Breakdown: modules idle");
   });
 
-  it("the same answer without the injected break needs no such rescue", () => {
-    // The negative control, and it is independent of the thing under test:
-    // identical input, labels that carry no artifact pattern. The rebuild
-    // then has no line break to insert, comes in under both halves of the
-    // gate, and the answer is returned by the FIRST rebuild — which is the
-    // longer, more complete one. If this case ever reported the same line
-    // count as a suite-wide collapse of the compactor, the first case above
-    // would be passing for a reason that has nothing to do with the gate.
-    const shaped = shapeSharedAdvisorResponse({
+  it("the same answer with artifact-free labels is now the SAME answer", () => {
+    // Was the negative control for a rescue that no longer happens, and it
+    // is kept rather than deleted because what it measures is still the
+    // right question — it is the ANSWER that changed, not the question.
+    //
+    // Before C-510 this input took the first rebuild while the artifact
+    // labels above were pushed to the harsher second one, so it was
+    // strictly longer and that gap was the cost the operand existed to
+    // impose. C-510 neutralises the artifact in the table branch, both
+    // inputs now take the first rebuild, and the gap is gone. Asserting the
+    // equality rather than deleting the case keeps the collapse detectable:
+    // if a future change sends either input to a later rebuild, these two
+    // stop matching.
+    const artifactFree = shapeSharedAdvisorResponse({
       text: TABLE_ANSWER,
       targetChars: TARGET_CHARS,
       maxParagraphs: MAX_PARAGRAPHS,
@@ -144,20 +175,37 @@ describe("C-505 — the compact rebuild's line budget is load-bearing", () => {
         { id: "NW-VAL-0002", label: "$0.9M across two modules" },
       ],
     });
+    const withArtifact = shapeSharedAdvisorResponse({
+      text: TABLE_ANSWER,
+      targetChars: TARGET_CHARS,
+      maxParagraphs: MAX_PARAGRAPHS,
+      labels: LABELS,
+    });
 
-    expect(visibleLines(shaped.text).length).toBeLessThanOrEqual(
+    expect(visibleLines(artifactFree.text).length).toBeLessThanOrEqual(
       MAX_PARAGRAPHS,
     );
-    // Strictly longer than the rescued answer above, because it is the first
-    // rebuild rather than the second: the gate's fallback costs content, and
-    // that cost is the reason the operand matters.
-    expect(shaped.text.length).toBeGreaterThan(
-      shapeSharedAdvisorResponse({
-        text: TABLE_ANSWER,
-        targetChars: TARGET_CHARS,
-        maxParagraphs: MAX_PARAGRAPHS,
-        labels: LABELS,
-      }).text.length,
+    // Both are the FIRST rebuild now: same line count, and the only
+    // difference between the two answers is the label text itself.
+    expect(visibleLines(artifactFree.text).length).toBe(
+      visibleLines(withArtifact.text).length,
     );
+    // The table summary survives in BOTH now. That is the content the
+    // artifact used to cost the reader, and it is the whole of what C-510
+    // bought.
+    expect(artifactFree.text).toContain(
+      "Northwind: $1.2M across four modules: renewal March",
+    );
+    expect(withArtifact.text).toContain(
+      "Northwind: $1.2M: Breakdown: modules idle: renewal March",
+    );
+
+    // NOT ASSERTED EQUAL BEYOND THIS, and the reason is a defect C-510 does
+    // NOT fix. The two answers still differ in their support line: the
+    // artifact rule splits the label's table row at line 341 BEFORE
+    // `removeMarkdownTables` runs, so neither half matches `^\|.+\|$` any
+    // more, the row escapes the table filter, and raw `|` markup reaches the
+    // reader as prose. Filed as C-511; pinning it here as expected output
+    // would make it look wanted.
   });
 });

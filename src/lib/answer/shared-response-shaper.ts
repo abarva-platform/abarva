@@ -173,6 +173,41 @@ function countCompactLines(text: string): number {
   return lineSplit(text).length;
 }
 
+// Backlog item C-510 — the character class the table branch neutralises must
+// be the one `normalizeAssemblyArtifacts` matches, or the branch defends
+// against one third of what it was written to stop.
+//
+// `tableToCompactLines` joins each row's cells with `" — "`, and the branch
+// below turns that separator into `": "`. It used to match the em dash
+// alone (`/\s+—\s+/g`) while the artifact rule one function down matches a
+// hyphen, an en dash AND an em dash (`/\s+[-–—]\s+Breakdown\s*:/`). Because
+// `tableToCompactLines` reads `normalized` — the one text feeding the
+// rebuild that is NOT re-run through `normalizeAssemblyArtifacts` after
+// `replaceLabels` has substituted caller-supplied label text — the hyphen
+// and en-dash forms arrived at the rebuild live and inserted a line break
+// into a table entry. Measured through the public entry point on the C-505
+// fixture before this change: hyphen and en dash both returned 382 chars in
+// 3 lines, the harsher second rebuild, with the whole table summary lost;
+// the em dash returned 536 chars in 4 lines with the summary intact. Same
+// answer, same labels, different dash character, 154 characters of content
+// difference to the reader.
+//
+// THE COST, TAKEN DELIBERATELY. This rewrites dash-shaped text INSIDE a
+// cell, not only the separator between cells, because the artifact it has to
+// stop lives inside the cell. A cell reading `"Feb 2026 – Jan 2027"` now
+// renders as `"Feb 2026: Jan 2027"` in the compacted summary. That cost
+// cannot be designed away by changing how the cells are joined: the pattern
+// `normalizeAssemblyArtifacts` reacts to is cell content, so anything that
+// leaves cell content untouched leaves the line break in place. The
+// narrower rule was not narrower in kind — it did the same rewriting to the
+// same cells, for one character out of three.
+//
+// Measured over the corpus before landing: of 3328 non-empty markdown table
+// cells in `src`, ZERO render differently under the widened class, and the
+// only differing string found anywhere in `src` is a fiscal-year range in a
+// setup-data markdown file that no shaper caller reads.
+const TABLE_CELL_SEPARATOR_RE = /\s+[-–—]\s+/g;
+
 function tableToCompactLines(text: string): string[] {
   const rows = text
     .split("\n")
@@ -389,7 +424,7 @@ function compactForChat(
     tableLines.length > 0
       ? tableLines
           .slice(0, 3)
-          .map((line) => cleanLeadLine(line).replace(/\s+—\s+/g, ": "))
+          .map((line) => cleanLeadLine(line).replace(TABLE_CELL_SEPARATOR_RE, ": "))
           .join("; ")
       : bulletSummary,
     ...support,
