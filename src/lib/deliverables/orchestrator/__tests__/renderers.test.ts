@@ -280,6 +280,36 @@ describe("HTML preview", () => {
     );
   });
 
+  it("does not print generic renderer vocabulary on exhibit visuals", () => {
+    const doc = goodDocument();
+    doc.exhibits = [
+      {
+        key: "journey",
+        title: "Executive Journey",
+        kind: "flow",
+        description:
+          "Intake aligns demand; triage routes the right owner; approval records the decision",
+        targetFormat: "pptx",
+      },
+      {
+        key: "choices",
+        title: "Decision Matrix",
+        kind: "matrix",
+        description:
+          "Reuse accepted pattern; isolate material exceptions; escalate unresolved gaps; confirm control owner",
+        targetFormat: "pptx",
+      },
+    ];
+
+    const out = renderDeliverableHtml(doc);
+
+    expect(out).toContain("Start");
+    expect(out).toContain("Step 2");
+    expect(out).toContain("Decision implication");
+    expect(out).not.toContain(">flow</text>");
+    expect(out).not.toContain("Implication: matrix");
+  });
+
   it("renders client-to-complete reason labels, not internal reason codes", () => {
     expect(html).toMatch(/Procurement approval required/);
     expect(html).not.toMatch(/procurement_signoff|client_judgment/);
