@@ -1658,5 +1658,183 @@ function allSummaryEntriesFor(dir, id) {
   fs.rmSync(dir, { recursive: true, force: true });
 }
 
+/* --------------------------------------------------------------- item T-752
+ *  An id a STAGE CAPABILITY is the only place that cites it reaches no item,
+ *  and the `unmapped` report is the reason nobody could see that.
+ *
+ *  Two walks of the same map disagreed. `mappedNums` counts a capability
+ *  citation as placement — "an id cited only by a capability is placed, not
+ *  orphaned" — so such an id is deliberately kept OUT of `unmapped`. But
+ *  `stageItems` is built from `map.stages[].items` alone, so the id is built
+ *  into no item either. It is in no bucket of `EXECUTION_QUEUE.md`, claimable
+ *  or blocked, and in no residual this generator prints. Cross-cutting
+ *  capabilities escaped it only because `crossCuttingTrack` is built FROM the
+ *  capability lists.
+ *
+ *  Measured on the live map and backlog at 2026-09-24T06:10Z: of 63 ids under
+ *  a stage capability, exactly two are declared nowhere else — `T-429`
+ *  (lane C) and `T-445` (lane U), both substantive filings with full
+ *  acceptances, in the two lanes the queue reported as having ZERO claimable
+ *  rows that same run. `T-429`'s absence was WRITTEN DOWN on 21 Sep — "265
+ *  item rows and T-429 is not one of them ... survives only as a capability
+ *  reference under /stages[5]/capabilities[3]" — and stayed because the
+ *  observation was prose. These cases are the executable form of it.
+ *
+ *  The live corpus is deliberately NOT asserted here. A case that reads the
+ *  operator's documents is red whenever they improve and skipped wherever CI
+ *  has no copy of them; the generator carries the standing check instead, over
+ *  whatever documents it is given, and reports `placedButUnbuilt` on every run
+ *  including at zero.
+ * ------------------------------------------------------------------------ */
+
+/** Cite an id from a stage capability, and from nowhere else in the map. */
+function citeFromStageCapabilityOnly(dir, id, capability = "Synthetic capability") {
+  const file = path.join(dir, "source-stage-map.json");
+  const map = JSON.parse(fs.readFileSync(file, "utf8"));
+  if (JSON.stringify(map).includes(`"${id}"`)) {
+    throw new Error(`fixture id ${id} is already placed somewhere in the map`);
+  }
+  const stage = map.stages[0];
+  (stage.capabilities ??= []).push({ capability, items: [id] });
+  fs.writeFileSync(file, `${JSON.stringify(map, null, 2)}\n`);
+}
+
+{
+  const dir = freshFixture();
+  addBacklogItem(dir, "T-951", "**Cited by a capability and nowhere else.**", "Be reachable.");
+  // `addBacklogItem` placed it on the platform track. Undo that: the whole
+  // point is an id whose ONLY placement is a stage capability.
+  {
+    const file = path.join(dir, "source-stage-map.json");
+    const map = JSON.parse(fs.readFileSync(file, "utf8"));
+    map.platformTrack.items = map.platformTrack.items.filter((r) => r !== "T-951");
+    fs.writeFileSync(file, `${JSON.stringify(map, null, 2)}\n`);
+  }
+  citeFromStageCapabilityOnly(dir, "T-951");
+  const r = run(dir, "build-source-board.mjs", ["--json"]);
+  const { summary, out } = summaryItems(dir);
+  check(
+    "an id cited only by a stage capability is built into an item",
+    out.has("T-951"),
+    `exit=${r.status}\nstderr=${r.stderr}\nitem ids=${JSON.stringify([...out.keys()].slice(0, 40))}`,
+  );
+  check(
+    "and it is not reported as unmapped, because the map does place it",
+    !(summary.unmapped ?? []).map(String).includes("T-951"),
+    `unmapped=${JSON.stringify(summary.unmapped)}`,
+  );
+  check(
+    "and it carries the acceptance its own filing states, not an empty row",
+    (out.get("T-951")?.acceptance ?? "").includes("Be reachable"),
+    `acceptance=${JSON.stringify(out.get("T-951")?.acceptance)}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+{
+  /*
+   * The guardrail against the naive fix. A capability normally cites an id its
+   * own stage already lists — 61 of the 63 live ones do — and concatenating
+   * the two lists without dedup would file that id twice on one stage, which
+   * the queue would render as two rows for one piece of work. This case is
+   * GREEN before the change and must stay green after it; a fix that turns it
+   * red has traded one defect for a louder one.
+   */
+  const dir = freshFixture();
+  addBacklogItem(dir, "T-952", "**Cited by its own stage and by its capability.**", "Appear once.");
+  const file = path.join(dir, "source-stage-map.json");
+  const map = JSON.parse(fs.readFileSync(file, "utf8"));
+  map.platformTrack.items = map.platformTrack.items.filter((r) => r !== "T-952");
+  map.stages[0].items = [...(map.stages[0].items ?? []), "T-952"];
+  (map.stages[0].capabilities ??= []).push({ capability: "Also cites it", items: ["T-952"] });
+  fs.writeFileSync(file, `${JSON.stringify(map, null, 2)}\n`);
+  const r = run(dir, "build-source-board.mjs", ["--json"]);
+  const summary = JSON.parse(fs.readFileSync(path.join(dir, "source-board-summary.json"), "utf8"));
+  const occurrences = (summary.stages ?? [])
+    .flatMap((s) => s.items ?? [])
+    .filter((i) => String(i.num) === "T-952").length;
+  check(
+    "an id its stage lists AND its capability cites is filed once, not twice",
+    r.status === 0 && occurrences === 1,
+    `exit=${r.status}\noccurrences=${occurrences}\nstderr=${r.stderr}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+{
+  /*
+   * The exclusion, and it has to be stated or the standing check is unusable:
+   * a map may place an id the backlog does not define yet. That builds no item
+   * and is NOT this defect — `buildItem` returning null for a missing
+   * definition is the documented behaviour. Only a PLACED AND DEFINED id that
+   * reaches no item is a fault.
+   */
+  const dir = freshFixture();
+  citeFromStageCapabilityOnly(dir, "T-953", "Cites an id nothing defines");
+  const r = run(dir, "build-source-board.mjs", ["--json"]);
+  const { summary, out } = summaryItems(dir);
+  check(
+    "a placed id the backlog does not define builds nothing and does not fail the run",
+    r.status === 0 && !out.has("T-953"),
+    `exit=${r.status}\nstderr=${r.stderr}`,
+  );
+  check(
+    "and it is not reported as placed-but-unbuilt, which is about DEFINED items",
+    Array.isArray(summary.placedButUnbuilt) && !summary.placedButUnbuilt.map(String).includes("T-953"),
+    `placedButUnbuilt=${JSON.stringify(summary.placedButUnbuilt)}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+{
+  /*
+   * The standing check itself, written at zero. A missing field is not a zero
+   * — the rule item T-746 set for the residual — so the generator writes
+   * `placedButUnbuilt` on every run, and a reader can tell "none" from "this
+   * generator does not look".
+   */
+  const dir = freshFixture();
+  addBacklogItem(dir, "T-954", "**Ordinary mapped item.**", "Be built.");
+  const r = run(dir, "build-source-board.mjs", ["--json"]);
+  const summary = JSON.parse(fs.readFileSync(path.join(dir, "source-board-summary.json"), "utf8"));
+  check(
+    "`placedButUnbuilt` is written on every run, including when it is empty",
+    r.status === 0
+      && Object.prototype.hasOwnProperty.call(summary, "placedButUnbuilt")
+      && Array.isArray(summary.placedButUnbuilt)
+      && summary.placedButUnbuilt.length === 0,
+    `exit=${r.status}\nplacedButUnbuilt=${JSON.stringify(summary.placedButUnbuilt)}`,
+  );
+  check(
+    "and stdout says so in words, so a run that is read rather than parsed still reports it",
+    /placed but built into no item:\s+0\b/.test(r.stdout),
+    `stdout tail=${JSON.stringify(r.stdout.split("\n").slice(-12).join("\n"))}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+{
+  /*
+   * The cross-cutting half, which already worked and must keep working. It is
+   * here because it is the negative control for the whole item: if this case
+   * had ever been red, the defect would have been noticed years of runs ago.
+   */
+  const dir = freshFixture();
+  addBacklogItem(dir, "T-955", "**Cited by a cross-cutting capability.**", "Still reachable.");
+  const file = path.join(dir, "source-stage-map.json");
+  const map = JSON.parse(fs.readFileSync(file, "utf8"));
+  map.platformTrack.items = map.platformTrack.items.filter((r) => r !== "T-955");
+  (map.crossCutting.capabilities ??= []).push({ capability: "Cross-cutting", items: ["T-955"] });
+  fs.writeFileSync(file, `${JSON.stringify(map, null, 2)}\n`);
+  const r = run(dir, "build-source-board.mjs", ["--json"]);
+  const { out } = summaryItems(dir);
+  check(
+    "a cross-cutting capability citation still builds an item",
+    out.has("T-955"),
+    `exit=${r.status}\nstderr=${r.stderr}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
 console.log(`\n${passes} passed, ${failures} failed`);
 process.exit(failures ? 1 : 0);

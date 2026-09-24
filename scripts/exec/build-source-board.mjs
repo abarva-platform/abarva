@@ -1370,6 +1370,42 @@ function resolveItemRef(ref) {
  * rows. Capability lists may intentionally cite the same item as their parent
  * stage, so uniqueness is enforced inside each list rather than globally.
  */
+/**
+ * Every item reference a stage places — item T-752.
+ *
+ * A stage places an id two ways: its own `items` list, and the `items` of any
+ * capability it declares. `mappedNums` has always counted BOTH as placement
+ * ("an id cited only by a capability is placed, not orphaned"), while
+ * `stageItems` was built from the first list alone. An id cited only by a
+ * capability was therefore mapped enough to be kept out of the `unmapped`
+ * report and unbuilt enough to reach no item — in no bucket of
+ * `EXECUTION_QUEUE.md`, claimable or blocked, and in no residual printed here.
+ *
+ * On the live map and backlog at 2026-09-24T06:10Z that was `T-429` (lane C)
+ * and `T-445` (lane U): 2 of the 63 ids under a stage capability are declared
+ * nowhere else, and both are substantive filings with full acceptances. The
+ * same run's queue offered three lane-D rows and reported lanes U, C and T as
+ * having none. `T-429`'s absence had already been observed and written down on
+ * 21 Sep; it survived because the observation was prose.
+ *
+ * Cross-cutting capabilities never had the defect, because `crossCuttingTrack`
+ * is built FROM the capability lists. This makes a stage behave the same way.
+ *
+ * Dedup by resolved number, the way `crossCuttingItemRefs` already does: 61 of
+ * the 63 live citations name an id the stage also lists, and concatenating
+ * without dedup would file one piece of work as two queue rows.
+ * `assertUniqueMappedRefs` deliberately checks uniqueness INSIDE each list and
+ * not across them, for exactly this reason.
+ */
+function stageItemRefs(stage) {
+  return [
+    ...new Map(
+      [...(stage.items ?? []), ...(stage.capabilities ?? []).flatMap((c) => c.items ?? [])]
+        .map((ref) => [resolveItemRef(ref).num, ref]),
+    ).values(),
+  ];
+}
+
 function assertUniqueMappedRefs(refs, trail) {
   const firstIndexByKey = new Map();
   for (const [index, ref] of (refs ?? []).entries()) {
@@ -1514,7 +1550,7 @@ const stages = map.stages.map((s) => {
     const names = [s.boardOutcomeMatch, ...(s.alsoBoardOutcomes ?? [])];
     return names.some((n) => cell.toLowerCase().includes(n.toLowerCase()));
   });
-  const stageItems = (s.items ?? []).map(buildItem).filter(Boolean);
+  const stageItems = stageItemRefs(s).map(buildItem).filter(Boolean);
   const stageClaimRe = new RegExp(`\\bStage\\s+0*${s.id}\\b`, "i");
   const explicitStageClaims = executionClaims.filter((entry) => stageClaimRe.test(entry.text));
   const stageOwnerTokens = s.name.toLowerCase().split(/[^a-z0-9]+/).filter((token) => token.length >= 3);
@@ -1734,16 +1770,17 @@ const sideTracks = [map.platformTrack, map.outsideLifecycle, crossCuttingTrack].
 // report counts numbers, so normalise before comparing. Capability
 // declarations count as mapping too — an id cited only by a capability is
 // placed, not orphaned.
-const mappedNums = new Set([
-  ...map.stages.flatMap((s) => (s.items ?? []).map((r) => resolveItemRef(r).num)),
-  ...map.stages.flatMap((s) =>
-    (s.capabilities ?? []).flatMap((c) => (c.items ?? []).map((r) => resolveItemRef(r).num)),
-  ),
-  ...(map.crossCutting?.capabilities ?? []).flatMap((c) =>
-    (c.items ?? []).map((r) => resolveItemRef(r).num),
-  ),
-  ...sideTracks.flatMap((t) => (t.items ?? []).map((r) => resolveItemRef(r).num)),
-]);
+//
+// Item T-752: this is now the SAME list the builders consume, walked once.
+// It used to be a second, independently written walk of the map, and the two
+// disagreed: this one counted a stage capability's citation, the builder did
+// not, and the difference was two real items nobody could reach. A second
+// walk cannot drift from the first if there is no second walk.
+const placedRefs = [
+  ...map.stages.flatMap((s) => stageItemRefs(s)),
+  ...sideTracks.flatMap((t) => t.items ?? []),
+];
+const mappedNums = new Set(placedRefs.map((r) => resolveItemRef(r).num));
 const unmapped = [...byNum.keys()]
   .filter((n) => !mappedNums.has(n))
   .sort((a, b) => String(a).localeCompare(String(b), undefined, { numeric: true }));
@@ -1791,6 +1828,34 @@ const tracks = sideTracks.map((t) => ({
   built: (t.items ?? []).map(buildItem).filter(Boolean),
 }));
 
+/**
+ * Ids the map places and the backlog defines, which reached no item — item
+ * T-752.
+ *
+ * The residual that would have named `T-429` and `T-445` three days earlier.
+ * `unparsedItemIds` could not: it is a set difference over ids the EXTRACTOR
+ * produced, and both were produced, so the residual read zero over exactly
+ * the population that was lost. `unmapped` could not either, by design: both
+ * were placed. This measures the third thing — placed, defined, and built
+ * anyway into nothing.
+ *
+ * The exclusion is load-bearing and is asserted in the suite: a map may place
+ * an id the backlog has not defined yet, and `buildItem` returning null for it
+ * is documented behaviour, not a fault. Only a DEFINED id that reaches no item
+ * is reported.
+ *
+ * Written on every run including at zero — a missing field is not a zero, the
+ * rule item T-746 set for the residual — so a reader can tell "none" from
+ * "this generator does not look".
+ */
+const builtNums = new Set([
+  ...stages.flatMap((s) => s.items.map((i) => i.num)),
+  ...tracks.flatMap((t) => t.built.map((i) => i.num)),
+]);
+const placedButUnbuilt = [...mappedNums]
+  .filter((num) => byNum.has(num) && !builtNums.has(num))
+  .sort((a, b) => String(a).localeCompare(String(b), undefined, { numeric: true }));
+
 /* ------------------------------------------------------------ reconcile */
 
 const report = {
@@ -1817,6 +1882,8 @@ const report = {
   })),
   laneContradictions,
   laneUnusable,
+  // Item T-752. An ARRAY on every run, at zero too, for the reason above.
+  placedButUnbuilt: placedButUnbuilt.map((num) => String(num)),
   stagesWithNothingMapped: stages.filter((s) => s.items.length === 0 && s.outcomeRows.length === 0 && s.stageClaims.length === 0).map((s) => s.id),
   rungCounts: stages.reduce((acc, s) => { acc[s.rung.key] = (acc[s.rung.key] ?? 0) + 1; return acc; }, {}),
 };
@@ -1958,6 +2025,16 @@ if (report.unrecognisedItemTableKinds.length > 0) {
     );
   }
 }
+// Item T-752. Printed unconditionally, including the zero: the number is the
+// whole point, and "the line is absent" and "the number is none" must not read
+// the same to an operator skimming this output.
+console.log(
+  `  placed but built into no item:  ${report.placedButUnbuilt.length}`
+    + (report.placedButUnbuilt.length
+      ? " -> " + report.placedButUnbuilt.map((id) => displayItemId(id)).join(", ")
+        + "  (the map places them and the backlog defines them, so they reach NO queue bucket)"
+      : ""),
+);
 console.log(`  stage rungs:              ${JSON.stringify(report.rungCounts)}`);
 /*
  * An ambiguous id the map cites is silently suppressed: it cannot promote a
@@ -2385,6 +2462,8 @@ if (process.argv.includes("--json")) {
     itemPositionIds: report.itemPositionIds,
     unparsedItemIds: report.unparsedItemIds,
     unrecognisedItemTableKinds: report.unrecognisedItemTableKinds,
+    // Item T-752. The third residual, on the same always-written terms.
+    placedButUnbuilt: report.placedButUnbuilt,
     laneContradictions,
     laneUnusable,
     // Item T-750. A MISSING FIELD IS NOT A ZERO, so this is written on every
