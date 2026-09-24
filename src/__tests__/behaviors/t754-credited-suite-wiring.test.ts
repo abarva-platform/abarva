@@ -135,7 +135,57 @@ const WIRED = VERDICTED_WIRE.filter(
 );
 const HELD_FOR_REPAIR = pathsWithVerdict("repair");
 const HELD_FOR_REBASELINE = pathsWithVerdict("update_with_reason_recorded");
-const HELD = [...HELD_FOR_REPAIR, ...HELD_FOR_REBASELINE].sort();
+
+/**
+ * Two of the three `update_with_reason_recorded` rows whose hold is discharged,
+ * each named with the item that discharged it and the change it was re-baselined
+ * against. This constant exists because the two per-path cases below went red on
+ * a real tree the moment the suites were wired, which is what they are for: the
+ * header's rule is that a discharged reason should be wired in the same change
+ * that discharges it, rather than leaving an exemption that outlives the fact
+ * justifying it.
+ *
+ * `docs/architecture/t475-stale-suite-triage.json` is deliberately NOT edited to
+ * say so. It is T-475's audit artifact — its own `forbiddenEdits` field records
+ * that the triage writes a verdict and hands it on, and a sibling control pins
+ * the case titles each verdict was written about. The verdict stays
+ * `update_with_reason_recorded`, because that is what T-475 drew; what changed
+ * is the state of the world, and the state of the world belongs here, where it
+ * is measured every run.
+ *
+ * The third row, `derived-enterprise-read.test.ts`, is NOT discharged. It is
+ * still red, its dataset roots were deleted rather than renamed, and retiring
+ * versus re-wiring the module is a decision rather than a re-baseline.
+ */
+const DISCHARGED = [
+  {
+    testPath: "src/lib/enterprise-context/__tests__/intelligence-read-model.test.ts",
+    byItem: "T-756",
+    reason:
+      "six expectations were behind #7795's record-type alias separation and copy rename, and a seventh was a spend binding lost as collateral of a bad merge rather than a stale expectation; all seven are resolved and the suite is green",
+  },
+  {
+    testPath: "src/lib/source/contract-evidence/__tests__/templates.test.ts",
+    byItem: "T-756",
+    reason:
+      "the ordered family list was behind `e38e5b4f5`, which prepended the application_inventory family; the list is re-baselined, still an ordered compare, and the suite is green",
+  },
+] as const;
+
+const DISCHARGED_PATHS: string[] = DISCHARGED.map((entry) => entry.testPath).sort();
+const HELD = [...HELD_FOR_REPAIR, ...HELD_FOR_REBASELINE]
+  .filter((testPath) => !DISCHARGED_PATHS.includes(testPath))
+  .sort();
+
+/**
+ * What the mutation is expected to leave covered. The mutated step is the one
+ * T-754 added, and it is still worth exactly five; the two discharged paths are
+ * named by two OTHER steps, so replacing T-754's step by `echo skipped` does not
+ * reach them and they stay covered on both arms. Asserting `coveredAfter` is
+ * empty would now be asserting that this mutation reaches a step it does not
+ * touch, and the delta would stop being attributable to the step it names.
+ */
+const COVERED_AFTER_MUTATION = [...DISCHARGED_PATHS].sort();
 
 type Probe = {
   unrun: string[];
@@ -320,8 +370,12 @@ function probeCensus(): Probe {
         CENSUS_ROOT: repoRoot,
         WIRING_WORKFLOW,
         WIRING_STEP_NAME,
+        // All twelve of T-475's rows, including the two now discharged: the
+        // scratch root must contain a path for it to be measurable at all, so
+        // dropping them here would make the mutation silent about them rather
+        // than proving they stay covered.
         SUBJECT_PATHS: JSON.stringify(
-          [...WIRED, ...WITHHELD_PATHS, ...HELD].sort(),
+          [...WIRED, ...WITHHELD_PATHS, ...HELD, ...DISCHARGED_PATHS].sort(),
         ),
         IMPORTER_TARGETS: JSON.stringify(IMPORTER_CHECKED),
       },
@@ -447,6 +501,36 @@ describe("the suites T-475 verdicted wire_into_ci", () => {
     },
   );
 
+  it.each(DISCHARGED_PATHS)(
+    "now runs %s, because the reason it was held no longer describes anything",
+    (testPath) => {
+      // The mirror of the two `HELD` cases above, and the reason this constant
+      // cannot be a comment: a path listed as discharged but still red, or
+      // discharged and quietly not wired, fails here by name.
+      expect(unrun.has(testPath)).toBe(false);
+      expect(
+        probe.pullRequestCommands.filter((command) =>
+          commandNamesExactly(command, testPath),
+        ),
+      ).toHaveLength(1);
+      const entry = DISCHARGED.find((candidate) => candidate.testPath === testPath);
+      expect(entry?.byItem).toMatch(/^[A-Z]-\d{3}$/);
+      expect((entry?.reason ?? "").length).toBeGreaterThan(80);
+    },
+  );
+
+  it("keeps every discharged path out of the held set, and the still-red one in it", () => {
+    // The two sets must not overlap, or a path could satisfy both the "still
+    // held" case and the "now runs" case depending on which ran first.
+    for (const testPath of DISCHARGED_PATHS) expect(HELD).not.toContain(testPath);
+    expect(HELD).toContain(
+      "src/lib/enterprise-context/__tests__/derived-enterprise-read.test.ts",
+    );
+    expect(
+      [...HELD, ...DISCHARGED_PATHS].sort(),
+    ).toEqual([...HELD_FOR_REPAIR, ...HELD_FOR_REBASELINE].sort());
+  });
+
   it("moves the workflow-reached count by exactly five when the step is replaced by `echo skipped`", () => {
     // The mutation the acceptance names, run by the control rather than by
     // hand, with the number corrected from eight to five for the reason in the
@@ -458,8 +542,10 @@ describe("the suites T-475 verdicted wire_into_ci", () => {
       workflowBytesChanged: probe.mutation.workflowBytesChanged,
     }).toEqual({ stepMatches: 1, workflowBytesChanged: true });
 
-    expect(probe.mutation.coveredBefore).toEqual(WIRED);
-    expect(probe.mutation.coveredAfter).toEqual([]);
+    expect(probe.mutation.coveredBefore).toEqual(
+      [...WIRED, ...DISCHARGED_PATHS].sort(),
+    );
+    expect(probe.mutation.coveredAfter).toEqual(COVERED_AFTER_MUTATION);
     expect(
       probe.mutation.coveredBefore.length - probe.mutation.coveredAfter.length,
     ).toBe(5);
