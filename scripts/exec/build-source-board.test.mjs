@@ -834,6 +834,12 @@ console.log("\nbuild-source-board — an owner decision qualified by an adjectiv
  *      The fixture titles below therefore end with a plain full stop, which
  *      is the shape case 21 records as required, and the case below speaks
  *      for the SENTENCE FORM only.
+ *
+ *      T-762 HAS SINCE SHIPPED and the live `C-504` row now reads its own
+ *      gate — see case 22d, which uses that row's unpunctuated title. The
+ *      first case's NAME below still says the live row is null, because that
+ *      is what was true when the case was written and keeping the record
+ *      straight is the reason it says so at all.
  * ------------------------------------------------------------------------ */
 for (const [id, acceptance, why] of [
   [
@@ -870,13 +876,23 @@ for (const [id, acceptance, why] of [
  *      bound or the anchor is dropped to reach the two cases above.
  *
  *      BODY IS DELIBERATELY UNRESOLVED. Case 22 and the first draft of these
- *      used `**The work is done.**`, and that makes the case VACUOUS:
- *      `deriveBlocker` reads the body ALONE for a decision gate once the rung
- *      resolves, so the acceptance under test is never consulted. Measured,
- *      not reasoned — substituting case 21's own gate sentence, the one that
- *      file proves IS a gate, into such a row still reads no gate and the
- *      case still passes. Reported as a residual against case 22 rather than
- *      rewritten here; these two are written so the rule is genuinely run.
+ *      used `**The work is done.**`, and that made the case VACUOUS:
+ *      substituting case 21's own gate sentence, the one this file proves IS
+ *      a gate, into such a row still read no gate and the case still passed.
+ *
+ *      THE CAUSE NAMED HERE WAS WRONG, and item T-762 measured it. This
+ *      paragraph blamed rung resolution — `deriveBlocker` narrowing a
+ *      decision-gate rule to `bodyText` once the rung resolves. That cannot
+ *      be it: `bodyText` IS `bodyCorpus`, and the acceptance sits inside it
+ *      either way. The real cause was the cell boundary. `bodyCorpus` joined
+ *      the title cell to the acceptance cell with a SPACE, and this fixture's
+ *      title ends `.` `*` `*`, so neither the terminator anchor (which needs
+ *      whitespace straight after the stop) nor the bold anchor (which needs
+ *      `**` straight before the phrase) could reach across it. Case 22f
+ *      below is that substitution written as a case; it was RED until T-762
+ *      repaired the boundary, and case 22 has consulted its acceptance ever
+ *      since. These two keep their unresolved body, which costs nothing and
+ *      leaves them independent of that question.
  * ------------------------------------------------------------------------ */
 for (const [id, acceptance, why, breaks] of [
   [
@@ -923,6 +939,195 @@ for (const [id, acceptance, why, breaks] of [
   const item = summaryItems(dir).out.get("T-956");
   check(
     "the bare noun phrase still reads as a gate with the slot empty",
+    item?.blocker === "Decision needed",
+    `rung=${item?.rung} (${item?.rungLabel}) blocker=${JSON.stringify(item?.blocker ?? null)}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+console.log("\nbuild-source-board — the acceptance cell is a corpus boundary (T-762)\n");
+
+/* ------------------------------------------------------------------------ *
+ * 22d. THE DEFECT, on `C-504`'s LIVE row shape. `bodyCorpus` joins the title
+ *      cell to the acceptance cell with a SPACE, so the head of the
+ *      acceptance cell — the field that states what an item NEEDS — is never
+ *      a sentence start, and no anchored rule can reach anything written
+ *      there. Every anchor the decision term offers requires `^`, a sentence
+ *      terminator, a newline or bold markup immediately before the phrase; a
+ *      bare space is none of them.
+ *
+ *      THE FIXTURE TITLE ENDS WITH NO TERMINAL PUNCTUATION, which is the
+ *      whole point and the reason case 22a could not speak for this. Case
+ *      21's comment records that its fixture title must end with a plain full
+ *      stop for the case to reach the rule at all — that full stop IS the
+ *      anchor, supplied by the title, and it hides the boundary. `C-504`'s
+ *      live title cell ends "…and no live caller does", so its own gate
+ *      sentence is preceded by a bare space and it derived `blocker: null`
+ *      while `EXECUTION_QUEUE.md` offered it as the ONE claimable row in lane
+ *      C. Its acceptance opens "A product decision, not a code decision, and
+ *      it is stated that way on purpose".
+ * ------------------------------------------------------------------------ */
+{
+  const dir = freshFixture();
+  addBacklogItem(
+    dir,
+    "T-957",
+    // No terminal punctuation — C-504's live title cell ends this way.
+    "`shapeAgentResponseForSurface` accepts an `issues` array only when the caller passes one, and no live caller does",
+    "A product decision, not a code decision, and it is stated that way on purpose: losing 83% of a governed answer is a worse failure than a long one.",
+  );
+  buildBoard(dir);
+  const item = summaryItems(dir).out.get("T-957");
+  check(
+    "a gate opening an acceptance cell after an unpunctuated title is read (C-504's live shape)",
+    item?.blocker === "Decision needed",
+    `rung=${item?.rung} (${item?.rungLabel}) blocker=${JSON.stringify(item?.blocker ?? null)}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+/* ------------------------------------------------------------------------ *
+ * 22e. THE POPULATION, and it is not the noun form. Measured over the live
+ *      corpus, repairing the boundary moves 33 items and **32 of them anchor
+ *      on the IMPERATIVE `Decide`** at the head of their acceptance cell, not
+ *      on the `A <adj> decision` phrase `T-761` added. That term has existed
+ *      since the `Decide` rule was written and has been unreachable from an
+ *      acceptance cell for its whole life: an acceptance is written in the
+ *      imperative, so the gate in one usually is too — which is the reason
+ *      the rule's own comment gives for admitting the imperative at all.
+ * ------------------------------------------------------------------------ */
+{
+  const dir = freshFixture();
+  addBacklogItem(
+    dir,
+    "T-958",
+    "Wiring `board-artifacts/__tests__` would leave this file dark even after the directory is green",
+    "Decide whether loose root test files move into `__tests__` or whether the wiring names the parent directory.",
+  );
+  buildBoard(dir);
+  const item = summaryItems(dir).out.get("T-958");
+  check(
+    "an imperative gate opening an acceptance cell after an unpunctuated title is read",
+    item?.blocker === "Decision needed",
+    `rung=${item?.rung} (${item?.rungLabel}) blocker=${JSON.stringify(item?.blocker ?? null)}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+/* ------------------------------------------------------------------------ *
+ * 22f. CASE 22 IS VACUOUS, and this is the case that proves it rather than
+ *      the paragraph in 22b that asserted it. `T-761` reported the vacuity
+ *      and named rung resolution as the cause. THAT DIAGNOSIS IS WRONG, and
+ *      measuring it is the only reason this case exists: `deriveBlocker`
+ *      narrows a decision-gate rule to `bodyText` when the rung resolves, but
+ *      `bodyText` IS `bodyCorpus` and the acceptance is inside it either way.
+ *      The real cause is the same boundary this item repairs — case 22's
+ *      fixture title is `**The work is done.**`, so the text before its
+ *      acceptance ends `.` `*` `*` ` `, and neither the terminator anchor
+ *      (which needs whitespace straight after the stop) nor the bold anchor
+ *      (which needs `**` straight before the phrase) can reach across it.
+ *
+ *      So this row carries case 21's OWN gate sentence — the one that file
+ *      proves IS a gate — under case 22's title, and asserts it is read as
+ *      one. It is RED before the boundary is repaired, which is precisely the
+ *      statement that case 22 was never consulting its acceptance.
+ * ------------------------------------------------------------------------ */
+{
+  const dir = freshFixture();
+  addBacklogItem(
+    dir,
+    "T-959",
+    "**The work is done.**",
+    "A decision, then the work that follows from it: mount them or retire them.",
+  );
+  buildBoard(dir);
+  const item = summaryItems(dir).out.get("T-959");
+  check(
+    "case 22's own row shape does consult its acceptance (the vacuity T-761 reported, with the cause corrected)",
+    item?.blocker === "Decision needed",
+    `rung=${item?.rung} (${item?.rungLabel}) blocker=${JSON.stringify(item?.blocker ?? null)}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+/* ------------------------------------------------------------------------ *
+ * 22g. THE GUARDRAIL, and it is the half that matters. Making the head of a
+ *      cell a sentence start is a WIDENING at the one position the anchor
+ *      allows, so the repair must not be reached by dropping the anchor
+ *      instead — which would read every passing mention of a decision as an
+ *      owner gate and move finished work into the never-claim bucket.
+ *
+ *      The title is unpunctuated, exactly as in 22d and 22e, so the only
+ *      thing separating this case from those is WHERE the phrase sits inside
+ *      the acceptance. Passes before and after BY DESIGN: it fails if the
+ *      anchor is removed, or if the boundary is implemented by injecting a
+ *      terminator into the middle of a cell rather than between two.
+ * ------------------------------------------------------------------------ */
+for (const [id, acceptance, why] of [
+  [
+    "T-960",
+    "The owner already took a decision here and the change follows it; nothing is outstanding.",
+    "a decision named mid-sentence",
+  ],
+  [
+    "T-961",
+    "The owner already took a product decision here and the change follows it; nothing is outstanding.",
+    "an adjective-qualified decision named mid-sentence",
+  ],
+  [
+    "T-962",
+    "Nothing here is for anyone to decide; the fix is mechanical and the test proves it.",
+    "the imperative verb used mid-sentence",
+  ],
+]) {
+  const dir = freshFixture();
+  addBacklogItem(
+    dir,
+    id,
+    "`shapeAgentResponseForSurface` accepts an `issues` array only when the caller passes one, and no live caller does",
+    acceptance,
+  );
+  buildBoard(dir);
+  const item = summaryItems(dir).out.get(id);
+  check(
+    `${why} in an acceptance cell is still not an owner gate — this fails if the anchor is dropped`,
+    item?.blocker !== "Decision needed",
+    `rung=${item?.rung} (${item?.rungLabel}) blocker=${JSON.stringify(item?.blocker ?? null)}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+/* ------------------------------------------------------------------------ *
+ * 22h. THE BODY STILL WINS OVER THE CLAIM LOG — item T-700's rule, which the
+ *      boundary was quietly defeating for TEN live items. `deriveBlocker`
+ *      returns on the first rule that matches the item's OWN body and holds a
+ *      claim-derived match aside, so an item that declares a gate itself must
+ *      never be labelled from a neighbouring item's release paperwork. With
+ *      the gate unreachable at the acceptance-cell head, the body matched
+ *      nothing and the claim line won by default.
+ *
+ *      Measured on the live corpus, ten of the eleven items whose blocker is
+ *      REPLACED by this change were labelled from the CLAIM LOG rather than
+ *      from their own body — nine of them `Signed-in acceptance owed` read
+ *      off register lines that mostly say the opposite in words ("no
+ *      signed-in proof owed"), and one the `Unclaimed` fallback.
+ *
+ *      The claim line here names signed-in proof for an id this case never
+ *      declares, so the label can only come from the register.
+ * ------------------------------------------------------------------------ */
+{
+  const dir = freshFixture();
+  addBacklogItem(
+    dir,
+    "T-963",
+    "Two suites hold the identical exact-list lock and nothing holds them to each other",
+    "Decide which suite owns the nav-config lock and have the other assert something it does not.",
+  );
+  appendClaims(dir, [FOREIGN_PROOF]);
+  buildBoard(dir);
+  const item = summaryItems(dir).out.get("T-963");
+  check(
+    "an item that declares its own gate is not labelled from a claim line (T-700, restored at the cell boundary)",
     item?.blocker === "Decision needed",
     `rung=${item?.rung} (${item?.rungLabel}) blocker=${JSON.stringify(item?.blocker ?? null)}`,
   );
