@@ -372,7 +372,7 @@
         "aVa answers contract questions",
         "Archetype and industry intelligence is cited"
       ],
-      "items": [1, 2, 3, 15, 16, 17, 18, 33, "U-007", "D-025", "T-444", "T-450", "T-459", "T-461", "C-500", "T-585"],
+      "items": [1, 2, 3, 15, 16, 17, 18, 33, "U-007", "D-025", "T-444", "T-450", "T-459", "T-461", "C-500", "T-585", "C-501", "C-502", "C-503", "C-504", "C-505"],
       "capabilities": [
         {
           "capability": "Six-contract Contract 360 acceptance matrix",
@@ -806,13 +806,23 @@
       "U-502",
       "U-504",
       "U-511",
-      "C-508"
+      "C-508",
+      "C-507",
+      "T-476",
+      "T-749",
+      "U-400",
+      "U-401",
+      "U-402",
+      "U-403",
+      "U-404",
+      "U-503",
+      "C-509"
     ]
   },
   "outsideLifecycle": {
     "name": "Outside the Source lifecycle",
     "why": "Ingestion, context-layer, Intelligence and Tower data-plane work. Real, owned, and on no lifecycle stage. Separated so the nine-stage view is not padded with work that cannot move it.",
-    "items": [5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 19, 31, 35, 36, 37, 38, 67, 69, "T-455", "T-456", "T-468", "T-613"]
+    "items": [5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 19, 31, 35, 36, 37, 38, 67, 69, "T-455", "T-456", "T-468", "T-613", "D-044", "D-511"]
   },
   "crossCutting": {
     "name": "Cross-cutting \u2014 belongs to no single stage",
@@ -832,7 +842,7 @@
       },
       {
         "capability": "aVa event context through the governed context bundle",
-        "items": ["C-008"]
+        "items": ["C-008", "C-506"]
       },
       {
         "capability": "Accepted-facts-only canonical projection",
