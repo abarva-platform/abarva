@@ -23,8 +23,6 @@ import type {
 } from "./types";
 import { sanitizeClientFacingArtifactMarkdown } from "@/lib/deliverables/client-facing-artifact-sanitize";
 import { countBodyWords } from "@/lib/deliverables/shared/body-word-count";
-import { deliverableKeyForOrchestratorType } from "@/lib/deliverables/quality/deliverable-key-map";
-import { DELIVERABLE_PROFILES } from "@/lib/deliverables/profiles/registry";
 import { clientCompleteReasonLabel } from "./client-complete-labels";
 import { carriesRequiredEvidenceSignal } from "./evidence-signals";
 import { humanizeSourceFamily } from "./source-register";
@@ -354,6 +352,7 @@ export interface SynthesisResult {
   recommendation?: string;
   nextActions?: string[];
   tables?: RenderableTable[];
+  exhibits?: RenderableExhibit[];
   clientCompleteChecklist?: RenderableDeliverable["clientCompleteChecklist"];
 }
 
@@ -418,41 +417,42 @@ function openInputsTable(
   };
 }
 
-function expectedExhibitsForProfile(
-  req: DeliverableIntelligenceRequest,
-  brief?: DeliverableArtifactBrief,
+const GENERIC_EXHIBIT_DESCRIPTION =
+  /profile-required view|populated from cited evidence|shows the user, ai, human decision|decision implication to confirm/i;
+
+function repairStructuredExhibit(exhibit: RenderableExhibit): RenderableExhibit {
+  return {
+    key: repairStructuredClientFactText(String(exhibit.key ?? "")),
+    title: repairStructuredClientFactText(String(exhibit.title ?? "")),
+    kind: exhibit.kind,
+    description: repairStructuredClientFactText(
+      String(exhibit.description ?? ""),
+    ),
+    targetFormat: exhibit.targetFormat,
+  };
+}
+
+function exhibitHasDiagramReadyContent(exhibit: RenderableExhibit): boolean {
+  const description = exhibit.description?.trim() ?? "";
+  if (!exhibit.key?.trim() || !exhibit.title?.trim() || !description) {
+    return false;
+  }
+  if (GENERIC_EXHIBIT_DESCRIPTION.test(description)) return false;
+  const clauses = description
+    .split(/\s*(?:→|->|;|\n|\.\s+)\s*/g)
+    .map((p) => p.trim())
+    .filter(Boolean);
+  return clauses.length >= 3;
+}
+
+function renderableExhibitsFromSynthesis(
+  synth: SynthesisResult,
 ): RenderableExhibit[] {
   const byKey = new Map<string, RenderableExhibit>();
-  for (const ex of brief?.expectedExhibits ?? []) {
-    byKey.set(ex.key, {
-      key: ex.key,
-      title: ex.title,
-      kind: ex.kind,
-      description: ex.purpose,
-      targetFormat: ex.preferredFormat,
-    });
-  }
-  const deliverableKey = deliverableKeyForOrchestratorType(req.deliverableType);
-  if (deliverableKey) {
-    const profile = DELIVERABLE_PROFILES[deliverableKey];
-    for (const key of profile.requiredExhibits) {
-      if (!byKey.has(key)) {
-        byKey.set(key, {
-          key,
-          title: key
-            .replace(/_/g, " ")
-            .replace(/\b\w/g, (m) => m.toUpperCase()),
-          kind:
-            key.includes("roadmap") || key.includes("calendar")
-              ? "timeline"
-              : key.includes("map") || key.includes("flow")
-                ? "flow"
-                : "matrix",
-          description: `Profile-required view for ${profile.title}; populated from cited evidence, assumptions, and open inputs.`,
-          targetFormat: profile.defaultFormat === "xlsx" ? "xlsx" : "docx",
-        });
-      }
-    }
+  for (const exhibit of synth.exhibits ?? []) {
+    const repaired = repairStructuredExhibit(exhibit);
+    if (!exhibitHasDiagramReadyContent(repaired)) continue;
+    byKey.set(repaired.key, repaired);
   }
   return [...byKey.values()];
 }
@@ -747,7 +747,7 @@ export function assembleDeliverable(
     initiativeDisplayName: req.initiativeDisplayName,
     generatedSections,
     tables,
-    exhibits: expectedExhibitsForProfile(req, options.brief),
+    exhibits: renderableExhibitsFromSynthesis(synth),
     sourceRegister: buildSourceRegister(evidence, sectionsWithSignals),
     assumptions: req.approvedAssumptions ?? [],
     clientCompleteChecklist: checklist,
