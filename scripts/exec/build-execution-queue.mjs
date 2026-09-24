@@ -885,6 +885,29 @@ claimable.sort((a, b) => (Number(b.isLifecycle) - Number(a.isLifecycle)) || comp
 const unplaceable = Array.isArray(s.unmapped) ? s.unmapped.map(String) : null;
 const UNPLACEABLE_LABEL = "not on the structure map, so the board could not place it";
 
+/**
+ * Ids the board never parsed at all (item T-746).
+ *
+ * One stage further upstream than `unmapped`, and it survives the fix above.
+ * `unmapped` is computed from the ids the board's reader PRODUCED, so an id in
+ * a shape that reader cannot parse is absent from the pool, absent from the
+ * drop row, and absent from the board's own `not placed on the map: 0` — which
+ * was vacuously true over exactly the population that was not missing.
+ * Measured on the live corpus at `aa0eecff9`: 474 ids sit in item position in
+ * the backlog, the board produced 441, and none of the 33 missing appeared in
+ * any line of this file.
+ *
+ * The cost is not hypothetical. `T-743` and `T-744` were open, unclaimed,
+ * lane-T work while three runs in a row read this file and recorded "my lane
+ * has ZERO claimable rows".
+ *
+ * A MISSING FIELD IS NOT A ZERO, for the same reason it is not one for
+ * `unmapped`: the field is written by a different generator, and printing "0
+ * unparsed" would assert a completeness nobody measured.
+ */
+const unparsed = Array.isArray(s.unparsedItemIds) ? s.unparsedItemIds.map(String) : null;
+const UNPARSED_LABEL = "in item position in the backlog but in a shape the board cannot parse";
+
 function renderClaimableFunnel() {
   const rows = claimableFunnel
     .map((f) => `| ${f.label} | ${f.removed.length} | ${f.remaining} |`)
@@ -901,9 +924,29 @@ function renderClaimableFunnel() {
     ? `| ${UNPLACEABLE_LABEL} | not recorded | not recorded |`
     : `| ${UNPLACEABLE_LABEL} | ${unplaceable.length} | ${all.length} |`;
 
+  // Rendered above the unplaceable row because it happens first: an id the
+  // reader never produced cannot then be placed or not placed. At zero it
+  // still renders, for the reason the comment above the unplaceable row gives.
+  const afterUnparsed = unplaceable === null ? null : all.length + unplaceable.length;
+  const unparsedRow = unparsed === null
+    ? `| ${UNPARSED_LABEL} | not recorded | not recorded |`
+    : `| ${UNPARSED_LABEL} | ${unparsed.length} | ${afterUnparsed === null ? "not recorded" : afterUnparsed} |`;
+
+  const truePopulation = unplaceable === null || unparsed === null
+    ? null
+    : all.length + unplaceable.length + unparsed.length;
+
   const opening = unplaceable === null
     ? `${all.length} items reach the filter. The board that wrote this summary recorded no count of ids it could not place, so the population this table starts from is **not recorded** and the census below cannot claim to be complete.`
-    : `${all.length + unplaceable.length} items enter the filter; each row says what the next rule removed.`;
+    : truePopulation === null
+      ? `${all.length + unplaceable.length} items reach the filter. The board recorded no count of ids it could not PARSE, so the population above that number is **not recorded** and this census cannot claim to be complete.`
+      : `${truePopulation} ids sit in item position in the backlog; each row says what the next rule removed.`;
+
+  const namedUnparsed = unparsed === null
+    ? "**Whether any id was dropped before it could be parsed is not recorded** by the board that wrote this summary, so this file cannot say. Run the board and read its own output."
+    : unparsed.length === 0
+      ? "No id was dropped before the reader: every id in item position in the backlog parsed into an item."
+      : `**${unparsed.length} id${unparsed.length === 1 ? " is" : "s are"} in item position in the backlog and were never parsed into an item at all:** ${unparsed.map((id) => `\`${id}\``).join(" ")}. They are in no bucket of this file, claimable or blocked, and mapping them changes nothing — the board's reader has to learn the shape they are written in first.`;
 
   const named = unplaceable === null
     ? "**Which ids those are is not recorded** by the board that wrote this summary, so this file cannot name them. Run the board and read its own output."
@@ -917,9 +960,12 @@ ${opening}
 
 | removed because it is | removed | left |
 |---|---|---|
-| — | — | ${unplaceable === null ? all.length : all.length + unplaceable.length} |
+| — | — | ${truePopulation ?? (unplaceable === null ? all.length : all.length + unplaceable.length)} |
+${unparsedRow}
 ${unplaceableRow}
 ${rows}
+
+${namedUnparsed}
 
 ${named}
 

@@ -283,7 +283,80 @@ function lanePrefixOf(num) {
   return m ? m[1] : "";
 }
 
-/** Every `| # | Item | Lane | Acceptance |` row in the backlog, with its section. */
+/**
+ * The column names a backlog table uses for its ID column — item T-746.
+ *
+ * `#` was the only one recognised, and it was recognised as a LITERAL: both
+ * "is this line a header?" and "which cell holds the id?" were the test
+ * `cells[0] === "#"`. The register does not write only that way. Measured on
+ * the live backlog at `aa0eecff9`, rows sit under `| Id | Finding | Lane |
+ * What it needs |`, `| Id | Finding | Lane | Status |`, `| Item | What | Lane |
+ * Acceptance |` and `| Id | What is wrong | Lane | Acceptance |`, and every one
+ * of them was dropped before any census counted it — 27 ids whose only table
+ * definition was in one of those shapes.
+ *
+ * This is item T-737 one column to the left: that item taught this reader to
+ * take the LANE from the column its header names rather than from position 2,
+ * and left the ID matched by a symbol.
+ */
+const ID_COLUMN_NAMES = new Set(["#", "id", "item"]);
+
+/**
+ * The item conventions this reader accepts, keyed by the header cell to the
+ * RIGHT of the id column.
+ *
+ * A whitelist, deliberately, because that is the protection the old
+ * `cells[0] === "#"` test was carrying by accident. `# | Mutation | Failing
+ * cases` is numbered 1..n and is not a backlog table: read as items it
+ * collided with #1-#4, four of the oldest and most-cited ids on the board,
+ * suppressed them as ambiguous and dropped three lifecycle stages with no work
+ * undone. The live backlog also carries `| id | stamp picks | append order
+ * picks |` and `| id | first holder | second holder |`, which are report
+ * tables about items rather than definitions of them.
+ *
+ * So widening the ID column must not widen the KINDS. A kind nobody listed
+ * here is not silently dropped either — `unrecognisedItemTableKinds` names the
+ * shape, so the next convention someone invents is visible to a human instead
+ * of costing another 27 ids.
+ */
+const ITEM_TABLE_KINDS = new Set([
+  "item",
+  "verdict",
+  "finding",
+  "outcome",
+  "status",
+  "what",
+  "what is wrong",
+  "merge and run",
+]);
+
+/** The kind a header declares, normalised. `Finding, re-verified` is `finding`. */
+function itemTableKind(header, at) {
+  return stripMd(header?.[at + 1] ?? "").split(",")[0].trim().toLowerCase();
+}
+
+/** Which cell of a header row holds the id, or -1 when none does. */
+function idColumnIndex(cells) {
+  return (cells ?? []).findIndex((c) => ID_COLUMN_NAMES.has(stripMd(c).toLowerCase()));
+}
+
+/**
+ * Whether this pipe line is a header row rather than a data row.
+ *
+ * Its first cell is the literal name of an id column, which no data row's
+ * first cell can be: a data row opens with an id. The old code tested exactly
+ * this for `#` alone, and that test is what let a table re-declare its header
+ * mid-section — the live backlog does that, and `T-544` is one of the ids that
+ * depends on it being recognised.
+ */
+function isItemTableHeader(cells) {
+  return ID_COLUMN_NAMES.has(stripMd(cells[0] ?? "").toLowerCase());
+}
+
+/** Kinds seen under an id column that this reader does not accept as items. */
+const unrecognisedItemTableKinds = new Map();
+
+/** Every backlog item row, in any header shape this reader accepts. */
 function backlogTableItems(text) {
   const lines = text.split(/\r?\n/);
   const out = [];
@@ -295,9 +368,10 @@ function backlogTableItems(text) {
     if (!line.startsWith("|")) continue;
     const cells = splitTableRow(line);
     if (/^-{2,}$/.test(cells[0]?.replace(/\s/g, "") ?? "")) continue;
-    if (cells[0] === "#") { header = cells; continue; }
+    if (isItemTableHeader(cells)) { header = cells; continue; }
     if (!header) continue;
-    if (header[0] !== "#") continue;
+    const at = idColumnIndex(header);
+    if (at < 0) continue;
     // A `#` first column is not enough to make a table a backlog table. The
     // log carries exactly two item conventions — `# | Item | Lane | Acceptance`
     // for a definition and `# | Verdict | Proof` for an outcome — and anything
@@ -306,14 +380,26 @@ function backlogTableItems(text) {
     // collided with #1-#4, four of the oldest and most-cited ids on the board;
     // that suppressed them as ambiguous and dropped three lifecycle stages
     // without any work being undone. Match the conventions, not the symbol.
-    const kind = (header[1] ?? "").toLowerCase();
-    if (kind !== "item" && kind !== "verdict") continue;
-    const num = parseBacklogId(cells[0]);
+    const kind = itemTableKind(header, at);
+    if (!ITEM_TABLE_KINDS.has(kind)) {
+      // Named, not dropped. An id under an unknown kind is reported with the
+      // header shape it was written in, because the failure this item repairs
+      // is a population shrinking without anyone being told.
+      if (parseBacklogId(cells[at]) !== null) {
+        const shape = header.map((c) => stripMd(c)).join(" | ");
+        if (!unrecognisedItemTableKinds.has(shape)) {
+          unrecognisedItemTableKinds.set(shape, { kind, ids: [] });
+        }
+        unrecognisedItemTableKinds.get(shape).ids.push(displayItemId(parseBacklogId(cells[at])));
+      }
+      continue;
+    }
+    const num = parseBacklogId(cells[at]);
     if (num === null) continue;
     out.push({
       num,
       section,
-      title: cells[1] ?? "",
+      title: cells[at + 1] ?? "",
       // Item T-737. The lane comes from the column the HEADER names `Lane`,
       // never from position 2. The two conventions do not agree about what
       // sits there: `# | Item | Lane | Acceptance` puts the lane letter in it,
@@ -331,7 +417,10 @@ function backlogTableItems(text) {
       // item with no lane is visibly unassigned, an item whose lane is a
       // sentence is invisibly unassignable.
       lane: laneCell(header, cells),
-      acceptance: cells[3] ?? "",
+      // Relative to the id column, so a shape whose id is not in position 0
+      // reads its own acceptance cell. For `# | Item | Lane | Acceptance` this
+      // is `cells[3]`, exactly as before.
+      acceptance: cells[at + 3] ?? "",
       raw: cells.join(" | "),
       // Item T-738. Recorded per definition so the report can name the id.
       // GitHub splits this row the same way, so it is a defect in the
@@ -499,6 +588,79 @@ function backlogProseItems(text) {
     });
   }
   return out;
+}
+
+/**
+ * Every id in ITEM POSITION in the backlog, found without asking the
+ * extractor — item T-746.
+ *
+ * The defect that let 33 ids vanish is not that a shape was unsupported. It is
+ * that an id the extractor never produces cannot appear in ANY of this
+ * generator's reports: the `unmapped` drop list is computed from the ids it DID
+ * produce, so `not placed on the map: 0` was vacuously true over exactly the
+ * population that was not missing. The census opened at a number that had
+ * already been reduced, and nothing said so.
+ *
+ * So the population is measured on its own, by the document's own conventions
+ * for where an id sits:
+ *
+ *   - a `## Item <id>` / `### Items <id>, <id>` heading, at any depth, taking
+ *     the LEADING id list only. Taking every number in the heading reads `00`
+ *     and `01` out of a time range and `186` out of the phrase "186 audit
+ *     scripts": measured, that over-counted by twelve.
+ *   - the id column of a table whose header NAMES one, under a kind this
+ *     reader accepts as an item convention.
+ *
+ * `unparsedItemIds` is the difference against what the extractor produced.
+ * Today it is the `## Item <id>` heading-with-no-item-table shape, which is
+ * item T-740's half of this defect and is deliberately NOT parsed here: the
+ * point is that it is now VISIBLE — named on stdout, in the summary, and in
+ * `EXECUTION_QUEUE.md` — rather than silently absent from every count.
+ *
+ * This is a narrower claim than "the two populations agree", and it is the one
+ * that survives the next new shape: a heading form or table kind nobody
+ * anticipated lands in the residual or in
+ * `unrecognisedItemTableKinds`, not in silence.
+ */
+function headingItemIds(line) {
+  const m = line.match(/^#{2,6}\s+Items?\s+(.*)$/);
+  if (!m) return [];
+  const out = [];
+  let rest = m[1].trim();
+  for (;;) {
+    const token = rest.match(/^`?(\d+|[DUCT]-\d{3})`?/);
+    if (!token) break;
+    out.push(parseBacklogId(token[1]));
+    rest = rest.slice(token[0].length).trim();
+    const sep = rest.match(/^(?:,|and|&|–|—|-|to)\s*/i);
+    if (!sep) break;
+    // A dash followed by prose is the title separator, not a range: stop at
+    // `## Item 5 — the route infers tenancy` rather than reading its title.
+    const after = rest.slice(sep[0].length).trim();
+    if (/^[—–-]/.test(sep[0]) && !/^`?(\d+|[DUCT]-\d{3})`?/.test(after)) break;
+    rest = after;
+  }
+  return out;
+}
+
+function itemPositionIds(text) {
+  const found = new Set();
+  let header = null;
+  for (const line of text.split(/\r?\n/)) {
+    for (const id of headingItemIds(line)) found.add(id);
+    if (/^#{2,6}\s/.test(line)) { header = null; continue; }
+    if (!line.startsWith("|")) continue;
+    const cells = splitTableRow(line);
+    if (/^-{2,}$/.test(cells[0]?.replace(/\s/g, "") ?? "")) continue;
+    if (isItemTableHeader(cells)) { header = cells; continue; }
+    if (!header) continue;
+    const at = idColumnIndex(header);
+    if (at < 0) continue;
+    if (!ITEM_TABLE_KINDS.has(itemTableKind(header, at))) continue;
+    const num = parseBacklogId(cells[at]);
+    if (num !== null) found.add(num);
+  }
+  return [...found];
 }
 
 /* ------------------------------------------------------- rung derivation */
@@ -982,6 +1144,17 @@ const boardOutcomes = tablesUnderHeading(boardText, /Vision to acceptance/i);
 const boardClaims = tablesUnderHeading(boardText, /item claims/i);
 const executionClaims = executionClaimEntries(claimsText);
 const items = [...backlogTableItems(backlogText), ...backlogProseItems(backlogText)];
+
+/*
+ * The residual — item T-746. Measured against `items` above, which is every
+ * definition this reader produced, so it names precisely what the extractor
+ * could not parse and nothing else.
+ */
+const itemPositionPopulation = itemPositionIds(backlogText);
+const parsedIds = new Set(items.map((i) => String(i.num)));
+const unparsedItemIds = itemPositionPopulation
+  .filter((id) => !parsedIds.has(String(id)))
+  .sort((a, b) => String(a).localeCompare(String(b), undefined, { numeric: true }));
 
 const byNum = new Map();
 for (const it of items) {
@@ -1495,6 +1668,20 @@ const report = {
   backlogDefinitions: items.length,
   duplicateNums,
   unmapped,
+  // Item T-746. The population measured independently of the extractor, and
+  // the ids it could not parse. Written as ARRAYS, never as counts alone: the
+  // queue has to be able to name them, and `build-execution-queue.mjs`
+  // renders "not recorded" rather than zero when a field is absent.
+  itemPositionIds: itemPositionPopulation
+    .map(displayItemId)
+    .map((id) => id.replace(/^#/, ""))
+    .sort((a, b) => a.localeCompare(b, undefined, { numeric: true })),
+  unparsedItemIds: unparsedItemIds.map((id) => String(id)),
+  unrecognisedItemTableKinds: [...unrecognisedItemTableKinds.entries()].map(([shape, v]) => ({
+    shape,
+    kind: v.kind,
+    ids: [...new Set(v.ids)],
+  })),
   laneContradictions,
   laneUnusable,
   stagesWithNothingMapped: stages.filter((s) => s.items.length === 0 && s.outcomeRows.length === 0 && s.stageClaims.length === 0).map((s) => s.id),
@@ -1597,6 +1784,26 @@ if (unmapped.length > 0) {
       "so editing a copy in the operator root changes nothing.",
   );
   process.exitCode = 1;
+}
+/*
+ * Item T-746. Printed next to the population it qualifies, because the line
+ * above it — `backlog item ids` — is the number every later count is measured
+ * against, and until now it was the only number on offer.
+ */
+console.log(
+  `  in item position:         ${report.itemPositionIds.length} scanned independently of the reader`
+    + `; ${report.unparsedItemIds.length} in a shape it cannot parse`
+    + (report.unparsedItemIds.length
+      ? " -> " + report.unparsedItemIds.map((id) => displayItemId(id)).join(", ")
+      : ""),
+);
+if (report.unrecognisedItemTableKinds.length > 0) {
+  for (const row of report.unrecognisedItemTableKinds) {
+    console.log(
+      `  unrecognised table kind:  \`${row.shape}\` -> not read as items`
+        + ` (${row.ids.length} row${row.ids.length === 1 ? "" : "s"}: ${row.ids.join(", ")})`,
+    );
+  }
 }
 console.log(`  stage rungs:              ${JSON.stringify(report.rungCounts)}`);
 /*
@@ -2020,6 +2227,11 @@ if (process.argv.includes("--json")) {
       .reduce((a, i) => { if (i.blocker) a[i.blocker.say] = (a[i.blocker.say] ?? 0) + 1; return a; }, {}),
     duplicateNums,
     unmapped,
+    // Item T-746. The queue renders these; a MISSING FIELD IS NOT A ZERO
+    // there, so they are written on every run including at zero.
+    itemPositionIds: report.itemPositionIds,
+    unparsedItemIds: report.unparsedItemIds,
+    unrecognisedItemTableKinds: report.unrecognisedItemTableKinds,
     laneContradictions,
     laneUnusable,
   };
