@@ -65,7 +65,17 @@ const LIST = path.join(HERE, "integration-root-quarantine.json");
 // Lowered in the SAME change that removed the entry, which is what this
 // file's own ratchet requires — a ceiling left above the list is headroom
 // the next exclusion would pass through unexamined.
-const CEILING = 4;
+//
+// 4 -> 3 (item 26). `deliverable-render-contract.test.ts`, verdict `update`.
+// Its one failing case opened by pinning the seed path count at 457 against a
+// tree that emits 363, so it threw on its first line and the two assertions
+// after it — no legacy `/deliverables/phase-` folder, and the canonical d-code
+// path is present — had never executed. The magnitude was dropped rather than
+// re-pinned, because re-pinning 363 rebuilds the same trap; the population is
+// now asserted non-empty, which is what keeps the filter assertions from
+// passing over an empty array. Lowered in the SAME change that removed the
+// entry and named the file in the integration-suites jest command.
+const CEILING = 3;
 
 /** The only triage verdicts item 26 recognises. */
 const VERDICTS = ["update", "delete", "real"];
