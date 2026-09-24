@@ -467,6 +467,20 @@ jobs:
       # shorter and would wire those three as well, admitting byte-matching
       # into a required job as though it were behaviour. T-558 owns rewriting
       # them; until it does, they stay unrun deliberately.
+      #
+      # That reasoning held the door and the door was already open (T-555).
+      # `WorkspaceExecutiveShell.performance.test.ts`, named below since T-557,
+      # was verdicted `wire_into_ci` rather than `rewrite_as_behavior`, and
+      # nine of its cases were byte-scans over the component and the
+      # stylesheet — exactly the shape the paragraph above refuses to admit.
+      # A verdict is a reading of a suite, so keeping byte-matching out by
+      # naming files individually only works while every verdict is right.
+      # T-555 repaired that suite in place rather than unwiring it: what could
+      # be rendered moved to the `shell-behaviour` suite added below, what was
+      # already rendered elsewhere was retired, what is genuinely a rule about
+      # the code now reads a comment-stripped copy so a comment can no longer
+      # satisfy it. The three `rewrite_as_behavior` files are untouched and
+      # still unrun; T-558 still owns them.
       # `src/__tests__/behaviors/t557-unrun-suite-wiring.test.ts` asserts both
       # halves — these fifteen reached, those three still not — through the
       # census's four-hop resolver rather than a grep over this file.
@@ -482,6 +496,7 @@ jobs:
           "src/app/(maestro)/source/preview/workspace/__tests__/WorkspaceClient.ecl-browser.test.tsx"
           "src/app/(maestro)/source/preview/workspace/__tests__/WorkspaceExecutiveShell.evidence.test.tsx"
           "src/app/(maestro)/source/preview/workspace/__tests__/WorkspaceExecutiveShell.performance.test.ts"
+          "src/app/(maestro)/source/preview/workspace/__tests__/WorkspaceExecutiveShell.shell-behaviour.test.tsx"
           "src/app/(maestro)/source/preview/workspace/__tests__/governedDirectives.test.ts"
           "src/app/(maestro)/source/preview/workspace/__tests__/moneyPrecision.test.ts"
           "src/app/(maestro)/source/preview/workspace/__tests__/portfolioTruth.test.tsx"
