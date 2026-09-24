@@ -22,24 +22,26 @@ slice. No deployment, data-plane mutation, or live tenant write is in scope for 
 | 5 | Red-test diagnosis | pr_open | PR #8421; the named visual-gate/storyline/render preview suites now pass on this branch without widening the visual-credit gate. |
 | 6 | Legacy small-model document route reachability | pr_open | PR #8421; code inspection confirms `POST /api/engage/[engagementId]/turn` still calls `generateDeliverableForPhase()` after gate approval. The legacy fallback now resolves through central document-generation policy instead of a hardcoded small model / 2,048-token call. |
 | 7 | Golden-bar signal measurement before enforcement | pr_open | PR #8421 adds report-only `moves:measure-golden-bar-signals` runner over caller-provided artifact exports. Production corpus measurement not run in this branch. |
-| 8 | Human exemplars, judge, and calibration corpus | not_started | Requires human-owned exemplars before judge work can be meaningful. |
+| 8 | Human exemplars, judge, and calibration corpus | pr_open | PR #8421 adds report-only exemplar coverage audit. Current local audit: 0/19 complete, 19 missing, 2 existing HTML files unmapped; `readyForJudge=false`. Human-owned exemplars remain required before judge work can be meaningful. |
 
 ## Measurements
 
 | Metric | Value | Notes |
 |--------|-------|-------|
-| Focused quality tests | 122/122 passing | `persistence-deck`, `renderers`, `section-generation`, `brief-library`, adaptive-depth, legacy policy, storyline-deck, and story-visual-gate suites |
+| Focused quality tests | 124/124 passing | `persistence-deck`, `renderers`, `section-generation`, `brief-library`, adaptive-depth, legacy policy, storyline-deck, story-visual-gate, and exemplar-audit suites |
 | Targeted ESLint | passing | Changed orchestrator/storyline files only |
 | Generated artifact proof | passed | `/tmp/moves-deliverable-quality-proof/proof-summary.json`; structured exhibit rendered, missing-data exhibit omitted |
 | Authored-slide artifact proof | passed | `/tmp/moves-deliverable-quality-proof/authored-slide-proof-summary.json`; authored slide rendered with linked exhibit and speaker notes |
 | Legacy route model policy | passed | Code inspection confirmed route reachability; regression test covers legacy fallback policy and forbids the hardcoded small-model / 2,048-token path |
 | Dead placeholder PPTX renderer | passed | `renderStorylineDeckPptx` and its `VISUAL EXHIBIT` placeholder were removed; live generated-deck PPTX remains in orchestrator `renderers.tsx` |
+| Exemplar coverage audit | passed | `npm run moves:audit-golden-exemplars -- --out /tmp/moves-golden-exemplar-coverage.json`; report says 0/19 complete, 19 missing, 2 unmapped HTML files |
 | Production data-plane writes | 0 | Not in scope |
 | Deployments | 0 | Not in scope |
 
 ## Blocked On
 
-Human-curated exemplars are required before a quality judge can be trusted.
+Human-curated exemplars are required before a quality judge can be trusted. The report-only
+coverage audit makes the gap machine-readable, but it does not create substitute exemplars.
 
 ## Known Gaps
 
