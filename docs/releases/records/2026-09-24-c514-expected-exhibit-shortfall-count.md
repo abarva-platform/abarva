@@ -31,7 +31,16 @@ this change makes the shortfall visible and does not make that decision.
 
 - Release lane: `global-control-lane`.
 - Layer 4 PRODUCTS: adds an advisory quality signal to generated deliverable output.
-  No product surface, route, or stored data changes.
+  No product surface or route changes.
+- **One persisted number moves, and it is named here rather than left to be discovered.**
+  `pass` is computed from blockers alone (`blockers.length === 0`), so the advisory cannot
+  block an export. But two persisted generation metrics are derived from the warning list:
+  `manualEditNeeded` is true whenever any warning fired, and `qualityScore` is
+  `max(0.5, 1 - warnings * 0.1)`. A generation that is short an expected exhibit will
+  therefore record `manualEditNeeded: true` and a quality score 0.1 lower than before.
+  That is the intended direction — a deliverable missing a visual it asked for genuinely
+  needs a human before it ships — but it does mean the metric series has a step in it at
+  this release, and a trend drawn across the boundary is not comparing like with like.
 - No canonical model, adapter, intake, or tenant data is touched.
 
 ## Client Applicability
