@@ -292,6 +292,9 @@ describe("buildMovesAvaChatPacket — no blank-prompt chat", () => {
     );
 
     expect(prompt).toContain("Terminal handoff state");
+    expect(prompt).toContain("Terminal P5 answer rule");
+    expect(prompt).toMatch(/do not ask the user to capture Tower acceptance/i);
+    expect(prompt).toMatch(/start after handoff/i);
     expect(prompt).not.toContain("Measurement owner and cadence");
     expect(prompt).not.toContain("Post-handoff caveats/follow-up candidates");
     expect(prompt).not.toContain("Evidence needs:");
