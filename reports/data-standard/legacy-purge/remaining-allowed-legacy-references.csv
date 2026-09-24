@@ -8,6 +8,7 @@ synthetic-v-folder-reference,datasets/enterprise-profile-foundation-v1/active-te
 legacy-v-dimension-token,datasets/enterprise-profile-foundation-v1/active-tenants/enterprise_profile_foundation.csv,non-loader historical reference
 legacy-v-file-name,datasets/enterprise-profile-foundation-v1/active-tenants/enterprise_profile_foundation.csv,non-loader historical reference
 v6-v7-current-state,datasets/enterprise-profile-foundation-v1/active-tenants/enterprise_profile_foundation.csv,non-loader historical reference
+synthetic-v-folder-reference,docs/architecture/t475-stale-suite-triage.json,non-loader historical reference
 v6-v7-current-state,docs/architecture/V3_DATA_ARCHITECTURE_STATUS_AND_V6V7_SUNSET_2026-07-17.md,non-loader historical reference
 synthetic-v-folder-reference,docs/build/BRAIN_CONTRACT_CODEX_RUNBOOK.md,non-loader historical reference
 synthetic-v-folder-reference,docs/build/CODEX_STREAMS_D_E_F_2026-05-26.md,non-loader historical reference

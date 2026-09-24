@@ -439,7 +439,7 @@ function importedProductSources(root, testFile) {
   return [...sources].sort();
 }
 
-function controlPaths(root) {
+export function controlPaths(root) {
   const absolute = path.join(root, CONTROL_CATALOG_RELATIVE_PATH);
   if (!existsSync(absolute)) return new Map();
   let parsed;
@@ -460,7 +460,7 @@ function controlPaths(root) {
   return byPath;
 }
 
-function governedRiskForDirectory(root, testFiles, catalogPaths) {
+export function governedRiskForDirectory(root, testFiles, catalogPaths) {
   const productSources = [
     ...new Set(testFiles.flatMap((testFile) => importedProductSources(root, testFile))),
   ].sort();
