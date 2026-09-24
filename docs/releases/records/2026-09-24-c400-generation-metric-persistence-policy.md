@@ -33,6 +33,9 @@ and a zero reads as the second.
 
 ## Layer Impact
 
+Release lane: **`global-control-lane`** — shared application behaviour for every client, not feature
+gated. The change is internal telemetry on a shared code path; it alters no client-visible output.
+
 - **Layer 4 — Products (Moves / Source deliverables).** Per-generation quality metrics stored
   alongside a generated artifact gain three fields. No product surface renders differently; nothing
   a signed-in user sees changes.
