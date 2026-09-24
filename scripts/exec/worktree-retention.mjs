@@ -26,6 +26,7 @@
  *   node scripts/exec/worktree-retention.mjs --claims ~/Downloads/EXECUTION_CLAIMS.md
  *   node scripts/exec/worktree-retention.mjs --check --free-floor-gib 10
  *   node scripts/exec/worktree-retention.mjs --emit-removals removals.sh
+ *   node scripts/exec/worktree-retention.mjs --status-timeout-ms 15000
  */
 
 import { execFileSync } from "node:child_process";
@@ -35,6 +36,20 @@ import path from "node:path";
 import { isDirectInvocation } from "./cli-entry.mjs";
 
 export const CLAIM_WINDOW_MS = 3 * 60 * 60 * 1000;
+
+/**
+ * Per-worktree bound on the `git status` probe (item T-721).
+ *
+ * Chosen against measurement, not taste. A checkout on ordinary local storage
+ * answers in about a second, and the live population classified at roughly nine
+ * worktrees a minute, so 60 s is far above any legitimate read and cannot
+ * manufacture an `unknown` out of a merely large repository. It is far below
+ * the pathological case it exists for: a checkout whose files are evicted
+ * cloud placeholders costs about a second PER FILE, which put one 4,014-file
+ * worktree at roughly 67 minutes and the four under one root at over four
+ * hours — long enough that no run ever saw a classification at all.
+ */
+export const STATUS_TIMEOUT_MS = 60_000;
 
 /** Verdicts, ordered from most to least conservative. */
 export const KEEP = "keep";
@@ -201,25 +216,64 @@ function readArg(argv, name, fallback = null) {
   return at === -1 || at === argv.length - 1 ? fallback : argv[at + 1];
 }
 
-function git(args, cwd) {
-  return execFileSync("git", args, { cwd, encoding: "utf8", maxBuffer: 64 * 1024 * 1024 });
+function git(args, cwd, options = {}) {
+  return execFileSync("git", args, { cwd, encoding: "utf8", maxBuffer: 64 * 1024 * 1024, ...options });
 }
 
-function readDirtyPaths(entries) {
+/**
+ * Did this error come from the bound rather than from git?
+ *
+ * Node reports a `spawnSync` timeout as `code === "ETIMEDOUT"`; the signal is
+ * checked as well so the answer does not depend on one runtime's spelling. Both
+ * are read, neither is assumed.
+ */
+function isTimeout(error, killSignal) {
+  return Boolean(error) && (error.code === "ETIMEDOUT" || error.signal === killSignal);
+}
+
+/**
+ * Read each worktree's uncommitted state, under a bound (item T-721).
+ *
+ * A timeout resolves to `null`, which is the SAME value an unreadable checkout
+ * already produced and which `classifyWorktree` already demotes to `unknown`.
+ * That is deliberate: the safe branch exists and is covered, so what changed
+ * here is which inputs reach it, not what it decides. An unread tree must never
+ * be `removable` — every other proof can be present and the uncommitted work is
+ * still there.
+ *
+ * The timed-out paths are returned separately because `unknown` is a safe
+ * verdict and a useless one if nobody learns which worktrees produced it:
+ * "37 worktrees could not be read" is a finding about the machine, and silence
+ * is not. Nothing here treats a slow path as special by name — the cause is a
+ * property of the storage, and a hard-coded directory list would go stale the
+ * moment a checkout moved.
+ *
+ * `SIGKILL` rather than the default `SIGTERM`: this control's contract is to
+ * return, and a child blocked in a filesystem fault is exactly the case that
+ * can decline to notice a catchable signal. Nothing is at risk in killing it —
+ * `git status --no-optional-locks` takes no lock and writes nothing.
+ */
+function readDirtyPaths(entries, timeoutMs = STATUS_TIMEOUT_MS) {
+  const killSignal = "SIGKILL";
   const dirty = new Map();
+  const timedOut = [];
   for (const entry of entries) {
     if (entry.bare) continue;
     try {
       if (!fs.existsSync(entry.path)) { dirty.set(entry.path, null); continue; }
       // `--no-optional-locks` so reading another run's checkout never takes its
       // index lock: this control must not contend with the work it is measuring.
-      const out = git(["--no-optional-locks", "status", "--porcelain"], entry.path);
+      const out = git(["--no-optional-locks", "status", "--porcelain"], entry.path, {
+        timeout: timeoutMs,
+        killSignal,
+      });
       dirty.set(entry.path, out.split("\n").filter((line) => line.trim() !== ""));
-    } catch {
+    } catch (error) {
       dirty.set(entry.path, null);
+      if (isTimeout(error, killSignal)) timedOut.push(entry.path);
     }
   }
-  return dirty;
+  return { dirty, timedOut };
 }
 
 function freeBytes(target) {
@@ -251,9 +305,11 @@ function main(argv) {
   }
 
   const claims = fs.existsSync(claimsPath) ? parseClaimLines(fs.readFileSync(claimsPath, "utf8")) : [];
+  const statusTimeoutMs = Number(readArg(argv, "--status-timeout-ms", String(STATUS_TIMEOUT_MS)));
+  const { dirty: dirtyPaths, timedOut } = readDirtyPaths(entries, statusTimeoutMs);
   const results = classifyWorktrees(entries, {
     mergedBranches: indexMergedBranches(prRows),
-    dirtyPaths: readDirtyPaths(entries),
+    dirtyPaths,
     claims,
     selfPath: process.cwd(),
     primaryPath,
@@ -261,7 +317,7 @@ function main(argv) {
     claimWindowMs: CLAIM_WINDOW_MS,
   });
 
-  const summary = summarise(results);
+  const summary = { ...summarise(results), timedOut: timedOut.length };
   const emitPath = readArg(argv, "--emit-removals", null);
   if (emitPath) {
     const body = ["#!/bin/sh", "# Generated by scripts/exec/worktree-retention.mjs. Review before running.", "set -e", ""];
@@ -273,13 +329,22 @@ function main(argv) {
   }
 
   if (argv.includes("--json")) {
-    process.stdout.write(JSON.stringify({ summary, results }, null, 2) + "\n");
+    process.stdout.write(JSON.stringify({ summary, timedOut, results }, null, 2) + "\n");
   } else {
     for (const result of results) {
       if (result.verdict === KEEP && !argv.includes("--all")) continue;
       process.stdout.write(`${result.verdict.padEnd(9)} ${result.path}\n    ${result.reasons.join("; ")}\n`);
     }
     process.stdout.write(`\n${summary.total} worktrees: ${summary.removable} removable, ${summary.unknown} unknown, ${summary.keep} keep\n`);
+    // Named, not counted. The operator cannot act on "some worktrees were
+    // unreadable", and the whole reason this bound exists is that these are
+    // the checkouts nobody could see.
+    if (timedOut.length > 0) {
+      process.stdout.write(
+        `\n${timedOut.length} worktree(s) exceeded the ${statusTimeoutMs} ms status bound and are unknown, never removable:\n`,
+      );
+      for (const timedOutPath of timedOut) process.stdout.write(`    ${timedOutPath}\n`);
+    }
   }
 
   if (argv.includes("--check")) {
