@@ -144,6 +144,7 @@ import {
   formatMovesAvaChatPacketForPrompt,
   shouldBuildMovesAvaPacketForMode,
 } from "@/lib/programs/ava-chat";
+import { resolveMovesAvaVisibleEvidenceCount } from "@/lib/programs/ava-chat/evidence-count";
 import {
   buildDeterministicMovesAvaStatusAnswer,
   buildDeterministicPhaseInputDraftAnswer,
@@ -859,8 +860,10 @@ export async function POST(request: Request) {
             ).length;
             const hardGateTotal = blockingGateScope.length;
             const hardGateOpen = hardGateTotal - hardGateMet;
-            const visibleEvidenceCount =
-              liveMove?.linkedEvidence.length ?? evidence.length;
+            const visibleEvidenceCount = resolveMovesAvaVisibleEvidenceCount({
+              liveLinkedEvidenceCount: liveMove?.linkedEvidence.length,
+              pageEvidenceCount: evidence.length,
+            });
             const terminalHandoffComplete =
               promptPhase === 5 && Boolean(liveMove?.terminalComplete);
             const evidenceNeedPackets = terminalHandoffComplete
