@@ -478,12 +478,33 @@ export function renderDeliverableDocx(doc: RenderableDeliverable): Document {
 
 // ── XLSX companion (wide tables) ──
 
+type ExcelCompanionOptions = {
+  /**
+   * Route downloads for an xlsx-prescribed artifact must produce a real workbook
+   * even when the model forgot to flag a table as xlsx. Normal companion mode
+   * stays strict so wide-data intent remains visible to authors and tests.
+   */
+  includeAllTablesWhenNoXlsxTables?: boolean;
+  /**
+   * Last-resort workbook for xlsx-prescribed artifacts with no tables at all.
+   * It preserves the structured document as auditable sheets instead of falling
+   * through to a mislabeled DOCX.
+   */
+  includeDocumentSheetsWhenNoTables?: boolean;
+};
+
 /** Build the Excel companion for every table flagged targetFormat 'xlsx'. Returns null if none. */
 export function renderDeliverableExcelCompanion(
   doc: RenderableDeliverable,
+  options: ExcelCompanionOptions = {},
 ): ExcelJS.Workbook | null {
-  const xlsxTables = doc.tables.filter((t) => t.targetFormat === "xlsx");
-  if (xlsxTables.length === 0) return null;
+  let xlsxTables = doc.tables.filter((t) => t.targetFormat === "xlsx");
+  if (xlsxTables.length === 0 && options.includeAllTablesWhenNoXlsxTables) {
+    xlsxTables = doc.tables;
+  }
+  if (xlsxTables.length === 0 && !options.includeDocumentSheetsWhenNoTables) {
+    return null;
+  }
   const wb = new ExcelJS.Workbook();
   wb.creator = "AbarVa";
   wb.created = new Date(0); // deterministic
@@ -509,7 +530,69 @@ export function renderDeliverableExcelCompanion(
       col.width = Math.min(60, max);
     });
   }
+  if (xlsxTables.length === 0 && options.includeDocumentSheetsWhenNoTables) {
+    addDocumentSummarySheets(wb, doc);
+  }
   return wb;
+}
+
+function addDocumentSummarySheets(
+  wb: ExcelJS.Workbook,
+  doc: RenderableDeliverable,
+): void {
+  const summary = wb.addWorksheet("Summary");
+  summary.addRows([
+    ["Field", "Value"],
+    ["Title", doc.title],
+    ["Client", doc.clientDisplayName],
+    ["Initiative", doc.initiativeDisplayName],
+    ["Recommendation", doc.recommendation],
+    ["Next actions", doc.nextActions.join("\n")],
+  ]);
+
+  const sections = wb.addWorksheet("Sections");
+  sections.addRow(["Section", "Content"]);
+  for (const section of doc.generatedSections) {
+    sections.addRow([section.title, section.bodyMarkdown]);
+  }
+
+  const sources = wb.addWorksheet("Source Register");
+  sources.addRow(["Citation", "Source", "Family", "Confidence"]);
+  for (const source of doc.sourceRegister) {
+    sources.addRow([
+      source.citationNumber,
+      source.label,
+      humanizeSourceFamily(source.evidenceFamily),
+      `${source.confidence}${source.asOf ? ` · ${source.asOf}` : ""}`,
+    ]);
+  }
+
+  const assumptions = wb.addWorksheet("Assumptions");
+  assumptions.addRow(["Assumption", "Basis", "Must validate"]);
+  for (const assumption of doc.assumptions) {
+    assumptions.addRow([
+      assumption.statement,
+      assumption.basis,
+      assumption.mustValidate ? "yes" : "no",
+    ]);
+  }
+
+  for (const sheet of wb.worksheets) {
+    const header = sheet.getRow(1);
+    header.font = { color: { argb: `FF${TOKENS.MUTED}` } };
+    header.eachCell((cell) => {
+      cell.border = {
+        bottom: { style: "thin", color: { argb: `FF${TOKENS.LINE}` } },
+      };
+    });
+    sheet.columns.forEach((col) => {
+      let max = 10;
+      col.eachCell?.({ includeEmpty: true }, (cell) => {
+        max = Math.max(max, String(cell.value ?? "").length + 2);
+      });
+      col.width = Math.min(80, max);
+    });
+  }
 }
 
 // ── HTML preview (AbarVa data-display tokens) ──
