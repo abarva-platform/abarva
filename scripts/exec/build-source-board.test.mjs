@@ -1184,5 +1184,219 @@ function frozenRows() {
   fs.rmSync(dir, { recursive: true, force: true });
 }
 
+
+/* ------------------------------------------------------------------------ *
+ * 35-39. THE ID COLUMN IS A HEADER NAME, NOT A LITERAL SYMBOL — item T-746.
+ *
+ *     `backlogTableItems` required `cells[0] === "#"` to recognise a table's
+ *     header. The register's item tables are not all headed that way: the
+ *     live backlog also uses `| Id | Finding | Lane | What it needs |`,
+ *     `| Id | Finding | Lane | Status |`, `| Item | What | Lane | Acceptance |`
+ *     and `| Id | What is wrong | Lane | Acceptance |`, and every row under
+ *     one of those was dropped before any census counted it. This is item
+ *     T-737's lesson one column to the left: that item taught the reader to
+ *     take the LANE from the column its header names, and the ID column was
+ *     still matched by a symbol.
+ *
+ *     Measured on `origin/main` `aa0eecff9` against the live operator
+ *     documents: an independent scan of ids in item position finds 474 and the
+ *     reader produced 444, a strict subset with zero extras, so 30 were dropped
+ *     with no report of any kind. 26 of those have a table row in one of the
+ *     shapes above; the other 4 are a heading shape, which is a separate item.
+ *     (441, quoted in an earlier draft, was the board's PLACED population —
+ *     parsed minus the 3 it could not place, and those 3 were already named.)
+ *
+ *     A dropped id is not merely missing from a report. It is absent from the
+ *     board's population, absent from the queue's pool, and absent from the
+ *     drop row T-745 added, so no bucket of `EXECUTION_QUEUE.md` can offer it
+ *     to anyone: `T-743` and `T-744` were open, unclaimed, lane-T work while
+ *     three runs in a row recorded "my lane has ZERO claimable rows".
+ *
+ *     Cases 35-37 are the shapes. Case 38 is the protection that the old
+ *     `cells[0] === "#"` test was carrying and must not lose. Case 39 is the
+ *     residual: a shape this reader STILL cannot parse has to be named rather
+ *     than silently dropped, which is the whole defect one level up.
+ * ------------------------------------------------------------------------ */
+
+/**
+ * A table in an arbitrary header shape, under its own section heading.
+ *
+ * The heading is load-bearing, not decoration. The board's header persists
+ * across interrupting prose and resets only at a heading, so a shaped table
+ * appended directly after the fixture's own `# | Item | Lane | Acceptance`
+ * table inherits THAT header: the row parses, carrying cells read against the
+ * wrong columns, and a case asserting only "the id is on the board" passes
+ * before anything is fixed. Under its own heading the header is genuinely
+ * unrecognised, which is the state this item is about.
+ *
+ * No cell may carry a pipe inside a code span either — item T-738 splits such
+ * a row at that pipe and shifts every cell right, so the fixture would be
+ * testing that defect instead of this one. The first draft of these cases did
+ * exactly that and reported a lane of "Finding` row.**".
+ */
+function addShapedRow(dir, header, cells, { map = true } = {}) {
+  fs.appendFileSync(
+    path.join(dir, "EXECUTION_BACKLOG_20260918.md"),
+    `\n## Synthetic shape section for ${cells[0]}\n\n`
+      + `| ${header.join(" | ")} |\n|${header.map(() => "---").join("|")}|\n| ${cells.join(" | ")} |\n`,
+  );
+  if (map) mapFixtureId(dir, cells[0]);
+}
+
+for (const [header, cells, lane, label] of [
+  [
+    ["Id", "Finding", "Lane", "What it needs"],
+    ["T-941", "**An Id-and-Finding row.**", "T", "Parsed as an item, in lane T."],
+    "T",
+    "`| Id | Finding | Lane | What it needs |`",
+  ],
+  [
+    ["Item", "What", "Lane", "Acceptance"],
+    ["T-942", "**An Item-and-What row.**", "U", "Parsed as an item, in lane U."],
+    "U",
+    "`| Item | What | Lane | Acceptance |`",
+  ],
+  [
+    ["Id", "What is wrong", "Lane", "Acceptance"],
+    ["T-943", "**An Id-and-What-is-wrong row.**", "C", "Parsed as an item, in lane C."],
+    "C",
+    "`| Id | What is wrong | Lane | Acceptance |`",
+  ],
+]) {
+  const dir = freshFixture();
+  addShapedRow(dir, header, cells);
+  const r = buildBoard(dir);
+  const { out } = summaryItems(dir);
+  // The assertion is on the DESTINATION: the id has to reach the board's
+  // population carrying the lane its own header column declares. "The id
+  // appears somewhere" would be satisfied by the unmapped-drop list.
+  check(
+    `a row headed ${label} reaches the board as an item, with the lane its header names`,
+    r.status === 0 && out.has(cells[0]) && resolvedLane(dir, cells[0]) === lane,
+    `exit=${r.status}; on the board=${out.has(cells[0])}; ` +
+      `lane=${JSON.stringify(resolvedLane(dir, cells[0]) ?? null)} expected ${lane}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+/* ------------------------------------------------------------------------ *
+ * 38. THE PROTECTION THE OLD GUARD WAS CARRYING.
+ *
+ *     `# | Mutation | Failing cases` is numbered 1..n and is not a backlog
+ *     table. Read as items it collided with #1-#4, four of the oldest and
+ *     most-cited ids on the board, suppressed them as ambiguous and dropped
+ *     three lifecycle stages with no work undone. Widening the ID column must
+ *     not widen the KINDS: the guard becomes a whitelist of conventions, and
+ *     this case is what tells the two apart.
+ *
+ *     Asserted through the unmapped gate rather than through the summary
+ *     alone. An id that leaks in here is not in the fixture's structure map,
+ *     so the board exits 1 and names it — a second, independent signal that
+ *     does not depend on this suite reading the summary the same way the
+ *     generator wrote it.
+ * ------------------------------------------------------------------------ */
+{
+  const dir = freshFixture();
+  fs.appendFileSync(
+    path.join(dir, "EXECUTION_BACKLOG_20260918.md"),
+    "\n| # | Mutation | Failing cases |\n|---|---|---|\n"
+      + "| 1 | `>=` to `>` in the reach bound | 2 |\n"
+      + "| 2 | drop the veto entirely | 4 |\n"
+      + "| 3 | return the first match, not the last | 1 |\n",
+  );
+  const r = run(dir, "build-source-board.mjs", ["--json"]);
+  const { out } = summaryItems(dir);
+  const leaked = ["1", "2", "3"].filter((n) => out.has(n));
+  check(
+    "a `# | Mutation | Failing cases` table is still not read as items 1, 2 and 3",
+    r.status === 0 && leaked.length === 0 && !r.stderr.includes("unmapped"),
+    `exit=${r.status}; leaked=${JSON.stringify(leaked)}\nstderr=${r.stderr.trim()}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+/* ------------------------------------------------------------------------ *
+ * 39. THE RESIDUAL. A SHAPE IT CANNOT PARSE MUST BE NAMED.
+ *
+ *     Fixing the shapes we already know about is the smaller half. The defect
+ *     that let 33 ids vanish is that an id the extractor never produces
+ *     cannot appear in ANY of the board's own reports — not in its
+ *     population, and not in the `unmapped` drop list either, because that
+ *     list is computed from the ids it did produce. `not placed on the map: 0`
+ *     was vacuously true over exactly the ids that were not missing.
+ *
+ *     So the board scans for ids in item position INDEPENDENTLY of the
+ *     extractor and reports the difference. `## Item T-981 — …` with no table
+ *     under it is such a shape today: it is item T-740's half of this defect,
+ *     deliberately not fixed here, and this case pins that it is at least
+ *     VISIBLE. When someone parses that shape, this case fails loudly and its
+ *     replacement is a fixture in whatever shape is then unreadable.
+ * ------------------------------------------------------------------------ */
+{
+  const dir = freshFixture();
+  fs.appendFileSync(
+    path.join(dir, "EXECUTION_BACKLOG_20260918.md"),
+    "\n## Item T-981 — filed by a heading with no table under it\n\n"
+      + "| Lane | Priority | Status | PR |\n|---|---|---|---|\n| T | P1 | open | none |\n",
+  );
+  const r = run(dir, "build-source-board.mjs", ["--json"]);
+  const { summary, out } = summaryItems(dir);
+  const residual = summary.unparsedItemIds;
+  check(
+    "an id in item position that no shape parses is NAMED as a residual, not silently dropped",
+    Array.isArray(residual) && residual.map(String).includes("T-981") && !out.has("T-981"),
+    `residual=${JSON.stringify(residual ?? null)}; parsed as an item=${out.has("T-981")}\n` +
+      `exit=${r.status}`,
+  );
+  check(
+    "and the board says so on its own stdout, where the operator reads it",
+    /in item position/i.test(r.stdout) && r.stdout.includes("T-981"),
+    `stdout tail=${r.stdout.split("\n").slice(-12).join("\n")}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+/* ------------------------------------------------------------------------ *
+ * 40. THE TWO POPULATIONS AGREE — the assertion T-746 asks for by name.
+ *
+ *     "Prove it by scanning the backlog independently of the extractor and
+ *     asserting the two populations agree, not by adding fixtures in the
+ *     shapes you already thought of." A fixture carrying one row of every
+ *     shape the live backlog uses, plus one shape nothing parses, and the
+ *     claim is arithmetic rather than a list: EVERY id discovered in item
+ *     position is either on the board or named in the residual. Nothing may
+ *     fall between the two.
+ *
+ *     The non-item tables are in the same fixture on purpose. If the census
+ *     counted them, the residual would name ids that are not items and this
+ *     case would pass while the generator was wrong in the other direction.
+ * ------------------------------------------------------------------------ */
+{
+  const dir = freshFixture();
+  addShapedRow(dir, ["Id", "Finding", "Lane", "Status"], ["T-951", "**Shape A.**", "T", "open"]);
+  addShapedRow(dir, ["Item", "What", "Lane", "Outcome"], ["T-952", "**Shape B.**", "T", "open"]);
+  addShapedRow(dir, ["#", "Verdict", "Proof"], ["T-953", "closed", "PR #1 merged"]);
+  fs.appendFileSync(
+    path.join(dir, "EXECUTION_BACKLOG_20260918.md"),
+    "\n| # | Mutation | Failing cases |\n|---|---|---|\n| 1 | a mutation, not an item | 2 |\n"
+      + "\n| id | stamp picks | append order picks |\n|---|---|---|\n| T-951 | a report row | a report row |\n"
+      + "\n## Item T-982 — a heading shape nothing parses\n\nProse only.\n",
+  );
+  const r = run(dir, "build-source-board.mjs", ["--json"]);
+  const { summary, out } = summaryItems(dir);
+  const discovered = (summary.itemPositionIds ?? []).map(String);
+  const residual = (summary.unparsedItemIds ?? []).map(String);
+  const unaccounted = discovered.filter((id) => !out.has(id) && !residual.includes(id));
+  check(
+    "every id discovered in item position is either on the board or named in the residual",
+    discovered.length > 0 && unaccounted.length === 0
+      && ["T-951", "T-952", "T-953"].every((id) => discovered.includes(id) && out.has(id))
+      && residual.includes("T-982") && !discovered.includes("1"),
+    `exit=${r.status}\ndiscovered=${JSON.stringify(discovered)}\n` +
+      `residual=${JSON.stringify(residual)}\nunaccounted=${JSON.stringify(unaccounted)}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
 console.log(`\n${passes} passed, ${failures} failed`);
 process.exit(failures ? 1 : 0);

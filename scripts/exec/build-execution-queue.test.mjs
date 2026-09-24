@@ -3007,10 +3007,32 @@ function boardTruth(dir) {
   return { unmapped: s.unmapped ?? [], pool };
 }
 
-/** The population the rendered funnel claims to have started from. */
+/**
+ * The population the rendered funnel claims to have started from.
+ *
+ * Two sentence forms, because item T-746 added a stage ABOVE this one: the
+ * census now opens at the ids in item position in the backlog, of which the
+ * ones the board parsed are a subset. Both forms are matched here rather than
+ * only the newer one, so a regression to the older sentence is a FAILURE of
+ * the arithmetic assertions below rather than a -1 that every one of them
+ * fails identically and uninformatively.
+ */
 function funnelOpeningTotal(rendered) {
-  const n = rendered.match(/^(\d+) items enter the filter/m)?.[1];
+  const n = rendered.match(/^(\d+) (?:items enter the filter|ids sit in item position)/m)?.[1];
   return n === undefined ? -1 : Number(n);
+}
+
+/** What the board recorded about ids it could not PARSE — item T-746. */
+function boardUnparsed(dir) {
+  const s = JSON.parse(fs.readFileSync(path.join(dir, "source-board-summary.json"), "utf8"));
+  return s.unparsedItemIds ?? [];
+}
+
+const UNPARSED_ROW = /cannot parse/i;
+
+/** The funnel row carrying a given label, located by LABEL and never by index. */
+function funnelRow(rendered, label) {
+  return funnelRows(rendered).find((r) => label.test(r.label));
 }
 
 /*
@@ -3045,17 +3067,27 @@ const UNPLACED_ROW = /could not place/i;
       `board dropped ${JSON.stringify(truth.unmapped)}\n` +
       `named in the queue: ${truth.unmapped.filter((id) => rendered.includes(id)).join(" ") || "none"}`,
   );
+  /*
+   * Updated for item T-746, not weakened: the unparsed row now sits ABOVE this
+   * one, because an id the board never parsed cannot then be placed or not
+   * placed. The expected numbers are unchanged — this drop still removes
+   * exactly `unmapped` and still closes onto the pool — and the row is located
+   * BY LABEL, which is what this block's own comment demanded while the
+   * assertion read `rows[0]`. That index is why the update was needed at all.
+   */
+  const unparsed = boardUnparsed(dir);
+  const unplacedRow = funnelRow(rendered, UNPLACED_ROW);
   check(
     "the funnel OPENS at the full population the board saw, not at the pool it handed on",
-    opening === truth.pool + truth.unmapped.length && truth.unmapped.length > 0,
+    opening === truth.pool + truth.unmapped.length + unparsed.length
+      && truth.unmapped.length > 0,
     `rendered opening=${opening}; board pool=${truth.pool} + dropped=${truth.unmapped.length}` +
-      ` = ${truth.pool + truth.unmapped.length}`,
+      ` + unparsed=${unparsed.length} = ${truth.pool + truth.unmapped.length + unparsed.length}`,
   );
   check(
-    "and its FIRST removal row is that drop, BY LABEL, so the arithmetic closes onto the pool",
-    UNPLACED_ROW.test(rows[0]?.label ?? "") && rows[0]?.removed === truth.unmapped.length
-      && rows[0]?.remaining === truth.pool,
-    `first row=${JSON.stringify(rows[0])}; expected removed=${truth.unmapped.length}` +
+    "and the drop row, BY LABEL, removes exactly those ids and closes onto the pool",
+    unplacedRow?.removed === truth.unmapped.length && unplacedRow?.remaining === truth.pool,
+    `drop row=${JSON.stringify(unplacedRow)}; expected removed=${truth.unmapped.length}` +
       ` remaining=${truth.pool}\nall rows=${JSON.stringify(rows)}`,
   );
   fs.rmSync(dir, { recursive: true, force: true });
@@ -3069,15 +3101,21 @@ const UNPLACED_ROW = /could not place/i;
   const { board, queue } = buildQueueOverUnplaceableIds(dir);
   const rendered = fs.readFileSync(path.join(dir, "EXECUTION_QUEUE.md"), "utf8");
   const truth = boardTruth(dir);
-  const rows = funnelRows(rendered);
+  const zeroRow = funnelRow(rendered, UNPLACED_ROW);
+  const zeroUnparsedRow = funnelRow(rendered, UNPARSED_ROW);
   check(
     "a corpus the board placed in full still renders the row, by label, at zero",
     board.status === 0 && queue.status === 0 && truth.unmapped.length === 0
-      && UNPLACED_ROW.test(rows[0]?.label ?? "")
-      && rows[0]?.removed === 0 && rows[0]?.remaining === truth.pool
+      && zeroRow?.removed === 0 && zeroRow?.remaining === truth.pool
       && funnelOpeningTotal(rendered) === truth.pool,
     `board exit=${board.status}; board dropped ${truth.unmapped.length}; ` +
-      `first row=${JSON.stringify(rows[0])}`,
+      `drop row=${JSON.stringify(zeroRow)}`,
+  );
+  check(
+    "and so does the unparsed row — item T-746, a row that appears only when non-zero is a branch only the failure exercises",
+    zeroUnparsedRow?.removed === 0 && zeroUnparsedRow?.remaining === truth.pool
+      && boardUnparsed(dir).length === 0,
+    `unparsed row=${JSON.stringify(zeroUnparsedRow)}; board unparsed=${JSON.stringify(boardUnparsed(dir))}`,
   );
   fs.rmSync(dir, { recursive: true, force: true });
 }
@@ -3114,6 +3152,89 @@ const UNPLACED_ROW = /could not place/i;
       `row saying both: ${/^\|.*could not place.*not recorded.*\|$/im.test(rendered)}\n` +
       `numeric unplaced row present: ${rows.some((r) => UNPLACED_ROW.test(r.label))}\n` +
       `all rows=${JSON.stringify(rows)}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+/* ------------------------------------------------------------------------ *
+ * THE STAGE ABOVE THE DROP — item T-746.                                    *
+ *                                                                           *
+ * `unmapped` is computed from the ids the board's reader produced, so an id  *
+ * in a shape that reader cannot parse is missing from the pool, from the     *
+ * drop row, and from the board's own `not placed on the map: 0`. Measured on *
+ * the live corpus at `aa0eecff9`: 474 ids in item position, 444 parsed, and  *
+ * not one of the 30 missing named anywhere in this file — while `T-743` and  *
+ * `T-744` sat open and unclaimed and three runs in a row read this file and  *
+ * recorded that their lane had nothing.                                      *
+ *                                                                           *
+ * The truth measured against is the BOARD's summary, a different program's   *
+ * output, never the queue's opinion of its own pool.                         *
+ * ------------------------------------------------------------------------ */
+
+{
+  const dir = freshFixture();
+  // A heading-only item. The board discovers the id in item position and
+  // cannot parse it, which is exactly the residual state.
+  fs.appendFileSync(
+    path.join(dir, "EXECUTION_BACKLOG_20260918.md"),
+    "\n## Item T-903 — a heading shape the board's reader does not parse\n\nProse only.\n",
+  );
+  const { board, queue } = buildQueueOverUnplaceableIds(dir);
+  const rendered = fs.readFileSync(path.join(dir, "EXECUTION_QUEUE.md"), "utf8");
+  const unparsed = boardUnparsed(dir).map(String);
+  const truth = boardTruth(dir);
+  const row = funnelRow(rendered, UNPARSED_ROW);
+  check(
+    "the queue NAMES the ids the board could not parse at all",
+    queue.status === 0 && unparsed.includes("T-903")
+      && unparsed.every((id) => rendered.includes(id)),
+    `board exit=${board.status}; queue exit=${queue.status}\n` +
+      `board could not parse ${JSON.stringify(unparsed)}\n` +
+      `named in the queue: ${unparsed.filter((id) => rendered.includes(id)).join(" ") || "none"}`,
+  );
+  check(
+    "and the funnel OPENS above them, so its arithmetic closes onto the parsed pool",
+    funnelOpeningTotal(rendered) === truth.pool + truth.unmapped.length + unparsed.length
+      && row?.removed === unparsed.length
+      && row?.remaining === truth.pool + truth.unmapped.length,
+    `opening=${funnelOpeningTotal(rendered)}; pool=${truth.pool}; ` +
+      `unmapped=${truth.unmapped.length}; unparsed=${unparsed.length}\n` +
+      `row=${JSON.stringify(row)}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+{
+  /*
+   * A MISSING FIELD IS NOT A ZERO, for the newer field too.
+   *
+   * `unparsedItemIds` is written by `build-source-board.mjs`. If that
+   * generator stops emitting it, rendering "0 unparsed" would be a false
+   * clean of the exact kind this item exists to remove: a completeness claim
+   * over a population nobody measured.
+   */
+  const dir = freshFixture();
+  const board = run(dir, "build-source-board.mjs", ["--json"]);
+  if (board.status !== 0) throw new Error(`fixture board build failed:\n${board.stderr}`);
+  const summaryFile = path.join(dir, "source-board-summary.json");
+  const summary = JSON.parse(fs.readFileSync(summaryFile, "utf8"));
+  delete summary.unparsedItemIds;
+  fs.writeFileSync(summaryFile, `${JSON.stringify(summary, null, 2)}\n`);
+  const queue = run(dir, "build-execution-queue.mjs");
+  const rendered = fs.readFileSync(path.join(dir, "EXECUTION_QUEUE.md"), "utf8");
+  check(
+    "a summary carrying no `unparsedItemIds` field renders as NOT RECORDED, never as zero",
+    queue.status === 0
+      && /^\|.*cannot parse.*not recorded.*\|$/im.test(rendered)
+      && !funnelRows(rendered).some((r) => UNPARSED_ROW.test(r.label))
+      // The opening sentence must stop claiming a known population too. A row
+      // reading "not recorded" above a total that still counts as complete is
+      // the same false clean one line up.
+      && /population above that number is \*\*not recorded\*\*/.test(rendered),
+    `queue exit=${queue.status}\n` +
+      `row saying both: ${/^\|.*cannot parse.*not recorded.*\|$/im.test(rendered)}\n` +
+      `numeric unparsed row present: ${funnelRows(rendered).some((r) => UNPARSED_ROW.test(r.label))}\n` +
+      `opening hedged: ${/population above that number is \*\*not recorded\*\*/.test(rendered)}`,
   );
   fs.rmSync(dir, { recursive: true, force: true });
 }
