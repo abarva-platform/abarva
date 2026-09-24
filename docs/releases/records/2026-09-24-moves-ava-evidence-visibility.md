@@ -10,7 +10,7 @@
 
 ## Plain-English Summary
 
-Moves aVa now counts evidence already loaded for the active workspace when building its deterministic guidance packet. An empty linked-evidence relation no longer causes aVa to tell the user that zero evidence is visible when the page context already loaded attached evidence.
+Moves aVa now counts evidence already loaded for the active workspace when building its deterministic guidance packet. An empty linked-evidence relation no longer causes aVa to tell the user that zero evidence is visible when the page context or current Move context extract already loaded attached evidence.
 
 ## Layer Impact
 
@@ -28,13 +28,15 @@ Moves aVa now counts evidence already loaded for the active workspace when build
 ## Changes Included
 
 - `src/app/api/chat/agent/route.ts`
+- `src/app/api/chat/agent/__tests__/moves-ava-scoped-context-gate.test.ts`
+- `src/app/(maestro)/strategic-moves/[moveId]/phase/[phaseNum]/page.tsx`
 - `src/lib/programs/ava-chat/evidence-count.ts`
 - `src/lib/programs/ava-chat/__tests__/evidence-count.test.ts`
 
 ## QA / Validation
 
-- `npm run test -- --runTestsByPath src/lib/programs/ava-chat/__tests__/evidence-count.test.ts src/lib/programs/ava-chat/__tests__/packet.test.ts --runInBand` — passed.
-- `npx eslint src/app/api/chat/agent/route.ts src/lib/programs/ava-chat/evidence-count.ts src/lib/programs/ava-chat/__tests__/evidence-count.test.ts` — passed.
+- `npm run test -- --runTestsByPath src/lib/programs/ava-chat/__tests__/evidence-count.test.ts src/lib/programs/ava-chat/__tests__/packet.test.ts src/app/api/chat/agent/__tests__/moves-ava-scoped-context-gate.test.ts --runInBand` — passed.
+- `npx eslint src/app/api/chat/agent/route.ts 'src/app/(maestro)/strategic-moves/[moveId]/phase/[phaseNum]/page.tsx' src/lib/programs/ava-chat/evidence-count.ts src/lib/programs/ava-chat/__tests__/evidence-count.test.ts src/app/api/chat/agent/__tests__/moves-ava-scoped-context-gate.test.ts` — passed.
 - `npm run typecheck` — passed.
 - `git diff --check` — passed.
 
@@ -60,7 +62,8 @@ Revert the PR and redeploy through the repo-owned ACA main deploy workflow.
 
 - PR URL: To be filled after PR creation.
 - Local smoke evidence: `reports/moves-e2e-operating-smoke/20260923T222629Z/raw/post8384-live-p5-ava-guidance-checks.json`
+- Follow-up smoke evidence: `reports/moves-e2e-operating-smoke/20260923T222629Z/raw/post8386-live-p5-ava-guidance-checks.json`
 
 ## Known Gaps
 
-This does not change evidence storage or gate decisions; it only fixes the aVa packet count used for chat guidance.
+This does not change evidence storage or gate decisions; it only fixes the aVa packet count used for chat guidance. The current page route now forwards the Move context extract attached-evidence count into chat surface context so guidance no longer depends only on legacy linked evidence or request evidence arrays.

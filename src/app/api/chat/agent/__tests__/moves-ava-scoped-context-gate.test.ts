@@ -49,6 +49,20 @@ describe("agent route · Moves aVa scoped-context gate", () => {
     expect(derivation).toContain("crossProgramSignalsBlock");
   });
 
+  it("counts visible Move context-extract evidence from surfaceContext before building the packet", () => {
+    const resolverBlock = source.slice(
+      source.indexOf("const surfaceContextEvidenceCount ="),
+      source.indexOf("const visibleEvidenceCount =") + 420,
+    );
+
+    expect(resolverBlock).toContain(
+      "surfaceContext.moveContextExtractEvidenceCount",
+    );
+    expect(resolverBlock).toContain("surfaceContext.moveEvidenceCount");
+    expect(resolverBlock).toContain("surfaceContextEvidenceCount");
+    expect(resolverBlock).toContain("resolveMovesAvaVisibleEvidenceCount");
+  });
+
   it("suppresses the generic tenant system block when Moves scoped grounding is present", () => {
     const derivation = source.slice(
       source.indexOf("const tenantSystemBlockForPrompt ="),
