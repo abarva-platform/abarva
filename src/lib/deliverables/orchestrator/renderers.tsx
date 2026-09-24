@@ -1546,15 +1546,12 @@ export function renderDeliverablePdf(
 
 // ── PPTX (pptxgenjs) ──
 //
-// MOVES-QUALITY-003 / Track D (artifact-digestion audit). Structural model
-// mirrors the proven storyline-deck PPTX renderer
-// (`@/lib/visual-system/storyline-deck.ts` → `renderStorylineDeckPptx`):
-// LAYOUT_16x9, one governing point per slide, evidence/detail kept off the
-// slide face. Exhibits are rasterised with the exact same pipeline as DOCX
-// and PDF (`resolveSvgTokens` → `withXmlns` → `rasteriseSvg`) so a diagram
-// looks identical across every export format — unlike the storyline deck,
-// which only had a placeholder box because its exhibit renderer didn't
-// exist yet at the time it was written.
+// MOVES-QUALITY-003 / Track D (artifact-digestion audit). This is the live
+// editable PPTX renderer for generated deliverables: LAYOUT_16x9, one governing
+// point per slide, evidence/detail kept off the slide face. Exhibits are
+// rasterised with the exact same pipeline as DOCX and PDF (`resolveSvgTokens`
+// → `withXmlns` → `rasteriseSvg`) so a diagram looks identical across every
+// export format.
 
 const PPTX_COLOR = {
   ink: "1B1A17",

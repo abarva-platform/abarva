@@ -37,6 +37,8 @@ or unsupported exhibit data is reported as a gap instead of being replaced by a 
   inside the matching exhibit block.
 - Adds optional authored `deckSlides` to the renderable artifact contract and makes PPTX output use
   authored slide messages, points, notes, and linked exhibit payloads when present.
+- Removes an unused storyline PPTX renderer that could only draw placeholder exhibit boxes; the
+  live generated-deliverable PPTX path remains the orchestrator renderer.
 - Compresses the target-architecture, solution-design, and operating-model prose structures so
   visuals, work-split, decision-rights, component, data, control, and operability detail are carried
   by focused exhibits/tables instead of forced generated essays.
@@ -54,7 +56,8 @@ or unsupported exhibit data is reported as a gap instead of being replaced by a 
 - `NODE_OPTIONS=--max-old-space-size=8192 ./node_modules/.bin/tsc --noEmit -p tsconfig.json --pretty false` — passed.
 - `./node_modules/.bin/jest --runTestsByPath src/lib/deliverables/orchestrator/__tests__/brief-library.test.ts src/lib/deliverables/__tests__/adaptive-depth.test.ts --runInBand` — passed, 37/37 tests.
 - `./node_modules/.bin/jest --runTestsByPath src/lib/deliverables/__tests__/legacy-generate-policy.test.ts --runInBand` — passed, 2/2 tests.
-- `./node_modules/.bin/jest --runTestsByPath src/lib/deliverables/orchestrator/__tests__/persistence-deck.test.ts src/lib/deliverables/orchestrator/__tests__/renderers.test.ts src/lib/deliverables/orchestrator/__tests__/section-generation.test.ts src/lib/deliverables/orchestrator/__tests__/brief-library.test.ts src/lib/deliverables/__tests__/adaptive-depth.test.ts src/lib/deliverables/__tests__/legacy-generate-policy.test.ts src/lib/visual-system/__tests__/storyline-deck.test.ts src/lib/deliverables/quality/__tests__/story-visual-gate.test.ts --runInBand` — passed, 123/123 tests.
+- `./node_modules/.bin/jest --runTestsByPath src/lib/deliverables/orchestrator/__tests__/persistence-deck.test.ts src/lib/deliverables/orchestrator/__tests__/renderers.test.ts src/lib/deliverables/orchestrator/__tests__/section-generation.test.ts src/lib/deliverables/orchestrator/__tests__/brief-library.test.ts src/lib/deliverables/__tests__/adaptive-depth.test.ts src/lib/deliverables/__tests__/legacy-generate-policy.test.ts src/lib/visual-system/__tests__/storyline-deck.test.ts src/lib/deliverables/quality/__tests__/story-visual-gate.test.ts --runInBand` — passed, 122/122 tests.
+- `./node_modules/.bin/jest --runTestsByPath src/lib/visual-system/__tests__/storyline-deck.test.ts src/lib/deliverables/orchestrator/__tests__/renderers.test.ts --runInBand` — passed, 46/46 tests after removing the unused placeholder PPTX renderer.
 - `npm run moves:measure-golden-bar-signals -- --input /tmp/moves-golden-bar-sample.json --out /tmp/moves-golden-bar-report.json --since-days 90` — passed on a local two-record sample; detected duplicate headings and unsupported quantified claims only on the in-window artifact.
 - Generated artifact proof under `/tmp/moves-deliverable-quality-proof`: structured exhibit generated HTML/DOCX/PPTX with rendered visual content; missing-data exhibit did not appear in generated HTML/DOCX/PPTX and no rasterisation-failure notice was shipped.
 - Authored-slide artifact proof under `/tmp/moves-deliverable-quality-proof/authored-slide-proof-summary.json`: generated PPTX contained the authored governing message, authored support point, linked exhibit title, speaker notes, and suppressed section-derived slides.
