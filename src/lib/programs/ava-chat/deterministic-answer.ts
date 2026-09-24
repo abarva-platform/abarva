@@ -14,6 +14,9 @@ export function buildDeterministicMovesAvaStatusAnswer(
   if (!DETERMINISTIC_STATUS_MODES.has(mode)) return null;
   const checklist = packet.checklistStatus;
   if (!checklist) return null;
+  if (packet.terminalHandoffComplete && packet.currentPhase === 5) {
+    return buildTerminalP5ExecutionGuidance(packet, checklist);
+  }
 
   const lines = [
     `From the live Move record for ${packet.moveTitle}: ${checklist.evidenceLabel}; ${checklist.gateLabel}; can advance: ${checklist.canAdvance ? "yes" : "no"}.`,
@@ -35,6 +38,52 @@ export function buildDeterministicMovesAvaStatusAnswer(
     "",
     "I am not using the generic phase-pack gate checklist as the live count. The live Move page is the source of truth for current evidence, gate, and advance status.",
   );
+
+  return lines.join("\n");
+}
+
+function buildTerminalP5ExecutionGuidance(
+  packet: MovesAvaChatPacket,
+  checklist: NonNullable<MovesAvaChatPacket["checklistStatus"]>,
+): string {
+  const metHardGates = packet.gateCriteria.filter(
+    (criterion) => criterion.severity === "hard" && criterion.met,
+  );
+  const openHardGates = packet.gateCriteria.filter(
+    (criterion) => criterion.severity === "hard" && !criterion.met,
+  );
+  const metGateSummary =
+    metHardGates.length > 0
+      ? metHardGates
+          .slice(0, 4)
+          .map((criterion) => criterion.label)
+          .join("; ")
+      : "terminal P5 handoff criteria in the live Move record";
+  const openGateSummary =
+    openHardGates.length > 0
+      ? openHardGates.map((criterion) => criterion.label).join("; ")
+      : "none";
+
+  const lines = [
+    `From the live Move record for ${packet.moveTitle}: ${checklist.evidenceLabel}; ${checklist.gateLabel}; can advance: ${checklist.canAdvance ? "yes" : "no"}.`,
+    "",
+    "Execution readiness answer:",
+    `- Ready now: P5 is handed off to Tower. The completed hard-gate basis is ${metGateSummary}.`,
+    `- Remaining blockers before Tower starts: ${openGateSummary}.`,
+    "- Evidence posture: do not reopen P5 for new collection. Confirm the attached evidence pack is accessible to the Tower owner, then track any caveats as Tower follow-up items.",
+    "",
+    "Sessions to run next:",
+    "- Tower kickoff: sponsor, delivery lead, Tower owner, and workstream owners confirm cadence, escalation path, first reporting date, and decision rights.",
+    "- Metric baseline lock: finance/value owner, operating owner, and data owner confirm baseline, target, cadence, and source for each Tower metric.",
+    "- Caveat burn-down: accountable owners review any residual risks, missing confirmations, or assumptions and assign dated follow-up actions outside the P5 gate.",
+    "",
+    "Metrics to carry into Tower:",
+    "- Value realization: benefit baseline, target, and actuals cadence tied to the approved business case.",
+    "- Adoption and operating health: workflow uptake, cycle time, exception volume, and owner sign-off cadence.",
+    "- Delivery control: open caveats, overdue actions, dependency risk, and metric-source freshness.",
+    "",
+    "Next concrete action: schedule the Tower kickoff and metric baseline lock sessions, using the attached Move evidence pack as the source package. The live Move page remains the source of truth for current evidence, gate, and handoff status.",
+  ];
 
   return lines.join("\n");
 }
