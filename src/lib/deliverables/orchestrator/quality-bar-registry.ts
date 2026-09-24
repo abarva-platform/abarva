@@ -91,11 +91,12 @@ const OVERRIDES: Record<string, QualityBarOverride> = {
   "moves::business_case": {
     // Substantial narrative artifact — must tell one coherent investment
     // argument, not a stack of disconnected sections. The financial model is a
-    // separate workbook, so the narrative case must stay within its hard band.
+    // separate workbook, so the narrative case must stay within its hard band
+    // and may not be forced back to the old 9-10 heading binder.
     // Word band reconciled 2026-07-25 with golden-bar's DEPTH_BY_ARTIFACT
     // (they previously contradicted: golden-bar's ceiling equalled this
     // pipeline's floor) — see P3_P4_WORD_BAND_CONTRACTS in artifact-contracts.ts.
-    minSections: 9,
+    minSections: 6,
     ...wordBandFrom("business_case"),
     requiresCentralTension: true,
     requiresOptionsConsidered: true,
@@ -108,32 +109,32 @@ const OVERRIDES: Record<string, QualityBarOverride> = {
     // Word band reconciled 2026-07-25 — golden-bar's ceiling (6,000) previously
     // sat below this pipeline's own floor (9,000); both now read the same
     // numbers from P3_P4_WORD_BAND_CONTRACTS in artifact-contracts.ts.
-    minSections: 10,
+    minSections: 7,
     ...wordBandFrom("target_state_architecture"),
     requiresCentralTension: true,
     requiresOptionsConsidered: true,
     requiresEvidenceGapsNoted: true,
   },
   "moves::solution_design": {
-    // 8-12 visual, decision-led pages. This is a specification of the accepted
+    // 5-10 visual, decision-led pages. This is a specification of the accepted
     // architecture, not a second architecture report or implementation manual.
-    minSections: 8,
+    minSections: 6,
     ...wordBandFrom("solution_design"),
     requiresCentralTension: true,
     requiresEvidenceGapsNoted: true,
   },
   "moves::operating_model_design": {
-    // 6-10 table/diagram-rich pages. Reader energy belongs on work split,
+    // 5-8 table/diagram-rich pages. Reader energy belongs on work split,
     // accountability, controls, cadence, and adoption decisions.
-    minSections: 8,
+    minSections: 6,
     ...wordBandFrom("operating_model_design"),
     requiresCentralTension: true,
     requiresEvidenceGapsNoted: true,
   },
   "moves::sourcing_strategy": {
-    // 5-8 page options paper. It chooses a sourcing posture; it does not become
+    // 4-7 page options paper. It chooses a sourcing posture; it does not become
     // an RFP, vendor landscape, contract, or restatement of the full design.
-    minSections: 7,
+    minSections: 5,
     ...wordBandFrom("sourcing_strategy"),
     requiresOptionsConsidered: true,
     requiresEvidenceGapsNoted: true,
@@ -159,7 +160,7 @@ const OVERRIDES: Record<string, QualityBarOverride> = {
     // Canonical orchestrator key used by the P3 `operating_model_design`
     // registry artifact. It must resolve to the same concise control as the
     // registry-facing alias above.
-    minSections: 8,
+    minSections: 6,
     ...wordBandFrom("operating_model_design"),
     requiresCentralTension: true,
     requiresEvidenceGapsNoted: true,

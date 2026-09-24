@@ -39,9 +39,12 @@ or unsupported exhibit data is reported as a gap instead of being replaced by a 
   authored slide messages, points, notes, and linked exhibit payloads when present.
 - Removes an unused storyline PPTX renderer that could only draw placeholder exhibit boxes; the
   live generated-deliverable PPTX path remains the orchestrator renderer.
-- Compresses the target-architecture, solution-design, operating-model, and sourcing-strategy prose
-  structures so visuals, work-split, decision-rights, component, data, control, operability, and
-  sourcing-option detail are carried by focused exhibits/tables instead of forced generated essays.
+- Compresses the target-architecture, business-case, solution-design, operating-model, and
+  sourcing-strategy prose structures so visuals, work-split, decision-rights, component, data,
+  control, operability, sourcing-option detail, and business-case economics are carried by focused
+  exhibits/tables instead of forced generated essays.
+- Aligns the quality-bar section floors to those compressed structures so the export gate no longer
+  demands the old binder-style section counts after the prompt contract has been simplified.
 - Adds focused negative tests for label-only and out-of-scope exhibit markers.
 - Adds a report-only golden-bar signal measurement runner over caller-provided artifact exports.
 - Adds a report-only golden-exemplar coverage auditor so judge readiness is based on approved
@@ -58,7 +61,10 @@ or unsupported exhibit data is reported as a gap instead of being replaced by a 
 - `NODE_OPTIONS=--max-old-space-size=8192 ./node_modules/.bin/tsc --noEmit -p tsconfig.json --pretty false` — passed.
 - `./node_modules/.bin/jest --runTestsByPath src/lib/deliverables/orchestrator/__tests__/brief-library.test.ts src/lib/deliverables/__tests__/adaptive-depth.test.ts --runInBand` — passed, 37/37 tests.
 - `./node_modules/.bin/jest --runTestsByPath src/lib/deliverables/__tests__/legacy-generate-policy.test.ts --runInBand` — passed, 2/2 tests.
-- `./node_modules/.bin/jest --runTestsByPath src/lib/deliverables/orchestrator/__tests__/persistence-deck.test.ts src/lib/deliverables/orchestrator/__tests__/renderers.test.ts src/lib/deliverables/orchestrator/__tests__/section-generation.test.ts src/lib/deliverables/orchestrator/__tests__/brief-library.test.ts src/lib/deliverables/__tests__/adaptive-depth.test.ts src/lib/deliverables/__tests__/legacy-generate-policy.test.ts src/lib/visual-system/__tests__/storyline-deck.test.ts src/lib/deliverables/quality/__tests__/story-visual-gate.test.ts scripts/moves/__tests__/audit-golden-exemplars.test.ts --runInBand` — passed, 124/124 tests.
+- `./node_modules/.bin/jest --runTestsByPath src/lib/deliverables/orchestrator/__tests__/persistence-deck.test.ts src/lib/deliverables/orchestrator/__tests__/renderers.test.ts src/lib/deliverables/orchestrator/__tests__/section-generation.test.ts src/lib/deliverables/orchestrator/__tests__/brief-library.test.ts src/lib/deliverables/orchestrator/__tests__/quality-bar-registry.test.ts src/lib/deliverables/orchestrator/__tests__/prompt-story-spine.test.ts src/lib/deliverables/__tests__/adaptive-depth.test.ts src/lib/deliverables/__tests__/legacy-generate-policy.test.ts src/lib/visual-system/__tests__/storyline-deck.test.ts src/lib/deliverables/quality/__tests__/story-visual-gate.test.ts scripts/moves/__tests__/audit-golden-exemplars.test.ts --runInBand` — passed, 154/154 tests.
+- `./node_modules/.bin/jest --runTestsByPath src/lib/deliverables/orchestrator/__tests__/brief-library.test.ts src/lib/deliverables/orchestrator/__tests__/quality-bar-registry.test.ts src/lib/deliverables/orchestrator/__tests__/prompt-story-spine.test.ts --runInBand` — passed, 55/55 tests after the Business Case section compression and quality-bar floor alignment.
+- `./node_modules/.bin/eslint src/lib/deliverables/orchestrator/briefs/deliverable-structures.ts src/lib/deliverables/orchestrator/quality-bar-registry.ts src/lib/deliverables/orchestrator/__tests__/brief-library.test.ts src/lib/deliverables/orchestrator/__tests__/quality-bar-registry.test.ts` — passed.
+- `npm run release:check` — passed; release-relevant files map to this release record.
 - `./node_modules/.bin/jest --runTestsByPath src/lib/visual-system/__tests__/storyline-deck.test.ts src/lib/deliverables/orchestrator/__tests__/renderers.test.ts --runInBand` — passed, 46/46 tests after removing the unused placeholder PPTX renderer.
 - `./node_modules/.bin/jest --runTestsByPath scripts/moves/__tests__/audit-golden-exemplars.test.ts --runInBand` — passed, 2/2 tests.
 - `npm run moves:audit-golden-exemplars -- --out /tmp/moves-golden-exemplar-coverage.json` — passed in report-only mode; current coverage is 0/19 complete, 19 missing, and 2 unmapped HTML files.
@@ -97,6 +103,6 @@ database, tenant data, migration, or runtime configuration rollback is required.
 
 ## Known Gaps
 
-This candidate applies section elasticity to Target Architecture, Solution Design, Operating Model,
-and Sourcing Strategy only. It does not implement section elasticity across all remaining
+This candidate applies section elasticity to Target Architecture, Business Case, Solution Design,
+Operating Model, and Sourcing Strategy only. It does not implement section elasticity across all remaining
 structures, legacy route retirement, golden-bar enforcement, or model-judge calibration.

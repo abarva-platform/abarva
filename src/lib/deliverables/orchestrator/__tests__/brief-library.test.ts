@@ -299,6 +299,54 @@ describe("deliverable structures", () => {
     expect(structure.requiredSectionKeys).not.toContain("delivery_risks");
   });
 
+  it("keeps business-case structure concise and avoids duplicated decision sections", () => {
+    const structure = getDeliverableStructure("moves", "business_case")!;
+    const brief = getArtifactBrief(
+      req({
+        module: "moves",
+        deliverableType: "business_case",
+        useCaseArchetype: "AI_PDLC",
+      }),
+    );
+
+    expect(structure.sections.map((section) => section.key)).toEqual([
+      "exec_summary",
+      "decision_required",
+      "current_state",
+      "options",
+      "value_hypothesis",
+      "risks",
+    ]);
+    expect(structure.sections.map((section) => section.title)).toEqual([
+      "Executive Answer",
+      "Funding Decision & Recommendation",
+      "Baseline, Problem & Opportunity",
+      "Options, Trade-Offs & Recommended Path",
+      "Economics & Value Case",
+      "Risks, Conditions & Evidence Gaps",
+    ]);
+    expect(brief.recommendedStructure).toHaveLength(6);
+    expect(structure.requiredSectionKeys).toEqual([
+      "exec_summary",
+      "decision_required",
+      "current_state",
+      "value_hypothesis",
+      "risks",
+    ]);
+    expect(brief.optionalSections).toEqual(["options"]);
+    expect(structure.sections.map((section) => section.key)).not.toEqual(
+      expect.arrayContaining([
+        "problem_opportunity",
+        "cost_model",
+        "financials",
+        "recommendation",
+      ]),
+    );
+    expect((structure.prohibitedContent ?? []).join(" ")).toMatch(
+      /Do not add separate Problem \/ Opportunity, Cost Model, Financial Summary, or Recommendation sections/,
+    );
+  });
+
   it("keeps P4 estimate, value, and readiness instruments fixed, compact, and evidence-gated", () => {
     const estimate = getDeliverableStructure("moves", "estimate_model")!;
     const value = getDeliverableStructure("moves", "value_model")!;
