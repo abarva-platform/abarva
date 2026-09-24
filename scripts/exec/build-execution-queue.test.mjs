@@ -3163,8 +3163,8 @@ const UNPLACED_ROW = /could not place/i;
  * `unmapped` is computed from the ids the board's reader produced, so an id  *
  * in a shape that reader cannot parse is missing from the pool, from the     *
  * drop row, and from the board's own `not placed on the map: 0`. Measured on *
- * the live corpus at `aa0eecff9`: 474 ids in item position, 441 parsed, and  *
- * not one of the 33 missing named anywhere in this file — while `T-743` and  *
+ * the live corpus at `aa0eecff9`: 474 ids in item position, 444 parsed, and  *
+ * not one of the 30 missing named anywhere in this file — while `T-743` and  *
  * `T-744` sat open and unclaimed and three runs in a row read this file and  *
  * recorded that their lane had nothing.                                      *
  *                                                                           *

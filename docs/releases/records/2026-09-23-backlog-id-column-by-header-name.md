@@ -114,11 +114,23 @@ diagnostics.
 | measurement | before | after |
 |---|---|---|
 | ids in item position, scanned independently | 474 | 474 |
-| ids the reader parsed | 441 | 470 |
-| dropped with no report of any kind | 33 | 0 |
+| ids the reader parsed (`backlog item ids`) | 444 | 470 |
+| **dropped by the reader with no report of any kind** | **30** | **0** |
 | named as a shape the reader cannot parse | 0 | 4 |
-| unplaced on the structure map, named | 3 | 7 |
-| rows the queue offers | 4 (one lane) | 8 (two lanes) |
+| parsed but unplaced on the map — already reported before this change | 3 | 7 |
+| rows the queue offers | 4, one lane | 8, two lanes |
+
+The 26 newly parsed ids are exactly the 26 the item named: `C-501`–`C-506`, `D-511`, `T-555`,
+`T-603`, `T-715`–`T-719`, `T-721`, `T-722`, `T-724`–`T-727`, `T-730`, `T-732`, `T-734`, `T-735`,
+`T-741`, `U-511`. Nothing the reader parsed before stopped being parsed: the population grew by
+exactly that set and lost nothing.
+
+**A correction to a figure quoted in the first draft of this record.** It said 441 parsed and 33
+dropped. 441 was the board's *placed* population, which is the parsed population minus the 3 ids it
+had parsed and could not place — and those 3 were already named in the generated queue before this
+change, so counting them as part of the silent drop overstated it. The reader parsed **444** and
+dropped **30**, which is the figure the item itself filed. The arithmetic closes either way
+(444 + 30 = 474 = 470 + 4), and the corrected numbers are the ones above.
 
 The four rows a whole lane could not previously be offered are `T-555`, `T-717`, `T-718` and
 `T-732`. The board's population is a strict subset of the independent scan in both directions

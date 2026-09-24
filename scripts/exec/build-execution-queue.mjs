@@ -894,7 +894,7 @@ const UNPLACEABLE_LABEL = "not on the structure map, so the board could not plac
  * drop row, and absent from the board's own `not placed on the map: 0` — which
  * was vacuously true over exactly the population that was not missing.
  * Measured on the live corpus at `aa0eecff9`: 474 ids sit in item position in
- * the backlog, the board produced 441, and none of the 33 missing appeared in
+ * the backlog, the reader produced 444, and none of the 30 missing appeared in
  * any line of this file.
  *
  * The cost is not hypothetical. `T-743` and `T-744` were open, unclaimed,

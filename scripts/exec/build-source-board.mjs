@@ -594,7 +594,7 @@ function backlogProseItems(text) {
  * Every id in ITEM POSITION in the backlog, found without asking the
  * extractor — item T-746.
  *
- * The defect that let 33 ids vanish is not that a shape was unsupported. It is
+ * The defect that let 30 ids vanish is not that a shape was unsupported. It is
  * that an id the extractor never produces cannot appear in ANY of this
  * generator's reports: the `unmapped` drop list is computed from the ids it DID
  * produce, so `not placed on the map: 0` was vacuously true over exactly the

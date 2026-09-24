@@ -1199,9 +1199,12 @@ function frozenRows() {
  *     still matched by a symbol.
  *
  *     Measured on `origin/main` `aa0eecff9` against the live operator
- *     documents: an independent scan of ids in item position finds 474, the
- *     board produced 441 — a strict subset, zero extras — and 33 were
- *     dropped. 27 of those had a table row in one of the shapes above.
+ *     documents: an independent scan of ids in item position finds 474 and the
+ *     reader produced 444, a strict subset with zero extras, so 30 were dropped
+ *     with no report of any kind. 26 of those have a table row in one of the
+ *     shapes above; the other 4 are a heading shape, which is a separate item.
+ *     (441, quoted in an earlier draft, was the board's PLACED population —
+ *     parsed minus the 3 it could not place, and those 3 were already named.)
  *
  *     A dropped id is not merely missing from a report. It is absent from the
  *     board's population, absent from the queue's pool, and absent from the
