@@ -29,7 +29,9 @@ now pinned by a test, and the note in the source no longer says something untrue
 
 Release lane: `global-control-lane` — the shared answer shaper is control-plane
 behaviour common to every client, and it ships unflagged. No client-scoped schema,
-retrieval or data-plane path is touched, so this is not `client-data-lane`.
+retrieval or data-plane path is touched, so this is not `client-data-lane`. The one
+`scripts/exec/source-stage-map.json` entry is operator-tooling data with no runtime
+reach; it rides this record rather than taking a second lane.
 
 - **Layer 4 — Products.** Presentation only, and no behaviour changes: this is the
   shared answer shaper that every advisor surface renders through. No product output
@@ -57,6 +59,11 @@ retrieval or data-plane path is touched, so this is not `client-data-lane`.
 - `src/__tests__/behaviors/shared-shaper-compact-line-gate.test.ts` — new. Three
   cases pinning the reachable false case, that the substituted text causing it
   genuinely reaches the reader, and an independent negative control.
+- `scripts/exec/source-stage-map.json` — one entry. The residual left out of scope
+  below was filed as a new backlog item, and the structure map is repo-owned, so the
+  filing is only visible to the queue once it is placed here. Placed beside its
+  direct sibling in the same stage, which is the precedent rather than an inference
+  from the id's letter.
 
 ## QA / Validation
 
@@ -110,6 +117,20 @@ expectation moved, which is the correct result for a comment-only source change.
 
 **Lint** `npx eslint` over both changed files — **exit 0**.
 
+**The structure-map entry, measured in both directions rather than asserted.** With
+the new item filed and unmapped, `build-source-board.mjs` over the live operator
+documents **exits 1** and names it: `not placed on the map: 1 -> C-510`. With the one
+entry added, **exit 0**, `not placed on the map: 0`, and the queue gains its row under
+stage 09. Removing the entry returns the board to exit 1 naming that id, so the entry
+is load-bearing and is not credited on another placement's evidence.
+
+**Toolchain suites, run the way CI runs them** (`node <file>`, not through jest —
+they are self-running scripts): `build-source-board.test.mjs` **60 passed / 0 failed**,
+`build-execution-queue.test.mjs` **184 passed / 0 failed / 2 skipped**,
+`toolchain-manifest.test.mjs` **17 passed / 0 failed**. Unchanged from the base, which
+is the correct result: those suites deliberately assert fixtures rather than the live
+operator documents.
+
 `node scripts/release-check.mjs --base origin/main --head HEAD` — recorded on the PR.
 
 ## Rollout Plan
@@ -157,7 +178,11 @@ incorrect comment, which is the only cost.
   branch from `/\s+—\s+/` to `[-–—]` would close this injection path and make the
   operand unreachable again — C-505's deletion option arriving by a longer route. It
   is a real behaviour change on real table answers and belongs to its own reviewed
-  item, not to a change written to correct a claim. Filed as a new backlog item.
+  item, not to a change written to correct a claim. Filed as backlog item `C-510` and
+  placed on the structure map in this PR so the queue can offer it; its acceptance
+  names the trap — the `C-505` suite needs a second still-reachable fixture for the
+  operand before that widening lands, or the operand becomes unreachable again and the
+  next reader deletes it on the argument this item's parent was filed on.
 - The reachable case runs through caller-supplied label text. No production caller is
   known today to emit a label of that shape; the point is that the shaper cannot
   detect one and its budget check is what absorbs it. This record does not claim a
