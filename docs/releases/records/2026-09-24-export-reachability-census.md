@@ -92,6 +92,7 @@ shared app or control-plane behaviour changes, and no client receives anything.
 | `docs/quality/export-reachability-census.md` | new. The published census and the reasoning behind the wiring decision. |
 | `src/app/(maestro)/source/preview/workspace/__tests__/WorkspaceExecutiveShell.performance.test.ts` | the private copy of the walk removed; imports the shared module. `stripComments` stays — it still scans a stylesheet, which has no TypeScript syntax to parse. |
 | `scripts/exec/source-stage-map.json` | places `U-504` on the structure map, so the board and queue can see it. |
+| `docs/architecture/ci-gate-registry.json` | classifies `check:export-reachability` as a `pr-gate`. Required: the registry audit refuses an unclassified new check, and it caught this one on the first CI run of this branch. |
 
 The walk was **moved, not copied**. A rule applied by hand in the places someone
 happened to think of is the defect shape recorded as item T-723.
@@ -160,6 +161,13 @@ the true positive.
 | `node --test scripts/quality/cli-invocation-guard.test.mjs` | **3 pass / 0 fail**; the new CLI is one of the 10 swept and is distinguishable through a symlinked path |
 | `node --test scripts/exec/build-source-board.test.mjs` / `build-execution-queue.test.mjs` | 1 pass / 0 fail each |
 | board regenerated after the map edit | unmapped ids fall from **11 to 10**; `U-504` is now placeable |
+| every step of `architecture-boundary.yml`, run locally | **9 of 9 exit 0** |
+
+The first CI run of this branch failed one check, and it was right to: the CI
+gate registry refuses an unclassified `check:*` script. `check:export-reachability`
+is now registered as a `pr-gate` with its reason, and the registry's
+sort-order audit was satisfied by placing it in key order rather than
+re-serialising the file, which would have moved unrelated entries.
 
 ## Rollout Plan
 
