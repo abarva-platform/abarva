@@ -325,7 +325,7 @@ export async function renderStorylineDeckPptx(
   return (await pptx.write({ outputType: "nodebuffer" })) as Buffer;
 }
 
-/** Exhibit ids actually placed on the deck (for the visual-completeness gate). */
+/** Exhibit ids declared by the slide model; visual credit is decided by the rendered artifact. */
 export function deckExhibits(deck: StorylineDeck): ExhibitId[] {
   return deck.slides
     .map((s) => s.exhibit)
@@ -337,6 +337,10 @@ function esc(s: string | undefined): string {
   return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
 
+function escAttr(s: string | undefined): string {
+  return esc(s).replace(/"/g, "&quot;");
+}
+
 /** Render the storyline deck as a premium self-contained HTML deck. */
 export function renderDeckHtml(deck: StorylineDeck): string {
   const slides = deck.slides
@@ -345,7 +349,7 @@ export function renderDeckHtml(deck: StorylineDeck): string {
         ? `<ul>${s.points.map((p) => `<li>${esc(p)}</li>`).join("")}</ul>`
         : "";
       const exhibit = s.exhibit
-        ? `<div class="exhibit">Exhibit · ${esc(s.exhibit.replace(/_/g, " "))}</div>`
+        ? `<div class="exhibit" data-exhibit="${escAttr(s.exhibit)}">Exhibit · ${esc(s.exhibit.replace(/_/g, " "))}</div>`
         : "";
       const notes = s.speakerNotes
         ? `<div class="notes"><span>Speaker notes</span> ${esc(s.speakerNotes)}</div>`

@@ -375,15 +375,16 @@ export function renderDeliverableDocx(doc: RenderableDeliverable): Document {
     }
   }
 
-  // Visual exhibits — rasterised from the same SVG the HTML renderer inlines,
-  // so a DOCX reader sees the diagrams that were previously only reachable
-  // via the HTML preview.
-  if (doc.exhibits.length) {
+  // Visual exhibits — rasterised from the same SVG the HTML renderer inlines.
+  // Missing structured exhibit data intentionally produces no block; the
+  // quality contract surfaces the missing visual instead of shipping a fake one.
+  const exhibitBlocks = doc.exhibits.flatMap((exhibit, index) =>
+    exhibitToDocxBlocks(exhibit, index),
+  );
+  if (exhibitBlocks.length) {
     children.push(pageBreak());
     children.push(heading1("Visual Exhibits"));
-    doc.exhibits.forEach((exhibit, index) => {
-      children.push(...exhibitToDocxBlocks(exhibit, index));
-    });
+    children.push(...exhibitBlocks);
   }
 
   // Recommendation + next actions
@@ -644,6 +645,69 @@ function exhibitClauses(exhibit: RenderableExhibit): string[] {
     exhibit.title,
     exhibit.description || "Decision implication to confirm",
   ].slice(0, 5);
+}
+
+function exhibitDataClauses(
+  data: RenderableExhibit["data"] | undefined,
+): string[] {
+  if (!data) return [];
+  switch (data.kind) {
+    case "flow":
+      return [
+        ...data.nodes.map((node) =>
+          [node.label, node.role].filter(Boolean).join(" — "),
+        ),
+        ...data.edges.map((edge) =>
+          [edge.from, edge.to, edge.label].filter(Boolean).join(" → "),
+        ),
+      ].filter(Boolean);
+    case "matrix":
+    case "heatmap":
+    case "comparison":
+      return data.cells
+        .map((cell) =>
+          [cell.x, cell.y, cell.label, cell.value].filter(Boolean).join(" — "),
+        )
+        .filter(Boolean);
+    case "timeline":
+    case "roadmap":
+      return data.lanes.flatMap((lane) =>
+        lane.items.map((item) =>
+          [lane.label, item.label, item.start, item.end]
+            .filter(Boolean)
+            .join(" — "),
+        ),
+      );
+    case "value_tree":
+      return [
+        [data.root.label, data.root.value].filter(Boolean).join(" — "),
+        ...data.branches.map((branch) =>
+          [branch.label, branch.value].filter(Boolean).join(" — "),
+        ),
+      ].filter(Boolean);
+    case "conceptual_architecture":
+    case "logical_architecture":
+    case "physical_architecture":
+    case "agent_orchestration":
+      return data.lanes
+        .map((lane) => [lane.label, ...lane.items].filter(Boolean).join(" — "))
+        .filter(Boolean);
+    default:
+      return [];
+  }
+}
+
+function exhibitWithDataDescription(
+  exhibit: RenderableExhibit,
+): RenderableExhibit | null {
+  const clauses = exhibitDataClauses(exhibit.data)
+    .map((clause) => clause.trim())
+    .filter(Boolean);
+  if (clauses.length === 0) return null;
+  return {
+    ...exhibit,
+    description: clauses.join("; "),
+  };
 }
 
 function svgFlowExhibit(exhibit: RenderableExhibit, domId: string): string {
@@ -990,30 +1054,44 @@ function svgRoadmapExhibit(exhibit: RenderableExhibit): string {
  *  HTML renderer (inlined directly, where the page's `:root` CSS variables
  *  resolve `var(--fresh)` etc.) and the DOCX renderer (which must substitute
  *  concrete hex values before rasterising — see `resolveSvgTokens`). */
-function exhibitSvg(exhibit: RenderableExhibit, index: number): string {
+function exhibitSvg(exhibit: RenderableExhibit, index: number): string | null {
   const domId = `exhibit-${index + 1}`;
-  return exhibit.kind === "matrix" || exhibit.kind === "heatmap"
-    ? svgMatrixExhibit(exhibit)
-    : exhibit.kind === "timeline"
-      ? svgTimelineExhibit(exhibit)
-      : exhibit.kind === "conceptual_architecture"
-        ? svgLayeredArchitectureExhibit(exhibit, CONCEPTUAL_LANES)
-        : exhibit.kind === "logical_architecture"
-          ? svgLayeredArchitectureExhibit(exhibit, LOGICAL_LANES)
-          : exhibit.kind === "physical_architecture"
-            ? svgLayeredArchitectureExhibit(exhibit, PHYSICAL_LANES, {
-                legend: true,
-              })
-            : exhibit.kind === "agent_orchestration"
-              ? svgAgentOrchestrationExhibit(exhibit)
-              : exhibit.kind === "roadmap"
-                ? svgRoadmapExhibit(exhibit)
-                : svgFlowExhibit(exhibit, domId);
+  const dataExhibit = exhibitWithDataDescription(exhibit);
+  if (!dataExhibit) return null;
+  if (
+    dataExhibit.kind === "matrix" ||
+    dataExhibit.kind === "heatmap" ||
+    dataExhibit.data?.kind === "matrix" ||
+    dataExhibit.data?.kind === "heatmap" ||
+    dataExhibit.data?.kind === "comparison"
+  )
+    return svgMatrixExhibit(dataExhibit);
+  if (
+    dataExhibit.kind === "timeline" ||
+    dataExhibit.data?.kind === "timeline"
+  )
+    return svgTimelineExhibit(dataExhibit);
+  if (dataExhibit.kind === "conceptual_architecture")
+    return svgLayeredArchitectureExhibit(dataExhibit, CONCEPTUAL_LANES);
+  if (dataExhibit.kind === "logical_architecture")
+    return svgLayeredArchitectureExhibit(dataExhibit, LOGICAL_LANES);
+  if (dataExhibit.kind === "physical_architecture")
+    return svgLayeredArchitectureExhibit(dataExhibit, PHYSICAL_LANES, {
+      legend: true,
+    });
+  if (dataExhibit.kind === "agent_orchestration")
+    return svgAgentOrchestrationExhibit(dataExhibit);
+  if (dataExhibit.kind === "roadmap" || dataExhibit.data?.kind === "roadmap")
+    return svgRoadmapExhibit(dataExhibit);
+  if (dataExhibit.kind === "flow" || dataExhibit.data?.kind === "flow")
+    return svgFlowExhibit(dataExhibit, domId);
+  return null;
 }
 
 function exhibitHtml(exhibit: RenderableExhibit, index: number): string {
   const domId = `exhibit-${index + 1}`;
   const visual = exhibitSvg(exhibit, index);
+  if (!visual) return "";
   return `<figure class="visual-exhibit" data-exhibit="${domId}" data-kind="${esc(exhibit.kind)}">
     <figcaption><span>${esc(exhibit.kind)}</span><strong>${esc(exhibit.title)}</strong></figcaption>
     ${visual}
@@ -1061,7 +1139,9 @@ function exhibitToDocxBlocks(
   exhibit: RenderableExhibit,
   index: number,
 ): Paragraph[] {
-  const svg = withXmlns(resolveSvgTokens(exhibitSvg(exhibit, index)));
+  const rawSvg = exhibitSvg(exhibit, index);
+  if (!rawSvg) return [];
+  const svg = withXmlns(resolveSvgTokens(rawSvg));
   let imageParagraph: Paragraph;
   try {
     const { png, aspect } = rasteriseSvg(svg, 3);
@@ -1078,23 +1158,12 @@ function exhibitToDocxBlocks(
       ],
     });
   } catch (err) {
-    // Rasterisation is best-effort — a malformed exhibit must not fail the
-    // whole document. Fall back to a text notice; the same content is
-    // still available in the HTML preview.
-    imageParagraph = bodyParagraph([
-      bodyRun(
-        `(exhibit could not be rendered as an image — see HTML preview)`,
-        {
-          italics: true,
-          color: SOURCE_DOCX.MUTED_COLOR,
-        },
-      ),
-    ]);
     console.error(
       "[renderDeliverableDocx] exhibit rasterisation failed",
       exhibit.key,
       err,
     );
+    return [];
   }
   return [
     heading2(exhibit.title),
@@ -1297,8 +1366,10 @@ function tableToPdf(table: RenderableTable): ReactElement {
 function exhibitToPdfBlock(
   exhibit: RenderableExhibit,
   index: number,
-): ReactElement {
-  const svg = withXmlns(resolveSvgTokens(exhibitSvg(exhibit, index)));
+): ReactElement | null {
+  const rawSvg = exhibitSvg(exhibit, index);
+  if (!rawSvg) return null;
+  const svg = withXmlns(resolveSvgTokens(rawSvg));
   let imageNode: ReactElement;
   try {
     const { png, aspect } = rasteriseSvg(svg, 3);
@@ -1311,22 +1382,12 @@ function exhibitToPdfBlock(
       />
     );
   } catch (err) {
-    imageNode = (
-      <PdfText
-        style={{
-          ...PDF_STYLES.body,
-          fontFamily: PDF_FONTS.BODY_ITALIC,
-          color: PDF_COLORS.MUTED,
-        }}
-      >
-        (exhibit could not be rendered as an image — see HTML preview)
-      </PdfText>
-    );
     console.error(
       "[renderDeliverablePdf] exhibit rasterisation failed",
       exhibit.key,
       err,
     );
+    return null;
   }
   return (
     <PdfView key={exhibit.key} wrap={false} style={{ marginBottom: 10 }}>
@@ -1350,6 +1411,9 @@ export function renderDeliverablePdf(
   doc: RenderableDeliverable,
 ): ReactElement<PdfDocumentProps> {
   const inDocTables = doc.tables.filter((t) => t.targetFormat !== "xlsx");
+  const exhibitBlocks = doc.exhibits
+    .map((exhibit, index) => exhibitToPdfBlock(exhibit, index))
+    .filter((block): block is ReactElement => block !== null);
 
   return (
     <PdfDocument
@@ -1408,12 +1472,10 @@ export function renderDeliverablePdf(
           </PdfView>
         ) : null}
 
-        {doc.exhibits.length > 0 ? (
+        {exhibitBlocks.length > 0 ? (
           <PdfView style={{ marginTop: 10 }}>
             <PdfText style={PDF_STYLES.h1}>Visual Exhibits</PdfText>
-            {doc.exhibits.map((exhibit, index) =>
-              exhibitToPdfBlock(exhibit, index),
-            )}
+            {exhibitBlocks}
           </PdfView>
         ) : null}
 
@@ -1606,7 +1668,25 @@ function addPptxExhibitSlide(
   doc: RenderableDeliverable,
   slideNumber: number,
   totalSlides: number,
-): void {
+): boolean {
+  const rawSvg = exhibitSvg(exhibit, index);
+  if (!rawSvg) return false;
+  const svg = withXmlns(resolveSvgTokens(rawSvg));
+  let png: Buffer;
+  let aspect: number;
+  try {
+    const rasterised = rasteriseSvg(svg, 3);
+    png = rasterised.png;
+    aspect = rasterised.aspect;
+  } catch (err) {
+    console.error(
+      "[renderDeliverablePptx] exhibit rasterisation failed",
+      exhibit.key,
+      err,
+    );
+    return false;
+  }
+
   const slide = pptx.addSlide();
   slide.background = { color: PPTX_COLOR.cream };
   addPptxChrome(slide, doc, slideNumber, totalSlides);
@@ -1620,53 +1700,21 @@ function addPptxExhibitSlide(
     color: PPTX_COLOR.ink,
     fit: "shrink",
   });
-  const svg = withXmlns(resolveSvgTokens(exhibitSvg(exhibit, index)));
-  try {
-    const { png, aspect } = rasteriseSvg(svg, 3);
-    const maxW = 11.8;
-    const maxH = 4.6;
-    let w = maxW;
-    let h = w / aspect;
-    if (h > maxH) {
-      h = maxH;
-      w = h * aspect;
-    }
-    slide.addImage({
-      data: `data:image/png;base64,${png.toString("base64")}`,
-      x: 0.72 + (maxW - w) / 2,
-      y: 1.55,
-      w,
-      h,
-    });
-  } catch (err) {
-    slide.addShape("roundRect", {
-      x: 0.72,
-      y: 1.55,
-      w: 11.8,
-      h: 3,
-      rectRadius: 0.12,
-      fill: { color: PPTX_COLOR.paper },
-      line: { color: PPTX_COLOR.line, width: 1 },
-    });
-    slide.addText(
-      "(exhibit could not be rendered as an image — see HTML/DOCX preview)",
-      {
-        x: 1,
-        y: 2.9,
-        w: 11.3,
-        h: 0.4,
-        fontFace: "Arial",
-        fontSize: 11,
-        italic: true,
-        color: PPTX_COLOR.muted,
-      },
-    );
-    console.error(
-      "[renderDeliverablePptx] exhibit rasterisation failed",
-      exhibit.key,
-      err,
-    );
+  const maxW = 11.8;
+  const maxH = 4.6;
+  let w = maxW;
+  let h = w / aspect;
+  if (h > maxH) {
+    h = maxH;
+    w = h * aspect;
   }
+  slide.addImage({
+    data: `data:image/png;base64,${png.toString("base64")}`,
+    x: 0.72 + (maxW - w) / 2,
+    y: 1.55,
+    w,
+    h,
+  });
   slide.addText(safePptxText(exhibit.description), {
     x: 0.72,
     y: 6.35,
@@ -1677,6 +1725,7 @@ function addPptxExhibitSlide(
     italic: true,
     color: PPTX_COLOR.muted,
   });
+  return true;
 }
 
 function addPptxTableSlide(
@@ -1771,10 +1820,13 @@ export async function renderDeliverablePptx(
   pptx.title = `${doc.clientDisplayName} — ${doc.title}`;
 
   const inDeckTables = doc.tables.filter((t) => t.targetFormat !== "xlsx");
+  const renderableExhibits = doc.exhibits
+    .map((exhibit, index) => ({ exhibit, index }))
+    .filter(({ exhibit, index }) => exhibitSvg(exhibit, index) !== null);
   const totalSlides =
     1 +
     doc.generatedSections.length +
-    doc.exhibits.length +
+    renderableExhibits.length +
     inDeckTables.length +
     1;
   let slideNumber = 1;
@@ -1925,9 +1977,9 @@ export async function renderDeliverablePptx(
   }
 
   // One rasterised-image slide per exhibit.
-  doc.exhibits.forEach((exhibit, index) => {
-    addPptxExhibitSlide(pptx, exhibit, index, doc, slideNumber, totalSlides);
-    slideNumber += 1;
+  renderableExhibits.forEach(({ exhibit, index }) => {
+    if (addPptxExhibitSlide(pptx, exhibit, index, doc, slideNumber, totalSlides))
+      slideNumber += 1;
   });
 
   // One native table slide per in-deck table (xlsx-targeted tables live only in the Excel companion).

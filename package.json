@@ -18,6 +18,7 @@
     "audit:enum-reachability": "node scripts/quality/enum-reachability.mjs",
     "audit:named-suite-requiredness": "node scripts/quality/check-named-suite-requiredness.mjs",
     "moves:scan-artifacts": "npx tsx scripts/moves/scan-artifacts.ts",
+    "moves:measure-golden-bar-signals": "npx tsx scripts/moves/measure-golden-bar-signals.ts",
     "moves:refresh-artifact-cleanliness": "NODE_OPTIONS='--require ./src/scripts/_mock-server-only-preload.cjs' npx tsx scripts/moves/refresh-persisted-artifact-cleanliness.ts",
     "lint:depth": "NODE_OPTIONS='--require ./src/scripts/_mock-server-only-preload.cjs' npx tsx scripts/lint/depth-lint.ts",
     "audit:architecture-boundaries": "depcruise -c .dependency-cruiser.cjs --ignore-known .dependency-cruiser-known-violations.json src/app src/components",

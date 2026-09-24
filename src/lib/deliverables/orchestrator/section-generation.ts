@@ -420,6 +420,20 @@ function openInputsTable(
 const GENERIC_EXHIBIT_DESCRIPTION =
   /profile-required view|populated from cited evidence|shows the user, ai, human decision|decision implication to confirm/i;
 
+function repairStructuredValue(value: unknown): unknown {
+  if (typeof value === "string") return repairStructuredClientFactText(value);
+  if (Array.isArray(value)) return value.map((item) => repairStructuredValue(item));
+  if (value && typeof value === "object") {
+    return Object.fromEntries(
+      Object.entries(value).map(([key, nested]) => [
+        key,
+        repairStructuredValue(nested),
+      ]),
+    );
+  }
+  return value;
+}
+
 function repairStructuredExhibit(exhibit: RenderableExhibit): RenderableExhibit {
   return {
     key: repairStructuredClientFactText(String(exhibit.key ?? "")),
@@ -429,10 +443,58 @@ function repairStructuredExhibit(exhibit: RenderableExhibit): RenderableExhibit 
       String(exhibit.description ?? ""),
     ),
     targetFormat: exhibit.targetFormat,
+    ...(exhibit.data
+      ? { data: repairStructuredValue(exhibit.data) as RenderableExhibit["data"] }
+      : {}),
   };
 }
 
+function exhibitHasStructuredData(exhibit: RenderableExhibit): boolean {
+  const data = exhibit.data;
+  if (!data || typeof data !== "object") return false;
+  switch (data.kind) {
+    case "flow":
+      return (
+        Array.isArray(data.nodes) &&
+        data.nodes.length >= 2 &&
+        Array.isArray(data.edges) &&
+        data.edges.length >= 1
+      );
+    case "matrix":
+    case "heatmap":
+    case "comparison":
+      return Array.isArray(data.cells) && data.cells.length >= 2;
+    case "timeline":
+    case "roadmap":
+      return (
+        Array.isArray(data.lanes) &&
+        data.lanes.some(
+          (lane) => Array.isArray(lane.items) && lane.items.length > 0,
+        )
+      );
+    case "value_tree":
+      return Boolean(
+        data.root?.label &&
+          Array.isArray(data.branches) &&
+          data.branches.length > 0,
+      );
+    case "conceptual_architecture":
+    case "logical_architecture":
+    case "physical_architecture":
+    case "agent_orchestration":
+      return (
+        Array.isArray(data.lanes) &&
+        data.lanes.some(
+          (lane) => Array.isArray(lane.items) && lane.items.length > 0,
+        )
+      );
+    default:
+      return false;
+  }
+}
+
 function exhibitHasDiagramReadyContent(exhibit: RenderableExhibit): boolean {
+  if (!exhibitHasStructuredData(exhibit)) return false;
   const description = exhibit.description?.trim() ?? "";
   if (!exhibit.key?.trim() || !exhibit.title?.trim() || !description) {
     return false;

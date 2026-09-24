@@ -437,16 +437,22 @@ const SECTION_SCHEMA_HINT = `Return ONLY JSON for THIS ONE section:
 const SYNTHESIS_SCHEMA_HINT = `Return ONLY JSON (the document-level executive layer):
 { "title","subtitle","recommendation","nextActions":[],
   "tables":[{"key","title","columns":[],"rows":[[]],"targetFormat":"docx"}],
-  "exhibits":[{"key","title","kind","description","targetFormat":"pptx"}],
+  "exhibits":[{"key","title","kind","description","targetFormat":"pptx","data":{}}],
   "clientCompleteChecklist":[{"key","label","owner","reason":"client_judgment|legal_review|procurement_signoff|pricing_signoff","placeholderText"}] }
-For exhibits, do not merely repeat the exhibit name or purpose. The description must be diagram-ready: write at least three semicolon-separated, client-specific nodes/lanes/steps/controls that the renderer can draw. If evidence is insufficient to populate a real diagram, omit that exhibit so the quality gate can surface the missing visual; do not create a placeholder exhibit.
+For exhibits, do not merely repeat the exhibit name or purpose. Populate data with the concrete values the renderer should draw. Supported payloads:
+- flow: {"kind":"flow","nodes":[{"id","label","role"}],"edges":[{"from","to","label"}]}
+- matrix/heatmap/comparison: {"kind":"matrix","axes":{"x","y"},"cells":[{"x","y","label","value","weight"}]}
+- timeline/roadmap: {"kind":"roadmap","lanes":[{"label","items":[{"label","start","end"}]}]}
+- value_tree: {"kind":"value_tree","root":{"label","value"},"branches":[{"label","value","children":[{"label","value"}]}]}
+- conceptual_architecture/logical_architecture/physical_architecture/agent_orchestration: {"kind":"logical_architecture","lanes":[{"label","items":[]}]}
+Every node, cell, lane item, metric, date, and label must be grounded in cited evidence or explicitly be a labeled assumption/open input in the source prose. If evidence is insufficient to populate real exhibit data, omit that exhibit so the quality gate can surface the missing visual; do not create a placeholder exhibit.
 Reason is an internal enum for workflow routing; do not copy snake_case reason codes into narrative prose, tables, or placeholder text.`;
 
 const RENDER_SCHEMA_HINT = `Return ONLY JSON matching RenderableDeliverable:
 { "title","subtitle","clientDisplayName","initiativeDisplayName",
   "generatedSections":[{"key","title","bodyMarkdown","groundingMode","citationsUsed":[n]}],
   "tables":[{"key","title","columns":[],"rows":[[]],"targetFormat"}],
-  "exhibits":[{"key","title","kind","description","targetFormat"}],
+  "exhibits":[{"key","title","kind","description","targetFormat","data":{}}],
   "sourceRegister":[{"citationNumber","label","evidenceFamily","confidence","asOf"}],
   "assumptions":[...], "clientCompleteChecklist":[...], "recommendation", "nextActions":[] }`;
 

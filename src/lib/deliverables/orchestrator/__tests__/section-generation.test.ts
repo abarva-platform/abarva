@@ -224,6 +224,27 @@ describe("assembleDeliverable", () => {
             description:
               "Care manager reviews reconciled care-gap queue; AI resolves provider-plan source authority and ranks advisory signals; named clinical owner approves before any outreach action",
             targetFormat: "pptx",
+            data: {
+              kind: "flow",
+              nodes: [
+                {
+                  id: "review",
+                  label: "Care manager reviews reconciled care-gap queue",
+                },
+                {
+                  id: "resolve",
+                  label: "AI resolves provider-plan source authority",
+                },
+                {
+                  id: "approve",
+                  label: "Named clinical owner approves outreach action",
+                },
+              ],
+              edges: [
+                { from: "review", to: "resolve" },
+                { from: "resolve", to: "approve" },
+              ],
+            },
           },
           {
             key: "agent_workflow",
