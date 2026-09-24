@@ -99,10 +99,18 @@ than reading this checkout's own `HEAD~1`, because `actions/checkout` is shallow
 case reading it would pass locally and be unreachable where it is gated. That case asserts the
 distinction the whole control rests on: a *later* commit on a sibling branch is not a descendant.
 
-**Calibrated against known positives, and the extras are zero.** Run over all eighteen items, the
-resolver agrees with every verdict an earlier run had already recorded independently: seven items
-whose record already carried a digest match it exactly, and the two items previously resolved "by
-descendant containment" name the same carrier runs this resolver picks. Zero disagreements.
+**Calibrated in both directions against the real corpus, and the extras are zero.** Counted from
+the corpus rather than by hand, after a first hand count of this figure came out one low:
+
+- *Known positives.* Of the eighteen, **eight** carry a digest in their existing record and **all
+  eight match this resolution exactly**; ten carry none. The two items previously resolved "by
+  descendant containment" name the same carrier runs this resolver picks independently. **Zero
+  disagreements.**
+- *Known negative.* Handed a commit that genuinely has no deploy — this branch's own head, which
+  the deploy workflow never runs against — the resolver returns `not_deployed` and exits 1. A
+  detector that only ever agrees is not evidence.
+- *The live path, not only the fixture path.* The reproduction command was run with no `--runs`
+  file, fetching run records from GitHub directly, and returned the same verdict and digest.
 
 ## Rollout Plan
 
