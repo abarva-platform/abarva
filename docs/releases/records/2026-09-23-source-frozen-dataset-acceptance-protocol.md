@@ -33,7 +33,8 @@ Release lane: `internal-admin`. The validator compares declared Layer 3 build an
 
 - Pass: 16 focused Jest tests cover changed identities, all four in-window mutation kinds, missing or malformed checksums, ambiguous timestamps, observations outside the window, and nonzero CLI exit on an in-window projection.
 - Pass: mutating the projection/read-model map comparison to accept all maps caused two focused tests to fail; the guard was restored and the suite passed.
-- Pass: scoped ESLint. Full TypeScript and release checks were rerun after release-record correction; CI and live product acceptance are not run at this candidate stage.
+- Pass: the initial CI coverage gate rejected a new dark test directory. The behavior tests were moved into the workflow-covered behavior suite; the two failing coverage guards and both focused suites then passed locally (60 tests total).
+- Pass: scoped ESLint, full TypeScript, and release checks. Applicable CI is being rerun for this correction; live product acceptance is outside this read-only change.
 
 ## Rollout Plan
 

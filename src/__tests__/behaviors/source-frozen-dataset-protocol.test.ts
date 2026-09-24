@@ -1,4 +1,4 @@
-import { evaluateFrozenDatasetAcceptance } from "../frozen-dataset-protocol";
+import { evaluateFrozenDatasetAcceptance } from "../../lib/source/acceptance/frozen-dataset-protocol";
 
 const snapshot = {
   datasetId: "synthetic-event-pack",
