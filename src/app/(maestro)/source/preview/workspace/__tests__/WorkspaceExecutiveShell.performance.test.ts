@@ -786,7 +786,7 @@ describe("WorkspaceExecutiveShell performance formatting", () => {
    * So this was never only a control a comment could satisfy. It was a
    * control asserting the shape of a renderer no reader can open, under a
    * title claiming the tab was kept. Both available repairs make it worse:
-   * mounting `ContractGraphPage` in a test manufactures four green cases
+   * mounting `ContractGraphPage` in a test manufactures five green cases
    * over dead code and pins it against the cleanup its own eslint comment
    * schedules, and exporting it to do so would make it reachable to the
    * export baseline as well. Scanning it more strictly would keep a control

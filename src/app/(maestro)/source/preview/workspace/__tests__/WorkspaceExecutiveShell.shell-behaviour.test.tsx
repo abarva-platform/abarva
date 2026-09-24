@@ -13,7 +13,8 @@
  * Only ONE of the two candidate surfaces made the move, and the reason the
  * other did not is recorded on the retired case in the sibling suite:
  * `ContractGraphPage` is not mounted anywhere. Rendering it here would have
- * produced four green cases over a surface no reader can reach.
+ * produced five green cases over a surface no reader can reach — they were
+ * written, run green, and reverted.
  */
 
 import { render, screen, within } from "@testing-library/react";
