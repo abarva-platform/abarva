@@ -305,6 +305,38 @@ describe("client-facing implementation vocabulary", () => {
   });
 });
 
+describe("fixture control language", () => {
+  it("blocks smoke-test upload/control prose masquerading as a deliverable", () => {
+    const result = scanClientReadiness(
+      "Status: simulated client approved upload. This is synthetic aggregate evidence only. Must mention in generated output: shadow registry.",
+    );
+    expect(result.findings).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          kind: "fixture_control_language",
+          match: expect.stringMatching(/simulated client approved upload/i),
+          severity: "blocker",
+        }),
+        expect.objectContaining({
+          kind: "fixture_control_language",
+          match: expect.stringMatching(/must mention in generated output/i),
+          severity: "blocker",
+        }),
+      ]),
+    );
+    expect(result.blockers).toBeGreaterThanOrEqual(2);
+  });
+
+  it("does not block ordinary client approval and evidence language", () => {
+    const result = scanClientReadiness(
+      "The client approved the discovery packet after reviewing the evidence summary and open assumptions.",
+    );
+    expect(result.findings.map((f) => f.kind)).not.toContain(
+      "fixture_control_language",
+    );
+  });
+});
+
 describe("filler", () => {
   it("flags padding for review", () => {
     const result = scanClientReadiness(
