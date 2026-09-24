@@ -42,6 +42,50 @@ import { TenancyError } from "@/lib/auth/tenancy";
 // Module boundary. Nothing below reaches a database, a model or a retriever.
 // ---------------------------------------------------------------------------
 
+/**
+ * `requireTenancy` is stubbed; `tenancyErrorResponse` and `TenancyError` are the
+ * REAL ones, because the status each failure maps to -- 401 unauthenticated,
+ * 403 no client, 503 retryable outage -- is part of the fail-closed behavior
+ * under test and a stubbed mapper would prove nothing about it.
+ *
+ * The tenancy module's own collaborators are stubbed below so that loading it
+ * loads it and not the auth and data-plane graph behind it. That is not only
+ * hygiene: jest instruments what a test actually loads, so pulling roughly four
+ * thousand unexercised lines in behind one `requireActual` lands them in the
+ * behavior gate's coverage denominator, where they read as this suite's own
+ * uncovered code.
+ */
+jest.mock("@/lib/active-client", () => ({
+  getActiveClientRow: jest.fn(async () => null),
+  TenantLookupUnavailableError: class TenantLookupUnavailableError extends Error {},
+}));
+jest.mock("@/lib/auth/current-user", () => ({
+  getCurrentUser: jest.fn(async () => null),
+}));
+jest.mock("@/lib/auth/maestro", () => ({
+  getCurrentPerson: jest.fn(async () => null),
+}));
+jest.mock("@/lib/auth/operator-persona-provisioning", () => ({
+  ensureOperatorPersonProvisioned: jest.fn(async () => null),
+}));
+jest.mock("@/lib/auth/tenant-access", () => ({
+  checkTenantAccessByKey: jest.fn(async () => ({ ok: true })),
+}));
+jest.mock("@/lib/tenant/resolveTenant", () => ({
+  resolveTenant: jest.fn(async () => ({
+    appClientKey: "meridian-health",
+    displayName: "A Client",
+    industryCode: "HEALTHCARE_IDN",
+  })),
+  resolveClientRow: jest.fn(async () => null),
+}));
+jest.mock("@/lib/client-config", () => ({
+  getClientOption: jest.fn(() => ({ name: "A Client" })),
+}));
+jest.mock("@/lib/intelligence/synthesis/instructionLayer", () => ({
+  FOUR_LAYER_REASONING_INSTRUCTIONS: "",
+}));
+
 const requireTenancy = jest.fn();
 jest.mock("@/lib/auth/tenancy", () => {
   const actual = jest.requireActual("@/lib/auth/tenancy");

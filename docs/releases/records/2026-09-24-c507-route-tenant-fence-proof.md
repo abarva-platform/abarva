@@ -130,6 +130,11 @@ repair. A fixture whose two sides agree cannot test which one was used.
 - **Before** (this change's test file absent, otherwise this tree): **116 suites / 1074 tests / 1 failing**
 - **After**: **117 suites / 1084 tests / 0 failing**
 
+And under the gate's own command (`jest src/__tests__/behaviors --coverage --runInBand`, which
+enumerates the directory rather than taking a path list), **119 suites / 1104 tests / 0 failing**
+before and **120 / 1114 / 0** after. The two scopes differ by suites the path-list form does not
+pick up; both are reported because the gate runs the second one.
+
 The delta is this change's own suite (+1 suite, +10 tests) plus the repair of the one
 pre-existing failure, described next.
 
@@ -147,6 +152,38 @@ resolver answering, not a grep over `.github/workflows`, which answers a differe
 
 `census shape: coverage shape matches the committed census` both before and after, so the
 shape gate T-760 wired was never the failing half.
+
+### The first version of this suite failed the behavior coverage gate, and the cause is worth recording
+
+Every test passed — 120 suites, 1114 tests, 0 failing — and the job still failed. The
+`Behavior coverage floor` gate is a **percentage** floor over the coverage the behaviors run
+collects, and jest instruments whatever a test actually loads.
+
+This suite needs the real `tenancyErrorResponse` and `TenancyError`, because the status each
+failure maps to is part of the fail-closed behavior under test. Taking them via
+`jest.requireActual("@/lib/auth/tenancy")` also loaded that module's entire transitive graph:
+**33 files, 6,864 instrumented lines, 42.1% covered**, dominated by `postgresCompat`,
+`seed-route-resolver`, `evidence-registry`, `resolveTenant` and `current-user` — roughly 3,900
+unexercised lines, none of them this suite's subject, all of them landing in the denominator
+as though they were.
+
+Measured, both sides, with the real gate:
+
+| | lines | statements | functions | branches | verdict |
+|---|---|---|---|---|---|
+| `origin/main` baseline, this suite absent | 91.02% | 91.02% | 69.31% | 68.86% | — |
+| first version (CI run 36007665930) | **88.68%** | **88.68%** | **58.36%** | 68.53% | **failed** three floors |
+| after stubbing the tenancy module's own collaborators | **90.89%** | **90.89%** | **69.31%** | 68.52% | **exit 0** |
+
+The repair stubs the collaborators *of* the module under test, so loading it loads it and not
+the graph behind it: 33 files and 6,864 lines become **3 files and 473 lines**. The real
+functions and `tenancyErrorResponse` are still the real ones — nothing about what is asserted
+changed, only what is dragged in behind it. The suite's own cost against the baseline is
+**−0.13pp lines and −0.34pp branches, with functions unchanged**, and every floor is cleared.
+
+**All eight mutations were re-run against the restructured suite** rather than assumed to still
+hold, because changing the mock boundary can weaken a case silently. Same results as the table
+above, and both subjects re-hashed byte-identical afterwards.
 
 ### Toolchain
 
