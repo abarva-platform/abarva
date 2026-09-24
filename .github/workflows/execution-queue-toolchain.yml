@@ -292,3 +292,26 @@ jobs:
       # filed on a hand measurement of seven that all still resolved.
       - name: Run the register-citation transcription verifier contract
         run: node scripts/exec/register-citation-check.test.mjs
+
+      # Which merges actually deployed (item T-476).
+      #
+      # Eighteen merged items carried a `deploy proof pending` line that had
+      # been stale for three to four days, and the first one checked named a
+      # run that had already completed `success` against its exact merge SHA
+      # before the line claiming it was in flight was written. All eighteen
+      # resolved -- fifteen deployed on their own SHA, three superseded by a
+      # descendant run after the concurrency group cancelled their own, none
+      # genuinely undeployed. A ledger that says `pending` when the proof
+      # exists is a false state, and it is the direction that hides finished
+      # work, so nothing downstream ever trips over it.
+      #
+      # The suite is synthetic -- every run record and every commit graph is
+      # built in the test, including a real two-branch git repository, because
+      # `actions/checkout` is shallow and a case reading this repository's own
+      # `HEAD~1` would pass locally and be unreachable in CI.
+      #
+      # The cases that carry it are the ones where TIME and ANCESTRY disagree:
+      # a later successful run on a sibling branch is not a descendant, and
+      # crediting it writes a false `deployed`. Ten mutations, ten caught.
+      - name: Run the deploy-proof resolver contract
+        run: node scripts/exec/deploy-proof-resolver.test.mjs
