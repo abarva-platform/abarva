@@ -41,7 +41,7 @@ import { evidenceForStage } from "@/lib/source/canonical-specs/evidence-requirem
 import {
   describeBuilderVocabulary,
   findBuilderVocabulary,
-} from "@/lib/source/vocabulary/builder-vocabulary";
+} from "@/testing/source-builder-vocabulary";
 
 /**
  * A surface under audit: how to put it on screen, how to drive it so the parts

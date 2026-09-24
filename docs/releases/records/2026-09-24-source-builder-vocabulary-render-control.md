@@ -50,16 +50,26 @@ and is not feature-gated, so every client receives it on the next deploy.
 
 ## Changes Included
 
-- `src/lib/source/vocabulary/builder-vocabulary.ts` — new. Defines the class of
+- `src/testing/source-builder-vocabulary.ts` — new. Defines the class of
   builder vocabulary once, for use against **rendered text**. Two rules:
   identifier shape (an internal underscore — no English word or product name has
   one) and the two phrases the Source master backlog names. Stage keys carry
   their canonical label, read from `SOURCE_STAGE_LABELS` rather than re-typed.
-- `src/lib/source/vocabulary/__tests__/builder-vocabulary.test.ts` — new. The
-  class definition proved in both directions.
+- `src/components/source/__tests__/source-builder-vocabulary-class.test.ts` —
+  new. The class definition proved in both directions.
 - `src/components/source/__tests__/source-surface-builder-vocabulary.test.tsx` —
   new. The control: renders three Source surfaces, drives them, scans output.
 - `src/components/source/RenewalCockpitActionBar.tsx` — the two occurrences.
+- `docs/architecture/test-ci-coverage-census.json` — regenerated.
+
+**On where the detector lives.** It was first written under `src/lib/`, and
+`audit:lib-orphans` refused it: nothing in the product calls it, so it was a
+`src/lib` module reachable only from a test. The gate is right, and its baseline
+would have accepted an entry. Adding one would have recorded the refusal as
+normal. The module moved to `src/testing/` instead, which is what it actually
+is. Both suites sit in `src/components/source/__tests__`, which
+`source-component-suites.yml` runs wholesale — so the control is **wired**, not
+merely present. An unwired suite is indistinguishable from no suite.
 
 ## QA / Validation
 
@@ -72,13 +82,15 @@ none of them could see either defect, which is why this item exists.
 `1 of 25 failed`. The single failing case names both occurrences in its message,
 because both render on the same surface. After the fix: `25 of 25 passed`.
 
-**Mutation proofs — seven, each verified to have actually changed behaviour:**
+**Mutation proofs — seven, re-run after the relocation, each verified to have
+actually changed behaviour. Counts are over `src/components/source/__tests__`,
+the directory CI runs: 132 of 132 pass at baseline.**
 
 | # | Mutation | Result |
 |---|---|---|
 | 1 | Put the raw posture key back on the draft label | control fails, naming `decline_renewal` |
 | 2 | Put `<code>tower_watch</code>` back in the prose | control fails, naming `tower_watch` |
-| 3 | Blind the detector's identifier-shape rule | 6 of 16 detector cases fail **and** 1 control case fails |
+| 3 | Blind the detector's identifier-shape rule | 7 fail — 6 detector cases **and** 1 control case |
 | 4 | Remove the detector's false-positive guards | 2 cases fail — the filename and the address, i.e. the "must NOT be caught" direction |
 | 5 | Turn the derived exemption into a blanket pass | 1 control case fails |
 | 6 | Add an adjudication entry for a term that no longer renders | staleness check fails, naming the stale entry |
@@ -95,6 +107,17 @@ than the term it catches, because the cost lands on whoever writes the
 client-facing copy. Eight ordinary-copy cases are asserted to pass, including
 hyphenated English, currency, dates, client filenames and addresses, and the
 product's own agent name.
+
+**CI-gate regressions found and fixed in this PR, both real:**
+`audit:lib-orphans` (above) and the coverage-shape census. Both now pass locally.
+
+**The census refresh is mostly not mine, and the record should say so.** The
+committed census was measured on a pristine `origin/main` worktree at the same
+commit this branch forks from: it was **already stale there by +4 test files
+(+4 covered)**. This change contributes the other **+2**, both covered, and
+**zero** uncovered — the earlier `+1 uncovered` disappeared when the detector's
+suite moved into a directory a workflow runs. Quoting the full `+6` as this
+change's footprint would have been wrong.
 
 **Typecheck:** `NODE_OPTIONS=--max-old-space-size=6144 npx tsc --noEmit
 --pretty false` — exit `0`, no diagnostics. Judged on the exit code, since a

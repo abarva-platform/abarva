@@ -13,7 +13,7 @@
 import {
   describeBuilderVocabulary,
   findBuilderVocabulary,
-} from "../builder-vocabulary";
+} from "@/testing/source-builder-vocabulary";
 import { SOURCE_STAGE_LABELS } from "@/lib/source/constants";
 
 describe("builder vocabulary · terms that must be caught", () => {

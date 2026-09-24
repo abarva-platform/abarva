@@ -2,6 +2,12 @@
  * Item U-400 / `N3` in the Source master backlog: builder vocabulary must not
  * ship on a Source surface a client reads.
  *
+ * This lives in `src/testing/` rather than `src/lib/` deliberately. It is a
+ * control, so nothing in the product calls it, and `audit:lib-orphans` is
+ * right to refuse a `src/lib` module that only a test reaches. Baselining that
+ * refusal would have declared the defect normal; moving the module says what
+ * is actually true — this is test infrastructure.
+ *
  * The item is the **class**, not the two strings the master backlog names as
  * examples. This module defines that class once so a control can be run over
  * **rendered output** rather than over source text. That distinction is the
