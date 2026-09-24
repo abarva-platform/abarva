@@ -1934,6 +1934,7 @@ export async function POST(request: Request) {
   // false for it), so it keeps receiving the generic receipt exactly as
   // before — unchanged behavior for every mode this fix does not target.
   const contextBundlePromptBlockForPrompt =
+    movesAvaHardeningBlock.length > 0 ||
     shouldSuppressGenericContextBundleForSourceMode(sourceAvaAnswerMode) ||
     hasSourcePortfolioGrounding ||
     hasSourceContractGrounding
@@ -1983,11 +1984,14 @@ export async function POST(request: Request) {
   // and is the demonstrated leak vector. `stakeholder_alignment` and any
   // non-Source surface keep receiving this block exactly as before.
   const agentTenantContextBlockForPrompt =
+    movesAvaHardeningBlock.length > 0 ||
     shouldSuppressGenericContextBundleForSourceMode(sourceAvaAnswerMode) ||
     hasSourcePortfolioGrounding ||
     hasSourceContractGrounding
       ? ""
       : agentTenantContextBlock;
+  const crossProgramSignalsBlockForPrompt =
+    movesAvaHardeningBlock.length > 0 ? "" : crossProgramSignalsBlock;
 
   // aVa Source polish gate — 3rd attempt (follow-up to #4602 / #4605).
   //
@@ -2024,6 +2028,7 @@ export async function POST(request: Request) {
   // `stakeholder_alignment` and every non-Source surface keep receiving
   // `tenantSystemBlock` exactly as before.
   const tenantSystemBlockForPrompt =
+    movesAvaHardeningBlock.length > 0 ||
     shouldSuppressGenericContextBundleForSourceMode(sourceAvaAnswerMode) ||
     hasSourcePortfolioGrounding ||
     hasSourceContractGrounding
@@ -2225,7 +2230,7 @@ export async function POST(request: Request) {
     // (sourced from the broker bundle's cross_program_signal items) so
     // the agent can emit a `cross-program-signal` artifact grounded in
     // tenant data when relevant. Empty string elsewhere.
-    crossProgramSignalsBlock,
+    crossProgramSignalsBlockForPrompt,
     "",
     sourceTenantContextBlockForPrompt,
     "",
