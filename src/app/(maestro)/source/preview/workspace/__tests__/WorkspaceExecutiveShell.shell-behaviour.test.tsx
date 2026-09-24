@@ -10,11 +10,14 @@
  * affordance did not fail it. It is the same control, moved to the only
  * place that can actually fail: a rendered tree.
  *
- * Only ONE of the two candidate surfaces made the move, and the reason the
- * other did not is recorded on the retired case in the sibling suite:
- * `ContractGraphPage` is not mounted anywhere. Rendering it here would have
- * produced five green cases over a surface no reader can reach — they were
- * written, run green, and reverted.
+ * Only ONE of the two candidate surfaces made the move. The other had no
+ * surface left to render: the legacy graph renderer was mounted by nothing,
+ * five green cases written over it were reverted rather than kept, and
+ * U-503 has since deleted the renderer, its helpers and its stylesheet
+ * classes outright. What replaces that case is not a scan for the absent
+ * name — it is the reachability control in the sibling suite, which walks
+ * the module's reference graph out from its exports and fails on the next
+ * component the product cannot mount.
  */
 
 import { render, screen, within } from "@testing-library/react";
