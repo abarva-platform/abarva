@@ -1,27 +1,27 @@
 # Moves Deliverable Quality - Status
 
-**Updated:** 2026-09-24T13:29:00Z
+**Updated:** 2026-09-24T13:35:00Z
 **Agent:** codex
 **Branch:** codex/moves-deliverable-quality-rebuild
 **Head:** f8ab86d37
 
 ## Now
 
-Working in a clean worktree from `origin/main` on the deliverable-quality rebuild. Current slice is
-the exhibit truthfulness and structured exhibit-data contract. No deployment, data-plane mutation,
-or live tenant write is in scope for this branch.
+PR #8421 is open for the exhibit truthfulness, structured exhibit-data contract, and report-only
+golden-bar measurement slice. No deployment, data-plane mutation, or live tenant write is in scope
+for this branch.
 
 ## Items
 
 | # | Item | State | Evidence |
 |---|------|-------|----------|
-| 1 | Honest visual credit for generated documents and decks | in_progress | Deck exhibits are credited only when visual markup exists inside the matching exhibit block; focused Jest 64/64 and targeted ESLint pass locally; generated artifacts opened/read under `/tmp/moves-deliverable-quality-proof`. |
-| 2 | Structured exhibit data and no generic visual fallback | in_progress | `RenderableExhibit` now carries typed `data`; prompt asks for concrete drawable values; renderers omit missing-data exhibits instead of inventing generic diagrams; generated HTML/DOCX/PPTX proof confirms missing-data exhibit is omitted. |
+| 1 | Honest visual credit for generated documents and decks | pr_open | PR #8421; deck exhibits are credited only when visual markup exists inside the matching exhibit block; focused Jest 64/64 and targeted ESLint pass locally; generated artifacts opened/read under `/tmp/moves-deliverable-quality-proof`. |
+| 2 | Structured exhibit data and no generic visual fallback | pr_open | PR #8421; `RenderableExhibit` now carries typed `data`; prompt asks for concrete drawable values; renderers omit missing-data exhibits instead of inventing generic diagrams; generated HTML/DOCX/PPTX proof confirms missing-data exhibit is omitted. |
 | 3 | Model-authored storyline slides | not_started | Live PPTX path identified; this branch has not yet changed the slide authoring contract. |
 | 4 | Section elasticity for over-sectioned structures | not_started | Business-case reduction exists on main from earlier work; this branch has not changed additional structures. |
 | 5 | Red-test diagnosis | not_started | Pre-existing red suites named in the brief have not yet been diagnosed in this branch. |
 | 6 | Legacy small-model document route reachability | not_started | No production reachability check in this branch. |
-| 7 | Golden-bar signal measurement before enforcement | in_progress | Added report-only `moves:measure-golden-bar-signals` runner over caller-provided artifact exports. Production corpus measurement not run in this branch. |
+| 7 | Golden-bar signal measurement before enforcement | pr_open | PR #8421 adds report-only `moves:measure-golden-bar-signals` runner over caller-provided artifact exports. Production corpus measurement not run in this branch. |
 | 8 | Human exemplars, judge, and calibration corpus | not_started | Requires human-owned exemplars before judge work can be meaningful. |
 
 ## Measurements
