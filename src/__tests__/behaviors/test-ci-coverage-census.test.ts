@@ -54,12 +54,19 @@ type Census = {
     directoriesPartiallyCovered: number;
     directoriesUncovered: number;
     directoriesWithUnrunTestFiles: number;
+    directoriesWithUntriagedUnrunTestFiles: number;
     declaredQuarantineTestFiles: number;
     untriagedUnrunTestFiles: number;
     indeterminateInvocations: number;
     criticalGovernedRiskDirectories: number;
     highGovernedRiskDirectories: number;
     unclassifiedRiskDirectories: number;
+    // The two halves of that word. `unclassified` means either "the census
+    // resolved this directory's product modules and none of the three signals
+    // matched" or "the census resolved nothing, so it is saying something about
+    // its own reach". These separate them, and they sum to the line above.
+    unclassifiedRiskDirectoriesWithResolvedProductSources: number;
+    unclassifiedRiskDirectoriesWithNoResolvedProductSource: number;
   };
   indeterminateInvocations: { source: string; invocation: string }[];
   unresolvedIgnoreArguments: { script: string; source: string; reason: string }[];
@@ -78,6 +85,7 @@ type Census = {
       score: number;
       band: "critical" | "high";
       signals: string[];
+      productSourceCount: number;
       controlIds?: string[];
       approvalOrLifecycleSourceCount?: number;
       approvalOrLifecycleSources?: string[];
@@ -96,6 +104,23 @@ type Census = {
       score: number;
       band: "critical" | "high" | "unclassified";
       signals: string[];
+      productSourceCount: number;
+    };
+  }[];
+  // Every directory holding an untriaged unrun file that the ranking does not
+  // carry, because its score is zero. Published so the zero can be read: a
+  // directory here with `productSourceCount: 0` is unmeasured, not safe.
+  unclassifiedRiskDirectories: {
+    directory: string;
+    testFiles: number;
+    unrunTestFiles: number;
+    declaredQuarantineTestFiles: number;
+    untriagedUnrunTestFiles: number;
+    governedRisk: {
+      score: 0;
+      band: "unclassified";
+      signals: [];
+      productSourceCount: number;
     };
   }[];
   governedRiskFiles: {
@@ -115,6 +140,13 @@ type Census = {
     covered: boolean;
     declaredQuarantine: boolean;
     untriaged: boolean;
+    governedRisk: {
+      rank: number;
+      score: number;
+      band: "critical" | "high";
+      signals: string[];
+      productSourceCount: number;
+    };
   }[];
   uncoveredDirectories: {
     directory: string;
@@ -805,6 +837,148 @@ describe("test CI coverage census", () => {
       "unclassified",
     );
     expect(riskFor("src/app/api/epsilon/__tests__")?.signals ?? []).toEqual([]);
+  });
+  /**
+   * `unclassified` is two different facts wearing one word, and until this case
+   * existed the census could not tell them apart.
+   *
+   * A directory scores zero either because the census resolved the product
+   * modules its tests import and none of the three signals matched — genuinely
+   * low risk, as far as this measurement reaches — or because it resolved no
+   * product module at all, in which case the census knows nothing about the
+   * directory and `unclassified` is a statement about the resolver rather than
+   * about the code. 180 of the 190 directories holding an untriaged unrun file
+   * land in that word, so which of the two it means decides whether a
+   * triage queue built from this file is ordered or merely short (T-758).
+   *
+   * The two arms below are identical in every published field the census had
+   * before this case: same band, same score, same empty signal list, both
+   * absent from `governedRiskRanking` because that list is filtered on a
+   * non-zero score. The ONLY thing that separates them is how many product
+   * modules resolved, which is why that number has to be on the face of the
+   * output rather than inferable from it.
+   *
+   * Both test files are named so the census's inferred sibling
+   * (`.../<name>.ts` beside `.../__tests__/<name>.test.ts`) does not exist:
+   * without that discipline the unresolved arm picks up an edge for free and
+   * the case proves nothing.
+   */
+  it("separates an unclassified directory that resolved product sources from one that resolved none", () => {
+    const dir = fixture({
+      // Arm A — resolves one real product module. It matches no signal: no
+      // catalog entry, no approval or lifecycle write, no tenant-scoped read.
+      "src/lib/plain/format.ts": "export const format = (s: string) => s.trim();\n",
+      "src/lib/plain/__tests__/formatting.test.ts": [
+        'import { format } from "../format";',
+        'it("formats", () => expect(format(" x ")).toBe("x"));',
+      ].join("\n"),
+      // Arm B — resolves nothing. The specifier is a bare package, which is a
+      // dependency rather than a product module, so the census follows no edge
+      // out of this directory at all.
+      "src/lib/opaque/__tests__/opacity.test.ts": [
+        'import path from "node:path";',
+        'it("opaque", () => expect(typeof path.join).toBe("function"));',
+      ].join("\n"),
+      // Arm C — a directory that DOES score, present so the two lists can be
+      // shown to partition the population rather than merely to be non-empty.
+      // Without it, a filter that swept every directory into the unclassified
+      // list would look identical to one that took the complement of the
+      // ranking, because the ranking would be empty either way.
+      "src/app/api/theta/route.ts":
+        "export async function POST() { return approve({ value: true }); }\n",
+      "src/app/api/theta/__tests__/approving.test.ts": [
+        'import { POST } from "../route";',
+        'it("approves", () => expect(typeof POST).toBe("function"));',
+      ].join("\n"),
+      ".github/workflows/gate.yml": PR_WORKFLOW("echo nothing"),
+    });
+
+    const { census } = runCensus(dir);
+
+    // Three directories hold an untriaged unrun file; one scores and two do
+    // not. The two lists are complements over that population, which is the
+    // property the counts below are arithmetic on.
+    expect(census.counts.directoriesWithUntriagedUnrunTestFiles).toBe(3);
+    expect(census.counts.unclassifiedRiskDirectories).toBe(2);
+    expect(census.governedRiskRanking.map((row) => row.directory)).toEqual([
+      "src/app/api/theta/__tests__",
+    ]);
+
+    // The split, by number.
+    expect(census.counts).toMatchObject({
+      unclassifiedRiskDirectoriesWithResolvedProductSources: 1,
+      unclassifiedRiskDirectoriesWithNoResolvedProductSource: 1,
+    });
+    // The two are exhaustive of the word, asserted rather than assumed: a third
+    // bucket appearing later must not quietly leave part of the 180 unexplained.
+    expect(
+      census.counts.unclassifiedRiskDirectoriesWithResolvedProductSources +
+        census.counts.unclassifiedRiskDirectoriesWithNoResolvedProductSource,
+    ).toBe(census.counts.unclassifiedRiskDirectories);
+
+    // The per-directory count, which is what makes a single row readable rather
+    // than only the population.
+    const unclassified = new Map(
+      census.unclassifiedRiskDirectories.map((row) => [row.directory, row]),
+    );
+    expect([...unclassified.keys()].sort()).toEqual([
+      "src/lib/opaque/__tests__",
+      "src/lib/plain/__tests__",
+    ]);
+    // Stated as its own assertion rather than left implicit in the list above:
+    // a ranked directory belongs to the ranking and to nothing else, or the two
+    // published lists double-count the population they split.
+    expect(unclassified.has("src/app/api/theta/__tests__")).toBe(false);
+    expect(unclassified.get("src/lib/plain/__tests__")).toMatchObject({
+      untriagedUnrunTestFiles: 1,
+      governedRisk: { band: "unclassified", score: 0, signals: [], productSourceCount: 1 },
+    });
+    expect(unclassified.get("src/lib/opaque/__tests__")).toMatchObject({
+      untriagedUnrunTestFiles: 1,
+      governedRisk: { band: "unclassified", score: 0, signals: [], productSourceCount: 0 },
+    });
+    // The list and the count are two computations over the same population, so
+    // they are checked against each other. A header that disagrees with its own
+    // body is the shape this census has already been caught in once.
+    expect(census.unclassifiedRiskDirectories.length).toBe(
+      census.counts.unclassifiedRiskDirectories,
+    );
+
+    // The summary says it in words, because the JSON is not what a person reads
+    // when they are deciding what to triage next.
+    expect(runSummary(dir)).toContain(
+      "unclassified: 2 (1 resolved no product source, so the band is the resolver's silence)",
+    );
+  });
+
+  /**
+   * The companion to the case above, and the reason `productSourceCount` is
+   * published on every directory rather than only on the unclassified ones: a
+   * RANKED directory carries it too, so the number that explains a zero score
+   * is the same number, read the same way, on a row that scored.
+   */
+  it("publishes the resolved product source count on a ranked directory as well", () => {
+    const dir = fixture({
+      "src/app/api/zeta/route.ts":
+        "export async function POST() { return approve({ value: true }); }\n",
+      "src/app/api/zeta/__tests__/posting.test.ts": [
+        'import { POST } from "../route";',
+        'it("posts", () => expect(typeof POST).toBe("function"));',
+      ].join("\n"),
+      ".github/workflows/gate.yml": PR_WORKFLOW("echo nothing"),
+    });
+
+    const { census } = runCensus(dir);
+    const ranked = census.governedRiskRanking.find(
+      (row) => row.directory === "src/app/api/zeta/__tests__",
+    );
+    expect(ranked?.governedRisk.band).toBe("critical");
+    expect(ranked?.governedRisk.productSourceCount).toBe(1);
+    expect(
+      census.governedRiskFiles.find(
+        (row) => row.testPath === "src/app/api/zeta/__tests__/posting.test.ts",
+      )?.governedRisk.productSourceCount,
+    ).toBe(1);
   });
 
   it("does not promote comments and literals into governed source signals", () => {

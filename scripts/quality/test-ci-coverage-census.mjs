@@ -508,6 +508,14 @@ export function governedRiskForDirectory(root, testFiles, catalogPaths) {
     score,
     band,
     signals,
+    // Always present, including on a zero score, because a zero score means two
+    // different things and this is the only field that separates them: a
+    // directory whose product modules resolved and matched no signal is as
+    // measured as this census gets, and a directory where nothing resolved is
+    // not measured at all. Both used to print an identical `unclassified`
+    // (T-758). Counted before the signal loop, so it reports what the resolver
+    // reached rather than what the regexes then made of it.
+    productSourceCount: productSources.length,
     ...(controlIds.length > 0 ? { controlIds } : {}),
     ...(approvalSources.length > 0
       ? {
@@ -1213,6 +1221,7 @@ export function buildCensus(root, { includeUnrunPaths = false } = {}) {
       score: row.governedRisk.score,
       band: row.governedRisk.band,
       signals: row.governedRisk.signals,
+      productSourceCount: row.governedRisk.productSourceCount,
       rank: row.governedRisk.rank,
     },
   }));
@@ -1233,6 +1242,7 @@ export function buildCensus(root, { includeUnrunPaths = false } = {}) {
         score: row.governedRisk.score,
         band: row.governedRisk.band,
         signals: row.governedRisk.signals,
+        productSourceCount: row.governedRisk.productSourceCount,
         rank: row.governedRisk.rank,
       },
     })),
@@ -1272,6 +1282,39 @@ export function buildCensus(root, { includeUnrunPaths = false } = {}) {
   const directoriesWithUntriagedUnrunTestFiles = rows.filter(
     (row) => row.untriagedUnrunTestFiles > 0,
   );
+  // `unclassifiedRiskDirectories` was a subtraction and nothing else: the
+  // directories it counted appeared in no list, so 180 of the 190 directories
+  // holding untriaged unrun work were a number with no rows behind it. They are
+  // published here, each carrying the count of product modules its tests
+  // resolved, because that count is what separates "measured, and nothing
+  // matched" from "the census followed no import out of this directory". The
+  // filter is the exact complement of `governedRiskRows`, over the exact same
+  // denominator, so the two partition that population rather than approximating
+  // it (T-758).
+  const unclassifiedRiskDirectories = directoriesWithUntriagedUnrunTestFiles
+    .filter((row) => row.governedRisk.score === 0)
+    .sort(
+      (a, b) =>
+        a.governedRisk.productSourceCount - b.governedRisk.productSourceCount ||
+        b.untriagedUnrunTestFiles - a.untriagedUnrunTestFiles ||
+        a.directory.localeCompare(b.directory),
+    )
+    .map((row) => ({
+      directory: row.directory,
+      testFiles: row.testFiles,
+      unrunTestFiles: row.unrunTestFiles,
+      declaredQuarantineTestFiles: row.declaredQuarantineTestFiles,
+      untriagedUnrunTestFiles: row.untriagedUnrunTestFiles,
+      governedRisk: {
+        score: row.governedRisk.score,
+        band: row.governedRisk.band,
+        signals: row.governedRisk.signals,
+        productSourceCount: row.governedRisk.productSourceCount,
+      },
+    }));
+  const unclassifiedWithNoResolvedProductSource = unclassifiedRiskDirectories.filter(
+    (row) => row.governedRisk.productSourceCount === 0,
+  );
 
   return {
     subject:
@@ -1288,6 +1331,7 @@ export function buildCensus(root, { includeUnrunPaths = false } = {}) {
       "Every directory holding an UNTRIAGED unrun file is ranked by governed-surface risk: declared AI controls, approval or lifecycle writes, then tenant-scoped reads; the count of unrun files is only a tie-breaker. A directory whose unrun set is entirely declared quarantine is not ranked, because it has already been triaged.",
       "Governed-risk signals come from product modules a test loads at runtime, not from directory names alone; type-only imports are erased before the test runs and are not counted as edges.",
       "Evidence source lists for the top 25 governed-risk directories are sorted and capped at five paths per signal; companion counts preserve the full match cardinality.",
+      "productSourceCount is the number of product modules the directory's tests resolved at run time, published on every directory including the unranked ones. An unclassified directory with a non-zero count was measured and matched no signal; one with zero resolved no import at all, so its band describes this census's reach rather than that directory's risk. unclassifiedRiskDirectories lists every such directory and the two counts beside it split them.",
       "No timestamp is recorded, so refreshing this file on an unchanged tree is a no-op.",
     ],
     counts: {
@@ -1317,6 +1361,14 @@ export function buildCensus(root, { includeUnrunPaths = false } = {}) {
       unclassifiedRiskDirectories:
         directoriesWithUntriagedUnrunTestFiles.length -
         governedRiskRanking.length,
+      // The two halves of that word, and they are counted from the rows rather
+      // than derived from each other, so a disagreement between the pair and
+      // the line above is visible instead of arithmetically impossible.
+      unclassifiedRiskDirectoriesWithResolvedProductSources:
+        unclassifiedRiskDirectories.length -
+        unclassifiedWithNoResolvedProductSource.length,
+      unclassifiedRiskDirectoriesWithNoResolvedProductSource:
+        unclassifiedWithNoResolvedProductSource.length,
     },
     indeterminateInvocations: indeterminate,
     // Every runner invocation a workflow-reachable script TALKS ABOUT without
@@ -1336,6 +1388,7 @@ export function buildCensus(root, { includeUnrunPaths = false } = {}) {
     ),
     governedRiskFiles,
     governedRiskRanking,
+    unclassifiedRiskDirectories,
     governedRiskEvidence,
     uncoveredDirectories,
     ...(includeUnrunPaths
@@ -1363,6 +1416,10 @@ function summarize(census) {
     `  run by no workflow, untriaged: ${c.untriagedUnrunTestFiles} (${c.declaredQuarantineTestFiles} are declared quarantines)`,
     `  directories with unrun tests:   ${c.directoriesWithUnrunTestFiles} (${c.directoriesWithUntriagedUnrunTestFiles} hold an untriaged file)`,
     `  governed risk among them:       ${c.criticalGovernedRiskDirectories} critical, ${c.highGovernedRiskDirectories} high`,
+    // The rest of that population, which the two lines above leave out. Worded
+    // so the zero-source half cannot be read as an all-clear: the census did
+    // not look at those directories and find nothing, it failed to look.
+    `    unclassified: ${c.unclassifiedRiskDirectories} (${c.unclassifiedRiskDirectoriesWithNoResolvedProductSource} resolved no product source, so the band is the resolver's silence)`,
   ];
   if (c.indeterminateInvocations > 0) {
     lines.push(
@@ -1480,10 +1537,21 @@ export function describeShapeDrift(measured, committedPath) {
     };
   }
 
+  // `unmeasured` is a set, not a count, for the same reason the other two are:
+  // it moves when a directory changes what the census can resolve about it, and
+  // not on every pull request that adds a test. A directory that silently stops
+  // resolving its imports would otherwise slide from "measured, no signal" to
+  // "unmeasured" with no output changing shape — which is how `unclassified`
+  // came to cover 180 directories unnoticed in the first place (T-758).
   const shape = (census) => ({
     uncovered: new Set((census.uncoveredDirectories ?? []).map((r) => r.directory)),
     partial: new Set(
       (census.partiallyCoveredDirectories ?? []).map((r) => r.directory),
+    ),
+    unmeasured: new Set(
+      (census.unclassifiedRiskDirectories ?? [])
+        .filter((r) => r.governedRisk?.productSourceCount === 0)
+        .map((r) => r.directory),
     ),
   });
   const was = shape(committed);
@@ -1495,6 +1563,8 @@ export function describeShapeDrift(measured, committedPath) {
     ...missing(was.uncovered, now.uncovered).map((d) => `-uncovered ${d}`),
     ...missing(now.partial, was.partial).map((d) => `+partial ${d}`),
     ...missing(was.partial, now.partial).map((d) => `-partial ${d}`),
+    ...missing(now.unmeasured, was.unmeasured).map((d) => `+unmeasured ${d}`),
+    ...missing(was.unmeasured, now.unmeasured).map((d) => `-unmeasured ${d}`),
   ];
 
   if (changes.length === 0) {
@@ -1529,7 +1599,17 @@ export function describeDrift(measured, committedPath) {
   // stale. A drift report that cannot fail is worse than none, because it is
   // read as assurance. So the fields are resolved explicitly and a missing one
   // is reported rather than skipped.
-  const FIELDS = ["testFiles", "coveredTestFiles", "uncoveredTestFiles"];
+  // The two unclassified-split fields are here for the reason the comment above
+  // gives: a field this report does not name is a field that can go stale with
+  // the report printing "matches this run". They were added with the split
+  // itself (T-758) rather than left for whoever next noticed the omission.
+  const FIELDS = [
+    "testFiles",
+    "coveredTestFiles",
+    "uncoveredTestFiles",
+    "unclassifiedRiskDirectoriesWithResolvedProductSources",
+    "unclassifiedRiskDirectoriesWithNoResolvedProductSource",
+  ];
   const before = committed?.counts ?? {};
   const after = measured?.counts ?? {};
 
