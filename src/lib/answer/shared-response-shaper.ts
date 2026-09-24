@@ -140,20 +140,35 @@ function isStockInstruction(text: string): boolean {
 // single newlines, no blank lines. Counting paragraphs there would return 1
 // for every input the rebuild can produce.
 //
-// RECORDED RATHER THAN QUIETLY FIXED: today that is true of the line count
-// too. `lines` is capped at `maxParagraphs` entries and every entry is
-// single-line by construction (`trimWords` joins on spaces, the table and
-// bullet summaries join on "; "), so this half of its caller's `&&` has no
-// reachable FALSE case and the gate's real work is the character check
-// beside it. A mutation swapping this for a paragraph count therefore
-// SURVIVES the C-503 suite, and that is reported in the pull request rather
-// than papered over with a test that pins nothing. The one insertion path
-// that could add a line — `normalizeAssemblyArtifacts` rewriting
-// " — Breakdown:" to a newline — was tried against this rebuild and is
-// consumed upstream by `cleanLeadLine`, measured, not assumed. Filed as
-// backlog item C-505; removing a redundant guard is not C-503's change to
-// make, and the line unit is the correct one to leave standing while the
-// thing being measured is spelled in lines.
+// C-505 CORRECTED, BY MEASUREMENT: this is NOT a redundant guard, and the
+// claim that stood here — that its caller's second operand "has no reachable
+// FALSE case" — was wrong. C-503 measured the em-dash form of the
+// `normalizeAssemblyArtifacts` " — Breakdown:" rewrite against the PROSE
+// path, where it is genuinely consumed: `proseOnly` is re-run through
+// `normalizeAssemblyArtifacts` inside `compactForChat`, so the lead, the
+// support bullets and the next line cannot carry it. Two things that
+// measurement did not cover:
+//
+//  - `tableToCompactLines` reads `normalized`, which is the ONE text feeding
+//    the rebuild that is not re-run through `normalizeAssemblyArtifacts`
+//    after `replaceLabels` has substituted caller-supplied label text into
+//    the answer.
+//  - The table branch neutralises the em dash only (`/\s+—\s+/g` to ": "),
+//    while the artifact rule matches a hyphen, an en dash AND an em dash.
+//
+// So a label carrying `" - Breakdown: "` reaches the rebuild live and breaks
+// one entry across two lines. Measured through the public entry point: a
+// first rebuild of 534 characters against a 900-character target — the
+// character half passes it — at six visible lines against a five-line
+// budget, so this half rejects it and the harsher second rebuild answers
+// instead. Pinned by
+// `src/__tests__/behaviors/shared-shaper-compact-line-gate.test.ts`, which
+// also kills the paragraph-count mutation that survived the C-503 suite.
+//
+// Do not delete the operand beside this, and do not widen this function to
+// count paragraphs — the suite turns red on both. Closing the path by
+// widening the table branch to `[-–—]` is a real option and a real behaviour
+// change on table answers; it belongs to its own reviewed item.
 function countCompactLines(text: string): number {
   return lineSplit(text).length;
 }
