@@ -1022,6 +1022,33 @@ const BLOCKER_RULES = [
   // the owner" and any mid-sentence mention stay out. Measured on the live
   // register, it changes the blocker of EXACTLY ONE item, that one.
   //
+  // ITEM T-761 — the same term, one word later, and the same cost twice more.
+  //
+  // The form above matched the literal noun phrase, so an adjective between
+  // the article and the noun defeated it — and both live rows that state
+  // their gate this way put one there. `C-504`'s acceptance opens "A product
+  // decision, not a code decision, and it is stated that way on purpose";
+  // `D-044`'s opens "A disambiguation decision precedes the code and an agent
+  // must not guess it". Measured by execution on `origin/main` `e47dd94e5`,
+  // both derived `blocker: null`, and `EXECUTION_QUEUE.md` offered both as
+  // claimable — 2 of the 9 rows it had to offer. That is precisely the
+  // outcome the paragraph above names as the reason this term exists.
+  //
+  // The slot is BOUNDED at two words and the anchor is untouched, which is
+  // what keeps this from becoming the un-narrowing the `signed-in` detector
+  // had to be rescued from: "A test that pins the decision boundary" has four
+  // words in the slot and stays out, and a mid-sentence "took a product
+  // decision" has no anchor and stays out. Both are cases in the suite, and
+  // both FAIL if the slot is written unbounded or the anchor is dropped.
+  //
+  // `An` is admitted for symmetry and is measured to change NOTHING on the
+  // live corpus today: no row states a gate in that form. It is here so the
+  // next row that writes "An architectural decision precedes the code" is not
+  // this same item a third time.
+  //
+  // Measured on the live corpus, this widening changes the blocker of exactly
+  // the two items named above and no others — extras zero, in both
+  // directions.
   // This is a WIDENING, and the detector was narrowed once before for good
   // reason: re-scanning raw prose made every descriptive use of "signed-in"
   // an owner gate. So both forms are anchored. `Decide` must open a sentence
@@ -1029,7 +1056,7 @@ const BLOCKER_RULES = [
   // owner to decide anything" and "Deciding which suite to wire was settled"
   // out; and the deferral form names who does the deciding rather than
   // matching the verb anywhere it appears.
-  { re: /decision needed|decision required|Content decision|\bproduct call\b|\bowner'?s call\b|blocked on owner policy|(?:^|[.!?;:]\s+|\n\s*|\*\*)Decide\b|\b(?:until|before)\s+(?:a human|an owner|a person|the owner|Anand|someone)\s+decides\b|(?:^|[.!?;:]\s+|\n\s*|\*\*)A decision\b/i, say: "Decision needed", decisionGate: true, ownerGate: true },
+  { re: /decision needed|decision required|Content decision|\bproduct call\b|\bowner'?s call\b|blocked on owner policy|(?:^|[.!?;:]\s+|\n\s*|\*\*)Decide\b|\b(?:until|before)\s+(?:a human|an owner|a person|the owner|Anand|someone)\s+decides\b|(?:^|[.!?;:]\s+|\n\s*|\*\*)An?\s+(?:[a-z][a-z-]*\s+){0,2}decision\b/i, say: "Decision needed", decisionGate: true, ownerGate: true },
   // Item T-703. This was a bare `\bblocked\b` — no anchoring, no veto — while
   // the decision rule directly above has both, added after raw prose made
   // every descriptive use of a word into an owner gate. T-700 gave this rule

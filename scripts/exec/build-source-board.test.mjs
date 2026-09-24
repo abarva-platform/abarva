@@ -803,6 +803,132 @@ console.log("\nbuild-source-board — an owner decision stated as a noun phrase 
   fs.rmSync(dir, { recursive: true, force: true });
 }
 
+console.log("\nbuild-source-board — an owner decision qualified by an adjective (T-761)\n");
+
+/* ------------------------------------------------------------------------ *
+ * 22a. THE SAME DEFECT AS 21, ONE WORD LATER. The U-502 term anchors on the
+ *      literal noun phrase "A decision", so an adjective between the article
+ *      and the noun defeats it — and both live rows that state their gate
+ *      this way put one there. These are the ACTUAL opening sentences of
+ *      `C-504` and `D-044` on `origin/main` `e47dd94e5`, not phrasings
+ *      invented to match a pattern: both derived `blocker: null` and both
+ *      were offered by `EXECUTION_QUEUE.md` as claimable, which is 2 of the
+ *      9 rows it offered. Case 21's comment names that outcome — "the queue
+ *      would have offered an owner decision to the next agent as free work"
+ *      — as the reason its term exists.
+ *
+ *      READ THE SECOND CASE'S NAME EXACTLY AS IT IS WRITTEN. Over the live
+ *      corpus this change moves ONE item, `D-044`, and `C-504` STAYS
+ *      `null` — so this fixture reaches a branch the live `C-504` row does
+ *      not, and saying otherwise would be the shape this suite exists
+ *      against. The difference is the anchor, not the sentence: `D-044`
+ *      opens its acceptance in bold and matches on `\*\*`, while `C-504`
+ *      writes it plain after a title cell that ends with no terminal
+ *      punctuation — and `bodyCorpus` joins title to acceptance with a
+ *      SPACE, so the head of the acceptance cell is not a sentence start at
+ *      all. That is a SECOND and INDEPENDENT cause, measured at **31 items**
+ *      over the live corpus and filed as `T-762`; it is not fixed here,
+ *      because repairing it also REPLACES 8 gates that are currently
+ *      `Signed-in acceptance owed` or `Blocked`, which is a re-ranking the
+ *      generator's own comment reserves for an attributed change of its own.
+ *      The fixture titles below therefore end with a plain full stop, which
+ *      is the shape case 21 records as required, and the case below speaks
+ *      for the SENTENCE FORM only.
+ * ------------------------------------------------------------------------ */
+for (const [id, acceptance, why] of [
+  [
+    "T-952",
+    "A product decision, not a code decision, and it is stated that way on purpose: losing 83% of a governed answer is a worse failure than a long one.",
+    "an adjective before the noun (C-504's live sentence; its live ROW is still null — see T-762)",
+  ],
+  [
+    "T-953",
+    "A disambiguation decision precedes the code and an agent must not guess it.",
+    "a longer adjective before the noun (D-044's live row, which this change repairs)",
+  ],
+]) {
+  const dir = freshFixture();
+  addBacklogItem(dir, id, "Nine modules are reached by no product entry point.", acceptance);
+  buildBoard(dir);
+  const item = summaryItems(dir).out.get(id);
+  check(
+    `an owner decision qualified by ${why} is not offered as free work`,
+    item?.blocker === "Decision needed",
+    `rung=${item?.rung} (${item?.rungLabel}) blocker=${JSON.stringify(item?.blocker ?? null)}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+/* ------------------------------------------------------------------------ *
+ * 22b. THE GUARDRAILS FOR THE WIDENING, which are the half that matters:
+ *      the adjective slot opens a new way in at the one position the anchor
+ *      allows, so case 22 — which proves a MID-sentence mention stays out —
+ *      cannot speak for this change.
+ *
+ *      Both pass on unfixed code BY DESIGN. They are the guardrails, not the
+ *      defect, and their job is to fail if the slot is written without a
+ *      bound or the anchor is dropped to reach the two cases above.
+ *
+ *      BODY IS DELIBERATELY UNRESOLVED. Case 22 and the first draft of these
+ *      used `**The work is done.**`, and that makes the case VACUOUS:
+ *      `deriveBlocker` reads the body ALONE for a decision gate once the rung
+ *      resolves, so the acceptance under test is never consulted. Measured,
+ *      not reasoned — substituting case 21's own gate sentence, the one that
+ *      file proves IS a gate, into such a row still reads no gate and the
+ *      case still passes. Reported as a residual against case 22 rather than
+ *      rewritten here; these two are written so the rule is genuinely run.
+ * ------------------------------------------------------------------------ */
+for (const [id, acceptance, why, breaks] of [
+  [
+    "T-954",
+    "A test that pins the decision boundary for this loader is added alongside the fix.",
+    "four words between the article and the noun",
+    "an unbounded adjective slot",
+  ],
+  [
+    "T-955",
+    "The change is done and the owner already took a product decision here.",
+    "an adjective-qualified decision named mid-sentence",
+    "dropping the anchor",
+  ],
+]) {
+  const dir = freshFixture();
+  addBacklogItem(dir, id, "Nine modules are reached by no product entry point.", acceptance);
+  buildBoard(dir);
+  const item = summaryItems(dir).out.get(id);
+  check(
+    `${why} is not read as an owner gate — this fails under ${breaks}`,
+    item?.blocker !== "Decision needed",
+    `rung=${item?.rung} (${item?.rungLabel}) blocker=${JSON.stringify(item?.blocker ?? null)}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+/* ------------------------------------------------------------------------ *
+ * 22c. THE SLOT IS NOT VACUOUS IN THE OTHER DIRECTION EITHER. The bare noun
+ *      phrase case 21 pins must keep matching once an optional slot sits in
+ *      front of it — a `{1,2}` quantifier written where `{0,2}` was meant
+ *      passes every case above and silently un-gates the live row that
+ *      forced the U-502 term.
+ * ------------------------------------------------------------------------ */
+{
+  const dir = freshFixture();
+  addBacklogItem(
+    dir,
+    "T-956",
+    "Nine modules are reached by no product entry point.",
+    "A decision, then the work that follows from it: mount them or retire them.",
+  );
+  buildBoard(dir);
+  const item = summaryItems(dir).out.get("T-956");
+  check(
+    "the bare noun phrase still reads as a gate with the slot empty",
+    item?.blocker === "Decision needed",
+    `rung=${item?.rung} (${item?.rungLabel}) blocker=${JSON.stringify(item?.blocker ?? null)}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
 console.log("\nbuild-source-board — the lane comes from the named column (T-737)\n");
 
 /* ------------------------------------------------------------------------ *
