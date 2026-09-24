@@ -41,8 +41,13 @@ const GOVERNED_ELSEWHERE = "src/__tests__";
  *   in that change (`source/ava`) was already partially covered, so clearing
  *   its last unrun file moved it out of the partial set without changing this
  *   count.
+ * 2026-09-24: 171 after T-754 wired five of the eight suites T-475 verdicted
+ *   `wire_into_ci`. One, not two: `source/candidate-suppliers/__tests__` was
+ *   0 of 3 covered and is now 3 of 3, which is the decrease. The other
+ *   directory the same step clears, `data-plane/__tests__`, was already 1 of 3
+ *   and moved out of the PARTIAL set — the `source/ava` case above, again.
  */
-const DARK_PRODUCT_DIRECTORY_COUNT = 172;
+const DARK_PRODUCT_DIRECTORY_COUNT = 171;
 
 type Census = {
   counts: { indeterminateInvocations: number };

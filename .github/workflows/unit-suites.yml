@@ -1119,6 +1119,69 @@ jobs:
           src/lib/governance/__tests__/dataset-manifest.test.ts
           --no-coverage --ci
 
+      # Five of the eight suites T-475 verdicted `wire_into_ci`, of the twelve
+      # it drew from the census's own governed-risk ranking. 5 suites / 18
+      # tests, measured on `2f6cac9d5` by running them as one jest process —
+      # which is what this step does, and is not the same evidence as running
+      # them one at a time. All five were unreached by any workflow and any npm
+      # script, measured through the census resolver rather than by reading
+      # YAML.
+      #
+      # What they hold: the data-plane read client's SQL guards and the blob
+      # upload fallback path, the candidate-supplier tenant fence, the
+      # acceptance approval minimums, and the candidate authority pre-query
+      # fence. Each caught a deliberate break in T-475's mutation pass, so none
+      # of them is coverage over nothing.
+      #
+      # FIVE, NOT THE EIGHT THE ITEM ASKED FOR. Three of the eight are named in
+      # the quarantine list of `src/__tests__/behaviors/source-contract-suite-ci-coverage.test.ts`,
+      # a control that runs today and asserts no jest command in this file
+      # mentions them. T-475's draw reached `wire_into_ci` from "green, and
+      # governed risk" without reading it — the same collision T-557 hit and
+      # resolved the same way. Two of the three reasons were re-measured here
+      # with the census's own import parser and are still exactly true:
+      # `contract-intelligence/prompt.ts` and `provenance.ts` have 0 non-test
+      # importers, so wiring them would add a number to the census without
+      # covering any code a product path reaches. The third,
+      # `contract-evidence/read-model.test.ts`, is held because its stated
+      # reason is undischarged, not because it is dead. The withheld three, and
+      # the executable check on each reason, are in
+      # `src/__tests__/behaviors/t754-credited-suite-wiring.test.ts`.
+      #
+      # Named FILE BY FILE, which is the opposite of the directory steps above,
+      # and the reason is specific rather than stylistic. Of the twelve T-475
+      # drew, one is `repair` (T-755) and three are
+      # `update_with_reason_recorded` (T-756), and they share directories with
+      # credited ones:
+      #
+      #   src/lib/source/contract-evidence/__tests__  persistence held by
+      #     T-755, templates held by T-756
+      #   src/lib/enterprise-context/__tests__  both files held by T-756, one
+      #     of them red against the #7795 separation
+      #
+      # A sweep over either parent would run a suite whose own item is open —
+      # including a red one — and would do it silently. `--runTestsByPath` is
+      # what makes "named individually" literal: a bare jest path argument is a
+      # regex against the full path, so a future sibling whose name this one
+      # prefixes would be adopted without anyone choosing it.
+      #
+      # The cost of that choice, stated rather than left implicit: a suite
+      # added to `src/lib/data-plane/__tests__` or
+      # `src/lib/source/candidate-suppliers/__tests__` tomorrow will NOT run
+      # here. That is the correct trade only while the held items are open.
+      # When they close, the right repair is to collapse this list into its
+      # parents, and the behaviour suite named above is what fails when the
+      # collapse happens without them.
+      - name: Run the five suites T-475 credited that no earlier record holds
+        run: >-
+          npx jest --runTestsByPath
+          src/lib/data-plane/__tests__/azure-read.test.ts
+          src/lib/data-plane/__tests__/objectStorage.test.ts
+          src/lib/source/candidate-suppliers/__tests__/candidate-supplier-registry-repository.test.ts
+          src/lib/source/candidate-suppliers/__tests__/event-candidate-acceptance-repository.test.ts
+          src/lib/source/candidate-suppliers/__tests__/event-candidate-authority-repository.test.ts
+          --no-coverage --ci
+
       - name: Refuse a test run that modified committed input data
         if: always()
         run: node scripts/ci/assert-datasets-unmodified.mjs
