@@ -36,6 +36,85 @@ import { readFileSync } from "node:fs";
 
 const WORKSPACE_DIR = `${__dirname}/..`;
 
+/**
+ * Top-level declarations of `WorkspaceExecutiveShell.tsx` that nothing
+ * exported by the module can reach, by walking the file's own reference
+ * graph from its exports.
+ *
+ * This is deliberately NOT a scan for a name. A name scan over a deleted
+ * renderer is the defect U-503 exists to repair — thirteen assertions stayed
+ * green for a fortnight because bytes on disk survive a component becoming
+ * unreachable, and a scan asserting a name is ABSENT has the mirror problem:
+ * it outlives its subject and passes forever over a file it no longer
+ * describes. This control's subject is whatever the file declares at the
+ * moment it runs, so it cannot go stale, and it fails the day anyone adds a
+ * component the product cannot mount. It reads `sourceCode()`, so a comment
+ * mentioning `<ContractGraphPage` cannot manufacture an edge.
+ */
+function topLevelSymbolsUnreachableFromExports(source: string): string[] {
+  const lines = source.split("\n");
+  const declaration =
+    /^(export\s+)?(?:default\s+)?(?:async\s+)?(?:function|const|let|var|type|interface|class|enum)\s+([A-Za-z_$][\w$]*)/;
+  const declared: { name: string; line: number; exported: boolean }[] = [];
+  const reExported = new Set<string>();
+
+  lines.forEach((line, index) => {
+    const match = declaration.exec(line);
+    if (match) {
+      declared.push({
+        name: match[2],
+        line: index + 1,
+        exported: Boolean(match[1]),
+      });
+      return;
+    }
+    // `export { a, b };` — a root that declares nothing of its own.
+    const reExport = /^export\s*\{([^}]*)\}/.exec(line);
+    if (reExport) {
+      for (const part of reExport[1].split(",")) {
+        const name = part
+          .trim()
+          .split(/\s+as\s+/)[0]
+          .trim();
+        if (name) reExported.add(name);
+      }
+    }
+  });
+
+  const span = new Map<string, [number, number]>();
+  declared.forEach((decl, index) => {
+    const end =
+      index + 1 < declared.length ? declared[index + 1].line - 1 : lines.length;
+    span.set(decl.name, [decl.line, end]);
+  });
+
+  const edges = new Map<string, Set<string>>();
+  for (const [name, [start, end]] of span) {
+    const body = lines.slice(start - 1, end).join("\n");
+    const referenced = new Set<string>();
+    for (const identifier of body.match(/[A-Za-z_$][\w$]*/g) ?? []) {
+      if (identifier !== name && span.has(identifier))
+        referenced.add(identifier);
+    }
+    edges.set(name, referenced);
+  }
+
+  const reached = new Set<string>();
+  const queue = declared
+    .filter((decl) => decl.exported || reExported.has(decl.name))
+    .map((decl) => decl.name);
+  while (queue.length > 0) {
+    const name = queue.pop() as string;
+    if (reached.has(name)) continue;
+    reached.add(name);
+    for (const next of edges.get(name) ?? []) {
+      if (!reached.has(next)) queue.push(next);
+    }
+  }
+
+  return [...span.keys()].filter((name) => !reached.has(name)).sort();
+}
+
 function stripComments(
   text: string,
   { lineComments = true }: { lineComments?: boolean } = {},
@@ -764,42 +843,27 @@ describe("WorkspaceExecutiveShell performance formatting", () => {
     ).toEqual(["vendor-register"]);
   });
 
-  /*
-   * RETIRED, and not rewritten as a render. This case used to scan thirteen
-   * strings — the `GRAPH_SUBTABS` tuple, `aria-label="Source contract graph
-   * flow"`, `aria-label="Source graph row volume"`, `aria-label="Source
-   * mapping flow"`, `className="sw-v2-graph-links"`, the four sub-component
-   * names, and four `.sw-v2-graph*` / `.sw-v2-mapping-flow` stylesheet
-   * classes — under the title "keeps the contract graph tab as a real
-   * lineage visual with drill-down subtabs".
-   *
-   * There is no contract graph tab. `ContractGraphPage` is declared in
-   * `WorkspaceExecutiveShell.tsx` and mounted by nothing: the component
-   * carries its own
-   * `// eslint-disable-next-line @typescript-eslint/no-unused-vars --
-   * Legacy graph renderer is no longer reachable from the Source command
-   * IA`, added by `4b3c2b569` on 2026-09-10, and a search of `src/` finds
-   * no `<ContractGraphPage` anywhere. The thirteen assertions were green
-   * for the whole fortnight after the tab left the IA, because bytes on
-   * disk are exactly what survives a component becoming unreachable.
-   *
-   * So this was never only a control a comment could satisfy. It was a
-   * control asserting the shape of a renderer no reader can open, under a
-   * title claiming the tab was kept. Both available repairs make it worse:
-   * mounting `ContractGraphPage` in a test manufactures five green cases
-   * over dead code and pins it against the cleanup its own eslint comment
-   * schedules, and exporting it to do so would make it reachable to the
-   * export baseline as well. Scanning it more strictly would keep a control
-   * whose subject does not exist.
-   *
-   * The four stylesheet classes go with it: they style that renderer.
-   *
-   * The renderer and its CSS are filed for deletion as U-503. No placeholder
-   * case is left in their place: a case that asserts nothing still counts as
-   * coverage to every census that reads this directory, which is the same
-   * lie in a different font. This comment is the record instead, and it sits
-   * exactly where the case was.
-   */
+  it("declares no top-level symbol that nothing exported can reach", () => {
+    /*
+     * U-503, and the executable replacement for the comment that used to sit
+     * here. That comment recorded a finding it could not enforce: thirteen
+     * assertions titled "keeps the contract graph tab as a real lineage
+     * visual with drill-down subtabs" were green for the whole fortnight
+     * after the tab left the IA, because bytes on disk are exactly what
+     * survives a component becoming unreachable. Retiring them removed the
+     * false coverage and left nothing that would notice the next one.
+     *
+     * This is that control, and it is a reachability computation rather than
+     * a scan: it walks the module's own reference graph out from its exports
+     * and reports what the walk never arrives at. When it was first written
+     * it returned ten names — `ContractGraphPage`, its four private helpers,
+     * `GRAPH_SUBTABS`, and the four label helpers reachable only through
+     * them — which is precisely the closure U-503 deleted. It fails again the
+     * day a renderer the product cannot mount is added back, and unlike a
+     * scan for an absent name it cannot outlive its subject.
+     */
+    expect(topLevelSymbolsUnreachableFromExports(sourceCode())).toEqual([]);
+  });
 
   it("derives graph row volumes from loaded impact coverage before old snapshots", () => {
     const coverage = [
