@@ -1,5 +1,5 @@
 {
-  "note": "Root-level suites under src/__tests__/integration that no workflow runs. This list is the OPPOSITE of its siblings. They guard a directory a workflow names, so their default is INCLUDED and a new suite runs the day it lands. This root is enumerated file by file — naming the directory would also run every red subdirectory under it — so the default here is EXCLUDED, and a file nobody enumerated is silently unrun. Before this list existed, the only record of the carve-out was a workflow comment counting how many were red. A count cannot fail. Triaged under backlog item 26 on 2026-09-23, with all five measured red on origin/main 5566a8df0: 13 failing cases of 28.",
+  "note": "Root-level suites under src/__tests__/integration that no workflow runs. This list is the OPPOSITE of its siblings. They guard a directory a workflow names, so their default is INCLUDED and a new suite runs the day it lands. This root is enumerated file by file \u2014 naming the directory would also run every red subdirectory under it \u2014 so the default here is EXCLUDED, and a file nobody enumerated is silently unrun. Before this list existed, the only record of the carve-out was a workflow comment counting how many were red. A count cannot fail. Triaged under backlog item 26 on 2026-09-23, with all five measured red on origin/main 5566a8df0: 13 failing cases of 28. Two have since been cleared and wired back in, so the list is three.",
   "howToClear": "Repair the suite, add its exact path to the jest command in .github/workflows/integration-suites.yml, delete the entry here, and lower CEILING in check-integration-root-quarantine.mjs in the SAME change. The checker re-runs every entry and fails if one PASSES, so an entry whose reason has been fixed cannot sit here quietly, and the ratchet fails when the list is shorter than the ceiling, so clearing one cannot leave headroom for the next. Do NOT clear an entry by deleting the failing case: four of these five are stale assertions about contracts that genuinely moved, and the fifth is a live defect that this suite is the only thing catching.",
   "verdicts": "update = the suite asserts a contract that has legitimately changed and the assertion needs rewriting to the current one. delete = the suite covers something the product retired, and removing it is a deliberate scope removal that must say so in a release record. real = the suite is correct and the product is wrong; the owner item carries the fix, and the suite stays red until it lands.",
   "quarantined": [
@@ -11,15 +11,8 @@
       "verdict": "update"
     },
     {
-      "suite": "deliverable-render-contract.test.ts",
-      "failingCase": "Deliverable render contract > emits canonical seed deliverable URLs without legacy phase folders",
-      "reason": "The first assertion pins a seed URL count at 457; the tree now emits 363. The pin is a magnitude, not a contract, and it throws before the two assertions that carry the actual contract — no legacy '/deliverables/phase-' folders, and canonical d-code paths — ever run. Rewrite it to assert the contract and drop the magnitude. The 94-path reduction is a separate data-plane question about seed scope and is NOT answered here.",
-      "owner": "26",
-      "verdict": "update"
-    },
-    {
       "suite": "marketing-nav-dropdowns.test.tsx",
-      "failingCase": "MarketingNav — Option A grouped dropdowns > exposes exactly two grouped dropdown triggers: Platform and Company (9 of 11 cases)",
+      "failingCase": "MarketingNav \u2014 Option A grouped dropdowns > exposes exactly two grouped dropdown triggers: Platform and Company (9 of 11 cases)",
       "reason": "The grouped nav was deliberately retired for a narrow launch. MARKETING_NAV_GROUPS is an empty array and showMenuItems defaults to false, and the component's own doc comment says so. Nine cases assert a nav that no longer exists. Rewriting this to the launch contract also has to record a finding it surfaced: the Dropdown and MobileSection components are still in the file but no prop can supply groups to them, so the hover, keyboard and Escape behaviour they implement is unreachable through MarketingNav. Asserting it by mounting Dropdown directly would manufacture coverage of an affordance no reader can open.",
       "owner": "26",
       "verdict": "update"
@@ -27,7 +20,7 @@
     {
       "suite": "sign-in-shell.test.tsx",
       "failingCase": "SignInShell > keeps legacy demo-code sign-in behind an explicit mode",
-      "reason": "The case renders SignInShell with signInMode='demo-code' and expects the Password and Access code fields immediately. DemoCodeSignIn has since gained its own email/demo toggle whose internal state defaults to 'email', so those fields now appear one click later. The control the case is about — legacy demo-code sign-in sits behind an explicit mode — still holds, and arguably holds harder. The rewrite is to click the toggle and then assert, which keeps the assertion meaningful rather than deleting it.",
+      "reason": "The case renders SignInShell with signInMode='demo-code' and expects the Password and Access code fields immediately. DemoCodeSignIn has since gained its own email/demo toggle whose internal state defaults to 'email', so those fields now appear one click later. The control the case is about \u2014 legacy demo-code sign-in sits behind an explicit mode \u2014 still holds, and arguably holds harder. The rewrite is to click the toggle and then assert, which keeps the assertion meaningful rather than deleting it.",
       "owner": "26",
       "verdict": "update"
     }
