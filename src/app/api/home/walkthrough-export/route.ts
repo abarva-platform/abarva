@@ -8,7 +8,6 @@ import {
 import { requireTenancy, tenancyErrorResponse } from "@/lib/auth/tenancy";
 import {
   getHomeReviewBundle,
-  HOME_PREVIEW_TENANT_KEYS,
   isHomePreviewTenantKey,
   type HomePreviewTenantKey,
 } from "@/lib/home/preview/golden-snapshot";
@@ -77,8 +76,31 @@ export async function GET(req: NextRequest) {
   const activeTenantKey =
     toHomeTenantKey(activeTenant?.appClientKey) ??
     toHomeTenantKey(activeTenant?.displayName);
-  const tenantKey =
-    requestedTenantKey ?? activeTenantKey ?? HOME_PREVIEW_TENANT_KEYS[0];
+  // Fail closed. `requireTenancy` above proves the caller may read the tenant it
+  // asked for; it says nothing about whether a Home bundle exists for that
+  // tenant. Defaulting to the first preview tenant answered an unresolved
+  // caller with a NAMED OTHER TENANT's walkthrough: an authenticated tenant with
+  // no Home preview bundle received the default tenant's export, with a 200 and
+  // that tenant's label on it, and asking for its own alias by name produced the
+  // same document. A tenant we cannot resolve to a Home bundle gets a refusal,
+  // never someone else's document (item U-404).
+  const tenantKey = requestedTenantKey ?? activeTenantKey;
+
+  if (!tenantKey) {
+    return Response.json(
+      {
+        error: "missing_home_bundle",
+        // Names only what the caller already supplied or already owns.
+        detail: `No Home bundle for ${
+          url.searchParams.get("tenant") ??
+          activeTenant?.appClientKey ??
+          "the active tenant"
+        }.`,
+      },
+      { status: 404 },
+    );
+  }
+
   const provider = resolveEclProductProvider(url.searchParams.get("provider"));
   const served = isEclProductProvider(provider)
     ? await getHomeEclProjectionBundleOrReviewedSnapshotWithSource(tenantKey)
