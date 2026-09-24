@@ -99,7 +99,7 @@ describe("FileCabinetPanel artifact labels", () => {
         },
       ]),
     ).toBe(
-      "5 current files · 2 review-ready DOCX/PPTX exports · 1 deliverable need review · 1 model.",
+      "5 current files · 2 review-ready DOCX/PPTX exports · 1 deliverable needs review · 1 model.",
     );
   });
 
