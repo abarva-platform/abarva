@@ -1140,6 +1140,27 @@ jobs:
           "src/app/(maestro)/source/preview/workspace/__tests__/workspace-explicit-client-api-routing.browser.test.tsx"
           --no-coverage --ci
 
+      # T-763. The three suites the two steps above deliberately leave out are
+      # held by a verdict in `docs/architecture/t478-source-workspace-wiring-triage.json`,
+      # and the CI coverage census does not read triage records — it credits a
+      # file as triaged only when a command subtracts it or a scoped
+      # `scripts/quality/*-quarantine.json` declares it. So all three reported
+      # `untriaged` and this directory held rank 2 on the governed-risk ranking
+      # with no untriaged work left in it, which is how one draw from that
+      # ranking came back already-verdicted and had to be re-derived by hand.
+      #
+      # `source-workspace-quarantine.json` declares the hold where the census
+      # already reads, and the checker below re-measures each entry's REASON
+      # rather than believing it: a held suite that stops reading source text
+      # fails, so the entry cannot outlive the verdict that justified it. It
+      # also fails a `held_unwired` verdict anywhere in the tree that brings no
+      # entry, which is what makes the triage record alone insufficient.
+      - name: Check the Source workspace quarantine
+        run: >-
+          node --test scripts/quality/check-source-workspace-quarantine.test.mjs
+          scripts/quality/triage-record-census-reconciliation.test.mjs
+          && node scripts/quality/check-source-workspace-quarantine.mjs
+
       # T-478, second half — a different defect from the two above, which is
       # why it is a step of its own rather than one more path in that one.
       # `portfolioAdapter.ecl.test.ts` is already `collected: true,

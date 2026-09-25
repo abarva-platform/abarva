@@ -128,7 +128,12 @@
         "ownerItem": "T-558"
       },
       "priorVerdictStatus": "still_true",
-      "rationale": "T-556 verdicted this rewrite_as_behavior because it reads source files at module scope and asserts substrings, so a comment carrying the same substring satisfies every case. Re-measured on this commit rather than assumed: still 1 readFileSync and 5 toContain, still renders nothing. The verdict stands and T-558 owns the rewrite. Wiring it would buy a green check and no protection."
+      "rationale": "T-556 verdicted this rewrite_as_behavior because it reads source files at module scope and asserts substrings, so a comment carrying the same substring satisfies every case. Re-measured on this commit rather than assumed: still 1 readFileSync and 5 toContain, still renders nothing. The verdict stands and T-558 owns the rewrite. Wiring it would buy a green check and no protection.",
+      "quarantineEntry": {
+        "list": "scripts/quality/source-workspace-quarantine.json",
+        "item": "T-763",
+        "why": "The CI coverage census credits a file as triaged only when a command subtracts it or a scoped scripts/quality/*-quarantine.json declares it. This verdict alone left the file reading as untriaged. The list entry declares the hold where the census reads, and its checker re-measures this rationale rather than believing it: when the suite stops reading source text the entry fails, so it cannot outlive its reason."
+      }
     },
     {
       "path": "src/app/(maestro)/source/preview/workspace/__tests__/workspace-ava-contract.test.ts",
@@ -154,7 +159,12 @@
         "ownerItem": "T-558"
       },
       "priorVerdictStatus": "still_true",
-      "rationale": "T-556's verdict re-measured and still true: 4 readFileSync and 40 toContain against a client component, a view-model builder, a lens, a stylesheet and a retriever. T-558 owns the rewrite. Note for whoever takes it: T-556 recorded 7 cases and this file now runs 8, so the suite has moved since that draw."
+      "rationale": "T-556's verdict re-measured and still true: 4 readFileSync and 40 toContain against a client component, a view-model builder, a lens, a stylesheet and a retriever. T-558 owns the rewrite. Note for whoever takes it: T-556 recorded 7 cases and this file now runs 8, so the suite has moved since that draw.",
+      "quarantineEntry": {
+        "list": "scripts/quality/source-workspace-quarantine.json",
+        "item": "T-763",
+        "why": "The CI coverage census credits a file as triaged only when a command subtracts it or a scoped scripts/quality/*-quarantine.json declares it. This verdict alone left the file reading as untriaged. The list entry declares the hold where the census reads, and its checker re-measures this rationale rather than believing it: when the suite stops reading source text the entry fails, so it cannot outlive its reason."
+      }
     },
     {
       "path": "src/app/(maestro)/source/preview/workspace/__tests__/workspace-explicit-client-api-routing.test.ts",
@@ -180,7 +190,12 @@
         "ownerItem": "T-558"
       },
       "priorVerdictStatus": "still_true",
-      "rationale": "T-556's verdict re-measured and still true: reads a client component and two API route files and asserts substrings of each. T-558 owns the rewrite. Its .browser.test.tsx sibling is wired above \u2014 the pair takes opposite verdicts, which is why they are two files here. Note for whoever takes it: T-556 recorded 3 cases and this file now runs 8."
+      "rationale": "T-556's verdict re-measured and still true: reads a client component and two API route files and asserts substrings of each. T-558 owns the rewrite. Its .browser.test.tsx sibling is wired above \u2014 the pair takes opposite verdicts, which is why they are two files here. Note for whoever takes it: T-556 recorded 3 cases and this file now runs 8.",
+      "quarantineEntry": {
+        "list": "scripts/quality/source-workspace-quarantine.json",
+        "item": "T-763",
+        "why": "The CI coverage census credits a file as triaged only when a command subtracts it or a scoped scripts/quality/*-quarantine.json declares it. This verdict alone left the file reading as untriaged. The list entry declares the hold where the census reads, and its checker re-measures this rationale rather than believing it: when the suite stops reading source text the entry fails, so it cannot outlive its reason."
+      }
     },
     {
       "path": "src/app/(maestro)/source/preview/workspace/__tests__/page-tenant-routing.test.ts",
@@ -220,6 +235,14 @@
       "path": "src/app/(maestro)/source/preview/workspace/__tests__/page-tenant-routing.test.ts",
       "change": "held_unwired -> wired",
       "why": "The verdict's stated reason was that the file was a source-text scanner. T-764 rewrote it to execute the route, so the reason no longer holds. Recorded as a discharge rather than a deletion: the prior verdict and its rationale are kept in priorVerdict and priorVerdictRationale. Counts corrected before merge: an earlier draft of this entry recorded readFileSyncCount 0 and toContainCount 0, which was wrong as a literal token count \u2014 the header prose named both tokens and two assertions used toContain. The prose was reworded, one assertion was tightened from a substring of the request pathname to an exact match, and the remaining one is recorded rather than rounded away."
+    },
+    {
+      "item": "T-763",
+      "at": "2026-09-25T16:22:30.998Z",
+      "base": "31f6badae",
+      "path": "docs/architecture/t478-source-workspace-wiring-triage.json",
+      "change": "held_unwired verdicts now require a scoped quarantine entry",
+      "why": "Measured before choosing a mechanism: of the 395 repo-wide untriagedUnrunTestFiles on 31f6badae, 20 already carried a verdict in some docs/architecture/*triage*.json and 375 carried none; of those 20 only these 3 carried a verdict that declares a HOLD, the other 17 carrying wire_into_ci, repair, update_with_reason_recorded, vacuous_control_proof or real \u2014 every one of which means work is owed. Teaching the census to read triage records would have had to credit those 17 too, which subtracts queued work from the ranking that decides what gets wired next. So the census vocabulary is unchanged and the hold is declared where the census already reads. scripts/quality/check-source-workspace-quarantine.mjs enforces both directions: a held_unwired verdict anywhere in the tree with no entry fails, and an entry whose record no longer carries the verdict fails."
     }
   ]
 }

@@ -1308,7 +1308,10 @@ function coverageFor(testPath, reachable, declaredQuarantinePathSet) {
  * before they are published. Those two maps spread `...row`, so a field added
  * to a row reaches the artifact whether or not anyone intended it to.
  */
-export function buildCensus(root, { includeUnrunPaths = false } = {}) {
+export function buildCensus(
+  root,
+  { includeUnrunPaths = false, includeFileStatuses = false } = {},
+) {
   const packageScripts =
     JSON.parse(readFileSync(path.join(root, "package.json"), "utf8")).scripts ??
     {};
@@ -1616,6 +1619,21 @@ export function buildCensus(root, { includeUnrunPaths = false } = {}) {
               unrunTestPaths: row.unrunTestPaths,
             }),
           ),
+        }
+      : {}),
+    // Every walked file with the three states this census decides, flat. OFF by
+    // default for the same reason as `includeUnrunPaths`: the committed
+    // artifact must stay byte-identical or `--check` fires on a reader.
+    //
+    // `untriaged` is already computed per file above and then dropped, so every
+    // consumer that wanted it has had to subtract two published counts and
+    // guess which files the difference names. That subtraction is how a
+    // directory's triage state gets re-derived by hand — the round trip
+    // `--explain` removed for the unrun set and this removes for the triaged
+    // one.
+    ...(includeFileStatuses
+      ? {
+          fileStatuses: rows.flatMap((row) => row.fileStatuses),
         }
       : {}),
   };
