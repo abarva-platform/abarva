@@ -142,6 +142,7 @@ import {
   evidenceRequirementIdForTask,
   factTemplateCodeForTask,
 } from "@/lib/source/facts/task-evidence-requirements";
+import { templateFactMapByCode } from "@/lib/source/facts/template-fact-map";
 import { ValueWaterfall } from "./ValueWaterfall";
 import { StepInsightPanel } from "./insights";
 import {
@@ -2899,7 +2900,7 @@ function EvidenceAskTable({
             />
             <EvidenceAskCell
               label={need.template}
-              detail={`${step.factTemplateCode ?? "artifact only"} · ${need.grainHistory}`}
+              detail={`${clientTemplateName(step.factTemplateCode) ?? "artifact only"} · ${need.grainHistory}`}
               active={active}
               captured={captured}
             />
@@ -2938,6 +2939,34 @@ function EvidenceAskTable({
       })}
     </div>
   );
+}
+
+/**
+ * The client-facing name of an intake template, for any cell a client reads.
+ *
+ * Item U-523. Three cells on this canvas rendered the raw template code —
+ * `VOLUMETRICS_V1`, `APP_INVENTORY_V1`, `CONTRACT_TERMS_V1` — straight into
+ * the evidence-ask table, the guide prep table and the upload readback. The
+ * rail already publishes a label for every one of those codes on its own
+ * template map, so this is a **rename, not a product decision**, which is the
+ * test U-400 sets for which of the two a term gets.
+ *
+ * The label is read from `templateFactMapByCode` rather than re-typed here, so
+ * a template added later is named without touching this file — the same rule
+ * the stage-front exemption follows against the canonical requirement set.
+ *
+ * A code the rail publishes no label for falls through to the code itself
+ * rather than to a vague phrase: that is a real gap in the template map and
+ * the render-measured control is what will show it, whereas hiding it behind
+ * "an intake template" would make the gap invisible. `template-fact-map` has a
+ * sibling guard asserting every shipped code carries a non-empty label, so the
+ * fallback is unreachable while that guard is green.
+ */
+function clientTemplateName(
+  templateCode: string | null | undefined,
+): string | null {
+  if (!templateCode) return null;
+  return templateFactMapByCode(templateCode)?.label ?? templateCode;
 }
 
 function EvidenceAskCell({
@@ -3799,7 +3828,9 @@ function ActiveStepUploadReadback({
       ? "Registry-only upload; no typed fact template on this step."
       : `${readback.factsWritten} typed fact${
           readback.factsWritten === 1 ? "" : "s"
-        } written${factTemplateCode ? ` through ${factTemplateCode}` : ""}.`;
+        } written${
+          factTemplateCode ? ` through ${clientTemplateName(factTemplateCode)}` : ""
+        }.`;
   const issues: string[] = [];
   if (readback.unmappedColumns.length > 0) {
     issues.push(
@@ -7871,7 +7902,10 @@ function StageGuideEvidencePrepTable({
                 <GuidePrepCell label={need.sourceSystem} detail={need.owner} />
                 <GuidePrepCell
                   label={template}
-                  detail={step.factTemplateCode ?? "No template code"}
+                  detail={
+                    clientTemplateName(step.factTemplateCode) ??
+                    "No intake template"
+                  }
                 />
                 <GuidePrepCell label={need.parseTarget} detail={need.status} />
                 <GuidePrepStatusCell

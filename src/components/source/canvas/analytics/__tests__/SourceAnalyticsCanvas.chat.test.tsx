@@ -948,7 +948,16 @@ describe("SourceAnalyticsCanvas — AskAnythingBar reachability", () => {
     expect(readback).toHaveTextContent("volumetrics.csv");
     expect(readback).toHaveTextContent("Typed facts:");
     expect(readback).toHaveTextContent("7 typed facts written");
-    expect(readback).toHaveTextContent("VOLUMETRICS_V1");
+    // Item U-523: this row used to render the raw template code. The rail
+    // publishes "Ticket volumes & volumetrics" for VOLUMETRICS_V1, so the code
+    // was builder vocabulary on a client surface (item U-400 / N3), not a
+    // deliberate affordance — this assertion codified the defect. It now
+    // asserts the published label, and the render-measured control in
+    // src/components/source/__tests__/source-surface-builder-vocabulary.test.tsx
+    // fails if the code comes back.
+    expect(readback).toHaveTextContent(
+      "written through Ticket volumes & volumetrics",
+    );
     expect(readback).toHaveTextContent("Issues:");
     expect(readback).toHaveTextContent("None reported by parser.");
     expect(readback).toHaveTextContent("Refresh impact:");

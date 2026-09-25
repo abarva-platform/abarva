@@ -242,4 +242,25 @@ describe('template → fact map — worked examples present', () => {
       expect(tpl.templateCode).toBe(code);
     }
   });
+
+  /**
+   * Item U-523. Three cells on the Source canvas used to render the raw
+   * template code to a client; they now render `label` instead, and fall
+   * through to the code when the rail publishes none. That fallback is a
+   * correct failure mode — it shows the gap rather than hiding it behind a
+   * vague phrase — but it is only ever reachable through a template that
+   * shipped without a label. This asserts none does, per code, so the message
+   * names the offender instead of a count going down by one.
+   */
+  it('every shipped template publishes a non-empty client-facing label', () => {
+    for (const [code, tpl] of Object.entries(TEMPLATE_FACT_MAPS)) {
+      expect(
+        tpl.label.trim().length > 0
+          ? ''
+          : `Template ${code} ships no client-facing label, so a Source cell ` +
+            `rendering it falls back to the code itself — which is the ` +
+            `builder vocabulary U-400 forbids on a client surface.`,
+      ).toBe('');
+    }
+  });
 });
