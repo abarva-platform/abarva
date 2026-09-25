@@ -1098,6 +1098,21 @@ jobs:
           "src/app/(maestro)/source/preview/workspace/__tests__/contract360-opportunity-count-labels.test.tsx"
           --no-coverage --ci
 
+      # U-522. A step of its own rather than one more path in the list above,
+      # because that list is the T-550 draw and its name says so; appending to
+      # it would make a historical measurement look larger than it was.
+      #
+      # Wired in the same change that adds the suite. The census reported this
+      # directory at rank 2 on the governed-risk ranking with an unwired file
+      # in it, and an unwired suite is the shape this whole backlog exists
+      # against: it passes locally, it is green forever, and it is never run by
+      # anything that could stop a merge.
+      - name: Run the U-522 Source workspace posture-absence suite
+        run: >-
+          npx jest --runTestsByPath
+          "src/app/(maestro)/source/preview/workspace/__tests__/WorkspaceExecutiveShell.posture-absence.test.tsx"
+          --no-coverage --ci
+
       # T-478. The rank-2 governed-risk directory in the coverage census —
       # band `high`, signal `tenant_scoped_read`, 31 product sources. Seven of
       # its 35 files were unwired in two distinct shapes; three are wired here

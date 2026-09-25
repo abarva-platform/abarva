@@ -5582,7 +5582,38 @@ function OptimizeActionQueue({
   );
 }
 
-function EvidencePage({
+/**
+ * Total one evidence lane across the loaded coverage rows.
+ *
+ * Null, not zero, when no coverage row was loaded at all: nothing was read, so
+ * the lane has no measured total and renders as a dash. A loaded lane that
+ * genuinely holds nothing still totals 0 and still prints 0.
+ *
+ * The distinction is carried by the absence of a coverage ROW, not by a null
+ * field on one. `SourceContractEvidenceCoverageRow` declares every lane as
+ * `readonly number`, and the only producer of `impact.evidenceCoverage`
+ * COALESCEs each lane to 0 in SQL, so a loaded lane never arrives as null —
+ * but the impact read yields an empty array when it returns nothing or throws,
+ * while the contract register is filled by a separate read. The register can
+ * therefore hold contracts with nothing loaded to look in.
+ *
+ * This is the rule `evidenceArchetypeRows` states for its "No evidence loaded"
+ * group and the one `Contract360Surfaces.laneCount` applies per contract; the
+ * posture panel used to drop it and keep the digit. `numberFromDb` stays in the
+ * sum because the lanes arrive from pg as `bigint` strings.
+ */
+function postureLaneTotal(
+  coverage: readonly SourceContractEvidenceCoverageRow[],
+  field: "spend_rows" | "performance_rows" | "document_page_text_rows",
+): number | null {
+  if (coverage.length === 0) return null;
+  return coverage.reduce(
+    (sum, row) => sum + (numberFromDb(row[field]) ?? 0),
+    0,
+  );
+}
+
+export function EvidencePage({
   portfolio,
   showLineage,
   onToggleLineage,
@@ -5747,30 +5778,16 @@ function EvidencePage({
           />
           <Fact
             label="Spend rows"
-            value={String(
-              coverage.reduce(
-                (sum, row) => sum + (numberFromDb(row.spend_rows) ?? 0),
-                0,
-              ),
-            )}
+            value={countOrDash(postureLaneTotal(coverage, "spend_rows"))}
           />
           <Fact
             label="Performance rows"
-            value={String(
-              coverage.reduce(
-                (sum, row) => sum + (numberFromDb(row.performance_rows) ?? 0),
-                0,
-              ),
-            )}
+            value={countOrDash(postureLaneTotal(coverage, "performance_rows"))}
           />
           <Fact
             label="Document page text"
-            value={String(
-              coverage.reduce(
-                (sum, row) =>
-                  sum + (numberFromDb(row.document_page_text_rows) ?? 0),
-                0,
-              ),
+            value={countOrDash(
+              postureLaneTotal(coverage, "document_page_text_rows"),
             )}
           />
           <Fact label="Finance confirmed" value="Not established" />
