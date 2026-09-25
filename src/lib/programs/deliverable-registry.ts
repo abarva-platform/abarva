@@ -167,6 +167,29 @@ export const DELIVERABLE_REGISTRY: DeliverableSpec[] = [
     consultingAnalog: "Root Cause Analysis Working Paper",
   },
 
+  {
+    deliverableTypeKey: "design_workshop_guide",
+    documentTitle: "Design Workshop Guide",
+    phase: 2,
+    phaseLabel: "P2 Discover & Diagnose",
+    audiencePrimary: "Sponsor · Move lead · Workshop participants",
+    documentPurpose:
+      "Working guide for Design — design workshops, decision sessions, evidence carry-forward, and client preparation instructions derived from the accepted Discovery record",
+    formatRecommendation: "html-word",
+    gateArtifact: false,
+    standAlone: true,
+    sections: [
+      "Discovery recap (what has been proven, what is insufficient evidence, and what must not be re-litigated)",
+      "Design session plan (future-state workshops, option-decision sessions, participants, objectives, and expected outputs)",
+      "Evidence carry-forward list (root causes, metrics, constraints, source files, and open gaps needed to ground design)",
+      "Workshop facilitation guide (questions, design decisions to test, trade-offs to record, and note-review method)",
+      "Readiness checklist for the design gate (what must be uploaded, reviewed, and accepted before Design closes)",
+    ],
+    consultingAnalog: "Future-State Design Workshop Guide",
+    generationPromptHint:
+      "This is the design working guide, not a second Discovery Report. Be operational: name design sessions, decision forums, participants, evidence carry-forward, trade-off questions, outputs, and design-gate readiness checks. Preserve insufficient-evidence labels.",
+  },
+
   // ── P3: Design Future State ─────────────────────────────────────────────────
 
   {
@@ -288,6 +311,31 @@ export const DELIVERABLE_REGISTRY: DeliverableSpec[] = [
       "Procurement Pathway (RFP/RFI/direct award rationale; timeline; approvals required)",
     ],
     consultingAnalog: "Sourcing Strategy & Vendor Selection Brief",
+  },
+
+  {
+    deliverableTypeKey: "planning_workshop_guide",
+    documentTitle: "Planning Workshop Guide",
+    phase: 3,
+    phaseLabel: "P3 Design Future State",
+    audiencePrimary:
+      "Sponsor · Delivery lead · Finance · Workshop participants",
+    documentPurpose:
+      "Working guide for Build the Plan — roadmap, business-case, finance, measurement, readiness, and change sessions derived from the accepted design",
+    formatRecommendation: "html-word",
+    gateArtifact: false,
+    standAlone: true,
+    sections: [
+      "Design recap (approved target state, option decisions, operating implications, and unresolved design caveats)",
+      "Planning session plan (roadmap, business case, finance, metrics, readiness/change workshops, participants, objectives, and outputs)",
+      "Planning evidence request list (cost inputs, benefit baselines, dependency evidence, resource model, metric definitions, and readiness evidence)",
+      "Workshop facilitation guide (questions, funding assumptions to validate, sequencing decisions, risk decisions, and note-review method)",
+      "Readiness checklist for the planning gate (what must be uploaded, reviewed, and accepted before planning closes)",
+    ],
+    consultingAnalog:
+      "Execution Planning Workshop Guide / Business Case Preparation Pack",
+    generationPromptHint:
+      "This is the planning working guide, not a business case or roadmap. Be operational: name sessions, owners, evidence requests, finance inputs, metric baselines, decision questions, and planning-gate readiness checks. Do not invent benefits or funding approval.",
   },
 
   // Backward-compat key for P3 monolithic doc
@@ -469,6 +517,31 @@ export const DELIVERABLE_REGISTRY: DeliverableSpec[] = [
       "Produce a compact readiness and change plan for the mobilization decision. Use tables for owners, cadence, risks, dependencies, and mobilization conditions. Do not assert funding approval, annual savings, ROI, NPV, payback, target value, or implementation authorization beyond the evidence-backed readiness recommendation.",
   },
 
+  {
+    deliverableTypeKey: "mobilization_workshop_guide",
+    documentTitle: "Mobilization Workshop Guide",
+    phase: 4,
+    phaseLabel: "P4 Roadmap & Business Case",
+    audiencePrimary:
+      "Sponsor · Delivery lead · Tower lead · Workshop participants",
+    documentPurpose:
+      "Working guide for Prepare to Execute — mobilization, Tower handoff, value-measurement, delivery-readiness, and approval sessions derived from the accepted plan",
+    formatRecommendation: "html-word",
+    gateArtifact: false,
+    standAlone: true,
+    sections: [
+      "Plan recap (approved roadmap, business case, metrics, readiness conditions, and open caveats)",
+      "Mobilization session plan (handoff, execution-readiness, value-measurement, governance, and Tower transition sessions)",
+      "Mobilization evidence request list (RACI, workstream plans, approval evidence, baseline locks, Tower measurement inputs, and open risks)",
+      "Workshop facilitation guide (questions, execution decisions, acceptance conditions, handoff decisions, and note-review method)",
+      "Readiness checklist for the execution handoff gate (what must be uploaded, reviewed, and accepted before execution handoff)",
+    ],
+    consultingAnalog:
+      "Mobilization Workshop Guide / Execution Handoff Preparation Pack",
+    generationPromptHint:
+      "This is the mobilization working guide, not a roadmap, business case, or handoff package. Be operational: name handoff sessions, owners, evidence requests, value-measurement inputs, readiness decisions, and execution-handoff gate checks. Do not assert execution approval unless evidence supports it.",
+  },
+
   // Backward-compat key for P4 monolithic doc
   {
     deliverableTypeKey: "roadmap",
@@ -537,6 +610,29 @@ export const DELIVERABLE_REGISTRY: DeliverableSpec[] = [
     generationPromptHint:
       'This is a formal accountability document. Every outcome must have a single named accountable individual. No "team" accountability. Target ranges must be specific ($M or %) not qualitative.',
   },
+
+  {
+    deliverableTypeKey: "execution_kickoff_guide",
+    documentTitle: "Execution Kickoff Guide",
+    phase: 5,
+    phaseLabel: "P5 Approval & Mobilization",
+    audiencePrimary: "Delivery lead · Tower lead · Accountable owners",
+    documentPurpose:
+      "Working guide for the first execution cadence — kickoff sessions, handoff validation, value-measurement startup, governance cadence, and first-review instructions after the Move leaves planning",
+    formatRecommendation: "html-word",
+    gateArtifact: false,
+    standAlone: true,
+    sections: [
+      "Execution-ready recap (approved handoff, committed measures, accountabilities, conditions, and open execution caveats)",
+      "Kickoff session plan (delivery kickoff, Tower measurement startup, risk review, governance cadence, and owner handoff sessions)",
+      "Execution evidence checklist (baseline locks, workstream artifacts, measurement feeds, approval evidence, risk triggers, and first-report inputs)",
+      "Facilitation guide for first governance cadence (questions, decisions, escalation rules, and evidence review method)",
+      "First-review readiness checklist (what must be captured before the first execution/Tower review)",
+    ],
+    consultingAnalog: "Execution Kickoff Guide / First Governance Cadence Pack",
+    generationPromptHint:
+      "This is the execution kickoff working guide, not a new phase-gate approval. Be operational: name sessions, owners, cadence, evidence checks, first-review inputs, and escalation rules. Preserve all caveats and conditions from the approved handoff.",
+  },
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -580,13 +676,14 @@ export function getPhaseDocumentSet(phase: number): {
 /** Map phase number → ordered list of canonical deliverable type keys (non-deprecated) */
 export const PHASE_CANONICAL_KEYS: Record<number, string[]> = {
   1: ["charter", "discovery_plan"],
-  2: ["discovery_report", "root_cause_worksheet"],
+  2: ["discovery_report", "root_cause_worksheet", "design_workshop_guide"],
   3: [
     "target_state_architecture",
     "solution_design",
     "operating_model_design",
     "requirements_traceability",
     "sourcing_strategy",
+    "planning_workshop_guide",
   ],
   4: [
     "execution_roadmap",
@@ -594,8 +691,13 @@ export const PHASE_CANONICAL_KEYS: Record<number, string[]> = {
     "financial_model",
     "tower_metrics_plan",
     "readiness_and_change_plan",
+    "mobilization_workshop_guide",
   ],
-  5: ["handoff_package", "value_measurement_contract"],
+  5: [
+    "handoff_package",
+    "value_measurement_contract",
+    "execution_kickoff_guide",
+  ],
 };
 
 /** Format badge labels */

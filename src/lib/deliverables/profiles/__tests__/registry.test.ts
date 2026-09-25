@@ -5,22 +5,26 @@ import {
 } from "../index";
 import type { DeliverableKey } from "../types";
 
-// The 13 canonical PHASE_CANONICAL_KEYS — every one must have a profile.
+// The canonical PHASE_CANONICAL_KEYS — every one must have a profile.
 const CANONICAL_KEYS: DeliverableKey[] = [
   "charter",
   "discovery_plan",
   "discovery_report",
   "root_cause_worksheet",
+  "design_workshop_guide",
   "target_state_architecture",
   "solution_design",
   "operating_model_design",
   "sourcing_strategy",
+  "planning_workshop_guide",
   "execution_roadmap",
   "business_case",
   "financial_model",
   "tower_metrics_plan",
+  "mobilization_workshop_guide",
   "handoff_package",
   "value_measurement_contract",
+  "execution_kickoff_guide",
 ];
 
 describe("deliverable profile registry (W0)", () => {

@@ -58,8 +58,16 @@ describe("deliverableBelongsToPhase", () => {
     expect(deliverableBelongsToPhase("handoff_package", 4, p4)).toBe(false);
   });
 
-  it("keeps P1 Charter and Discovery Workshop Guide as separate documents", () => {
+  it("keeps phase gate artifacts and workshop guides as separate documents", () => {
     expect(PHASE_CANONICAL_KEYS[1]).toEqual(["charter", "discovery_plan"]);
+    expect(PHASE_CANONICAL_KEYS[2]).toEqual([
+      "discovery_report",
+      "root_cause_worksheet",
+      "design_workshop_guide",
+    ]);
+    expect(PHASE_CANONICAL_KEYS[3]).toContain("planning_workshop_guide");
+    expect(PHASE_CANONICAL_KEYS[4]).toContain("mobilization_workshop_guide");
+    expect(PHASE_CANONICAL_KEYS[5]).toContain("execution_kickoff_guide");
 
     const p1 = getPhaseDocumentSet(1);
     expect(p1.gateArtifacts.map((d) => d.deliverableTypeKey)).toEqual([
@@ -69,5 +77,15 @@ describe("deliverableBelongsToPhase", () => {
       "discovery_plan",
     ]);
     expect(p1.workingDocs[0]?.documentTitle).toBe("Discovery Workshop Guide");
+
+    const p3 = getPhaseDocumentSet(3);
+    expect(p3.workingDocs.map((d) => d.deliverableTypeKey)).toEqual(
+      expect.arrayContaining(["planning_workshop_guide"]),
+    );
+    expect(
+      p3.workingDocs.find(
+        (d) => d.deliverableTypeKey === "planning_workshop_guide",
+      )?.gateArtifact,
+    ).toBe(false);
   });
 });

@@ -223,7 +223,9 @@ export function resolveDocGenQualityProfile(): DocGenQualityProfile {
 // golden-bar pipeline's single-shot maxTokens) — generous enough for
 // structured content/tables above the word ceiling, without being unbounded.
 // Every other deliverable type still gets the standard per-profile budget.
-function charterPassFallback(input: ResolvePassTokenBudgetInput): number | null {
+function charterPassFallback(
+  input: ResolvePassTokenBudgetInput,
+): number | null {
   const deliverableKey = input.deliverableType
     ? normalizeDeliverableKey(input.deliverableType)
     : "";
@@ -280,6 +282,10 @@ const DELIVERABLE_TIER: Readonly<Record<string, DocGenTier>> = {
   discovery_report: "tier3_board_grade",
   discovery_plan: "tier3_board_grade",
   evidence_request_pack: "tier3_board_grade",
+  design_workshop_guide: "tier3_board_grade",
+  planning_workshop_guide: "tier3_board_grade",
+  mobilization_workshop_guide: "tier3_board_grade",
+  execution_kickoff_guide: "tier3_board_grade",
   current_state_assessment: "tier3_board_grade",
   current_state: "tier3_board_grade",
   solution_design: "tier3_board_grade",

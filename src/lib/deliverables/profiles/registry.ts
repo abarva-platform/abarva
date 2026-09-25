@@ -241,6 +241,70 @@ const discoveryPlan: DeliverableProfile = {
   ],
 };
 
+function phaseWorkshopGuideProfile(args: {
+  key:
+    | "design_workshop_guide"
+    | "planning_workshop_guide"
+    | "mobilization_workshop_guide"
+    | "execution_kickoff_guide";
+  title: string;
+  decisionPurpose: string;
+}): DeliverableProfile {
+  return {
+    key: args.key,
+    renderer: "docx_narrative",
+    title: args.title,
+    clientFacing: true,
+    audience: ["program_leadership", "steering_committee"],
+    decisionPurpose: args.decisionPurpose,
+    defaultFormat: "docx",
+    supportingFormats: ["html"],
+    tone: "delivery_lead",
+    visualDensity: "medium",
+    allowPhaseLabels: false,
+    evidenceMode: "appendix_only",
+    sourceRegisterPolicy: "appendix_only",
+    missingInputPolicy: "single_open_inputs_table",
+    requiredExhibits: ["open_inputs_required"],
+    lengthGuidance:
+      "Working guide, not the formal gate artifact: practical session plan, evidence requests, owners, and readiness checks.",
+    acceptanceChecks: [
+      "states which approved phase facts are settled and should not be re-collected",
+      "contains session/workshop instructions, evidence requests, owners, outputs, and next-gate readiness checks",
+      "does not make new sponsor, funding, design, or execution decisions",
+      "missing evidence is consolidated into one Open Inputs Required table",
+    ],
+  };
+}
+
+const designWorkshopGuide = phaseWorkshopGuideProfile({
+  key: "design_workshop_guide",
+  title: "Design Workshop Guide",
+  decisionPurpose:
+    "Prepare the client and delivery team to run future-state design, option, and trade-off sessions from the accepted Discovery record.",
+});
+
+const planningWorkshopGuide = phaseWorkshopGuideProfile({
+  key: "planning_workshop_guide",
+  title: "Planning Workshop Guide",
+  decisionPurpose:
+    "Prepare the client and delivery team to run roadmap, business-case, finance, metrics, readiness, and change sessions from the accepted design.",
+});
+
+const mobilizationWorkshopGuide = phaseWorkshopGuideProfile({
+  key: "mobilization_workshop_guide",
+  title: "Mobilization Workshop Guide",
+  decisionPurpose:
+    "Prepare the client and delivery team to run mobilization, Tower handoff, value-measurement, and execution-readiness sessions from the accepted plan.",
+});
+
+const executionKickoffGuide = phaseWorkshopGuideProfile({
+  key: "execution_kickoff_guide",
+  title: "Execution Kickoff Guide",
+  decisionPurpose:
+    "Prepare accountable owners for the first execution cadence, Tower measurement startup, governance review, and escalation rhythm after planning handoff.",
+});
+
 const discoveryReport: DeliverableProfile = {
   key: "discovery_report",
   renderer: "pptx_storyline",
@@ -726,17 +790,21 @@ export const DELIVERABLE_PROFILES: Readonly<
   discovery_plan: discoveryPlan,
   discovery_report: discoveryReport,
   root_cause_worksheet: rootCauseWorksheet,
+  design_workshop_guide: designWorkshopGuide,
   target_state_architecture: targetStateArchitecture,
   solution_design: solutionDesign,
   operating_model_design: operatingModelDesign,
   sourcing_strategy: sourcingStrategy,
+  planning_workshop_guide: planningWorkshopGuide,
   execution_roadmap: executionRoadmap,
   business_case: businessCase,
   financial_model: financialModel,
   tower_metrics_plan: towerMetricsPlan,
   readiness_and_change_plan: readinessAndChangePlan,
+  mobilization_workshop_guide: mobilizationWorkshopGuide,
   handoff_package: handoffPackage,
   value_measurement_contract: valueMeasurementContract,
+  execution_kickoff_guide: executionKickoffGuide,
   solution_approach_options: solutionApproachOptions,
   ...SOURCE_PROFILES,
 };
