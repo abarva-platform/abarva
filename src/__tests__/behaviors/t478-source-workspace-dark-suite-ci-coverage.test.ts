@@ -171,9 +171,13 @@ describe("T-478 Source workspace dark-suite disposition", () => {
       (suite) => suite.verdict === "wired" && suite.priorVerdict === "held_unwired",
     );
 
-    expect(discharged.map((suite) => suite.path)).toEqual([
-      "src/app/(maestro)/source/preview/workspace/__tests__/page-tenant-routing.test.ts",
-    ]);
+    // Non-vacuous, but deliberately NOT a pinned list of paths. The identity of
+    // the discharged set is already pinned by the verdict map above, and pinning
+    // it a second time here would make the next legitimate discharge fail this
+    // case for doing the right thing. What this case is for is the fields, so it
+    // asserts the fields on whatever is in the set and only that the set is not
+    // empty — a renamed `priorVerdict` empties it and fails here.
+    expect(discharged.length).toBeGreaterThan(0);
 
     for (const suite of discharged) {
       expect({
