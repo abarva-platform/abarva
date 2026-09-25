@@ -383,7 +383,7 @@ const rootCauseWorksheet: DeliverableProfile = {
 
 const solutionApproachOptions: DeliverableProfile = {
   key: "solution_approach_options",
-  renderer: "html_architecture",
+  renderer: "pptx_storyline",
   title: "Solution Approach & Options",
   clientFacing: true,
   audience: ["steering_committee", "cio", "cto"],
@@ -425,7 +425,7 @@ const solutionApproachOptions: DeliverableProfile = {
 
 const targetStateArchitecture: DeliverableProfile = {
   key: "target_state_architecture",
-  renderer: "html_architecture",
+  renderer: "pptx_storyline",
   visualStandard: ARCHITECTURE_VISUAL_STANDARD,
   // ── Story-Led / Exhibit-Led Standard (v2 redo) ──
   narrativeQuestion:
@@ -512,7 +512,7 @@ const targetStateArchitecture: DeliverableProfile = {
 
 const solutionDesign: DeliverableProfile = {
   key: "solution_design",
-  renderer: "html_architecture",
+  renderer: "pptx_storyline",
   visualRendererRequired: true,
   visualStandard: ARCHITECTURE_VISUAL_STANDARD,
   title: "Solution Design",
@@ -585,7 +585,7 @@ const sourcingStrategy: DeliverableProfile = {
   audience: ["procurement", "cio", "program_leadership"],
   decisionPurpose: "Decide the build / buy / partner / hybrid path.",
   defaultFormat: "docx",
-    supportingFormats: ["pptx"],
+  supportingFormats: ["pptx"],
   tone: "senior_consultant",
   visualDensity: "medium",
   allowPhaseLabels: false,
@@ -773,7 +773,7 @@ const valueMeasurementContract: DeliverableProfile = {
   decisionPurpose:
     "Prevent fake ROI by defining how value will be measured and governed.",
   defaultFormat: "docx",
-    supportingFormats: ["pptx"],
+  supportingFormats: ["pptx"],
   tone: "delivery_lead",
   visualDensity: "low",
   allowPhaseLabels: false,
