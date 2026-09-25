@@ -609,6 +609,10 @@
     "audit:tower-v3-source-of-truth-alignment": {
       "kind": "unclassified"
     },
+    "audit:triage-record-reconciliation": {
+      "kind": "report",
+      "reason": "Report mode, and deliberately not a gate. It always exits 0: it cross-references the CI coverage census against every docs/architecture/*triage*.json and prints which untriaged unrun test files already carry a verdict, which is the hand-written derivation T-763 exists to stop repeating. The gate on the same subject is the workflow step running check-source-workspace-quarantine.mjs, which is scoped to verdicts that declare a hold; the rows this prints under any other verdict are work that is owed, and failing on them would turn a queue into a red build."
+    },
     "audit:v3-only-active-architecture": {
       "kind": "unclassified"
     },
