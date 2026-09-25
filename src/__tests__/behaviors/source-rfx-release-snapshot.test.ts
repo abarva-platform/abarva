@@ -31,7 +31,29 @@ function input(): RfxReleaseSnapshotInput {
     packageVersionId: "package-version-1",
     version: 1,
     artifacts: [{ artifactId: "artifact-1", sha256: HASH }],
-    recipientAuthorities: [{ recipientId: "recipient-1", candidateAuthorityId: "candidate-1", ndaAuthorityId: "nda-1" }],
+    recipientAuthorities: [{
+      recipientId: "recipient-1",
+      candidateAuthorityId: "candidate-1",
+      candidateTenantKey: "tenant-1",
+      candidateEventId: "event-1",
+      candidateLegalEntityId: "vendor-1",
+      candidateState: "accepted",
+      contactAuthorityId: "contact-authority-1",
+      contactTenantKey: "tenant-1",
+      contactEventId: "event-1",
+      contactLegalEntityId: "vendor-1",
+      contactId: "contact-1",
+      contactEmail: "contact@example.test",
+      contactPolicy: "contact_allowed",
+      contactState: "approved",
+      contactApprovedByUserId: "contact-approver-1",
+      contactEvidenceReference: "contact-evidence-1",
+      ndaAuthorityId: "nda-1",
+      ndaTenantKey: "tenant-1",
+      ndaEventId: "event-1",
+      ndaLegalEntityId: "vendor-1",
+      ndaState: "recorded",
+    }],
     approvedByUserId: "approver-1",
     approvedAt: "2026-09-25T00:00:00Z",
     approvalEvidenceReference: "approval-1",
@@ -111,5 +133,32 @@ describe("Stage 06 release snapshot preparation", () => {
     expect(second.ready).toBe(true);
     if (!first.ready || !second.ready) return;
     expect(first.snapshot.snapshotSha256).not.toBe(second.snapshot.snapshotSha256);
+  });
+
+  it("refuses a candidate authority for another legal entity", () => {
+    const base = input();
+    const result = prepareRfxReleaseSnapshot({
+      ...base,
+      recipientAuthorities: [{ ...base.recipientAuthorities[0], candidateLegalEntityId: "vendor-other" }],
+    });
+    expect(result.ready).toBe(false);
+  });
+
+  it("refuses a contact authority that is not individually approved", () => {
+    const base = input();
+    const result = prepareRfxReleaseSnapshot({
+      ...base,
+      recipientAuthorities: [{ ...base.recipientAuthorities[0], contactState: "draft" }],
+    });
+    expect(result.ready).toBe(false);
+  });
+
+  it("refuses NDA authority from another event", () => {
+    const base = input();
+    const result = prepareRfxReleaseSnapshot({
+      ...base,
+      recipientAuthorities: [{ ...base.recipientAuthorities[0], ndaEventId: "event-other" }],
+    });
+    expect(result.ready).toBe(false);
   });
 });

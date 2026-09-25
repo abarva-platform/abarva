@@ -13,8 +13,30 @@ export type RfxReleaseSnapshotInput = {
   recipientAuthorities: readonly {
     recipientId: string;
     candidateAuthorityId: string;
+    candidateTenantKey?: string;
+    candidateEventId?: string;
+    candidateLegalEntityId?: string;
+    candidateState?: string;
+    contactAuthorityId?: string;
+    contactTenantKey?: string;
+    contactEventId?: string;
+    contactLegalEntityId?: string;
+    contactId?: string;
+    contactEmail?: string;
+    contactPolicy?: string;
+    contactState?: string;
+    contactApprovedByUserId?: string;
+    contactEvidenceReference?: string;
     ndaAuthorityId?: string;
+    ndaTenantKey?: string;
+    ndaEventId?: string;
+    ndaLegalEntityId?: string;
+    ndaState?: string;
     waiverAuthorityId?: string;
+    waiverTenantKey?: string;
+    waiverEventId?: string;
+    waiverLegalEntityId?: string;
+    waiverState?: string;
   }[];
   approvedByUserId: string;
   approvedAt: string;
@@ -43,6 +65,7 @@ export type RfxReleaseSnapshotResult =
           contactName: string;
           contactEmail: string;
           candidateAuthorityId: string;
+          contactAuthorityId: string;
           ndaAuthorityId?: string;
           waiverAuthorityId?: string;
         }[];
@@ -107,6 +130,49 @@ export function prepareRfxReleaseSnapshot(
     defects.push("Each selected recipient needs one candidate authority and exactly one NDA or waiver authority.");
   }
 
+  for (const recipient of recipients) {
+    const authority = input.recipientAuthorities.find((item) => item.recipientId === recipient.recipientId);
+    if (!authority) continue;
+    if (
+      authority.candidateTenantKey !== pkg.tenantKey ||
+      authority.candidateEventId !== pkg.eventId ||
+      authority.candidateLegalEntityId !== recipient.legalEntityId ||
+      authority.candidateState !== "accepted"
+    ) {
+      defects.push(`Recipient ${recipient.recipientId} lacks matching accepted candidate authority.`);
+    }
+    if (
+      !filled(authority.contactAuthorityId) ||
+      authority.contactTenantKey !== pkg.tenantKey ||
+      authority.contactEventId !== pkg.eventId ||
+      authority.contactLegalEntityId !== recipient.legalEntityId ||
+      authority.contactId !== recipient.contactId ||
+      authority.contactEmail !== recipient.contactEmail ||
+      authority.contactPolicy !== "contact_allowed" ||
+      authority.contactState !== "approved" ||
+      !filled(authority.contactApprovedByUserId) ||
+      !filled(authority.contactEvidenceReference)
+    ) {
+      defects.push(`Recipient ${recipient.recipientId} lacks matching named-contact approval.`);
+    }
+    if (authority.ndaAuthorityId && (
+      authority.ndaTenantKey !== pkg.tenantKey ||
+      authority.ndaEventId !== pkg.eventId ||
+      authority.ndaLegalEntityId !== recipient.legalEntityId ||
+      authority.ndaState !== "recorded"
+    )) {
+      defects.push(`Recipient ${recipient.recipientId} lacks matching executed NDA authority.`);
+    }
+    if (authority.waiverAuthorityId && (
+      authority.waiverTenantKey !== pkg.tenantKey ||
+      authority.waiverEventId !== pkg.eventId ||
+      authority.waiverLegalEntityId !== recipient.legalEntityId ||
+      authority.waiverState !== "approved"
+    )) {
+      defects.push(`Recipient ${recipient.recipientId} lacks matching NDA waiver authority.`);
+    }
+  }
+
   if (defects.length > 0) return { ready: false, defects };
 
   const artifacts = input.artifacts
@@ -122,6 +188,7 @@ export function prepareRfxReleaseSnapshot(
         contactName: recipient.contactName,
         contactEmail: recipient.contactEmail,
         candidateAuthorityId: authority.candidateAuthorityId,
+        contactAuthorityId: authority.contactAuthorityId!,
         ...(authority.ndaAuthorityId ? { ndaAuthorityId: authority.ndaAuthorityId } : {}),
         ...(authority.waiverAuthorityId ? { waiverAuthorityId: authority.waiverAuthorityId } : {}),
       };
