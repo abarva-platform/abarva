@@ -2,6 +2,7 @@ import { mkdtemp, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 
+import { MOVES_DELIVERABLE_KEYS } from "@/lib/deliverables/profiles";
 import { buildExemplarCoverageReport } from "../audit-golden-exemplars";
 
 describe("audit-golden-exemplars", () => {
@@ -15,12 +16,34 @@ describe("audit-golden-exemplars", () => {
     });
 
     expect(report.readyForJudge).toBe(false);
-    expect(report.requiredCount).toBeGreaterThan(10);
+    expect(report.requiredCount).toBe(MOVES_DELIVERABLE_KEYS.length);
     expect(report.completeCount).toBe(0);
     expect(report.missingCount).toBe(report.requiredCount);
     expect(report.unmappedHtmlFiles).toEqual([
       join(dir, "Target-State-Architecture.html"),
     ]);
+  });
+
+  it("counts every profiled Moves workshop guide as exemplar-required", async () => {
+    const dir = await mkdtemp(join(tmpdir(), "golden-exemplars-"));
+
+    const report = await buildExemplarCoverageReport({
+      dir,
+      manifest: join(dir, "golden-exemplar-manifest.json"),
+    });
+
+    expect(report.entries.map((entry) => entry.key)).toEqual(
+      expect.arrayContaining([
+        "moves:discovery_plan",
+        "moves:design_workshop_guide",
+        "moves:planning_workshop_guide",
+        "moves:mobilization_workshop_guide",
+        "moves:execution_kickoff_guide",
+      ]),
+    );
+    expect(report.entries.every((entry) => entry.module === "moves")).toBe(
+      true,
+    );
   });
 
   it("requires approved status, owner/date, and human rationale before marking an exemplar complete", async () => {

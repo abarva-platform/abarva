@@ -10,7 +10,7 @@ import { dirname, join, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 import process from "node:process";
 
-import { DELIVERABLE_STRUCTURES } from "@/lib/deliverables/orchestrator/briefs/deliverable-structures";
+import { MOVES_DELIVERABLE_KEYS } from "@/lib/deliverables/profiles";
 
 interface Args {
   dir: string;
@@ -150,10 +150,10 @@ export async function buildExemplarCoverageReport(args: {
     manifest.map((entry) => resolve(exemplarDir, entry.artifactPath)),
   );
   const htmlFiles = await listHtmlFiles(exemplarDir);
-  const required = DELIVERABLE_STRUCTURES.map((structure) => ({
-    module: structure.module,
-    deliverableType: structure.deliverableType,
-    key: exemplarKey(structure.module, structure.deliverableType),
+  const required = MOVES_DELIVERABLE_KEYS.map((deliverableType) => ({
+    module: "moves",
+    deliverableType,
+    key: exemplarKey("moves", deliverableType),
   }));
 
   const entries: ExemplarCoverageEntry[] = [];

@@ -1,40 +1,18 @@
 import {
   getDeliverableProfile,
   listDeliverableProfiles,
+  MOVES_DELIVERABLE_KEYS,
   CLIENT_NARRATIVE_BANNED_TERMS,
 } from "../index";
-import type { DeliverableKey } from "../types";
-
-// The canonical PHASE_CANONICAL_KEYS — every one must have a profile.
-const CANONICAL_KEYS: DeliverableKey[] = [
-  "charter",
-  "discovery_plan",
-  "discovery_report",
-  "root_cause_worksheet",
-  "design_workshop_guide",
-  "target_state_architecture",
-  "solution_design",
-  "operating_model_design",
-  "sourcing_strategy",
-  "planning_workshop_guide",
-  "execution_roadmap",
-  "business_case",
-  "financial_model",
-  "tower_metrics_plan",
-  "mobilization_workshop_guide",
-  "handoff_package",
-  "value_measurement_contract",
-  "execution_kickoff_guide",
-];
 
 describe("deliverable profile registry (W0)", () => {
   it("has a profile for every canonical deliverable key", () => {
-    for (const key of CANONICAL_KEYS) {
+    for (const key of MOVES_DELIVERABLE_KEYS) {
       expect(getDeliverableProfile(key)?.key).toBe(key);
     }
     // Moves keys + the 14 Source artifact profiles all share one registry.
     expect(listDeliverableProfiles().length).toBeGreaterThanOrEqual(
-      CANONICAL_KEYS.length + 14,
+      MOVES_DELIVERABLE_KEYS.length + 14,
     );
   });
 
