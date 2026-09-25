@@ -364,9 +364,9 @@ function conciseInstrumentDraftInstruction(
     `- The entire body must stay within ${qb.targetBodyWordsMax.toLocaleString()} words; target 900–1,100 when the evidence is rich.`,
     `- Write at least ${qb.minBodyWords.toLocaleString()} words of prose before tables, exhibits, and appendices; table-heavy output below that floor will fail the quality gate.`,
     `- Obey every per-section word budget in the REQUIRED STRUCTURE.`,
-    `- Use compact Markdown tables for scope, roles, value hypothesis, risks, and P2 handoff.`,
+    `- Use compact Markdown tables for scope, roles, value hypothesis, risks, and authorization conditions.`,
     `- Do not include a cover letter, table of contents, appendix narrative, methodology explanation, or repeated source summaries.`,
-    `- Do not write P2 current-state findings, P3 solution design, P4 economics, or implementation planning here.`,
+    `- Do not write workshop agendas, interview scripts, evidence-request workbooks, P2 current-state findings, P3 solution design, P4 economics, or implementation planning here.`,
   ].join("\n");
 }
 

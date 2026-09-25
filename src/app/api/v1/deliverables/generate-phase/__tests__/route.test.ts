@@ -58,6 +58,7 @@ const loadApprovedSolutionApproach: jest.Mock = jest.fn(async () => ({
     approvedAt: "2026-07-23T00:00:00.000Z",
   },
 }));
+const getModuleState: jest.Mock = jest.fn(async () => []);
 
 jest.mock("@/lib/auth/tenancy", () => ({
   requireTenancy: jest.fn(async () => tenancy),
@@ -110,6 +111,9 @@ jest.mock("@/lib/programs/approved-solution-approach", () => ({
     `APPROVED SOLUTION APPROACH - AUTHORITATIVE INPUT\nChosen option: ${approved.chosenOption}\nBuild only to the approved option.`,
   ARCHITECTURE_MODEL_VERSION: "moves-architecture-model-v2",
 }));
+jest.mock("@/lib/programs/queries", () => ({
+  getModuleState: (...args: unknown[]) => getModuleState(...args),
+}));
 
 import { POST } from "../route";
 
@@ -136,6 +140,8 @@ beforeEach(() => {
   });
   createMoveContextExtract.mockClear();
   loadApprovedSolutionApproach.mockClear();
+  getModuleState.mockClear();
+  getModuleState.mockResolvedValue([]);
   loadApprovedSolutionApproach.mockResolvedValue({
     decisionId: "decision-1",
     decisionVersion: "1",
@@ -179,6 +185,68 @@ describe("POST /api/v1/deliverables/generate-phase", () => {
       (await POST(req({ phase: 1, useCaseArchetype: "ams" }))).status,
     ).toBe(400);
     expect((await POST(req({ moveId: "m1", phase: 1 }))).status).toBe(400);
+  });
+
+  it("queues P1 Charter and Discovery Workshop Guide with authoritative phase capture", async () => {
+    getModuleState.mockResolvedValueOnce([
+      {
+        moduleKey: "phase_1_sponsor_commitment",
+        moduleName: "Sponsor commitment",
+        phaseNumber: 1,
+        status: "completed",
+        state: {
+          value: "VP Member Services sponsors the Move and owns the cadence.",
+        },
+      },
+      {
+        moduleKey: "phase_1_scope_boundary",
+        moduleName: "Scope boundary",
+        phaseNumber: 1,
+        status: "completed",
+        state: {
+          value:
+            "Include member-service contacts and exclude autonomous clinical advice.",
+        },
+      },
+    ]);
+
+    const res = await POST(
+      req({
+        moveId: "m-p1",
+        phase: 1,
+        useCaseArchetype: "ai_member_service",
+        moveName: "Member Service Agent Assist",
+        clientDisplayName: "Client",
+      }),
+    );
+
+    expect(res.status).toBe(202);
+    const json = (await res.json()) as {
+      deliverables: Array<{ deliverableTypeKey: string; deliverableType: string }>;
+    };
+    expect(json.deliverables.map((d) => d.deliverableTypeKey)).toEqual([
+      "charter",
+      "discovery_plan",
+    ]);
+    expect(json.deliverables.map((d) => d.deliverableType)).toEqual([
+      "charter",
+      "discovery_plan",
+    ]);
+
+    expect(createCalls).toHaveLength(2);
+    for (const call of createCalls) {
+      const decisionContext = (call.jobPayload as { decisionContext: string })
+        .decisionContext;
+      expect(decisionContext).toContain(
+        "APPROVED P1 PHASE CAPTURE (authoritative for this build)",
+      );
+      expect(decisionContext).toContain(
+        "Sponsor commitment: VP Member Services sponsors the Move",
+      );
+      expect(decisionContext).toContain(
+        "Scope boundary: Include member-service contacts",
+      );
+    }
   });
 
   it("enqueues one queued run per phase deliverable, scoped to the tenant", async () => {

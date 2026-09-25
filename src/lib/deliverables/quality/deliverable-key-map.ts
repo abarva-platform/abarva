@@ -15,6 +15,8 @@ import type { OutputFormat } from "@/lib/deliverables/orchestrator/types";
 /** Orchestrator deliverableType → profiled DeliverableKey. */
 const ORCH_TYPE_TO_KEY: Readonly<Record<string, DeliverableKey>> = {
   charter: "charter",
+  discovery_plan: "discovery_plan",
+  evidence_request_pack: "discovery_plan",
   discovery_report: "discovery_report",
   root_cause: "root_cause_worksheet",
   root_cause_worksheet: "root_cause_worksheet",

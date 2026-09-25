@@ -57,7 +57,7 @@ describe("shared artifact contracts", () => {
     );
   });
 
-  it("requires exactly 7 sections, with Discovery Preparation preserved and redundant headings folded into parent sections", () => {
+  it("requires exactly 7 sections, with workshop-guide detail split out of the Charter", () => {
     expect(CHARTER_CONTRACT.sections).toHaveLength(7);
     expect(CHARTER_CONTRACT.sections.map((s) => s.key)).toEqual([
       "charter_decision",
@@ -66,14 +66,20 @@ describe("shared artifact contracts", () => {
       "success_measures",
       "sponsorship_governance",
       "known_constraints_dependencies",
-      "discovery_preparation",
+      "authorization_conditions",
     ]);
+    expect(
+      CHARTER_CONTRACT.sections.some((s) => s.key === "discovery_preparation"),
+    ).toBe(false);
   });
 
   it("declares the boundary statement and table ceiling for the presentation standard", () => {
     expect(CHARTER_CONTRACT.boundaryStatement).toMatch(
       /authorizes and bounds the Discovery phase/i,
     );
-    expect(CHARTER_CONTRACT.maxSubstantiveTables).toBe(4);
+    expect(CHARTER_CONTRACT.boundaryStatement).toMatch(
+      /does not .*provide a Discovery workshop guide/i,
+    );
+    expect(CHARTER_CONTRACT.maxSubstantiveTables).toBe(3);
   });
 });

@@ -58,7 +58,11 @@ const CHARTER_SECTION_TO_P0_CAPTURE_KEYS: Readonly<Record<string, string[]>> = {
   success_measures: ["outcomes_success"],
   sponsorship_governance: ["stakeholder_owner_view"],
   known_constraints_dependencies: ["missing_evidence_open_questions"],
-  discovery_preparation: ["discovery_questions", "known_evidence"],
+  authorization_conditions: [
+    "discovery_questions",
+    "known_evidence",
+    "missing_evidence_open_questions",
+  ],
 };
 
 function hasContent(value: string | undefined): boolean {

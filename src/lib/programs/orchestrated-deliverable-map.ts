@@ -37,6 +37,7 @@ import {
 const REGISTRY_TO_ORCHESTRATOR: Readonly<Record<string, string>> = {
   // P1
   charter: "charter",
+  discovery_plan: "discovery_plan",
   // P2 — discovery and root-cause are different client artifacts. Root cause
   // must keep its own issue-tree structure and quality profile; routing it
   // through discovery_report produced a second discovery binder instead of a

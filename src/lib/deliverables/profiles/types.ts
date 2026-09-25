@@ -33,6 +33,7 @@ import type {
  */
 export type MovesDeliverableKey =
   | "charter" // P1
+  | "discovery_plan" // P1 working guide for P2 Discovery
   | "discovery_report" // P2
   | "root_cause_worksheet" // P2
   | "solution_approach_options" // P3a — the decision spine that drives the architecture

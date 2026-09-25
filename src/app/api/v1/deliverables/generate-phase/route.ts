@@ -44,6 +44,11 @@ import {
   shouldGenerateArtifact,
   type AdaptiveDepthDecision,
 } from "@/lib/deliverables/adaptive-depth";
+import { getModuleState } from "@/lib/programs/queries";
+import {
+  getPhaseCaptureSections,
+  phaseCaptureModuleKey,
+} from "@/lib/programs/phase-capture-contract";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -117,6 +122,33 @@ function normalizeGenerationAttemptId(value: unknown): string {
     .replace(/^-+|-+$/g, "")
     .slice(0, 96);
   return normalized || randomUUID();
+}
+
+async function buildPhaseCaptureDecisionContext(args: {
+  ctx: Awaited<ReturnType<typeof requireTenancy>>;
+  moveId: string;
+  phase: number;
+}): Promise<string | null> {
+  const sections = getPhaseCaptureSections(args.phase);
+  if (sections.length === 0) return null;
+
+  const modules = await getModuleState(args.ctx, args.moveId).catch(() => []);
+  const lines: string[] = [];
+  for (const section of sections) {
+    const moduleKey = phaseCaptureModuleKey(args.phase, section.key);
+    const captureModule = modules.find((entry) => entry.moduleKey === moduleKey);
+    const state = (captureModule?.state ?? {}) as Record<string, unknown>;
+    const value = typeof state.value === "string" ? state.value.trim() : "";
+    if (!value) continue;
+    lines.push(`- ${section.label}: ${value}`);
+  }
+  if (lines.length === 0) return null;
+
+  return [
+    `APPROVED P${args.phase} PHASE CAPTURE (authoritative for this build)`,
+    `Use these captured values as the primary source for this phase artifact. Do not replace them with generic tenant context, and do not re-collect them in the artifact.`,
+    ...lines,
+  ].join("\n");
 }
 
 export async function POST(req: NextRequest) {
@@ -325,6 +357,12 @@ export async function POST(req: NextRequest) {
         }
       : null;
 
+    const phaseCaptureContext = await buildPhaseCaptureDecisionContext({
+      ctx,
+      moveId,
+      phase,
+    });
+
     const adaptiveDepth: AdaptiveDepthDecision = resolveAdaptiveDepth({
       archetype: useCaseArchetype,
       text: [
@@ -392,6 +430,7 @@ export async function POST(req: NextRequest) {
         deliverableType,
         decisionContext: [
           `${moveName} — ${clientSafePhaseLabel}: ${spec.documentPurpose}`,
+          phaseCaptureContext,
           approvedApproachBlock,
         ]
           .filter(Boolean)

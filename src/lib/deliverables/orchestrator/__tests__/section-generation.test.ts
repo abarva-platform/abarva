@@ -279,8 +279,8 @@ describe("assembleDeliverable", () => {
       {
         key: "charter_decision",
         title: "Charter Decision & Immediate Next Steps",
-        bodyMarkdown:
-          "Approve P2 Discovery with the charter scope, evidence families, and caveats carried forward as the governed source of truth.",
+      bodyMarkdown:
+          "Approve Discovery with the charter scope, authorization conditions, evidence families, and caveats carried forward.",
         groundingMode: "mixed",
         citationsUsed: [],
       },
@@ -303,7 +303,7 @@ describe("assembleDeliverable", () => {
     });
   });
 
-  it("adds a decision-useful carry-forward section when a Moves charter is below its prose floor", () => {
+  it("adds decision-useful authorization conditions when a Moves charter is below its prose floor", () => {
     const req = amsRfpRequest({
       module: "moves",
       deliverableType: "charter",
@@ -338,7 +338,7 @@ describe("assembleDeliverable", () => {
 
     expect(
       doc.generatedSections.some(
-        (section) => section.key === "discovery_readiness_carry_forward",
+        (section) => section.key === "authorization_conditions",
       ),
     ).toBe(true);
     expect(wordCount).toBeGreaterThanOrEqual(700);

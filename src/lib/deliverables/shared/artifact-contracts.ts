@@ -127,9 +127,8 @@ export const CHARTER_CONTRACT: ArtifactContract = {
   maxOutputTokens: 4_000,
   estimatedRenderedPages: "2-3",
   // Re-compressed 2026-09-25: the Charter remains a 7-section commitment
-  // instrument. Discovery Preparation stays first-class, but intended outcomes
-  // now live with the business context and immediate next steps live with the
-  // decision so the artifact does not read like a binder.
+  // instrument. Detailed Discovery/workshop instructions are deliberately not
+  // part of this artifact; they belong in the separate phase workshop guide.
   sections: [
     {
       key: "charter_decision",
@@ -173,11 +172,11 @@ export const CHARTER_CONTRACT: ArtifactContract = {
       maxWords: 120,
     },
     {
-      key: "discovery_preparation",
-      title: "Discovery Preparation",
+      key: "authorization_conditions",
+      title: "Authorization Conditions & Open Inputs",
       intent:
-        "Sets expectations for the Discovery phase — not the assessment itself. An executive table (Area / What to Expect / What We Need From You / Priority) across Business Process, People & Governance, Technology, Data, Performance, Risk & Controls; a second table of typical Discovery activities and durations; and a short closing paragraph noting that a detailed Discovery Guidebook, tailored to this Move, will be generated after Charter approval — do not embed that detail here.",
-      maxWords: 250,
+        "State the conditions under which the sponsor is authorizing Discovery and the few open inputs that must carry into the separate Discovery Workshop Guide. Do not include agendas, interview scripts, data-request tables, questionnaires, or workshop operating instructions here.",
+      maxWords: 170,
     },
   ],
   forbiddenTopics: [
@@ -202,12 +201,11 @@ export const CHARTER_CONTRACT: ArtifactContract = {
   presentationElements: [
     "An executive Charter Decision box at the beginning.",
     "A two-column Scope / Out of Scope table.",
-    "A Discovery Preparation table (Area / What to Expect / What We Need From You / Priority).",
-    "A Discovery Activities table (typical activity / typical duration).",
+    "A compact Authorization Conditions / Open Inputs table.",
   ],
   boundaryStatement:
-    "This Charter authorizes and bounds the Discovery phase. It does not present a completed diagnosis, recommend a solution, define architecture, establish a future operating model, provide an implementation roadmap, or commit implementation funding.",
-  maxSubstantiveTables: 4,
+    "This Charter authorizes and bounds the Discovery phase. It does not present a completed diagnosis, recommend a solution, define architecture, establish a future operating model, provide a Discovery workshop guide, provide an implementation roadmap, or commit implementation funding.",
+  maxSubstantiveTables: 3,
   policy: {
     qualityContractRequired: true,
     visualRendererRequired: false,

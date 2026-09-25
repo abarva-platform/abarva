@@ -100,6 +100,29 @@ export const DELIVERABLE_REGISTRY: DeliverableSpec[] = [
     consultingAnalog: "McKinsey Engagement Scope & Charter Document",
   },
 
+  {
+    deliverableTypeKey: "discovery_plan",
+    documentTitle: "Discovery Workshop Guide",
+    phase: 1,
+    phaseLabel: "P1 Charter",
+    audiencePrimary: "Sponsor · Move lead · Workshop participants",
+    documentPurpose:
+      "Working guide for P2 Discovery — sessions, evidence requests, interview prompts, and client preparation instructions derived from the approved charter",
+    formatRecommendation: "html-word",
+    gateArtifact: false,
+    standAlone: true,
+    sections: [
+      "Charter recap (what is already known and must not be re-collected)",
+      "Discovery session plan (workshops, interviews, participants, objectives, and expected outputs)",
+      "Evidence request list (what files/extracts are needed, why they matter, likely owner, required format, and priority)",
+      "Workshop facilitation guide (questions, decisions to test, evidence to capture, and how notes will be reviewed)",
+      "Readiness checklist for the next phase gate (what must be uploaded, reviewed, and accepted before Discovery closes)",
+    ],
+    consultingAnalog: "Discovery Workshop Guide / Evidence Request Pack",
+    generationPromptHint:
+      "This is the detailed working guide that the Charter must not contain. Be operational: name sessions, roles, evidence requests, intake templates, outputs, and next-gate readiness checks. Keep all assumptions labeled and cite the approved Charter or evidence where used.",
+  },
+
   // ── P2: Discover & Diagnose ─────────────────────────────────────────────────
 
   {
@@ -556,7 +579,7 @@ export function getPhaseDocumentSet(phase: number): {
 
 /** Map phase number → ordered list of canonical deliverable type keys (non-deprecated) */
 export const PHASE_CANONICAL_KEYS: Record<number, string[]> = {
-  1: ["charter"],
+  1: ["charter", "discovery_plan"],
   2: ["discovery_report", "root_cause_worksheet"],
   3: [
     "target_state_architecture",
