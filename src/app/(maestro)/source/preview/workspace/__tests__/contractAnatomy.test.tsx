@@ -26,8 +26,8 @@ import type { SourceWorkspaceVM } from "../buildViewModel";
  * `opportunity_rows` is count(*) over `source.contract_action_candidate_v1` in
  * the migration-owned projection and count(*) over deduped
  * `source.optimization_opportunity` in the live portfolio adapter, and a third
- * writer overwrites it with the computed count. That is item U-522. These cases
- * hold regardless of how U-522 is settled, which is why they are phrased against
+ * writer overwrites it with the computed count. That is item D-500. These cases
+ * hold regardless of how D-500 is settled, which is why they are phrased against
  * the component's props rather than against the population.
  */
 

@@ -52,11 +52,11 @@ import type { SourceWorkspaceVM } from "./buildViewModel";
  *
  * So on the live path this facet may still be answered from the computed set,
  * arriving through the lane instead of directly. That is a data-contract defect
- * rather than a rendering one and it is filed as item U-522; do not "fix" it
+ * rather than a rendering one and it is filed as item D-500; do not "fix" it
  * here by picking another column. `opportunities_with_evidence` is the obvious
  * candidate and is not safe to adopt yet: it filters on `evidence_state`, and
  * item C-402 has the related `evidence_status` column open as effectively
- * constant. Until U-522 settles which population this lane reports, treat the
+ * constant. Until D-500 settles which population this lane reports, treat the
  * Optimize facet as consistent with its siblings but not independently proven.
  */
 
@@ -189,7 +189,7 @@ export function ContractAnatomy({
       // "0 governed levers" rather than "not loaded" when nothing was there.
       // Named as an evidence row count, matching `Contract360Surfaces` under
       // item U-518. Which population the lane actually reports is contested
-      // across read paths; see the note at the top of this file and item U-522.
+      // across read paths; see the note at the top of this file and item D-500.
       label: "Opportunity evidence rows",
       detail: laneCountLabel(
         coverage,

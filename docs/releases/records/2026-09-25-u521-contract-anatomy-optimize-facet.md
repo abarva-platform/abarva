@@ -45,7 +45,7 @@ So on the live path the Optimize facet may still be answered from the computed s
 through the lane rather than directly. **This release does not close that.** What it closes is
 narrower and real: the component no longer conflates the two itself, all seven facets read one
 source, and the feeds block enumerates only coverage lanes. The remaining half is a
-data-contract question, filed as item U-522 with the call sites named.
+data-contract question, filed as item D-500 with the call sites named.
 
 ## Layer Impact
 
@@ -168,7 +168,7 @@ conflation and locality; it does not fix the lane's meaning.
 No other column was substituted on a guess. `opportunities_with_evidence` is the obvious
 candidate and was rejected for now: it filters on `evidence_state`, and item C-402 has the
 related `evidence_status` column open as effectively constant, so adopting it would trade one
-unproven signal for another. Filed as item U-522.
+unproven signal for another. Filed as item D-500.
 
 That override was left alone deliberately rather than folded in here. It feeds roughly ten
 other consumers of `opportunity_rows` — readiness scoring, KPI strips, the evidence-lane
