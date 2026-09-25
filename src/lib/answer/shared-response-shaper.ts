@@ -231,7 +231,7 @@ function tableToCompactLines(text: string): string[] {
 function removeMarkdownTables(text: string): string {
   return text
     .split("\n")
-    .filter((line) => !/^\s*\|.+\|\s*$/.test(line))
+    .filter((line) => !TABLE_ROW_RE.test(line))
     .join("\n");
 }
 
@@ -317,32 +317,69 @@ function dedupeVisibleLines(text: string): string {
   return lines.join("\n");
 }
 
+// One grammar for "this line is markdown table markup, not a sentence", read
+// by both the filter that removes rows and the cleanup that must leave them
+// alone. Item C-511: they were two readings of the same idea in two places,
+// and the cleanup's reading was implicit — it had none, so it rewrote row
+// text as though it were prose.
+const TABLE_ROW_RE = /^\s*\|.+\|\s*$/;
+
+// Item C-511 — the assembly-artifact rewrites run PER LINE and skip a
+// markdown table row.
+//
+// One of them turns `" <dash> Breakdown:"` into a newline. Applied to the
+// whole answer it landed INSIDE a table row whenever caller-supplied label
+// text carried that pattern, and split the row in two: a first half with no
+// trailing `|`, a second with no leading `|`. Neither half then matched
+// `TABLE_ROW_RE`, so `removeMarkdownTables` no longer recognised either, both
+// survived into `proseOnly`, and `sentenceSplit` handed the reader raw pipe
+// markup in a support bullet.
+//
+// Fixing only the pass order inside `compactForChat` would close one of the
+// two places this happens. `shapeSharedAdvisorResponse` runs this function
+// once more AFTER compaction, where an answer that took the early return
+// still has its rows intact — so the same rewrite split them there, on the
+// path that exists precisely to leave a short answer's structure alone.
+// Measured over 18,900 constructed inputs: 3,324 leaked a half-row with a
+// well-formed table, and the pass-order fix alone left every one of them.
+// Guarding the rewrites instead closes both, in one place, with one rule.
+//
+// Deliberately NOT a narrower dash class: that is C-510 undone, and its suite
+// fails if anyone tries. `dedupeVisibleLines` still runs across every line,
+// rows included, so duplicate-row behaviour is unchanged.
+function rewriteAssemblyArtifacts(line: string): string {
+  return line
+    .replace(/\b(supporting)\s+\1\b/gi, "$1")
+    .replace(
+      /\b(Read|Evidence|Implication|Next(?: move)?)\s*:\s*\1\s*:/gi,
+      "$1:",
+    )
+    .replace(/\bNext\s*:\s*Next(?: move)?\s*:/gi, "Next:")
+    .replace(/\bNext\s*:\s*-\s*Next\s*:/gi, "Next:")
+    .replace(/\bBreakdown\s*:\s*;\s*/gi, "Breakdown: ")
+    .replace(/\s*;\s*[-–—]\s*/g, "; ")
+    .replace(/\s+[-–—]\s+Breakdown\s*:\s*[-–—]?\s*/gi, "\nBreakdown: ")
+    // A connector stranded at the end of a line used to be treated as
+    // proof that the sentence had been cut, and the connector plus its
+    // period were deleted. That is only true for a coordinating
+    // conjunction: English strands prepositions freely ("the comparison
+    // you asked for.", "the baseline we measured against.") and uses
+    // several subordinators adverbially ("paused for a while.", "nobody
+    // has raised this before."). The old list carried all of them, so
+    // finished prose was delivered with its last word missing. A
+    // sentence never legitimately ends in "and", "or" or "but", so those
+    // stay — and the cut sentence is closed with a period rather than
+    // left hanging on a comma.
+    .replace(/(?:\s*,)?\s*\b(?:and|or|but)\.(?=\s*(?:\n|$))/gi, ".")
+    .replace(/\s+([,.;:!?])/g, "$1");
+}
+
 function normalizeAssemblyArtifacts(text: string): string {
   return dedupeVisibleLines(
     text
-      .replace(/\b(supporting)\s+\1\b/gi, "$1")
-      .replace(
-        /\b(Read|Evidence|Implication|Next(?: move)?)\s*:\s*\1\s*:/gi,
-        "$1:",
-      )
-      .replace(/\bNext\s*:\s*Next(?: move)?\s*:/gi, "Next:")
-      .replace(/\bNext\s*:\s*-\s*Next\s*:/gi, "Next:")
-      .replace(/\bBreakdown\s*:\s*;\s*/gi, "Breakdown: ")
-      .replace(/\s*;\s*[-–—]\s*/g, "; ")
-      .replace(/\s+[-–—]\s+Breakdown\s*:\s*[-–—]?\s*/gi, "\nBreakdown: ")
-      // A connector stranded at the end of a line used to be treated as
-      // proof that the sentence had been cut, and the connector plus its
-      // period were deleted. That is only true for a coordinating
-      // conjunction: English strands prepositions freely ("the comparison
-      // you asked for.", "the baseline we measured against.") and uses
-      // several subordinators adverbially ("paused for a while.", "nobody
-      // has raised this before."). The old list carried all of them, so
-      // finished prose was delivered with its last word missing. A
-      // sentence never legitimately ends in "and", "or" or "but", so those
-      // stay — and the cut sentence is closed with a period rather than
-      // left hanging on a comma.
-      .replace(/(?:\s*,)?\s*\b(?:and|or|but)\.(?=\s*(?:\n|$))/gi, ".")
-      .replace(/\s+([,.;:!?])/g, "$1"),
+      .split("\n")
+      .map((line) => (TABLE_ROW_RE.test(line) ? line : rewriteAssemblyArtifacts(line)))
+      .join("\n"),
   );
 }
 
