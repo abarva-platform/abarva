@@ -1,0 +1,10 @@
+tenant_key,use_case,metric_or_gate,tower_trackability,evidence_status,safe_tower_posture,missing_evidence,pass_fail
+meridian-health,Agent Assist / Member Service,AHT baseline,trackable,missing or unvalidated,show as measurement gap,"baseline source, as-of, queue scope",Partial
+meridian-health,Agent Assist / Member Service,FCR baseline,trackable,missing or unvalidated,show as measurement gap,member service definition and source,Partial
+meridian-health,Agent Assist / Member Service,Transfer/repeat contact/CSAT/cost per contact,trackable,missing or partial,show measurement plan,contact center extracts and finance cost basis,Partial
+meridian-health,Agent Assist / Member Service,PHI incidents / hallucination controls / audit exceptions,trackable,missing or partial,show risk/control readiness,control owner and audit source,Partial
+meridian-health,Agent Assist / Member Service,Knowledge freshness / transcript availability / API latency,trackable,missing or partial,show operational readiness gaps,system telemetry and source freshness,Partial
+meridian-health,Data foundation / AWS + Databricks,Medallion architecture readiness,readiness gate,partial,target/foundation readiness only,certified bronze/silver/gold products,Partial
+meridian-health,Data foundation / AWS + Databricks,Unity Catalog / lineage / semantic layer / PHI control,readiness gate,partial,do not show realized value,control evidence and data-product certification,Pass
+meridian-health,Finance Analytics / Cost Transparency,close cycle / reconciliation effort / cost visibility,trackable,missing or partial,hypothesis and measurement plan,finance baseline and owner attestation,Partial
+meridian-health,Provider Quality / Clinical Quality,HEDIS/Stars uplift,regulated outcome,unsafe unless certified,block uplift claim,certified quality measurement evidence,Pass

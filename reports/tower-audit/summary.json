@@ -1,0 +1,45 @@
+{
+  "generatedAt": "2026-07-15T19:12:00.216Z",
+  "auditCodename": "TOWER-CONTEXT-LAYER-VALUE-FUTURE-AUDIT-PR",
+  "gitHead": "unknown",
+  "status": {
+    "towerUsesNewContextLayer": "Partial",
+    "oldVPathsAbsent": "No",
+    "unsupportedValueClaimsExist": "Yes",
+    "meridianDemoSafe": "Conditionally: safe if framed as measurement plan/readiness, not realized ROI.",
+    "browserScreenshots": "Not run by this static audit. See screenshots/README.md."
+  },
+  "evidence": {
+    "towerPageUsesCxoView": true,
+    "towerPageUsesBudgetRollups": true,
+    "cxoViewReadsCioTower": true,
+    "askRouteUsesCioAnswer": true,
+    "cioAnswerReadsContracts": true,
+    "cioAnswerReadsFacts": true,
+    "cioAnswerReadsRelationships": true,
+    "cioAnswerPersistsPromptTrace": true,
+    "v7ProjectionReadsBusinessRecords": true,
+    "towerGroundingUsesV7Projection": true,
+    "towerGroundingUsesMaterializedReadModel": true,
+    "outcomeLedgerFlagsUnsupportedVerified": true,
+    "chartsUseRecharts": true,
+    "rawTemplateDirectRead": true,
+    "explicitCandidateRead": true,
+    "oldVisibleVLanguage": true
+  },
+  "outputs": [
+    "summary.md",
+    "summary.json",
+    "context-path-proof.csv",
+    "tower-data-model-coverage.csv",
+    "metric-value-claim-audit.csv",
+    "meridian-tower-readiness.csv",
+    "cross-module-handoff-audit.csv",
+    "ui-rendering-audit.csv",
+    "visual-quality-audit.csv",
+    "future-of-tower.md",
+    "future-of-tower-roadmap.csv",
+    "top-10-tower-recommendations.csv",
+    "tower-audit-proof.html"
+  ]
+}
