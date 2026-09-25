@@ -805,7 +805,12 @@ async function resolveStageGateAction(
   };
 }
 
-async function buildStrategyStageForRoute(
+// Exported for the U-517 permission cases. The financial-permission resolution
+// this function performs is not reachable from any render harness for this
+// route, so with the function private the only guard on it was `tsc` — and a
+// literal `true` typechecks, which is exactly the mutation that has to fail.
+// `renderTowerPage` in `(maestro)/tower/page.tsx` is the same pattern.
+export async function buildStrategyStageForRoute(
   eventId: string,
   clientKey: string,
   currentStageKey: string,
@@ -823,26 +828,33 @@ async function buildStrategyStageForRoute(
     if (!data) return undefined;
 
     const row = data as SourceEventRow;
-    const facts = deriveStrategyIntakeFacts(row);
+    // Item U-517. The viewer's access policy is read ONCE here and answers two
+    // questions: may they approve, and may they see exact financial values. It
+    // used to be read only inside the `awaitingApproval` branch below, which is
+    // why the value thesis was derived with a literal `true` — the object that
+    // could have answered was loaded after the derivation, and conditionally.
+    // Both reads fail CLOSED: a null policy denies approval and restricts the
+    // figure.
+    const tenancy = await requireTenancy().catch(() => null);
+    const policy = tenancy
+      ? await loadUserSourceAccessPolicy(tenancy, {
+          activeClientKey: clientKey,
+          sourceEventId: eventId,
+        }).catch(() => null)
+      : null;
+    const canViewFinancialValues = policy?.canViewFinancialData === true;
+
+    const facts = deriveStrategyIntakeFacts(row, canViewFinancialValues);
 
     // Only offer the live approve action when the event is genuinely awaiting the
     // P0 approval in the strategy stage AND the user can approve. The approve
     // route re-checks access + confirmations server-side regardless; this just
     // avoids arming a gate that would be rejected.
-    let canApprove = false;
     const awaitingApproval =
       currentStageKey === "strategy" &&
       STRATEGY_APPROVAL_STATES.has(row.lifecycle_state);
-    if (awaitingApproval) {
-      const tenancy = await requireTenancy().catch(() => null);
-      if (tenancy) {
-        const policy = await loadUserSourceAccessPolicy(tenancy, {
-          activeClientKey: clientKey,
-          sourceEventId: eventId,
-        }).catch(() => null);
-        canApprove = policy?.canApproveSourceStages === true;
-      }
-    }
+    const canApprove =
+      awaitingApproval && policy?.canApproveSourceStages === true;
 
     return adaptStageViewToSourceJourney(
       buildStrategyStageView({

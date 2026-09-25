@@ -17,9 +17,9 @@
     "No timestamp is recorded, so refreshing this file on an unchanged tree is a no-op."
   ],
   "counts": {
-    "testFiles": 2435,
-    "coveredTestFiles": 1989,
-    "pullRequestCoveredTestFiles": 1986,
+    "testFiles": 2439,
+    "coveredTestFiles": 1993,
+    "pullRequestCoveredTestFiles": 1990,
     "uncoveredTestFiles": 446,
     "directoriesWithTests": 487,
     "directoriesFullyCovered": 288,
@@ -31,8 +31,8 @@
     "untriagedUnrunTestFiles": 397,
     "indeterminateInvocations": 0,
     "unresolvedIgnoreArguments": 0,
-    "criticalGovernedRiskDirectories": 0,
-    "highGovernedRiskDirectories": 9,
+    "criticalGovernedRiskDirectories": 1,
+    "highGovernedRiskDirectories": 8,
     "unclassifiedRiskDirectories": 180,
     "unclassifiedRiskDirectoriesWithResolvedProductSources": 174,
     "unclassifiedRiskDirectoriesWithNoResolvedProductSource": 6
@@ -265,6 +265,16 @@
       ]
     },
     {
+      "directory": "src/app/(maestro)/source/__tests__",
+      "testFiles": 5,
+      "coveredTestFiles": 4,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 1,
+      "via": [
+        "command"
+      ]
+    },
+    {
       "directory": "src/lib/knowledge/context-broker/__tests__",
       "testFiles": 5,
       "coveredTestFiles": 4,
@@ -335,16 +345,6 @@
       ]
     },
     {
-      "directory": "src/app/(maestro)/source/__tests__",
-      "testFiles": 3,
-      "coveredTestFiles": 2,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 1,
-      "via": [
-        "command"
-      ]
-    },
-    {
       "directory": "src/components/source/new-workspace",
       "testFiles": 3,
       "coveredTestFiles": 2,
@@ -387,6 +387,134 @@
   ],
   "governedRiskFiles": [
     {
+      "directory": "src/app/(maestro)/source/__tests__",
+      "testPath": "src/app/(maestro)/source/__tests__/approval-financial-permission.test.tsx",
+      "enumerated": true,
+      "collected": true,
+      "run": "unknown",
+      "green": "unknown",
+      "covered": true,
+      "pullRequestCovered": true,
+      "declaredQuarantine": false,
+      "declaredQuarantineShape": null,
+      "untriaged": false,
+      "via": [
+        "command"
+      ],
+      "governedRisk": {
+        "score": 110,
+        "band": "critical",
+        "signals": [
+          "approval_or_lifecycle_write",
+          "tenant_scoped_read"
+        ],
+        "productSourceCount": 18,
+        "rank": 1
+      }
+    },
+    {
+      "directory": "src/app/(maestro)/source/__tests__",
+      "testPath": "src/app/(maestro)/source/__tests__/new-route-optimization-redirect.test.ts",
+      "enumerated": true,
+      "collected": true,
+      "run": "unknown",
+      "green": "unknown",
+      "covered": true,
+      "pullRequestCovered": true,
+      "declaredQuarantine": false,
+      "declaredQuarantineShape": null,
+      "untriaged": false,
+      "via": [
+        "command"
+      ],
+      "governedRisk": {
+        "score": 110,
+        "band": "critical",
+        "signals": [
+          "approval_or_lifecycle_write",
+          "tenant_scoped_read"
+        ],
+        "productSourceCount": 18,
+        "rank": 1
+      }
+    },
+    {
+      "directory": "src/app/(maestro)/source/__tests__",
+      "testPath": "src/app/(maestro)/source/__tests__/not-found-source.test.tsx",
+      "enumerated": true,
+      "collected": true,
+      "run": "unknown",
+      "green": "unknown",
+      "covered": true,
+      "pullRequestCovered": true,
+      "declaredQuarantine": false,
+      "declaredQuarantineShape": null,
+      "untriaged": false,
+      "via": [
+        "command"
+      ],
+      "governedRisk": {
+        "score": 110,
+        "band": "critical",
+        "signals": [
+          "approval_or_lifecycle_write",
+          "tenant_scoped_read"
+        ],
+        "productSourceCount": 18,
+        "rank": 1
+      }
+    },
+    {
+      "directory": "src/app/(maestro)/source/__tests__",
+      "testPath": "src/app/(maestro)/source/__tests__/requester-estimate-disclosure.test.tsx",
+      "enumerated": true,
+      "collected": true,
+      "run": "unknown",
+      "green": "unknown",
+      "covered": true,
+      "pullRequestCovered": true,
+      "declaredQuarantine": false,
+      "declaredQuarantineShape": null,
+      "untriaged": false,
+      "via": [
+        "command"
+      ],
+      "governedRisk": {
+        "score": 110,
+        "band": "critical",
+        "signals": [
+          "approval_or_lifecycle_write",
+          "tenant_scoped_read"
+        ],
+        "productSourceCount": 18,
+        "rank": 1
+      }
+    },
+    {
+      "directory": "src/app/(maestro)/source/__tests__",
+      "testPath": "src/app/(maestro)/source/__tests__/tenant-resolution-source-contract.test.tsx",
+      "enumerated": true,
+      "collected": false,
+      "run": false,
+      "green": "unknown",
+      "covered": false,
+      "pullRequestCovered": false,
+      "declaredQuarantine": false,
+      "declaredQuarantineShape": null,
+      "untriaged": true,
+      "via": [],
+      "governedRisk": {
+        "score": 110,
+        "band": "critical",
+        "signals": [
+          "approval_or_lifecycle_write",
+          "tenant_scoped_read"
+        ],
+        "productSourceCount": 18,
+        "rank": 1
+      }
+    },
+    {
       "directory": "src/app/(maestro)/source/preview/workspace/__tests__",
       "testPath": "src/app/(maestro)/source/preview/workspace/__tests__/avaComposerGate.test.ts",
       "enumerated": true,
@@ -408,7 +536,7 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 31,
-        "rank": 1
+        "rank": 2
       }
     },
     {
@@ -433,7 +561,7 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 31,
-        "rank": 1
+        "rank": 2
       }
     },
     {
@@ -458,7 +586,7 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 31,
-        "rank": 1
+        "rank": 2
       }
     },
     {
@@ -483,7 +611,7 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 31,
-        "rank": 1
+        "rank": 2
       }
     },
     {
@@ -508,7 +636,7 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 31,
-        "rank": 1
+        "rank": 2
       }
     },
     {
@@ -533,7 +661,7 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 31,
-        "rank": 1
+        "rank": 2
       }
     },
     {
@@ -558,7 +686,7 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 31,
-        "rank": 1
+        "rank": 2
       }
     },
     {
@@ -583,7 +711,7 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 31,
-        "rank": 1
+        "rank": 2
       }
     },
     {
@@ -608,7 +736,7 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 31,
-        "rank": 1
+        "rank": 2
       }
     },
     {
@@ -631,7 +759,7 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 31,
-        "rank": 1
+        "rank": 2
       }
     },
     {
@@ -656,7 +784,7 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 31,
-        "rank": 1
+        "rank": 2
       }
     },
     {
@@ -681,7 +809,7 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 31,
-        "rank": 1
+        "rank": 2
       }
     },
     {
@@ -706,7 +834,7 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 31,
-        "rank": 1
+        "rank": 2
       }
     },
     {
@@ -731,7 +859,7 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 31,
-        "rank": 1
+        "rank": 2
       }
     },
     {
@@ -756,7 +884,7 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 31,
-        "rank": 1
+        "rank": 2
       }
     },
     {
@@ -781,7 +909,7 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 31,
-        "rank": 1
+        "rank": 2
       }
     },
     {
@@ -806,7 +934,7 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 31,
-        "rank": 1
+        "rank": 2
       }
     },
     {
@@ -831,7 +959,7 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 31,
-        "rank": 1
+        "rank": 2
       }
     },
     {
@@ -856,7 +984,7 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 31,
-        "rank": 1
+        "rank": 2
       }
     },
     {
@@ -881,7 +1009,7 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 31,
-        "rank": 1
+        "rank": 2
       }
     },
     {
@@ -906,7 +1034,7 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 31,
-        "rank": 1
+        "rank": 2
       }
     },
     {
@@ -931,7 +1059,7 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 31,
-        "rank": 1
+        "rank": 2
       }
     },
     {
@@ -956,7 +1084,7 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 31,
-        "rank": 1
+        "rank": 2
       }
     },
     {
@@ -979,7 +1107,7 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 31,
-        "rank": 1
+        "rank": 2
       }
     },
     {
@@ -1004,7 +1132,7 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 31,
-        "rank": 1
+        "rank": 2
       }
     },
     {
@@ -1029,7 +1157,7 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 31,
-        "rank": 1
+        "rank": 2
       }
     },
     {
@@ -1052,7 +1180,7 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 31,
-        "rank": 1
+        "rank": 2
       }
     },
     {
@@ -1075,7 +1203,7 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 31,
-        "rank": 1
+        "rank": 2
       }
     },
     {
@@ -1098,7 +1226,7 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 31,
-        "rank": 1
+        "rank": 2
       }
     },
     {
@@ -1123,7 +1251,7 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 31,
-        "rank": 1
+        "rank": 2
       }
     },
     {
@@ -1148,7 +1276,7 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 31,
-        "rank": 1
+        "rank": 2
       }
     },
     {
@@ -1173,7 +1301,7 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 31,
-        "rank": 1
+        "rank": 2
       }
     },
     {
@@ -1198,7 +1326,7 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 31,
-        "rank": 1
+        "rank": 2
       }
     },
     {
@@ -1223,7 +1351,7 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 31,
-        "rank": 1
+        "rank": 2
       }
     },
     {
@@ -1248,7 +1376,7 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 31,
-        "rank": 1
+        "rank": 2
       }
     },
     {
@@ -1273,7 +1401,7 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 3,
-        "rank": 2
+        "rank": 3
       }
     },
     {
@@ -1298,7 +1426,7 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 3,
-        "rank": 2
+        "rank": 3
       }
     },
     {
@@ -1321,7 +1449,7 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 3,
-        "rank": 2
+        "rank": 3
       }
     },
     {
@@ -1344,7 +1472,7 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 3,
-        "rank": 2
+        "rank": 3
       }
     },
     {
@@ -1369,7 +1497,7 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 4,
-        "rank": 3
+        "rank": 4
       }
     },
     {
@@ -1392,7 +1520,7 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 4,
-        "rank": 3
+        "rank": 4
       }
     },
     {
@@ -1415,7 +1543,7 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 4,
-        "rank": 3
+        "rank": 4
       }
     },
     {
@@ -1440,7 +1568,7 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 4,
-        "rank": 3
+        "rank": 4
       }
     },
     {
@@ -1465,7 +1593,7 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 5,
-        "rank": 4
+        "rank": 5
       }
     },
     {
@@ -1490,7 +1618,7 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 5,
-        "rank": 4
+        "rank": 5
       }
     },
     {
@@ -1513,7 +1641,7 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 5,
-        "rank": 4
+        "rank": 5
       }
     },
     {
@@ -1536,79 +1664,6 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 5,
-        "rank": 4
-      }
-    },
-    {
-      "directory": "src/app/(maestro)/source/__tests__",
-      "testPath": "src/app/(maestro)/source/__tests__/new-route-optimization-redirect.test.ts",
-      "enumerated": true,
-      "collected": true,
-      "run": "unknown",
-      "green": "unknown",
-      "covered": true,
-      "pullRequestCovered": true,
-      "declaredQuarantine": false,
-      "declaredQuarantineShape": null,
-      "untriaged": false,
-      "via": [
-        "command"
-      ],
-      "governedRisk": {
-        "score": 10,
-        "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "productSourceCount": 12,
-        "rank": 5
-      }
-    },
-    {
-      "directory": "src/app/(maestro)/source/__tests__",
-      "testPath": "src/app/(maestro)/source/__tests__/not-found-source.test.tsx",
-      "enumerated": true,
-      "collected": true,
-      "run": "unknown",
-      "green": "unknown",
-      "covered": true,
-      "pullRequestCovered": true,
-      "declaredQuarantine": false,
-      "declaredQuarantineShape": null,
-      "untriaged": false,
-      "via": [
-        "command"
-      ],
-      "governedRisk": {
-        "score": 10,
-        "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "productSourceCount": 12,
-        "rank": 5
-      }
-    },
-    {
-      "directory": "src/app/(maestro)/source/__tests__",
-      "testPath": "src/app/(maestro)/source/__tests__/tenant-resolution-source-contract.test.tsx",
-      "enumerated": true,
-      "collected": false,
-      "run": false,
-      "green": "unknown",
-      "covered": false,
-      "pullRequestCovered": false,
-      "declaredQuarantine": false,
-      "declaredQuarantineShape": null,
-      "untriaged": true,
-      "via": [],
-      "governedRisk": {
-        "score": 10,
-        "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "productSourceCount": 12,
         "rank": 5
       }
     },
@@ -1907,6 +1962,23 @@
   ],
   "governedRiskRanking": [
     {
+      "directory": "src/app/(maestro)/source/__tests__",
+      "testFiles": 5,
+      "unrunTestFiles": 1,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 1,
+      "governedRisk": {
+        "score": 110,
+        "band": "critical",
+        "signals": [
+          "approval_or_lifecycle_write",
+          "tenant_scoped_read"
+        ],
+        "productSourceCount": 18,
+        "rank": 1
+      }
+    },
+    {
       "directory": "src/app/(maestro)/source/preview/workspace/__tests__",
       "testFiles": 35,
       "unrunTestFiles": 5,
@@ -1919,7 +1991,7 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 31,
-        "rank": 1
+        "rank": 2
       }
     },
     {
@@ -1935,7 +2007,7 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 3,
-        "rank": 2
+        "rank": 3
       }
     },
     {
@@ -1951,7 +2023,7 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 4,
-        "rank": 3
+        "rank": 4
       }
     },
     {
@@ -1967,22 +2039,6 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 5,
-        "rank": 4
-      }
-    },
-    {
-      "directory": "src/app/(maestro)/source/__tests__",
-      "testFiles": 3,
-      "unrunTestFiles": 1,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 1,
-      "governedRisk": {
-        "score": 10,
-        "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "productSourceCount": 12,
         "rank": 5
       }
     },
@@ -4395,6 +4451,34 @@
   ],
   "governedRiskEvidence": [
     {
+      "directory": "src/app/(maestro)/source/__tests__",
+      "testFiles": 5,
+      "unrunTestFiles": 1,
+      "governedRisk": {
+        "score": 110,
+        "band": "critical",
+        "signals": [
+          "approval_or_lifecycle_write",
+          "tenant_scoped_read"
+        ],
+        "productSourceCount": 18,
+        "approvalOrLifecycleSourceCount": 2,
+        "approvalOrLifecycleSources": [
+          "src/app/(maestro)/source/approvals/page.tsx",
+          "src/app/(maestro)/source/events/[eventId]/approval/page.tsx"
+        ],
+        "tenantScopedReadSourceCount": 7,
+        "tenantScopedReadSources": [
+          "src/app/(maestro)/source/events/[eventId]/approval/page.tsx",
+          "src/app/(maestro)/source/events/[eventId]/page.tsx",
+          "src/app/(maestro)/source/new/page.tsx",
+          "src/app/(maestro)/source/workspace/page.tsx",
+          "src/lib/source/intake/servicenow-sourcing-request-repository.ts"
+        ],
+        "rank": 1
+      }
+    },
+    {
       "directory": "src/app/(maestro)/source/preview/workspace/__tests__",
       "testFiles": 35,
       "unrunTestFiles": 5,
@@ -4413,7 +4497,7 @@
           "src/lib/auth/tenancy.ts",
           "src/lib/source/data-model/read-adapter.ts"
         ],
-        "rank": 1
+        "rank": 2
       }
     },
     {
@@ -4431,7 +4515,7 @@
         "tenantScopedReadSources": [
           "src/lib/active-client.ts"
         ],
-        "rank": 2
+        "rank": 3
       }
     },
     {
@@ -4449,7 +4533,7 @@
         "tenantScopedReadSources": [
           "src/lib/source/contract-evidence/read-model.ts"
         ],
-        "rank": 3
+        "rank": 4
       }
     },
     {
@@ -4466,28 +4550,6 @@
         "tenantScopedReadSourceCount": 1,
         "tenantScopedReadSources": [
           "src/lib/source/contract-intelligence/cloud-adapter.ts"
-        ],
-        "rank": 4
-      }
-    },
-    {
-      "directory": "src/app/(maestro)/source/__tests__",
-      "testFiles": 3,
-      "unrunTestFiles": 1,
-      "governedRisk": {
-        "score": 10,
-        "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "productSourceCount": 12,
-        "tenantScopedReadSourceCount": 5,
-        "tenantScopedReadSources": [
-          "src/app/(maestro)/source/new/page.tsx",
-          "src/app/(maestro)/source/workspace/page.tsx",
-          "src/lib/source/intake/servicenow-sourcing-request-repository.ts",
-          "src/lib/source/queries.ts",
-          "src/lib/tenant/resolveTenant.ts"
         ],
         "rank": 5
       }

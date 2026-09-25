@@ -752,6 +752,13 @@ jobs:
       # it lands, because a control that runs nowhere is the failure this
       # directory's census exists to catch. Measured green on the branch: 5
       # tests.
+      #
+      # U-517 (2026-09-25) adds the approval financial-permission suite. It is
+      # the only assertion that a viewer whose policy restricts exact financial
+      # values does not receive the figure on either the event approval page or
+      # the event detail route's Strategy stage, and it asserts the opposite
+      # direction as well so an always-restrict page cannot satisfy it. Wired in
+      # the same change that creates it. Measured green on the branch: 9 tests.
       - name: Run Source readiness and route suites
         run: >-
           npx jest --runTestsByPath
@@ -762,6 +769,7 @@ jobs:
           "src/app/(maestro)/source/__tests__/new-route-optimization-redirect.test.ts"
           "src/app/(maestro)/source/__tests__/not-found-source.test.tsx"
           "src/app/(maestro)/source/__tests__/requester-estimate-disclosure.test.tsx"
+          "src/app/(maestro)/source/__tests__/approval-financial-permission.test.tsx"
           --no-coverage --ci
 
       # Eight Source contract suites were measured before wiring: all eight
