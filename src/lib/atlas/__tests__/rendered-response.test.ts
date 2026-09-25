@@ -1,4 +1,5 @@
 import { assertVisibleAnswerContract } from '@/lib/agent/visible-answer-contract';
+import { shapeAgentResponseForSurface } from '@/lib/agent/response-shape';
 import { validateCxoAnswer } from '@/lib/agent/quality/cxo-answer-quality';
 import { buildAtlasRenderedResponse } from '../rendered-response';
 import type { AtlasTurnResult } from '../types';
@@ -89,5 +90,76 @@ describe('buildAtlasRenderedResponse', () => {
         },
       }).passed,
     ).toBe(true);
+  });
+});
+
+// T-617 — the renderer used to carry its own `\bAtlas\b` -> `aVa` replacement,
+// one line below, on text that `shapeAgentResponseForSurface` had already
+// scrubbed. Deleting it changed nothing: over a 3,078-row constructed corpus
+// (2,754 of whose inputs carried the name) the rendered output was identical
+// byte for byte with and without that line.
+//
+// The route-level `not.toContain('Atlas')` assertions above are the reason
+// that redundancy could sit there unnoticed. They are true, and they are worth
+// keeping, but they pass against whichever layer happens to act first and so
+// can name none of them: with the name removed from the shared shaper's
+// `BANNED_BRAND_RE` and the renderer's line still present, all three of them
+// still passed.
+//
+// So the property is pinned here at the two layers that actually hold it, one
+// test each, and each of these fails when its own layer is broken.
+describe('legacy agent branding — which layer removes it', () => {
+  const NAMED = 'Atlas sees the pressure stack as a portfolio warning.';
+
+  it('the shared surface shaper is the layer that rewrites the name', () => {
+    const shaped = shapeAgentResponseForSurface('/tower', NAMED);
+
+    expect(shaped).not.toMatch(/\bAtlas\b/);
+    expect(shaped).toContain('aVa');
+  });
+
+  it('the visible answer contract fails closed on the name, which is what makes the route answer 422', () => {
+    const contract = assertVisibleAnswerContract(NAMED);
+
+    expect(contract.passed).toBe(false);
+    expect(contract.violations.map((violation) => violation.id)).toContain('atlas_branding');
+  });
+
+  it('keeps the renderer scrubs that have no upstream equivalent', () => {
+    const rendered = buildAtlasRenderedResponse({
+      clientName: 'SkyHarbor Air',
+      message: 'What is the portfolio pressure right now?',
+      result: atlasResult(
+        'The industry standard is unclear and best practice is unsettled, so read the data rows as evidence rather than as a claim.',
+      ),
+    });
+
+    expect(rendered.response_text).toContain('market benchmark');
+    expect(rendered.response_text).toContain('strong operating pattern');
+    expect(rendered.response_text).toContain('records');
+    expect(rendered.response_text).not.toContain('industry standard');
+    expect(rendered.response_text).not.toContain('best practice');
+  });
+
+  it.each([
+    'Atlas',
+    'Atlas.',
+    '(Atlas)',
+    "Atlas's",
+    'Atlas-driven',
+    '**Atlas**',
+    'Atlas | Sentinel',
+    'Sentinel and Atlas and Nexus',
+  ])('renders %s with no legacy branding and a passing contract', (form) => {
+    const rendered = buildAtlasRenderedResponse({
+      clientName: 'SkyHarbor Air',
+      message: 'What is the portfolio pressure right now?',
+      result: atlasResult(`${form} reports that measured adoption is below plan.`),
+    });
+
+    expect(rendered.response_text).not.toMatch(/\bAtlas\b/);
+    expect(rendered.response_text).not.toMatch(/\bSentinel\b/);
+    expect(rendered.response_text).not.toMatch(/\bNexus\b/);
+    expect(assertVisibleAnswerContract(rendered.response_text).passed).toBe(true);
   });
 });
