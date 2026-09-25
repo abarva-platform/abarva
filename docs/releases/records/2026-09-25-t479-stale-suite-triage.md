@@ -193,7 +193,10 @@ Revert the PR. Two added files, no migration, no runtime state, no data written.
   a guess, and it is filed as `T-486` marked `decision needed` with a recommendation. The
   recommendation is to fix rather than baseline, because the ratchet's own documentation says the
   baseline is a record of what was already broken when the check landed, not a budget to spend —
-  and these three were never "already broken when the check landed", they were never reached.
+  and these were never "already broken when the check landed" — they were never reached. The
+  unescaped patterns have been in place since the gates landed: `a2a981bc4` (2026-09-01, #7303) for
+  Home and `31f24dfda` (2026-09-02, #7328) for Tower. Neither directory has ever been run by the
+  gate that names it.
 - **`T-487`** — the census crediting baseline paths as prefixes — is filed and not fixed here.
 - **`T-742`'s +38 pool discrepancy is still owed**, and is now joined by a second unsettled number:
   the `covered` column the triage ranking rests on is over-credited by exactly these patterns. A
