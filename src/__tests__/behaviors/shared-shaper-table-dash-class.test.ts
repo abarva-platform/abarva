@@ -120,7 +120,19 @@ describe("C-510 — the table branch neutralises the artifact rule's dash class"
 
     expect(hyphen.text).toEqual(emDash.text);
     expect(enDash.text).toEqual(emDash.text);
-    expect(emDash.text.length).toBe(536);
+    // 536 → 526 when item C-511 landed, and the reason is recorded here
+    // rather than the number quietly re-pinned. C-510 fixed the table
+    // SUMMARY line; the support bullet under it was still the split table
+    // row this fixture's labels produce, shipped as prose with eight `|`
+    // characters in it. C-511 reordered the two passes that build
+    // `proseOnly` so a row is filtered before the cleanup can split it, and
+    // the bullet is now the first real prose sentence of the answer — ten
+    // characters shorter and the pipe markup gone. This suite's own subject
+    // is unchanged: all three dash forms still agree, which is what the two
+    // assertions above measure, and the em-dash form is still the one the
+    // other two were raised to.
+    expect(emDash.text.length).toBe(526);
+    expect(emDash.text).not.toMatch(/\|/);
     expect(visibleLines(emDash.text)).toHaveLength(4);
   });
 

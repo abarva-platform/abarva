@@ -372,8 +372,18 @@ function compactForChat(
     return normalized;
   }
 
+  // The table filter runs BEFORE the artifact cleanup, and the order is the
+  // whole of item C-511. `normalizeAssemblyArtifacts` rewrites
+  // `" <dash> Breakdown:"` to a newline; when a caller-supplied label carries
+  // that pattern the rewrite lands inside a markdown table row and splits it,
+  // leaving a first half with no trailing `|` and a second half with no
+  // leading `|`. Neither half then matches this filter's `^\s*\|.+\|\s*$`, so
+  // both survived it and `sentenceSplit` handed the reader raw pipe markup in
+  // a support bullet. Filtering first means a row is gone before the cleanup
+  // can split it. The cleanup's dash class is deliberately untouched —
+  // narrowing it is C-510 undone.
   const proseOnly = removeSectionHeadings(
-    removeMarkdownTables(normalizeAssemblyArtifacts(normalized)),
+    normalizeAssemblyArtifacts(removeMarkdownTables(normalized)),
   );
   const sentences = sentenceSplit(proseOnly.replace(/\n+/g, " "));
   // Lead candidates, not paragraphs: this list feeds a `.find()` for the
