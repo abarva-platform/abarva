@@ -5,7 +5,7 @@
     "src/components",
     "src/app"
   ],
-  "scannedFiles": 1188,
+  "scannedFiles": 1196,
   "orphanExports": [
     "src/app/(maestro)/admin/_cached-helpers.ts#cachedApprovalQueue",
     "src/app/(maestro)/admin/_cached-helpers.ts#cachedCrossProgramSignals",
