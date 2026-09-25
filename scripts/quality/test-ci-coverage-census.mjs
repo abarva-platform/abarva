@@ -1061,7 +1061,200 @@ export function collectReachableCommands(root, packageScripts) {
 // pass, which is the fail-closed direction.
 const EXECUTION_UNKNOWN = "unknown";
 
-function coverageFor(testPath, reachable) {
+/**
+ * A quarantine expressed by ENUMERATION, which the reading above cannot see.
+ *
+ * `excludedByNamingCommand` recognises exactly one shape: a command names a
+ * directory and then subtracts a file inside it through its own
+ * `--testPathIgnorePatterns`. That shape needs the command to NAME the file
+ * before there is anything to subtract, so it can only ever be true where the
+ * directory's default is INCLUDED.
+ *
+ * `src/__tests__/integration` inverts that default deliberately: its root files
+ * are enumerated by exact path, because naming the directory would also select
+ * every red subdirectory under it. A file left out of that enumeration is named
+ * by nothing at all, so `named.length` is 0 and the file falls through to
+ * `untriaged` — including a file that WAS triaged, declared in a repo-owned
+ * list with a reason, an owner and a verdict, and re-run by a sibling checker
+ * that fails if it passes. `untriagedUnrunTestFiles` is the sole input to
+ * `governedRiskRanking`, so three such files were the entire reason one
+ * directory sat at rank 1 of the critical band, and two backlog items drew work
+ * from that rank before the mislabelling was measured (T-615).
+ *
+ * So the second shape is read here: a file DECLARED in a quarantine list,
+ * whether or not any command names it.
+ *
+ * DISCOVERY IS A GLOB, NOT A LIST OF LISTS. A hardcoded set of list files is the
+ * same blind spot one directory over — the item that found this named five lists
+ * and `scripts/quality` holds seven. Every `*-quarantine.json` there is read,
+ * and a list this function cannot resolve THROWS rather than being skipped: an
+ * unreadable or unscoped quarantine would otherwise under-state triage in
+ * silence, which is the failure mode this whole file exists against.
+ *
+ * SCOPE IS DECLARED, NEVER INFERRED. An entry names its suite by BASENAME and
+ * the directory it belongs to lives in the sibling checker, not in the list. Two
+ * cheaper bridges were measured and both are wrong. Resolving a basename against
+ * the walked tree is ambiguous on this repository TODAY —
+ * `ai-program-failure-modes.test.ts` exists under both
+ * `src/lib/intelligence/__tests__` and `src/__tests__/integration/intelligence`
+ * while one list declares it, and 40 basenames in the tree are non-unique — and
+ * crediting the wrong file is the over-stating direction. Reading the checker's
+ * own directory constant would be a text scan answering a syntax question. So
+ * each list declares its scope, and a list that does not is a hard failure
+ * rather than a quiet miss.
+ */
+const QUARANTINE_LIST_DIRECTORY = "scripts/quality";
+const QUARANTINE_LIST_RE = /-quarantine\.json$/;
+const QUARANTINE_ENTRY_KEY = "quarantined";
+const QUARANTINE_SCOPE_KEY = "scope";
+
+/**
+ * The key that carries the scope for a given array of declarations. The primary
+ * array is `quarantined` and its scope is plain `scope`; any sibling array of
+ * suite names — `alsoIgnored` is the one in the tree today — carries its own,
+ * because those entries are swept in from a DIFFERENT directory than the one the
+ * list guards and a single scope would silently misplace them.
+ */
+function quarantineScopeKeyFor(arrayKey) {
+  return arrayKey === QUARANTINE_ENTRY_KEY
+    ? QUARANTINE_SCOPE_KEY
+    : `${arrayKey}Scope`;
+}
+
+function quarantineSuiteOf(entry) {
+  if (typeof entry === "string") return entry;
+  if (entry !== null && typeof entry === "object" && typeof entry.suite === "string") {
+    return entry.suite;
+  }
+  return null;
+}
+
+/**
+ * Every quarantine declaration in the tree, as `{ list, key, scope, suite }`.
+ *
+ * Only an array whose entries carry suite names is a declaration: a list may
+ * hold other arrays that describe clusters or batches, and demanding a scope
+ * from those would be a false requirement. A MIXED array — some entries with a
+ * suite name and some without — throws, because crediting the ones it can read
+ * and dropping the rest is the silent under-statement again, one entry down.
+ */
+export function quarantineDeclarations(root) {
+  const directory = path.join(root, QUARANTINE_LIST_DIRECTORY);
+  if (!existsSync(directory)) return { lists: [], declarations: [] };
+  const lists = [];
+  const declarations = [];
+  for (const name of readdirSync(directory).filter((entry) =>
+    QUARANTINE_LIST_RE.test(entry),
+  ).sort()) {
+    const relative = `${QUARANTINE_LIST_DIRECTORY}/${name}`;
+    lists.push(relative);
+    let parsed;
+    try {
+      parsed = JSON.parse(readFileSync(path.join(directory, name), "utf8"));
+    } catch (error) {
+      throw new Error(
+        `${relative} is not readable JSON (${error?.message ?? "unknown error"}). ` +
+          "The census cannot tell a triaged unrun file from an untriaged one while " +
+          "a quarantine list is unreadable, so it reports neither.",
+      );
+    }
+    if (parsed === null || typeof parsed !== "object" || Array.isArray(parsed)) {
+      throw new Error(`${relative} is not a JSON object.`);
+    }
+    for (const [key, value] of Object.entries(parsed)) {
+      if (!Array.isArray(value) || value.length === 0) continue;
+      const suites = value.map(quarantineSuiteOf);
+      const named = suites.filter((suite) => suite !== null && suite.length > 0);
+      if (named.length === 0) continue;
+      if (named.length !== value.length) {
+        throw new Error(
+          `${relative} has ${value.length - named.length} of ${value.length} ` +
+            `entries in "${key}" with no suite name. A mixed array would be ` +
+            "credited in part and dropped in part, which is the silent " +
+            "under-statement this reading exists to remove.",
+        );
+      }
+      const scopeKey = quarantineScopeKeyFor(key);
+      const scope = parsed[scopeKey];
+      if (typeof scope !== "string" || scope.trim().length === 0) {
+        throw new Error(
+          `${relative} declares ${value.length} quarantined suite` +
+            `${value.length === 1 ? "" : "s"} in "${key}" but no "${scopeKey}": ` +
+            "the repository-relative directory those suite names belong to. Add " +
+            "it. Basenames are not unique in this tree, so the census will not " +
+            "guess which file an entry means.",
+        );
+      }
+      for (const suite of named) {
+        declarations.push({ list: relative, key, scope: normalize(scope), suite });
+      }
+    }
+  }
+  return { lists, declarations };
+}
+
+/**
+ * The declared paths, resolved against the walked tree.
+ *
+ * An entry is read as an exact path under its scope first, which is what the
+ * sibling checkers do. When no such file exists the entry is read as the regex
+ * fragment the `*-ignore-args.mjs` scripts turn it into, matched ONLY against
+ * files inside the declared scope — the same fence, so a fragment cannot reach
+ * out of the directory its list guards.
+ *
+ * A declaration that resolves to nothing is recorded and credited to nobody. It
+ * is a stale entry, and every one of these lists has a checker that re-runs its
+ * entries and fails on a name that no longer exists; that finding belongs there
+ * rather than here, and a census that threw on it would stop measuring over
+ * somebody else's bookkeeping.
+ */
+export function declaredQuarantinePaths(root, testFiles) {
+  const { lists, declarations } = quarantineDeclarations(root);
+  const inTree = new Set(testFiles);
+  const paths = new Set();
+  // Seeded from the INVENTORY, so a list that declares nothing still gets a row.
+  // An empty quarantine list is the strongest state of an enumeration carve-out,
+  // not a missing one, and a summary that only counted declarations would drop
+  // the one list this reading was written for.
+  const byList = new Map(
+    lists.map((list) => [
+      list,
+      { list, declaredSuites: 0, resolvedTestFiles: new Set(), unresolved: [] },
+    ]),
+  );
+  for (const { list, key, scope, suite } of declarations) {
+    const summary = byList.get(list);
+    summary.declaredSuites += 1;
+    const exact = `${scope}/${suite}`;
+    const resolved = [];
+    if (inTree.has(exact)) resolved.push(exact);
+    else {
+      for (const testFile of testFiles) {
+        if (testFile.startsWith(`${scope}/`) && ignoreMatches(suite, testFile)) {
+          resolved.push(testFile);
+        }
+      }
+    }
+    if (resolved.length === 0) summary.unresolved.push(`${key}:${exact}`);
+    for (const testFile of resolved) {
+      summary.resolvedTestFiles.add(testFile);
+      paths.add(testFile);
+    }
+  }
+  return {
+    paths,
+    lists: [...byList.values()]
+      .map((summary) => ({
+        list: summary.list,
+        declaredSuites: summary.declaredSuites,
+        resolvedTestFiles: [...summary.resolvedTestFiles].sort(),
+        unresolvedDeclarations: summary.unresolved.sort(),
+      }))
+      .sort((a, b) => a.list.localeCompare(b.list)),
+  };
+}
+
+function coverageFor(testPath, reachable, declaredQuarantinePathSet) {
   const candidates = registrationCandidates(testPath);
   const named = reachable.filter((entry) =>
     candidates.some((candidate) => commandNamesPath(entry.command, candidate)),
@@ -1083,11 +1276,24 @@ function coverageFor(testPath, reachable) {
   // how a draw from this census's own risk ranking came back with eleven of
   // twenty files already quarantined.
   const excludedByNamingCommand = hits.length === 0 && named.length > 0;
+  // The second shape, and the reason it is a separate term rather than a wider
+  // predicate: a file no command names can still have been triaged. See
+  // `declaredQuarantinePaths`.
+  const declaredInQuarantineList =
+    hits.length === 0 && declaredQuarantinePathSet.has(testPath);
   return {
     covered: hits.length > 0,
     pullRequestCovered: hits.some((entry) => entry.pullRequest),
     collected: named.length > 0,
-    declaredQuarantine: excludedByNamingCommand,
+    declaredQuarantine: excludedByNamingCommand || declaredInQuarantineList,
+    // WHICH shape credited the file. A count cannot tell them apart, and the
+    // two are triaged by different evidence: one by a command that subtracts
+    // the file, one by a list entry carrying a reason and an owner.
+    declaredQuarantineShape: excludedByNamingCommand
+      ? "excluded-by-naming-command"
+      : declaredInQuarantineList
+        ? "declared-in-quarantine-list"
+        : null,
     via: [...new Set(hits.map((entry) => entry.via))].sort(),
   };
 }
@@ -1110,6 +1316,8 @@ export function buildCensus(root, { includeUnrunPaths = false } = {}) {
     collectReachableCommands(root, packageScripts);
   const testFiles = collectTestFiles(root);
   const catalogPaths = controlPaths(root);
+  const { paths: declaredQuarantinePathSet, lists: quarantineLists } =
+    declaredQuarantinePaths(root, testFiles);
 
   const directories = new Map();
   let covered = 0;
@@ -1117,7 +1325,7 @@ export function buildCensus(root, { includeUnrunPaths = false } = {}) {
   let declaredQuarantine = 0;
 
   for (const testFile of testFiles) {
-    const result = coverageFor(testFile, reachable);
+    const result = coverageFor(testFile, reachable, declaredQuarantinePathSet);
     if (result.covered) covered += 1;
     if (result.pullRequestCovered) pullRequestCovered += 1;
 
@@ -1155,6 +1363,7 @@ export function buildCensus(root, { includeUnrunPaths = false } = {}) {
       covered: result.covered,
       pullRequestCovered: result.pullRequestCovered,
       declaredQuarantine: result.declaredQuarantine,
+      declaredQuarantineShape: result.declaredQuarantineShape,
       untriaged: !result.covered && !result.declaredQuarantine,
       via: result.via,
     });
@@ -1236,6 +1445,7 @@ export function buildCensus(root, { includeUnrunPaths = false } = {}) {
       covered: file.covered,
       pullRequestCovered: file.pullRequestCovered,
       declaredQuarantine: file.declaredQuarantine,
+      declaredQuarantineShape: file.declaredQuarantineShape,
       untriaged: file.untriaged,
       via: file.via,
       governedRisk: {
@@ -1326,7 +1536,8 @@ export function buildCensus(root, { includeUnrunPaths = false } = {}) {
       "pullRequestCovered counts only workflows triggered by pull_request or merge_group, i.e. the set that can block a merge.",
       "While indeterminateInvocations is non-empty, uncoveredTestFiles is an upper bound.",
       "An unrun file a naming command excludes through its own --testPathIgnorePatterns is a declared quarantine: triaged, with a reason recorded somewhere. An unrun file no command names is untriaged. Both stay in uncoveredTestFiles; only untriagedUnrunTestFiles separates them.",
-      "governedRiskFiles reports each file in a ranked governed-risk directory: enumerated means the census walked the tree and found the file, collected means a workflow-reachable command named it before ignore subtraction, covered means that command still reaches it after ignore subtraction, and untriaged means no command reaches it and no naming command quarantines it.",
+      "A quarantine is also read where it is expressed by ENUMERATION: a directory whose default is EXCLUDED names its files one by one, so a file left out is named by nothing and no ignore pattern subtracts it. Such a file is a declared quarantine when a scoped entry in a scripts/quality/*-quarantine.json names it; declaredQuarantineShape says which of the two shapes credited each file. Discovery is a glob over that directory and scope is declared in the list, because basenames are not unique in this tree: a list the census cannot resolve fails the run rather than being skipped.",
+      "governedRiskFiles reports each file in a ranked governed-risk directory: enumerated means the census walked the tree and found the file, collected means a workflow-reachable command named it before ignore subtraction, covered means that command still reaches it after ignore subtraction, untriaged means no command reaches it and no quarantine declares it, and declaredQuarantineShape names which of the two quarantine shapes credited a file that is not untriaged.",
       "This census executes no test, so it publishes no pass or fail for any file: green is \"unknown\" for every row without exception, and run is false only where no reachable command selects the file — the one execution fact reachability settles — and \"unknown\" otherwise, because selection is not execution. A file that was never executed cannot appear as green.",
       "Every directory holding an UNTRIAGED unrun file is ranked by governed-surface risk: declared AI controls, approval or lifecycle writes, then tenant-scoped reads; the count of unrun files is only a tie-breaker. A directory whose unrun set is entirely declared quarantine is not ranked, because it has already been triaged.",
       "Governed-risk signals come from product modules a test loads at runtime, not from directory names alone; type-only imports are erased before the test runs and are not counted as edges.",
@@ -1370,6 +1581,11 @@ export function buildCensus(root, { includeUnrunPaths = false } = {}) {
       unclassifiedRiskDirectoriesWithNoResolvedProductSource:
         unclassifiedWithNoResolvedProductSource.length,
     },
+    // Every quarantine list the glob found, what it declares and what that
+    // resolved to. Published so an unregistered or stale list is a row somebody
+    // can read rather than an absence nobody can: a declaration that resolves to
+    // no file credits nothing, and the count alone cannot say so.
+    quarantineLists,
     indeterminateInvocations: indeterminate,
     // Every runner invocation a workflow-reachable script TALKS ABOUT without
     // running: a comment, an assertion, a data field. Published because the
@@ -1414,6 +1630,7 @@ function summarize(census) {
     `  run by no workflow:             ${c.uncoveredTestFiles}`,
     `  directories with tests:         ${c.directoriesWithTests} (${c.directoriesFullyCovered} fully covered, ${c.directoriesPartiallyCovered} partial, ${c.directoriesUncovered} uncovered)`,
     `  run by no workflow, untriaged: ${c.untriagedUnrunTestFiles} (${c.declaredQuarantineTestFiles} are declared quarantines)`,
+    `  quarantine lists read:          ${census.quarantineLists.length} (${census.quarantineLists.reduce((total, row) => total + row.declaredSuites, 0)} declared suites, ${census.quarantineLists.reduce((total, row) => total + row.unresolvedDeclarations.length, 0)} naming no file in the tree)`,
     `  directories with unrun tests:   ${c.directoriesWithUnrunTestFiles} (${c.directoriesWithUntriagedUnrunTestFiles} hold an untriaged file)`,
     `  governed risk among them:       ${c.criticalGovernedRiskDirectories} critical, ${c.highGovernedRiskDirectories} high`,
     // The rest of that population, which the two lines above leave out. Worded

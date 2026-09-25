@@ -139,6 +139,10 @@ type Census = {
     green: "unknown";
     covered: boolean;
     declaredQuarantine: boolean;
+    declaredQuarantineShape:
+      | "excluded-by-naming-command"
+      | "declared-in-quarantine-list"
+      | null;
     untriaged: boolean;
     governedRisk: {
       rank: number;
@@ -153,6 +157,12 @@ type Census = {
     testFiles: number;
     declaredQuarantineTestFiles: number;
     untriagedUnrunTestFiles: number;
+  }[];
+  quarantineLists: {
+    list: string;
+    declaredSuites: number;
+    resolvedTestFiles: string[];
+    unresolvedDeclarations: string[];
   }[];
 };
 
@@ -1372,6 +1382,7 @@ describe("test CI coverage census", () => {
         ');',
       ].join("\n"),
       "scripts/quality/iota-quarantine.json": `${JSON.stringify({
+        scope: "src/lib/iota/__tests__",
         quarantined: ["quarantined\\.test\\.ts"],
       })}\n`,
     });
@@ -1417,6 +1428,382 @@ describe("test CI coverage census", () => {
     expect(census.unresolvedIgnoreArguments).toEqual([
       expect.objectContaining({ script: "scripts/quality/absent-ignore-args.mjs" }),
     ]);
+  });
+
+
+  /**
+   * T-615. `declaredQuarantine` recognised one shape — a command that NAMES a
+   * file and then subtracts it through its own `--testPathIgnorePatterns` — and
+   * that shape needs the naming for the subtraction to have something to
+   * subtract. A directory whose default is EXCLUDED expresses its carve-out the
+   * other way round: it enumerates the files it runs, so a file left out is
+   * named by nothing at all and no ignore pattern mentions it.
+   *
+   * `src/__tests__/integration` is that directory, deliberately, and three files
+   * declared in `scripts/quality/integration-root-quarantine.json` on 2026-09-23
+   * with a reason, an owner and a verdict were reported `untriaged` two days
+   * later. `untriagedUnrunTestFiles` is the sole input to `governedRiskRanking`,
+   * so those three were the entire reason that directory sat at rank 1 of the
+   * critical band, and two backlog items drew work from that rank.
+   *
+   * Measured on the real tree before this changed, with one root file unwired
+   * from the workflow's enumeration AND declared in the list: the census at
+   * `406b24498` reported 398 untriaged, 49 declared quarantines, and the root at
+   * rank 1 `critical`; with this reading it reports 397, 50, and the root
+   * unranked. The fixture below is that state, minimised.
+   *
+   * The fixture has to disagree with itself or it cannot fail. `runs.test.ts` is
+   * enumerated and covered; `declared.test.ts` is enumerated by nothing and named
+   * in the list; nothing anywhere passes an ignore pattern, so the first shape
+   * has no way to be true and only the second reading can credit the file.
+   */
+  it("credits a quarantine a directory expresses by enumeration, not by an ignore pattern", () => {
+    const dir = fixture({
+      "src/app/api/rho/action/route.ts":
+        "export async function POST() { return approve({ value: true }); }\n",
+      "src/app/api/rho/action/__tests__/runs.test.ts":
+        'import "../route";\nit("runs", () => expect(true).toBe(true));\n',
+      "src/app/api/rho/action/__tests__/ignored.test.ts":
+        'import "../route";\nit("ignored", () => expect(true).toBe(true));\n',
+      "src/app/api/rho/action/__tests__/declared.test.ts":
+        'import "../route";\nit("declared", () => expect(true).toBe(true));\n',
+      "src/app/api/rho/action/__tests__/dark.test.ts":
+        'import "../route";\nit("dark", () => expect(true).toBe(true));\n',
+      // Enumeration, not a directory. `declared.test.ts` and `dark.test.ts` are
+      // named by nothing, which is what makes the first shape unable to see
+      // either of them; `ignored.test.ts` is named and then subtracted, so both
+      // shapes are present in one directory and a reading that conflated them
+      // would publish the wrong reason for one of the two.
+      ".github/workflows/gate.yml": PR_WORKFLOW(
+        [
+          "npx jest",
+          "src/app/api/rho/action/__tests__/runs.test.ts",
+          "src/app/api/rho/action/__tests__/ignored.test.ts",
+          "--testPathIgnorePatterns action/__tests__/ignored\\.test\\.ts$",
+          "--ci",
+        ].join(" "),
+      ),
+      "scripts/quality/rho-quarantine.json": `${JSON.stringify(
+        {
+          scope: "src/app/api/rho/action/__tests__",
+          quarantined: [
+            {
+              suite: "declared.test.ts",
+              owner: "T-615",
+              reason: "Declared with a reason, and named by no command.",
+              verdict: "update",
+            },
+          ],
+        },
+        null,
+        2,
+      )}\n`,
+    });
+
+    const { census } = runCensus(dir);
+
+    // Three unrun files, two of them triaged by different evidence, one dark.
+    // The total must not move: only the classification changed.
+    expect(census.counts.uncoveredTestFiles).toBe(3);
+    expect(census.counts.declaredQuarantineTestFiles).toBe(2);
+    expect(census.counts.untriagedUnrunTestFiles).toBe(1);
+
+    // Per file, naming WHICH shape credited it. A count cannot tell the two
+    // apart: widening the first shape instead of adding the second would satisfy
+    // the three numbers above and still report the wrong reason here.
+    const shapes = Object.fromEntries(
+      census.governedRiskFiles
+        .filter((row) => row.directory === "src/app/api/rho/action/__tests__")
+        .map((row) => [
+          row.testPath.split("/").pop(),
+          { declaredQuarantine: row.declaredQuarantine, shape: row.declaredQuarantineShape, untriaged: row.untriaged },
+        ]),
+    );
+    expect(shapes).toEqual({
+      "runs.test.ts": { declaredQuarantine: false, shape: null, untriaged: false },
+      "ignored.test.ts": {
+        declaredQuarantine: true,
+        shape: "excluded-by-naming-command",
+        untriaged: false,
+      },
+      "declared.test.ts": {
+        declaredQuarantine: true,
+        shape: "declared-in-quarantine-list",
+        untriaged: false,
+      },
+      "dark.test.ts": { declaredQuarantine: false, shape: null, untriaged: true },
+    });
+
+    expect(
+      census.quarantineLists.find(
+        (row) => row.list === "scripts/quality/rho-quarantine.json",
+      ),
+    ).toEqual({
+      list: "scripts/quality/rho-quarantine.json",
+      declaredSuites: 1,
+      resolvedTestFiles: ["src/app/api/rho/action/__tests__/declared.test.ts"],
+      unresolvedDeclarations: [],
+    });
+
+    // The consequence the item is about: the directory is still ranked, because
+    // one dark file remains — and it is ranked on ONE untriaged file rather than
+    // on two, so the next drawer is not sent to work already done.
+    const ranked = census.governedRiskRanking.find(
+      (row) => row.directory === "src/app/api/rho/action/__tests__",
+    );
+    expect(ranked).toMatchObject({
+      unrunTestFiles: 3,
+      declaredQuarantineTestFiles: 2,
+      untriagedUnrunTestFiles: 1,
+    });
+  });
+
+  /**
+   * The same tree with the declaration removed, which is the state before
+   * anybody triaged the file. Without this the case above passes for a census
+   * that called every unrun file a quarantine, and the ranking would stop
+   * offering real work.
+   */
+  it("still reports an enumerated-out file as untriaged when no list declares it", () => {
+    const dir = fixture({
+      "src/app/api/rho/action/route.ts":
+        "export async function POST() { return approve({ value: true }); }\n",
+      "src/app/api/rho/action/__tests__/runs.test.ts":
+        'import "../route";\nit("runs", () => expect(true).toBe(true));\n',
+      "src/app/api/rho/action/__tests__/declared.test.ts":
+        'import "../route";\nit("declared", () => expect(true).toBe(true));\n',
+      ".github/workflows/gate.yml": PR_WORKFLOW(
+        "npx jest src/app/api/rho/action/__tests__/runs.test.ts --ci",
+      ),
+      // The list exists and is EMPTY, which is the state the real root list is in
+      // today. An empty carve-out is the strongest state of the control, not a
+      // missing one, so it must still appear in the published inventory.
+      "scripts/quality/rho-quarantine.json": `${JSON.stringify(
+        { scope: "src/app/api/rho/action/__tests__", quarantined: [] },
+        null,
+        2,
+      )}\n`,
+    });
+
+    const { census } = runCensus(dir);
+
+    expect(census.counts.declaredQuarantineTestFiles).toBe(0);
+    expect(census.counts.untriagedUnrunTestFiles).toBe(1);
+    expect(census.governedRiskRanking.map((row) => row.directory)).toEqual([
+      "src/app/api/rho/action/__tests__",
+    ]);
+    expect(census.quarantineLists).toEqual([
+      {
+        list: "scripts/quality/rho-quarantine.json",
+        declaredSuites: 0,
+        resolvedTestFiles: [],
+        unresolvedDeclarations: [],
+      },
+    ]);
+  });
+
+  /**
+   * Why scope is declared and never inferred, held as a case rather than as a
+   * comment. Resolving an entry's basename against the walked tree looks like it
+   * would save the field, and it is ambiguous on this repository TODAY:
+   * `ai-program-failure-modes.test.ts` exists under both
+   * `src/lib/intelligence/__tests__` and `src/__tests__/integration/intelligence`
+   * while `intelligence-library-quarantine.json` declares that name, and 40
+   * basenames in the tree are non-unique. Crediting the wrong file is the
+   * over-stating direction: an untriaged suite would read as triaged and drop out
+   * of the ranking.
+   *
+   * Two files, same basename, two directories, one declaration. A basename match
+   * credits both and puts `untriagedUnrunTestFiles` at 0.
+   */
+  it("credits only the declared scope when two directories hold the same suite name", () => {
+    const dir = fixture({
+      "src/app/api/sigma/action/route.ts":
+        "export async function POST() { return approve({ value: true }); }\n",
+      "src/app/api/sigma/action/__tests__/same-name.test.ts":
+        'import "../route";\nit("in scope", () => expect(true).toBe(true));\n',
+      "src/app/api/tau/action/route.ts":
+        "export async function POST() { return approve({ value: true }); }\n",
+      "src/app/api/tau/action/__tests__/same-name.test.ts":
+        'import "../route";\nit("out of scope", () => expect(true).toBe(true));\n',
+      ".github/workflows/gate.yml": PR_WORKFLOW("npx jest src/app/api/absent --ci"),
+      "scripts/quality/sigma-quarantine.json": `${JSON.stringify(
+        {
+          scope: "src/app/api/sigma/action/__tests__",
+          quarantined: [
+            { suite: "same-name.test.ts", owner: "T-615", reason: "Declared in sigma only." },
+          ],
+        },
+        null,
+        2,
+      )}\n`,
+    });
+
+    const { census } = runCensus(dir);
+
+    expect(census.counts.uncoveredTestFiles).toBe(2);
+    expect(census.counts.declaredQuarantineTestFiles).toBe(1);
+    expect(census.counts.untriagedUnrunTestFiles).toBe(1);
+    expect(
+      census.quarantineLists.find(
+        (row) => row.list === "scripts/quality/sigma-quarantine.json",
+      )?.resolvedTestFiles,
+    ).toEqual(["src/app/api/sigma/action/__tests__/same-name.test.ts"]);
+    // The out-of-scope namesake is still work somebody has to triage.
+    expect(census.governedRiskRanking.map((row) => row.directory)).toEqual([
+      "src/app/api/tau/action/__tests__",
+    ]);
+  });
+
+  /**
+   * The same fence, on the OTHER resolution branch. An entry whose scoped path
+   * is not a file in the tree is read as the regex fragment the
+   * `*-ignore-args.mjs` scripts turn it into — that is how this repository's
+   * lists are consumed — and a fragment must not reach outside the directory its
+   * list guards.
+   *
+   * This case exists because the first fence case could not prove it: its entry
+   * resolved through the exact-path branch and returned before the fragment
+   * branch ran, so inverting the fence left the suite green. Both branches now
+   * have a namesake outside scope to credit if the fence is dropped.
+   */
+  it("keeps a declared regex fragment inside its own scope", () => {
+    const dir = fixture({
+      "src/app/api/psi/action/route.ts":
+        "export async function POST() { return approve({ value: true }); }\n",
+      "src/app/api/psi/action/__tests__/swept.test.ts":
+        'import "../route";\nit("in scope", () => expect(true).toBe(true));\n',
+      "src/app/api/omega/action/route.ts":
+        "export async function POST() { return approve({ value: true }); }\n",
+      "src/app/api/omega/action/__tests__/swept.test.ts":
+        'import "../route";\nit("out of scope", () => expect(true).toBe(true));\n',
+      ".github/workflows/gate.yml": PR_WORKFLOW("npx jest src/app/api/absent --ci"),
+      "scripts/quality/psi-quarantine.json": `${JSON.stringify(
+        {
+          scope: "src/app/api/psi/action/__tests__",
+          // A fragment, not a filename: no file is called `swept\\.test\\.ts`,
+          // so this can only resolve through the regex branch.
+          quarantined: ["swept\\.test\\.ts"],
+        },
+        null,
+        2,
+      )}\n`,
+    });
+
+    const { census } = runCensus(dir);
+
+    expect(census.counts.uncoveredTestFiles).toBe(2);
+    expect(census.counts.declaredQuarantineTestFiles).toBe(1);
+    expect(census.counts.untriagedUnrunTestFiles).toBe(1);
+    expect(
+      census.quarantineLists.find(
+        (row) => row.list === "scripts/quality/psi-quarantine.json",
+      )?.resolvedTestFiles,
+    ).toEqual(["src/app/api/psi/action/__tests__/swept.test.ts"]);
+    expect(census.governedRiskRanking.map((row) => row.directory)).toEqual([
+      "src/app/api/omega/action/__tests__",
+    ]);
+  });
+
+  /**
+   * Discovery is a glob, so a new list cannot be missed; a list the census
+   * cannot RESOLVE is the remaining way to go silent, and it refuses to measure
+   * instead. The item that found this named five quarantine lists and
+   * `scripts/quality` holds seven, which is the argument: a list of lists rots,
+   * and an unscoped list would otherwise be read as declaring nothing at all —
+   * under-stating triage, with no row to read.
+   */
+  it("refuses to measure when a quarantine list declares suites with no scope", () => {
+    const dir = fixture({
+      "src/lib/upsilon/__tests__/only.test.ts": TEST_FILE,
+      ".github/workflows/gate.yml": PR_WORKFLOW("npx jest src/lib/upsilon --ci"),
+      "scripts/quality/upsilon-quarantine.json": `${JSON.stringify({
+        quarantined: [{ suite: "only.test.ts", reason: "no scope declared" }],
+      })}\n`,
+    });
+
+    const { status, stdout } = runCensus(dir);
+    expect(status).not.toBe(0);
+    expect(stdout).toContain("scripts/quality/upsilon-quarantine.json");
+    expect(stdout).toContain('"scope"');
+  });
+
+  /**
+   * A sibling array carries its own scope, because `alsoIgnored` entries are
+   * swept in from a DIFFERENT directory than the one their list guards — the
+   * integration root, reached by an un-slashed directory pattern — so sharing
+   * the list's scope would file them under the wrong directory. Both such arrays
+   * in the repository are empty today; this is the case that makes the next
+   * entry declare where it belongs rather than being credited to the wrong row.
+   */
+  it("requires a sibling declaration array to carry its own scope", () => {
+    const dir = fixture({
+      "src/lib/phi/__tests__/only.test.ts": TEST_FILE,
+      ".github/workflows/gate.yml": PR_WORKFLOW("npx jest src/lib/phi --ci"),
+      "scripts/quality/phi-quarantine.json": `${JSON.stringify({
+        scope: "src/lib/phi/__tests__",
+        quarantined: [],
+        alsoIgnored: [{ suite: "swept-in.test.ts", reason: "from another directory" }],
+      })}\n`,
+    });
+
+    const { status, stdout } = runCensus(dir);
+    expect(status).not.toBe(0);
+    expect(stdout).toContain("scripts/quality/phi-quarantine.json");
+    expect(stdout).toContain('"alsoIgnoredScope"');
+  });
+
+  /**
+   * A declaration naming a file that is not in the tree credits nobody and is
+   * published as such. It is a stale entry, and every one of these lists has a
+   * checker that re-runs its entries and fails on a name that no longer resolves;
+   * that finding belongs there. A census that threw on it would stop measuring
+   * over somebody else's bookkeeping, and one that dropped it silently would let
+   * a list shrink to nothing without a row changing.
+   */
+  it("records a declaration that names no file in the tree and credits it to nobody", () => {
+    const dir = fixture({
+      "src/lib/chi/__tests__/present.test.ts": TEST_FILE,
+      ".github/workflows/gate.yml": PR_WORKFLOW("npx jest src/lib/chi --ci"),
+      "scripts/quality/chi-quarantine.json": `${JSON.stringify({
+        scope: "src/lib/chi/__tests__",
+        quarantined: [{ suite: "deleted.test.ts", reason: "the file was removed" }],
+      })}\n`,
+    });
+
+    const { census } = runCensus(dir);
+
+    expect(census.counts.declaredQuarantineTestFiles).toBe(0);
+    expect(census.quarantineLists).toEqual([
+      {
+        list: "scripts/quality/chi-quarantine.json",
+        declaredSuites: 1,
+        resolvedTestFiles: [],
+        unresolvedDeclarations: [
+          "quarantined:src/lib/chi/__tests__/deleted.test.ts",
+        ],
+      },
+    ]);
+  });
+
+  /**
+   * The repository's own lists, read through the census rather than described
+   * here. Every `*-quarantine.json` in `scripts/quality` must reach the census's
+   * inventory: the count is derived from the directory on both sides, so a list
+   * added tomorrow is covered without editing this case, and a list the glob
+   * stops finding fails it.
+   */
+  it("reads every quarantine list this repository holds", () => {
+    const onDisk = readdirSync(path.join(repoRoot, "scripts", "quality"))
+      .filter((name) => name.endsWith("-quarantine.json"))
+      .map((name) => `scripts/quality/${name}`)
+      .sort();
+    expect(onDisk.length).toBeGreaterThan(0);
+
+    const committed = JSON.parse(
+      readFileSync(path.join(repoRoot, "docs/architecture/test-ci-coverage-census.json"), "utf8"),
+    ) as Census;
+    expect(committed.quarantineLists.map((row) => row.list)).toEqual(onDisk);
   });
 
   it("subtracts every quarantined suite this repository excludes by name", () => {

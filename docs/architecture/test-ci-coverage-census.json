@@ -7,7 +7,8 @@
     "pullRequestCovered counts only workflows triggered by pull_request or merge_group, i.e. the set that can block a merge.",
     "While indeterminateInvocations is non-empty, uncoveredTestFiles is an upper bound.",
     "An unrun file a naming command excludes through its own --testPathIgnorePatterns is a declared quarantine: triaged, with a reason recorded somewhere. An unrun file no command names is untriaged. Both stay in uncoveredTestFiles; only untriagedUnrunTestFiles separates them.",
-    "governedRiskFiles reports each file in a ranked governed-risk directory: enumerated means the census walked the tree and found the file, collected means a workflow-reachable command named it before ignore subtraction, covered means that command still reaches it after ignore subtraction, and untriaged means no command reaches it and no naming command quarantines it.",
+    "A quarantine is also read where it is expressed by ENUMERATION: a directory whose default is EXCLUDED names its files one by one, so a file left out is named by nothing and no ignore pattern subtracts it. Such a file is a declared quarantine when a scoped entry in a scripts/quality/*-quarantine.json names it; declaredQuarantineShape says which of the two shapes credited each file. Discovery is a glob over that directory and scope is declared in the list, because basenames are not unique in this tree: a list the census cannot resolve fails the run rather than being skipped.",
+    "governedRiskFiles reports each file in a ranked governed-risk directory: enumerated means the census walked the tree and found the file, collected means a workflow-reachable command named it before ignore subtraction, covered means that command still reaches it after ignore subtraction, untriaged means no command reaches it and no quarantine declares it, and declaredQuarantineShape names which of the two quarantine shapes credited a file that is not untriaged.",
     "This census executes no test, so it publishes no pass or fail for any file: green is \"unknown\" for every row without exception, and run is false only where no reachable command selects the file — the one execution fact reachability settles — and \"unknown\" otherwise, because selection is not execution. A file that was never executed cannot appear as green.",
     "Every directory holding an UNTRIAGED unrun file is ranked by governed-surface risk: declared AI controls, approval or lifecycle writes, then tenant-scoped reads; the count of unrun files is only a tie-breaker. A directory whose unrun set is entirely declared quarantine is not ranked, because it has already been triaged.",
     "Governed-risk signals come from product modules a test loads at runtime, not from directory names alone; type-only imports are erased before the test runs and are not counted as edges.",
@@ -36,6 +37,88 @@
     "unclassifiedRiskDirectoriesWithResolvedProductSources": 174,
     "unclassifiedRiskDirectoriesWithNoResolvedProductSource": 6
   },
+  "quarantineLists": [
+    {
+      "list": "scripts/quality/admin-integration-quarantine.json",
+      "declaredSuites": 2,
+      "resolvedTestFiles": [
+        "src/__tests__/integration/admin/admin-visible-vocabulary.test.ts",
+        "src/__tests__/integration/admin/admin7-visual-lock.test.ts"
+      ],
+      "unresolvedDeclarations": []
+    },
+    {
+      "list": "scripts/quality/integration-root-quarantine.json",
+      "declaredSuites": 0,
+      "resolvedTestFiles": [],
+      "unresolvedDeclarations": []
+    },
+    {
+      "list": "scripts/quality/intelligence-integration-quarantine.json",
+      "declaredSuites": 15,
+      "resolvedTestFiles": [
+        "src/__tests__/integration/intelligence/evidence-dataset-drawer.test.ts",
+        "src/__tests__/integration/intelligence/intelligence-canvas-modes.test.ts",
+        "src/__tests__/integration/intelligence/intelligence-i3.test.ts",
+        "src/__tests__/integration/intelligence/intelligence-i4.test.ts",
+        "src/__tests__/integration/intelligence/intelligence-i5.test.ts",
+        "src/__tests__/integration/intelligence/intelligence-i7.test.ts",
+        "src/__tests__/integration/intelligence/intelligence-library-foundation.test.ts",
+        "src/__tests__/integration/intelligence/intelligence-pattern-detail-i2.test.ts",
+        "src/__tests__/integration/intelligence/intelligence-route-shell-wiring.test.ts",
+        "src/__tests__/integration/intelligence/intelligence-workflow-canvas.test.ts",
+        "src/__tests__/integration/intelligence/sentinel-active-patterns-page.test.ts",
+        "src/__tests__/integration/intelligence/sentinel-evidence-brief.test.ts",
+        "src/__tests__/integration/intelligence/sentinel-interaction-rail.test.ts",
+        "src/__tests__/integration/intelligence/sentinel-pattern-content.test.ts",
+        "src/__tests__/integration/intelligence/sentinel-pattern-detail.test.ts"
+      ],
+      "unresolvedDeclarations": []
+    },
+    {
+      "list": "scripts/quality/intelligence-library-quarantine.json",
+      "declaredSuites": 5,
+      "resolvedTestFiles": [
+        "src/lib/intelligence/__tests__/ai-program-failure-modes.test.ts",
+        "src/lib/intelligence/__tests__/decision-route-mode.test.ts",
+        "src/lib/intelligence/__tests__/intelligence-consultant-text-synthesis.test.ts",
+        "src/lib/intelligence/__tests__/j0-failure-mode-cards.test.ts",
+        "src/lib/intelligence/__tests__/j1-topics.test.ts"
+      ],
+      "unresolvedDeclarations": []
+    },
+    {
+      "list": "scripts/quality/qa-integration-quarantine.json",
+      "declaredSuites": 1,
+      "resolvedTestFiles": [
+        "src/__tests__/integration/qa/wireframe-compliance-audit.test.ts"
+      ],
+      "unresolvedDeclarations": []
+    },
+    {
+      "list": "scripts/quality/source-ava-library-quarantine.json",
+      "declaredSuites": 1,
+      "resolvedTestFiles": [
+        "src/lib/source/ava/__tests__/export-answer-packet.test.ts"
+      ],
+      "unresolvedDeclarations": []
+    },
+    {
+      "list": "scripts/quality/source-integration-quarantine.json",
+      "declaredSuites": 8,
+      "resolvedTestFiles": [
+        "src/__tests__/integration/source/source-event-canvas-shell.test.ts",
+        "src/__tests__/integration/source/source-executive-decision-summary-panel.test.ts",
+        "src/__tests__/integration/source/source-originate-page.test.ts",
+        "src/__tests__/integration/source/source-rfp-readiness-panel.test.ts",
+        "src/__tests__/integration/source/source-scope-stage-workspace.test.ts",
+        "src/__tests__/integration/source/source-vendor-pricing-smoke.test.ts",
+        "src/__tests__/integration/source/source-vendor-response-completeness-panel.test.ts",
+        "src/__tests__/integration/source/source-vendor-selection-readiness-panel.test.ts"
+      ],
+      "unresolvedDeclarations": []
+    }
+  ],
   "indeterminateInvocations": [],
   "mentionedInvocations": [
     {
@@ -313,6 +396,7 @@
       "covered": true,
       "pullRequestCovered": true,
       "declaredQuarantine": false,
+      "declaredQuarantineShape": null,
       "untriaged": false,
       "via": [
         "command"
@@ -337,6 +421,7 @@
       "covered": true,
       "pullRequestCovered": true,
       "declaredQuarantine": false,
+      "declaredQuarantineShape": null,
       "untriaged": false,
       "via": [
         "command"
@@ -361,6 +446,7 @@
       "covered": true,
       "pullRequestCovered": true,
       "declaredQuarantine": false,
+      "declaredQuarantineShape": null,
       "untriaged": false,
       "via": [
         "command"
@@ -385,6 +471,7 @@
       "covered": true,
       "pullRequestCovered": true,
       "declaredQuarantine": false,
+      "declaredQuarantineShape": null,
       "untriaged": false,
       "via": [
         "command"
@@ -409,6 +496,7 @@
       "covered": true,
       "pullRequestCovered": true,
       "declaredQuarantine": false,
+      "declaredQuarantineShape": null,
       "untriaged": false,
       "via": [
         "command"
@@ -433,6 +521,7 @@
       "covered": true,
       "pullRequestCovered": true,
       "declaredQuarantine": false,
+      "declaredQuarantineShape": null,
       "untriaged": false,
       "via": [
         "command"
@@ -457,6 +546,7 @@
       "covered": true,
       "pullRequestCovered": true,
       "declaredQuarantine": false,
+      "declaredQuarantineShape": null,
       "untriaged": false,
       "via": [
         "command"
@@ -481,6 +571,7 @@
       "covered": true,
       "pullRequestCovered": true,
       "declaredQuarantine": false,
+      "declaredQuarantineShape": null,
       "untriaged": false,
       "via": [
         "command"
@@ -505,6 +596,7 @@
       "covered": true,
       "pullRequestCovered": true,
       "declaredQuarantine": false,
+      "declaredQuarantineShape": null,
       "untriaged": false,
       "via": [
         "command"
@@ -529,6 +621,7 @@
       "covered": false,
       "pullRequestCovered": false,
       "declaredQuarantine": false,
+      "declaredQuarantineShape": null,
       "untriaged": true,
       "via": [],
       "governedRisk": {
@@ -551,6 +644,7 @@
       "covered": true,
       "pullRequestCovered": true,
       "declaredQuarantine": false,
+      "declaredQuarantineShape": null,
       "untriaged": false,
       "via": [
         "command"
@@ -575,6 +669,7 @@
       "covered": true,
       "pullRequestCovered": true,
       "declaredQuarantine": false,
+      "declaredQuarantineShape": null,
       "untriaged": false,
       "via": [
         "command"
@@ -599,6 +694,7 @@
       "covered": true,
       "pullRequestCovered": true,
       "declaredQuarantine": false,
+      "declaredQuarantineShape": null,
       "untriaged": false,
       "via": [
         "command"
@@ -623,6 +719,7 @@
       "covered": true,
       "pullRequestCovered": true,
       "declaredQuarantine": false,
+      "declaredQuarantineShape": null,
       "untriaged": false,
       "via": [
         "command"
@@ -647,6 +744,7 @@
       "covered": true,
       "pullRequestCovered": true,
       "declaredQuarantine": false,
+      "declaredQuarantineShape": null,
       "untriaged": false,
       "via": [
         "command"
@@ -671,6 +769,7 @@
       "covered": true,
       "pullRequestCovered": true,
       "declaredQuarantine": false,
+      "declaredQuarantineShape": null,
       "untriaged": false,
       "via": [
         "command"
@@ -695,6 +794,7 @@
       "covered": true,
       "pullRequestCovered": true,
       "declaredQuarantine": false,
+      "declaredQuarantineShape": null,
       "untriaged": false,
       "via": [
         "command"
@@ -719,6 +819,7 @@
       "covered": true,
       "pullRequestCovered": true,
       "declaredQuarantine": false,
+      "declaredQuarantineShape": null,
       "untriaged": false,
       "via": [
         "command"
@@ -743,6 +844,7 @@
       "covered": true,
       "pullRequestCovered": true,
       "declaredQuarantine": false,
+      "declaredQuarantineShape": null,
       "untriaged": false,
       "via": [
         "command"
@@ -767,6 +869,7 @@
       "covered": true,
       "pullRequestCovered": true,
       "declaredQuarantine": false,
+      "declaredQuarantineShape": null,
       "untriaged": false,
       "via": [
         "command"
@@ -791,6 +894,7 @@
       "covered": true,
       "pullRequestCovered": false,
       "declaredQuarantine": false,
+      "declaredQuarantineShape": null,
       "untriaged": false,
       "via": [
         "script-file"
@@ -815,6 +919,7 @@
       "covered": true,
       "pullRequestCovered": false,
       "declaredQuarantine": false,
+      "declaredQuarantineShape": null,
       "untriaged": false,
       "via": [
         "script-file"
@@ -839,6 +944,7 @@
       "covered": true,
       "pullRequestCovered": true,
       "declaredQuarantine": false,
+      "declaredQuarantineShape": null,
       "untriaged": false,
       "via": [
         "command"
@@ -863,6 +969,7 @@
       "covered": false,
       "pullRequestCovered": false,
       "declaredQuarantine": false,
+      "declaredQuarantineShape": null,
       "untriaged": true,
       "via": [],
       "governedRisk": {
@@ -885,6 +992,7 @@
       "covered": true,
       "pullRequestCovered": true,
       "declaredQuarantine": false,
+      "declaredQuarantineShape": null,
       "untriaged": false,
       "via": [
         "command"
@@ -909,6 +1017,7 @@
       "covered": true,
       "pullRequestCovered": true,
       "declaredQuarantine": false,
+      "declaredQuarantineShape": null,
       "untriaged": false,
       "via": [
         "command"
@@ -933,6 +1042,7 @@
       "covered": false,
       "pullRequestCovered": false,
       "declaredQuarantine": false,
+      "declaredQuarantineShape": null,
       "untriaged": true,
       "via": [],
       "governedRisk": {
@@ -955,6 +1065,7 @@
       "covered": false,
       "pullRequestCovered": false,
       "declaredQuarantine": false,
+      "declaredQuarantineShape": null,
       "untriaged": true,
       "via": [],
       "governedRisk": {
@@ -977,6 +1088,7 @@
       "covered": false,
       "pullRequestCovered": false,
       "declaredQuarantine": false,
+      "declaredQuarantineShape": null,
       "untriaged": true,
       "via": [],
       "governedRisk": {
@@ -999,6 +1111,7 @@
       "covered": true,
       "pullRequestCovered": true,
       "declaredQuarantine": false,
+      "declaredQuarantineShape": null,
       "untriaged": false,
       "via": [
         "command"
@@ -1023,6 +1136,7 @@
       "covered": true,
       "pullRequestCovered": true,
       "declaredQuarantine": false,
+      "declaredQuarantineShape": null,
       "untriaged": false,
       "via": [
         "command"
@@ -1047,6 +1161,7 @@
       "covered": true,
       "pullRequestCovered": true,
       "declaredQuarantine": false,
+      "declaredQuarantineShape": null,
       "untriaged": false,
       "via": [
         "command"
@@ -1071,6 +1186,7 @@
       "covered": true,
       "pullRequestCovered": true,
       "declaredQuarantine": false,
+      "declaredQuarantineShape": null,
       "untriaged": false,
       "via": [
         "command"
@@ -1095,6 +1211,7 @@
       "covered": true,
       "pullRequestCovered": true,
       "declaredQuarantine": false,
+      "declaredQuarantineShape": null,
       "untriaged": false,
       "via": [
         "command"
@@ -1119,6 +1236,7 @@
       "covered": true,
       "pullRequestCovered": true,
       "declaredQuarantine": false,
+      "declaredQuarantineShape": null,
       "untriaged": false,
       "via": [
         "command"
@@ -1143,6 +1261,7 @@
       "covered": true,
       "pullRequestCovered": true,
       "declaredQuarantine": false,
+      "declaredQuarantineShape": null,
       "untriaged": false,
       "via": [
         "command"
@@ -1167,6 +1286,7 @@
       "covered": true,
       "pullRequestCovered": true,
       "declaredQuarantine": false,
+      "declaredQuarantineShape": null,
       "untriaged": false,
       "via": [
         "command"
@@ -1191,6 +1311,7 @@
       "covered": false,
       "pullRequestCovered": false,
       "declaredQuarantine": false,
+      "declaredQuarantineShape": null,
       "untriaged": true,
       "via": [],
       "governedRisk": {
@@ -1213,6 +1334,7 @@
       "covered": false,
       "pullRequestCovered": false,
       "declaredQuarantine": false,
+      "declaredQuarantineShape": null,
       "untriaged": true,
       "via": [],
       "governedRisk": {
@@ -1235,6 +1357,7 @@
       "covered": true,
       "pullRequestCovered": true,
       "declaredQuarantine": false,
+      "declaredQuarantineShape": null,
       "untriaged": false,
       "via": [
         "command"
@@ -1259,6 +1382,7 @@
       "covered": false,
       "pullRequestCovered": false,
       "declaredQuarantine": false,
+      "declaredQuarantineShape": null,
       "untriaged": true,
       "via": [],
       "governedRisk": {
@@ -1281,6 +1405,7 @@
       "covered": false,
       "pullRequestCovered": false,
       "declaredQuarantine": false,
+      "declaredQuarantineShape": null,
       "untriaged": true,
       "via": [],
       "governedRisk": {
@@ -1303,6 +1428,7 @@
       "covered": true,
       "pullRequestCovered": true,
       "declaredQuarantine": false,
+      "declaredQuarantineShape": null,
       "untriaged": false,
       "via": [
         "command"
@@ -1327,6 +1453,7 @@
       "covered": true,
       "pullRequestCovered": true,
       "declaredQuarantine": false,
+      "declaredQuarantineShape": null,
       "untriaged": false,
       "via": [
         "command"
@@ -1351,6 +1478,7 @@
       "covered": true,
       "pullRequestCovered": true,
       "declaredQuarantine": false,
+      "declaredQuarantineShape": null,
       "untriaged": false,
       "via": [
         "command"
@@ -1375,6 +1503,7 @@
       "covered": false,
       "pullRequestCovered": false,
       "declaredQuarantine": false,
+      "declaredQuarantineShape": null,
       "untriaged": true,
       "via": [],
       "governedRisk": {
@@ -1397,6 +1526,7 @@
       "covered": false,
       "pullRequestCovered": false,
       "declaredQuarantine": false,
+      "declaredQuarantineShape": null,
       "untriaged": true,
       "via": [],
       "governedRisk": {
@@ -1419,6 +1549,7 @@
       "covered": true,
       "pullRequestCovered": true,
       "declaredQuarantine": false,
+      "declaredQuarantineShape": null,
       "untriaged": false,
       "via": [
         "command"
@@ -1443,6 +1574,7 @@
       "covered": true,
       "pullRequestCovered": true,
       "declaredQuarantine": false,
+      "declaredQuarantineShape": null,
       "untriaged": false,
       "via": [
         "command"
@@ -1467,6 +1599,7 @@
       "covered": false,
       "pullRequestCovered": false,
       "declaredQuarantine": false,
+      "declaredQuarantineShape": null,
       "untriaged": true,
       "via": [],
       "governedRisk": {
@@ -1489,6 +1622,7 @@
       "covered": false,
       "pullRequestCovered": false,
       "declaredQuarantine": false,
+      "declaredQuarantineShape": null,
       "untriaged": true,
       "via": [],
       "governedRisk": {
@@ -1511,6 +1645,7 @@
       "covered": false,
       "pullRequestCovered": false,
       "declaredQuarantine": false,
+      "declaredQuarantineShape": null,
       "untriaged": true,
       "via": [],
       "governedRisk": {
@@ -1533,6 +1668,7 @@
       "covered": true,
       "pullRequestCovered": true,
       "declaredQuarantine": false,
+      "declaredQuarantineShape": null,
       "untriaged": false,
       "via": [
         "command"
@@ -1557,6 +1693,7 @@
       "covered": true,
       "pullRequestCovered": true,
       "declaredQuarantine": false,
+      "declaredQuarantineShape": null,
       "untriaged": false,
       "via": [
         "command"
@@ -1581,6 +1718,7 @@
       "covered": false,
       "pullRequestCovered": false,
       "declaredQuarantine": false,
+      "declaredQuarantineShape": null,
       "untriaged": true,
       "via": [],
       "governedRisk": {
@@ -1603,6 +1741,7 @@
       "covered": true,
       "pullRequestCovered": true,
       "declaredQuarantine": false,
+      "declaredQuarantineShape": null,
       "untriaged": false,
       "via": [
         "command"
@@ -1627,6 +1766,7 @@
       "covered": true,
       "pullRequestCovered": true,
       "declaredQuarantine": false,
+      "declaredQuarantineShape": null,
       "untriaged": false,
       "via": [
         "command"
@@ -1651,6 +1791,7 @@
       "covered": true,
       "pullRequestCovered": true,
       "declaredQuarantine": false,
+      "declaredQuarantineShape": null,
       "untriaged": false,
       "via": [
         "command"
@@ -1675,6 +1816,7 @@
       "covered": true,
       "pullRequestCovered": true,
       "declaredQuarantine": false,
+      "declaredQuarantineShape": null,
       "untriaged": false,
       "via": [
         "command"
@@ -1699,6 +1841,7 @@
       "covered": true,
       "pullRequestCovered": true,
       "declaredQuarantine": false,
+      "declaredQuarantineShape": null,
       "untriaged": false,
       "via": [
         "command"
@@ -1723,6 +1866,7 @@
       "covered": true,
       "pullRequestCovered": true,
       "declaredQuarantine": false,
+      "declaredQuarantineShape": null,
       "untriaged": false,
       "via": [
         "command"
@@ -1747,6 +1891,7 @@
       "covered": false,
       "pullRequestCovered": false,
       "declaredQuarantine": false,
+      "declaredQuarantineShape": null,
       "untriaged": true,
       "via": [],
       "governedRisk": {
