@@ -121,6 +121,22 @@ export default async function SourceEventDetailPage({
     // path) for this exact event, if one was loaded for it. The render gate is
     // row presence for this tenant and event, not tenant identity or keywords.
     const normalizedClientKey = activeClient?.key?.trim().toLowerCase();
+    // U-520. The canvas mounts a descendant that prints an exact financial
+    // magnitude (the evidenced BAFO leverage range), so this route now has to
+    // answer the entitlement question here rather than only inside the strategy
+    // stage builder below, where U-517 reads the same policy for its own figure.
+    // Fails CLOSED: no tenancy, no client key or a failed policy read all
+    // restrict.
+    const canvasTenancy = await requireTenancy().catch(() => null);
+    const canvasSourcePolicy =
+      canvasTenancy && normalizedClientKey
+        ? await loadUserSourceAccessPolicy(canvasTenancy, {
+            activeClientKey: normalizedClientKey,
+            sourceEventId: event.id,
+          }).catch(() => null)
+        : null;
+    const canViewFinancialValues =
+      canvasSourcePolicy?.canViewFinancialData === true;
     const contractOptimizationProfile = normalizedClientKey
       ? await getContractOptimizationProfile(
           normalizedClientKey,
@@ -701,6 +717,7 @@ export default async function SourceEventDetailPage({
     return (
       <SourceAnalyticsCanvas
         event={event}
+        canViewFinancialValues={canViewFinancialValues}
         viewStage={viewStage}
         tenantName={analyticsTenantName}
         stageView={liveStageView}

@@ -18,7 +18,14 @@ describe("VendorResponseDecisionProofPanel", () => {
       buildVendorResponseParseReportsFromProfiles(profileSet);
 
     const html = renderToStaticMarkup(
-      createElement(VendorResponseDecisionProofPanel, { parseReports }),
+      // U-520 made the flag required. This suite asserts the panel's structure
+      // and its vendor-anonymity rule, neither of which depends on the
+      // entitlement, so it answers granted; the restricted direction is covered
+      // in `u520-financial-visibility.test.tsx`.
+      createElement(VendorResponseDecisionProofPanel, {
+        parseReports,
+        canViewFinancialValues: true,
+      }),
     );
 
     expect(html).toContain("Decision proof");

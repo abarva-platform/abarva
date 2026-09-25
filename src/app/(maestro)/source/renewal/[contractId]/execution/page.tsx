@@ -3,6 +3,8 @@ import { AppShell } from "@/components/shell/AppShell";
 import { SourceSubNav } from "@/components/source/SourceSubNav";
 import { SourceExecutionRoomPage } from "@/components/source/SourceExecutionRoomPage";
 import { SourceWorkingPane } from "@/components/source/SourceWorkingPane";
+import { loadUserSourceAccessPolicy } from "@/lib/auth/source-access-policy";
+import { requireTenancy } from "@/lib/auth/tenancy";
 import { getActiveClientRow } from "@/lib/active-client";
 import { canonicalClientDisplayName } from "@/lib/client-config";
 import { SHELL } from "@/lib/shell/shell-tokens";
@@ -37,6 +39,18 @@ export default async function SourceExecutionRoomRoute({
     decodeURIComponent(contractId),
   );
 
+  // U-520. This surface prints exact financial magnitudes, so the route has to
+  // answer the entitlement question rather than leaving the component to assume.
+  // Fails CLOSED: no tenancy, or a policy read that throws, restricts.
+  const renewalTenancy = await requireTenancy().catch(() => null);
+  const renewalSourcePolicy = renewalTenancy
+    ? await loadUserSourceAccessPolicy(renewalTenancy, {
+        activeClientKey: clientKey,
+      }).catch(() => null)
+    : null;
+  const canViewFinancialValues =
+    renewalSourcePolicy?.canViewFinancialData === true;
+
   // Build the Execution Room and reconcile it against the persisted
   // `sourcing_work_items` rows — owner, SLA and status come from the durable
   // work-item layer, not just the deterministic composer baseline.
@@ -57,6 +71,7 @@ export default async function SourceExecutionRoomRoute({
           <SourceExecutionRoomPage
             room={room}
             evidenceContext={evidenceContext}
+            canViewFinancialValues={canViewFinancialValues}
           />
         ) : (
           <div

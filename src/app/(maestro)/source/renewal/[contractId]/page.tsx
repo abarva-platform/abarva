@@ -3,6 +3,8 @@ import { AppShell } from "@/components/shell/AppShell";
 import { SourceSubNav } from "@/components/source/SourceSubNav";
 import { SourceWorkingPane } from "@/components/source/SourceWorkingPane";
 import { RenewalCockpitView } from "@/components/source/RenewalCockpitView";
+import { loadUserSourceAccessPolicy } from "@/lib/auth/source-access-policy";
+import { requireTenancy } from "@/lib/auth/tenancy";
 import { getActiveClientRow } from "@/lib/active-client";
 import { canonicalClientDisplayName } from "@/lib/client-config";
 import { SHELL } from "@/lib/shell/shell-tokens";
@@ -34,6 +36,18 @@ export default async function RenewalCockpitPage({
     decodeURIComponent(contractId),
   );
 
+  // U-520. This surface prints exact financial magnitudes, so the route has to
+  // answer the entitlement question rather than leaving the component to assume.
+  // Fails CLOSED: no tenancy, or a policy read that throws, restricts.
+  const renewalTenancy = await requireTenancy().catch(() => null);
+  const renewalSourcePolicy = renewalTenancy
+    ? await loadUserSourceAccessPolicy(renewalTenancy, {
+        activeClientKey: clientKey,
+      }).catch(() => null)
+    : null;
+  const canViewFinancialValues =
+    renewalSourcePolicy?.canViewFinancialData === true;
+
   return (
     <AppShell
       surface="source"
@@ -49,6 +63,7 @@ export default async function RenewalCockpitPage({
           <RenewalCockpitView
             cockpit={cockpit}
             evidenceContext={evidenceContext}
+            canViewFinancialValues={canViewFinancialValues}
           />
         ) : (
           <div

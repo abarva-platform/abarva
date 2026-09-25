@@ -8,12 +8,20 @@ import {
   buildSourceValueRealizationProofPlan,
   type VendorResponseParseReport,
 } from "@/lib/source/proposal-intelligence";
+import { RESTRICTED_SOURCE_FINANCIAL_LABEL } from "@/lib/source/financial-display";
 import { CANVAS } from "../canvas-tokens";
 
 export function VendorResponseDecisionProofPanel({
   parseReports,
+  canViewFinancialValues,
 }: {
   parseReports?: VendorResponseParseReport[];
+  /**
+   * U-520 — required, not optional. The evidenced BAFO leverage range below is
+   * an exact magnitude, and this panel had no entitlement flag at all before
+   * this change. An optional flag would answer "yes" for a silent caller.
+   */
+  canViewFinancialValues: boolean;
 }) {
   if (!parseReports || parseReports.length === 0) return null;
 
@@ -79,7 +87,7 @@ export function VendorResponseDecisionProofPanel({
           badge={
             optimizer.evidencedValueLowUsd !== null &&
             optimizer.evidencedValueHighUsd !== null
-              ? `${formatUsd(optimizer.evidencedValueLowUsd)}-${formatUsd(optimizer.evidencedValueHighUsd)} evidenced`
+              ? `${formatUsd(optimizer.evidencedValueLowUsd, canViewFinancialValues)}-${formatUsd(optimizer.evidencedValueHighUsd, canViewFinancialValues)} evidenced`
               : `${optimizer.opportunityToTestCount} to test`
           }
           body={optimizer.guardrail}
@@ -156,7 +164,12 @@ function Metric({
   );
 }
 
-function formatUsd(value: number): string {
+/**
+ * U-520 — the flag is a REQUIRED second parameter, so an unanswering call site
+ * fails to compile. The granted branch is the previous rendering unchanged.
+ */
+function formatUsd(value: number, canViewFinancialValues: boolean): string {
+  if (!canViewFinancialValues) return RESTRICTED_SOURCE_FINANCIAL_LABEL;
   return new Intl.NumberFormat("en-US", {
     style: "currency",
     currency: "USD",

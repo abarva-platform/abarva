@@ -212,6 +212,26 @@ const SESSION_EVIDENCE_LANES: readonly SessionEvidenceLane[] = [
 
 interface SourceAnalyticsCanvasProps {
   event: SourcingEventSummary;
+  /**
+   * U-520 — pass-through to `VendorResponseDecisionProofPanel`, the one
+   * descendant of this canvas that prints an exact financial magnitude. The
+   * canvas does not read it.
+   *
+   * Optional, and defaulted to `false` at the destructure below. The LEAF that
+   * consumes it takes it as required, because that is where a silent caller
+   * would become a granted reader. Here the safe default is available and the
+   * cost of requiring it is not: this canvas is mounted at 78 call sites across
+   * twelve suites that have nothing to do with financial entitlement, and a
+   * mechanical prop added to all of them is the large-diff-nobody-reads shape
+   * this backlog exists against.
+   *
+   * `false` is the fail-CLOSED direction, and the distinction matters: U-508's
+   * defect was eight components defaulting to `true`, and its record notes that
+   * the one reader already defaulting to `false` "has no fail-open default to
+   * remove". A route that forgets this prop restricts, which a reader can see
+   * and report; the opposite silently discloses.
+   */
+  canViewFinancialValues?: boolean;
   viewStage: SourceStageKey;
   tenantName: string;
   stageView?: StageAnalyticsView;
@@ -731,6 +751,7 @@ export function SourceAnalyticsCanvas({
   vendorResponseParseReports = [],
   normalizedResponsePackages = [],
   awardSowHandoffReadiness = null,
+  canViewFinancialValues = false,
 }: SourceAnalyticsCanvasProps) {
   const router = useRouter();
   const resolvedInitialWorkspace = initialWorkspace ?? "steps";
@@ -869,6 +890,7 @@ export function SourceAnalyticsCanvas({
               view={shellView}
               stageView={resolvedStageView}
               workspace={workspace}
+              canViewFinancialValues={canViewFinancialValues}
               vendorResponseReadiness={vendorResponseReadiness}
               vendorResponseProfiles={vendorResponseProfiles}
               vendorChallengeIntelligence={vendorChallengeIntelligence}
@@ -1337,6 +1359,7 @@ function SourceWorkspace({
   normalizedResponsePackages,
   artifacts,
   awardSowHandoffReadiness,
+  canViewFinancialValues = false,
   stage08AcceptanceSpine,
   evidenceStates,
   eventDisplayName,
@@ -1358,6 +1381,8 @@ function SourceWorkspace({
   normalizedResponsePackages?: readonly NormalizedVendorResponsePackage[];
   artifacts: readonly SourceShellArtifactLike[];
   awardSowHandoffReadiness?: SourceAwardSowHandoffReadiness | null;
+  /** U-520 — pass-through only; see the canvas's own prop for the reasoning. */
+  canViewFinancialValues?: boolean;
   stage08AcceptanceSpine?: SourceStage08AcceptanceSpine | null;
   evidenceStates?: readonly SourceEventEvidence[];
   eventDisplayName?: string;
@@ -1434,6 +1459,7 @@ function SourceWorkspace({
             bafoInstructionPack={vendorBafoInstructionPack}
             evaluationDecisionView={vendorEvaluationDecisionView}
             parseReports={vendorResponseParseReports}
+            canViewFinancialValues={canViewFinancialValues}
             normalizedResponsePackages={normalizedResponsePackages}
             artifacts={artifacts}
             responseProposalAvailabilityState={
