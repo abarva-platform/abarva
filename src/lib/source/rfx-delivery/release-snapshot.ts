@@ -22,10 +22,12 @@ export type RfxReleaseSnapshotInput = {
     contactEventId?: string;
     contactLegalEntityId?: string;
     contactId?: string;
+    contactName?: string;
     contactEmail?: string;
     contactPolicy?: string;
     contactState?: string;
     contactApprovedByUserId?: string;
+    contactApprovedAt?: string;
     contactEvidenceReference?: string;
     ndaAuthorityId?: string;
     ndaTenantKey?: string;
@@ -147,10 +149,13 @@ export function prepareRfxReleaseSnapshot(
       authority.contactEventId !== pkg.eventId ||
       authority.contactLegalEntityId !== recipient.legalEntityId ||
       authority.contactId !== recipient.contactId ||
+      authority.contactName !== recipient.contactName ||
       authority.contactEmail !== recipient.contactEmail ||
       authority.contactPolicy !== "contact_allowed" ||
       authority.contactState !== "approved" ||
       !filled(authority.contactApprovedByUserId) ||
+      !Number.isFinite(Date.parse(authority.contactApprovedAt ?? "")) ||
+      Date.parse(authority.contactApprovedAt ?? "") > Date.parse(input.release.asOf) ||
       !filled(authority.contactEvidenceReference)
     ) {
       defects.push(`Recipient ${recipient.recipientId} lacks matching named-contact approval.`);

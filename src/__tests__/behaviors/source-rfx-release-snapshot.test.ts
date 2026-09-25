@@ -43,10 +43,12 @@ function input(): RfxReleaseSnapshotInput {
       contactEventId: "event-1",
       contactLegalEntityId: "vendor-1",
       contactId: "contact-1",
+      contactName: "Named contact",
       contactEmail: "contact@example.test",
       contactPolicy: "contact_allowed",
       contactState: "approved",
       contactApprovedByUserId: "contact-approver-1",
+      contactApprovedAt: "2026-09-24T00:00:00Z",
       contactEvidenceReference: "contact-evidence-1",
       ndaAuthorityId: "nda-1",
       ndaTenantKey: "tenant-1",
@@ -149,6 +151,24 @@ describe("Stage 06 release snapshot preparation", () => {
     const result = prepareRfxReleaseSnapshot({
       ...base,
       recipientAuthorities: [{ ...base.recipientAuthorities[0], contactState: "draft" }],
+    });
+    expect(result.ready).toBe(false);
+  });
+
+  it("refuses a contact name that differs from the approved authority", () => {
+    const base = input();
+    const result = prepareRfxReleaseSnapshot({
+      ...base,
+      recipientAuthorities: [{ ...base.recipientAuthorities[0], contactName: "Another person" }],
+    });
+    expect(result.ready).toBe(false);
+  });
+
+  it("refuses a contact approval dated after release evaluation", () => {
+    const base = input();
+    const result = prepareRfxReleaseSnapshot({
+      ...base,
+      recipientAuthorities: [{ ...base.recipientAuthorities[0], contactApprovedAt: "2026-09-26T00:00:00Z" }],
     });
     expect(result.ready).toBe(false);
   });
