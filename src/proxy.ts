@@ -176,6 +176,19 @@ export const PUBLIC_ROUTE_PATTERNS = [
   // initiative counts publicly to anyone who knew the URL. The route is
   // now an authenticated diagnostic (any signed-in user, count-only is
   // still acceptable across the workspace). Removed from the public list.
+
+  // ── Vendor RFP portal ──────────────────────────────────────────────────
+  // Competing vendors are OUTSIDE the organisation and have no Clerk account,
+  // so Clerk must not intercept these paths. They are NOT unguarded: each is
+  // gated by a vendor session cookie that is minted only by the sign-in route
+  // and scoped to one solicitation (src/lib/source/vendor-portal/).
+  //
+  // This is new external attack surface, not an extension of the existing
+  // token-guarded ops route. Anything added under /rfp or this API prefix is
+  // reachable by the public internet and must carry its own vendor-session
+  // check — being on this list is the ABSENCE of a control, not a control.
+  "/rfp(.*)",
+  "/api/v1/source/rfp(.*)",
 ] as const;
 
 const isPublicRoute = createRouteMatcher([...PUBLIC_ROUTE_PATTERNS]);
