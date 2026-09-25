@@ -1,11 +1,12 @@
 import {
+import { deliverableModel } from '../model-policy';
   validateDeliverablePlan,
   type DeliverablePlan,
   type PlanValidationIssue,
 } from "./deliverable-plan";
 import type { GovernedToolCall } from "@/lib/visual-system/architecture-generation";
 
-export const DEFAULT_DELIVERABLE_PLAN_MODEL = "claude-opus-4-8";
+export const DEFAULT_DELIVERABLE_PLAN_MODEL = deliverableModel();
 
 const OBSERVED_GAP_SCHEMA = {
   type: "object",
