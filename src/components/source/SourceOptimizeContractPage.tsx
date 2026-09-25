@@ -57,7 +57,7 @@ interface SourceOptimizeContractPageProps {
   spine: ContractOptimizationSpine;
   opportunitySet: ContractOptimizationOpportunitySet | null;
   evidencePack?: ContractOptimizationEvidencePack | null;
-  canViewFinancialValues?: boolean;
+  canViewFinancialValues: boolean;
 }
 
 export function SourceOptimizeContractPage({
@@ -66,7 +66,7 @@ export function SourceOptimizeContractPage({
   spine,
   opportunitySet,
   evidencePack = null,
-  canViewFinancialValues = true,
+  canViewFinancialValues,
 }: SourceOptimizeContractPageProps) {
   const selected = spine.selected;
   const [dockOpen, setDockOpen] = useState(false);

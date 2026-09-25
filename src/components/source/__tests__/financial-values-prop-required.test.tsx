@@ -59,7 +59,12 @@ import { SourcePortfolioPage } from "../SourcePortfolioPage";
 import { SourceValueLedger } from "../SourceValueLedger";
 import { SourcingEventTable } from "../SourcingEventTable";
 
-import { getSourceEventSeed, listSourceEventSeed } from "@/lib/source/mock-seed";
+import { AbarVaSourceDashboard } from "../AbarVaSourceDashboard";
+import {
+  getSourceDashboardSeed,
+  getSourceEventSeed,
+  listSourceEventSeed,
+} from "@/lib/source/mock-seed";
 import type { ContractOptimizationSpine } from "@/lib/source/data-model/contract-optimization-spine";
 import type {
   SourceValueLedgerSnapshot,
@@ -162,7 +167,6 @@ type Mount = {
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const omit = (Component: any, props: Record<string, unknown>) => (
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
   <Component {...props} />
 );
 
@@ -326,6 +330,49 @@ describe("U-508 — canViewFinancialValues has no fail-open default", () => {
         expect(container.textContent ?? "").toContain(mount.exact);
       });
     }
+  });
+});
+
+// The three call sites the type change forced. Each had to answer, and the
+// answer must be the caller's own value rather than a literal — a literal
+// `true` would satisfy the compiler and reinstate the defect one level up,
+// which is how it was authored the first time. Only a mount that RESTRICTS can
+// tell the two apart, so that is what these assert.
+//
+// Scope, stated rather than implied: these assert the two CHILDREN the type
+// change forced this component to answer for. AbarVaSourceDashboard also
+// prints exact figures from its OWN body — "$98.3M under management", the
+// value-at-stake KPI, "Value exposed $18.5M" — through `formatUsd` calls that
+// never consulted any flag and that this item does not touch. That is filed
+// separately; it is not fixed here and is not claimed to be.
+describe("U-508 — the forced call sites pass their caller's value, not a literal", () => {
+  function dashboardRegions(canView: boolean) {
+    const { container } = render(
+      <AbarVaSourceDashboard
+        data={getSourceDashboardSeed()}
+        canViewFinancialValues={canView}
+      />,
+    );
+    return {
+      all: container.textContent ?? "",
+      table: container.querySelector("table")?.textContent ?? "",
+    };
+  }
+
+  it("threads its own value into the alert panel and the event table", () => {
+    const restricted = dashboardRegions(false);
+    // The alert panel renders "<amount> exposed"; this phrasing is unique to it.
+    expect(restricted.all).toContain("Restricted exposed");
+    expect(restricted.all).not.toContain("$18.5M exposed");
+    // The event table's value column is the second forced call site.
+    expect(restricted.table).not.toMatch(/\$\d[\d.,]*[KMB]/);
+    expect(restricted.table).toContain("Restricted");
+  });
+
+  it("still prints amounts in both children when granted", () => {
+    const granted = dashboardRegions(true);
+    expect(granted.all).toContain("$18.5M exposed");
+    expect(granted.table).toMatch(/\$\d[\d.,]*[KMB]/);
   });
 });
 

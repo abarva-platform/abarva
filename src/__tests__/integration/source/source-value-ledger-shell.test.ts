@@ -9,7 +9,7 @@ describe('Source value ledger shell', () => {
   it('renders Ava-led value context, summary distinctions, and action layer', () => {
     const snapshot = getSourceValueSeed();
 
-    const html = renderToStaticMarkup(createElement(SourceValueLedger, { snapshot }));
+    const html = renderToStaticMarkup(createElement(SourceValueLedger, { snapshot, canViewFinancialValues: true }));
 
     expect(html).toContain('Ava value ledger lead');
     expect(html).toContain('Projected');

@@ -151,7 +151,13 @@ const LIGHT_ACTION_LINK: CSSProperties = {
 
 const DASHBOARD_MISSION_GENERATED_AT = '2026-04-26T00:00:00.000Z';
 
-export function AbarVaSourceDashboard({ data }: { data: AbarvaSourceDashboardData }) {
+export function AbarVaSourceDashboard({
+  data,
+  canViewFinancialValues,
+}: {
+  data: AbarvaSourceDashboardData;
+  canViewFinancialValues: boolean;
+}) {
   const waitingOrBlockedEvents = data.events.filter(
     (event) => event.blocker || event.status.startsWith('waiting_on'),
   );
@@ -368,6 +374,7 @@ export function AbarVaSourceDashboard({ data }: { data: AbarvaSourceDashboardDat
           title="Executive pressure signals"
           eventContextById={eventContextById}
           variant="light"
+          canViewFinancialValues={canViewFinancialValues}
         />
       </section>
 
@@ -407,7 +414,11 @@ export function AbarVaSourceDashboard({ data }: { data: AbarvaSourceDashboardDat
         </div>
       </section>
 
-      <SourcingEventTable events={data.events} variant="light" />
+      <SourcingEventTable
+        events={data.events}
+        variant="light"
+        canViewFinancialValues={canViewFinancialValues}
+      />
 
       <section
         style={{

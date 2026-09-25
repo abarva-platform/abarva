@@ -144,7 +144,7 @@ export function SourceAlertPanel({
   framed = true,
   eventContextById,
   variant = 'dark',
-  canViewFinancialValues = true,
+  canViewFinancialValues,
 }: {
   alerts: SourceAlertPanelItem[];
   title?: string;
@@ -152,7 +152,7 @@ export function SourceAlertPanel({
   framed?: boolean;
   eventContextById?: Record<string, SourceAlertEventContext>;
   variant?: SourceAlertPanelVariant;
-  canViewFinancialValues?: boolean;
+  canViewFinancialValues: boolean;
 }) {
   const lightMode = variant === 'light';
   const panelStyle: CSSProperties = lightMode
