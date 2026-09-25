@@ -339,17 +339,11 @@
             "assumptions.map"
           ],
           "behavioralTest": {
-            "status": "none",
-            "reason": "A rendering suite does exist: src/components/source/__tests__/EstimateAssumptionDisclosure.test.tsx mounts the component and proves the assumptions list renders rather than collapsing to an empty node. The reason recorded here before denied that suite existed, and was false. What stays unproven is the control itself: no route mounts this component, so no Source estimate a user sees is shown to carry the caveat.",
-            "knownSuites": [
-              "src/__tests__/behaviors/uncovered-control-known-suites.test.ts",
-              "src/components/source/__tests__/EstimateAssumptionDisclosure.test.tsx"
-            ]
+            "path": "src/components/source/__tests__/RenewalCockpitView.estimate-disclosure.test.tsx"
           }
         }
       ],
-      "routeReachable": false,
-      "unreachableReason": "No route imports this component; it is already recorded in docs/architecture/unreachable-components.json, and its only importer is its own test. Every Source savings and cost estimate a user sees today is rendered without it. Fixed by mounting it wherever Source presents an estimate, which is where the catalog claims the caveat is shown."
+      "routeReachable": true
     },
     {
       "id": "agent-chat-route-decision-boundary",

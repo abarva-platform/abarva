@@ -17,6 +17,7 @@ import {
   resolveEvidenceTraces,
   type EvidenceResolutionContext,
 } from "@/lib/source/evidence-trace/evidence-trace";
+import { EstimateAssumptionDisclosure } from "./EstimateAssumptionDisclosure";
 import { RenewalCockpitActionBar } from "./RenewalCockpitActionBar";
 import { EvidenceTraceTrigger } from "./EvidenceTraceDrawer";
 
@@ -388,6 +389,17 @@ export function RenewalCockpitView({
             />
           ) : null}
         </div>
+        {/*
+          The low/high pair above is modelled, not quoted. Without this the
+          reader sees two dollar figures and nothing that says what was
+          assumed to reach them. Basis and assumptions come from the builder
+          that made the assumptions, so they cannot drift from the numbers.
+        */}
+        <EstimateAssumptionDisclosure
+          title="Should-cost estimate basis"
+          basis={sc.estimateBasis}
+          assumptions={sc.estimateAssumptions}
+        />
       </EvidenceCard>
 
       <EvidenceCard

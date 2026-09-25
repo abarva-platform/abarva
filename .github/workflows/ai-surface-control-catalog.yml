@@ -72,6 +72,9 @@ jobs:
       - name: Exercise renewal cockpit external action
         run: npx jest --runTestsByPath src/components/source/__tests__/RenewalCockpitActionBar.external-action.test.tsx --runInBand
 
+      - name: Exercise Source estimate assumption disclosure
+        run: npx jest --runTestsByPath src/components/source/__tests__/RenewalCockpitView.estimate-disclosure.test.tsx --runInBand
+
       - name: Exercise deliverable approval actions
         run: npx jest --runTestsByPath src/components/deliverables/__tests__/ApproveActions.controls.test.tsx --runInBand
 

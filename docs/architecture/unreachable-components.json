@@ -263,7 +263,6 @@
     "src/components/source/AmsIntelligenceSignalsPanel.tsx",
     "src/components/source/AmsVendorStorylinePanel.tsx",
     "src/components/source/BulkEvidenceImportButton.tsx",
-    "src/components/source/EstimateAssumptionDisclosure.tsx",
     "src/components/source/EventLifecycleStatusBadge.tsx",
     "src/components/source/FileCabinetPanel.tsx",
     "src/components/source/GateDecisionPanel.tsx",

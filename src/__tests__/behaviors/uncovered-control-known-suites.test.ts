@@ -1,5 +1,5 @@
 import { execFileSync } from "node:child_process";
-import { mkdtempSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
+import { existsSync, mkdtempSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 
@@ -37,6 +37,7 @@ import path from "node:path";
 const repoRoot = path.resolve(__dirname, "../../..");
 const CATALOG_REL = "docs/security/ai-surface-control-catalog.json";
 const SCRIPT = path.join(repoRoot, "scripts/audit/ai-surface-control-catalog.mjs");
+const WORKFLOW_REL = ".github/workflows/ai-surface-control-catalog.yml";
 
 type Catalog = {
   controls: Array<{
@@ -132,18 +133,39 @@ describe("an uncovered AI-surface control reconciles against the suites that exi
     }
   });
 
-  it("proves the drifted reason it was written for is gone: a suite renders the Source disclosure", () => {
+  // U-507 mounted the Source disclosure on the renewal cockpit, which closed
+  // the very state this case was written against: the surface is no longer
+  // uncovered, so there is no longer a `status: "none"` reason on it to be
+  // stale. The assertion is updated in place rather than deleted, because the
+  // thing worth holding is not "that prose is not stale" but "that surface
+  // never returns to prose". Its uncovered form was the drift; its covered
+  // form has to be a test the catalog workflow runs, on a route a reader
+  // reaches — a strictly stronger end state than the one it used to assert.
+  it("proves the drifted reason it was written for is gone: the Source disclosure is covered, not narrated", () => {
     const catalog = readCatalog();
     const surface = catalog.controls.find((c) => c.id === "source-estimate-assumption-disclosure");
     expect(surface).toBeDefined();
-    const control = surface!.requiredControls.find((c) => c.behavioralTest?.status === "none");
+
+    const control = surface!.requiredControls.find((c) => c.kind === "risk-caveat");
     expect(control).toBeDefined();
 
-    // The suite exists on main, so no reason may claim the component has none.
-    expect(control!.behavioralTest.knownSuites).toContain(
-      "src/components/source/__tests__/EstimateAssumptionDisclosure.test.tsx",
-    );
-    expect(control!.behavioralTest.reason ?? "").not.toMatch(/no rendering suite/i);
+    // No prose branch: no status, no reason, no knownSuites list to rot.
+    expect(control!.behavioralTest.status).toBeUndefined();
+    expect(control!.behavioralTest.reason).toBeUndefined();
+    expect(control!.behavioralTest.knownSuites).toBeUndefined();
+
+    // A real suite, which exists and which the catalog workflow runs. The
+    // audit enforces both; asserting the path here keeps the surface named,
+    // so silently re-parking it as uncovered turns this red.
+    const testPath = control!.behavioralTest.path;
+    expect(typeof testPath).toBe("string");
+    expect(existsSync(path.join(repoRoot, testPath!))).toBe(true);
+    expect(readFileSync(path.join(repoRoot, WORKFLOW_REL), "utf8")).toContain(testPath!);
+
+    // And the control is on a screen. A caveat proven in isolation on a
+    // component no route mounts is the state U-507 was filed about.
+    expect((surface as { routeReachable?: boolean }).routeReachable).toBe(true);
+    expect(surface).not.toHaveProperty("unreachableReason");
   });
 
   it("the real catalog passes the audit", () => {
@@ -151,17 +173,36 @@ describe("an uncovered AI-surface control reconciles against the suites that exi
     expect(code).toBe(0);
   });
 
+  // Keyed to whatever is uncovered today, not to one surface by name. The
+  // previous version named `source-estimate-assumption-disclosure` and the
+  // suite it had; covering that surface took this case with it, which is how
+  // a gate quietly loses the case that proved it. Deriving both the control
+  // and the suite it must be told about from the catalog and the tree means
+  // covering the next surface cannot retire this one either.
   it("fails when a suite exists that the uncovered control does not name", () => {
+    const uncovered = uncoveredControls(readCatalog());
+    expect(uncovered.length).toBeGreaterThan(0);
+
+    const withSuites = uncovered.find(
+      ({ surface }) => suitesReferencing(moduleToken(surface.path)).length > 0,
+    );
+    // An uncovered control whose module no suite touches cannot demonstrate
+    // this branch; say so rather than passing vacuously.
+    expect(withSuites).toBeDefined();
+
+    const { surface, control } = withSuites!;
+    const expectedSuite = suitesReferencing(moduleToken(surface.path))[0];
+
     const fixture = writeFixture((catalog) => {
-      for (const { control } of uncoveredControls(catalog)) {
-        control.behavioralTest.knownSuites = [];
+      for (const { control: c } of uncoveredControls(catalog)) {
+        c.behavioralTest.knownSuites = [];
       }
     });
 
     const { code, output } = runAudit(fixture);
     expect(code).not.toBe(0);
-    expect(output).toMatch(/source-estimate-assumption-disclosure:risk-caveat/);
-    expect(output).toMatch(/EstimateAssumptionDisclosure\.test\.tsx/);
+    expect(output).toContain(`${surface.id}:${control.kind}`);
+    expect(output).toContain(expectedSuite);
   });
 
   it("fails when the control names a suite that does not reference it", () => {
