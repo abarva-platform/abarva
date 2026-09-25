@@ -1,5 +1,6 @@
 {
   "ceiling": 5,
+  "scope": "src/lib/intelligence/__tests__",
   "quarantined": [
     {
       "suite": "ai-program-failure-modes.test.ts",
