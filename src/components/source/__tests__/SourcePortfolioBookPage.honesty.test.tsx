@@ -146,6 +146,7 @@ describe("SourcePortfolioBookPage — honesty invariants", () => {
       <SourcePortfolioBookPage
         events={[makeEvent({})]}
         tenantName="Lakeshore"
+        canViewFinancialValues
       />,
     );
 
@@ -176,6 +177,7 @@ describe("SourcePortfolioBookPage — honesty invariants", () => {
       <SourcePortfolioBookPage
         events={[makeEvent({})]}
         tenantName="Lakeshore"
+        canViewFinancialValues
       />,
     );
 
@@ -195,6 +197,7 @@ describe("SourcePortfolioBookPage — honesty invariants", () => {
         events={[makeEvent({ valueAtStakeUsd: 12_000_000 })]}
         tenantName="Airline Demo"
         governedSnapshot={makeGovernedSnapshot()}
+        canViewFinancialValues
       />,
     );
 
@@ -218,6 +221,7 @@ describe("SourcePortfolioBookPage — honesty invariants", () => {
           }),
         ]}
         tenantName="Airline Demo"
+        canViewFinancialValues
       />,
     );
 
@@ -233,7 +237,7 @@ describe("SourcePortfolioBookPage — honesty invariants", () => {
 
   it("renders honest empty states where there is NO substrate backing", () => {
     // Empty portfolio: no events, nothing realized, no renewal substrate.
-    render(<SourcePortfolioBookPage events={[]} tenantName="Lakeshore" />);
+    render(<SourcePortfolioBookPage events={[]} tenantName="Lakeshore" canViewFinancialValues />);
 
     // Renewals card and value-captured card show the em-dash placeholder, never
     // a fabricated number.
@@ -263,6 +267,7 @@ describe("SourcePortfolioBookPage — honesty invariants", () => {
       <SourcePortfolioBookPage
         events={[makeEvent({ realizedValueUsd: 0 })]}
         tenantName="Lakeshore"
+        canViewFinancialValues
       />,
     );
     const captured = screen.getByTestId("source-book-stat-value_captured");

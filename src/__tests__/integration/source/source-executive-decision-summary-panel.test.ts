@@ -75,7 +75,7 @@ describe('Source executive decision summary panel', () => {
   it('renders executive decision panel in event canvas when selection stage is active', async () => {
     const sourceEvent = await getSourcingEvent(SOURCE_GOLDEN_EVENT_IDS.digitalAppBuild);
     const event = buildSelectionEvent(sourceEvent!);
-    const html = renderToStaticMarkup(createElement(SentinelEngagementCanvas, { event }));
+    const html = renderToStaticMarkup(createElement(SentinelEngagementCanvas, { event, canViewFinancialValues: true }));
 
     expect(html).toContain('Vendor selection readiness');
     expect(html).toContain('Selection posture');

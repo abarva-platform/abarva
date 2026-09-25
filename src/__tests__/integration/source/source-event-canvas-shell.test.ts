@@ -93,7 +93,7 @@ describe('Source event canvas shell', () => {
     const event = await getSourcingEvent(SOURCE_GOLDEN_EVENT_IDS.dataAiModernization);
     expect(event).toBeDefined();
 
-    const html = renderToStaticMarkup(createElement(SentinelEngagementCanvas, { event: event! }));
+    const html = renderToStaticMarkup(createElement(SentinelEngagementCanvas, { event: event!, canViewFinancialValues: true }));
 
     expect(html).toContain('Journey map');
     expect(html).toContain('Stage gate readiness');
@@ -116,7 +116,7 @@ describe('Source event canvas shell', () => {
   it('keeps Scope visible as the current blocked stage with required baseline inputs', async () => {
     const event = await getSourcingEvent(SOURCE_GOLDEN_EVENT_IDS.dataAiModernization);
     const readiness = buildSourceRfpReadiness({ event: event! });
-    const html = renderToStaticMarkup(createElement(SentinelEngagementCanvas, { event: event! }));
+    const html = renderToStaticMarkup(createElement(SentinelEngagementCanvas, { event: event!, canViewFinancialValues: true }));
 
     expect(html).toContain('Scope');
     expect(html).toContain('Blocked');
@@ -222,7 +222,7 @@ describe('Source event canvas shell', () => {
   it('surfaces BAFO negotiation panel signals in event canvas when orals/BAFO is active', async () => {
     const sourceEvent = await getSourcingEvent(SOURCE_GOLDEN_EVENT_IDS.digitalAppBuild);
     const event = buildOralsBafoEvent(sourceEvent!);
-    const html = renderToStaticMarkup(createElement(SentinelEngagementCanvas, { event }));
+    const html = renderToStaticMarkup(createElement(SentinelEngagementCanvas, { event, canViewFinancialValues: true }));
 
     expect(html).toContain('BAFO negotiation');
     expect(html).toContain('Overall negotiation readiness');
@@ -235,7 +235,7 @@ describe('Source event canvas shell', () => {
     const sourceEvent = await getSourcingEvent(SOURCE_GOLDEN_EVENT_IDS.digitalAppBuild);
     const event = buildSelectionEvent(sourceEvent!);
     const summary = buildSourceExecutiveDecisionSummary({ event });
-    const html = renderToStaticMarkup(createElement(SentinelEngagementCanvas, { event }));
+    const html = renderToStaticMarkup(createElement(SentinelEngagementCanvas, { event, canViewFinancialValues: true }));
     const selectionReadiness = buildSourceVendorSelectionReadiness({ event });
 
     expect(html).toContain('Vendor selection readiness');
@@ -255,7 +255,7 @@ describe('Source event canvas shell', () => {
     expect(readiness.selectionReviewReady).toBe(false);
     expect(readiness.selectionPosture).not.toBe('ready_for_selection_review');
 
-    const html = renderToStaticMarkup(createElement(SentinelEngagementCanvas, { event }));
+    const html = renderToStaticMarkup(createElement(SentinelEngagementCanvas, { event, canViewFinancialValues: true }));
 
     expect(html).toContain('Vendor selection readiness');
     expect(html).toContain('Selection posture');
@@ -269,7 +269,7 @@ describe('Source event canvas shell', () => {
 
   it('includes the deterministic data readiness panel with missing and usable evidence states', async () => {
     const event = await getSourcingEvent(SOURCE_GOLDEN_EVENT_IDS.dataAiModernization);
-    const html = renderToStaticMarkup(createElement(SentinelEngagementCanvas, { event: event! }));
+    const html = renderToStaticMarkup(createElement(SentinelEngagementCanvas, { event: event!, canViewFinancialValues: true }));
 
     expect(html).toContain('Data readiness');
     expect(html).toContain('Workload Baseline');
@@ -297,7 +297,7 @@ describe('Source event canvas shell', () => {
       ...event!,
       dataReadiness: [],
     };
-    const html = renderToStaticMarkup(createElement(SentinelEngagementCanvas, { event: eventWithoutLocalReadiness }));
+    const html = renderToStaticMarkup(createElement(SentinelEngagementCanvas, { event: eventWithoutLocalReadiness, canViewFinancialValues: true }));
 
     expect(html).toContain('34% toward event data readiness');
     expect(html).toContain('Admin/Setup readiness contract projection');

@@ -25,7 +25,7 @@ describe('Source stage gate + artifact smoke coverage', () => {
 
   it('renders stage gate and artifact sections together in event canvas shell', () => {
     const event = getSourceEventSeed(SOURCE_GOLDEN_EVENT_IDS.dataAiModernization);
-    const html = renderToStaticMarkup(createElement(SentinelEngagementCanvas, { event: event! }));
+    const html = renderToStaticMarkup(createElement(SentinelEngagementCanvas, { event: event!, canViewFinancialValues: true }));
 
     expect(html).toContain('Stage gate readiness');
     expect(html).toContain('Current gate signal');

@@ -305,6 +305,7 @@ describe("SourceOptimizeContractPage", () => {
         asOfDateIso="2027-06-30T00:00:00.000Z"
         spine={makeSpine()}
         opportunitySet={null}
+        canViewFinancialValues
       />,
     );
 
@@ -391,6 +392,7 @@ describe("SourceOptimizeContractPage", () => {
         asOfDateIso="2027-06-30T00:00:00.000Z"
         spine={makeSpine({ selected: makeCandidate() })}
         opportunitySet={makeOpportunitySet()}
+        canViewFinancialValues
       />,
     );
 
@@ -415,6 +417,7 @@ describe("SourceOptimizeContractPage", () => {
         asOfDateIso="2027-06-30T00:00:00.000Z"
         spine={makeSpine({ selected: makeCandidate() })}
         opportunitySet={makeOpportunitySet()}
+        canViewFinancialValues
       />,
     );
 
@@ -450,6 +453,7 @@ describe("SourceOptimizeContractPage", () => {
         asOfDateIso="2027-06-30T00:00:00.000Z"
         spine={makeSpine({ selected: makeCandidate() })}
         opportunitySet={makeOpportunitySet()}
+        canViewFinancialValues
       />,
     );
 
@@ -501,6 +505,7 @@ describe("SourceOptimizeContractPage", () => {
         asOfDateIso="2027-06-30T00:00:00.000Z"
         spine={makeSpine({ selected: makeCandidate() })}
         opportunitySet={makeOpportunitySet()}
+        canViewFinancialValues
       />,
     );
 
@@ -565,6 +570,7 @@ describe("SourceOptimizeContractPage", () => {
         asOfDateIso="2027-06-30T00:00:00.000Z"
         spine={makeSpine({ selected: makeCandidate() })}
         opportunitySet={makeOpportunitySet()}
+        canViewFinancialValues
       />,
     );
 
@@ -622,6 +628,7 @@ describe("SourceOptimizeContractPage", () => {
         })}
         opportunitySet={approvalStageSet}
         evidencePack={makeReadySaaSEvidencePack()}
+        canViewFinancialValues
       />,
     );
 
@@ -684,6 +691,7 @@ describe("SourceOptimizeContractPage", () => {
         })}
         opportunitySet={targetPositionSet}
         evidencePack={makeReadySaaSEvidencePack()}
+        canViewFinancialValues
       />,
     );
 
@@ -785,6 +793,7 @@ describe("SourceOptimizeContractPage", () => {
         })}
         opportunitySet={pendingApprovalSet}
         evidencePack={makeReadySaaSEvidencePack()}
+        canViewFinancialValues
       />,
     );
 
@@ -870,6 +879,7 @@ describe("SourceOptimizeContractPage", () => {
         })}
         opportunitySet={agreedOutcomeSet}
         evidencePack={makeReadySaaSEvidencePack()}
+        canViewFinancialValues
       />,
     );
 
@@ -1015,6 +1025,7 @@ describe("SourceOptimizeContractPage", () => {
         })}
         opportunitySet={confirmedSet}
         evidencePack={makeReadySaaSEvidencePack()}
+        canViewFinancialValues
       />,
     );
 
@@ -1108,6 +1119,7 @@ describe("SourceOptimizeContractPage", () => {
         })}
         opportunitySet={pendingFinanceHandoffSet}
         evidencePack={makeReadySaaSEvidencePack()}
+        canViewFinancialValues
       />,
     );
 
@@ -1209,6 +1221,7 @@ describe("SourceOptimizeContractPage", () => {
         })}
         opportunitySet={confirmedWithoutHandoff}
         evidencePack={makeReadySaaSEvidencePack()}
+        canViewFinancialValues
       />,
     );
 
@@ -1264,6 +1277,7 @@ describe("SourceOptimizeContractPage", () => {
           missingEvidenceSources: [],
         })}
         opportunitySet={makeConflictOpportunitySet()}
+        canViewFinancialValues
       />,
     );
 
@@ -1310,6 +1324,7 @@ describe("SourceOptimizeContractPage", () => {
           missingEvidenceSources: [],
         })}
         opportunitySet={opportunitySet}
+        canViewFinancialValues
       />,
     );
 
@@ -1358,6 +1373,7 @@ describe("SourceOptimizeContractPage", () => {
           ],
         })}
         opportunitySet={makeOpportunitySet()}
+        canViewFinancialValues
       />,
     );
 
@@ -1386,6 +1402,7 @@ describe("SourceOptimizeContractPage", () => {
         asOfDateIso="2027-06-30T00:00:00.000Z"
         spine={makeSpine({ selected: makeCandidate() })}
         opportunitySet={makeOpportunitySet()}
+        canViewFinancialValues
       />,
     );
 
@@ -1443,6 +1460,7 @@ describe("SourceOptimizeContractPage", () => {
         asOfDateIso="2027-06-30T00:00:00.000Z"
         spine={makeSpine({ selected: makeCandidate() })}
         opportunitySet={withUntraced}
+        canViewFinancialValues
       />,
     );
 
@@ -1501,6 +1519,7 @@ describe("SourceOptimizeContractPage", () => {
         asOfDateIso="2027-06-30T00:00:00.000Z"
         spine={makeSpine({ selected: makeCandidate() })}
         opportunitySet={makeOpportunitySet()}
+        canViewFinancialValues
       />,
     );
 
@@ -1557,6 +1576,7 @@ describe("SourceOptimizeContractPage", () => {
             },
           ],
         }}
+        canViewFinancialValues
       />,
     );
 

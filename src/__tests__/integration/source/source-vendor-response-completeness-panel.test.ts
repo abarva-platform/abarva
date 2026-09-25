@@ -32,7 +32,7 @@ describe('Source vendor response completeness panel', () => {
     expect(event).toBeTruthy();
     expect(event?.currentStageKey).toBe('responses');
 
-    const html = renderToStaticMarkup(createElement(SentinelEngagementCanvas, { event: event! }));
+    const html = renderToStaticMarkup(createElement(SentinelEngagementCanvas, { event: event!, canViewFinancialValues: true }));
 
     expect(html).toContain('Vendor Response Completeness');
     expect(html).toContain('Event vendor response readiness');
