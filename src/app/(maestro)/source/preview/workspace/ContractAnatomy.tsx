@@ -30,6 +30,18 @@ import type { SourceWorkspaceVM } from "./buildViewModel";
  * The right column is fully live. The seven facets and their required or
  * not-required state come from the archetype model; whether each is answered
  * comes from the contract's own lanes.
+ *
+ * Item U-521 settled what the Optimize facet is a question about, because it is
+ * the one facet with two candidate populations. `coverage.opportunity_rows` is
+ * count(*) over `source.contract_action_candidate_v1` -- opportunity evidence
+ * loaded onto this contract, whose own projection tells an operator to "Load
+ * opportunity rows ..." when it is zero. `vm.opportunityView.opportunities` is
+ * the product's computed opportunity set (`source.optimization_opportunity`, or
+ * a fallback derived from `source.golden_contract_*`). This strip reports which
+ * questions the contract's EVIDENCE can answer, so Optimize reads the loaded
+ * lane like its six siblings. Reading the computed set made the card answer a
+ * question with the recommendation the question is about, and marked a contract
+ * with nothing loaded and three authored levers as having answered it.
  */
 
 type Coverage = SourceContractEvidenceCoverageRow | null | undefined;
@@ -85,7 +97,6 @@ function facetStates(
   coverage: Coverage,
   education: ContractEducationView | null,
   scopeRowCount: number,
-  opportunityCount: number,
 ): Record<ContractFacetKey, FacetState> {
   const required = (facet: ContractFacetKey) =>
     education?.facetRequirements?.[facet]?.state !== "not_required";
@@ -97,7 +108,7 @@ function facetStates(
     Performance: (lane(coverage, "performance_rows") ?? 0) > 0,
     Relationship: scopeRowCount > 0,
     Evidence: (lane(coverage, "document_page_text_rows") ?? 0) > 0,
-    Optimize: opportunityCount > 0,
+    Optimize: (lane(coverage, "opportunity_rows") ?? 0) > 0,
   };
 
   const out = {} as Record<ContractFacetKey, FacetState>;
@@ -121,8 +132,7 @@ export function ContractAnatomy({
   vm: SourceWorkspaceVM;
 }) {
   const education = vm.contractEducation ?? null;
-  const opportunityCount = vm.opportunityView?.opportunities?.length ?? 0;
-  const states = facetStates(coverage, education, scopeRowCount, opportunityCount);
+  const states = facetStates(coverage, education, scopeRowCount);
 
   const answered = FACET_ORDER.filter((f) => states[f] === "answered").length;
   const open = FACET_ORDER.filter((f) => states[f] === "open").length;
@@ -156,8 +166,19 @@ export function ContractAnatomy({
       detail: laneCountLabel(coverage, "document_page_text_rows", "document passage"),
     },
     {
-      label: "Optimization opportunities",
-      detail: `${opportunityCount} governed ${opportunityCount === 1 ? "lever" : "levers"}`,
+      // Item U-521. This is the LOADED lane -- `opportunity_rows` is count(*)
+      // over `source.contract_action_candidate_v1`, the same population
+      // `Contract360Surfaces` names under item U-518. It is not
+      // `vm.opportunityView.opportunities`, which is the product's computed
+      // opportunity set; that set is an answer about this contract, not an
+      // input to it, and printing it here claimed a feed for a contract with
+      // no loaded rows and authored levers.
+      label: "Opportunity evidence rows",
+      detail: laneCountLabel(
+        coverage,
+        "opportunity_rows",
+        "opportunity evidence row",
+      ),
     },
   ];
 
