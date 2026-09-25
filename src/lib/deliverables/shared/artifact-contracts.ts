@@ -126,37 +126,24 @@ export const CHARTER_CONTRACT: ArtifactContract = {
    */
   maxOutputTokens: 4_000,
   estimatedRenderedPages: "2-3",
-  // Redesigned 2026-07-25: 9 sections replacing the earlier 7. The prior
-  // design folded "discovery questions" and "evidence requested for P2" as
-  // bullets inside a generic "recommendation" section — thinner than the
-  // presentation contract's own promise of a dedicated table for that
-  // content. This design gives Discovery its own first-class section
-  // (discovery_preparation) with two real tables, so the Charter ends by
-  // transitioning cleanly into P2 instead of compressing it into an
-  // afterthought. It also splits "intended outcomes" (what Discovery should
-  // evaluate) from "success measures" (how success will be judged) — these
-  // were previously merged into one "success_criteria" section.
+  // Re-compressed 2026-09-25: the Charter remains a 7-section commitment
+  // instrument. Discovery Preparation stays first-class, but intended outcomes
+  // now live with the business context and immediate next steps live with the
+  // decision so the artifact does not read like a binder.
   sections: [
     {
       key: "charter_decision",
-      title: "Charter Decision",
+      title: "Charter Decision & Immediate Next Steps",
       intent:
-        "State one of: Authorize Discovery / Authorize Discovery with Conditions / Do Not Authorize Discovery, plus a concise executive decision summary.",
-      maxWords: 100,
+        "State one of: Authorize Discovery / Authorize Discovery with Conditions / Do Not Authorize Discovery, plus the immediate owner actions and conditions.",
+      maxWords: 140,
     },
     {
       key: "opportunity_context",
-      title: "Opportunity & Business Context",
+      title: "Opportunity, Context & Intended Outcomes",
       intent:
-        "Why this Move is being considered, why it matters now, the business opportunity or challenge, and expected business value direction. Only approved P0 capture, sponsor input, and approved enterprise context.",
-      maxWords: 150,
-    },
-    {
-      key: "intended_outcomes",
-      title: "Intended Outcomes",
-      intent:
-        "The business outcomes Discovery is intended to evaluate — objectives, not commitments or validated findings.",
-      maxWords: 120,
+        "Why this Move is being considered, why it matters now, the business opportunity or challenge, expected value direction, and the outcomes Discovery is intended to evaluate. These are objectives, not validated findings.",
+      maxWords: 220,
     },
     {
       key: "scope",
@@ -191,13 +178,6 @@ export const CHARTER_CONTRACT: ArtifactContract = {
       intent:
         "Sets expectations for the Discovery phase — not the assessment itself. An executive table (Area / What to Expect / What We Need From You / Priority) across Business Process, People & Governance, Technology, Data, Performance, Risk & Controls; a second table of typical Discovery activities and durations; and a short closing paragraph noting that a detailed Discovery Guidebook, tailored to this Move, will be generated after Charter approval — do not embed that detail here.",
       maxWords: 250,
-    },
-    {
-      key: "authorization_next_steps",
-      title: "Authorization & Immediate Next Steps",
-      intent:
-        "Charter decision, immediate actions, conditions (if any), and the expected transition into P2.",
-      maxWords: 120,
     },
   ],
   forbiddenTopics: [

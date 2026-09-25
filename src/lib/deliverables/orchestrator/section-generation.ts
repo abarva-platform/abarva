@@ -101,13 +101,19 @@ function sentenceEvidenceCitations(
   return Array.from(citations).sort((a, b) => a - b);
 }
 
-function appendCitations(sentence: string, citations: readonly number[]): string {
+function appendCitations(
+  sentence: string,
+  citations: readonly number[],
+): string {
   const suffix = citations.map((n) => `[${n}]`).join("");
   if (!suffix) return sentence;
-  return sentence.replace(/([.!?])?(\s*)$/u, (_match, punctuation = "", whitespace = "") => {
-    if (punctuation) return ` ${suffix}${punctuation}${whitespace}`;
-    return ` ${suffix}${whitespace}`;
-  });
+  return sentence.replace(
+    /([.!?])?(\s*)$/u,
+    (_match, punctuation = "", whitespace = "") => {
+      if (punctuation) return ` ${suffix}${punctuation}${whitespace}`;
+      return ` ${suffix}${whitespace}`;
+    },
+  );
 }
 
 /**
@@ -303,7 +309,10 @@ function documentTextForSignalCheck(
   return [
     sections.map((s) => `${s.title}\n${s.bodyMarkdown}`).join("\n\n"),
     tables
-      .map((t) => `${t.title}\n${t.columns.join(" | ")}\n${t.rows.map((r) => r.join(" | ")).join("\n")}`)
+      .map(
+        (t) =>
+          `${t.title}\n${t.columns.join(" | ")}\n${t.rows.map((r) => r.join(" | ")).join("\n")}`,
+      )
       .join("\n\n"),
     recommendation,
     nextActions.join("\n"),
@@ -319,14 +328,15 @@ function appendMissingEvidenceSignals(
 ): RenderableSection[] {
   const required = req.requiredEvidenceSignals ?? [];
   if (required.length === 0) return [...sections];
-  const haystack = documentTextForSignalCheck(sections, tables, recommendation, nextActions);
+  const haystack = documentTextForSignalCheck(
+    sections,
+    tables,
+    recommendation,
+    nextActions,
+  );
   const missing = required.filter(
     (signal) =>
-      !carriesRequiredEvidenceSignal(
-        haystack,
-        signal.label,
-        signal.statement,
-      ),
+      !carriesRequiredEvidenceSignal(haystack, signal.label, signal.statement),
   );
   if (missing.length === 0) return [...sections];
   return [
@@ -335,10 +345,16 @@ function appendMissingEvidenceSignals(
       key: "evidence_signals_carried_forward",
       title: "Evidence Signals Carried Forward",
       bodyMarkdown: missing
-        .map((signal) => `- ${signal.label}: ${signal.statement} [${signal.citationNumber}]`)
+        .map(
+          (signal) =>
+            `- ${signal.label}: ${signal.statement} [${signal.citationNumber}]`,
+        )
         .join("\n"),
       rawBodyMarkdown: missing
-        .map((signal) => `- ${signal.label}: ${signal.statement} [${signal.citationNumber}]`)
+        .map(
+          (signal) =>
+            `- ${signal.label}: ${signal.statement} [${signal.citationNumber}]`,
+        )
         .join("\n"),
       groundingMode: "governed_facts",
       citationsUsed: missing.map((signal) => signal.citationNumber),
@@ -445,7 +461,8 @@ const GENERIC_EXHIBIT_DESCRIPTION =
 
 function repairStructuredValue(value: unknown): unknown {
   if (typeof value === "string") return repairStructuredClientFactText(value);
-  if (Array.isArray(value)) return value.map((item) => repairStructuredValue(item));
+  if (Array.isArray(value))
+    return value.map((item) => repairStructuredValue(item));
   if (value && typeof value === "object") {
     return Object.fromEntries(
       Object.entries(value).map(([key, nested]) => [
@@ -457,7 +474,9 @@ function repairStructuredValue(value: unknown): unknown {
   return value;
 }
 
-function repairStructuredExhibit(exhibit: RenderableExhibit): RenderableExhibit {
+function repairStructuredExhibit(
+  exhibit: RenderableExhibit,
+): RenderableExhibit {
   return {
     key: repairStructuredClientFactText(String(exhibit.key ?? "")),
     title: repairStructuredClientFactText(String(exhibit.title ?? "")),
@@ -467,7 +486,11 @@ function repairStructuredExhibit(exhibit: RenderableExhibit): RenderableExhibit 
     ),
     targetFormat: exhibit.targetFormat,
     ...(exhibit.data
-      ? { data: repairStructuredValue(exhibit.data) as RenderableExhibit["data"] }
+      ? {
+          data: repairStructuredValue(
+            exhibit.data,
+          ) as RenderableExhibit["data"],
+        }
       : {}),
   };
 }
@@ -498,8 +521,8 @@ function exhibitHasStructuredData(exhibit: RenderableExhibit): boolean {
     case "value_tree":
       return Boolean(
         data.root?.label &&
-          Array.isArray(data.branches) &&
-          data.branches.length > 0,
+        Array.isArray(data.branches) &&
+        data.branches.length > 0,
       );
     case "conceptual_architecture":
     case "logical_architecture":
@@ -722,6 +745,7 @@ function ensureMovesCharterMinimumProse(
     "This does not require a longer strategy narrative. It requires enough disciplined prose for the sponsor to see the work system that will turn uploaded evidence, client review, and human approvals into a trustworthy discovery finding.",
     "At the next gate, the team should be able to show what changed, what was approved, what stayed open, and what the evidence can responsibly support. That is the charter's real job: creating the conditions for a better decision later.",
     "If discovery cannot produce that trace, the sponsor should hold the next decision rather than letting a polished artifact hide a weak evidence base. The charter should make that failure mode visible early, when it is still inexpensive to correct.",
+    "The carry-forward record should also be explicit about what not to do next: do not turn unanswered client questions into design choices, do not translate directional value into finance-approved benefit, and do not let a workshop preference become an approved requirement without evidence review. Those boundaries keep discovery useful, not theatrical.",
   ];
   const body: string[] = [];
   for (const paragraph of paragraphs) {
@@ -733,9 +757,7 @@ function ensureMovesCharterMinimumProse(
       citationsUsed: [],
       bodyMarkdown: body.join("\n\n"),
     };
-    if (
-      countWords([...sections, candidate]) >= req.qualityBar.minBodyWords
-    ) {
+    if (countWords([...sections, candidate]) >= req.qualityBar.minBodyWords) {
       return [...sections, candidate];
     }
   }

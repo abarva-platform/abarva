@@ -207,7 +207,7 @@ describe("MOVES_CHARTER structure (phase discipline)", () => {
     expect(structure).toBeTruthy();
     expect(structure.sections.map((s) => s.key)).not.toContain("current_state");
     expect(structure.requiredSectionKeys).not.toContain("current_state");
-    // decision/commitment sections are present (redesigned 2026-07-25 — see
+    // decision/commitment sections are present (compressed 2026-09-25 — see
     // src/lib/deliverables/shared/artifact-contracts.ts's CHARTER_CONTRACT)
     for (const k of [
       "sponsorship_governance",
@@ -218,7 +218,10 @@ describe("MOVES_CHARTER structure (phase discipline)", () => {
       expect(structure.sections.map((s) => s.key)).toContain(k);
     }
     expect(structure.fixedStructure).toBe(true);
-    expect(structure.sections).toHaveLength(9);
+    expect(structure.sections).toHaveLength(7);
+    expect(structure.sections.map((s) => s.key)).not.toEqual(
+      expect.arrayContaining(["intended_outcomes", "authorization_next_steps"]),
+    );
     expect((structure.forbiddenSectionTopics ?? []).join(" ")).toMatch(
       /target state/i,
     );

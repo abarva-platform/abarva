@@ -80,12 +80,9 @@ const s = (
 // names the sponsor, and prepares the client for what Discovery will need. It
 // must NOT pre-empt later phases: no current-state evidence analysis (that is
 // P2 Discovery), no target/future-state or solution/architecture design (that
-// is P3). Redesigned 2026-07-25: the Charter ends with a first-class
-// "Discovery Preparation" section (two tables + a short pointer to the
-// separate, detailed Discovery Guidebook generated after approval) instead of
-// folding that content as bullets inside a generic recommendation section —
-// see the shared contract (src/lib/deliverables/shared/artifact-contracts.ts)
-// for the canonical 9-section list both pipelines read from.
+// is P3). Re-compressed 2026-09-25: the Charter stays under seven sections
+// while keeping Discovery Preparation first-class; redundant outcomes/next-step
+// headings are folded into their decision parent sections.
 const MOVES_CHARTER: DeliverableStructure = {
   module: "moves",
   deliverableType: "charter",
@@ -96,27 +93,19 @@ const MOVES_CHARTER: DeliverableStructure = {
   sections: [
     s(
       "charter_decision",
-      "Charter Decision",
-      "State one of: Authorize Discovery / Authorize Discovery with Conditions / Do Not Authorize Discovery, plus a concise executive decision summary. Framing only — NOT a current-state analysis, solution design, or implementation plan.",
+      "Charter Decision & Immediate Next Steps",
+      "State one of: Authorize Discovery / Authorize Discovery with Conditions / Do Not Authorize Discovery, plus immediate owner actions and conditions. Framing only — NOT a current-state analysis, solution design, or implementation plan.",
       "mixed",
       [],
       `Keep this section under ${charterSectionMaxWords("charter_decision")} words. Use one short paragraph plus a small decision box; do not add subsections.`,
     ),
     s(
       "opportunity_context",
-      "Opportunity & Business Context",
-      "Why this Move is being considered, why it matters now, the business opportunity or challenge, and expected business value direction. Only approved P0 capture, sponsor input, and approved enterprise context — do not assert baselines, root causes, or operating metrics unless cited or labelled as assumptions to validate.",
+      "Opportunity, Context & Intended Outcomes",
+      "Why this Move is being considered, why it matters now, the business opportunity or challenge, expected business value direction, and the outcomes Discovery is intended to evaluate. Only approved P0 capture, sponsor input, and approved enterprise context — do not assert baselines, root causes, or operating metrics unless cited or labelled as assumptions to validate.",
       "mixed",
       [],
       `Keep this section under ${charterSectionMaxWords("opportunity_context")} words. This is hypothesis framing, not P2 findings.`,
-    ),
-    s(
-      "intended_outcomes",
-      "Intended Outcomes",
-      "The business outcomes Discovery is intended to evaluate — objectives, not commitments or validated findings.",
-      "mixed",
-      [],
-      `Keep this section under ${charterSectionMaxWords("intended_outcomes")} words. Do not state these as validated results.`,
     ),
     s(
       "scope",
@@ -158,25 +147,15 @@ const MOVES_CHARTER: DeliverableStructure = {
       [],
       `Keep this section under ${charterSectionMaxWords("discovery_preparation")} words. Two tables plus one short closing paragraph — no interview questionnaires or workshop agendas here.`,
     ),
-    s(
-      "authorization_next_steps",
-      "Authorization & Immediate Next Steps",
-      "Charter decision, immediate actions, conditions (if any), and the expected transition into P2.",
-      "mixed",
-      [],
-      `Keep this section under ${charterSectionMaxWords("authorization_next_steps")} words. Use bullets grouped by decision, actions, and conditions.`,
-    ),
   ],
   requiredSectionKeys: [
     "charter_decision",
     "opportunity_context",
-    "intended_outcomes",
     "scope",
     "success_measures",
     "sponsorship_governance",
     "known_constraints_dependencies",
     "discovery_preparation",
-    "authorization_next_steps",
   ],
   fixedStructure: true,
   forbiddenSectionTopics: [...CHARTER_CONTRACT.forbiddenTopics],
@@ -263,13 +242,7 @@ const MOVES_ROADMAP: DeliverableStructure = {
     s(
       "exec_summary",
       "Executive Summary",
-      "The shape of the journey.",
-      "mixed",
-    ),
-    s(
-      "objectives",
-      "Objectives & Guiding Principles",
-      "What the roadmap optimizes for.",
+      "The shape of the journey, objectives, and guiding principles.",
       "mixed",
     ),
     s(
@@ -281,21 +254,15 @@ const MOVES_ROADMAP: DeliverableStructure = {
     s("phases", "Phases & Work Packages", "Phase plan with outcomes.", "mixed"),
     s(
       "sequencing",
-      "Sequencing & Dependencies",
-      "Critical path and dependencies.",
+      "Sequencing, Dependencies & Gates",
+      "Critical path, dependencies, phase gates, and milestones.",
       "mixed",
     ),
     s(
-      "resourcing",
-      "Resourcing & Operating Model",
-      "Teams and capacity.",
+      "resourcing_governance",
+      "Resourcing, Owners & Governance",
+      "Teams, capacity, ownership, and governance cadence.",
       "mixed",
-    ),
-    s(
-      "gates",
-      "Phase Gates & Milestones",
-      "Decision gates.",
-      "expert_template",
     ),
     s("risks", "Risks, Issues & Dependencies", "Delivery risks.", "mixed"),
     s(
@@ -307,10 +274,15 @@ const MOVES_ROADMAP: DeliverableStructure = {
   ],
   requiredSectionKeys: [
     "exec_summary",
-    "objectives",
+    "current_state",
     "phases",
     "sequencing",
     "recommendation",
+  ],
+  fixedStructure: true,
+  prohibitedContent: [
+    "Do not add standalone Objectives or Phase Gates sections; objectives live in the executive summary and gates live in sequencing.",
+    "Do not become a project plan, implementation manual, or second business case. Keep the roadmap to the sequence, owners, dependencies, gates, risks, and next action.",
   ],
   // Added 2026-07-25 (REF_EXECUTIVE_ROADMAP pilot) — previously this brief had
   // NO expectedExhibits at all, so the roadmap rendered as a generic
@@ -363,19 +335,17 @@ const MOVES_DISCOVERY: DeliverableStructure = {
       "governed_facts",
     ),
     s(
-      "maturity",
-      "Maturity & Benchmark",
-      "Maturity scoring vs benchmark.",
+      "maturity_gaps",
+      "Maturity, Benchmark & Gaps",
+      "Maturity scoring vs benchmark, plus the foundation and use-case gaps that matter.",
       "mixed",
     ),
-    s("gaps", "Gap Analysis", "Foundation vs use-case gaps.", "mixed"),
     s(
-      "readiness",
-      "Change & Adoption Readiness",
-      "Assess the client's ability AND willingness to make the business-process changes the outcome needs, and to stand up the measurement (per the charter's success criteria). Validate the metric baselines and whether each is measurable today. A high-value outcome with no process-change commitment is not ready — say so.",
+      "readiness_implications",
+      "Readiness & Implications",
+      "Assess the client's ability AND willingness to make the business-process changes the outcome needs, stand up measurement, and act on the implications. Validate metric baselines and whether each is measurable today. A high-value outcome with no process-change commitment is not ready — say so.",
       "mixed",
     ),
-    s("implications", "Implications", "What it means for the move.", "mixed"),
     s(
       "recommendation",
       "Recommended Move & Next Steps",
@@ -386,8 +356,13 @@ const MOVES_DISCOVERY: DeliverableStructure = {
   requiredSectionKeys: [
     "exec_summary",
     "current_state",
-    "gaps",
+    "maturity_gaps",
     "recommendation",
+  ],
+  fixedStructure: true,
+  prohibitedContent: [
+    "Do not split maturity, benchmark, and gap findings into separate essays; use one integrated diagnostic section.",
+    "Do not split readiness and implications into separate essays; readiness only matters through the implication it creates for the next phase.",
   ],
 };
 
@@ -1069,18 +1044,10 @@ const MOVES_ESTIMATE: DeliverableStructure = {
     s(
       "exec_summary",
       "Executive Summary",
-      "Estimate and confidence in brief.",
+      "Estimate, confidence, and the approval ask in brief.",
       "mixed",
       [],
-      "Keep under 350 words. State whether a finance-grade model exists; if not, summarize the input-register status without repeating the business case.",
-    ),
-    s(
-      "decision_required",
-      "Decision Required",
-      "The estimate approval ask.",
-      "mixed",
-      [],
-      "Keep under 250 words. Name the approval condition and missing inputs; do not add narrative background.",
+      "Keep under 450 words. State whether a finance-grade model exists, name the approval condition, and summarize input-register status without repeating the business case.",
     ),
     s(
       "current_state",
@@ -1099,20 +1066,12 @@ const MOVES_ESTIMATE: DeliverableStructure = {
       "Keep under 450 words. Describe the model formula and evidence requirements, not a full methodology essay.",
     ),
     s(
-      "cost_model",
-      "Investment & Run-Cost Model",
-      "Cost pools, assumptions, ranges.",
+      "cost_resource_model",
+      "Investment, Run-Cost & Resource Model",
+      "Cost pools, assumptions, ranges, human/agent/SI/platform capacity, and confirmation owners.",
       "mixed",
       [],
-      "Keep under 700 words. Prefer a compact input-register table. If inputs are absent, mark them open rather than filling numeric placeholders.",
-    ),
-    s(
-      "resource_model",
-      "Resource Model",
-      "Human, agent, SI, and platform capacity.",
-      "mixed",
-      [],
-      "Keep under 550 words. Name resource categories and confirmation owners; avoid staffing arithmetic without evidence.",
+      "Keep under 850 words. Prefer compact cost/resource input-register tables. If inputs are absent, mark them open rather than filling numeric placeholders; avoid staffing arithmetic without evidence.",
     ),
     s(
       "confidence",
@@ -1135,7 +1094,7 @@ const MOVES_ESTIMATE: DeliverableStructure = {
     "exec_summary",
     "current_state",
     "estimate_method",
-    "cost_model",
+    "cost_resource_model",
     "recommendation",
   ],
   fixedStructure: true,
@@ -1157,18 +1116,10 @@ const MOVES_VALUE: DeliverableStructure = {
     s(
       "exec_summary",
       "Executive Summary",
-      "Value thesis in brief.",
+      "Value thesis and approval ask in brief.",
       "mixed",
       [],
-      "Keep under 250 words. State the measurement posture, readiness verdict, and immediate owner action; do not repeat the business case.",
-    ),
-    s(
-      "decision_required",
-      "Decision Required",
-      "The value approval ask.",
-      "mixed",
-      [],
-      "Keep under 180 words. State the measurement approval decision and do not repeat the business case.",
+      "Keep under 325 words. State the measurement posture, value approval decision, readiness verdict, and immediate owner action; do not repeat the business case.",
     ),
     s(
       "current_state",
@@ -1195,20 +1146,12 @@ const MOVES_VALUE: DeliverableStructure = {
       "Keep under 425 words. Use one compact table for metrics, owner, source, baseline status, cadence, and acceptance rule. No methodology essay.",
     ),
     s(
-      "controls",
-      "Finance Controls & Attestation",
-      "Approval and variance controls.",
+      "controls_risks",
+      "Finance Controls, Risks & Dependencies",
+      "Approval controls, variance controls, leakage risks, and dependencies that could erode value.",
       "mixed",
       [],
-      "Keep under 275 words. Focus on attestation gates and variance controls in a table.",
-    ),
-    s(
-      "risks",
-      "Risks, Leakage & Dependencies",
-      "What could erode value.",
-      "mixed",
-      [],
-      "Keep under 250 words. Consolidate risks and mitigations; do not repeat predecessor-document dependencies.",
+      "Keep under 425 words. Use one controls/risk/dependency table; focus on attestation gates, variance controls, mitigations, and owner actions.",
     ),
     s(
       "recommendation",
@@ -1305,7 +1248,6 @@ const MOVES_READINESS_AND_CHANGE_PLAN: DeliverableStructure = {
     "stakeholders_decision_rights",
     "adoption_workplan",
     "governance_cadence",
-    "dependencies_risks",
     "mobilization_conditions",
     "recommendation",
   ],
@@ -1344,26 +1286,14 @@ const MOVES_MOBILIZATION: DeliverableStructure = {
     ),
     s(
       "workstreams",
-      "Workstreams & Milestones",
-      "The mobilization plan.",
+      "Workstreams, Milestones & Governance",
+      "The mobilization plan, owners, decision rights, and governance cadence.",
       "mixed",
     ),
     s(
-      "raci",
-      "RACI & Governance",
-      "Named owners and decision rights.",
-      "mixed",
-    ),
-    s(
-      "controls",
-      "Controls, Gates & Reporting",
-      "How execution is governed.",
-      "mixed",
-    ),
-    s(
-      "risks",
-      "Risks, Issues & Dependencies",
-      "Launch risks and mitigations.",
+      "controls_risks",
+      "Controls, Gates, Risks & Reporting",
+      "How execution is governed and which launch risks/dependencies need active management.",
       "mixed",
     ),
     s(
@@ -1377,8 +1307,13 @@ const MOVES_MOBILIZATION: DeliverableStructure = {
     "exec_summary",
     "go_decision",
     "workstreams",
-    "raci",
+    "controls_risks",
     "recommendation",
+  ],
+  fixedStructure: true,
+  prohibitedContent: [
+    "Do not add standalone RACI, milestone, governance, or risk sections; workstreams and controls carry those details.",
+    "Do not become a second roadmap, handoff pack, or implementation manual.",
   ],
 };
 
@@ -1490,26 +1425,14 @@ const MOVES_EXECUTIVE_PLAYBACK: DeliverableStructure = {
     ),
     s(
       "solution",
-      "Solution / Architecture / Operating Model",
-      "How the move works.",
-      "mixed",
-    ),
-    s(
-      "value",
-      "Value, Cost & Confidence",
-      "The value and cost posture.",
+      "Solution, Architecture, Operating Model & Value",
+      "How the move works, what it changes, and the value/cost/confidence posture.",
       "mixed",
     ),
     s(
       "mobilization",
-      "Mobilization & Controls",
-      "How execution starts and stays governed.",
-      "mixed",
-    ),
-    s(
-      "risks",
-      "Risks, Issues & Dependencies",
-      "The honest risk view.",
+      "Mobilization, Controls & Risk",
+      "How execution starts, stays governed, and manages the honest risk view.",
       "mixed",
     ),
     s(
@@ -1523,8 +1446,13 @@ const MOVES_EXECUTIVE_PLAYBACK: DeliverableStructure = {
     "exec_summary",
     "current_state",
     "solution",
-    "value",
+    "mobilization",
     "recommendation",
+  ],
+  fixedStructure: true,
+  prohibitedContent: [
+    "Do not add standalone Value, Architecture, Operating Model, Risk, or Roadmap sections; the executive playback is a synthesized story, not a binder.",
+    "Do not repeat predecessor artifacts section by section. Show the decision story and the open conditions.",
   ],
 };
 
@@ -1545,8 +1473,8 @@ const SOURCE_STRATEGY_MEMO: DeliverableStructure = {
     ),
     s(
       "event_archetype",
-      "Event Archetype & Scope",
-      "The type of event and scope.",
+      "Event Archetype, Scope & Market Context",
+      "The type of event, scope, market structure, and candidates.",
       "mixed",
     ),
     s(
@@ -1554,12 +1482,6 @@ const SOURCE_STRATEGY_MEMO: DeliverableStructure = {
       "Current-State Baseline",
       "Today's baseline.",
       "governed_facts",
-    ),
-    s(
-      "market",
-      "Vendor Landscape",
-      "Market structure and candidates.",
-      "expert_template",
     ),
     s(
       "commercial_model",
@@ -1588,6 +1510,10 @@ const SOURCE_STRATEGY_MEMO: DeliverableStructure = {
     "commercial_model",
     "evaluation",
     "recommendation",
+  ],
+  fixedStructure: true,
+  prohibitedContent: [
+    "Do not add a standalone vendor landscape section; market context belongs in the event archetype and scope decision.",
   ],
 };
 
@@ -1647,14 +1573,8 @@ const SOURCE_EXEC_REC: DeliverableStructure = {
   sections: [
     s(
       "exec_summary",
-      "Executive Summary",
-      "The recommendation in brief.",
-      "mixed",
-    ),
-    s(
-      "decision_required",
-      "Decision Required",
-      "The award/negotiation ask.",
+      "Executive Summary & Decision Required",
+      "The recommendation, award/negotiation ask, and decision required in brief.",
       "mixed",
     ),
     s("process", "Process Run", "How the event was run.", "expert_template"),
@@ -1674,11 +1594,10 @@ const SOURCE_EXEC_REC: DeliverableStructure = {
       "mixed",
     ),
   ],
-  requiredSectionKeys: [
-    "exec_summary",
-    "decision_required",
-    "evaluation",
-    "recommendation",
+  requiredSectionKeys: ["exec_summary", "evaluation", "recommendation"],
+  fixedStructure: true,
+  prohibitedContent: [
+    "Do not add a standalone Decision Required section; the decision belongs in the executive summary and recommendation.",
   ],
 };
 

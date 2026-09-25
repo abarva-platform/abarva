@@ -57,18 +57,16 @@ describe("shared artifact contracts", () => {
     );
   });
 
-  it("requires exactly 9 sections (redesigned 2026-07-25 to give Discovery Preparation its own section), matching both pipelines' required-section count", () => {
-    expect(CHARTER_CONTRACT.sections).toHaveLength(9);
+  it("requires exactly 7 sections, with Discovery Preparation preserved and redundant headings folded into parent sections", () => {
+    expect(CHARTER_CONTRACT.sections).toHaveLength(7);
     expect(CHARTER_CONTRACT.sections.map((s) => s.key)).toEqual([
       "charter_decision",
       "opportunity_context",
-      "intended_outcomes",
       "scope",
       "success_measures",
       "sponsorship_governance",
       "known_constraints_dependencies",
       "discovery_preparation",
-      "authorization_next_steps",
     ]);
   });
 

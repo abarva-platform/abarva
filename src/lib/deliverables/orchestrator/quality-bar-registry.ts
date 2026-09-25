@@ -140,7 +140,7 @@ const OVERRIDES: Record<string, QualityBarOverride> = {
     requiresEvidenceGapsNoted: true,
   },
   "moves::discovery_report": {
-    minSections: 8,
+    minSections: 4,
     minBodyWords: 6_500, // ~15 pages
     targetBodyWordsMax: 13_500, // ~30 pages plus appendix
     enforceMaxAsBlocker: false,
@@ -171,7 +171,7 @@ const OVERRIDES: Record<string, QualityBarOverride> = {
     // sponsor-readable roadmap. Word band reconciled 2026-07-25 — golden-bar's
     // `execution_roadmap` ceiling (5,000) previously equalled this pipeline's
     // own floor; both now read P3_P4_WORD_BAND_CONTRACTS.roadmap.
-    minSections: 6,
+    minSections: 5,
     ...wordBandFrom("roadmap"),
     requiresEvidenceGapsNoted: true,
     // REF_EXECUTIVE_ROADMAP pilot (2026-07-25): the roadmap must argue why
@@ -203,7 +203,7 @@ const OVERRIDES: Record<string, QualityBarOverride> = {
     // and confidence, but prose bloat is a quality failure. golden-bar calls
     // this deliverable type `financial_model` and had no depth standard for
     // it at all before this reconciliation.
-    minSections: 6,
+    minSections: 5,
     ...wordBandFrom("estimate_model"),
     requiresEvidenceGapsNoted: true,
   },
@@ -212,7 +212,7 @@ const OVERRIDES: Record<string, QualityBarOverride> = {
     // not a second business case. golden-bar calls this deliverable type
     // `tower_metrics_plan` and had no depth standard for it at all before
     // this reconciliation.
-    minSections: 6,
+    minSections: 5,
     ...wordBandFrom("value_model"),
     requiresEvidenceGapsNoted: true,
   },
@@ -241,10 +241,25 @@ const OVERRIDES: Record<string, QualityBarOverride> = {
     // bound has a small tolerance because the prompt deliberately removes
     // predecessor-document repetition; a strong handoff should not be forced to
     // add filler to cross an arbitrary round-number floor.
-    minSections: 6,
+    minSections: 5,
     minBodyWords: 4_800, // ~11-12 pages
     targetBodyWordsMax: 11_000, // ~25 pages
     enforceMaxAsBlocker: true,
+    requiresEvidenceGapsNoted: true,
+  },
+  "moves::mobilization_plan": {
+    minSections: 5,
+    minBodyWords: 1_800,
+    targetBodyWordsMax: 4_800,
+    enforceMaxAsBlocker: true,
+    requiresEvidenceGapsNoted: true,
+  },
+  "moves::executive_playback": {
+    minSections: 5,
+    minBodyWords: 2_400,
+    targetBodyWordsMax: 6_000,
+    enforceMaxAsBlocker: true,
+    requiresCentralTension: true,
     requiresEvidenceGapsNoted: true,
   },
   "moves::value_measurement_contract": {

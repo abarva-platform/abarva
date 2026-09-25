@@ -15,6 +15,7 @@ import {
   getArtifactBrief,
   hasDedicatedBrief,
 } from "../artifact-brief-registry";
+import { CHARTER_CONTRACT } from "@/lib/deliverables/shared/artifact-contracts";
 import { validateGenerationPlan } from "../generation-plan";
 import { validateDeliverableQuality } from "../quality-validator";
 import { runDeliverableOrchestration, extractJson } from "../orchestrator";
@@ -210,7 +211,9 @@ describe("multi-pass prompt builder", () => {
       draftMarkdown: "draft",
     });
     expect(draft.user).toMatch(/Apply citation and evidence rules silently/i);
-    expect(rewrite.user).toMatch(/remove any sentence that explains those authoring rules/i);
+    expect(rewrite.user).toMatch(
+      /remove any sentence that explains those authoring rules/i,
+    );
     for (const prompt of [draft.system, rewrite.system]) {
       expect(prompt).toMatch(/Never write "authorized to build"/i);
       expect(prompt).toMatch(/in scope for delivery/i);
@@ -243,7 +246,14 @@ describe("multi-pass prompt builder", () => {
       },
     });
     expect(p.user).toMatch(/CONCISE SECTION RULES/);
-    expect(p.user).toMatch(/Hard cap for this section: 100 body words/);
+    const charterDecision = CHARTER_CONTRACT.sections.find(
+      (section) => section.key === "charter_decision",
+    );
+    expect(p.user).toMatch(
+      new RegExp(
+        `Hard cap for this section: ${charterDecision?.maxWords} body words`,
+      ),
+    );
     expect(p.user).toMatch(/WRITE ONLY THIS SECTION/);
     expect(p.user).toMatch(/do NOT write any other section/i);
     expect(p.user).toMatch(/Do not write P2 current-state findings/i);

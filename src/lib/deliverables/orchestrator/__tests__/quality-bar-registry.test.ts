@@ -12,9 +12,9 @@ describe("resolveQualityBar", () => {
     expect(qb.enforceMaxAsBlocker).toBe(true);
     // the Charter's whole point is staying concise — its band must be
     // materially smaller than the architecture doc's.
-    // 9 sections since the 2026-07-25 redesign (Discovery Preparation as its
-    // own first-class section) — see shared/artifact-contracts.ts.
-    expect(qb.minSections).toBe(9);
+    // Seven-section compressed contract keeps Discovery Preparation first-class
+    // without restoring a binder shape.
+    expect(qb.minSections).toBe(7);
     // Aligned to the shared contract (src/lib/deliverables/shared/
     // artifact-contracts.ts): prose-only counting uses the Charter's explicit
     // prose floor while required tables carry structured decision content.
@@ -108,10 +108,10 @@ describe("resolveQualityBar", () => {
   });
 
   it.each([
-    ["roadmap", 6, 5_000, 11_000],
-    ["handoff_pack", 6, 4_800, 11_000],
-    ["estimate_model", 6, 1_600, 4_200],
-    ["value_model", 6, 1_800, 4_600],
+    ["roadmap", 5, 5_000, 11_000],
+    ["handoff_pack", 5, 4_800, 11_000],
+    ["estimate_model", 5, 1_600, 4_200],
+    ["value_model", 5, 1_800, 4_600],
     ["value_measurement_contract", 6, 1_800, 4_200],
   ] as const)(
     "gives %s a phase-close hard ceiling",
