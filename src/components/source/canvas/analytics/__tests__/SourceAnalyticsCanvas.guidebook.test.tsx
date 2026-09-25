@@ -217,7 +217,16 @@ describe("SourceAnalyticsCanvas — guidebook workspace", () => {
     expect(volumetricsRow).toHaveTextContent(
       "Tickets, SLA misses, change orders, run volumes",
     );
-    expect(volumetricsRow).toHaveTextContent("VOLUMETRICS_V1");
+    // Item U-523: this row used to render the raw template code. The rail
+    // publishes "Ticket volumes & volumetrics" for VOLUMETRICS_V1, so the code
+    // was builder vocabulary on a client surface (item U-400 / N3), not a
+    // deliberate affordance — this assertion codified the defect. It now
+    // asserts the published label, and the render-measured control in
+    // src/components/source/__tests__/source-surface-builder-vocabulary.test.tsx
+    // fails if the code comes back.
+    expect(volumetricsRow).toHaveTextContent(
+      "Ticket volumes & volumetrics",
+    );
   });
 
   it("does not call a completed stage gate-ready while required artifacts still need review", () => {

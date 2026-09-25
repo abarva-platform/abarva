@@ -73,7 +73,7 @@ export interface AuditedSurfaceRoot {
 }
 
 /**
- * The three roots the render control mounts today.
+ * The roots the render control mounts today.
  *
  * `SimpleStageFront` is deliberately still audited and deliberately not
  * counted. U-405 is explicit that deleting it is the wrong resolution — a
@@ -103,6 +103,17 @@ export const AUDITED_SURFACE_ROOTS: readonly AuditedSurfaceRoot[] = [
   {
     surfaceName: "artifact blocker list",
     path: "src/components/source/canvas/ArtifactBlockerList.tsx",
+    routeReachable: true,
+  },
+  // ── Item U-523 · first slice of the 34-surface worst-first ranking ─────────
+  {
+    surfaceName: "source canvas · every workspace and disclosure",
+    path: "src/components/source/canvas/analytics/SourceAnalyticsCanvas.tsx",
+    routeReachable: true,
+  },
+  {
+    surfaceName: "step insight panel · every insight kind",
+    path: "src/components/source/canvas/analytics/insights/StepInsightPanel.tsx",
     routeReachable: true,
   },
 ];

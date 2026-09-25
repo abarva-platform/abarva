@@ -33,11 +33,27 @@
 import "@testing-library/jest-dom";
 import { fireEvent, render, screen } from "@testing-library/react";
 
+// The canvas reads the router for its own navigation. Mocked because this suite
+// audits rendered text, not routing — and an unmocked `useRouter` throws in
+// jsdom, which would make the surface unauditable rather than clean.
+jest.mock("next/navigation", () => ({
+  useRouter: () => ({ push: jest.fn(), replace: jest.fn(), refresh: jest.fn() }),
+  usePathname: () => "/source/events/evt-1",
+  useSearchParams: () => new URLSearchParams(),
+  useParams: () => ({ eventId: "evt-1" }),
+}));
+
 import { ArtifactBlockerList } from "@/components/source/canvas/ArtifactBlockerList";
+import { SourceAnalyticsCanvas } from "@/components/source/canvas/analytics/SourceAnalyticsCanvas";
+import { StepInsightPanel } from "@/components/source/canvas/analytics/insights/StepInsightPanel";
 import { RenewalCockpitActionBar } from "@/components/source/RenewalCockpitActionBar";
 import { SimpleStageFront } from "@/components/source/canvas/SimpleStageFront";
 import { resolveSimpleStageScreen } from "@/lib/source/simple-front";
+import { SOURCE_ARTIFACT_SPECS } from "@/lib/source/canonical-specs/artifact-specs";
 import { evidenceForStage } from "@/lib/source/canonical-specs/evidence-requirements";
+import { SOURCE_STAGE_ORDER } from "@/lib/source/constants";
+import { buildStepInsight } from "@/lib/source/facts/view/step-insight-builder";
+import type { SourcingEventSummary } from "@/lib/source/types";
 import {
   describeBuilderVocabulary,
   findBuilderVocabulary,
@@ -114,6 +130,91 @@ const STAGE_FRONT_CRITICAL_FIELDS: ReadonlySet<string> = new Set(
   evidenceForStage("scope").flatMap((requirement) => requirement.criticalFields),
 );
 
+/**
+ * Item U-523 · the canvas walk.
+ *
+ * The canvas is one surface with five workspaces and two disclosures, and
+ * reading it once audits the steps rail alone — the artifact register, the
+ * lifecycle matrix and the audit metrics are all behind a click. Driving it the
+ * way an operator does takes the audited text from 6 KB to 84 KB, which is the
+ * difference between auditing a screen and auditing a tab.
+ *
+ * Declared by name rather than by "click every button" so that a renamed
+ * control **reddens** instead of quietly auditing less; the walk asserts each
+ * disclosure was reached at least once.
+ */
+const CANVAS_WORKSPACES = [
+  "Files & deliverables",
+  "Intelligence Explorer",
+  "Approvals",
+  "Guidebook",
+] as const;
+
+/** Disclosures that keep half a workspace off screen until they are opened. */
+const CANVAS_DISCLOSURES = ["Show all 11 stages", "Show audit metrics"] as const;
+
+/**
+ * The event the canvas walk mounts. Shaped like the server projection, with no
+ * stage view, so every stage falls back to its own scaffold — which is the
+ * state a new event is actually in and the one that renders the whole artifact
+ * register rather than one stage's slice.
+ */
+function canvasEvent(): SourcingEventSummary {
+  return {
+    id: "evt-1",
+    code: "DEMO-AMS-2026",
+    name: "Managed application services",
+    accountName: "Demo Account",
+    leadAgent: "Sentinel",
+    archetype: "AMS",
+    rigor: "standard",
+    status: "active",
+    statusLabel: "Active",
+    priority: "high",
+    currentStageKey: "scope",
+    currentStageLabel: "Scope",
+    openAlerts: 0,
+    owner: "K. Oshima",
+    agingDays: 4,
+    blocker: null,
+    nextAction: "Provide the volumetrics",
+    isAtRisk: false,
+    valueAtStakeUsd: 1_000_000,
+    projectedValueUsd: 200_000,
+    realizedValueUsd: 0,
+    nextDecision: "Approve scope gate",
+  } as SourcingEventSummary;
+}
+
+/**
+ * Every canonical document code the artifact register can render, read from the
+ * canonical spec set rather than typed out — a document added later is covered
+ * without touching this file.
+ */
+const CANONICAL_ARTIFACT_CODES: readonly string[] = SOURCE_ARTIFACT_SPECS.map(
+  (spec) => spec.code,
+);
+
+/**
+ * The canonical document code inside a rendered token, or `null`.
+ *
+ * `container.textContent` concatenates adjacent text nodes with no separator,
+ * so the register's mono sub-line reaches the detector as `Tieringd04_app_inv`
+ * — the tail of the document's own name glued to its code. Matching a code as a
+ * **suffix** is what recognizes that, and requiring the prefix to carry no
+ * underscore is what stops the rule from waving through a second key that
+ * happens to end in one.
+ */
+function canonicalArtifactCodeIn(term: string): string | null {
+  for (const code of CANONICAL_ARTIFACT_CODES) {
+    if (term === code) return code;
+    if (!term.endsWith(code)) continue;
+    const prefix = term.slice(0, term.length - code.length);
+    if (!prefix.includes("_")) return code;
+  }
+  return null;
+}
+
 const SURFACES: readonly SurfaceUnderAudit[] = [
   {
     name: "renewal cockpit · action bar (all panels opened)",
@@ -174,6 +275,134 @@ const SURFACES: readonly SurfaceUnderAudit[] = [
         ? "names a column the client's own evidence extract must carry; " +
           "renaming it here would make the instruction wrong"
         : null,
+  },
+  {
+    /**
+     * Item U-523, rank 1 of the 34-surface worst-first ranking. The heaviest
+     * Source surface there is, and the reason this slice paid: the walk rendered
+     * ten distinct builder terms, five of them raw intake template codes on
+     * three separate client-facing cells, now fixed.
+     */
+    name: "source canvas · every workspace and disclosure",
+    rootPath:
+      "src/components/source/canvas/analytics/SourceAnalyticsCanvas.tsx",
+    renderAndDrive: () => {
+      const { container } = render(
+        <SourceAnalyticsCanvas
+          event={canvasEvent()}
+          viewStage="scope"
+          tenantName="Demo Account"
+          stageView={undefined}
+        />,
+      );
+      let text = container.textContent ?? "";
+      const disclosuresOpened = new Set<string>();
+      for (const workspace of CANVAS_WORKSPACES) {
+        fireEvent.click(screen.getByRole("button", { name: workspace }));
+        text += "\n" + (container.textContent ?? "");
+        for (const disclosure of CANVAS_DISCLOSURES) {
+          const control = screen.queryByRole("button", { name: disclosure });
+          if (!control) continue;
+          fireEvent.click(control);
+          disclosuresOpened.add(disclosure);
+          text += "\n" + (container.textContent ?? "");
+        }
+      }
+      // A disclosure that was renamed would silently halve this audit, so the
+      // walk fails rather than passing over less surface.
+      for (const disclosure of CANVAS_DISCLOSURES) {
+        if (disclosuresOpened.has(disclosure)) continue;
+        throw new Error(
+          `The canvas walk never found the "${disclosure}" control, so the ` +
+            `surface behind it was not audited. Update CANVAS_DISCLOSURES to ` +
+            `the control's current name — do not delete the entry, which ` +
+            `would drop the coverage instead of reporting it.`,
+        );
+      }
+      return text;
+    },
+    adjudicated: {},
+    /**
+     * The artifact register renders each document's canonical code in a mono
+     * 10px sub-line directly beneath the document's own published name — 33 of
+     * them across the eleven stages once "Show all 11 stages" is open.
+     *
+     * Left, and not renamed, because this one really is the case U-400 carves
+     * out. The code is not a paraphrasable label sitting where prose belongs:
+     * it is a deliberate register handle, styled as one, and it is the same
+     * string the generate, export and render routes take in their URLs. Whether
+     * a client-facing document register shows its document code at all, and if
+     * so whether as `d04_app_inv` or as a display form like `D04`, is a product
+     * decision about the register — not a rename, which is the test U-400 sets.
+     * Filed as a follow-on item rather than guessed at here.
+     *
+     * Membership is derived from `SOURCE_ARTIFACT_SPECS`, so a document added
+     * later is covered and a term that is NOT a canonical document code still
+     * fails on this surface. That second half is asserted below.
+     */
+    adjudicatedBy: (term) => {
+      const code = canonicalArtifactCodeIn(term);
+      return code
+        ? `renders the canonical document code "${code}" as the artifact ` +
+            `register's handle, beneath that document's own published name; ` +
+            `whether the register shows a code, and in what form, is a ` +
+            `product decision rather than a rename`
+        : null;
+    },
+  },
+  {
+    /**
+     * Item U-523, rank 5 of the ranking — and the entry that says most about
+     * the prescreen. The syntax-aware pass counted 11 identifier-shaped tokens
+     * in this file; every one is a `switch` discriminant and **none** of them
+     * renders. Mounting it anyway surfaced six builder terms from its
+     * CHILDREN: the Intelligence-tab notes named the fact key a client was
+     * being asked to supply, and the transition-risk note joined
+     * `missingEvidence` verbatim, so those keys were assembled at run time and
+     * no pass over any file would have seen them. Both are fixed.
+     *
+     * So the per-file prescreen undercounts a dispatcher and cannot rank one:
+     * the value of auditing a container is in what it mounts.
+     *
+     * Driven across every insight kind the product can build, from the
+     * product's own builder — eleven stages, eleven kinds — rather than one
+     * hand-written view, so the switch is covered rather than sampled.
+     */
+    name: "step insight panel · every insight kind",
+    rootPath:
+      "src/components/source/canvas/analytics/insights/StepInsightPanel.tsx",
+    renderAndDrive: () => {
+      let text = "";
+      let kinds = 0;
+      for (const stageKey of SOURCE_STAGE_ORDER) {
+        const insight = buildStepInsight({
+          stageKey,
+          archetypeId: "AMS_MANAGED_SERVICES",
+          // No facts and no citations: the state a new event is in, and the one
+          // whose notes tell a client what to upload — which is where the
+          // builder used to name the storage key.
+          inputs: {},
+          citations: {},
+        });
+        if (!insight) continue;
+        kinds += 1;
+        const { container } = render(<StepInsightPanel insight={insight} />);
+        text += "\n" + (container.textContent ?? "");
+      }
+      // Guard the walk, not just the text: a builder that stopped returning
+      // insights would leave this surface rendering nothing while the
+      // non-empty check above still passed on another kind's output.
+      if (kinds !== SOURCE_STAGE_ORDER.length) {
+        throw new Error(
+          `The insight walk built ${kinds} insights for ` +
+            `${SOURCE_STAGE_ORDER.length} stages. Every Source stage maps to an ` +
+            `insight kind today; if that changed deliberately, update this ` +
+            `count with the reason rather than lowering it.`,
+        );
+      }
+      return text;
+    },
+    adjudicated: {},
   },
   {
     name: "artifact blocker list",
@@ -312,6 +541,25 @@ describe("guarding the guard", () => {
     const { container } = render(<SeededSurface />);
     const found = findBuilderVocabulary(container.textContent);
     expect(found.map((o) => o.term)).toEqual(["tower_watch"]);
+  });
+
+  it("flags a term that is NOT a canonical document code on the canvas", () => {
+    // The canvas exemption is derived, so it has to be shown to be a rule and
+    // not a blanket pass: a key the canonical spec set does not declare must
+    // still fail on the surface that carries the exemption. Inverted — return
+    // a reason unconditionally — and this case is the one that reddens.
+    expect(canonicalArtifactCodeIn("tower_watch")).toBeNull();
+    expect(canonicalArtifactCodeIn("d04_app_inv")).toBe("d04_app_inv");
+    // The suffix rule recognizes the glued form the DOM actually produces...
+    expect(canonicalArtifactCodeIn("Tieringd04_app_inv")).toBe("d04_app_inv");
+    // ...and stops there: a second key in the prefix is not covered by it.
+    expect(canonicalArtifactCodeIn("tower_watchd04_app_inv")).toBeNull();
+
+    const canvas = SURFACES.find(
+      (surface) => surface.name === "source canvas · every workspace and disclosure",
+    );
+    expect(canvas?.adjudicatedBy?.("tower_watch")).toBeNull();
+    expect(canvas?.adjudicatedBy?.("d04_app_inv")).not.toBeNull();
   });
 
   it("flags a stage-front term that is NOT a canonical critical field", () => {

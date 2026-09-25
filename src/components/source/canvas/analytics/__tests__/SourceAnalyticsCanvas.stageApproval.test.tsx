@@ -289,7 +289,16 @@ describe("SourceAnalyticsCanvas stage workflow", () => {
       "Monthly by service tower for 12-24 months",
     );
     expect(activeEvidenceRow).toHaveTextContent("Scope volumetrics template");
-    expect(activeEvidenceRow).toHaveTextContent("VOLUMETRICS_V1");
+    // Item U-523: this row used to render the raw template code. The rail
+    // publishes "Ticket volumes & volumetrics" for VOLUMETRICS_V1, so the code
+    // was builder vocabulary on a client surface (item U-400 / N3), not a
+    // deliberate affordance — this assertion codified the defect. It now
+    // asserts the published label, and the render-measured control in
+    // src/components/source/__tests__/source-surface-builder-vocabulary.test.tsx
+    // fails if the code comes back.
+    expect(activeEvidenceRow).toHaveTextContent(
+      "Ticket volumes & volumetrics",
+    );
     expect(activeEvidenceRow).toHaveTextContent("Upload below");
     expect(
       screen.getByTestId("source-shell-active-step-needs"),

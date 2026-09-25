@@ -228,4 +228,24 @@ describe('Source fact catalog — shape + lookups', () => {
     );
     expect(counted).toBe(FACT_CATALOG.length);
   });
+
+  /**
+   * Item U-523. The Intelligence-tab notes no longer name a fact key; they read
+   * the catalog's `label` and fall through to the key only when the label is
+   * missing or blank. That fallback is deliberately visible rather than hidden
+   * behind a vague phrase, but it is reachable only through a catalog entry
+   * that shipped without a label — so assert none does, per key, because a
+   * total would only say that one of them is wrong.
+   */
+  it('every catalog fact publishes a non-empty client-facing label', () => {
+    for (const spec of FACT_CATALOG) {
+      expect(
+        spec.label.trim().length > 0
+          ? ''
+          : `Fact ${spec.key} ships no client-facing label, so a Source note ` +
+            `naming it falls back to the key itself — the builder vocabulary ` +
+            `item U-400 forbids on a client surface.`,
+      ).toBe('');
+    }
+  });
 });
