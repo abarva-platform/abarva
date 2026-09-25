@@ -36,18 +36,22 @@ export type MovesDeliverableKey =
   | "discovery_plan" // P1 working guide for P2 Discovery
   | "discovery_report" // P2
   | "root_cause_worksheet" // P2
+  | "design_workshop_guide" // P2 working guide for P3 Design
   | "solution_approach_options" // P3a — the decision spine that drives the architecture
   | "target_state_architecture" // P3
   | "solution_design" // P3
   | "operating_model_design" // P3
   | "sourcing_strategy" // P3
+  | "planning_workshop_guide" // P3 working guide for P4 Build the Plan
   | "execution_roadmap" // P4
   | "business_case" // P4
   | "financial_model" // P4 (workbook companion to business_case)
   | "tower_metrics_plan" // P4 (Tower value model)
   | "readiness_and_change_plan" // P4 (readiness/adoption gate)
+  | "mobilization_workshop_guide" // P4 working guide for P5 Prepare to Execute
   | "handoff_package" // P5
-  | "value_measurement_contract"; // P5
+  | "value_measurement_contract" // P5
+  | "execution_kickoff_guide"; // P5 working guide for execution kickoff
 
 /** Source (IT sourcing) artifact keys — profiled distinctly from Moves. */
 export type SourceDeliverableKey =

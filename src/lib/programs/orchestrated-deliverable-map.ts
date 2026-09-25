@@ -44,6 +44,7 @@ const REGISTRY_TO_ORCHESTRATOR: Readonly<Record<string, string>> = {
   // concise root-cause readout.
   discovery_report: "discovery_report",
   root_cause_worksheet: "root_cause_worksheet",
+  design_workshop_guide: "discovery_plan",
   // P3 — architecture keeps the premium architecture path; Solution Design keeps
   // its own profile so its five workflow/control exhibits are generated and
   // evaluated in the same key space. Org design → operating_model; sourcing uses
@@ -52,6 +53,7 @@ const REGISTRY_TO_ORCHESTRATOR: Readonly<Record<string, string>> = {
   solution_design: "solution_design",
   operating_model_design: "operating_model",
   sourcing_strategy: "sourcing_strategy",
+  planning_workshop_guide: "discovery_plan",
   // P4 — roadmap structure; investment case; financial model → estimate_model;
   //      tower metrics plan → value_model (measurement/realization flow)
   execution_roadmap: "roadmap",
@@ -59,9 +61,11 @@ const REGISTRY_TO_ORCHESTRATOR: Readonly<Record<string, string>> = {
   financial_model: "estimate_model",
   tower_metrics_plan: "value_model",
   readiness_and_change_plan: "readiness_and_change_plan",
+  mobilization_workshop_guide: "discovery_plan",
   // P5 — handoff → handoff_pack; value contract has its own quality profile.
   handoff_package: "handoff_pack",
   value_measurement_contract: "value_measurement_contract",
+  execution_kickoff_guide: "discovery_plan",
 };
 
 /**

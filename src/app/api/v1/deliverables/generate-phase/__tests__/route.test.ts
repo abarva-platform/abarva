@@ -222,7 +222,10 @@ describe("POST /api/v1/deliverables/generate-phase", () => {
 
     expect(res.status).toBe(202);
     const json = (await res.json()) as {
-      deliverables: Array<{ deliverableTypeKey: string; deliverableType: string }>;
+      deliverables: Array<{
+        deliverableTypeKey: string;
+        deliverableType: string;
+      }>;
     };
     expect(json.deliverables.map((d) => d.deliverableTypeKey)).toEqual([
       "charter",
@@ -276,6 +279,7 @@ describe("POST /api/v1/deliverables/generate-phase", () => {
       "operating_model_design",
       "requirements_traceability",
       "sourcing_strategy",
+      "planning_workshop_guide",
     ]);
     expect(
       json.deliverables.every(
@@ -314,6 +318,7 @@ describe("POST /api/v1/deliverables/generate-phase", () => {
       "operating_model",
       "requirements_traceability",
       "sourcing_strategy",
+      "discovery_plan",
     ]);
     for (const c of createCalls) {
       expect(c.clientId).toBe("client-uuid");
@@ -447,6 +452,7 @@ describe("POST /api/v1/deliverables/generate-phase", () => {
       "target_state_architecture",
       "solution_design",
       "requirements_traceability",
+      "planning_workshop_guide",
     ]);
     expect(json.omittedDeliverables).toEqual(
       expect.arrayContaining([
@@ -467,7 +473,12 @@ describe("POST /api/v1/deliverables/generate-phase", () => {
           (c.jobPayload as { adaptiveDepth: { complexityTier: string } })
             .adaptiveDepth.complexityTier,
       ),
-    ).toEqual(["straightforward", "straightforward", "straightforward"]);
+    ).toEqual([
+      "straightforward",
+      "straightforward",
+      "straightforward",
+      "straightforward",
+    ]);
   });
 
   it("queues P2 root-cause with its own type and canonical registry key", async () => {

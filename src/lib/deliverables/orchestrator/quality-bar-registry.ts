@@ -99,6 +99,38 @@ const OVERRIDES: Record<string, QualityBarOverride> = {
     enforceMaxAsBlocker: true,
     requiresEvidenceGapsNoted: true,
   },
+  "moves::design_workshop_guide": {
+    minSections: 4,
+    minBodyWords: 1_200,
+    targetBodyWordsMax: 3_000,
+    advisoryBandMax: 3_600,
+    enforceMaxAsBlocker: true,
+    requiresEvidenceGapsNoted: true,
+  },
+  "moves::planning_workshop_guide": {
+    minSections: 4,
+    minBodyWords: 1_200,
+    targetBodyWordsMax: 3_000,
+    advisoryBandMax: 3_600,
+    enforceMaxAsBlocker: true,
+    requiresEvidenceGapsNoted: true,
+  },
+  "moves::mobilization_workshop_guide": {
+    minSections: 4,
+    minBodyWords: 1_200,
+    targetBodyWordsMax: 3_000,
+    advisoryBandMax: 3_600,
+    enforceMaxAsBlocker: true,
+    requiresEvidenceGapsNoted: true,
+  },
+  "moves::execution_kickoff_guide": {
+    minSections: 4,
+    minBodyWords: 1_200,
+    targetBodyWordsMax: 3_000,
+    advisoryBandMax: 3_600,
+    enforceMaxAsBlocker: true,
+    requiresEvidenceGapsNoted: true,
+  },
   "moves::business_case": {
     // Substantial narrative artifact — must tell one coherent investment
     // argument, not a stack of disconnected sections. The financial model is a
