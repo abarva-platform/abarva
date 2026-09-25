@@ -27,7 +27,13 @@ immediately, on failures that are in the code right now and that neither check c
 
 - Home: passes today; corrected, it fails on a Home boundary suite with two failing assertions.
 - Tower: passes today; corrected, it fails on a **tenant route-scope** suite — a check on which
-  client's data a page may read — with one failing assertion.
+  client's data a page may read — with one failing assertion. Being precise about that one, because
+  it is easy to overstate: that suite has four cases, three of them behavioral (Tower renders for
+  the tenant the route authorizes; tenant traffic is not routed through a generic client query
+  parameter; the governed serving view is read directly) and **those three pass**. The failing one
+  expects a literal three-line snippet in a page file that no longer spells it that way — drift in a
+  text check, not a proven tenancy defect. What is not overstated: none of the four runs, so the
+  three real tenancy checks are not being executed either.
 
 Both checks are green today *because* their pattern cannot reach the folder they name. That is the
 same shape as the failure this whole backlog exists against: a control that proves itself by its
@@ -185,9 +191,9 @@ Revert the PR. Two added files, no migration, no runtime state, no data written.
   failures so the escape can land immediately, or fix them first and escape in the same change —
   differ in whether a known-bad surface blocks merges in the meantime. That is an owner's call, not
   a guess, and it is filed as `T-486` marked `decision needed` with a recommendation. The
-  recommendation is to fix rather than baseline, because one of the three is a tenant route-scope
-  suite and the ratchet's own documentation says the baseline is a record of what was already
-  broken, not a budget to spend.
+  recommendation is to fix rather than baseline, because the ratchet's own documentation says the
+  baseline is a record of what was already broken when the check landed, not a budget to spend —
+  and these three were never "already broken when the check landed", they were never reached.
 - **`T-487`** — the census crediting baseline paths as prefixes — is filed and not fixed here.
 - **`T-742`'s +38 pool discrepancy is still owed**, and is now joined by a second unsettled number:
   the `covered` column the triage ranking rests on is over-credited by exactly these patterns. A
