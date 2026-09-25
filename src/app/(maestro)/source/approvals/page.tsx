@@ -8,6 +8,7 @@ import {
   loadApprovalsInbox,
   type ApprovalsInboxItem,
 } from "@/lib/source/approvals-inbox";
+import { requesterEstimateCardLabel } from "@/lib/source/requester-estimate-label";
 
 export const dynamic = "force-dynamic";
 
@@ -154,8 +155,14 @@ export default async function SourceApprovalsPage() {
                         {item.stageLabel
                           ? ` · ${item.stageLabel}`
                           : " · Intake"}
+                        {/*
+                          Item U-514. This figure is the requester's own
+                          number, so it carries the provenance label rather
+                          than sitting beside the event code and the stage
+                          label as if it were one more fact.
+                        */}
                         {item.estimatedValueUsd
-                          ? ` · ${money(item.estimatedValueUsd)}`
+                          ? ` · ${requesterEstimateCardLabel(money(item.estimatedValueUsd))}`
                           : ""}
                       </span>
                     </div>

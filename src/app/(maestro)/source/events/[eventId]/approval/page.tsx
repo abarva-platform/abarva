@@ -20,6 +20,7 @@ import { getContractOptimizationProfile } from "@/lib/source/contract-optimizati
 import { readSourceAuthorityVersionState } from "@/lib/source/new-workspace/authority-version-store";
 import { formatSourceFinancialValue } from "@/lib/source/financial-display";
 import { parseSourceScopeDescription } from "@/lib/source/intake-summary";
+import { requesterEstimateFieldLabel } from "@/lib/source/requester-estimate-label";
 import {
   getSourcingEvent,
   isUuid,
@@ -237,10 +238,17 @@ async function loadArtifactAcceptanceHistory(
 
 function buildCapturedFacts(row: SourceEventRow): IntakeFact[] {
   const scopeSummary = parseSourceScopeDescription(row.scope_description);
+  // Item U-514. The first branch is a value target the intake captured in its
+  // own words and is left exactly as written; the second is the requester's
+  // declared figure with nothing behind it, so it carries the provenance
+  // label. `SourceOriginatePage` writes the same label into this same field,
+  // which is why the two must not word it differently.
   const valueTarget =
     scopeSummary.valueTarget ??
     (row.estimated_value_usd && row.estimated_value_usd > 0
-      ? formatSourceFinancialValue(row.estimated_value_usd, true)
+      ? requesterEstimateFieldLabel(
+          formatSourceFinancialValue(row.estimated_value_usd, true),
+        )
       : "Value target pending.");
   return [
     {
