@@ -185,6 +185,37 @@ name: Integration suites
 # root file that is unrun and undeclared, a declared file that is run again,
 # and a declared suite that PASSES when re-run. Backlog item 26.
 
+# 2026-09-25 · the root carve-out is EMPTY. The last three declared entries were
+# repaired and wired here, so `integration-root-quarantine.json` holds no suites
+# and its ceiling is 0: every root-level file under this directory is now run by
+# this command. All three carried verdict `update`, all three were stale
+# contracts rather than product defects, and each had gone stale because a
+# deliberate product change updated its siblings and not it — which is what an
+# unrun file buys you.
+#
+#   · atlas-ask-route.test.ts asserted `- Evidence:` / `- Next:` labelled lines.
+#     Correct when written; `/tower` left the compaction set ONE DAY later under
+#     VOICE.STRAT-2026-05-10f, which calls that template "a Brief violation by
+#     construction". Rewritten to assert the substance the labels stood for.
+#   · marketing-nav-dropdowns.test.tsx asserted a grouped `Platform ▾` /
+#     `Company ▾` nav that #2658 retired for a narrow launch. Rewritten as a
+#     guard on the gating decision: 9 cases that described an absent nav became
+#     cases that fail if it returns by default.
+#   · sign-in-shell.test.tsx expected the invite Password field on first paint.
+#     `DemoCodeSignIn` has since gained its own email/demo toggle defaulting to
+#     email, so it now takes a click. The case asserts both gates in order.
+#
+# TWO ASSERTIONS WERE MEASURED AND NOT KEPT, which is the part worth reading.
+# Inverting the Atlas assertions to "the labelled template must not appear" is
+# the obvious repair and it is VACUOUS: the route runs
+# `assertVisibleAnswerContract` and answers 422 on a scaffolding label, so two
+# separate mutations that put the labels back both failed the status assertion
+# instead and never reached the inverted one. The same holds for "the internal
+# agent name never reaches the reader" — defended by the shared shaper's brand
+# scrub, redundantly again in the Atlas renderer, and a third time by the same
+# 422. What replaced them is the REFUSAL itself, asserted directly, which the
+# route had no integration-level coverage of at all.
+
 on:
   merge_group:
   pull_request:
@@ -217,7 +248,7 @@ jobs:
       # what makes this cover suites nobody has written yet: a new suite in one
       # of these directories runs the day it lands.
       - name: Run the integration directories that pass on main
-        run: npx jest src/__tests__/integration/architecture src/__tests__/integration/corpus src/__tests__/integration/data-trust src/__tests__/integration/design src/__tests__/integration/demo src/__tests__/integration/deployment src/__tests__/integration/engagement src/__tests__/integration/knowledge src/__tests__/integration/nexus src/__tests__/integration/observability src/__tests__/integration/programs src/__tests__/integration/security src/__tests__/integration/sentinel src/__tests__/integration/setup src/__tests__/integration/solutions src/__tests__/integration/story-pack src/__tests__/integration/tenants src/__tests__/integration/agent/agent1-foundation.test.ts src/__tests__/integration/admin-context-uploads-tabs.test.tsx src/__tests__/integration/agent-column-agent-answer.test.ts src/__tests__/integration/app-rail-home-nav.test.tsx src/__tests__/integration/app-topbar-prefetch-guard.test.tsx src/__tests__/integration/app-topbar-preserve-tenant-name.test.ts src/__tests__/integration/ask-anything-bar-agent-answer.test.tsx src/__tests__/integration/atlas-page-state-timeout.test.ts src/__tests__/integration/email-code-sign-in-panel.test.tsx src/__tests__/integration/evidence-registry.test.ts src/__tests__/integration/learn-welcome-cxo-toggle.test.tsx src/__tests__/integration/pack-j-realistic-portfolio.test.ts src/__tests__/integration/pattern-deliverable-api.test.ts src/__tests__/integration/shell-topbar-auth.test.tsx src/__tests__/integration/sign-in-route-contract.test.ts src/__tests__/integration/strategic-moves-chat-shape.test.ts src/__tests__/integration/supabase.test.ts src/__tests__/integration/tenant-empty-states.test.tsx src/__tests__/integration/tower-p6-handoff-panel.test.ts src/__tests__/integration/demo-code-sign-in-panel.test.tsx src/__tests__/integration/demo-code-sign-in-route.test.ts src/__tests__/integration/demo-p0-graceful-degradation.test.ts src/__tests__/integration/deliverable-render-contract.test.ts src/__tests__/integration/programs-api-contracts.test.ts src/__tests__/integration/programs-demo-beats.test.ts src/__tests__/integration/programs-enhancement-seed-planner.test.ts src/__tests__/integration/programs-enhancement-seed-writer.test.ts src/__tests__/integration/programs-enhancement-spec.test.ts src/__tests__/integration/programs-nexus-ask-route.test.ts src/__tests__/integration/programs-nexus-free-text.test.ts src/__tests__/integration/programs-quality-gates.test.ts --no-coverage --ci
+        run: npx jest src/__tests__/integration/architecture src/__tests__/integration/corpus src/__tests__/integration/data-trust src/__tests__/integration/design src/__tests__/integration/demo src/__tests__/integration/deployment src/__tests__/integration/engagement src/__tests__/integration/knowledge src/__tests__/integration/nexus src/__tests__/integration/observability src/__tests__/integration/programs src/__tests__/integration/security src/__tests__/integration/sentinel src/__tests__/integration/setup src/__tests__/integration/solutions src/__tests__/integration/story-pack src/__tests__/integration/tenants src/__tests__/integration/agent/agent1-foundation.test.ts src/__tests__/integration/admin-context-uploads-tabs.test.tsx src/__tests__/integration/agent-column-agent-answer.test.ts src/__tests__/integration/app-rail-home-nav.test.tsx src/__tests__/integration/app-topbar-prefetch-guard.test.tsx src/__tests__/integration/app-topbar-preserve-tenant-name.test.ts src/__tests__/integration/ask-anything-bar-agent-answer.test.tsx src/__tests__/integration/atlas-ask-route.test.ts src/__tests__/integration/atlas-page-state-timeout.test.ts src/__tests__/integration/email-code-sign-in-panel.test.tsx src/__tests__/integration/evidence-registry.test.ts src/__tests__/integration/learn-welcome-cxo-toggle.test.tsx src/__tests__/integration/marketing-nav-dropdowns.test.tsx src/__tests__/integration/pack-j-realistic-portfolio.test.ts src/__tests__/integration/pattern-deliverable-api.test.ts src/__tests__/integration/shell-topbar-auth.test.tsx src/__tests__/integration/sign-in-route-contract.test.ts src/__tests__/integration/sign-in-shell.test.tsx src/__tests__/integration/strategic-moves-chat-shape.test.ts src/__tests__/integration/supabase.test.ts src/__tests__/integration/tenant-empty-states.test.tsx src/__tests__/integration/tower-p6-handoff-panel.test.ts src/__tests__/integration/demo-code-sign-in-panel.test.tsx src/__tests__/integration/demo-code-sign-in-route.test.ts src/__tests__/integration/demo-p0-graceful-degradation.test.ts src/__tests__/integration/deliverable-render-contract.test.ts src/__tests__/integration/programs-api-contracts.test.ts src/__tests__/integration/programs-demo-beats.test.ts src/__tests__/integration/programs-enhancement-seed-planner.test.ts src/__tests__/integration/programs-enhancement-seed-writer.test.ts src/__tests__/integration/programs-enhancement-spec.test.ts src/__tests__/integration/programs-nexus-ask-route.test.ts src/__tests__/integration/programs-nexus-free-text.test.ts src/__tests__/integration/programs-quality-gates.test.ts --no-coverage --ci
 
       - name: Refuse a stale, growing or mis-classified Intelligence quarantine list
         # Runs the check's own unit cases first, then the check. The cases pin
