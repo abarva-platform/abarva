@@ -17,6 +17,10 @@ import {
   resolveEvidenceTraces,
   type EvidenceResolutionContext,
 } from "@/lib/source/evidence-trace/evidence-trace";
+import {
+  RESTRICTED_SOURCE_FINANCIAL_LABEL,
+  redactSourceFinancialText,
+} from "@/lib/source/financial-display";
 import { EstimateAssumptionDisclosure } from "./EstimateAssumptionDisclosure";
 import { RenewalCockpitActionBar } from "./RenewalCockpitActionBar";
 import { EvidenceTraceTrigger } from "./EvidenceTraceDrawer";
@@ -50,8 +54,28 @@ const POSTURE_META: Record<
   exit: { bg: SHELL.RUST_BG, line: SHELL.PEACH_LINE, text: SHELL.RUST_TEXT },
 };
 
-function formatUsd(value: number | null): string {
+/**
+ * U-520 — the exact-magnitude gate for this surface.
+ *
+ * The flag is a REQUIRED second parameter, not an option with a default, so a
+ * call site that does not answer fails to compile. That is the property the
+ * item asks for and the reason the eight duplicate local formatters were never
+ * the defect: a shared ungated `formatUsd` would be no safer than eight of
+ * them, because neither makes omission an error.
+ *
+ * The granted branch keeps this surface's own formatting untouched. Routing it
+ * through the shared `formatSourceFinancialValue` would have re-rendered every
+ * figure here in the value-ledger's compact style ("$500K" for "$500,000"),
+ * which is a change to a locked design and not what this item is for. Only the
+ * restricted LABEL is shared, so there is one spelling of the withheld state.
+ *
+ * `null` stays "not priced" in both directions: that is a statement about the
+ * contract, not about the reader, and replacing it with the restricted label
+ * would tell a restricted reader a price exists when none does.
+ */
+function formatUsd(value: number | null, canViewFinancialValues: boolean): string {
   if (value === null) return "not priced";
+  if (!canViewFinancialValues) return RESTRICTED_SOURCE_FINANCIAL_LABEL;
   return `$${Math.round(value).toLocaleString("en-US")}`;
 }
 
@@ -128,13 +152,38 @@ function EvidenceCard({
 export function RenewalCockpitView({
   cockpit,
   evidenceContext,
+  canViewFinancialValues,
 }: {
   cockpit: RenewalCockpit;
   /** Substrate for resolving the evidence-trace drawer; omit to hide triggers. */
   evidenceContext?: EvidenceResolutionContext;
+  /**
+   * U-520 — required, and deliberately not optional. This surface prints nine
+   * exact magnitudes; an optional flag lets a caller stay silent and be
+   * answered "yes" on its behalf, which is the fail-open shape U-508 removed
+   * from the eight components that already read this prop.
+   */
+  canViewFinancialValues: boolean;
 }) {
   const posture = POSTURE_META[cockpit.recommendedPosture];
   const sc = cockpit.shouldCost;
+  /**
+   * U-520, second half — the builder's PROSE carries magnitudes too.
+   *
+   * The item counted nineteen formatter call sites. Gating only those left this
+   * surface reading "Current annual spend Restricted." three lines above
+   * "Current spend $500,000 runs $80,000/yr above the $420,000 category
+   * benchmark", because that sentence is authored by `buildRenewalCockpit` and
+   * rendered as a string, never through `formatUsd`. A gate that a neighbouring
+   * sentence walks straight around is worse than none: it tells the reader the
+   * figure was withheld while showing it to them.
+   *
+   * `redactSourceFinancialText` is the existing shared mechanism for exactly
+   * this — the same one `redactSourcingEventSummaryForDisplay` already applies
+   * to `blocker` and `nextAction`. Granted readers get the string untouched.
+   */
+  const prose = (text: string) =>
+    redactSourceFinancialText(text, canViewFinancialValues);
   // Evidence refs mirror the detector convention: the contract row plus the
   // backing context segments. Should-cost additionally leans on it_financials.
   const contractRefs = [cockpit.contractId, "vendor_contracts"];
@@ -205,11 +254,11 @@ export function RenewalCockpitView({
           }}
         >
           <span>
-            Current annual spend {formatUsd(cockpit.currentAnnualSpendUsd)}.
+            Current annual spend {formatUsd(cockpit.currentAnnualSpendUsd, canViewFinancialValues)}.
           </span>
           {evidenceContext ? (
             <EvidenceTraceTrigger
-              claimLabel={`Current annual spend — ${formatUsd(cockpit.currentAnnualSpendUsd)}`}
+              claimLabel={`Current annual spend — ${formatUsd(cockpit.currentAnnualSpendUsd, canViewFinancialValues)}`}
               traces={contractTraces}
             />
           ) : null}
@@ -254,7 +303,7 @@ export function RenewalCockpitView({
             lineHeight: 1.55,
           }}
         >
-          {cockpit.postureRationale}
+          {prose(cockpit.postureRationale)}
         </p>
         <Link
           href={`/source/renewal/${encodeURIComponent(cockpit.contractId)}/execution`}
@@ -288,7 +337,7 @@ export function RenewalCockpitView({
               ? "Auto-renewing contract"
               : "Standard renewal"
         }
-        body={cockpit.timing.summary}
+        body={prose(cockpit.timing.summary)}
         traceTrigger={
           evidenceContext ? (
             <EvidenceTraceTrigger
@@ -333,7 +382,7 @@ export function RenewalCockpitView({
             ? "Utilization not measured"
             : `${Math.round(cockpit.usage.utilizationRate * 100)}% utilized`
         }
-        body={cockpit.usage.summary}
+        body={prose(cockpit.usage.summary)}
         traceTrigger={
           evidenceContext ? (
             <EvidenceTraceTrigger
@@ -349,17 +398,17 @@ export function RenewalCockpitView({
         label="Should-cost benchmark"
         headline={
           sc.benchmarkUsd !== null
-            ? `Benchmark ${formatUsd(sc.benchmarkUsd)}/yr`
+            ? `Benchmark ${formatUsd(sc.benchmarkUsd, canViewFinancialValues)}/yr`
             : "Should-cost iceberg framing"
         }
-        body={sc.summary}
+        body={prose(sc.summary)}
         traceTrigger={
           evidenceContext ? (
             <EvidenceTraceTrigger
               variant="chip"
               claimLabel={
                 sc.benchmarkUsd !== null
-                  ? `Should-cost benchmark — ${formatUsd(sc.benchmarkUsd)}/yr`
+                  ? `Should-cost benchmark — ${formatUsd(sc.benchmarkUsd, canViewFinancialValues)}/yr`
                   : "Should-cost framing"
               }
               traces={shouldCostTraces}
@@ -372,19 +421,19 @@ export function RenewalCockpitView({
         >
           <Metric
             label="Should-cost low"
-            value={formatUsd(sc.estimate.totalLow)}
+            value={formatUsd(sc.estimate.totalLow, canViewFinancialValues)}
           />
           <Metric
             label="Should-cost high"
-            value={formatUsd(sc.estimate.totalHigh)}
+            value={formatUsd(sc.estimate.totalHigh, canViewFinancialValues)}
           />
           {sc.overspendVsBenchmarkUsd !== null ? (
             <Metric
               label="Vs benchmark"
               value={
                 sc.overspendVsBenchmarkUsd > 0
-                  ? `+${formatUsd(sc.overspendVsBenchmarkUsd)}`
-                  : formatUsd(sc.overspendVsBenchmarkUsd)
+                  ? `+${formatUsd(sc.overspendVsBenchmarkUsd, canViewFinancialValues)}`
+                  : formatUsd(sc.overspendVsBenchmarkUsd, canViewFinancialValues)
               }
             />
           ) : null}
@@ -397,8 +446,8 @@ export function RenewalCockpitView({
         */}
         <EstimateAssumptionDisclosure
           title="Should-cost estimate basis"
-          basis={sc.estimateBasis}
-          assumptions={sc.estimateAssumptions}
+          basis={prose(sc.estimateBasis)}
+          assumptions={sc.estimateAssumptions.map(prose)}
         />
       </EvidenceCard>
 
@@ -411,7 +460,7 @@ export function RenewalCockpitView({
               ? "Leverage sits with the vendor"
               : "Leverage is balanced"
         }
-        body={cockpit.leverage.assessment}
+        body={prose(cockpit.leverage.assessment)}
       >
         <p
           style={{
@@ -422,7 +471,7 @@ export function RenewalCockpitView({
             lineHeight: 1.5,
           }}
         >
-          <strong>Play:</strong> {cockpit.leverage.recommendedPlay}
+          <strong>Play:</strong> {prose(cockpit.leverage.recommendedPlay)}
         </p>
       </EvidenceCard>
 
@@ -463,7 +512,7 @@ export function RenewalCockpitView({
               >
                 <strong>{alt.vendorName}</strong>
                 {alt.indicativeAnnualUsd !== null
-                  ? ` — ${formatUsd(alt.indicativeAnnualUsd)}/yr`
+                  ? ` — ${formatUsd(alt.indicativeAnnualUsd, canViewFinancialValues)}/yr`
                   : ""}
                 . {alt.switchingNote}
               </li>

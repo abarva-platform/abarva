@@ -69,7 +69,13 @@ function cockpitInput(overrides: Partial<RenewalCockpitInput> = {}): RenewalCock
 
 function renderCockpit(overrides: Partial<RenewalCockpitInput> = {}) {
   const cockpit = buildRenewalCockpit(cockpitInput(overrides));
-  render(<RenewalCockpitView cockpit={cockpit} />);
+  // U-520 made `canViewFinancialValues` required on this component. Granted is
+  // the correct answer for THIS suite: every assertion below reads the
+  // should-cost disclosure's own figures back off the DOM and compares them to
+  // the builder's constants, which is a statement about the estimate model and
+  // only holds for a reader entitled to see the numbers. A restricted mount is
+  // asserted separately, in `u520-financial-visibility.test.tsx`.
+  render(<RenewalCockpitView cockpit={cockpit} canViewFinancialValues />);
   return cockpit;
 }
 
