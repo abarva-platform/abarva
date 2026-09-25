@@ -22,8 +22,8 @@
   ],
   "counts": {
     "suites": 7,
-    "wired": 3,
-    "heldUnwired": 4,
+    "wired": 4,
+    "heldUnwired": 3,
     "repaired": 0,
     "deleted": 0
   },
@@ -193,18 +193,32 @@
       "priorPullRequestCovered": false,
       "collected": true,
       "green": true,
-      "totalTests": 13,
+      "totalTests": 14,
       "failedTests": 0,
       "pendingTests": 0,
-      "readFileSyncCount": 6,
-      "toContainCount": 100,
-      "sourceTextScanner": true,
-      "rendersComponent": false,
-      "verdict": "held_unwired",
-      "ownerItem": null,
-      "priorVerdict": null,
-      "priorVerdictStatus": "untriaged",
-      "rationale": "NEW FINDING, and the reason this item does not simply wire the second half. It shares portfolioAdapter.ecl.test.ts's defect \u2014 reached only from the post-deploy ECL gate, so nothing it asserts can block a merge \u2014 but it is also the heaviest source-text scanner of the seven: 6 readFileSync and 100 toContain. The repository's own rule forbids wiring a scanner into CI, so making it merge-blocking would convert an unenforced check into an enforced check of source bytes. It needs a behavioural rewrite and has no owner; filed back to the backlog rather than wired or deleted here."
+      "readFileSyncCount": 0,
+      "toContainCount": 0,
+      "sourceTextScanner": false,
+      "rendersComponent": true,
+      "verdict": "wired",
+      "ownerItem": "T-764",
+      "priorVerdict": "held_unwired",
+      "priorVerdictStatus": "discharged",
+      "rationale": "DISCHARGED by T-764. The held_unwired verdict was correct at this record's base: the file was a source-text scanner (6 readFileSync, 100 toContain) and the repository's rule forbids making one merge-blocking. T-764 removed the reason rather than waiving it. The file now calls SourceWorkspacePage with real searchParams, mounts the tree it returns with the real WorkspaceClientLoader and the real WorkspaceClient beneath it, and reads the client parameter off the contract-detail request those components actually made: 0 readFileSync, 0 toContain, 14 cases. Calibrated in both directions before wiring. With the tenant membership fence still running and its call text byte-identical, only its verdict ignored, the old scanner passed 13 of 13 and the rewrite fails 4 of 14; on a behaviour-preserving rename of a local binding the old scanner failed 1 of 13 and the rewrite passes 14 of 14. Wired into .github/workflows/unit-suites.yml beside portfolioAdapter.ecl.test.ts; removing that one path drops pullRequestCoveredTestFiles 1998 -> 1997, and the per-file record flips pullRequestCovered false -> true with via gaining 'command'. The pre-deploy ECL gate keeps its own invocation.",
+      "priorVerdictRationale": "NEW FINDING, and the reason this item does not simply wire the second half. It shares portfolioAdapter.ecl.test.ts's defect \u2014 reached only from the post-deploy ECL gate, so nothing it asserts can block a merge \u2014 but it is also the heaviest source-text scanner of the seven: 6 readFileSync and 100 toContain. The repository's own rule forbids wiring a scanner into CI, so making it merge-blocking would convert an unenforced check into an enforced check of source bytes. It needs a behavioural rewrite and has no owner; filed back to the backlog rather than wired or deleted here.",
+      "dischargedBy": "T-764",
+      "dischargedAt": "2026-09-25T14:05:00.000Z",
+      "reverificationCondition": "This entry asserts the file executes the route rather than scanning its bytes. If readFileSyncCount or toContainCount rises above 0, or rendersComponent becomes false, the wiring is no longer justified by this rationale and the verdict must be re-taken."
+    }
+  ],
+  "amendments": [
+    {
+      "item": "T-764",
+      "at": "2026-09-25T14:05:00.000Z",
+      "base": "7700791ae",
+      "path": "src/app/(maestro)/source/preview/workspace/__tests__/page-tenant-routing.test.ts",
+      "change": "held_unwired -> wired",
+      "why": "The verdict's stated reason was that the file was a source-text scanner. T-764 rewrote it to execute the route, so the reason no longer holds. Recorded as a discharge rather than a deletion: the prior verdict and its rationale are kept in priorVerdict and priorVerdictRationale."
     }
   ]
 }
