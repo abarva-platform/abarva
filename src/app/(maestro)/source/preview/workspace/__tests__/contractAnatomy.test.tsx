@@ -12,24 +12,23 @@ import type { SourceWorkspaceVM } from "../buildViewModel";
  * not-applicable only when the archetype says so, and as open otherwise —
  * never one collapsed into another.
  *
- * Item U-521 added the Optimize pair below. Optimize is the one facet whose
- * signal could plausibly be taken from two different populations, and they are
- * not the same fact:
+ * Item U-521 added the Optimize cases below. What they pin is a property of
+ * THIS component: the Optimize facet and the feeds row read the evidence
+ * coverage row it is given, not `vm.opportunityView` — the product's computed
+ * opportunity set. Reading the computed set made the card answer one of its own
+ * seven questions with the recommendation that question is about.
  *
- *  - `coverage.opportunity_rows` is `count(*)` over
- *    `source.contract_action_candidate_v1` — opportunity evidence LOADED onto
- *    this contract. Its own projection tells an operator to "Load opportunity
- *    rows ..." when it is zero
- *    (`20260910203000_source_contract_tab_intelligence.sql:271`).
- *  - `vm.opportunityView.opportunities` is the product's computed opportunity
- *    set (`source.optimization_opportunity`, or a fallback derived from
- *    `source.golden_contract_*`).
+ * The cases are written in both directions deliberately: a single case would be
+ * satisfied by a signal that is merely always-open or always-answered.
  *
- * The facet strip answers "which of this contract's questions can its evidence
- * answer", so it must read the first. Reading the second makes the card answer
- * a question with the recommendation the question is about. The two cases are
- * written in both directions deliberately: a single case would be satisfied by
- * a signal that is merely always-true.
+ * They deliberately do NOT assert that the lane and the computed set are
+ * different populations, because measurement says that is not reliably true.
+ * `opportunity_rows` is count(*) over `source.contract_action_candidate_v1` in
+ * the migration-owned projection and count(*) over deduped
+ * `source.optimization_opportunity` in the live portfolio adapter, and a third
+ * writer overwrites it with the computed count. That is item U-522. These cases
+ * hold regardless of how U-522 is settled, which is why they are phrased against
+ * the component's props rather than against the population.
  */
 
 const coverage = (

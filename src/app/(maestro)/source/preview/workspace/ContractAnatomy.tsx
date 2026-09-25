@@ -31,17 +31,33 @@ import type { SourceWorkspaceVM } from "./buildViewModel";
  * not-required state come from the archetype model; whether each is answered
  * comes from the contract's own lanes.
  *
- * Item U-521 settled what the Optimize facet is a question about, because it is
- * the one facet with two candidate populations. `coverage.opportunity_rows` is
- * count(*) over `source.contract_action_candidate_v1` -- opportunity evidence
- * loaded onto this contract, whose own projection tells an operator to "Load
- * opportunity rows ..." when it is zero. `vm.opportunityView.opportunities` is
- * the product's computed opportunity set (`source.optimization_opportunity`, or
- * a fallback derived from `source.golden_contract_*`). This strip reports which
- * questions the contract's EVIDENCE can answer, so Optimize reads the loaded
- * lane like its six siblings. Reading the computed set made the card answer a
- * question with the recommendation the question is about, and marked a contract
- * with nothing loaded and three authored levers as having answered it.
+ * Item U-521. The Optimize facet used to read `vm.opportunityView` -- the
+ * product's computed opportunity set -- so the card answered one of its seven
+ * questions with the recommendation that question is about, and the "What feeds
+ * it" block listed that computed count among the contract's inputs. Both sites
+ * now read the evidence coverage row, so all seven facets have one source and
+ * the feeds block enumerates only the coverage lanes.
+ *
+ * What that does NOT settle, measured while making the change and recorded here
+ * so the next reader does not re-derive it: `opportunity_rows` does not mean one
+ * population. The migration-owned projection defines it as count(*) over
+ * `source.contract_action_candidate_v1`
+ * (`20260910203000_source_contract_tab_intelligence.sql:73`, self-labelled at
+ * `:126`), while the live portfolio adapter defines it as count(*) over deduped
+ * `source.optimization_opportunity` (`live/portfolioAdapter.ts:986`, from the
+ * `opportunity_source` CTE, self-labelled at `:1081`) -- which is the same table
+ * behind `vm.opportunityView`. A third writer, `contractCoverageWithDetailLanes`
+ * in `WorkspaceExecutiveShell.tsx:6240`, overwrites the lane with the computed
+ * count outright.
+ *
+ * So on the live path this facet may still be answered from the computed set,
+ * arriving through the lane instead of directly. That is a data-contract defect
+ * rather than a rendering one and it is filed as item U-522; do not "fix" it
+ * here by picking another column. `opportunities_with_evidence` is the obvious
+ * candidate and is not safe to adopt yet: it filters on `evidence_state`, and
+ * item C-402 has the related `evidence_status` column open as effectively
+ * constant. Until U-522 settles which population this lane reports, treat the
+ * Optimize facet as consistent with its siblings but not independently proven.
  */
 
 type Coverage = SourceContractEvidenceCoverageRow | null | undefined;
@@ -166,13 +182,14 @@ export function ContractAnatomy({
       detail: laneCountLabel(coverage, "document_page_text_rows", "document passage"),
     },
     {
-      // Item U-521. This is the LOADED lane -- `opportunity_rows` is count(*)
-      // over `source.contract_action_candidate_v1`, the same population
-      // `Contract360Surfaces` names under item U-518. It is not
-      // `vm.opportunityView.opportunities`, which is the product's computed
-      // opportunity set; that set is an answer about this contract, not an
-      // input to it, and printing it here claimed a feed for a contract with
-      // no loaded rows and authored levers.
+      // Item U-521. Reads the coverage lane rather than
+      // `vm.opportunityView.opportunities`: the computed set is an answer about
+      // this contract, not an input to it, and printing it here claimed a feed
+      // for a contract with no loaded rows and authored levers -- and printed
+      // "0 governed levers" rather than "not loaded" when nothing was there.
+      // Named as an evidence row count, matching `Contract360Surfaces` under
+      // item U-518. Which population the lane actually reports is contested
+      // across read paths; see the note at the top of this file and item U-522.
       label: "Opportunity evidence rows",
       detail: laneCountLabel(
         coverage,

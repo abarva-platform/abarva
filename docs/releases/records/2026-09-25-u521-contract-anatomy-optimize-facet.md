@@ -21,18 +21,31 @@ question as answered, which rolled into the headline "This contract answers N of
 questions." The card was answering a question using the recommendation that the question is
 about.
 
-The two populations involved are genuinely different facts, and the repository had already
-drawn the distinction elsewhere:
+Both sites now read the evidence coverage row the component is already given, which is what
+the other six facets do. The feeds row is named "Opportunity evidence rows", matching the
+wording an earlier item established on the sibling Contract 360 surface, and it now renders
+"not loaded" when the lane is absent instead of asserting "0 governed levers".
 
-- `coverage.opportunity_rows` is `count(*)` over `source.contract_action_candidate_v1` —
-  opportunity evidence **loaded** onto this contract. Its own projection tells an operator
-  to "Load opportunity rows ..." when it is zero.
-- `vm.opportunityView.opportunities` is the product's **computed** opportunity set
-  (`source.optimization_opportunity`, or a fallback derived from `source.golden_contract_*`).
+**What this does not settle, stated here because the first draft of this record got it
+wrong.** The obvious justification for the change is that the coverage lane and the computed
+set are different populations. Measurement says that is not reliably true, so it is not the
+justification being claimed. `opportunity_rows` has two definitions by read path:
 
-Both sites on the card now read the loaded lane, which is what the other six facets do. The
-feeds row is named "Opportunity evidence rows" so it states which population it reports,
-matching the wording an earlier item established on the sibling Contract 360 surface.
+- the migration-owned projection defines it as `count(*)` over
+  `source.contract_action_candidate_v1`
+  (`20260910203000_source_contract_tab_intelligence.sql:73`, self-labelled at `:126`);
+- the live portfolio adapter defines it as `count(*)` over deduped
+  `source.optimization_opportunity` (`live/portfolioAdapter.ts:986`, from the
+  `opportunity_source` CTE, self-labelled at `:1081`) — the same table behind
+  `vm.opportunityView`;
+- and `contractCoverageWithDetailLanes` (`WorkspaceExecutiveShell.tsx:6240`) overwrites the
+  lane with the computed count outright.
+
+So on the live path the Optimize facet may still be answered from the computed set, arriving
+through the lane rather than directly. **This release does not close that.** What it closes is
+narrower and real: the component no longer conflates the two itself, all seven facets read one
+source, and the feeds block enumerates only coverage lanes. The remaining half is a
+data-contract question, filed as item U-522 with the call sites named.
 
 ## Layer Impact
 
@@ -137,17 +150,25 @@ remains available for a traffic shift if a faster path is wanted.
 
 ## Known Gaps
 
-**One, and it bounds what this change achieves at runtime — stated rather than left to be
-discovered.** `contractCoverageWithDetailLanes` in `WorkspaceExecutiveShell.tsx` builds the
-coverage row this component receives, and it sets `opportunity_rows` from the **computed**
-opportunity set when that set is non-empty, overriding the persisted count via
-`{ ...base, ...detailCounts }`. So on the mounted path the lane this component now reads can
-still carry the computed number.
+**The item U-521 describes is NOT fully closed by this release, and that is the most important
+line in this record.** Two findings, both measured while making the change:
 
-The consequence is precise: this change makes the component read the correct field and stops
-it reading the computed set directly, and it is sufficient on its own for a contract whose
-coverage row is not overridden. It is **not** sufficient for one whose coverage row is, and
-the remaining half lives in the caller.
+1. `opportunity_rows` does not name one population. Migration projection: `count(*)` over
+   `source.contract_action_candidate_v1`. Live adapter: `count(*)` over deduped
+   `source.optimization_opportunity`, the same table behind `vm.opportunityView`. An earlier
+   item's shipped comment on the sibling surface asserts the first and is therefore accurate
+   on only one of the two read paths.
+2. `contractCoverageWithDetailLanes` (`WorkspaceExecutiveShell.tsx:6240`) overwrites the lane
+   with the computed count through `{ ...base, ...detailCounts }`, a third injection point.
+
+Together these mean the semantic defect — a facet answered from the product's own output —
+can persist through the lane on the live path. This release fixes the component's own
+conflation and locality; it does not fix the lane's meaning.
+
+No other column was substituted on a guess. `opportunities_with_evidence` is the obvious
+candidate and was rejected for now: it filters on `evidence_state`, and item C-402 has the
+related `evidence_status` column open as effectively constant, so adopting it would trade one
+unproven signal for another. Filed as item U-522.
 
 That override was left alone deliberately rather than folded in here. It feeds roughly ten
 other consumers of `opportunity_rows` — readiness scoring, KPI strips, the evidence-lane
