@@ -17,6 +17,7 @@ import { clerkClient } from '@clerk/nextjs/server';
 import {
   isApprovedTestRecipient,
   soleApprovalParticipant,
+  soleSponsorApprovalParticipant,
   type ApprovalParticipant,
 } from '@/lib/source/notifications/approval-recipient-policy';
 import { sendApprovalRequestEmail } from '@/lib/source/notifications/approval-request';
@@ -25,6 +26,7 @@ export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 interface Body {
+  approvalKind?: 'stage_gate' | 'sponsor_commitment';
   stageLabel?: string;
   stageKey?: string;
   approverEmail?: string;
@@ -81,6 +83,10 @@ export async function POST(req: Request, ctxParam: { params: Promise<{ eventId: 
     if (body.approverEmail !== undefined) {
       return Response.json({ error: 'recipient_must_be_event_participant' }, { status: 400 });
     }
+    if (body.approvalKind !== undefined &&
+      body.approvalKind !== 'stage_gate' && body.approvalKind !== 'sponsor_commitment') {
+      return Response.json({ error: 'invalid_approval_kind' }, { status: 400 });
+    }
 
     const db = getAzureReadFluentClient();
     const { data: event, error: eventError } = await db
@@ -94,13 +100,16 @@ export async function POST(req: Request, ctxParam: { params: Promise<{ eventId: 
 
     const { data: participantRows, error: participantError } = await db
       .from('source_event_participants')
-      .select('user_id, approval_authority, can_approve_source_stages')
+      .select('user_id, role, approval_authority, can_approve_source_stages')
       .eq('source_event_id', eventId)
       .eq('client_key', event.client_key);
     if (participantError) throw participantError;
-    const participant = soleApprovalParticipant((participantRows ?? []) as ApprovalParticipant[]);
+    const sponsorRequest = body.approvalKind === 'sponsor_commitment';
+    const participant = sponsorRequest
+      ? soleSponsorApprovalParticipant((participantRows ?? []) as ApprovalParticipant[])
+      : soleApprovalParticipant((participantRows ?? []) as ApprovalParticipant[]);
     if (!participant?.user_id) {
-      return Response.json({ error: 'approver_assignment_required' }, { status: 409 });
+      return Response.json({ error: sponsorRequest ? 'sponsor_assignment_required' : 'approver_assignment_required' }, { status: 409 });
     }
     const identity = await participantIdentity(participant.user_id);
     if (!identity || /^(user|test|unknown)$/i.test(identity.name)) {
@@ -117,8 +126,8 @@ export async function POST(req: Request, ctxParam: { params: Promise<{ eventId: 
     }
 
     const eventName = event.event_name?.trim() || `Sourcing event ${eventId}`;
-    const stageLabel = body.stageLabel?.trim() || 'Stage gate';
-    const stageKey = body.stageKey?.trim();
+    const stageLabel = sponsorRequest ? 'Sponsor commitment' : body.stageLabel?.trim() || 'Stage gate';
+    const stageKey = sponsorRequest ? 'scope' : body.stageKey?.trim();
 
     const base = process.env.NEXT_PUBLIC_APP_URL || 'https://app.abarva.ai';
     const reviewUrl = stageKey
@@ -126,6 +135,7 @@ export async function POST(req: Request, ctxParam: { params: Promise<{ eventId: 
       : `${base}/source/events/${encodeURIComponent(eventId)}/approval`;
 
     const result = await sendApprovalRequestEmail({
+      approvalKind: sponsorRequest ? 'sponsor_commitment' : 'stage_gate',
       eventId,
       eventName,
       stageLabel,

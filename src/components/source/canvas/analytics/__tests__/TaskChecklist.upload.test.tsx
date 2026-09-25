@@ -38,6 +38,12 @@ const PROVIDE_TASK: StageTaskView = {
   },
 };
 
+const SPONSOR_TASK: StageTaskView = {
+  ...PROVIDE_TASK,
+  id: "scope.sponsor",
+  title: "Sponsor commitment",
+};
+
 const EXECUTIVE_DECISION_TASK: StageTaskView = {
   id: "executive-decision.recommendation-packet",
   title: "Confirm executive recommendation packet",
@@ -62,6 +68,40 @@ function selectFile(file: File) {
 }
 
 describe("TaskChecklist provide-task upload", () => {
+  it("offers an explicit sponsor review request only on the bound Scope sponsor step", async () => {
+    const fetchMock = jest.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ ok: true, channel: "logged_fallback" }),
+    });
+    global.fetch = fetchMock as unknown as typeof fetch;
+    render(<TaskChecklist tasks={[SPONSOR_TASK]} eventId="evt-1" stageKey="scope" />);
+    fireEvent.click(screen.getByRole("button", { name: "Request sponsor review" }));
+    await waitFor(() => expect(screen.getByText("Notification logged; no email sent.")).toBeInTheDocument());
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/v1/source/events/evt-1/request-approval",
+      expect.objectContaining({
+        method: "POST",
+        body: JSON.stringify({ approvalKind: "sponsor_commitment" }),
+      }),
+    );
+  });
+
+  it("does not offer a sponsor request for other steps or preview data", () => {
+    const { rerender } = render(<TaskChecklist tasks={[PROVIDE_TASK]} eventId="evt-1" stageKey="scope" />);
+    expect(screen.queryByRole("button", { name: "Request sponsor review" })).not.toBeInTheDocument();
+    rerender(<TaskChecklist tasks={[SPONSOR_TASK]} stageKey="scope" />);
+    expect(screen.queryByRole("button", { name: "Request sponsor review" })).not.toBeInTheDocument();
+  });
+
+  it("explains when a sponsor must be assigned before review can be requested", async () => {
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: false,
+      json: async () => ({ error: "sponsor_assignment_required" }),
+    }) as unknown as typeof fetch;
+    render(<TaskChecklist tasks={[SPONSOR_TASK]} eventId="evt-1" stageKey="scope" />);
+    fireEvent.click(screen.getByRole("button", { name: "Request sponsor review" }));
+    expect(await screen.findByText("Assign one sponsor to this event before requesting review.")).toBeInTheDocument();
+  });
   it("renders the evidence request as a clear upload row before file selection", () => {
     const boundTask: StageTaskView = {
       ...PROVIDE_TASK,

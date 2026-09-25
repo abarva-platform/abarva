@@ -287,24 +287,29 @@ function TaskRow({
 
           {task.rows ? <ReviewRows rows={task.rows} /> : null}
           {task.type === "provide" ? (
-            <EvidenceRequestPanel
-              task={task}
-              isDone={isDone}
-              eventId={eventId}
-              factTemplateCode={factTemplateCode}
-            >
-              {task.file ? (
-                <FileChip file={task.file} />
-              ) : (
-                <TaskProvideUpload
-                  signed={/letter|commit/i.test(task.title)}
-                  eventId={eventId}
-                  stageKey={stageKey}
-                  factTemplateCode={factTemplateCode}
-                  onUploaded={onComplete}
-                />
-              )}
-            </EvidenceRequestPanel>
+            <>
+              <EvidenceRequestPanel
+                task={task}
+                isDone={isDone}
+                eventId={eventId}
+                factTemplateCode={factTemplateCode}
+              >
+                {task.file ? (
+                  <FileChip file={task.file} />
+                ) : (
+                  <TaskProvideUpload
+                    signed={/letter|commit/i.test(task.title)}
+                    eventId={eventId}
+                    stageKey={stageKey}
+                    factTemplateCode={factTemplateCode}
+                    onUploaded={onComplete}
+                  />
+                )}
+              </EvidenceRequestPanel>
+              {task.id === "scope.sponsor" && stageKey === "scope" && eventId ? (
+                <SponsorReviewRequest eventId={eventId} />
+              ) : null}
+            </>
           ) : (
             <>
               {task.template ? <TemplateChip template={task.template} /> : null}
@@ -1238,6 +1243,62 @@ export function TaskProvideUpload({
           {status.message}
         </div>
       ) : null}
+    </div>
+  );
+}
+
+function SponsorReviewRequest({ eventId }: { eventId: string }) {
+  const [status, setStatus] = useState<"idle" | "sending" | "sent" | "logged" | "error">("idle");
+  const [errorMessage, setErrorMessage] = useState("Could not request sponsor review.");
+
+  const requestReview = async () => {
+    if (status !== "idle" && status !== "error") return;
+    setStatus("sending");
+    try {
+      const response = await fetch(
+        `/api/v1/source/events/${encodeURIComponent(eventId)}/request-approval`,
+        {
+          method: "POST",
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ approvalKind: "sponsor_commitment" }),
+        },
+      );
+      const result = await response.json() as { channel?: string; error?: string };
+      if (!response.ok) {
+        setErrorMessage(result.error === "sponsor_assignment_required"
+          ? "Assign one sponsor to this event before requesting review."
+          : result.error === "test_recipient_not_allowed"
+            ? "Sponsor email is not enabled in this environment."
+            : "Could not request sponsor review.");
+        setStatus("error");
+        return;
+      }
+      setStatus(result.channel === "email_sent"
+        ? "sent"
+        : result.channel === "logged_fallback"
+          ? "logged"
+          : "error");
+    } catch {
+      setStatus("error");
+    }
+  };
+
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", marginTop: 10 }}>
+      <button
+        type="button"
+        onClick={() => void requestReview()}
+        disabled={status === "sending" || status === "sent" || status === "logged"}
+        style={{ border: `1px solid ${ANALYTICS.LINE_STRONG}`, borderRadius: 8, background: ANALYTICS.CARD, color: ANALYTICS.INK, padding: "8px 12px", fontSize: 12, fontWeight: 600 }}
+      >
+        {status === "sending" ? "Requesting..." : "Request sponsor review"}
+      </button>
+      <span role="status" style={{ color: ANALYTICS.MUTED, fontSize: 12 }}>
+        {status === "sent" ? "Review email sent." : null}
+        {status === "logged" ? "Notification logged; no email sent." : null}
+        {status === "error" ? errorMessage : null}
+      </span>
     </div>
   );
 }

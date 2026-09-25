@@ -110,3 +110,38 @@ test('sends only to the resolved event participant with the stored event name', 
     eventName: 'Governed event',
   }));
 });
+
+test('sponsor request refuses an ordinary approver rather than notifying an admin in their place', async () => {
+  const response = await POST(request({ approvalKind: 'sponsor_commitment' }), params);
+  expect(response.status).toBe(409);
+  expect(await response.json()).toEqual({ error: 'sponsor_assignment_required' });
+  expect(sendMock).not.toHaveBeenCalled();
+});
+
+test('sponsor request uses only the assigned sponsor and a fixed signed-in Scope review link', async () => {
+  fromMock.mockImplementation((table: string) => table === 'source_events'
+    ? eventQuery({ id: 'event-1', event_name: 'Governed event', client_key: 'meridian-health' })
+    : participantQuery([
+      { user_id: 'user_admin', role: 'admin', approval_authority: 'approver', can_approve_source_stages: true },
+      { user_id: 'user_sponsor', role: 'sponsor', approval_authority: 'approver', can_approve_source_stages: true },
+    ]));
+  const response = await POST(request({ approvalKind: 'sponsor_commitment', stageLabel: 'Award approved', stageKey: 'award' }), params);
+  expect(response.status).toBe(200);
+  expect(getUserMock).toHaveBeenCalledWith('user_sponsor');
+  expect(sendMock).toHaveBeenCalledWith(expect.objectContaining({
+    stageLabel: 'Sponsor commitment',
+    reviewUrl: 'https://app.abarva.ai/source/events/event-1?stage=scope',
+  }));
+});
+
+test('sponsor request refuses ambiguous sponsor assignment and invalid request kind', async () => {
+  fromMock.mockImplementation((table: string) => table === 'source_events'
+    ? eventQuery({ id: 'event-1', event_name: 'Governed event', client_key: 'meridian-health' })
+    : participantQuery([
+      { user_id: 'user_sponsor', role: 'sponsor', approval_authority: 'approver', can_approve_source_stages: true },
+      { user_id: 'user_other', role: 'sponsor', approval_authority: 'approver', can_approve_source_stages: true },
+    ]));
+  expect((await POST(request({ approvalKind: 'sponsor_commitment' }), params)).status).toBe(409);
+  expect((await POST(request({ approvalKind: 'self_approve' }), params)).status).toBe(400);
+  expect(sendMock).not.toHaveBeenCalled();
+});

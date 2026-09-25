@@ -93,3 +93,11 @@ test('ok:false maps to error channel with delivered false', async () => {
   expect(result.delivered).toBe(false);
   expect(result.error).toBe('provider_down');
 });
+
+test('sponsor notice says the review link is not a signature or approval', async () => {
+  sendEmailMock.mockResolvedValue({ ok: true, id: 'resend-1' });
+  await sendApprovalRequestEmail({ ...baseInput, approvalKind: 'sponsor_commitment' });
+  const msg = sendEmailMock.mock.calls[0][0];
+  expect(msg.text).toContain('does not approve or sign');
+  expect(msg.html).toContain('does not approve or sign');
+});
