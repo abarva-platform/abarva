@@ -1091,6 +1091,73 @@ jobs:
           "src/app/(maestro)/source/preview/workspace/__tests__/contractStoryDuplication.test.ts"
           --no-coverage --ci
 
+      # T-478. The rank-2 governed-risk directory in the coverage census —
+      # band `high`, signal `tenant_scoped_read`, 31 product sources. Seven of
+      # its 35 files were unwired in two distinct shapes; three are wired here
+      # and four are deliberately NOT, each for a reason recorded in
+      # `docs/architecture/t478-source-workspace-wiring-triage.json`. The guard
+      # `src/__tests__/behaviors/t478-source-workspace-dark-suite-ci-coverage.test.ts`
+      # reads that record rather than a copy of these paths.
+      #
+      # The 28 files above are covered by ENUMERATION, which is the shape that
+      # hid these: no ignore pattern subtracted them, so nothing named them and
+      # nothing reported them missing.
+      #
+      # Both files below were `collected: false`, `green: "unknown"`, `via: []`
+      # on `274967083`. That was settled by running each directly before
+      # judging it, because a file Jest cannot parse and a file Jest never
+      # reaches are indistinguishable from the census: both parse and both
+      # pass, so `collected: false` was reach, not breakage, and neither needed
+      # a repair.
+      #
+      # `contractDetailRetry.test.tsx` is wired although
+      # `docs/architecture/t550-stale-suite-triage.json` verdicts it
+      # `rewrite_as_behavior`. That verdict was CORRECT at its declared base
+      # `05bdab64e`, where the file held 1 `readFileSync` and 16 `toContain`
+      # against `WorkspaceClient.tsx`. `b66e4cd22` ("assert Source route
+      # behaviour instead of file bytes", #8201) rewrote it +248/-53 and is not
+      # an ancestor of that base, so the rewrite the verdict asked for was
+      # delivered on a parallel line and the record was never amended. On this
+      # commit the file holds 0 `readFileSync` and 0 `toContain`, mocks its
+      # dependencies and mounts the component. The T-550 record is left as the
+      # historical draw it is; the current measurement lives in the T-478
+      # record beside it.
+      #
+      # The two render modes of `workspace-explicit-client-api-routing` are two
+      # files, and only the `.browser.test.tsx` one is here. The `.test.ts` one
+      # is a source-text scanner T-556 verdicted `rewrite_as_behavior`.
+      - name: Run the T-478 dark Source workspace suites
+        run: >-
+          npx jest --runTestsByPath
+          "src/app/(maestro)/source/preview/workspace/__tests__/contractDetailRetry.test.tsx"
+          "src/app/(maestro)/source/preview/workspace/__tests__/workspace-explicit-client-api-routing.browser.test.tsx"
+          --no-coverage --ci
+
+      # T-478, second half — a different defect from the two above, which is
+      # why it is a step of its own rather than one more path in that one.
+      # `portfolioAdapter.ecl.test.ts` is already `collected: true,
+      # covered: true`. It is reached only `via: ["script-file"]`:
+      # `COMMAND_CHECKS` in `scripts/ecl/run_product_ecl_predeploy_gate.mjs`
+      # names it, and the only workflow running that gate is
+      # `ecl-product-live-proof.yml`, whose triggers are `workflow_dispatch`
+      # and `workflow_run` after "ACA main deploy" — neither `pull_request` nor
+      # `merge_group`. It ran, green, AFTER the deploy it might have stopped.
+      # Green-and-unwired is the same as absent to a reviewer, and the
+      # difference is visible in the census as
+      # `covered: true, pullRequestCovered: false`.
+      #
+      # This step does not replace the pre-deploy gate's invocation; it adds
+      # the merge-blocking one the file never had. `page-tenant-routing.test.ts`
+      # shares that defect and is NOT wired with it: 6 `readFileSync` and 100
+      # `toContain` against source text, which the repo's own rule — "cannot
+      # wire a source-text scanner into CI" — forbids. Wiring it would buy a
+      # green check and no protection.
+      - name: Run the T-478 pre-deploy-only Source workspace suite
+        run: >-
+          npx jest --runTestsByPath
+          "src/app/(maestro)/source/preview/workspace/__tests__/portfolioAdapter.ecl.test.ts"
+          --no-coverage --ci --runInBand
+
       # An entry in TENANT_DATASET_BY_KEY is a claim that a dataset exists.
       # When it does not, the V6 builders return null and every caller
       # degrades silently — which is how two dataset roots stayed missing

@@ -1,0 +1,210 @@
+{
+  "item": "T-478",
+  "title": "Disposition of the seven unwired files in the census's rank-2 governed-risk directory",
+  "recordedAt": "2026-09-25T10:40:00.000Z",
+  "base": "274967083",
+  "directory": "src/app/(maestro)/source/preview/workspace/__tests__",
+  "governedRisk": {
+    "band": "high",
+    "score": 10,
+    "signals": [
+      "tenant_scoped_read"
+    ],
+    "productSourceCount": 31,
+    "rank": 2
+  },
+  "method": [
+    "Every verdict below is measured on the base commit, not read from an earlier record. Two earlier verdicts were checked against the file as it stands and one of them had gone stale.",
+    "sourceTextScanner is counted, not asserted: readFileSyncCount is occurrences of readFileSync in the file and toContainCount is occurrences of toContain(. A file that reads source at module scope and asserts substrings of it is a scanner however green it runs.",
+    "collected: false was settled by running each file directly BEFORE judging it. A file Jest cannot parse and a file Jest never reaches are indistinguishable in the census, and only the first is breakage.",
+    "The two render modes of workspace-explicit-client-api-routing are two files. One collecting says nothing about the other, and here they take opposite verdicts.",
+    "The repository's standing rule, from the T-742 guard, is that a source-text scanner cannot be wired into CI. Four of these seven are held unwired by it."
+  ],
+  "counts": {
+    "suites": 7,
+    "wired": 3,
+    "heldUnwired": 4,
+    "repaired": 0,
+    "deleted": 0
+  },
+  "suites": [
+    {
+      "path": "src/app/(maestro)/source/preview/workspace/__tests__/contractDetailRetry.test.tsx",
+      "priorShape": "never_reached",
+      "priorVia": [],
+      "priorCollected": false,
+      "priorCovered": false,
+      "priorPullRequestCovered": false,
+      "collected": true,
+      "green": true,
+      "totalTests": 6,
+      "failedTests": 0,
+      "pendingTests": 0,
+      "readFileSyncCount": 0,
+      "toContainCount": 0,
+      "sourceTextScanner": false,
+      "rendersComponent": true,
+      "verdict": "wired",
+      "wiredBy": ".github/workflows/unit-suites.yml",
+      "priorVerdict": {
+        "record": "docs/architecture/t550-stale-suite-triage.json",
+        "verdict": "rewrite_as_behavior",
+        "ownerItem": "T-553"
+      },
+      "priorVerdictStatus": "discharged_elsewhere",
+      "rationale": "T-550 verdicted this rewrite_as_behavior and the verdict was CORRECT at its declared base 05bdab64e, where the file held 1 readFileSync and 16 toContain against WorkspaceClient.tsx. b66e4cd22 (#8201, 'assert Source route behaviour instead of file bytes') rewrote it +248/-53 and is NOT an ancestor of that base, so the rewrite the verdict asked for was delivered on a parallel line and nobody amended the record. Measured here: 0 readFileSync, 0 toContain, dependencies mocked, component mounted, 6 cases green. T-553's premise is discharged; the T-550 record is left as the historical draw it is."
+    },
+    {
+      "path": "src/app/(maestro)/source/preview/workspace/__tests__/workspace-explicit-client-api-routing.browser.test.tsx",
+      "priorShape": "never_reached",
+      "priorVia": [],
+      "priorCollected": false,
+      "priorCovered": false,
+      "priorPullRequestCovered": false,
+      "collected": true,
+      "green": true,
+      "totalTests": 3,
+      "failedTests": 0,
+      "pendingTests": 0,
+      "readFileSyncCount": 0,
+      "toContainCount": 0,
+      "sourceTextScanner": false,
+      "rendersComponent": true,
+      "verdict": "wired",
+      "wiredBy": ".github/workflows/unit-suites.yml",
+      "priorVerdict": {
+        "record": "docs/architecture/t742-stale-suite-triage.json",
+        "verdict": "wire_into_ci",
+        "ownerItem": "T-743"
+      },
+      "priorVerdictStatus": "agrees",
+      "rationale": "T-742 already verdicted this wire_into_ci with sourceTextScanner false and T-743 owned the wiring, which had not happened. Re-measured rather than taken on trust: 0 readFileSync, 0 toContain, renders, 3 cases green. Wired. Its .test.ts sibling takes the opposite verdict below."
+    },
+    {
+      "path": "src/app/(maestro)/source/preview/workspace/__tests__/portfolioAdapter.ecl.test.ts",
+      "priorShape": "pre_deploy_only",
+      "priorVia": [
+        "script-file"
+      ],
+      "priorCollected": true,
+      "priorCovered": true,
+      "priorPullRequestCovered": false,
+      "collected": true,
+      "green": true,
+      "totalTests": 10,
+      "failedTests": 0,
+      "pendingTests": 0,
+      "readFileSyncCount": 0,
+      "toContainCount": 30,
+      "sourceTextScanner": false,
+      "rendersComponent": false,
+      "verdict": "wired",
+      "wiredBy": ".github/workflows/unit-suites.yml",
+      "priorVerdict": null,
+      "priorVerdictStatus": "untriaged",
+      "rationale": "Already collected and covered, but reached only from COMMAND_CHECKS in scripts/ecl/run_product_ecl_predeploy_gate.mjs, whose only caller is ecl-product-live-proof.yml, triggered by workflow_dispatch and by workflow_run after 'ACA main deploy' \u2014 neither pull_request nor merge_group. It ran green AFTER the deploy it might have stopped. Its 30 toContain assert values produced by the adapter against mocked reads and a real temporary directory, not the bytes of a source file, so it is not a scanner. Wired into a merge-blocking step in addition to the pre-deploy gate, which keeps its own invocation."
+    },
+    {
+      "path": "src/app/(maestro)/source/preview/workspace/__tests__/sourceFreshness.test.tsx",
+      "priorShape": "never_reached",
+      "priorVia": [],
+      "priorCollected": false,
+      "priorCovered": false,
+      "priorPullRequestCovered": false,
+      "collected": true,
+      "green": true,
+      "totalTests": 7,
+      "failedTests": 0,
+      "pendingTests": 0,
+      "readFileSyncCount": 1,
+      "toContainCount": 5,
+      "sourceTextScanner": true,
+      "rendersComponent": false,
+      "verdict": "held_unwired",
+      "ownerItem": "T-558",
+      "priorVerdict": {
+        "record": "docs/architecture/t556-stale-suite-triage.json",
+        "verdict": "rewrite_as_behavior",
+        "ownerItem": "T-558"
+      },
+      "priorVerdictStatus": "still_true",
+      "rationale": "T-556 verdicted this rewrite_as_behavior because it reads source files at module scope and asserts substrings, so a comment carrying the same substring satisfies every case. Re-measured on this commit rather than assumed: still 1 readFileSync and 5 toContain, still renders nothing. The verdict stands and T-558 owns the rewrite. Wiring it would buy a green check and no protection."
+    },
+    {
+      "path": "src/app/(maestro)/source/preview/workspace/__tests__/workspace-ava-contract.test.ts",
+      "priorShape": "never_reached",
+      "priorVia": [],
+      "priorCollected": false,
+      "priorCovered": false,
+      "priorPullRequestCovered": false,
+      "collected": true,
+      "green": true,
+      "totalTests": 8,
+      "failedTests": 0,
+      "pendingTests": 0,
+      "readFileSyncCount": 4,
+      "toContainCount": 40,
+      "sourceTextScanner": true,
+      "rendersComponent": false,
+      "verdict": "held_unwired",
+      "ownerItem": "T-558",
+      "priorVerdict": {
+        "record": "docs/architecture/t556-stale-suite-triage.json",
+        "verdict": "rewrite_as_behavior",
+        "ownerItem": "T-558"
+      },
+      "priorVerdictStatus": "still_true",
+      "rationale": "T-556's verdict re-measured and still true: 4 readFileSync and 40 toContain against a client component, a view-model builder, a lens, a stylesheet and a retriever. T-558 owns the rewrite. Note for whoever takes it: T-556 recorded 7 cases and this file now runs 8, so the suite has moved since that draw."
+    },
+    {
+      "path": "src/app/(maestro)/source/preview/workspace/__tests__/workspace-explicit-client-api-routing.test.ts",
+      "priorShape": "never_reached",
+      "priorVia": [],
+      "priorCollected": false,
+      "priorCovered": false,
+      "priorPullRequestCovered": false,
+      "collected": true,
+      "green": true,
+      "totalTests": 8,
+      "failedTests": 0,
+      "pendingTests": 0,
+      "readFileSyncCount": 1,
+      "toContainCount": 4,
+      "sourceTextScanner": true,
+      "rendersComponent": false,
+      "verdict": "held_unwired",
+      "ownerItem": "T-558",
+      "priorVerdict": {
+        "record": "docs/architecture/t556-stale-suite-triage.json",
+        "verdict": "rewrite_as_behavior",
+        "ownerItem": "T-558"
+      },
+      "priorVerdictStatus": "still_true",
+      "rationale": "T-556's verdict re-measured and still true: reads a client component and two API route files and asserts substrings of each. T-558 owns the rewrite. Its .browser.test.tsx sibling is wired above \u2014 the pair takes opposite verdicts, which is why they are two files here. Note for whoever takes it: T-556 recorded 3 cases and this file now runs 8."
+    },
+    {
+      "path": "src/app/(maestro)/source/preview/workspace/__tests__/page-tenant-routing.test.ts",
+      "priorShape": "pre_deploy_only",
+      "priorVia": [
+        "script-file"
+      ],
+      "priorCollected": true,
+      "priorCovered": true,
+      "priorPullRequestCovered": false,
+      "collected": true,
+      "green": true,
+      "totalTests": 13,
+      "failedTests": 0,
+      "pendingTests": 0,
+      "readFileSyncCount": 6,
+      "toContainCount": 100,
+      "sourceTextScanner": true,
+      "rendersComponent": false,
+      "verdict": "held_unwired",
+      "ownerItem": null,
+      "priorVerdict": null,
+      "priorVerdictStatus": "untriaged",
+      "rationale": "NEW FINDING, and the reason this item does not simply wire the second half. It shares portfolioAdapter.ecl.test.ts's defect \u2014 reached only from the post-deploy ECL gate, so nothing it asserts can block a merge \u2014 but it is also the heaviest source-text scanner of the seven: 6 readFileSync and 100 toContain. The repository's own rule forbids wiring a scanner into CI, so making it merge-blocking would convert an unenforced check into an enforced check of source bytes. It needs a behavioural rewrite and has no owner; filed back to the backlog rather than wired or deleted here."
+    }
+  ]
+}
