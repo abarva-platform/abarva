@@ -36,37 +36,80 @@ const FORMATTING_PROFILE: FormattingProfile = {
 
 /** Charter fields captured at P1, in the order they read on a board deck. */
 const CHARTER_EVIDENCE_FIELDS: ReadonlyArray<{
-  key: string;
+  keys: readonly string[];
   label: string;
   evidenceFamily: string;
+  required?: boolean;
+  requiredFor?: readonly string[];
 }> = [
   {
-    key: "sponsor",
-    label: "Accountable sponsor",
+    keys: ["sponsor_commitment", "sponsor"],
+    label: "Sponsor commitment",
     evidenceFamily: "charter_sponsor",
   },
   {
-    key: "stakeholders",
-    label: "Stakeholders & dependencies",
+    keys: ["stakeholder_map", "stakeholders"],
+    label: "Stakeholder map",
     evidenceFamily: "charter_stakeholders",
   },
   {
-    key: "success_metrics",
-    label: "Success metrics & baseline",
+    keys: ["success_criteria", "success_metrics"],
+    label: "Success criteria",
     evidenceFamily: "charter_success_metrics",
   },
   {
-    key: "value_range",
+    keys: ["value_range"],
     label: "Projected value range",
     evidenceFamily: "charter_value_range",
+    required: false,
   },
-  { key: "scope", label: "Scope (in / out)", evidenceFamily: "charter_scope" },
+  {
+    keys: ["decision_rights"],
+    label: "Decision rights",
+    evidenceFamily: "charter_decision_rights",
+    requiredFor: ["charter", "program_charter"],
+  },
+  {
+    keys: ["scope_boundary", "scope"],
+    label: "Scope boundary",
+    evidenceFamily: "charter_scope",
+  },
+  {
+    keys: ["evidence_plan"],
+    label: "P2 evidence plan",
+    evidenceFamily: "charter_evidence_plan",
+    requiredFor: ["charter", "program_charter"],
+  },
 ];
 
 function asString(value: unknown): string | null {
   if (typeof value !== "string") return null;
   const trimmed = value.trim();
   return trimmed.length > 0 ? trimmed : null;
+}
+
+function charterFieldStatement(
+  charter: Record<string, unknown>,
+  keys: readonly string[],
+): { key: string; statement: string } | null {
+  for (const key of keys) {
+    const statement = asString(charter[key]);
+    if (statement) return { key, statement };
+  }
+  return null;
+}
+
+function isProgramCharterDeliverable(deliverableType: string): boolean {
+  return deliverableType === "charter" || deliverableType === "program_charter";
+}
+
+function fieldIsRequiredForDeliverable(
+  field: (typeof CHARTER_EVIDENCE_FIELDS)[number],
+  deliverableType: string,
+): boolean {
+  if (field.required === false) return false;
+  if (!field.requiredFor) return true;
+  return field.requiredFor.includes(deliverableType);
 }
 
 /** Pull a clean, human-readable statement from a baseline-metric row. */
@@ -182,17 +225,17 @@ export function buildMoveDeliverableRequest(
 
   // 1 · Charter fields — user-attested intake, high confidence when present.
   for (const field of CHARTER_EVIDENCE_FIELDS) {
-    const statement = asString(charter[field.key]);
-    if (statement) {
+    const resolved = charterFieldStatement(charter, field.keys);
+    if (resolved) {
       n += 1;
       governedEvidenceBundle.push({
         citationNumber: n,
         label: field.label,
-        statement,
+        statement: resolved.statement,
         evidenceFamily: field.evidenceFamily,
         confidence: "high",
         disclosureTier: "internal_only",
-        provenanceRef: `engagements.charter.${field.key}`,
+        provenanceRef: `engagements.charter.${resolved.key}`,
       });
       sourceRegister.push({
         citationNumber: n,
@@ -200,7 +243,7 @@ export function buildMoveDeliverableRequest(
         evidenceFamily: field.evidenceFamily,
         confidence: "high",
       });
-    } else {
+    } else if (fieldIsRequiredForDeliverable(field, options.deliverableType)) {
       missingEvidence.push({
         evidenceFamily: field.evidenceFamily,
         label: field.label,
@@ -289,10 +332,11 @@ export function buildMoveDeliverableRequest(
     decisionContext: options.decisionContext,
     governedEvidenceBundle,
     sourceRegister,
-    requiredEvidenceSignals:
-      options.deliverableType === "charter"
-        ? []
-        : selectRequiredEvidenceSignals(governedEvidenceBundle),
+    requiredEvidenceSignals: isProgramCharterDeliverable(
+      options.deliverableType,
+    )
+      ? []
+      : selectRequiredEvidenceSignals(governedEvidenceBundle),
     missingEvidence,
     clientCompleteItems: [],
     approvedAssumptions: [],

@@ -32,6 +32,21 @@ const FULL_CHARTER = {
   scope: "Hub re-accommodation in scope; long-haul out of scope for the pilot.",
 };
 
+const CURRENT_P1_CHARTER = {
+  sponsor_commitment:
+    "VP Member Services & Patient Experience sponsors weekly P1/P2 working sessions and phase-gate reviews.",
+  scope_boundary:
+    "Already-live virtual assistant for member service contacts is in scope; clinical advice and autonomous benefit decisions are out of scope.",
+  success_criteria:
+    "Test 20%+ avoidable live-agent contact reduction only as true resolution without service degradation.",
+  stakeholder_map:
+    "Contact center operations, workforce management, CRM, scheduling, payer platform, Privacy, Compliance, CISO, Finance, and Procurement are stakeholders.",
+  decision_rights:
+    "VP Member Services owns service prioritization; Finance owns baseline value; Privacy and Compliance can block transcript or PHI expansion.",
+  evidence_plan:
+    "P2 must validate queue exports, transcript governance, intent taxonomy, API inventory, finance baseline, escalation, repeat contacts, and workforce/site model.",
+};
+
 const FULL_MOVE: MoveBusinessCaseInput = {
   industry_code: "air_transport",
   name: "IROPS Digital AI",
@@ -149,15 +164,15 @@ function passingStub(): ModelCaller {
           "That discipline is what makes the artifact safe to project into HTML now and into document formats later without changing the underlying source.",
       ].join(" ");
       const title =
-        prompt.user.match(/WRITE ONLY THIS SECTION:\s*"([^"]+)"/)?.[1]?.trim() ??
-        "Executive Summary";
+        prompt.user
+          .match(/WRITE ONLY THIS SECTION:\s*"([^"]+)"/)?.[1]
+          ?.trim() ?? "Executive Summary";
       const section: RenderableSection = {
         key: title.toLowerCase().replace(/[^a-z]+/g, "_"),
         title,
-        bodyMarkdown:
-          /recommendation|decision/i.test(title)
-            ? `We recommend the board approve a scoped pilot; the decision ask is explicit and the kill condition is named. ${para}`
-            : `${para} Options considered include holding current operations, piloting the workflow at one hub, or funding a broader rollout after the decision gate [1]. The case for change is explicit because the recovery workflow is where the current operating tension lands.`,
+        bodyMarkdown: /recommendation|decision/i.test(title)
+          ? `We recommend the board approve a scoped pilot; the decision ask is explicit and the kill condition is named. ${para}`
+          : `${para} Options considered include holding current operations, piloting the workflow at one hub, or funding a broader rollout after the decision gate [1]. The case for change is explicit because the recovery workflow is where the current operating tension lands.`,
         groundingMode: "mixed" as const,
         citationsUsed: [1],
       };
@@ -218,6 +233,50 @@ describe("buildBusinessCaseRequest — binds only recorded facts", () => {
     expect(request.initiativeDisplayName).toBe("IROPS Digital AI");
   });
 
+  it("binds current P1 Charter field keys as evidence for the Program Charter", () => {
+    const { request, evidenceCount } = buildMoveDeliverableRequest(
+      {
+        ...FULL_MOVE,
+        name: "Member Service Agent Assist",
+        charter: CURRENT_P1_CHARTER,
+        baseline_metrics: null,
+      },
+      {
+        deliverableType: "program_charter",
+        phaseOrStage: "P1_charter",
+        artifactStandard: "moves.board_grade.program_charter",
+        decisionContext: "Approve the P1 Charter and run P2 Discovery.",
+      },
+    );
+
+    expect(evidenceCount).toBe(6);
+    expect(request.requiredEvidenceSignals).toEqual([]);
+    expect(request.missingEvidence).toHaveLength(0);
+    expect(
+      request.governedEvidenceBundle.map((item) => [
+        item.evidenceFamily,
+        item.provenanceRef,
+      ]),
+    ).toEqual([
+      ["charter_sponsor", "engagements.charter.sponsor_commitment"],
+      ["charter_stakeholders", "engagements.charter.stakeholder_map"],
+      ["charter_success_metrics", "engagements.charter.success_criteria"],
+      ["charter_decision_rights", "engagements.charter.decision_rights"],
+      ["charter_scope", "engagements.charter.scope_boundary"],
+      ["charter_evidence_plan", "engagements.charter.evidence_plan"],
+    ]);
+    expect(
+      request.governedEvidenceBundle.find(
+        (item) => item.evidenceFamily === "charter_sponsor",
+      )?.statement,
+    ).toContain("VP Member Services");
+    expect(
+      request.governedEvidenceBundle.find(
+        (item) => item.evidenceFamily === "charter_evidence_plan",
+      )?.statement,
+    ).toContain("transcript governance");
+  });
+
   it("records absent charter fields as missing evidence (gap, not fabrication)", () => {
     const thin: MoveBusinessCaseInput = {
       ...FULL_MOVE,
@@ -230,7 +289,6 @@ describe("buildBusinessCaseRequest — binds only recorded facts", () => {
       expect.arrayContaining([
         "charter_stakeholders",
         "charter_success_metrics",
-        "charter_value_range",
         "charter_scope",
       ]),
     );
