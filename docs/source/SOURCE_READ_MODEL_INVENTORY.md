@@ -1,6 +1,6 @@
 # Source read-model inventory (D-030)
 
-This is a build-contract inventory, not a claim that any of these proposed L4 models exists, is populated, or is safe for product claims. Layer 3 owns facts; Source consumes projections. The executable catalogue is `src/lib/source/data-model/read-model-inventory.ts`. Its check measures metadata completeness only, not validity or build approval. A build cannot be called ready until its contract has verified canonical inputs, grain, keys, as-of basis, reconciliation equation and denominator, tenant fence and opposite-tenant query, freshness SLA, owner, trigger, stale behavior, field authority, and a governed job.
+This is a build-contract inventory, not a claim that any of these proposed L4 models exists, is populated, or is safe for product claims. Layer 3 owns facts; Source consumes projections. The executable catalogue is `src/lib/source/data-model/read-model-inventory.ts`; `npx tsx scripts/source/check-read-model-inventory.ts` reports missing metadata and `--require-complete` exits nonzero while any is missing. Its check measures metadata completeness only, not validity or build approval. A build cannot be called ready until its contract has verified canonical inputs, grain, keys, as-of basis, reconciliation equation and denominator, tenant fence and opposite-tenant query, freshness SLA, owner, trigger, stale behavior, field authority, and a governed job.
 
 | Proposed model | Grain | Intended consumer | Reconciled build contract |
 |---|---|---|---|

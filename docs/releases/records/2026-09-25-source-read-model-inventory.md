@@ -27,6 +27,7 @@ Release lane: `client-data-lane`. Layer 3 remains the fact authority. This Layer
 ## Changes Included
 
 - Add a 13-model proposed catalogue and a fail-closed build-contract assessment.
+- Add a read-only operator report with an optional completeness exit status.
 - Document the first event-queue candidate and its unresolved identity and denominator questions.
 - Add behavior tests for completeness and missing tenant/reconciliation controls.
 
@@ -35,6 +36,7 @@ Release lane: `client-data-lane`. Layer 3 remains the fact authority. This Layer
 - Red first: the behavior suite failed because the contract module did not exist.
 - Mutation: removing `tenantFence` from required fields failed two tests; it was restored.
 - Focused Jest: Pass, 3 tests. TypeScript: Pass with an 8 GB Node heap after the default 4 GB heap exhausted. Scoped ESLint: Pass. Test coverage census: refreshed after the new suite. Release check: Pass.
+- Operator report: 13/13 proposed models still lack complete metadata; `--require-complete` exits 1. Library orphan audit: Pass after the report became the non-test consumer.
 - Live data reconciliation, ACA job and signed-in positive readback: Not run; separately authorized work remains.
 
 ## Rollout Plan
