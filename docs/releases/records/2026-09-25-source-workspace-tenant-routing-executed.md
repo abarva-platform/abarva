@@ -65,9 +65,12 @@ file is touched, so this is not `client-data-lane`.
 
 - `src/app/(maestro)/source/preview/workspace/__tests__/page-tenant-routing.test.ts`
   — rewritten from a source-text scanner into an executed-route test. Was 208
-  lines, 13 cases, 6 `readFileSync`, 100 `toContain`. Now 14 cases, 0
-  `readFileSync`, 0 `toContain`. The path is unchanged, so the pre-deploy gate
-  that already named it keeps its invocation.
+  lines, 13 cases, six synchronous source-file reads and a hundred substring
+  assertions over their text. Now 14 cases, **no file reads at all** and
+  **nothing asserted against the bytes of a source file**. One substring
+  assertion remains, against rendered DOM text, and is annotated as such where
+  it sits. The path is unchanged, so the pre-deploy gate that already named it
+  keeps its invocation.
 - `.github/workflows/unit-suites.yml` — the suite is added by exact path to the
   existing pre-deploy-only step, making it merge-blocking. The step's comment,
   which previously recorded why this file was deliberately *not* wired, is
@@ -82,6 +85,13 @@ file is touched, so this is not `client-data-lane`.
   is written to avoid.
 - `docs/architecture/test-ci-coverage-census.json` — refreshed in the same
   change.
+- `src/__tests__/behaviors/t478-source-workspace-dark-suite-ci-coverage.test.ts`
+  — the guard over that triage record. Its non-vacuity case pinned the
+  disposition at three wired and four held, so moving a verdict made it fail, as
+  designed. Updated to the new draw and strengthened from a pair of counts to a
+  per-file verdict map, plus a new case requiring the discharge fields on any
+  verdict that moved off the held list. See QA below for the deliberate breakage
+  that proves it still bites.
 
 No source, route, API, migration, loader, adapter, or dataset file is modified.
 
@@ -101,6 +111,36 @@ as clean.)
 
 **Lint.** `npx eslint` on the rewritten file — 0 errors, 0 warnings. An earlier
 draft left an unused interaction handle; it was deleted rather than suppressed.
+
+**Two corrections made before merge, recorded rather than quietly fixed.**
+
+*The counts.* An earlier draft of this record, of the workflow comment and of the
+triage entry all claimed "0 `readFileSync`, 0 `toContain`". That was wrong as a
+literal token count: the header prose describing the old scanner named both
+tokens, so the line describing the defect was an instance of it, and two
+assertions used `toContain`. The prose was reworded to stop naming the tokens;
+the assertion on the contract-detail pathname was tightened from a substring to
+an exact match, which is the stronger assertion anyway; and the one remaining
+substring assertion — against rendered DOM text, not source bytes — is recorded
+as `toContainCount: 1` with `toContainAgainstSourceTextCount: 0` rather than
+rounded to zero. The re-verification condition keys on the second field, so it
+does not fire on the legitimate one.
+
+*A guard this change had to update.* `src/__tests__/behaviors/t478-source-workspace-dark-suite-ci-coverage.test.ts`
+holds the T-478 disposition in place, and its non-vacuity case hard-coded
+`wired: 3, held: 4`. Moving one verdict made it fail, correctly — it was doing
+its job. It was updated, not weakened, and made stronger in the process: the
+pair of counts is replaced by a per-file verdict map, because a count cannot say
+*which* verdict moved and one update is otherwise indistinguishable from two
+moving in opposite directions. A new case was added requiring that any suite now
+wired which the record shows was previously held must carry the discharge fields
+— prior verdict, prior rationale, owner, and a stated re-verification condition
+— so a verdict cannot be reversed without leaving a trace of what it used to say.
+
+Both halves of that guard were then broken deliberately. Flipping this file's
+verdict back to `held_unwired` fails 4 of its 23 cases, including the new
+disposition map and the new discharge case. Stripping just the discharge fields
+fails exactly 1 of 24 — the new case and nothing else. Restored: 24 of 24 pass.
 
 **The suite itself.** 14 passed, 14 total.
 

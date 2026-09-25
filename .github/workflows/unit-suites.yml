@@ -1164,8 +1164,10 @@ jobs:
       # execute the route — it calls `SourceWorkspacePage` with real
       # `searchParams`, mounts the tree it returns with the real loader and the
       # real `WorkspaceClient` beneath it, and reads the `client` parameter off
-      # the contract-detail request those components actually made. It now holds
-      # 0 `readFileSync` and 0 `toContain`.
+      # the contract-detail request those components actually made. It makes no
+      # file reads at all, and asserts nothing against the bytes of a source
+      # file; one substring assertion remains and it is against rendered DOM
+      # text.
       #
       # What the rewrite buys, measured rather than asserted. With the tenant
       # membership fence left in place and running, its call text byte-identical,

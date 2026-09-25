@@ -6,10 +6,10 @@
  * Source workspace tenant routing — asserted by running the route, not by
  * reading it.
  *
- * WHAT THIS FILE USED TO BE. 208 lines, 13 cases, 6 `readFileSync` and 100
- * `toContain` against the source text of `page.tsx`, `loading.tsx`,
- * `WorkspaceClientLoader.tsx`, the preview `page.tsx` and the portfolio API
- * route. Every case asserted that a line had been *written*. A
+ * WHAT THIS FILE USED TO BE. 208 lines, 13 cases, six synchronous reads of
+ * source files and a hundred substring assertions over their text: `page.tsx`,
+ * `loading.tsx`, `WorkspaceClientLoader.tsx`, the preview `page.tsx` and the
+ * portfolio API route. Every case asserted that a line had been *written*. A
  * behaviour-preserving rename broke it, and a comment satisfied it. Its only
  * reach was `COMMAND_CHECKS` in `scripts/ecl/run_product_ecl_predeploy_gate.mjs`,
  * driven by `ecl-product-live-proof.yml` — `workflow_dispatch` plus
@@ -246,8 +246,8 @@ describe("the Source workspace route resolves a tenant and carries it to the wir
     expect(contractDetailUrl().searchParams.get("client")).toBe(
       REQUESTED_TENANT,
     );
-    expect(contractDetailUrl().pathname).toContain(
-      encodeURIComponent(CONTRACT_ID),
+    expect(contractDetailUrl().pathname).toBe(
+      `/api/source/workspace/contract/${encodeURIComponent(CONTRACT_ID)}`,
     );
   });
 
@@ -335,6 +335,8 @@ describe("an unauthorised tenant fails closed before any read", () => {
     // Asserting the absence of the read is the point — a page that rendered a
     // warning and still read the other tenant's contracts would pass a
     // render-only assertion.
+    // The only substring assertion left in this file, and it is against
+    // rendered DOM text — not the bytes of a source file.
     expect(container.textContent).toContain(
       "This session cannot open the requested tenant",
     );
