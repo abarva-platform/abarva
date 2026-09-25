@@ -41,6 +41,9 @@ nobody can open is not shipped product.
 
 ## Layer Impact
 
+Release lane: **`global-control-lane`** — shared control-plane behavior (a CI
+gate and its committed measurement) for all clients, with no feature gate.
+
 - **Layer 4 (Products · Source)** — no product behavior changes. No component,
   route, adapter, query or projection is touched. What changes is what the
   repository can say about how much of the Source surface one control proves.
@@ -163,6 +166,31 @@ observed, then restored.
   before render, which is exactly why the control must stay render-measured.
 - A reader's confirmation on the deployed surface is outside this acceptance by
   the item's own wording. None is claimed.
+
+## Known Gaps
+
+- **`coveredUpperBound` is an upper bound, not proven coverage.** The closure is
+  a transitive *import* closure; importing a module is not rendering it. The
+  number is honest about the direction it errs in, and the remainder — the half
+  that drives the work — is a sound lower bound on the gap. Narrowing the upper
+  bound would need per-component render attribution, which is not built.
+- **100 route-reachable Source components are audited by nothing.** That is the
+  finding, not a defect introduced here. This change makes the gap visible and
+  makes it fail when it grows; closing it is follow-on work, with a worst-first
+  ranking recorded above so the next agent starts from evidence.
+- **The reachable population depends on a committed baseline.** Reachability is
+  read from `docs/architecture/unreachable-components.json` rather than
+  recomputed, so a newly added component counts as reachable until that baseline
+  is regenerated. That errs toward a larger remainder, which is the safe
+  direction, and the route-reachability gate already refuses a pull request that
+  lands a new orphan without updating the baseline.
+- **The worst-first ranking is a prioritisation heuristic, not a finding list.**
+  It counts identifier-shaped tokens in string-literal and JSX-text positions.
+  Many are switch discriminants mapped to a client label before render, which is
+  precisely why the control itself must stay render-measured. Nothing in the
+  ranking is asserted to be a shipped defect.
+- **No signed-in or deployed-surface check is claimed.** The filing item places
+  it outside this acceptance, and nothing here changes a product surface.
 
 ## Rollout Plan
 
