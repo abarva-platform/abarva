@@ -367,3 +367,46 @@ export function classifySourceAnswerMode(
   }
   return { mode: "general_advisory", matchedRule: "no_match", isFallback: true };
 }
+
+/**
+ * The prompt-visible disclosure of what the classifier actually decided.
+ *
+ * Item C-522. `classifySourceAnswerMode` returns three fields and the chat
+ * route kept one of them: `.mode`. Its sibling caller
+ * (`src/lib/source/ava/module-expert.ts`) kept all three and rendered the rule
+ * id into the packet it hands the model, so two callers of one classifier
+ * disagreed about whether "no rule matched" is information. It is: C-403
+ * measured the 16-row §12.11 contract acceptance set and found 48 of 48
+ * questions arriving as `isFallback: true`, which means the route was building
+ * its catch-all grounding without ever knowing the mode was a fall-through.
+ *
+ * `general_advisory` is reachable ONLY by fallback (asserted in
+ * `src/__tests__/behaviors/c403-answer-mode-routing.test.ts`), so the mode
+ * alone cannot tell "a rule chose this" from "nothing matched" — the two
+ * fallback rules (`empty_question`, `no_match`) and any future matched route
+ * into the same mode would be indistinguishable downstream. This block is what
+ * makes the difference reach the model.
+ *
+ * Pure and deterministic: same classification in, same string out, no I/O.
+ */
+export function buildSourceAnswerModeDisclosureBlock(
+  classification: SourceAnswerModeClassification,
+): string {
+  if (classification.isFallback) {
+    return [
+      "SOURCE ANSWER-MODE CLASSIFICATION:",
+      `NO PATTERN MATCHED this question (fall-through rule: ${classification.matchedRule}). ` +
+        `Mode ${classification.mode} is a fall-through, not a classification — ` +
+        "the deterministic router recognised nothing specific in what was asked.",
+      "- Do not present the grounding above as a targeted answer to the question asked.",
+      "- Name plainly the part of the question you cannot address from the recorded evidence.",
+      "- Do not silently narrow the question to one the grounding happens to answer.",
+    ].join("\n");
+  }
+  return [
+    "SOURCE ANSWER-MODE CLASSIFICATION:",
+    `A deterministic rule matched this question: mode ${classification.mode} ` +
+      `via rule ${classification.matchedRule}.`,
+    "- Answer in that mode, using the grounding above for that mode.",
+  ].join("\n");
+}

@@ -177,6 +177,7 @@ import { buildAvaSourcePortfolioGrounding } from "@/lib/source/facts/view/ava-po
 // like the value grounding above: when `source_analytics` is off or no event id
 // is present, none of this runs and the chat is byte-for-byte unchanged.
 import {
+  buildSourceAnswerModeDisclosureBlock,
   classifySourceAnswerMode,
   isPhaseBImplementedMode,
   isPhaseCImplementedMode,
@@ -1552,6 +1553,14 @@ export async function POST(request: Request) {
   let sourceAvaAnswerMode:
     | ReturnType<typeof classifySourceAnswerMode>["mode"]
     | null = null;
+  // C-522 · the classifier's OTHER two fields, made visible to the model.
+  // `classifySourceAnswerMode` returns `.mode`, `.matchedRule` and
+  // `.isFallback`; this route kept only the first, so it built catch-all
+  // grounding without knowing the catch-all was a fall-through. C-403 measured
+  // that blind spot at 48 of 48 contract questions. Empty string on every turn
+  // that does not classify — the join-filter below strips it, so those turns
+  // are byte-identical.
+  let sourceAvaAnswerModeDisclosureBlock = "";
   let sourceAvaModeGroundingFacts: Record<string, string> = {};
   let sourceAvaModeEvidenceIncomplete = false;
   // Phase B only: the raw mode-grounding block text (for the quality gate's
@@ -1626,6 +1635,11 @@ export async function POST(request: Request) {
         viewedStage: viewStageFromContext,
       });
       sourceAvaAnswerMode = modeClassification.mode;
+      // The whole classification, not `.mode` — passing the mode alone would
+      // put `isFallback` back out of reach, and `general_advisory` is
+      // fallback-only, so the mode cannot carry that distinction itself.
+      sourceAvaAnswerModeDisclosureBlock =
+        buildSourceAnswerModeDisclosureBlock(modeClassification);
       // Contract Optimize turns can carry both `contractId` and `sourceEventId`.
       // When the single-contract read model is present, it is the authority for
       // this contract; do not append the older event/archetype block after it.
@@ -1903,6 +1917,7 @@ export async function POST(request: Request) {
       sourceAvaGroundingBlock = "";
       sourceAvaQuoteNotComputeGuard = "";
       sourceAvaAnswerMode = null;
+      sourceAvaAnswerModeDisclosureBlock = "";
       sourceAvaModeGroundingFacts = {};
       sourceAvaModeEvidenceIncomplete = false;
       sourceAvaModeGroundingBlockText = "";
@@ -2267,6 +2282,12 @@ export async function POST(request: Request) {
     // string when the flag is off or no event id is present — the join-filter
     // strips it and the chat is unchanged.
     sourceAvaGroundingBlock,
+    // C-522 · what the deterministic router decided, and whether it decided
+    // anything at all. Placed immediately AFTER the mode grounding it
+    // qualifies: the fall-through wording tells aVa not to present the block
+    // above as a targeted answer, which only reads correctly once that block
+    // has been stated. Empty string when no classification ran.
+    sourceAvaAnswerModeDisclosureBlock,
     sourceContract360PromptBlock,
     "",
     tenantTechnologyContextBlock,

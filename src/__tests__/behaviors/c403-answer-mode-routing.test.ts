@@ -62,6 +62,7 @@ import path from "node:path";
 import ts from "typescript";
 
 import {
+  buildSourceAnswerModeDisclosureBlock,
   classifySourceAnswerMode,
   type SourceAnswerMode,
 } from "@/lib/source/ava/answer-mode";
@@ -966,11 +967,17 @@ describe("C-403 — the two callers, and what each one keeps", () => {
     expect(nonTestCallers()).toEqual([ROUTE_CALLER_REL, PACKET_CALLER_REL].sort());
   });
 
-  it("the chat route keeps only `.mode` — this is the defect the item names", () => {
-    const text = fs.readFileSync(path.join(REPO_ROOT, ROUTE_CALLER_REL), "utf8");
-    expect(text).toContain("sourceAvaAnswerMode = modeClassification.mode;");
-    expect(text).not.toContain("modeClassification.matchedRule");
-    expect(text).not.toContain("modeClassification.isFallback");
+  it("the chat route no longer keeps only `.mode` — C-522 closed the defect C-403 named", () => {
+    // C-403 recorded this call site dropping `.matchedRule` and `.isFallback`.
+    // C-522 fixed it. The assertion is inverted rather than deleted, so the
+    // defect cannot return without failing the suite that measured it. It is
+    // asserted through the AST in the C-522 block below, not by a text scan:
+    // the question "does the route pass the whole classification to the
+    // disclosure builder, and does that builder's result reach the prompt" is
+    // a syntax question, and a text scan cannot answer one.
+    const wiring = extractRouteDisclosureWiring();
+    expect(wiring.builderArgument).toBe("modeClassification");
+    expect(wiring.systemPromptElements).toContain(wiring.assignedTo);
   });
 
   it("the module-expert packet keeps BOTH fields and shows the rule to the model", () => {
@@ -978,6 +985,212 @@ describe("C-403 — the two callers, and what each one keeps", () => {
     expect(text).toContain("matchedRule: classification.matchedRule");
     expect(text).toContain("isFallbackMode: classification.isFallback");
     expect(text).toContain("`Answer mode: ${mode} (${packet.matchedRule})`");
+  });
+});
+
+// ───────────────────────────────────────────────────────────────────────────────
+// C-522 — the route now READS the fallback flag, and the read reaches the model.
+//
+// C-403 measured the defect; this is the fix's proof. Two things have to hold,
+// and they are different kinds of claim:
+//
+//   1. BEHAVIOUR, at the destination. Run real questions through the real
+//      classifier into the real builder and compare the strings that reach the
+//      model. A matched question and a fallen-through question must not produce
+//      the same model-facing text. A test that merely observes the field being
+//      assigned would pass against a route that assigns it and throws it away,
+//      which is the exact shape of the defect — so nothing here asserts an
+//      assignment.
+//   2. WIRING, in syntax. The builder's result has to be an element of the
+//      `systemPrompt` array, and its argument has to be the whole
+//      classification object rather than `.mode` — passing `.mode` would
+//      compile, would look correct in a grep, and would make `isFallback`
+//      unreachable again. Both are read off the TypeScript AST.
+// ───────────────────────────────────────────────────────────────────────────────
+
+interface RouteDisclosureWiring {
+  /** The identifier the builder's result is assigned to. */
+  assignedTo: string;
+  /** The text of the single argument handed to the builder. */
+  builderArgument: string;
+  /** Identifier names appearing as elements of the `systemPrompt` array. */
+  systemPromptElements: string[];
+}
+
+function findFirstArrayLiteral(
+  node: ts.Node,
+): ts.ArrayLiteralExpression | null {
+  let found: ts.ArrayLiteralExpression | null = null;
+  const walk = (current: ts.Node): void => {
+    if (found) return;
+    if (ts.isArrayLiteralExpression(current)) {
+      found = current;
+      return;
+    }
+    ts.forEachChild(current, walk);
+  };
+  walk(node);
+  return found;
+}
+
+function extractRouteDisclosureWiring(): RouteDisclosureWiring {
+  const routePath = path.join(REPO_ROOT, ROUTE_CALLER_REL);
+  const sourceFile = ts.createSourceFile(
+    ROUTE_CALLER_REL,
+    fs.readFileSync(routePath, "utf8"),
+    ts.ScriptTarget.Latest,
+    true,
+  );
+
+  let assignedTo = "";
+  let builderArgument = "";
+  let systemPromptElements: string[] = [];
+
+  const visit = (node: ts.Node): void => {
+    // `<identifier> = buildSourceAnswerModeDisclosureBlock(<arg>)`
+    if (
+      ts.isBinaryExpression(node) &&
+      node.operatorToken.kind === ts.SyntaxKind.EqualsToken &&
+      ts.isIdentifier(node.left) &&
+      ts.isCallExpression(node.right) &&
+      ts.isIdentifier(node.right.expression) &&
+      node.right.expression.text === "buildSourceAnswerModeDisclosureBlock"
+    ) {
+      assignedTo = node.left.text;
+      const [arg] = node.right.arguments;
+      builderArgument = arg ? arg.getText(sourceFile) : "";
+    }
+    // `const systemPrompt = [ ... ].filter(...).join(...)` — the initializer is
+    // a call chain, so descend to the array literal it is built from rather
+    // than assuming the declaration's initializer IS the array.
+    if (
+      ts.isVariableDeclaration(node) &&
+      ts.isIdentifier(node.name) &&
+      node.name.text === "systemPrompt" &&
+      node.initializer
+    ) {
+      const array = findFirstArrayLiteral(node.initializer);
+      if (array) {
+        systemPromptElements = array.elements
+          .filter(ts.isIdentifier)
+          .map((element) => element.text);
+      }
+    }
+    ts.forEachChild(node, visit);
+  };
+  visit(sourceFile);
+
+  return { assignedTo, builderArgument, systemPromptElements };
+}
+
+/** Questions the router genuinely matches, taken from the rules' own words. */
+function matchedQuestions(): Array<{ question: string; ruleId: string }> {
+  const out: Array<{ question: string; ruleId: string }> = [];
+  for (const rule of extractRules().rules) {
+    for (const probe of probesFor(rule)) {
+      const result = classifySourceAnswerMode({ question: probe });
+      if (!result.isFallback) {
+        out.push({ question: probe, ruleId: result.matchedRule });
+      }
+    }
+  }
+  return out;
+}
+
+describe("C-522 — a fallen-through question and a matched one no longer look alike", () => {
+  const matched = matchedQuestions();
+
+  it("has a non-trivial corpus on both sides, so neither branch is vacuous", () => {
+    // A control that only ever sees one branch proves nothing about the other.
+    expect(matched.length).toBeGreaterThan(50);
+    expect(measurement.specAcceptance.fallbackCount).toBe(48);
+  });
+
+  it("gives every one of the 48 §12.11 acceptance questions an explicit no-pattern-matched marker", () => {
+    for (const entry of measurement.specAcceptance.questions) {
+      const block = buildSourceAnswerModeDisclosureBlock(
+        classifySourceAnswerMode({ question: entry.question }),
+      );
+      expect(block).toContain("NO PATTERN MATCHED");
+      expect(block).toContain(entry.matchedRule);
+    }
+  });
+
+  it("never emits that marker for a question a rule actually matched", () => {
+    for (const { question, ruleId } of matched) {
+      const block = buildSourceAnswerModeDisclosureBlock(
+        classifySourceAnswerMode({ question }),
+      );
+      expect(block).not.toContain("NO PATTERN MATCHED");
+      expect(block).toContain(ruleId);
+    }
+  });
+
+  it("produces text that DIFFERS between the two, question for question", () => {
+    // The destination, not the departure: these are the strings handed to the
+    // model, compared against each other. If the builder ever collapses to one
+    // message this fails, even though `isFallback` would still be read.
+    const fallbackBlocks = new Set(
+      measurement.specAcceptance.questions.map((entry) =>
+        buildSourceAnswerModeDisclosureBlock(
+          classifySourceAnswerMode({ question: entry.question }),
+        ),
+      ),
+    );
+    const matchedBlocks = new Set(
+      matched.map(({ question }) =>
+        buildSourceAnswerModeDisclosureBlock(
+          classifySourceAnswerMode({ question }),
+        ),
+      ),
+    );
+    expect(fallbackBlocks.size).toBeGreaterThan(0);
+    expect(matchedBlocks.size).toBeGreaterThan(0);
+    for (const block of matchedBlocks) {
+      expect(fallbackBlocks.has(block)).toBe(false);
+    }
+  });
+
+  it("separates the two fallback rules, which the mode alone cannot", () => {
+    // `general_advisory` is fallback-only (C-403 clause 1), so the mode is the
+    // same for an empty question and an unmatched one. The disclosure is not.
+    const empty = buildSourceAnswerModeDisclosureBlock(
+      classifySourceAnswerMode({ question: "" }),
+    );
+    const noMatch = buildSourceAnswerModeDisclosureBlock(
+      classifySourceAnswerMode({
+        question: "zzzz qqqq no rule in this table matches this string",
+      }),
+    );
+    expect(empty).toContain("empty_question");
+    expect(noMatch).toContain("no_match");
+    expect(empty).not.toEqual(noMatch);
+  });
+
+  it("is pure — the same classification yields the same string", () => {
+    const classification = classifySourceAnswerMode({
+      question: "what is the value at stake",
+    });
+    expect(buildSourceAnswerModeDisclosureBlock(classification)).toBe(
+      buildSourceAnswerModeDisclosureBlock(classification),
+    );
+  });
+});
+
+describe("C-522 — the route's wiring, read off the AST rather than grepped", () => {
+  const wiring = extractRouteDisclosureWiring();
+
+  it("hands the builder the WHOLE classification, not `.mode`", () => {
+    // `buildSourceAnswerModeDisclosureBlock(modeClassification.mode)` would not
+    // type-check today, but the point of asserting the argument is that a later
+    // widening of the builder's parameter must not quietly make `isFallback`
+    // unreachable again.
+    expect(wiring.builderArgument).toBe("modeClassification");
+  });
+
+  it("puts the builder's result into the systemPrompt array", () => {
+    expect(wiring.assignedTo).not.toBe("");
+    expect(wiring.systemPromptElements).toContain(wiring.assignedTo);
   });
 });
 
