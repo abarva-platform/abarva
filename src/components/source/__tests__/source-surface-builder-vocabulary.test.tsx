@@ -42,6 +42,7 @@ import {
   describeBuilderVocabulary,
   findBuilderVocabulary,
 } from "@/testing/source-builder-vocabulary";
+import { AUDITED_SURFACE_ROOTS } from "@/testing/source-builder-vocabulary-coverage";
 
 /**
  * A surface under audit: how to put it on screen, how to drive it so the parts
@@ -49,6 +50,16 @@ import {
  */
 interface SurfaceUnderAudit {
   readonly name: string;
+  /**
+   * The component file this surface mounts, repo-relative.
+   *
+   * Item U-405: the coverage this control has over shipped Source UI is
+   * derived from these paths and committed to
+   * `docs/architecture/source-builder-vocabulary-render-coverage.json`. Naming
+   * the root here is what lets the coverage gate redden by surface name when a
+   * surface is dropped, instead of a total quietly shrinking.
+   */
+  readonly rootPath: string;
   /** Renders the surface and returns the text of everything reachable on it. */
   readonly renderAndDrive: () => string;
   /**
@@ -106,6 +117,7 @@ const STAGE_FRONT_CRITICAL_FIELDS: ReadonlySet<string> = new Set(
 const SURFACES: readonly SurfaceUnderAudit[] = [
   {
     name: "renewal cockpit · action bar (all panels opened)",
+    rootPath: "src/components/source/RenewalCockpitActionBar.tsx",
     renderAndDrive: () => {
       const { container } = render(<RenewalCockpitActionBar cockpit={cockpit} />);
       let text = container.textContent ?? "";
@@ -122,6 +134,7 @@ const SURFACES: readonly SurfaceUnderAudit[] = [
   },
   {
     name: "stage front · working session guide",
+    rootPath: "src/components/source/canvas/SimpleStageFront.tsx",
     renderAndDrive: () => {
       // The view is resolved by the product's own resolver from the canonical
       // requirement set, so the text audited here is the text a real event
@@ -164,6 +177,7 @@ const SURFACES: readonly SurfaceUnderAudit[] = [
   },
   {
     name: "artifact blocker list",
+    rootPath: "src/components/source/canvas/ArtifactBlockerList.tsx",
     renderAndDrive: () => {
       const { container } = render(
         <ArtifactBlockerList
@@ -226,6 +240,51 @@ describe("Source surfaces · no builder vocabulary in rendered output", () => {
               `${stale.join(", ")}. Delete the entries — an exemption that outlives ` +
               `its defect is how a baseline stops meaning anything.`,
       ).toBe("");
+    },
+  );
+});
+
+describe("the audited surface list and the declared coverage agree", () => {
+  /**
+   * Item U-405. The coverage number in
+   * `docs/architecture/source-builder-vocabulary-render-coverage.json` is
+   * derived from `AUDITED_SURFACE_ROOTS`, and this suite is what actually
+   * mounts them. If the two drift, the artifact bills coverage for a screen
+   * nothing renders — the exact shape of "a gate you cannot fail".
+   *
+   * Asserted per entry in both directions, never as a count: two entries
+   * swapping leaves a total unmoved, and the failure has to say which one.
+   */
+  it.each(SURFACES.map((s) => [s.name, s] as const))(
+    "%s is declared in AUDITED_SURFACE_ROOTS with the same root path",
+    (_name, surface) => {
+      const declared = AUDITED_SURFACE_ROOTS.find(
+        (root) => root.surfaceName === surface.name,
+      );
+      expect(
+        declared
+          ? ""
+          : `Surface "${surface.name}" is audited here but not declared in ` +
+              `AUDITED_SURFACE_ROOTS, so the committed coverage number does ` +
+              `not know about it.`,
+      ).toBe("");
+      expect(declared?.path).toBe(surface.rootPath);
+    },
+  );
+
+  it.each(AUDITED_SURFACE_ROOTS.map((r) => [r.surfaceName, r] as const))(
+    "%s is declared for coverage and is still audited here",
+    (_name, root) => {
+      const surface = SURFACES.find((s) => s.name === root.surfaceName);
+      expect(
+        surface
+          ? ""
+          : `AUDITED_SURFACE_ROOTS declares "${root.surfaceName}" ` +
+              `(${root.path}) as audited, and this suite no longer mounts it. ` +
+              `Restore the surface, or drop the declaration so the committed ` +
+              `coverage number falls with it.`,
+      ).toBe("");
+      expect(surface?.rootPath).toBe(root.path);
     },
   );
 });
