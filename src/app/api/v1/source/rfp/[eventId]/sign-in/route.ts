@@ -129,7 +129,7 @@ export async function POST(
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'lax',
-    path: `/rfp/${eventId}`,
+    path: '/',
     expires: session.expiresAt,
   });
   return res;

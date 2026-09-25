@@ -30,6 +30,6 @@ export async function POST(
     }
   }
   const res = NextResponse.json({ ok: true });
-  res.cookies.set(cookie, '', { path: `/rfp/${eventId}`, expires: new Date(0) });
+  res.cookies.set(cookie, '', { path: '/', expires: new Date(0) });
   return res;
 }

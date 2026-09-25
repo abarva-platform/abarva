@@ -86,4 +86,11 @@ describe('vendor portal public surface', () => {
     expect(errors).not.toContain('unknown_username');
     expect(errors).not.toContain('wrong_password');
   });
+
+  it('the session cookie reaches both the overview and vendor API routes', () => {
+    const signIn = readFileSync(path.join(API_ROOT, '[eventId]/sign-in/route.ts'), 'utf8');
+    const signOut = readFileSync(path.join(API_ROOT, '[eventId]/sign-out/route.ts'), 'utf8');
+    expect(signIn).toMatch(/res\.cookies\.set\(sessionCookieName\(eventId\), session\.token, \{[\s\S]*?path: '\/'/);
+    expect(signOut).toMatch(/res\.cookies\.set\(cookie, '', \{ path: '\/'/);
+  });
 });
