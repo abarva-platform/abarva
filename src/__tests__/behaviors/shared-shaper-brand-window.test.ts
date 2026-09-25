@@ -44,6 +44,17 @@ const ASCII_PRINTABLE: string[] = Array.from({ length: 95 }, (_, i) =>
   String.fromCharCode(0x20 + i),
 );
 
+/**
+ * An occurrence is word-bounded on both sides exactly when neither neighbour is
+ * a word character, so the number of rows whose input carries a bounded name is
+ * derived rather than written down. A literal would break the moment a carrier
+ * is added, which teaches the next author to edit the number instead of asking
+ * what it means.
+ */
+const NON_WORD_PRINTABLE = ASCII_PRINTABLE.filter(
+  (char) => !/[A-Za-z0-9_]/.test(char),
+);
+
 const FILLER =
   "The renewal sits with the vendor owner and the budget line is the one the board asked about. " +
   "Spend is concentrated in three contracts and the proof for each is a signed order form. " +
@@ -258,8 +269,11 @@ describe("C-517 — the window after the shaper's single brand rewrite", () => {
       }
       expect(rows).toBe(CORPUS_ROWS);
       // Asserted, not assumed: if this reached zero the sweep would be running
-      // over text that never carried a name in the first place.
-      expect(carriedBoundedName).toBe(33792);
+      // over text that never carried a name in the first place. 33,792 rows at
+      // eleven carriers.
+      expect(carriedBoundedName).toBe(
+        CARRIERS.length * BANNED_NAMES.length * NON_WORD_PRINTABLE.length ** 2,
+      );
       expect(leaks).toEqual([]);
       expect(flagged).toEqual([]);
     },
