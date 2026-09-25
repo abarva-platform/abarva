@@ -12,8 +12,9 @@ describe("resolveQualityBar", () => {
     expect(qb.enforceMaxAsBlocker).toBe(true);
     // the Charter's whole point is staying concise — its band must be
     // materially smaller than the architecture doc's.
-    // Seven-section compressed contract keeps Discovery Preparation first-class
-    // without restoring a binder shape.
+    // Seven-section compressed contract keeps authorization conditions in the
+    // Charter while moving detailed Discovery/workshop instructions into a
+    // separate working guide.
     expect(qb.minSections).toBe(7);
     // Aligned to the shared contract (src/lib/deliverables/shared/
     // artifact-contracts.ts): prose-only counting uses the Charter's explicit
@@ -25,6 +26,15 @@ describe("resolveQualityBar", () => {
   it("measures Charter length as prose only, so required tables do not consume the band", () => {
     const qb = resolveQualityBar("moves", "charter");
     expect(qb.excludeNonProseFromBody).toBe(true);
+  });
+
+  it("gives the Discovery Workshop Guide its own working-document band", () => {
+    const qb = resolveQualityBar("moves", "discovery_plan");
+    expect(qb.minSections).toBe(4);
+    expect(qb.minBodyWords).toBe(1_200);
+    expect(qb.targetBodyWordsMax).toBe(3_000);
+    expect(qb.enforceMaxAsBlocker).toBe(true);
+    expect(qb.requiresEvidenceGapsNoted).toBe(true);
   });
 
   it("gives Target State Architecture a substantial band whose ceiling only WARNS", () => {

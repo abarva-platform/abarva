@@ -8,6 +8,7 @@ import type { DeliverableKey } from "../types";
 // The 13 canonical PHASE_CANONICAL_KEYS — every one must have a profile.
 const CANONICAL_KEYS: DeliverableKey[] = [
   "charter",
+  "discovery_plan",
   "discovery_report",
   "root_cause_worksheet",
   "target_state_architecture",

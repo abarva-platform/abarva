@@ -81,11 +81,22 @@ const OVERRIDES: Record<string, QualityBarOverride> = {
     // advisoryMaxWords in artifact-contracts.ts for the rationale.
     advisoryBandMax: CHARTER_CONTRACT.wordBudget.advisoryMaxWords,
     enforceMaxAsBlocker: true,
-    // Charter is deliberately table-led (decision box, scope table, discovery
-    // preparation tables). Enforce the word band on prose so the gate blocks
+    // Charter is deliberately concise and table-aware (decision box, scope table,
+    // authorization conditions). Enforce the word band on prose so the gate blocks
     // narrative bloat without penalizing the required tables.
     excludeNonProseFromBody: true,
     requiresCentralTension: true,
+    requiresEvidenceGapsNoted: true,
+  },
+  "moves::discovery_plan": {
+    // Working guide generated after Charter approval. It carries the detailed
+    // workshop/session/evidence instructions that the executive Charter must
+    // not embed.
+    minSections: 4,
+    minBodyWords: 1_200,
+    targetBodyWordsMax: 3_000,
+    advisoryBandMax: 3_600,
+    enforceMaxAsBlocker: true,
     requiresEvidenceGapsNoted: true,
   },
   "moves::business_case": {

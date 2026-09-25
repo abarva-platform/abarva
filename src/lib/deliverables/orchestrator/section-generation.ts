@@ -614,7 +614,7 @@ function fallbackRecommendation(
   }
 
   if (req.module === "moves" && req.deliverableType === "charter") {
-    return `We recommend the sponsor review this concise Charter and approve P2 Discovery only with the stated scope, decision rights, evidence plan, assumptions, and caveats carried forward as the governed source of truth.`;
+    return `We recommend the sponsor review this concise Charter and approve Discovery only with the stated scope, decision rights, authorization conditions, assumptions, and caveats carried forward; detailed workshop instructions belong in the separate Discovery Workshop Guide.`;
   }
 
   return `We recommend sponsor review of this artifact before the next governed phase decision, with unresolved evidence gaps and client-complete items carried forward explicitly.`;
@@ -658,11 +658,11 @@ function fallbackRiskTable(
           "Confirm sponsor cadence and operating-owner attendance before P2 close.",
         ],
         [
-          "Evidence readiness for P2 Discovery",
+          "Discovery working-session readiness",
           "Dependency",
-          "Current-state findings should not be finalized until uploaded evidence is reviewed and accepted.",
+          "Current-state findings should not be finalized until uploaded evidence, workshop notes, and client corrections are reviewed and accepted.",
           "Evidence owners",
-          "Use the P2 evidence plan and Files & Evidence review before Approve & Build.",
+          "Use the separate Discovery Workshop Guide / Evidence Request Pack and Files & Evidence review before the Discovery gate.",
         ],
         [
           "Scope expansion beyond the charter boundary",
@@ -729,30 +729,30 @@ function ensureMovesCharterMinimumProse(
   if (countWords(sections) >= req.qualityBar.minBodyWords) {
     return [...sections];
   }
-  if (sections.some((s) => s.key === "discovery_readiness_carry_forward")) {
+  if (sections.some((s) => s.key === "authorization_conditions")) {
     return [...sections];
   }
 
   const paragraphs = [
-    "Discovery should open with a tight operating cadence, named evidence owners, and a visible decision log so the charter does not become a passive statement of intent. The sponsor should confirm who owns evidence acceptance, who resolves scope questions, who approves value assumptions, and who decides when a finding is strong enough to shape the next design option.",
-    "The discovery team should keep current-state baseline work, source-control and monitoring gaps, ownership gaps, scope caveats, and value-approval dependencies in one governed working view. That view should be updated as documents are reviewed, changed client versions are uploaded, and evidence is accepted or rejected.",
-    "Each working session should end with a short record of what was learned, what remains open, and which decision the evidence can support. If a fact is not approved, the artifact should carry it as an open input or assumption to validate rather than turning it into a commitment.",
-    "The sponsor review should test whether scope, decision rights, evidence handling, and value discipline are strong enough to proceed. This keeps the next phase bounded, auditable, and ready for sponsor review without converting charter approval into delivery authorization.",
-    "Any unresolved dependency should remain visible until an accountable owner closes it. The charter should therefore preserve the operating questions that matter most: which evidence is ready, which caveats shape scope, which approvals are missing, and which conditions would stop or reshape the Move.",
-    "Discovery planning should also separate facts, assumptions, and client judgments. Facts require accepted evidence. Assumptions require an owner, a reason, and a validation path. Client judgments require a named decision maker and a gate where the judgment will be confirmed.",
-    "The evidence plan should make changed-version handling explicit. When a client uploads a revised deliverable or dataset, the team should treat it as a new review item until the changed version is approved. Prior approvals should inform context, but they should not silently certify new content.",
-    "The charter should leave the team with a practical operating test: a reviewer can trace every material claim to accepted evidence, every caveat to a decision boundary, and every open input to an owner. Anything else remains outside the decision until discovery closes the gap.",
-    "This does not require a longer strategy narrative. It requires enough disciplined prose for the sponsor to see the work system that will turn uploaded evidence, client review, and human approvals into a trustworthy discovery finding.",
+    "Discovery authorization should preserve the sponsor's known scope, decision rights, success measures, and evidence boundaries without turning unanswered questions into findings. The charter should therefore state what is approved now, what remains conditional, and which sponsor or operating owner must resolve each condition.",
+    "The next phase should use a separate Discovery Workshop Guide / Evidence Request Pack for session agendas, interview prompts, data extracts, templates, and working instructions. That separate guide can be operational and detailed; the charter should remain a CXO-facing authorization record.",
+    "Any unresolved dependency should stay visible until an accountable owner closes it. If a fact is not approved, the charter should carry it as an open input or assumption to validate rather than converting it into a commitment.",
+    "The sponsor review should test whether scope, decision rights, evidence handling, and value discipline are strong enough to proceed. This keeps the next phase bounded and auditable without converting charter approval into delivery authorization.",
+    "The charter should leave the team with a practical operating test: a reviewer can trace every material claim to accepted evidence, every caveat to a decision boundary, and every open input to an owner. Anything else remains outside the decision until Discovery closes the gap.",
     "At the next gate, the team should be able to show what changed, what was approved, what stayed open, and what the evidence can responsibly support. That is the charter's real job: creating the conditions for a better decision later.",
-    "If discovery cannot produce that trace, the sponsor should hold the next decision rather than letting a polished artifact hide a weak evidence base. The charter should make that failure mode visible early, when it is still inexpensive to correct.",
-    "The carry-forward record should also be explicit about what not to do next: do not turn unanswered client questions into design choices, do not translate directional value into finance-approved benefit, and do not let a workshop preference become an approved requirement without evidence review. Those boundaries keep discovery useful, not theatrical.",
+    "The charter should also make the stopping conditions visible. If the sponsor cannot confirm the operating owner, if evidence access is blocked, if the value baseline cannot be finance-reviewed, or if risk and compliance boundaries are not accepted, the Move should pause or narrow before the team advances to design.",
+    "Known facts should be carried forward exactly once. Scope, success measures, stakeholder roles, decision rights, exclusions, and caveats belong in this authorization record; the separate guide can translate them into meetings, file requests, and working-session outputs without changing the underlying decision.",
+    "This separation matters for executive trust. A sponsor should be able to read the charter as the approved mandate, then hand the workshop guide to the working team as the operating playbook for the next phase. If those two purposes are combined, the executive record becomes cluttered and the working guide becomes too shallow to run.",
+    "When evidence is incomplete, the charter should say so plainly. A missing baseline, unapproved source, unconfirmed owner, or unresolved risk is not a reason to invent detail; it is a condition for Discovery to close. That makes the document useful even before every input is known.",
+    "The final authorization should therefore read as a compact decision: proceed, proceed with conditions, or hold. It should tell leadership what is known, what is not yet known, who owns the next decision, and which boundaries cannot be crossed without returning to the sponsor.",
+    "If the next phase later discovers that the charter boundary was wrong, the remedy is not quiet expansion inside the workstream. The sponsor should amend the charter or approve a narrower path so the record stays aligned with what the team is actually authorized to do.",
   ];
   const body: string[] = [];
   for (const paragraph of paragraphs) {
     body.push(paragraph);
     const candidate: RenderableSection = {
-      key: "discovery_readiness_carry_forward",
-      title: "Discovery Readiness Carry-Forward",
+      key: "authorization_conditions",
+      title: "Authorization Conditions & Open Inputs",
       groundingMode: "expert_template",
       citationsUsed: [],
       bodyMarkdown: body.join("\n\n"),
@@ -764,8 +764,8 @@ function ensureMovesCharterMinimumProse(
   return [
     ...sections,
     {
-      key: "discovery_readiness_carry_forward",
-      title: "Discovery Readiness Carry-Forward",
+      key: "authorization_conditions",
+      title: "Authorization Conditions & Open Inputs",
       groundingMode: "expert_template",
       citationsUsed: [],
       bodyMarkdown: body.join("\n\n"),

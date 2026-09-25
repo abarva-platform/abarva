@@ -214,6 +214,33 @@ const charter: DeliverableProfile = {
   ],
 };
 
+const discoveryPlan: DeliverableProfile = {
+  key: "discovery_plan",
+  renderer: "docx_narrative",
+  title: "Discovery Workshop Guide",
+  clientFacing: true,
+  audience: ["program_leadership", "steering_committee"],
+  decisionPurpose:
+    "Prepare the client and delivery team to run the next phase's workshops, evidence collection, and readiness checks.",
+  defaultFormat: "docx",
+  supportingFormats: ["html"],
+  tone: "delivery_lead",
+  visualDensity: "medium",
+  allowPhaseLabels: false,
+  evidenceMode: "appendix_only",
+  sourceRegisterPolicy: "appendix_only",
+  missingInputPolicy: "single_open_inputs_table",
+  requiredExhibits: ["open_inputs_required"],
+  lengthGuidance:
+    "Working guide, not executive charter: practical session plan, evidence requests, owners, and readiness checks.",
+  acceptanceChecks: [
+    "explicitly states which Charter facts are already settled and should not be re-collected",
+    "contains session/workshop instructions, evidence requests, owners, and outputs",
+    "does not make new sponsor decisions or alter the Charter boundary",
+    "missing evidence is consolidated into one Open Inputs Required table",
+  ],
+};
+
 const discoveryReport: DeliverableProfile = {
   key: "discovery_report",
   renderer: "pptx_storyline",
@@ -696,6 +723,7 @@ export const DELIVERABLE_PROFILES: Readonly<
   Record<DeliverableKey, DeliverableProfile>
 > = {
   charter,
+  discovery_plan: discoveryPlan,
   discovery_report: discoveryReport,
   root_cause_worksheet: rootCauseWorksheet,
   target_state_architecture: targetStateArchitecture,

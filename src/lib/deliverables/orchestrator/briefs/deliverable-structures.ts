@@ -77,12 +77,11 @@ const s = (
 // ── Moves deliverables (strategic transformation artifacts) ──
 
 // A P1 Charter is a COMMITMENT instrument — it authorizes and bounds Discovery,
-// names the sponsor, and prepares the client for what Discovery will need. It
+// names the sponsor, and records the known facts and conditions for proceeding. It
 // must NOT pre-empt later phases: no current-state evidence analysis (that is
 // P2 Discovery), no target/future-state or solution/architecture design (that
-// is P3). Re-compressed 2026-09-25: the Charter stays under seven sections
-// while keeping Discovery Preparation first-class; redundant outcomes/next-step
-// headings are folded into their decision parent sections.
+// is P3). Detailed workshop/session instructions belong in the separate phase
+// guide, not in the executive charter.
 const MOVES_CHARTER: DeliverableStructure = {
   module: "moves",
   deliverableType: "charter",
@@ -140,12 +139,12 @@ const MOVES_CHARTER: DeliverableStructure = {
       `Keep this section under ${charterSectionMaxWords("known_constraints_dependencies")} words. Include only constraints/dependencies actually supported by evidence.`,
     ),
     s(
-      "discovery_preparation",
-      "Discovery Preparation",
-      "Sets expectations for the Discovery phase — not the assessment itself. An executive table (Area / What to Expect / What We Need From You / Priority) across Business Process, People & Governance, Technology, Data, Performance, and Risk & Controls; a second table of typical Discovery activities and durations; then a short closing paragraph noting that a detailed Discovery Guidebook, tailored to this Move, will be generated after Charter approval. Do not embed that detailed material here.",
+      "authorization_conditions",
+      "Authorization Conditions & Open Inputs",
+      "State the sponsor conditions for authorizing Discovery and the few open inputs that carry into the separate Discovery Workshop Guide. Do not include workshop agendas, data-request tables, interview scripts, session instructions, or guidebook detail in this Charter.",
       "mixed",
       [],
-      `Keep this section under ${charterSectionMaxWords("discovery_preparation")} words. Two tables plus one short closing paragraph — no interview questionnaires or workshop agendas here.`,
+      `Keep this section under ${charterSectionMaxWords("authorization_conditions")} words. One compact table plus a short closing paragraph; explicitly refer detailed workshop/session instructions to the separate guide.`,
     ),
   ],
   requiredSectionKeys: [
@@ -155,7 +154,7 @@ const MOVES_CHARTER: DeliverableStructure = {
     "success_measures",
     "sponsorship_governance",
     "known_constraints_dependencies",
-    "discovery_preparation",
+    "authorization_conditions",
   ],
   fixedStructure: true,
   forbiddenSectionTopics: [...CHARTER_CONTRACT.forbiddenTopics],

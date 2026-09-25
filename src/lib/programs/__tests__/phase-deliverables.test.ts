@@ -1,4 +1,8 @@
 import { deliverableBelongsToPhase } from "../phase-deliverables";
+import {
+  getPhaseDocumentSet,
+  PHASE_CANONICAL_KEYS,
+} from "../deliverable-registry";
 
 describe("deliverableBelongsToPhase", () => {
   it("counts the canonical phase gate deliverable (the eval's missing charter)", () => {
@@ -52,5 +56,18 @@ describe("deliverableBelongsToPhase", () => {
     );
     // a P5 deliverable does not count toward P4
     expect(deliverableBelongsToPhase("handoff_package", 4, p4)).toBe(false);
+  });
+
+  it("keeps P1 Charter and Discovery Workshop Guide as separate documents", () => {
+    expect(PHASE_CANONICAL_KEYS[1]).toEqual(["charter", "discovery_plan"]);
+
+    const p1 = getPhaseDocumentSet(1);
+    expect(p1.gateArtifacts.map((d) => d.deliverableTypeKey)).toEqual([
+      "charter",
+    ]);
+    expect(p1.workingDocs.map((d) => d.deliverableTypeKey)).toEqual([
+      "discovery_plan",
+    ]);
+    expect(p1.workingDocs[0]?.documentTitle).toBe("Discovery Workshop Guide");
   });
 });

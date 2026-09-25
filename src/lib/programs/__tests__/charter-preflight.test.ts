@@ -27,7 +27,7 @@ describe("computeCharterPreflight", () => {
       "p0_capture:initial_value_hypothesis",
       "p0_capture:recommendation_to_advance",
     ]);
-    expect(result.sourceCoverageBySection.discovery_preparation.status).toBe(
+    expect(result.sourceCoverageBySection.authorization_conditions.status).toBe(
       "complete",
     );
   });
@@ -70,7 +70,7 @@ describe("computeCharterPreflight", () => {
       "success_measures",
       "sponsorship_governance",
       "known_constraints_dependencies",
-      "discovery_preparation",
+      "authorization_conditions",
     ]);
   });
 });

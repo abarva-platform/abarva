@@ -191,7 +191,9 @@ describe("multi-pass prompt builder", () => {
       expect(prompt).toMatch(
         /Do not include a cover letter, table of contents, appendix narrative/i,
       );
-      expect(prompt).toMatch(/Do not write P2 current-state findings/i);
+      expect(prompt).toMatch(
+        /Do not write .*P2 current-state findings/i,
+      );
       expect(prompt).not.toMatch(/DORA|AI Tooling Adoption|Phase Roadmap/i);
     }
   });
@@ -256,7 +258,7 @@ describe("multi-pass prompt builder", () => {
     );
     expect(p.user).toMatch(/WRITE ONLY THIS SECTION/);
     expect(p.user).toMatch(/do NOT write any other section/i);
-    expect(p.user).toMatch(/Do not write P2 current-state findings/i);
+    expect(p.user).toMatch(/Do not write .*P2 current-state findings/i);
     expect(p.user).not.toMatch(/DORA|AI Tooling Adoption|Phase Roadmap/i);
   });
 

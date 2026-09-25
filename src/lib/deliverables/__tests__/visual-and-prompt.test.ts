@@ -287,14 +287,15 @@ describe("solution-prompt-factory — simple prompt, rich context", () => {
     expect(p.user).toContain("Target 900-1,100 body words");
     expect(p.user).toContain("Hard maximum 1,300 body words");
     expect(p.user).toContain("Charter Decision box");
-    expect(p.user).toContain("Discovery Preparation table");
-    expect(p.user).toContain("Discovery Activities table");
+    expect(p.user).toContain("Authorization Conditions / Open Inputs table");
     expect(p.user).toContain("Target depth: 900-1,100 words");
     expect(p.user).toContain(
       "Write at least 700 words of prose before tables, exhibits, and appendices",
     );
-    expect(p.user).toContain("Discovery Preparation");
-    expect(p.user).toContain("Discovery Guidebook");
+    expect(p.user).toContain("Authorization Conditions & Open Inputs");
+    expect(p.user).toContain("Discovery Workshop Guide / Evidence Request Pack");
+    expect(p.user).not.toContain("Discovery Activities table");
+    expect(p.user).not.toContain("typical Discovery activities");
     expect(p.user).toContain("Client Decision Required");
     expect(p.user).toContain("To Validate During Discovery");
     expect(p.user).toContain("Evidence Required for P2");

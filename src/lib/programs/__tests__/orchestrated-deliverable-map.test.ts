@@ -29,6 +29,15 @@ describe("orchestrated deliverable map", () => {
     expect(prescribedFormatForDeliverableType(orchestratorType)).toBe("docx");
   });
 
+  it("routes the P1 Discovery Workshop Guide separately from the Charter", () => {
+    const orchestratorType = orchestratorDeliverableType("discovery_plan");
+    expect(orchestratorType).toBe("discovery_plan");
+    expect(deliverableKeyForOrchestratorType(orchestratorType)).toBe(
+      "discovery_plan",
+    );
+    expect(prescribedFormatForDeliverableType(orchestratorType)).toBe("docx");
+  });
+
   it("routes the P5 value measurement contract to its own quality profile", () => {
     const orchestratorType = orchestratorDeliverableType(
       "value_measurement_contract",
