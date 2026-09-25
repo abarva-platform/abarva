@@ -607,15 +607,35 @@ export function shapeSharedAdvisorResponse(
     normalizeWhitespace(normalizeAssemblyArtifacts(input.text)),
     input.labels ?? [],
   );
+  // Item C-517 — ONE rewrite, and it runs here, before compaction.
+  //
+  // This used to be applied twice: here, and again inside the trailing
+  // normalize below. T-617 found that removing the second one left all 45
+  // tests across the six shared-shaper suites passing, and a survivor is not a
+  // verdict — the second pass saw text this one never did, so if any pass
+  // between them could put a word-bounded name into text that had none, it was
+  // load-bearing and the missing thing was a test.
+  //
+  // Settled by search, not by sample, in
+  // `src/__tests__/behaviors/shared-shaper-brand-window.test.ts`: `\b` depends
+  // on exactly ONE character each side, so sweeping every printable ASCII
+  // character on both sides is complete for the exposure question, and the
+  // sweep is repeated inside one carrier per pass in the window. 0 of 297,825
+  // rows changed output with the second application gone, 33,792 of them
+  // carrying a bounded name; with BOTH gone, 33,738 rows leak and every
+  // carrier leaks, so the sweep has power everywhere it claims to.
+  //
+  // The position matters more than the count: `aVa` is two characters shorter
+  // than `Atlas` and `compactForChat`'s budget is measured in characters, so
+  // the rewrite has to precede it. That is pinned by its own test rather than
+  // by this comment.
   const brandClean = labeled.text.replace(BANNED_BRAND_RE, "aVa");
   const idClean = stripUnmappedRawIds(brandClean);
   const compacted = input.preserveStructure
     ? idClean
     : compactForChat(idClean, targetChars, maxParagraphs);
   const finalText = normalizeWhitespace(
-    normalizeAssemblyArtifacts(
-      stripUnmappedRawIds(compacted).replace(BANNED_BRAND_RE, "aVa"),
-    ),
+    normalizeAssemblyArtifacts(stripUnmappedRawIds(compacted)),
   );
   return {
     text: finalText,
