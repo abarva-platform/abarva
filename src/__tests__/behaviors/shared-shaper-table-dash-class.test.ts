@@ -85,6 +85,13 @@ function shapeWithDash(dash: string) {
   });
 }
 
+// Item C-511 — the three dash characters folded to one, so a difference that
+// is only the character the CALLER supplied inside a table cell is not read as
+// the shaper's output depending on it.
+function foldDashes(text: string): string {
+  return text.replace(/[\u2013\u2014]/g, "-");
+}
+
 function visibleLines(text: string): string[] {
   return text.split("\n").filter((line) => line.trim().length > 0);
 }
@@ -200,11 +207,33 @@ describe("C-510 — the table branch neutralises the artifact rule's dash class"
     expect(shaped.text).not.toContain("co: term");
   });
 
-  it("no answer in a 6,640-input space depends on which dash a label carries", () => {
+  it("no answer in a 6,640-input space depends STRUCTURALLY on which dash a label carries", () => {
     // The fix stated as an invariant over a space rather than over one
     // fixture, and this is what defends the change: restoring the narrow
     // rule fails it thousands of times over, so the branch cannot quietly
     // narrow again.
+    //
+    // RELAXED BY MEASUREMENT WHEN ITEM C-511 LANDED, and relaxed in exactly
+    // one direction. This test asserted byte equality across the three dash
+    // characters. That held only because the artifact rewrite reached inside
+    // a table row and rewrote all three the same way — and rewriting inside
+    // a row is the C-511 defect: it split the row, and the halves shipped to
+    // the reader as raw pipe markup. With the rewrites now skipping a row,
+    // a table cell keeps the label text its caller supplied, so a hyphen
+    // label and an em-dash label differ by that one character. They are
+    // DIFFERENT LABELS; the old equality came from destroying the
+    // distinction, not from respecting it.
+    //
+    // So the comparison folds the three dash characters together and the
+    // invariant becomes structural, which is what C-510 was about — whether
+    // 154 characters of table summary survive should not depend on a dash.
+    // Both counts are pinned, so the relaxation is bounded rather than open:
+    // 1,355 answers differ before folding and ZERO differ after. The
+    // relaxation does not retire the guard, which is the thing worth
+    // checking when a fix touches another item's evidence. Narrowing
+    // `TABLE_CELL_SEPARATOR_RE` back to the em dash alone — C-510 undone —
+    // still fails this test on the folded comparison 2,509 times, measured
+    // over the same space with C-511's fix in place.
     //
     // WHAT THIS DELIBERATELY DOES NOT ASSERT, because it is not true. An
     // earlier draft asserted that every returned answer obeys its
@@ -248,6 +277,7 @@ describe("C-510 — the table branch neutralises the artifact rule's dash class"
 
     let comparisons = 0;
     const differing: string[] = [];
+    const differingBeforeFolding: string[] = [];
     for (const shape of labelShapes) {
       for (const rows of [0, 1, 2, 3, 4, 6, 8]) {
         for (const proseCount of [0, 1, 2, 3, 4, 5]) {
@@ -273,10 +303,13 @@ describe("C-510 — the table branch neutralises the artifact rule's dash class"
                     }).text,
                 );
                 comparisons += 2;
+                const where = `rows=${rows} prose=${proseCount} bullets=${withBullets} target=${targetChars} max=${maxParagraphs}`;
                 if (byDash[0] !== byDash[2] || byDash[1] !== byDash[2]) {
-                  differing.push(
-                    `rows=${rows} prose=${proseCount} bullets=${withBullets} target=${targetChars} max=${maxParagraphs}`,
-                  );
+                  differingBeforeFolding.push(where);
+                }
+                const folded = byDash.map(foldDashes);
+                if (folded[0] !== folded[2] || folded[1] !== folded[2]) {
+                  differing.push(where);
                 }
               }
             }
@@ -289,5 +322,10 @@ describe("C-510 — the table branch neutralises the artifact rule's dash class"
     // generating cases would otherwise make an empty `differing` vacuous.
     expect(comparisons).toBe(13_280);
     expect(differing).toEqual([]);
+    // And the relaxation is asserted in both directions. If this count went
+    // to zero, a table cell would have stopped carrying the caller's own
+    // text — the C-511 rewrite reaching back inside a row — and an empty
+    // `differing` above would no longer mean what it says.
+    expect(differingBeforeFolding).toHaveLength(1_355);
   });
 });
