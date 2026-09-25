@@ -1,15 +1,19 @@
 {
   "item": "T-479",
-  "title": "Sixth triage draw of twenty untriaged, unrun, governed-risk suites; the draw concentrates in Home and Tower, and two of its byte-scanning cases are proven vacuous against the very defect they name",
-  "recordedAt": "2026-09-25T23:16:07.737Z",
+  "title": "Sixth triage draw re-verified on current main: the premise holds for 4 of 20 and fails for 16, because two CI baselines name three directories with an unescaped jest regex -- and each one hides a live failure",
+  "recordedAt": "2026-09-25T23:49:14.683Z",
   "base": "538ce854a902bf8416ebd32e9f417daa5d998f88",
+  "premiseCorrection": {
+    "asFiled": "T-479 states that all twenty are `untriaged: true` and `covered: false` -- `named by no CI job, so nothing reports whether it passes`. That was measured at base 2b942ee94.",
+    "measuredAtThisBase": "FALSE FOR 16 OF 20. `scripts/quality/test-ci-coverage-census.mjs` at this base reports every one of the twenty as `covered: true, pullRequestCovered: true, untriaged: false, via: [\"ratchet-baseline\"]`, and `--explain` lists none of them as unrun. Independently, `npx jest --listTests` given each baseline's `paths` verbatim selects 16 of the twenty. So 16 DO run on every pull request and every push to main, inside the Surface Ratchet Guard -- and 2 of them are recorded in a baseline's `knownFailing` with failure counts that reproduce exactly.",
+    "whyThisMattersMoreThanTheCorrection": "The remaining 4 are not `named by no CI job`. They are named by a command that CANNOT MATCH THEM, and the census credits the name as coverage. `docs/ci/home-test-baseline.json` lists `src/app/(maestro)/home`; a jest path argument is a regex, so `(maestro)` is a capture group and the pattern matches `src/app/maestro/home`, a path that does not exist. `docs/ci/tower-test-baseline.json` carries the same defect twice, on `src/app/(maestro)/tower` and `src/app/(maestro)/tenant/[tenantSlug]/tower`, where `[tenantSlug]` is additionally a character class. Across both baselines, `--listTests` selects 220 files and ZERO of them are under a parenthesised segment.",
+    "theConsequenceIsNotCosmetic": "Escaping the parentheses turns BOTH gates red immediately, on failures that exist on main today and that neither gate can currently see. Home: `727/755 tests, exit 0` as-is, `745/775 tests, exit 1` escaped, `NEW FAILURE src/app/(maestro)/home/__tests__/home-admin-boundary-contract.test.ts -- 2`. Tower: `1790/1801, exit 0` as-is, `1793/1805, exit 1` escaped, `NEW FAILURE src/app/(maestro)/tower/__tests__/tenant-tower-route-scope.test.ts -- 1`. The second is a route-scope suite -- a tenancy fence -- failing unseen. Both gates are green today BECAUSE their pattern cannot reach the directory they name, which is the same class of defect as a control proved by its own name appearing in a file.",
+    "whatThisDoesToTheDraw": "The draw is not reproducible from this base's census, so no seventh draw should be taken from the T-479 ranking until the baseline-path defect is settled: the ranking's `covered` column is over-credited by exactly the parenthesised patterns. Filed as `T-486` (the pattern, which needs a decision) and `T-487` (the census reading baseline paths as prefixes rather than as the regexes jest applies).",
+    "whatSurvivesUnchanged": "Every per-suite measurement below, and all five mutation proofs. Whether a suite runs in CI is a different question from whether its assertions can fail, and the two vacuous cases M3 and M4 are worse news now than when this record was drafted: both suites are RUN on every pull request, so they are not dormant -- they are actively reporting assurance they do not have."
+  },
   "scope": {
-    "drawnFrom": "governedRiskFiles from scripts/quality/test-ci-coverage-census.mjs, rows with untriaged true and covered false, band before score before path. The draw itself was fixed when T-479 was filed at base 2b942ee94; this record judges that same twenty at base 538ce854a.",
+    "drawnFrom": "The twenty were fixed when T-479 was filed at base 2b942ee94 from governedRiskFiles rows with untriaged true and covered false. This record judges that same twenty at base 538ce854a and corrects the premise above rather than re-drawing.",
     "drawSize": 20,
-    "bandsInThisDraw": {
-      "critical": 0,
-      "high": 20
-    },
     "allTwentyExistAtThisBase": true,
     "disjointFrom": [
       "docs/architecture/t472-stale-suite-triage.json",
@@ -24,18 +28,24 @@
       "src/app/api/home/walkthrough-export/__tests__/tenancy-fence.test.ts",
       "src/app/(maestro)/home/__tests__/no-readmin-reexports.test.ts"
     ],
-    "poolReconciliationNotDone": "T-479's acceptance carries `before drawing anything further, reconcile T-742's +38` -- re-running the census at 5cb905487 with node_modules installed from that base's own lockfile, to settle whether 55 or 93 is the right pool figure. That precondition governs a SEVENTH draw, not this record's triage of an already-fixed twenty, and it is NOT discharged here. It is still owed, and no `remaining` figure is published in this record precisely because every such figure inherits that unsettled answer. Whoever takes the seventh draw must settle it first."
+    "poolReconciliationNotDone": "T-479's acceptance carries `before drawing anything further, reconcile T-742's +38` -- re-running the census at 5cb905487 with node_modules installed from that base's own lockfile, to settle whether 55 or 93 is the right pool figure. That precondition governs a SEVENTH draw and it is NOT discharged here; it is still owed. It is now joined by a second precondition this record establishes: the `covered` column the ranking rests on is over-credited by the parenthesised baseline patterns (`T-486`, `T-487`), so a seventh draw would inherit two unsettled numbers rather than one. No `remaining` figure is published in this record for that reason."
   },
   "verdictVocabulary": [
     "wire_into_ci",
     "rewrite_as_behavior",
     "update_with_reason_recorded",
-    "repair"
+    "repair",
+    "already_selected_no_action"
   ],
+  "verdictVocabularyDeviation": {
+    "added": "already_selected_no_action",
+    "why": "T-479 asks for the established four-word vocabulary, which every prior draw in this family could use because every row in every prior draw was genuinely uncovered. Sixteen rows here are not: they run on every pull request. `wire_into_ci` would be factually false for them and `repair` would be false too, so the four words leave no truthful verdict for a green suite that is already in a merge-blocking gate. A fifth value is a smaller deviation than a verdict that contradicts its own note, and it is constrained rather than free: the guard permits it ONLY on a row the measurement reports as selected AND green, so it cannot be used to excuse an unselected or failing suite. Flagged here rather than buried because the item's wording did ask for four.",
+    "constrainedBy": "src/__tests__/behaviors/t479-stale-suite-triage-record.test.ts -- `already_selected_no_action` requires ciSelection.selectedByAWorkflowCommand true and green true."
+  },
   "jestEvidence": {
-    "how": "Each of the twenty was executed on its own with `npx jest --runTestsByPath <path> --no-coverage --ci --json --outputFile`, and every count in suites[] is read out of that run's JSON by scripts/../build-record.mjs rather than typed. --runTestsByPath is used for all twenty because four paths contain the parenthesised segment (maestro), which jest would read as a regex group.",
+    "how": "Each of the twenty was executed on its own with `npx jest --runTestsByPath <path> --no-coverage --ci --json --outputFile`, and every count in suites[] is read out of that run's JSON by a script rather than typed. --runTestsByPath is used for all twenty because four paths contain the parenthesised segment (maestro) -- the same regex-versus-literal distinction that is the subject of the premise correction above.",
     "executedAt": "2026-09-25T23:09Z to 2026-09-25T23:18Z, before any verdict below was written",
-    "harnessFoundTests": "Asserted rather than assumed: every one of the twenty runs reports numTotalTestSuites 1, exactly one entry in testResults whose name ends with the path asked for, and numTotalTests greater than zero. A run that matched no file exits green and reports zero, which is the failure a green exit code hides.",
+    "harnessFoundTests": "Asserted rather than assumed: every one of the twenty runs reports numTotalTestSuites 1, exactly one testResults entry whose name ends with the path asked for, and numTotalTests greater than zero. A run that matches no file exits green and reports zero, which is the failure a green exit code hides.",
     "totals": {
       "suitesExecuted": 20,
       "green": 17,
@@ -46,8 +56,32 @@
       "testsPending": 0
     }
   },
+  "ciSelectionEvidence": {
+    "how": "For each of the two Surface Ratchet Guard baselines, `npx jest --listTests` was given that baseline's `paths` array verbatim, and the selected set compared with the twenty. This resolves the hop the census resolves by reading the JSON, but applies jest's own regex semantics to the strings rather than treating them as path prefixes.",
+    "selectedOfTwenty": 16,
+    "notSelectedOfTwenty": 4,
+    "filesSelectedByBothBaselines": 220,
+    "filesSelectedUnderAParenthesisedSegment": 0,
+    "ratchetProbes": [
+      {
+        "baseline": "docs/ci/home-test-baseline.json",
+        "asIs": "727/755 tests, 12 failing suites, exit 0",
+        "escaped": "745/775 tests, 13 failing suites, exit 1",
+        "newFailureRevealed": "src/app/(maestro)/home/__tests__/home-admin-boundary-contract.test.ts -- 2 failing, not in knownFailing",
+        "testsTheGateIsNotRunning": 20
+      },
+      {
+        "baseline": "docs/ci/tower-test-baseline.json",
+        "asIs": "1790/1801 tests, 8 failing suites, exit 0",
+        "escaped": "1793/1805 tests, 9 failing suites, exit 1",
+        "newFailureRevealed": "src/app/(maestro)/tower/__tests__/tenant-tower-route-scope.test.ts -- 1 failing, not in knownFailing",
+        "testsTheGateIsNotRunning": 4
+      }
+    ],
+    "probeMethod": "The probe wrote a COPY of each baseline to a scratch directory with only the parentheses and brackets escaped, and ran the repo's own `scripts/ci/test-ratchet.mjs` against it. No baseline in the repository was modified, and the ratchet script was not changed."
+  },
   "mutationEvidence": {
-    "how": "Each proof mutates the SUBJECT -- a route, a component, a page -- never the suite under judgement, applies the mutation, re-runs that one suite to JSON, and restores the file. Before and after counts below are read from the two run JSONs.",
+    "how": "Each proof mutates the SUBJECT -- a route, a component, a page -- never the suite under judgement, applies the mutation, re-runs that one suite to JSON, and restores the file.",
     "whyBothKindsAreRecorded": "A mutation that kills proves the suite can fail. A mutation that SURVIVES is the more valuable finding and this record publishes it as a first-class result rather than as an absence: M3 and M4 each destroy the exact property their case is named for and leave the suite green. Recording only kills would make a blind detector indistinguishable from a healthy one.",
     "proofs": [
       {
@@ -125,7 +159,7 @@
         "totalTestsBefore": 3,
         "totalTestsAfter": 3,
         "failingCasesAfter": [],
-        "proves": "VACUOUS. All three cases stay green while the leak the case is named for is live, because the case asserts a COMMENT is present and that one particular wrong spelling is absent. This is the 6ebe6d4a9 defect shape, found alive in a suite nothing runs."
+        "proves": "VACUOUS. All three cases stay green while the leak the case is named for is live, because the case asserts a COMMENT is present and that one particular wrong spelling is absent. This is the 6ebe6d4a9 defect shape, found alive in a suite the Surface Ratchet Guard runs on every pull request."
       }
     ]
   },
@@ -145,26 +179,30 @@
     },
     "dominantDirectory": "src/app/(maestro)/home/__tests__",
     "dominantDirectoryCount": 4,
-    "whyItMatters": "Every row in the pool at this base is band high, score 10, signal tenant_scoped_read, so the ranking collapses to path order and the draw is an alphabetical sweep rather than a risk-ordered spread. Unlike T-742, which put nineteen of twenty in one directory, this draw spreads across eleven directories -- but it is still concentrated in two products: eight rows are Home surfaces and route handlers, ten are Tower. A reader told `twenty suites, highest governed risk first` should read that as: the untriaged residue in this repo is now Home and Tower, and both are surfaces a signed-in executive reads. The per-directory breakdown is published so the concentration cannot be understated by a record edited after the fact."
+    "whyItMatters": "Every row was band high, score 10, signal tenant_scoped_read when the draw was taken, so the ranking collapsed to path order. The draw spreads across eleven directories but concentrates in two products: eight rows are Home, ten are Tower, and both are surfaces a signed-in executive reads. The concentration now reads differently than when the draw was taken: the four rows in `src/app/(maestro)/home/__tests__` are the four that no CI command can select, and they are one directory rather than four -- so the unreachable set is not scattered residue but exactly the directory whose name the baseline could not escape."
   },
   "counts": {
-    "wire_into_ci": 14,
+    "wire_into_ci": 2,
     "rewrite_as_behavior": 4,
     "update_with_reason_recorded": 2,
-    "repair": 0
+    "repair": 0,
+    "already_selected_no_action": 12
   },
   "populationsDeclared": {
     "sourceTextScanner": "FIRED -- 4 of 20 rows carry sourceTextScanner true, and every one of them is judged rewrite_as_behavior rather than wired. T-742's draw contained zero scanners and its guard therefore declared that control VACUOUS; this draw is the opposite case, so the declaration states the count and the guard recomputes it from the rows. A declaration that cannot be wrong in both directions is not a control: it must be falsifiable by a draw with no scanners AND by a draw whose count is understated.",
-    "redSuites": "FIRED -- 3 of 20 rows are not green, and each carries a verdict that does not assume it passes. T-742's draw contained zero red suites and declared that control VACUOUS. The two are not symmetric in what they mean: a red suite here is evidence the suite still has an opinion about a product that moved, and both of this draw's red suites turned out to be stale fixtures rather than live defects -- one a brand rename, one a deliberate roster narrowing.",
-    "vacuousCasesFound": "FIRED -- 2 of the 5 mutation proofs SURVIVED, on rows 2 and 15. Neither suite was red; both would have been wired into CI on a green run alone. This is the population no prior record in this family has declared, and it is the reason mutationEvidence is part of the record rather than a note in a pull request."
+    "redSuites": "FIRED -- 3 of 20 rows are not green, and each carries a verdict that does not assume it passes. Two of the three are recorded in a CI baseline's knownFailing with counts that reproduce exactly, which is how a red suite can run on every pull request and still not be news. The third is in the directory no command can select.",
+    "vacuousCasesFound": "FIRED -- 2 of the 5 mutation proofs SURVIVED, on rows 2 and 15. Neither suite was red, and both are RUN by the Surface Ratchet Guard on every pull request, so neither is dormant: each reports assurance it does not have. This is the population no prior record in this family has declared.",
+    "notSelectedByAnyCiCommand": "FIRED -- 4 of 20 rows are selected by no workflow command, all four in one directory, for the regex reason set out in premiseCorrection. The other 16 are selected, which is the half of T-479's premise that does not survive re-verification."
   },
-  "forbiddenEdits": "No file judged in suites[] is edited by this item. Every mutation in mutationEvidence was applied to a subject file and restored; `git status --porcelain` was clean after each. The triage records a verdict and hands it on; wiring, rewriting, updating and repair are the follow-on items' work.",
+  "forbiddenEdits": "No file judged in suites[] is edited by this item, and no baseline, workflow or ratchet script is edited either. Every mutation in mutationEvidence was applied to a subject file and restored, and the ratchet probes ran against scratch COPIES of the baselines. `git status --porcelain` was clean after each.",
   "followOnItems": {
-    "T-480": "Wire the fourteen suites this record judges wire_into_ci into a named CI scope, so a run reports whether they pass. Each is green at this base with nothing skipped, and none is a source-text scanner. Wiring alone; no suite is edited.",
-    "T-481": "Rewrite the four source-text scanners as behavioral proofs: rows 1, 2, 13 and 18. Row 14 is the worked example -- it asserts by composition exactly what row 13 asserts by regex, on the same route. Row 2 must be rewritten against mutation M4 and row 18 against the same class: the replacement must go red when the property is destroyed by a re-spelling, not merely by a deletion.",
-    "T-482": "Update row 12's honest-timeout assertion from the retired Atlas brand to the product's current agent name, recording #4037 as the reason, and keep the wording-quality and length assertions it was written for.",
-    "T-483": "Row 15: refresh the outcome-report fixture identity to one that can actually reach the same-client admin fallback under the post-6ebe6d4a9 roster, WITHOUT widening CANONICAL_CLIENT_ADMIN_EMAILS, then re-run mutation M3 and require the widening case to go red. It passes vacuously today.",
-    "T-484": "Replace the four byte-matching cases sitting inside suites this record wires into CI -- two in row 4, one in row 12, one in row 20 -- with assertions over behavior. They are named individually in partialSourceTextCaseNames so they cannot be lost inside a green suite."
+    "T-480": "Wire the suites this record judges wire_into_ci. Read ciSelection first: only the rows with selectedByAWorkflowCommand false actually need wiring, and for those the fix is T-486's escape rather than a new command. A row already selected by a baseline needs no wiring and this record does not ask for any.",
+    "T-481": "Rewrite the four source-text scanners as behavioral proofs: rows 1, 2, 13 and 18. Row 14 is the worked example -- it asserts by composition exactly what row 13 asserts by regex, on the same route. Rows 2 and 18 must be rewritten against mutation M4 and its class: the replacement must go red when the property is destroyed by a RE-SPELLING, not merely by a deletion. Rows 2, 13 and 18 are run on every pull request today, so these are live false assurances rather than dormant ones.",
+    "T-482": "Update row 12's honest-timeout assertion from the retired Atlas brand to the product's current agent name, recording #4037 as the reason, and keep the wording-quality and length assertions it was written for. Its 1 failing case is baselined in docs/ci/tower-test-baseline.json, so fixing it requires re-recording that baseline in the same change or the ratchet fails on the improvement.",
+    "T-483": "Row 15: refresh the outcome-report fixture identity to one that can actually reach the same-client admin fallback under the post-6ebe6d4a9 roster, WITHOUT widening CANONICAL_CLIENT_ADMIN_EMAILS, then re-run mutation M3 and require the widening case to go red. It passes vacuously today. Its 2 failing cases are baselined, so the same re-record applies.",
+    "T-484": "Replace the four byte-matching cases sitting inside suites this record does not call scanners -- two in row 4, one in row 12, one in row 20. They are named individually in partialSourceTextCaseNames so none can be lost inside a green suite. Each replacement must be shown to fail when the property is destroyed by a re-spelling, not only by a deletion.",
+    "T-486": "Escape the parenthesised and bracketed segments in both Surface Ratchet Guard baselines, or select those directories some other way. DECISION NEEDED on what happens to the three failures the escape reveals -- see the item.",
+    "T-487": "The census reads a ratchet baseline's `paths` as literal path prefixes and credits every file beneath them as covered. Jest applies them as regexes. Every parenthesised or bracketed segment in a baseline is therefore counted as coverage that no run delivers."
   },
   "claimedWriteFiles": [
     "docs/architecture/t479-stale-suite-triage.json",
@@ -175,9 +213,9 @@
     {
       "path": "src/app/(maestro)/home/__tests__/home-admin-boundary-contract.test.ts",
       "draw": "T-479",
-      "governedRiskBand": "high",
-      "governedRiskScore": 10,
-      "governedRiskSignals": [
+      "governedRiskBandAsFiled": "high",
+      "governedRiskScoreAsFiled": 10,
+      "governedRiskSignalsAsFiled": [
         "tenant_scoped_read"
       ],
       "loaded": true,
@@ -189,6 +227,13 @@
       "passedTests": 5,
       "pendingTests": 0,
       "todoTests": 0,
+      "ciSelection": {
+        "selectedByAWorkflowCommand": false,
+        "selectingBaselines": [],
+        "measuredWith": "npx jest --listTests <that baseline's paths, verbatim>",
+        "whyNotSelected": "The Surface Ratchet Guard's baseline NAMES this file's directory as `src/app/(maestro)/home`. A jest path argument is a REGEX, so `(maestro)` is a capture group and the pattern matches the string `src/app/maestro/home`, which does not exist. The directory is named and unreachable."
+      },
+      "declaredKnownFailingInBaseline": null,
       "sourceTextScanner": true,
       "verdict": "rewrite_as_behavior",
       "ownerItem": "T-481",
@@ -201,9 +246,9 @@
     {
       "path": "src/app/(maestro)/home/__tests__/home-layer-boundary-contract.test.ts",
       "draw": "T-479",
-      "governedRiskBand": "high",
-      "governedRiskScore": 10,
-      "governedRiskSignals": [
+      "governedRiskBandAsFiled": "high",
+      "governedRiskScoreAsFiled": 10,
+      "governedRiskSignalsAsFiled": [
         "tenant_scoped_read"
       ],
       "loaded": true,
@@ -215,6 +260,13 @@
       "passedTests": 3,
       "pendingTests": 0,
       "todoTests": 0,
+      "ciSelection": {
+        "selectedByAWorkflowCommand": false,
+        "selectingBaselines": [],
+        "measuredWith": "npx jest --listTests <that baseline's paths, verbatim>",
+        "whyNotSelected": "The Surface Ratchet Guard's baseline NAMES this file's directory as `src/app/(maestro)/home`. A jest path argument is a REGEX, so `(maestro)` is a capture group and the pattern matches the string `src/app/maestro/home`, which does not exist. The directory is named and unreachable."
+      },
+      "declaredKnownFailingInBaseline": null,
       "sourceTextScanner": true,
       "verdict": "rewrite_as_behavior",
       "ownerItem": "T-481",
@@ -223,9 +275,9 @@
     {
       "path": "src/app/(maestro)/home/__tests__/home-page-ecl-route.test.tsx",
       "draw": "T-479",
-      "governedRiskBand": "high",
-      "governedRiskScore": 10,
-      "governedRiskSignals": [
+      "governedRiskBandAsFiled": "high",
+      "governedRiskScoreAsFiled": 10,
+      "governedRiskSignalsAsFiled": [
         "tenant_scoped_read"
       ],
       "loaded": true,
@@ -237,6 +289,13 @@
       "passedTests": 3,
       "pendingTests": 0,
       "todoTests": 0,
+      "ciSelection": {
+        "selectedByAWorkflowCommand": false,
+        "selectingBaselines": [],
+        "measuredWith": "npx jest --listTests <that baseline's paths, verbatim>",
+        "whyNotSelected": "The Surface Ratchet Guard's baseline NAMES this file's directory as `src/app/(maestro)/home`. A jest path argument is a REGEX, so `(maestro)` is a capture group and the pattern matches the string `src/app/maestro/home`, which does not exist. The directory is named and unreachable."
+      },
+      "declaredKnownFailingInBaseline": null,
       "sourceTextScanner": false,
       "verdict": "wire_into_ci",
       "ownerItem": "T-480",
@@ -245,9 +304,9 @@
     {
       "path": "src/app/(maestro)/home/__tests__/no-readmin-reexports.test.ts",
       "draw": "T-479",
-      "governedRiskBand": "high",
-      "governedRiskScore": 10,
-      "governedRiskSignals": [
+      "governedRiskBandAsFiled": "high",
+      "governedRiskScoreAsFiled": 10,
+      "governedRiskSignalsAsFiled": [
         "tenant_scoped_read"
       ],
       "loaded": true,
@@ -259,6 +318,13 @@
       "passedTests": 7,
       "pendingTests": 0,
       "todoTests": 0,
+      "ciSelection": {
+        "selectedByAWorkflowCommand": false,
+        "selectingBaselines": [],
+        "measuredWith": "npx jest --listTests <that baseline's paths, verbatim>",
+        "whyNotSelected": "The Surface Ratchet Guard's baseline NAMES this file's directory as `src/app/(maestro)/home`. A jest path argument is a REGEX, so `(maestro)` is a capture group and the pattern matches the string `src/app/maestro/home`, which does not exist. The directory is named and unreachable."
+      },
+      "declaredKnownFailingInBaseline": null,
       "sourceTextScanner": false,
       "verdict": "wire_into_ci",
       "ownerItem": "T-480",
@@ -272,9 +338,9 @@
     {
       "path": "src/app/api/home/know/ask/__tests__/route-visible-contract.test.ts",
       "draw": "T-479",
-      "governedRiskBand": "high",
-      "governedRiskScore": 10,
-      "governedRiskSignals": [
+      "governedRiskBandAsFiled": "high",
+      "governedRiskScoreAsFiled": 10,
+      "governedRiskSignalsAsFiled": [
         "tenant_scoped_read"
       ],
       "loaded": true,
@@ -286,17 +352,26 @@
       "passedTests": 2,
       "pendingTests": 0,
       "todoTests": 0,
+      "ciSelection": {
+        "selectedByAWorkflowCommand": true,
+        "selectingBaselines": [
+          "home"
+        ],
+        "measuredWith": "npx jest --listTests <that baseline's paths, verbatim>",
+        "whyNotSelected": null
+      },
+      "declaredKnownFailingInBaseline": null,
       "sourceTextScanner": false,
-      "verdict": "wire_into_ci",
+      "verdict": "already_selected_no_action",
       "ownerItem": "T-480",
-      "rationale": "Drives the /api/home/know/ask route and asserts the visible answer contract on two failure paths: answer-construction language leaking into final prose, and a terminal blocked answer when the streaming read fails. Both green, both about what a caller receives."
+      "rationale": "ALREADY RUN IN CI, contrary to T-479's premise: the Surface Ratchet Guard selects this file through docs/ci/home-test-baseline.json on every pull request and every push to main, measured with npx jest --listTests over that baseline's paths verbatim. Nothing needs wiring and this record asks for none. What the triage still answers is whether the suite is worth the assurance it reports, and on that: Drives the /api/home/know/ask route and asserts the visible answer contract on two failure paths: answer-construction language leaking into final prose, and a terminal blocked answer when the streaming read fails. Both green, both about what a caller receives."
     },
     {
       "path": "src/app/api/home/preview/ask/__tests__/route.test.ts",
       "draw": "T-479",
-      "governedRiskBand": "high",
-      "governedRiskScore": 10,
-      "governedRiskSignals": [
+      "governedRiskBandAsFiled": "high",
+      "governedRiskScoreAsFiled": 10,
+      "governedRiskSignalsAsFiled": [
         "tenant_scoped_read"
       ],
       "loaded": true,
@@ -308,17 +383,26 @@
       "passedTests": 2,
       "pendingTests": 0,
       "todoTests": 0,
+      "ciSelection": {
+        "selectedByAWorkflowCommand": true,
+        "selectingBaselines": [
+          "home"
+        ],
+        "measuredWith": "npx jest --listTests <that baseline's paths, verbatim>",
+        "whyNotSelected": null
+      },
+      "declaredKnownFailingInBaseline": null,
       "sourceTextScanner": false,
-      "verdict": "wire_into_ci",
+      "verdict": "already_selected_no_action",
       "ownerItem": "T-480",
-      "rationale": "Asserts the ask route answers from the same served Home bundle source that renders the page, and that the reviewed fallback stays visible to the API caller. Two green cases over the route's real response, not its text."
+      "rationale": "ALREADY RUN IN CI, contrary to T-479's premise: the Surface Ratchet Guard selects this file through docs/ci/home-test-baseline.json on every pull request and every push to main, measured with npx jest --listTests over that baseline's paths verbatim. Nothing needs wiring and this record asks for none. What the triage still answers is whether the suite is worth the assurance it reports, and on that: Asserts the ask route answers from the same served Home bundle source that renders the page, and that the reviewed fallback stays visible to the API caller. Two green cases over the route's real response, not its text."
     },
     {
       "path": "src/app/api/home/walkthrough-export/__tests__/route.test.ts",
       "draw": "T-479",
-      "governedRiskBand": "high",
-      "governedRiskScore": 10,
-      "governedRiskSignals": [
+      "governedRiskBandAsFiled": "high",
+      "governedRiskScoreAsFiled": 10,
+      "governedRiskSignalsAsFiled": [
         "tenant_scoped_read"
       ],
       "loaded": true,
@@ -330,17 +414,26 @@
       "passedTests": 1,
       "pendingTests": 0,
       "todoTests": 0,
+      "ciSelection": {
+        "selectedByAWorkflowCommand": true,
+        "selectingBaselines": [
+          "home"
+        ],
+        "measuredWith": "npx jest --listTests <that baseline's paths, verbatim>",
+        "whyNotSelected": null
+      },
+      "declaredKnownFailingInBaseline": null,
       "sourceTextScanner": false,
-      "verdict": "wire_into_ci",
+      "verdict": "already_selected_no_action",
       "ownerItem": "T-480",
-      "rationale": "One green case: canonical Home tenant aliases are authorized through the app client key. It mocks @/lib/auth/tenancy wholesale, so it proves the route CALLS the fence with a particular argument and nothing about whether the fence holds -- its sibling suite (row 8) exists for that reason and carries the behavioral proof. Wire it for what it does assert, and do not read a green run here as tenancy evidence."
+      "rationale": "ALREADY RUN IN CI, contrary to T-479's premise: the Surface Ratchet Guard selects this file through docs/ci/home-test-baseline.json on every pull request and every push to main, measured with npx jest --listTests over that baseline's paths verbatim. Nothing needs wiring and this record asks for none. What the triage still answers is whether the suite is worth the assurance it reports, and on that: One green case: canonical Home tenant aliases are authorized through the app client key. It mocks @/lib/auth/tenancy wholesale, so it proves the route CALLS the fence with a particular argument and nothing about whether the fence holds -- its sibling suite (row 8) exists for that reason and carries the behavioral proof. Wire it for what it does assert, and do not read a green run here as tenancy evidence."
     },
     {
       "path": "src/app/api/home/walkthrough-export/__tests__/tenancy-fence.test.ts",
       "draw": "T-479",
-      "governedRiskBand": "high",
-      "governedRiskScore": 10,
-      "governedRiskSignals": [
+      "governedRiskBandAsFiled": "high",
+      "governedRiskScoreAsFiled": 10,
+      "governedRiskSignalsAsFiled": [
         "tenant_scoped_read"
       ],
       "loaded": true,
@@ -352,17 +445,26 @@
       "passedTests": 9,
       "pendingTests": 0,
       "todoTests": 0,
+      "ciSelection": {
+        "selectedByAWorkflowCommand": true,
+        "selectingBaselines": [
+          "home"
+        ],
+        "measuredWith": "npx jest --listTests <that baseline's paths, verbatim>",
+        "whyNotSelected": null
+      },
+      "declaredKnownFailingInBaseline": null,
       "sourceTextScanner": false,
-      "verdict": "wire_into_ci",
+      "verdict": "already_selected_no_action",
       "ownerItem": "T-480",
-      "rationale": "The boundary suite this draw was told to start from. It mocks the identity layer BELOW requireTenancy and runs the real fence, and mutation M1 proved the assertion can fail: dropping requestedClientKey from the route's requireTenancy call took it from 0 failing to 4 failing of 9, including the foreign-alias refusal and the positive same-tenant case. Nine green cases covering refusal before any document is produced, both export formats, and the requested-versus-active tenant label. An unrun fence and a vacuous fence look identical from outside; this one is not vacuous, and nothing runs it."
+      "rationale": "ALREADY RUN IN CI, contrary to T-479's premise: the Surface Ratchet Guard selects this file through docs/ci/home-test-baseline.json on every pull request and every push to main, measured with npx jest --listTests over that baseline's paths verbatim. Nothing needs wiring and this record asks for none. What the triage still answers is whether the suite is worth the assurance it reports, and on that: The boundary suite this draw was told to start from. It mocks the identity layer BELOW requireTenancy and runs the real fence, and mutation M1 proved the assertion can fail: dropping requestedClientKey from the route's requireTenancy call took it from 0 failing to 4 failing of 9, including the foreign-alias refusal and the positive same-tenant case. Nine green cases covering refusal before any document is produced, both export formats, and the requested-versus-active tenant label. An unrun fence and a vacuous fence look identical from outside; this one is not vacuous, and nothing runs it."
     },
     {
       "path": "src/app/api/tower/__tests__/seed-demo-route.test.ts",
       "draw": "T-479",
-      "governedRiskBand": "high",
-      "governedRiskScore": 10,
-      "governedRiskSignals": [
+      "governedRiskBandAsFiled": "high",
+      "governedRiskScoreAsFiled": 10,
+      "governedRiskSignalsAsFiled": [
         "tenant_scoped_read"
       ],
       "loaded": true,
@@ -374,17 +476,26 @@
       "passedTests": 2,
       "pendingTests": 0,
       "todoTests": 0,
+      "ciSelection": {
+        "selectedByAWorkflowCommand": true,
+        "selectingBaselines": [
+          "tower"
+        ],
+        "measuredWith": "npx jest --listTests <that baseline's paths, verbatim>",
+        "whyNotSelected": null
+      },
+      "declaredKnownFailingInBaseline": null,
       "sourceTextScanner": false,
-      "verdict": "wire_into_ci",
+      "verdict": "already_selected_no_action",
       "ownerItem": "T-480",
-      "rationale": "Asserts /api/tower/seed-demo blocks demo seeding and demo reset for governed foundation tenants BEFORE the role or write lookup -- ordering, not just outcome, which is the property that matters for a destructive operator route. Two green cases."
+      "rationale": "ALREADY RUN IN CI, contrary to T-479's premise: the Surface Ratchet Guard selects this file through docs/ci/tower-test-baseline.json on every pull request and every push to main, measured with npx jest --listTests over that baseline's paths verbatim. Nothing needs wiring and this record asks for none. What the triage still answers is whether the suite is worth the assurance it reports, and on that: Asserts /api/tower/seed-demo blocks demo seeding and demo reset for governed foundation tenants BEFORE the role or write lookup -- ordering, not just outcome, which is the property that matters for a destructive operator route. Two green cases."
     },
     {
       "path": "src/app/api/tower/ask/route.test.ts",
       "draw": "T-479",
-      "governedRiskBand": "high",
-      "governedRiskScore": 10,
-      "governedRiskSignals": [
+      "governedRiskBandAsFiled": "high",
+      "governedRiskScoreAsFiled": 10,
+      "governedRiskSignalsAsFiled": [
         "tenant_scoped_read"
       ],
       "loaded": true,
@@ -396,17 +507,26 @@
       "passedTests": 2,
       "pendingTests": 0,
       "todoTests": 0,
+      "ciSelection": {
+        "selectedByAWorkflowCommand": true,
+        "selectingBaselines": [
+          "tower"
+        ],
+        "measuredWith": "npx jest --listTests <that baseline's paths, verbatim>",
+        "whyNotSelected": null
+      },
+      "declaredKnownFailingInBaseline": null,
       "sourceTextScanner": false,
-      "verdict": "wire_into_ci",
+      "verdict": "already_selected_no_action",
       "ownerItem": "T-480",
-      "rationale": "Two green cases: the Tower ask prompt inherits the shared consultant answer shape, and the legacy ask path keeps the selected Tower tenant candidate set. Both exercise the composed value rather than the route file's bytes."
+      "rationale": "ALREADY RUN IN CI, contrary to T-479's premise: the Surface Ratchet Guard selects this file through docs/ci/tower-test-baseline.json on every pull request and every push to main, measured with npx jest --listTests over that baseline's paths verbatim. Nothing needs wiring and this record asks for none. What the triage still answers is whether the suite is worth the assurance it reports, and on that: Two green cases: the Tower ask prompt inherits the shared consultant answer shape, and the legacy ask path keeps the selected Tower tenant candidate set. Both exercise the composed value rather than the route file's bytes."
     },
     {
       "path": "src/app/api/tower/chat/route.test.ts",
       "draw": "T-479",
-      "governedRiskBand": "high",
-      "governedRiskScore": 10,
-      "governedRiskSignals": [
+      "governedRiskBandAsFiled": "high",
+      "governedRiskScoreAsFiled": 10,
+      "governedRiskSignalsAsFiled": [
         "tenant_scoped_read"
       ],
       "loaded": true,
@@ -418,17 +538,26 @@
       "passedTests": 1,
       "pendingTests": 0,
       "todoTests": 0,
+      "ciSelection": {
+        "selectedByAWorkflowCommand": true,
+        "selectingBaselines": [
+          "tower"
+        ],
+        "measuredWith": "npx jest --listTests <that baseline's paths, verbatim>",
+        "whyNotSelected": null
+      },
+      "declaredKnownFailingInBaseline": null,
       "sourceTextScanner": false,
-      "verdict": "wire_into_ci",
+      "verdict": "already_selected_no_action",
       "ownerItem": "T-480",
-      "rationale": "One green case asserting /api/tower/chat resolves the Tower answer context under the SELECTED client key. Small, but it is the tenant-selection seam and it runs the route."
+      "rationale": "ALREADY RUN IN CI, contrary to T-479's premise: the Surface Ratchet Guard selects this file through docs/ci/tower-test-baseline.json on every pull request and every push to main, measured with npx jest --listTests over that baseline's paths verbatim. Nothing needs wiring and this record asks for none. What the triage still answers is whether the suite is worth the assurance it reports, and on that: One green case asserting /api/tower/chat resolves the Tower answer context under the SELECTED client key. Small, but it is the tenant-selection seam and it runs the route."
     },
     {
       "path": "src/app/api/tower/synthesis/route-fix-c.test.ts",
       "draw": "T-479",
-      "governedRiskBand": "high",
-      "governedRiskScore": 10,
-      "governedRiskSignals": [
+      "governedRiskBandAsFiled": "high",
+      "governedRiskScoreAsFiled": 10,
+      "governedRiskSignalsAsFiled": [
         "tenant_scoped_read"
       ],
       "loaded": true,
@@ -440,6 +569,18 @@
       "passedTests": 3,
       "pendingTests": 0,
       "todoTests": 0,
+      "ciSelection": {
+        "selectedByAWorkflowCommand": true,
+        "selectingBaselines": [
+          "tower"
+        ],
+        "measuredWith": "npx jest --listTests <that baseline's paths, verbatim>",
+        "whyNotSelected": null
+      },
+      "declaredKnownFailingInBaseline": {
+        "failing": 1,
+        "ran": true
+      },
       "sourceTextScanner": false,
       "verdict": "update_with_reason_recorded",
       "ownerItem": "T-482",
@@ -455,9 +596,9 @@
     {
       "path": "src/app/api/tower/synthesis/route.invariants.test.ts",
       "draw": "T-479",
-      "governedRiskBand": "high",
-      "governedRiskScore": 10,
-      "governedRiskSignals": [
+      "governedRiskBandAsFiled": "high",
+      "governedRiskScoreAsFiled": 10,
+      "governedRiskSignalsAsFiled": [
         "tenant_scoped_read"
       ],
       "loaded": true,
@@ -469,6 +610,15 @@
       "passedTests": 6,
       "pendingTests": 0,
       "todoTests": 0,
+      "ciSelection": {
+        "selectedByAWorkflowCommand": true,
+        "selectingBaselines": [
+          "tower"
+        ],
+        "measuredWith": "npx jest --listTests <that baseline's paths, verbatim>",
+        "whyNotSelected": null
+      },
+      "declaredKnownFailingInBaseline": null,
       "sourceTextScanner": true,
       "verdict": "rewrite_as_behavior",
       "ownerItem": "T-481",
@@ -477,9 +627,9 @@
     {
       "path": "src/app/api/tower/synthesis/route.test.ts",
       "draw": "T-479",
-      "governedRiskBand": "high",
-      "governedRiskScore": 10,
-      "governedRiskSignals": [
+      "governedRiskBandAsFiled": "high",
+      "governedRiskScoreAsFiled": 10,
+      "governedRiskSignalsAsFiled": [
         "tenant_scoped_read"
       ],
       "loaded": true,
@@ -491,17 +641,26 @@
       "passedTests": 9,
       "pendingTests": 0,
       "todoTests": 0,
+      "ciSelection": {
+        "selectedByAWorkflowCommand": true,
+        "selectingBaselines": [
+          "tower"
+        ],
+        "measuredWith": "npx jest --listTests <that baseline's paths, verbatim>",
+        "whyNotSelected": null
+      },
+      "declaredKnownFailingInBaseline": null,
       "sourceTextScanner": false,
-      "verdict": "wire_into_ci",
+      "verdict": "already_selected_no_action",
       "ownerItem": "T-480",
-      "rationale": "Nine green cases that CALL composeAtlasSynthesisUserMessage and assert the composed message: the tenant display name in the header for three tenants, an honest empty state that is never another tenant's content, and snapshot cases pinning that an unknown tenant gets an honest empty rather than a silent default. This is the behavioral form of what row 13 asserts by regex, on the same route, which makes the pair a ready-made example for T-481."
+      "rationale": "ALREADY RUN IN CI, contrary to T-479's premise: the Surface Ratchet Guard selects this file through docs/ci/tower-test-baseline.json on every pull request and every push to main, measured with npx jest --listTests over that baseline's paths verbatim. Nothing needs wiring and this record asks for none. What the triage still answers is whether the suite is worth the assurance it reports, and on that: Nine green cases that CALL composeAtlasSynthesisUserMessage and assert the composed message: the tenant display name in the header for three tenants, an honest empty state that is never another tenant's content, and snapshot cases pinning that an unknown tenant gets an honest empty rather than a silent default. This is the behavioral form of what row 13 asserts by regex, on the same route, which makes the pair a ready-made example for T-481."
     },
     {
       "path": "src/app/api/v1/tower/outcome-report/__tests__/route.test.ts",
       "draw": "T-479",
-      "governedRiskBand": "high",
-      "governedRiskScore": 10,
-      "governedRiskSignals": [
+      "governedRiskBandAsFiled": "high",
+      "governedRiskScoreAsFiled": 10,
+      "governedRiskSignalsAsFiled": [
         "tenant_scoped_read"
       ],
       "loaded": true,
@@ -513,6 +672,18 @@
       "passedTests": 2,
       "pendingTests": 0,
       "todoTests": 0,
+      "ciSelection": {
+        "selectedByAWorkflowCommand": true,
+        "selectingBaselines": [
+          "tower"
+        ],
+        "measuredWith": "npx jest --listTests <that baseline's paths, verbatim>",
+        "whyNotSelected": null
+      },
+      "declaredKnownFailingInBaseline": {
+        "failing": 2,
+        "ran": true
+      },
       "sourceTextScanner": false,
       "verdict": "update_with_reason_recorded",
       "ownerItem": "T-483",
@@ -525,9 +696,9 @@
     {
       "path": "src/components/home/ai-success-command-center/__tests__/AiSuccessCommandCenter.test.tsx",
       "draw": "T-479",
-      "governedRiskBand": "high",
-      "governedRiskScore": 10,
-      "governedRiskSignals": [
+      "governedRiskBandAsFiled": "high",
+      "governedRiskScoreAsFiled": 10,
+      "governedRiskSignalsAsFiled": [
         "tenant_scoped_read"
       ],
       "loaded": true,
@@ -539,17 +710,26 @@
       "passedTests": 3,
       "pendingTests": 0,
       "todoTests": 0,
+      "ciSelection": {
+        "selectedByAWorkflowCommand": true,
+        "selectingBaselines": [
+          "home"
+        ],
+        "measuredWith": "npx jest --listTests <that baseline's paths, verbatim>",
+        "whyNotSelected": null
+      },
+      "declaredKnownFailingInBaseline": null,
       "sourceTextScanner": false,
-      "verdict": "wire_into_ci",
+      "verdict": "already_selected_no_action",
       "ownerItem": "T-480",
-      "rationale": "Renders AiSuccessCommandCenter and asserts the generated advisory story and architecture canvas, that expanded Ask aVa is wired to the Home KNOW provider with export-capable rendering, and that internal provider errors do not reach the drawer. Three green cases, all over rendered output."
+      "rationale": "ALREADY RUN IN CI, contrary to T-479's premise: the Surface Ratchet Guard selects this file through docs/ci/home-test-baseline.json on every pull request and every push to main, measured with npx jest --listTests over that baseline's paths verbatim. Nothing needs wiring and this record asks for none. What the triage still answers is whether the suite is worth the assurance it reports, and on that: Renders AiSuccessCommandCenter and asserts the generated advisory story and architecture canvas, that expanded Ask aVa is wired to the Home KNOW provider with export-capable rendering, and that internal provider errors do not reach the drawer. Three green cases, all over rendered output."
     },
     {
       "path": "src/lib/tower/__tests__/ai-ops-cost-ledger.test.ts",
       "draw": "T-479",
-      "governedRiskBand": "high",
-      "governedRiskScore": 10,
-      "governedRiskSignals": [
+      "governedRiskBandAsFiled": "high",
+      "governedRiskScoreAsFiled": 10,
+      "governedRiskSignalsAsFiled": [
         "tenant_scoped_read"
       ],
       "loaded": true,
@@ -561,17 +741,26 @@
       "passedTests": 4,
       "pendingTests": 0,
       "todoTests": 0,
+      "ciSelection": {
+        "selectedByAWorkflowCommand": true,
+        "selectingBaselines": [
+          "tower"
+        ],
+        "measuredWith": "npx jest --listTests <that baseline's paths, verbatim>",
+        "whyNotSelected": null
+      },
+      "declaredKnownFailingInBaseline": null,
       "sourceTextScanner": false,
-      "verdict": "wire_into_ci",
+      "verdict": "already_selected_no_action",
       "ownerItem": "T-480",
-      "rationale": "Four green cases over the AI ops cost ledger: it emits a variance alert when realized cost exceeds projection by more than ten percent with no reason code, suppresses it when a reason code is on file, and builds an estimated ledger from the license-dollar layer until live run-cost fields exist. Computed outcomes, not text."
+      "rationale": "ALREADY RUN IN CI, contrary to T-479's premise: the Surface Ratchet Guard selects this file through docs/ci/tower-test-baseline.json on every pull request and every push to main, measured with npx jest --listTests over that baseline's paths verbatim. Nothing needs wiring and this record asks for none. What the triage still answers is whether the suite is worth the assurance it reports, and on that: Four green cases over the AI ops cost ledger: it emits a variance alert when realized cost exceeds projection by more than ten percent with no reason code, suppresses it when a reason code is on file, and builds an estimated ledger from the license-dollar layer until live run-cost fields exist. Computed outcomes, not text."
     },
     {
       "path": "src/lib/tower/__tests__/case-attribute-widening.test.ts",
       "draw": "T-479",
-      "governedRiskBand": "high",
-      "governedRiskScore": 10,
-      "governedRiskSignals": [
+      "governedRiskBandAsFiled": "high",
+      "governedRiskScoreAsFiled": 10,
+      "governedRiskSignalsAsFiled": [
         "tenant_scoped_read"
       ],
       "loaded": true,
@@ -583,6 +772,15 @@
       "passedTests": 88,
       "pendingTests": 0,
       "todoTests": 0,
+      "ciSelection": {
+        "selectedByAWorkflowCommand": true,
+        "selectingBaselines": [
+          "tower"
+        ],
+        "measuredWith": "npx jest --listTests <that baseline's paths, verbatim>",
+        "whyNotSelected": null
+      },
+      "declaredKnownFailingInBaseline": null,
       "sourceTextScanner": true,
       "verdict": "rewrite_as_behavior",
       "ownerItem": "T-481",
@@ -591,9 +789,9 @@
     {
       "path": "src/lib/tower/__tests__/current-layer-answer.test.ts",
       "draw": "T-479",
-      "governedRiskBand": "high",
-      "governedRiskScore": 10,
-      "governedRiskSignals": [
+      "governedRiskBandAsFiled": "high",
+      "governedRiskScoreAsFiled": 10,
+      "governedRiskSignalsAsFiled": [
         "tenant_scoped_read"
       ],
       "loaded": true,
@@ -605,17 +803,26 @@
       "passedTests": 15,
       "pendingTests": 0,
       "todoTests": 0,
+      "ciSelection": {
+        "selectedByAWorkflowCommand": true,
+        "selectingBaselines": [
+          "tower"
+        ],
+        "measuredWith": "npx jest --listTests <that baseline's paths, verbatim>",
+        "whyNotSelected": null
+      },
+      "declaredKnownFailingInBaseline": null,
       "sourceTextScanner": false,
-      "verdict": "wire_into_ci",
+      "verdict": "already_selected_no_action",
       "ownerItem": "T-480",
-      "rationale": "Fifteen green cases over the current-layer answer path, exercising the computed answer rather than its source. The largest purely behavioral suite in the draw after row 14."
+      "rationale": "ALREADY RUN IN CI, contrary to T-479's premise: the Surface Ratchet Guard selects this file through docs/ci/tower-test-baseline.json on every pull request and every push to main, measured with npx jest --listTests over that baseline's paths verbatim. Nothing needs wiring and this record asks for none. What the triage still answers is whether the suite is worth the assurance it reports, and on that: Fifteen green cases over the current-layer answer path, exercising the computed answer rather than its source. The largest purely behavioral suite in the draw after row 14."
     },
     {
       "path": "src/lib/tower/__tests__/ecl-projection-preview-degrades.test.ts",
       "draw": "T-479",
-      "governedRiskBand": "high",
-      "governedRiskScore": 10,
-      "governedRiskSignals": [
+      "governedRiskBandAsFiled": "high",
+      "governedRiskScoreAsFiled": 10,
+      "governedRiskSignalsAsFiled": [
         "tenant_scoped_read"
       ],
       "loaded": true,
@@ -627,10 +834,19 @@
       "passedTests": 4,
       "pendingTests": 0,
       "todoTests": 0,
+      "ciSelection": {
+        "selectedByAWorkflowCommand": true,
+        "selectingBaselines": [
+          "tower"
+        ],
+        "measuredWith": "npx jest --listTests <that baseline's paths, verbatim>",
+        "whyNotSelected": null
+      },
+      "declaredKnownFailingInBaseline": null,
       "sourceTextScanner": false,
-      "verdict": "wire_into_ci",
+      "verdict": "already_selected_no_action",
       "ownerItem": "T-480",
-      "rationale": "Three of the four cases call readTowerEclProjectionPreview and assert it degrades to null instead of throwing when rows or the tenant key are absent, and still returns a preview when rows are present -- the positive case that keeps the negatives from being vacuous. The fourth slices the /tower page source at the call site and matches /\\.catch\\(\\(\\) => null\\)/, which proves the text of one call and would pass a try/catch or a wrapper written any other way. Wire the suite; hand that one case to T-484.",
+      "rationale": "ALREADY RUN IN CI, contrary to T-479's premise: the Surface Ratchet Guard selects this file through docs/ci/tower-test-baseline.json on every pull request and every push to main, measured with npx jest --listTests over that baseline's paths verbatim. Nothing needs wiring and this record asks for none. What the triage still answers is whether the suite is worth the assurance it reports, and on that: Three of the four cases call readTowerEclProjectionPreview and assert it degrades to null instead of throwing when rows or the tenant key are absent, and still returns a preview when rows are present -- the positive case that keeps the negatives from being vacuous. The fourth slices the /tower page source at the call site and matches /\\.catch\\(\\(\\) => null\\)/, which proves the text of one call and would pass a try/catch or a wrapper written any other way. Wire the suite; hand that one case to T-484.",
       "partialSourceTextCases": 1,
       "partialSourceTextCaseNames": [
         "/tower route — ECL preview call site is guarded :: wraps readTowerEclProjectionPreview so a read failure cannot fail the route"

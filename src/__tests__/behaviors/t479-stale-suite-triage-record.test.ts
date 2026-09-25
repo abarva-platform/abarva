@@ -24,7 +24,20 @@
  *     declaration is falsifiable whether the population is empty or not, which
  *     is what a control has to be.
  *
- *  3. MUTATION EVIDENCE IS PART OF THE RECORD, AND A SURVIVING MUTATION IS A
+ *  3. THE ITEM'S PREMISE WAS RE-VERIFIED AND IT FAILED FOR 16 OF 20, SO THE
+ *     GUARD CHECKS THE CORRECTION RATHER THAN THE CLAIM. T-479 states that all
+ *     twenty are named by no CI job. Sixteen run on every pull request inside
+ *     the Surface Ratchet Guard, and the other four are named by a pattern that
+ *     cannot match them -- `src/app/(maestro)/home` is a jest REGEX, so
+ *     `(maestro)` is a capture group. The controls below therefore verify the
+ *     record's selection claims against the live baselines and against the
+ *     mechanism: a row may only be called unselected if its path actually
+ *     carries a parenthesised segment, a row called selected may not, and a
+ *     `knownFailing` entry the record quotes must match the baseline file on
+ *     disk AND the failure count measured from the run. A premise correction
+ *     that only restates itself is not a correction.
+ *
+ *  4. MUTATION EVIDENCE IS PART OF THE RECORD, AND A SURVIVING MUTATION IS A
  *     RESULT RATHER THAN AN ABSENCE. The item asks the two boundary suites to
  *     be shown capable of failing, because an unrun fence and a vacuous fence
  *     are indistinguishable from outside. Two of this draw's five mutations
@@ -70,6 +83,13 @@ type Suite = {
   partialSourceTextCases?: number;
   partialSourceTextCaseNames?: string[];
   failingCaseNames?: string[];
+  ciSelection: {
+    selectedByAWorkflowCommand: boolean;
+    selectingBaselines: string[];
+    measuredWith: string;
+    whyNotSelected: string | null;
+  };
+  declaredKnownFailingInBaseline: { failing: number; ran: boolean } | null;
   verdict: string;
   ownerItem: string;
   rationale: string;
@@ -128,6 +148,28 @@ type Record_ = {
     sourceTextScanner: string;
     redSuites: string;
     vacuousCasesFound: string;
+    notSelectedByAnyCiCommand: string;
+  };
+  verdictVocabularyDeviation: {
+    added: string;
+    why: string;
+    constrainedBy: string;
+  };
+  premiseCorrection: Record<string, string>;
+  ciSelectionEvidence: {
+    how: string;
+    selectedOfTwenty: number;
+    notSelectedOfTwenty: number;
+    filesSelectedByBothBaselines: number;
+    filesSelectedUnderAParenthesisedSegment: number;
+    ratchetProbes: {
+      baseline: string;
+      asIs: string;
+      escaped: string;
+      newFailureRevealed: string;
+      testsTheGateIsNotRunning: number;
+    }[];
+    probeMethod: string;
   };
   followOnItems: Record<string, string>;
 };
@@ -222,6 +264,9 @@ describe("T-479 stale suite triage record", () => {
     const wiring = record.suites.filter((s) => s.verdict === "wire_into_ci");
     expect(wiring.length).toBeGreaterThan(0);
     for (const suite of wiring) {
+      // Asking to wire something CI already selects is the error the premise
+      // correction exists to prevent.
+      expect(suite.ciSelection.selectedByAWorkflowCommand).toBe(false);
       expect(suite.loaded).toBe(true);
       expect(suite.collected).toBe(true);
       expect(suite.run).toBe(true);
@@ -475,6 +520,145 @@ describe("T-479 stale suite triage record", () => {
     expect(Object.keys(record.scope)).not.toContain(
       "poolUntriagedAndUncovered",
     );
+  });
+
+  /*
+   * The premise correction has to be checkable against something other than its
+   * own prose. These read the live baselines.
+   */
+  it("keeps the published selection counts equal to the rows, and summing to the draw", () => {
+    const selected = record.suites.filter(
+      (s) => s.ciSelection.selectedByAWorkflowCommand,
+    ).length;
+    expect(record.ciSelectionEvidence.selectedOfTwenty).toBe(selected);
+    expect(record.ciSelectionEvidence.notSelectedOfTwenty).toBe(
+      record.suites.length - selected,
+    );
+    expect(
+      record.ciSelectionEvidence.selectedOfTwenty +
+        record.ciSelectionEvidence.notSelectedOfTwenty,
+    ).toBe(record.suites.length);
+
+    const declaration = declaredPopulation(
+      record.populationsDeclared.notSelectedByAnyCiCommand,
+    );
+    expect(declaration.fired).toBe(selected < record.suites.length);
+    expect(declaration.count).toBe(record.suites.length - selected);
+  });
+
+  /*
+   * The MECHANISM, not just the count. The record's explanation for every
+   * unselected row is that a parenthesised segment in a baseline path is read by
+   * jest as a capture group. If an unselected row's path carries no such
+   * segment, the explanation does not apply to it and the record is asserting a
+   * cause it has not established. The converse matters just as much: a SELECTED
+   * row under a parenthesised segment would falsify the mechanism outright.
+   */
+  it("holds the selection claim to the mechanism it names, in both directions", () => {
+    const parenthesised = (p: string) => /\([^/]*\)/.test(p);
+    for (const suite of record.suites) {
+      if (suite.ciSelection.selectedByAWorkflowCommand) {
+        expect(suite.ciSelection.whyNotSelected).toBeNull();
+        expect(suite.ciSelection.selectingBaselines.length).toBeGreaterThan(0);
+        expect(parenthesised(suite.path)).toBe(false);
+      } else {
+        expect(parenthesised(suite.path)).toBe(true);
+        expect(suite.ciSelection.selectingBaselines).toHaveLength(0);
+        expect((suite.ciSelection.whyNotSelected ?? "").length).toBeGreaterThan(
+          120,
+        );
+      }
+    }
+    expect(
+      record.ciSelectionEvidence.filesSelectedUnderAParenthesisedSegment,
+    ).toBe(0);
+  });
+
+  /*
+   * A `knownFailing` quote is checked against the baseline on disk and against
+   * the measured run. Two independent facts, and the record may not disagree
+   * with either -- this is the control that would catch a baseline re-recorded
+   * after the fact to make a row look expected.
+   */
+  it("verifies every quoted baseline knownFailing entry against the baseline file and the measured run", () => {
+    const baselines = [
+      "docs/ci/home-test-baseline.json",
+      "docs/ci/tower-test-baseline.json",
+    ].map((p) => read(p) as { knownFailing: Record<string, { failing: number; ran: boolean }> });
+    const live: Record<string, { failing: number; ran: boolean }> = {};
+    for (const b of baselines) Object.assign(live, b.knownFailing);
+
+    for (const suite of record.suites) {
+      const quoted = suite.declaredKnownFailingInBaseline;
+      if (!quoted) {
+        expect(live[suite.path]).toBeUndefined();
+        continue;
+      }
+      expect(live[suite.path]).toEqual(quoted);
+      expect(quoted.failing).toBe(suite.failedTests);
+      expect(suite.green).toBe(false);
+    }
+  });
+
+  /*
+   * Each ratchet probe claims the gate passes as written and fails escaped. A
+   * probe that did not change the outcome proves nothing, and a revealed failure
+   * that is already baselined would not be revealed at all.
+   */
+  it("holds each ratchet probe to a changed outcome and a genuinely unbaselined failure", () => {
+    expect(record.ciSelectionEvidence.ratchetProbes.length).toBeGreaterThan(0);
+    for (const probe of record.ciSelectionEvidence.ratchetProbes) {
+      const baseline = read(probe.baseline) as {
+        knownFailing: Record<string, unknown>;
+        paths: string[];
+      };
+      expect(probe.asIs).toMatch(/exit 0/);
+      expect(probe.escaped).toMatch(/exit 1/);
+      expect(probe.testsTheGateIsNotRunning).toBeGreaterThan(0);
+
+      // The revealed failure must not already be baselined, or it is not news.
+      const revealedPath = probe.newFailureRevealed.split(" ")[0];
+      expect(Object.keys(baseline.knownFailing)).not.toContain(revealedPath);
+
+      // And the baseline must still carry the unescaped pattern this is about.
+      expect(baseline.paths.some((p) => /\([^/]*\)/.test(p))).toBe(true);
+    }
+  });
+
+  /*
+   * The fifth verdict is a deliberate deviation from the item's wording, so it
+   * is constrained rather than free: it may only describe a row the measurement
+   * says is already selected AND green.
+   */
+  it("allows the added verdict only on a row that is measured as selected and green", () => {
+    expect(record.verdictVocabulary).toContain(
+      record.verdictVocabularyDeviation.added,
+    );
+    expect(record.verdictVocabularyDeviation.why.length).toBeGreaterThan(200);
+    expect(
+      record.verdictVocabularyDeviation.constrainedBy,
+    ).toContain("t479-stale-suite-triage-record.test.ts");
+
+    const added = record.verdictVocabularyDeviation.added;
+    for (const suite of record.suites) {
+      if (suite.verdict !== added) continue;
+      expect(suite.ciSelection.selectedByAWorkflowCommand).toBe(true);
+      expect(suite.green).toBe(true);
+    }
+    // And it may not be used to avoid wiring something nothing selects.
+    for (const suite of record.suites) {
+      if (suite.ciSelection.selectedByAWorkflowCommand) continue;
+      expect(suite.verdict).not.toBe(added);
+    }
+  });
+
+  it("states the premise correction rather than repeating the item's claim", () => {
+    for (const [key, value] of Object.entries(record.premiseCorrection)) {
+      expect(typeof value).toBe("string");
+      expect(value.length).toBeGreaterThan(80);
+      expect(key.length).toBeGreaterThan(0);
+    }
+    expect(record.premiseCorrection.measuredAtThisBase).toMatch(/FALSE FOR \d+ OF \d+/);
   });
 
   it("hands every suite to a named follow-on item that this record also describes", () => {
