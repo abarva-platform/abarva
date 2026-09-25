@@ -31,6 +31,7 @@ Adds a canonical supplier-contact identity and an evidenced, event-specific appr
 
 - `supabase/migrations/20260925160000_source_event_rfx_release_authority.sql` authors the contact and prepared-package authority schema, tenant read policies, insertion checks, and immutability guards.
 - The contact read repository and pure snapshot preparation helper fail closed on missing, mismatched, retired, or stale authority.
+- A read-only operator preview checks proposed contact identity against the repository and reports proposal consistency without exposing recipient details, persisting a snapshot, or claiming governed release readiness.
 - Focused behavioral and storage-contract tests cover tenant/event identity, named contacts, artifact hashes, and the prepared-only state.
 
 ## QA / Validation
@@ -38,6 +39,7 @@ Adds a canonical supplier-contact identity and an evidenced, event-specific appr
 - Pass: focused repository, snapshot, and storage-contract tests.
 - Pass: red-first storage tests before the package-version schema was added; removing the retired-contact predicate made the focused contract fail, and restoring it returned green.
 - Pass: PR CI fresh PostgreSQL migration replay and full sequence against isolated PostgreSQL. This is test-database execution only, not a shared-tenant apply.
+- Pass: orphan-module reachability check after adding the read-only operator preview; typecheck and targeted lint.
 - Not run: shared-tenant migration apply. It requires a separate operator decision.
 - Not run: positive signed-in Stage 06 release readback; there is no issuance route or populated recipient authority.
 
