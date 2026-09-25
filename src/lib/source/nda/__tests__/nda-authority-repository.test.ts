@@ -29,6 +29,7 @@ describe("readNdaAuthorityForEvent", () => {
           scope_level: "event_only",
           covered_affiliate_entity_ids: [],
           effective_from: "2026-01-01",
+          executed_at: "2026-02-15T12:00:00.000Z",
           effective_to: "2027-01-01",
           uploaded_by_user_id: "user-1",
           // Signature evidence is given real, distinct values rather than left
@@ -79,9 +80,7 @@ describe("readNdaAuthorityForEvent", () => {
           signatureEvidence: {
             documentSha256: "a".repeat(64),
             signatureMethod: "docusign",
-            // `effective_from` is the signature date; there is no separate
-            // signed_at column, which the repository says in its own comment.
-            signedAt: "2026-01-01",
+            signedAt: "2026-02-15T12:00:00.000Z",
             supplierSignatoryName: "Supplier Signatory",
             buyerSignatoryName: "Buyer Signatory",
             certificateSha256: "b".repeat(64),
@@ -121,6 +120,7 @@ describe("readNdaAuthorityForEvent", () => {
     expect(run.mock.calls[2][0]).toContain("client_key = $1");
     expect(run.mock.calls[2][0]).toContain("source_event_id = $2::uuid");
     expect(run.mock.calls[2][0]).toContain("supplier_legal_entity_id = $3");
+    expect(run.mock.calls[2][0]).toContain("authority.executed_at");
     expect(run.mock.calls[2][0]).toContain("artifact_type = 'nda_executed'");
     expect(run.mock.calls[2][0]).toContain("lifecycle_state = 'current'");
     expect(run.mock.calls[2][0]).toContain(
