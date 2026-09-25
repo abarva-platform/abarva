@@ -1,0 +1,735 @@
+{
+  "item": "C-403",
+  "generatedBy": "src/__tests__/behaviors/c403-answer-mode-routing.test.ts",
+  "subject": {
+    "file": "src/lib/source/ava/answer-mode.ts",
+    "ruleCount": 19,
+    "regexLiteralCount": 23,
+    "ruleOrder": [
+      "event_status.where_are_we",
+      "event_status.progress",
+      "stage_gate.blockers",
+      "stage_gate.confirms",
+      "evidence_readiness.missing",
+      "artifact_finality.which_is_final",
+      "artifact_lineage.history",
+      "workflow_how_to.how_do_i",
+      "decision_recommendation.core",
+      "contract_optimization.core",
+      "value_at_stake.core",
+      "vendor_comparison.core",
+      "risk_exposure.core",
+      "clause_coverage.core",
+      "bafo_strategy.core",
+      "should_cost.core",
+      "committed_value.core",
+      "value_realization.core",
+      "stakeholder_alignment.deferred"
+    ]
+  },
+  "modeUnion": {
+    "declared": [
+      "event_status",
+      "workflow_how_to",
+      "evidence_readiness",
+      "artifact_lineage",
+      "artifact_finality",
+      "stage_gate",
+      "value_at_stake",
+      "vendor_comparison",
+      "risk_exposure",
+      "clause_coverage",
+      "bafo_strategy",
+      "should_cost",
+      "committed_value",
+      "value_realization",
+      "decision_recommendation",
+      "contract_optimization",
+      "general_advisory",
+      "stakeholder_alignment"
+    ],
+    "declaredCount": 18,
+    "ruleReachable": [
+      "artifact_finality",
+      "artifact_lineage",
+      "bafo_strategy",
+      "clause_coverage",
+      "committed_value",
+      "contract_optimization",
+      "decision_recommendation",
+      "event_status",
+      "evidence_readiness",
+      "risk_exposure",
+      "should_cost",
+      "stage_gate",
+      "stakeholder_alignment",
+      "value_at_stake",
+      "value_realization",
+      "vendor_comparison",
+      "workflow_how_to"
+    ],
+    "fallbackOnly": [
+      "general_advisory"
+    ]
+  },
+  "rules": [
+    {
+      "index": 0,
+      "id": "event_status.where_are_we",
+      "mode": "event_status",
+      "regexes": [
+        "\\b(where (are|is) (we|this event)|what stage|current stage|what('s| is) (the )?status|how (far along|much (is )?(done|left|remaining))|what('s| is) (open|outstanding|left to do)|event status|status of (this|the) event)\\b"
+      ],
+      "probeCount": 26,
+      "ownProbesShadowed": 0
+    },
+    {
+      "index": 1,
+      "id": "event_status.progress",
+      "mode": "event_status",
+      "regexes": [
+        "\\b(stage (\\d+ )?of \\d+|which stages? (are|is) (complete|done)|what('s| have) (we|i) (completed|finished))\\b"
+      ],
+      "probeCount": 18,
+      "ownProbesShadowed": 0
+    },
+    {
+      "index": 2,
+      "id": "stage_gate.blockers",
+      "mode": "stage_gate",
+      "regexes": [
+        "\\b(gate|advance (the )?stage|move (to|past) (the )?next stage|what('s| is) blocking|what do i need to (advance|approve)|approve (the )?(gate|stage)|what('s| is) required to (advance|move on|proceed))\\b"
+      ],
+      "probeCount": 21,
+      "ownProbesShadowed": 0
+    },
+    {
+      "index": 3,
+      "id": "stage_gate.confirms",
+      "mode": "stage_gate",
+      "regexes": [
+        "\\b(gate confirm|confirmation (box|item)|sign[- ]?off|sponsor confirm)\\b"
+      ],
+      "probeCount": 7,
+      "ownProbesShadowed": 1
+    },
+    {
+      "index": 4,
+      "id": "evidence_readiness.missing",
+      "mode": "evidence_readiness",
+      "regexes": [
+        "\\b(what|which) (evidence|data|facts|inputs?|documents?) (do (i|we) (still )?need|(is|are) missing|(is|are) outstanding)\\b",
+        "\\b(evidence|data) (readiness|complete|gaps?)\\b",
+        "\\bwhat (do i still need to (provide|upload)|haven't i (provided|uploaded))\\b"
+      ],
+      "probeCount": 124,
+      "ownProbesShadowed": 0
+    },
+    {
+      "index": 5,
+      "id": "artifact_finality.which_is_final",
+      "mode": "artifact_finality",
+      "regexes": [
+        "\\b(which (version|copy|file|artifact) is (the )?(final|authoritative|current|latest)|is (this|that) (the )?(final version|final|authoritative( copy| version)?)|has (this|it) been superseded|which one (is|counts as) (final|authoritative))\\b"
+      ],
+      "probeCount": 58,
+      "ownProbesShadowed": 0
+    },
+    {
+      "index": 6,
+      "id": "artifact_lineage.history",
+      "mode": "artifact_lineage",
+      "regexes": [
+        "\\b(where did (this|that|it)( \\w+)? come from|(upload|version) history|who uploaded|what replaced|prior version|previous version|artifact history|document history)\\b"
+      ],
+      "probeCount": 14,
+      "ownProbesShadowed": 0
+    },
+    {
+      "index": 7,
+      "id": "workflow_how_to.how_do_i",
+      "mode": "workflow_how_to",
+      "regexes": [
+        "\\bhow do i\\b",
+        "\\bhow (can|do) (i|we) (upload|submit|advance|approve|attach|provide|review|confirm)\\b",
+        "\\bwhere (do i|can i|should i) (upload|click|find|go)\\b"
+      ],
+      "probeCount": 45,
+      "ownProbesShadowed": 0
+    },
+    {
+      "index": 8,
+      "id": "decision_recommendation.core",
+      "mode": "decision_recommendation",
+      "regexes": [
+        "\\b(what should (we|i) (do|decide|award|recommend)|recommend (an? )?(award|decision|vendor)|who should (we|i) award|which vendor should (we|i) (pick|choose|select|award)|award recommendation|make the (award )?decision|ready to award)\\b"
+      ],
+      "probeCount": 31,
+      "ownProbesShadowed": 0
+    },
+    {
+      "index": 9,
+      "id": "contract_optimization.core",
+      "mode": "contract_optimization",
+      "regexes": [
+        "\\b(renew (or|vs\\.?|versus) (rebid|renegotiate)|renegotiate (the )?(contract|incumbent|current vendor)|rebid (this|the) (contract|event)|incumbent (economics|leakage|contract)|contract optimization|optimize (the )?(current )?contract|cure (the )?contract|current[- ]state economics)\\b"
+      ],
+      "probeCount": 30,
+      "ownProbesShadowed": 0
+    },
+    {
+      "index": 10,
+      "id": "value_at_stake.core",
+      "mode": "value_at_stake",
+      "regexes": [
+        "\\b(value at stake|how much (savings|value)|value bridge|value pool)\\b"
+      ],
+      "probeCount": 5,
+      "ownProbesShadowed": 0
+    },
+    {
+      "index": 11,
+      "id": "vendor_comparison.core",
+      "mode": "vendor_comparison",
+      "regexes": [
+        "\\b(compare vendors?|vendor comparison|which vendor|best vendor|vendor scorecard|vendor coverage|vendor response|response coverage|response completeness|response readiness|proposal completeness|proposal coverage|who (addressed|dodged))\\b"
+      ],
+      "probeCount": 15,
+      "ownProbesShadowed": 0
+    },
+    {
+      "index": 12,
+      "id": "risk_exposure.core",
+      "mode": "risk_exposure",
+      "regexes": [
+        "\\b(risk exposure|transition risk|commercial risk|what('s| is) (the )?risk)\\b"
+      ],
+      "probeCount": 7,
+      "ownProbesShadowed": 0
+    },
+    {
+      "index": 13,
+      "id": "clause_coverage.core",
+      "mode": "clause_coverage",
+      "regexes": [
+        "\\b(clause coverage|rfp clause|which clauses?|protected vs exposed|what('s| is) exposed)\\b"
+      ],
+      "probeCount": 7,
+      "ownProbesShadowed": 0
+    },
+    {
+      "index": 14,
+      "id": "bafo_strategy.core",
+      "mode": "bafo_strategy",
+      "regexes": [
+        "\\bbafo\\b"
+      ],
+      "probeCount": 1,
+      "ownProbesShadowed": 0
+    },
+    {
+      "index": 15,
+      "id": "should_cost.core",
+      "mode": "should_cost",
+      "regexes": [
+        "\\bshould[- ]cost|normalized tco|tco normalization\\b"
+      ],
+      "probeCount": 4,
+      "ownProbesShadowed": 0
+    },
+    {
+      "index": 16,
+      "id": "committed_value.core",
+      "mode": "committed_value",
+      "regexes": [
+        "\\bcommitted value|what did (we|the award) (lock|commit)\\b"
+      ],
+      "probeCount": 5,
+      "ownProbesShadowed": 0
+    },
+    {
+      "index": 17,
+      "id": "value_realization.core",
+      "mode": "value_realization",
+      "regexes": [
+        "\\bvalue realiz\\w*|\\brealized value\\b|\\btracking (the )?savings\\b"
+      ],
+      "probeCount": 5,
+      "ownProbesShadowed": 0
+    },
+    {
+      "index": 18,
+      "id": "stakeholder_alignment.deferred",
+      "mode": "stakeholder_alignment",
+      "regexes": [
+        "\\b(stakeholder alignment|sponsor (agree|aligned)|committee (agree|aligned))\\b"
+      ],
+      "probeCount": 5,
+      "ownProbesShadowed": 0
+    }
+  ],
+  "shadowing": {
+    "orderedPairsPossible": 171,
+    "shadowedPairCount": 1,
+    "shadowedPairs": [
+      {
+        "shadowerIndex": 2,
+        "shadower": "stage_gate.blockers",
+        "shadowedIndex": 3,
+        "shadowed": "stage_gate.confirms",
+        "probeCount": 1,
+        "sampleProbes": [
+          "gate confirm"
+        ]
+      }
+    ],
+    "totalProbes": 428,
+    "totalShadowedProbes": 1
+  },
+  "specAcceptance": {
+    "source": "SPEC_lever_basis_provenance.md §12.11",
+    "rowCount": 16,
+    "quotedRows": 11,
+    "describedRowsInstantiated": 5,
+    "totalQuestionsRun": 48,
+    "fallbackCount": 48,
+    "nonFallbackCount": 0,
+    "modeHistogram": {
+      "general_advisory": 48
+    },
+    "questions": [
+      {
+        "row": 1,
+        "kind": "quoted",
+        "variant": "spec_question",
+        "question": "What are we buying under this agreement?",
+        "mode": "general_advisory",
+        "matchedRule": "no_match",
+        "isFallback": true
+      },
+      {
+        "row": 1,
+        "kind": "quoted",
+        "variant": "authored_paraphrase",
+        "question": "What scope does this agreement actually cover?",
+        "mode": "general_advisory",
+        "matchedRule": "no_match",
+        "isFallback": true
+      },
+      {
+        "row": 1,
+        "kind": "quoted",
+        "variant": "authored_paraphrase",
+        "question": "Tell me what is in scope and what is excluded here.",
+        "mode": "general_advisory",
+        "matchedRule": "no_match",
+        "isFallback": true
+      },
+      {
+        "row": 2,
+        "kind": "quoted",
+        "variant": "spec_question",
+        "question": "Why do you say support should be 15%?",
+        "mode": "general_advisory",
+        "matchedRule": "no_match",
+        "isFallback": true
+      },
+      {
+        "row": 2,
+        "kind": "quoted",
+        "variant": "authored_paraphrase",
+        "question": "Where does the 15% support figure come from?",
+        "mode": "general_advisory",
+        "matchedRule": "no_match",
+        "isFallback": true
+      },
+      {
+        "row": 2,
+        "kind": "quoted",
+        "variant": "authored_paraphrase",
+        "question": "What backs the 15% support target?",
+        "mode": "general_advisory",
+        "matchedRule": "no_match",
+        "isFallback": true
+      },
+      {
+        "row": 3,
+        "kind": "quoted",
+        "variant": "spec_question",
+        "question": "Are we paying too much?",
+        "mode": "general_advisory",
+        "matchedRule": "no_match",
+        "isFallback": true
+      },
+      {
+        "row": 3,
+        "kind": "quoted",
+        "variant": "authored_paraphrase",
+        "question": "Is this contract overpriced?",
+        "mode": "general_advisory",
+        "matchedRule": "no_match",
+        "isFallback": true
+      },
+      {
+        "row": 3,
+        "kind": "quoted",
+        "variant": "authored_paraphrase",
+        "question": "Are our fees out of line for what we use?",
+        "mode": "general_advisory",
+        "matchedRule": "no_match",
+        "isFallback": true
+      },
+      {
+        "row": 4,
+        "kind": "quoted",
+        "variant": "spec_question",
+        "question": "Have we actually paid $1.89M?",
+        "mode": "general_advisory",
+        "matchedRule": "no_match",
+        "isFallback": true
+      },
+      {
+        "row": 4,
+        "kind": "quoted",
+        "variant": "authored_paraphrase",
+        "question": "Did we really pay 1.89 million on this?",
+        "mode": "general_advisory",
+        "matchedRule": "no_match",
+        "isFallback": true
+      },
+      {
+        "row": 4,
+        "kind": "quoted",
+        "variant": "authored_paraphrase",
+        "question": "What has actually been billed and settled here?",
+        "mode": "general_advisory",
+        "matchedRule": "no_match",
+        "isFallback": true
+      },
+      {
+        "row": 5,
+        "kind": "quoted",
+        "variant": "spec_question",
+        "question": "How much commitment is unused?",
+        "mode": "general_advisory",
+        "matchedRule": "no_match",
+        "isFallback": true
+      },
+      {
+        "row": 5,
+        "kind": "quoted",
+        "variant": "authored_paraphrase",
+        "question": "What portion of the commitment is still unconsumed?",
+        "mode": "general_advisory",
+        "matchedRule": "no_match",
+        "isFallback": true
+      },
+      {
+        "row": 5,
+        "kind": "quoted",
+        "variant": "authored_paraphrase",
+        "question": "How much headroom is left before forfeiture?",
+        "mode": "general_advisory",
+        "matchedRule": "no_match",
+        "isFallback": true
+      },
+      {
+        "row": 6,
+        "kind": "quoted",
+        "variant": "spec_question",
+        "question": "Can we exit at the next anniversary?",
+        "mode": "general_advisory",
+        "matchedRule": "no_match",
+        "isFallback": true
+      },
+      {
+        "row": 6,
+        "kind": "quoted",
+        "variant": "authored_paraphrase",
+        "question": "Are we able to terminate at the next anniversary date?",
+        "mode": "general_advisory",
+        "matchedRule": "no_match",
+        "isFallback": true
+      },
+      {
+        "row": 6,
+        "kind": "quoted",
+        "variant": "authored_paraphrase",
+        "question": "What are our exit rights at the anniversary?",
+        "mode": "general_advisory",
+        "matchedRule": "no_match",
+        "isFallback": true
+      },
+      {
+        "row": 7,
+        "kind": "quoted",
+        "variant": "spec_question",
+        "question": "Did we really have four tickets last quarter?",
+        "mode": "general_advisory",
+        "matchedRule": "no_match",
+        "isFallback": true
+      },
+      {
+        "row": 7,
+        "kind": "quoted",
+        "variant": "authored_paraphrase",
+        "question": "Was the ticket volume last quarter really four?",
+        "mode": "general_advisory",
+        "matchedRule": "no_match",
+        "isFallback": true
+      },
+      {
+        "row": 7,
+        "kind": "quoted",
+        "variant": "authored_paraphrase",
+        "question": "Recount the support tickets for last quarter.",
+        "mode": "general_advisory",
+        "matchedRule": "no_match",
+        "isFallback": true
+      },
+      {
+        "row": 8,
+        "kind": "quoted",
+        "variant": "spec_question",
+        "question": "How much SLA credit have we earned?",
+        "mode": "general_advisory",
+        "matchedRule": "no_match",
+        "isFallback": true
+      },
+      {
+        "row": 8,
+        "kind": "quoted",
+        "variant": "authored_paraphrase",
+        "question": "What SLA credits are we owed so far?",
+        "mode": "general_advisory",
+        "matchedRule": "no_match",
+        "isFallback": true
+      },
+      {
+        "row": 8,
+        "kind": "quoted",
+        "variant": "authored_paraphrase",
+        "question": "How much service credit has accrued to date?",
+        "mode": "general_advisory",
+        "matchedRule": "no_match",
+        "isFallback": true
+      },
+      {
+        "row": 9,
+        "kind": "quoted",
+        "variant": "spec_question",
+        "question": "What would $950K and 15% mean?",
+        "mode": "general_advisory",
+        "matchedRule": "no_match",
+        "isFallback": true
+      },
+      {
+        "row": 9,
+        "kind": "quoted",
+        "variant": "authored_paraphrase",
+        "question": "Model this at 950K with 15% support.",
+        "mode": "general_advisory",
+        "matchedRule": "no_match",
+        "isFallback": true
+      },
+      {
+        "row": 9,
+        "kind": "quoted",
+        "variant": "authored_paraphrase",
+        "question": "If we landed 950K and 15%, what changes?",
+        "mode": "general_advisory",
+        "matchedRule": "no_match",
+        "isFallback": true
+      },
+      {
+        "row": 10,
+        "kind": "quoted",
+        "variant": "spec_question",
+        "question": "Can we add all the opportunities?",
+        "mode": "general_advisory",
+        "matchedRule": "no_match",
+        "isFallback": true
+      },
+      {
+        "row": 10,
+        "kind": "quoted",
+        "variant": "authored_paraphrase",
+        "question": "Can the opportunities simply be summed?",
+        "mode": "general_advisory",
+        "matchedRule": "no_match",
+        "isFallback": true
+      },
+      {
+        "row": 10,
+        "kind": "quoted",
+        "variant": "authored_paraphrase",
+        "question": "Is it valid to total every opportunity together?",
+        "mode": "general_advisory",
+        "matchedRule": "no_match",
+        "isFallback": true
+      },
+      {
+        "row": 11,
+        "kind": "quoted",
+        "variant": "spec_question",
+        "question": "Where did the 40% threshold come from?",
+        "mode": "general_advisory",
+        "matchedRule": "no_match",
+        "isFallback": true
+      },
+      {
+        "row": 11,
+        "kind": "quoted",
+        "variant": "authored_paraphrase",
+        "question": "What is the origin of the 40% threshold rule?",
+        "mode": "general_advisory",
+        "matchedRule": "no_match",
+        "isFallback": true
+      },
+      {
+        "row": 11,
+        "kind": "quoted",
+        "variant": "authored_paraphrase",
+        "question": "Who set the 40% threshold and on what basis?",
+        "mode": "general_advisory",
+        "matchedRule": "no_match",
+        "isFallback": true
+      },
+      {
+        "row": 12,
+        "kind": "described_row_instantiated",
+        "variant": "spec_question",
+        "question": "What is the term length on the ServiceNow agreement?",
+        "mode": "general_advisory",
+        "matchedRule": "no_match",
+        "isFallback": true
+      },
+      {
+        "row": 12,
+        "kind": "described_row_instantiated",
+        "variant": "authored_paraphrase",
+        "question": "Switch to the ServiceNow contract and tell me its renewal date.",
+        "mode": "general_advisory",
+        "matchedRule": "no_match",
+        "isFallback": true
+      },
+      {
+        "row": 12,
+        "kind": "described_row_instantiated",
+        "variant": "authored_paraphrase",
+        "question": "Answer this about ServiceNow instead, not the contract on screen.",
+        "mode": "general_advisory",
+        "matchedRule": "no_match",
+        "isFallback": true
+      },
+      {
+        "row": 13,
+        "kind": "described_row_instantiated",
+        "variant": "spec_question",
+        "question": "Which entity is named as the contracting party?",
+        "mode": "general_advisory",
+        "matchedRule": "no_match",
+        "isFallback": true
+      },
+      {
+        "row": 13,
+        "kind": "described_row_instantiated",
+        "variant": "authored_paraphrase",
+        "question": "What governing law does the agreement specify?",
+        "mode": "general_advisory",
+        "matchedRule": "no_match",
+        "isFallback": true
+      },
+      {
+        "row": 13,
+        "kind": "described_row_instantiated",
+        "variant": "authored_paraphrase",
+        "question": "What notice address is written into the agreement?",
+        "mode": "general_advisory",
+        "matchedRule": "no_match",
+        "isFallback": true
+      },
+      {
+        "row": 14,
+        "kind": "described_row_instantiated",
+        "variant": "spec_question",
+        "question": "What are the payment terms on the Cotiviti contract?",
+        "mode": "general_advisory",
+        "matchedRule": "no_match",
+        "isFallback": true
+      },
+      {
+        "row": 14,
+        "kind": "described_row_instantiated",
+        "variant": "authored_paraphrase",
+        "question": "Summarise the Inovalon agreement for me.",
+        "mode": "general_advisory",
+        "matchedRule": "no_match",
+        "isFallback": true
+      },
+      {
+        "row": 14,
+        "kind": "described_row_instantiated",
+        "variant": "authored_paraphrase",
+        "question": "What do we know about the NCQA HEDIS contract?",
+        "mode": "general_advisory",
+        "matchedRule": "no_match",
+        "isFallback": true
+      },
+      {
+        "row": 15,
+        "kind": "described_row_instantiated",
+        "variant": "spec_question",
+        "question": "What is the total annual value of this contract?",
+        "mode": "general_advisory",
+        "matchedRule": "no_match",
+        "isFallback": true
+      },
+      {
+        "row": 15,
+        "kind": "described_row_instantiated",
+        "variant": "authored_paraphrase",
+        "question": "What does this contract cost us each year?",
+        "mode": "general_advisory",
+        "matchedRule": "no_match",
+        "isFallback": true
+      },
+      {
+        "row": 15,
+        "kind": "described_row_instantiated",
+        "variant": "authored_paraphrase",
+        "question": "State the annual contract value.",
+        "mode": "general_advisory",
+        "matchedRule": "no_match",
+        "isFallback": true
+      },
+      {
+        "row": 16,
+        "kind": "described_row_instantiated",
+        "variant": "spec_question",
+        "question": "What are the current pricing terms after the amendment?",
+        "mode": "general_advisory",
+        "matchedRule": "no_match",
+        "isFallback": true
+      },
+      {
+        "row": 16,
+        "kind": "described_row_instantiated",
+        "variant": "authored_paraphrase",
+        "question": "Which terms apply now that the amendment is signed?",
+        "mode": "general_advisory",
+        "matchedRule": "no_match",
+        "isFallback": true
+      },
+      {
+        "row": 16,
+        "kind": "described_row_instantiated",
+        "variant": "authored_paraphrase",
+        "question": "Do the amended rates supersede the original schedule?",
+        "mode": "general_advisory",
+        "matchedRule": "no_match",
+        "isFallback": true
+      }
+    ]
+  }
+}
