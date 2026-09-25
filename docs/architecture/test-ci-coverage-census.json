@@ -17,9 +17,9 @@
     "No timestamp is recorded, so refreshing this file on an unchanged tree is a no-op."
   ],
   "counts": {
-    "testFiles": 2443,
-    "coveredTestFiles": 1999,
-    "pullRequestCoveredTestFiles": 1997,
+    "testFiles": 2444,
+    "coveredTestFiles": 2000,
+    "pullRequestCoveredTestFiles": 1999,
     "uncoveredTestFiles": 444,
     "directoriesWithTests": 487,
     "directoriesFullyCovered": 288,
@@ -535,7 +535,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "productSourceCount": 31,
+        "productSourceCount": 33,
         "rank": 2
       }
     },
@@ -560,7 +560,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "productSourceCount": 31,
+        "productSourceCount": 33,
         "rank": 2
       }
     },
@@ -585,7 +585,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "productSourceCount": 31,
+        "productSourceCount": 33,
         "rank": 2
       }
     },
@@ -610,7 +610,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "productSourceCount": 31,
+        "productSourceCount": 33,
         "rank": 2
       }
     },
@@ -635,7 +635,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "productSourceCount": 31,
+        "productSourceCount": 33,
         "rank": 2
       }
     },
@@ -660,7 +660,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "productSourceCount": 31,
+        "productSourceCount": 33,
         "rank": 2
       }
     },
@@ -685,7 +685,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "productSourceCount": 31,
+        "productSourceCount": 33,
         "rank": 2
       }
     },
@@ -710,7 +710,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "productSourceCount": 31,
+        "productSourceCount": 33,
         "rank": 2
       }
     },
@@ -735,7 +735,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "productSourceCount": 31,
+        "productSourceCount": 33,
         "rank": 2
       }
     },
@@ -760,7 +760,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "productSourceCount": 31,
+        "productSourceCount": 33,
         "rank": 2
       }
     },
@@ -785,7 +785,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "productSourceCount": 31,
+        "productSourceCount": 33,
         "rank": 2
       }
     },
@@ -810,7 +810,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "productSourceCount": 31,
+        "productSourceCount": 33,
         "rank": 2
       }
     },
@@ -835,7 +835,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "productSourceCount": 31,
+        "productSourceCount": 33,
         "rank": 2
       }
     },
@@ -860,7 +860,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "productSourceCount": 31,
+        "productSourceCount": 33,
         "rank": 2
       }
     },
@@ -885,7 +885,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "productSourceCount": 31,
+        "productSourceCount": 33,
         "rank": 2
       }
     },
@@ -910,7 +910,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "productSourceCount": 31,
+        "productSourceCount": 33,
         "rank": 2
       }
     },
@@ -935,7 +935,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "productSourceCount": 31,
+        "productSourceCount": 33,
         "rank": 2
       }
     },
@@ -960,7 +960,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "productSourceCount": 31,
+        "productSourceCount": 33,
         "rank": 2
       }
     },
@@ -985,7 +985,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "productSourceCount": 31,
+        "productSourceCount": 33,
         "rank": 2
       }
     },
@@ -1010,7 +1010,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "productSourceCount": 31,
+        "productSourceCount": 33,
         "rank": 2
       }
     },
@@ -1035,7 +1035,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "productSourceCount": 31,
+        "productSourceCount": 33,
         "rank": 2
       }
     },
@@ -1047,11 +1047,12 @@
       "run": "unknown",
       "green": "unknown",
       "covered": true,
-      "pullRequestCovered": false,
+      "pullRequestCovered": true,
       "declaredQuarantine": false,
       "declaredQuarantineShape": null,
       "untriaged": false,
       "via": [
+        "command",
         "script-file"
       ],
       "governedRisk": {
@@ -1060,7 +1061,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "productSourceCount": 31,
+        "productSourceCount": 33,
         "rank": 2
       }
     },
@@ -1086,7 +1087,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "productSourceCount": 31,
+        "productSourceCount": 33,
         "rank": 2
       }
     },
@@ -1111,7 +1112,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "productSourceCount": 31,
+        "productSourceCount": 33,
         "rank": 2
       }
     },
@@ -1134,7 +1135,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "productSourceCount": 31,
+        "productSourceCount": 33,
         "rank": 2
       }
     },
@@ -1159,7 +1160,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "productSourceCount": 31,
+        "productSourceCount": 33,
         "rank": 2
       }
     },
@@ -1184,7 +1185,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "productSourceCount": 31,
+        "productSourceCount": 33,
         "rank": 2
       }
     },
@@ -1207,7 +1208,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "productSourceCount": 31,
+        "productSourceCount": 33,
         "rank": 2
       }
     },
@@ -1232,7 +1233,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "productSourceCount": 31,
+        "productSourceCount": 33,
         "rank": 2
       }
     },
@@ -1255,7 +1256,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "productSourceCount": 31,
+        "productSourceCount": 33,
         "rank": 2
       }
     },
@@ -1280,7 +1281,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "productSourceCount": 31,
+        "productSourceCount": 33,
         "rank": 2
       }
     },
@@ -1305,7 +1306,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "productSourceCount": 31,
+        "productSourceCount": 33,
         "rank": 2
       }
     },
@@ -1330,7 +1331,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "productSourceCount": 31,
+        "productSourceCount": 33,
         "rank": 2
       }
     },
@@ -1355,7 +1356,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "productSourceCount": 31,
+        "productSourceCount": 33,
         "rank": 2
       }
     },
@@ -1380,7 +1381,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "productSourceCount": 31,
+        "productSourceCount": 33,
         "rank": 2
       }
     },
@@ -1405,7 +1406,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "productSourceCount": 31,
+        "productSourceCount": 33,
         "rank": 2
       }
     },
@@ -2020,7 +2021,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "productSourceCount": 31,
+        "productSourceCount": 33,
         "rank": 2
       }
     },
@@ -4518,14 +4519,14 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "productSourceCount": 31,
-        "tenantScopedReadSourceCount": 5,
+        "productSourceCount": 33,
+        "tenantScopedReadSourceCount": 6,
         "tenantScopedReadSources": [
           "src/app/(maestro)/source/preview/workspace/live/portfolioAdapter.ts",
+          "src/app/(maestro)/source/workspace/page.tsx",
           "src/app/api/source/workspace/contract/[contractId]/optimization/route.ts",
           "src/app/api/source/workspace/contract/[contractId]/route.ts",
-          "src/lib/auth/tenancy.ts",
-          "src/lib/source/data-model/read-adapter.ts"
+          "src/lib/auth/tenancy.ts"
         ],
         "rank": 2
       }

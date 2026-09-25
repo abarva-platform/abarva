@@ -1154,15 +1154,37 @@ jobs:
       # `covered: true, pullRequestCovered: false`.
       #
       # This step does not replace the pre-deploy gate's invocation; it adds
-      # the merge-blocking one the file never had. `page-tenant-routing.test.ts`
-      # shares that defect and is NOT wired with it: 6 `readFileSync` and 100
-      # `toContain` against source text, which the repo's own rule — "cannot
-      # wire a source-text scanner into CI" — forbids. Wiring it would buy a
-      # green check and no protection.
+      # the merge-blocking one these files never had.
+      #
+      # T-764 adds `page-tenant-routing.test.ts` here. T-478 left it out for a
+      # reason that was correct at the time and is now discharged: it held 6
+      # `readFileSync` and 100 `toContain` against source text, and the repo's
+      # own rule forbids making a source-text scanner merge-blocking, because
+      # that buys a green check and no protection. It has been rewritten to
+      # execute the route — it calls `SourceWorkspacePage` with real
+      # `searchParams`, mounts the tree it returns with the real loader and the
+      # real `WorkspaceClient` beneath it, and reads the `client` parameter off
+      # the contract-detail request those components actually made. It makes no
+      # file reads at all, and asserts nothing against the bytes of a source
+      # file; one substring assertion remains and it is against rendered DOM
+      # text.
+      #
+      # What the rewrite buys, measured rather than asserted. With the tenant
+      # membership fence left in place and running, its call text byte-identical,
+      # and only its verdict ignored (`if (false && !access.ok)`) — every tenant
+      # can then open every other tenant's contracts — the old scanner passed 13
+      # of 13 and the rewrite fails 4 of 14. In the other direction, renaming a
+      # local binding changes no behaviour: the old scanner failed 1 of 13, the
+      # rewrite passes 14 of 14.
+      #
+      # The directory's governed-risk signal is `tenant_scoped_read`, so the
+      # opposite-tenant case asserts the absence of the read, not the presence
+      # of a warning.
       - name: Run the T-478 pre-deploy-only Source workspace suite
         run: >-
           npx jest --runTestsByPath
           "src/app/(maestro)/source/preview/workspace/__tests__/portfolioAdapter.ecl.test.ts"
+          "src/app/(maestro)/source/preview/workspace/__tests__/page-tenant-routing.test.ts"
           --no-coverage --ci --runInBand
 
       # An entry in TENANT_DATASET_BY_KEY is a claim that a dataset exists.
