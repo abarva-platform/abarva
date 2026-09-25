@@ -116,7 +116,13 @@ describe("multi-pass prompt builder", () => {
     expect(sys).toMatch(/GOVERNED FACTUAL MODE/);
     expect(sys).toMatch(/EXPERT ARTIFACT MODE/);
     expect(sys).toMatch(/never invent/i);
-    expect(sys).toMatch(/Do not optimize for short documents/i);
+    // Superseded 2026-09-25. The instruction used to read "Do not optimize for
+    // short documents", which is an instruction to be long — and it survived
+    // alongside the section-compression work that removed four headings from the
+    // business case for exactly the opposite reason. The bar is now the shortest
+    // artifact that carries the argument.
+    expect(sys).toMatch(/SHORTEST artifact that carries the argument/i);
+    expect(sys).not.toMatch(/Do not optimize for short documents/i);
     expect(sys).toMatch(/invisible authoring controls/i);
     expect(sys).toMatch(/never write that a claim is "tied to"/i);
   });
@@ -129,7 +135,9 @@ describe("multi-pass prompt builder", () => {
       qualityBar: resolveQualityBar("moves", "charter"),
     });
     const sys = buildSystemPrompt(charterReq);
-    expect(sys).not.toMatch(/Do not optimize for short documents/i);
+    // A concise instrument gets the ceiling language instead of the general
+    // brevity rule — both push the same direction, but only this one is blocking.
+    expect(sys).not.toMatch(/SHORTEST artifact that carries the argument/i);
     expect(sys).toMatch(/concise approval instrument/i);
     expect(sys).toMatch(/enforced length ceiling/i);
   });
