@@ -47,6 +47,15 @@ describe('slide contract', () => {
   // Listed here so the set cannot grow quietly. The second assertion matters as
   // much as the first: an exemption that does not verify its own defect still
   // exists will outlive the fix and start protecting nothing.
+  // These three declare `defaultFormat: pptx` while `renderer: html_architecture`
+  // produces HTML. My first reading was that the declaration was wrong — it is
+  // not. `registry.test.ts` asserts deliberately that board-decision and
+  // architecture artifacts are PPTX finals, so the DECLARATION is the intent and
+  // the RENDERER is the gap: it does not yet produce the format its profile
+  // promises.
+  //
+  // Listed so the set cannot grow quietly, and paired with an expiry check so it
+  // cannot outlive the renderer work.
   const KNOWN_FORMAT_MISMATCHES = new Set([
     'solution_approach_options',
     'target_state_architecture',
@@ -86,5 +95,50 @@ describe('slide contract', () => {
       expect(band.max).toBeLessThanOrEqual(16);
       void key;
     }
+  });
+});
+
+// The CXO deck guarantee, as a test rather than an intention.
+//
+// PPTX has always been *reachable* for any deliverable with a structured
+// document — the artifact route renders it on ?format=pptx with no profile
+// check. What was missing was the DECLARATION, which is what `format_fit`
+// reads. A phase deliverable that does not declare pptx produces a deck the
+// quality contract then treats as a format mismatch.
+describe('every phase deliverable declares a CXO deck', () => {
+  const PHASE_DELIVERABLES: Record<string, string> = {
+    charter: 'P1',
+    discovery_report: 'P2',
+    root_cause_worksheet: 'P2',
+    solution_approach_options: 'P3',
+    target_state_architecture: 'P3',
+    solution_design: 'P3',
+    operating_model_design: 'P3',
+    sourcing_strategy: 'P3',
+    execution_roadmap: 'P4',
+    business_case: 'P4',
+    tower_metrics_plan: 'P4',
+    readiness_and_change_plan: 'P4',
+    handoff_package: 'P5',
+    value_measurement_contract: 'P5',
+  };
+
+  it('declares pptx as its default or a supporting format', () => {
+    const undeclared: string[] = [];
+    for (const key of Object.keys(PHASE_DELIVERABLES)) {
+      const p = DELIVERABLE_PROFILES[key as DeliverableKey];
+      if (!p) { undeclared.push(`${key}: profile missing`); continue; }
+      const declared =
+        p.defaultFormat === 'pptx' ||
+        (p.supportingFormats ?? []).includes('pptx');
+      if (!declared) undeclared.push(`${PHASE_DELIVERABLES[key]} ${key}`);
+    }
+    expect(undeclared).toEqual([]);
+  });
+
+  it('covers all five phases', () => {
+    expect(new Set(Object.values(PHASE_DELIVERABLES))).toEqual(
+      new Set(['P1', 'P2', 'P3', 'P4', 'P5']),
+    );
   });
 });
