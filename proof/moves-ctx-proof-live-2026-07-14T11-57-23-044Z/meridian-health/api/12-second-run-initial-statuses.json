@@ -1,0 +1,36 @@
+[
+  {
+    "ok": true,
+    "status": 200,
+    "url": "https://app.abarva.ai/api/v1/deliverables/runs/f25b2f63-b873-48e5-9c38-0d32607a5939",
+    "headers": {
+      "content-type": "application/json",
+      "date": "Tue, 14 Jul 2026 12:01:34 GMT",
+      "vary": "rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch",
+      "x-middleware-rewrite": "/api/v1/deliverables/runs/f25b2f63-b873-48e5-9c38-0d32607a5939"
+    },
+    "body": {
+      "runId": "f25b2f63-b873-48e5-9c38-0d32607a5939",
+      "status": "queued",
+      "artifactId": null,
+      "blobUrl": null,
+      "artifactScope": "generated_artifacts",
+      "quality": {
+        "contextReadiness": "checking",
+        "gateReadiness": "ready",
+        "goldenBarStatus": "Not run",
+        "artifactStatus": "queued",
+        "evidenceCaveats": [],
+        "blockers": []
+      },
+      "sectionCount": null,
+      "retrievedEvidence": null,
+      "blockers": [],
+      "warnings": [],
+      "error": null,
+      "progressPct": 0,
+      "progressLabel": "Queued — waiting for the generation worker",
+      "updatedAt": "Tue Jul 14 2026 12:01:33 GMT+0000 (Coordinated Universal Time)"
+    }
+  }
+]

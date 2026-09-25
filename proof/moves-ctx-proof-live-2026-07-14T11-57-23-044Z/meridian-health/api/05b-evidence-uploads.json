@@ -1,0 +1,583 @@
+[
+  {
+    "evidence": {
+      "name": "current-state-process-operating-documentation-smoke.txt",
+      "title": "Current-state process / operating documentation smoke evidence"
+    },
+    "uploaded": {
+      "ok": true,
+      "status": 200,
+      "url": "https://app.abarva.ai/api/programs/workspace/44f6f4d4-ab88-4fdf-88e8-45c26f27838c/upload",
+      "body": {
+        "attachmentId": "4e5ea39f-179e-49af-a138-7e48d34cff6e",
+        "originalName": "current-state-process-operating-documentation-smoke.txt",
+        "status": "processing",
+        "evidence": {
+          "id": "f1012fc2-7cea-44a8-8c12-73095b76b51a",
+          "status": "captured",
+          "parseMethod": "text-line-parser",
+          "warnings": [],
+          "whatFound": [
+            "uploaded evidence captured"
+          ],
+          "whereUsed": [
+            "Move workspace"
+          ]
+        },
+        "discovery": {
+          "sourceFile": "current-state-process-operating-documentation-smoke.txt",
+          "evidenceType": "baseline_evidence",
+          "parseMethod": "text-line-parser",
+          "warnings": [],
+          "stages": [
+            {
+              "stage": "staged",
+              "status": "done",
+              "detail": "current-state-process-operating-documentation-smoke.txt received"
+            },
+            {
+              "stage": "parsed",
+              "status": "done",
+              "detail": "parse_method=text-line-parser"
+            },
+            {
+              "stage": "extracted",
+              "status": "done",
+              "detail": "2 candidate(s)"
+            },
+            {
+              "stage": "routed",
+              "status": "done",
+              "detail": "1 routed to landscape; 1 kept as evidence only"
+            },
+            {
+              "stage": "review",
+              "status": "done",
+              "detail": "1 field value(s) review-pending"
+            }
+          ],
+          "routed": [
+            {
+              "field": "landscape",
+              "count": 1,
+              "review": "review_pending",
+              "provenance": "current-state-process-operating-documentation-smoke.txt"
+            }
+          ],
+          "reviewPendingCount": 1,
+          "unmapped": [
+            "decision: use only to close the controlled P1 smoke gate so Approve & Build can validate Move Context Extract behavior."
+          ],
+          "summary": "Extracted 2 candidate(s) from current-state-process-operating-documentation-smoke.txt; routed 1 to landscape (review-pending); 1 kept as evidence only."
+        },
+        "discoveryReadiness": {
+          "archetypeLabel": "General (default)",
+          "requiredTotal": 4,
+          "requiredCovered": 1,
+          "requiredMissing": 3,
+          "optionalCovered": 0,
+          "readinessScore": 25,
+          "readyForP3": false,
+          "families": [
+            {
+              "familyId": "current_state_process",
+              "label": "Current-state process / operating documentation",
+              "required": true,
+              "status": "covered",
+              "evidenceIds": [
+                "f1012fc2-7cea-44a8-8c12-73095b76b51a"
+              ],
+              "evidenceTitles": [
+                "current-state-process-operating-documentation-smoke.txt"
+              ]
+            },
+            {
+              "familyId": "it_systems_landscape",
+              "label": "Systems landscape",
+              "required": true,
+              "status": "missing",
+              "evidenceIds": [],
+              "evidenceTitles": []
+            },
+            {
+              "familyId": "kpi_baseline",
+              "label": "KPI / metric baseline",
+              "required": true,
+              "status": "missing",
+              "evidenceIds": [],
+              "evidenceTitles": []
+            },
+            {
+              "familyId": "cost_baseline",
+              "label": "Cost baseline",
+              "required": true,
+              "status": "missing",
+              "evidenceIds": [],
+              "evidenceTitles": []
+            },
+            {
+              "familyId": "org_workforce",
+              "label": "Org / workforce model",
+              "required": false,
+              "status": "missing",
+              "evidenceIds": [],
+              "evidenceTitles": []
+            }
+          ],
+          "gapRegister": [
+            {
+              "familyId": "it_systems_landscape",
+              "label": "Systems landscape",
+              "required": true,
+              "likelySource": "Enterprise Architecture",
+              "format": "CSV",
+              "grounds": "Current-State · Target Architecture",
+              "remediation": "Upload CSV from Enterprise Architecture or record a human waiver before P3."
+            },
+            {
+              "familyId": "kpi_baseline",
+              "label": "KPI / metric baseline",
+              "required": true,
+              "likelySource": "Finance / Analytics",
+              "format": "XLSX",
+              "grounds": "Value Model · Business Case",
+              "remediation": "Upload XLSX from Finance / Analytics or record a human waiver before P3."
+            },
+            {
+              "familyId": "cost_baseline",
+              "label": "Cost baseline",
+              "required": true,
+              "likelySource": "Finance",
+              "format": "XLSX",
+              "grounds": "Value Model · ROI",
+              "remediation": "Upload XLSX from Finance or record a human waiver before P3."
+            }
+          ]
+        }
+      }
+    }
+  },
+  {
+    "evidence": {
+      "name": "systems-landscape-application-integration-smoke.txt",
+      "title": "Systems landscape / application integration smoke evidence"
+    },
+    "uploaded": {
+      "ok": true,
+      "status": 200,
+      "url": "https://app.abarva.ai/api/programs/workspace/44f6f4d4-ab88-4fdf-88e8-45c26f27838c/upload",
+      "body": {
+        "attachmentId": "eceec9c9-5b28-4453-9f0c-e4d66bc07175",
+        "originalName": "systems-landscape-application-integration-smoke.txt",
+        "status": "processing",
+        "evidence": {
+          "id": "c0072f48-7940-4cf7-be40-b74fa18ecda7",
+          "status": "captured",
+          "parseMethod": "text-line-parser",
+          "warnings": [],
+          "whatFound": [
+            "uploaded evidence captured"
+          ],
+          "whereUsed": [
+            "Move workspace"
+          ]
+        },
+        "discovery": {
+          "sourceFile": "systems-landscape-application-integration-smoke.txt",
+          "evidenceType": "architecture_inventory",
+          "parseMethod": "text-line-parser",
+          "warnings": [],
+          "stages": [
+            {
+              "stage": "staged",
+              "status": "done",
+              "detail": "systems-landscape-application-integration-smoke.txt received"
+            },
+            {
+              "stage": "parsed",
+              "status": "done",
+              "detail": "parse_method=text-line-parser"
+            },
+            {
+              "stage": "extracted",
+              "status": "partial",
+              "detail": "0 candidate(s)"
+            },
+            {
+              "stage": "routed",
+              "status": "skipped",
+              "detail": "0 routed to landscape; 0 kept as evidence only"
+            },
+            {
+              "stage": "review",
+              "status": "skipped",
+              "detail": "0 field value(s) review-pending"
+            }
+          ],
+          "routed": [],
+          "reviewPendingCount": 0,
+          "unmapped": [],
+          "summary": "Extracted 0 candidate(s) from systems-landscape-application-integration-smoke.txt; routed 0 to landscape (review-pending); 0 kept as evidence only."
+        },
+        "discoveryReadiness": {
+          "archetypeLabel": "General (default)",
+          "requiredTotal": 4,
+          "requiredCovered": 2,
+          "requiredMissing": 2,
+          "optionalCovered": 0,
+          "readinessScore": 50,
+          "readyForP3": false,
+          "families": [
+            {
+              "familyId": "current_state_process",
+              "label": "Current-state process / operating documentation",
+              "required": true,
+              "status": "covered",
+              "evidenceIds": [
+                "f1012fc2-7cea-44a8-8c12-73095b76b51a"
+              ],
+              "evidenceTitles": [
+                "current-state-process-operating-documentation-smoke.txt"
+              ]
+            },
+            {
+              "familyId": "it_systems_landscape",
+              "label": "Systems landscape",
+              "required": true,
+              "status": "covered",
+              "evidenceIds": [
+                "c0072f48-7940-4cf7-be40-b74fa18ecda7"
+              ],
+              "evidenceTitles": [
+                "systems-landscape-application-integration-smoke.txt"
+              ]
+            },
+            {
+              "familyId": "kpi_baseline",
+              "label": "KPI / metric baseline",
+              "required": true,
+              "status": "missing",
+              "evidenceIds": [],
+              "evidenceTitles": []
+            },
+            {
+              "familyId": "cost_baseline",
+              "label": "Cost baseline",
+              "required": true,
+              "status": "missing",
+              "evidenceIds": [],
+              "evidenceTitles": []
+            },
+            {
+              "familyId": "org_workforce",
+              "label": "Org / workforce model",
+              "required": false,
+              "status": "missing",
+              "evidenceIds": [],
+              "evidenceTitles": []
+            }
+          ],
+          "gapRegister": [
+            {
+              "familyId": "kpi_baseline",
+              "label": "KPI / metric baseline",
+              "required": true,
+              "likelySource": "Finance / Analytics",
+              "format": "XLSX",
+              "grounds": "Value Model · Business Case",
+              "remediation": "Upload XLSX from Finance / Analytics or record a human waiver before P3."
+            },
+            {
+              "familyId": "cost_baseline",
+              "label": "Cost baseline",
+              "required": true,
+              "likelySource": "Finance",
+              "format": "XLSX",
+              "grounds": "Value Model · ROI",
+              "remediation": "Upload XLSX from Finance or record a human waiver before P3."
+            }
+          ]
+        }
+      }
+    }
+  },
+  {
+    "evidence": {
+      "name": "kpi-metric-baseline-target-smoke.txt",
+      "title": "KPI / metric baseline target smoke evidence"
+    },
+    "uploaded": {
+      "ok": true,
+      "status": 200,
+      "url": "https://app.abarva.ai/api/programs/workspace/44f6f4d4-ab88-4fdf-88e8-45c26f27838c/upload",
+      "body": {
+        "attachmentId": "9207d46b-4302-4ad8-a538-61d46c66cfa9",
+        "originalName": "kpi-metric-baseline-target-smoke.txt",
+        "status": "processing",
+        "evidence": {
+          "id": "8a20da40-ca80-4979-b509-00d9ec89e3a3",
+          "status": "captured",
+          "parseMethod": "text-line-parser",
+          "warnings": [],
+          "whatFound": [
+            "uploaded evidence captured"
+          ],
+          "whereUsed": [
+            "Move workspace"
+          ]
+        },
+        "discovery": {
+          "sourceFile": "kpi-metric-baseline-target-smoke.txt",
+          "evidenceType": "baseline_evidence",
+          "parseMethod": "text-line-parser",
+          "warnings": [],
+          "stages": [
+            {
+              "stage": "staged",
+              "status": "done",
+              "detail": "kpi-metric-baseline-target-smoke.txt received"
+            },
+            {
+              "stage": "parsed",
+              "status": "done",
+              "detail": "parse_method=text-line-parser"
+            },
+            {
+              "stage": "extracted",
+              "status": "done",
+              "detail": "1 candidate(s)"
+            },
+            {
+              "stage": "routed",
+              "status": "done",
+              "detail": "1 routed to landscape; 0 kept as evidence only"
+            },
+            {
+              "stage": "review",
+              "status": "done",
+              "detail": "1 field value(s) review-pending"
+            }
+          ],
+          "routed": [
+            {
+              "field": "landscape",
+              "count": 1,
+              "review": "review_pending",
+              "provenance": "kpi-metric-baseline-target-smoke.txt"
+            }
+          ],
+          "reviewPendingCount": 1,
+          "unmapped": [],
+          "summary": "Extracted 1 candidate(s) from kpi-metric-baseline-target-smoke.txt; routed 1 to landscape (review-pending); 0 kept as evidence only."
+        },
+        "discoveryReadiness": {
+          "archetypeLabel": "General (default)",
+          "requiredTotal": 4,
+          "requiredCovered": 3,
+          "requiredMissing": 1,
+          "optionalCovered": 0,
+          "readinessScore": 75,
+          "readyForP3": false,
+          "families": [
+            {
+              "familyId": "current_state_process",
+              "label": "Current-state process / operating documentation",
+              "required": true,
+              "status": "covered",
+              "evidenceIds": [
+                "f1012fc2-7cea-44a8-8c12-73095b76b51a"
+              ],
+              "evidenceTitles": [
+                "current-state-process-operating-documentation-smoke.txt"
+              ]
+            },
+            {
+              "familyId": "it_systems_landscape",
+              "label": "Systems landscape",
+              "required": true,
+              "status": "covered",
+              "evidenceIds": [
+                "c0072f48-7940-4cf7-be40-b74fa18ecda7"
+              ],
+              "evidenceTitles": [
+                "systems-landscape-application-integration-smoke.txt"
+              ]
+            },
+            {
+              "familyId": "kpi_baseline",
+              "label": "KPI / metric baseline",
+              "required": true,
+              "status": "covered",
+              "evidenceIds": [
+                "8a20da40-ca80-4979-b509-00d9ec89e3a3"
+              ],
+              "evidenceTitles": [
+                "kpi-metric-baseline-target-smoke.txt"
+              ]
+            },
+            {
+              "familyId": "cost_baseline",
+              "label": "Cost baseline",
+              "required": true,
+              "status": "missing",
+              "evidenceIds": [],
+              "evidenceTitles": []
+            },
+            {
+              "familyId": "org_workforce",
+              "label": "Org / workforce model",
+              "required": false,
+              "status": "missing",
+              "evidenceIds": [],
+              "evidenceTitles": []
+            }
+          ],
+          "gapRegister": [
+            {
+              "familyId": "cost_baseline",
+              "label": "Cost baseline",
+              "required": true,
+              "likelySource": "Finance",
+              "format": "XLSX",
+              "grounds": "Value Model · ROI",
+              "remediation": "Upload XLSX from Finance or record a human waiver before P3."
+            }
+          ]
+        }
+      }
+    }
+  },
+  {
+    "evidence": {
+      "name": "cost-finance-budget-run-rate-baseline-smoke.txt",
+      "title": "Cost baseline / finance budget run-rate smoke evidence"
+    },
+    "uploaded": {
+      "ok": true,
+      "status": 200,
+      "url": "https://app.abarva.ai/api/programs/workspace/44f6f4d4-ab88-4fdf-88e8-45c26f27838c/upload",
+      "body": {
+        "attachmentId": "0d390a88-1ffe-4cf2-9266-029aabaaee24",
+        "originalName": "cost-finance-budget-run-rate-baseline-smoke.txt",
+        "status": "processing",
+        "evidence": {
+          "id": "2bec3884-92f9-4da5-a98f-88396dc4d8a6",
+          "status": "captured",
+          "parseMethod": "text-line-parser",
+          "warnings": [],
+          "whatFound": [
+            "uploaded evidence captured"
+          ],
+          "whereUsed": [
+            "Move workspace"
+          ]
+        },
+        "discovery": {
+          "sourceFile": "cost-finance-budget-run-rate-baseline-smoke.txt",
+          "evidenceType": "baseline_evidence",
+          "parseMethod": "text-line-parser",
+          "warnings": [],
+          "stages": [
+            {
+              "stage": "staged",
+              "status": "done",
+              "detail": "cost-finance-budget-run-rate-baseline-smoke.txt received"
+            },
+            {
+              "stage": "parsed",
+              "status": "done",
+              "detail": "parse_method=text-line-parser"
+            },
+            {
+              "stage": "extracted",
+              "status": "partial",
+              "detail": "0 candidate(s)"
+            },
+            {
+              "stage": "routed",
+              "status": "skipped",
+              "detail": "0 routed to landscape; 0 kept as evidence only"
+            },
+            {
+              "stage": "review",
+              "status": "skipped",
+              "detail": "0 field value(s) review-pending"
+            }
+          ],
+          "routed": [],
+          "reviewPendingCount": 0,
+          "unmapped": [],
+          "summary": "Extracted 0 candidate(s) from cost-finance-budget-run-rate-baseline-smoke.txt; routed 0 to landscape (review-pending); 0 kept as evidence only."
+        },
+        "discoveryReadiness": {
+          "archetypeLabel": "General (default)",
+          "requiredTotal": 4,
+          "requiredCovered": 4,
+          "requiredMissing": 0,
+          "optionalCovered": 0,
+          "readinessScore": 100,
+          "readyForP3": true,
+          "families": [
+            {
+              "familyId": "current_state_process",
+              "label": "Current-state process / operating documentation",
+              "required": true,
+              "status": "covered",
+              "evidenceIds": [
+                "f1012fc2-7cea-44a8-8c12-73095b76b51a"
+              ],
+              "evidenceTitles": [
+                "current-state-process-operating-documentation-smoke.txt"
+              ]
+            },
+            {
+              "familyId": "it_systems_landscape",
+              "label": "Systems landscape",
+              "required": true,
+              "status": "covered",
+              "evidenceIds": [
+                "c0072f48-7940-4cf7-be40-b74fa18ecda7"
+              ],
+              "evidenceTitles": [
+                "systems-landscape-application-integration-smoke.txt"
+              ]
+            },
+            {
+              "familyId": "kpi_baseline",
+              "label": "KPI / metric baseline",
+              "required": true,
+              "status": "covered",
+              "evidenceIds": [
+                "8a20da40-ca80-4979-b509-00d9ec89e3a3"
+              ],
+              "evidenceTitles": [
+                "kpi-metric-baseline-target-smoke.txt"
+              ]
+            },
+            {
+              "familyId": "cost_baseline",
+              "label": "Cost baseline",
+              "required": true,
+              "status": "covered",
+              "evidenceIds": [
+                "2bec3884-92f9-4da5-a98f-88396dc4d8a6"
+              ],
+              "evidenceTitles": [
+                "cost-finance-budget-run-rate-baseline-smoke.txt"
+              ]
+            },
+            {
+              "familyId": "org_workforce",
+              "label": "Org / workforce model",
+              "required": false,
+              "status": "missing",
+              "evidenceIds": [],
+              "evidenceTitles": []
+            }
+          ],
+          "gapRegister": []
+        }
+      }
+    }
+  }
+]
