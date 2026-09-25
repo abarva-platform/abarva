@@ -18,9 +18,6 @@ import 'server-only';
 // dependency to add.
 
 import { randomBytes, scrypt as scryptCb, timingSafeEqual } from 'node:crypto';
-import { promisify } from 'node:util';
-
-const scrypt = promisify(scryptCb);
 
 /** scrypt cost. 128 * N * r = 16 MiB, comfortably under node's 32 MiB default maxmem. */
 const SCRYPT_N = 16_384;
@@ -62,11 +59,16 @@ function randomString(length: number, alphabet: string): string {
 }
 
 async function derive(password: string, salt: string): Promise<Buffer> {
-  return (await scrypt(password, salt, KEY_LENGTH, {
-    N: SCRYPT_N,
-    r: SCRYPT_r,
-    p: SCRYPT_p,
-  })) as Buffer;
+  return new Promise((resolve, reject) => {
+    scryptCb(password, salt, KEY_LENGTH, {
+      N: SCRYPT_N,
+      r: SCRYPT_r,
+      p: SCRYPT_p,
+    }, (error, key) => {
+      if (error) reject(error);
+      else resolve(key);
+    });
+  });
 }
 
 /**

@@ -268,14 +268,14 @@ export async function recordAcknowledgement(input: {
           decline_reason: input.declineReason ?? null,
           updated_at: now,
         };
-    const { error } = await db
+    const { error, count } = await db
       .from('source_event_vendors')
       .update(patch)
       // Only an invitation still open may be answered. A vendor cannot
       // re-acknowledge to reset a decline, and cannot answer after withdrawal.
       .eq('id', input.vendorId)
       .eq('invitation_state', 'invited');
-    return !error;
+    return !error && count === 1;
   } catch (error) {
     console.error('[recordAcknowledgement]', error instanceof Error ? error.message : error);
     return false;
