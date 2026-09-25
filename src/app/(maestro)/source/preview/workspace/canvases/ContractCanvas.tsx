@@ -2566,6 +2566,14 @@ function OpportunityStoryPanel({ vm }: { vm: SourceWorkspaceVM }) {
   const selectedSpine = vm.optSpine?.selected ?? null;
   const conflict = view.baseline.status === "conflict";
   const visibleOpportunities = view.opportunities.slice(0, 5);
+  // Item U-518. The sentences above count the whole set; the queue below shows
+  // five. Without this the difference is silent, and the densest opportunity
+  // fixture in the repository carries six rows for one contract, so the cap is
+  // reached rather than theoretical.
+  const cappedDisclosure =
+    view.opportunities.length > visibleOpportunities.length
+      ? `Showing ${visibleOpportunities.length} of ${view.opportunities.length}`
+      : null;
   const blockedCount = view.opportunities.filter(
     (opportunity) =>
       opportunity.stageRaw === "baseline_conflict" ||
@@ -2836,6 +2844,9 @@ function OpportunityStoryPanel({ vm }: { vm: SourceWorkspaceVM }) {
           <div style={{ fontSize: 11.5, color: "#5f5e5a" }}>
             Fact-backed lines only; values are potential until workflow and
             finance prove outcome.
+            {cappedDisclosure
+              ? ` ${cappedDisclosure} identified opportunities, highest value first.`
+              : ""}
           </div>
         </div>
         <div
@@ -3315,6 +3326,22 @@ function OpportunityRelationshipCanvas({ vm }: { vm: SourceWorkspaceVM }) {
                     </text>
                   </g>
                 ))}
+                {/*
+                  Item U-518. The box holds five rows; the set can hold more.
+                  Plotting the first five under an unqualified heading reads as
+                  the whole set.
+                */}
+                {view.opportunities.length > 5 ? (
+                  <text
+                    x="606"
+                    y="282"
+                    fontSize="9.6"
+                    fontWeight="700"
+                    fill="#5f5e5a"
+                  >
+                    {`Showing 5 of ${view.opportunities.length}`}
+                  </text>
+                ) : null}
               </g>
 
               <g filter="url(#relShadow)">

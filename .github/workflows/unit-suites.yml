@@ -1063,6 +1063,12 @@ jobs:
           "src/app/(maestro)/source/workspace/__tests__/workspace-impact-read-resilience.test.tsx"
           --no-coverage --ci
 
+      # U-518 added the eighteenth path below. A new file in this directory is
+      # dark unless it is named here -- the directory is covered by
+      # ENUMERATION, which is the shape T-478 found hiding seven files -- so a
+      # suite proving two counts carry distinct labels would itself have run
+      # nowhere.
+      #
       # T-552. T-550 executed these seventeen Source workspace suites together:
       # 17 suites, 130 tests, all green, with no pending or todo cases. They
       # assert behavior or rendered view-model output; the three source-text
@@ -1089,6 +1095,7 @@ jobs:
           "src/app/(maestro)/source/preview/workspace/__tests__/contractPurposeGuard.test.tsx"
           "src/app/(maestro)/source/preview/workspace/__tests__/contractPurposeProse.test.ts"
           "src/app/(maestro)/source/preview/workspace/__tests__/contractStoryDuplication.test.ts"
+          "src/app/(maestro)/source/preview/workspace/__tests__/contract360-opportunity-count-labels.test.tsx"
           --no-coverage --ci
 
       # T-478. The rank-2 governed-risk directory in the coverage census —

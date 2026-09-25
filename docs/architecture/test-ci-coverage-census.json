@@ -17,9 +17,9 @@
     "No timestamp is recorded, so refreshing this file on an unchanged tree is a no-op."
   ],
   "counts": {
-    "testFiles": 2442,
-    "coveredTestFiles": 1998,
-    "pullRequestCoveredTestFiles": 1996,
+    "testFiles": 2443,
+    "coveredTestFiles": 1999,
+    "pullRequestCoveredTestFiles": 1997,
     "uncoveredTestFiles": 444,
     "directoriesWithTests": 487,
     "directoriesFullyCovered": 288,
@@ -195,8 +195,8 @@
     },
     {
       "directory": "src/app/(maestro)/source/preview/workspace/__tests__",
-      "testFiles": 35,
-      "coveredTestFiles": 32,
+      "testFiles": 36,
+      "coveredTestFiles": 33,
       "declaredQuarantineTestFiles": 0,
       "untriagedUnrunTestFiles": 3,
       "via": [
@@ -567,6 +567,31 @@
     {
       "directory": "src/app/(maestro)/source/preview/workspace/__tests__",
       "testPath": "src/app/(maestro)/source/preview/workspace/__tests__/compositionInvariants.test.tsx",
+      "enumerated": true,
+      "collected": true,
+      "run": "unknown",
+      "green": "unknown",
+      "covered": true,
+      "pullRequestCovered": true,
+      "declaredQuarantine": false,
+      "declaredQuarantineShape": null,
+      "untriaged": false,
+      "via": [
+        "command"
+      ],
+      "governedRisk": {
+        "score": 10,
+        "band": "high",
+        "signals": [
+          "tenant_scoped_read"
+        ],
+        "productSourceCount": 31,
+        "rank": 2
+      }
+    },
+    {
+      "directory": "src/app/(maestro)/source/preview/workspace/__tests__",
+      "testPath": "src/app/(maestro)/source/preview/workspace/__tests__/contract360-opportunity-count-labels.test.tsx",
       "enumerated": true,
       "collected": true,
       "run": "unknown",
@@ -1985,7 +2010,7 @@
     },
     {
       "directory": "src/app/(maestro)/source/preview/workspace/__tests__",
-      "testFiles": 35,
+      "testFiles": 36,
       "unrunTestFiles": 3,
       "declaredQuarantineTestFiles": 0,
       "untriagedUnrunTestFiles": 3,
@@ -4485,7 +4510,7 @@
     },
     {
       "directory": "src/app/(maestro)/source/preview/workspace/__tests__",
-      "testFiles": 35,
+      "testFiles": 36,
       "unrunTestFiles": 3,
       "governedRisk": {
         "score": 10,
