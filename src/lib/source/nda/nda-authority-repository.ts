@@ -30,6 +30,7 @@ type ExecutedNdaRow = {
   scope_level: NdaScopeLevel;
   covered_affiliate_entity_ids: string[] | null;
   effective_from: string | Date;
+  executed_at: string | Date;
   effective_to: string | Date | null;
   uploaded_by_user_id: string;
   signature_method: string | null;
@@ -102,6 +103,7 @@ export async function readNdaAuthorityForEvent(
                 authority.template_version, authority.scope_level,
                 authority.covered_affiliate_entity_ids,
                 authority.effective_from, authority.effective_to,
+                authority.executed_at,
                 authority.uploaded_by_user_id,
                 authority.signature_method,
                 authority.supplier_signatory_name,
@@ -167,7 +169,7 @@ export async function readNdaAuthorityForEvent(
             signatureMethod:
               (row.signature_method as ExecutedDocumentEvidence["signatureMethod"]) ??
               null,
-            signedAt: iso(row.effective_from),
+            signedAt: iso(row.executed_at),
             supplierSignatoryName: row.supplier_signatory_name,
             buyerSignatoryName: row.buyer_signatory_name,
             certificateSha256: row.certificate_sha256,
