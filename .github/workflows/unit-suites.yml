@@ -743,8 +743,15 @@ jobs:
       # to render the component. It now mounts Source's access guard and is the
       # only place the guard's disclosure behaviour is asserted, so leaving it
       # unwired left that control unrun. Measured green on the branch: 6 tests.
-      # Both paths are quoted because they carry the route-group segment
-      # `(maestro)`, which a bare Jest pattern would read as a capture group.
+      # Every `(maestro)` path is quoted because that route-group segment
+      # would be read as a capture group by a bare Jest pattern.
+      #
+      # U-514 (2026-09-25) adds the requester-estimate disclosure suite. It
+      # renders both Source approval surfaces and asserts that a figure the
+      # requester declared carries its provenance label; wired here on the day
+      # it lands, because a control that runs nowhere is the failure this
+      # directory's census exists to catch. Measured green on the branch: 5
+      # tests.
       - name: Run Source readiness and route suites
         run: >-
           npx jest --runTestsByPath
@@ -754,6 +761,7 @@ jobs:
           src/lib/source/rfp-readiness/__tests__/section-trace.test.ts
           "src/app/(maestro)/source/__tests__/new-route-optimization-redirect.test.ts"
           "src/app/(maestro)/source/__tests__/not-found-source.test.tsx"
+          "src/app/(maestro)/source/__tests__/requester-estimate-disclosure.test.tsx"
           --no-coverage --ci
 
       # Eight Source contract suites were measured before wiring: all eight

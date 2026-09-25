@@ -13,6 +13,7 @@ import { SHELL } from "@/lib/shell/shell-tokens";
 import type { SourceIntakeRequestSummary } from "@/lib/source/intake/servicenow-sourcing-request-repository";
 import type { CSSProperties, ReactNode } from "react";
 import { useMemo } from "react";
+import { requesterEstimateCardLabel } from "@/lib/source/requester-estimate-label";
 
 export type SourceNewRequestQueueStatus =
   | "loading"
@@ -323,7 +324,9 @@ function RequestTriageRow({
 
       {request.value ? (
         <p style={NOTE_COPY}>
-          Requester estimate: {formatMoney(request.value.amount, request.value.currency)} · Not validated
+          {requesterEstimateCardLabel(
+            formatMoney(request.value.amount, request.value.currency),
+          )}
         </p>
       ) : null}
       <Link href={actionHref} style={PRIMARY_ACTION}>

@@ -20,6 +20,11 @@ const ownedFiles = [
   // rewritten to mount the component; it is now the only assertion of Source's
   // access-guard disclosure behaviour, and it ran nowhere.
   "src/app/(maestro)/source/__tests__/not-found-source.test.tsx",
+  // U-514 (2026-09-25): the requester-estimate disclosure suite. It renders
+  // both Source approval surfaces and is the only assertion that a declared
+  // figure carries its provenance label, so it joins the owned set in the same
+  // change that created it rather than in a later one.
+  "src/app/(maestro)/source/__tests__/requester-estimate-disclosure.test.tsx",
 ] as const;
 
 const quarantinedFiles = [
@@ -83,7 +88,7 @@ describe("Source readiness and route suite CI ownership", () => {
     }
   });
 
-  it("runs the six behavior-bearing suites and leaves the exact quarantine out", () => {
+  it("runs the seven behavior-bearing suites and leaves the exact quarantine out", () => {
     const commands = jestCommands();
     const command = commands.find((candidate) =>
       candidate.includes(ownedFiles[0]),
@@ -109,11 +114,14 @@ describe("Source readiness and route suite CI ownership", () => {
     expect(census.counts.indeterminateInvocations).toBe(0);
     expect(uncovered("src/lib/source/rfp-readiness/__tests__")).toBe(false);
     expect(partial("src/lib/source/rfp-readiness/__tests__")).toBeUndefined();
-    // 1 -> 2 of 3: U-511 wired the not-found suite. The third file, the
-    // tenant-named source scanner, remains the exact quarantine above.
+    // 1 -> 2 of 3: U-511 wired the not-found suite. 3 of 4: U-514 added the
+    // requester-estimate disclosure suite and wired it in the same change. The
+    // remaining uncovered file, the tenant-named source scanner, is still the
+    // exact quarantine above — the covered count moves with each wiring and
+    // the total moves with each new file, so neither can drift unnoticed.
     expect(partial("src/app/(maestro)/source/__tests__")).toMatchObject({
-      testFiles: 3,
-      coveredTestFiles: 2,
+      testFiles: 4,
+      coveredTestFiles: 3,
     });
   });
 });
