@@ -80,8 +80,14 @@ Clean baseline from a separate `origin/main` worktree at `2ccef7d29`, same scope
 
 The 7 failures are the **same 7 by name**, all in
 `src/__tests__/integration/source/source-originate-page.test.ts`, and they fail identically on clean
-`origin/main` — diffed by test name, not by count. They are pre-existing and are filed separately as
-item U-515; this change neither causes nor repairs them.
+`origin/main` — diffed by test name, not by count. They are pre-existing and this change neither causes
+nor repairs them.
+
+They are also **already owned**, which was checked rather than assumed before filing anything new:
+`scripts/quality/source-integration-quarantine.json` declares that suite with owner `T-018` and two
+expected failure patterns, and both patterns still appear in today's output, so the quarantine gate is
+current rather than stale and CI is right not to be red on them. Nothing new was filed for this; a
+first draft of this record filed a new id for it and was wrong.
 
 Red first, before the fix: **2 failed, 3 passed** of the 5 new cases, each failing on the defect —
 `"SRC-0042 · Intake · $4.2M"` and `"Value or savings target$4.2M"`. After the fix: **5 passed**.
