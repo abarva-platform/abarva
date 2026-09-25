@@ -130,6 +130,7 @@ function classifyRoute(route: string): RouteRow["audience"] {
     route.startsWith("/model-card") ||
     route.startsWith("/patterns") ||
     route.startsWith("/responsible-ai") ||
+    route.startsWith("/rfp/") ||
     route.startsWith("/solutions") ||
     route.startsWith("/status") ||
     route.startsWith("/subprocessors") ||
@@ -151,7 +152,7 @@ function classifyRoute(route: string): RouteRow["audience"] {
 function productForRoute(route: string): string {
   if (route.startsWith("/home")) return "Home";
   if (route.startsWith("/intelligence")) return "Intelligence";
-  if (route.startsWith("/source")) return "Source";
+  if (route.startsWith("/source") || route.startsWith("/rfp/")) return "Source";
   if (route.startsWith("/strategic-moves") || route.startsWith("/programs")) return "Moves";
   if (route.includes("/tower") || route.startsWith("/tower")) return "Tower";
   if (route.startsWith("/admin") || route.startsWith("/platform/admin")) return "Admin";
