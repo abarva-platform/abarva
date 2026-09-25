@@ -410,10 +410,9 @@ function recordedBaselineMetricsBlock(ctx: SolutionContext): string {
   const entries = Object.entries(ctx.baselineMetrics ?? {}).filter(
     ([label, value]) => label.trim() && value.trim(),
   );
-  if (!entries.length) return "- [none captured as structured baseline metrics]";
-  return entries
-    .map(([label, value]) => `- ${label}: ${value}`)
-    .join("\n");
+  if (!entries.length)
+    return "- [none captured as structured baseline metrics]";
+  return entries.map(([label, value]) => `- ${label}: ${value}`).join("\n");
 }
 
 function evidenceTaxonomyBlock(ctx: SolutionContext): string {
@@ -490,7 +489,7 @@ Near the beginning of the Charter, include this statement verbatim:
 Required sections, in order:
 ${requiredSections}
 
-For "${CHARTER_CONTRACT.sections[7]?.title}" specifically: this section prepares the client for
+For "${CHARTER_CONTRACT.sections.find((section) => section.key === "discovery_preparation")?.title}" specifically: this section prepares the client for
 Discovery — it does not perform the assessment. Include an executive table (Area / What to Expect /
 What We Need From You / Priority) covering Business Process, People & Governance, Technology, Data,
 Performance, and Risk & Controls; then a second table of typical Discovery activities and their

@@ -544,6 +544,7 @@ function composeBrief(
   const disallowed = pack?.governanceNote
     ? `${DISALLOWED_FABRICATION} ${pack.governanceNote}`
     : DISALLOWED_FABRICATION;
+  const allowArchetypeAssets = structure.deliverableType !== "charter";
 
   return {
     module: req.module,
@@ -565,11 +566,12 @@ function composeBrief(
     // archetype pack contributes (use-case-specific exhibits like a dependency
     // map) — a business case and an architecture doc under the same archetype
     // must not get the same exhibit list.
-    expectedExhibits: structure.fixedStructure
-      ? (structure.expectedExhibits ?? [])
-      : [...(structure.expectedExhibits ?? []), ...(pack?.exhibits ?? [])],
-    expectedTables: structure.fixedStructure
-      ? [
+    expectedExhibits: [
+      ...(structure.expectedExhibits ?? []),
+      ...(allowArchetypeAssets ? (pack?.exhibits ?? []) : []),
+    ],
+    expectedTables: allowArchetypeAssets
+      ? (pack?.tables ?? [
           {
             key: "risk_register",
             title: "Risks, Issues & Dependencies",
@@ -577,16 +579,8 @@ function composeBrief(
             groundingMode: "mixed",
             moveToExcelIfWide: false,
           },
-        ]
-      : (pack?.tables ?? [
-          {
-            key: "risk_register",
-            title: "Risks, Issues & Dependencies",
-            columns: ["Item", "Type", "Impact", "Owner", "Mitigation"],
-            groundingMode: "mixed",
-            moveToExcelIfWide: false,
-          },
-        ]),
+        ])
+      : [],
     requiredPlaceholders: sections
       .filter((s) => s.groundingMode === "client_to_complete")
       .map((s) => s.key),

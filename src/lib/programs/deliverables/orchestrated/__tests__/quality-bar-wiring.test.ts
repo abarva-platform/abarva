@@ -38,9 +38,9 @@ function barFor(deliverableType: string) {
 }
 
 describe("the canonical quality contract reaches the runtime request", () => {
-  it("applies the reconciled P4 business-case band, not a generic floor", () => {
+  it("applies the reconciled compact P4 business-case band, not a generic low bar", () => {
     const bar = barFor("business_case");
-    expect(bar.minSections).toBe(9);
+    expect(bar.minSections).toBe(5);
     expect(bar.minBodyWords).toBe(3_000);
     expect(bar.targetBodyWordsMax).toBe(5_000);
     expect(bar.advisoryBandMax).toBe(5_800);
@@ -55,10 +55,11 @@ describe("the canonical quality contract reaches the runtime request", () => {
     expect(bar.requiresEvidenceGapsNoted).toBe(true);
   });
 
-  it("is no longer the hardcoded 5-section / 600-word floor", () => {
+  it("is no longer the hardcoded 600-word generic floor", () => {
     const bar = barFor("business_case");
-    expect(bar.minSections).not.toBe(5);
     expect(bar.minBodyWords).not.toBe(600);
+    expect(bar.targetBodyWordsMax).toBeDefined();
+    expect(bar.enforceMaxAsBlocker).toBe(true);
   });
 
   it("gives each artifact type its own contract rather than one shared bar", () => {
@@ -85,8 +86,8 @@ describe("the canonical quality contract reaches the runtime request", () => {
       const expected = resolveQualityBar("moves", type);
       const actual = barFor(type);
       // Everything except the deliberate source-register override.
-      const { requiresSourceRegister: _a, ...actualRest } = actual;
-      const { requiresSourceRegister: _b, ...expectedRest } = expected;
+      const actualRest = { ...actual, requiresSourceRegister: undefined };
+      const expectedRest = { ...expected, requiresSourceRegister: undefined };
       expect(actualRest).toEqual(expectedRest);
     }
   });

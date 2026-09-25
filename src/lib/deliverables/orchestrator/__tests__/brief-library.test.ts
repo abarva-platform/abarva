@@ -99,16 +99,17 @@ describe("deliverable structures", () => {
       "confidence_gaps",
       "p3_implications",
     ]);
-    expect(brief.expectedExhibits.map((e) => e.key)).toEqual([
-      "symptom_cause_table",
-      "root_cause_tree",
-    ]);
+    expect(brief.expectedExhibits.map((e) => e.key)).toEqual(
+      expect.arrayContaining(["symptom_cause_table", "root_cause_tree"]),
+    );
     expect(brief.recommendedStructure.map((s) => s.key)).not.toContain(
       "maturity",
     );
   });
 
   it.each([
+    ["roadmap", 7, ["executive_roadmap"]],
+    ["discovery_report", 6, []],
     [
       "target_state_architecture",
       7,
@@ -127,6 +128,12 @@ describe("deliverable structures", () => {
     ["operating_model", 6, ["human_ai_work_split", "decision_rights"]],
     ["requirements_traceability", 5, []],
     ["sourcing_strategy", 5, ["sourcing_options_matrix"]],
+    ["estimate_model", 6, []],
+    ["value_model", 6, []],
+    ["readiness_and_change_plan", 7, []],
+    ["mobilization_plan", 6, []],
+    ["handoff_pack", 7, []],
+    ["executive_playback", 6, []],
   ] as const)(
     "%s has a fixed, purpose-specific structure instead of the generic Moves binder",
     (deliverableType, sectionCount, exhibitKeys) => {
@@ -139,7 +146,7 @@ describe("deliverable structures", () => {
       expect(brief.recommendedStructure).toHaveLength(sectionCount);
       expect(brief.requiredSections).toEqual(structure.requiredSectionKeys);
       expect(brief.expectedExhibits.map((exhibit) => exhibit.key)).toEqual(
-        exhibitKeys,
+        expect.arrayContaining([...exhibitKeys]),
       );
       expect(
         brief.recommendedStructure.map((section) => section.key),
@@ -152,6 +159,17 @@ describe("deliverable structures", () => {
       );
     },
   );
+
+  it("keeps every shared deliverable structure to seven sections or fewer", () => {
+    const oversized = DELIVERABLE_STRUCTURES.filter(
+      (structure) => structure.sections.length > 7,
+    ).map((structure) => ({
+      key: `${structure.module}:${structure.deliverableType}`,
+      sectionCount: structure.sections.length,
+    }));
+
+    expect(oversized).toEqual([]);
+  });
 
   it("keeps target architecture fixed, decision-focused, and below the hard export ceiling", () => {
     const structure = getDeliverableStructure(
@@ -352,18 +370,28 @@ describe("deliverable structures", () => {
   });
 
   it.each([
-    "business_case",
-    "target_state_architecture",
-    "solution_design",
-    "operating_model",
-    "sourcing_strategy",
+    ["business_case", true],
+    ["target_state_architecture", true],
+    ["solution_design", true],
+    ["operating_model", true],
+    ["sourcing_strategy", true],
+    ["roadmap", true],
+    ["discovery_report", true],
+    ["estimate_model", true],
+    ["value_model", true],
+    ["readiness_and_change_plan", true],
+    ["handoff_pack", true],
+    ["mobilization_plan", true],
+    ["executive_playback", true],
   ] as const)(
     "%s quality floor follows required sections, not optional section count",
-    (deliverableType) => {
+    (deliverableType, hasOptionalSections) => {
       const structure = getDeliverableStructure("moves", deliverableType)!;
-      expect(structure.sections.length).toBeGreaterThan(
-        structure.requiredSectionKeys.length,
-      );
+      if (hasOptionalSections) {
+        expect(structure.sections.length).toBeGreaterThan(
+          structure.requiredSectionKeys.length,
+        );
+      }
       expect(resolveQualityBar("moves", deliverableType).minSections).toBe(
         structure.requiredSectionKeys.length,
       );
@@ -401,6 +429,7 @@ describe("deliverable structures", () => {
     expect(
       readiness.sections.map((section) => section.expertLatitude).join(" "),
     ).toMatch(/role-and-authority table/);
+    expect(readiness.requiredSectionKeys).not.toContain("dependencies_risks");
   });
 });
 
@@ -557,7 +586,16 @@ describe("target_state_architecture key resolution (regression)", () => {
         "agent_orchestration",
       ]),
     );
-    expect(brief.expectedExhibits).toHaveLength(4);
+    expect(
+      brief.expectedExhibits.filter((e) =>
+        [
+          "conceptual_architecture",
+          "logical_architecture",
+          "physical_architecture",
+          "agent_orchestration",
+        ].includes(e.kind),
+      ),
+    ).toHaveLength(4);
     const physical = brief.expectedExhibits.find(
       (e) => e.kind === "physical_architecture",
     )!;

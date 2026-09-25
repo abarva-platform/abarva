@@ -75,7 +75,9 @@ describe("repairEvidenceBackedUncitedFigures", () => {
       evidence,
     );
 
-    expect(repaired).toContain("1,142,000 count is selected, not measured [4].");
+    expect(repaired).toContain(
+      "1,142,000 count is selected, not measured [4].",
+    );
     expect(extractUnsupportedFigureClaims(repaired)).toEqual([]);
   });
 
@@ -275,8 +277,8 @@ describe("assembleDeliverable", () => {
     });
     const sections: RenderableSection[] = [
       {
-        key: "authorization_next_steps",
-        title: "Authorization & Immediate Next Steps",
+        key: "charter_decision",
+        title: "Charter Decision & Immediate Next Steps",
         bodyMarkdown:
           "Approve P2 Discovery with the charter scope, evidence families, and caveats carried forward as the governed source of truth.",
         groundingMode: "mixed",
@@ -309,19 +311,16 @@ describe("assembleDeliverable", () => {
       clientCompleteItems: [],
       qualityBar: {
         ...amsRfpRequest().qualityBar,
-        minSections: 9,
+        minSections: 7,
         minBodyWords: 700,
         requiresSourceRegister: false,
       },
     });
     const thinBody =
       "Sponsor alignment, evidence acceptance, decision rights, scope control, owner attendance, value discipline, review cadence, and caveat handling are confirmed for discovery.";
-    const sections: RenderableSection[] = Array.from({ length: 9 }, (_, i) => ({
+    const sections: RenderableSection[] = Array.from({ length: 7 }, (_, i) => ({
       key: `charter_section_${i + 1}`,
-      title:
-        i === 0
-          ? "Charter Decision"
-          : `Charter Working Section ${i + 1}`,
+      title: i === 0 ? "Charter Decision" : `Charter Working Section ${i + 1}`,
       bodyMarkdown: thinBody,
       groundingMode: "mixed",
       citationsUsed: [],

@@ -9,7 +9,8 @@ describe("computeCharterPreflight", () => {
       scope_out: "Clinical decisions and appeals.",
       initial_value_hypothesis: "Reduce handle time and repeat contact.",
       outcomes_success: "Lower handle time, validated against baseline.",
-      discovery_questions: "Hypothesis: repeat contacts trace to a few intents.",
+      discovery_questions:
+        "Hypothesis: repeat contacts trace to a few intents.",
       stakeholder_owner_view: "COO as sponsor.",
       known_evidence: "Call metrics.",
       missing_evidence_open_questions: "Depends on the CRM migration.",
@@ -21,9 +22,11 @@ describe("computeCharterPreflight", () => {
     expect(result.sourceCoverageBySection.charter_decision.status).toBe(
       "complete",
     );
-    expect(result.sourceCoverageBySection.charter_decision.sourceRefs).toEqual(
-      ["p0_capture:problem_statement", "p0_capture:initial_value_hypothesis"],
-    );
+    expect(result.sourceCoverageBySection.charter_decision.sourceRefs).toEqual([
+      "p0_capture:problem_statement",
+      "p0_capture:initial_value_hypothesis",
+      "p0_capture:recommendation_to_advance",
+    ]);
     expect(result.sourceCoverageBySection.discovery_preparation.status).toBe(
       "complete",
     );
@@ -58,18 +61,16 @@ describe("computeCharterPreflight", () => {
     expect(result.missingRequiredInputs).not.toContain("charter_decision");
   });
 
-  it("covers exactly the Charter's 9 sections (redesigned 2026-07-25)", () => {
+  it("covers exactly the Charter's compressed 7 sections", () => {
     const result = computeCharterPreflight({});
     expect(Object.keys(result.sourceCoverageBySection)).toEqual([
       "charter_decision",
       "opportunity_context",
-      "intended_outcomes",
       "scope",
       "success_measures",
       "sponsorship_governance",
       "known_constraints_dependencies",
       "discovery_preparation",
-      "authorization_next_steps",
     ]);
   });
 });
