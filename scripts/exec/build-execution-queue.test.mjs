@@ -3077,17 +3077,39 @@ const UNPLACED_ROW = /could not place/i;
    */
   const unparsed = boardUnparsed(dir);
   const unplacedRow = funnelRow(rendered, UNPLACED_ROW);
+  /*
+   * UPDATED for item C-515, and the reason matters because the shape of the
+   * edit is the shape a weakening also has.
+   *
+   * Both assertions read `truth.unmapped.length` as the number of ids REMOVED
+   * from the pool. That was true while the board dropped every unmapped id.
+   * It now builds them onto an unplaced track, so `truth.pool` already carries
+   * them and the same ids were being added twice — the opening over-counted by
+   * exactly `offered`, and the drop row claimed a removal that had not
+   * happened.
+   *
+   * What replaces it is not a looser number. `truth.unmapped.length` is a
+   * constant the board hands over; `split.dropped` is an intersection with the
+   * pool the board actually wrote, so these cases now distinguish an id that
+   * was dropped from one that was offered, which the old form could not do at
+   * all. They fail if the queue counts an offered id as removed, and they fail
+   * if it stops counting a genuinely dropped one — the direction the original
+   * case was written to hold, asserted below over `split.dropped` and proven
+   * still reachable by the compatibility case in the C-515 block.
+   */
+  const split = unplacedSplit(dir);
   check(
     "the funnel OPENS at the full population the board saw, not at the pool it handed on",
-    opening === truth.pool + truth.unmapped.length + unparsed.length
+    opening === truth.pool + split.dropped.length + unparsed.length
       && truth.unmapped.length > 0,
-    `rendered opening=${opening}; board pool=${truth.pool} + dropped=${truth.unmapped.length}` +
-      ` + unparsed=${unparsed.length} = ${truth.pool + truth.unmapped.length + unparsed.length}`,
+    `rendered opening=${opening}; board pool=${truth.pool} + dropped=${split.dropped.length}` +
+      ` + unparsed=${unparsed.length} = ${truth.pool + split.dropped.length + unparsed.length}` +
+      `\nunmapped=${JSON.stringify(truth.unmapped)} offered=${JSON.stringify(split.offered)}`,
   );
   check(
     "and the drop row, BY LABEL, removes exactly those ids and closes onto the pool",
-    unplacedRow?.removed === truth.unmapped.length && unplacedRow?.remaining === truth.pool,
-    `drop row=${JSON.stringify(unplacedRow)}; expected removed=${truth.unmapped.length}` +
+    unplacedRow?.removed === split.dropped.length && unplacedRow?.remaining === truth.pool,
+    `drop row=${JSON.stringify(unplacedRow)}; expected removed=${split.dropped.length}` +
       ` remaining=${truth.pool}\nall rows=${JSON.stringify(rows)}`,
   );
   fs.rmSync(dir, { recursive: true, force: true });
@@ -3468,6 +3490,122 @@ const DISAGREE = /\*\*The census and the board's own scan DISAGREE/;
       `cannot-be-reconciled=${/cannot be reconciled/i.test(rendered)} ` +
       `reconciled=${RECONCILED.test(rendered)} disagree=${DISAGREE.test(rendered)}\n` +
       `add-back row=${JSON.stringify(duplicatePlacementRow(rendered))}; expected added=${p.rows - p.distinct}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+
+/* ------------------------------------------------------------------------ *
+ * An unplaceable id the board OFFERS is not a removal (item C-515).         *
+ *                                                                           *
+ * `unmapped` answers "is this id on the structure map", and the census      *
+ * spent it as "was this id removed from the pool". Those were the same      *
+ * question only for as long as the board dropped every unmapped id. Now it  *
+ * builds them onto an unplaced track, so the same id is counted once inside *
+ * `distinctPlaced` and once again in the drop row: on the live corpus the   *
+ * census opened at 525 against 513 scanned, and its own reconciliation      *
+ * called the disagreement rather than closing.                              *
+ *                                                                           *
+ * The repair is a set intersection with the pool the summary actually       *
+ * carries, never an assumption about which board wrote it. That is what     *
+ * makes these cases hold for BOTH generators: a summary from a board that   *
+ * still drops unmapped ids has an empty intersection, and every number      *
+ * below returns to what T-745 asserted.                                     *
+ * ------------------------------------------------------------------------ */
+
+/** The ids the summary reports unmapped, split by whether its pool carries them. */
+function unplacedSplit(dir) {
+  const s = JSON.parse(fs.readFileSync(path.join(dir, "source-board-summary.json"), "utf8"));
+  const pool = new Set(
+    [...s.stages.flatMap((st) => st.items), ...s.tracks.flatMap((t) => t.items)]
+      .map((i) => String(i.num)),
+  );
+  const unmapped = (s.unmapped ?? []).map(String);
+  return {
+    offered: unmapped.filter((id) => pool.has(id)),
+    dropped: unmapped.filter((id) => !pool.has(id)),
+    distinctPool: pool.size,
+    unmapped,
+  };
+}
+
+{
+  const dir = freshFixture();
+  addBacklogItem(dir, "T-903");
+  addBacklogItem(dir, "T-904");
+  const { board, queue } = buildQueueOverUnplaceableIds(dir);
+  const rendered = fs.readFileSync(path.join(dir, "EXECUTION_QUEUE.md"), "utf8");
+  const split = unplacedSplit(dir);
+  const row = funnelRow(rendered, UNPLACED_ROW);
+
+  check(
+    "the fixture reproduces the state under test: the board reports the ids unmapped AND carries them in its pool",
+    board.status === 1 && queue.status === 0
+      && split.unmapped.length === 2 && split.offered.length === 2,
+    `board exit=${board.status}; queue exit=${queue.status}\nsplit=${JSON.stringify(split)}`,
+  );
+  check(
+    "the drop row removes only the unplaceable ids the pool does NOT carry",
+    row?.removed === split.dropped.length,
+    `drop row=${JSON.stringify(row)}; board dropped=${JSON.stringify(split.dropped)}`
+      + ` offered=${JSON.stringify(split.offered)}`,
+  );
+  check(
+    "so the census reconciles against the board's own scan instead of double-counting them",
+    RECONCILED.test(rendered) && !DISAGREE.test(rendered),
+    `reconciled=${RECONCILED.test(rendered)} disagree=${DISAGREE.test(rendered)}\n`
+      + `opening=${funnelOpeningTotal(rendered)} pool=${split.distinctPool}`,
+  );
+  check(
+    "the file still NAMES them and still says the map entry is owed — offering is not absolution",
+    split.offered.every((id) => rendered.includes(id))
+      && /source-stage-map\.json/.test(rendered)
+      && /offered|unplaced/i.test(rendered),
+    `named=${split.offered.filter((id) => rendered.includes(id)).join(" ") || "none"}`,
+  );
+  check(
+    "and it no longer tells the reader they are offered to nobody, which is now false",
+    !/offered to nobody/i.test(rendered),
+    `matched=${JSON.stringify(rendered.match(/.{0,120}offered to nobody.{0,120}/i)?.[0] ?? null)}`,
+  );
+  check(
+    "an offered unplaced id is reachable in a bucket, which is the whole point of the item",
+    new RegExp(`\\|\\s*T-903\\s*\\|`).test(rendered),
+    `T-903 rows=${JSON.stringify(rendered.split("\n").filter((l) => l.includes("T-903")).slice(0, 4))}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+{
+  /*
+   * The compatibility direction, and the reason the queue reads the pool
+   * rather than trusting the board's version: a summary whose pool does NOT
+   * carry the unmapped ids must still render exactly what T-745 asserted.
+   * Built by hand from a real summary so the case does not depend on an old
+   * generator being available to run.
+   */
+  const dir = freshFixture();
+  addBacklogItem(dir, "T-905");
+  buildQueueOverUnplaceableIds(dir);
+  const file = path.join(dir, "source-board-summary.json");
+  const s = JSON.parse(fs.readFileSync(file, "utf8"));
+  s.tracks = (s.tracks ?? []).filter((t) => !(t.items ?? []).some((i) => String(i.num) === "T-905"));
+  fs.writeFileSync(file, `${JSON.stringify(s, null, 2)}\n`);
+  const queue = run(dir, "build-execution-queue.mjs");
+  const rendered = fs.readFileSync(path.join(dir, "EXECUTION_QUEUE.md"), "utf8");
+  const split = unplacedSplit(dir);
+  const row = funnelRow(rendered, UNPLACED_ROW);
+
+  check(
+    "a summary that really did drop the id still reports it as a removal, and closes onto the pool",
+    queue.status === 0 && split.dropped.length === 1 && split.offered.length === 0
+      && row?.removed === 1 && row?.remaining === split.distinctPool,
+    `queue=${queue.status}\nsplit=${JSON.stringify(split)}\nrow=${JSON.stringify(row)}`,
+  );
+  check(
+    "and it is the dropped case that says they are offered to nobody",
+    /offered to nobody/i.test(rendered) && rendered.includes("T-905"),
+    `matched=${JSON.stringify(rendered.match(/.{0,80}offered to nobody.{0,80}/i)?.[0] ?? null)}`,
   );
   fs.rmSync(dir, { recursive: true, force: true });
 }

@@ -953,6 +953,33 @@ const DUPLICATE_LABEL =
   "placed in more than one stage or track, so it reaches the filter below as more than one row";
 
 /**
+ * Unplaceable is not the same question as removed — item C-515.
+ *
+ * `unmapped` answers "is this id on the structure map". This census spent it
+ * as "was this id removed before the pool existed". Those were one question
+ * only while the board dropped every unmapped id, and it no longer does: it
+ * builds them onto an unplaced track so filed work is not hidden behind a
+ * pull request. The same id was then counted once inside `distinctPlaced` and
+ * once again in the drop row, and the census opened at 525 against 513
+ * scanned on the live corpus — its own reconciliation called the
+ * disagreement rather than closing over it, which is the only reason this was
+ * a visible defect and not a silent one.
+ *
+ * Split by INTERSECTION WITH THE POOL THIS SUMMARY CARRIES, never by asking
+ * which generator wrote it. A summary from a board that still drops unmapped
+ * ids has an empty `unplacedOffered`, and every number below returns to
+ * exactly what item T-745 asserted. That is the compatibility property, and
+ * it is a case in the suite rather than a claim here.
+ */
+const pooledIds = new Set([...placementCounts.keys()]);
+const unplacedOffered = unplaceable === null
+  ? null
+  : unplaceable.filter((id) => pooledIds.has(normalizeItemId(id)));
+const unplacedDropped = unplaceable === null
+  ? null
+  : unplaceable.filter((id) => !pooledIds.has(normalizeItemId(id)));
+
+/**
  * The board's own scan of ids in item position — the number this census is
  * reconciled AGAINST rather than derived from.
  *
@@ -965,9 +992,9 @@ const DUPLICATE_LABEL =
 const scanned = Array.isArray(s.itemPositionIds) ? s.itemPositionIds.map(String) : null;
 
 /** distinct ids + the two dropped buckets — what the census claims to cover. */
-const derivedTotal = unplaceable === null || unparsed === null
+const derivedTotal = unplacedDropped === null || unparsed === null
   ? null
-  : distinctPlaced + unplaceable.length + unparsed.length;
+  : distinctPlaced + unplacedDropped.length + unparsed.length;
 
 /**
  * Reconcile in BOTH directions, never by count alone.
@@ -985,7 +1012,7 @@ function reconcileCensus() {
   }
   const derivedSet = new Map();
   for (const id of placementCounts.keys()) derivedSet.set(id, "placed on the structure map");
-  for (const id of unplaceable) derivedSet.set(normalizeItemId(id), "dropped as not on the structure map");
+  for (const id of unplacedDropped) derivedSet.set(normalizeItemId(id), "dropped as not on the structure map");
   for (const id of unparsed) derivedSet.set(normalizeItemId(id), "dropped as unparsed");
   const scannedSet = new Set(scanned.map((id) => normalizeItemId(id)));
   const onlyDerived = [...derivedSet.keys()].filter((id) => !scannedSet.has(id)).sort(compareItemIds);
@@ -1034,14 +1061,18 @@ function renderClaimableFunnel() {
   // is where the census hands over to a filter that counts placements (item
   // T-753). `distinctPlaced`, not `all.length`, is therefore what the drop
   // rows close onto.
-  const unplaceableRow = unplaceable === null
+  // Item C-515: what this row removes is the unplaceable ids the pool does NOT
+  // carry. An id the board offers from the unplaced track is still unmapped
+  // and is still named below — it is simply not a removal, and counting it as
+  // one is how the census came to double-count it.
+  const unplaceableRow = unplacedDropped === null
     ? `| ${UNPLACEABLE_LABEL} | not recorded | not recorded |`
-    : `| ${UNPLACEABLE_LABEL} | ${unplaceable.length} | ${distinctPlaced} |`;
+    : `| ${UNPLACEABLE_LABEL} | ${unplacedDropped.length} | ${distinctPlaced} |`;
 
   // Rendered above the unplaceable row because it happens first: an id the
   // reader never produced cannot then be placed or not placed. At zero it
   // still renders, for the reason the comment above the unplaceable row gives.
-  const afterUnparsed = unplaceable === null ? null : distinctPlaced + unplaceable.length;
+  const afterUnparsed = unplacedDropped === null ? null : distinctPlaced + unplacedDropped.length;
   const unparsedRow = unparsed === null
     ? `| ${UNPARSED_LABEL} | not recorded | not recorded |`
     : `| ${UNPARSED_LABEL} | ${unparsed.length} | ${afterUnparsed === null ? "not recorded" : afterUnparsed} |`;
@@ -1065,7 +1096,7 @@ function renderClaimableFunnel() {
   const opening = unplaceable === null
     ? `${all.length} items reach the filter. The board that wrote this summary recorded no count of ids it could not place, so the population this table starts from is **not recorded** and the census below cannot claim to be complete.`
     : truePopulation === null
-      ? `${distinctPlaced + unplaceable.length} items reach the filter. The board recorded no count of ids it could not PARSE, so the population above that number is **not recorded** and this census cannot claim to be complete.`
+      ? `${distinctPlaced + unplacedDropped.length} items reach the filter. The board recorded no count of ids it could not PARSE, so the population above that number is **not recorded** and this census cannot claim to be complete.`
       : scanned === null
         ? `${truePopulation} ids are accounted for by this census — placed, unplaceable, or unparsed — and each row says what the next rule removed. The population is derived here rather than scanned, for the reason directly below.`
         : `${truePopulation} ids sit in item position in the backlog; each row says what the next rule removed.`;
@@ -1076,11 +1107,28 @@ function renderClaimableFunnel() {
       ? "No id was dropped before the reader: every id in item position in the backlog parsed into an item."
       : `**${unparsed.length} id${unparsed.length === 1 ? " is" : "s are"} in item position in the backlog and were never parsed into an item at all:** ${unparsed.map((id) => `\`${id}\``).join(" ")}. They are in no bucket of this file, claimable or blocked, and mapping them changes nothing — the board's reader has to learn the shape they are written in first.`;
 
-  const named = unplaceable === null
+  /*
+   * Two sentences, because there are now two states and they say opposite
+   * things to the reader — item C-515. An id the board DROPPED is offered to
+   * nobody and the reader must go and map it before it can be worked. An id
+   * the board OFFERS from the unplaced track is takeable right now, and the
+   * map entry is still owed. Rendering one sentence for both would either
+   * hide reachable work or tell the reader that reachable work is unreachable.
+   *
+   * Both are written on every run, including at zero, for the reason the
+   * unplaceable ROW's comment already gives.
+   */
+  const namedDropped = unplacedDropped === null
     ? "**Which ids those are is not recorded** by the board that wrote this summary, so this file cannot name them. Run the board and read its own output."
-    : unplaceable.length === 0
-      ? "No id was dropped before the table: every id in the backlog is placed on the structure map."
-      : `**${unplaceable.length} id${unplaceable.length === 1 ? " was" : "s were"} dropped before the table and ${unplaceable.length === 1 ? "is" : "are"} offered to nobody:** ${unplaceable.map((id) => `\`${id}\``).join(" ")}. They are in the backlog and in no entry of \`scripts/exec/source-stage-map.json\`, which is repo-owned — mapping a copy in the operator root changes nothing. Until one is placed it cannot appear in any bucket of this file, claimable or blocked.`;
+    : unplacedDropped.length === 0
+      ? "No id was dropped before the table: every id in the backlog reached the pool this census counts."
+      : `**${unplacedDropped.length} id${unplacedDropped.length === 1 ? " was" : "s were"} dropped before the table and ${unplacedDropped.length === 1 ? "is" : "are"} offered to nobody:** ${unplacedDropped.map((id) => `\`${id}\``).join(" ")}. They are in the backlog and in no entry of \`scripts/exec/source-stage-map.json\`, which is repo-owned — mapping a copy in the operator root changes nothing. Until one is placed it cannot appear in any bucket of this file, claimable or blocked.`;
+
+  const namedOffered = unplacedOffered === null || unplacedOffered.length === 0
+    ? "No id is being offered from the unplaced track: every id this file offers is placed on the structure map."
+    : `**${unplacedOffered.length} id${unplacedOffered.length === 1 ? " is" : "s are"} not on the structure map and ${unplacedOffered.length === 1 ? "is" : "are"} offered anyway, from the board's unplaced track:** ${unplacedOffered.map((id) => `\`${id}\``).join(" ")}. They are filed in the backlog and in no entry of \`scripts/exec/source-stage-map.json\`, which is repo-owned. They appear in the buckets below on the same terms as every other row, so the work is takeable now — **and the map entry is still owed**: the board exits non-zero while any of them is unplaced, and placing them on the stage or track they belong to is a pull request someone still has to open.`;
+
+  const named = `${namedDropped}\n\n${namedOffered}`;
 
   return `## Why that number
 
@@ -1090,7 +1138,7 @@ ${censusReconciliation.say}
 
 | removed because it is | removed | left |
 |---|---|---|
-| — | — | ${truePopulation ?? (unplaceable === null ? all.length : distinctPlaced + unplaceable.length)} |
+| — | — | ${truePopulation ?? (unplacedDropped === null ? all.length : distinctPlaced + unplacedDropped.length)} |
 ${unparsedRow}
 ${unplaceableRow}
 ${duplicateRow}

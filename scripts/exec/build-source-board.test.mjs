@@ -2167,5 +2167,171 @@ function citeFromStageCapabilityOnly(dir, id, capability = "Synthetic capability
   fs.rmSync(dir, { recursive: true, force: true });
 }
 
+
+/* ------------------------------------------------------------------------ *
+ * Item C-515 — a defined id with no map entry is offered to nobody.
+ *
+ * The drop is upstream of every filter the queue renders. `placedRefs` is
+ * built from the structure map alone, so an id the backlog defines and the
+ * map does not place never becomes an item, never reaches `summary.tracks`,
+ * and therefore appears in no bucket of `EXECUTION_QUEUE.md` — not as
+ * claimable, not as blocked, not as held.
+ *
+ * The board already names the condition and exits 1. That remedy is
+ * structurally red at all times, because filing is a local edit to an
+ * operator-owned document and mapping is a repo-owned pull request, so the
+ * two come apart the instant an item is filed. Measured twice on the live
+ * corpus: 17 ids on 2026-09-24 at 15:50Z (item C-509 placed them all), and 12
+ * more eight hours later, with the queue offering zero rows in lanes U, C and
+ * T on both occasions while filed, unclaimed, executable work sat in the
+ * backlog.
+ *
+ * What these cases hold shut is the HIDING, and nothing else. The gate, its
+ * stderr line, the exit code and `summary.unmapped` are asserted UNCHANGED
+ * below, deliberately: `build-execution-queue.mjs` reserves "whether an
+ * unmapped id should FAIL the board" to the operator, and this item does not
+ * take that decision. Mapping stays owed; it stops being a precondition for
+ * the work being visible.
+ * ------------------------------------------------------------------------ */
+
+/** A backlog item with NO entry in the structure map — the state under test. */
+function addUnmappedBacklogItem(dir, id, body, lane, acceptance) {
+  fs.appendFileSync(
+    path.join(dir, "EXECUTION_BACKLOG_20260918.md"),
+    `\n| # | Item | Lane | Acceptance |\n|---|---|---|---|\n| ${id} | ${body} | ${lane} | ${acceptance} |\n`,
+  );
+}
+
+/** The track a summary places one id on, or undefined. */
+function trackOf(dir, id) {
+  const summary = JSON.parse(
+    fs.readFileSync(path.join(dir, "source-board-summary.json"), "utf8"),
+  );
+  return (summary.tracks ?? []).find((t) => (t.items ?? []).some((i) => String(i.num) === id));
+}
+
+console.log("\nbuild-source-board — an unmapped id is offered, not hidden (C-515)\n");
+
+{
+  const dir = freshFixture();
+  addUnmappedBacklogItem(
+    dir,
+    "C-970",
+    "**Filed from the operator documents and mapped by nobody.**",
+    "C",
+    "Offer it.",
+  );
+  const r = run(dir, "build-source-board.mjs", ["--json"]);
+  const { summary, out } = summaryItems(dir);
+
+  check(
+    "an unmapped but defined id reaches the summary as an item",
+    out.has("C-970"),
+    `exit=${r.status}\nitems=${JSON.stringify([...out.keys()])}`,
+  );
+  check(
+    "it carries its OWN lane and acceptance, so the queue filters it by the same rules as every other row",
+    out.get("C-970")?.lane === "C" && /Offer it\./.test(out.get("C-970")?.acceptance ?? ""),
+    `item=${JSON.stringify(out.get("C-970"))}`,
+  );
+
+  const track = trackOf(dir, "C-970");
+  check(
+    "it lands on a track that says in its own name that it is not placed",
+    Boolean(track) && /not (yet )?on the structure map|unplaced/i.test(`${track?.name} ${track?.why ?? ""}`),
+    `track=${JSON.stringify(track && { name: track.name, why: track.why })}`,
+  );
+  check(
+    "and on NO stage and NO capability — placement is still owed, and credit is not granted for owing it",
+    !(summary.stages ?? []).some(
+      (s) =>
+        (s.items ?? []).some((i) => String(i.num) === "C-970")
+        || (s.capabilities ?? []).some((c) =>
+          (c.items ?? []).some((i) => String(i.num) === "C-970")
+          || (c.declaredIds ?? []).map(String).includes("C-970")),
+    ),
+    `stages=${JSON.stringify((summary.stages ?? []).map((s) => (s.items ?? []).map((i) => i.num)))}`,
+  );
+
+  /* The reserved decision, asserted untouched in all three of its forms. */
+  check(
+    "the board still exits 1 — whether an unmapped id FAILS the run is the operator's decision, not this item's",
+    r.status === 1,
+    `exit=${r.status}\nstderr=${r.stderr}`,
+  );
+  check(
+    "the stderr line still names the id and still says to add it to the repo-owned map",
+    /unmapped: 1 backlog id\(s\)/.test(r.stderr)
+      && r.stderr.includes("C-970")
+      && /source-stage-map\.json/.test(r.stderr),
+    `stderr=${JSON.stringify(r.stderr)}`,
+  );
+  check(
+    "and `summary.unmapped` still names it, so the queue's census can still report the condition",
+    (summary.unmapped ?? []).map(String).includes("C-970"),
+    `unmapped=${JSON.stringify(summary.unmapped)}`,
+  );
+  check(
+    "it is not reported as placed-but-unbuilt — being built from the unplaced track does not make it placed",
+    Array.isArray(summary.placedButUnbuilt) && summary.placedButUnbuilt.length === 0,
+    `placedButUnbuilt=${JSON.stringify(summary.placedButUnbuilt)}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+{
+  /*
+   * The vision figure must not move. `coverageOf` reads capabilities alone, so
+   * a track cannot credit one — but that is an argument, and the figure is the
+   * number a reader quotes. Measured in both directions against the same
+   * fixture with the unmapped row absent.
+   */
+  const bare = freshFixture();
+  run(bare, "build-source-board.mjs", ["--json"]);
+  const visionBare = JSON.parse(
+    fs.readFileSync(path.join(bare, "source-board-summary.json"), "utf8"),
+  ).vision;
+
+  const withUnmapped = freshFixture();
+  addUnmappedBacklogItem(withUnmapped, "C-971", "**Unplaced.**", "C", "Offer it.");
+  run(withUnmapped, "build-source-board.mjs", ["--json"]);
+  const visionWith = JSON.parse(
+    fs.readFileSync(path.join(withUnmapped, "source-board-summary.json"), "utf8"),
+  ).vision;
+
+  check(
+    "offering an unplaced id moves neither capability coverage nor proof-weighted completion",
+    visionBare.total === visionWith.total
+      && visionBare.covered === visionWith.covered
+      && visionBare.completion === visionWith.completion,
+    `bare=${JSON.stringify({ t: visionBare.total, c: visionBare.covered, p: visionBare.completion })}\n`
+      + `with=${JSON.stringify({ t: visionWith.total, c: visionWith.covered, p: visionWith.completion })}`,
+  );
+  fs.rmSync(bare, { recursive: true, force: true });
+  fs.rmSync(withUnmapped, { recursive: true, force: true });
+}
+
+{
+  /*
+   * The negative control, and the one that separates this change from "put
+   * everything on a track": with nothing unmapped, no such track exists at
+   * all. A track rendered empty on every run would read as a permanent,
+   * meaningless section and would tell a reader nothing about whether mapping
+   * is owed.
+   */
+  const dir = freshFixture();
+  const r = run(dir, "build-source-board.mjs", ["--json"]);
+  const summary = JSON.parse(
+    fs.readFileSync(path.join(dir, "source-board-summary.json"), "utf8"),
+  );
+  check(
+    "with nothing unmapped the board exits 0 and writes no unplaced track",
+    r.status === 0
+      && !(summary.tracks ?? []).some((t) => /not (yet )?on the structure map|unplaced/i.test(t.name)),
+    `exit=${r.status}\ntracks=${JSON.stringify((summary.tracks ?? []).map((t) => t.name))}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
 console.log(`\n${passes} passed, ${failures} failed`);
 process.exit(failures ? 1 : 0);
