@@ -9,6 +9,11 @@ import process from 'node:process';
 // tokens and its behavioral test are.
 import { computeRouteReachability } from './lib/route-reachability.mjs';
 
+// `unreachableReason` asserts things about the tree. Until item C-513 the only
+// thing checked about it was that it was forty characters long, and one of its
+// three clauses had already gone false while the gate stayed green.
+import { evaluateUnreachableReason } from './lib/unreachable-reason-claims.mjs';
+
 // The catalog this gate reads. `AI_SURFACE_CONTROL_CATALOG_PATH` is a test
 // seam: it lets a suite run this script against a mutated copy and prove the
 // gate goes red, which is the only way to show a branch can fail. Nothing in
@@ -280,6 +285,73 @@ function indexSuitesReferencing(tokens) {
 }
 
 /**
+ * The tree, as the `unreachableReason` rules need to see it.
+ *
+ * Built once and injected rather than read inside the rules, so the same rules
+ * can be driven over a constructed tree by a suite. A checker that can only be
+ * run against this repository can only be tested by asserting what it happens
+ * to print today.
+ */
+function buildReasonClaimIo() {
+  let productFiles = null;
+
+  const listProductFiles = () => {
+    if (productFiles) return productFiles;
+    productFiles = [];
+    const walk = (relative) => {
+      let entries;
+      try {
+        entries = fs.readdirSync(path.join(process.cwd(), relative), { withFileTypes: true });
+      } catch {
+        return;
+      }
+      for (const entry of entries) {
+        if (SUITE_SCAN_SKIP.has(entry.name)) continue;
+        const child = `${relative}/${entry.name}`;
+        if (entry.isDirectory()) {
+          walk(child);
+          continue;
+        }
+        if (!/\.[cm]?[jt]sx?$/.test(child) || isTestFile(child)) continue;
+        productFiles.push(child);
+      }
+    };
+    walk(SUITE_SCAN_ROOT);
+    return productFiles;
+  };
+
+  return {
+    exists: (relative) => fs.existsSync(path.join(process.cwd(), relative)),
+    read: (relative) => {
+      try {
+        return fs.readFileSync(path.join(process.cwd(), relative), 'utf8');
+      } catch {
+        return null;
+      }
+    },
+    /*
+     * A test is not an importer for this purpose. "Nothing imports X" is a
+     * claim about the product reaching X, and X's own test importing it is
+     * exactly the state the claim is describing, not a refutation of it.
+     */
+    importersOf: (needles) =>
+      listProductFiles().filter((file) => {
+        let text;
+        try {
+          text = fs.readFileSync(path.join(process.cwd(), file), 'utf8');
+        } catch {
+          return false;
+        }
+        return needles.some((needle) =>
+          new RegExp(
+            `(?:from|require\\()\\s*['"\`][^'"\`]*${needle.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}['"\`]`,
+          ).test(text),
+        );
+      }),
+  };
+}
+
+/**
  * Behavioral coverage is declared per control kind, not per surface. A surface
  * with four controls and a suite that exercises two of them is two covered and
  * two uncovered — counting it as one covered surface overstates the programme
@@ -393,7 +465,7 @@ function validateBehavioralTest(control, controlLabel, workflowRuns, surface, su
  * catalog were components no route could reach, already recorded as orphans by
  * a different audit while this one counted them as controls the product has.
  */
-function validateRouteReachability(surface, label, reachable, roots) {
+function validateRouteReachability(surface, label, reachable, roots, reasonClaimIo) {
   const problems = [];
   if (!surface.path) return { problems, reachable: false };
 
@@ -422,6 +494,17 @@ function validateRouteReachability(surface, label, reachable, roots) {
     if (typeof reason !== 'string' || reason.trim().length < 40) {
       problems.push(
         `${label}: routeReachable false needs a reason saying what is not on a screen and what would put it there`,
+      );
+    } else {
+      // Length was the whole of this check until C-513. Now the clauses that
+      // assert something about the tree are read back off the tree.
+      problems.push(
+        ...evaluateUnreachableReason({
+          label,
+          reason,
+          surfacePath: surface.path,
+          io: reasonClaimIo,
+        }),
       );
     }
   }
@@ -490,7 +573,7 @@ function validateCatalogClaimCoverage(catalog, surfacesById) {
   return problems;
 }
 
-function validateSurface(surface, index, workflowRuns, tally, routeGraph, suiteIndex) {
+function validateSurface(surface, index, workflowRuns, tally, routeGraph, suiteIndex, reasonClaimIo) {
   const label = surface?.id ?? `surface[${index}]`;
   const problems = [];
 
@@ -521,6 +604,7 @@ function validateSurface(surface, index, workflowRuns, tally, routeGraph, suiteI
     label,
     routeGraph.reachable,
     routeGraph.roots,
+    reasonClaimIo,
   );
   problems.push(...reachability.problems);
 
@@ -585,6 +669,7 @@ function main() {
   const problems = [];
   const workflowRuns = readWorkflowJestRuns();
   const routeGraph = computeRouteReachability(process.cwd());
+  const reasonClaimIo = buildReasonClaimIo();
   // Walked once, for the modules that claim to have no behavioral test.
   const suiteIndex = indexSuitesReferencing(
     Array.from(
@@ -610,7 +695,7 @@ function main() {
       ids.add(surface.id);
       surfacesById.set(surface.id, surface);
     }
-    problems.push(...validateSurface(surface, index, workflowRuns, tally, routeGraph, suiteIndex));
+    problems.push(...validateSurface(surface, index, workflowRuns, tally, routeGraph, suiteIndex, reasonClaimIo));
   });
   problems.push(...validateCatalogClaimCoverage(catalog, surfacesById));
 
