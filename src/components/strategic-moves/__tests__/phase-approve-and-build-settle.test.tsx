@@ -112,6 +112,16 @@ describe("PhaseApproveAndBuild onBuildSettled sequencing", () => {
             downloadUrl:
               "/api/v1/programs/move-1/artifacts/artifact-charter-current/download",
           },
+          {
+            artifactId: "artifact-discovery-guide-current",
+            deliverableTypeKey: "discovery_plan",
+            documentTitle: "Discovery Workshop Guide",
+            phase: 1,
+            status: "draft",
+            version: 1,
+            downloadUrl:
+              "/api/v1/programs/move-1/artifacts/artifact-discovery-guide-current/download",
+          },
         ]}
       />,
     );
@@ -121,13 +131,18 @@ describe("PhaseApproveAndBuild onBuildSettled sequencing", () => {
         "P1 Charter documents are built. Review them before relying on them.",
       ),
     ).toBeInTheDocument();
-    expect(screen.getByText("1/1 built")).toBeInTheDocument();
-    expect(screen.getByText("Built")).toBeInTheDocument();
-    expect(
-      screen.getByRole("link", { name: "Download final \u2192" }),
-    ).toHaveAttribute(
+    expect(screen.getByText("2/2 built")).toBeInTheDocument();
+    expect(screen.getAllByText("Built")).toHaveLength(2);
+    const downloadLinks = screen.getAllByRole("link", {
+      name: "Download final \u2192",
+    });
+    expect(downloadLinks[0]).toHaveAttribute(
       "href",
       "/api/v1/programs/move-1/artifacts/artifact-charter-current/download",
+    );
+    expect(downloadLinks[1]).toHaveAttribute(
+      "href",
+      "/api/v1/programs/move-1/artifacts/artifact-discovery-guide-current/download",
     );
     expect(global.fetch).not.toHaveBeenCalled();
   });
