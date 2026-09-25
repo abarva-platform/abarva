@@ -1,0 +1,123 @@
+{
+  "column": "source.opportunity_evidence.evidence_status",
+  "item": "C-402",
+  "measured_on": "origin/main 2a4e804ef",
+  "measured_at": "2026-09-25",
+  "why_this_file_exists": "The column is declared with five legal values and written by four INSERT statements that all bind the same SQL literal, so four of the five are produced by nothing and every predicate written against the column answers the same question for every row. This file is the measured population of writers and consumers; src/__tests__/behaviors/c402-opportunity-evidence-status-authority.test.ts recomputes it from the repository and fails when it drifts. It records the defect rather than fixing it: where the authority for this value lives is an owner decision, and the numbers it needs are in the release record beside this file.",
+  "declaration": {
+    "file": "supabase/migrations/20260809143000_source_contract_optimization_opportunity_spine.sql",
+    "line_when_measured": 63,
+    "legal_values": [
+      "EVIDENCE_AVAILABLE",
+      "EVIDENCE_MISSING",
+      "WORKFLOW_REQUIRED",
+      "CONFLICTED",
+      "NOT_ESTABLISHED"
+    ],
+    "default": "EVIDENCE_AVAILABLE"
+  },
+  "writers": [
+    {
+      "file": "scripts/source/load-cloud-consumption-package.mjs",
+      "line_when_measured": 1591,
+      "binding": "literal",
+      "value": "EVIDENCE_AVAILABLE"
+    },
+    {
+      "file": "scripts/source/load-contract-depth-demo-slice.ts",
+      "line_when_measured": 758,
+      "binding": "literal",
+      "value": "EVIDENCE_AVAILABLE"
+    },
+    {
+      "file": "scripts/source/load-contract-depth-package.ts",
+      "line_when_measured": 2573,
+      "binding": "literal",
+      "value": "EVIDENCE_AVAILABLE"
+    },
+    {
+      "file": "scripts/source/project-contract-optimization-spine.ts",
+      "line_when_measured": 902,
+      "binding": "literal",
+      "value": "EVIDENCE_AVAILABLE"
+    }
+  ],
+  "reachable_values": ["EVIDENCE_AVAILABLE"],
+  "unreachable_values": [
+    "CONFLICTED",
+    "EVIDENCE_MISSING",
+    "NOT_ESTABLISHED",
+    "WORKFLOW_REQUIRED"
+  ],
+  "predicate_consumers": [
+    {
+      "file": "supabase/migrations/20260907144500_source_cloud_consumption_layer4_cubes.sql",
+      "line_when_measured": 117,
+      "derives": "evidence_state"
+    },
+    {
+      "file": "supabase/migrations/20260907144500_source_cloud_consumption_layer4_cubes.sql",
+      "line_when_measured": 231,
+      "derives": "evidence_state"
+    },
+    {
+      "file": "supabase/migrations/20260910143500_source_cloud_l4_opportunity_readiness_repair.sql",
+      "line_when_measured": 123,
+      "derives": "evidence_state"
+    },
+    {
+      "file": "supabase/migrations/20260910143500_source_cloud_l4_opportunity_readiness_repair.sql",
+      "line_when_measured": 243,
+      "derives": "evidence_state"
+    },
+    {
+      "file": "supabase/migrations/20260910231500_source_cloud_l4_control_readiness_projection.sql",
+      "line_when_measured": 125,
+      "derives": "evidence_state"
+    },
+    {
+      "file": "supabase/migrations/20260910231500_source_cloud_l4_control_readiness_projection.sql",
+      "line_when_measured": 245,
+      "derives": "evidence_state"
+    }
+  ],
+  "metric_consumers": [
+    {
+      "file": "scripts/source/source-substrate-lineage-report.mjs",
+      "line_when_measured": 319,
+      "metric": "evidence_available_count",
+      "note": "Computed in the same SELECT as __source_row_count, so with one reachable value the metric equals the row count for every tenant by construction."
+    }
+  ],
+  "application_consumers": [],
+  "application_consumers_note": "src/lib/source/data-model/read-adapter.ts:1905 selects `evidence.*` from this table, so the column reaches the application process — but sourceRefFromEvidence (:2743) projects source_system, source_record_id, source_file_report, source_table, source_span and review_state and drops evidence_status. No application code reads the value. That is why this list is empty rather than absent, and it is the fact that most changes the cost of each option in the release record: retiring the column touches migrations and one report, not a product surface.",
+  "sibling_authorities": [
+    {
+      "kind": "computed, different grain",
+      "file": "src/lib/source/data-model/contract-optimization-ledger.ts",
+      "line_when_measured": 381,
+      "symbol": "evidenceStatusForKind",
+      "note": "Derives the same spelling of the enum from ledger line state, but per ledger KIND over a set of lines, not per evidence ROW. Reusing it verbatim for this column would change the grain of the fact, which the item's text does not say."
+    },
+    {
+      "kind": "persisted, narrower enum",
+      "file": "supabase/migrations/20260808213000_source_contract_optimization_v11_portability.sql",
+      "line_when_measured": 82,
+      "symbol": "source.contract_optimization_evidence_observation.evidence_status",
+      "note": "A second persisted column of the same name for a related fact, with FOUR legal values. CONFLICTED is absent here and from the TypeScript union, so the computed rule cannot produce it."
+    },
+    {
+      "kind": "type",
+      "file": "src/lib/source/data-model/contract-optimization-ledger.ts",
+      "line_when_measured": 22,
+      "symbol": "ContractOptimizationEvidenceStatus",
+      "members": [
+        "EVIDENCE_AVAILABLE",
+        "EVIDENCE_MISSING",
+        "WORKFLOW_REQUIRED",
+        "NOT_ESTABLISHED"
+      ]
+    }
+  ],
+  "line_numbers_are_evidence_not_assertions": "The test asserts file, binding and value, and the counts. It deliberately does not assert line_when_measured: an unrelated edit above one of these sites would then fail a control that has nothing to say about it. The numbers are kept because they are how the next reader finds the site."
+}
