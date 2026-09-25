@@ -132,11 +132,21 @@ function sourceRows(): {
   };
 }
 
+const artifact = {
+  artifactId: "artifact-1",
+  tenantKey: "tenant-1",
+  eventId: "event-1",
+  sha256: HASH,
+  lifecycleState: "current",
+  deletedAt: null,
+};
+
 function readers(rows = sourceRows()): RfxAuthorityReaders {
   return {
     readAcceptedCandidatesForEvent: jest.fn(async () => rows.candidates),
     readApprovedContactsForEvent: jest.fn(async () => rows.contacts),
     readNdaAuthorityForEvent: jest.fn(async () => rows.nda),
+    readArtifactsForEvent: jest.fn(async () => ({ registryAvailable: true, artifacts: [artifact] })),
   };
 }
 
@@ -156,7 +166,33 @@ describe("Source-backed RFx preparation preview", () => {
     expect(sources.readNdaAuthorityForEvent).toHaveBeenCalledWith({
       clientKey: "tenant-1", eventId: "event-1", supplierLegalEntityId: "vendor-1",
     });
+    expect(sources.readArtifactsForEvent).toHaveBeenCalledWith({
+      clientKey: "tenant-1", eventId: "event-1", artifactIds: ["artifact-1"],
+    });
     expect(JSON.stringify(result)).not.toContain("contact@example.test");
+  });
+
+  it.each([
+    { name: "missing artifact", artifacts: [], expected: "artifact_authority_mismatch" },
+    { name: "wrong tenant", artifacts: [{ ...artifact, tenantKey: "tenant-2" }], expected: "artifact_authority_mismatch" },
+    { name: "wrong event", artifacts: [{ ...artifact, eventId: "event-2" }], expected: "artifact_authority_mismatch" },
+    { name: "changed bytes", artifacts: [{ ...artifact, sha256: "b".repeat(64) }], expected: "artifact_hash_mismatch" },
+    { name: "retired version", artifacts: [{ ...artifact, lifecycleState: "retired" }], expected: "artifact_authority_mismatch" },
+    { name: "deleted row", artifacts: [{ ...artifact, deletedAt: AS_OF }], expected: "artifact_authority_mismatch" },
+  ])("rejects $name in the source artifact registry", async ({ artifacts, expected }) => {
+    const sources = readers();
+    jest.mocked(sources.readArtifactsForEvent).mockResolvedValue({ registryAvailable: true, artifacts });
+    const result = await previewRfxReleaseAgainstAuthority(proposal(), sources);
+    expect(result).toMatchObject({ sourceAuthoritiesConsistent: false, governedReleaseReady: false, issued: false });
+    expect(result.defects).toContain(expected);
+  });
+
+  it("fails closed when the artifact registry cannot be read", async () => {
+    const sources = readers();
+    jest.mocked(sources.readArtifactsForEvent).mockResolvedValue({ registryAvailable: false, artifacts: [] });
+    const result = await previewRfxReleaseAgainstAuthority(proposal(), sources);
+    expect(result.defects).toContain("authority_unavailable");
+    expect(result).toMatchObject({ sourceAuthoritiesConsistent: false, issued: false });
   });
 
   it("rejects a claimed candidate identifier absent from the accepted register", async () => {

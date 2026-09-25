@@ -12,6 +12,7 @@ import {
   readApprovedContactsForEvent,
   type ApprovedRfxContact,
 } from "./release-authority-repository";
+import { readArtifactsForEvent, type RfxSourceArtifact } from "./release-artifact-repository";
 import { prepareRfxReleaseSnapshot, type RfxReleaseSnapshotInput } from "./release-snapshot";
 
 export type RfxAuthorityReaders = {
@@ -25,6 +26,10 @@ export type RfxAuthorityReaders = {
     eventId: string;
     supplierLegalEntityId: string;
   }): Promise<NdaAuthorityRead>;
+  readArtifactsForEvent(input: { clientKey: string; eventId: string; artifactIds: readonly string[] }): Promise<{
+    registryAvailable: boolean;
+    artifacts: readonly RfxSourceArtifact[];
+  }>;
 };
 
 export type RfxSourceBackedPreview = {
@@ -42,6 +47,7 @@ const defaultReaders: RfxAuthorityReaders = {
   readAcceptedCandidatesForEvent,
   readApprovedContactsForEvent,
   readNdaAuthorityForEvent,
+  readArtifactsForEvent,
 };
 
 const base = { governedReleaseReady: false, issued: false } as const;
@@ -68,19 +74,31 @@ export async function previewRfxReleaseAgainstAuthority(
   const scope = { clientKey: pkg.tenantKey, eventId: pkg.eventId };
   let candidates: EventCandidateAuthorityRead;
   let contacts: Awaited<ReturnType<RfxAuthorityReaders["readApprovedContactsForEvent"]>>;
+  let artifacts: Awaited<ReturnType<RfxAuthorityReaders["readArtifactsForEvent"]>>;
   try {
-    [candidates, contacts] = await Promise.all([
+    [candidates, contacts, artifacts] = await Promise.all([
       readers.readAcceptedCandidatesForEvent(scope),
       readers.readApprovedContactsForEvent(scope),
+      readers.readArtifactsForEvent({ ...scope, artifactIds: pkg.disclosureScope.includedArtifactIds }),
     ]);
   } catch {
     return { ...base, proposalConsistent: true, sourceAuthoritiesConsistent: false, defects: ["authority_unavailable"] };
   }
-  if (!candidates.registryAvailable || !contacts.registryAvailable) {
+  if (!candidates.registryAvailable || !contacts.registryAvailable || !artifacts.registryAvailable) {
     return { ...base, proposalConsistent: true, sourceAuthoritiesConsistent: false, defects: ["authority_unavailable"] };
   }
 
   const defects = new Set<string>();
+  for (const frozen of input.artifacts) {
+    const matching = artifacts.artifacts.filter((item) => item.artifactId === frozen.artifactId);
+    if (matching.length !== 1 || matching[0].tenantKey !== pkg.tenantKey ||
+      matching[0].eventId !== pkg.eventId || matching[0].lifecycleState !== "current" ||
+      matching[0].deletedAt !== null) {
+      defects.add("artifact_authority_mismatch");
+    } else if (matching[0].sha256.toLowerCase() !== frozen.sha256.toLowerCase()) {
+      defects.add("artifact_hash_mismatch");
+    }
+  }
   for (const recipient of pkg.recipients) {
     const supplied = input.recipientAuthorities.find((item) => item.recipientId === recipient.recipientId);
     const candidateMatches = candidates.acceptedCandidates.filter(
