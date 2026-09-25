@@ -7,7 +7,11 @@
 // Inert at W0: nothing imports this yet. W1+ wires the synthesis layer and
 // renderers to read it.
 
-import type { DeliverableKey, DeliverableProfile } from "./types";
+import type {
+  DeliverableKey,
+  DeliverableProfile,
+  MovesDeliverableKey,
+} from "./types";
 import { SOURCE_PROFILES } from "./registry-source";
 
 const CURRENT_STATE_VISUAL_STANDARD = {
@@ -781,6 +785,29 @@ const valueMeasurementContract: DeliverableProfile = {
     "no value storytelling without a measurement method; no fake benefits",
   ],
 };
+
+export const MOVES_DELIVERABLE_KEYS = [
+  "charter",
+  "discovery_plan",
+  "discovery_report",
+  "root_cause_worksheet",
+  "design_workshop_guide",
+  "target_state_architecture",
+  "solution_design",
+  "operating_model_design",
+  "sourcing_strategy",
+  "planning_workshop_guide",
+  "execution_roadmap",
+  "business_case",
+  "financial_model",
+  "tower_metrics_plan",
+  "readiness_and_change_plan",
+  "mobilization_workshop_guide",
+  "handoff_package",
+  "value_measurement_contract",
+  "execution_kickoff_guide",
+  "solution_approach_options",
+] as const satisfies ReadonlyArray<MovesDeliverableKey>;
 
 /** The canonical profile registry, keyed by deliverable. */
 export const DELIVERABLE_PROFILES: Readonly<

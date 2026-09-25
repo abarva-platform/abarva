@@ -61,6 +61,21 @@ const DEFAULT_QUALITY_BAR: QualityBar = {
   tone: "board_grade_consulting",
 };
 
+const WORKSHOP_GUIDE_QUALITY_BAR: QualityBarOverride = {
+  // Working guide, not a phase decision artifact. It needs practical session
+  // instructions and gap discipline, not the decision/recommendation/risk-table
+  // spine required by board-grade gate artifacts.
+  minSections: 4,
+  minBodyWords: 1_200,
+  targetBodyWordsMax: 3_000,
+  advisoryBandMax: 3_600,
+  enforceMaxAsBlocker: true,
+  requiresDecisionSection: false,
+  requiresRecommendation: false,
+  requiresRiskTable: false,
+  requiresEvidenceGapsNoted: true,
+};
+
 /** key = `${module}::${deliverableType}` */
 const OVERRIDES: Record<string, QualityBarOverride> = {
   "moves::charter": {
@@ -92,45 +107,13 @@ const OVERRIDES: Record<string, QualityBarOverride> = {
     // Working guide generated after Charter approval. It carries the detailed
     // workshop/session/evidence instructions that the executive Charter must
     // not embed.
-    minSections: 4,
-    minBodyWords: 1_200,
-    targetBodyWordsMax: 3_000,
-    advisoryBandMax: 3_600,
-    enforceMaxAsBlocker: true,
-    requiresEvidenceGapsNoted: true,
+    ...WORKSHOP_GUIDE_QUALITY_BAR,
   },
-  "moves::design_workshop_guide": {
-    minSections: 4,
-    minBodyWords: 1_200,
-    targetBodyWordsMax: 3_000,
-    advisoryBandMax: 3_600,
-    enforceMaxAsBlocker: true,
-    requiresEvidenceGapsNoted: true,
-  },
-  "moves::planning_workshop_guide": {
-    minSections: 4,
-    minBodyWords: 1_200,
-    targetBodyWordsMax: 3_000,
-    advisoryBandMax: 3_600,
-    enforceMaxAsBlocker: true,
-    requiresEvidenceGapsNoted: true,
-  },
-  "moves::mobilization_workshop_guide": {
-    minSections: 4,
-    minBodyWords: 1_200,
-    targetBodyWordsMax: 3_000,
-    advisoryBandMax: 3_600,
-    enforceMaxAsBlocker: true,
-    requiresEvidenceGapsNoted: true,
-  },
-  "moves::execution_kickoff_guide": {
-    minSections: 4,
-    minBodyWords: 1_200,
-    targetBodyWordsMax: 3_000,
-    advisoryBandMax: 3_600,
-    enforceMaxAsBlocker: true,
-    requiresEvidenceGapsNoted: true,
-  },
+  "moves::discovery_workshop_guide": WORKSHOP_GUIDE_QUALITY_BAR,
+  "moves::design_workshop_guide": WORKSHOP_GUIDE_QUALITY_BAR,
+  "moves::planning_workshop_guide": WORKSHOP_GUIDE_QUALITY_BAR,
+  "moves::mobilization_workshop_guide": WORKSHOP_GUIDE_QUALITY_BAR,
+  "moves::execution_kickoff_guide": WORKSHOP_GUIDE_QUALITY_BAR,
   "moves::business_case": {
     // Substantial narrative artifact — must tell one coherent investment
     // argument, not a stack of disconnected sections. The financial model is a

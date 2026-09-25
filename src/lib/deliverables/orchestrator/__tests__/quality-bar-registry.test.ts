@@ -37,6 +37,22 @@ describe("resolveQualityBar", () => {
     expect(qb.requiresEvidenceGapsNoted).toBe(true);
   });
 
+  it.each([
+    "discovery_plan",
+    "discovery_workshop_guide",
+    "design_workshop_guide",
+    "planning_workshop_guide",
+    "mobilization_workshop_guide",
+    "execution_kickoff_guide",
+  ])("%s is a working guide, not a decision artifact", (deliverableType) => {
+    const qb = resolveQualityBar("moves", deliverableType);
+    expect(qb.minSections).toBe(4);
+    expect(qb.requiresDecisionSection).toBe(false);
+    expect(qb.requiresRecommendation).toBe(false);
+    expect(qb.requiresRiskTable).toBe(false);
+    expect(qb.enforceMaxAsBlocker).toBe(true);
+  });
+
   it("gives Target State Architecture a substantial band whose ceiling only WARNS", () => {
     const qb = resolveQualityBar("moves", "target_state_architecture");
     expect(qb.minBodyWords).toBeGreaterThanOrEqual(9_000);
