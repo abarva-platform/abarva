@@ -210,9 +210,10 @@
           ],
           "behavioralTest": {
             "status": "none",
-            "reason": "No behavioral test yet. src/__tests__/integration/tower/program-pressure-cards.test.ts asserts brief.accountability.watermark on the view model, but nothing mounts ProgramPressureCards, so nothing proves the AI-assisted label reaches a screen.",
+            "reason": "No behavioral test yet. src/__tests__/integration/tower/program-pressure-cards.test.ts asserts brief.accountability.watermark on the view model, but nothing mounts ProgramPressureCards, so nothing proves the AI-assisted label reaches a screen. src/__tests__/behaviors/unreachable-reason-claims.test.ts is in the list below because it names this component, but it mounts nothing: it uses the component only as the subject of a fixture for the unreachableReason prose rules, so it adds no render proof to any of these five controls.",
             "knownSuites": [
               "src/__tests__/behaviors/qa-inventory-tower-route-parity.test.ts",
+              "src/__tests__/behaviors/unreachable-reason-claims.test.ts",
               "src/__tests__/integration/agents/agent-mission-surface-wiring.test.ts",
               "src/__tests__/integration/tower/program-pressure-cards.test.ts"
             ]
@@ -226,9 +227,10 @@
           ],
           "behavioralTest": {
             "status": "none",
-            "reason": "No behavioral test yet. src/__tests__/integration/tower/program-pressure-cards.test.ts asserts brief.accountability.evidenceBasis is non-empty on the view model; no suite mounts the component, so nothing proves the evidence basis is rendered to a reader.",
+            "reason": "No behavioral test yet. src/__tests__/integration/tower/program-pressure-cards.test.ts asserts brief.accountability.evidenceBasis is non-empty on the view model; no suite mounts the component, so nothing proves the evidence basis is rendered to a reader. src/__tests__/behaviors/unreachable-reason-claims.test.ts is in the list below because it names this component, but it mounts nothing: it uses the component only as the subject of a fixture for the unreachableReason prose rules, so it adds no render proof to any of these five controls.",
             "knownSuites": [
               "src/__tests__/behaviors/qa-inventory-tower-route-parity.test.ts",
+              "src/__tests__/behaviors/unreachable-reason-claims.test.ts",
               "src/__tests__/integration/agents/agent-mission-surface-wiring.test.ts",
               "src/__tests__/integration/tower/program-pressure-cards.test.ts"
             ]
@@ -242,9 +244,10 @@
           ],
           "behavioralTest": {
             "status": "none",
-            "reason": "No behavioral test yet. src/__tests__/integration/tower/program-pressure-cards.test.ts pins brief.confidenceLabel to the canonical enum on the view model; no suite mounts the component, so nothing proves the confidence label is displayed.",
+            "reason": "No behavioral test yet. src/__tests__/integration/tower/program-pressure-cards.test.ts pins brief.confidenceLabel to the canonical enum on the view model; no suite mounts the component, so nothing proves the confidence label is displayed. src/__tests__/behaviors/unreachable-reason-claims.test.ts is in the list below because it names this component, but it mounts nothing: it uses the component only as the subject of a fixture for the unreachableReason prose rules, so it adds no render proof to any of these five controls.",
             "knownSuites": [
               "src/__tests__/behaviors/qa-inventory-tower-route-parity.test.ts",
+              "src/__tests__/behaviors/unreachable-reason-claims.test.ts",
               "src/__tests__/integration/agents/agent-mission-surface-wiring.test.ts",
               "src/__tests__/integration/tower/program-pressure-cards.test.ts"
             ]
@@ -258,9 +261,10 @@
           ],
           "behavioralTest": {
             "status": "none",
-            "reason": "No behavioral test yet. src/__tests__/integration/tower/program-pressure-cards.test.ts asserts brief.accountability.humanApprovalRequired and sanitizedRecommendation on the view model; nothing mounts the component, so nothing proves a reader is told a human must approve.",
+            "reason": "No behavioral test yet. src/__tests__/integration/tower/program-pressure-cards.test.ts asserts brief.accountability.humanApprovalRequired and sanitizedRecommendation on the view model; nothing mounts the component, so nothing proves a reader is told a human must approve. src/__tests__/behaviors/unreachable-reason-claims.test.ts is in the list below because it names this component, but it mounts nothing: it uses the component only as the subject of a fixture for the unreachableReason prose rules, so it adds no render proof to any of these five controls.",
             "knownSuites": [
               "src/__tests__/behaviors/qa-inventory-tower-route-parity.test.ts",
+              "src/__tests__/behaviors/unreachable-reason-claims.test.ts",
               "src/__tests__/integration/agents/agent-mission-surface-wiring.test.ts",
               "src/__tests__/integration/tower/program-pressure-cards.test.ts"
             ]
@@ -274,9 +278,10 @@
           ],
           "behavioralTest": {
             "status": "none",
-            "reason": "No behavioral test yet. src/__tests__/integration/tower/program-pressure-cards.test.ts asserts brief.accountability.missingDataBanner on the view model; nothing mounts the component, so nothing proves the missing-data caveat is shown alongside the brief.",
+            "reason": "No behavioral test yet. src/__tests__/integration/tower/program-pressure-cards.test.ts asserts brief.accountability.missingDataBanner on the view model; nothing mounts the component, so nothing proves the missing-data caveat is shown alongside the brief. src/__tests__/behaviors/unreachable-reason-claims.test.ts is in the list below because it names this component, but it mounts nothing: it uses the component only as the subject of a fixture for the unreachableReason prose rules, so it adds no render proof to any of these five controls.",
             "knownSuites": [
               "src/__tests__/behaviors/qa-inventory-tower-route-parity.test.ts",
+              "src/__tests__/behaviors/unreachable-reason-claims.test.ts",
               "src/__tests__/integration/agents/agent-mission-surface-wiring.test.ts",
               "src/__tests__/integration/tower/program-pressure-cards.test.ts"
             ]
@@ -284,7 +289,7 @@
         }
       ],
       "routeReachable": false,
-      "unreachableReason": "The Tower route renders TowerCommandCenterAvaShell; nothing imports ProgramPressureCards. The brief's five controls exist in a component the Tower rebuild left behind. src/lib/qa/route-smoke-inventory.ts and src/lib/qa/founder-demo-route-checklist.ts still name it as the component /tenant/[tenantSlug]/tower renders. Fixed by mounting the accountability block in the command-center shell, or by moving these five controls to the component that now renders there and retiring this entry."
+      "unreachableReason": "The Tower route renders TowerCommandCenterAvaShell; nothing imports ProgramPressureCards. The brief's five controls exist in a component the Tower rebuild left behind. src/lib/qa/route-smoke-inventory.ts and src/lib/qa/founder-demo-route-checklist.ts now name src/components/tower/command-center/TowerCommandCenterAvaShell.tsx for that route, while docs/demo/ABARVA_FOUNDER_DEMO_ROUTE_CHECKLIST.md still names src/components/tower/ProgramPressureCards.tsx as the expected component. Fixed by mounting the accountability block in the command-center shell, or by moving these five controls to the component that now renders there and retiring this entry."
     },
     {
       "id": "source-admin-event-approval-queue",
