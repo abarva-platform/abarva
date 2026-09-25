@@ -340,7 +340,15 @@ export function ContractStoryBriefing({
       required: true,
     },
     {
-      name: "Opportunities",
+      // Item U-518. This counts governed action-candidate rows LOADED as
+      // evidence -- `opportunity_rows` is count(*) over
+      // source.contract_action_candidate_v1. It is not the contract's
+      // optimization opportunity set, which the rest of the page counts from
+      // `vm.opportunityView.opportunities` (source.optimization_opportunity, or
+      // a fallback derived from source.golden_contract_*). The two populations
+      // legitimately differ, so the lane says which one it is rather than
+      // printing a second number under the same word.
+      name: "Opportunity evidence rows",
       value: laneCount(coverage, "opportunity_rows"),
       required: true,
     },
