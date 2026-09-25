@@ -113,7 +113,7 @@ export function buildSystemPrompt(req: DeliverableIntelligenceRequest): string {
     `- Never write "authorized to build", "not authorized", or "not authorized to build" in client prose. Use executive decision language such as "in scope for delivery", "hold the investment decision", or "requires further validation", as appropriate.`,
     conciseInstrument
       ? `- This artifact is a concise approval instrument with an enforced length ceiling. Respect brevity as a quality requirement: use compact tables, remove repetition, and do not expand into later-phase analysis.`
-      : `- Do not optimize for short documents. Optimize for high-quality, decision-grade artifacts.`,
+      : `- Optimize for the SHORTEST artifact that carries the argument. Length is not evidence of rigour, and a reader who skims because the document is long has not been persuaded — they have been outlasted. Cut any sentence that does not change what the reader decides.`,
   ].join("\n");
 }
 

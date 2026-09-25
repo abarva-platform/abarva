@@ -16,6 +16,7 @@ import type {
 import { carriesRequiredEvidenceSignal } from "./evidence-signals";
 import { scanForInternalLeaks } from "./source-register";
 import { countBodyWords } from "@/lib/deliverables/shared/body-word-count";
+import { judgeSlideCount } from "@/lib/deliverables/slide-contract";
 
 const DECISION_RE =
   /\b(decision|recommend|we recommend|the ask|approval sought|go\/no-go)\b/i;
@@ -287,6 +288,21 @@ export function validateDeliverableQuality(
     );
   if (sectionCount < qb.minSections)
     blockers.push(`only ${sectionCount} sections; minimum ${qb.minSections}`);
+
+  // Deck length, for deliverables that produce one. The band is declared per
+  // deck in slide-contract.ts; a deliverable with no band is not a deck and is
+  // judged by the section and word bars above instead.
+  //
+  // The ceiling is the half that matters. An artifact can satisfy every section
+  // and citation rule and still fail in the room by being thirty slides long,
+  // and that is a failure this pipeline has no other way to see.
+  if (doc.deckSlides && doc.deckSlides.length > 0) {
+    const verdict = judgeSlideCount(
+      req.deliverableType as Parameters<typeof judgeSlideCount>[0],
+      doc.deckSlides.length,
+    );
+    if (!verdict.ok) blockers.push(verdict.message);
+  }
   if (bodyWordCount < qb.minBodyWords)
     blockers.push(
       `document too short: ${bodyWordCount} words; minimum ${qb.minBodyWords}`,

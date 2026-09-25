@@ -341,9 +341,40 @@ describe("HTML preview", () => {
 
     const out = renderDeliverableHtml(doc);
 
-    expect(out).toContain("Start");
-    expect(out).toContain("Step 2");
+    // This test's name was always right and two of its assertions were not:
+    // it pinned "Start" and "Step 2", which ARE generic renderer vocabulary.
+    // They came from a flow renderer that flattened nodes AND edges into one
+    // list of strings and numbered the result. Edges are now edges.
+
+    // The flow draws its nodes as boxes and its edges as arrows between them.
+    // Labels wrap across <text> lines rather than being cut mid-word, so assert
+    // the words survived rather than a contiguous string. "decisio" would mean
+    // the old character-slice is back.
+    for (const word of ["Intake", "aligns", "demand", "Approval", "records", "decision"]) {
+      expect(out).toContain(word);
+    }
+    expect(out).not.toMatch(/decisio</);
+    expect(out).toMatch(/<path d="M\d+ 72 L\d+ 72"[^>]*marker-end/);
+    expect(out).not.toContain("Start");
+    expect(out).not.toContain("Step 2");
+    // There must be exactly one box per NODE. Three nodes and two edges means
+    // three boxes — if edges are being flattened into the node list again this
+    // becomes five, and an arrow assertion alone would not notice.
+    const nodeBoxes = [...out.matchAll(/<rect x="\d+" y="38" width="118"/g)];
+    expect(nodeBoxes).toHaveLength(3);
+
+    // The matrix labels both axes and places a cell by its own x/y, not by its
+    // index in the array. Two cells with different axis values must not share a
+    // quadrant origin.
     expect(out).toContain("Decision implication");
+    expect(out).toContain(">Option<");
+    // The fixture's two cells have different x-axis values, so one belongs in
+    // the LEFT half and one in the RIGHT. Asserting only that the two origins
+    // differ is too weak — the y values differ regardless of whether x is
+    // computed or hardcoded, so index-placement would pass it.
+    expect(out).toMatch(/<rect x="36" y="\d+" width="300"/);
+    expect(out).toMatch(/<rect x="378" y="\d+" width="300"/);
+
     expect(out).not.toContain(">flow</text>");
     expect(out).not.toContain("Implication: matrix");
   });

@@ -1,4 +1,5 @@
 import { getAuditedAnthropicClient } from "@/lib/agent/stream";
+import { deliverableModel } from './model-policy';
 import type { ContentBlock, TextBlock } from "@/lib/integrations/ai-egress";
 import { getAzureWriteFluentClient } from "@/lib/data-plane/postgresCompat";
 import { getEngagementById } from "@/lib/db/engagement";
@@ -511,7 +512,7 @@ export async function generateDraft(
   const { client } = await getAuditedAnthropicClient({
     tenantId: aiContext.tenantId,
     workflow: aiContext.workflow,
-    model: 'claude-opus-4-8',
+    model: deliverableModel(),
     prompt,
     dataClass: "confidential",
     artifactId: aiContext.artifactId,
@@ -519,7 +520,7 @@ export async function generateDraft(
     metadata: aiContext.metadata,
   });
   const resp = await client.messages.create({
-    model: 'claude-opus-4-8',
+    model: deliverableModel(),
     max_tokens: 32_000,
     temperature: 0.3,
     messages: [{ role: "user", content: prompt }],
@@ -568,7 +569,7 @@ Return JSON only with schema:
     const { client } = await getAuditedAnthropicClient({
       tenantId: args.aiContext.tenantId,
       workflow: `${args.aiContext.workflow}:rubric-review`,
-      model: 'claude-opus-4-8',
+      model: deliverableModel(),
       prompt: [RUBRIC_REVIEW_SYSTEM, prompt].join('\n\n'),
       dataClass: 'confidential',
       artifactId: args.aiContext.artifactId,
@@ -576,7 +577,7 @@ Return JSON only with schema:
       metadata: args.aiContext.metadata,
     });
     const resp = await client.messages.create({
-      model: 'claude-opus-4-8',
+      model: deliverableModel(),
       max_tokens: 4_000,
       system: RUBRIC_REVIEW_SYSTEM,
       messages: [{ role: "user", content: prompt }],
@@ -661,14 +662,14 @@ ${renderRubricCriteria(args.spec.quality_rubric)}`;
   const { client } = await getAuditedAnthropicClient({
     tenantId: args.aiContext.tenantId,
     workflow: `${args.aiContext.workflow}:revision`,
-    model: 'claude-opus-4-8',
+    model: deliverableModel(),
     prompt,
     dataClass: "confidential",
     artifactType: args.aiContext.artifactType,
     metadata: args.aiContext.metadata,
   });
   const resp = await client.messages.create({
-    model: 'claude-opus-4-8',
+    model: deliverableModel(),
     max_tokens: 32_000,
     temperature: 0.3,
     messages: [{ role: "user", content: prompt }],

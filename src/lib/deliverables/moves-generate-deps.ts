@@ -1,4 +1,5 @@
 import "server-only";
+import { deliverableModel } from './model-policy';
 
 import { streamAgentTurn } from "@/lib/agent/stream";
 import {
@@ -418,7 +419,7 @@ export function createMovesGenerateArtifactDeps(
       for await (const chunk of streamAgentTurn({
         system,
         messages: [{ role: "user", content: user }],
-        model: process.env.NEXUS_COMPOSER_MODEL ?? "claude-opus-4-7",
+        model: deliverableModel(),
         maxTokens: maxTokensForRequest(options?.maxTokens),
         aiEgress: {
           tenantId: ctx.clientId,

@@ -194,7 +194,7 @@ const charter: DeliverableProfile = {
   decisionPurpose:
     "Approve a focused discovery/design gate — not build or scale funding.",
   defaultFormat: "docx",
-  supportingFormats: ["html"],
+  supportingFormats: ["pptx", "html"],
   tone: "senior_consultant",
   visualDensity: "medium",
   allowPhaseLabels: false,
@@ -390,7 +390,7 @@ const solutionApproachOptions: DeliverableProfile = {
   decisionPurpose:
     "Choose the solution approach (and option) that will drive the architecture — before any architecture is designed.",
   defaultFormat: "pptx",
-  supportingFormats: ["docx"],
+  supportingFormats: ["pptx", "docx"],
   tone: "board_grade",
   visualDensity: "high",
   allowPhaseLabels: false,
@@ -479,7 +479,7 @@ const targetStateArchitecture: DeliverableProfile = {
   decisionPurpose:
     "Align on future-state design, data flow, AI pattern, controls, and integration choices.",
   defaultFormat: "pptx",
-  supportingFormats: ["docx"], // HTML is a preview surface, not a final format.
+  supportingFormats: ["pptx", "docx"], // HTML is a preview surface, not a final format.
   tone: "architecture_lead",
   visualDensity: "high",
   allowPhaseLabels: false,
@@ -520,7 +520,7 @@ const solutionDesign: DeliverableProfile = {
   audience: ["cto", "program_leadership", "ciso"],
   decisionPurpose: "Explain how the solution actually works.",
   defaultFormat: "pptx",
-  supportingFormats: ["docx"],
+  supportingFormats: ["pptx", "docx"],
   tone: "architecture_lead",
   visualDensity: "high",
   allowPhaseLabels: false,
@@ -585,6 +585,7 @@ const sourcingStrategy: DeliverableProfile = {
   audience: ["procurement", "cio", "program_leadership"],
   decisionPurpose: "Decide the build / buy / partner / hybrid path.",
   defaultFormat: "docx",
+    supportingFormats: ["pptx"],
   tone: "senior_consultant",
   visualDensity: "medium",
   allowPhaseLabels: false,
@@ -687,7 +688,7 @@ const towerMetricsPlan: DeliverableProfile = {
   audience: ["cfo", "program_leadership"],
   decisionPurpose: "Define how value shows up in ongoing operating metrics.",
   defaultFormat: "docx",
-  supportingFormats: ["html"],
+  supportingFormats: ["pptx", "html"],
   tone: "delivery_lead",
   visualDensity: "medium",
   allowPhaseLabels: false,
@@ -713,7 +714,7 @@ const readinessAndChangePlan: DeliverableProfile = {
   decisionPurpose:
     "Decide whether the organization is ready to mobilize, ready with conditions, or blocked by adoption/governance gaps.",
   defaultFormat: "docx",
-  supportingFormats: ["html"],
+  supportingFormats: ["pptx", "html"],
   tone: "delivery_lead",
   visualDensity: "medium",
   allowPhaseLabels: false,
@@ -772,6 +773,7 @@ const valueMeasurementContract: DeliverableProfile = {
   decisionPurpose:
     "Prevent fake ROI by defining how value will be measured and governed.",
   defaultFormat: "docx",
+    supportingFormats: ["pptx"],
   tone: "delivery_lead",
   visualDensity: "low",
   allowPhaseLabels: false,
