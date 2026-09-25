@@ -49,6 +49,7 @@ import {
   type OptimizeWorkflowPosition,
   type OptimizeWorkflowStep,
 } from "@/lib/source/data-model/contract-optimization-workflow-step";
+import { formatSourceFinancialValue } from "@/lib/source/financial-display";
 import { buildSourceOptimizeContractHref } from "@/lib/source/optimize-routing";
 
 interface SourceOptimizeContractPageProps {
@@ -235,6 +236,7 @@ export function SourceOptimizeContractPage({
           asOfDateIso={asOfDateIso}
           selected={selected}
           selectedOpportunity={selectedOpportunity}
+          canViewFinancialValues={canViewFinancialValues}
         />
         <SourceWorkflowFrame
           testId="source-optimize-contract-frame"
@@ -367,10 +369,12 @@ function ModuleHeader({
   asOfDateIso,
   selected,
   selectedOpportunity,
+  canViewFinancialValues,
 }: {
   asOfDateIso: string;
   selected: ContractOptimizationCandidate | null;
   selectedOpportunity: ContractOptimizationOpportunity | null;
+  canViewFinancialValues: boolean;
 }) {
   return (
     <header style={HEADER_STYLE}>
@@ -383,7 +387,7 @@ function ModuleHeader({
         </h1>
         <p style={SUBLINE_STYLE}>
           {selected
-            ? `${selected.contractName} · ${formatUsd(selected.annualValue)} annual value · focused 7-step incumbent-contract path.`
+            ? `${selected.contractName} · ${formatSourceFinancialValue(selected.annualValue, canViewFinancialValues)} annual value · focused 7-step incumbent-contract path.`
             : "Select one governed contract first. This is the focused incumbent-contract path, not the 11-stage sourcing event intake."}
         </p>
         <div style={META_ROW_STYLE}>
