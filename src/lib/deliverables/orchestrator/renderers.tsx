@@ -711,46 +711,147 @@ function exhibitWithDataDescription(
   };
 }
 
+/**
+ * Fit a label into a fixed-width box without cutting a word in half.
+ *
+ * The previous renderers sliced at a character count, which was tolerable when
+ * the input was already-chopped prose and is not once real labels arrive:
+ * "Approval records the decision" became "Approval records the decisio" on a
+ * client deck. Wrap to at most two lines, break on whitespace, and ellipsise
+ * only when the text genuinely cannot fit.
+ */
+function fitLabelLines(text: string, perLine: number, maxLines = 2): string[] {
+  const words = String(text).trim().split(/\s+/).filter(Boolean);
+  if (words.length === 0) return [];
+  const lines: string[] = [];
+  let line = "";
+  for (const word of words) {
+    const candidate = line ? `${line} ${word}` : word;
+    if (candidate.length <= perLine) {
+      line = candidate;
+      continue;
+    }
+    if (line) lines.push(line);
+    if (lines.length === maxLines) {
+      lines[maxLines - 1] = `${lines[maxLines - 1]!.replace(/[,;:]$/, "")}…`;
+      return lines;
+    }
+    // A single word longer than the line still has to break somewhere.
+    line = word.length > perLine ? `${word.slice(0, perLine - 1)}…` : word;
+  }
+  if (line) lines.push(line);
+  return lines.slice(0, maxLines);
+}
+
 function svgFlowExhibit(exhibit: RenderableExhibit, domId: string): string {
-  const clauses = exhibitClauses(exhibit);
-  const width = Math.max(720, clauses.length * 180);
-  const nodes = clauses
-    .map((clause, i) => {
-      const x = 56 + i * 170;
-      const arrow =
-        i < clauses.length - 1
-          ? `<path d="M${x + 116} 72 L${x + 154} 72" stroke="var(--fresh)" stroke-width="2" marker-end="url(#arrow-${domId})"/>`
-          : "";
-      const stepLabel = i === 0 ? "Start" : `Step ${i + 1}`;
-      return `${arrow}<g>
+  // Read the STRUCTURE, not a flattened sentence.
+  //
+  // This previously took `exhibitClauses`, which concatenates a flow's nodes
+  // AND its edges into one list of strings — so a four-node, four-edge flow
+  // rendered as eight boxes in a row, four of them labelled with an edge and
+  // numbered "Step 5" through "Step 8". The arrows a flow exists to show were
+  // drawn as more boxes. Edges are edges here.
+  const data = exhibit.data;
+  if (!data || data.kind !== "flow" || data.nodes.length === 0) return "";
+
+  const nodes = data.nodes.slice(0, 6);
+  const width = Math.max(720, nodes.length * 180);
+  const xFor = (i: number) => 56 + i * 170;
+  const indexById = new Map(nodes.map((n, i) => [n.id ?? n.label, i]));
+
+  const boxes = nodes
+    .map((node, i) => {
+      const x = xFor(i);
+      const role = node.role ? esc(String(node.role).slice(0, 26)) : "";
+      const lines = fitLabelLines(String(node.label), 18, role ? 2 : 3);
+      const first = role ? 62 : 66;
+      const labelSvg = lines
+        .map(
+          (ln, n) =>
+            `<text x="${x + 59}" y="${first + n * 13}" text-anchor="middle" font-size="10.5" font-weight="700">${esc(ln)}</text>`,
+        )
+        .join("");
+      return `<g>
         <rect x="${x}" y="38" width="118" height="68" rx="8" fill="#fff" stroke="var(--line)"/>
-        <text x="${x + 59}" y="65" text-anchor="middle" font-size="11" font-weight="700">${esc(clause.slice(0, 28))}</text>
-        <text x="${x + 59}" y="84" text-anchor="middle" font-size="9" fill="var(--muted)">${esc(stepLabel)}</text>
+        ${labelSvg}
+        ${role ? `<text x="${x + 59}" y="98" text-anchor="middle" font-size="9" fill="var(--muted)">${role}</text>` : ""}
       </g>`;
     })
     .join("");
+
+  // Only draw an edge whose endpoints both exist. An edge into a node that was
+  // never declared is a data defect; drawing it anyway would hide that.
+  const arrows = data.edges
+    .map((edge) => {
+      const a = indexById.get(edge.from);
+      const b = indexById.get(edge.to);
+      if (a === undefined || b === undefined || a === b) return "";
+      const from = xFor(Math.min(a, b)) + 118;
+      const to = xFor(Math.max(a, b));
+      const label = edge.label
+        ? `<text x="${(from + to) / 2}" y="64" text-anchor="middle" font-size="9" fill="var(--muted)">${esc(String(edge.label).slice(0, 22))}</text>`
+        : "";
+      return `<path d="M${from} 72 L${to - 4} 72" stroke="var(--fresh)" stroke-width="2" marker-end="url(#arrow-${domId})"/>${label}`;
+    })
+    .join("");
+
   return `<svg class="exhibit-svg" viewBox="0 0 ${width} 140" role="img" aria-label="${esc(exhibit.title)}">
     <defs><marker id="arrow-${domId}" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="var(--fresh)"/></marker></defs>
-    ${nodes}
+    ${arrows}${boxes}
   </svg>`;
 }
 
 function svgMatrixExhibit(exhibit: RenderableExhibit): string {
-  const clauses = exhibitClauses(exhibit).slice(0, 4);
-  const cells = clauses
-    .map((clause, i) => {
-      const x = i % 2 === 0 ? 36 : 378;
-      const y = i < 2 ? 44 : 132;
-      return `<g>
-        <rect x="${x}" y="${y}" width="300" height="66" rx="8" fill="#fff" stroke="var(--line)"/>
-        <text x="${x + 16}" y="${y + 28}" font-size="12" font-weight="700">${esc(clause.slice(0, 36))}</text>
-        <text x="${x + 16}" y="${y + 48}" font-size="10" fill="var(--muted)">Decision implication</text>
+  // A matrix's whole meaning is WHERE a thing sits. This previously placed
+  // cells by array index — first clause top-left, second top-right — so the
+  // position carried no information and the axes were discarded entirely. Each
+  // cell now lands in the quadrant its own x/y values put it in, and the axes
+  // are labelled.
+  const data = exhibit.data;
+  if (!data || (data.kind !== "matrix" && data.kind !== "heatmap" && data.kind !== "comparison")) return "";
+  if (data.cells.length === 0) return "";
+
+  const axes = data.axes;
+  // Distinct axis values in order of appearance decide which half a cell is in.
+  const xs = [...new Set(data.cells.map((c) => String(c.x ?? "")))].filter(Boolean);
+  const ys = [...new Set(data.cells.map((c) => String(c.y ?? "")))].filter(Boolean);
+
+  const placed = data.cells.slice(0, 8).map((cell) => {
+    const xi = xs.indexOf(String(cell.x ?? ""));
+    const yi = ys.indexOf(String(cell.y ?? ""));
+    const right = xi >= 0 ? xi >= Math.ceil(xs.length / 2) : false;
+    const lower = yi >= 0 ? yi >= Math.ceil(ys.length / 2) : false;
+    return { cell, right, lower };
+  });
+
+  const byQuadrant = new Map<string, typeof placed>();
+  for (const p of placed) {
+    const q = `${p.right ? "r" : "l"}${p.lower ? "b" : "t"}`;
+    byQuadrant.set(q, [...(byQuadrant.get(q) ?? []), p]);
+  }
+
+  const cells = [...byQuadrant.entries()]
+    .flatMap(([q, items]) =>
+      items.slice(0, 2).map((p, n) => {
+        const x = q.startsWith("r") ? 378 : 36;
+        const y = (q.endsWith("b") ? 132 : 44) + n * 34;
+        const value = p.cell.value ? ` · ${esc(String(p.cell.value).slice(0, 14))}` : "";
+        return `<g>
+        <rect x="${x}" y="${y}" width="300" height="30" rx="6" fill="#fff" stroke="var(--line)"/>
+        <text x="${x + 14}" y="${y + 19}" font-size="11" font-weight="700">${esc(fitLabelLines(String(p.cell.label ?? ""), 34, 1)[0] ?? "")}${value}</text>
       </g>`;
-    })
+      }),
+    )
     .join("");
-  return `<svg class="exhibit-svg" viewBox="0 0 720 230" role="img" aria-label="${esc(exhibit.title)}">
+
+  const axisLabels = axes
+    ? `<text x="360" y="224" text-anchor="middle" font-size="10" fill="var(--muted)">${esc(String(axes.x).slice(0, 40))}</text>
+       <text x="14" y="120" font-size="10" fill="var(--muted)" transform="rotate(-90 14 120)" text-anchor="middle">${esc(String(axes.y).slice(0, 40))}</text>`
+    : "";
+
+  return `<svg class="exhibit-svg" viewBox="0 0 720 240" role="img" aria-label="${esc(exhibit.title)}">
     <path d="M360 28 L360 210 M24 120 L696 120" stroke="var(--line)" stroke-width="1"/>
-    ${cells}
+    ${axisLabels}${cells}
   </svg>`;
 }
 
