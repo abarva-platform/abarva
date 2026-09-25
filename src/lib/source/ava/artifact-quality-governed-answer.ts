@@ -39,6 +39,7 @@ import {
   buildGovernedEventContextBundle,
   type EventContextCandidate,
 } from "@/lib/source/ava/event-context-bundle";
+import { confidenceFromGovernanceState } from "@/lib/source/ava/governed-answer-confidence";
 
 export interface BuildArtifactQualityGovernedAnswerInput {
   eventId: string;
@@ -80,13 +81,11 @@ export function sourceDataClassificationToClassification(
 function confidenceForArtifact(
   artifact: SourceArtifactRegistryRecordWithContent,
 ): ConfidenceLevel {
-  if (artifact.isClientFinal || artifact.approvalState === "approved") {
-    return "high";
-  }
-  if (artifact.parseStatus === "parsed" || artifact.evidenceState === "cited") {
-    return "medium";
-  }
-  return "low";
+  return confidenceFromGovernanceState({
+    approved: artifact.isClientFinal || artifact.approvalState === "approved",
+    parsed: artifact.parseStatus === "parsed",
+    cited: artifact.evidenceState === "cited",
+  });
 }
 
 function retrievabilityForArtifact(
