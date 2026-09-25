@@ -64,6 +64,11 @@ flag and not scoped to one tenant's data.
   from the shared module.
 - `src/components/source/SourceOriginatePage.tsx` — same written text, now read from the shared module.
 - `src/app/(maestro)/source/__tests__/requester-estimate-disclosure.test.tsx` — new suite, 5 cases.
+- `.github/workflows/unit-suites.yml` — the new suite is named in the `--runTestsByPath` command that
+  owns this directory, so it runs in CI from the day it lands rather than in some later change.
+- `src/__tests__/behaviors/source-readiness-route-suite-ci-coverage.test.ts` — the directory's coverage
+  census moves from 2 of 3 to 3 of 4. The one remaining uncovered file is the pre-existing exact
+  quarantine and is untouched.
 
 ## QA / Validation
 
@@ -92,7 +97,7 @@ first draft of this record filed a new id for it and was wrong.
 Red first, before the fix: **2 failed, 3 passed** of the 5 new cases, each failing on the defect —
 `"SRC-0042 · Intake · $4.2M"` and `"Value or savings target$4.2M"`. After the fix: **5 passed**.
 
-Five deliberate mutations, five killed, each by the assertion that should have fired:
+Six deliberate mutations, six killed, each by the assertion that should have fired:
 
 | # | mutation | result |
 |---|---|---|
@@ -101,12 +106,19 @@ Five deliberate mutations, five killed, each by the assertion that should have f
 | 3 | label applied unconditionally, over the intake-authored branch too | the *absence* case fails — `"…Requester estimate: Hold contracted annual value flat…"` |
 | 4 | card form keeps the label, drops `Not validated` | inbox case fails on the qualifier alone |
 | 5b | an unrelated reachable Source surface is made to render the label | false-positive case fails |
+| 6 | the new suite is removed from the CI command that owns its directory | the census case fails — `coveredTestFiles` 3 → 2 |
 
 Mutation 5 was run in both directions on purpose. **5a** put the literal
 `"Requester estimate: … · Not validated"` into `SourceValueLedger.tsx` as an unrendered constant: all
 5 cases still passed, which is the control proving these assertions read the DOM rather than the file.
 **5b** then rendered that same constant and the false-positive case failed. `SourceValueLedger` was
 restored byte-identical afterwards and is not part of this change.
+
+Mutation 6 matters on its own terms. The first push of this branch failed `Behavior coverage floor`
+precisely because the new file raised the directory's total without being wired, which is the control
+working as designed: a suite that runs nowhere is the failure mode this backlog exists against. It is
+wired in the same change that created it, and mutation 6 proves the census still notices if it is
+unwired again.
 
 - `NODE_OPTIONS=--max-old-space-size=6144 npx tsc --noEmit --pretty false` — **exit 0**, no
   diagnostics. Judged on the exit code: a bare `npx tsc --noEmit` exits 134 on this host with no
