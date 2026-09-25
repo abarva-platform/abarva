@@ -34,6 +34,14 @@ export interface StrategyIntakeFacts {
  * Derive the sponsor / mandate / value-thesis facts from a persisted event row.
  * Mirrors `buildCapturedFacts` on the standalone approval page so the in-canvas
  * Strategy stage reads the exact same intake, not a parallel source of truth.
+ *
+ * `canViewFinancialValues` is REQUIRED and has no default. Item U-517: this
+ * function passed the literal `true` to `formatSourceFinancialValue`, so the
+ * requester's exact figure reached a viewer whose policy restricts exact
+ * financial values — the same defect as on the page this mirrors, and the
+ * mirroring is why it was here. A default would let the old behaviour return by
+ * omission at a call site nobody re-reads, so the caller must resolve the
+ * viewer's permission and say so; `false` is the safe answer when it cannot.
  */
 export function deriveStrategyIntakeFacts(
   row: Pick<
@@ -43,6 +51,7 @@ export function deriveStrategyIntakeFacts(
     | 'scope_description'
     | 'estimated_value_usd'
   >,
+  canViewFinancialValues: boolean,
 ): StrategyIntakeFacts {
   const scopeSummary = parseSourceScopeDescription(row.scope_description);
   const trigger = row.trigger_description?.trim();
@@ -54,7 +63,7 @@ export function deriveStrategyIntakeFacts(
   const valueThesis =
     scopeSummary.valueTarget?.trim() ??
     (row.estimated_value_usd && row.estimated_value_usd > 0
-      ? formatSourceFinancialValue(row.estimated_value_usd, true)
+      ? formatSourceFinancialValue(row.estimated_value_usd, canViewFinancialValues)
       : 'Value target pending.');
   return {
     sponsor: row.decision_owner?.trim() || 'Decision owner pending.',

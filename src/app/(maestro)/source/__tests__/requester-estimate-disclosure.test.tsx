@@ -78,9 +78,17 @@ jest.mock("@/lib/auth/tenancy", () => ({
   requireTenancy: (...args: unknown[]) => requireTenancy(...args),
 }));
 
+// The fixture viewer is PERMITTED to see exact financial values. That was
+// implicit until item U-517: the page passed a literal `true` for
+// `canViewFinancialValues`, so the policy's answer to that question was never
+// read and the mock did not need to give one. It does now, and it is stated
+// rather than defaulted, because this suite's subject is the provenance LABEL
+// on a figure the viewer may see — a restricted viewer renders `Restricted`
+// instead of the figure, which is U-517's subject and is asserted there.
 jest.mock("@/lib/auth/source-access-policy", () => ({
   loadUserSourceAccessPolicy: jest.fn(async () => ({
     canApproveSourceStages: true,
+    canViewFinancialData: true,
   })),
 }));
 
