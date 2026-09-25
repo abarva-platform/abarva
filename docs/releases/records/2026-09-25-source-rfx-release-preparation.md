@@ -37,7 +37,8 @@ Adds a canonical supplier-contact identity and an evidenced, event-specific appr
 
 - Pass: focused repository, snapshot, and storage-contract tests.
 - Pass: red-first storage tests before the package-version schema was added; removing the retired-contact predicate made the focused contract fail, and restoring it returned green.
-- Not run: migration execution against PostgreSQL. The migration is authored only and must not be applied by this release without a separate operator decision.
+- Pass: PR CI fresh PostgreSQL migration replay and full sequence against isolated PostgreSQL. This is test-database execution only, not a shared-tenant apply.
+- Not run: shared-tenant migration apply. It requires a separate operator decision.
 - Not run: positive signed-in Stage 06 release readback; there is no issuance route or populated recipient authority.
 
 ## Rollout Plan
@@ -65,6 +66,6 @@ Revert the application commit through a PR if the preparatory code regresses. No
 
 ## Known Gaps
 
-- Schema syntax and behavior have not been exercised on PostgreSQL; migration apply requires separate authorization.
+- Schema passed isolated PostgreSQL replay; applying it to a shared tenant remains separately authorized work.
 - No source-backed transaction creates a package version, no human issuance action exists, and no receipt or external delivery is represented.
 - A genuine signed sponsor commitment and named Scope reviews remain prerequisites for the frozen journey; this release does not bypass them.
