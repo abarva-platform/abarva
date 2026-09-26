@@ -946,11 +946,26 @@ export type StepInsightView =
 /**
  * Where ONE beat of a stage view's content came from.
  *
- * `fact_derived` — computed for THIS event from its committed facts.
+ * `fact_derived` — derived for THIS event, as opposed to exemplar copy: from its
+ *                  committed facts, from the archetype its own classification
+ *                  resolved to, or from both.
  * `scaffold`     — carried verbatim from the stage exemplar in
  *                  `sample-view-model.ts`. The structure is real; the CONTENT
  *                  (task titles, the approver's name, confirm-box labels) is
  *                  authored exemplar copy that describes no particular event.
+ *
+ * ITEM U-534 WIDENED THE FIRST DEFINITION, and deliberately not the union. The
+ * first derived stage's gate takes its confirm boxes from the event's computed
+ * lever results but its approver role and its generates-on-approval list from the
+ * resolved archetype's declarations — which move with the event's archetype and
+ * NOT with its facts. Measured, not assumed: the per-field readings in
+ * `docs/architecture/u533-stage-scaffold-provenance.json` record which of the two
+ * each field follows, because that distinction belongs in the measurement.
+ *
+ * It does not belong in this union. The question this field answers for the
+ * grounding builder is "is this exemplar copy?", and a third member would make
+ * archetype-declared content disclose itself to the model as content "carried
+ * verbatim from the stage exemplar", which is false.
  */
 export type StageBeatProvenance = 'fact_derived' | 'scaffold';
 
