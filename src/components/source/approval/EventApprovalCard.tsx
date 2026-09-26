@@ -94,7 +94,7 @@ export function EventApprovalCard({
   const [reason, setReason] = useState("");
   const [confirmed, setConfirmed] = useState(false);
   const [strategyGate, setStrategyGate] = useState({
-    sponsor: false,
+    mandate: false,
     value: false,
     archetype: false,
   });
@@ -107,7 +107,7 @@ export function EventApprovalCard({
   // criteria are confirmed here as explicit checkboxes. Other tenants keep the
   // single accountable-decision confirm.
   const gateReady = generateMemoOnApprove
-    ? strategyGate.sponsor && strategyGate.value && strategyGate.archetype
+    ? strategyGate.mandate && strategyGate.value && strategyGate.archetype
     : confirmed;
   const actionReady =
     currentUserCanApprove &&
@@ -155,7 +155,7 @@ export function EventApprovalCard({
           action: action === "reject" ? "reject" : "approve",
           notes:
             action !== "reject" && generateMemoOnApprove
-              ? `${reason}\n\nStrategy gate confirmed at approval — sponsor sign-off, value target set, archetype confirmed.`
+              ? `${reason}\n\nEvent Owner confirmed the strategy mandate, value target, and archetype.`
               : reason,
           // The approve route validates `confirmations` (all three required keys)
           // via evaluateSourceApprovalDecision — sending a bare `confirmed` flag
@@ -165,7 +165,7 @@ export function EventApprovalCard({
           confirmed: true,
           confirmations: {
             strategyMemoReviewed: generateMemoOnApprove
-              ? strategyGate.sponsor
+              ? strategyGate.mandate
               : confirmed,
             valueTargetConfirmed: generateMemoOnApprove
               ? strategyGate.value
@@ -178,11 +178,8 @@ export function EventApprovalCard({
           // strategy memo is actually drafted — the GATE-STRATEGY-01 readiness
           // check it would otherwise trigger belongs to a LATER, separate
           // stage-advance action (leaving Strategy once the memo exists), not
-          // to this first approval. In pilot mode, a self-approving creator is
-          // authorized to bypass that computed-readiness check here; the
-          // server independently re-verifies this is safe (rejects the bypass
-          // outright when GATE_APPROVAL_STRICT_MODE is on, regardless of what
-          // the client sends).
+          // to this first approval. The server verifies self-approval authority
+          // and still evaluates the current gate readiness.
           selfApproveIfAuthorized:
             action === "approve" && isSelfApproval && pilotMode,
           requestAuthorityVersionId,
@@ -362,17 +359,17 @@ export function EventApprovalCard({
                 <input
                   data-testid="source-approval-gate-sponsor"
                   type="checkbox"
-                  checked={strategyGate.sponsor}
+                  checked={strategyGate.mandate}
                   disabled={!currentUserCanApprove || Boolean(busyAction)}
                   onChange={(event) =>
                     setStrategyGate((g) => ({
                       ...g,
-                      sponsor: event.target.checked,
+                      mandate: event.target.checked,
                     }))
                   }
                 />
                 <span>
-                  Sponsor sign-off — the decision owners endorse this event.
+                  Event Owner confirms the sourcing mandate and strategy memo review.
                 </span>
               </label>
               <label style={CHECKBOX_ROW_STYLE}>
@@ -449,17 +446,17 @@ export function EventApprovalCard({
                 </button>
               </div>
             </details>
-            <button
-              type="button"
-              data-testid="source-approval-co-approver"
-              disabled={!actionReady}
-              onClick={() => void submitAction("route-to-co-approver")}
-              style={SECONDARY_BUTTON_STYLE}
-            >
-              {coApprover
-                ? `Send to ${coApprover.displayName}`
-                : "Send to co-approver"}
-            </button>
+            {coApprover ? (
+              <button
+                type="button"
+                data-testid="source-approval-co-approver"
+                disabled={!actionReady}
+                onClick={() => void submitAction("route-to-co-approver")}
+                style={SECONDARY_BUTTON_STYLE}
+              >
+                Send to {coApprover.displayName}
+              </button>
+            ) : null}
             <button
               type="button"
               data-testid="source-approval-approve"
@@ -495,9 +492,11 @@ export function EventApprovalCard({
                     ? "Approve: the strategy gate is cleared here — the event advances to Scope and the memo drafts."
                     : "Approve: event unlocks at Stage 1 Strategy."}
                 </span>
-                <span>
-                  Co-approve: the event stays on this page until routed.
-                </span>
+                {coApprover ? (
+                  <span>
+                    Co-approve: the event stays on this page until routed.
+                  </span>
+                ) : null}
                 <span>
                   Request changes: the intake reopens with the current facts.
                 </span>
