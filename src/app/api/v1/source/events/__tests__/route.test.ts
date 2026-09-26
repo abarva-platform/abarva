@@ -221,6 +221,7 @@ describe("POST /api/v1/source/events", () => {
         eventName: importedRequest.title,
         categoryId: "bpo_contact_centre",
         creationRequestId: importedRequest.requestId,
+        createdByUserId: "user-1",
       }),
     );
     expect(linkServiceNowRequestToEvent).toHaveBeenCalledWith(

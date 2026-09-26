@@ -261,7 +261,11 @@ export async function POST(request: Request) {
 
     const event = await createSourcingEvent(
       sourceHandoff
-        ? { clientKey: activeClient.key, ...sourceHandoff.eventInput }
+        ? {
+            clientKey: activeClient.key,
+            ...sourceHandoff.eventInput,
+            createdByUserId: tenancy.userId,
+          }
         : {
             clientKey: activeClient.key,
             eventName: eventName!,
