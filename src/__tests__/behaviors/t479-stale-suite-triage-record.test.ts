@@ -90,6 +90,9 @@ type Suite = {
     whyNotSelected: string | null;
   };
   declaredKnownFailingInBaseline: { failing: number; ran: boolean } | null;
+  /* Present only once the quoted entry has been removed from the live baseline
+   * by a named item -- see the knownFailing case below. */
+  baselineEntryRemovedBy?: { item: string; reason: string };
   verdict: string;
   ownerItem: string;
   rationale: string;
@@ -579,6 +582,16 @@ describe("T-479 stale suite triage record", () => {
    * the measured run. Two independent facts, and the record may not disagree
    * with either -- this is the control that would catch a baseline re-recorded
    * after the fact to make a row look expected.
+   *
+   * A row whose failures have since been FIXED is the one legitimate way for
+   * the two to disagree, and the first version of this control had no case for
+   * it: the quote is a measurement at this record's base, the baseline is live,
+   * and requiring them to match forever meant no baselined row could ever
+   * improve without turning this red (found by T-483, which repaired one). The
+   * row has to SAY so, naming the item -- a removal nobody declared is still a
+   * failure, and so is a declaration made while the entry is still there,
+   * because otherwise the declaration is a standing exemption rather than a
+   * record of one event.
    */
   it("verifies every quoted baseline knownFailing entry against the baseline file and the measured run", () => {
     const baselines = [
@@ -590,13 +603,27 @@ describe("T-479 stale suite triage record", () => {
 
     for (const suite of record.suites) {
       const quoted = suite.declaredKnownFailingInBaseline;
+      const removedBy = suite.baselineEntryRemovedBy;
+
       if (!quoted) {
+        expect(removedBy).toBeUndefined();
         expect(live[suite.path]).toBeUndefined();
         continue;
       }
-      expect(live[suite.path]).toEqual(quoted);
+
+      // The quote is history and is checked against the measured run either
+      // way; only its agreement with the LIVE baseline is conditional.
       expect(quoted.failing).toBe(suite.failedTests);
       expect(suite.green).toBe(false);
+
+      if (removedBy) {
+        expect(live[suite.path]).toBeUndefined();
+        expect(removedBy.item).toMatch(/^[A-Z]-\d+$/);
+        expect(removedBy.reason.length).toBeGreaterThan(80);
+        continue;
+      }
+
+      expect(live[suite.path]).toEqual(quoted);
     }
   });
 
