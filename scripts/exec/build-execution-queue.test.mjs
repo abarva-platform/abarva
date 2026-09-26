@@ -3610,5 +3610,155 @@ function unplacedSplit(dir) {
   fs.rmSync(dir, { recursive: true, force: true });
 }
 
+/* ------------------------------------------------------------------------ *
+ * 30. PER-UNIT RESIDUAL — item C-549 half (1).
+ *
+ * The defect: the claimable filter's first stage is `rung === 0`, so the moment
+ * an item's FIRST slice merges it leaves every claimable bucket. For an item
+ * whose acceptance is explicitly per-unit — "one row at a time", "per row,
+ * never as a count" — the rung describes the slice that shipped and says
+ * nothing about the rest of the row set. With no owner blocker such an item is
+ * not in *Blocked on Anand* either, so it sits in NO bucket of this file and
+ * its residual goes dark. That happened three times in three days: C-544
+ * closed 3 of 13, C-547 closed 2 of 10, and each had to hand-file a successor
+ * id or the remainder would have been invisible to every later run.
+ *
+ * Measured on the live summary at `813537a0f`: 617 items, 451 at rung 1-6 and
+ * not closed, 9 of those carry per-unit settlement acceptance, and 3 of the 9
+ * carry no blocker — T-062, D-030 and C-547. C-547 is the real known positive
+ * this row was filed for, and the first pattern written here missed it, which
+ * is why the phrase list is measured rather than guessed.
+ *
+ * Both directions are asserted, because a bucket listing every merged item is
+ * noise and a bucket listing none is the defect unchanged:
+ *   (a) per-unit + rung 1-6            -> MUST appear, and must NOT be claimable
+ *   (b) per-unit + finished (rung 7)   -> must NOT appear
+ *   (c) aggregate acceptance + rung 6  -> must NOT appear
+ *   (d) the stated count equals the ids listed
+ * ------------------------------------------------------------------------ */
+{
+  const PER_UNIT_ACCEPTANCE =
+    "Catalogue them one row at a time and verify per row rather than in aggregate, never as a count.";
+  const AGGREGATE_ACCEPTANCE =
+    "Add the validator and make the whole suite green in one pass.";
+  const RESIDUAL_HEADING = /^## Residual work a proof rung cannot close.*$/m;
+
+  /** Add an item whose body carries `proof` and whose acceptance is `acceptance`. */
+  function addRungItem(dir, id, acceptance, proof) {
+    fs.appendFileSync(
+      path.join(dir, "EXECUTION_BACKLOG_20260918.md"),
+      `\n| ${id} | **Synthetic per-unit residual fixture.** | T | ${acceptance} |\n`,
+    );
+    mapFixtureId(dir, id);
+    /*
+     * The rung comes from the REGISTER, not from the problem statement. The
+     * board's status corpus is an item's own verdict/update text plus its
+     * claim-log lines, and it deliberately excludes the prose that merely
+     * CITES a predecessor's PR or deploy. A first draft of this case wrote
+     * "merged and deployed" into the backlog row instead, which left the item
+     * at rung 0 — so its positive case was asserting against a branch keyed to
+     * rung 1-6 that the fixture could never reach, and the item came back
+     * CLAIMABLE rather than residual.
+     */
+    fs.appendFileSync(
+      path.join(dir, "EXECUTION_CLAIMS.md"),
+      `\n${NOW} | fixture#residual | RELEASED item ${id} on branch \`fixture/${id}\` — ${proof}\n`,
+    );
+  }
+
+  /** The residual section alone, so a match elsewhere in the file cannot pass. */
+  function residualSection(rendered) {
+    const start = rendered.search(RESIDUAL_HEADING);
+    if (start < 0) return "";
+    const rest = rendered.slice(start + 1);
+    const next = rest.search(/^## /m);
+    return next < 0 ? rendered.slice(start) : rendered.slice(start, start + 1 + next);
+  }
+
+  /**
+   * The claimable lane tables alone — up to the next `## ` heading, whichever
+   * it is. Slicing to a NAMED later heading is how this helper first read the
+   * residual section as part of the lane tables and reported the item as
+   * claimable when it was not.
+   */
+  function laneTables(rendered) {
+    const start = rendered.search(/^### Lane [DCUT?] /m);
+    if (start < 0) return "";
+    const rest = rendered.slice(start);
+    const end = rest.search(/^## /m);
+    return end < 0 ? rest : rest.slice(0, end);
+  }
+
+  /* --- (a) THE DEFECT. Per-unit, deployed, no blocker: must be reachable. -- */
+  {
+    const dir = freshFixture();
+    addRungItem(dir, "T-911", PER_UNIT_ACCEPTANCE, "The first slice merged and deployed.");
+    const q = buildBoardAndQueue(dir);
+    const rendered = fs.readFileSync(path.join(dir, "EXECUTION_QUEUE.md"), "utf8");
+    const section = residualSection(rendered);
+    check(
+      "a per-unit item at a proof rung with no blocker is reachable in a bucket of its own",
+      q.status === 0 && section.includes("T-911"),
+      `exit=${q.status}\nsectionFound=${Boolean(section)}\nanywhereInFile=${rendered.includes("T-911")}\nsection=${section.slice(0, 700)}`,
+    );
+    check(
+      "and it is NOT offered as claimable, because it is above rung 0",
+      q.status === 0 && !laneTables(rendered).includes("T-911"),
+      `laneRows=${JSON.stringify(laneTables(rendered).split("\n").filter((l) => l.includes("T-911")))}`,
+    );
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+
+  /* --- (b) NEGATIVE. Per-unit but FINISHED: must not appear. --------------- */
+  {
+    const dir = freshFixture();
+    addRungItem(dir, "T-912", PER_UNIT_ACCEPTANCE, "Merged, deployed and live-proven signed in.");
+    const q = buildBoardAndQueue(dir);
+    const rendered = fs.readFileSync(path.join(dir, "EXECUTION_QUEUE.md"), "utf8");
+    check(
+      "a per-unit item that is FINISHED is not offered as a residual",
+      // The section must EXIST for this to mean anything. Asserting only that
+      // the id is absent passes on a file with no such section at all, which is
+      // the defect state — so the exclusion would read identical to the bug.
+      q.status === 0 && Boolean(residualSection(rendered)) && !residualSection(rendered).includes("T-912"),
+      `exit=${q.status}\nsectionFound=${Boolean(residualSection(rendered))}\nsection=${residualSection(rendered).slice(0, 700)}`,
+    );
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+
+  /* --- (c) NEGATIVE. Deployed but AGGREGATE acceptance: must not appear. --- */
+  {
+    const dir = freshFixture();
+    addRungItem(dir, "T-913", AGGREGATE_ACCEPTANCE, "The change merged and deployed.");
+    const q = buildBoardAndQueue(dir);
+    const rendered = fs.readFileSync(path.join(dir, "EXECUTION_QUEUE.md"), "utf8");
+    check(
+      "a merged item with aggregate acceptance is not offered as a residual, so the bucket is not every merged item",
+      q.status === 0 && Boolean(residualSection(rendered)) && !residualSection(rendered).includes("T-913"),
+      `exit=${q.status}\nsectionFound=${Boolean(residualSection(rendered))}\nsection=${residualSection(rendered).slice(0, 700)}`,
+    );
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+
+  /* --- (d) The bucket states its own count, and it agrees with the rows. --- */
+  {
+    const dir = freshFixture();
+    addRungItem(dir, "T-914", PER_UNIT_ACCEPTANCE, "Slice one merged and deployed.");
+    addRungItem(dir, "T-915", PER_UNIT_ACCEPTANCE, "Slice one merged and deployed.");
+    addRungItem(dir, "T-916", AGGREGATE_ACCEPTANCE, "Merged and deployed.");
+    const q = buildBoardAndQueue(dir);
+    const rendered = fs.readFileSync(path.join(dir, "EXECUTION_QUEUE.md"), "utf8");
+    const section = residualSection(rendered);
+    const stated = Number(section.match(/\*\*(\d+) items?\*\* reached a proof rung/)?.[1] ?? NaN);
+    const listed = ["T-914", "T-915", "T-916"].filter((id) => section.includes(id));
+    check(
+      "the residual bucket's stated count equals the ids it lists",
+      q.status === 0 && listed.length === 2 && stated === 2,
+      `stated=${stated} listed=${JSON.stringify(listed)}\nsection=${section.slice(0, 900)}`,
+    );
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+}
+
 console.log(`\n${passes} passed, ${failures} failed${skipped ? `, ${skipped} skipped` : ""}`);
 process.exit(failures ? 1 : 0);

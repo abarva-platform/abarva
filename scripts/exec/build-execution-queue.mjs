@@ -1177,6 +1177,114 @@ for (const i of claimable) {
  */
 const isFinished = (i) => i.rung === 7 || i.rungLabel === "Closed";
 
+/* ------------------------------------------------------------------------ *
+ * RESIDUAL WORK A PROOF RUNG CANNOT CLOSE — item C-549 half (1).
+ *
+ * The first claimable stage is `rung === 0`, so an item leaves every claimable
+ * bucket the moment its FIRST slice merges. For most items that is right: the
+ * rung is the item's proof. For an item whose acceptance is explicitly
+ * per-unit — "one row at a time", "per row, never as a count" — it is not. The
+ * rung then describes the slice that shipped and says nothing about the rest of
+ * the row set, and with no owner blocker the item is not in *Blocked on Anand*
+ * either. It is in NO bucket of this file, and its remainder goes dark.
+ *
+ * That has now happened three times in three days, each time repaired by hand:
+ * `C-544` closed 3 of 13 rows and reached rung 5; `C-547` was filed to carry
+ * the residual, closed 2 of 10 and reached rung 6; `C-549` was filed to carry
+ * that one. Each slice had to hand-file a successor id or the remainder would
+ * have been invisible to every later run — and a mechanism that depends on an
+ * agent remembering to file its own successor is not a mechanism.
+ *
+ * This does not make such an item claimable. It is above rung 0 and its
+ * shipped slice is real, so offering it in a lane would invite a second agent
+ * to redo the slice. It is emitted as its own bucket, named in the numbered
+ * instructions above, saying what the rung can and cannot evidence.
+ *
+ * THE PHRASE LIST IS MEASURED, NOT GUESSED. On the live summary at `813537a0f`
+ * (617 items, 451 at rung 1-6 and not closed) it selects 9, of which 3 carry no
+ * blocker: `T-062`, `D-030` and `C-547`. The first draft of the list MISSED
+ * `C-547` — the real known positive this row was filed for — because C-547
+ * writes "one surface at a time" where its predecessor wrote "one row at a
+ * time". A narrower draft that matched only literal rows would have shipped
+ * green and blind. Widening it with per-DIRECTION proof language ("prove each
+ * in both directions") was measured and rejected: it takes the set from 9 to
+ * 21, which is proof obligation rather than per-unit settlement.
+ * ------------------------------------------------------------------------ */
+const PER_UNIT_PHRASES = [
+  /\bper row\b/i,
+  /\beach row\b/i,
+  /\bone [a-z]+ at a time\b/i,
+  /\bnever as a count\b/i,
+  /\b(?:rather than|not) in aggregate\b/i,
+  /\bsettle each\b/i,
+  /\bper record rather than\b/i,
+  /\bwhich [a-z]+ you took\b/i,
+];
+
+/** The phrase that selected an item, so the bucket can show its own reason. */
+function perUnitPhrase(item) {
+  const acceptance = item.acceptance ?? "";
+  for (const re of PER_UNIT_PHRASES) {
+    const m = acceptance.match(re);
+    if (m) return m[0];
+  }
+  return "";
+}
+
+const residualAtRung = all
+  .filter((i) => !isFinished(i) && i.rung > 0 && Boolean(perUnitPhrase(i)))
+  .sort((a, b) => compareItemIds(normalizeItemId(a.num), normalizeItemId(b.num)));
+
+/**
+ * Render the bucket on EVERY run, including at zero.
+ *
+ * A section that appears only when it has rows is exercised only when it has
+ * rows, and this directory has already paid twice for branches nothing ever
+ * ran. At zero it says so in words, which is also the only way a reader can
+ * tell "nothing is residual" from "this generator no longer looks".
+ */
+function renderResidualAtRung() {
+  const n = residualAtRung.length;
+  const head = `## Residual work a proof rung cannot close — read this before you stop
+
+**${n} item${n === 1 ? "" : "s"}** reached a proof rung while carrying a per-unit
+acceptance, so the rung describes the slice that shipped and cannot evidence
+that the row set is closed.`;
+
+  if (!n) {
+    return `${head}
+
+_None right now. Every item at a proof rung states an acceptance the rung can
+answer for. This section is rendered at zero on purpose: an empty bucket and a
+generator that stopped looking are not the same thing._
+`;
+  }
+
+  const free = residualAtRung.filter((i) => !userBlockerText(i));
+  const gated = residualAtRung.filter((i) => userBlockerText(i));
+  const rows = residualAtRung
+    .map((i) => `| ${formatItemId(i.num)} | ${i.rung} ${i.rungLabel ?? ""} | ${i.lane ?? "?"} | ${userBlockerText(i) || "—"} | \`${perUnitPhrase(i)}\` | ${(i.title || "").replace(/\|/g, "\\|").slice(0, 110)} |`)
+    .join("\n");
+
+  return `${head}
+
+**These are NOT claimable and must not be re-taken as a whole.** The shipped
+slice is real; taking the item again invites a second agent to redo it. Read the
+item, settle what its own text says is still open, and either close it or file
+the successor id — which is the step that has been missed three times.
+
+| # | Rung | Lane | Owner blocker | Selected by | Item |
+|---|---|---|---|---|---|
+${rows}
+
+${free.length
+  ? `**${free.length} of ${n} carr${free.length === 1 ? "ies" : "y"} no owner blocker**, so ${free.length === 1 ? "it appears" : "they appear"} in no other bucket of this file at all: ${free.map((i) => formatItemId(i.num)).join(" ")}. That is the state this section exists for.`
+  : "**All of them carry an owner blocker**, so each is also counted under *Blocked on Anand*."}${gated.length
+  ? `\n\n**${gated.length} carr${gated.length === 1 ? "ies" : "y"} an owner blocker** — ${gated.map((i) => formatItemId(i.num)).join(" ")} — so the residual is open but the item is owner-gated. Surface it; do not claim it.`
+  : ""}
+`;
+}
+
 const blockedOnUser = all.filter(
   (i) => !isFinished(i) && Boolean(userBlockerText(i)),
 );
@@ -1302,6 +1410,10 @@ ${renderClaimableFunnel()}
    the deploy proof. The board reads the backlog, so also record the outcome in
    \`EXECUTION_BACKLOG_20260918.md\`.
 6. Go to step 2. **Do not ask which item is next — this file answers that.**
+7. Before you stop, read **Residual work a proof rung cannot close**. An item
+   whose acceptance is per-unit leaves every claimable bucket as soon as its
+   first slice merges, so its remaining rows are in no lane above. Settle or
+   file them; do not read their absence from the lanes as completion.
 
 ### Filing a new item: take an id from your own band
 
@@ -1337,7 +1449,7 @@ An item that is finished is excluded from this bucket regardless of phrasing,
 because proof that already happened is not proof that is owed.
 
 ${["D", "C", "U", "T", "?"].filter((l) => byLane[l]?.length).map(laneSection).join("\n")}
-
+${renderResidualAtRung()}
 ## Blocked on Anand — never claim these
 
 ${Object.entries(blockedCounts).map(([b, n]) => `- **${b}** — ${n} item${n === 1 ? "" : "s"}`).join("\n") || "- None"}
@@ -1355,6 +1467,14 @@ ${renderOrderDisagreements()}`;
 
 fs.writeFileSync(OUT, out);
 console.log(`Wrote ${path.basename(OUT)}: ${claimable.length} claimable, ${blockedOnUser.length} blocked on Anand, ${claimed.size} held, ${expiredClaims.length} expired-idle, ${expiredInFlight.length} expired-in-flight, ${lapsedClaims.length} lapsed, ${releasedClaims.length} released.`);
+// Item C-549. On stdout as well as in the file: a run that is tailed rather
+// than read would otherwise never learn that work sits outside every lane.
+console.log(
+  `  residual at a proof rung: ${residualAtRung.length}` +
+    (residualAtRung.length
+      ? ` (${residualAtRung.filter((i) => !userBlockerText(i)).length} in no other bucket: ${residualAtRung.filter((i) => !userBlockerText(i)).map((i) => formatItemId(i.num)).join(" ")})`
+      : ""),
+);
 for (const [l, v] of Object.entries(byLane)) console.log(`  lane ${l}: ${v.length}`);
 for (const band of bands) {
   console.log(
