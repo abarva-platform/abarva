@@ -69,6 +69,11 @@ import {
   buildRfpFactDerivedTasks,
 } from './rfp-fact-beats';
 import {
+  SELECTION_STAGE_KEY,
+  buildSelectionFactDerivedGate,
+  buildSelectionFactDerivedTasks,
+} from './selection-fact-beats';
+import {
   SOURCE_STAGE_LABELS,
   nextSourceStage,
 } from '@/lib/source/constants';
@@ -138,6 +143,13 @@ export interface BuildLiveStageInput {
   vendorResponses?: VendorResponseCoverage;
   /** Existing tenant-scoped per-lever included-clause signal, when available. */
   rfpClausePresentLeverKeys?: ReadonlySet<string>;
+  /**
+   * Existing tenant-scoped per-lever committed-value-at-award signal, when
+   * available (`readCommittedValueLevers`). `undefined` means NO award fact has
+   * been read — NOT that nothing committed; `selection-fact-beats` keeps those
+   * two states apart and this field is where the distinction enters.
+   */
+  committedValueByLeverKey?: ReadonlyMap<string, number>;
 }
 
 /**
@@ -208,9 +220,9 @@ export function buildLiveStageView(
     ? SOURCE_STAGE_LABELS[nextStage] ?? nextStage
     : null;
 
-  // Items U-534, U-535, U-538 and U-540. Four stages' intake beats are derived from
-  // event facts and the resolved archetype. The other six carry exemplar
-  // content and say so below. `factBeats`
+  // Items U-534, U-535, U-538, U-540 and U-542. Five stages' intake beats are
+  // derived from event facts and the resolved archetype. The other five carry
+  // exemplar content and say so below. `factBeats`
   // is the single switch: nothing downstream infers which stage is derived, and
   // the beat provenance is declared from the same value so the label cannot
   // drift from what this function actually returned.
@@ -236,6 +248,13 @@ export function buildLiveStageView(
     presentLeverKeys: input.rfpClausePresentLeverKeys,
     nextStageName,
   };
+  const selectionBeatInput = {
+    archetype,
+    leverResults,
+    citations: input.citations,
+    committedByLeverKey: input.committedValueByLeverKey,
+    nextStageName,
+  };
   const FACT_DERIVED_BEATS: Readonly<
     Record<string, () => { tasks: StageAnalyticsView['tasks']; gate: StageAnalyticsView['gate'] }>
   > = {
@@ -254,6 +273,10 @@ export function buildLiveStageView(
     [RFP_STAGE_KEY]: () => ({
       tasks: buildRfpFactDerivedTasks(rfpBeatInput),
       gate: buildRfpFactDerivedGate(rfpBeatInput),
+    }),
+    [SELECTION_STAGE_KEY]: () => ({
+      tasks: buildSelectionFactDerivedTasks(selectionBeatInput),
+      gate: buildSelectionFactDerivedGate(selectionBeatInput),
     }),
   };
   const factBeats = FACT_DERIVED_BEATS[requestedStageKey]?.() ?? null;
