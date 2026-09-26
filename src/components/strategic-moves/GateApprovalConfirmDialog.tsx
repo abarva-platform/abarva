@@ -22,6 +22,7 @@ interface Props {
    *  free-text/user-editable — this is a display of who the session
    *  already resolves to, not an identity claim the user can alter. */
   approverLabel: string | null;
+  actorLabelPrefix?: string;
   confirmLabel?: string;
   cancelLabel?: string;
   onCancel: () => void;
@@ -33,6 +34,7 @@ export function GateApprovalConfirmDialog({
   title,
   summary,
   approverLabel,
+  actorLabelPrefix = "Approving as",
   confirmLabel = "Confirm approval",
   cancelLabel = "Cancel",
   onCancel,
@@ -56,7 +58,7 @@ export function GateApprovalConfirmDialog({
         <p className={styles.confirmDialogBody}>{summary}</p>
         {approverLabel ? (
           <p className={styles.confirmDialogBody} style={{ fontWeight: 700 }}>
-            Approving as: {approverLabel}
+            {actorLabelPrefix}: {approverLabel}
           </p>
         ) : null}
         <div className={styles.confirmActions}>

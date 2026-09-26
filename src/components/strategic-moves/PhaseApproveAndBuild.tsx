@@ -652,8 +652,9 @@ export function PhaseApproveAndBuild({
       <GateApprovalConfirmDialog
         open={confirmOpen}
         title={`Approve & build ${phaseLabel}?`}
-        summary={`This generates all ${specs.length} ${phaseLabel} deliverable${specs.length === 1 ? "" : "s"} in one governed batch and closes the phase gate once every document reaches a terminal state. There is no per-document regenerate afterward — if an input changes, you'll re-run and re-approve the whole phase.`}
+        summary={`This authorizes a governed build of all ${specs.length} ${phaseLabel} deliverable${specs.length === 1 ? "" : "s"} in one batch. It does not sign off the generated document${specs.length === 1 ? "" : "s"} or record the sponsor approval required by the phase gate; the gate remains blocked until each required deliverable is reviewed and signed off in Files & Evidence. There is no per-document regenerate afterward — if an input changes, you'll re-run the whole phase build.`}
         approverLabel={approverLabel}
+        actorLabelPrefix="Authorizing build as"
         confirmLabel="Approve & Build"
         onCancel={() => setConfirmOpen(false)}
         onConfirm={() => {
