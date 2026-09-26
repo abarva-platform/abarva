@@ -509,6 +509,38 @@
       ]
     },
     {
+      "id": "intelligence-pattern-promotion-brief-panel",
+      "surface": "Intelligence pattern promotion brief panel",
+      "lane": "global-control-lane",
+      "owner": "AbarVa",
+      "path": "src/components/programs/origination/ProgramBriefPanel.tsx",
+      "requiredControls": [
+        {
+          "kind": "ai-label",
+          "evidence": [
+            "IntelligencePromotionApprovalCard",
+            "Human promotion gate required",
+            "Intelligence pattern promotion approval"
+          ],
+          "behavioralTest": {
+            "path": "src/components/programs/origination/__tests__/ProgramBriefPanel.controls.test.tsx"
+          }
+        },
+        {
+          "kind": "citation",
+          "evidence": [
+            "approval.evidenceRefs.join(', ')",
+            "approval.sourceThreadId",
+            "approval.selectedPatternKey",
+            "promotionApproval.evidenceRefs.length > 0"
+          ],
+          "behavioralTest": {
+            "path": "src/components/programs/origination/__tests__/ProgramBriefPanel.controls.test.tsx"
+          }
+        }
+      ]
+    },
+    {
       "id": "moves-deliverable-canvas-view",
       "surface": "Moves deliverable canvas view model",
       "lane": "global-control-lane",
@@ -756,30 +788,22 @@
     },
     {
       "key": "generated-ui|Intelligence|Sentinel active pattern recommendations|ai-label",
-      "status": "deferred",
-      "controlKind": "ai-label",
-      "reason": "The old SentinelActivePatterns component path was retired; the current pattern UI needs a fresh machine-pinned AI label surface.",
-      "surfaceJoin": {
-        "state": "uncatalogued"
-      }
+      "status": "covered",
+      "surfaceId": "intelligence-pattern-promotion-brief-panel",
+      "controlKind": "ai-label"
     },
     {
       "key": "generated-ui|Intelligence|Sentinel active pattern recommendations|citation",
-      "status": "deferred",
-      "controlKind": "citation",
-      "reason": "The old SentinelActivePatterns component path was retired; the current pattern UI needs a fresh machine-pinned citation surface.",
-      "surfaceJoin": {
-        "state": "uncatalogued"
-      }
+      "status": "covered",
+      "surfaceId": "intelligence-pattern-promotion-brief-panel",
+      "controlKind": "citation"
     },
     {
       "key": "generated-ui|Intelligence|Sentinel active pattern recommendations|confidence",
       "status": "deferred",
       "controlKind": "confidence",
-      "reason": "The old SentinelActivePatterns component path was retired; the current pattern UI needs a fresh machine-pinned confidence surface.",
-      "surfaceJoin": {
-        "state": "uncatalogued"
-      }
+      "surfaceId": "intelligence-pattern-promotion-brief-panel",
+      "reason": "The surface is catalogued and its ai-label and citation controls are covered, but it carries no confidence disclosure: the confidence-label half of this legal claim rendered on the pattern-recommendation cards in a component that no longer exists, and the surviving brief panel discloses the promotion gate and its evidence refs without stating a confidence tier. Deferred against the surface rather than against no surface at all, so the gap is now attached to a path a reader can open."
     },
     {
       "key": "generated-ui|Moves|Deliverables canvas|ai-label",
