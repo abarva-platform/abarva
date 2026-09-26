@@ -107,6 +107,14 @@ const requiredFields: readonly SourceReadModelContractField[] = [
  * `buildJob: "none"` counted toward build readiness.
  */
 const PLACEHOLDERS = new Set([
+  // This validator has to spell the words it rejects, exactly as the DOM linter
+  // itself and `link-crawler.ts` do — both are named in that linter's own skip
+  // list for the same reason. The line below is a detector's vocabulary, not
+  // placeholder copy in rendered output: nothing renders this module, whose only
+  // importers are one behaviours suite and one operator script. The marker is
+  // scoped to that one line on purpose, so the rule stays live for the rest of
+  // this file and the rest of the tree.
+  // dom-integrity-ignore-line
   "tbd", "tba", "todo", "n/a", "na", "none", "no", "nil", "null", "unknown",
   "unspecified", "pending", "?", "-", "--", "tbc", "later", "somewhere",
 ]);
