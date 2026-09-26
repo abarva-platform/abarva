@@ -55,6 +55,16 @@ export interface SourceGateAdvanceContractResult {
  * evidence. A criterion or evidence requirement that is open is answered with a
  * 409 blocker and no write, for every caller. An individual criterion is cleared
  * only through the recorded-waiver path in the criterion-state route, never here.
+ *
+ * That invariant is held by a guard that does not name the input it refuses (item
+ * C-550): the suite drives this function through an input answering "yes" to
+ * every field this interface does not declare, and asserts both that `ok` stays
+ * false while readiness fails and that no undeclared field was read at all. A
+ * waiver reintroduced under any new name -- a flag, an options bag, a second
+ * overload -- reddens that guard without anyone having predicted the name. If a
+ * field is genuinely added to `SourceGateAdvanceContractInput`, add it to
+ * `DECLARED_CONTRACT_INPUT_FIELDS` in the suite; the typecheck requires it, and
+ * that line is where a reviewer decides whether the new input is a waiver.
  */
 export function evaluateSourceGateAdvanceContract(
   input: SourceGateAdvanceContractInput,
