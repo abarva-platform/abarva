@@ -1,9 +1,9 @@
 # Moves Deliverable Quality - Status
 
-**Updated:** 2026-09-25T13:24:28Z
+**Updated:** 2026-09-26T00:44:00Z
 **Agent:** codex
-**Branch:** codex/moves-quality-fix-all
-**Head:** local branch pending PR
+**Branch:** origin/main plus follow-up status cleanup
+**Head:** post-#8473 verification
 
 ## Now
 
@@ -23,7 +23,7 @@ exhibits and tables. No data-plane mutation or live tenant write is in scope for
 | 5   | Red-test diagnosis                                     | pr_open              | PR #8421; the named visual-gate/storyline/render preview suites now pass on this branch without widening the visual-credit gate.                                                                                                                                                                                                                                                                                                                                                                   |
 | 6   | Legacy small-model document route reachability         | pr_open              | PR #8421; code inspection confirms `POST /api/engage/[engagementId]/turn` still calls `generateDeliverableForPhase()` after gate approval. The legacy fallback now resolves through central document-generation policy instead of a hardcoded small model / 2,048-token call.                                                                                                                                                                                                                      |
 | 7   | Golden-bar signal measurement before enforcement       | pr_open              | PR #8421 adds report-only `moves:measure-golden-bar-signals` runner over caller-provided artifact exports. Production corpus measurement not run in this branch.                                                                                                                                                                                                                                                                                                                                   |
-| 8   | Human exemplars, judge, and calibration corpus         | blocked_human_review | Report-only exemplar audit remains honest: 0/19 complete, 19 missing, 2 existing HTML files unmapped; `readyForJudge=false`. Human-owned exemplars remain required before judge work can be meaningful; this branch does not fabricate approvals.                                                                                                                                                                                                                                                  |
+| 8   | Human exemplars, judge, and calibration corpus         | blocked_human_review | Report-only exemplar audit remains honest: 0/20 complete, 20 missing, 2 existing visual benchmark HTML files unmapped as per-deliverable exemplars; `readyForJudge=false`. Human-owned exemplars remain required before judge work can be meaningful; this branch does not fabricate approvals.                                                                                                                                                                                                      |
 
 ## Measurements
 
@@ -36,7 +36,7 @@ exhibits and tables. No data-plane mutation or live tenant write is in scope for
 | Authored-slide artifact proof  | passed                   | `/tmp/moves-deliverable-quality-proof/authored-slide-proof-summary.json`; authored slide rendered with linked exhibit and speaker notes                                                                           |
 | Legacy route model policy      | passed                   | Code inspection confirmed route reachability; regression test covers legacy fallback policy and forbids the hardcoded small-model / 2,048-token path                                                              |
 | Dead placeholder PPTX renderer | passed                   | `renderStorylineDeckPptx` and its `VISUAL EXHIBIT` placeholder were removed; live generated-deck PPTX remains in orchestrator `renderers.tsx`                                                                     |
-| Exemplar coverage audit        | passed with expected gap | `npm run moves:audit-golden-exemplars -- --out /tmp/moves-golden-exemplar-coverage-fix-all.json`; report says 0/19 complete, 19 missing, 2 unmapped HTML files; `readyForJudge=false`                             |
+| Exemplar coverage audit        | passed with expected gap | `npm run moves:audit-golden-exemplars -- --out /tmp/moves-golden-exemplar-coverage-after-8473.json`; report says 0/20 complete, 20 missing, 2 unmapped visual benchmark HTML files; `readyForJudge=false`          |
 | Production data-plane writes   | 0                        | Not in scope                                                                                                                                                                                                      |
 | Deployments                    | 0                        | Not in scope                                                                                                                                                                                                      |
 
@@ -44,6 +44,9 @@ exhibits and tables. No data-plane mutation or live tenant write is in scope for
 
 Human-curated exemplars are required before a quality judge can be trusted. The report-only
 coverage audit makes the gap machine-readable, but it does not create substitute exemplars.
+The two staged HTML files under `docs/build/golden-artifacts/` are visual benchmark fixtures used by
+golden-bar tests; they are not approved per-deliverable exemplars until a human manifest maps each
+one to a deliverable with an owner, review date, approved status, and rationale.
 
 ## Known Gaps
 
