@@ -1,6 +1,6 @@
 # Source Done Ledger
 
-Last updated: 2026-07-19
+Last updated: 2026-09-26
 
 ## Purpose
 
@@ -20,7 +20,9 @@ tenant and route.
 | Signed-in proven | Authenticated browser crawl confirms the expected product behavior live. |
 | Archived | Route/component is not reachable from the product path; rollback requires a code change. |
 
-## Current Source Release Chain
+## Historical July Source Release Chain
+
+The table below preserves the July baseline. Its `Candidate PR` and `Planned` rows are historical statuses, not a current queue. Use the dated chain below for current Source V1 execution.
 
 | Item | User-facing intent | Current state | Evidence | Remaining gate |
 | --- | --- | --- | --- | --- |
@@ -35,6 +37,13 @@ tenant and route.
 | aVa/artifact evidence parity | Ensure aVa and artifact generation read the same evidence/provenance semantics. | Planned | Flagged as plausible but not fully verified. | Audit first; do not assume parity. |
 | Archetype rules for SaaS + BPO | Add non-AMS rules so Source intelligence is not AMS-only. | Planned | Needed before broad value-signal generalization. | Define archetype contracts and cross-tenant proof. |
 
+## Current Source V1 Completion Chain
+
+| Item | Motion and user outcome | State and evidence | Remaining gate | Proposal disposition | Next |
+| --- | --- | --- | --- | --- | --- |
+| C-603 Event Owner on creation | NEW: assign the authenticated creator event-scoped decision authority without granting financial visibility. | Deployed. PR #8516, squash `3c4c291d016bd94b26e378f62d32111e8f164bb7`; 35 applicable CI checks passed and three skipped; official ACA run `36262364185` succeeded. Read-only runtime proof: web template, healthy 100%-traffic revision, and both delivery workers at `sha256:66d26f4d436f3dd3c25a1c9b0c964fdb7a0729487e8b2dbc18e0367b20a287c1`. Focused local suites 55/55 and negative adapter mutations passed. A signed-in synthetic intake created an event and showed the creator's self-approval notice. | Private participant-row readback and an authorized human's successful decision are not proven. Existing events were not backfilled; evidence gates remain in force. | AbarVa Product | Correct the approval screen's actor attribution; then prove an authorized Event Owner decision without fabricating one. |
+| C-605 Approval actor attribution | NEW: the Event Owner's own intake decision must not be recorded as a distinct sponsor sign-off. | Candidate PR. Red-first rendered and transport tests found the false claim; component suite 12/12, approval route 26/26, scoped lint, typecheck, and release check pass; restoring the old payload claim fails the negative test. | PR/CI, merge, official deploy, runtime invariant, and signed-in readback remain owed. This does not clear a separately governed Scope evidence gate. | AbarVa Product | Release this narrow correction, then resolve the per-event Source V1 SELF policy without changing historical gate authority by implication. |
+
 ## Hard Gates For Every Future Source Slice
 
 1. Focused tests prove the exact behavior changed.
@@ -47,7 +56,9 @@ tenant and route.
    traffic revision match the approved digest.
 8. Signed-in browser proof confirms the affected Source route/workflow.
 
-## Next Execution Order
+## Historical July Execution Order
+
+This ordering is retained for audit only. The current Source V1 completion chain above governs active selection.
 
 1. Merge/deploy/prove the Source aVa truth contract.
 2. Wire Dynamic Intelligence Explorer by stage.
