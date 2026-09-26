@@ -1020,7 +1020,7 @@ describe("SourceAnalyticsCanvas — docked aVa honesty against live stage state"
     );
 
     const canvas = screen.getByTestId("source-analytics-canvas");
-    expect(canvas.textContent).toContain(`${remaining} steps left`);
+    expect(canvas.textContent).toContain(`${remaining} required workflow steps remain for Scope`);
     expect(canvas.textContent).toContain(`1 / ${total}`);
     expect(canvas.textContent).not.toContain("Two steps left");
   });
@@ -1068,7 +1068,7 @@ describe("SourceAnalyticsCanvas — docked aVa honesty against live stage state"
       (task) => task.state === "done",
     ).length;
     expect(screen.getByTestId("source-analytics-canvas").textContent).toContain(
-      `${total - done} steps left`,
+      `${total - done} required workflow steps remain for Scope`,
     );
   });
 });
