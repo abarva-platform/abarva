@@ -17,7 +17,7 @@ function safeSupplementalVendorName(
   return ref || "Vendor name not resolved";
 }
 
-function supplementalCoverageContractRow(
+export function supplementalCoverageContractRow(
   coverage: SourceContractEvidenceCoverageRow,
 ): SourceContract360Row {
   return {
@@ -65,7 +65,7 @@ function supplementalCoverageContractRow(
   };
 }
 
-function supplementalActionContractRow(
+export function supplementalActionContractRow(
   action: SourceContractActionCandidateRow,
 ): SourceContract360Row {
   const candidateAmount = numberFromDb(action.candidate_amount_usd);

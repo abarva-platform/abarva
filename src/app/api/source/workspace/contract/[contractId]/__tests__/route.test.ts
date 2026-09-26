@@ -46,6 +46,8 @@ jest.mock("@/lib/source/data-model/read-adapter", () => ({
   listDocFilesForContract: jest.fn(),
   listLatestTowerObservationsForSubjects: jest.fn(),
   listTowerValueClaimsForSubjects: jest.fn(),
+  getSourceContractEvidenceCoverage: jest.fn(),
+  getSourceContractActionCandidate: jest.fn(),
 }));
 
 jest.mock(
@@ -94,6 +96,8 @@ import {
   listDocFilesForContract,
   listLatestTowerObservationsForSubjects,
   listTowerValueClaimsForSubjects,
+  getSourceContractEvidenceCoverage,
+  getSourceContractActionCandidate,
 } from "@/lib/source/data-model/read-adapter";
 
 const mockRequireTenancy = requireTenancy as jest.Mock;
@@ -142,6 +146,10 @@ const mockListLatestTowerObservationsForSubjects =
   listLatestTowerObservationsForSubjects as jest.Mock;
 const mockListTowerValueClaimsForSubjects =
   listTowerValueClaimsForSubjects as jest.Mock;
+const mockGetSourceContractEvidenceCoverage =
+  getSourceContractEvidenceCoverage as jest.Mock;
+const mockGetSourceContractActionCandidate =
+  getSourceContractActionCandidate as jest.Mock;
 
 const contract = {
   tenant_key: "meridian",
@@ -202,6 +210,8 @@ beforeEach(() => {
     initiativeDependencies: [],
   });
   mockLoadSourceWorkspaceContractDetailFallback.mockResolvedValue(null);
+  mockGetSourceContractEvidenceCoverage.mockResolvedValue(null);
+  mockGetSourceContractActionCandidate.mockResolvedValue(null);
   mockSourceWorkspaceProvider.mockImplementation(
     (provider: string | null | undefined) => provider ?? "legacy",
   );
@@ -438,6 +448,91 @@ describe("GET /api/source/workspace/contract/[contractId]", () => {
         }),
       }),
     );
+  });
+
+  it("resolves an action-only contract when portfolio impact is deferred without inventing contract value", async () => {
+    mockGetContract360.mockResolvedValueOnce(null);
+    mockGetSourceContractActionCandidate.mockResolvedValueOnce({
+      tenant_key: "meridian_health_global",
+      contract_id: "CTR-ACTION-1",
+      vendor_ref: "VEN-1",
+      vendor_name: "Example Vendor",
+      title: "Review terms",
+      action_type: "renewal",
+      opportunity_type: "renewal",
+      finding_summary: "Candidate action only",
+      candidate_amount_usd: 12000,
+      readiness_state: "candidate",
+      accountable_role: "Category Manager",
+    });
+
+    const res = await GET(
+      new Request("https://app.test/api/source/workspace/contract/CTR-ACTION-1?client=meridian&sourceProvider=ecl_projection_db"),
+      params("CTR-ACTION-1"),
+    );
+
+    expect(res.status).toBe(200);
+    expect(loadSourceWorkspacePortfolio).toHaveBeenCalledWith(
+      "meridian", expect.any(String), "ecl_projection_db", { impactMode: "deferred" },
+    );
+    expect(getSourceContractActionCandidate).toHaveBeenCalledWith("meridian", "CTR-ACTION-1");
+    expect(buildContract360View).toHaveBeenCalledWith(expect.objectContaining({
+      contract: expect.objectContaining({
+        contract_id: "CTR-ACTION-1",
+        annual_value: null,
+        total_committed_value: null,
+        resolved_annual_value: null,
+        resolved_total_committed_value: null,
+      }),
+    }));
+  });
+
+  it("does not resolve a supplemental row from another tenant", async () => {
+    mockGetContract360.mockResolvedValueOnce(null);
+    mockGetSourceContractActionCandidate.mockResolvedValueOnce({
+      tenant_key: "skyharbor_global",
+      contract_id: "CTR-ACTION-1",
+      vendor_ref: "VEN-1",
+      vendor_name: "Other Tenant Vendor",
+    });
+
+    const res = await GET(
+      new Request("https://app.test/api/source/workspace/contract/CTR-ACTION-1?client=meridian&sourceProvider=ecl_projection_db"),
+      params("CTR-ACTION-1"),
+    );
+
+    expect(res.status).toBe(404);
+    expect(buildContract360View).not.toHaveBeenCalled();
+  });
+
+  it("resolves evidence-only detail without waiting for impact fanout", async () => {
+    mockGetContract360.mockResolvedValueOnce(null);
+    mockGetSourceContractEvidenceCoverage.mockResolvedValueOnce({
+      tenant_key: "meridian",
+      contract_id: "CTR-EVIDENCE-1",
+      vendor_ref: "VEN-1",
+      vendor_name: "Example Vendor",
+      contract_name: "Supplemental depth record",
+      coverage_state: "partial",
+      scope_rows: 2,
+      critical_scope_rows: 1,
+    });
+
+    const res = await GET(
+      new Request("https://app.test/api/source/workspace/contract/CTR-EVIDENCE-1?client=meridian&sourceProvider=ecl_projection_db"),
+      params("CTR-EVIDENCE-1"),
+    );
+
+    expect(res.status).toBe(200);
+    expect(getSourceContractEvidenceCoverage).toHaveBeenCalledWith("meridian", "CTR-EVIDENCE-1");
+    expect(buildContract360View).toHaveBeenCalledWith(expect.objectContaining({
+      contract: expect.objectContaining({
+        contract_id: "CTR-EVIDENCE-1",
+        annual_value: null,
+        total_committed_value: null,
+        scoped_application_count: 2,
+      }),
+    }));
   });
 
   it("passes governed tab intelligence into the contract-detail view builder", async () => {

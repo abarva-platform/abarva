@@ -8,6 +8,8 @@ import {
 } from "@/lib/source/data-model/contract-360-view";
 import {
   getContract360,
+  getSourceContractActionCandidate,
+  getSourceContractEvidenceCoverage,
   getContractEvidenceOverview,
   getContractIntelligence,
   getContractEvidencePerformanceSummary,
@@ -37,14 +39,18 @@ import type {
   SourceContractEvidencePerformanceSummary,
   SourceContractOperationalPerformanceRow,
 } from "@/lib/source/data-model/types";
-import { appClientKeyForTenant } from "@/lib/tenant/aliases";
+import { appClientKeyForTenant, canonicalTenantKey } from "@/lib/tenant/aliases";
 import {
   loadSourceWorkspacePortfolio,
   loadSourceWorkspaceContractDetailFallback,
   sourceWorkspaceProvider,
   type SourceWorkspaceProviderMode,
 } from "@/app/(maestro)/source/preview/workspace/live/portfolioAdapter";
-import { focusableContractRows } from "@/app/(maestro)/source/preview/workspace/contractDiscovery";
+import {
+  focusableContractRows,
+  supplementalActionContractRow,
+  supplementalCoverageContractRow,
+} from "@/app/(maestro)/source/preview/workspace/contractDiscovery";
 
 // Lazy, per-contract detail read for the Source Workspace — mirrors exactly
 // what the retired /source/vendor-portfolio/[contractId] route used to do,
@@ -127,6 +133,38 @@ export async function GET(
       return null;
     });
     contract = projectionDetail?.contract ?? null;
+  }
+  if (!contract && eclProvider !== "legacy") {
+    const action = await getSourceContractActionCandidate(
+      tenantKey,
+      contractId,
+    ).catch(() => {
+      readFailed = true;
+      return null;
+    });
+    if (
+      action &&
+      canonicalTenantKey(action.tenant_key) === canonicalTenantKey(tenantKey) &&
+      action.contract_id === contractId
+    ) {
+      contract = supplementalActionContractRow(action);
+    }
+  }
+  if (!contract && eclProvider !== "legacy") {
+    const coverage = await getSourceContractEvidenceCoverage(
+      tenantKey,
+      contractId,
+    ).catch(() => {
+      readFailed = true;
+      return null;
+    });
+    if (
+      coverage &&
+      canonicalTenantKey(coverage.tenant_key) === canonicalTenantKey(tenantKey) &&
+      coverage.contract_id === contractId
+    ) {
+      contract = supplementalCoverageContractRow(coverage);
+    }
   }
   if (!contract) {
     if (readFailed) {
