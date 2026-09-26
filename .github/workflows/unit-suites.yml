@@ -151,6 +151,29 @@ jobs:
           src/app/api/v1/programs/[programId]/deliverables/complete/__tests__/route.test.ts
           --no-coverage --ci
 
+      # The two synthesis route directories, wired by C-532.
+      #
+      # Measured from `docs/architecture/test-ci-coverage-census.json` on
+      # `874114b1e` rather than inferred: both directories were
+      # `run: false, covered: false, untriaged: true` at governed-risk band
+      # `high` with signal `tenant_scoped_read` — that is, suites asserting
+      # tenant-scoped behavior on a model-facing route, green locally and run by
+      # nothing. The item that brought this here is about a control that was safe
+      # only by accident; leaving its proof in a directory CI does not enter
+      # would reproduce the original defect in the test tree instead of the
+      # source tree.
+      #
+      # Named as directories, not as files, so the next suite added beside them
+      # joins CI on the commit that adds it rather than waiting for someone to
+      # remember this list. Both directories are green as named: 4 suites /
+      # 20 tests.
+      - name: Run the synthesis route suites
+        run: >-
+          npx jest
+          src/app/api/source/synthesis/__tests__
+          src/app/api/programs/synthesis/__tests__
+          --no-coverage --ci
+
       # Four more library trees that no workflow and no npm script reached.
       # Measured on `ced75d7c3` by running them, not by reading YAML:
       #
