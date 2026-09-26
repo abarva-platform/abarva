@@ -686,6 +686,10 @@
         "failing": 2,
         "ran": true
       },
+      "baselineEntryRemovedBy": {
+        "item": "T-483",
+        "reason": "The two fallback cases this row recorded as failing were repaired by updating the stale fixture identity, so docs/ci/tower-test-baseline.json no longer carries an entry for this suite. The quote above is left exactly as measured at this record\u2019s base; it is history, not a live assertion."
+      },
       "sourceTextScanner": false,
       "verdict": "update_with_reason_recorded",
       "ownerItem": "T-483",

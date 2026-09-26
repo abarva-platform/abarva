@@ -68,6 +68,7 @@ jest.mock("@/lib/tower/exports", () => ({
 }));
 
 import { GET } from "../route";
+import { CANONICAL_CLIENT_ADMIN_EMAILS } from "@/lib/auth/canonical-auth-roster";
 
 const APEX_CLIENT = {
   id: "client_apex",
@@ -81,12 +82,36 @@ const MERIDIAN_CLIENT = {
   name: "Meridian Health System",
 };
 
-const APEX_ADMIN = {
+// The identity this suite hangs on has to satisfy isSameClientAdminFallback,
+// which needs BOTH halves: same client as the active one, and admin-like. The
+// previous fixture was a persona address dropped from the canonical
+// client-admin roster in 6ebe6d4a9, so it was admin-like against no list, the
+// three fallback cases were unreachable, and the widening case below could not
+// tell the guard from its absence (T-483). The roster is not widened to suit
+// the test; the test uses an address that is on it.
+//
+// FALLBACK_ADMIN's own tenant is the one its address infers to, which is
+// FALLBACK_OWN_CLIENT. FALLBACK_OTHER_CLIENT is the tenant it must NOT reach.
+// Written out, not read back out of CANONICAL_CLIENT_ADMIN_EMAILS. Taking it
+// from that list makes the pin below assert that a list contains its own first
+// element, which is true however the roster changes -- the same
+// satisfied-by-a-name shape this item exists to remove. Measured: with the
+// address read from the list, removing it from the roster left all five cases
+// green.
+const FALLBACK_ADMIN_EMAIL = "admin@abarva.ai";
+
+const FALLBACK_OWN_CLIENT = MERIDIAN_CLIENT;
+const FALLBACK_OTHER_CLIENT = APEX_CLIENT;
+
+const FALLBACK_ADMIN = {
   personId: null,
-  clerkUserId: "user_apex_cio",
-  metadataClientKey: "apexretail",
-  name: "Carlos Rivera",
-  email: "cio@apex-retail.example.com",
+  clerkUserId: "user_canonical_client_admin",
+  // Deliberately null: isSameClient then rests on the address inference alone,
+  // so dropping that half of the condition shows up here. The metadata half is
+  // covered by the non-admin case below, which sets this key instead.
+  metadataClientKey: null as string | null,
+  name: "Canonical client admin",
+  email: FALLBACK_ADMIN_EMAIL,
   primaryRole: "client_viewer",
   accessibleClients: [],
   defaultClientId: null,
@@ -106,11 +131,11 @@ describe("GET /api/v1/tower/outcome-report", () => {
         { status: 403 },
       ),
     );
-    getCurrentUserMock.mockResolvedValue(APEX_ADMIN);
+    getCurrentUserMock.mockResolvedValue(FALLBACK_ADMIN);
     getActiveClientRowMock.mockImplementation((requestedClientKey?: string) => {
-      if (requestedClientKey === "meridian")
-        return Promise.resolve(MERIDIAN_CLIENT);
-      return Promise.resolve(APEX_CLIENT);
+      if (requestedClientKey === FALLBACK_OTHER_CLIENT.key)
+        return Promise.resolve(FALLBACK_OTHER_CLIENT);
+      return Promise.resolve(FALLBACK_OWN_CLIENT);
     });
     loadUserProgramAccessPolicyMock.mockResolvedValue({
       accessLevel: "program_member",
@@ -123,18 +148,31 @@ describe("GET /api/v1/tower/outcome-report", () => {
     );
   });
 
+  it("pins the fallback fixture to the canonical client-admin roster", () => {
+    // Without this, a future narrowing of the roster takes the three cases
+    // below with it and leaves them red for a reason none of them names --
+    // which is how this suite spent ten weeks proving nothing (T-483).
+    expect(CANONICAL_CLIENT_ADMIN_EMAILS).toContain(FALLBACK_ADMIN.email);
+  });
+
   it("streams DOCX for a same-client admin fallback when the active-client cookie is missing", async () => {
-    const res = await GET(req("?format=docx&client=apexretail") as never);
+    const res = await GET(
+      req(`?format=docx&client=${FALLBACK_OWN_CLIENT.key}`) as never,
+    );
 
     expect(res.status).toBe(200);
     expect(res.headers.get("content-type")).toBe(
       "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
     );
     expect(res.headers.get("content-disposition")).toMatch(
-      /attachment; filename="tower-outcome-report__apexretail__\d{4}-\d{2}-\d{2}\.docx"/,
+      new RegExp(
+        `attachment; filename="tower-outcome-report__${FALLBACK_OWN_CLIENT.key}__\\d{4}-\\d{2}-\\d{2}\\.docx"`,
+      ),
     );
     expect(res.headers.get("x-tower-report-format")).toBe("docx");
-    expect(res.headers.get("x-tower-report-tenant")).toBe("apexretail");
+    expect(res.headers.get("x-tower-report-tenant")).toBe(
+      FALLBACK_OWN_CLIENT.key,
+    );
     expect(
       Buffer.from(await res.arrayBuffer())
         .subarray(0, 2)
@@ -143,17 +181,23 @@ describe("GET /api/v1/tower/outcome-report", () => {
   });
 
   it("streams XLSX for a same-client admin fallback when the active-client cookie is missing", async () => {
-    const res = await GET(req("?format=xlsx&client=apexretail") as never);
+    const res = await GET(
+      req(`?format=xlsx&client=${FALLBACK_OWN_CLIENT.key}`) as never,
+    );
 
     expect(res.status).toBe(200);
     expect(res.headers.get("content-type")).toBe(
       "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
     );
     expect(res.headers.get("content-disposition")).toMatch(
-      /attachment; filename="tower-outcome-report__apexretail__\d{4}-\d{2}-\d{2}\.xlsx"/,
+      new RegExp(
+        `attachment; filename="tower-outcome-report__${FALLBACK_OWN_CLIENT.key}__\\d{4}-\\d{2}-\\d{2}\\.xlsx"`,
+      ),
     );
     expect(res.headers.get("x-tower-report-format")).toBe("xlsx");
-    expect(res.headers.get("x-tower-report-tenant")).toBe("apexretail");
+    expect(res.headers.get("x-tower-report-tenant")).toBe(
+      FALLBACK_OWN_CLIENT.key,
+    );
     expect(
       Buffer.from(await res.arrayBuffer())
         .subarray(0, 2)
@@ -162,7 +206,67 @@ describe("GET /api/v1/tower/outcome-report", () => {
   });
 
   it("does not let a same-client fallback widen into another requested client", async () => {
-    const res = await GET(req("?format=docx&client=meridian") as never);
+    // The 403 below only means something if this identity can reach the
+    // fallback at all, and that truth has to come from somewhere other than
+    // the assertion it is supporting. Mutation M3 -- dropping the same-client
+    // condition from isSameClientAdminFallback -- survived this case for ten
+    // weeks precisely because the fixture could never be admin-like, so the
+    // 403 was arriving for a reason the case does not test (T-483).
+    const ownTenant = await GET(
+      req(`?format=docx&client=${FALLBACK_OWN_CLIENT.key}`) as never,
+    );
+    expect(ownTenant.status).toBe(200);
+
+    // Counts rather than never-called, because the control above legitimately
+    // reads and renders. The property is that the widened request adds none.
+    const substrateReads = listInitiativesForClientMock.mock.calls.length;
+    const renders = packerToBufferMock.mock.calls.length;
+
+    const res = await GET(
+      req(`?format=docx&client=${FALLBACK_OTHER_CLIENT.key}`) as never,
+    );
+
+    expect(res.status).toBe(403);
+    expect(listInitiativesForClientMock.mock.calls.length).toBe(substrateReads);
+    expect(packerToBufferMock.mock.calls.length).toBe(renders);
+  });
+
+  it("reaches the fallback for a tenant the admin's metadata scopes them to, not only the one their address infers", async () => {
+    // isSameClient is an OR of two halves and each needs its own case:
+    // removing the metadata half left all six other cases green, because the
+    // fixture above is same-client by address inference alone. Here the
+    // address infers a different tenant and the metadata carries the match.
+    getCurrentUserMock.mockResolvedValue({
+      ...FALLBACK_ADMIN,
+      metadataClientKey: FALLBACK_OTHER_CLIENT.key,
+    });
+
+    const res = await GET(
+      req(`?format=docx&client=${FALLBACK_OTHER_CLIENT.key}`) as never,
+    );
+
+    expect(res.status).toBe(200);
+    expect(res.headers.get("x-tower-report-tenant")).toBe(
+      FALLBACK_OTHER_CLIENT.key,
+    );
+  });
+
+  it("does not let a same-client non-admin skip the program-access policy", async () => {
+    // The fallback is "same client AND admin-like". Nothing asserted the
+    // second half: dropping it from isSameClientAdminFallback left all five
+    // cases green, because the only fixture reaching the fallback was already
+    // admin-like. This identity is same-client by metadata and admin-like by
+    // nothing.
+    getCurrentUserMock.mockResolvedValue({
+      ...FALLBACK_ADMIN,
+      clerkUserId: "user_same_client_viewer",
+      metadataClientKey: FALLBACK_OWN_CLIENT.key,
+      email: "analyst@meridian-health.example.com",
+    });
+
+    const res = await GET(
+      req(`?format=docx&client=${FALLBACK_OWN_CLIENT.key}`) as never,
+    );
 
     expect(res.status).toBe(403);
     expect(listInitiativesForClientMock).not.toHaveBeenCalled();
@@ -177,7 +281,7 @@ describe("GET /api/v1/tower/outcome-report", () => {
       email: "cdio@meridian-health.example.com",
     });
     getCurrentUserMock.mockResolvedValue({
-      ...APEX_ADMIN,
+      ...FALLBACK_ADMIN,
       metadataClientKey: "meridian",
       email: "cdio@meridian-health.example.com",
     });
