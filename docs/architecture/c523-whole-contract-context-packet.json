@@ -1,0 +1,59 @@
+{
+  "item": "C-523",
+  "subject": "the whole-contract context packet, measured where it reaches the model",
+  "measuredOn": "687b5c300",
+  "measuredAt": "2026-09-26",
+  "method": "The packet is built by the real server builder over stubbed leaf reads for one authorized contract on one tenant, then formatted by the real prompt-block formatter. Every content number below is counted over the formatter's output string with the fixed answer-format footer removed, because that footer is the block's instruction to the model rather than contract content retrieved for it. Nothing is read off a builder's return value. Governance verdicts come from the repo-owned graph walk in scripts/audit/lib/route-reachability.mjs, the same walk the route-reachability audit and the route-ownership map use.",
+  "grainWarning": "A route-level reachability verdict is not evidence about a packet. One of the two routes named by the item reaches the governance seam module through unrelated code while the packet it formats never touches it, so the per-module verdicts are the answer and the per-route ones are recorded only to show that the coarser question answers wrongly.",
+  "inheritedPremiseCorrected": "The master backlog records this packet as carrying 'a document count only'. On the server-built path there is no document count either: the dataset, cube and top-vendor summaries all resolve to null because the builder does not write the keys that feed them.",
+  "objectKindCounts": {
+    "clause": 0,
+    "definition": 0,
+    "schedule": 0,
+    "amendment": 0,
+    "evidence_reference": 0
+  },
+  "specComponentsPresent": {
+    "identity_and_time": false,
+    "agreement_set": false,
+    "commercial_position": true,
+    "operating_evidence": false,
+    "enterprise_relationships": false,
+    "computed_intelligence": false,
+    "advisory_material": false,
+    "coverage_and_conflicts": false
+  },
+  "packetSurfaceKeys": ["selectedContract", "optimizationOpportunities"],
+  "packetKeysNeverWritten": [
+    "executivePortfolio",
+    "contextCoverage",
+    "valueProof",
+    "contractDirectory",
+    "contractOpportunityDirectory"
+  ],
+  "governanceSeamModule": "src/lib/governance/agent-context-bundle.ts",
+  "governanceSeamReachableFrom": {
+    "src/lib/source/ava/server-contract-answer-context.ts": false,
+    "src/lib/source/ava/portfolio-fallback-answer.ts": false,
+    "src/lib/intelligence/ask/retrievers/surface-context.ts": false,
+    "src/lib/source/ava/module-expert.ts": false
+  },
+  "surfaceRetrieverSourcesFromPacket": 0,
+  "destinations": [
+    {
+      "id": "ask-route-server-built",
+      "callSite": "src/lib/intelligence/ask/index.ts:656",
+      "packetBuilder": "src/lib/source/ava/server-contract-answer-context.ts",
+      "packetProvenance": "server-rebuilt under a tenant-access check; client-supplied contract fields are discarded on the Source module path",
+      "formatter": "src/lib/source/ava/portfolio-fallback-answer.ts:300"
+    },
+    {
+      "id": "agent-route-request-supplied",
+      "callSite": "src/app/api/chat/agent/route.ts:1971",
+      "packetBuilder": null,
+      "packetProvenance": "the request body's own surfaceContext, passed to the formatter unrebuilt, and labelled to the model as authoritative page-local contract scope",
+      "formatter": "src/lib/source/ava/portfolio-fallback-answer.ts:300"
+    }
+  ],
+  "provenNegative": "The expected outcome, per the item: no object of any of the five named kinds reaches the model through this packet, and the packet does not pass the governance seam at any module on its path."
+}
