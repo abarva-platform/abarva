@@ -941,6 +941,46 @@ export type StepInsightView =
   | BafoProgressInsightView
   | CommittedValueInsightView;
 
+// ── Beat provenance — is this beat derived, or exemplar scaffold content? ─────
+
+/**
+ * Where ONE beat of a stage view's content came from.
+ *
+ * `fact_derived` — computed for THIS event from its committed facts.
+ * `scaffold`     — carried verbatim from the stage exemplar in
+ *                  `sample-view-model.ts`. The structure is real; the CONTENT
+ *                  (task titles, the approver's name, confirm-box labels) is
+ *                  authored exemplar copy that describes no particular event.
+ */
+export type StageBeatProvenance = 'fact_derived' | 'scaffold';
+
+/**
+ * Per-beat provenance for a stage view, declared AT THE BOUNDARY that builds it.
+ *
+ * Item U-533. `buildLiveStageView` composes a live value waterfall and a live
+ * intel beat, then carries the exemplar's `tasks` and `gate` through unchanged
+ * so the page renders. Two things consume that view: the event canvas, and the
+ * chat grounding builder that writes the model's prompt. Until this field
+ * existed neither could tell derived content from exemplar copy, and the
+ * grounding block introduced BOTH as "authoritative" — including a gate
+ * approver who is a name in a fixture, not a person on the event.
+ *
+ * `intel` and `waterfall` are NOT listed: `SourceIntelViewModel.provenance` and
+ * `ValueWaterfallView.provenance` already declare their own, and a second
+ * writer of the same fact is a second thing to keep honest.
+ */
+export interface StageBeatProvenanceView {
+  /** Beat 2 — the task checklist. */
+  tasks: StageBeatProvenance;
+  /** Beat 3 — the gate: approver, confirm boxes, generates. */
+  gate: StageBeatProvenance;
+  /**
+   * The exemplar constant any `scaffold` beat above was carried from, e.g.
+   * `SAMPLE_RFP_STAGE`. Null when no beat is scaffold-backed.
+   */
+  scaffoldSource: string | null;
+}
+
 // ── The stage-level composite the canvas renders ─────────────────────────────
 
 /**
@@ -972,6 +1012,14 @@ export interface StageAnalyticsView {
    * tab leads with it; when absent it falls back to the IntelPanel read.
    */
   stepInsight?: StepInsightView;
+  /**
+   * Which beats of THIS view are fact-derived and which carry exemplar content
+   * verbatim (item U-533). Optional because the exemplars in
+   * `sample-view-model.ts` are wholly authored and declare nothing; a consumer
+   * that must distinguish derived content from exemplar copy treats an ABSENT
+   * value as undeclared, never as derived.
+   */
+  beatProvenance?: StageBeatProvenanceView;
 }
 
 /**

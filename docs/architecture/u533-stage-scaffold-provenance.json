@@ -1,0 +1,488 @@
+{
+  "item": "U-533",
+  "generatedBy": "src/__tests__/behaviors/u533-stage-scaffold-provenance.test.ts",
+  "regenerateWith": "ABARVA_UPDATE_U533_PROVENANCE=1 npx jest --runTestsByPath src/__tests__/behaviors/u533-stage-scaffold-provenance.test.ts",
+  "subject": {
+    "builder": "src/lib/source/facts/view/stage-analytics-builder.ts",
+    "builderFunction": "buildLiveStageView",
+    "scaffoldSwitch": "liveStageScaffoldFor",
+    "exemplarModule": "src/components/source/canvas/analytics/sample-view-model.ts"
+  },
+  "consumers": [
+    "src/app/(maestro)/source/events/[eventId]/page.tsx",
+    "src/app/api/chat/agent/route.ts",
+    "src/lib/source/facts/view/ava-grounding-context.ts"
+  ],
+  "scope": {
+    "inSlice": [
+      "per-stage per-field provenance measurement",
+      "known positives on the render path and the grounding path",
+      "boundary declaration (StageAnalyticsView.beatProvenance)",
+      "grounding-block disclosure of exemplar content"
+    ],
+    "deferred": [
+      "replace one stage's tasks/gate with fact-derived values (U-533 acceptance 3)"
+    ],
+    "signedInProofPerformed": false
+  },
+  "summary": {
+    "armedStageCount": 10,
+    "declaredStageKeyCount": 18,
+    "factDerivedFields": [
+      "intel",
+      "waterfall"
+    ],
+    "scaffoldCarriedFields": [
+      "gate.approver",
+      "gate.confirms",
+      "gate.generates",
+      "purpose",
+      "tasks"
+    ],
+    "stagesWithScaffoldTasks": 10,
+    "stagesWithScaffoldGate": 10,
+    "distinctCarriedApprovers": [
+      "Commercial owner",
+      "Decision owner",
+      "K. Oshima, CIO",
+      "Transition owner"
+    ],
+    "stagesWithPersonNamedApprover": [
+      "responses",
+      "evaluation",
+      "bafo",
+      "value"
+    ]
+  },
+  "nextStageNameProbe": {
+    "stageKey": "sourcing_strategy",
+    "exemplar": "SAMPLE_SCOPE_STAGE",
+    "exemplarNextStageName": "RFP",
+    "builtNextStageName": "Scope"
+  },
+  "carriedFieldReach": {
+    "tasks": [
+      "rendered_canvas",
+      "model_prompt"
+    ],
+    "gate.approver": [
+      "model_prompt"
+    ],
+    "gate.confirms": [
+      "model_prompt"
+    ],
+    "gate.generates": [
+      "model_prompt"
+    ]
+  },
+  "stages": [
+    {
+      "stageKey": "scope",
+      "exemplar": "SAMPLE_SCOPE_STAGE",
+      "exemplarOwnStageKey": "scope",
+      "fields": {
+        "stageKey": "from_input",
+        "stageName": "from_input",
+        "purpose": "scaffold_carried_by_reference",
+        "intel": "fact_derived",
+        "tasks": "scaffold_carried_by_reference",
+        "gate.approver": "scaffold_carried_by_reference",
+        "gate.confirms": "scaffold_carried_by_reference",
+        "gate.generates": "scaffold_carried_by_reference",
+        "gate.nextStageName": "computed_agrees_with_exemplar",
+        "gate.action": "absent",
+        "waterfall": "fact_derived",
+        "stepInsight": "absent",
+        "beatProvenance": "declared_provenance"
+      },
+      "declared": {
+        "tasks": "scaffold",
+        "gate": "scaffold",
+        "scaffoldSource": "SAMPLE_SCOPE_STAGE"
+      },
+      "carriedTaskTitles": [
+        "Confirm the applications in scope",
+        "Provide the volumetrics",
+        "Provide the application inventory",
+        "Provide vendor commercials & contract terms",
+        "Confirm what's out of scope",
+        "Confirm retained vs. vendor",
+        "Sponsor commitment"
+      ],
+      "carriedGateApprover": "Commercial owner",
+      "carriedGateConfirmLabels": [
+        "Evidence complete",
+        "Exclusions reviewed",
+        "Scope final"
+      ],
+      "intelProvenance": "live",
+      "waterfallProvenance": "live"
+    },
+    {
+      "stageKey": "rfp",
+      "exemplar": "SAMPLE_RFP_STAGE",
+      "exemplarOwnStageKey": "rfp",
+      "fields": {
+        "stageKey": "from_input",
+        "stageName": "from_input",
+        "purpose": "scaffold_carried_by_reference",
+        "intel": "fact_derived",
+        "tasks": "scaffold_carried_by_reference",
+        "gate.approver": "scaffold_carried_by_reference",
+        "gate.confirms": "scaffold_carried_by_reference",
+        "gate.generates": "scaffold_carried_by_reference",
+        "gate.nextStageName": "computed_agrees_with_exemplar",
+        "gate.action": "absent",
+        "waterfall": "fact_derived",
+        "stepInsight": "absent",
+        "beatProvenance": "declared_provenance"
+      },
+      "declared": {
+        "tasks": "scaffold",
+        "gate": "scaffold",
+        "scaffoldSource": "SAMPLE_RFP_STAGE"
+      },
+      "carriedTaskTitles": [
+        "Confirm RFP clause coverage"
+      ],
+      "carriedGateApprover": "Decision owner",
+      "carriedGateConfirmLabels": [
+        "Every priced lever has a clause",
+        "BAFO fallbacks paired",
+        "RFP final"
+      ],
+      "intelProvenance": "live",
+      "waterfallProvenance": "live"
+    },
+    {
+      "stageKey": "responses",
+      "exemplar": "SAMPLE_RESPONSES_STAGE",
+      "exemplarOwnStageKey": "responses",
+      "fields": {
+        "stageKey": "from_input",
+        "stageName": "from_input",
+        "purpose": "scaffold_carried_by_reference",
+        "intel": "fact_derived",
+        "tasks": "scaffold_carried_by_reference",
+        "gate.approver": "scaffold_carried_by_reference",
+        "gate.confirms": "scaffold_carried_by_reference",
+        "gate.generates": "scaffold_carried_by_reference",
+        "gate.nextStageName": "computed_agrees_with_exemplar",
+        "gate.action": "absent",
+        "waterfall": "fact_derived",
+        "stepInsight": "absent",
+        "beatProvenance": "declared_provenance"
+      },
+      "declared": {
+        "tasks": "scaffold",
+        "gate": "scaffold",
+        "scaffoldSource": "SAMPLE_RESPONSES_STAGE"
+      },
+      "carriedTaskTitles": [
+        "Confirm vendor response coverage"
+      ],
+      "carriedGateApprover": "K. Oshima, CIO",
+      "carriedGateConfirmLabels": [
+        "Every lever mapped to each vendor’s answer",
+        "Dodged levers flagged for evaluation",
+        "Responses complete"
+      ],
+      "intelProvenance": "live",
+      "waterfallProvenance": "live"
+    },
+    {
+      "stageKey": "evaluation",
+      "exemplar": "SAMPLE_EVALUATION_STAGE",
+      "exemplarOwnStageKey": "evaluation",
+      "fields": {
+        "stageKey": "from_input",
+        "stageName": "from_input",
+        "purpose": "scaffold_carried_by_reference",
+        "intel": "fact_derived",
+        "tasks": "scaffold_carried_by_reference",
+        "gate.approver": "scaffold_carried_by_reference",
+        "gate.confirms": "scaffold_carried_by_reference",
+        "gate.generates": "scaffold_carried_by_reference",
+        "gate.nextStageName": "computed_agrees_with_exemplar",
+        "gate.action": "absent",
+        "waterfall": "fact_derived",
+        "stepInsight": "absent",
+        "beatProvenance": "declared_provenance"
+      },
+      "declared": {
+        "tasks": "scaffold",
+        "gate": "scaffold",
+        "scaffoldSource": "SAMPLE_EVALUATION_STAGE"
+      },
+      "carriedTaskTitles": [
+        "Confirm vendor bids for should-cost"
+      ],
+      "carriedGateApprover": "K. Oshima, CIO",
+      "carriedGateConfirmLabels": [
+        "Every bid normalized to should-cost",
+        "The trap surfaced",
+        "Evaluation complete"
+      ],
+      "intelProvenance": "live",
+      "waterfallProvenance": "live"
+    },
+    {
+      "stageKey": "pricing",
+      "exemplar": "SAMPLE_PRICING_STAGE",
+      "exemplarOwnStageKey": "pricing",
+      "fields": {
+        "stageKey": "from_input",
+        "stageName": "from_input",
+        "purpose": "scaffold_carried_by_reference",
+        "intel": "fact_derived",
+        "tasks": "scaffold_carried_by_reference",
+        "gate.approver": "scaffold_carried_by_reference",
+        "gate.confirms": "scaffold_carried_by_reference",
+        "gate.generates": "scaffold_carried_by_reference",
+        "gate.nextStageName": "computed_agrees_with_exemplar",
+        "gate.action": "absent",
+        "waterfall": "fact_derived",
+        "stepInsight": "absent",
+        "beatProvenance": "declared_provenance"
+      },
+      "declared": {
+        "tasks": "scaffold",
+        "gate": "scaffold",
+        "scaffoldSource": "SAMPLE_PRICING_STAGE"
+      },
+      "carriedTaskTitles": [
+        "Confirm normalized supplier pricing"
+      ],
+      "carriedGateApprover": "Commercial owner",
+      "carriedGateConfirmLabels": [
+        "Supplier pricing normalized",
+        "Assumptions and traps reviewed",
+        "Pricing ready for BAFO"
+      ],
+      "intelProvenance": "live",
+      "waterfallProvenance": "live"
+    },
+    {
+      "stageKey": "bafo",
+      "exemplar": "SAMPLE_BAFO_STAGE",
+      "exemplarOwnStageKey": "bafo",
+      "fields": {
+        "stageKey": "from_input",
+        "stageName": "from_input",
+        "purpose": "scaffold_carried_by_reference",
+        "intel": "fact_derived",
+        "tasks": "scaffold_carried_by_reference",
+        "gate.approver": "scaffold_carried_by_reference",
+        "gate.confirms": "scaffold_carried_by_reference",
+        "gate.generates": "scaffold_carried_by_reference",
+        "gate.nextStageName": "computed_agrees_with_exemplar",
+        "gate.action": "absent",
+        "waterfall": "fact_derived",
+        "stepInsight": "absent",
+        "beatProvenance": "declared_provenance"
+      },
+      "declared": {
+        "tasks": "scaffold",
+        "gate": "scaffold",
+        "scaffoldSource": "SAMPLE_BAFO_STAGE"
+      },
+      "carriedTaskTitles": [
+        "Confirm BAFO concessions captured"
+      ],
+      "carriedGateApprover": "K. Oshima, CIO",
+      "carriedGateConfirmLabels": [
+        "Every open lever pressed in BAFO",
+        "Concessions booked per lever",
+        "BAFO final"
+      ],
+      "intelProvenance": "live",
+      "waterfallProvenance": "live"
+    },
+    {
+      "stageKey": "executive_decision",
+      "exemplar": "SAMPLE_EXECUTIVE_DECISION_STAGE",
+      "exemplarOwnStageKey": "executive_decision",
+      "fields": {
+        "stageKey": "from_input",
+        "stageName": "from_input",
+        "purpose": "scaffold_carried_by_reference",
+        "intel": "fact_derived",
+        "tasks": "scaffold_carried_by_reference",
+        "gate.approver": "scaffold_carried_by_reference",
+        "gate.confirms": "scaffold_carried_by_reference",
+        "gate.generates": "scaffold_carried_by_reference",
+        "gate.nextStageName": "computed_agrees_with_exemplar",
+        "gate.action": "absent",
+        "waterfall": "fact_derived",
+        "stepInsight": "absent",
+        "beatProvenance": "declared_provenance"
+      },
+      "declared": {
+        "tasks": "scaffold",
+        "gate": "scaffold",
+        "scaffoldSource": "SAMPLE_EXECUTIVE_DECISION_STAGE"
+      },
+      "carriedTaskTitles": [
+        "Confirm executive recommendation packet"
+      ],
+      "carriedGateApprover": "Decision owner",
+      "carriedGateConfirmLabels": [
+        "Recommendation reviewed",
+        "Value and risk accepted",
+        "Decision ready for selection"
+      ],
+      "intelProvenance": "live",
+      "waterfallProvenance": "live"
+    },
+    {
+      "stageKey": "selection",
+      "exemplar": "SAMPLE_SELECTION_STAGE",
+      "exemplarOwnStageKey": "selection",
+      "fields": {
+        "stageKey": "from_input",
+        "stageName": "from_input",
+        "purpose": "scaffold_carried_by_reference",
+        "intel": "fact_derived",
+        "tasks": "scaffold_carried_by_reference",
+        "gate.approver": "scaffold_carried_by_reference",
+        "gate.confirms": "scaffold_carried_by_reference",
+        "gate.generates": "scaffold_carried_by_reference",
+        "gate.nextStageName": "computed_agrees_with_exemplar",
+        "gate.action": "absent",
+        "waterfall": "fact_derived",
+        "stepInsight": "absent",
+        "beatProvenance": "declared_provenance"
+      },
+      "declared": {
+        "tasks": "scaffold",
+        "gate": "scaffold",
+        "scaffoldSource": "SAMPLE_SELECTION_STAGE"
+      },
+      "carriedTaskTitles": [
+        "Confirm committed value at award"
+      ],
+      "carriedGateApprover": "Commercial owner",
+      "carriedGateConfirmLabels": [
+        "Every priced lever carried into the award",
+        "Committed baseline set",
+        "Award final"
+      ],
+      "intelProvenance": "live",
+      "waterfallProvenance": "live"
+    },
+    {
+      "stageKey": "transition",
+      "exemplar": "SAMPLE_TRANSITION_STAGE",
+      "exemplarOwnStageKey": "transition",
+      "fields": {
+        "stageKey": "from_input",
+        "stageName": "from_input",
+        "purpose": "scaffold_carried_by_reference",
+        "intel": "fact_derived",
+        "tasks": "scaffold_carried_by_reference",
+        "gate.approver": "scaffold_carried_by_reference",
+        "gate.confirms": "scaffold_carried_by_reference",
+        "gate.generates": "scaffold_carried_by_reference",
+        "gate.nextStageName": "computed_agrees_with_exemplar",
+        "gate.action": "absent",
+        "waterfall": "fact_derived",
+        "stepInsight": "absent",
+        "beatProvenance": "declared_provenance"
+      },
+      "declared": {
+        "tasks": "scaffold",
+        "gate": "scaffold",
+        "scaffoldSource": "SAMPLE_TRANSITION_STAGE"
+      },
+      "carriedTaskTitles": [
+        "Confirm transition go-live readiness"
+      ],
+      "carriedGateApprover": "Transition owner",
+      "carriedGateConfirmLabels": [
+        "Milestones reviewed",
+        "Go-live blockers visible",
+        "Ready for value tracking"
+      ],
+      "intelProvenance": "live",
+      "waterfallProvenance": "live"
+    },
+    {
+      "stageKey": "value",
+      "exemplar": "SAMPLE_VALUE_STAGE",
+      "exemplarOwnStageKey": "value",
+      "fields": {
+        "stageKey": "from_input",
+        "stageName": "from_input",
+        "purpose": "scaffold_carried_by_reference",
+        "intel": "fact_derived",
+        "tasks": "scaffold_carried_by_reference",
+        "gate.approver": "scaffold_carried_by_reference",
+        "gate.confirms": "scaffold_carried_by_reference",
+        "gate.generates": "scaffold_carried_by_reference",
+        "gate.nextStageName": "computed_differs_from_exemplar",
+        "gate.action": "absent",
+        "waterfall": "fact_derived",
+        "stepInsight": "absent",
+        "beatProvenance": "declared_provenance"
+      },
+      "declared": {
+        "tasks": "scaffold",
+        "gate": "scaffold",
+        "scaffoldSource": "SAMPLE_VALUE_STAGE"
+      },
+      "carriedTaskTitles": [
+        "Confirm realized value to date"
+      ],
+      "carriedGateApprover": "K. Oshima, CIO",
+      "carriedGateConfirmLabels": [
+        "Realized value booked per lever",
+        "Realization measured against committed",
+        "Value tracked"
+      ],
+      "intelProvenance": "live",
+      "waterfallProvenance": "live"
+    }
+  ],
+  "legacyResolution": [
+    {
+      "stageKey": "contract_mobilization",
+      "resolvesTo": "SAMPLE_SCOPE_STAGE",
+      "isDefaultArm": true
+    },
+    {
+      "stageKey": "intake",
+      "resolvesTo": "SAMPLE_SCOPE_STAGE",
+      "isDefaultArm": true
+    },
+    {
+      "stageKey": "orals_bafo",
+      "resolvesTo": "SAMPLE_SCOPE_STAGE",
+      "isDefaultArm": true
+    },
+    {
+      "stageKey": "rfp_rfi_package",
+      "resolvesTo": "SAMPLE_SCOPE_STAGE",
+      "isDefaultArm": true
+    },
+    {
+      "stageKey": "sourcing_strategy",
+      "resolvesTo": "SAMPLE_SCOPE_STAGE",
+      "isDefaultArm": true
+    },
+    {
+      "stageKey": "strategy",
+      "resolvesTo": "SAMPLE_SCOPE_STAGE",
+      "isDefaultArm": true
+    },
+    {
+      "stageKey": "value_realization",
+      "resolvesTo": "SAMPLE_SCOPE_STAGE",
+      "isDefaultArm": true
+    },
+    {
+      "stageKey": "vendor_responses",
+      "resolvesTo": "SAMPLE_SCOPE_STAGE",
+      "isDefaultArm": true
+    }
+  ]
+}
