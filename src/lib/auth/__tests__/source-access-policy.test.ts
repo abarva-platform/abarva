@@ -482,6 +482,57 @@ describe("source access policy", () => {
     );
   });
 
+  it("limits owner approval and publishing authority to the owned event", async () => {
+    setupRows({
+      person_client_memberships: {
+        access_level: "source_member",
+        financial_visibility: false,
+      },
+      source_event_participants: [
+        {
+          source_event_id: "owned-event",
+          source_access_level: "source_member",
+          approval_authority: "approver",
+          can_view_financial: false,
+          can_approve_source_stages: true,
+          can_approve_award: true,
+          can_publish_sourcing_artifacts: true,
+        },
+        {
+          source_event_id: "other-event",
+          source_access_level: "source_member",
+          approval_authority: "contributor",
+          can_view_financial: false,
+          can_approve_source_stages: false,
+          can_approve_award: false,
+          can_publish_sourcing_artifacts: false,
+        },
+      ],
+    });
+    const { loadUserSourceAccessPolicy } = await import("../source-access-policy");
+    const ctx = {
+      clientId: "client-apex",
+      userId: "00000000-0000-4000-8000-000000000001",
+    };
+
+    const owned = await loadUserSourceAccessPolicy(ctx, {
+      activeClientKey: "apexretail",
+      sourceEventId: "owned-event",
+    });
+    const other = await loadUserSourceAccessPolicy(ctx, {
+      activeClientKey: "apexretail",
+      sourceEventId: "other-event",
+    });
+
+    expect(owned.canApproveSourceStages).toBe(true);
+    expect(owned.canApproveAward).toBe(true);
+    expect(owned.canPublishSourcingArtifacts).toBe(true);
+    expect(owned.canViewFinancialData).toBe(false);
+    expect(other.canApproveSourceStages).toBe(false);
+    expect(other.canApproveAward).toBe(false);
+    expect(other.canPublishSourcingArtifacts).toBe(false);
+  });
+
   it("resolves a canonical same-tenant Clerk persona email to person-scoped Source access", async () => {
     setupRows({
       persons: { id: "00000000-0000-4000-8000-00000000c700" },

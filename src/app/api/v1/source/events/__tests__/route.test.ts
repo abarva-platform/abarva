@@ -127,6 +127,7 @@ jest.mock("@/lib/data-plane/write-adapters/sourceWriteAdapter", () => ({
 }));
 
 import { POST } from "../route";
+import { requireTenancy } from "@/lib/auth/tenancy";
 import { createSourcingEvent } from "@/lib/source/queries";
 import { persistSourceAuthorityVersion } from "@/lib/source/new-workspace/authority-version-store";
 import {
@@ -161,6 +162,8 @@ describe("POST /api/v1/source/events", () => {
     expect(res.status).toBe(200);
     expect(json.approvalUrl).toBe("/source/events/evt-123/approval");
     expect(json.eventUrl).toBe("/source/events/evt-123?stage=strategy");
+    expect(json.approvalAuthority).toContain("Event Owner");
+    expect(json.approvalAuthority).not.toMatch(/co-signed|tenant admin/i);
     expect(createSourcingEvent).toHaveBeenCalledWith(
       expect.objectContaining({
         categoryId: "data_ai_platform",
@@ -175,6 +178,25 @@ describe("POST /api/v1/source/events", () => {
         createdByUserId: "user-1",
       }),
     );
+  });
+
+  it("rejects a missing named creator before writing an event", async () => {
+    jest.mocked(requireTenancy).mockResolvedValueOnce({
+      clientId: "client-1",
+      clientKey: "skyharbor-air",
+      userId: "",
+    } as Awaited<ReturnType<typeof requireTenancy>>);
+    const res = await POST(new Request("http://localhost/api/v1/source/events", {
+      method: "POST",
+      body: JSON.stringify({
+        eventName: "Synthetic source request",
+        triggerDescription: "Review a renewal",
+      }),
+    }));
+
+    expect(res.status).toBe(403);
+    expect((await res.json()).error).toBe("named_source_event_creator_required");
+    expect(createSourcingEvent).not.toHaveBeenCalled();
   });
 
   it("creates and links an event from the persisted current-version mapping decision", async () => {

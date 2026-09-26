@@ -43,7 +43,7 @@ import {
 
 // --- write inputs ----------------------------------------------------------
 
-/** Insert a participant row when a Source event is created via the API path. */
+/** Assign the named creator as owner of a newly created Source event. */
 export interface SourceParticipantInsert {
   readonly clientKey: string;
   readonly sourceEventId: string;
@@ -236,9 +236,7 @@ export interface SourceWriteAdapter {
 export type SupabaseFactory = () => SupabaseClient;
 
 /**
- * Build the Supabase source write adapter. Every statement is the verbatim
- * pre-seam `.insert()` / `.update()` call — the produced rows are
- * byte-faithful to the routes' prior behavior. The Supabase client factory is
+ * Build the Supabase source write adapter. The Supabase client factory is
  * injectable so tests drive it without a live backend.
  */
 export function createSupabaseSourceWriteAdapter(
@@ -255,24 +253,18 @@ export function createSupabaseSourceWriteAdapter(
           source_event_id: input.sourceEventId,
           source_event_row_id: input.sourceEventId,
           user_id: input.userId,
-          role: "source creator",
-          approval_authority: "contributor",
+          role: "event owner",
+          approval_authority: "approver",
           source_access_level: "source_member",
           can_view_financial: false,
           can_upload_source_artifacts: true,
           can_generate_sourcing_artifacts: true,
-          can_publish_sourcing_artifacts: false,
-          can_approve_source_stages: false,
-          can_approve_award: false,
+          can_publish_sourcing_artifacts: true,
+          can_approve_source_stages: true,
+          can_approve_award: true,
           notify_on: ["source_event_update", "approval_needed"],
         });
-      // The route only treats a missing-table error as benign.
-      if (
-        error &&
-        !/source_event_participants|schema cache|does not exist/i.test(
-          error.message,
-        )
-      ) {
+      if (error) {
         return fail(`source participant assignment failed: ${error.message}`);
       }
       return ok();
@@ -535,8 +527,8 @@ export function createAzureSourceWriteAdapter(
                 can_upload_source_artifacts, can_generate_sourcing_artifacts,
                 can_publish_sourcing_artifacts, can_approve_source_stages,
                 can_approve_award, notify_on)
-             VALUES ($1,$2::text,$2::uuid,$3,'source creator','contributor','source_member',
-                     false,true,true,false,false,false,$4)`,
+             VALUES ($1,$2::text,$2::uuid,$3,'event owner','approver','source_member',
+                     false,true,true,true,true,true,$4)`,
             [
               input.clientKey,
               input.sourceEventId,
@@ -549,7 +541,6 @@ export function createAzureSourceWriteAdapter(
       } catch (err) {
         if (isUniqueViolation(err)) return ok();
         const msg = errMessage(err);
-        if (/source_event_participants|does not exist/i.test(msg)) return ok();
         return fail(`source participant assignment failed: ${msg}`);
       }
     },
