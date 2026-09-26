@@ -46,8 +46,21 @@ const GOVERNED_ELSEWHERE = "src/__tests__";
  *   0 of 3 covered and is now 3 of 3, which is the decrease. The other
  *   directory the same step clears, `data-plane/__tests__`, was already 1 of 3
  *   and moved out of the PARTIAL set — the `source/ava` case above, again.
+ * 2026-09-26: 172 after T-487, and this is the one entry here that is a RISE.
+ *   No directory went dark. A bare Jest path argument is a regex and the
+ *   census was resolving a ratchet baseline's paths as literal prefixes, so a
+ *   baseline naming an app-router group segment credited a directory Jest
+ *   cannot select. Correcting the reading made one such directory visible as
+ *   what it already was: it has been reached by no gate since that gate
+ *   landed. Raising the ceiling records a measurement that was wrong, not a
+ *   regression that was allowed — the directory is unchanged and unwired, and
+ *   wiring it or escaping the baseline path is T-486, which is blocked on a
+ *   decision about the failures the escape reveals. The second directory the
+ *   same correction moved, `src/app/(maestro)/home/__tests__`, is 2 of 4 and
+ *   therefore PARTIAL rather than uncovered, so it does not reach this count —
+ *   the `source/ava` and `data-plane` case above, in the other direction.
  */
-const DARK_PRODUCT_DIRECTORY_COUNT = 171;
+const DARK_PRODUCT_DIRECTORY_COUNT = 172;
 
 type Census = {
   counts: { indeterminateInvocations: number };
