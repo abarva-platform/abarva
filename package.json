@@ -43,6 +43,7 @@
     "check:admin-integration-quarantine": "node scripts/quality/check-admin-integration-quarantine.mjs",
     "check:qa-integration-quarantine": "node scripts/quality/check-qa-integration-quarantine.mjs",
     "check:export-reachability": "node --test scripts/quality/export-reachability.test.mjs && node scripts/quality/export-reachability.mjs --check",
+    "check:fixture-row-identity": "node --test scripts/data/fixtures/deepen-fixture-substrate.test.mjs && node scripts/data/fixtures/deepen-fixture-substrate.mjs --check",
     "check:cli-invocation-guard": "node --test scripts/quality/cli-invocation-guard.test.mjs",
     "check:integration-root-quarantine": "node --test scripts/quality/check-integration-root-quarantine.test.mjs && node scripts/quality/check-integration-root-quarantine.mjs --rerun",
     "check:intelligence-integration-quarantine": "node --test scripts/quality/check-intelligence-integration-quarantine.test.mjs && node scripts/quality/check-intelligence-integration-quarantine.mjs",
