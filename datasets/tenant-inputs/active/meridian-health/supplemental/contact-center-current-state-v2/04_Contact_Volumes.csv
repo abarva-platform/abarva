@@ -1,0 +1,8 @@
+channel,system_of_record,annual_contacts,live_agent_share,live_agent_contacts,self_service_contacts,principal_drivers,provenance
+Member services — MA,Salesforce Member CRM,4220000,71%,2996200,1223800,"Benefits, claims status, provider network, ID cards",SYNTHETIC
+Member services — commercial/Medicaid,Salesforce Member CRM,2180000,66%,1438800,741200,"Eligibility, benefits, prior auth status",SYNTHETIC
+Patient access — scheduling,Epic Cadence,3640000,58%,2111200,1528800,"Appointment booking, reschedule, cancellation",SYNTHETIC
+Patient access — clinical messaging,Epic ClinDoc / MyChart,1910000,41%,783100,1126900,"Results questions, medication refills, triage routing",SYNTHETIC
+Revenue cycle — patient billing,Epic Tapestry / billing,2240000,74%,1657600,582400,"Statement questions, payment plans, financial assistance",SYNTHETIC
+Provider services,Salesforce Member CRM,1060000,69%,731400,328600,"Claims status, credentialing, contract questions",SYNTHETIC
+Pharmacy,Epic Willow,720000,63%,453600,266400,"Refills, prior auth, formulary",SYNTHETIC

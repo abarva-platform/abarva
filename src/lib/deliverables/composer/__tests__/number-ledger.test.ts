@@ -137,6 +137,35 @@ describe('lineage gate over a rendered deck', () => {
     expect(bad.findings.some((f) => f.kind === 'bad_derivation')).toBe(true);
   });
 
+  it('distinguishes applying a percentage from expressing a share', () => {
+    // One operation with two readings blocked a correct derivation: the composer
+    // declared 26% of 2,000 enabled users = 520, and the gate computed 26 as a
+    // percentage of 2,000 = 1.3. Both operations exist now and the direction is
+    // fixed by the name.
+    const pct: LedgerEntry = { figureId: 'P1', value: 26, unit: 'percent', label: 'gap', formattedVariants: ['26%'], sourceRef: 's' };
+    const base: LedgerEntry = { figureId: 'P2', value: 2000, unit: 'count', label: 'enabled', formattedVariants: ['2000'], sourceRef: 's' };
+
+    const applied = validateDeckLineage(deckOf(['520 more users']), {
+      ledger: [...LEDGER, pct, base],
+      derived: [{ value: 520, unit: 'count', fromFigureIds: ['P1', 'P2'], operation: 'percent_of', label: 'implied users' }],
+    });
+    expect(applied.findings.filter((f) => f.kind === 'bad_derivation')).toEqual([]);
+
+    const share: LedgerEntry = { figureId: 'P3', value: 680, unit: 'count', label: 'active', formattedVariants: ['680'], sourceRef: 's' };
+    const expressed = validateDeckLineage(deckOf(['34% of enabled users']), {
+      ledger: [...LEDGER, share, base],
+      derived: [{ value: 34, unit: 'percent', fromFigureIds: ['P3', 'P2'], operation: 'share_percent', label: 'usage rate' }],
+    });
+    expect(expressed.findings.filter((f) => f.kind === 'bad_derivation')).toEqual([]);
+
+    // And using the wrong one is still caught.
+    const wrong = validateDeckLineage(deckOf(['x']), {
+      ledger: [...LEDGER, pct, base],
+      derived: [{ value: 520, unit: 'count', fromFigureIds: ['P1', 'P2'], operation: 'share_percent', label: 'wrong direction' }],
+    });
+    expect(wrong.findings.some((f) => f.kind === 'bad_derivation')).toBe(true);
+  });
+
   it('rejects a derivation naming a figureId that is not in the ledger', () => {
     const verdict = validateDeckLineage(deckOf(['x']), {
       ledger: LEDGER,

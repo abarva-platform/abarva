@@ -78,6 +78,8 @@ function checkDerivation(d: DerivedFigure, ledger: LedgerEntry[]): number | null
     case 'difference':
       return values.slice(1).reduce((a, b) => a - b, values[0] ?? 0);
     case 'percent_of':
+      return values.length === 2 ? (values[0] / 100) * values[1] : null;
+    case 'share_percent':
       return values.length === 2 && values[1] !== 0 ? (values[0] / values[1]) * 100 : null;
   }
 }

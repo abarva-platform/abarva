@@ -1,0 +1,10 @@
+check,expected,actual,result
+Revenue anchor matches the active tenant record,"25,000,000,000","25,000,000,000",PASS
+Hospitals matches the active tenant record,34,34,PASS
+Ambulatory sites matches the active tenant record,214,214,PASS
+Employees matches the active tenant record,"68,000","68,000",PASS
+Headquarters matches the active tenant record,"Lakeview, IL","Lakeview, IL",PASS
+Contact volumes sum to the stated total,"15,970,000","15,970,000",PASS
+Live-agent contacts sum to the stated total,"10,171,900","10,171,900",PASS
+No invented vendor names for anchor systems,0,0,PASS
+Every value figure carries a provenance column,yes,yes,PASS

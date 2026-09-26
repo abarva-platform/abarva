@@ -38,7 +38,14 @@ Return ONE JSON object and nothing else:
 
 {
   "slideStoryPlan": [ { "slideId", "title", "purpose", "decisionContribution", "sourceFactIds": [], "figureIds": [], "visualIntent", "slideType": "cover|divider|content|appendix", "designation": "core|appendix" } ],
-  "derivedFigures": [ { "value", "unit", "fromFigureIds": [], "operation": "sum|difference|percent_of", "label" } ],
+  "derivedFigures": [ { "value", "unit", "fromFigureIds": [], "operation": "sum|difference|percent_of|share_percent", "label" } ],
+
+Derivation operations, and they are NOT interchangeable:
+  sum             a + b + ...
+  difference      a - b - ...
+  percent_of      apply a percentage:   (a / 100) * b   — "26% of 2,000 enabled users" = 520
+  share_percent   express a as a share: (a / b) * 100   — "680 of 2,000 enabled users" = 34%
+Order matters: fromFigureIds[0] is a, fromFigureIds[1] is b.
   "pythonSource": "..."
 }
 

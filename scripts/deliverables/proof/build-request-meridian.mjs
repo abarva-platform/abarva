@@ -382,18 +382,6 @@ for (const i of infra.slice(0, 16)) {
   });
 }
 
-// ── 9 · the prohibitions, carried forward as governed content ────────────────
-const forbiddenList = [...forbidden].sort();
-add({
-  label: "Claims this artifact must not make",
-  statement:
-    `The governed set carries ${forbiddenList.length} explicit prohibitions that any artifact must respect: ` +
-    forbiddenList.join(" | "),
-  family: "claim_boundaries",
-  confidence: "high",
-  figures: [count(forbiddenList.length, "explicit claim prohibitions")],
-});
-
 // ── 10 · the real initiative: the AI benefit/usage ledger ────────────────────
 //
 // The decision context below is NOT authored. It is the corpus's own initiative:
@@ -555,7 +543,210 @@ if (ccUse) {
   });
 }
 
+// ── 12 · supplemental current-state intake (the P2 upload under test) ────────
+//
+// Loaded only when PROOF_UPLOAD is set, so the pre-upload run stays intact as
+// the control. The package declares in its own gap-coverage tab which gaps it
+// fills and which stay open, and that declaration is the smoke's expected
+// result — not a judgement I make afterwards about whether the deck looks
+// better.
+//
+// Every figure it carries is a synthetic PLANNING figure. The package says so on
+// every row and repeats it as a prohibition. Registering these in the ledger
+// makes them assertable; it does not make them measured, and the deck must not
+// present them as actuals.
+// Resolved against THIS repo, not against PROOF_DATA_ROOT. The canonical packet
+// is read from wherever the tenant data lives; the supplemental package is
+// checked in beside the adapter, and conflating the two silently disabled the
+// upload while still reporting a successful build.
+const UPLOAD_DIR = path.resolve(
+  process.env.PROOF_UPLOAD_DIR ??
+    path.join(
+      path.dirname(new URL(import.meta.url).pathname),
+      "../../../datasets/tenant-inputs/active/meridian-health/supplemental/contact-center-current-state-v2",
+    ),
+);
+const uploadWanted = process.env.PROOF_UPLOAD === "1";
+const uploadEnabled = uploadWanted && fs.existsSync(UPLOAD_DIR);
+// Asking for the upload and silently not getting it would make the treatment run
+// an expensive duplicate of the control, and the smoke would report "no change"
+// as a finding about the pipeline rather than about the path.
+if (uploadWanted && !uploadEnabled) {
+  throw new Error(`PROOF_UPLOAD=1 but no package at ${UPLOAD_DIR}`);
+}
+/** Instrumented facts the trace harness follows to the rendered file. */
+const uploadedFacts = [];
+
+if (uploadEnabled) {
+  const tab = (f) => {
+    const p2 = path.join(UPLOAD_DIR, `${f}.csv`);
+    return fs.existsSync(p2) ? parseCsv(fs.readFileSync(p2, "utf8")) : [];
+  };
+  const track = (factId, label, value, variants, tab_, expectation) => {
+    uploadedFacts.push({ factId, label, value, variants, tab: tab_, expectation });
+  };
+
+  // 05 · KPI baselines — the gap the corpus names most often
+  const kpis = tab("05_KPI_Baseline");
+  add({
+    label: "Uploaded KPI baselines — contact centre",
+    statement:
+      `A supplemental current-state intake supplies ${kpis.length} contact-centre KPI baselines: ` +
+      kpis.map((k) => `${k.kpi} ${k.value} ${k.unit} (${k.measurement_basis})`).join("; ") +
+      `. Every one is a synthetic planning figure, not a measured actual, and the package states that on each row.`,
+    family: "uploaded_current_state",
+    confidence: "medium",
+    figures: kpis.map((k) => {
+      const v = num(k.value);
+      track(`kpi:${k.kpi}`, k.kpi, v, [String(v), `${v}%`, `${v} ${k.unit}`], "05_KPI_Baseline", "represented");
+      return metric(v, `${k.kpi} baseline (uploaded, planning figure)`, `${k.value} ${k.unit}`);
+    }),
+  });
+
+  // 04 · contact volumes
+  const volumes = tab("04_Contact_Volumes");
+  const totalContacts = volumes.reduce((a, v) => a + (num(v.annual_contacts) ?? 0), 0);
+  track("volume:total", "total annual contacts", totalContacts, [String(totalContacts), totalContacts.toLocaleString("en-US"), `${(totalContacts / 1e6).toFixed(1)}M`, `${(totalContacts / 1e6).toFixed(2)}M`], "04_Contact_Volumes", "represented");
+  add({
+    label: "Uploaded contact volumes",
+    statement:
+      `${volumes.length} contact channels carry ${totalContacts.toLocaleString("en-US")} annual contacts: ` +
+      volumes.map((v) => `${v.channel} ${Number(v.annual_contacts).toLocaleString("en-US")} (${v.live_agent_share} live agent, system of record ${v.system_of_record}; drivers: ${v.principal_drivers})`).join("; ") + ".",
+    family: "uploaded_current_state",
+    confidence: "medium",
+    figures: [
+      count(totalContacts, "total annual contacts (uploaded)"),
+      ...volumes.map((v) => {
+        const n = num(v.annual_contacts);
+        track(`volume:${v.channel}`, v.channel, n, [String(n), n.toLocaleString("en-US")], "04_Contact_Volumes", "optional");
+        return count(n, `${v.channel} annual contacts (uploaded)`);
+      }),
+    ],
+  });
+
+  // 06 · workforce
+  const workforce = tab("06_Workforce_And_Sites");
+  const headcount = workforce.reduce((a, w) => a + (num(w.headcount) ?? 0), 0);
+  const productive = workforce.reduce((a, w) => a + (num(w.productive_fte) ?? 0), 0);
+  track("workforce:headcount", "contact-centre headcount", headcount, [String(headcount), headcount.toLocaleString("en-US")], "06_Workforce_And_Sites", "represented");
+  track("workforce:productive", "productive FTE", productive, [String(productive), productive.toLocaleString("en-US")], "06_Workforce_And_Sites", "optional");
+  add({
+    label: "Uploaded workforce and sites",
+    statement:
+      `${headcount.toLocaleString("en-US")} contact-centre headcount and ${productive.toLocaleString("en-US")} productive FTE across ` +
+      `${new Set(workforce.map((w) => w.site)).size} site groupings: ` +
+      workforce.map((w) => `${w.site} — ${w.role} ${w.headcount} (${w.productive_fte} productive${w.span ? `, ${w.span}` : ""})`).join("; ") + ".",
+    family: "uploaded_current_state",
+    confidence: "medium",
+    figures: [count(headcount, "contact-centre headcount (uploaded)"), count(productive, "contact-centre productive FTE (uploaded)")],
+  });
+
+  // 07 · cost structure
+  const costs = tab("07_Cost_Structure");
+  const totalRow = costs.find((c) => /total/i.test(c.cost_line));
+  const lines = costs.filter((c) => !/total/i.test(c.cost_line));
+  const totalCost = num(totalRow?.annual_usd) ?? lines.reduce((a, c) => a + (num(c.annual_usd) ?? 0), 0);
+  track("cost:total", "contact-centre annual cost base", totalCost, [String(totalCost), usd(totalCost), `$${(totalCost / 1e6).toFixed(1)}M`, `$${(totalCost / 1e6).toFixed(0)}M`], "07_Cost_Structure", "represented");
+  add({
+    label: "Uploaded contact-centre cost structure",
+    statement:
+      `The uploaded cost structure totals ${usd(totalCost)} across ${lines.length} lines: ` +
+      lines.map((c) => `${c.cost_line} ${usd(num(c.annual_usd))}${c.basis ? ` (${c.basis})` : ""}`).join("; ") +
+      `. The package labels the total a synthetic planning figure and explicitly not a Finance-confirmed cost base.`,
+    family: "uploaded_current_state",
+    confidence: "medium",
+    figures: [
+      money(totalCost, "contact-centre annual cost base (uploaded planning figure)", false),
+      ...lines.map((c) => {
+        const n = num(c.annual_usd);
+        track(`cost:${c.cost_line}`, c.cost_line, n, [String(n), usd(n)], "07_Cost_Structure", "optional");
+        return money(n, `${c.cost_line} (uploaded)`, false);
+      }),
+    ],
+  });
+
+  // 08 · integration surface
+  const integ = tab("08_Integration_Surface");
+  const unvalidated = integ.filter((i) => /UNVALIDATED/i.test(i.api_readiness ?? ""));
+  track("integration:unvalidated", "systems with unvalidated API readiness", unvalidated.length, [String(unvalidated.length)], "08_Integration_Surface", "represented");
+  add({
+    label: "Uploaded integration surface",
+    statement:
+      `${integ.length} systems sit in the contact flow, of which ${unvalidated.length} carry UNVALIDATED API readiness: ` +
+      integ.map((i) => `${i.system} (${i.vendor}) — ${i.role_in_contact_flow}, interface today: ${i.interface_today}, readiness: ${i.api_readiness}`).join("; ") + ".",
+    family: "uploaded_current_state",
+    confidence: "medium",
+    figures: [count(integ.length, "systems in the contact flow (uploaded)"), count(unvalidated.length, "systems with unvalidated API readiness (uploaded)")],
+  });
+
+  // 02 · what this package does and does NOT close — the smoke's expected result
+  const coverage = tab("02_Gap_Coverage");
+  add({
+    label: "What the upload closes, and what it does not",
+    statement:
+      `The uploaded package declares its own coverage against the previously identified gaps: ` +
+      coverage.map((c) => `"${c.home_identified_gap}" — ${c.filled_by_this_package}; still open: ${c.still_open_after_this}`).join(" | "),
+    family: "uploaded_current_state",
+    confidence: "high",
+  });
+  for (const c of coverage) {
+    const filled = /^PARTIAL/i.test(c.filled_by_this_package ?? "");
+    uploadedFacts.push({
+      factId: `coverage:${c.home_identified_gap}`,
+      label: c.home_identified_gap,
+      value: null,
+      variants: [],
+      tab: "02_Gap_Coverage",
+      expectation: filled ? "recharacterised" : "still_open",
+      stillOpen: c.still_open_after_this,
+    });
+  }
+
+  // 09 · controls and risk, 03 · scale derivation, 11 · checks
+  for (const [file, label, family] of [
+    ["09_Controls_And_Risk", "Uploaded control and risk position", "uploaded_current_state"],
+    ["03_Scale_Derivation", "Uploaded scale derivation", "uploaded_current_state"],
+    ["11_Checks", "Uploaded internal consistency checks", "uploaded_current_state"],
+  ]) {
+    const rows = tab(file);
+    if (!rows.length) continue;
+    add({
+      label,
+      statement:
+        `${label} (${rows.length} rows): ` +
+        rows.map((r) => Object.entries(r).filter(([, v]) => val(v)).map(([k, v]) => `${k.replace(/_/g, " ")}: ${v}`).join(", ")).join(" | "),
+      family,
+      confidence: "medium",
+    });
+  }
+
+  // 10 · the package's own prohibitions merge into the tenant set
+  for (const r of tab("10_Do_Not_Claim")) {
+    const t = val(r.statement);
+    if (t) forbidden.add(t);
+  }
+}
+
+// ── 13 · the prohibitions, once every source has contributed ─────────────────
+//
+// This ran as section 9 and snapshotted the set before the supplemental intake
+// had merged its own seven prohibitions, so the package's claim boundaries were
+// collected and then silently discarded. A list that is built incrementally has
+// to be read at the end of the build, not in the middle of it.
+const forbiddenList = [...forbidden].sort();
+add({
+  label: "Claims this artifact must not make",
+  statement:
+    `The governed set carries ${forbiddenList.length} explicit prohibitions that any artifact must respect: ` +
+    forbiddenList.join(" | "),
+  family: "claim_boundaries",
+  confidence: "high",
+  figures: [count(forbiddenList.length, "explicit claim prohibitions")],
+});
+
+
 // ── request ───────────────────────────────────────────────────────────────────
+
 const focusRow = benefits.find((r) => r.ai_program_id === PROGRAM);
 const request = {
   module: "moves",
@@ -603,6 +794,7 @@ fs.mkdirSync(out, { recursive: true });
 fs.writeFileSync(path.join(out, "request.json"), JSON.stringify(request, null, 2));
 fs.writeFileSync(path.join(out, "number-ledger.json"), JSON.stringify(ledger, null, 2));
 fs.writeFileSync(path.join(out, "forbidden-claims.json"), JSON.stringify(forbiddenList, null, 2));
+fs.writeFileSync(path.join(out, "uploaded-facts.json"), JSON.stringify(uploadedFacts, null, 2));
 console.log(`tenant:          ${TENANT} (${entityName})`);
 console.log(`initiative:      ${request.initiativeDisplayName}`);
 console.log(`evidence items:  ${evidence.length}`);
@@ -610,3 +802,4 @@ console.log(`  focus:         ${evidence.filter((e) => e.evidenceFamily === "foc
 console.log(`ledger figures:  ${ledger.length} (${ledger.filter((f) => f.additive).length} additive)`);
 console.log(`forbidden:       ${forbiddenList.length} explicit prohibitions`);
 console.log(`bundle chars:    ${JSON.stringify(evidence).length.toLocaleString("en-US")}`);
+console.log(`upload:          ${uploadEnabled ? `ON — ${uploadedFacts.length} instrumented facts` : "OFF (control run)"}`);

@@ -39,7 +39,17 @@ export interface DerivedFigure {
   value: number;
   unit: FigureUnit;
   fromFigureIds: string[];
-  operation: 'sum' | 'difference' | 'percent_of';
+  /**
+   * `percent_of` was one operation with two readings, and the composer picked
+   * the other one: it declared "26% of 2,000 enabled users = 520", which is
+   * right, while the gate computed "26 as a percentage of 2,000" = 1.3 and
+   * blocked a correct derivation. An operator whose direction has to be guessed
+   * is a defect in the contract, not in the caller.
+   *
+   *   percent_of     apply a percentage: (a / 100) * b   — 26% of 2,000 = 520
+   *   share_percent  express a as a share: (a / b) * 100 — 680 of 2,000 = 34
+   */
+  operation: 'sum' | 'difference' | 'percent_of' | 'share_percent';
   label: string;
 }
 
@@ -281,6 +291,8 @@ function checkDerivation(d: DerivedFigure, ledger: LedgerEntry[]): number | null
     case 'difference':
       return values.slice(1).reduce((a, b) => a - b, values[0] ?? 0);
     case 'percent_of':
+      return values.length === 2 ? (values[0] / 100) * values[1] : null;
+    case 'share_percent':
       return values.length === 2 && values[1] !== 0 ? (values[0] / values[1]) * 100 : null;
   }
 }

@@ -1,0 +1,38 @@
+{
+  "package": "Meridian contact-centre supplemental intake (SYNTHETIC)",
+  "version": "2.0",
+  "generated": "2026-09-25",
+  "supersedes": {
+    "version": "1.0",
+    "reason": "v1 used a $17.8B revenue anchor and invented vendor names (Northstar CX Cloud, MemberCare CRM, CareRecord EHR). Both were wrong against the active tenant record."
+  },
+  "positioning": "Supplemental intake evidence filling two gaps the Home insight packet already identified. NOT an opportunity case: the active record lists Contact Center Virtual Assistant as production_enterprise_wide.",
+  "anchors_from_active_tenant_record": {
+    "entity_name": "Meridian Health System",
+    "annual_revenue_usd": 25000000000,
+    "employee_count": 68000,
+    "headquarters": "Lakeview, IL",
+    "hospitals": 34,
+    "ambulatory_clinic_sites": 214,
+    "business_model": "Integrated Delivery Network & Medicare Advantage Health Plan",
+    "accountable_role": "VP Member Services & Patient Experience",
+    "use_case": "Contact Center Virtual Assistant",
+    "use_case_current_status": "production_enterprise_wide"
+  },
+  "synthetic_figures": {
+    "annual_contacts": 15970000,
+    "annual_live_agent_contacts": 10171900,
+    "total_plan_members": 1117000,
+    "annual_contact_centre_cost_usd": 427200000
+  },
+  "home_gaps_filled": [
+    "KPI baselines incomplete (partial)",
+    "API readiness unclear across CRM, claims, eligibility and knowledge (partial)"
+  ],
+  "home_gaps_deliberately_not_filled": [
+    "Transcript availability and governance not validated",
+    "AWS + Databricks production-readiness validation missing"
+  ],
+  "no_value_claim": "No savings, ROI or deflection benefit figure appears in this package. The capability is already in production; a benefit claim would require Finance-confirmed baselines that do not exist.",
+  "data_class": "synthetic"
+}
