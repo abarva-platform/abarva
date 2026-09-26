@@ -72,7 +72,6 @@ jest.mock("@/lib/source/gate-advance-contract", () => ({
     ok: true,
     status: 200,
     readiness: { ok: true, blockers: [] },
-    bypassedGovernanceBlockers: [],
   })),
 }));
 
@@ -135,8 +134,7 @@ describe("PATCH /api/v1/source/[eventId]/stage", () => {
       ok: true,
       status: 200,
       readiness: { ok: true, blockers: [] },
-      bypassedGovernanceBlockers: [],
-    }));
+      }));
   });
 
   it("does not advance a strategy event with a pending hard criterion on self-approval", async () => {

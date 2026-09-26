@@ -27,7 +27,6 @@ export interface SourceGateAdvanceContractInput {
   artifacts?: SourceEventArtifactState[];
   evidence?: SourceEventEvidence[];
   reason: unknown;
-  allowComputedReadinessBypass?: boolean;
   verifiedDelegatedSponsorAcknowledgement?: boolean;
 }
 
@@ -39,7 +38,6 @@ export interface SourceGateAdvanceContractResult {
   missingConfirmations?: string[];
   blocker?: SourceGovernanceBlocker;
   readiness: SourceGovernanceVerdict;
-  bypassedGovernanceBlockers: SourceGovernanceBlocker[];
 }
 
 /**
@@ -50,8 +48,13 @@ export interface SourceGateAdvanceContractResult {
  * 2. computed readiness: the current stage's artifacts/evidence/criteria pass the
  *    governance readiness model.
  *
- * Pilot self-approval may bypass computed-readiness blockers when an authorized
- * route explicitly opts in, but it never bypasses missing human confirmations.
+ * Neither signal is waivable here. The contract previously accepted an
+ * `allowComputedReadinessBypass` input that returned success with open gate
+ * criteria; no production route ever passed it, and it was removed (item C-604)
+ * so that same-person decision authority cannot be read as permission to skip
+ * evidence. A criterion or evidence requirement that is open is answered with a
+ * 409 blocker and no write, for every caller. An individual criterion is cleared
+ * only through the recorded-waiver path in the criterion-state route, never here.
  */
 export function evaluateSourceGateAdvanceContract(
   input: SourceGateAdvanceContractInput,
@@ -87,7 +90,6 @@ export function evaluateSourceGateAdvanceContract(
       detail: approval.detail ?? "Source stage approval failed.",
       missingConfirmations: approval.missingConfirmations,
       readiness,
-      bypassedGovernanceBlockers: [],
     };
   }
 
@@ -104,11 +106,10 @@ export function evaluateSourceGateAdvanceContract(
           ? `Approval would not close terminal stage ${input.currentStage}.`
           : `Approval would advance ${input.currentStage} to ${approval.advanceStageTo ?? "closed"}, not ${input.targetStage}.`,
       readiness,
-      bypassedGovernanceBlockers: [],
     };
   }
 
-  if (!readiness.ok && !input.allowComputedReadinessBypass) {
+  if (!readiness.ok) {
     const blocker = firstGovernanceBlocker(readiness);
     return {
       ok: false,
@@ -117,7 +118,6 @@ export function evaluateSourceGateAdvanceContract(
       detail: blocker.detail,
       blocker,
       readiness,
-      bypassedGovernanceBlockers: [],
     };
   }
 
@@ -125,6 +125,5 @@ export function evaluateSourceGateAdvanceContract(
     ok: true,
     status: 200,
     readiness,
-    bypassedGovernanceBlockers: readiness.ok ? [] : readiness.blockers,
   };
 }

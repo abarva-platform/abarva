@@ -331,7 +331,6 @@ export async function PATCH(req: NextRequest, { params }: RouteCtx) {
           toStage: stageKey,
           selfApproved: canPilotSelfApprove,
           autoAssessment: autoAssessmentWrite,
-          bypassedGovernanceBlockers: gateContract.bypassedGovernanceBlockers,
         },
         occurredAtIso: nowIso,
       });
