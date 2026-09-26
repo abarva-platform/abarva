@@ -12,10 +12,12 @@
 // it in — so the assertion is about what a reader sees, not about what a source
 // file says.
 //
-// It asserts the BEFORE state on purpose. An exemplar task title and an exemplar
-// approver's name reach the rendered page today, so the slice that replaces one
-// stage's tasks/gate with fact-derived values has a real known positive to go red
-// against rather than a fixture written to make a point.
+// It asserted the BEFORE state on purpose, and UPDATED BY U-534 it now asserts
+// both sides of the boundary. Its approver case named `bafo` by hand, `bafo` is
+// the stage U-534 flipped, and the case went red exactly as intended. It is not
+// deleted and not relaxed: the stage is now FOUND by searching for one that still
+// carries, and a new case asserts the flipped stage renders its DERIVED titles and
+// none of the exemplar's.
 //
 // NOT A SIGNED-IN ACCEPTANCE. Clerk is mocked to a signed-in user because the
 // chrome renders its nav only for one; this is a render, and U-533's acceptance
@@ -129,8 +131,42 @@ function renderStage(stageKey: string, label: string) {
   );
 }
 
-/** The `bafo` exemplar is one of the four whose approver is a person's name. */
-const NAMED_APPROVER_STAGE = "bafo";
+const ARMED_STAGE_KEYS = [
+  "scope",
+  "rfp",
+  "responses",
+  "evaluation",
+  "pricing",
+  "bafo",
+  "executive_decision",
+  "selection",
+  "transition",
+  "value",
+] as const;
+
+/** A person's name rather than a role label, as U-533 learned to detect one. */
+const PERSON_NAME_APPROVER = /^[A-Z]\.\s\S/;
+
+/** The stages whose built view still carries both intake beats from an exemplar. */
+const CARRIED_STAGE_KEYS = ARMED_STAGE_KEYS.filter(
+  (stageKey) => buildStageView(stageKey).beatProvenance?.tasks === "scaffold",
+);
+
+const DERIVED_STAGE_KEYS = ARMED_STAGE_KEYS.filter(
+  (stageKey) => buildStageView(stageKey).beatProvenance?.tasks === "fact_derived",
+);
+
+/**
+ * A stage that STILL carries an approver reading as a person's name.
+ *
+ * Searched, not named. This constant was the literal `"bafo"` and went red when
+ * `bafo` became the first derived stage — which is the right failure, but a
+ * literal makes the next flip a breakage instead of a move. Four exemplars carry a
+ * personal name and three of them still reach this path.
+ */
+const NAMED_APPROVER_STAGE = CARRIED_STAGE_KEYS.find((stageKey) =>
+  PERSON_NAME_APPROVER.test(liveStageScaffoldFor(stageKey).gate.approver),
+)!;
 const NAMED_APPROVER = liveStageScaffoldFor(NAMED_APPROVER_STAGE).gate.approver;
 
 const SCOPE_EXEMPLAR_TASK_TITLES = liveStageScaffoldFor("scope").tasks.map(
@@ -173,17 +209,26 @@ describe("U-533 · the exemplar approver does NOT reach this reader", () => {
    * it assert the approver's absence.
    */
   it("renders the carried task titles but not the carried approver", () => {
-    expect(NAMED_APPROVER).toMatch(/^[A-Z]\.\s\S/);
-    expect(liveStageScaffoldSourceFor(NAMED_APPROVER_STAGE)).toBe(
-      "SAMPLE_BAFO_STAGE",
+    expect(NAMED_APPROVER).toMatch(PERSON_NAME_APPROVER);
+    // The exemplar this searched stage resolves to, asserted by identity against
+    // the switch rather than against a literal name: the literal was
+    // "SAMPLE_BAFO_STAGE" and it pinned this case to the one stage that later
+    // stopped carrying.
+    expect(liveStageScaffoldSourceFor(NAMED_APPROVER_STAGE)).toMatch(
+      /^SAMPLE_[A-Z_]+_STAGE$/,
     );
+    expect(buildStageView(NAMED_APPROVER_STAGE).beatProvenance).toEqual({
+      tasks: "scaffold",
+      gate: "scaffold",
+      scaffoldSource: liveStageScaffoldSourceFor(NAMED_APPROVER_STAGE),
+    });
 
     const exemplarTaskTitles = liveStageScaffoldFor(
       NAMED_APPROVER_STAGE,
     ).tasks.map((task) => task.title);
     expect(exemplarTaskTitles.length).toBeGreaterThan(0);
 
-    renderStage(NAMED_APPROVER_STAGE, "BAFO");
+    renderStage(NAMED_APPROVER_STAGE, NAMED_APPROVER_STAGE);
 
     // Population: the carried beats really did reach this render.
     for (const title of exemplarTaskTitles) {
@@ -209,5 +254,47 @@ describe("U-533 · the view the canvas receives declares its carried beats", () 
     expect(screen.getAllByText(SCOPE_EXEMPLAR_TASK_TITLES[0]!).length).toBeGreaterThan(
       0,
     );
+  });
+});
+
+describe("U-534 · the flipped stage renders derived content, not the exemplar's", () => {
+  it("has exactly one flipped stage and nine that still carry", () => {
+    // Population before property. A search that found nothing would make both
+    // cases below pass over an empty set.
+    expect(DERIVED_STAGE_KEYS).toHaveLength(1);
+    expect(CARRIED_STAGE_KEYS).toHaveLength(9);
+    expect(NAMED_APPROVER_STAGE).toBeDefined();
+  });
+
+  it("renders no exemplar task title on the flipped stage, and does render its own", () => {
+    const stageKey = DERIVED_STAGE_KEYS[0]!;
+    const view = buildStageView(stageKey);
+    const exemplarTitles = liveStageScaffoldFor(stageKey).tasks.map(
+      (task) => task.title,
+    );
+    // Population: the exemplar this stage used to carry really had titles, so the
+    // negative below is about a replacement and not about an empty fixture.
+    expect(exemplarTitles.length).toBeGreaterThan(0);
+    expect(view.tasks.length).toBeGreaterThan(0);
+
+    renderStage(stageKey, "BAFO");
+
+    // What replaced them is on the page — read off the built view, so a change to
+    // the derivation cannot leave this green against a string it no longer emits.
+    for (const title of view.tasks.map((task) => task.title)) {
+      expect(screen.getAllByText(title).length).toBeGreaterThan(0);
+    }
+    // And the exemplar's own titles are not.
+    for (const title of exemplarTitles) {
+      expect(screen.queryAllByText(title)).toHaveLength(0);
+    }
+  });
+
+  it("still names the exemplar for the nine that carry", () => {
+    for (const stageKey of CARRIED_STAGE_KEYS) {
+      expect(buildStageView(stageKey).beatProvenance?.scaffoldSource).toBe(
+        liveStageScaffoldSourceFor(stageKey),
+      );
+    }
   });
 });

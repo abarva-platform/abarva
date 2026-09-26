@@ -49,6 +49,11 @@ import {
   SAMPLE_VALUE_STAGE,
 } from '@/components/source/canvas/analytics/sample-view-model';
 import {
+  BAFO_STAGE_KEY,
+  buildBafoFactDerivedGate,
+  buildBafoFactDerivedTasks,
+} from './bafo-fact-beats';
+import {
   SOURCE_STAGE_LABELS,
   nextSourceStage,
 } from '@/lib/source/constants';
@@ -184,6 +189,30 @@ export function buildLiveStageView(
     ? SOURCE_STAGE_LABELS[nextStage] ?? nextStage
     : null;
 
+  // Item U-534. ONE stage's intake beats are now derived from this event's facts
+  // and its resolved archetype instead of being carried from the exemplar. The
+  // other nine still carry, and still say so below. `factBeats` is the single
+  // switch: nothing downstream infers which stage is derived, and the beat
+  // provenance is declared from the same value so the label cannot drift from
+  // what this function actually returned.
+  const factBeats =
+    requestedStageKey === BAFO_STAGE_KEY
+      ? {
+          tasks: buildBafoFactDerivedTasks({
+            archetype,
+            leverResults,
+            citations: input.citations,
+            nextStageName,
+          }),
+          gate: buildBafoFactDerivedGate({
+            archetype,
+            leverResults,
+            citations: input.citations,
+            nextStageName,
+          }),
+        }
+      : null;
+
   return {
     stageKey,
     stageName: input.stageName ?? scaffold.stageName,
@@ -194,12 +223,14 @@ export function buildLiveStageView(
         "Here's the value we computed from your committed facts — each band is math over a cited fact, not an estimate.",
       points: intelPoints,
     },
-    // The intake beats are not fact-derived in this slice; reuse the sample
-    // structure so the page renders, while the value proof above is fully live.
-    tasks: scaffold.tasks,
-    // Reuse the sample gate's confirm boxes + generates (not yet fact-derived per
-    // stage) but correct the next-stage label for the stage being built.
-    gate: { ...scaffold.gate, nextStageName },
+    // Derived where `factBeats` is present; otherwise the intake beats are not
+    // fact-derived on this stage, so reuse the sample structure to render while
+    // the value proof above stays fully live.
+    tasks: factBeats?.tasks ?? scaffold.tasks,
+    // Derived where `factBeats` is present. Otherwise reuse the sample gate's
+    // confirm boxes + generates (not yet fact-derived on this stage) but correct
+    // the next-stage label for the stage being built.
+    gate: factBeats?.gate ?? { ...scaffold.gate, nextStageName },
     waterfall: waterfallView,
     // Item U-533. Say so at the boundary. The two comments above were the only
     // record that `tasks` and `gate` are exemplar content, and a comment is
@@ -209,7 +240,7 @@ export function buildLiveStageView(
     // task titles and its fixture approver "authoritative". This field is the
     // machine-readable form of those two comments, written HERE because this is
     // where the carriage happens.
-    beatProvenance: liveStageBeatProvenanceFor(requestedStageKey),
+    beatProvenance: liveStageBeatProvenanceFor(requestedStageKey, factBeats !== null),
   };
 }
 
@@ -244,12 +275,18 @@ export function liveStageScaffoldSourceFor(stageKey: string): string {
 /**
  * Per-beat provenance for a view built by `buildLiveStageView`.
  *
- * Both beats are `scaffold` for every stage in this slice -- that is the measured
- * state, recorded in `docs/architecture/u533-stage-scaffold-provenance.json`,
- * not a placeholder. It is a function rather than a constant so that replacing
- * ONE stage's tasks/gate with fact-derived values changes this one place and the
- * disclosure downstream follows, instead of the label drifting away from what
- * the builder actually returns.
+ * Item U-533 recorded the measured before-state -- both beats `scaffold` on all
+ * ten armed stages -- in `docs/architecture/u533-stage-scaffold-provenance.json`.
+ * Item U-534 flipped ONE stage, so this now has two answers, and `derived` is
+ * passed in by the caller rather than re-derived from `stageKey` here: the label
+ * must be a reading of what the builder ACTUALLY returned, not a second opinion
+ * about it that can drift.
+ *
+ * `scaffoldSource` is null on the derived stage because neither declared beat was
+ * carried from an exemplar, which is the field's documented contract. Note that
+ * this stage's `purpose` IS still exemplar copy -- `beatProvenance` covers the two
+ * intake beats only, and the per-field artifact above is where the remaining
+ * carriage stays visible.
  */
 /*
  * Module-private on purpose. Exporting it would add a second exported gate with
@@ -259,7 +296,11 @@ export function liveStageScaffoldSourceFor(stageKey: string): string {
  */
 function liveStageBeatProvenanceFor(
   stageKey: string,
+  derived: boolean,
 ): StageBeatProvenanceView {
+  if (derived) {
+    return { tasks: 'fact_derived', gate: 'fact_derived', scaffoldSource: null };
+  }
   return {
     tasks: 'scaffold',
     gate: 'scaffold',

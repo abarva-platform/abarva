@@ -29,9 +29,16 @@
     "armedStageCount": 10,
     "declaredStageKeyCount": 18,
     "factDerivedFields": [
+      "gate.confirms",
       "intel",
+      "tasks",
       "waterfall"
     ],
+    "archetypeDerivedFields": [
+      "gate.approver",
+      "gate.generates"
+    ],
+    "derivedFromNeitherFields": [],
     "scaffoldCarriedFields": [
       "gate.approver",
       "gate.confirms",
@@ -39,9 +46,20 @@
       "purpose",
       "tasks"
     ],
-    "stagesWithScaffoldTasks": 10,
-    "stagesWithScaffoldGate": 10,
-    "distinctCarriedApprovers": [
+    "stagesWithScaffoldTasks": 9,
+    "stagesWithScaffoldGate": 9,
+    "stagesWithDerivedTasks": 1,
+    "stagesWithDerivedGate": 1,
+    "derivedStages": [
+      "bafo"
+    ],
+    "stagesExposingPersonNamedApprover": [
+      "responses",
+      "evaluation",
+      "value"
+    ],
+    "distinctGateApprovers": [
+      "CIO",
       "Commercial owner",
       "Decision owner",
       "K. Oshima, CIO",
@@ -95,12 +113,32 @@
         "stepInsight": "absent",
         "beatProvenance": "declared_provenance"
       },
+      "movesWithFacts": {
+        "purpose": false,
+        "intel": true,
+        "tasks": false,
+        "gate.approver": false,
+        "gate.confirms": false,
+        "gate.generates": false,
+        "gate.nextStageName": false,
+        "waterfall": true
+      },
+      "movesWithArchetype": {
+        "purpose": false,
+        "intel": true,
+        "tasks": false,
+        "gate.approver": false,
+        "gate.confirms": false,
+        "gate.generates": false,
+        "gate.nextStageName": false,
+        "waterfall": true
+      },
       "declared": {
         "tasks": "scaffold",
         "gate": "scaffold",
         "scaffoldSource": "SAMPLE_SCOPE_STAGE"
       },
-      "carriedTaskTitles": [
+      "gateTaskTitles": [
         "Confirm the applications in scope",
         "Provide the volumetrics",
         "Provide the application inventory",
@@ -109,8 +147,8 @@
         "Confirm retained vs. vendor",
         "Sponsor commitment"
       ],
-      "carriedGateApprover": "Commercial owner",
-      "carriedGateConfirmLabels": [
+      "gateApprover": "Commercial owner",
+      "gateConfirmLabels": [
         "Evidence complete",
         "Exclusions reviewed",
         "Scope final"
@@ -137,16 +175,36 @@
         "stepInsight": "absent",
         "beatProvenance": "declared_provenance"
       },
+      "movesWithFacts": {
+        "purpose": false,
+        "intel": true,
+        "tasks": false,
+        "gate.approver": false,
+        "gate.confirms": false,
+        "gate.generates": false,
+        "gate.nextStageName": false,
+        "waterfall": true
+      },
+      "movesWithArchetype": {
+        "purpose": false,
+        "intel": true,
+        "tasks": false,
+        "gate.approver": false,
+        "gate.confirms": false,
+        "gate.generates": false,
+        "gate.nextStageName": false,
+        "waterfall": true
+      },
       "declared": {
         "tasks": "scaffold",
         "gate": "scaffold",
         "scaffoldSource": "SAMPLE_RFP_STAGE"
       },
-      "carriedTaskTitles": [
+      "gateTaskTitles": [
         "Confirm RFP clause coverage"
       ],
-      "carriedGateApprover": "Decision owner",
-      "carriedGateConfirmLabels": [
+      "gateApprover": "Decision owner",
+      "gateConfirmLabels": [
         "Every priced lever has a clause",
         "BAFO fallbacks paired",
         "RFP final"
@@ -173,16 +231,36 @@
         "stepInsight": "absent",
         "beatProvenance": "declared_provenance"
       },
+      "movesWithFacts": {
+        "purpose": false,
+        "intel": true,
+        "tasks": false,
+        "gate.approver": false,
+        "gate.confirms": false,
+        "gate.generates": false,
+        "gate.nextStageName": false,
+        "waterfall": true
+      },
+      "movesWithArchetype": {
+        "purpose": false,
+        "intel": true,
+        "tasks": false,
+        "gate.approver": false,
+        "gate.confirms": false,
+        "gate.generates": false,
+        "gate.nextStageName": false,
+        "waterfall": true
+      },
       "declared": {
         "tasks": "scaffold",
         "gate": "scaffold",
         "scaffoldSource": "SAMPLE_RESPONSES_STAGE"
       },
-      "carriedTaskTitles": [
+      "gateTaskTitles": [
         "Confirm vendor response coverage"
       ],
-      "carriedGateApprover": "K. Oshima, CIO",
-      "carriedGateConfirmLabels": [
+      "gateApprover": "K. Oshima, CIO",
+      "gateConfirmLabels": [
         "Every lever mapped to each vendor’s answer",
         "Dodged levers flagged for evaluation",
         "Responses complete"
@@ -209,16 +287,36 @@
         "stepInsight": "absent",
         "beatProvenance": "declared_provenance"
       },
+      "movesWithFacts": {
+        "purpose": false,
+        "intel": true,
+        "tasks": false,
+        "gate.approver": false,
+        "gate.confirms": false,
+        "gate.generates": false,
+        "gate.nextStageName": false,
+        "waterfall": true
+      },
+      "movesWithArchetype": {
+        "purpose": false,
+        "intel": true,
+        "tasks": false,
+        "gate.approver": false,
+        "gate.confirms": false,
+        "gate.generates": false,
+        "gate.nextStageName": false,
+        "waterfall": true
+      },
       "declared": {
         "tasks": "scaffold",
         "gate": "scaffold",
         "scaffoldSource": "SAMPLE_EVALUATION_STAGE"
       },
-      "carriedTaskTitles": [
+      "gateTaskTitles": [
         "Confirm vendor bids for should-cost"
       ],
-      "carriedGateApprover": "K. Oshima, CIO",
-      "carriedGateConfirmLabels": [
+      "gateApprover": "K. Oshima, CIO",
+      "gateConfirmLabels": [
         "Every bid normalized to should-cost",
         "The trap surfaced",
         "Evaluation complete"
@@ -245,16 +343,36 @@
         "stepInsight": "absent",
         "beatProvenance": "declared_provenance"
       },
+      "movesWithFacts": {
+        "purpose": false,
+        "intel": true,
+        "tasks": false,
+        "gate.approver": false,
+        "gate.confirms": false,
+        "gate.generates": false,
+        "gate.nextStageName": false,
+        "waterfall": true
+      },
+      "movesWithArchetype": {
+        "purpose": false,
+        "intel": true,
+        "tasks": false,
+        "gate.approver": false,
+        "gate.confirms": false,
+        "gate.generates": false,
+        "gate.nextStageName": false,
+        "waterfall": true
+      },
       "declared": {
         "tasks": "scaffold",
         "gate": "scaffold",
         "scaffoldSource": "SAMPLE_PRICING_STAGE"
       },
-      "carriedTaskTitles": [
+      "gateTaskTitles": [
         "Confirm normalized supplier pricing"
       ],
-      "carriedGateApprover": "Commercial owner",
-      "carriedGateConfirmLabels": [
+      "gateApprover": "Commercial owner",
+      "gateConfirmLabels": [
         "Supplier pricing normalized",
         "Assumptions and traps reviewed",
         "Pricing ready for BAFO"
@@ -271,29 +389,54 @@
         "stageName": "from_input",
         "purpose": "scaffold_carried_by_reference",
         "intel": "fact_derived",
-        "tasks": "scaffold_carried_by_reference",
-        "gate.approver": "scaffold_carried_by_reference",
-        "gate.confirms": "scaffold_carried_by_reference",
-        "gate.generates": "scaffold_carried_by_reference",
+        "tasks": "fact_derived",
+        "gate.approver": "archetype_derived",
+        "gate.confirms": "fact_derived",
+        "gate.generates": "archetype_derived",
         "gate.nextStageName": "computed_agrees_with_exemplar",
         "gate.action": "absent",
         "waterfall": "fact_derived",
         "stepInsight": "absent",
         "beatProvenance": "declared_provenance"
       },
-      "declared": {
-        "tasks": "scaffold",
-        "gate": "scaffold",
-        "scaffoldSource": "SAMPLE_BAFO_STAGE"
+      "movesWithFacts": {
+        "purpose": false,
+        "intel": true,
+        "tasks": true,
+        "gate.approver": false,
+        "gate.confirms": true,
+        "gate.generates": false,
+        "gate.nextStageName": false,
+        "waterfall": true
       },
-      "carriedTaskTitles": [
-        "Confirm BAFO concessions captured"
+      "movesWithArchetype": {
+        "purpose": false,
+        "intel": true,
+        "tasks": true,
+        "gate.approver": true,
+        "gate.confirms": true,
+        "gate.generates": true,
+        "gate.nextStageName": false,
+        "waterfall": true
+      },
+      "declared": {
+        "tasks": "fact_derived",
+        "gate": "fact_derived",
+        "scaffoldSource": null
+      },
+      "gateTaskTitles": [
+        "Press the BAFO ask on Enhancement / change-order leakage",
+        "Provide the missing evidence for Volume-band price flex-down",
+        "Provide the missing evidence for Productivity / automation not priced back",
+        "Provide the missing evidence for Retained client / SME cost omitted from TCO",
+        "Provide the missing evidence for SLA credit economics",
+        "Provide the missing evidence for Transition fees not milestone-based"
       ],
-      "carriedGateApprover": "K. Oshima, CIO",
-      "carriedGateConfirmLabels": [
-        "Every open lever pressed in BAFO",
-        "Concessions booked per lever",
-        "BAFO final"
+      "gateApprover": "CIO",
+      "gateConfirmLabels": [
+        "1 of 6 levers pressed with a computed ask",
+        "5 of 6 levers still need evidence",
+        "Best-and-final round closed"
       ],
       "intelProvenance": "live",
       "waterfallProvenance": "live"
@@ -317,16 +460,36 @@
         "stepInsight": "absent",
         "beatProvenance": "declared_provenance"
       },
+      "movesWithFacts": {
+        "purpose": false,
+        "intel": true,
+        "tasks": false,
+        "gate.approver": false,
+        "gate.confirms": false,
+        "gate.generates": false,
+        "gate.nextStageName": false,
+        "waterfall": true
+      },
+      "movesWithArchetype": {
+        "purpose": false,
+        "intel": true,
+        "tasks": false,
+        "gate.approver": false,
+        "gate.confirms": false,
+        "gate.generates": false,
+        "gate.nextStageName": false,
+        "waterfall": true
+      },
       "declared": {
         "tasks": "scaffold",
         "gate": "scaffold",
         "scaffoldSource": "SAMPLE_EXECUTIVE_DECISION_STAGE"
       },
-      "carriedTaskTitles": [
+      "gateTaskTitles": [
         "Confirm executive recommendation packet"
       ],
-      "carriedGateApprover": "Decision owner",
-      "carriedGateConfirmLabels": [
+      "gateApprover": "Decision owner",
+      "gateConfirmLabels": [
         "Recommendation reviewed",
         "Value and risk accepted",
         "Decision ready for selection"
@@ -353,16 +516,36 @@
         "stepInsight": "absent",
         "beatProvenance": "declared_provenance"
       },
+      "movesWithFacts": {
+        "purpose": false,
+        "intel": true,
+        "tasks": false,
+        "gate.approver": false,
+        "gate.confirms": false,
+        "gate.generates": false,
+        "gate.nextStageName": false,
+        "waterfall": true
+      },
+      "movesWithArchetype": {
+        "purpose": false,
+        "intel": true,
+        "tasks": false,
+        "gate.approver": false,
+        "gate.confirms": false,
+        "gate.generates": false,
+        "gate.nextStageName": false,
+        "waterfall": true
+      },
       "declared": {
         "tasks": "scaffold",
         "gate": "scaffold",
         "scaffoldSource": "SAMPLE_SELECTION_STAGE"
       },
-      "carriedTaskTitles": [
+      "gateTaskTitles": [
         "Confirm committed value at award"
       ],
-      "carriedGateApprover": "Commercial owner",
-      "carriedGateConfirmLabels": [
+      "gateApprover": "Commercial owner",
+      "gateConfirmLabels": [
         "Every priced lever carried into the award",
         "Committed baseline set",
         "Award final"
@@ -389,16 +572,36 @@
         "stepInsight": "absent",
         "beatProvenance": "declared_provenance"
       },
+      "movesWithFacts": {
+        "purpose": false,
+        "intel": true,
+        "tasks": false,
+        "gate.approver": false,
+        "gate.confirms": false,
+        "gate.generates": false,
+        "gate.nextStageName": false,
+        "waterfall": true
+      },
+      "movesWithArchetype": {
+        "purpose": false,
+        "intel": true,
+        "tasks": false,
+        "gate.approver": false,
+        "gate.confirms": false,
+        "gate.generates": false,
+        "gate.nextStageName": false,
+        "waterfall": true
+      },
       "declared": {
         "tasks": "scaffold",
         "gate": "scaffold",
         "scaffoldSource": "SAMPLE_TRANSITION_STAGE"
       },
-      "carriedTaskTitles": [
+      "gateTaskTitles": [
         "Confirm transition go-live readiness"
       ],
-      "carriedGateApprover": "Transition owner",
-      "carriedGateConfirmLabels": [
+      "gateApprover": "Transition owner",
+      "gateConfirmLabels": [
         "Milestones reviewed",
         "Go-live blockers visible",
         "Ready for value tracking"
@@ -425,16 +628,36 @@
         "stepInsight": "absent",
         "beatProvenance": "declared_provenance"
       },
+      "movesWithFacts": {
+        "purpose": false,
+        "intel": true,
+        "tasks": false,
+        "gate.approver": false,
+        "gate.confirms": false,
+        "gate.generates": false,
+        "gate.nextStageName": false,
+        "waterfall": true
+      },
+      "movesWithArchetype": {
+        "purpose": false,
+        "intel": true,
+        "tasks": false,
+        "gate.approver": false,
+        "gate.confirms": false,
+        "gate.generates": false,
+        "gate.nextStageName": false,
+        "waterfall": true
+      },
       "declared": {
         "tasks": "scaffold",
         "gate": "scaffold",
         "scaffoldSource": "SAMPLE_VALUE_STAGE"
       },
-      "carriedTaskTitles": [
+      "gateTaskTitles": [
         "Confirm realized value to date"
       ],
-      "carriedGateApprover": "K. Oshima, CIO",
-      "carriedGateConfirmLabels": [
+      "gateApprover": "K. Oshima, CIO",
+      "gateConfirmLabels": [
         "Realized value booked per lever",
         "Realization measured against committed",
         "Value tracked"
