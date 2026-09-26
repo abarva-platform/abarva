@@ -165,6 +165,59 @@ describe("SourceAnalyticsCanvas stage workflow", () => {
     jest.restoreAllMocks();
   });
 
+  it("offers sponsor review from the mounted Scope step without approving the gate", async () => {
+    const sponsorPendingStage = {
+      ...SAMPLE_SCOPE_STAGE,
+      tasks: SAMPLE_SCOPE_STAGE.tasks.map((task) =>
+        task.id === "scope.sponsor"
+          ? task
+          : { ...task, state: "done" as const, evidenceComplete: true },
+      ),
+    };
+    (global.fetch as jest.Mock).mockResolvedValue({
+      ok: true,
+      json: async () => ({ channel: "logged_fallback" }),
+    });
+
+    render(
+      <SourceAnalyticsCanvas
+        event={EVENT}
+        viewStage="scope"
+        tenantName="Demo Client"
+        stageView={sponsorPendingStage}
+        initialWorkspace="steps"
+      />,
+    );
+
+    expect(screen.getByRole("button", { name: /Open Scope gate/ })).toBeDisabled();
+    fireEvent.click(screen.getByRole("button", { name: "Request sponsor review" }));
+    await waitFor(() => {
+      expect(global.fetch).toHaveBeenCalledWith(
+        `/api/v1/source/events/${EVENT.id}/request-approval`,
+        expect.objectContaining({
+          method: "POST",
+          body: JSON.stringify({ approvalKind: "sponsor_commitment" }),
+        }),
+      );
+    });
+    expect(await screen.findByText("Notification logged; no email sent.")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Open Scope gate/ })).toBeDisabled();
+  });
+
+  it("does not offer sponsor review from another Scope step", () => {
+    render(
+      <SourceAnalyticsCanvas
+        event={EVENT}
+        viewStage="scope"
+        tenantName="Demo Client"
+        stageView={SAMPLE_SCOPE_STAGE}
+        initialWorkspace="steps"
+      />,
+    );
+
+    expect(screen.queryByRole("button", { name: "Request sponsor review" })).toBeNull();
+  });
+
   it("renders a real approve action in the featured Approvals card instead of looping back to steps", async () => {
     render(
       <SourceAnalyticsCanvas

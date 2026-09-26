@@ -134,6 +134,7 @@ import { ANALYTICS } from "./analytics-tokens";
 import { CommercialActiveCanvasStrip } from "./CommercialActiveCanvasStrip";
 import { IntelPanel } from "./IntelPanel";
 import {
+  SponsorReviewRequest,
   TaskProvideUpload,
   TemplateDownloadLink,
   type TaskProvideUploadReadback,
@@ -3785,6 +3786,9 @@ function StepDetail({
           readback={uploadReadback}
           factTemplateCode={factTemplateCode}
         />
+        {stageKey === "scope" && activeStep.id === "scope.sponsor" && !isComplete ? (
+          <SponsorReviewRequest eventId={eventId} />
+        ) : null}
         {vendorCoverage ? (
           <VendorResponseCoverageList vendors={vendorCoverage} />
         ) : null}
