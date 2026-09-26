@@ -1,6 +1,0 @@
-layer,storage_account,container_or_path,parser_visible,restricted_truth_visible,allowed_identity,denied_identity,purpose
-parser_visible_source_corpus,stabairdnlabeus001,raw/source-manifests/parsed/working/quarantine/published/projections/exports/audit,true,false,source parser and governed job runner,restricted evaluator hidden truth identity,Client-style source files and manifests used for extraction
-hidden_canonical_truth,stabairdnevallab001,hidden-truth,false,true,restricted evaluator identity only,"parser, Claude, Source, Home, aVa, web and worker app identities",Answer key for reconstruction scoring
-source_to_truth_crosswalk,stabairdnevallab001,source-to-truth-crosswalk,false,true,restricted evaluator identity only,"parser, Claude, Source, Home, aVa, web and worker app identities",Restricted mapping from parser-visible source-native refs to hidden truth
-expected_reconstruction,stabairdnevallab001,expected-reconstruction,false,true,restricted evaluator identity only,"parser, Claude, Source, Home, aVa, web and worker app identities",Expected canonical objects and relationships used in certification
-evaluation_results,stabairdnevallab001,evaluation-results,false,true,restricted evaluator identity only,"parser, Claude, Source, Home, aVa, web and worker app identities",Evaluator outputs after parser/reconstruction run
