@@ -21,7 +21,7 @@ import { instanceStateHash } from '@/lib/reasoning/synthesis-context-builder';
 import { programInstanceStateHash } from '@/lib/reasoning/program-synthesis-context-builder';
 import { computeSynthesisEtag } from '@/lib/reasoning/synthesis-etag';
 import { buildStageSynthesisPrompt } from '@/lib/reasoning/stage-synthesis-prompt';
-import { AGENT_DEMO_SYSTEM_BLOCK } from '@/lib/agent/demo-context';
+import { getTenantSystemBlock } from '@/lib/agent/demo-context';
 import { getUserContextPromptBlock } from '@/lib/agent/userContext';
 import { FOUR_LAYER_REASONING_INSTRUCTIONS } from '@/lib/intelligence/synthesis/instructionLayer';
 
@@ -136,7 +136,20 @@ export async function POST(request: Request) {
     );
   }
 
-  const cacheKey = `${resolved.instanceId}:${stageId}:${resolved.stateHash}`;
+  // The active client is resolved here rather than just before the egress
+  // preflight, because from this point on it is an input to what is composed
+  // and to what is cached, not only to the egress record. Item C-527.
+  const activeClient = await getActiveClientRow();
+  if (!activeClient) {
+    return Response.json({ error: 'no_client', detail: 'No active client for AI egress policy.' }, { status: 403 });
+  }
+  const tenantKey = activeClient.key ?? null;
+
+  // The tenant belongs in the key because the composed system prompt now
+  // differs by tenant. Without it the first tenant to ask about a stage decides
+  // what every other tenant is told about it, which would defeat the scoping
+  // below at the one place it is least visible.
+  const cacheKey = `${tenantKey ?? 'no-tenant'}:${resolved.instanceId}:${stageId}:${resolved.stateHash}`;
   const etag = computeSynthesisEtag(cacheKey);
   const ifNoneMatch = request.headers.get('if-none-match');
   const cached = stageSynthesisCache.get(cacheKey);
@@ -173,18 +186,19 @@ export async function POST(request: Request) {
   // F0.2 Layer 0 — composed AFTER role/voice (prompt.system) and BEFORE
   // demo/knowledge block.
   const userContextBlock = await getUserContextPromptBlock();
+  // `getTenantSystemBlock` is the repository's own declaration of which demo
+  // context is scoped to which tenant; the unconditional block this used to
+  // pass handed one tenant's programme inventory, vendor selection and open
+  // attestation gap to every tenant that reached this route. The key comes from
+  // the server-resolved active client, never from the request body.
   const composedSystem = [
     prompt.system,
     userContextBlock,
     FOUR_LAYER_REASONING_INSTRUCTIONS,
-    AGENT_DEMO_SYSTEM_BLOCK,
+    getTenantSystemBlock(tenantKey),
   ]
     .filter((s) => s && s.trim().length > 0)
     .join('\n\n');
-  const activeClient = await getActiveClientRow();
-  if (!activeClient) {
-    return Response.json({ error: 'no_client', detail: 'No active client for AI egress policy.' }, { status: 403 });
-  }
   const preflight = await preflightAnthropicDirectClient({
     tenantId: activeClient.id,
     workflow: 'stage-synthesis',
