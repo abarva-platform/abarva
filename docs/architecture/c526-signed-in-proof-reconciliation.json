@@ -2314,5 +2314,11 @@
       "register_line_names_n_pull_requests": 118,
       "verdict": "ambiguous"
     }
-  ]
+  ],
+  "no_register_line_breakdown": {
+    "total": 83,
+    "pull_request_resolved_but_register_holds_no_line": 49,
+    "no_pull_request_to_look_up": 34,
+    "note": "The second group is a gap in the reader, not in the records: the record was added by a commit whose subject carries no (#N), so the pull-request join has nothing to key on."
+  }
 }

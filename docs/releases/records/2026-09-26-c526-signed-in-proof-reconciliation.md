@@ -225,7 +225,11 @@ No schema rollback is required.
 - **The reader cannot run in CI against the real register**, which lives in the
   operator root. CI proves the reader's behaviour; the corpus measurement is an
   operator-side run whose output is committed as the artifact above.
-- **`no-register-line` is not a verdict about a record's honesty.** 83 rows have
-  no register line for their pull request, which may mean the register never
-  recorded that release or that the reader could not resolve its pull request.
-  Separating those two is not attempted here.
+- **`no-register-line` is not a verdict about a record's honesty**, and it has
+  two causes, which are separated rather than left conflated: of the 83 rows, **49
+  resolved a pull request and the register simply holds no line naming it**, and
+  **34 had no pull request to look up at all** — their record was added by a commit
+  whose subject carries no `(#N)`, so the join has nothing to key on. The second
+  group is a gap in the *reader*, not in the records; a record added outside a
+  squash merge is invisible to this join. Closing it needs a second join key, which
+  this release does not attempt.
