@@ -165,6 +165,35 @@ describe("SourceAnalyticsCanvas stage workflow", () => {
     jest.restoreAllMocks();
   });
 
+  it("mounts delegated acknowledgement on the active Scope sponsor step", async () => {
+    const sponsorPendingStage = {
+      ...SAMPLE_SCOPE_STAGE,
+      tasks: SAMPLE_SCOPE_STAGE.tasks.map((task) =>
+        task.id === "scope.sponsor"
+          ? task
+          : { ...task, state: "done" as const, evidenceComplete: true },
+      ),
+    };
+    (global.fetch as jest.Mock).mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        verified: false, available: true, sponsorAssigned: true,
+        sponsorName: "Sam Sponsor", recipientReady: true, canDelegate: true,
+        scopeArtifact: { id: "scope-file", sha256: "a".repeat(64) }, currentStage: "scope",
+      }),
+    });
+    render(<SourceAnalyticsCanvas
+      event={EVENT}
+      viewStage="scope"
+      tenantName="Demo Client"
+      stageView={sponsorPendingStage}
+      initialWorkspace="steps"
+    />);
+    expect(await screen.findByRole("button", { name: "Acknowledge and notify sponsor" })).toBeInTheDocument();
+    expect(screen.getByText("Sponsor: Sam Sponsor")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Open Scope gate/ })).toBeDisabled();
+  });
+
   it("offers sponsor review from the mounted Scope step without approving the gate", async () => {
     const sponsorPendingStage = {
       ...SAMPLE_SCOPE_STAGE,
@@ -216,6 +245,7 @@ describe("SourceAnalyticsCanvas stage workflow", () => {
     );
 
     expect(screen.queryByRole("button", { name: "Request sponsor review" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Acknowledge and notify sponsor" })).toBeNull();
   });
 
   it("separates a remaining Scope workflow input from approval readiness", () => {

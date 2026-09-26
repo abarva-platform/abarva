@@ -134,6 +134,7 @@ import { ANALYTICS } from "./analytics-tokens";
 import { CommercialActiveCanvasStrip } from "./CommercialActiveCanvasStrip";
 import { IntelPanel } from "./IntelPanel";
 import {
+  SponsorDelegationControl,
   SponsorReviewRequest,
   TaskProvideUpload,
   TemplateDownloadLink,
@@ -506,16 +507,16 @@ const STEP_REQUIREMENTS: Record<string, WorkflowStepRequirement> = {
     missingAction: "Upload the required vendor-commercials workbook.",
   },
   "scope.sponsor": {
-    item: "Sponsor commitment letter",
-    requirement: "1 required signed file",
+    item: "Sponsor commitment",
+    requirement: "Verified signer proof or delegated acknowledgement with provider-accepted sponsor notice",
     sourceSystem: "Scope readiness pack",
     ownerRole: "Executive sponsor",
     acceptedFormats: "PDF or DOCX",
-    grainHistory: "One signed commitment for the current scope gate",
+    grainHistory: "One commitment bound to the current Scope memo",
     templateLabel: "Sponsor sign-off checklist",
     parseTarget: "Sponsor commitment evidence",
     artifactImpact: "Scope approval and governance record",
-    missingAction: "Upload the signed sponsor commitment.",
+    missingAction: "Submit signed commitment evidence for verification or acknowledge as an authorized delegate and notify the sponsor.",
   },
   "rfp.clause-coverage": {
     item: "RFP clause coverage file",
@@ -3779,7 +3780,7 @@ function StepDetail({
           eventId={eventId}
           stageKey={stageKey}
           factTemplateCode={factTemplateCode}
-          onUploaded={onComplete}
+          onUploaded={activeStep.id === "scope.sponsor" ? () => router.refresh() : onComplete}
           onUploadReadback={setUploadReadback}
         />
         <ActiveStepUploadReadback
@@ -3787,7 +3788,10 @@ function StepDetail({
           factTemplateCode={factTemplateCode}
         />
         {stageKey === "scope" && activeStep.id === "scope.sponsor" && !isComplete ? (
-          <SponsorReviewRequest eventId={eventId} />
+          <>
+            <SponsorDelegationControl eventId={eventId} />
+            <SponsorReviewRequest eventId={eventId} />
+          </>
         ) : null}
         {vendorCoverage ? (
           <VendorResponseCoverageList vendors={vendorCoverage} />

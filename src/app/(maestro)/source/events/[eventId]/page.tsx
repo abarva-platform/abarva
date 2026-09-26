@@ -40,6 +40,7 @@ import {
 } from "@/lib/source/facts/view/task-evidence-hydration";
 import { loadApprovalsInbox } from "@/lib/source/approvals-inbox";
 import { loadApprovalLedger } from "@/lib/source/approval-ledger";
+import { hasVerifiedSponsorDelegation } from "@/lib/source/sponsor-delegation-repository";
 import {
   buildStrategyStageView,
   deriveStrategyIntakeFacts,
@@ -678,6 +679,16 @@ export default async function SourceEventDetailPage({
     // reached a usable, persisted state — never a fabricated done. Never fatal.
     if (liveStageView) {
       try {
+        const verifiedDelegatedSponsorAcknowledgement =
+          viewStage === "scope" && activeClient?.key
+            ? await hasVerifiedSponsorDelegation({
+                eventId: event.id,
+                tenantKey: activeClient.key,
+              }).catch((error) => {
+                console.error("[SourceEventDetailPage] sponsor delegation read failed", error);
+                return false;
+              })
+            : false;
         const journeyStageView = adaptStageViewToSourceJourney(
           liveStageView,
           sourceJourney,
@@ -690,6 +701,7 @@ export default async function SourceEventDetailPage({
             artifacts: analyticsHydrationArtifacts,
             evidenceStates: analyticsEvidenceStates,
             stageKey: journeyStageView.stageKey,
+            verifiedDelegatedSponsorAcknowledgement,
           }),
         };
       } catch (error) {

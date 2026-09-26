@@ -36,6 +36,7 @@ import { autoDraftOnStageEntry } from "@/lib/source/stage-entry-autodraft";
 import { getStageSubstrate } from "@/lib/source/canvas-substrate/queries";
 import { normalizeSourceStageKey } from "@/lib/source/constants";
 import { evaluateSourceGateAdvanceContract } from "@/lib/source/gate-advance-contract";
+import { hasVerifiedSponsorDelegation } from "@/lib/source/sponsor-delegation-repository";
 import {
   coerceStageToSourceJourney,
   getSourceJourneyForEvent,
@@ -294,6 +295,13 @@ export async function POST(
       artifacts: substrate.artifacts,
       evidence: substrate.evidence,
       reason: body.notes,
+      verifiedDelegatedSponsorAcknowledgement:
+        effectiveCurrentStage === "scope"
+          ? await hasVerifiedSponsorDelegation({
+              eventId,
+              tenantKey: activeClient.key,
+            })
+          : false,
     });
     if (!gateContract.ok) {
       return Response.json(

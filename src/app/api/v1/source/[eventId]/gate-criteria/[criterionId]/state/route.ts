@@ -49,6 +49,7 @@ import {
 } from "@/lib/source/source-governance-enforcement";
 import { scaffoldNewEventSubstrate } from "@/lib/source/queries";
 import { syncEventIntakeEvidence } from "@/lib/source/canvas-substrate/event-intake-sync";
+import { hasVerifiedSponsorDelegation } from "@/lib/source/sponsor-delegation-repository";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -290,6 +291,13 @@ export async function PATCH(req: NextRequest, { params }: RouteCtx) {
           evidenceStateRowToView,
         ),
         reason,
+        verifiedDelegatedSponsorAcknowledgement:
+          criterionId === "GATE-SCOPE-02"
+            ? await hasVerifiedSponsorDelegation({
+                eventId: persistedEvent.id,
+                tenantKey: effectiveClientKey,
+              })
+            : false,
       });
       if (!readiness.ok) {
         const blocker = firstGovernanceBlocker(readiness);

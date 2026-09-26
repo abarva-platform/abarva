@@ -151,11 +151,11 @@ export const SAMPLE_SCOPE_STAGE: StageAnalyticsView = {
     {
       id: 'scope.sponsor',
       title: 'Sponsor commitment',
-      subtitle: 'Signed commitment letter',
+      subtitle: 'Signed-letter review or delegated acknowledgement',
       type: 'provide',
       state: 'todo',
       guide:
-        'The last step. Upload the signed letter — it records that leadership stands behind the scope going into RFP.',
+        'Record the sponsor commitment against the current Scope memo. A signed letter needs independent verification; an authorized delegate can acknowledge in the app and notify the named sponsor.',
       provenance: {
         owner: 'Katherine Oshima, CIO',
         source: 'Template in your readiness pack',

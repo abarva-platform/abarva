@@ -73,6 +73,8 @@ export interface HydrateTaskEvidenceInput {
   >[];
   /** The canonical stage key being rendered; retained for the caller contract. */
   stageKey?: string;
+  /** Verified, current-artifact delegate receipt plus confirmed sponsor notice. */
+  verifiedDelegatedSponsorAcknowledgement?: boolean;
 }
 
 /**
@@ -106,6 +108,7 @@ export function hydrateTaskEvidenceState(
     factInputs,
     artifacts = [],
     evidenceStates = [],
+    verifiedDelegatedSponsorAcknowledgement = false,
   } = input;
 
   const evidenceStateByRequirementId = new Map<
@@ -122,6 +125,9 @@ export function hydrateTaskEvidenceState(
   }
 
   return tasks.map((task) => {
+    if (task.id === "scope.sponsor" && verifiedDelegatedSponsorAcknowledgement) {
+      return { ...task, evidenceComplete: true };
+    }
     if (task.type !== "provide") {
       const requirementId = evidenceRequirementIdForTask(task);
       if (!requirementId) return task;
