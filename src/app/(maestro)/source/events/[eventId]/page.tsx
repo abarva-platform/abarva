@@ -628,6 +628,7 @@ export default async function SourceEventDetailPage({
               baselineAmount: event.valueAtStakeUsd ?? 0,
               stageKey: viewStage,
               stageName: sourceJourneyLabelForStage(sourceJourney, viewStage),
+              vendorResponses,
             }) ?? undefined;
 
           // Arm the LIVE approve action on the gate ONLY when the event actually

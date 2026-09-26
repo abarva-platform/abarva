@@ -199,6 +199,22 @@ const ARMED_STAGE_KEYS = [
 /** Every key the canonical label table declares, armed and legacy alike. */
 const ALL_DECLARED_STAGE_KEYS = Object.keys(SOURCE_STAGE_LABELS).sort();
 
+const RESPONSE_RULES = getSourceArchetype(ARCHETYPE_ID)!.valueLeverRules ?? [];
+const RESPONSE_COVERAGE = {
+  vendors: ['vendor-a'],
+  statusByVendorLever: new Map([
+    ['vendor-a', new Map([[RESPONSE_RULES[0].key, 'addressed' as const]])],
+  ]),
+};
+const RICHER_RESPONSE_COVERAGE = {
+  vendors: ['vendor-a'],
+  statusByVendorLever: new Map([
+    ['vendor-a', new Map([
+      [RESPONSE_RULES[0].key, 'addressed' as const],
+      [RESPONSE_RULES[1].key, 'partial' as const],
+    ])],
+  ]),
+};
 
 function buildFor(stageKey: string): StageAnalyticsView {
   const view = buildLiveStageView({
@@ -208,6 +224,7 @@ function buildFor(stageKey: string): StageAnalyticsView {
     baselineLabel: "Value at stake (event estimate)",
     baselineAmount: 14_000_000,
     stageKey,
+    vendorResponses: RESPONSE_COVERAGE,
   });
   if (!view) throw new Error(`no live view for stage ${stageKey}`);
   return view;
@@ -363,7 +380,10 @@ const NAMED_APPROVER_STAGES = ARMED_STAGE_KEYS.filter((stageKey) =>
   PERSON_NAME_APPROVER.test(liveStageScaffoldFor(stageKey).gate.approver),
 );
 
-const NAMED_APPROVER_STAGE = NAMED_APPROVER_STAGES[0]!;
+const NAMED_APPROVER_STAGE = NAMED_APPROVER_STAGES.find((stageKey) =>
+  (CARRIED_STAGE_KEYS as readonly string[]).includes(stageKey),
+)!;
+
 
 // ─────────────────────────────────────────────────────────────────────────────
 // 1. The measurement.
@@ -387,6 +407,7 @@ function measureStage(stageKey: string) {
     baselineAmount: 14_000_000,
     stageKey,
     stageName: PERTURBED_STAGE_NAME,
+    vendorResponses: RESPONSE_COVERAGE,
   })!;
 
   const follows = (
@@ -413,6 +434,7 @@ function measureStage(stageKey: string) {
     baselineLabel: "Value at stake (event estimate)",
     baselineAmount: 14_000_000,
     stageKey,
+    vendorResponses: RICHER_RESPONSE_COVERAGE,
   })!;
 
   const movesWithFacts = (read: (v: StageAnalyticsView) => unknown): boolean =>
@@ -436,6 +458,7 @@ function measureStage(stageKey: string) {
     baselineLabel: "Value at stake (event estimate)",
     baselineAmount: 14_000_000,
     stageKey,
+    vendorResponses: RESPONSE_COVERAGE,
   })!;
 
   const movesWithArchetype = (
@@ -623,7 +646,7 @@ function buildMeasurement() {
         // that is partly done reads as though none of it is. Stated as a
         // remainder rather than a task, and the two counts above are the
         // machine-checkable half of it.
-        "derive tasks/gate for the eight stages still carrying an exemplar (U-533 acceptance 3, continued)",
+        `derive tasks/gate for the ${CARRIED_STAGE_KEYS.length} stages still carrying an exemplar (U-533 acceptance 3, continued)`,
       ],
       signedInProofPerformed: false,
     },
@@ -808,9 +831,8 @@ describe("U-533 · the measurement is committed and does not drift", () => {
 
 describe("U-533 · what is carried, and what only agrees", () => {
   it("records the five carried fields, and the four the flips moved off the list", () => {
-    // `purpose` is carried on ALL TEN, including the flipped stages -- U-534 and
-    // U-535 both scoped to the two intake beats. The other four are carried on
-    // the eight and derived on the two, so they appear in BOTH lists, and that is
+    // `purpose` is carried on ALL TEN, including the flipped stages. The other
+    // four are carried on seven and derived on three, so they appear in BOTH lists, and that is
     // the honest reading of a per-stage measurement rolled up across stages.
     expect(measurement.summary.scaffoldCarriedFields).toEqual([
       "gate.approver",
@@ -844,10 +866,10 @@ describe("U-533 · what is carried, and what only agrees", () => {
      * verdict is what keeps the hand-written-fixture guard below meaningful.
      */
     expect(measurement.summary.emptyDerivedFields).toEqual(["gate.generates"]);
-    expect(measurement.summary.stagesWithScaffoldTasks).toBe(8);
-    expect(measurement.summary.stagesWithScaffoldGate).toBe(8);
-    expect(measurement.summary.stagesWithDerivedTasks).toBe(2);
-    expect(measurement.summary.stagesWithDerivedGate).toBe(2);
+    expect(measurement.summary.stagesWithScaffoldTasks).toBe(7);
+    expect(measurement.summary.stagesWithScaffoldGate).toBe(7);
+    expect(measurement.summary.stagesWithDerivedTasks).toBe(3);
+    expect(measurement.summary.stagesWithDerivedGate).toBe(3);
   });
 
   it("finds NO field that differs from the exemplar and follows nothing", () => {
@@ -1083,14 +1105,14 @@ describe("U-533 · known positive: exemplar content reaches the model's prompt",
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("U-533 · the boundary declares which beats are carried", () => {
-  it("still has eight carried stages and two derived ones", () => {
+  it("still has seven carried stages and three derived ones", () => {
     // Population before property, and the acceptance clause U-534 carried and
     // U-535 keeps: the label must not disappear from the rest because another
     // stage stopped needing it. A case over an empty CARRIED set would assert
     // that vacuously, and the two numbers are written out rather than summed so
     // a stage silently dropped from the armed set cannot keep this green.
-    expect(CARRIED_STAGE_KEYS).toHaveLength(8);
-    expect(DERIVED_STAGE_KEYS).toHaveLength(2);
+    expect(CARRIED_STAGE_KEYS).toHaveLength(7);
+    expect(DERIVED_STAGE_KEYS).toHaveLength(3);
   });
 
   it.each(CARRIED_STAGE_KEYS)("%s declares both intake beats as scaffold", (stageKey) => {

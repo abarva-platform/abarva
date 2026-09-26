@@ -162,7 +162,7 @@ const DERIVED_STAGE_KEYS = ARMED_STAGE_KEYS.filter(
  * Searched, not named. This constant was the literal `"bafo"` and went red when
  * `bafo` became the first derived stage — which is the right failure, but a
  * literal makes the next flip a breakage instead of a move. Four exemplars carry a
- * personal name and three of them still reach this path.
+ * personal name; the carrying set is measured from the builder.
  */
 const NAMED_APPROVER_STAGE = CARRIED_STAGE_KEYS.find((stageKey) =>
   PERSON_NAME_APPROVER.test(liveStageScaffoldFor(stageKey).gate.approver),
@@ -257,12 +257,12 @@ describe("U-533 · the view the canvas receives declares its carried beats", () 
   });
 });
 
-describe("U-534/U-535 · a flipped stage renders derived content, not the exemplar's", () => {
-  it("has two flipped stages and eight that still carry", () => {
+describe("U-534/U-535/U-538 · a flipped stage renders derived content, not the exemplar's", () => {
+  it("has three flipped stages and seven that still carry", () => {
     // Population before property. A search that found nothing would make every
     // case below pass over an empty set.
-    expect(DERIVED_STAGE_KEYS).toHaveLength(2);
-    expect(CARRIED_STAGE_KEYS).toHaveLength(8);
+    expect(DERIVED_STAGE_KEYS).toHaveLength(3);
+    expect(CARRIED_STAGE_KEYS).toHaveLength(7);
     expect(NAMED_APPROVER_STAGE).toBeDefined();
   });
 
