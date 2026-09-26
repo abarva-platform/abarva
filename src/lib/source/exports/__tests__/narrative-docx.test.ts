@@ -1,4 +1,5 @@
 import { Packer } from 'docx';
+import JSZip from 'jszip';
 import {
   DECISION_BRIEF_DOCX_CONFIG,
   RFP_PACK_DOCX_CONFIG,
@@ -57,6 +58,18 @@ describe('buildNarrativeDocx', () => {
     const doc = buildNarrativeDocx(makePayload(), RFP_PACK_DOCX_CONFIG);
     const buf = await Packer.toBuffer(doc);
     expect(buf.byteLength).toBeGreaterThan(4000);
+  });
+
+  it('places the authored RFP body in the packed document, without a scaffold warning', async () => {
+    const doc = buildNarrativeDocx(
+      makePayload({ body: '# Request for proposal\n\nDescribe the proposed service approach.', bodyIsAuthored: true }),
+      RFP_PACK_DOCX_CONFIG,
+    );
+    const zip = await JSZip.loadAsync(await Packer.toBuffer(doc));
+    const xml = await zip.file('word/document.xml')?.async('string');
+
+    expect(xml).toContain('Describe the proposed service approach.');
+    expect(xml).not.toContain('canonical scaffold');
   });
 
   it('produces a packable docx for d13 Vendor Response Pack config', async () => {

@@ -190,6 +190,35 @@ export function ScopeGate({ gate, stageName, eventId }: ScopeGateProps) {
             background: ANALYTICS.SOFT,
           }}
         >
+          {/*
+            * Item U-535. An EMPTY `generates` is a real derived answer, not a
+            * missing one: `evaluation` derives this list from the resolved
+            * archetype's `deliverablePack` at that stage, and no rule-bearing
+            * archetype declares a deliverable there. Until this branch existed
+            * the heading and its dashed box rendered unconditionally, so the
+            * honest answer drew an empty box under "Prepared for approval" and
+            * then promised, in the footer below, that "these" are prepared after
+            * approval — a promise about nothing. The alternative was to backfill
+            * the stage exemplar's deliverable to keep the box full, which would
+            * assert a document no archetype declares.
+            */}
+          {gate.generates.length === 0 ? (
+            <div
+              style={{
+                fontSize: 12.5,
+                color: ANALYTICS.MUTED,
+                lineHeight: 1.5,
+              }}
+            >
+              <b style={{ color: ANALYTICS.INK_2 }}>
+                No deliverable is declared for this stage.
+              </b>{' '}
+              This event&rsquo;s archetype names no document that this gate
+              generates, so nothing is listed here rather than a placeholder
+              standing in for one. The approval still advances the stage.
+            </div>
+          ) : (
+          <>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
             {gate.generates.map((deliverable) => (
               <div
@@ -243,6 +272,8 @@ export function ScopeGate({ gate, stageName, eventId }: ScopeGateProps) {
             prepared automatically after the approval decision — there is no build step on
             this stage page.
           </div>
+          </>
+          )}
         </div>
       </div>
 

@@ -90,6 +90,17 @@ type Suite = {
     whyNotSelected: string | null;
   };
   declaredKnownFailingInBaseline: { failing: number; ran: boolean } | null;
+  /* Present only once the quoted entry has been removed from the live baseline
+   * by a named item -- see the knownFailing case below. */
+  baselineEntryRemovedBy?: { item: string; reason: string };
+  /* Present only once the byte-matching cases named above have been replaced by
+   * behavioural ones, by a named item -- see the replacement case below. */
+  partialSourceTextCasesReplacedBy?: {
+    item: string;
+    replacedBy: string[];
+    reason: string;
+    measured: string;
+  };
   verdict: string;
   ownerItem: string;
   rationale: string;
@@ -312,6 +323,61 @@ describe("T-479 stale suite triage record", () => {
     expect(record.suites.some((s) => (s.partialSourceTextCases ?? 0) > 0)).toBe(
       true,
     );
+  });
+
+  /*
+   * Item T-484 replaced all four byte-matching cases this record named. Naming
+   * them was what stopped them being lost inside a green suite; once they are
+   * gone, the names are the one part of this record that can go stale against a
+   * live file, and a record that quotes case titles no suite has any more is the
+   * shape T-479 exists against -- a byte-scan outliving its subject, in the
+   * bookkeeping rather than in the test.
+   *
+   * So a row that declares a replacement has to survive both directions: the
+   * titles it says are gone must be gone, and the titles it says replaced them
+   * must be there. History is kept -- `partialSourceTextCaseNames` still holds
+   * what was measured at this record's base and is never rewritten.
+   *
+   * This reads the suite file as TEXT, which is the instrument this whole item
+   * is about removing, and that is deliberate here for one reason: the subject
+   * is a quoted NAME, not a behaviour. What it proves is that the record's
+   * bookkeeping matches the suite's case titles. It proves nothing about what
+   * those cases assert -- that is the pull request's mutation evidence, quoted
+   * in `measured` and required to be substantial below.
+   */
+  it("keeps a replaced-case declaration honest against the live suite in both directions", () => {
+    const declared = record.suites.filter(
+      (suite) => suite.partialSourceTextCasesReplacedBy,
+    );
+    // The population is declared rather than assumed: all four named cases were
+    // replaced under T-484, across three suites.
+    expect(declared).toHaveLength(3);
+
+    for (const suite of declared) {
+      const replacement = suite.partialSourceTextCasesReplacedBy!;
+      expect(replacement.item).not.toBe(record.item);
+      expect(replacement.reason.length).toBeGreaterThan(200);
+      expect(replacement.measured.length).toBeGreaterThan(120);
+
+      // History is preserved, not rewritten.
+      expect(suite.partialSourceTextCaseNames).toHaveLength(
+        suite.partialSourceTextCases ?? 0,
+      );
+      // A replacement may fold two byte scans into one behavioural case or
+      // split one into several; what it may not do is replace fewer cases than
+      // it names as replaced.
+      expect(replacement.replacedBy.length).toBeGreaterThan(0);
+
+      const source = readFileSync(path.join(process.cwd(), suite.path), "utf8");
+      const title = (name: string) => name.split(" :: ").slice(-1)[0];
+
+      for (const gone of suite.partialSourceTextCaseNames ?? []) {
+        expect(source).not.toContain(title(gone));
+      }
+      for (const present of replacement.replacedBy) {
+        expect(source).toContain(title(present));
+      }
+    }
   });
 
   it("gives every non-green suite a verdict that does not assume it passes", () => {
@@ -579,6 +645,16 @@ describe("T-479 stale suite triage record", () => {
    * the measured run. Two independent facts, and the record may not disagree
    * with either -- this is the control that would catch a baseline re-recorded
    * after the fact to make a row look expected.
+   *
+   * A row whose failures have since been FIXED is the one legitimate way for
+   * the two to disagree, and the first version of this control had no case for
+   * it: the quote is a measurement at this record's base, the baseline is live,
+   * and requiring them to match forever meant no baselined row could ever
+   * improve without turning this red (found by T-483, which repaired one). The
+   * row has to SAY so, naming the item -- a removal nobody declared is still a
+   * failure, and so is a declaration made while the entry is still there,
+   * because otherwise the declaration is a standing exemption rather than a
+   * record of one event.
    */
   it("verifies every quoted baseline knownFailing entry against the baseline file and the measured run", () => {
     const baselines = [
@@ -590,13 +666,27 @@ describe("T-479 stale suite triage record", () => {
 
     for (const suite of record.suites) {
       const quoted = suite.declaredKnownFailingInBaseline;
+      const removedBy = suite.baselineEntryRemovedBy;
+
       if (!quoted) {
+        expect(removedBy).toBeUndefined();
         expect(live[suite.path]).toBeUndefined();
         continue;
       }
-      expect(live[suite.path]).toEqual(quoted);
+
+      // The quote is history and is checked against the measured run either
+      // way; only its agreement with the LIVE baseline is conditional.
       expect(quoted.failing).toBe(suite.failedTests);
       expect(suite.green).toBe(false);
+
+      if (removedBy) {
+        expect(live[suite.path]).toBeUndefined();
+        expect(removedBy.item).toMatch(/^[A-Z]-\d+$/);
+        expect(removedBy.reason.length).toBeGreaterThan(80);
+        continue;
+      }
+
+      expect(live[suite.path]).toEqual(quoted);
     }
   });
 

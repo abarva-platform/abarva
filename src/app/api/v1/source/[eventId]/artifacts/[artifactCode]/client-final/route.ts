@@ -2,6 +2,7 @@ import { createHash, randomUUID } from "node:crypto";
 
 import { requireTenancy, tenancyErrorResponse } from "@/app/api/v1/_intel-auth";
 import { getActiveClientRow } from "@/lib/active-client";
+import { loadUserSourceAccessPolicy } from "@/lib/auth/source-access-policy";
 import { clientKeyToInventorySubstrateKey } from "@/lib/agent/tools/intelligence/_shared";
 import { getObjectStorageAdapter } from "@/lib/data-plane/objectStorage";
 import {
@@ -165,6 +166,18 @@ export async function POST(request: Request, { params }: RouteContext) {
   const event = await getPersistedSourceEventRow(client.key, eventId);
   if (!event) return jsonError(403, "forbidden_event");
 
+  const accessPolicy = await loadUserSourceAccessPolicy(tenancy, {
+    activeClientKey: client.key,
+    sourceEventId: event.id,
+  }).catch(() => null);
+  if (!accessPolicy?.canUploadSourceArtifacts || !accessPolicy.canApproveSourceStages) {
+    return jsonError(
+      403,
+      "approval_rights_required",
+      "Source artifact upload and stage approval rights are required to accept a client-final artifact.",
+    );
+  }
+
   const artifactState = await getArtifactState({
     eventId: event.id,
     tenantKey,
@@ -207,6 +220,9 @@ export async function POST(request: Request, { params }: RouteContext) {
   }
 
   const note = parseOptionalString(formData.get("note"));
+  if (!note) {
+    return jsonError(400, "approval_rationale_required");
+  }
   const reviewMeetingDate = parseOptionalDate(
     formData.get("reviewMeetingDate"),
   );

@@ -43,6 +43,7 @@ import { getAzureReadFluentClient } from "@/lib/data-plane/postgresCompat";
 import { getLatestArtifactAcceptance } from "@/lib/source/artifact-acceptances";
 import { resolveArtifactAuthority } from "@/lib/source/contracts/artifact-authority";
 import { getSourceArtifactContract } from "@/lib/source/contracts/registry";
+import { requireRfpArtifactExport } from "@/lib/source/exports/rfp-export-authority";
 import {
   contentTypeFor,
   type ArtifactFileFormat,
@@ -172,8 +173,24 @@ async function renderArtifact(
     );
   }
 
+  const canonicalArtifactCode = canonicalArtifactCodeFor(
+    artifactCode,
+    variantParam === "comparison" ? "comparison" : "template",
+  );
+  const linkedArtifactId = ctx.artifactStates.find(
+    (state) => state.artifactCode === canonicalArtifactCode,
+  )?.linkedArtifactId;
+  const rfpExport = await requireRfpArtifactExport(
+    ctx,
+    canonicalArtifactCode,
+    activeClient?.id ?? null,
+    requestedFormat
+      ? deliverableFormatToFileFormat(requestedFormat) ?? "docx"
+      : "docx",
+  );
+  if (rfpExport.response) return rfpExport.response;
+
   if (requestedFormat && variantParam !== "comparison" && activeClient) {
-    const canonicalArtifactCode = canonicalArtifactCodeFor(artifactCode);
     const clientFinalResponse = await streamClientFinalIfAvailable({
       sourceEventId: ctx.event.id,
       clientId: activeClient.id,
@@ -186,10 +203,6 @@ async function renderArtifact(
   }
 
   // Resolve artifact code → kind after the event/auth boundary.
-  const canonicalArtifactCode = canonicalArtifactCodeFor(
-    artifactCode,
-    variantParam === "comparison" ? "comparison" : "template",
-  );
   const kind = kindForArtifactCode(
     canonicalArtifactCode,
     variantParam === "comparison" ? "comparison" : "template",
@@ -208,18 +221,16 @@ async function renderArtifact(
   // the canonical code has a registered SourceArtifactContract (PR 4A's
   // registry covers the 33 d-code artifacts; other rendered kinds are
   // untouched by this gate, named explicitly rather than silently extended
-  // to codes this workstream never analyzed). When a contract exists AND
+  // to codes this workstream never analyzed). RFP export has already passed
+  // its stricter exact-file gate above. For other codes, when a contract exists AND
   // the artifact has a linked source_artifacts row, export is blocked
   // unless the resolved authority decision says it's eligible — e.g. a
   // client-facing artifact still at ai_draft cannot export until it clears
   // approved_for_external_use, matching the contract's exportEligibility
-  // rule. No linked artifact yet (nothing generated/uploaded) is not a
-  // governance concern this gate blocks — that fails naturally downstream.
+  // rule. Other codes with no linked artifact retain their existing preview
+  // behavior; this does not grant an external-release decision.
   const exportContract = getSourceArtifactContract(canonicalArtifactCode);
   if (exportContract) {
-    const linkedArtifactId = ctx.artifactStates.find(
-      (state) => state.artifactCode === canonicalArtifactCode,
-    )?.linkedArtifactId;
     if (linkedArtifactId) {
       const [{ data: governanceRow }, latestAcceptance] = await Promise.all([
         getAzureReadFluentClient()

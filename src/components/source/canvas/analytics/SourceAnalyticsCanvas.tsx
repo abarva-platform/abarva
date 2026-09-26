@@ -2314,7 +2314,7 @@ function FocusedWorkPanel({
                 // gap and misdescribes the state — live-found on a stage reading
                 // 0/1 whose approval record was already in the ledger.
                 `${view.stage.label} was approved with ${flatSteps.length - doneCount} required input${flatSteps.length - doneCount === 1 ? "" : "s"} still open. The approval stands; the gap is recorded here so it is not mistaken for completed work.`
-              : `${flatSteps.length - doneCount} step${flatSteps.length - doneCount === 1 ? "" : "s"} left before ${view.stage.label} can move to approval.`}
+              : `${flatSteps.length - doneCount} required workflow step${flatSteps.length - doneCount === 1 ? " remains" : "s remain"} for ${view.stage.label}. Review evidence, artifact status, and gate criteria separately in Approvals.`}
         </div>
       </div>
 

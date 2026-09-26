@@ -16,6 +16,7 @@ import { AGENT_DEMO_SYSTEM_BLOCK } from "@/lib/agent/demo-context";
 import { getUserContextPromptBlock } from "@/lib/agent/userContext";
 import { FOUR_LAYER_REASONING_INSTRUCTIONS } from "@/lib/intelligence/synthesis/instructionLayer";
 import { requireTenancy, tenancyErrorResponse } from "@/lib/auth/tenancy";
+import { TOWER_LEAD_AGENT } from "@/lib/tower/constants";
 import {
   formatUserProgramAccessPolicyForPrompt,
   loadUserProgramAccessPolicy,
@@ -41,8 +42,15 @@ registerSynthesisCache("tower", synthesisCache, cacheCreatedAt);
 // message instead of leaving the UI hung at "aVa is thinking...". 30s matches
 // the working API timeout policy elsewhere in this codebase.
 export const TOWER_SYNTHESIS_TIMEOUT_MS = 30_000;
+// The agent's name comes from `TOWER_LEAD_AGENT` rather than being spelled here.
+// This message used to carry a second, literal copy of it, and when the product
+// renamed the agent in #4037 only one of the copies moved — the literal in the
+// test beside this file kept asserting the retired name and went red for three
+// months. One declaration means the next rename cannot leave a stale copy behind.
+// The rendered string is unchanged by this: the constant is the same name the
+// literal spelled.
 export const TOWER_SYNTHESIS_TIMEOUT_MESSAGE =
-  "aVa could not complete that response in time. Try again or pick a narrower question.";
+  `${TOWER_LEAD_AGENT} could not complete that response in time. Try again or pick a narrower question.`;
 
 // aVa Fix C (determinism): tower synthesis uses temperature=0 so the same
 // portfolio state produces the same read. The CXO-quality audit (PR #2562)

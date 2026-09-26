@@ -941,6 +941,61 @@ export type StepInsightView =
   | BafoProgressInsightView
   | CommittedValueInsightView;
 
+// ── Beat provenance — is this beat derived, or exemplar scaffold content? ─────
+
+/**
+ * Where ONE beat of a stage view's content came from.
+ *
+ * `fact_derived` — derived for THIS event, as opposed to exemplar copy: from its
+ *                  committed facts, from the archetype its own classification
+ *                  resolved to, or from both.
+ * `scaffold`     — carried verbatim from the stage exemplar in
+ *                  `sample-view-model.ts`. The structure is real; the CONTENT
+ *                  (task titles, the approver's name, confirm-box labels) is
+ *                  authored exemplar copy that describes no particular event.
+ *
+ * ITEM U-534 WIDENED THE FIRST DEFINITION, and deliberately not the union. The
+ * first derived stage's gate takes its confirm boxes from the event's computed
+ * lever results but its approver role and its generates-on-approval list from the
+ * resolved archetype's declarations — which move with the event's archetype and
+ * NOT with its facts. Measured, not assumed: the per-field readings in
+ * `docs/architecture/u533-stage-scaffold-provenance.json` record which of the two
+ * each field follows, because that distinction belongs in the measurement.
+ *
+ * It does not belong in this union. The question this field answers for the
+ * grounding builder is "is this exemplar copy?", and a third member would make
+ * archetype-declared content disclose itself to the model as content "carried
+ * verbatim from the stage exemplar", which is false.
+ */
+export type StageBeatProvenance = 'fact_derived' | 'scaffold';
+
+/**
+ * Per-beat provenance for a stage view, declared AT THE BOUNDARY that builds it.
+ *
+ * Item U-533. `buildLiveStageView` composes a live value waterfall and a live
+ * intel beat, then carries the exemplar's `tasks` and `gate` through unchanged
+ * so the page renders. Two things consume that view: the event canvas, and the
+ * chat grounding builder that writes the model's prompt. Until this field
+ * existed neither could tell derived content from exemplar copy, and the
+ * grounding block introduced BOTH as "authoritative" — including a gate
+ * approver who is a name in a fixture, not a person on the event.
+ *
+ * `intel` and `waterfall` are NOT listed: `SourceIntelViewModel.provenance` and
+ * `ValueWaterfallView.provenance` already declare their own, and a second
+ * writer of the same fact is a second thing to keep honest.
+ */
+export interface StageBeatProvenanceView {
+  /** Beat 2 — the task checklist. */
+  tasks: StageBeatProvenance;
+  /** Beat 3 — the gate: approver, confirm boxes, generates. */
+  gate: StageBeatProvenance;
+  /**
+   * The exemplar constant any `scaffold` beat above was carried from, e.g.
+   * `SAMPLE_RFP_STAGE`. Null when no beat is scaffold-backed.
+   */
+  scaffoldSource: string | null;
+}
+
 // ── The stage-level composite the canvas renders ─────────────────────────────
 
 /**
@@ -972,6 +1027,14 @@ export interface StageAnalyticsView {
    * tab leads with it; when absent it falls back to the IntelPanel read.
    */
   stepInsight?: StepInsightView;
+  /**
+   * Which beats of THIS view are fact-derived and which carry exemplar content
+   * verbatim (item U-533). Optional because the exemplars in
+   * `sample-view-model.ts` are wholly authored and declare nothing; a consumer
+   * that must distinguish derived content from exemplar copy treats an ABSENT
+   * value as undeclared, never as derived.
+   */
+  beatProvenance?: StageBeatProvenanceView;
 }
 
 /**

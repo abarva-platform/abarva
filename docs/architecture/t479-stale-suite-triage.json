@@ -335,7 +335,16 @@
       "partialSourceTextCaseNames": [
         "no /home/* re-exports of /admin/* pages :: keeps Home copy tenant-scoped and free of setup/admin framing",
         "no /home/* re-exports of /admin/* pages :: keeps visible Home entry copy aligned to Admin instead of setup-era labels"
-      ]
+      ],
+      "partialSourceTextCasesReplacedBy": {
+        "item": "T-484",
+        "replacedBy": [
+          "no /home/* re-exports of /admin/* pages :: keeps visible Home copy tenant-scoped and free of setup/admin framing",
+          "no /home/* re-exports of /admin/* pages :: keeps visible Home copy free of the setup-era labels the entry surface retired"
+        ],
+        "reason": "Both cases now sweep the VISIBLE TEXT of the surface /home actually renders -- HomeV4App over every governed Home bundle and every view a reader can reach -- instead of the bytes of four components. The retarget was forced by a re-verification the item did not predict: none of ImpactInsightsHome, AgenticHomeEntry, HomeIndexPage or HomeOverviewV2 is reachable from any route, so a render-based replacement aimed at the same files would have been a behavioural test of dead code. The positive halves ('Client locked', \"title: 'Admin'\", 'access from Admin') were not carried over, because that copy exists on no live surface; the four unreachable components are filed as U-530.",
+        "measured": "Old cases vs new, same tree: rendering a runtime-assembled 'Cross-tenant' on the live surface left the old pair 2/2 GREEN and turned the new pair red; the same for a runtime-assembled 'Setup \u00b7 dataset domains'; and M2b's own mutation -- the banned words present only in a comment of the old subject file -- turned the old pair red while the new pair stayed green."
+      }
     },
     {
       "path": "src/app/api/home/know/ask/__tests__/route-visible-contract.test.ts",
@@ -583,6 +592,10 @@
         "failing": 1,
         "ran": true
       },
+      "baselineEntryRemovedBy": {
+        "item": "T-482",
+        "reason": "The single failing case this row recorded was repaired under T-482, so docs/ci/tower-test-baseline.json no longer carries an entry for this suite. The case asserted a retired agent brand on a user-facing string; it now asks the product's own visible-answer contract and the Tower constant that declares the agent's name, and the route derives the message from that same constant so the name is declared once rather than copied twice. The quote above is left exactly as measured at this record's base; it is history, not a live assertion."
+      },
       "sourceTextScanner": false,
       "verdict": "update_with_reason_recorded",
       "ownerItem": "T-482",
@@ -591,6 +604,15 @@
       "partialSourceTextCaseNames": [
         "Tower synthesis Fix C levers :: wires temperature, AbortController, and honest fallback into the route source"
       ],
+      "partialSourceTextCasesReplacedBy": {
+        "item": "T-484",
+        "replacedBy": [
+          "Tower synthesis Fix C levers :: passes temperature and an abort signal into the model call",
+          "Tower synthesis Fix C levers :: answers a stalled upstream with the honest timeout message and aborts it"
+        ],
+        "reason": "The case read route.ts and matched four substrings; its own comment said it existed to catch a refactor that imports the constant without passing it into the SDK call, which is the one thing reading the file cannot see. The replacement drives the real exported POST handler with the egress preflight stubbed, and asserts the argument the model client RECEIVED plus the response a caller gets when the upstream never produces a token.",
+        "measured": "Old case vs new, same tree: spreading a temperature override in after the literal, and binding the signal to a local without passing it, each left all four substrings in place and the old case GREEN while the new cases went red; replacing the honest message with a generic string while the constant stayed referenced did the same; and binding the temperature through a local -- no behaviour change -- turned the old case RED."
+      },
       "failingCaseNames": [
         "Tower synthesis Fix C levers :: emits an honest user-facing timeout message instead of silence"
       ]
@@ -685,6 +707,10 @@
       "declaredKnownFailingInBaseline": {
         "failing": 2,
         "ran": true
+      },
+      "baselineEntryRemovedBy": {
+        "item": "T-483",
+        "reason": "The two fallback cases this row recorded as failing were repaired by updating the stale fixture identity, so docs/ci/tower-test-baseline.json no longer carries an entry for this suite. The quote above is left exactly as measured at this record\u2019s base; it is history, not a live assertion."
       },
       "sourceTextScanner": false,
       "verdict": "update_with_reason_recorded",
@@ -852,7 +878,16 @@
       "partialSourceTextCases": 1,
       "partialSourceTextCaseNames": [
         "/tower route \u2014 ECL preview call site is guarded :: wraps readTowerEclProjectionPreview so a read failure cannot fail the route"
-      ]
+      ],
+      "partialSourceTextCasesReplacedBy": {
+        "item": "T-484",
+        "replacedBy": [
+          "/tower route \u2014 ECL preview call site is guarded :: drops the panel and still renders the page when the projection read fails",
+          "/tower route \u2014 ECL preview call site is guarded :: renders the panel from the preview when the read succeeds"
+        ],
+        "reason": "The case sliced page.tsx at the call site and matched the text of one guard written one way. The replacement renders the real page through its exported renderer with the REAL preview read failing (driven through the suite's existing azureRead mock), and asks the rendered markup whether the page survived and the panel degraded. The success half is not decoration: without it a mutation that replaced the read with a literal null would satisfy the degradation case and lose the panel permanently.",
+        "measured": "Old case vs new, same tree: commenting the guard out in place left the bytes at the call site and the old case GREEN while the new case went red; rewriting the identical guard as try/catch turned the old case RED while the new cases stayed green; removing the read entirely failed both."
+      }
     }
   ]
 }
