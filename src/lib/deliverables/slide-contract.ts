@@ -26,7 +26,16 @@ export interface SlideBand {
  * make a document pass a deck check.
  */
 export const SLIDE_BANDS: Partial<Record<DeliverableKey, SlideBand>> = {
-  charter: { min: 8, max: 10, purpose: 'P1 — the ask, the scope, the kill condition' },
+  // charter — DELIBERATELY ABSENT.
+  //
+  // Charter is DOCX-primary. I added a mandatory 8-10 slide band on the
+  // reasoning that every phase should have a deck; the earlier decision was
+  // explicit and better. A charter deck is an OPTIONAL executive decision
+  // projection, requested or configured — not an obligation created by the
+  // phase existing, and not nine document headings placed on nine slides.
+  //
+  // When it is enabled it gets its own story contract, not the section
+  // fallback. Absence here means "not a deck", which is exactly right.
   discovery_report: { min: 10, max: 14, purpose: 'P2 — what is true today and what it costs' },
   root_cause_worksheet: { min: 6, max: 10, purpose: 'P2 — why it is true' },
   solution_approach_options: { min: 8, max: 12, purpose: 'P3 — the options and the rejected ones' },
