@@ -123,11 +123,17 @@ jobs:
       # owned below by their measured subdirectory list; this step owns only the
       # two repaired directories. The synthesis subtree stays unwired because
       # no product path reaches it.
+      # governance/ and composer/ are named explicitly rather than by a parent
+      # glob: a directory that exists but no command names is dark, and the
+      # behavior gate treats dark as a defect. Adding a suite without adding it
+      # here leaves it green locally and unrun in CI.
       - name: Run the repaired deliverables suites
         run: >-
           npx jest
           src/lib/deliverables/__tests__
           src/lib/deliverables/orchestrator/__tests__
+          src/lib/deliverables/governance/__tests__
+          src/lib/deliverables/composer/__tests__
           --no-coverage --ci
 
       - name: Run the uncovered deliverables component suite

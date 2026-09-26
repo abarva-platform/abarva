@@ -1,0 +1,17 @@
+field,value
+Package,Meridian contact-centre supplemental intake (SYNTHETIC) — v2
+Generated,2026-09-25
+What this is,Supplemental intake evidence for an EXISTING capability. It fills two gaps the Home insight packet already identified; it does not describe a new programme.
+What this is NOT,Not real Meridian data. Not a savings claim. Not production-readiness evidence. Not a transcript corpus.
+Entity anchor,Meridian Health System
+Revenue anchor,"$25,000,000,000 (active tenant record)"
+Employees,"68,000"
+Headquarters,"Lakeview, IL"
+Footprint,"34 owned hospitals, 214 ambulatory clinic sites across Illinois, Indiana and Wisconsin"
+Business model,Integrated Delivery Network & Medicare Advantage Health Plan
+Revenue split,60% provider / 40% health plan; plan revenue 70% Medicare Advantage and Medicare FFS / 30% commercial and Medicaid managed care
+Accountable role,VP Member Services & Patient Experience
+Use case,Contact Center Virtual Assistant
+CURRENT STATUS OF THE USE CASE,"production_enterprise_wide — the active record already lists this as in production enterprise-wide, advisory only, human step intact"
+Why that matters,"This package is BASELINE evidence for a capability already running. It is not an opportunity case for something new, and must not be presented as one."
+Supersedes,"v1 (2026-09-25), which used a $17.8B revenue anchor and invented vendor names. Both were wrong against the active record."

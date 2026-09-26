@@ -1,0 +1,8 @@
+cost_line,annual_usd,basis,provenance
+Agent labour — fully loaded,318400000,"3,165 productive FTE at blended loaded cost",SYNTHETIC
+Supervision and quality,41200000,"Leads, QA, training",SYNTHETIC
+Telephony and contact platform,18600000,Licences and carriage,SYNTHETIC
+CRM licensing attributable to contact centre,14900000,Salesforce seats,SYNTHETIC
+Knowledge and workforce tooling,7300000,,SYNTHETIC
+Outsourced overflow,26800000,Seasonal and after-hours,SYNTHETIC
+TOTAL,427200000,Sum of the above,"SYNTHETIC — planning figure, not a Finance-confirmed cost base"

@@ -36,7 +36,16 @@ export const SLIDE_BANDS: Partial<Record<DeliverableKey, SlideBand>> = {
   //
   // When it is enabled it gets its own story contract, not the section
   // fallback. Absence here means "not a deck", which is exactly right.
-  discovery_report: { min: 10, max: 14, purpose: 'P2 — what is true today and what it costs' },
+  // "what it costs" presumed cost is evidenced, and on a real Move it was not:
+  // 231 governed vendor records carried 3 contract values, and the enterprise
+  // budget lines were not that programme's cost. A framing that assumes a figure
+  // exists pushes the artifact to produce one.
+  discovery_report: {
+    min: 10,
+    max: 14,
+    purpose:
+      'P2 — what is true today, what is evidenced, what remains uncertain, and what must close before the next decision',
+  },
   root_cause_worksheet: { min: 6, max: 10, purpose: 'P2 — why it is true' },
   solution_approach_options: { min: 8, max: 12, purpose: 'P3 — the options and the rejected ones' },
   target_state_architecture: { min: 10, max: 16, purpose: 'P3 — the design and its control points' },

@@ -1,0 +1,11 @@
+step,basis,value,note
+Enterprise revenue,Active tenant record,"25,000,000,000",Anchor — not derived
+Health plan revenue,40% of enterprise,"10,000,000,000",Per the active revenue split
+Medicare Advantage + FFS revenue,70% of plan,"7,000,000,000",
+Commercial + Medicaid managed care revenue,30% of plan,"3,000,000,000",
+MA + FFS members,"Synthetic, plausible for the revenue","505,000",SYNTHETIC — not in the active record
+Commercial + Medicaid members,Synthetic,"612,000",SYNTHETIC
+Total plan members,Sum,"1,117,000",SYNTHETIC
+Hospitals,Active tenant record,34,Anchor
+Ambulatory clinic sites,Active tenant record,214,Anchor
+Employees,Active tenant record,"68,000",Anchor

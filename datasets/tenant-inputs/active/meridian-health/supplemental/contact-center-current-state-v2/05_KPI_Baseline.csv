@@ -1,0 +1,10 @@
+kpi,value,unit,measurement_basis,home_gap_reference,provenance
+Average handle time (AHT),7.4,minutes,Blended across channels,KPI baselines incomplete,SYNTHETIC — planning figure
+First contact resolution (FCR),68.2,percent,Resolved without follow-up within 7 days,KPI baselines incomplete,SYNTHETIC
+Transfer rate,19.6,percent,Contacts routed to a second queue,KPI baselines incomplete,SYNTHETIC
+Repeat contact rate (7-day),14.1,percent,"Same member, same driver",KPI baselines incomplete,SYNTHETIC
+Average speed of answer,52,seconds,Queue wait,KPI baselines incomplete,SYNTHETIC
+Abandonment rate,6.8,percent,Abandoned before answer,KPI baselines incomplete,SYNTHETIC
+Member satisfaction (post-contact),4.1,of 5,Post-contact survey,KPI baselines incomplete,SYNTHETIC
+Agent occupancy,78.4,percent,Productive time / paid time,KPI baselines incomplete,SYNTHETIC
+Virtual assistant containment,31.5,percent,Resolved without live agent,KPI baselines incomplete,SYNTHETIC — for the capability already in production
