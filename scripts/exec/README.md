@@ -199,6 +199,68 @@ worktree list are not the operator's, and a gate asserting on a subject it
 cannot see is the unfailable kind. So `--check` is an operator control in the
 shape of `--preclaim`: available, and only as good as its being invoked.
 
+## Is this directory swept by something else? Ask before `git worktree add`
+
+The retention control above answers "may I remove this worktree". This answers
+the question underneath it, which nobody had asked: **is the directory the
+protocol sends every agent to being swept by something that never heard of the
+claim protocol?**
+
+At `2026-09-26T00:19Z` a full checkout created per the operator task file's own
+first instruction vanished mid-session between two commands about 90 seconds
+apart, taking uncommitted work with it; the next command died `uv_cwd ENOENT`. A
+second, independent run of the same task lost a worktree in the same window.
+Nothing in the register, the pulse file or the task instructions said who sweeps,
+on what trigger, or with what age bound.
+
+```bash
+node scripts/exec/worktree-sweep-hazard.mjs --check-root /tmp/exec-x
+node scripts/exec/worktree-sweep-hazard.mjs --check-root "$PWD" --json
+```
+
+`0` no declared sweeper reaches it, `1` swept, `2` unknown or misused. Run it on
+the path you are about to pass to `git worktree add`, not after.
+
+**It reads the host's declarations; it does not hold an opinion about `/tmp`.**
+A gate that said "/tmp is unsafe" in prose would be the shape this directory
+exists against — it could not notice the rule changing, it could not be wrong in
+a way anyone sees, and it would say nothing at all about a root nobody had
+thought of. So it parses launchd job definitions and the scripts they run, and
+on a macOS host today that reading finds, unprompted:
+
+```
+SWEPT /private/tmp/exec-item
+  com.apple.tmp_cleaner
+  /System/Library/LaunchDaemons/com.apple.tmp_cleaner.plist
+  StartCalendarInterval Hour 0   ->  /usr/libexec/tmp_cleaner
+  declares /tmp, age bound 3 day(s), on atime AND mtime AND ctime
+```
+
+That job consults no branch, no index and no claim. It is a genuine, scheduled
+hazard to any worktree that outlives an item by three days, and it is **not**
+the actor that removed the checkout at 00:19Z — see the release record for what
+the evidence does and does not settle.
+
+Three inversions it refuses, each held down by a case:
+
+1. **`not_swept` is not `safe`.** It means no *declared* sweeper reaches the
+   root, and it reports how many jobs on the host declare nothing this can read
+   — 421 of them on the machine above — rather than rounding that to zero.
+2. **An unreadable host is `unknown`, never `not_swept`.** Refusing costs one
+   rerun; a false `not_swept` costs the work.
+3. **The age bound is WHEN, not WHETHER.** Every worktree is younger than the
+   bound at the moment it is created, and an item that runs long carries it past
+   the bound with no second warning. A verdict that consulted the candidate's
+   own age would report safe at exactly the moment an agent asks.
+
+Eight mutations, eight caught — and two of them survived their first fixture,
+which is the part worth keeping:
+
+| mutation | first fixture | why it passed anyway |
+|---|---|---|
+| `containsPath` → bare `startsWith` | `/tmpfoo/exec-x` vs a `/tmp` sweeper | after symlink resolution the sweeper's root is `/private/tmp` and `/tmpfoo` resolves to itself, so **no prefix relationship held in either form** — the negative control never reached the boundary. The case now builds two real sibling directories and asserts the textual prefix holds *before* reading the verdict. |
+| shebang bound dropped | any | it changed no verdict, because a Mach-O binary contains no shell assignment. It is a blast-radius bound, not a correctness guard, and it had nothing asserting it. Case 20 now pins what it buys: a program that is not a script declares nothing **even when its bytes carry the declaration text**. |
+
 ## Was I run, or imported? One predicate, not four
 
 Every script here is a module with a CLI attached, so each must answer that
