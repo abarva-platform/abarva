@@ -1,7 +1,7 @@
 const sendEmailMock = jest.fn();
 jest.mock("@/lib/email/send", () => ({ sendEmail: (...args: unknown[]) => sendEmailMock(...args) }));
 
-import { sendSponsorDelegationNotice } from "../sponsor-delegation-notice";
+import { sendSponsorDelegationNotice } from "../notifications/sponsor-delegation-notice";
 
 const input = {
   sponsorEmail: "sponsor@example.test",
