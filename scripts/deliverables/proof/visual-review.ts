@@ -18,6 +18,8 @@ import { validateDeckLineage, type LedgerEntry, type LineageVerdict } from "@/li
 import { sha256 } from "@/lib/deliverables/composer/presentation-packet";
 import { deliverableModel } from "@/lib/deliverables/model-policy";
 import { COMPOSER_SYSTEM } from "./composer-prompt";
+import { parseSlideFunctions } from "@/lib/deliverables/composer/parse-slide-functions";
+import { assembleComposerModule } from "@/lib/deliverables/composer/assemble-module";
 import { renderSlidePngs } from "./render-png";
 
 const OUT = path.resolve(process.argv[2] ?? "./proof-out");
@@ -28,7 +30,6 @@ const PYTHON = process.env.COMPOSER_PYTHON ?? "python3";
 const ledger: LedgerEntry[] = JSON.parse(fs.readFileSync(path.join(OUT, "number-ledger.json"), "utf8"));
 const packet = JSON.parse(fs.readFileSync(path.join(OUT, "packet.json"), "utf8"));
 const plan = JSON.parse(fs.readFileSync(path.join(OUT, "slide-story-plan-A.json"), "utf8"));
-const pythonA = fs.readFileSync(path.join(OUT, "composer-A.py"), "utf8");
 
 const apiKey = (() => {
   if (process.env.ANTHROPIC_API_KEY) return process.env.ANTHROPIC_API_KEY;
@@ -80,45 +81,64 @@ async function critique(pngs: string[]) {
   return { body, parsed: extractJson<{ deckLevel: string[]; slides: { slide: number; severity: string; problem: string; instruction: string }[]; strongest?: number[]; weakest?: number[] }>(body) };
 }
 
-async function revise(critiqueJson: string) {
-  const response = await client.messages
-    .stream({
-      model,
-      system: COMPOSER_SYSTEM,
-      messages: [
-        {
-          role: "user",
-          content: [
-            `Here is the Python that produced the deck you just had reviewed, the plan it was drawing, and the reviewer's corrections.`,
-            ``,
-            `Apply the corrections. Change nothing else — every figure, every claim and every story beat stays. Do not add a number that is not already on a slide.`,
-            ``,
-            `=== SLIDE STORY PLAN ===`,
-            JSON.stringify(plan, null, 1),
-            ``,
-            `=== VISUAL REVIEW ===`,
-            critiqueJson,
-            ``,
-            `=== CURRENT PYTHON ===`,
-            "```python",
-            pythonA,
-            "```",
-            ``,
-            `Return ONLY {"pythonSource": "..."} — the complete revised program as a JSON string.`,
-          ].join("\n"),
-        },
-      ],
-      max_tokens: 56_000,
-    })
-    .finalMessage();
-  const body = response.content
-    .filter((b): b is Anthropic.TextBlock => b.type === "text")
-    .map((b) => b.text)
-    .join("");
-  console.log(
-    `  revise   in ${response.usage.input_tokens.toLocaleString()} out ${response.usage.output_tokens.toLocaleString()} stop=${response.stop_reason}`,
-  );
-  return extractJson<{ pythonSource: string }>(body);
+/**
+ * Revise ONLY the criticised slides.
+ *
+ * The first version handed the model the entire program and asked for it back.
+ * It blew a 56,000-token ceiling and returned nothing — and even if it had
+ * fitted, re-emitting eighteen functions to fix three invites the other fifteen
+ * to change by accident. Per-slide functions exist so a revision can be
+ * surgical; this is the call site that has to honour that.
+ */
+async function reviseSlides(
+  targets: { slideId: string; index: number; code: string; png: string; notes: string[] }[],
+  batchSize = 3,
+): Promise<Map<string, string>> {
+  const revised = new Map<string, string>();
+  for (let i = 0; i < targets.length; i += batchSize) {
+    const batch = targets.slice(i, i + batchSize);
+    const content: Anthropic.ContentBlockParam[] = [
+      {
+        type: "text",
+        text: [
+          `Fix the presentation defects listed for each slide below. You are correcting LAYOUT ONLY.`,
+          ``,
+          `Do not change any figure, any claim, any date, any owner, the recommendation, the ask, or the scope. Do not add a number that is not already on the slide. Do not remove a story beat. If a correction would require new content, do the smallest layout change that addresses the problem instead.`,
+          ``,
+          `Most of these defects are one thing: an element placed at a fixed y while the element above it wrapped to more lines than expected. add_text, add_title and add_bullets all RETURN the y to continue at — use the returned value instead of a literal.`,
+          ``,
+          `Return each corrected function as:`,
+          ``,
+          `### SLIDE <slideId>`,
+          "```python",
+          `def slide_<slideId>(deck, theme):`,
+          `    ...`,
+          "```",
+        ].join("\n"),
+      },
+    ];
+    for (const t of batch) {
+      content.push({ type: "text", text: `\n=== SLIDE ${t.slideId} (deck position ${t.index}) ===\nReviewer notes:\n${t.notes.map((n) => `- ${n}`).join("\n")}\n\nRendered slide:` });
+      content.push({
+        type: "image",
+        source: { type: "base64", media_type: "image/png", data: fs.readFileSync(t.png).toString("base64") },
+      });
+      content.push({ type: "text", text: `Current function:\n\`\`\`python\n${t.code}\n\`\`\`` });
+    }
+
+    const response = await client.messages
+      .stream({ model, system: COMPOSER_SYSTEM, messages: [{ role: "user", content }], max_tokens: 28_000 })
+      .finalMessage();
+    const body = response.content
+      .filter((b): b is Anthropic.TextBlock => b.type === "text")
+      .map((b) => b.text)
+      .join("");
+    console.log(
+      `  revise ${batch.map((b) => b.slideId).join(",").padEnd(14)} in ${response.usage.input_tokens.toLocaleString()} out ${response.usage.output_tokens.toLocaleString()} stop=${response.stop_reason}`,
+    );
+    for (const fn of parseSlideFunctions(body).functions) revised.set(fn.slideId, fn.code);
+  }
+  return revised;
 }
 
 function runSandbox(source: string, label: string) {
@@ -205,13 +225,43 @@ async function main() {
     console.log(`   slide ${s.slide} [${s.severity}] ${s.problem.slice(0, 90)}`);
   }
 
-  console.log("revising…");
-  const revised = await revise(critiqueBody);
-  if (!revised?.pythonSource) {
-    console.error("revision did not return python; A stands");
-    process.exit(1);
+  // The functions the composer wrote, recovered from the saved batch responses.
+  const current = new Map(
+    fs
+      .readdirSync(OUT)
+      .filter((f) => f.startsWith("code-raw-A-") && f.endsWith(".txt"))
+      .sort((a, b) => Number(a.match(/-(\d+)\.txt$/)![1]) - Number(b.match(/-(\d+)\.txt$/)![1]))
+      .flatMap((f) => parseSlideFunctions(fs.readFileSync(path.join(OUT, f), "utf8")).functions)
+      .map((fn) => [fn.slideId, fn.code] as const),
+  );
+
+  const byIndex = new Map<number, string>(
+    (plan.slideStoryPlan as { slideId: string }[]).map((s2, i) => [i + 1, s2.slideId]),
+  );
+  const notesBySlide = new Map<string, string[]>();
+  for (const item of parsed?.slides ?? []) {
+    const slideId = byIndex.get(item.slide);
+    if (!slideId || !current.has(slideId)) continue;
+    notesBySlide.set(slideId, [...(notesBySlide.get(slideId) ?? []), `[${item.severity}] ${item.problem} → ${item.instruction}`]);
   }
-  fs.writeFileSync(path.join(OUT, "composer-B.py"), revised.pythonSource);
+
+  const targets = [...notesBySlide.entries()].map(([slideId, notes]) => {
+    const index = [...byIndex.entries()].find(([, id]) => id === slideId)![0];
+    return { slideId, index, code: current.get(slideId)!, png: pngsA[index - 1], notes };
+  });
+  console.log(`revising ${targets.length} of ${current.size} slides…`);
+
+  const replacements = await reviseSlides(targets);
+  for (const [slideId, code] of replacements) current.set(slideId, code);
+  console.log(`  ${replacements.size} functions replaced; ${current.size - replacements.size} untouched`);
+
+  const assembledB = assembleComposerModule(
+    plan.slideStoryPlan,
+    [...current.entries()].map(([slideId, code]) => ({ slideId, code })),
+    "abarva-v3",
+  );
+  fs.writeFileSync(path.join(OUT, "composer-B.py"), assembledB.source);
+  const revised = { pythonSource: assembledB.source };
 
   const runB = runSandbox(revised.pythonSource, "B");
   fs.writeFileSync(path.join(OUT, "sandbox-B.json"), JSON.stringify(runB.report, null, 2));

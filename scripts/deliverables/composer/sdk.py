@@ -42,8 +42,17 @@ class DeckLimit(ValueError):
 
 
 MAX_SLIDES = 40
-MAX_SHAPES_PER_SLIDE = 80
-MAX_SHAPES_TOTAL = 1200
+# Caps exist to stop runaway generation producing a file nobody can open. They
+# have to be set against what the SDK actually costs, not picked round.
+#
+# add_table_like_grid emits TWO shapes per cell — a rectangle and its text — so a
+# ten-row, four-column decision grid is 80 shapes before the title, the footer or
+# a legend. The first cap was 80, and it rejected a revision whose only offence
+# was making a nine-row constraint table more legible at 89 shapes. A cap that
+# refuses an ordinary consulting slide is not protecting anything; it is just
+# losing work.
+MAX_SHAPES_PER_SLIDE = 160
+MAX_SHAPES_TOTAL = 2400
 
 
 def _hex(value: str) -> RGBColor:

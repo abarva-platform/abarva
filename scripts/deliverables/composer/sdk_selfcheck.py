@@ -80,6 +80,31 @@ tall = slide.add_table_like_grid(
 )
 check("grid grows for wrapped cells", tall > 1.0 + 0.6, f"grid bottom at {tall:.2f}in")
 
+# 7 · the shape cap must admit an ordinary dense consulting slide.
+#     Pinned to a real composition rather than asserted as a number, so the cap
+#     cannot drift below what the SDK's own grid primitive costs.
+dense = sdk.Deck().add_slide()
+try:
+    y = dense.add_title("A ten-row decision grid with a legend beneath it")
+    dense.add_table_like_grid(
+        0.75, y, 11.8,
+        [[f"c{c}" for c in range(4)] for _ in range(10)],
+        row_h=0.28,
+    )
+    dense.add_footer("Source: governed register", 4)
+    check("shape cap admits a 10x4 grid slide", True, f"{dense.shape_count} shapes")
+except (sdk.DeckLimit, sdk.OutOfCanvas) as exc:
+    check("shape cap admits a 10x4 grid slide", False, str(exc))
+
+# 8 · but a runaway slide is still stopped.
+runaway = sdk.Deck().add_slide()
+try:
+    for _ in range(MAX := sdk.MAX_SHAPES_PER_SLIDE + 40):
+        runaway.add_shape("rect", 0.5, 0.5, 0.1, 0.1)
+    check("shape cap still stops a runaway slide", False, "no limit raised")
+except sdk.DeckLimit:
+    check("shape cap still stops a runaway slide", True)
+
 failed = [r for r in results if not r["ok"]]
 if "--json" in sys.argv:
     print(json.dumps({"results": results, "failed": len(failed)}, indent=2))
