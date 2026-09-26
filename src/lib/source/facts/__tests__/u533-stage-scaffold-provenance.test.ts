@@ -34,7 +34,8 @@
  * and `gate` through verbatim so the page renders. Three reachable consumers
  * take that view: the mounted event route, the chat agent route, and
  * `ava-grounding-context.ts` — so exemplar task titles and an exemplar
- * approver's name reach a reader AND the model's prompt.
+ * approver's name could reach the model's prompt. The terminal Value field is
+ * now replaced with the Source V1 decision role before either consumer sees it.
  *
  * THIS SUITE IS THE SLICE THE ITEM'S ACCEPTANCE SEPARATES OUT, and it is worth
  * being precise about which half:
@@ -278,6 +279,7 @@ const CARRIED_STAGE_KEYS = ARMED_STAGE_KEYS.filter(
 type Verdict =
   | "fact_derived"
   | "archetype_derived"
+  | "policy_derived"
   | "derived_empty"
   | "derived_from_neither"
   | "scaffold_carried_by_reference"
@@ -308,8 +310,10 @@ function verdictFor(
   carried: unknown,
   moves: "does_not_move" | "follows_input" | "follows_stage_order",
   derivation?: { withFacts: boolean; withArchetype: boolean },
+  policyRole?: string,
 ): Verdict {
   if (built === undefined) return "absent";
+  if (policyRole !== undefined && built === policyRole) return "policy_derived";
   const agrees =
     built === carried || JSON.stringify(built) === JSON.stringify(carried);
 
@@ -535,6 +539,7 @@ function measureStage(stageKey: string) {
         scaffold.gate.approver,
         follows((v) => v.gate.approver),
         derivation((v) => v.gate.approver),
+        stageKey === "value" ? "Event Owner" : undefined,
       ),
       "gate.confirms": verdictFor(
         view.gate.confirms,
@@ -632,6 +637,7 @@ function buildMeasurement() {
 
   const derivedFieldNames = new Set<string>();
   const archetypeDerivedFieldNames = new Set<string>();
+  const policyDerivedFieldNames = new Set<string>();
   const emptyDerivedFieldNames = new Set<string>();
   const neitherFieldNames = new Set<string>();
   const carriedFieldNames = new Set<string>();
@@ -639,6 +645,7 @@ function buildMeasurement() {
     for (const [field, verdict] of Object.entries(stage.fields)) {
       if (verdict === "fact_derived") derivedFieldNames.add(field);
       if (verdict === "archetype_derived") archetypeDerivedFieldNames.add(field);
+      if (verdict === "policy_derived") policyDerivedFieldNames.add(field);
       if (verdict === "derived_empty") emptyDerivedFieldNames.add(field);
       if (verdict === "derived_from_neither") neitherFieldNames.add(field);
       if (
@@ -694,6 +701,7 @@ function buildMeasurement() {
        * its facts", and the first draft of U-534 called both of these fact-derived.
        */
       archetypeDerivedFields: [...archetypeDerivedFieldNames].sort(),
+      policyDerivedFields: [...policyDerivedFieldNames].sort(),
       /**
        * Item U-535. Fields whose derived value is EMPTY because the archetype
        * declares nothing to derive from at that stage. A faithful reading of an
@@ -1025,10 +1033,9 @@ describe("U-533 · what is carried, and what only agrees", () => {
     },
   );
 
-  it("still finds carried stages exposing one, so the measurement kept looking", () => {
-    expect(
-      measurement.summary.stagesExposingPersonNamedApprover.length,
-    ).toBeGreaterThan(0);
+  it("keeps the named fixtures as a positive control but exposes none", () => {
+    expect(measurement.summary.stagesWithPersonNamedApprover).toContain("value");
+    expect(measurement.summary.stagesExposingPersonNamedApprover).toEqual([]);
   });
 
   it("records the carried gate fields as reaching the prompt, `tasks` as reaching both", () => {
@@ -1048,8 +1055,9 @@ describe("U-533 · what is carried, and what only agrees", () => {
       "bafo",
       "value",
     ]);
-    expect(measurement.summary.distinctGateApprovers).toContain(
-      liveStageScaffoldFor("bafo").gate.approver,
+    expect(measurement.summary.distinctGateApprovers).toContain("Event Owner");
+    expect(measurement.summary.distinctGateApprovers).not.toContain(
+      liveStageScaffoldFor("value").gate.approver,
     );
   });
 });
@@ -1087,7 +1095,7 @@ describe("U-533 · known positive: exemplar content reaches the built view", () 
     expect(view.tasks.map((t) => t.title)).toContain(SCOPE_EXEMPLAR_TASK_TITLE);
   });
 
-  it("carries an exemplar approver who is a fixture name, not an event record", () => {
+  it("keeps a named exemplar but gives the terminal live view Event Owner authority", () => {
     // Population first: if no exemplar carried a personal name there would be no
     // defect of this shape to prove, and this case must fail rather than pass.
     expect(NAMED_APPROVER_STAGES.length).toBeGreaterThan(0);
@@ -1095,10 +1103,9 @@ describe("U-533 · known positive: exemplar content reaches the built view", () 
     const view = buildFor(NAMED_APPROVER_STAGE);
     const exemplarApprover =
       liveStageScaffoldFor(NAMED_APPROVER_STAGE).gate.approver;
-    expect(view.gate.approver).toBe(exemplarApprover);
-    // The point of the known positive: this is a person's NAME, reaching a
-    // consumer that introduces it as this stage's approver.
     expect(exemplarApprover).toMatch(PERSON_NAME_APPROVER);
+    expect(view.gate.approver).toBe("Event Owner");
+    expect(view.gate.approver).not.toBe(exemplarApprover);
   });
 });
 
@@ -1127,11 +1134,10 @@ describe("U-533 · known positive: exemplar content reaches the model's prompt",
     expect(block).toContain(SCOPE_EXEMPLAR_TASK_TITLE);
   });
 
-  it("puts the exemplar approver's name into the stage-gate block", () => {
+  it("puts the Event Owner role, not the exemplar person, into the stage-gate block", () => {
     const { block } = groundingFor("stage_gate", NAMED_APPROVER_STAGE);
-    expect(block).toContain(
-      `Approver: ${liveStageScaffoldFor(NAMED_APPROVER_STAGE).gate.approver}.`,
-    );
+    expect(block).toContain("Approver: Event Owner.");
+    expect(block).not.toContain(liveStageScaffoldFor(NAMED_APPROVER_STAGE).gate.approver);
   });
 });
 
@@ -1227,17 +1233,16 @@ describe("U-533 · the grounding blocks disclose carried content to the model", 
     expect(text).toContain("not derived from this event's facts");
   });
 
-  it("tells the model not to name the exemplar approver as a person", () => {
+  it("discloses carried content without giving the model a fixture person's name", () => {
     const approver = liveStageScaffoldFor(NAMED_APPROVER_STAGE).gate.approver;
     const text = block("stage_gate", buildFor(NAMED_APPROVER_STAGE));
     expect(text).toMatch(DISCLOSURE_MARKER);
     expect(text).toContain(liveStageScaffoldSourceFor(NAMED_APPROVER_STAGE));
-    expect(text).toContain("do NOT name them");
-    // The disclosure must precede the line that prints the name, or a model
-    // reading top-to-bottom meets the fixture before the caveat.
+    expect(text).toContain("Approver: Event Owner.");
+    expect(text).not.toContain(approver);
     const markerAt = text.search(DISCLOSURE_MARKER);
     expect(markerAt).toBeGreaterThanOrEqual(0);
-    expect(markerAt).toBeLessThan(text.indexOf(`Approver: ${approver}`));
+    expect(markerAt).toBeLessThan(text.indexOf("Approver: Event Owner."));
   });
 
   it("keeps the real verdicts in the block — the disclosure is additive", () => {

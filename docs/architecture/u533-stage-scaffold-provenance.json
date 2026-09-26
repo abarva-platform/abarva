@@ -38,6 +38,9 @@
       "gate.approver",
       "gate.generates"
     ],
+    "policyDerivedFields": [
+      "gate.approver"
+    ],
     "emptyDerivedFields": [
       "gate.generates"
     ],
@@ -60,14 +63,12 @@
       "bafo",
       "selection"
     ],
-    "stagesExposingPersonNamedApprover": [
-      "value"
-    ],
+    "stagesExposingPersonNamedApprover": [],
     "distinctGateApprovers": [
       "CIO",
       "Commercial owner",
       "Decision owner",
-      "K. Oshima, CIO",
+      "Event Owner",
       "Transition owner"
     ],
     "stagesWithPersonNamedApprover": [
@@ -635,7 +636,7 @@
         "purpose": "scaffold_carried_by_reference",
         "intel": "fact_derived",
         "tasks": "scaffold_carried_by_reference",
-        "gate.approver": "scaffold_carried_by_reference",
+        "gate.approver": "policy_derived",
         "gate.confirms": "scaffold_carried_by_reference",
         "gate.generates": "scaffold_carried_by_reference",
         "gate.nextStageName": "computed_differs_from_exemplar",
@@ -672,7 +673,7 @@
       "gateTaskTitles": [
         "Confirm realized value to date"
       ],
-      "gateApprover": "K. Oshima, CIO",
+      "gateApprover": "Event Owner",
       "gateConfirmLabels": [
         "Realized value booked per lever",
         "Realization measured against committed",

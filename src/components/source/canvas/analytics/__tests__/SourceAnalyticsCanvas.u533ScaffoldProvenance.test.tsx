@@ -191,6 +191,14 @@ describe("U-533 · exemplar task content reaches the rendered canvas", () => {
 });
 
 describe("U-533 · the exemplar approver does NOT reach this reader", () => {
+  it("passes only the Event Owner role in the live terminal canvas view", () => {
+    const view = buildStageView("value");
+    expect(liveStageScaffoldFor("value").gate.approver).toMatch(PERSON_NAME_APPROVER);
+    expect(view.gate.approver).toBe("Event Owner");
+    expect(view.gate.approver).not.toBe(liveStageScaffoldFor("value").gate.approver);
+    renderStage("value", "Value");
+    expect(screen.queryByText(liveStageScaffoldFor("value").gate.approver)).toBeNull();
+  });
   /**
    * MEASURED, and it corrects what this suite first assumed.
    *
