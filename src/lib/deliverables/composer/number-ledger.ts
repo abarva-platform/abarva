@@ -82,6 +82,16 @@ const BARE_NUMBER = /(?<![\w.$])(\d{1,3}(?:,\d{3})+|\d+(?:\.\d+)?)(?![\w%])/g;
  * taught a reader to ignore the gate.
  */
 const ISO_DATE = /\b(?:19|20)\d{2}-\d{2}-\d{2}\b/g;
+/**
+ * Citation markers are references, not figures.
+ *
+ * The pipeline's own citation grammar is `[n]`, and `[12, 13]` for several. The
+ * extractor read them as bare numbers and reported seven unsupported claims of
+ * "144" on one deck — every one of them a citation the renderer had printed into
+ * the slide body. Masked before anything else, because no other rule can tell a
+ * citation from a count once the brackets are gone.
+ */
+const CITATION = /\[\s*\d+(?:\s*[,;]\s*\d+)*\s*\]/g;
 
 const SCALE: Record<string, number> = {
   bn: 1e9, b: 1e9, billion: 1e9,
@@ -107,9 +117,23 @@ function isStructural(
   slideIndex: number,
   calendarYears: Set<number>,
   at = -1,
+  governedText = '',
 ): boolean {
   const trimmed = run.trim();
   const n = Number(raw.replace(/,/g, ''));
+
+  // A number inside a PRODUCT NAME the governed content already uses.
+  //
+  // "Microsoft 365" was reported as an unsupported figure. It is not a figure;
+  // it is a name. The exemption is grounded in the corpus rather than an
+  // allowlist: the two-token phrase must already appear in the governed text.
+  // So "Microsoft 365" passes because the evidence says it, while "$365M" does
+  // not, because it is a different shape and a currency claim.
+  if (at >= 0 && governedText && /^\d{1,4}$/.test(raw)) {
+    const before = run.slice(Math.max(0, at - 32), at);
+    const word = before.match(/([A-Z][A-Za-z0-9&'-]*)\s$/);
+    if (word && governedText.includes(`${word[1].toLowerCase()} ${raw}`)) return true;
+  }
 
   // A document section reference — "§1.1", "Sections 5.1-5.3", "§3.1–§3.2".
   // These are how a slide cites the artifact it came from, and a footer full of
@@ -154,6 +178,7 @@ export function extractNumericClaims(
   deck: InspectedDeck,
   calendarYears: Set<number> = new Set(),
   calendarDates: Set<string> = new Set(),
+  governedText = '',
 ): { claims: NumericClaim[]; structural: number } {
   const claims: NumericClaim[] = [];
   let structural = 0;
@@ -165,14 +190,18 @@ export function extractNumericClaims(
         const key = `${raw}|${unit}`;
         if (seen.has(key)) return;
         seen.add(key);
-        if (isStructural(run, raw.replace(/[^0-9.,]/g, ''), slide.index, calendarYears, at)) {
+        if (isStructural(run, raw.replace(/[^0-9.,]/g, ''), slide.index, calendarYears, at, governedText)) {
           structural += 1;
           return;
         }
         claims.push({ raw, value, unit, precision, slide: slide.index, run });
       };
 
-      // Dates first, and the rest of the extraction runs over a run with the
+      // Citation markers first of all: once the brackets are masked, nothing
+      // downstream can distinguish "[144]" from a count of 144.
+      run = run.replace(CITATION, (c) => ' '.repeat(c.length));
+
+      // Dates next, and the rest of the extraction runs over a run with the
       // dates masked out, so no component of a date is read as a loose number.
       for (const m of run.matchAll(ISO_DATE)) {
         if (calendarDates.has(m[0])) {
@@ -263,6 +292,8 @@ export interface LineageOptions {
   calendarYears?: Set<number>;
   /** Exact dates the governed artifact already carries. */
   calendarDates?: Set<string>;
+  /** Lower-cased governed prose, so a number inside a product name is a name. */
+  governedText?: string;
 }
 
 export function validateDeckLineage(deck: InspectedDeck, opts: LineageOptions): LineageVerdict {
@@ -271,6 +302,7 @@ export function validateDeckLineage(deck: InspectedDeck, opts: LineageOptions): 
     derived = [],
     calendarYears = new Set<number>(),
     calendarDates = new Set<string>(),
+    governedText = '',
   } = opts;
   const findings: LineageFinding[] = [];
 
@@ -295,7 +327,7 @@ export function validateDeckLineage(deck: InspectedDeck, opts: LineageOptions): 
     }
   }
 
-  const { claims, structural } = extractNumericClaims(deck, calendarYears, calendarDates);
+  const { claims, structural } = extractNumericClaims(deck, calendarYears, calendarDates, governedText.toLowerCase());
   let matchedLedger = 0;
   let matchedDerived = 0;
 

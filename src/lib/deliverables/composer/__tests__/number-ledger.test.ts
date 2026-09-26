@@ -181,6 +181,49 @@ describe('lineage gate over a rendered deck', () => {
     expect(verdict.findings[0]).toMatchObject({ claim: '$240M' });
   });
 
+  it('never reads a citation marker as a figure', () => {
+    // Seven unsupported "144" findings on a real deck were all the citation
+    // [144] printed into the slide body by the renderer.
+    const cited = deckOf(['Approved funding of $81.4B [144] against the plan [12, 13].']);
+    const v = validateDeckLineage(cited, { ledger: LEDGER });
+    expect(v.findings).toEqual([]);
+  });
+
+  it('still reads a real figure that sits beside a citation', () => {
+    // Masking the citation must not swallow the claim next to it.
+    const v = validateDeckLineage(deckOf(['Savings of $240M [12] were assumed.']), { ledger: LEDGER });
+    expect(v.findings).toHaveLength(1);
+    expect(v.findings[0]).toMatchObject({ claim: '$240M' });
+  });
+
+  it('treats a number inside a governed product name as a name', () => {
+    // "Microsoft 365 Copilot" was reported as an unsupported figure 365. It is a
+    // name. The exemption is grounded in the corpus, not an allowlist: the
+    // two-token phrase must already appear in the governed text.
+    const governedText = 'Microsoft 365 Copilot Productivity Enablement carries funded spend.';
+    const named = validateDeckLineage(deckOf(['Microsoft 365 Copilot Productivity Enablement']), {
+      ledger: LEDGER,
+      governedText,
+    });
+    expect(named.findings).toEqual([]);
+
+    // A currency claim of the same digits is a different shape and still fails.
+    const claimed = validateDeckLineage(deckOf(['The programme releases $365M']), {
+      ledger: LEDGER,
+      governedText,
+    });
+    expect(claimed.ok).toBe(false);
+  });
+
+  it('does not exempt a bare number after a capitalised word the corpus never pairs it with', () => {
+    // Without the phrase in the governed text there is no name to appeal to.
+    const v = validateDeckLineage(deckOf(['Region 47 reported the result']), {
+      ledger: LEDGER,
+      governedText: 'Microsoft 365 Copilot is deployed.',
+    });
+    expect(v.ok).toBe(false);
+  });
+
   it('requires two signals before exempting a dotted number', () => {
     // A false finding is noise; a false exemption lets an invented number
     // through. So "Utilisation Rate 3.2" — a capitalised name in front of a

@@ -47,6 +47,12 @@ const COMPOSER_DIR = path.join(REPO, "scripts/deliverables/composer");
 const PYTHON = process.env.COMPOSER_PYTHON ?? "python3";
 
 const doc = JSON.parse(fs.readFileSync(path.join(OUT, "governed-document.json"), "utf8"));
+/** Governed prose, so a number inside a product name reads as a name. */
+const GOVERNED_TEXT = [
+  ...doc.generatedSections.map((s: { bodyMarkdown: string }) => s.bodyMarkdown),
+  ...doc.tables.flatMap((t: { rows: string[][] }) => t.rows.flat()),
+  doc.recommendation,
+].join("\n");
 const ledger: LedgerEntry[] = JSON.parse(fs.readFileSync(path.join(OUT, "number-ledger.json"), "utf8"));
 const request = JSON.parse(fs.readFileSync(path.join(OUT, "request.json"), "utf8"));
 
@@ -230,6 +236,7 @@ async function main() {
     // Omitting this reported five governed renewal dates as invented. The packet
     // had harvested them correctly; the call site simply did not pass them.
     calendarDates: new Set(frozen.packet.calendarDates),
+    governedText: GOVERNED_TEXT,
   });
 
   console.log(

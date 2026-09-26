@@ -61,6 +61,79 @@ describe('explicit claim prohibitions against a rendered deck', () => {
     expect(v.findings[0].assertionVerb.toLowerCase()).toContain('delivered');
   });
 
+  it('does not flag a denial written with "nothing" or "zero"', () => {
+    // Real false positive: "nothing yet finance-validated" is the compliant
+    // statement, and the first version of the negation list had no "nothing".
+    const v = checkProhibitions(
+      deckOf('Promised value stands at $8.0M with nothing yet finance-validated by the CFO.'),
+      ['Do not claim realized AI value unless tower_claim_allowed is yes.'],
+    );
+    expect(v.findings).toEqual([]);
+  });
+
+  it('does not flag a column header or a short label', () => {
+    // "Finance-validated value" was flagged twice on a real deck. A label is not
+    // a claim, and the same token supplied both the subject and the verb.
+    const v = checkProhibitions(
+      deckOf('FINANCE-VALIDATED', 'Finance-validated value'),
+      ['Do not claim realized AI value unless tower_claim_allowed is yes.'],
+    );
+    expect(v.findings).toEqual([]);
+  });
+
+  it('does not flag a conditional value hypothesis', () => {
+    const v = checkProhibitions(
+      deckOf('Improve agent assist and next-best-action only after transcript and intent evidence is governed.'),
+      ['Do not claim real-time agent assist is live.'],
+    );
+    expect(v.findings).toEqual([]);
+  });
+
+  it('needs a term distinctive to that prohibition, not shared boilerplate', () => {
+    // Every prohibition in a governance corpus repeats "value", "claim",
+    // "approved", "funding". A sentence matching only those has matched the
+    // vocabulary of the list, not the subject of any item in it.
+    const boilerplate = [
+      'Do not claim approved funding creates value.',
+      'Do not claim value without approved funding evidence.',
+      'Interview context cannot create approved funding or value claims.',
+    ];
+    const v = checkProhibitions(
+      deckOf('Approved funding of $16.0M against $6.7M incurred year to date is the current position.'),
+      boilerplate,
+    );
+    expect(v.findings).toEqual([]);
+  });
+
+  it('catches a violation written with "and" where the prohibition used a slash', () => {
+    // A planted control missed this: "HEDIS/STAR" tokenised as one term, so a
+    // deck saying "HEDIS and STAR" matched only "outputs".
+    const v = checkProhibitions(
+      deckOf('HEDIS and STAR outputs are audited and certified by the quality office.'),
+      ['Do not claim HEDIS/STAR outputs are audited.'],
+    );
+    expect(v.clean).toBe(false);
+    expect(v.findings[0].matchedTerms).toEqual(expect.arrayContaining(['hedis', 'star']));
+  });
+
+  it('needs the sentence to engage the prohibition subject, not just its predicate', () => {
+    // Real false positive: a slide citing approved funding from a budget record
+    // matched "Interview context cannot create approved funding or value
+    // claims" on the words after the subject. It never mentions interviews.
+    const v = checkProhibitions(
+      deckOf('Approved funding of $16.0M against $6.7M incurred year to date is the current position.'),
+      ['Interview context cannot create approved funding or value claims.'],
+    );
+    expect(v.findings).toEqual([]);
+
+    // The same prohibition still fires on a sentence that IS about interviews.
+    const real = checkProhibitions(
+      deckOf('Interview context from the executive workshop confirms approved funding of $16.0M is committed.'),
+      ['Interview context cannot create approved funding or value claims.'],
+    );
+    expect(real.clean).toBe(false);
+  });
+
   it('reports what it scanned, so a vacuous run is visible', () => {
     // A run over an empty prohibition list must not read as a clean run.
     const none = checkProhibitions(deckOf('anything at all here'), []);

@@ -48,21 +48,44 @@ const ASSERTION = new RegExp(
 );
 
 /** Negations that turn an assertion back into a denial — the safe form. */
-const NEGATION = /\b(not|no|never|without|cannot|can't|isn't|aren't|lacks?|absent|missing|unproven|un\w+ed|before|until|pending|required|requires)\b/i;
+const NEGATION =
+  /\b(not|no|never|none|nothing|zero|without|cannot|can't|isn't|aren't|lacks?|absent|missing|unproven|unvalidated|un\w+ed|before|until|pending|require[sd]?|must|should|would|only after|only once|yet to|not yet|if |when |subject to|conditional)\b/i;
 
 const STOP = new Set([
   'do', 'not', 'claim', 'claims', 'cite', 'state', 'assert', 'say', 'the', 'a', 'an', 'is', 'are',
   'was', 'were', 'has', 'have', 'been', 'and', 'or', 'of', 'to', 'in', 'on', 'for', 'with',
   'without', 'any', 'all', 'that', 'this', 'it', 'as', 'at', 'by', 'from', 'real', 'evidence',
-  'production', 'ready', 'exists', 'exist', 'implemented', 'audited',
+  'production', 'ready', 'exists', 'exist', 'implemented', 'audited', 'cannot', 'create',
+  'unless', 'until', 'yes', 'no',
 ]);
+
+/**
+ * The first few subject terms — what the prohibition is ABOUT.
+ *
+ * "Interview context cannot create approved funding or value claims" was matched
+ * by a sentence citing approved funding from a budget record. It shares the
+ * prohibition's predicate and none of its subject: the sentence never mentions
+ * interviews or context. A sentence has to engage what the item is about, not
+ * merely reuse the words that follow it.
+ */
+function leadTerms(prohibition: string): Set<string> {
+  // Two, not three. At three, "approved" was the third term of "Interview
+  // context cannot create approved funding..." and a sentence citing approved
+  // funding from a budget record still matched. The subject of that item is
+  // "interview context", and it stops there.
+  return new Set(subjectTerms(prohibition).slice(0, 2));
+}
 
 function subjectTerms(prohibition: string): string[] {
   return [
     ...new Set(
       prohibition
         .toLowerCase()
-        .replace(/[^a-z0-9\s/-]/g, ' ')
+        // Split on the slash too. "HEDIS/STAR outputs are audited" tokenised as
+        // one term "hedis/star", so a deck saying "HEDIS and STAR outputs are
+        // audited" matched only "outputs" and fell below the two-term floor —
+        // a planted violation the detector missed.
+        .replace(/[^a-z0-9\s-]/g, ' ')
         .split(/\s+/)
         .filter((w) => w.length > 3 && !STOP.has(w)),
     ),
@@ -82,24 +105,49 @@ function sentences(deck: InspectedDeck): { slide: number; text: string }[] {
   return out;
 }
 
+const MIN_SENTENCE_WORDS = 6;
+/** A term appearing in more prohibitions than this is boilerplate, not a subject. */
+const RARE_MAX_PROHIBITIONS = 2;
+
 export function checkProhibitions(deck: InspectedDeck, prohibitions: string[]): ProhibitionVerdict {
   const scanned = sentences(deck);
   const findings: ProhibitionFinding[] = [];
 
+  // How many prohibitions each term appears in. Governance corpora repeat words
+  // like "value", "claim", "approved" and "funding" across most of their
+  // prohibitions; a sentence matching only those has matched the vocabulary of
+  // the list, not the subject of any one item.
+  const docFreq = new Map<string, number>();
+  for (const p of prohibitions) {
+    for (const t of new Set(subjectTerms(p))) docFreq.set(t, (docFreq.get(t) ?? 0) + 1);
+  }
+
   for (const prohibition of prohibitions) {
     const terms = subjectTerms(prohibition);
     if (terms.length === 0) continue;
+    const lead = leadTerms(prohibition);
     for (const { slide, text } of scanned) {
       const lower = text.toLowerCase();
       const hits = terms.filter((t) => lower.includes(t));
-      // Two distinctive terms, not one: a single shared word like "clinical"
-      // appears on half the deck and would flag everything, which trains a
-      // reader to ignore the check.
+      // Two terms, not one: a single shared word like "clinical" appears on half
+      // the deck and would flag everything.
       if (hits.length < 2) continue;
+      // And at least one of them must be distinctive to THIS prohibition.
+      if (!hits.some((t) => (docFreq.get(t) ?? 0) <= RARE_MAX_PROHIBITIONS)) continue;
+      // And at least one must be part of what the prohibition is ABOUT.
+      if (!hits.some((t) => lead.has(t))) continue;
+      // A label is not a claim. "Finance-validated value" is a column header and
+      // was flagged twice on one deck.
+      if (text.split(/\s+/).length < MIN_SENTENCE_WORDS) continue;
       const assertion = text.match(ASSERTION);
       if (!assertion) continue;
+      // The two signals must be INDEPENDENT. "Finance-validated" supplies both
+      // the subject term and the assertion verb, so a bare label self-triggers:
+      // the guard appears to have fired twice when only one thing happened.
+      if (hits.includes(assertion[0].toLowerCase())) continue;
       // "No certified medallion architecture" carries the subject and a verb but
-      // denies it. Denying a prohibited claim is the compliant form.
+      // denies it. Denying a prohibited claim is the compliant form, and so is a
+      // conditional: "only after transcript evidence is governed".
       if (NEGATION.test(text)) continue;
       findings.push({
         prohibition,

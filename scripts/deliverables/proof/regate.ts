@@ -16,6 +16,13 @@ const PYTHON = process.env.COMPOSER_PYTHON ?? "python3";
 const ledger: LedgerEntry[] = JSON.parse(fs.readFileSync(path.join(OUT, "number-ledger.json"), "utf8"));
 const packet = JSON.parse(fs.readFileSync(path.join(OUT, "packet.json"), "utf8"));
 const plan = JSON.parse(fs.readFileSync(path.join(OUT, "slide-story-plan-A.json"), "utf8"));
+/** Governed prose, so a number inside a product name reads as a name. */
+const governedDoc = JSON.parse(fs.readFileSync(path.join(OUT, "governed-document.json"), "utf8"));
+const GOVERNED_TEXT = [
+  ...governedDoc.generatedSections.map((s: { bodyMarkdown: string }) => s.bodyMarkdown),
+  ...governedDoc.tables.flatMap((t: { rows: string[][] }) => t.rows.flat()),
+  governedDoc.recommendation,
+].join("\n");
 const roles = Object.fromEntries(plan.slideStoryPlan.map((s: { slideType: string }, i: number) => [i + 1, s.slideType]));
 
 function run(label: string) {
@@ -51,6 +58,7 @@ async function gates(buffer: Buffer) {
       derived: plan.derivedFigures ?? [],
       calendarYears: new Set<number>(packet.calendarYears ?? []),
       calendarDates: new Set<string>(packet.calendarDates ?? []),
+      governedText: GOVERNED_TEXT,
     }),
   };
 }
