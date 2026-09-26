@@ -218,6 +218,34 @@ describe("SourceAnalyticsCanvas stage workflow", () => {
     expect(screen.queryByRole("button", { name: "Request sponsor review" })).toBeNull();
   });
 
+  it("separates a remaining Scope workflow input from approval readiness", () => {
+    const sponsorPendingStage = {
+      ...SAMPLE_SCOPE_STAGE,
+      tasks: SAMPLE_SCOPE_STAGE.tasks.map((task) =>
+        task.id === "scope.sponsor"
+          ? task
+          : { ...task, state: "done" as const, evidenceComplete: true },
+      ),
+    };
+
+    render(
+      <SourceAnalyticsCanvas
+        event={EVENT}
+        viewStage="scope"
+        tenantName="Demo Client"
+        stageView={sponsorPendingStage}
+        approvalItems={[APPROVAL]}
+        initialWorkspace="steps"
+      />,
+    );
+
+    expect(screen.getByText(/1 required workflow step remains for Scope/)).toHaveTextContent(
+      "Review evidence, artifact status, and gate criteria separately in Approvals.",
+    );
+    expect(screen.queryByText(/1 step left before Scope can move to approval/)).toBeNull();
+    expect(screen.getByRole("button", { name: /Open Scope gate/ })).toBeDisabled();
+  });
+
   it("renders a real approve action in the featured Approvals card instead of looping back to steps", async () => {
     render(
       <SourceAnalyticsCanvas
