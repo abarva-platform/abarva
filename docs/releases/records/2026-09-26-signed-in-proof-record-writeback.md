@@ -83,6 +83,12 @@ surface and no data-plane change.
   human reads as a correction and the parser reads as a debt would leave all nine still owing their
   proof: after the edit the same command reports **disagree 9 → 0**, all nine reading `ran`, with
   `ambiguous` and `no-register-line` unchanged at 32 and 83 and no new disagreement in the corpus.
+- **Driven once over the real corpus, not only over fixtures**, because a detector proven on cases a
+  suite hands it can still be blind on the real thing. Replaying the actual register sentence for one
+  of the nine against a clean checkout of `origin/main`, with `--base` set to the parent of the squash
+  that added that record, the check names
+  `docs/releases/records/2026-09-26-source-action-error-loop.md` with both accounts — the record's own
+  `Not run` bullet and the register's `obtained` sentence — under `--dry-run`, writing nothing.
 - Typecheck, ESLint over the changed files, and `node scripts/release-check.mjs` — recorded on the
   release candidate.
 
@@ -122,5 +128,11 @@ independent account either way.
 - The register is operator-owned, so nothing in CI can compare these two accounts. That is why the
   check sits on the sanctioned writer rather than in a workflow, and it means a register line written
   by hand still bypasses it.
+- **Precision is exactly as good as the branch's own diff, and that was measured rather than assumed.**
+  The check names every record the branch adds under the records directory. Given a deliberately wide
+  base spanning many merges, the same real replay above named nine records instead of one. In practice
+  a release adds one record and the answer is exact; naming a record too many is the safe direction for
+  the advisory, but a branch carrying several records would be refused under `--strict` for a record its
+  line is not about. Nothing here narrows that, and a caller in that position should omit `--strict`.
 - Two residuals found by two of the nine replays were previously carried by no item. They are filed
   as `C-542` and `C-543`; neither is diagnosed here.
