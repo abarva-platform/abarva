@@ -85,6 +85,7 @@ export function evaluateCriterionMetReadiness(input: {
   evidence: SourceEventEvidence[];
   reason: unknown;
   skipApprovalReasonCheck?: boolean;
+  verifiedDelegatedSponsorAcknowledgement?: boolean;
 }): SourceGovernanceVerdict {
   const hasExplicitHumanReview =
     !input.skipApprovalReasonCheck && validateApprovalReason(input.reason).ok;
@@ -112,7 +113,9 @@ export function evaluateCriterionMetReadiness(input: {
     }
   }
 
-  if (SIGNER_PROOF_REQUIRED_CRITERIA.has(input.criterion.criterionId)) {
+  if (SIGNER_PROOF_REQUIRED_CRITERIA.has(input.criterion.criterionId) &&
+    !(input.criterion.criterionId === "GATE-SCOPE-02" &&
+      input.verifiedDelegatedSponsorAcknowledgement === true)) {
     blockers.push({
       code: "signer_proof_not_verified",
       detail: `Verified ${input.criterion.criterionId === "GATE-SCOPE-04" ? "sponsor and EA" : "sponsor"} signer proof is required. An uploaded or approved scope memo alone cannot satisfy this criterion.`,
@@ -167,6 +170,7 @@ export function evaluateStagePromotionReadiness(input: {
   artifacts?: SourceEventArtifactState[];
   evidence?: SourceEventEvidence[];
   reason: unknown;
+  verifiedDelegatedSponsorAcknowledgement?: boolean;
 }): SourceGovernanceVerdict {
   const blockers: SourceGovernanceBlocker[] = [
     ...validateApprovalReason(input.reason).blockers,
@@ -242,6 +246,8 @@ export function evaluateStagePromotionReadiness(input: {
         artifacts: input.artifacts,
         evidence: input.evidence,
         reason: criterion.notes,
+        verifiedDelegatedSponsorAcknowledgement:
+          input.verifiedDelegatedSponsorAcknowledgement,
       });
       if (!criterionReadiness.ok) {
         blockers.push({

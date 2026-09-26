@@ -30,6 +30,9 @@ const requestVersionState = {
 jest.mock("@/lib/source/new-workspace/authority-version-store", () => ({
   readSourceAuthorityVersionState: jest.fn(async () => requestVersionState),
 }));
+jest.mock("@/lib/source/sponsor-delegation-repository", () => ({
+  hasVerifiedSponsorDelegation: jest.fn(async () => false),
+}));
 const stageSubstrate = {
   criteria: [] as Array<Record<string, unknown>>,
   artifacts: [],

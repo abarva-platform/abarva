@@ -17,12 +17,12 @@
     "No timestamp is recorded, so refreshing this file on an unchanged tree is a no-op."
   ],
   "counts": {
-    "testFiles": 2463,
-    "coveredTestFiles": 2016,
-    "pullRequestCoveredTestFiles": 2015,
+    "testFiles": 2476,
+    "coveredTestFiles": 2029,
+    "pullRequestCoveredTestFiles": 2028,
     "uncoveredTestFiles": 447,
-    "directoriesWithTests": 487,
-    "directoriesFullyCovered": 286,
+    "directoriesWithTests": 488,
+    "directoriesFullyCovered": 287,
     "directoriesPartiallyCovered": 24,
     "directoriesUncovered": 177,
     "directoriesWithUnrunTestFiles": 201,
@@ -553,7 +553,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "productSourceCount": 4,
+        "productSourceCount": 5,
         "rank": 2
       }
     },
@@ -576,7 +576,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "productSourceCount": 4,
+        "productSourceCount": 5,
         "rank": 2
       }
     },
@@ -601,7 +601,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "productSourceCount": 4,
+        "productSourceCount": 5,
         "rank": 2
       }
     },
@@ -626,7 +626,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "productSourceCount": 4,
+        "productSourceCount": 5,
         "rank": 2
       }
     },
@@ -1241,7 +1241,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "productSourceCount": 4,
+        "productSourceCount": 5,
         "rank": 2
       }
     },
@@ -3752,7 +3752,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "productSourceCount": 4,
+        "productSourceCount": 5,
         "tenantScopedReadSourceCount": 2,
         "tenantScopedReadSources": [
           "src/app/(maestro)/home/page.tsx",
