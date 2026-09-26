@@ -194,6 +194,37 @@ jobs:
       - name: Run the toolchain manifest contract
         run: node scripts/exec/toolchain-manifest.test.mjs
 
+      # C-526. Does a release record's own account of its signed-in proof match
+      # what the register says happened?
+      #
+      # The filed instance: a record on `main` declared a signed-in replay
+      # required and, in QA/Validation, that it was NOT RUN, while the register's
+      # release line for the same pull request said the replay ran, was positive,
+      # and produced a residual now carried by its own item. The durable artifact
+      # in the public repository asserted a debt that did not exist and hid a
+      # finding that did, and nothing compared the two. A false "not run" costs
+      # more than a false "run": an auditor either re-runs a proof already
+      # obtained, or reports a release as owing one it does not owe.
+      #
+      # Measured over 626 records added in the window: 209 declare a signed-in
+      # proof required, and 9 of them DISAGREE with the register after the filed
+      # instance was repaired -- so the item was one case of a class, not an
+      # incident.
+      #
+      # The cases run over REAL records read from `docs/releases/records` at run
+      # time, and over register text quoted in the suite, so CI never reads the
+      # operator root. Calibrated in BOTH directions: the filed disagreement, and
+      # a real known-negative whose replay genuinely was not run and which must
+      # come back `agree` -- a detector calibrated only on the disagreeing case
+      # cannot tell a stale record from a detector that always says stale.
+      #
+      # Red first 2/34 on the repair half; 41 passed / 0 failed after.
+      # Seventeen mutations, seventeen caught. Two guards were DELETED rather
+      # than kept during that sweep, each after measuring that it decided zero
+      # records across the whole corpus.
+      - name: Run the signed-in-proof reconciliation contract
+        run: node scripts/exec/signed-in-proof-reconcile.test.mjs
+
       # T-729. Two findings, one item id -- a detector, not an allocator.
       #
       # Three times in one day two overlapping runs of this scheduled task each
