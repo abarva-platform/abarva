@@ -172,7 +172,7 @@ export function buildCodeBatchUser(
     `- Realise the slide's visualIntent. Two consecutive slides must not share an arrangement.`,
     `- Use the full 13.333in width. Keep 0.75in side margins and finish above y=7.0.`,
     `- Use measure_text/fit_text rather than guessing; a shape off the canvas raises and fails the whole deck.`,
-    `- Cite sources in a small footer line via s.add_footer(...), not in the body.`,
+    `- Cite sources in a small footer line via s.add_footer(...), not in the body. Begin that line with "Source:" or "Sources:" and write section references as "§4.1", so the lineage gate can tell a citation from a claim.`,
     ``,
     `- Aim for 40-90 lines per slide. A function three times that length is drawing detail no one reads at projection size.`,
     ``,

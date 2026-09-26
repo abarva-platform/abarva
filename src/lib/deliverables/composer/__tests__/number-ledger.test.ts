@@ -181,6 +181,17 @@ describe('lineage gate over a rendered deck', () => {
     expect(verdict.findings[0]).toMatchObject({ claim: '$240M' });
   });
 
+  it('requires two signals before exempting a dotted number', () => {
+    // A false finding is noise; a false exemption lets an invented number
+    // through. So "Utilisation Rate 3.2" — a capitalised name in front of a
+    // dotted number, in a run that is not a citation — stays a claim.
+    const body = deckOf(['Utilisation Rate 3.2 against Coverage Ratio 4.1']);
+    expect(validateDeckLineage(body, { ledger: LEDGER }).findings).toHaveLength(2);
+
+    const citation = deckOf(['Source: Current-State Drivers 3.2; Executive Answer 4.1']);
+    expect(validateDeckLineage(citation, { ledger: LEDGER }).findings).toEqual([]);
+  });
+
   it('exempts a document section reference but not a bare decimal beside it', () => {
     // A citation footer carrying "§1.1, §3.1-§3.2" produced sixteen findings
     // that were all the same non-defect. The rule keys on the characters right

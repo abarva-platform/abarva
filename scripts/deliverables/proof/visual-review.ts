@@ -155,6 +155,7 @@ async function gates(buffer: Buffer, roles: Record<number, string>) {
     ledger,
     derived: plan.derivedFigures ?? [],
     calendarYears: new Set<number>(packet.calendarYears ?? []),
+    calendarDates: new Set<string>(packet.calendarDates ?? []),
   });
   return { inspection, verdict, lineage };
 }
@@ -191,7 +192,9 @@ async function main() {
   );
 
   console.log("rendering A to PNG…");
-  const pngsA = renderSlidePngs(path.join(OUT, "deck-composed-A.pptx"), path.join(OUT, "png-A"));
+  const pngsA = fs.existsSync(path.join(OUT, "png-A"))
+    ? fs.readdirSync(path.join(OUT, "png-A")).filter((f) => f.endsWith(".png")).sort().map((f) => path.join(OUT, "png-A", f))
+    : renderSlidePngs(path.join(OUT, "deck-composed-A.pptx"), path.join(OUT, "png-A"));
   console.log(`  ${pngsA.length} slide images`);
 
   console.log("visual critique…");

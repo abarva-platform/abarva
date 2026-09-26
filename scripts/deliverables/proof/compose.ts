@@ -222,6 +222,9 @@ async function main() {
     ledger,
     derived: plan.derivedFigures,
     calendarYears: new Set(frozen.packet.calendarYears),
+    // Omitting this reported five governed renewal dates as invented. The packet
+    // had harvested them correctly; the call site simply did not pass them.
+    calendarDates: new Set(frozen.packet.calendarDates),
   });
 
   console.log(

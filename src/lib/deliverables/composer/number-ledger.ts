@@ -118,8 +118,18 @@ function isStructural(
   // containing the word "section" somewhere, so a real 3.2 elsewhere in the same
   // footer is still a claim.
   if (at >= 0 && /^\d{1,2}\.\d{1,2}$/.test(raw)) {
-    const before = run.slice(Math.max(0, at - 12), at);
-    if (/(§|\bsections?\s|[–—-]\s?)$/i.test(before)) return true;
+    const before = run.slice(Math.max(0, at - 24), at);
+    // TWO signals are required, and the rule errs toward flagging.
+    //
+    // A false finding is noise. A false exemption lets an invented number
+    // through, which is the whole thing this gate exists to stop — so a dotted
+    // number is exempt only when the run declares itself a citation AND the
+    // number sits directly after a section marker or a capitalised section name.
+    // "Utilisation Rate 3.2" in ordinary body text has the second signal and not
+    // the first, and stays a claim.
+    const looksLikeCitation = /\b(sources?|section|§|exhibit|appendix|ref)\b/i.test(run);
+    const afterMarker = /(§|\bsections?\s|[–—-]\s?|\b[A-Z][\w&'-]*(?:\s+(?:[A-Z&][\w&'-]*|and|of|the|on|a))*\s)$/.test(before);
+    if (looksLikeCitation && afterMarker) return true;
   }
 
   // Slide number: the run is the number, and the number is this slide's.
