@@ -1,6 +1,6 @@
 /**
- * /api/reasoning/stage-synthesis — cross-tenant invariants on the demo/context
- * block, asserted at the destination.
+ * /api/reasoning/stage-synthesis — tenant ownership and model-context invariants
+ * asserted through the real handler.
  *
  * Item C-527, one caller of the six. The item names six production files that
  * pass the unconditional `AGENT_DEMO_SYSTEM_BLOCK` into a model system prompt
@@ -17,15 +17,11 @@
  *                              templates`, which is present for no tenant in
  *                              the repository.
  *   /api/programs/synthesis    same 404, same cause.
- *   THIS ROUTE                 200 for every tenant, and all of the fixture
- *                              tenant's context lines reach the system prompt.
+ *   THIS ROUTE                 now refuses an instance belonging to another
+ *                              tenant before cache lookup or AI egress.
  *
- * So this is the caller where the leak is reachable, and the only one of the
- * four whose fix can be proved by behaviour rather than by a fixture. It is
- * reachable because nothing here fences the tenant: `/api/reasoning(.*)` is an
- * auth-required pattern in `src/proxy.ts`, so a request is signed in, but the
- * instance is resolved from module fixtures with no tenant check and the
- * composed prompt is handed to `client.messages.stream({ system })`.
+ * This caller could leak because authentication in
+ * `src/proxy.ts` did not prove instance ownership. C-533 adds that fence.
  *
  * WHAT IS STUBBED, AND WHAT DELIBERATELY IS NOT
  *
@@ -40,11 +36,8 @@
  * WHAT THIS FILE DOES NOT CLAIM
  *
  * Nothing here proves the request is authenticated — the middleware pattern is
- * not exercised. Nor does it claim the route is otherwise tenant-clean: the
- * instance itself is still resolved without a tenant fence, so a tenant that is
- * not the fixture tenant is still answered about the fixture tenant's own
- * sourcing event. That is a separate defect, filed separately, and these cases
- * are scoped to the context block C-527 names.
+ * not exercised. These tests cover the route's own authorization and model
+ * boundary for its fixture instances.
  */
 
 jest.mock('server-only', () => ({}));
@@ -194,6 +187,63 @@ async function askAsTenant({
   };
 }
 
+describe('C-533 · stage-synthesis instance ownership', () => {
+  it('refuses another tenant before AI egress or model streaming', async () => {
+    const observed = await askAsTenant({
+      clientKey: 'c533-other-tenant',
+      instanceId: 'apex-retail-cdw-eval-2026',
+      stageId: 'Scope',
+      answer: 'A response that must never be emitted.',
+    });
+    expect(observed.response.status).toBe(403);
+    expect(JSON.parse(observed.body)).toEqual(
+      expect.objectContaining({ error: 'wrong_client' }),
+    );
+    expect(observed.egressPrompts).toEqual([]);
+    expect(observed.streamCalls).toBe(0);
+    expect(observed.body).not.toContain('A response that must never be emitted.');
+  });
+
+  it('still streams the same instance to its owning tenant', async () => {
+    const observed = await askAsTenant({
+      clientKey: FIXTURE_TENANT_KEY,
+      instanceId: 'apex-retail-cdp-eval-2026',
+      stageId: 'Scope',
+      answer: 'Authorized stage synthesis.',
+    });
+    expect(observed.response.status).toBe(200);
+    expect(observed.body).toContain('Authorized stage synthesis.');
+    expect(observed.egressPrompts).toHaveLength(1);
+    expect(observed.streamCalls).toBe(1);
+  });
+
+  it('applies the same owner fence to program instances', async () => {
+    const denied = await askAsTenant({
+      clientKey: 'c533-other-program-tenant',
+      instanceId: 'APX-CDP-2026',
+      stageId: 'P0-Originate',
+      answer: 'A program response that must never be emitted.',
+    });
+    expect(denied.response.status).toBe(403);
+    expect(JSON.parse(denied.body)).toEqual(
+      expect.objectContaining({ error: 'wrong_client' }),
+    );
+    expect(denied.egressPrompts).toEqual([]);
+    expect(denied.streamCalls).toBe(0);
+
+    const owner = await askAsTenant({
+      clientKey: FIXTURE_TENANT_KEY,
+      instanceId: 'APX-CDP-2026',
+      stageId: 'P0-Originate',
+      answer: 'Owner can review the program stage.',
+    });
+    expect(owner.response.status).toBe(200);
+    expect(owner.body).toContain('Owner can review the program stage.');
+    expect(owner.egressPrompts).toHaveLength(1);
+    expect(owner.streamCalls).toBe(1);
+  });
+});
+
 describe('stage-synthesis route — cross-tenant context invariants', () => {
   /*
    * Declared first, and on an instance no other case in this file touches,
@@ -228,22 +278,20 @@ describe('stage-synthesis route — cross-tenant context invariants', () => {
     expect(fixtureHit.streamCalls).toBe(0);
     expect(fixtureHit.body).toContain('for the fixture tenant');
 
-    // Another tenant, same instance and stage. Its prompt is not the fixture
-    // tenant's prompt, so it must be answered for itself rather than handed the
-    // body generated from a prompt carrying that tenant's context.
+    // Another tenant, same instance and stage, cannot use the cached answer
+    // because the instance itself belongs to the fixture tenant.
     const other = await askAsTenant({
       clientKey: 'c527-cache-tenant',
       instanceId,
       stageId,
       answer: 'A read composed for the other tenant.',
     });
-    expect(other.response.headers.get('X-Cache')).toBe('MISS');
-    expect(other.streamCalls).toBe(1);
-    expect(other.body).toContain('for the other tenant');
+    expect(other.response.status).toBe(403);
+    expect(other.egressPrompts).toEqual([]);
+    expect(other.streamCalls).toBe(0);
     expect(other.body).not.toContain('for the fixture tenant');
 
-    // And the conditional arm of the same leak: presenting the fixture tenant's
-    // validator must not tell another tenant its copy is current.
+    // The conditional arm must refuse too, before the ETag is compared.
     const conditional = await askAsTenant({
       clientKey: 'c527-cache-tenant-2',
       instanceId,
@@ -251,7 +299,9 @@ describe('stage-synthesis route — cross-tenant context invariants', () => {
       answer: 'A third read for a third tenant.',
       ifNoneMatch: fixtureEtag as string,
     });
-    expect(conditional.response.status).not.toBe(304);
+    expect(conditional.response.status).toBe(403);
+    expect(conditional.egressPrompts).toEqual([]);
+    expect(conditional.streamCalls).toBe(0);
   });
 
   it('hands the fixture tenant its own demo context', async () => {
@@ -275,6 +325,9 @@ describe('stage-synthesis route — cross-tenant context invariants', () => {
       observed.system.includes(line),
     );
     expect(present).toEqual(fixtureOnlyContextLines);
+    expect(
+      sharedContextLines.filter((line) => observed.system.includes(line)),
+    ).toEqual(sharedContextLines);
 
     // The same content is what the egress record was preflighted on, so the
     // audit trail and the model see one prompt rather than two.
@@ -285,7 +338,7 @@ describe('stage-synthesis route — cross-tenant context invariants', () => {
     expect(presentInEgress).toEqual(fixtureOnlyContextLines);
   });
 
-  it('hands another tenant the shared platform context and no part of the fixture tenant', async () => {
+  it('hands another tenant no fixture instance content at all', async () => {
     const observed = await askAsTenant({
       clientKey: 'c527-other-tenant',
       instanceId: 'apex-retail-cdp-eval-2026',
@@ -293,30 +346,12 @@ describe('stage-synthesis route — cross-tenant context invariants', () => {
       answer: 'Scope evidence is thin for this tenant.',
     });
 
-    expect(observed.response.status).toBe(200);
-    expect(observed.streamCalls).toBe(1);
-    expect(observed.egressTenantIds).toEqual(['cid-c527-other-tenant']);
-
-    // Context did reach the prompt, so the negative below is about which
-    // context rather than about an empty prompt.
-    const wholeRequest = [
-      observed.system,
-      observed.userMessage,
-      ...observed.egressPrompts,
-    ].join('\n');
-    const sharedPresent = sharedContextLines.filter((line) =>
-      wholeRequest.includes(line),
-    );
-    expect(sharedPresent).toEqual(sharedContextLines);
-
-    // And not one line the repository scopes to the fixture tenant, anywhere in
-    // the request the model or the egress ledger saw. These literals live in an
-    // imported module, not in `route.ts`, so no file-reading guard could see
-    // this half.
-    const leaked = fixtureOnlyContextLines.filter((line) =>
-      wholeRequest.includes(line),
-    );
-    expect(leaked).toEqual([]);
+    expect(observed.response.status).toBe(403);
+    expect(observed.egressPrompts).toEqual([]);
+    expect(observed.egressTenantIds).toEqual([]);
+    expect(observed.streamCalls).toBe(0);
+    expect(observed.system).toBe('');
+    expect(observed.userMessage).toBe('');
   });
 });
 
