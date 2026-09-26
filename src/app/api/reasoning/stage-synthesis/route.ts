@@ -22,6 +22,7 @@ import { programInstanceStateHash } from '@/lib/reasoning/program-synthesis-cont
 import { computeSynthesisEtag } from '@/lib/reasoning/synthesis-etag';
 import { buildStageSynthesisPrompt } from '@/lib/reasoning/stage-synthesis-prompt';
 import { getTenantSystemBlock } from '@/lib/agent/demo-context';
+import { canonicalV6DemoTenantKey } from '@/lib/module-v6/demo-tenant-packs';
 import { getUserContextPromptBlock } from '@/lib/agent/userContext';
 import { FOUR_LAYER_REASONING_INSTRUCTIONS } from '@/lib/intelligence/synthesis/instructionLayer';
 
@@ -31,6 +32,7 @@ const stageSynthesisCache = new Map<string, string>();
 
 interface ResolvedInstance {
   surface: 'source' | 'programs';
+  tenantKey: string;
   instanceId: string;
   instanceLabel: string;
   patternId: string;
@@ -44,6 +46,7 @@ function resolveInstance(instanceId: string): ResolvedInstance | null {
   if (sourceInstance) {
     return {
       surface: 'source',
+      tenantKey: canonicalV6DemoTenantKey(sourceInstance.tenantSlug ?? sourceInstance.tenantId),
       instanceId: sourceInstance.id,
       instanceLabel: sourceInstance.name,
       patternId: sourceInstance.patternId,
@@ -59,6 +62,7 @@ function resolveInstance(instanceId: string): ResolvedInstance | null {
   if (programInstance) {
     return {
       surface: 'programs',
+      tenantKey: canonicalV6DemoTenantKey(programInstance.tenantSlug ?? programInstance.tenantId),
       instanceId: programInstance.id,
       instanceLabel: programInstance.name,
       patternId: programInstance.patternId,
@@ -95,6 +99,18 @@ export async function POST(request: Request) {
       status: 404,
       headers: { 'Content-Type': 'application/json' },
     });
+  }
+
+  const activeClient = await getActiveClientRow();
+  if (!activeClient) {
+    return Response.json({ error: 'no_client', detail: 'No active client for AI egress policy.' }, { status: 403 });
+  }
+  const tenantKey = activeClient.key ?? null;
+  if (resolved.tenantKey !== canonicalV6DemoTenantKey(tenantKey)) {
+    return Response.json(
+      { error: 'wrong_client', detail: 'Requested instance does not belong to the active tenant.' },
+      { status: 403 },
+    );
   }
 
   const pattern = findLifecyclePattern(resolved.patternId);
@@ -135,15 +151,6 @@ export async function POST(request: Request) {
       },
     );
   }
-
-  // The active client is resolved here rather than just before the egress
-  // preflight, because from this point on it is an input to what is composed
-  // and to what is cached, not only to the egress record. Item C-527.
-  const activeClient = await getActiveClientRow();
-  if (!activeClient) {
-    return Response.json({ error: 'no_client', detail: 'No active client for AI egress policy.' }, { status: 403 });
-  }
-  const tenantKey = activeClient.key ?? null;
 
   // The tenant belongs in the key because the composed system prompt now
   // differs by tenant. Without it the first tenant to ask about a stage decides
