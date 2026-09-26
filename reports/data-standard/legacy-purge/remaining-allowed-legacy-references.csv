@@ -529,6 +529,7 @@ legacy-v-dimension-token,src/app/(maestro)/source/preview/workspace/__tests__/bu
 legacy-v-dimension-token,src/app/api/intelligence/ask/route.ts,non-loader historical reference
 legacy-v-file-name,src/app/api/intelligence/ask/route.ts,non-loader historical reference
 synthetic-v-folder-reference,src/app/api/programs/synthesis/__tests__/route.test.ts,non-loader historical reference
+synthetic-v-folder-reference,src/app/api/reasoning/stage-synthesis/__tests__/route.invariants.test.ts,non-loader historical reference
 synthetic-v-folder-reference,src/components/home/__tests__/HomeSurface.test.tsx,non-loader historical reference
 legacy-v-dimension-token,src/components/home/__tests__/HomeSurface.test.tsx,non-loader historical reference
 legacy-v-file-name,src/components/home/__tests__/HomeSurface.test.tsx,non-loader historical reference
