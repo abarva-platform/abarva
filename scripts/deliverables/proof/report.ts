@@ -26,6 +26,13 @@ const GOVERNED_TEXT = [
 const ledger: LedgerEntry[] = JSON.parse(fs.readFileSync(path.join(OUT, "number-ledger.json"), "utf8"));
 const packet = JSON.parse(fs.readFileSync(path.join(OUT, "packet.json"), "utf8"));
 
+/**
+ * One name for the composed deck, used by BOTH the grading loop and the blind
+ * pack. They were separate: the report graded A and packed B, so the numbers
+ * described one artifact and the images another, and nothing said so.
+ */
+const COMPOSED = process.env.COMPOSED_DECK ?? "deck-composed-A.pptx";
+
 const claims = deriveMaterialClaims({ recommendation: doc.recommendation, nextActions: doc.nextActions });
 const prohibitionsPath = path.join(OUT, "forbidden-claims.json");
 const prohibitions: string[] = fs.existsSync(prohibitionsPath)
@@ -72,7 +79,7 @@ async function main() {
   const results = [];
   for (const [name, file] of [
     ["deterministic renderer", "deck-baseline.pptx"],
-    ["model-composed", "deck-composed-A.pptx"],
+    ["model-composed", COMPOSED],
   ] as const) {
     if (!fs.existsSync(path.join(OUT, file))) {
       console.log(`${name}: ${file} not present, skipped`);
@@ -100,7 +107,7 @@ async function main() {
   fs.writeFileSync(path.join(OUT, "ab-report.json"), JSON.stringify({ claims, results }, null, 2));
 
   // Blind pack
-  const composed = path.join(OUT, process.env.COMPOSED_DECK ?? "deck-composed-A.pptx");
+  const composed = path.join(OUT, COMPOSED);
   const baseline = path.join(OUT, "deck-baseline.pptx");
   if (fs.existsSync(composed) && fs.existsSync(baseline)) {
     // Render BOTH. The first version rendered only the composed deck and the
