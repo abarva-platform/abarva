@@ -21,7 +21,7 @@
       "grounding-block disclosure of exemplar content"
     ],
     "deferred": [
-      "derive tasks/gate for the 7 stages still carrying an exemplar (U-533 acceptance 3, continued)"
+      "derive tasks/gate for the 6 stages still carrying an exemplar (U-533 acceptance 3, continued)"
     ],
     "signedInProofPerformed": false
   },
@@ -49,11 +49,12 @@
       "purpose",
       "tasks"
     ],
-    "stagesWithScaffoldTasks": 7,
-    "stagesWithScaffoldGate": 7,
-    "stagesWithDerivedTasks": 3,
-    "stagesWithDerivedGate": 3,
+    "stagesWithScaffoldTasks": 6,
+    "stagesWithScaffoldGate": 6,
+    "stagesWithDerivedTasks": 4,
+    "stagesWithDerivedGate": 4,
     "derivedStages": [
+      "rfp",
       "responses",
       "evaluation",
       "bafo"
@@ -168,10 +169,10 @@
         "stageName": "from_input",
         "purpose": "scaffold_carried_by_reference",
         "intel": "fact_derived",
-        "tasks": "scaffold_carried_by_reference",
-        "gate.approver": "scaffold_carried_by_reference",
-        "gate.confirms": "scaffold_carried_by_reference",
-        "gate.generates": "scaffold_carried_by_reference",
+        "tasks": "fact_derived",
+        "gate.approver": "archetype_derived",
+        "gate.confirms": "fact_derived",
+        "gate.generates": "archetype_derived",
         "gate.nextStageName": "computed_agrees_with_exemplar",
         "gate.action": "absent",
         "waterfall": "fact_derived",
@@ -181,9 +182,9 @@
       "movesWithFacts": {
         "purpose": false,
         "intel": true,
-        "tasks": false,
+        "tasks": true,
         "gate.approver": false,
-        "gate.confirms": false,
+        "gate.confirms": true,
         "gate.generates": false,
         "gate.nextStageName": false,
         "waterfall": true
@@ -191,26 +192,26 @@
       "movesWithArchetype": {
         "purpose": false,
         "intel": true,
-        "tasks": false,
-        "gate.approver": false,
-        "gate.confirms": false,
-        "gate.generates": false,
+        "tasks": true,
+        "gate.approver": true,
+        "gate.confirms": true,
+        "gate.generates": true,
         "gate.nextStageName": false,
         "waterfall": true
       },
       "declared": {
-        "tasks": "scaffold",
-        "gate": "scaffold",
-        "scaffoldSource": "SAMPLE_RFP_STAGE"
+        "tasks": "fact_derived",
+        "gate": "fact_derived",
+        "scaffoldSource": null
       },
       "gateTaskTitles": [
-        "Confirm RFP clause coverage"
+        "Review RFP clause evidence"
       ],
-      "gateApprover": "Decision owner",
+      "gateApprover": "CIO",
       "gateConfirmLabels": [
-        "Every priced lever has a clause",
-        "BAFO fallbacks paired",
-        "RFP final"
+        "1 of 6 value-lever clauses evidenced",
+        "6 archetype clause requirements to review",
+        "Review package and release authority"
       ],
       "intelProvenance": "live",
       "waterfallProvenance": "live"
