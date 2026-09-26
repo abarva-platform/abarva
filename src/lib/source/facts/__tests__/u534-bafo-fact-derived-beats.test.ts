@@ -137,8 +137,22 @@ const ARMED_STAGE_KEYS = [
   "value",
 ] as const;
 
+/**
+ * The stages that still carry, READ OFF THE BUILDER rather than computed as "all
+ * but mine".
+ *
+ * Item U-535 changed this, and the reason is the failure mode `U-533` warns about
+ * in the same words. As written, this was `ARMED_STAGE_KEYS.filter(key => key !==
+ * DERIVED_STAGE)` — a set defined by this suite's own subject, which silently
+ * claimed every other stage was scaffold. When `U-535` flipped `evaluation`, four
+ * cases here failed asserting that a derived stage still carried its exemplar.
+ * That was the right failure and it is not the point: the same shape, inverted,
+ * is a case that keeps PASSING about a stage it no longer describes. Reading the
+ * set off `beatProvenance` means the next flip moves these cases instead of
+ * breaking them.
+ */
 const STILL_SCAFFOLD_STAGES = ARMED_STAGE_KEYS.filter(
-  (key) => key !== DERIVED_STAGE,
+  (key) => buildFor(key).beatProvenance?.tasks !== "fact_derived",
 );
 
 /** The rule-bearing archetypes — the only ones that can reach this builder. */
@@ -233,10 +247,17 @@ describe("U-534 · the boundary declares the flipped stage derived", () => {
     },
   );
 
-  it("has a non-empty set of still-scaffold stages", () => {
-    // Acceptance (6): the label must not disappear because one stage stopped
+  it("has a non-empty set of still-scaffold stages, and excludes this one", () => {
+    // Acceptance (6): the label must not disappear because a stage stopped
     // needing it. A case over an empty set would assert that vacuously.
-    expect(STILL_SCAFFOLD_STAGES.length).toBe(9);
+    //
+    // Item U-535 flipped a second stage, so this is 8 rather than 9. The second
+    // assertion is what the count alone never said: the set is built by reading
+    // provenance, so this suite's OWN stage must be absent from it, and a builder
+    // that stopped deriving `bafo` would fail here rather than quietly widening
+    // the set back to nine.
+    expect(STILL_SCAFFOLD_STAGES.length).toBe(8);
+    expect(STILL_SCAFFOLD_STAGES).not.toContain(DERIVED_STAGE);
   });
 
   it("still carries `purpose` on the flipped stage, and says so nowhere else", () => {
@@ -363,7 +384,7 @@ describe("U-534 · the derived task list is not the exemplar's", () => {
     expect(titles).not.toBe(mine);
   });
 
-  it("leaves the other nine stages holding the exemplar's own array", () => {
+  it("leaves every still-carrying stage holding the exemplar's own array", () => {
     for (const stageKey of STILL_SCAFFOLD_STAGES) {
       expect(buildFor(stageKey).tasks).toBe(liveStageScaffoldFor(stageKey).tasks);
     }
@@ -432,7 +453,7 @@ describe("U-534 · the derived gate", () => {
     );
   });
 
-  it("leaves the other nine gates holding the exemplar's own confirm array", () => {
+  it("leaves every still-carrying gate holding the exemplar's own confirm array", () => {
     for (const stageKey of STILL_SCAFFOLD_STAGES) {
       expect(buildFor(stageKey).gate.confirms).toBe(
         liveStageScaffoldFor(stageKey).gate.confirms,

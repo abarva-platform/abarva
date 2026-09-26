@@ -21,7 +21,7 @@
       "grounding-block disclosure of exemplar content"
     ],
     "deferred": [
-      "replace one stage's tasks/gate with fact-derived values (U-533 acceptance 3)"
+      "derive tasks/gate for the eight stages still carrying an exemplar (U-533 acceptance 3, continued)"
     ],
     "signedInProofPerformed": false
   },
@@ -38,6 +38,9 @@
       "gate.approver",
       "gate.generates"
     ],
+    "emptyDerivedFields": [
+      "gate.generates"
+    ],
     "derivedFromNeitherFields": [],
     "scaffoldCarriedFields": [
       "gate.approver",
@@ -46,16 +49,16 @@
       "purpose",
       "tasks"
     ],
-    "stagesWithScaffoldTasks": 9,
-    "stagesWithScaffoldGate": 9,
-    "stagesWithDerivedTasks": 1,
-    "stagesWithDerivedGate": 1,
+    "stagesWithScaffoldTasks": 8,
+    "stagesWithScaffoldGate": 8,
+    "stagesWithDerivedTasks": 2,
+    "stagesWithDerivedGate": 2,
     "derivedStages": [
+      "evaluation",
       "bafo"
     ],
     "stagesExposingPersonNamedApprover": [
       "responses",
-      "evaluation",
       "value"
     ],
     "distinctGateApprovers": [
@@ -277,10 +280,10 @@
         "stageName": "from_input",
         "purpose": "scaffold_carried_by_reference",
         "intel": "fact_derived",
-        "tasks": "scaffold_carried_by_reference",
-        "gate.approver": "scaffold_carried_by_reference",
-        "gate.confirms": "scaffold_carried_by_reference",
-        "gate.generates": "scaffold_carried_by_reference",
+        "tasks": "fact_derived",
+        "gate.approver": "archetype_derived",
+        "gate.confirms": "fact_derived",
+        "gate.generates": "derived_empty",
         "gate.nextStageName": "computed_agrees_with_exemplar",
         "gate.action": "absent",
         "waterfall": "fact_derived",
@@ -290,9 +293,9 @@
       "movesWithFacts": {
         "purpose": false,
         "intel": true,
-        "tasks": false,
+        "tasks": true,
         "gate.approver": false,
-        "gate.confirms": false,
+        "gate.confirms": true,
         "gate.generates": false,
         "gate.nextStageName": false,
         "waterfall": true
@@ -300,26 +303,32 @@
       "movesWithArchetype": {
         "purpose": false,
         "intel": true,
-        "tasks": false,
-        "gate.approver": false,
-        "gate.confirms": false,
+        "tasks": true,
+        "gate.approver": true,
+        "gate.confirms": true,
         "gate.generates": false,
         "gate.nextStageName": false,
         "waterfall": true
       },
       "declared": {
-        "tasks": "scaffold",
-        "gate": "scaffold",
-        "scaffoldSource": "SAMPLE_EVALUATION_STAGE"
+        "tasks": "fact_derived",
+        "gate": "fact_derived",
+        "scaffoldSource": null
       },
       "gateTaskTitles": [
-        "Confirm vendor bids for should-cost"
+        "Apply the IT Outsourcing / AMS / Managed Services scoring model",
+        "Score Enhancement / change-order leakage into the evaluation model",
+        "Provide the scoring evidence for Volume-band price flex-down",
+        "Provide the scoring evidence for Productivity / automation not priced back",
+        "Provide the scoring evidence for Retained client / SME cost omitted from TCO",
+        "Provide the scoring evidence for SLA credit economics",
+        "Provide the scoring evidence for Transition fees not milestone-based"
       ],
-      "gateApprover": "K. Oshima, CIO",
+      "gateApprover": "CIO",
       "gateConfirmLabels": [
-        "Every bid normalized to should-cost",
-        "The trap surfaced",
-        "Evaluation complete"
+        "1 of 6 value levers scored from computed facts",
+        "Ranked on 5 weighted criteria, 3 auto-fail checked",
+        "Scoring closed"
       ],
       "intelProvenance": "live",
       "waterfallProvenance": "live"

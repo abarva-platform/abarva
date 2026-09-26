@@ -54,6 +54,11 @@ import {
   buildBafoFactDerivedTasks,
 } from './bafo-fact-beats';
 import {
+  EVALUATION_STAGE_KEY,
+  buildEvaluationFactDerivedGate,
+  buildEvaluationFactDerivedTasks,
+} from './evaluation-fact-beats';
+import {
   SOURCE_STAGE_LABELS,
   nextSourceStage,
 } from '@/lib/source/constants';
@@ -189,29 +194,37 @@ export function buildLiveStageView(
     ? SOURCE_STAGE_LABELS[nextStage] ?? nextStage
     : null;
 
-  // Item U-534. ONE stage's intake beats are now derived from this event's facts
-  // and its resolved archetype instead of being carried from the exemplar. The
-  // other nine still carry, and still say so below. `factBeats` is the single
-  // switch: nothing downstream infers which stage is derived, and the beat
-  // provenance is declared from the same value so the label cannot drift from
-  // what this function actually returned.
-  const factBeats =
-    requestedStageKey === BAFO_STAGE_KEY
-      ? {
-          tasks: buildBafoFactDerivedTasks({
-            archetype,
-            leverResults,
-            citations: input.citations,
-            nextStageName,
-          }),
-          gate: buildBafoFactDerivedGate({
-            archetype,
-            leverResults,
-            citations: input.citations,
-            nextStageName,
-          }),
-        }
-      : null;
+  // Items U-534 and U-535. TWO stages' intake beats are now derived from this
+  // event's facts and its resolved archetype instead of being carried from the
+  // exemplar. The other eight still carry, and still say so below. `factBeats`
+  // is the single switch: nothing downstream infers which stage is derived, and
+  // the beat provenance is declared from the same value so the label cannot
+  // drift from what this function actually returned.
+  //
+  // Kept as a lookup rather than a chain of `if`s so that adding the next stage
+  // is one entry: a second derived stage arriving as a second ternary was how
+  // this would have grown into the ten-arm switch below it, which is the shape
+  // `liveStageScaffoldFor` is and the reason `LIVE_STAGE_SCAFFOLD_SOURCE` has to
+  // exist beside it.
+  const beatInput = {
+    archetype,
+    leverResults,
+    citations: input.citations,
+    nextStageName,
+  };
+  const FACT_DERIVED_BEATS: Readonly<
+    Record<string, () => { tasks: StageAnalyticsView['tasks']; gate: StageAnalyticsView['gate'] }>
+  > = {
+    [BAFO_STAGE_KEY]: () => ({
+      tasks: buildBafoFactDerivedTasks(beatInput),
+      gate: buildBafoFactDerivedGate(beatInput),
+    }),
+    [EVALUATION_STAGE_KEY]: () => ({
+      tasks: buildEvaluationFactDerivedTasks(beatInput),
+      gate: buildEvaluationFactDerivedGate(beatInput),
+    }),
+  };
+  const factBeats = FACT_DERIVED_BEATS[requestedStageKey]?.() ?? null;
 
   return {
     stageKey,

@@ -1,14 +1,27 @@
 /**
  * Item U-533 — `SOURCE_BACKLOG_MASTER.md` §F9, wave 2.
  *
- * UPDATED BY U-534, which shipped the slice this suite deliberately deferred: ONE
- * stage's (`bafo`) intake beats are now derived from the event's facts and its
- * resolved archetype. The cases below were the known positives U-534 was supposed
- * to turn red, and five of them did. They are UPDATED rather than deleted or
- * relaxed: the per-stage measurement now records nine carried stages and one
- * derived one, and each case that named `bafo` by hand now SEARCHES for a stage
- * that still carries, so the next stage to flip cannot leave a case green against
- * a stage it no longer describes.
+ * UPDATED BY U-534 AND THEN BY U-535, which between them shipped part of the
+ * slice this suite deliberately deferred: TWO stages' (`bafo`, then `evaluation`)
+ * intake beats are now derived from the event's facts and its resolved
+ * archetype, and eight still carry.
+ *
+ * U-535 also SPLIT A VERDICT, because the measurement was wrong about the second
+ * stage in a way it could not have been about the first. See `verdictFor`: a
+ * derived value that is EMPTY -- `evaluation` derives `gate.generates` from an
+ * archetype that declares no deliverable there -- differs from the exemplar and
+ * moves with neither reading, so it landed on `derived_from_neither`, the verdict
+ * reserved for a hand-written replacement, and tripped the guard that exists to
+ * catch one. `derived_empty` now carries that case and the guard still catches
+ * every non-empty replacement.
+ *
+ * ORIGINAL U-534 NOTE, kept and re-counted: the cases below were the known
+ * positives U-534 was supposed to turn red, and five of them did; U-535 turned
+ * four more red, including one in U-534's own suite. They are UPDATED rather than
+ * deleted or relaxed — the per-stage measurement now records eight carried stages
+ * and two derived ones — and each case that named a stage by hand now SEARCHES
+ * for one, or runs `it.each` over the set the builder reports, so the next stage
+ * to flip cannot leave a case green against a stage it no longer describes.
  *
  * The measurement also gained a third reading, because U-534's acceptance says a
  * hand-written alternative to a fixture is still a fixture: `movesWithFacts` per
@@ -111,6 +124,16 @@ const LIVE_CITATIONS: Record<string, FactSourceCitation | null> = {
  * so the "richer" bag quantified nothing extra and a movement case failed for a
  * reason unrelated to the code under test.
  */
+/**
+ * The archetypes that can reach this builder at all: `buildLiveStageView` returns
+ * null unless a value lever computes, so an archetype with no `valueLeverRules`
+ * never produces a view to measure. Item U-535 reads the per-stage deliverable
+ * rule off this set rather than off the whole registry, for the same reason.
+ */
+const RULE_BEARING_ARCHETYPES = listSourceArchetypes().filter(
+  (archetype) => (archetype.valueLeverRules?.length ?? 0) > 0,
+);
+
 const OTHER_ARCHETYPE_ID = (() => {
   const other = listSourceArchetypes().find(
     (archetype) =>
@@ -211,6 +234,7 @@ const CARRIED_STAGE_KEYS = ARMED_STAGE_KEYS.filter(
 type Verdict =
   | "fact_derived"
   | "archetype_derived"
+  | "derived_empty"
   | "derived_from_neither"
   | "scaffold_carried_by_reference"
   | "scaffold_carried_by_value"
@@ -270,9 +294,43 @@ function verdictFor(
   if (derivation) {
     if (derivation.withFacts) return "fact_derived";
     if (derivation.withArchetype) return "archetype_derived";
+    /**
+     * ITEM U-535 SPLIT THIS RETURN A SECOND TIME, and again a measurement forced
+     * it rather than taste. `evaluation` derives `gate.generates` from the
+     * archetype's `deliverablePack` at that stage, and NO rule-bearing archetype
+     * declares one there -- so the derived list is legitimately EMPTY. Empty
+     * differs from the exemplar and moves with neither reading, which sent it to
+     * `derived_from_neither` and tripped the guard below that exists to catch a
+     * fixture swapped for a fixture.
+     *
+     * An empty derivation and a hand-written replacement are not the same
+     * provenance. The first is the faithful reading of an archetype that declares
+     * nothing; the second is content a person typed. Conflating them would have
+     * left exactly two options, both bad: weaken the guard to allow the verdict,
+     * or backfill the exemplar's deliverable to keep the list full.
+     *
+     * `isEmptyDerivation` fires ONLY on a value carrying no content at all, so a
+     * hand-written replacement -- non-empty by construction, since it is content
+     * someone wrote -- still earns `derived_from_neither`. A case below mutates a
+     * non-empty value through this branch and asserts it does not reach here.
+     */
+    if (isEmptyDerivation(built)) return "derived_empty";
     return "derived_from_neither";
   }
   return "fact_derived";
+}
+
+/**
+ * A derived value carrying no content: an empty array, an empty/whitespace
+ * string, or nothing at all. Deliberately NOT "falsy" -- `0` and `false` are
+ * content, and a field legitimately derived to zero must not be excused from the
+ * hand-written-fixture guard by an accident of JavaScript truthiness.
+ */
+function isEmptyDerivation(value: unknown): boolean {
+  if (value === null || value === undefined) return true;
+  if (Array.isArray(value)) return value.length === 0;
+  if (typeof value === "string") return value.trim().length === 0;
+  return false;
 }
 
 /**
@@ -518,12 +576,14 @@ function buildMeasurement() {
 
   const derivedFieldNames = new Set<string>();
   const archetypeDerivedFieldNames = new Set<string>();
+  const emptyDerivedFieldNames = new Set<string>();
   const neitherFieldNames = new Set<string>();
   const carriedFieldNames = new Set<string>();
   for (const stage of stages) {
     for (const [field, verdict] of Object.entries(stage.fields)) {
       if (verdict === "fact_derived") derivedFieldNames.add(field);
       if (verdict === "archetype_derived") archetypeDerivedFieldNames.add(field);
+      if (verdict === "derived_empty") emptyDerivedFieldNames.add(field);
       if (verdict === "derived_from_neither") neitherFieldNames.add(field);
       if (
         verdict === "scaffold_carried_by_reference" ||
@@ -558,7 +618,12 @@ function buildMeasurement() {
         "grounding-block disclosure of exemplar content",
       ],
       deferred: [
-        "replace one stage's tasks/gate with fact-derived values (U-533 acceptance 3)",
+        // Item U-535. This read "replace ONE stage's tasks/gate ..." and was
+        // stale the moment a second stage flipped -- a deferred entry naming work
+        // that is partly done reads as though none of it is. Stated as a
+        // remainder rather than a task, and the two counts above are the
+        // machine-checkable half of it.
+        "derive tasks/gate for the eight stages still carrying an exemplar (U-533 acceptance 3, continued)",
       ],
       signedInProofPerformed: false,
     },
@@ -573,6 +638,13 @@ function buildMeasurement() {
        * its facts", and the first draft of U-534 called both of these fact-derived.
        */
       archetypeDerivedFields: [...archetypeDerivedFieldNames].sort(),
+      /**
+       * Item U-535. Fields whose derived value is EMPTY because the archetype
+       * declares nothing to derive from at that stage. A faithful reading of an
+       * absence, recorded apart from both the derived sets and from the
+       * hand-written-fixture set below, because it is neither.
+       */
+      emptyDerivedFields: [...emptyDerivedFieldNames].sort(),
       /**
        * Fields that differ from the exemplar and follow NOTHING — the shape a
        * hand-written replacement for a fixture takes. Expected empty; a case below
@@ -735,11 +807,11 @@ describe("U-533 · the measurement is committed and does not drift", () => {
 });
 
 describe("U-533 · what is carried, and what only agrees", () => {
-  it("records the five carried fields, and the four U-534 moved off the list", () => {
-    // `purpose` is carried on ALL TEN, including the flipped stage -- U-534 scoped
-    // to the two intake beats. The other four are carried on the nine and derived
-    // on the one, so they appear in BOTH lists, and that is the honest reading of
-    // a per-stage measurement rolled up across stages.
+  it("records the five carried fields, and the four the flips moved off the list", () => {
+    // `purpose` is carried on ALL TEN, including the flipped stages -- U-534 and
+    // U-535 both scoped to the two intake beats. The other four are carried on
+    // the eight and derived on the two, so they appear in BOTH lists, and that is
+    // the honest reading of a per-stage measurement rolled up across stages.
     expect(measurement.summary.scaffoldCarriedFields).toEqual([
       "gate.approver",
       "gate.confirms",
@@ -762,10 +834,20 @@ describe("U-533 · what is carried, and what only agrees", () => {
       "gate.approver",
       "gate.generates",
     ]);
-    expect(measurement.summary.stagesWithScaffoldTasks).toBe(9);
-    expect(measurement.summary.stagesWithScaffoldGate).toBe(9);
-    expect(measurement.summary.stagesWithDerivedTasks).toBe(1);
-    expect(measurement.summary.stagesWithDerivedGate).toBe(1);
+    /**
+     * Item U-535. `gate.generates` appears in `archetypeDerivedFields` above AND
+     * here, for the same reason `tasks` appears in two lists: this is a per-stage
+     * measurement rolled up across stages, and the two flipped stages derive that
+     * field to different KINDS of answer. `bafo` derives a declared deliverable,
+     * which moves with the archetype. `evaluation` derives an absence, because no
+     * rule-bearing archetype declares one there. Recording the absence as its own
+     * verdict is what keeps the hand-written-fixture guard below meaningful.
+     */
+    expect(measurement.summary.emptyDerivedFields).toEqual(["gate.generates"]);
+    expect(measurement.summary.stagesWithScaffoldTasks).toBe(8);
+    expect(measurement.summary.stagesWithScaffoldGate).toBe(8);
+    expect(measurement.summary.stagesWithDerivedTasks).toBe(2);
+    expect(measurement.summary.stagesWithDerivedGate).toBe(2);
   });
 
   it("finds NO field that differs from the exemplar and follows nothing", () => {
@@ -776,32 +858,117 @@ describe("U-533 · what is carried, and what only agrees", () => {
     expect(measurement.summary.derivedFromNeitherFields).toEqual([]);
   });
 
-  it("records the flipped stage's gate as a MIX, not as one provenance", () => {
-    const flipped = measurement.stages.find(
-      (stage: { stageKey: string }) => stage.stageKey === DERIVED_STAGE_KEYS[0],
-    )!;
-    // Population: there is a flipped stage to read.
-    expect(flipped).toBeDefined();
-    expect(flipped.fields["gate.confirms"]).toBe("fact_derived");
-    expect(flipped.fields["gate.approver"]).toBe("archetype_derived");
-    expect(flipped.fields["gate.generates"]).toBe("archetype_derived");
-    // And the two readings that separate them, recorded rather than inferred.
-    expect(flipped.movesWithFacts["gate.confirms"]).toBe(true);
-    expect(flipped.movesWithFacts["gate.approver"]).toBe(false);
-    expect(flipped.movesWithArchetype["gate.approver"]).toBe(true);
+  it("keeps that guard live after U-535 split an EMPTY derivation out of it", () => {
+    /**
+     * The split is only safe if the new verdict cannot absorb the old one, and
+     * asserting the guard's list is empty does not show that -- it is empty both
+     * when the guard works and when it has been defeated. So this drives the
+     * predicate the split turns on, over a value of each shape.
+     *
+     * A hand-written replacement is CONTENT someone typed and is therefore
+     * non-empty by construction; an absence-of-declaration derives to `[]`. The
+     * cases below pin both directions, including the two JavaScript-truthiness
+     * traps that would have made this excuse a real derivation: `0` and `false`
+     * are content, not absence.
+     */
+    for (const empty of [[], "", "   ", null, undefined]) {
+      expect(isEmptyDerivation(empty)).toBe(true);
+    }
+    for (const content of [
+      [{ label: "Should-cost evaluation summary" }],
+      "Should-cost evaluation summary",
+      0,
+      false,
+      {},
+    ]) {
+      expect(isEmptyDerivation(content)).toBe(false);
+    }
+
+    // And end to end through the verdict, which is what the summary reads: a
+    // non-empty value following neither reading is still `derived_from_neither`.
+    const followsNothing = { withFacts: false, withArchetype: false };
+    expect(
+      verdictFor(
+        [{ label: "A deliverable nobody declared" }],
+        [{ label: "Should-cost evaluation summary" }],
+        "does_not_move",
+        followsNothing,
+      ),
+    ).toBe("derived_from_neither");
+    expect(
+      verdictFor(
+        [],
+        [{ label: "Should-cost evaluation summary" }],
+        "does_not_move",
+        followsNothing,
+      ),
+    ).toBe("derived_empty");
   });
 
-  it("stops exposing a person-named approver on the flipped stage", () => {
-    // The exemplar it replaced carried one, so this is a real before/after and
-    // not a property the stage always had.
-    expect(measurement.summary.stagesWithPersonNamedApprover).toContain(
-      DERIVED_STAGE_KEYS[0],
+  it.each(DERIVED_STAGE_KEYS)(
+    "records %s's gate as a MIX of provenances, not as one",
+    (stageKey) => {
+      const flipped = measurement.stages.find(
+        (stage: { stageKey: string }) => stage.stageKey === stageKey,
+      )!;
+      // Population: there is a flipped stage to read.
+      expect(flipped).toBeDefined();
+      expect(flipped.fields["gate.confirms"]).toBe("fact_derived");
+      expect(flipped.fields["gate.approver"]).toBe("archetype_derived");
+
+      /**
+       * Item U-535 made this a RULE rather than a constant. `gate.generates` is
+       * the archetype's deliverables at this stage, so its verdict follows
+       * whether the archetype declares one -- `archetype_derived` where it does,
+       * `derived_empty` where it does not. The expectation is READ from the
+       * registry for that reason: typing `archetype_derived` was correct while
+       * `bafo` was the only flipped stage and became wrong the moment a stage
+       * with no declared deliverable was flipped, which is the class of case that
+       * lets a suite keep passing about a stage it no longer describes.
+       */
+      const declaresDeliverable = RULE_BEARING_ARCHETYPES.some((archetype) =>
+        archetype.deliverablePack.some((d) => d.stage === stageKey),
+      );
+      expect(flipped.fields["gate.generates"]).toBe(
+        declaresDeliverable ? "archetype_derived" : "derived_empty",
+      );
+
+      // And the two readings that separate them, recorded rather than inferred.
+      expect(flipped.movesWithFacts["gate.confirms"]).toBe(true);
+      expect(flipped.movesWithFacts["gate.approver"]).toBe(false);
+      expect(flipped.movesWithArchetype["gate.approver"]).toBe(true);
+    },
+  );
+
+  it("covers BOTH kinds of generates verdict across the flipped stages", () => {
+    // Otherwise the rule above could be satisfied by two stages of the same kind
+    // and the branch it added would never be exercised.
+    const verdicts = DERIVED_STAGE_KEYS.map(
+      (stageKey) =>
+        measurement.stages.find((s: { stageKey: string }) => s.stageKey === stageKey)!
+          .fields["gate.generates"],
     );
-    expect(measurement.summary.stagesExposingPersonNamedApprover).not.toContain(
-      DERIVED_STAGE_KEYS[0],
+    expect(new Set(verdicts)).toEqual(
+      new Set(["archetype_derived", "derived_empty"]),
     );
-    // And the nine that still carry one still show up, so the measurement did
-    // not simply stop looking.
+  });
+
+  it.each(DERIVED_STAGE_KEYS)(
+    "stops exposing a person-named approver on %s",
+    (stageKey) => {
+      // The exemplar it replaced carried one, so this is a real before/after and
+      // not a property the stage always had. Both flipped stages happen to
+      // qualify; the `toContain` is what proves it for each rather than assuming.
+      expect(measurement.summary.stagesWithPersonNamedApprover).toContain(
+        stageKey,
+      );
+      expect(
+        measurement.summary.stagesExposingPersonNamedApprover,
+      ).not.toContain(stageKey);
+    },
+  );
+
+  it("still finds carried stages exposing one, so the measurement kept looking", () => {
     expect(
       measurement.summary.stagesExposingPersonNamedApprover.length,
     ).toBeGreaterThan(0);
@@ -916,12 +1083,14 @@ describe("U-533 · known positive: exemplar content reaches the model's prompt",
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("U-533 · the boundary declares which beats are carried", () => {
-  it("still has nine carried stages and one derived one", () => {
-    // Population before property, and the acceptance clause U-534 carries: the
-    // label must not disappear from the nine because one stage stopped needing
-    // it. A case over an empty CARRIED set would assert that vacuously.
-    expect(CARRIED_STAGE_KEYS).toHaveLength(9);
-    expect(DERIVED_STAGE_KEYS).toHaveLength(1);
+  it("still has eight carried stages and two derived ones", () => {
+    // Population before property, and the acceptance clause U-534 carried and
+    // U-535 keeps: the label must not disappear from the rest because another
+    // stage stopped needing it. A case over an empty CARRIED set would assert
+    // that vacuously, and the two numbers are written out rather than summed so
+    // a stage silently dropped from the armed set cannot keep this green.
+    expect(CARRIED_STAGE_KEYS).toHaveLength(8);
+    expect(DERIVED_STAGE_KEYS).toHaveLength(2);
   });
 
   it.each(CARRIED_STAGE_KEYS)("%s declares both intake beats as scaffold", (stageKey) => {
