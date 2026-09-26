@@ -1648,7 +1648,7 @@ export function renderDeliverablePdf(
 // ── PPTX (pptxgenjs) ──
 //
 // MOVES-QUALITY-003 / Track D (artifact-digestion audit). This is the live
-// editable PPTX renderer for generated deliverables: LAYOUT_16x9, one governing
+// editable PPTX renderer for generated deliverables: LAYOUT_WIDE, one governing
 // point per slide, evidence/detail kept off the slide face. Exhibits are
 // rasterised with the exact same pipeline as DOCX and PDF (`resolveSvgTokens`
 // → `withXmlns` → `rasteriseSvg`) so a diagram looks identical across every
@@ -2029,7 +2029,18 @@ export async function renderDeliverablePptx(
 ): Promise<Buffer> {
   const { default: PptxGenJS } = await import("pptxgenjs");
   const pptx = new PptxGenJS();
-  pptx.layout = "LAYOUT_16x9";
+  // LAYOUT_WIDE is 13.333in x 7.5in. LAYOUT_16x9 is 10.0in x 5.625in — the same
+  // aspect ratio, a third narrower.
+  //
+  // This said LAYOUT_16x9 while every content shape in this renderer is
+  // positioned for the wide canvas (x: 0.72, w: 11.8 needs 12.52in). So every
+  // shape on every slide overflowed the right edge by about 2.5 inches: body
+  // text, tables and exhibits all ran off the page. A 12-slide charter carried
+  // 64 off-canvas shapes.
+  //
+  // Same aspect ratio is why it was invisible — thumbnails and slide-count
+  // checks look correct, and only opening the file shows it.
+  pptx.layout = "LAYOUT_WIDE";
   pptx.author = "AbarVa";
   pptx.company = "AbarVa";
   pptx.subject = doc.title;
