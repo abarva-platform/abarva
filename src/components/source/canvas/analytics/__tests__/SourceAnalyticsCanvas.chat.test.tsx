@@ -767,7 +767,7 @@ describe("SourceAnalyticsCanvas — AskAnythingBar reachability", () => {
         ],
       },
     });
-    fireEvent.change(screen.getByLabelText(/optional note/i), {
+    fireEvent.change(screen.getByLabelText(/approval rationale/i), {
       target: { value: "Reviewed by sourcing steering committee." },
     });
     fireEvent.submit(

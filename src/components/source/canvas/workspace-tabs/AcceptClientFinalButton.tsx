@@ -107,6 +107,10 @@ export function AcceptClientFinalButton({
           <div style={EYEBROW_STYLE}>Authoritative version</div>
           <strong style={TITLE_STYLE}>{artifactName}</strong>
           <p style={COPY_STYLE}>{CLIENT_FINAL_GOVERNANCE_MESSAGE}</p>
+          <p style={COPY_STYLE}>
+            Confirming this file makes it the authoritative version. Source approval
+            rights and a recorded reason are required.
+          </p>
           <label style={LABEL_STYLE}>
             Client-approved file
             <input
@@ -118,8 +122,8 @@ export function AcceptClientFinalButton({
             />
           </label>
           <label style={LABEL_STYLE}>
-            Optional note
-            <textarea name="note" rows={3} style={TEXTAREA_STYLE} />
+            Approval rationale
+            <textarea name="note" rows={3} required style={TEXTAREA_STYLE} />
           </label>
           <div style={FIELD_GRID_STYLE}>
             <label style={LABEL_STYLE}>

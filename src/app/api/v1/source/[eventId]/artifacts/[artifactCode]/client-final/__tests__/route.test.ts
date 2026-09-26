@@ -10,6 +10,7 @@ const updateArtifactBody = jest.fn(async (input: unknown) => ({
     ...(input as { columns?: Record<string, unknown> }).columns,
   },
 }));
+const uploadBlob = jest.fn(async () => undefined);
 
 jest.mock("@/app/api/v1/_intel-auth", () => ({
   requireTenancy: jest.fn(async () => ({
@@ -33,8 +34,15 @@ jest.mock("@/lib/agent/tools/intelligence/_shared", () => ({
 
 jest.mock("@/lib/data-plane/objectStorage", () => ({
   getObjectStorageAdapter: jest.fn(() => ({
-    upload: jest.fn(async () => undefined),
+    upload: uploadBlob,
     remove: jest.fn(async () => undefined),
+  })),
+}));
+
+jest.mock("@/lib/auth/source-access-policy", () => ({
+  loadUserSourceAccessPolicy: jest.fn(async () => ({
+    canUploadSourceArtifacts: true,
+    canApproveSourceStages: true,
   })),
 }));
 
@@ -151,29 +159,56 @@ jest.mock("@/lib/security/sensitive-upload-guard", () => ({
 }));
 
 import { POST } from "../route";
+import { loadUserSourceAccessPolicy } from "@/lib/auth/source-access-policy";
+import { registerSourceArtifactUpload } from "@/lib/source/artifact-registry";
+
+const policy = jest.mocked(loadUserSourceAccessPolicy);
+const registerArtifact = jest.mocked(registerSourceArtifactUpload);
+
+function clientFinalForm(note?: string): FormData {
+  const form = new FormData();
+  form.set("file", new File(["<h1>Final</h1>"], "response-pack.html", {
+    type: "text/html",
+  }));
+  if (note) form.set("note", note);
+  return form;
+}
+
+function postClientFinal(form: FormData) {
+  return POST(new Request("http://localhost", {
+    method: "POST",
+    body: form,
+  }), {
+    params: Promise.resolve({
+      eventId: "11111111-1111-1111-1111-111111111111",
+      artifactCode: "d13_vendor_responses",
+    }),
+  });
+}
 
 describe("client-final artifact body landing", () => {
-  beforeEach(() => jest.clearAllMocks());
+  beforeEach(() => {
+    jest.clearAllMocks();
+    policy.mockResolvedValue({
+      canUploadSourceArtifacts: true,
+      canApproveSourceStages: true,
+    } as Awaited<ReturnType<typeof loadUserSourceAccessPolicy>>);
+  });
 
   it("replaces the generated body with text extracted from the authoritative client final", async () => {
-    const form = new FormData();
-    form.set(
-      "file",
-      new File(["<h1>Final</h1>"], "response-pack.html", {
-        type: "text/html",
-      }),
-    );
-    const response = await POST(new Request("http://localhost", {
-      method: "POST",
-      body: form,
-    }), {
-      params: Promise.resolve({
-        eventId: "11111111-1111-1111-1111-111111111111",
-        artifactCode: "d13_vendor_responses",
-      }),
-    });
+    const response = await postClientFinal(clientFinalForm("Reviewed against the approved draft."));
 
     expect(response.status).toBe(200);
+    expect(policy).toHaveBeenCalledWith(expect.objectContaining({ userId: "user-1" }), {
+      activeClientKey: "meridian-health",
+      sourceEventId: "11111111-1111-1111-1111-111111111111",
+    });
+    expect(registerArtifact).toHaveBeenCalledWith(expect.objectContaining({
+      fileCabinet: expect.objectContaining({
+        clientFinalAcceptedBy: "user-1",
+        clientFinalNote: "Reviewed against the approved draft.",
+      }),
+    }));
     expect(updateArtifactBody).toHaveBeenCalledWith({
       artifactRowId: "state-1",
       columns: expect.objectContaining({
@@ -183,5 +218,59 @@ describe("client-final artifact body landing", () => {
         status: "approved",
       }),
     });
+  });
+
+  it("refuses an uploader who lacks named approval authority before any blob or metadata write", async () => {
+    policy.mockResolvedValue({
+      canUploadSourceArtifacts: true,
+      canApproveSourceStages: false,
+    } as Awaited<ReturnType<typeof loadUserSourceAccessPolicy>>);
+
+    const response = await postClientFinal(clientFinalForm("Reviewed file."));
+
+    expect(response.status).toBe(403);
+    expect(uploadBlob).not.toHaveBeenCalled();
+    expect(registerArtifact).not.toHaveBeenCalled();
+    expect(updateArtifactBody).not.toHaveBeenCalled();
+  });
+
+  it("refuses an approver who lacks artifact upload authority", async () => {
+    policy.mockResolvedValue({
+      canUploadSourceArtifacts: false,
+      canApproveSourceStages: true,
+    } as Awaited<ReturnType<typeof loadUserSourceAccessPolicy>>);
+
+    const response = await postClientFinal(clientFinalForm("Reviewed file."));
+
+    expect(response.status).toBe(403);
+    expect(uploadBlob).not.toHaveBeenCalled();
+    expect(registerArtifact).not.toHaveBeenCalled();
+    expect(updateArtifactBody).not.toHaveBeenCalled();
+  });
+
+  it("fails closed when Source approval policy cannot be read", async () => {
+    policy.mockRejectedValue(new Error("policy unavailable"));
+
+    const response = await postClientFinal(clientFinalForm("Reviewed file."));
+
+    expect(response.status).toBe(403);
+    expect(uploadBlob).not.toHaveBeenCalled();
+    expect(registerArtifact).not.toHaveBeenCalled();
+  });
+
+  it("requires a human rationale before promoting an uploaded file", async () => {
+    const response = await postClientFinal(clientFinalForm());
+
+    expect(response.status).toBe(400);
+    expect(uploadBlob).not.toHaveBeenCalled();
+    expect(registerArtifact).not.toHaveBeenCalled();
+  });
+
+  it("rejects whitespace-only approval rationale", async () => {
+    const response = await postClientFinal(clientFinalForm("   "));
+
+    expect(response.status).toBe(400);
+    expect(uploadBlob).not.toHaveBeenCalled();
+    expect(registerArtifact).not.toHaveBeenCalled();
   });
 });
