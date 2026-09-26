@@ -27,6 +27,7 @@ import {
 import { buildNarrativeDocxPayloadFromContext } from '@/lib/source/exports/payloads/narrative-docx-payload';
 import { buildAiClauseGapPayloadFromContext } from '@/lib/source/exports/payloads/ai-clause-gap-payload';
 import { eventCodeFromPayload } from '@/lib/source/exports/metadata';
+import { requireRfpArtifactExport } from '@/lib/source/exports/rfp-export-authority';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -101,6 +102,14 @@ export async function GET(req: NextRequest, { params }: RouteCtx) {
       { status: 403 },
     );
   }
+
+  const rfpExport = await requireRfpArtifactExport(
+    ctx,
+    artifactCode,
+    activeClient?.id ?? null,
+    'html',
+  );
+  if (rfpExport.response) return rfpExport.response;
 
   const generatedAt = new Date().toISOString();
   let html: string;
