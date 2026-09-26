@@ -27,8 +27,11 @@ import path from "node:path";
  *
  * - `retired`      — no declared code path is in the tree (4 rows)
  * - `uncatalogued` — a declared code path IS in the tree, and no `controls[]`
- *                    entry names it (13 rows). The surface is live; nobody
- *                    catalogued it. That is work, not history.
+ *                    entry names it (13 rows when this suite was written, 10
+ *                    now — C-544 catalogued the Intelligence pattern promotion
+ *                    brief panel and its three rows left this state). The
+ *                    surface is live; nobody catalogued it. That is work, not
+ *                    history.
  * - `ambiguous`    — more than one `controls[]` entry names the row's code
  *                    paths (2 rows), so naming one would be false precision.
  *
@@ -243,15 +246,42 @@ describe("legal catalog claims bind only when coverage is real", () => {
    * number nobody measured. The per-row assertions above are the real gate —
    * this one cannot tell which row moved.
    */
-  it("records the 18/19 split the repair was measured against", () => {
-    const tally = { coveredWithSurfaceId: 0, deferredWithJoin: 0, unbound: 0 };
+  /*
+   * A fourth bucket, added by C-544 rather than folded into an existing one.
+   *
+   * Cataloguing a surface resolves EVERY claim row that names its code path,
+   * including rows for a control kind the new `controls[]` entry does not
+   * declare. Such a row may no longer carry a `surfaceJoin` — the resolver says
+   * `resolved` and the gate demands the `surfaceId` — but it is not `covered`
+   * either, because the control is not on the surface. It is deferred against a
+   * named surface, which is strictly more than the `uncatalogued` it replaced.
+   *
+   * The three-bucket tally counted that row as `unbound`, and `unbound` reads as
+   * "nobody bound it". Keeping the name honest is the whole reason the bucket
+   * exists: `unbound: 0` still has to mean no row is missing a join.
+   */
+  it("records the split the repair was measured against, per bucket", () => {
+    const tally = {
+      coveredWithSurfaceId: 0,
+      deferredWithJoin: 0,
+      deferredWithSurfaceId: 0,
+      unbound: 0,
+    };
     for (const entry of live.catalogClaimCoverage) {
       if (entry.status === "covered" && entry.surfaceId) tally.coveredWithSurfaceId += 1;
       else if (entry.status === "deferred" && entry.surfaceJoin?.state) tally.deferredWithJoin += 1;
+      else if (entry.status === "deferred" && entry.surfaceId) tally.deferredWithSurfaceId += 1;
       else tally.unbound += 1;
     }
 
-    expect(tally).toEqual({ coveredWithSurfaceId: 18, deferredWithJoin: 19, unbound: 0 });
+    // 18/19/0/0 when C-537 wrote this. C-544 catalogued one surface: two of its
+    // three rows became covered, the third is deferred against that surface.
+    expect(tally).toEqual({
+      coveredWithSurfaceId: 20,
+      deferredWithJoin: 16,
+      deferredWithSurfaceId: 1,
+      unbound: 0,
+    });
   });
 
   it("resolves all 18 hand-written covered joins from the code paths alone", () => {

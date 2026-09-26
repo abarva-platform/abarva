@@ -60,6 +60,13 @@ jobs:
       - name: Exercise Intelligence promotion approval gate
         run: npx jest --runTestsByPath src/lib/programs/__tests__/origination-submit.promotion-gate.test.ts --runInBand
 
+      # C-544. The step above proves the SERVER gate. This one proves what the
+      # brief panel renders: the legal catalog claims this surface carries an AI
+      # label and the promotion's evidence refs, and until this step existed no
+      # job ran anything that would notice either going away.
+      - name: Exercise Intelligence promotion brief panel disclosure controls
+        run: npx jest --runTestsByPath src/components/programs/origination/__tests__/ProgramBriefPanel.controls.test.tsx --runInBand
+
       - name: Exercise Moves phase-gate route approval
         run: npx jest --runTestsByPath src/app/api/programs/phase-gate/__tests__/approval-gate.test.ts --runInBand
 
