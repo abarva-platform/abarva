@@ -65,10 +65,15 @@ const PROCESS_ORDER = Object.freeze({
     outputs: ["consumption.*_v1", "publication.projection_version"],
     prerequisites: ["active knowledge baseline"],
   },
+  "knowledge-narrative-generate-v1": {
+    stage: "knowledge_narrative_generate",
+    outputs: ["consumption.enterprise_brief_v1 narrative lens rows"],
+    prerequisites: ["projection-build-v1 passed", "active knowledge baseline", "accepted evidence"],
+  },
   "home-readmodel-v1": {
     stage: "home_read_model",
     outputs: ["Home/Knowledge read model projections"],
-    prerequisites: ["projection-build-v1 passed"],
+    prerequisites: ["projection-build-v1 passed", "knowledge-narrative-generate-v1 completed or explicitly blocked"],
   },
   "knowledge-backfill-v1": {
     stage: "knowledge_backfill",
@@ -617,6 +622,15 @@ const GENERIC_STORE_OPERATIONS = Object.freeze({
   "domain-publish-v1": ["publishDomain", "immutable domain publication created", (op) => (op.entityCount + op.factCount + op.relationshipCount > 0 ? [] : ["empty_domain_publication"])],
   "baseline-publish-v1": ["publishBaseline", "atomic active baseline pointer switched", (op) => (op.domainPublicationRefs?.length > 0 && op.isActive ? [] : ["mandatory_domain_publications_missing"])],
   "projection-build-v1": ["buildConsumptionProjections", "consumption projections built from active baseline", (op) => (op.rowCount > 0 ? [] : ["no_active_baseline_projection_rows"])],
+  "knowledge-narrative-generate-v1": [
+    "generateKnowledgeNarratives",
+    "AbarVa View / Leadership / Benchmark narratives generated",
+    (op) => {
+      const blockers = [...(op.blockers ?? [])];
+      if (Number(op.generatedCount ?? 0) <= 0) blockers.push("no_grounded_narratives_generated");
+      return blockers;
+    },
+  ],
   "home-readmodel-v1": ["verifyHomeReadModel", "Home read model projections verified", (op) => (op.enterpriseBriefRows + op.searchRows + op.relationshipRows > 0 ? [] : ["home_read_model_empty"])],
   "reconciliation-audit-v1": [
     "runReconciliationAudit",
