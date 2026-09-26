@@ -257,12 +257,12 @@ describe("U-533 · the view the canvas receives declares its carried beats", () 
   });
 });
 
-describe("U-534/U-535/U-538 · a flipped stage renders derived content, not the exemplar's", () => {
-  it("has three flipped stages and seven that still carry", () => {
+describe("U-534/U-535/U-538/U-540 · a flipped stage renders derived content, not the exemplar's", () => {
+  it("has four flipped stages and six that still carry", () => {
     // Population before property. A search that found nothing would make every
     // case below pass over an empty set.
-    expect(DERIVED_STAGE_KEYS).toHaveLength(3);
-    expect(CARRIED_STAGE_KEYS).toHaveLength(7);
+    expect(DERIVED_STAGE_KEYS).toHaveLength(4);
+    expect(CARRIED_STAGE_KEYS).toHaveLength(6);
     expect(NAMED_APPROVER_STAGE).toBeDefined();
   });
 

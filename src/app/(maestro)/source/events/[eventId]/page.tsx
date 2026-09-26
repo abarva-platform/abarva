@@ -629,6 +629,7 @@ export default async function SourceEventDetailPage({
               stageKey: viewStage,
               stageName: sourceJourneyLabelForStage(sourceJourney, viewStage),
               vendorResponses,
+              rfpClausePresentLeverKeys,
             }) ?? undefined;
 
           // Arm the LIVE approve action on the gate ONLY when the event actually

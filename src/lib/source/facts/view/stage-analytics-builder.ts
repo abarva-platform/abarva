@@ -6,8 +6,7 @@
 // archetype → roll them into the value waterfall → build the canvas view. The
 // value-waterfall beat is fully live (real facts, real math, cited). Selected
 // stages derive tasks and gates; the others explicitly carry sample structure.
-// The builder states the
-// live value proof through the waterfall — the intel lead is rewritten to reflect
+// The builder states the live value proof through the waterfall — the intel lead reflects
 // the real computed/insufficient counts so nothing is dressed as more than it is.
 //
 // Returns null when there are not enough facts to compute at least one lever; the
@@ -64,6 +63,11 @@ import {
   buildResponsesFactDerivedTasks,
   type VendorResponseCoverage,
 } from './responses-fact-beats';
+import {
+  RFP_STAGE_KEY,
+  buildRfpFactDerivedGate,
+  buildRfpFactDerivedTasks,
+} from './rfp-fact-beats';
 import {
   SOURCE_STAGE_LABELS,
   nextSourceStage,
@@ -132,6 +136,8 @@ export interface BuildLiveStageInput {
   stageName?: string;
   /** Existing tenant-scoped vendor-by-lever response signal, when available. */
   vendorResponses?: VendorResponseCoverage;
+  /** Existing tenant-scoped per-lever included-clause signal, when available. */
+  rfpClausePresentLeverKeys?: ReadonlySet<string>;
 }
 
 /**
@@ -202,8 +208,8 @@ export function buildLiveStageView(
     ? SOURCE_STAGE_LABELS[nextStage] ?? nextStage
     : null;
 
-  // Items U-534, U-535 and U-538. Three stages' intake beats are derived from
-  // event facts and the resolved archetype. The other seven carry exemplar
+  // Items U-534, U-535, U-538 and U-540. Four stages' intake beats are derived from
+  // event facts and the resolved archetype. The other six carry exemplar
   // content and say so below. `factBeats`
   // is the single switch: nothing downstream infers which stage is derived, and
   // the beat provenance is declared from the same value so the label cannot
@@ -225,6 +231,11 @@ export function buildLiveStageView(
     vendorResponses: input.vendorResponses,
     nextStageName,
   };
+  const rfpBeatInput = {
+    archetype,
+    presentLeverKeys: input.rfpClausePresentLeverKeys,
+    nextStageName,
+  };
   const FACT_DERIVED_BEATS: Readonly<
     Record<string, () => { tasks: StageAnalyticsView['tasks']; gate: StageAnalyticsView['gate'] }>
   > = {
@@ -239,6 +250,10 @@ export function buildLiveStageView(
     [RESPONSES_STAGE_KEY]: () => ({
       tasks: buildResponsesFactDerivedTasks(responsesBeatInput),
       gate: buildResponsesFactDerivedGate(responsesBeatInput),
+    }),
+    [RFP_STAGE_KEY]: () => ({
+      tasks: buildRfpFactDerivedTasks(rfpBeatInput),
+      gate: buildRfpFactDerivedGate(rfpBeatInput),
     }),
   };
   const factBeats = FACT_DERIVED_BEATS[requestedStageKey]?.() ?? null;
