@@ -185,9 +185,9 @@ import {
   shouldSuppressGenericContextBundleForSourceMode,
 } from "@/lib/source/ava/answer-mode";
 import {
-  buildSourceContract360PromptBlock,
   buildSourcePortfolioFallbackAnswer,
 } from "@/lib/source/ava/portfolio-fallback-answer";
+import { buildAuthorizedSourceContract360PromptBlock } from "@/lib/source/ava/server-contract-answer-context";
 import { buildModeGrounding } from "@/lib/source/ava/mode-grounding";
 import { resolveContractQuestionId } from "@/lib/source/ava/contract-question-identity";
 import { runSourceAnswerQualityGate } from "@/lib/source/ava/answer-quality-gate";
@@ -1968,10 +1968,19 @@ export async function POST(request: Request) {
     hasSourceContractGrounding
       ? ""
       : contextBundlePromptBlock;
-  const sourceContract360PromptBlock = buildSourceContract360PromptBlock(
-    surfaceContext,
-    activeClientDisplayName,
-  );
+  const authorizedSourceTenantKey = activeClientKey ?? tenancy?.clientKey ?? null;
+  const sourceContract360PromptBlock =
+    isSourceSurface(surface) && contractIdFromContext && authorizedSourceTenantKey
+      ? await buildAuthorizedSourceContract360PromptBlock({
+          query: message,
+          requestContext: {
+            module: "Source",
+            contractId: contractIdFromContext,
+          },
+          tenantKey: authorizedSourceTenantKey,
+          tenantDisplayName: activeClientDisplayName,
+        })
+      : "";
 
   // aVa Source polish gate — Gap 2 fix (follow-up to Gap 1 / #4602).
   //
@@ -2513,6 +2522,21 @@ export async function POST(request: Request) {
     return new Response(demoSafeClientText(movesAvaDeterministicAnswer), {
       headers: { "content-type": "text/plain; charset=utf-8" },
     });
+  }
+  if (
+    isSourceSurface(surface) &&
+    contractIdFromContext &&
+    !sourceContract360PromptBlock
+  ) {
+    return new Response(
+      "I cannot verify that contract from the current authorized Source records. Please select a contract available to this signed-in tenant.",
+      {
+        headers: {
+          "content-type": "text/plain; charset=utf-8",
+          "Cache-Control": "no-store",
+        },
+      },
+    );
   }
   const sourcePortfolioFallbackAnswer = buildSourcePortfolioFallbackAnswer({
     message,

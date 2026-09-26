@@ -15,13 +15,14 @@
  * exactly that reading — its acceptance asks for `fallbackCount` in the C-403
  * record to FALL as the proof that a general contract-question path was built.
  *
- * Measured here, from repository bytes: the two paths are DISJOINT.
+ * The routes remain distinct in how they classify questions, but a later
+ * contract-context authority fix made the contract resolver shared.
  *
  *   - The spec's own declared Ask aVa entry point, `/api/intelligence/ask`, does
  *     not import `answer-mode.ts` anywhere in its transitive closure. It reaches
  *     the contract answer builder `source-workspace-visual-answer.ts` instead.
- *   - `/api/chat/agent` reaches `answer-mode.ts` and does NOT reach the contract
- *     answer builder.
+ *   - `/api/chat/agent` reaches `answer-mode.ts` and now also reaches the
+ *     contract answer builder through its tenant-checked server context.
  *
  * So a general contract-question path built where the spec puts it cannot move
  * the C-403 number, and the only edit that WOULD move it is adding rules to a
@@ -42,11 +43,9 @@
  *
  * THE LIMIT OF A CLOSURE, STATED AS A NUMBER RATHER THAN ASSUMED AWAY. An import
  * closure is sound evidence that a path EXISTS and weaker evidence that one does
- * not: a `import(expr)` with a computed specifier is invisible to it. The two
- * negative readings above are therefore backed by two further measurements — the
- * count of non-literal dynamic imports inside each closure, recorded rather than
- * waved at, and the list of string literals anywhere in the closure that name the
- * module said to be unreachable, asserted empty.
+ * not: a `import(expr)` with a computed specifier is invisible to it. The remaining
+ * negative classifier reading is therefore backed by the count of non-literal
+ * dynamic imports and the absence of classifier-naming literals in the ask closure.
  *
  * Regenerate the committed record with:
  *   ABARVA_UPDATE_C406_SURFACES=1 npx jest --runTestsByPath \
@@ -68,6 +67,7 @@ const C403_RECORD_PATH = path.join(REPO_ROOT, C403_RECORD_REL);
 
 const EVENT_CHAT_CLASSIFIER_REL = "src/lib/source/ava/answer-mode.ts";
 const CONTRACT_ANSWER_BUILDER_REL = "src/lib/source/ava/source-workspace-visual-answer.ts";
+const SERVER_CONTRACT_CONTEXT_REL = "src/lib/source/ava/server-contract-answer-context.ts";
 
 const ASK_ROUTE_REL = "src/app/api/intelligence/ask/route.ts";
 const CHAT_ROUTE_REL = "src/app/api/chat/agent/route.ts";
@@ -480,13 +480,17 @@ describe("C-406 (1) — the §12.11 acceptance path cannot reach the event-chat 
   });
 });
 
-describe("C-406 (2) — and the event-chat path cannot reach the contract answer builder", () => {
+describe("C-406 (2) — both paths now reach the contract answer builder", () => {
   it(`${ASK_ROUTE_REL} reaches ${CONTRACT_ANSWER_BUILDER_REL}`, () => {
     expect(askClosure.fileSet.has(CONTRACT_ANSWER_BUILDER_REL)).toBe(true);
   });
 
-  it(`${CHAT_ROUTE_REL} does not`, () => {
-    expect(chatClosure.fileSet.has(CONTRACT_ANSWER_BUILDER_REL)).toBe(false);
+  it(`${CHAT_ROUTE_REL} reaches it through the server contract context`, () => {
+    expect(chatClosure.fileSet.has(SERVER_CONTRACT_CONTEXT_REL)).toBe(true);
+    expect(chatClosure.fileSet.has(CONTRACT_ANSWER_BUILDER_REL)).toBe(true);
+    expect(chainTo(chatClosure, CONTRACT_ANSWER_BUILDER_REL)).toContain(
+      SERVER_CONTRACT_CONTEXT_REL,
+    );
   });
 });
 
@@ -509,13 +513,13 @@ describe("C-406 (3) — the two negative readings are backed, not assumed", () =
     expect(askClosure.fileSet.has(EVENT_CHAT_CLASSIFIER_REL)).toBe(false);
   });
 
-  it("finds no string literal naming the contract answer builder in the chat closure", () => {
+  it("finds the now-declared contract builder import in the chat closure", () => {
     const naming = [
       ...new Set(
         chatClosure.stringLiterals.filter((v) => v.includes("source-workspace-visual-answer")),
       ),
     ];
-    expect(naming).toEqual([]);
+    expect(naming).toContain("./source-workspace-visual-answer");
   });
 
   it("records the count of non-literal dynamic imports rather than waving at it", () => {

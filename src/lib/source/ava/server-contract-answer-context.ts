@@ -9,6 +9,7 @@ import type { SourceContract360Row } from "@/lib/source/data-model/types";
 import { classifyOpportunityTrace } from "@/lib/source/data-model/contract-optimization-traceability";
 import { opportunityForAvaTrace } from "@/lib/source/facts/view/ava-contract-grounding-context";
 import { tenantAliasesFor } from "@/lib/tenant/aliases";
+import { buildSourceContract360PromptBlock } from "./portfolio-fallback-answer";
 import { resolveSourceWorkspaceContractId } from "./source-workspace-visual-answer";
 
 function readHintId(context: AskSurfaceContext): string | null {
@@ -185,4 +186,18 @@ export async function buildServerSourceAnswerContext(input: {
   } catch {
     return null;
   }
+}
+
+export async function buildAuthorizedSourceContract360PromptBlock(input: {
+  query: string;
+  requestContext: AskSurfaceContext;
+  tenantKey: string;
+  tenantDisplayName: string;
+}): Promise<string> {
+  const context = await buildServerSourceAnswerContext(input);
+  if (!context) return "";
+  return buildSourceContract360PromptBlock(
+    context as unknown as Record<string, unknown>,
+    input.tenantDisplayName,
+  );
 }

@@ -304,7 +304,7 @@ export function buildSourceContract360PromptBlock(
   const contract = readSelectedSourceContractContext(surfaceContext);
   if (!contract) return "";
   const lines = [
-    "SOURCE CONTRACT 360 SELECTED-CONTRACT CONTEXT (authoritative page-local contract scope):",
+    "SOURCE CONTRACT 360 SELECTED-CONTRACT CONTEXT (quote only server-verified facts):",
     formatSelectedContractPrefix(tenant, contract),
     formatSelectedContractFinancialBasis(contract),
     contract.datasetSummary ? `Contract dataset: ${contract.datasetSummary}` : null,
