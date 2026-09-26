@@ -518,7 +518,7 @@ export async function lockEvaluatorScore(
   try {
     const evidenceResult = await getAzureReadFluentClient()
       .from("source_artifacts")
-      .select("id,tenant_key,source_event_id,status,lifecycle_state,blob_sha256")
+      .select("id,tenant_key,source_event_id,status,lifecycle_state,blob_sha256,sha256")
       .eq("id", evidenceId)
       .eq("tenant_key", input.clientKey)
       .eq("source_event_id", input.eventId)
@@ -537,8 +537,13 @@ export async function lockEvaluatorScore(
       evidence.source_event_id !== input.eventId ||
       evidence.status !== "approved" ||
       evidence.lifecycle_state !== "current" ||
-      typeof evidence.blob_sha256 !== "string" ||
-      !/^[0-9a-f]{64}$/i.test(evidence.blob_sha256)
+      !/^[0-9a-f]{64}$/i.test(
+        typeof evidence.blob_sha256 === "string"
+          ? evidence.blob_sha256
+          : typeof evidence.sha256 === "string"
+            ? evidence.sha256
+            : "",
+      )
     ) {
       return { ok: false, code: "evidence_not_approved" };
     }

@@ -428,6 +428,17 @@ describe("human scorecard writes", () => {
     expect(calls).toHaveLength(1);
   });
 
+  it("accepts an approved artifact whose checksum is in the legacy sha256 field", async () => {
+    serve({
+      source_scorecard_criteria: { data: [criterion], error: null },
+      source_scorecard_scores: { data: [{ ...score, lock_state: "unlocked", locked_by: null, locked_at: null }], error: null },
+      source_artifacts: { data: [{ id: artifactId, tenant_key: "tenant-1", source_event_id: "event-1", status: "approved", lifecycle_state: "current", blob_sha256: null, sha256: "b".repeat(64) }], error: null },
+    });
+    const calls = serveWrites();
+    expect(await lockEvaluatorScore({ ...writeBase, ...actor, vendorId: "supplier-1" })).toEqual({ ok: true });
+    expect(calls).toHaveLength(1);
+  });
+
   it("refuses to lock an unsupported or opposite-tenant evidence reference", async () => {
     serve({
       source_scorecard_criteria: { data: [criterion], error: null },
