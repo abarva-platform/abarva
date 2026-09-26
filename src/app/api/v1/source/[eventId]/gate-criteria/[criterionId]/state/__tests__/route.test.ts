@@ -51,6 +51,11 @@ const writeAdapter = {
   insertActivityLog: jest.fn(async () => ({ ok: true })),
 };
 const emitSourceApprovalNotificationBestEffort = jest.fn();
+const verifiedSponsorDelegationMock = jest.fn<Promise<boolean>, [{ eventId: string; tenantKey: string }]>(async () => false);
+
+jest.mock("@/lib/source/sponsor-delegation-repository", () => ({
+  hasVerifiedSponsorDelegation: (input: { eventId: string; tenantKey: string }) => verifiedSponsorDelegationMock(input),
+}));
 
 jest.mock("@/lib/auth/tenancy", () => ({
   requireTenancy: jest.fn(async () => tenancy),
@@ -159,9 +164,24 @@ const ctx = {
 
 beforeEach(() => {
   jest.clearAllMocks();
+  verifiedSponsorDelegationMock.mockResolvedValue(false);
 });
 
 describe("PATCH Source gate criterion state", () => {
+  it("consults the exact event's delegated receipt before evaluating a sponsor criterion", async () => {
+    const pending = await PATCH(request({ state: "met", reason: "Reviewed current Scope commitment." }), ctx);
+    expect(pending.status).toBe(409);
+    expect((await pending.json()).blockers).toEqual(expect.arrayContaining([
+      expect.objectContaining({ code: "signer_proof_not_verified" }),
+    ]));
+    verifiedSponsorDelegationMock.mockResolvedValue(true);
+    const delegated = await PATCH(request({ state: "met", reason: "Reviewed current Scope commitment." }), ctx);
+    expect(delegated.status).toBe(409);
+    expect((await delegated.json()).blockers).not.toEqual(expect.arrayContaining([
+      expect.objectContaining({ code: "signer_proof_not_verified" }),
+    ]));
+    expect(verifiedSponsorDelegationMock).toHaveBeenCalledWith({ eventId: "evt-1", tenantKey: "skyharbor-air" });
+  });
   it("rejects waived without a human reason", async () => {
     const res = await PATCH(request({ state: "waived", reason: "short" }), ctx);
     expect(res.status).toBe(409);

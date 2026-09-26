@@ -283,6 +283,31 @@ describe("Source governance enforcement", () => {
     },
   );
 
+  it("accepts delivered delegated sponsor proof only for the commitment criterion", () => {
+    const input = {
+      artifacts: [artifact({
+        artifactCode: "d05_scope_memo",
+        stage: "scope",
+        status: "approved",
+        linkedArtifactId: "uploaded-scope-memo",
+      })],
+      evidence: [],
+      reason: REVIEW_REASON,
+      verifiedDelegatedSponsorAcknowledgement: true,
+    };
+    const commitment = evaluateCriterionMetReadiness({
+      ...input,
+      criterion: criterion({ criterionId: "GATE-SCOPE-02", fromStage: "scope", toStage: "rfp" }),
+    });
+    expect(commitment.blockers.map((row) => row.code)).not.toContain("signer_proof_not_verified");
+
+    const memoSignatures = evaluateCriterionMetReadiness({
+      ...input,
+      criterion: criterion({ criterionId: "GATE-SCOPE-04", fromStage: "scope", toStage: "rfp" }),
+    });
+    expect(memoSignatures.blockers.map((row) => row.code)).toContain("signer_proof_not_verified");
+  });
+
   it("blocks promotion when a legacy scope signer criterion was marked met from a memo", () => {
     const verdict = evaluateStagePromotionReadiness({
       currentStage: "scope",

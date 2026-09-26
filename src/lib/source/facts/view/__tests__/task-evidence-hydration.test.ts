@@ -184,6 +184,18 @@ describe("hydrateTaskEvidenceState", () => {
     expect(hydrated[0].evidenceComplete).toBeUndefined();
   });
 
+  it("reads back a verified delegate acknowledgement for the sponsor task", () => {
+    const result = hydrateTaskEvidenceState({
+      tasks: [SPONSOR_LETTER_TASK],
+      factInputs: {},
+      artifacts: [],
+      evidenceStates: [],
+      stageKey: "scope",
+      verifiedDelegatedSponsorAcknowledgement: true,
+    });
+    expect(result[0].evidenceComplete).toBe(true);
+  });
+
   it("does not infer a signed commitment from a sponsor-named file alone", () => {
     const hydrated = hydrateTaskEvidenceState({
       tasks: [SPONSOR_LETTER_TASK],

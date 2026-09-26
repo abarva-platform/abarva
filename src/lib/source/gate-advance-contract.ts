@@ -28,6 +28,7 @@ export interface SourceGateAdvanceContractInput {
   evidence?: SourceEventEvidence[];
   reason: unknown;
   allowComputedReadinessBypass?: boolean;
+  verifiedDelegatedSponsorAcknowledgement?: boolean;
 }
 
 export interface SourceGateAdvanceContractResult {
@@ -74,6 +75,8 @@ export function evaluateSourceGateAdvanceContract(
     artifacts: input.artifacts,
     evidence: input.evidence,
     reason: input.reason,
+    verifiedDelegatedSponsorAcknowledgement:
+      input.verifiedDelegatedSponsorAcknowledgement,
   });
 
   if (!approval.ok) {
