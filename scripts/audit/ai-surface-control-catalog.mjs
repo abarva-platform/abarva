@@ -41,7 +41,7 @@ const LEGAL_CATALOGS = [
     path: 'docs/legal/AI_CONSEQUENTIAL_ACTION_CATALOG.md',
     header: '| Module | Surface / action | Code path | Current control | Required / next control |',
     parseClaims(columns) {
-      const [module, surface, , currentControl] = columns;
+      const [module, surface, codePath, currentControl] = columns;
       if (!currentControl?.startsWith('Covered')) return [];
       return [
         {
@@ -49,6 +49,7 @@ const LEGAL_CATALOGS = [
           catalog: 'consequential',
           module,
           surface,
+          codePaths: parseCodePaths(codePath),
           controlKind: 'human-approval-gate',
         },
       ];
@@ -60,13 +61,15 @@ const LEGAL_CATALOGS = [
     header:
       '| Module | Surface / element | Code path | AI label present? | Citations / evidence present? | Confidence / assumption disclosure present? | Required / next control |',
     parseClaims(columns) {
-      const [module, surface, , aiLabel, citations, confidence] = columns;
+      const [module, surface, codePath, aiLabel, citations, confidence] = columns;
+      const codePaths = parseCodePaths(codePath);
       return [
         aiLabel?.startsWith('Yes') && {
           key: `generated-ui|${module}|${surface}|ai-label`,
           catalog: 'generated-ui',
           module,
           surface,
+          codePaths,
           controlKind: 'ai-label',
         },
         citations?.startsWith('Yes') && {
@@ -74,6 +77,7 @@ const LEGAL_CATALOGS = [
           catalog: 'generated-ui',
           module,
           surface,
+          codePaths,
           controlKind: 'citation',
         },
         confidence?.startsWith('Yes') && {
@@ -81,6 +85,7 @@ const LEGAL_CATALOGS = [
           catalog: 'generated-ui',
           module,
           surface,
+          codePaths,
           controlKind: 'confidence',
         },
       ].filter(Boolean);
@@ -139,6 +144,121 @@ function sameColumns(left, right) {
 
 function isMarkdownDivider(columns) {
   return columns.length > 0 && columns.every((column) => /^:?-{3,}:?$/.test(column));
+}
+
+/**
+ * The `Code path` column is prose with backticked paths in it, and a row may
+ * name more than one. Those paths are the only machine-readable link between a
+ * legal-catalog claim and a `controls[]` entry, so they are parsed rather than
+ * summarised.
+ */
+function parseCodePaths(cell) {
+  if (typeof cell !== 'string') return [];
+  return [...new Set((cell.match(/`([^`]+)`/g) ?? []).map((token) => token.replace(/`/g, '')))];
+}
+
+/**
+ * The join between a legal-catalog claim and a catalogued surface, measured
+ * from the repository rather than read from the coverage row.
+ *
+ * Run over the 18 `covered` rows this reproduces all 18 hand-written
+ * `surfaceId` values, 18 agree and 0 disagree, which is the evidence that it
+ * may be trusted to judge the rows nobody bound.
+ *
+ * `resolved` is the only state a row may not declare: a claim that resolves to
+ * exactly one catalogued surface must carry that `surfaceId`. The other three
+ * are the honest answers to "why is there no single surface to name", and each
+ * one is falsified by the repository improving — which is the point. An
+ * exemption that cannot go stale outlives the defect it was written for.
+ */
+function resolveClaimJoin(claim, surfaces) {
+  const codePaths = Array.isArray(claim?.codePaths) ? claim.codePaths : [];
+  const matched = [
+    ...new Set(
+      codePaths.flatMap((codePath) =>
+        surfaces.filter((surface) => surface?.path === codePath).map((surface) => surface.id),
+      ),
+    ),
+  ].sort();
+  const inTree = codePaths.filter((codePath) => fs.existsSync(path.join(process.cwd(), codePath)));
+  let state;
+  if (matched.length === 1) state = 'resolved';
+  else if (matched.length > 1) state = 'ambiguous';
+  else state = inTree.length === 0 ? 'retired' : 'uncatalogued';
+  return { state, matched, codePaths, inTree };
+}
+
+const SURFACE_JOIN_STATES = ['retired', 'uncatalogued', 'ambiguous'];
+
+/**
+ * Every coverage row must name a join. Until this existed, `surfaceId` was
+ * required of `covered` rows and of nothing else, so all 19 deferrals omitted
+ * it and no deferral could be reconciled against `controls[]` or ever retired.
+ */
+function validateClaimJoin(label, entry, claim, surfaces) {
+  const problems = [];
+  const join = entry.surfaceJoin;
+
+  if (entry.surfaceId && join) {
+    problems.push(`${label}: names both a surfaceId and a surfaceJoin — a row names one or the other`);
+  }
+  if (!entry.surfaceId && !join) {
+    problems.push(
+      `${label}: names no join — give it a surfaceId present in controls[], or a surfaceJoin saying why no single catalogued surface can be named`,
+    );
+  }
+  if (!claim) return problems;
+
+  const measured = resolveClaimJoin(claim, surfaces);
+  const where =
+    `code paths ${measured.codePaths.join(', ') || '(none declared)'}; ` +
+    `in the tree: ${measured.inTree.join(', ') || 'none'}; ` +
+    `controls[] entries naming them: ${measured.matched.join(', ') || 'none'}`;
+
+  if (entry.surfaceId && measured.codePaths.length > 0 && !measured.matched.includes(entry.surfaceId)) {
+    problems.push(
+      `${label}: surfaceId ${entry.surfaceId} is not a controls[] entry naming this claim's code paths — ${where}`,
+    );
+  }
+
+  if (!join) return problems;
+
+  if (measured.codePaths.length === 0) {
+    problems.push(
+      `${label}: the legal catalog row declares no code path, so a surfaceJoin cannot be measured against anything`,
+    );
+    return problems;
+  }
+  if (!SURFACE_JOIN_STATES.includes(join.state)) {
+    problems.push(
+      `${label}: surfaceJoin.state must be one of ${SURFACE_JOIN_STATES.join(', ')} — got ${join.state ?? '(missing)'}`,
+    );
+    return problems;
+  }
+  if (measured.state === 'resolved') {
+    problems.push(
+      `${label}: this claim now resolves to exactly one catalogued surface, ${measured.matched[0]} — ` +
+        `replace surfaceJoin with that surfaceId (${where})`,
+    );
+  } else if (join.state !== measured.state) {
+    problems.push(
+      `${label}: surfaceJoin.state says ${join.state}; the repository says ${measured.state} (${where})`,
+    );
+  }
+
+  if (join.state === 'ambiguous') {
+    const declared = [...(join.candidateSurfaceIds ?? [])].sort();
+    if (declared.join('\u0000') !== measured.matched.join('\u0000')) {
+      problems.push(
+        `${label}: surfaceJoin.candidateSurfaceIds must be exactly the controls[] entries naming this claim's code paths — ` +
+          `${measured.matched.join(', ') || 'none'} (${where})`,
+      );
+    }
+  } else if (join.candidateSurfaceIds !== undefined) {
+    problems.push(`${label}: surfaceJoin.candidateSurfaceIds belongs only on an ambiguous join`);
+  }
+
+  return problems;
 }
 
 function collectLegalCatalogClaims() {
@@ -516,7 +636,7 @@ function normalizeEvidence(value) {
   return Array.isArray(value) ? value.filter((item) => typeof item === 'string' && item.trim()) : [];
 }
 
-function validateCatalogClaimCoverage(catalog, surfacesById) {
+function validateCatalogClaimCoverage(catalog, surfacesById, surfaces) {
   const claims = collectLegalCatalogClaims();
   const claimKeys = new Set(claims.map((claim) => claim.key));
   const entries = normalizeCoverageEntries(catalog);
@@ -562,6 +682,8 @@ function validateCatalogClaimCoverage(catalog, surfacesById) {
         problems.push(`${label}: deferred claims need a concrete reason`);
       }
     }
+
+    problems.push(...validateClaimJoin(label, entry, claim, surfaces));
   }
 
   for (const claim of claims) {
@@ -697,7 +819,7 @@ function main() {
     }
     problems.push(...validateSurface(surface, index, workflowRuns, tally, routeGraph, suiteIndex, reasonClaimIo));
   });
-  problems.push(...validateCatalogClaimCoverage(catalog, surfacesById));
+  problems.push(...validateCatalogClaimCoverage(catalog, surfacesById, surfaces));
 
   if (problems.length > 0) {
     fail('AI surface control catalog failed.', problems);

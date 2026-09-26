@@ -722,43 +722,64 @@
       "key": "generated-ui|Intelligence|aVa reasoning cards|citation",
       "status": "deferred",
       "controlKind": "citation",
-      "reason": "The old AvaReasoningCards component was retired; current Intelligence rendering needs a fresh machine-pinned citation surface before covered status."
+      "reason": "The old AvaReasoningCards component was retired; current Intelligence rendering needs a fresh machine-pinned citation surface before covered status.",
+      "surfaceJoin": {
+        "state": "retired"
+      }
     },
     {
       "key": "generated-ui|Intelligence|aVa reasoning cards|confidence",
       "status": "deferred",
       "controlKind": "confidence",
-      "reason": "The old AvaReasoningCards component was retired; current Intelligence rendering needs a fresh machine-pinned confidence surface before covered status."
+      "reason": "The old AvaReasoningCards component was retired; current Intelligence rendering needs a fresh machine-pinned confidence surface before covered status.",
+      "surfaceJoin": {
+        "state": "retired"
+      }
     },
     {
       "key": "generated-ui|Intelligence|Atlas synthesis answer|citation",
       "status": "deferred",
       "controlKind": "citation",
-      "reason": "The old SynthesisOutput component is no longer the live source path; re-catalog the current shared renderer before claiming covered status."
+      "reason": "The old SynthesisOutput component is no longer the live source path; re-catalog the current shared renderer before claiming covered status.",
+      "surfaceJoin": {
+        "state": "retired"
+      }
     },
     {
       "key": "generated-ui|Intelligence|Sentinel pattern rail replies|confidence",
       "status": "deferred",
       "controlKind": "confidence",
-      "reason": "The rail has thin-evidence language, but the current machine catalog does not yet pin a stable confidence control token."
+      "reason": "The rail has thin-evidence language, but the current machine catalog does not yet pin a stable confidence control token.",
+      "surfaceJoin": {
+        "state": "retired"
+      }
     },
     {
       "key": "generated-ui|Intelligence|Sentinel active pattern recommendations|ai-label",
       "status": "deferred",
       "controlKind": "ai-label",
-      "reason": "The old SentinelActivePatterns component path was retired; the current pattern UI needs a fresh machine-pinned AI label surface."
+      "reason": "The old SentinelActivePatterns component path was retired; the current pattern UI needs a fresh machine-pinned AI label surface.",
+      "surfaceJoin": {
+        "state": "uncatalogued"
+      }
     },
     {
       "key": "generated-ui|Intelligence|Sentinel active pattern recommendations|citation",
       "status": "deferred",
       "controlKind": "citation",
-      "reason": "The old SentinelActivePatterns component path was retired; the current pattern UI needs a fresh machine-pinned citation surface."
+      "reason": "The old SentinelActivePatterns component path was retired; the current pattern UI needs a fresh machine-pinned citation surface.",
+      "surfaceJoin": {
+        "state": "uncatalogued"
+      }
     },
     {
       "key": "generated-ui|Intelligence|Sentinel active pattern recommendations|confidence",
       "status": "deferred",
       "controlKind": "confidence",
-      "reason": "The old SentinelActivePatterns component path was retired; the current pattern UI needs a fresh machine-pinned confidence surface."
+      "reason": "The old SentinelActivePatterns component path was retired; the current pattern UI needs a fresh machine-pinned confidence surface.",
+      "surfaceJoin": {
+        "state": "uncatalogued"
+      }
     },
     {
       "key": "generated-ui|Moves|Deliverables canvas|ai-label",
@@ -782,13 +803,27 @@
       "key": "generated-ui|Moves|Phase advance / gate approval UI|citation",
       "status": "deferred",
       "controlKind": "citation",
-      "reason": "Rationale prompts ask for reviewed evidence, but this row is not yet represented as a citation control in the machine catalog."
+      "reason": "Rationale prompts ask for reviewed evidence, but this row is not yet represented as a citation control in the machine catalog.",
+      "surfaceJoin": {
+        "state": "ambiguous",
+        "candidateSurfaceIds": [
+          "moves-phase-advance-button",
+          "program-gate-approval"
+        ]
+      }
     },
     {
       "key": "generated-ui|Moves|Phase advance / gate approval UI|confidence",
       "status": "deferred",
       "controlKind": "confidence",
-      "reason": "The UI has rationale and attestation controls, but no dedicated confidence or assumption control is machine-pinned yet."
+      "reason": "The UI has rationale and attestation controls, but no dedicated confidence or assumption control is machine-pinned yet.",
+      "surfaceJoin": {
+        "state": "ambiguous",
+        "candidateSurfaceIds": [
+          "moves-phase-advance-button",
+          "program-gate-approval"
+        ]
+      }
     },
     {
       "key": "generated-ui|Moves|Nexus decision evidence packet view model|ai-label",
@@ -812,25 +847,37 @@
       "key": "generated-ui|Moves|Nexus current-state briefing panel|citation",
       "status": "deferred",
       "controlKind": "citation",
-      "reason": "Briefing citations exist in the component, but AI Draft/edit-before-commit framing still needs a dedicated machine catalog entry."
+      "reason": "Briefing citations exist in the component, but AI Draft/edit-before-commit framing still needs a dedicated machine catalog entry.",
+      "surfaceJoin": {
+        "state": "uncatalogued"
+      }
     },
     {
       "key": "generated-ui|Moves|Nexus current-state briefing panel|confidence",
       "status": "deferred",
       "controlKind": "confidence",
-      "reason": "Briefing confidence exists, but the surface is still pending AI Draft/edit-before-commit framing before full coverage."
+      "reason": "Briefing confidence exists, but the surface is still pending AI Draft/edit-before-commit framing before full coverage.",
+      "surfaceJoin": {
+        "state": "uncatalogued"
+      }
     },
     {
       "key": "generated-ui|Source|Artifact detail/provenance drawer|citation",
       "status": "deferred",
       "controlKind": "citation",
-      "reason": "Provenance exists on the artifact detail surface, but generated/AI-assisted labels remain partial before full machine coverage."
+      "reason": "Provenance exists on the artifact detail surface, but generated/AI-assisted labels remain partial before full machine coverage.",
+      "surfaceJoin": {
+        "state": "uncatalogued"
+      }
     },
     {
       "key": "generated-ui|Source|Scorecard generated/default state|citation",
       "status": "deferred",
       "controlKind": "citation",
-      "reason": "Approval counts and blockers exist, but scorecard generated/default state still lacks full BAFO-decision approval coverage."
+      "reason": "Approval counts and blockers exist, but scorecard generated/default state still lacks full BAFO-decision approval coverage.",
+      "surfaceJoin": {
+        "state": "uncatalogued"
+      }
     },
     {
       "key": "generated-ui|Source|Renewal cockpit vendor email draft and serve-notice work item|ai-label",
@@ -842,25 +889,37 @@
       "key": "generated-ui|Source|Commercial summary surface|confidence",
       "status": "deferred",
       "controlKind": "confidence",
-      "reason": "The control is deterministic/no-live-benchmark limitation copy, not a formal confidence control yet."
+      "reason": "The control is deterministic/no-live-benchmark limitation copy, not a formal confidence control yet.",
+      "surfaceJoin": {
+        "state": "uncatalogued"
+      }
     },
     {
       "key": "generated-ui|Tower|aVa Command Center chat opener|citation",
       "status": "deferred",
       "controlKind": "citation",
-      "reason": "Tower answer packets preserve trace/evidence fields when available, but committed artifact reuse still needs explicit AI-assisted labeling."
+      "reason": "Tower answer packets preserve trace/evidence fields when available, but committed artifact reuse still needs explicit AI-assisted labeling.",
+      "surfaceJoin": {
+        "state": "uncatalogued"
+      }
     },
     {
       "key": "generated-ui|Tower|aVa Command Center chat opener|confidence",
       "status": "deferred",
       "controlKind": "confidence",
-      "reason": "The Command Center aVa shell has unavailable/timeout states, but a formal confidence badge for advisory answers remains follow-on."
+      "reason": "The Command Center aVa shell has unavailable/timeout states, but a formal confidence badge for advisory answers remains follow-on.",
+      "surfaceJoin": {
+        "state": "uncatalogued"
+      }
     },
     {
       "key": "generated-ui|Tower|Atlas synthesis API response|citation",
       "status": "deferred",
       "controlKind": "citation",
-      "reason": "Telemetry records citation counts, but streamed UI response-level watermark and assumption controls remain follow-on."
+      "reason": "Telemetry records citation counts, but streamed UI response-level watermark and assumption controls remain follow-on.",
+      "surfaceJoin": {
+        "state": "uncatalogued"
+      }
     },
     {
       "key": "generated-ui|Tower|Pressure/action cards|confidence",
@@ -872,13 +931,19 @@
       "key": "generated-ui|Setup|Steward setup guidance|confidence",
       "status": "deferred",
       "controlKind": "confidence",
-      "reason": "Setup guidance separates seeded/live state, but it is not yet a formal confidence control in the machine catalog."
+      "reason": "Setup guidance separates seeded/live state, but it is not yet a formal confidence control in the machine catalog.",
+      "surfaceJoin": {
+        "state": "uncatalogued"
+      }
     },
     {
       "key": "generated-ui|Setup|Agent readiness drill-down|confidence",
       "status": "deferred",
       "controlKind": "confidence",
-      "reason": "Agent readiness has deterministic source captions, but factor-level evidence links and formal confidence coverage remain follow-on."
+      "reason": "Agent readiness has deterministic source captions, but factor-level evidence links and formal confidence coverage remain follow-on.",
+      "surfaceJoin": {
+        "state": "uncatalogued"
+      }
     }
   ]
 }
