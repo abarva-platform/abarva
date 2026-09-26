@@ -17,6 +17,7 @@
  */
 "use client";
 
+import { useEffect, useId, useRef } from "react";
 import type {
   EvidenceDescriptor,
   EvidenceGapV1,
@@ -61,6 +62,59 @@ export function EvidenceDrawer({
   onRequestAccess,
   entityId,
 }: EvidenceDrawerProps) {
+  const panelRef = useRef<HTMLDivElement>(null);
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
+  const returnFocusRef = useRef<HTMLElement | null>(null);
+  const titleId = useId();
+  const subtitleId = useId();
+
+  useEffect(() => {
+    if (!open) return;
+
+    returnFocusRef.current =
+      document.activeElement instanceof HTMLElement
+        ? document.activeElement
+        : null;
+    closeButtonRef.current?.focus();
+
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        event.stopPropagation();
+        onClose();
+        return;
+      }
+
+      if (event.key !== "Tab" || !panelRef.current) return;
+
+      const focusable = getFocusableElements(panelRef.current);
+      if (focusable.length === 0) {
+        event.preventDefault();
+        panelRef.current.focus();
+        return;
+      }
+
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      const activeElement = document.activeElement;
+
+      if (event.shiftKey && activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    }
+
+    document.addEventListener("keydown", onKeyDown, true);
+    return () => {
+      document.removeEventListener("keydown", onKeyDown, true);
+      const target = returnFocusRef.current;
+      if (target?.isConnected) target.focus();
+    };
+  }, [onClose, open]);
+
   if (!open) return null;
 
   const restricted = evidence.some(
@@ -79,31 +133,41 @@ export function EvidenceDrawer({
       className="fixed inset-0 z-40 flex justify-end"
       role="dialog"
       aria-modal="true"
-      aria-label={`${kind}: ${title}`}
+      aria-labelledby={titleId}
+      aria-describedby={subtitle ? subtitleId : undefined}
     >
-      <button
-        type="button"
-        aria-label="Close evidence drawer"
+      <div
+        aria-hidden="true"
         onClick={onClose}
         className="absolute inset-0 bg-[rgba(10,10,11,0.28)]"
       />
-      <div className="relative flex h-full w-full max-w-md flex-col overflow-y-auto border-l border-[rgba(10,10,11,0.12)] bg-[#faf7f1] p-5 shadow-2xl">
+      <div
+        ref={panelRef}
+        tabIndex={-1}
+        className="relative flex h-full w-full max-w-md flex-col overflow-y-auto border-l border-[rgba(10,10,11,0.12)] bg-[#faf7f1] p-5 shadow-2xl"
+      >
         <div className="mb-4 flex items-start justify-between gap-3">
           <div>
             <p className="text-xs font-medium uppercase tracking-wide text-[#888780]">
               {kind}
             </p>
-            <h2 className="mt-0.5 text-lg font-semibold text-[#0c1a3a]">
+            <h2
+              id={titleId}
+              className="mt-0.5 text-lg font-semibold text-[#0c1a3a]"
+            >
               {title}
             </h2>
             {subtitle ? (
-              <p className="mt-1 text-sm text-[#5f5e5a]">{subtitle}</p>
+              <p id={subtitleId} className="mt-1 text-sm text-[#5f5e5a]">
+                {subtitle}
+              </p>
             ) : null}
           </div>
           <button
+            ref={closeButtonRef}
             type="button"
             onClick={onClose}
-            aria-label="Close"
+            aria-label={`Close evidence drawer for ${title}`}
             className="rounded-md border border-[rgba(10,10,11,0.18)] bg-white px-2 py-1 text-sm text-[#5f5e5a] hover:bg-[rgba(10,10,11,0.04)]"
           >
             Close
@@ -246,6 +310,25 @@ export function EvidenceDrawer({
         ) : null}
       </div>
     </div>
+  );
+}
+
+function getFocusableElements(root: HTMLElement): HTMLElement[] {
+  return Array.from(
+    root.querySelectorAll<HTMLElement>(
+      [
+        "a[href]",
+        "button:not([disabled])",
+        "input:not([disabled])",
+        "select:not([disabled])",
+        "textarea:not([disabled])",
+        "[tabindex]:not([tabindex='-1'])",
+      ].join(","),
+    ),
+  ).filter(
+    (el) =>
+      !el.hasAttribute("disabled") &&
+      el.getAttribute("aria-hidden") !== "true",
   );
 }
 
