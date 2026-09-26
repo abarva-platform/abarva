@@ -1,8 +1,11 @@
 import { commitSourceEventTool } from "../tools/source/commitSourceEvent";
-import { createSourcingEvent } from "@/lib/source/queries";
+import { createSourcingEvent, isUuid } from "@/lib/source/queries";
 import { selectSourceWriteAdapter } from "@/lib/data-plane/write-adapters/sourceWriteAdapter";
 
-jest.mock("@/lib/source/queries", () => ({ createSourcingEvent: jest.fn() }));
+jest.mock("@/lib/source/queries", () => ({
+  createSourcingEvent: jest.fn(),
+  isUuid: (value: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value),
+}));
 jest.mock("@/lib/data-plane/write-adapters/sourceWriteAdapter", () => ({
   selectSourceWriteAdapter: jest.fn(),
 }));
@@ -17,7 +20,7 @@ const context = {
   request: new Request("http://localhost/source"),
   surface: "/source",
   clientKey: "synthetic",
-  userId: "person-1",
+  userId: "00000000-0000-4000-8000-000000000001",
   accessPolicy: {
     accessLevel: "source_member",
     programIdsAllowed: null,
@@ -41,14 +44,15 @@ beforeEach(() => {
 });
 
 it("assigns the named event creator through the tenant-selected participant adapter", async () => {
+  expect(isUuid(context.userId)).toBe(true);
   const result = await commitSourceEventTool.handler(input, context);
 
-  expect(result.success).toBe(true);
+  expect(result).toEqual({ success: true, data: expect.anything() });
   expect(selectSourceWriteAdapter).toHaveBeenCalledWith(undefined, "synthetic");
   expect(insertParticipant).toHaveBeenCalledWith({
     clientKey: "synthetic",
     sourceEventId: "event-1",
-    userId: "person-1",
+    userId: "00000000-0000-4000-8000-000000000001",
   });
   if (result.success) {
     expect(result.data.approval_authority).toMatch(/Event Owner/);
@@ -60,6 +64,17 @@ it("does not create an ownerless event", async () => {
   const result = await commitSourceEventTool.handler(input, {
     ...context,
     userId: undefined,
+  });
+
+  expect(result.success).toBe(false);
+  expect(createSourcingEvent).not.toHaveBeenCalled();
+  expect(insertParticipant).not.toHaveBeenCalled();
+});
+
+it("does not persist a Clerk fallback id as an unreadable owner", async () => {
+  const result = await commitSourceEventTool.handler(input, {
+    ...context,
+    userId: "clerk:unprovisioned",
   });
 
   expect(result.success).toBe(false);

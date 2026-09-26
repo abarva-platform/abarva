@@ -7,7 +7,7 @@
 import { requireTenancy, tenancyErrorResponse } from "@/lib/auth/tenancy";
 import { getActiveClientRow } from "@/lib/active-client";
 import { loadUserSourceAccessPolicy } from "@/lib/auth/source-access-policy";
-import { createSourcingEvent } from "@/lib/source/queries";
+import { createSourcingEvent, isUuid } from "@/lib/source/queries";
 import { buildSourceScopeDescription } from "@/lib/source/intake-summary";
 import { selectSourceWriteAdapter } from "@/lib/data-plane/write-adapters/sourceWriteAdapter";
 import type { SourceSourcingMotion } from "@/lib/source/sourcing-motion-journeys";
@@ -126,7 +126,7 @@ export async function POST(request: Request) {
     );
   }
 
-  if (!tenancy.userId) {
+  if (!tenancy.userId || !isUuid(tenancy.userId)) {
     return Response.json(
       { error: "named_source_event_creator_required" },
       { status: 403 },

@@ -4,7 +4,7 @@ jest.mock("@/lib/auth/tenancy", () => ({
   requireTenancy: jest.fn(async () => ({
     clientId: "client-1",
     clientKey: "skyharbor-air",
-    userId: "user-1",
+    userId: "00000000-0000-4000-8000-000000000001",
   })),
   tenancyErrorResponse: jest.fn(() =>
     Response.json({ error: "auth" }, { status: 401 }),
@@ -27,7 +27,7 @@ jest.mock("@/lib/auth/source-access-policy", () => ({
 
 jest.mock("@/lib/auth/current-user", () => ({
   getCurrentUser: jest.fn(async () => ({
-    personId: "person-1",
+    personId: "00000000-0000-4000-8000-000000000001",
     clerkUserId: "clerk-1",
     name: "Procurement Lead",
   })),
@@ -104,6 +104,7 @@ jest.mock("@/lib/source/intake/servicenow-request-event-authority", () => ({
 }));
 
 jest.mock("@/lib/source/queries", () => ({
+  isUuid: (value: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value),
   createSourcingEvent: jest.fn(async () => ({
     id: "evt-123",
     code: "SRC-123",
@@ -159,7 +160,7 @@ describe("POST /api/v1/source/events", () => {
     );
     const json = await res.json();
 
-    expect(res.status).toBe(200);
+    expect({ status: res.status, body: json }).toEqual({ status: 200, body: expect.anything() });
     expect(json.approvalUrl).toBe("/source/events/evt-123/approval");
     expect(json.eventUrl).toBe("/source/events/evt-123?stage=strategy");
     expect(json.approvalAuthority).toContain("Event Owner");
@@ -175,7 +176,7 @@ describe("POST /api/v1/source/events", () => {
         eventId: "evt-123",
         clientKey: "skyharbor-air",
         authorityKind: "request",
-        createdByUserId: "user-1",
+        createdByUserId: "00000000-0000-4000-8000-000000000001",
       }),
     );
   });
@@ -185,6 +186,25 @@ describe("POST /api/v1/source/events", () => {
       clientId: "client-1",
       clientKey: "skyharbor-air",
       userId: "",
+    } as Awaited<ReturnType<typeof requireTenancy>>);
+    const res = await POST(new Request("http://localhost/api/v1/source/events", {
+      method: "POST",
+      body: JSON.stringify({
+        eventName: "Synthetic source request",
+        triggerDescription: "Review a renewal",
+      }),
+    }));
+
+    expect(res.status).toBe(403);
+    expect((await res.json()).error).toBe("named_source_event_creator_required");
+    expect(createSourcingEvent).not.toHaveBeenCalled();
+  });
+
+  it("rejects an unprovisioned Clerk fallback before writing an event", async () => {
+    jest.mocked(requireTenancy).mockResolvedValueOnce({
+      clientId: "client-1",
+      clientKey: "skyharbor-air",
+      userId: "clerk:unprovisioned",
     } as Awaited<ReturnType<typeof requireTenancy>>);
     const res = await POST(new Request("http://localhost/api/v1/source/events", {
       method: "POST",
@@ -221,7 +241,7 @@ describe("POST /api/v1/source/events", () => {
         eventName: importedRequest.title,
         categoryId: "bpo_contact_centre",
         creationRequestId: importedRequest.requestId,
-        createdByUserId: "user-1",
+        createdByUserId: "00000000-0000-4000-8000-000000000001",
       }),
     );
     expect(linkServiceNowRequestToEvent).toHaveBeenCalledWith(

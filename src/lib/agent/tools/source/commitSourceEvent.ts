@@ -16,7 +16,7 @@
 
 import type { AgentTool, ToolResult } from '../registry';
 import { registerTool } from '../registry';
-import { createSourcingEvent } from '@/lib/source/queries';
+import { createSourcingEvent, isUuid } from '@/lib/source/queries';
 import { selectSourceWriteAdapter } from '@/lib/data-plane/write-adapters/sourceWriteAdapter';
 import type { SourceSourcingMotion } from '@/lib/source/sourcing-motion-journeys';
 
@@ -93,7 +93,7 @@ export const commitSourceEventTool: AgentTool<CommitSourceEventInput> = {
     if (!input.event_name?.trim()) {
       return { success: false, error: 'event_name is required', recovery: 'Ask the user for the event name.' };
     }
-    if (!ctx.userId) {
+    if (!ctx.userId || !isUuid(ctx.userId)) {
       return { success: false, error: 'named_source_event_creator_required', recovery: 'Sign in with a named Source user before creating an event.' };
     }
     if (!ctx.clientKey) {
