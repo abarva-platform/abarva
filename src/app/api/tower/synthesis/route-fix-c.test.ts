@@ -54,16 +54,26 @@ describe('Tower synthesis Fix C levers', () => {
     // The replacement therefore asserts the identity through the repository's
     // own authorities rather than through a second brand literal that would go
     // stale the same way: `TOWER_LEAD_AGENT` is where Tower states its agent's
-    // name, and `assertVisibleAnswerContract` is the checker production runs
-    // over model output, whose `atlas_branding` rule is the executable form of
-    // the sentence "the user-facing identity is aVa".
+    // name — and, since this change, where the route's message gets it from too,
+    // so there is one declaration rather than two copies free to drift — and
+    // `assertVisibleAnswerContract` is the checker production runs over model
+    // output, whose `atlas_branding` rule is the executable form of the sentence
+    // "the user-facing identity is aVa".
     //
     // The assertions are ordered so that each one is the FIRST to fail for a
     // distinct defect, because jest abandons a case at its first failed
     // expectation and an assertion that is always pre-empted by an earlier one
     // is an assertion nothing proves. Reinstating the pre-#4037 wording trips
-    // the branding clause; renaming the agent trips the identity check; a raw
-    // ID trips the whole-contract check. Each is recorded in the pull request.
+    // the branding clause; rewriting the sentence around a different name, or
+    // reducing it to a generic error string, trips the identity check; a raw ID
+    // trips the whole-contract check. Each is recorded in the pull request.
+    //
+    // Note what the identity check does NOT catch, now that the route derives
+    // the name from the same constant: renaming the agent in `TOWER_LEAD_AGENT`
+    // moves both sides together and this case stays green. That is the point of
+    // a single declaration, not a hole — a rename is not a defect. What would be
+    // a defect is the message drifting away from the declared name, and that is
+    // what these assertions see.
     const contract = assertVisibleAnswerContract(TOWER_SYNTHESIS_TIMEOUT_MESSAGE);
     expect(contract.violations.map((violation) => violation.id)).not.toContain(
       'atlas_branding',

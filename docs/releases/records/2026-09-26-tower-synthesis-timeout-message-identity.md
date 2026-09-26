@@ -30,8 +30,16 @@ branding rule is the executable form of the sentence "the user-facing identity i
 notice is prose a reader sees, so the case now requires it to satisfy that contract in full — a
 raw record id or a stock closing would be as wrong there as in an answer.
 
-No product behaviour changes. The route, its constants and the message a reader sees are
-byte-identical before and after.
+One runtime line changed, and it was not in the first draft of this change. The route used to
+spell the agent's name as a literal inside the message. Importing the Tower constant into the test
+alone made that constant reached *only* by a test, which the repository's own orphan gate correctly
+refuses — a test written for code nothing calls. The honest repair ran the other way: the route now
+builds the message from `TOWER_LEAD_AGENT`, so the name is declared once instead of copied twice.
+That is also the mechanism of the original defect, removed rather than worked around — two copies
+of one name, and a rename that moved only one of them.
+
+**No product behaviour changes.** The rendered string is byte-identical: the constant holds exactly
+the name the literal spelled. Nothing else in the route is touched.
 
 ## Layer Impact
 
@@ -40,8 +48,9 @@ test and a repository-wide CI baseline — and is not gated behind a flag or sco
 It ships to every client in the sense that it ships in the same image, and to none of them in the
 sense that no client-visible behaviour differs.
 
-- **Layer 4 (Products — Tower):** test-only. The route under test is unchanged; what changed is
-  what the suite beside it is allowed to accept.
+- **Layer 4 (Products — Tower):** one runtime line in the synthesis route, which now derives the
+  agent's name from the Tower constant instead of repeating it as a literal. The string a reader
+  receives is unchanged. Everything else is the suite beside it and two generated CI baselines.
 - No change to layers 1–3. No tenant data, adapter, canonical model, schema or migration is
   touched.
 
@@ -60,9 +69,18 @@ sense that no client-visible behaviour differs.
   with the attribution to `bdbfff54b` (#4037) recorded in the suite itself. The assertions are
   ordered so each one is the first to fail for a distinct defect, because jest abandons a case at
   its first failed expectation and an assertion that is always pre-empted proves nothing.
+- `src/app/api/tower/synthesis/route.ts` — `TOWER_SYNTHESIS_TIMEOUT_MESSAGE` is built from
+  `TOWER_LEAD_AGENT` rather than spelling the name a second time. Rendered output is unchanged.
 - `docs/ci/tower-test-baseline.json` — the suite's `knownFailing` entry is removed. The ratchet
   fails a run when a baselined suite improves while the baseline still allows the old failure, so
   leaving the entry would have turned the Tower gate red on the correction.
+- `docs/architecture/orphaned-lib-modules.json` — regenerated with the gate's own
+  `npm run audit:lib-orphans -- --update`. Exactly one membership line moves:
+  `src/lib/tower/constants.ts` leaves the `unreferenced` list, because the route now reaches it.
+  The recorded counts also move, and not all of that movement is from this change — the committed
+  figures had drifted behind `main` (scanned 2962 → 2973, tooling entry points 2029 → 2037, test
+  2613 → 2632), and a regeneration re-records the true numbers rather than preserving stale ones.
+  Attributable to this change: product-reached 2170 → 2171 and unreferenced 133 → 132.
 
 Deliberately out of scope: the suite's fourth case reads `route.ts` as source text and asserts
 substrings. That is a separate, filed piece of work about byte-scanning cases, and it is left
@@ -94,15 +112,34 @@ the case is left unproven:
 
 1. Restore the pre-#4037 wording (`"Atlas couldn't complete …"`) → caught by the branding clause.
 2. Replace the message with `"Request failed."` → caught by the agent-identity check.
-3. Name a different agent (`"Tower could not complete …"`) → caught by the agent-identity check.
+3. Let the message drift off the declared name (`"Tower could not complete …"`) → caught by the
+   agent-identity check.
 4. Keep the current wording but embed a raw record id → caught by the whole-contract assertion.
-5. Change `TOWER_LEAD_AGENT` itself → caught by the agent-identity check, which proves the case
-   reads the constant rather than carrying a second copy of the name.
+5. Set `TOWER_LEAD_AGENT` to the retired name → caught by the branding clause. Worth reading
+   carefully, because the single declaration changed which assertion fires: the route now takes its
+   name from that constant, so a forbidden name entered there reaches the reader and the contract
+   sees it. A rename to some *other* legitimate name moves both sides together and this case stays
+   green, which is the point of one declaration rather than a hole in the test — a rename is not a
+   defect. What is a defect is the message drifting away from the declared name, and mutations 2
+   and 3 are what prove that is caught.
 6. Force `assertVisibleAnswerContract` to report `passed: false` with no violations → caught by
    the `passed` assertion, which is therefore not decoration.
 7. Delete the branding rule from the checker *and* restore the old wording → still caught, by the
    agent-identity check. Reported rather than hidden: the two assertions cover each other, which
    is why both are kept.
+
+**The gate that caught the first draft, and what it changed**
+
+The first draft imported `TOWER_LEAD_AGENT` into the test only. CI's "Agent context broker boundary"
+job failed on `npm run audit:lib-orphans` with `~ src/lib/tower/constants.ts: unreferenced ->
+testOnly`, whose own message reads "unreferenced -> testOnly means a test was written for code
+nothing calls". It was right, and the repair was to give the constant a product consumer rather than
+to re-record the baseline around it. After the route change the same audit reports `No change
+against the baseline`, exit 0, with the module counted as product-reached.
+
+Because the route changed, every measurement here was taken again on the final tree rather than
+carried over from the draft: the tower ratchet still reports `1796/1804 tests, 6 failing suites
+(baseline 6)`, exit 0, and the mutation table above is the re-run.
 
 **Other gates**
 
@@ -126,15 +163,18 @@ it does for any commit; nothing in this change requires it to, because no runtim
   execution pulse, as for any merge.
 - Worker image invariant: unaffected — no worker job input changes.
 - Feature/env flag update path: none.
-- Live signed-in proof required: **no.** Nothing a signed-in user can see differs. The route, the
-  exported constants and the rendered message are byte-identical before and after; what changed is
-  a test file and a CI baseline entry.
+- Live signed-in proof required: **no.** Nothing a signed-in user can see differs. One runtime
+  line changed and it is a refactor of how the same string is assembled: `TOWER_LEAD_AGENT` holds
+  exactly the name the removed literal spelled, so the rendered message is byte-identical. Stated
+  as a limit rather than a certainty: this is an argument from the two values being equal, checked
+  in both the suite and by direct comparison, not from having driven the timeout path signed in.
 
 ## Rollback Plan
 
-Revert the squash commit. There is no runtime state, no migration and no flag to unwind; a revert
-restores the previous test expectation and the previous baseline entry together, which is the only
-pairing that keeps the Tower ratchet green.
+Revert the squash commit. There is no runtime state, no migration and no flag to unwind. A revert
+restores the route's literal, the previous test expectation and both baseline entries together,
+which is the only combination that keeps the Tower ratchet and the orphan audit green — reverting
+any one of them alone would turn a gate red.
 
 ## Audit Evidence
 
@@ -145,6 +185,8 @@ pairing that keeps the Tower ratchet green.
 - `src/lib/agent/visible-answer-contract.ts` is the contract the corrected case now asks.
 - `docs/ci/tower-test-baseline.json` before and after shows `knownFailing` going from seven
   entries to six.
+- The CI job that failed the first draft, `npm run audit:lib-orphans` under "Agent context broker
+  boundary", and the same command passing on the final tree.
 
 ## Known Gaps
 
@@ -156,3 +198,6 @@ pairing that keeps the Tower ratchet green.
   the checker is still caught, but by the other assertion. That overlap is deliberate and stated
   rather than trimmed, because each assertion is independently first-to-fail for a defect the other
   does not see.
+- `TOWER_PRODUCT_NAME`, the other export in `src/lib/tower/constants.ts`, still has no consumer.
+  The module as a whole is now product-reached, so no gate reports it, and wiring an unrelated
+  constant into a surface is not something this change should decide on its way past.
