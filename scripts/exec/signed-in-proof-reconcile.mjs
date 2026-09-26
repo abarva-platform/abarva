@@ -118,6 +118,41 @@ export const AGREE = "agree";
 export const DISAGREE = "disagree";
 export const AMBIGUOUS = "ambiguous";
 export const NO_REGISTER_LINE = "no-register-line";
+/**
+ * A row whose deciding register line named more than this record's pull
+ * request (item C-540). It is a verdict about the EVIDENCE, not about the two
+ * documents, and it is deliberately not one of the four above: those four are
+ * answers to "do the record and the register agree", and this one says that
+ * question was never put to a line about this record.
+ */
+export const INEXACT_ATTRIBUTION = "inexact-attribution";
+
+/**
+ * How well the deciding register line is attributed to this record (C-540).
+ *
+ * `reconcileRecord` has always preferred the line naming the fewest pull
+ * requests, and its docstring gives the reason: a line naming only this pull
+ * request is about this pull request, and a line naming ten is citing it. What
+ * was missing is the case where the winner of that preference still names more
+ * than one — the count was computed into `registerLinePullRequests` and then
+ * discarded, so a verdict drawn from a bulk citation was indistinguishable from
+ * one drawn from that release's own line.
+ *
+ * `UNATTRIBUTED` covers two situations that stay distinguishable by
+ * `registerLines`: no line named this pull request at all (`registerLines === 0`),
+ * and lines named it but none said anything about a signed-in proof
+ * (`registerLines > 0`). On the live corpus those are 84 rows and 33 rows, and
+ * collapsing the second into the first would hide it.
+ */
+export const EXACT = "exact";
+export const INEXACT = "inexact";
+export const UNATTRIBUTED = "none";
+
+/** The attribution of a chosen line, from the number of pull requests it names. */
+export function attributionOf(pullRequestsNamed) {
+  if (pullRequestsNamed == null) return UNATTRIBUTED;
+  return pullRequestsNamed > 1 ? INEXACT : EXACT;
+}
 
 /* ------------------------------------------------------------------------- */
 /* The record's own account                                                   */
@@ -615,18 +650,35 @@ export function reconcileRecord({ record, pr, entries }) {
   const chosen = closest.length > 0 ? closest[closest.length - 1] : null;
 
   const registerSays = chosen ? chosen.verdict : matched.length > 0 ? SILENT : null;
+  const registerLinePullRequests = chosen ? chosen.entry.prs.size : null;
+  const attribution = attributionOf(registerLinePullRequests);
   const row = {
     ...record,
     pr: pr ?? null,
     registerLines: matched.length,
-    registerLinePullRequests: chosen ? chosen.entry.prs.size : null,
+    registerLinePullRequests,
+    attribution,
     registerSays,
     registerStamp: chosen?.entry.stamp ?? null,
     registerIdentity: chosen?.entry.identity ?? null,
     registerEvidence: chosen?.sentence ?? null,
   };
 
-  return { ...row, verdict: compareAccounts({ recordSays: record.recordSays, registerSays }) };
+  /*
+   * The comparison is kept whatever the attribution says, because the item is
+   * explicit that the row must not be dropped: "a line naming two may well be
+   * about both". A reader who establishes that the line IS about this record
+   * recovers the verdict from `comparedVerdict` without re-running anything,
+   * and a DISAGREE is where losing it would cost most — a disagreement is the
+   * thing this module exists to find.
+   */
+  const comparedVerdict = compareAccounts({ recordSays: record.recordSays, registerSays });
+
+  return {
+    ...row,
+    comparedVerdict,
+    verdict: attribution === INEXACT ? INEXACT_ATTRIBUTION : comparedVerdict,
+  };
 }
 
 /**
@@ -710,7 +762,13 @@ export function reconcile({ records = [], register = "" } = {}) {
     reconcileRecord({ record: p.record, pr: p.raw.pr, entries }),
   );
 
-  const counts = { [AGREE]: 0, [DISAGREE]: 0, [AMBIGUOUS]: 0, [NO_REGISTER_LINE]: 0 };
+  const counts = {
+    [AGREE]: 0,
+    [DISAGREE]: 0,
+    [AMBIGUOUS]: 0,
+    [NO_REGISTER_LINE]: 0,
+    [INEXACT_ATTRIBUTION]: 0,
+  };
   for (const row of rows) counts[row.verdict] += 1;
 
   return {
@@ -726,17 +784,36 @@ export function reconcile({ records = [], register = "" } = {}) {
 /** Per record, never a count on its own. */
 export function formatReport(result) {
   const lines = [];
-  const order = [DISAGREE, AMBIGUOUS, NO_REGISTER_LINE, AGREE];
+  /*
+   * `inexact-attribution` is printed SECOND, ahead of ambiguous, because a row
+   * in it is a row nobody has read against the right evidence — the deciding
+   * line was about a batch. Burying it under `agree` was the original defect in
+   * report form (item C-540).
+   */
+  const order = [DISAGREE, INEXACT_ATTRIBUTION, AMBIGUOUS, NO_REGISTER_LINE, AGREE];
   for (const verdict of order) {
     const rows = result.rows.filter((r) => r.verdict === verdict);
     if (rows.length === 0) continue;
     lines.push(`\n## ${verdict} — ${rows.length}`);
     for (const row of rows) {
+      /*
+       * The pull-request count and the comparison are printed PER ROW, not as a
+       * total. 2 and 190 are the same state and are not remotely the same
+       * evidence, and the item asks for the population per row for exactly that
+       * reason. Saying what the comparison "would have read" keeps the row
+       * recoverable without asking the reader to re-run anything.
+       */
+      const attributionNote =
+        row.verdict === INEXACT_ATTRIBUTION
+          ? `\n    evidence: the deciding line named ${row.registerLinePullRequests} pull requests, ` +
+            `so it may be about any of them; the comparison alone would have read ${row.comparedVerdict}`
+          : "";
       lines.push(
         `  ${row.releaseId ?? row.file}` +
           `\n    pr:       ${row.pr ?? "unresolved"}` +
           `\n    record:   ${row.recordSays}${row.recordEvidence ? ` — ${row.recordEvidence.slice(0, 160)}` : ""}` +
-          `\n    register: ${row.registerSays ?? "no line"}${row.registerEvidence ? ` — ${row.registerEvidence.slice(0, 160)}` : ""}`,
+          `\n    register: ${row.registerSays ?? "no line"}${row.registerEvidence ? ` — ${row.registerEvidence.slice(0, 160)}` : ""}` +
+          attributionNote,
       );
     }
   }
@@ -746,7 +823,8 @@ export function formatReport(result) {
   );
   lines.push(
     `agree ${result.counts[AGREE]}  disagree ${result.counts[DISAGREE]}  ` +
-      `ambiguous ${result.counts[AMBIGUOUS]}  no-register-line ${result.counts[NO_REGISTER_LINE]}`,
+      `ambiguous ${result.counts[AMBIGUOUS]}  no-register-line ${result.counts[NO_REGISTER_LINE]}  ` +
+      `inexact-attribution ${result.counts[INEXACT_ATTRIBUTION]}`,
   );
   /*
    * The not-owed rows are printed as their own number even though they are not
