@@ -334,7 +334,7 @@ export function buildScorecardAuthorityView(input: {
       approvedAt: criterion.approvedAt,
     })),
     scoreRows: scores.map((score) => ({
-      scoreId: `${score.vendorId}:${score.criterionId}`,
+      scoreId: `${score.vendorId}:${score.criterionId}:${score.evaluatorId ?? "unnamed"}`,
       vendorId: score.vendorId,
       vendorName: score.vendorName,
       criterionId: score.criterionId,

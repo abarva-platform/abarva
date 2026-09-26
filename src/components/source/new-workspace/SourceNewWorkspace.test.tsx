@@ -444,6 +444,108 @@ describe("SourceNewWorkspace", () => {
     }
   });
 
+  it("offers human scorecard actions only after a scoped Evaluation readback", async () => {
+    const originalFetch = global.fetch;
+    const authority = buildScorecardAuthorityView({
+      tenantKey: request.clientKey,
+      sourceEventId: request.id,
+      criteria: [{
+        tenantKey: request.clientKey,
+        sourceEventId: request.id,
+        criterionId: "quality",
+        criterionVersion: "v1",
+        label: "Quality",
+        weight: 100,
+        weightsFrozen: false,
+        approvedCriterionVersion: null,
+        approvedBy: null,
+        approvedAt: null,
+      }],
+      scores: [],
+    });
+    global.fetch = jest.fn(async (_url, options) =>
+      options?.method === "POST"
+        ? { ok: true, json: async () => ({ ok: true }) }
+        : { ok: true, json: async () => ({
+          eventId: request.id,
+          clientKey: request.clientKey,
+          authority,
+          canWrite: true,
+          supplierOptions: [{ id: "supplier-1", name: "Supplier One" }],
+          lockableScores: [],
+        }) },
+    ) as unknown as typeof fetch;
+    try {
+      render(<SourceNewWorkspace event={{ ...request, currentStage: "evaluation", lifecycle: "active" }} files={[]} />);
+      const panel = screen.getByRole("region", { name: "Stage 07 scorecard authority" });
+      await waitFor(() => expect(within(panel).getByRole("button", { name: "Approve Quality v1" })).toBeTruthy());
+      fireEvent.click(within(panel).getByRole("button", { name: "Approve Quality v1" }));
+      await waitFor(() => expect(global.fetch).toHaveBeenCalledWith(
+        "/api/v1/source/events/event-1/scorecard-authority",
+        expect.objectContaining({ method: "POST", body: JSON.stringify({ action: "approve_criterion", criterionId: "quality", criterionVersion: "v1" }) }),
+      ));
+      expect(within(panel).queryByRole("button", { name: /award|bafo/i })).toBeNull();
+    } finally {
+      global.fetch = originalFetch;
+    }
+  });
+
+  it("binds score save and lock to the accepted supplier and session-scoped action", async () => {
+    const originalFetch = global.fetch;
+    const authority = buildScorecardAuthorityView({
+      tenantKey: request.clientKey,
+      sourceEventId: request.id,
+      criteria: [{
+        tenantKey: request.clientKey, sourceEventId: request.id,
+        criterionId: "quality", criterionVersion: "v1", label: "Quality", weight: 100,
+        weightsFrozen: true, approvedCriterionVersion: "v1", approvedBy: "reviewer-1", approvedAt: "2026-09-23T00:00:00Z",
+      }],
+      scores: [{
+        tenantKey: request.clientKey, sourceEventId: request.id,
+        vendorId: "supplier-1", vendorName: "Supplier One", criterionId: "quality", criterionVersion: "v1",
+        evaluatorId: "reviewer-2", evaluatorName: "Reviewer Two", evaluatorScore: 8,
+        evidenceReference: "11111111-1111-4111-8111-111111111111", overrideReason: null, overrideReasonRequired: false,
+        lockState: "unlocked", lockedBy: null, lockedAt: null,
+      }],
+    });
+    global.fetch = jest.fn(async (_url, options) =>
+      options?.method === "POST"
+        ? { ok: true, json: async () => ({ ok: true }) }
+        : { ok: true, json: async () => ({
+          eventId: request.id, clientKey: request.clientKey, authority, canWrite: true,
+          supplierOptions: [{ id: "supplier-1", name: "Supplier One" }],
+          lockableScores: [{ vendorId: "supplier-1", criterionId: "quality", criterionVersion: "v1" }],
+        }) },
+    ) as unknown as typeof fetch;
+    try {
+      render(<SourceNewWorkspace event={{ ...request, currentStage: "evaluation", lifecycle: "active" }} files={[]} />);
+      const panel = screen.getByRole("region", { name: "Stage 07 scorecard authority" });
+      await waitFor(() => expect(within(panel).getByRole("button", { name: "Save evaluator score" })).toBeTruthy());
+      expect(within(panel).getByRole("option", { name: "Supplier One" })).toBeTruthy();
+      fireEvent.change(within(panel).getByRole("combobox", { name: "Supplier" }), { target: { value: "supplier-1" } });
+      fireEvent.change(within(panel).getByRole("combobox", { name: "Criterion" }), { target: { value: "quality" } });
+      fireEvent.change(within(panel).getByRole("spinbutton", { name: "Evaluator score / 10" }), { target: { value: "8" } });
+      fireEvent.change(within(panel).getByRole("textbox", { name: "Evidence artifact ID" }), { target: { value: "11111111-1111-4111-8111-111111111111" } });
+      fireEvent.click(within(panel).getByRole("button", { name: "Save evaluator score" }));
+      await waitFor(() => expect(global.fetch).toHaveBeenCalledWith(
+        "/api/v1/source/events/event-1/scorecard-authority",
+        expect.objectContaining({ method: "POST", body: JSON.stringify({
+          action: "record_score", vendorId: "supplier-1", criterionId: "quality", criterionVersion: "v1",
+          score: 8, evidenceReference: "11111111-1111-4111-8111-111111111111", overrideReason: "",
+        }) }),
+      ));
+      fireEvent.click(within(panel).getByRole("button", { name: "Lock score" }));
+      await waitFor(() => expect(global.fetch).toHaveBeenCalledWith(
+        "/api/v1/source/events/event-1/scorecard-authority",
+        expect.objectContaining({ method: "POST", body: JSON.stringify({
+          action: "lock_score", vendorId: "supplier-1", criterionId: "quality", criterionVersion: "v1",
+        }) }),
+      ));
+    } finally {
+      global.fetch = originalFetch;
+    }
+  });
+
   it("refuses a scorecard readback for another event", async () => {
     const originalFetch = global.fetch;
     global.fetch = jest.fn(async () => ({
