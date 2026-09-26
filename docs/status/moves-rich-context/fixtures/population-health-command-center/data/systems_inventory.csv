@@ -1,0 +1,121 @@
+system_id,system_name,category,owner_role,platform,hosting_model,lifecycle_state,feed_cadence,contains_phi_or_pii,integration_count,monitoring_state,source_control_state,evidence_note
+SYS-0001,Enterprise EHR,EHR,VP Clinical Apps,Epic,managed cloud,active,daily,yes,12,monitored,catalogued,owned
+SYS-0002,Population Health Registry,population health,VP Value Based Care,Epic Healthy Planet,private cloud,active,daily,yes,19,monitored,catalogued,owned
+SYS-0003,Care Gap Outreach CRM,care management,Director Data Platform,Salesforce Health Cloud,hospital data center,active,daily,yes,26,monitored,catalogued,owned
+SYS-0004,Legacy Population Warehouse,analytics,Director Integration Services,Warehouse,vendor hosted,retired_2024,none,yes,33,monitored,catalogued,owned
+SYS-0005,Sepsis Alert Sandbox,clinical AI,VP Application Services,EHR alerting,managed cloud,declined_2025,none,yes,40,not_monitored,catalogued,not_approved
+SYS-0006,Island Legacy EHR,EHR,VP Application Services,Oracle Health,private cloud,design_scope_only,weekly,yes,47,not_monitored,catalogued,named_gap
+SYS-0007,Care delivery platform 007,security,Director Data Platform,Databricks,vendor hosted,active,near-real-time,yes,9,not_monitored,catalogued,synthetic system inventory row; no patient-level data
+SYS-0008,Care delivery platform 008,EHR,Director Integration Services,Snowflake,managed cloud,rationalize,weekly,yes,20,monitored,not_versioned,synthetic system inventory row; no patient-level data
+SYS-0009,Care delivery platform 009,population health,VP Application Services,ServiceNow,private cloud,monitor,monthly,no,31,monitored,catalogued,synthetic system inventory row; no patient-level data
+SYS-0010,Care delivery platform 010,analytics,VP Clinical Apps,Mirth,hospital data center,active,daily,yes,42,partial,catalogued,synthetic system inventory row; no patient-level data
+SYS-0011,Care delivery platform 011,claims,VP Value Based Care,Workday,vendor hosted,active,daily,yes,53,not_monitored,not_versioned,synthetic system inventory row; no patient-level data
+SYS-0012,Care delivery platform 012,care management,Director Data Platform,Epic,managed cloud,active,near-real-time,no,64,monitored,catalogued,synthetic system inventory row; no patient-level data
+SYS-0013,Care delivery platform 013,integration,Director Integration Services,Databricks,private cloud,rationalize,weekly,yes,75,monitored,catalogued,synthetic system inventory row; no patient-level data
+SYS-0014,Care delivery platform 014,finance,VP Application Services,Snowflake,hospital data center,monitor,monthly,yes,14,partial,not_versioned,synthetic system inventory row; no patient-level data
+SYS-0015,Care delivery platform 015,security,VP Clinical Apps,ServiceNow,vendor hosted,active,daily,no,25,not_monitored,catalogued,synthetic system inventory row; no patient-level data
+SYS-0016,Care delivery platform 016,EHR,VP Value Based Care,Mirth,managed cloud,active,daily,yes,36,monitored,catalogued,synthetic system inventory row; no patient-level data
+SYS-0017,Care delivery platform 017,population health,Director Data Platform,Workday,private cloud,active,near-real-time,yes,47,monitored,not_versioned,synthetic system inventory row; no patient-level data
+SYS-0018,Care delivery platform 018,analytics,Director Integration Services,Epic,hospital data center,rationalize,weekly,no,58,partial,catalogued,synthetic system inventory row; no patient-level data
+SYS-0019,Care delivery platform 019,claims,VP Application Services,Databricks,vendor hosted,monitor,monthly,yes,69,not_monitored,catalogued,synthetic system inventory row; no patient-level data
+SYS-0020,Care delivery platform 020,care management,VP Clinical Apps,Snowflake,managed cloud,active,daily,yes,8,monitored,not_versioned,synthetic system inventory row; no patient-level data
+SYS-0021,Care delivery platform 021,integration,VP Value Based Care,ServiceNow,private cloud,active,daily,no,19,monitored,catalogued,synthetic system inventory row; no patient-level data
+SYS-0022,Care delivery platform 022,finance,Director Data Platform,Mirth,hospital data center,active,near-real-time,yes,30,partial,catalogued,synthetic system inventory row; no patient-level data
+SYS-0023,Care delivery platform 023,security,Director Integration Services,Workday,vendor hosted,rationalize,weekly,yes,41,not_monitored,not_versioned,synthetic system inventory row; no patient-level data
+SYS-0024,Care delivery platform 024,EHR,VP Application Services,Epic,managed cloud,monitor,monthly,no,52,monitored,catalogued,synthetic system inventory row; no patient-level data
+SYS-0025,Care delivery platform 025,population health,VP Clinical Apps,Databricks,private cloud,active,daily,yes,63,monitored,catalogued,synthetic system inventory row; no patient-level data
+SYS-0026,Care delivery platform 026,analytics,VP Value Based Care,Snowflake,hospital data center,active,daily,yes,74,partial,not_versioned,synthetic system inventory row; no patient-level data
+SYS-0027,Care delivery platform 027,claims,Director Data Platform,ServiceNow,vendor hosted,active,near-real-time,no,13,not_monitored,catalogued,synthetic system inventory row; no patient-level data
+SYS-0028,Care delivery platform 028,care management,Director Integration Services,Mirth,managed cloud,rationalize,weekly,yes,24,monitored,catalogued,synthetic system inventory row; no patient-level data
+SYS-0029,Care delivery platform 029,integration,VP Application Services,Workday,private cloud,monitor,monthly,yes,35,monitored,not_versioned,synthetic system inventory row; no patient-level data
+SYS-0030,Care delivery platform 030,finance,VP Clinical Apps,Epic,hospital data center,active,daily,no,46,partial,catalogued,synthetic system inventory row; no patient-level data
+SYS-0031,Care delivery platform 031,security,VP Value Based Care,Databricks,vendor hosted,active,daily,yes,57,not_monitored,catalogued,synthetic system inventory row; no patient-level data
+SYS-0032,Care delivery platform 032,EHR,Director Data Platform,Snowflake,managed cloud,active,near-real-time,yes,68,monitored,not_versioned,synthetic system inventory row; no patient-level data
+SYS-0033,Care delivery platform 033,population health,Director Integration Services,ServiceNow,private cloud,rationalize,weekly,no,7,monitored,catalogued,synthetic system inventory row; no patient-level data
+SYS-0034,Care delivery platform 034,analytics,VP Application Services,Mirth,hospital data center,monitor,monthly,yes,18,partial,catalogued,synthetic system inventory row; no patient-level data
+SYS-0035,Care delivery platform 035,claims,VP Clinical Apps,Workday,vendor hosted,active,daily,yes,29,not_monitored,not_versioned,synthetic system inventory row; no patient-level data
+SYS-0036,Care delivery platform 036,care management,VP Value Based Care,Epic,managed cloud,active,daily,no,40,monitored,catalogued,synthetic system inventory row; no patient-level data
+SYS-0037,Care delivery platform 037,integration,Director Data Platform,Databricks,private cloud,active,near-real-time,yes,51,monitored,catalogued,synthetic system inventory row; no patient-level data
+SYS-0038,Care delivery platform 038,finance,Director Integration Services,Snowflake,hospital data center,rationalize,weekly,yes,62,partial,not_versioned,synthetic system inventory row; no patient-level data
+SYS-0039,Care delivery platform 039,security,VP Application Services,ServiceNow,vendor hosted,monitor,monthly,no,73,not_monitored,catalogued,synthetic system inventory row; no patient-level data
+SYS-0040,Care delivery platform 040,EHR,VP Clinical Apps,Mirth,managed cloud,active,daily,yes,12,monitored,catalogued,synthetic system inventory row; no patient-level data
+SYS-0041,Care delivery platform 041,population health,VP Value Based Care,Workday,private cloud,active,daily,yes,23,monitored,not_versioned,synthetic system inventory row; no patient-level data
+SYS-0042,Care delivery platform 042,analytics,Director Data Platform,Epic,hospital data center,active,near-real-time,no,34,partial,catalogued,synthetic system inventory row; no patient-level data
+SYS-0043,Care delivery platform 043,claims,Director Integration Services,Databricks,vendor hosted,rationalize,weekly,yes,45,not_monitored,catalogued,synthetic system inventory row; no patient-level data
+SYS-0044,Care delivery platform 044,care management,VP Application Services,Snowflake,managed cloud,monitor,monthly,yes,56,monitored,not_versioned,synthetic system inventory row; no patient-level data
+SYS-0045,Care delivery platform 045,integration,VP Clinical Apps,ServiceNow,private cloud,active,daily,no,67,monitored,catalogued,synthetic system inventory row; no patient-level data
+SYS-0046,Care delivery platform 046,finance,VP Value Based Care,Mirth,hospital data center,active,daily,yes,6,partial,catalogued,synthetic system inventory row; no patient-level data
+SYS-0047,Care delivery platform 047,security,Director Data Platform,Workday,vendor hosted,active,near-real-time,yes,17,not_monitored,not_versioned,synthetic system inventory row; no patient-level data
+SYS-0048,Care delivery platform 048,EHR,Director Integration Services,Epic,managed cloud,rationalize,weekly,no,28,monitored,catalogued,synthetic system inventory row; no patient-level data
+SYS-0049,Care delivery platform 049,population health,VP Application Services,Databricks,private cloud,monitor,monthly,yes,39,monitored,catalogued,synthetic system inventory row; no patient-level data
+SYS-0050,Care delivery platform 050,analytics,VP Clinical Apps,Snowflake,hospital data center,active,daily,yes,50,partial,not_versioned,synthetic system inventory row; no patient-level data
+SYS-0051,Care delivery platform 051,claims,VP Value Based Care,ServiceNow,vendor hosted,active,daily,no,61,not_monitored,catalogued,synthetic system inventory row; no patient-level data
+SYS-0052,Care delivery platform 052,care management,Director Data Platform,Mirth,managed cloud,active,near-real-time,yes,72,monitored,catalogued,synthetic system inventory row; no patient-level data
+SYS-0053,Care delivery platform 053,integration,Director Integration Services,Workday,private cloud,rationalize,weekly,yes,11,monitored,not_versioned,synthetic system inventory row; no patient-level data
+SYS-0054,Care delivery platform 054,finance,VP Application Services,Epic,hospital data center,monitor,monthly,no,22,partial,catalogued,synthetic system inventory row; no patient-level data
+SYS-0055,Care delivery platform 055,security,VP Clinical Apps,Databricks,vendor hosted,active,daily,yes,33,not_monitored,catalogued,synthetic system inventory row; no patient-level data
+SYS-0056,Care delivery platform 056,EHR,VP Value Based Care,Snowflake,managed cloud,active,daily,yes,44,monitored,not_versioned,synthetic system inventory row; no patient-level data
+SYS-0057,Care delivery platform 057,population health,Director Data Platform,ServiceNow,private cloud,active,near-real-time,no,55,monitored,catalogued,synthetic system inventory row; no patient-level data
+SYS-0058,Care delivery platform 058,analytics,Director Integration Services,Mirth,hospital data center,rationalize,weekly,yes,66,partial,catalogued,synthetic system inventory row; no patient-level data
+SYS-0059,Care delivery platform 059,claims,VP Application Services,Workday,vendor hosted,monitor,monthly,yes,5,not_monitored,not_versioned,synthetic system inventory row; no patient-level data
+SYS-0060,Care delivery platform 060,care management,VP Clinical Apps,Epic,managed cloud,active,daily,no,16,monitored,catalogued,synthetic system inventory row; no patient-level data
+SYS-0061,Care delivery platform 061,integration,VP Value Based Care,Databricks,private cloud,active,daily,yes,27,monitored,catalogued,synthetic system inventory row; no patient-level data
+SYS-0062,Care delivery platform 062,finance,Director Data Platform,Snowflake,hospital data center,active,near-real-time,yes,38,partial,not_versioned,synthetic system inventory row; no patient-level data
+SYS-0063,Care delivery platform 063,security,Director Integration Services,ServiceNow,vendor hosted,rationalize,weekly,no,49,not_monitored,catalogued,synthetic system inventory row; no patient-level data
+SYS-0064,Care delivery platform 064,EHR,VP Application Services,Mirth,managed cloud,monitor,monthly,yes,60,monitored,catalogued,synthetic system inventory row; no patient-level data
+SYS-0065,Care delivery platform 065,population health,VP Clinical Apps,Workday,private cloud,active,daily,yes,71,monitored,not_versioned,synthetic system inventory row; no patient-level data
+SYS-0066,Care delivery platform 066,analytics,VP Value Based Care,Epic,hospital data center,active,daily,no,10,partial,catalogued,synthetic system inventory row; no patient-level data
+SYS-0067,Care delivery platform 067,claims,Director Data Platform,Databricks,vendor hosted,active,near-real-time,yes,21,not_monitored,catalogued,synthetic system inventory row; no patient-level data
+SYS-0068,Care delivery platform 068,care management,Director Integration Services,Snowflake,managed cloud,rationalize,weekly,yes,32,monitored,not_versioned,synthetic system inventory row; no patient-level data
+SYS-0069,Care delivery platform 069,integration,VP Application Services,ServiceNow,private cloud,monitor,monthly,no,43,monitored,catalogued,synthetic system inventory row; no patient-level data
+SYS-0070,Care delivery platform 070,finance,VP Clinical Apps,Mirth,hospital data center,active,daily,yes,54,partial,catalogued,synthetic system inventory row; no patient-level data
+SYS-0071,Care delivery platform 071,security,VP Value Based Care,Workday,vendor hosted,active,daily,yes,65,not_monitored,not_versioned,synthetic system inventory row; no patient-level data
+SYS-0072,Care delivery platform 072,EHR,Director Data Platform,Epic,managed cloud,active,near-real-time,no,4,monitored,catalogued,synthetic system inventory row; no patient-level data
+SYS-0073,Care delivery platform 073,population health,Director Integration Services,Databricks,private cloud,rationalize,weekly,yes,15,monitored,catalogued,synthetic system inventory row; no patient-level data
+SYS-0074,Care delivery platform 074,analytics,VP Application Services,Snowflake,hospital data center,monitor,monthly,yes,26,partial,not_versioned,synthetic system inventory row; no patient-level data
+SYS-0075,Care delivery platform 075,claims,VP Clinical Apps,ServiceNow,vendor hosted,active,daily,no,37,not_monitored,catalogued,synthetic system inventory row; no patient-level data
+SYS-0076,Care delivery platform 076,care management,VP Value Based Care,Mirth,managed cloud,active,daily,yes,48,monitored,catalogued,synthetic system inventory row; no patient-level data
+SYS-0077,Care delivery platform 077,integration,Director Data Platform,Workday,private cloud,active,near-real-time,yes,59,monitored,not_versioned,synthetic system inventory row; no patient-level data
+SYS-0078,Care delivery platform 078,finance,Director Integration Services,Epic,hospital data center,rationalize,weekly,no,70,partial,catalogued,synthetic system inventory row; no patient-level data
+SYS-0079,Care delivery platform 079,security,VP Application Services,Databricks,vendor hosted,monitor,monthly,yes,9,not_monitored,catalogued,synthetic system inventory row; no patient-level data
+SYS-0080,Care delivery platform 080,EHR,VP Clinical Apps,Snowflake,managed cloud,active,daily,yes,20,monitored,not_versioned,synthetic system inventory row; no patient-level data
+SYS-0081,Care delivery platform 081,population health,VP Value Based Care,ServiceNow,private cloud,active,daily,no,31,monitored,catalogued,synthetic system inventory row; no patient-level data
+SYS-0082,Care delivery platform 082,analytics,Director Data Platform,Mirth,hospital data center,active,near-real-time,yes,42,partial,catalogued,synthetic system inventory row; no patient-level data
+SYS-0083,Care delivery platform 083,claims,Director Integration Services,Workday,vendor hosted,rationalize,weekly,yes,53,not_monitored,not_versioned,synthetic system inventory row; no patient-level data
+SYS-0084,Care delivery platform 084,care management,VP Application Services,Epic,managed cloud,monitor,monthly,no,64,monitored,catalogued,synthetic system inventory row; no patient-level data
+SYS-0085,Care delivery platform 085,integration,VP Clinical Apps,Databricks,private cloud,active,daily,yes,75,monitored,catalogued,synthetic system inventory row; no patient-level data
+SYS-0086,Care delivery platform 086,finance,VP Value Based Care,Snowflake,hospital data center,active,daily,yes,14,partial,not_versioned,synthetic system inventory row; no patient-level data
+SYS-0087,Care delivery platform 087,security,Director Data Platform,ServiceNow,vendor hosted,active,near-real-time,no,25,not_monitored,catalogued,synthetic system inventory row; no patient-level data
+SYS-0088,Care delivery platform 088,EHR,Director Integration Services,Mirth,managed cloud,rationalize,weekly,yes,36,monitored,catalogued,synthetic system inventory row; no patient-level data
+SYS-0089,Care delivery platform 089,population health,VP Application Services,Workday,private cloud,monitor,monthly,yes,47,monitored,not_versioned,synthetic system inventory row; no patient-level data
+SYS-0090,Care delivery platform 090,analytics,VP Clinical Apps,Epic,hospital data center,active,daily,no,58,partial,catalogued,synthetic system inventory row; no patient-level data
+SYS-0091,Care delivery platform 091,claims,VP Value Based Care,Databricks,vendor hosted,active,daily,yes,69,not_monitored,catalogued,synthetic system inventory row; no patient-level data
+SYS-0092,Care delivery platform 092,care management,Director Data Platform,Snowflake,managed cloud,active,near-real-time,yes,8,monitored,not_versioned,synthetic system inventory row; no patient-level data
+SYS-0093,Care delivery platform 093,integration,Director Integration Services,ServiceNow,private cloud,rationalize,weekly,no,19,monitored,catalogued,synthetic system inventory row; no patient-level data
+SYS-0094,Care delivery platform 094,finance,VP Application Services,Mirth,hospital data center,monitor,monthly,yes,30,partial,catalogued,synthetic system inventory row; no patient-level data
+SYS-0095,Care delivery platform 095,security,VP Clinical Apps,Workday,vendor hosted,active,daily,yes,41,not_monitored,not_versioned,synthetic system inventory row; no patient-level data
+SYS-0096,Care delivery platform 096,EHR,VP Value Based Care,Epic,managed cloud,active,daily,no,52,monitored,catalogued,synthetic system inventory row; no patient-level data
+SYS-0097,Care delivery platform 097,population health,Director Data Platform,Databricks,private cloud,active,near-real-time,yes,63,monitored,catalogued,synthetic system inventory row; no patient-level data
+SYS-0098,Care delivery platform 098,analytics,Director Integration Services,Snowflake,hospital data center,rationalize,weekly,yes,74,partial,not_versioned,synthetic system inventory row; no patient-level data
+SYS-0099,Care delivery platform 099,claims,VP Application Services,ServiceNow,vendor hosted,monitor,monthly,no,13,not_monitored,catalogued,synthetic system inventory row; no patient-level data
+SYS-0100,Care delivery platform 100,care management,VP Clinical Apps,Mirth,managed cloud,active,daily,yes,24,monitored,catalogued,synthetic system inventory row; no patient-level data
+SYS-0101,Care delivery platform 101,integration,VP Value Based Care,Workday,private cloud,active,daily,yes,35,monitored,not_versioned,synthetic system inventory row; no patient-level data
+SYS-0102,Care delivery platform 102,finance,Director Data Platform,Epic,hospital data center,active,near-real-time,no,46,partial,catalogued,synthetic system inventory row; no patient-level data
+SYS-0103,Care delivery platform 103,security,Director Integration Services,Databricks,vendor hosted,rationalize,weekly,yes,57,not_monitored,catalogued,synthetic system inventory row; no patient-level data
+SYS-0104,Care delivery platform 104,EHR,VP Application Services,Snowflake,managed cloud,monitor,monthly,yes,68,monitored,not_versioned,synthetic system inventory row; no patient-level data
+SYS-0105,Care delivery platform 105,population health,VP Clinical Apps,ServiceNow,private cloud,active,daily,no,7,monitored,catalogued,synthetic system inventory row; no patient-level data
+SYS-0106,Care delivery platform 106,analytics,VP Value Based Care,Mirth,hospital data center,active,daily,yes,18,partial,catalogued,synthetic system inventory row; no patient-level data
+SYS-0107,Care delivery platform 107,claims,Director Data Platform,Workday,vendor hosted,active,near-real-time,yes,29,not_monitored,not_versioned,synthetic system inventory row; no patient-level data
+SYS-0108,Care delivery platform 108,care management,Director Integration Services,Epic,managed cloud,rationalize,weekly,no,40,monitored,catalogued,synthetic system inventory row; no patient-level data
+SYS-0109,Care delivery platform 109,integration,VP Application Services,Databricks,private cloud,monitor,monthly,yes,51,monitored,catalogued,synthetic system inventory row; no patient-level data
+SYS-0110,Care delivery platform 110,finance,VP Clinical Apps,Snowflake,hospital data center,active,daily,yes,62,partial,not_versioned,synthetic system inventory row; no patient-level data
+SYS-0111,Care delivery platform 111,security,VP Value Based Care,ServiceNow,vendor hosted,active,daily,no,73,not_monitored,catalogued,synthetic system inventory row; no patient-level data
+SYS-0112,Care delivery platform 112,EHR,Director Data Platform,Mirth,managed cloud,active,near-real-time,yes,12,monitored,catalogued,synthetic system inventory row; no patient-level data
+SYS-0113,Care delivery platform 113,population health,Director Integration Services,Workday,private cloud,rationalize,weekly,yes,23,monitored,not_versioned,synthetic system inventory row; no patient-level data
+SYS-0114,Care delivery platform 114,analytics,VP Application Services,Epic,hospital data center,monitor,monthly,no,34,partial,catalogued,synthetic system inventory row; no patient-level data
+SYS-0115,Care delivery platform 115,claims,VP Clinical Apps,Databricks,vendor hosted,active,daily,yes,45,not_monitored,catalogued,synthetic system inventory row; no patient-level data
+SYS-0116,Care delivery platform 116,care management,VP Value Based Care,Snowflake,managed cloud,active,daily,yes,56,monitored,not_versioned,synthetic system inventory row; no patient-level data
+SYS-0117,Care delivery platform 117,integration,Director Data Platform,ServiceNow,private cloud,active,near-real-time,no,67,monitored,catalogued,synthetic system inventory row; no patient-level data
+SYS-0118,Care delivery platform 118,finance,Director Integration Services,Mirth,hospital data center,rationalize,weekly,yes,6,partial,catalogued,synthetic system inventory row; no patient-level data
+SYS-0119,Care delivery platform 119,security,VP Application Services,Workday,vendor hosted,monitor,monthly,yes,17,not_monitored,not_versioned,synthetic system inventory row; no patient-level data
+SYS-0120,Care delivery platform 120,EHR,VP Clinical Apps,Epic,managed cloud,active,daily,no,28,monitored,catalogued,synthetic system inventory row; no patient-level data
