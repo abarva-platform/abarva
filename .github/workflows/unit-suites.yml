@@ -1343,6 +1343,39 @@ jobs:
           src/lib/source/candidate-suppliers/__tests__/event-candidate-authority-repository.test.ts
           --no-coverage --ci
 
+      # T-480 (2026-09-26) wires the two suites `T-479` judged `wire_into_ci`.
+      # The item as filed named fourteen; twelve of those are `already_selected
+      # _no_action` in that record, because a ratchet baseline already selects
+      # them. These two are the ones no command reaches.
+      #
+      # They are unreachable for a reason worth stating, because it is the trap
+      # this whole step exists against: a bare Jest path argument is a REGULAR
+      # EXPRESSION. `docs/ci/home-test-baseline.json` names
+      # `src/app/(maestro)/home`, where `(maestro)` is a capture group, so the
+      # pattern matches `src/app/maestro/home` — a directory that does not
+      # exist — and the baseline selects ZERO files beneath the route group.
+      # Measured: given that baseline's five paths verbatim, `--listTests`
+      # selects 84 files and none of them is under a parenthesised segment.
+      # The coverage census credits the name as coverage regardless, which is
+      # why neither directory shows up as unrun (T-487 owns that half).
+      #
+      # So `--runTestsByPath` is load-bearing here, not stylistic: it tells Jest
+      # these arguments are paths. The quotes are load-bearing too — `(` and `)`
+      # are shell metacharacters. Measured green on the branch before wiring:
+      # 3 tests and 7 tests, nothing skipped.
+      #
+      # `src/__tests__/behaviors/t480-home-route-group-suite-ci-wiring.test.ts`
+      # asserts this step by handing its own arguments to Jest and reading back
+      # what Jest selects, rather than by checking that this file contains the
+      # strings. A command can name a path and select nothing; that is the
+      # defect, so the text of this step is not its own evidence.
+      - name: Run the T-480 Home route-group suites
+        run: >-
+          npx jest --runTestsByPath
+          "src/app/(maestro)/home/__tests__/home-page-ecl-route.test.tsx"
+          "src/app/(maestro)/home/__tests__/no-readmin-reexports.test.ts"
+          --no-coverage --ci
+
       - name: Refuse a test run that modified committed input data
         if: always()
         run: node scripts/ci/assert-datasets-unmodified.mjs
