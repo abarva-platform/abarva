@@ -50,6 +50,18 @@
  * mixed lines and a human still reads them. No marker was loosened to get
  * there; loosening one converts a refusal into a wrong answer.
  *
+ * The register has THREE proof states, not two (item C-534). `owed` asserts a
+ * debt, `obtained` asserts it was paid, and `not-owed` asserts there was never
+ * one — *"Signed-in acceptance NOT owed: the change alters one refusal branch in
+ * a pure function"*. Without the third state that sentence came back `owed`,
+ * and a record saying its proof RAN was reported as disagreeing with a register
+ * that had said no proof was needed. `not-owed` is deliberately not folded into
+ * `obtained`: a release that needs no proof has not obtained one. On the live
+ * corpus it moved four rows, one of them out of `disagree`, and it resolved
+ * none of the 32 residual `ambiguous` rows — the item predicted at least two and
+ * the bucket cannot be reached this way, because an ambiguous row needs both
+ * markers in one clause and this removes only the owed one.
+ *
  * The direction matters here too. Before this, `Status `deployed`, NOT
  * signed-in proven` was read as OBTAINED — a false obtained, which lets a
  * record saying no run happened agree with a register the reader believes
@@ -89,6 +101,15 @@ export const UNSTATED = "unstated";
 /** What the register's release line says happened. */
 export const OBTAINED = "obtained";
 export const OWED = "owed";
+/**
+ * The register says no signed-in proof was required at all (item C-534).
+ *
+ * A third state, not a shade of the other two. `OWED` asserts a debt and
+ * `OBTAINED` asserts it was paid; this asserts there was never a debt, which is
+ * a claim neither of them can carry — and it may not be folded into `OBTAINED`,
+ * because a release that needs no proof has not obtained one.
+ */
+export const NOT_OWED = "not-owed";
 export const SILENT = "silent";
 export const CONFLICTED = "conflicted";
 
@@ -428,6 +449,61 @@ const REGISTER_OBTAINED_NEGATED = new RegExp(
 );
 
 /**
+ * A negated owed marker — the register saying a proof was never owed (C-534).
+ *
+ * The owed vocabulary had no negation at all, so *"Signed-in acceptance **NOT
+ * owed**"* (live register, PR #8234) and *"signed-in acceptance OWED"* (PR
+ * #8208) both came back `owed`, and the register reported a debt against a
+ * release that never had one.
+ *
+ * Read ADJACENTLY, unlike `REGISTER_OBTAINED_NEGATED` above, which is read
+ * across the whole sentence — and the reason is a measurement rather than a
+ * symmetry argument. **On the live register the two scopes disagree about
+ * exactly one distinct sentence**, `"**NOT signed-in accepted and none owed**"`,
+ * which adjacency should also accept; that is why `none` is a negator here. So
+ * on today's corpus a span-wide owed negation would behave identically, and the
+ * choice is about the phrasings not yet written.
+ *
+ * Adjacency is kept because the two rules fail in opposite directions on the
+ * first natural sentence that separates them — *"signed-in replay was not
+ * attempted and remains owed"*, where a span rule strips `not attempted and
+ * remains owed` and reports a release with an open debt as owing nothing. A
+ * missed not-owed costs a second look at a record that is fine; a missed debt
+ * is a signed-in proof nobody ever comes back for. The corresponding case is
+ * constructed and labelled as such in the suite, because no live line has this
+ * shape yet — the measurement above is how that was established rather than
+ * assumed.
+ *
+ * What does NOT hold, and was believed while this was being written: that the
+ * register's most common owed phrasing, *"Not live-proven — signed-in check
+ * owed."* (21 rows at C-529), needs adjacency to survive. It does not. The
+ * clause scoping below already leaves the negator outside the scope, so a
+ * span-wide rule never sees it, and widening this regex leaves that case green.
+ * The claim was written here first, then falsified by mutating the regex.
+ *
+ * `[\s*_]{0,4}` crosses the emphasis the register writes this in — `**NOT
+ * owed**`, `is not owed`, `NOT OWED`, `none owed` — and nothing else.
+ */
+const REGISTER_OWED_NEGATED = /\b(not|never|no longer|none)\b[\s*_]{0,4}(owed|required|needed)\b/gi;
+
+/**
+ * The owed markers that assert a DEBT, as against ones that merely report a
+ * proof did not happen (item C-534).
+ *
+ * `not claimed`, `not run`, `not performed` and `not attempted` all say no
+ * proof took place; only in the presence of a requirement do they say one is
+ * owed. So *"Signed-in acceptance **NOT owed and not claimed**"* — the live
+ * sentence at 2026-09-22T09:36:27Z, which is the corroborating half of one
+ * assertion — must not be read as a debt because of its second clause.
+ *
+ * A debt word left un-negated anywhere in the scope still wins, so the failure
+ * mode of the not-owed rule is a MISSED not-owed and never a missed debt. That
+ * direction is chosen: a false "not owed" hides a real signed-in debt, which is
+ * the one error in this module nobody would ever go looking for.
+ */
+const REGISTER_DEBT = /\b(owed|pending|required|must|will be)\b/i;
+
+/**
  * The part of a sentence that speaks about the signed-in proof (item C-529).
  *
  * A sentence reaches this reader because it mentions a signed-in proof
@@ -472,15 +548,23 @@ export function registerSignedInVerdict(text) {
 
   const read = sentences.map((s) => {
     const scope = signedInScope(s);
+    // The scope with every adjacent-negated owed marker removed. What is left
+    // is what the sentence asserts about the proof independently of the writer
+    // saying it was never owed, so a real debt beside a not-owed assertion
+    // still reaches `isOwed`.
+    const withoutNegatedOwed = scope.replace(REGISTER_OWED_NEGATED, " ");
+    const notOwed = withoutNegatedOwed !== scope && !REGISTER_DEBT.test(withoutNegatedOwed);
     return {
       sentence: s,
       isObtained: REGISTER_OBTAINED.test(scope) && !REGISTER_OBTAINED_NEGATED.test(s),
-      isOwed: REGISTER_OWED.test(scope),
+      isOwed: REGISTER_OWED.test(scope) && !notOwed,
+      isNotOwed: notOwed,
     };
   });
   const obtained = read.filter((r) => r.isObtained && !r.isOwed).map((r) => r.sentence);
   const owed = read.filter((r) => r.isOwed && !r.isObtained).map((r) => r.sentence);
   const both = read.filter((r) => r.isObtained && r.isOwed).map((r) => r.sentence);
+  const notOwed = read.filter((r) => r.isNotOwed && !r.isOwed).map((r) => r.sentence);
 
   if (obtained.length > 0 && owed.length === 0 && both.length === 0) {
     return { verdict: OBTAINED, sentence: obtained[0] };
@@ -491,6 +575,10 @@ export function registerSignedInVerdict(text) {
   if (obtained.length > 0 || owed.length > 0 || both.length > 0) {
     return { verdict: CONFLICTED, sentence: both[0] ?? obtained[0] ?? owed[0] };
   }
+  // Read after the two proof states and before silence: a line that says no
+  // proof was owed has spoken about the proof, so calling it silent would drop
+  // a clear answer into a bucket whose name says the register gave none.
+  if (notOwed.length > 0) return { verdict: NOT_OWED, sentence: notOwed[0] };
   return { verdict: SILENT, sentence: sentences[0] };
 }
 
@@ -610,6 +698,26 @@ export function formatReport(result) {
     `agree ${result.counts[AGREE]}  disagree ${result.counts[DISAGREE]}  ` +
       `ambiguous ${result.counts[AMBIGUOUS]}  no-register-line ${result.counts[NO_REGISTER_LINE]}`,
   );
+  /*
+   * The not-owed rows are printed as their own number even though they are not
+   * their own verdict (item C-534). `agree` means the two documents do not
+   * disagree about a debt, and a register line saying no proof was ever owed
+   * does not disagree with a record about one — but it is not the same sentence
+   * the record wrote either, and a row whose record DECLARES a proof required
+   * while the register says none was owed is a declaration mismatch this module
+   * does not adjudicate. Folding it into a total would be the count that hides
+   * it; this names it so the next reader can select on `registerSays`.
+   */
+  const notOwedRows = result.rows.filter((r) => r.registerSays === NOT_OWED);
+  if (notOwedRows.length > 0) {
+    const declaredRequired = notOwedRows.filter((r) => r.recordSays === RAN).length;
+    lines.push(
+      `of those, ${notOwedRows.length} row(s) have a register line saying no signed-in proof was ` +
+        `owed at all; ${declaredRequired} of them ${declaredRequired === 1 ? "sits" : "sit"} ` +
+        "against a record that says its proof ran, " +
+        `which is a declaration mismatch this reader reports and does not adjudicate.`,
+    );
+  }
   return lines.join("\n");
 }
 

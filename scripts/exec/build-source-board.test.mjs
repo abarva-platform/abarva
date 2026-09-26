@@ -2333,5 +2333,73 @@ console.log("\nbuild-source-board — an unmapped id is offered, not hidden (C-5
   fs.rmSync(dir, { recursive: true, force: true });
 }
 
+/* ------------------------------------------------------------------------ *
+ * A NEGATED OWED ASSERTION IS NOT A GATE — item C-534, second reader.
+ *
+ * The live case, and the one that shows the cost. `C-534` is itself an item
+ * about the register's owed vocabulary, so its body QUOTES the register
+ * sentence *"Signed-in acceptance **NOT owed**"*. The signed-in rule matched
+ * `signed-in` ... `owed` across that quotation with no negation rule, so the
+ * board filed the item as owing a live signed-in proof, the queue put it in
+ * *Blocked on Anand — never claim these*, and the only item that would have
+ * repaired the identical gap in the reconciliation reader became invisible to
+ * every agent. The defect hid its own fix.
+ *
+ * `C-534` requires no signed-in run of any kind: it changes an operator script
+ * that renders nothing and reaches no tenant data.
+ *
+ * This is a VETO, which removes matches and can only take an item OUT of the
+ * never-claim bucket — the direction this file is most careful about. So the
+ * negation is read ADJACENTLY, and the regression case below is what holds the
+ * narrowing shut.
+ * ------------------------------------------------------------------------ */
+{
+  const dir = freshFixture();
+  addBacklogItem(
+    dir,
+    "T-946",
+    "**The register's owed vocabulary cannot say \"not owed\".** Nothing distinguishes " +
+      "*\"Signed-in acceptance **NOT owed**: the change alters one refusal branch in a pure " +
+      "function\"* from *\"signed-in acceptance OWED\"*. Both come back owed.",
+    "Add a third register state distinguishing no proof required from a proof owed, red-first.",
+  );
+  buildBoard(dir);
+  check(
+    "a quoted, negated owed assertion is not read as an owner gate",
+    blockerOf(dir, "T-946") !== "Signed-in acceptance owed",
+    `blocker=${JSON.stringify(blockerOf(dir, "T-946"))}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+/* ------------------------------------------------------------------------ *
+ * THE REGRESSION SET FOR THAT VETO. Both forms are live and both must KEEP the
+ * label. They pass on unfixed code by design: a veto that took them with it
+ * would be worse than the defect, because it would offer genuinely owner-gated
+ * work as free.
+ *
+ * The second is the register's most common owed phrasing and the reason the
+ * negation is adjacent rather than span-wide: its negator belongs to
+ * `live-proven`, several words before `owed`, and a span rule reads it as a
+ * release that owes nothing.
+ * ------------------------------------------------------------------------ */
+{
+  const dir = freshFixture();
+  addBacklogItem(dir, "T-947", "**The panel ships without acceptance.** Signed-in acceptance owed before this is called live-proven.", "Render the panel and record what it shows.");
+  addBacklogItem(dir, "T-948", "**The reader throws on current filenames.** Not live-proven — signed-in check owed after the deploy.", "Accept the current filenames.");
+  check(
+    "a genuine signed-in gate keeps its label, including when a negator sits earlier in the sentence",
+    (() => {
+      buildBoard(dir);
+      return (
+        blockerOf(dir, "T-947") === "Signed-in acceptance owed" &&
+        blockerOf(dir, "T-948") === "Signed-in acceptance owed"
+      );
+    })(),
+    `T-947=${JSON.stringify(blockerOf(dir, "T-947"))} T-948=${JSON.stringify(blockerOf(dir, "T-948"))}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
 console.log(`\n${passes} passed, ${failures} failed`);
 process.exit(failures ? 1 : 0);

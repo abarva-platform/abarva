@@ -45,6 +45,7 @@ import {
   AMBIGUOUS,
   CONFLICTED,
   DISAGREE,
+  NOT_OWED,
   NOT_REQUIRED,
   NOT_RUN,
   NO_REGISTER_LINE,
@@ -861,6 +862,193 @@ console.log("\nsigned-in-proof reconciliation (item C-526)\n");
     "an owed marker in a clause naming something else does not make the signed-in proof owed",
     verdict.verdict !== OWED,
     JSON.stringify(verdict),
+  );
+}
+
+/* 41-47. The owed vocabulary cannot say "not owed" (item C-534). ---------- */
+
+{
+  // 41. The sentence the item names, quoted from the live register at
+  // 2026-09-22T06:59:56Z (PR #8234). `REGISTER_OWED` matches `owed` and
+  // nothing distinguished this from a line asserting a debt, so a release
+  // that owes nothing was reported as owing a signed-in proof.
+  const verdict = registerSignedInVerdict(
+    "signed-in acceptance NOT owed (pure-function refusal branch, no rendered surface).",
+  );
+  check(
+    '"signed-in acceptance NOT owed" is a third state, not a debt',
+    verdict.verdict === NOT_OWED,
+    JSON.stringify(verdict),
+  );
+  // C-534's acceptance, in its own words: a release that needs no proof has
+  // not obtained one. Folding this into `obtained` would let a record saying
+  // no run happened be reported as disagreeing with a register that never
+  // claimed one.
+  check(
+    "and it is not folded into obtained",
+    verdict.verdict !== OBTAINED,
+    JSON.stringify(verdict),
+  );
+}
+
+{
+  // 42. The second sentence the item names, quoted from the live register at
+  // 2026-09-22T09:36:27Z (PRs #8241, #8240): the owed clause carries `not
+  // claimed` as well. `not claimed` is an owed marker on its own, so a reader
+  // that merely subtracted the negated `owed` would still report a debt from
+  // the corroborating half of the same assertion.
+  const verdict = registerSignedInVerdict(
+    "Signed-in acceptance **NOT owed and not claimed**: nothing outside two test files, " +
+      "one workflow file, one generated docs artifact and one release record is in the diff.",
+  );
+  check(
+    '"NOT owed and not claimed" is not a debt, though "not claimed" is an owed marker alone',
+    verdict.verdict === NOT_OWED,
+    JSON.stringify(verdict),
+  );
+}
+
+{
+  // 43. THE NEGATIVE CONTROL THAT DECIDES THE SCOPE, and the reason the owed
+  // negation is read ADJACENTLY while the obtained negation of case 39 is read
+  // across the sentence. This is the register's most common owed phrasing — 21
+  // rows carried it at C-529 — and its negator belongs to `live-proven`, three
+  // words and a clause boundary away from `owed`. A span-wide owed negation,
+  // written first and measured, turned every one of those rows into a false
+  // "not owed" and hid 21 real debts. The two negations are not symmetric
+  // because their targets are not: an obtained marker is negated by a distant
+  // `not`, and an owed marker is asserted by the writer next to the word.
+  const verdict = registerSignedInVerdict("Not live-proven — signed-in check owed.");
+  check(
+    "a negator attached to a different word does not turn an owed line into not-owed",
+    verdict.verdict === OWED,
+    JSON.stringify(verdict),
+  );
+}
+
+{
+  // 43b. THE CASE THAT ACTUALLY SEPARATES ADJACENCY FROM A SPAN, and it is
+  // CONSTRUCTED — no live register line has this shape, which was established
+  // by measurement rather than assumed: over the whole register the adjacent and
+  // span-wide owed negations disagree about exactly one distinct sentence,
+  // `"**NOT signed-in accepted and none owed**"`, which adjacency should also
+  // accept and does. So case 43 does NOT discriminate — the clause scoping
+  // leaves its negator outside the scope, and a span rule passes it too. That
+  // was believed and then falsified by widening the regex and watching case 43
+  // stay green. This case is the one that goes red: a span rule strips `not
+  // attempted and remains owed` and reports a release with an open signed-in
+  // debt as owing nothing, which is the one error here nobody would come back
+  // for.
+  const verdict = registerSignedInVerdict(
+    "The signed-in replay was not attempted and remains owed after the deploy.",
+  );
+  check(
+    "a negator attached to a different verb does not cancel the owed marker after it",
+    verdict.verdict === OWED,
+    JSON.stringify(verdict),
+  );
+}
+
+{
+  // 43c. And the live sentence the two rules disagreed about, quoted from the
+  // register: `none` negates `owed` adjacently, so this reads not-owed under
+  // either. Without `none` in the negator list, adjacency would have reported a
+  // debt on a line that says there is none.
+  const verdict = registerSignedInVerdict("**NOT signed-in accepted and none owed**");
+  check(
+    '"none owed" is a negated owed marker, not a debt',
+    verdict.verdict === NOT_OWED,
+    JSON.stringify(verdict),
+  );
+}
+
+{
+  // 44. A DEBT IN THE SAME SCOPE WINS. Constructed, and labelled as such: no
+  // live register line carries both halves, which was measured over the whole
+  // register rather than assumed — 103 sentences match the adjacent negation
+  // and none of them leaves an un-negated debt word behind. It is here because
+  // the resolution ORDER is what keeps this change conservative: a real debt is
+  // never hidden by a not-owed assertion sitting beside it, so the failure mode
+  // of this rule is a missed not-owed, never a missed debt.
+  const verdict = registerSignedInVerdict(
+    "Signed-in acceptance NOT owed for the pure helper, and a signed-in readback is owed for the panel.",
+  );
+  check(
+    "an un-negated debt word in the same scope still reports owed",
+    verdict.verdict === OWED,
+    JSON.stringify(verdict),
+  );
+}
+
+{
+  // 45. The row the item predicted. `2026-09-22-source-evidence-review-reconciliation`
+  // is a real record in this repository whose QA section says the proof RAN;
+  // the register line above (case 42) says it was never owed. C-534 filed this
+  // as masked — "it stops being right the moment a record says `ran`" — and on
+  // the corpus as of this change it is no longer masked: the row was reported
+  // as the tenth DISAGREE, which would have sent an auditor after a release
+  // that owes nothing, and a repair appended to that record would have written
+  // a false debt dispute into a public artifact.
+  const record = realRecord("2026-09-22-source-evidence-review-reconciliation.md");
+  const parsed = parseRecord({ file: record.file, text: record.text });
+  check(
+    "the real record still says its signed-in proof ran",
+    parsed.declaration === REQUIRED && parsed.recordSays === RAN,
+    JSON.stringify({ declaration: parsed.declaration, recordSays: parsed.recordSays }),
+  );
+  const row = reconcileRecord({
+    record: parsed,
+    pr: 8240,
+    entries: registerEntries(
+      "2026-09-22T09:36:27Z | source-backlog-executor#20260922T085600Z | RELEASED item T-460 " +
+        "through PR #8240 — Signed-in acceptance **NOT owed and not claimed**: nothing outside " +
+        "two test files is in the diff, so no client-visible surface can reach it.",
+    ),
+  });
+  check(
+    "a record that ran against a register line that says no proof was owed is not a disagreement",
+    row.verdict !== DISAGREE && row.registerSays === NOT_OWED,
+    JSON.stringify({ verdict: row.verdict, registerSays: row.registerSays }),
+  );
+}
+
+{
+  // 46. The masked majority, which must not move. Every instance C-534 found
+  // had a record saying `not-run` against a register line saying no proof was
+  // owed, and reconciled to `agree` — the right answer for the wrong reason.
+  // It stays `agree`, now because neither document asserts a debt.
+  const row = reconcileRecord({
+    record: { recordSays: NOT_RUN, declaration: REQUIRED, file: "r.md", releaseId: "r" },
+    pr: 8234,
+    entries: registerEntries(
+      "2026-09-22T07:35:55Z | codex#1 | RELEASED through PR #8234 — Signed-in acceptance NOT owed.",
+    ),
+  });
+  check(
+    "a record that says not-run still agrees with a register line that says no proof was owed",
+    row.verdict === AGREE && row.registerSays === NOT_OWED,
+    JSON.stringify({ verdict: row.verdict, registerSays: row.registerSays }),
+  );
+}
+
+{
+  // 47. `not-owed` is a reported state with its sentence, never a silent drop.
+  // Reporting it as `no-register-line` would be the reader refusing to answer
+  // about a line that answered clearly, and the row would land in a bucket
+  // whose name asserts something false about the register.
+  const row = reconcileRecord({
+    record: { recordSays: RAN, declaration: REQUIRED, file: "r.md", releaseId: "r" },
+    pr: 8234,
+    entries: registerEntries(
+      "2026-09-22T07:35:55Z | codex#1 | RELEASED through PR #8234 — Signed-in acceptance NOT owed.",
+    ),
+  });
+  check(
+    "the not-owed row keeps its register line, stamp and sentence",
+    row.registerLines === 1 &&
+      row.registerStamp === "2026-09-22T07:35:55Z" &&
+      /NOT owed/i.test(String(row.registerEvidence)),
+    JSON.stringify(row),
   );
 }
 
