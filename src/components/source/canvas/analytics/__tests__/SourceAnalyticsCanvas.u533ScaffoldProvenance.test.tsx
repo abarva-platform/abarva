@@ -257,40 +257,88 @@ describe("U-533 · the view the canvas receives declares its carried beats", () 
   });
 });
 
-describe("U-534 · the flipped stage renders derived content, not the exemplar's", () => {
-  it("has exactly one flipped stage and nine that still carry", () => {
-    // Population before property. A search that found nothing would make both
-    // cases below pass over an empty set.
-    expect(DERIVED_STAGE_KEYS).toHaveLength(1);
-    expect(CARRIED_STAGE_KEYS).toHaveLength(9);
+describe("U-534/U-535 · a flipped stage renders derived content, not the exemplar's", () => {
+  it("has two flipped stages and eight that still carry", () => {
+    // Population before property. A search that found nothing would make every
+    // case below pass over an empty set.
+    expect(DERIVED_STAGE_KEYS).toHaveLength(2);
+    expect(CARRIED_STAGE_KEYS).toHaveLength(8);
     expect(NAMED_APPROVER_STAGE).toBeDefined();
   });
 
-  it("renders no exemplar task title on the flipped stage, and does render its own", () => {
-    const stageKey = DERIVED_STAGE_KEYS[0]!;
-    const view = buildStageView(stageKey);
-    const exemplarTitles = liveStageScaffoldFor(stageKey).tasks.map(
-      (task) => task.title,
+  it.each(DERIVED_STAGE_KEYS)(
+    "%s renders no exemplar task title, and does render its own",
+    (stageKey) => {
+      // Item U-535 made this `it.each`. It read `DERIVED_STAGE_KEYS[0]` and
+      // rendered under a hard-coded "BAFO" label, so a second flipped stage was
+      // simply not checked — and which stage index 0 names depends on the armed
+      // order, which is not something this suite should be sensitive to.
+      const view = buildStageView(stageKey);
+      const exemplarTitles = liveStageScaffoldFor(stageKey).tasks.map(
+        (task) => task.title,
+      );
+      // Population: the exemplar this stage used to carry really had titles, so
+      // the negative below is about a replacement and not about an empty fixture.
+      expect(exemplarTitles.length).toBeGreaterThan(0);
+      expect(view.tasks.length).toBeGreaterThan(0);
+
+      renderStage(stageKey, view.stageName);
+
+      // What replaced them is on the page — read off the built view, so a change
+      // to the derivation cannot leave this green against a string it no longer
+      // emits.
+      for (const title of view.tasks.map((task) => task.title)) {
+        expect(screen.getAllByText(title).length).toBeGreaterThan(0);
+      }
+      // And the exemplar's own titles are not.
+      for (const title of exemplarTitles) {
+        expect(screen.queryAllByText(title)).toHaveLength(0);
+      }
+    },
+  );
+
+  /**
+   * Item U-535. The derived gate's `generates` list does NOT reach this reader,
+   * and the cases that would have asserted it here were MOVED rather than
+   * dropped — to `ScopeGate.u535EmptyGenerates.test.tsx`, which mounts that
+   * component directly and says why.
+   *
+   * The item's acceptance (7) warns that "an empty generates section is a visible
+   * regression". On today's render path it is not visible at all: the only
+   * component that draws the section is `ScopeGate`, whose sole mounter
+   * `ScopeAnalyticsStage` is imported by the barrel and by tests and by no route
+   * — the same asymmetry the approver case above pins, and the reason
+   * `carriedFieldReach` records `gate.generates` as reaching `model_prompt`
+   * alone. Two cases written here first FAILED for exactly that reason, which is
+   * how the premise got checked instead of inherited.
+   */
+  it("does not render this stage's gate deliverables at all, on either branch", () => {
+    // The negative that keeps the note above honest. It is asserted over BOTH
+    // derived stages — the one whose derived list is empty and the one whose is
+    // not — so it cannot be satisfied by the emptiness rather than by the reach.
+    const withItems = DERIVED_STAGE_KEYS.filter(
+      (stageKey) => buildStageView(stageKey).gate.generates.length > 0,
     );
-    // Population: the exemplar this stage used to carry really had titles, so the
-    // negative below is about a replacement and not about an empty fixture.
-    expect(exemplarTitles.length).toBeGreaterThan(0);
-    expect(view.tasks.length).toBeGreaterThan(0);
+    const withoutItems = DERIVED_STAGE_KEYS.filter(
+      (stageKey) => buildStageView(stageKey).gate.generates.length === 0,
+    );
+    // Population: both branches exist among the flipped stages.
+    expect(withItems.length).toBeGreaterThan(0);
+    expect(withoutItems.length).toBeGreaterThan(0);
 
-    renderStage(stageKey, "BAFO");
-
-    // What replaced them is on the page — read off the built view, so a change to
-    // the derivation cannot leave this green against a string it no longer emits.
-    for (const title of view.tasks.map((task) => task.title)) {
-      expect(screen.getAllByText(title).length).toBeGreaterThan(0);
-    }
-    // And the exemplar's own titles are not.
-    for (const title of exemplarTitles) {
-      expect(screen.queryAllByText(title)).toHaveLength(0);
+    for (const stageKey of withItems) {
+      const view = buildStageView(stageKey);
+      renderStage(stageKey, view.stageName);
+      // Population within the case: this render really did receive the view, so
+      // the negative below is about reach and not about an empty render.
+      expect(screen.getAllByText(view.tasks[0]!.title).length).toBeGreaterThan(0);
+      for (const deliverable of view.gate.generates) {
+        expect(screen.queryAllByText(deliverable.label)).toHaveLength(0);
+      }
     }
   });
 
-  it("still names the exemplar for the nine that carry", () => {
+  it("still names the exemplar for the eight that carry", () => {
     for (const stageKey of CARRIED_STAGE_KEYS) {
       expect(buildStageView(stageKey).beatProvenance?.scaffoldSource).toBe(
         liveStageScaffoldSourceFor(stageKey),
