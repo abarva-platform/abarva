@@ -1,0 +1,67 @@
+{
+  "core": {
+    "item": "C-406",
+    "generatedBy": "src/__tests__/behaviors/c406-contract-question-surface-reachability.test.ts",
+    "question": "Which mounted route does a whole-contract question reach, and is the router the §12.11 fallback count was measured on reachable from it?",
+    "subjects": {
+      "eventChatClassifier": "src/lib/source/ava/answer-mode.ts",
+      "contractAnswerBuilder": "src/lib/source/ava/source-workspace-visual-answer.ts",
+      "askPathModeRegistryNotTheClassifier": "src/lib/intelligence/ask/answer-mode-registry.ts"
+    },
+    "entryPoints": [
+      {
+        "route": "/api/intelligence/ask",
+        "file": "src/app/api/intelligence/ask/route.ts",
+        "reachesEventChatClassifier": false,
+        "reachesContractAnswerBuilder": true
+      },
+      {
+        "route": "/api/chat/agent",
+        "file": "src/app/api/chat/agent/route.ts",
+        "reachesEventChatClassifier": true,
+        "reachesContractAnswerBuilder": false
+      }
+    ],
+    "surfaceBinding": [
+      {
+        "surface": "/source/360",
+        "postsTo": "/api/intelligence/ask"
+      },
+      {
+        "surface": "/source/workspace",
+        "postsTo": "/api/intelligence/ask"
+      },
+      {
+        "surface": "/source/optimize",
+        "postsTo": "/api/chat/agent"
+      }
+    ],
+    "fallbackCountScope": {
+      "citedRecord": "docs/architecture/c403-answer-mode-routing.json",
+      "citedFallbackCount": 48,
+      "citedTotalQuestionsRun": 48,
+      "describesRoute": "/api/chat/agent",
+      "doesNotDescribeRoute": "/api/intelligence/ask",
+      "statement": "The §12.11 fallback count in the cited record is a fact about the event-chat classifier, which only /api/chat/agent reaches. It is not a measurement of the Ask aVa contract path (/api/intelligence/ask) that §12.11's acceptance is written against, and it cannot be moved by building the general contract-question path there."
+    }
+  },
+  "observed": {
+    "note": "Volatile measurements, recorded for a reader and deliberately NOT equality-asserted: a closure size or an intermediate import changes whenever an unrelated module is added, and a gate that fails for an unrelated reason gets weakened rather than read.",
+    "closureSizes": {
+      "src/app/api/intelligence/ask/route.ts": 297,
+      "src/app/api/chat/agent/route.ts": 717
+    },
+    "chainToContractAnswerBuilder": [
+      "src/app/api/intelligence/ask/route.ts",
+      "src/lib/source/ava/source-workspace-visual-answer.ts"
+    ],
+    "chainToEventChatClassifier": [
+      "src/app/api/chat/agent/route.ts",
+      "src/lib/source/ava/answer-mode.ts"
+    ],
+    "nonLiteralDynamicImports": {
+      "src/app/api/intelligence/ask/route.ts": 0,
+      "src/app/api/chat/agent/route.ts": 0
+    }
+  }
+}

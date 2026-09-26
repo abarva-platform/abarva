@@ -18,6 +18,18 @@
 //
 // Deterministic on purpose: classification must be fast, cheap, and testable
 // without an LLM round-trip — this is pattern/keyword matching only.
+//
+// WHICH SURFACE THIS SERVES, because a measurement over it was once read as a
+// fact about a surface it does not serve (item C-406). This classifier is
+// reachable from `/api/chat/agent` only. The Ask aVa contract path
+// (`/api/intelligence/ask`, behind Contract 360 and the Source workspace) does
+// not import it at any depth and answers through
+// `source-workspace-visual-answer.ts` instead. So a fallback rate measured over
+// a set of whole-contract questions is a fact about the event-chat surface, and
+// adding rules here cannot change what Contract 360 answers. The reachability is
+// measured, not asserted here:
+// `docs/architecture/c406-contract-question-surface-reachability.json`, written
+// by `src/__tests__/behaviors/c406-contract-question-surface-reachability.test.ts`.
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
