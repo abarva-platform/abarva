@@ -1,7 +1,7 @@
 {
   "subject": "every route under src/app/api/** that CALLS a tenancy fence, and what kind of proof its covering suites offer",
   "method": [
-    "A route fences when a CallExpression's callee is a binding imported from a fence module. An import with no call, a mention in a comment and a mention in a string are all `none` — that distinction is the defect class this census exists to measure, so it is decided by TypeScript's parser rather than by a text scan.",
+    "A route fences when a CallExpression's callee is a binding imported from a fence module. An import with no call, a mention in a comment and a mention in a string are all `none` \u2014 that distinction is the defect class this census exists to measure, so it is decided by TypeScript's parser rather than by a text scan.",
     "The fence surface grows from src/lib/auth/tenancy.ts to a fixpoint: a module that calls a fence symbol has its own exported value names marked as fence symbols, which is how the `_auth` wrappers under src/app/api/** are found without a hand-kept list. A route reaching a fence through a wrapper is `indirect` and names the hop in fenceVia.",
     "requireTenancy and tenancyErrorResponse are the seed symbols. TenancyError is not: narrowing an error type is reading a fence, not applying one. C-507's mutation M-B deleted only the mapper and both byte-scanner suites stayed green, which is why the mapper counts.",
     "reachesFenceModule is import-graph reach at any depth and is reported separately from `fence` on purpose. The two numbers disagree by a wide margin, and a route that reaches tenancy through a library it imports for other reasons fences on nothing.",
@@ -16,11 +16,23 @@
     "fencedIndirect": 124,
     "unfenced": 174,
     "unfencedButReachesFenceModule": 93,
-    "behavioral": 66,
-    "byteScannerOnly": 7,
+    "behavioral": 67,
+    "byteScannerOnly": 6,
     "none": 140
   },
   "ranking": [
+    {
+      "route": "src/app/api/v1/source/[eventId]/artifacts/[artifactCode]/render-pdf/route.ts",
+      "coverage": "none",
+      "fence": "indirect",
+      "fenceVia": [
+        "src/lib/source/exports/payloads/demand-challenge-payload.ts",
+        "src/lib/source/exports/payloads/narrative-docx-payload.ts",
+        "src/lib/source/exports/payloads/sourcing-approach-payload.ts",
+        "src/lib/source/exports/payloads/vendor-risk-pack-payload.ts",
+        "src/lib/source/exports/rfp-export-authority.ts"
+      ]
+    },
     {
       "route": "src/app/api/corpus/[id]/approve/route.ts",
       "coverage": "none",
@@ -115,17 +127,6 @@
       "fence": "indirect",
       "fenceVia": [
         "src/app/api/templates/_route-utils.ts"
-      ]
-    },
-    {
-      "route": "src/app/api/v1/source/[eventId]/artifacts/[artifactCode]/render-pdf/route.ts",
-      "coverage": "none",
-      "fence": "indirect",
-      "fenceVia": [
-        "src/lib/source/exports/payloads/demand-challenge-payload.ts",
-        "src/lib/source/exports/payloads/narrative-docx-payload.ts",
-        "src/lib/source/exports/payloads/sourcing-approach-payload.ts",
-        "src/lib/source/exports/payloads/vendor-risk-pack-payload.ts"
       ]
     },
     {
@@ -353,6 +354,24 @@
       ]
     },
     {
+      "route": "src/app/api/v1/source/[eventId]/artifacts/[artifactCode]/render-docx/route.ts",
+      "coverage": "none",
+      "fence": "indirect",
+      "fenceVia": [
+        "src/lib/source/exports/payloads/narrative-docx-payload.ts",
+        "src/lib/source/exports/rfp-export-authority.ts"
+      ]
+    },
+    {
+      "route": "src/app/api/v1/source/[eventId]/artifacts/[artifactCode]/render-html/route.ts",
+      "coverage": "none",
+      "fence": "indirect",
+      "fenceVia": [
+        "src/lib/source/exports/payloads/narrative-docx-payload.ts",
+        "src/lib/source/exports/rfp-export-authority.ts"
+      ]
+    },
+    {
       "route": "src/app/api/v1/source/[eventId]/test-reset/route.ts",
       "coverage": "none",
       "fence": "indirect",
@@ -414,22 +433,6 @@
       "fence": "indirect",
       "fenceVia": [
         "src/app/api/reasoning/_auth.ts"
-      ]
-    },
-    {
-      "route": "src/app/api/v1/source/[eventId]/artifacts/[artifactCode]/render-docx/route.ts",
-      "coverage": "none",
-      "fence": "indirect",
-      "fenceVia": [
-        "src/lib/source/exports/payloads/narrative-docx-payload.ts"
-      ]
-    },
-    {
-      "route": "src/app/api/v1/source/[eventId]/artifacts/[artifactCode]/render-html/route.ts",
-      "coverage": "none",
-      "fence": "indirect",
-      "fenceVia": [
-        "src/lib/source/exports/payloads/narrative-docx-payload.ts"
       ]
     },
     {
@@ -1085,12 +1088,6 @@
       ]
     },
     {
-      "route": "src/app/api/tower/synthesis/route.ts",
-      "coverage": "byte-scanner",
-      "fence": "direct",
-      "fenceVia": []
-    },
-    {
       "route": "src/app/api/v1/source/[eventId]/communications/draft/route.ts",
       "coverage": "byte-scanner",
       "fence": "direct",
@@ -1110,17 +1107,19 @@
     }
   ],
   "mutationProof": {
-    "note": "A classification that was never executed is the same kind of claim this item exists against. Each sample below was proved by applying the named mutation to the route on the recorded commit and running the covering suites: a `byte-scanner` or `none` row is proved when the suites stay GREEN under a mutation that breaks the fence. Sampled, not generalised — the counts say how many of how many.",
+    "note": "A classification that was never executed is the same kind of claim this item exists against. Each sample below was proved by applying the named mutation to the route on the recorded commit and running the covering suites. The decisive direction depends on what is being proved: a `byte-scanner` or `none` row is proved when the suites stay GREEN under a mutation that breaks the fence, and a `behavioral` row is proved when the same mutation turns them RED. A `behavioral` row with no sample is a structural classification only -- this census calls a suite behavioral when it loads the route and calls a handler, which a suite that STUBS the fence also does. Sampled, not generalised -- the counts say how many of how many.",
     "sampled": [
       {
         "route": "src/app/api/tower/synthesis/route.ts",
-        "coverageWhenSampled": "byte-scanner",
+        "coverageWhenSampled": "behavioral",
         "coveringSuites": [
+          "src/app/api/tower/synthesis/route-fix-c.test.ts",
           "src/__tests__/integration/atlas/atlas-invariants.test.ts"
         ],
-        "mutation": "The fence DELETED: `tenancy = await requireTenancy()` replaced with a hard-coded foreign tenant, and the catch arm's `tenancyErrorResponse(err)` replaced with a 200.",
-        "result": "green",
-        "evidence": "3 suites, 16 passed / 4 skipped / 0 failed -- identical to the clean baseline of the same command."
+        "mutation": "Unchanged from when this row was first sampled -- the fence DELETED: `tenancy = await requireTenancy()` replaced with a hard-coded foreign tenant, and the catch arm's `tenancyErrorResponse(err)` replaced with a 200.",
+        "result": "red",
+        "evidence": "2 suites, 14 total: 10 passed / 4 skipped / 0 failed clean, and 1 FAILED with the fence deleted. The failing case is the one that asserts the route consults the fence before any tenant-scoped read and hands a refusal to the fence's own mapper.",
+        "whyItMoved": "This row read `byte-scanner` and its sample proved a GAP: the same mutation left the covering suites green, 9 passed / 4 skipped, byte-identical to the clean baseline. T-484 then replaced this route's source-text case with cases that call the real handler, which moved the row to `behavioral` -- and that alone would have been a FALSE improvement in this census, because those cases stub `requireTenancy` and the fence mutation still left them green. It was measured that way before anything was recorded here. The gap is closed rather than caveated: the covering suite now asserts the refusal path, and the mutation that used to pass unnoticed fails it."
       },
       {
         "route": "src/app/api/v1/source/[eventId]/communications/draft/route.ts",
@@ -1141,13 +1140,15 @@
         "evidence": "A routine gate scope, `jest src/__tests__/behaviors`: 120 suites / 1114 passed clean, and 120 suites / 1114 passed with the fence gone. The mutation was verified to change observable behavior rather than being a no-op -- a throwaway probe calling the handler with an unauthenticated caller answered 401 on the real route and 403 on the mutated one -- so the unchanged gate is a coverage gap and not an inert edit."
       }
     ],
-    "commit": "f383dcd6b2e668297eb40ebb751bb4f33ab34165",
+    "commit": "the tower-synthesis sample was re-measured under T-484; the other two are unchanged from f383dcd6b2e668297eb40ebb751bb4f33ab34165",
     "sampledOf": {
-      "byteScannerRowsSampled": 2,
-      "byteScannerRowsTotal": 7,
+      "byteScannerRowsSampled": 1,
+      "byteScannerRowsTotal": 6,
       "noneRowsSampled": 1,
       "noneRowsTotal": 140,
-      "note": "Sampled, not generalised. 3 of 147 unproven rows were executed; the other 144 carry the classification the parser gave them and nothing more."
+      "note": "Sampled, not generalised. 3 of 213 fenced rows have been executed: 1 of 6 byte-scanner rows, 1 of 140 `none` rows, and 1 of 67 behavioral rows. Every other row carries the classification the parser gave it and nothing more -- which for a `behavioral` row means a suite loads the route and calls a handler, NOT that the fence was exercised.",
+      "behavioralRowsSampled": 1,
+      "behavioralRowsTotal": 67
     },
     "calibration": {
       "subject": "src/app/api/chat/step/route.ts",
@@ -1870,6 +1871,7 @@
           "scripts/smoke/foundation-fix-2-session-memory.spec.ts",
           "scripts/smoke/p22-decision-dossier.spec.ts",
           "scripts/smoke/sentinel-tenant-pin.spec.ts",
+          "src/__tests__/behaviors/c403-answer-mode-routing.test.ts",
           "src/__tests__/integration/knowledge/agent-context-broker.test.ts",
           "src/__tests__/integration/source/source-access-control-static.test.ts",
           "src/__tests__/integration/source/source-route-shell-enforcement.test.ts",
@@ -3862,9 +3864,7 @@
         "behavioral": [
           "src/app/api/source/workspace/portfolio/__tests__/route.test.ts"
         ],
-        "byteScanner": [
-          "src/app/(maestro)/source/preview/workspace/__tests__/page-tenant-routing.test.ts"
-        ]
+        "byteScanner": []
       }
     },
     {
@@ -4146,9 +4146,11 @@
       ],
       "fenceVia": [],
       "reachesFenceModule": true,
-      "coverage": "byte-scanner",
+      "coverage": "behavioral",
       "suites": {
-        "behavioral": [],
+        "behavioral": [
+          "src/app/api/tower/synthesis/route-fix-c.test.ts"
+        ],
         "byteScanner": [
           "src/__tests__/integration/atlas/atlas-invariants.test.ts"
         ]
@@ -5824,11 +5826,13 @@
       "fence": "indirect",
       "fenceSymbols": [
         "buildNarrativeDocxPayloadFromContext",
+        "requireRfpArtifactExport",
         "requireTenancy",
         "tenancyErrorResponse"
       ],
       "fenceVia": [
-        "src/lib/source/exports/payloads/narrative-docx-payload.ts"
+        "src/lib/source/exports/payloads/narrative-docx-payload.ts",
+        "src/lib/source/exports/rfp-export-authority.ts"
       ],
       "reachesFenceModule": true,
       "coverage": "none",
@@ -5842,11 +5846,13 @@
       "fence": "indirect",
       "fenceSymbols": [
         "buildNarrativeDocxPayloadFromContext",
+        "requireRfpArtifactExport",
         "requireTenancy",
         "tenancyErrorResponse"
       ],
       "fenceVia": [
-        "src/lib/source/exports/payloads/narrative-docx-payload.ts"
+        "src/lib/source/exports/payloads/narrative-docx-payload.ts",
+        "src/lib/source/exports/rfp-export-authority.ts"
       ],
       "reachesFenceModule": true,
       "coverage": "none",
@@ -5859,10 +5865,12 @@
       "route": "src/app/api/v1/source/[eventId]/artifacts/[artifactCode]/render-pdf/route.ts",
       "fence": "indirect",
       "fenceSymbols": [
+        "allowsDegradedSourcePdf",
         "buildDemandChallengePayloadFromContext",
         "buildNarrativeDocxPayloadFromContext",
         "buildSourcingApproachPayloadFromContext",
         "buildVendorRiskPackPayloadFromContext",
+        "requireRfpArtifactExport",
         "requireTenancy",
         "tenancyErrorResponse"
       ],
@@ -5870,7 +5878,8 @@
         "src/lib/source/exports/payloads/demand-challenge-payload.ts",
         "src/lib/source/exports/payloads/narrative-docx-payload.ts",
         "src/lib/source/exports/payloads/sourcing-approach-payload.ts",
-        "src/lib/source/exports/payloads/vendor-risk-pack-payload.ts"
+        "src/lib/source/exports/payloads/vendor-risk-pack-payload.ts",
+        "src/lib/source/exports/rfp-export-authority.ts"
       ],
       "reachesFenceModule": true,
       "coverage": "none",
@@ -5901,10 +5910,12 @@
         "buildSourceDeliverableSpec",
         "canonicalArtifactCodeFor",
         "kindForArtifactCode",
+        "requireRfpArtifactExport",
         "requireTenancy",
         "tenancyErrorResponse"
       ],
       "fenceVia": [
+        "src/lib/source/exports/rfp-export-authority.ts",
         "src/lib/source/exports/spec-builder.ts"
       ],
       "reachesFenceModule": true,

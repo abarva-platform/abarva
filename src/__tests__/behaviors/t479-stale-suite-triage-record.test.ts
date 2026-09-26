@@ -93,6 +93,14 @@ type Suite = {
   /* Present only once the quoted entry has been removed from the live baseline
    * by a named item -- see the knownFailing case below. */
   baselineEntryRemovedBy?: { item: string; reason: string };
+  /* Present only once the byte-matching cases named above have been replaced by
+   * behavioural ones, by a named item -- see the replacement case below. */
+  partialSourceTextCasesReplacedBy?: {
+    item: string;
+    replacedBy: string[];
+    reason: string;
+    measured: string;
+  };
   verdict: string;
   ownerItem: string;
   rationale: string;
@@ -315,6 +323,61 @@ describe("T-479 stale suite triage record", () => {
     expect(record.suites.some((s) => (s.partialSourceTextCases ?? 0) > 0)).toBe(
       true,
     );
+  });
+
+  /*
+   * Item T-484 replaced all four byte-matching cases this record named. Naming
+   * them was what stopped them being lost inside a green suite; once they are
+   * gone, the names are the one part of this record that can go stale against a
+   * live file, and a record that quotes case titles no suite has any more is the
+   * shape T-479 exists against -- a byte-scan outliving its subject, in the
+   * bookkeeping rather than in the test.
+   *
+   * So a row that declares a replacement has to survive both directions: the
+   * titles it says are gone must be gone, and the titles it says replaced them
+   * must be there. History is kept -- `partialSourceTextCaseNames` still holds
+   * what was measured at this record's base and is never rewritten.
+   *
+   * This reads the suite file as TEXT, which is the instrument this whole item
+   * is about removing, and that is deliberate here for one reason: the subject
+   * is a quoted NAME, not a behaviour. What it proves is that the record's
+   * bookkeeping matches the suite's case titles. It proves nothing about what
+   * those cases assert -- that is the pull request's mutation evidence, quoted
+   * in `measured` and required to be substantial below.
+   */
+  it("keeps a replaced-case declaration honest against the live suite in both directions", () => {
+    const declared = record.suites.filter(
+      (suite) => suite.partialSourceTextCasesReplacedBy,
+    );
+    // The population is declared rather than assumed: all four named cases were
+    // replaced under T-484, across three suites.
+    expect(declared).toHaveLength(3);
+
+    for (const suite of declared) {
+      const replacement = suite.partialSourceTextCasesReplacedBy!;
+      expect(replacement.item).not.toBe(record.item);
+      expect(replacement.reason.length).toBeGreaterThan(200);
+      expect(replacement.measured.length).toBeGreaterThan(120);
+
+      // History is preserved, not rewritten.
+      expect(suite.partialSourceTextCaseNames).toHaveLength(
+        suite.partialSourceTextCases ?? 0,
+      );
+      // A replacement may fold two byte scans into one behavioural case or
+      // split one into several; what it may not do is replace fewer cases than
+      // it names as replaced.
+      expect(replacement.replacedBy.length).toBeGreaterThan(0);
+
+      const source = readFileSync(path.join(process.cwd(), suite.path), "utf8");
+      const title = (name: string) => name.split(" :: ").slice(-1)[0];
+
+      for (const gone of suite.partialSourceTextCaseNames ?? []) {
+        expect(source).not.toContain(title(gone));
+      }
+      for (const present of replacement.replacedBy) {
+        expect(source).toContain(title(present));
+      }
+    }
   });
 
   it("gives every non-green suite a verdict that does not assume it passes", () => {
