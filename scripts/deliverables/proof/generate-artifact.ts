@@ -129,7 +129,7 @@ async function main() {
   );
   if (result.quality) {
     console.log(
-      `quality: ${result.quality.ok ? "pass" : "FAIL"} ` +
+      `quality: ${result.quality.pass ? "pass" : "FAIL"} ` +
         `blockers=${result.quality.blockers?.length ?? 0} warnings=${result.quality.warnings?.length ?? 0}`,
     );
     for (const b of result.quality.blockers ?? []) console.log(`   blocker: ${b}`);

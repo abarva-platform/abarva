@@ -17,24 +17,24 @@
     "No timestamp is recorded, so refreshing this file on an unchanged tree is a no-op."
   ],
   "counts": {
-    "testFiles": 2454,
-    "coveredTestFiles": 2010,
-    "pullRequestCoveredTestFiles": 2009,
-    "uncoveredTestFiles": 444,
-    "directoriesWithTests": 487,
+    "testFiles": 2471,
+    "coveredTestFiles": 2018,
+    "pullRequestCoveredTestFiles": 2017,
+    "uncoveredTestFiles": 453,
+    "directoriesWithTests": 488,
     "directoriesFullyCovered": 288,
     "directoriesPartiallyCovered": 23,
-    "directoriesUncovered": 176,
-    "directoriesWithUnrunTestFiles": 199,
-    "directoriesWithUntriagedUnrunTestFiles": 188,
+    "directoriesUncovered": 177,
+    "directoriesWithUnrunTestFiles": 200,
+    "directoriesWithUntriagedUnrunTestFiles": 189,
     "declaredQuarantineTestFiles": 52,
-    "untriagedUnrunTestFiles": 392,
+    "untriagedUnrunTestFiles": 401,
     "indeterminateInvocations": 0,
     "unresolvedIgnoreArguments": 0,
     "criticalGovernedRiskDirectories": 1,
     "highGovernedRiskDirectories": 7,
-    "unclassifiedRiskDirectories": 180,
-    "unclassifiedRiskDirectoriesWithResolvedProductSources": 174,
+    "unclassifiedRiskDirectories": 181,
+    "unclassifiedRiskDirectoriesWithResolvedProductSources": 175,
     "unclassifiedRiskDirectoriesWithNoResolvedProductSource": 6
   },
   "quarantineLists": [
@@ -3500,6 +3500,19 @@
       }
     },
     {
+      "directory": "src/lib/deliverables/composer/__tests__",
+      "testFiles": 9,
+      "unrunTestFiles": 9,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 9,
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 9
+      }
+    },
+    {
       "directory": "src/lib/programs/ava-chat/__tests__",
       "testFiles": 7,
       "unrunTestFiles": 7,
@@ -3758,6 +3771,14 @@
       "coveredTestFiles": 0,
       "declaredQuarantineTestFiles": 0,
       "untriagedUnrunTestFiles": 10,
+      "via": []
+    },
+    {
+      "directory": "src/lib/deliverables/composer/__tests__",
+      "testFiles": 9,
+      "coveredTestFiles": 0,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 9,
       "via": []
     },
     {

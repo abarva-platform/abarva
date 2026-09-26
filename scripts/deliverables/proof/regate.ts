@@ -13,6 +13,17 @@ const REPO = path.resolve(__dirname, "../../..");
 const COMPOSER_DIR = path.join(REPO, "scripts/deliverables/composer");
 const PYTHON = process.env.COMPOSER_PYTHON ?? "python3";
 
+/**
+ * The sandbox environment, constructed rather than inherited.
+ *
+ * Deliberately omits everything else — that absence is the boundary, not an
+ * oversight. Cast because the Node typings require the full ProcessEnv shape,
+ * and adding NODE_ENV to satisfy them would put a real variable back in.
+ */
+function SCRUBBED_ENV(scratch: string): NodeJS.ProcessEnv {
+  return { PATH: "/usr/bin:/bin", HOME: scratch, COMPOSER_CPU_SECONDS: "90" } as NodeJS.ProcessEnv;
+}
+
 const ledger: LedgerEntry[] = JSON.parse(fs.readFileSync(path.join(OUT, "number-ledger.json"), "utf8"));
 const packet = JSON.parse(fs.readFileSync(path.join(OUT, "packet.json"), "utf8"));
 const plan = JSON.parse(fs.readFileSync(path.join(OUT, "slide-story-plan-A.json"), "utf8"));
@@ -33,7 +44,7 @@ function run(label: string) {
     const out = execFileSync(PYTHON, ["-I", path.join(COMPOSER_DIR, "bootstrap.py"), scratch, src, COMPOSER_DIR], {
       encoding: "utf8",
       timeout: 180_000,
-      env: { PATH: "/usr/bin:/bin", HOME: scratch, COMPOSER_CPU_SECONDS: "90" },
+      env: SCRUBBED_ENV(scratch),
     });
     return { report: JSON.parse(out.trim().split("\n").pop()!), pptx: path.join(scratch, "deck.pptx") };
   } catch (err) {
@@ -79,8 +90,10 @@ async function main() {
 
   const off = (v: typeof gA.verdict) => v.findings.filter((f) => f.kind === "off_canvas" || f.kind === "canvas").length;
   const thin = (v: typeof gA.verdict) => v.findings.filter((f) => f.kind === "thin_slide").length;
-  const aBad = new Set(gA.lineage.findings.map((f) => ("claim" in f ? f.claim : f.message)));
-  const newBad = gB.lineage.findings.filter((f) => !aBad.has("claim" in f ? f.claim : f.message));
+  // Both finding variants carry `claim`, so `"claim" in f` was always true and
+  // the else-branch narrowed to never. Compare on the message, which both have.
+  const aBad = new Set(gA.lineage.findings.map((f) => f.message));
+  const newBad = gB.lineage.findings.filter((f) => !aBad.has(f.message));
 
   const checks = [
     { name: "no new unsupported figures", pass: newBad.length === 0, detail: newBad.map((f) => f.message).join("; ") || "none" },

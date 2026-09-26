@@ -46,6 +46,17 @@ const REPO = path.resolve(__dirname, "../../..");
 const COMPOSER_DIR = path.join(REPO, "scripts/deliverables/composer");
 const PYTHON = process.env.COMPOSER_PYTHON ?? "python3";
 
+/**
+ * The sandbox environment, constructed rather than inherited.
+ *
+ * Deliberately omits everything else — that absence is the boundary, not an
+ * oversight. Cast because the Node typings require the full ProcessEnv shape,
+ * and adding NODE_ENV to satisfy them would put a real variable back in.
+ */
+function SCRUBBED_ENV(scratch: string): NodeJS.ProcessEnv {
+  return { PATH: "/usr/bin:/bin", HOME: scratch, COMPOSER_CPU_SECONDS: "90" } as NodeJS.ProcessEnv;
+}
+
 const doc = JSON.parse(fs.readFileSync(path.join(OUT, "governed-document.json"), "utf8"));
 /** Governed prose, so a number inside a product name reads as a name. */
 const GOVERNED_TEXT = [
@@ -204,7 +215,7 @@ async function main() {
     const stdout = execFileSync(
       PYTHON,
       ["-I", path.join(COMPOSER_DIR, "bootstrap.py"), scratch, sourcePath, COMPOSER_DIR],
-      { encoding: "utf8", timeout: 180_000, env: { PATH: "/usr/bin:/bin", HOME: scratch, COMPOSER_CPU_SECONDS: "90" } },
+      { encoding: "utf8", timeout: 180_000, env: SCRUBBED_ENV(scratch) },
     );
     sandboxReport = JSON.parse(stdout.trim().split("\n").pop() ?? "{}");
   } catch (err) {

@@ -27,6 +27,17 @@ const REPO = path.resolve(__dirname, "../../..");
 const COMPOSER_DIR = path.join(REPO, "scripts/deliverables/composer");
 const PYTHON = process.env.COMPOSER_PYTHON ?? "python3";
 
+/**
+ * The sandbox environment, constructed rather than inherited.
+ *
+ * Deliberately omits everything else — that absence is the boundary, not an
+ * oversight. Cast because the Node typings require the full ProcessEnv shape,
+ * and adding NODE_ENV to satisfy them would put a real variable back in.
+ */
+function SCRUBBED_ENV(scratch: string): NodeJS.ProcessEnv {
+  return { PATH: "/usr/bin:/bin", HOME: scratch, COMPOSER_CPU_SECONDS: "90" } as NodeJS.ProcessEnv;
+}
+
 const ledger: LedgerEntry[] = JSON.parse(fs.readFileSync(path.join(OUT, "number-ledger.json"), "utf8"));
 const packet = JSON.parse(fs.readFileSync(path.join(OUT, "packet.json"), "utf8"));
 const plan = JSON.parse(fs.readFileSync(path.join(OUT, "slide-story-plan-A.json"), "utf8"));
@@ -156,7 +167,7 @@ function runSandbox(source: string, label: string) {
     const stdout = execFileSync(
       PYTHON,
       ["-I", path.join(COMPOSER_DIR, "bootstrap.py"), scratch, sourcePath, COMPOSER_DIR],
-      { encoding: "utf8", timeout: 180_000, env: { PATH: "/usr/bin:/bin", HOME: scratch, COMPOSER_CPU_SECONDS: "90" } },
+      { encoding: "utf8", timeout: 180_000, env: SCRUBBED_ENV(scratch) },
     );
     return { report: JSON.parse(stdout.trim().split("\n").pop()!), pptx: path.join(scratch, "deck.pptx") };
   } catch (err) {
@@ -200,8 +211,10 @@ function nonRegression(
 ) {
   const aOff = a.verdict.findings.filter((f) => f.kind === "off_canvas" || f.kind === "canvas").length;
   const bOff = b.verdict.findings.filter((f) => f.kind === "off_canvas" || f.kind === "canvas").length;
-  const aBad = new Set(a.lineage.findings.map((f) => ("claim" in f ? f.claim : f.message)));
-  const newBad = b.lineage.findings.filter((f) => !aBad.has("claim" in f ? f.claim : f.message));
+  // Both finding variants carry `claim`, so `"claim" in f` was always true and
+  // the else-branch narrowed to never. Compare on the message, which both have.
+  const aBad = new Set(a.lineage.findings.map((f) => f.message));
+  const newBad = b.lineage.findings.filter((f) => !aBad.has(f.message));
   const checks = [
     { name: "no new unsupported figures", pass: newBad.length === 0, detail: newBad.map((f) => f.message).join("; ") || "none" },
     { name: "no new bounds or canvas failures", pass: bOff <= aOff, detail: `A ${aOff} -> B ${bOff}` },

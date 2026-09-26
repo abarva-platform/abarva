@@ -45,6 +45,6 @@ describe('prompt hygiene', () => {
   });
 
   it('throws with the marker and its context, naming the prompt', () => {
-    expect(() => assertPromptHygiene('- [9] undefined: x', 'architect')).toThrow(/architect.*interpolated undefined/s);
+    expect(() => assertPromptHygiene('- [9] undefined: x', 'architect')).toThrow(/architect[\s\S]*interpolated undefined/);
   });
 });
