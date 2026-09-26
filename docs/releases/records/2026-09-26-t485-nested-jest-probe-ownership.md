@@ -34,9 +34,14 @@ still removes the file after its own workers have exited.
 
 ## Layer Impact
 
+Release lane: `global-control-lane` — shared control-plane tooling every branch and every
+agent runs, not scoped to any client. It is behind no feature flag because it is not
+reachable from a product surface at all.
+
 - `T` — tests, validators, CI and platform tooling. No product layer is touched: no client
   intake, no source adapter, no canonical model, no product surface. The only code involved
-  is the test runner's two global hooks and a new test-support module beside them.
+  is the test runner's two global hooks and a new test-support module beside them. Nothing
+  here is imported by application code, so no client-visible behaviour can change.
 
 ## Client Applicability
 
@@ -94,12 +99,27 @@ against the same root inside one run: the outer one (`globalSetup` 00:05:43.576Z
 `scripts/quality/check-source-integration-quarantine.mjs` spawning the runner from inside
 `src/__tests__/behaviors/source-quarantine-ceiling-is-a-ratchet.test.ts`.
 
-**Second measurement, base `f46e5f5df`, before and after, same scope:** recorded in the
-pull request body with the per-run counts, because the base moved between the two
-measurements and quoting the first run's totals against the second base would be a
-comparison across two different scopes.
+**Second measurement, base `f46e5f5df`, before and after.** `origin/main` moved between the
+two measurements, so the first run's totals are not comparable to this base and this pair is
+measured again from scratch: the baseline in a separate clean worktree checked out at
+`f46e5f5df` with nothing applied, the after-runs on this branch.
 
-**The fix broken deliberately, three ways, at base `a4c9e4f69`:**
+| tree | run | failing suites | failing tests | total suites |
+|---|---|---|---|---|
+| baseline, unmodified | 1 | 1 | 1 | 137 |
+| baseline, unmodified | 2 | 8 | 12 | 137 |
+| baseline, unmodified | 3 | 7 | 4 | 137 |
+| this branch | 1 | **0** | **0** | 138 |
+| this branch | 2 | **0** | **0** | 138 |
+| this branch | 3 | **0** | **0** | 138 |
+
+138 rather than 137 because this branch adds one suite. The three baseline failing sets are
+again largely disjoint — one run failed only the suite that parses the census's stdout, the
+next eight suites, the next seven others — which is the property that makes this a race
+rather than a broken assertion. "Repeatedly" above means three consecutive full runs of the
+scope at default parallelism; it is not a claim about any number beyond three.
+
+**The fix broken deliberately, three ways, at both bases:**
 
 | mutation | result |
 |---|---|
@@ -107,6 +127,8 @@ comparison across two different scopes.
 | `globalSetup` only reverted | 1 of 9 failing — same assertion |
 | `globalTeardown` only reverted | 1 of 9 failing — same assertion |
 | neither reverted | 9 of 9 passing |
+
+Run at base `a4c9e4f69` and again at `f46e5f5df`, with the same result each time.
 
 Each hook's guard is therefore load-bearing on its own; neither is absorbed by the other.
 The assertion that fails is the file's presence, not the log line — the message is asserted
