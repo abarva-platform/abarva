@@ -19,7 +19,57 @@
 import { assertVisibleAnswerContract } from '@/lib/agent/visible-answer-contract';
 import { TOWER_LEAD_AGENT } from '@/lib/tower/constants';
 
+/*
+ * Item T-484. The last case in this suite drives the real exported handler, so
+ * the route's surroundings are stubbed at the module boundary: tenancy, the
+ * tenant portfolio read, the synthesis context, the user-context block and the
+ * AI egress preflight. The model client returned by the preflight is the
+ * observation point -- it is where "did the route actually pass temperature and
+ * a signal into the SDK call" can be answered at all.
+ *
+ * The constants under test are NOT stubbed. `@/lib/tower/constants` and
+ * `@/lib/agent/visible-answer-contract` are the repository's own authorities
+ * for the agent's user-facing name and for what a reader may be shown, and the
+ * three cases above ask them directly.
+ */
+jest.mock('server-only', () => ({}));
+jest.mock('@/lib/auth/tenancy', () => ({
+  requireTenancy: jest.fn(),
+  tenancyErrorResponse: () => new Response('tenancy', { status: 401 }),
+}));
+jest.mock('@/lib/auth/program-access-policy', () => ({
+  loadUserProgramAccessPolicy: jest.fn(),
+  formatUserProgramAccessPolicyForPrompt: () => '',
+}));
+jest.mock('@/lib/reasoning/tenant-tower-portfolio', () => ({
+  loadTenantTowerPortfolio: jest.fn(),
+}));
+jest.mock('@/lib/reasoning/tower-synthesis-context-builder', () => ({
+  buildTowerSynthesisContext: jest.fn(),
+  towerStateHash: jest.fn(),
+}));
+jest.mock('@/lib/active-client', () => ({
+  getActiveClientRow: jest.fn(),
+}));
+jest.mock('@/lib/agent/userContext', () => ({
+  getUserContextPromptBlock: jest.fn(async () => ''),
+}));
+jest.mock('@/lib/integrations/ai-egress', () => ({
+  preflightAnthropicDirectClient: jest.fn(),
+}));
+
+import { getActiveClientRow } from '@/lib/active-client';
+import { loadUserProgramAccessPolicy } from '@/lib/auth/program-access-policy';
+import { requireTenancy } from '@/lib/auth/tenancy';
+import { preflightAnthropicDirectClient } from '@/lib/integrations/ai-egress';
+import { loadTenantTowerPortfolio } from '@/lib/reasoning/tenant-tower-portfolio';
 import {
+  buildTowerSynthesisContext,
+  towerStateHash,
+} from '@/lib/reasoning/tower-synthesis-context-builder';
+
+import {
+  POST,
   TOWER_SYNTHESIS_TEMPERATURE,
   TOWER_SYNTHESIS_TIMEOUT_MS,
   TOWER_SYNTHESIS_TIMEOUT_MESSAGE,
@@ -89,23 +139,182 @@ describe('Tower synthesis Fix C levers', () => {
     expect(TOWER_SYNTHESIS_TIMEOUT_MESSAGE.length).toBeGreaterThan(20);
   });
 
-  it('wires temperature, AbortController, and honest fallback into the route source', async () => {
-    // Source-level audit: a constant test alone would not catch a refactor
-    // that imports the constant but does not actually pass it into the SDK
-    // call, or one that drops AbortController.
-    const fs = await import('node:fs/promises');
-    const path = await import('node:path');
-    const source = await fs.readFile(
-      path.join(__dirname, 'route.ts'),
-      'utf8',
-    );
-    expect(source).toContain('temperature: TOWER_SYNTHESIS_TEMPERATURE');
-    expect(source).toContain('new AbortController()');
-    expect(source).toContain('abortController.signal');
-    expect(source).toContain('TOWER_SYNTHESIS_TIMEOUT_MESSAGE');
-    // The original bug: max_tokens=350 with no temperature. The temperature
-    // must now be present; max_tokens is a different concern for this route
-    // (a 90–140 word quote) so we do not require a raise.
-    expect(source).not.toMatch(/messages\.stream\(\s*\{\s*model: "claude-sonnet-4-6",\s*max_tokens:/);
+  /*
+   * Item T-484. This case used to read `route.ts` as text and match four
+   * substrings: `temperature: TOWER_SYNTHESIS_TEMPERATURE`,
+   * `new AbortController()`, `abortController.signal` and
+   * `TOWER_SYNTHESIS_TIMEOUT_MESSAGE`. Its own comment said what it was for --
+   * "a constant test alone would not catch a refactor that imports the constant
+   * but does not actually pass it into the SDK call" -- and that is precisely
+   * the question reading the file cannot answer. It answers a spelling question
+   * instead, and the pull request records both directions measured against
+   * mutations of `route.ts`: an override spread in after the literal, and a
+   * signal bound to a local and then not passed, each left all four substrings
+   * in place and the old case green; binding the temperature through a local
+   * changed no behaviour and turned it red.
+   *
+   * So the subject is what the SDK call receives, and what a caller gets back
+   * when the upstream never produces a token. Both are read from the real
+   * exported handler.
+   */
+  it('passes temperature and an abort signal into the model call', async () => {
+    let params: Record<string, unknown> | undefined;
+    let options: { signal?: AbortSignal } | undefined;
+    const stream = jest.fn(async (...args: unknown[]) => {
+      params = args[0] as Record<string, unknown>;
+      options = args[1] as { signal?: AbortSignal } | undefined;
+      return oneTextChunk('Portfolio read stands.');
+    });
+    givenRoute({ stream, stateHash: 'temperature-case' });
+
+    const response = await POST(new Request('https://test.local/api/tower/synthesis', { method: 'POST' }));
+
+    expect(response.status).toBe(200);
+    expect(stream).toHaveBeenCalledTimes(1);
+
+    // The received argument, not the text of the call site. A refactor that
+    // imports the constant and then overrides it fails here.
+    expect(params?.temperature).toBe(TOWER_SYNTHESIS_TEMPERATURE);
+    expect(params?.temperature).toBe(0);
+
+    // Cancellation has to reach the SDK to bound anything. An AbortController
+    // constructed and not handed over is the defect this replaces.
+    expect(options?.signal).toBeInstanceOf(AbortSignal);
+    expect(options?.signal?.aborted).toBe(false);
+  });
+
+  it('answers a stalled upstream with the honest timeout message and aborts it', async () => {
+    jest.useFakeTimers();
+    try {
+      let observed: AbortSignal | undefined;
+      const stream = jest.fn(async (...args: unknown[]) => {
+        const options = args[1] as { signal?: AbortSignal } | undefined;
+        observed = options?.signal;
+        return stallsUntilAborted(options?.signal);
+      });
+      givenRoute({ stream, stateHash: 'timeout-case' });
+
+      const pending = POST(new Request('https://test.local/api/tower/synthesis', { method: 'POST' }));
+      // Let the handler reach the stream before the clock moves.
+      await jest.advanceTimersByTimeAsync(0);
+      await jest.advanceTimersByTimeAsync(TOWER_SYNTHESIS_TIMEOUT_MS);
+      const response = await pending;
+
+      expect(response.status).toBe(504);
+      expect(response.headers.get('X-Synthesis-Timeout')).toBe('true');
+      // The body a reader receives, produced by the route rather than quoted
+      // from its source.
+      expect(await response.text()).toBe(TOWER_SYNTHESIS_TIMEOUT_MESSAGE);
+      // And the upstream was actually cancelled, not merely abandoned.
+      expect(observed?.aborted).toBe(true);
+    } finally {
+      jest.useRealTimers();
+    }
   });
 });
+
+/** One text delta, then end of stream. */
+async function* oneTextChunk(text: string) {
+  yield { type: 'content_block_delta', delta: { type: 'text_delta', text } };
+}
+
+/**
+ * An upstream that produces nothing and only ends when the route's own
+ * AbortController fires -- which is the stall Fix C exists for. A stream that
+ * simply never settles could not tell a working timeout from a hung request.
+ */
+function stallsUntilAborted(signal: AbortSignal | undefined) {
+  return {
+    [Symbol.asyncIterator]() {
+      return {
+        next(): Promise<IteratorResult<never>> {
+          return new Promise((_resolve, reject) => {
+            if (!signal) {
+              // The route handed the SDK no way to cancel. Say so instead of
+              // hanging: a case that times out reads like flake, and this is a
+              // finding.
+              reject(
+                new Error(
+                  'the route called the model without an abort signal, so nothing can bound this stream',
+                ),
+              );
+              return;
+            }
+            if (signal.aborted) {
+              reject(new Error('aborted'));
+              return;
+            }
+            signal.addEventListener('abort', () => reject(new Error('aborted')), {
+              once: true,
+            });
+          });
+        },
+      };
+    },
+  };
+}
+
+/**
+ * Everything the route reaches for other than the model client. Kept in one
+ * place so a test states only what it is about.
+ */
+function givenRoute({
+  stream,
+  stateHash,
+}: {
+  stream: jest.Mock;
+  stateHash: string;
+}) {
+  (requireTenancy as jest.Mock).mockResolvedValue({
+    clientId: '00000000-0000-4000-8000-000000000001',
+    clientKey: `t484-${stateHash}`,
+    userId: '00000000-0000-4000-8000-000000000002',
+  });
+  (loadUserProgramAccessPolicy as jest.Mock).mockResolvedValue({
+    outputPolicy: { exactFinancialValues: true },
+  });
+  (loadTenantTowerPortfolio as jest.Mock).mockReturnValue({
+    programInstances: [],
+    sourceEventInstances: [],
+  });
+  (towerStateHash as jest.Mock).mockReturnValue(stateHash);
+  (buildTowerSynthesisContext as jest.Mock).mockReturnValue({
+    citations: [],
+    activeContradictions: [],
+    failureModes: [],
+    gatesSummary: { total: 0 },
+    instanceSnapshot: {
+      programCount: 1,
+      sourceEventCount: 1,
+      pendingGateCount: 0,
+      activeBlockerCount: 0,
+      programs: [
+        {
+          id: 'p1',
+          name: 'Network Modernisation',
+          phase: 2,
+          phaseLabel: 'Design',
+          gateStatus: 'open',
+          openBlockerCount: 0,
+          linkedSourceEventIds: [],
+        },
+      ],
+      sourceEvents: [
+        {
+          id: 's1',
+          name: 'Core Platform Renewal',
+          stage: 'Evaluation',
+          vendorCount: 2,
+          activeVendors: [],
+          openBlockerCount: 0,
+          linkedProgramIds: [],
+        },
+      ],
+    },
+  });
+  (getActiveClientRow as jest.Mock).mockResolvedValue({ name: 'Test Tenant' });
+  (preflightAnthropicDirectClient as jest.Mock).mockResolvedValue({
+    ok: true,
+    client: { messages: { stream } },
+  });
+}
