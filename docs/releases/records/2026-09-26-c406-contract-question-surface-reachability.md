@@ -82,7 +82,10 @@ empty), over the same scope, rather than quoting an absolute count:
 - New suite in its **final** form, against the pre-change tree: **4 failing before / 0 after**,
   measured by holding the artifact out of the tree rather than by quoting an earlier draft.
 
-Eight deliberate mutations, each confirmed to have changed the tree before its count was recorded:
+**Seven** deliberate mutations, each confirmed to have changed the tree before its count was
+recorded. Correcting my own overstatement by amending rather than restating: the commit message on this
+branch says "eight". Seven were run, the table below is the whole set, and the miscount was in the
+prose and never in the evidence:
 
 | # | Mutation | Result |
 |---|---|---|
