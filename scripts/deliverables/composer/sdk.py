@@ -75,33 +75,64 @@ class Theme:
         return _hex(value)
 
 
-# Character-width factors per point of font size, measured against Inter at 100pt
-# and divided down. Good enough to decide how many lines a string needs, which is
-# all fit_text has to get right.
-_AVG_CHAR_W = 0.50
-_WIDE_CHARS = set("MWmw@%")
-_NARROW_CHARS = set("iljtfIr.,:;'|!()[] ")
+from widths import CHAR_W, CHAR_W_BOLD, DEFAULT_W, DEFAULT_W_BOLD
+
+# Text measurement is done against a REAL font width table, generated at build
+# time by build_width_table.py from a deliberately wide fallback face.
+#
+# The first version guessed per-character weights and under-measured by about a
+# quarter. fit_text then under-wrapped, every box was sized for fewer lines than
+# its text needed, and the overflow landed on whatever was beneath it — visible
+# text-on-text across five slides of the first composed deck. The deck declares
+# Inter, but Inter is frequently absent and the renderer substitutes something
+# wider, so measuring the brand font would be measuring a font that may never be
+# used. Over-measuring costs slack; under-measuring costs a broken slide.
+SAFETY = 1.04
 
 
 def measure_text(text: str, size_pt: float, bold: bool = False) -> float:
-    """Approximate rendered width of one line, in inches."""
-    units = 0.0
-    for ch in text:
-        if ch in _WIDE_CHARS:
-            units += 0.92
-        elif ch in _NARROW_CHARS:
-            units += 0.38
+    """Rendered width of one line, in inches. Conservative by construction."""
+    table = CHAR_W_BOLD if bold else CHAR_W
+    default = DEFAULT_W_BOLD if bold else DEFAULT_W
+    em = sum(table.get(ord(ch), default) for ch in text)
+    return em * (size_pt / 72.0) * SAFETY
+
+
+def _split_long_token(token: str, width_in: float, size_pt: float, bold: bool) -> list[str]:
+    """Hard-break a token that cannot fit on a line of its own.
+
+    PowerPoint breaks mid-word when a word is wider than its box. If fit_text
+    refused to, it would return one line where the renderer draws three, the box
+    would be sized for one, and the extra two would be drawn over whatever is
+    beneath. "Never splits a word" was the wrong invariant: matching the renderer
+    is the invariant.
+    """
+    pieces: list[str] = []
+    current = ""
+    for ch in token:
+        if current and measure_text(current + ch, size_pt, bold) > width_in:
+            pieces.append(current)
+            current = ch
         else:
-            units += 1.0
-    width = units * _AVG_CHAR_W * (size_pt / 72.0)
-    return width * (1.06 if bold else 1.0)
+            current += ch
+    if current:
+        pieces.append(current)
+    return pieces or [token]
 
 
 def fit_text(text: str, width_in: float, size_pt: float, bold: bool = False) -> list[str]:
-    """Break `text` into lines that each fit `width_in`. Never splits a word."""
+    """Break `text` into lines that each fit `width_in`, as the renderer would."""
     lines: list[str] = []
     current = ""
     for word in text.split():
+        if measure_text(word, size_pt, bold) > width_in:
+            if current:
+                lines.append(current)
+                current = ""
+            pieces = _split_long_token(word, width_in, size_pt, bold)
+            lines.extend(pieces[:-1])
+            current = pieces[-1]
+            continue
         candidate = f"{current} {word}".strip()
         if current and measure_text(candidate, size_pt, bold) > width_in:
             lines.append(current)
@@ -113,7 +144,13 @@ def fit_text(text: str, width_in: float, size_pt: float, bold: bool = False) -> 
     return lines or [""]
 
 
-def text_height(lines: int, size_pt: float, line_spacing: float = 1.22) -> float:
+def text_height(lines: int, size_pt: float, line_spacing: float = 1.34) -> float:
+    """Height of a wrapped block.
+
+    1.34 rather than a tight 1.22: PowerPoint adds leading above the first line
+    and below the last, and a box sized to the exact glyph height clips its own
+    descenders and crowds whatever sits under it.
+    """
     return lines * (size_pt / 72.0) * line_spacing
 
 
