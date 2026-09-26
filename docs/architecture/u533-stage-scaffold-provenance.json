@@ -21,7 +21,7 @@
       "grounding-block disclosure of exemplar content"
     ],
     "deferred": [
-      "derive tasks/gate for the eight stages still carrying an exemplar (U-533 acceptance 3, continued)"
+      "derive tasks/gate for the 7 stages still carrying an exemplar (U-533 acceptance 3, continued)"
     ],
     "signedInProofPerformed": false
   },
@@ -49,16 +49,16 @@
       "purpose",
       "tasks"
     ],
-    "stagesWithScaffoldTasks": 8,
-    "stagesWithScaffoldGate": 8,
-    "stagesWithDerivedTasks": 2,
-    "stagesWithDerivedGate": 2,
+    "stagesWithScaffoldTasks": 7,
+    "stagesWithScaffoldGate": 7,
+    "stagesWithDerivedTasks": 3,
+    "stagesWithDerivedGate": 3,
     "derivedStages": [
+      "responses",
       "evaluation",
       "bafo"
     ],
     "stagesExposingPersonNamedApprover": [
-      "responses",
       "value"
     ],
     "distinctGateApprovers": [
@@ -224,10 +224,10 @@
         "stageName": "from_input",
         "purpose": "scaffold_carried_by_reference",
         "intel": "fact_derived",
-        "tasks": "scaffold_carried_by_reference",
-        "gate.approver": "scaffold_carried_by_reference",
-        "gate.confirms": "scaffold_carried_by_reference",
-        "gate.generates": "scaffold_carried_by_reference",
+        "tasks": "fact_derived",
+        "gate.approver": "archetype_derived",
+        "gate.confirms": "fact_derived",
+        "gate.generates": "derived_empty",
         "gate.nextStageName": "computed_agrees_with_exemplar",
         "gate.action": "absent",
         "waterfall": "fact_derived",
@@ -237,9 +237,9 @@
       "movesWithFacts": {
         "purpose": false,
         "intel": true,
-        "tasks": false,
+        "tasks": true,
         "gate.approver": false,
-        "gate.confirms": false,
+        "gate.confirms": true,
         "gate.generates": false,
         "gate.nextStageName": false,
         "waterfall": true
@@ -247,26 +247,26 @@
       "movesWithArchetype": {
         "purpose": false,
         "intel": true,
-        "tasks": false,
-        "gate.approver": false,
-        "gate.confirms": false,
+        "tasks": true,
+        "gate.approver": true,
+        "gate.confirms": true,
         "gate.generates": false,
         "gate.nextStageName": false,
         "waterfall": true
       },
       "declared": {
-        "tasks": "scaffold",
-        "gate": "scaffold",
-        "scaffoldSource": "SAMPLE_RESPONSES_STAGE"
+        "tasks": "fact_derived",
+        "gate": "fact_derived",
+        "scaffoldSource": null
       },
       "gateTaskTitles": [
-        "Confirm vendor response coverage"
+        "Review vendor response coverage"
       ],
-      "gateApprover": "K. Oshima, CIO",
+      "gateApprover": "CIO",
       "gateConfirmLabels": [
-        "Every lever mapped to each vendor’s answer",
-        "Dodged levers flagged for evaluation",
-        "Responses complete"
+        "1 of 6 observed vendor-lever cells mapped",
+        "6 archetype value levers to review",
+        "Review response set for evaluation"
       ],
       "intelProvenance": "live",
       "waterfallProvenance": "live"

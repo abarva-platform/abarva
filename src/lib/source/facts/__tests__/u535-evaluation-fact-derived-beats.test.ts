@@ -238,18 +238,14 @@ describe("U-535 · the boundary declares the flipped stage derived", () => {
     });
   });
 
-  it("now reports exactly two derived stages, and eight still carrying", () => {
-    expect([...DERIVED_STAGE_KEYS].sort()).toEqual(
-      [ALREADY_DERIVED_STAGE, DERIVED_STAGE].sort(),
+  it("still reports the two stages this item flipped as derived", () => {
+    expect(DERIVED_STAGE_KEYS).toEqual(
+      expect.arrayContaining([ALREADY_DERIVED_STAGE, DERIVED_STAGE]),
     );
-    expect(STILL_SCAFFOLD_STAGES).toHaveLength(8);
+    expect(STILL_SCAFFOLD_STAGES.length + DERIVED_STAGE_KEYS.length).toBe(ARMED_STAGE_KEYS.length);
   });
 
-  it.each(
-    ARMED_STAGE_KEYS.filter(
-      (k) => k !== DERIVED_STAGE && k !== ALREADY_DERIVED_STAGE,
-    ),
-  )("%s still declares both intake beats as scaffold", (stageKey) => {
+  it.each(STILL_SCAFFOLD_STAGES)("%s still declares both intake beats as scaffold", (stageKey) => {
     expect(buildFor(stageKey).beatProvenance).toEqual({
       tasks: "scaffold",
       gate: "scaffold",

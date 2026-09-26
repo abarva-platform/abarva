@@ -4,9 +4,9 @@
 // This is the integration seam the event route calls when `source_analytics` is
 // ON: read the event's facts → run the deterministic evaluators for the event's
 // archetype → roll them into the value waterfall → build the canvas view. The
-// value-waterfall beat is fully live (real facts, real math, cited). The intake
-// beats (intel points / tasks / gate) are not fact-derived in this slice, so the
-// builder reuses the sample scaffold's STRUCTURE for those beats and states the
+// value-waterfall beat is fully live (real facts, real math, cited). Selected
+// stages derive tasks and gates; the others explicitly carry sample structure.
+// The builder states the
 // live value proof through the waterfall — the intel lead is rewritten to reflect
 // the real computed/insufficient counts so nothing is dressed as more than it is.
 //
@@ -58,6 +58,12 @@ import {
   buildEvaluationFactDerivedGate,
   buildEvaluationFactDerivedTasks,
 } from './evaluation-fact-beats';
+import {
+  RESPONSES_STAGE_KEY,
+  buildResponsesFactDerivedGate,
+  buildResponsesFactDerivedTasks,
+  type VendorResponseCoverage,
+} from './responses-fact-beats';
 import {
   SOURCE_STAGE_LABELS,
   nextSourceStage,
@@ -124,6 +130,8 @@ export interface BuildLiveStageInput {
   /** Stage identity for the canvas (defaults to the sample Scope exemplar). */
   stageKey?: string;
   stageName?: string;
+  /** Existing tenant-scoped vendor-by-lever response signal, when available. */
+  vendorResponses?: VendorResponseCoverage;
 }
 
 /**
@@ -194,9 +202,9 @@ export function buildLiveStageView(
     ? SOURCE_STAGE_LABELS[nextStage] ?? nextStage
     : null;
 
-  // Items U-534 and U-535. TWO stages' intake beats are now derived from this
-  // event's facts and its resolved archetype instead of being carried from the
-  // exemplar. The other eight still carry, and still say so below. `factBeats`
+  // Items U-534, U-535 and U-538. Three stages' intake beats are derived from
+  // event facts and the resolved archetype. The other seven carry exemplar
+  // content and say so below. `factBeats`
   // is the single switch: nothing downstream infers which stage is derived, and
   // the beat provenance is declared from the same value so the label cannot
   // drift from what this function actually returned.
@@ -212,6 +220,11 @@ export function buildLiveStageView(
     citations: input.citations,
     nextStageName,
   };
+  const responsesBeatInput = {
+    archetype,
+    vendorResponses: input.vendorResponses,
+    nextStageName,
+  };
   const FACT_DERIVED_BEATS: Readonly<
     Record<string, () => { tasks: StageAnalyticsView['tasks']; gate: StageAnalyticsView['gate'] }>
   > = {
@@ -222,6 +235,10 @@ export function buildLiveStageView(
     [EVALUATION_STAGE_KEY]: () => ({
       tasks: buildEvaluationFactDerivedTasks(beatInput),
       gate: buildEvaluationFactDerivedGate(beatInput),
+    }),
+    [RESPONSES_STAGE_KEY]: () => ({
+      tasks: buildResponsesFactDerivedTasks(responsesBeatInput),
+      gate: buildResponsesFactDerivedGate(responsesBeatInput),
     }),
   };
   const factBeats = FACT_DERIVED_BEATS[requestedStageKey]?.() ?? null;

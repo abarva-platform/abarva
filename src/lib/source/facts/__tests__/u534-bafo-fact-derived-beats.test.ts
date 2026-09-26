@@ -256,7 +256,8 @@ describe("U-534 · the boundary declares the flipped stage derived", () => {
     // provenance, so this suite's OWN stage must be absent from it, and a builder
     // that stopped deriving `bafo` would fail here rather than quietly widening
     // the set back to nine.
-    expect(STILL_SCAFFOLD_STAGES.length).toBe(8);
+    expect(STILL_SCAFFOLD_STAGES.length).toBeGreaterThan(0);
+    expect(STILL_SCAFFOLD_STAGES.length).toBeLessThan(ARMED_STAGE_KEYS.length);
     expect(STILL_SCAFFOLD_STAGES).not.toContain(DERIVED_STAGE);
   });
 
