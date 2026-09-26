@@ -28,7 +28,7 @@ When a named user creates a Source event, that user is assigned the Event Owner 
 
 ## Changes Included
 
-- API and agent event creation use the tenant-selected participant writer.
+- API and agent event creation use the tenant-selected participant writer; the agent refuses a missing client context instead of falling back to a generic tenant key.
 - Imported-request event creation records the authenticated event creator independently of the earlier request-mapping reviewer.
 - Both physical adapter implementations assign the named creator as Event Owner, with event-scoped stage, award-decision, and publication authority but no new financial visibility.
 - Missing participant storage fails the assignment instead of returning success; the Azure duplicate participant insert remains a no-op.
@@ -37,7 +37,7 @@ When a named user creates a Source event, that user is assigned the Event Owner 
 ## QA / Validation
 
 - Pass: Red-first tests captured the previous contributor assignment and the agent's bypass of the shared adapter.
-- Pass: API, adapter, and agent creation suites (52 tests); focused event-scope authorization regression.
+- Pass: API, adapter, and agent creation suites (53 tests); focused event-scope authorization regression.
 - Pass: Deliberately dropping the stage-approval flag in each physical adapter fails the respective test; mutations were restored.
 - Pass: ESLint on changed TypeScript files, `tsc --noEmit`, and `release:check`.
 - Blocked: Four unchanged admin-fixture expectations in the full Source access-policy suite fail on the base branch; the new owner-isolation test passes. These are not represented as green.

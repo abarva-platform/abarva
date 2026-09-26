@@ -67,6 +67,17 @@ it("does not create an ownerless event", async () => {
   expect(insertParticipant).not.toHaveBeenCalled();
 });
 
+it("does not create an event without a resolved tenant", async () => {
+  const result = await commitSourceEventTool.handler(input, {
+    ...context,
+    clientKey: undefined,
+  });
+
+  expect(result.success).toBe(false);
+  expect(createSourcingEvent).not.toHaveBeenCalled();
+  expect(insertParticipant).not.toHaveBeenCalled();
+});
+
 it("does not report success when the creator assignment fails", async () => {
   insertParticipant.mockResolvedValueOnce({ ok: false, error: "write failed" });
 

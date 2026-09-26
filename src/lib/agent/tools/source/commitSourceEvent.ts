@@ -96,8 +96,11 @@ export const commitSourceEventTool: AgentTool<CommitSourceEventInput> = {
     if (!ctx.userId) {
       return { success: false, error: 'named_source_event_creator_required', recovery: 'Sign in with a named Source user before creating an event.' };
     }
+    if (!ctx.clientKey) {
+      return { success: false, error: 'source_tenant_required', recovery: 'Select an active client before creating a Source event.' };
+    }
 
-    const clientKey = ctx.clientKey ?? 'demo';
+    const clientKey = ctx.clientKey;
 
     try {
       const event = await createSourcingEvent({
