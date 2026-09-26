@@ -81,6 +81,11 @@ sense that no client-visible behaviour differs.
   figures had drifted behind `main` (scanned 2962 → 2973, tooling entry points 2029 → 2037, test
   2613 → 2632), and a regeneration re-records the true numbers rather than preserving stale ones.
   Attributable to this change: product-reached 2170 → 2171 and unreferenced 133 → 132.
+- `docs/architecture/t479-stale-suite-triage.json` — the row for this suite now carries
+  `baselineEntryRemovedBy: { item: "T-482", reason: … }`. That record quotes each baselined suite's
+  `knownFailing` entry and checks the quote against the live baseline, so removing the entry
+  silently would have made the record disagree with the file it cites. The declaration is the
+  record's own sanctioned way to say a baselined row was repaired rather than quietly dropped.
 
 Deliberately out of scope: the suite's fourth case reads `route.ts` as source text and asserts
 substrings. That is a separate, filed piece of work about byte-scanning cases, and it is left
@@ -106,7 +111,8 @@ stash — over the same scope, and the exit code was judged rather than the outp
   because the case count is unchanged — the same four tests run, one of them now passes — so the
   `floor` and `totalTests` fields needed no edit.
 
-**Mutation checks — seven applied, seven caught.** Each was confirmed to change behaviour before
+**Mutation checks — nine applied, nine caught** (seven on the timeout case below, two on the triage
+record's declaration, under the second-gate heading further down). Each was confirmed to change behaviour before
 its result was scored, and each is recorded with the assertion that caught it, so no assertion in
 the case is left unproven:
 
@@ -140,6 +146,24 @@ against the baseline`, exit 0, with the module counted as product-reached.
 Because the route changed, every measurement here was taken again on the final tree rather than
 carried over from the draft: the tower ratchet still reports `1796/1804 tests, 6 failing suites
 (baseline 6)`, exit 0, and the mutation table above is the re-run.
+
+**The second gate, and why the record needed an edit rather than a suppression**
+
+"Behavior coverage floor" then failed on
+`src/__tests__/behaviors/t479-stale-suite-triage-record.test.ts`: that record quotes this suite's
+`knownFailing` entry and checks the quote against the live baseline, so with the entry gone the
+quote had nothing to match. The control is deliberately two-sided, and both sides were checked here
+rather than assumed:
+
+- Declaration present **and** the baseline entry restored → fails at
+  `expect(live[suite.path]).toBeUndefined()`. The declaration therefore cannot become a standing
+  exemption that outlives the repair.
+- Baseline entry gone **and** the declaration removed → fails at
+  `expect(live[suite.path]).toEqual(quoted)`. A removal nobody declared is still a failure.
+
+`28 passed / 28` with the declaration in place. The two suites that read the changed baselines —
+`t479-stale-suite-triage-record` and `test-ci-coverage-census` — run `84 passed / 84` together
+under `--runInBand`.
 
 **Other gates**
 
