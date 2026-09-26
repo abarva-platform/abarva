@@ -3,7 +3,7 @@ import {
   NO_DRIFT_MESSAGE,
   diffDarkDirectories,
   formatDarkDirectoryDrift,
-} from "@/lib/qa/dark-directory-ratchet";
+} from "@/testing/dark-directory-ratchet";
 
 /**
  * T-491 — the dark test directory ratchet has to name what moved.

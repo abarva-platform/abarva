@@ -55,7 +55,7 @@ Release lane: `global-control-lane` — a shared repository CI control, not gate
 
 ## Changes Included
 
-- `src/lib/qa/dark-directory-ratchet.ts` — new. Pure set-difference and failure-text module:
+- `src/testing/dark-directory-ratchet.ts` — new. Pure set-difference and failure-text module:
   `diffDarkDirectories(baseline, observed)` returns `{ entered, left, inAgreement }`, and
   `formatDarkDirectoryDrift` renders the two sections. Duplicates on either side throw rather than
   being collapsed, because a duplicate makes a set difference lie about what moved.
@@ -69,6 +69,14 @@ Release lane: `global-control-lane` — a shared repository CI control, not gate
 - `src/__tests__/behaviors/t491-dark-directory-ratchet-diff.test.ts` — new. Eight cases over the
   diff module, including the cancelling direction and an assertion that the failure text itself
   contains the names of both sides.
+
+The module first went to `src/lib/qa/`, and the `audit:lib-orphans` gate refused it on CI: nothing
+but its own test reaches it, and a green suite over a module no entry point reaches is not evidence
+the code runs. That is correct, and the right answer is the one the gate names — this is test
+infrastructure, so it belongs beside `pg-test-boundary.ts` and the jest global setup in
+`src/testing/`, not in the product library. It was moved rather than added to the audit's baseline;
+`npm run audit:lib-orphans` then reports `No change against the baseline`. Recorded because the
+gate doing its job is itself evidence worth keeping.
 
 ## QA / Validation
 

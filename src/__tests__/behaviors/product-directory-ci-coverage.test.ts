@@ -7,7 +7,7 @@ import {
   NO_DRIFT_MESSAGE,
   diffDarkDirectories,
   formatDarkDirectoryDrift,
-} from "@/lib/qa/dark-directory-ratchet";
+} from "@/testing/dark-directory-ratchet";
 
 /**
  * No NEW dark test directory outside `src/__tests__`.
@@ -37,7 +37,7 @@ import {
  * and the failure is a set difference rather than two integers. A count
  * cannot tell a wiring from a regression when a change does both — it moves
  * by zero — and that is the case a reviewer would wave through. The diff
- * logic and its failure text live in `@/lib/qa/dark-directory-ratchet` so
+ * logic and its failure text live in `@/testing/dark-directory-ratchet` so
  * they can be asserted directly, including in the cancelling direction, by
  * `t491-dark-directory-ratchet-diff.test.ts`.
  */
