@@ -65,3 +65,26 @@ Revert the PR through the protected main branch and allow the repo-owned workflo
 ## Known Gaps
 
 The missing contract detail record remains a separate identity/read-model reconciliation task. This release does not claim that a contract was created or that the affected record is accepted in Contract 360.
+
+## Post-deployment signed-in replay
+
+**Appended 2026-09-26 (item C-526). The QA/Validation line above is left exactly
+as written: this record is audit history, and a correction to it is an addition,
+not an edit.** At the time that line was written it was true.
+
+- The signed-in post-deployment replay was run after the official main
+  deployment, and the action review was positive. This section is the record of
+  it; the "Not run" line above is the state as of the candidate, not the outcome.
+- What it found: the action drawer still looped back through Contract 360 after a
+  terminal detail error. That is a residual, not a regression of this change.
+- Residual carried by: item `C-602`, which narrowed the drawer's error state so
+  the loop no longer occurs. Merged as
+  [#8503](https://github.com/abarva-platform/abarva/pull/8503).
+- **Scope of the replay is UNDETERMINED, and is not claimed here.** The
+  Deployment Authority line above names two assertions — reopening a
+  missing-detail action *and* a valid detail-backed action. The evidence
+  available to this correction confirms one positive action review and one
+  residual; it does not settle whether both named assertions were exercised. That
+  gap is stated rather than closed by assumption.
+- No signed-in run was performed by the correction itself. It reconciles two
+  existing accounts of one run.
