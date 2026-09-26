@@ -23,6 +23,7 @@ import type { Contract360Response } from "./live/contractDetail";
 const CONTRACT_DETAIL_RETRY_ATTEMPTS = 2;
 const CONTRACT_DETAIL_RETRY_DELAY_MS = 600;
 const INITIAL_CONTRACT_DETAIL_RETRY_DELAY_MS = 1200;
+class ContractDetailNotFoundError extends Error {}
 const DEFAULT_SOURCE_PROVIDER_KEY: SourceWorkspaceProviderMode =
   "ecl_projection_db";
 import {
@@ -254,11 +255,11 @@ export function WorkspaceClient({
             effectiveSourceProviderKey,
           ),
         )
-          .then((r) =>
-            r.ok
-              ? (r.json() as Promise<Contract360Response>)
-              : Promise.reject(new Error(String(r.status))),
-          )
+          .then((r) => {
+            if (r.ok) return r.json() as Promise<Contract360Response>;
+            if (r.status === 404) throw new ContractDetailNotFoundError();
+            throw new Error(String(r.status));
+          })
           .then((view) => {
             detailRequests.current.set(contractId, "loaded");
             setStateRaw((prev) => ({
@@ -266,8 +267,11 @@ export function WorkspaceClient({
               contractDetail: { ...prev.contractDetail, [contractId]: view },
             }));
           })
-          .catch(() => {
-            if (remaining > 0) {
+          .catch((error: unknown) => {
+            if (
+              !(error instanceof ContractDetailNotFoundError) &&
+              remaining > 0
+            ) {
               window.setTimeout(
                 () => attempt(remaining - 1),
                 CONTRACT_DETAIL_RETRY_DELAY_MS,

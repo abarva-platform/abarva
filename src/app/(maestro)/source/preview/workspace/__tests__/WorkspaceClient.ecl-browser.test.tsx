@@ -1946,4 +1946,74 @@ describe("Source workspace ECL browser-surface proof", () => {
       screen.queryByRole("heading", { name: "Epic Systems Corporation" }),
     ).toBeNull();
   });
+
+  it("keeps an action reviewable when its contract detail returns 404", async () => {
+    const portfolio = await loadSourceWorkspacePortfolio(
+      "meridian",
+      "2027-06-30T00:00:00Z",
+    );
+    const missingContractId = "CONTRACT-ACTION-WITHOUT-DETAIL";
+    const actionCandidate = {
+      ...portfolio.impact.actionCandidates[0],
+      action_candidate_id: "ACTION-WITHOUT-DETAIL",
+      contract_id: missingContractId,
+      title: "Review unmatched action",
+      next_action: "Resolve contract identity before using detail.",
+    } as SourceWorkspacePortfolioData["impact"]["actionCandidates"][number];
+    const routedPortfolio: SourceWorkspacePortfolioData = {
+      ...portfolio,
+      impact: { ...portfolio.impact, actionCandidates: [actionCandidate] },
+    };
+    (global.fetch as jest.Mock).mockImplementation(
+      (input: RequestInfo | URL) =>
+        String(input).includes(
+          `/api/source/workspace/contract/${missingContractId}`,
+        )
+          ? Promise.resolve({ ok: false, status: 404 } as Response)
+          : new Promise<Response>(() => undefined),
+    );
+
+    render(
+      <WorkspaceClient
+        portfolio={routedPortfolio}
+        tenantName="Synthetic tenant"
+        sourceClientKey="synthetic-tenant"
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Contracts" }));
+    fireEvent.change(screen.getByRole("searchbox", { name: "Find a contract" }), {
+      target: { value: missingContractId },
+    });
+    fireEvent.click(
+      screen.getByRole("button", { name: /Review unmatched action/ }),
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText("Contract detail unavailable")).toBeTruthy();
+    });
+    expect(
+      screen.getByText(/No substitute contract is being shown/),
+    ).toBeTruthy();
+    expect(screen.getByText("Review unmatched action")).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Review action" })).toBeTruthy();
+    expect(
+      (global.fetch as jest.Mock).mock.calls.filter(([input]) =>
+        String(input).includes(
+          `/api/source/workspace/contract/${missingContractId}`,
+        ),
+      ),
+    ).toHaveLength(1);
+
+    fireEvent.click(screen.getByRole("button", { name: "Review action" }));
+    expect(
+      screen.getByRole("complementary", { name: "Action details" }),
+    ).toBeTruthy();
+    expect(
+      screen.getByText("Resolve contract identity before using detail."),
+    ).toBeTruthy();
+    expect(
+      screen.queryByRole("heading", { name: portfolio.contracts[0].contract_name }),
+    ).toBeNull();
+  });
 });

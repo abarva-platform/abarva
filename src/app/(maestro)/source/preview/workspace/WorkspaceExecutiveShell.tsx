@@ -1251,6 +1251,12 @@ export function WorkspaceExecutiveShell({
                 <ContractDetailLoadState
                   contractId={selectedContractId}
                   state={fetchedContractDetail}
+                  actionCandidate={portfolio.impact.actionCandidates.find(
+                    (candidate) => candidate.contract_id === selectedContractId,
+                  )}
+                  onReviewAction={(candidateId) =>
+                    setOpenActionCandidateId(candidateId)
+                  }
                 />
               )
             ) : (
@@ -3291,9 +3297,13 @@ function ContractFinancialPostureTable({
 function ContractDetailLoadState({
   contractId,
   state,
+  actionCandidate,
+  onReviewAction,
 }: {
   contractId: string | null;
   state: Contract360Response | "loading" | "error" | undefined;
+  actionCandidate?: SourceContractActionCandidateRow;
+  onReviewAction: (candidateId: string) => void;
 }) {
   const failed = state === "error";
   return (
@@ -3313,6 +3323,17 @@ function ContractDetailLoadState({
           ? `Source could not load ${contractId ?? "the selected contract"}. No substitute contract is being shown.`
           : `Loading ${contractId ?? "the selected contract"} from the governed contract-detail service.`}
       </p>
+      {failed && actionCandidate ? (
+        <div>
+          <p>{actionCandidate.title ?? actionCandidate.finding_summary}</p>
+          <button
+            type="button"
+            onClick={() => onReviewAction(actionCandidate.action_candidate_id)}
+          >
+            Review action
+          </button>
+        </div>
+      ) : null}
     </section>
   );
 }
