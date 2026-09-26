@@ -1247,7 +1247,7 @@ export function TaskProvideUpload({
   );
 }
 
-function SponsorReviewRequest({ eventId }: { eventId: string }) {
+export function SponsorReviewRequest({ eventId }: { eventId: string }) {
   const [status, setStatus] = useState<"idle" | "sending" | "sent" | "logged" | "error">("idle");
   const [errorMessage, setErrorMessage] = useState("Could not request sponsor review.");
 
