@@ -18,23 +18,23 @@
   ],
   "counts": {
     "testFiles": 2489,
-    "coveredTestFiles": 2029,
-    "pullRequestCoveredTestFiles": 2028,
-    "uncoveredTestFiles": 460,
+    "coveredTestFiles": 2042,
+    "pullRequestCoveredTestFiles": 2041,
+    "uncoveredTestFiles": 447,
     "directoriesWithTests": 490,
-    "directoriesFullyCovered": 287,
+    "directoriesFullyCovered": 289,
     "directoriesPartiallyCovered": 24,
-    "directoriesUncovered": 179,
-    "directoriesWithUnrunTestFiles": 203,
-    "directoriesWithUntriagedUnrunTestFiles": 192,
+    "directoriesUncovered": 177,
+    "directoriesWithUnrunTestFiles": 201,
+    "directoriesWithUntriagedUnrunTestFiles": 190,
     "declaredQuarantineTestFiles": 52,
-    "untriagedUnrunTestFiles": 408,
+    "untriagedUnrunTestFiles": 395,
     "indeterminateInvocations": 0,
     "unresolvedIgnoreArguments": 0,
     "criticalGovernedRiskDirectories": 1,
     "highGovernedRiskDirectories": 8,
-    "unclassifiedRiskDirectories": 183,
-    "unclassifiedRiskDirectoriesWithResolvedProductSources": 176,
+    "unclassifiedRiskDirectories": 181,
+    "unclassifiedRiskDirectoriesWithResolvedProductSources": 174,
     "unclassifiedRiskDirectoriesWithNoResolvedProductSource": 7
   },
   "quarantineLists": [
@@ -3310,19 +3310,6 @@
       }
     },
     {
-      "directory": "src/lib/deliverables/governance/__tests__",
-      "testFiles": 4,
-      "unrunTestFiles": 4,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 4,
-      "governedRisk": {
-        "score": 0,
-        "band": "unclassified",
-        "signals": [],
-        "productSourceCount": 5
-      }
-    },
-    {
       "directory": "src/lib/atlas/composition/__tests__",
       "testFiles": 3,
       "unrunTestFiles": 3,
@@ -3648,19 +3635,6 @@
       }
     },
     {
-      "directory": "src/lib/deliverables/composer/__tests__",
-      "testFiles": 9,
-      "unrunTestFiles": 9,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 9,
-      "governedRisk": {
-        "score": 0,
-        "band": "unclassified",
-        "signals": [],
-        "productSourceCount": 9
-      }
-    },
-    {
       "directory": "src/lib/programs/ava-chat/__tests__",
       "testFiles": 7,
       "unrunTestFiles": 7,
@@ -3941,14 +3915,6 @@
       "via": []
     },
     {
-      "directory": "src/lib/deliverables/composer/__tests__",
-      "testFiles": 9,
-      "coveredTestFiles": 0,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 9,
-      "via": []
-    },
-    {
       "directory": "src/__tests__/integration/agents",
       "testFiles": 8,
       "coveredTestFiles": 0,
@@ -4118,14 +4084,6 @@
     },
     {
       "directory": "src/lib/agent/voice-doctrine/__tests__",
-      "testFiles": 4,
-      "coveredTestFiles": 0,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 4,
-      "via": []
-    },
-    {
-      "directory": "src/lib/deliverables/governance/__tests__",
       "testFiles": 4,
       "coveredTestFiles": 0,
       "declaredQuarantineTestFiles": 0,
