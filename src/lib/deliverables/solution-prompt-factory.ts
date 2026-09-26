@@ -25,6 +25,10 @@ tables, charts, and decision exhibits. You write like a partner who understood t
 and made a clear judgment — never a generic, mechanical, section-pack memo. You decide the right
 exhibit mix, but you are visual-first by default.`;
 
+function requiresApprovedArchitectureOption(artifact: DeliverableKey): boolean {
+  return artifact === "target_state_architecture";
+}
+
 function field(
   label: string,
   value: string | undefined,
@@ -50,8 +54,7 @@ function baselineMetricsBlock(ctx: SolutionContext): string {
   const entries = Object.entries(ctx.baselineMetrics ?? {}).filter(
     ([label, value]) => label.trim() && value.trim(),
   );
-  if (!entries.length)
-    return "RECORDED BASELINE METRICS:\n[none captured]";
+  if (!entries.length) return "RECORDED BASELINE METRICS:\n[none captured]";
   return (
     "RECORDED BASELINE METRICS:\n" +
     entries.map(([label, value]) => `- ${label}: ${value}`).join("\n")
@@ -149,11 +152,9 @@ export function buildArtifactPrompt(args: {
     draftCaveat: args.draftCaveat,
   });
 
-  const archRule =
-    profile.renderer === "html_architecture" &&
-    artifact !== "solution_approach_options"
-      ? `\nARCHITECTURE RULE:\n- Do NOT choose the solution approach here — use the already-approved chosenOption: ${ctx.chosenOption ? `"${ctx.chosenOption}"` : "[MISSING — STOP and request P3a approval]"}.\n- The architecture must be built to that decision.\n- Do not reopen, blend, or silently replace rejected alternatives. If new evidence conflicts with the decision, expose the conflict in the Open Decision Log.`
-      : "";
+  const archRule = requiresApprovedArchitectureOption(artifact)
+    ? `\nARCHITECTURE RULE:\n- Do NOT choose the solution approach here — use the already-approved chosenOption: ${ctx.chosenOption ? `"${ctx.chosenOption}"` : "[MISSING — STOP and request P3a approval]"}.\n- The architecture must be built to that decision.\n- Do not reopen, blend, or silently replace rejected alternatives. If new evidence conflicts with the decision, expose the conflict in the Open Decision Log.`
+    : "";
 
   const draftBlock =
     generationMode === "draft"
