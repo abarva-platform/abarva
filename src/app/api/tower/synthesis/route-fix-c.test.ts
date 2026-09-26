@@ -35,7 +35,9 @@ import { TOWER_LEAD_AGENT } from '@/lib/tower/constants';
 jest.mock('server-only', () => ({}));
 jest.mock('@/lib/auth/tenancy', () => ({
   requireTenancy: jest.fn(),
-  tenancyErrorResponse: () => new Response('tenancy', { status: 401 }),
+  // A spy rather than a plain stub: the fence case below asserts the route hands
+  // the refusal to the fence's own mapper instead of composing a status itself.
+  tenancyErrorResponse: jest.fn(() => new Response('tenancy', { status: 401 })),
 }));
 jest.mock('@/lib/auth/program-access-policy', () => ({
   loadUserProgramAccessPolicy: jest.fn(),
@@ -60,7 +62,7 @@ jest.mock('@/lib/integrations/ai-egress', () => ({
 
 import { getActiveClientRow } from '@/lib/active-client';
 import { loadUserProgramAccessPolicy } from '@/lib/auth/program-access-policy';
-import { requireTenancy } from '@/lib/auth/tenancy';
+import { requireTenancy, tenancyErrorResponse } from '@/lib/auth/tenancy';
 import { preflightAnthropicDirectClient } from '@/lib/integrations/ai-egress';
 import { loadTenantTowerPortfolio } from '@/lib/reasoning/tenant-tower-portfolio';
 import {
@@ -74,6 +76,10 @@ import {
   TOWER_SYNTHESIS_TIMEOUT_MS,
   TOWER_SYNTHESIS_TIMEOUT_MESSAGE,
 } from './route';
+
+beforeEach(() => {
+  jest.clearAllMocks();
+});
 
 describe('Tower synthesis Fix C levers', () => {
   it('uses temperature=0 so the same portfolio state produces the same read', () => {
@@ -181,6 +187,43 @@ describe('Tower synthesis Fix C levers', () => {
     // constructed and not handed over is the defect this replaces.
     expect(options?.signal).toBeInstanceOf(AbortSignal);
     expect(options?.signal?.aborted).toBe(false);
+  });
+
+  /*
+   * Not part of T-484's four cases, and here for a reason the CI gate found
+   * rather than one this item predicted.
+   *
+   * `docs/security/tenancy-fence-coverage.json` classifies a route as
+   * `behavioral` as soon as a suite loads it and calls an HTTP-method handler.
+   * The two cases above do exactly that, which moved this route out of the
+   * census's `byteScannerOnly` bucket -- and they stub `requireTenancy`, so on
+   * their own they say nothing about the fence. Measured, not assumed: with the
+   * fence deleted (tenancy hard-coded to a foreign tenant and the refusal arm
+   * returning 200) both covering suites stayed GREEN, 9 passed / 4 skipped,
+   * byte-identical to the clean baseline. A change that improves how a security
+   * census reads without improving what it measures is the shape this backlog
+   * exists against, so the gap is closed here rather than recorded as a caveat.
+   *
+   * What this asserts is the part a stubbed fence can still prove honestly: the
+   * route CONSULTS the fence before doing anything else, and a fence refusal
+   * becomes the fence's own error response rather than an answer. That is
+   * precisely what the census's recorded mutation destroys.
+   */
+  it('refuses before reading anything when the tenancy fence rejects', async () => {
+    const stream = jest.fn();
+    givenRoute({ stream, stateHash: 'fence-case' });
+    const refusal = new Error('unauthenticated');
+    (requireTenancy as jest.Mock).mockRejectedValue(refusal);
+
+    const response = await POST(new Request('https://test.local/api/tower/synthesis', { method: 'POST' }));
+
+    // The fence's own mapper decides the status; the route does not invent one.
+    expect(tenancyErrorResponse).toHaveBeenCalledWith(refusal);
+    expect(response.status).toBe(401);
+    // And nothing tenant-scoped was read or sent: no portfolio load, no model call.
+    expect(loadTenantTowerPortfolio).not.toHaveBeenCalled();
+    expect(preflightAnthropicDirectClient).not.toHaveBeenCalled();
+    expect(stream).not.toHaveBeenCalled();
   });
 
   it('answers a stalled upstream with the honest timeout message and aborts it', async () => {

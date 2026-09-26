@@ -59,9 +59,12 @@ feature-gated.
 
 - **Layer 4 (products):** no behaviour change. Two Tower surfaces and one Home
   surface are now *observed* by tests that drive them; none of them was modified.
-- **Test and validation tooling:** four byte-matching cases removed, six
+- **Test and validation tooling:** four byte-matching cases removed, seven
   behavioural cases added, and one new control added to the triage-record guard
   so the record cannot keep quoting case titles that no suite has any more.
+- **Security assurance artifact:** the tenancy-fence census is regenerated and
+  one of its three executed mutation samples is re-measured. No fence, route or
+  auth path is modified; what changes is what the census can honestly claim.
 
 ## Client Applicability
 
@@ -74,7 +77,11 @@ feature-gated.
 ## Changes Included
 
 - `src/app/api/tower/synthesis/route-fix-c.test.ts` — the source-text case
-  replaced by two cases that drive the exported `POST` handler.
+  replaced by two cases that drive the exported `POST` handler, plus a third that
+  closes the fence-coverage gap those two would otherwise have opened in the
+  security census (see the CI-gate note under QA).
+- `docs/security/tenancy-fence-coverage.json` — regenerated, and that route's
+  mutation sample re-measured and re-recorded with why it moved.
 - `src/lib/tower/__tests__/ecl-projection-preview-degrades.test.ts` — the
   call-site regex case replaced by two cases that render the real page through
   its exported renderer, with the real projection read failing.
@@ -101,10 +108,11 @@ with a clean `git status`.
 
 | scope | before | after |
 |---|---|---|
-| the four changed suites | 43 passed, 0 failed (4 suites) | 46 passed, 0 failed (4 suites) |
-| tower ratchet scope, baseline paths verbatim | 8 failed / 1796 passed / 1804 total, 6 failing suites | 8 failed / 1798 passed / 1806 total, 6 failing suites |
+| the four changed suites | 43 passed, 0 failed (4 suites) | 47 passed, 0 failed (4 suites) |
+| tower ratchet scope, baseline paths verbatim | 8 failed / 1796 passed / 1804 total, 6 failing suites | 8 failed / 1799 passed / 1807 total, 6 failing suites |
 | home ratchet scope | 28 failed / 733 passed / 761 total, 12 failing suites | 28 failed / 733 passed / 761 total, 12 failing suites |
-| `src/__tests__/behaviors` `--runInBand` | 1353 passed, 0 failed (139 suites) | 1353 + 1 = see note |
+| `src/__tests__/behaviors` `--runInBand` | 1353 passed, 0 failed (139 suites) | 1354 passed, 0 failed (139 suites) |
+| `node --test scripts/quality/tenancy-fence-coverage.test.mjs` | 15 passed, 0 failed | 15 passed, 0 failed |
 
 The tower and home failures are the ones already declared in
 `docs/ci/tower-test-baseline.json` and `docs/ci/home-test-baseline.json`; the same
@@ -140,6 +148,38 @@ Three more on the new triage-record control, one per direction it has to hold:
 removing one row's declaration, putting a replaced case title back into a live
 suite, and naming a replacement the suite does not have — each fails it, and the
 record guard is 29/29 with all three reverted.
+
+### A CI gate caught a false improvement, and it was right
+
+`Fence coverage matches the committed census` failed on the first push, and not
+on a formality. `docs/security/tenancy-fence-coverage.json` classifies an API
+route as `behavioral` as soon as some suite loads it and calls an HTTP-method
+handler. The replacement cases do exactly that, so the Tower synthesis route
+moved out of the census's `byteScannerOnly` bucket (7 -> 6) and into `behavioral`
+(66 -> 67) — **while those cases stub `requireTenancy`**. In a security census
+that reads as fence assurance that had not been gained.
+
+It was measured before anything was recorded. Re-running the census's own
+recorded mutation for that row — the fence deleted, tenancy hard-coded to a
+foreign tenant and the refusal arm returning 200 — left both covering suites
+GREEN at 10 passed / 4 skipped / 0 failed, byte-identical to the clean baseline.
+So the improvement was real in the classifier and empty in fact.
+
+The gap is closed rather than caveated. The suite now also asserts the part a
+stubbed fence can still prove honestly: the route consults the fence before any
+tenant-scoped read, and hands a refusal to the fence's own mapper instead of
+composing a status itself — no portfolio load, no egress preflight, no model
+call. The same mutation now turns the covering suites **RED**: 14 total, 0 failed
+clean -> 1 failed with the fence deleted.
+
+The census artifact records that history rather than overwriting it: the row's
+sample carries `whyItMoved`, its `result` flips from `green` to `red`, and the
+`mutationProof` note now states the direction that proves each kind of row —
+green for a `byte-scanner` or `none` row, red for a `behavioral` one — plus the
+sentence that was missing and that this episode is the case for: **a
+`behavioral` row with no sample is a structural classification only, because a
+suite that stubs the fence also loads the route and calls a handler.** The
+sampled-of-how-many counts are updated in both buckets.
 
 Typecheck: `NODE_OPTIONS=--max-old-space-size=6144 npx tsc --noEmit --pretty false`
 with `tsconfig.tsbuildinfo` deleted first, **exit 0**, judged by status. One real
