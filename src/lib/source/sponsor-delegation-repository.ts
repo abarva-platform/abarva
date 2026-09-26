@@ -3,6 +3,7 @@ import "server-only";
 import { getAzureWriteFluentClient } from "@/lib/data-plane/postgresCompat";
 import {
   acknowledgementNotes,
+  configuredSponsorDelegationSigningKey,
   noticeNotes,
   verifiedDelegatedSponsorAcknowledgement,
   type SponsorDelegationApprovalRow,
@@ -94,7 +95,7 @@ export async function hasVerifiedSponsorDelegation(input: {
   eventId: string;
   tenantKey: string;
 }): Promise<boolean> {
-  const signingKey = process.env.SOURCE_SPONSOR_DELEGATION_SIGNING_KEY?.trim();
+  const signingKey = configuredSponsorDelegationSigningKey();
   if (!signingKey) return false;
   const [sponsorUserId, scopeArtifact] = await Promise.all([
     readAssignedSponsorUserId(input.eventId, input.tenantKey),
@@ -119,7 +120,7 @@ export async function appendSponsorDelegationAcknowledgement(input: {
   sponsorUserId: string;
   scopeArtifact: ScopeArtifactVersion;
 }): Promise<string> {
-  const signingKey = process.env.SOURCE_SPONSOR_DELEGATION_SIGNING_KEY?.trim();
+  const signingKey = configuredSponsorDelegationSigningKey();
   if (!signingKey) throw new Error("sponsor_delegation_signing_key_required");
   const { data, error } = await getAzureWriteFluentClient()
     .from("source_event_approvals")
@@ -151,7 +152,7 @@ export async function appendSponsorDelegationNotice(input: {
   acknowledgementId: string;
   providerMessageId: string;
 }): Promise<void> {
-  const signingKey = process.env.SOURCE_SPONSOR_DELEGATION_SIGNING_KEY?.trim();
+  const signingKey = configuredSponsorDelegationSigningKey();
   if (!signingKey) throw new Error("sponsor_delegation_signing_key_required");
   if (!input.providerMessageId || input.providerMessageId.startsWith("console-")) {
     throw new Error("confirmed_email_delivery_required");

@@ -24,7 +24,7 @@ An authorized client admin or explicitly assigned event delegate can acknowledge
 - Specific clients: none automatically enabled.
 - Internal only: no.
 - Public/demo only: no.
-- Feature flag: `SOURCE_SPONSOR_DELEGATION_SIGNING_KEY` must be provisioned; sponsor email must resolve from exactly one event participant and pass `SOURCE_APPROVAL_TEST_RECIPIENT_ALLOWLIST` until client notification provenance is established.
+- Feature flag: `SOURCE_SPONSOR_DELEGATION_SIGNING_KEY` must be provisioned with at least 32 bytes; sponsor email must resolve from exactly one event participant and pass `SOURCE_APPROVAL_TEST_RECIPIENT_ALLOWLIST` until client notification provenance is established.
 
 ## Changes Included
 

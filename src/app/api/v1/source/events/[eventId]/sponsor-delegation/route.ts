@@ -6,6 +6,7 @@ import { loadUserSourceAccessPolicy } from "@/lib/auth/source-access-policy";
 import { getAzureReadFluentClient } from "@/lib/data-plane/postgresCompat";
 import { isApprovedTestRecipient } from "@/lib/source/notifications/approval-recipient-policy";
 import { sendSponsorDelegationNotice } from "@/lib/source/notifications/sponsor-delegation-notice";
+import { configuredSponsorDelegationSigningKey } from "@/lib/source/sponsor-delegation";
 import {
   appendSponsorDelegationAcknowledgement,
   appendSponsorDelegationNotice,
@@ -97,13 +98,13 @@ export async function GET(_request: Request, { params }: RouteContext) {
     ));
     return Response.json({
       verified,
-      available: Boolean(process.env.SOURCE_SPONSOR_DELEGATION_SIGNING_KEY?.trim()),
+      available: Boolean(configuredSponsorDelegationSigningKey()),
       sponsorAssigned: Boolean(sponsorUserId),
       sponsorName: sponsorIdentity?.name ?? null,
       recipientReady,
       scopeArtifact: scopeArtifact ? { id: scopeArtifact.id, sha256: scopeArtifact.sha256 } : null,
       currentStage: event.current_stage_key,
-      canDelegate: Boolean(process.env.SOURCE_SPONSOR_DELEGATION_SIGNING_KEY?.trim()) &&
+      canDelegate: Boolean(configuredSponsorDelegationSigningKey()) &&
         policy.canApproveSourceStages &&
         (policy.accessLevel === "client_admin" || assignedDelegate) &&
         sponsorUserId !== null && !actorUserIds.includes(sponsorUserId) && recipientReady,
@@ -127,7 +128,7 @@ export async function POST(request: Request, { params }: RouteContext) {
     if (!policy.canApproveSourceStages) {
       return Response.json({ error: "delegate_approval_rights_required" }, { status: 403 });
     }
-    if (!process.env.SOURCE_SPONSOR_DELEGATION_SIGNING_KEY?.trim()) {
+    if (!configuredSponsorDelegationSigningKey()) {
       return Response.json({ error: "delegated_commitment_not_configured" }, { status: 503 });
     }
     const actorUserId = tenancy.userId;

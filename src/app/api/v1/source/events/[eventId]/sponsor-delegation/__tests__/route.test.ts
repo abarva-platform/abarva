@@ -49,7 +49,7 @@ const accepted = { acknowledged: true, scopeArtifactId: artifact.id, scopeArtifa
 
 beforeEach(() => {
   jest.clearAllMocks();
-  process.env.SOURCE_SPONSOR_DELEGATION_SIGNING_KEY = "test-only-signing-key";
+  process.env.SOURCE_SPONSOR_DELEGATION_SIGNING_KEY = "test-only-signing-key-with-32-plus-bytes";
   requireTenancyMock.mockResolvedValue({ userId: "user_delegate" });
   activeClientMock.mockResolvedValue({ key: "tenant-one" });
   accessPolicyMock.mockResolvedValue({ accessLevel: "client_admin", canApproveSourceStages: true });
@@ -166,6 +166,13 @@ it("fails closed before a write when the server signing key is absent", async ()
   delete process.env.SOURCE_SPONSOR_DELEGATION_SIGNING_KEY;
   const response = await POST(request(accepted), params);
   expect(response.status).toBe(503);
+  expect(appendAckMock).not.toHaveBeenCalled();
+  expect(sendMock).not.toHaveBeenCalled();
+});
+
+it("rejects a short signing key before any write or notification", async () => {
+  process.env.SOURCE_SPONSOR_DELEGATION_SIGNING_KEY = "too-short";
+  expect((await POST(request(accepted), params)).status).toBe(503);
   expect(appendAckMock).not.toHaveBeenCalled();
   expect(sendMock).not.toHaveBeenCalled();
 });

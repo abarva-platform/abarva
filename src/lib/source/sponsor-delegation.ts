@@ -21,6 +21,11 @@ export interface ExpectedSponsorDelegation {
 export const SPONSOR_DELEGATE_STATEMENT =
   "I acknowledge the scope and resourcing as authorized delegate.";
 
+export function configuredSponsorDelegationSigningKey(): string | null {
+  const key = process.env.SOURCE_SPONSOR_DELEGATION_SIGNING_KEY?.trim();
+  return key && Buffer.byteLength(key, "utf8") >= 32 ? key : null;
+}
+
 interface AcknowledgementNotes {
   version: 1;
   sponsorUserId: string;
