@@ -1,0 +1,89 @@
+{
+  "item": "C-408",
+  "subject": "Which mechanism holds the Source version-freeze approval invariant, measured per layer",
+  "measuredOnCommit": "1526110e70d95acdbfd38309b6046432b01e6549",
+  "method": "Each candidate mechanism was removed one at a time; every mutation was confirmed to have changed the file before the suite was run, and the failing case titles were recorded rather than only the counts.",
+  "question": "When an approved authority version is materially edited so a new version supersedes it, what stops the old version's approval from presenting as current?",
+  "answer": "The approvals read predicate, in SQL, at read time. Nothing invalidates the stale rows and nothing needs to: they are never selected.",
+  "layers": [
+    {
+      "layer": 1,
+      "name": "read-time SQL predicate",
+      "site": "src/lib/source/new-workspace/authority-version-store.ts readSourceAuthorityVersionState — .eq(\"version_id\", currentVersion.id)",
+      "verdict": "load_bearing",
+      "mutation": "delete that .eq call",
+      "mutationEffect": "3 cases fail",
+      "failingCases": [
+        "scopes both reads by tenant, event and kind, and takes only the unsuperseded version",
+        "the version-freeze fence — withdraws an acceptance the superseding edit left behind, and the SQL predicate is what does it",
+        "the version-freeze fence — withdraws both Strategy approvals the same way, though nothing in production asks"
+      ]
+    },
+    {
+      "layer": 2,
+      "name": "row re-check in the store",
+      "site": "src/lib/source/new-workspace/authority-version-store.ts resolveApproval — text(row.version_id) !== versionId",
+      "verdict": "redundant_backstop_fails_closed",
+      "mutation": "delete that guard",
+      "mutationEffect": "1 case fails, and only the backstop case",
+      "failingCases": [
+        "the version-freeze fence — fails closed rather than leaking if that predicate is ever widened"
+      ],
+      "note": "Redundant while layer 1 holds, and deliberately kept: if the predicate is ever widened the store refuses the whole read rather than handing a stale approval on. Its own case drives it by serving rows that ignore the predicates, which is what a widened predicate looks like from inside the store."
+    },
+    {
+      "layer": 3,
+      "name": "contract-side filter",
+      "site": "src/lib/source/new-workspace/source-version-authority.ts approvalsForCurrentVersion — approval.versionId === currentVersionId",
+      "verdict": "redundant_and_only_reached_by_pure_function_tests",
+      "mutation": "drop the versionId comparison from the filter",
+      "mutationEffect": "2 cases fail, both in source-version-authority.test.ts; 0 cases fail in the suite that executes the store",
+      "failingCases": [
+        "accepts a request only from a named actor approving the exact current version",
+        "requires business owner and procurement lead to approve the same strategy version as distinct actors"
+      ],
+      "note": "This asymmetry is the defect shape the item names: a guard whose only proof asserts on a pure function's return value can be removed without any test that drives the real read path noticing."
+    },
+    {
+      "layer": 4,
+      "name": "planner invalidation list",
+      "site": "src/lib/source/new-workspace/source-version-authority.ts planSourceAuthorityVersion — invalidatedApprovalVersionIds",
+      "verdict": "dead_removed",
+      "mutation": "give it a consumer that deletes the stale approval rows in the write path",
+      "mutationEffect": "1 case fails",
+      "failingCases": [
+        "the version-freeze fence — does not write to the approvals table when a version supersedes another"
+      ],
+      "note": "Run twice: once against the field as it stood, once after removal using plan.supersedesVersionId. Both are decisive. The field is deleted rather than wired, per the item's own acceptance (c)."
+    }
+  ],
+  "fixtureFinding": {
+    "problem": "The existing store fixture returns its rows regardless of which predicates the query builder was given.",
+    "consequence": "Deleting the predicate under test leaves every one of its cases green, so a case written against that fixture cannot prove a read-time fence at all.",
+    "resolution": "serveTable applies the recorded .eq/.is predicates to a row set, so the row set is the table and the builder is a query over it. The pre-existing predicate-shape assertion is kept: it says which columns are filtered, which is a different claim from what the filter does."
+  },
+  "notFixedHere": {
+    "half": "evaluateStrategyVersionApprovals",
+    "measurement": "Zero non-test references anywhere in src/ on 1526110e7. The mounted src/app/(maestro)/source/new/[eventId]/page.tsx imports only evaluateRequestVersionApproval and reads only authorityKind: \"request\".",
+    "andOneThingTheItemDidNotSay": "Nothing WRITES the strategy half either. persistSourceAuthorityVersion's only production caller is src/app/api/v1/source/events/route.ts, which persists \"request\". authorityKind: \"strategy\" appears in no production path in the repository; every occurrence is in a test.",
+    "whyItIsNotAOneLineWiring": "Naming a caller for the resolver is not the cost. The cost is building the Strategy version write path, its payload projection and its approval recording — which is F2's whole exit condition, not a bounded change.",
+    "verdict": "decision_needed",
+    "recommendation": "Decide whether F2 is in scope before deciding which of the two resolvers to keep. If it is, the resolver stays and the write path is a separate item. If it is not, delete the resolver with its cases rather than leaving an exported gate nothing calls. Do not resolve it by deleting the resolver as tidy-up: the fence proven here already covers the strategy kind, so the resolver is the only part that would have to be rebuilt."
+  },
+  "scope": {
+    "suites": [
+      "src/lib/source/new-workspace/__tests__/authority-version-store.test.ts",
+      "src/lib/source/new-workspace/__tests__/event-authority.test.ts",
+      "src/lib/source/new-workspace/source-version-authority.test.ts",
+      "src/lib/source/new-workspace/phase-state.test.ts",
+      "src/lib/source/new-workspace/step-readiness.test.ts",
+      "src/lib/source/new-workspace/navigation.test.ts",
+      "src/lib/source/new-workspace/event-intelligence.test.ts",
+      "src/lib/source/new-workspace/__tests__/response-intake.test.ts"
+    ],
+    "why": "This is the list .github/workflows/unit-suites.yml runs for this directory, so the scope of the measurement is the scope CI will run.",
+    "baselineAtCommit": { "suites": 8, "passed": 80, "failed": 0 },
+    "afterChange": { "suites": 8, "passed": 84, "failed": 0 },
+    "baselineMeasuredIn": "a separate detached worktree at origin/main, not a stash of this one"
+  }
+}

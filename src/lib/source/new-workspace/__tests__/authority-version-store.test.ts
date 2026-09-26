@@ -80,6 +80,71 @@ function serve(byTable: Record<string, Result>) {
   return { from, calls };
 }
 
+/**
+ * A fixture that APPLIES the recorded predicates instead of answering the same
+ * rows whichever filters were asked for.
+ *
+ * `serve` above cannot see a predicate change: it returns its fixture no matter
+ * what `.eq` was called with, so deleting `.eq("version_id", …)` from the
+ * approvals read leaves every one of its cases green. That is the shape this
+ * item was filed against — a control that is computed and then not executed by
+ * the thing that claims to test it. Here the row set is the table and the
+ * builder is a query over it, so the fence under test is the predicate itself.
+ *
+ * Only `.eq` and `.is` are honoured, which is all `readSourceAuthorityVersionState`
+ * issues. `maybeSingle` mirrors the real client: more than one surviving row is
+ * an error, not a silent first-row pick.
+ */
+function serveTable(rows: {
+  versions: Record<string, unknown>[];
+  approvals: Record<string, unknown>[];
+}) {
+  const ROWS: Record<string, Record<string, unknown>[]> = {
+    source_event_authority_versions: rows.versions,
+    source_event_authority_version_approvals: rows.approvals,
+  };
+
+  const from = jest.fn((table: string) => {
+    const predicates: [string, unknown][] = [];
+    const matched = () =>
+      (ROWS[table] ?? []).filter((row) =>
+        predicates.every(([column, value]) => row[column] === value),
+      );
+    const query: Chain = {
+      select: jest.fn(),
+      eq: jest.fn(),
+      is: jest.fn(),
+      maybeSingle: jest.fn(async () => {
+        const hits = matched();
+        if (hits.length > 1) {
+          return {
+            data: null,
+            error: { message: "multiple rows returned" },
+          } satisfies Result;
+        }
+        return { data: hits[0] ?? null, error: null } satisfies Result;
+      }),
+      then: (resolve: (value: Result) => unknown) =>
+        Promise.resolve({ data: matched(), error: null } as Result).then(
+          resolve,
+        ),
+    };
+    query.select.mockReturnValue(query);
+    query.eq.mockImplementation((column: string, value: unknown) => {
+      predicates.push([column, value]);
+      return query;
+    });
+    query.is.mockImplementation((column: string, value: unknown) => {
+      predicates.push([column, value]);
+      return query;
+    });
+    return query;
+  });
+
+  getClient.mockReturnValue({ from });
+  return { from };
+}
+
 const VERSION_ROW = {
   id: "version-1",
   event_id: "event-1",
@@ -357,6 +422,193 @@ describe("Source authority version store", () => {
         approvals: state.approvals,
       }),
     ).toEqual({ status: "pending", missing: ["Request acceptance pending"] });
+  });
+
+  describe("the version-freeze fence — which mechanism holds it", () => {
+    // C-408 asked which of three candidate mechanisms actually keeps a
+    // superseded version's acceptance from presenting as current: the read
+    // query's own predicate, the row re-check in the store, or
+    // `approvalsForCurrentVersion` in the contract. Each case below removes one
+    // and says what happens, because "defence in depth" is a claim about three
+    // layers and each has to be executed to be worth anything.
+
+    const SUPERSEDED = {
+      id: "version-1",
+      event_id: "event-1",
+      client_key: "tenant-1",
+      authority_kind: "request",
+      version_number: 1,
+      content_hash: HASH,
+      superseded_at: "2026-09-26T00:00:00.000Z",
+    };
+    const CURRENT = {
+      id: "version-2",
+      event_id: "event-1",
+      client_key: "tenant-1",
+      authority_kind: "request",
+      version_number: 2,
+      content_hash: "b".repeat(64),
+      superseded_at: null,
+    };
+    const STALE_ACCEPTANCE = {
+      version_id: "version-1",
+      client_key: "tenant-1",
+      role: "request_acceptor",
+      decision: "approved",
+      actor_user_id: "user-7",
+    };
+
+    it("withdraws an acceptance the superseding edit left behind, and the SQL predicate is what does it", async () => {
+      // The one case the item is actually about: an approved Request version is
+      // materially edited, so version 2 is current and version 1 keeps its
+      // acceptance row. Nothing deleted that row, and nothing has to: the
+      // approvals read never asks for it.
+      serveTable({
+        versions: [SUPERSEDED, CURRENT],
+        approvals: [STALE_ACCEPTANCE],
+      });
+
+      const state = await readSourceAuthorityVersionState(
+        "event-1",
+        "tenant-1",
+        "request",
+      );
+
+      // Asserted on the store's own return value, not only through the
+      // resolver. `approvalsForCurrentVersion` would filter this row out a
+      // second time, so a test that looked only at the resolver's verdict would
+      // stay green with the predicate deleted — the redundant guard would
+      // absorb the mutation and the fence would go untested.
+      expect(state).toEqual({
+        kind: "available",
+        currentVersion: {
+          id: "version-2",
+          versionNumber: 2,
+          contentHash: "b".repeat(64),
+        },
+        approvals: [],
+      });
+
+      if (state.kind !== "available" || !state.currentVersion)
+        throw new Error("unreachable");
+      expect(
+        evaluateRequestVersionApproval({
+          currentVersionId: state.currentVersion.id,
+          approvals: state.approvals,
+        }),
+      ).toEqual({ status: "pending", missing: ["Request acceptance pending"] });
+    });
+
+    it("withdraws both Strategy approvals the same way, though nothing in production asks", async () => {
+      // The Strategy half is `F2`'s half and its resolver has no production
+      // caller, which is a separate open decision. The fence is not waiting on
+      // that decision: it is the same query, so the same edit withdraws a
+      // business-owner and a procurement-lead approval together. Proven here so
+      // wiring the resolver later cannot be mistaken for wiring the fence.
+      serveTable({
+        versions: [
+          { ...SUPERSEDED, authority_kind: "strategy" },
+          { ...CURRENT, authority_kind: "strategy" },
+        ],
+        approvals: [
+          { ...STALE_ACCEPTANCE, role: "business_owner", actor_user_id: "u-a" },
+          {
+            ...STALE_ACCEPTANCE,
+            role: "procurement_lead",
+            actor_user_id: "u-b",
+          },
+        ],
+      });
+
+      const state = await readSourceAuthorityVersionState(
+        "event-1",
+        "tenant-1",
+        "strategy",
+      );
+      if (state.kind !== "available" || !state.currentVersion)
+        throw new Error("unreachable");
+      expect(state.approvals).toEqual([]);
+      expect(
+        evaluateStrategyVersionApprovals({
+          currentVersionId: state.currentVersion.id,
+          approvals: state.approvals,
+        }),
+      ).toEqual({
+        status: "pending",
+        missing: [
+          "Business owner approval pending",
+          "Procurement lead approval pending",
+        ],
+      });
+    });
+
+    it("fails closed rather than leaking if that predicate is ever widened", async () => {
+      // The second layer, executed on its own. `serve` answers whichever rows
+      // it was given regardless of the filters, which is exactly a widened
+      // predicate: the stale row comes back from the database. The store must
+      // refuse the whole read rather than hand the row on — dropping it quietly
+      // would under-count a `changes_requested` on the current version, and
+      // passing it through would report the edited version as accepted.
+      serve({
+        ...versions(CURRENT),
+        ...approvals([STALE_ACCEPTANCE]),
+      });
+
+      await expect(
+        readSourceAuthorityVersionState("event-1", "tenant-1", "request"),
+      ).resolves.toEqual({ kind: "unavailable" });
+    });
+
+    it("does not write to the approvals table when a version supersedes another", async () => {
+      // The third candidate mechanism, and the answer is that it does not
+      // exist. `planSourceAuthorityVersion` used to return an
+      // `invalidatedApprovalVersionIds` list that no caller read; this asserts
+      // the write path still touches only the versions table, so the read-time
+      // predicate above is the single mechanism holding the invariant. It goes
+      // red if a second writer of the same invariant is ever introduced, which
+      // is the thing worth being told about: two writers of one rule is two
+      // things to keep honest.
+      const tables: string[] = [];
+      const session = jest.fn(
+        async (work: (run: jest.Mock) => Promise<unknown>) =>
+          work(
+            jest.fn(async (sql: string) => {
+              for (const table of [
+                "source_event_authority_version_approvals",
+                "source_event_authority_versions",
+              ]) {
+                if (sql.includes(table)) {
+                  tables.push(table);
+                  break;
+                }
+              }
+              if (sql.includes("SELECT id, version_number, content_hash")) {
+                return [
+                  { id: "version-1", version_number: 1, content_hash: HASH },
+                ];
+              }
+              if (sql.includes("INSERT INTO source_event_authority_versions")) {
+                return [{ id: "version-2" }];
+              }
+              return [{ id: "updated" }];
+            }),
+          ),
+      );
+
+      await persistSourceAuthorityVersion(
+        {
+          eventId: "event-1",
+          clientKey: "tenant-1",
+          authorityKind: "request",
+          payload: { trigger: "Materially changed" },
+          createdByUserId: "user-2",
+        },
+        session as never,
+      );
+
+      expect(tables).not.toContain("source_event_authority_version_approvals");
+      expect(tables.length).toBeGreaterThan(0);
+    });
   });
 
   it("persists the first immutable Request version with its canonical hash", async () => {
