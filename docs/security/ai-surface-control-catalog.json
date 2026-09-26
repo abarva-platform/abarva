@@ -687,6 +687,39 @@
           }
         }
       ]
+    },
+    {
+      "id": "moves-nexus-current-state-briefing-panel",
+      "surface": "Moves Nexus current-state briefing panel",
+      "lane": "global-control-lane",
+      "owner": "AbarVa",
+      "path": "src/components/strategic-moves/NexusCurrentStateBriefingPanel.tsx",
+      "requiredControls": [
+        {
+          "kind": "citation",
+          "evidence": [
+            "citationLabel(briefing.citations, id)",
+            "citationsById.get(id)?.sourceBasis",
+            "section.citationIds.slice(0, 3)",
+            "answer.citationIds.slice(0, 4).map((id) => citationLabel(briefing.citations, id))"
+          ],
+          "behavioralTest": {
+            "path": "src/components/strategic-moves/__tests__/NexusCurrentStateBriefingPanel.controls.test.tsx"
+          }
+        },
+        {
+          "kind": "confidence",
+          "evidence": [
+            "Answer · confidence {answer.confidence}",
+            "confidence: 'high' | 'medium' | 'low'"
+          ],
+          "behavioralTest": {
+            "path": "src/components/strategic-moves/__tests__/NexusCurrentStateBriefingPanel.controls.test.tsx"
+          }
+        }
+      ],
+      "routeReachable": false,
+      "unreachableReason": "The Moves phase Prepare tab mounted this panel until the old phase shell was sunset, and nothing imports NexusCurrentStateBriefingPanel today, so no route reaches it: the citation and confidence disclosures below are real code that no user can open. The unmounted state is recorded in docs/architecture/unreachable-components.json. The endpoint it calls, src/app/api/v1/programs/[programId]/nexus/current-state-brief/route.ts, is still in the tree, so the panel would work the day something mounts it. Fixed by mounting it in the Moves phase shell that renders today, or by moving both controls to that shell and retiring this entry."
     }
   ],
   "catalogClaimCoverage": [
@@ -869,21 +902,17 @@
     },
     {
       "key": "generated-ui|Moves|Nexus current-state briefing panel|citation",
-      "status": "deferred",
+      "status": "covered",
       "controlKind": "citation",
-      "reason": "Briefing citations exist in the component, but AI Draft/edit-before-commit framing still needs a dedicated machine catalog entry.",
-      "surfaceJoin": {
-        "state": "uncatalogued"
-      }
+      "reason": "Bound to the catalogued surface by C-547. The panel resolves each cited id to its citation label and carries the source basis on the chip; an answer states its own confidence next to the answer text. Both are held to evidence tokens and to a behavioural suite the catalog job runs. The surface is routeReachable: false, so neither control counts toward behavioural coverage of reachable controls — they are in the not-on-any-screen bucket until something mounts the panel.",
+      "surfaceId": "moves-nexus-current-state-briefing-panel"
     },
     {
       "key": "generated-ui|Moves|Nexus current-state briefing panel|confidence",
-      "status": "deferred",
+      "status": "covered",
       "controlKind": "confidence",
-      "reason": "Briefing confidence exists, but the surface is still pending AI Draft/edit-before-commit framing before full coverage.",
-      "surfaceJoin": {
-        "state": "uncatalogued"
-      }
+      "reason": "Bound to the catalogued surface by C-547. The panel resolves each cited id to its citation label and carries the source basis on the chip; an answer states its own confidence next to the answer text. Both are held to evidence tokens and to a behavioural suite the catalog job runs. The surface is routeReachable: false, so neither control counts toward behavioural coverage of reachable controls — they are in the not-on-any-screen bucket until something mounts the panel.",
+      "surfaceId": "moves-nexus-current-state-briefing-panel"
     },
     {
       "key": "generated-ui|Source|Artifact detail/provenance drawer|citation",

@@ -67,6 +67,18 @@ jobs:
       - name: Exercise Intelligence promotion brief panel disclosure controls
         run: npx jest --runTestsByPath src/components/programs/origination/__tests__/ProgramBriefPanel.controls.test.tsx --runInBand
 
+      # C-547. The Moves Nexus current-state briefing panel's citation and
+      # confidence disclosures are real code that NO route reaches — nothing in
+      # the product imports the panel, so its catalog entry carries
+      # routeReachable: false and the audit counts both controls in its
+      # not-on-any-screen bucket. This step is still the difference between a
+      # claim and a check: it proves the two controls render when the component
+      # is mounted, which is what has to hold the day something mounts it.
+      # Listed by exact path because src/components/strategic-moves/__tests__ is
+      # not swept by any job.
+      - name: Exercise Moves Nexus current-state briefing disclosure controls
+        run: npx jest --runTestsByPath src/components/strategic-moves/__tests__/NexusCurrentStateBriefingPanel.controls.test.tsx --runInBand
+
       - name: Exercise Moves phase-gate route approval
         run: npx jest --runTestsByPath src/app/api/programs/phase-gate/__tests__/approval-gate.test.ts --runInBand
 
