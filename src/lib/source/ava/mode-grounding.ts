@@ -434,11 +434,10 @@ const EXEMPLAR_TASK_LIST_DISCLOSURE =
   "asked of them.";
 
 const EXEMPLAR_GATE_DISCLOSURE =
-  "SCAFFOLD CONTENT -- the approver, the confirm-box labels and the " +
-  "generates-on-approval list below are carried verbatim from the stage " +
-  "exemplar%SOURCE%, not from this event's record. The approver is exemplar " +
-  "copy, not a person on this event: do NOT name them, attribute a decision to " +
-  "them, or say who must sign. The evidence box's own verdict below is real -- " +
+  "SCAFFOLD CONTENT -- the confirm-box labels and the generates-on-approval " +
+  "list below are carried from the stage exemplar%SOURCE%, not from this " +
+  "event's record. The approver label is not a verified actor assignment or " +
+  "evidence that anyone approved or signed. The evidence box's own verdict below is real -- " +
   "it is computed from this event's task checklist.";
 
 // The wording above deliberately avoids the token `UNMET`.

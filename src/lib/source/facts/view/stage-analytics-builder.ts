@@ -298,7 +298,11 @@ export function buildLiveStageView(
     // Derived where `factBeats` is present. Otherwise reuse the sample gate's
     // confirm boxes + generates (not yet fact-derived on this stage) but correct
     // the next-stage label for the stage being built.
-    gate: factBeats?.gate ?? { ...scaffold.gate, nextStageName },
+    gate: factBeats?.gate ?? {
+      ...scaffold.gate,
+      nextStageName,
+      ...(requestedStageKey === 'value' ? { approver: 'Event Owner' } : {}),
+    },
     waterfall: waterfallView,
     // Item U-533. Say so at the boundary. The two comments above were the only
     // record that `tasks` and `gate` are exemplar content, and a comment is
