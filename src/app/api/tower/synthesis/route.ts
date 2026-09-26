@@ -12,7 +12,7 @@ import {
 import { recordSynthesisEvent } from "@/lib/reasoning/synthesis-telemetry";
 import { computeSynthesisEtag } from "@/lib/reasoning/synthesis-etag";
 import { registerSynthesisCache } from "@/lib/reasoning/synthesis-cache-registry";
-import { AGENT_DEMO_SYSTEM_BLOCK } from "@/lib/agent/demo-context";
+import { getTenantSystemBlock } from "@/lib/agent/demo-context";
 import { getUserContextPromptBlock } from "@/lib/agent/userContext";
 import { FOUR_LAYER_REASONING_INSTRUCTIONS } from "@/lib/intelligence/synthesis/instructionLayer";
 import { requireTenancy, tenancyErrorResponse } from "@/lib/auth/tenancy";
@@ -303,8 +303,16 @@ export async function POST(request: Request) {
     formatUserProgramAccessPolicyForPrompt(accessPolicy);
   const restrictedOutputBlock =
     formatRestrictedOutputPolicyForPrompt(accessPolicy);
+  // The demo context is scoped to the tenant that owns it. `demo-context.ts`
+  // declares `getTenantSystemBlock` for exactly this and says the unconditional
+  // block is "legacy ... kept for the routes that still import it"; this route
+  // was one of them, so a tenant whose portfolio is honestly empty was told in
+  // the same request that another tenant's programmes were authoritative
+  // context. The tenant key comes from the tenancy fence, the same source that
+  // already scopes the portfolio read above, so one decision cannot drift from
+  // the other.
   const demoContextBlock = sanitizeRestrictedFinancialText(
-    AGENT_DEMO_SYSTEM_BLOCK,
+    getTenantSystemBlock(tenancy.clientKey),
     accessPolicy,
   );
   const systemPrompt = buildAtlasSynthesisPrompt(
