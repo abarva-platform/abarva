@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useId, useMemo, useState, type ReactNode } from "react";
+import { useEffect, useId, useMemo, useState, type FormEvent, type ReactNode } from "react";
 import Link from "next/link";
 import { AppShell } from "@/components/shell/AppShell";
 import { AgentDock, type ChatMessage } from "@/components/agent/AgentDock";
@@ -365,10 +365,14 @@ export function SourceNewWorkspace({
   const isCurrentPhase = phase === current;
   const responsesStage = isResponsesStage(event);
   const scorecardAuthorityStage = isScorecardAuthorityStage(event);
+  const [scorecardRefresh, setScorecardRefresh] = useState(0);
   const [scorecardReadback, setScorecardReadback] = useState<{
     eventId: string;
     clientKey: string;
     authority: ScorecardAuthorityView | null;
+    canWrite: boolean;
+    supplierOptions: { id: string; name: string }[];
+    lockableScores: { vendorId: string; criterionId: string; criterionVersion: string }[];
   } | null>(null);
   useEffect(() => {
     if (!scorecardAuthorityStage || typeof fetch !== "function") return;
@@ -382,24 +386,48 @@ export function SourceNewWorkspace({
           eventId?: unknown;
           clientKey?: unknown;
           authority?: unknown;
+          canWrite?: unknown;
+          supplierOptions?: unknown;
+          lockableScores?: unknown;
         } | null;
         const authority = value?.authority as ScorecardAuthorityView | null;
+        const validAuthority =
+          value?.eventId === event.id &&
+          value.clientKey === event.clientKey &&
+          (authority?.state === "ready" || authority?.state === "blocked") &&
+          Array.isArray(authority.criteria) &&
+          Array.isArray(authority.scoreRows) &&
+          Array.isArray(authority.vendorRows) &&
+          Array.isArray(authority.blockers) &&
+          authority.rankAllowed === false &&
+          authority.advanceAllowed === false &&
+          authority.bafoReady === false;
+        const supplierOptions = Array.isArray(value?.supplierOptions)
+          ? value.supplierOptions.filter(
+              (row): row is { id: string; name: string } =>
+                Boolean(row) &&
+                typeof row.id === "string" &&
+                Boolean(row.id.trim()) &&
+                typeof row.name === "string" &&
+                Boolean(row.name.trim()),
+            )
+          : [];
+        const lockableScores = Array.isArray(value?.lockableScores)
+          ? value.lockableScores.filter(
+              (row): row is { vendorId: string; criterionId: string; criterionVersion: string } =>
+                Boolean(row) &&
+                typeof row.vendorId === "string" &&
+                typeof row.criterionId === "string" &&
+                typeof row.criterionVersion === "string",
+            )
+          : [];
         setScorecardReadback({
           eventId: event.id,
           clientKey: event.clientKey,
-          authority:
-            value?.eventId === event.id &&
-            value.clientKey === event.clientKey &&
-            (authority?.state === "ready" || authority?.state === "blocked") &&
-            Array.isArray(authority.criteria) &&
-            Array.isArray(authority.scoreRows) &&
-            Array.isArray(authority.vendorRows) &&
-            Array.isArray(authority.blockers) &&
-            authority.rankAllowed === false &&
-            authority.advanceAllowed === false &&
-            authority.bafoReady === false
-              ? authority
-              : null,
+          authority: validAuthority ? authority : null,
+          canWrite: validAuthority && value?.canWrite === true,
+          supplierOptions: validAuthority ? supplierOptions : [],
+          lockableScores: validAuthority ? lockableScores : [],
         });
       })
       .catch(() => {
@@ -408,11 +436,14 @@ export function SourceNewWorkspace({
             eventId: event.id,
             clientKey: event.clientKey,
             authority: null,
+            canWrite: false,
+            supplierOptions: [],
+            lockableScores: [],
           });
         }
       });
     return () => controller.abort();
-  }, [event.id, event.clientKey, scorecardAuthorityStage]);
+  }, [event.id, event.clientKey, scorecardAuthorityStage, scorecardRefresh]);
   const currentScorecardReadback =
     scorecardReadback?.eventId === event.id &&
     scorecardReadback.clientKey === event.clientKey
@@ -659,6 +690,11 @@ export function SourceNewWorkspace({
                   {scorecardAuthorityStage && (
                     <SourceNewStage07ScorecardAuthority
                       authority={displayedScorecardAuthority}
+                      eventId={event.id}
+                      canWrite={currentScorecardReadback?.canWrite ?? false}
+                      supplierOptions={currentScorecardReadback?.supplierOptions ?? []}
+                      lockableScores={currentScorecardReadback?.lockableScores ?? []}
+                      onChanged={() => setScorecardRefresh((value) => value + 1)}
                     />
                   )}
                 </>
@@ -702,6 +738,11 @@ export function SourceNewWorkspace({
                   {scorecardAuthorityStage && (
                     <SourceNewStage07ScorecardAuthority
                       authority={displayedScorecardAuthority}
+                      eventId={event.id}
+                      canWrite={currentScorecardReadback?.canWrite ?? false}
+                      supplierOptions={currentScorecardReadback?.supplierOptions ?? []}
+                      lockableScores={currentScorecardReadback?.lockableScores ?? []}
+                      onChanged={() => setScorecardRefresh((value) => value + 1)}
                     />
                   )}
                 </>
@@ -1432,9 +1473,72 @@ function SourceNewStage05NdaReadiness({
 
 function SourceNewStage07ScorecardAuthority({
   authority,
+  eventId,
+  canWrite,
+  supplierOptions,
+  lockableScores,
+  onChanged,
 }: {
   authority: ScorecardAuthorityView;
+  eventId: string;
+  canWrite: boolean;
+  supplierOptions: readonly { id: string; name: string }[];
+  lockableScores: readonly { vendorId: string; criterionId: string; criterionVersion: string }[];
+  onChanged: () => void;
 }) {
+  const [busy, setBusy] = useState(false);
+  const [writeMessage, setWriteMessage] = useState<string | null>(null);
+  const endpoint = `/api/v1/source/events/${encodeURIComponent(eventId)}/scorecard-authority`;
+  async function submitAction(action: Record<string, unknown>) {
+    if (!canWrite || busy) return;
+    setBusy(true);
+    setWriteMessage(null);
+    try {
+      const response = await fetch(endpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(action),
+      });
+      const payload = (await response.json()) as { error?: string };
+      if (!response.ok) {
+        setWriteMessage((payload.error ?? "Scorecard write failed").replaceAll("_", " "));
+        return;
+      }
+      setWriteMessage("Saved. Authority readback is refreshing.");
+      onChanged();
+    } catch {
+      setWriteMessage("Scorecard write is unavailable.");
+    } finally {
+      setBusy(false);
+    }
+  }
+  function createCriterion(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const data = new FormData(event.currentTarget);
+    void submitAction({
+      action: "create_criterion",
+      criterionId: String(data.get("criterionId") ?? "").trim(),
+      criterionVersion: String(data.get("criterionVersion") ?? "").trim(),
+      label: String(data.get("label") ?? "").trim(),
+      weight: Number(data.get("weight")),
+    });
+  }
+  function recordScore(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const data = new FormData(event.currentTarget);
+    const criterionId = String(data.get("criterionId") ?? "");
+    const criterion = approvedCriteria.find((row) => row.criterionId === criterionId);
+    if (!criterion) return;
+    void submitAction({
+      action: "record_score",
+      vendorId: String(data.get("vendorId") ?? ""),
+      criterionId,
+      criterionVersion: criterion.criterionVersion,
+      score: Number(data.get("score")),
+      evidenceReference: String(data.get("evidenceReference") ?? "").trim(),
+      overrideReason: String(data.get("overrideReason") ?? "").trim(),
+    });
+  }
   const approvedCriteria = authority.criteria.filter(
     (criterion) =>
       criterion.approvedCriterionVersion === criterion.criterionVersion &&
@@ -1444,10 +1548,9 @@ function SourceNewStage07ScorecardAuthority({
   const frozenWeightTotal = approvedCriteria
     .filter((criterion) => criterion.weightsFrozen)
     .reduce((total, criterion) => total + criterion.weight, 0);
-  const lockedScoreCount = authority.vendorRows.reduce(
-    (total, row) => total + row.lockedScoreCount,
-    0,
-  );
+  const lockedScoreCount = authority.scoreRows.filter(
+    (row) => row.lockState === "locked",
+  ).length;
   return (
     <section
       className="snw-nda-readiness"
@@ -1456,9 +1559,9 @@ function SourceNewStage07ScorecardAuthority({
       <p className="snw-eyebrow">Stage 07 · Scorecard authority</p>
       <h3>Frozen evaluator scorecard</h3>
       <p>
-        This read-only check summarizes whether scorecard authority is ready for
-        governed reviewer inspection. It does not rank vendors, send BAFOs,
-        approve an award or turn an AI suggestion into a final score.
+        Named criterion approvals and evidenced evaluator scores determine the
+        review posture. This view does not rank suppliers, send BAFOs or approve
+        an award.
       </p>
       <dl className="snw-facts">
         <div>
@@ -1500,6 +1603,38 @@ function SourceNewStage07ScorecardAuthority({
                   {criterion.weightsFrozen
                     ? "weights frozen"
                     : "weights not frozen"}
+                  {canWrite && !criterion.approvedAt && (
+                    <>
+                      <button
+                        type="button"
+                        className="snw-text-action"
+                        disabled={busy}
+                        onClick={() => void submitAction({
+                          action: "approve_criterion",
+                          criterionId: criterion.criterionId,
+                          criterionVersion: criterion.criterionVersion,
+                        })}
+                      >
+                        Approve {criterion.label} {criterion.criterionVersion}
+                      </button>
+                      <button
+                        type="button"
+                        className="snw-text-action"
+                        disabled={busy}
+                        onClick={() => {
+                          if (window.confirm(`Retire unapproved criterion ${criterion.label}?`)) {
+                            void submitAction({
+                              action: "retire_criterion",
+                              criterionId: criterion.criterionId,
+                              criterionVersion: criterion.criterionVersion,
+                            });
+                          }
+                        }}
+                      >
+                        Retire {criterion.label} {criterion.criterionVersion}
+                      </button>
+                    </>
+                  )}
                 </li>
               ))
             ) : (
@@ -1523,6 +1658,43 @@ function SourceNewStage07ScorecardAuthority({
           </ul>
         </div>
       </div>
+      {canWrite && !authority.criteria.some((criterion) => criterion.approvedAt) && (
+        <form className="snw-scorecard-form" onSubmit={createCriterion}>
+          <label>Criterion ID<input name="criterionId" required maxLength={100} /></label>
+          <label>Version<input name="criterionVersion" required maxLength={100} /></label>
+          <label>Criterion label<input name="label" required maxLength={500} /></label>
+          <label>Weight %<input name="weight" type="number" required min="0.0001" max="100" step="0.0001" /></label>
+          <button className="snw-primary" type="submit" disabled={busy}>Save criterion</button>
+        </form>
+      )}
+      {canWrite && approvedCriteria.length > 0 && supplierOptions.length > 0 && (
+        <form className="snw-scorecard-form" onSubmit={recordScore}>
+          <label>Supplier
+            <select name="vendorId" required defaultValue="">
+              <option value="" disabled>Select supplier</option>
+              {supplierOptions.map((supplier) => (
+                <option key={supplier.id} value={supplier.id}>{supplier.name}</option>
+              ))}
+            </select>
+          </label>
+          <label>Criterion
+            <select name="criterionId" required defaultValue="">
+              <option value="" disabled>Select criterion</option>
+              {approvedCriteria.map((criterion) => (
+                <option key={criterion.criterionId} value={criterion.criterionId}>{criterion.label}</option>
+              ))}
+            </select>
+          </label>
+          <label>Evaluator score / 10<input name="score" type="number" required min="0" max="10" step="0.1" /></label>
+          <label>Evidence artifact ID<input name="evidenceReference" required maxLength={36} /></label>
+          <label>Override reason<input name="overrideReason" maxLength={2000} /></label>
+          <button className="snw-primary" type="submit" disabled={busy}>Save evaluator score</button>
+        </form>
+      )}
+      {canWrite && supplierOptions.length === 0 && (
+        <p className="snw-note">No accepted event suppliers are available for scoring.</p>
+      )}
+      {writeMessage && <p className="snw-note" role="status">{writeMessage}</p>}
       <div className="snw-nda-next">
         <strong>Evaluator authority</strong>
         <ul>
@@ -1542,6 +1714,31 @@ function SourceNewStage07ScorecardAuthority({
             <li>No named evaluator score authority is loaded.</li>
           )}
         </ul>
+        {canWrite && lockableScores.length > 0 && (
+          <div>
+            <strong>Your unlocked scores</strong>
+            <ul>
+              {lockableScores.map((row) => (
+                <li key={`${row.vendorId}:${row.criterionId}:${row.criterionVersion}`}>
+                  {supplierOptions.find((supplier) => supplier.id === row.vendorId)?.name ?? row.vendorId} / {row.criterionId}
+                  <button
+                    type="button"
+                    className="snw-text-action"
+                    disabled={busy}
+                    onClick={() => void submitAction({
+                      action: "lock_score",
+                      vendorId: row.vendorId,
+                      criterionId: row.criterionId,
+                      criterionVersion: row.criterionVersion,
+                    })}
+                  >
+                    Lock score
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
       </div>
       {authority.vendorRows.length > 0 && (
         <div className="snw-nda-next">
@@ -1557,7 +1754,11 @@ function SourceNewStage07ScorecardAuthority({
           </ul>
         </div>
       )}
-      <p className="snw-note">{authority.guardrail}</p>
+      <p className="snw-note">
+        {canWrite
+          ? "AI suggestions remain advisory. Only named evaluator scores with evidence may be locked; this view does not rank, advance, create BAFO rounds or approve awards."
+          : authority.guardrail}
+      </p>
     </section>
   );
 }

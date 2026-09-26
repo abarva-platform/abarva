@@ -97,6 +97,17 @@ describe("buildScorecardAuthorityView", () => {
     expect(result.blockers).toEqual([]);
   });
 
+  it("keeps two evaluators on one supplier criterion as distinct rows", () => {
+    const result = view({
+      scores: [
+        baseScore,
+        { ...baseScore, evaluatorId: "eval-2", evaluatorName: "B. Evaluator" },
+      ],
+    });
+    expect(result.scoreRows).toHaveLength(2);
+    expect(new Set(result.scoreRows.map((row) => row.scoreId)).size).toBe(2);
+  });
+
   it("does not rank suppliers or expose weighted totals when score authority is complete", () => {
     const result = view({
       scores: [
