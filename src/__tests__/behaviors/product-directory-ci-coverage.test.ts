@@ -59,8 +59,17 @@ const GOVERNED_ELSEWHERE = "src/__tests__";
  *   same correction moved, `src/app/(maestro)/home/__tests__`, is 2 of 4 and
  *   therefore PARTIAL rather than uncovered, so it does not reach this count —
  *   the `source/ava` and `data-plane` case above, in the other direction.
+ * 2026-09-26: 170 after C-532 wired `src/app/api/source/synthesis/__tests__`
+ *   and `src/app/api/programs/synthesis/__tests__`. Two, and measured
+ *   per-directory rather than inferred from the count: the dark set was
+ *   captured from this census on a clean worktree at `origin/main` `92f5836b3`
+ *   and on the change, and the set difference is exactly those two leaving
+ *   with nothing entering. Both were fully uncovered rather than partial — each
+ *   held one unrun file and the wiring names the directory, so both now run
+ *   every file they hold — which is why this moves by two and not by one; the
+ *   `source/ava` and `data-plane` caveat above does not apply to either.
  */
-const DARK_PRODUCT_DIRECTORY_COUNT = 172;
+const DARK_PRODUCT_DIRECTORY_COUNT = 170;
 
 type Census = {
   counts: { indeterminateInvocations: number };
