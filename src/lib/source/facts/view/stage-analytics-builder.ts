@@ -55,6 +55,7 @@ import {
 import type {
   IntelPointView,
   StageAnalyticsView,
+  StageBeatProvenanceView,
 } from '@/components/source/canvas/analytics/view-model';
 
 /**
@@ -200,6 +201,69 @@ export function buildLiveStageView(
     // stage) but correct the next-stage label for the stage being built.
     gate: { ...scaffold.gate, nextStageName },
     waterfall: waterfallView,
+    // Item U-533. Say so at the boundary. The two comments above were the only
+    // record that `tasks` and `gate` are exemplar content, and a comment is
+    // readable by a maintainer and by nothing else -- the canvas and the chat
+    // grounding builder both consumed this view with no way to tell carried
+    // copy from computed fact, and the grounding block called the exemplar's
+    // task titles and its fixture approver "authoritative". This field is the
+    // machine-readable form of those two comments, written HERE because this is
+    // where the carriage happens.
+    beatProvenance: liveStageBeatProvenanceFor(requestedStageKey),
+  };
+}
+
+/**
+ * The exemplar constant `liveStageScaffoldFor` returns for a stage key.
+ *
+ * Kept as a table beside that switch rather than derived from it, because the
+ * constants are imported bindings: at runtime a `SAMPLE_*_STAGE` object carries
+ * no name to read back, and `.stageKey` is the exemplar's OWN key, which is not
+ * the same thing (nine arms match their key; `default` catches every unlisted
+ * key and returns the Scope exemplar). `u533-stage-scaffold-provenance` asserts
+ * the two agree arm for arm, so a new arm cannot land here unnamed.
+ */
+const LIVE_STAGE_SCAFFOLD_SOURCE: Readonly<Record<string, string>> = {
+  rfp: 'SAMPLE_RFP_STAGE',
+  responses: 'SAMPLE_RESPONSES_STAGE',
+  evaluation: 'SAMPLE_EVALUATION_STAGE',
+  pricing: 'SAMPLE_PRICING_STAGE',
+  bafo: 'SAMPLE_BAFO_STAGE',
+  executive_decision: 'SAMPLE_EXECUTIVE_DECISION_STAGE',
+  selection: 'SAMPLE_SELECTION_STAGE',
+  transition: 'SAMPLE_TRANSITION_STAGE',
+  value: 'SAMPLE_VALUE_STAGE',
+  scope: 'SAMPLE_SCOPE_STAGE',
+};
+
+/** The exemplar `liveStageScaffoldFor` resolves `stageKey` to, by name. */
+export function liveStageScaffoldSourceFor(stageKey: string): string {
+  return LIVE_STAGE_SCAFFOLD_SOURCE[stageKey] ?? 'SAMPLE_SCOPE_STAGE';
+}
+
+/**
+ * Per-beat provenance for a view built by `buildLiveStageView`.
+ *
+ * Both beats are `scaffold` for every stage in this slice -- that is the measured
+ * state, recorded in `docs/architecture/u533-stage-scaffold-provenance.json`,
+ * not a placeholder. It is a function rather than a constant so that replacing
+ * ONE stage's tasks/gate with fact-derived values changes this one place and the
+ * disclosure downstream follows, instead of the label drifting away from what
+ * the builder actually returns.
+ */
+/*
+ * Module-private on purpose. Exporting it would add a second exported gate with
+ * no caller outside this file, which is the exact shape item C-408 is filed
+ * about; `buildLiveStageView` is the only thing that should decide a view's
+ * provenance, and the suite drives the builder rather than this function.
+ */
+function liveStageBeatProvenanceFor(
+  stageKey: string,
+): StageBeatProvenanceView {
+  return {
+    tasks: 'scaffold',
+    gate: 'scaffold',
+    scaffoldSource: liveStageScaffoldSourceFor(stageKey),
   };
 }
 

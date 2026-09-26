@@ -397,6 +397,67 @@ function buildWorkflowHowToGrounding(
   return { block, quotableFacts: { howToAction: action } };
 }
 
+// ── U-533 · exemplar-content disclosure ───────────────────────────────────────
+//
+// `buildLiveStageView` composes a live waterfall and a live intel beat and then
+// carries the stage exemplar's `tasks` and `gate` through verbatim. Both of the
+// blocks below introduce that content to the model as "authoritative", and the
+// gate block prints `gate.approver` -- which for four of the ten exemplars is a
+// person's name that exists only in `sample-view-model.ts`. The stage view now
+// declares per-beat provenance at the boundary that builds it
+// (`StageAnalyticsView.beatProvenance`); these two helpers turn that declaration
+// into a line the model reads.
+//
+// Fails CLOSED on an ABSENT declaration. A view that declares nothing is treated
+// as undeclared, not as derived, so a future builder that forgets the field
+// discloses too much rather than too little.
+
+function tasksAreExemplarContent(stageView: StageAnalyticsView): boolean {
+  return stageView.beatProvenance?.tasks !== "fact_derived";
+}
+
+function gateIsExemplarContent(stageView: StageAnalyticsView): boolean {
+  return stageView.beatProvenance?.gate !== "fact_derived";
+}
+
+function exemplarSourceSuffix(stageView: StageAnalyticsView): string {
+  const source = stageView.beatProvenance?.scaffoldSource;
+  return source ? ` (${source})` : "";
+}
+
+const EXEMPLAR_TASK_LIST_DISCLOSURE =
+  "SCAFFOLD CONTENT -- the task TITLES on this stage are carried verbatim from " +
+  "the stage exemplar%SOURCE%, not derived from this event's facts. The " +
+  "present/missing verdicts below are real -- they are read from persisted facts " +
+  "and registered artifacts. The LIST is not: do not present it as this event's " +
+  "agreed or required evidence set, and do not tell the user a named task was " +
+  "asked of them.";
+
+const EXEMPLAR_GATE_DISCLOSURE =
+  "SCAFFOLD CONTENT -- the approver, the confirm-box labels and the " +
+  "generates-on-approval list below are carried verbatim from the stage " +
+  "exemplar%SOURCE%, not from this event's record. The approver is exemplar " +
+  "copy, not a person on this event: do NOT name them, attribute a decision to " +
+  "them, or say who must sign. The evidence box's own verdict below is real -- " +
+  "it is computed from this event's task checklist.";
+
+// The wording above deliberately avoids the token `UNMET`.
+// `mode-grounding-phase-c.test.ts` asserts `not.toContain("UNMET")` over the
+// WHOLE general_advisory block to prove the task-derived gate signal has not
+// regressed to unmet, and the first draft of this disclosure said "the
+// MET/UNMET verdict ... is real", which collided with that scan and turned a
+// passing suite red. The existing assertion is blunt rather than stale -- it
+// means "the evidence box is not reported unmet" and says "the block does not
+// contain these five letters" -- so it is left exactly as it is and this prose
+// moves instead. Anything added to these blocks later has the same constraint.
+
+function exemplarDisclosure(
+  template: string,
+  stageView: StageAnalyticsView,
+): string {
+  return template.replace("%SOURCE%", exemplarSourceSuffix(stageView));
+}
+
 // ── evidence_readiness ────────────────────────────────────────────────────────
 
 function buildEvidenceReadinessGrounding(
@@ -440,6 +501,9 @@ function buildEvidenceReadinessGrounding(
   const lines = [
     "EVIDENCE READINESS GROUNDING (authoritative — persisted facts/artifacts for the CURRENT stage's tasks):",
     `Stage: ${stageView.stageName}.`,
+    ...(tasksAreExemplarContent(stageView)
+      ? [exemplarDisclosure(EXEMPLAR_TASK_LIST_DISCLOSURE, stageView)]
+      : []),
     present.length > 0
       ? `Present (evidence already persisted): ${present.join("; ")}.`
       : "Present (evidence already persisted): none yet on this stage.",
@@ -707,6 +771,9 @@ function buildStageGateGrounding(
 
   const lines = [
     "STAGE GATE GROUNDING (authoritative — the same gate the canvas renders for this stage):",
+    ...(gateIsExemplarContent(stageView)
+      ? [exemplarDisclosure(EXEMPLAR_GATE_DISCLOSURE, stageView)]
+      : []),
     `Stage: ${stageView.stageName}. Approver: ${gate.approver}.`,
     `Gate requires ${requiredKeys.length} confirmation(s):`,
   ];
