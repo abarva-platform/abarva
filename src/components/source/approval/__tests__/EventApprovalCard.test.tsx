@@ -273,6 +273,44 @@ describe("EventApprovalCard", () => {
     expect(approve.disabled).toBe(false);
   });
 
+  it("identifies the decision owner without implying a mandatory sponsor or co-approver", () => {
+    render(<EventApprovalCard {...baseProps} coApprover={null} />);
+
+    expect(screen.getByText("Event Owner")).not.toBeNull();
+    expect(screen.queryByText("Sponsor", { exact: true })).toBeNull();
+    expect(screen.getByText("No additional approver is required.")).not.toBeNull();
+    expect(screen.queryByTestId("source-approval-co-approver")).toBeNull();
+  });
+
+  it("records the owner's strategy confirmation without claiming sponsor sign-off", async () => {
+    (global.fetch as jest.Mock).mockResolvedValue({
+      ok: true,
+      json: async () => ({ ok: true }),
+    });
+    render(<EventApprovalCard {...baseProps} generateMemoOnApprove />);
+
+    expect(screen.getByText("Event Owner confirms the sourcing mandate and strategy memo review.")).not.toBeNull();
+    expect(screen.queryByText(/Sponsor sign-off/)).toBeNull();
+    fireEvent.change(screen.getByTestId("source-approval-rationale"), {
+      target: { value: "I reviewed the synthetic intake facts and accept this strategy decision." },
+    });
+    fireEvent.click(screen.getByTestId("source-approval-gate-sponsor"));
+    fireEvent.click(screen.getByTestId("source-approval-gate-value"));
+    fireEvent.click(screen.getByTestId("source-approval-gate-archetype"));
+    fireEvent.click(screen.getByTestId("source-approval-approve"));
+
+    await waitFor(() => expect(global.fetch).toHaveBeenCalled());
+    const [, requestInit] = (global.fetch as jest.Mock).mock.calls[0];
+    const body = JSON.parse(requestInit.body as string);
+    expect(body.confirmations).toEqual({
+      strategyMemoReviewed: true,
+      valueTargetConfirmed: true,
+      archetypeRigorConfirmed: true,
+    });
+    expect(body.notes).toContain("Event Owner confirmed the strategy mandate, value target, and archetype.");
+    expect(body.notes).not.toMatch(/sponsor sign-off/i);
+  });
+
   it("sends selfApproveIfAuthorized on approve when the creator is self-approving in pilot mode", async () => {
     (global.fetch as jest.Mock).mockResolvedValue({
       ok: true,
