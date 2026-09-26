@@ -7,6 +7,11 @@ import {
   removeTransientProbeFiles,
   writeTransientProbeFile,
 } from "../../testing/transient-probe-files";
+import {
+  claimPathFor,
+  claimTransientProbeOwnership,
+  releaseTransientProbeOwnership,
+} from "../../testing/transient-probe-ownership";
 
 /**
  * Item T-759. `src/__tests__/behaviors` was CI-gated and non-deterministically
@@ -143,6 +148,18 @@ describe("transient probe files are removed outside the run, not inside it", () 
         const probe = seed(root, TRANSIENT_PROBE_FILES[0]);
         process.env.ABARVA_TRANSIENT_PROBE_ROOT = root;
 
+        // Item T-485. Removal is now the OWNER's to do: a Jest run nested
+        // inside another one executes these same two hooks against the live
+        // tree, and the outer run's probe used to go with it. `globalSetup`
+        // claims ownership itself, so it is driven bare; `globalTeardown` only
+        // removes what it owns, so the claim its own setup would have made is
+        // made here. Before this the case passed with no claim at all, which is
+        // why it is updated rather than deleted — the behaviour it asserts is
+        // the same, and the precondition is new.
+        if (name === "globalTeardown") {
+          expect(claimTransientProbeOwnership(root).owner).toBe(true);
+        }
+
         const hook = (await import(absolute)).default as () => void | Promise<void>;
         await hook();
 
@@ -153,6 +170,8 @@ describe("transient probe files are removed outside the run, not inside it", () 
       } finally {
         if (previous === undefined) delete process.env.ABARVA_TRANSIENT_PROBE_ROOT;
         else process.env.ABARVA_TRANSIENT_PROBE_ROOT = previous;
+        releaseTransientProbeOwnership(root);
+        rmSync(claimPathFor(root), { force: true });
         rmSync(root, { recursive: true, force: true });
       }
     }
