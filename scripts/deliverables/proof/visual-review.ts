@@ -35,7 +35,7 @@ const PYTHON = process.env.COMPOSER_PYTHON ?? "python3";
  * and adding NODE_ENV to satisfy them would put a real variable back in.
  */
 function SCRUBBED_ENV(scratch: string): NodeJS.ProcessEnv {
-  return { PATH: "/usr/bin:/bin", HOME: scratch, COMPOSER_CPU_SECONDS: "90" } as NodeJS.ProcessEnv;
+  return { PATH: "/usr/bin:/bin", HOME: scratch, COMPOSER_CPU_SECONDS: "90" } as unknown as NodeJS.ProcessEnv;
 }
 
 const ledger: LedgerEntry[] = JSON.parse(fs.readFileSync(path.join(OUT, "number-ledger.json"), "utf8"));

@@ -54,7 +54,7 @@ const PYTHON = process.env.COMPOSER_PYTHON ?? "python3";
  * and adding NODE_ENV to satisfy them would put a real variable back in.
  */
 function SCRUBBED_ENV(scratch: string): NodeJS.ProcessEnv {
-  return { PATH: "/usr/bin:/bin", HOME: scratch, COMPOSER_CPU_SECONDS: "90" } as NodeJS.ProcessEnv;
+  return { PATH: "/usr/bin:/bin", HOME: scratch, COMPOSER_CPU_SECONDS: "90" } as unknown as NodeJS.ProcessEnv;
 }
 
 const doc = JSON.parse(fs.readFileSync(path.join(OUT, "governed-document.json"), "utf8"));
@@ -114,7 +114,7 @@ async function main() {
     decisionSupported: request.decisionContext,
     // From the artifact-type registry, not a literal. A hardcoded band is how a
     // discovery report ends up sized like a target-state architecture.
-    slideGuidance: SLIDE_BANDS[request.deliverableType] ?? { min: 10, max: 14, purpose: request.deliverableType.replace(/_/g, " ") },
+    slideGuidance: SLIDE_BANDS[request.deliverableType as keyof typeof SLIDE_BANDS] ?? { min: 10, max: 14, purpose: request.deliverableType.replace(/_/g, " ") },
     themeVersion: "abarva-v3",
   });
   fs.writeFileSync(path.join(OUT, "packet.json"), frozen.canonicalJson);
