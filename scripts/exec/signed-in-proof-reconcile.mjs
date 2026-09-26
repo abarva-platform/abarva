@@ -50,6 +50,18 @@
  * mixed lines and a human still reads them. No marker was loosened to get
  * there; loosening one converts a refusal into a wrong answer.
  *
+ * The register has THREE proof states, not two (item C-534). `owed` asserts a
+ * debt, `obtained` asserts it was paid, and `not-owed` asserts there was never
+ * one — *"Signed-in acceptance NOT owed: the change alters one refusal branch in
+ * a pure function"*. Without the third state that sentence came back `owed`,
+ * and a record saying its proof RAN was reported as disagreeing with a register
+ * that had said no proof was needed. `not-owed` is deliberately not folded into
+ * `obtained`: a release that needs no proof has not obtained one. On the live
+ * corpus it moved four rows, one of them out of `disagree`, and it resolved
+ * none of the 32 residual `ambiguous` rows — the item predicted at least two and
+ * the bucket cannot be reached this way, because an ambiguous row needs both
+ * markers in one clause and this removes only the owed one.
+ *
  * The direction matters here too. Before this, `Status `deployed`, NOT
  * signed-in proven` was read as OBTAINED — a false obtained, which lets a
  * record saying no run happened agree with a register the reader believes
