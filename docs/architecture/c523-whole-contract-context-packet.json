@@ -48,10 +48,10 @@
       "formatter": "src/lib/source/ava/portfolio-fallback-answer.ts:300"
     },
     {
-      "id": "agent-route-request-supplied",
-      "callSite": "src/app/api/chat/agent/route.ts:1971",
-      "packetBuilder": null,
-      "packetProvenance": "the request body's own surfaceContext, passed to the formatter unrebuilt, and labelled to the model as authoritative page-local contract scope",
+      "id": "agent-route-server-built",
+      "callSite": "src/app/api/chat/agent/route.ts",
+      "packetBuilder": "src/lib/source/ava/server-contract-answer-context.ts",
+      "packetProvenance": "tenant-access-checked canonical contract record; request contract fields discarded and only the nominated contract identity used as a lookup hint. Absent, mismatched and opposite-tenant rows yield no selected-contract prompt block",
       "formatter": "src/lib/source/ava/portfolio-fallback-answer.ts:300"
     }
   ],

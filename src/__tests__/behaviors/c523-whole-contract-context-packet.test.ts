@@ -33,6 +33,7 @@
  */
 import fs from "node:fs";
 import path from "node:path";
+import ts from "typescript";
 
 import { reachableFrom } from "../../../scripts/audit/lib/route-reachability.mjs";
 
@@ -80,7 +81,10 @@ jest.mock("@/lib/source/facts/view/ava-contract-grounding-context", () => ({
   opportunityForAvaTrace: (opportunity: unknown) => opportunity,
 }));
 
-import { buildServerSourceAnswerContext } from "@/lib/source/ava/server-contract-answer-context";
+import {
+  buildAuthorizedSourceContract360PromptBlock,
+  buildServerSourceAnswerContext,
+} from "@/lib/source/ava/server-contract-answer-context";
 import {
   buildSourceContract360PromptBlock,
   readSelectedSourceContractContext,
@@ -606,5 +610,146 @@ describe("C-523 · the committed baseline agrees with the measurement, in both d
     expect(artifact.surfaceRetrieverSourcesFromPacket).toBe(
       retrieveSurfaceContextSources(packet, "what is the renewal exposure").length,
     );
+  });
+});
+
+describe("C-525 · request contract facts cannot become authoritative prompt facts", () => {
+  const conflictingRequest = {
+    module: "Source",
+    contractId: FIXTURE_CONTRACT_ID,
+    sourceContract360Mode: true,
+    annualValue: 987_654_321,
+    actualAnnualSpend: 876_543_210,
+    contractDatasetSummary: "UNTRUSTED_DATASET_SUMMARY",
+    contractCubeSummary: "UNTRUSTED_CUBE_SUMMARY",
+    sourceV4: {
+      selectedContract: {
+        contractId: FIXTURE_CONTRACT_ID,
+        annualValueUsd: 987_654_321,
+      },
+    },
+  } as unknown as AskSurfaceContext;
+
+  beforeEach(() => {
+    listContract360.mockReset().mockResolvedValue([contract360Row()]);
+    getContract360.mockReset().mockResolvedValue(contract360Row());
+    getContractOptimizationOpportunitySet.mockReset().mockResolvedValue(null);
+  });
+
+  it("ask-route packet discards conflicting request values before the real formatter", async () => {
+    const packet = await buildServerSourceAnswerContext({
+      query: `What is the annual value of ${FIXTURE_CONTRACT_ID}?`,
+      requestContext: conflictingRequest,
+      tenantKey: FIXTURE_TENANT_KEY,
+      tenantDisplayName: FIXTURE_TENANT_NAME,
+    });
+    const block = buildSourceContract360PromptBlock(
+      packet as Record<string, unknown>,
+      FIXTURE_TENANT_NAME,
+    );
+    expect(block).toContain("$4.2M");
+    expect(block).not.toContain("$987.7M");
+    expect(block).not.toContain("UNTRUSTED_DATASET_SUMMARY");
+    expect(block).not.toContain("UNTRUSTED_CUBE_SUMMARY");
+  });
+
+  it("agent-route resolver formats only tenant-checked canonical facts", async () => {
+    const block = await buildAuthorizedSourceContract360PromptBlock({
+      query: `What is the annual value of ${FIXTURE_CONTRACT_ID}?`,
+      requestContext: conflictingRequest,
+      tenantKey: FIXTURE_TENANT_KEY,
+      tenantDisplayName: FIXTURE_TENANT_NAME,
+    });
+    expect(block).toContain("$4.2M");
+    expect(block).not.toContain("$987.7M");
+    expect(block).not.toContain("UNTRUSTED_DATASET_SUMMARY");
+    expect(block).not.toContain("UNTRUSTED_CUBE_SUMMARY");
+    expect(getContract360).toHaveBeenCalledWith(
+      FIXTURE_TENANT_KEY,
+      FIXTURE_CONTRACT_ID,
+    );
+  });
+
+  it("agent-route refuses a contract with no authorized record", async () => {
+    getContract360.mockResolvedValue(null);
+    const block = await buildAuthorizedSourceContract360PromptBlock({
+      query: `What is the annual value of ${FIXTURE_CONTRACT_ID}?`,
+      requestContext: conflictingRequest,
+      tenantKey: FIXTURE_TENANT_KEY,
+      tenantDisplayName: FIXTURE_TENANT_NAME,
+    });
+    expect(block).toBe("");
+  });
+
+  it("agent-route refuses a row belonging to another tenant", async () => {
+    getContract360.mockResolvedValue({
+      ...contract360Row(),
+      tenant_key: "other-fixture-tenant",
+    });
+    const block = await buildAuthorizedSourceContract360PromptBlock({
+      query: `What is the annual value of ${FIXTURE_CONTRACT_ID}?`,
+      requestContext: conflictingRequest,
+      tenantKey: FIXTURE_TENANT_KEY,
+      tenantDisplayName: FIXTURE_TENANT_NAME,
+    });
+    expect(block).toBe("");
+  });
+
+  it("agent route wires the authorized resolver, not raw surfaceContext, to the prompt", () => {
+    const route = fs.readFileSync(
+      path.join(process.cwd(), "src/app/api/chat/agent/route.ts"),
+      "utf8",
+    );
+    const source = ts.createSourceFile("route.ts", route, ts.ScriptTarget.Latest, true);
+    const declarations: ts.VariableDeclaration[] = [];
+    const visit = (node: ts.Node) => {
+      if (
+        ts.isVariableDeclaration(node) &&
+        ts.isIdentifier(node.name) &&
+        node.name.text === "sourceContract360PromptBlock"
+      ) {
+        declarations.push(node);
+      }
+      ts.forEachChild(node, visit);
+    };
+    visit(source);
+    expect(declarations).toHaveLength(1);
+    const initializer = declarations[0].initializer;
+    expect(initializer).toBeDefined();
+    expect(initializer?.getText(source)).toContain(
+      "buildAuthorizedSourceContract360PromptBlock",
+    );
+    expect(initializer?.getText(source)).not.toContain(
+      "buildSourceContract360PromptBlock(surfaceContext",
+    );
+    const refusal = route.indexOf("I cannot verify that contract from the current authorized Source records.");
+    const fallback = route.indexOf("const sourcePortfolioFallbackAnswer =");
+    expect(refusal).toBeGreaterThan(route.indexOf("const sourceContract360PromptBlock ="));
+    expect(refusal).toBeLessThan(fallback);
+    expect(route.slice(refusal - 155, refusal)).toContain("!sourceContract360PromptBlock");
+  });
+
+  it("the committed destination inventory names both server-built routes", () => {
+    const artifact = JSON.parse(fs.readFileSync(ARTIFACT_PATH, "utf8")) as {
+      destinations: Array<{
+        id: string;
+        packetBuilder: string | null;
+        packetProvenance: string;
+      }>;
+    };
+    expect(artifact.destinations.map((destination) => destination.id)).toEqual([
+      "ask-route-server-built",
+      "agent-route-server-built",
+    ]);
+    expect(
+      artifact.destinations.find(
+        (destination) => destination.id === "agent-route-server-built",
+      )?.packetBuilder,
+    ).toBe("src/lib/source/ava/server-contract-answer-context.ts");
+    expect(
+      artifact.destinations.find(
+        (destination) => destination.id === "agent-route-server-built",
+      )?.packetProvenance,
+    ).toContain("request contract fields discarded");
   });
 });

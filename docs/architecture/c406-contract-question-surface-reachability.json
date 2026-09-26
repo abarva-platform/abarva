@@ -19,7 +19,7 @@
         "route": "/api/chat/agent",
         "file": "src/app/api/chat/agent/route.ts",
         "reachesEventChatClassifier": true,
-        "reachesContractAnswerBuilder": false
+        "reachesContractAnswerBuilder": true
       }
     ],
     "surfaceBinding": [
@@ -49,7 +49,7 @@
     "note": "Volatile measurements, recorded for a reader and deliberately NOT equality-asserted: a closure size or an intermediate import changes whenever an unrelated module is added, and a gate that fails for an unrelated reason gets weakened rather than read.",
     "closureSizes": {
       "src/app/api/intelligence/ask/route.ts": 297,
-      "src/app/api/chat/agent/route.ts": 717
+      "src/app/api/chat/agent/route.ts": 720
     },
     "chainToContractAnswerBuilder": [
       "src/app/api/intelligence/ask/route.ts",
