@@ -57,6 +57,7 @@ import {
   UNDECLARED,
   UNSTATED,
   compareAccounts,
+  formatReport,
   parseRecord,
   parseSignedInRequirement,
   parseStatedRunState,
@@ -68,6 +69,15 @@ import {
   reviewReleaseLine,
   registerSignedInVerdict,
 } from "./signed-in-proof-reconcile.mjs";
+/*
+ * The namespace import is deliberate (item C-540). A named import of an export
+ * this module does not have is a link-time SyntaxError, which takes the whole
+ * suite down to "0 passed" instead of failing the one case that asked for it —
+ * and a red-first measurement cannot tell that crash from a suite that found
+ * nothing. The new states are asserted THROUGH the namespace so the red run is
+ * a case count, not a stack trace.
+ */
+import * as reconcileModule from "./signed-in-proof-reconcile.mjs";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const REPO = path.resolve(HERE, "..", "..");
@@ -1205,6 +1215,305 @@ const RELEASE_RECORD_NOT_RUN = [
       silent.registerSays === SILENT &&
       silent.contradicted.length === 0,
     `${JSON.stringify(outside)}\n${JSON.stringify(silent)}`,
+  );
+}
+
+
+/* ------------------------------------------------------------------------- */
+/* Inexact attribution: a line naming several pull requests (item C-540)      */
+/* ------------------------------------------------------------------------- */
+
+/*
+ * `reconcileRecord` prefers the register line naming the FEWEST pull requests,
+ * and that preference is right — its own docstring says why: "a line naming
+ * only this pull request is about this pull request, and a line naming ten is
+ * citing it". The defect is what happens when the winner of that preference
+ * STILL names more than one. The row reports a verdict, the verdict reads as a
+ * judgement about this record, and the number of pull requests the deciding
+ * line named is computed into `registerLinePullRequests` and then never used.
+ *
+ * Measured on the live operator register at origin/main 2e91a64ec, with
+ * --since 2026-09-19T00:00:00Z over 218 records in the population: 59 rows rest
+ * on a line naming more than one pull request. The distribution is the part
+ * that makes the case, because it is not a rounding error — 8 rows on a 2-pull-
+ * request line, 4 on a 6, 3 on a 14, 21 reported AGREE by a line naming 118,
+ * and 23 reported AMBIGUOUS by a line naming 190. A line naming 190 pull
+ * requests is a bulk citation; it is not an account of the record whose verdict
+ * it is setting.
+ *
+ * These cases are FIXTURES for the register side on purpose, and the reason is
+ * item C-540's own history. The filing names its live consequence as the tenth
+ * disagreement in the C-528 population — and C-528 repaired that, so the corpus
+ * now reports `disagree 0`. A suite whose premise is "the live corpus contains a
+ * disagreement decided by a multi-pull-request line" would have gone red on the
+ * repair, which reads as a regression and invites weakening the rule. The rule
+ * is asserted over constructed registers; the live magnitude is recorded above
+ * as an observation and in the release record, where improving it is progress
+ * rather than a failure.
+ */
+
+// The state names, pinned through the namespace rather than imported by name.
+const ATTR_EXACT = "exact";
+const ATTR_INEXACT = "inexact";
+const ATTR_NONE = "none";
+const INEXACT_ATTRIBUTION = "inexact-attribution";
+
+{
+  check(
+    "the module EXPORTS the attribution states and the verdict, so a caller can select on them",
+    reconcileModule.EXACT === ATTR_EXACT &&
+      reconcileModule.INEXACT === ATTR_INEXACT &&
+      reconcileModule.UNATTRIBUTED === ATTR_NONE &&
+      reconcileModule.INEXACT_ATTRIBUTION === INEXACT_ATTRIBUTION,
+    `exported: ${JSON.stringify({
+      EXACT: reconcileModule.EXACT,
+      INEXACT: reconcileModule.INEXACT,
+      UNATTRIBUTED: reconcileModule.UNATTRIBUTED,
+      INEXACT_ATTRIBUTION: reconcileModule.INEXACT_ATTRIBUTION,
+    })}`,
+  );
+}
+
+// One register, four kinds of line, so every case below selects a different
+// deciding line out of the SAME register rather than getting its own.
+const ATTRIBUTION_REGISTER = [
+  // Names 9001 alone and nothing else: an exact account of that release.
+  "2026-09-26T10:00:00Z | agent#a | RELEASED item C-901 via https://github.com/o/r/pull/9001 — " +
+    "signed-in acceptance is owed and was not run.",
+  // Names 9002 AND 9003. Whichever record this decides, it is an account of at
+  // most one of them, and the row cannot say which.
+  "2026-09-26T10:05:00Z | agent#a | RELEASED item C-902 via https://github.com/o/r/pull/9002 — " +
+    "signed-in acceptance is owed and was not run; supersedes the account in " +
+    "https://github.com/o/r/pull/9003.",
+  // Names 9004 and says the proof RAN, while the record for 9004 says not-run:
+  // the compared verdict here is a DISAGREE that must stay recoverable.
+  "2026-09-26T10:10:00Z | agent#a | RELEASED item C-903 via https://github.com/o/r/pull/9004 — " +
+    "signed-in replay ran and was positive; see also https://github.com/o/r/pull/9005.",
+  // Matches 9006 but says nothing at all about a signed-in proof.
+  "2026-09-26T10:15:00Z | agent#a | RELEASED item C-904 via https://github.com/o/r/pull/9006 — " +
+    "merged, deployed, digest pinned.",
+  // A bulk citation, standing in for the 190-pull-request line on the live
+  // register. It names 9007 among many and asserts a completed proof.
+  "2026-09-26T10:20:00Z | agent#a | sweep — signed-in acceptance was proven for the batch: " +
+    Array.from({ length: 12 }, (_, i) => `https://github.com/o/r/pull/${9007 + i}`).join(" "),
+].join("\n");
+
+const ATTR_ENTRIES = registerEntries(ATTRIBUTION_REGISTER);
+
+{
+  // PRECONDITION. Every case below rests on this register parsing into lines
+  // with the pull-request counts the comments claim. Asserted rather than
+  // assumed, because a fixture that parses differently than described would
+  // make the cases pass for the wrong reason.
+  const sizes = ATTR_ENTRIES.map((e) => e.prs.size);
+  check(
+    "PRECONDITION: the attribution register parses into lines naming 1, 2, 2, 1 and 12 pull requests",
+    ATTR_ENTRIES.length === 5 &&
+      sizes.join(",") === "1,2,2,1,12" &&
+      ATTR_ENTRIES[0].prs.has(9001) &&
+      ATTR_ENTRIES[1].prs.has(9002) &&
+      ATTR_ENTRIES[1].prs.has(9003) &&
+      ATTR_ENTRIES[4].prs.has(9007),
+    JSON.stringify(sizes),
+  );
+}
+
+// The record side is the real shape the population has: proof declared
+// required, and the record stating it has not run.
+function attrRow(pr) {
+  return reconcileRecord({
+    record: parseRecord({ file: `r-${pr}.md`, text: RELEASE_RECORD_NOT_RUN }),
+    pr,
+    entries: ATTR_ENTRIES,
+  });
+}
+
+{
+  // A line naming ONE pull request is an exact account, and the verdict stands
+  // as the comparison made it. This is the case that must NOT move.
+  const row = attrRow(9001);
+  check(
+    "a deciding line naming exactly one pull request is EXACT, and its verdict is the comparison",
+    row.attribution === ATTR_EXACT &&
+      row.registerLinePullRequests === 1 &&
+      row.verdict === AGREE &&
+      row.comparedVerdict === AGREE,
+    JSON.stringify(row),
+  );
+}
+
+{
+  // The item's rule. Two pull requests is inexact, and the row says so in its
+  // own state instead of handing back a verdict that reads as a judgement.
+  const row = attrRow(9002);
+  check(
+    "a deciding line naming TWO pull requests reports inexact attribution as its own state",
+    row.attribution === ATTR_INEXACT &&
+      row.registerLinePullRequests === 2 &&
+      row.verdict === INEXACT_ATTRIBUTION,
+    JSON.stringify(row),
+  );
+}
+
+{
+  // "Do not drop the row: a line naming two may well be about both." The
+  // comparison the row would otherwise have reported is retained, so a reader
+  // who decides the line IS about both records recovers the verdict without
+  // re-running anything — and a DISAGREE is the case where losing it costs
+  // most, because a disagreement is the thing this module exists to find.
+  const row = attrRow(9004);
+  check(
+    "an inexact row RETAINS the comparison, so a disagreement is not dropped by being inexact",
+    row.attribution === ATTR_INEXACT &&
+      row.verdict === INEXACT_ATTRIBUTION &&
+      row.comparedVerdict === DISAGREE &&
+      row.registerSays === OBTAINED &&
+      row.recordSays === NOT_RUN,
+    JSON.stringify(row),
+  );
+}
+
+{
+  // The bulk line. Nothing about the magnitude changes the rule — it is still
+  // one state — but the COUNT has to survive onto the row, because 2 and 12 are
+  // the same verdict and not remotely the same evidence.
+  const row = attrRow(9007);
+  check(
+    "a bulk citation is inexact and the row carries how many pull requests decided it",
+    row.attribution === ATTR_INEXACT &&
+      row.verdict === INEXACT_ATTRIBUTION &&
+      row.registerLinePullRequests === 12,
+    JSON.stringify(row),
+  );
+}
+
+{
+  // Two ways to have no attribution, and they must stay distinguishable.
+  // `none` with matched lines means the register spoke about this pull request
+  // and said nothing about its proof; `none` with no matched lines means the
+  // register never mentioned it. Folding them together would hide 33 rows of
+  // the live population inside 84.
+  const silent = attrRow(9006);
+  const absent = attrRow(9999);
+  check(
+    "no deciding line is its own attribution state, and a silent line stays distinct from no line",
+    silent.attribution === ATTR_NONE &&
+      silent.registerLines === 1 &&
+      absent.attribution === ATTR_NONE &&
+      absent.registerLines === 0 &&
+      absent.verdict === NO_REGISTER_LINE,
+    `${JSON.stringify(silent)}\n${JSON.stringify(absent)}`,
+  );
+}
+
+{
+  // REGRESSION GUARD on rule 1, which this change must not disturb: when an
+  // exact line and an inexact line both name the record, the exact one still
+  // wins and the row is EXACT. Inverting the preference makes this row inexact,
+  // so the fix cannot be "call everything inexact".
+  const entries = registerEntries(
+    [
+      "2026-09-26T11:00:00Z | agent#a | sweep — signed-in acceptance was proven for " +
+        "https://github.com/o/r/pull/9100 https://github.com/o/r/pull/9101 " +
+        "https://github.com/o/r/pull/9102.",
+      "2026-09-26T11:01:00Z | agent#a | RELEASED item C-905 via https://github.com/o/r/pull/9100 — " +
+        "signed-in acceptance is owed and was not run.",
+    ].join("\n"),
+  );
+  const row = reconcileRecord({
+    record: parseRecord({ file: "r.md", text: RELEASE_RECORD_NOT_RUN }),
+    pr: 9100,
+    entries,
+  });
+  check(
+    "REGRESSION GUARD: an exact line still beats an inexact one, and that row is EXACT",
+    row.attribution === ATTR_EXACT &&
+      row.registerLinePullRequests === 1 &&
+      row.verdict === AGREE,
+    JSON.stringify(row),
+  );
+}
+
+{
+  // The census has to add up. The item asks for the population "per row rather
+  // than as a count", and a count that cannot be reconciled to the rows it came
+  // from is the shape this backlog exists to repair — so the buckets are
+  // asserted to partition the population, not merely to contain the new one.
+  const result = reconcile({
+    records: [9001, 9002, 9004, 9006, 9007, 9999].map((pr) => ({
+      file: `r-${pr}.md`,
+      text: RELEASE_RECORD_NOT_RUN,
+      pr,
+    })),
+    register: ATTRIBUTION_REGISTER,
+  });
+  const summed = Object.values(result.counts).reduce((a, b) => a + b, 0);
+  const inexactRows = result.rows.filter((r) => r.attribution === ATTR_INEXACT);
+  check(
+    "reconcile counts inexact attribution as its own bucket and the buckets partition the population",
+    result.counts[INEXACT_ATTRIBUTION] === 3 &&
+      inexactRows.length === 3 &&
+      summed === result.population &&
+      result.population === 6 &&
+      result.rows.every((r) => r.attribution !== undefined),
+    JSON.stringify(result.counts) + ` summed=${summed} population=${result.population}`,
+  );
+}
+
+{
+  // The report is the only thing most readers see. An inexact row has to be
+  // NAMED there with the number of pull requests that decided it and with the
+  // comparison it would otherwise have reported — a bucket whose rows are
+  // invisible is the count that hides them.
+  //
+  // TWO rows with DIFFERENT counts, and that is the whole point of the case
+  // rather than thoroughness. Written first over the 2-pull-request row alone,
+  // this case SURVIVED a mutation that replaced `row.registerLinePullRequests`
+  // with the literal `2` — a report that prints a constant where a reader
+  // expects a measurement, passing because the one row it was shown happened to
+  // have that value. Asserting over 2 AND 12 in the same report means no
+  // constant satisfies it.
+  const result = reconcile({
+    records: [
+      { file: "r-9004.md", text: RELEASE_RECORD_NOT_RUN, pr: 9004 },
+      { file: "r-9007.md", text: RELEASE_RECORD_NOT_RUN, pr: 9007 },
+    ],
+    register: ATTRIBUTION_REGISTER,
+  });
+  const text = formatReport(result);
+  const section = text.split("\n").find((l) => l.includes(INEXACT_ATTRIBUTION));
+  check(
+    "formatReport names each inexact row, how many pull requests decided it, and the comparison",
+    section !== undefined &&
+      text.includes("r-9004.md") &&
+      text.includes("r-9007.md") &&
+      /named 2 pull requests/.test(text) &&
+      /named 12 pull requests/.test(text) &&
+      new RegExp(`would have read ${DISAGREE}`).test(text),
+    text,
+  );
+}
+
+{
+  // NEGATIVE CONTROL, and the one that protects the other half of C-528. The
+  // release-step reviewer does NO pull-request matching at all — it is handed
+  // the records the branch adds — so attribution is not a question it can ask
+  // and must not be one it answers. A line naming a dozen pull requests still
+  // contradicts a record that says its proof did not run, because the caller,
+  // not the line, established which records are in scope.
+  const review = reviewReleaseLine({
+    line:
+      "2026-09-26T10:20:00Z | agent#a | sweep — signed-in acceptance was proven for " +
+      Array.from({ length: 12 }, (_, i) => `https://github.com/o/r/pull/${9007 + i}`).join(" "),
+    records: [{ file: "f.md", text: RELEASE_RECORD_NOT_RUN }],
+  });
+  check(
+    "NEGATIVE CONTROL: attribution does not leak into the writer, which does no pull-request matching",
+    review.registerSays === OBTAINED &&
+      review.contradicted.length === 1 &&
+      review.rows[0].verdict === DISAGREE &&
+      review.rows[0].attribution === undefined,
+    JSON.stringify(review),
   );
 }
 
