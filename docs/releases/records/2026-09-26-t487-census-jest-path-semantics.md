@@ -147,9 +147,16 @@ five files dropped, two added. `untriagedUnrunTestFiles` 392 → 395.
 `directoriesFullyCovered` 288 → 286, `directoriesPartiallyCovered` 23 → 24,
 `directoriesUncovered` 176 → 177. In the governed-risk ranking one directory
 enters at **rank 2, band high, signal `tenant_scoped_read`**, 2 of its 4 files
-unrun; `highGovernedRiskDirectories` 7 → 8. Every figure quoted in an earlier
-record that inherits this reading — any "remaining pool" number drawn from the
-census — was taken under the old resolution and is high by up to five files.
+unrun; `highGovernedRiskDirectories` 7 → 8.
+
+**Inherited figures, with the direction stated per kind rather than in one
+sweep, because they do not all point the same way.** A COVERAGE figure taken
+under the old resolution is over-stated on five files and under-stated on two.
+A REMAINING-POOL figure — untriaged unrun files, which is what most of the
+`t5xx`/`t7xx` draws quote — moves the other way and was **under**-stated by
+three net. No earlier record is corrected here: this change states the
+movement, and re-deriving a specific historical figure means re-running the
+census at that record's base commit, which nothing in this PR has done.
 
 ## Rollout Plan
 
