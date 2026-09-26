@@ -123,6 +123,18 @@ inventory is clean today — all thirteen models declare nothing, so the live as
 trivially, and a detector nobody has shown to fire is not a detector. Half-declaring a real row
 turns it red.
 
+**CI found one defect in this change and it was a real one.** The first push failed the `Routes and
+disclaimers` job: `npm run integrity:dom` reported `violations=1 · placeholder_text=1` against
+`read-model-inventory.ts`, because the new placeholder vocabulary spells `"tbd"` and that rule matches
+`\bTBD\b` case-insensitively — the line describing the defect is an instance of it. Fixed with the
+linter's own documented inline escape hatch (`// dom-integrity-ignore-line`) on the line immediately
+above, which is the category that linter already grants itself and `src/lib/integrity/link-crawler.ts`
+in its skip list: a detector has to spell the strings it rejects. **Not** a file-level or rule-level
+exemption, and proven rather than asserted — with the marker in place the tree is `violations=0`,
+while a `"TBD"` string literal appended elsewhere in the *same* file is still reported
+(`violations=1`, line 279). The scanner skips comment lines by design, so the explanation above the
+marker is not itself doing the suppressing.
+
 **Suite and tree.**
 
 - `npx jest --runTestsByPath src/__tests__/behaviors/source-read-model-inventory.test.ts` — 13/13 pass.
