@@ -46,10 +46,22 @@ const STALE_TOWER_REASON =
   "Fixed by mounting the accountability block in the command-center shell, or by moving these five " +
   "controls to the component that now renders there and retiring this entry.";
 
-/** The same clause shape, about a file that does name the component. Must pass. */
+/**
+ * The same clause shape, about a file that does name the component. Must pass.
+ *
+ * Its subject used to be `docs/demo/ABARVA_FOUNDER_DEMO_ROUTE_CHECKLIST.md`,
+ * whose naming of the retired component was the defect `C-536` then fixed —
+ * so this control inverted the moment the corpus improved, going red for the
+ * repository getting better. The subject is now the suite that exercises the
+ * component, which names it because that is what it is for, and
+ * `POSITIVE_CONTROL_SUBJECT` is read at test time so the premise cannot rot
+ * again without saying so.
+ */
+const POSITIVE_CONTROL_SUBJECT =
+  "src/__tests__/integration/tower/program-pressure-cards.test.ts";
 const NAMES_A_FILE_THAT_DOES =
-  "No route imports this component. docs/demo/ABARVA_FOUNDER_DEMO_ROUTE_CHECKLIST.md still names " +
-  "src/components/tower/ProgramPressureCards.tsx as the expected component for that route. " +
+  `No route imports this component. ${POSITIVE_CONTROL_SUBJECT} still names ` +
+  "src/components/tower/ProgramPressureCards.tsx as the component it exercises. " +
   "Fixed by mounting the accountability block in the command-center shell.";
 
 type Catalog = {
@@ -132,9 +144,15 @@ describe("an unreachableReason is checked against the tree it describes", () => 
   });
 
   it("passes the same clause shape when the file really does name the component", () => {
+    // The premise first: a positive control whose subject stopped naming the
+    // component would pass for the wrong reason, or fail while the rule is
+    // fine. Read it, do not assume it.
+    const subject = readFileSync(path.join(repoRoot, POSITIVE_CONTROL_SUBJECT), "utf8");
+    expect(subject).toContain("ProgramPressureCards");
+
     const { code, output } = runAudit(withTowerReason(NAMES_A_FILE_THAT_DOES));
 
-    expect(output).not.toContain("ABARVA_FOUNDER_DEMO_ROUTE_CHECKLIST.md still names");
+    expect(output).not.toContain(`${POSITIVE_CONTROL_SUBJECT} still names`);
     expect(code).toBe(0);
   });
 
