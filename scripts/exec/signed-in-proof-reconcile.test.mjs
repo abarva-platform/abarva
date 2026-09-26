@@ -55,6 +55,8 @@ import {
   REQUIRED,
   SILENT,
   UNDECLARED,
+  UNSTATED,
+  compareAccounts,
   parseRecord,
   parseSignedInRequirement,
   parseStatedRunState,
@@ -63,6 +65,7 @@ import {
   reconcileRecord,
   recordBullets,
   registerEntries,
+  reviewReleaseLine,
   registerSignedInVerdict,
 } from "./signed-in-proof-reconcile.mjs";
 
@@ -1049,6 +1052,159 @@ console.log("\nsigned-in-proof reconciliation (item C-526)\n");
       row.registerStamp === "2026-09-22T07:35:55Z" &&
       /NOT owed/i.test(String(row.registerEvidence)),
     JSON.stringify(row),
+  );
+}
+
+// ---------------------------------------------------------------------------
+// C-528 — the same comparison, asked one moment earlier.
+//
+// `reconcile` is a detector: it can only report an accumulation that already
+// happened, and nine records accumulated before anything looked. The release
+// step asks the same question of a line it is about to write, against the
+// record that release adds — and the two callers must not be two rules, or the
+// day one grows a case the other silently disagrees.
+// ---------------------------------------------------------------------------
+
+{
+  // The rule is ONE function, and this pins the corpus caller to it rather than
+  // asserting the pair separately: for every combination the reader can
+  // produce, `reconcileRecord`'s verdict IS `compareAccounts`.
+  const recordStates = [RAN, NOT_RUN, UNSTATED];
+  const registerStates = [OBTAINED, OWED, NOT_OWED, CONFLICTED, SILENT];
+  const mismatched = [];
+  for (const recordSays of recordStates) {
+    for (const registerSays of registerStates) {
+      // A register line in the state under test, matched to this record by its
+      // pull request, so `reconcileRecord` reaches the comparison at all.
+      const sentence = {
+        [OBTAINED]: "signed-in acceptance passed.",
+        [OWED]: "Not live-proven — signed-in check owed.",
+        [NOT_OWED]: "Signed-in acceptance NOT owed.",
+        [CONFLICTED]: "signed-in acceptance passed; signed-in acceptance owed.",
+        [SILENT]: "merged and deployed.",
+      }[registerSays];
+      const entries = registerEntries(`2026-09-22T07:00:00Z | a#1 | RELEASED #9100 — ${sentence}`);
+      const direct = compareAccounts({ recordSays, registerSays: registerSignedInVerdict(sentence).verdict });
+      const viaRecord = reconcileRecord({
+        record: { recordSays, declaration: REQUIRED, file: "r.md", releaseId: "r" },
+        pr: 9100,
+        entries,
+      }).verdict;
+      if (direct !== viaRecord) mismatched.push(`${recordSays}/${registerSays}: ${direct} vs ${viaRecord}`);
+    }
+  }
+  check(
+    "the corpus reader and the release step share ONE comparison rule, over all 15 pairs",
+    mismatched.length === 0,
+    mismatched.join("\n"),
+  );
+}
+
+// The record shape the nine disagreeing records share: the proof is declared
+// required, and the record states — truthfully when it was written, before the
+// merge — that the replay has not run.
+const RELEASE_RECORD_NOT_RUN = [
+  "# Release record — fixture",
+  "",
+  "- Live signed-in proof required: yes, before calling the behaviour live-proven.",
+  "- Not run: post-deploy signed-in replay; required after the official main workflow.",
+  "",
+].join("\n");
+
+{
+  // The fixture is in the population FIRST. A review over records that all
+  // fall outside it reports zero contradictions and passes vacuously, which is
+  // the failure mode that let nine accumulate under green suites.
+  const record = parseRecord({ file: "f.md", text: RELEASE_RECORD_NOT_RUN });
+  check(
+    "PRECONDITION: the release-step fixture declares the proof required and says not-run",
+    record.declaration === REQUIRED && record.recordSays === NOT_RUN,
+    JSON.stringify(record),
+  );
+}
+
+{
+  const review = reviewReleaseLine({
+    line:
+      "2026-09-26T13:26:15Z | agent#1 | RELEASED item C-900 on branch `x` — PR #9100 merged, " +
+      "official ACA run proven; signed-in acceptance passed.",
+    records: [{ file: "docs/releases/records/f.md", text: RELEASE_RECORD_NOT_RUN }],
+  });
+  check(
+    "a line asserting the proof ran contradicts the record it releases, and NAMES it",
+    review.contradicted.length === 1 &&
+      review.contradicted[0].file === "docs/releases/records/f.md" &&
+      review.contradicted[0].verdict === DISAGREE,
+    JSON.stringify(review),
+  );
+  check(
+    "the contradicted row carries both accounts, so the repair can be written from it",
+    review.registerSays === OBTAINED &&
+      /signed-in acceptance passed/.test(String(review.contradicted[0].registerEvidence)) &&
+      review.contradicted[0].recordSays === NOT_RUN,
+    JSON.stringify(review.contradicted[0]),
+  );
+}
+
+{
+  // The direction that matters for calibration: a line that says the proof is
+  // still owed AGREES with a record that says not-run. Nearly every honest
+  // release line looks like this one.
+  const review = reviewReleaseLine({
+    line: "2026-09-26T13:26:15Z | agent#1 | RELEASED item C-900 — Not live-proven — signed-in check owed.",
+    records: [{ file: "f.md", text: RELEASE_RECORD_NOT_RUN }],
+  });
+  check(
+    "NEGATIVE CONTROL: an owed line contradicts a not-run record in neither direction",
+    review.contradicted.length === 0 && review.rows[0].verdict === AGREE,
+    JSON.stringify(review),
+  );
+}
+
+{
+  // The other direction of the same rule, and it is a real shape: the record
+  // claims the run happened and the register says it is still owed.
+  // The record half quotes the shape C-526's append-only repair produced on
+  // `docs/releases/records/2026-09-26-source-action-detail-guard.md`, which is
+  // the one record in this corpus that states its replay ran. A phrasing
+  // invented here would prove the fixture, not the reader.
+  const review = reviewReleaseLine({
+    line: "2026-09-26T13:26:15Z | agent#1 | RELEASED item C-900 — Not live-proven — signed-in check owed.",
+    records: [
+      {
+        file: "f.md",
+        text:
+          "# r\n\n- Live signed-in proof required: yes.\n\n" +
+          "## Post-deployment validation\n\n" +
+          "- The signed-in post-deployment replay was run and the surface rendered as described.\n",
+      },
+    ],
+  });
+  check(
+    "a record claiming the run while the line says owed is a contradiction too",
+    review.contradicted.length === 1 && review.contradicted[0].recordSays === RAN,
+    JSON.stringify(review),
+  );
+}
+
+{
+  // A record outside the population cannot be contradicted, and a line silent
+  // on the proof contradicts nothing at all.
+  const outside = reviewReleaseLine({
+    line: "2026-09-26T13:26:15Z | agent#1 | RELEASED item C-900 — signed-in acceptance passed.",
+    records: [{ file: "f.md", text: "# r\n\n- Live signed-in proof required: no; documentation only.\n" }],
+  });
+  const silent = reviewReleaseLine({
+    line: "2026-09-26T13:26:15Z | agent#1 | RELEASED item C-900 — merged and deployed; digest pinned.",
+    records: [{ file: "f.md", text: RELEASE_RECORD_NOT_RUN }],
+  });
+  check(
+    "NEGATIVE CONTROL: neither a record outside the population nor a silent line is contradicted",
+    outside.population === 0 &&
+      outside.contradicted.length === 0 &&
+      silent.registerSays === SILENT &&
+      silent.contradicted.length === 0,
+    `${JSON.stringify(outside)}\n${JSON.stringify(silent)}`,
   );
 }
 

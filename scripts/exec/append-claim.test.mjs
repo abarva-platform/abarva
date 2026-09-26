@@ -944,5 +944,210 @@ for (const bad of ["--release", "--totally-made-up-flag", "--wrong-flag-two=x"])
   );
 }
 
+// ---------------------------------------------------------------------------
+// C-528 — the record this line releases, against the line itself.
+//
+// Nine release records on `main` assert a signed-in debt the register says was
+// already paid. Not one is a wrong verdict: the record is authored before the
+// merge, so it can only say the proof has not run; the register line is
+// appended after the deploy, when it has; and nothing between them reopens the
+// record. The only moment both accounts are in hand is the one this helper
+// owns, and until now it wrote the line without ever looking at the record.
+//
+// Every case below runs the real helper over a real throwaway git repository,
+// because the production answer to "which record is this release about" is a
+// git question and a case that hands the helper a file list would prove the
+// describer rather than the check.
+// ---------------------------------------------------------------------------
+
+/** A throwaway repository whose BRANCH adds the given release records. */
+function repoFixture(records) {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "append-claim-repo-"));
+  const git = (...args) =>
+    execFileSync("git", args, { cwd: dir, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] });
+  git("init", "-q", "-b", "trunk");
+  git("config", "user.email", "suite@example.invalid");
+  git("config", "user.name", "suite");
+  git("config", "commit.gpgsign", "false");
+  fs.mkdirSync(path.join(dir, "docs", "releases", "records"), { recursive: true });
+  fs.writeFileSync(path.join(dir, "README.md"), "base\n");
+  git("add", "-A");
+  git("commit", "-qm", "base");
+  git("checkout", "-q", "-b", "work");
+  for (const [name, text] of Object.entries(records)) {
+    fs.writeFileSync(path.join(dir, "docs", "releases", "records", name), text);
+  }
+  git("add", "-A");
+  git("commit", "-qm", "add records");
+  return dir;
+}
+
+// The record shape the nine share: it declares the proof required and states,
+// truthfully at the time it was written, that the replay has not run.
+const RECORD_REQUIRED_NOT_RUN = [
+  "# Release record — fixture",
+  "",
+  "## Deployment authority",
+  "",
+  "- Live signed-in proof required: yes, before calling the behaviour live-proven.",
+  "- Not run: post-deploy signed-in replay; required after the official main workflow.",
+  "",
+].join("\n");
+
+// A record outside the population: it declares no signed-in proof required, so
+// there is nothing for a line to contradict.
+const RECORD_NOT_REQUIRED = [
+  "# Release record — fixture",
+  "",
+  "- Live signed-in proof required: no; this change is documentation only.",
+  "",
+].join("\n");
+
+const PROOF_RAN =
+  "PR #9000 merged, official ACA run 1 proven and digest-pinned; signed-in acceptance passed.";
+const PROOF_OWED = "PR #9000 merged and deployed. Not live-proven — signed-in check owed.";
+
+{
+  // THE ACCEPTANCE. The line says the proof ran; the record it releases still
+  // says it did not. The helper must say so, and name the record — a count
+  // would leave the operator with nothing to open.
+  const { dir, file } = fixture([]);
+  const repo = repoFixture({ "2026-09-26-fixture-release.md": RECORD_REQUIRED_NOT_RUN });
+  const before = digest(file);
+  const r = run([
+    ...base({ file, item: "C-900", identity: ME, message: PROOF_RAN }),
+    "--action", "release", "--branch", "exec/c-900", "--now", NOW,
+    "--repo", repo, "--base", "trunk",
+  ]);
+  const said = r.stdout + r.stderr;
+  check(
+    "a release line asserting the proof ran NAMES the record that still says not-run",
+    /2026-09-26-fixture-release\.md/.test(said) && /not-run/.test(said) && /obtained/.test(said),
+    `status=${r.status}\nstdout=${r.stdout}\nstderr=${r.stderr}`,
+  );
+  check(
+    "it says the repair is an APPEND to the record, not a rewrite",
+    /APPEND-ONLY/.test(said) && /never a rewrite/.test(said),
+    said,
+  );
+  check(
+    "the register line is still written — a release hands work back and must be recordable",
+    r.status === 0 && digest(file) !== before,
+    `status=${r.status} appended=${digest(file) !== before}\nstderr=${r.stderr}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+  fs.rmSync(repo, { recursive: true, force: true });
+}
+
+{
+  // --strict is the escalation, and it must refuse BEFORE the write: a refusal
+  // that leaves the line behind has recorded the thing it objected to.
+  const { dir, file } = fixture([]);
+  const repo = repoFixture({ "2026-09-26-fixture-release.md": RECORD_REQUIRED_NOT_RUN });
+  const before = digest(file);
+  const r = run([
+    ...base({ file, item: "C-900", identity: ME, message: PROOF_RAN }),
+    "--action", "release", "--branch", "exec/c-900", "--now", NOW,
+    "--repo", repo, "--base", "trunk", "--strict",
+  ]);
+  check(
+    "--strict refuses the line and appends nothing — register byte-identical",
+    r.status === 1 && digest(file) === before,
+    `status=${r.status} changed=${digest(file) !== before}\nstderr=${r.stderr}`,
+  );
+  check(
+    "the strict refusal still names the record and says nothing was appended",
+    /2026-09-26-fixture-release\.md/.test(r.stderr) && /Nothing was appended/.test(r.stderr),
+    r.stderr,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+  fs.rmSync(repo, { recursive: true, force: true });
+}
+
+{
+  // NEGATIVE CONTROL, and the one that matters most: a line that says the
+  // proof is still OWED agrees with a record that says not-run. A check that
+  // fired here would fire on almost every honest release and be turned off.
+  const { dir, file } = fixture([]);
+  const repo = repoFixture({ "2026-09-26-fixture-release.md": RECORD_REQUIRED_NOT_RUN });
+  const before = digest(file);
+  const r = run([
+    ...base({ file, item: "C-900", identity: ME, message: PROOF_OWED }),
+    "--action", "release", "--branch", "exec/c-900", "--now", NOW,
+    "--repo", repo, "--base", "trunk", "--strict",
+  ]);
+  check(
+    "NEGATIVE CONTROL: an owed line agrees with a not-run record, and --strict still writes it",
+    r.status === 0 && digest(file) !== before && !/fixture-release\.md/.test(r.stdout + r.stderr),
+    `status=${r.status} appended=${digest(file) !== before}\nstdout=${r.stdout}\nstderr=${r.stderr}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+  fs.rmSync(repo, { recursive: true, force: true });
+}
+
+{
+  // NEGATIVE CONTROL: a record that declares no signed-in proof required is
+  // outside the population, so an obtained line contradicts nothing.
+  const { dir, file } = fixture([]);
+  const repo = repoFixture({ "2026-09-26-fixture-release.md": RECORD_NOT_REQUIRED });
+  const r = run([
+    ...base({ file, item: "C-900", identity: ME, message: PROOF_RAN }),
+    "--action", "release", "--branch", "exec/c-900", "--now", NOW,
+    "--repo", repo, "--base", "trunk", "--strict",
+  ]);
+  check(
+    "NEGATIVE CONTROL: a record declaring no signed-in proof required is not contradicted",
+    r.status === 0 && !/fixture-release\.md/.test(r.stdout + r.stderr),
+    `status=${r.status}\nstdout=${r.stdout}\nstderr=${r.stderr}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+  fs.rmSync(repo, { recursive: true, force: true });
+}
+
+{
+  // A repository this cannot read is UNDETERMINED and says so. Silence here
+  // would read as "no record contradicts this line", which is the exact
+  // substitution — a check that cannot look reporting a clean bill of health —
+  // that C-528 exists against.
+  const { dir, file } = fixture([]);
+  const empty = fs.mkdtempSync(path.join(os.tmpdir(), "append-claim-norepo-"));
+  const before = digest(file);
+  const r = run([
+    ...base({ file, item: "C-900", identity: ME, message: PROOF_RAN }),
+    "--action", "release", "--branch", "exec/c-900", "--now", NOW,
+    "--repo", empty, "--base", "trunk",
+  ]);
+  check(
+    "an unreadable checkout is reported as UNDETERMINED, and the line is still written",
+    /UNDETERMINED/.test(r.stdout + r.stderr) && r.status === 0 && digest(file) !== before,
+    `status=${r.status}\nstdout=${r.stdout}\nstderr=${r.stderr}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+  fs.rmSync(empty, { recursive: true, force: true });
+}
+
+{
+  // A line that says nothing about a signed-in proof cannot contradict a
+  // record, and must not be slowed down or commented on by this check. This is
+  // the shape of nearly every claim line in the register.
+  const { dir, file } = fixture([]);
+  const repo = repoFixture({ "2026-09-26-fixture-release.md": RECORD_REQUIRED_NOT_RUN });
+  const before = digest(file);
+  const r = run([
+    ...base({ file, item: "C-900", identity: ME, message: "Taking C-900; re-verified on main." }),
+    "--now", NOW, "--repo", repo, "--base", "trunk", "--strict",
+  ]);
+  check(
+    "NEGATIVE CONTROL: a line silent on the proof is written with no record commentary",
+    r.status === 0 &&
+      digest(file) !== before &&
+      !/fixture-release\.md/.test(r.stdout + r.stderr) &&
+      !/UNDETERMINED/.test(r.stdout + r.stderr),
+    `status=${r.status}\nstdout=${r.stdout}\nstderr=${r.stderr}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+  fs.rmSync(repo, { recursive: true, force: true });
+}
+
 console.log(`\n${passes} passed, ${failures} failed`);
 process.exit(failures ? 1 : 0);

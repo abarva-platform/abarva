@@ -67,3 +67,23 @@ PR link, focused test output, full component test output, mutation-check output,
 
 - Local validation used the main checkout's dependency tree through an ignored `node_modules` symlink because this fresh worktree had no installed dependencies.
 - No deployed or signed-in browser proof is claimed in this release record.
+
+## Post-deployment signed-in replay
+
+**Appended 2026-09-26 (item `C-528`). Every line above is left exactly as
+written: this record is audit history, and a correction to it is an addition,
+never an edit.** What those lines said was true when they were written — the
+record is authored before the merge, and the replay happens after the deploy.
+
+- The signed-in post-deployment replay was run. This section is the record of
+  its outcome; the line above is the state as of the candidate, not the result.
+- Recorded in the execution register at `2026-09-22T02:20:18Z` by `codex-source-new-concise-completed-ui`.
+- What it found: the register records its own repo-owned ACA run succeeded, the
+  runtime invariant passed, and signed-in acceptance passed. It names no defect.
+- **Scope is UNDETERMINED and is not claimed here.** The requirement above names
+  the conditions the replay was to run under — a completed event carrying
+  high-volume review items and historical decision-trail activity. The register
+  says acceptance passed; it does not say those conditions were the ones present,
+  and this correction does not assume they were.
+- No signed-in run was performed by this correction. It reconciles two existing
+  accounts of one run, and the appended-to record is the durable one.

@@ -66,3 +66,23 @@ Revert the squash merge and let the repo-owned workflow restore the previous pre
 ## Known Gaps
 
 This release changes presentation only. It does not alter underlying formulas, classification, evidence readiness, or value facts.
+
+## Post-deployment signed-in replay
+
+**Appended 2026-09-26 (item `C-528`). Every line above is left exactly as
+written: this record is audit history, and a correction to it is an addition,
+never an edit.** What those lines said was true when they were written — the
+record is authored before the merge, and the replay happens after the deploy.
+
+- The signed-in post-deployment replay was run. This section is the record of
+  its outcome; the line above is the state as of the candidate, not the result.
+- Recorded in the execution register at `2026-09-22T01:02:00Z` by `codex-source-value-movement-presentation`.
+- What it found: signed-in acceptance passed on the governed intelligence
+  surface, and the register quotes the negotiable headline range it saw there.
+- **Scope is PARTLY settled and otherwise UNDETERMINED.** The requirement above
+  names two assertions: that all three value categories are stated separately,
+  and that no netted negative headline or percentage is shown. The quoted
+  headline is a positive range, which speaks to the second; nothing in the
+  register speaks to the first, and this correction does not infer it.
+- No signed-in run was performed by this correction. It reconciles two existing
+  accounts of one run, and the appended-to record is the durable one.

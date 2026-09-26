@@ -75,3 +75,24 @@ Revert the squash merge and allow the repo-owned deployment workflow to restore 
 - This release does not prove the signed-in production path.
 - This release does not create, approve, parse, index, or transition any artifact.
 - This release does not change the structured governed answer packet already covered by the earlier artifact-draft grounding release record.
+
+## Post-deployment signed-in replay
+
+**Appended 2026-09-26 (item `C-528`). Every line above is left exactly as
+written: this record is audit history, and a correction to it is an addition,
+never an edit.** What those lines said was true when they were written — the
+record is authored before the merge, and the replay happens after the deploy.
+
+- The signed-in post-deployment replay was run. This section is the record of
+  its outcome; the line above is the state as of the candidate, not the result.
+- Recorded in the execution register at `2026-09-22T03:22:30Z` by `codex-fix-advisor-registered-drafts`.
+- What it found: the register records the merge, a repo-owned ACA deploy run
+  that succeeded, a runtime invariant that passed, and that signed-in acceptance
+  passed. It names no defect and no residual.
+- **Scope is UNDETERMINED and is not claimed here.** The register's sentence
+  asserts that acceptance passed without naming the behaviours exercised, so
+  whether it covered every behaviour this record claims is not settled by it.
+  Two register lines name this pull request; the one quoted is the later of the
+  two, and each names this pull request alone.
+- No signed-in run was performed by this correction. It reconciles two existing
+  accounts of one run, and the appended-to record is the durable one.

@@ -48,6 +48,7 @@ import path from "node:path";
 import { execFileSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { announcesRelease, announcesAbstention } from "./register-time-authority.mjs";
+import { SILENT, reviewReleaseLine } from "./signed-in-proof-reconcile.mjs";
 import { unknownFlags } from "./cli-entry.mjs";
 import {
   describeQueueProvenance,
@@ -69,6 +70,7 @@ export const USAGE =
   "usage: --file <register.md> --item <id> --identity <base-agent#run-id> --message <text>\n" +
   "       [--action claim|release|abstain] [--branch <name>] [--files a,b]\n" +
   "       [--strict] [--dry-run] [--now ISO] [--queue <EXECUTION_QUEUE.md>]\n" +
+  "       [--repo <dir>] [--records <dir>] [--base <ref>]\n" +
   "       [--window-hours 3] [--gate <path>] [--gate-arg <flag>]...";
 
 /**
@@ -88,6 +90,7 @@ export const FLAG_SPEC = {
   value: [
     "--file", "--item", "--identity", "--message", "--files", "--action",
     "--branch", "--now", "--window-hours", "--gate", "--gate-arg", "--queue",
+    "--repo", "--records", "--base",
   ],
   boolean: ["--strict", "--dry-run"],
 };
@@ -135,6 +138,83 @@ export function announcementHead(action, item, branch) {
   const parts = [`item ${item} claimed`];
   if (branch) parts.push(`on branch \`${branch}\``);
   return parts.join(" ");
+}
+
+const DEFAULT_RECORD_DIR = "docs/releases/records";
+const DEFAULT_BASE = "origin/main";
+
+/**
+ * The release records this branch adds or changes (item C-528).
+ *
+ * The record a release is about is the one its own branch introduces, which is
+ * a question git answers without a pull request id — and at the moment a
+ * release line is written there may be no local commit carrying one, because
+ * the squash lands on `main` and the agent is standing on its feature branch.
+ *
+ * Returns `{ records, undetermined }`. A repository this cannot read makes the
+ * answer UNDETERMINED and says so; it does not return an empty list, because
+ * "no record contradicts this line" and "I could not look" are different
+ * statements and collapsing them is how a check stops being one.
+ */
+export function releaseRecordsInBranch({
+  repo,
+  dir = DEFAULT_RECORD_DIR,
+  base = DEFAULT_BASE,
+  git = runGit,
+} = {}) {
+  let out;
+  try {
+    out = git(["diff", "--name-only", "--diff-filter=AM", `${base}...HEAD`, "--", dir], repo);
+  } catch (error) {
+    const detail = String(error?.stderr ?? error?.message ?? error).trim().split("\n")[0];
+    return { records: [], undetermined: `git could not compare ${base}...HEAD in ${repo}: ${detail}` };
+  }
+  const records = [];
+  for (const rel of out.split("\n").map((l) => l.trim()).filter(Boolean)) {
+    const abs = path.join(repo, rel);
+    if (!fs.existsSync(abs)) continue;
+    records.push({ file: rel, text: fs.readFileSync(abs, "utf8") });
+  }
+  return { records, undetermined: null };
+}
+
+function runGit(args, cwd) {
+  return execFileSync("git", args, { cwd, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] });
+}
+
+/**
+ * What this line would leave behind in the record it releases (item C-528).
+ *
+ * Nine release records on `main` assert a signed-in debt the register says was
+ * already paid. None of them is a wrong verdict; every one is a writing order.
+ * The record is authored before the merge, so it can only ever say the proof
+ * has not run; the register line is appended after the deploy, when the proof
+ * HAS run; and nothing between the two ever reopens the record. The debt is
+ * then recoverable only from an operator-root register that CI cannot see.
+ *
+ * So the check runs here, on the one sanctioned writer of a register line, at
+ * the one moment both accounts are in hand. It cannot repair the record — that
+ * file is already merged — and it does not pretend to: it names the record, the
+ * two accounts, and the append-only repair that is owed.
+ *
+ * A line that says nothing about a signed-in proof cannot contradict anything,
+ * and short-circuits before git is touched.
+ */
+export function describeRecordContradiction(review) {
+  const lines = [];
+  for (const row of review.contradicted) {
+    lines.push(
+      `  record:   ${row.file}`,
+      `    says:     ${row.recordSays} — ${String(row.recordEvidence ?? "").trim()}`,
+      `    register: ${row.registerSays} — ${String(row.registerEvidence ?? "").trim()}`,
+    );
+  }
+  lines.push(
+    "  This record is already merged, so this line cannot repair it. What is owed is an",
+    "  APPEND-ONLY section on the record — that the replay ran, when, what it found, and the",
+    "  id carrying any residual — never a rewrite of the original assertion (item C-528).",
+  );
+  return lines.join("\n");
 }
 
 export function buildClaimLine({ stamp, identity, item, message, branch, files, verdict, action = "claim" }) {
@@ -419,6 +499,52 @@ function main(argv) {
     verdict,
     action,
   });
+
+  /*
+   * C-528. The record this line releases, against the line itself.
+   *
+   * Placed after the line is built and BEFORE anything is written, so --strict
+   * can refuse without leaving a register the refusal contradicts. The default
+   * is advisory on purpose and it is not timidity: the register is audit
+   * history, a release hands work back, and refusing to record an outcome
+   * because a document disagrees with it would strand the claim and push the
+   * correction into a hand-written line — the T-708 shape, reached from the
+   * sanctioned path.
+   */
+  const silentOnProof = reviewReleaseLine({ line, records: [] }).registerSays === SILENT;
+  if (!silentOnProof) {
+    const repo = path.resolve(flag("--repo") ?? path.join(HERE, "..", ".."));
+    const { records, undetermined } = releaseRecordsInBranch({
+      repo,
+      dir: flag("--records") ?? DEFAULT_RECORD_DIR,
+      base: flag("--base") ?? DEFAULT_BASE,
+    });
+    if (undetermined) {
+      // Named, never silent. An unreadable repository is not a clean bill of
+      // health, and reporting it as one is the failure this whole item is about.
+      // Advisory, so stdout — the same channel this file's other advisory uses.
+      // A refusal is the only thing that speaks on stderr here.
+      console.log(
+        "This line speaks about a signed-in proof, and whether it contradicts the record it " +
+          `releases is UNDETERMINED: ${undetermined}\n` +
+          "  Pass --repo/--base to point at the checkout that holds the record.",
+      );
+    } else {
+      const review = reviewReleaseLine({ line, records });
+      if (review.contradicted.length > 0) {
+        const headline =
+          `This line says the signed-in proof is \`${review.registerSays}\`, and ` +
+          `${review.contradicted.length} release record(s) this branch writes say otherwise.`;
+        if (has("--strict")) {
+          fail(
+            EXIT_REFUSED,
+            `${headline} Nothing was appended.\n${describeRecordContradiction(review)}`,
+          );
+        }
+        console.log(`${headline}\n${describeRecordContradiction(review)}`);
+      }
+    }
+  }
 
   if (has("--dry-run")) {
     console.log(`--dry-run; this record was NOT appended:\n${line}`);

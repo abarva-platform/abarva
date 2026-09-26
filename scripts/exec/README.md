@@ -116,9 +116,40 @@ node scripts/exec/append-claim.mjs \
 ```
 
 The gate decides and **a refusal means nothing is written** — not a warning, not
-a line with a caveat. The helper adds no rules of its own: the verdict is the
-gate's exit status, so a rule that lands in the gate governs the claim step the
-day it merges.
+a line with a caveat. On ownership the helper adds no rules of its own: the
+verdict is the gate's exit status, so a rule that lands in the gate governs the
+claim step the day it merges.
+
+## The record this line releases (item C-528)
+
+One rule does originate here, and it is about documents rather than ownership.
+Nine release records on `main` declared a post-deployment signed-in proof still
+owed while the register recorded that it had run. None of them was a wrong
+verdict: a release record is authored before the merge, so it can only say the
+proof has not happened; the register line is appended after the deploy, when it
+has; and nothing between the two ever reopens the record.
+
+So when a line says something about a signed-in proof, this helper compares it
+against the release records the branch itself adds — `origin/main...HEAD` under
+`docs/releases/records`, which needs no pull request id, because at that moment
+the squash is on `main` and may not be in the local repository at all. A record
+the line contradicts is named, with both accounts and the append-only repair
+that is owed.
+
+Three properties, and each is the opposite of the ownership gate's for a stated
+reason:
+
+- **Advisory by default**, refusing only under `--strict`, and always *before*
+  the write. A release hands work back; refusing to record an outcome because a
+  document disagrees with it would strand a live claim.
+- **It cannot repair the record** — that file is merged — and it does not
+  pretend to. Opening the follow-up is still a human or agent action.
+- **An unreadable checkout is `UNDETERMINED`, never silence.** "No record
+  contradicts this line" and "I could not look" are different statements.
+
+`--repo`, `--records` and `--base` point it at another checkout. Precision is
+exactly the branch's own diff: a branch carrying several records has all of them
+named, which is harmless as an advisory and wrong under `--strict`.
 
 Three behaviours are worth knowing before you reach for `--force` (there isn't
 one):

@@ -92,3 +92,25 @@ rail. No data rollback is required.
 - Signed-in acceptance is owed after deployment and is not claimed here.
 - This release does not change canonical internal Source stage keys, approval semantics, event
   progression, artifact generation, or Source New request creation.
+
+## Post-deployment signed-in replay
+
+**Appended 2026-09-26 (item `C-528`). Every line above is left exactly as
+written: this record is audit history, and a correction to it is an addition,
+never an edit.** What those lines said was true when they were written — the
+record is authored before the merge, and the replay happens after the deploy.
+
+- The signed-in post-deployment replay was run. This section is the record of
+  its outcome; the line above is the state as of the candidate, not the result.
+- Recorded in the execution register at `2026-09-22T02:09:21Z` by `codex-source-f8-five-phase-event-journey`.
+- What it found: the register records a carrier ACA run that succeeded, a runtime
+  invariant that passed, and that signed-in acceptance passed. It names no
+  defect, and it describes no visual observation.
+- **Scope is UNDETERMINED and is not claimed here, and this is the weakest of
+  the nine.** The requirement above names a read-only visual acceptance of one
+  rail. The register's sentence is a deploy-and-acceptance sentence carrying no
+  visual detail, and its carrier run is shared with another release stamped at
+  the same minute. It is therefore evidence that a signed-in acceptance happened
+  on that deploy, and not evidence that this rail was the thing looked at.
+- No signed-in run was performed by this correction. It reconciles two existing
+  accounts of one run, and the appended-to record is the durable one.

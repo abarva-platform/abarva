@@ -63,3 +63,25 @@ Revert the PR through protected main and let the repo-owned workflow deploy the 
 ## Known Gaps
 
 The missing contract detail/identity mapping remains a separate read-model task. This release does not create a canonical contract or claim Contract 360 acceptance for that record.
+
+## Post-deployment signed-in replay
+
+**Appended 2026-09-26 (item `C-528`). Every line above is left exactly as
+written: this record is audit history, and a correction to it is an addition,
+never an edit.** What those lines said was true when they were written — the
+record is authored before the merge, and the replay happens after the deploy.
+
+- The signed-in post-deployment replay was run. This section is the record of
+  its outcome; the line above is the state as of the candidate, not the result.
+- Recorded in the execution register at `2026-09-26T13:26:15Z` by `codex-source-cpo#20260926T125422Z`.
+- What it found: the known-error action drawer no longer loops, and the
+  canonical detail for the affected record is still absent.
+- Residual carried by: item `C-542`, filed by this correction. Nothing carried
+  the missing canonical detail before it — the finding existed only in the
+  register line, which CI cannot read.
+- **Scope is UNDETERMINED and is not claimed here.** The requirement above names
+  three assertions — reopening the measured missing-detail action, reviewing its
+  drawer, and also verifying a detail-backed path. The register settles the
+  drawer; it does not say whether the detail-backed path was exercised.
+- No signed-in run was performed by this correction. It reconciles two existing
+  accounts of one run, and the appended-to record is the durable one.
