@@ -1,5 +1,5 @@
 /**
- * Atlas Fix C — synthesis determinism + honest timeout
+ * Tower synthesis Fix C — determinism + honest timeout
  *
  * The CXO-quality audit (PR #2562) flagged the tower synthesis route for two
  * structural problems:
@@ -7,12 +7,17 @@
  *   1. The Anthropic `messages.stream` call had no `temperature`, so the
  *      default (~1.0) drifted across reads of the same portfolio state.
  *   2. The stream had no `AbortController`, so when the upstream hung the UI
- *      sat indefinitely on "Atlas is thinking…".
+ *      sat indefinitely on the agent's "thinking…" state. At the time that
+ *      state read "Atlas is thinking…"; see the timeout-message case below
+ *      for why the product no longer says that.
  *
  * These tests pin the exported levers and the honest-failure message so a
  * future refactor that strips either fails loudly. They live alongside the
  * route so refactors that move the route move the test.
  */
+
+import { assertVisibleAnswerContract } from '@/lib/agent/visible-answer-contract';
+import { TOWER_LEAD_AGENT } from '@/lib/tower/constants';
 
 import {
   TOWER_SYNTHESIS_TEMPERATURE,
@@ -36,7 +41,40 @@ describe('Tower synthesis Fix C levers', () => {
     // The message must clear the "thinking…" state. Asserting wording in case
     // a future refactor swaps in a generic "error" string and loses the
     // CXO-grade phrasing the audit called for.
-    expect(TOWER_SYNTHESIS_TIMEOUT_MESSAGE).toMatch(/Atlas/);
+    //
+    // This case used to assert /Atlas/, and was red from 2026-06-27 until it
+    // was corrected. `bdbfff54b` — "fix(home,tower): enforce visible answer
+    // contract (#4037)" — rewrote this constant from "Atlas couldn't complete
+    // …" to "aVa could not complete …" as part of a change whose whole point
+    // was that legacy internal agent branding must not reach a reader. So the
+    // old expectation was not merely stale: it pinned a string the product's
+    // own contract now forbids on a user-facing surface, and a "fix" that
+    // satisfied it would have reintroduced the defect #4037 removed.
+    //
+    // The replacement therefore asserts the identity through the repository's
+    // own authorities rather than through a second brand literal that would go
+    // stale the same way: `TOWER_LEAD_AGENT` is where Tower states its agent's
+    // name, and `assertVisibleAnswerContract` is the checker production runs
+    // over model output, whose `atlas_branding` rule is the executable form of
+    // the sentence "the user-facing identity is aVa".
+    //
+    // The assertions are ordered so that each one is the FIRST to fail for a
+    // distinct defect, because jest abandons a case at its first failed
+    // expectation and an assertion that is always pre-empted by an earlier one
+    // is an assertion nothing proves. Reinstating the pre-#4037 wording trips
+    // the branding clause; renaming the agent trips the identity check; a raw
+    // ID trips the whole-contract check. Each is recorded in the pull request.
+    const contract = assertVisibleAnswerContract(TOWER_SYNTHESIS_TIMEOUT_MESSAGE);
+    expect(contract.violations.map((violation) => violation.id)).not.toContain(
+      'atlas_branding',
+    );
+    // A timeout notice is prose a user reads, so it owes the whole contract,
+    // not only the branding clause — a raw ID or a stock closing would be just
+    // as wrong here as in an answer.
+    expect(contract.violations).toEqual([]);
+    expect(contract.passed).toBe(true);
+
+    expect(TOWER_SYNTHESIS_TIMEOUT_MESSAGE).toContain(TOWER_LEAD_AGENT);
     expect(TOWER_SYNTHESIS_TIMEOUT_MESSAGE).toMatch(/time/i);
     expect(TOWER_SYNTHESIS_TIMEOUT_MESSAGE.length).toBeGreaterThan(20);
   });
