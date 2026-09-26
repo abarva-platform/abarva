@@ -991,7 +991,60 @@ for (const [sample, num, expected] of [
 }
 
 const BLOCKER_RULES = [
-  { re: /\bnot\s+signed-in\b|(?:^|[.!?]\s+)signed-in\s+check\b|signed-in[^.]{0,80}\b(pending|owed|not proven|not performed|not claimed|remains? (?:open|unproven))\b/i, say: "Signed-in acceptance owed", ownerGate: true },
+  // Item C-534, second reader. The owed half of this pattern had no negation,
+  // so a sentence asserting that NO signed-in proof is owed was filed as one
+  // asserting a debt. The live case is C-534's own row: it is an item ABOUT
+  // this vocabulary, so its body quotes the register sentence "Signed-in
+  // acceptance **NOT owed**", the rule matched `signed-in` ... `owed` across
+  // the quotation, and the queue filed the only item that would repair the
+  // identical gap in `signed-in-proof-reconcile.mjs` as owing a live proof
+  // nobody may run unattended. The defect hid its own fix, and C-534 needs no
+  // signed-in run at all — it changes an operator script that renders nothing.
+  //
+  // A VETO, like the `blocked` rule's below, so it can only REMOVE matches —
+  // which is the direction that takes an item out of the never-claim bucket and
+  // therefore the one to be careful in. Two things keep it narrow, and each has
+  // a case in the suite that fails without it:
+  //
+  //   - The negator must sit ADJACENTLY to the owed word, crossing only the
+  //     emphasis the register writes it in (`**NOT owed**`, `is not owed`,
+  //     `none owed`). The register's most common owed phrasing is "Not
+  //     live-proven — signed-in check owed", where the negator belongs to
+  //     `live-proven`; a span-wide veto reads that as a release owing nothing
+  //     and would silence every row carrying it.
+  //   - It is vetoed per SENTENCE, by `firstUnvetoedMatch`, so a row that
+  //     quotes a not-owed line and ALSO states a real gate in another sentence
+  //     keeps the gate.
+  //
+  // MEASURED ON THE LIVE BACKLOG, and the measurement corrected the sentence
+  // that stood here first. This changes the derived blocker of 31 items, not of
+  // the two that motivated it. Every one of the 31 sits at rung 5, 6 or 7 —
+  // merged, deployed, or signed-in proven — and every one was labelled from a
+  // RELEASE line of its own saying the proof was not owed: "RELEASED item T-510
+  // — merged, DEPLOYED, ACA runtime invariant PROVEN", "`live-proven` is NOT
+  // owed and is not claimed: no product code changed". So the corrections are
+  // real and they are in the safe direction twice over: **zero rung-0 items
+  // move**, and claimability requires rung 0, so the claimable queue is
+  // identical before and after apart from its own generation timestamp —
+  // checked by regenerating it from both summaries and diffing, not by
+  // reasoning about rungs.
+  //
+  // AND IT DOES NOT FREE `C-534` OR `C-535`, which is why it was written. Their
+  // rows are vetoed correctly; what keeps them labelled is a DIFFERENT hole,
+  // found by measuring instead of assuming. Two unvetoed matches come from a
+  // CLAIM line — a sentence quoting the label itself ("the board derived the
+  // blocker \"Signed-in acceptance owed\" for it"), and the `files:` path list
+  // at the end of every claim line, where a release-record filename carrying
+  // the token matches `signed-in` ... `owed` across it. A filename is not a
+  // gate: that is the defect this file already pins for the `blocked` rule, and
+  // the signed-in rule still has it. Neither is a polarity question, so neither
+  // is fixed here; both are filed, each with the live line that produced it.
+  {
+    re: /\bnot\s+signed-in\b|(?:^|[.!?]\s+)signed-in\s+check\b|signed-in[^.]{0,80}\b(pending|owed|not proven|not performed|not claimed|remains? (?:open|unproven))\b/i,
+    veto: /\b(?:not|never|no longer|none)\b[\s*_]{0,4}(?:owed|required|needed)\b/i,
+    say: "Signed-in acceptance owed",
+    ownerGate: true,
+  },
   // The third form is item T-705's, and it sits here rather than in its own
   // change for one measured reason. Correcting the rung-7 veto below drops one
   // row to rung 0 — correctly; its own text reads "not merged, not deployed,
