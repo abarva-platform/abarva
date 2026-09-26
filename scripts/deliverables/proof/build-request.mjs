@@ -363,7 +363,7 @@ const request = {
   })),
   requiredEvidenceSignals: [1, 4, 8, 9].map((n) => {
     const e = evidence.find((x) => x.citationNumber === n);
-    return { key: e.evidenceFamily, statement: e.statement, citationNumber: n };
+    return { key: e.evidenceFamily, label: e.label, statement: e.statement, citationNumber: n };
   }),
   missingEvidence: [],
   clientCompleteItems: [],

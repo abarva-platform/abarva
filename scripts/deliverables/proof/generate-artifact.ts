@@ -15,6 +15,7 @@ import fs from "node:fs";
 import path from "node:path";
 import Anthropic from "@anthropic-ai/sdk";
 import { runDeliverableOrchestration } from "@/lib/deliverables/orchestrator/orchestrator";
+import { assertPromptHygiene } from "@/lib/deliverables/composer/prompt-hygiene";
 import { resolveQualityBar } from "@/lib/deliverables/orchestrator/quality-bar-registry";
 import { deliverableModel, DELIVERABLE_MAX_TOKENS } from "@/lib/deliverables/model-policy";
 import type {
@@ -64,6 +65,10 @@ async function main() {
     req,
     async (prompt) => {
       const n = ++calls;
+      // Before the spend, not after. A missing field once put "undefined:" into
+      // the required-signals block; the model copied it into the document and
+      // the quality gate blocked the artifact three steps later.
+      assertPromptHygiene(`${prompt.system}\n\n${prompt.user}`, prompt.pass);
       const t0 = Date.now();
       const response = await client.messages
         .stream({

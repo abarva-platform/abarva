@@ -34,6 +34,8 @@ import { validateSlideStoryPlan, narrowPacketForCode } from "@/lib/deliverables/
 import { assembleComposerModule, type SlideFunction } from "@/lib/deliverables/composer/assemble-module";
 import { parseSlideFunctions } from "@/lib/deliverables/composer/parse-slide-functions";
 import { deliverableModel } from "@/lib/deliverables/model-policy";
+import { assertPromptHygiene } from "@/lib/deliverables/composer/prompt-hygiene";
+import { SLIDE_BANDS } from "@/lib/deliverables/slide-contract";
 import { COMPOSER_SYSTEM, buildComposerUser, buildCodeBatchUser } from "./composer-prompt";
 
 const OUT = path.resolve(process.argv[2] ?? "./proof-out");
@@ -58,6 +60,7 @@ let totalIn = 0;
 let totalOut = 0;
 
 async function call(label: string, system: string, userText: string, maxTokens: number) {
+  assertPromptHygiene(`${system}\n\n${userText}`, label);
   const started = Date.now();
   const response = await client.messages
     .stream({ model, system, messages: [{ role: "user", content: userText }], max_tokens: maxTokens })
@@ -92,7 +95,9 @@ async function main() {
     tenantKey: request.clientDisplayName,
     audience: request.audience,
     decisionSupported: request.decisionContext,
-    slideGuidance: { min: 12, max: 18, purpose: "the design and its control points" },
+    // From the artifact-type registry, not a literal. A hardcoded band is how a
+    // discovery report ends up sized like a target-state architecture.
+    slideGuidance: SLIDE_BANDS[request.deliverableType] ?? { min: 10, max: 14, purpose: request.deliverableType.replace(/_/g, " ") },
     themeVersion: "abarva-v3",
   });
   fs.writeFileSync(path.join(OUT, "packet.json"), frozen.canonicalJson);
@@ -214,8 +219,8 @@ async function main() {
   // ── 8 · gates over the rendered file ──────────────────────────────────────
   const inspection = await inspectDeck(buffer);
   const verdict = judgeRenderedDeck(inspection, {
-    minSlides: 10,
-    maxSlides: 24,
+    minSlides: frozen.packet.slideGuidance.min,
+    maxSlides: frozen.packet.slideGuidance.max + 6, // appendix slides sit outside the band
     rolesByIndex: Object.fromEntries(plan.slideStoryPlan.map((s, i) => [i + 1, s.slideType])),
   });
   const lineage = validateDeckLineage(inspection, {
