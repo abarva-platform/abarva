@@ -32,13 +32,14 @@ import {
 import { validateDeckLineage, type DerivedFigure, type LedgerEntry } from "@/lib/deliverables/composer/number-ledger";
 import { validateSlideStoryPlan, narrowPacketForCode } from "@/lib/deliverables/composer/plan-gate";
 import { assembleComposerModule, type SlideFunction } from "@/lib/deliverables/composer/assemble-module";
+import { parseSlideFunctions } from "@/lib/deliverables/composer/parse-slide-functions";
 import { deliverableModel } from "@/lib/deliverables/model-policy";
 import { COMPOSER_SYSTEM, buildComposerUser, buildCodeBatchUser } from "./composer-prompt";
 
 const OUT = path.resolve(process.argv[2] ?? "./proof-out");
 const LABEL = process.argv[3] ?? "A";
 const REUSE_PLAN = process.argv.includes("--reuse-plan");
-const BATCH = Number(process.env.COMPOSER_BATCH ?? 5);
+const BATCH = Number(process.env.COMPOSER_BATCH ?? 3);
 const REPO = path.resolve(__dirname, "../../..");
 const COMPOSER_DIR = path.join(REPO, "scripts/deliverables/composer");
 const PYTHON = process.env.COMPOSER_PYTHON ?? "python3";
@@ -155,11 +156,14 @@ async function main() {
       label,
       COMPOSER_SYSTEM,
       buildCodeBatchUser(frozen.packet, narrowed, sdkSource, plan.slideStoryPlan, batch),
-      28_000,
+      32_000,
     );
-    const parsed = extractJson<{ functions: SlideFunction[] }>(res.body);
-    if (!parsed?.functions?.length) {
-      fs.writeFileSync(path.join(OUT, `code-raw-${LABEL}-${i}.txt`), res.body);
+    fs.writeFileSync(path.join(OUT, `code-raw-${LABEL}-${i}.txt`), res.body);
+    const parsed = parseSlideFunctions(res.body);
+    if (parsed.unparsed.length) {
+      console.error(`  ${label}: unparsed ${parsed.unparsed.join(", ")}`);
+    }
+    if (!parsed.functions.length) {
       console.error(`  ${label}: no parseable functions`);
       continue;
     }

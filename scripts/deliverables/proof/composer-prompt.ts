@@ -174,7 +174,16 @@ export function buildCodeBatchUser(
     `- Use measure_text/fit_text rather than guessing; a shape off the canvas raises and fails the whole deck.`,
     `- Cite sources in a small footer line via s.add_footer(...), not in the body.`,
     ``,
-    `Return ONE JSON object and nothing else:`,
-    `{"functions": [{"slideId": "...", "code": "def slide_...(deck, theme):\\n    ..."}]}`,
+    `- Aim for 40-90 lines per slide. A function three times that length is drawing detail no one reads at projection size.`,
+    ``,
+    `RETURN FORMAT — plain fenced blocks, NOT JSON. For each slide, exactly:`,
+    ``,
+    `### SLIDE <slideId>`,
+    "```python",
+    `def slide_<slideId>(deck, theme):`,
+    `    ...`,
+    "```",
+    ``,
+    `No prose between blocks. No JSON wrapper.`,
   ].join("\n");
 }
