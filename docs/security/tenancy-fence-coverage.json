@@ -1,7 +1,7 @@
 {
   "subject": "every route under src/app/api/** that CALLS a tenancy fence, and what kind of proof its covering suites offer",
   "method": [
-    "A route fences when a CallExpression's callee is a binding imported from a fence module. An import with no call, a mention in a comment and a mention in a string are all `none` \u2014 that distinction is the defect class this census exists to measure, so it is decided by TypeScript's parser rather than by a text scan.",
+    "A route fences when a CallExpression's callee is a binding imported from a fence module. An import with no call, a mention in a comment and a mention in a string are all `none` — that distinction is the defect class this census exists to measure, so it is decided by TypeScript's parser rather than by a text scan.",
     "The fence surface grows from src/lib/auth/tenancy.ts to a fixpoint: a module that calls a fence symbol has its own exported value names marked as fence symbols, which is how the `_auth` wrappers under src/app/api/** are found without a hand-kept list. A route reaching a fence through a wrapper is `indirect` and names the hop in fenceVia.",
     "requireTenancy and tenancyErrorResponse are the seed symbols. TenancyError is not: narrowing an error type is reading a fence, not applying one. C-507's mutation M-B deleted only the mapper and both byte-scanner suites stayed green, which is why the mapper counts.",
     "reachesFenceModule is import-graph reach at any depth and is reported separately from `fence` on purpose. The two numbers disagree by a wide margin, and a route that reaches tenancy through a library it imports for other reasons fences on nothing.",
@@ -10,13 +10,13 @@
     "This census ranks and does not repair. Each repair is its own backlog item so that a sweep finding twenty routes is not one change nobody reads."
   ],
   "counts": {
-    "routes": 387,
-    "fenced": 213,
-    "fencedDirect": 89,
+    "routes": 388,
+    "fenced": 214,
+    "fencedDirect": 90,
     "fencedIndirect": 124,
     "unfenced": 174,
     "unfencedButReachesFenceModule": 93,
-    "behavioral": 67,
+    "behavioral": 68,
     "byteScannerOnly": 6,
     "none": 140
   },
@@ -1886,7 +1886,8 @@
           "src/app/api/chat/agent/__tests__/source-ava-polish-gate.test.ts",
           "src/app/api/chat/agent/__tests__/source-ava-tenant-broker-leak-gate.test.ts",
           "src/app/api/chat/agent/__tests__/source-l7-discipline.test.ts",
-          "src/app/api/chat/agent/__tests__/steward-trust-spine-wiring.test.ts"
+          "src/app/api/chat/agent/__tests__/steward-trust-spine-wiring.test.ts",
+          "src/lib/source/facts/__tests__/u533-stage-scaffold-provenance.test.ts"
         ]
       }
     },
@@ -6659,6 +6660,23 @@
       "suites": {
         "behavioral": [
           "src/app/api/v1/source/events/[eventId]/scorecard-authority/__tests__/route.test.ts"
+        ],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/v1/source/events/[eventId]/sponsor-delegation/route.ts",
+      "fence": "direct",
+      "fenceSymbols": [
+        "requireTenancy",
+        "tenancyErrorResponse"
+      ],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": "behavioral",
+      "suites": {
+        "behavioral": [
+          "src/app/api/v1/source/events/[eventId]/sponsor-delegation/__tests__/route.test.ts"
         ],
         "byteScanner": []
       }
