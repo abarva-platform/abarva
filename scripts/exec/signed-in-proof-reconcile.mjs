@@ -126,6 +126,49 @@ export const NO_REGISTER_LINE = "no-register-line";
  * question was never put to a line about this record.
  */
 export const INEXACT_ATTRIBUTION = "inexact-attribution";
+/**
+ * A row whose deciding register line named this pull request and said nothing
+ * about the signed-in proof (item C-545).
+ *
+ * `registerSays: SILENT` used to fall through every case of `compareAccounts` —
+ * it is not `null`, not `CONFLICTED`, not `OBTAINED`, not `OWED` — and came back
+ * `AGREE`. So *the register mentioned this release and said nothing about its
+ * proof* was reported with the same word as *the register independently confirms
+ * what the record says*. On the live corpus that was 34 of the 67 `agree` rows:
+ * a false clean, which is the direction of error this module was built to avoid,
+ * and a false clean is invisible.
+ *
+ * It is deliberately NOT folded into `NO_REGISTER_LINE`. The register did speak
+ * about this pull request, which is a different fact from never having mentioned
+ * it, and the row says which by carrying the deciding line's stamp and identity.
+ */
+export const REGISTER_SILENT = "register-silent";
+
+/**
+ * Which silence it is (item C-545). Two kinds, and they are different defects.
+ *
+ * `UNREAD` — the deciding line HAS a sentence about a signed-in proof and no
+ * marker read a verdict from it. 22 of the 34 on the live corpus, and the
+ * expensive ones: one line says the signed-in answer now carries the refreshed
+ * date, which reads like a run, against a record that says the replay did not
+ * run. That row is a candidate disagreement that was reported as agreement.
+ *
+ * `UNMENTIONED` — no sentence in the deciding line mentions a signed-in proof at
+ * all. 12 of the 34. Some are deploy lines that legitimately had no proof to
+ * report; others owe a proof in words this reader does not recognise as
+ * signed-in, such as a "positive live canvas readback owed".
+ *
+ * Neither kind is repaired by loosening a marker — C-529 records that loosening
+ * converts a refusal into a wrong answer. Both are reported per row, with the
+ * sentence where there is one, and a human settles them.
+ */
+export const UNREAD = "unread";
+export const UNMENTIONED = "unmentioned";
+
+/** The kind of silence, from the sentence the deciding line offered. */
+export function silenceOf(sentence) {
+  return sentence == null ? UNMENTIONED : UNREAD;
+}
 
 /**
  * How well the deciding register line is attributed to this record (C-540).
@@ -639,17 +682,46 @@ export function registerSignedInVerdict(text) {
  */
 export function reconcileRecord({ record, pr, entries }) {
   const matched = pr == null ? [] : entries.filter((e) => e.prs.has(pr));
-  const verdicts = matched
-    .map((e) => ({ entry: e, ...registerSignedInVerdict(e.text) }))
-    .filter((v) => v.verdict !== SILENT);
-  const fewest = verdicts.reduce(
-    (min, v) => (v.entry.prs.size < min ? v.entry.prs.size : min),
-    Number.POSITIVE_INFINITY,
-  );
-  const closest = verdicts.filter((v) => v.entry.prs.size === fewest);
-  const chosen = closest.length > 0 ? closest[closest.length - 1] : null;
+  const read = matched.map((e) => ({ entry: e, ...registerSignedInVerdict(e.text) }));
+  /**
+   * The two rules above, applied to whichever lines are on offer.
+   *
+   * Factored out rather than written twice because the silent lines need the
+   * same preference (item C-545): a silent row used to carry no deciding line at
+   * all, so it reported no stamp, no identity and no sentence, and the 34 rows
+   * of the live corpus were unfindable from the report that named them. Picking
+   * the last silent line instead would usually pick a bulk citation — the
+   * newest line naming a pull request is routinely a sweep naming a dozen — and
+   * the row would name a line that is not about it.
+   */
+  const decide = (candidates) => {
+    const fewest = candidates.reduce(
+      (min, v) => (v.entry.prs.size < min ? v.entry.prs.size : min),
+      Number.POSITIVE_INFINITY,
+    );
+    const closest = candidates.filter((v) => v.entry.prs.size === fewest);
+    return closest.length > 0 ? closest[closest.length - 1] : null;
+  };
+  const chosen = decide(read.filter((v) => v.verdict !== SILENT));
+  /*
+   * Only consulted when no line resolved a verdict. A line that says something
+   * about the proof still decides the row, however many pull requests it names —
+   * that is C-540's question and `attribution` answers it — and silence must not
+   * outrank speech.
+   */
+  const silentChosen = chosen ? null : decide(read.filter((v) => v.verdict === SILENT));
+  const deciding = chosen ?? silentChosen;
 
   const registerSays = chosen ? chosen.verdict : matched.length > 0 ? SILENT : null;
+  /*
+   * The pull-request count and the attribution stay drawn from `chosen` alone,
+   * so a silent row keeps `attribution: none`. This is load-bearing rather than
+   * incidental: `verdict` below is overridden to `INEXACT_ATTRIBUTION` whenever
+   * attribution is inexact, so attributing a silent deciding line would report a
+   * silence as a batch-citation problem and hide it a second time. C-540's own
+   * distinction — `none` with matched lines versus `none` with none — rests on
+   * the same thing.
+   */
   const registerLinePullRequests = chosen ? chosen.entry.prs.size : null;
   const attribution = attributionOf(registerLinePullRequests);
   const row = {
@@ -659,9 +731,10 @@ export function reconcileRecord({ record, pr, entries }) {
     registerLinePullRequests,
     attribution,
     registerSays,
-    registerStamp: chosen?.entry.stamp ?? null,
-    registerIdentity: chosen?.entry.identity ?? null,
-    registerEvidence: chosen?.sentence ?? null,
+    registerSilence: registerSays === SILENT ? silenceOf(silentChosen?.sentence ?? null) : null,
+    registerStamp: deciding?.entry.stamp ?? null,
+    registerIdentity: deciding?.entry.identity ?? null,
+    registerEvidence: deciding?.sentence ?? null,
   };
 
   /*
@@ -695,6 +768,13 @@ export function reconcileRecord({ record, pr, entries }) {
  */
 export function compareAccounts({ recordSays, registerSays }) {
   if (registerSays == null) return NO_REGISTER_LINE;
+  /*
+   * Read BEFORE the four comparisons, because there is nothing to compare: a
+   * line that said nothing about the proof corroborates neither account. It
+   * used to reach `return AGREE` at the bottom by being none of the cases above
+   * it, which is the false clean item C-545 was filed against.
+   */
+  if (registerSays === SILENT) return REGISTER_SILENT;
   if (registerSays === CONFLICTED) return AMBIGUOUS;
   if (recordSays === NOT_RUN && registerSays === OBTAINED) return DISAGREE;
   if (recordSays === RAN && registerSays === OWED) return DISAGREE;
@@ -768,6 +848,7 @@ export function reconcile({ records = [], register = "" } = {}) {
     [AMBIGUOUS]: 0,
     [NO_REGISTER_LINE]: 0,
     [INEXACT_ATTRIBUTION]: 0,
+    [REGISTER_SILENT]: 0,
   };
   for (const row of rows) counts[row.verdict] += 1;
 
@@ -790,7 +871,20 @@ export function formatReport(result) {
    * line was about a batch. Burying it under `agree` was the original defect in
    * report form (item C-540).
    */
-  const order = [DISAGREE, INEXACT_ATTRIBUTION, AMBIGUOUS, NO_REGISTER_LINE, AGREE];
+  /*
+   * `register-silent` is printed ahead of `no-register-line` (item C-545). A row
+   * in it has a line an auditor can go and read, and 22 of the 34 on the live
+   * corpus carry a sentence about the proof that this reader could not resolve —
+   * so it is nearer to unfinished business than the rows nobody ever wrote about.
+   */
+  const order = [
+    DISAGREE,
+    INEXACT_ATTRIBUTION,
+    AMBIGUOUS,
+    REGISTER_SILENT,
+    NO_REGISTER_LINE,
+    AGREE,
+  ];
   for (const verdict of order) {
     const rows = result.rows.filter((r) => r.verdict === verdict);
     if (rows.length === 0) continue;
@@ -808,12 +902,29 @@ export function formatReport(result) {
           ? `\n    evidence: the deciding line named ${row.registerLinePullRequests} pull requests, ` +
             `so it may be about any of them; the comparison alone would have read ${row.comparedVerdict}`
           : "";
+      /*
+       * Per row, and the KIND per row, because the two silences are different
+       * defects and a reader who is shown only a total cannot tell which one
+       * they have. The stamp and identity are printed for both kinds: an
+       * `unmentioned` row has no sentence to quote, so the line's coordinates in
+       * the register are the only thing that makes the claim checkable.
+       */
+      const silenceNote =
+        row.verdict === REGISTER_SILENT
+          ? `\n    silence:  ${row.registerSilence} — the deciding line at ` +
+            `${row.registerStamp ?? "an unparsed stamp"} by ${row.registerIdentity ?? "an unnamed identity"} ` +
+            (row.registerSilence === UNREAD
+              ? "has a sentence about the proof that no marker resolved; read it and settle the row"
+              : "mentions no signed-in proof at all; it may have had none to report") +
+            `\n    would have read: ${AGREE} before item C-545`
+          : "";
       lines.push(
         `  ${row.releaseId ?? row.file}` +
           `\n    pr:       ${row.pr ?? "unresolved"}` +
           `\n    record:   ${row.recordSays}${row.recordEvidence ? ` — ${row.recordEvidence.slice(0, 160)}` : ""}` +
           `\n    register: ${row.registerSays ?? "no line"}${row.registerEvidence ? ` — ${row.registerEvidence.slice(0, 160)}` : ""}` +
-          attributionNote,
+          attributionNote +
+          silenceNote,
       );
     }
   }
@@ -824,8 +935,27 @@ export function formatReport(result) {
   lines.push(
     `agree ${result.counts[AGREE]}  disagree ${result.counts[DISAGREE]}  ` +
       `ambiguous ${result.counts[AMBIGUOUS]}  no-register-line ${result.counts[NO_REGISTER_LINE]}  ` +
-      `inexact-attribution ${result.counts[INEXACT_ATTRIBUTION]}`,
+      `inexact-attribution ${result.counts[INEXACT_ATTRIBUTION]}  ` +
+      `register-silent ${result.counts[REGISTER_SILENT]}`,
   );
+  /*
+   * The split named as two numbers, not one (item C-545). Every one of these
+   * rows read `agree` before this change, and they are two defects: an `unread`
+   * row has a proof sentence this module could not resolve and is where a
+   * disagreement may be hiding; an `unmentioned` row may simply be a deploy line
+   * with nothing to report. Totalling them would put the second's harmlessness
+   * over the first.
+   */
+  const silentRows = result.rows.filter((r) => r.verdict === REGISTER_SILENT);
+  if (silentRows.length > 0) {
+    const unread = silentRows.filter((r) => r.registerSilence === UNREAD).length;
+    lines.push(
+      `of the ${silentRows.length} register-silent row(s), ${unread} have a sentence about the ` +
+        `proof that no marker resolved and ${silentRows.length - unread} mention no signed-in ` +
+        "proof at all. Every one of them read `agree` before item C-545, and none of them is " +
+        "fixed by loosening a marker — read the sentence printed against each row and settle it.",
+    );
+  }
   /*
    * The not-owed rows are printed as their own number even though they are not
    * their own verdict (item C-534). `agree` means the two documents do not

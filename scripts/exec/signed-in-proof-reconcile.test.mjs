@@ -1517,5 +1517,290 @@ function attrRow(pr) {
   );
 }
 
+/* ------------------------------------------------------------------------- */
+/* A deciding line that says nothing about the proof is not agreement (C-545)  */
+/* ------------------------------------------------------------------------- */
+
+/*
+ * `registerSays: silent` fell through every case of `compareAccounts` and came
+ * back `agree`, so *the register mentioned this release and said nothing about
+ * its proof* was reported with the same word as *the register independently
+ * confirms what the record says*. A false clean, and a false clean is invisible.
+ *
+ * Measured on `origin/main` `2301644d9` with `--since 2026-09-19T00:00:00Z`
+ * over 220 records: 34 rows carried `registerSays: silent` and all 34 were
+ * counted inside the 67 `agree`. Those 34 are not one defect. Two kinds, and
+ * the split is why the rows are printed individually rather than totalled:
+ *
+ *   - `unread` (22 of 34) — the deciding line HAS a sentence about a signed-in
+ *     proof and this module's markers read no verdict from it. `#8507`'s line
+ *     says the signed-in answer carries the refreshed date, which reads like a
+ *     run, against a record that says not-run. That row is a candidate
+ *     DISAGREE and it was reported as agreement.
+ *   - `unmentioned` (12 of 34) — no sentence in the deciding line mentions a
+ *     signed-in proof at all. `#8513`'s line owes a "positive live Responses
+ *     canvas readback", which is a proof debt in words this reader does not
+ *     recognise as signed-in.
+ *
+ * Neither is repaired by loosening a marker: C-529 records that loosening
+ * converts a refusal into a wrong answer. Both are reported, with the sentence
+ * the deciding line offered where there is one, and a human reads them.
+ */
+
+// Quoted from EXECUTION_CLAIMS.md at 2026-09-26T14:48:29Z, identity
+// codex-source-cpo#20260926T1416Z, releasing C-530 through PR #8507. The
+// sentence about the proof is there and no marker reads a verdict from it.
+const SILENT_UNREAD_LINE =
+  "2026-09-26T14:48:29Z | codex-source-cpo#20260926T1416Z | RELEASED item C-530 on branch " +
+  "`codex/source-contract-date-context` — PR #8507 merged at " +
+  "2f1f6613a549c309eafb9fa192add3c365046968 after 35 applicable green checks; official ACA " +
+  "main run 36249129151 success with digest-pinned web 100 percent revision and both workers " +
+  "independently verified. Signed-in exact contract answer now carries the same date as the " +
+  "refreshed page. Canonical row lineage unavailable without database URL; frozen Scope still " +
+  "blocked and Stage 06 readback owed.";
+
+// Quoted from EXECUTION_CLAIMS.md at 2026-09-26T16:40:48Z, identity
+// codex-source-cpo#20260926T1558Z, releasing U-538 through PR #8513. No
+// sentence in it mentions a signed-in proof.
+const SILENT_UNMENTIONED_LINE =
+  "2026-09-26T16:40:48Z | codex-source-cpo#20260926T1558Z | RELEASED item U-538 on branch " +
+  "`codex/source-responses-fact-beats` — PR #8513 merged at " +
+  "df2f15aa04bba0e4c7e066849e069002ad100f03 after 36 successful CI checks; official ACA run " +
+  "36255666278 succeeded and independent web/revision/worker digest proof matched " +
+  "sha256:034dce51f017bf8b43242051804f4fd496eade6b4f18fbcde9b091d76a9c47a4. Frozen Scope " +
+  "remains blocked; positive live Responses canvas readback owed.";
+
+const SILENT_ENTRIES = registerEntries([SILENT_UNREAD_LINE, SILENT_UNMENTIONED_LINE].join("\n"));
+
+{
+  // PRECONDITION, and the one that stops every case below passing vacuously.
+  // Both lines must PARSE, must each name exactly the one pull request their
+  // comment claims, and must both come back SILENT from the verdict reader —
+  // if either resolved a verdict, the case would be testing some other state
+  // under this item's name.
+  const sizes = SILENT_ENTRIES.map((e) => e.prs.size);
+  const verdicts = SILENT_ENTRIES.map((e) => registerSignedInVerdict(e.text));
+  check(
+    "PRECONDITION: both quoted lines name one pull request each and both read SILENT",
+    SILENT_ENTRIES.length === 2 &&
+      sizes.join(",") === "1,1" &&
+      SILENT_ENTRIES[0].prs.has(8507) &&
+      SILENT_ENTRIES[1].prs.has(8513) &&
+      verdicts.every((v) => v.verdict === SILENT) &&
+      typeof verdicts[0].sentence === "string" &&
+      verdicts[1].sentence === null,
+    JSON.stringify({ sizes, verdicts }),
+  );
+}
+
+{
+  // The states exist, asserted through the namespace so a missing export is a
+  // failed case rather than a link-time crash that reads as "found nothing".
+  check(
+    "register-silent and the two silence kinds are exported states",
+    reconcileModule.REGISTER_SILENT === "register-silent" &&
+      reconcileModule.UNREAD === "unread" &&
+      reconcileModule.UNMENTIONED === "unmentioned" &&
+      reconcileModule.REGISTER_SILENT !== NO_REGISTER_LINE &&
+      reconcileModule.REGISTER_SILENT !== AGREE,
+    JSON.stringify({
+      s: reconcileModule.REGISTER_SILENT,
+      u: reconcileModule.UNREAD,
+      m: reconcileModule.UNMENTIONED,
+    }),
+  );
+}
+
+{
+  // The rule itself, over all three things a record can say. None of them is
+  // agreement: the record's own account is not corroborated by a line that
+  // said nothing about it, whichever way the record leans.
+  const forRecord = (recordSays) => compareAccounts({ recordSays, registerSays: SILENT });
+  check(
+    "compareAccounts reports a silent deciding line as its own state for every record account",
+    [NOT_RUN, RAN, UNSTATED].every(
+      (says) => forRecord(says) === reconcileModule.REGISTER_SILENT,
+    ) && compareAccounts({ recordSays: NOT_RUN, registerSays: null }) === NO_REGISTER_LINE,
+    JSON.stringify([NOT_RUN, RAN, UNSTATED].map(forRecord)),
+  );
+}
+
+{
+  // The item is explicit that this must NOT be folded into `no-register-line`:
+  // the register did speak about this pull request, which is a different fact
+  // from never having mentioned it, and the row has to say which. So the two
+  // are asserted to differ on the same record, from the same reader.
+  const spoke = reconcileRecord({
+    record: parseRecord(realRecord("2026-09-26-source-contract-date-context.md")),
+    pr: 8507,
+    entries: SILENT_ENTRIES,
+  });
+  const neverSpoke = reconcileRecord({
+    record: parseRecord(realRecord("2026-09-26-source-contract-date-context.md")),
+    pr: 9999,
+    entries: SILENT_ENTRIES,
+  });
+  check(
+    "a line that named this pull request and said nothing is NOT no-register-line",
+    spoke.verdict === reconcileModule.REGISTER_SILENT &&
+      spoke.registerLines === 1 &&
+      neverSpoke.verdict === NO_REGISTER_LINE &&
+      neverSpoke.registerLines === 0,
+    `${JSON.stringify(spoke)}\n${JSON.stringify(neverSpoke)}`,
+  );
+}
+
+{
+  // A REAL row of the 22, and the one that shows what the false clean cost.
+  // The record says its replay did not run; the deciding line's sentence reads
+  // like it did. The row must carry that sentence, and the line's stamp and
+  // identity, or a reader cannot go and settle it — which is the whole reason
+  // the item asks for the 34 printed individually instead of counted.
+  const row = reconcileRecord({
+    record: parseRecord(realRecord("2026-09-26-source-contract-date-context.md")),
+    pr: 8507,
+    entries: SILENT_ENTRIES,
+  });
+  check(
+    "an UNREAD silence carries the sentence the deciding line offered, with its stamp and identity",
+    row.verdict === reconcileModule.REGISTER_SILENT &&
+      row.registerSays === SILENT &&
+      row.registerSilence === reconcileModule.UNREAD &&
+      /Signed-in exact contract answer/.test(String(row.registerEvidence)) &&
+      row.registerStamp === "2026-09-26T14:48:29Z" &&
+      row.registerIdentity === "codex-source-cpo#20260926T1416Z" &&
+      row.recordSays === NOT_RUN,
+    JSON.stringify(row),
+  );
+}
+
+{
+  // A REAL row of the 12. There is no sentence to offer, and the row says so
+  // by kind rather than by an empty string — but it still carries the stamp and
+  // identity, because "the register said nothing this reader recognises" is
+  // only checkable if the reader can find the line.
+  const row = reconcileRecord({
+    record: parseRecord(realRecord("2026-09-26-source-responses-fact-beats.md")),
+    pr: 8513,
+    entries: SILENT_ENTRIES,
+  });
+  check(
+    "an UNMENTIONED silence offers no sentence and still names the deciding line",
+    row.verdict === reconcileModule.REGISTER_SILENT &&
+      row.registerSilence === reconcileModule.UNMENTIONED &&
+      row.registerEvidence === null &&
+      row.registerStamp === "2026-09-26T16:40:48Z" &&
+      row.registerIdentity === "codex-source-cpo#20260926T1558Z",
+    JSON.stringify(row),
+  );
+}
+
+{
+  // The new state must not be swallowed by the C-540 attribution override:
+  // `verdict` is set to `inexact-attribution` whenever attribution is inexact,
+  // so if a silent deciding line were given an attribution the row would be
+  // reported as a batch-citation problem instead of a silence. Silent rows keep
+  // `attribution: none` and no pull-request count, which is what C-540's own
+  // case on 9006 already rests on.
+  const row = reconcileRecord({
+    record: parseRecord(realRecord("2026-09-26-source-contract-date-context.md")),
+    pr: 8507,
+    entries: SILENT_ENTRIES,
+  });
+  check(
+    "a silent row keeps attribution none, so the silence is never reported as inexact attribution",
+    row.attribution === ATTR_NONE &&
+      row.registerLinePullRequests === null &&
+      row.verdict !== INEXACT_ATTRIBUTION,
+    JSON.stringify(row),
+  );
+}
+
+{
+  // A silent deciding line is CHOSEN by the same two rules as any other — fewest
+  // other pull requests first, then newest. Without that, the row reports the
+  // stamp of whichever silent line happens to be last, and on the live register
+  // a bulk line naming a dozen releases is usually the last. The exact line
+  // here is the OLDER of the two, so "newest wins" alone picks the wrong one.
+  const entries = registerEntries(
+    [
+      "2026-09-26T09:00:00Z | agent#exact | RELEASED item C-906 via " +
+        "https://github.com/o/r/pull/9200 — merged, deployed, digest pinned.",
+      "2026-09-26T09:30:00Z | agent#bulk | sweep — merged and deployed: " +
+        Array.from({ length: 9 }, (_, i) => `https://github.com/o/r/pull/${9200 + i}`).join(" "),
+    ].join("\n"),
+  );
+  const row = reconcileRecord({
+    record: parseRecord({ file: "r.md", text: RELEASE_RECORD_NOT_RUN }),
+    pr: 9200,
+    entries,
+  });
+  check(
+    "the deciding silent line is picked by fewest-pull-requests-then-newest, not merely newest",
+    row.verdict === reconcileModule.REGISTER_SILENT &&
+      row.registerIdentity === "agent#exact" &&
+      row.registerStamp === "2026-09-26T09:00:00Z",
+    JSON.stringify(row),
+  );
+}
+
+{
+  // The report is the only thing most readers see, and the item asks for the
+  // rows individually WITH the sentence. Both kinds in one report, because a
+  // report that prints one kind is a report that hides the other — and the
+  // count is asserted alongside the two named rows so a constant cannot satisfy
+  // it.
+  const result = reconcile({
+    records: [
+      { ...realRecord("2026-09-26-source-contract-date-context.md"), pr: 8507 },
+      { ...realRecord("2026-09-26-source-responses-fact-beats.md"), pr: 8513 },
+    ],
+    register: [SILENT_UNREAD_LINE, SILENT_UNMENTIONED_LINE].join("\n"),
+  });
+  const text = formatReport(result);
+  const summed = Object.values(result.counts).reduce((a, b) => a + b, 0);
+  check(
+    "reconcile counts register-silent as its own bucket and the buckets still partition the population",
+    result.counts[reconcileModule.REGISTER_SILENT] === 2 &&
+      result.counts[AGREE] === 0 &&
+      summed === result.population &&
+      result.population === 2,
+    JSON.stringify(result.counts) + ` summed=${summed} population=${result.population}`,
+  );
+  check(
+    "formatReport names each silent row, its kind, and the sentence the deciding line offered",
+    new RegExp(`## ${reconcileModule.REGISTER_SILENT} — 2`).test(text) &&
+      text.includes("2026-09-26-source-contract-date-context") &&
+      text.includes("2026-09-26-source-responses-fact-beats") &&
+      new RegExp(reconcileModule.UNREAD).test(text) &&
+      new RegExp(reconcileModule.UNMENTIONED).test(text) &&
+      /Signed-in exact contract answer/.test(text),
+    text,
+  );
+}
+
+{
+  // NEGATIVE CONTROL for the shared rule's second caller. `compareAccounts` is
+  // also the release-step writer's comparison, so this change moves it — the
+  // rows it returns for a silent line now say `register-silent`. What must NOT
+  // move is the set it refuses on: `contradicted` is the disagreements, and a
+  // silence is not a disagreement. If this case goes red, a reader of
+  // `append-claim.mjs` is being told a line contradicts a record when all that
+  // happened is that the line was quiet.
+  const review = reviewReleaseLine({
+    line: "2026-09-26T10:15:00Z | agent#a | RELEASED item C-907 via " +
+      "https://github.com/o/r/pull/9300 — merged, deployed, digest pinned.",
+    records: [{ file: "f.md", text: RELEASE_RECORD_NOT_RUN }],
+  });
+  check(
+    "NEGATIVE CONTROL: a silent line moves the writer's verdict and not its refusal set",
+    review.registerSays === SILENT &&
+      review.population === 1 &&
+      review.rows[0].verdict === reconcileModule.REGISTER_SILENT &&
+      review.contradicted.length === 0,
+    JSON.stringify(review),
+  );
+}
+
 console.log(`\n${passes} passed, ${failures} failed`);
 process.exit(failures === 0 ? 0 : 1);

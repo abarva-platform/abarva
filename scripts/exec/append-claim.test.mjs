@@ -1149,5 +1149,47 @@ const PROOF_OWED = "PR #9000 merged and deployed. Not live-proven — signed-in 
   fs.rmSync(repo, { recursive: true, force: true });
 }
 
+{
+  /*
+   * C-545 moves the comparison this helper shares with the reconciler, so the
+   * writer is pinned here rather than assumed. The answer that matters is that
+   * the writer is UNAFFECTED, and the reason is the short-circuit above the
+   * review: a line reading SILENT never reaches the comparison at all. That is
+   * also the honest answer to what a writer-side check would have caught among
+   * the silent rows on the live register — NONE of them, because for a quiet
+   * line the writer does not ask the question.
+   *
+   * Asserting "nothing was printed" over a READABLE checkout proves nothing:
+   * a silence is not a contradiction, so removing the short-circuit prints
+   * nothing either and the case survives the only mutation it is for. An
+   * UNREADABLE checkout is what separates them — reaching the review at all
+   * reports UNDETERMINED — so this case is run against one deliberately.
+   */
+  const { dir, file } = fixture([]);
+  const empty = fs.mkdtempSync(path.join(os.tmpdir(), "append-claim-c545-norepo-"));
+  const before = digest(file);
+  const r = run([
+    ...base({
+      file,
+      item: "C-900",
+      identity: ME,
+      message: "PR #9000 merged, official ACA run 1 proven and digest-pinned.",
+    }),
+    "--action", "release", "--branch", "exec/c-900", "--now", NOW,
+    "--repo", empty, "--base", "trunk", "--strict",
+  ]);
+  const out = r.stdout + r.stderr;
+  check(
+    "NEGATIVE CONTROL: a quiet line never reaches the shared comparison, so C-545 cannot move the writer",
+    r.status === 0 &&
+      digest(file) !== before &&
+      !/UNDETERMINED/.test(out) &&
+      !/register-silent/.test(out),
+    `status=${r.status}\nout=${out}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+  fs.rmSync(empty, { recursive: true, force: true });
+}
+
 console.log(`\n${passes} passed, ${failures} failed`);
 process.exit(failures ? 1 : 0);
