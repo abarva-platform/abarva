@@ -40,11 +40,20 @@ import { existsSync, mkdtempSync, readFileSync, readdirSync, rmSync } from "node
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { resolveQuarantineListPath } from "./quarantine-list-path.mjs";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const REPO = path.resolve(HERE, "../..");
 const SUITE_DIR = path.join(REPO, "src/__tests__/integration", "source");
-const LIST = path.join(HERE, "source-integration-quarantine.json");
+/**
+ * The committed list this check exists to guard. `--list <path>` reads a
+ * different file instead, which is how the ratchet suite exercises the checker
+ * without writing the working tree that ~31 other readers parse. The DEFAULT is
+ * asserted by that suite against every configured invocation, so the override
+ * cannot become a way to point the gate at a friendlier file.
+ */
+const DEFAULT_LIST = path.join(HERE, "source-integration-quarantine.json");
+const LIST = resolveQuarantineListPath(process.argv.slice(2), DEFAULT_LIST);
 const JEST_BIN = path.join(
   REPO,
   "node_modules/.bin",
