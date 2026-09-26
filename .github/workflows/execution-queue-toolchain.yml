@@ -315,3 +315,45 @@ jobs:
       # crediting it writes a false `deployed`. Ten mutations, ten caught.
       - name: Run the deploy-proof resolver contract
         run: node scripts/exec/deploy-proof-resolver.test.mjs
+
+      # Is the directory the protocol sends agents to swept by something else?
+      # (item T-489)
+      #
+      # At 2026-09-26T00:19Z a full checkout created per the operator task
+      # file's own first instruction vanished mid-session between two commands
+      # about 90 seconds apart, taking uncommitted work with it; the next
+      # command died `uv_cwd ENOENT`. A second, independent run of the same task
+      # lost a worktree in the same window. Nothing in the register, the pulse
+      # file or the task instructions said who sweeps that directory, on what
+      # trigger, or with what age bound -- so the claim protocol was telling
+      # every agent to work somewhere another process may delete, and no control
+      # could say so.
+      #
+      # The control READS the host's own declarations -- launchd job definitions
+      # and the scripts they run -- rather than asserting a verdict about a path
+      # in prose. A gate that said "/tmp is unsafe" could not notice the rule
+      # changing, could not be wrong in a way anyone sees, and would say nothing
+      # at all about a root nobody thought of.
+      #
+      # Three inversions it refuses, each pinned by a case: an unreadable host
+      # is `unknown`, never `not_swept`; `not_swept` means no DECLARED sweeper
+      # reaches the root and reports the count of jobs that declare nothing, so
+      # it is not read as a proof of safety; and the age bound is WHEN, never
+      # WHETHER -- every worktree is younger than the bound when it is created,
+      # so a verdict consulting the candidate's own age would report safe at
+      # exactly the moment an agent asks.
+      #
+      # Cases 1-13 run the exported functions over fixtures, 14-18 run the real
+      # CLI as a child process, 20 pins the shebang bound, and 21 reads the real
+      # host and is the ONLY case that skips -- a Linux runner has no launchd,
+      # and a gate asserting on a subject it cannot see is the unfailable kind.
+      #
+      # Eight mutations, eight caught -- but two of them survived their first
+      # fixture and both are recorded in the suite. The prefix-boundary case
+      # passed with the boundary check removed, because after symlink resolution
+      # no prefix relationship held in either form; it is now built so the
+      # textual prefix genuinely holds, and asserts that before reading the
+      # verdict. The shebang bound changed no verdict at all until a case
+      # asserted what it actually buys.
+      - name: Run the worktree sweep-hazard contract
+        run: node scripts/exec/worktree-sweep-hazard.test.mjs
