@@ -61,3 +61,22 @@ rollback is needed.
 
 This copy fix does not import a request, complete classification, or advance a
 sourcing event.
+
+## Post-deployment signed-in replay
+
+**Appended 2026-09-26 (item `C-528`). Every line above is left exactly as
+written: this record is audit history, and a correction to it is an addition,
+never an edit.** What those lines said was true when they were written — the
+record is authored before the merge, and the replay happens after the deploy.
+
+- The signed-in post-deployment replay was run. This section is the record of
+  its outcome; the line above is the state as of the candidate, not the result.
+- Recorded in the execution register at `2026-09-23T05:31:12Z` by `codex-source-new-advisor-opening`.
+- What it found: the default signed-in intake rendered a neutral opening and
+  five neutral form prompts. No defect is recorded against it.
+- **Scope is UNDETERMINED and is not claimed here.** The requirement above names
+  no individual assertions to check, so there is nothing to compare the
+  register's account against assertion by assertion. What the register settles is
+  the sentence quoted above, and no more than it.
+- No signed-in run was performed by this correction. It reconciles two existing
+  accounts of one run, and the appended-to record is the durable one.

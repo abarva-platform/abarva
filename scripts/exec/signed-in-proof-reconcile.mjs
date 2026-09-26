@@ -626,18 +626,68 @@ export function reconcileRecord({ record, pr, entries }) {
     registerEvidence: chosen?.sentence ?? null,
   };
 
-  if (matched.length === 0) return { ...row, verdict: NO_REGISTER_LINE };
-  if (registerSays === CONFLICTED) return { ...row, verdict: AMBIGUOUS };
-  if (record.recordSays === NOT_RUN && registerSays === OBTAINED) {
-    return { ...row, verdict: DISAGREE };
-  }
-  if (record.recordSays === RAN && registerSays === OWED) {
-    return { ...row, verdict: DISAGREE };
-  }
-  if (record.recordSays === UNSTATED && registerSays === OBTAINED) {
-    return { ...row, verdict: AMBIGUOUS };
-  }
-  return { ...row, verdict: AGREE };
+  return { ...row, verdict: compareAccounts({ recordSays: record.recordSays, registerSays }) };
+}
+
+/**
+ * The one rule that decides whether a record and the register agree (C-528).
+ *
+ * Extracted from `reconcileRecord` rather than restated, because C-528 needs
+ * the same question answered at a second moment — when a register line is
+ * being WRITTEN, before any pull request exists to match it by — and two
+ * copies of this comparison would drift the day one of them grew a case. The
+ * suite pins the two callers to this function instead.
+ *
+ * `registerSays === null` means no line was found at all, which is not
+ * agreement and is not a disagreement either.
+ */
+export function compareAccounts({ recordSays, registerSays }) {
+  if (registerSays == null) return NO_REGISTER_LINE;
+  if (registerSays === CONFLICTED) return AMBIGUOUS;
+  if (recordSays === NOT_RUN && registerSays === OBTAINED) return DISAGREE;
+  if (recordSays === RAN && registerSays === OWED) return DISAGREE;
+  if (recordSays === UNSTATED && registerSays === OBTAINED) return AMBIGUOUS;
+  return AGREE;
+}
+
+/**
+ * The release step's own question, asked of a line that is about to be written
+ * (item C-528).
+ *
+ * `reconcile` answers "which records on `main` disagree with the register", and
+ * that is a detector: it can only report an accumulation that already happened.
+ * Nine records accumulated because the record is written BEFORE the merge and
+ * the register line is written AFTER the deploy, so nothing ever revisits the
+ * record. This function is the same comparison asked one moment earlier — of
+ * the line itself, against the records the release being recorded actually adds
+ * — so the writer is told while it is still doing release bookkeeping.
+ *
+ * There is no pull request matching here, deliberately. At the moment the line
+ * is written its pull request is merged but the record's squash commit is not
+ * necessarily in the local repository, and the caller already knows which
+ * records this release is about: the ones its own branch adds. Matching by a
+ * pull request id that may be absent would report `no-register-line` and miss
+ * exactly the case this exists for.
+ */
+export function reviewReleaseLine({ line, records = [] } = {}) {
+  const { verdict: registerSays, sentence } = registerSignedInVerdict(line);
+  const rows = records
+    .map((r) => parseRecord(r))
+    .filter((record) => record.declaration === REQUIRED)
+    .map((record) => ({
+      ...record,
+      registerSays,
+      registerEvidence: sentence,
+      verdict: compareAccounts({ recordSays: record.recordSays, registerSays }),
+    }));
+  return {
+    registerSays,
+    sentence,
+    scanned: records.length,
+    population: rows.length,
+    rows,
+    contradicted: rows.filter((r) => r.verdict === DISAGREE),
+  };
 }
 
 /**
