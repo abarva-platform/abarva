@@ -1291,6 +1291,10 @@ export function WorkspaceExecutiveShell({
         </section>
         <SourceActionDrawer
           candidate={openActionCandidate}
+          contractDetailFailed={Boolean(
+            openActionCandidate &&
+              logic.state.contractDetail[openActionCandidate.contract_id] === "error",
+          )}
           coverage={
             openActionCandidate
               ? coverageForContract(portfolio, openActionCandidate.contract_id)
@@ -1416,12 +1420,14 @@ export function SourceCommandKpiStrip({
 
 function SourceActionDrawer({
   candidate,
+  contractDetailFailed,
   coverage,
   asOfDateIso,
   onClose,
   onOpenContract,
 }: {
   candidate: SourceContractActionCandidateRow | null;
+  contractDetailFailed: boolean;
   coverage: SourceContractEvidenceCoverageRow | null;
   asOfDateIso: string;
   onClose: () => void;
@@ -1495,16 +1501,20 @@ function SourceActionDrawer({
           </section>
         ) : null}
         <div className="sw-v2-action-drawer-foot">
-          <button
-            type="button"
-            className="sw-v2-primary"
-            onClick={() => {
-              onOpenContract(candidate.contract_id, "Optimize");
-              onClose();
-            }}
-          >
-            Open Contract 360
-          </button>
+          {contractDetailFailed ? (
+            <span>Contract detail unavailable</span>
+          ) : (
+            <button
+              type="button"
+              className="sw-v2-primary"
+              onClick={() => {
+                onOpenContract(candidate.contract_id, "Optimize");
+                onClose();
+              }}
+            >
+              Open Contract 360
+            </button>
+          )}
         </div>
       </aside>
     </div>

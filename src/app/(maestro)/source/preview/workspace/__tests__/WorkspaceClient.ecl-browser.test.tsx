@@ -2013,6 +2013,10 @@ describe("Source workspace ECL browser-surface proof", () => {
       screen.getByText("Resolve contract identity before using detail."),
     ).toBeTruthy();
     expect(
+      screen.queryByRole("button", { name: "Open Contract 360" }),
+    ).toBeNull();
+    expect(screen.getAllByText("Contract detail unavailable").length).toBeGreaterThan(0);
+    expect(
       screen.queryByRole("heading", { name: portfolio.contracts[0].contract_name }),
     ).toBeNull();
   });
