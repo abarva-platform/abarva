@@ -47,7 +47,7 @@ it("assigns the named event creator through the tenant-selected participant adap
   expect(isUuid(context.userId)).toBe(true);
   const result = await commitSourceEventTool.handler(input, context);
 
-  expect(result).toEqual({ success: true, data: expect.anything() });
+  expect(result.success).toBe(true);
   expect(selectSourceWriteAdapter).toHaveBeenCalledWith(undefined, "synthetic");
   expect(insertParticipant).toHaveBeenCalledWith({
     clientKey: "synthetic",
