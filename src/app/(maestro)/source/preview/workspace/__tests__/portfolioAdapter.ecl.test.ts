@@ -14,6 +14,7 @@ import { azureRead } from "@/lib/data-plane/azureRead";
 import { createEmptySourceV4WorkspaceSnapshot } from "@/lib/source/data-model/source-v4-workspace-snapshot";
 import {
   buildSourceVendor360Cockpit,
+  loadSourceWorkspaceDirectImpactContract,
   loadSourceWorkspacePortfolio,
   resolveImpactVendorNames,
   sourceWorkspaceProvider,
@@ -98,6 +99,57 @@ describe("loadSourceWorkspacePortfolio ECL projection adapter", () => {
     process.env.SOURCE_WORKSPACE_PROVIDER = "legacy";
 
     expect(sourceWorkspaceProvider()).toBe("legacy");
+  });
+
+  it("reads only the requested supplemental contract from the direct impact producer", async () => {
+    const reads: Array<{ sql: string; params: unknown[] }> = [];
+    mockWithSession.mockImplementation(async (callback) => {
+      const run = async <R>(sql: string, params: unknown[]): Promise<R[]> => {
+        reads.push({ sql, params });
+        if (sql.includes("set_config")) return [];
+        if (isDirectActionCandidateSql(sql)) {
+          return [{ tenant_key: "meridian_health_global", contract_id: "CTR-ACTION-2", vendor_ref: "VEN-2", vendor_name: "Example Vendor", action_candidate_id: "ACT-2", candidate_amount_usd: null }] as R[];
+        }
+        return [];
+      };
+      return callback(run);
+    });
+
+    const detail = await loadSourceWorkspaceDirectImpactContract("meridian", "CTR-ACTION-2");
+
+    expect(detail?.action).toMatchObject({ contract_id: "CTR-ACTION-2", action_candidate_id: "ACT-2" });
+    const impactReads = reads.filter((call) =>
+      isDirectEvidenceCoverageSql(call.sql) || isDirectActionCandidateSql(call.sql),
+    );
+    expect(impactReads).toHaveLength(2);
+    for (const call of impactReads) {
+      expect(call.params).toEqual([expect.arrayContaining(["meridian_health_global"]), "CTR-ACTION-2"]);
+    }
+    const coverageSql = impactReads.find((call) => isDirectEvidenceCoverageSql(call.sql))?.sql ?? "";
+    for (const alias of ["o", "cs", "facts", "c"]) {
+      expect(coverageSql).toContain(`AND ${alias}.contract_id = $2`);
+    }
+    const actionSql = impactReads.find((call) => isDirectActionCandidateSql(call.sql))?.sql ?? "";
+    for (const alias of ["current_contract", "legacy", "o"]) {
+      expect(actionSql).toContain(`AND ${alias}.contract_id = $2`);
+    }
+  });
+
+  it("refuses a cross-tenant direct row and propagates a targeted read error", async () => {
+    mockWithSession.mockImplementation(async (callback) => {
+      const run = async <R>(sql: string): Promise<R[]> => {
+        if (sql.includes("set_config")) return [];
+        if (isDirectActionCandidateSql(sql)) {
+          return [{ tenant_key: "skyharbor_global", contract_id: "CTR-ACTION-2", action_candidate_id: "ACT-OTHER" }] as R[];
+        }
+        return [];
+      };
+      return callback(run);
+    });
+    await expect(loadSourceWorkspaceDirectImpactContract("meridian", "CTR-ACTION-2")).resolves.toBeNull();
+
+    mockWithSession.mockRejectedValueOnce(new Error("direct read unavailable"));
+    await expect(loadSourceWorkspaceDirectImpactContract("meridian", "CTR-ACTION-2")).rejects.toThrow("direct read unavailable");
   });
 
   it("resolves UUID-like vendor display names before impact rows reach the workspace payload", () => {

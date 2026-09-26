@@ -882,6 +882,7 @@ async function loadSourceWorkspaceImpactLayerWithTimings(
 async function loadDirectSourceWorkspaceImpactRows(
   tenantKey: string,
   timings: SourceWorkspaceLoadTiming[],
+  contractId?: string,
 ): Promise<
   Pick<SourceWorkspaceImpactLayer, "evidenceCoverage" | "actionCandidates">
 > {
@@ -894,6 +895,11 @@ async function loadDirectSourceWorkspaceImpactRows(
       ].map((value) => value.trim()),
     ),
   );
+  const scopedParams = contractId
+    ? [acceptedTenantKeys, contractId]
+    : [acceptedTenantKeys];
+  const contractPredicate = (alias: "o" | "cs" | "facts" | "c" | "current_contract" | "legacy") =>
+    contractId ? `AND ${alias}.contract_id = $2` : "";
   try {
     const rows = await azureRead.withSession(async (run) => {
       await run("SELECT set_config('app.tenant_key', $1, false)", [
@@ -917,6 +923,7 @@ async function loadDirectSourceWorkspaceImpactRows(
                  AND current_contract.contract_id = o.contract_id
                  AND current_contract.load_run_id = o.load_run_id
                WHERE o.tenant_key = ANY($1::text[])
+                 ${contractPredicate("o")}
                GROUP BY o.tenant_key, o.contract_id
              ),
              performance AS (
@@ -934,6 +941,7 @@ async function loadDirectSourceWorkspaceImpactRows(
                  AND current_contract.contract_id = o.contract_id
                  AND current_contract.load_run_id = o.load_run_id
                WHERE o.tenant_key = ANY($1::text[])
+                 ${contractPredicate("o")}
                GROUP BY o.tenant_key, o.contract_id
              ),
              opportunity_source AS (
@@ -967,6 +975,7 @@ async function loadDirectSourceWorkspaceImpactRows(
                  AND sizing_claim.opportunity_id = o.opportunity_id
                  AND sizing_claim.claim_role = 'sizing'
                WHERE o.tenant_key = ANY($1::text[])
+                 ${contractPredicate("o")}
              ),
              opportunity_deduped AS (
                SELECT DISTINCT ON (tenant_key, opportunity_id)
@@ -1005,6 +1014,7 @@ async function loadDirectSourceWorkspaceImpactRows(
                  AND current_contract.contract_id = cs.contract_id
                  AND current_contract.load_run_id = cs.load_run_id
                WHERE cs.tenant_key = ANY($1::text[])
+                 ${contractPredicate("cs")}
                GROUP BY cs.tenant_key, cs.contract_id
              ),
              depth AS (
@@ -1019,6 +1029,7 @@ async function loadDirectSourceWorkspaceImpactRows(
                  AND current_contract.contract_id = facts.contract_id
                  AND current_contract.raw_payload->>'dataset_version' = facts.dataset_version
                WHERE facts.tenant_key = ANY($1::text[])
+                 ${contractPredicate("facts")}
                GROUP BY facts.tenant_key, facts.contract_id
              )
              SELECT
@@ -1093,6 +1104,7 @@ async function loadDirectSourceWorkspaceImpactRows(
               LEFT JOIN scope ON scope.tenant_key = c.tenant_key AND scope.contract_id = c.contract_id
               LEFT JOIN depth ON depth.tenant_key = c.tenant_key AND depth.contract_id = c.contract_id
              WHERE c.tenant_key = ANY($1::text[])
+               ${contractPredicate("c")}
                AND (
                  COALESCE(spend.spend_rows, 0) > 0
                  OR COALESCE(performance.performance_rows, 0) > 0
@@ -1102,7 +1114,7 @@ async function loadDirectSourceWorkspaceImpactRows(
              ORDER BY COALESCE(opportunities.candidate_amount_usd, 0) DESC NULLS LAST,
                       GREATEST(COALESCE(performance.credit_calculated_usd, 0) - COALESCE(performance.credit_claimed_usd, 0), 0) DESC NULLS LAST,
                       c.contract_id`,
-            [acceptedTenantKeys],
+            scopedParams,
           ).then((rows) => rows.map(normalizeDerivedEvidenceCoverageRow)),
       );
       const actionCandidates = await timeWorkspaceRead(
@@ -1120,6 +1132,7 @@ async function loadDirectSourceWorkspaceImpactRows(
                  AND current_opportunity.contract_id = current_contract.contract_id
                  AND current_opportunity.dataset_version = current_contract.raw_payload->>'dataset_version'
                WHERE current_contract.tenant_key = ANY($1::text[])
+                 ${contractPredicate("current_contract")}
              ),
              raw_actions AS (
                SELECT
@@ -1178,6 +1191,7 @@ async function loadDirectSourceWorkspaceImpactRows(
                   ON current_action.tenant_key = legacy.tenant_key
                  AND current_action.opportunity_id = legacy.opportunity_id
                WHERE legacy.tenant_key = ANY($1::text[])
+                 ${contractPredicate("legacy")}
                  AND current_action.opportunity_id IS NULL
                UNION ALL
                SELECT
@@ -1248,6 +1262,7 @@ async function loadDirectSourceWorkspaceImpactRows(
                  AND sizing_claim.opportunity_id = o.opportunity_id
                  AND sizing_claim.claim_role = 'sizing'
                WHERE o.tenant_key = ANY($1::text[])
+                 ${contractPredicate("o")}
              ),
              deduped AS (
                SELECT DISTINCT ON (tenant_key, action_candidate_id)
@@ -1281,21 +1296,38 @@ async function loadDirectSourceWorkspaceImpactRows(
              SELECT *
                FROM deduped
               ORDER BY candidate_amount_usd DESC NULLS LAST, opportunity_id`,
-            [acceptedTenantKeys],
+            scopedParams,
           ).then((rows) => rows.map(normalizeDerivedActionCandidateRow)),
       );
       return { evidenceCoverage, actionCandidates };
     });
     return rows ?? { evidenceCoverage: [], actionCandidates: [] };
-  } catch {
+  } catch (error) {
     timings.push({
       label: "impact.direct_session",
       ms: 0,
       rows: 0,
       error: "read_failed",
     });
+    if (contractId) throw error;
     return { evidenceCoverage: [], actionCandidates: [] };
   }
+}
+
+export async function loadSourceWorkspaceDirectImpactContract(
+  tenantKey: string,
+  contractId: string,
+): Promise<{
+  readonly action: SourceContractActionCandidateRow | null;
+  readonly coverage: SourceContractEvidenceCoverageRow | null;
+} | null> {
+  const rows = await loadDirectSourceWorkspaceImpactRows(tenantKey, [], contractId);
+  const matches = (row: { readonly tenant_key: string; readonly contract_id: string }) =>
+    row.contract_id === contractId &&
+    canonicalTenantKey(row.tenant_key) === canonicalTenantKey(tenantKey);
+  const action = rows.actionCandidates.find(matches) ?? null;
+  const coverage = rows.evidenceCoverage.find(matches) ?? null;
+  return action || coverage ? { action, coverage } : null;
 }
 
 async function timeDerivedWorkspaceImpactRead(

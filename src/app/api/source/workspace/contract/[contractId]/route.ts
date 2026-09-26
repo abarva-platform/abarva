@@ -43,6 +43,7 @@ import { appClientKeyForTenant, canonicalTenantKey } from "@/lib/tenant/aliases"
 import {
   loadSourceWorkspacePortfolio,
   loadSourceWorkspaceContractDetailFallback,
+  loadSourceWorkspaceDirectImpactContract,
   sourceWorkspaceProvider,
   type SourceWorkspaceProviderMode,
 } from "@/app/(maestro)/source/preview/workspace/live/portfolioAdapter";
@@ -164,6 +165,28 @@ export async function GET(
       coverage.contract_id === contractId
     ) {
       contract = supplementalCoverageContractRow(coverage);
+    }
+  }
+  if (!contract && eclProvider !== "legacy") {
+    const direct = await loadSourceWorkspaceDirectImpactContract(
+      tenantKey,
+      contractId,
+    ).catch(() => {
+      readFailed = true;
+      return null;
+    });
+    if (
+      direct?.action &&
+      direct.action.contract_id === contractId &&
+      canonicalTenantKey(direct.action.tenant_key) === canonicalTenantKey(tenantKey)
+    ) {
+      contract = supplementalActionContractRow(direct.action);
+    } else if (
+      direct?.coverage &&
+      direct.coverage.contract_id === contractId &&
+      canonicalTenantKey(direct.coverage.tenant_key) === canonicalTenantKey(tenantKey)
+    ) {
+      contract = supplementalCoverageContractRow(direct.coverage);
     }
   }
   if (!contract) {
