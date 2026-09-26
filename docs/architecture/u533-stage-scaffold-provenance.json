@@ -1,7 +1,7 @@
 {
   "item": "U-533",
-  "generatedBy": "src/__tests__/behaviors/u533-stage-scaffold-provenance.test.ts",
-  "regenerateWith": "ABARVA_UPDATE_U533_PROVENANCE=1 npx jest --runTestsByPath src/__tests__/behaviors/u533-stage-scaffold-provenance.test.ts",
+  "generatedBy": "src/lib/source/facts/__tests__/u533-stage-scaffold-provenance.test.ts",
+  "regenerateWith": "ABARVA_UPDATE_U533_PROVENANCE=1 npx jest --runTestsByPath src/lib/source/facts/__tests__/u533-stage-scaffold-provenance.test.ts",
   "subject": {
     "builder": "src/lib/source/facts/view/stage-analytics-builder.ts",
     "builderFunction": "buildLiveStageView",

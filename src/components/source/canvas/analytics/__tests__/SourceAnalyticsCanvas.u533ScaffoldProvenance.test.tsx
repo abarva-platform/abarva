@@ -163,7 +163,7 @@ describe("U-533 · the exemplar approver does NOT reach this reader", () => {
    * component that renders `gate.approver` is `ScopeGate`, whose sole mounter
    * `ScopeAnalyticsStage` is imported by no route — only by tests. So the carried
    * approver reaches the MODEL'S PROMPT (asserted in
-   * `src/__tests__/behaviors/u533-stage-scaffold-provenance.test.ts`) and reaches
+   * `src/lib/source/facts/__tests__/u533-stage-scaffold-provenance.test.ts`) and reaches
    * no reader. That asymmetry is worth pinning: the render path and the grounding
    * path leak DIFFERENT carried fields, and a fix aimed at one does not close the
    * other.
