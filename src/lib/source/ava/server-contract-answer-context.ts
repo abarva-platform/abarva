@@ -25,6 +25,24 @@ function readHintId(context: AskSurfaceContext): string | null {
   return typeof id === "string" && id.trim() ? id.trim() : null;
 }
 
+function calendarDate(value: unknown): string | null {
+  if (value instanceof Date) {
+    if (!Number.isFinite(value.getTime())) return null;
+    const year = String(value.getFullYear()).padStart(4, "0");
+    const month = String(value.getMonth() + 1).padStart(2, "0");
+    const day = String(value.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  }
+  if (typeof value !== "string") return null;
+  const date = value.trim();
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return null;
+  const parsed = new Date(`${date}T00:00:00.000Z`);
+  return Number.isFinite(parsed.getTime()) &&
+    parsed.toISOString().slice(0, 10) === date
+    ? date
+    : null;
+}
+
 function contractForAnswer(contract: SourceContract360Row) {
   const committedAnnualSpendUsd = contract.committed_annual_spend;
   const actualAnnualSpendUsd = contract.actual_annual_spend;
@@ -46,9 +64,10 @@ function contractForAnswer(contract: SourceContract360Row) {
     totalCommittedValueUsd: contract.total_committed_value_conflict_flag
       ? contract.resolved_total_committed_value
       : contract.total_committed_value,
-    endDate: contract.end_date,
-    noticeDate:
-      contract.renewal_notice_date ?? contract.notice_deadline ?? null,
+    endDate: calendarDate(contract.end_date),
+    noticeDate: calendarDate(
+      contract.renewal_notice_date ?? contract.notice_deadline,
+    ),
     noticePeriodDays: contract.notice_period_days,
     autoRenew: contract.auto_renew,
     renewalOwnerRef: contract.renewal_owner_ref,

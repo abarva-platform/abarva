@@ -753,3 +753,75 @@ describe("C-525 · request contract facts cannot become authoritative prompt fac
     ).toContain("request contract fields discarded");
   });
 });
+
+describe("C-530 · server DATE values reach the selected-contract answer", () => {
+  beforeEach(() => {
+    listContract360.mockReset().mockResolvedValue([contract360Row()]);
+    getContract360.mockReset();
+    getContractOptimizationOpportunitySet.mockReset().mockResolvedValue(null);
+  });
+
+  const requestContext = {
+    module: "Source",
+    clientKey: FIXTURE_TENANT_KEY,
+    contractId: FIXTURE_CONTRACT_ID,
+    endDate: "2099-12-31",
+  } as AskSurfaceContext;
+
+  it("formats PostgreSQL DATE objects from the authorized row at the prompt destination", async () => {
+    getContract360.mockResolvedValue({
+      ...contract360Row(),
+      end_date: new Date(2027, 2, 31),
+      renewal_notice_date: new Date(2026, 11, 31),
+    });
+    const block = await buildAuthorizedSourceContract360PromptBlock({
+      query: `When does ${FIXTURE_CONTRACT_ID} end?`,
+      requestContext,
+      tenantKey: FIXTURE_TENANT_KEY,
+      tenantDisplayName: FIXTURE_TENANT_NAME,
+    });
+    expect(block).toContain("end date 2027-03-31");
+    expect(block).not.toContain("2099-12-31");
+    expect(block).not.toContain("end date not established");
+    expect(block).not.toContain("2027-03-31T00:00:00");
+  });
+
+  it("does not turn an invalid date or another tenant's row into a date claim", async () => {
+    getContract360.mockResolvedValue({
+      ...contract360Row(),
+      end_date: new Date(Number.NaN),
+    });
+    const invalidBlock = await buildAuthorizedSourceContract360PromptBlock({
+      query: `When does ${FIXTURE_CONTRACT_ID} end?`,
+      requestContext,
+      tenantKey: FIXTURE_TENANT_KEY,
+      tenantDisplayName: FIXTURE_TENANT_NAME,
+    });
+    expect(invalidBlock).not.toContain("end date ");
+
+    getContract360.mockResolvedValue({
+      ...contract360Row(),
+      end_date: "2027-02-30",
+    });
+    const impossibleDateBlock = await buildAuthorizedSourceContract360PromptBlock({
+      query: `When does ${FIXTURE_CONTRACT_ID} end?`,
+      requestContext,
+      tenantKey: FIXTURE_TENANT_KEY,
+      tenantDisplayName: FIXTURE_TENANT_NAME,
+    });
+    expect(impossibleDateBlock).not.toContain("end date ");
+
+    getContract360.mockResolvedValue({
+      ...contract360Row(),
+      tenant_key: "other-fixture-tenant",
+      end_date: new Date(2027, 2, 31),
+    });
+    const foreignBlock = await buildAuthorizedSourceContract360PromptBlock({
+      query: `When does ${FIXTURE_CONTRACT_ID} end?`,
+      requestContext,
+      tenantKey: FIXTURE_TENANT_KEY,
+      tenantDisplayName: FIXTURE_TENANT_NAME,
+    });
+    expect(foreignBlock).toBe("");
+  });
+});
