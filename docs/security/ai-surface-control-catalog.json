@@ -289,7 +289,7 @@
         }
       ],
       "routeReachable": false,
-      "unreachableReason": "The Tower route renders TowerCommandCenterAvaShell; nothing imports ProgramPressureCards. The brief's five controls exist in a component the Tower rebuild left behind. src/lib/qa/route-smoke-inventory.ts and src/lib/qa/founder-demo-route-checklist.ts now name src/components/tower/command-center/TowerCommandCenterAvaShell.tsx for that route, while docs/demo/ABARVA_FOUNDER_DEMO_ROUTE_CHECKLIST.md still names src/components/tower/ProgramPressureCards.tsx as the expected component. Fixed by mounting the accountability block in the command-center shell, or by moving these five controls to the component that now renders there and retiring this entry."
+      "unreachableReason": "The Tower route renders TowerCommandCenterAvaShell; nothing imports ProgramPressureCards. The brief's five controls exist in a component the Tower rebuild left behind. src/lib/qa/route-smoke-inventory.ts, src/lib/qa/founder-demo-route-checklist.ts and docs/demo/ABARVA_FOUNDER_DEMO_ROUTE_CHECKLIST.md now name src/components/tower/command-center/TowerCommandCenterAvaShell.tsx for that route. Fixed by mounting the accountability block in the command-center shell, or by moving these five controls to the component that now renders there and retiring this entry."
     },
     {
       "id": "source-admin-event-approval-queue",
