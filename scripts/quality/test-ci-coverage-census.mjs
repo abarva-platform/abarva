@@ -47,6 +47,7 @@ import {
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
+import { TestPathPatterns } from "@jest/pattern";
 import ts from "typescript";
 import { isDirectInvocation } from "../exec/cli-entry.mjs";
 
@@ -546,6 +547,68 @@ function commandNamesPath(command, candidate) {
   ).test(command);
 }
 
+/**
+ * A bare Jest path argument is a REGULAR EXPRESSION matched against the whole
+ * path, not a directory prefix — so the reading above is wrong for one class of
+ * command, and wrong in both directions.
+ *
+ * `src/app/(maestro)/home` is a capture group around `maestro`: Jest looks for
+ * `src/app/maestro/home`, which is not in this tree, and selects nothing while
+ * the literal reading credits every suite in the directory whose name is
+ * spelled right there in the baseline. `src/__tests__/integration/tower` is
+ * unanchored, so Jest also selects `…/tower-p6-handoff-panel.test.ts`, which
+ * the literal reading called uncovered because the parent directory is not an
+ * exact match. Item T-487; the over-crediting half is the one that matters,
+ * because this census is the instrument the triage ranking is drawn from.
+ *
+ * Jest's own class does the matching rather than a second copy of its rules.
+ * `TestPathPatterns` carries the case-insensitive flag, the `./foo` → `^foo`
+ * rewrite, the path-separator substitution and the relative-then-absolute pair
+ * of tests, and a re-implementation here would be a second reading of one
+ * contract, free to drift from the runner it is supposed to describe. It is a
+ * bare specifier, resolved from `node_modules` exactly as `@jest/globals` is in
+ * `scripts/**` today.
+ */
+const jestPatternExecutors = new Map();
+function jestPathPatternSelects(root, pattern, testPath) {
+  const key = `${root}\u0000${pattern}`;
+  let executor = jestPatternExecutors.get(key);
+  if (executor === undefined) {
+    executor = new TestPathPatterns([pattern]).toExecutor({ rootDir: root });
+    jestPatternExecutors.set(key, executor);
+  }
+  // A pattern that is not a valid regex selects EVERYTHING, which is not the
+  // guess it looks like: Jest prints "Invalid testPattern <p> supplied. Running
+  // all tests instead." and does exactly that. Measured, because `false` was
+  // written here first on the reasoning that a broken pattern runs nothing, and
+  // a mutation of this line changed no count on a corpus where the branch is
+  // unreachable — so the wrong answer would have shipped unopposed.
+  //
+  // Jest discards the whole pattern SET, so a baseline with one bad path runs
+  // the repository. Reading one pattern at a time still lands on that answer,
+  // because the bad pattern alone credits every file and the union cannot say
+  // less; there is no arrangement of paths where the two readings differ.
+  if (!executor.isValid()) return true;
+  return executor.isMatch(path.join(root, testPath));
+}
+
+/**
+ * Whether one reachable command runs one test file.
+ *
+ * Exported so a caller can ask the question the census asks, of the code the
+ * census asks it with. Two readings live here and the entry says which one it
+ * is: a command line names a path as a literal token, and a path spread into
+ * Jest's argv is a pattern Jest matches.
+ */
+export function reachableEntrySelects(root, entry, testPath) {
+  if (entry.jestPathPattern !== undefined) {
+    return jestPathPatternSelects(root, entry.jestPathPattern, testPath);
+  }
+  return registrationCandidates(testPath).some((candidate) =>
+    commandNamesPath(entry.command, candidate),
+  );
+}
+
 /** The test path itself, then every directory above it up to `src`. */
 export function registrationCandidates(testPath) {
   const candidates = [testPath];
@@ -955,6 +1018,12 @@ export function collectReachableCommands(root, packageScripts) {
             source: `${scriptPath} ← ${source}`,
             pullRequest,
             command: declared,
+            // The same string twice, deliberately. `command` is what the
+            // census reports; `jestPathPattern` is the flag that says how it
+            // must be READ — spread into Jest's argv, so a regex and not a
+            // literal prefix. Carrying the reading on the entry keeps the
+            // decision in one place instead of re-deriving `via` downstream.
+            jestPathPattern: declared,
           });
         }
 
@@ -1254,10 +1323,9 @@ export function declaredQuarantinePaths(root, testFiles) {
   };
 }
 
-function coverageFor(testPath, reachable, declaredQuarantinePathSet) {
-  const candidates = registrationCandidates(testPath);
+function coverageFor(root, testPath, reachable, declaredQuarantinePathSet) {
   const named = reachable.filter((entry) =>
-    candidates.some((candidate) => commandNamesPath(entry.command, candidate)),
+    reachableEntrySelects(root, entry, testPath),
   );
   const hits = named.filter(
     (entry) =>
@@ -1328,7 +1396,12 @@ export function buildCensus(
   let declaredQuarantine = 0;
 
   for (const testFile of testFiles) {
-    const result = coverageFor(testFile, reachable, declaredQuarantinePathSet);
+    const result = coverageFor(
+      root,
+      testFile,
+      reachable,
+      declaredQuarantinePathSet,
+    );
     if (result.covered) covered += 1;
     if (result.pullRequestCovered) pullRequestCovered += 1;
 

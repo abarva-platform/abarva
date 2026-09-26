@@ -301,6 +301,58 @@ const PR_WORKFLOW = (run: string) =>
 
 const TEST_FILE = "it('x', () => { expect(1).toBe(1); });\n";
 
+/**
+ * What Jest itself selects, in `cwd`, when handed these path arguments — the
+ * oracle for every case below. Jest is spawned rather than re-implemented: a
+ * second copy of its pattern rules here would be free to agree with a census
+ * that had the rules wrong, which is the failure these cases exist to catch.
+ */
+function jestSelects(cwd: string, paths: readonly string[]): string[] {
+  const stdout = execFileSync(
+    process.execPath,
+    [path.join(cwd, "node_modules", "jest", "bin", "jest.js"), "--listTests", ...paths],
+    { cwd, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] },
+  );
+  return stdout
+    .split("\n")
+    .map((line) => line.trim())
+    // Jest prints its own diagnostics on this stream — "Invalid testPattern …
+    // supplied. Running all tests instead." is one of them, and a case below
+    // provokes it deliberately. Only a line that is an absolute path inside
+    // `cwd` is a selected file.
+    .filter((line) => line.startsWith(`${cwd}${path.sep}`))
+    .map((absolute) => path.relative(cwd, absolute))
+    .sort();
+}
+
+/**
+ * The test files the census credits through a ratchet baseline, decided by the
+ * census's own exported matcher so the case measures the shipped reading
+ * rather than a paraphrase of it. Run out of process because the script is an
+ * ES module and this suite is transpiled to CommonJS.
+ */
+function ratchetBaselineSelection(root: string): string[] {
+  const probe = [
+    'import { readFileSync } from "node:fs";',
+    'import { collectTestFiles, collectReachableCommands, reachableEntrySelects }',
+    `  from ${JSON.stringify(path.join(root, CENSUS_SCRIPT))};`,
+    `const root = ${JSON.stringify(root)};`,
+    'const scripts = JSON.parse(readFileSync(`${root}/package.json`, "utf8")).scripts ?? {};',
+    "const { reachable } = collectReachableCommands(root, scripts);",
+    'const baseline = reachable.filter((entry) => entry.via === "ratchet-baseline");',
+    "const selected = collectTestFiles(root).filter((file) =>",
+    "  baseline.some((entry) => reachableEntrySelects(root, entry, file)),",
+    ");",
+    "console.log(JSON.stringify(selected.sort()));",
+  ].join("\n");
+  const stdout = execFileSync(process.execPath, ["--input-type=module", "-e", probe], {
+    cwd: root,
+    encoding: "utf8",
+    stdio: ["ignore", "pipe", "pipe"],
+  });
+  return JSON.parse(stdout) as string[];
+}
+
 const fixtures: string[] = [];
 function fixture(files: Record<string, string>, scripts?: Record<string, string>): string {
   const dir = makeFixture(files, scripts);
@@ -1992,6 +2044,169 @@ function runExplain(cwd: string): string {
     stdio: ["ignore", "pipe", "pipe"],
   });
 }
+
+/**
+ * A bare Jest path argument is a REGULAR EXPRESSION, and a ratchet baseline's
+ * `paths` are spread into one. The census resolved them as literal prefixes,
+ * so `src/app/(maestro)/home` credited every suite inside that directory while
+ * Jest read `(maestro)` as a capture group, looked for `src/app/maestro/home`,
+ * and selected nothing (item T-487).
+ *
+ * The direction matters more than the size. A census that is more generous
+ * than the run is invisible from its own output — the directory name is right
+ * there in the baseline — and this census is the instrument the triage ranking
+ * is drawn from, so an over-credit removes a directory from the queue that
+ * decides what gets wired next.
+ *
+ * These cases fix the reading, not the baselines. Escaping the three real
+ * baseline paths is `T-486`, it is blocked on a decision about the failures
+ * the escape reveals, and doing it here would turn this control green with the
+ * census reading still wrong.
+ */
+describe("test CI coverage census — a ratchet baseline path is a Jest regex", () => {
+  const GROUP_SUITE = "src/app/(group)/home/__tests__/home.test.ts";
+  const ratchetFixture = (declaredPath: string) => ({
+    [GROUP_SUITE]: TEST_FILE,
+    ".github/workflows/gate.yml": PR_WORKFLOW(
+      "node scripts/ci/test-ratchet.mjs docs/ci/group-test-baseline.json",
+    ),
+    "scripts/ci/test-ratchet.mjs": [
+      'import { spawnSync } from "node:child_process";',
+      "const { paths } = JSON.parse(process.argv[2]);",
+      'spawnSync("npx", ["jest", ...paths, "--json"], { stdio: "inherit" });',
+    ].join("\n"),
+    "docs/ci/group-test-baseline.json": `${JSON.stringify({
+      name: "group",
+      paths: [declaredPath],
+    })}\n`,
+  });
+
+  it("credits nothing for a parenthesised path Jest reads as a capture group", () => {
+    // Ground truth is Jest's own selection over the same fixture, taken first
+    // and independently of anything the census says. `(group)` is a group, so
+    // the pattern looks for `src/app/group/home`, which is not in the tree.
+    const dir = fixture(ratchetFixture("src/app/(group)/home"));
+    expect(jestSelects(dir, ["src/app/(group)/home"])).toEqual([]);
+
+    const { census } = runCensus(dir);
+    expect(census.counts.testFiles).toBe(1);
+    expect(census.counts.coveredTestFiles).toBe(0);
+    expect(census.counts.uncoveredTestFiles).toBe(1);
+    expect(census.uncoveredDirectories.map((row) => row.directory)).toEqual([
+      "src/app/(group)/home/__tests__",
+    ]);
+  });
+
+  it("credits the files under the escaped form of that same path", () => {
+    // The other direction, and the one that keeps the fix from being "call
+    // every parenthesised path uncovered": escaped, the pattern reaches the
+    // directory, Jest runs the suite, and the census must say so.
+    const dir = fixture(ratchetFixture("src/app/\\(group\\)/home"));
+    expect(jestSelects(dir, ["src/app/\\(group\\)/home"])).toEqual([GROUP_SUITE]);
+
+    const { census } = runCensus(dir);
+    expect(census.counts.coveredTestFiles).toBe(1);
+    expect(census.counts.uncoveredTestFiles).toBe(0);
+    expect(census.counts.indeterminateInvocations).toBe(0);
+  });
+
+  it("reads an unanchored path the way Jest does, including the sibling it reaches", () => {
+    // Not a correction in the generous direction only. `src/lib/tower` is an
+    // unanchored regex, so Jest also selects `src/lib/tower-extras`; the
+    // literal-prefix reading required the parent directory to be exactly
+    // `src/lib/tower` and called that sibling uncovered when the gate runs it.
+    const dir = fixture({
+      "src/lib/tower/__tests__/tower.test.ts": TEST_FILE,
+      "src/lib/tower-extras/__tests__/extras.test.ts": TEST_FILE,
+      ".github/workflows/gate.yml": PR_WORKFLOW(
+        "node scripts/ci/test-ratchet.mjs docs/ci/tower-test-baseline.json",
+      ),
+      "scripts/ci/test-ratchet.mjs": [
+        'import { spawnSync } from "node:child_process";',
+        "const { paths } = JSON.parse(process.argv[2]);",
+        'spawnSync("npx", ["jest", ...paths, "--json"], { stdio: "inherit" });',
+      ].join("\n"),
+      "docs/ci/tower-test-baseline.json": `${JSON.stringify({
+        name: "tower",
+        paths: ["src/lib/tower"],
+      })}\n`,
+    });
+    expect(jestSelects(dir, ["src/lib/tower"])).toEqual([
+      "src/lib/tower-extras/__tests__/extras.test.ts",
+      "src/lib/tower/__tests__/tower.test.ts",
+    ]);
+
+    const { census } = runCensus(dir);
+    expect(census.counts.coveredTestFiles).toBe(2);
+    expect(census.counts.uncoveredTestFiles).toBe(0);
+  });
+
+  it("credits every suite for a baseline path that is not a valid regex", () => {
+    // Not the answer that reads as obvious. A broken pattern looks like a run
+    // that selects nothing, and this reading was written that way first; Jest
+    // prints "Invalid testPattern … supplied. Running all tests instead." and
+    // runs the whole tree, so the honest census says every file is covered.
+    // The case exists because a mutation of that line moved no count — the
+    // branch is unreachable from the real baselines, so nothing on this
+    // repository could have told the two answers apart.
+    const dir = fixture(ratchetFixture("src/lib/alpha["));
+    const other = path.join(dir, "src/lib/beta/__tests__/beta.test.ts");
+    mkdirSync(path.dirname(other), { recursive: true });
+    writeFileSync(other, TEST_FILE);
+
+    expect(jestSelects(dir, ["src/lib/alpha["])).toEqual([
+      GROUP_SUITE,
+      "src/lib/beta/__tests__/beta.test.ts",
+    ]);
+
+    const { census } = runCensus(dir);
+    expect(census.counts.testFiles).toBe(2);
+    expect(census.counts.coveredTestFiles).toBe(2);
+    expect(census.counts.uncoveredTestFiles).toBe(0);
+  });
+
+  it("agrees file for file with Jest's own selection over this repository's real baselines", () => {
+    // The acceptance, measured against the real baselines rather than against
+    // a fixture: whatever the census credits through a ratchet baseline must
+    // be exactly what Jest selects when handed those same `paths`. Jest is
+    // spawned here, so the oracle is the runner itself and not a second copy
+    // of the reading under test — a re-implementation that agreed with the
+    // census would agree with it when both were wrong.
+    const baselines = readdirSync(path.join(repoRoot, "docs", "ci"))
+      .filter((name) => /-test-baseline\.json$/.test(name))
+      .sort();
+    expect(baselines.length).toBeGreaterThan(0);
+
+    const declared = baselines.flatMap((name) =>
+      (
+        JSON.parse(readFileSync(path.join(repoRoot, "docs", "ci", name), "utf8")) as {
+          paths?: string[];
+        }
+      ).paths ?? [],
+    );
+    const selectedByJest = new Set(jestSelects(repoRoot, declared));
+    const creditedByCensus = new Set(ratchetBaselineSelection(repoRoot));
+
+    expect([...creditedByCensus].filter((file) => !selectedByJest.has(file)).sort()).toEqual([]);
+    expect([...selectedByJest].filter((file) => !creditedByCensus.has(file)).sort()).toEqual([]);
+
+    // Not vacuous in either direction: the baselines do name suites, and the
+    // three unescaped paths on `main` do reach a real directory that Jest
+    // nonetheless cannot select. Both sets must be non-empty for the equality
+    // above to mean anything.
+    expect(selectedByJest.size).toBeGreaterThan(0);
+    const unreachable = declared.filter(
+      (declaredPath) => /[()[\]]/.test(declaredPath) && !/\\[()[\]]/.test(declaredPath),
+    );
+    for (const declaredPath of unreachable) {
+      expect(existsSync(path.join(repoRoot, declaredPath))).toBe(true);
+      expect(jestSelects(repoRoot, [declaredPath])).toEqual([]);
+      expect(
+        [...creditedByCensus].filter((file) => file.startsWith(`${declaredPath}/`)),
+      ).toEqual([]);
+    }
+  }, 120_000);
+});
 
 describe("test CI coverage census --explain", () => {
   it("names the unrun file and not the covered one beside it", () => {
