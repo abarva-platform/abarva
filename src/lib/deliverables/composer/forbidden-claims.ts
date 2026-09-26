@@ -47,6 +47,27 @@ const ASSERTION = new RegExp(
   'i',
 );
 
+/**
+ * A sentence that carries the very qualifier a prohibition demands is the
+ * compliant form, not a violation.
+ *
+ * "Every one is labelled a synthetic planning figure" was flagged against "do
+ * not present the cost or KPI figures as measured" — it is the most compliant
+ * sentence in the deck. So was a list of the artifacts required before a claim
+ * can be made.
+ */
+const COMPLIANCE =
+  /\b(synthetic|planning figure|planning-grade|not measured|unvalidated|not validated|unaudited|hypothes[ie]s|not finance-confirmed|not attested|requires? (?:proof|evidence|attestation|validation)|labelled|labeled|marked as|stated as|before any claim|pending|requested|artifacts?|to be provided|open input)\b/i;
+
+/**
+ * Denial by quantity.
+ *
+ * "$0 of the $8.0M promised value is validated" denies the claim using a number
+ * rather than a negation word, and the first version of the negation list had no
+ * notion of zero. Three of four false positives on one deck were this shape.
+ */
+const ZERO_QUANTITY = /(^|[\s(])(\$\s?0(?![.\d])|0(?![.\d])\s+(?:of|out of)\b|zero\b|none of\b|nil\b)/i;
+
 /** Negations that turn an assertion back into a denial — the safe form. */
 const NEGATION =
   /\b(not|no|never|none|nothing|zero|without|cannot|can't|isn't|aren't|lacks?|absent|missing|unproven|unvalidated|un\w+ed|before|until|pending|require[sd]?|must|should|would|only after|only once|yet to|not yet|if |when |subject to|conditional)\b/i;
@@ -149,6 +170,8 @@ export function checkProhibitions(deck: InspectedDeck, prohibitions: string[]): 
       // denies it. Denying a prohibited claim is the compliant form, and so is a
       // conditional: "only after transcript evidence is governed".
       if (NEGATION.test(text)) continue;
+      if (ZERO_QUANTITY.test(text)) continue;
+      if (COMPLIANCE.test(text)) continue;
       findings.push({
         prohibition,
         slide,

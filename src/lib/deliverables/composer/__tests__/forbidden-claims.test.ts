@@ -134,6 +134,46 @@ describe('explicit claim prohibitions against a rendered deck', () => {
     expect(real.clean).toBe(false);
   });
 
+  it('treats denial by quantity as a denial', () => {
+    // "$0 of the $8.0M promised value is validated" denies the claim with a
+    // number rather than a negation word. Three of four false positives on one
+    // deck were this shape.
+    const v = checkProhibitions(
+      deckOf('$0 of the $8.0M promised value is finance-validated despite $16.0M of approved funding.'),
+      ['Do not claim realized ROI, Tower value, or savings until measured evidence exists.'],
+    );
+    expect(v.findings).toEqual([]);
+  });
+
+  it('does not flag a sentence carrying the qualifier the prohibition demands', () => {
+    // The most compliant sentence in the deck was flagged against the rule it
+    // was satisfying.
+    const v = checkProhibitions(
+      deckOf('Every one is labelled a synthetic planning figure — as is the $427.2M uploaded cost base.'),
+      ['Do not present the cost or KPI figures as measured. Every one is synthetic planning evidence.'],
+    );
+    expect(v.findings).toEqual([]);
+  });
+
+  it('does not flag a sentence naming what must still be provided', () => {
+    // Listing the artifacts an owner has requested is the compliant framing; it
+    // asserts nothing about realized value.
+    const v = checkProhibitions(
+      deckOf('Monthly usage export, KPI baseline/actual report, and a finance value attestation — the three artifacts the named business owner has already requested.'),
+      ['Do not claim realized AI value unless tower_claim_allowed is partial/yes and finance_validated_value_usd is populated.'],
+    );
+    expect(v.findings).toEqual([]);
+  });
+
+  it('still flags the same subject asserted WITHOUT the qualifier', () => {
+    // The compliance rule must not become a blanket exemption.
+    const v = checkProhibitions(
+      deckOf('The $427.2M cost base is measured and confirmed by Finance for the contact centre.'),
+      ['Do not present the cost or KPI figures as measured.'],
+    );
+    expect(v.clean).toBe(false);
+  });
+
   it('reports what it scanned, so a vacuous run is visible', () => {
     // A run over an empty prohibition list must not read as a clean run.
     const none = checkProhibitions(deckOf('anything at all here'), []);

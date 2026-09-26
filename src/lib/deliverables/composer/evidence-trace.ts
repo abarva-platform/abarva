@@ -35,6 +35,17 @@ export interface FactTrace {
   /** The first stage that did NOT carry it, or null if it reached the end. */
   lostAt: TraceStage | null;
   matchedAs: string | null;
+  /**
+   * A later stage matched while an earlier one did not.
+   *
+   * The funnel is monotonic by construction: nothing can be cited that was never
+   * in the bundle, and nothing reaches the deck that was never cited. So a gap
+   * followed by a hit is the MATCHER failing on phrasing, not the pipeline
+   * losing the fact — the bundle wrote "of which 7 carry" while the deck wrote
+   * "Seven of the nine". Reporting that as a pipeline loss would send someone to
+   * debug a stage that did its job.
+   */
+  instrumentDefect: boolean;
 }
 
 export interface StageSummary {
@@ -116,11 +127,19 @@ export function traceFacts(facts: InstrumentedFact[], sources: TraceSources): Tr
       if (hit && !matchedAs) matchedAs = hit;
     }
 
+    // Monotonicity: once a later stage matches, every earlier gap was a phrasing
+    // miss. Repaired here so the funnel counts describe the pipeline.
+    const lastHit = STAGES.reduce((acc, s, i) => (reached[s] ? i : acc), -1);
+    const instrumentDefect = STAGES.slice(0, Math.max(lastHit, 0)).some((s) => !reached[s]);
+    if (instrumentDefect) {
+      for (let i = 0; i < lastHit; i++) reached[STAGES[i]] = true;
+    }
+
     // The first stage that did not carry it. Stages are ordered, so this names
     // where to look rather than reporting a bare failure.
     const lostAt = STAGES.find((s) => !reached[s]) ?? null;
 
-    traces.push({ factId: fact.factId, label: fact.label, expectation: fact.expectation, reached, lostAt, matchedAs });
+    traces.push({ factId: fact.factId, label: fact.label, expectation: fact.expectation, reached, lostAt, matchedAs, instrumentDefect });
   }
 
   const required = traces.filter((t) => t.expectation === 'represented');

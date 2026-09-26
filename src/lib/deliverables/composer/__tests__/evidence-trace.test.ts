@@ -69,6 +69,33 @@ describe('tracing an uploaded fact to the rendered file', () => {
     expect(v.facts[0].reached.deck).toBe(false);
   });
 
+  it('repairs a non-monotonic funnel and says it was the matcher', () => {
+    // Nothing can be cited that was never in the bundle. The bundle wrote
+    // "of which 7 carry" and the deck wrote "Seven of the nine", so the bundle
+    // stage missed on phrasing. Reporting that as a pipeline loss sends someone
+    // to debug a stage that did its job.
+    const v = traceFacts(
+      [fact({ factId: 'integration', variants: ['seven', 'seven of'] })],
+      sources({
+        bundleText: 'of which 7 carry unvalidated readiness',
+        assignedText: 'of which 7 carry unvalidated readiness',
+        citedText: 'Seven of the nine systems carry unvalidated API readiness.',
+        deckText: 'Seven of the nine systems in the contact flow carry unvalidated API readiness',
+        gapAnalysisText: 'Seven of the nine systems carry unvalidated API readiness',
+      }),
+    );
+    expect(v.facts[0].instrumentDefect).toBe(true);
+    expect(v.facts[0].reached.bundle).toBe(true);
+    expect(v.facts[0].lostAt).toBeNull();
+  });
+
+  it('does not mark a genuine late loss as an instrument defect', () => {
+    // Bundle, assigned and cited, then absent from the deck: monotonic, real.
+    const v = traceFacts([fact({})], sources({ deckText: '', gapAnalysisText: '' }));
+    expect(v.facts[0].instrumentDefect).toBe(false);
+    expect(v.facts[0].lostAt).toBe('deck');
+  });
+
   it('excludes coverage expectations from the value funnel', () => {
     const v = traceFacts([fact({ expectation: 'still_open' }), fact({ factId: 'x', expectation: 'recharacterised' })], sources());
     expect(v.facts).toEqual([]);

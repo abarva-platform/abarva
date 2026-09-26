@@ -582,8 +582,22 @@ if (uploadEnabled) {
     const p2 = path.join(UPLOAD_DIR, `${f}.csv`);
     return fs.existsSync(p2) ? parseCsv(fs.readFileSync(p2, "utf8")) : [];
   };
+  // Executive prose spells small numbers out. The deck said "Seven of the nine
+  // systems in the contact flow carry unvalidated API readiness" and the trace
+  // reported the fact as never having reached the bundle, because every variant
+  // was a digit. An instrument that only reads digits cannot measure a document
+  // written by people.
+  const WORDS = [
+    "zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten",
+    "eleven", "twelve", "thirteen", "fourteen", "fifteen", "sixteen", "seventeen",
+    "eighteen", "nineteen", "twenty",
+  ];
+  const withWords = (value, variants) =>
+    Number.isInteger(value) && value >= 0 && value <= 20
+      ? [...variants, WORDS[value], `${WORDS[value]} of`]
+      : variants;
   const track = (factId, label, value, variants, tab_, expectation) => {
-    uploadedFacts.push({ factId, label, value, variants, tab: tab_, expectation });
+    uploadedFacts.push({ factId, label, value, variants: withWords(value, variants), tab: tab_, expectation });
   };
 
   // 05 · KPI baselines — the gap the corpus names most often
@@ -668,7 +682,18 @@ if (uploadEnabled) {
   // 08 · integration surface
   const integ = tab("08_Integration_Surface");
   const unvalidated = integ.filter((i) => /UNVALIDATED/i.test(i.api_readiness ?? ""));
-  track("integration:unvalidated", "systems with unvalidated API readiness", unvalidated.length, [String(unvalidated.length)], "08_Integration_Surface", "represented");
+  // Variants have to be long enough to be a signal. A bare "8" matches a page
+  // number, so the trace matcher refuses it and the fact reads as never having
+  // reached the bundle — an instrument defect indistinguishable from a pipeline
+  // defect in the report.
+  track(
+    "integration:unvalidated",
+    "systems with unvalidated API readiness",
+    unvalidated.length,
+    [`${unvalidated.length} of ${integ.length}`, `${unvalidated.length} systems`, `${unvalidated.length} unvalidated`],
+    "08_Integration_Surface",
+    "represented",
+  );
   add({
     label: "Uploaded integration surface",
     statement:
