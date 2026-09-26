@@ -3807,15 +3807,17 @@ export function contractPurposeSummary(
     .join(" ")
     .toLowerCase();
   const kind = contractPurposeKind(classificationText);
-  const annualValue =
-    contractBookAnnualValueForContract(contract) ??
-    numberFromDb(coverage?.committed_spend_usd);
+  const annualValue = contractBookAnnualValueForContract(contract);
+  const committedSpend = numberFromDb(coverage?.committed_spend_usd);
   const actualSpend =
     numberFromDb(contract.actual_annual_spend) ??
     numberFromDb(coverage?.actual_spend_usd);
   const evidenceParts = [
     archetype ? `${archetype} archetype` : null,
     annualValue != null ? `${money(annualValue)} annual value` : null,
+    annualValue == null && committedSpend != null
+      ? `${money(committedSpend)} committed spend`
+      : null,
     actualSpend != null ? `${money(actualSpend)} observed spend` : null,
     positiveCount(numberFromDb(coverage?.scope_rows) ?? scopeRows.length)
       ? `${numberFromDb(coverage?.scope_rows) ?? scopeRows.length} scope rows`
@@ -4357,9 +4359,7 @@ function ContractStoryContextStack({
   scopeRows: readonly SourceContractApplicationScopeRow[];
   vm: SourceWorkspaceVM;
 }) {
-  const annualValue =
-    contractBookAnnualValueForContract(contract) ??
-    numberFromDb(coverage?.committed_spend_usd);
+  const annualValue = contractBookAnnualValueForContract(contract);
   const actualSpend =
     numberFromDb(contract.actual_annual_spend) ??
     numberFromDb(coverage?.actual_spend_usd);
@@ -6714,8 +6714,7 @@ function vendorsWithImpactEvidence(
         vendor_category: existing.vendor_category ?? vendorCategory,
         contract_count: Math.max(existing.contract_count, contractRefs.length),
         annual_value: numberFromDb(existing.annual_value) ?? annualValue,
-        total_committed_value:
-          numberFromDb(existing.total_committed_value) ?? annualValue,
+        total_committed_value: numberFromDb(existing.total_committed_value),
         contract_refs: contractRefs,
         vendor_refs: uniqueRefs([
           existing.vendor_ref,
@@ -6732,7 +6731,7 @@ function vendorsWithImpactEvidence(
       vendor_category: vendorCategory,
       contract_count: contractRefs.length,
       annual_value: annualValue,
-      total_committed_value: annualValue,
+      total_committed_value: null,
       auto_renew_contracts: 0,
       next_end_date: null,
       contract_refs: contractRefs,
@@ -6742,10 +6741,7 @@ function vendorsWithImpactEvidence(
 
   for (const coverage of portfolio.impact?.evidenceCoverage ?? []) {
     const contract = contractsById.get(coverage.contract_id);
-    const annualValue =
-      contractBookAnnualValueForContract(contract) ??
-      numberFromDb(coverage.candidate_amount_usd) ??
-      numberFromDb(coverage.actual_spend_usd);
+    const annualValue = contractBookAnnualValueForContract(contract);
     upsert({
       contractId: coverage.contract_id,
       vendorName: coverage.vendor_name || contract?.vendor_name || "",
@@ -6763,9 +6759,7 @@ function vendorsWithImpactEvidence(
 
   for (const action of portfolio.impact?.actionCandidates ?? []) {
     const contract = contractsById.get(action.contract_id);
-    const annualValue =
-      contractBookAnnualValueForContract(contract) ??
-      numberFromDb(action.candidate_amount_usd);
+    const annualValue = contractBookAnnualValueForContract(contract);
     upsert({
       contractId: action.contract_id,
       vendorName: action.vendor_name || contract?.vendor_name || "",
@@ -6779,9 +6773,7 @@ function vendorsWithImpactEvidence(
 
   for (const claim of portfolio.impact?.claimCards ?? []) {
     const contract = contractsById.get(claim.contract_id);
-    const annualValue =
-      contractBookAnnualValueForContract(contract) ??
-      numberFromDb(claim.candidate_amount_usd);
+    const annualValue = contractBookAnnualValueForContract(contract);
     upsert({
       contractId: claim.contract_id,
       vendorName: claim.vendor_name || contract?.vendor_name || "",
@@ -7833,17 +7825,18 @@ function contractStoryHeadline(
   const actualSpend =
     numberFromDb(contract.actual_annual_spend) ??
     numberFromDb(coverage?.actual_spend_usd);
-  const annualValue =
-    contractBookAnnualValueForContract(contract) ??
-    numberFromDb(coverage?.committed_spend_usd);
+  const annualValue = contractBookAnnualValueForContract(contract);
   if (opportunityTotal > 0) {
     return `${vendor}: ${money(opportunityTotal)} of governed optimization levers are ready to work.`;
   }
   if (annualValue != null && actualSpend != null && annualValue > actualSpend) {
-    return `${vendor}: commitment is ahead of observed use.`;
+    return `${vendor}: annual contract value is above observed spend.`;
   }
   if (annualValue != null && actualSpend != null && actualSpend > annualValue) {
-    return `${vendor}: spend is running above the recorded commitment.`;
+    return `${vendor}: spend is running above the recorded annual contract value.`;
+  }
+  if (annualValue == null) {
+    return `${vendor}: annual contract value is not established; action depends on loaded evidence.`;
   }
   return `${vendor}: contract header is governed; action depends on loaded evidence.`;
 }
@@ -7854,9 +7847,8 @@ function contractStoryBody(
   scopeRows: readonly SourceContractApplicationScopeRow[],
   vm: SourceWorkspaceVM,
 ) {
-  const annualValue =
-    contractBookAnnualValueForContract(contract) ??
-    numberFromDb(coverage?.committed_spend_usd);
+  const annualValue = contractBookAnnualValueForContract(contract);
+  const committedSpend = numberFromDb(coverage?.committed_spend_usd);
   const actualSpend =
     numberFromDb(contract.actual_annual_spend) ??
     numberFromDb(coverage?.actual_spend_usd);
@@ -7865,7 +7857,12 @@ function contractStoryBody(
     ? sizedOpportunityTotalUsd(vm.opportunityView.opportunities)
     : 0;
   const phrases = [
-    `${contract.contract_name} carries ${money(annualValue)} in annual value`,
+    annualValue != null
+      ? `${contract.contract_name} carries ${money(annualValue)} in annual value`
+      : `${contract.contract_name} has no established annual contract value`,
+    annualValue == null && committedSpend != null
+      ? `${money(committedSpend)} committed spend`
+      : null,
     actualSpend != null
       ? `${money(actualSpend)} of observed annual spend`
       : null,
