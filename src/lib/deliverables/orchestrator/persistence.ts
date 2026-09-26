@@ -45,11 +45,24 @@ import {
   deckExhibits,
   type StorylineDeck,
 } from "@/lib/visual-system/storyline-deck";
-import type { ExhibitId } from "@/lib/deliverables/profiles/types";
+import type {
+  DeliverableKey,
+  ExhibitId,
+} from "@/lib/deliverables/profiles/types";
 import type { OutputFormat, QualityValidationResult } from "./types";
 
 const UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+const STRUCTURED_ARCHITECTURE_KEYS = new Set<DeliverableKey>([
+  "target_state_architecture",
+]);
+
+function usesStructuredArchitecturePreview(
+  deliverableKey: DeliverableKey | undefined,
+): boolean {
+  return !!deliverableKey && STRUCTURED_ARCHITECTURE_KEYS.has(deliverableKey);
+}
 
 export interface PersistDeliverableOptions {
   clientId: string;
@@ -312,8 +325,7 @@ export async function persistDeliverable(
     const profile = DELIVERABLE_PROFILES[contractDeliverableKey];
     const models = opts.structuredModels;
     if (
-      profile.renderer === "html_architecture" &&
-      contractDeliverableKey === "target_state_architecture" &&
+      usesStructuredArchitecturePreview(contractDeliverableKey) &&
       models?.architectureModel
     ) {
       html = renderArchitectureHtml(models.architectureModel);

@@ -33,10 +33,18 @@ import { getArtifactBrief } from "./artifact-brief-registry";
 import { adaptArtifactBriefForDepth } from "@/lib/deliverables/adaptive-depth";
 import { buildPassPrompt } from "./prompt-builder";
 import { resolveContextBudget } from "./context-budget";
-import {
-  withCitedEvidence,
-  type ContextCoverage,
-} from "./context-coverage";
+import { withCitedEvidence, type ContextCoverage } from "./context-coverage";
+import type { DeliverableKey } from "@/lib/deliverables/profiles/types";
+
+const STRUCTURED_ARCHITECTURE_KEYS = new Set<DeliverableKey>([
+  "target_state_architecture",
+]);
+
+function usesStructuredArchitecturePath(
+  deliverableKey: DeliverableKey | undefined,
+): boolean {
+  return !!deliverableKey && STRUCTURED_ARCHITECTURE_KEYS.has(deliverableKey);
+}
 
 export interface GenerateDeliverableServiceInput extends Omit<
   BuildRequestParams,
@@ -216,21 +224,22 @@ export async function runDeliverableForTenant(
   );
 
   // 1 · governed evidence (clean, citation-numbered, vendor-facing exclusion applied)
-  const { evidence, sourceRegister, retrievedCount, coverage } = await assemble({
-    tenantClientKey: input.tenantClientKey,
-    clientId: input.clientId,
-    sourceArtifactRef: input.sourceArtifactRef,
-    query: evidenceQueries[0],
-    queries: evidenceQueries,
-    audienceIsVendorFacing,
-    contextBudget,
-  });
-  const coverageWarnings =
-    coverage.requiresAttention
-      ? [
-          `context_coverage_empty: ${coverage.approvedAvailable} approved evidence item(s) existed for this Move, but 0 were packed into the prompt.`,
-        ]
-      : [];
+  const { evidence, sourceRegister, retrievedCount, coverage } = await assemble(
+    {
+      tenantClientKey: input.tenantClientKey,
+      clientId: input.clientId,
+      sourceArtifactRef: input.sourceArtifactRef,
+      query: evidenceQueries[0],
+      queries: evidenceQueries,
+      audienceIsVendorFacing,
+      contextBudget,
+    },
+  );
+  const coverageWarnings = coverage.requiresAttention
+    ? [
+        `context_coverage_empty: ${coverage.approvedAvailable} approved evidence item(s) existed for this Move, but 0 were packed into the prompt.`,
+      ]
+    : [];
 
   // 2 · orchestrator request
   const req = buildDeliverableRequest(
@@ -253,7 +262,8 @@ export async function runDeliverableForTenant(
   );
   const wantsArchitecture =
     !!deliverableKey &&
-    DELIVERABLE_PROFILES[deliverableKey].renderer === "html_architecture";
+    (usesStructuredArchitecturePath(deliverableKey) ||
+      DELIVERABLE_PROFILES[deliverableKey].renderer === "html_architecture");
   // Target Architecture's quality contract requires a rendered current state,
   // gap-to-target bridge, and conceptual/logical/physical architecture levels.
   // A prose-only path can never satisfy that contract, so the structured model
