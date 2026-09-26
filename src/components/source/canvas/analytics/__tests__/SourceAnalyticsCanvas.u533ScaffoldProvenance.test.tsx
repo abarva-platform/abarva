@@ -257,12 +257,17 @@ describe("U-533 · the view the canvas receives declares its carried beats", () 
   });
 });
 
-describe("U-534/U-535/U-538/U-540 · a flipped stage renders derived content, not the exemplar's", () => {
-  it("has four flipped stages and six that still carry", () => {
+describe("U-534/U-535/U-538/U-540/U-542 · a flipped stage renders derived content, not the exemplar's", () => {
+  it("has five flipped stages and five that still carry", () => {
     // Population before property. A search that found nothing would make every
     // case below pass over an empty set.
-    expect(DERIVED_STAGE_KEYS).toHaveLength(4);
-    expect(CARRIED_STAGE_KEYS).toHaveLength(6);
+    //
+    // Item U-542 flipped `selection`. `buildStageView` here passes NO tenant
+    // signal, so that stage renders its UN-OBSERVED beat -- which is the state a
+    // canvas with no award fact should show, and is still derived rather than the
+    // exemplar, so the cases below hold over it unchanged.
+    expect(DERIVED_STAGE_KEYS).toHaveLength(5);
+    expect(CARRIED_STAGE_KEYS).toHaveLength(5);
     expect(NAMED_APPROVER_STAGE).toBeDefined();
   });
 

@@ -218,6 +218,28 @@ const RICHER_RESPONSE_COVERAGE = {
 const RFP_RULES = getSourceArchetype(ARCHETYPE_ID)!.valueLeverRules ?? [];
 const RFP_CLAUSE_COVERAGE = new Set([RFP_RULES[0].key]);
 const RICHER_RFP_CLAUSE_COVERAGE = new Set([RFP_RULES[0].key, RFP_RULES[1].key]);
+/*
+ * Item U-542. The committed-value-at-award signal, in the SAME base/richer pair
+ * every other tenant signal here is given.
+ *
+ * This pair is load-bearing for the measurement rather than decoration. Without
+ * it the first regeneration after `selection` flipped recorded that stage's
+ * `gate.confirms` as `derived_from_neither` and `movesWithFacts['gate.confirms']`
+ * as `false` -- and it was RIGHT: with no committed signal in either build, a
+ * derivation of the award read has nothing to move with, so the measurement said
+ * the field followed neither reading while `declared` said `fact_derived`. The
+ * harness, not the derivation, was what could not see it.
+ *
+ * The richer variant commits a SECOND lever rather than a larger amount on the
+ * first, so both the coverage count and the committed total move; a bigger number
+ * on one lever would move the total while leaving the count identical, and the
+ * count is the marker the gate leads with.
+ */
+const COMMITTED_VALUE_COVERAGE = new Map([[RFP_RULES[0].key, 4_200_000]]);
+const RICHER_COMMITTED_VALUE_COVERAGE = new Map([
+  [RFP_RULES[0].key, 4_200_000],
+  [RFP_RULES[1].key, 800_000],
+]);
 
 function buildFor(stageKey: string): StageAnalyticsView {
   const view = buildLiveStageView({
@@ -229,6 +251,7 @@ function buildFor(stageKey: string): StageAnalyticsView {
     stageKey,
     vendorResponses: RESPONSE_COVERAGE,
     rfpClausePresentLeverKeys: RFP_CLAUSE_COVERAGE,
+    committedValueByLeverKey: COMMITTED_VALUE_COVERAGE,
   });
   if (!view) throw new Error(`no live view for stage ${stageKey}`);
   return view;
@@ -413,6 +436,7 @@ function measureStage(stageKey: string) {
     stageName: PERTURBED_STAGE_NAME,
     vendorResponses: RESPONSE_COVERAGE,
     rfpClausePresentLeverKeys: RFP_CLAUSE_COVERAGE,
+    committedValueByLeverKey: COMMITTED_VALUE_COVERAGE,
   })!;
 
   const follows = (
@@ -441,6 +465,7 @@ function measureStage(stageKey: string) {
     stageKey,
     vendorResponses: RICHER_RESPONSE_COVERAGE,
     rfpClausePresentLeverKeys: RICHER_RFP_CLAUSE_COVERAGE,
+    committedValueByLeverKey: RICHER_COMMITTED_VALUE_COVERAGE,
   })!;
 
   const movesWithFacts = (read: (v: StageAnalyticsView) => unknown): boolean =>
@@ -466,6 +491,7 @@ function measureStage(stageKey: string) {
     stageKey,
     vendorResponses: RESPONSE_COVERAGE,
     rfpClausePresentLeverKeys: RFP_CLAUSE_COVERAGE,
+    committedValueByLeverKey: COMMITTED_VALUE_COVERAGE,
   })!;
 
   const movesWithArchetype = (
@@ -839,7 +865,7 @@ describe("U-533 · the measurement is committed and does not drift", () => {
 describe("U-533 · what is carried, and what only agrees", () => {
   it("records the five carried fields, and the four the flips moved off the list", () => {
     // `purpose` is carried on ALL TEN, including the flipped stages. The other
-    // four are carried on six and derived on four, so they appear in BOTH lists, and that is
+    // four are carried on five and derived on five, so they appear in BOTH lists, and that is
     // the honest reading of a per-stage measurement rolled up across stages.
     expect(measurement.summary.scaffoldCarriedFields).toEqual([
       "gate.approver",
@@ -873,10 +899,10 @@ describe("U-533 · what is carried, and what only agrees", () => {
      * verdict is what keeps the hand-written-fixture guard below meaningful.
      */
     expect(measurement.summary.emptyDerivedFields).toEqual(["gate.generates"]);
-    expect(measurement.summary.stagesWithScaffoldTasks).toBe(6);
-    expect(measurement.summary.stagesWithScaffoldGate).toBe(6);
-    expect(measurement.summary.stagesWithDerivedTasks).toBe(4);
-    expect(measurement.summary.stagesWithDerivedGate).toBe(4);
+    expect(measurement.summary.stagesWithScaffoldTasks).toBe(5);
+    expect(measurement.summary.stagesWithScaffoldGate).toBe(5);
+    expect(measurement.summary.stagesWithDerivedTasks).toBe(5);
+    expect(measurement.summary.stagesWithDerivedGate).toBe(5);
   });
 
   it("finds NO field that differs from the exemplar and follows nothing", () => {
@@ -1114,14 +1140,14 @@ describe("U-533 · known positive: exemplar content reaches the model's prompt",
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("U-533 · the boundary declares which beats are carried", () => {
-  it("still has six carried stages and four derived ones", () => {
+  it("still has five carried stages and five derived ones", () => {
     // Population before property, and the acceptance clause U-534 carried and
     // U-535 keeps: the label must not disappear from the rest because another
     // stage stopped needing it. A case over an empty CARRIED set would assert
     // that vacuously, and the two numbers are written out rather than summed so
     // a stage silently dropped from the armed set cannot keep this green.
-    expect(CARRIED_STAGE_KEYS).toHaveLength(6);
-    expect(DERIVED_STAGE_KEYS).toHaveLength(4);
+    expect(CARRIED_STAGE_KEYS).toHaveLength(5);
+    expect(DERIVED_STAGE_KEYS).toHaveLength(5);
   });
 
   it.each(CARRIED_STAGE_KEYS)("%s declares both intake beats as scaffold", (stageKey) => {
