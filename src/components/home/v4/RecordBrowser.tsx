@@ -525,8 +525,8 @@ export function RecordBrowser({
     () => (recordType.rows ?? []) as RecordRow[],
     [recordType.rows],
   );
-  const indexedRows = useMemo(
-    () => rows.map((row, index) => ({ row, index, key: rowKey(row, index) })),
+  const { indexedRows, identityCollisions } = useMemo(
+    () => indexRows(rows),
     [rows],
   );
   const columns = useMemo(() => columnsFor(recordType), [recordType]);
@@ -838,6 +838,45 @@ export function RecordBrowser({
           </div>
         );
       })()}
+
+      {identityCollisions > 0 ? (
+        <div
+          data-testid="record-identity-collision"
+          data-record-identity-collisions={identityCollisions}
+          style={{
+            margin: "0 0 16px",
+            background: V4.surface,
+            border: `1px solid ${V4.rule}`,
+            borderLeft: `3px solid ${V4.amber}`,
+            padding: "13px 16px",
+            display: "flex",
+            flexDirection: "column",
+            gap: 5,
+          }}
+        >
+          <span style={eyebrow(V4.amber)}>
+            {identityCollisions.toLocaleString()} of {rows.length.toLocaleString()}{" "}
+            records share an identifier
+          </span>
+          <p
+            style={{
+              margin: 0,
+              fontFamily: SANS,
+              fontSize: 13.5,
+              lineHeight: 1.5,
+              color: V4.inkSoft,
+              maxWidth: "82ch",
+            }}
+          >
+            Each of these records is listed and openable in its own right, so
+            nothing here is hidden or merged. But the identifier they share is
+            the one a reader would quote to take a record back to the file it
+            came from, and for these that identifier does not single out one
+            record — so treat it as unresolved until it is corrected in the
+            file, not in this view.
+          </p>
+        </div>
+      ) : null}
 
       <div data-record-layout style={layoutStyle}>
         <section style={{ minWidth: 0 }}>
@@ -1948,7 +1987,15 @@ function titleForSelected(objectType: TechObjectType, row: RecordRow): string {
   return humanise(row[fieldByType[objectType] ?? "name"]);
 }
 
-function rowKey(row: RecordRow, index: number): string {
+/**
+ * The identifier the record itself declares, read in the order a reader would trust it.
+ *
+ * This is an identifier the record *asserts*, not one this view can guarantee, and the difference
+ * is the whole reason `indexRows` exists below: one governed tenant's infrastructure estate asserts
+ * the same stamp on fourteen of its forty-seven platforms. So nothing may key a rendered row on
+ * this value directly.
+ */
+function declaredRowId(row: RecordRow, index: number): string {
   return String(
     row.originalRowId ??
       row.systemId ??
@@ -1957,6 +2004,56 @@ function rowKey(row: RecordRow, index: number): string {
       row.dataAssetId ??
       `${titleForSelected("application_system", row)}-${index}`,
   );
+}
+
+/**
+ * One key per row, guaranteed distinct, plus a count of the records that had to be separated.
+ *
+ * Keying on the declared identifier put fourteen platforms under one key. React states that
+ * behaviour is unsupported and that children may be duplicated or omitted, but the reader-visible
+ * failure needs no help from React and appears in a production build: selection resolves by key, so
+ * clicking the thirty-fourth platform opened the first platform's detail panel under the first
+ * platform's ordinal, and the panel gave no sign it had answered about a different record.
+ *
+ * A repeated identifier takes an occurrence suffix rather than being replaced outright, so a record
+ * whose identifier is already unique -- which is every record on the other governed tenant, and
+ * every other record type on this one -- keys exactly as before and its selection survives a
+ * re-render. The count comes back so the surface can say a correction is owed at source instead of
+ * quietly absorbing it: a view that silently works around a duplicated identifier hides the defect
+ * from the only people who can fix it.
+ */
+function indexRows(rows: RecordRow[]): {
+  indexedRows: { row: RecordRow; index: number; key: string }[];
+  identityCollisions: number;
+} {
+  const declared = rows.map((row, index) => declaredRowId(row, index));
+  const timesDeclared = new Map<string, number>();
+  for (const id of declared)
+    timesDeclared.set(id, (timesDeclared.get(id) ?? 0) + 1);
+
+  // Every carrier of a repeated identifier, the first one included. The first is not innocent here:
+  // until something separates them it is indistinguishable from the other thirteen, and it is the
+  // one whose detail panel the other thirteen were opening.
+  const identityCollisions = declared.filter(
+    (id) => (timesDeclared.get(id) ?? 0) > 1,
+  ).length;
+
+  const taken = new Set<string>();
+  const indexedRows = rows.map((row, index) => {
+    const id = declared[index];
+    let key = id;
+    // Only a repeated identifier is altered, so a record that was already unique keeps the exact key
+    // it had and its selection survives a re-render. The loop is what makes "distinct" a fact rather
+    // than an assumption: a suffixed key could in principle equal some other record's declared one.
+    if ((timesDeclared.get(id) ?? 0) > 1) {
+      key = `${id}#${index + 1}`;
+      while (taken.has(key)) key = `${key}#`;
+    }
+    taken.add(key);
+    return { row, index, key };
+  });
+
+  return { indexedRows, identityCollisions };
 }
 
 function bucket(value: unknown): string {

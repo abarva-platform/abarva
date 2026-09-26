@@ -1,0 +1,41 @@
+name: Fixture rows are named, not copied
+
+on:
+  pull_request:
+    paths:
+      - "scripts/data/fixtures/deepen-fixture-substrate.mjs"
+      - "scripts/data/fixtures/deepen-fixture-substrate.test.mjs"
+      - "datasets/tenant-inputs/active/**/06_infrastructure_platforms.csv"
+      - "datasets/tenant-inputs/active/**/09_programs_initiatives.csv"
+      - ".github/workflows/fixture-row-identity.yml"
+  merge_group:
+  workflow_dispatch:
+
+jobs:
+  verify:
+    # The depth pass appends rows as `{ ...template }` from the file's first row. For the
+    # descriptive columns that is correct; for the columns that NAME a row it made identity
+    # something a row inherits, and a view that keys on that identifier then answers about the
+    # wrong row. `--check` reads the committed files as they stand and exits non-zero on a
+    # duplicate -- deliberately not a dry run, which passes on a broken file whenever the repair
+    # pass could fix it.
+    name: No two fixture rows share a row name
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Set up Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run the suite, then the gate over the committed fixtures
+        run: npm run check:fixture-row-identity

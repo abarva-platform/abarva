@@ -21,14 +21,27 @@
  * Where a figure is needed it comes from the row, not from invention.
  *
  * Usage:
- *   node scripts/data/fixtures/deepen-fixture-substrate.mjs [--write]
+ *   node scripts/data/fixtures/deepen-fixture-substrate.mjs [--write|--check]
+ *
+ * `--check` verifies the committed fixtures as they stand and exits non-zero on a duplicated row
+ * name; it never writes. That is the CI gate. `--write` repairs and appends.
  */
 
+import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 
 const ROOT = process.cwd();
 const WRITE = process.argv.includes("--write");
+/**
+ * `--check` asks a different question from a dry run, and the difference is the whole point of
+ * having it. A dry run reports what the naming pass WOULD repair, so it passes on a file that is
+ * broken today as long as the pass could fix it -- which is exactly the state the committed files
+ * were in. `--check` asserts the committed bytes as read, before any repair, and exits non-zero.
+ * That is what CI needs: a gate that fails when the defect is present, not one that fails only
+ * when it is also unfixable.
+ */
+const CHECK = process.argv.includes("--check");
 const ACTIVE = path.join(ROOT, "datasets/tenant-inputs/active");
 const TENANTS = ["skyharbor-air", "meridian-health"];
 
@@ -68,6 +81,119 @@ const esc = (v) => {
   return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
 };
 const usdM = (n) => `$${(n / 1e6).toFixed(2)}M`;
+
+/**
+ * Columns that NAME a row rather than describe it.
+ *
+ * Every row appended below starts as `{ ...template }`, where the template is the file's first row.
+ * A spread is the right shape for the descriptive columns -- an appended platform genuinely shares
+ * the estate's stack, owner and packet -- and exactly the wrong shape for these, because it makes
+ * identity something a row INHERITS. The operating model says the opposite: identity is declared,
+ * never inferred, and a copied identifier is inference of the least visible kind.
+ *
+ * What that cost, measured on the substrate this script wrote: thirteen of one tenant's forty-six
+ * platforms carried the first platform's `original_row_id`, `source_fingerprint` and
+ * `infrastructure_id`, and claimed its `original_row_number` -- so fourteen distinct platforms held
+ * one canonical id between them, and thirteen of them pointed a reader at a line of the intake file
+ * they did not come from. The programme sheet carried the same defect from the same spread. Home's
+ * record browser keys its rendered rows on that identifier, so clicking the thirty-fourth platform
+ * opened the first one's detail panel, under the first one's ordinal, in any build.
+ *
+ * `conflict_status`, `original_packet`, `source_classification` and `consolidation_rule_used` are
+ * deliberately NOT in this list. They are categorical, every row in the file already shares them,
+ * and a repeated categorical is not a collision -- widening the list to "anything that looks like
+ * bookkeeping" would make the guard below fire on correct data.
+ *
+ * `program_id` and `infrastructure_id` are not in it either, for a different and more important
+ * reason: they are not this script's to write. `scripts/data/assign-stable-identity.mjs` owns them,
+ * mints them from `sha256(tenant|type|normalised name)`, and records each one in the tenant's
+ * identity ledger so that a rename becomes an alias against an id that never moves. This script can
+ * only guarantee the columns it writes, so it asserts about exactly those and leaves the canonical
+ * id to the script that can declare it. The spread duplicated those columns too, and the ledger is
+ * separately behind the intake it describes -- both are recorded in the backlog rather than repaired
+ * from here, because repairing them means re-running the minter across the whole intake.
+ */
+const ROW_NAMING_COLUMNS = ["original_row_id", "original_row_number", "source_fingerprint"];
+
+/** sha256, for the content fingerprint. Canonical ids are not minted here -- see below. */
+const sha = (text) => crypto.createHash("sha256").update(text).digest("hex");
+const nameKey = (column, value) => JSON.stringify([column, value]);
+
+/**
+ * Give every row a name of its own, keeping the first carrier of a repeated one unchanged.
+ *
+ * Restamping the first carrier too would be tidier and is wrong: claims, verdicts and release
+ * records cite these identifiers, so a row whose name is already unique -- which is every row in
+ * both files on one of the two tenants -- must come out byte-identical. Only a later duplicate is
+ * renamed, which is also why running this over an already-repaired file is a no-op rather than a
+ * fresh churn of ids.
+ *
+ * `original_row_number` becomes the row's own line in the file it is written to, counting the header
+ * as line 1, so a reader who follows it arrives where the row actually is.
+ *
+ */
+function declareRowNames({ rows, header, rowIdColumn, rowIdPrefix, nameColumn }) {
+  const descriptive = header.filter((h) => !ROW_NAMING_COLUMNS.includes(h));
+  const width = String(rows[0]?.[rowIdColumn] ?? "").replace(rowIdPrefix, "").length || 4;
+  let highest = 0;
+  for (const row of rows) {
+    const n = Number(String(row[rowIdColumn] ?? "").replace(rowIdPrefix, ""));
+    if (Number.isFinite(n) && n > highest) highest = n;
+  }
+
+  const restamped = [];
+  const seen = new Map();
+  rows.forEach((row, index) => {
+    const collides = ROW_NAMING_COLUMNS.filter((column) => {
+      if (!(column in row)) return false;
+      const value = String(row[column] ?? "").trim();
+      if (!value) return false;
+      const key = nameKey(column, value);
+      if (!seen.has(key)) { seen.set(key, index); return false; }
+      return true;
+    });
+    if (collides.length === 0) return;
+
+    highest += 1;
+    row[rowIdColumn] = `${rowIdPrefix}${String(highest).padStart(width, "0")}`;
+    if ("original_row_number" in row) row.original_row_number = String(index + 2);
+    if ("source_fingerprint" in row)
+      row.source_fingerprint = sha(descriptive.map((h) => String(row[h] ?? "")).join(""));
+    for (const column of ROW_NAMING_COLUMNS)
+      if (column in row) seen.set(nameKey(column, String(row[column] ?? "").trim()), index);
+    restamped.push({ line: index + 2, name: row[nameColumn], columns: collides });
+  });
+  return restamped;
+}
+
+/**
+ * Refuse rather than warn.
+ *
+ * The defect above survived because nothing looked. A file with two rows under one name is worse
+ * than a file this script declined to write: a reader is shown the duplicate confidently, and a view
+ * that keys on it answers about the wrong row with no sign that it did.
+ *
+ * An empty value is skipped rather than counted, because it names nothing: "two rows share a blank"
+ * is not a collision, while "two rows share an id" is.
+ */
+function assertRowNamesAreDistinct(file, header, rows) {
+  const offences = [];
+  for (const column of ROW_NAMING_COLUMNS) {
+    if (!header.includes(column)) continue;
+    const counts = new Map();
+    for (const row of rows) {
+      const value = String(row[column] ?? "").trim();
+      if (!value) continue;
+      counts.set(value, (counts.get(value) ?? 0) + 1);
+    }
+    for (const [value, count] of counts)
+      if (count > 1) offences.push(`${column}="${value}" on ${count} rows`);
+  }
+  if (offences.length)
+    throw new Error(
+      `${file}: refusing to write -- ${offences.length} duplicated row name(s): ${offences.join("; ")}`,
+    );
+}
 const write = (p, header, rows) =>
   fs.writeFileSync(p, [header.join(","), ...rows.map((r) => header.map((h) => esc(r[h])).join(","))].join("\n") + "\n");
 
@@ -97,7 +223,7 @@ for (const tenantKey of TENANTS) {
     const p = path.join(dir, f);
     return fs.existsSync(p) ? parseCsv(fs.readFileSync(p, "utf8")) : null;
   };
-  const out = { tenantKey, programsAdded: 0, infrastructureAdded: 0, vendorColumnsFilled: 0 };
+  const out = { tenantKey, programsAdded: 0, programsRenamed: 0, infrastructureAdded: 0, infrastructureRenamed: 0, vendorColumnsFilled: 0 };
 
   // ---- programs -----------------------------------------------------------
   const progRaw = readRaw("09_programs_initiatives.csv");
@@ -144,7 +270,21 @@ for (const tenantKey of TENANTS) {
       }
     }
     out.programsAdded = added.length;
-    if (WRITE && added.length) write(path.join(dir, "09_programs_initiatives.csv"), header, [...programs, ...added]);
+    if (CHECK) assertRowNamesAreDistinct("09_programs_initiatives.csv", header, programs);
+    // Named before the guard, and the guard before the write. `added` inherited the template's
+    // identity columns through the spread above, and repairs an already-written file in the same
+    // pass, which is why this runs over the whole file rather than over `added` alone.
+    const allPrograms = [...programs, ...added];
+    out.programsRenamed = declareRowNames({
+      rows: allPrograms,
+      header,
+      rowIdColumn: "original_row_id",
+      rowIdPrefix: "PROG-",
+      nameColumn: "program_name",
+    }).length;
+    assertRowNamesAreDistinct("09_programs_initiatives.csv", header, allPrograms);
+    if (WRITE && (added.length || out.programsRenamed))
+      write(path.join(dir, "09_programs_initiatives.csv"), header, allPrograms);
   }
 
   // ---- infrastructure -----------------------------------------------------
@@ -197,7 +337,18 @@ for (const tenantKey of TENANTS) {
       });
     }
     out.infrastructureAdded = added.length;
-    if (WRITE && added.length) write(path.join(dir, "06_infrastructure_platforms.csv"), header, [...infra, ...added]);
+    if (CHECK) assertRowNamesAreDistinct("06_infrastructure_platforms.csv", header, infra);
+    const allInfra = [...infra, ...added];
+    out.infrastructureRenamed = declareRowNames({
+      rows: allInfra,
+      header,
+      rowIdColumn: "original_row_id",
+      rowIdPrefix: "INFRA-",
+      nameColumn: "platform_name",
+    }).length;
+    assertRowNamesAreDistinct("06_infrastructure_platforms.csv", header, allInfra);
+    if (WRITE && (added.length || out.infrastructureRenamed))
+      write(path.join(dir, "06_infrastructure_platforms.csv"), header, allInfra);
   }
 
   // ---- vendor evidence columns -------------------------------------------
