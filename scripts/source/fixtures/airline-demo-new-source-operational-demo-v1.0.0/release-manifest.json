@@ -1,0 +1,45 @@
+{
+  "releaseId": "airline-demo-new-source-operational-demo-v1.0.0",
+  "tenantKey": "airline-demo-new",
+  "generatedAt": "2026-07-30T00:00:00.000Z",
+  "sourceBasis": "synthetic_source_operational_demo",
+  "knowledgeContext": {
+    "provider": "KnowledgeConsumptionProvider",
+    "tenantKey": "airline-demo-new",
+    "frozenV1Status": "EXISTING LIVE AIRLINE CORPUS RECONCILED THROUGH CUBE",
+    "baselineRef": "airline-demo-new-source-corpus-v1.0.0:knowledge-baseline-v1",
+    "limitation": "Live Knowledge contains 10 interview rows; leadership/C-suite completeness is not certified."
+  },
+  "releaseHashSha256": "1d86dc440b8d88e314a1f3d354ecec1c552a400b0585d6bba98c6da4b73d496e",
+  "objectCounts": {
+    "event": 1,
+    "requirements": 24,
+    "vendors": 4,
+    "proposals": 4,
+    "proposalResponses": 96,
+    "criteria": 5,
+    "evaluations": 4,
+    "pricing": 4,
+    "bafo": 4,
+    "recommendation": 1,
+    "transitionCommitments": 4,
+    "valueScorecard": 1,
+    "decisionBrief": 1
+  },
+  "loadPolicy": {
+    "allowed": "lab_only_source_operational_schema",
+    "forbidden": [
+      "canonical_knowledge_promotion",
+      "knowledge_publication",
+      "baseline_activation",
+      "offline_augmentation_ingestion",
+      "production_provider_cutover"
+    ]
+  },
+  "expectedUiConsumers": [
+    "SourceOperationalProvider",
+    "SourceViewModelAssembler",
+    "SourceAnalyticsCanvas",
+    "Decision Brief export"
+  ]
+}

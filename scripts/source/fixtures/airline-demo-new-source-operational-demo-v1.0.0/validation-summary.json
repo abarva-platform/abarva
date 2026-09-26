@@ -1,0 +1,32 @@
+{
+  "ok": true,
+  "releaseId": "airline-demo-new-source-operational-demo-v1.0.0",
+  "tenantKey": "airline-demo-new",
+  "objectCounts": {
+    "event": 1,
+    "requirements": 24,
+    "vendors": 4,
+    "proposals": 4,
+    "proposalResponses": 96,
+    "criteria": 5,
+    "evaluations": 4,
+    "pricing": 4,
+    "bafo": 4,
+    "recommendation": 1,
+    "transitionCommitments": 4,
+    "valueScorecard": 1,
+    "decisionBrief": 1
+  },
+  "checks": {
+    "primaryKeys": true,
+    "foreignKeys": true,
+    "criteriaWeights": true,
+    "scoreRecomputation": true,
+    "pricingRecomputation": true,
+    "proposalCoverage": true,
+    "bafoReferences": true,
+    "transitionReferences": true,
+    "syntheticLabels": true
+  },
+  "errors": []
+}
