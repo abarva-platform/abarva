@@ -4,6 +4,7 @@
 // Both come from the SAME rows on purpose. The ledger is not a second, hand-kept
 // list that can drift from the evidence the model was shown; it is derived from the
 // evidence items themselves, so "in the bundle" and "in the ledger" cannot disagree.
+import { createHash } from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 import { parseCsv } from "./csv.mjs";
@@ -17,8 +18,20 @@ const ROOT = path.resolve(
 );
 
 const read = (f) => parseCsv(fs.readFileSync(path.join(ROOT, `${f}.csv`), "utf8"));
+/**
+ * The FIRST numeric token in a string, not every digit in it.
+ *
+ * Stripping non-digits turned "100% by FY27 Q4" into 100274 — the target, the
+ * fiscal year and the quarter concatenated — and wrote that into the ledger as
+ * an authoritative figure. Every metric baseline and target in the corpus was
+ * wrong the same way, and the lineage gate then correctly refused the deck's
+ * perfectly good "100%" because the governed entry it was checked against was
+ * nonsense. A bad ledger does not fail loudly; it fails as a false accusation.
+ */
 const num = (v) => {
-  const n = Number(String(v ?? "").replace(/[^0-9.\-]/g, ""));
+  const m = String(v ?? "").match(/-?\d[\d,]*(?:\.\d+)?/);
+  if (!m) return null;
+  const n = Number(m[0].replace(/,/g, ""));
   return Number.isFinite(n) ? n : null;
 };
 const usd = (n) =>
@@ -49,8 +62,16 @@ function add({ label, statement, family, confidence = "medium", asOf = "FY2026",
     provenanceRef: `${TENANT}/current/${family}#${cite}`,
   });
   for (const f of figures) {
+    // Content-addressed, NOT positional.
+    //
+    // Sequential ids looked stable and were not: fixing an unrelated parser
+    // inserted one figure at index 117 and renumbered everything after it, so
+    // eight of the accepted plan's fifty-seven figure references silently began
+    // pointing at a different figure. Nothing failed — the ids still existed.
+    // An id that means "the 118th thing we happened to build" cannot survive its
+    // own builder changing.
     ledger.push({
-      figureId: `F${String(ledger.length + 1).padStart(3, "0")}`,
+      figureId: `F${createHash("sha256").update(`${f.label}|${f.unit}|${f.value}`).digest("hex").slice(0, 8)}`,
       value: f.value,
       unit: f.unit,
       label: f.label,

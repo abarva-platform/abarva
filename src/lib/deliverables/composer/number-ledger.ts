@@ -101,9 +101,26 @@ function decimals(text: string): number {
  * slide-number rule can check the number IS this slide's number rather than
  * exempting every small integer that happens to sit alone in a run.
  */
-function isStructural(run: string, raw: string, slideIndex: number, calendarYears: Set<number>): boolean {
+function isStructural(
+  run: string,
+  raw: string,
+  slideIndex: number,
+  calendarYears: Set<number>,
+  at = -1,
+): boolean {
   const trimmed = run.trim();
   const n = Number(raw.replace(/,/g, ''));
+
+  // A document section reference — "§1.1", "Sections 5.1-5.3", "§3.1–§3.2".
+  // These are how a slide cites the artifact it came from, and a footer full of
+  // them produced sixteen findings that were all the same non-defect. The rule
+  // is keyed on the characters immediately before the number, not on the run
+  // containing the word "section" somewhere, so a real 3.2 elsewhere in the same
+  // footer is still a claim.
+  if (at >= 0 && /^\d{1,2}\.\d{1,2}$/.test(raw)) {
+    const before = run.slice(Math.max(0, at - 12), at);
+    if (/(§|\bsections?\s|[–—-]\s?)$/i.test(before)) return true;
+  }
 
   // Slide number: the run is the number, and the number is this slide's.
   if (trimmed === raw && n === slideIndex) return true;
@@ -134,11 +151,11 @@ export function extractNumericClaims(
   for (const slide of deck.slides) {
     for (let run of slide.textRuns) {
       const seen = new Set<string>();
-      const push = (raw: string, value: number, unit: FigureUnit, precision: number) => {
+      const push = (raw: string, value: number, unit: FigureUnit, precision: number, at = -1) => {
         const key = `${raw}|${unit}`;
         if (seen.has(key)) return;
         seen.add(key);
-        if (isStructural(run, raw.replace(/[^0-9.,]/g, ''), slide.index, calendarYears)) {
+        if (isStructural(run, raw.replace(/[^0-9.,]/g, ''), slide.index, calendarYears, at)) {
           structural += 1;
           return;
         }
@@ -159,15 +176,15 @@ export function extractNumericClaims(
       for (const m of run.matchAll(MONEY)) {
         const digits = m[1].replace(/,/g, '');
         const scale = m[2] ? SCALE[m[2].toLowerCase()] ?? 1 : 1;
-        push(m[0].trim(), Number(digits) * scale, 'usd', decimals(digits));
+        push(m[0].trim(), Number(digits) * scale, 'usd', decimals(digits), m.index);
       }
       for (const m of run.matchAll(PERCENT)) {
-        push(m[0].trim(), Number(m[1]), 'percent', decimals(m[1]));
+        push(m[0].trim(), Number(m[1]), 'percent', decimals(m[1]), m.index);
       }
       const masked = run.replace(MONEY, (s) => ' '.repeat(s.length)).replace(PERCENT, (s) => ' '.repeat(s.length));
       for (const m of masked.matchAll(BARE_NUMBER)) {
         const digits = m[1].replace(/,/g, '');
-        push(m[1], Number(digits), 'count', decimals(digits));
+        push(m[1], Number(digits), 'count', decimals(digits), m.index);
       }
     }
   }

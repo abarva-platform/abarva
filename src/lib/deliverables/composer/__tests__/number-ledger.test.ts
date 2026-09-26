@@ -181,6 +181,15 @@ describe('lineage gate over a rendered deck', () => {
     expect(verdict.findings[0]).toMatchObject({ claim: '$240M' });
   });
 
+  it('exempts a document section reference but not a bare decimal beside it', () => {
+    // A citation footer carrying "§1.1, §3.1-§3.2" produced sixteen findings
+    // that were all the same non-defect. The rule keys on the characters right
+    // before the number, so a real figure in the same footer is still a claim.
+    const footer = deckOf(['Source: Executive Summary §1.1, Current-State §3.1-§3.2; ratio 4.7 observed']);
+    const v = validateDeckLineage(footer, { ledger: LEDGER });
+    expect(v.findings.map((f) => ('claim' in f ? f.claim : ''))).toEqual(['4.7']);
+  });
+
   it('counts a figure once when it is written with a currency symbol', () => {
     // "$503" must not also register as the bare count 503 — a double count would
     // inflate matchedToLedger and hide a real miss behind a coincidence.

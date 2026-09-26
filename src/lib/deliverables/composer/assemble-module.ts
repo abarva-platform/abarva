@@ -88,6 +88,14 @@ export function assembleComposerModule(
     '# Per-slide functions are model-authored; this header, the call order and the',
     '# save are assembled deterministically.',
     'import sdk',
+    // The SDK's measurement and layout helpers are module-level functions, and
+    // the composer reaches for them unqualified — `fit_text(...)`, not
+    // `sdk.fit_text(...)`. Eighteen generated functions all did, and the deck
+    // died on a NameError at the first one. Binding them here is the assembler's
+    // job: the header is the part nobody prompts, so it is the right place to
+    // close a gap between what the SDK exposes and what the model writes.
+    'from sdk import align, distribute, fit_text, measure_text, span_width, text_height',
+    'from sdk import CANVAS_H, CANVAS_W',
     '',
     '',
     ...bodies.flatMap((b) => [b, '', '']),
