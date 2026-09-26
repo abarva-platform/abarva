@@ -113,7 +113,6 @@ jest.mock("@/lib/source/gate-advance-contract", () => ({
     ok: true,
     status: 200,
     readiness: { ok: true, blockers: [] },
-    bypassedGovernanceBlockers: [],
   })),
 }));
 
@@ -174,8 +173,7 @@ describe("POST Source event approve", () => {
       ok: true,
       status: 200,
       readiness: { ok: true, blockers: [] },
-      bypassedGovernanceBlockers: [],
-    }));
+      }));
   });
 
   it("binds the initial intake approval to the exact current Request version", async () => {

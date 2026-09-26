@@ -75,7 +75,7 @@ describe("evaluateSourceGateAdvanceContract", () => {
     });
 
     expect(verdict.ok).toBe(true);
-    expect(verdict.bypassedGovernanceBlockers).toEqual([]);
+    expect(verdict.readiness.ok).toBe(true);
   });
 
   it("requires computed readiness when closing the terminal stage", () => {
@@ -100,8 +100,22 @@ describe("evaluateSourceGateAdvanceContract", () => {
     expect(verdict.error).toBe("gate_criterion_open");
   });
 
-  it("preserves pilot computed-readiness bypass without bypassing confirmations", () => {
-    const withConfirmations = evaluateSourceGateAdvanceContract({
+  // C-604. The contract used to accept `allowComputedReadinessBypass: true` and
+  // return `ok` for a stage whose criteria were still open. No production route
+  // ever passed it -- both the stage route and the event approval route call this
+  // contract without the field -- so what was removed is the affordance, not a
+  // live behaviour. These two cases drive the real contract with the field STILL
+  // SET, through a cast, so reinstating the condition goes red rather than
+  // silently returning to the old behaviour.
+  //
+  // What these two cases do NOT prove, said plainly rather than left implied: a
+  // bypass reintroduced under a DIFFERENT field name would pass them, because
+  // they can only send a name that exists. No test can send a field nobody has
+  // written yet. The case above them -- an open criterion with confirmations and
+  // no extra input at all -- is the one that catches an unconditional bypass;
+  // between them the uncovered shape is exactly "a new opt-in nobody passes".
+  it("has no input that converts an open gate criterion into an approval", () => {
+    const verdict = evaluateSourceGateAdvanceContract({
       currentStage: "scope",
       targetStage: "rfp",
       confirmations: WORKED_STAGE_CONFIRMED,
@@ -114,12 +128,17 @@ describe("evaluateSourceGateAdvanceContract", () => {
         }),
       ],
       reason: REVIEW_REASON,
-      allowComputedReadinessBypass: true,
+      ...({ allowComputedReadinessBypass: true } as Record<string, unknown>),
     });
-    expect(withConfirmations.ok).toBe(true);
-    expect(withConfirmations.bypassedGovernanceBlockers).toHaveLength(1);
 
-    const withoutConfirmations = evaluateSourceGateAdvanceContract({
+    expect(verdict.ok).toBe(false);
+    expect(verdict.status).toBe(409);
+    expect(verdict.error).toBe("gate_criterion_open");
+    expect(verdict.blocker?.code).toBe("gate_criterion_open");
+  });
+
+  it("still requires human confirmations when a bypass-shaped input is sent", () => {
+    const verdict = evaluateSourceGateAdvanceContract({
       currentStage: "scope",
       targetStage: "rfp",
       confirmations: {},
@@ -132,10 +151,12 @@ describe("evaluateSourceGateAdvanceContract", () => {
         }),
       ],
       reason: REVIEW_REASON,
-      allowComputedReadinessBypass: true,
+      ...({ allowComputedReadinessBypass: true } as Record<string, unknown>),
     });
-    expect(withoutConfirmations.ok).toBe(false);
-    expect(withoutConfirmations.error).toBe("confirmations_required");
+
+    expect(verdict.ok).toBe(false);
+    expect(verdict.status).toBe(422);
+    expect(verdict.error).toBe("confirmations_required");
   });
 });
 
