@@ -712,5 +712,157 @@ console.log("\nsigned-in-proof reconciliation (item C-526)\n");
   fs.rmSync(dir, { recursive: true, force: true });
 }
 
+/* 33-38. Item C-529 — why a row is `ambiguous`. -------------------------- */
+
+/*
+ * `ambiguous` is a refusal, and 61 of them are not 61 judgements. Measured on
+ * the live register against `docs/releases/records` with
+ * `--since 2026-09-19T00:00:00Z` (population 213), the 61 decompose into three
+ * INDEPENDENT reader defects, each of which hides the next — the first
+ * classification of this population was itself an artifact of defect (a), and
+ * only reporting the distribution after fixing it showed what the sentences
+ * actually say:
+ *
+ *   (a) a sentence boundary blind to markdown emphasis, so `owed.** Opened ...`
+ *       is one sentence and swallows a clause about something else entirely;
+ *   (b) no negation on the obtained side — `NOT signed-in proven` was read as
+ *       an obtained proof, which is a FALSE OBTAINED, the costly direction, and
+ *       the record side has had exactly this rule since case 9;
+ *   (c) markers read per line rather than per proof, so `DEPLOY VERIFIED,
+ *       SIGNED-IN ACCEPTANCE OWED` carries an obtained marker belonging to a
+ *       different proof.
+ *
+ * Every sentence below is quoted from the live register or from a record in
+ * this repository. None of these cases LOOSENS a marker: each narrows the scope
+ * a marker is read in, so the count falls because rows are resolved, never
+ * because a refusal was converted into a guess.
+ */
+
+{
+  // 33. (a) A terminator followed by markdown emphasis ends a sentence. This
+  // line is the chosen register evidence for 23 of the 61 rows; because the
+  // period is followed by `**`, the reader ran it into a parenthetical about a
+  // generator that `no longer exists` — an obtained marker about neither this
+  // release nor any proof — and reported the row as conflicted.
+  const verdict = registerSignedInVerdict(
+    "no signed-in acceptance owed.** Opened C-009, T-046 (the manifest's generator " +
+      "no longer exists, so it cannot be regenerated).",
+  );
+  check(
+    "a period followed by markdown emphasis ends the sentence, so a later clause cannot contribute a marker",
+    verdict.verdict === OWED,
+    JSON.stringify(verdict),
+  );
+}
+
+{
+  // 34. (b) A negated obtained marker is not an obtained proof. Quoted from
+  // the live register; 21 rows of the 61 carry this exact sentence.
+  const verdict = registerSignedInVerdict("Not live-proven — signed-in check owed.");
+  check(
+    "\"Not live-proven\" is not a proof obtained, and the line reads owed",
+    verdict.verdict === OWED,
+    JSON.stringify(verdict),
+  );
+}
+
+{
+  // 35. (b) The same defect in the spelling that cost most: read as OBTAINED,
+  // not merely as ambiguous. A false obtained is the direction this module
+  // exists to prevent — it lets a record claiming no run agree with a register
+  // the reader thinks confirms one.
+  const verdict = registerSignedInVerdict("Status `deployed`, NOT signed-in proven;");
+  check(
+    "\"NOT signed-in proven\" is never reported as an obtained proof",
+    verdict.verdict !== OBTAINED,
+    JSON.stringify(verdict),
+  );
+}
+
+{
+  // 36. (c) Per-proof, not per-line. `verified` belongs to the deploy; `owed`
+  // belongs to the signed-in acceptance. Quoted from the live register, where
+  // it is the chosen evidence for 23 rows once (a) is fixed.
+  const verdict = registerSignedInVerdict(
+    "**DEPLOY VERIFIED, SIGNED-IN ACCEPTANCE OWED — Source 360 direct action-candidate read.",
+  );
+  check(
+    "an obtained marker in a clause naming a different proof does not make the signed-in proof obtained",
+    verdict.verdict === OWED,
+    JSON.stringify(verdict),
+  );
+}
+
+{
+  // 37. The negative control for case 36, and the reason this is scoping
+  // rather than a weaker marker: a line whose obtained marker IS in the
+  // clause naming the signed-in proof still reports obtained. Without this,
+  // case 36 would pass just as well against a reader that had stopped reading
+  // obtained markers at all.
+  const verdict = registerSignedInVerdict(
+    "Deploy digest pending; the signed-in replay passed on the deployed SHA.",
+  );
+  check(
+    "an obtained marker in the clause that names the signed-in proof still reports obtained",
+    verdict.verdict === OBTAINED,
+    JSON.stringify(verdict),
+  );
+}
+
+{
+  // 38. The record side has the same negation gap, and it is reached from the
+  // register fix: `docs/releases/records/c522-answer-mode-fallback-disclosure.md`
+  // says its proof was NOT run, and the reader called it `ran` because
+  // `has been run` matched while `no signed-in check ... has been run` matched
+  // no negated form — case 9 covers `was run`, not the perfect. Left alone,
+  // repairing the register side turns this record into a DISAGREE that is an
+  // artifact of this reader rather than a finding about the record.
+  const state = parseStatedRunState(
+    "## QA / Validation\n\nNot verified, and named as not verified: no signed-in " +
+      "check against a deployed build has been run.\n",
+  );
+  check(
+    "\"no signed-in check ... has been run\" is not a completed run",
+    state.state === NOT_RUN,
+    JSON.stringify(state),
+  );
+}
+
+{
+  // 39. The negation is read from the SENTENCE, not from the clause scope of
+  // case 36 — and this case exists because the clause-scoped version was
+  // written first and measured. Quoted from the live register: the negator is
+  // in the first clause and its target in the third, so scoping the negation
+  // to the clause severed them and produced a FALSE OBTAINED on this row.
+  // Marker attachment is per clause; negation scope is a span that crosses
+  // clauses, and the two are not the same question.
+  const verdict = registerSignedInVerdict(
+    "not merged, deployed, or signed-in proven at this stamp | red-first rendered failure reproduced.",
+  );
+  check(
+    "a negator in an earlier clause still negates an obtained marker in a later one",
+    verdict.verdict !== OBTAINED,
+    JSON.stringify(verdict),
+  );
+}
+
+{
+  // 40. The clause scoping is SYMMETRIC, and this is the mirror case that
+  // decided it. Quoted from the live register: `never` belongs to a parsed
+  // artifact, not to the signed-in replay named in the last clause. Scoping
+  // only the obtained side — the asymmetric version, also written and
+  // measured — read this line as `owed` and turned a record that says its
+  // replay ran into a DISAGREE that no human should have been sent after.
+  const verdict = registerSignedInVerdict(
+    "Scope: remove the conflicting tenant-key equality, prove a parsed artifact on another " +
+      "event can never reconcile, and signed-in replay after repo-owned deploy.",
+  );
+  check(
+    "an owed marker in a clause naming something else does not make the signed-in proof owed",
+    verdict.verdict !== OWED,
+    JSON.stringify(verdict),
+  );
+}
+
 console.log(`\n${passes} passed, ${failures} failed`);
 process.exit(failures === 0 ? 0 : 1);

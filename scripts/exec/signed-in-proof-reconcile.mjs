@@ -38,6 +38,23 @@
  * defect this module looks for, and folding them into `disagree` would send an
  * auditor after records that are fine. An ambiguous row is a row a human reads.
  *
+ * An ambiguous row is READ PER PROOF, not per line (item C-529). 61 rows came
+ * back ambiguous on the live corpus, and they were not 61 judgements: measured
+ * with `--since 2026-09-19T00:00:00Z` over 213 records, two phrasings carried
+ * 44 of them. `DEPLOY VERIFIED, SIGNED-IN ACCEPTANCE OWED` has an obtained
+ * marker belonging to the deploy, and `Not live-proven — signed-in check owed`
+ * has one inside a negation. So a marker is read from the clause that names the
+ * proof, and a negation is read across the sentence, because the scope of a
+ * negation is a span and the attachment of a marker is not. 29 rows resolved,
+ * one became a real disagreement, and 32 stay ambiguous — those are genuinely
+ * mixed lines and a human still reads them. No marker was loosened to get
+ * there; loosening one converts a refusal into a wrong answer.
+ *
+ * The direction matters here too. Before this, `Status `deployed`, NOT
+ * signed-in proven` was read as OBTAINED — a false obtained, which lets a
+ * record saying no run happened agree with a register the reader believes
+ * confirms one. That is this module's own defect, inverted.
+ *
  * Nothing here reads a signed-in session, opens a browser, or performs a proof.
  * It compares two documents' accounts of one.
  *
@@ -229,6 +246,14 @@ const RAN_NEGATED = new RegExp(
   [
     String.raw`\b(not|never|no)\s+(yet\s+)?(been\s+)?(run|performed|replayed|proven|attempted|claimed)\b`,
     String.raw`\b(no|not)\b[^.;\n]{0,40}\b(was|were|is|are)\s+(run|performed|replayed|claimed|obtained)\b`,
+    // The perfect, which the copula alternative above cannot reach. Measured
+    // on `c522-answer-mode-fallback-disclosure.md` (item C-529): *"no signed-in
+    // check against a deployed build **has been run**"* was classified `ran`,
+    // because the completed-run pattern matches `has been run` and no negated
+    // form covered the auxiliary. That record is one of the rows repairing the
+    // register grammar moves out of `ambiguous`, so left here it would have
+    // surfaced as a DISAGREE that is an artifact of this reader.
+    String.raw`\b(no|not)\b[^.;\n]{0,60}\b(has|have|had)\s+(been\s+)?(run|performed|replayed|claimed|obtained)\b`,
     String.raw`\bnone\s+(is|was|were|will be)\s+(claimed|performed|run|owed|obtained)\b`,
   ].join("|"),
   "i",
@@ -375,6 +400,61 @@ const REGISTER_OWED =
   /\b(owed|pending|required|must|will be|not run|not performed|not attempted|not claimed|never|none may|none will|not yet|no signed[\s-]?in|no exact|unproven|unverified|unconfirmed)\b/i;
 
 /**
+ * A negated obtained marker, read across the WHOLE sentence (item C-529).
+ *
+ * The register side had no negation at all, while the record side has had one
+ * since case 9 — and the register is where it costs more, because a negation
+ * missed here produces a FALSE OBTAINED: a register line the reader thinks
+ * confirms a run, agreeing with a record that says no run happened, which is
+ * precisely the defect this module exists to catch, inverted.
+ *
+ * Two spellings dominate the live corpus and neither is adjacent to its verb:
+ * *"**Not** live-proven — signed-in check owed."* (21 rows, where the marker
+ * is inside a hyphenated compound) and *"Status `deployed`, **NOT** signed-in
+ * proven;"* (read as `obtained`, not merely as ambiguous). So the span is
+ * wide and the marker may carry a compound prefix.
+ *
+ * It is read from the sentence rather than from the clause scope below,
+ * deliberately: the scope of a negation is a span, not a clause, and
+ * `"not merged, deployed, or signed-in proven at this stamp"` puts the
+ * negator in the first clause and its target in the third. Scoping the
+ * negation to the clause turned that line into a false obtained while this
+ * change was being measured.
+ */
+const REGISTER_OBTAINED_NEGATED = new RegExp(
+  String.raw`\b(not|never|no|none)\b[^.;\n]{0,40}?\b(?:[a-z]+[-\s])?` +
+    String.raw`(proven|positive|confirmed|verified|run|replayed|rendered|passed|succeeded)\b`,
+  "i",
+);
+
+/**
+ * The part of a sentence that speaks about the signed-in proof (item C-529).
+ *
+ * A sentence reaches this reader because it mentions a signed-in proof
+ * somewhere; that does not make every marker in it a statement ABOUT that
+ * proof. The live register's *"DEPLOY VERIFIED, SIGNED-IN ACCEPTANCE OWED"*
+ * carries an obtained marker belonging to the deploy and an owed marker
+ * belonging to the signed-in acceptance, and reading the line as a whole
+ * reported it as a conflict between them.
+ *
+ * So markers are read from the clauses that name the proof. The scoping is
+ * SYMMETRIC — an owed marker in a clause about something else is as wrong as
+ * an obtained one, and measuring the asymmetric version found the mirror case:
+ * *"prove a parsed artifact on another event can **never** reconcile, ... and
+ * signed-in replay after repo-owned deploy"*, where `never` is about an
+ * artifact and produced a false disagreement.
+ *
+ * When no clause names the proof — the mention is the sentence — the whole
+ * sentence is the scope, so this can only narrow, never widen.
+ */
+export function signedInScope(sentence) {
+  const clauses = String(sentence ?? "")
+    .split(/[,:—–]|\s--\s/)
+    .filter((c) => SIGNED_IN.test(c));
+  return clauses.length > 0 ? clauses.join(" ; ") : String(sentence ?? "");
+}
+
+/**
  * What a register line says about a signed-in proof, and the sentence it says
  * it in.
  *
@@ -390,9 +470,17 @@ export function registerSignedInVerdict(text) {
     .filter((s) => SIGNED_IN.test(s));
   if (sentences.length === 0) return { verdict: SILENT, sentence: null };
 
-  const obtained = sentences.filter((s) => REGISTER_OBTAINED.test(s) && !REGISTER_OWED.test(s));
-  const owed = sentences.filter((s) => REGISTER_OWED.test(s) && !REGISTER_OBTAINED.test(s));
-  const both = sentences.filter((s) => REGISTER_OBTAINED.test(s) && REGISTER_OWED.test(s));
+  const read = sentences.map((s) => {
+    const scope = signedInScope(s);
+    return {
+      sentence: s,
+      isObtained: REGISTER_OBTAINED.test(scope) && !REGISTER_OBTAINED_NEGATED.test(s),
+      isOwed: REGISTER_OWED.test(scope),
+    };
+  });
+  const obtained = read.filter((r) => r.isObtained && !r.isOwed).map((r) => r.sentence);
+  const owed = read.filter((r) => r.isOwed && !r.isObtained).map((r) => r.sentence);
+  const both = read.filter((r) => r.isObtained && r.isOwed).map((r) => r.sentence);
 
   if (obtained.length > 0 && owed.length === 0 && both.length === 0) {
     return { verdict: OBTAINED, sentence: obtained[0] };
