@@ -3,15 +3,15 @@
   "watched": "src/lib",
   "entryPointCounts": {
     "product": 641,
-    "tooling": 2029,
-    "test": 2613
+    "tooling": 2037,
+    "test": 2632
   },
   "counts": {
-    "scanned": 2962,
-    "product": 2163,
-    "tooling": 236,
+    "scanned": 2973,
+    "product": 2171,
+    "tooling": 240,
     "testOnly": 430,
-    "unreferenced": 133
+    "unreferenced": 132
   },
   "testOnly": [
     "src/lib/admin/admin-action-strip-view.ts",
@@ -561,7 +561,6 @@
     "src/lib/story-pack/index.ts",
     "src/lib/supabase-client.ts",
     "src/lib/supabase.ts",
-    "src/lib/tower/constants.ts",
     "src/lib/tower/enterprise-summary.ts",
     "src/lib/tower/executive-decision-queue-view.ts",
     "src/lib/tower/narratives/generated/first-capital-tower-cxo-blocks.ts",
