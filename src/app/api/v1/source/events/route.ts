@@ -7,7 +7,7 @@
 import { requireTenancy, tenancyErrorResponse } from "@/lib/auth/tenancy";
 import { getActiveClientRow } from "@/lib/active-client";
 import { loadUserSourceAccessPolicy } from "@/lib/auth/source-access-policy";
-import { createSourcingEvent } from "@/lib/source/queries";
+import { createSourcingEvent, isUuid } from "@/lib/source/queries";
 import { buildSourceScopeDescription } from "@/lib/source/intake-summary";
 import { selectSourceWriteAdapter } from "@/lib/data-plane/write-adapters/sourceWriteAdapter";
 import type { SourceSourcingMotion } from "@/lib/source/sourcing-motion-journeys";
@@ -126,6 +126,13 @@ export async function POST(request: Request) {
     );
   }
 
+  if (!tenancy.userId || !isUuid(tenancy.userId)) {
+    return Response.json(
+      { error: "named_source_event_creator_required" },
+      { status: 403 },
+    );
+  }
+
   let body: CreateSourceEventBody;
   try {
     body = (await request.json()) as CreateSourceEventBody;
@@ -209,7 +216,7 @@ export async function POST(request: Request) {
           ok: true,
           event: { id: importedRequest.eventLink.eventId },
           approvalAuthority:
-            "Tenant admin reviews the intake record; S0 exit is co-signed by the decision owner and sourcing lead.",
+            "The Event Owner is the default decision authority; governed evidence is still required.",
           approvalUrl: `/source/events/${importedRequest.eventLink.eventId}/approval`,
           eventUrl: `/source/events/${importedRequest.eventLink.eventId}?stage=strategy`,
         });
@@ -254,7 +261,11 @@ export async function POST(request: Request) {
 
     const event = await createSourcingEvent(
       sourceHandoff
-        ? { clientKey: activeClient.key, ...sourceHandoff.eventInput }
+        ? {
+            clientKey: activeClient.key,
+            ...sourceHandoff.eventInput,
+            createdByUserId: tenancy.userId,
+          }
         : {
             clientKey: activeClient.key,
             eventName: eventName!,
@@ -271,9 +282,6 @@ export async function POST(request: Request) {
           },
     );
 
-    if (!tenancy.userId) {
-      throw new Error("named Source event creator is required");
-    }
     const requestAuthority = await persistSourceAuthorityVersion({
       eventId: event.id,
       clientKey: activeClient.key,
@@ -291,22 +299,19 @@ export async function POST(request: Request) {
       createdByUserId: tenancy.userId,
     });
 
-    if (tenancy.userId) {
-      // DB write routed through the data-plane write seam (Slice 3b). The
-      // adapter tolerates a missing participants table, exactly as before.
-      const participantWrite = await selectSourceWriteAdapter(
-        undefined,
-        activeClient.key,
-      ).insertParticipant({
-        clientKey: activeClient.key,
-        sourceEventId: event.id,
-        userId: tenancy.userId,
-      });
-      if (!participantWrite.ok) {
-        throw new Error(
-          participantWrite.error ?? "source participant assignment failed",
-        );
-      }
+    // A durable owner assignment is required before reporting creation.
+    const participantWrite = await selectSourceWriteAdapter(
+      undefined,
+      activeClient.key,
+    ).insertParticipant({
+      clientKey: activeClient.key,
+      sourceEventId: event.id,
+      userId: tenancy.userId,
+    });
+    if (!participantWrite.ok) {
+      throw new Error(
+        participantWrite.error ?? "source participant assignment failed",
+      );
     }
 
     if (sourceHandoff && sourceRequestInput?.requestId) {
@@ -327,7 +332,7 @@ export async function POST(request: Request) {
       event,
       requestAuthorityVersionId: requestAuthority.versionId,
       approvalAuthority:
-        "Tenant admin reviews the intake record; S0 exit is co-signed by the decision owner and sourcing lead.",
+        "The Event Owner is the default decision authority; governed evidence is still required.",
       approvalUrl: `/source/events/${event.id}/approval`,
       eventUrl: `/source/events/${event.id}?stage=strategy`,
     });

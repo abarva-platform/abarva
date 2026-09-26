@@ -16,8 +16,8 @@
 
 import type { AgentTool, ToolResult } from '../registry';
 import { registerTool } from '../registry';
-import { createSourcingEvent } from '@/lib/source/queries';
-import { getAzureWriteFluentClient } from '@/lib/data-plane/postgresCompat';
+import { createSourcingEvent, isUuid } from '@/lib/source/queries';
+import { selectSourceWriteAdapter } from '@/lib/data-plane/write-adapters/sourceWriteAdapter';
 import type { SourceSourcingMotion } from '@/lib/source/sourcing-motion-journeys';
 
 interface CommitSourceEventInput {
@@ -38,7 +38,7 @@ export const commitSourceEventTool: AgentTool<CommitSourceEventInput> = {
     'Call this ONLY when the user explicitly says to create/submit/start the event AND you have ' +
     'captured at minimum: event_name, event_type, and trigger_description. Do NOT call it ' +
     'speculatively — ask the user to confirm the event details first. After committing, ' +
-    'tell the user the event has been created and it needs admin approval to proceed.',
+    'tell the user the event has been created with them as the Event Owner.',
   surfaces: ['/source', 'source', 'source-detail'],
   input_schema: {
     type: 'object',
@@ -93,8 +93,14 @@ export const commitSourceEventTool: AgentTool<CommitSourceEventInput> = {
     if (!input.event_name?.trim()) {
       return { success: false, error: 'event_name is required', recovery: 'Ask the user for the event name.' };
     }
+    if (!ctx.userId || !isUuid(ctx.userId)) {
+      return { success: false, error: 'named_source_event_creator_required', recovery: 'Sign in with a named Source user before creating an event.' };
+    }
+    if (!ctx.clientKey) {
+      return { success: false, error: 'source_tenant_required', recovery: 'Select an active client before creating a Source event.' };
+    }
 
-    const clientKey = ctx.clientKey ?? 'demo';
+    const clientKey = ctx.clientKey;
 
     try {
       const event = await createSourcingEvent({
@@ -110,33 +116,18 @@ export const commitSourceEventTool: AgentTool<CommitSourceEventInput> = {
         sourcingMotion: input.sourcing_motion,
       });
 
-      if (ctx.userId) {
-        const { error: participantError } = await getAzureWriteFluentClient()
-          .from('source_event_participants')
-          .insert({
-            client_key: clientKey,
-            source_event_id: event.id,
-            source_event_row_id: event.id,
-            user_id: ctx.userId,
-            role: 'source creator',
-            approval_authority: 'contributor',
-            source_access_level: 'source_member',
-            can_view_financial: false,
-            can_upload_source_artifacts: true,
-            can_generate_sourcing_artifacts: true,
-            can_publish_sourcing_artifacts: false,
-            can_approve_source_stages: false,
-            can_approve_award: false,
-            notify_on: ['source_event_update', 'approval_needed'],
-          });
-        if (participantError && !/source_event_participants|schema cache|does not exist/i.test(participantError.message)) {
-          throw new Error(`source participant assignment failed: ${participantError.message}`);
-        }
+      const participantWrite = await selectSourceWriteAdapter(undefined, clientKey).insertParticipant({
+        clientKey,
+        sourceEventId: event.id,
+        userId: ctx.userId,
+      });
+      if (!participantWrite.ok) {
+        throw new Error(participantWrite.error ?? 'source participant assignment failed');
       }
 
       // Emit source-event-created artifact for the reactive panel.
       const approvalAuthority =
-        'Tenant admin reviews the intake record; S0 exit is co-signed by the decision owner and sourcing lead.';
+        'The Event Owner is the default decision authority; governed evidence is still required.';
 
       ctx.writer?.write(
         `\n[[artifact:source-event-created]]${JSON.stringify({
@@ -163,7 +154,7 @@ export const commitSourceEventTool: AgentTool<CommitSourceEventInput> = {
           lifecycle_state: event.lifecycle_state,
           approval_authority: approvalAuthority,
           approval_queue_url: '/source/events',
-          note: 'Event created and pending tenant-admin approval. Tell the user the exact event code, that the record is visible in the Source operating queue and /source/events approval queue, and that S0 exit requires decision-owner plus sourcing-lead co-sign after admin approval.',
+          note: 'Event created with the named user as Event Owner. Tell the user the exact event code and that the record is visible in the Source operating queue. Governed evidence requirements still apply.',
         },
       };
     } catch (err) {
