@@ -32,6 +32,7 @@ An event stage with one remaining workflow input no longer suggests that finishi
 
 - Pass: the existing 11-stage render smoke, 16/16 tests.
 - Pass: the focused stage approval suite, 21/21 tests after the change.
+- Pass: the full canvas analytics suite, 31/31 suites and 196/196 tests after preserving the live task-count assertions in two existing cases. The first PR head failed those two cases because they encoded the superseded wording; CI exposed the omission.
 - Fail as intended before implementation: the new rendered Scope case could not find the corrected readiness message.
 - Fail as intended under mutation: removing the separate approval-readiness clause made the new case fail while leaving the workflow count intact.
 - Pass: TypeScript (`npx tsc --noEmit --incremental false`) and scoped ESLint.
