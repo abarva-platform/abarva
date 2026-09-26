@@ -3529,7 +3529,16 @@ describe("MovesPhaseStandaloneClient", () => {
 
     const dialog = screen.getByRole("dialog");
     expect(
-      within(dialog).getByText(/Approving as: jane@apex-retail.com/i),
+      within(dialog).getByText(/Authorizing build as: jane@apex-retail.com/i),
+    ).toBeInTheDocument();
+    expect(
+      within(dialog).queryByText(/Approving as: jane@apex-retail.com/i),
+    ).not.toBeInTheDocument();
+    expect(
+      within(dialog).getByText(/It does not sign off the generated documents/i),
+    ).toBeInTheDocument();
+    expect(
+      within(dialog).getByText(/the gate remains blocked until each required deliverable is reviewed and signed off/i),
     ).toBeInTheDocument();
     expect(
       (global.fetch as jest.Mock).mock.calls.some(([url]) =>
