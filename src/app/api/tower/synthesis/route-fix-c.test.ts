@@ -197,12 +197,15 @@ describe('Tower synthesis Fix C levers', () => {
    * `behavioral` as soon as a suite loads it and calls an HTTP-method handler.
    * The two cases above do exactly that, which moved this route out of the
    * census's `byteScannerOnly` bucket -- and they stub `requireTenancy`, so on
-   * their own they say nothing about the fence. Measured, not assumed: with the
-   * fence deleted (tenancy hard-coded to a foreign tenant and the refusal arm
-   * returning 200) both covering suites stayed GREEN, 9 passed / 4 skipped,
-   * byte-identical to the clean baseline. A change that improves how a security
-   * census reads without improving what it measures is the shape this backlog
-   * exists against, so the gap is closed here rather than recorded as a caveat.
+   * their own they say nothing about the fence. Measured, not assumed, with this
+   * case absent: under the census's own recorded mutation -- the fence deleted,
+   * tenancy hard-coded to a foreign tenant, the refusal arm returning 200 --
+   * both covering suites stayed GREEN at 9 passed / 4 skipped / 0 failed of 13,
+   * byte-identical to the clean baseline of the same command. A change that
+   * improves how a security census reads without improving what it measures is
+   * the shape this backlog exists against, so the gap is closed here rather than
+   * recorded as a caveat. With this case present the same mutation fails the
+   * suite: 14 total, 0 failed clean, 1 failed mutated.
    *
    * What this asserts is the part a stubbed fence can still prove honestly: the
    * route CONSULTS the fence before doing anything else, and a fence refusal
