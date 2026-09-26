@@ -27,19 +27,22 @@ import path from "node:path";
  *
  * - `retired`      — no declared code path is in the tree (4 rows)
  * - `uncatalogued` — a declared code path IS in the tree, and no `controls[]`
- *                    entry names it (13 rows when this suite was written, 10
+ *                    entry names it (13 rows when this suite was written, 8
  *                    now — C-544 catalogued the Intelligence pattern promotion
- *                    brief panel and its three rows left this state). The
- *                    surface is live; nobody catalogued it. That is work, not
- *                    history.
+ *                    brief panel and C-547 the Moves Nexus current-state
+ *                    briefing panel, and five rows left this state between
+ *                    them). The surface is live; nobody catalogued it. That is
+ *                    work, not history.
  * - `ambiguous`    — more than one `controls[]` entry names the row's code
  *                    paths (2 rows), so naming one would be false precision.
  *
  * The declared state is checked against the repository on every run, so the
  * exemption asserts its own defect still exists: restore
- * `AvaReasoningCards.tsx` and `retired` goes red; catalogue
- * `NexusCurrentStateBriefingPanel.tsx` in `controls[]` and `uncatalogued` goes
- * red naming the `surfaceId` the row must now carry.
+ * `AvaReasoningCards.tsx` and `retired` goes red. The second half of that
+ * sentence has since been collected: cataloguing
+ * `NexusCurrentStateBriefingPanel.tsx` in `controls[]` (C-547) did turn its two
+ * rows red naming the `surfaceId` they had to carry, which is why they now
+ * carry it.
  *
  * The resolver is not invented for the deferrals. Run over the 18 covered rows
  * it reproduces all 18 hand-written joins, 18 agree / 0 disagree / 0 unmatched,
@@ -174,8 +177,36 @@ function entryByKey(catalog: Catalog, key: string): ClaimCoverage {
 const live = readCatalog();
 const livePaths = codePathsByModuleSurface();
 
-/** A live deferral whose declared code path is in the tree. `retired` must be false of it. */
+/**
+ * The subject of the two `uncatalogued` directions below.
+ *
+ * It was a live deferral until C-547 catalogued this surface, so on `main` the
+ * row is `covered` and the state those two cases are about is no longer in the
+ * live catalog. They **reconstruct** it in the fixture rather than being
+ * repointed at whichever row happens to be uncatalogued today, for two reasons
+ * that pull the same way. Fixing a defect must not retire the guard that proved
+ * it — deleting these cases because the row improved is how a direction stops
+ * being checked. And a fixture pinned to a live uncatalogued row goes stale the
+ * next time one is catalogued, and once the last of the eight is catalogued it
+ * inverts into a case that can only be set up while the repository is still
+ * broken.
+ */
 const UNCATALOGUED_KEY = "generated-ui|Moves|Nexus current-state briefing panel|citation";
+const UNCATALOGUED_SURFACE_ID = "moves-nexus-current-state-briefing-panel";
+
+/**
+ * Put the row and its surface back in the pre-C-547 state: the declared code
+ * path is in the tree and no `controls[]` entry names it, so the repository
+ * measures `uncatalogued`.
+ */
+function decatalogue(catalog: Catalog): ClaimCoverage {
+  catalog.controls = catalog.controls.filter((surface) => surface.id !== UNCATALOGUED_SURFACE_ID);
+  const entry = entryByKey(catalog, UNCATALOGUED_KEY);
+  delete entry.surfaceId;
+  entry.status = "deferred";
+  entry.surfaceJoin = { state: "uncatalogued" };
+  return entry;
+}
 /** A deferral whose every declared code path is gone. `uncatalogued` must be false of it. */
 const RETIRED_KEY = "generated-ui|Intelligence|aVa reasoning cards|citation";
 /** A deferral whose code paths name two controls at once. */
@@ -276,9 +307,12 @@ describe("legal catalog claims bind only when coverage is real", () => {
 
     // 18/19/0/0 when C-537 wrote this. C-544 catalogued one surface: two of its
     // three rows became covered, the third is deferred against that surface.
+    // C-547 catalogued a second, whose two rows both became covered — 20/16 to
+    // 22/14, with `deferredWithSurfaceId` unmoved because that surface declares
+    // every control kind its legal rows claim.
     expect(tally).toEqual({
-      coveredWithSurfaceId: 20,
-      deferredWithJoin: 16,
+      coveredWithSurfaceId: 22,
+      deferredWithJoin: 14,
       deferredWithSurfaceId: 1,
       unbound: 0,
     });
@@ -332,7 +366,7 @@ describe("the catalog claim join gate fails in both directions", () => {
   it("goes red when a deferred row names no join at all", () => {
     const { code, output } = runAudit(
       writeFixture((catalog) => {
-        delete entryByKey(catalog, UNCATALOGUED_KEY).surfaceJoin;
+        delete decatalogue(catalog).surfaceJoin;
       }),
     );
 
@@ -348,7 +382,7 @@ describe("the catalog claim join gate fails in both directions", () => {
 
     const { code, output } = runAudit(
       writeFixture((catalog) => {
-        entryByKey(catalog, UNCATALOGUED_KEY).surfaceJoin = { state: "retired" };
+        decatalogue(catalog).surfaceJoin = { state: "retired" };
       }),
     );
 
