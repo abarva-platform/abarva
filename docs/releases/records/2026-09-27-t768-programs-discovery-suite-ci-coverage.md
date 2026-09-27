@@ -199,6 +199,24 @@ Three `PASS` lines naming each suite **individually**, so this is per-suite evid
 a directory-level aggregate, and it reproduces the same 3 suites and 7 tests measured locally
 before the wiring.
 
+**And the new guard itself runs in CI — checked, because the opposite would have been the same
+defect one level up.** A guard that never executes is worth nothing, and a grep of the workflow
+files for `src/__tests__/behaviors` finds only **three** individually-named files
+(`unit-directory-ci-coverage`, `integration-directory-ci-coverage`,
+`route-export-reachability`) — which would mean this new suite, `T-767`'s sibling suite, and
+~140 others never run.
+
+That reading is **wrong**, and the reason it is wrong is the reason this item forbids grepping
+YAML. The behaviors directory is reached through a node-script hop the grep does not follow:
+`Coverage Threshold` → job `Behavior coverage floor` → step `Run behavior coverage gate` →
+`npm run coverage:behavior-gate` → `node scripts/ci/check-behavior-coverage.mjs`, which spawns
+`jest src/__tests__/behaviors` over the whole directory. The census's four-hop resolver follows
+that chain, which is why it reports the directory as fully covered and why case 1 of the new
+suite insists `indeterminateInvocations` is 0 before trusting any of it.
+
+Recorded here rather than silently dropped, because the first measurement pointed the wrong way
+and only the resolver settled it.
+
 ## Rollout Plan
 
 Merge to `main` through the normal pull request and squash merge. No runtime rollout: the
