@@ -14,7 +14,11 @@
 //   • Backward-compat keys: legacy keys ('p3_design', 'roadmap') are retained
 //     and displayed in the Evidence Hub; new keys are the canonical path forward
 
-export type DeliverableFormat = "html-word" | "excel" | "html-word-excel";
+export type DeliverableFormat =
+  | "html-word"
+  | "excel"
+  | "html-word-excel"
+  | "pptx";
 
 export interface ExcelSheetSpec {
   /** Tab name in the workbook */
@@ -133,7 +137,7 @@ export const DELIVERABLE_REGISTRY: DeliverableSpec[] = [
     audiencePrimary: "Sponsor · Engagement team",
     documentPurpose:
       "Establishes the evidence base: quantified current state, ranked root causes, and explicit gate recommendation",
-    formatRecommendation: "html-word",
+    formatRecommendation: "pptx",
     gateArtifact: true,
     standAlone: true,
     sections: [
@@ -154,7 +158,7 @@ export const DELIVERABLE_REGISTRY: DeliverableSpec[] = [
     audiencePrimary: "Engagement team (working document)",
     documentPurpose:
       "Working document for root cause decomposition — shows the full causal chain for team alignment, not executive distribution",
-    formatRecommendation: "html-word",
+    formatRecommendation: "pptx",
     gateArtifact: false,
     standAlone: true,
     sections: [
@@ -705,4 +709,5 @@ export const FORMAT_LABELS: Record<DeliverableFormat, string[]> = {
   "html-word": ["HTML", "Word"],
   excel: ["Excel"],
   "html-word-excel": ["HTML", "Word", "Excel"],
+  pptx: ["PowerPoint"],
 };

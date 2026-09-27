@@ -170,6 +170,7 @@ function FormatPills({ format }: { format: DeliverableFormat }) {
     HTML: { bg: "rgba(27,43,92,0.07)", fg: "#1B2B5C" },
     Word: { bg: "rgba(37,99,235,0.07)", fg: "#1D4ED8" },
     Excel: { bg: "rgba(22,163,74,0.07)", fg: "#15803D" },
+    PowerPoint: { bg: "rgba(194,65,12,0.07)", fg: "#C2410C" },
   };
   return (
     <>

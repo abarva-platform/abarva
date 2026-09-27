@@ -26,6 +26,9 @@ import { countBodyWords } from "@/lib/deliverables/shared/body-word-count";
 import { clientCompleteReasonLabel } from "./client-complete-labels";
 import { carriesRequiredEvidenceSignal } from "./evidence-signals";
 import { humanizeSourceFamily } from "./source-register";
+import { deckContract } from "@/lib/deliverables/shared/deck-story-contract";
+import { SLIDE_BANDS } from "@/lib/deliverables/slide-contract";
+import type { DeliverableKey } from "@/lib/deliverables/profiles/types";
 
 /** Bounded-concurrency map that preserves input order. */
 export async function mapWithConcurrency<T, R>(
@@ -253,6 +256,132 @@ function repairStructuredDeckSlides(
     }))
     .filter((slide) => slide.governingMessage.trim().length > 0);
   return repaired.length > 0 ? repaired : undefined;
+}
+
+const P2_DISCOVERY_DECK_SLIDES = deckContract(
+  "REF_DECK_P2_DISCOVERY_READOUT",
+).slides;
+
+const ROOT_CAUSE_SLIDE_KEYS = new Set([
+  "executive_answer",
+  "what_is_not_working",
+  "root_causes",
+  "metrics_evidence",
+  "implications",
+  "proceed_hold_stop",
+]);
+
+function contractedP2SlidesFor(deliverableType: string) {
+  if (deliverableType === "discovery_report") return P2_DISCOVERY_DECK_SLIDES;
+  if (deliverableType === "root_cause_worksheet") {
+    return P2_DISCOVERY_DECK_SLIDES.filter((slide) =>
+      ROOT_CAUSE_SLIDE_KEYS.has(slide.id),
+    );
+  }
+  return [];
+}
+
+function stripMarkdown(text: string): string {
+  return text
+    .replace(/```[\s\S]*?```/g, " ")
+    .replace(/!\[[^\]]*\]\([^)]*\)/g, " ")
+    .replace(/\[[^\]]+\]\([^)]*\)/g, " ")
+    .replace(/[#*_`>|-]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function firstSentence(text: string): string {
+  const clean = stripMarkdown(text);
+  const sentence = clean.match(/.+?[.!?](?:\s|$)/)?.[0]?.trim() ?? clean;
+  return sentence.split(/\s+/).slice(0, 26).join(" ");
+}
+
+function sectionForSlide(
+  slideId: string,
+  sections: readonly RenderableSection[],
+): RenderableSection | undefined {
+  const lookup = sections.map((section) => ({
+    section,
+    haystack: `${section.key} ${section.title}`.toLowerCase(),
+  }));
+  const needlesBySlide: Record<string, string[]> = {
+    executive_answer: ["exec", "summary", "answer", "recommendation"],
+    what_we_assessed: ["approach", "evidence", "scope"],
+    current_state: ["current", "baseline", "workflow", "process"],
+    what_is_working: ["working", "strength", "preserve", "readiness"],
+    what_is_not_working: ["gap", "pain", "not_working", "maturity"],
+    root_causes: ["root", "cause", "maturity", "gap"],
+    metrics_evidence: ["metric", "baseline", "evidence", "confidence"],
+    implications: ["implication", "p3", "design", "readiness"],
+    readiness: ["readiness", "data", "control", "governance"],
+    proceed_hold_stop: ["recommendation", "verdict", "continue", "decision"],
+  };
+  for (const needle of needlesBySlide[slideId] ?? []) {
+    const hit = lookup.find((candidate) => candidate.haystack.includes(needle));
+    if (hit) return hit.section;
+  }
+  return sections[0];
+}
+
+function ensureContractedDeckSlides(args: {
+  req: DeliverableIntelligenceRequest;
+  sections: readonly RenderableSection[];
+  repairedSlides: RenderableDeliverable["deckSlides"] | undefined;
+  recommendation: string;
+  nextActions: readonly string[];
+}): RenderableDeliverable["deckSlides"] | undefined {
+  if (!args.req.outputFormats.includes("pptx")) return args.repairedSlides;
+  const contractSlides = contractedP2SlidesFor(args.req.deliverableType);
+  if (contractSlides.length === 0) return args.repairedSlides;
+
+  const key = args.req.deliverableType as DeliverableKey;
+  const band = SLIDE_BANDS[key];
+  if (!band) return args.repairedSlides;
+
+  const current = args.repairedSlides ?? [];
+  if (current.length >= band.min && current.length <= band.max) return current;
+
+  const currentByKey = new Map(
+    current
+      .filter((slide) => slide.key)
+      .map((slide) => [slide.key as string, slide]),
+  );
+  const normalized = contractSlides.map((contractSlide) => {
+    const existing = currentByKey.get(contractSlide.id);
+    if (existing) return existing;
+    const source = sectionForSlide(contractSlide.id, args.sections);
+    const sourceSentence = source ? firstSentence(source.bodyMarkdown) : "";
+    const governingMessage =
+      sourceSentence ||
+      (contractSlide.id === "proceed_hold_stop"
+        ? firstSentence(args.recommendation)
+        : `${contractSlide.label}: ${contractSlide.purpose}`);
+    const actionLine =
+      contractSlide.id === "proceed_hold_stop" && args.nextActions.length > 0
+        ? `Next action: ${args.nextActions[0]}`
+        : contractSlide.requiredElements[0];
+    const citationsUsed = source?.citationsUsed?.filter((n) =>
+      Number.isFinite(n),
+    );
+    return {
+      key: contractSlide.id,
+      title: contractSlide.label,
+      governingMessage,
+      points: [contractSlide.purpose, actionLine].filter(Boolean).slice(0, 3),
+      speakerNotes: [
+        source ? `Grounded in section "${source.title}".` : null,
+        citationsUsed && citationsUsed.length > 0
+          ? `Citations used: ${citationsUsed.join(", ")}.`
+          : "No additional facts introduced by the deterministic deck normalizer.",
+      ]
+        .filter(Boolean)
+        .join(" "),
+      ...(citationsUsed && citationsUsed.length > 0 ? { citationsUsed } : {}),
+    };
+  });
+
+  return normalized.slice(0, band.max);
 }
 
 /**
@@ -847,13 +976,20 @@ export function assembleDeliverable(
     req,
     sectionsWithSignals,
   );
+  const deckSlides = ensureContractedDeckSlides({
+    req,
+    sections: generatedSections,
+    repairedSlides: repairStructuredDeckSlides(synth.deckSlides),
+    recommendation,
+    nextActions,
+  });
   return {
     title: honestTitle(req, synth),
     subtitle: synth.subtitle,
     clientDisplayName: req.clientDisplayName,
     initiativeDisplayName: req.initiativeDisplayName,
     generatedSections,
-    deckSlides: repairStructuredDeckSlides(synth.deckSlides),
+    deckSlides,
     tables,
     exhibits: renderableExhibitsFromSynthesis(synth),
     sourceRegister: buildSourceRegister(evidence, sectionsWithSignals),

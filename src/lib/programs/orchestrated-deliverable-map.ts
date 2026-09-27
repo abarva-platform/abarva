@@ -82,6 +82,8 @@ export function orchestratorDeliverableType(registryKey: string): string {
 export type PrescribedDeliverableFormat = "docx" | "pptx" | "xlsx";
 
 const PPTX_FINAL_DELIVERABLES = new Set([
+  "discovery_report",
+  "root_cause_worksheet",
   "solution_approach_options",
   "target_architecture",
   "target_state_architecture",
@@ -92,6 +94,7 @@ const PPTX_FINAL_DELIVERABLES = new Set([
 function registryFormatToFile(
   format: DeliverableFormat,
 ): PrescribedDeliverableFormat {
+  if (format === "pptx") return "pptx";
   // 'excel' → the document IS the workbook; everything else's primary file is Word/DOCX
   // ('html-word' and 'html-word-excel' both keep HTML for preview but download as DOCX).
   return format === "excel" ? "xlsx" : "docx";

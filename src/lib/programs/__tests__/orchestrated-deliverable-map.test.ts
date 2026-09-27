@@ -26,7 +26,16 @@ describe("orchestrated deliverable map", () => {
     expect(deliverableKeyForOrchestratorType(orchestratorType)).toBe(
       "root_cause_worksheet",
     );
-    expect(prescribedFormatForDeliverableType(orchestratorType)).toBe("docx");
+    expect(prescribedFormatForDeliverableType(orchestratorType)).toBe("pptx");
+  });
+
+  it("persists P2 Discovery as a PPTX deck, matching its slide contract", () => {
+    const orchestratorType = orchestratorDeliverableType("discovery_report");
+    expect(orchestratorType).toBe("discovery_report");
+    expect(deliverableKeyForOrchestratorType(orchestratorType)).toBe(
+      "discovery_report",
+    );
+    expect(prescribedFormatForDeliverableType(orchestratorType)).toBe("pptx");
   });
 
   it("routes the P1 Discovery Workshop Guide separately from the Charter", () => {
