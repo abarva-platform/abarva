@@ -75,7 +75,10 @@ touched. It is not `internal-admin`, `public-demo` or `experimental`.
   Proves the wiring through the census's own resolver rather than by searching a workflow for a
   string, and refuses the re-add to the fully-dark baseline.
 - `src/__tests__/behaviors/product-directory-ci-coverage.baseline.json` — the directory's line
-  removed, 169 → 168 entries. Required in this same change: that baseline is a set of
+  removed: **168 → 167** entries against `54bc2ac277`. The first measurement said 169 → 168, and
+  that was against the old base; `main` removed a different line (`src/scripts/__tests__`) in the
+  meantime, so the count is corrected here rather than left to read as if this change removed
+  two. This change removes exactly one line, and it is this directory's. Required in this same change: that baseline is a set of
   fully-dark directories and the ratchet asserts set **equality**, so leaving the line behind
   fails there instead.
 - `docs/architecture/test-ci-coverage-census.json` — refreshed via `--write`; `--check` passes.
@@ -91,16 +94,18 @@ touched. It is not `internal-admin`, `public-demo` or `experimental`.
 | `DiscoveryCapturePanel.test.tsx` | 3 passed, 0 failed |
 | all three together | 3 suites, 7 tests, 0 failing, 0.25s |
 
-**Red-first, then green**, over the new suite on this change's base `6a68c913fd`:
+**Red-first, then green**, over the new suite (first measured on `6a68c913fd`, and the new
+suite re-run green on the merged tree at `54bc2ac277`):
 
 - before the workflow step and the baseline edit: **4 failed, 4 passed of 8** — and it is the
   four wiring cases that failed (reach, governed-risk ranking, named-literally, dark baseline),
   while the four preconditions and floors passed.
 - after: **8 passed of 8**.
 
-**Clean baseline over the same scope**, measured in this worktree at `6a68c913fd` before any
-edit rather than by stashing: `test:behaviors` **144 suites / 1527 tests / 0 failing** before,
-**145 / 1535 / 0** after. The discovery directory itself: **0 failing before and after**; it
+**Clean baseline over the same scope**, measured in a separate clean worktree at `54bc2ac277`,
+the base this lands on, rather than by stashing: `test:behaviors` **144 suites / 1527 tests / 0
+failing** before, **145 / 1535 / 0** after — the same figures the first measurement at
+`6a68c913fd` gave, re-run rather than carried over. The discovery directory itself: **0 failing before and after**; it
 was never red.
 
 **Typecheck**: `NODE_OPTIONS=--max-old-space-size=6144 npx tsc --noEmit --pretty false` →
@@ -118,8 +123,8 @@ totals:
 
 | census gap list | before | after | left | entered |
 |---|---|---|---|---|
-| uncovered | 174 | 173 | `src/components/programs/discovery/__tests__` | none |
-| partially covered | 24 | 24 | none | none |
+| uncovered | 173 | 172 | `src/components/programs/discovery/__tests__` | none |
+| partially covered | 25 | 25 | none | none |
 | union of both | 198 | 197 | that one directory | **none** |
 
 Exactly one directory leaves and none enter, which is the acceptance. Per suite the directory
@@ -127,13 +132,23 @@ went `uncovered (0 of 3)` → `covered (3 of 3)`, skipping `partial` entirely �
 predecessor it never passes through the quieter state. It is also gone from the governed-risk
 ranking, where it sat at rank 1; rank 1 is now `src/app/(maestro)/source/__tests__`.
 
-**Repo-wide absolutes, quoted against `6a68c913fd`, the base this pull request lands on** (the
-`testFiles` figure moves by +1 because this change adds its own behaviors suite):
+**Repo-wide absolutes, quoted against `54bc2ac277`, the base this pull request actually lands
+on** (the `testFiles` figure moves by +1 because this change adds its own behaviors suite).
+
+**These figures were corrected after a merge moved them.** The branch first measured against
+`6a68c913fd`; two pull requests landed on `main` while checks were pending, and the branch took
+them by merge rather than rebase because a rebase would have needed a force-push. Re-measured in
+a separate clean worktree at `54bc2ac277` — not by stashing — the **repo-wide** figures moved
+(base `testFiles` 2505 → 2506, run by a workflow 2065 → 2066, uncovered 174 → 173, partial
+24 → 25) while every **per-directory** figure this change turns on did not: the directory was
+still `uncovered`, still `0 of 3` covered with 3 untriaged, still rank 1, and exactly one
+directory still leaves the gap lists with none entering. The generated census was resolved by
+**regenerating** it against the new base rather than hand-merging two machine-written files:
 
 | | before | after |
 |---|---|---|
-| Jest test files under `src/` | 2505 | 2506 |
-| run by a workflow | 2065 | 2069 |
+| Jest test files under `src/` | 2506 | 2507 |
+| run by a workflow | 2066 | 2070 |
 | run by no workflow | 440 | 437 |
 | run by no workflow, untriaged | 388 | 385 |
 | directories with unrun tests | 198 | 197 |
