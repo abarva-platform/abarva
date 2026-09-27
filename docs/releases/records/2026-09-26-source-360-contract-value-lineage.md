@@ -58,3 +58,13 @@ Focused test output, PR/CI, official deploy run, read-only runtime digest proof,
 ## Known Gaps
 
 This correction does not establish a missing canonical annual contract value or turn supplemental action evidence into a contract header. Full Source New lifecycle acceptance remains separately governed.
+
+## Signed-in proof reconciliation (item C-548)
+
+- Ran: a signed-in replay was run and is reported in the execution register at `2026-09-26T21:30:45Z`
+  by `codex-source-cpo-v2#20260926T2051Z` against PR #8527 — signed-in exact Story replay distinguishes unknown annual contract value from committed and observed spend.
+- Outcome as the register states it: reported as meeting this record's acceptance. The same line records one residual: no canonical amount readback is claimed.
+- Provenance: this section reconciles the durable record with the operator register under item
+  C-548; it is not a first-hand observation by its author, and no proof was re-executed to write
+  it. The QA/Validation bullet above was accurate when this record was authored and is superseded
+  here by an appended correction rather than by a restamp, per the register time-authority rule.

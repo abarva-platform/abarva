@@ -64,3 +64,13 @@ Revert the UI change through a PR and the repo-owned main deploy workflow. No da
 ## Known Gaps
 
 - This copy correction does not supply missing approval evidence, complete a stage, release an RFx package, or close an end-to-end journey.
+
+## Signed-in proof reconciliation (item C-548)
+
+- Ran: a signed-in replay was run and is reported in the execution register at `2026-09-26T10:29Z`
+  by `codex-source-scope-readiness#20260926T0950Z` against PR #8496 — the signed-in frozen-event replay showed the corrected Scope readiness copy.
+- Outcome as the register states it: reported as meeting this record's acceptance. The same line is explicit that the governed journey did not advance: the surface's own readiness counters were unchanged.
+- Provenance: this section reconciles the durable record with the operator register under item
+  C-548; it is not a first-hand observation by its author, and no proof was re-executed to write
+  it. The QA/Validation bullet above was accurate when this record was authored and is superseded
+  here by an appended correction rather than by a restamp, per the register time-authority rule.

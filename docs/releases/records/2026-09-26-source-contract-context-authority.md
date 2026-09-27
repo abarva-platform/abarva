@@ -71,3 +71,13 @@ Revert this commit through a new PR and the same main workflow. Do not restore r
 
 - This guards the selected-contract prompt block, not every other chat prompt fragment or the missing agreement-set/evidence objects measured under C-523.
 - Live signed-in contract-answer behavior and canonical data readback are not yet proven.
+
+## Signed-in proof reconciliation (item C-548)
+
+- Ran: a signed-in replay was run and is reported in the execution register at `2026-09-26T14:12:17Z`
+  by `codex-source-cpo#20260926T1327Z` against PR #8505 — the signed-in contract chat replay returned a server-bound, evidence-caveated answer.
+- Outcome as the register states it: reported as meeting this record's acceptance. The same line records a residual: a Stage 06 readback is still outstanding.
+- Provenance: this section reconciles the durable record with the operator register under item
+  C-548; it is not a first-hand observation by its author, and no proof was re-executed to write
+  it. The QA/Validation bullet above was accurate when this record was authored and is superseded
+  here by an appended correction rather than by a restamp, per the register time-authority rule.

@@ -1669,7 +1669,19 @@ const SILENT_ENTRIES = registerEntries([SILENT_UNREAD_LINE, SILENT_UNMENTIONED_L
       /Signed-in exact contract answer/.test(String(row.registerEvidence)) &&
       row.registerStamp === "2026-09-26T14:48:29Z" &&
       row.registerIdentity === "codex-source-cpo#20260926T1416Z" &&
-      row.recordSays === NOT_RUN,
+      // STALE EXPECTATION, UPDATED RATHER THAN DROPPED (item C-548). This read
+      // `NOT_RUN` when the case was written, and that clause was incidental:
+      // the case is about the register's SILENCE, and it pinned whatever the
+      // record happened to say at the time. C-548 settled this row as one of
+      // eleven that report a completed run, and amended the record to say so,
+      // so the record's own account is now `ran`. Flipping the constant would
+      // be the weakening this suite exists against, so the clause is made
+      // load-bearing instead: the row must STILL be `register-silent` with its
+      // sentence, stamp and identity intact. That is the stronger claim — the
+      // amendment corrected the record and did NOT paper over the fact that the
+      // register never said a verdict, which is the defect C-545 exposed and
+      // this change must not hide.
+      row.recordSays === RAN,
     JSON.stringify(row),
   );
 }
@@ -1799,6 +1811,99 @@ const SILENT_ENTRIES = registerEntries([SILENT_UNREAD_LINE, SILENT_UNMENTIONED_L
       review.rows[0].verdict === reconcileModule.REGISTER_SILENT &&
       review.contradicted.length === 0,
     JSON.stringify(review),
+  );
+}
+
+
+/* ------------------------------------------------------------------------- */
+/* Item C-548 — the eleven records the register says were replayed            */
+/* ------------------------------------------------------------------------- */
+
+/**
+ * `C-545` gave a silent deciding line its own reported state and split the
+ * silent rows into `unread` and `unmentioned`. `C-548` read the `unread`
+ * sentences one at a time. Eleven of them report a **completed signed-in run**
+ * against a record whose own account says the run had not happened — the
+ * disagreement `C-548` predicted might exist once, measured eleven times.
+ *
+ * The register is operator-owned and CI cannot see it, so this suite cannot
+ * assert what the register says. What it CAN assert, and what the defect
+ * actually is, lives in this repository: the durable public record asserted a
+ * debt that the register says was discharged, and nothing made the record
+ * carry it. So each row below is pinned by the record file, read from disk.
+ *
+ * **Red before the amendment, by construction.** Every one of these eleven
+ * parsed `not-run` or `unstated` on `60bc9c7702`; the amendment is what moves
+ * them, and deleting any one of them puts its case back to red. That is the
+ * mutation check, and it is per record rather than against a total, because a
+ * count can be satisfied by amending the wrong file twice.
+ *
+ * **What this case does NOT assert.** It does not assert the run passed — two
+ * of the eleven report a run that FAILED, and a failed run is still a run, so
+ * `ran` is the honest state for both. It does not assert this agent observed
+ * anything: each amendment cites the register line's stamp and identity, and
+ * the citation is required here so a future reader can tell a reconciled
+ * account from a first-hand one.
+ */
+const C548_RECONCILED = [
+  ["2026-09-26-source-360-contract-value-lineage.md", 8527, "2026-09-26T21:30:45Z"],
+  ["2026-09-26-source-360-direct-impact-detail.md", 8525, "2026-09-26T21:36:20Z"],
+  ["2026-09-26-source-contract-date-context.md", 8507, "2026-09-26T14:48:29Z"],
+  ["2026-09-26-source-contract-context-authority.md", 8505, "2026-09-26T14:12:17Z"],
+  ["2026-09-26-source-scope-readiness-message.md", 8496, "2026-09-26T10:29Z"],
+  ["2026-09-23-source-new-demo-decision.md", 8333, "2026-09-23T11:36:10Z"],
+  ["2026-09-22-source-recorded-approval-audit-honesty.md", 8287, "2026-09-22T20:33:16Z"],
+  ["2026-09-22-source-new-completion-integrity.md", 8277, "2026-09-22T19:21:46Z"],
+  ["2026-09-22-source-ava-mounted-artifact-projection.md", 8253, "2026-09-22T13:24:40Z"],
+  ["2026-09-22-source-ava-event-artifact-alias-reconciliation.md", 8246, "2026-09-22T12:45:35Z"],
+  ["2026-09-22-authenticated-profile-name-precedence.md", 8238, "2026-09-22T08:51:52Z"],
+];
+
+for (const [basename, pr, stamp] of C548_RECONCILED) {
+  const { text } = realRecord(basename);
+  const parsed = parseStatedRunState(text);
+  check(
+    `C-548: ${basename} reads \`ran\` after reconciliation`,
+    parsed.state === RAN,
+    `state=${parsed.state} evidence=${parsed.evidence ?? "(none)"}`,
+  );
+  check(
+    `C-548: ${basename} cites the register line that reports the run`,
+    text.includes(stamp) && text.includes(`C-548`) && new RegExp(`#?${pr}\\b`).test(text),
+    `stamp=${stamp} pr=${pr}`,
+  );
+}
+
+{
+  // BOTH DIRECTIONS. The amendment is a grammar the reconciler has to read, so
+  // the suite has to show the reader can still refuse. Same heading, same
+  // shape, one negated clause: this must NOT come back `ran`, or the amendment
+  // template is a phrase that reports a run no matter what it says — which is
+  // the `C-529` failure mode (a loosened marker turns a refusal into a wrong
+  // answer) reached from the writer's side instead of the reader's.
+  const { text } = realRecord("2026-09-26-source-360-direct-impact-detail.md");
+  const negated = text.replace(
+    /^- Ran: a signed-in replay was run/m,
+    "- Not run: no signed-in replay was run",
+  );
+  check(
+    "C-548 NEGATIVE CONTROL: the amendment template negated is not read as a run",
+    negated !== text && parseStatedRunState(negated).state !== RAN,
+    `changed=${negated !== text} state=${parseStatedRunState(negated).state}`,
+  );
+}
+
+{
+  // A record the register genuinely says nothing affirmative about must not be
+  // swept along. `2026-09-26-source-responses-fact-beats` is an `unmentioned`
+  // silent row — its deciding line mentions no signed-in proof at all — and it
+  // is deliberately NOT amended. If this goes red, the amendment pass was run
+  // over the wrong set.
+  const { text } = realRecord("2026-09-26-source-responses-fact-beats.md");
+  check(
+    "C-548 NEGATIVE CONTROL: an `unmentioned` silent row is left alone",
+    !text.includes("C-548") && parseStatedRunState(text).state === NOT_RUN,
+    `state=${parseStatedRunState(text).state}`,
   );
 }
 

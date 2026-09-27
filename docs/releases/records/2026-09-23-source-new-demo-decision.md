@@ -64,3 +64,13 @@ Focused test output, mutation test output, PR checks, ACA runtime-invariant arti
 ## Known Gaps
 
 This is presentation navigation, not governed self-approval. The event cannot become production-ready through this mode. Only phases represented in Source New are previewed; later sourcing stages remain subject to their governed workflow.
+
+## Signed-in proof reconciliation (item C-548)
+
+- Ran: a signed-in replay was run and is reported in the execution register at `2026-09-23T11:36:10Z`
+  by `codex-source-new-demo-decision` against PR #8333 — signed-in QA exercised the browser-only demo decisions, observed the acknowledgements, and reloaded to confirm they reset.
+- Outcome as the register states it: reported as meeting this record's acceptance. The same line is explicit that presentation navigation only was accepted, and that governed stage approval remains unproven.
+- Provenance: this section reconciles the durable record with the operator register under item
+  C-548; it is not a first-hand observation by its author, and no proof was re-executed to write
+  it. The QA/Validation bullet above was accurate when this record was authored and is superseded
+  here by an appended correction rather than by a restamp, per the register time-authority rule.

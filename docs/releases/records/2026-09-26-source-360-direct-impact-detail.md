@@ -57,3 +57,13 @@ Focused test output, PR/CI, official deploy run, read-only runtime digest proof,
 ## Known Gaps
 
 The earlier summary-view fallback passed local tests and deployed but failed signed-in readback on a direct-only action. This correction is not complete until that exact live handoff resolves.
+
+## Signed-in proof reconciliation (item C-548)
+
+- Ran: a signed-in replay was run and is reported in the execution register at `2026-09-26T21:36:20Z`
+  by `codex-source-cpo-v2#20260926T2132Z` against PR #8525 — the direct action detail read was repaired with red-first tests and signed-in acceptance.
+- Outcome as the register states it: reported as meeting this record's acceptance. Independently corroborated in the private backlog, whose read-only diagnosis for the same identifier reaches the same conclusion.
+- Provenance: this section reconciles the durable record with the operator register under item
+  C-548; it is not a first-hand observation by its author, and no proof was re-executed to write
+  it. The QA/Validation bullet above was accurate when this record was authored and is superseded
+  here by an appended correction rather than by a restamp, per the register time-authority rule.
