@@ -1,6 +1,7 @@
 import "server-only";
 
 import { createClerkClient } from "@clerk/backend";
+import { createHash } from "node:crypto";
 import type { ClientKey } from "@/lib/client-config";
 import { getClientOption } from "@/lib/client-config";
 import type { LaunchAccessProfile } from "@/lib/auth/launch-access";
@@ -25,7 +26,10 @@ export type LaunchUserProvisioningResult =
     }
   | {
       ok: false;
-      error: "access_not_provisioned" | "clerk_not_configured";
+      error:
+        | "access_not_provisioned"
+        | "clerk_not_configured"
+        | "clerk_user_provisioning_failed";
     };
 
 function moduleAccessFor(profile: LaunchAccessProfile): ProductModule[] {
@@ -108,6 +112,14 @@ function displayNameParts(email: string): { firstName?: string; lastName?: strin
   };
 }
 
+function syntheticLaunchPhoneNumber(email: string): string {
+  const digest = createHash("sha256").update(email).digest("hex");
+  const lineNumber = (parseInt(digest.slice(0, 8), 16) % 10_000)
+    .toString()
+    .padStart(4, "0");
+  return `+1555010${lineNumber}`;
+}
+
 export async function ensureLaunchAccessClerkUser(
   emailInput: string | null | undefined,
 ): Promise<LaunchUserProvisioningResult> {
@@ -123,7 +135,18 @@ export async function ensureLaunchAccessClerkUser(
   }
 
   const clerk = createClerkClient({ secretKey });
-  return ensureLaunchAccessClerkUserWithClient(clerk, profile);
+  try {
+    return await ensureLaunchAccessClerkUserWithClient(clerk, profile);
+  } catch (error) {
+    console.error("[launch-user] Clerk user provisioning failed", {
+      email,
+      code: (error as { code?: unknown })?.code,
+      status: (error as { status?: unknown })?.status,
+      clerkTraceId: (error as { clerkTraceId?: unknown })?.clerkTraceId,
+      errors: (error as { errors?: unknown })?.errors,
+    });
+    return { ok: false, error: "clerk_user_provisioning_failed" };
+  }
 }
 
 export async function ensureLaunchAccessClerkUserWithClient(
@@ -142,6 +165,7 @@ export async function ensureLaunchAccessClerkUserWithClient(
     const names = displayNameParts(email);
     const created = (await clerk.users.createUser({
       emailAddress: [email],
+      phoneNumber: [syntheticLaunchPhoneNumber(email)],
       firstName: names.firstName,
       lastName: names.lastName,
       skipPasswordRequirement: true,

@@ -167,4 +167,23 @@ describe('EmailCodeSignIn', () => {
     expect(alert.textContent).toMatch(/approved AbarVa workspace identity/i);
     expect(signIn.create).not.toHaveBeenCalled();
   });
+
+  it('does not mislabel Clerk provisioning failures as approval failures', async () => {
+    const { signIn } = installClerkMock();
+    (global.fetch as jest.Mock).mockResolvedValueOnce({
+      ok: false,
+      json: jest.fn().mockResolvedValue({ error: 'clerk_user_provisioning_failed' }),
+    });
+    jest.spyOn(console, 'error').mockImplementation(() => undefined);
+
+    render(<EmailCodeSignIn redirectUrl="/auth-redirect" />);
+    fireEvent.change(screen.getByLabelText('Email'), {
+      target: { value: 'anand@abarva.ai' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: /send email code/i }));
+
+    const alert = await screen.findByRole('alert');
+    expect(alert.textContent).toMatch(/could not provision this approved account/i);
+    expect(signIn.create).not.toHaveBeenCalled();
+  });
 });
