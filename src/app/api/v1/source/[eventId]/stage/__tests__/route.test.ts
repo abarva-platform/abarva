@@ -3,6 +3,8 @@ const persistedEvent = {
   client_key: "skyharbor-air",
   current_stage_key: "rfp",
   lifecycle_state: "active",
+  approval_policy_code: null as "legacy_signed_scope_v1" | "self_v1" | null,
+  created_by_user_id: "another-user" as string | null,
 };
 
 const updateStage = jest.fn(async () => ({ ok: true }));
@@ -138,6 +140,8 @@ describe("PATCH /api/v1/source/[eventId]/stage", () => {
     readScorecard.mockResolvedValue({ kind: "unavailable" });
     criterionRows = [];
     persistedEvent.current_stage_key = "rfp";
+    persistedEvent.approval_policy_code = null;
+    persistedEvent.created_by_user_id = "another-user";
     jest.mocked(evaluateSourceGateAdvanceContract).mockImplementation(() => ({
       ok: true,
       status: 200,
@@ -162,6 +166,44 @@ describe("PATCH /api/v1/source/[eventId]/stage", () => {
     expect((await response.json()).error).toBe("scorecard_authority_unavailable");
     expect(updateStage).not.toHaveBeenCalled();
     expect(insertActivityLog).not.toHaveBeenCalled();
+  });
+
+  it("carries explicit SELF authority to the stage gate without bypassing readiness", async () => {
+    persistedEvent.approval_policy_code = "self_v1";
+    const response = await PATCH(new Request("https://app.abarva.ai/api/v1/source/event-1/stage", {
+      method: "PATCH",
+      body: JSON.stringify({
+        stageKey: "responses",
+        reason: "Event Owner reviewed this stage and its evidence.",
+        selfApproveIfAuthorized: true,
+        confirmations: { evidenceComplete: true, exclusionsReviewed: true, stageFinal: true },
+      }),
+    }) as never, { params: Promise.resolve({ eventId: "event-1" }) });
+    expect(response.status).toBe(200);
+    expect(evaluateSourceGateAdvanceContract).toHaveBeenCalledWith(
+      expect.objectContaining({ approvalPolicyCode: "self_v1" }),
+    );
+  });
+
+  it("rejects a legacy strict-mode creator even when the caller omits the self flag", async () => {
+    const previous = process.env.GATE_APPROVAL_STRICT_MODE;
+    process.env.GATE_APPROVAL_STRICT_MODE = "true";
+    persistedEvent.created_by_user_id = "user-1";
+    try {
+      const response = await PATCH(new Request("https://app.abarva.ai/api/v1/source/event-1/stage", {
+        method: "PATCH",
+        body: JSON.stringify({
+          stageKey: "responses",
+          reason: "The stage evidence was reviewed by the creator.",
+          confirmations: { evidenceComplete: true, exclusionsReviewed: true, stageFinal: true },
+        }),
+      }) as never, { params: Promise.resolve({ eventId: "event-1" }) });
+      expect(response.status).toBe(403);
+      expect(updateStage).not.toHaveBeenCalled();
+    } finally {
+      if (previous === undefined) delete process.env.GATE_APPROVAL_STRICT_MODE;
+      else process.env.GATE_APPROVAL_STRICT_MODE = previous;
+    }
   });
 
   it("does not advance a strategy event with a pending hard criterion on self-approval", async () => {

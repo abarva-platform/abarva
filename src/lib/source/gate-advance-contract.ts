@@ -17,6 +17,7 @@ import {
 import type { SourceStageKey } from "./types";
 import { buildScorecardAuthorityView } from "./proposal-intelligence/scorecard-authority";
 import type { SourceScorecardAuthorityRecordsResult } from "./proposal-intelligence/scorecard-authority-store";
+import type { SourceApprovalPolicyCode } from "./approval-policy";
 
 export interface SourceGateAdvanceContractInput {
   currentStage: SourceStageKey;
@@ -33,6 +34,7 @@ export interface SourceGateAdvanceContractInput {
   tenantKey?: string;
   eventId?: string;
   scorecardRecords?: SourceScorecardAuthorityRecordsResult;
+  approvalPolicyCode?: SourceApprovalPolicyCode | null;
 }
 
 export interface SourceGateAdvanceContractResult {
@@ -95,6 +97,7 @@ export function evaluateSourceGateAdvanceContract(
     reason: input.reason,
     verifiedDelegatedSponsorAcknowledgement:
       input.verifiedDelegatedSponsorAcknowledgement,
+    approvalPolicyCode: input.approvalPolicyCode,
   });
 
   if (!approval.ok) {

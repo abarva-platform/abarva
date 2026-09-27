@@ -50,6 +50,7 @@ import {
   validateApprovalReason,
 } from "@/lib/source/source-governance-enforcement";
 import { readSourceAuthorityVersionState } from "@/lib/source/new-workspace/authority-version-store";
+import { resolveSourceApprovalPolicy } from "@/lib/source/approval-policy";
 
 // Every lifecycle decision gets its own action type, so the activity table can
 // be read without inferring the decision from the reason text.
@@ -175,7 +176,7 @@ export async function POST(
   const { data: event, error: fetchError } = await supabase
     .from("source_events")
     .select(
-      "id, lifecycle_state, current_stage_key, event_name, event_code, event_type, sourcing_motion, classified_category, trigger_description, client_key, created_by_user_id",
+      "id, lifecycle_state, current_stage_key, event_name, event_code, event_type, sourcing_motion, classified_category, trigger_description, client_key, created_by_user_id, approval_policy_code",
     )
     .eq("id", eventId)
     .eq("client_key", activeClient.key)
@@ -183,6 +184,12 @@ export async function POST(
 
   if (fetchError || !event) {
     return Response.json({ error: "not_found" }, { status: 404 });
+  }
+  let approvalPolicy;
+  try {
+    approvalPolicy = resolveSourceApprovalPolicy(event.approval_policy_code);
+  } catch {
+    return Response.json({ error: "invalid_approval_policy" }, { status: 409 });
   }
 
   // Resolve the decision (validates action + confirmations, decides the
@@ -236,7 +243,7 @@ export async function POST(
     );
   }
 
-  const strictMode = isGateApprovalStrictMode();
+  const strictMode = isGateApprovalStrictMode() && !approvalPolicy.selfApprovalAllowed;
   // Whether this is a self-approval is a fact about the event and the caller,
   // so the server derives it from the stored creator. The client flag stays
   // honoured for callers that send it, but omitting it no longer hides a
@@ -309,6 +316,7 @@ export async function POST(
               tenantKey: activeClient.key,
             })
           : false,
+      approvalPolicyCode: approvalPolicy.code,
     });
     if (!gateContract.ok) {
       return Response.json(

@@ -112,6 +112,18 @@ function requiredScopeEvidence(
 }
 
 describe("Source gate auto assessment", () => {
+  it("names a SELF Scope blocker as an Event Owner decision, preserving the legacy signer label", () => {
+    const input = {
+      fromStage: "scope" as const,
+      criteria: [criterion({ criterionId: "GATE-SCOPE-04" })],
+      artifacts: [],
+      evidence: [],
+    };
+    expect(assessStageGate({ ...input, approvalPolicyCode: "self_v1" }).criteria[0]?.title)
+      .toBe("Scope memo approved by Event Owner");
+    expect(assessStageGate(input).criteria[0]?.title)
+      .toBe("Scope memo signed by sponsor + EA");
+  });
   it("marks a pending criterion met when required evidence is at threshold", () => {
     const assessment = assessStageGate({
       fromStage: "scope",

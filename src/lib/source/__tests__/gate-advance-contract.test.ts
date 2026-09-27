@@ -38,6 +38,7 @@ const DECLARED_CONTRACT_INPUT_FIELDS = [
   "tenantKey",
   "eventId",
   "scorecardRecords",
+  "approvalPolicyCode",
 ] as const satisfies readonly (keyof SourceGateAdvanceContractInput)[];
 
 /**

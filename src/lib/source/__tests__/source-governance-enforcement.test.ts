@@ -87,6 +87,20 @@ describe("Source governance enforcement", () => {
     expect(verdict.ok).toBe(true);
   });
 
+  it("does not demand a sponsor commitment from SELF Strategy while keeping other evidence mandatory", () => {
+    const base = {
+      criterion: criterion({ criterionId: "GATE-STRATEGY-01" }),
+      artifacts: [artifact({ artifactCode: "d01_strategy_memo", status: "approved", body: "Reviewed strategy memo." })],
+      evidence: strategyEvidenceReady().filter((row) => row.requirementId !== "EVID-SRC-STR-SPONSOR-COMMIT"),
+      reason: "Event Owner reviewed the strategy and evidence.",
+    };
+    expect(evaluateCriterionMetReadiness({ ...base, approvalPolicyCode: "self_v1" }).ok).toBe(true);
+    expect(evaluateCriterionMetReadiness(base).blockers).toEqual(expect.arrayContaining([
+      expect.objectContaining({ code: "required_evidence_not_ready", detail: expect.stringContaining("Sponsor commitment") }),
+    ]));
+    expect(evaluateCriterionMetReadiness({ ...base, evidence: base.evidence.filter((row) => row.requirementId !== "EVID-SRC-STR-TRIGGER"), approvalPolicyCode: "self_v1" }).ok).toBe(false);
+  });
+
   it("allows a named human review to clear ready client-stated evidence", () => {
     const verdict = evaluateCriterionMetReadiness({
       criterion: criterion({ criterionId: "GATE-STRATEGY-01" }),
@@ -279,6 +293,33 @@ describe("Source governance enforcement", () => {
         expect.arrayContaining([
           expect.objectContaining({ code: "signer_proof_not_verified" }),
         ]),
+      );
+    },
+  );
+
+  it.each(["GATE-SCOPE-02", "GATE-SCOPE-04"])(
+    "uses Event Owner authority for %s only under explicit SELF policy",
+    (criterionId) => {
+      const input = {
+        criterion: criterion({ criterionId, fromStage: "scope", toStage: "rfp", state: "met" }),
+        artifacts: [artifact({
+          artifactCode: "d05_scope_memo",
+          stage: "scope",
+          status: "approved",
+          linkedArtifactId: "scope-memo",
+        })],
+        evidence: [],
+        reason: REVIEW_REASON,
+        approvalPolicyCode: "self_v1" as const,
+      };
+      expect(evaluateCriterionMetReadiness(input).blockers).not.toEqual(
+        expect.arrayContaining([expect.objectContaining({ code: "signer_proof_not_verified" })]),
+      );
+      expect(evaluateCriterionMetReadiness({
+        ...input,
+        artifacts: [],
+      }).blockers).toEqual(
+        expect.arrayContaining([expect.objectContaining({ code: "linked_artifact_not_committed" })]),
       );
     },
   );

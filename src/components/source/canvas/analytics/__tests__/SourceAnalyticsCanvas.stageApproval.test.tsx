@@ -165,6 +165,18 @@ describe("SourceAnalyticsCanvas stage workflow", () => {
     jest.restoreAllMocks();
   });
 
+  it("does not restore the legacy sponsor task when a SELF event uses the canvas fallback", () => {
+    render(
+      <SourceAnalyticsCanvas
+        event={{ ...EVENT, approvalPolicyCode: "self_v1" }}
+        viewStage="scope"
+        tenantName="Demo Client"
+        initialWorkspace="steps"
+      />,
+    );
+    expect(screen.queryByText("Sponsor commitment")).toBeNull();
+  });
+
   it("mounts delegated acknowledgement on the active Scope sponsor step", async () => {
     const sponsorPendingStage = {
       ...SAMPLE_SCOPE_STAGE,
