@@ -146,6 +146,29 @@ const STILL_SCAFFOLD_STAGES = ARMED_STAGE_KEYS.filter(
   (stageKey) => !(DERIVED_STAGE_KEYS as readonly string[]).includes(stageKey),
 );
 
+/**
+ * The stages the builder declares derived on BOTH intake beats — item `U-544`.
+ *
+ * `DERIVED_STAGE_KEYS` above reads the `tasks` beat, which is what the cases in
+ * section 1 are about. The disclosure is decided per beat: `mode-grounding` reads
+ * `beatProvenance.tasks` for `evidence_readiness` and `beatProvenance.gate` for
+ * `stage_gate`. So the negative in section 4 asserts over the stages where both
+ * beats are derived. The one shape that then falls between this set and
+ * `STILL_SCAFFOLD_STAGES` — a stage deriving one beat and not the other — is
+ * asserted by `u533-stage-scaffold-provenance.test.ts`, which pins the partition
+ * by hand and per stage; `U-544` measured three mutations of that shape against
+ * it before deciding not to re-assert it here.
+ *
+ * The negative used to be pinned to `DERIVED_STAGE`, so it asserted the
+ * disclosure switches off for `evaluation` and said nothing about the three
+ * stages the builder derived after this suite was written; `rfp` and `responses`
+ * had no such assertion in any suite in the repository.
+ */
+const DERIVED_BOTH_BEAT_STAGES = ARMED_STAGE_KEYS.filter((stageKey) => {
+  const provenance = buildFor(stageKey).beatProvenance;
+  return provenance?.tasks === "fact_derived" && provenance?.gate === "fact_derived";
+});
+
 /** The rule-bearing archetypes — the only ones that can reach this builder. */
 const RULE_BEARING = listSourceArchetypes().filter(
   (archetype) => (archetype.valueLeverRules?.length ?? 0) > 0,
@@ -520,11 +543,23 @@ describe("U-535 · the grounding disclosure follows the declaration", () => {
     }).block;
   }
 
-  it("STOPS disclosing on the flipped stage — both modes", () => {
-    const view = buildFor(DERIVED_STAGE);
-    expect(block("evidence_readiness", view)).not.toMatch(DISCLOSURE_MARKER);
-    expect(block("stage_gate", view)).not.toMatch(DISCLOSURE_MARKER);
+  it("has more than one derived stage to assert over, and includes this one", () => {
+    // An `it.each` over an empty table passes vacuously, which is the failure
+    // mode that let derived stages go uncovered while this suite was green. `> 1`
+    // rather than `> 0`: at one entry the parameterised case below is exactly the
+    // hardcoded case it replaced.
+    expect(DERIVED_BOTH_BEAT_STAGES.length).toBeGreaterThan(1);
+    expect(DERIVED_BOTH_BEAT_STAGES).toContain(DERIVED_STAGE);
   });
+
+  it.each(DERIVED_BOTH_BEAT_STAGES)(
+    "%s STOPS disclosing its derived beats to the model — both modes",
+    (stageKey) => {
+      const view = buildFor(stageKey);
+      expect(block("evidence_readiness", view)).not.toMatch(DISCLOSURE_MARKER);
+      expect(block("stage_gate", view)).not.toMatch(DISCLOSURE_MARKER);
+    },
+  );
 
   it.each(STILL_SCAFFOLD_STAGES)(
     "%s still discloses its carried beats to the model",

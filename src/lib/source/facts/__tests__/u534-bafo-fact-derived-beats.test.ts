@@ -155,6 +155,40 @@ const STILL_SCAFFOLD_STAGES = ARMED_STAGE_KEYS.filter(
   (key) => buildFor(key).beatProvenance?.tasks !== "fact_derived",
 );
 
+/**
+ * The stages the builder declares derived on BOTH intake beats, read off the same
+ * `beatProvenance` the set above is read off.
+ *
+ * Item `U-544`, and the reason is the mirror image of the paragraph above. The
+ * negative in section 4 was pinned to `DERIVED_STAGE`, so it asserted the
+ * disclosure switches off for `bafo` and said nothing about any other stage the
+ * builder went on to derive. By the time `U-544` was measured the builder derived
+ * FIVE — `bafo`, `evaluation`, `responses`, `rfp`, `selection` — and no case
+ * anywhere in this repository asserted that `rfp` or `responses` had stopped
+ * disclosing. The positive half never had that problem, because it reads its set
+ * off the builder. The negative now does the same.
+ *
+ * BOTH beats, because `mode-grounding` decides per beat: `evidence_readiness`
+ * reads `beatProvenance.tasks` and `stage_gate` reads `beatProvenance.gate`.
+ *
+ * That leaves one shape in neither this set nor `STILL_SCAFFOLD_STAGES` — a stage
+ * that derived its task beat and not its gate beat, since the scaffold set is the
+ * complement of the `tasks` beat alone. `U-544` wrote an `it.each` over
+ * `ARMED_STAGE_KEYS` asserting the two sets between them still reach every armed
+ * stage, and then MEASURED it rather than shipping it: three mutations of that
+ * exact shape — a half-derived `rfp`, a half-derived `rfp` with the committed
+ * `U-533` artifact regenerated, and a half-derived `pricing`, a stage with no
+ * sibling suite — were each caught by `u533-stage-scaffold-provenance.test.ts`
+ * on its own, which pins the partition by hand and per stage. The case was
+ * removed rather than kept as a second reader of a fact already asserted next
+ * door. If `U-533`'s per-stage expectations are ever relaxed, that guard goes
+ * with them.
+ */
+const DERIVED_STAGES = ARMED_STAGE_KEYS.filter((key) => {
+  const provenance = buildFor(key).beatProvenance;
+  return provenance?.tasks === "fact_derived" && provenance?.gate === "fact_derived";
+});
+
 /** The rule-bearing archetypes — the only ones that can reach this builder. */
 const RULE_BEARING = listSourceArchetypes().filter(
   (archetype) => (archetype.valueLeverRules?.length ?? 0) > 0,
@@ -464,7 +498,7 @@ describe("U-534 · the derived gate", () => {
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
-// 4. The disclosure switches off for this stage and stays on for the nine.
+// 4. The disclosure switches off on every derived stage and stays on for the rest.
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
@@ -496,11 +530,23 @@ describe("U-534 · the grounding disclosure follows the declaration", () => {
     }).block;
   }
 
-  it("STOPS disclosing on the flipped stage — both modes", () => {
-    const view = buildFor(DERIVED_STAGE);
-    expect(block("evidence_readiness", view)).not.toMatch(DISCLOSURE_MARKER);
-    expect(block("stage_gate", view)).not.toMatch(DISCLOSURE_MARKER);
+  it("has more than one derived stage to assert over, and includes this one", () => {
+    // An `it.each` over an empty table is the failure mode that let derived
+    // stages go uncovered while this suite was green, so the table is asserted
+    // before it is used. `> 1` rather than `> 0`: at one entry the parameterised
+    // case below is exactly the hardcoded case it replaced.
+    expect(DERIVED_STAGES.length).toBeGreaterThan(1);
+    expect(DERIVED_STAGES).toContain(DERIVED_STAGE);
   });
+
+  it.each(DERIVED_STAGES)(
+    "%s STOPS disclosing its derived beats to the model — both modes",
+    (stageKey) => {
+      const view = buildFor(stageKey);
+      expect(block("evidence_readiness", view)).not.toMatch(DISCLOSURE_MARKER);
+      expect(block("stage_gate", view)).not.toMatch(DISCLOSURE_MARKER);
+    },
+  );
 
   it.each(STILL_SCAFFOLD_STAGES)(
     "%s still discloses its carried beats to the model",
