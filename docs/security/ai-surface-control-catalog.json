@@ -280,8 +280,9 @@
           ],
           "behavioralTest": {
             "status": "none",
-            "reason": "No behavioral test yet. src/__tests__/integration/tower/program-pressure-cards.test.ts asserts brief.accountability.watermark on the view model, but nothing mounts ProgramPressureCards, so nothing proves the AI-assisted label reaches a screen. src/__tests__/behaviors/unreachable-reason-claims.test.ts is in the list below because it names this component, but it mounts nothing: it uses the component only as the subject of a fixture for the unreachableReason prose rules, so it adds no render proof to any of these five controls.",
+            "reason": "No behavioral test yet. src/__tests__/integration/tower/program-pressure-cards.test.ts asserts brief.accountability.watermark on the view model, but nothing mounts ProgramPressureCards, so nothing proves the AI-assisted label reaches a screen. src/__tests__/behaviors/unreachable-reason-claims.test.ts is in the list below because it names this component, but it mounts nothing: it uses the component only as the subject of a fixture for the unreachableReason prose rules, so it adds no render proof to any of these five controls. src/__tests__/behaviors/catalog-claim-binding.test.ts is in the list below because it names this component while explaining why the confidence credit was demoted to deferred (item C-409); it asserts bookkeeping in this file and mounts nothing, so it adds no render proof either.",
             "knownSuites": [
+              "src/__tests__/behaviors/catalog-claim-binding.test.ts",
               "src/__tests__/behaviors/qa-inventory-tower-route-parity.test.ts",
               "src/__tests__/behaviors/unreachable-reason-claims.test.ts",
               "src/__tests__/integration/agents/agent-mission-surface-wiring.test.ts",
@@ -297,8 +298,9 @@
           ],
           "behavioralTest": {
             "status": "none",
-            "reason": "No behavioral test yet. src/__tests__/integration/tower/program-pressure-cards.test.ts asserts brief.accountability.evidenceBasis is non-empty on the view model; no suite mounts the component, so nothing proves the evidence basis is rendered to a reader. src/__tests__/behaviors/unreachable-reason-claims.test.ts is in the list below because it names this component, but it mounts nothing: it uses the component only as the subject of a fixture for the unreachableReason prose rules, so it adds no render proof to any of these five controls.",
+            "reason": "No behavioral test yet. src/__tests__/integration/tower/program-pressure-cards.test.ts asserts brief.accountability.evidenceBasis is non-empty on the view model; no suite mounts the component, so nothing proves the evidence basis is rendered to a reader. src/__tests__/behaviors/unreachable-reason-claims.test.ts is in the list below because it names this component, but it mounts nothing: it uses the component only as the subject of a fixture for the unreachableReason prose rules, so it adds no render proof to any of these five controls. src/__tests__/behaviors/catalog-claim-binding.test.ts is in the list below because it names this component while explaining why the confidence credit was demoted to deferred (item C-409); it asserts bookkeeping in this file and mounts nothing, so it adds no render proof either.",
             "knownSuites": [
+              "src/__tests__/behaviors/catalog-claim-binding.test.ts",
               "src/__tests__/behaviors/qa-inventory-tower-route-parity.test.ts",
               "src/__tests__/behaviors/unreachable-reason-claims.test.ts",
               "src/__tests__/integration/agents/agent-mission-surface-wiring.test.ts",
@@ -314,8 +316,9 @@
           ],
           "behavioralTest": {
             "status": "none",
-            "reason": "No behavioral test yet. src/__tests__/integration/tower/program-pressure-cards.test.ts pins brief.confidenceLabel to the canonical enum on the view model; no suite mounts the component, so nothing proves the confidence label is displayed. src/__tests__/behaviors/unreachable-reason-claims.test.ts is in the list below because it names this component, but it mounts nothing: it uses the component only as the subject of a fixture for the unreachableReason prose rules, so it adds no render proof to any of these five controls.",
+            "reason": "No behavioral test yet. src/__tests__/integration/tower/program-pressure-cards.test.ts pins brief.confidenceLabel to the canonical enum on the view model; no suite mounts the component, so nothing proves the confidence label is displayed. src/__tests__/behaviors/unreachable-reason-claims.test.ts is in the list below because it names this component, but it mounts nothing: it uses the component only as the subject of a fixture for the unreachableReason prose rules, so it adds no render proof to any of these five controls. src/__tests__/behaviors/catalog-claim-binding.test.ts is in the list below because it names this component while explaining why the confidence credit was demoted to deferred (item C-409); it asserts bookkeeping in this file and mounts nothing, so it adds no render proof either.",
             "knownSuites": [
+              "src/__tests__/behaviors/catalog-claim-binding.test.ts",
               "src/__tests__/behaviors/qa-inventory-tower-route-parity.test.ts",
               "src/__tests__/behaviors/unreachable-reason-claims.test.ts",
               "src/__tests__/integration/agents/agent-mission-surface-wiring.test.ts",
@@ -331,8 +334,9 @@
           ],
           "behavioralTest": {
             "status": "none",
-            "reason": "No behavioral test yet. src/__tests__/integration/tower/program-pressure-cards.test.ts asserts brief.accountability.humanApprovalRequired and sanitizedRecommendation on the view model; nothing mounts the component, so nothing proves a reader is told a human must approve. src/__tests__/behaviors/unreachable-reason-claims.test.ts is in the list below because it names this component, but it mounts nothing: it uses the component only as the subject of a fixture for the unreachableReason prose rules, so it adds no render proof to any of these five controls.",
+            "reason": "No behavioral test yet. src/__tests__/integration/tower/program-pressure-cards.test.ts asserts brief.accountability.humanApprovalRequired and sanitizedRecommendation on the view model; nothing mounts the component, so nothing proves a reader is told a human must approve. src/__tests__/behaviors/unreachable-reason-claims.test.ts is in the list below because it names this component, but it mounts nothing: it uses the component only as the subject of a fixture for the unreachableReason prose rules, so it adds no render proof to any of these five controls. src/__tests__/behaviors/catalog-claim-binding.test.ts is in the list below because it names this component while explaining why the confidence credit was demoted to deferred (item C-409); it asserts bookkeeping in this file and mounts nothing, so it adds no render proof either.",
             "knownSuites": [
+              "src/__tests__/behaviors/catalog-claim-binding.test.ts",
               "src/__tests__/behaviors/qa-inventory-tower-route-parity.test.ts",
               "src/__tests__/behaviors/unreachable-reason-claims.test.ts",
               "src/__tests__/integration/agents/agent-mission-surface-wiring.test.ts",
@@ -348,8 +352,9 @@
           ],
           "behavioralTest": {
             "status": "none",
-            "reason": "No behavioral test yet. src/__tests__/integration/tower/program-pressure-cards.test.ts asserts brief.accountability.missingDataBanner on the view model; nothing mounts the component, so nothing proves the missing-data caveat is shown alongside the brief. src/__tests__/behaviors/unreachable-reason-claims.test.ts is in the list below because it names this component, but it mounts nothing: it uses the component only as the subject of a fixture for the unreachableReason prose rules, so it adds no render proof to any of these five controls.",
+            "reason": "No behavioral test yet. src/__tests__/integration/tower/program-pressure-cards.test.ts asserts brief.accountability.missingDataBanner on the view model; nothing mounts the component, so nothing proves the missing-data caveat is shown alongside the brief. src/__tests__/behaviors/unreachable-reason-claims.test.ts is in the list below because it names this component, but it mounts nothing: it uses the component only as the subject of a fixture for the unreachableReason prose rules, so it adds no render proof to any of these five controls. src/__tests__/behaviors/catalog-claim-binding.test.ts is in the list below because it names this component while explaining why the confidence credit was demoted to deferred (item C-409); it asserts bookkeeping in this file and mounts nothing, so it adds no render proof either.",
             "knownSuites": [
+              "src/__tests__/behaviors/catalog-claim-binding.test.ts",
               "src/__tests__/behaviors/qa-inventory-tower-route-parity.test.ts",
               "src/__tests__/behaviors/unreachable-reason-claims.test.ts",
               "src/__tests__/integration/agents/agent-mission-surface-wiring.test.ts",
@@ -1182,9 +1187,10 @@
     },
     {
       "key": "generated-ui|Tower|Pressure/action cards|confidence",
-      "status": "covered",
+      "status": "deferred",
       "surfaceId": "tower-atlas-program-pressure-brief",
-      "controlKind": "confidence"
+      "controlKind": "confidence",
+      "reason": "The surface is catalogued and its confidence control is declared, but that control carries behavioralTest status \"none\": the integration suite pins brief.confidenceLabel on the view model and no suite mounts ProgramPressureCards, so nothing proves the confidence label reaches a reader. This row read covered for that reason-free join until the gate learned to ask about proof. It stays deferred until the mount-or-retire call on the component is made and, if it is mounted, a render test names the label; writing a mount test purely to restore the credit is expressly not the remedy."
     },
     {
       "key": "generated-ui|Setup|Steward setup guidance|confidence",
