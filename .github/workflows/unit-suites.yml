@@ -1695,6 +1695,24 @@ jobs:
           npx jest src/lib/agent/sentinel-reasoning/__tests__
           --no-coverage --ci
 
+      # Item T-771. The ninth stale-suite draw found that eleven of the twenty
+      # files it names already carried a verdict in a repo-owned triage record,
+      # and that ONE of those verdicts has a discharged reason. T-472 measured
+      # this suite red — 1 of 4, an exhaustive expectation that had not been
+      # widened when the repository gained a signature-evidence field group —
+      # and assigned the widening to T-519 rather than repairing it in the
+      # triage. T-519 landed the widening in `bd63332ea4` (#8183) and did not
+      # wire the suite, so it has run nowhere since. 4 of 4 green today.
+      #
+      # Named as a DIRECTORY for this file's header reason, and its line leaves
+      # `product-directory-ci-coverage.baseline.json` in the same change, which
+      # the ratchet asserts as set equality in both directions. The directory is
+      # 1 of 1 unrun, so no sibling this draw did not judge comes with it.
+      - name: Run the T-771 Source NDA authority suite
+        run: >-
+          npx jest src/lib/source/nda/__tests__
+          --no-coverage --ci
+
       - name: Refuse a test run that modified committed input data
         if: always()
         run: node scripts/ci/assert-datasets-unmodified.mjs
