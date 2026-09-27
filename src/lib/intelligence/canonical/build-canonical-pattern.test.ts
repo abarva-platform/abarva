@@ -139,7 +139,10 @@ describe('canonical pattern draft builders', () => {
       vertical: 'health-care',
     }));
 
-    expect(draft.industry).toEqual(['healthcare']);
+    // Item T-497: `health-care` canonicalises to the narrower `healthcare_provider`
+    // band. Same defect and same single commit (`5d795a3976`) as the two rows in
+    // `normalizers.test.ts`; both route through `normalizeIndustry`.
+    expect(draft.industry).toEqual(['healthcare_provider']);
     expect(draft.title).toBe('Ambient Intelligence & Clinical Value Chain Automation');
   });
 
@@ -159,7 +162,8 @@ describe('canonical pattern draft builders', () => {
     const draft = fromManifestEntry(manifestFixture);
 
     expect(draft.source_systems).toEqual(['generated_pattern_manifest']);
-    expect(draft.industry).toEqual(['healthcare']);
+    // Item T-497: see the Healthcare PatternSeed case above.
+    expect(draft.industry).toEqual(['healthcare_provider']);
     expect(draft.gate_evidence_required).toEqual(['Queue aging report']);
     expect(draft.source_basis).toEqual('internal_pattern');
     expect(draft.confidence_rationale).toContain('Manifest confidence floor');

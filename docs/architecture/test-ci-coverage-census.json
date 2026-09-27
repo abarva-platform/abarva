@@ -18,24 +18,24 @@
   ],
   "counts": {
     "testFiles": 2526,
-    "coveredTestFiles": 2170,
-    "pullRequestCoveredTestFiles": 2169,
-    "uncoveredTestFiles": 356,
+    "coveredTestFiles": 2173,
+    "pullRequestCoveredTestFiles": 2172,
+    "uncoveredTestFiles": 353,
     "directoriesWithTests": 492,
     "directoriesFullyCovered": 310,
-    "directoriesPartiallyCovered": 24,
-    "directoriesUncovered": 158,
+    "directoriesPartiallyCovered": 26,
+    "directoriesUncovered": 156,
     "directoriesWithUnrunTestFiles": 182,
     "directoriesWithUntriagedUnrunTestFiles": 171,
     "declaredQuarantineTestFiles": 52,
-    "untriagedUnrunTestFiles": 304,
+    "untriagedUnrunTestFiles": 301,
     "indeterminateInvocations": 0,
     "unresolvedIgnoreArguments": 0,
     "criticalGovernedRiskDirectories": 1,
     "highGovernedRiskDirectories": 6,
     "unclassifiedRiskDirectories": 164,
     "rankedDirectories": 171,
-    "rankedUntriagedUnrunTestFiles": 304,
+    "rankedUntriagedUnrunTestFiles": 301,
     "unclassifiedRiskDirectoriesWithResolvedProductSources": 157,
     "unclassifiedRiskDirectoriesWithNoResolvedProductSource": 7
   },
@@ -241,6 +241,16 @@
       ]
     },
     {
+      "directory": "src/lib/intelligence/ask/__tests__",
+      "testFiles": 23,
+      "coveredTestFiles": 1,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 22,
+      "via": [
+        "command"
+      ]
+    },
+    {
       "directory": "src/lib/auth/__tests__",
       "testFiles": 20,
       "coveredTestFiles": 14,
@@ -266,6 +276,16 @@
       "coveredTestFiles": 8,
       "declaredQuarantineTestFiles": 1,
       "untriagedUnrunTestFiles": 0,
+      "via": [
+        "command"
+      ]
+    },
+    {
+      "directory": "src/lib/intelligence/canonical",
+      "testFiles": 6,
+      "coveredTestFiles": 2,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 4,
       "via": [
         "command"
       ]
@@ -1295,15 +1315,15 @@
     {
       "directory": "src/lib/intelligence/ask/__tests__",
       "testFiles": 23,
-      "unrunTestFiles": 23,
+      "unrunTestFiles": 22,
       "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 23,
+      "untriagedUnrunTestFiles": 22,
       "admittedBy": "untriaged_unrun_work",
       "governedRisk": {
         "score": 0,
         "band": "unclassified",
         "signals": [],
-        "productSourceCount": 24,
+        "productSourceCount": 25,
         "rank": 8
       }
     },
@@ -1368,21 +1388,6 @@
       }
     },
     {
-      "directory": "src/lib/intelligence/canonical",
-      "testFiles": 6,
-      "unrunTestFiles": 6,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 6,
-      "admittedBy": "untriaged_unrun_work",
-      "governedRisk": {
-        "score": 0,
-        "band": "unclassified",
-        "signals": [],
-        "productSourceCount": 8,
-        "rank": 13
-      }
-    },
-    {
       "directory": "src/lib/intelligence/synthesis/__tests__",
       "testFiles": 5,
       "unrunTestFiles": 5,
@@ -1394,7 +1399,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 4,
-        "rank": 14
+        "rank": 13
       }
     },
     {
@@ -1409,7 +1414,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 3,
-        "rank": 15
+        "rank": 14
       }
     },
     {
@@ -1424,7 +1429,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 4,
-        "rank": 16
+        "rank": 15
       }
     },
     {
@@ -1439,6 +1444,21 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 5,
+        "rank": 16
+      }
+    },
+    {
+      "directory": "src/lib/intelligence/canonical",
+      "testFiles": 6,
+      "unrunTestFiles": 4,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 4,
+      "admittedBy": "untriaged_unrun_work",
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 8,
         "rank": 17
       }
     },
@@ -5837,9 +5857,9 @@
     {
       "directory": "src/lib/intelligence/canonical",
       "testFiles": 6,
-      "unrunTestFiles": 6,
+      "unrunTestFiles": 4,
       "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 6,
+      "untriagedUnrunTestFiles": 4,
       "governedRisk": {
         "score": 0,
         "band": "unclassified",
@@ -5876,14 +5896,14 @@
     {
       "directory": "src/lib/intelligence/ask/__tests__",
       "testFiles": 23,
-      "unrunTestFiles": 23,
+      "unrunTestFiles": 22,
       "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 23,
+      "untriagedUnrunTestFiles": 22,
       "governedRisk": {
         "score": 0,
         "band": "unclassified",
         "signals": [],
-        "productSourceCount": 24
+        "productSourceCount": 25
       }
     }
   ],
@@ -6029,14 +6049,6 @@
   ],
   "uncoveredDirectories": [
     {
-      "directory": "src/lib/intelligence/ask/__tests__",
-      "testFiles": 23,
-      "coveredTestFiles": 0,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 23,
-      "via": []
-    },
-    {
       "directory": "src/__tests__/integration/ops",
       "testFiles": 14,
       "coveredTestFiles": 0,
@@ -6062,14 +6074,6 @@
     },
     {
       "directory": "src/lib/integrations/ai-egress/__tests__",
-      "testFiles": 6,
-      "coveredTestFiles": 0,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 6,
-      "via": []
-    },
-    {
-      "directory": "src/lib/intelligence/canonical",
       "testFiles": 6,
       "coveredTestFiles": 0,
       "declaredQuarantineTestFiles": 0,
