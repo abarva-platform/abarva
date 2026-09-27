@@ -165,6 +165,136 @@ export const REGISTER_SILENT = "register-silent";
 export const UNREAD = "unread";
 export const UNMENTIONED = "unmentioned";
 
+/**
+ * A row every one of whose matched register lines names its pull request while
+ * being about other work (item C-551).
+ *
+ * `C-545` split *the register mentioned this release and said nothing* from
+ * *the register never mentioned it*. Underneath both sits a third state, and
+ * until this it was reported as the first: **the register named the number
+ * while talking about something else**. Measured on the live register over the
+ * 25 `unread` rows `C-548` settled one at a time, five are this — the deciding
+ * line names the pull request as a stack base, a file-collision explanation, a
+ * rebase reference, an explicit exclusion of that pull request's files, or an
+ * announcement of follow-up work.
+ *
+ * It is deliberately NOT folded into `REGISTER_SILENT`, whose whole claim is
+ * that the register *did* speak about this pull request. Here it did not speak
+ * about this release at all, so the row is closer in substance to
+ * `NO_REGISTER_LINE` — and it is not that either, because a number the register
+ * names is a thread an auditor can pull and an absent one is not. The row
+ * carries `registerPassingClauses` so the words can be read rather than trusted.
+ *
+ * The count is the point as much as the verdict: `registerLines > 0` was
+ * overstating how much the register says about the corpus, and
+ * `registerSubjectLines` is what it says.
+ */
+export const PASSING_MENTION = "passing-mention";
+
+/**
+ * What one register line's mention of one pull request is (item C-551).
+ *
+ * Read from the register's own subject grammar, never from phrasing. "stacked
+ * after", "rebasing onto", "Explicit exclusions:", "behind open" and
+ * "follow-up for" are five spellings of one structure, and `C-529` records what
+ * happens when a marker is widened to cover a fifth phrasing: a refusal becomes
+ * a wrong answer. `fossil-claims.mjs` already applies a first-written-wins
+ * subject contest to *item ids*, for this exact defect — "register lines
+ * routinely narrate another lane's item in passing" — and this is that rule
+ * asked about *pull requests*.
+ */
+export const SUBJECT = "subject";
+export const PASSING = "passing";
+
+/** The register's field separator. `fields[0]` is the line's own assertion. */
+function messageFields(text) {
+  return String(text ?? "")
+    .split("|")
+    .map((field) => field.trim());
+}
+
+/*
+ * A claim's lead. A claim declares work that has not happened, so every pull
+ * request it names belongs to somebody else's — a claim has no pull request of
+ * its own at the moment it is written.
+ */
+const CLAIM_LEAD = /^(?:RE-)?CLAIM(?:ING|ED|S)?\b/i;
+/*
+ * An outcome's lead, and the PRECEDENCE that makes this rule safe in the other
+ * direction. `RELEASED item U-599 through PR #8203 | squash … | branch … |
+ * files: …` is a genuine deciding line that carries a file list of its own, so
+ * the scope-field rule below would call it a claim and refuse the one row it
+ * decides. Its lead asserts an outcome, and that wins.
+ */
+const OUTCOME_LEAD =
+  /^(?:RELEASED|RELEASING|MERGED|MERGING|DEPLOYED|ABSTENTION|ABSTAIN(?:ED|ING)?|PR\s*#?\d{4,}|pull\/\d+)\b/i;
+/*
+ * A scope field: the claim shape for a line whose lead is prose. Two of the
+ * five live cases are these — one leads "Governed ServiceNow request
+ * review-to-event handoff claimed, stacked after PR #8260", the other "Source
+ * New signed-in acceptance follow-up for #8200" — and neither opens with a
+ * claim verb. What they do carry is the register's declaration of what the work
+ * will touch, which only unstarted work has.
+ */
+const SCOPE_FIELD = /^(?:files\s*:|branch\s+\S)/i;
+
+/** The first pull request written in `text`, by position, or `null`. */
+function firstPullRequestIn(text) {
+  const match = String(text ?? "").match(/pull\/(\d+)|#(\d{4,})\b/);
+  return match ? Number(match[1] ?? match[2]) : null;
+}
+
+/**
+ * Which pull request a register line is ABOUT, or `null` when it is about none
+ * (item C-551).
+ *
+ * Three rules, in this order, and the order is the whole of the safety:
+ *
+ *   1. A lead that asserts an OUTCOME makes this an outcome line, whatever
+ *      fields follow it.
+ *   2. Otherwise a claim lead, or a scope field, makes it a claim — which has
+ *      no subject pull request at all.
+ *   3. Otherwise the subject is the first pull request written in the lead
+ *      field, falling back to the first written anywhere when the lead names
+ *      none.
+ *
+ * Rule 3 is `fewest pull requests first` asked a sharper way. `reconcileRecord`
+ * has always preferred the line naming fewest, on the reasoning that a line
+ * naming ten is citing them; this says WHICH of the ten it is about, so the
+ * other nine stop being candidates for a verdict.
+ */
+export function subjectPullRequest(text) {
+  const fields = messageFields(text);
+  const lead = fields[0] ?? "";
+  if (!OUTCOME_LEAD.test(lead)) {
+    if (CLAIM_LEAD.test(lead)) return null;
+    if (fields.slice(1).some((field) => SCOPE_FIELD.test(field))) return null;
+  }
+  return firstPullRequestIn(lead) ?? firstPullRequestIn(text);
+}
+
+/** Whether this line is about this pull request, or merely names it. */
+export function mentionRole(text, pr) {
+  const subject = subjectPullRequest(text);
+  return subject != null && subject === pr ? SUBJECT : PASSING;
+}
+
+/**
+ * The clause in which a line names a pull request.
+ *
+ * The item is explicit that the rows are printed individually **with the clause
+ * that names the pull request**, because the five live cases differ in kind and
+ * a human settling them needs the words. A count of passing mentions would
+ * report the defect and leave it unsettleable.
+ */
+export function mentionClause(text, pr) {
+  if (pr == null) return null;
+  const names = new RegExp(`(?:pull/${pr}|#${pr})\\b`);
+  const pieces = String(text ?? "").split(/(?<=[.;])\s+|\n+|\s*\|\s*/);
+  const hit = pieces.find((piece) => names.test(piece));
+  return hit ? hit.trim() : null;
+}
+
 /** The kind of silence, from the sentence the deciding line offered. */
 export function silenceOf(sentence) {
   return sentence == null ? UNMENTIONED : UNREAD;
@@ -682,7 +812,18 @@ export function registerSignedInVerdict(text) {
  */
 export function reconcileRecord({ record, pr, entries }) {
   const matched = pr == null ? [] : entries.filter((e) => e.prs.has(pr));
-  const read = matched.map((e) => ({ entry: e, ...registerSignedInVerdict(e.text) }));
+  /*
+   * The lines that are ABOUT this pull request, separated from the ones that
+   * merely name it (item C-551). Only the first kind may decide the row: a
+   * verdict read from a line about somebody else's work is read from the wrong
+   * sentence, and before this separation four of the five live cases had one —
+   * the passing mention won the selection below, because a claim naming one
+   * pull request beats a release line naming two on `fewest first`.
+   */
+  const roles = matched.map((e) => ({ entry: e, role: mentionRole(e.text, pr) }));
+  const subjectEntries = roles.filter((r) => r.role === SUBJECT).map((r) => r.entry);
+  const passingEntries = roles.filter((r) => r.role === PASSING).map((r) => r.entry);
+  const read = subjectEntries.map((e) => ({ entry: e, ...registerSignedInVerdict(e.text) }));
   /**
    * The two rules above, applied to whichever lines are on offer.
    *
@@ -712,7 +853,15 @@ export function reconcileRecord({ record, pr, entries }) {
   const silentChosen = chosen ? null : decide(read.filter((v) => v.verdict === SILENT));
   const deciding = chosen ?? silentChosen;
 
-  const registerSays = chosen ? chosen.verdict : matched.length > 0 ? SILENT : null;
+  /*
+   * `subjectEntries`, not `matched` (item C-551). A row whose only lines name
+   * the pull request in passing has no register account of its release, so
+   * calling it `SILENT` would assert the register spoke about it and said
+   * nothing — which is the false clean C-545 was filed against, one level up.
+   */
+  const registerSays = chosen ? chosen.verdict : subjectEntries.length > 0 ? SILENT : null;
+  /* Every matched line is a passing mention, so nothing here decides the row. */
+  const passingOnly = matched.length > 0 && subjectEntries.length === 0;
   /*
    * The pull-request count and the attribution stay drawn from `chosen` alone,
    * so a silent row keeps `attribution: none`. This is load-bearing rather than
@@ -728,6 +877,18 @@ export function reconcileRecord({ record, pr, entries }) {
     ...record,
     pr: pr ?? null,
     registerLines: matched.length,
+    /*
+     * What `registerLines` was overstating. The item's finding is as much about
+     * the count as the verdict: `registerLines > 0` reads as "the register has
+     * something to say about this release", and for these rows it does not.
+     */
+    registerSubjectLines: subjectEntries.length,
+    registerPassingLines: passingEntries.length,
+    registerPassingClauses: passingEntries.map((e) => ({
+      stamp: e.stamp,
+      identity: e.identity,
+      clause: mentionClause(e.text, pr),
+    })),
     registerLinePullRequests,
     attribution,
     registerSays,
@@ -750,7 +911,17 @@ export function reconcileRecord({ record, pr, entries }) {
   return {
     ...row,
     comparedVerdict,
-    verdict: attribution === INEXACT ? INEXACT_ATTRIBUTION : comparedVerdict,
+    /*
+     * `passingOnly` is read FIRST. `comparedVerdict` would be
+     * `NO_REGISTER_LINE` here — true of this release and false of the number,
+     * which the register does name — and `INEXACT_ATTRIBUTION` cannot apply,
+     * because no line was chosen to be inexactly attributed.
+     */
+    verdict: passingOnly
+      ? PASSING_MENTION
+      : attribution === INEXACT
+        ? INEXACT_ATTRIBUTION
+        : comparedVerdict,
   };
 }
 
@@ -849,6 +1020,7 @@ export function reconcile({ records = [], register = "" } = {}) {
     [NO_REGISTER_LINE]: 0,
     [INEXACT_ATTRIBUTION]: 0,
     [REGISTER_SILENT]: 0,
+    [PASSING_MENTION]: 0,
   };
   for (const row of rows) counts[row.verdict] += 1;
 
@@ -877,11 +1049,19 @@ export function formatReport(result) {
    * corpus carry a sentence about the proof that this reader could not resolve —
    * so it is nearer to unfinished business than the rows nobody ever wrote about.
    */
+  /*
+   * `passing-mention` is printed after `register-silent` and ahead of
+   * `no-register-line` (item C-551). A row in it is unfinished business like a
+   * silent one — the register names a number an auditor can go and read — but
+   * strictly less is known about the release than in a silent row, where a line
+   * about the release exists and merely resolved to nothing.
+   */
   const order = [
     DISAGREE,
     INEXACT_ATTRIBUTION,
     AMBIGUOUS,
     REGISTER_SILENT,
+    PASSING_MENTION,
     NO_REGISTER_LINE,
     AGREE,
   ];
@@ -918,13 +1098,35 @@ export function formatReport(result) {
               : "mentions no signed-in proof at all; it may have had none to report") +
             `\n    would have read: ${AGREE} before item C-545`
           : "";
+      /*
+       * Every passing clause, one per line, with the register coordinates that
+       * make it checkable (item C-551). NOT the count and not the first: the
+       * five live cases differ in kind — a stack base, a rebase note, an
+       * exclusion, a collision explanation, a follow-up announcement — and the
+       * settlement of each is in its own words. A row whose three lines all name
+       * the number in passing needs all three shown, or the reader settles it
+       * from whichever one this printer happened to pick.
+       */
+      const passingNote =
+        row.verdict === PASSING_MENTION
+          ? `\n    passing:  ${row.registerPassingLines} line(s) name #${row.pr} without being ` +
+            `about it, and no line is; \`registerLines: ${row.registerLines}\` was overstating this row` +
+            row.registerPassingClauses
+              .map(
+                (c) =>
+                  `\n      - ${c.stamp} by ${c.identity}: ${(c.clause ?? "(no clause found)").slice(0, 200)}`,
+              )
+              .join("") +
+            `\n    would have read: ${row.comparedVerdict} before item C-551`
+          : "";
       lines.push(
         `  ${row.releaseId ?? row.file}` +
           `\n    pr:       ${row.pr ?? "unresolved"}` +
           `\n    record:   ${row.recordSays}${row.recordEvidence ? ` — ${row.recordEvidence.slice(0, 160)}` : ""}` +
           `\n    register: ${row.registerSays ?? "no line"}${row.registerEvidence ? ` — ${row.registerEvidence.slice(0, 160)}` : ""}` +
           attributionNote +
-          silenceNote,
+          silenceNote +
+          passingNote,
       );
     }
   }
@@ -936,7 +1138,8 @@ export function formatReport(result) {
     `agree ${result.counts[AGREE]}  disagree ${result.counts[DISAGREE]}  ` +
       `ambiguous ${result.counts[AMBIGUOUS]}  no-register-line ${result.counts[NO_REGISTER_LINE]}  ` +
       `inexact-attribution ${result.counts[INEXACT_ATTRIBUTION]}  ` +
-      `register-silent ${result.counts[REGISTER_SILENT]}`,
+      `register-silent ${result.counts[REGISTER_SILENT]}  ` +
+      `passing-mention ${result.counts[PASSING_MENTION]}`,
   );
   /*
    * The split named as two numbers, not one (item C-545). Every one of these
@@ -954,6 +1157,24 @@ export function formatReport(result) {
         `proof that no marker resolved and ${silentRows.length - unread} mention no signed-in ` +
         "proof at all. Every one of them read `agree` before item C-545, and none of them is " +
         "fixed by loosening a marker — read the sentence printed against each row and settle it.",
+    );
+  }
+  /*
+   * Corpus-wide, the thing the item is actually about (C-551): how much of
+   * `registerLines` is the register talking about these releases. A row can
+   * have subject lines AND passing mentions, so this is counted over every row
+   * rather than over the `passing-mention` bucket — the four live cases where a
+   * passing mention won the deciding line are not in that bucket at all.
+   */
+  const passingLineTotal = result.rows.reduce((n, r) => n + (r.registerPassingLines ?? 0), 0);
+  if (passingLineTotal > 0) {
+    const matchedTotal = result.rows.reduce((n, r) => n + (r.registerLines ?? 0), 0);
+    const affected = result.rows.filter((r) => (r.registerPassingLines ?? 0) > 0).length;
+    lines.push(
+      `${passingLineTotal} of the ${matchedTotal} register line(s) matched by pull request name ` +
+        `the number while being about other work, across ${affected} row(s). They no longer ` +
+        "compete for a deciding line, so a verdict here is read from a sentence about this " +
+        "release or from none at all.",
     );
   }
   /*
