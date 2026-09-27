@@ -782,7 +782,7 @@ describe("SourceAnalyticsCanvas stage workflow", () => {
       `/source/events/${EVENT.id}?stage=scope&workspace=files`,
     );
     const approvalsWorkspace = screen.getByTestId("source-shell-v2-approvals");
-    expect(screen.getByRole("button", { name: "Retire event" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Retire event" })).toBeNull();
     expect(approvalsWorkspace).toHaveTextContent(
       "All 7 workflow inputs complete",
     );
@@ -795,6 +795,7 @@ describe("SourceAnalyticsCanvas stage workflow", () => {
     render(
       <SourceAnalyticsCanvas
         event={{ ...EVENT, status: "archived", statusLabel: "Archived" }}
+        canRetireEvent
         viewStage="scope"
         tenantName="Demo Client"
         initialWorkspace="approvals"
@@ -802,6 +803,20 @@ describe("SourceAnalyticsCanvas stage workflow", () => {
     );
 
     expect(screen.queryByRole("button", { name: "Retire event" })).toBeNull();
+  });
+
+  it("offers retirement to an authorized decision-maker on an active event", () => {
+    render(
+      <SourceAnalyticsCanvas
+        event={EVENT}
+        canRetireEvent
+        viewStage="scope"
+        tenantName="Demo Client"
+        initialWorkspace="approvals"
+      />,
+    );
+
+    expect(screen.getByRole("button", { name: "Retire event" })).toBeInTheDocument();
   });
 
   it("discloses when a stage was approved with required inputs still open", () => {

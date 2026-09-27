@@ -34,7 +34,7 @@ An authorized Source stage decision-maker can retire an active sourcing event fr
 
 ## QA / Validation
 
-- Pass: 61 focused Jest tests across route, retirement control and stage-approval canvas.
+- Pass: 62 focused Jest tests across route, retirement control and stage-approval canvas.
 - Pass: TypeScript typecheck with an 8 GB Node heap.
 - Pass: ESLint on changed TypeScript files.
 - Not run: signed-in production retirement; requires deployed code and explicit confirmation on the target event.

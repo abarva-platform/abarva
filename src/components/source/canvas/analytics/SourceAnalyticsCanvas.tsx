@@ -218,6 +218,7 @@ const SESSION_EVIDENCE_LANES: readonly SessionEvidenceLane[] = [
 
 interface SourceAnalyticsCanvasProps {
   event: SourcingEventSummary;
+  canRetireEvent?: boolean;
   /**
    * U-520 — pass-through to `VendorResponseDecisionProofPanel`, the one
    * descendant of this canvas that prints an exact financial magnitude. The
@@ -734,6 +735,7 @@ function SourceRailAdvisorNote({
 
 export function SourceAnalyticsCanvas({
   event,
+  canRetireEvent = false,
   viewStage,
   tenantName,
   stageView,
@@ -897,6 +899,7 @@ export function SourceAnalyticsCanvas({
             ) : null}
             <SourceWorkspace
               view={shellView}
+              canRetireEvent={canRetireEvent}
               stageView={resolvedStageView}
               workspace={workspace}
               canViewFinancialValues={canViewFinancialValues}
@@ -1355,6 +1358,7 @@ function sourceReaderCheckpointState(
 
 function SourceWorkspace({
   view,
+  canRetireEvent,
   stageView,
   workspace,
   vendorResponseReadiness,
@@ -1377,6 +1381,7 @@ function SourceWorkspace({
   onClientFinalAccepted,
 }: {
   view: SourceEventShellView;
+  canRetireEvent: boolean;
   stageView: StageAnalyticsView;
   workspace: SourceShellWorkspace;
   vendorResponseReadiness?: SourceVendorResponseCompleteness | null;
@@ -1421,6 +1426,7 @@ function SourceWorkspace({
     return (
       <ApprovalsWorkspace
         view={view}
+        canRetireEvent={canRetireEvent}
         gateAction={stageView.gate.action}
         onGoToSteps={() => onWorkspaceChange("steps")}
       />
@@ -6999,10 +7005,12 @@ function intelligenceBasisLabel(basis: SourceShellEvidenceBasis): string {
 
 function ApprovalsWorkspace({
   view,
+  canRetireEvent,
   gateAction,
   onGoToSteps,
 }: {
   view: SourceEventShellView;
+  canRetireEvent: boolean;
   gateAction?: StageGateActionView;
   onGoToSteps: () => void;
 }) {
@@ -7040,7 +7048,7 @@ function ApprovalsWorkspace({
       {view.approvals.ledger.length > 0 ? (
         <ApprovalLedgerTable ledger={view.approvals.ledger} />
       ) : null}
-      {view.event.lifecycle === "active" ? (
+      {canRetireEvent && view.event.lifecycle === "active" ? (
         <EventRetirementControl eventId={view.event.id} eventCode={view.event.code} />
       ) : null}
     </section>

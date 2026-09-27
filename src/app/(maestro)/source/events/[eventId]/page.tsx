@@ -738,6 +738,7 @@ export default async function SourceEventDetailPage({
     return (
       <SourceAnalyticsCanvas
         event={event}
+        canRetireEvent={canvasSourcePolicy?.canApproveSourceStages === true}
         canViewFinancialValues={canViewFinancialValues}
         viewStage={viewStage}
         tenantName={analyticsTenantName}

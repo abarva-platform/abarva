@@ -4,7 +4,7 @@
 
 import "@testing-library/jest-dom";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { EventRetirementControl } from "../EventRetirementControl";
+import { EventRetirementControl } from "../approval/EventRetirementControl";
 
 const push = jest.fn();
 jest.mock("next/navigation", () => ({
