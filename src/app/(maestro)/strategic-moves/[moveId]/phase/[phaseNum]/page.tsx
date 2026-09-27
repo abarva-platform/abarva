@@ -17,9 +17,15 @@ import {
   parseRequestedPhase,
   type StageReadinessReviewGateStatus,
 } from "@/lib/programs/phase-navigation-status";
-import { listMoveArtifacts } from "@/lib/programs/deliverables/move-artifacts";
+import {
+  downloadArtifactBytes,
+  listMoveArtifacts,
+} from "@/lib/programs/deliverables/move-artifacts";
 import { listGeneratedArtifactsForMoveAllRefs } from "@/lib/artifacts/repository";
-import { STAGE_READINESS_PROPOSAL_REVIEW_ARTIFACT_TYPE } from "@/lib/programs/stage-readiness-workbooks/proposals";
+import {
+  STAGE_READINESS_PROPOSAL_REVIEW_ARTIFACT_TYPE,
+  STAGE_READINESS_PROPOSAL_SET_ARTIFACT_TYPE,
+} from "@/lib/programs/stage-readiness-workbooks/proposals";
 import { requireTenancy } from "@/app/api/v1/programs/_auth";
 import { loadDiscoveryEvidenceReadiness } from "@/lib/programs/discovery/evidence-readiness";
 import {
@@ -80,6 +86,121 @@ function p1ToP2ReviewStatusFromMetadata(
     ready: numberFromMetadata(readiness, "ready"),
     insufficientEvidence: numberFromMetadata(readiness, "insufficientEvidence"),
     unknown: numberFromMetadata(readiness, "unknown"),
+  };
+}
+
+interface StageReadinessProposalSetPreview {
+  ok: boolean;
+  summary?: {
+    totalQuestions?: number;
+    answeredQuestions?: number;
+    requiredAnswered?: number;
+    requiredTotal?: number;
+    warningCount?: number;
+    errorCount?: number;
+  };
+  proposalSet?: {
+    artifactId?: string;
+    artifactVersion?: number;
+    status?: string;
+    proposalCount?: number;
+    pendingCount?: number;
+    proposals?: Array<{
+      proposalId?: string;
+      questionId?: string;
+      dimensionId?: string;
+      requirement?: "required" | "recommended";
+      question?: string;
+      response?: string;
+      answerState?: string;
+      disposition?: string;
+    }>;
+    message?: string;
+  } | null;
+}
+
+function objectValue(value: unknown): Record<string, unknown> | null {
+  return value && typeof value === "object" && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : null;
+}
+
+function proposalSetPreviewFromJson(
+  artifactId: string,
+  artifactVersion: number,
+  value: unknown,
+): StageReadinessProposalSetPreview | null {
+  const proposalSet = objectValue(value);
+  if (!proposalSet) return null;
+  const summary = objectValue(proposalSet.summary);
+  const proposals = Array.isArray(proposalSet.proposals)
+    ? proposalSet.proposals
+        .map((raw) => {
+          const proposal = objectValue(raw);
+          if (!proposal) return null;
+          return {
+            proposalId:
+              typeof proposal.proposalId === "string"
+                ? proposal.proposalId
+                : undefined,
+            questionId:
+              typeof proposal.questionId === "string"
+                ? proposal.questionId
+                : undefined,
+            dimensionId:
+              typeof proposal.dimensionId === "string"
+                ? proposal.dimensionId
+                : undefined,
+            requirement: (
+              proposal.requirement === "recommended"
+                ? "recommended"
+                : "required"
+            ) as "required" | "recommended",
+            question:
+              typeof proposal.question === "string"
+                ? proposal.question
+                : undefined,
+            response:
+              typeof proposal.response === "string"
+                ? proposal.response
+                : undefined,
+            answerState:
+              typeof proposal.answerState === "string"
+                ? proposal.answerState
+                : undefined,
+            disposition:
+              typeof proposal.disposition === "string"
+                ? proposal.disposition
+                : undefined,
+          };
+        })
+        .filter((proposal): proposal is NonNullable<typeof proposal> =>
+          Boolean(proposal?.proposalId),
+        )
+    : [];
+  if (proposals.length === 0) return null;
+  return {
+    ok: true,
+    summary: summary
+      ? {
+          totalQuestions: numberFromMetadata(summary, "totalQuestions"),
+          answeredQuestions: numberFromMetadata(summary, "answeredQuestions"),
+          requiredAnswered: numberFromMetadata(summary, "requiredAnswered"),
+          requiredTotal: numberFromMetadata(summary, "requiredTotal"),
+          warningCount: numberFromMetadata(summary, "warningCount"),
+          errorCount: numberFromMetadata(summary, "errorCount"),
+        }
+      : undefined,
+    proposalSet: {
+      artifactId,
+      artifactVersion,
+      status: "review_required",
+      proposalCount: numberFromMetadata(summary, "proposalCount") || proposals.length,
+      pendingCount: numberFromMetadata(summary, "pendingCount"),
+      proposals,
+      message:
+        "Workbook responses were stored as pending proposals. They do not feed P2 until accepted.",
+    },
   };
 }
 
@@ -184,6 +305,8 @@ export default async function StrategicMovePhaseWorkspacePage({
   // looking requests back to the true current phase.
   const currentPhase = move.currentPhase ?? 0;
   let p1ToP2WorkbookReview: StageReadinessReviewGateStatus | null = null;
+  let initialStageReadinessPreview: StageReadinessProposalSetPreview | null =
+    null;
   try {
     const tctx = await requireTenancy();
     const approvalArtifacts = await listMoveArtifacts(tctx, moveId, {
@@ -199,8 +322,28 @@ export default async function StrategicMovePhaseWorkspacePage({
     p1ToP2WorkbookReview = p1ToP2ReviewStatusFromMetadata(
       currentReview?.metadata,
     );
+    const currentProposalSet = approvalArtifacts.find(
+      (artifact) =>
+        artifact.phase === 1 &&
+        artifact.artifact_type === STAGE_READINESS_PROPOSAL_SET_ARTIFACT_TYPE &&
+        artifact.status === "review_required",
+    );
+    if (currentProposalSet) {
+      const downloaded = await downloadArtifactBytes(
+        tctx,
+        currentProposalSet.artifact_id,
+      );
+      if (downloaded?.fileFormat === "json") {
+        initialStageReadinessPreview = proposalSetPreviewFromJson(
+          currentProposalSet.artifact_id,
+          currentProposalSet.version,
+          JSON.parse(downloaded.bytes.toString("utf8")),
+        );
+      }
+    }
   } catch {
     p1ToP2WorkbookReview = null;
+    initialStageReadinessPreview = null;
   }
   const blockedPhaseFromQuery =
     parseRequestedPhase(resolvedSearchParams.blockedPhase) ??
@@ -406,6 +549,7 @@ export default async function StrategicMovePhaseWorkspacePage({
         evidenceNeedPackets={evidenceNeedPackets}
         initialPhaseCaptureRevision={initialPhaseCaptureRevision}
         initialPhaseCaptureValues={initialPhaseCaptureValues}
+        initialStageReadinessPreview={initialStageReadinessPreview}
         moveContextExtractEvidenceCount={moveContextExtractEvidenceCount}
         phaseBuildArtifacts={phaseBuildArtifacts}
         initialSubstepKey={

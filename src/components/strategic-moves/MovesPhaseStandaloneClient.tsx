@@ -132,6 +132,7 @@ interface MovesPhaseStandaloneClientProps {
   carriesForwardContent: DeliverableContentSignal[];
   phaseBuildArtifacts?: PhaseBuildArtifact[];
   phaseNavigationStatus?: PhaseNavigationStatus;
+  initialStageReadinessPreview?: StageReadinessWorkbookParsePreview | null;
   currentStateReadiness?: ReadinessReport | null;
   /**
    * Count of attached evidence found inside the current Move context extract.
@@ -663,6 +664,7 @@ export function MovesPhaseStandaloneClient({
   carriesForwardContent,
   phaseBuildArtifacts = [],
   phaseNavigationStatus,
+  initialStageReadinessPreview = null,
   currentStateReadiness = null,
   moveContextExtractEvidenceCount = 0,
   initialSubstepKey,
@@ -711,6 +713,7 @@ export function MovesPhaseStandaloneClient({
   const [finderComingUpOpen, setFinderComingUpOpen] = useState<boolean | null>(
     null,
   );
+  const workbookReviewRef = useRef<HTMLDivElement | null>(null);
   const [avaOpen, setAvaOpen] = useState(false);
   const [avaThread, setAvaThread] = useState<AvaChatMessage[]>([]);
   const [avaInput, setAvaInput] = useState("");
@@ -2415,9 +2418,13 @@ export function MovesPhaseStandaloneClient({
                           className="mxw-primary-action"
                           onClick={() => {
                             setWorkspaceView("phase");
-                            setSubstepIndex(1);
                             setFinderSelectedSectionKey(null);
-                            window.scrollTo({ top: 0, behavior: "smooth" });
+                            (
+                              workbookReviewRef.current ?? document.documentElement
+                            ).scrollIntoView({
+                              behavior: "smooth",
+                              block: "start",
+                            });
                           }}
                           type="button"
                         >
@@ -2434,9 +2441,13 @@ export function MovesPhaseStandaloneClient({
                         >
                           Download P{phase.phase + 1} readiness workbook
                         </a>
-                        <StageReadinessWorkbookPreviewControl
-                          apiPath={readinessWorkbookHref}
-                        />
+                        <div ref={workbookReviewRef}>
+                          <StageReadinessWorkbookPreviewControl
+                            apiPath={readinessWorkbookHref}
+                            initialPreview={initialStageReadinessPreview}
+                            onReviewSaved={() => router.refresh()}
+                          />
+                        </div>
                       </div>
                     ) : null}
                     <div
@@ -5941,8 +5952,12 @@ function EvidenceUploadControl({
 
 function StageReadinessWorkbookPreviewControl({
   apiPath,
+  initialPreview = null,
+  onReviewSaved,
 }: {
   apiPath: string;
+  initialPreview?: StageReadinessWorkbookParsePreview | null;
+  onReviewSaved?: () => void;
 }) {
   const inputRef = useRef<HTMLInputElement | null>(null);
   const [status, setStatus] = useState<"idle" | "parsing" | "parsed" | "error">(
@@ -5950,9 +5965,16 @@ function StageReadinessWorkbookPreviewControl({
   );
   const [message, setMessage] = useState("");
   const [preview, setPreview] =
-    useState<StageReadinessWorkbookParsePreview | null>(null);
+    useState<StageReadinessWorkbookParsePreview | null>(initialPreview);
   const [selectedProposalIds, setSelectedProposalIds] = useState<Set<string>>(
-    () => new Set(),
+    () =>
+      new Set(
+        initialPreview?.proposalSet?.proposals
+          ?.filter((proposal) => proposal.disposition === "pending")
+          .map((proposal) => proposal.proposalId)
+          .filter((proposalId): proposalId is string => Boolean(proposalId)) ??
+          [],
+      ),
   );
   const [reviewStatus, setReviewStatus] = useState<
     "idle" | "saving" | "saved" | "error"
@@ -6065,6 +6087,7 @@ function StageReadinessWorkbookPreviewControl({
           `${message} · readiness ${review.readiness.ready ?? 0} ready / ${review.readiness.insufficientEvidence ?? 0} insufficient / ${review.readiness.unknown ?? 0} unknown`,
         );
       }
+      onReviewSaved?.();
     } catch (err) {
       setReviewStatus("error");
       setReviewMessage(
@@ -6078,6 +6101,12 @@ function StageReadinessWorkbookPreviewControl({
     preview?.summary?.requiredTotal !== undefined
       ? `${preview.summary.requiredAnswered ?? 0}/${preview.summary.requiredTotal} required`
       : null;
+  const pendingProposalCount = preview?.proposalSet?.pendingCount ?? 0;
+  const storedProposalMessage =
+    preview?.proposalSet?.artifactId && status === "idle" && pendingProposalCount > 0
+      ? `Stored workbook responses awaiting review · ${pendingProposalCount}/${preview.proposalSet.proposalCount ?? pendingProposalCount} pending proposals`
+      : "";
+  const statusMessage = message || storedProposalMessage;
 
   return (
     <div className="mxw-workbook-preview">
@@ -6101,9 +6130,9 @@ function StageReadinessWorkbookPreviewControl({
           ? "Parsing workbook..."
           : "Preview completed workbook"}
       </button>
-      {message ? (
+      {statusMessage ? (
         <span className={`mxw-workbook-preview-status ${status}`}>
-          {message}
+          {statusMessage}
           {required ? <em>{required}</em> : null}
           {firstIssue ? <small>{firstIssue}</small> : null}
         </span>
