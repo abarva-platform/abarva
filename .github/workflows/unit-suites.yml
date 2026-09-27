@@ -450,6 +450,7 @@ jobs:
           src/lib/nexus/__tests__/gateLifecycle-pack-bound.test.ts
           src/lib/source/notifications/__tests__/approval-recipient-policy.test.ts
           src/lib/source/notifications/__tests__/approval-request.test.ts
+          src/lib/source/notifications/__tests__/stage-decision-update.test.ts
           src/components/source/approval/__tests__/EventApprovalCard.test.tsx
           src/lib/enterprise-knowledge/narratives/__tests__/knowledge-narrative-store.test.ts
           src/lib/intelligence/insight-engine/rules/__tests__/context-record-rules.test.ts

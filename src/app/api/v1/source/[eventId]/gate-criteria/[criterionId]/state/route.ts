@@ -219,6 +219,19 @@ export async function PATCH(req: NextRequest, { params }: RouteCtx) {
         { status: 403 },
       );
     }
+    if (
+      approvalPolicy.selfApprovalAllowed &&
+      accessPolicy?.accessLevel !== "client_admin" &&
+      persistedEvent.created_by_user_id !== tenancy?.userId
+    ) {
+      return Response.json(
+        {
+          error: "event_owner_or_admin_required",
+          detail: "The event creator or client admin must record this criterion decision.",
+        },
+        { status: 403 },
+      );
+    }
 
     // SECURITY (audit 2026-05-22, P1-4): GATE_APPROVAL_STRICT_MODE. Per
     // Memory · Gate self-approval model, production hardens criterion

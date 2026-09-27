@@ -118,6 +118,18 @@ test('sponsor request refuses an ordinary approver rather than notifying an admi
   expect(sendMock).not.toHaveBeenCalled();
 });
 
+test('SELF events do not email approval requests to sponsors or other participants', async () => {
+  fromMock.mockImplementation((table: string) => table === 'source_events'
+    ? eventQuery({ id: 'event-1', event_name: 'Governed event', client_key: 'meridian-health', approval_policy_code: 'self_v1' })
+    : participantQuery([{ user_id: 'user_sponsor', role: 'sponsor', approval_authority: 'approver', can_approve_source_stages: true }]));
+  for (const approvalKind of ['sponsor_commitment', 'stage_gate']) {
+    const response = await POST(request({ approvalKind }), params);
+    expect(response.status).toBe(409);
+    expect((await response.json()).error).toBe('owner_decides_in_app');
+  }
+  expect(sendMock).not.toHaveBeenCalled();
+});
+
 test('sponsor request uses only the assigned sponsor and a fixed signed-in Scope review link', async () => {
   fromMock.mockImplementation((table: string) => table === 'source_events'
     ? eventQuery({ id: 'event-1', event_name: 'Governed event', client_key: 'meridian-health' })

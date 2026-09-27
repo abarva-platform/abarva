@@ -53,6 +53,8 @@ const writeAdapter = {
 const emitSourceApprovalNotificationBestEffort = jest.fn();
 const verifiedSponsorDelegationMock = jest.fn<Promise<boolean>, [{ eventId: string; tenantKey: string }]>(async () => false);
 let eventApprovalPolicyCode: "legacy_signed_scope_v1" | "self_v1" | null = null;
+let eventCreatorUserId = "clerk-user-1";
+let accessLevel: string | undefined;
 
 jest.mock("@/lib/source/sponsor-delegation-repository", () => ({
   hasVerifiedSponsorDelegation: (input: { eventId: string; tenantKey: string }) => verifiedSponsorDelegationMock(input),
@@ -76,6 +78,7 @@ jest.mock("@/lib/auth/current-user", () => ({
 jest.mock("@/lib/auth/source-access-policy", () => ({
   loadUserSourceAccessPolicy: jest.fn(async () => ({
     canApproveSourceStages: true,
+    accessLevel,
   })),
 }));
 
@@ -126,7 +129,7 @@ function fakeFluentClient() {
                 event_name: "SkyHarbor Air Managed Services",
                 event_code: "SKYH-MANAGED-SERVICES",
                 decision_owner: "Tomas Singh",
-                created_by_user_id: "clerk-user-1",
+                created_by_user_id: eventCreatorUserId,
                 approval_policy_code: eventApprovalPolicyCode,
               },
               error: null,
@@ -168,9 +171,30 @@ beforeEach(() => {
   jest.clearAllMocks();
   verifiedSponsorDelegationMock.mockResolvedValue(false);
   eventApprovalPolicyCode = null;
+  eventCreatorUserId = "clerk-user-1";
+  accessLevel = undefined;
 });
 
 describe("PATCH Source gate criterion state", () => {
+  it("reserves SELF criterion decisions for the event creator or client admin", async () => {
+    eventApprovalPolicyCode = "self_v1";
+    eventCreatorUserId = "another-user";
+    const denied = await PATCH(
+      request({ state: "waived", reason: "Reviewed evidence and accepted the exception." }),
+      ctx,
+    );
+    expect(denied.status).toBe(403);
+    expect((await denied.json()).error).toBe("event_owner_or_admin_required");
+    expect(writeAdapter.insertCriterionApproval).not.toHaveBeenCalled();
+    expect(writeAdapter.updateGateCriterion).not.toHaveBeenCalled();
+
+    accessLevel = "client_admin";
+    const admin = await PATCH(
+      request({ state: "waived", reason: "Reviewed evidence and accepted the exception." }),
+      ctx,
+    );
+    expect(admin.status).toBe(200);
+  });
   it("consults the exact event's delegated receipt before evaluating a sponsor criterion", async () => {
     const pending = await PATCH(request({ state: "met", reason: "Reviewed current Scope commitment." }), ctx);
     expect(pending.status).toBe(409);

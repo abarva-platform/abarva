@@ -173,6 +173,15 @@ export async function PATCH(req: NextRequest, { params }: RouteCtx) {
           { status: 404 },
         );
       }
+      if (approvalPolicy.selfApprovalAllowed) {
+        return Response.json(
+          {
+            error: "use_event_approval_route",
+            detail: "Self-policy stage decisions must use the audited event approval action.",
+          },
+          { status: 409 },
+        );
+      }
 
       await scaffoldNewEventSubstrate(
         persistedEvent.id,

@@ -21,6 +21,7 @@ import {
   type ApprovalParticipant,
 } from '@/lib/source/notifications/approval-recipient-policy';
 import { sendApprovalRequestEmail } from '@/lib/source/notifications/approval-request';
+import { resolveSourceApprovalPolicy } from '@/lib/source/approval-policy';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -91,12 +92,24 @@ export async function POST(req: Request, ctxParam: { params: Promise<{ eventId: 
     const db = getAzureReadFluentClient();
     const { data: event, error: eventError } = await db
       .from('source_events')
-      .select('id, event_name, client_key')
+      .select('id, event_name, client_key, approval_policy_code')
       .eq('id', eventId)
       .eq('client_key', activeClient.key)
       .maybeSingle();
     if (eventError) throw eventError;
     if (!event) return Response.json({ error: 'not_found' }, { status: 404 });
+    let approvalPolicy;
+    try {
+      approvalPolicy = resolveSourceApprovalPolicy(event.approval_policy_code);
+    } catch {
+      return Response.json({ error: 'invalid_approval_policy' }, { status: 409 });
+    }
+    if (approvalPolicy.selfApprovalAllowed) {
+      return Response.json({
+        error: 'owner_decides_in_app',
+        detail: 'The signed-in Source approver decides in the event. Stakeholders receive an update after the decision, not an approval request.',
+      }, { status: 409 });
+    }
 
     const { data: participantRows, error: participantError } = await db
       .from('source_event_participants')
