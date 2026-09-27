@@ -32,17 +32,32 @@ import {
 /* shared                                                                     */
 /* -------------------------------------------------------------------------- */
 
+/**
+ * `Open Optimize` is a handoff into the dedicated Optimize journey, not a tab
+ * switch (C-610). It used to call `select("contract", id, "Optimize")`, which
+ * moved the Contract 360 tab row and left the seven-step journey at
+ * `/source/optimize` reachable only by typing its URL — so the one visible
+ * command for "optimize this contract" never carried the contract into it.
+ *
+ * The href comes from `vm.optCtaHref`, the same governed journey URL the
+ * contract header action uses; this component builds no URL of its own, so
+ * there is one place where the handoff's shape is decided. It is a real anchor
+ * rather than a button with a navigating handler, so Back is the browser's and
+ * returns to the contract the workspace already mirrors into the address bar.
+ *
+ * No href means no affordance. A contract-less `/source/optimize` would open
+ * the journey on nothing, which reads as the command having failed silently.
+ */
 export function ContractCaseThreadStrip({
   vm,
-  onOpenOptimize,
   isOptimizeTab = false,
 }: {
   vm: SourceWorkspaceVM;
-  onOpenOptimize: () => void;
   isOptimizeTab?: boolean;
 }) {
   const caseThread = vm.opportunityView?.caseThread;
   if (caseThread === undefined) return null;
+  const optimizeHref = vm.optCtaHref?.trim() ? vm.optCtaHref : null;
 
   return (
     <div className="sw-c3-case-thread" role="region" aria-label="Optimization case">
@@ -56,8 +71,8 @@ export function ContractCaseThreadStrip({
         {caseThread?.owner ? <span>{caseThread.owner}</span> : null}
       </div>
       <p>{caseThread?.nextAction ?? "Review the contract evidence before opening a case."}</p>
-      {isOptimizeTab ? null : (
-        <button type="button" onClick={onOpenOptimize}>Open Optimize</button>
+      {isOptimizeTab || !optimizeHref ? null : (
+        <a href={optimizeHref}>Open Optimize</a>
       )}
     </div>
   );

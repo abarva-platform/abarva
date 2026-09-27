@@ -1,6 +1,6 @@
 /** @jest-environment jsdom */
 
-import { fireEvent, render, screen } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 
 import {
   ContractBriefingHeader,
@@ -179,47 +179,104 @@ describe("ContractStoryBriefing", () => {
   });
 });
 
+/**
+ * C-610. `Open Optimize` used to call `logic.select("contract", id, "Optimize")`
+ * -- the Contract 360 Optimize TAB, not the dedicated seven-step journey at
+ * `/source/optimize`. Three cases below therefore changed shape rather than
+ * being added beside the old ones: the first pinned the tab-select callback as
+ * correct, and two others named the affordance by the role a callback button
+ * carries. The assertions they were written for -- a persisted case is shown
+ * and never invented, and the affordance is not repeated on the tab it points
+ * at -- are each kept, on the element the component now renders.
+ *
+ * `optCtaHref` is the governed journey href the view model already builds
+ * through `contractOptimizationIntakeHref`; `buildViewModel.numeric.test.ts`
+ * asserts separately that it resolves to `/source/optimize` carrying the
+ * selected contract. This suite asserts the strip renders THAT href and
+ * nothing it composed itself, so the two suites together carry the chain.
+ */
+const JOURNEY_HREF =
+  "/source/optimize?contractId=MER-TEST-001&opportunityId=OPP-9";
+
+const caseThreadVm = (optCtaHref: string | null) =>
+  ({
+    opportunityView: {
+      caseThread: {
+        state: "Evidence Review",
+        caseCount: 2,
+        owner: "Category Management",
+        nextAction: "Attach the reviewed pricing schedule.",
+      },
+    },
+    optCtaHref,
+  }) as unknown as SourceWorkspaceVM;
+
 describe("ContractCaseThreadStrip", () => {
   it("shows persisted case state and its next action, with a path to Optimize", () => {
-    const onOpenOptimize = jest.fn();
-    const vm = {
-      opportunityView: {
-        caseThread: {
-          state: "Evidence Review",
-          caseCount: 2,
-          owner: "Category Management",
-          nextAction: "Attach the reviewed pricing schedule.",
-        },
-      },
-    } as unknown as SourceWorkspaceVM;
-
-    render(<ContractCaseThreadStrip vm={vm} onOpenOptimize={onOpenOptimize} />);
+    render(<ContractCaseThreadStrip vm={caseThreadVm(JOURNEY_HREF)} />);
     expect(screen.getByText("Evidence Review")).toBeTruthy();
     expect(screen.getByText("Latest of 2 cases")).toBeTruthy();
     expect(screen.getByText("Category Management")).toBeTruthy();
     expect(screen.getByText("Attach the reviewed pricing schedule.")).toBeTruthy();
-    fireEvent.click(screen.getByRole("button", { name: "Open Optimize" }));
-    expect(onOpenOptimize).toHaveBeenCalledTimes(1);
+  });
+
+  it("hands the selected contract to the dedicated journey, not to the Contract 360 tab", () => {
+    render(<ContractCaseThreadStrip vm={caseThreadVm(JOURNEY_HREF)} />);
+
+    const link = screen.getByRole("link", { name: "Open Optimize" });
+    const href = link.getAttribute("href");
+    // The strip renders the governed href verbatim; it composes no URL itself.
+    expect(href).toBe(JOURNEY_HREF);
+
+    const url = new URL(href!, "https://app.abarva.ai");
+    expect(url.pathname).toBe("/source/optimize");
+    expect(url.searchParams.get("contractId")).toBe("MER-TEST-001");
+    // The defect: selecting the tab keeps the workspace path and writes
+    // `contractTab=Optimize` into the address bar. A journey href carries
+    // neither, so this pair fails on a return to the tab-select.
+    expect(url.pathname).not.toContain("/preview/workspace");
+    expect(url.searchParams.get("contractTab")).toBeNull();
+
+    // A real anchor, so the browser owns Back to the originating contract.
+    expect(link.tagName).toBe("A");
+    expect(screen.queryByRole("button", { name: "Open Optimize" })).toBeNull();
+  });
+
+  it("offers no journey affordance when the view model holds no governed contract href", () => {
+    render(<ContractCaseThreadStrip vm={caseThreadVm(null)} />);
+    // The case line itself still renders -- only the handoff is withheld.
+    expect(screen.getByText("Evidence Review")).toBeTruthy();
+    expect(screen.queryByRole("link", { name: "Open Optimize" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Open Optimize" })).toBeNull();
+    // Never a contract-less journey: an empty handoff is no handoff.
+    expect(
+      document.querySelector('.sw-c3-case-thread a[href="/source/optimize"]'),
+    ).toBeNull();
   });
 
   it("does not invent an optimization case from loaded opportunities", () => {
-    const vm = { opportunityView: { caseThread: null } } as unknown as SourceWorkspaceVM;
-    render(<ContractCaseThreadStrip vm={vm} onOpenOptimize={() => undefined} />);
+    const vm = {
+      opportunityView: { caseThread: null },
+      optCtaHref: JOURNEY_HREF,
+    } as unknown as SourceWorkspaceVM;
+    render(<ContractCaseThreadStrip vm={vm} />);
     expect(screen.getByText("No case opened")).toBeTruthy();
-    expect(screen.getByRole("button", { name: "Open Optimize" })).toBeTruthy();
+    expect(screen.getByRole("link", { name: "Open Optimize" })).toBeTruthy();
     expect(screen.queryByText("Evidence Review")).toBeNull();
   });
 
   it("does not repeat the navigation action on the Optimize tab", () => {
-    const vm = { opportunityView: { caseThread: null } } as unknown as SourceWorkspaceVM;
-    render(<ContractCaseThreadStrip vm={vm} onOpenOptimize={() => undefined} isOptimizeTab />);
+    const vm = {
+      opportunityView: { caseThread: null },
+      optCtaHref: JOURNEY_HREF,
+    } as unknown as SourceWorkspaceVM;
+    render(<ContractCaseThreadStrip vm={vm} isOptimizeTab />);
+    expect(screen.queryByRole("link", { name: "Open Optimize" })).toBeNull();
     expect(screen.queryByRole("button", { name: "Open Optimize" })).toBeNull();
   });
 
   it("does not render a case line without a contract opportunity read", () => {
-    const { container } = render(
-      <ContractCaseThreadStrip vm={vmWith(null)} onOpenOptimize={() => undefined} />,
-    );
+    const { container } = render(<ContractCaseThreadStrip vm={vmWith(null)} />);
     expect(container.querySelector(".sw-c3-case-thread")).toBeNull();
   });
 });
