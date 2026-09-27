@@ -631,6 +631,7 @@ export default async function SourceEventDetailPage({
               vendorResponses,
               rfpClausePresentLeverKeys,
               committedValueByLeverKey,
+              realizedValueByLeverKey,
             }) ?? undefined;
 
           // Arm the LIVE approve action on the gate ONLY when the event actually

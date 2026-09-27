@@ -74,6 +74,11 @@ import {
   buildSelectionFactDerivedTasks,
 } from './selection-fact-beats';
 import {
+  VALUE_STAGE_KEY,
+  buildValueFactDerivedGate,
+  buildValueFactDerivedTasks,
+} from './value-fact-beats';
+import {
   SOURCE_STAGE_LABELS,
   nextSourceStage,
 } from '@/lib/source/constants';
@@ -151,6 +156,13 @@ export interface BuildLiveStageInput {
    * two states apart and this field is where the distinction enters.
    */
   committedValueByLeverKey?: ReadonlyMap<string, number>;
+  /**
+   * Existing tenant-scoped per-lever realized-to-date signal, when available
+   * (`readRealizedValueLevers`). `undefined` means NO realized fact has been read
+   * — NOT that nothing has realized; `value-fact-beats` keeps those two states
+   * apart and this field is where the distinction enters.
+   */
+  realizedValueByLeverKey?: ReadonlyMap<string, number>;
 }
 
 /**
@@ -221,8 +233,8 @@ export function buildLiveStageView(
     ? SOURCE_STAGE_LABELS[nextStage] ?? nextStage
     : null;
 
-  // Items U-534, U-535, U-538, U-540 and U-542. Five stages' intake beats are
-  // derived from event facts and the resolved archetype. The other five carry
+  // Items U-534, U-535, U-538, U-540, U-542 and U-545. Six stages' intake beats
+  // are derived from event facts and the resolved archetype. The other four carry
   // exemplar content and say so below. `factBeats`
   // is the single switch: nothing downstream infers which stage is derived, and
   // the beat provenance is declared from the same value so the label cannot
@@ -256,6 +268,15 @@ export function buildLiveStageView(
     committedByLeverKey: input.committedValueByLeverKey,
     nextStageName,
   };
+  // Item U-545. No `nextStageName`: this is the terminal stage, and the gate
+  // reads its onward target (there is none) from the terminal contract rather
+  // than from a computed label a caller could hand it.
+  const valueBeatInput = {
+    archetype,
+    leverResults,
+    citations: input.citations,
+    realizedByLeverKey: input.realizedValueByLeverKey,
+  };
   const FACT_DERIVED_BEATS: Readonly<
     Record<string, () => { tasks: StageAnalyticsView['tasks']; gate: StageAnalyticsView['gate'] }>
   > = {
@@ -278,6 +299,10 @@ export function buildLiveStageView(
     [SELECTION_STAGE_KEY]: () => ({
       tasks: buildSelectionFactDerivedTasks(selectionBeatInput),
       gate: buildSelectionFactDerivedGate(selectionBeatInput),
+    }),
+    [VALUE_STAGE_KEY]: () => ({
+      tasks: buildValueFactDerivedTasks(valueBeatInput),
+      gate: buildValueFactDerivedGate(valueBeatInput),
     }),
   };
   const factBeats = FACT_DERIVED_BEATS[requestedStageKey]?.() ?? null;
