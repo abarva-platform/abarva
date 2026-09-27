@@ -17,21 +17,21 @@
     "No timestamp is recorded, so refreshing this file on an unchanged tree is a no-op."
   ],
   "counts": {
-    "testFiles": 2505,
-    "coveredTestFiles": 2065,
-    "pullRequestCoveredTestFiles": 2064,
-    "uncoveredTestFiles": 440,
+    "testFiles": 2506,
+    "coveredTestFiles": 2069,
+    "pullRequestCoveredTestFiles": 2068,
+    "uncoveredTestFiles": 437,
     "directoriesWithTests": 491,
-    "directoriesFullyCovered": 293,
+    "directoriesFullyCovered": 294,
     "directoriesPartiallyCovered": 24,
-    "directoriesUncovered": 174,
-    "directoriesWithUnrunTestFiles": 198,
-    "directoriesWithUntriagedUnrunTestFiles": 187,
+    "directoriesUncovered": 173,
+    "directoriesWithUnrunTestFiles": 197,
+    "directoriesWithUntriagedUnrunTestFiles": 186,
     "declaredQuarantineTestFiles": 52,
-    "untriagedUnrunTestFiles": 388,
+    "untriagedUnrunTestFiles": 385,
     "indeterminateInvocations": 0,
     "unresolvedIgnoreArguments": 0,
-    "criticalGovernedRiskDirectories": 2,
+    "criticalGovernedRiskDirectories": 1,
     "highGovernedRiskDirectories": 6,
     "unclassifiedRiskDirectories": 179,
     "unclassifiedRiskDirectoriesWithResolvedProductSources": 172,
@@ -407,75 +407,6 @@
   ],
   "governedRiskFiles": [
     {
-      "directory": "src/components/programs/discovery/__tests__",
-      "testPath": "src/components/programs/discovery/__tests__/brief-to-shape.test.ts",
-      "enumerated": true,
-      "collected": false,
-      "run": false,
-      "green": "unknown",
-      "covered": false,
-      "pullRequestCovered": false,
-      "declaredQuarantine": false,
-      "declaredQuarantineShape": null,
-      "untriaged": true,
-      "via": [],
-      "governedRisk": {
-        "score": 1000,
-        "band": "critical",
-        "signals": [
-          "declared_ai_surface_control"
-        ],
-        "productSourceCount": 6,
-        "rank": 1
-      }
-    },
-    {
-      "directory": "src/components/programs/discovery/__tests__",
-      "testPath": "src/components/programs/discovery/__tests__/DiscoveryCapturePanel.test.tsx",
-      "enumerated": true,
-      "collected": false,
-      "run": false,
-      "green": "unknown",
-      "covered": false,
-      "pullRequestCovered": false,
-      "declaredQuarantine": false,
-      "declaredQuarantineShape": null,
-      "untriaged": true,
-      "via": [],
-      "governedRisk": {
-        "score": 1000,
-        "band": "critical",
-        "signals": [
-          "declared_ai_surface_control"
-        ],
-        "productSourceCount": 6,
-        "rank": 1
-      }
-    },
-    {
-      "directory": "src/components/programs/discovery/__tests__",
-      "testPath": "src/components/programs/discovery/__tests__/DiscoveryReceiptCard.test.tsx",
-      "enumerated": true,
-      "collected": false,
-      "run": false,
-      "green": "unknown",
-      "covered": false,
-      "pullRequestCovered": false,
-      "declaredQuarantine": false,
-      "declaredQuarantineShape": null,
-      "untriaged": true,
-      "via": [],
-      "governedRisk": {
-        "score": 1000,
-        "band": "critical",
-        "signals": [
-          "declared_ai_surface_control"
-        ],
-        "productSourceCount": 6,
-        "rank": 1
-      }
-    },
-    {
       "directory": "src/app/(maestro)/source/__tests__",
       "testPath": "src/app/(maestro)/source/__tests__/approval-financial-permission.test.tsx",
       "enumerated": true,
@@ -498,7 +429,7 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 18,
-        "rank": 2
+        "rank": 1
       }
     },
     {
@@ -524,7 +455,7 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 18,
-        "rank": 2
+        "rank": 1
       }
     },
     {
@@ -550,7 +481,7 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 18,
-        "rank": 2
+        "rank": 1
       }
     },
     {
@@ -576,7 +507,7 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 18,
-        "rank": 2
+        "rank": 1
       }
     },
     {
@@ -600,7 +531,7 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 18,
-        "rank": 2
+        "rank": 1
       }
     },
     {
@@ -623,7 +554,7 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 5,
-        "rank": 3
+        "rank": 2
       }
     },
     {
@@ -646,7 +577,7 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 5,
-        "rank": 3
+        "rank": 2
       }
     },
     {
@@ -671,7 +602,7 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 5,
-        "rank": 3
+        "rank": 2
       }
     },
     {
@@ -696,7 +627,7 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 5,
-        "rank": 3
+        "rank": 2
       }
     },
     {
@@ -721,7 +652,7 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 3,
-        "rank": 4
+        "rank": 3
       }
     },
     {
@@ -746,7 +677,7 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 3,
-        "rank": 4
+        "rank": 3
       }
     },
     {
@@ -769,7 +700,7 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 3,
-        "rank": 4
+        "rank": 3
       }
     },
     {
@@ -792,7 +723,7 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 3,
-        "rank": 4
+        "rank": 3
       }
     },
     {
@@ -817,7 +748,7 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 4,
-        "rank": 5
+        "rank": 4
       }
     },
     {
@@ -840,7 +771,7 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 4,
-        "rank": 5
+        "rank": 4
       }
     },
     {
@@ -863,7 +794,7 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 4,
-        "rank": 5
+        "rank": 4
       }
     },
     {
@@ -888,7 +819,7 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 4,
-        "rank": 5
+        "rank": 4
       }
     },
     {
@@ -913,7 +844,7 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 5,
-        "rank": 6
+        "rank": 5
       }
     },
     {
@@ -938,7 +869,7 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 5,
-        "rank": 6
+        "rank": 5
       }
     },
     {
@@ -961,7 +892,7 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 5,
-        "rank": 6
+        "rank": 5
       }
     },
     {
@@ -984,7 +915,7 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 5,
-        "rank": 6
+        "rank": 5
       }
     },
     {
@@ -1009,7 +940,7 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 8,
-        "rank": 7
+        "rank": 6
       }
     },
     {
@@ -1034,7 +965,7 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 8,
-        "rank": 7
+        "rank": 6
       }
     },
     {
@@ -1057,7 +988,7 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 8,
-        "rank": 7
+        "rank": 6
       }
     },
     {
@@ -1082,7 +1013,7 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 8,
-        "rank": 7
+        "rank": 6
       }
     },
     {
@@ -1107,7 +1038,7 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 8,
-        "rank": 7
+        "rank": 6
       }
     },
     {
@@ -1132,7 +1063,7 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 8,
-        "rank": 7
+        "rank": 6
       }
     },
     {
@@ -1157,7 +1088,7 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 8,
-        "rank": 7
+        "rank": 6
       }
     },
     {
@@ -1182,7 +1113,7 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 8,
-        "rank": 7
+        "rank": 6
       }
     },
     {
@@ -1207,7 +1138,7 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 8,
-        "rank": 7
+        "rank": 6
       }
     },
     {
@@ -1230,27 +1161,11 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 2,
-        "rank": 8
+        "rank": 7
       }
     }
   ],
   "governedRiskRanking": [
-    {
-      "directory": "src/components/programs/discovery/__tests__",
-      "testFiles": 3,
-      "unrunTestFiles": 3,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 3,
-      "governedRisk": {
-        "score": 1000,
-        "band": "critical",
-        "signals": [
-          "declared_ai_surface_control"
-        ],
-        "productSourceCount": 6,
-        "rank": 1
-      }
-    },
     {
       "directory": "src/app/(maestro)/source/__tests__",
       "testFiles": 5,
@@ -1265,7 +1180,7 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 18,
-        "rank": 2
+        "rank": 1
       }
     },
     {
@@ -1281,7 +1196,7 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 5,
-        "rank": 3
+        "rank": 2
       }
     },
     {
@@ -1297,7 +1212,7 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 3,
-        "rank": 4
+        "rank": 3
       }
     },
     {
@@ -1313,7 +1228,7 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 4,
-        "rank": 5
+        "rank": 4
       }
     },
     {
@@ -1329,7 +1244,7 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 5,
-        "rank": 6
+        "rank": 5
       }
     },
     {
@@ -1345,7 +1260,7 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 8,
-        "rank": 7
+        "rank": 6
       }
     },
     {
@@ -1361,7 +1276,7 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 2,
-        "rank": 8
+        "rank": 7
       }
     }
   ],
@@ -3696,23 +3611,6 @@
   ],
   "governedRiskEvidence": [
     {
-      "directory": "src/components/programs/discovery/__tests__",
-      "testFiles": 3,
-      "unrunTestFiles": 3,
-      "governedRisk": {
-        "score": 1000,
-        "band": "critical",
-        "signals": [
-          "declared_ai_surface_control"
-        ],
-        "productSourceCount": 6,
-        "controlIds": [
-          "intelligence-pattern-promotion-brief-panel"
-        ],
-        "rank": 1
-      }
-    },
-    {
       "directory": "src/app/(maestro)/source/__tests__",
       "testFiles": 5,
       "unrunTestFiles": 1,
@@ -3737,7 +3635,7 @@
           "src/app/(maestro)/source/workspace/page.tsx",
           "src/lib/source/intake/servicenow-sourcing-request-repository.ts"
         ],
-        "rank": 2
+        "rank": 1
       }
     },
     {
@@ -3756,7 +3654,7 @@
           "src/app/(maestro)/home/page.tsx",
           "src/lib/tenant/resolveTenant.ts"
         ],
-        "rank": 3
+        "rank": 2
       }
     },
     {
@@ -3774,7 +3672,7 @@
         "tenantScopedReadSources": [
           "src/lib/active-client.ts"
         ],
-        "rank": 4
+        "rank": 3
       }
     },
     {
@@ -3792,7 +3690,7 @@
         "tenantScopedReadSources": [
           "src/lib/source/contract-evidence/read-model.ts"
         ],
-        "rank": 5
+        "rank": 4
       }
     },
     {
@@ -3810,7 +3708,7 @@
         "tenantScopedReadSources": [
           "src/lib/source/contract-intelligence/cloud-adapter.ts"
         ],
-        "rank": 6
+        "rank": 5
       }
     },
     {
@@ -3829,7 +3727,7 @@
           "src/lib/enterprise-context/derived-enterprise-read.ts",
           "src/lib/enterprise-context/intelligence-read-model.ts"
         ],
-        "rank": 7
+        "rank": 6
       }
     },
     {
@@ -3847,7 +3745,7 @@
         "tenantScopedReadSources": [
           "src/lib/source/nda/nda-authority-repository.ts"
         ],
-        "rank": 8
+        "rank": 7
       }
     }
   ],
@@ -4110,14 +4008,6 @@
     },
     {
       "directory": "src/components/context-broker/__tests__",
-      "testFiles": 3,
-      "coveredTestFiles": 0,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 3,
-      "via": []
-    },
-    {
-      "directory": "src/components/programs/discovery/__tests__",
       "testFiles": 3,
       "coveredTestFiles": 0,
       "declaredQuarantineTestFiles": 0,
