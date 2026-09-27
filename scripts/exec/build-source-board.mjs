@@ -1039,8 +1039,55 @@ const BLOCKER_RULES = [
   // gate: that is the defect this file already pins for the `blocked` rule, and
   // the signed-in rule still has it. Neither is a polarity question, so neither
   // is fixed here; both are filed, each with the live line that produced it.
+  //
+  // ITEM C-557 — THE OTHER POLARITY, AND THE EXPENSIVE ONE. Every note above is
+  // about this rule labelling an item that owes nothing. Two live items whose
+  // ENTIRE acceptance is a signed-in session derived NO blocker and were offered
+  // in a claimable lane of the queue, which exists to answer "what can I take
+  // with no input from Anand". `C-553`'s row names the direction: a false clear
+  // costs more than a false pending, and these were false clears. Two
+  // independent vocabulary holes, both measured by executing the rule rather
+  // than reading it — a prior run guessed that the classifier read the
+  // acceptance and not the body, and said so; it reads both.
+  //
+  //   - THE OWED WINDOW WAS 13 CHARACTERS TOO SHORT. `U-525` states its gate
+  //     literally — a signed-in phase build proof listed "as owed audit
+  //     evidence" — with 93 non-period characters between the two words. Swept
+  //     over the live corpus at 60/80/90/100/120/140/160/200/240/320: 80 and 90
+  //     move nothing, 100 moves `U-525` alone, and the band is FLAT from 140 to
+  //     320 at the same five ids, so the exact value carries no behaviour. 60
+  //     LOSES `U-536`, whose live gap is 78, which makes 80 a floor rather than
+  //     a starting point. 160 is taken from inside the flat band.
+  //
+  //   - `required` AND `needed` MATCHED NOTHING. `"Live signed-in proof
+  //     required: Yes"` is the plainest form a release record has, and it is
+  //     `U-527`'s only one. The VETO below already negates
+  //     `owed|required|needed` — it was written for a matcher vocabulary that
+  //     did not exist, and two of its three tokens were unreachable.
+  //
+  // THE WINDOW NOW STOPS AT THE NEWLINE, and that is what makes a wide one safe
+  // rather than merely bigger. `[^.]` admits `\n`, so `claimCorpus` — one item's
+  // statuses joined by `\n` — let a span leave one register line and take an
+  // owed word from the next: at 200 that labelled `T-401`. With `[^.\n]` the
+  // positive is gone at EVERY bound to 320. `;` is deliberately NOT excluded,
+  // unlike the sibling rung vetoes' `[^.;\n]`: four correct live matches
+  // (`D-020`, `U-540`, `U-543`, `C-609`) cross a semicolon inside one sentence.
+  //
+  // THE WHOLE MOVEMENT, per item and in both directions: 15 items change
+  // blocker, 0 LOSE one, and each gains this label from a sentence that says so
+  // in plain English. Only THREE are at rung 0, where claimability is decided —
+  // `U-401`, already gated and merely relabelled from `Blocked (see source)`,
+  // and `U-525` and `U-527`, which leave the claimable lanes. That is the entire
+  // claimability change.
+  //
+  // THE VETO IS NOT WIDENED HERE. `\bno\b` is absent from its negator list, so
+  // "no signed-in proof is required" still reads as a gate. That belongs to
+  // `C-553`, which is open against this veto; widening it in the same change
+  // would make the movement above unattributable. Blinding `required|needed` out
+  // of the veto moves 0 live items, so today's corpus does not hold that
+  // polarity and only case (c) of the suite does.
   {
-    re: /\bnot\s+signed-in\b|(?:^|[.!?]\s+)signed-in\s+check\b|signed-in[^.]{0,80}\b(pending|owed|not proven|not performed|not claimed|remains? (?:open|unproven))\b/i,
+    re: /\bnot\s+signed-in\b|(?:^|[.!?]\s+)signed-in\s+check\b|signed-in[^.\n]{0,160}\b(pending|owed|required|needed|not proven|not performed|not claimed|remains? (?:open|unproven))\b/i,
     veto: /\b(?:not|never|no longer|none)\b[\s*_]{0,4}(?:owed|required|needed)\b/i,
     say: "Signed-in acceptance owed",
     ownerGate: true,
