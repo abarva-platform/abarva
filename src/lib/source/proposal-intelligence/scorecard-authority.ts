@@ -111,6 +111,16 @@ export function buildScorecardAuthorityView(input: {
   );
 
   const blockers: ScorecardAuthorityBlocker[] = [];
+  const weightTotal = criteria.reduce((total, item) => total + item.weight, 0);
+
+  if (criteria.length > 0 && (!Number.isFinite(weightTotal) || Math.abs(weightTotal - 100) > 0.000001)) {
+    blockers.push({
+      blockerId: "scorecard-weight-total-invalid",
+      label: "Scorecard weights must total 100",
+      detail: "Approved scorecard criterion weights do not total 100.",
+      nextAction: "Correct and reapprove the frozen criterion weights before review.",
+    });
+  }
 
   if (criteria.length === 0) {
     blockers.push({
@@ -281,7 +291,6 @@ export function buildScorecardAuthorityView(input: {
   }
 
   const ready = blockers.length === 0;
-  const weightTotal = criteria.reduce((total, item) => total + item.weight, 0);
   const vendorRows = ready
     ? [...scoresByVendor.entries()].map(([vendorId, vendorScores]) => {
         const criterionIds = new Set(

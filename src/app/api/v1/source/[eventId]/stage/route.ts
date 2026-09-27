@@ -35,6 +35,7 @@ import { persistAutoAssessment } from "@/lib/source/gate-auto-assessment-persist
 import { normalizeApprovalReason } from "@/lib/source/source-governance-enforcement";
 import type { SourceStageConfirmations } from "@/lib/source/approval-decision";
 import { evaluateSourceGateAdvanceContract } from "@/lib/source/gate-advance-contract";
+import { readSourceScorecardAuthorityRecords } from "@/lib/source/proposal-intelligence/scorecard-authority-store";
 import {
   isGateApprovalStrictMode,
   isStrictModeApprovalRole,
@@ -253,9 +254,15 @@ export async function PATCH(req: NextRequest, { params }: RouteCtx) {
       const evidence = (
         (evidenceRows ?? []) as SourceEventEvidenceStateRow[]
       ).map(evidenceStateRowToView);
+      const scorecardRecords = currentStage === "evaluation"
+        ? await readSourceScorecardAuthorityRecords(persistedEvent.id, effectiveClientKey)
+        : undefined;
       const gateContract = evaluateSourceGateAdvanceContract({
         currentStage,
         targetStage: stageKey,
+        tenantKey: effectiveClientKey,
+        eventId: persistedEvent.id,
+        scorecardRecords,
         confirmations: body.confirmations,
         criteria,
         artifacts,

@@ -10,7 +10,7 @@ const baseCriterion: ScorecardAuthorityCriterionRecord = {
   criterionId: "transition",
   criterionVersion: "crit-v1",
   label: "Transition certainty",
-  weight: 40,
+  weight: 100,
   weightsFrozen: true,
   approvedCriterionVersion: "crit-v1",
   approvedBy: "procurement-lead",
@@ -69,7 +69,7 @@ describe("buildScorecardAuthorityView", () => {
     expect(result.rankAllowed).toBe(false);
     expect(result.advanceAllowed).toBe(false);
     expect(result.bafoReady).toBe(false);
-    expect(result.weightTotal).toBe(40);
+    expect(result.weightTotal).toBe(100);
     expect(result.criteria[0]).toEqual(
       expect.objectContaining({
         approvedCriterionVersion: "crit-v1",
@@ -236,5 +236,13 @@ describe("buildScorecardAuthorityView", () => {
     );
     expect(result.scoreRows).toEqual([]);
     expect(result.vendorRows).toEqual([]);
+  });
+
+  it("refuses a locked but non-100-weight scorecard", () => {
+    const result = view({ criteria: [{ ...baseCriterion, weight: 40 }] });
+    expect(result.state).toBe("blocked");
+    expect(result.blockers.map((blocker) => blocker.blockerId)).toContain(
+      "scorecard-weight-total-invalid",
+    );
   });
 });

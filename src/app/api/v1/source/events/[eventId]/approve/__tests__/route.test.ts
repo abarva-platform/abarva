@@ -116,6 +116,10 @@ jest.mock("@/lib/source/gate-advance-contract", () => ({
   })),
 }));
 
+jest.mock("@/lib/source/proposal-intelligence/scorecard-authority-store", () => ({
+  readSourceScorecardAuthorityRecords: jest.fn(async () => ({ kind: "unavailable" as const })),
+}));
+
 jest.mock("@/lib/source/contract-optimization/read", () => ({
   getContractOptimizationProfile: jest.fn(async () => null),
 }));
@@ -128,6 +132,7 @@ import { autoDraftOnStageEntry } from "@/lib/source/stage-entry-autodraft";
 import { getContractOptimizationProfile } from "@/lib/source/contract-optimization/read";
 import { isGateApprovalStrictMode } from "@/lib/auth/gate-approval-strict-mode";
 import { evaluateSourceGateAdvanceContract } from "@/lib/source/gate-advance-contract";
+import { readSourceScorecardAuthorityRecords } from "@/lib/source/proposal-intelligence/scorecard-authority-store";
 import { SOURCE_APPROVAL_REASON_MIN_LENGTH } from "@/lib/source/source-governance-enforcement";
 
 const mockAfter = jest.mocked(after);
@@ -138,6 +143,7 @@ const mockGetContractOptimizationProfile = jest.mocked(
 );
 const mockIsGateApprovalStrictMode = jest.mocked(isGateApprovalStrictMode);
 const mockGateAdvance = jest.mocked(evaluateSourceGateAdvanceContract);
+const readScorecard = jest.mocked(readSourceScorecardAuthorityRecords);
 
 // `key` is what `getActiveClientRow` returns, which is `tenant.appClientKey` —
 // the app-tier ClientKey, not the canonical key. This helper used to take a
@@ -153,6 +159,8 @@ function activeClientRow(key: ClientKey) {
 
 describe("POST Source event approve", () => {
   beforeEach(() => {
+    readScorecard.mockClear();
+    readScorecard.mockResolvedValue({ kind: "unavailable" });
     mockAutoDraftOnStageEntry.mockClear();
     mockAfter.mockClear();
     applyApproval.mockClear();
@@ -174,6 +182,25 @@ describe("POST Source event approve", () => {
       status: 200,
       readiness: { ok: true, blockers: [] },
       }));
+  });
+
+  it("reads scorecard authority before Evaluation approval and refuses to write when unavailable", async () => {
+    eventRow.current_stage_key = "evaluation";
+    mockGateAdvance.mockImplementationOnce((input) => ({
+      ok: false,
+      status: 503,
+      error: input.scorecardRecords?.kind === "unavailable" ? "scorecard_authority_unavailable" : "scorecard_not_read",
+      readiness: { ok: true, blockers: [] },
+    }));
+    const response = await POST(new Request("https://app.abarva.ai/api/v1/source/events/event-1/approve", {
+      method: "POST",
+      body: JSON.stringify({ action: "approve", notes: "Evaluation review completed.", confirmations: { evidenceComplete: true, exclusionsReviewed: true, stageFinal: true } }),
+    }), { params: Promise.resolve({ eventId: "event-1" }) });
+    expect(readScorecard).toHaveBeenCalledWith("event-1", "skyharbor");
+    expect(response.status).toBe(503);
+    expect((await response.json()).error).toBe("scorecard_authority_unavailable");
+    expect(applyApproval).not.toHaveBeenCalled();
+    expect(updateStage).not.toHaveBeenCalled();
   });
 
   it("binds the initial intake approval to the exact current Request version", async () => {
