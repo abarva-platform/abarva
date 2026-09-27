@@ -33,6 +33,7 @@ Event creation/read mapping, the common criterion and stage-gate evaluator, both
 - Pass: red-first tests reproduced missing policy persistence, duplicate-create overwrites, external signer checks under SELF, and route policy omission.
 - Pass: red-first Strategy cases caught a sponsor-commitment evidence requirement and sponsor sign-off wording still applied to SELF events. The correction excludes only that evidence ID for SELF and retains the other Strategy requirements and all legacy requirements.
 - Pass: 85 Source library suites, 835 tests; 33 Source API suites, 243 tests; 3 canvas/adapter suites, 47 tests.
+- Pass: the derived Source builder-vocabulary render-coverage artifact was regenerated after the canvas gained two policy imports. Its import closure changed from 432 to 434; covered and remainder component paths did not change. The control passed 21/21 without regeneration mode.
 - Pass: removing the missing-policy fallback made the historical-authority test fail; restoration returned it to green.
 - Pass: TypeScript no-emit with an 8 GB heap and scoped ESLint. Final release control and diff checks are run before updating the PR.
 - Pass: schema-only PR #8542 merged; official ACA run 36286558717 succeeded and its image was independently matched across web template, healthy 100%-traffic revision, and both delivery workers. This is not database apply.
