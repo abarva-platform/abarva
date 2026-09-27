@@ -9,6 +9,19 @@ import {
   buildOperatorChecklist,
 } from '../ProgramOriginationWorkspace';
 
+// TEST-SETUP GAP, NOT A PRODUCT DEFECT: `ProgramOriginationWorkspace` calls
+// `useRouter()` unconditionally at line 378 and pushes on a successful commit at
+// 558, so rendering it without the App Router in scope throws `invariant
+// expected app router to be mounted` before any assertion in this file runs.
+// Both cases here failed on that, in a suite no workflow ran. The sibling
+// `StewardChat.attachments.test.tsx` in this same directory already carried this
+// exact mock — so the gap was one file wide, and this is the sibling's shape.
+const mockRouterPush = jest.fn();
+
+jest.mock('next/navigation', () => ({
+  useRouter: () => ({ push: mockRouterPush, replace: jest.fn() }),
+}));
+
 jest.mock('../StewardChat', () => ({
   StewardChat: ({ turns }: { turns: Array<{ text: string }> }) => (
     <section aria-label="Mock Steward chat">

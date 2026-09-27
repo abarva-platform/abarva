@@ -17,21 +17,21 @@
     "No timestamp is recorded, so refreshing this file on an unchanged tree is a no-op."
   ],
   "counts": {
-    "testFiles": 2504,
-    "coveredTestFiles": 2059,
-    "pullRequestCoveredTestFiles": 2058,
-    "uncoveredTestFiles": 445,
+    "testFiles": 2505,
+    "coveredTestFiles": 2065,
+    "pullRequestCoveredTestFiles": 2064,
+    "uncoveredTestFiles": 440,
     "directoriesWithTests": 491,
-    "directoriesFullyCovered": 292,
-    "directoriesPartiallyCovered": 25,
+    "directoriesFullyCovered": 293,
+    "directoriesPartiallyCovered": 24,
     "directoriesUncovered": 174,
-    "directoriesWithUnrunTestFiles": 199,
-    "directoriesWithUntriagedUnrunTestFiles": 188,
+    "directoriesWithUnrunTestFiles": 198,
+    "directoriesWithUntriagedUnrunTestFiles": 187,
     "declaredQuarantineTestFiles": 52,
-    "untriagedUnrunTestFiles": 393,
+    "untriagedUnrunTestFiles": 388,
     "indeterminateInvocations": 0,
     "unresolvedIgnoreArguments": 0,
-    "criticalGovernedRiskDirectories": 3,
+    "criticalGovernedRiskDirectories": 2,
     "highGovernedRiskDirectories": 6,
     "unclassifiedRiskDirectories": 179,
     "unclassifiedRiskDirectoriesWithResolvedProductSources": 172,
@@ -265,16 +265,6 @@
       ]
     },
     {
-      "directory": "src/components/programs/origination/__tests__",
-      "testFiles": 6,
-      "coveredTestFiles": 1,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 5,
-      "via": [
-        "command"
-      ]
-    },
-    {
       "directory": "src/lib/source/new-workspace",
       "testFiles": 6,
       "coveredTestFiles": 5,
@@ -417,146 +407,6 @@
   ],
   "governedRiskFiles": [
     {
-      "directory": "src/components/programs/origination/__tests__",
-      "testPath": "src/components/programs/origination/__tests__/applyArtifactToBrief.test.ts",
-      "enumerated": true,
-      "collected": false,
-      "run": false,
-      "green": "unknown",
-      "covered": false,
-      "pullRequestCovered": false,
-      "declaredQuarantine": false,
-      "declaredQuarantineShape": null,
-      "untriaged": true,
-      "via": [],
-      "governedRisk": {
-        "score": 1000,
-        "band": "critical",
-        "signals": [
-          "declared_ai_surface_control"
-        ],
-        "productSourceCount": 5,
-        "rank": 1
-      }
-    },
-    {
-      "directory": "src/components/programs/origination/__tests__",
-      "testPath": "src/components/programs/origination/__tests__/buildBriefSnapshot.test.ts",
-      "enumerated": true,
-      "collected": false,
-      "run": false,
-      "green": "unknown",
-      "covered": false,
-      "pullRequestCovered": false,
-      "declaredQuarantine": false,
-      "declaredQuarantineShape": null,
-      "untriaged": true,
-      "via": [],
-      "governedRisk": {
-        "score": 1000,
-        "band": "critical",
-        "signals": [
-          "declared_ai_surface_control"
-        ],
-        "productSourceCount": 5,
-        "rank": 1
-      }
-    },
-    {
-      "directory": "src/components/programs/origination/__tests__",
-      "testPath": "src/components/programs/origination/__tests__/ProgramBriefPanel.controls.test.tsx",
-      "enumerated": true,
-      "collected": true,
-      "run": "unknown",
-      "green": "unknown",
-      "covered": true,
-      "pullRequestCovered": true,
-      "declaredQuarantine": false,
-      "declaredQuarantineShape": null,
-      "untriaged": false,
-      "via": [
-        "command"
-      ],
-      "governedRisk": {
-        "score": 1000,
-        "band": "critical",
-        "signals": [
-          "declared_ai_surface_control"
-        ],
-        "productSourceCount": 5,
-        "rank": 1
-      }
-    },
-    {
-      "directory": "src/components/programs/origination/__tests__",
-      "testPath": "src/components/programs/origination/__tests__/ProgramBriefPanel.test.tsx",
-      "enumerated": true,
-      "collected": false,
-      "run": false,
-      "green": "unknown",
-      "covered": false,
-      "pullRequestCovered": false,
-      "declaredQuarantine": false,
-      "declaredQuarantineShape": null,
-      "untriaged": true,
-      "via": [],
-      "governedRisk": {
-        "score": 1000,
-        "band": "critical",
-        "signals": [
-          "declared_ai_surface_control"
-        ],
-        "productSourceCount": 5,
-        "rank": 1
-      }
-    },
-    {
-      "directory": "src/components/programs/origination/__tests__",
-      "testPath": "src/components/programs/origination/__tests__/ProgramOriginationWorkspace.test.tsx",
-      "enumerated": true,
-      "collected": false,
-      "run": false,
-      "green": "unknown",
-      "covered": false,
-      "pullRequestCovered": false,
-      "declaredQuarantine": false,
-      "declaredQuarantineShape": null,
-      "untriaged": true,
-      "via": [],
-      "governedRisk": {
-        "score": 1000,
-        "band": "critical",
-        "signals": [
-          "declared_ai_surface_control"
-        ],
-        "productSourceCount": 5,
-        "rank": 1
-      }
-    },
-    {
-      "directory": "src/components/programs/origination/__tests__",
-      "testPath": "src/components/programs/origination/__tests__/StewardChat.attachments.test.tsx",
-      "enumerated": true,
-      "collected": false,
-      "run": false,
-      "green": "unknown",
-      "covered": false,
-      "pullRequestCovered": false,
-      "declaredQuarantine": false,
-      "declaredQuarantineShape": null,
-      "untriaged": true,
-      "via": [],
-      "governedRisk": {
-        "score": 1000,
-        "band": "critical",
-        "signals": [
-          "declared_ai_surface_control"
-        ],
-        "productSourceCount": 5,
-        "rank": 1
-      }
-    },
-    {
       "directory": "src/components/programs/discovery/__tests__",
       "testPath": "src/components/programs/discovery/__tests__/brief-to-shape.test.ts",
       "enumerated": true,
@@ -576,7 +426,7 @@
           "declared_ai_surface_control"
         ],
         "productSourceCount": 6,
-        "rank": 2
+        "rank": 1
       }
     },
     {
@@ -599,7 +449,7 @@
           "declared_ai_surface_control"
         ],
         "productSourceCount": 6,
-        "rank": 2
+        "rank": 1
       }
     },
     {
@@ -622,7 +472,7 @@
           "declared_ai_surface_control"
         ],
         "productSourceCount": 6,
-        "rank": 2
+        "rank": 1
       }
     },
     {
@@ -648,7 +498,7 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 18,
-        "rank": 3
+        "rank": 2
       }
     },
     {
@@ -674,7 +524,7 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 18,
-        "rank": 3
+        "rank": 2
       }
     },
     {
@@ -700,7 +550,7 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 18,
-        "rank": 3
+        "rank": 2
       }
     },
     {
@@ -726,7 +576,7 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 18,
-        "rank": 3
+        "rank": 2
       }
     },
     {
@@ -750,7 +600,7 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 18,
-        "rank": 3
+        "rank": 2
       }
     },
     {
@@ -773,7 +623,7 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 5,
-        "rank": 4
+        "rank": 3
       }
     },
     {
@@ -796,7 +646,7 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 5,
-        "rank": 4
+        "rank": 3
       }
     },
     {
@@ -821,7 +671,7 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 5,
-        "rank": 4
+        "rank": 3
       }
     },
     {
@@ -846,7 +696,7 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 5,
-        "rank": 4
+        "rank": 3
       }
     },
     {
@@ -871,7 +721,7 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 3,
-        "rank": 5
+        "rank": 4
       }
     },
     {
@@ -896,7 +746,7 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 3,
-        "rank": 5
+        "rank": 4
       }
     },
     {
@@ -919,7 +769,7 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 3,
-        "rank": 5
+        "rank": 4
       }
     },
     {
@@ -942,7 +792,7 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 3,
-        "rank": 5
+        "rank": 4
       }
     },
     {
@@ -967,7 +817,7 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 4,
-        "rank": 6
+        "rank": 5
       }
     },
     {
@@ -990,7 +840,7 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 4,
-        "rank": 6
+        "rank": 5
       }
     },
     {
@@ -1013,7 +863,7 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 4,
-        "rank": 6
+        "rank": 5
       }
     },
     {
@@ -1038,7 +888,7 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 4,
-        "rank": 6
+        "rank": 5
       }
     },
     {
@@ -1063,7 +913,7 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 5,
-        "rank": 7
+        "rank": 6
       }
     },
     {
@@ -1088,7 +938,7 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 5,
-        "rank": 7
+        "rank": 6
       }
     },
     {
@@ -1111,7 +961,7 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 5,
-        "rank": 7
+        "rank": 6
       }
     },
     {
@@ -1134,7 +984,7 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 5,
-        "rank": 7
+        "rank": 6
       }
     },
     {
@@ -1159,7 +1009,7 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 8,
-        "rank": 8
+        "rank": 7
       }
     },
     {
@@ -1184,7 +1034,7 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 8,
-        "rank": 8
+        "rank": 7
       }
     },
     {
@@ -1207,7 +1057,7 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 8,
-        "rank": 8
+        "rank": 7
       }
     },
     {
@@ -1232,7 +1082,7 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 8,
-        "rank": 8
+        "rank": 7
       }
     },
     {
@@ -1257,7 +1107,7 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 8,
-        "rank": 8
+        "rank": 7
       }
     },
     {
@@ -1282,7 +1132,7 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 8,
-        "rank": 8
+        "rank": 7
       }
     },
     {
@@ -1307,7 +1157,7 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 8,
-        "rank": 8
+        "rank": 7
       }
     },
     {
@@ -1332,7 +1182,7 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 8,
-        "rank": 8
+        "rank": 7
       }
     },
     {
@@ -1357,7 +1207,7 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 8,
-        "rank": 8
+        "rank": 7
       }
     },
     {
@@ -1380,27 +1230,11 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 2,
-        "rank": 9
+        "rank": 8
       }
     }
   ],
   "governedRiskRanking": [
-    {
-      "directory": "src/components/programs/origination/__tests__",
-      "testFiles": 6,
-      "unrunTestFiles": 5,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 5,
-      "governedRisk": {
-        "score": 1000,
-        "band": "critical",
-        "signals": [
-          "declared_ai_surface_control"
-        ],
-        "productSourceCount": 5,
-        "rank": 1
-      }
-    },
     {
       "directory": "src/components/programs/discovery/__tests__",
       "testFiles": 3,
@@ -1414,7 +1248,7 @@
           "declared_ai_surface_control"
         ],
         "productSourceCount": 6,
-        "rank": 2
+        "rank": 1
       }
     },
     {
@@ -1431,7 +1265,7 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 18,
-        "rank": 3
+        "rank": 2
       }
     },
     {
@@ -1447,7 +1281,7 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 5,
-        "rank": 4
+        "rank": 3
       }
     },
     {
@@ -1463,7 +1297,7 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 3,
-        "rank": 5
+        "rank": 4
       }
     },
     {
@@ -1479,7 +1313,7 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 4,
-        "rank": 6
+        "rank": 5
       }
     },
     {
@@ -1495,7 +1329,7 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 5,
-        "rank": 7
+        "rank": 6
       }
     },
     {
@@ -1511,7 +1345,7 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 8,
-        "rank": 8
+        "rank": 7
       }
     },
     {
@@ -1527,7 +1361,7 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 2,
-        "rank": 9
+        "rank": 8
       }
     }
   ],
@@ -3862,23 +3696,6 @@
   ],
   "governedRiskEvidence": [
     {
-      "directory": "src/components/programs/origination/__tests__",
-      "testFiles": 6,
-      "unrunTestFiles": 5,
-      "governedRisk": {
-        "score": 1000,
-        "band": "critical",
-        "signals": [
-          "declared_ai_surface_control"
-        ],
-        "productSourceCount": 5,
-        "controlIds": [
-          "intelligence-pattern-promotion-brief-panel"
-        ],
-        "rank": 1
-      }
-    },
-    {
       "directory": "src/components/programs/discovery/__tests__",
       "testFiles": 3,
       "unrunTestFiles": 3,
@@ -3892,7 +3709,7 @@
         "controlIds": [
           "intelligence-pattern-promotion-brief-panel"
         ],
-        "rank": 2
+        "rank": 1
       }
     },
     {
@@ -3920,7 +3737,7 @@
           "src/app/(maestro)/source/workspace/page.tsx",
           "src/lib/source/intake/servicenow-sourcing-request-repository.ts"
         ],
-        "rank": 3
+        "rank": 2
       }
     },
     {
@@ -3939,7 +3756,7 @@
           "src/app/(maestro)/home/page.tsx",
           "src/lib/tenant/resolveTenant.ts"
         ],
-        "rank": 4
+        "rank": 3
       }
     },
     {
@@ -3957,7 +3774,7 @@
         "tenantScopedReadSources": [
           "src/lib/active-client.ts"
         ],
-        "rank": 5
+        "rank": 4
       }
     },
     {
@@ -3975,7 +3792,7 @@
         "tenantScopedReadSources": [
           "src/lib/source/contract-evidence/read-model.ts"
         ],
-        "rank": 6
+        "rank": 5
       }
     },
     {
@@ -3993,7 +3810,7 @@
         "tenantScopedReadSources": [
           "src/lib/source/contract-intelligence/cloud-adapter.ts"
         ],
-        "rank": 7
+        "rank": 6
       }
     },
     {
@@ -4012,7 +3829,7 @@
           "src/lib/enterprise-context/derived-enterprise-read.ts",
           "src/lib/enterprise-context/intelligence-read-model.ts"
         ],
-        "rank": 8
+        "rank": 7
       }
     },
     {
@@ -4030,7 +3847,7 @@
         "tenantScopedReadSources": [
           "src/lib/source/nda/nda-authority-repository.ts"
         ],
-        "rank": 9
+        "rank": 8
       }
     }
   ],

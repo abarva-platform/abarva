@@ -129,7 +129,19 @@ describe('StewardChat · starter prompts', () => {
     expect(screen.getByLabelText('Starter prompts')).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Apex ERP modernization' })).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Meridian prior auth' })).toBeTruthy();
-    expect(screen.getByRole('button', { name: 'First Capital risk controls' })).toBeTruthy();
+    // STALE, UPDATED: this case asked for a button named `First Capital risk
+    // controls` until 2026-09-27. #5005 standardized the demo tenant display
+    // labels on 2026-07-17 and renamed that starter prompt to `FS Demo risk
+    // controls`; the case has been red ever since, in a suite no workflow ran.
+    // The renamed label is the product's intent, so the expectation moves — the
+    // behaviour under test, that all three starter prompts render before the
+    // first user turn, never changed.
+    //
+    // Still pinned as a literal rather than read off the component's own
+    // STARTER_PROMPTS list. Deriving it would make the case pass for any label,
+    // including an empty one, which is how a rename goes unnoticed in the first
+    // place.
+    expect(screen.getByRole('button', { name: 'FS Demo risk controls' })).toBeTruthy();
   });
 
   it('prefills the composer when a starter prompt is selected', () => {

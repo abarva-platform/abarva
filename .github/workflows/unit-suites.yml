@@ -1405,6 +1405,57 @@ jobs:
           "src/app/(maestro)/home/__tests__/no-readmin-reexports.test.ts"
           --no-coverage --ci
 
+      # T-767 (2026-09-27) wires `src/components/programs/origination/__tests__`,
+      # which the coverage census ranked #1 by untriaged unrun tests among
+      # governed-risk directories — `critical`, `declared_ai_surface_control`,
+      # 5 untriaged of 5 unrun of 6 test files on `0a6f73356f`, this change's base.
+      # Re-measured there in a separate clean worktree after a rebase rather than
+      # carried over from the branch point, so the figure is one a reader can
+      # reproduce. The repo-wide absolutes DID move across that rebase; the
+      # per-directory figures did not, and the release record states both.
+      #
+      # The item said two of three suites were unwired. The directory holds SIX
+      # and FIVE ran nowhere, so the filing undercounted by three. What it got
+      # right is the hazard it named: `C-544` wired one suite into
+      # `ai-surface-control-catalog.yml` and had to drop the directory from the
+      # committed dark-directory baseline in the same change, which moved it from
+      # `uncovered` to `partial` — a QUIETER state, because the ratchet watches
+      # fully-dark directories and stopped watching this one while five of its
+      # six suites still ran nowhere. The directory is NOT being re-added to that
+      # baseline; a partial directory does not belong in a set of fully-dark ones.
+      #
+      # Two of the five were RED where no workflow could report it, and neither
+      # was a product defect:
+      #
+      #   * `StewardChat.attachments.test.tsx` pinned a starter-prompt button
+      #     named `First Capital risk controls`. #5005 renamed it to `FS Demo
+      #     risk controls` on 2026-07-17 — the case had been red for ten weeks.
+      #     Verdict `update`: the expectation moves to the renamed label.
+      #   * `ProgramOriginationWorkspace.test.tsx` rendered a component that
+      #     calls `useRouter()` unconditionally, with no `next/navigation` mock,
+      #     so both its cases threw `invariant expected app router to be
+      #     mounted`. Verdict `update`: the sibling suite in this same directory
+      #     already carried the mock it was missing.
+      #
+      # Neither was weakened or deleted to reach green. Measured on the branch
+      # after the two repairs and before this step: 6 suites, 49 tests, 0 failing,
+      # 0.7s. A red directory is wired by fixing it, never by adding it to a green
+      # command, which is why the repairs come first and the directory name comes
+      # second.
+      #
+      # Named as a DIRECTORY, not file by file, for the reason in this file's
+      # header: file-by-file wiring is the shape of the defect. A seventh suite
+      # written here tomorrow runs the day it lands.
+      # `src/__tests__/behaviors/programs-origination-directory-ci-coverage.test.ts`
+      # proves this step through the census's own four-hop resolver rather than by
+      # searching this file for a string, and records that no sibling directory is
+      # prefixed by `__tests__` — a bare Jest path argument is a regex, so one
+      # arriving later would be adopted by this command without anyone choosing it.
+      - name: Run the T-767 Programs origination component suites
+        run: >-
+          npx jest src/components/programs/origination/__tests__
+          --no-coverage --ci
+
       - name: Refuse a test run that modified committed input data
         if: always()
         run: node scripts/ci/assert-datasets-unmodified.mjs
