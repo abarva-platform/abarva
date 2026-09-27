@@ -17,6 +17,7 @@ import remarkGfm from "remark-gfm";
 import rehypeSanitize from "rehype-sanitize";
 import { AskAnythingBar } from "@/components/agent/AskAnythingBar";
 import { AppShell } from "@/components/shell/AppShell";
+import { EventRetirementControl } from "@/components/source/approval/EventRetirementControl";
 import { AcceptClientFinalButton } from "@/components/source/canvas/workspace-tabs/AcceptClientFinalButton";
 import { ContractOptimizationProfilePanel } from "@/components/source/canvas/contract-optimization/ContractOptimizationProfilePanel";
 import { ResponsesStageView } from "@/components/source/canvas/responses/ResponsesStageView";
@@ -7038,6 +7039,9 @@ function ApprovalsWorkspace({
       ) : null}
       {view.approvals.ledger.length > 0 ? (
         <ApprovalLedgerTable ledger={view.approvals.ledger} />
+      ) : null}
+      {view.event.lifecycle === "active" ? (
+        <EventRetirementControl eventId={view.event.id} eventCode={view.event.code} />
       ) : null}
     </section>
   );

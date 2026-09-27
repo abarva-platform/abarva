@@ -782,12 +782,26 @@ describe("SourceAnalyticsCanvas stage workflow", () => {
       `/source/events/${EVENT.id}?stage=scope&workspace=files`,
     );
     const approvalsWorkspace = screen.getByTestId("source-shell-v2-approvals");
+    expect(screen.getByRole("button", { name: "Retire event" })).toBeInTheDocument();
     expect(approvalsWorkspace).toHaveTextContent(
       "All 7 workflow inputs complete",
     );
     expect(approvalsWorkspace).not.toHaveTextContent(
       "All 7 required evidence items ready",
     );
+  });
+
+  it("does not offer retirement once an event is archived", () => {
+    render(
+      <SourceAnalyticsCanvas
+        event={{ ...EVENT, status: "archived", statusLabel: "Archived" }}
+        viewStage="scope"
+        tenantName="Demo Client"
+        initialWorkspace="approvals"
+      />,
+    );
+
+    expect(screen.queryByRole("button", { name: "Retire event" })).toBeNull();
   });
 
   it("discloses when a stage was approved with required inputs still open", () => {

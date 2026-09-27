@@ -187,11 +187,13 @@ describe("POST Source event approve", () => {
     applyApproval.mockResolvedValue({ ok: true });
     updateStage.mockResolvedValue({ ok: true });
     eventRow.current_stage_key = "rfp";
+    eventRow.lifecycle_state = "waiting_on_client";
     eventRow.client_key = "skyharbor-air";
     eventRow.sourcing_motion = null;
     eventRow.created_by_user_id = "another-user";
     eventRow.approval_policy_code = null;
     mockIsGateApprovalStrictMode.mockReturnValue(false);
+    mockGateAdvance.mockClear();
     stageSubstrate.criteria = [];
     mockGateAdvance.mockImplementation(() => ({
       ok: true,
@@ -218,6 +220,40 @@ describe("POST Source event approve", () => {
     expect((await response.json()).error).toBe("scorecard_authority_unavailable");
     expect(applyApproval).not.toHaveBeenCalled();
     expect(updateStage).not.toHaveBeenCalled();
+  });
+
+  it("allows an authorized creator to retire a legacy event without recording stage approval", async () => {
+    eventRow.lifecycle_state = "active";
+    eventRow.current_stage_key = "scope";
+    eventRow.created_by_user_id = "user-1";
+    eventRow.approval_policy_code = "legacy_signed_scope_v1";
+    mockIsGateApprovalStrictMode.mockReturnValue(true);
+
+    const response = await POST(
+      new Request("http://localhost/api/v1/source/events/event-1/approve", {
+        method: "POST",
+        body: JSON.stringify({ action: "reject", notes: "Synthetic event superseded by a new event." }),
+      }),
+      { params: Promise.resolve({ eventId: "event-1" }) },
+    );
+
+    expect(response.status).toBe(200);
+    expect(applyApproval).toHaveBeenCalledWith(
+      expect.objectContaining({
+        approvalAction: "rejected",
+        fromState: "active",
+        toState: "archived",
+        notes: expect.stringContaining("Synthetic event superseded"),
+      }),
+    );
+    expect(applyApproval.mock.calls[0]).toEqual([
+      expect.objectContaining({ notes: expect.not.stringContaining("Self-approval notice") }),
+    ]);
+    expect(insertActivityLog).toHaveBeenCalledWith(
+      expect.objectContaining({ metadata: expect.objectContaining({ selfApproval: false }) }),
+    );
+    expect(mockGateAdvance).not.toHaveBeenCalled();
+    expect(sendStageDecisionUpdates).not.toHaveBeenCalled();
   });
 
   it("binds the initial intake approval to the exact current Request version", async () => {

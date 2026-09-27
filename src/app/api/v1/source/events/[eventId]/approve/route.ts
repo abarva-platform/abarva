@@ -280,11 +280,12 @@ export async function POST(
   // so the server derives it from the stored creator. The client flag stays
   // honoured for callers that send it, but omitting it no longer hides a
   // self-approval from the strict-mode gate or from the approval record.
-  const isSelfApproval = Boolean(
+  const isEventCreator = Boolean(
     event.created_by_user_id && event.created_by_user_id === tenancy.userId,
   );
+  const isSelfApproval = body.action === "approve" && isEventCreator;
   const selfApprovalClaimed = body.selfApproveIfAuthorized === true;
-  if ((selfApprovalClaimed || isSelfApproval) && strictMode) {
+  if (body.action !== "reject" && (selfApprovalClaimed || isEventCreator) && strictMode) {
     if (!isStrictModeApprovalRole(tenancy.role)) {
       return Response.json(
         {
