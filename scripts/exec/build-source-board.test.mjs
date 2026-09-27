@@ -2598,5 +2598,227 @@ function partialGateOf(dir, id) {
   fs.rmSync(dir, { recursive: true, force: true });
 }
 
+
+/* ------------------------------------------------------------------------ *
+ * A GATE STATED THE WAY AN ACCEPTANCE STATES IT — item C-563.
+ *
+ * `BLOCKER_RULES` has been widened four times by measurement (T-596, T-703,
+ * T-705, T-761) and every one of those repairs was the same shape: a row
+ * declared an owner gate in a form the rule did not recognise, derived
+ * `blocker: null`, and the queue offered owner work to the next agent as free
+ * work. This is that shape twice more, and it was found the way the others
+ * were — by executing the generator over the live documents, not by reading
+ * the pattern.
+ *
+ * MEASURED on the live operator root frozen at 2026-09-27T19:50Z, backlog
+ * sha256 `4a12db96…`, from a scratch copy so nothing wrote to the register:
+ * the queue offered **7 claimable rows and 3 of them name work an agent is
+ * forbidden to do**. `C-562` opens its acceptance "Owner decision, not agent
+ * work — do not edit the required gate from a feature branch"; `U-525` and
+ * `U-527` both direct a signed-in run, which the queue's own *Blocked on
+ * Anand* section says an agent must not attempt. All three derived
+ * `blocker: null`.
+ *
+ * The two holes, each with its own live row:
+ *
+ *   THE DECISION RULE REQUIRES AN ARTICLE. T-761 bounded a two-word slot
+ *   between `A`/`An` and `decision`, which is what catches "A product
+ *   decision" and "A disambiguation decision". `C-562` writes the role
+ *   without an article — "Owner decision" — so nothing anchors. The article
+ *   is deliberately NOT made optional here: `(?:An?\s+)?` would admit "The
+ *   decision was taken in #8123", which the rule's own comment names as a
+ *   form that must stay out. What is added instead is the categorical phrase
+ *   the sentence also carries, `not agent work`, which cannot be written
+ *   descriptively — a row that says it is not agent work is not describing
+ *   anything, it is declaring who may act.
+ *
+ *   THE SIGNED-IN RULE RECOGNISES ONLY STATUS PHRASING. Its third branch
+ *   wants a status word (`pending`, `owed`, `not proven`) within 80
+ *   characters of `signed-in`, which is how a RELEASE LINE reports a proof
+ *   gap. An ACCEPTANCE is written in the imperative — "Run a signed-in phase
+ *   build", "Generate one deliverable …, signed in, and record" — and says
+ *   the same thing with no status word anywhere. That is precisely the hole
+ *   T-596 repaired in the decision rule for the same reason, stated in this
+ *   file's own comment: "An acceptance is written in the imperative, so the
+ *   decision gate in one usually is too."
+ *
+ * Both terms are anchored and bounded the way every term above them is, and
+ * the bound is what the guardrail cases below exist to hold. Measured over the
+ * live corpus, the pair moves **4 items and no others** — `C-562`, `U-525` and
+ * `U-527` from `null` into the never-claim bucket, and `U-401` from the
+ * general `Blocked (see source)` to the specific `Signed-in acceptance owed`,
+ * which its own acceptance names ("this item carries them to `signed-in
+ * acceptance`"). **Nothing leaves a gate**: blocked-on-Anand goes 377 → 380,
+ * claimable 7 → 4, and no item at a rung above 0 moves at all.
+ * ------------------------------------------------------------------------ */
+
+console.log("\nbuild-source-board — an owner gate stated as an acceptance states it (C-563)\n");
+
+/* --- (a) THE LIVE ROW, verbatim. `C-562`'s acceptance opens with the phrase
+ * and the queue offered it as claimable anyway.                             */
+{
+  const dir = freshFixture();
+  addBacklogItem(
+    dir,
+    "T-960",
+    "**A required gate is a coin flip on wall clock.**",
+    "Owner decision, not agent work — do not edit the required gate from a feature branch. Recommendation: raise the timeout and move the heavy step.",
+  );
+  buildBoard(dir);
+  check(
+    "C-563 (a) a role-stated decision declaring itself not agent work is an owner gate",
+    blockerOf(dir, "T-960") === "Decision needed",
+    `blocker=${JSON.stringify(blockerOf(dir, "T-960"))}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+/* --- (b) THE IMPERATIVE SIGNED-IN FORM, from `U-525`. No status word appears
+ * anywhere in the row, so the rule's third branch cannot reach it.          */
+{
+  const dir = freshFixture();
+  addBacklogItem(
+    dir,
+    "T-961",
+    "**A merged change declares a signed-in proof and nobody has run it.**",
+    "Run a signed-in phase build for one authorized tenant and record what the surface renders, each document opened rather than listed.",
+  );
+  buildBoard(dir);
+  check(
+    "C-563 (b) an acceptance directing a signed-in run is an owner gate",
+    blockerOf(dir, "T-961") === "Signed-in acceptance owed",
+    `blocker=${JSON.stringify(blockerOf(dir, "T-961"))}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+/* --- (c) THE UNHYPHENATED VARIANT, from `U-527`, where the phrase sits 60
+ * characters into the sentence as an aside. Every branch above this one
+ * spells the token `signed-in`; the register and the acceptances both write
+ * `signed in` too, and a rule that reads only one spelling reads half the
+ * corpus.                                                                    */
+{
+  const dir = freshFixture();
+  addBacklogItem(
+    dir,
+    "T-962",
+    "**A second merged change declares the same proof.**",
+    "Generate one deliverable per phase for one authorized tenant, signed in, and record the slide count off the rendered deck.",
+  );
+  buildBoard(dir);
+  check(
+    "C-563 (c) the unhyphenated `signed in` spelling is read as the same gate",
+    blockerOf(dir, "T-962") === "Signed-in acceptance owed",
+    `blocker=${JSON.stringify(blockerOf(dir, "T-962"))}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+/* --- (d) THE SPAN IS ONE SENTENCE. This case PASSES on unfixed code by
+ * design and is the one an over-broad fix breaks: written `[\s\S]{0,120}`
+ * instead of `[^.\n]{0,120}` the imperative reaches across the full stop into
+ * a descriptive mention 78 characters away and gates ordinary work.          */
+{
+  const dir = freshFixture();
+  addBacklogItem(
+    dir,
+    "T-963",
+    "**The reader drops the second alias of each pair.**",
+    "Run the reader over the fixture and report the row count. The census names a signed-in surface among its rows.",
+  );
+  buildBoard(dir);
+  check(
+    "C-563 (d) an imperative does not reach a later sentence's mention of a signed-in surface",
+    blockerOf(dir, "T-963") === null,
+    `blocker=${JSON.stringify(blockerOf(dir, "T-963"))}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+/* --- (e) THE IMPERATIVE MUST ANCHOR. Also green on unfixed code: drop the
+ * anchor and every mid-sentence "we should run a signed-in check later"
+ * becomes a gate, which is the un-narrowing the signed-in detector already
+ * had to be rescued from once.                                              */
+{
+  const dir = freshFixture();
+  addBacklogItem(
+    dir,
+    "T-964",
+    "**The panel renders the trail.**",
+    "The record says we should run a signed-in check later; this item ships the reader and nothing else.",
+  );
+  buildBoard(dir);
+  check(
+    "C-563 (e) an unanchored mid-sentence imperative is not read as a gate",
+    blockerOf(dir, "T-964") === null,
+    `blocker=${JSON.stringify(blockerOf(dir, "T-964"))}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+/* --- (f) THE VETO STILL APPLIES TO THE NEW BRANCH. `firstUnvetoedMatch`
+ * gives it this for free, and that is exactly why it is asserted: a term
+ * added somewhere the veto does not reach would read a row saying the proof
+ * is NOT owed as a row owing one.                                           */
+{
+  const dir = freshFixture();
+  addBacklogItem(
+    dir,
+    "T-965",
+    "**The exporter emits the canonical token.**",
+    "Run the exporter over the fixture and diff the output; a signed-in proof is not owed here, because nothing user-visible changes.",
+  );
+  buildBoard(dir);
+  check(
+    "C-563 (f) a sentence stating the signed-in proof is not owed keeps its veto",
+    blockerOf(dir, "T-965") === null,
+    `blocker=${JSON.stringify(blockerOf(dir, "T-965"))}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+/* --- (g) THE PHRASE IS THE WHOLE PHRASE. Green on unfixed code: written
+ * `\bnot\s+\w+\s+work\b` the term matches any negated kind of work, and a
+ * row saying it IS agent work acquires an owner gate — a false gate, which is
+ * the direction that hides live work.                                        */
+{
+  const dir = freshFixture();
+  addBacklogItem(
+    dir,
+    "T-966",
+    "**The map entry is owed.**",
+    "This is agent work, not owner work: add the id to the repo-owned structure map and open the pull request.",
+  );
+  buildBoard(dir);
+  check(
+    "C-563 (g) a row declaring itself agent work does not acquire an owner gate",
+    blockerOf(dir, "T-966") === null,
+    `blocker=${JSON.stringify(blockerOf(dir, "T-966"))}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+/* --- (h) NEITHER TERM DEMOTES A GATE. The signed-in rule sits above the
+ * blocked rule, so a row carrying both now reads the more specific label —
+ * `U-401` is the live instance, and its own acceptance says it "carries them
+ * to `signed-in acceptance`". What must never happen is the label going to
+ * `null`, so that is what this asserts rather than which of the two wins.    */
+{
+  const dir = freshFixture();
+  addBacklogItem(
+    dir,
+    "T-967",
+    "**Two deployed changes are live and unproven.**",
+    "Generate at least one real deliverable end to end, signed in, and judge the rendered slides; the remaining wiring is blocked on the unapplied migration.",
+  );
+  buildBoard(dir);
+  check(
+    "C-563 (h) a row stating two gates keeps one, and never falls to no gate",
+    blockerOf(dir, "T-967") !== null,
+    `blocker=${JSON.stringify(blockerOf(dir, "T-967"))}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
 console.log(`\n${passes} passed, ${failures} failed`);
 process.exit(failures ? 1 : 0);

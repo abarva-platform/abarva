@@ -1039,8 +1039,65 @@ const BLOCKER_RULES = [
   // gate: that is the defect this file already pins for the `blocked` rule, and
   // the signed-in rule still has it. Neither is a polarity question, so neither
   // is fixed here; both are filed, each with the live line that produced it.
+  //
+  // ITEM C-563 — THE IMPERATIVE FORM, and it is the same miss T-596 repaired
+  // one rule below for the same stated reason.
+  //
+  // Every branch above reads a STATUS: a word like `pending`, `owed` or `not
+  // proven` within 80 characters of the token. That is how a RELEASE LINE
+  // reports a proof gap, and the register is full of it. An ACCEPTANCE states
+  // the same gate as an INSTRUCTION and carries no status word anywhere —
+  // "Run a signed-in phase build for one authorized tenant", "Generate one
+  // deliverable …, signed in, and record" — so no branch above could reach it.
+  //
+  // MEASURED by execution over the live operator root frozen at 19:50Z on
+  // 2026-09-27, from a scratch copy: the generated queue offered **7 claimable
+  // rows and 3 of them named work an agent is forbidden to do**. Two were this
+  // hole — `U-525` and `U-527`, both `blocker: null` while both acceptances
+  // direct a signed-in run that the queue's own *Blocked on Anand* section
+  // says an agent must not attempt. The watcher had already written that
+  // finding into the operator document at 18:15Z and again at 19:15Z, in
+  // prose, with no control; a narrated finding is the shape this file exists
+  // against.
+  //
+  // Three bounds keep it in the safe direction, each with a case in the suite
+  // that FAILS without it:
+  //
+  //   - The verb must ANCHOR — start of text, after a sentence terminator,
+  //     after a newline, or immediately after bold markup. T-762 established
+  //     that the head of the acceptance cell is a `\n` position, which is why
+  //     an instruction written there reaches this rule at all. Unanchored,
+  //     "we should run a signed-in check later" becomes a gate, which is the
+  //     un-narrowing the branches above had to be rescued from once.
+  //   - The span is ONE CLAUSE, `[^.;\n]`. Written `[\s\S]` the imperative
+  //     reaches over a full stop into a later descriptive mention and gates
+  //     ordinary executable work. The SEMICOLON is in that set for a reason
+  //     found by a failing guardrail rather than by reasoning: `sentenceAround`
+  //     — which is what the veto reads — starts at the MATCH INDEX and ends at
+  //     the first `.` or `;` after it. A match that begins at an imperative
+  //     120 characters before the token therefore hands the veto a window that
+  //     can END BEFORE the token, so "Run the exporter …; a signed-in proof is
+  //     not owed here" matched unvetoed. Aligning the span with the veto's own
+  //     window is what makes the veto reach this branch at all; widening the
+  //     veto would have been the wrong half to touch, because every branch
+  //     above shares it.
+  //   - The verb list is CLOSED and each entry is a live acceptance's opening
+  //     verb. `Confirm`, `Assert` and `Check` are deliberately absent: those
+  //     open an assertion about an artifact, which a test can make.
+  //
+  // `signed[- ]in` rather than `signed-in`: the branches above spell only the
+  // hyphenated token and `U-527` writes "signed in" as an aside, so half the
+  // corpus's spelling was unreadable. Measured, admitting the space changes
+  // this rule's verdict for exactly the rows named here.
+  //
+  // Measured on the live corpus, this widening and the `not agent work` term
+  // below move **4 items together and no others** — `C-562`, `U-525`, `U-527`
+  // out of `null`, and `U-401` from the general `Blocked (see source)` to the
+  // specific label its own acceptance names. Blocked-on-Anand goes 377 → 380
+  // and claimable 7 → 4, so **nothing leaves a gate** and no item above rung 0
+  // moves at all.
   {
-    re: /\bnot\s+signed-in\b|(?:^|[.!?]\s+)signed-in\s+check\b|signed-in[^.]{0,80}\b(pending|owed|not proven|not performed|not claimed|remains? (?:open|unproven))\b/i,
+    re: /(?:^|[.!?;:]\s+|\n\s*|\*\*)(?:Run|Perform|Capture|Generate|Open|Drive|Execute)\b[^.;\n]{0,120}\bsigned[- ]in\b|\bnot\s+signed-in\b|(?:^|[.!?]\s+)signed-in\s+check\b|signed-in[^.]{0,80}\b(pending|owed|not proven|not performed|not claimed|remains? (?:open|unproven))\b/i,
     veto: /\b(?:not|never|no longer|none)\b[\s*_]{0,4}(?:owed|required|needed)\b/i,
     say: "Signed-in acceptance owed",
     ownerGate: true,
@@ -1109,7 +1166,33 @@ const BLOCKER_RULES = [
   // owner to decide anything" and "Deciding which suite to wire was settled"
   // out; and the deferral form names who does the deciding rather than
   // matching the verb anywhere it appears.
-  { re: /decision needed|decision required|Content decision|\bproduct call\b|\bowner'?s call\b|blocked on owner policy|(?:^|[.!?;:]\s+|\n\s*|\*\*)Decide\b|\b(?:until|before)\s+(?:a human|an owner|a person|the owner|Anand|someone)\s+decides\b|(?:^|[.!?;:]\s+|\n\s*|\*\*)An?\s+(?:[a-z][a-z-]*\s+){0,2}decision\b/i, say: "Decision needed", decisionGate: true, ownerGate: true },
+  //
+  // ITEM C-563 — THE ROLE FORM, WITHOUT AN ARTICLE.
+  //
+  // T-761 bounded a two-word slot between `A`/`An` and `decision`, which is
+  // what catches "A product decision" and "A disambiguation decision".
+  // `C-562` writes the role and no article — its acceptance opens "Owner
+  // decision, not agent work — do not edit the required gate from a feature
+  // branch" — so nothing above anchors and it derived `blocker: null` while
+  // the queue offered it as claimable.
+  //
+  // THE ARTICLE IS NOT MADE OPTIONAL, and that is the whole care in this
+  // term. `(?:An?\s+)?` would admit "The decision was taken in #8123", which
+  // this rule's own comment names as a form that must stay out, and the slot
+  // is bounded precisely so a sharper pattern is not the answer. What is
+  // added instead is the categorical phrase the same sentence carries: a row
+  // saying it is `not agent work` is not describing anything, it is declaring
+  // who may act, and there is no descriptive use of those three words.
+  //
+  // The phrase is matched WHOLE. Written `\bnot\s+\w+\s+work\b` it would
+  // match any negated kind of work, so a row saying "This is agent work, not
+  // owner work" would acquire an owner gate — a false gate, and the direction
+  // that hides live work. That case is in the suite and it is green on
+  // unfixed code, by design.
+  //
+  // Measured on the live corpus, this term moves EXACTLY ONE item, `C-562`,
+  // from `null` to `Decision needed`. Extras zero, in both directions.
+  { re: /decision needed|decision required|Content decision|\bproduct call\b|\bowner'?s call\b|blocked on owner policy|(?:^|[.!?;:]\s+|\n\s*|\*\*)Decide\b|\b(?:until|before)\s+(?:a human|an owner|a person|the owner|Anand|someone)\s+decides\b|(?:^|[.!?;:]\s+|\n\s*|\*\*)An?\s+(?:[a-z][a-z-]*\s+){0,2}decision\b|\bnot\s+agent\s+work\b/i, say: "Decision needed", decisionGate: true, ownerGate: true },
   // Item T-703. This was a bare `\bblocked\b` — no anchoring, no veto — while
   // the decision rule directly above has both, added after raw prose made
   // every descriptive use of a word into an owner gate. T-700 gave this rule
