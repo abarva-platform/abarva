@@ -29,6 +29,7 @@ import { SourceWorkflowFrame } from "@/components/source/SourceWorkflowFrame";
 import { SourceAwardSowHandoffReadinessPanel } from "@/components/source/SourceAwardSowHandoffReadinessPanel";
 import { buildSourceAwardSowHandoffReadiness } from "@/lib/source/award-sow-handoff-readiness";
 import { applySourceApprovalPolicyToStageView } from "@/lib/source/approval-policy-stage-view";
+import { sourceEvidenceAppliesToApprovalPolicy } from "@/lib/source/approval-policy";
 import {
   buildSourceStage08AcceptanceSpine,
   type SourceStage08AcceptanceSpine,
@@ -1917,6 +1918,7 @@ function buildStageOperatingStatus(
     stageKey: view.stage.key,
     artifactStates,
     evidenceStates: stageEvidence,
+    approvalPolicyCode: view.event.approvalPolicyCode,
   });
   const recommendation = buildStageRecommendation(
     assessStageGate({
@@ -1943,7 +1945,8 @@ function buildStageOperatingStatus(
     optionalTotal: rows.length - requiredRows.length,
     coverageValue: coverage.displayValue,
     canonicalRequiredTotal:
-      requiredEvidenceForStage(view.stage.key).length +
+      requiredEvidenceForStage(view.stage.key).filter((row) =>
+        sourceEvidenceAppliesToApprovalPolicy(row.requirementId, view.event.approvalPolicyCode)).length +
       requiredSpecsForStage(view.stage.key).length,
     gateReady: recommendation.requiredMet,
     gateTotal: recommendation.requiredTotal,
@@ -4330,7 +4333,8 @@ function buildStageEvidenceRequirementRows(
   view: SourceEventShellView,
   evidenceStates: readonly SourceEventEvidence[],
 ): StageEvidenceRequirementRow[] {
-  const requirements = evidenceForStage(view.stage.key).sort((a, b) => {
+  const requirements = evidenceForStage(view.stage.key).filter((row) =>
+    sourceEvidenceAppliesToApprovalPolicy(row.requirementId, view.event.approvalPolicyCode)).sort((a, b) => {
     if (a.level !== b.level) return a.level === "required" ? -1 : 1;
     return a.label.localeCompare(b.label);
   });

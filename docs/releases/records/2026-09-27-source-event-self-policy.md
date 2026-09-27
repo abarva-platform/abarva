@@ -26,15 +26,18 @@ Release lane: `global-control-lane`. Layer 4 Source workflow authority and event
 
 ## Changes Included
 
-Event creation/read mapping, the common criterion and stage-gate evaluator, both stage-advance routes, the criterion-state route, and a policy-aware event view. The separate schema prerequisite is release `2026-09-27-source-event-approval-policy-schema`.
+Event creation/read mapping, the common criterion and stage-gate evaluator, both stage-advance routes, the criterion-state route, and a policy-aware event view and evidence count. The separate schema prerequisite is release `2026-09-27-source-event-approval-policy-schema`.
 
 ## QA / Validation
 
 - Pass: red-first tests reproduced missing policy persistence, duplicate-create overwrites, external signer checks under SELF, and route policy omission.
-- Pass: 14 focused Source, route, canvas and adapter suites, 204/204 tests. Red-first cases caught false sponsor-role attribution, unsupported external sign-off labels, and a sponsor task restored by the canvas fallback.
+- Pass: red-first Strategy cases caught a sponsor-commitment evidence requirement and sponsor sign-off wording still applied to SELF events. The correction excludes only that evidence ID for SELF and retains the other Strategy requirements and all legacy requirements.
+- Pass: 85 Source library suites, 835 tests; 33 Source API suites, 243 tests; 3 canvas/adapter suites, 47 tests.
 - Pass: removing the missing-policy fallback made the historical-authority test fail; restoration returned it to green.
-- Pass: TypeScript no-emit with an 8 GB heap and scoped ESLint. Final release control and diff checks are run before PR.
-- Not run: live migration apply or schema readback. Separate specific authorization is required.
+- Pass: TypeScript no-emit with an 8 GB heap and scoped ESLint. Final release control and diff checks are run before updating the PR.
+- Pass: schema-only PR #8542 merged; official ACA run 36286558717 succeeded and its image was independently matched across web template, healthy 100%-traffic revision, and both delivery workers. This is not database apply.
+- Pass: read-only migration status run 36287399920 found exactly one pending migration: `20260927011000_source_event_approval_policy.sql`.
+- Not run: live migration apply or schema readback. Separate specific authorization is required and requested.
 - Not run: positive human Event Owner decision or signed-in SELF event acceptance.
 
 ## Rollout Plan
@@ -61,4 +64,4 @@ The schema and code PRs, CI checks, red/green and mutation output, official migr
 
 ## Known Gaps
 
-The schema is not yet applied and this code is not live. Human decision and event-owner participant readback remain owed. Later-stage organizational-approval assumptions require policy-aware review before claiming the complete CPO journey. SELF Scope criterion titles and append-only actor-role notes now name the Event Owner; historical titles and controls are retained.
+The schema is merged and runtime-proven but not applied to the database; this code is not live. Human decision and event-owner participant readback remain owed. Later-stage organizational-approval assumptions require policy-aware review before claiming the complete CPO journey. SELF Scope criterion titles and append-only actor-role notes now name the Event Owner; historical titles and controls are retained.

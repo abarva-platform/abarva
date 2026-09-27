@@ -10,6 +10,7 @@ import {
   type SourceEvidenceRequirement,
 } from "./canonical-specs";
 import type { SourceStageKey } from "./types";
+import { sourceEvidenceAppliesToApprovalPolicy } from "./approval-policy";
 
 const EVIDENCE_READINESS_RANK: Record<
   SourceEventEvidence["currentState"],
@@ -94,14 +95,17 @@ export function computeStageRequirementCoverage({
   stageKey,
   artifactStates,
   evidenceStates,
+  approvalPolicyCode,
 }: {
   stageKey: SourceStageKey;
   artifactStates: SourceEventArtifactState[];
   evidenceStates: SourceEventEvidence[];
+  approvalPolicyCode?: "legacy_signed_scope_v1" | "self_v1" | null;
 }): RequirementCoverageResult {
   return computeRequirementCoverage({
     requiredArtifacts: requiredSpecsForStage(stageKey),
-    requiredEvidence: requiredEvidenceForStage(stageKey),
+    requiredEvidence: requiredEvidenceForStage(stageKey).filter((row) =>
+      sourceEvidenceAppliesToApprovalPolicy(row.requirementId, approvalPolicyCode)),
     artifactStates,
     evidenceStates,
   });

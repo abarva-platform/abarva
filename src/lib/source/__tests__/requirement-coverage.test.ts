@@ -171,4 +171,11 @@ describe("requirement coverage", () => {
       }).displayValue,
     ).toBe(`0 / ${required}`);
   });
+
+  it("excludes only sponsor commitment from SELF Strategy coverage", () => {
+    const legacy = computeStageRequirementCoverage({ stageKey: "strategy", artifactStates: [], evidenceStates: [] });
+    const self = computeStageRequirementCoverage({ stageKey: "strategy", artifactStates: [], evidenceStates: [], approvalPolicyCode: "self_v1" });
+    expect(self.required).toBe(legacy.required - 1);
+    expect(self.met).toBe(0);
+  });
 });

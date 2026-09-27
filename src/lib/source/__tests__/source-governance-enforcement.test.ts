@@ -87,6 +87,20 @@ describe("Source governance enforcement", () => {
     expect(verdict.ok).toBe(true);
   });
 
+  it("does not demand a sponsor commitment from SELF Strategy while keeping other evidence mandatory", () => {
+    const base = {
+      criterion: criterion({ criterionId: "GATE-STRATEGY-01" }),
+      artifacts: [artifact({ artifactCode: "d01_strategy_memo", status: "approved", body: "Reviewed strategy memo." })],
+      evidence: strategyEvidenceReady().filter((row) => row.requirementId !== "EVID-SRC-STR-SPONSOR-COMMIT"),
+      reason: "Event Owner reviewed the strategy and evidence.",
+    };
+    expect(evaluateCriterionMetReadiness({ ...base, approvalPolicyCode: "self_v1" }).ok).toBe(true);
+    expect(evaluateCriterionMetReadiness(base).blockers).toEqual(expect.arrayContaining([
+      expect.objectContaining({ code: "required_evidence_not_ready", detail: expect.stringContaining("Sponsor commitment") }),
+    ]));
+    expect(evaluateCriterionMetReadiness({ ...base, evidence: base.evidence.filter((row) => row.requirementId !== "EVID-SRC-STR-TRIGGER"), approvalPolicyCode: "self_v1" }).ok).toBe(false);
+  });
+
   it("allows a named human review to clear ready client-stated evidence", () => {
     const verdict = evaluateCriterionMetReadiness({
       criterion: criterion({ criterionId: "GATE-STRATEGY-01" }),

@@ -65,3 +65,11 @@ export function criterionForSourceApprovalPolicy(
         : "event-owner",
   };
 }
+
+export function sourceEvidenceAppliesToApprovalPolicy(
+  requirementId: string,
+  policyCode: string | null | undefined,
+): boolean {
+  const policy = resolveSourceApprovalPolicy(policyCode);
+  return !(policy.selfApprovalAllowed && requirementId === "EVID-SRC-STR-SPONSOR-COMMIT");
+}

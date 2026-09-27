@@ -7,7 +7,7 @@ import type {
 } from "./canvas-substrate";
 import { isFactBackedEvidence } from "./canvas-substrate/fact-derived-evidence";
 import type { SourceStageKey } from "./types";
-import { criterionForSourceApprovalPolicy, resolveSourceApprovalPolicy, type SourceApprovalPolicyCode } from "./approval-policy";
+import { criterionForSourceApprovalPolicy, resolveSourceApprovalPolicy, sourceEvidenceAppliesToApprovalPolicy, type SourceApprovalPolicyCode } from "./approval-policy";
 
 export const SOURCE_APPROVAL_REASON_MIN_LENGTH = 12;
 export const SOURCE_HUMAN_EDIT_METADATA_KEYS = [
@@ -131,7 +131,8 @@ export function evaluateCriterionMetReadiness(input: {
 
   const requiredEvidence = requiredEvidenceForStage(input.criterion.fromStage);
   const isHardCriterion = definition?.severity === "hard";
-  for (const requirement of requiredEvidence) {
+  for (const requirement of requiredEvidence.filter((row) =>
+    sourceEvidenceAppliesToApprovalPolicy(row.requirementId, approvalPolicy.code))) {
     const state = input.evidence.find(
       (row) => row.requirementId === requirement.requirementId,
     );
