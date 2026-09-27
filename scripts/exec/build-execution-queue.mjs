@@ -20,7 +20,12 @@ import { fileURLToPath } from "node:url";
 import { formatQueueProvenance, queueProvenanceStamp } from "./queue-provenance.mjs";
 import { isDirectInvocation } from "./cli-entry.mjs";
 import { branchesInClaim } from "./fossil-claims.mjs";
-import { announcesAbstention } from "./register-time-authority.mjs";
+import {
+  announcesAbstention,
+  parseRegisterLines,
+  heldPaths,
+  CLAIM_WINDOW_HOURS,
+} from "./register-time-authority.mjs";
 
 /**
  * Everything below is the CLI, and until item T-728 it ran on `import` (item
@@ -1426,6 +1431,133 @@ correction pattern is append-only.
 `;
 }
 
+/*
+ * The repo paths a live claim HOLDS, published so a reader can intersect
+ * before it spends anything (item C-566).
+ *
+ * The defect: this queue decided claimability from item-level claims only.
+ * The sanctioned claim path, `scripts/exec/append-claim.mjs`, refuses on a
+ * second condition entirely — a FILE already held by another live run — and
+ * this file said nothing about it. So a row could pass every test here and be
+ * refused at the moment of claiming. The refusal itself is cheap and names
+ * its holder; what it costs is its TIMING, because it arrives after the agent
+ * has chosen the row and re-verified it on `main`. Measured on the
+ * 2026-09-27T20:33Z queue, three rows were offered and none of them was
+ * reachable by a lane-T agent, for that reason or a standing rule.
+ *
+ * WHAT IS PUBLISHED, AND WHAT DELIBERATELY IS NOT. This generator cannot know
+ * which files an item needs — nothing in the backlog declares that, and
+ * guessing it would be an inference dressed as a filter. So it publishes the
+ * half that IS knowable, the holds, and leaves the intersection to the reader
+ * that knows its own file list.
+ *
+ * The holds come from `heldPaths` in `register-time-authority.mjs`, which is
+ * the same function `resolveFileOverlap` refuses from — not a local re-parse
+ * of `files:`. A second reader of one grammar is the defect T-717 and T-747
+ * both cost; here it would be worse than silence, because a table advertising
+ * a hold the gate does not enforce sends agents away from work that is theirs
+ * to take.
+ */
+const heldPathRows = (() => {
+  if (!fs.existsSync(CLAIMS)) return null;
+  const text = fs.readFileSync(CLAIMS, "utf8");
+  const start = text.indexOf("## Claim log");
+  const body = start < 0 ? text : text.slice(start);
+  return heldPaths(parseRegisterLines(body), { nowMs: Date.now() });
+})();
+
+/*
+ * Shared wiring, DECLARED rather than inferred.
+ *
+ * A held path becomes a caution for a whole lane only when it is one of the
+ * few files every item of a kind must edit. Today that is the CI workflow
+ * directory: an item whose acceptance is "wire this suite into CI" cannot be
+ * done without it, whichever suite it names. This list is a declaration, it
+ * is short on purpose, and its ONLY effect is the sentence below — it never
+ * removes a row, never changes a count, and never decides claimability.
+ */
+const SHARED_WIRING = [
+  { prefix: ".github/workflows/", lanes: ["T"], what: "CI wiring" },
+];
+
+function heldWiringCaution() {
+  if (!heldPathRows?.length) return "";
+  const cautions = [];
+  for (const scope of SHARED_WIRING) {
+    const hits = heldPathRows.filter((h) => h.path.startsWith(scope.prefix));
+    if (!hits.length) continue;
+    const rows = scope.lanes.reduce((n, l) => n + (byLane[l]?.length ?? 0), 0);
+    if (!rows) continue;
+    const holders = [...new Set(hits.map((h) => h.agent))].sort();
+    cautions.push(
+      `**Caution, not a filter:** ${rows} of the ${claimable.length} claimable row${claimable.length === 1 ? " is" : "s are"} ` +
+        `in lane${scope.lanes.length === 1 ? "" : "s"} ${scope.lanes.join(", ")}, and ${hits.length} ${scope.what} ` +
+        `path${hits.length === 1 ? " is" : "s are"} held right now by ${holders.join(", ")}. ` +
+        `A row whose change has to touch \`${scope.prefix}\` is **unworkable this hour** — it is not unclaimable, ` +
+        `and it stays in its lane table below. Read the holds, then pick a row that does not need one.`,
+    );
+  }
+  return cautions.join("\n\n");
+}
+
+function renderHeldPaths() {
+  const head = "## Paths held by a live claim";
+  const how =
+    "Derived by running the register through the same `claimedPaths` the claim gate refuses from\n" +
+    "(`heldPaths` in `scripts/exec/register-time-authority.mjs`), not by re-parsing `files:` here.\n" +
+    "A release, an abstention, a path a line attributes to somebody else, and a path outside the\n" +
+    `${CLAIM_WINDOW_HOURS}-hour window all hold nothing, and none of them appears above.\n\n` +
+    "A **scope** — a directory or a glob — is a note, not a lock: the gate warns on it and lets the\n" +
+    "claim through. A **file** is a lock and the gate refuses.\n";
+
+  if (heldPathRows === null) {
+    return (
+      `\n${head}\n\n**NOT MEASURED** — there is no claim register at \`${path.basename(CLAIMS)}\`,\n` +
+      "so this section is empty because nothing was read, which is not the same as nothing being\n" +
+      `held.\n\n${how}`
+    );
+  }
+
+  if (heldPathRows.length === 0) {
+    return (
+      `\n${head}\n\n**0 paths are held.** The register was read and no live claim holds a path, so no row\n` +
+      "below is blocked by the file half of the claim gate. This section is printed empty on\n" +
+      `purpose: "no holds" and "not measured" must not look alike.\n\n${how}`
+    );
+  }
+
+  const byPath = new Map();
+  for (const hold of heldPathRows) {
+    const key = `${hold.path} :: ${hold.agent}`;
+    const prior = byPath.get(key);
+    if (!prior || hold.stampMs > prior.stampMs) byPath.set(key, hold);
+  }
+  const rows = [...byPath.values()].sort(
+    (a, b) => a.path.localeCompare(b.path) || a.agent.localeCompare(b.agent),
+  );
+  const holders = new Set(rows.map((r) => r.agent)).size;
+  const stampOf = (ms) => `${new Date(ms).toISOString().slice(0, 16)}Z`;
+
+  return `
+${head}
+
+**${rows.length} path${rows.length === 1 ? " is" : "s are"} held** by ${holders} live claim holder${holders === 1 ? "" : "s"}. A claim naming any
+file below is refused by \`append-claim.mjs\` until its hold expires — so intersect your intended
+file list with this table **before** you pick a row, not after you have re-verified it on \`main\`.
+
+| Path | Kind | Held by | Claimed | Hold expires |
+|---|---|---|---|---|
+${rows
+  .map(
+    (r) =>
+      `| \`${r.path}\` | ${r.kind === "scope" ? "scope — a note, not a lock" : "file — a lock"} ` +
+      `| \`${r.agent}\` | ${r.stamp} | ${stampOf(r.expiresAtMs)} |`,
+  )
+  .join("\n")}
+
+${how}`;
+}
+
 const out = `# Execution queue — generated
 
 Generated ${new Date().toISOString().slice(0, 16).replace("T", " ")} UTC from \`source-board-summary.json\`.
@@ -1452,7 +1584,10 @@ SOURCE_EXECUTION_HOME=~/Downloads node scripts/exec/build-execution-queue.mjs
 **${claimable.length} items are claimable right now with no input from Anand.**
 ${Object.entries(byLane).map(([l, v]) => `${l}:${v.length}`).join("  ")}
 
+${heldWiringCaution()}
+
 ${renderClaimableFunnel()}
+${renderHeldPaths()}
 
 ## How to take work without asking
 

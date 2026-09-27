@@ -2072,18 +2072,36 @@ export function crossHalfCueMovement(texts) {
   };
 }
 
-export function resolveFileOverlap(lines, { files, identity, nowMs, windowHours }) {
-  const requested = [];
-  const unparsed = [];
-  for (const raw of files ?? []) {
-    const normalised = normalisePath(raw);
-    if (normalised) requested.push(normalised);
-    else if (String(raw).trim()) unparsed.push(String(raw).trim());
-  }
-
+/**
+ * Every repo path a LIVE claim holds right now, with its holder and the
+ * instant that hold expires (item C-566).
+ *
+ * This exists because the gate could answer the question and nothing else
+ * could ask it. `resolveFileOverlap` below has read this correctly since
+ * T-706, but only ever for a file list an agent had already chosen — so the
+ * refusal arrived AFTER the agent had picked its row and re-verified it on
+ * `main`, which is the expensive half. Two consecutive scheduled runs paid
+ * that on 2026-09-27. Publishing the holds lets a reader intersect for
+ * itself, before it spends anything.
+ *
+ * It is factored OUT of `resolveFileOverlap` rather than reimplemented beside
+ * it. A second reader of one grammar is the defect T-717 and T-747 both cost,
+ * and the release, abstention, window and ownership rules below are exactly
+ * the ones a published hold has to agree with — if they ever disagreed, the
+ * queue would advertise a hold the gate does not enforce, or stay silent
+ * about one it does.
+ *
+ * `identity` is optional and OMITTING IT IS THE NORMAL CASE for a reader with
+ * no run of its own, such as the queue generator: with no identity every live
+ * hold is reported, including one the asking run placed itself. A caller that
+ * passes an identity gets its own holds dropped, which is what the overlap
+ * gate wants and what a published table must not do.
+ *
+ * @param {ReturnType<typeof parseRegisterLines>} lines
+ * @param {{ nowMs:number, windowHours?:number, identity?:string|null }} opts
+ */
+export function heldPaths(lines, { nowMs, windowHours, identity = null }) {
   const windowMs = (windowHours ?? CLAIM_WINDOW_HOURS) * 3600 * 1000;
-  const conflicts = [];
-  const notes = [];
 
   const inWindow = lines.filter(
     (line) =>
@@ -2108,32 +2126,68 @@ export function resolveFileOverlap(lines, { files, identity, nowMs, windowHours 
     if (prior === undefined || line.stampMs > prior) releasedAt.set(line.agent, line.stampMs);
   }
 
+  const out = [];
   for (const line of inWindow) {
     // An abstention holds nothing. It names files to say who else is on them.
     if (announcesRelease(line.text) || announcesAbstention(line.text)) continue;
     const released = releasedAt.get(line.agent);
     if (released !== undefined && released >= line.stampMs) continue;
-    const ownership = resolveClaimOwnership(line.agent, identity);
+    const ownership = identity === null ? "unowned" : resolveClaimOwnership(line.agent, identity);
     // Only this exact run may hold its own files. A SIBLING contends: that is
     // the distinction base-name keying loses, one level down from T-706.
     if (ownership === "own") continue;
 
-    const held = new Map(claimedPaths(line.text).map((p) => [p.path, p]));
-    for (const want of requested) {
-      const match = held.get(want.path);
-      if (!match) continue;
-      const entry = {
-        path: want.path,
-        lineNumber: line.lineNumber,
-        stamp: line.stamp,
+    for (const { path: held, kind } of claimedPaths(line.text)) {
+      out.push({
+        path: held,
+        kind,
         agent: line.agent,
         ownership,
+        lineNumber: line.lineNumber,
+        stamp: line.stamp,
+        stampMs: line.stampMs,
+        expiresAtMs: line.stampMs + windowMs,
         excerpt: line.text.slice(0, 200),
-      };
-      // A directory or glob is a SCOPE, not a lock — in either position.
-      if (want.kind === "scope" || match.kind === "scope") notes.push(entry);
-      else conflicts.push(entry);
+      });
     }
+  }
+
+  return out;
+}
+
+export function resolveFileOverlap(lines, { files, identity, nowMs, windowHours }) {
+  const requested = [];
+  const unparsed = [];
+  for (const raw of files ?? []) {
+    const normalised = normalisePath(raw);
+    if (normalised) requested.push(normalised);
+    else if (String(raw).trim()) unparsed.push(String(raw).trim());
+  }
+
+  const conflicts = [];
+  const notes = [];
+
+  // One reader (item C-566). The window, the release rule, the abstention
+  // rule, the ownership rule and `claimedPaths` all live in `heldPaths`, so
+  // the queue's published table and this refusal cannot drift apart.
+  //
+  // Every hold is walked, not one per path: two runs holding the same file is
+  // two conflicts, and collapsing them would report one of the two holders.
+  const wanted = new Map(requested.map((want) => [want.path, want]));
+  for (const hold of heldPaths(lines, { nowMs, windowHours, identity })) {
+    const want = wanted.get(hold.path);
+    if (!want) continue;
+    const entry = {
+      path: want.path,
+      lineNumber: hold.lineNumber,
+      stamp: hold.stamp,
+      agent: hold.agent,
+      ownership: hold.ownership,
+      excerpt: hold.excerpt,
+    };
+    // A directory or glob is a SCOPE, not a lock — in either position.
+    if (want.kind === "scope" || hold.kind === "scope") notes.push(entry);
+    else conflicts.push(entry);
   }
 
   return {
