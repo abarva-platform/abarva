@@ -13,6 +13,7 @@ import { computeRouteReachability } from './lib/route-reachability.mjs';
 // thing checked about it was that it was forty characters long, and one of its
 // three clauses had already gone false while the gate stayed green.
 import { evaluateUnreachableReason } from './lib/unreachable-reason-claims.mjs';
+import { isDirectInvocation } from '../exec/cli-entry.mjs';
 import { findSharedProvenCases } from './ai-surface-control-cases.mjs';
 
 // The catalog this gate reads. `AI_SURFACE_CONTROL_CATALOG_PATH` is a test
@@ -809,6 +810,22 @@ function validateSurface(surface, index, workflowRuns, tally, routeGraph, suiteI
     } else if (behavioral.covered) {
       tally.covered += 1;
     }
+    if (!behavioral.covered) {
+      // Named, not just counted — item C-411. The restocking backlog item is
+      // defined as "the next declared control with no behavioral test", and
+      // until this list existed the report answered only how many there were,
+      // so answering it meant searching the test tree instead of reading the
+      // gate. Collected in the same pass as the tally rather than recomputed
+      // afterwards: two walks of one catalog can disagree, and then the count
+      // and the names are evidence against each other rather than for the
+      // same fact.
+      tally.uncovered.push({
+        surfaceId: surface?.id ?? label,
+        kind,
+        path: surface?.path ?? null,
+        reachable: reachability.reachable,
+      });
+    }
 
     const evidence = normalizeEvidence(control.evidence);
     if (evidence.length === 0) {
@@ -832,6 +849,36 @@ function validateSurface(surface, index, workflowRuns, tally, routeGraph, suiteI
   }
 
   return problems;
+}
+
+/**
+ * The roster of controls with no behavioral test, as the report prints it.
+ *
+ * Exported because the interesting branch is the empty one and the live
+ * catalog cannot reach it. A section that disappears when the roster is empty
+ * cannot be told apart from a section somebody removed, and "no output read as
+ * nothing wrong" is the failure this whole catalog exists against — so zero is
+ * stated in words rather than left as a silence.
+ */
+export function renderUncoveredRoster(uncovered, declared) {
+  if (uncovered.length === 0) {
+    return [
+      `Controls with no behavioral test: 0 of ${declared}. Every declared control names the case that proves it.`,
+    ];
+  }
+  const lines = [
+    `Controls with no behavioral test: ${uncovered.length} of ${declared}. Named here so the next one ` +
+      'can be read off this report rather than searched for in the test tree.',
+  ];
+  for (const control of [...uncovered].sort((a, b) =>
+    `${a.surfaceId}:${a.kind}`.localeCompare(`${b.surfaceId}:${b.kind}`),
+  )) {
+    lines.push(
+      `  - ${control.surfaceId}:${control.kind} — ${control.path ?? 'no path declared'}` +
+        (control.reachable ? '' : ' — not on any screen'),
+    );
+  }
+  return lines;
 }
 
 function main() {
@@ -863,7 +910,7 @@ function main() {
       ),
     ),
   );
-  const tally = { declared: 0, covered: 0, unreachable: 0 };
+  const tally = { declared: 0, covered: 0, unreachable: 0, uncovered: [] };
   surfaces.forEach((surface, index) => {
     if (surface?.id) {
       if (ids.has(surface.id)) {
@@ -908,6 +955,9 @@ function main() {
   console.log(
     `Reachable share of declared controls: ${reachable} of ${tally.declared} (${pct(reachable, tally.declared)}).`,
   );
+  for (const line of renderUncoveredRoster(tally.uncovered, tally.declared)) {
+    console.log(line);
+  }
   if (tally.unreachable > 0) {
     console.log(
       `Not on any screen: ${tally.unreachable} of ${tally.declared} controls sit on surfaces no route reaches. ` +
@@ -920,4 +970,9 @@ function main() {
   }
 }
 
-main();
+// Guarded because `renderUncoveredRoster` is imported by a behavioral suite and
+// an unguarded `main()` runs the whole audit on import — the same shape as
+// `isDirectInvocation` (item T-723) was written for.
+if (isDirectInvocation(import.meta.url)) {
+  main();
+}
