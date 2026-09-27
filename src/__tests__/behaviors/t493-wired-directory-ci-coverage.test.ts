@@ -40,6 +40,7 @@
  * reading as success after a rename or a deletion — an empty directory is
  * absent from them in exactly the same way a fully wired one is.
  */
+import { execFileSync } from "node:child_process";
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import path from "node:path";
 
@@ -47,7 +48,6 @@ import {
   expandWorkflowCommands,
   extractWorkflowRunCommands,
 } from "../../../scripts/quality/check-integration-ci-visibility.mjs";
-import { buildCensus } from "../../../scripts/quality/test-ci-coverage-census.mjs";
 
 const repoRoot = path.resolve(__dirname, "../../..");
 const WIRING_WORKFLOW = ".github/workflows/unit-suites.yml";
@@ -127,19 +127,46 @@ function expandedWorkflowCommands(): string[] {
   );
 }
 
+const CENSUS_SCRIPT = "scripts/quality/test-ci-coverage-census.mjs";
+
 /*
- * ONE in-process census, not two child processes. `buildCensus` is the same
- * resolver the CLI and every sibling gate use, and asking it for the unrun paths
- * in the same pass is what keeps this suite off the behaviour job's time budget:
- * that job is already within about twenty seconds of its own ceiling, and a
- * control that makes a required check time out fails every pull request behind
- * it rather than the one it was written for.
+ * The census runs as a CHILD PROCESS, twice, and that is a measured choice
+ * rather than the shape this file started with. It first called `buildCensus`
+ * in process, on the reasoning that one in-process call must beat two spawns.
+ * That reasoning was never tested in the environment that decides it. The
+ * required `Behavior coverage floor` job runs this directory under
+ * `--coverage --runInBand`, so an in-process census is INSTRUMENTED and a
+ * spawned one is not:
+ *
+ *   in process, with coverage   22.2s
+ *   two spawns, with coverage   10.9s
+ *   in process, no coverage      8.2s
+ *   two spawns, no coverage      9.9s
+ *
+ * Without coverage the in-process form is the faster one, which is why the
+ * wrong choice looked right. Under coverage it costs twice as much, and under
+ * coverage is how the gate runs. Every sibling census-reading suite in this
+ * directory spawns the CLI; this is now the fourth measurement agreeing with
+ * them rather than a style someone copied.
  */
-const census = buildCensus(repoRoot, { includeUnrunPaths: true }) as Census & {
-  unrunTestPathsByDirectory: { directory: string; unrunTestPaths: string[] }[];
-};
+function runCensusJson(extraArgs: string[] = []): unknown {
+  const stdout = execFileSync(
+    process.execPath,
+    [path.join(repoRoot, CENSUS_SCRIPT), ...extraArgs, "--json"],
+    {
+      cwd: repoRoot,
+      encoding: "utf8",
+      stdio: ["ignore", "pipe", "pipe"],
+      maxBuffer: 64 * 1024 * 1024,
+    },
+  );
+  return JSON.parse(stdout.slice(stdout.search(/[[{]/)));
+}
+
+const census = runCensusJson() as Census;
+const unrunByDirectory = runCensusJson(["--explain"]) as { directory: string; unrunTestPaths: string[] }[];
 const unrunPaths = new Set(
-  census.unrunTestPathsByDirectory.flatMap((row) => row.unrunTestPaths),
+  unrunByDirectory.flatMap((row) => row.unrunTestPaths),
 );
 
 const record = JSON.parse(

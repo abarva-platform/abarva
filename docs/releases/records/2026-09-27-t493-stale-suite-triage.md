@@ -173,15 +173,42 @@ unwind.
 
 ## Risks
 
-**One, and it is not caused by this change.** The `Behavior coverage floor` check is already running
-within roughly twenty seconds of its own `timeout-minutes` ceiling on this repository, and another
-pull request today was cancelled on three consecutive attempts with its gate step reporting success
-inside a job that was killed. This change adds two suites to `src/__tests__/behaviors`, one of which
-runs the coverage census. That cost was cut before opening: the wiring proof now calls `buildCensus`
-**once in process** instead of spawning the CLI twice, which is the same resolver and roughly halves
-its share. If that check is cancelled here, the cause is the standing capacity ceiling — the remedy
-is the cap or a shard of that suite, a change to the gate rather than to any pull request behind it
-— and this one will not be merged on a cancelled required check.
+**The required `Behavior coverage floor` check does not pass, and this section is the honest account
+of why — including the part this change caused and the claim it originally got backwards.**
+
+*What happened.* That job runs `src/__tests__/behaviors` under `--coverage --runInBand` with
+`timeout-minutes: 15`. On both runs of this branch the **gate step itself was cancelled** at 14m23s,
+having not finished. It is a required context, so this change cannot merge on it.
+
+*It is not only this change.* Another pull request today — **doc-only** — was cancelled on three
+consecutive attempts of the same job. On those attempts the gate step *concluded success* at 812s and
+818s and the JOB was killed afterwards, during the cheap steps that follow. So the job total was
+already over the cap before this branch existed.
+
+*And it is partly this change, which the first version of this section denied.* The step fit in 818s
+on doc-only content and did not fit in 863s here, so this branch made the gate step roughly 50
+seconds slower. Two suites are added, one of which runs the coverage census.
+
+*The correction.* This record originally claimed that cost had been cut by calling `buildCensus`
+**once in process** instead of spawning the census CLI twice — "the same resolver and roughly halves
+its share". **That was asserted and never measured, and it is wrong in the environment that
+decides it.** Measured four ways on this machine, one suite:
+
+| | with `--coverage` | without |
+|---|---|---|
+| in process, one call | **22.2s** | 8.2s |
+| spawned CLI, two calls | **10.9s** | 9.9s |
+
+Without coverage the in-process form is faster, which is why the wrong choice looked right. Under
+coverage an in-process census is *instrumented* and a spawned one is not, so it costs twice as much —
+and under coverage is how the gate runs. The suite now spawns the CLI, like every sibling
+census-reading suite in that directory already did; that is four measurements agreeing with them
+rather than a style someone copied. The saving is real but small against the gap.
+
+*What is owed, and to whom.* Even at 10.9s this job does not fit: the gate step would be about 850s
+and the steps after it need roughly 90 more. The remedy is a change to the **gate** — raise the cap,
+or shard that suite — which affects every pull request behind it and is not this item's to make. This
+change will not be merged on a cancelled or failing required check.
 
 ## Known Gaps
 
