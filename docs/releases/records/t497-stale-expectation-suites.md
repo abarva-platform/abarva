@@ -71,7 +71,13 @@ data-plane object, and no product behaviour changes, so neither `global-control-
   data-plane seam the subject actually calls.
 - `src/lib/intelligence/ask/__tests__/ask-guardrails.test.ts` — one case's two dead byte assertions
   replaced by an executed guard check plus the current trace-marker name.
-- `.github/workflows/intelligence-library-suites.yml` — wires two directories and one named file.
+- `.github/workflows/intelligence-library-suites.yml` — wires three named files. An earlier revision
+  of this change wired two whole directories and was refused by three of this repository's own
+  controls; see **The wiring was refused once** below.
+- `docs/architecture/t493-stale-suite-triage.json` — the held-directory reason rewritten, because half
+  of its two-leg basis expired with this change. The hold itself stands.
+- `src/__tests__/behaviors/product-directory-ci-coverage.baseline.json` — two directories removed,
+  both because they LEFT the dark set. None entered.
 - `docs/architecture/test-ci-coverage-census.json` — regenerated; the gate requires it to match.
 
 ## QA / Validation
@@ -118,13 +124,48 @@ Other gates:
 - `node scripts/quality/check-intelligence-library-quarantine.mjs` — passes; the quarantine list is
   unchanged and still names 5 suites. No suite was added to it.
 - The wired command was run verbatim under `bash` so the `$(…)` ignore arguments word-split as they
-  will in CI: **30 suites, 203 tests, all passing** — up from 18 suites / 84 tests before.
+  will in CI: **21 suites, 141 tests, all passing** — up from 18 suites / 84 tests before.
 - `node scripts/quality/test-ci-coverage-census.mjs --check` — no drift, shape matches.
+- The three wiring controls this change touches — `t770-scanner-wiring-refusal`,
+  `t493-wired-directory-ci-coverage`, `product-directory-ci-coverage` — **21 of 21 passing**, and the
+  full `src/__tests__/behaviors` suite the coverage gate runs exits 0.
 
 Coverage census delta, which measures the wiring rather than asserting it: covered test files
-2170 → 2182, uncovered 356 → 344, fully covered directories 310 → 312, partially covered 24 → **25**.
-That last number is the point: the partially covered directory is the one wired by named file, so the
-gap stays visible in the census ranking instead of being silenced.
+2170 → **2173**, fully covered directories unchanged at 310, partially covered 24 → **26**. Two
+directories moved from dark to partial and one stayed dark on purpose, so every remaining file is
+still in the census ranking instead of being silenced.
+
+## The wiring was refused once, and the refusal is the most useful thing here
+
+The first revision of this change wired `src/lib/intelligence/canonical` and
+`src/lib/intelligence/synthesis/__tests__` as whole **directories**, on the reasoning that every suite
+in each was green. **Three controls refused it, and they were right — green was never the criterion.**
+The refusal was observed in the real CI runner, not a fixture, which makes this change an end-to-end
+positive control for all three:
+
+- **`t770-scanner-wiring-refusal`** named two declared source-text scanners the directory patterns now
+  reached, each with its declaring record and owning item: `canonical/persistence-contract.test.ts` and
+  `synthesis/__tests__/violationsMigration.test.ts`, both owned by the open scanner-rewrite item. The
+  standing rule refuses to wire a byte-scanner **whether or not it passes**, because it goes green on a
+  comment or a rename. Its exception list is declared "closed and shrinking", so there was no exception
+  route — correctly.
+- **`t493-wired-directory-ci-coverage`** showed `synthesis/__tests__` is a declared **held** directory,
+  with the hold asserted by a control over all five of its files rather than left to prose. Its own
+  comment says the green suites inside it "are not finished work, they are blocked work", and that a
+  change wiring it "has to delete this case on purpose".
+- **`product-directory-ci-coverage`** required the dark-directory baseline to be updated in the same
+  change, and to distinguish a directory *being wired* from one merely leaving the fully-uncovered set.
+
+So the wiring is now three **named files**, and **nothing inside the held directory is wired at all** —
+including the suite this change repaired there. That suite is green now instead of never having passed,
+which is real progress, but it remains dark and the record says why.
+
+**One consequence worth stating, because it is a control correcting itself.** The held directory's
+recorded reason had two legs: a wrong-seam mock owned by this item, and the scanner owned by the other.
+This change resolved the first. A hold whose stated basis has half expired reads as more blocked than
+it is, so the reason was rewritten to rest only on the surviving leg. The hold is unchanged and still
+covers all five files; only its justification was corrected. No control was weakened, no case deleted,
+and nothing was added to any exception list.
 
 ## Rollout Plan
 
@@ -165,10 +206,16 @@ complete and immediate. Reverting restores four never-passing suites to an unrun
 - **One case is deliberately still failing.** The token-budget expectation in `ask-guardrails.test.ts`
   is gated on an owner decision about whether a previously removed ceiling still holds. It is outside
   this change and untouched.
-- **One directory is wired by named file, not as a directory.** `src/lib/intelligence/ask/__tests__`
-  holds two red suites that are not this item's to fix — the gated case above, and a source-text
-  scanner owned by a separate open item. Wiring the whole directory is owed once both land, and the
-  census reports it as partial until then.
+- **All three directories are still owed directory-level wiring**, and each is blocked on work that is
+  not this item's: two declared source-text scanners awaiting their rewrite, and the gated case above.
+  The census reports two as partial and one as dark until then.
+- **A suite this change repaired is still run by nothing.** The one inside the held directory is green
+  but unwired, because the hold covers the whole directory. It is blocked solely on the scanner beside
+  it — four of that directory's five files now are.
+- **Two generated artifacts in this change were also claimed by a concurrent run** for a different
+  item, after this branch had already modified them. Both are generated rather than authored, and this
+  change cannot drop them without dropping the wiring, so whoever merges second should regenerate
+  rather than hand-merge. Disclosed in the execution register.
 - **Three of the four repairs cite no commit that moved anything**, because nothing did: suite and
   subject arrive in the same commit already disagreeing. The item's own acceptance asked for the
   commit that moved the behaviour, and for these the honest answer is that there was never a moment
