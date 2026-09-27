@@ -79,7 +79,9 @@ control are on by default.
 **Failing test first, then the fix, then the fix broken deliberately.**
 
 - The new control was written and run **before** the workflow step and baseline edit existed:
-  **4 failing of 31**. After the wiring: **31 passed, 0 failing**.
+  **4 failing of 31**. After the wiring: **31 passed, 0 failing**. That before-figure was taken at
+  `83b3a384da`; at the merged base it is reproduced by the mutation pass rather than re-derived by
+  un-writing the change — mutation 1 accounts for three of the four and mutation 2 for the fourth.
 - **Four mutations, four caught, and each mutation was verified to be a real edit before its effect
   was believed** — a no-op mutation reads exactly like a caught one. Each fired the case intended
   and no other:
@@ -97,23 +99,25 @@ stash.** `npx jest src/__tests__/behaviors`:
 
 | | suites | tests | failing |
 |---|---|---|---|
-| base `83b3a384da` | 151 | 1627 | 0 |
+| merged base `d57a86f9b4` | 151 | 1627 | 0 |
 | this branch | 152 | 1658 | 0 |
 
 The delta is exactly the new control: +1 suite, +31 tests. No pre-existing failure is claimed as
 caused or fixed here.
 
 **Every one of the 25 judged files was executed individually** with
-`npx jest --runTestsByPath <path>` on the base SHA. 20 green, 5 red. The counts in the record are
+`npx jest --runTestsByPath <path>`, first on `83b3a384da` and again on the merged base
+`d57a86f9b4` after two changes landed on `main` mid-flight. 20 green, 5 red both times, every
+per-suite count identical, and the 11-of-20 already-verdicted finding reproduces id for id, record
+for record and owner for owner. Nothing is carried forward. The counts in the record are
 counts of suites RUN, never counts read from the census — "not reached by CI" is not the claim
 "fails", and three of the five reds had never been reported by anything.
 
-**Census deltas** (`npm run audit:test-ci-coverage:write`), which are the measurement behind the
-first finding: `coveredTestFiles` 2170 → 2172, `uncoveredTestFiles` 356 → 355,
-`directoriesFullyCovered` 310 → 311, `directoriesUncovered` 158 → 157,
-`untriagedUnrunTestFiles` 304 → 303, `highGovernedRiskDirectories` 6 → 5. **Twenty-five files were
-triaged and the census's untriaged count moved by one.** That is not a defect in this change; it is
-the blind spot, stated as a number.
+**Census deltas** (`npm run audit:test-ci-coverage:write`), re-measured at the merged base:
+`coveredTestFiles` 2173 → 2175, `uncoveredTestFiles` 353 → 352, `directoriesFullyCovered` 310 → 311,
+`directoriesUncovered` 156 → 155, `untriagedUnrunTestFiles` 301 → 300,
+`highGovernedRiskDirectories` 6 → 5. **Twenty-five files were triaged and the census's untriaged
+count moved by one.** That is not a defect in this change; it is the blind spot, stated as a number.
 
 **Gates, all exit 0:** `audit:test-ci-coverage:check`, `audit:triage-record-reconciliation`,
 `audit:named-suite-requiredness`, `test:integration:ci-visibility`. The control merged earlier today
@@ -142,6 +146,9 @@ traffic change.
   template.
 - Approved image digest: not applicable — no runtime image change is requested by this release.
 - ACA runtime invariant: to be captured after merge from the deploy run at or after the merge SHA.
+- Merge base: `origin/main` was merged into this branch as a **real merge commit** — no rebase, no
+  force-push — after two changes landed mid-flight. The one conflict was the generated census
+  snapshot, resolved by regenerating rather than hand-merging.
 - Worker image invariant: unchanged.
 - Feature/env flag update path: not applicable.
 - Live signed-in proof required: **no.** Nothing user-visible changes; the evidence for this release
@@ -168,7 +175,7 @@ data change, nothing to unwind outside git.
 
 - The census's untriaged predicate still ignores triage records, and **this change makes that count
   worse rather than better, which is the clearest statement of the problem available.** Before:
-  71 of 304 ranked files carried a verdict. After: **84 of 303.** Triaging a file writes a verdict and
+  68 of 301 ranked files carried a verdict. After: **81 of 300.** Triaging a file writes a verdict and
   does not remove the file from the ranking, so the 14 operator-integration files judged here joined
   the verdicted-but-ranked set and only the one wired file left it. Doing the work the item asked for
   moved the number the wrong way by 13. The reconciliation script measures this and exits 0. Filed as

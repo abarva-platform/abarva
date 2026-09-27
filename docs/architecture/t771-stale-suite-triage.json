@@ -21,18 +21,18 @@
   "censusBlindSpot": {
     "subject": "Every triage verdict is invisible to the instrument the triage ranking is drawn from.",
     "measuredOnThisBase": {
-      "untriagedUnrunTestFiles": 304,
-      "alreadyCarryingAVerdict": 71,
+      "untriagedUnrunTestFiles": 301,
+      "alreadyCarryingAVerdict": 68,
       "carryingNone": 233
     },
     "instrumentExists": "scripts/quality/triage-record-census-reconciliation.mjs reports exactly this number.",
     "andDoesNotGate": "It exits 0 whatever it finds, so nothing objects when the ranking re-offers verdicted work. Three consecutive draws \u2014 T-492, T-493 and this one \u2014 have re-drawn already-judged files, and this is the mechanism.",
     "filedAs": "T-773",
     "measuredAfterThisChange": {
-      "untriagedUnrunTestFiles": 303,
-      "alreadyCarryingAVerdict": 84,
+      "untriagedUnrunTestFiles": 300,
+      "alreadyCarryingAVerdict": 81,
       "carryingNone": 219,
-      "note": "This change moves the verdicted-but-ranked count from 71 to 84. Triaging a file writes a verdict and does not remove it from the ranking, so the 14 operator-integration files judged here joined that set and only the one wired file left it. Doing the work the item asked for made the number worse by 13, which is the sharpest available statement of the defect: the instrument the ranking is drawn from cannot see the work done to it."
+      "note": "This change moves the verdicted-but-ranked count from 68 to 81. Triaging a file writes a verdict and does not remove it from the ranking, so the 14 operator-integration files judged here joined that set and only the one wired file left it. Doing the work the item asked for made the number worse by 13, which is the sharpest available statement of the defect: the instrument the ranking is drawn from cannot see the work done to it. Re-measured at the merged base; the figures at the original base were 71 of 304 and 84 of 303, the same +13."
     }
   },
   "scope": {
@@ -598,5 +598,16 @@
       "rationale": "Green, 12 cases, mostly executing the script over a temp tree. One read asserts over the script's source, which is enough to make it a declared scanner and enough to keep the directory behind T-770's refusal. The subject is runnable, so the rewrite is cheap."
     }
   ],
-  "idBandNote": "Follow-on ids were filed as T-773 and T-774, not T-772. T-772 was drafted here and then taken by a sibling watcher run at 19:15Z while this item was in flight, which is the collision the id-band rule exists for and which no control detects. Re-measured free in the backlog and the register at 19:26Z before renumbering."
+  "idBandNote": "Follow-on ids were filed as T-773 and T-774, not T-772. T-772 was drafted here and then taken by a sibling watcher run at 19:15Z while this item was in flight, which is the collision the id-band rule exists for and which no control detects. Re-measured free in the backlog and the register at 19:26Z before renumbering.",
+  "rebasedOnto": {
+    "newBase": "d57a86f9b4c372b90ee3595d7f2b3f4b3350c79b",
+    "originalBase": "83b3a384da734e2a3b611f35fc0f07c22d8f8678",
+    "how": "A real merge commit of origin/main into the branch. No rebase, no force-push. The only conflict was this repository's generated coverage census snapshot, resolved by regenerating it from the merged tree rather than by hand-merging a generated file; the dark-directory baseline auto-merged as a union of two removals, which is correct because each side wired a different directory.",
+    "everyFigureReMeasured": "Nothing is carried forward. All 25 suites were re-run individually at the new base: 20 green, 5 red, every per-suite count identical. The 11-of-20 already-verdicted finding reproduces id for id, record for record, owner for owner.",
+    "reconciliationAtNewBase": {
+      "before": "68 of 301",
+      "afterThisChange": "81 of 300",
+      "delta": "+13, the same direction and magnitude measured at the original base"
+    }
+  }
 }
