@@ -282,9 +282,7 @@ export function formatApprovedSolutionApproach(
     `${label}: ${values.length ? values.join("; ") : empty}`;
   return [
     "APPROVED SOLUTION APPROACH - AUTHORITATIVE INPUT",
-    `Decision ID/version: ${approved.decisionId} / ${approved.decisionVersion}`,
-    `Decision hash: ${approved.decisionHash}`,
-    `Chosen option: ${approved.chosenOption} (${approved.selectedOptionId} v${approved.selectedOptionVersion})`,
+    `Chosen option: ${approved.chosenOption}`,
     approved.approach ? `Approved approach: ${approved.approach}` : null,
     `Approval rationale: ${approved.decision.rationale}`,
     list("Tradeoffs accepted", approved.tradeoffsAccepted, "none recorded"),
@@ -294,7 +292,6 @@ export function formatApprovedSolutionApproach(
     list("Constraints", approved.constraints, "none recorded"),
     list("Unresolved decisions", approved.unresolvedDecisions, "none recorded"),
     `Rejected alternatives: ${approved.rejectedOptions.map((item) => `${item.name} — ${item.reason}`).join("; ") || "none"}`,
-    `Approved by/at: ${approved.decision.approvedBy} / ${approved.decision.approvedAt}`,
     "Build only to this approved option. Do not reopen, blend, or silently replace it. Expose conflicting evidence as an unresolved decision and stop if it changes the approved basis.",
   ]
     .filter((line): line is string => Boolean(line))
