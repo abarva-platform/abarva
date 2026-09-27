@@ -54,6 +54,7 @@ describe('POST /api/auth/launch-user', () => {
     });
     expect(createUser).toHaveBeenCalledWith(expect.objectContaining({
       emailAddress: ['operator@example.com'],
+      phoneNumber: [expect.stringMatching(/^\+1555010\d{4}$/)],
       skipPasswordRequirement: true,
       publicMetadata: expect.objectContaining({
         role: 'admin',
@@ -123,6 +124,24 @@ describe('POST /api/auth/launch-user', () => {
     await expect(res.json()).resolves.toMatchObject({ error: 'clerk_not_configured' });
     expect(getUserList).not.toHaveBeenCalled();
     expect(createUser).not.toHaveBeenCalled();
+  });
+
+  it('surfaces Clerk provisioning failures as JSON instead of an empty 500', async () => {
+    process.env.ABARVA_LAUNCH_ALLOWED_EMAILS = 'operator@example.com:admin:meridian';
+    createUser.mockRejectedValueOnce(Object.assign(new Error('Unprocessable Entity'), {
+      code: 'api_response_error',
+      status: 422,
+      clerkTraceId: 'trace_123',
+      errors: [{ code: 'form_data_missing' }],
+    }));
+
+    const { POST } = await import('@/app/api/auth/launch-user/route');
+    const res = await POST(makeRequest({ email: 'operator@example.com' }));
+
+    expect(res.status).toBe(502);
+    await expect(res.json()).resolves.toMatchObject({
+      error: 'clerk_user_provisioning_failed',
+    });
   });
 });
 

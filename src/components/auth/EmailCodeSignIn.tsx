@@ -124,6 +124,9 @@ function describeFailure(err: unknown, fallback: string): string {
   if (message === 'clerk_not_configured') {
     return 'Authentication is not fully configured on this runtime. Ask an AbarVa admin to check Clerk settings.'
   }
+  if (message === 'clerk_user_provisioning_failed') {
+    return 'Clerk could not provision this approved account. Ask an AbarVa admin to check the auth-provider account requirements.'
+  }
   if (message.startsWith('email_code_sign_in_')) {
     const status = message.slice('email_code_sign_in_'.length)
     return `Clerk did not finalize the session (status: ${status}). Check the code and retry.`

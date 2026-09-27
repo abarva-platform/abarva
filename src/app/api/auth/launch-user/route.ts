@@ -10,6 +10,7 @@ interface LaunchUserRequestBody {
 function statusForError(error: string): number {
   if (error === "access_not_provisioned") return 403;
   if (error === "clerk_not_configured") return 503;
+  if (error === "clerk_user_provisioning_failed") return 502;
   return 500;
 }
 
