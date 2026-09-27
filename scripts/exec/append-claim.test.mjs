@@ -1191,5 +1191,132 @@ const PROOF_OWED = "PR #9000 merged and deployed. Not live-proven — signed-in 
   fs.rmSync(empty, { recursive: true, force: true });
 }
 
+
+// ---------------------------------------------------------------------------
+// T-707, the half of its own acceptance that was never delivered — a
+// file-overlap refusal must NAME THE PATH AND THE HOLDER.
+//
+// T-707's acceptance is quoted: "refuse when any path appears in another live
+// claim's `files:` list, **naming the path and the holder**". The refusing was
+// delivered; the naming was not. `describe()` read `report.contended`, a key
+// the gate does not emit — the gate reports the overlap under
+// `fileOverlap.conflicts`, with the path, the holding line's number, its stamp
+// and its agent all present — so a refusal printed three lines: the banner,
+// then the ITEM half's `verdict: take` and an item-half reason about a live
+// claim that does not exist. A refusal whose printed text says take.
+//
+// What that costs is not hypothetical. On 2026-09-27 a run asking for 24 files
+// was refused with exactly that output and had to re-invoke the helper once
+// per file — eleven times — to learn which two were held; the obvious reading
+// of `verdict: take` under a REFUSED banner is that the gate is broken, which
+// is the argument a run should never be invited to have with a control.
+//
+// THE GATE HERE IS THE REAL ONE, deliberately. The defect is a disagreement
+// between what the gate emits and what the caller reads, so a stub emitting
+// `contended` would pass against the unfixed describer and this case would
+// prove nothing. Every other assertion about forwarding may use a stub; this
+// one may not.
+// ---------------------------------------------------------------------------
+{
+  const HELD = "scripts/exec/build-source-board.mjs";
+  const ALSO_HELD = "scripts/exec/source-stage-map.json";
+  const { dir, file } = fixture([
+    `2026-09-22T17:00:00Z | ${OTHER} | item T-900 claimed on branch \`exec/t-900\` — taking it. ` +
+      `files: ${HELD},${ALSO_HELD}`,
+  ]);
+  const before = digest(file);
+  const r = run([
+    ...base({ file, item: "T-901", identity: ME }),
+    "--branch", "exec/t-901", "--now", NOW,
+    "--files", `${HELD},scripts/exec/not-held.mjs`,
+  ]);
+  const out = r.stdout + r.stderr;
+
+  check(
+    "a file-overlap refusal appends nothing",
+    r.status === 1 && digest(file) === before,
+    `status=${r.status} changed=${digest(file) !== before}\nout=${out}`,
+  );
+  check(
+    "T-707: the refusal NAMES THE CONTENDED PATH",
+    out.includes(HELD),
+    `the held path never appears in the output\nout=${out}`,
+  );
+  check(
+    "T-707: the refusal NAMES THE HOLDER — its identity, its stamp and its line",
+    out.includes(OTHER) && out.includes("2026-09-22T17:00:00Z") && /\b5\b/.test(out),
+    `holder=${out.includes(OTHER)} stamp=${out.includes("2026-09-22T17:00:00Z")}\nout=${out}`,
+  );
+  check(
+    "T-707: a path that is NOT held is not reported as contended",
+    !new RegExp(`not-held\\.mjs[^\\n]*held by`).test(out),
+    `a free path was named as contended\nout=${out}`,
+  );
+  check(
+    "T-707: the refusal does not offer an item-half `take` as its whole explanation",
+    !/verdict: take/.test(out) || out.includes(HELD),
+    `printed \`verdict: take\` and named no contended file — this reads as permission\nout=${out}`,
+  );
+  // And the verdict line has to SAY it is the item half's. A mutation proved
+  // this needed its own assertion: relabelling it back to a bare `verdict:`
+  // left all the cases above green, because they only ask that the conflict be
+  // named somewhere. `verdict: take` on the second line of a REFUSED banner is
+  // the sentence that invites a run to conclude the control is malfunctioning,
+  // so the label is part of the fix and not decoration.
+  check(
+    "T-707: a file-half refusal labels the item verdict as the ITEM half's",
+    /(^|\n)item verdict: take/.test(out) && !/(^|\n)verdict: take/.test(out),
+    `out=${out}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+// ---------------------------------------------------------------------------
+// The other direction, so the case above cannot pass by printing always.
+//
+// The control this replaces was VACUOUS and a mutation said so: it asked for a
+// claim whose files were free, that claim SUCCEEDED, and a successful claim
+// never calls the describer at all — so a describer rewritten to print the
+// file-overlap block unconditionally passed all six assertions here, 77 of 77.
+// A control that cannot reach the code it guards is the shape this directory
+// exists against.
+//
+// So the refusal has to come from the OTHER half: the item is held by another
+// run, every requested path is free, and the describer therefore runs with an
+// empty conflict set. It must then print none of the file-overlap markers.
+//
+// It asserts the MARKERS and not the words "held by": the item half's own
+// reason legitimately reads "line 5 is held by ...", so a case forbidding that
+// phrase would fail on correct output and get relaxed rather than believed.
+// ---------------------------------------------------------------------------
+{
+  const { dir, file } = fixture([
+    `2026-09-22T17:00:00Z | ${OTHER} | item T-900 claimed on branch \`exec/t-900\` — ` +
+      `taking it. files: scripts/exec/build-source-board.mjs`,
+  ]);
+  const before = digest(file);
+  const r = run([
+    ...base({ file, item: "T-900", identity: ME }),
+    "--branch", "exec/t-900-b", "--now", NOW,
+    "--files", "scripts/exec/queue-provenance.mjs",
+  ]);
+  const out = r.stdout + r.stderr;
+  check(
+    "NEGATIVE CONTROL: an ITEM-half refusal reaches the describer and reports no contended file",
+    r.status === 1 &&
+      digest(file) === before &&
+      /held-by-another/.test(out) &&
+      !/REFUSED BY THE FILE HALF/.test(out) &&
+      !/(^|\n)file: /.test(out),
+    `status=${r.status} changed=${digest(file) !== before}\nout=${out}`,
+  );
+  check(
+    "NEGATIVE CONTROL: an item-half refusal still labels its verdict `verdict:`, not `item verdict:`",
+    /(^|\n)verdict: held-by-another/.test(out),
+    `out=${out}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
 console.log(`\n${passes} passed, ${failures} failed`);
 process.exit(failures ? 1 : 0);
