@@ -21,7 +21,7 @@
       "grounding-block disclosure of exemplar content"
     ],
     "deferred": [
-      "derive tasks/gate for the 5 stages still carrying an exemplar (U-533 acceptance 3, continued)"
+      "derive tasks/gate for the 4 stages still carrying an exemplar (U-533 acceptance 3, continued)"
     ],
     "signedInProofPerformed": false
   },
@@ -52,16 +52,17 @@
       "purpose",
       "tasks"
     ],
-    "stagesWithScaffoldTasks": 5,
-    "stagesWithScaffoldGate": 5,
-    "stagesWithDerivedTasks": 5,
-    "stagesWithDerivedGate": 5,
+    "stagesWithScaffoldTasks": 4,
+    "stagesWithScaffoldGate": 4,
+    "stagesWithDerivedTasks": 6,
+    "stagesWithDerivedGate": 6,
     "derivedStages": [
       "rfp",
       "responses",
       "evaluation",
       "bafo",
-      "selection"
+      "selection",
+      "value"
     ],
     "stagesExposingPersonNamedApprover": [],
     "distinctGateApprovers": [
@@ -635,10 +636,10 @@
         "stageName": "from_input",
         "purpose": "scaffold_carried_by_reference",
         "intel": "fact_derived",
-        "tasks": "scaffold_carried_by_reference",
+        "tasks": "fact_derived",
         "gate.approver": "policy_derived",
-        "gate.confirms": "scaffold_carried_by_reference",
-        "gate.generates": "scaffold_carried_by_reference",
+        "gate.confirms": "fact_derived",
+        "gate.generates": "derived_empty",
         "gate.nextStageName": "computed_agrees_with_exemplar",
         "gate.action": "absent",
         "waterfall": "fact_derived",
@@ -648,9 +649,9 @@
       "movesWithFacts": {
         "purpose": false,
         "intel": true,
-        "tasks": false,
+        "tasks": true,
         "gate.approver": false,
-        "gate.confirms": false,
+        "gate.confirms": true,
         "gate.generates": false,
         "gate.nextStageName": false,
         "waterfall": true
@@ -658,26 +659,26 @@
       "movesWithArchetype": {
         "purpose": false,
         "intel": true,
-        "tasks": false,
+        "tasks": true,
         "gate.approver": false,
-        "gate.confirms": false,
+        "gate.confirms": true,
         "gate.generates": false,
         "gate.nextStageName": false,
         "waterfall": true
       },
       "declared": {
-        "tasks": "scaffold",
-        "gate": "scaffold",
-        "scaffoldSource": "SAMPLE_VALUE_STAGE"
+        "tasks": "fact_derived",
+        "gate": "fact_derived",
+        "scaffoldSource": null
       },
       "gateTaskTitles": [
-        "Confirm realized value to date"
+        "Provide the realized-value actuals"
       ],
       "gateApprover": "Event Owner",
       "gateConfirmLabels": [
-        "Realized value booked per lever",
-        "Realization measured against committed",
-        "Value tracked"
+        "No realized value observed on 6 declared levers",
+        "No realization measured · target $420,000–$600,000",
+        "Open the completion review"
       ],
       "intelProvenance": "live",
       "waterfallProvenance": "live"
