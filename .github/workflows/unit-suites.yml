@@ -1565,6 +1565,100 @@ jobs:
           npx jest src/lib/visual-system/__tests__
           --no-coverage --ci
 
+
+      # T-493 drew the next 50 untriaged unrun test files, five each across ten
+      # directories. Every one of the 50 was EXECUTED on its own with
+      # `--runTestsByPath` — so no path was read as a regex — before any verdict
+      # was written: 414 cases, 411 passing, 3 failing in one suite.
+      #
+      # THE FILED RANKS WERE STALE AND THE DIRECTORY NAMES WERE NOT. The item
+      # names ranks 19-28; on this change's base the same ten directories sit at
+      # ranks 14-23, because T-492 wired five directories out of the untriaged
+      # set an hour earlier. Re-deriving the census on the base rather than
+      # reading the committed snapshot is what showed that, and it is why the
+      # filing named the ten directories individually instead of by rank.
+      #
+      # Nine of the ten are wired below: 45 suites, 373 cases, 0 failing. They
+      # were also run TOGETHER as one jest invocation in the shape of these
+      # steps — 46 suites / 374 passed, the extra suite being the already-owned
+      # worker-boundary file in `src/scripts/__tests__` — so nothing here passes
+      # only in isolation.
+      #
+      # `src/lib/intelligence/synthesis/__tests__` is deliberately NOT wired. It
+      # holds both of this draw's deferred rows: one suite red on a mock aimed at
+      # a seam its subject no longer uses, and one whose every assertion is a
+      # substring of a committed SQL migration, which T-550's rule refuses to
+      # wire. A red directory is wired by fixing it, never by adding it to a
+      # green command, and the triage record hands both rows to the items that
+      # already own those classes.
+      #
+      # `src/lib/intelligence/ask/retrievers` is NOT a `__tests__` directory —
+      # its five test files sit beside their sources. A `__tests__`-shaped glob
+      # would match nothing there and exit green, which is the gate-reachability
+      # defect this family exists to end, so the sibling control asserts the
+      # FILES are selected rather than the directory name being present.
+      #
+      # `src/scripts/__tests__` deliberately re-runs one suite the pinned
+      # "deliverables worker boundary" step above already owns. Measured, not
+      # asserted: that suite alone is 1 case in 0.858s (it spawns a node
+      # subprocess to check import conditions) against 1.111s for the whole
+      # six-suite directory. That duplication is the same order as the overlaps
+      # docs/ci/README-suite-wiring.md already accepts, and it buys automatic
+      # ownership for the next suite added there; the alternative was excluding a
+      # green file by name, which is a quarantine shape for no defect.
+      #
+      # Named as DIRECTORIES, not file by file, for the reason in this file's
+      # header: file-by-file wiring is the shape of the defect, and a suite added
+      # to any of these nine tomorrow runs the day it lands.
+      # `src/__tests__/behaviors/t493-wired-directory-ci-coverage.test.ts` proves
+      # these steps through the census's own resolver rather than by searching
+      # this file for a string (C-537), refuses a trailing slash, and refuses a
+      # re-add to the dark baseline.
+      - name: Run the T-493 knowledge component suites
+        run: >-
+          npx jest src/components/knowledge/__tests__
+          --no-coverage --ci
+
+      - name: Run the T-493 aVa answer suites
+        run: >-
+          npx jest src/lib/ava-answer/__tests__
+          --no-coverage --ci
+
+      - name: Run the T-493 Intelligence answer suites
+        run: >-
+          npx jest src/lib/intelligence/answer/__tests__
+          --no-coverage --ci
+
+      - name: Run the T-493 Intelligence ask retriever suites
+        run: >-
+          npx jest src/lib/intelligence/ask/retrievers
+          --no-coverage --ci
+
+      - name: Run the T-493 stage-readiness workbook suites
+        run: >-
+          npx jest src/lib/programs/stage-readiness-workbooks/__tests__
+          --no-coverage --ci
+
+      - name: Run the T-493 Source artifact-registry suites
+        run: >-
+          npx jest src/lib/source/artifact-registry/__tests__
+          --no-coverage --ci
+
+      - name: Run the T-493 Source door1 suites
+        run: >-
+          npx jest src/lib/source/door1/__tests__
+          --no-coverage --ci
+
+      - name: Run the T-493 Source proposal-intelligence suites
+        run: >-
+          npx jest src/lib/source/proposal-intelligence/__tests__
+          --no-coverage --ci
+
+      - name: Run the T-493 operator script suites
+        run: >-
+          npx jest src/scripts/__tests__
+          --no-coverage --ci
+
       - name: Refuse a test run that modified committed input data
         if: always()
         run: node scripts/ci/assert-datasets-unmodified.mjs

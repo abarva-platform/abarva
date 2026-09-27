@@ -135,12 +135,30 @@ const WIRED_DIRECTORIES = [
  * owned by one step naming the directory, nothing in it is quarantined — so the
  * number and "directories now fully wired" agree here too.
  *
+ * 18 → 17 on 27 Sep for T-493 wiring
+ * `src/lib/programs/stage-readiness-workbooks/__tests__`, one of the nine clean
+ * directories in that draw's ten. Proved the same way, by diffing the two dark
+ * lists rather than by comparing totals: exactly one directory under
+ * `src/lib/programs` left the set, that one, and none entered. A FULL wire — all
+ * five suites are owned by one step naming the directory and nothing in it is
+ * quarantined — so the number and "directories now fully wired" agree here too.
+ *
+ * That diff had to be taken by hand, and the reason is worth recording where the
+ * next person to move this number will read it: this case holds a COUNT while its
+ * sibling `product-directory-ci-coverage.test.ts` holds a LIST, which T-491
+ * changed it to precisely so the gate prints the set difference instead of two
+ * integers. A count cannot tell a wiring from a regression in a change that does
+ * both — it moves by zero — and that is the change a reviewer waves through.
+ * Converting this one is a separate change with its own id; it is not folded in
+ * here, because widening a change whose value is that its scope is checkable is
+ * how both of those defects arrived.
+ *
  * This case is a RATCHET and the number is a log, not a target. It went red on
  * the change that wired a directory, which is the direction it must never
  * punish: the constant is lowered because the measurement moved, and the row
  * above records what moved it. Raising it would be the edit to refuse.
  */
-const DARK_DIRECTORY_COUNT = 18;
+const DARK_DIRECTORY_COUNT = 17;
 
 type Census = {
   counts: { indeterminateInvocations: number };
