@@ -133,7 +133,6 @@
   "src/lib/source/handoff/__tests__",
   "src/lib/source/industry-intelligence/__tests__",
   "src/lib/source/mrm-screen/__tests__",
-  "src/lib/source/nda/__tests__",
   "src/lib/source/negotiation/__tests__",
   "src/lib/source/pricing-submissions/__tests__",
   "src/lib/source/proposal-normalization/__tests__",
