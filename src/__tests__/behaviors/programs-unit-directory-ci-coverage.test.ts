@@ -127,8 +127,20 @@ const WIRED_DIRECTORIES = [
  * set, that one, and none entered. This is a FULL wire — unlike the
  * `archetypes/__tests__` row above, no file in it is quarantined — so the
  * number and "directories now fully wired" agree on this row.
+ *
+ * 19 → 18 on 27 Sep for T-492 wiring `src/lib/programs/ava-chat/__tests__`,
+ * one of the five clean directories in that draw's ten. Proved the same way, by
+ * diffing the two dark lists and not by comparing totals: exactly one directory
+ * left the set, that one, and none entered. A FULL wire — all seven suites are
+ * owned by one step naming the directory, nothing in it is quarantined — so the
+ * number and "directories now fully wired" agree here too.
+ *
+ * This case is a RATCHET and the number is a log, not a target. It went red on
+ * the change that wired a directory, which is the direction it must never
+ * punish: the constant is lowered because the measurement moved, and the row
+ * above records what moved it. Raising it would be the edit to refuse.
  */
-const DARK_DIRECTORY_COUNT = 19;
+const DARK_DIRECTORY_COUNT = 18;
 
 type Census = {
   counts: { indeterminateInvocations: number };

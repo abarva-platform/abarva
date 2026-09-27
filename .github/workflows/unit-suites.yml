@@ -1507,6 +1507,64 @@ jobs:
           npx jest src/components/programs/discovery/__tests__
           --no-coverage --ci
 
+      # T-492 drew 84 untriaged unrun test files across ten directories — the
+      # first draw from the widened ranking, and more than four times the size of
+      # any before it. Every one of the 84 was EXECUTED on its own, with
+      # `--runTestsByPath` so no path was read as a regex, before any verdict was
+      # written: 1123 cases, 1084 passing, 39 failing across 10 red suites.
+      #
+      # Five of the ten directories came back entirely clean and are wired below:
+      # 35 suites, 460 cases, 0 failing, and not one of the 35 reads a repository
+      # file as text, so nothing being added here pins the shape of a source file.
+      # They were also run TOGETHER, as one jest invocation in the shape of the
+      # steps below, and not only one file at a time — 35 suites, 460 passed.
+      #
+      # The other five drawn directories are deliberately NOT wired. Each holds at
+      # least one row the triage record hands to another item: a red suite, or a
+      # source-text scanner that T-550's rule refuses to wire. A red directory is
+      # wired by fixing it, never by adding it to a green command — the same
+      # sentence this file's header already carries about `hygiene`, which is one
+      # of the five and is still red, three of six.
+      #
+      # Two of the ten reds had been red since the single commit that created both
+      # the suite and the module it tests, four months earlier, and nothing could
+      # report it because nothing ran them. That is the cost this wiring removes
+      # for the five clean directories, and the reason the other five are filed
+      # rather than left to the next census.
+      #
+      # Named as DIRECTORIES, not file by file, for the reason in this file's
+      # header: file-by-file wiring is the shape of the defect, and a suite added
+      # to one of these five tomorrow runs the day it lands.
+      # `src/__tests__/behaviors/t492-wired-directory-ci-coverage.test.ts` proves
+      # these five steps through the census's own resolver rather than by
+      # searching this file for a string (C-537), refuses a trailing slash,
+      # refuses a re-add to the dark baseline, and refuses a sibling directory
+      # whose name merely starts with `__tests__`.
+      - name: Run the T-492 Setup component suites
+        run: >-
+          npx jest src/components/setup/__tests__
+          --no-coverage --ci
+
+      - name: Run the T-492 Atlas IAC archetype suites
+        run: >-
+          npx jest src/lib/atlas/iac/__tests__
+          --no-coverage --ci
+
+      - name: Run the T-492 aVa chat suites
+        run: >-
+          npx jest src/lib/programs/ava-chat/__tests__
+          --no-coverage --ci
+
+      - name: Run the T-492 Source contracts suites
+        run: >-
+          npx jest src/lib/source/contracts/__tests__
+          --no-coverage --ci
+
+      - name: Run the T-492 visual-system suites
+        run: >-
+          npx jest src/lib/visual-system/__tests__
+          --no-coverage --ci
+
       - name: Refuse a test run that modified committed input data
         if: always()
         run: node scripts/ci/assert-datasets-unmodified.mjs
