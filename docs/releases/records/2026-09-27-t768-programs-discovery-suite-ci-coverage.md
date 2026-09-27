@@ -180,9 +180,24 @@ Every mutation was reverted and the product files confirmed byte-identical to `H
 afterwards; `git diff --quiet` passes for `ProgramOriginationWorkspace.tsx` and for
 `src/components/programs/discovery/`.
 
-**What this record does NOT yet claim**: that a GitHub runner executed the new step. That
-proof is a job log on this pull request's own run, read rather than grepped, and it is recorded
-in the pull request once the run completes.
+**Runner proof — read from the job log, not grepped from the YAML.** `Unit suites` run
+`36286762995`, keyed to this branch's own head SHA `79fb63dee27c6c7b8d70dfe5567239e7dd93e751`
+rather than to "the newest run" — run `headSha` confirmed equal, `createdAt
+2026-09-27T01:50:47Z`, conclusion `success`. Job `Unit suites that pass on main`, step
+`Run the T-768 Programs discovery component suites`:
+
+```
+01:57:33 ##[group]Run npx jest src/components/programs/discovery/__tests__ --no-coverage --ci
+01:57:35 PASS src/components/programs/discovery/__tests__/brief-to-shape.test.ts
+01:57:36 PASS src/components/programs/discovery/__tests__/DiscoveryReceiptCard.test.tsx
+01:57:36 PASS src/components/programs/discovery/__tests__/DiscoveryCapturePanel.test.tsx
+01:57:36 Test Suites: 3 passed, 3 total
+01:57:36 Tests:       7 passed, 7 total
+```
+
+Three `PASS` lines naming each suite **individually**, so this is per-suite evidence rather than
+a directory-level aggregate, and it reproduces the same 3 suites and 7 tests measured locally
+before the wiring.
 
 ## Rollout Plan
 
@@ -236,5 +251,7 @@ requires in either direction.
   not fixed, and the governed-risk **band** for 179 of those directories is `unclassified`
   because the resolver found no product source for them — the resolver's silence, not a finding
   that they are low risk.
-- **No runner has yet executed the new step** at the time this record is written. That is
-  recorded in the pull request when the job completes, not asserted here.
+- **Deploy proof.** The merge triggers the repo-owned ACA main deploy workflow as any commit
+  does. Nothing in this change alters an image, env var, flag, scale rule, secret or traffic
+  weight, so the runtime invariant is verified after the merge as routine rather than as this
+  change's evidence.
