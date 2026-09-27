@@ -1459,6 +1459,54 @@ jobs:
           npx jest src/components/programs/origination/__tests__
           --no-coverage --ci
 
+      # T-768 (2026-09-27) wires `src/components/programs/discovery/__tests__`,
+      # which the coverage census ranked #1 by untriaged unrun tests among
+      # governed-risk directories on `6a68c913fd`, this change's base — `critical`,
+      # signal `declared_ai_surface_control`, 3 untriaged of 3 unrun of 3. FULLY
+      # dark, where T-767's predecessor was partial, so this directory's line has
+      # to leave `product-directory-ci-coverage.baseline.json` in this same change:
+      # that baseline is a set of fully-dark directories and asserts set EQUALITY,
+      # so a wiring that left the line behind would fail the ratchet.
+      #
+      # It inherited rank 1 the moment T-767 wired the origination directory. It
+      # did not get worse; it stopped being second.
+      #
+      # All three suites were run BEFORE any of this was written and all three were
+      # GREEN — 2, 2 and 3 cases, 7 in total, 0 failing. So this is a wiring job
+      # and not a repair, and that is measured rather than assumed: T-767's
+      # directory looked like a wiring job too and held two suites that had been
+      # red for weeks where nothing could report it. Nothing here was weakened,
+      # skipped or deleted to reach green, because nothing needed to be.
+      #
+      # Triage per suite, and it is reachability that decided `wire` over `delete`,
+      # measured by running `scripts/audit/route-reachability-check.mjs` rather than
+      # reading its committed artifact:
+      #
+      #   * `brief-to-shape.test.ts` -> `wire`. `briefToDiscoveryShape` is imported
+      #     by `ProgramOriginationWorkspace`, which `/programs/new` and
+      #     `/demo/programs/new` both mount. Live code.
+      #   * `DiscoveryCapturePanel.test.tsx` -> `wire`. Rendered by that same
+      #     workspace. Live code.
+      #   * `DiscoveryReceiptCard.test.tsx` -> `wire`, with the coverage it buys
+      #     named honestly. The card is an ORPHAN: its only importer is
+      #     `MoveArtifactUpload.tsx`, itself an orphan, so no route reaches it. A
+      #     green, cheap, correct suite over a presentational card is not worth
+      #     deleting, and the dead mount is a defect with its own id rather than a
+      #     reason to leave the other two dark.
+      #
+      # Named as a DIRECTORY, not file by file, for the reason in this file's
+      # header: file-by-file wiring is the shape of the defect. A fourth suite
+      # written here tomorrow runs the day it lands.
+      # `src/__tests__/behaviors/programs-discovery-directory-ci-coverage.test.ts`
+      # proves this step through the census's own resolver rather than by searching
+      # this file for a string (C-537), and refuses a re-add to the dark baseline.
+      # It deliberately does NOT assert that the card is unreachable: a case pinned
+      # to today's orphan set would go red on the change that finally mounts it.
+      - name: Run the T-768 Programs discovery component suites
+        run: >-
+          npx jest src/components/programs/discovery/__tests__
+          --no-coverage --ci
+
       - name: Refuse a test run that modified committed input data
         if: always()
         run: node scripts/ci/assert-datasets-unmodified.mjs
