@@ -3760,5 +3760,179 @@ function unplacedSplit(dir) {
   }
 }
 
+/* ------------------------------------------------------------------------ *
+ * ITEM C-552 — THE QUEUE MUST OFFER THE UNGATED HALF AND STILL SHOW THE
+ * GATED ONE.
+ *
+ * `userBlockerText` is the third stage of the claimable funnel, and an item
+ * carrying any owner gate is removed there entirely. That is right for a gate
+ * over the whole item and wrong for a gate over half of it: the executable half
+ * disappears from every lane table, and *Blocked on Anand* tells an agent never
+ * to take it.
+ *
+ * The board now records a gate declared over a named half as `partialGate`
+ * rather than `blocker`, so such an item reaches the lane tables. This suite
+ * holds shut the half the queue owns: the row must arrive WITH the gated half
+ * attached, and a section must name it, because an item offered as free work
+ * with its owner-gated half silently dropped is a worse failure than the one
+ * this fixes.
+ *
+ * Both directions are asserted on the same fixture pair, and the negative is
+ * the important one: an item whose gate is NOT scoped must stay out of the lane
+ * tables and stay in *Blocked on Anand*.
+ * ------------------------------------------------------------------------ */
+{
+  console.log("\nbuild-execution-queue — a gate over half an item (C-552)\n");
+
+  const PARTIAL_HEADING = /^## Partly gated/m;
+
+  /** The section alone, so a match elsewhere in the file cannot pass a case. */
+  function partialSection(rendered) {
+    const start = rendered.search(PARTIAL_HEADING);
+    if (start < 0) return "";
+    const rest = rendered.slice(start + 1);
+    const next = rest.search(/^## /m);
+    return next < 0 ? rendered.slice(start) : rendered.slice(start, start + 1 + next);
+  }
+
+  /** The claimable lane tables alone — up to the next `## ` heading. */
+  function laneTables(rendered) {
+    const start = rendered.search(/^### Lane [DCUT?] /m);
+    if (start < 0) return "";
+    const rest = rendered.slice(start);
+    const end = rest.search(/^## /m);
+    return end < 0 ? rest : rest.slice(0, end);
+  }
+
+  function blockedSection(rendered) {
+    const start = rendered.search(/^## Blocked on Anand/m);
+    if (start < 0) return "";
+    const rest = rendered.slice(start + 1);
+    const next = rest.search(/^## /m);
+    return next < 0 ? rendered.slice(start) : rendered.slice(start, start + 1 + next);
+  }
+
+  /** The exact gating sentence from the live register line at 03:05:20Z. */
+  const LIVE_GATE =
+    "The signed-in Value readback the row also asks for was NOT attempted and remains owed"
+    + " -- it needs a human and the row forbids waiving the frozen event's Scope policy to reach Value.";
+
+  const DECLARATION =
+    "**Gate scope — partial.** Gated half: the signed-in Value readback on a live Value surface,"
+    + " which needs a human. Claimable half: state the terminal Value contract in code and test it.";
+
+  function addGatedItem(dir, id, { declare }) {
+    fs.appendFileSync(
+      path.join(dir, "EXECUTION_BACKLOG_20260918.md"),
+      `\n| ${id} | **Value is terminal and the surface implies an onward target.**${declare ? ` ${DECLARATION}` : ""} | T |`
+        + " State the terminal Value contract in code and test it, red-first. |\n",
+    );
+    mapFixtureId(dir, id);
+    fs.appendFileSync(
+      path.join(dir, "EXECUTION_CLAIMS.md"),
+      `\n2026-09-27T03:05:20Z | fixture#abstain | item ${id} NOT TAKEN — ${LIVE_GATE}\n`,
+    );
+  }
+
+  /* --- (a) THE DEFECT. Gate scoped to a half: the item is offered again. --- */
+  {
+    const dir = freshFixture();
+    addGatedItem(dir, "T-951", { declare: true });
+    const q = buildBoardAndQueue(dir);
+    const rendered = fs.readFileSync(path.join(dir, "EXECUTION_QUEUE.md"), "utf8");
+    check(
+      "C-552 (a) an item whose gate is declared over one half is offered in a claimable lane",
+      q.status === 0 && laneTables(rendered).includes("| T-951 |"),
+      `exit=${q.status}\nlaneRows=${JSON.stringify(laneTables(rendered).split("\n").filter((l) => l.includes("T-951")))}`,
+    );
+    /*
+     * The MARKER, not the words. A first draft asserted only that the row
+     * mentioned the gated half, and it passed on unfixed code: the declaration
+     * is written in the item's own row, so the title the queue prints already
+     * contained those words and the case was testing the fixture rather than
+     * the generator. The marker below is the queue's own, and it exists nowhere
+     * in the fixture documents.
+     */
+    const t951Row = laneTables(rendered).split("\n").filter((l) => l.includes("| T-951 |")).join("\n");
+    check(
+      "C-552 (a) and its claimable row carries the queue's own partly-gated marker with the gated half",
+      q.status === 0
+        && /PARTLY GATED/.test(t951Row)
+        && /signed-in Value readback/i.test(t951Row.split("PARTLY GATED")[1] ?? ""),
+      `row=${JSON.stringify(t951Row)}`,
+    );
+    check(
+      "C-552 (a) and a section of its own names the item and the half that is gated",
+      q.status === 0
+        && partialSection(rendered).includes("T-951")
+        && /signed-in Value readback/i.test(partialSection(rendered)),
+      `sectionFound=${Boolean(partialSection(rendered))}\nsection=${partialSection(rendered).slice(0, 800)}`,
+    );
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+
+  /* --- (b) THE NEGATIVE, and the one that costs if it moves. An identical
+   * item with NO declaration stays gated, out of every lane table and inside
+   * *Blocked on Anand*.                                                     */
+  {
+    const dir = freshFixture();
+    addGatedItem(dir, "T-952", { declare: false });
+    const q = buildBoardAndQueue(dir);
+    const rendered = fs.readFileSync(path.join(dir, "EXECUTION_QUEUE.md"), "utf8");
+    check(
+      "C-552 (b) an undeclared gate keeps the whole item out of every claimable lane",
+      q.status === 0 && !laneTables(rendered).includes("| T-952 |"),
+      `exit=${q.status}\nlaneRows=${JSON.stringify(laneTables(rendered).split("\n").filter((l) => l.includes("T-952")))}`,
+    );
+    check(
+      "C-552 (b) and it is still counted under Blocked on Anand — exactly one item, which is this one",
+      q.status === 0 && /\*\*Signed-in acceptance owed\*\*\s+[\u2014-]\s+1 item\b/.test(blockedSection(rendered)),
+      `blocked=${blockedSection(rendered).slice(0, 500)}`,
+    );
+    check(
+      "C-552 (b) and it is NOT reported as partly gated",
+      q.status === 0 && Boolean(partialSection(rendered)) && !partialSection(rendered).includes("T-952"),
+      `sectionFound=${Boolean(partialSection(rendered))}\nsection=${partialSection(rendered).slice(0, 800)}`,
+    );
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+
+  /* --- (c) The section is rendered on EVERY run, including at zero. A block
+   * that appears only in the interesting case is exercised only in the
+   * interesting case, which is how this directory lost a control for ten
+   * weeks. The count it states must agree with the rows it lists.           */
+  {
+    const dir = freshFixture();
+    const q = buildBoardAndQueue(dir);
+    const rendered = fs.readFileSync(path.join(dir, "EXECUTION_QUEUE.md"), "utf8");
+    check(
+      "C-552 (c) the partly-gated section is present with nothing in it",
+      q.status === 0 && Boolean(partialSection(rendered)) && /\b0\b/.test(partialSection(rendered)),
+      `sectionFound=${Boolean(partialSection(rendered))}\nsection=${partialSection(rendered).slice(0, 600)}`,
+    );
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+
+  /* --- (d) The stated count equals the ids listed, on two items and one
+   * control that must not be counted.                                       */
+  {
+    const dir = freshFixture();
+    addGatedItem(dir, "T-953", { declare: true });
+    addGatedItem(dir, "T-954", { declare: true });
+    addGatedItem(dir, "T-955", { declare: false });
+    const q = buildBoardAndQueue(dir);
+    const rendered = fs.readFileSync(path.join(dir, "EXECUTION_QUEUE.md"), "utf8");
+    const section = partialSection(rendered);
+    const stated = Number(section.match(/\*\*(\d+) items?\*\* carr/)?.[1] ?? NaN);
+    const listed = ["T-953", "T-954", "T-955"].filter((id) => section.includes(id));
+    check(
+      "C-552 (d) the partly-gated count equals the ids it lists, and the undeclared one is not among them",
+      q.status === 0 && stated === 2 && listed.length === 2 && !listed.includes("T-955"),
+      `stated=${stated} listed=${JSON.stringify(listed)}\nsection=${section.slice(0, 900)}`,
+    );
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+}
+
 console.log(`\n${passes} passed, ${failures} failed${skipped ? `, ${skipped} skipped` : ""}`);
 process.exit(failures ? 1 : 0);

@@ -1219,12 +1219,100 @@ function deriveBlocker(body, claims = "", rung = null) {
     if (r.ownerGate) {
       const bodyMatch = firstUnvetoedMatch(bodyText, r);
       if (bodyMatch) {
-        return { say: r.say, quote: sentenceAround(bodyText, bodyMatch.index ?? 0) };
+        return { say: r.say, ownerGate: true, quote: sentenceAround(bodyText, bodyMatch.index ?? 0) };
       }
     }
-    fromClaims ??= { say: r.say, quote: sentenceAround(t, m.index ?? 0) };
+    fromClaims ??= { say: r.say, ownerGate: r.ownerGate === true, quote: sentenceAround(t, m.index ?? 0) };
   }
   return fromClaims;
+}
+
+/* ------------------------------------------------------------------------ *
+ * A GATE DECLARED OVER PART OF AN ITEM — item C-552.
+ *
+ * `deriveBlocker` above returns at most one blocker, and it is a per-ITEM
+ * field. An acceptance written in halves has nowhere to say that one half is
+ * owner-gated while the other is ordinary executable work, so the first true
+ * sentence about the gated half labels the whole item and the queue files it
+ * where an agent is told never to look. The executable half stops being work.
+ *
+ * MEASURED, on the live documents at `912a1c593c`. `U-406` is explicitly two
+ * halves — state the terminal Value contract in code, which needs nobody, and
+ * read the approver role back on a live Value surface, which needs a human. A
+ * register line at `2026-09-27T03:05:20Z` stated the second and was right to;
+ * `U-406`'s derived blocker went from `null` to `Signed-in acceptance owed` and
+ * the generated queue's claimable count went 4 to 3. Removing that one line
+ * from a scratch copy of the operator root returned the blocker to `null`, so
+ * the line is the whole cause and the row's own body gates nothing.
+ *
+ * AND THE REGISTER HAD NO REMEDY OF ITS OWN. It is append-only, and
+ * `firstUnvetoedMatch` scans an item's whole corpus, so one unvetoed sentence
+ * anywhere is enough and a later line saying the executable half is free does
+ * not move the blocker. A single badly-scoped sentence gated an item
+ * permanently and by construction.
+ *
+ * THIS IS A DECLARATION, NOT A NARROWER PATTERN, and the distinction is the
+ * item's own instruction: `T-703` and `T-761` each paid for the current breadth
+ * of these rules, and the live sentence is a correct match that must go on
+ * matching. Nothing above changes. An item may instead DECLARE that the gate it
+ * carries covers a named half, in its row or in an appended register line, and
+ * the board then records the gate as partial — the item carries no per-item
+ * blocker and the gated half travels with it so the reader cannot miss it.
+ *
+ * Four properties keep this in the safe direction, each with a case in the
+ * behavioural suite that fails without it:
+ *
+ *   DECLARED, NEVER INFERRED. With no declaration the gate covers the whole
+ *   item exactly as before. Nothing is read from the shape of an acceptance,
+ *   the word "half", or an absent value — the constitution's rule for identity
+ *   applied to a gate's scope.
+ *
+ *   IT FAILS CLOSED. Both halves must be named. A declaration that names the
+ *   gated half and no claimable half says nothing about what is takeable, so
+ *   the gate stays where it is.
+ *
+ *   IT CANNOT INVENT A GATE. The scope is consulted only when a rule has
+ *   already matched, so a row that WRITES ABOUT partial gates does not acquire
+ *   one. That is `C-538`'s disease, and it has now reproduced live twice.
+ *
+ *   `Unclaimed` IS NOT SCOPABLE. It is the fallback and it asserts the ABSENCE
+ *   of a gate; only an `ownerGate` rule can be scoped, for the same reason the
+ *   `T-418` note gives for never promoting it.
+ * ------------------------------------------------------------------------ */
+
+/**
+ * The declaration, written so a human reading the row sees it first and the
+ * parser second. Both halves are required and each stops at the next field, at
+ * a table-cell boundary or at end of line — never at a bare full stop, because
+ * a scope sentence routinely contains one.
+ */
+const PARTIAL_GATE_DECLARATION =
+  /\*\*Gate scope\s*[—–-]\s*partial\.?\*\*\s*Gated half:\s*([^\n]{1,300}?)\s*Claimable half:\s*([^\n]{1,300}?)\s*(?:\||\n|$)/i;
+
+function declaredGateScope(text) {
+  const m = PARTIAL_GATE_DECLARATION.exec(text ?? "");
+  if (!m) return null;
+  const tidy = (s) => s.trim().replace(/[.;,]+$/, "").trim().replace(/\s+/g, " ").slice(0, 240);
+  const gated = tidy(m[1]);
+  const open = tidy(m[2]);
+  if (!gated || !open) return null;
+  return { gated, open };
+}
+
+/**
+ * Scope a derived blocker to a declared half, or leave it alone.
+ *
+ * Returns the pair the item carries: `blocker` is what gates the WHOLE item and
+ * decides claimability, `partialGate` is a gate over a named part and does not.
+ */
+function scopeBlocker(blocker, corpus) {
+  if (!blocker?.ownerGate) return { blocker, partialGate: null };
+  const scope = declaredGateScope(corpus);
+  if (!scope) return { blocker, partialGate: null };
+  return {
+    blocker: null,
+    partialGate: { say: blocker.say, quote: blocker.quote, gated: scope.gated, open: scope.open },
+  };
 }
 
 /**
@@ -1627,6 +1715,12 @@ function buildItem(ref) {
   // rules T-700 reworked read that one, and narrowing both in one change would
   // make the rung movement unattributable.
   const rung = deriveRung(statusCorpus, num);
+  // Item C-552. The declaration may come from either corpus: a row is edited,
+  // and the register — which cannot be — can only append one.
+  const { blocker, partialGate } = scopeBlocker(
+    deriveBlocker(bodyCorpus, claimCorpus, rung),
+    claimCorpus ? `${bodyCorpus}\n${claimCorpus}` : bodyCorpus,
+  );
   return {
     num,
     definedIn,
@@ -1649,7 +1743,8 @@ function buildItem(ref) {
     ),
     owner: claims.map((c) => c.owner).find(Boolean) ?? "",
     rung,
-    blocker: deriveBlocker(bodyCorpus, claimCorpus, rung),
+    blocker,
+    partialGate,
   };
 }
 
@@ -2281,7 +2376,13 @@ function itemRow(i) {
     <td>${esc(i.title).slice(0, 230)}</td>
     <td>${i.lane ? `<span class="lane">${esc(i.lane)}</span>` : "—"}</td>
     <td>${rungChip(i.rung)}</td>
-    <td>${i.blocker ? esc(i.blocker.say) : "—"}</td>
+    <td>${i.blocker
+      ? esc(i.blocker.say)
+      : i.partialGate
+        // Item C-552: a partial gate is not a blocker and does not stop the
+        // item being claimed, but the page must not render it as "none".
+        ? `partly gated — ${esc(i.partialGate.say)} over: ${esc(i.partialGate.gated)}`
+        : "—"}</td>
     <td>${esc(i.acceptance).slice(0, 220) || "—"}</td>
   </tr>`;
 }
@@ -2582,7 +2683,7 @@ if (process.argv.includes("--json")) {
       } : null,
       items: s.items.map((i) => ({
         num: i.num, rung: i.rung.rung, rungLabel: RUNG_LABEL[i.rung.key],
-        blocker: i.blocker?.say ?? null, lane: i.lane || null,
+        blocker: i.blocker?.say ?? null, partialGate: i.partialGate ?? null, lane: i.lane || null,
         title: i.title, acceptance: i.acceptance || null, ambiguous: i.ambiguous,
         substantiveSections: i.ambiguous ? i.substantiveSections : undefined,
       })),
@@ -2599,6 +2700,10 @@ if (process.argv.includes("--json")) {
         rung: i.rung.rung,
         rungLabel: RUNG_LABEL[i.rung.key],
         blocker: i.blocker?.say ?? null,
+        // Item C-552. A gate over a named half. It is NOT a per-item blocker
+        // and must never be counted as one; the queue renders it beside the
+        // claimable row so the half nobody may take travels with the work.
+        partialGate: i.partialGate ?? null,
         quote: i.rung.quote || null,
         lane: i.lane || null,
         title: i.title,
@@ -2611,6 +2716,13 @@ if (process.argv.includes("--json")) {
       .reduce((a, i) => { a[RUNG_LABEL[i.rung.key]] = (a[RUNG_LABEL[i.rung.key]] ?? 0) + 1; return a; }, {}),
     allBlockers: [...stages.flatMap((s) => s.items), ...tracks.flatMap((t) => t.built)]
       .reduce((a, i) => { if (i.blocker) a[i.blocker.say] = (a[i.blocker.say] ?? 0) + 1; return a; }, {}),
+    // Item C-552. Written on EVERY run including empty — a missing field is not
+    // a zero, the rule item T-746 set for the residual. These items are NOT in
+    // `allBlockers`: a gate over a named half does not gate the item, and
+    // counting it there is the per-item field this item exists to stop.
+    partialGates: [...stages.flatMap((s) => s.items), ...tracks.flatMap((t) => t.built)]
+      .filter((i) => i.partialGate)
+      .map((i) => ({ num: i.num, lane: i.lane || null, ...i.partialGate })),
     duplicateNums,
     unmapped,
     // Item T-746. The queue renders these; a MISSING FIELD IS NOT A ZERO
