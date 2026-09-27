@@ -9,6 +9,8 @@ import {
   consolidateOpenInputPlaceholders,
   type SynthesisResult,
 } from "../section-generation";
+import { validateDeliverableQuality } from "../quality-validator";
+import { resolveQualityBar } from "../quality-bar-registry";
 import { amsRfpRequest } from "../__fixtures__/ams-rfp";
 import { countBodyWords } from "@/lib/deliverables/shared/body-word-count";
 import type { GovernedEvidenceItem, RenderableSection } from "../types";
@@ -130,6 +132,108 @@ describe("buildSourceRegister", () => {
         (r) => r.citationNumber,
       ),
     ).toEqual([1]);
+  });
+
+  it("normalizes an under-authored P2 discovery deck to the governed slide contract", () => {
+    const req = amsRfpRequest({
+      module: "moves",
+      deliverableType: "discovery_report",
+      outputFormats: ["pptx"],
+      qualityBar: {
+        ...resolveQualityBar("moves", "discovery_report"),
+        minBodyWords: 0,
+        requiresSourceRegister: false,
+      },
+    });
+    const sections: RenderableSection[] = [
+      {
+        key: "exec_summary",
+        title: "Executive Summary",
+        bodyMarkdown:
+          "The member-service workflow can proceed to design only if tool, policy, and human-approval gaps remain explicit [1].",
+        groundingMode: "mixed",
+        citationsUsed: [1],
+      },
+      {
+        key: "current_state",
+        title: "Current-State Findings",
+        bodyMarkdown:
+          "Agents move between CRM, eligibility, claims, prior authorization, knowledge, and supervisor channels during one member contact [2].",
+        groundingMode: "governed_facts",
+        citationsUsed: [2],
+      },
+      {
+        key: "maturity_gaps",
+        title: "Maturity, Benchmark & Gaps",
+        bodyMarkdown:
+          "The highest-risk gaps are disposition quality, knowledge ownership, and inconsistent handoff evidence [3].",
+        groundingMode: "mixed",
+        citationsUsed: [3],
+      },
+      {
+        key: "readiness_implications",
+        title: "Readiness & Implications",
+        bodyMarkdown:
+          "Design must preserve human approval for coverage, payment, prior authorization, appeal, grievance, clinical, and pharmacy decisions [4].",
+        groundingMode: "mixed",
+        citationsUsed: [4],
+      },
+      {
+        key: "recommendation",
+        title: "Recommended Move & Next Steps",
+        bodyMarkdown:
+          "Proceed to design with retrieval, citation, and approval controls; defer autonomy and writeback [5].",
+        groundingMode: "mixed",
+        citationsUsed: [5],
+      },
+    ];
+    const synth: SynthesisResult = {
+      recommendation:
+        "Proceed to design with explicit controls and no autonomous member-impacting decisions.",
+      nextActions: ["Review the design boundary with the sponsor."],
+      deckSlides: [
+        {
+          key: "executive_answer",
+          title: "Executive Answer",
+          governingMessage: "Proceed, but only with controls.",
+        },
+        {
+          key: "current_state",
+          title: "Current State",
+          governingMessage: "The workflow is fragmented.",
+        },
+        {
+          key: "root_causes",
+          title: "Root Causes",
+          governingMessage: "The root causes are operational.",
+        },
+        {
+          key: "proceed_hold_stop",
+          title: "Proceed, Hold or Stop",
+          governingMessage: "Proceed to design.",
+        },
+      ],
+      tables: [],
+    };
+
+    const doc = assembleDeliverable(req, sections, synth, []);
+
+    expect(doc.deckSlides).toHaveLength(10);
+    expect(doc.deckSlides?.map((slide) => slide.key)).toEqual([
+      "executive_answer",
+      "what_we_assessed",
+      "current_state",
+      "what_is_working",
+      "what_is_not_working",
+      "root_causes",
+      "metrics_evidence",
+      "implications",
+      "readiness",
+      "proceed_hold_stop",
+    ]);
+    expect(validateDeliverableQuality(doc, req).blockers.join(" ")).not.toMatch(
+      /slides.*needs at least/i,
+    );
   });
 });
 

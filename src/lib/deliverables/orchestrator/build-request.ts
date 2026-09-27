@@ -15,6 +15,8 @@ import type {
 } from "./types";
 import type { AdaptiveDepthDecision } from "@/lib/deliverables/adaptive-depth";
 import { resolveQualityBar } from "./quality-bar-registry";
+import { DELIVERABLE_PROFILES } from "@/lib/deliverables/profiles/registry";
+import { deliverableKeyForOrchestratorType } from "@/lib/deliverables/quality/deliverable-key-map";
 
 export interface BuildRequestParams {
   module: DeliverableModule;
@@ -34,6 +36,18 @@ const DEFAULT_AUDIENCE: Record<DeliverableModule, AudienceRole[]> = {
   tower: ["cio", "cto", "steering_committee"],
   intelligence: ["cio", "steering_committee"],
 };
+
+function defaultOutputFormats(
+  module: DeliverableModule,
+  deliverableType: string,
+): OutputFormat[] {
+  if (module === "moves") {
+    const key = deliverableKeyForOrchestratorType(deliverableType);
+    const profile = key ? DELIVERABLE_PROFILES[key] : undefined;
+    if (profile?.defaultFormat) return [profile.defaultFormat];
+  }
+  return ["docx", "xlsx"];
+}
 
 export function buildDeliverableRequest(
   params: BuildRequestParams,
@@ -57,7 +71,7 @@ export function buildDeliverableRequest(
     artifactStandard: "ABARVA_BOARD_GRADE_DELIVERABLE_STANDARD",
     outputFormats: params.outputFormats?.length
       ? params.outputFormats
-      : ["docx", "xlsx"],
+      : defaultOutputFormats(params.module, params.deliverableType),
     formattingProfile: {
       bodyPointSize: 11,
       headingStyle: "numbered",

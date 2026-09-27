@@ -681,6 +681,30 @@ describe("buildDeliverableRequest", () => {
     expect(req.qualityBar.requiresSourceRegister).toBe(true);
   });
 
+  it("defaults P2 discovery reports to PPTX so the deck storyline is authored", () => {
+    const req = buildDeliverableRequest(
+      {
+        module: "moves",
+        useCaseArchetype: "CONTRACT_OBLIGATION_CONTROL",
+        deliverableType: "discovery_report",
+        decisionContext: "approve discovery gate",
+        clientDisplayName: "Synthetic Tenant",
+        initiativeDisplayName: "Contract Control",
+      },
+      evidence,
+      [
+        {
+          citationNumber: 1,
+          label: "SLA",
+          evidenceFamily: "sla_baseline",
+          confidence: "high",
+        },
+      ],
+    );
+
+    expect(req.outputFormats).toEqual(["pptx"]);
+  });
+
   it("does NOT require a source register when there is no governed evidence to register", () => {
     // A source register is a register OF governed evidence; with an empty bundle
     // there is nothing to cite, so the quality gate must not block on its absence
