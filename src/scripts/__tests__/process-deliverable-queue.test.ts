@@ -76,6 +76,42 @@ const { persistMoveGeneratedArtifact } = premiumPersist;
 const { getProgramById } = programQueries;
 const { validateDeliverableTenantInvariant } = invariant;
 
+const governedContext = {
+  moveId: 'move-1',
+  tenantKey: 'lakeshore-holdings',
+  baselineMetrics: {
+    'Manual touch hours per month': '2,345',
+  },
+  metricsThatMatter: [
+    { label: 'Monthly exceptions', value: '1,872' },
+  ],
+  evidenceTaxonomy: [
+    { category: 'Payment hold / control review', riskLevel: 'High' },
+  ],
+  evidenceMap: [
+    {
+      claim: 'Control risk is concentrated in payment-release handoffs.',
+      source: 'P2 diagnostic',
+    },
+  ],
+  evidencePackets: [
+    {
+      evidenceId: 'evid-1',
+      title: 'P2 workshop evidence pack',
+      evidenceType: 'workshop',
+      phase: 2,
+      summary: 'Workshop confirmed queue review and policy handoffs.',
+      observations: [],
+      assumptions: [],
+      openQuestions: [],
+      citations: [],
+      approvedAt: '2026-09-27T00:00:00.000Z',
+    },
+  ],
+  decisions: [],
+  humanApprovalNotes: [],
+};
+
 const jobPayload = {
   module: 'source',
   useCaseArchetype: 'AMS_IT_OUTSOURCING',
@@ -366,6 +402,109 @@ describe('processDeliverableQueue', () => {
       expect.objectContaining({
         status: 'succeeded',
         artifactId: 'move-artifact-1',
+      }),
+    );
+  });
+
+  it('records governed context evidence for a succeeded premium run instead of the SVG count', async () => {
+    const premiumRun = {
+      ...claimedRow('run-premium-count'),
+      clientId: 'client-lake',
+      tenantKey: 'lakeshore-holdings',
+      module: 'moves',
+      deliverableType: 'target_state_architecture',
+      jobPayload: {
+        kind: 'moves_premium_artifact',
+        module: 'moves',
+        useCaseArchetype: 'ai_opportunity_discovery',
+        deliverableType: 'target_state_architecture',
+        decisionContext: 'P3 future-state blueprint',
+        clientDisplayName: 'Lakeshore Holdings',
+        initiativeDisplayName: 'Back-office Automation',
+        sourceArtifactRef: 'move-1',
+        phase: 3,
+        artifact: 'target_state_architecture',
+        generationMode: 'draft',
+        title: 'P3 Future-State Blueprint Draft',
+        useCaseQuery: 'Reduce AP exceptions',
+      },
+    };
+    generateArtifact.mockResolvedValueOnce({
+      status: 'generated',
+      html: '<html><body><svg></svg></body></html>',
+      context: governedContext,
+      goldenBar: { pass: true, wordCount: 2600, svgCount: 11, hasDataGap: false },
+      generationMode: 'draft',
+      draftOnly: true,
+      draftCaveats: [],
+      contextCaveats: [],
+    });
+    claimNextDeliverableRun.mockResolvedValueOnce(premiumRun).mockResolvedValueOnce(null);
+
+    await processDeliverableQueue({ workerId: 'worker-p3-count', batchSize: 5 });
+
+    expect(completeDeliverableRun).toHaveBeenCalledWith(
+      'run-premium-count',
+      expect.objectContaining({
+        status: 'succeeded',
+        retrievedEvidence: 5,
+        warnings: expect.arrayContaining([
+          'svg_count=11',
+          'governed_context_evidence=5',
+        ]),
+      }),
+    );
+  });
+
+  it('records governed context evidence when a premium run is quality-blocked', async () => {
+    const premiumRun = {
+      ...claimedRow('run-premium-blocked-count'),
+      clientId: 'client-lake',
+      tenantKey: 'lakeshore-holdings',
+      module: 'moves',
+      deliverableType: 'solution_design',
+      jobPayload: {
+        kind: 'moves_premium_artifact',
+        module: 'moves',
+        useCaseArchetype: 'ai_opportunity_discovery',
+        deliverableType: 'solution_design',
+        decisionContext: 'P3 solution design',
+        clientDisplayName: 'Lakeshore Holdings',
+        initiativeDisplayName: 'Back-office Automation',
+        sourceArtifactRef: 'move-1',
+        phase: 3,
+        artifact: 'solution_design',
+        generationMode: 'draft',
+        title: 'P3 Solution Design Draft',
+        useCaseQuery: 'Reduce AP exceptions',
+      },
+    };
+    generateArtifact.mockResolvedValueOnce({
+      status: 'blocked_quality',
+      html: '<html><body><svg></svg></body></html>',
+      context: governedContext,
+      goldenBar: {
+        pass: false,
+        wordCount: 2600,
+        svgCount: 11,
+        hasDataGap: false,
+        reasons: ['missing required exhibits: decision traceability table'],
+      },
+    });
+    claimNextDeliverableRun.mockResolvedValueOnce(premiumRun).mockResolvedValueOnce(null);
+
+    await processDeliverableQueue({ workerId: 'worker-p3-blocked', batchSize: 5 });
+
+    expect(completeDeliverableRun).toHaveBeenCalledWith(
+      'run-premium-blocked-count',
+      expect.objectContaining({
+        status: 'blocked',
+        retrievedEvidence: 5,
+        blockers: ['missing required exhibits: decision traceability table'],
+        warnings: expect.arrayContaining([
+          'svg_count=11',
+          'governed_context_evidence=5',
+        ]),
       }),
     );
   });
