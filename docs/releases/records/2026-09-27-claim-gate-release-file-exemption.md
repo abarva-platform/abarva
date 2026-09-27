@@ -73,6 +73,12 @@ Baseline and result measured over the same scope, from a worktree cut clean from
   shaped like the live one: item verdict `already-yours` (not refusing), `REFUSED BY THE FILE
   HALF — 1 of 1 requested path(s)`, nothing appended. After the change the same invocation appends
   and the line carries its `files:` list.
+- **Proven on the REAL known positive, not only on a fixture.** The occurrence the item cites was
+  replayed from a frozen prefix of the live register — its first 3,273 lines, cut immediately before
+  the release line in question was written — with the gate pinned to the instant it happened. The
+  old module refuses it (`item verdict: already-yours`, `REFUSED BY THE FILE HALF — 1 of 1
+  requested path(s)`, the holder named); the new module appends it, and the line carries its
+  `files:` list. Both directions were run against the same frozen file.
 - **Four mutations, each verified to change behaviour and each caught.**
   - Dropping the exemption (`askFileHalf = files !== undefined`) — 2 failed, both the new
     acceptance assertions.
