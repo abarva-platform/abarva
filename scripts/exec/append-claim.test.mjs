@@ -1318,5 +1318,136 @@ const PROOF_OWED = "PR #9000 merged and deployed. Not live-proven — signed-in 
   fs.rmSync(dir, { recursive: true, force: true });
 }
 
+// ---------------------------------------------------------------------------
+// Case 22 (item C-564) — the file-overlap half must not refuse a RELEASE.
+//
+// A release is the one record that FREES a file. The file half asks "is any
+// path you named already held by another live claim?", and for a release the
+// only thing an overlap can mean is that a successor has already taken the
+// paths — which is the normal, desirable case and precisely what the release
+// unblocks. Reproduced on the live register while closing C-563: the item half
+// answered `already-yours` and did not refuse, the file half refused, and the
+// helper appended nothing. The workaround was to drop `--files` from the
+// release line, which works and silently loses the record of which files the
+// item held and freed — so this case asserts the appended line still CARRIES
+// its `files:` list.
+//
+// `--action abstain` is already exempt for the same reason one rung down: the
+// moment you most need to record the decision is the moment the gate refuses.
+//
+// Stamps are taken from the real clock rather than the fixed NOW, as case 10
+// does: the helper stamps its own write from the clock at the instant of
+// writing (T-457), so a `--now` in the past would drop that line out of the
+// window and make every read-back below a vacuous pass.
+// ---------------------------------------------------------------------------
+{
+  const HELD = "scripts/exec/append-claim.mjs";
+  const ago = (minutes) =>
+    new Date(Date.now() - minutes * 60_000).toISOString().replace(/\.\d{3}Z$/, "Z");
+  const { dir, file } = fixture([
+    `${ago(40)} | ${ME} | item T-810 claimed on branch \`exec/t-810\` — taking it. files: ${HELD}`,
+    `${ago(20)} | ${OTHER} | item T-811 claimed on branch \`exec/t-811\` — ` +
+      `successor took the same path after the merge. files: ${HELD}`,
+  ]);
+
+  // The file really is held by the OTHER identity, proven against the REAL
+  // gate rather than assumed from the fixture text. Without this the
+  // acceptance below could pass against a gate that holds nothing.
+  const heldNow = preclaimFiles(file, "T-812", ME, ago(0), HELD);
+  check(
+    "C-564 setup — the REAL gate reports the path held by another live claim",
+    heldNow.status === 1 && heldNow.report.fileOverlap?.conflicts?.length === 1,
+    `status=${heldNow.status} report=${JSON.stringify(heldNow.report)}`,
+  );
+
+  // T-707's guardrail, asserted here and not only elsewhere: the exemption is
+  // for releases, so a CLAIM naming the same held path must still be refused,
+  // and the refusal must still name the path and the holder.
+  const beforeClaim = digest(file);
+  const claimBlocked = run([
+    ...base({ file, item: "T-812", identity: ME, message: "taking a path someone else holds" }),
+    "--branch", "exec/t-812", "--files", HELD,
+  ]);
+  const claimOut = claimBlocked.stdout + claimBlocked.stderr;
+  check(
+    "C-564 guardrail — a CLAIM naming a held path is still refused, naming path and holder",
+    claimBlocked.status === 1 &&
+      digest(file) === beforeClaim &&
+      /REFUSED BY THE FILE HALF/.test(claimOut) &&
+      claimOut.includes(HELD) &&
+      claimOut.includes(OTHER),
+    `status=${claimBlocked.status} changed=${digest(file) !== beforeClaim}\nout=${claimOut}`,
+  );
+
+  // THE ACCEPTANCE.
+  const released = run([
+    ...base({
+      file, item: "T-810", identity: ME,
+      message: "merged and deployed; handing the item back",
+    }),
+    "--action", "release", "--branch", "exec/t-810", "--files", HELD,
+  ]);
+  const releasedOut = released.stdout + released.stderr;
+  check(
+    "C-564 THE ACCEPTANCE — a RELEASE naming a path held by a DIFFERENT live identity is appended",
+    released.status === 0,
+    `status=${released.status} out=${releasedOut}`,
+  );
+  const tail = fs.readFileSync(file, "utf8").slice(-600);
+  check(
+    "C-564 THE ACCEPTANCE — the appended release still CARRIES its `files:` list",
+    /\|\s*RELEASED item T-810\b/.test(tail) && new RegExp(`files: ${HELD.replace(/[.]/g, "\\.")}`).test(tail),
+    tail,
+  );
+
+  // The item half is kept exactly as it is: a release of an item another
+  // identity holds is still refused. Without this, "exempt the release" could
+  // be implemented as "skip the gate for releases", which frees a file by
+  // writing a release over someone else's claim.
+  const beforeSteal = digest(file);
+  const stolen = run([
+    ...base({
+      file, item: "T-811", identity: ME,
+      message: "releasing an item that is not mine",
+    }),
+    "--action", "release", "--branch", "exec/t-811", "--files", HELD,
+  ]);
+  const stolenOut = stolen.stdout + stolen.stderr;
+  check(
+    "C-564 — the ITEM half is unchanged: releasing another identity's item is still refused",
+    stolen.status === 1 && digest(file) === beforeSteal && /held-by-another/.test(stolenOut),
+    `status=${stolen.status} changed=${digest(file) !== beforeSteal}\nout=${stolenOut}`,
+  );
+  // A consequence of the exemption, pinned rather than left incidental: the
+  // advertised-flag check (case 13) refuses `--files` against a gate that
+  // cannot check files, because the check the caller asked for would silently
+  // not run. A release does not ask for that check, so there is nothing to
+  // refuse and the record must land — otherwise the exemption would still
+  // block a release on a gate predating T-707, which is the same defect
+  // reached by a different route.
+  {
+    const { dir: d2, file: f2 } = fixture([]);
+    const without = path.join(d2, "gate-without-files.mjs");
+    fs.writeFileSync(
+      without,
+      "if (!process.argv.includes('--file')) { console.error('usage: --preclaim --file <f> --item <i> --identity <x> [--json]'); process.exit(2); }\n" +
+        "if (process.argv.includes('--files')) { console.error('the caller forwarded --files to a gate that cannot check them'); process.exit(9); }\n" +
+        "console.log(JSON.stringify({ verdict: 'already-yours', reason: 'stub' }));\nprocess.exit(0);\n",
+    );
+    const r2 = run([
+      ...base({ file: f2, item: "T-813", identity: ME, message: "merged; handing it back" }),
+      "--action", "release", "--branch", "exec/t-813", "--files", HELD, "--gate", without,
+    ]);
+    check(
+      "C-564 — a RELEASE does not ask the file half, so a gate that cannot check files does not block it",
+      r2.status === 0 && new RegExp(`files: ${HELD.replace(/[.]/g, "\\.")}`).test(fs.readFileSync(f2, "utf8")),
+      `status=${r2.status} out=${r2.stdout}${r2.stderr}`,
+    );
+    fs.rmSync(d2, { recursive: true, force: true });
+  }
+
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
 console.log(`\n${passes} passed, ${failures} failed`);
 process.exit(failures ? 1 : 0);
