@@ -57,6 +57,55 @@ function result(): OrchestrationResult {
   } as unknown as OrchestrationResult;
 }
 
+function p2DiscoveryDoc(
+  slideKeys: string[] = [
+    "current_state",
+    "what_is_not_working",
+    "root_causes",
+    "metrics_evidence",
+    "readiness",
+  ],
+): RenderableDeliverable {
+  return {
+    ...doc(),
+    title: "Discovery & Diagnostic Readout",
+    recommendation: "Recommend proceeding to option design with stated controls.",
+    generatedSections: [
+      {
+        key: "current_state",
+        title: "Current State",
+        bodyMarkdown:
+          "Current service handoffs create repeat contacts and slow resolution.",
+        groundingMode: "governed_facts",
+        citationsUsed: [1],
+      },
+    ],
+    deckSlides: slideKeys.map((key) => ({
+      key,
+      title: key.replace(/_/g, " "),
+      governingMessage:
+        "Recommend using the diagnosed service gaps to shape the next design decision.",
+      points: ["Evidence-backed operating finding", "Implication for design"],
+      citationsUsed: [1],
+    })),
+  };
+}
+
+function p2Result(
+  deliverableType: string,
+  document: RenderableDeliverable,
+): OrchestrationResult {
+  return {
+    ...result(),
+    document,
+    brief: {
+      module: "moves",
+      deliverableType,
+      decisionToSupport: "Proceed to the next governed phase",
+    },
+  } as unknown as OrchestrationResult;
+}
+
 const opts = (extra: Record<string, unknown>) => ({
   clientId: "c1",
   renderedBy: "u1",
@@ -180,5 +229,70 @@ describe("persistDeliverable — flag-gated decision-storytelling deck", () => {
     expect(captured.outputFormat).toBe("pptx");
     expect(captured.quarantined).toBe(true);
     expect(captured.quarantineReason).toMatch(/blocked_missing/);
+  });
+
+  it("treats native P2 deck slides as the rendered exhibit contract", async () => {
+    const { captured, save } = captureSave();
+    await persistDeliverable(
+      p2Result("discovery_report", p2DiscoveryDoc()),
+      opts({
+        deliverableTypeKey: "discovery_report",
+        outputFormat: "pptx",
+      }),
+      { save },
+    );
+
+    expect(captured.outputFormat).toBe("pptx");
+    expect(captured.quarantined).toBe(false);
+    expect(captured.quarantineReason).toBeNull();
+  });
+
+  it("still quarantines a native P2 deck when a required slide signal is absent", async () => {
+    const { captured, save } = captureSave();
+    await persistDeliverable(
+      p2Result(
+        "discovery_report",
+        p2DiscoveryDoc(["current_state", "what_is_not_working", "root_causes"]),
+      ),
+      opts({
+        deliverableTypeKey: "discovery_report",
+        outputFormat: "pptx",
+      }),
+      { save },
+    );
+
+    expect(captured.outputFormat).toBe("pptx");
+    expect(captured.quarantined).toBe(true);
+    expect(captured.quarantineReason).toMatch(/blocked_missing/);
+  });
+
+  it("counts the workflow-guide open-input checklist as the required open-input exhibit", async () => {
+    const { captured, save } = captureSave();
+    await persistDeliverable(
+      p2Result("design_workshop_guide", {
+        ...doc(),
+        title: "Design Workshop Guide",
+        recommendation:
+          "Recommend running the design workshop with these open inputs assigned.",
+        clientCompleteChecklist: [
+          {
+            key: "workshop_owner",
+            label: "Confirm workshop owner",
+            owner: "Program lead",
+            placeholderText: "Workshop owner to confirm.",
+            reason: "client_judgment",
+          },
+        ],
+      }),
+      opts({
+        deliverableTypeKey: "design_workshop_guide",
+        outputFormat: "docx",
+      }),
+      { save },
+    );
+
+    expect(captured.outputFormat).toBe("docx");
+    expect(captured.quarantined).toBe(false);
+    expect(captured.quarantineReason).toBeNull();
   });
 });
