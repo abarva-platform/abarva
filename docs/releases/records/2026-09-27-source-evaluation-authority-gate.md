@@ -10,7 +10,7 @@
 
 ## Plain-English Summary
 
-Advancing a Source event out of Evaluation now requires the current event's approved, complete human scorecard. An unavailable read, missing or out-of-range score, missing evidence reference, unlocked score, wrong tenant, or criterion weights that do not total 100 blocks the transition before an approval or stage write.
+Advancing a Source event out of Evaluation now requires approved criteria and complete, locked human evaluator scores for the current event. An unavailable read, missing or out-of-range score, missing evidence reference, unlocked score, wrong tenant, or criterion weights that do not total 100 blocks the transition before an approval or stage write.
 
 ## Layer Impact
 
@@ -63,4 +63,4 @@ The PR, CI checks, focused red/green test output, official ACA run and digest-pi
 
 ## Known Gaps
 
-No positive live evaluator scoring or Evaluation advance is claimed. The frozen synthetic event remains at its earlier Scope gate.
+No positive live evaluator scoring or Evaluation advance is claimed. A distinct Event Owner decision approving the completed scorecard is not represented by this read-side gate and remains separate work. The frozen synthetic event remains at its earlier Scope gate.
