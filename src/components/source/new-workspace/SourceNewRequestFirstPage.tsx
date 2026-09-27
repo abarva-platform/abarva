@@ -137,7 +137,7 @@ export function SourceNewRequestFirstPage({
         <section aria-label="Event workspaces" style={SECTION}>
           <div style={PANEL_HEADER}>
             <div>
-              <p style={EYEBROW}>Events in progress</p>
+              <p style={EYEBROW}>Other events</p>
               <h2 style={PANEL_TITLE}>Event workspaces</h2>
             </div>
             {activeWorkspaces.length > 0 ? (

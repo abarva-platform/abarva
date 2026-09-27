@@ -204,6 +204,7 @@ describe("SourceNewRequestFirstPage", () => {
     expect(
       within(workspaces).getByText("Application services event"),
     ).toBeTruthy();
+    expect(within(workspaces).getByText("Other events")).toBeTruthy();
     expect(screen.queryByText("Open accepted work")).toBeNull();
     expect(
       within(workspaces)
