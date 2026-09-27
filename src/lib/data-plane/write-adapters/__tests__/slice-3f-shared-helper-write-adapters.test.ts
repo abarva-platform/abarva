@@ -329,6 +329,27 @@ describe("programs runDraftModuleDeliverable", () => {
     expect(
       tx.statements.some((s) => s.includes("INSERT INTO deliverable_versions")),
     ).toBe(true);
+    const deliverableInsert = tx.statements.find((s) =>
+      s.includes("INSERT INTO deliverables_v2"),
+    );
+    expect(deliverableInsert).toContain("requires_revalidation");
+    expect(deliverableInsert).toContain("'nexus', false");
+  });
+
+  it("azure: clears draft revalidation explicitly when refreshing an existing deliverable", async () => {
+    const tx = fakeTxSession((sql) => {
+      if (sql.includes("SELECT id, current_version")) {
+        return [{ id: "deliv-existing", current_version: 2 }];
+      }
+      return [{ id: "row-1" }];
+    });
+    const adapter = createAzureProgramsWriteAdapter(tx.session);
+    const res = await adapter.runDraftModuleDeliverable(DRAFT_INPUT);
+    expect(res.ok).toBe(true);
+    const deliverableUpdate = tx.statements.find((s) =>
+      s.includes("UPDATE deliverables_v2"),
+    );
+    expect(deliverableUpdate).toContain("requires_revalidation = false");
   });
 });
 

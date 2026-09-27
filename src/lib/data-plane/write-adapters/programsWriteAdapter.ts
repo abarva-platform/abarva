@@ -695,7 +695,8 @@ export function createAzureProgramsWriteAdapter(
             nextVersion = (existingRows[0].current_version ?? 0) + 1;
             await run(
               'UPDATE deliverables_v2 '
-                + "SET current_version = $1, status = 'draft', updated_at = now() "
+                + "SET current_version = $1, status = 'draft', "
+                + 'requires_revalidation = false, updated_at = now() '
                 + 'WHERE id = $2',
               [nextVersion, deliverableId],
             );
@@ -703,8 +704,8 @@ export function createAzureProgramsWriteAdapter(
             const createdRows = await run<{ id: string }>(
               'INSERT INTO deliverables_v2 '
                 + '(engagement_id, deliverable_type_key, title, status, '
-                + 'current_version, created_by) '
-                + "VALUES ($1, $2, $3, 'draft', 1, 'nexus') RETURNING id",
+                + 'current_version, created_by, requires_revalidation) '
+                + "VALUES ($1, $2, $3, 'draft', 1, 'nexus', false) RETURNING id",
               [input.programId, input.deliverableTypeKey, input.title],
             );
             deliverableId = createdRows[0]?.id ?? '';
