@@ -91,9 +91,9 @@ type GeneratedOfficeReadinessContent =
     }
   | {
       ok: false;
-      artifactId: string;
-      fileName: string;
-      fileFormat: string;
+      artifactId?: string;
+      fileName?: string;
+      fileFormat?: string;
       detail: string;
     };
 
@@ -128,6 +128,7 @@ async function buildClientReadinessScanContent(
     deliverableId: string;
     versionId: string;
     htmlContent?: string | null;
+    requiresOfficeCompanionScan?: boolean;
   },
 ): Promise<GeneratedOfficeReadinessContent> {
   const scanParts: string[] = [];
@@ -148,6 +149,13 @@ async function buildClientReadinessScanContent(
       input.versionId,
     ),
   );
+  if (input.requiresOfficeCompanionScan && officeCompanions.length === 0) {
+    return {
+      ok: false,
+      detail:
+        "No current generated Office companion matched this deliverable version.",
+    };
+  }
 
   for (const artifact of officeCompanions) {
     const downloaded = await downloadArtifactBytes(ctx, artifact.artifact_id);
@@ -325,6 +333,9 @@ export async function POST(
             deliverableId,
             versionId,
             htmlContent: currentVersionRow?.content,
+            requiresOfficeCompanionScan:
+              currentVersionRow?.structured_data
+                ?.requiresOfficeCompanionScan === true,
           })
         : {
             ok: true as const,
@@ -337,11 +348,16 @@ export async function POST(
             error: "generated_artifact_not_scannable",
             detail:
               "A generated Office companion must be readable before this deliverable can be signed off.",
-            artifact: {
-              artifactId: scanContent.artifactId,
-              fileName: scanContent.fileName,
-              fileFormat: scanContent.fileFormat,
-            },
+            ...(scanContent.artifactId
+              ? {
+                  artifact: {
+                    artifactId: scanContent.artifactId,
+                    fileName: scanContent.fileName,
+                    fileFormat: scanContent.fileFormat,
+                  },
+                }
+              : {}),
+            requiredMetadata: { deliverableId, versionId },
             scannerDetail: scanContent.detail,
             remedy:
               "Regenerate the deliverable or repair the stored generated Office artifact, then retry sign-off.",

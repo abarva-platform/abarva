@@ -12,12 +12,14 @@ import {
   MOVES_EDIT_BEFORE_COMMIT_REQUIREMENT,
 } from "@/lib/programs/deliverable-canvas-polish-view";
 
+let mockDeliverablesData: unknown[] = [];
+
 jest.mock("@/lib/supabase-server", () => ({
   getServerSupabase: () => ({
     from: () => ({
       select: () => ({
         eq: () => ({
-          order: async () => ({ data: [], error: null }),
+          order: async () => ({ data: mockDeliverablesData, error: null }),
         }),
       }),
     }),
@@ -72,6 +74,10 @@ function renderedText(needle: string): HTMLElement[] {
 }
 
 describe("Strategic Moves visible AI liability controls", () => {
+  beforeEach(() => {
+    mockDeliverablesData = [];
+  });
+
   it("labels the phase Approve & Build action as AI drafts requiring human edit before commit", () => {
     render(
       <PhaseApproveAndBuild
@@ -119,6 +125,43 @@ describe("Strategic Moves visible AI liability controls", () => {
       renderedText(MOVES_EDIT_BEFORE_COMMIT_REQUIREMENT).length,
     ).toBeGreaterThan(0);
     expect(renderedText(AI_DECISION_SUPPORT_WATERMARK).length).toBe(1);
+  });
+
+  it("shows the sign-off action when Approve & Build has materialized a deliverables_v2 draft with content", async () => {
+    mockDeliverablesData = [
+      {
+        id: "deliverable-charter-1",
+        deliverable_type_key: "charter",
+        title: "Program Charter",
+        status: "draft",
+        current_version: 1,
+        updated_at: "2026-09-26T00:00:00Z",
+        signed_off_version: null,
+        approved_artifact_id: null,
+        deliverable_versions: [
+          {
+            content: "<p>Generated charter content.</p>",
+            version: 1,
+          },
+        ],
+      },
+    ];
+
+    render(
+      await PhaseDocumentsPanel({
+        moveId: "5f5d7993-18ba-4eb6-84a3-72373aab042b",
+        currentPhase: 1,
+        compact: false,
+        archetype: "ai_enabled_sdlc",
+        moveName: "Contact Center AI",
+        clientDisplayName: "Apex Retail",
+      }),
+    );
+
+    expect(
+      screen.getByRole("button", { name: /Approve as-is/i }),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Draft")).toBeInTheDocument();
   });
 
   // The suppression above is deliberate, and it is also the reason the previous

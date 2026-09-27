@@ -17,16 +17,32 @@ interface Props {
   alreadyApproved: boolean;
 }
 
+type ReadinessBlocker = {
+  kind?: string;
+  match?: string;
+  why?: string;
+  context?: string;
+};
+
+type ApprovalErrorState = {
+  message: string;
+  blockers?: ReadinessBlocker[];
+  canAcknowledge?: boolean;
+};
+
 export function DeliverableApprovalAction({
   moveId,
   deliverableId,
   alreadyApproved,
 }: Props) {
   const [busy, setBusy] = useState<"idle" | "approving" | "uploading">("idle");
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<ApprovalErrorState | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  async function submitApproval(file?: File) {
+  async function submitApproval(
+    file?: File,
+    acknowledgeReadinessBlockers = false,
+  ) {
     setError(null);
     setBusy(file ? "uploading" : "approving");
     try {
@@ -36,21 +52,48 @@ export function DeliverableApprovalAction({
             form.append("file", file);
             return form;
           })() }
-        : { method: "POST" };
+        : acknowledgeReadinessBlockers
+          ? {
+              method: "POST",
+              headers: { "content-type": "application/json" },
+              body: JSON.stringify({ acknowledgeReadinessBlockers: true }),
+            }
+          : { method: "POST" };
       const res = await fetch(
         `/api/v1/programs/${moveId}/deliverables/${deliverableId}/sign-off`,
         init,
       );
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
-        throw new Error(body?.detail || body?.error || `HTTP ${res.status}`);
+        if (body?.error === "client_readiness_blockers") {
+          setError({
+            message:
+              body?.detail ||
+              "Client-readiness blockers must be acknowledged before sign-off.",
+            blockers: Array.isArray(body?.blockers) ? body.blockers : [],
+            canAcknowledge: true,
+          });
+          setBusy("idle");
+          return;
+        }
+        setError({
+          message:
+            body?.detail ||
+            body?.scannerDetail ||
+            body?.error ||
+            `HTTP ${res.status}`,
+        });
+        setBusy("idle");
+        return;
       }
       // Server state changed (status/signed_off_version) — the page's next
       // load reflects it. A full reload keeps this component simple and
       // matches the rest of this server-rendered panel.
       window.location.reload();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Approval failed");
+      setError({
+        message: err instanceof Error ? err.message : "Approval failed",
+      });
       setBusy("idle");
     }
   }
@@ -107,7 +150,52 @@ export function DeliverableApprovalAction({
         }}
       />
       {error ? (
-        <span style={{ fontSize: 10, color: "#B91C1C" }}>{error}</span>
+        <div
+          role="alert"
+          style={{
+            flexBasis: "100%",
+            maxWidth: 520,
+            border: "1px solid rgba(185,28,28,0.22)",
+            borderRadius: 6,
+            background: "rgba(254,242,242,0.88)",
+            color: "#7F1D1D",
+            padding: "8px 10px",
+            fontSize: 12,
+            lineHeight: 1.45,
+          }}
+        >
+          <div style={{ fontWeight: 700, marginBottom: 4 }}>{error.message}</div>
+          {error.blockers?.length ? (
+            <ul style={{ margin: "4px 0 8px 16px", padding: 0 }}>
+              {error.blockers.map((blocker, index) => (
+                <li key={`${blocker.kind ?? "blocker"}-${index}`}>
+                  <strong>{blocker.kind ?? "blocker"}</strong>
+                  {blocker.match ? `: ${blocker.match}` : ""}
+                  {blocker.why ? ` - ${blocker.why}` : ""}
+                </li>
+              ))}
+            </ul>
+          ) : null}
+          {error.canAcknowledge ? (
+            <button
+              type="button"
+              disabled={busy !== "idle"}
+              onClick={() => void submitApproval(undefined, true)}
+              style={{
+                fontSize: 11,
+                fontWeight: 700,
+                color: "#7F1D1D",
+                backgroundColor: "#FFFFFF",
+                border: "1px solid rgba(185,28,28,0.35)",
+                borderRadius: 4,
+                padding: "5px 8px",
+                cursor: busy === "idle" ? "pointer" : "default",
+              }}
+            >
+              Acknowledge blockers and approve
+            </button>
+          ) : null}
+        </div>
       ) : null}
     </div>
   );

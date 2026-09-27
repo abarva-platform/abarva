@@ -270,6 +270,73 @@ describe("evaluateGate", () => {
     );
   });
 
+  it("keeps P1 blocked when Approve & Build has produced only an unsigned charter draft", async () => {
+    getProgramByIdMock.mockResolvedValue({
+      id: "program-1",
+      currentPhase: 1,
+      archetype: "agent_assist",
+    });
+    deliverablesFixture = [
+      {
+        id: "charter",
+        deliverable_type_key: "charter",
+        status: "draft",
+      },
+    ];
+    participantsFixture = [{ approval_authority: "sponsor" }];
+
+    const result = await evaluateGate(
+      { clientId: "client-1", userId: "person-1" },
+      "program-1",
+      1,
+      2,
+    );
+
+    expect(result.pass).toBe(false);
+    expect(result.failedChecks).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          check: "charter_signed_off",
+          severity: "hard",
+        }),
+      ]),
+    );
+  });
+
+  it("opens the P1 hard gate once that same charter row is signed off", async () => {
+    getProgramByIdMock.mockResolvedValue({
+      id: "program-1",
+      currentPhase: 1,
+      archetype: "agent_assist",
+    });
+    deliverablesFixture = [
+      {
+        id: "charter",
+        deliverable_type_key: "charter",
+        status: "signed_off",
+      },
+    ];
+    participantsFixture = [{ approval_authority: "sponsor" }];
+
+    const result = await evaluateGate(
+      { clientId: "client-1", userId: "person-1" },
+      "program-1",
+      1,
+      2,
+    );
+
+    expect(result.failedChecks).toEqual(
+      expect.not.arrayContaining([
+        expect.objectContaining({ check: "charter_signed_off" }),
+      ]),
+    );
+    expect(result.failedChecks).toEqual(
+      expect.not.arrayContaining([
+        expect.objectContaining({ check: "sponsor_assigned" }),
+      ]),
+    );
+  });
+
   it("blocks business_case_approved when the deliverable is signed off but its required roles are not all approved", async () => {
     // business_case requires business+finance approval (REQUIRED_APPROVAL_ROLES
     // in deliverable-role-approvals.ts). Single-actor sign-off alone must no

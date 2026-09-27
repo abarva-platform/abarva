@@ -499,9 +499,8 @@ export async function runDeliverableForTenant(
     ...(explicitOverride ? { outputFormat: explicitOverride } : {}),
     userId: input.userId,
     evidenceLedgerIds: evidence.map((e) => e.provenanceRef),
-    ...(renderAsDeck
-      ? { renderAsDeck: true, tenantKey: input.tenantClientKey }
-      : {}),
+    ...(renderAsDeck ? { renderAsDeck: true } : {}),
+    ...(input.tenantClientKey ? { tenantKey: input.tenantClientKey } : {}),
     // Stage 4-7: hand the structured exhibit models to persistence so the profile's
     // renderer draws them and they count toward exhibit enforcement.
     ...(structuredModels ? { structuredModels, renderViaProfile: true } : {}),
