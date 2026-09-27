@@ -366,6 +366,54 @@ jobs:
       - name: Exercise the Programs board-artifact suites
         run: npx jest src/lib/programs/board-artifacts/__tests__ --runInBand
 
+      # The third of the dark directories under `src/lib/programs`, taken from
+      # the order item T-772 declares — census rank then file count — because
+      # `T-062`'s own ordering stopped discriminating: all 17 remaining
+      # directories are band `unclassified`, score 0, `admittedBy:
+      # untriaged_unrun_work`. That is the classifier recording "no signal",
+      # not a finding of low risk, so the order had to come from somewhere and
+      # a declared one is checkable.
+      #
+      # Measured BEFORE it was wired, every suite executed individually, which
+      # is the acceptance: 4 suites, 65 tests, GREEN — attachments 28,
+      # extract-text 10, mime 15, upload-client 12. So this step buys the
+      # future rather than repairing the past, and that weaker claim is the
+      # only one a green directory can make.
+      #
+      # It is not coverage of nothing, checked before wiring rather than
+      # assumed: 19 files outside this directory reference
+      # `programs/attachments`, and the live ones are not incidental — three
+      # `/api/programs/[id]/attachments` route handlers, the v1 artifact
+      # upload and client-approval routes, the workspace upload route, the
+      # deliverable sign-off route, `AskAnythingBar`, `StewardChat`,
+      # `AttachmentChip`, `MoveArtifactUpload`, `PhaseDocumentsPanel` and the
+      # attachments write adapter. A directory whose only importer is its own
+      # test file would be an argument for deleting it, not for spending CI
+      # time on it.
+      #
+      # No suite here is a source-text scanner: not one of the four reads a
+      # file's bytes, so `T-770`'s control has nothing to refuse and the
+      # `textIsTheSubject` judgement is negative for all four. That was checked
+      # per suite, because `T-770` is a control now and a scanner wired by
+      # mistake is what it exists to stop.
+      #
+      # Wired as a DIRECTORY, and nothing nests beneath it — the four files sit
+      # directly in `__tests__` — so the jest path regex covers the whole
+      # directory including the suites nobody has written yet. No trailing
+      # slash: `T-062` recorded that one still prints green while the
+      # visibility gate reports every suite in the directory as owned by no
+      # workflow.
+      #
+      # `src/__tests__/behaviors/programs-unit-directory-ci-coverage.test.ts`
+      # holds this step in place through the census's own four-hop resolver,
+      # and its dark-directory ratchet comes down 17 → 16 in the same change.
+      # The directory's line also leaves
+      # `product-directory-ci-coverage.baseline.json`, because that baseline is
+      # set equality over the census's dark list and a wired directory is no
+      # longer in it. See backlog item T-772.
+      - name: Exercise the Programs attachment suites
+        run: npx jest src/lib/programs/attachments/__tests__ --runInBand
+
       # Two suites shipped on 18 Sep whose release records said "5 of 5 pass"
       # and "19 of 19 pass". Both were true locally and enforced by nothing:
       # neither file was named by any workflow, and no scoped jest script
