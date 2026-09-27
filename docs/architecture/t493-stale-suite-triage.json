@@ -1,7 +1,7 @@
 {
   "item": "T-493",
   "title": "Eighth stale-suite triage draw: 50 untriaged unrun test files across ten directories, each executed on its own, and the nine directories that came back clean wired into CI",
-  "recordedAt": "2026-09-27T13:22:43.762Z",
+  "recordedAt": "2026-09-27T13:37:08.536Z",
   "base": "31641238a16bd5135466af5d01a95ced3b3bd3cc",
   "scope": {
     "drawnFrom": "governedRiskRanking from scripts/quality/test-ci-coverage-census.mjs, re-derived on this base rather than read from the committed snapshot",
@@ -136,6 +136,7 @@
     ".github/workflows/unit-suites.yml",
     "src/__tests__/behaviors/product-directory-ci-coverage.baseline.json",
     "src/__tests__/behaviors/product-directory-ci-coverage.test.ts",
+    "src/__tests__/behaviors/programs-unit-directory-ci-coverage.test.ts",
     "docs/architecture/test-ci-coverage-census.json",
     "docs/releases/records/2026-09-27-t493-stale-suite-triage.md"
   ],

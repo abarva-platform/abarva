@@ -40,7 +40,6 @@
  * reading as success after a rename or a deletion — an empty directory is
  * absent from them in exactly the same way a fully wired one is.
  */
-import { execFileSync } from "node:child_process";
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import path from "node:path";
 
@@ -48,9 +47,9 @@ import {
   expandWorkflowCommands,
   extractWorkflowRunCommands,
 } from "../../../scripts/quality/check-integration-ci-visibility.mjs";
+import { buildCensus } from "../../../scripts/quality/test-ci-coverage-census.mjs";
 
 const repoRoot = path.resolve(__dirname, "../../..");
-const CENSUS_SCRIPT = "scripts/quality/test-ci-coverage-census.mjs";
 const WIRING_WORKFLOW = ".github/workflows/unit-suites.yml";
 const RECORD_PATH = "docs/architecture/t493-stale-suite-triage.json";
 const DARK_BASELINE =
@@ -103,21 +102,6 @@ type Census = {
   governedRiskRanking: { directory: string }[];
 };
 
-function runCensusJson(extraArgs: string[] = []): unknown {
-  const stdout = execFileSync(
-    process.execPath,
-    [path.join(repoRoot, CENSUS_SCRIPT), ...extraArgs, "--json"],
-    {
-      cwd: repoRoot,
-      encoding: "utf8",
-      stdio: ["ignore", "pipe", "pipe"],
-      maxBuffer: 64 * 1024 * 1024,
-    },
-  );
-  const start = stdout.search(/[[{]/);
-  return JSON.parse(stdout.slice(start));
-}
-
 function testFilesDirectlyIn(relativeDirectory: string): string[] {
   const absolute = path.join(repoRoot, relativeDirectory);
   if (!existsSync(absolute)) return [];
@@ -143,14 +127,19 @@ function expandedWorkflowCommands(): string[] {
   );
 }
 
-const census = runCensusJson() as Census;
-const unrunByDirectory = runCensusJson(["--explain"]) as {
-  directory: string;
-  unrunTestFiles: number;
-  unrunTestPaths: string[];
-}[];
+/*
+ * ONE in-process census, not two child processes. `buildCensus` is the same
+ * resolver the CLI and every sibling gate use, and asking it for the unrun paths
+ * in the same pass is what keeps this suite off the behaviour job's time budget:
+ * that job is already within about twenty seconds of its own ceiling, and a
+ * control that makes a required check time out fails every pull request behind
+ * it rather than the one it was written for.
+ */
+const census = buildCensus(repoRoot, { includeUnrunPaths: true }) as Census & {
+  unrunTestPathsByDirectory: { directory: string; unrunTestPaths: string[] }[];
+};
 const unrunPaths = new Set(
-  unrunByDirectory.flatMap((row) => row.unrunTestPaths),
+  census.unrunTestPathsByDirectory.flatMap((row) => row.unrunTestPaths),
 );
 
 const record = JSON.parse(
