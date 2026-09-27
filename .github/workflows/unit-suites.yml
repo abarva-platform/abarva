@@ -881,6 +881,24 @@ jobs:
       # suites replace model, data, auth, session, and telemetry boundaries.
       # Exact files are named so a future writer or sender is not adopted
       # without the same boundary review.
+      #
+      # Item T-496 adds a third Ask suite here, and the boundary review is the
+      # same: it replaces model, data, auth, session and telemetry exactly as
+      # the two above do, and it drives the real `POST` to prove the route
+      # reaches the Sentinel reasoning module at the canonical `src/lib/agent/`
+      # path rather than the retired `src/lib/agents/` one.
+      #
+      # It sits here rather than in `src/__tests__/behaviors`, where it was
+      # first written, for a measured reason. `Behavior coverage floor` runs
+      # that whole directory under `--coverage` with no `collectCoverageFrom`,
+      # so every file a suite LOADS enters the denominator. This suite imports
+      # the Ask route, which pulls 212 files and 137,960 lines at 77.01% lines
+      # and 14.45% functions; a typical suite in that directory is 3 files and
+      # 550 lines at 98.9%. One suite therefore moved the aggregate from
+      # 90.90 / 71.33 to 83.75 / 42.19 against floors of 90 / 60 and failed the
+      # gate with all 151 suites and 1,624 cases passing. The gate was not
+      # weakened and the case was not dropped: the suite moved to the directory
+      # that owns the route it drives, which runs `--no-coverage` here.
       - name: Run tenant, Tower, notification, and Intelligence Ask suites
         run: >-
           npx jest --runTestsByPath
@@ -894,6 +912,7 @@ jobs:
           "src/app/(maestro)/admin/users-access/notifications/_actions/__tests__/send-test.test.ts"
           src/app/api/intelligence/ask/__tests__/route.source-contract-authority.test.ts
           src/app/api/intelligence/ask/__tests__/route.telemetry.test.ts
+          src/app/api/intelligence/ask/__tests__/t496-sentinel-reasoning-canonical-path.test.ts
           --no-coverage --ci
 
       # Four previously dark suites. Measured before any edit: the Atlas
@@ -1658,6 +1677,22 @@ jobs:
       - name: Run the T-493 operator script suites
         run: >-
           npx jest src/scripts/__tests__
+          --no-coverage --ci
+
+      # Item T-496. The Sentinel reasoning module moved from the retired
+      # `src/lib/agents/` path to the canonical `src/lib/agent/`, and its suite
+      # moved with it. That suite ran nowhere on either path, which is the
+      # condition the item is against: the reason a live Intelligence route
+      # could drift back to a retired import for weeks is that nothing
+      # executable objected. Wiring it here is not incidental tidying — the
+      # module the route calls now has its own suite in a required job.
+      #
+      # Named as a DIRECTORY for this file's header reason, and its line leaves
+      # `product-directory-ci-coverage.baseline.json` in the same change, which
+      # the ratchet asserts as set equality in both directions.
+      - name: Run the T-496 Sentinel reasoning suites
+        run: >-
+          npx jest src/lib/agent/sentinel-reasoning/__tests__
           --no-coverage --ci
 
       - name: Refuse a test run that modified committed input data
