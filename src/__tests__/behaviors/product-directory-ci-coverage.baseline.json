@@ -41,7 +41,6 @@
   "src/lib/agent/output-discipline",
   "src/lib/agent/streaming",
   "src/lib/agent/voice-doctrine/__tests__",
-  "src/lib/agents/sentinel-reasoning/__tests__",
   "src/lib/ai/__tests__",
   "src/lib/answer/__tests__",
   "src/lib/artifact-excellence/__tests__",

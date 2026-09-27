@@ -35,7 +35,7 @@ jest.mock("@/lib/intelligence/ask/session-memory", () => ({
   })),
 }));
 
-jest.mock("@/lib/agents/sentinel-reasoning", () => ({
+jest.mock("@/lib/agent/sentinel-reasoning", () => ({
   classifySentinelIntent: jest.fn(async () => ({
     intent: "general",
     confidence: 0.8,

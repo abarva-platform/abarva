@@ -22,7 +22,7 @@ jest.mock('@/lib/intelligence/ask/session-memory', () => ({
   appendAskSessionTurn: jest.fn().mockResolvedValue(undefined),
   normalizeAskTabId: jest.fn((tabId: string) => tabId),
 }));
-jest.mock('@/lib/agents/sentinel-reasoning', () => ({
+jest.mock('@/lib/agent/sentinel-reasoning', () => ({
   classifySentinelIntent: jest.fn().mockResolvedValue({
     intent: 'general', confidence: 1, matchedPatternSlugs: [],
   }),
