@@ -31,6 +31,7 @@ For events created with Event Owner approval policy, the signed-in event creator
 - Event-scoped post-decision email update with separate provider-acceptance audit and address deduplication. Later stage updates reuse the approved Scope sponsor context from the tenant-scoped activity record. SELF events cannot issue sponsor or stage approval-request emails.
 - SELF events cannot advance through the direct stage route or let other stage reviewers record criterion or lifecycle decisions.
 - The new notification behavior suite is wired into the existing approval/lifecycle CI step, and the test-coverage census is refreshed.
+- The required behavior coverage job gets a 25-minute capacity budget after its unchanged full-suite step was cancelled by the prior 15-minute job ceiling. The suite, coverage thresholds and required context are unchanged.
 - Focused route, UI, validation, and notification tests.
 
 ## QA / Validation
@@ -41,6 +42,7 @@ For events created with Event Owner approval policy, the signed-in event creator
 - Pass: test-coverage census check after wiring the new notification suite.
 - Pass: the exact small approval/lifecycle CI step (9 suites, 117 tests) and the corrected census behavior suite (57 tests).
 - Not run: the full local behavior suite was interrupted after the pre-correction stale-census failure; full PR CI remains the broad validation gate.
+- Fail: the first PR-head Behavior coverage floor was cancelled at the old 15-minute job limit before producing a coverage summary. The revised job budget has not yet been verified on CI.
 - Not run: production signed-in approval, email provider delivery, opposite-tenant live readback and full Source lifecycle smoke.
 
 ## Rollout Plan
