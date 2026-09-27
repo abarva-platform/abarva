@@ -57,6 +57,13 @@ import type {
   SourceEventArchetype,
   ValueLeverRule,
 } from '@/lib/source/archetypes/types';
+import {
+  citedDocFor,
+  idSegment,
+  targetBandFor,
+  targetLabel,
+  usd,
+} from '@/lib/source/facts/view/stage-beat-formatters';
 import type { ValueLeverResult } from '@/lib/source/facts/evaluators/types';
 import type { FactSourceCitation } from '@/lib/source/facts/fact-types';
 import type {
@@ -93,53 +100,6 @@ export interface SelectionFactBeatInput {
   committedByLeverKey?: ReadonlyMap<string, number>;
   /** The computed next-stage label, already resolved from the canonical order. */
   nextStageName: string | null;
-}
-
-/** USD, as a reader reads it. */
-function usd(amount: number): string {
-  return `$${Math.round(amount).toLocaleString('en-US')}`;
-}
-
-/**
- * A lever key as a task id segment: lowercased, non-alphanumerics collapsed. The
- * rule keys are `AMS.ENHANCEMENT_LEAKAGE`-shaped, and a task id reaches the DOM
- * as a React key.
- */
-function idSegment(leverKey: string): string {
-  return leverKey.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
-}
-
-/**
- * The document a lever's number can be cited to, or null. Reads the FIRST
- * consumed fact that has a citation rather than the first required input,
- * because an input the evaluator did not consume says nothing about where the
- * number came from.
- */
-function citedDocFor(
-  result: ValueLeverResult | undefined,
-  citations: Record<string, FactSourceCitation | null>,
-): string | null {
-  for (const ref of result?.evidenceRefs ?? []) {
-    const citation = citations[ref.factKey];
-    if (citation?.doc) {
-      return citation.locator
-        ? `${citation.doc} · ${citation.locator}`
-        : citation.doc;
-    }
-  }
-  return null;
-}
-
-/** The target band for a lever, or null when the lever did not compute. */
-function targetBandFor(
-  result: ValueLeverResult | undefined,
-): { low: number; high: number } | null {
-  if (!result || result.insufficientEvidence) return null;
-  return { low: result.low, high: result.high };
-}
-
-function targetLabel(band: { low: number; high: number } | null): string {
-  return band ? `${usd(band.low)}–${usd(band.high)}` : 'Not yet quantified';
 }
 
 /**

@@ -1,0 +1,2508 @@
+{
+  "bafo/unobserved": {
+    "stageKey": "bafo",
+    "stageName": "BAFO",
+    "purpose": "Pull every open lever into a booked concession — BAFO is the last negotiation round, and a lever not captured here is captured never.",
+    "intel": {
+      "provenance": "live",
+      "lead": "Here's the value we computed from your committed facts — each band is math over a cited fact, not an estimate.",
+      "points": [
+        {
+          "tone": "found",
+          "tag": "Computed",
+          "text": "1 value lever computed from committed facts — every figure traces to a cited source_event_facts row."
+        },
+        {
+          "tone": "archetype",
+          "tag": "Archetype",
+          "text": "IT Outsourcing / AMS / Managed Services value-lever rules drove the classification into the five value types."
+        },
+        {
+          "tone": "muted",
+          "tag": "Needs evidence",
+          "text": "5 levers could not be quantified yet — shown as \"needs evidence\", never as a guess."
+        }
+      ]
+    },
+    "tasks": [
+      {
+        "id": "bafo.ask.ams-enhancement-leakage",
+        "title": "Press the BAFO ask on Enhancement / change-order leakage",
+        "subtitle": "$529,200–$756,000 computed · protected",
+        "type": "confirm",
+        "state": "todo",
+        "guide": "Convert the recurring change-order categories into a fixed service catalog or capped unit-rate structure.",
+        "rows": [
+          {
+            "key": "Computed value over term",
+            "value": "$529,200–$756,000 · med confidence"
+          },
+          {
+            "key": "Basis",
+            "value": "Avoidable portion of recurring change-order / enhancement spend converted to base scope or a fixed service catalog."
+          },
+          {
+            "key": "Cited to",
+            "value": "No citation on the consumed facts",
+            "flag": true
+          }
+        ],
+        "cta": "Confirm the ask is booked"
+      },
+      {
+        "id": "bafo.evidence.ams-volume-band-pricing",
+        "title": "Provide the missing evidence for Volume-band price flex-down",
+        "subtitle": "3 facts missing · not yet quantified",
+        "type": "provide",
+        "state": "todo",
+        "guide": "This lever has no computed value yet: Run-cost reduction from repricing to the actual lower volume band over the term (projected volume decline × unit rate delta). Without the facts below the lever renders \"needs evidence\", never a guess.",
+        "rows": [
+          {
+            "key": "Annual run cost at current band",
+            "value": "annual_run_cost",
+            "flag": true
+          },
+          {
+            "key": "Share of run cost that flexes with volume",
+            "value": "variable_cost_share_pct",
+            "flag": true
+          },
+          {
+            "key": "Projected volume decline over term",
+            "value": "projected_volume_decline_pct",
+            "flag": true
+          }
+        ],
+        "cta": "Provide the missing evidence"
+      },
+      {
+        "id": "bafo.evidence.ams-productivity-credits",
+        "title": "Provide the missing evidence for Productivity / automation not priced back",
+        "subtitle": "2 facts missing · not yet quantified",
+        "type": "provide",
+        "state": "todo",
+        "guide": "This lever has no computed value yet: Committed productivity-credit percentage × the automatable ticket/effort pool per year. A vendor automation claim is not value until it is a credit schedule — count only the committed %, not the marketing claim.",
+        "rows": [
+          {
+            "key": "Annual automatable effort pool",
+            "value": "automatable_effort_pool",
+            "flag": true
+          },
+          {
+            "key": "Committed productivity-credit %",
+            "value": "committed_credit_pct",
+            "flag": true
+          }
+        ],
+        "cta": "Provide the missing evidence"
+      },
+      {
+        "id": "bafo.evidence.ams-retained-cost",
+        "title": "Provide the missing evidence for Retained client / SME cost omitted from TCO",
+        "subtitle": "2 facts missing · not yet quantified",
+        "type": "provide",
+        "state": "todo",
+        "guide": "This lever has no computed value yet: Difference in retained FTE effort between models, valued at loaded cost, plus reduction commitment over the term. This is a normalization, not a saving — presenting it as headline value double-counts. Apply it to make bids comparable.",
+        "rows": [
+          {
+            "key": "Retained FTE difference vs baseline model",
+            "value": "retained_fte_delta",
+            "flag": true
+          },
+          {
+            "key": "Loaded annual cost per retained FTE",
+            "value": "loaded_fte_cost",
+            "flag": true
+          }
+        ],
+        "cta": "Provide the missing evidence"
+      },
+      {
+        "id": "bafo.evidence.ams-sla-economics",
+        "title": "Provide the missing evidence for SLA credit economics",
+        "subtitle": "3 facts missing · not yet quantified",
+        "type": "provide",
+        "state": "todo",
+        "guide": "This lever has no computed value yet: Value protected = expected credit pool + avoided business impact from chronic-miss remedies (protection, not headline savings). Protected value is a risk hedge, not cash — never sum it into a headline savings figure.",
+        "rows": [
+          {
+            "key": "Annual fee pool exposed to SLA credits",
+            "value": "at_risk_fee_pool",
+            "flag": true
+          },
+          {
+            "key": "SLA credit cap %",
+            "value": "credit_cap_pct",
+            "flag": true
+          },
+          {
+            "key": "Historical chronic-miss rate",
+            "value": "chronic_miss_rate",
+            "flag": true
+          }
+        ],
+        "cta": "Provide the missing evidence"
+      },
+      {
+        "id": "bafo.evidence.ams-transition-risk",
+        "title": "Provide the missing evidence for Transition fees not milestone-based",
+        "subtitle": "2 facts missing · not yet quantified",
+        "type": "provide",
+        "state": "todo",
+        "guide": "This lever has no computed value yet: Avoided failed/extended-transition cost = probability-weighted transition overrun × transition value at risk. Without the facts below the lever renders \"needs evidence\", never a guess.",
+        "rows": [
+          {
+            "key": "Quoted transition fee",
+            "value": "transition_fee",
+            "flag": true
+          },
+          {
+            "key": "Probability of transition overrun",
+            "value": "overrun_probability",
+            "flag": true
+          }
+        ],
+        "cta": "Provide the missing evidence"
+      }
+    ],
+    "gate": {
+      "approver": "CIO",
+      "confirms": [
+        {
+          "label": "1 of 6 levers pressed with a computed ask",
+          "detail": "Each has a banded value over term and the facts it was computed from: Enhancement / change-order leakage."
+        },
+        {
+          "label": "5 of 6 levers still need evidence",
+          "detail": "Pressed without it, the ask overstates a number the vendor can refute: Volume-band price flex-down; Productivity / automation not priced back; Retained client / SME cost omitted from TCO; SLA credit economics; Transition fees not milestone-based."
+        },
+        {
+          "label": "Best-and-final round closed",
+          "detail": "The round is final — advance to Executive Decision."
+        }
+      ],
+      "generates": [
+        {
+          "label": "AMS Pricing & Negotiation Memo"
+        }
+      ],
+      "nextStageName": "Executive Decision"
+    },
+    "waterfall": {
+      "provenance": "live",
+      "baselineLabel": "Committed value baseline",
+      "baselineAmount": 12000000,
+      "unit": "usd",
+      "bands": [
+        {
+          "id": "wf.AMS.ENHANCEMENT_LEAKAGE",
+          "valueType": "protected",
+          "label": "Enhancement / change-order leakage",
+          "unit": "usd",
+          "confidence": "med",
+          "amountLow": 529200,
+          "amountHigh": 756000,
+          "state": "quantified",
+          "citation": null
+        },
+        {
+          "id": "wf.AMS.VOLUME_BAND_PRICING",
+          "valueType": "incremental_negotiated",
+          "label": "Volume-band price flex-down",
+          "unit": "usd",
+          "confidence": "med",
+          "amountLow": 0,
+          "amountHigh": 0,
+          "state": "insufficient_evidence",
+          "citation": null
+        },
+        {
+          "id": "wf.AMS.PRODUCTIVITY_CREDITS",
+          "valueType": "solution_tightening",
+          "label": "Productivity / automation not priced back",
+          "unit": "usd",
+          "confidence": "med",
+          "amountLow": 0,
+          "amountHigh": 0,
+          "state": "insufficient_evidence",
+          "citation": null
+        },
+        {
+          "id": "wf.AMS.RETAINED_COST",
+          "valueType": "risk_adjusted",
+          "label": "Retained client / SME cost omitted from TCO",
+          "unit": "usd",
+          "confidence": "low",
+          "amountLow": 0,
+          "amountHigh": 0,
+          "state": "insufficient_evidence",
+          "citation": null
+        },
+        {
+          "id": "wf.AMS.SLA_ECONOMICS",
+          "valueType": "protected",
+          "label": "SLA credit economics",
+          "unit": "usd",
+          "confidence": "low",
+          "amountLow": 0,
+          "amountHigh": 0,
+          "state": "insufficient_evidence",
+          "citation": null
+        },
+        {
+          "id": "wf.AMS.TRANSITION_RISK",
+          "valueType": "risk_adjusted",
+          "label": "Transition fees not milestone-based",
+          "unit": "usd",
+          "confidence": "low",
+          "amountLow": 0,
+          "amountHigh": 0,
+          "state": "insufficient_evidence",
+          "citation": null
+        }
+      ]
+    },
+    "beatProvenance": {
+      "tasks": "fact_derived",
+      "gate": "fact_derived",
+      "scaffoldSource": null
+    }
+  },
+  "bafo/observed": {
+    "stageKey": "bafo",
+    "stageName": "BAFO",
+    "purpose": "Pull every open lever into a booked concession — BAFO is the last negotiation round, and a lever not captured here is captured never.",
+    "intel": {
+      "provenance": "live",
+      "lead": "Here's the value we computed from your committed facts — each band is math over a cited fact, not an estimate.",
+      "points": [
+        {
+          "tone": "found",
+          "tag": "Computed",
+          "text": "1 value lever computed from committed facts — every figure traces to a cited source_event_facts row."
+        },
+        {
+          "tone": "archetype",
+          "tag": "Archetype",
+          "text": "IT Outsourcing / AMS / Managed Services value-lever rules drove the classification into the five value types."
+        },
+        {
+          "tone": "muted",
+          "tag": "Needs evidence",
+          "text": "5 levers could not be quantified yet — shown as \"needs evidence\", never as a guess."
+        }
+      ]
+    },
+    "tasks": [
+      {
+        "id": "bafo.ask.ams-enhancement-leakage",
+        "title": "Press the BAFO ask on Enhancement / change-order leakage",
+        "subtitle": "$529,200–$756,000 computed · protected",
+        "type": "confirm",
+        "state": "todo",
+        "guide": "Convert the recurring change-order categories into a fixed service catalog or capped unit-rate structure.",
+        "rows": [
+          {
+            "key": "Computed value over term",
+            "value": "$529,200–$756,000 · med confidence"
+          },
+          {
+            "key": "Basis",
+            "value": "Avoidable portion of recurring change-order / enhancement spend converted to base scope or a fixed service catalog."
+          },
+          {
+            "key": "Cited to",
+            "value": "Change-order register · Tab 3, row 44",
+            "flag": false
+          }
+        ],
+        "cta": "Confirm the ask is booked"
+      },
+      {
+        "id": "bafo.evidence.ams-volume-band-pricing",
+        "title": "Provide the missing evidence for Volume-band price flex-down",
+        "subtitle": "3 facts missing · not yet quantified",
+        "type": "provide",
+        "state": "todo",
+        "guide": "This lever has no computed value yet: Run-cost reduction from repricing to the actual lower volume band over the term (projected volume decline × unit rate delta). Without the facts below the lever renders \"needs evidence\", never a guess.",
+        "rows": [
+          {
+            "key": "Annual run cost at current band",
+            "value": "annual_run_cost",
+            "flag": true
+          },
+          {
+            "key": "Share of run cost that flexes with volume",
+            "value": "variable_cost_share_pct",
+            "flag": true
+          },
+          {
+            "key": "Projected volume decline over term",
+            "value": "projected_volume_decline_pct",
+            "flag": true
+          }
+        ],
+        "cta": "Provide the missing evidence"
+      },
+      {
+        "id": "bafo.evidence.ams-productivity-credits",
+        "title": "Provide the missing evidence for Productivity / automation not priced back",
+        "subtitle": "2 facts missing · not yet quantified",
+        "type": "provide",
+        "state": "todo",
+        "guide": "This lever has no computed value yet: Committed productivity-credit percentage × the automatable ticket/effort pool per year. A vendor automation claim is not value until it is a credit schedule — count only the committed %, not the marketing claim.",
+        "rows": [
+          {
+            "key": "Annual automatable effort pool",
+            "value": "automatable_effort_pool",
+            "flag": true
+          },
+          {
+            "key": "Committed productivity-credit %",
+            "value": "committed_credit_pct",
+            "flag": true
+          }
+        ],
+        "cta": "Provide the missing evidence"
+      },
+      {
+        "id": "bafo.evidence.ams-retained-cost",
+        "title": "Provide the missing evidence for Retained client / SME cost omitted from TCO",
+        "subtitle": "2 facts missing · not yet quantified",
+        "type": "provide",
+        "state": "todo",
+        "guide": "This lever has no computed value yet: Difference in retained FTE effort between models, valued at loaded cost, plus reduction commitment over the term. This is a normalization, not a saving — presenting it as headline value double-counts. Apply it to make bids comparable.",
+        "rows": [
+          {
+            "key": "Retained FTE difference vs baseline model",
+            "value": "retained_fte_delta",
+            "flag": true
+          },
+          {
+            "key": "Loaded annual cost per retained FTE",
+            "value": "loaded_fte_cost",
+            "flag": true
+          }
+        ],
+        "cta": "Provide the missing evidence"
+      },
+      {
+        "id": "bafo.evidence.ams-sla-economics",
+        "title": "Provide the missing evidence for SLA credit economics",
+        "subtitle": "3 facts missing · not yet quantified",
+        "type": "provide",
+        "state": "todo",
+        "guide": "This lever has no computed value yet: Value protected = expected credit pool + avoided business impact from chronic-miss remedies (protection, not headline savings). Protected value is a risk hedge, not cash — never sum it into a headline savings figure.",
+        "rows": [
+          {
+            "key": "Annual fee pool exposed to SLA credits",
+            "value": "at_risk_fee_pool",
+            "flag": true
+          },
+          {
+            "key": "SLA credit cap %",
+            "value": "credit_cap_pct",
+            "flag": true
+          },
+          {
+            "key": "Historical chronic-miss rate",
+            "value": "chronic_miss_rate",
+            "flag": true
+          }
+        ],
+        "cta": "Provide the missing evidence"
+      },
+      {
+        "id": "bafo.evidence.ams-transition-risk",
+        "title": "Provide the missing evidence for Transition fees not milestone-based",
+        "subtitle": "2 facts missing · not yet quantified",
+        "type": "provide",
+        "state": "todo",
+        "guide": "This lever has no computed value yet: Avoided failed/extended-transition cost = probability-weighted transition overrun × transition value at risk. Without the facts below the lever renders \"needs evidence\", never a guess.",
+        "rows": [
+          {
+            "key": "Quoted transition fee",
+            "value": "transition_fee",
+            "flag": true
+          },
+          {
+            "key": "Probability of transition overrun",
+            "value": "overrun_probability",
+            "flag": true
+          }
+        ],
+        "cta": "Provide the missing evidence"
+      }
+    ],
+    "gate": {
+      "approver": "CIO",
+      "confirms": [
+        {
+          "label": "1 of 6 levers pressed with a computed ask",
+          "detail": "Each has a banded value over term and the facts it was computed from: Enhancement / change-order leakage."
+        },
+        {
+          "label": "5 of 6 levers still need evidence",
+          "detail": "Pressed without it, the ask overstates a number the vendor can refute: Volume-band price flex-down; Productivity / automation not priced back; Retained client / SME cost omitted from TCO; SLA credit economics; Transition fees not milestone-based."
+        },
+        {
+          "label": "Best-and-final round closed",
+          "detail": "The round is final — advance to Executive Decision."
+        }
+      ],
+      "generates": [
+        {
+          "label": "AMS Pricing & Negotiation Memo"
+        }
+      ],
+      "nextStageName": "Executive Decision"
+    },
+    "waterfall": {
+      "provenance": "live",
+      "baselineLabel": "Committed value baseline",
+      "baselineAmount": 12000000,
+      "unit": "usd",
+      "bands": [
+        {
+          "id": "wf.AMS.ENHANCEMENT_LEAKAGE",
+          "valueType": "protected",
+          "label": "Enhancement / change-order leakage",
+          "unit": "usd",
+          "confidence": "med",
+          "amountLow": 529200,
+          "amountHigh": 756000,
+          "state": "quantified",
+          "citation": {
+            "doc": "Change-order register",
+            "locator": "Tab 3, row 44"
+          }
+        },
+        {
+          "id": "wf.AMS.VOLUME_BAND_PRICING",
+          "valueType": "incremental_negotiated",
+          "label": "Volume-band price flex-down",
+          "unit": "usd",
+          "confidence": "med",
+          "amountLow": 0,
+          "amountHigh": 0,
+          "state": "insufficient_evidence",
+          "citation": null
+        },
+        {
+          "id": "wf.AMS.PRODUCTIVITY_CREDITS",
+          "valueType": "solution_tightening",
+          "label": "Productivity / automation not priced back",
+          "unit": "usd",
+          "confidence": "med",
+          "amountLow": 0,
+          "amountHigh": 0,
+          "state": "insufficient_evidence",
+          "citation": null
+        },
+        {
+          "id": "wf.AMS.RETAINED_COST",
+          "valueType": "risk_adjusted",
+          "label": "Retained client / SME cost omitted from TCO",
+          "unit": "usd",
+          "confidence": "low",
+          "amountLow": 0,
+          "amountHigh": 0,
+          "state": "insufficient_evidence",
+          "citation": null
+        },
+        {
+          "id": "wf.AMS.SLA_ECONOMICS",
+          "valueType": "protected",
+          "label": "SLA credit economics",
+          "unit": "usd",
+          "confidence": "low",
+          "amountLow": 0,
+          "amountHigh": 0,
+          "state": "insufficient_evidence",
+          "citation": null
+        },
+        {
+          "id": "wf.AMS.TRANSITION_RISK",
+          "valueType": "risk_adjusted",
+          "label": "Transition fees not milestone-based",
+          "unit": "usd",
+          "confidence": "low",
+          "amountLow": 0,
+          "amountHigh": 0,
+          "state": "insufficient_evidence",
+          "citation": null
+        }
+      ]
+    },
+    "beatProvenance": {
+      "tasks": "fact_derived",
+      "gate": "fact_derived",
+      "scaffoldSource": null
+    }
+  },
+  "evaluation/unobserved": {
+    "stageKey": "evaluation",
+    "stageName": "Evaluation",
+    "purpose": "Normalize every bid to should-cost — the cheapest headline is a trap once retained-client cost and weak-SLA risk are priced in; the lowest TRUE TCO is the real winner.",
+    "intel": {
+      "provenance": "live",
+      "lead": "Here's the value we computed from your committed facts — each band is math over a cited fact, not an estimate.",
+      "points": [
+        {
+          "tone": "found",
+          "tag": "Computed",
+          "text": "1 value lever computed from committed facts — every figure traces to a cited source_event_facts row."
+        },
+        {
+          "tone": "archetype",
+          "tag": "Archetype",
+          "text": "IT Outsourcing / AMS / Managed Services value-lever rules drove the classification into the five value types."
+        },
+        {
+          "tone": "muted",
+          "tag": "Needs evidence",
+          "text": "5 levers could not be quantified yet — shown as \"needs evidence\", never as a guess."
+        }
+      ]
+    },
+    "tasks": [
+      {
+        "id": "evaluation.model.ams-managed-services",
+        "title": "Apply the IT Outsourcing / AMS / Managed Services scoring model",
+        "subtitle": "5 weighted criteria · 3 disqualifiers",
+        "type": "confirm",
+        "state": "todo",
+        "guide": "IT Outsourcing / AMS / Managed Services ranks bids on 5 weighted criteria. Auto-fail conditions declared for this event type: No committed SLA credits; No termination-assistance terms; Cannot evidence comparable tower-scale delivery.",
+        "rows": [
+          {
+            "key": "Service capability & SLA credibility",
+            "value": "30% of the score"
+          },
+          {
+            "key": "Normalized price / should-cost gap",
+            "value": "30% of the score"
+          },
+          {
+            "key": "Transition & retained-org fit",
+            "value": "15% of the score"
+          },
+          {
+            "key": "Automation / productivity commitment",
+            "value": "15% of the score"
+          },
+          {
+            "key": "Delivery & concentration risk",
+            "value": "10% of the score"
+          }
+        ],
+        "cta": "Confirm the scoring model"
+      },
+      {
+        "id": "evaluation.score.ams-enhancement-leakage",
+        "title": "Score Enhancement / change-order leakage into the evaluation model",
+        "subtitle": "$529,200–$756,000 computed · protected",
+        "type": "confirm",
+        "state": "todo",
+        "guide": "How this lever moves the score: Penalize vague enhancement exclusions and open-ended change-order language.",
+        "rows": [
+          {
+            "key": "Computed value over term",
+            "value": "$529,200–$756,000 · med confidence"
+          },
+          {
+            "key": "Basis",
+            "value": "Avoidable portion of recurring change-order / enhancement spend converted to base scope or a fixed service catalog."
+          },
+          {
+            "key": "Cited to",
+            "value": "No citation on the consumed facts",
+            "flag": true
+          }
+        ],
+        "cta": "Confirm the score input"
+      },
+      {
+        "id": "evaluation.evidence.ams-volume-band-pricing",
+        "title": "Provide the scoring evidence for Volume-band price flex-down",
+        "subtitle": "3 facts missing · cannot be scored",
+        "type": "provide",
+        "state": "todo",
+        "guide": "Run-cost reduction from repricing to the actual lower volume band over the term (projected volume decline × unit rate delta). Unscored, this is the hook the scorecard loses: Disqualify pricing with no band step-down; score band granularity.",
+        "rows": [
+          {
+            "key": "Annual run cost at current band",
+            "value": "annual_run_cost",
+            "flag": true
+          },
+          {
+            "key": "Share of run cost that flexes with volume",
+            "value": "variable_cost_share_pct",
+            "flag": true
+          },
+          {
+            "key": "Projected volume decline over term",
+            "value": "projected_volume_decline_pct",
+            "flag": true
+          }
+        ],
+        "cta": "Provide the missing evidence"
+      },
+      {
+        "id": "evaluation.evidence.ams-productivity-credits",
+        "title": "Provide the scoring evidence for Productivity / automation not priced back",
+        "subtitle": "2 facts missing · cannot be scored",
+        "type": "provide",
+        "state": "todo",
+        "guide": "Committed productivity-credit percentage × the automatable ticket/effort pool per year. Unscored, this is the hook the scorecard loses: Reward committed credits; treat uncredited claims as evaluation risk.",
+        "rows": [
+          {
+            "key": "Annual automatable effort pool",
+            "value": "automatable_effort_pool",
+            "flag": true
+          },
+          {
+            "key": "Committed productivity-credit %",
+            "value": "committed_credit_pct",
+            "flag": true
+          }
+        ],
+        "cta": "Provide the missing evidence"
+      },
+      {
+        "id": "evaluation.evidence.ams-retained-cost",
+        "title": "Provide the scoring evidence for Retained client / SME cost omitted from TCO",
+        "subtitle": "2 facts missing · cannot be scored",
+        "type": "provide",
+        "state": "todo",
+        "guide": "Difference in retained FTE effort between models, valued at loaded cost, plus reduction commitment over the term. Unscored, this is the hook the scorecard loses: Normalize all proposals to include retained cost before ranking on price.",
+        "rows": [
+          {
+            "key": "Retained FTE difference vs baseline model",
+            "value": "retained_fte_delta",
+            "flag": true
+          },
+          {
+            "key": "Loaded annual cost per retained FTE",
+            "value": "loaded_fte_cost",
+            "flag": true
+          }
+        ],
+        "cta": "Provide the missing evidence"
+      },
+      {
+        "id": "evaluation.evidence.ams-sla-economics",
+        "title": "Provide the scoring evidence for SLA credit economics",
+        "subtitle": "3 facts missing · cannot be scored",
+        "type": "provide",
+        "state": "todo",
+        "guide": "Value protected = expected credit pool + avoided business impact from chronic-miss remedies (protection, not headline savings). Unscored, this is the hook the scorecard loses: Do not let a low headline price outrank a vendor with materially stronger SLA remedies once normalized.",
+        "rows": [
+          {
+            "key": "Annual fee pool exposed to SLA credits",
+            "value": "at_risk_fee_pool",
+            "flag": true
+          },
+          {
+            "key": "SLA credit cap %",
+            "value": "credit_cap_pct",
+            "flag": true
+          },
+          {
+            "key": "Historical chronic-miss rate",
+            "value": "chronic_miss_rate",
+            "flag": true
+          }
+        ],
+        "cta": "Provide the missing evidence"
+      },
+      {
+        "id": "evaluation.evidence.ams-transition-risk",
+        "title": "Provide the scoring evidence for Transition fees not milestone-based",
+        "subtitle": "2 facts missing · cannot be scored",
+        "type": "provide",
+        "state": "todo",
+        "guide": "Avoided failed/extended-transition cost = probability-weighted transition overrun × transition value at risk. Unscored, this is the hook the scorecard loses: Do not award full transition score to a generic transition narrative.",
+        "rows": [
+          {
+            "key": "Quoted transition fee",
+            "value": "transition_fee",
+            "flag": true
+          },
+          {
+            "key": "Probability of transition overrun",
+            "value": "overrun_probability",
+            "flag": true
+          }
+        ],
+        "cta": "Provide the missing evidence"
+      }
+    ],
+    "gate": {
+      "approver": "CIO",
+      "confirms": [
+        {
+          "label": "1 of 6 value levers scored from computed facts",
+          "detail": "Scored with a banded value and the facts behind it: Enhancement / change-order leakage. Still unscored for want of evidence: Volume-band price flex-down; Productivity / automation not priced back; Retained client / SME cost omitted from TCO; SLA credit economics; Transition fees not milestone-based — ranked without them, the comparison is thinner than it looks."
+        },
+        {
+          "label": "Ranked on 5 weighted criteria, 3 auto-fail checked",
+          "detail": "Service capability & SLA credibility 30%; Normalized price / should-cost gap 30%; Transition & retained-org fit 15%; Automation / productivity commitment 15%; Delivery & concentration risk 10%."
+        },
+        {
+          "label": "Scoring closed",
+          "detail": "Bids are scored and ranked — advance to Pricing."
+        }
+      ],
+      "generates": [],
+      "nextStageName": "Pricing"
+    },
+    "waterfall": {
+      "provenance": "live",
+      "baselineLabel": "Committed value baseline",
+      "baselineAmount": 12000000,
+      "unit": "usd",
+      "bands": [
+        {
+          "id": "wf.AMS.ENHANCEMENT_LEAKAGE",
+          "valueType": "protected",
+          "label": "Enhancement / change-order leakage",
+          "unit": "usd",
+          "confidence": "med",
+          "amountLow": 529200,
+          "amountHigh": 756000,
+          "state": "quantified",
+          "citation": null
+        },
+        {
+          "id": "wf.AMS.VOLUME_BAND_PRICING",
+          "valueType": "incremental_negotiated",
+          "label": "Volume-band price flex-down",
+          "unit": "usd",
+          "confidence": "med",
+          "amountLow": 0,
+          "amountHigh": 0,
+          "state": "insufficient_evidence",
+          "citation": null
+        },
+        {
+          "id": "wf.AMS.PRODUCTIVITY_CREDITS",
+          "valueType": "solution_tightening",
+          "label": "Productivity / automation not priced back",
+          "unit": "usd",
+          "confidence": "med",
+          "amountLow": 0,
+          "amountHigh": 0,
+          "state": "insufficient_evidence",
+          "citation": null
+        },
+        {
+          "id": "wf.AMS.RETAINED_COST",
+          "valueType": "risk_adjusted",
+          "label": "Retained client / SME cost omitted from TCO",
+          "unit": "usd",
+          "confidence": "low",
+          "amountLow": 0,
+          "amountHigh": 0,
+          "state": "insufficient_evidence",
+          "citation": null
+        },
+        {
+          "id": "wf.AMS.SLA_ECONOMICS",
+          "valueType": "protected",
+          "label": "SLA credit economics",
+          "unit": "usd",
+          "confidence": "low",
+          "amountLow": 0,
+          "amountHigh": 0,
+          "state": "insufficient_evidence",
+          "citation": null
+        },
+        {
+          "id": "wf.AMS.TRANSITION_RISK",
+          "valueType": "risk_adjusted",
+          "label": "Transition fees not milestone-based",
+          "unit": "usd",
+          "confidence": "low",
+          "amountLow": 0,
+          "amountHigh": 0,
+          "state": "insufficient_evidence",
+          "citation": null
+        }
+      ]
+    },
+    "beatProvenance": {
+      "tasks": "fact_derived",
+      "gate": "fact_derived",
+      "scaffoldSource": null
+    }
+  },
+  "evaluation/observed": {
+    "stageKey": "evaluation",
+    "stageName": "Evaluation",
+    "purpose": "Normalize every bid to should-cost — the cheapest headline is a trap once retained-client cost and weak-SLA risk are priced in; the lowest TRUE TCO is the real winner.",
+    "intel": {
+      "provenance": "live",
+      "lead": "Here's the value we computed from your committed facts — each band is math over a cited fact, not an estimate.",
+      "points": [
+        {
+          "tone": "found",
+          "tag": "Computed",
+          "text": "1 value lever computed from committed facts — every figure traces to a cited source_event_facts row."
+        },
+        {
+          "tone": "archetype",
+          "tag": "Archetype",
+          "text": "IT Outsourcing / AMS / Managed Services value-lever rules drove the classification into the five value types."
+        },
+        {
+          "tone": "muted",
+          "tag": "Needs evidence",
+          "text": "5 levers could not be quantified yet — shown as \"needs evidence\", never as a guess."
+        }
+      ]
+    },
+    "tasks": [
+      {
+        "id": "evaluation.model.ams-managed-services",
+        "title": "Apply the IT Outsourcing / AMS / Managed Services scoring model",
+        "subtitle": "5 weighted criteria · 3 disqualifiers",
+        "type": "confirm",
+        "state": "todo",
+        "guide": "IT Outsourcing / AMS / Managed Services ranks bids on 5 weighted criteria. Auto-fail conditions declared for this event type: No committed SLA credits; No termination-assistance terms; Cannot evidence comparable tower-scale delivery.",
+        "rows": [
+          {
+            "key": "Service capability & SLA credibility",
+            "value": "30% of the score"
+          },
+          {
+            "key": "Normalized price / should-cost gap",
+            "value": "30% of the score"
+          },
+          {
+            "key": "Transition & retained-org fit",
+            "value": "15% of the score"
+          },
+          {
+            "key": "Automation / productivity commitment",
+            "value": "15% of the score"
+          },
+          {
+            "key": "Delivery & concentration risk",
+            "value": "10% of the score"
+          }
+        ],
+        "cta": "Confirm the scoring model"
+      },
+      {
+        "id": "evaluation.score.ams-enhancement-leakage",
+        "title": "Score Enhancement / change-order leakage into the evaluation model",
+        "subtitle": "$529,200–$756,000 computed · protected",
+        "type": "confirm",
+        "state": "todo",
+        "guide": "How this lever moves the score: Penalize vague enhancement exclusions and open-ended change-order language.",
+        "rows": [
+          {
+            "key": "Computed value over term",
+            "value": "$529,200–$756,000 · med confidence"
+          },
+          {
+            "key": "Basis",
+            "value": "Avoidable portion of recurring change-order / enhancement spend converted to base scope or a fixed service catalog."
+          },
+          {
+            "key": "Cited to",
+            "value": "Change-order register · Tab 3, row 44",
+            "flag": false
+          }
+        ],
+        "cta": "Confirm the score input"
+      },
+      {
+        "id": "evaluation.evidence.ams-volume-band-pricing",
+        "title": "Provide the scoring evidence for Volume-band price flex-down",
+        "subtitle": "3 facts missing · cannot be scored",
+        "type": "provide",
+        "state": "todo",
+        "guide": "Run-cost reduction from repricing to the actual lower volume band over the term (projected volume decline × unit rate delta). Unscored, this is the hook the scorecard loses: Disqualify pricing with no band step-down; score band granularity.",
+        "rows": [
+          {
+            "key": "Annual run cost at current band",
+            "value": "annual_run_cost",
+            "flag": true
+          },
+          {
+            "key": "Share of run cost that flexes with volume",
+            "value": "variable_cost_share_pct",
+            "flag": true
+          },
+          {
+            "key": "Projected volume decline over term",
+            "value": "projected_volume_decline_pct",
+            "flag": true
+          }
+        ],
+        "cta": "Provide the missing evidence"
+      },
+      {
+        "id": "evaluation.evidence.ams-productivity-credits",
+        "title": "Provide the scoring evidence for Productivity / automation not priced back",
+        "subtitle": "2 facts missing · cannot be scored",
+        "type": "provide",
+        "state": "todo",
+        "guide": "Committed productivity-credit percentage × the automatable ticket/effort pool per year. Unscored, this is the hook the scorecard loses: Reward committed credits; treat uncredited claims as evaluation risk.",
+        "rows": [
+          {
+            "key": "Annual automatable effort pool",
+            "value": "automatable_effort_pool",
+            "flag": true
+          },
+          {
+            "key": "Committed productivity-credit %",
+            "value": "committed_credit_pct",
+            "flag": true
+          }
+        ],
+        "cta": "Provide the missing evidence"
+      },
+      {
+        "id": "evaluation.evidence.ams-retained-cost",
+        "title": "Provide the scoring evidence for Retained client / SME cost omitted from TCO",
+        "subtitle": "2 facts missing · cannot be scored",
+        "type": "provide",
+        "state": "todo",
+        "guide": "Difference in retained FTE effort between models, valued at loaded cost, plus reduction commitment over the term. Unscored, this is the hook the scorecard loses: Normalize all proposals to include retained cost before ranking on price.",
+        "rows": [
+          {
+            "key": "Retained FTE difference vs baseline model",
+            "value": "retained_fte_delta",
+            "flag": true
+          },
+          {
+            "key": "Loaded annual cost per retained FTE",
+            "value": "loaded_fte_cost",
+            "flag": true
+          }
+        ],
+        "cta": "Provide the missing evidence"
+      },
+      {
+        "id": "evaluation.evidence.ams-sla-economics",
+        "title": "Provide the scoring evidence for SLA credit economics",
+        "subtitle": "3 facts missing · cannot be scored",
+        "type": "provide",
+        "state": "todo",
+        "guide": "Value protected = expected credit pool + avoided business impact from chronic-miss remedies (protection, not headline savings). Unscored, this is the hook the scorecard loses: Do not let a low headline price outrank a vendor with materially stronger SLA remedies once normalized.",
+        "rows": [
+          {
+            "key": "Annual fee pool exposed to SLA credits",
+            "value": "at_risk_fee_pool",
+            "flag": true
+          },
+          {
+            "key": "SLA credit cap %",
+            "value": "credit_cap_pct",
+            "flag": true
+          },
+          {
+            "key": "Historical chronic-miss rate",
+            "value": "chronic_miss_rate",
+            "flag": true
+          }
+        ],
+        "cta": "Provide the missing evidence"
+      },
+      {
+        "id": "evaluation.evidence.ams-transition-risk",
+        "title": "Provide the scoring evidence for Transition fees not milestone-based",
+        "subtitle": "2 facts missing · cannot be scored",
+        "type": "provide",
+        "state": "todo",
+        "guide": "Avoided failed/extended-transition cost = probability-weighted transition overrun × transition value at risk. Unscored, this is the hook the scorecard loses: Do not award full transition score to a generic transition narrative.",
+        "rows": [
+          {
+            "key": "Quoted transition fee",
+            "value": "transition_fee",
+            "flag": true
+          },
+          {
+            "key": "Probability of transition overrun",
+            "value": "overrun_probability",
+            "flag": true
+          }
+        ],
+        "cta": "Provide the missing evidence"
+      }
+    ],
+    "gate": {
+      "approver": "CIO",
+      "confirms": [
+        {
+          "label": "1 of 6 value levers scored from computed facts",
+          "detail": "Scored with a banded value and the facts behind it: Enhancement / change-order leakage. Still unscored for want of evidence: Volume-band price flex-down; Productivity / automation not priced back; Retained client / SME cost omitted from TCO; SLA credit economics; Transition fees not milestone-based — ranked without them, the comparison is thinner than it looks."
+        },
+        {
+          "label": "Ranked on 5 weighted criteria, 3 auto-fail checked",
+          "detail": "Service capability & SLA credibility 30%; Normalized price / should-cost gap 30%; Transition & retained-org fit 15%; Automation / productivity commitment 15%; Delivery & concentration risk 10%."
+        },
+        {
+          "label": "Scoring closed",
+          "detail": "Bids are scored and ranked — advance to Pricing."
+        }
+      ],
+      "generates": [],
+      "nextStageName": "Pricing"
+    },
+    "waterfall": {
+      "provenance": "live",
+      "baselineLabel": "Committed value baseline",
+      "baselineAmount": 12000000,
+      "unit": "usd",
+      "bands": [
+        {
+          "id": "wf.AMS.ENHANCEMENT_LEAKAGE",
+          "valueType": "protected",
+          "label": "Enhancement / change-order leakage",
+          "unit": "usd",
+          "confidence": "med",
+          "amountLow": 529200,
+          "amountHigh": 756000,
+          "state": "quantified",
+          "citation": {
+            "doc": "Change-order register",
+            "locator": "Tab 3, row 44"
+          }
+        },
+        {
+          "id": "wf.AMS.VOLUME_BAND_PRICING",
+          "valueType": "incremental_negotiated",
+          "label": "Volume-band price flex-down",
+          "unit": "usd",
+          "confidence": "med",
+          "amountLow": 0,
+          "amountHigh": 0,
+          "state": "insufficient_evidence",
+          "citation": null
+        },
+        {
+          "id": "wf.AMS.PRODUCTIVITY_CREDITS",
+          "valueType": "solution_tightening",
+          "label": "Productivity / automation not priced back",
+          "unit": "usd",
+          "confidence": "med",
+          "amountLow": 0,
+          "amountHigh": 0,
+          "state": "insufficient_evidence",
+          "citation": null
+        },
+        {
+          "id": "wf.AMS.RETAINED_COST",
+          "valueType": "risk_adjusted",
+          "label": "Retained client / SME cost omitted from TCO",
+          "unit": "usd",
+          "confidence": "low",
+          "amountLow": 0,
+          "amountHigh": 0,
+          "state": "insufficient_evidence",
+          "citation": null
+        },
+        {
+          "id": "wf.AMS.SLA_ECONOMICS",
+          "valueType": "protected",
+          "label": "SLA credit economics",
+          "unit": "usd",
+          "confidence": "low",
+          "amountLow": 0,
+          "amountHigh": 0,
+          "state": "insufficient_evidence",
+          "citation": null
+        },
+        {
+          "id": "wf.AMS.TRANSITION_RISK",
+          "valueType": "risk_adjusted",
+          "label": "Transition fees not milestone-based",
+          "unit": "usd",
+          "confidence": "low",
+          "amountLow": 0,
+          "amountHigh": 0,
+          "state": "insufficient_evidence",
+          "citation": null
+        }
+      ]
+    },
+    "beatProvenance": {
+      "tasks": "fact_derived",
+      "gate": "fact_derived",
+      "scaffoldSource": null
+    }
+  },
+  "selection/unobserved": {
+    "stageKey": "selection",
+    "stageName": "Selection",
+    "purpose": "Confirm the value the executed award actually locked — the award is the contract of record the Value step measures realization against.",
+    "intel": {
+      "provenance": "live",
+      "lead": "Here's the value we computed from your committed facts — each band is math over a cited fact, not an estimate.",
+      "points": [
+        {
+          "tone": "found",
+          "tag": "Computed",
+          "text": "1 value lever computed from committed facts — every figure traces to a cited source_event_facts row."
+        },
+        {
+          "tone": "archetype",
+          "tag": "Archetype",
+          "text": "IT Outsourcing / AMS / Managed Services value-lever rules drove the classification into the five value types."
+        },
+        {
+          "tone": "muted",
+          "tag": "Needs evidence",
+          "text": "5 levers could not be quantified yet — shown as \"needs evidence\", never as a guess."
+        }
+      ]
+    },
+    "tasks": [
+      {
+        "id": "selection.award-commitments",
+        "title": "Provide the award commitments",
+        "subtitle": "6 declared levers · no award fact read yet",
+        "type": "provide",
+        "state": "todo",
+        "guide": "Upload the award commitments (one row per value lever, keyed by lever key, with the committed value over the contract term). No award fact has been read for this event yet, so nothing below is a claim that a lever committed nothing — it is a claim that nothing has been read.",
+        "rows": [
+          {
+            "key": "Enhancement / change-order leakage",
+            "value": "Target $529,200–$756,000 · no award commitment read",
+            "flag": true
+          },
+          {
+            "key": "Volume-band price flex-down",
+            "value": "Target Not yet quantified · no award commitment read",
+            "flag": true
+          },
+          {
+            "key": "Productivity / automation not priced back",
+            "value": "Target Not yet quantified · no award commitment read",
+            "flag": true
+          },
+          {
+            "key": "Retained client / SME cost omitted from TCO",
+            "value": "Target Not yet quantified · no award commitment read",
+            "flag": true
+          },
+          {
+            "key": "SLA credit economics",
+            "value": "Target Not yet quantified · no award commitment read",
+            "flag": true
+          },
+          {
+            "key": "Transition fees not milestone-based",
+            "value": "Target Not yet quantified · no award commitment read",
+            "flag": true
+          }
+        ],
+        "provenance": {
+          "owner": "Sourcing lead",
+          "source": "Executed contract / award record"
+        },
+        "cta": "Provide the award commitments",
+        "factTemplateCode": "COMMITTED_VALUE_V1"
+      }
+    ],
+    "gate": {
+      "approver": "CIO",
+      "confirms": [
+        {
+          "label": "No award commitments observed",
+          "detail": "No award fact has been read for this event, so no lever on this gate is confirmed either way. This is an unread award, not an award that committed nothing."
+        },
+        {
+          "label": "No committed baseline set",
+          "detail": "The Value step measures realization against the committed baseline. Until the award commitments are read there is no baseline to measure against, and realization would be unfalsifiable."
+        },
+        {
+          "label": "Award commitments confirmed against the executed contract",
+          "detail": "Confirm each committed figure is the one the executed contract carries before advancing to Transition."
+        }
+      ],
+      "generates": [],
+      "nextStageName": "Transition"
+    },
+    "waterfall": {
+      "provenance": "live",
+      "baselineLabel": "Committed value baseline",
+      "baselineAmount": 12000000,
+      "unit": "usd",
+      "bands": [
+        {
+          "id": "wf.AMS.ENHANCEMENT_LEAKAGE",
+          "valueType": "protected",
+          "label": "Enhancement / change-order leakage",
+          "unit": "usd",
+          "confidence": "med",
+          "amountLow": 529200,
+          "amountHigh": 756000,
+          "state": "quantified",
+          "citation": null
+        },
+        {
+          "id": "wf.AMS.VOLUME_BAND_PRICING",
+          "valueType": "incremental_negotiated",
+          "label": "Volume-band price flex-down",
+          "unit": "usd",
+          "confidence": "med",
+          "amountLow": 0,
+          "amountHigh": 0,
+          "state": "insufficient_evidence",
+          "citation": null
+        },
+        {
+          "id": "wf.AMS.PRODUCTIVITY_CREDITS",
+          "valueType": "solution_tightening",
+          "label": "Productivity / automation not priced back",
+          "unit": "usd",
+          "confidence": "med",
+          "amountLow": 0,
+          "amountHigh": 0,
+          "state": "insufficient_evidence",
+          "citation": null
+        },
+        {
+          "id": "wf.AMS.RETAINED_COST",
+          "valueType": "risk_adjusted",
+          "label": "Retained client / SME cost omitted from TCO",
+          "unit": "usd",
+          "confidence": "low",
+          "amountLow": 0,
+          "amountHigh": 0,
+          "state": "insufficient_evidence",
+          "citation": null
+        },
+        {
+          "id": "wf.AMS.SLA_ECONOMICS",
+          "valueType": "protected",
+          "label": "SLA credit economics",
+          "unit": "usd",
+          "confidence": "low",
+          "amountLow": 0,
+          "amountHigh": 0,
+          "state": "insufficient_evidence",
+          "citation": null
+        },
+        {
+          "id": "wf.AMS.TRANSITION_RISK",
+          "valueType": "risk_adjusted",
+          "label": "Transition fees not milestone-based",
+          "unit": "usd",
+          "confidence": "low",
+          "amountLow": 0,
+          "amountHigh": 0,
+          "state": "insufficient_evidence",
+          "citation": null
+        }
+      ]
+    },
+    "beatProvenance": {
+      "tasks": "fact_derived",
+      "gate": "fact_derived",
+      "scaffoldSource": null
+    }
+  },
+  "selection/observed": {
+    "stageKey": "selection",
+    "stageName": "Selection",
+    "purpose": "Confirm the value the executed award actually locked — the award is the contract of record the Value step measures realization against.",
+    "intel": {
+      "provenance": "live",
+      "lead": "Here's the value we computed from your committed facts — each band is math over a cited fact, not an estimate.",
+      "points": [
+        {
+          "tone": "found",
+          "tag": "Computed",
+          "text": "1 value lever computed from committed facts — every figure traces to a cited source_event_facts row."
+        },
+        {
+          "tone": "archetype",
+          "tag": "Archetype",
+          "text": "IT Outsourcing / AMS / Managed Services value-lever rules drove the classification into the five value types."
+        },
+        {
+          "tone": "muted",
+          "tag": "Needs evidence",
+          "text": "5 levers could not be quantified yet — shown as \"needs evidence\", never as a guess."
+        }
+      ]
+    },
+    "tasks": [
+      {
+        "id": "selection.committed.ams-enhancement-leakage",
+        "title": "Confirm the award commitment on Enhancement / change-order leakage",
+        "subtitle": "$250,000 committed · target $529,200–$756,000",
+        "type": "confirm",
+        "state": "todo",
+        "guide": "The award records $250,000 against this lever. Confirm that figure is the one the executed contract locks over the term — the committed value becomes the baseline the Value step measures realization against, so a figure confirmed here that the contract does not carry makes realization unfalsifiable.",
+        "rows": [
+          {
+            "key": "Committed at award",
+            "value": "$250,000"
+          },
+          {
+            "key": "Target band",
+            "value": "$529,200–$756,000"
+          },
+          {
+            "key": "Cited to",
+            "value": "Change-order register · Tab 3, row 44",
+            "flag": false
+          }
+        ],
+        "cta": "Confirm the commitment"
+      },
+      {
+        "id": "selection.awaiting-award.ams-volume-band-pricing",
+        "title": "Record the award commitment for Volume-band price flex-down",
+        "subtitle": "Awaiting award · target Not yet quantified",
+        "type": "provide",
+        "state": "todo",
+        "guide": "The award read for this event carries no commitment against this lever. That is awaiting award, not a commitment of nothing — record the committed value the executed contract locks, or state that the award deliberately carries this lever at no value. A negotiated lever left out of the award is value the buyer forfeits.",
+        "rows": [
+          {
+            "key": "Target band",
+            "value": "Not yet quantified"
+          },
+          {
+            "key": "Committed at award",
+            "value": "Awaiting award",
+            "flag": true
+          }
+        ],
+        "cta": "Record the award commitment",
+        "factTemplateCode": "COMMITTED_VALUE_V1"
+      },
+      {
+        "id": "selection.awaiting-award.ams-productivity-credits",
+        "title": "Record the award commitment for Productivity / automation not priced back",
+        "subtitle": "Awaiting award · target Not yet quantified",
+        "type": "provide",
+        "state": "todo",
+        "guide": "The award read for this event carries no commitment against this lever. That is awaiting award, not a commitment of nothing — record the committed value the executed contract locks, or state that the award deliberately carries this lever at no value. A vendor automation claim is not value until it is a credit schedule — count only the committed %, not the marketing claim.",
+        "rows": [
+          {
+            "key": "Target band",
+            "value": "Not yet quantified"
+          },
+          {
+            "key": "Committed at award",
+            "value": "Awaiting award",
+            "flag": true
+          }
+        ],
+        "cta": "Record the award commitment",
+        "factTemplateCode": "COMMITTED_VALUE_V1"
+      },
+      {
+        "id": "selection.awaiting-award.ams-retained-cost",
+        "title": "Record the award commitment for Retained client / SME cost omitted from TCO",
+        "subtitle": "Awaiting award · target Not yet quantified",
+        "type": "provide",
+        "state": "todo",
+        "guide": "The award read for this event carries no commitment against this lever. That is awaiting award, not a commitment of nothing — record the committed value the executed contract locks, or state that the award deliberately carries this lever at no value. This is a normalization, not a saving — presenting it as headline value double-counts. Apply it to make bids comparable.",
+        "rows": [
+          {
+            "key": "Target band",
+            "value": "Not yet quantified"
+          },
+          {
+            "key": "Committed at award",
+            "value": "Awaiting award",
+            "flag": true
+          }
+        ],
+        "cta": "Record the award commitment",
+        "factTemplateCode": "COMMITTED_VALUE_V1"
+      },
+      {
+        "id": "selection.awaiting-award.ams-sla-economics",
+        "title": "Record the award commitment for SLA credit economics",
+        "subtitle": "Awaiting award · target Not yet quantified",
+        "type": "provide",
+        "state": "todo",
+        "guide": "The award read for this event carries no commitment against this lever. That is awaiting award, not a commitment of nothing — record the committed value the executed contract locks, or state that the award deliberately carries this lever at no value. Protected value is a risk hedge, not cash — never sum it into a headline savings figure.",
+        "rows": [
+          {
+            "key": "Target band",
+            "value": "Not yet quantified"
+          },
+          {
+            "key": "Committed at award",
+            "value": "Awaiting award",
+            "flag": true
+          }
+        ],
+        "cta": "Record the award commitment",
+        "factTemplateCode": "COMMITTED_VALUE_V1"
+      },
+      {
+        "id": "selection.awaiting-award.ams-transition-risk",
+        "title": "Record the award commitment for Transition fees not milestone-based",
+        "subtitle": "Awaiting award · target Not yet quantified",
+        "type": "provide",
+        "state": "todo",
+        "guide": "The award read for this event carries no commitment against this lever. That is awaiting award, not a commitment of nothing — record the committed value the executed contract locks, or state that the award deliberately carries this lever at no value. A negotiated lever left out of the award is value the buyer forfeits.",
+        "rows": [
+          {
+            "key": "Target band",
+            "value": "Not yet quantified"
+          },
+          {
+            "key": "Committed at award",
+            "value": "Awaiting award",
+            "flag": true
+          }
+        ],
+        "cta": "Record the award commitment",
+        "factTemplateCode": "COMMITTED_VALUE_V1"
+      }
+    ],
+    "gate": {
+      "approver": "CIO",
+      "confirms": [
+        {
+          "label": "1 of 6 levers carried a committed value into the award",
+          "detail": "5 declared levers are awaiting award and are not committed at nothing: Volume-band price flex-down; Productivity / automation not priced back; Retained client / SME cost omitted from TCO; SLA credit economics; Transition fees not milestone-based."
+        },
+        {
+          "label": "$250,000 committed at award · target $529,200–$756,000",
+          "detail": "This committed total is the baseline the Value step measures realization against. It sums only the 1 lever the award record actually commits against; no awaiting-award lever is counted as zero."
+        },
+        {
+          "label": "Award commitments confirmed against the executed contract",
+          "detail": "Confirm each committed figure is the one the executed contract carries before advancing to Transition."
+        }
+      ],
+      "generates": [],
+      "nextStageName": "Transition"
+    },
+    "waterfall": {
+      "provenance": "live",
+      "baselineLabel": "Committed value baseline",
+      "baselineAmount": 12000000,
+      "unit": "usd",
+      "bands": [
+        {
+          "id": "wf.AMS.ENHANCEMENT_LEAKAGE",
+          "valueType": "protected",
+          "label": "Enhancement / change-order leakage",
+          "unit": "usd",
+          "confidence": "med",
+          "amountLow": 529200,
+          "amountHigh": 756000,
+          "state": "quantified",
+          "citation": {
+            "doc": "Change-order register",
+            "locator": "Tab 3, row 44"
+          }
+        },
+        {
+          "id": "wf.AMS.VOLUME_BAND_PRICING",
+          "valueType": "incremental_negotiated",
+          "label": "Volume-band price flex-down",
+          "unit": "usd",
+          "confidence": "med",
+          "amountLow": 0,
+          "amountHigh": 0,
+          "state": "insufficient_evidence",
+          "citation": null
+        },
+        {
+          "id": "wf.AMS.PRODUCTIVITY_CREDITS",
+          "valueType": "solution_tightening",
+          "label": "Productivity / automation not priced back",
+          "unit": "usd",
+          "confidence": "med",
+          "amountLow": 0,
+          "amountHigh": 0,
+          "state": "insufficient_evidence",
+          "citation": null
+        },
+        {
+          "id": "wf.AMS.RETAINED_COST",
+          "valueType": "risk_adjusted",
+          "label": "Retained client / SME cost omitted from TCO",
+          "unit": "usd",
+          "confidence": "low",
+          "amountLow": 0,
+          "amountHigh": 0,
+          "state": "insufficient_evidence",
+          "citation": null
+        },
+        {
+          "id": "wf.AMS.SLA_ECONOMICS",
+          "valueType": "protected",
+          "label": "SLA credit economics",
+          "unit": "usd",
+          "confidence": "low",
+          "amountLow": 0,
+          "amountHigh": 0,
+          "state": "insufficient_evidence",
+          "citation": null
+        },
+        {
+          "id": "wf.AMS.TRANSITION_RISK",
+          "valueType": "risk_adjusted",
+          "label": "Transition fees not milestone-based",
+          "unit": "usd",
+          "confidence": "low",
+          "amountLow": 0,
+          "amountHigh": 0,
+          "state": "insufficient_evidence",
+          "citation": null
+        }
+      ]
+    },
+    "beatProvenance": {
+      "tasks": "fact_derived",
+      "gate": "fact_derived",
+      "scaffoldSource": null
+    }
+  },
+  "selection/observed-uncited": {
+    "stageKey": "selection",
+    "stageName": "Selection",
+    "purpose": "Confirm the value the executed award actually locked — the award is the contract of record the Value step measures realization against.",
+    "intel": {
+      "provenance": "live",
+      "lead": "Here's the value we computed from your committed facts — each band is math over a cited fact, not an estimate.",
+      "points": [
+        {
+          "tone": "found",
+          "tag": "Computed",
+          "text": "1 value lever computed from committed facts — every figure traces to a cited source_event_facts row."
+        },
+        {
+          "tone": "archetype",
+          "tag": "Archetype",
+          "text": "IT Outsourcing / AMS / Managed Services value-lever rules drove the classification into the five value types."
+        },
+        {
+          "tone": "muted",
+          "tag": "Needs evidence",
+          "text": "5 levers could not be quantified yet — shown as \"needs evidence\", never as a guess."
+        }
+      ]
+    },
+    "tasks": [
+      {
+        "id": "selection.committed.ams-enhancement-leakage",
+        "title": "Confirm the award commitment on Enhancement / change-order leakage",
+        "subtitle": "$250,000 committed · target $529,200–$756,000",
+        "type": "confirm",
+        "state": "todo",
+        "guide": "The award records $250,000 against this lever. Confirm that figure is the one the executed contract locks over the term — the committed value becomes the baseline the Value step measures realization against, so a figure confirmed here that the contract does not carry makes realization unfalsifiable.",
+        "rows": [
+          {
+            "key": "Committed at award",
+            "value": "$250,000"
+          },
+          {
+            "key": "Target band",
+            "value": "$529,200–$756,000"
+          },
+          {
+            "key": "Cited to",
+            "value": "No citation on the consumed facts",
+            "flag": true
+          }
+        ],
+        "cta": "Confirm the commitment"
+      },
+      {
+        "id": "selection.awaiting-award.ams-volume-band-pricing",
+        "title": "Record the award commitment for Volume-band price flex-down",
+        "subtitle": "Awaiting award · target Not yet quantified",
+        "type": "provide",
+        "state": "todo",
+        "guide": "The award read for this event carries no commitment against this lever. That is awaiting award, not a commitment of nothing — record the committed value the executed contract locks, or state that the award deliberately carries this lever at no value. A negotiated lever left out of the award is value the buyer forfeits.",
+        "rows": [
+          {
+            "key": "Target band",
+            "value": "Not yet quantified"
+          },
+          {
+            "key": "Committed at award",
+            "value": "Awaiting award",
+            "flag": true
+          }
+        ],
+        "cta": "Record the award commitment",
+        "factTemplateCode": "COMMITTED_VALUE_V1"
+      },
+      {
+        "id": "selection.awaiting-award.ams-productivity-credits",
+        "title": "Record the award commitment for Productivity / automation not priced back",
+        "subtitle": "Awaiting award · target Not yet quantified",
+        "type": "provide",
+        "state": "todo",
+        "guide": "The award read for this event carries no commitment against this lever. That is awaiting award, not a commitment of nothing — record the committed value the executed contract locks, or state that the award deliberately carries this lever at no value. A vendor automation claim is not value until it is a credit schedule — count only the committed %, not the marketing claim.",
+        "rows": [
+          {
+            "key": "Target band",
+            "value": "Not yet quantified"
+          },
+          {
+            "key": "Committed at award",
+            "value": "Awaiting award",
+            "flag": true
+          }
+        ],
+        "cta": "Record the award commitment",
+        "factTemplateCode": "COMMITTED_VALUE_V1"
+      },
+      {
+        "id": "selection.awaiting-award.ams-retained-cost",
+        "title": "Record the award commitment for Retained client / SME cost omitted from TCO",
+        "subtitle": "Awaiting award · target Not yet quantified",
+        "type": "provide",
+        "state": "todo",
+        "guide": "The award read for this event carries no commitment against this lever. That is awaiting award, not a commitment of nothing — record the committed value the executed contract locks, or state that the award deliberately carries this lever at no value. This is a normalization, not a saving — presenting it as headline value double-counts. Apply it to make bids comparable.",
+        "rows": [
+          {
+            "key": "Target band",
+            "value": "Not yet quantified"
+          },
+          {
+            "key": "Committed at award",
+            "value": "Awaiting award",
+            "flag": true
+          }
+        ],
+        "cta": "Record the award commitment",
+        "factTemplateCode": "COMMITTED_VALUE_V1"
+      },
+      {
+        "id": "selection.awaiting-award.ams-sla-economics",
+        "title": "Record the award commitment for SLA credit economics",
+        "subtitle": "Awaiting award · target Not yet quantified",
+        "type": "provide",
+        "state": "todo",
+        "guide": "The award read for this event carries no commitment against this lever. That is awaiting award, not a commitment of nothing — record the committed value the executed contract locks, or state that the award deliberately carries this lever at no value. Protected value is a risk hedge, not cash — never sum it into a headline savings figure.",
+        "rows": [
+          {
+            "key": "Target band",
+            "value": "Not yet quantified"
+          },
+          {
+            "key": "Committed at award",
+            "value": "Awaiting award",
+            "flag": true
+          }
+        ],
+        "cta": "Record the award commitment",
+        "factTemplateCode": "COMMITTED_VALUE_V1"
+      },
+      {
+        "id": "selection.awaiting-award.ams-transition-risk",
+        "title": "Record the award commitment for Transition fees not milestone-based",
+        "subtitle": "Awaiting award · target Not yet quantified",
+        "type": "provide",
+        "state": "todo",
+        "guide": "The award read for this event carries no commitment against this lever. That is awaiting award, not a commitment of nothing — record the committed value the executed contract locks, or state that the award deliberately carries this lever at no value. A negotiated lever left out of the award is value the buyer forfeits.",
+        "rows": [
+          {
+            "key": "Target band",
+            "value": "Not yet quantified"
+          },
+          {
+            "key": "Committed at award",
+            "value": "Awaiting award",
+            "flag": true
+          }
+        ],
+        "cta": "Record the award commitment",
+        "factTemplateCode": "COMMITTED_VALUE_V1"
+      }
+    ],
+    "gate": {
+      "approver": "CIO",
+      "confirms": [
+        {
+          "label": "1 of 6 levers carried a committed value into the award",
+          "detail": "5 declared levers are awaiting award and are not committed at nothing: Volume-band price flex-down; Productivity / automation not priced back; Retained client / SME cost omitted from TCO; SLA credit economics; Transition fees not milestone-based."
+        },
+        {
+          "label": "$250,000 committed at award · target $529,200–$756,000",
+          "detail": "This committed total is the baseline the Value step measures realization against. It sums only the 1 lever the award record actually commits against; no awaiting-award lever is counted as zero."
+        },
+        {
+          "label": "Award commitments confirmed against the executed contract",
+          "detail": "Confirm each committed figure is the one the executed contract carries before advancing to Transition."
+        }
+      ],
+      "generates": [],
+      "nextStageName": "Transition"
+    },
+    "waterfall": {
+      "provenance": "live",
+      "baselineLabel": "Committed value baseline",
+      "baselineAmount": 12000000,
+      "unit": "usd",
+      "bands": [
+        {
+          "id": "wf.AMS.ENHANCEMENT_LEAKAGE",
+          "valueType": "protected",
+          "label": "Enhancement / change-order leakage",
+          "unit": "usd",
+          "confidence": "med",
+          "amountLow": 529200,
+          "amountHigh": 756000,
+          "state": "quantified",
+          "citation": null
+        },
+        {
+          "id": "wf.AMS.VOLUME_BAND_PRICING",
+          "valueType": "incremental_negotiated",
+          "label": "Volume-band price flex-down",
+          "unit": "usd",
+          "confidence": "med",
+          "amountLow": 0,
+          "amountHigh": 0,
+          "state": "insufficient_evidence",
+          "citation": null
+        },
+        {
+          "id": "wf.AMS.PRODUCTIVITY_CREDITS",
+          "valueType": "solution_tightening",
+          "label": "Productivity / automation not priced back",
+          "unit": "usd",
+          "confidence": "med",
+          "amountLow": 0,
+          "amountHigh": 0,
+          "state": "insufficient_evidence",
+          "citation": null
+        },
+        {
+          "id": "wf.AMS.RETAINED_COST",
+          "valueType": "risk_adjusted",
+          "label": "Retained client / SME cost omitted from TCO",
+          "unit": "usd",
+          "confidence": "low",
+          "amountLow": 0,
+          "amountHigh": 0,
+          "state": "insufficient_evidence",
+          "citation": null
+        },
+        {
+          "id": "wf.AMS.SLA_ECONOMICS",
+          "valueType": "protected",
+          "label": "SLA credit economics",
+          "unit": "usd",
+          "confidence": "low",
+          "amountLow": 0,
+          "amountHigh": 0,
+          "state": "insufficient_evidence",
+          "citation": null
+        },
+        {
+          "id": "wf.AMS.TRANSITION_RISK",
+          "valueType": "risk_adjusted",
+          "label": "Transition fees not milestone-based",
+          "unit": "usd",
+          "confidence": "low",
+          "amountLow": 0,
+          "amountHigh": 0,
+          "state": "insufficient_evidence",
+          "citation": null
+        }
+      ]
+    },
+    "beatProvenance": {
+      "tasks": "fact_derived",
+      "gate": "fact_derived",
+      "scaffoldSource": null
+    }
+  },
+  "value/unobserved": {
+    "stageKey": "value",
+    "stageName": "Value",
+    "purpose": "Prove the committed value is actually being realized — an un-tracked committed value reverts to incumbent run-rate within a year or two, so book realized value per lever against what the award committed.",
+    "intel": {
+      "provenance": "live",
+      "lead": "Here's the value we computed from your committed facts — each band is math over a cited fact, not an estimate.",
+      "points": [
+        {
+          "tone": "found",
+          "tag": "Computed",
+          "text": "1 value lever computed from committed facts — every figure traces to a cited source_event_facts row."
+        },
+        {
+          "tone": "archetype",
+          "tag": "Archetype",
+          "text": "IT Outsourcing / AMS / Managed Services value-lever rules drove the classification into the five value types."
+        },
+        {
+          "tone": "muted",
+          "tag": "Needs evidence",
+          "text": "5 levers could not be quantified yet — shown as \"needs evidence\", never as a guess."
+        }
+      ]
+    },
+    "tasks": [
+      {
+        "id": "value.realized-actuals",
+        "title": "Provide the realized-value actuals",
+        "subtitle": "6 declared levers · no realized fact read yet",
+        "type": "provide",
+        "state": "todo",
+        "guide": "Upload the realized-value actuals (one row per value lever, keyed by lever key, with the cumulative realized-to-date value for that lever over the contract term — not annualized and not per-period). No realized fact has been read for this event yet, so nothing below is a claim that a lever has realized nothing — it is a claim that nothing has been read.",
+        "rows": [
+          {
+            "key": "Enhancement / change-order leakage",
+            "value": "Target $529,200–$756,000 · no realized figure read",
+            "flag": true
+          },
+          {
+            "key": "Volume-band price flex-down",
+            "value": "Target Not yet quantified · no realized figure read",
+            "flag": true
+          },
+          {
+            "key": "Productivity / automation not priced back",
+            "value": "Target Not yet quantified · no realized figure read",
+            "flag": true
+          },
+          {
+            "key": "Retained client / SME cost omitted from TCO",
+            "value": "Target Not yet quantified · no realized figure read",
+            "flag": true
+          },
+          {
+            "key": "SLA credit economics",
+            "value": "Target Not yet quantified · no realized figure read",
+            "flag": true
+          },
+          {
+            "key": "Transition fees not milestone-based",
+            "value": "Target Not yet quantified · no realized figure read",
+            "flag": true
+          }
+        ],
+        "provenance": {
+          "owner": "Value realization lead",
+          "source": "Run-cost / SLA-credit / productivity actuals record"
+        },
+        "cta": "Provide the realized-value actuals",
+        "factTemplateCode": "VALUE_REALIZATION_V1"
+      }
+    ],
+    "gate": {
+      "approver": "Event Owner",
+      "confirms": [
+        {
+          "label": "No realized value observed on 6 declared levers",
+          "detail": "No realized fact has been read for this event, so no lever on this gate is confirmed either way. This is an unread realization, not a realization that produced nothing. Declared levers awaiting a first realized figure: Enhancement / change-order leakage; Volume-band price flex-down; Productivity / automation not priced back; Retained client / SME cost omitted from TCO; SLA credit economics; Transition fees not milestone-based."
+        },
+        {
+          "label": "No realization measured · target $529,200–$756,000",
+          "detail": "Realization is measured against the value this event computed from its own committed facts. Until the actuals are read there is nothing to measure against that target, and any statement about realized value would be unfalsifiable."
+        },
+        {
+          "label": "Open the completion review",
+          "detail": "The decision on this stage is a completion review: it records whether the realized value has been booked against what the award committed, and its outcome closes the event."
+        }
+      ],
+      "generates": [],
+      "nextStageName": null
+    },
+    "waterfall": {
+      "provenance": "live",
+      "baselineLabel": "Committed value baseline",
+      "baselineAmount": 12000000,
+      "unit": "usd",
+      "bands": [
+        {
+          "id": "wf.AMS.ENHANCEMENT_LEAKAGE",
+          "valueType": "protected",
+          "label": "Enhancement / change-order leakage",
+          "unit": "usd",
+          "confidence": "med",
+          "amountLow": 529200,
+          "amountHigh": 756000,
+          "state": "quantified",
+          "citation": null
+        },
+        {
+          "id": "wf.AMS.VOLUME_BAND_PRICING",
+          "valueType": "incremental_negotiated",
+          "label": "Volume-band price flex-down",
+          "unit": "usd",
+          "confidence": "med",
+          "amountLow": 0,
+          "amountHigh": 0,
+          "state": "insufficient_evidence",
+          "citation": null
+        },
+        {
+          "id": "wf.AMS.PRODUCTIVITY_CREDITS",
+          "valueType": "solution_tightening",
+          "label": "Productivity / automation not priced back",
+          "unit": "usd",
+          "confidence": "med",
+          "amountLow": 0,
+          "amountHigh": 0,
+          "state": "insufficient_evidence",
+          "citation": null
+        },
+        {
+          "id": "wf.AMS.RETAINED_COST",
+          "valueType": "risk_adjusted",
+          "label": "Retained client / SME cost omitted from TCO",
+          "unit": "usd",
+          "confidence": "low",
+          "amountLow": 0,
+          "amountHigh": 0,
+          "state": "insufficient_evidence",
+          "citation": null
+        },
+        {
+          "id": "wf.AMS.SLA_ECONOMICS",
+          "valueType": "protected",
+          "label": "SLA credit economics",
+          "unit": "usd",
+          "confidence": "low",
+          "amountLow": 0,
+          "amountHigh": 0,
+          "state": "insufficient_evidence",
+          "citation": null
+        },
+        {
+          "id": "wf.AMS.TRANSITION_RISK",
+          "valueType": "risk_adjusted",
+          "label": "Transition fees not milestone-based",
+          "unit": "usd",
+          "confidence": "low",
+          "amountLow": 0,
+          "amountHigh": 0,
+          "state": "insufficient_evidence",
+          "citation": null
+        }
+      ]
+    },
+    "beatProvenance": {
+      "tasks": "fact_derived",
+      "gate": "fact_derived",
+      "scaffoldSource": null
+    }
+  },
+  "value/observed": {
+    "stageKey": "value",
+    "stageName": "Value",
+    "purpose": "Prove the committed value is actually being realized — an un-tracked committed value reverts to incumbent run-rate within a year or two, so book realized value per lever against what the award committed.",
+    "intel": {
+      "provenance": "live",
+      "lead": "Here's the value we computed from your committed facts — each band is math over a cited fact, not an estimate.",
+      "points": [
+        {
+          "tone": "found",
+          "tag": "Computed",
+          "text": "1 value lever computed from committed facts — every figure traces to a cited source_event_facts row."
+        },
+        {
+          "tone": "archetype",
+          "tag": "Archetype",
+          "text": "IT Outsourcing / AMS / Managed Services value-lever rules drove the classification into the five value types."
+        },
+        {
+          "tone": "muted",
+          "tag": "Needs evidence",
+          "text": "5 levers could not be quantified yet — shown as \"needs evidence\", never as a guess."
+        }
+      ]
+    },
+    "tasks": [
+      {
+        "id": "value.realized.ams-enhancement-leakage",
+        "title": "Confirm the realized value on Enhancement / change-order leakage",
+        "subtitle": "$180,000 realized to date · target $529,200–$756,000",
+        "type": "confirm",
+        "state": "todo",
+        "guide": "The realization record carries $180,000 against this lever. Confirm that figure is the one the actuals support — a realized figure confirmed here that the actuals do not carry turns the event's value story into a claim nobody can falsify, which is the failure this stage exists to prevent.",
+        "rows": [
+          {
+            "key": "Realized to date",
+            "value": "$180,000"
+          },
+          {
+            "key": "Target band",
+            "value": "$529,200–$756,000"
+          },
+          {
+            "key": "Cited to",
+            "value": "Change-order register · Tab 3, row 44",
+            "flag": false
+          }
+        ],
+        "cta": "Confirm the realized value"
+      },
+      {
+        "id": "value.not-yet-realized.ams-volume-band-pricing",
+        "title": "Record the realized value for Volume-band price flex-down",
+        "subtitle": "Not yet realized · target Not yet quantified",
+        "type": "provide",
+        "state": "todo",
+        "guide": "The realization read for this event carries no figure against this lever. That is not yet realized, not a realization of nothing — record the realized-to-date value the actuals support, or state why this lever has not begun to realize. An unmeasured lever is value that quietly reverts to the incumbent run-rate.",
+        "rows": [
+          {
+            "key": "Target band",
+            "value": "Not yet quantified"
+          },
+          {
+            "key": "Realized to date",
+            "value": "Not yet realized",
+            "flag": true
+          }
+        ],
+        "cta": "Record the realized value",
+        "factTemplateCode": "VALUE_REALIZATION_V1"
+      },
+      {
+        "id": "value.not-yet-realized.ams-productivity-credits",
+        "title": "Record the realized value for Productivity / automation not priced back",
+        "subtitle": "Not yet realized · target Not yet quantified",
+        "type": "provide",
+        "state": "todo",
+        "guide": "The realization read for this event carries no figure against this lever. That is not yet realized, not a realization of nothing — record the realized-to-date value the actuals support, or state why this lever has not begun to realize. A vendor automation claim is not value until it is a credit schedule — count only the committed %, not the marketing claim.",
+        "rows": [
+          {
+            "key": "Target band",
+            "value": "Not yet quantified"
+          },
+          {
+            "key": "Realized to date",
+            "value": "Not yet realized",
+            "flag": true
+          }
+        ],
+        "cta": "Record the realized value",
+        "factTemplateCode": "VALUE_REALIZATION_V1"
+      },
+      {
+        "id": "value.not-yet-realized.ams-retained-cost",
+        "title": "Record the realized value for Retained client / SME cost omitted from TCO",
+        "subtitle": "Not yet realized · target Not yet quantified",
+        "type": "provide",
+        "state": "todo",
+        "guide": "The realization read for this event carries no figure against this lever. That is not yet realized, not a realization of nothing — record the realized-to-date value the actuals support, or state why this lever has not begun to realize. This is a normalization, not a saving — presenting it as headline value double-counts. Apply it to make bids comparable.",
+        "rows": [
+          {
+            "key": "Target band",
+            "value": "Not yet quantified"
+          },
+          {
+            "key": "Realized to date",
+            "value": "Not yet realized",
+            "flag": true
+          }
+        ],
+        "cta": "Record the realized value",
+        "factTemplateCode": "VALUE_REALIZATION_V1"
+      },
+      {
+        "id": "value.not-yet-realized.ams-sla-economics",
+        "title": "Record the realized value for SLA credit economics",
+        "subtitle": "Not yet realized · target Not yet quantified",
+        "type": "provide",
+        "state": "todo",
+        "guide": "The realization read for this event carries no figure against this lever. That is not yet realized, not a realization of nothing — record the realized-to-date value the actuals support, or state why this lever has not begun to realize. Protected value is a risk hedge, not cash — never sum it into a headline savings figure.",
+        "rows": [
+          {
+            "key": "Target band",
+            "value": "Not yet quantified"
+          },
+          {
+            "key": "Realized to date",
+            "value": "Not yet realized",
+            "flag": true
+          }
+        ],
+        "cta": "Record the realized value",
+        "factTemplateCode": "VALUE_REALIZATION_V1"
+      },
+      {
+        "id": "value.not-yet-realized.ams-transition-risk",
+        "title": "Record the realized value for Transition fees not milestone-based",
+        "subtitle": "Not yet realized · target Not yet quantified",
+        "type": "provide",
+        "state": "todo",
+        "guide": "The realization read for this event carries no figure against this lever. That is not yet realized, not a realization of nothing — record the realized-to-date value the actuals support, or state why this lever has not begun to realize. An unmeasured lever is value that quietly reverts to the incumbent run-rate.",
+        "rows": [
+          {
+            "key": "Target band",
+            "value": "Not yet quantified"
+          },
+          {
+            "key": "Realized to date",
+            "value": "Not yet realized",
+            "flag": true
+          }
+        ],
+        "cta": "Record the realized value",
+        "factTemplateCode": "VALUE_REALIZATION_V1"
+      }
+    ],
+    "gate": {
+      "approver": "Event Owner",
+      "confirms": [
+        {
+          "label": "1 of 6 levers carry a realized-value figure",
+          "detail": "5 declared levers are not yet realized and are not realizing nothing: Volume-band price flex-down; Productivity / automation not priced back; Retained client / SME cost omitted from TCO; SLA credit economics; Transition fees not milestone-based."
+        },
+        {
+          "label": "$180,000 realized to date · target $529,200–$756,000",
+          "detail": "This realized total sums only the 1 lever the realization record actually carries a figure for; no lever that has not yet realized is counted as zero. The target band is this event’s own computed value range, so the gap between the two is the leakage still open."
+        },
+        {
+          "label": "Open the completion review",
+          "detail": "The decision on this stage is a completion review: it records whether the realized value has been booked against what the award committed, and its outcome closes the event."
+        }
+      ],
+      "generates": [],
+      "nextStageName": null
+    },
+    "waterfall": {
+      "provenance": "live",
+      "baselineLabel": "Committed value baseline",
+      "baselineAmount": 12000000,
+      "unit": "usd",
+      "bands": [
+        {
+          "id": "wf.AMS.ENHANCEMENT_LEAKAGE",
+          "valueType": "protected",
+          "label": "Enhancement / change-order leakage",
+          "unit": "usd",
+          "confidence": "med",
+          "amountLow": 529200,
+          "amountHigh": 756000,
+          "state": "quantified",
+          "citation": {
+            "doc": "Change-order register",
+            "locator": "Tab 3, row 44"
+          }
+        },
+        {
+          "id": "wf.AMS.VOLUME_BAND_PRICING",
+          "valueType": "incremental_negotiated",
+          "label": "Volume-band price flex-down",
+          "unit": "usd",
+          "confidence": "med",
+          "amountLow": 0,
+          "amountHigh": 0,
+          "state": "insufficient_evidence",
+          "citation": null
+        },
+        {
+          "id": "wf.AMS.PRODUCTIVITY_CREDITS",
+          "valueType": "solution_tightening",
+          "label": "Productivity / automation not priced back",
+          "unit": "usd",
+          "confidence": "med",
+          "amountLow": 0,
+          "amountHigh": 0,
+          "state": "insufficient_evidence",
+          "citation": null
+        },
+        {
+          "id": "wf.AMS.RETAINED_COST",
+          "valueType": "risk_adjusted",
+          "label": "Retained client / SME cost omitted from TCO",
+          "unit": "usd",
+          "confidence": "low",
+          "amountLow": 0,
+          "amountHigh": 0,
+          "state": "insufficient_evidence",
+          "citation": null
+        },
+        {
+          "id": "wf.AMS.SLA_ECONOMICS",
+          "valueType": "protected",
+          "label": "SLA credit economics",
+          "unit": "usd",
+          "confidence": "low",
+          "amountLow": 0,
+          "amountHigh": 0,
+          "state": "insufficient_evidence",
+          "citation": null
+        },
+        {
+          "id": "wf.AMS.TRANSITION_RISK",
+          "valueType": "risk_adjusted",
+          "label": "Transition fees not milestone-based",
+          "unit": "usd",
+          "confidence": "low",
+          "amountLow": 0,
+          "amountHigh": 0,
+          "state": "insufficient_evidence",
+          "citation": null
+        }
+      ]
+    },
+    "beatProvenance": {
+      "tasks": "fact_derived",
+      "gate": "fact_derived",
+      "scaffoldSource": null
+    }
+  },
+  "value/observed-uncited": {
+    "stageKey": "value",
+    "stageName": "Value",
+    "purpose": "Prove the committed value is actually being realized — an un-tracked committed value reverts to incumbent run-rate within a year or two, so book realized value per lever against what the award committed.",
+    "intel": {
+      "provenance": "live",
+      "lead": "Here's the value we computed from your committed facts — each band is math over a cited fact, not an estimate.",
+      "points": [
+        {
+          "tone": "found",
+          "tag": "Computed",
+          "text": "1 value lever computed from committed facts — every figure traces to a cited source_event_facts row."
+        },
+        {
+          "tone": "archetype",
+          "tag": "Archetype",
+          "text": "IT Outsourcing / AMS / Managed Services value-lever rules drove the classification into the five value types."
+        },
+        {
+          "tone": "muted",
+          "tag": "Needs evidence",
+          "text": "5 levers could not be quantified yet — shown as \"needs evidence\", never as a guess."
+        }
+      ]
+    },
+    "tasks": [
+      {
+        "id": "value.realized.ams-enhancement-leakage",
+        "title": "Confirm the realized value on Enhancement / change-order leakage",
+        "subtitle": "$180,000 realized to date · target $529,200–$756,000",
+        "type": "confirm",
+        "state": "todo",
+        "guide": "The realization record carries $180,000 against this lever. Confirm that figure is the one the actuals support — a realized figure confirmed here that the actuals do not carry turns the event's value story into a claim nobody can falsify, which is the failure this stage exists to prevent.",
+        "rows": [
+          {
+            "key": "Realized to date",
+            "value": "$180,000"
+          },
+          {
+            "key": "Target band",
+            "value": "$529,200–$756,000"
+          },
+          {
+            "key": "Cited to",
+            "value": "No citation on the consumed facts",
+            "flag": true
+          }
+        ],
+        "cta": "Confirm the realized value"
+      },
+      {
+        "id": "value.not-yet-realized.ams-volume-band-pricing",
+        "title": "Record the realized value for Volume-band price flex-down",
+        "subtitle": "Not yet realized · target Not yet quantified",
+        "type": "provide",
+        "state": "todo",
+        "guide": "The realization read for this event carries no figure against this lever. That is not yet realized, not a realization of nothing — record the realized-to-date value the actuals support, or state why this lever has not begun to realize. An unmeasured lever is value that quietly reverts to the incumbent run-rate.",
+        "rows": [
+          {
+            "key": "Target band",
+            "value": "Not yet quantified"
+          },
+          {
+            "key": "Realized to date",
+            "value": "Not yet realized",
+            "flag": true
+          }
+        ],
+        "cta": "Record the realized value",
+        "factTemplateCode": "VALUE_REALIZATION_V1"
+      },
+      {
+        "id": "value.not-yet-realized.ams-productivity-credits",
+        "title": "Record the realized value for Productivity / automation not priced back",
+        "subtitle": "Not yet realized · target Not yet quantified",
+        "type": "provide",
+        "state": "todo",
+        "guide": "The realization read for this event carries no figure against this lever. That is not yet realized, not a realization of nothing — record the realized-to-date value the actuals support, or state why this lever has not begun to realize. A vendor automation claim is not value until it is a credit schedule — count only the committed %, not the marketing claim.",
+        "rows": [
+          {
+            "key": "Target band",
+            "value": "Not yet quantified"
+          },
+          {
+            "key": "Realized to date",
+            "value": "Not yet realized",
+            "flag": true
+          }
+        ],
+        "cta": "Record the realized value",
+        "factTemplateCode": "VALUE_REALIZATION_V1"
+      },
+      {
+        "id": "value.not-yet-realized.ams-retained-cost",
+        "title": "Record the realized value for Retained client / SME cost omitted from TCO",
+        "subtitle": "Not yet realized · target Not yet quantified",
+        "type": "provide",
+        "state": "todo",
+        "guide": "The realization read for this event carries no figure against this lever. That is not yet realized, not a realization of nothing — record the realized-to-date value the actuals support, or state why this lever has not begun to realize. This is a normalization, not a saving — presenting it as headline value double-counts. Apply it to make bids comparable.",
+        "rows": [
+          {
+            "key": "Target band",
+            "value": "Not yet quantified"
+          },
+          {
+            "key": "Realized to date",
+            "value": "Not yet realized",
+            "flag": true
+          }
+        ],
+        "cta": "Record the realized value",
+        "factTemplateCode": "VALUE_REALIZATION_V1"
+      },
+      {
+        "id": "value.not-yet-realized.ams-sla-economics",
+        "title": "Record the realized value for SLA credit economics",
+        "subtitle": "Not yet realized · target Not yet quantified",
+        "type": "provide",
+        "state": "todo",
+        "guide": "The realization read for this event carries no figure against this lever. That is not yet realized, not a realization of nothing — record the realized-to-date value the actuals support, or state why this lever has not begun to realize. Protected value is a risk hedge, not cash — never sum it into a headline savings figure.",
+        "rows": [
+          {
+            "key": "Target band",
+            "value": "Not yet quantified"
+          },
+          {
+            "key": "Realized to date",
+            "value": "Not yet realized",
+            "flag": true
+          }
+        ],
+        "cta": "Record the realized value",
+        "factTemplateCode": "VALUE_REALIZATION_V1"
+      },
+      {
+        "id": "value.not-yet-realized.ams-transition-risk",
+        "title": "Record the realized value for Transition fees not milestone-based",
+        "subtitle": "Not yet realized · target Not yet quantified",
+        "type": "provide",
+        "state": "todo",
+        "guide": "The realization read for this event carries no figure against this lever. That is not yet realized, not a realization of nothing — record the realized-to-date value the actuals support, or state why this lever has not begun to realize. An unmeasured lever is value that quietly reverts to the incumbent run-rate.",
+        "rows": [
+          {
+            "key": "Target band",
+            "value": "Not yet quantified"
+          },
+          {
+            "key": "Realized to date",
+            "value": "Not yet realized",
+            "flag": true
+          }
+        ],
+        "cta": "Record the realized value",
+        "factTemplateCode": "VALUE_REALIZATION_V1"
+      }
+    ],
+    "gate": {
+      "approver": "Event Owner",
+      "confirms": [
+        {
+          "label": "1 of 6 levers carry a realized-value figure",
+          "detail": "5 declared levers are not yet realized and are not realizing nothing: Volume-band price flex-down; Productivity / automation not priced back; Retained client / SME cost omitted from TCO; SLA credit economics; Transition fees not milestone-based."
+        },
+        {
+          "label": "$180,000 realized to date · target $529,200–$756,000",
+          "detail": "This realized total sums only the 1 lever the realization record actually carries a figure for; no lever that has not yet realized is counted as zero. The target band is this event’s own computed value range, so the gap between the two is the leakage still open."
+        },
+        {
+          "label": "Open the completion review",
+          "detail": "The decision on this stage is a completion review: it records whether the realized value has been booked against what the award committed, and its outcome closes the event."
+        }
+      ],
+      "generates": [],
+      "nextStageName": null
+    },
+    "waterfall": {
+      "provenance": "live",
+      "baselineLabel": "Committed value baseline",
+      "baselineAmount": 12000000,
+      "unit": "usd",
+      "bands": [
+        {
+          "id": "wf.AMS.ENHANCEMENT_LEAKAGE",
+          "valueType": "protected",
+          "label": "Enhancement / change-order leakage",
+          "unit": "usd",
+          "confidence": "med",
+          "amountLow": 529200,
+          "amountHigh": 756000,
+          "state": "quantified",
+          "citation": null
+        },
+        {
+          "id": "wf.AMS.VOLUME_BAND_PRICING",
+          "valueType": "incremental_negotiated",
+          "label": "Volume-band price flex-down",
+          "unit": "usd",
+          "confidence": "med",
+          "amountLow": 0,
+          "amountHigh": 0,
+          "state": "insufficient_evidence",
+          "citation": null
+        },
+        {
+          "id": "wf.AMS.PRODUCTIVITY_CREDITS",
+          "valueType": "solution_tightening",
+          "label": "Productivity / automation not priced back",
+          "unit": "usd",
+          "confidence": "med",
+          "amountLow": 0,
+          "amountHigh": 0,
+          "state": "insufficient_evidence",
+          "citation": null
+        },
+        {
+          "id": "wf.AMS.RETAINED_COST",
+          "valueType": "risk_adjusted",
+          "label": "Retained client / SME cost omitted from TCO",
+          "unit": "usd",
+          "confidence": "low",
+          "amountLow": 0,
+          "amountHigh": 0,
+          "state": "insufficient_evidence",
+          "citation": null
+        },
+        {
+          "id": "wf.AMS.SLA_ECONOMICS",
+          "valueType": "protected",
+          "label": "SLA credit economics",
+          "unit": "usd",
+          "confidence": "low",
+          "amountLow": 0,
+          "amountHigh": 0,
+          "state": "insufficient_evidence",
+          "citation": null
+        },
+        {
+          "id": "wf.AMS.TRANSITION_RISK",
+          "valueType": "risk_adjusted",
+          "label": "Transition fees not milestone-based",
+          "unit": "usd",
+          "confidence": "low",
+          "amountLow": 0,
+          "amountHigh": 0,
+          "state": "insufficient_evidence",
+          "citation": null
+        }
+      ]
+    },
+    "beatProvenance": {
+      "tasks": "fact_derived",
+      "gate": "fact_derived",
+      "scaffoldSource": null
+    }
+  }
+}
