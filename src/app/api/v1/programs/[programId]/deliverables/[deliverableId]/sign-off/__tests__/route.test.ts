@@ -447,6 +447,15 @@ describe("POST /api/v1/programs/[programId]/deliverables/[deliverableId]/sign-of
     });
 
     it("ignores generated Office artifacts from another deliverable version", async () => {
+      versionRow = {
+        id: "version-1",
+        structured_data: {
+          source: "generated_by_orchestrator",
+          requiresOfficeCompanionScan: true,
+        },
+        content:
+          "<p>SkyHarbor Global should instrument turnaround delay before committing to a predictive model.</p>",
+      };
       mockListMoveArtifacts.mockResolvedValue([
         generatedDocxArtifact({
           artifact_id: "stale-docx",
@@ -460,15 +469,43 @@ describe("POST /api/v1/programs/[programId]/deliverables/[deliverableId]/sign-of
       const { POST } = await import("../route");
       const res = await POST(req(), { params });
 
-      expect(res.status).toBe(200);
+      expect(res.status).toBe(422);
       expect(mockDownloadArtifactBytes).not.toHaveBeenCalled();
       expect(mockExtractOfficeText).not.toHaveBeenCalled();
       await expect(res.json()).resolves.toMatchObject({
-        clientReadiness: {
-          verdict: "clear",
-          scannedArtifacts: [],
+        error: "generated_artifact_not_scannable",
+        scannerDetail:
+          "No current generated Office companion matched this deliverable version.",
+        requiredMetadata: {
+          deliverableId: "deliverable-1",
+          versionId: "version-1",
         },
       });
+      expect(mockSignOffDeliverable).not.toHaveBeenCalled();
+    });
+
+    it("blocks sign-off when a generated deliverable version requires an Office scan but has no companion", async () => {
+      versionRow = {
+        id: "version-1",
+        structured_data: {
+          source: "generated_by_orchestrator",
+          requiresOfficeCompanionScan: true,
+        },
+        content:
+          "<p>SkyHarbor Global should instrument turnaround delay before committing to a predictive model.</p>",
+      };
+      mockListMoveArtifacts.mockResolvedValue([]);
+
+      const { POST } = await import("../route");
+      const res = await POST(req(), { params });
+
+      expect(res.status).toBe(422);
+      await expect(res.json()).resolves.toMatchObject({
+        error: "generated_artifact_not_scannable",
+        scannerDetail:
+          "No current generated Office companion matched this deliverable version.",
+      });
+      expect(mockSignOffDeliverable).not.toHaveBeenCalled();
     });
 
     it("records acknowledgement when the accepted blocker came from an Office companion", async () => {

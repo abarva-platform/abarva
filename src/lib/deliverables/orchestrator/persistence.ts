@@ -8,6 +8,7 @@
 import "server-only";
 
 import { createHash } from "node:crypto";
+import { Packer } from "docx";
 import type { TenantAiPolicy } from "@/lib/integrations/ai-egress";
 import type {
   BoardPackRenderInput,
@@ -20,10 +21,18 @@ import {
   type GeneratedArtifactRecord,
 } from "@/lib/artifacts/repository";
 import { prescribedFormatForDeliverableType } from "@/lib/programs/orchestrated-deliverable-map";
-import { renderDeliverableHtml } from "./renderers";
+import {
+  renderDeliverableDocx,
+  renderDeliverableHtml,
+} from "./renderers";
+import { renderValidatedDeck } from "./render-validated-deck";
 import { humanizeSourceFamily } from "./source-register";
 import { buildDeckHtmlFromDocument } from "@/lib/deliverables/deck-from-result";
 import type { OrchestrationResult } from "./orchestrator";
+import { completeDeliverable } from "@/lib/programs/mutations";
+import { saveMoveArtifact } from "@/lib/programs/deliverables/move-artifacts";
+import { DELIVERABLE_REGISTRY } from "@/lib/programs/deliverable-registry";
+import type { TenancyCtx } from "@/lib/programs/types.db";
 import { assessClientDeliverable } from "@/lib/deliverables/quality/assess-deliverable";
 import {
   buildContractInput,
@@ -49,7 +58,11 @@ import type {
   DeliverableKey,
   ExhibitId,
 } from "@/lib/deliverables/profiles/types";
-import type { OutputFormat, QualityValidationResult } from "./types";
+import type {
+  OutputFormat,
+  QualityValidationResult,
+  RenderableDeliverable,
+} from "./types";
 
 const UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -113,7 +126,16 @@ export interface PersistDeliverableOptions {
 
 export interface PersistDeps {
   save?: typeof saveGeneratedArtifact;
+  materializeDeliverableDraft?: typeof completeDeliverable;
+  saveGeneratedOfficeCompanion?: typeof saveMoveArtifact;
+  renderOfficeCompanion?: typeof renderOfficeCompanion;
 }
+
+type GeneratedOfficeCompanion = {
+  body: Buffer;
+  fileFormat: "docx" | "pptx";
+  fileName: string;
+};
 
 function artifactTypeFor(module: string): GeneratedArtifactType {
   if (module === "source") return "source_board_pack";
@@ -281,6 +303,58 @@ function visibleTextFromHtml(html: string): string {
     .replace(/&#39;/gi, "'")
     .replace(/\s+/g, " ")
     .trim();
+}
+
+function safeFileStem(value: string): string {
+  return (
+    value
+      .replace(/[\\/:*?"<>|]+/g, " ")
+      .replace(/[^\x20-\x7e]+/g, "-")
+      .replace(/\s+/g, "-")
+      .replace(/-+/g, "-")
+      .replace(/^-|-$/g, "")
+      .toLowerCase()
+      .slice(0, 80) || "deliverable"
+  );
+}
+
+async function renderOfficeCompanion(
+  doc: RenderableDeliverable,
+  outputFormat: GeneratedArtifactFormat,
+): Promise<GeneratedOfficeCompanion | null> {
+  if (outputFormat === "pptx") {
+    const rendered = await renderValidatedDeck(doc);
+    if (!rendered.physicallyIntact) {
+      throw new Error(
+        `generated_pptx_failed_physical_integrity: ${rendered.integrityFailures
+          .slice(0, 3)
+          .join("; ")}`,
+      );
+    }
+    return {
+      body: rendered.buffer,
+      fileFormat: "pptx",
+      fileName: `${safeFileStem(doc.title)}.pptx`,
+    };
+  }
+
+  if (outputFormat === "docx") {
+    return {
+      body: await Packer.toBuffer(renderDeliverableDocx(doc)),
+      fileFormat: "docx",
+      fileName: `${safeFileStem(doc.title)}.docx`,
+    };
+  }
+
+  return null;
+}
+
+function phaseForDeliverableType(deliverableTypeKey: string): number {
+  return (
+    DELIVERABLE_REGISTRY.find(
+      (spec) => spec.deliverableTypeKey === deliverableTypeKey,
+    )?.phase ?? 0
+  );
 }
 
 export async function persistDeliverable(
@@ -536,7 +610,7 @@ export async function persistDeliverable(
   // without guessing from a generated title.
   const generationMetrics = buildGenerationMetrics(result);
 
-  return save(input, rendered, {
+  const record = await save(input, rendered, {
     deliverableTypeKey: resolvedDeliverableTypeKey,
     deliverableType: result.brief.deliverableType,
     registryKey: resolvedDeliverableTypeKey,
@@ -556,4 +630,84 @@ export async function persistDeliverable(
         }
       : {}),
   });
+
+  if (result.brief.module === "moves" && UUID_RE.test(opts.sourceArtifactRef)) {
+    const renderCompanion = deps.renderOfficeCompanion ?? renderOfficeCompanion;
+    const officeCompanion = await renderCompanion(
+      renderableDocWithType,
+      outputFormat,
+    );
+    const materialize =
+      deps.materializeDeliverableDraft ?? completeDeliverable;
+    const materialized = await materialize(
+      {
+        clientId: opts.clientId,
+        userId: opts.userId ?? opts.renderedBy,
+        ...(opts.tenantKey ? { clientKey: opts.tenantKey } : {}),
+      } satisfies TenancyCtx,
+      opts.sourceArtifactRef,
+      {
+        deliverableTypeKey: resolvedDeliverableTypeKey,
+        title: doc.title,
+        content: html,
+        moduleKey: "moves",
+        signOff: false,
+        structuredData: {
+          source: "generated_by_orchestrator",
+          generated_artifact_id: record.id,
+          output_format: outputFormat,
+          render_engine: "internal",
+          requiresOfficeCompanionScan: Boolean(officeCompanion),
+          ...(opts.generationLineage
+            ? { generationLineage: opts.generationLineage }
+            : {}),
+        },
+      },
+    );
+
+    if (officeCompanion) {
+      if (!materialized.versionId) {
+        throw new Error(
+          "generated_deliverable_version_missing_for_office_companion",
+        );
+      }
+      const saveCompanion =
+        deps.saveGeneratedOfficeCompanion ?? saveMoveArtifact;
+      await saveCompanion(
+        {
+          clientId: opts.clientId,
+          userId: opts.userId ?? opts.renderedBy,
+          ...(opts.tenantKey ? { clientKey: opts.tenantKey } : {}),
+        } satisfies TenancyCtx,
+        {
+          moveId: opts.sourceArtifactRef,
+          phase: phaseForDeliverableType(resolvedDeliverableTypeKey),
+          artifactType: `${resolvedDeliverableTypeKey}_editable_${officeCompanion.fileFormat}`,
+          artifactFamily: "generated_deliverable",
+          title: doc.title,
+          description:
+            "Generated Office companion for governed deliverable sign-off scanning.",
+          fileName: officeCompanion.fileName,
+          fileFormat: officeCompanion.fileFormat,
+          body: officeCompanion.body,
+          status: "draft",
+          generatedBy: opts.userId ?? opts.renderedBy,
+          qualityScore: rendered.qualityScore,
+          sourceBasis: "governed_generation",
+          confidence: "medium",
+          citationReady: true,
+          requireBlobStored: true,
+          metadata: {
+            deliverableId: materialized.deliverableId,
+            versionId: materialized.versionId,
+            generatedArtifactId: record.id,
+            outputFormat,
+            outputRole: `${officeCompanion.fileFormat}_editable_phase_record`,
+          },
+        },
+      );
+    }
+  }
+
+  return record;
 }
