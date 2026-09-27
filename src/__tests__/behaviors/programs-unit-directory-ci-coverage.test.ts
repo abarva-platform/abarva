@@ -75,6 +75,10 @@ const WIRED_DIRECTORIES = [
     directory: `${PROGRAMS_ROOT}/board-artifacts/__tests__`,
     minimumSuites: 4,
   },
+  {
+    directory: `${PROGRAMS_ROOT}/attachments/__tests__`,
+    minimumSuites: 4,
+  },
 ] as const;
 
 /**
@@ -158,7 +162,7 @@ const WIRED_DIRECTORIES = [
  * punish: the constant is lowered because the measurement moved, and the row
  * above records what moved it. Raising it would be the edit to refuse.
  */
-const DARK_DIRECTORY_COUNT = 17;
+const DARK_DIRECTORY_COUNT = 16;
 
 type Census = {
   counts: { indeterminateInvocations: number };
