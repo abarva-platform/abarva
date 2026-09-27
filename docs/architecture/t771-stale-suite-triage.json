@@ -11,12 +11,12 @@
     "already_verdicted_elsewhere"
   ],
   "filingCorrection": {
-    "claim": "The item is filed as 'the next 20 stale suites to triage ... excluding every directory already gated'. Eleven of the twenty already carry an explicit verdict in a repo-owned triage record, each with a named owning item, recorded between 2026-09-25 and 2026-09-26 — before this item was filed.",
+    "claim": "The item is filed as 'the next 20 stale suites to triage ... excluding every directory already gated'. Eleven of the twenty already carry an explicit verdict in a repo-owned triage record, each with a named owning item, recorded between 2026-09-25 and 2026-09-26 \u2014 before this item was filed.",
     "measuredHow": "node scripts/quality/triage-record-census-reconciliation.mjs on this base, intersected against the twenty paths the item names. Not reasoned from the item's text.",
     "alreadyVerdicted": 11,
     "genuinelyUntriaged": 14,
     "note": "The eleven are exactly the eleven the item describes as carrying a governed-risk band at ranks 1-7. The nine it drew from rank 9 are operator-integration files, and those nine plus the five it named as not-drawn are the only genuinely untriaged work in the draw. So the ranked, governed-risk half of this draw was entirely re-offered work.",
-    "whyTheDrawCouldNotKnow": "governedRiskRanking's sole input is untriagedUnrunTestFiles, and that predicate is `!covered && !declaredQuarantine` (scripts/quality/test-ci-coverage-census.mjs). It does not consult triage records at all. A file with a written verdict, a recorded reason and a named owner is still counted untriaged and is still ranked, so the ranking keeps offering judged work. T-615 fixed the narrow case of this — a file declared in scripts/quality/*-quarantine.json — and the general case is untouched."
+    "whyTheDrawCouldNotKnow": "governedRiskRanking's sole input is untriagedUnrunTestFiles, and that predicate is `!covered && !declaredQuarantine` (scripts/quality/test-ci-coverage-census.mjs). It does not consult triage records at all. A file with a written verdict, a recorded reason and a named owner is still counted untriaged and is still ranked, so the ranking keeps offering judged work. T-615 fixed the narrow case of this \u2014 a file declared in scripts/quality/*-quarantine.json \u2014 and the general case is untouched."
   },
   "censusBlindSpot": {
     "subject": "Every triage verdict is invisible to the instrument the triage ranking is drawn from.",
@@ -26,8 +26,14 @@
       "carryingNone": 233
     },
     "instrumentExists": "scripts/quality/triage-record-census-reconciliation.mjs reports exactly this number.",
-    "andDoesNotGate": "It exits 0 whatever it finds, so nothing objects when the ranking re-offers verdicted work. Three consecutive draws — T-492, T-493 and this one — have re-drawn already-judged files, and this is the mechanism.",
-    "filedAs": "T-773"
+    "andDoesNotGate": "It exits 0 whatever it finds, so nothing objects when the ranking re-offers verdicted work. Three consecutive draws \u2014 T-492, T-493 and this one \u2014 have re-drawn already-judged files, and this is the mechanism.",
+    "filedAs": "T-773",
+    "measuredAfterThisChange": {
+      "untriagedUnrunTestFiles": 303,
+      "alreadyCarryingAVerdict": 84,
+      "carryingNone": 219,
+      "note": "This change moves the verdicted-but-ranked count from 71 to 84. Triaging a file writes a verdict and does not remove it from the ranking, so the 14 operator-integration files judged here joined that set and only the one wired file left it. Doing the work the item asked for made the number worse by 13, which is the sharpest available statement of the defect: the instrument the ranking is drawn from cannot see the work done to it."
+    }
   },
   "scope": {
     "drawnFrom": "The twenty paths T-771 names individually, plus the five operator-integration siblings it names as not-drawn, because the wiring unit is the directory and a directory cannot be judged from nine of its fourteen files.",
@@ -45,7 +51,7 @@
     "casesWired": 4,
     "namedAsADirectory": "Named as a DIRECTORY without a trailing slash, per that workflow's header, and its line leaves src/__tests__/behaviors/product-directory-ci-coverage.baseline.json in the same change, which the ratchet asserts as set equality in both directions.",
     "provenBy": "src/__tests__/behaviors/t771-nda-suite-wiring.test.ts, which answers through the census's own resolver rather than by grepping the workflow for a string, and which fails if the directory is re-added to the dark baseline or if the suite's exhaustive expectation is narrowed.",
-    "whyOnlyOne": "Of the eight directories this draw touches, seven cannot be wired on this item's evidence. Six are partially covered, so wiring the directory would sweep in siblings this draw did not judge — the acceptance forbids it. The seventh, src/__tests__/integration/ops, is fully unrun and therefore decidable here, and is withheld for the two reasons recorded under heldDirectories."
+    "whyOnlyOne": "Of the eight directories this draw touches, seven cannot be wired on this item's evidence. Six are partially covered, so wiring the directory would sweep in siblings this draw did not judge \u2014 the acceptance forbids it. The seventh, src/__tests__/integration/ops, is fully unrun and therefore decidable here, and is withheld for the two reasons recorded under heldDirectories."
   },
   "dischargedHold": {
     "directory": "src/lib/source/nda/__tests__",
@@ -57,7 +63,7 @@
     "dischargeEvidence": [
       "Re-measured on this base: 4 of 4 green, 0 failing.",
       "T-519 landed the widening in bd63332ea4 (#8183), 'assert NDA signature evidence instead of ignoring it'. The expectation is still a toEqual and now carries the whole signatureEvidence group, with an in-file comment recording that toMatchObject was rejected on purpose. The hold was discharged by widening, not by weakening.",
-      "The subject has two non-test importers on live product paths — src/lib/source/rfx-delivery/source-backed-preview.ts and src/lib/source/new-workspace/stage05-nda-coverage.ts — so wiring covers code a product path reaches rather than adding a number to the census."
+      "The subject has two non-test importers on live product paths \u2014 src/lib/source/rfx-delivery/source-backed-preview.ts and src/lib/source/new-workspace/stage05-nda-coverage.ts \u2014 so wiring covers code a product path reaches rather than adding a number to the census."
     ],
     "whatWasLeftUndone": "T-519 discharged the reason and did not wire the suite, so it has sat dark since, still on the dark baseline and still counted untriaged. The rule this violates is already written in src/__tests__/behaviors/t754-credited-suite-wiring.test.ts: a discharged reason should be wired in the change that discharges it. Wiring it here is the close, not a new judgement."
   },
@@ -191,7 +197,7 @@
       "verdictThere": "repair",
       "owningItemThere": "T-560",
       "wiredInThisItem": false,
-      "rationale": "A control-plane literal-leak prohibition: it scans src/lib, src/app and src/components for a fixture tenant's display strings and requires zero. It is RED against five real occurrences across three modules — two in a Programs UI type module and three in two Intelligence ask modules — so this is a live governance violation and not a stale expectation. textIsTheSubject is true: the prohibition is about the bytes of the tree, and there is no run of the product that can answer it. Already verdicted repair by T-556 and owned by T-560; the five occurrences are what that item has to clear. Named here as counts and module paths, never as the strings themselves, because this record is public."
+      "rationale": "A control-plane literal-leak prohibition: it scans src/lib, src/app and src/components for a fixture tenant's display strings and requires zero. It is RED against five real occurrences across three modules \u2014 two in a Programs UI type module and three in two Intelligence ask modules \u2014 so this is a live governance violation and not a stale expectation. textIsTheSubject is true: the prohibition is about the bytes of the tree, and there is no run of the product that can answer it. Already verdicted repair by T-556 and owned by T-560; the five occurrences are what that item has to clear. Named here as counts and module paths, never as the strings themselves, because this record is public."
     },
     {
       "path": "src/lib/__tests__/supabase-server.test.ts",
@@ -251,7 +257,7 @@
       "verdictThere": "wire_into_ci",
       "owningItemThere": "T-754",
       "wiredInThisItem": false,
-      "rationale": "Verdicted wire_into_ci by T-475 and then deliberately WITHHELD by T-754 with a written reason — its fixture carries no register contract identity, so it cannot reproduce the live identity split — and quarantined by the sibling behaviours control. T-754's own file asserts that this quarantine is still in place, so wiring it fails two controls, not one."
+      "rationale": "Verdicted wire_into_ci by T-475 and then deliberately WITHHELD by T-754 with a written reason \u2014 its fixture carries no register contract identity, so it cannot reproduce the live identity split \u2014 and quarantined by the sibling behaviours control. T-754's own file asserts that this quarantine is still in place, so wiring it fails two controls, not one."
     },
     {
       "path": "src/lib/source/contract-intelligence/__tests__/prompt.test.ts",
@@ -351,7 +357,7 @@
       "verdict": "repair",
       "ownerItem": "T-774",
       "wiredInThisItem": false,
-      "rationale": "Red 22 of 32 on ONE cause, and the cause is the seed, not the module: docs/build/agent-dispatch-queue.json declares its own lifecycle as proposed, ready, blocked, in_progress, complete — and all 20 of its items carry the status merged, which is in neither that array nor the module's alias table, so normalizeState throws and takes every case that loads the file. The module's aliases mirror the file's declared lifecycle exactly, so the module agrees with the file's contract and the file's own rows do not. Both arrive in the SAME single commit, 5d795a3976 (#2514), so the pair shipped disagreeing and this suite has never passed; nothing ran it to say so. Repair is on the seed or on a deliberate widening of the lifecycle, and it is a judgement about ops vocabulary rather than a re-baseline, so it is not taken here — a triage may not edit a file it judges."
+      "rationale": "Red 22 of 32 on ONE cause, and the cause is the seed, not the module: docs/build/agent-dispatch-queue.json declares its own lifecycle as proposed, ready, blocked, in_progress, complete \u2014 and all 20 of its items carry the status merged, which is in neither that array nor the module's alias table, so normalizeState throws and takes every case that loads the file. The module's aliases mirror the file's declared lifecycle exactly, so the module agrees with the file's contract and the file's own rows do not. Both arrive in the SAME single commit, 5d795a3976 (#2514), so the pair shipped disagreeing and this suite has never passed; nothing ran it to say so. Repair is on the seed or on a deliberate widening of the lifecycle, and it is a judgement about ops vocabulary rather than a re-baseline, so it is not taken here \u2014 a triage may not edit a file it judges."
     },
     {
       "path": "src/__tests__/integration/ops/build-run-retrospective.test.ts",
@@ -369,7 +375,7 @@
       "verdict": "wire_into_ci",
       "ownerItem": "T-774",
       "wiredInThisItem": false,
-      "rationale": "Green, 27 cases, behavioural — it builds retrospective models and asserts the returned shape. Wireable on its own merits and held only by its directory: five siblings carry a source-text scanner and two are red, and the acceptance forbids wiring this directory file by file."
+      "rationale": "Green, 27 cases, behavioural \u2014 it builds retrospective models and asserts the returned shape. Wireable on its own merits and held only by its directory: five siblings carry a source-text scanner and two are red, and the acceptance forbids wiring this directory file by file."
     },
     {
       "path": "src/__tests__/integration/ops/build-wave-progress.test.ts",
@@ -387,7 +393,7 @@
       "verdict": "update_with_reason_recorded",
       "ownerItem": "T-774",
       "wiredInThisItem": false,
-      "rationale": "Red 8 of 61, and not a scanner: every read is JSON.parse of a committed data artifact and every assertion is over the parsed model, which is a data contract rather than a byte assertion. The eight failures are expectations pinned to a moment: an exact lastUpdated string, an exact count of 33 waves against 40 today, and a required field spelled name where the data spells it title. Pinning a mutable lastUpdated stamp is the defect — the same assertion cannot survive the next write to the file it guards — so the repair is to assert the field's shape and monotonicity rather than its value, and to derive the wave set rather than count it."
+      "rationale": "Red 8 of 61, and not a scanner: every read is JSON.parse of a committed data artifact and every assertion is over the parsed model, which is a data contract rather than a byte assertion. The eight failures are expectations pinned to a moment: an exact lastUpdated string, an exact count of 33 waves against 40 today, and a required field spelled name where the data spells it title. Pinning a mutable lastUpdated stamp is the defect \u2014 the same assertion cannot survive the next write to the file it guards \u2014 so the repair is to assert the field's shape and monotonicity rather than its value, and to derive the wave set rather than count it."
     },
     {
       "path": "src/__tests__/integration/ops/cherry-resolve-build-waves.test.ts",
@@ -516,7 +522,7 @@
       "verdict": "wire_into_ci",
       "ownerItem": "T-774",
       "wiredInThisItem": false,
-      "rationale": "Green, 44 cases, no file reads at all — the largest clean suite in the directory and the cheapest coverage in this draw. Held only by its siblings."
+      "rationale": "Green, 44 cases, no file reads at all \u2014 the largest clean suite in the directory and the cheapest coverage in this draw. Held only by its siblings."
     },
     {
       "path": "src/__tests__/integration/ops/route-registry.test.ts",
@@ -552,7 +558,7 @@
       "verdict": "wire_into_ci",
       "ownerItem": "T-774",
       "wiredInThisItem": false,
-      "rationale": "Green, 28 cases, no file reads. Guards a control that matters to every agent on this repository — the shared stash stack — and it runs nowhere."
+      "rationale": "Green, 28 cases, no file reads. Guards a control that matters to every agent on this repository \u2014 the shared stash stack \u2014 and it runs nowhere."
     },
     {
       "path": "src/__tests__/integration/ops/wave-runner-model.test.ts",

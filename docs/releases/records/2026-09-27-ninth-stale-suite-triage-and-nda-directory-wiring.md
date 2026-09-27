@@ -166,9 +166,14 @@ data change, nothing to unwind outside git.
 
 ## Known Gaps
 
-- The census's untriaged predicate still ignores triage records, so 70 files carry a verdict and are
-  ranked anyway. The reconciliation script measures it and exits 0. Filed as a follow-on item; not
-  fixed here, because changing what the ranking is drawn from is a larger change than a triage.
+- The census's untriaged predicate still ignores triage records, and **this change makes that count
+  worse rather than better, which is the clearest statement of the problem available.** Before:
+  71 of 304 ranked files carried a verdict. After: **84 of 303.** Triaging a file writes a verdict and
+  does not remove the file from the ranking, so the 14 operator-integration files judged here joined
+  the verdicted-but-ranked set and only the one wired file left it. Doing the work the item asked for
+  moved the number the wrong way by 13. The reconciliation script measures this and exits 0. Filed as
+  a follow-on item; not fixed here, because changing what the ranking is drawn from is a larger change
+  than a triage and would want its own before/after.
 - `src/__tests__/integration/ops` stays unwired: 12 of 14 green with 286 cases, held by 2 reds and 5
   confined source-text scanners. Both reds are diagnosed to a single cause each in the record, and
   neither is repaired here — a triage may not edit a file it judges. Filed as a follow-on item.
