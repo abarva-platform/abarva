@@ -1282,11 +1282,58 @@ const PATH_TAIL_ATTRIBUTION_REACH_TOKENS = 8;
  * recorded, so it is gone rather than left carrying a claim no test can check.
  * The anchor is what does this work, and the suite pins the anchor.
  */
+/**
+ * A collective anaphor — the word that says an attribution governs the WHOLE
+ * list rather than only the member it sits behind.
+ *
+ * This is the entire licence for the skip below (item C-560), so it is written
+ * as vocabulary rather than as a wildcard. Without one of these words the
+ * attribution's subject is the coordinated member alone and the path in front
+ * of it goes on holding, which is the hold-preserving reading: a wrong free
+ * costs another lane its work silently, a wrong hold costs one refusal that
+ * names itself.
+ */
+const PATH_TAIL_LIST_ANAPHOR = "(?:both|all|each|either|neither|these|those|them)";
+
+/**
+ * A list member named in WORDS instead of as a path, and the anaphor behind it.
+ *
+ * `PATH_LIST_JOINER` only ever joins a path to a path, so a list whose members
+ * are one file and one artifact named in prose — `` `<path>` and the coverage
+ * census, both held by <holder> `` — leaves the described member sitting
+ * between the path and its attribution. Both attribution patterns are anchored
+ * at the head of the tail, so they cannot see past it and the holder falls
+ * outside the reach as well; the path holds, and the sentence that REPORTED
+ * somebody else's hold has created one of its own.
+ *
+ * That is a ratchet, which is why it is repaired rather than recorded: a run
+ * documenting why it passed an item over freezes the file it names, outliving
+ * the claim it was describing, so the more carefully runs record refusals the
+ * less of the tree stays claimable. Measured on the live register at
+ * 2026-09-27T20:41Z, one such sentence was the only hold on
+ * `.github/workflows/unit-suites.yml` and it refused a correct claim.
+ *
+ * TWO BOUNDS KEEP THE SKIP HONEST, and both are testable. The member may be at
+ * most `PATH_TAIL_COORDINATED_MEMBER_REACH_TOKENS` words, and no word of it may
+ * contain `.`, `;` or `/` — so the skip cannot cross a sentence boundary and
+ * cannot step over a path, which is the joiner's job and not this one's.
+ */
+const PATH_TAIL_COORDINATED_MEMBER_REACH_TOKENS = 4;
+
+const PATH_TAIL_COORDINATED_MEMBER = new RegExp(
+  `^(?:(?:and|or|plus)\\s+)?(?:[^.;/\\s]+\\s+){0,${PATH_TAIL_COORDINATED_MEMBER_REACH_TOKENS}}` +
+    `${PATH_TAIL_LIST_ANAPHOR}[,\\s]+`,
+  "i",
+);
+
 function pathAttributionTail(after) {
   const cleaned = String(after)
     .replace(/^[`'")\]*,\s]+/, "")
     .replace(/`[^`]*`/g, "ref");
-  return cleaned.split(/\s+/).slice(0, PATH_TAIL_ATTRIBUTION_REACH_TOKENS).join(" ");
+  // The skip runs BEFORE the reach is counted, so the eight-token budget is
+  // spent on the attribution itself rather than on the list it governs.
+  const governed = cleaned.replace(PATH_TAIL_COORDINATED_MEMBER, "");
+  return governed.split(/\s+/).slice(0, PATH_TAIL_ATTRIBUTION_REACH_TOKENS).join(" ");
 }
 
 /** Whether an attribution behind the list hands the whole list to somebody else. */
