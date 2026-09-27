@@ -257,6 +257,21 @@ requires in either direction.
 
 ## Known Gaps
 
+- **"Wired" here does not mean "can block a merge", and the two halves differ.** The step sits in
+  job `Unit suites that pass on main`, which is **not** a required status check on `main`
+  (`docs/ci/required-status-checks.json` lists 19 required contexts and no `Unit suites`
+  context). So if one of these three suites regresses tomorrow, the runner reports it and the
+  merge is not blocked by it. The **wiring itself** is protected on the required side: the new
+  behaviors guard runs in `Behavior coverage floor`, which **is** required, so deleting the step
+  or re-adding the dark-baseline line fails a merge-blocking check even though a failing case
+  inside the three suites would not.
+  This is not a new finding and is deliberately not filed as one: it is the shape `U-500` owns —
+  which recommends making `Unit suites that pass on main` required as the smallest fix — and the
+  residual of `T-595`, which decided the naming rule. This change also does not violate that
+  rule: it names a **directory**, not an individual suite, and no required job sweeps these three
+  suites, so the rule's precondition does not arise. `npm run audit:named-suite-requiredness`
+  passes, and the previous change wired into the same job on the same terms.
+
 - **`DiscoveryReceiptCard.tsx` is an orphan and its suite is now wired.** The coverage is real
   but it guards a card no route can reach, because its only importer
   (`MoveArtifactUpload.tsx`) is itself an orphan. Filed as `T-769` — mount it or remove it;
