@@ -20,6 +20,7 @@
 import { getAzureReadFluentClient } from "@/lib/data-plane/postgresCompat";
 import { after } from "next/server";
 import { requireTenancy, tenancyErrorResponse } from "@/lib/auth/tenancy";
+import { getCurrentUser } from "@/lib/auth/current-user";
 import { getActiveClientRow } from "@/lib/active-client";
 import { loadUserSourceAccessPolicy } from "@/lib/auth/source-access-policy";
 import {
@@ -34,7 +35,7 @@ import {
 import { confirmationKeysForStage } from "@/lib/source/stage-gate-confirmations";
 import { autoDraftOnStageEntry } from "@/lib/source/stage-entry-autodraft";
 import { getStageSubstrate } from "@/lib/source/canvas-substrate/queries";
-import { normalizeSourceStageKey } from "@/lib/source/constants";
+import { normalizeSourceStageKey, SOURCE_STAGE_LABELS } from "@/lib/source/constants";
 import { evaluateSourceGateAdvanceContract } from "@/lib/source/gate-advance-contract";
 import { readSourceScorecardAuthorityRecords } from "@/lib/source/proposal-intelligence/scorecard-authority-store";
 import { hasVerifiedSponsorDelegation } from "@/lib/source/sponsor-delegation-repository";
@@ -51,6 +52,12 @@ import {
 } from "@/lib/source/source-governance-enforcement";
 import { readSourceAuthorityVersionState } from "@/lib/source/new-workspace/authority-version-store";
 import { resolveSourceApprovalPolicy } from "@/lib/source/approval-policy";
+import {
+  formatSourceSponsorContext,
+  parseSourceSponsorContext,
+  type SourceSponsorContext,
+} from "@/lib/source/sponsor-context";
+import { sendSourceStageDecisionUpdates } from "@/lib/source/notifications/stage-decision-update";
 
 // Every lifecycle decision gets its own action type, so the activity table can
 // be read without inferring the decision from the reason text.
@@ -72,6 +79,7 @@ interface ApproveBody {
   confirmations?: SourceStageConfirmations;
   selfApproveIfAuthorized?: boolean;
   requestAuthorityVersionId?: string;
+  sponsorContext?: unknown;
 }
 
 /**
@@ -83,6 +91,7 @@ function composeApprovalNotes(
   action: ApproveBody["action"],
   currentStageKey: string | null,
   isSelfApproval = false,
+  sponsorContext: SourceSponsorContext | null = null,
 ): string | null {
   const trimmed = comment?.trim();
   // The approval screen tells a self-approving creator that this decision is
@@ -91,7 +100,8 @@ function composeApprovalNotes(
     ? "Self-approval notice: the approver is the recorded event creator."
     : null;
   const withNotice = (value: string | null) =>
-    [selfApprovalNotice, value].filter(Boolean).join("\n\n") || null;
+    [selfApprovalNotice, value, sponsorContext ? formatSourceSponsorContext(sponsorContext) : null]
+      .filter(Boolean).join("\n\n") || null;
   if (action === "approve") {
     // Strategy approval is the P0 memo/value/archetype attestation; every other
     // stage attests that stage's gate boxes.
@@ -191,6 +201,14 @@ export async function POST(
   } catch {
     return Response.json({ error: "invalid_approval_policy" }, { status: 409 });
   }
+  if (approvalPolicy.selfApprovalAllowed &&
+    accessPolicy.accessLevel !== "client_admin" &&
+    event.created_by_user_id !== tenancy.userId) {
+    return Response.json({
+      error: "event_owner_or_admin_required",
+      detail: "The event creator or client admin must record this stage decision.",
+    }, { status: 403 });
+  }
 
   // Resolve the decision (validates action + confirmations, decides the
   // lifecycle transition and whether to advance the stage). Confirmations are
@@ -216,6 +234,20 @@ export async function POST(
   const effectiveCurrentStage = currentStage
     ? coerceStageToSourceJourney(journey, currentStage, currentStage)
     : null;
+  const ownerScopeApproval = body.action === "approve" &&
+    effectiveCurrentStage === "scope" && approvalPolicy.selfApprovalAllowed;
+  if (body.sponsorContext !== undefined && !ownerScopeApproval) {
+    return Response.json({ error: "sponsor_context_policy_mismatch" }, { status: 409 });
+  }
+  const sponsorContext = ownerScopeApproval
+    ? parseSourceSponsorContext(body.sponsorContext)
+    : null;
+  if (ownerScopeApproval && !sponsorContext) {
+    return Response.json({
+      error: "sponsor_context_required",
+      detail: "Name the sponsor, title, role and notification email, then explicitly acknowledge that you are the approving actor.",
+    }, { status: 422 });
+  }
   const nextStage = nextSourceStageForJourney(effectiveCurrentStage, journey);
   const decision = evaluateSourceApprovalDecision(
     body.action,
@@ -407,6 +439,7 @@ export async function POST(
       body.action,
       effectiveCurrentStage ?? currentStageKey,
       isSelfApproval,
+      sponsorContext,
     ),
     stageKey: effectiveCurrentStage ?? currentStageKey,
     authorityApproval,
@@ -442,6 +475,7 @@ export async function POST(
       toState,
       approvalAction: decision.approvalAction,
       selfApproval: isSelfApproval,
+      ...(sponsorContext ? { sponsorContext } : {}),
       intendedAdvanceStageTo: decision.advanceStageTo ?? null,
     },
     occurredAtIso: new Date().toISOString(),
@@ -518,6 +552,26 @@ export async function POST(
     } else {
       stageAdvancedTo = decision.advanceStageTo;
     }
+  }
+
+  if (body.action === "approve" && effectiveCurrentStage) {
+    const actor = await getCurrentUser().catch(() => null);
+    after(async () => {
+      try {
+        await sendSourceStageDecisionUpdates({
+          eventId,
+          clientKey: activeClient.key,
+          eventName: event.event_name?.trim() || `Sourcing event ${eventId}`,
+          stageKey: effectiveCurrentStage,
+          stageLabel: SOURCE_STAGE_LABELS[effectiveCurrentStage],
+          actorUserId: tenancy.userId,
+          actorName: actor?.name?.trim() || "An authorized Source approver",
+          ...(sponsorContext ? { sponsorEmail: sponsorContext.email } : {}),
+        });
+      } catch (error) {
+        console.error("[source stage decision update] notification failed", error);
+      }
+    });
   }
 
   return Response.json({

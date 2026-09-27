@@ -7019,6 +7019,7 @@ function ApprovalsWorkspace({
           item={view.approvals.currentStageItem}
           gateAction={gateAction}
           decision={currentApprovalDecision(view)}
+          approvalPolicyCode={view.event.approvalPolicyCode}
           featured
           onGoToSteps={onGoToSteps}
         />
@@ -8407,12 +8408,14 @@ function ApprovalCard({
   item,
   gateAction,
   decision,
+  approvalPolicyCode,
   featured = false,
   onGoToSteps,
 }: {
   item: ApprovalsInboxItem;
   gateAction?: StageGateActionView;
   decision?: ApprovalDecisionForCard | null;
+  approvalPolicyCode?: string | null;
   featured?: boolean;
   onGoToSteps?: () => void;
 }) {
@@ -8464,6 +8467,7 @@ function ApprovalCard({
             action={gateAction}
             status={item.status}
             stageLabel={item.stageLabel}
+            requiresSponsorContext={approvalPolicyCode === "self_v1" && item.stageKey === "scope"}
           />
         ) : gateAction && decision ? (
           <button
@@ -8503,15 +8507,22 @@ function StageGateApprovalButton({
   action,
   status,
   stageLabel,
+  requiresSponsorContext,
 }: {
   action: StageGateActionView;
   status: ApprovalsInboxItem["status"];
   stageLabel: string | null;
+  requiresSponsorContext: boolean;
 }) {
   const router = useRouter();
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [rationale, setRationale] = useState(action.rationale);
+  const [sponsorName, setSponsorName] = useState("");
+  const [sponsorTitle, setSponsorTitle] = useState("");
+  const [sponsorRole, setSponsorRole] = useState("");
+  const [sponsorEmail, setSponsorEmail] = useState("");
+  const [ownerAcknowledged, setOwnerAcknowledged] = useState(false);
   const requiresRationale = status === "ready_with_gaps";
   const buttonLabel = requiresRationale
     ? "Approve exception and advance"
@@ -8520,8 +8531,22 @@ function StageGateApprovalButton({
     ? `${stageLabel ?? "Stage"} exception rationale`
     : `${stageLabel ?? "Stage"} approval rationale`;
   const trimmedRationale = rationale.trim();
+  const sponsorInputStyle: CSSProperties = {
+    display: "block",
+    width: "100%",
+    boxSizing: "border-box",
+    border: `1px solid ${ANALYTICS.LINE}`,
+    borderRadius: 6,
+    background: ANALYTICS.SOFT,
+    color: ANALYTICS.INK,
+    fontSize: 12.5,
+    padding: "7px 9px",
+  };
   const disabled =
-    submitting || (requiresRationale && trimmedRationale.length === 0);
+    submitting || (requiresRationale && trimmedRationale.length === 0) ||
+    (requiresSponsorContext && (!ownerAcknowledged ||
+      [sponsorName, sponsorTitle, sponsorRole].some((value) => value.trim().length < 2) ||
+      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(sponsorEmail.trim())));
 
   const approve = async () => {
     if (disabled) return;
@@ -8541,6 +8566,15 @@ function StageGateApprovalButton({
               action.confirmationKeys.map((key) => [key, true]),
             ),
             selfApproveIfAuthorized: true,
+            ...(requiresSponsorContext ? {
+              sponsorContext: {
+                name: sponsorName.trim(),
+                title: sponsorTitle.trim(),
+                role: sponsorRole.trim(),
+                email: sponsorEmail.trim(),
+                ownerAcknowledged,
+              },
+            } : {}),
           }),
         },
       );
@@ -8606,6 +8640,36 @@ function StageGateApprovalButton({
           resize: "vertical",
         }}
       />
+      {requiresSponsorContext ? (
+        <div style={{ display: "grid", gap: 8 }}>
+          <span style={{ fontWeight: 700, fontSize: 12.5, color: ANALYTICS.INK }}>Sponsor reference</span>
+          <label style={{ fontSize: 12, color: ANALYTICS.INK_2 }}>
+            Sponsor name
+            <input value={sponsorName} onChange={(event) => setSponsorName(event.currentTarget.value)}
+              maxLength={120} style={{ ...sponsorInputStyle, marginTop: 4 }} />
+          </label>
+          <label style={{ fontSize: 12, color: ANALYTICS.INK_2 }}>
+            Sponsor title
+            <input value={sponsorTitle} onChange={(event) => setSponsorTitle(event.currentTarget.value)}
+              maxLength={120} style={{ ...sponsorInputStyle, marginTop: 4 }} />
+          </label>
+          <label style={{ fontSize: 12, color: ANALYTICS.INK_2 }}>
+            Sponsor role
+            <input value={sponsorRole} onChange={(event) => setSponsorRole(event.currentTarget.value)}
+              maxLength={120} style={{ ...sponsorInputStyle, marginTop: 4 }} />
+          </label>
+          <label style={{ fontSize: 12, color: ANALYTICS.INK_2 }}>
+            Sponsor notification email
+            <input type="email" value={sponsorEmail} onChange={(event) => setSponsorEmail(event.currentTarget.value)}
+              maxLength={254} style={{ ...sponsorInputStyle, marginTop: 4 }} />
+          </label>
+          <label style={{ display: "flex", gap: 8, fontSize: 12, color: ANALYTICS.INK_2 }}>
+            <input type="checkbox" checked={ownerAcknowledged}
+              onChange={(event) => setOwnerAcknowledged(event.currentTarget.checked)} />
+            I am approving this stage, not the sponsor. A notification will be attempted after the decision; delivery is audited separately.
+          </label>
+        </div>
+      ) : null}
       <button
         type="button"
         data-testid="source-stage-gate-approve"

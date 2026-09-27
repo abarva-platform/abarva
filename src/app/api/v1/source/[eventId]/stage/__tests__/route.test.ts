@@ -168,7 +168,7 @@ describe("PATCH /api/v1/source/[eventId]/stage", () => {
     expect(insertActivityLog).not.toHaveBeenCalled();
   });
 
-  it("carries explicit SELF authority to the stage gate without bypassing readiness", async () => {
+  it("routes SELF stage decisions through the audited event approval endpoint", async () => {
     persistedEvent.approval_policy_code = "self_v1";
     const response = await PATCH(new Request("https://app.abarva.ai/api/v1/source/event-1/stage", {
       method: "PATCH",
@@ -179,10 +179,10 @@ describe("PATCH /api/v1/source/[eventId]/stage", () => {
         confirmations: { evidenceComplete: true, exclusionsReviewed: true, stageFinal: true },
       }),
     }) as never, { params: Promise.resolve({ eventId: "event-1" }) });
-    expect(response.status).toBe(200);
-    expect(evaluateSourceGateAdvanceContract).toHaveBeenCalledWith(
-      expect.objectContaining({ approvalPolicyCode: "self_v1" }),
-    );
+    expect(response.status).toBe(409);
+    expect((await response.json()).error).toBe("use_event_approval_route");
+    expect(evaluateSourceGateAdvanceContract).not.toHaveBeenCalled();
+    expect(updateStage).not.toHaveBeenCalled();
   });
 
   it("rejects a legacy strict-mode creator even when the caller omits the self flag", async () => {

@@ -356,6 +356,51 @@ describe("SourceAnalyticsCanvas stage workflow", () => {
     expect(routerRefresh).toHaveBeenCalled();
   });
 
+  it("requires sponsor context but attributes SELF Scope approval to the signed-in user", async () => {
+    render(
+      <SourceAnalyticsCanvas
+        event={{ ...EVENT, approvalPolicyCode: "self_v1" }}
+        viewStage="scope"
+        tenantName="Demo Client"
+        stageView={{
+          ...COMPLETE_SCOPE_STAGE,
+          gate: {
+            ...COMPLETE_SCOPE_STAGE.gate,
+            action: {
+              eventId: EVENT.id,
+              rationale: "I reviewed the current Scope memo and required evidence.",
+              confirmationKeys: ["scopeEvidenceComplete", "scopeInputsReviewed", "scopeStageFinal"],
+            },
+          },
+        }}
+        artifacts={SCOPE_READY_ARTIFACTS}
+        approvalItems={[APPROVAL]}
+        initialWorkspace="approvals"
+      />,
+    );
+    const approve = screen.getByTestId("source-stage-gate-approve");
+    expect(approve).toBeDisabled();
+    fireEvent.change(screen.getByLabelText("Sponsor name"), { target: { value: "Morgan Lee" } });
+    fireEvent.change(screen.getByLabelText("Sponsor title"), { target: { value: "Chief Technology Officer" } });
+    fireEvent.change(screen.getByLabelText("Sponsor role"), { target: { value: "Executive sponsor" } });
+    fireEvent.change(screen.getByLabelText("Sponsor notification email"), { target: { value: "morgan@example.test" } });
+    expect(approve).toBeDisabled();
+    fireEvent.click(screen.getByLabelText("I am approving this stage, not the sponsor. A notification will be attempted after the decision; delivery is audited separately."));
+    expect(approve).toBeEnabled();
+    fireEvent.click(approve);
+    await waitFor(() => expect(global.fetch).toHaveBeenCalledWith(
+      `/api/v1/source/events/${EVENT.id}/approve`, expect.anything(),
+    ));
+    const body = JSON.parse((global.fetch as jest.Mock).mock.calls[0][1].body);
+    expect(body.sponsorContext).toEqual({
+      name: "Morgan Lee",
+      title: "Chief Technology Officer",
+      role: "Executive sponsor",
+      email: "morgan@example.test",
+      ownerAcknowledged: true,
+    });
+  });
+
   it("renders one active stage canvas with a gated Continue button", () => {
     render(
       <SourceAnalyticsCanvas
