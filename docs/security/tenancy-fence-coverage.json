@@ -10,12 +10,12 @@
     "This census ranks and does not repair. Each repair is its own backlog item so that a sweep finding twenty routes is not one change nobody reads."
   ],
   "counts": {
-    "routes": 388,
+    "routes": 389,
     "fenced": 214,
     "fencedDirect": 90,
     "fencedIndirect": 124,
-    "unfenced": 174,
-    "unfencedButReachesFenceModule": 93,
+    "unfenced": 175,
+    "unfencedButReachesFenceModule": 94,
     "behavioral": 68,
     "byteScannerOnly": 6,
     "none": 140
@@ -1872,6 +1872,8 @@
           "scripts/smoke/p22-decision-dossier.spec.ts",
           "scripts/smoke/sentinel-tenant-pin.spec.ts",
           "src/__tests__/behaviors/c403-answer-mode-routing.test.ts",
+          "src/__tests__/behaviors/c406-contract-question-surface-reachability.test.ts",
+          "src/__tests__/behaviors/c523-whole-contract-context-packet.test.ts",
           "src/__tests__/integration/knowledge/agent-context-broker.test.ts",
           "src/__tests__/integration/source/source-access-control-static.test.ts",
           "src/__tests__/integration/source/source-route-shell-enforcement.test.ts",
@@ -4150,7 +4152,8 @@
       "coverage": "behavioral",
       "suites": {
         "behavioral": [
-          "src/app/api/tower/synthesis/route-fix-c.test.ts"
+          "src/app/api/tower/synthesis/route-fix-c.test.ts",
+          "src/app/api/tower/synthesis/route.invariants.test.ts"
         ],
         "byteScanner": [
           "src/__tests__/integration/atlas/atlas-invariants.test.ts"
@@ -5574,6 +5577,18 @@
       }
     },
     {
+      "route": "src/app/api/v1/programs/[programId]/stage-readiness-evidence-pack/route.ts",
+      "fence": "none",
+      "fenceSymbols": [],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": null,
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
       "route": "src/app/api/v1/programs/[programId]/stage-readiness-workbook/route.ts",
       "fence": "none",
       "fenceSymbols": [],
@@ -6376,6 +6391,7 @@
           "src/app/api/v1/source/[eventId]/nexus/ask/__tests__/value-ledger-negative-savings-routing.test.ts"
         ],
         "byteScanner": [
+          "scripts/exec/signed-in-proof-reconcile.test.mjs",
           "src/__tests__/integration/source/source-nexus-api-stub.test.ts"
         ]
       }
@@ -6686,6 +6702,7 @@
       "fence": "indirect",
       "fenceSymbols": [
         "createSourcingEvent",
+        "isUuid",
         "requireTenancy",
         "tenancyErrorResponse"
       ],

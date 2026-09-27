@@ -795,6 +795,7 @@ describe("MovesPhaseStandaloneClient", () => {
           move={move}
           phaseNum={1}
           phaseTallies={[...phaseTallies]}
+          syntheticEvidencePackHref={`/api/v1/programs/${move.id}/stage-readiness-evidence-pack?phase=1`}
         />,
       );
 
@@ -806,6 +807,14 @@ describe("MovesPhaseStandaloneClient", () => {
         `/api/v1/programs/${move.id}/stage-readiness-workbook?phase=1`,
       );
       expect(workbookLink).toHaveAttribute("download");
+      const sampleFilesLink = screen.getByRole("link", {
+        name: "Download sample upload files",
+      });
+      expect(sampleFilesLink).toHaveAttribute(
+        "href",
+        `/api/v1/programs/${move.id}/stage-readiness-evidence-pack?phase=1`,
+      );
+      expect(sampleFilesLink).toHaveAttribute("download");
 
       fireEvent.change(
         screen.getByLabelText("Upload completed readiness workbook"),
