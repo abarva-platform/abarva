@@ -102,7 +102,15 @@ export function EventApprovalCard({
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
 
-  const reasonReady = reason.trim().length >= SOURCE_APPROVAL_REASON_MIN_LENGTH;
+  const reasonLength = reason.trim().length;
+  const reasonRemaining = Math.max(
+    0,
+    SOURCE_APPROVAL_REASON_MIN_LENGTH - reasonLength,
+  );
+  const reasonReady = reasonRemaining === 0;
+  const reasonHelp = reasonReady
+    ? "Minimum met"
+    : `${reasonRemaining} more character${reasonRemaining === 1 ? "" : "s"} needed`;
   // Strategy-at-P0 makes approval the strategy gate: the three GATE-STRATEGY
   // criteria are confirmed here as explicit checkboxes. Other tenants keep the
   // single accountable-decision confirm.
@@ -135,7 +143,7 @@ export function EventApprovalCard({
     : !requestAuthorityVersionId
       ? "The current Request version is unavailable. Reload or repair the governed intake before approval."
       : !reasonReady
-        ? `Add an audit rationale of at least ${SOURCE_APPROVAL_REASON_MIN_LENGTH} characters.`
+        ? `Add an audit rationale: ${reasonHelp}.`
         : !gateReady
           ? generateMemoOnApprove
             ? "Confirm all three strategy-gate checks."
@@ -264,9 +272,7 @@ export function EventApprovalCard({
                 <div style={EYEBROW_STYLE}>Approval brief</div>
                 <h2 style={SECTION_TITLE_STYLE}>What you are approving</h2>
               </div>
-              <span style={READY_CHIP_STYLE}>
-                {actionReady ? "Ready" : "Needs input"}
-              </span>
+              <span style={READY_CHIP_STYLE}>{briefFacts.length} facts</span>
             </div>
             <dl style={FACT_LIST_STYLE}>
               {briefFacts.map((fact) => (
@@ -340,6 +346,8 @@ export function EventApprovalCard({
             </span>
             <textarea
               data-testid="source-approval-rationale"
+              aria-describedby="source-approval-rationale-help"
+              aria-invalid={reasonLength > 0 && !reasonReady}
               value={reason}
               disabled={!currentUserCanApprove || Boolean(busyAction)}
               onChange={(event) => setReason(event.target.value)}
@@ -347,8 +355,14 @@ export function EventApprovalCard({
               placeholder="Record what you reviewed and why this event should move."
               style={TEXTAREA_STYLE}
             />
-            <span style={FIELD_HELP_STYLE}>
-              Minimum {SOURCE_APPROVAL_REASON_MIN_LENGTH} characters.
+            <span
+              id="source-approval-rationale-help"
+              data-testid="source-approval-rationale-help"
+              aria-live="polite"
+              style={FIELD_HELP_STYLE}
+            >
+              {reasonLength} / {SOURCE_APPROVAL_REASON_MIN_LENGTH} characters ·{" "}
+              {reasonHelp}
             </span>
           </label>
 
@@ -369,7 +383,8 @@ export function EventApprovalCard({
                   }
                 />
                 <span>
-                  Event Owner confirms the sourcing mandate and strategy memo review.
+                  Event Owner confirms the sourcing mandate and strategy memo
+                  review.
                 </span>
               </label>
               <label style={CHECKBOX_ROW_STYLE}>
@@ -422,6 +437,18 @@ export function EventApprovalCard({
             </label>
           )}
 
+          {!actionReady &&
+          !busyAction &&
+          currentUserCanApprove &&
+          requestAuthorityVersionId ? (
+            <p
+              data-testid="source-approval-action-hint"
+              role="status"
+              style={FIELD_HELP_STYLE}
+            >
+              {blockerLabel}
+            </p>
+          ) : null}
           <div style={ACTION_ROW_STYLE}>
             <details style={MORE_STYLE}>
               <summary style={MORE_SUMMARY_STYLE}>Other decisions</summary>

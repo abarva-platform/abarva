@@ -103,9 +103,7 @@ describe("SourceNewRequestFirstPage", () => {
         .getByRole("link", { name: "Start a request" })
         .getAttribute("href"),
     ).toBe("/source/new?mode=intake");
-    expect(screen.getByText("One next action").nextSibling?.textContent).toBe(
-      "Start a request",
-    );
+    expect(screen.queryByText("One next action")).toBeNull();
     expect(screen.queryByTestId("source-originate-canvas")).toBeNull();
   });
 
@@ -145,7 +143,9 @@ describe("SourceNewRequestFirstPage", () => {
     expect(
       screen.queryByRole("link", { name: "Application services event" }),
     ).toBeNull();
-    expect(screen.queryByText("Infrastructure request awaiting approval")).toBeNull();
+    expect(
+      screen.queryByText("Infrastructure request awaiting approval"),
+    ).toBeNull();
   });
 
   it("does not expose request rows when intake authority is unavailable but preserves governed event access", () => {
@@ -204,7 +204,8 @@ describe("SourceNewRequestFirstPage", () => {
     expect(
       within(workspaces).getByText("Application services event"),
     ).toBeTruthy();
-    expect(screen.getByText("Open accepted work")).toBeTruthy();
+    expect(within(workspaces).getByText("Other events")).toBeTruthy();
+    expect(screen.queryByText("Open accepted work")).toBeNull();
     expect(
       within(workspaces)
         .getByRole("link", { name: "Open" })
@@ -227,16 +228,66 @@ describe("SourceNewRequestFirstPage", () => {
     const workspaces = screen.getByRole("region", {
       name: "Event workspaces",
     });
-    expect(within(queue).getByText("Infrastructure request awaiting approval")).toBeTruthy();
-    expect(within(queue).getByText("Pending approval")).toBeTruthy();
+    expect(
+      within(queue).getByText("Infrastructure request awaiting approval"),
+    ).toBeTruthy();
+    expect(within(queue).getByText("Awaiting decision")).toBeTruthy();
     expect(
       within(queue)
         .getByRole("link", { name: "Review approval" })
         .getAttribute("href"),
     ).toBe("/source/events/event-pending/approval");
-    expect(within(workspaces).queryByText("Infrastructure request awaiting approval")).toBeNull();
-    expect(within(workspaces).getByText("Application services event")).toBeTruthy();
-    expect(screen.getByText("Review pending approvals")).toBeTruthy();
+    expect(
+      within(workspaces).queryByText(
+        "Infrastructure request awaiting approval",
+      ),
+    ).toBeNull();
+    expect(
+      within(workspaces).getByText("Application services event"),
+    ).toBeTruthy();
+    expect(screen.queryByText("Review pending approvals")).toBeNull();
+    expect(
+      screen.queryByText("No imported requests are waiting for intake review."),
+    ).toBeNull();
+    expect(
+      within(queue).getByText("Decision owner: Technology sponsor"),
+    ).toBeTruthy();
+  });
+
+  it("shows two pending decisions once each with their distinct owners", () => {
+    render(
+      <SourceNewRequestFirstPage
+        clientName="Example client"
+        clientKey="example-client"
+        requestQueueStatus="empty"
+        importedRequests={[]}
+        eventWorkspaces={[
+          { ...pendingEventWorkspace, decisionOwner: "Anand" },
+          {
+            ...pendingEventWorkspace,
+            id: "event-qa",
+            code: "SRC-QA",
+            name: "Internal sourcing test",
+            decisionOwner: "Production QA",
+          },
+          ...activeEventWorkspaces,
+        ]}
+      />,
+    );
+
+    const queue = screen.getByRole("region", { name: "Request queue" });
+    expect(
+      within(queue).getAllByRole("link", { name: "Review approval" }),
+    ).toHaveLength(2);
+    expect(within(queue).getByText("Decision owner: Anand")).toBeTruthy();
+    expect(
+      within(queue).getByText("Decision owner: Production QA"),
+    ).toBeTruthy();
+    expect(within(queue).getByText("2 to review")).toBeTruthy();
+    expect(screen.queryByText("One next action")).toBeNull();
+    expect(
+      screen.queryByText("No imported requests are waiting for intake review."),
+    ).toBeNull();
   });
 
   it("still exposes pending approval when the imported-request registry is unavailable", () => {
@@ -251,12 +302,15 @@ describe("SourceNewRequestFirstPage", () => {
     );
 
     const queue = screen.getByRole("region", { name: "Request queue" });
-    expect(within(queue).getByText("Infrastructure request awaiting approval")).toBeTruthy();
-    expect(within(queue).getByText(/could not be read/)).toBeTruthy();
-    expect(within(queue).queryByText("Infrastructure services request")).toBeNull();
     expect(
-      screen.getByRole("region", { name: "Event workspaces" })
-        .textContent,
+      within(queue).getByText("Infrastructure request awaiting approval"),
+    ).toBeTruthy();
+    expect(within(queue).getByText(/could not be read/)).toBeTruthy();
+    expect(
+      within(queue).queryByText("Infrastructure services request"),
+    ).toBeNull();
+    expect(
+      screen.getByRole("region", { name: "Event workspaces" }).textContent,
     ).not.toContain("Infrastructure request awaiting approval");
   });
 
@@ -279,8 +333,12 @@ describe("SourceNewRequestFirstPage", () => {
 
     const queue = screen.getByRole("region", { name: "Request queue" });
     const workspaces = screen.getByRole("region", { name: "Event workspaces" });
-    expect(within(queue).queryByText("Infrastructure request awaiting approval")).toBeNull();
-    expect(within(workspaces).getByText("Infrastructure request awaiting approval")).toBeTruthy();
+    expect(
+      within(queue).queryByText("Infrastructure request awaiting approval"),
+    ).toBeNull();
+    expect(
+      within(workspaces).getByText("Infrastructure request awaiting approval"),
+    ).toBeTruthy();
   });
 
   it("triages governed request fields and answers the four readiness questions", () => {
@@ -305,7 +363,7 @@ describe("SourceNewRequestFirstPage", () => {
     expect(within(queue).getByText("Proposed routing")).toBeTruthy();
     expect(within(queue).getByText("Supplier pool")).toBeTruthy();
     expect(within(queue).getByText("Review required")).toBeTruthy();
-    expect(screen.getByText("Review pending requests")).toBeTruthy();
+    expect(screen.queryByText("Review pending requests")).toBeNull();
     expect(within(queue).getByText("Nothing required is missing")).toBeTruthy();
     expect(
       within(queue).getByText("AI proposal only · named review required"),
