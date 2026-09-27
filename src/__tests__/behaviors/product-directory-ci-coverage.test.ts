@@ -91,6 +91,16 @@ const GOVERNED_ELSEWHERE = "src/__tests__";
  *   the reason the baseline below is now a list: from this entry on, the set
  *   difference is what the gate prints, so the three caveats above are
  *   self-evident from the diff rather than reconstructed in prose.
+ * 2026-09-27: 154 after T-493 wired nine of the ten directories in its draw.
+ *   Eight, not nine, and measured per-directory from two census runs on this
+ *   change's base rather than inferred from the count: the eight above left the
+ *   uncovered set with nothing entering it, while the ninth,
+ *   `src/scripts/__tests__`, was 5 of 6 covered and therefore PARTIAL, so
+ *   wiring it moved it out of the partial set and never reached this one — the
+ *   `source/ava` and `data-plane` case again. The tenth drawn directory,
+ *   `src/lib/intelligence/synthesis/__tests__`, is NOT wired and stays in this
+ *   list: it holds a red suite and a source-text scanner, and a directory is
+ *   wired by fixing it rather than by adding it to a green command.
  */
 const DARK_PRODUCT_DIRECTORY_COUNT = DARK_PRODUCT_DIRECTORY_BASELINE.length;
 
