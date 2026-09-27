@@ -47,7 +47,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { execFileSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
-import { announcesRelease, announcesAbstention } from "./register-time-authority.mjs";
+import { announcesRelease, announcesAbstention, describePreclaim } from "./register-time-authority.mjs";
 import { SILENT, reviewReleaseLine } from "./signed-in-proof-reconcile.mjs";
 import { unknownFlags } from "./cli-entry.mjs";
 import {
@@ -429,16 +429,26 @@ function main(argv) {
     report = null;
   }
 
+  /*
+   * T-498. The gate's rendering, not a second one.
+   *
+   * This used to format the report here, and it read `report.contended` — a key
+   * the gate has never emitted. The overlap it wanted is at
+   * `fileOverlap.conflicts`. So a claim refused by the FILE half printed the
+   * ITEM half's verdict and nothing else: `verdict: take`, a reason about the
+   * item, and no path, no line, no agent. On 2026-09-27 the cause was only
+   * findable by calling the gate directly and reading its JSON, and a refusal
+   * that names nothing is a refusal an agent works around by hand — which is
+   * the path this helper exists to replace.
+   *
+   * `describePreclaim` is exported from the gate and used by its own text mode
+   * too, so there is one rendering and it cannot drift from the report again.
+   * The missing key was the symptom; two renderings of one report was the
+   * defect.
+   */
   const describe = () => {
     if (!report) return stdout.trim() || stderr.trim() || "(the gate produced no report)";
-    const lines = [`verdict: ${report.verdict}`, `reason:  ${report.reason}`];
-    if (report.holder) {
-      lines.push(`holder:  line ${report.holder.lineNumber} ${report.holder.stamp} ${report.holder.agent}`);
-    }
-    if (Array.isArray(report.contended) && report.contended.length) {
-      for (const c of report.contended) lines.push(`file:    ${c.path ?? c} held by ${c.agent ?? "another claim"}`);
-    }
-    return lines.join("\n");
+    return describePreclaim(report);
   };
 
   // An abstention past a refusal is the ONE case that continues, so it is

@@ -1191,5 +1191,81 @@ const PROOF_OWED = "PR #9000 merged and deployed. Not live-proven — signed-in 
   fs.rmSync(empty, { recursive: true, force: true });
 }
 
+// ---------------------------------------------------------------------------
+// Item T-498 — a refusal that names nothing is a refusal an agent works around.
+//
+// The gate's own text mode prints the file conflict in full: the path, the
+// holding line's number, its stamp, its agent, and `(REFUSED by the files
+// gate)` beside the verdict. The helper asks for `--json` instead and formatted
+// the report itself — reading `report.contended`, a key the gate has never
+// emitted. The overlap lives at `report.fileOverlap.conflicts`.
+//
+// So a claim refused by the FILE half printed the ITEM half's verdict and
+// nothing else:
+//
+//   Pre-claim REFUSED — item T-498 ... Nothing was appended.
+//   verdict: take
+//   reason:  no live line within 3h names item T-498 in subject position
+//
+// A refusal reading `verdict: take` and naming no file cost a diagnosis on
+// 2026-09-27 that a glance should have covered, and the only way to see the
+// cause was to call the gate directly and read its JSON. The fix is not a
+// second formatter: `describePreclaim` is exported from the gate and used by
+// BOTH its text mode and this helper, so the two cannot drift apart again —
+// which is the defect, not the missing key.
+// ---------------------------------------------------------------------------
+{
+  const { dir, file } = fixture([]);
+  const HELD = "scripts/exec/register-time-authority.mjs";
+  const before = digest(file);
+
+  // Another run holds the path. Stamped from the real clock, because the
+  // helper stamps from it too and a fixed past `--now` would drop the line out
+  // of the window and refuse nothing at all.
+  const held = run([
+    ...base({ file, item: "T-900", identity: OTHER, message: "taking it, holding the gate file" }),
+    "--branch", "exec/t-900", "--files", HELD,
+  ]);
+  check(
+    "setup: the other run's claim on the gate file is appended",
+    held.status === 0,
+    `status=${held.status} stderr=${held.stderr}`,
+  );
+  const after = digest(file);
+
+  const refused = run([
+    ...base({ file, item: "T-901", identity: ME, message: "taking a different item, same file" }),
+    "--branch", "exec/t-901", "--files", HELD,
+  ]);
+  const out = `${refused.stdout}${refused.stderr}`;
+  check(
+    "a file-conflict refusal appends nothing — the acceptance, unchanged",
+    refused.status === 1 && digest(file) === after,
+    `status=${refused.status} out=${out}`,
+  );
+  check(
+    "THE MOVEMENT — the refusal NAMES the contended path",
+    refused.status === 1 && out.includes(HELD),
+    out,
+  );
+  check(
+    "THE MOVEMENT — and the holding line's agent",
+    refused.status === 1 && out.includes(OTHER),
+    out,
+  );
+  check(
+    "THE MOVEMENT — and the holding line's number and stamp, so the line can be found",
+    refused.status === 1 && /held by line \d+ \d{4}-\d\d-\d\dT[\d:]+Z/.test(out),
+    out,
+  );
+  check(
+    "THE MOVEMENT — and says which half refused, so `verdict: take` is not read as a contradiction",
+    refused.status === 1 && /REFUSED by the files gate/.test(out),
+    out,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+  void before;
+}
+
 console.log(`\n${passes} passed, ${failures} failed`);
 process.exit(failures ? 1 : 0);

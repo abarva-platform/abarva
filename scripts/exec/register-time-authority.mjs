@@ -725,13 +725,30 @@ export function announcesAbstention(text) {
  * promises "one public-safe release record", and reading that as a release
  * would free every item in flight. The announcement form is the verb at the
  * head of the message field, which is where the register puts it.
+ *
+ * CASE IS NOT PART OF THE ANNOUNCEMENT (item T-498). This rule used to read
+ * `RELEASED|RELEASING` case-sensitively, with a lowercase branch that also
+ * demanded the literal word `item` after the verb. `released — C-555 MERGED`
+ * — written by the sanctioned helper, behind the generated prefix T-712
+ * taught `messageField` to strip — fell between the two and was read as a
+ * LIVE CLAIM. On 2026-09-27 that held three files of a merged, deployed item
+ * against every sibling run for three hours, and the more precisely an agent
+ * named what it had touched, the longer it blocked everyone else.
+ *
+ * So the verb is matched in either case and the `\s+items?` requirement is
+ * gone. That subsumes the old lowercase branch completely, which is why it is
+ * DELETED rather than left in place: a second pattern no input can reach is a
+ * guard that survives every mutation of itself.
+ *
+ * What did NOT widen is the part that does the work. The rule is still
+ * anchored at the head of the message field, still `releas(ed|ing)` and never
+ * the noun `release`, and the negative controls in the suite are three lines
+ * that HOLD work and must keep holding it. Calibrated in both directions over
+ * the real 1,987-line register before the change: exactly one line changes
+ * verdict, 297 release lines to 298, and it is the C-555 line above.
  */
 export function announcesRelease(text) {
-  const message = messageField(text);
-  return (
-    /^(?:\*\*)?(?:RELEASED|RELEASING)\b/.test(message) ||
-    /^(?:\*\*)?releas(?:ed|ing)\s+items?\b/i.test(message)
-  );
+  return /^(?:\*\*)?releas(?:ed|ing)\b/i.test(messageField(text));
 }
 
 /**
@@ -2099,6 +2116,60 @@ export function resolveFileOverlap(lines, { files, identity, nowMs, windowHours 
   };
 }
 
+
+/**
+ * One rendering of a `--preclaim` report, for every caller that prints one
+ * (item T-498).
+ *
+ * This text used to live inline in the CLI branch below, and
+ * `append-claim.mjs` — the ONE sanctioned writer of a claim line — asked the
+ * same gate for `--json` and formatted the report itself. Its version read
+ * `report.contended`, a key this gate has never emitted; the overlap is at
+ * `fileOverlap.conflicts`. So a claim refused by the FILE half printed the
+ * ITEM half's verdict and nothing else, and on 2026-09-27 a refusal reading
+ * `verdict: take` with no path, no line and no agent cost a diagnosis that a
+ * glance should have covered.
+ *
+ * The missing key was the symptom. The defect was TWO renderings of one
+ * report, only one of which anybody looked at, so this returns a string and
+ * both callers print it. A formatter that cannot drift cannot drift silently.
+ *
+ * Takes the whole `--json` payload, so a caller that has only the JSON — which
+ * is every caller that is not this file — renders exactly what the CLI does.
+ */
+export function describePreclaim(payload) {
+  const fileOverlap = payload?.fileOverlap ?? { checked: false, requested: [], conflicts: [], notes: [], unparsed: [] };
+  const refusedBy = [payload?.itemRefuses ? "item" : null, fileOverlap.refuses ? "files" : null].filter(Boolean);
+  const out = [
+    `  verdict: ${payload?.verdict}${payload?.refuses ? ` (REFUSED by the ${refusedBy.join(" and ")} gate)` : ""}`,
+    `  reason:  ${payload?.reason}`,
+  ];
+  if (payload?.holder) {
+    out.push(`  holder:  line ${payload.holder.lineNumber} ${payload.holder.stamp} ${payload.holder.agent}`);
+    out.push(`           ${payload.holder.excerpt}`);
+  }
+  if (!fileOverlap.checked) {
+    out.push("  files:   NOT CHECKED — pass --files <a,b,c> or --files @list to run the file gate");
+    return out.join("\n");
+  }
+  out.push(
+    `  files:   ${fileOverlap.requested.length} requested, ` +
+      `${fileOverlap.conflicts.length} contended, ${fileOverlap.notes.length} shared-scope note(s)`,
+  );
+  for (const c of fileOverlap.conflicts) {
+    out.push(`    CONTENDED ${c.path}`);
+    out.push(`      held by line ${c.lineNumber} ${c.stamp} ${c.agent} (${c.ownership})`);
+    out.push(`      ${c.excerpt}`);
+  }
+  for (const n of fileOverlap.notes) {
+    out.push(`    [note] ${n.path} is a shared scope, not a lock — also named by ${n.agent} on line ${n.lineNumber}`);
+  }
+  for (const u of fileOverlap.unparsed) {
+    out.push(`    [note] not read as a repo path, so NOT checked: ${u}`);
+  }
+  return out.join("\n");
+}
+
 // ---------------------------------------------------------------------------
 // Auditing.
 // ---------------------------------------------------------------------------
@@ -2706,44 +2777,19 @@ if (isMain()) {
       process.exit(2);
     }
 
-    const refuses =
-      result.refuses || fileOverlap.refuses || (strict && result.advisory === true);
-    const payload = { ...result, item, identity, windowHours, strict, refuses, fileOverlap };
+    // `itemRefuses` is carried EXPLICITLY (item T-498). The combined `refuses`
+    // below is spread over `result.refuses`, so from the JSON alone a reader
+    // could not tell which half objected — and every caller that prints this
+    // report from the JSON is such a reader. Naming it here is what lets one
+    // formatter serve both the text mode and `append-claim.mjs`.
+    const itemRefuses = result.refuses || (strict && result.advisory === true);
+    const refuses = itemRefuses || fileOverlap.refuses;
+    const payload = { ...result, item, identity, windowHours, strict, itemRefuses, refuses, fileOverlap };
     if (has("--json")) {
       console.log(JSON.stringify(payload, null, 1));
     } else {
       console.log(`Pre-claim check — item ${item} as ${identity}`);
-      const refusedBy = [
-        result.refuses || (strict && result.advisory === true) ? "item" : null,
-        fileOverlap.refuses ? "files" : null,
-      ].filter(Boolean);
-      console.log(
-        `  verdict: ${result.verdict}${refuses ? ` (REFUSED by the ${refusedBy.join(" and ")} gate)` : ""}`,
-      );
-      console.log(`  reason:  ${result.reason}`);
-      if (result.holder) {
-        console.log(`  holder:  line ${result.holder.lineNumber} ${result.holder.stamp} ${result.holder.agent}`);
-        console.log(`           ${result.holder.excerpt}`);
-      }
-      if (!fileOverlap.checked) {
-        console.log("  files:   NOT CHECKED — pass --files <a,b,c> or --files @list to run the file gate");
-      } else {
-        console.log(
-          `  files:   ${fileOverlap.requested.length} requested, ` +
-            `${fileOverlap.conflicts.length} contended, ${fileOverlap.notes.length} shared-scope note(s)`,
-        );
-        for (const c of fileOverlap.conflicts) {
-          console.log(`    CONTENDED ${c.path}`);
-          console.log(`      held by line ${c.lineNumber} ${c.stamp} ${c.agent} (${c.ownership})`);
-          console.log(`      ${c.excerpt}`);
-        }
-        for (const n of fileOverlap.notes) {
-          console.log(`    [note] ${n.path} is a shared scope, not a lock — also named by ${n.agent} on line ${n.lineNumber}`);
-        }
-        for (const u of fileOverlap.unparsed) {
-          console.log(`    [note] not read as a repo path, so NOT checked: ${u}`);
-        }
-      }
+      console.log(describePreclaim(payload));
     }
     // An unusable identity or item id is a usage error, not a refusal.
     if (result.verdict === "invalid-identity" || result.verdict === "invalid-item") process.exit(2);
