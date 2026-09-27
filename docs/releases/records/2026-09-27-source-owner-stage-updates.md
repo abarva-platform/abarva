@@ -30,6 +30,7 @@ For events created with Event Owner approval policy, the signed-in event creator
 - The mounted Source approval card collects sponsor context and the approver's explicit acknowledgement.
 - Event-scoped post-decision email update with separate provider-acceptance audit and address deduplication. Later stage updates reuse the approved Scope sponsor context from the tenant-scoped activity record. SELF events cannot issue sponsor or stage approval-request emails.
 - SELF events cannot advance through the direct stage route or let other stage reviewers record criterion or lifecycle decisions.
+- The new notification behavior suite is wired into the existing approval/lifecycle CI step, and the test-coverage census is refreshed.
 - Focused route, UI, validation, and notification tests.
 
 ## QA / Validation
@@ -37,6 +38,9 @@ For events created with Event Owner approval policy, the signed-in event creator
 - Pass: focused Jest suites for approval, request-approval, mounted canvas, sponsor context and stage updates.
 - Pass: full TypeScript check with an 8 GB Node heap.
 - Pass: scoped ESLint on changed source files.
+- Pass: test-coverage census check after wiring the new notification suite.
+- Pass: the exact small approval/lifecycle CI step (9 suites, 117 tests) and the corrected census behavior suite (57 tests).
+- Not run: the full local behavior suite was interrupted after the pre-correction stale-census failure; full PR CI remains the broad validation gate.
 - Not run: production signed-in approval, email provider delivery, opposite-tenant live readback and full Source lifecycle smoke.
 
 ## Rollout Plan
