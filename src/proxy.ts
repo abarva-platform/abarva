@@ -134,6 +134,7 @@ export const PUBLIC_ROUTE_PATTERNS = [
   // handoff route must stay publicly reachable and perform its own checks.
   "/api/auth/demo-code-sign-in(.*)",
   "/api/auth/access-eligibility(.*)",
+  "/api/auth/launch-user(.*)",
   // Private browser proof helper is self-guarded by an opt-in env flag and
   // bearer token, and returns 404 unless explicitly enabled on an isolated
   // proof revision.
