@@ -2598,5 +2598,180 @@ function partialGateOf(dir, id) {
   fs.rmSync(dir, { recursive: true, force: true });
 }
 
+/* ------------------------------------------------------------------------ *
+ * ITEM C-557 — THE SIGNED-IN GATE'S VOCABULARY IS NARROWER THAN THE REGISTER'S.
+ *
+ * `C-534`, `C-538`, `C-539`, `C-552` and `C-553` are all about this rule
+ * labelling an item that owes nothing. This one is the other polarity, and it
+ * is the expensive one: two items whose ENTIRE acceptance is a signed-in
+ * session derived no blocker at all and were offered in a claimable lane of
+ * `EXECUTION_QUEUE.md`, which exists to answer "what can I take with no input
+ * from Anand". `C-553`'s own row names the direction — a false clear costs more
+ * than a false pending — and these are false clears.
+ *
+ * MEASURED ON THE LIVE DOCUMENTS at `fb52509568`, by executing the rule rather
+ * than reading it. A prior run recorded the symptom in prose and GUESSED the
+ * mechanism, proposing that the classifier reads the acceptance and not the
+ * body, and asked for the code to be read first. It reads both: `deriveBlocker`
+ * scans `bodyCorpus`, which carries title, acceptance and raw row. The field is
+ * right and the VOCABULARY is wrong, in two independent ways.
+ *
+ *   (a) THE OWED WINDOW IS TOO SHORT. `U-525`'s row states its gate literally —
+ *       a signed-in phase build proof listed "as owed audit evidence" — with 93
+ *       non-period characters between `signed-in` and `owed` against a bound of
+ *       80. Swept over the live corpus at 60/80/90/100/120/140/160/200/240/320:
+ *       80 and 90 move nothing, 100 moves `U-525` alone, and the band is FLAT
+ *       from 140 to 320 at the same five ids. 60 LOSES `U-536`, whose live gap
+ *       is 78, so 80 is a floor and case (e) holds it.
+ *
+ *   (b) `required` AND `needed` ARE IN NO ALTERNATION. `"Live signed-in proof
+ *       required: Yes"` is the plainest statement of this gate a release record
+ *       can make, and it matched nothing. It is `U-527`'s only form. The
+ *       rule's own VETO beside it already negates `owed|required|needed` — it
+ *       was written for a matcher vocabulary that did not exist, and two of its
+ *       three tokens were unreachable.
+ *
+ * THE WINDOW ALSO HAD TO STOP AT THE NEWLINE, and that is measured, not tidy.
+ * `[^.]` admits `\n`, so at 200 the span crossed out of one register line and
+ * took an owed word from a different line's text, labelling `T-401`. With
+ * `[^.\n]` that positive disappears at EVERY bound to 320 — which is what makes
+ * a wide window safe rather than merely bigger. `;` is deliberately NOT
+ * excluded: four correct live matches (`D-020`, `U-540`, `U-543`, `C-609`) cross
+ * a semicolon inside one sentence, and the sibling rung vetoes' `[^.;\n]` would
+ * lose all four.
+ *
+ * THE WHOLE MOVEMENT, per item, both directions: 15 items change blocker, 0
+ * LOSE one, and every one gains `Signed-in acceptance owed` from a sentence
+ * that says so in plain English — twelve of the form "signed-in proof is
+ * required", four of the form "readback owed"/"not claimed". Only THREE sit at
+ * rung 0, where claimability is decided: `U-401`, which was already gated and
+ * merely relabelled from `Blocked (see source)`, and `U-525` and `U-527`, which
+ * leave the claimable lanes. That is the entire claimability change.
+ *
+ * THE VETO CLAUSE IS STILL VACUOUS ON TODAY'S CORPUS, and case (c) exists
+ * because of that rather than in spite of it: blinding `required|needed` out of
+ * the veto moves 0 live items, so nothing in the corpus holds the polarity and
+ * only a case can. Widening the veto is NOT done here — `\bno\b` is absent from
+ * its negator list, so "no signed-in proof is required" would read as a gate;
+ * that belongs to `C-553`, which is open against this veto, and doing it here
+ * would make this change's movement unattributable.
+ * ------------------------------------------------------------------------ */
+
+/* --- (a) THE LIVE `U-525` SHAPE. The owed word sits 93 non-period characters
+ * from `signed-in`, in one sentence, on one line. The filename in the live row
+ * is dropped so this case isolates the WINDOW from case (b)'s token.         */
+{
+  const dir = freshFixture();
+  addBacklogItem(
+    dir,
+    "T-951",
+    "**A merged change declares a signed-in proof and nobody has run it.** Line `:69` lists a "
+      + "\"signed-in phase build proof showing separate formal artifact and workshop/session guide "
+      + "documents\" as owed audit evidence.",
+    "Run a signed-in phase build for one authorized tenant and record what the surface renders.",
+  );
+  buildBoard(dir);
+  check(
+    "C-557 (a) an owed signed-in proof is a gate when the two words are 93 characters apart",
+    blockerOf(dir, "T-951") === "Signed-in acceptance owed",
+    `blocker=${JSON.stringify(blockerOf(dir, "T-951"))}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+/* --- (b) THE LIVE `U-527` SHAPE. `required`, with nothing else in the row that
+ * the unfixed rule could match, so this case isolates the TOKEN.             */
+{
+  const dir = freshFixture();
+  addBacklogItem(
+    dir,
+    "T-952",
+    "**A second merged change declares a proof and nobody has run it.** Its own release record says "
+      + "*\"Live signed-in proof required: yes — generate one deliverable per phase and open the "
+      + "deck\"*.",
+    "Generate one deliverable per phase for one authorized tenant, signed in, and record the deck.",
+  );
+  buildBoard(dir);
+  check(
+    "C-557 (b) a signed-in proof stated as REQUIRED is a gate",
+    blockerOf(dir, "T-952") === "Signed-in acceptance owed",
+    `blocker=${JSON.stringify(blockerOf(dir, "T-952"))}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+/* --- (c) POLARITY, AND THE ONLY THING HOLDING IT. Adding `required` makes the
+ * veto's `required|needed` clause reachable for the first time; blinding that
+ * clause moves 0 live items, so the corpus cannot hold this and this case
+ * must. It fails if the token is added without the veto, and it fails if the
+ * veto's clause is later dropped as dead.                                    */
+{
+  const dir = freshFixture();
+  addBacklogItem(
+    dir,
+    "T-953",
+    "**An operator script changes and renders nothing.** A signed-in proof is not required: the "
+      + "change alters one refusal branch in a pure function.",
+    "Add the refusal branch, red-first.",
+  );
+  buildBoard(dir);
+  check(
+    "C-557 (c) a signed-in proof stated as NOT required is not a gate",
+    blockerOf(dir, "T-953") !== "Signed-in acceptance owed",
+    `blocker=${JSON.stringify(blockerOf(dir, "T-953"))}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+/* --- (d) THE WINDOW MUST NOT LEAVE THE LINE. The live `T-401` positive: one
+ * register line ends by stating proof, the NEXT line is a different item's and
+ * carries an owed word. `[^.]` spans the newline between them and reads the two
+ * as one sentence. Neither line gates the fixture item.                      */
+{
+  const dir = freshFixture();
+  addBacklogItem(dir, "T-954", "**An ordinary open item.**", "Ship the reader.");
+  // Both lines belong to T-954, because that is how the live positive arose:
+  // `claimCorpus` joins one item's statuses with `\n`, and the span crossed from
+  // one into the next. The gap from `signed-in` to `not claimed` is 148
+  // characters over exactly one newline and no period — inside a 160 window that
+  // admits `\n` and outside one that does not, so this case is decisive in both
+  // directions rather than merely short.
+  appendClaims(dir, [
+    "2026-09-20T14:00Z | cx-a | RELEASED item T-954 - merged and signed-in proof claimed",
+    "2026-09-20T15:06Z | cx-a | item T-954 amended - 24 behavior checks and both focused "
+      + "mutations pass, the queue census is unchanged, and the positive readback is not claimed",
+  ]);
+  buildBoard(dir);
+  check(
+    "C-557 (d) the owed window does not cross a register line boundary",
+    blockerOf(dir, "T-954") !== "Signed-in acceptance owed",
+    `blocker=${JSON.stringify(blockerOf(dir, "T-954"))}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+/* --- (e) THE FLOOR, so a future narrowing cannot pass. The live `U-536` shape:
+ * gap 78, inside the old bound, and it must keep its label. This case passes on
+ * unfixed code by design — it is the regression half of the sweep, and it is
+ * what makes 80 a floor rather than an arbitrary starting point.             */
+{
+  const dir = freshFixture();
+  addBacklogItem(
+    dir,
+    "T-955",
+    "**A merged, deployed change owes a live proof.** If Anand decides the signed-in proof is not "
+      + "worth running, record that decision here and retire the row; an owed proof that nobody "
+      + "intends to run should not sit in the queue pretending to be work.",
+    "Record the decision on this row.",
+  );
+  buildBoard(dir);
+  check(
+    "C-557 (e) a gap of 78 characters still reads as a gate, so the window cannot be narrowed",
+    blockerOf(dir, "T-955") === "Signed-in acceptance owed",
+    `blocker=${JSON.stringify(blockerOf(dir, "T-955"))}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
 console.log(`\n${passes} passed, ${failures} failed`);
 process.exit(failures ? 1 : 0);
