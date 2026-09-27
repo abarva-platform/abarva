@@ -114,10 +114,10 @@ function displayNameParts(email: string): { firstName?: string; lastName?: strin
 
 function syntheticLaunchPhoneNumber(email: string): string {
   const digest = createHash("sha256").update(email).digest("hex");
-  const lineNumber = (parseInt(digest.slice(0, 8), 16) % 10_000)
+  const lineNumber = (parseInt(digest.slice(0, 8), 16) % 100)
     .toString()
-    .padStart(4, "0");
-  return `+1555010${lineNumber}`;
+    .padStart(2, "0");
+  return `+120255501${lineNumber}`;
 }
 
 export async function ensureLaunchAccessClerkUser(
