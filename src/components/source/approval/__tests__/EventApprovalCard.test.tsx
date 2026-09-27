@@ -244,6 +244,45 @@ describe("EventApprovalCard", () => {
     ).toBe(false);
   });
 
+  it("explains the exact remaining rationale length beside a checked but disabled decision", () => {
+    render(<EventApprovalCard {...baseProps} />);
+
+    fireEvent.change(screen.getByTestId("source-approval-rationale"), {
+      target: { value: "approved" },
+    });
+    fireEvent.click(screen.getByTestId("source-approval-confirmation"));
+
+    const approve = screen.getByTestId(
+      "source-approval-approve",
+    ) as HTMLButtonElement;
+    expect(approve.disabled).toBe(true);
+    expect(
+      screen.getByTestId("source-approval-rationale-help").textContent,
+    ).toContain("4 more characters needed");
+    expect(
+      screen.getByTestId("source-approval-action-hint").textContent,
+    ).toContain("4 more characters needed");
+    expect(
+      screen.getByTestId("source-approval-brief").textContent,
+    ).not.toContain("Needs input");
+
+    fireEvent.change(screen.getByTestId("source-approval-rationale"), {
+      target: { value: " approved   " },
+    });
+    expect(approve.disabled).toBe(true);
+    expect(
+      screen.getByTestId("source-approval-rationale-help").textContent,
+    ).toContain("4 more characters needed");
+
+    fireEvent.change(screen.getByTestId("source-approval-rationale"), {
+      target: { value: "Reviewed intake facts" },
+    });
+    expect(approve.disabled).toBe(false);
+    expect(
+      screen.getByTestId("source-approval-rationale-help").textContent,
+    ).toContain("Minimum met");
+  });
+
   it("shows the three strategy-gate confirmations and gates Approve on all three when strategy-at-P0 is on", () => {
     render(<EventApprovalCard {...baseProps} generateMemoOnApprove />);
 
@@ -278,7 +317,9 @@ describe("EventApprovalCard", () => {
 
     expect(screen.getByText("Event Owner")).not.toBeNull();
     expect(screen.queryByText("Sponsor", { exact: true })).toBeNull();
-    expect(screen.getByText("No additional approver is required.")).not.toBeNull();
+    expect(
+      screen.getByText("No additional approver is required."),
+    ).not.toBeNull();
     expect(screen.queryByTestId("source-approval-co-approver")).toBeNull();
   });
 
@@ -289,10 +330,17 @@ describe("EventApprovalCard", () => {
     });
     render(<EventApprovalCard {...baseProps} generateMemoOnApprove />);
 
-    expect(screen.getByText("Event Owner confirms the sourcing mandate and strategy memo review.")).not.toBeNull();
+    expect(
+      screen.getByText(
+        "Event Owner confirms the sourcing mandate and strategy memo review.",
+      ),
+    ).not.toBeNull();
     expect(screen.queryByText(/Sponsor sign-off/)).toBeNull();
     fireEvent.change(screen.getByTestId("source-approval-rationale"), {
-      target: { value: "I reviewed the synthetic intake facts and accept this strategy decision." },
+      target: {
+        value:
+          "I reviewed the synthetic intake facts and accept this strategy decision.",
+      },
     });
     fireEvent.click(screen.getByTestId("source-approval-gate-sponsor"));
     fireEvent.click(screen.getByTestId("source-approval-gate-value"));
@@ -307,7 +355,9 @@ describe("EventApprovalCard", () => {
       valueTargetConfirmed: true,
       archetypeRigorConfirmed: true,
     });
-    expect(body.notes).toContain("Event Owner confirmed the strategy mandate, value target, and archetype.");
+    expect(body.notes).toContain(
+      "Event Owner confirmed the strategy mandate, value target, and archetype.",
+    );
     expect(body.notes).not.toMatch(/sponsor sign-off/i);
   });
 
