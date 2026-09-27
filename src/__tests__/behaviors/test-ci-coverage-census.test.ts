@@ -67,6 +67,12 @@ type Census = {
     // its own reach". These separate them, and they sum to the line above.
     unclassifiedRiskDirectoriesWithResolvedProductSources: number;
     unclassifiedRiskDirectoriesWithNoResolvedProductSource: number;
+    // The ranking's own two numbers, published because C-555's whole finding
+    // was that the ranking's denominator was the classified subset and nobody
+    // could see it: these are directories and files IN the ranking, against
+    // `untriagedUnrunTestFiles` above as the pool.
+    rankedDirectories: number;
+    rankedUntriagedUnrunTestFiles: number;
   };
   indeterminateInvocations: { source: string; invocation: string }[];
   unresolvedIgnoreArguments: { script: string; source: string; reason: string }[];
@@ -99,6 +105,13 @@ type Census = {
     unrunTestFiles: number;
     declaredQuarantineTestFiles: number;
     untriagedUnrunTestFiles: number;
+    // Which admission path put the row in the queue. `governed_risk_signal` is
+    // a non-zero score; `untriaged_unrun_work` is a directory holding untriaged
+    // unrun files that matched no signal, which before C-555 was in no ordering
+    // at all. Named on the row rather than derived from the score so a reader —
+    // and a test — can separate the two populations without re-deriving the
+    // rule (C-555).
+    admittedBy: "governed_risk_signal" | "untriaged_unrun_work";
     governedRisk: {
       rank: number;
       score: number;
@@ -568,19 +581,43 @@ describe("test CI coverage census", () => {
     });
 
     const { census } = runCensus(dir);
+    // `src/lib/helpers/__tests__` is the larger inert directory this case is
+    // named for — three unrun files against one apiece for the governed three.
+    // It used to be absent rather than last, because admission was on a
+    // non-zero score; since C-555 the ranking carries the whole untriaged pool
+    // and the assertion can finally say what the case is called: governed
+    // surfaces AHEAD of it, not instead of it. Updated rather than relaxed — it
+    // still pins the exact order of every row, and it now also pins that the
+    // larger inert directory cannot outrank a one-file governed one.
     expect(census.governedRiskRanking.map((row) => row.directory)).toEqual([
       "src/components/agent/__tests__",
       "src/app/api/source/action/__tests__",
       "src/lib/data/__tests__",
+      "src/lib/helpers/__tests__",
     ]);
     expect(census.governedRiskRanking.map((row) => row.governedRisk.signals)).toEqual([
       ["declared_ai_surface_control"],
       ["approval_or_lifecycle_write"],
       ["tenant_scoped_read"],
+      [],
     ]);
     expect(census.governedRiskRanking.map((row) => row.governedRisk.rank)).toEqual([
-      1, 2, 3,
+      1, 2, 3, 4,
     ]);
+    // Which path admitted each row, per directory. The three signalled ones are
+    // admitted as they always were; the inert one is admitted only by the new
+    // path, which is what makes it removable by reverting that path alone.
+    expect(census.governedRiskRanking.map((row) => row.admittedBy)).toEqual([
+      "governed_risk_signal",
+      "governed_risk_signal",
+      "governed_risk_signal",
+      "untriaged_unrun_work",
+    ]);
+    // Admission did not buy the inert directory a score or a band.
+    expect(census.governedRiskRanking[3].governedRisk).toMatchObject({
+      score: 0,
+      band: "unclassified",
+    });
     expect(census.counts).toMatchObject({
       criticalGovernedRiskDirectories: 2,
       highGovernedRiskDirectories: 1,
@@ -597,9 +634,14 @@ describe("test CI coverage census", () => {
     // every unrun file to only the untriaged ones — a directory whose unrun
     // set is entirely declared quarantine is no longer ranked, so "by unrun
     // tests" would now overstate what the list is ordered on. The assertion is
-    // updated rather than relaxed: it still pins an exact heading.
+    // updated rather than relaxed: it still pins an exact heading. It moved a
+    // third time under C-555, because the list stopped being only governed-risk
+    // directories — an unscored one is ranked now — so the old heading would
+    // name a list that mostly is not one. The heading also carries the ranking's
+    // coverage of its own pool, which is the number whose absence let the queue
+    // sit at 2.9% of it unnoticed.
     expect(summary).toContain(
-      "top governed-risk directories by untriaged unrun tests:",
+      "next to wire, by governed risk then untriaged unrun tests (4 ranked, 6 of 6 untriaged files):",
     );
     expect(summary.indexOf("src/components/agent/__tests__")).toBeLessThan(
       summary.indexOf("src/app/api/source/action/__tests__"),
@@ -607,7 +649,18 @@ describe("test CI coverage census", () => {
     expect(summary.indexOf("src/app/api/source/action/__tests__")).toBeLessThan(
       summary.indexOf("src/lib/data/__tests__"),
     );
-    expect(summary).not.toContain("src/lib/helpers/__tests__");
+    // The inert directory is printed LAST rather than not printed. It used to be
+    // absent from this list, which is the state C-555 was filed against: three
+    // unrun files in a queue of one apiece, invisible to whoever reads the
+    // summary to decide what to wire next.
+    expect(summary.indexOf("src/lib/data/__tests__")).toBeLessThan(
+      summary.indexOf("src/lib/helpers/__tests__"),
+    );
+    // And it is labelled as unscored where a signal list would otherwise be, so
+    // a reader cannot mistake its place in the queue for a matched signal.
+    expect(summary).toContain(
+      "4. src/lib/helpers/__tests__ (unclassified; 3 untriaged of 3 unrun of 3 tests; no governed-risk signal matched; ranked as untriaged unrun work)",
+    );
   });
 
   /**
@@ -958,12 +1011,23 @@ describe("test CI coverage census", () => {
     const { census } = runCensus(dir);
 
     // Three directories hold an untriaged unrun file; one scores and two do
-    // not. The two lists are complements over that population, which is the
-    // property the counts below are arithmetic on.
+    // not. The unclassified list is the zero-score half of that population,
+    // which is the property the counts below are arithmetic on.
     expect(census.counts.directoriesWithUntriagedUnrunTestFiles).toBe(3);
     expect(census.counts.unclassifiedRiskDirectories).toBe(2);
+    // The ranking holds all three since C-555, with the scoring one first. This
+    // case is about the two KINDS of zero, and the ranking is where both now
+    // appear — so the order is pinned here rather than the membership being
+    // asserted as a one-element list that the wider admission would break.
     expect(census.governedRiskRanking.map((row) => row.directory)).toEqual([
       "src/app/api/theta/__tests__",
+      "src/lib/opaque/__tests__",
+      "src/lib/plain/__tests__",
+    ]);
+    expect(census.governedRiskRanking.map((row) => row.admittedBy)).toEqual([
+      "governed_risk_signal",
+      "untriaged_unrun_work",
+      "untriaged_unrun_work",
     ]);
 
     // The split, by number.
@@ -988,9 +1052,25 @@ describe("test CI coverage census", () => {
       "src/lib/plain/__tests__",
     ]);
     // Stated as its own assertion rather than left implicit in the list above:
-    // a ranked directory belongs to the ranking and to nothing else, or the two
-    // published lists double-count the population they split.
+    // a directory that SCORES appears in the ranking and in nothing else. The
+    // two lists stopped being complements at C-555 — every unclassified row is
+    // now also a ranked row — but this direction of the split is unchanged and
+    // is the one that would break if the zero-score filter ever widened.
     expect(unclassified.has("src/app/api/theta/__tests__")).toBe(false);
+    // And the new relationship in the other direction, per directory: an
+    // unclassified row is a ranked row admitted by the wider path, carrying the
+    // same untriaged count in both places. Before C-555 this loop would have
+    // found nothing at all, which is the defect it now guards.
+    const rankedByDirectory = new Map(
+      census.governedRiskRanking.map((row) => [row.directory, row]),
+    );
+    for (const row of census.unclassifiedRiskDirectories) {
+      const ranked = rankedByDirectory.get(row.directory);
+      expect(ranked).toBeDefined();
+      expect(ranked!.admittedBy).toBe("untriaged_unrun_work");
+      expect(ranked!.untriagedUnrunTestFiles).toBe(row.untriagedUnrunTestFiles);
+      expect(ranked!.governedRisk.score).toBe(0);
+    }
     expect(unclassified.get("src/lib/plain/__tests__")).toMatchObject({
       untriagedUnrunTestFiles: 1,
       governedRisk: { band: "unclassified", score: 0, signals: [], productSourceCount: 1 },
@@ -1041,6 +1121,156 @@ describe("test CI coverage census", () => {
         (row) => row.testPath === "src/app/api/zeta/__tests__/posting.test.ts",
       )?.governedRisk.productSourceCount,
     ).toBe(1);
+  });
+
+  /**
+   * The ranking's denominator is the untriaged pool, not the subset the signal
+   * classifier managed to score (C-555).
+   *
+   * `governedRiskRanking` answers one question: which stale test directory gets
+   * wired next. It was admitted on `governedRisk.score > 0`, so a directory the
+   * classifier reached and matched no signal in was not ranked LOW — it was
+   * absent. Measured on `origin/main` `cc2d13f2bc`: the ranking held 7
+   * directories covering 11 of the 385 untriaged unrun test files (2.9%), while
+   * `unclassifiedRiskDirectories` held 179 directories and 374 files, 172 of
+   * them with resolved product sources, and the two lists had zero overlap. So
+   * the queue read as exhausted at 7 entries while 374 files waited in a list
+   * nothing ordered.
+   *
+   * The classifier is not what changed. Its three signals stay exactly as they
+   * are, every band and score is untouched, and no directory's risk is raised —
+   * a score-0 directory enters the ranking BELOW every scored one and keeps
+   * `band: "unclassified"`, `score: 0` and an empty signal list. What changed is
+   * admission, and `admittedBy` says per row which path put it there, so the two
+   * populations stay legible on the face of the output instead of being inferred
+   * from a score.
+   *
+   * Asserted per directory throughout, never on a count: the ranking's length
+   * also moves when a directory is wired, so a length ratchet would go green for
+   * the wrong reason.
+   */
+  it("ranks every directory holding untriaged unrun work, and says which path admitted it", () => {
+    const dir = fixture({
+      // Scores: an approval write. Must keep rank 1 — a directory with a real
+      // signal cannot lose its place to the wider admission.
+      "src/app/api/omicron/route.ts":
+        "export async function POST() { return approve({ value: true }); }\n",
+      "src/app/api/omicron/__tests__/approving.test.ts": [
+        'import { POST } from "../route";',
+        'it("approves", () => expect(typeof POST).toBe("function"));',
+      ].join("\n"),
+      // Scores zero WITH a resolved product source: the census followed an edge
+      // out of here and matched none of the three signals. This is the
+      // population C-555 is about — 172 directories of it.
+      "src/lib/measured/format.ts": "export const format = (s: string) => s.trim();\n",
+      "src/lib/measured/__tests__/formatting.test.ts": [
+        'import { format } from "../format";',
+        'it("formats", () => expect(format(" x ")).toBe("x"));',
+        'it("trims", () => expect(format("y ")).toBe("y"));',
+      ].join("\n"),
+      "src/lib/measured/__tests__/second.test.ts": [
+        'import { format } from "../format";',
+        'it("second", () => expect(format("z")).toBe("z"));',
+      ].join("\n"),
+      // Scores zero with NO resolved product source: the band is the resolver's
+      // silence. Named so the inferred sibling does not exist, or the arm picks
+      // up an edge for free and proves nothing (the T-758 discipline).
+      "src/lib/opaque/__tests__/opacity.test.ts": [
+        'import path from "node:path";',
+        'it("opaque", () => expect(typeof path.join).toBe("function"));',
+      ].join("\n"),
+      ".github/workflows/gate.yml": PR_WORKFLOW("echo nothing"),
+    });
+
+    const { census } = runCensus(dir);
+    const ranked = new Map(
+      census.governedRiskRanking.map((row) => [row.directory, row]),
+    );
+
+    // The signalled directory keeps rank 1 and its admission path is the old
+    // one. If the wider admission ever reorders a scored row, this fails.
+    expect(ranked.get("src/app/api/omicron/__tests__")).toMatchObject({
+      admittedBy: "governed_risk_signal",
+      governedRisk: {
+        rank: 1,
+        band: "critical",
+        signals: ["approval_or_lifecycle_write"],
+      },
+    });
+
+    // Both score-0 directories are now IN the work order, each named, each
+    // still unclassified and unscored. Nothing is reclassified upward.
+    expect(ranked.get("src/lib/measured/__tests__")).toMatchObject({
+      admittedBy: "untriaged_unrun_work",
+      untriagedUnrunTestFiles: 2,
+      governedRisk: {
+        rank: 2,
+        score: 0,
+        band: "unclassified",
+        signals: [],
+        productSourceCount: 1,
+      },
+    });
+    expect(ranked.get("src/lib/opaque/__tests__")).toMatchObject({
+      admittedBy: "untriaged_unrun_work",
+      untriagedUnrunTestFiles: 1,
+      governedRisk: {
+        rank: 3,
+        score: 0,
+        band: "unclassified",
+        signals: [],
+        productSourceCount: 0,
+      },
+    });
+
+    // The denominator property itself, stated over the population rather than
+    // over these three names: every directory the census says holds untriaged
+    // unrun work appears in the ranking exactly once, and nothing else does.
+    const untriagedDirectories = [
+      "src/app/api/omicron/__tests__",
+      "src/lib/measured/__tests__",
+      "src/lib/opaque/__tests__",
+    ];
+    expect([...ranked.keys()].sort()).toEqual([...untriagedDirectories].sort());
+    expect(census.governedRiskRanking.length).toBe(
+      census.counts.directoriesWithUntriagedUnrunTestFiles,
+    );
+    // Ranks are a dense ordering over that whole population, so a row cannot
+    // be admitted and left without a place in the queue.
+    expect(census.governedRiskRanking.map((row) => row.governedRisk.rank)).toEqual([
+      1, 2, 3,
+    ]);
+
+    // `governedRiskFiles` and `governedRiskEvidence` still mean governed risk,
+    // and are unchanged by the admission: they carry the signalled directory
+    // and neither score-0 one. Widening them would have quietly redefined
+    // "governed-risk evidence" as "every unrun file".
+    expect(census.governedRiskEvidence.map((row) => row.directory)).toEqual([
+      "src/app/api/omicron/__tests__",
+    ]);
+    expect([
+      ...new Set(census.governedRiskFiles.map((row) => row.directory)),
+    ]).toEqual(["src/app/api/omicron/__tests__"]);
+
+    // The unclassified list keeps its own meaning — which zeros the resolver
+    // reached and which it did not — and is now a view ON the ranking rather
+    // than its complement. Asserted as that relationship, per directory, so the
+    // two cannot drift apart unnoticed.
+    for (const row of census.unclassifiedRiskDirectories) {
+      const rankedRow = ranked.get(row.directory);
+      expect(rankedRow).toBeDefined();
+      expect(rankedRow!.admittedBy).toBe("untriaged_unrun_work");
+      expect(rankedRow!.governedRisk.score).toBe(0);
+      expect(rankedRow!.untriagedUnrunTestFiles).toBe(row.untriagedUnrunTestFiles);
+    }
+
+    // The three numbers C-555 asks for, on the face of the output rather than
+    // recomputed by whoever reads it.
+    expect(census.counts).toMatchObject({
+      rankedDirectories: 3,
+      rankedUntriagedUnrunTestFiles: 4,
+      untriagedUnrunTestFiles: 4,
+    });
   });
 
   it("does not promote comments and literals into governed source signals", () => {
