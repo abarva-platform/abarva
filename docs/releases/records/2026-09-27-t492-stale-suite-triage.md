@@ -225,7 +225,20 @@ for finished.
 - The CI run on the pull request: the five new steps print the case counts for the directories they
   wire, which is the wiring proof the item asks for — a suite that is green and unwired is
   indistinguishable from one that is absent, so the count is read from the job log rather than grepped
-  from a summary.
+  from a summary. **Captured:** `Unit suites` run `36307653265`, conclusion success. Setup
+  **6 suites / 44 cases**, Atlas IAC **6 / 162**, aVa chat **7 / 52**, Source contracts **6 / 65**,
+  visual-system **10 / 137** — **35 suites and 460 cases**, the same figures measured locally file by
+  file and then again as one invocation. Before that run, all 35 ran in no workflow at all.
+- **One required check did not settle green on the first run, and it is not an assertion of this
+  change that failed.** `Behavior coverage floor` (run `36307653279`) was **cancelled** at its
+  15-minute ceiling with step 5, `Run behavior coverage gate`, still in progress and every later step
+  skipped. No case in it failed — the runner ran out of wall clock. That job's thin margin against its
+  ceiling is already recorded against another item and is owed to a human, because raising a required
+  gate's timeout is refused to an unattended agent as a CI bypass, correctly. This change does add to
+  that job's body: 2 suites and 29 cases in `src/__tests__/behaviors`, which is what the gate runs
+  under coverage. The gate **passes locally, exit 0**. It is re-run by a fresh `pull_request` event
+  rather than re-run in place, because a `--failed` re-run reuses the same run and keeps losing at
+  this margin. **The check is neither de-required nor deleted**, and the merge waits for it.
 - Four follow-on items are named in the record with what each owns: wiring the five held directories
   once their blocking rows are settled; rewriting the 14 source-text scanners; repairing the retired
   import path one of them found; and updating the four behaviourally stale suites against the changes
