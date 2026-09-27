@@ -22,10 +22,10 @@ The private demo-code route uses the same helper so approved launch identities c
 separate missing-user state there either.
 
 The production auth provider also requires a phone-number field when a backend user is created.
-Launch bootstrap now supplies a deterministic non-routable phone value for newly materialized
-approved identities so email-code sign-in can proceed without collecting a phone number from the
-user. If the provider still rejects provisioning, the bootstrap route returns a typed JSON failure
-instead of a blank 500.
+Launch bootstrap now supplies a deterministic non-routable, E.164-valid phone value for newly
+materialized approved identities so email-code sign-in can proceed without collecting a phone
+number from the user. If the provider still rejects provisioning, the bootstrap route returns a
+typed JSON failure instead of a blank 500.
 
 ## Layer Impact
 
@@ -67,6 +67,8 @@ workspace.
 - `npm test -- --runInBand src/__tests__/integration/launch-user-route.test.ts src/__tests__/integration/email-code-sign-in-panel.test.tsx src/__tests__/integration/demo-code-sign-in-route.test.ts src/__tests__/unit/proxy-public-routes.test.ts` — **Pass**, 34 passed / 0 failed.
 - `npm test -- --runInBand src/__tests__/integration/launch-user-route.test.ts src/__tests__/integration/email-code-sign-in-panel.test.tsx src/__tests__/integration/demo-code-sign-in-route.test.ts src/__tests__/unit/proxy-public-routes.test.ts src/__tests__/behaviors/integration-directory-ci-coverage.test.ts` — **Pass**, 50 passed / 0 failed.
 - Follow-up focused regression for provider-required phone bootstrap and typed provisioning errors:
+  **Pass** in the follow-up PR; focused auth route/component suite is 36 passed / 0 failed.
+- Follow-up E.164 correction for the provider-required bootstrap phone field:
   **Pass** in the follow-up PR; focused auth route/component suite is 36 passed / 0 failed.
 - `npm run test:integration:ci-visibility` — **Pass**.
 - `npm run audit:test-ci-coverage:check` — **Pass**.

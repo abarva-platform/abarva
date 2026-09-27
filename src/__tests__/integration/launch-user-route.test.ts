@@ -54,7 +54,7 @@ describe('POST /api/auth/launch-user', () => {
     });
     expect(createUser).toHaveBeenCalledWith(expect.objectContaining({
       emailAddress: ['operator@example.com'],
-      phoneNumber: [expect.stringMatching(/^\+1555010\d{4}$/)],
+      phoneNumber: [expect.stringMatching(/^\+120255501\d{2}$/)],
       skipPasswordRequirement: true,
       publicMetadata: expect.objectContaining({
         role: 'admin',
