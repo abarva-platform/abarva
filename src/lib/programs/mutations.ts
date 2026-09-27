@@ -1175,7 +1175,7 @@ export async function completeDeliverable(
           input.signOff === false ? undefined : "human_approved",
         authoritative_flag_source:
           input.signOff === false ? undefined : "normal_flow",
-        requires_revalidation: input.signOff === false ? undefined : false,
+        requires_revalidation: false,
         updated_at: now,
       })
       .eq("id", deliverableId)
