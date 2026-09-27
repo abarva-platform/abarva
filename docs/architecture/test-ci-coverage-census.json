@@ -17,14 +17,14 @@
     "No timestamp is recorded, so refreshing this file on an unchanged tree is a no-op."
   ],
   "counts": {
-    "testFiles": 2505,
-    "coveredTestFiles": 2065,
-    "pullRequestCoveredTestFiles": 2064,
+    "testFiles": 2506,
+    "coveredTestFiles": 2066,
+    "pullRequestCoveredTestFiles": 2065,
     "uncoveredTestFiles": 440,
     "directoriesWithTests": 491,
     "directoriesFullyCovered": 293,
-    "directoriesPartiallyCovered": 24,
-    "directoriesUncovered": 174,
+    "directoriesPartiallyCovered": 25,
+    "directoriesUncovered": 173,
     "directoriesWithUnrunTestFiles": 198,
     "directoriesWithUntriagedUnrunTestFiles": 187,
     "declaredQuarantineTestFiles": 52,
@@ -270,6 +270,16 @@
       "coveredTestFiles": 5,
       "declaredQuarantineTestFiles": 0,
       "untriagedUnrunTestFiles": 1,
+      "via": [
+        "command"
+      ]
+    },
+    {
+      "directory": "src/scripts/__tests__",
+      "testFiles": 6,
+      "coveredTestFiles": 1,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 5,
       "via": [
         "command"
       ]
@@ -3513,7 +3523,7 @@
     },
     {
       "directory": "src/scripts/__tests__",
-      "testFiles": 5,
+      "testFiles": 6,
       "unrunTestFiles": 5,
       "declaredQuarantineTestFiles": 0,
       "untriagedUnrunTestFiles": 5,
@@ -4006,14 +4016,6 @@
     },
     {
       "directory": "src/lib/source/proposal-intelligence/__tests__",
-      "testFiles": 5,
-      "coveredTestFiles": 0,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 5,
-      "via": []
-    },
-    {
-      "directory": "src/scripts/__tests__",
       "testFiles": 5,
       "coveredTestFiles": 0,
       "declaredQuarantineTestFiles": 0,

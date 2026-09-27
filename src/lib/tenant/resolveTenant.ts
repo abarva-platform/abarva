@@ -1,5 +1,3 @@
-import { cookies } from "next/headers";
-import { auth, currentUser } from "@clerk/nextjs/server";
 import {
   hasExplicitTenantAlias,
   isLockedTenantRole,
@@ -39,6 +37,10 @@ interface SessionClientContext {
   email?: string;
 }
 
+interface CookieStoreLike {
+  get(name: string): { value?: string } | undefined;
+}
+
 export interface ResolveTenantInput {
   requestedClient?: string | null;
   surfaceClientKey?: string | null;
@@ -46,11 +48,20 @@ export interface ResolveTenantInput {
   allowFallback?: boolean;
 }
 
+async function getRequestCookieStore(): Promise<CookieStoreLike | null> {
+  try {
+    const { cookies } = await import("next/headers");
+    return (await cookies()) as CookieStoreLike;
+  } catch {
+    return null;
+  }
+}
+
 async function getSessionClientContext(): Promise<SessionClientContext> {
   try {
-    const store = await cookies();
+    const store = await getRequestCookieStore();
     const proofSession = await readPrivateBrowserProofSessionValue(
-      store.get(PRIVATE_BROWSER_PROOF_SESSION_COOKIE)?.value,
+      store?.get(PRIVATE_BROWSER_PROOF_SESSION_COOKIE)?.value,
     );
     if (proofSession) {
       return {
@@ -64,9 +75,25 @@ async function getSessionClientContext(): Promise<SessionClientContext> {
     // Fall through to the Clerk-backed session path.
   }
 
-  let session: Awaited<ReturnType<typeof auth>> | null = null;
+  let clerk:
+    | {
+        auth: () => Promise<{ sessionClaims?: unknown } | null>;
+        currentUser: () => Promise<{
+          publicMetadata?: Record<string, unknown> | null;
+          primaryEmailAddress?: { emailAddress?: string | null } | null;
+          emailAddresses?: Array<{ emailAddress?: string | null }>;
+        } | null>;
+      }
+    | null = null;
   try {
-    session = await auth();
+    clerk = await import("@clerk/nextjs/server");
+  } catch {
+    clerk = null;
+  }
+
+  let session: { sessionClaims?: unknown } | null = null;
+  try {
+    session = clerk ? await clerk.auth() : null;
   } catch {
     session = null;
   }
@@ -97,10 +124,11 @@ async function getSessionClientContext(): Promise<SessionClientContext> {
   };
 
   try {
-    const user = await currentUser();
+    const user = clerk ? await clerk.currentUser() : null;
     return {
       role:
-        claimContext.role ?? (user?.publicMetadata?.role as string | undefined),
+        claimContext.role ??
+        (user?.publicMetadata?.role as string | undefined),
       clientId:
         claimContext.clientId ??
         (user?.publicMetadata?.clientId as string | undefined),
@@ -119,8 +147,8 @@ async function getSessionClientContext(): Promise<SessionClientContext> {
 
 async function getCookieClientKey(): Promise<ClientKey | null> {
   try {
-    const store = await cookies();
-    const fromCookie = store.get(ACTIVE_CLIENT_COOKIE)?.value ?? null;
+    const store = await getRequestCookieStore();
+    const fromCookie = store?.get(ACTIVE_CLIENT_COOKIE)?.value ?? null;
     return appClientKeyForTenant(fromCookie);
   } catch {
     return null;
