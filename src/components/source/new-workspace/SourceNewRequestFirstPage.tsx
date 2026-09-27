@@ -27,6 +27,7 @@ export interface SourceNewEventWorkspaceSummary {
   code: string;
   name: string;
   lifecycle: string;
+  currentStageKey: string;
   currentStageLabel: string;
   lifecycleLabel: string;
   trigger: string | null;
@@ -59,7 +60,14 @@ export function SourceNewRequestFirstPage({
   const requests = canShowRequests
     ? importedRequests.filter((request) => request.eventLink === null)
     : [];
-  const activeWorkspaces = visibleWorkspaces;
+  const pendingApprovals = visibleWorkspaces.filter(
+    (event) =>
+      event.lifecycle === "waiting_on_client" &&
+      event.currentStageKey === "strategy",
+  );
+  const activeWorkspaces = visibleWorkspaces.filter(
+    (event) => !pendingApprovals.includes(event),
+  );
   const nextAction =
     requestQueueStatus === "unauthorized"
       ? {
@@ -76,6 +84,11 @@ export function SourceNewRequestFirstPage({
               label: "Review pending requests",
               note: "Each request shows its missing information and next owner.",
             }
+          : pendingApprovals.length > 0
+            ? {
+                label: "Review pending approvals",
+                note: "These events remain in intake until an accountable decision is recorded.",
+              }
           : activeWorkspaces.length > 0
             ? {
                 label: "Open accepted work",
@@ -117,8 +130,32 @@ export function SourceNewRequestFirstPage({
             status={requestQueueStatus}
             intakeHref={intakeHref}
             requests={requests}
+            hasPendingApprovals={pendingApprovals.length > 0}
             onRetryRequestQueue={onRetryRequestQueue}
           />
+          {pendingApprovals.length > 0 ? (
+            <div style={{ marginTop: 16 }}>
+              <h3 style={PENDING_TITLE}>Pending approval</h3>
+              <ol style={EVENT_LIST}>
+                {pendingApprovals.slice(0, 6).map((event) => (
+                  <li key={event.id} style={EVENT_ROW}>
+                    <div style={{ minWidth: 0 }}>
+                      <div style={EVENT_LINK}>{event.name}</div>
+                      <div style={EVENT_META}>
+                        {event.code} · {event.lifecycleLabel}
+                      </div>
+                    </div>
+                    <Link
+                      href={`/source/events/${encodeURIComponent(event.id)}/approval`}
+                      style={OPEN_LINK}
+                    >
+                      Review approval
+                    </Link>
+                  </li>
+                ))}
+              </ol>
+            </div>
+          ) : null}
         </section>
 
         <section aria-label="Event workspaces" style={PANEL}>
@@ -180,11 +217,13 @@ function RequestQueueState({
   status,
   intakeHref,
   requests,
+  hasPendingApprovals,
   onRetryRequestQueue,
 }: {
   status: SourceNewRequestQueueStatus;
   intakeHref: string;
   requests: readonly SourceIntakeRequestSummary[];
+  hasPendingApprovals: boolean;
   onRetryRequestQueue: () => void;
 }) {
   if (status === "loading") {
@@ -229,7 +268,9 @@ function RequestQueueState({
   return (
     <div style={STATE_BOX}>
       <p style={EMPTY_COPY}>
-        No requests are waiting for intake review.
+        {hasPendingApprovals
+          ? "No imported requests are waiting for intake review."
+          : "No requests are waiting for intake review."}
       </p>
       <p style={NOTE_COPY}>
         New requests stay here until their intake review is complete.
@@ -511,6 +552,12 @@ const PANEL_TITLE: CSSProperties = {
   fontSize: 18,
   lineHeight: 1.2,
   letterSpacing: 0,
+};
+
+const PENDING_TITLE: CSSProperties = {
+  margin: "0 0 10px",
+  fontSize: 14,
+  lineHeight: 1.3,
 };
 
 const CHIP: CSSProperties = {
