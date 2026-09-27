@@ -187,6 +187,25 @@ const RATCHET_SCRIPT = "scripts/ci/test-ratchet.mjs";
 const RATCHET_SPREAD = "...paths";
 
 /**
+ * `scripts/audit/ai-surface-control-cases.mjs` has the same shape for the same
+ * reason (item C-554): it spawns Jest with `...suites` spread from the AI
+ * surface control catalog, so the suites are in that catalog and not in any
+ * command line. Without this hop its invocation lands in
+ * `indeterminateInvocations`, which twenty-eight behaviour suites assert is
+ * zero — and, worse in the direction that matters, the 23 suites it genuinely
+ * runs on every pull request would be credited to nobody.
+ *
+ * Named explicitly, on the same rule as the ratchet above: a general rule that
+ * read test paths out of any JSON a script happens to mention would claim
+ * coverage from files that have nothing to do with a test run. The paths are
+ * read from the catalog's own `behavioralTest.path` fields rather than from a
+ * second copy of that list kept here.
+ */
+const CONTROL_CASE_SCRIPT = "scripts/audit/ai-surface-control-cases.mjs";
+const CONTROL_CASE_SPREAD = "...suites";
+const CONTROL_CASE_CATALOG = "docs/security/ai-surface-control-catalog.json";
+
+/**
  * A command that names a directory and then excludes a file inside it by name
  * does not run that file. Reading the directory and stopping there counts the
  * exclusion as covered — the over-stating direction, which is the one that
@@ -964,9 +983,38 @@ function jsonPathArguments(root, command) {
 }
 
 /**
+ * The suites `scripts/audit/ai-surface-control-cases.mjs` runs, read from the
+ * control catalog it reads them from.
+ *
+ * Every credited control names the behavioral test that proves it; the script
+ * spreads the distinct set of those paths into Jest. Reading the same field
+ * here keeps one list, so a suite added to or removed from the catalog moves
+ * this census in the same commit.
+ */
+function controlCaseSuites(root) {
+  const absolute = path.join(root, CONTROL_CASE_CATALOG);
+  if (!existsSync(absolute)) return [];
+  let catalog;
+  try {
+    catalog = JSON.parse(readFileSync(absolute, "utf8"));
+  } catch {
+    return [];
+  }
+  const suites = new Set();
+  for (const surface of catalog?.controls ?? []) {
+    for (const control of surface?.requiredControls ?? []) {
+      const declared = control?.behavioralTest?.path;
+      if (typeof declared === "string" && declared.startsWith("src/")) suites.add(declared);
+    }
+  }
+  return [...suites].sort().map((declared) => ({ source: CONTROL_CASE_CATALOG, declared }));
+}
+
+/**
  * Every command a workflow reaches, each tagged with the workflow it came from
  * and whether that workflow gates a pull request. Hops: workflow run step →
- * npm script (recursive) → repo script file → ratchet baseline JSON.
+ * npm script (recursive) → repo script file → ratchet baseline JSON, or AI
+ * surface control catalog.
  */
 export function collectReachableCommands(root, packageScripts) {
   const reachable = [];
@@ -1011,10 +1059,16 @@ export function collectReachableCommands(root, packageScripts) {
         if (!existsSync(absolute)) continue;
 
         const ratchetPaths =
-          scriptPath === RATCHET_SCRIPT ? jsonPathArguments(root, command) : [];
+          scriptPath === RATCHET_SCRIPT
+            ? jsonPathArguments(root, command)
+            : scriptPath === CONTROL_CASE_SCRIPT
+              ? controlCaseSuites(root)
+              : [];
+        const spreadVia =
+          scriptPath === CONTROL_CASE_SCRIPT ? "control-case-catalog" : "ratchet-baseline";
         for (const { source, declared } of ratchetPaths) {
           reachable.push({
-            via: "ratchet-baseline",
+            via: spreadVia,
             source: `${scriptPath} ← ${source}`,
             pullRequest,
             command: declared,
@@ -1070,6 +1124,16 @@ export function collectReachableCommands(root, packageScripts) {
           if (
             scriptPath === RATCHET_SCRIPT &&
             invocation.includes(RATCHET_SPREAD) &&
+            ratchetPaths.length > 0
+          ) {
+            continue;
+          }
+          // Same reading for the control-case checker: its spawn line is
+          // `["jest", "--runTestsByPath", ...suites, …]` and those suites were
+          // just resolved from the catalog above, so it is not unresolved.
+          if (
+            scriptPath === CONTROL_CASE_SCRIPT &&
+            invocation.includes(CONTROL_CASE_SPREAD) &&
             ratchetPaths.length > 0
           ) {
             continue;

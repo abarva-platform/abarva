@@ -17,7 +17,10 @@
             "Review before acting"
           ],
           "behavioralTest": {
-            "path": "src/components/agent/__tests__/AgentResponse.controls.test.tsx"
+            "path": "src/components/agent/__tests__/AgentResponse.controls.test.tsx",
+            "provenCases": [
+              "agent response · disclosure controls marks every answer as a draft to review before acting"
+            ]
           }
         },
         {
@@ -28,7 +31,18 @@
             "inlineNodes"
           ],
           "behavioralTest": {
-            "path": "src/components/agent/__tests__/AgentResponse.citation-control.test.tsx"
+            "path": "src/components/agent/__tests__/AgentResponse.citation-control.test.tsx",
+            "provenCases": [
+              "agent response · citation control · what the reader sees resolves the placeholder to a citation pill naming the source",
+              "agent response · citation control · what the reader sees leaves no raw placeholder text where a citation resolved",
+              "agent response · citation control · what the reader sees resolves the canonical grammar even when the model emitted another",
+              "agent response · citation control · what the reader sees renders a broken target visibly rather than hiding it",
+              "agent response · citation control · what the reader sees renders an unresolvable placeholder as literal text rather than swallowing it",
+              "agent response · citation control · the map the component builds keys every citation under the placeholder the model actually emitted",
+              "agent response · citation control · the map the component builds also keys it under the canonical {{cite:type:id}} form",
+              "agent response · citation control · the map the component builds keys every citation in a multi-citation answer, not just the first",
+              "agent response · citation control · the map the component builds hands down an empty map when the answer cites nothing"
+            ]
           }
         },
         {
@@ -38,7 +52,12 @@
             "shouldShowRenderedResponseCitationGap"
           ],
           "behavioralTest": {
-            "path": "src/components/agent/__tests__/AgentResponse.controls.test.tsx"
+            "path": "src/components/agent/__tests__/AgentResponse.controls.test.tsx",
+            "provenCases": [
+              "agent response · disclosure controls says so when substantive prose arrives with no citation",
+              "agent response · disclosure controls stays quiet about citation gaps when the answer is actually cited",
+              "agent response · disclosure controls does not raise a citation gap when confidence is explicitly none"
+            ]
           }
         },
         {
@@ -48,7 +67,11 @@
             "viewModel.confidence.tier"
           ],
           "behavioralTest": {
-            "path": "src/components/agent/__tests__/AgentResponse.controls.test.tsx"
+            "path": "src/components/agent/__tests__/AgentResponse.controls.test.tsx",
+            "provenCases": [
+              "agent response · disclosure controls discloses a confidence tier when the response carries one",
+              "agent response · disclosure controls documents a gap: confidence_signal alone discloses nothing"
+            ]
           }
         },
         {
@@ -58,7 +81,10 @@
             "follow_up_actions"
           ],
           "behavioralTest": {
-            "path": "src/components/agent/__tests__/AgentResponse.controls.test.tsx"
+            "path": "src/components/agent/__tests__/AgentResponse.controls.test.tsx",
+            "provenCases": [
+              "agent response · disclosure controls puts an approval notice above follow-up actions a user can fire"
+            ]
           }
         }
       ]
@@ -77,7 +103,10 @@
             "compact"
           ],
           "behavioralTest": {
-            "path": "src/components/agent/__tests__/AgentDock.test.tsx"
+            "path": "src/components/agent/__tests__/AgentDock.test.tsx",
+            "provenCases": [
+              "AgentDock · default mode renders the persistent AI responsibility footer"
+            ]
           }
         },
         {
@@ -87,7 +116,10 @@
             "compact"
           ],
           "behavioralTest": {
-            "path": "src/components/agent/__tests__/AgentDock.test.tsx"
+            "path": "src/components/agent/__tests__/AgentDock.test.tsx",
+            "provenCases": [
+              "AgentDock · default mode renders the in-chat human approval boundary for agent actions"
+            ]
           }
         }
       ]
@@ -107,7 +139,13 @@
             "Review before acting"
           ],
           "behavioralTest": {
-            "path": "src/components/shell/__tests__/AtlasDrawer.controls.test.tsx"
+            "path": "src/components/shell/__tests__/AtlasDrawer.controls.test.tsx",
+            "provenCases": [
+              "atlas drawer · AI draft label on an answer labels a settled streamed answer as a draft to review",
+              "atlas drawer · AI draft label on an answer labels an answer while it is still generating",
+              "atlas drawer · AI draft label on an answer labels a settled agent turn and leaves the reader's own words unlabelled",
+              "atlas drawer · AI draft label on an answer shows no answer label when the drawer has no answer in it"
+            ]
           }
         },
         {
@@ -118,7 +156,11 @@
             "compact"
           ],
           "behavioralTest": {
-            "path": "src/components/shell/__tests__/AtlasDrawer.controls.test.tsx"
+            "path": "src/components/shell/__tests__/AtlasDrawer.controls.test.tsx",
+            "provenCases": [
+              "atlas drawer · disclosure controls carries the responsibility footer in the drawer's own tone",
+              "atlas drawer · disclosure controls keeps both notices in the drawer rather than only on the page behind it"
+            ]
           }
         },
         {
@@ -128,7 +170,14 @@
             "shouldShowPlainTextCitationGap"
           ],
           "behavioralTest": {
-            "path": "src/components/shell/__tests__/AtlasDrawer.controls.test.tsx"
+            "path": "src/components/shell/__tests__/AtlasDrawer.controls.test.tsx",
+            "provenCases": [
+              "atlas drawer · citation gap on an answer warns when a streamed substantive answer carries no source basis",
+              "atlas drawer · citation gap on an answer stays silent when the same answer carries its source basis",
+              "atlas drawer · citation gap on an answer stays silent on an answer that makes no substantive claim",
+              "atlas drawer · citation gap on an answer warns on an uncited settled agent turn, not on the reader's own turn",
+              "atlas drawer · citation gap on an answer stays silent on a cited settled agent turn"
+            ]
           }
         },
         {
@@ -138,7 +187,10 @@
             "tone=\"dark\""
           ],
           "behavioralTest": {
-            "path": "src/components/shell/__tests__/AtlasDrawer.controls.test.tsx"
+            "path": "src/components/shell/__tests__/AtlasDrawer.controls.test.tsx",
+            "provenCases": [
+              "atlas drawer · disclosure controls states that agent actions need human approval"
+            ]
           }
         }
       ]
@@ -158,7 +210,17 @@
             "MOVES_HUMAN_RATIONALE_MIN_CHARS"
           ],
           "behavioralTest": {
-            "path": "src/components/programs/__tests__/ProgramDetailPage.gate-approval.controls.test.tsx"
+            "path": "src/components/programs/__tests__/ProgramDetailPage.gate-approval.controls.test.tsx",
+            "provenCases": [
+              "program gate approval · human decision control shows the AI-support watermark and the attestation while the human decides",
+              "program gate approval · human decision control will not advance the program with no rationale and no accepted responsibility",
+              "program gate approval · human decision control will not advance on a rationale alone, without accepted responsibility",
+              "program gate approval · human decision control will not advance on accepted responsibility alone, without a rationale",
+              "program gate approval · human decision control will not advance on a rationale shorter than the stated minimum",
+              "program gate approval · human decision control will not accept whitespace padded to reach the minimum",
+              "program gate approval · human decision control advances only once both halves are given, and sends the rationale the human typed",
+              "program gate approval · human decision control names the criteria that are not met before asking for the rationale"
+            ]
           }
         }
       ]
@@ -178,7 +240,11 @@
             "reviewedDecision"
           ],
           "behavioralTest": {
-            "path": "src/components/deliverables/__tests__/ApproveActions.controls.test.tsx"
+            "path": "src/components/deliverables/__tests__/ApproveActions.controls.test.tsx",
+            "provenCases": [
+              "deliverable approve actions · controls sends the human's edited decision, not the drafted one",
+              "deliverable approve actions · controls refuses to submit an emptied decision"
+            ]
           }
         },
         {
@@ -189,7 +255,11 @@
             "Logs you as approver"
           ],
           "behavioralTest": {
-            "path": "src/components/deliverables/__tests__/ApproveActions.controls.test.tsx"
+            "path": "src/components/deliverables/__tests__/ApproveActions.controls.test.tsx",
+            "provenCases": [
+              "deliverable approve actions · controls gives a viewer without approval rights no way to approve",
+              "deliverable approve actions · controls tells the approver what approving does before they do it"
+            ]
           }
         }
       ]
@@ -306,7 +376,18 @@
             "Self-approval notice"
           ],
           "behavioralTest": {
-            "path": "src/components/source/__tests__/AdminSourceEventApprovalQueue.controls.test.tsx"
+            "path": "src/components/source/__tests__/AdminSourceEventApprovalQueue.controls.test.tsx",
+            "provenCases": [
+              "source approval queue · controls refuses to approve before every attestation is ticked",
+              "source approval queue · controls refuses to approve on a reason shorter than the minimum it advertises",
+              "source approval queue · controls sends the attestations the approver actually ticked",
+              "source approval queue · controls send back and reject carry the same rationale weight refuses source-event-send-back-event-1 with no rationale",
+              "source approval queue · controls send back and reject carry the same rationale weight refuses source-event-reject-event-1 with no rationale",
+              "source approval queue · controls send back and reject carry the same rationale weight refuses source-event-send-back-event-1 on a rationale shorter than the minimum",
+              "source approval queue · controls send back and reject carry the same rationale weight refuses source-event-reject-event-1 on a rationale shorter than the minimum",
+              "source approval queue · controls send back and reject carry the same rationale weight sends source-event-send-back-event-1 with the rationale once it meets the minimum",
+              "source approval queue · controls send back and reject carry the same rationale weight sends source-event-reject-event-1 with the rationale once it meets the minimum"
+            ]
           }
         },
         {
@@ -317,7 +398,14 @@
             "Approval action failed."
           ],
           "behavioralTest": {
-            "path": "src/components/source/__tests__/AdminSourceEventApprovalQueue.controls.test.tsx"
+            "path": "src/components/source/__tests__/AdminSourceEventApprovalQueue.controls.test.tsx",
+            "provenCases": [
+              "source approval queue · controls tells the approver this is their accountable decision",
+              "source approval queue · controls the self-approval notice states what the record will say names the self-approval when the approver created the event",
+              "source approval queue · controls the self-approval notice states what the record will say does not claim a self-approval when someone else created the event",
+              "source approval queue · controls the self-approval notice states what the record will say states the condition rather than asserting either way when the viewer is unknown",
+              "source approval queue · controls surfaces a failed approval instead of implying it succeeded"
+            ]
           }
         }
       ],
@@ -339,7 +427,13 @@
             "assumptions.map"
           ],
           "behavioralTest": {
-            "path": "src/components/source/__tests__/RenewalCockpitView.estimate-disclosure.test.tsx"
+            "path": "src/components/source/__tests__/RenewalCockpitView.estimate-disclosure.test.tsx",
+            "provenCases": [
+              "U-507 — the renewal cockpit should-cost estimate carries its disclosure renders the caveat on the cockpit, not only in the component's own suite",
+              "U-507 — the renewal cockpit should-cost estimate carries its disclosure states the assumptions the should-cost model actually made",
+              "U-507 — the renewal cockpit should-cost estimate carries its disclosure puts the disclosure inside the should-cost card and nowhere else",
+              "U-507 — the renewal cockpit should-cost estimate carries its disclosure leaves an ordinary non-estimate Source panel without the caveat"
+            ]
           }
         }
       ],
@@ -362,7 +456,13 @@
             "Do not claim the user can see, approve"
           ],
           "behavioralTest": {
-            "path": "src/app/api/chat/agent/__tests__/agent-visible-stream-controls.test.ts"
+            "path": "src/app/api/chat/agent/__tests__/agent-visible-stream-controls.test.ts",
+            "provenCases": [
+              "agent visible stream controls scrubs model and tool text",
+              "agent visible stream controls scrubs a phrase split across output chunks",
+              "agent visible stream controls holds a split name and flushes an unfinished sentence",
+              "agent visible stream controls preserves ordinary text while withholding an unfinished control phrase"
+            ]
           }
         }
       ]
@@ -382,7 +482,14 @@
             "aiDecisionEvidencePacket"
           ],
           "behavioralTest": {
-            "path": "src/app/api/programs/phase-gate/__tests__/approval-gate.test.ts"
+            "path": "src/app/api/programs/phase-gate/__tests__/approval-gate.test.ts",
+            "provenCases": [
+              "phase-gate route · human approval gate refuses a gate advance with no human rationale, before any tenant lookup",
+              "phase-gate route · human approval gate refuses a rationale that is present but empty of reasoning",
+              "phase-gate route · human approval gate refuses a tenant member who does not hold gate-approval permission",
+              "phase-gate route · human approval gate refuses an ordinary approver when strict mode demands an admin",
+              "phase-gate route · human approval gate refuses a caller whose tenant access does not check out"
+            ]
           }
         }
       ]
@@ -402,7 +509,11 @@
             "aiDecisionEvidencePacket"
           ],
           "behavioralTest": {
-            "path": "src/app/api/reasoning/gate-waiver/__tests__/route.controls.test.ts"
+            "path": "src/app/api/reasoning/gate-waiver/__tests__/route.controls.test.ts",
+            "provenCases": [
+              "POST /api/reasoning/gate-waiver decision controls refuses a reason too short to explain a consequential waiver",
+              "POST /api/reasoning/gate-waiver decision controls records an auditable evidence packet for an accepted waiver"
+            ]
           }
         }
       ]
@@ -422,7 +533,12 @@
             "approval_required"
           ],
           "behavioralTest": {
-            "path": "src/app/api/v1/programs/[programId]/advance/__tests__/approval-gate.test.ts"
+            "path": "src/app/api/v1/programs/[programId]/advance/__tests__/approval-gate.test.ts",
+            "provenCases": [
+              "program advance route · human approval gate refuses to advance without a human rationale, and writes nothing",
+              "program advance route · human approval gate creates an approval request instead of advancing when the gate requires one",
+              "program advance route · human approval gate refuses an unmet hard gate, and writes nothing"
+            ]
           }
         }
       ]
@@ -442,7 +558,13 @@
             "approval_required"
           ],
           "behavioralTest": {
-            "path": "src/lib/agent/tools/program/__tests__/advancePhase.approval-gate.test.ts"
+            "path": "src/lib/agent/tools/program/__tests__/advancePhase.approval-gate.test.ts",
+            "provenCases": [
+              "advance_phase tool · human approval gate refuses to advance without an explicit human rationale, and writes nothing",
+              "advance_phase tool · human approval gate queues an approval request instead of satisfying the gate itself",
+              "advance_phase tool · human approval gate refuses a bypass from a session without gate-approval rights",
+              "advance_phase tool · human approval gate still blocks on an unmet hard gate before any rationale question arises"
+            ]
           }
         }
       ]
@@ -462,7 +584,14 @@
             "MOVES_HUMAN_RATIONALE_MIN_CHARS"
           ],
           "behavioralTest": {
-            "path": "src/components/programs/__tests__/PhaseAdvanceButton.controls.test.tsx"
+            "path": "src/components/programs/__tests__/PhaseAdvanceButton.controls.test.tsx",
+            "provenCases": [
+              "phase advance button · human decision control will not commit a phase advance with no rationale",
+              "phase advance button · human decision control will not commit a rationale shorter than the stated minimum",
+              "phase advance button · human decision control sends the rationale the human typed",
+              "phase advance button · human decision control shows the attestation the human is making while they make it",
+              "phase advance button · human decision control offers no advance at all when the caller says the gate is closed"
+            ]
           }
         }
       ]
@@ -482,7 +611,14 @@
             "externalActionGate"
           ],
           "behavioralTest": {
-            "path": "src/app/api/v1/source/work-items/__tests__/external-action-gate.test.ts"
+            "path": "src/app/api/v1/source/work-items/__tests__/external-action-gate.test.ts",
+            "provenCases": [
+              "source work-items route · external action gate refuses an external action with no human confirmation, and writes nothing",
+              "source work-items route · external action gate refuses a confirmation that carries no real rationale",
+              "source work-items route · external action gate refuses a confirmed, justified action with no evidence references",
+              "source work-items route · external action gate records who confirmed, why, and that a human remains responsible for sending",
+              "source work-items route · external action gate does not demand confirmation for an item that stays inside the platform"
+            ]
           }
         }
       ]
@@ -503,7 +639,14 @@
             "evidence_refs"
           ],
           "behavioralTest": {
-            "path": "src/lib/programs/__tests__/origination-submit.promotion-gate.test.ts"
+            "path": "src/lib/programs/__tests__/origination-submit.promotion-gate.test.ts",
+            "provenCases": [
+              "origination submit · intelligence promotion gate refuses a promotion with no human acceptance, before touching anything",
+              "origination submit · intelligence promotion gate refuses an acceptance with no real rationale",
+              "origination submit · intelligence promotion gate refuses an accepted, justified promotion that names no evidence",
+              "origination submit · intelligence promotion gate does not demand promotion approval for a brief that came from no pattern",
+              "origination submit · intelligence promotion gate lets a fully approved promotion past the gate"
+            ]
           }
         }
       ]
@@ -523,7 +666,11 @@
             "Intelligence pattern promotion approval"
           ],
           "behavioralTest": {
-            "path": "src/components/programs/origination/__tests__/ProgramBriefPanel.controls.test.tsx"
+            "path": "src/components/programs/origination/__tests__/ProgramBriefPanel.controls.test.tsx",
+            "provenCases": [
+              "ProgramBriefPanel · declared ai-label control labels an AI-shaped brief as one, in the words the catalog pins",
+              "ProgramBriefPanel · declared ai-label control does not label a brief that no pattern recommendation shaped"
+            ]
           }
         },
         {
@@ -535,7 +682,13 @@
             "promotionApproval.evidenceRefs.length > 0"
           ],
           "behavioralTest": {
-            "path": "src/components/programs/origination/__tests__/ProgramBriefPanel.controls.test.tsx"
+            "path": "src/components/programs/origination/__tests__/ProgramBriefPanel.controls.test.tsx",
+            "provenCases": [
+              "ProgramBriefPanel · declared citation control renders every evidence ref the promotion carries, one by one",
+              "ProgramBriefPanel · declared citation control names the source thread and the selected pattern the recommendation came from",
+              "ProgramBriefPanel · declared citation control withholds submit when the promotion carries no evidence ref at all",
+              "ProgramBriefPanel · declared citation control allows submit once the evidence refs are present and accepted"
+            ]
           }
         }
       ]
@@ -554,7 +707,10 @@
             "AI Draft"
           ],
           "behavioralTest": {
-            "path": "src/lib/programs/__tests__/deliverable-canvas-polish-view.controls.test.ts"
+            "path": "src/lib/programs/__tests__/deliverable-canvas-polish-view.controls.test.ts",
+            "provenCases": [
+              "moves deliverable canvas view · disclosure controls marks every deliverable as an AI draft, not just the first"
+            ]
           }
         },
         {
@@ -563,7 +719,12 @@
             "evidenceCitations"
           ],
           "behavioralTest": {
-            "path": "src/lib/programs/__tests__/deliverable-canvas-polish-view.controls.test.ts"
+            "path": "src/lib/programs/__tests__/deliverable-canvas-polish-view.controls.test.ts",
+            "provenCases": [
+              "moves deliverable canvas view · disclosure controls drops low-confidence and contradicted evidence from the trace",
+              "moves deliverable canvas view · disclosure controls documents a gap: the trace silently stops at two citations",
+              "moves deliverable canvas view · disclosure controls documents a gap: a pending deliverable shows no evidence even when it has some"
+            ]
           }
         },
         {
@@ -574,7 +735,11 @@
             "Missing evidence"
           ],
           "behavioralTest": {
-            "path": "src/lib/programs/__tests__/deliverable-canvas-polish-view.controls.test.ts"
+            "path": "src/lib/programs/__tests__/deliverable-canvas-polish-view.controls.test.ts",
+            "provenCases": [
+              "moves deliverable canvas view · disclosure controls gives every deliverable a readiness the reader can act on",
+              "moves deliverable canvas view · disclosure controls documents a gap: readiness reads the phase's evidence, not the deliverable's"
+            ]
           }
         }
       ]
@@ -593,7 +758,12 @@
             "HUMAN_DECISION_ATTESTATION_TEXT"
           ],
           "behavioralTest": {
-            "path": "src/lib/programs/__tests__/moves-ai-liability.decision-packet.test.ts"
+            "path": "src/lib/programs/__tests__/moves-ai-liability.decision-packet.test.ts",
+            "provenCases": [
+              "moves phase decision evidence packet records who decided and on what, not just that a decision happened",
+              "moves phase decision evidence packet does not let the packet say an agent approved the advance",
+              "moves phase decision evidence packet documents a gap: the scrub covers decision verbs, not action verbs"
+            ]
           }
         },
         {
@@ -603,7 +773,11 @@
             "buildMovesPhaseDecisionAuditRefs"
           ],
           "behavioralTest": {
-            "path": "src/lib/programs/__tests__/moves-ai-liability.decision-packet.test.ts"
+            "path": "src/lib/programs/__tests__/moves-ai-liability.decision-packet.test.ts",
+            "provenCases": [
+              "moves phase decision evidence packet keeps the caller's own evidence, assumptions and alternatives when given",
+              "moves phase decision evidence packet audit refs point back at the decision and every cited item, without duplicates"
+            ]
           }
         },
         {
@@ -613,7 +787,11 @@
             "alternativesConsidered"
           ],
           "behavioralTest": {
-            "path": "src/lib/programs/__tests__/moves-ai-liability.decision-packet.test.ts"
+            "path": "src/lib/programs/__tests__/moves-ai-liability.decision-packet.test.ts",
+            "provenCases": [
+              "moves phase decision evidence packet states the assumptions and the alternatives, so the decision can be argued with later",
+              "moves phase decision evidence packet says plainly when the reviewer declared no missing inputs"
+            ]
           }
         }
       ]
@@ -632,7 +810,10 @@
             "draft, not sent"
           ],
           "behavioralTest": {
-            "path": "src/components/source/__tests__/RenewalCockpitActionBar.external-action.test.tsx"
+            "path": "src/components/source/__tests__/RenewalCockpitActionBar.external-action.test.tsx",
+            "provenCases": [
+              "renewal cockpit · external action control labels a generated vendor email as a draft that was not sent"
+            ]
           }
         },
         {
@@ -643,7 +824,12 @@
             "serveNoticeRationaleReady"
           ],
           "behavioralTest": {
-            "path": "src/components/source/__tests__/RenewalCockpitActionBar.external-action.test.tsx"
+            "path": "src/components/source/__tests__/RenewalCockpitActionBar.external-action.test.tsx",
+            "provenCases": [
+              "renewal cockpit · external action control cannot fire an external action before a human writes a rationale",
+              "renewal cockpit · external action control stays disabled for a rationale shorter than the stated minimum",
+              "renewal cockpit · external action control sends exactly what the screen promised once a rationale is written"
+            ]
           }
         }
       ]
@@ -663,7 +849,13 @@
             "export_not_eligible"
           ],
           "behavioralTest": {
-            "path": "src/app/api/v1/source/[eventId]/artifacts/[artifactCode]/render/__tests__/route.test.ts"
+            "path": "src/app/api/v1/source/[eventId]/artifacts/[artifactCode]/render/__tests__/route.test.ts",
+            "provenCases": [
+              "GET /api/v1/source/[eventId]/artifacts/[artifactCode]/render refuses a client-final RFP before checking its linked authority",
+              "GET /api/v1/source/[eventId]/artifacts/[artifactCode]/render refuses a linked approved RFP without active acceptance",
+              "GET /api/v1/source/[eventId]/artifacts/[artifactCode]/render blocks export with a structured 409 when the linked artifact has not cleared the contract's export-eligibility bar",
+              "GET /api/v1/source/[eventId]/artifacts/[artifactCode]/render allows export once the linked artifact is approved for external use and accepted"
+            ]
           }
         }
       ]
@@ -683,7 +875,11 @@
             "export_not_eligible"
           ],
           "behavioralTest": {
-            "path": "src/app/api/v1/source/artifacts/[artifactId]/download/__tests__/route.test.ts"
+            "path": "src/app/api/v1/source/artifacts/[artifactId]/download/__tests__/route.test.ts",
+            "provenCases": [
+              "GET /api/v1/source/artifacts/[artifactId]/download blocks download with a structured 409 when the client-facing artifact has not cleared export eligibility",
+              "GET /api/v1/source/artifacts/[artifactId]/download allows download once the client-facing artifact is approved for external use and accepted"
+            ]
           }
         }
       ]
@@ -704,7 +900,12 @@
             "answer.citationIds.slice(0, 4).map((id) => citationLabel(briefing.citations, id))"
           ],
           "behavioralTest": {
-            "path": "src/components/strategic-moves/__tests__/NexusCurrentStateBriefingPanel.controls.test.tsx"
+            "path": "src/components/strategic-moves/__tests__/NexusCurrentStateBriefingPanel.controls.test.tsx",
+            "provenCases": [
+              "Nexus current-state briefing panel — declared AI surface controls citation renders the cited label for every citation a section cites, not the raw id",
+              "Nexus current-state briefing panel — declared AI surface controls citation carries each citation source basis on the rendered chip",
+              "Nexus current-state briefing panel — declared AI surface controls citation renders the labels an answer cites alongside the answer"
+            ]
           }
         },
         {
@@ -714,7 +915,12 @@
             "confidence: 'high' | 'medium' | 'low'"
           ],
           "behavioralTest": {
-            "path": "src/components/strategic-moves/__tests__/NexusCurrentStateBriefingPanel.controls.test.tsx"
+            "path": "src/components/strategic-moves/__tests__/NexusCurrentStateBriefingPanel.controls.test.tsx",
+            "provenCases": [
+              "Nexus current-state briefing panel — declared AI surface controls confidence states the answer confidence in the words the catalog pins",
+              "Nexus current-state briefing panel — declared AI surface controls confidence discloses the confidence the answer actually carries, not a fixed word",
+              "Nexus current-state briefing panel — declared AI surface controls confidence shows no confidence disclosure before an answer exists, so the label cannot be a constant"
+            ]
           }
         }
       ],

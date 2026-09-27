@@ -31,6 +31,9 @@
     "audit:ai-control-schema-drift": {
       "kind": "unclassified"
     },
+    "audit:ai-surface-control-cases": {
+      "kind": "pr-gate"
+    },
     "audit:ai-surface-controls": {
       "kind": "pr-gate"
     },
