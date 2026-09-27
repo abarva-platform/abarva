@@ -1137,13 +1137,21 @@
   line-height: 1.4;
 }
 
-.sw-c3-case-thread button {
+/*
+ * `Open Optimize` became an anchor when it stopped switching the Contract 360
+ * tab and started handing the contract to the dedicated Optimize journey
+ * (C-610). The anchor is added to this rule rather than given one of its own so
+ * the affordance keeps the exact type it already had; only the element changed.
+ */
+.sw-c3-case-thread button,
+.sw-c3-case-thread a {
   border: 0;
   background: none;
   color: #0f6e56;
   font-size: 12px;
   font-weight: 700;
   cursor: pointer;
+  text-decoration: none;
 }
 
 @media (max-width: 700px) {

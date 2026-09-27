@@ -136,6 +136,9 @@ jobs:
           src/lib/deliverables/composer/__tests__
           --no-coverage --ci
 
+      - name: Run the deliverables worker boundary suite
+        run: npx jest --runTestsByPath src/scripts/__tests__/process-deliverable-queue-worker-boundary.test.ts --no-coverage --ci
+
       - name: Run the uncovered deliverables component suite
         run: npx jest --runTestsByPath src/components/deliverables/__tests__/ApproveActions.test.tsx --no-coverage --ci
 
