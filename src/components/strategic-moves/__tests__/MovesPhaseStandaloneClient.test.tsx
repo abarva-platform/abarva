@@ -315,6 +315,7 @@ describe("MovesPhaseStandaloneClient", () => {
   let generatedDeliverableArtifacts: Array<{
     artifactId: string;
     artifactType: string;
+    deliverableTypeKey?: string | null;
     family: string;
     title: string;
     phase: number;
@@ -3110,6 +3111,84 @@ describe("MovesPhaseStandaloneClient", () => {
     expect(screen.getByTestId("mxw-decision-surface")).not.toHaveTextContent(
       "0 evidence items",
     );
+  });
+
+  it("hydrates phase build rows from generated Office companions using their canonical deliverable keys", async () => {
+    generatedDeliverableArtifacts = [
+      {
+        artifactId: "artifact-discovery-report",
+        artifactType: "discovery_report_editable_pptx",
+        deliverableTypeKey: "discovery_report",
+        family: "generated_deliverable",
+        title: "Discovery & Diagnosis Report",
+        phase: 2,
+        version: 1,
+        status: "draft",
+        lifecycleState: "current",
+        qualityScore: 96,
+        createdAt: "2026-09-27T20:42:30.000Z",
+        downloadUrl: "/api/v1/artifacts/artifact-discovery-report",
+        fileFormat: "pptx",
+      },
+      {
+        artifactId: "artifact-root-cause",
+        artifactType: "root_cause_worksheet_editable_pptx",
+        deliverableTypeKey: "root_cause_worksheet",
+        family: "generated_deliverable",
+        title: "Root Cause Analysis Worksheet",
+        phase: 2,
+        version: 1,
+        status: "draft",
+        lifecycleState: "current",
+        qualityScore: 96,
+        createdAt: "2026-09-27T20:42:31.000Z",
+        downloadUrl: "/api/v1/artifacts/artifact-root-cause",
+        fileFormat: "pptx",
+      },
+      {
+        artifactId: "artifact-design-workshop",
+        artifactType: "design_workshop_guide_editable_pptx",
+        deliverableTypeKey: "design_workshop_guide",
+        family: "generated_deliverable",
+        title: "Design Workshop Guide",
+        phase: 2,
+        version: 1,
+        status: "draft",
+        lifecycleState: "current",
+        qualityScore: 96,
+        createdAt: "2026-09-27T20:42:32.000Z",
+        downloadUrl: "/api/v1/artifacts/artifact-design-workshop",
+        fileFormat: "pptx",
+      },
+    ];
+
+    render(
+      <MovesPhaseStandaloneClient
+        carriesForwardContent={[]}
+        evidenceNeedPackets={[]}
+        initialPhaseCaptureRevision="p2-complete"
+        initialPhaseCaptureValues={completeP2CaptureValues}
+        initialSubstepKey="approve"
+        move={makeMove({
+          currentPhase: 2,
+          phaseLabel: "P2 Discover & Diagnose",
+        })}
+        phaseBuildArtifacts={[]}
+        phaseNum={2}
+        phaseTallies={[...phaseTallies]}
+      />,
+    );
+
+    fireEvent.click(contractStepButton(/Approve & Build/i));
+
+    await waitFor(() => {
+      expect(screen.getByText("3/3 built")).toBeInTheDocument();
+    });
+    expect(
+      screen.getByText(
+        /documents are built\. Review them before relying on them\./,
+      ),
+    ).toBeInTheDocument();
   });
 
   it("renders File Cabinet generated artifact open and download controls as real links", async () => {

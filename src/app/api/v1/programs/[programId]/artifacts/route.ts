@@ -17,6 +17,7 @@ export const dynamic = "force-dynamic";
 interface CabinetArtifact {
   artifactId: string;
   artifactType: string;
+  deliverableTypeKey?: string | null;
   family: string;
   title: string;
   phase: number | null;
@@ -145,6 +146,22 @@ function deliverableKeyFromGeneratedArtifactMetadata(
     !Array.isArray(meta.renderableDoc)
       ? (meta.renderableDoc as Record<string, unknown>).deliverableType
       : null,
+  ];
+  for (const candidate of candidates) {
+    if (typeof candidate === "string" && candidate.trim()) {
+      return candidate.trim();
+    }
+  }
+  return null;
+}
+
+function deliverableKeyFromMoveArtifactMetadata(
+  meta: Record<string, unknown> | null | undefined,
+): string | null {
+  const candidates = [
+    meta?.deliverableTypeKey,
+    meta?.registryKey,
+    meta?.deliverableType,
   ];
   for (const candidate of candidates) {
     if (typeof candidate === "string" && candidate.trim()) {
@@ -357,6 +374,9 @@ export async function GET(
       const fixtureControl = isFixtureControlArtifact(r);
       const meta = r.metadata as {
         storage?: string;
+        deliverableTypeKey?: string;
+        registryKey?: string;
+        deliverableType?: string;
         openItems?: string[];
         reviewStatus?: string;
         feedbackStatus?: string;
@@ -377,6 +397,7 @@ export async function GET(
       return {
         artifactId: r.artifact_id,
         artifactType: r.artifact_type,
+        deliverableTypeKey: deliverableKeyFromMoveArtifactMetadata(meta),
         family: r.artifact_family,
         title: r.title,
         phase: r.phase,
@@ -455,6 +476,7 @@ export async function GET(
             return {
               artifactId: rec.id,
               artifactType: rec.artifactType,
+              deliverableTypeKey: deliverableKeyFromGeneratedArtifactMetadata(meta),
               family: "generated_deliverable",
               title: meta?.renderableDoc?.title ?? rec.artifactType,
               phase: phaseFromGeneratedArtifactMetadata(meta),

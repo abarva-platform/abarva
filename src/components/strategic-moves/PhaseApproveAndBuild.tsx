@@ -14,6 +14,7 @@
 import {
   useCallback,
   useEffect,
+  useMemo,
   useRef,
   useState,
   type ReactNode,
@@ -245,11 +246,15 @@ export function PhaseApproveAndBuild({
   initialArtifacts = [],
 }: Props) {
   const [confirmOpen, setConfirmOpen] = useState(false);
-  const specs = (PHASE_CANONICAL_KEYS[phaseNum] ?? [])
-    .map((key) =>
-      DELIVERABLE_REGISTRY.find((d) => d.deliverableTypeKey === key),
-    )
-    .filter(Boolean) as DeliverableSpec[];
+  const specs = useMemo(
+    () =>
+      (PHASE_CANONICAL_KEYS[phaseNum] ?? [])
+        .map((key) =>
+          DELIVERABLE_REGISTRY.find((d) => d.deliverableTypeKey === key),
+        )
+        .filter(Boolean) as DeliverableSpec[],
+    [phaseNum],
+  );
 
   const [rows, setRows] = useState<DeliverableRow[]>(() =>
     buildInitialRows(specs, initialArtifacts),
@@ -266,6 +271,22 @@ export function PhaseApproveAndBuild({
   } | null>(null);
   const timers = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
   const startedAt = useRef<number>(0);
+  const initialArtifactSignature = initialArtifacts
+    .map(
+      (artifact) =>
+        [
+          artifact.artifactId,
+          artifact.deliverableTypeKey,
+          artifact.documentTitle,
+          artifact.phase,
+          artifact.status,
+          artifact.version,
+          artifact.downloadUrl,
+        ].join(":"),
+    )
+    .join("|");
+  const rowSourceSignature = `${phaseNum}::${initialArtifactSignature}`;
+  const lastRowSourceSignature = useRef(rowSourceSignature);
   // Set true only while a real batch is in flight, so the settle-detection
   // effect below never fires from the component's initial idle render or
   // from unrelated row updates.
@@ -277,6 +298,13 @@ export function PhaseApproveAndBuild({
       Object.values(t).forEach((id) => clearTimeout(id));
     };
   }, []);
+
+  useEffect(() => {
+    if (runInFlight.current) return;
+    if (lastRowSourceSignature.current === rowSourceSignature) return;
+    lastRowSourceSignature.current = rowSourceSignature;
+    setRows(buildInitialRows(specs, initialArtifacts));
+  }, [initialArtifacts, rowSourceSignature, specs]);
 
   const patchRow = useCallback(
     (key: string, patch: Partial<DeliverableRow>) => {
