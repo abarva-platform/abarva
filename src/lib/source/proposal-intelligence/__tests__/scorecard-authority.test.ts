@@ -245,4 +245,12 @@ describe("buildScorecardAuthorityView", () => {
       "scorecard-weight-total-invalid",
     );
   });
+
+  it("refuses an out-of-range locked evaluator score even if the row is otherwise complete", () => {
+    const result = view({ scores: [{ ...baseScore, evaluatorScore: 11 }] });
+    expect(result.state).toBe("blocked");
+    expect(result.blockers.map((blocker) => blocker.blockerId)).toContain(
+      "score-vendor-a-transition-evaluator-score-invalid",
+    );
+  });
 });

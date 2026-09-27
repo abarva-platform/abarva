@@ -210,6 +210,13 @@ export function buildScorecardAuthorityView(input: {
         detail: `${score.vendorName} is missing the evaluator score for ${score.criterionId}.`,
         nextAction: "Record a human evaluator score before review.",
       });
+    } else if (score.evaluatorScore < 0 || score.evaluatorScore > 10) {
+      blockers.push({
+        blockerId: `score-${score.vendorId}-${score.criterionId}-evaluator-score-invalid`,
+        label: "Evaluator score out of range",
+        detail: `${score.vendorName} has an evaluator score outside the approved 0-10 scale for ${score.criterionId}.`,
+        nextAction: "Correct the human evaluator score before authority review.",
+      });
     }
     if (!score.evidenceReference?.trim()) {
       blockers.push({

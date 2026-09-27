@@ -10,7 +10,7 @@
 
 ## Plain-English Summary
 
-Advancing a Source event out of Evaluation now requires the current event's approved, complete human scorecard. An unavailable read, incomplete score, missing evidence reference, unlocked score, wrong tenant, or criterion weights that do not total 100 blocks the transition before an approval or stage write.
+Advancing a Source event out of Evaluation now requires the current event's approved, complete human scorecard. An unavailable read, missing or out-of-range score, missing evidence reference, unlocked score, wrong tenant, or criterion weights that do not total 100 blocks the transition before an approval or stage write.
 
 ## Layer Impact
 
@@ -31,8 +31,9 @@ The shared stage-advance contract, both persisted stage-advance routes, the scor
 ## QA / Validation
 
 - Pass: red-first tests demonstrated a missing scorecard read and an invalid weight total were previously accepted.
-- Pass: focused contract, view and route tests (61/61).
-- Pass: deliberate Evaluation-guard removal made the missing-authority and opposite-tenant tests fail; restoring the guard returned 61/61 to green.
+- Pass: focused contract, view and route tests (62/62).
+- Pass: deliberate Evaluation-guard removal made the missing-authority and opposite-tenant tests fail; restoring the guard returned the focused suite to green.
+- Pass: an out-of-range locked-score test failed against the candidate read model, then passed after the read-side authority check matched the writer's 0-10 scale.
 - Blocked (pre-existing): related-test sweep ran 481/502 tests green. Five seeded-canvas suites (21 failures) could not resolve their golden event; the same missing-event failure reproduced on the clean base checkout.
 - Pass: TypeScript no-emit check.
 - Pass: scoped ESLint and release check before PR.
