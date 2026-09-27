@@ -34,6 +34,7 @@ const activeEventWorkspaces = [
     code: "SRC-001",
     name: "Application services event",
     lifecycle: "active",
+    currentStageKey: "strategy",
     currentStageLabel: "Strategy",
     lifecycleLabel: "Active event",
     trigger: "Review the application support model before renewal.",
@@ -43,6 +44,16 @@ const activeEventWorkspaces = [
     href: "/source/new/event-1",
   },
 ];
+
+const pendingEventWorkspace = {
+  ...activeEventWorkspaces[0],
+  id: "event-pending",
+  code: "SRC-PENDING",
+  name: "Infrastructure request awaiting approval",
+  lifecycle: "waiting_on_client",
+  lifecycleLabel: "Waiting on Client",
+  href: "/source/new/event-pending",
+};
 
 const importedRequest = {
   requestId: "servicenow:sn_sourcing_request:request-1",
@@ -122,7 +133,7 @@ describe("SourceNewRequestFirstPage", () => {
         clientKey="example-client"
         requestQueueStatus="unauthorized"
         importedRequests={[importedRequest]}
-        eventWorkspaces={activeEventWorkspaces}
+        eventWorkspaces={[pendingEventWorkspace, ...activeEventWorkspaces]}
       />,
     );
 
@@ -134,6 +145,7 @@ describe("SourceNewRequestFirstPage", () => {
     expect(
       screen.queryByRole("link", { name: "Application services event" }),
     ).toBeNull();
+    expect(screen.queryByText("Infrastructure request awaiting approval")).toBeNull();
   });
 
   it("does not expose request rows when intake authority is unavailable but preserves governed event access", () => {
@@ -198,6 +210,77 @@ describe("SourceNewRequestFirstPage", () => {
         .getByRole("link", { name: "Open" })
         .getAttribute("href"),
     ).toBe("/source/new/event-1");
+  });
+
+  it("keeps an unapproved event in intake instead of calling it accepted work", () => {
+    render(
+      <SourceNewRequestFirstPage
+        clientName="Example client"
+        clientKey="example-client"
+        requestQueueStatus="empty"
+        importedRequests={[]}
+        eventWorkspaces={[pendingEventWorkspace, ...activeEventWorkspaces]}
+      />,
+    );
+
+    const queue = screen.getByRole("region", { name: "Request queue" });
+    const workspaces = screen.getByRole("region", {
+      name: "Event workspaces",
+    });
+    expect(within(queue).getByText("Infrastructure request awaiting approval")).toBeTruthy();
+    expect(within(queue).getByText("Pending approval")).toBeTruthy();
+    expect(
+      within(queue)
+        .getByRole("link", { name: "Review approval" })
+        .getAttribute("href"),
+    ).toBe("/source/events/event-pending/approval");
+    expect(within(workspaces).queryByText("Infrastructure request awaiting approval")).toBeNull();
+    expect(within(workspaces).getByText("Application services event")).toBeTruthy();
+    expect(screen.getByText("Review pending approvals")).toBeTruthy();
+  });
+
+  it("still exposes pending approval when the imported-request registry is unavailable", () => {
+    render(
+      <SourceNewRequestFirstPage
+        clientName="Example client"
+        clientKey="example-client"
+        requestQueueStatus="unavailable"
+        importedRequests={[importedRequest]}
+        eventWorkspaces={[pendingEventWorkspace]}
+      />,
+    );
+
+    const queue = screen.getByRole("region", { name: "Request queue" });
+    expect(within(queue).getByText("Infrastructure request awaiting approval")).toBeTruthy();
+    expect(within(queue).getByText(/could not be read/)).toBeTruthy();
+    expect(within(queue).queryByText("Infrastructure services request")).toBeNull();
+    expect(
+      screen.getByRole("region", { name: "Event workspaces" })
+        .textContent,
+    ).not.toContain("Infrastructure request awaiting approval");
+  });
+
+  it("does not move later-stage client decisions back into intake", () => {
+    render(
+      <SourceNewRequestFirstPage
+        clientName="Example client"
+        clientKey="example-client"
+        requestQueueStatus="empty"
+        importedRequests={[]}
+        eventWorkspaces={[
+          {
+            ...pendingEventWorkspace,
+            currentStageKey: "scope",
+            currentStageLabel: "Scope",
+          },
+        ]}
+      />,
+    );
+
+    const queue = screen.getByRole("region", { name: "Request queue" });
+    const workspaces = screen.getByRole("region", { name: "Event workspaces" });
+    expect(within(queue).queryByText("Infrastructure request awaiting approval")).toBeNull();
+    expect(within(workspaces).getByText("Infrastructure request awaiting approval")).toBeTruthy();
   });
 
   it("triages governed request fields and answers the four readiness questions", () => {
