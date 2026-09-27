@@ -35,6 +35,9 @@ const DECLARED_CONTRACT_INPUT_FIELDS = [
   "evidence",
   "reason",
   "verifiedDelegatedSponsorAcknowledgement",
+  "tenantKey",
+  "eventId",
+  "scorecardRecords",
 ] as const satisfies readonly (keyof SourceGateAdvanceContractInput)[];
 
 /**
@@ -224,6 +227,82 @@ const READINESS_PASSES = (): SourceGateAdvanceContractInput => ({
 });
 
 describe("evaluateSourceGateAdvanceContract", () => {
+  const evaluationInput = (scorecardRecords?: unknown) => ({
+    currentStage: "evaluation",
+    targetStage: "pricing",
+    confirmations: WORKED_STAGE_CONFIRMED,
+    criteria: [criterion({
+      criterionId: "GATE-EVAL-01",
+      fromStage: "evaluation",
+      toStage: "pricing",
+      state: "met",
+    })],
+    reason: REVIEW_REASON,
+    tenantKey: "tenant-a",
+    eventId: "event-1",
+    scorecardRecords,
+  }) as SourceGateAdvanceContractInput;
+
+  const readyScorecard = {
+    kind: "available",
+    criteria: [{
+      tenantKey: "tenant-a",
+      sourceEventId: "event-1",
+      criterionId: "technical",
+      criterionVersion: "v1",
+      label: "Technical fit",
+      weight: 100,
+      weightsFrozen: true,
+      approvedCriterionVersion: "v1",
+      approvedBy: "owner-1",
+      approvedAt: "2026-09-26T00:00:00Z",
+    }],
+    scores: [{
+      tenantKey: "tenant-a",
+      sourceEventId: "event-1",
+      vendorId: "vendor-1",
+      vendorName: "Supplier One",
+      criterionId: "technical",
+      criterionVersion: "v1",
+      evaluatorId: "evaluator-1",
+      evaluatorName: "Evaluator One",
+      evaluatorScore: 8,
+      evidenceReference: "artifact-1",
+      overrideReason: null,
+      overrideReasonRequired: false,
+      lockState: "locked",
+      lockedBy: "Evaluator One",
+      lockedAt: "2026-09-26T00:05:00Z",
+    }],
+  } as const;
+
+  it("refuses Evaluation promotion when scorecard authority cannot be read", () => {
+    const verdict = evaluateSourceGateAdvanceContract(evaluationInput());
+    expect(verdict).toEqual(expect.objectContaining({
+      ok: false,
+      status: 503,
+      error: "scorecard_authority_unavailable",
+    }));
+  });
+
+  it("refuses an opposite-tenant scorecard instead of accepting its locked score", () => {
+    const verdict = evaluateSourceGateAdvanceContract(evaluationInput({
+      ...readyScorecard,
+      criteria: readyScorecard.criteria.map((row) => ({ ...row, tenantKey: "tenant-b" })),
+      scores: readyScorecard.scores.map((row) => ({ ...row, tenantKey: "tenant-b" })),
+    }));
+    expect(verdict).toEqual(expect.objectContaining({
+      ok: false,
+      status: 409,
+      error: "scorecard_authority_not_ready",
+    }));
+  });
+
+  it("allows Evaluation promotion only with current locked score authority", () => {
+    const verdict = evaluateSourceGateAdvanceContract(evaluationInput(readyScorecard));
+    expect(verdict.ok).toBe(true);
+  });
+
   it("rejects a legacy-style promotion with computed readiness but no human confirmations", () => {
     const verdict = evaluateSourceGateAdvanceContract({
       currentStage: "scope",

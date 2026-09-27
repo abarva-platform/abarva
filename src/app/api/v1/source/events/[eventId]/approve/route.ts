@@ -36,6 +36,7 @@ import { autoDraftOnStageEntry } from "@/lib/source/stage-entry-autodraft";
 import { getStageSubstrate } from "@/lib/source/canvas-substrate/queries";
 import { normalizeSourceStageKey } from "@/lib/source/constants";
 import { evaluateSourceGateAdvanceContract } from "@/lib/source/gate-advance-contract";
+import { readSourceScorecardAuthorityRecords } from "@/lib/source/proposal-intelligence/scorecard-authority-store";
 import { hasVerifiedSponsorDelegation } from "@/lib/source/sponsor-delegation-repository";
 import {
   coerceStageToSourceJourney,
@@ -285,8 +286,14 @@ export async function POST(
     }
 
     const substrate = await getStageSubstrate(eventId, effectiveCurrentStage);
+    const scorecardRecords = effectiveCurrentStage === "evaluation"
+      ? await readSourceScorecardAuthorityRecords(eventId, activeClient.key)
+      : undefined;
     const gateContract = evaluateSourceGateAdvanceContract({
       currentStage: effectiveCurrentStage,
+      tenantKey: activeClient.key,
+      eventId,
+      scorecardRecords,
       targetStage: decision.advanceStageTo ?? null,
       isTerminalClosure,
       stageOrder: sourceJourneyStageKeys(journey),

@@ -75,6 +75,10 @@ jest.mock("@/lib/source/gate-advance-contract", () => ({
   })),
 }));
 
+jest.mock("@/lib/source/proposal-intelligence/scorecard-authority-store", () => ({
+  readSourceScorecardAuthorityRecords: jest.fn(async () => ({ kind: "unavailable" as const })),
+}));
+
 jest.mock("@/lib/source/stage-entry-autodraft", () => ({
   autoDraftOnStageEntry: jest.fn(async () => ({
     queued: ["d09_rfp_pack"],
@@ -122,12 +126,16 @@ jest.mock("@/lib/data-plane/postgresCompat", () => ({
 import { PATCH } from "../route";
 import { autoDraftOnStageEntry } from "@/lib/source/stage-entry-autodraft";
 import { evaluateSourceGateAdvanceContract } from "@/lib/source/gate-advance-contract";
+import { readSourceScorecardAuthorityRecords } from "@/lib/source/proposal-intelligence/scorecard-authority-store";
+
+const readScorecard = jest.mocked(readSourceScorecardAuthorityRecords);
 
 const mockAutoDraftOnStageEntry = jest.mocked(autoDraftOnStageEntry);
 
 describe("PATCH /api/v1/source/[eventId]/stage", () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    readScorecard.mockResolvedValue({ kind: "unavailable" });
     criterionRows = [];
     persistedEvent.current_stage_key = "rfp";
     jest.mocked(evaluateSourceGateAdvanceContract).mockImplementation(() => ({
@@ -135,6 +143,25 @@ describe("PATCH /api/v1/source/[eventId]/stage", () => {
       status: 200,
       readiness: { ok: true, blockers: [] },
       }));
+  });
+
+  it("reads the tenant-scoped scorecard before Evaluation promotion and makes no write when unavailable", async () => {
+    persistedEvent.current_stage_key = "evaluation";
+    jest.mocked(evaluateSourceGateAdvanceContract).mockImplementationOnce((input) => ({
+      ok: false,
+      status: 503,
+      error: input.scorecardRecords?.kind === "unavailable" ? "scorecard_authority_unavailable" : "scorecard_not_read",
+      readiness: { ok: true, blockers: [] },
+    }));
+    const response = await PATCH(new Request("https://app.abarva.ai/api/v1/source/event-1/stage", {
+      method: "PATCH",
+      body: JSON.stringify({ stageKey: "pricing", reason: "Evaluation review completed.", confirmations: { evidenceComplete: true, exclusionsReviewed: true, stageFinal: true } }),
+    }) as never, { params: Promise.resolve({ eventId: "event-1" }) });
+    expect(readScorecard).toHaveBeenCalledWith(persistedEvent.id, persistedEvent.client_key);
+    expect(response.status).toBe(503);
+    expect((await response.json()).error).toBe("scorecard_authority_unavailable");
+    expect(updateStage).not.toHaveBeenCalled();
+    expect(insertActivityLog).not.toHaveBeenCalled();
   });
 
   it("does not advance a strategy event with a pending hard criterion on self-approval", async () => {

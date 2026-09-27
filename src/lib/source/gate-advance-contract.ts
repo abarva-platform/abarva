@@ -15,6 +15,8 @@ import {
   type SourceGovernanceVerdict,
 } from "./source-governance-enforcement";
 import type { SourceStageKey } from "./types";
+import { buildScorecardAuthorityView } from "./proposal-intelligence/scorecard-authority";
+import type { SourceScorecardAuthorityRecordsResult } from "./proposal-intelligence/scorecard-authority-store";
 
 export interface SourceGateAdvanceContractInput {
   currentStage: SourceStageKey;
@@ -28,6 +30,9 @@ export interface SourceGateAdvanceContractInput {
   evidence?: SourceEventEvidence[];
   reason: unknown;
   verifiedDelegatedSponsorAcknowledgement?: boolean;
+  tenantKey?: string;
+  eventId?: string;
+  scorecardRecords?: SourceScorecardAuthorityRecordsResult;
 }
 
 export interface SourceGateAdvanceContractResult {
@@ -129,6 +134,33 @@ export function evaluateSourceGateAdvanceContract(
       blocker,
       readiness,
     };
+  }
+
+  if (input.currentStage === "evaluation") {
+    if (!input.tenantKey || !input.eventId || input.scorecardRecords?.kind !== "available") {
+      return {
+        ok: false,
+        status: 503,
+        error: "scorecard_authority_unavailable",
+        detail: "Evaluation scorecard authority could not be read.",
+        readiness,
+      };
+    }
+    const scorecard = buildScorecardAuthorityView({
+      tenantKey: input.tenantKey,
+      sourceEventId: input.eventId,
+      criteria: input.scorecardRecords.criteria,
+      scores: input.scorecardRecords.scores,
+    });
+    if (scorecard.state !== "ready") {
+      return {
+        ok: false,
+        status: 409,
+        error: "scorecard_authority_not_ready",
+        detail: scorecard.blockers[0]?.detail ?? "Evaluation scorecard authority is not ready.",
+        readiness,
+      };
+    }
   }
 
   return {
