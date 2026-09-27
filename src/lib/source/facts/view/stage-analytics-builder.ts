@@ -77,6 +77,7 @@ import {
   SOURCE_STAGE_LABELS,
   nextSourceStage,
 } from '@/lib/source/constants';
+import { withTerminalGateContract } from '@/lib/source/stage-terminal-contract';
 import type {
   IntelPointView,
   StageAnalyticsView,
@@ -298,11 +299,17 @@ export function buildLiveStageView(
     // Derived where `factBeats` is present. Otherwise reuse the sample gate's
     // confirm boxes + generates (not yet fact-derived on this stage) but correct
     // the next-stage label for the stage being built.
-    gate: factBeats?.gate ?? {
-      ...scaffold.gate,
-      nextStageName,
-      ...(requestedStageKey === 'value' ? { approver: 'Event Owner' } : {}),
-    },
+    // ITEM U-406. The terminal contract is applied to whichever gate this
+    // returns -- derived or carried -- rather than as a second `=== 'value'`
+    // branch inside the carried arm. The literal it replaces was correct and
+    // unreachable from the derived arm, so a future fact-derived terminal gate
+    // would have silently lost the role and could have reintroduced an onward
+    // target. The contract also states the absence of that target, which is what
+    // the exemplar used to fill with `'Closed'`.
+    gate: withTerminalGateContract(
+      factBeats?.gate ?? { ...scaffold.gate, nextStageName },
+      requestedStageKey,
+    ),
     waterfall: waterfallView,
     // Item U-533. Say so at the boundary. The two comments above were the only
     // record that `tasks` and `gate` are exemplar content, and a comment is

@@ -849,7 +849,15 @@ export const SAMPLE_VALUE_STAGE: StageAnalyticsView = {
       },
     ],
     generates: [{ label: 'Value realization summary', code: 'd12' }],
-    nextStageName: 'Closed',
+    // ITEM U-406. `null`, not `'Closed'`. This is the terminal entry of
+    // `SOURCE_STAGE_ORDER`, so `nextSourceStage` returns null for it and there is
+    // no onward stage to name. `'Closed'` was not one: it is not a
+    // `SourceStageKey`, it is absent from the order, and nothing could produce
+    // it — an invented onward target, which the exemplar then handed to every
+    // consumer that reads terminality off this field. It reached the model
+    // verbatim as "Next stage on approval: Closed." The stated contract lives in
+    // `@/lib/source/stage-terminal-contract`.
+    nextStageName: null,
   },
 };
 
