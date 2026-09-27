@@ -77,5 +77,27 @@ describe("renderStageReadinessWorkbookXlsx", () => {
     expect(String(dataSheet?.getCell("C2").value)).toContain(
       "Approved data estate profile",
     );
+    const dataSheetContext = dataSheet
+      ? [2, 3, 4].map((row) => String(dataSheet.getCell(`C${row}`).value))
+      : [];
+    expect(dataSheetContext.join("\n")).toContain("known gaps");
+    const visibleQuestions = workbook.worksheets.flatMap((sheet) => {
+      if (["Start Here", "Evidence & Open Items", "_metadata"].includes(sheet.name)) {
+        return [];
+      }
+      const rows: string[] = [];
+      sheet.eachRow((row, rowNumber) => {
+        if (rowNumber > 1) rows.push(String(row.getCell(1).value ?? ""));
+      });
+      return rows;
+    });
+    expect(visibleQuestions).toEqual(
+      expect.arrayContaining([
+        expect.stringContaining("current-state reality"),
+        expect.stringContaining("volumes, frequency, cycle times"),
+        expect.stringContaining("systems, data fields, files"),
+        expect.stringContaining("fail, vary by segment"),
+      ]),
+    );
   });
 });

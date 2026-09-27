@@ -32,6 +32,7 @@ import {
   buildMoveEvidenceNeedPackets,
   type MoveEvidenceNeedPacket,
 } from "@/lib/programs/evidence-readiness/move-evidence-need-packet";
+import { isFoundationTenantKey } from "@/lib/tenant/foundation-tenants";
 import { getMovePhaseTallies } from "@/lib/programs/phase-explorer-tallies";
 import {
   DELIVERABLE_REGISTRY,
@@ -365,6 +366,7 @@ export default async function StrategicMovePhaseWorkspacePage({
   }
 
   let evidenceNeedPackets: MoveEvidenceNeedPacket[] = [];
+  let syntheticEvidencePackHref: string | null = null;
   try {
     const tctx = await requireTenancy();
     const evidenceReadiness = await loadDiscoveryEvidenceReadiness(
@@ -377,8 +379,14 @@ export default async function StrategicMovePhaseWorkspacePage({
       currentPhase: parsedPhase,
       readiness: evidenceReadiness,
     });
+    if (parsedPhase < 5 && isFoundationTenantKey(tctx.clientKey)) {
+      syntheticEvidencePackHref = `/api/v1/programs/${encodeURIComponent(
+        moveId,
+      )}/stage-readiness-evidence-pack?phase=${parsedPhase}`;
+    }
   } catch {
     evidenceNeedPackets = [];
+    syntheticEvidencePackHref = null;
   }
 
   let moveContextExtractEvidenceCount = 0;
@@ -550,6 +558,7 @@ export default async function StrategicMovePhaseWorkspacePage({
         initialPhaseCaptureRevision={initialPhaseCaptureRevision}
         initialPhaseCaptureValues={initialPhaseCaptureValues}
         initialStageReadinessPreview={initialStageReadinessPreview}
+        syntheticEvidencePackHref={syntheticEvidencePackHref}
         moveContextExtractEvidenceCount={moveContextExtractEvidenceCount}
         phaseBuildArtifacts={phaseBuildArtifacts}
         initialSubstepKey={

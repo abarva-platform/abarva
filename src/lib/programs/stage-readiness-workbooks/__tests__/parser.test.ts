@@ -88,14 +88,14 @@ describe("parseStageReadinessWorkbookXlsx", () => {
       nextPhase: 2,
     });
     expect(parsed.summary).toMatchObject({
-      totalQuestions: 2,
-      answeredQuestions: 2,
-      requiredAnswered: 2,
-      requiredTotal: 2,
+      totalQuestions: 8,
+      answeredQuestions: 8,
+      requiredAnswered: 8,
+      requiredTotal: 8,
       errorCount: 0,
     });
     expect(parsed.responses[0]).toMatchObject({
-      questionId: "q_data_analytics_estate",
+      questionId: "q_data_analytics_estate_confirm_currency",
       dimensionId: "data_analytics_estate",
       response: "Confirmed",
       context: "Data estate profile reviewed with analytics owner.",

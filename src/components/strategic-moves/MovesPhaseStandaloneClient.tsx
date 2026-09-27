@@ -133,6 +133,7 @@ interface MovesPhaseStandaloneClientProps {
   phaseBuildArtifacts?: PhaseBuildArtifact[];
   phaseNavigationStatus?: PhaseNavigationStatus;
   initialStageReadinessPreview?: StageReadinessWorkbookParsePreview | null;
+  syntheticEvidencePackHref?: string | null;
   currentStateReadiness?: ReadinessReport | null;
   /**
    * Count of attached evidence found inside the current Move context extract.
@@ -665,6 +666,7 @@ export function MovesPhaseStandaloneClient({
   phaseBuildArtifacts = [],
   phaseNavigationStatus,
   initialStageReadinessPreview = null,
+  syntheticEvidencePackHref = null,
   currentStateReadiness = null,
   moveContextExtractEvidenceCount = 0,
   initialSubstepKey,
@@ -2441,6 +2443,15 @@ export function MovesPhaseStandaloneClient({
                         >
                           Download P{phase.phase + 1} readiness workbook
                         </a>
+                        {syntheticEvidencePackHref ? (
+                          <a
+                            className="mxw-stage-download"
+                            download
+                            href={syntheticEvidencePackHref}
+                          >
+                            Download sample upload files
+                          </a>
+                        ) : null}
                         <div ref={workbookReviewRef}>
                           <StageReadinessWorkbookPreviewControl
                             apiPath={readinessWorkbookHref}
