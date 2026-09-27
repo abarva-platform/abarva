@@ -429,14 +429,56 @@ function main(argv) {
     report = null;
   }
 
+  /**
+   * Render the gate's report for the run that has to act on it.
+   *
+   * T-707's acceptance was "refuse when any path appears in another live
+   * claim's `files:` list, NAMING THE PATH AND THE HOLDER". The refusing
+   * shipped; the naming did not, because this function read `report.contended`
+   * and the gate reports the overlap under `fileOverlap.conflicts`. Every
+   * field the acceptance asks for — path, holding line, stamp, agent — was
+   * computed and then discarded, so a file-overlap refusal printed the banner,
+   * the ITEM half's `verdict: take`, and an item-half reason about a live claim
+   * that does not exist. A refusal whose text reads as permission.
+   *
+   * Two consequences, and the second is the expensive one: a run cannot tell
+   * WHICH of the files it asked for is held, so it re-invokes the helper one
+   * path at a time to find out; and `verdict: take` under a REFUSED banner
+   * invites the reading that the control is broken. So the verdict line now
+   * says which half it belongs to, and the half that actually refused is named.
+   *
+   * It reads ONLY `fileOverlap.conflicts`, checked against the gate's history
+   * rather than assumed: no commit of `register-time-authority.mjs` has ever
+   * emitted a top-level `contended` key — the file-overlap half emitted
+   * `fileOverlap.conflicts` from its first commit (`5e8a42e284`). So the old
+   * read was wrong the day it was written, and keeping it "for compatibility"
+   * would ship an unreachable branch under a comment implying some gate
+   * produces that shape. What actually guards a future key rename is the case
+   * below driving the REAL gate, which fails if the shape moves.
+   */
   const describe = () => {
     if (!report) return stdout.trim() || stderr.trim() || "(the gate produced no report)";
-    const lines = [`verdict: ${report.verdict}`, `reason:  ${report.reason}`];
+    const overlap = report.fileOverlap ?? null;
+    const overlapRefuses = Boolean(overlap?.refuses);
+    const itemLabel = overlapRefuses ? "item verdict:" : "verdict:";
+    const lines = [`${itemLabel} ${report.verdict}`, `reason:  ${report.reason}`];
     if (report.holder) {
       lines.push(`holder:  line ${report.holder.lineNumber} ${report.holder.stamp} ${report.holder.agent}`);
     }
-    if (Array.isArray(report.contended) && report.contended.length) {
-      for (const c of report.contended) lines.push(`file:    ${c.path ?? c} held by ${c.agent ?? "another claim"}`);
+
+    const conflicts = Array.isArray(overlap?.conflicts) ? overlap.conflicts : [];
+    if (conflicts.length) {
+      lines.push(
+        `REFUSED BY THE FILE HALF — ${conflicts.length} of ` +
+          `${overlap?.requested?.length ?? conflicts.length} requested path(s) ` +
+          `already held by another live claim:`,
+      );
+      for (const c of conflicts) {
+        const where = c.lineNumber === undefined ? "" : ` at line ${c.lineNumber}`;
+        const when = c.stamp === undefined ? "" : ` (${c.stamp})`;
+        lines.push(`file:    ${c.path ?? c} held by ${c.agent ?? "another claim"}${where}${when}`);
+      }
+      lines.push("         Take a different item, or a file list that does not overlap.");
     }
     return lines.join("\n");
   };
