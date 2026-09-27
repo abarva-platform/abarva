@@ -38,6 +38,7 @@ import {
   buildContractInput,
   deliverableKeyForRegistryKey,
   deliverableKeyForOrchestratorType,
+  renderedContractExhibitsFromDocument,
 } from "@/lib/deliverables/quality/deliverable-key-map";
 import { DELIVERABLE_PROFILES } from "@/lib/deliverables/profiles/registry";
 import {
@@ -272,6 +273,20 @@ function renderedVisualsPresent(html: string): boolean {
   return /<(?:svg|img|table)\b/i.test(html);
 }
 
+function nativePptxDeckSatisfiesVisualContract(
+  doc: RenderableDeliverable,
+  deliverableKey: DeliverableKey,
+  outputFormat: GeneratedArtifactFormat,
+): boolean {
+  if (outputFormat !== "pptx" || !doc.deckSlides?.length) return false;
+  const profile = DELIVERABLE_PROFILES[deliverableKey];
+  if (profile.renderer !== "pptx_storyline") return false;
+  const rendered = new Set(
+    renderedContractExhibitsFromDocument(doc, deliverableKey),
+  );
+  return profile.requiredExhibits.every((id) => rendered.has(id));
+}
+
 function escapeRegExp(value: string): string {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
@@ -469,6 +484,12 @@ export async function persistDeliverable(
     const renderedDeckExhibits = opts.structuredModels?.storylineDeck
       ? deckExhibitsRenderedAsVisual(html, opts.structuredModels.storylineDeck)
       : [];
+    const nativePptxDeckVisualsPresent =
+      nativePptxDeckSatisfiesVisualContract(
+        doc,
+        contractDeliverableKey,
+        outputFormat,
+      );
     additionalExhibits.push(...renderedDeckExhibits);
 
     const contractInput = buildContractInput({
@@ -489,9 +510,10 @@ export async function persistDeliverable(
       ...contractInput,
       exhibitsRenderedAsVisual:
         architectureSignals.exhibitsRenderedAsVisual ??
-        (opts.structuredModels?.storylineDeck
-          ? renderedDeckExhibits.length > 0
-          : renderedVisualsPresent(html)),
+        (nativePptxDeckVisualsPresent ||
+          (opts.structuredModels?.storylineDeck
+            ? renderedDeckExhibits.length > 0
+            : renderedVisualsPresent(html))),
       ...architectureSignals,
       deliverableKey: contractDeliverableKey,
     });
