@@ -358,7 +358,17 @@ node scripts/exec/cli-entry.test.mjs
 node scripts/exec/toolchain-manifest.test.mjs
 node scripts/exec/id-collision.test.mjs
 node scripts/exec/fossil-claims.test.mjs
+node scripts/exec/signed-in-proof-reconcile.test.mjs
+node scripts/exec/register-citation-check.test.mjs
+node scripts/exec/deploy-proof-resolver.test.mjs
+node scripts/exec/worktree-sweep-hazard.test.mjs
+node scripts/exec/register-merge-coverage.test.mjs
 ```
+
+Four of those lines were missing from this list while the workflow ran all four
+suites, so the list understated the contract rather than the contract itself. The
+authority is `.github/workflows/execution-queue-toolchain.yml`; this block is a
+convenience and is now equal to it.
 
 The suites run the generators as child processes against synthetic operator documents. CI never reads a local execution backlog.
 
@@ -408,6 +418,52 @@ changes in both.
 **Resolution, when it reports something:** the earlier filing keeps the id and
 the later one moves, renumbered by whoever claims it. That is what the register
 already did once, by hand.
+
+## Did the register notice this merge at all? (item C-556)
+
+```bash
+node scripts/exec/register-merge-coverage.mjs --since 2026-09-26T00:00:00Z
+node scripts/exec/register-merge-coverage.mjs --base origin/main~40 --json
+```
+
+Four controls here ask whether a register line decides a row *correctly*. This
+asks whether **there is a line**. A change can merge to `main`, ship, and alter a
+product surface while nothing in the register names it — and because every
+downstream reader is keyed to a line, it then has no `merged` state, no
+`deployed` state, no signed-in question, and no item reporting it as unfinished.
+The absence of a row and the absence of work look identical.
+
+Three naming states, and the middle one is why a `grep` is not this tool:
+
+| verdict | what it means | what to do |
+|---|---|---|
+| `named` | some line's **subject** pull request is this merge's | nothing |
+| `mentioned-only` | the SHA or the number is on file, and no line is about it | read the printed clause and settle it |
+| `unnamed` | neither appears anywhere | the merge has no reported state; write its line |
+| `unresolved` | `--no-github`, so the question was withheld | re-run with the lookup |
+
+Measured over `--since 2026-09-26T00:00:00Z` on 2026-09-27: **76 merges, 64
+named, 8 mentioned-only, 4 unnamed.** So it detects silence rather than counting
+merges — the failure mode a one-directional check would have.
+
+Two readings the item's own filing got wrong, both repaired here:
+
+- **Match a SHA by prefix, never at a fixed width.** git abbreviates to whatever
+  length is unambiguous and the register quotes whatever git printed — 8, 9, 10
+  and 40 characters all appear. A ten-character probe missed the one merge of the
+  nine that the register does name, at eight.
+- **A SHA in another item's prose is not that merge's line.** Four of the nine do
+  appear, at nine characters, as somebody else's base or another run's SHA. A
+  substring reader calls all four accounted-for, which is `C-551`'s distinction
+  asked about SHAs.
+
+Provenance is three answered states plus one unasked one. A commit whose only
+pull request is **closed without merging** is its own state: the API does not say
+how it reached `main`. `--no-github` answers `pull-request-unresolved`, never
+`no-pull-request`, and `--strict` refuses that run at exit 2 — a run that asked
+nothing has produced silence, not measured it.
+
+Exit codes: `0` clean, `1` a finding, `2` a refusal.
 
 ## The queue says 0 claimable — is the suppression bucket telling the truth?
 
