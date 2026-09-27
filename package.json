@@ -538,6 +538,7 @@
     "audit:vercel-production-runtime:check": "node scripts/audit/vercel-production-runtime-guard.mjs --check",
     "audit:no-auto-action-boundary": "node scripts/audit/no-auto-action-boundary.mjs",
     "audit:ai-surface-controls": "node scripts/audit/ai-surface-control-catalog.mjs",
+    "audit:ai-surface-control-cases": "node scripts/audit/ai-surface-control-cases.mjs",
     "audit:financial": "npx tsx src/scripts/audit/audit-financial-kpis.ts",
     "audit:sanity": "npx tsx src/scripts/audit/audit-numbers-sanity.ts",
     "audit:categories": "npx tsx src/scripts/audit/audit-steward-categories.ts",

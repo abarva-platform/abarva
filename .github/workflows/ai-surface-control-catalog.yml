@@ -42,6 +42,20 @@ jobs:
       - name: Check AI surface controls
         run: npm run audit:ai-surface-controls
 
+      # Every step below exercises one suite. This one asks a different
+      # question of all of them at once: does the suite credited with a control
+      # still contain the case that proves it? The static gate above checks the
+      # FILE — that it exists, that this workflow runs it, that the name filter
+      # matches — and never looks inside, so a suite named by four control
+      # kinds earned four credits whatever it exercised (item C-554). Deleting
+      # the one case proving one of them left both the suite and that gate
+      # green. The names are read back from jest's own report rather than
+      # scanned out of the source, because a case name can be built from a
+      # template literal or a `describe.each` table; all 23 credited suites run
+      # in one invocation in about three seconds.
+      - name: Prove each credited control still has its case
+        run: npm run audit:ai-surface-control-cases
+
       - name: Exercise visible agent stream controls
         run: npx jest src/app/api/chat/agent/__tests__/agent-visible-stream-controls.test.ts --runInBand
 

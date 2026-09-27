@@ -13,6 +13,7 @@ import { computeRouteReachability } from './lib/route-reachability.mjs';
 // thing checked about it was that it was forty characters long, and one of its
 // three clauses had already gone false while the gate stayed green.
 import { evaluateUnreachableReason } from './lib/unreachable-reason-claims.mjs';
+import { findSharedProvenCases } from './ai-surface-control-cases.mjs';
 
 // The catalog this gate reads. `AI_SURFACE_CONTROL_CATALOG_PATH` is a test
 // seam: it lets a suite run this script against a mutated copy and prove the
@@ -574,8 +575,42 @@ function validateBehavioralTest(control, controlLabel, workflowRuns, surface, su
     );
   }
 
+  // Everything above is about the FILE. None of it looks inside, so coverage
+  // was credited per control kind from a file, and a suite named by four kinds
+  // earned four credits whatever it exercised (item C-554).
+  //
+  // Measured before this existed: 10 files carried 25 of the 35 reachable
+  // credits, the worst a 61-case general suite credited for two kinds. Deleting
+  // the one case proving one of them left the suite green and this gate green,
+  // still reporting the control covered inside "35 of 35 (100%)".
+  //
+  // So a credit names the case(s) that prove it. This branch checks only that
+  // the declaration exists and is well formed — whether those cases still RUN
+  // and PASS is not knowable statically, because a case name can be built from
+  // a template literal or a `describe.each` table. That half is
+  // `scripts/audit/ai-surface-control-cases.mjs`, which reads the names back
+  // from jest's own report.
+  if (!Array.isArray(declared.provenCases) || declared.provenCases.length === 0) {
+    problems.push(
+      `${controlLabel}: declares ${declared.path} but no provenCases — name the case(s) in that suite which prove this control, or the credit is a claim about a file rather than about a control`,
+    );
+  } else {
+    for (const caseName of declared.provenCases) {
+      if (typeof caseName !== 'string' || !caseName.trim()) {
+        problems.push(`${controlLabel}: provenCases must be non-empty case names`);
+      }
+    }
+  }
+
   return { problems, covered: problems.length === 0 };
 }
+
+/**
+ * Two kinds on one surface must not point at the same case — see
+ * `findSharedProvenCases`, which is imported rather than reimplemented here so
+ * the rule has exactly one owner. This gate and the case-proof checker both ask
+ * it, and two copies of a rule drift.
+ */
 
 /**
  * A declared control has to be on a screen a user can get to.
@@ -729,6 +764,7 @@ function validateSurface(surface, index, workflowRuns, tally, routeGraph, suiteI
     reasonClaimIo,
   );
   problems.push(...reachability.problems);
+  problems.push(...findSharedProvenCases({ controls: [surface] }));
 
   const seenKinds = new Set();
   for (const control of surface.requiredControls ?? []) {
