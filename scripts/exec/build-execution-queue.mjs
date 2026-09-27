@@ -1285,6 +1285,58 @@ ${free.length
 `;
 }
 
+/**
+ * Items carrying a gate declared over ONE HALF of themselves — item C-552.
+ *
+ * These are claimable and they are NOT counted in *Blocked on Anand*, which is
+ * the point: before this, one true sentence about the gated half removed the
+ * item from every lane table and its executable half stopped being work. The
+ * risk now runs the other way, so this section carries the half nobody may
+ * take beside the work somebody should.
+ *
+ * Rendered on EVERY run, including at zero. A block that appears only in the
+ * interesting case is exercised only in the interesting case, and this
+ * directory exists because a control nobody ran looked exactly like one that
+ * did.
+ */
+const partlyGated = all.filter((i) => !isFinished(i) && i.partialGate);
+
+function renderPartlyGated() {
+  const n = partlyGated.length;
+  const head = "## Partly gated — claimable, with a half you must not take";
+
+  if (!n) {
+    return `${head}
+
+**0 items** carry a gate declared over part of themselves. An item stating a
+gate with no declared scope is gated whole and is in *Blocked on Anand*; this
+section renders at zero on purpose, so an empty bucket and a generator that
+stopped looking are not the same thing.
+`;
+  }
+
+  const rows = partlyGated
+    .map((i) => `| ${formatItemId(i.num)} | ${i.lane ?? "?"} | ${String(i.partialGate.say)} | ${String(i.partialGate.gated).replace(/\|/g, "\\|").slice(0, 160)} | ${String(i.partialGate.open).replace(/\|/g, "\\|").slice(0, 160)} |`)
+    .join("\n");
+
+  return `${head}
+
+**${n} item${n === 1 ? "" : "s"}** carr${n === 1 ? "ies" : "y"} a gate that its own row, or a
+register line, declares over a NAMED half. The other half is ordinary executable
+work and is offered in the lane tables above. Take the claimable half; do not
+attempt the gated one, and do not read its appearance here as permission.
+
+| # | Lane | Gate | The half that is GATED | The half that is CLAIMABLE |
+|---|---|---|---|---|
+${rows}
+
+A gate with no declared scope still covers the whole item and stays in *Blocked
+on Anand*, unchanged. The declaration is \`**Gate scope — partial.** Gated half:
+<text>. Claimable half: <text>.\`, both halves are required, and a declaration
+naming only one of them frees nothing.
+`;
+}
+
 const blockedOnUser = all.filter(
   (i) => !isFinished(i) && Boolean(userBlockerText(i)),
 );
@@ -1310,7 +1362,17 @@ function row(i) {
           .join(" and ")}. Cite the section in your claim line and verify you are reading the one you claimed.`
       : " ⚠ number is ambiguous — cite it with its section"
     : "";
-  return `| ${i.num} | ${i.track} | ${(i.title || "").replace(/\|/g, "\\|").slice(0, 150)} | ${(i.acceptance || "—").replace(/\|/g, "\\|").slice(0, 190)}${flag} |`;
+  // Item C-552. A gate declared over one half of an item leaves the other half
+  // claimable, so the row is offered again — and the gated half travels with
+  // it. The marker is the QUEUE's own words rather than the row's, because an
+  // agent reading this table must not have to go back to the backlog to find
+  // out what it may not touch.
+  const scoped = i.partialGate
+    ? ` ⚠ PARTLY GATED — ${String(i.partialGate.say)} covers only: ${String(i.partialGate.gated).replace(/\|/g, "\\|")}.`
+      + ` Claimable half: ${String(i.partialGate.open).replace(/\|/g, "\\|")}.`
+      + " Take that half only; the gated half needs Anand and is not yours to attempt."
+    : "";
+  return `| ${i.num} | ${i.track} | ${(i.title || "").replace(/\|/g, "\\|").slice(0, 150)} | ${(i.acceptance || "—").replace(/\|/g, "\\|").slice(0, 190)}${flag}${scoped} |`;
 }
 
 const laneSection = (lane) => {
@@ -1450,6 +1512,7 @@ because proof that already happened is not proof that is owed.
 
 ${["D", "C", "U", "T", "?"].filter((l) => byLane[l]?.length).map(laneSection).join("\n")}
 ${renderResidualAtRung()}
+${renderPartlyGated()}
 ## Blocked on Anand — never claim these
 
 ${Object.entries(blockedCounts).map(([b, n]) => `- **${b}** — ${n} item${n === 1 ? "" : "s"}`).join("\n") || "- None"}
@@ -1466,7 +1529,7 @@ ${releasedClaims.length ? `\n**Explicitly released (${releasedClaims.length}):**
 ${renderOrderDisagreements()}`;
 
 fs.writeFileSync(OUT, out);
-console.log(`Wrote ${path.basename(OUT)}: ${claimable.length} claimable, ${blockedOnUser.length} blocked on Anand, ${claimed.size} held, ${expiredClaims.length} expired-idle, ${expiredInFlight.length} expired-in-flight, ${lapsedClaims.length} lapsed, ${releasedClaims.length} released.`);
+console.log(`Wrote ${path.basename(OUT)}: ${claimable.length} claimable (${partlyGated.length} partly gated), ${blockedOnUser.length} blocked on Anand, ${claimed.size} held, ${expiredClaims.length} expired-idle, ${expiredInFlight.length} expired-in-flight, ${lapsedClaims.length} lapsed, ${releasedClaims.length} released.`);
 // Item C-549. On stdout as well as in the file: a run that is tailed rather
 // than read would otherwise never learn that work sits outside every lane.
 console.log(

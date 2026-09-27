@@ -456,3 +456,43 @@ network and a credential. This is a separate CLI, in the shape of
 becomes executable. The verdict is advisory — it prints the `append-claim.mjs`
 invocation for a fossil and refuses to print one for anything else. Appending
 the line is still a decision someone takes.
+
+## A gate over PART of an item (item C-552)
+
+`deriveBlocker` returns at most one blocker and it is a per-ITEM field, so an
+acceptance written in halves had nowhere to say that one half is owner-gated
+while the other is ordinary executable work. One true sentence about the gated
+half labelled the whole item, the queue filed it where an agent is told never to
+look, and the executable half stopped being work.
+
+Measured on the live documents: one item's derived blocker went from `null` to an
+owner gate and the claimable count went 4 to 3, caused entirely by a single
+register line that was **right** about the half it described. And the register is
+append-only while the match runs over an item's whole corpus, so a later line
+saying the other half is free does not move the blocker — one unvetoed sentence
+anywhere is enough. There was no in-register remedy at all.
+
+**The remedy is a declaration, not a narrower pattern.** The blocker rules are
+unchanged; `T-703` and `T-761` each paid for their current breadth and the
+sentence above is a correct match. An item may instead declare, in its own row
+or in an appended register line:
+
+```
+**Gate scope — partial.** Gated half: <text>. Claimable half: <text>.
+```
+
+The board then records the gate as `partialGate` rather than `blocker`. The item
+is claimable again, its lane row carries a `⚠ PARTLY GATED` marker naming the
+half nobody may take, and the queue renders a *Partly gated* section on every
+run — including at zero, so an empty bucket and a generator that stopped looking
+are not the same thing.
+
+Four properties keep it in the safe direction, each with a case that fails
+without it:
+
+| property | what it refuses |
+|---|---|
+| declared, never inferred | with no declaration the gate covers the whole item, exactly as before |
+| fails closed | both halves are required; naming only the gated one frees nothing |
+| cannot invent a gate | the scope is read only after a rule has matched, so a row *about* partial gates does not acquire one |
+| `Unclaimed` is not scopable | it asserts the ABSENCE of a gate, and promoting it is the one direction this file must never take |
