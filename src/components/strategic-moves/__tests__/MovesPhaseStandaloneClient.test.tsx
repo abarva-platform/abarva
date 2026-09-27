@@ -941,6 +941,110 @@ describe("MovesPhaseStandaloneClient", () => {
         "Workbook uploaded/previewed is not acceptance",
       );
     });
+
+    it("surfaces stored workbook proposals for blocked P2 review without requiring a re-upload", async () => {
+      const scrollIntoView = jest.fn();
+      Element.prototype.scrollIntoView = scrollIntoView;
+      const move = makeMove({
+        currentPhase: 1,
+        phaseLabel: "P1 Charter",
+      });
+      render(
+        <MovesPhaseStandaloneClient
+          carriesForwardContent={[]}
+          evidenceNeedPackets={[]}
+          initialStageReadinessPreview={{
+            ok: true,
+            summary: {
+              totalQuestions: 2,
+              answeredQuestions: 2,
+              requiredAnswered: 2,
+              requiredTotal: 2,
+              warningCount: 0,
+              errorCount: 0,
+            },
+            proposalSet: {
+              artifactId: "proposal-artifact-1",
+              artifactVersion: 2,
+              status: "review_required",
+              proposalCount: 2,
+              pendingCount: 2,
+              proposals: [
+                {
+                  proposalId: "proposal-1",
+                  questionId: "q-1",
+                  dimensionId: "baseline_metrics",
+                  requirement: "required",
+                  question: "Provide baseline metrics.",
+                  response: "Unknown",
+                  answerState: "unknown",
+                  disposition: "pending",
+                },
+                {
+                  proposalId: "proposal-2",
+                  questionId: "q-2",
+                  dimensionId: "delay_volume",
+                  requirement: "required",
+                  question: "Provide addressable delay volume.",
+                  response: "Insufficient evidence",
+                  answerState: "insufficient_evidence",
+                  disposition: "pending",
+                },
+              ],
+            },
+          }}
+          move={move}
+          phaseNavigationStatus={buildPhaseNavigationStatus({
+            currentPhase: 1,
+            requestedPhase: 1,
+            blockedPhase: 2,
+          })}
+          phaseNum={1}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+
+      fireEvent.click(
+        screen.getByRole("button", { name: "Review workbook responses" }),
+      );
+      expect(scrollIntoView).toHaveBeenCalled();
+      expect(
+        screen.getByText(
+          /Stored workbook responses awaiting review · 2\/2 pending proposals/,
+        ),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByText("Workbook responses awaiting review"),
+      ).toBeInTheDocument();
+      expect(screen.getByText(/2\/2 selected/)).toBeInTheDocument();
+      expect(screen.getByText("Provide baseline metrics.")).toBeInTheDocument();
+      expect(
+        screen.getByText("Provide addressable delay volume."),
+      ).toBeInTheDocument();
+      expect(
+        screen.queryByRole("heading", { name: "Upload evidence for P1" }),
+      ).not.toBeInTheDocument();
+
+      fireEvent.click(screen.getByRole("button", { name: "Accept selected" }));
+      await waitFor(() => {
+        expect(screen.getByText(/Review saved/)).toBeInTheDocument();
+      });
+      const reviewCall = (global.fetch as jest.Mock).mock.calls.find(
+        ([url, init]) =>
+          String(url).includes("/stage-readiness-workbook") &&
+          init?.method === "PATCH",
+      );
+      expect(reviewCall).toBeTruthy();
+      expect(JSON.parse(String(reviewCall?.[1]?.body))).toMatchObject({
+        proposalSetArtifactId: "proposal-artifact-1",
+        proposalSetArtifactVersion: 2,
+        decisions: [
+          { proposalId: "proposal-1", disposition: "accepted" },
+          { proposalId: "proposal-2", disposition: "accepted" },
+        ],
+      });
+      expect(mockRouterRefresh).toHaveBeenCalled();
+    });
   });
 
   describe("MOVES-UI-003 rail collapse/expand toggle", () => {
