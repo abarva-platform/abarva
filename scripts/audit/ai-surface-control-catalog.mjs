@@ -705,11 +705,30 @@ function validateCatalogClaimCoverage(catalog, surfacesById, surfaces) {
         problems.push(`${label}: covered claim references unknown surfaceId ${entry.surfaceId ?? '(missing)'}`);
         continue;
       }
-      const hasControl = (surface.requiredControls ?? []).some(
-        (control) => control.kind === entry.controlKind,
+      const control = (surface.requiredControls ?? []).find(
+        (candidate) => candidate.kind === entry.controlKind,
       );
-      if (!hasControl) {
+      if (!control) {
         problems.push(`${label}: surface ${entry.surfaceId} does not include ${entry.controlKind}`);
+      } else if (control.behavioralTest?.status === 'none') {
+        // `covered` asked two questions — does the surfaceId resolve, and does
+        // the surface declare this kind — and never the one the word means. So
+        // a credit could be claimed over a control this same file records as
+        // having no behavioral test, and the gate had no opinion: measured over
+        // all 22 covered rows, exactly one was in that state — and on the one
+        // surface whose five controls this file all record as unproven, with a
+        // reason each saying no suite mounts the component.
+        //
+        // `covered` is a claim about proof, so it is now refused unless the
+        // joined control names one. The control's own reason is quoted rather
+        // than re-derived: it is the sentence someone has to reconcile, and
+        // `validateBehavioralTest` already keeps it honest against the tree.
+        problems.push(
+          `${label}: claims covered over ${entry.surfaceId} / ${entry.controlKind}, which declares ` +
+            `behavioralTest status "none" — a covered credit needs a proven control. ` +
+            `The control's own reason: ${control.behavioralTest.reason ?? '(none given)'} ` +
+            `Resolve the row as deferred with a concrete reason, or prove the control.`,
+        );
       }
     }
     if (entry.status === 'deferred') {

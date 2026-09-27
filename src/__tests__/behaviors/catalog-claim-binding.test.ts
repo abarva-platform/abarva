@@ -67,8 +67,20 @@ type ClaimCoverage = {
   surfaceJoin?: SurfaceJoin;
 };
 
+type BehavioralTest = {
+  status?: string;
+  path?: string;
+  provenCases?: string[];
+  reason?: string;
+};
+
+type RequiredControl = {
+  kind: string;
+  behavioralTest?: BehavioralTest;
+};
+
 type Catalog = {
-  controls: Array<{ id: string; path: string }>;
+  controls: Array<{ id: string; path: string; requiredControls?: RequiredControl[] }>;
   catalogClaimCoverage: ClaimCoverage[];
 };
 
@@ -215,6 +227,14 @@ const AMBIGUOUS_KEY = "generated-ui|Moves|Phase advance / gate approval UI|citat
 const COVERED_KEY =
   "consequential|Intelligence|Gate waiver / approval|human-approval-gate";
 
+/**
+ * Item C-409's subject: the one `covered` row of 22 whose joined control
+ * declared `behavioralTest.status: "none"`. It is `deferred` on `main` now, and
+ * the fixture below puts it back to `covered` to reproduce the defect.
+ */
+const UNPROVEN_KEY = "generated-ui|Tower|Pressure/action cards|confidence";
+const UNPROVEN_SURFACE_ID = "tower-atlas-program-pressure-brief";
+
 describe("legal catalog claims bind only when coverage is real", () => {
   it("requires every covered claim to name the exact catalog surface", () => {
     const unboundCovered = live.catalogClaimCoverage.filter(
@@ -310,10 +330,17 @@ describe("legal catalog claims bind only when coverage is real", () => {
     // C-547 catalogued a second, whose two rows both became covered — 20/16 to
     // 22/14, with `deferredWithSurfaceId` unmoved because that surface declares
     // every control kind its legal rows claim.
+    //
+    // C-409 moved one row the other way, and it is the first movement in that
+    // direction: the Tower pressure-brief confidence row was covered against a
+    // control declaring `behavioralTest.status: "none"`, so it is now deferred
+    // and still bound by `surfaceId`. 22/14/1 to 21/14/2. Nothing left or
+    // entered `deferredWithJoin`, which is the check that the correction was
+    // bookkeeping on one row and not a re-join of anything.
     expect(tally).toEqual({
-      coveredWithSurfaceId: 22,
+      coveredWithSurfaceId: 21,
       deferredWithJoin: 14,
-      deferredWithSurfaceId: 1,
+      deferredWithSurfaceId: 2,
       unbound: 0,
     });
   });
@@ -480,5 +507,161 @@ describe("the catalog claim join gate fails in both directions", () => {
     expect(code).not.toBe(0);
     const finding = output.split("\n").find((line) => line.startsWith(`- ${COVERED_KEY}`));
     expect(finding).toContain("names both a surfaceId and a surfaceJoin");
+  });
+});
+
+/**
+ * Item C-409. `covered` is a claim about proof, and until this block existed
+ * the gate never asked about proof at all.
+ *
+ * A `covered` row was validated for two things: that its `surfaceId` resolves
+ * to a `controls[]` entry, and that the entry declares the row's
+ * `controlKind`. `validateClaimJoin` (C-554) added the code-path identity
+ * check. None of the three looks at `behavioralTest`, so a credit could be
+ * claimed over a control that this same document records as having no
+ * behavioral test — and the two halves of the contradiction sat about a
+ * thousand lines apart in one file.
+ *
+ * Measured over all 22 `covered` rows on `main` `0b8aefd03d`, exactly one was
+ * in that state: `generated-ui|Tower|Pressure/action cards|confidence` claimed
+ * covered against `tower-atlas-program-pressure-brief` / `confidence`, whose
+ * `behavioralTest.status` is `"none"` because nothing mounts
+ * `ProgramPressureCards`. Not sampled — the join ran over all 22, one hit.
+ * The legal catalog's covered count therefore overstated by one, and it
+ * overstated on the single surface this file is most careful about.
+ *
+ * **The remedy is bookkeeping, not a mount test.** The row is now `deferred`
+ * with a reason, which is the vocabulary this file already has for "no proven
+ * control to name". Writing a render test for an unmounted component to
+ * restore the credit is expressly not the fix; `U-506` / item 38 own the
+ * mount-or-retire call that would later make `covered` true again.
+ *
+ * Both directions are checked, because a gate that refuses the shape is only
+ * half of it: a `covered` credit over a control that really does name a path
+ * and `provenCases` must still pass, and a `deferred` row over an unproven
+ * control must be left alone — that second one is the live state of the very
+ * row this item corrected, so if it were not exempt the repository would be
+ * red right now.
+ */
+describe("a covered credit is a claim about proof", () => {
+  /** Reads `behavioralTest` off the joined control without going through the gate. */
+  function joinedControl(entry: ClaimCoverage, catalog: Catalog): RequiredControl | undefined {
+    const surface = catalog.controls.find((candidate) => candidate.id === entry.surfaceId);
+    return (surface?.requiredControls ?? []).find(
+      (control) => control.kind === entry.controlKind,
+    );
+  }
+
+  const coveredRows = live.catalogClaimCoverage.filter((entry) => entry.status === "covered");
+
+  it("has no covered row in the live catalog bound to a control declaring no behavioral test", () => {
+    // The standing invariant, measured over the whole set rather than over the
+    // one row the item named. An implementation that moved more than that one
+    // row would show up here as a different number, not as silence.
+    const unproven = coveredRows
+      .filter((entry) => joinedControl(entry, live)?.behavioralTest?.status === "none")
+      .map((entry) => `${entry.key} -> ${entry.surfaceId}/${entry.controlKind}`);
+
+    expect(unproven).toEqual([]);
+  });
+
+  it("counts a covered set that is not vacuously clean", () => {
+    // Without this, deleting every covered row would satisfy the case above.
+    // 22 rows carried the credit when C-409 was filed and 21 do now, the one
+    // removal being the row it corrected.
+    expect(coveredRows).toHaveLength(21);
+    const proven = coveredRows.filter((entry) => {
+      const test = joinedControl(entry, live)?.behavioralTest;
+      return Boolean(test?.path) && (test?.provenCases ?? []).length > 0;
+    });
+    expect(proven).toHaveLength(21);
+  });
+
+  it("goes red when a covered credit names a control declaring no behavioral test", () => {
+    // Reconstructs the exact pre-fix state of the row C-409 corrected, rather
+    // than inventing a shape. The precondition is asserted first: if that
+    // control ever gains a behavioral test this fixture stops reproducing the
+    // defect, and a guard that no longer reaches its branch has to say so
+    // loudly instead of passing for the wrong reason.
+    const control = joinedControl(
+      { key: UNPROVEN_KEY, status: "covered", surfaceId: UNPROVEN_SURFACE_ID, controlKind: "confidence" },
+      live,
+    );
+    expect(control?.behavioralTest?.status).toBe("none");
+
+    const { code, output } = runAudit(
+      writeFixture((catalog) => {
+        const entry = entryByKey(catalog, UNPROVEN_KEY);
+        entry.status = "covered";
+        delete entry.reason;
+      }),
+    );
+
+    expect(code).not.toBe(0);
+    const finding = output.split("\n").find((line) => line.startsWith(`- ${UNPROVEN_KEY}`));
+    // Which rule fired, and that the message carries the three things an owner
+    // needs to act: the surface, the kind, and the control's own reason. The
+    // reason is quoted from the control rather than restated by the gate, so
+    // the sentence a reader is asked to reconcile is the one that goes stale.
+    expect(finding).toContain("a covered credit needs a proven control");
+    expect(finding).toContain(UNPROVEN_SURFACE_ID);
+    expect(finding).toContain("confidence");
+    expect(finding).toContain("no suite mounts the component");
+    // Exactly one row moves. The gate reports every problem it finds, so a
+    // check that is too broad shows up here as extra findings.
+    expect(output.split("\n").filter((line) => line.startsWith("- "))).toHaveLength(1);
+  });
+
+  it("leaves a deferred row over that same unproven control alone", () => {
+    // The live state of the corrected row: deferred, joined by surfaceId to a
+    // control at status "none". The gate passing on today's bytes is the proof,
+    // and this case pins the join so the pass is not coming from the row having
+    // quietly lost its surfaceId.
+    const entry = entryByKey(live, UNPROVEN_KEY);
+    expect(entry.status).toBe("deferred");
+    expect(entry.surfaceId).toBe(UNPROVEN_SURFACE_ID);
+    expect(joinedControl(entry, live)?.behavioralTest?.status).toBe("none");
+
+    const { code } = runAudit(path.join(repoRoot, CATALOG_REL));
+    expect(code).toBe(0);
+  });
+
+  it("keys the refusal on the control's status, not on one surface", () => {
+    // A rule written against `tower-atlas-program-pressure-brief` by name would
+    // pass every case above. So the same refusal is provoked on a different,
+    // currently-proven control: take a covered row whose control names a path
+    // and proven cases, replace that with status "none", and the credit must be
+    // refused for the same reason.
+    //
+    // It is the credit finding that is asserted, not merely a red exit —
+    // demoting a control also trips `validateBehavioralTest`, which is why the
+    // line is matched by its own text rather than by the process status.
+    const control = joinedControl(entryByKey(live, COVERED_KEY), live);
+    expect(control?.behavioralTest?.path).toBeTruthy();
+    expect((control?.behavioralTest?.provenCases ?? []).length).toBeGreaterThan(0);
+
+    const { code, output } = runAudit(
+      writeFixture((catalog) => {
+        const entry = entryByKey(catalog, COVERED_KEY);
+        const demoted = joinedControl(entry, catalog);
+        if (!demoted) throw new Error(`${COVERED_KEY} no longer joins to a control`);
+        demoted.behavioralTest = {
+          status: "none",
+          reason:
+            "Demoted by a fixture so the covered-credit refusal can be provoked on a surface it does not name.",
+        };
+      }),
+    );
+
+    expect(code).not.toBe(0);
+    const finding = output.split("\n").find((line) => line.startsWith(`- ${COVERED_KEY}`));
+    expect(finding).toContain("a covered credit needs a proven control");
+    expect(finding).toContain(String(entryByKey(live, COVERED_KEY).surfaceId));
+  });
+
+  it("does not fire on the live catalog, whose covered credits are all proven", () => {
+    const { code, output } = runAudit(path.join(repoRoot, CATALOG_REL));
+    expect(code).toBe(0);
+    expect(output).not.toContain("a covered credit needs a proven control");
   });
 });
