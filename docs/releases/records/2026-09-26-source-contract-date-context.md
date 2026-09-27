@@ -67,3 +67,13 @@ Revert this commit through a new PR and the same main workflow. Preserve the exi
 ## Known Gaps
 
 - A date mismatch that persists after deployment may reflect divergent read projections or data. This change does not assert a live row type or reconcile canonical data.
+
+## Signed-in proof reconciliation (item C-548)
+
+- Ran: a signed-in replay was run and is reported in the execution register at `2026-09-26T14:48:29Z`
+  by `codex-source-cpo#20260926T1416Z` against PR #8507 — the signed-in exact contract answer carries the same date as the refreshed page.
+- Outcome as the register states it: reported as meeting this record's acceptance. The same line records two residuals: canonical row lineage was unavailable, and a Stage 06 readback is still outstanding.
+- Provenance: this section reconciles the durable record with the operator register under item
+  C-548; it is not a first-hand observation by its author, and no proof was re-executed to write
+  it. The QA/Validation bullet above was accurate when this record was authored and is superseded
+  here by an appended correction rather than by a restamp, per the register time-authority rule.

@@ -66,3 +66,13 @@ Revert the squash commit and allow the repo-owned main deployment workflow to re
 ## Known Gaps
 
 This release exposes historical incompleteness; it does not create missing evidence, infer approvals, reopen events, or write waivers.
+
+## Signed-in proof reconciliation (item C-548)
+
+- Ran: a signed-in replay was run and is reported in the execution register at `2026-09-22T19:21:46Z`
+  by `codex-cpo-source-new-smoke` against PR #8277 — the signed-in replay on the frozen completed synthetic event renders the completion-review state and exposes the resolve affordance.
+- Outcome as the register states it: reported as meeting this record's acceptance. The same line is explicit about scope: the read-only fail-closed completion guard only, with no governed write.
+- Provenance: this section reconciles the durable record with the operator register under item
+  C-548; it is not a first-hand observation by its author, and no proof was re-executed to write
+  it. The QA/Validation bullet above was accurate when this record was authored and is superseded
+  here by an appended correction rather than by a restamp, per the register time-authority rule.

@@ -86,3 +86,13 @@ rollback is required.
 - Deployment and signed-in replay are pending.
 - This release does not accept client-final artifacts, approve a stage, run parsers, or make evidence
   agent-ready.
+
+## Signed-in proof reconciliation (item C-548)
+
+- Ran: a signed-in replay was run and is reported in the execution register at `2026-09-22T12:45:35Z`
+  by `codex-cpo-source-new-smoke` against PR #8246 — a signed-in cross-surface replay of the deployed build found the governed answer still counting fewer artifacts than the mounted surface.
+- Outcome as the register states it: reported as NOT meeting this record's acceptance. A run that did not meet its acceptance is still a run; the successor blocker was claimed from this replay rather than from a fresh reading of the code.
+- Provenance: this section reconciles the durable record with the operator register under item
+  C-548; it is not a first-hand observation by its author, and no proof was re-executed to write
+  it. The QA/Validation bullet above was accurate when this record was authored and is superseded
+  here by an appended correction rather than by a restamp, per the register time-authority rule.

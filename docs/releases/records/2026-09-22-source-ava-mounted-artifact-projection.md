@@ -80,3 +80,13 @@ rollback is required.
 - Deployment and signed-in replay remain pending.
 - This release does not accept client-final artifacts, approve a stage, run parsers, contact
   suppliers, or make evidence agent-ready.
+
+## Signed-in proof reconciliation (item C-548)
+
+- Ran: a signed-in replay was run and is reported in the execution register at `2026-09-22T13:24:40Z`
+  by `codex-cpo-source-new-smoke` against PR #8253 — the mounted-artifact projection was SIGNED-IN ACCEPTED on the frozen synthetic event after an exact deployed replay.
+- Outcome as the register states it: reported as meeting this record's acceptance. The same line is explicit that no artifact was accepted, no stage approved and no supplier-facing action sent.
+- Provenance: this section reconciles the durable record with the operator register under item
+  C-548; it is not a first-hand observation by its author, and no proof was re-executed to write
+  it. The QA/Validation bullet above was accurate when this record was authored and is superseded
+  here by an appended correction rather than by a restamp, per the register time-authority rule.

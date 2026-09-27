@@ -66,3 +66,13 @@ Revert the squash commit and redeploy through the repo-owned ACA main deployment
 ## Known Gaps
 
 This release repairs authenticated name precedence only. It does not itself approve evidence, advance a sourcing stage, or mutate canonical person rows.
+
+## Signed-in proof reconciliation (item C-548)
+
+- Ran: a signed-in replay was run and is reported in the execution register at `2026-09-22T08:51:52Z`
+  by `codex-cpo-source-new-smoke` against PR #8238 — a signed-in replay of the deployed build confirmed the reviewer-identity blocker was removed, and the next live action exposed a separate state contradiction.
+- Outcome as the register states it: reported as meeting this record's acceptance. The separate contradiction the same replay exposed was carried forward as its own claim and is not a defect of this release.
+- Provenance: this section reconciles the durable record with the operator register under item
+  C-548; it is not a first-hand observation by its author, and no proof was re-executed to write
+  it. The QA/Validation bullet above was accurate when this record was authored and is superseded
+  here by an appended correction rather than by a restamp, per the register time-authority rule.
