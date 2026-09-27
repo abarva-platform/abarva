@@ -28,7 +28,7 @@ For events created with Event Owner approval policy, the signed-in event creator
 
 - Server validation and append-only attribution for sponsor context at Event Owner Scope approval.
 - The mounted Source approval card collects sponsor context and the approver's explicit acknowledgement.
-- Event-scoped post-decision email update with separate provider-acceptance audit and address deduplication. SELF events cannot issue sponsor or stage approval-request emails.
+- Event-scoped post-decision email update with separate provider-acceptance audit and address deduplication. Later stage updates reuse the approved Scope sponsor context from the tenant-scoped activity record. SELF events cannot issue sponsor or stage approval-request emails.
 - SELF events cannot advance through the direct stage route or let other stage reviewers record criterion or lifecycle decisions.
 - Focused route, UI, validation, and notification tests.
 

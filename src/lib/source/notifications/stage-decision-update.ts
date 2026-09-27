@@ -4,6 +4,7 @@ import { clerkClient } from "@clerk/nextjs/server";
 import { getAzureReadFluentClient } from "@/lib/data-plane/postgresCompat";
 import { selectSourceWriteAdapter } from "@/lib/data-plane/write-adapters/sourceWriteAdapter";
 import { sendEmail } from "@/lib/email/send";
+import { parseSourceSponsorContext } from "@/lib/source/sponsor-context";
 import { isApprovedTestRecipient } from "./approval-recipient-policy";
 
 export interface StageUpdateParticipant {
@@ -59,6 +60,21 @@ async function participantEmail(userId: string): Promise<string | null> {
   return data?.email?.trim() || null;
 }
 
+async function recordedScopeSponsorEmail(eventId: string, clientKey: string): Promise<string | null> {
+  const { data, error } = await getAzureReadFluentClient()
+    .from("source_event_activity")
+    .select("metadata")
+    .eq("event_id", eventId)
+    .eq("client_key", clientKey)
+    .eq("action_type", "source_event_approved")
+    .eq("stage_key", "scope")
+    .order("occurred_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (error) throw error;
+  return parseSourceSponsorContext(data?.metadata?.sponsorContext)?.email ?? null;
+}
+
 export async function sendSourceStageDecisionUpdates(input: {
   eventId: string;
   clientKey: string;
@@ -78,8 +94,16 @@ export async function sendSourceStageDecisionUpdates(input: {
   const participants = selectStageDecisionUpdateParticipants(
     (data ?? []) as StageUpdateParticipant[], input.actorUserId,
   );
+  let sponsorEmail = input.sponsorEmail ?? null;
+  if (!sponsorEmail) {
+    try {
+      sponsorEmail = await recordedScopeSponsorEmail(input.eventId, input.clientKey);
+    } catch (error) {
+      console.warn("[source stage decision update] sponsor context read failed", error);
+    }
+  }
   const recipients: Array<{ userId: string | null; role: string; email?: string }> = [
-    ...(input.sponsorEmail ? [{ userId: null, role: "sponsor", email: input.sponsorEmail }] : []),
+    ...(sponsorEmail ? [{ userId: null, role: "sponsor", email: sponsorEmail }] : []),
     ...participants,
   ];
   const base = process.env.NEXT_PUBLIC_APP_URL || "https://app.abarva.ai";
