@@ -3,6 +3,7 @@ import {
   SOURCE_STAGE_ORDER,
   normalizeSourceStageKey,
 } from "./constants";
+import { withTerminalGateContract } from "./stage-terminal-contract";
 import type { SourceStageKey, SourcingEventSummary } from "./types";
 import type { StageAnalyticsView } from "@/components/source/canvas/analytics/view-model";
 
@@ -267,7 +268,21 @@ export function adaptStageViewToSourceJourney(
   journey: SourceJourneyDefinition | null | undefined,
 ): StageAnalyticsView {
   const canonical = normalizeSourceStageKey(stageView.stageKey);
-  if (!journey || !canonical) return stageView;
+  /**
+   * ITEM U-406. The terminal gate contract is applied BEFORE the early return,
+   * which is the line that carried the defect: with no journey this function
+   * returned its input untouched, so an exemplar gate's invented onward target
+   * (`'Closed'` on the terminal stage — not a stage key, absent from
+   * `SOURCE_STAGE_ORDER`) passed straight through to the canvas and to the
+   * model's grounding block. This is the single funnel every stage view goes
+   * through on the event page and in the canvas, so the contract is enforced
+   * here rather than at each call site.
+   */
+  const contracted: StageAnalyticsView = {
+    ...stageView,
+    gate: withTerminalGateContract(stageView.gate, stageView.stageKey),
+  };
+  if (!journey || !canonical) return contracted;
   const label = sourceJourneyLabelForStage(journey, canonical);
   const purpose =
     sourceJourneyPurposeForStage(journey, canonical) ?? stageView.purpose;
@@ -278,15 +293,15 @@ export function adaptStageViewToSourceJourney(
 
   if (journey.id !== "contract_optimization") {
     return {
-      ...stageView,
+      ...contracted,
       stageName: label,
       purpose,
-      gate: { ...stageView.gate, nextStageName },
+      gate: { ...contracted.gate, nextStageName },
     };
   }
 
   return {
-    ...stageView,
+    ...contracted,
     stageName: label,
     purpose,
     intel: {
@@ -324,13 +339,13 @@ export function adaptStageViewToSourceJourney(
       })),
     })),
     gate: {
-      ...stageView.gate,
-      confirms: stageView.gate.confirms.map((confirm) => ({
+      ...contracted.gate,
+      confirms: contracted.gate.confirms.map((confirm) => ({
         ...confirm,
         label: contractOptimizationText(confirm.label),
         detail: contractOptimizationText(confirm.detail),
       })),
-      generates: stageView.gate.generates
+      generates: contracted.gate.generates
         .filter((deliverable) => !/\brfp\b/i.test(deliverable.label))
         .map((deliverable) => ({
           ...deliverable,

@@ -56,6 +56,11 @@ import {
   SOURCE_STAGE_LABELS,
   normalizeSourceStageKey,
 } from "@/lib/source/constants";
+import {
+  SOURCE_TERMINAL_GATE_CONTRACT,
+  isTerminalSourceStage,
+  sourceGateDecisionKindFor,
+} from "@/lib/source/stage-terminal-contract";
 import { confirmationKeysForStage } from "@/lib/source/stage-gate-confirmations";
 import { templateFactsPresent } from "@/lib/source/facts/view/task-evidence-hydration";
 import { buildStepInsight } from "@/lib/source/facts/view/step-insight-builder";
@@ -787,10 +792,20 @@ function buildStageGateGrounding(
       `  ${index + 1}. ${confirm.label}: ${confirm.detail} — ${status}`,
     );
   });
+  /**
+   * ITEM U-406. Keyed to the STAGE, not to whether the gate happens to carry a
+   * label. Read off `gate.nextStageName`, this line said "Next stage on
+   * approval: Closed." for the terminal stage whenever the view arrived with the
+   * exemplar's invented target — the model was told an onward stage existed and
+   * given its name. The stage key is the thing that decides whether one exists,
+   * so the terminal sentence is now unfalsifiable by carried copy.
+   */
   lines.push(
-    gate.nextStageName
-      ? `Next stage on approval: ${gate.nextStageName}.`
-      : "This is the final stage — approval closes the event.",
+    isTerminalSourceStage(stageKey)
+      ? SOURCE_TERMINAL_GATE_CONTRACT.groundingSentence
+      : gate.nextStageName
+        ? `Next stage on approval: ${gate.nextStageName}.`
+        : "The next stage has not been resolved for this gate — do not name one.",
   );
   if (gate.generates.length > 0) {
     lines.push(
@@ -818,6 +833,9 @@ function buildStageGateGrounding(
       taskChecklistTotal: String(stageView.tasks.length),
       gateMetConfirmCount: String(metConfirmCount),
       gateRequiredConfirmCount: String(requiredKeys.length),
+      // ITEM U-406. Stated so a reader of the packet can tell a completion
+      // review from an advance without re-deriving it from a nullable label.
+      gateDecisionKind: sourceGateDecisionKindFor(stageKey),
     },
   };
 }
