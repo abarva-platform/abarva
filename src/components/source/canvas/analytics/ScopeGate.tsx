@@ -3,6 +3,10 @@
 import { useState, type CSSProperties } from 'react';
 import { useRouter } from 'next/navigation';
 import { ANALYTICS } from './analytics-tokens';
+import {
+  SOURCE_TERMINAL_GATE_CONTRACT,
+  isTerminalSourceStage,
+} from '@/lib/source/stage-terminal-contract';
 import type { StageGateView } from './view-model';
 
 interface ScopeGateProps {
@@ -19,11 +23,20 @@ interface ScopeGateProps {
  * because the evidence reached its target state — never because someone clicked
  * "mark met."
  */
-export function ScopeGate({ gate, stageName, eventId }: ScopeGateProps) {
+export function ScopeGate({ gate, stageName, eventId, stageKey }: ScopeGateProps) {
   const router = useRouter();
   const [confirmed, setConfirmed] = useState<ReadonlySet<number>>(new Set());
   const allConfirmed = confirmed.size === gate.confirms.length;
-  const last = gate.nextStageName === null;
+  /**
+   * ITEM U-406. `stageKey` was already a declared prop and was destructured by
+   * nobody, so terminality was read off `gate.nextStageName` — a field the
+   * exemplar could fill with an invented target, and did. The stage decides it;
+   * the missing label is a consequence, not the evidence. The label stays in the
+   * fallback for a caller that renders a gate without a stage key.
+   */
+  const last = stageKey
+    ? isTerminalSourceStage(stageKey)
+    : gate.nextStageName === null;
   const canOpenApprovalWorkspace = allConfirmed && Boolean(eventId);
 
   const cardStyle: CSSProperties = {
@@ -56,10 +69,12 @@ export function ScopeGate({ gate, stageName, eventId }: ScopeGateProps) {
           maxWidth: '58ch',
         }}
       >
-        {gate.approver} confirms three things before {stageName} advances
         {last
-          ? ' and the event closes.'
-          : `. This page prepares the gate; the formal decision happens in the event approval workspace.`}
+          ? `${gate.approver} confirms three things before the ${stageName} completion review. `
+          : `${gate.approver} confirms three things before ${stageName} advances. `}
+        {last
+          ? SOURCE_TERMINAL_GATE_CONTRACT.outcomeSentence
+          : 'This page prepares the gate; the formal decision happens in the event approval workspace.'}
       </p>
 
       <div
@@ -75,8 +90,16 @@ export function ScopeGate({ gate, stageName, eventId }: ScopeGateProps) {
         }}
       >
         <b>What good looks like here:</b> inputs are complete, exceptions are
-        visible, and the approval packet is ready to review. The event approval
-        workspace records the human rationale and advances the event.
+        visible, and the approval packet is ready to review.{' '}
+        {/*
+          * ITEM U-406. This sentence promised that the workspace "advances the
+          * event" on EVERY stage, including the terminal one, where there is
+          * nothing onward to advance to. The terminal wording is the stated
+          * contract's, not a second phrasing invented at the surface.
+          */}
+        {last
+          ? SOURCE_TERMINAL_GATE_CONTRACT.gateSummarySentence
+          : 'The event approval workspace records the human rationale and advances the event.'}
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -297,7 +320,9 @@ export function ScopeGate({ gate, stageName, eventId }: ScopeGateProps) {
             cursor: canOpenApprovalWorkspace ? 'pointer' : 'not-allowed',
           }}
         >
-          {last ? 'Open final approval ->' : 'Open event approval page ->'}
+          {last
+            ? `${SOURCE_TERMINAL_GATE_CONTRACT.decisionLabel} ->`
+            : 'Open event approval page ->'}
         </button>
         {!canOpenApprovalWorkspace ? (
           <span style={{ fontSize: 11.5, color: ANALYTICS.FAINT }}>

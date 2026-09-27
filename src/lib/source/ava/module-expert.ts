@@ -12,6 +12,11 @@ import {
   SOURCE_STAGE_LABELS,
 } from "@/lib/source/constants";
 import {
+  isTerminalSourceStage,
+  sourceGateDecisionKindFor,
+  type SourceGateDecisionKind,
+} from "@/lib/source/stage-terminal-contract";
+import {
   classifySourceAnswerMode,
   type ClassifySourceAnswerModeInput,
   type SourceAnswerMode,
@@ -37,6 +42,13 @@ export interface SourceAvaPacketCitation {
 export interface SourceAvaStageGateSummary {
   stageKey: string;
   stageLabel: string;
+  /**
+   * What kind of decision this gate asks for. Stated rather than inferred from
+   * `nextStageLabel` being null, because "no onward stage" and "the onward stage
+   * has not been resolved" are different facts and only one of them means the
+   * decision is a completion review. See `@/lib/source/stage-terminal-contract`.
+   */
+  gateDecisionKind: SourceGateDecisionKind;
   nextStageLabel: string | null;
   taskChecklistDone: number;
   taskChecklistTotal: number;
@@ -251,7 +263,21 @@ function buildSourceAvaStageGateSummary(
   return {
     stageKey: stageView.stageKey,
     stageLabel: stageView.stageName || labelForSourceStage(stageView.stageKey),
-    nextStageLabel: nextStageKey ? SOURCE_STAGE_LABELS[nextStageKey] : stageView.gate.nextStageName,
+    gateDecisionKind: sourceGateDecisionKindFor(canonicalStageKey),
+    /**
+     * ITEM U-406. The fallback to the VIEW's own label fires only when
+     * `nextSourceStage` returns null — which on a recognised stage means the
+     * stage is terminal, so the fallback asked the view for an answer the
+     * canonical order had just said does not exist. The terminal exemplar
+     * answered `'Closed'`, and that string reached the model. On a terminal
+     * stage the absence is the answer; the fallback stays for an UNRECOGNISED
+     * stage key, where the order genuinely cannot answer.
+     */
+    nextStageLabel: nextStageKey
+      ? SOURCE_STAGE_LABELS[nextStageKey]
+      : isTerminalSourceStage(canonicalStageKey)
+        ? null
+        : stageView.gate.nextStageName,
     taskChecklistDone,
     taskChecklistTotal,
     evidenceBox:
