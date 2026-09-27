@@ -118,6 +118,12 @@ function describeFailure(err: unknown, fallback: string): string {
   if (message === 'email_code_not_enabled') {
     return 'This account is not configured for email-code sign-in yet. Use the private invite fallback or ask Anand to enable email code in Clerk.'
   }
+  if (message === 'access_not_provisioned') {
+    return 'That email is not an approved AbarVa workspace identity.'
+  }
+  if (message === 'clerk_not_configured') {
+    return 'Authentication is not fully configured on this runtime. Ask an AbarVa admin to check Clerk settings.'
+  }
   if (message.startsWith('email_code_sign_in_')) {
     const status = message.slice('email_code_sign_in_'.length)
     return `Clerk did not finalize the session (status: ${status}). Check the code and retry.`
@@ -180,6 +186,16 @@ export function EmailCodeSignIn({ redirectUrl }: Props) {
       }
       if (!clerk?.loaded) {
         throw new Error('clerk_not_ready')
+      }
+
+      const bootstrap = await fetch('/api/auth/launch-user', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: normalizedEmail }),
+      })
+      if (!bootstrap.ok) {
+        const payload = (await bootstrap.json().catch(() => null)) as { error?: string } | null
+        throw new Error(payload?.error || 'access_not_provisioned')
       }
 
       const signIn = await clerk.client.signIn.create({ identifier: normalizedEmail })

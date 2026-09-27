@@ -211,6 +211,7 @@ const ROOT_FILES_WIRED_BY_FILE = [
   "src/__tests__/integration/atlas-page-state-timeout.test.ts",
   "src/__tests__/integration/email-code-sign-in-panel.test.tsx",
   "src/__tests__/integration/evidence-registry.test.ts",
+  "src/__tests__/integration/launch-user-route.test.ts",
   "src/__tests__/integration/learn-welcome-cxo-toggle.test.tsx",
   "src/__tests__/integration/pack-j-realistic-portfolio.test.ts",
   "src/__tests__/integration/pattern-deliverable-api.test.ts",
@@ -555,7 +556,7 @@ describe("integration directories a workflow actually reaches", () => {
         !KNOWN_DARK_ROOT_FILES.has(file),
     );
 
-    expect(rootFiles).toHaveLength(45);
+    expect(rootFiles).toHaveLength(46);
     expect(unclassified).toEqual([]);
   });
 
