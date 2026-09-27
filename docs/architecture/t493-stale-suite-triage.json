@@ -1,7 +1,7 @@
 {
   "item": "T-493",
   "title": "Eighth stale-suite triage draw: 50 untriaged unrun test files across ten directories, each executed on its own, and the nine directories that came back clean wired into CI",
-  "recordedAt": "2026-09-27T13:37:08.536Z",
+  "recordedAt": "2026-09-27T13:54:40.745Z",
   "base": "31641238a16bd5135466af5d01a95ced3b3bd3cc",
   "scope": {
     "drawnFrom": "governedRiskRanking from scripts/quality/test-ci-coverage-census.mjs, re-derived on this base rather than read from the committed snapshot",
@@ -121,7 +121,7 @@
   },
   "forbiddenEdits": "This record judges 50 files and edits none of them. The guard asserts claimedWriteFiles and the judged paths are disjoint, which is what keeps a triage from quietly repairing its own subject and reporting the repair as a finding.",
   "followOnItems": {
-    "T-495": "Owns the 14 source-text scanners from the T-492 draw and gains a 15th here: src/lib/intelligence/synthesis/__tests__/violationsMigration.test.ts, whose single case asserts seven substrings of a committed migration including that row-level security is enabled and the read grant is tenant-scoped. Same class, same question -- which lane it belongs in: a governance validator over migrations, or a parsed model of the DDL. T-495's lane decision is its owner-gated half, so this row is owner-gated too and no agent should rewrite it on a guess.",
+    "T-495": "Owns the 14 source-text scanners from the T-492 draw and gains a 15th here: src/lib/intelligence/synthesis/__tests__/violationsMigration.test.ts, whose single case asserts seven substrings of a committed migration including that row-level security is enabled and the read grant is tenant-scoped. WHICH HALF OF T-495 IT FALLS IN IS NOT THIS RECORD'S TO DECIDE, and the honest answer is that the two readings disagree. T-495's gate scope names THREE SPECIFIC ROWS, the ones carrying textIsTheSubject, and this is not one of them -- this row carries textIsTheSubject false, because whether a table has row-level security is executable against a database and parseable from the SQL, so text is not the only subject available. By the letter of that split the row is in T-495's claimable half. By its nature it needs the same lane decision the gated half exists for: there is no module to execute here, so 'rewrite against what the module returns' has no target, and the real choice is between a governance validator over migrations and a parsed model of the DDL. Whoever takes T-495 should read that disagreement rather than inherit a verdict from this record.",
     "T-497": "Owns the four suites that execute real code and disagree with it, and gains a fifth here: src/lib/intelligence/synthesis/__tests__/violationsSupabaseBackend.test.ts. Its acceptance already prescribes what this row needs -- decide whether the code or the expectation is right and say which, citing the commit that moved it. The answer is recorded in this row's rationale: the product is right, the expectation has to move to the seam the module actually uses, and the commit is 5d795a3976."
   },
   "unfiledSuccessor": {
