@@ -159,6 +159,7 @@ interface MovesPhaseStandaloneClientProps {
 interface MoveArtifactApiRow {
   artifactId: string;
   artifactType: string;
+  deliverableTypeKey?: string | null;
   family: string;
   title: string;
   phase: number | null;
@@ -626,7 +627,7 @@ function mapArtifactApiRowToBuildArtifact(
 ): PhaseBuildArtifact {
   return {
     artifactId: artifact.artifactId,
-    deliverableTypeKey: artifact.artifactType,
+    deliverableTypeKey: artifact.deliverableTypeKey ?? artifact.artifactType,
     documentTitle: artifact.title,
     phase: artifact.phase,
     status: artifact.status,

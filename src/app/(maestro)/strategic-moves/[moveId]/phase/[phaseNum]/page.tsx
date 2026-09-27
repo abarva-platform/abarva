@@ -250,6 +250,25 @@ function generatedArtifactTitle(
   return typeof title === "string" && title.trim() ? title.trim() : null;
 }
 
+function deliverableKeyFromArtifactMetadata(
+  metadata: Record<string, unknown> | null | undefined,
+): string | null {
+  const renderableDoc = objectMetadata(metadata?.renderableDoc);
+  const candidates = [
+    metadata?.deliverableTypeKey,
+    metadata?.registryKey,
+    metadata?.deliverableType,
+    renderableDoc.deliverableTypeKey,
+    renderableDoc.deliverableType,
+  ];
+  for (const candidate of candidates) {
+    if (typeof candidate === "string" && candidate.trim()) {
+      return candidate.trim();
+    }
+  }
+  return null;
+}
+
 function contextExtractAttachedEvidenceCount(
   metadata: Record<string, unknown>,
 ): number {
@@ -433,9 +452,12 @@ export default async function StrategicMovePhaseWorkspacePage({
     });
     for (const artifact of generatedArtifacts) {
       if (artifact.phase !== parsedPhase) continue;
+      const artifactMetadata = objectMetadata(artifact.metadata);
       artifactsById.set(artifact.artifact_id, {
         artifactId: artifact.artifact_id,
-        deliverableTypeKey: artifact.artifact_type,
+        deliverableTypeKey:
+          deliverableKeyFromArtifactMetadata(artifactMetadata) ??
+          artifact.artifact_type,
         documentTitle: artifact.title,
         phase: artifact.phase,
         status: artifact.status,
@@ -461,7 +483,9 @@ export default async function StrategicMovePhaseWorkspacePage({
       if (artifactPhase !== parsedPhase) continue;
       artifactsById.set(artifact.id, {
         artifactId: artifact.id,
-        deliverableTypeKey: artifact.artifactType,
+        deliverableTypeKey:
+          deliverableKeyFromArtifactMetadata(artifact.metadata) ??
+          artifact.artifactType,
         documentTitle:
           generatedArtifactTitle(artifact.metadata) ?? artifact.artifactType,
         phase: artifactPhase,
