@@ -70,6 +70,7 @@ import {
 import { requireTenancy } from "@/lib/auth/tenancy";
 import { loadUserSourceAccessPolicy } from "@/lib/auth/source-access-policy";
 import { getAzureReadFluentClient } from "@/lib/data-plane/postgresCompat";
+import { applySourceApprovalPolicyToStageView } from "@/lib/source/approval-policy-stage-view";
 import type { SourceEventRow } from "@/lib/source/queries";
 import type {
   StageAnalyticsView,
@@ -682,6 +683,10 @@ export default async function SourceEventDetailPage({
     // reached a usable, persisted state — never a fabricated done. Never fatal.
     if (liveStageView) {
       try {
+        liveStageView = applySourceApprovalPolicyToStageView(
+          liveStageView,
+          event.approvalPolicyCode,
+        );
         const verifiedDelegatedSponsorAcknowledgement =
           viewStage === "scope" && activeClient?.key
             ? await hasVerifiedSponsorDelegation({

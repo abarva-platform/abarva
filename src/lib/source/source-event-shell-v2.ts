@@ -188,6 +188,7 @@ export type SourceShellStageArtifactReadiness = SourceStageArtifactReadiness;
 export interface SourceEventShellView {
   event: {
     id: string;
+    approvalPolicyCode?: SourcingEventSummary["approvalPolicyCode"];
     code: string;
     name: string;
     tenantName: string;
@@ -554,6 +555,7 @@ export function buildSourceEventShellView(
   return {
     event: {
       id: input.event.id,
+      approvalPolicyCode: input.event.approvalPolicyCode,
       code: input.event.code,
       name: input.event.name,
       tenantName: input.tenantName,

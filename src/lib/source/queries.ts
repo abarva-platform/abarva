@@ -63,6 +63,7 @@ import { coerceUsdAmountOrZero } from "./usd-amount";
 import { autoDraftOnStageEntry } from "./stage-entry-autodraft";
 import { htmlToPlainText, isFullHtmlDocument } from "./html-to-plain-text";
 import { syncEventIntakeEvidence } from "./canvas-substrate/event-intake-sync";
+import type { SourceApprovalPolicyCode } from "./approval-policy";
 
 // ── DB row type for source_events ─────────────────────────────────────────────
 
@@ -72,6 +73,7 @@ export interface SourceEventRow {
   event_code: string;
   event_name: string;
   event_type: string;
+  approval_policy_code?: SourceApprovalPolicyCode | null;
   sourcing_motion?: SourceSourcingMotion | null;
   classified_category?: string | null;
   current_stage_key: string;
@@ -209,12 +211,8 @@ export async function createSourcingEvent(
   );
   const nowIso = new Date().toISOString();
 
-  // Idempotent on (client_key, event_code): retries, double-submits, and
-  // replayed agent tool calls return the existing row instead of creating a
-  // ghost duplicate. The DB unique constraint
-  // `source_events_client_event_code_unique` is the authoritative guard;
-  // this upsert just bumps updated_at and re-reads the row so the caller
-  // sees the same shape whether it was a fresh insert or a returning row.
+  // A conflict must return the original event unchanged: an upsert would
+  // rewrite its stage, authority policy and creator on a retry.
   const { data, error } = await supabase
     .from("source_events")
     .upsert(
@@ -223,6 +221,7 @@ export async function createSourcingEvent(
         event_code: eventCode,
         event_name: input.eventName,
         event_type: input.eventType,
+        approval_policy_code: "self_v1",
         sourcing_motion: input.sourcingMotion ?? null,
         trigger_description: input.triggerDescription || null,
         decision_owner: input.decisionOwner || null,
@@ -238,13 +237,23 @@ export async function createSourcingEvent(
       },
       {
         onConflict: "client_key,event_code",
-        ignoreDuplicates: false,
+        ignoreDuplicates: true,
       },
     )
     .select()
-    .single();
+    .maybeSingle();
 
   if (error) throw new Error(error.message);
+  if (!data) {
+    const existing = await selectSourceEventsReadAdapter(
+      undefined,
+      input.clientKey,
+    ).getEventByCodeForClient(eventCode, input.clientKey);
+    if (!existing) {
+      throw new Error("Source event conflict could not be read for its tenant");
+    }
+    return existing as SourceEventRow;
+  }
   const row = data as SourceEventRow;
 
   // Slice 1.1: classify at intake. The classifier is a pure deterministic function
@@ -932,6 +941,7 @@ export function sourceEventRowToDetail(
 
   return {
     ...summary,
+    approvalPolicyCode: row.approval_policy_code ?? null,
     synopsis: `${summary.name} is a persisted Source event for ${accountName}. Ava is tracking intake, evidence, artifacts, approvals, and value from the live source_events row.`,
     problemStatement: trigger,
     triggerDescription: row.trigger_description,

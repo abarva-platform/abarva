@@ -283,6 +283,33 @@ describe("Source governance enforcement", () => {
     },
   );
 
+  it.each(["GATE-SCOPE-02", "GATE-SCOPE-04"])(
+    "uses Event Owner authority for %s only under explicit SELF policy",
+    (criterionId) => {
+      const input = {
+        criterion: criterion({ criterionId, fromStage: "scope", toStage: "rfp", state: "met" }),
+        artifacts: [artifact({
+          artifactCode: "d05_scope_memo",
+          stage: "scope",
+          status: "approved",
+          linkedArtifactId: "scope-memo",
+        })],
+        evidence: [],
+        reason: REVIEW_REASON,
+        approvalPolicyCode: "self_v1" as const,
+      };
+      expect(evaluateCriterionMetReadiness(input).blockers).not.toEqual(
+        expect.arrayContaining([expect.objectContaining({ code: "signer_proof_not_verified" })]),
+      );
+      expect(evaluateCriterionMetReadiness({
+        ...input,
+        artifacts: [],
+      }).blockers).toEqual(
+        expect.arrayContaining([expect.objectContaining({ code: "linked_artifact_not_committed" })]),
+      );
+    },
+  );
+
   it("accepts delivered delegated sponsor proof only for the commitment criterion", () => {
     const input = {
       artifacts: [artifact({

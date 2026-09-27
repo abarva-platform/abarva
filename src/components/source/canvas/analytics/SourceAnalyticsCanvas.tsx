@@ -28,6 +28,7 @@ import { StageDecisionLensPanel } from "@/components/source/canvas/workspace-tab
 import { SourceWorkflowFrame } from "@/components/source/SourceWorkflowFrame";
 import { SourceAwardSowHandoffReadinessPanel } from "@/components/source/SourceAwardSowHandoffReadinessPanel";
 import { buildSourceAwardSowHandoffReadiness } from "@/lib/source/award-sow-handoff-readiness";
+import { applySourceApprovalPolicyToStageView } from "@/lib/source/approval-policy-stage-view";
 import {
   buildSourceStage08AcceptanceSpine,
   type SourceStage08AcceptanceSpine,
@@ -775,11 +776,14 @@ export function SourceAnalyticsCanvas({
 
   const baseStageView = useMemo(
     () =>
-      adaptStageViewToSourceJourney(
-        stageView ?? sampleStageViewFor(viewStage, journey),
-        journey,
+      applySourceApprovalPolicyToStageView(
+        adaptStageViewToSourceJourney(
+          stageView ?? sampleStageViewFor(viewStage, journey),
+          journey,
+        ),
+        event.approvalPolicyCode,
       ),
-    [journey, stageView, viewStage],
+    [event.approvalPolicyCode, journey, stageView, viewStage],
   );
   const resolvedStageView: StageAnalyticsView = useMemo(
     () => (stepInsight ? { ...baseStageView, stepInsight } : baseStageView),
@@ -1920,6 +1924,7 @@ function buildStageOperatingStatus(
       criteria: gateCriterionStates,
       artifacts: artifactStates,
       evidence: stageEvidence,
+      approvalPolicyCode: view.event.approvalPolicyCode,
     }),
   );
   const requiredRows = rows.filter(

@@ -32,10 +32,10 @@ const criterionRow = {
 };
 
 const writeAdapter = {
-  insertCriterionApproval: jest.fn(async () => ({
-    ok: true,
-    data: { id: "approval-1" },
-  })),
+  insertCriterionApproval: jest.fn(async (input: { notes: string }) => {
+    void input;
+    return { ok: true, data: { id: "approval-1" } };
+  }),
   updateGateCriterion: jest.fn(async (input) => ({
     ok: true,
     data: {
@@ -52,6 +52,7 @@ const writeAdapter = {
 };
 const emitSourceApprovalNotificationBestEffort = jest.fn();
 const verifiedSponsorDelegationMock = jest.fn<Promise<boolean>, [{ eventId: string; tenantKey: string }]>(async () => false);
+let eventApprovalPolicyCode: "legacy_signed_scope_v1" | "self_v1" | null = null;
 
 jest.mock("@/lib/source/sponsor-delegation-repository", () => ({
   hasVerifiedSponsorDelegation: (input: { eventId: string; tenantKey: string }) => verifiedSponsorDelegationMock(input),
@@ -126,6 +127,7 @@ function fakeFluentClient() {
                 event_code: "SKYH-MANAGED-SERVICES",
                 decision_owner: "Tomas Singh",
                 created_by_user_id: "clerk-user-1",
+                approval_policy_code: eventApprovalPolicyCode,
               },
               error: null,
             };
@@ -165,6 +167,7 @@ const ctx = {
 beforeEach(() => {
   jest.clearAllMocks();
   verifiedSponsorDelegationMock.mockResolvedValue(false);
+  eventApprovalPolicyCode = null;
 });
 
 describe("PATCH Source gate criterion state", () => {
@@ -181,6 +184,19 @@ describe("PATCH Source gate criterion state", () => {
       expect.objectContaining({ code: "signer_proof_not_verified" }),
     ]));
     expect(verifiedSponsorDelegationMock).toHaveBeenCalledWith({ eventId: "evt-1", tenantKey: "skyharbor-air" });
+  });
+  it("does not require sponsor signer proof under explicit SELF authority, but still requires evidence", async () => {
+    eventApprovalPolicyCode = "self_v1";
+    const result = await PATCH(request({ state: "met", reason: "Event Owner reviewed the scope memo and evidence." }), ctx);
+    expect(result.status).toBe(409);
+    const blockers = (await result.json()).blockers;
+    expect(blockers).not.toEqual(expect.arrayContaining([
+      expect.objectContaining({ code: "signer_proof_not_verified" }),
+    ]));
+    expect(blockers).toEqual(expect.arrayContaining([
+      expect.objectContaining({ code: "required_evidence_not_ready" }),
+    ]));
+    expect(writeAdapter.updateGateCriterion).not.toHaveBeenCalled();
   });
   it("rejects waived without a human reason", async () => {
     const res = await PATCH(request({ state: "waived", reason: "short" }), ctx);
@@ -223,6 +239,21 @@ describe("PATCH Source gate criterion state", () => {
         eventType: "source.approval_needed",
         targetResourceId: "evt-1",
       }),
+    );
+  });
+
+  it("records SELF criterion waiver as an Event Owner decision, never a sponsor approval", async () => {
+    eventApprovalPolicyCode = "self_v1";
+    const res = await PATCH(
+      request({ state: "waived", reason: "Event Owner reviewed the scope evidence and accepted the exception." }),
+      ctx,
+    );
+    expect(res.status).toBe(200);
+    const approval = writeAdapter.insertCriterionApproval.mock.calls[0]?.[0];
+    expect(approval?.notes).toContain("ownerRole=event-owner");
+    expect(approval?.notes).not.toContain("ownerRole=sponsor");
+    expect(writeAdapter.insertActivityLog).toHaveBeenCalledWith(
+      expect.objectContaining({ metadata: expect.objectContaining({ approvalOwnerRole: "event-owner" }) }),
     );
   });
 

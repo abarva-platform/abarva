@@ -10,6 +10,7 @@ const eventRow = {
   trigger_description: null,
   client_key: "skyharbor-air",
   created_by_user_id: "another-user" as string | null,
+  approval_policy_code: null as "legacy_signed_scope_v1" | "self_v1" | null,
 };
 
 const applyApproval = jest.fn(async () => ({ ok: true }));
@@ -175,6 +176,7 @@ describe("POST Source event approve", () => {
     eventRow.client_key = "skyharbor-air";
     eventRow.sourcing_motion = null;
     eventRow.created_by_user_id = "another-user";
+    eventRow.approval_policy_code = null;
     mockIsGateApprovalStrictMode.mockReturnValue(false);
     stageSubstrate.criteria = [];
     mockGateAdvance.mockImplementation(() => ({
@@ -479,6 +481,24 @@ describe("POST Source event approve", () => {
 
       expect(response.status).toBe(403);
       expect(applyApproval).not.toHaveBeenCalled();
+    });
+
+    it("allows the creator under explicit SELF policy even when global strict mode is on", async () => {
+      eventRow.created_by_user_id = "user-1";
+      eventRow.approval_policy_code = "self_v1";
+      mockIsGateApprovalStrictMode.mockReturnValue(true);
+
+      const response = await POST(approveRequest(), {
+        params: Promise.resolve({ eventId: "event-1" }),
+      });
+
+      expect(response.status).toBe(200);
+      expect(mockGateAdvance).toHaveBeenCalledWith(
+        expect.objectContaining({ approvalPolicyCode: "self_v1" }),
+      );
+      expect(applyApproval).toHaveBeenCalledWith(
+        expect.objectContaining({ notes: expect.stringContaining("Self-approval notice") }),
+      );
     });
   });
 

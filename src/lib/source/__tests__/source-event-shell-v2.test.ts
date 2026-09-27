@@ -56,6 +56,16 @@ const APPROVAL: ApprovalsInboxItem = {
   actionLabel: "Review & decide",
 };
 
+it("carries persisted SELF policy into the mounted stage shell", () => {
+  const view = buildSourceEventShellView({
+    event: { ...EVENT, approvalPolicyCode: "self_v1" },
+    tenantName: "FS Demo",
+    viewedStageKey: "scope",
+    stageView: SAMPLE_SCOPE_STAGE as StageAnalyticsView,
+  });
+  expect(view.event.approvalPolicyCode).toBe("self_v1");
+});
+
 describe("journey stage completion evidence", () => {
   // A stage sitting before the current one has only moved past in position.
   // That is not proof it was completed, so the rail may only claim completion

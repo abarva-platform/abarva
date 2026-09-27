@@ -36,6 +36,7 @@ export interface SourceGateCriterion {
   linkedArtifactCodes: string[];
   /** Lead role accountable for advancing this criterion to `met`. */
   ownerRole:
+    | 'event-owner'
     | 'sourcing-lead'
     | 'sponsor'
     | 'ea-council'

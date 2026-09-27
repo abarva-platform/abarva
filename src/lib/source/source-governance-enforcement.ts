@@ -7,6 +7,7 @@ import type {
 } from "./canvas-substrate";
 import { isFactBackedEvidence } from "./canvas-substrate/fact-derived-evidence";
 import type { SourceStageKey } from "./types";
+import { criterionForSourceApprovalPolicy, resolveSourceApprovalPolicy, type SourceApprovalPolicyCode } from "./approval-policy";
 
 export const SOURCE_APPROVAL_REASON_MIN_LENGTH = 12;
 export const SOURCE_HUMAN_EDIT_METADATA_KEYS = [
@@ -86,13 +87,18 @@ export function evaluateCriterionMetReadiness(input: {
   reason: unknown;
   skipApprovalReasonCheck?: boolean;
   verifiedDelegatedSponsorAcknowledgement?: boolean;
+  approvalPolicyCode?: SourceApprovalPolicyCode | null;
 }): SourceGovernanceVerdict {
+  const approvalPolicy = resolveSourceApprovalPolicy(input.approvalPolicyCode);
   const hasExplicitHumanReview =
     !input.skipApprovalReasonCheck && validateApprovalReason(input.reason).ok;
   const blockers: SourceGovernanceBlocker[] = input.skipApprovalReasonCheck
     ? []
     : [...validateApprovalReason(input.reason).blockers];
-  const definition = criterionById(input.criterion.criterionId);
+  const definition = criterionForSourceApprovalPolicy(
+    criterionById(input.criterion.criterionId),
+    approvalPolicy.code,
+  );
 
   if (!definition) {
     blockers.push({
@@ -113,7 +119,8 @@ export function evaluateCriterionMetReadiness(input: {
     }
   }
 
-  if (SIGNER_PROOF_REQUIRED_CRITERIA.has(input.criterion.criterionId) &&
+  if (approvalPolicy.requiresExternalSigners &&
+    SIGNER_PROOF_REQUIRED_CRITERIA.has(input.criterion.criterionId) &&
     !(input.criterion.criterionId === "GATE-SCOPE-02" &&
       input.verifiedDelegatedSponsorAcknowledgement === true)) {
     blockers.push({
@@ -171,7 +178,9 @@ export function evaluateStagePromotionReadiness(input: {
   evidence?: SourceEventEvidence[];
   reason: unknown;
   verifiedDelegatedSponsorAcknowledgement?: boolean;
+  approvalPolicyCode?: SourceApprovalPolicyCode | null;
 }): SourceGovernanceVerdict {
+  const approvalPolicy = resolveSourceApprovalPolicy(input.approvalPolicyCode);
   const blockers: SourceGovernanceBlocker[] = [
     ...validateApprovalReason(input.reason).blockers,
   ];
@@ -202,7 +211,10 @@ export function evaluateStagePromotionReadiness(input: {
     (row) => row.fromStage === input.currentStage,
   );
   for (const criterion of stageCriteria) {
-    const definition = criterionById(criterion.criterionId);
+    const definition = criterionForSourceApprovalPolicy(
+      criterionById(criterion.criterionId),
+      approvalPolicy.code,
+    );
     // An unresolvable criterion id is catalog drift, not an informational
     // criterion. Deriving `blocksPromotion` from `definition?.severity` alone
     // made a row the catalog cannot resolve silently non-blocking, so the
@@ -248,6 +260,7 @@ export function evaluateStagePromotionReadiness(input: {
         reason: criterion.notes,
         verifiedDelegatedSponsorAcknowledgement:
           input.verifiedDelegatedSponsorAcknowledgement,
+        approvalPolicyCode: input.approvalPolicyCode,
       });
       if (!criterionReadiness.ok) {
         blockers.push({

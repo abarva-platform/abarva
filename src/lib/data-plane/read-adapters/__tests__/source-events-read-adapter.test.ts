@@ -61,6 +61,7 @@ const ROW: SourceEventDbRow = {
   event_code: 'SRC-APX-101',
   event_name: 'Contact Center Sourcing',
   event_type: 'managed_service',
+  approval_policy_code: 'self_v1',
   current_stage_key: 'strategy',
   lifecycle_state: 'waiting_on_client',
   linked_program_id: null,
@@ -186,6 +187,7 @@ describe('azureSourceEventsReadAdapter', () => {
 
     expect(rows).toEqual([ROW]);
     expect(seen[0].sql).toContain('FROM source_events');
+    expect(seen[0].sql).toContain('approval_policy_code');
     expect(seen[0].sql).toContain("lifecycle_state = 'waiting_on_client'");
     expect(seen[0].params).toEqual(['apexretail']);
   });

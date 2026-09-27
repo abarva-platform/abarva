@@ -50,6 +50,7 @@ import {
 import { scaffoldNewEventSubstrate } from "@/lib/source/queries";
 import { syncEventIntakeEvidence } from "@/lib/source/canvas-substrate/event-intake-sync";
 import { hasVerifiedSponsorDelegation } from "@/lib/source/sponsor-delegation-repository";
+import { criterionForSourceApprovalPolicy, resolveSourceApprovalPolicy } from "@/lib/source/approval-policy";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -131,7 +132,7 @@ export async function PATCH(req: NextRequest, { params }: RouteCtx) {
     const { data: persistedEvent, error: fetchError } = await supabase
       .from("source_events")
       .select(
-        "id, client_key, event_name, event_code, decision_owner, created_by_user_id, trigger_description",
+        "id, client_key, event_name, event_code, decision_owner, created_by_user_id, trigger_description, approval_policy_code",
       )
       .eq("id", eventId)
       .maybeSingle();
@@ -168,6 +169,12 @@ export async function PATCH(req: NextRequest, { params }: RouteCtx) {
         { error: "not_found", detail: `No source event with id ${eventId}` },
         { status: 404 },
       );
+    }
+    let approvalPolicy;
+    try {
+      approvalPolicy = resolveSourceApprovalPolicy(persistedEvent.approval_policy_code);
+    } catch {
+      return Response.json({ error: "invalid_approval_policy" }, { status: 409 });
     }
 
     await scaffoldNewEventSubstrate(
@@ -219,6 +226,7 @@ export async function PATCH(req: NextRequest, { params }: RouteCtx) {
     // any stage-approver may mark a criterion met.
     if (
       isGateApprovalStrictMode() &&
+      !approvalPolicy.selfApprovalAllowed &&
       !isStrictModeApprovalRole(tenancy?.role)
     ) {
       return Response.json(
@@ -291,6 +299,7 @@ export async function PATCH(req: NextRequest, { params }: RouteCtx) {
           evidenceStateRowToView,
         ),
         reason,
+        approvalPolicyCode: approvalPolicy.code,
         verifiedDelegatedSponsorAcknowledgement:
           criterionId === "GATE-SCOPE-02"
             ? await hasVerifiedSponsorDelegation({
@@ -327,7 +336,7 @@ export async function PATCH(req: NextRequest, { params }: RouteCtx) {
     // DB write routed through the data-plane write seam (Slice 3b).
     const sourceWrite = selectSourceWriteAdapter(undefined, effectiveClientKey);
     const nowIso = new Date().toISOString();
-    const definition = criterionById(criterionId);
+    const definition = criterionForSourceApprovalPolicy(criterionById(criterionId), approvalPolicy.code);
     const ownerRole = definition?.ownerRole ?? "sourcing-lead";
     const approverResolution = resolveApprover(
       {
@@ -340,6 +349,7 @@ export async function PATCH(req: NextRequest, { params }: RouteCtx) {
           typeof persistedEvent.created_by_user_id === "string"
             ? persistedEvent.created_by_user_id
             : null,
+        actingUserId: actorUserId,
       },
       ownerRole,
     );
