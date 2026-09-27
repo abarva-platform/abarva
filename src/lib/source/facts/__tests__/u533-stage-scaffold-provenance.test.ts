@@ -81,6 +81,10 @@ import {
   listSourceArchetypes,
 } from "@/lib/source/archetypes/registry";
 import { SOURCE_STAGE_LABELS } from "@/lib/source/constants";
+import {
+  SOURCE_TERMINAL_GATE_CONTRACT,
+  TERMINAL_SOURCE_STAGE_KEY,
+} from "@/lib/source/stage-terminal-contract";
 import type { FactSourceCitation } from "@/lib/source/facts/fact-types";
 import type { StageAnalyticsView } from "@/components/source/canvas/analytics/view-model";
 import {
@@ -411,9 +415,26 @@ const NAMED_APPROVER_STAGES = ARMED_STAGE_KEYS.filter((stageKey) =>
   PERSON_NAME_APPROVER.test(liveStageScaffoldFor(stageKey).gate.approver),
 );
 
-const NAMED_APPROVER_STAGE = NAMED_APPROVER_STAGES.find((stageKey) =>
+/*
+ * ITEM U-545, and this is the shape of the change rather than an aside.
+ *
+ * This was `NAMED_APPROVER_STAGES.find(k => CARRIED_STAGE_KEYS.includes(k))!`,
+ * and the three cases that used it asserted a CONJUNCTION: a stage that still
+ * carries its exemplar beats AND whose exemplar approver reads as a person.
+ * `value` was the last member of that intersection, so flipping it to derived
+ * emptied the set and the `!` turned three real cases into three cases about
+ * `undefined` -- which resolve through the default arm to Scope and pass or fail
+ * for reasons that have nothing to do with what they are named after.
+ *
+ * So the intersection is now SEARCHED and allowed to be empty, the two
+ * properties it used to bundle are asserted over their own non-empty
+ * populations, and the emptiness itself is asserted -- because a future stage
+ * arriving carried-and-person-named must reinstate the conjunction case rather
+ * than land silently.
+ */
+const CARRIED_NAMED_APPROVER_STAGES = NAMED_APPROVER_STAGES.filter((stageKey) =>
   (CARRIED_STAGE_KEYS as readonly string[]).includes(stageKey),
-)!;
+);
 
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -539,7 +560,12 @@ function measureStage(stageKey: string) {
         scaffold.gate.approver,
         follows((v) => v.gate.approver),
         derivation((v) => v.gate.approver),
-        stageKey === "value" ? "Event Owner" : undefined,
+        // Item U-545. Read from the contract and keyed on the canonical terminal
+        // stage, not on the literals `"value"` and `"Event Owner"` -- the pair the
+        // contract module exists to keep from being typed twice.
+        stageKey === TERMINAL_SOURCE_STAGE_KEY
+          ? SOURCE_TERMINAL_GATE_CONTRACT.approverRole
+          : undefined,
       ),
       "gate.confirms": verdictFor(
         view.gate.confirms,
@@ -907,10 +933,11 @@ describe("U-533 · what is carried, and what only agrees", () => {
      * verdict is what keeps the hand-written-fixture guard below meaningful.
      */
     expect(measurement.summary.emptyDerivedFields).toEqual(["gate.generates"]);
-    expect(measurement.summary.stagesWithScaffoldTasks).toBe(5);
-    expect(measurement.summary.stagesWithScaffoldGate).toBe(5);
-    expect(measurement.summary.stagesWithDerivedTasks).toBe(5);
-    expect(measurement.summary.stagesWithDerivedGate).toBe(5);
+    // Item U-545 flipped the sixth stage, the terminal one.
+    expect(measurement.summary.stagesWithScaffoldTasks).toBe(4);
+    expect(measurement.summary.stagesWithScaffoldGate).toBe(4);
+    expect(measurement.summary.stagesWithDerivedTasks).toBe(6);
+    expect(measurement.summary.stagesWithDerivedGate).toBe(6);
   });
 
   it("finds NO field that differs from the exemplar and follows nothing", () => {
@@ -977,7 +1004,19 @@ describe("U-533 · what is carried, and what only agrees", () => {
       // Population: there is a flipped stage to read.
       expect(flipped).toBeDefined();
       expect(flipped.fields["gate.confirms"]).toBe("fact_derived");
-      expect(flipped.fields["gate.approver"]).toBe("archetype_derived");
+      /*
+       * Item U-545. The approver's provenance splits on terminality, and stating
+       * it as one answer was only correct while every derived stage had an
+       * archetype to read a deciding role from. On the terminal stage the deciding
+       * role is fixed by `SOURCE_TERMINAL_GATE_CONTRACT` -- a policy, not a
+       * property of this event's archetype -- so it is `policy_derived` and does
+       * NOT move with the archetype. Asserting `archetype_derived` there would
+       * have been an over-claim of the same kind U-534 corrected.
+       */
+      const terminal = stageKey === TERMINAL_SOURCE_STAGE_KEY;
+      expect(flipped.fields["gate.approver"]).toBe(
+        terminal ? "policy_derived" : "archetype_derived",
+      );
 
       /**
        * Item U-535 made this a RULE rather than a constant. `gate.generates` is
@@ -999,7 +1038,7 @@ describe("U-533 · what is carried, and what only agrees", () => {
       // And the two readings that separate them, recorded rather than inferred.
       expect(flipped.movesWithFacts["gate.confirms"]).toBe(true);
       expect(flipped.movesWithFacts["gate.approver"]).toBe(false);
-      expect(flipped.movesWithArchetype["gate.approver"]).toBe(true);
+      expect(flipped.movesWithArchetype["gate.approver"]).toBe(!terminal);
     },
   );
 
@@ -1099,13 +1138,30 @@ describe("U-533 · known positive: exemplar content reaches the built view", () 
     // Population first: if no exemplar carried a personal name there would be no
     // defect of this shape to prove, and this case must fail rather than pass.
     expect(NAMED_APPROVER_STAGES.length).toBeGreaterThan(0);
+    // Item U-545. Read the TERMINAL stage, which is what this case is named
+    // after, instead of "whichever person-named exemplar still carries" -- the
+    // property being proved is the contract's role replacing a fixture person,
+    // and that does not depend on whether the stage's beats are carried.
+    expect(NAMED_APPROVER_STAGES).toContain(TERMINAL_SOURCE_STAGE_KEY);
 
-    const view = buildFor(NAMED_APPROVER_STAGE);
+    const view = buildFor(TERMINAL_SOURCE_STAGE_KEY);
     const exemplarApprover =
-      liveStageScaffoldFor(NAMED_APPROVER_STAGE).gate.approver;
+      liveStageScaffoldFor(TERMINAL_SOURCE_STAGE_KEY).gate.approver;
     expect(exemplarApprover).toMatch(PERSON_NAME_APPROVER);
-    expect(view.gate.approver).toBe("Event Owner");
+    expect(view.gate.approver).toBe(SOURCE_TERMINAL_GATE_CONTRACT.approverRole);
     expect(view.gate.approver).not.toBe(exemplarApprover);
+  });
+
+  it("gives NO built view a person-named approver, on any armed stage", () => {
+    /*
+     * Item U-545. The case above samples one stage; this one searches the whole
+     * armed set, because "no reachable case" is a claim a sample cannot support.
+     * Four exemplars carry a personal name and none of them reaches a built view.
+     */
+    expect(NAMED_APPROVER_STAGES.length).toBeGreaterThan(0);
+    for (const stageKey of ARMED_STAGE_KEYS) {
+      expect(buildFor(stageKey).gate.approver).not.toMatch(PERSON_NAME_APPROVER);
+    }
   });
 });
 
@@ -1135,9 +1191,16 @@ describe("U-533 · known positive: exemplar content reaches the model's prompt",
   });
 
   it("puts the Event Owner role, not the exemplar person, into the stage-gate block", () => {
-    const { block } = groundingFor("stage_gate", NAMED_APPROVER_STAGE);
-    expect(block).toContain("Approver: Event Owner.");
-    expect(block).not.toContain(liveStageScaffoldFor(NAMED_APPROVER_STAGE).gate.approver);
+    // Item U-545. `Event Owner` is the TERMINAL contract's role, so this case
+    // reads the terminal stage by name rather than through the carried-and-named
+    // intersection it used to borrow, which no longer has a member.
+    const { block } = groundingFor("stage_gate", TERMINAL_SOURCE_STAGE_KEY);
+    expect(block).toContain(
+      `Approver: ${SOURCE_TERMINAL_GATE_CONTRACT.approverRole}.`,
+    );
+    expect(block).not.toContain(
+      liveStageScaffoldFor(TERMINAL_SOURCE_STAGE_KEY).gate.approver,
+    );
   });
 });
 
@@ -1152,8 +1215,8 @@ describe("U-533 · the boundary declares which beats are carried", () => {
     // stage stopped needing it. A case over an empty CARRIED set would assert
     // that vacuously, and the two numbers are written out rather than summed so
     // a stage silently dropped from the armed set cannot keep this green.
-    expect(CARRIED_STAGE_KEYS).toHaveLength(5);
-    expect(DERIVED_STAGE_KEYS).toHaveLength(5);
+    expect(CARRIED_STAGE_KEYS).toHaveLength(4);
+    expect(DERIVED_STAGE_KEYS).toHaveLength(6);
   });
 
   it.each(CARRIED_STAGE_KEYS)("%s declares both intake beats as scaffold", (stageKey) => {
@@ -1233,16 +1296,49 @@ describe("U-533 · the grounding blocks disclose carried content to the model", 
     expect(text).toContain("not derived from this event's facts");
   });
 
-  it("discloses carried content without giving the model a fixture person's name", () => {
-    const approver = liveStageScaffoldFor(NAMED_APPROVER_STAGE).gate.approver;
-    const text = block("stage_gate", buildFor(NAMED_APPROVER_STAGE));
-    expect(text).toMatch(DISCLOSURE_MARKER);
-    expect(text).toContain(liveStageScaffoldSourceFor(NAMED_APPROVER_STAGE));
-    expect(text).toContain("Approver: Event Owner.");
+  /*
+   * ITEM U-545. This case used to assert a CONJUNCTION on one stage: a carried
+   * stage whose exemplar approver reads as a person discloses the carriage AND
+   * withholds the name. `value` was the last member of that intersection, and
+   * deriving its beats emptied it -- so the conjunction is now unreachable, and a
+   * case that keeps asserting it is a case about `undefined`.
+   *
+   * Rather than delete the guard or quietly re-point it, the two halves are split
+   * over their own non-empty populations and the emptiness is asserted in its own
+   * right. That last assertion is the one that matters for a later reader: if a
+   * new stage lands carried with a person-named exemplar, it fails, and whoever
+   * lands it has to reinstate the conjunction here instead of inheriting silence.
+   */
+  it("has no carried stage left whose exemplar approver reads as a person", () => {
+    // Population before property: there really are person-named exemplars, and
+    // there really are carried stages. The intersection being empty is therefore
+    // a measurement and not an artefact of either set being empty.
+    expect(NAMED_APPROVER_STAGES.length).toBeGreaterThan(0);
+    expect(CARRIED_STAGE_KEYS.length).toBeGreaterThan(0);
+    expect(CARRIED_NAMED_APPROVER_STAGES).toEqual([]);
+  });
+
+  it("discloses the carriage and names the exemplar, on every carried stage", () => {
+    for (const stageKey of CARRIED_STAGE_KEYS) {
+      const text = block("stage_gate", buildFor(stageKey));
+      expect(text).toMatch(DISCLOSURE_MARKER);
+      expect(text).toContain(liveStageScaffoldSourceFor(stageKey));
+    }
+  });
+
+  it("gives the model no fixture person's name, and no disclosure, on the terminal stage", () => {
+    // The other half, over the stage the retired conjunction was really about.
+    // Its exemplar still carries a personal name; its built view does not, and
+    // now that its beats are derived the disclosure must be absent too.
+    const approver = liveStageScaffoldFor(TERMINAL_SOURCE_STAGE_KEY).gate.approver;
+    expect(approver).toMatch(PERSON_NAME_APPROVER);
+    const text = block("stage_gate", buildFor(TERMINAL_SOURCE_STAGE_KEY));
+    // Population: the block really is about this stage's gate.
+    expect(text).toContain(
+      `Approver: ${SOURCE_TERMINAL_GATE_CONTRACT.approverRole}.`,
+    );
     expect(text).not.toContain(approver);
-    const markerAt = text.search(DISCLOSURE_MARKER);
-    expect(markerAt).toBeGreaterThanOrEqual(0);
-    expect(markerAt).toBeLessThan(text.indexOf("Approver: Event Owner."));
+    expect(text).not.toMatch(DISCLOSURE_MARKER);
   });
 
   it("keeps the real verdicts in the block — the disclosure is additive", () => {
