@@ -196,7 +196,8 @@ describe("POST Source event approve", () => {
       method: "POST",
       body: JSON.stringify({ action: "approve", notes: "Evaluation review completed.", confirmations: { evidenceComplete: true, exclusionsReviewed: true, stageFinal: true } }),
     }), { params: Promise.resolve({ eventId: "event-1" }) });
-    expect(readScorecard).toHaveBeenCalledWith("event-1", "skyharbor");
+    const activeClient = await mockGetActiveClientRow();
+    expect(readScorecard).toHaveBeenCalledWith(eventRow.id, activeClient?.key);
     expect(response.status).toBe(503);
     expect((await response.json()).error).toBe("scorecard_authority_unavailable");
     expect(applyApproval).not.toHaveBeenCalled();

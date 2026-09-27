@@ -157,7 +157,7 @@ describe("PATCH /api/v1/source/[eventId]/stage", () => {
       method: "PATCH",
       body: JSON.stringify({ stageKey: "pricing", reason: "Evaluation review completed.", confirmations: { evidenceComplete: true, exclusionsReviewed: true, stageFinal: true } }),
     }) as never, { params: Promise.resolve({ eventId: "event-1" }) });
-    expect(readScorecard).toHaveBeenCalledWith("event-1", "skyharbor-air");
+    expect(readScorecard).toHaveBeenCalledWith(persistedEvent.id, persistedEvent.client_key);
     expect(response.status).toBe(503);
     expect((await response.json()).error).toBe("scorecard_authority_unavailable");
     expect(updateStage).not.toHaveBeenCalled();
