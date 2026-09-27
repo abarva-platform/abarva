@@ -130,8 +130,45 @@ mid-flight: any invocation that omits `--landed-branch` behaves identically befo
   control and the fail-closed case.
 - The before/after invocations against the real register quoted under QA.
 
+## Overlap with PR #8556 (`T-498`), and why both are needed
+
+`#8556` has been open since 10:30Z against the same two files and the same one-sentence defect —
+a claim whose work is on `main` keeps holding its files — by a different mechanism: it widens
+`announcesRelease` so a release line phrased `released — <id> MERGED` is recognised as one. That
+overlap was raised in the operator pulse as a possible redundancy, correctly, because two guards for
+one defect is how a redundant one survives every mutation of itself.
+
+Measured rather than argued. On a fixture register where the holder **never wrote a release line at
+all** — one claim line naming a landed branch, one follow-up line — run against `#8556`'s own head
+`55a57fa786`:
+
+- `#8556` alone: **2 contended, still REFUSED.** Its rule needs a release line to exist; there is
+  none to widen.
+- this change: the branch-naming line is freed and reported as `[landed]`.
+
+They repair disjoint halves. `#8556` covers a release that was written and missed; this covers a
+holder that wrote nothing and moved on. Neither subsumes the other, and the case above is the
+evidence. Whichever lands first, the other rebases — both edit `resolveFileOverlap` — and the
+rebase does not change this conclusion.
+
+## Correction to the live-register evidence quoted above
+
+The live-register positive was measured at **14:38Z** and the output is quoted verbatim under QA. It
+is no longer reproducible: `T-493`'s holder appended its own release at **14:44:15Z**, six minutes
+later, which frees the same files by the ordinary route. That does not weaken the measurement — the
+files were genuinely frozen for the **12 minutes** between the 14:32:03Z merge and that release, and
+nothing structural bounded that window; the holder happening to wake did. But the durable instrument
+for this defect is the fixture suite, not the live register, and the live-register run should be read
+as a dated observation rather than a repeatable check.
+
 ## Known Gaps
 
+- **A claim line that names no branch keeps its hold**, even when a sibling line by the same agent
+  names one that landed. Silence is not evidence, so this fails closed by design and is pinned by a
+  case. In practice every line written through `append-claim.mjs` carries ``on branch `<name>` `` in
+  its machine-generated head, so the gap is reached only by hand-written lines — but a claim whose
+  progress lines omit the branch will still be held, and that is the main limit on how much of this
+  defect the change actually removes.
 - The argument is supplied by the caller. The gate verifies the branch is gone, which is the half
   that can be checked offline of any issue tracker, but it does not itself confirm that a pull
   request was merged rather than the branch being deleted unmerged. A branch deleted without merging

@@ -4473,6 +4473,40 @@ const C559_LINES = [
 }
 
 {
+  // FAIL CLOSED ON SILENCE, and this is the limit of the mechanism rather
+  // than an oversight. A claim line that names NO branch offers no evidence
+  // that anything landed, so it keeps its hold even when a sibling line by
+  // the same agent named a branch that did.
+  //
+  // In practice every line written through `append-claim.mjs` carries
+  // ``on branch `<name>` `` in its machine-generated head, so this case is
+  // reached by hand-written lines. Pinned here so the conservative reading is
+  // a decision with a case behind it, not an accident of `branchesInClaim`
+  // returning an empty array.
+  const { dir, file } = fixture([
+    "2026-09-22T18:05:00Z | lane-a#run-1 | item T-884 claimed on branch `claude/landed-one` | files: scripts/exec/a.mjs",
+    "2026-09-22T18:09:00Z | lane-a#run-1 | item T-884 IN FLIGHT: PR #9999 open | files: scripts/exec/a.mjs",
+  ]);
+  const origin = repoWithOriginHeads([]);
+  const r = preclaimFiles(file, "T-885", "lane-b#run-2", "scripts/exec/a.mjs", [
+    "--landed-branch",
+    "claude/landed-one",
+    "--repo-dir",
+    origin.repoDir,
+  ]);
+  check(
+    "a follow-up line naming no branch keeps its hold — silence is not evidence of landing",
+    r.status === 1 &&
+      r.report.fileOverlap?.conflicts?.length === 1 &&
+      r.report.fileOverlap.conflicts[0].lineNumber === 6 &&
+      r.report.fileOverlap.notes?.length === 1,
+    `status=${r.status} overlap=${JSON.stringify(r.report.fileOverlap)}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+  fs.rmSync(origin.dir, { recursive: true, force: true });
+}
+
+{
   // THE ADVERTISEMENT CONTRACT. `append-claim.mjs` probes this usage text to
   // decide whether a flag it forwards would actually run, and refuses the
   // claim when a flag is unadvertised — because Node ignores flags it does
