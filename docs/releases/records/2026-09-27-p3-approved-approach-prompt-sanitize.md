@@ -58,7 +58,7 @@ Revert the PR and redeploy through the repo-owned ACA main deploy workflow. Exis
 
 ## Audit Evidence
 
-- PR URL: TBD
+- PR URL: https://github.com/abarva-platform/abarva/pull/8583
 - Local test output: focused unit test listed above.
 - Deploy run and runtime invariant: To be captured after merge/deploy.
 - Signed-in product proof: To be captured after deploy.
