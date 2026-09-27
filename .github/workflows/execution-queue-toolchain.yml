@@ -388,3 +388,59 @@ jobs:
       # asserted what it actually buys.
       - name: Run the worktree sweep-hazard contract
         run: node scripts/exec/worktree-sweep-hazard.test.mjs
+
+      # Does the register account for this merge at all? (item C-556)
+      #
+      # Four controls in this directory ask whether a register line decides a row
+      # correctly. This asks whether there IS a line. A change can merge to
+      # `main`, ship, and alter a product surface while nothing in the register
+      # names it by merge SHA or by pull request -- and every downstream reader is
+      # keyed to a line, so it then carries no merged state, no deployed state, no
+      # signed-in question, and no item reports it as unfinished. The absence of a
+      # row and the absence of work are indistinguishable.
+      #
+      # Measured over --since 2026-09-26T00:00:00Z: 76 merges, 64 named, 8
+      # mentioned-only, 4 unnamed. Both directions, which is what stops this
+      # counting merges instead of detecting silence.
+      #
+      # The item was filed on a grep for ten-character abbreviations, and two of
+      # its nine findings were wrong in opposite directions. One merge IS named --
+      # "PR #8520 merged as 7f0056d1", by pull request and by an EIGHT character
+      # abbreviation that a fixed-width probe cannot see -- so a SHA is matched by
+      # prefix relation. Four more DO appear at nine characters and none of them is
+      # named: they are somebody else's base, another item's merge narrated in
+      # passing, or the SHA of a deploy run a different item queued behind. A
+      # substring reader calls all four accounted-for, which is C-551's
+      # distinction asked about SHAs, so the join is the SUBJECT pull request read
+      # with signed-in-proof-reconcile.mjs's own grammar.
+      #
+      # `mentioned-only` is its own verdict for that reason. Folding it into
+      # `named` hides an unaccounted merge -- the defect, inverted, in the silent
+      # direction -- and folding it into `unnamed` sends an auditor after a thread
+      # that is on file.
+      #
+      # A guard requiring the naming line to ASSERT the merge was built, measured
+      # over the live window, and REMOVED rather than kept: it moved 12 ordinary
+      # release lines out of `named`, because the repo's merge-token reader is
+      # tuned for a different question and an untokenised "squash merge <sha>"
+      # reads as unannounced. Widening the token to fit would be C-529's defect.
+      # The flag is reported on the row instead and decides nothing.
+      #
+      # This step runs the SUITE only. The detector reads the operator register
+      # and the GitHub API, neither of which a runner has, and a control taking
+      # its truth from a subject the pull request never saw cannot fail. Every
+      # pull request lookup in the suite is passed in as data; the one git case
+      # builds its own two-commit repository, because `actions/checkout` is
+      # shallow and a case reading real commits would pass locally and be
+      # unreachable here. The live-corpus cases assert only what an append-only
+      # register cannot undo -- a named merge stays named, a mentioned one stays
+      # at least mentioned -- and deliberately do NOT assert that any merge is
+      # still unnamed, which would go red the day the corpus improved.
+      #
+      # Red first 31 passed / 19 failed against the status-quo reader (fixed-width
+      # substring, two naming states, no subject grammar); 50 / 0 after. Fifteen
+      # mutations, fifteen caught -- one of them only after a first attempt
+      # SURVIVED, and closing it needed a case reaching a line that carries no SHA
+      # at all.
+      - name: Run the merge-coverage detector contract
+        run: node scripts/exec/register-merge-coverage.test.mjs

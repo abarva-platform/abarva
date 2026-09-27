@@ -33,7 +33,7 @@
       "surfaceName": "source canvas · every workspace and disclosure",
       "path": "src/components/source/canvas/analytics/SourceAnalyticsCanvas.tsx",
       "routeReachable": true,
-      "importClosureFiles": 434
+      "importClosureFiles": 435
     },
     {
       "surfaceName": "step insight panel · every insight kind",

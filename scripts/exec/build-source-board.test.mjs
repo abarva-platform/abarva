@@ -2401,5 +2401,202 @@ console.log("\nbuild-source-board — an unmapped id is offered, not hidden (C-5
   fs.rmSync(dir, { recursive: true, force: true });
 }
 
+
+/* ------------------------------------------------------------------------ *
+ * ITEM C-552 — A GATE OVER PART OF AN ITEM MUST NOT GATE ALL OF IT.
+ *
+ * `deriveBlocker` returns at most one blocker per item, and it is a per-ITEM
+ * field. An acceptance written in halves therefore has nowhere to say that one
+ * half is owner-gated and the other is ordinary executable work: the first
+ * true sentence about the gated half labels the whole item, the queue moves it
+ * into the bucket an agent is told never to take, and the executable half
+ * becomes invisible as work.
+ *
+ * THE LIVE CASE, reproduced here by its own text rather than invented. `U-406`
+ * is two halves — state the terminal Value contract in code (needs nobody) and
+ * read the approver role back on a live Value surface (needs a human). A
+ * register line at `2026-09-27T03:05:20Z` stated the second, truthfully, and
+ * the gate below is its exact sentence. Measured on the live documents at
+ * `912a1c593c`: `U-406`'s derived blocker was `Signed-in acceptance owed` and
+ * the generated queue's claimable count went 4 to 3. Removing that one line
+ * from a scratch copy of the operator root returned the blocker to `null`, so
+ * the line is the whole cause and the row's own body gates nothing.
+ *
+ * AND THERE WAS NO IN-REGISTER REMEDY. The register is append-only and
+ * `firstUnvetoedMatch` scans the item's whole corpus, so a later line saying
+ * the executable half is free does not move the blocker — one unvetoed
+ * sentence anywhere is enough. A single badly-scoped sentence gated an item
+ * permanently and by construction.
+ *
+ * What is added is a DECLARATION, not a narrower pattern. `T-703` and `T-761`
+ * each paid for the current breadth of these rules and the sentence above is a
+ * correct match; nothing here changes what matches. An item may instead declare
+ * that the gate it carries covers a named half, and the board then records the
+ * gate as partial: the item is claimable again and the gated half travels with
+ * it. Declared, never inferred — with no declaration the gate covers the whole
+ * item exactly as before, which is the direction that must not move.
+ * ------------------------------------------------------------------------ */
+
+/** The exact sentence from the live register line, character for character. */
+const LIVE_PARTIAL_GATE_SENTENCE =
+  "The signed-in Value readback the row also asks for was NOT attempted and remains owed"
+  + " -- it needs a human and the row forbids waiving the frozen event's Scope policy to reach Value.";
+
+/** A register line carrying it, in the register's own shape. */
+const LIVE_U406_REGISTER_LINE =
+  `2026-09-27T03:05:20Z | source-backlog-executor#20260927T0255Z | item U-406 NOT TAKEN — `
+  + `U-406 ABSTENTION -- re-verified on origin/main, no code written, no claim held. `
+  + LIVE_PARTIAL_GATE_SENTENCE;
+
+const U406_DECLARATION =
+  "**Gate scope — partial.** Gated half: the signed-in Value readback on a live Value surface, "
+  + "which needs a human. Claimable half: state the terminal Value contract in code and test it.";
+
+const U406_BODY =
+  "**Value is terminal and the surface still implies an onward target.** Half (1) is merged and "
+  + "deploy-proven; half (2) states the terminal Value contract in code.";
+
+const U406_ACCEPTANCE =
+  "State the terminal Value contract in code and test it, red-first against the current copy.";
+
+function partialGateOf(dir, id) {
+  return summaryItems(dir).out.get(id)?.partialGate ?? null;
+}
+
+/* --- (a) THE DEFECT, on the live line: the whole item is gated. ---------- *
+ * This case passes before the fix and after it. It is the direction that must
+ * never move: an item carrying a gate and NO declaration stays in the
+ * never-claim bucket, whatever else changes.                                */
+{
+  const dir = freshFixture();
+  addBacklogItem(dir, "U-406", U406_BODY, U406_ACCEPTANCE);
+  appendClaims(dir, [LIVE_U406_REGISTER_LINE]);
+  buildBoard(dir);
+  check(
+    "C-552 (a) a gate with no declared scope still covers the whole item",
+    blockerOf(dir, "U-406") === "Signed-in acceptance owed" && partialGateOf(dir, "U-406") === null,
+    `blocker=${JSON.stringify(blockerOf(dir, "U-406"))} partialGate=${JSON.stringify(partialGateOf(dir, "U-406"))}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+/* --- (b) RED FIRST. The row declares the gate covers one half. ---------- *
+ * Same live register line. The item's row now declares which half the gate
+ * covers, so the item must carry no per-item blocker and must carry the gated
+ * half instead.                                                             */
+{
+  const dir = freshFixture();
+  addBacklogItem(dir, "U-406", `${U406_BODY} ${U406_DECLARATION}`, U406_ACCEPTANCE);
+  appendClaims(dir, [LIVE_U406_REGISTER_LINE]);
+  buildBoard(dir);
+  const scope = partialGateOf(dir, "U-406");
+  check(
+    "C-552 (b) a row may scope a gate to a named half, and the item keeps no per-item blocker",
+    blockerOf(dir, "U-406") === null
+      && scope?.say === "Signed-in acceptance owed"
+      && /signed-in Value readback/i.test(scope?.gated ?? "")
+      && /terminal Value contract/i.test(scope?.open ?? ""),
+    `blocker=${JSON.stringify(blockerOf(dir, "U-406"))} partialGate=${JSON.stringify(scope)}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+/* --- (c) A REGISTER LINE may declare it too. ---------------------------- *
+ * The acceptance says "a row or register line", and the register is the corpus
+ * that has no other remedy: it is append-only, so the only move available to
+ * it is to append. A declaration appended there must work exactly as the row's
+ * does — the row here is the ORIGINAL, undeclared one.                       */
+{
+  const dir = freshFixture();
+  addBacklogItem(dir, "U-406", U406_BODY, U406_ACCEPTANCE);
+  appendClaims(dir, [
+    LIVE_U406_REGISTER_LINE,
+    `2026-09-27T03:40:00Z | source-backlog-executor#20260927T0325Z | item U-406 scope — ${U406_DECLARATION}`,
+  ]);
+  buildBoard(dir);
+  const scope = partialGateOf(dir, "U-406");
+  check(
+    "C-552 (c) an appended register line can scope the same gate",
+    blockerOf(dir, "U-406") === null && /signed-in Value readback/i.test(scope?.gated ?? ""),
+    `blocker=${JSON.stringify(blockerOf(dir, "U-406"))} partialGate=${JSON.stringify(scope)}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+/* --- (d) IT FAILS CLOSED. A declaration naming only the gated half names no
+ * claimable half, so it says nothing about what is takeable and must leave the
+ * gate where it is. A half-written declaration is the shape a hurried agent
+ * writes, and reading it as "free" is the one direction that costs.          */
+{
+  const dir = freshFixture();
+  addBacklogItem(
+    dir,
+    "U-406",
+    `${U406_BODY} **Gate scope — partial.** Gated half: the signed-in Value readback on a live surface.`,
+    U406_ACCEPTANCE,
+  );
+  appendClaims(dir, [LIVE_U406_REGISTER_LINE]);
+  buildBoard(dir);
+  check(
+    "C-552 (d) a declaration that names no claimable half does not free the item",
+    blockerOf(dir, "U-406") === "Signed-in acceptance owed" && partialGateOf(dir, "U-406") === null,
+    `blocker=${JSON.stringify(blockerOf(dir, "U-406"))} partialGate=${JSON.stringify(partialGateOf(dir, "U-406"))}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+/* --- (e) A DECLARATION CANNOT INVENT A GATE. An item with no gate at all
+ * that carries one of these declarations must stay ungated and must NOT be
+ * reported as partly gated: a row about partial gates is not a partial gate,
+ * which is the `C-538` disease and it has now reproduced twice live.         */
+{
+  const dir = freshFixture();
+  addBacklogItem(dir, "T-949", `**An ordinary open item.** ${U406_DECLARATION}`, "Ship the reader.");
+  buildBoard(dir);
+  check(
+    "C-552 (e) a declaration on an ungated item invents neither a gate nor a partial one",
+    blockerOf(dir, "T-949") === null && partialGateOf(dir, "T-949") === null,
+    `blocker=${JSON.stringify(blockerOf(dir, "T-949"))} partialGate=${JSON.stringify(partialGateOf(dir, "T-949"))}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+/* --- (f) `Unclaimed` IS NOT A GATE AND IS NOT SCOPABLE. It is the fallback
+ * and it asserts the ABSENCE of a gate; scoping it would report a partial gate
+ * where no gate was ever stated, and this file's own note on `T-418` is why
+ * that rule is treated differently everywhere else too.                      */
+{
+  const dir = freshFixture();
+  addBacklogItem(
+    dir,
+    "T-950",
+    `**The largest unclaimed row in the census.** ${U406_DECLARATION}`,
+    "Ship the reader.",
+  );
+  buildBoard(dir);
+  check(
+    "C-552 (f) the Unclaimed fallback is not converted into a partial gate",
+    partialGateOf(dir, "T-950") === null,
+    `blocker=${JSON.stringify(blockerOf(dir, "T-950"))} partialGate=${JSON.stringify(partialGateOf(dir, "T-950"))}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+/* --- (g) THE SUMMARY WRITES THE FIELD AT ZERO. A missing field is not a
+ * zero — the rule item T-746 set for the residual. The queue renders this
+ * roll-up, and a field written only when non-empty is a section exercised only
+ * in the interesting case.                                                   */
+{
+  const dir = freshFixture();
+  buildBoard(dir);
+  const { summary } = summaryItems(dir);
+  check(
+    "C-552 (g) the summary always carries a partialGates roll-up, including empty",
+    Array.isArray(summary.partialGates) && summary.partialGates.length === 0,
+    `partialGates=${JSON.stringify(summary.partialGates)}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
 console.log(`\n${passes} passed, ${failures} failed`);
 process.exit(failures ? 1 : 0);

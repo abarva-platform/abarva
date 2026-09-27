@@ -639,7 +639,7 @@
         "gate.approver": "policy_derived",
         "gate.confirms": "scaffold_carried_by_reference",
         "gate.generates": "scaffold_carried_by_reference",
-        "gate.nextStageName": "computed_differs_from_exemplar",
+        "gate.nextStageName": "computed_agrees_with_exemplar",
         "gate.action": "absent",
         "waterfall": "fact_derived",
         "stepInsight": "absent",

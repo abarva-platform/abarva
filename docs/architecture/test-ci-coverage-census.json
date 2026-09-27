@@ -8,33 +8,35 @@
     "While indeterminateInvocations is non-empty, uncoveredTestFiles is an upper bound.",
     "An unrun file a naming command excludes through its own --testPathIgnorePatterns is a declared quarantine: triaged, with a reason recorded somewhere. An unrun file no command names is untriaged. Both stay in uncoveredTestFiles; only untriagedUnrunTestFiles separates them.",
     "A quarantine is also read where it is expressed by ENUMERATION: a directory whose default is EXCLUDED names its files one by one, so a file left out is named by nothing and no ignore pattern subtracts it. Such a file is a declared quarantine when a scoped entry in a scripts/quality/*-quarantine.json names it; declaredQuarantineShape says which of the two shapes credited each file. Discovery is a glob over that directory and scope is declared in the list, because basenames are not unique in this tree: a list the census cannot resolve fails the run rather than being skipped.",
-    "governedRiskFiles reports each file in a ranked governed-risk directory: enumerated means the census walked the tree and found the file, collected means a workflow-reachable command named it before ignore subtraction, covered means that command still reaches it after ignore subtraction, untriaged means no command reaches it and no quarantine declares it, and declaredQuarantineShape names which of the two quarantine shapes credited a file that is not untriaged.",
+    "governedRiskFiles reports each file in a ranked directory that carries a governed-risk signal — not every ranked directory, since C-555 admitted the unscored ones to the ranking and deliberately not to this list: enumerated means the census walked the tree and found the file, collected means a workflow-reachable command named it before ignore subtraction, covered means that command still reaches it after ignore subtraction, untriaged means no command reaches it and no quarantine declares it, and declaredQuarantineShape names which of the two quarantine shapes credited a file that is not untriaged.",
     "This census executes no test, so it publishes no pass or fail for any file: green is \"unknown\" for every row without exception, and run is false only where no reachable command selects the file — the one execution fact reachability settles — and \"unknown\" otherwise, because selection is not execution. A file that was never executed cannot appear as green.",
-    "Every directory holding an UNTRIAGED unrun file is ranked by governed-surface risk: declared AI controls, approval or lifecycle writes, then tenant-scoped reads; the count of unrun files is only a tie-breaker. A directory whose unrun set is entirely declared quarantine is not ranked, because it has already been triaged.",
+    "Every directory holding an UNTRIAGED unrun file is ranked, and admittedBy on each row says which path admitted it: governed_risk_signal for a non-zero governed-risk score, untriaged_unrun_work for a directory that matched no signal and would have been absent before C-555. Order is governed-surface risk first — declared AI controls, approval or lifecycle writes, then tenant-scoped reads — so every signalled directory precedes every zero and keeps the rank it had; the count of unrun files is a tie-breaker, and it is what orders the zero tier among itself. Admission raises no score and no band. A directory whose unrun set is entirely declared quarantine is still not ranked, because it has already been triaged.",
     "Governed-risk signals come from product modules a test loads at runtime, not from directory names alone; type-only imports are erased before the test runs and are not counted as edges.",
     "Evidence source lists for the top 25 governed-risk directories are sorted and capped at five paths per signal; companion counts preserve the full match cardinality.",
-    "productSourceCount is the number of product modules the directory's tests resolved at run time, published on every directory including the unranked ones. An unclassified directory with a non-zero count was measured and matched no signal; one with zero resolved no import at all, so its band describes this census's reach rather than that directory's risk. unclassifiedRiskDirectories lists every such directory and the two counts beside it split them.",
+    "productSourceCount is the number of product modules the directory's tests resolved at run time, published on every directory including the unranked ones. An unclassified directory with a non-zero count was measured and matched no signal; one with zero resolved no import at all, so its band describes this census's reach rather than that directory's risk. unclassifiedRiskDirectories lists every such directory and the two counts beside it split them. Since C-555 it is a view ON the ranking rather than the ranking's complement: each of its rows is also a ranked row with admittedBy untriaged_unrun_work, and rankedDirectories against untriagedUnrunTestFiles is how far the work order reaches into its own pool.",
     "No timestamp is recorded, so refreshing this file on an unchanged tree is a no-op."
   ],
   "counts": {
-    "testFiles": 2506,
-    "coveredTestFiles": 2066,
-    "pullRequestCoveredTestFiles": 2065,
-    "uncoveredTestFiles": 440,
+    "testFiles": 2510,
+    "coveredTestFiles": 2108,
+    "pullRequestCoveredTestFiles": 2107,
+    "uncoveredTestFiles": 402,
     "directoriesWithTests": 491,
-    "directoriesFullyCovered": 293,
+    "directoriesFullyCovered": 299,
     "directoriesPartiallyCovered": 25,
-    "directoriesUncovered": 173,
-    "directoriesWithUnrunTestFiles": 198,
-    "directoriesWithUntriagedUnrunTestFiles": 187,
+    "directoriesUncovered": 167,
+    "directoriesWithUnrunTestFiles": 192,
+    "directoriesWithUntriagedUnrunTestFiles": 181,
     "declaredQuarantineTestFiles": 52,
-    "untriagedUnrunTestFiles": 388,
+    "untriagedUnrunTestFiles": 350,
     "indeterminateInvocations": 0,
     "unresolvedIgnoreArguments": 0,
-    "criticalGovernedRiskDirectories": 2,
+    "criticalGovernedRiskDirectories": 1,
     "highGovernedRiskDirectories": 6,
-    "unclassifiedRiskDirectories": 179,
-    "unclassifiedRiskDirectoriesWithResolvedProductSources": 172,
+    "unclassifiedRiskDirectories": 174,
+    "rankedDirectories": 181,
+    "rankedUntriagedUnrunTestFiles": 350,
+    "unclassifiedRiskDirectoriesWithResolvedProductSources": 167,
     "unclassifiedRiskDirectoriesWithNoResolvedProductSource": 7
   },
   "quarantineLists": [
@@ -131,6 +133,10 @@
   ],
   "indeterminateInvocations": [],
   "mentionedInvocations": [
+    {
+      "source": "scripts/audit/ai-surface-control-cases.mjs",
+      "mention": "/** * Does the suite credited with a control still contain the case that proves it? * (item C-554) * * `scripts/audit/ai-surface-control-catalog.mjs` checks a declared behavioral * test hard — the path exists, the catalog workflow runs it, and the name * filter the workflow uses is the one the catalog declares. What it never did * was look inside the suite. Coverage was credited **per control kind** from a * **file**, so a suite named by four kinds earned four credits whatever it * actually exercised. * * Measured on `912a1c593c` before this existed: 10 test files carried 25 of the * 35 reachable credits, and the worst case was a 61-case general suite * (`src/components/agent/__tests__/AgentDock.test.tsx`) credited for two kinds. * Deleting the one case that proves one of them — * `renders the persistent AI responsibility footer`, the only proof of * `agent-dock-chat-turns/responsibility-footer` — left the suite green at 60 * cases and left the gate green at exit 0, still reporting that control covered * inside \"35 of 35 (100%)\". Nothing anywhere went red. That is the founding * defect of this whole programme in a new dress: a control proved by a name * rather than by something that runs. * * So each credited control now declares `provenCases`: the exact jest case * names that prove that kind, and this script reconciles them against the * suites themselves. * * ## Why jest's own output, and not a scan of the test file * * A case name is a runtime value. It can be built from a template literal, a * `describe.each` table, a loop variable, or a constant imported from another * module — four shapes a grep reads wrong in both directions, and one of them * (`describe.each`) is already used by the surfaces in this catalog. Reading * the names back from `jest --json` asks jest what it ran, which is the only * authority on the question, and it carries each case's **status** as well, so * a case that was renamed, deleted, skipped or marked `todo` is a failure * rather than a silence. * * All 23 credited suites run in one invocation in a few seconds, so this is a * single jest boot and not 23. */"
+    },
     {
       "source": "scripts/quality/admin-integration-ignore-args.mjs",
       "mention": "/** * Print the `--testPathIgnorePatterns` arguments for the Admin integration * directory, derived from admin-integration-quarantine.json. * * The workflow runs jest directly and names the directory literally: * * npx jest ... src/__tests__/integration/admin ... $(node scripts/quality/admin-integration-ignore-args.mjs) * * That shape is deliberate, and it is the same one source-integration.yml and * the Intelligence step already use. The \"Changed integration suites have a CI * owner\" gate counts a suite as registered only when a workflow command * mentions a test runner AND names the suite or a containing directory. Moving * the run behind a wrapper script satisfies neither, so wrapping it would leave * every new Admin integration suite failing that gate while the workflow * appeared to work. Only the flags come from here; the runner and the path stay * in the command where the gate can see them. */"
@@ -417,75 +423,6 @@
   ],
   "governedRiskFiles": [
     {
-      "directory": "src/components/programs/discovery/__tests__",
-      "testPath": "src/components/programs/discovery/__tests__/brief-to-shape.test.ts",
-      "enumerated": true,
-      "collected": false,
-      "run": false,
-      "green": "unknown",
-      "covered": false,
-      "pullRequestCovered": false,
-      "declaredQuarantine": false,
-      "declaredQuarantineShape": null,
-      "untriaged": true,
-      "via": [],
-      "governedRisk": {
-        "score": 1000,
-        "band": "critical",
-        "signals": [
-          "declared_ai_surface_control"
-        ],
-        "productSourceCount": 6,
-        "rank": 1
-      }
-    },
-    {
-      "directory": "src/components/programs/discovery/__tests__",
-      "testPath": "src/components/programs/discovery/__tests__/DiscoveryCapturePanel.test.tsx",
-      "enumerated": true,
-      "collected": false,
-      "run": false,
-      "green": "unknown",
-      "covered": false,
-      "pullRequestCovered": false,
-      "declaredQuarantine": false,
-      "declaredQuarantineShape": null,
-      "untriaged": true,
-      "via": [],
-      "governedRisk": {
-        "score": 1000,
-        "band": "critical",
-        "signals": [
-          "declared_ai_surface_control"
-        ],
-        "productSourceCount": 6,
-        "rank": 1
-      }
-    },
-    {
-      "directory": "src/components/programs/discovery/__tests__",
-      "testPath": "src/components/programs/discovery/__tests__/DiscoveryReceiptCard.test.tsx",
-      "enumerated": true,
-      "collected": false,
-      "run": false,
-      "green": "unknown",
-      "covered": false,
-      "pullRequestCovered": false,
-      "declaredQuarantine": false,
-      "declaredQuarantineShape": null,
-      "untriaged": true,
-      "via": [],
-      "governedRisk": {
-        "score": 1000,
-        "band": "critical",
-        "signals": [
-          "declared_ai_surface_control"
-        ],
-        "productSourceCount": 6,
-        "rank": 1
-      }
-    },
-    {
       "directory": "src/app/(maestro)/source/__tests__",
       "testPath": "src/app/(maestro)/source/__tests__/approval-financial-permission.test.tsx",
       "enumerated": true,
@@ -508,7 +445,7 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 18,
-        "rank": 2
+        "rank": 1
       }
     },
     {
@@ -534,7 +471,7 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 18,
-        "rank": 2
+        "rank": 1
       }
     },
     {
@@ -560,7 +497,7 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 18,
-        "rank": 2
+        "rank": 1
       }
     },
     {
@@ -586,7 +523,7 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 18,
-        "rank": 2
+        "rank": 1
       }
     },
     {
@@ -610,7 +547,7 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 18,
-        "rank": 2
+        "rank": 1
       }
     },
     {
@@ -633,7 +570,7 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 5,
-        "rank": 3
+        "rank": 2
       }
     },
     {
@@ -656,7 +593,7 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 5,
-        "rank": 3
+        "rank": 2
       }
     },
     {
@@ -681,7 +618,7 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 5,
-        "rank": 3
+        "rank": 2
       }
     },
     {
@@ -706,7 +643,7 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 5,
-        "rank": 3
+        "rank": 2
       }
     },
     {
@@ -731,7 +668,7 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 3,
-        "rank": 4
+        "rank": 3
       }
     },
     {
@@ -756,7 +693,7 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 3,
-        "rank": 4
+        "rank": 3
       }
     },
     {
@@ -779,7 +716,7 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 3,
-        "rank": 4
+        "rank": 3
       }
     },
     {
@@ -802,7 +739,7 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 3,
-        "rank": 4
+        "rank": 3
       }
     },
     {
@@ -827,7 +764,7 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 4,
-        "rank": 5
+        "rank": 4
       }
     },
     {
@@ -850,7 +787,7 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 4,
-        "rank": 5
+        "rank": 4
       }
     },
     {
@@ -873,7 +810,7 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 4,
-        "rank": 5
+        "rank": 4
       }
     },
     {
@@ -898,7 +835,7 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 4,
-        "rank": 5
+        "rank": 4
       }
     },
     {
@@ -923,7 +860,7 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 5,
-        "rank": 6
+        "rank": 5
       }
     },
     {
@@ -948,7 +885,7 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 5,
-        "rank": 6
+        "rank": 5
       }
     },
     {
@@ -971,7 +908,7 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 5,
-        "rank": 6
+        "rank": 5
       }
     },
     {
@@ -994,7 +931,7 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 5,
-        "rank": 6
+        "rank": 5
       }
     },
     {
@@ -1019,7 +956,7 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 8,
-        "rank": 7
+        "rank": 6
       }
     },
     {
@@ -1044,7 +981,7 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 8,
-        "rank": 7
+        "rank": 6
       }
     },
     {
@@ -1067,7 +1004,7 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 8,
-        "rank": 7
+        "rank": 6
       }
     },
     {
@@ -1092,7 +1029,7 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 8,
-        "rank": 7
+        "rank": 6
       }
     },
     {
@@ -1117,7 +1054,7 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 8,
-        "rank": 7
+        "rank": 6
       }
     },
     {
@@ -1142,7 +1079,7 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 8,
-        "rank": 7
+        "rank": 6
       }
     },
     {
@@ -1167,7 +1104,7 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 8,
-        "rank": 7
+        "rank": 6
       }
     },
     {
@@ -1192,7 +1129,7 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 8,
-        "rank": 7
+        "rank": 6
       }
     },
     {
@@ -1217,7 +1154,7 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 8,
-        "rank": 7
+        "rank": 6
       }
     },
     {
@@ -1240,33 +1177,18 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 2,
-        "rank": 8
+        "rank": 7
       }
     }
   ],
   "governedRiskRanking": [
-    {
-      "directory": "src/components/programs/discovery/__tests__",
-      "testFiles": 3,
-      "unrunTestFiles": 3,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 3,
-      "governedRisk": {
-        "score": 1000,
-        "band": "critical",
-        "signals": [
-          "declared_ai_surface_control"
-        ],
-        "productSourceCount": 6,
-        "rank": 1
-      }
-    },
     {
       "directory": "src/app/(maestro)/source/__tests__",
       "testFiles": 5,
       "unrunTestFiles": 1,
       "declaredQuarantineTestFiles": 0,
       "untriagedUnrunTestFiles": 1,
+      "admittedBy": "governed_risk_signal",
       "governedRisk": {
         "score": 110,
         "band": "critical",
@@ -1275,7 +1197,7 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 18,
-        "rank": 2
+        "rank": 1
       }
     },
     {
@@ -1284,6 +1206,7 @@
       "unrunTestFiles": 2,
       "declaredQuarantineTestFiles": 0,
       "untriagedUnrunTestFiles": 2,
+      "admittedBy": "governed_risk_signal",
       "governedRisk": {
         "score": 10,
         "band": "high",
@@ -1291,7 +1214,7 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 5,
-        "rank": 3
+        "rank": 2
       }
     },
     {
@@ -1300,6 +1223,7 @@
       "unrunTestFiles": 2,
       "declaredQuarantineTestFiles": 0,
       "untriagedUnrunTestFiles": 2,
+      "admittedBy": "governed_risk_signal",
       "governedRisk": {
         "score": 10,
         "band": "high",
@@ -1307,7 +1231,7 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 3,
-        "rank": 4
+        "rank": 3
       }
     },
     {
@@ -1316,6 +1240,7 @@
       "unrunTestFiles": 2,
       "declaredQuarantineTestFiles": 0,
       "untriagedUnrunTestFiles": 2,
+      "admittedBy": "governed_risk_signal",
       "governedRisk": {
         "score": 10,
         "band": "high",
@@ -1323,7 +1248,7 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 4,
-        "rank": 5
+        "rank": 4
       }
     },
     {
@@ -1332,6 +1257,7 @@
       "unrunTestFiles": 2,
       "declaredQuarantineTestFiles": 0,
       "untriagedUnrunTestFiles": 2,
+      "admittedBy": "governed_risk_signal",
       "governedRisk": {
         "score": 10,
         "band": "high",
@@ -1339,7 +1265,7 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 5,
-        "rank": 6
+        "rank": 5
       }
     },
     {
@@ -1348,6 +1274,7 @@
       "unrunTestFiles": 1,
       "declaredQuarantineTestFiles": 0,
       "untriagedUnrunTestFiles": 1,
+      "admittedBy": "governed_risk_signal",
       "governedRisk": {
         "score": 10,
         "band": "high",
@@ -1355,7 +1282,7 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 8,
-        "rank": 7
+        "rank": 6
       }
     },
     {
@@ -1364,6 +1291,7 @@
       "unrunTestFiles": 1,
       "declaredQuarantineTestFiles": 0,
       "untriagedUnrunTestFiles": 1,
+      "admittedBy": "governed_risk_signal",
       "governedRisk": {
         "score": 10,
         "band": "high",
@@ -1371,7 +1299,2617 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 2,
+        "rank": 7
+      }
+    },
+    {
+      "directory": "src/lib/intelligence/ask/__tests__",
+      "testFiles": 23,
+      "unrunTestFiles": 23,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 23,
+      "admittedBy": "untriaged_unrun_work",
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 24,
         "rank": 8
+      }
+    },
+    {
+      "directory": "src/__tests__/integration/ops",
+      "testFiles": 14,
+      "unrunTestFiles": 14,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 14,
+      "admittedBy": "untriaged_unrun_work",
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 7,
+        "rank": 9
+      }
+    },
+    {
+      "directory": "src/__tests__/integration/agents",
+      "testFiles": 8,
+      "unrunTestFiles": 8,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 8,
+      "admittedBy": "untriaged_unrun_work",
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 7,
+        "rank": 10
+      }
+    },
+    {
+      "directory": "src/__tests__/hygiene",
+      "testFiles": 6,
+      "unrunTestFiles": 6,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 6,
+      "admittedBy": "untriaged_unrun_work",
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 2,
+        "rank": 11
+      }
+    },
+    {
+      "directory": "src/lib/integrations/ai-egress/__tests__",
+      "testFiles": 6,
+      "unrunTestFiles": 6,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 6,
+      "admittedBy": "untriaged_unrun_work",
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 7,
+        "rank": 12
+      }
+    },
+    {
+      "directory": "src/lib/intelligence/canonical",
+      "testFiles": 6,
+      "unrunTestFiles": 6,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 6,
+      "admittedBy": "untriaged_unrun_work",
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 8,
+        "rank": 13
+      }
+    },
+    {
+      "directory": "src/components/knowledge/__tests__",
+      "testFiles": 5,
+      "unrunTestFiles": 5,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 5,
+      "admittedBy": "untriaged_unrun_work",
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 13,
+        "rank": 14
+      }
+    },
+    {
+      "directory": "src/lib/ava-answer/__tests__",
+      "testFiles": 5,
+      "unrunTestFiles": 5,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 5,
+      "admittedBy": "untriaged_unrun_work",
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 7,
+        "rank": 15
+      }
+    },
+    {
+      "directory": "src/lib/intelligence/answer/__tests__",
+      "testFiles": 5,
+      "unrunTestFiles": 5,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 5,
+      "admittedBy": "untriaged_unrun_work",
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 6,
+        "rank": 16
+      }
+    },
+    {
+      "directory": "src/lib/intelligence/ask/retrievers",
+      "testFiles": 5,
+      "unrunTestFiles": 5,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 5,
+      "admittedBy": "untriaged_unrun_work",
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 7,
+        "rank": 17
+      }
+    },
+    {
+      "directory": "src/lib/intelligence/synthesis/__tests__",
+      "testFiles": 5,
+      "unrunTestFiles": 5,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 5,
+      "admittedBy": "untriaged_unrun_work",
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 4,
+        "rank": 18
+      }
+    },
+    {
+      "directory": "src/lib/programs/stage-readiness-workbooks/__tests__",
+      "testFiles": 5,
+      "unrunTestFiles": 5,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 5,
+      "admittedBy": "untriaged_unrun_work",
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 6,
+        "rank": 19
+      }
+    },
+    {
+      "directory": "src/lib/source/artifact-registry/__tests__",
+      "testFiles": 5,
+      "unrunTestFiles": 5,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 5,
+      "admittedBy": "untriaged_unrun_work",
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 7,
+        "rank": 20
+      }
+    },
+    {
+      "directory": "src/lib/source/door1/__tests__",
+      "testFiles": 5,
+      "unrunTestFiles": 5,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 5,
+      "admittedBy": "untriaged_unrun_work",
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 5,
+        "rank": 21
+      }
+    },
+    {
+      "directory": "src/lib/source/proposal-intelligence/__tests__",
+      "testFiles": 5,
+      "unrunTestFiles": 5,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 5,
+      "admittedBy": "untriaged_unrun_work",
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 15,
+        "rank": 22
+      }
+    },
+    {
+      "directory": "src/scripts/__tests__",
+      "testFiles": 6,
+      "unrunTestFiles": 5,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 5,
+      "admittedBy": "untriaged_unrun_work",
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 7,
+        "rank": 23
+      }
+    },
+    {
+      "directory": "src/components/intelligence-advisory/__tests__",
+      "testFiles": 4,
+      "unrunTestFiles": 4,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 4,
+      "admittedBy": "untriaged_unrun_work",
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 3,
+        "rank": 24
+      }
+    },
+    {
+      "directory": "src/lib/agent/output-discipline",
+      "testFiles": 4,
+      "unrunTestFiles": 4,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 4,
+      "admittedBy": "untriaged_unrun_work",
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 4,
+        "rank": 25
+      }
+    },
+    {
+      "directory": "src/lib/agent/voice-doctrine/__tests__",
+      "testFiles": 4,
+      "unrunTestFiles": 4,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 4,
+      "admittedBy": "untriaged_unrun_work",
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 5,
+        "rank": 26
+      }
+    },
+    {
+      "directory": "src/lib/programs/attachments/__tests__",
+      "testFiles": 4,
+      "unrunTestFiles": 4,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 4,
+      "admittedBy": "untriaged_unrun_work",
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 4,
+        "rank": 27
+      }
+    },
+    {
+      "directory": "src/lib/programs/deliverables/__tests__",
+      "testFiles": 4,
+      "unrunTestFiles": 4,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 4,
+      "admittedBy": "untriaged_unrun_work",
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 8,
+        "rank": 28
+      }
+    },
+    {
+      "directory": "src/lib/security/__tests__",
+      "testFiles": 4,
+      "unrunTestFiles": 4,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 4,
+      "admittedBy": "untriaged_unrun_work",
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 4,
+        "rank": 29
+      }
+    },
+    {
+      "directory": "src/lib/source/expert-judgment/__tests__",
+      "testFiles": 4,
+      "unrunTestFiles": 4,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 4,
+      "admittedBy": "untriaged_unrun_work",
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 3,
+        "rank": 30
+      }
+    },
+    {
+      "directory": "src/lib/source/reasoning/__tests__",
+      "testFiles": 4,
+      "unrunTestFiles": 4,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 4,
+      "admittedBy": "untriaged_unrun_work",
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 7,
+        "rank": 31
+      }
+    },
+    {
+      "directory": "src/lib/source/vendor-proposals/__tests__",
+      "testFiles": 4,
+      "unrunTestFiles": 4,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 4,
+      "admittedBy": "untriaged_unrun_work",
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 4,
+        "rank": 32
+      }
+    },
+    {
+      "directory": "src/lib/workspace-explorer/__tests__",
+      "testFiles": 4,
+      "unrunTestFiles": 4,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 4,
+      "admittedBy": "untriaged_unrun_work",
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 4,
+        "rank": 33
+      }
+    },
+    {
+      "directory": "src/components/agent-answer/__tests__",
+      "testFiles": 3,
+      "unrunTestFiles": 3,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 3,
+      "admittedBy": "untriaged_unrun_work",
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 2,
+        "rank": 34
+      }
+    },
+    {
+      "directory": "src/components/context-broker/__tests__",
+      "testFiles": 3,
+      "unrunTestFiles": 3,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 3,
+      "admittedBy": "untriaged_unrun_work",
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 4,
+        "rank": 35
+      }
+    },
+    {
+      "directory": "src/lib/atlas/composition/__tests__",
+      "testFiles": 3,
+      "unrunTestFiles": 3,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 3,
+      "admittedBy": "untriaged_unrun_work",
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 5,
+        "rank": 36
+      }
+    },
+    {
+      "directory": "src/lib/atlas/initiative-deep/__tests__",
+      "testFiles": 3,
+      "unrunTestFiles": 3,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 3,
+      "admittedBy": "untriaged_unrun_work",
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 2,
+        "rank": 37
+      }
+    },
+    {
+      "directory": "src/lib/eval/answer-quality/__tests__",
+      "testFiles": 4,
+      "unrunTestFiles": 3,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 3,
+      "admittedBy": "untriaged_unrun_work",
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 1,
+        "rank": 38
+      }
+    },
+    {
+      "directory": "src/lib/sentinel/__tests__",
+      "testFiles": 3,
+      "unrunTestFiles": 3,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 3,
+      "admittedBy": "untriaged_unrun_work",
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 4,
+        "rank": 39
+      }
+    },
+    {
+      "directory": "src/lib/shell/__tests__",
+      "testFiles": 3,
+      "unrunTestFiles": 3,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 3,
+      "admittedBy": "untriaged_unrun_work",
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 3,
+        "rank": 40
+      }
+    },
+    {
+      "directory": "src/lib/source/renewal-cockpit/__tests__",
+      "testFiles": 3,
+      "unrunTestFiles": 3,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 3,
+      "admittedBy": "untriaged_unrun_work",
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 3,
+        "rank": 41
+      }
+    },
+    {
+      "directory": "src/components/__tests__",
+      "testFiles": 2,
+      "unrunTestFiles": 2,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 2,
+      "admittedBy": "untriaged_unrun_work",
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 1,
+        "rank": 42
+      }
+    },
+    {
+      "directory": "src/components/source/learn/case-study/__tests__",
+      "testFiles": 2,
+      "unrunTestFiles": 2,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 2,
+      "admittedBy": "untriaged_unrun_work",
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 4,
+        "rank": 43
+      }
+    },
+    {
+      "directory": "src/lib/agent-grounding/__tests__",
+      "testFiles": 2,
+      "unrunTestFiles": 2,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 2,
+      "admittedBy": "untriaged_unrun_work",
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 2,
+        "rank": 44
+      }
+    },
+    {
+      "directory": "src/lib/artifact-excellence/__tests__",
+      "testFiles": 2,
+      "unrunTestFiles": 2,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 2,
+      "admittedBy": "untriaged_unrun_work",
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 2,
+        "rank": 45
+      }
+    },
+    {
+      "directory": "src/lib/artifacts/__tests__",
+      "testFiles": 2,
+      "unrunTestFiles": 2,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 2,
+      "admittedBy": "untriaged_unrun_work",
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 2,
+        "rank": 46
+      }
+    },
+    {
+      "directory": "src/lib/atlas",
+      "testFiles": 3,
+      "unrunTestFiles": 2,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 2,
+      "admittedBy": "untriaged_unrun_work",
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 3,
+        "rank": 47
+      }
+    },
+    {
+      "directory": "src/lib/ava-answer/export/__tests__",
+      "testFiles": 2,
+      "unrunTestFiles": 2,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 2,
+      "admittedBy": "untriaged_unrun_work",
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 2,
+        "rank": 48
+      }
+    },
+    {
+      "directory": "src/lib/instruments/__tests__",
+      "testFiles": 2,
+      "unrunTestFiles": 2,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 2,
+      "admittedBy": "untriaged_unrun_work",
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 3,
+        "rank": 49
+      }
+    },
+    {
+      "directory": "src/lib/lakeshore/__tests__",
+      "testFiles": 2,
+      "unrunTestFiles": 2,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 2,
+      "admittedBy": "untriaged_unrun_work",
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 3,
+        "rank": 50
+      }
+    },
+    {
+      "directory": "src/lib/observability/__tests__",
+      "testFiles": 3,
+      "unrunTestFiles": 2,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 2,
+      "admittedBy": "untriaged_unrun_work",
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 5,
+        "rank": 51
+      }
+    },
+    {
+      "directory": "src/lib/patternops",
+      "testFiles": 2,
+      "unrunTestFiles": 2,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 2,
+      "admittedBy": "untriaged_unrun_work",
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 2,
+        "rank": 52
+      }
+    },
+    {
+      "directory": "src/lib/programs/deliverables/orchestrated/__tests__",
+      "testFiles": 2,
+      "unrunTestFiles": 2,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 2,
+      "admittedBy": "untriaged_unrun_work",
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 6,
+        "rank": 53
+      }
+    },
+    {
+      "directory": "src/lib/programs/phase-success-package/__tests__",
+      "testFiles": 2,
+      "unrunTestFiles": 2,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 2,
+      "admittedBy": "untriaged_unrun_work",
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 4,
+        "rank": 54
+      }
+    },
+    {
+      "directory": "src/lib/programs/playbook/__tests__",
+      "testFiles": 2,
+      "unrunTestFiles": 2,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 2,
+      "admittedBy": "untriaged_unrun_work",
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 3,
+        "rank": 55
+      }
+    },
+    {
+      "directory": "src/lib/programs/source-trigger/__tests__",
+      "testFiles": 2,
+      "unrunTestFiles": 2,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 2,
+      "admittedBy": "untriaged_unrun_work",
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 7,
+        "rank": 56
+      }
+    },
+    {
+      "directory": "src/lib/programs/suitability/__tests__",
+      "testFiles": 2,
+      "unrunTestFiles": 2,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 2,
+      "admittedBy": "untriaged_unrun_work",
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 4,
+        "rank": 57
+      }
+    },
+    {
+      "directory": "src/lib/setup/__tests__",
+      "testFiles": 2,
+      "unrunTestFiles": 2,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 2,
+      "admittedBy": "untriaged_unrun_work",
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 3,
+        "rank": 58
+      }
+    },
+    {
+      "directory": "src/lib/source/decision-queue/__tests__",
+      "testFiles": 2,
+      "unrunTestFiles": 2,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 2,
+      "admittedBy": "untriaged_unrun_work",
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 4,
+        "rank": 59
+      }
+    },
+    {
+      "directory": "src/lib/source/disclosure-flag/__tests__",
+      "testFiles": 2,
+      "unrunTestFiles": 2,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 2,
+      "admittedBy": "untriaged_unrun_work",
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 3,
+        "rank": 60
+      }
+    },
+    {
+      "directory": "src/lib/source/execution-room/__tests__",
+      "testFiles": 2,
+      "unrunTestFiles": 2,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 2,
+      "admittedBy": "untriaged_unrun_work",
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 4,
+        "rank": 61
+      }
+    },
+    {
+      "directory": "src/lib/source/new-workspace/__tests__",
+      "testFiles": 5,
+      "unrunTestFiles": 2,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 2,
+      "admittedBy": "untriaged_unrun_work",
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 7,
+        "rank": 62
+      }
+    },
+    {
+      "directory": "src/lib/source/pricing-submissions/__tests__",
+      "testFiles": 2,
+      "unrunTestFiles": 2,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 2,
+      "admittedBy": "untriaged_unrun_work",
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 5,
+        "rank": 63
+      }
+    },
+    {
+      "directory": "src/__tests__/features",
+      "testFiles": 1,
+      "unrunTestFiles": 1,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 1,
+      "admittedBy": "untriaged_unrun_work",
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 2,
+        "rank": 64
+      }
+    },
+    {
+      "directory": "src/__tests__/guardrails",
+      "testFiles": 1,
+      "unrunTestFiles": 1,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 1,
+      "admittedBy": "untriaged_unrun_work",
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 0,
+        "rank": 65
+      }
+    },
+    {
+      "directory": "src/app/(maestro)/admin/context-layer/__tests__",
+      "testFiles": 1,
+      "unrunTestFiles": 1,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 1,
+      "admittedBy": "untriaged_unrun_work",
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 0,
+        "rank": 66
+      }
+    },
+    {
+      "directory": "src/app/(maestro)/admin/context-layer/templates/__tests__",
+      "testFiles": 1,
+      "unrunTestFiles": 1,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 1,
+      "admittedBy": "untriaged_unrun_work",
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 0,
+        "rank": 67
+      }
+    },
+    {
+      "directory": "src/app/(maestro)/admin/data-layer-explorer/__tests__",
+      "testFiles": 1,
+      "unrunTestFiles": 1,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 1,
+      "admittedBy": "untriaged_unrun_work",
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 0,
+        "rank": 68
+      }
+    },
+    {
+      "directory": "src/app/(maestro)/docs/__tests__",
+      "testFiles": 1,
+      "unrunTestFiles": 1,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 1,
+      "admittedBy": "untriaged_unrun_work",
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 2,
+        "rank": 69
+      }
+    },
+    {
+      "directory": "src/app/(maestro)/tower/__tests__",
+      "testFiles": 1,
+      "unrunTestFiles": 1,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 1,
+      "admittedBy": "untriaged_unrun_work",
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 0,
+        "rank": 70
+      }
+    },
+    {
+      "directory": "src/app/api/chat/step/__tests__",
+      "testFiles": 1,
+      "unrunTestFiles": 1,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 1,
+      "admittedBy": "untriaged_unrun_work",
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 0,
+        "rank": 71
+      }
+    },
+    {
+      "directory": "src/app/api/cron/board-pack/__tests__",
+      "testFiles": 1,
+      "unrunTestFiles": 1,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 1,
+      "admittedBy": "untriaged_unrun_work",
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 1,
+        "rank": 72
+      }
+    },
+    {
+      "directory": "src/app/api/cron/notifications-tick/__tests__",
+      "testFiles": 1,
+      "unrunTestFiles": 1,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 1,
+      "admittedBy": "untriaged_unrun_work",
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 2,
+        "rank": 73
+      }
+    },
+    {
+      "directory": "src/app/api/health/__tests__",
+      "testFiles": 1,
+      "unrunTestFiles": 1,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 1,
+      "admittedBy": "untriaged_unrun_work",
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 1,
+        "rank": 74
+      }
+    },
+    {
+      "directory": "src/app/api/health/postgres-disruption/__tests__",
+      "testFiles": 1,
+      "unrunTestFiles": 1,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 1,
+      "admittedBy": "untriaged_unrun_work",
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 1,
+        "rank": 75
+      }
+    },
+    {
+      "directory": "src/app/api/intelligence/query/__tests__",
+      "testFiles": 1,
+      "unrunTestFiles": 1,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 1,
+      "admittedBy": "untriaged_unrun_work",
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 0,
+        "rank": 76
+      }
+    },
+    {
+      "directory": "src/app/api/knowledge/chunk/__tests__",
+      "testFiles": 1,
+      "unrunTestFiles": 1,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 1,
+      "admittedBy": "untriaged_unrun_work",
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 1,
+        "rank": 77
+      }
+    },
+    {
+      "directory": "src/app/api/programs/expert-kernel/export/__tests__",
+      "testFiles": 1,
+      "unrunTestFiles": 1,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 1,
+      "admittedBy": "untriaged_unrun_work",
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 1,
+        "rank": 78
+      }
+    },
+    {
+      "directory": "src/app/api/request-access/__tests__",
+      "testFiles": 1,
+      "unrunTestFiles": 1,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 1,
+      "admittedBy": "untriaged_unrun_work",
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 1,
+        "rank": 79
+      }
+    },
+    {
+      "directory": "src/app/api/webhooks/resend/__tests__",
+      "testFiles": 1,
+      "unrunTestFiles": 1,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 1,
+      "admittedBy": "untriaged_unrun_work",
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 4,
+        "rank": 80
+      }
+    },
+    {
+      "directory": "src/components/ava-chat/__tests__",
+      "testFiles": 1,
+      "unrunTestFiles": 1,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 1,
+      "admittedBy": "untriaged_unrun_work",
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 1,
+        "rank": 81
+      }
+    },
+    {
+      "directory": "src/components/chrome/__tests__",
+      "testFiles": 1,
+      "unrunTestFiles": 1,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 1,
+      "admittedBy": "untriaged_unrun_work",
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 1,
+        "rank": 82
+      }
+    },
+    {
+      "directory": "src/components/evidence/__tests__",
+      "testFiles": 1,
+      "unrunTestFiles": 1,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 1,
+      "admittedBy": "untriaged_unrun_work",
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 1,
+        "rank": 83
+      }
+    },
+    {
+      "directory": "src/components/moves/living/__tests__",
+      "testFiles": 1,
+      "unrunTestFiles": 1,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 1,
+      "admittedBy": "untriaged_unrun_work",
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 1,
+        "rank": 84
+      }
+    },
+    {
+      "directory": "src/components/navigation/__tests__",
+      "testFiles": 1,
+      "unrunTestFiles": 1,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 1,
+      "admittedBy": "untriaged_unrun_work",
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 1,
+        "rank": 85
+      }
+    },
+    {
+      "directory": "src/components/programs/attachments/__tests__",
+      "testFiles": 1,
+      "unrunTestFiles": 1,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 1,
+      "admittedBy": "untriaged_unrun_work",
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 1,
+        "rank": 86
+      }
+    },
+    {
+      "directory": "src/components/setup/loader/__tests__",
+      "testFiles": 1,
+      "unrunTestFiles": 1,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 1,
+      "admittedBy": "untriaged_unrun_work",
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 2,
+        "rank": 87
+      }
+    },
+    {
+      "directory": "src/components/source/new-workspace",
+      "testFiles": 3,
+      "unrunTestFiles": 1,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 1,
+      "admittedBy": "untriaged_unrun_work",
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 4,
+        "rank": 88
+      }
+    },
+    {
+      "directory": "src/components/source/setup/__tests__",
+      "testFiles": 1,
+      "unrunTestFiles": 1,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 1,
+      "admittedBy": "untriaged_unrun_work",
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 1,
+        "rank": 89
+      }
+    },
+    {
+      "directory": "src/components/strategic-moves/cost-effort/__tests__",
+      "testFiles": 1,
+      "unrunTestFiles": 1,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 1,
+      "admittedBy": "untriaged_unrun_work",
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 1,
+        "rank": 90
+      }
+    },
+    {
+      "directory": "src/components/strategic-moves/risk-assessment/__tests__",
+      "testFiles": 1,
+      "unrunTestFiles": 1,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 1,
+      "admittedBy": "untriaged_unrun_work",
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 1,
+        "rank": 91
+      }
+    },
+    {
+      "directory": "src/components/strategic-moves/solutioning/__tests__",
+      "testFiles": 1,
+      "unrunTestFiles": 1,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 1,
+      "admittedBy": "untriaged_unrun_work",
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 1,
+        "rank": 92
+      }
+    },
+    {
+      "directory": "src/components/tenant/__tests__",
+      "testFiles": 1,
+      "unrunTestFiles": 1,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 1,
+      "admittedBy": "untriaged_unrun_work",
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 1,
+        "rank": 93
+      }
+    },
+    {
+      "directory": "src/components/workspace-explorer/__tests__",
+      "testFiles": 1,
+      "unrunTestFiles": 1,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 1,
+      "admittedBy": "untriaged_unrun_work",
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 1,
+        "rank": 94
+      }
+    },
+    {
+      "directory": "src/config/tenants/__tests__",
+      "testFiles": 1,
+      "unrunTestFiles": 1,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 1,
+      "admittedBy": "untriaged_unrun_work",
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 1,
+        "rank": 95
+      }
+    },
+    {
+      "directory": "src/data/apexretail/__tests__",
+      "testFiles": 1,
+      "unrunTestFiles": 1,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 1,
+      "admittedBy": "untriaged_unrun_work",
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 7,
+        "rank": 96
+      }
+    },
+    {
+      "directory": "src/lib/admin",
+      "testFiles": 1,
+      "unrunTestFiles": 1,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 1,
+      "admittedBy": "untriaged_unrun_work",
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 3,
+        "rank": 97
+      }
+    },
+    {
+      "directory": "src/lib/adversarial/__tests__",
+      "testFiles": 1,
+      "unrunTestFiles": 1,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 1,
+      "admittedBy": "untriaged_unrun_work",
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 1,
+        "rank": 98
+      }
+    },
+    {
+      "directory": "src/lib/agent",
+      "testFiles": 1,
+      "unrunTestFiles": 1,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 1,
+      "admittedBy": "untriaged_unrun_work",
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 1,
+        "rank": 99
+      }
+    },
+    {
+      "directory": "src/lib/agent/quality/__tests__",
+      "testFiles": 2,
+      "unrunTestFiles": 1,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 1,
+      "admittedBy": "untriaged_unrun_work",
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 6,
+        "rank": 100
+      }
+    },
+    {
+      "directory": "src/lib/agent/streaming",
+      "testFiles": 1,
+      "unrunTestFiles": 1,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 1,
+      "admittedBy": "untriaged_unrun_work",
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 1,
+        "rank": 101
+      }
+    },
+    {
+      "directory": "src/lib/agents/sentinel-reasoning/__tests__",
+      "testFiles": 1,
+      "unrunTestFiles": 1,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 1,
+      "admittedBy": "untriaged_unrun_work",
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 2,
+        "rank": 102
+      }
+    },
+    {
+      "directory": "src/lib/ai/__tests__",
+      "testFiles": 1,
+      "unrunTestFiles": 1,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 1,
+      "admittedBy": "untriaged_unrun_work",
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 1,
+        "rank": 103
+      }
+    },
+    {
+      "directory": "src/lib/answer/__tests__",
+      "testFiles": 1,
+      "unrunTestFiles": 1,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 1,
+      "admittedBy": "untriaged_unrun_work",
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 1,
+        "rank": 104
+      }
+    },
+    {
+      "directory": "src/lib/atlas/initiative-deep/joins/__tests__",
+      "testFiles": 1,
+      "unrunTestFiles": 1,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 1,
+      "admittedBy": "untriaged_unrun_work",
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 2,
+        "rank": 105
+      }
+    },
+    {
+      "directory": "src/lib/azure-connectivity/__tests__",
+      "testFiles": 1,
+      "unrunTestFiles": 1,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 1,
+      "admittedBy": "untriaged_unrun_work",
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 1,
+        "rank": 106
+      }
+    },
+    {
+      "directory": "src/lib/compliance/__tests__",
+      "testFiles": 1,
+      "unrunTestFiles": 1,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 1,
+      "admittedBy": "untriaged_unrun_work",
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 1,
+        "rank": 107
+      }
+    },
+    {
+      "directory": "src/lib/context-trust/__tests__",
+      "testFiles": 1,
+      "unrunTestFiles": 1,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 1,
+      "admittedBy": "untriaged_unrun_work",
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 1,
+        "rank": 108
+      }
+    },
+    {
+      "directory": "src/lib/corpus/__tests__",
+      "testFiles": 1,
+      "unrunTestFiles": 1,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 1,
+      "admittedBy": "untriaged_unrun_work",
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 1,
+        "rank": 109
+      }
+    },
+    {
+      "directory": "src/lib/crawl/__tests__",
+      "testFiles": 1,
+      "unrunTestFiles": 1,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 1,
+      "admittedBy": "untriaged_unrun_work",
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 2,
+        "rank": 110
+      }
+    },
+    {
+      "directory": "src/lib/cxo-canvas/__tests__",
+      "testFiles": 1,
+      "unrunTestFiles": 1,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 1,
+      "admittedBy": "untriaged_unrun_work",
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 2,
+        "rank": 111
+      }
+    },
+    {
+      "directory": "src/lib/cxo-intel/__tests__",
+      "testFiles": 1,
+      "unrunTestFiles": 1,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 1,
+      "admittedBy": "untriaged_unrun_work",
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 2,
+        "rank": 112
+      }
+    },
+    {
+      "directory": "src/lib/decisions/__tests__",
+      "testFiles": 1,
+      "unrunTestFiles": 1,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 1,
+      "admittedBy": "untriaged_unrun_work",
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 2,
+        "rank": 113
+      }
+    },
+    {
+      "directory": "src/lib/deliverables/synthesis/__tests__",
+      "testFiles": 1,
+      "unrunTestFiles": 1,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 1,
+      "admittedBy": "untriaged_unrun_work",
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 3,
+        "rank": 114
+      }
+    },
+    {
+      "directory": "src/lib/dependencies/__tests__",
+      "testFiles": 1,
+      "unrunTestFiles": 1,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 1,
+      "admittedBy": "untriaged_unrun_work",
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 2,
+        "rank": 115
+      }
+    },
+    {
+      "directory": "src/lib/email/__tests__",
+      "testFiles": 1,
+      "unrunTestFiles": 1,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 1,
+      "admittedBy": "untriaged_unrun_work",
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 1,
+        "rank": 116
+      }
+    },
+    {
+      "directory": "src/lib/enterprise-data/candidate-version-build/__tests__",
+      "testFiles": 1,
+      "unrunTestFiles": 1,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 1,
+      "admittedBy": "untriaged_unrun_work",
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 1,
+        "rank": 117
+      }
+    },
+    {
+      "directory": "src/lib/enterprise-data/contracts/__tests__",
+      "testFiles": 1,
+      "unrunTestFiles": 1,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 1,
+      "admittedBy": "untriaged_unrun_work",
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 2,
+        "rank": 118
+      }
+    },
+    {
+      "directory": "src/lib/enterprise-data/data-quality/__tests__",
+      "testFiles": 1,
+      "unrunTestFiles": 1,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 1,
+      "admittedBy": "untriaged_unrun_work",
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 1,
+        "rank": 119
+      }
+    },
+    {
+      "directory": "src/lib/enterprise-data/enterprise-profile/__tests__",
+      "testFiles": 1,
+      "unrunTestFiles": 1,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 1,
+      "admittedBy": "untriaged_unrun_work",
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 1,
+        "rank": 120
+      }
+    },
+    {
+      "directory": "src/lib/enterprise-data/module-context-serving/__tests__",
+      "testFiles": 1,
+      "unrunTestFiles": 1,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 1,
+      "admittedBy": "untriaged_unrun_work",
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 2,
+        "rank": 121
+      }
+    },
+    {
+      "directory": "src/lib/enterprise-data/remediation/__tests__",
+      "testFiles": 1,
+      "unrunTestFiles": 1,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 1,
+      "admittedBy": "untriaged_unrun_work",
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 1,
+        "rank": 122
+      }
+    },
+    {
+      "directory": "src/lib/enterprise-data/tower-candidate-load/__tests__",
+      "testFiles": 1,
+      "unrunTestFiles": 1,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 1,
+      "admittedBy": "untriaged_unrun_work",
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 1,
+        "rank": 123
+      }
+    },
+    {
+      "directory": "src/lib/enterprise-knowledge/assembler/__tests__",
+      "testFiles": 1,
+      "unrunTestFiles": 1,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 1,
+      "admittedBy": "untriaged_unrun_work",
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 1,
+        "rank": 124
+      }
+    },
+    {
+      "directory": "src/lib/enterprise-knowledge/tower/__tests__",
+      "testFiles": 1,
+      "unrunTestFiles": 1,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 1,
+      "admittedBy": "untriaged_unrun_work",
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 1,
+        "rank": 125
+      }
+    },
+    {
+      "directory": "src/lib/evidence/__tests__",
+      "testFiles": 1,
+      "unrunTestFiles": 1,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 1,
+      "admittedBy": "untriaged_unrun_work",
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 2,
+        "rank": 126
+      }
+    },
+    {
+      "directory": "src/lib/features/__tests__",
+      "testFiles": 1,
+      "unrunTestFiles": 1,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 1,
+      "admittedBy": "untriaged_unrun_work",
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 1,
+        "rank": 127
+      }
+    },
+    {
+      "directory": "src/lib/intelligence/advisory-packet/__tests__",
+      "testFiles": 1,
+      "unrunTestFiles": 1,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 1,
+      "admittedBy": "untriaged_unrun_work",
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 3,
+        "rank": 128
+      }
+    },
+    {
+      "directory": "src/lib/intelligence/analytics/__tests__",
+      "testFiles": 1,
+      "unrunTestFiles": 1,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 1,
+      "admittedBy": "untriaged_unrun_work",
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 3,
+        "rank": 129
+      }
+    },
+    {
+      "directory": "src/lib/intelligence/answer/evals/__tests__",
+      "testFiles": 1,
+      "unrunTestFiles": 1,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 1,
+      "admittedBy": "untriaged_unrun_work",
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 2,
+        "rank": 130
+      }
+    },
+    {
+      "directory": "src/lib/intelligence/answer/evals/live-answer/__tests__",
+      "testFiles": 1,
+      "unrunTestFiles": 1,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 1,
+      "admittedBy": "untriaged_unrun_work",
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 4,
+        "rank": 131
+      }
+    },
+    {
+      "directory": "src/lib/intelligence/ask",
+      "testFiles": 1,
+      "unrunTestFiles": 1,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 1,
+      "admittedBy": "untriaged_unrun_work",
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 1,
+        "rank": 132
+      }
+    },
+    {
+      "directory": "src/lib/intelligence/binding/__tests__",
+      "testFiles": 1,
+      "unrunTestFiles": 1,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 1,
+      "admittedBy": "untriaged_unrun_work",
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 3,
+        "rank": 133
+      }
+    },
+    {
+      "directory": "src/lib/intelligence/canvas/__tests__",
+      "testFiles": 1,
+      "unrunTestFiles": 1,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 1,
+      "admittedBy": "untriaged_unrun_work",
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 1,
+        "rank": 134
+      }
+    },
+    {
+      "directory": "src/lib/intelligence/dossiers/__tests__",
+      "testFiles": 1,
+      "unrunTestFiles": 1,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 1,
+      "admittedBy": "untriaged_unrun_work",
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 2,
+        "rank": 135
+      }
+    },
+    {
+      "directory": "src/lib/intelligence/expert-pack",
+      "testFiles": 1,
+      "unrunTestFiles": 1,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 1,
+      "admittedBy": "untriaged_unrun_work",
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 2,
+        "rank": 136
+      }
+    },
+    {
+      "directory": "src/lib/intelligence/exposure",
+      "testFiles": 1,
+      "unrunTestFiles": 1,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 1,
+      "admittedBy": "untriaged_unrun_work",
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 1,
+        "rank": 137
+      }
+    },
+    {
+      "directory": "src/lib/intelligence/insight-engine/__tests__",
+      "testFiles": 1,
+      "unrunTestFiles": 1,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 1,
+      "admittedBy": "untriaged_unrun_work",
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 1,
+        "rank": 138
+      }
+    },
+    {
+      "directory": "src/lib/onboarding/__tests__",
+      "testFiles": 1,
+      "unrunTestFiles": 1,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 1,
+      "admittedBy": "untriaged_unrun_work",
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 1,
+        "rank": 139
+      }
+    },
+    {
+      "directory": "src/lib/parallel-run/__tests__",
+      "testFiles": 1,
+      "unrunTestFiles": 1,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 1,
+      "admittedBy": "untriaged_unrun_work",
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 1,
+        "rank": 140
+      }
+    },
+    {
+      "directory": "src/lib/pilot-dashboard/__tests__",
+      "testFiles": 1,
+      "unrunTestFiles": 1,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 1,
+      "admittedBy": "untriaged_unrun_work",
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 1,
+        "rank": 141
+      }
+    },
+    {
+      "directory": "src/lib/programs/architecture/__tests__",
+      "testFiles": 1,
+      "unrunTestFiles": 1,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 1,
+      "admittedBy": "untriaged_unrun_work",
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 2,
+        "rank": 142
+      }
+    },
+    {
+      "directory": "src/lib/programs/controls/__tests__",
+      "testFiles": 1,
+      "unrunTestFiles": 1,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 1,
+      "admittedBy": "untriaged_unrun_work",
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 2,
+        "rank": 143
+      }
+    },
+    {
+      "directory": "src/lib/programs/decomposition/__tests__",
+      "testFiles": 1,
+      "unrunTestFiles": 1,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 1,
+      "admittedBy": "untriaged_unrun_work",
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 2,
+        "rank": 144
+      }
+    },
+    {
+      "directory": "src/lib/programs/evidence-readiness/__tests__",
+      "testFiles": 1,
+      "unrunTestFiles": 1,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 1,
+      "admittedBy": "untriaged_unrun_work",
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 3,
+        "rank": 145
+      }
+    },
+    {
+      "directory": "src/lib/programs/learning-writeback/__tests__",
+      "testFiles": 1,
+      "unrunTestFiles": 1,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 1,
+      "admittedBy": "untriaged_unrun_work",
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 1,
+        "rank": 146
+      }
+    },
+    {
+      "directory": "src/lib/programs/mobilization/__tests__",
+      "testFiles": 1,
+      "unrunTestFiles": 1,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 1,
+      "admittedBy": "untriaged_unrun_work",
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 5,
+        "rank": 147
+      }
+    },
+    {
+      "directory": "src/lib/programs/regulatory/__tests__",
+      "testFiles": 1,
+      "unrunTestFiles": 1,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 1,
+      "admittedBy": "untriaged_unrun_work",
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 3,
+        "rank": 148
+      }
+    },
+    {
+      "directory": "src/lib/programs/taxonomy/__tests__",
+      "testFiles": 1,
+      "unrunTestFiles": 1,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 1,
+      "admittedBy": "untriaged_unrun_work",
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 2,
+        "rank": 149
+      }
+    },
+    {
+      "directory": "src/lib/programs/tower-trigger/__tests__",
+      "testFiles": 1,
+      "unrunTestFiles": 1,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 1,
+      "admittedBy": "untriaged_unrun_work",
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 1,
+        "rank": 150
+      }
+    },
+    {
+      "directory": "src/lib/programs/vendor-platform-intelligence/__tests__",
+      "testFiles": 1,
+      "unrunTestFiles": 1,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 1,
+      "admittedBy": "untriaged_unrun_work",
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 3,
+        "rank": 151
+      }
+    },
+    {
+      "directory": "src/lib/prompts/__tests__",
+      "testFiles": 1,
+      "unrunTestFiles": 1,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 1,
+      "admittedBy": "untriaged_unrun_work",
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 1,
+        "rank": 152
+      }
+    },
+    {
+      "directory": "src/lib/runtime/__tests__",
+      "testFiles": 1,
+      "unrunTestFiles": 1,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 1,
+      "admittedBy": "untriaged_unrun_work",
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 1,
+        "rank": 153
+      }
+    },
+    {
+      "directory": "src/lib/semantic-dossiers/__tests__",
+      "testFiles": 1,
+      "unrunTestFiles": 1,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 1,
+      "admittedBy": "untriaged_unrun_work",
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 1,
+        "rank": 154
+      }
+    },
+    {
+      "directory": "src/lib/semantic2/__tests__",
+      "testFiles": 1,
+      "unrunTestFiles": 1,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 1,
+      "admittedBy": "untriaged_unrun_work",
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 1,
+        "rank": 155
+      }
+    },
+    {
+      "directory": "src/lib/semantic2/dossiers/__tests__",
+      "testFiles": 1,
+      "unrunTestFiles": 1,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 1,
+      "admittedBy": "untriaged_unrun_work",
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 2,
+        "rank": 156
+      }
+    },
+    {
+      "directory": "src/lib/source/analytics/__tests__",
+      "testFiles": 1,
+      "unrunTestFiles": 1,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 1,
+      "admittedBy": "untriaged_unrun_work",
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 1,
+        "rank": 157
+      }
+    },
+    {
+      "directory": "src/lib/source/classifier/__tests__",
+      "testFiles": 1,
+      "unrunTestFiles": 1,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 1,
+      "admittedBy": "untriaged_unrun_work",
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 2,
+        "rank": 158
+      }
+    },
+    {
+      "directory": "src/lib/source/context-writeback/__tests__",
+      "testFiles": 1,
+      "unrunTestFiles": 1,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 1,
+      "admittedBy": "untriaged_unrun_work",
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 1,
+        "rank": 159
+      }
+    },
+    {
+      "directory": "src/lib/source/deliverables/__tests__",
+      "testFiles": 1,
+      "unrunTestFiles": 1,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 1,
+      "admittedBy": "untriaged_unrun_work",
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 2,
+        "rank": 160
+      }
+    },
+    {
+      "directory": "src/lib/source/delivery-model/__tests__",
+      "testFiles": 1,
+      "unrunTestFiles": 1,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 1,
+      "admittedBy": "untriaged_unrun_work",
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 2,
+        "rank": 161
+      }
+    },
+    {
+      "directory": "src/lib/source/documentation-standards/__tests__",
+      "testFiles": 1,
+      "unrunTestFiles": 1,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 1,
+      "admittedBy": "untriaged_unrun_work",
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 2,
+        "rank": 162
+      }
+    },
+    {
+      "directory": "src/lib/source/evidence-trace/__tests__",
+      "testFiles": 1,
+      "unrunTestFiles": 1,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 1,
+      "admittedBy": "untriaged_unrun_work",
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 1,
+        "rank": 163
+      }
+    },
+    {
+      "directory": "src/lib/source/exports/deal-pack/__tests__",
+      "testFiles": 1,
+      "unrunTestFiles": 1,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 1,
+      "admittedBy": "untriaged_unrun_work",
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 1,
+        "rank": 164
+      }
+    },
+    {
+      "directory": "src/lib/source/handoff/__tests__",
+      "testFiles": 1,
+      "unrunTestFiles": 1,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 1,
+      "admittedBy": "untriaged_unrun_work",
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 2,
+        "rank": 165
+      }
+    },
+    {
+      "directory": "src/lib/source/industry-intelligence/__tests__",
+      "testFiles": 1,
+      "unrunTestFiles": 1,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 1,
+      "admittedBy": "untriaged_unrun_work",
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 4,
+        "rank": 166
+      }
+    },
+    {
+      "directory": "src/lib/source/mrm-screen/__tests__",
+      "testFiles": 1,
+      "unrunTestFiles": 1,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 1,
+      "admittedBy": "untriaged_unrun_work",
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 1,
+        "rank": 167
+      }
+    },
+    {
+      "directory": "src/lib/source/negotiation/__tests__",
+      "testFiles": 1,
+      "unrunTestFiles": 1,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 1,
+      "admittedBy": "untriaged_unrun_work",
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 2,
+        "rank": 168
+      }
+    },
+    {
+      "directory": "src/lib/source/new-workspace",
+      "testFiles": 6,
+      "unrunTestFiles": 1,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 1,
+      "admittedBy": "untriaged_unrun_work",
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 8,
+        "rank": 169
+      }
+    },
+    {
+      "directory": "src/lib/source/proposal-normalization/__tests__",
+      "testFiles": 1,
+      "unrunTestFiles": 1,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 1,
+      "admittedBy": "untriaged_unrun_work",
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 2,
+        "rank": 170
+      }
+    },
+    {
+      "directory": "src/lib/source/queue/__tests__",
+      "testFiles": 1,
+      "unrunTestFiles": 1,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 1,
+      "admittedBy": "untriaged_unrun_work",
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 1,
+        "rank": 171
+      }
+    },
+    {
+      "directory": "src/lib/source/should-cost/__tests__",
+      "testFiles": 1,
+      "unrunTestFiles": 1,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 1,
+      "admittedBy": "untriaged_unrun_work",
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 1,
+        "rank": 172
+      }
+    },
+    {
+      "directory": "src/lib/source/sourcing/__tests__",
+      "testFiles": 1,
+      "unrunTestFiles": 1,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 1,
+      "admittedBy": "untriaged_unrun_work",
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 1,
+        "rank": 173
+      }
+    },
+    {
+      "directory": "src/lib/source/stage-gate/__tests__",
+      "testFiles": 1,
+      "unrunTestFiles": 1,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 1,
+      "admittedBy": "untriaged_unrun_work",
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 4,
+        "rank": 174
+      }
+    },
+    {
+      "directory": "src/lib/source/stage-packs/__tests__",
+      "testFiles": 1,
+      "unrunTestFiles": 1,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 1,
+      "admittedBy": "untriaged_unrun_work",
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 1,
+        "rank": 175
+      }
+    },
+    {
+      "directory": "src/lib/source/taxonomy/__tests__",
+      "testFiles": 1,
+      "unrunTestFiles": 1,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 1,
+      "admittedBy": "untriaged_unrun_work",
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 1,
+        "rank": 176
+      }
+    },
+    {
+      "directory": "src/lib/telemetry/__tests__",
+      "testFiles": 1,
+      "unrunTestFiles": 1,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 1,
+      "admittedBy": "untriaged_unrun_work",
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 1,
+        "rank": 177
+      }
+    },
+    {
+      "directory": "src/lib/workforce-economics/__tests__",
+      "testFiles": 1,
+      "unrunTestFiles": 1,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 1,
+      "admittedBy": "untriaged_unrun_work",
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 1,
+        "rank": 178
+      }
+    },
+    {
+      "directory": "src/lib/workshops/__tests__",
+      "testFiles": 1,
+      "unrunTestFiles": 1,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 1,
+      "admittedBy": "untriaged_unrun_work",
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 2,
+        "rank": 179
+      }
+    },
+    {
+      "directory": "src/scripts/governance/__tests__",
+      "testFiles": 1,
+      "unrunTestFiles": 1,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 1,
+      "admittedBy": "untriaged_unrun_work",
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 3,
+        "rank": 180
+      }
+    },
+    {
+      "directory": "src/scripts/qa/__tests__",
+      "testFiles": 1,
+      "unrunTestFiles": 1,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 1,
+      "admittedBy": "untriaged_unrun_work",
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 1,
+        "rank": 181
       }
     }
   ],
@@ -3366,19 +5904,6 @@
       }
     },
     {
-      "directory": "src/components/setup/__tests__",
-      "testFiles": 6,
-      "unrunTestFiles": 6,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 6,
-      "governedRisk": {
-        "score": 0,
-        "band": "unclassified",
-        "signals": [],
-        "productSourceCount": 6
-      }
-    },
-    {
       "directory": "src/lib/intelligence/answer/__tests__",
       "testFiles": 5,
       "unrunTestFiles": 5,
@@ -3458,19 +5983,6 @@
     },
     {
       "directory": "src/lib/integrations/ai-egress/__tests__",
-      "testFiles": 6,
-      "unrunTestFiles": 6,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 6,
-      "governedRisk": {
-        "score": 0,
-        "band": "unclassified",
-        "signals": [],
-        "productSourceCount": 7
-      }
-    },
-    {
-      "directory": "src/lib/source/contracts/__tests__",
       "testFiles": 6,
       "unrunTestFiles": 6,
       "declaredQuarantineTestFiles": 0,
@@ -3626,32 +6138,6 @@
       }
     },
     {
-      "directory": "src/lib/programs/ava-chat/__tests__",
-      "testFiles": 7,
-      "unrunTestFiles": 7,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 7,
-      "governedRisk": {
-        "score": 0,
-        "band": "unclassified",
-        "signals": [],
-        "productSourceCount": 9
-      }
-    },
-    {
-      "directory": "src/lib/atlas/iac/__tests__",
-      "testFiles": 6,
-      "unrunTestFiles": 6,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 6,
-      "governedRisk": {
-        "score": 0,
-        "band": "unclassified",
-        "signals": [],
-        "productSourceCount": 12
-      }
-    },
-    {
       "directory": "src/components/knowledge/__tests__",
       "testFiles": 5,
       "unrunTestFiles": 5,
@@ -3678,19 +6164,6 @@
       }
     },
     {
-      "directory": "src/lib/visual-system/__tests__",
-      "testFiles": 10,
-      "unrunTestFiles": 10,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 10,
-      "governedRisk": {
-        "score": 0,
-        "band": "unclassified",
-        "signals": [],
-        "productSourceCount": 17
-      }
-    },
-    {
       "directory": "src/lib/intelligence/ask/__tests__",
       "testFiles": 23,
       "unrunTestFiles": 23,
@@ -3705,23 +6178,6 @@
     }
   ],
   "governedRiskEvidence": [
-    {
-      "directory": "src/components/programs/discovery/__tests__",
-      "testFiles": 3,
-      "unrunTestFiles": 3,
-      "governedRisk": {
-        "score": 1000,
-        "band": "critical",
-        "signals": [
-          "declared_ai_surface_control"
-        ],
-        "productSourceCount": 6,
-        "controlIds": [
-          "intelligence-pattern-promotion-brief-panel"
-        ],
-        "rank": 1
-      }
-    },
     {
       "directory": "src/app/(maestro)/source/__tests__",
       "testFiles": 5,
@@ -3747,7 +6203,7 @@
           "src/app/(maestro)/source/workspace/page.tsx",
           "src/lib/source/intake/servicenow-sourcing-request-repository.ts"
         ],
-        "rank": 2
+        "rank": 1
       }
     },
     {
@@ -3766,7 +6222,7 @@
           "src/app/(maestro)/home/page.tsx",
           "src/lib/tenant/resolveTenant.ts"
         ],
-        "rank": 3
+        "rank": 2
       }
     },
     {
@@ -3784,7 +6240,7 @@
         "tenantScopedReadSources": [
           "src/lib/active-client.ts"
         ],
-        "rank": 4
+        "rank": 3
       }
     },
     {
@@ -3802,7 +6258,7 @@
         "tenantScopedReadSources": [
           "src/lib/source/contract-evidence/read-model.ts"
         ],
-        "rank": 5
+        "rank": 4
       }
     },
     {
@@ -3820,7 +6276,7 @@
         "tenantScopedReadSources": [
           "src/lib/source/contract-intelligence/cloud-adapter.ts"
         ],
-        "rank": 6
+        "rank": 5
       }
     },
     {
@@ -3839,7 +6295,7 @@
           "src/lib/enterprise-context/derived-enterprise-read.ts",
           "src/lib/enterprise-context/intelligence-read-model.ts"
         ],
-        "rank": 7
+        "rank": 6
       }
     },
     {
@@ -3857,7 +6313,7 @@
         "tenantScopedReadSources": [
           "src/lib/source/nda/nda-authority-repository.ts"
         ],
-        "rank": 8
+        "rank": 7
       }
     }
   ],
@@ -3879,14 +6335,6 @@
       "via": []
     },
     {
-      "directory": "src/lib/visual-system/__tests__",
-      "testFiles": 10,
-      "coveredTestFiles": 0,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 10,
-      "via": []
-    },
-    {
       "directory": "src/__tests__/integration/agents",
       "testFiles": 8,
       "coveredTestFiles": 0,
@@ -3895,31 +6343,7 @@
       "via": []
     },
     {
-      "directory": "src/lib/programs/ava-chat/__tests__",
-      "testFiles": 7,
-      "coveredTestFiles": 0,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 7,
-      "via": []
-    },
-    {
       "directory": "src/__tests__/hygiene",
-      "testFiles": 6,
-      "coveredTestFiles": 0,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 6,
-      "via": []
-    },
-    {
-      "directory": "src/components/setup/__tests__",
-      "testFiles": 6,
-      "coveredTestFiles": 0,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 6,
-      "via": []
-    },
-    {
-      "directory": "src/lib/atlas/iac/__tests__",
       "testFiles": 6,
       "coveredTestFiles": 0,
       "declaredQuarantineTestFiles": 0,
@@ -3936,14 +6360,6 @@
     },
     {
       "directory": "src/lib/intelligence/canonical",
-      "testFiles": 6,
-      "coveredTestFiles": 0,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 6,
-      "via": []
-    },
-    {
-      "directory": "src/lib/source/contracts/__tests__",
       "testFiles": 6,
       "coveredTestFiles": 0,
       "declaredQuarantineTestFiles": 0,
@@ -4112,14 +6528,6 @@
     },
     {
       "directory": "src/components/context-broker/__tests__",
-      "testFiles": 3,
-      "coveredTestFiles": 0,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 3,
-      "via": []
-    },
-    {
-      "directory": "src/components/programs/discovery/__tests__",
       "testFiles": 3,
       "coveredTestFiles": 0,
       "declaredQuarantineTestFiles": 0,

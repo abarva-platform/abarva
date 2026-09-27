@@ -79,3 +79,13 @@ workflow. No data or migration rollback is required.
 
 - Journey-phase history remains a separate authority from the 11-stage approval
   ledger and is not changed in this release.
+
+## Signed-in proof reconciliation (item C-548)
+
+- Ran: a signed-in replay was run and is reported in the execution register at `2026-09-22T20:33:16Z`
+  by `codex-cpo-source-new-smoke` against PR #8287 — the signed-in acceptance FAILED on the completed synthetic event, with the live surface still rendering an approved posture.
+- Outcome as the register states it: reported as FAILING. This is the reconciliation that matters most in the set: a signed-in run that failed was recorded only in the register, so the durable record carried neither the run nor its outcome.
+- Provenance: this section reconciles the durable record with the operator register under item
+  C-548; it is not a first-hand observation by its author, and no proof was re-executed to write
+  it. The QA/Validation bullet above was accurate when this record was authored and is superseded
+  here by an appended correction rather than by a restamp, per the register time-authority rule.

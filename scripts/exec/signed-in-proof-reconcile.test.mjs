@@ -1669,7 +1669,19 @@ const SILENT_ENTRIES = registerEntries([SILENT_UNREAD_LINE, SILENT_UNMENTIONED_L
       /Signed-in exact contract answer/.test(String(row.registerEvidence)) &&
       row.registerStamp === "2026-09-26T14:48:29Z" &&
       row.registerIdentity === "codex-source-cpo#20260926T1416Z" &&
-      row.recordSays === NOT_RUN,
+      // STALE EXPECTATION, UPDATED RATHER THAN DROPPED (item C-548). This read
+      // `NOT_RUN` when the case was written, and that clause was incidental:
+      // the case is about the register's SILENCE, and it pinned whatever the
+      // record happened to say at the time. C-548 settled this row as one of
+      // eleven that report a completed run, and amended the record to say so,
+      // so the record's own account is now `ran`. Flipping the constant would
+      // be the weakening this suite exists against, so the clause is made
+      // load-bearing instead: the row must STILL be `register-silent` with its
+      // sentence, stamp and identity intact. That is the stronger claim — the
+      // amendment corrected the record and did NOT paper over the fact that the
+      // register never said a verdict, which is the defect C-545 exposed and
+      // this change must not hide.
+      row.recordSays === RAN,
     JSON.stringify(row),
   );
 }
@@ -1799,6 +1811,402 @@ const SILENT_ENTRIES = registerEntries([SILENT_UNREAD_LINE, SILENT_UNMENTIONED_L
       review.rows[0].verdict === reconcileModule.REGISTER_SILENT &&
       review.contradicted.length === 0,
     JSON.stringify(review),
+  );
+}
+
+
+/* ------------------------------------------------------------------------- */
+/* Item C-548 — the eleven records the register says were replayed            */
+/* ------------------------------------------------------------------------- */
+
+/**
+ * `C-545` gave a silent deciding line its own reported state and split the
+ * silent rows into `unread` and `unmentioned`. `C-548` read the `unread`
+ * sentences one at a time. Eleven of them report a **completed signed-in run**
+ * against a record whose own account says the run had not happened — the
+ * disagreement `C-548` predicted might exist once, measured eleven times.
+ *
+ * The register is operator-owned and CI cannot see it, so this suite cannot
+ * assert what the register says. What it CAN assert, and what the defect
+ * actually is, lives in this repository: the durable public record asserted a
+ * debt that the register says was discharged, and nothing made the record
+ * carry it. So each row below is pinned by the record file, read from disk.
+ *
+ * **Red before the amendment, by construction.** Every one of these eleven
+ * parsed `not-run` or `unstated` on `60bc9c7702`; the amendment is what moves
+ * them, and deleting any one of them puts its case back to red. That is the
+ * mutation check, and it is per record rather than against a total, because a
+ * count can be satisfied by amending the wrong file twice.
+ *
+ * **What this case does NOT assert.** It does not assert the run passed — two
+ * of the eleven report a run that FAILED, and a failed run is still a run, so
+ * `ran` is the honest state for both. It does not assert this agent observed
+ * anything: each amendment cites the register line's stamp and identity, and
+ * the citation is required here so a future reader can tell a reconciled
+ * account from a first-hand one.
+ */
+const C548_RECONCILED = [
+  ["2026-09-26-source-360-contract-value-lineage.md", 8527, "2026-09-26T21:30:45Z"],
+  ["2026-09-26-source-360-direct-impact-detail.md", 8525, "2026-09-26T21:36:20Z"],
+  ["2026-09-26-source-contract-date-context.md", 8507, "2026-09-26T14:48:29Z"],
+  ["2026-09-26-source-contract-context-authority.md", 8505, "2026-09-26T14:12:17Z"],
+  ["2026-09-26-source-scope-readiness-message.md", 8496, "2026-09-26T10:29Z"],
+  ["2026-09-23-source-new-demo-decision.md", 8333, "2026-09-23T11:36:10Z"],
+  ["2026-09-22-source-recorded-approval-audit-honesty.md", 8287, "2026-09-22T20:33:16Z"],
+  ["2026-09-22-source-new-completion-integrity.md", 8277, "2026-09-22T19:21:46Z"],
+  ["2026-09-22-source-ava-mounted-artifact-projection.md", 8253, "2026-09-22T13:24:40Z"],
+  ["2026-09-22-source-ava-event-artifact-alias-reconciliation.md", 8246, "2026-09-22T12:45:35Z"],
+  ["2026-09-22-authenticated-profile-name-precedence.md", 8238, "2026-09-22T08:51:52Z"],
+];
+
+for (const [basename, pr, stamp] of C548_RECONCILED) {
+  const { text } = realRecord(basename);
+  const parsed = parseStatedRunState(text);
+  check(
+    `C-548: ${basename} reads \`ran\` after reconciliation`,
+    parsed.state === RAN,
+    `state=${parsed.state} evidence=${parsed.evidence ?? "(none)"}`,
+  );
+  check(
+    `C-548: ${basename} cites the register line that reports the run`,
+    text.includes(stamp) && text.includes(`C-548`) && new RegExp(`#?${pr}\\b`).test(text),
+    `stamp=${stamp} pr=${pr}`,
+  );
+}
+
+{
+  // BOTH DIRECTIONS. The amendment is a grammar the reconciler has to read, so
+  // the suite has to show the reader can still refuse. Same heading, same
+  // shape, one negated clause: this must NOT come back `ran`, or the amendment
+  // template is a phrase that reports a run no matter what it says — which is
+  // the `C-529` failure mode (a loosened marker turns a refusal into a wrong
+  // answer) reached from the writer's side instead of the reader's.
+  const { text } = realRecord("2026-09-26-source-360-direct-impact-detail.md");
+  const negated = text.replace(
+    /^- Ran: a signed-in replay was run/m,
+    "- Not run: no signed-in replay was run",
+  );
+  check(
+    "C-548 NEGATIVE CONTROL: the amendment template negated is not read as a run",
+    negated !== text && parseStatedRunState(negated).state !== RAN,
+    `changed=${negated !== text} state=${parseStatedRunState(negated).state}`,
+  );
+}
+
+{
+  // A record the register genuinely says nothing affirmative about must not be
+  // swept along. `2026-09-26-source-responses-fact-beats` is an `unmentioned`
+  // silent row — its deciding line mentions no signed-in proof at all — and it
+  // is deliberately NOT amended. If this goes red, the amendment pass was run
+  // over the wrong set.
+  const { text } = realRecord("2026-09-26-source-responses-fact-beats.md");
+  check(
+    "C-548 NEGATIVE CONTROL: an `unmentioned` silent row is left alone",
+    !text.includes("C-548") && parseStatedRunState(text).state === NOT_RUN,
+    `state=${parseStatedRunState(text).state}`,
+  );
+}
+
+
+/* ------------------------------------------------------------------------- */
+/* Item C-551 — a line that names the pull request without being about it     */
+/* ------------------------------------------------------------------------- */
+
+/**
+ * `C-545` split *the register mentioned this release and said nothing* from
+ * *the register never mentioned it*. Underneath both sits a third state: **the
+ * register named the number while talking about something else**, and until
+ * this item it was reported as the first.
+ *
+ * Measured on the live register at `2026-09-27T02:26Z` over the 25 `unread`
+ * rows `C-548` settled: five have a deciding line whose subject is other work
+ * and which names the record's pull request as a stack base (`#8260`), a
+ * file-collision explanation (`#8303`), a rebase reference (`#8297`), an
+ * explicit **exclusion** of that pull request's files (`#8296`), or an
+ * announcement of follow-up work (`#8200`).
+ *
+ * **The distinguishing fact is structural, and a phrasing rule was not
+ * written.** `C-529` records what loosening a marker costs, and "stacked
+ * after", "rebasing onto", "exclusions", "behind open" and "follow-up for" are
+ * five different phrasings of one structure. So the rule read here is the
+ * register's own subject grammar — the same first-written-wins contest
+ * `fossil-claims.mjs` already applies to *item ids*, for exactly this defect
+ * ("register lines routinely narrate another lane's item in passing"), applied
+ * to *pull requests*:
+ *
+ *   - A line whose message field leads with a claim declares work not yet
+ *     done, so it has no subject pull request at all.
+ *   - A line carrying a `branch` or `files:` field is a claim by the same
+ *     reasoning — **unless** its lead asserts an outcome, which is the case
+ *     that keeps a real release line from being swept up (case 8203 below).
+ *   - Otherwise the subject is the FIRST pull request written in the lead
+ *     field, and every other number on the line is named in passing.
+ *
+ * **Both directions, on real lines.** The five above must move, and the
+ * genuine deciding line `RELEASED item U-599 through PR #8203 | …` — which
+ * carries a file list of its own and would be caught by the claim-shape rule
+ * without the outcome-lead precedence — must not.
+ *
+ * Each line below is quoted from `EXECUTION_CLAIMS.md`, truncated to the
+ * structure the rule reads, with its stamp and identity. CI cannot see the
+ * operator register, so the lines are constants here — but a truncated
+ * quotation is an observation, not an invention, and the truncation is to the
+ * lead field on purpose: the lead field is what decides these cases.
+ */
+
+// A claim line whose lead is `CLAIMING` and which names #8303 to explain a
+// file collision. 2026-09-22T23:00:03Z, identity codex-cpo-source-new-smoke.
+const C551_FILE_COLLISION =
+  "CLAIMING CPO-SMOKE-INTELLIGENCE-FILES-DESTINATION behind open PR #8303 because both touch " +
+  "`src/components/source/new-workspace/SourceNewWorkspace.tsx`. Signed-in failure on the " +
+  "immutable carrier: Intelligence labels the next action `Review loaded evidence` but links " +
+  "to the bare event URL.";
+
+// An outcome line about #8303 which names #8297 only as a rebase base.
+// 2026-09-22T22:50:14Z, identity codex-source-request-history-summary.
+const C551_REBASE_NOTE =
+  "PR #8303 OPEN at head `f4b1f633d2`; mergeable and squash auto-merge armed, with hosted " +
+  "checks running and no bypass. Local proof after rebasing onto merged response-intake PR " +
+  "#8297: focused mounted/repository/projection/page behavior 4 suites.";
+
+// A claim line naming #8296 inside an explicit exclusion.
+// 2026-09-22T22:31:27Z, identity codex-source-stage07-evaluation-bafo-smoke.
+const C551_EXCLUSION =
+  "CLAIMED CPO Source New Stage 07 Evaluation/BAFO mounted-path audit on branch " +
+  "`codex/source-stage07-evaluation-bafo-smoke`. Scope: trace the signed-in production path " +
+  "from normalized supplier responses through comparable evaluation. Explicit exclusions: all " +
+  "supplier-response intake files owned by PR #8296, `SourceAnalyticsCanvas` approval controls " +
+  "and tests, migrations, tenant data.";
+
+// A claim line whose lead is not a claim verb and whose claim shape is its
+// `files:` field; #8260 is its stack base.
+// 2026-09-22T14:52:28Z, identity codex-source-servicenow-review.
+const C551_STACK_BASE =
+  "Governed ServiceNow request review-to-event handoff claimed, stacked after PR #8260 | " +
+  "files: new request-review projection/component and focused tests, " +
+  "`src/app/(maestro)/source/new/page.tsx` | No migration apply, data load, supplier contact, " +
+  "email, external send, legal/security/finance approval, award, or signed-in proof is claimed.";
+
+// A claim line announcing follow-up work for #8200, with `branch` and `files:`
+// fields. 2026-09-22T00:40:00Z, identity codex-source-new-ava-phase-readiness.
+const C551_FOLLOW_UP =
+  "Source New signed-in acceptance follow-up for #8200 | branch " +
+  "codex/source-new-ava-phase-readiness from current origin/main | files: " +
+  "src/app/api/v1/source/[eventId]/nexus/ask/route.ts, its existing real-route test | repair " +
+  "the live payload so a combined completion/evidence question uses the simplified Source New " +
+  "phase label. No signed-in acceptance claim.";
+
+// THE CONTROL, and it is a real release line, not an invented one: a genuine
+// deciding line for #8203 that ALSO carries a file list and a `squash` field.
+// 2026-09-22T01:02:00Z, identity codex-source-value-movement-presentation.
+const C551_REAL_RELEASE =
+  "RELEASED item U-599 through PR #8203 | squash cf85f75599 | repo-owned ACA run 35673375008 " +
+  "completed success; runtime proof with the expected/template/active image and both governed " +
+  "workers on one digest | branch codex/source-value-movement-presentation | files: the " +
+  "presentation projection and its focused tests. Signed-in acceptance passed on the governed " +
+  "Scope Intelligence Explorer.";
+
+/*
+ * The namespace guard of C-540 stops a link-time SyntaxError; it does not stop
+ * `c551.role(...)` from throwing while the function does not
+ * exist yet, and the first red run of this block did exactly that — one FAIL
+ * and then a TypeError that took the remaining 112 cases with it. A red-first
+ * measurement has to be a CASE COUNT, so every call below goes through these
+ * wrappers and a missing export fails the case that asked for it.
+ */
+const c551 = {
+  role: (line, pr) =>
+    typeof reconcileModule.mentionRole === "function"
+      ? reconcileModule.mentionRole(line, pr)
+      : "(mentionRole is missing)",
+  subject: (line) =>
+    typeof reconcileModule.subjectPullRequest === "function"
+      ? reconcileModule.subjectPullRequest(line)
+      : "(subjectPullRequest is missing)",
+  clause: (line, pr) =>
+    typeof reconcileModule.mentionClause === "function"
+      ? reconcileModule.mentionClause(line, pr)
+      : null,
+};
+
+{
+  // 1. The vocabulary exists. Asserted through the namespace (see C-540's note
+  // above): a named import of a missing export is a link-time SyntaxError that
+  // takes the suite to "0 passed", which a red-first measurement cannot tell
+  // apart from a suite that found nothing.
+  check(
+    "C-551: the module names a passing-mention state and its two roles",
+    reconcileModule.PASSING_MENTION === "passing-mention" &&
+      reconcileModule.SUBJECT === "subject" &&
+      reconcileModule.PASSING === "passing" &&
+      typeof reconcileModule.subjectPullRequest === "function" &&
+      typeof reconcileModule.mentionRole === "function" &&
+      typeof reconcileModule.mentionClause === "function",
+    `PASSING_MENTION=${reconcileModule.PASSING_MENTION} SUBJECT=${reconcileModule.SUBJECT} ` +
+      `PASSING=${reconcileModule.PASSING} ` +
+      `subjectPullRequest=${typeof reconcileModule.subjectPullRequest} ` +
+      `mentionRole=${typeof reconcileModule.mentionRole} ` +
+      `mentionClause=${typeof reconcileModule.mentionClause}`,
+  );
+}
+
+{
+  // 2-6. The five, one case each, because they differ in KIND. A rule that
+  // catches the stack reference need not catch the exclusion, so a single
+  // aggregate assertion over the five would let four failures hide behind one
+  // pass — the defect this whole backlog exists to repair, at test scale.
+  const five = [
+    ["a file-collision explanation (#8303) is a passing mention", C551_FILE_COLLISION, 8303, null],
+    ["a rebase note (#8297) is a passing mention", C551_REBASE_NOTE, 8297, 8303],
+    ["an explicit exclusion (#8296) is a passing mention", C551_EXCLUSION, 8296, null],
+    ["a stack base (#8260) is a passing mention", C551_STACK_BASE, 8260, null],
+    ["a follow-up announcement (#8200) is a passing mention", C551_FOLLOW_UP, 8200, null],
+  ];
+  for (const [name, line, pr, subject] of five) {
+    check(
+      `C-551: ${name}`,
+      c551.role(line, pr) === reconcileModule.PASSING &&
+        c551.subject(line) === subject,
+      `role=${c551.role(line, pr)} ` +
+        `subject=${String(c551.subject(line))} (expected ${String(subject)})`,
+    );
+  }
+}
+
+{
+  // 7. THE OTHER DIRECTION, and the precedence case. This line carries a
+  // `files:` field and a `branch` field, so the claim-shape rule alone would
+  // call it a claim and refuse the one row it genuinely decides. Its lead
+  // asserts an outcome, and that is what must win.
+  check(
+    "C-551 BOTH DIRECTIONS: a real `RELEASED item … through PR #n` line still decides its row",
+    c551.role(C551_REAL_RELEASE, 8203) === reconcileModule.SUBJECT &&
+      c551.subject(C551_REAL_RELEASE) === 8203,
+    `role=${c551.role(C551_REAL_RELEASE, 8203)} ` +
+      `subject=${String(c551.subject(C551_REAL_RELEASE))}`,
+  );
+
+  // 8. The same line, and the number it names in passing. One line decides one
+  // row and cites another; asserting only the subject would pass with a
+  // classifier that answers `subject` unconditionally.
+  const cited = C551_REAL_RELEASE.replace("| squash", "| stacked on PR #8199 | squash");
+  check(
+    "C-551 BOTH DIRECTIONS: the same outcome line names #8199 in passing",
+    c551.role(cited, 8203) === reconcileModule.SUBJECT &&
+      c551.role(cited, 8199) === reconcileModule.PASSING,
+    `8203=${c551.role(cited, 8203)} 8199=${c551.role(cited, 8199)}`,
+  );
+}
+
+{
+  // 9. The clause, per row. The item requires the rows printed individually
+  // *with the clause that names the pull request*, because the five differ in
+  // kind and a reader settling them needs the words, not the count.
+  check(
+    "C-551: the clause naming the pull request is recoverable for the report",
+    /rebasing onto merged response-intake PR #8297/.test(
+      c551.clause(C551_REBASE_NOTE, 8297) ?? "",
+    ) &&
+      !/OPEN at head/.test(c551.clause(C551_REBASE_NOTE, 8297) ?? ""),
+    JSON.stringify(c551.clause(C551_REBASE_NOTE, 8297)),
+  );
+}
+
+{
+  // 10-11. The row, end to end. A record whose only register line names its
+  // pull request in passing must come back `passing-mention` — not
+  // `register-silent`, which asserts the register spoke about this release, and
+  // not `agree`. And the row must carry the counts that say what
+  // `registerLines` was overstating.
+  const register =
+    `2026-09-22T00:40:00Z | codex-source-new-ava-phase-readiness | ${C551_FOLLOW_UP}`;
+  const row = reconcileRecord({
+    record: parseRecord({ file: "r.md", text: RELEASE_RECORD_NOT_RUN }),
+    pr: 8200,
+    entries: registerEntries(register),
+  });
+  check(
+    "C-551: a row whose only line is a passing mention reports `passing-mention`",
+    row.verdict === reconcileModule.PASSING_MENTION && row.registerSays == null,
+    `verdict=${row.verdict} registerSays=${String(row.registerSays)} silence=${String(row.registerSilence)}`,
+  );
+  check(
+    "C-551: the row splits `registerLines` into subject and passing, and quotes the clause",
+    row.registerLines === 1 &&
+      row.registerSubjectLines === 0 &&
+      row.registerPassingLines === 1 &&
+      /follow-up for #8200/.test(row.registerPassingClauses?.[0]?.clause ?? "") &&
+      row.registerPassingClauses[0].stamp === "2026-09-22T00:40:00Z",
+    JSON.stringify({
+      lines: row.registerLines,
+      subject: row.registerSubjectLines,
+      passing: row.registerPassingLines,
+      clauses: row.registerPassingClauses,
+    }),
+  );
+}
+
+{
+  // 12. The selection, which is where four of the five actually move. #8303
+  // has TWO matched lines: the claim that names it to explain a collision, and
+  // the outcome line that is about it. Before this item the claim won — it is
+  // the newest line naming the fewest pull requests — so the row's verdict was
+  // read from a sentence about somebody else's work. A passing mention must
+  // not compete for the deciding line.
+  const register =
+    `2026-09-22T22:50:14Z | codex-source-request-history-summary | ${C551_REBASE_NOTE}\n` +
+    `2026-09-22T23:00:03Z | codex-cpo-source-new-smoke | ${C551_FILE_COLLISION}`;
+  const row = reconcileRecord({
+    record: parseRecord({ file: "r.md", text: RELEASE_RECORD_NOT_RUN }),
+    pr: 8303,
+    entries: registerEntries(register),
+  });
+  check(
+    "C-551: a passing mention does not win the deciding line from a line about the record",
+    row.registerStamp === "2026-09-22T22:50:14Z" &&
+      row.registerSubjectLines === 1 &&
+      row.registerPassingLines === 1 &&
+      row.verdict !== reconcileModule.PASSING_MENTION,
+    `stamp=${row.registerStamp} subject=${row.registerSubjectLines} ` +
+      `passing=${row.registerPassingLines} verdict=${row.verdict}`,
+  );
+}
+
+{
+  // 13. NEGATIVE CONTROL for the whole change: a record the register decides
+  // properly must be untouched. This is the suite's own known-negative from
+  // case 17 — a real release line for #8444 whose record and register agree
+  // that the proof is owed — and it must still read `agree` with one subject
+  // line and no passing mentions. If this goes red, the classifier is
+  // answering `passing` on ordinary release lines and every row in the report
+  // has become unresolvable.
+  const row = reconcileRecord({
+    record: parseRecord({ file: "r.md", text: RELEASE_RECORD_NOT_RUN }),
+    pr: 8444,
+    entries: registerEntries(KNOWN_NEGATIVE_REGISTER_LINE),
+  });
+  check(
+    "C-551 NEGATIVE CONTROL: a real release line still decides its row as before",
+    row.verdict === AGREE && row.registerSubjectLines === 1 && row.registerPassingLines === 0,
+    `verdict=${row.verdict} subject=${row.registerSubjectLines} passing=${row.registerPassingLines}`,
+  );
+}
+
+{
+  // 14. The report and the counts. A state nobody prints is a state nobody
+  // reads: `C-545`'s own finding was invisible for exactly as long as the
+  // report did not name it.
+  const result = reconcile({
+    records: [{ file: "r.md", text: RELEASE_RECORD_NOT_RUN, pr: 8200 }],
+    register: `2026-09-22T00:40:00Z | codex-source-new-ava-phase-readiness | ${C551_FOLLOW_UP}`,
+  });
+  const report = formatReport(result);
+  check(
+    "C-551: the report counts passing-mention rows and prints the clause that names the PR",
+    result.counts[reconcileModule.PASSING_MENTION] === 1 &&
+      /passing-mention 1/.test(report) &&
+      /follow-up for #8200/.test(report),
+    `counts=${JSON.stringify(result.counts)}\n${report}`,
   );
 }
 

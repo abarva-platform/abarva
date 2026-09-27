@@ -187,6 +187,25 @@ const RATCHET_SCRIPT = "scripts/ci/test-ratchet.mjs";
 const RATCHET_SPREAD = "...paths";
 
 /**
+ * `scripts/audit/ai-surface-control-cases.mjs` has the same shape for the same
+ * reason (item C-554): it spawns Jest with `...suites` spread from the AI
+ * surface control catalog, so the suites are in that catalog and not in any
+ * command line. Without this hop its invocation lands in
+ * `indeterminateInvocations`, which twenty-eight behaviour suites assert is
+ * zero — and, worse in the direction that matters, the 23 suites it genuinely
+ * runs on every pull request would be credited to nobody.
+ *
+ * Named explicitly, on the same rule as the ratchet above: a general rule that
+ * read test paths out of any JSON a script happens to mention would claim
+ * coverage from files that have nothing to do with a test run. The paths are
+ * read from the catalog's own `behavioralTest.path` fields rather than from a
+ * second copy of that list kept here.
+ */
+const CONTROL_CASE_SCRIPT = "scripts/audit/ai-surface-control-cases.mjs";
+const CONTROL_CASE_SPREAD = "...suites";
+const CONTROL_CASE_CATALOG = "docs/security/ai-surface-control-catalog.json";
+
+/**
  * A command that names a directory and then excludes a file inside it by name
  * does not run that file. Reading the directory and stopping there counts the
  * exclusion as covered — the over-stating direction, which is the one that
@@ -964,9 +983,38 @@ function jsonPathArguments(root, command) {
 }
 
 /**
+ * The suites `scripts/audit/ai-surface-control-cases.mjs` runs, read from the
+ * control catalog it reads them from.
+ *
+ * Every credited control names the behavioral test that proves it; the script
+ * spreads the distinct set of those paths into Jest. Reading the same field
+ * here keeps one list, so a suite added to or removed from the catalog moves
+ * this census in the same commit.
+ */
+function controlCaseSuites(root) {
+  const absolute = path.join(root, CONTROL_CASE_CATALOG);
+  if (!existsSync(absolute)) return [];
+  let catalog;
+  try {
+    catalog = JSON.parse(readFileSync(absolute, "utf8"));
+  } catch {
+    return [];
+  }
+  const suites = new Set();
+  for (const surface of catalog?.controls ?? []) {
+    for (const control of surface?.requiredControls ?? []) {
+      const declared = control?.behavioralTest?.path;
+      if (typeof declared === "string" && declared.startsWith("src/")) suites.add(declared);
+    }
+  }
+  return [...suites].sort().map((declared) => ({ source: CONTROL_CASE_CATALOG, declared }));
+}
+
+/**
  * Every command a workflow reaches, each tagged with the workflow it came from
  * and whether that workflow gates a pull request. Hops: workflow run step →
- * npm script (recursive) → repo script file → ratchet baseline JSON.
+ * npm script (recursive) → repo script file → ratchet baseline JSON, or AI
+ * surface control catalog.
  */
 export function collectReachableCommands(root, packageScripts) {
   const reachable = [];
@@ -1011,10 +1059,16 @@ export function collectReachableCommands(root, packageScripts) {
         if (!existsSync(absolute)) continue;
 
         const ratchetPaths =
-          scriptPath === RATCHET_SCRIPT ? jsonPathArguments(root, command) : [];
+          scriptPath === RATCHET_SCRIPT
+            ? jsonPathArguments(root, command)
+            : scriptPath === CONTROL_CASE_SCRIPT
+              ? controlCaseSuites(root)
+              : [];
+        const spreadVia =
+          scriptPath === CONTROL_CASE_SCRIPT ? "control-case-catalog" : "ratchet-baseline";
         for (const { source, declared } of ratchetPaths) {
           reachable.push({
-            via: "ratchet-baseline",
+            via: spreadVia,
             source: `${scriptPath} ← ${source}`,
             pullRequest,
             command: declared,
@@ -1070,6 +1124,16 @@ export function collectReachableCommands(root, packageScripts) {
           if (
             scriptPath === RATCHET_SCRIPT &&
             invocation.includes(RATCHET_SPREAD) &&
+            ratchetPaths.length > 0
+          ) {
+            continue;
+          }
+          // Same reading for the control-case checker: its spawn line is
+          // `["jest", "--runTestsByPath", ...suites, …]` and those suites were
+          // just resolved from the catalog above, so it is not unresolved.
+          if (
+            scriptPath === CONTROL_CASE_SCRIPT &&
+            invocation.includes(CONTROL_CASE_SPREAD) &&
             ratchetPaths.length > 0
           ) {
             continue;
@@ -1483,9 +1547,28 @@ export function buildCensus(
   // the ordering that exists to say "triage this next" was offering work that
   // had already been triaged. The full `unrunTestFiles` stays on every row, so
   // nothing is hidden — only the ordering stops repeating itself.
-  const governedRiskRows = rows
+  // Admitted on holding untriaged unrun work, NOT on having scored. Until
+  // C-555 the second filter here was `row.governedRisk.score > 0`, so a
+  // directory the classifier reached and matched no signal in was not ranked
+  // low — it was absent from the only artifact that answers "which stale test
+  // directory gets wired next". Measured on `cc2d13f2bc`: 7 directories ranked,
+  // covering 11 of 385 untriaged unrun test files (2.9%), against 179
+  // directories and 374 files in `unclassifiedRiskDirectories` with zero
+  // overlap between the two lists. The queue therefore read as exhausted at
+  // seven entries while 374 files sat in a list nothing ordered, and two
+  // backlog items concluded from that the pool had run out.
+  //
+  // The classifier is untouched, and so is every score and band: this is the
+  // ranking's denominator, nothing else. The comparator is the same comparator,
+  // over a wider input — which is what keeps a scored directory's rank exactly
+  // where it was, since score descending sorts every signalled row ahead of
+  // every zero. Within the zeros the existing secondary keys apply, so the tier
+  // is ordered by the amount of unrun work rather than alphabetically. No
+  // directory's risk is raised to buy it a place; `admittedBy` names the path
+  // instead, on the row, so the two populations stay separable by a reader and
+  // by a test.
+  const rankedRows = rows
     .filter((row) => row.untriagedUnrunTestFiles > 0)
-    .filter((row) => row.governedRisk.score > 0)
     .sort(
       (a, b) =>
         b.governedRisk.score - a.governedRisk.score ||
@@ -1494,14 +1577,23 @@ export function buildCensus(
     )
     .map((row, index) => ({
       ...row,
+      admittedBy:
+        row.governedRisk.score > 0 ? "governed_risk_signal" : "untriaged_unrun_work",
       governedRisk: { ...row.governedRisk, rank: index + 1 },
     }));
-  const governedRiskRanking = governedRiskRows.map((row) => ({
+  // `governedRiskFiles` and `governedRiskEvidence` below stay bound to the rows
+  // that actually carry a governed-risk signal. Widening those two with the
+  // ranking would have redefined "governed-risk evidence" as "every unrun
+  // file", which is a different claim from the one their names make, and it is
+  // the claim four workflow comments already cite this artifact for.
+  const governedRiskRows = rankedRows.filter((row) => row.governedRisk.score > 0);
+  const governedRiskRanking = rankedRows.map((row) => ({
     directory: row.directory,
     testFiles: row.testFiles,
     unrunTestFiles: row.unrunTestFiles,
     declaredQuarantineTestFiles: row.declaredQuarantineTestFiles,
     untriagedUnrunTestFiles: row.untriagedUnrunTestFiles,
+    admittedBy: row.admittedBy,
     governedRisk: {
       score: row.governedRisk.score,
       band: row.governedRisk.band,
@@ -1568,6 +1660,13 @@ export function buildCensus(
   const directoriesWithUntriagedUnrunTestFiles = rows.filter(
     (row) => row.untriagedUnrunTestFiles > 0,
   );
+  // Kept as its own list after C-555 widened the ranking to hold these rows
+  // too. It is no longer the ranking's complement; it is the answer to a
+  // different question — which zeros the resolver reached and which it did not —
+  // and that question is why `productSourceCount` is published at all. Dropping
+  // it because the rows are now ranked would delete the only place the two kinds
+  // of zero are separated.
+  //
   // `unclassifiedRiskDirectories` was a subtraction and nothing else: the
   // directories it counted appeared in no list, so 180 of the 190 directories
   // holding untriaged unrun work were a number with no rows behind it. They are
@@ -1613,12 +1712,12 @@ export function buildCensus(
       "While indeterminateInvocations is non-empty, uncoveredTestFiles is an upper bound.",
       "An unrun file a naming command excludes through its own --testPathIgnorePatterns is a declared quarantine: triaged, with a reason recorded somewhere. An unrun file no command names is untriaged. Both stay in uncoveredTestFiles; only untriagedUnrunTestFiles separates them.",
       "A quarantine is also read where it is expressed by ENUMERATION: a directory whose default is EXCLUDED names its files one by one, so a file left out is named by nothing and no ignore pattern subtracts it. Such a file is a declared quarantine when a scoped entry in a scripts/quality/*-quarantine.json names it; declaredQuarantineShape says which of the two shapes credited each file. Discovery is a glob over that directory and scope is declared in the list, because basenames are not unique in this tree: a list the census cannot resolve fails the run rather than being skipped.",
-      "governedRiskFiles reports each file in a ranked governed-risk directory: enumerated means the census walked the tree and found the file, collected means a workflow-reachable command named it before ignore subtraction, covered means that command still reaches it after ignore subtraction, untriaged means no command reaches it and no quarantine declares it, and declaredQuarantineShape names which of the two quarantine shapes credited a file that is not untriaged.",
+      "governedRiskFiles reports each file in a ranked directory that carries a governed-risk signal — not every ranked directory, since C-555 admitted the unscored ones to the ranking and deliberately not to this list: enumerated means the census walked the tree and found the file, collected means a workflow-reachable command named it before ignore subtraction, covered means that command still reaches it after ignore subtraction, untriaged means no command reaches it and no quarantine declares it, and declaredQuarantineShape names which of the two quarantine shapes credited a file that is not untriaged.",
       "This census executes no test, so it publishes no pass or fail for any file: green is \"unknown\" for every row without exception, and run is false only where no reachable command selects the file — the one execution fact reachability settles — and \"unknown\" otherwise, because selection is not execution. A file that was never executed cannot appear as green.",
-      "Every directory holding an UNTRIAGED unrun file is ranked by governed-surface risk: declared AI controls, approval or lifecycle writes, then tenant-scoped reads; the count of unrun files is only a tie-breaker. A directory whose unrun set is entirely declared quarantine is not ranked, because it has already been triaged.",
+      "Every directory holding an UNTRIAGED unrun file is ranked, and admittedBy on each row says which path admitted it: governed_risk_signal for a non-zero governed-risk score, untriaged_unrun_work for a directory that matched no signal and would have been absent before C-555. Order is governed-surface risk first — declared AI controls, approval or lifecycle writes, then tenant-scoped reads — so every signalled directory precedes every zero and keeps the rank it had; the count of unrun files is a tie-breaker, and it is what orders the zero tier among itself. Admission raises no score and no band. A directory whose unrun set is entirely declared quarantine is still not ranked, because it has already been triaged.",
       "Governed-risk signals come from product modules a test loads at runtime, not from directory names alone; type-only imports are erased before the test runs and are not counted as edges.",
       "Evidence source lists for the top 25 governed-risk directories are sorted and capped at five paths per signal; companion counts preserve the full match cardinality.",
-      "productSourceCount is the number of product modules the directory's tests resolved at run time, published on every directory including the unranked ones. An unclassified directory with a non-zero count was measured and matched no signal; one with zero resolved no import at all, so its band describes this census's reach rather than that directory's risk. unclassifiedRiskDirectories lists every such directory and the two counts beside it split them.",
+      "productSourceCount is the number of product modules the directory's tests resolved at run time, published on every directory including the unranked ones. An unclassified directory with a non-zero count was measured and matched no signal; one with zero resolved no import at all, so its band describes this census's reach rather than that directory's risk. unclassifiedRiskDirectories lists every such directory and the two counts beside it split them. Since C-555 it is a view ON the ranking rather than the ranking's complement: each of its rows is also a ranked row with admittedBy untriaged_unrun_work, and rankedDirectories against untriagedUnrunTestFiles is how far the work order reaches into its own pool.",
       "No timestamp is recorded, so refreshing this file on an unchanged tree is a no-op.",
     ],
     counts: {
@@ -1645,9 +1744,27 @@ export function buildCensus(
       highGovernedRiskDirectories: governedRiskRanking.filter(
         (row) => row.governedRisk.band === "high",
       ).length,
-      unclassifiedRiskDirectories:
-        directoriesWithUntriagedUnrunTestFiles.length -
-        governedRiskRanking.length,
+      // Counted over the denominator by the zero-score rule, NOT as
+      // `denominator - governedRiskRanking.length`. That subtraction was
+      // correct only while the ranking held exactly the scored rows; C-555
+      // widened the ranking to the whole untriaged pool, which would have driven
+      // this number to zero while 179 rows sat in the list below it. A count
+      // derived from the ranking's length cannot survive a change to what the
+      // ranking admits, and this number is the one four backlog items read.
+      unclassifiedRiskDirectories: directoriesWithUntriagedUnrunTestFiles.filter(
+        (row) => row.governedRisk.score === 0,
+      ).length,
+      // The ranking's own two numbers. C-555's finding was that the ranking
+      // covered 11 of 385 untriaged unrun files and nothing in this artifact
+      // said so: the ranking's length was published nowhere, its file total was
+      // published nowhere, and the pool was three lines up. Reading the coverage
+      // of the work order meant summing a list by hand, so nobody did, and the
+      // ranking sat at 2.9% of its own denominator across twelve censuses.
+      rankedDirectories: governedRiskRanking.length,
+      rankedUntriagedUnrunTestFiles: governedRiskRanking.reduce(
+        (total, row) => total + row.untriagedUnrunTestFiles,
+        0,
+      ),
       // The two halves of that word, and they are counted from the rows rather
       // than derived from each other, so a disagreement between the pair and
       // the line above is visible instead of arithmetically impossible.
@@ -1767,10 +1884,27 @@ function summarize(census) {
   }
   const governedHead = census.governedRiskRanking.slice(0, 5);
   if (governedHead.length > 0) {
-    lines.push("  top governed-risk directories by untriaged unrun tests:");
+    // The heading names what the list is ordered ON, and it has moved twice
+    // before for the same reason. C-555 moved it again: the ranking is no
+    // longer only governed-risk directories, so "top governed-risk
+    // directories" would now name a list that mostly is not one. Governed risk
+    // is still the primary key — every signalled row precedes every zero — and
+    // the untriaged count orders the rest, so the heading says both in that
+    // order. The count is the ranking's own, against the pool, because the head
+    // of a 186-row list read exactly like the head of a 7-row one.
+    lines.push(
+      `  next to wire, by governed risk then untriaged unrun tests (${census.counts.rankedDirectories} ranked, ${census.counts.rankedUntriagedUnrunTestFiles} of ${census.counts.untriagedUnrunTestFiles} untriaged files):`,
+    );
     for (const row of governedHead) {
+      // An unscored row has no signals, and joining an empty list left a
+      // dangling `; )` on it. It says which admission path placed it instead —
+      // the same fact `admittedBy` carries in the JSON.
+      const why =
+        row.governedRisk.signals.length > 0
+          ? row.governedRisk.signals.join(", ")
+          : "no governed-risk signal matched; ranked as untriaged unrun work";
       lines.push(
-        `    ${row.governedRisk.rank}. ${row.directory} (${row.governedRisk.band}; ${row.untriagedUnrunTestFiles} untriaged of ${row.unrunTestFiles} unrun of ${row.testFiles} tests; ${row.governedRisk.signals.join(", ")})`,
+        `    ${row.governedRisk.rank}. ${row.directory} (${row.governedRisk.band}; ${row.untriagedUnrunTestFiles} untriaged of ${row.unrunTestFiles} unrun of ${row.testFiles} tests; ${why})`,
       );
     }
   }
