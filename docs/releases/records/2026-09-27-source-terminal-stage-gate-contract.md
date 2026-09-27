@@ -23,11 +23,23 @@ a label that is not one of the product's stages, is absent from the canonical st
 order, and cannot be produced by the function that resolves the next stage. It was
 an invented destination.
 
-It was not cosmetic. The block of text the product hands to the model when a user
-asks about a gate read that field directly, so on the final stage the model was told,
-verbatim, `Next stage on approval: Closed.` — an onward stage that does not exist,
-named with confidence. The same field also fed the stage-gate summary the Source
-assistant assembles.
+It was not cosmetic, and here is the precise claim. The block of text the product
+hands to the model when a user asks about a gate read that field directly. Driven with
+the final stage's own illustrative view, that builder emits, verbatim,
+`Next stage on approval: Closed.` — an onward stage that does not exist, named with
+confidence. That is measured, printed by a failing assertion on the base commit, not
+inferred from reading the source.
+
+**What is deliberately NOT claimed: that a live request reached that state.** The two
+callers that build a stage view in production each happen to empty the field first —
+one through the journey adapter on the event page, the other through the stage-order
+function inside the live fact builder. So the right answer was being reconstructed
+independently in several places rather than stated in one, which is the defect. The
+assistant's stage-gate summary is the near miss that shows the cost: its fallback to
+the view's own label fires **only** when the stage-order function returns nothing,
+which on a recognised stage means the stage is terminal — so it asked the view for an
+answer the order had just said does not exist, and the illustrative view answers
+`Closed`. One caller passing an unadapted view is all that separated the two states.
 
 This change states the contract once, in a single module: the final stage's gate asks
 for a **completion review**, its outcome **closes the event**, and it has **no onward
@@ -115,9 +127,11 @@ feature-gated and not client-scoped.
 new suites and the new contract module present and nothing calling it.**
 
 - New suites: **9 failing / 16 passing before → 0 failing / 25 passing after.**
-  The nine reds included the one that matters most: the grounding block for the final
-  stage emitted `Next stage on approval: Closed.` verbatim, printed in the failure
-  output rather than argued from the source.
+  The nine reds included the one that matters most: driven with the final stage's own
+  illustrative view, the grounding builder emitted `Next stage on approval: Closed.`
+  verbatim, printed in the failure output rather than argued from the source. That is a
+  statement about the builder given that input, not about a live request — see the
+  summary above for what is not claimed.
 - Three of the sixteen that passed before are deliberate guardrails an over-broad fix
   would break — the non-terminal branches. They are not padding; they are the reason
   the fix cannot be "delete advance language everywhere".
@@ -204,5 +218,9 @@ returns them to the base values in the same commit.
   its acceptance depends on this contract existing.
 - **One signed-in readback remains owed on this stage and is not attempted here.** It
   needs a human session and is recorded against the backlog item rather than claimed.
+- **No live request was shown to have emitted the invented onward stage**, and no attempt
+  was made to construct one. The change removes the possibility rather than repairing an
+  observed production failure; a reader who wants the stronger claim should treat it as
+  absent, not as implied.
 - The two pre-existing failing suites in the scoped run are untouched and unrelated; no
   attempt was made to fix or silence them.
