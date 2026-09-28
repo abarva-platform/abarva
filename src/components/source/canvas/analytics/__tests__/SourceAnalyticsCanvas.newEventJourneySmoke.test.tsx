@@ -161,32 +161,11 @@ describe("SourceAnalyticsCanvas New Event journey smoke", () => {
         screen.getByTestId("source-journey-current-stage-status"),
       ).toBeInTheDocument();
 
-      const evidenceTables = screen.getAllByTestId(
-        "source-shell-evidence-ask-table",
-      );
-      expect(evidenceTables.length).toBeGreaterThan(0);
-      const evidenceTableText = evidenceTables
-        .map((table) => table.textContent)
-        .join(" ");
-      expect(
-        evidenceTableText,
-      ).toEqual(expect.stringContaining("Evidence needed"));
-      expect(
-        evidenceTableText,
-      ).toEqual(expect.stringContaining("Where to get it"));
-      expect(
-        evidenceTableText,
-      ).toEqual(expect.stringContaining("Template / grain"));
-      expect(
-        evidenceTableText,
-      ).toEqual(expect.stringContaining("Required"));
-      expect(
-        evidenceTableText,
-      ).toEqual(expect.stringContaining("Next action"));
-
-      expect(
-        screen.getByTestId("source-shell-active-step-needs"),
-      ).toHaveTextContent(/what continue needs/i);
+      const activeNeed = screen.getByTestId("source-shell-active-step-needs");
+      expect(activeNeed).toHaveTextContent(/what continue needs/i);
+      expect(activeNeed).toHaveTextContent(/required/i);
+      expect(screen.queryByTestId("source-shell-evidence-ask-table"))
+        .toBeNull();
       expect(
         screen.getByTestId("source-shell-active-step-guide"),
       ).toHaveTextContent(/guidebook/i);
