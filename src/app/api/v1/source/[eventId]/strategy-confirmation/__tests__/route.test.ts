@@ -16,6 +16,7 @@ const event = {
 let persistedEvent = { ...event };
 let actorId = "owner-1";
 let canApprove = true;
+let accessLevel = "event_owner";
 let activityWriteError: string | null = null;
 const activityRows: Array<Record<string, unknown>> = [];
 
@@ -30,7 +31,7 @@ jest.mock("@/lib/auth/current-user", () => ({
   getCurrentUser: jest.fn(async () => ({ personId: actorId, name: "Event Owner", primaryRole: "client_admin" })),
 }));
 jest.mock("@/lib/auth/source-access-policy", () => ({
-  loadUserSourceAccessPolicy: jest.fn(async () => ({ canApproveSourceStages: canApprove, accessLevel: "event_owner" })),
+  loadUserSourceAccessPolicy: jest.fn(async () => ({ canApproveSourceStages: canApprove, accessLevel })),
 }));
 jest.mock("@/lib/data-plane/postgresCompat", () => ({
   getAzureWriteFluentClient: jest.fn(() => ({
@@ -72,6 +73,7 @@ beforeEach(() => {
   persistedEvent = { ...event };
   actorId = "owner-1";
   canApprove = true;
+  accessLevel = "event_owner";
   activityWriteError = null;
   activityRows.length = 0;
 });
@@ -83,11 +85,11 @@ describe("POST Strategy Event Owner confirmation", () => {
     expect(activityRows).toHaveLength(1);
     expect(activityRows[0]).toMatchObject({
       event_id: "event-1", client_key: "tenant-1", actor_user_id: "owner-1",
-      action_type: "strategy_owner_confirmed", stage_key: "strategy",
+      action_type: "strategy_basis_confirmed", stage_key: "strategy",
       metadata: { version: strategyConfirmationVersion(event) },
     });
     expect(activityRows[0].action_label).toBe("Event Owner confirmed current strategy basis");
-    expect(activityRows[0].metadata).toMatchObject({ decision: "event_owner_strategy_confirmation" });
+    expect(activityRows[0].metadata).toMatchObject({ decision: "strategy_basis_confirmation", actorAuthority: "event_owner" });
   });
 
   it("rejects a changed mandate without writing a decision", async () => {
@@ -129,6 +131,18 @@ describe("POST Strategy Event Owner confirmation", () => {
     canApprove = false;
     expect((await POST(request(strategyConfirmationVersion(event)), ctx)).status).toBe(403);
     expect(activityRows).toEqual([]);
+  });
+
+  it("records an authorized client admin as admin rather than pretending to be the event creator", async () => {
+    actorId = "admin-2";
+    accessLevel = "client_admin";
+    const response = await POST(request(strategyConfirmationVersion(event)), ctx);
+    expect(response.status).toBe(200);
+    expect(activityRows[0]).toMatchObject({
+      actor_user_id: "admin-2",
+      action_label: "Client admin confirmed current strategy basis",
+      metadata: { actorAuthority: "client_admin" },
+    });
   });
 
   it("does not relax a historical strict-policy event", async () => {

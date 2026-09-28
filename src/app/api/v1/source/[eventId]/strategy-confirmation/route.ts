@@ -75,6 +75,9 @@ export async function POST(request: NextRequest, { params }: Context) {
   }
 
   const actor = await getCurrentUser().catch(() => null);
+  const actorAuthority = event.created_by_user_id === tenancy.userId
+    ? "event_owner"
+    : "client_admin";
   const { data: receipt, error: writeError } = await db
     .from("source_event_activity")
     .insert({
@@ -83,11 +86,13 @@ export async function POST(request: NextRequest, { params }: Context) {
       actor_user_id: tenancy.userId,
       actor_display_name: actor?.name ?? actor?.email ?? null,
       actor_role: actor?.primaryRole ?? null,
-      action_type: "strategy_owner_confirmed",
-      action_label: "Event Owner confirmed current strategy basis",
+      action_type: "strategy_basis_confirmed",
+      action_label: actorAuthority === "event_owner"
+        ? "Event Owner confirmed current strategy basis"
+        : "Client admin confirmed current strategy basis",
       stage_key: "strategy",
       reason: "Reviewed current mandate, decision owner and planning value thesis; this is not sponsor sign-off or stage approval.",
-      metadata: { version: currentVersion, decision: "event_owner_strategy_confirmation" },
+      metadata: { version: currentVersion, decision: "strategy_basis_confirmation", actorAuthority },
     })
     .select("id")
     .single<{ id: string }>();

@@ -63,7 +63,7 @@ describe("Strategy owner confirmation", () => {
 
   it("accepts only an actual matching owner decision for a SELF event", () => {
     const row = {
-      action_type: "strategy_owner_confirmed",
+      action_type: "strategy_basis_confirmed",
       stage_key: "strategy",
       metadata: { version: strategyConfirmationVersion(event) },
     };
@@ -76,12 +76,12 @@ describe("Strategy owner confirmation", () => {
   it("reads a tenant-scoped matching receipt and fails closed on missing or failed reads", async () => {
     expect(await hasCurrentStrategyOwnerConfirmation(event)).toBe(false);
     storedActivity = {
-      action_type: "strategy_owner_confirmed",
+      action_type: "strategy_basis_confirmed",
       stage_key: "strategy",
       metadata: { version: strategyConfirmationVersion(event) },
     };
     expect(await hasCurrentStrategyOwnerConfirmation(event)).toBe(true);
-    expect(filters).toMatchObject({ event_id: "event-1", client_key: "tenant-1", action_type: "strategy_owner_confirmed" });
+    expect(filters).toMatchObject({ event_id: "event-1", client_key: "tenant-1", action_type: "strategy_basis_confirmed" });
     expect(await hasCurrentStrategyOwnerConfirmation({ ...event, trigger_description: "changed" })).toBe(false);
     readFailure = true;
     await expect(hasCurrentStrategyOwnerConfirmation(event)).rejects.toThrow("read failed");

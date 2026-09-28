@@ -51,7 +51,7 @@ export function confirmationMatchesCurrentEvent(
   activity: StrategyConfirmationActivity | null,
 ): boolean {
   return event.approval_policy_code === "self_v1" &&
-    activity?.action_type === "strategy_owner_confirmed" &&
+    activity?.action_type === "strategy_basis_confirmed" &&
     activity.stage_key === "strategy" &&
     activity.metadata?.version === strategyConfirmationVersion(event);
 }
@@ -65,7 +65,7 @@ export async function hasCurrentStrategyOwnerConfirmation(
     .select("action_type, stage_key, metadata")
     .eq("event_id", event.id)
     .eq("client_key", event.client_key)
-    .eq("action_type", "strategy_owner_confirmed")
+    .eq("action_type", "strategy_basis_confirmed")
     .eq("stage_key", "strategy")
     .order("occurred_at", { ascending: false })
     .limit(1)

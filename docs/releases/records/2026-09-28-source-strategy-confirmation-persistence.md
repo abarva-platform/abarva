@@ -10,7 +10,7 @@
 
 ## Plain-English Summary
 
-The Strategy checklist could appear complete in one browser session without saving the human confirmation. This release records the Event Owner's explicit decision in the existing append-only Source activity trail and reads it back against the current event version. A changed mandate invalidates the earlier confirmation. Artifact review and stage approval remain independent.
+The Strategy checklist could appear complete in one browser session without saving the human confirmation. This release records an authorized Event Owner or client admin's explicit decision in the existing append-only Source activity trail, naming the actor's actual authority, and reads it back against the current event version. A changed mandate invalidates the earlier confirmation. Artifact review and stage approval remain independent.
 
 ## Layer Impact
 
