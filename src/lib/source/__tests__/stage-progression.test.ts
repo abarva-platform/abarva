@@ -90,6 +90,25 @@ const STRATEGY_GATES = (
 const GEN = ["d01_strategy_memo", "d05_scope_memo", "d09_rfp_pack"];
 
 describe("computeStageProgression", () => {
+  it("keeps a parsed but unlinked Strategy trigger in the upload queue", () => {
+    const view = computeStageProgression({
+      stage: "strategy",
+      criteria: STRATEGY_GATES(),
+      evidence: [evidence("EVID-SRC-STR-TRIGGER", "Parsed")],
+      artifacts: [],
+      generatableCodes: GEN,
+    });
+
+    expect(view.needs).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          kind: "upload",
+          requirementId: "EVID-SRC-STR-TRIGGER",
+        }),
+      ]),
+    );
+  });
+
   it("keeps an unbacked Available incumbent package in the upload queue", () => {
     const view = computeStageProgression({
       stage: "strategy",
@@ -157,7 +176,10 @@ describe("computeStageProgression", () => {
         criterion("GATE-STRATEGY-03", "met"),
       ],
       evidence: [
-        evidence("EVID-SRC-STR-TRIGGER", "Parsed"),
+        {
+          ...evidence("EVID-SRC-STR-TRIGGER", "Parsed"),
+          sourceArtifactId: "artifact-trigger",
+        },
         { ...evidence("EVID-SRC-STR-INCUMBENT", "Available"), sourceArtifactId: "artifact-incumbent" },
         { ...evidence("EVID-SRC-STR-SPEND-BASELINE", "Available"), sourceArtifactId: "artifact-spend" },
         { ...evidence("EVID-SRC-STR-SPONSOR-COMMIT", "Loaded"), sourceArtifactId: "artifact-commitment" },

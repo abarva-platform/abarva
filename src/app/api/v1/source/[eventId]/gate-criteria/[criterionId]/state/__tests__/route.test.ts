@@ -92,7 +92,7 @@ jest.mock("@/lib/source/queries", () => ({
 }));
 
 jest.mock("@/lib/source/canvas-substrate/event-intake-sync", () => ({
-  syncEventIntakeEvidence: jest.fn(async () => false),
+  repairLegacyClientStatedTriggerEvidence: jest.fn(async () => false),
 }));
 
 jest.mock("@/lib/data-plane/write-adapters/sourceWriteAdapter", () => ({

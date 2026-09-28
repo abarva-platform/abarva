@@ -48,7 +48,7 @@ import {
   validateApprovalReason,
 } from "@/lib/source/source-governance-enforcement";
 import { scaffoldNewEventSubstrate } from "@/lib/source/queries";
-import { syncEventIntakeEvidence } from "@/lib/source/canvas-substrate/event-intake-sync";
+import { repairLegacyClientStatedTriggerEvidence } from "@/lib/source/canvas-substrate/event-intake-sync";
 import { hasVerifiedSponsorDelegation } from "@/lib/source/sponsor-delegation-repository";
 import { criterionForSourceApprovalPolicy, resolveSourceApprovalPolicy } from "@/lib/source/approval-policy";
 
@@ -186,13 +186,9 @@ export async function PATCH(req: NextRequest, { params }: RouteCtx) {
         error instanceof Error ? error.message : String(error),
       );
     });
-    await syncEventIntakeEvidence({
+    await repairLegacyClientStatedTriggerEvidence({
       sourceEventId: persistedEvent.id,
       tenantKey: persistedEvent.client_key,
-      triggerDescription:
-        typeof persistedEvent.trigger_description === "string"
-          ? persistedEvent.trigger_description
-          : null,
     });
 
     const accessPolicy =
