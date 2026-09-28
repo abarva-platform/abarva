@@ -6,7 +6,7 @@
 
 ## Status
 
-`candidate`
+`released`
 
 ## Plain-English Summary
 
@@ -81,8 +81,18 @@ Release lane: `global-control-lane` with a narrow `client-data-lane` repair.
   the trigger as `NOT LOADED`, evidence readiness is 0/3, and approval remains
   locked. This also exposed the separate stale `Now: Available` summary, which
   this follow-up change corrects.
-- **NOT RUN:** Follow-up PR CI and signed-in verification of the Continue
-  summary correction; pending merge and deployment of this candidate.
+- **PASS:** Follow-up PR #8644 corrected the Continue summary and updated its
+  regression expectation. All required PR checks passed, including the
+  13m33s behavior coverage floor; the Source canvas suite passed 60 suites /
+  320 tests, and local lint, typecheck, release check, and coverage census
+  checks passed.
+- **PASS:** Follow-up deployment run `36496129488` deployed merge SHA
+  `37ae78862a6af2677b3a22e81b4c5cfcbd98af3c`. The repo-owned runtime
+  invariant and health checks passed.
+- **PASS:** Fresh signed-in verification showed the Continue summary as
+  `Now: Not loaded`; the Files ledger still marks the unlinked requirement
+  `NOT LOADED`, keeps upload available, and leaves approval locked. No evidence
+  was uploaded, accepted, or approved during verification.
 
 ## Rollout Plan
 
@@ -98,8 +108,13 @@ database edit or batch migration is part of this release.
 - Shared runtime mutators: none outside that workflow.
 - First deployed SHA: `a1ebd9316b12025622d47b9667b01fa5191a1240`.
 - First deployed image digest: `sha256:595a699f703bf30bb1255cfade2e29c40542a4fb4a652751471a5635142dee27`.
-- ACA runtime invariant: passed for the first fix; follow-up deployment pending.
-- Worker image invariant: passed for the first fix; follow-up deployment pending.
+- Follow-up deployed SHA: `37ae78862a6af2677b3a22e81b4c5cfcbd98af3c`.
+- Follow-up image digest: `sha256:c4256f1cab69d9a5dde7a43a2699b56dba7e521a6caa2b238c3062465b25c23e`.
+- Follow-up revision: `ca-abarva-web-lab-eastus--m37ae7886` at 100% traffic.
+- ACA runtime invariant: passed for both deployments; for the follow-up,
+  template, active revision, and traffic target use the follow-up digest.
+- Worker image invariant: passed for both deployments; both worker jobs read
+  back at the follow-up digest.
 - Feature/env flag update path: none.
 - Live signed-in proof required: yes; verify both the Files checklist and
   Continue summary avoid showing an unlinked trigger as ready, and the Strategy
@@ -115,8 +130,11 @@ normal source upload and evidence-review path.
 
 - First-fix PR: #8642; merged SHA `a1ebd9316b12025622d47b9667b01fa5191a1240`.
 - First-fix deploy run: `36492521182`.
-- Follow-up PR and exact merged SHA: pending.
-- Follow-up CI, deploy run, digest, and signed-in verification: pending.
+- Follow-up PR #8644; merge SHA `37ae78862a6af2677b3a22e81b4c5cfcbd98af3c`.
+- Follow-up deploy run `36496129488`; image digest
+  `sha256:c4256f1cab69d9a5dde7a43a2699b56dba7e521a6caa2b238c3062465b25c23e`.
+- Follow-up signed-in verification: Continue summary `Now: Not loaded`; Files
+  checklist `NOT LOADED`; upload available; approval locked.
 
 ## Known Gaps
 
