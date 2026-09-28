@@ -214,6 +214,7 @@ export async function buildSourceGenerationContext(
       classifiedCategory: event.classifiedCategory ?? null,
       rigor: event.rigor ?? null,
       currentStageKey: event.currentStageKey,
+      approvalPolicyCode: event.approvalPolicyCode ?? null,
       statusLabel: event.statusLabel,
       owner: event.owner ?? null,
       // Bind the persisted intake fields independently. `problemStatement`
@@ -324,20 +325,22 @@ export function sanitizeArtifactBodyForExport(body: string): string {
 }
 
 /**
- * Pluck approved-or-richer bodies from the substrate, keyed by code.
- * The prompt builder uses this to bind upstream artifacts into the
- * user message. Pre-approval-status bodies are still included if a
- * body exists — the user may have authored content but not yet flipped
- * the status pill, and the agent should still consume what's there.
+ * Pluck upstream bodies from the substrate, keyed by code. Most callers
+ * can use draft context; financial companion artifacts can require a
+ * reviewed upstream to avoid laundering an AI draft into authority.
  */
 export function collectUpstreamBodies(
   ctx: SourceGenerationContext,
   codes: string[],
+  options: { approvedOnly?: boolean } = {},
 ): Record<string, string> {
   const out: Record<string, string> = {};
   for (const code of codes) {
     const row = ctx.artifactStates.find((a) => a.artifactCode === code);
-    if (row?.body && row.body.trim().length > 0) {
+    if (
+      row?.body && row.body.trim().length > 0 &&
+      (!options.approvedOnly || row.status === "approved" || row.status === "locked")
+    ) {
       out[code] = sanitizeArtifactBodyForExport(row.body);
     }
   }

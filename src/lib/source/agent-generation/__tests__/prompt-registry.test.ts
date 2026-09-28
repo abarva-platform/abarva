@@ -85,6 +85,68 @@ describe("Source artifact prompt registry provider config", () => {
     ).toBe("Not Requested");
   });
 
+  it("binds current Strategy applicability, SELF policy, and uncleared gate to d01 and d02", () => {
+    const ctx = makeD09Context([]);
+    ctx.event.currentStageKey = "strategy";
+    ctx.event.approvalPolicyCode = "self_v1";
+    ctx.evidence = [
+      {
+        ...ctx.evidence[0],
+        requirementId: "EVID-SRC-STR-INCUMBENT",
+        stage: "strategy",
+        applicabilityStatus: "not_applicable",
+        applicabilityReason: "No incumbent for this synthetic event.",
+      },
+      {
+        ...ctx.evidence[0],
+        id: "evidence-spend",
+        requirementId: "EVID-SRC-STR-SPEND-BASELINE",
+        stage: "strategy",
+        applicabilityStatus: "not_applicable",
+        applicabilityReason: "No historical spend for this synthetic event.",
+      },
+    ];
+    ctx.gateCriteria = [{
+      id: "criterion-1",
+      sourceEventId: "event-1",
+      tenantKey: "skyharbor",
+      criterionId: "GATE-STRATEGY-01",
+      fromStage: "strategy",
+      toStage: "scope",
+      state: "pending",
+      reviewerUserId: null,
+      reviewedAt: null,
+      notes: null,
+      evidenceArtifactIds: [],
+      waiverApprovalId: null,
+      createdAt: "2026-06-12T00:00:00.000Z",
+      updatedAt: "2026-06-12T00:00:00.000Z",
+    }];
+
+    for (const code of ["d01_strategy_memo", "d02_value_target"]) {
+      const message = getPromptTemplate(code)!.buildUserMessage(ctx, {});
+      expect(message).toContain("EVID-SRC-STR-INCUMBENT; applicability=not_applicable");
+      expect(message).toContain("EVID-SRC-STR-SPEND-BASELINE; applicability=not_applicable");
+      expect(message).toContain("approval_policy=self_v1");
+      expect(message).toContain("GATE-STRATEGY-01; state=pending");
+    }
+  });
+
+  it("does not call an unapproved d01 body approved in the d02 prompt", () => {
+    const ctx = makeD09Context([]);
+    ctx.event.currentStageKey = "strategy";
+    ctx.artifactStates = [{
+      ...makeArtifactState("d01_strategy_memo", "Unreviewed planning draft."),
+      status: "needs_review",
+    }];
+
+    const message = getPromptTemplate("d02_value_target")!.buildUserMessage(ctx, {
+      d01_strategy_memo: "Unreviewed planning draft.",
+    });
+    expect(message).not.toContain("Approved Sourcing Strategy Memo");
+    expect(message).not.toContain("Unreviewed planning draft.");
+  });
+
   it("lets legacy suffixed prompt keys resolve without changing the legacy prompt keys", () => {
     expect(getSourceArtifactStoryContract("d02_value_target_legacy")).toMatchObject({
       artifactCode: "d02_value_target",

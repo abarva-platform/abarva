@@ -274,6 +274,71 @@ describe("Source consulting-grade quality gate helpers", () => {
     expect(violations).toEqual([]);
   });
 
+  it("rejects Strategy drafts that contradict audited applicability, SELF policy, or a pending gate", () => {
+    const ctx = makeContext();
+    ctx.event.currentStageKey = "strategy";
+    ctx.event.approvalPolicyCode = "self_v1";
+    ctx.evidence = [{
+      ...ctx.evidence[0],
+      requirementId: "EVID-SRC-STR-INCUMBENT",
+      stage: "strategy",
+      currentState: "Not Requested",
+      applicabilityStatus: "not_applicable",
+    }];
+    ctx.gateCriteria = [{ ...ctx.gateCriteria[0], fromStage: "strategy", state: "pending" }];
+    const violations = findDeterministicSourceClaimViolations({
+      artifactCode: "d01_strategy_memo",
+      sourceContext: "",
+      ctx,
+      body: [
+        "EVID-SRC-STR-INCUMBENT — Not Requested; request the incumbent contract.",
+        "EVID-SRC-STR-SPONSOR-COMMIT is required before release.",
+        "The event is ready to advance. Approve at the Strategy Gate.",
+      ].join("\n"),
+    });
+    expect(violations.map((item) => item.reason)).toEqual(expect.arrayContaining([
+      expect.stringContaining("audited not-applicable"),
+      expect.stringContaining("SELF policy"),
+      expect.stringContaining("pending Strategy gate"),
+    ]));
+  });
+
+  it("allows accurate absence and policy language while refusing unsupported vendor-pricing lore", () => {
+    const ctx = makeContext();
+    ctx.event.currentStageKey = "strategy";
+    ctx.event.approvalPolicyCode = "self_v1";
+    ctx.evidence = [{
+      ...ctx.evidence[0],
+      requirementId: "EVID-SRC-STR-INCUMBENT",
+      stage: "strategy",
+      applicabilityStatus: "not_applicable",
+    }];
+    ctx.gateCriteria = [{ ...ctx.gateCriteria[0], fromStage: "strategy", state: "pending" }];
+    const accurate = findDeterministicSourceClaimViolations({
+      artifactCode: "d02_value_target",
+      sourceContext: "",
+      ctx,
+      body: "EVID-SRC-STR-INCUMBENT is not applicable by audited decision. A separate sponsor commitment is not required under SELF policy. The Strategy gate is pending.",
+    });
+    expect(accurate).toEqual([]);
+
+    ctx.event.approvalPolicyCode = "legacy_signed_scope_v1";
+    const legacy = findDeterministicSourceClaimViolations({
+      artifactCode: "d01_strategy_memo",
+      sourceContext: "",
+      ctx,
+      body: "EVID-SRC-STR-SPONSOR-COMMIT is required before release.",
+    });
+    expect(legacy).toEqual([]);
+
+    const unsupported = findDeterministicSourceClaimViolations({
+      artifactCode: "d02_value_target",
+      sourceContext: "No market evidence is loaded.",
+      body: "Vendors in this managed-service market price aggressively and recover margin through change orders.",
+    });
+    expect(unsupported.some((item) => /vendor-pricing/i.test(item.reason))).toBe(true);
+  });
+
   it("forces evidence and source-discipline dimensions below the release bar", () => {
     const baseReview = {
       standardId: "partner-grade-consulting-deliverable-v1" as const,

@@ -521,7 +521,7 @@ export async function generateSourceArtifactDraft(
   const upstreamBound = collectUpstreamBodies(ctx, [
     ...template.upstreamRequired,
     ...template.upstreamOptional,
-  ]);
+  ], { approvedOnly: artifactCode === "d02_value_target" });
   const userMessage = template.buildUserMessage(ctx, upstreamBound);
   const requiresQualityGate = requiresSourceConsultingGradeGate(artifactCode);
   if (requiresQualityGate && !process.env.ANTHROPIC_API_KEY) {
@@ -1174,6 +1174,7 @@ async function runConsultingGradeQualityGate(args: {
       artifactCode: args.artifactCode,
       body: args.body,
       sourceContext,
+      ctx: args.ctx,
     }),
   );
   reviews.push(firstReview);
@@ -1304,6 +1305,7 @@ async function runConsultingGradeQualityGate(args: {
       artifactCode: args.artifactCode,
       body: rewrittenBody,
       sourceContext,
+      ctx: args.ctx,
     }),
   );
   reviews.push(secondReview);
