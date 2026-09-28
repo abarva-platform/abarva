@@ -399,6 +399,58 @@ describe("Source consulting-grade quality gate helpers", () => {
     expect(mixed.some((item) => item.reason.includes("pending Strategy gate"))).toBe(true);
   });
 
+  it("rejects a direct Strategy-to-RFP transition without blocking later-stage discussion", () => {
+    const ctx = makeContext();
+    ctx.event.currentStageKey = "strategy";
+    ctx.gateCriteria = [{ ...ctx.gateCriteria[0], fromStage: "strategy", state: "met" }];
+
+    for (const artifactCode of ["d01_strategy_memo", "d02_value_target"]) {
+      for (const body of [
+        "Approve the event to advance into RFP preparation.",
+        "After approval, the event advances to the Market package.",
+      ]) {
+        const violations = findDeterministicSourceClaimViolations({
+          artifactCode,
+          sourceContext: "",
+          ctx,
+          body,
+        });
+        expect(violations.some((item) => item.reason.includes("Define/Scope"))).toBe(true);
+      }
+    }
+
+    for (const body of [
+      "Approval moves the event to Define/Scope; RFP release has its own later gate.",
+      "After Strategy approval, Define/Scope work may begin preparing the later RFP.",
+      "Strategy approval does not authorize advancement to RFP.",
+      "Strategy approval should not advance the event to RFP.",
+      "The RFP package will be considered only after Scope is approved.",
+    ]) {
+      expect(findDeterministicSourceClaimViolations({
+        artifactCode: "d01_strategy_memo",
+        sourceContext: "",
+        ctx,
+        body,
+      })).toEqual([]);
+    }
+
+    const mixed = findDeterministicSourceClaimViolations({
+      artifactCode: "d01_strategy_memo",
+      sourceContext: "",
+      ctx,
+      body: "Do not advance now, but after approval the event advances to RFP.",
+    });
+    expect(mixed.some((item) => item.reason.includes("Define/Scope"))).toBe(true);
+
+    ctx.event.currentStageKey = "rfp";
+    expect(findDeterministicSourceClaimViolations({
+      artifactCode: "d01_strategy_memo",
+      sourceContext: "",
+      ctx,
+      body: "The RFP stage may now authorize market release after its own gate.",
+    })).toEqual([]);
+  });
+
   it("allows accurate absence and policy language while refusing unsupported vendor-pricing lore", () => {
     const ctx = makeContext();
     ctx.event.currentStageKey = "strategy";

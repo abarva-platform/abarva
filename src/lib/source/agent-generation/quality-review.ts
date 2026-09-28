@@ -188,6 +188,20 @@ export function findDeterministicSourceClaimViolations(args: {
         });
       }
     }
+    if (args.ctx.event.currentStageKey === "strategy") {
+      const clauses = lines.flatMap((line) => line.split(/(?<=[.!?])\s+|[;|]/));
+      const directRfpTransition = /\badvance(?:s|ment)?(?:\s+(?:the|this)\s+event)?\s+(?:directly\s+)?(?:into|to)\s+(?:the\s+)?(?:RFP|market package)\b/i;
+      for (const clause of clauses) {
+        const match = directRfpTransition.exec(clause);
+        if (!match) continue;
+        const beforeClaim = clause.slice(Math.max(0, match.index - 60), match.index);
+        if (/\b(?:do(?:es)? not|cannot|must not|should not|will not|never|not yet)\b(?:\s+\w+){0,3}\s*$/i.test(beforeClaim)) continue;
+        violations.push({
+          claim: clause.trim().slice(0, 220),
+          reason: "Strategy approval advances only to Define/Scope; it does not authorize a direct RFP or market-package transition.",
+        });
+      }
+    }
     const strategyCriteria = args.ctx.gateCriteria.filter(
       (criterion) => criterion.fromStage === "strategy",
     );
