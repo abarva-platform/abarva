@@ -120,6 +120,19 @@ describe("evidenceStateRowToView", () => {
     expect(view.requirementId).toBe("EVID-SRC-SCOPE-TICKET-HISTORY");
     expect(view.currentState).toBe("Loaded");
     expect(view.notes).toContain("ServiceNow");
+    expect(view.applicabilityStatus).toBeUndefined();
+    const decided = evidenceStateRowToView({
+      ...row,
+      applicability_status: "not_applicable",
+      applicability_reason: "No historical record exists for this new sourcing event.",
+      applicability_actor_user_id: "event-owner",
+      applicability_decided_at: "2026-09-28T00:00:00Z",
+    });
+    expect(decided).toMatchObject({
+      applicabilityStatus: "not_applicable",
+      applicabilityActorUserId: "event-owner",
+      applicabilityDecidedAt: "2026-09-28T00:00:00Z",
+    });
   });
 });
 

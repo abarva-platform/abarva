@@ -296,6 +296,58 @@ describe("SourceAnalyticsCanvas — artifact role badge (SOURCE-SHELL-002)", () 
     ).toBeInTheDocument();
   });
 
+  it("offers an accountable absence decision only for a record that may genuinely not exist", () => {
+    const incumbentState: SourceEventEvidence = {
+      id: "incumbent-evidence", sourceEventId: "evt-1", tenantKey: "demo-client",
+      requirementId: "EVID-SRC-STR-INCUMBENT", stage: "strategy",
+      currentState: "Not Requested", sourceArtifactId: null,
+      applicabilityStatus: "applicable", notes: null, lastSyncedAt: null,
+      createdAt: "2026-09-28T00:00:00Z", updatedAt: "2026-09-28T00:00:00Z",
+    };
+    render(
+      <SourceAnalyticsCanvas
+        event={makeEvent()}
+        viewStage="strategy"
+        tenantName="Lakeshore"
+        artifacts={[]}
+        evidenceStates={[incumbentState]}
+        initialWorkspace="files"
+      />,
+    );
+
+    const incumbent = screen.getByTestId(
+      "source-stage-evidence-checklist-row-EVID-SRC-STR-INCUMBENT",
+    );
+    fireEvent.click(within(incumbent).getByRole("button", { name: "Declare no incumbent" }));
+    expect(within(incumbent).queryByRole("button", { name: "Record applicability" })).not.toBeInTheDocument();
+    fireEvent.change(within(incumbent).getByLabelText("Reason no incumbent exists"), {
+      target: { value: "This net-new service has no incumbent agreement or renewal history." },
+    });
+    fireEvent.click(within(incumbent).getByRole("checkbox", { name: /I confirm no incumbent exists/i }));
+    expect(within(incumbent).getByRole("button", { name: "Record applicability" })).toBeEnabled();
+    expect(screen.queryByRole("button", { name: "Declare no sponsor commitment" })).not.toBeInTheDocument();
+  });
+
+  it("does not offer absence decisions before the schema has been read back", () => {
+    render(
+      <SourceAnalyticsCanvas
+        event={makeEvent()}
+        viewStage="strategy"
+        tenantName="Lakeshore"
+        artifacts={[]}
+        evidenceStates={[{
+          id: "incumbent-evidence", sourceEventId: "evt-1", tenantKey: "demo-client",
+          requirementId: "EVID-SRC-STR-INCUMBENT", stage: "strategy",
+          currentState: "Not Requested", sourceArtifactId: null,
+          notes: null, lastSyncedAt: null,
+          createdAt: "2026-09-28T00:00:00Z", updatedAt: "2026-09-28T00:00:00Z",
+        }]}
+        initialWorkspace="files"
+      />,
+    );
+    expect(screen.queryByRole("button", { name: "Declare no incumbent" })).not.toBeInTheDocument();
+  });
+
   it("labels RFP evidence owners and reviews parsed evidence", async () => {
     const rfpEvent: SourcingEventSummary = {
       ...makeEvent(),

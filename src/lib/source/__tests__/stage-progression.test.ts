@@ -102,6 +102,21 @@ describe("computeStageProgression", () => {
       expect.objectContaining({ kind: "upload", requirementId: "EVID-SRC-STR-INCUMBENT" }),
     ]));
   });
+  it("removes only the declared-absent incumbent from the upload queue", () => {
+    const view = computeStageProgression({
+      stage: "strategy", criteria: STRATEGY_GATES(), artifacts: [], generatableCodes: GEN,
+      evidence: [{
+        ...evidence("EVID-SRC-STR-INCUMBENT", "Not Requested"),
+        applicabilityStatus: "not_applicable",
+        applicabilityReason: "This net-new service has no incumbent agreement or renewal history.",
+        applicabilityActorUserId: "event-owner",
+        applicabilityDecidedAt: "2026-09-28T00:00:00Z",
+      }],
+    });
+    expect(view.needs.some((need) => need.kind === "upload" && need.requirementId === "EVID-SRC-STR-INCUMBENT")).toBe(false);
+    expect(view.needs.some((need) => need.kind === "upload" && need.requirementId === "EVID-SRC-STR-SPEND-BASELINE")).toBe(true);
+    expect(view.allClear).toBe(false);
+  });
   it("empty Strategy stage → upload evidence + generate/prepare deliverables, none clear", () => {
     const view = computeStageProgression({
       stage: "strategy",
