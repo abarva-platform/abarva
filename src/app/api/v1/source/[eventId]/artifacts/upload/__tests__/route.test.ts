@@ -119,6 +119,7 @@ jest.mock('@/lib/source/artifact-registry', () => ({
   isAllowedSourceArtifactMimeType: (mime: string) =>
     [
       'text/csv',
+      'text/plain',
       'application/pdf',
       'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
     ].includes(mime),
@@ -137,7 +138,7 @@ jest.mock('@/lib/source/artifact-registry', () => ({
 jest.mock('@/lib/source/artifact-registry/upload-contract', () => ({
   inferSourceArtifactFamily: () => 'pricing_workbook',
   sourceArtifactFormatFromMime: (mime: string) =>
-    mime.includes('spreadsheet') ? 'xlsx' : mime === 'application/pdf' ? 'pdf' : 'csv',
+    mime.includes('spreadsheet') ? 'xlsx' : mime === 'application/pdf' ? 'pdf' : mime === 'text/plain' ? 'txt' : 'csv',
 }));
 
 const mockParseSourceTextArtifact = jest.fn(
@@ -290,6 +291,27 @@ describe('POST /api/v1/source/[eventId]/artifacts/upload', () => {
       expect.objectContaining({
         artifactFamily: 'other',
         artifactKind: 'uploaded_source_artifact',
+      }),
+    );
+  });
+
+  it('accepts a text trigger under its declared Strategy requirement', async () => {
+    maybeSingleMock.mockResolvedValueOnce({
+      data: { id: EVENT_ID, client_key: 'apexretail', current_stage_key: 'strategy' },
+      error: null,
+    });
+    const res = await POST(
+      makeMultipartRequest('synthetic-trigger.txt', 'text/plain', 128, {
+        stageKey: 'strategy',
+        evidenceRequirementId: 'EVID-SRC-STR-TRIGGER',
+      }),
+      EVENT_PARAMS,
+    );
+    expect(res.status).toBe(200);
+    expect(syncUploadToCanvasSubstrateMock.mock.calls[0]?.[0]?.[0]).toEqual(
+      expect.objectContaining({
+        requirementId: 'EVID-SRC-STR-TRIGGER',
+        artifactFamily: 'other',
       }),
     );
   });

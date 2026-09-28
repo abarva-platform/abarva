@@ -40,7 +40,7 @@ Release lane: `global-control-lane` with a narrow existing Source evidence-write
 - **Pass:** red-first route and substrate tests failed for missing binding and invalid selections before implementation.
 - **Pass:** mounted UI tests failed when the checklist only scrolled to generic session uploads.
 - **Pass:** deleting the route's evidence-family isolation, the substrate's selected-ID binding, or the UI's ID field failed targeted tests; each mutation was restored.
-- **Pass:** 29 Source canvas suites / 231 tests and focused route/substrate suites / 31 tests.
+- **Pass:** 29 Source canvas suites / 231 tests and focused route/substrate suites / 32 tests, including the text/plain trigger used for signed-in replay.
 - **Pass:** Node 24 TypeScript no-emit check and scoped ESLint (three existing test-file warnings, zero errors).
 - **Not run:** PR CI, official ACA deploy, immutable runtime readback, and signed-in upload/readiness replay; these are required before live acceptance.
 
