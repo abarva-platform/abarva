@@ -134,7 +134,8 @@ describe("C-574 · the Tower aVa dock is a catalogued AI surface", () => {
     catalog.controls = catalog.controls.filter((entry) => entry.id !== SURFACE_ID);
     catalog.catalogClaimCoverage = catalog.catalogClaimCoverage.map((row) => {
       if (row.surfaceId !== SURFACE_ID) return row;
-      const { surfaceId: _joined, ...rest } = row;
+      const rest: CoverageRow = { ...row };
+      delete rest.surfaceId;
       return { ...rest, surfaceJoin: { state: "uncatalogued" } };
     });
     const dir = mkdtempSync(path.join(tmpdir(), "c574-tower-dock-"));
