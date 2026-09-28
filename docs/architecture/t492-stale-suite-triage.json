@@ -340,7 +340,12 @@
       "verdict": "rewrite_as_behavior",
       "ownerItem": "T-495",
       "wiredInThisItem": false,
-      "rationale": "RED, and stale against a deliberate product decision. It asserts topbar-nav-items.ts contains label: \"Knowledge\" and key: \"programs\"; the live registry carries Home, Intelligence, Moves, Source Optimize, Source New and Tower. The nav taxonomy moved and the byte assertion did not. Eighteen of its nineteen cases still pass, which is the trap: a suite this brittle reads as healthy right up to the rename."
+      "rationale": "RED, and stale against a deliberate product decision. It asserts topbar-nav-items.ts contains label: \"Knowledge\" and key: \"programs\"; the live registry carries Home, Intelligence, Moves, Source Optimize, Source New and Tower. The nav taxonomy moved and the byte assertion did not. Eighteen of its nineteen cases still pass, which is the trap: a suite this brittle reads as healthy right up to the rename.",
+      "movedTo": {
+        "path": "src/components/shell/__tests__/shell-v2-mode-layout.test.tsx",
+        "byItem": "T-495",
+        "reason": "Rewritten from a source-text scanner into a rendering suite beside the shell components; the new contents contain JSX and require the .tsx extension, and its directory is already run by the AI surface control catalog workflow. Its Rule 5 nav cases are not re-asserted there: the same rules were already asserted by render in src/components/navigation/__tests__/NexusTopNav.test.tsx, which ran in no workflow and is wired in the same change. The verdict, counts and execution numbers recorded above describe the file as drawn at the base commit and are unchanged. Record: docs/architecture/t495-shell-v2-mode-layout-triage.json."
+      }
     },
     {
       "path": "src/__tests__/integration/agents/agent-hidden-drawer.test.ts",

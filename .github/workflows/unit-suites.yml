@@ -1747,6 +1747,27 @@ jobs:
           npx jest src/components/chrome/__tests__
           --no-coverage --ci
 
+      # Item T-495, claimable half, suite 3 of 11.
+      # `src/__tests__/hygiene/shell-v2-mode-layout.test.ts` asserted the Shell
+      # Layout Spec v2 rules over the BYTES of surface files. Its Rule 5 nav
+      # cases (product nav visible by default; the product labels) were red on
+      # this change's base for a deliberate nav rename, not a defect -- and the
+      # same rules are already asserted BY RENDER here, in
+      # `NexusTopNav.test.tsx`, which ran in no workflow. The byte suite is
+      # deleted; its chat-entry and Atlas-provider rules are re-asserted by
+      # render in `src/components/shell/__tests__/shell-v2-mode-layout.test.tsx`,
+      # whose directory the AI surface control catalog workflow already runs.
+      #
+      # Named as a DIRECTORY for this file's header reason: 1 of 1 unrun and
+      # green, 17 tests / 0 failing on the branch. Its line leaves
+      # `product-directory-ci-coverage.baseline.json` in the same change; that
+      # ratchet asserts set equality, so this step without the line, or the
+      # line without this step, both fail.
+      - name: Run the T-495 top-nav render suites
+        run: >-
+          npx jest src/components/navigation/__tests__
+          --no-coverage --ci
+
       - name: Refuse a test run that modified committed input data
         if: always()
         run: node scripts/ci/assert-datasets-unmodified.mjs
