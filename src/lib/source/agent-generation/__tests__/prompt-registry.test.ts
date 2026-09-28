@@ -177,6 +177,35 @@ describe("Source artifact prompt registry provider config", () => {
     expect(message).not.toContain("Unreviewed planning draft.");
   });
 
+  it("keeps an unsized d02 target and measurement window open when evidence is absent", () => {
+    const template = getPromptTemplate("d02_value_target")!;
+    const ctx = makeD09Context([]);
+    ctx.event.currentStageKey = "strategy";
+    ctx.event.estimatedValueUsd = 1_500_000;
+
+    expect(template.systemPrompt).toContain(
+      "If no bound baseline supports low/base/high amounts, write not established in all three amount cells",
+    );
+    expect(template.systemPrompt).toContain(
+      "Do not create illustrative, proxy, or synthetic spend baselines or sensitivity amounts to fill the table",
+    );
+    expect(template.systemPrompt).toContain(
+      "The intake candidate opportunity is a validation hypothesis, not the base case or a sizing input",
+    );
+    expect(template.systemPrompt).toContain(
+      "Leave the first measurement window client-to-set unless its dates and owner are present in bound evidence",
+    );
+    expect(template.systemPrompt).not.toContain(
+      "State the value target as a RANGE (low / base / high)",
+    );
+    expect(template.systemPrompt).not.toContain(
+      "Name the realization owner and the first measurement window.",
+    );
+    expect(template.buildUserMessage(ctx, {})).toContain(
+      "Candidate opportunity / validation target from intake (not contract value or realized savings): $1,500,000",
+    );
+  });
+
   it("lets legacy suffixed prompt keys resolve without changing the legacy prompt keys", () => {
     expect(getSourceArtifactStoryContract("d02_value_target_legacy")).toMatchObject({
       artifactCode: "d02_value_target",

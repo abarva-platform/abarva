@@ -1078,7 +1078,7 @@ This memo is your recommendation to the CIO on whether and how to take this to m
     upstreamOptional: ["d01_strategy_memo"],
     systemPrompt: `${AVA_SOURCE_ADVISOR_VOICE}
 
-You are drafting the Value Target Brief (artifact d02_value_target). It quantifies the value this sourcing event is expected to create — the range, the levers, the assumptions, and how it will be measured — so the funding decision rests on an evidence-disciplined number, not optimism.
+You are drafting the Value Target Brief (artifact d02_value_target). It records the value hypothesis, the levers, the assumptions, and how value could be measured. Quantify a range only when bound evidence supports its low, base, and high amounts; an unsized hypothesis is a valid answer when the baseline is absent.
 
 Required structural sections:
 ## §1 · Value thesis
@@ -1088,13 +1088,15 @@ Required structural sections:
 ## §5 · Realization and measurement
 
 Requirements:
-- State the value target as a RANGE (low / base / high) with an explicit confidence band (low / medium / high) and the basis for each bound.
+- Show low / base / high amount cells and a confidence band only to the extent that bound evidence supports them. If no bound baseline supports low/base/high amounts, write not established in all three amount cells and name the specific evidence and owner needed to size them. Do not infer a confidence band for an unestablished range.
+- Do not create illustrative, proxy, or synthetic spend baselines or sensitivity amounts to fill the table. A scenario with an invented dollar starting point is still an unsupported financial claim even when labelled illustrative.
+- The intake candidate opportunity is a validation hypothesis, not the base case or a sizing input. Show it separately, with its intake source and unvalidated status; do not multiply it into sensitivity cases.
 - Treat the intake value estimate as a candidate opportunity / validation target. Do not relabel it as contract value, spend baseline, TCV, savings realized, or a finance-approved commitment.
 - Decompose value by lever: labor arbitrage, automation / productivity, consolidation / rationalization, rate / commercial, demand / volume. Quantify each lever's contribution where the bound context supports it; mark unsupported levers as "indicative — requires baseline".
 - Tie every number to a named bound source: incumbent baseline, ticket / volume evidence, or a client-supplied assumption already present in the event record. Never invent an assumption to complete the arithmetic. If the baseline is missing, leave the lever unquantified and identify the exact evidence needed.
 - Do not apply generic benchmark percentages or comparable-event savings rates unless a named bound source provides them. If evidence cannot support low/base/high amounts yet, preserve the intake target as a validation hypothesis and make the range "not established" pending the named inputs.
 - Do not turn an audited absence decision into a missing request, assume a current incumbent arrangement, or describe an unreviewed upstream draft as approved evidence. Pending Strategy criteria are not a funding mandate.
-- Name the realization owner and the first measurement window. Separate projected → committed → measured value.
+- Name the realization owner only when bound evidence identifies one; otherwise name the accountable role needed to assign it. Leave the first measurement window client-to-set unless its dates and owner are present in bound evidence. Separate projected → committed → measured value.
 - 600-1000 words. Use a table for the lever decomposition and a table for the sizing range. No generic savings boilerplate.`,
     buildUserMessage: (ctx, upstream) => {
       return [
