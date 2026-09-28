@@ -17,25 +17,25 @@
     "No timestamp is recorded, so refreshing this file on an unchanged tree is a no-op."
   ],
   "counts": {
-    "testFiles": 2540,
-    "coveredTestFiles": 2201,
-    "pullRequestCoveredTestFiles": 2200,
-    "uncoveredTestFiles": 339,
-    "directoriesWithTests": 492,
-    "directoriesFullyCovered": 313,
-    "directoriesPartiallyCovered": 28,
-    "directoriesUncovered": 151,
+    "testFiles": 2542,
+    "coveredTestFiles": 2204,
+    "pullRequestCoveredTestFiles": 2203,
+    "uncoveredTestFiles": 338,
+    "directoriesWithTests": 493,
+    "directoriesFullyCovered": 314,
+    "directoriesPartiallyCovered": 29,
+    "directoriesUncovered": 150,
     "directoriesWithUnrunTestFiles": 179,
     "directoriesWithUntriagedUnrunTestFiles": 168,
     "declaredQuarantineTestFiles": 52,
-    "untriagedUnrunTestFiles": 287,
+    "untriagedUnrunTestFiles": 286,
     "indeterminateInvocations": 0,
     "unresolvedIgnoreArguments": 0,
     "criticalGovernedRiskDirectories": 2,
     "highGovernedRiskDirectories": 5,
     "unclassifiedRiskDirectories": 161,
     "rankedDirectories": 168,
-    "rankedUntriagedUnrunTestFiles": 287,
+    "rankedUntriagedUnrunTestFiles": 286,
     "unclassifiedRiskDirectoriesWithResolvedProductSources": 154,
     "unclassifiedRiskDirectoriesWithNoResolvedProductSource": 7
   },
@@ -297,6 +297,16 @@
       "coveredTestFiles": 8,
       "declaredQuarantineTestFiles": 1,
       "untriagedUnrunTestFiles": 0,
+      "via": [
+        "command"
+      ]
+    },
+    {
+      "directory": "src/__tests__/integration/agents",
+      "testFiles": 8,
+      "coveredTestFiles": 1,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 7,
       "via": [
         "command"
       ]
@@ -1785,15 +1795,15 @@
     {
       "directory": "src/__tests__/integration/agents",
       "testFiles": 8,
-      "unrunTestFiles": 8,
+      "unrunTestFiles": 7,
       "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 8,
+      "untriagedUnrunTestFiles": 7,
       "admittedBy": "untriaged_unrun_work",
       "governedRisk": {
         "score": 0,
         "band": "unclassified",
         "signals": [],
-        "productSourceCount": 7,
+        "productSourceCount": 9,
         "rank": 10
       }
     },
@@ -6133,19 +6143,6 @@
       }
     },
     {
-      "directory": "src/__tests__/integration/agents",
-      "testFiles": 8,
-      "unrunTestFiles": 8,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 8,
-      "governedRisk": {
-        "score": 0,
-        "band": "unclassified",
-        "signals": [],
-        "productSourceCount": 7
-      }
-    },
-    {
       "directory": "src/lib/integrations/ai-egress/__tests__",
       "testFiles": 6,
       "unrunTestFiles": 6,
@@ -6247,6 +6244,19 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 8
+      }
+    },
+    {
+      "directory": "src/__tests__/integration/agents",
+      "testFiles": 8,
+      "unrunTestFiles": 7,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 7,
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 9
       }
     },
     {
@@ -6412,14 +6422,6 @@
     }
   ],
   "uncoveredDirectories": [
-    {
-      "directory": "src/__tests__/integration/agents",
-      "testFiles": 8,
-      "coveredTestFiles": 0,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 8,
-      "via": []
-    },
     {
       "directory": "src/lib/integrations/ai-egress/__tests__",
       "testFiles": 6,
