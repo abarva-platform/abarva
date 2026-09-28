@@ -922,6 +922,35 @@ function formatDraftEvidenceContext(
     .join("\n\n") || null;
 }
 
+function formatStrategyGovernanceContext(ctx: SourceGenerationContext): string {
+  const evidence = ctx.evidence
+    .filter((item) => item.stage === "strategy")
+    .map((item) => [
+      `- ${item.requirementId}`,
+      `applicability=${item.applicabilityStatus ?? "applicable"}`,
+      `state=${resolveGenerationEvidenceState(ctx, item)}`,
+      item.applicabilityStatus === "not_applicable" && item.applicabilityReason
+        ? `audited_reason=${item.applicabilityReason}`
+        : null,
+    ].filter(Boolean).join("; "));
+  const criteria = ctx.gateCriteria
+    .filter((item) => item.fromStage === "strategy")
+    .map((item) => `- ${item.criterionId}; state=${item.state}`);
+  return [
+    "— CURRENT STRATEGY GOVERNANCE STATE —",
+    `approval_policy=${ctx.event.approvalPolicyCode ?? "unknown"}`,
+    ctx.event.approvalPolicyCode === "self_v1"
+      ? "The Event Owner records the decision under SELF policy. Do not require or imply a separate executive-sponsor commitment for this event."
+      : "Do not assume Event Owner self-approval; follow the recorded policy and gate evidence.",
+    "An audited not-applicable decision is an absence decision, not a missing request or a supplied contract/spend fact.",
+    "A pending or unread Strategy criterion does not authorize a claim that the gate is ready to advance. Recommend the next review action without recording approval.",
+    "Strategy evidence requirements:",
+    ...(evidence.length ? evidence : ["- no evidence states read back"]),
+    "Strategy gate criteria:",
+    ...(criteria.length ? criteria : ["- no gate criteria read back"]),
+  ].join("\n");
+}
+
 function formatStageGuidebookContext(
   ctx: SourceGenerationContext,
 ): string | null {
@@ -971,7 +1000,7 @@ You are drafting the Sourcing Strategy Memo. This is the foundational document f
 Required structural sections:
 ${formatRequiredSectionsForPrompt("d01_strategy_memo")}
 
-This memo is your recommendation to the CIO on whether and how to take this to market. Open with the decision needed and the recommendation a CIO can absorb quickly — the business context, why this matters now, the candidate value to validate, and the specific approval requested — as a few crisp bullets or a compact table. Then make the case: cite the trigger from the intake, name the decision owner, and give the value hypothesis as a range with a confidence band only when the intake or bound evidence supports one. Never convert the intake value-at-stake field into contract value, annual spend, TCV, or realized savings. If the contract baseline is not present in the bound evidence, say it is not established instead of deriving a percentage or dollar range. Do not introduce generic percentage benchmarks, typical timelines, current-market conditions, vendor appetite, competitive-intensity claims, or comparisons with a typical/equivalent event unless a named bound source establishes them. Use only dates and durations that appear verbatim in the bound context. Do not calculate notice deadlines, back-solve an RFP issue quarter, or supply an elapsed-time estimate in prose; state the loaded expiry and notice inputs separately and assign calendar validation as an action until a deterministic schedule artifact supplies the derived dates. Cite evidence by its business filename only. Never invent or expose a bracketed hash, shortened identifier, artifact id, or chunk id as a citation. Any causal interpretation drawn from a trend or correlation must be labeled as a working hypothesis and registered with a validation owner, action, and downstream impact. Choose the archetype and rigor and defend the choice in an advisor's voice — standard for run-rate continuity, enhanced for a material candidate-value claim, strategic for a transformation — and explain what that choice means for how the event should actually run. Include at least one compact table that maps current facts to sourcing implications. Depth is allowed when it changes decision quality; every section should earn its place. Never expose internal product terms (tenant, tenant key, substrate, table names, artifact ids, chunk ids).`,
+This memo is your recommendation to the CIO on whether and how to take this to market. Open with the decision needed and the recommendation a CIO can absorb quickly — the business context, why this matters now, the candidate value to validate, and the specific approval requested — as a few crisp bullets or a compact table. Then make the case: cite the trigger from the intake, name the decision owner, and give the value hypothesis as a range with a confidence band only when the intake or bound evidence supports one. Never convert the intake value-at-stake field into contract value, annual spend, TCV, or realized savings. If the contract baseline is not present in the bound evidence, say it is not established instead of deriving a percentage or dollar range. Do not introduce generic percentage benchmarks, typical timelines, current-market conditions, vendor appetite, competitive-intensity claims, or comparisons with a typical/equivalent event unless a named bound source establishes them. Use only dates and durations that appear verbatim in the bound context. Do not calculate notice deadlines, back-solve an RFP issue quarter, or supply an elapsed-time estimate in prose; state the loaded expiry and notice inputs separately and assign calendar validation as an action until a deterministic schedule artifact supplies the derived dates. Cite evidence by its business filename only. Never invent or expose a bracketed hash, shortened identifier, artifact id, or chunk id as a citation. Any causal interpretation drawn from a trend or correlation must be labeled as a working hypothesis and registered with a validation owner, action, and downstream impact. Choose the archetype and rigor and defend the choice in an advisor's voice — standard for run-rate continuity, enhanced for a material candidate-value claim, strategic for a transformation — and explain what that choice means for how the event should actually run. Include at least one compact table that maps current facts to sourcing implications. Depth is allowed when it changes decision quality; every section should earn its place. Never expose internal product terms (tenant, tenant key, substrate, table names, artifact ids, chunk ids). A pending gate is not an approval; do not call the event ready to advance until its criteria and required client-final artifacts are actually cleared. Treat regulatory or legal obligations as questions for the accountable reviewer unless bound evidence establishes their application to this scope.`,
     buildUserMessage: (ctx) => {
       return [
         `Company: ${ctx.tenantName}`,
@@ -989,6 +1018,7 @@ This memo is your recommendation to the CIO on whether and how to take this to m
         `Scope description from intake:`,
         ctx.event.scopeDescription || "(not provided)",
         "",
+        formatStrategyGovernanceContext(ctx),
         formatDraftEvidenceContext(ctx),
         "",
         ctx.archetypeAdvisory
@@ -1025,6 +1055,7 @@ Requirements:
 - Decompose value by lever: labor arbitrage, automation / productivity, consolidation / rationalization, rate / commercial, demand / volume. Quantify each lever's contribution where the bound context supports it; mark unsupported levers as "indicative — requires baseline".
 - Tie every number to a named bound source: incumbent baseline, ticket / volume evidence, or a client-supplied assumption already present in the event record. Never invent an assumption to complete the arithmetic. If the baseline is missing, leave the lever unquantified and identify the exact evidence needed.
 - Do not apply generic benchmark percentages or comparable-event savings rates unless a named bound source provides them. If evidence cannot support low/base/high amounts yet, preserve the intake target as a validation hypothesis and make the range "not established" pending the named inputs.
+- Do not turn an audited absence decision into a missing request, assume a current incumbent arrangement, or describe an unreviewed upstream draft as approved evidence. Pending Strategy criteria are not a funding mandate.
 - Name the realization owner and the first measurement window. Separate projected → committed → measured value.
 - 600-1000 words. Use a table for the lever decomposition and a table for the sizing range. No generic savings boilerplate.`,
     buildUserMessage: (ctx, upstream) => {
@@ -1040,10 +1071,15 @@ Requirements:
         `Trigger / why-now: ${ctx.event.triggerDescription ?? "(not provided)"}`,
         `Scope description: ${ctx.event.scopeDescription || "(not provided)"}`,
         "",
-        upstream.d01_strategy_memo
-          ? `Approved Sourcing Strategy Memo (d01_strategy_memo) — anchor the value thesis to it:\n${upstream.d01_strategy_memo}`
-          : `(Strategy memo d01 not yet authored — derive the thesis from the intake and flag the dependency as a gap.)`,
+        upstream.d01_strategy_memo &&
+        ctx.artifactStates.some(
+          (item) => item.artifactCode === "d01_strategy_memo" &&
+            (item.status === "approved" || item.status === "locked"),
+        )
+          ? `Reviewed Sourcing Strategy Memo (d01_strategy_memo) — use its supported claims only; reconcile with current evidence and gate state:\n${upstream.d01_strategy_memo}`
+          : "Strategy memo is not yet approved — derive the thesis from current intake and governed evidence; do not inherit claims from an unreviewed draft.",
         "",
+        formatStrategyGovernanceContext(ctx),
         formatDraftEvidenceContext(ctx),
         "",
         `Draft the Value Target Brief per the system prompt requirements.`,
@@ -4577,6 +4613,9 @@ export function resolveGenerationEvidenceState(
   item: SourceGenerationContext["evidence"][number],
   includeD09Coverage = true,
 ): string {
+  if (item.applicabilityStatus === "not_applicable") {
+    return "Not applicable — audited owner decision";
+  }
   if (item.currentState !== "Not Requested") return item.currentState;
   if (
     item.requirementId === "EVID-SRC-STR-TRIGGER" &&

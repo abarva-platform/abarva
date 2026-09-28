@@ -71,6 +71,7 @@ export function findDeterministicSourceClaimViolations(args: {
   artifactCode: string;
   body: string;
   sourceContext: string;
+  ctx?: SourceGenerationContext;
 }): DeterministicSourceClaimViolation[] {
   if (!DETERMINISTIC_CLAIM_GATE_CODES.has(args.artifactCode)) return [];
 
@@ -114,6 +115,15 @@ export function findDeterministicSourceClaimViolations(args: {
   for (const sentence of args.body.split(/(?<=[.!?])\s+|\n+/)) {
     const text = sentence.replace(/\s+/g, " ").trim();
     if (!text) continue;
+    if (
+      /\b(?:vendors?|providers?)\b[^.!?]{0,100}\b(?:price aggressively|recover margin)\b/i.test(text) &&
+      !/\b(?:vendors?|providers?)\b[^.!?]{0,100}\b(?:price aggressively|recover margin)\b/i.test(args.sourceContext)
+    ) {
+      violations.push({
+        claim: text.slice(0, 220),
+        reason: "Unverified vendor-pricing mechanism requires named bound evidence.",
+      });
+    }
     if (isEvidenceAbsenceStatement(text)) continue;
     if (generalizationPatterns.some((pattern) => pattern.test(text))) {
       violations.push({
@@ -130,6 +140,52 @@ export function findDeterministicSourceClaimViolations(args: {
       reason:
         "Client-facing narrative exposes an internal artifact identifier instead of a friendly evidence citation.",
     });
+  }
+
+  if (args.ctx) {
+    const lines = args.body.split(/\n+/).map((line) => line.trim());
+    for (const item of args.ctx.evidence.filter(
+      (evidence) => evidence.stage === "strategy" && evidence.applicabilityStatus === "not_applicable",
+    )) {
+      for (const line of lines.filter((text) =>
+        text.includes(item.requirementId) && /\bnot requested\b/i.test(text),
+      )) {
+        violations.push({
+          claim: line.slice(0, 220),
+          reason: "Requirement contradicts an audited not-applicable decision.",
+        });
+      }
+    }
+    if (args.ctx.event.approvalPolicyCode === "self_v1") {
+      for (const line of lines.filter((text) =>
+        /EVID-SRC-STR-SPONSOR-COMMIT|executive sponsor commitment/i.test(text) &&
+        /\b(?:required|must|blocks?|before (?:external )?release)\b/i.test(text) &&
+        !/\b(?:not required|does not require|optional|historical)\b/i.test(text),
+      )) {
+        violations.push({
+          claim: line.slice(0, 220),
+          reason: "Separate sponsor commitment is not required by this event's SELF policy.",
+        });
+      }
+    }
+    const strategyCriteria = args.ctx.gateCriteria.filter(
+      (criterion) => criterion.fromStage === "strategy",
+    );
+    const strategyGatePending = args.ctx.event.currentStageKey === "strategy" &&
+      (strategyCriteria.length === 0 || strategyCriteria.some(
+        (criterion) => criterion.state !== "met" && criterion.state !== "waived",
+      ));
+    if (strategyGatePending) {
+      for (const line of lines.filter((text) =>
+        /\b(?:event is ready to advance|approve at the strategy gate)\b/i.test(text) &&
+        !/\b(?:not ready|do not approve|cannot approve)\b/i.test(text),
+      )) {
+        violations.push({
+          claim: line.slice(0, 220),
+          reason: "Advancement claim contradicts a pending Strategy gate.",
+        });
+      }
+    }
   }
 
   return uniqueViolations(violations).slice(0, 12);
@@ -394,6 +450,7 @@ export function buildSourceQualitySourceContext(args: {
     return [
       `- ${item.requirementId}`,
       `state=${state}`,
+      `applicability=${item.applicabilityStatus ?? "applicable"}`,
       item.sourceArtifactId ? "source=linked evidence record" : null,
       item.notes ? `notes=${item.notes}` : null,
     ]
@@ -436,6 +493,7 @@ export function buildSourceQualitySourceContext(args: {
   return [
     `Tenant: ${ctx.tenantName} (${ctx.tenantKey})`,
     `Event: ${ctx.event.name} (${ctx.event.code})`,
+    `Approval policy: ${ctx.event.approvalPolicyCode ?? "unknown"}`,
     ctx.event.owner ? `Owner: ${ctx.event.owner}` : "Owner: not recorded",
     ctx.event.estimatedValueUsd
       ? `Estimated value: $${ctx.event.estimatedValueUsd.toLocaleString()}`
