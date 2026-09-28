@@ -1,0 +1,176 @@
+{
+  "item": "T-495",
+  "title": "One suite of T-495's claimable half: agent-inline-recommendation rewritten from a source-text scanner into a behavioural suite, and wired",
+  "recordedAt": "2026-09-28T10:45:00.000Z",
+  "base": "64abe65ea29a85d420d70e9ab838a238bde25555",
+  "directory": "src/__tests__/integration/agents",
+  "scope": [
+    "One suite, because T-495's acceptance is per suite. It is suite 8 of the 11 in the claimable half; 3 remain, all in src/__tests__/integration/agents: agent-mission-panel, agent-mission-surface-wiring, mission-workflow-handoff.",
+    "The gated half of T-495 -- the rows carrying textIsTheSubject -- is NOT touched here.",
+    "This record exists so the T-770 control resolves this path's classification from the LATEST record rather than from the T-492 draw. Measured: with the workflow step extended and this record absent, t770-scanner-wiring-refusal fails 2 of 7 and names this suite."
+  ],
+  "method": [
+    "Re-verified on origin/main 64abe65ea2 by running the suite: 42 of 42 green. Seven cases read AgentInlineRecommendation.tsx as text; five read the view module after stripping strings and comments and grepped it for Date.now, Math.random, new Date, fetch and an import path. The builder cases ran only over the AG11 seed, in which all four inline missions are critical or high, so no case ever reached a non-urgent mission.",
+    "All 42 cases were replaced by 27. The builder's single input, buildAgentMissionPanelSeedView, is WRAPPED rather than replaced: with no override the real seed flows through; with an override a case supplies its own missions and the real label helpers format them.",
+    "Builder over the seed: requests the inline_recommendation variant; one recommendation per agent in seed order with unique ids; the disclaimer is the panel's; output is byte-equal across two different system times with Math.random and fetch made to throw. Builder over controlled missions: each of the four priorities maps to its label, confidence and urgency; agent, state and type labels; input order is kept (the top item is the first, not the most urgent); urgency is any-not-all; an empty queue gives null top, zero count, no urgency. Helpers: exact ids for byAgent and urgent filters; exact describe strings including '1 item' and '0 items'.",
+    "Component: RENDERED in jsdom with @testing-library/react. With no view it renders the seed as a region named 'Agent recommendations' with one row per recommendation, each showing its action, rationale, priority, state, confidence tier and badge status, plus the urgent chip, the AI 'suggested' label and the disclaimer. With a supplied view: no urgent chip and the quiet row accent when nothing is urgent; navy accent on the urgent row only; the supplied view rather than the seed; an empty queue shows the empty-state line and the disclaimer. Hook-free: the component is called as a plain function outside any render, which throws if it calls a hook.",
+    "Eighteen mutations -- nine against the view module and nine against the component -- each verified by git diff --numstat to have changed the file before either suite ran. Each was run against the new suite and against the deleted suite restored from origin/main as a sibling file; the deleted suite is 0 of 42 failing on the base."
+  ],
+  "counts": {
+    "suites": 1,
+    "wired": 1,
+    "heldUnwired": 0,
+    "repaired": 1,
+    "deleted": 0
+  },
+  "suites": [
+    {
+      "path": "src/__tests__/integration/agents/agent-inline-recommendation.test.ts",
+      "priorShape": "never_reached",
+      "priorVia": [],
+      "priorCollected": true,
+      "priorCovered": false,
+      "priorGreen": true,
+      "collected": true,
+      "green": true,
+      "totalTests": 27,
+      "failedTests": 0,
+      "pendingTests": 0,
+      "readFileSyncCount": 0,
+      "sourceTextScanner": false,
+      "textIsTheSubject": false,
+      "rendersComponent": true,
+      "drivesProductionEntryPoint": "AgentInlineRecommendation",
+      "verdict": "wired",
+      "wiredBy": ".github/workflows/integration-suites.yml",
+      "ownerItem": "T-495",
+      "priorVerdict": {
+        "record": "docs/architecture/t492-stale-suite-triage.json",
+        "verdict": "rewrite_as_behavior",
+        "ownerItem": "T-495",
+        "sourceTextScanner": true
+      },
+      "priorVerdictStatus": "discharged_here",
+      "rationale": "The deleted suite was green, and green over the wrong things: seven cases asserted what the component file says, five asserted what the view module's bytes do not say, and every builder case ran over a seed with no non-urgent mission. Against eighteen mutations that change what the builder returns or what the card renders, it caught six and missed twelve -- including a medium mission raised as urgent, three of four rows silently not rendered, the urgent chip shown on a quiet queue, the view prop ignored, and a hook added to the server component. The new suite caught all eighteen."
+    }
+  ],
+  "mutations": [
+    {
+      "mutation": "agent-inline-recommendation-view.ts: isUrgent true for medium too (priority !== 'low')",
+      "result": "5 of 27 failed",
+      "deletedScanner": "0 of 42 failed -- missed",
+      "catches": "a medium mission raised as urgent; the seed has no medium mission, so the deleted suite's 'isUrgent only for critical/high' case never saw a false one"
+    },
+    {
+      "mutation": "agent-inline-recommendation-view.ts: medium priority reported as low confidence",
+      "result": "2 of 27 failed",
+      "deletedScanner": "0 of 42 failed -- missed",
+      "catches": "the medium/low confidence split"
+    },
+    {
+      "mutation": "agent-inline-recommendation-view.ts: top recommendation is the LAST item",
+      "result": "3 of 27 failed",
+      "deletedScanner": "1 of 42 failed -- caught",
+      "catches": "which item is top"
+    },
+    {
+      "mutation": "agent-inline-recommendation-view.ts: hasUrgentRecommendation uses every() instead of some()",
+      "result": "4 of 27 failed",
+      "deletedScanner": "0 of 42 failed -- missed",
+      "catches": "a mixed queue losing its urgent flag; indistinguishable on an all-urgent seed"
+    },
+    {
+      "mutation": "agent-inline-recommendation-view.ts: describe always says 'items'",
+      "result": "1 of 27 failed",
+      "deletedScanner": "0 of 42 failed -- missed",
+      "catches": "'1 item' singular; the deleted case matched /\\d+ item/, which 'items' also satisfies"
+    },
+    {
+      "mutation": "agent-inline-recommendation-view.ts: builder asks for the hidden_drawer variant",
+      "result": "4 of 27 failed",
+      "deletedScanner": "1 of 42 failed -- caught",
+      "catches": "the variant requested from the mission view"
+    },
+    {
+      "mutation": "agent-inline-recommendation-view.ts: getRecommendationsByAgent filter inverted",
+      "result": "1 of 27 failed",
+      "deletedScanner": "4 of 42 failed -- caught",
+      "catches": "agent filtering"
+    },
+    {
+      "mutation": "agent-inline-recommendation-view.ts: disclaimer replaced by a constant containing 'deterministic'",
+      "result": "1 of 27 failed",
+      "deletedScanner": "0 of 42 failed -- missed",
+      "catches": "the disclaimer no longer being the mission panel's"
+    },
+    {
+      "mutation": "agent-inline-recommendation-view.ts: missions shuffled with Math.random",
+      "result": "7 of 27 failed",
+      "deletedScanner": "3 of 42 failed -- caught",
+      "catches": "nondeterminism and order"
+    },
+    {
+      "mutation": "AgentInlineRecommendation.tsx: urgent chip always shown",
+      "result": "2 of 27 failed",
+      "deletedScanner": "0 of 42 failed -- missed",
+      "catches": "an urgent chip on a queue with nothing urgent"
+    },
+    {
+      "mutation": "AgentInlineRecommendation.tsx: only the top row renders",
+      "result": "4 of 27 failed",
+      "deletedScanner": "0 of 42 failed -- missed",
+      "catches": "three of four recommendations silently not rendered"
+    },
+    {
+      "mutation": "AgentInlineRecommendation.tsx: empty state replaced by nothing",
+      "result": "1 of 27 failed",
+      "deletedScanner": "0 of 42 failed -- missed",
+      "catches": "an empty queue rendering as a blank card"
+    },
+    {
+      "mutation": "AgentInlineRecommendation.tsx: disclaimer not rendered",
+      "result": "2 of 27 failed",
+      "deletedScanner": "1 of 42 failed -- caught",
+      "catches": "the honest disclaimer disappearing"
+    },
+    {
+      "mutation": "AgentInlineRecommendation.tsx: aria-label dropped from the section",
+      "result": "2 of 27 failed",
+      "deletedScanner": "1 of 42 failed -- caught",
+      "catches": "the region losing its accessible name"
+    },
+    {
+      "mutation": "AgentInlineRecommendation.tsx: row accent inverted (urgent quiet, quiet navy)",
+      "result": "2 of 27 failed",
+      "deletedScanner": "0 of 42 failed -- missed",
+      "catches": "the urgent row accent"
+    },
+    {
+      "mutation": "AgentInlineRecommendation.tsx: component calls useMemo",
+      "result": "1 of 27 failed",
+      "deletedScanner": "0 of 42 failed -- missed",
+      "catches": "a hook in a server component; the deleted regex named only useState|useEffect"
+    },
+    {
+      "mutation": "AgentInlineRecommendation.tsx: confidence indicator hard-coded to high",
+      "result": "1 of 27 failed",
+      "deletedScanner": "0 of 42 failed -- missed",
+      "catches": "every row claiming high confidence"
+    },
+    {
+      "mutation": "AgentInlineRecommendation.tsx: supplied view prop ignored in favour of the seed",
+      "result": "4 of 27 failed",
+      "deletedScanner": "0 of 42 failed -- missed",
+      "catches": "the view prop not being honoured"
+    }
+  ],
+  "droppedWithoutReplacement": [
+    "'does not have \"use client\"'. A client directive does not change what the component renders or whether it can be called without a render, so no behavioural case can observe it; the hook-free case covers the property that directive was standing in for.",
+    "'imports from abarva-theme' and 'imports AgentBadge', and 'imports from @/lib/agent/agent-mission-view'. Import paths are not behaviour; the render cases observe the badge's data-agent/data-status and the row accent tokens, and the seam proves the builder draws from the mission view.",
+    "The strip-and-grep bans on Date.now, Math.random, new Date and fetch in the view module. Replaced by a determinism case that moves the system clock and makes Math.random and fetch throw."
+  ],
+  "residualsNotClosedHere": [
+    "The directory src/__tests__/integration/agents still cannot be wired whole: agent-mission-surface-wiring is red on base and three suites remain T-495 scanners. This suite is named individually for that reason.",
+    "OBSERVED, not acted on: AgentInlineRecommendation is imported by no module outside its own test -- no route under src/app and no other component mounts it -- so these cases prove what the card renders, not that any user sees it. Delete-versus-mount is a product call and not this change's to take."
+  ]
+}
