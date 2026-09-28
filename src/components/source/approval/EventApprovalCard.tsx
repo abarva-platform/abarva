@@ -1101,11 +1101,10 @@ const PROGRESS_DOCK_STYLE: CSSProperties = {
   bottom: 16,
   boxShadow: "0 8px 28px rgba(12, 26, 58, 0.18)",
   boxSizing: "border-box",
-  left: "50%",
   maxWidth: "calc(100vw - 32px)",
   padding: 6,
   position: "fixed",
-  transform: "translateX(-50%)",
+  right: "clamp(16px, 5vw, 60px)",
   width: 500,
   zIndex: 80,
 };
