@@ -1,6 +1,13 @@
 /** @jest-environment jsdom */
 
-import { fireEvent, render, screen, within } from "@testing-library/react";
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import { SourceNewRequestFirstPage } from "./SourceNewRequestFirstPage";
 
 jest.mock("@/components/shell/AppShell", () => ({
@@ -23,8 +30,22 @@ jest.mock("@/components/source/SourceSubNav", () => ({
 }));
 
 jest.mock("@/components/agent/AgentDock", () => ({
-  AgentDock: ({ workspace }: { workspace: React.ReactNode }) => (
-    <div>{workspace}</div>
+  AgentDock: ({
+    workspace,
+    defaultMode,
+    collapsedRestoreMode,
+  }: {
+    workspace: React.ReactNode;
+    defaultMode?: string;
+    collapsedRestoreMode?: string;
+  }) => (
+    <div
+      data-testid="source-request-dock"
+      data-default-mode={defaultMode}
+      data-restore-mode={collapsedRestoreMode}
+    >
+      {workspace}
+    </div>
   ),
 }));
 
@@ -81,6 +102,71 @@ const importedRequest = {
 };
 
 describe("SourceNewRequestFirstPage", () => {
+  it("gives the workspace the full mobile width and restores aVa below it", async () => {
+    const originalMatchMedia = window.matchMedia;
+    let compact = true;
+    let onChange: ((event: MediaQueryListEvent) => void) | undefined;
+    Object.defineProperty(window, "matchMedia", {
+      configurable: true,
+      value: jest.fn().mockImplementation((query: string) => ({
+        matches: compact,
+        media: query,
+        addEventListener: (
+          _event: string,
+          listener: (event: MediaQueryListEvent) => void,
+        ) => {
+          onChange = listener;
+        },
+        removeEventListener: jest.fn(),
+      })),
+    });
+    try {
+      render(
+        <SourceNewRequestFirstPage
+          clientName="Example client"
+          clientKey="example-client"
+          requestQueueStatus="empty"
+          importedRequests={[]}
+          eventWorkspaces={[pendingEventWorkspace]}
+        />,
+      );
+
+      await waitFor(() =>
+        expect(
+          screen
+            .getByTestId("source-request-dock")
+            .getAttribute("data-default-mode"),
+        ).toBe("collapsed"),
+      );
+      expect(
+        screen
+          .getByTestId("source-request-dock")
+          .getAttribute("data-restore-mode"),
+      ).toBe("pin-bottom");
+      expect(
+        screen
+          .getByRole("region", { name: "Request queue" })
+          .querySelector("li")
+          ?.getAttribute("style"),
+      ).toContain("repeat(auto-fit, minmax(min(100%, 260px), 1fr))");
+
+      compact = false;
+      act(() => onChange?.({ matches: compact } as MediaQueryListEvent));
+      await waitFor(() =>
+        expect(
+          screen
+            .getByTestId("source-request-dock")
+            .getAttribute("data-default-mode"),
+        ).toBe("side-rail"),
+      );
+    } finally {
+      Object.defineProperty(window, "matchMedia", {
+        configurable: true,
+        value: originalMatchMedia,
+      });
+    }
+  });
+
   it("opens on a request queue instead of the legacy create form", () => {
     render(
       <SourceNewRequestFirstPage

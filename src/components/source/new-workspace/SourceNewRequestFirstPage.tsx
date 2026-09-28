@@ -12,7 +12,7 @@ import { SourceSubNav } from "@/components/source/SourceSubNav";
 import { SHELL } from "@/lib/shell/shell-tokens";
 import type { SourceIntakeRequestSummary } from "@/lib/source/intake/servicenow-sourcing-request-repository";
 import type { CSSProperties, ReactNode } from "react";
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { requesterEstimateCardLabel } from "@/lib/source/requester-estimate-label";
 
 export type SourceNewRequestQueueStatus =
@@ -385,6 +385,16 @@ function SourceNewRequestDock({
   clientName: string;
   workspace: ReactNode;
 }) {
+  const [compactViewport, setCompactViewport] = useState(false);
+  useEffect(() => {
+    const media = window.matchMedia?.("(max-width: 899px)");
+    if (!media) return;
+    setCompactViewport(media.matches);
+    const onChange = (event: MediaQueryListEvent) =>
+      setCompactViewport(event.matches);
+    media.addEventListener("change", onChange);
+    return () => media.removeEventListener("change", onChange);
+  }, []);
   const pageState = useAtlasPageState();
   const thread: ChatMessage[] = useMemo(
     () =>
@@ -416,7 +426,8 @@ function SourceNewRequestDock({
         role: "Source request advisor",
       }}
       surface="source/new"
-      defaultMode="side-rail"
+      defaultMode={compactViewport ? "collapsed" : "side-rail"}
+      collapsedRestoreMode={compactViewport ? "pin-bottom" : undefined}
       disableStoredMode
       defaultLeftPercent={34}
       minLeftPx={320}
@@ -653,7 +664,7 @@ const MISSING_LIST: CSSProperties = {
 
 const EVENT_ROW: CSSProperties = {
   display: "grid",
-  gridTemplateColumns: "minmax(0, 1fr) auto",
+  gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 260px), 1fr))",
   gap: 12,
   alignItems: "center",
   border: `1px solid ${SHELL.CARD_LINE}`,
@@ -678,6 +689,7 @@ const EVENT_META: CSSProperties = {
 };
 
 const OPEN_LINK: CSSProperties = {
+  justifySelf: "end",
   color: SHELL.INK,
   fontSize: 12,
   fontWeight: 700,

@@ -151,6 +151,20 @@ describe("EventApprovalCard", () => {
     ).toBe("4");
   });
 
+  it("stacks the approval brief and decision without fixed-width mobile columns", () => {
+    render(<EventApprovalCard {...baseProps} />);
+
+    expect(
+      screen.getByTestId("source-approval-grid").getAttribute("style"),
+    ).toContain("repeat(auto-fit, minmax(min(100%, 440px), 1fr))");
+    expect(
+      screen
+        .getByTestId("source-approval-brief")
+        .querySelector("dl > div")
+        ?.getAttribute("style"),
+    ).toContain("repeat(auto-fit, minmax(min(100%, 180px), 1fr))");
+  });
+
   it("shows real governance history when approvals and artifact acceptances are present", () => {
     render(
       <EventApprovalCard

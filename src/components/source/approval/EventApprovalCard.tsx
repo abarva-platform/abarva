@@ -264,7 +264,7 @@ export function EventApprovalCard({
         </div>
       </section>
 
-      <section style={GRID_STYLE}>
+      <section data-testid="source-approval-grid" style={GRID_STYLE}>
         <div style={LEFT_COL_STYLE}>
           <section data-testid="source-approval-brief" style={BRIEF_CARD_STYLE}>
             <div style={SECTION_HEADER_STYLE}>
@@ -718,6 +718,7 @@ const BANNER_TEXT_STYLE: CSSProperties = {
   fontFamily: SHELL.SANS,
   fontSize: 12,
   color: SHELL.INK,
+  overflowWrap: "anywhere",
 };
 
 const HEADER_STYLE: CSSProperties = {
@@ -756,7 +757,7 @@ const LEDE_STYLE: CSSProperties = {
 
 const GRID_STYLE: CSSProperties = {
   display: "grid",
-  gridTemplateColumns: "minmax(0, 1fr) minmax(330px, 0.58fr)",
+  gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 440px), 1fr))",
   gap: 12,
   alignItems: "start",
 };
@@ -764,6 +765,7 @@ const GRID_STYLE: CSSProperties = {
 const LEFT_COL_STYLE: CSSProperties = {
   display: "grid",
   gap: 10,
+  minWidth: 0,
 };
 
 const BRIEF_CARD_STYLE: CSSProperties = {
@@ -814,7 +816,7 @@ const FACT_LIST_STYLE: CSSProperties = {
 
 const FACT_ROW_STYLE: CSSProperties = {
   display: "grid",
-  gridTemplateColumns: "minmax(150px, 0.34fr) minmax(0, 1fr)",
+  gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 180px), 1fr))",
   gap: 16,
   padding: "7px 0",
   borderBottom: `1px solid ${SHELL.CARD_LINE}`,
@@ -840,6 +842,7 @@ const BLOCKER_STRIP_STYLE: CSSProperties = {
   display: "flex",
   alignItems: "center",
   justifyContent: "space-between",
+  flexWrap: "wrap",
   gap: 12,
   border: `1px solid ${SHELL.PEACH_LINE}`,
   borderRadius: 8,
@@ -863,6 +866,7 @@ const RIGHT_PANEL_STYLE: CSSProperties = {
   top: 10,
   display: "grid",
   gap: 9,
+  minWidth: 0,
   border: `1px solid ${SHELL.CARD_LINE}`,
   borderRadius: 8,
   background: SHELL.CARD_WHITE,
