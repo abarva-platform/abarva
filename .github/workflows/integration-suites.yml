@@ -289,8 +289,15 @@ jobs:
       # was red for renames alone. It now renders the composer and drives
       # Enter, Shift+Enter, Send and dismiss, and renders its Program-detail
       # mount; `docs/architecture/t495-ask-anything-bar-triage.json` declares it.
+      #
+      # Suite 8 of 11 joins it: agent-inline-recommendation.test.ts used to grep
+      # AgentInlineRecommendation.tsx and strip-and-grep its view module, and
+      # ran every builder case over a seed in which all four missions are
+      # urgent. It now renders the card and runs the builder over missions each
+      # case controls; `docs/architecture/t495-agent-inline-recommendation-triage.json`
+      # declares it.
       - name: Run the rewritten agents suites (named per file, not as a directory)
-        run: npx jest --runTestsByPath src/__tests__/integration/agents/agent-hidden-drawer.test.ts src/__tests__/integration/agents/ask-anything-bar.test.ts --no-coverage --ci
+        run: npx jest --runTestsByPath src/__tests__/integration/agents/agent-hidden-drawer.test.ts src/__tests__/integration/agents/ask-anything-bar.test.ts src/__tests__/integration/agents/agent-inline-recommendation.test.ts --no-coverage --ci
 
       - name: Refuse a stale, growing or mis-classified Intelligence quarantine list
         # Runs the check's own unit cases first, then the check. The cases pin

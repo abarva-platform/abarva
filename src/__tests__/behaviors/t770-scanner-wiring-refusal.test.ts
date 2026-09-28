@@ -60,14 +60,19 @@ const RECORD_DIR = "docs/architecture";
 const BASELINE = "src/__tests__/behaviors/t770-scanner-wiring-refusal.baseline.json";
 
 /**
- * A floor, never an exact pin. 30 live declared scanners on `be3c7dc27e`. The
+ * A floor, never an exact pin. 30 live declared scanners on `be3c7dc27e`; 24 on
+ * the T-495 suite-8 branch off `64abe65ea2`, where rewriting
+ * agent-inline-recommendation took it from 25 and the old floor of 25 went red
+ * for a corpus that had improved. Lowered to 20 in that same change: T-495 has
+ * three more planned discharges (21 after them), and 20 still refuses the
+ * failure the floor exists for — a resolver change that empties the set. The
  * count moves whenever a draw is triaged or a rewrite lands, and a case pinning
  * it exactly would fail that pull request and teach the next author to raise a
  * number instead of reading one — the reason `T-767` and `T-768` both give.
  * What the floor is for is vacuity: every case below iterates the scanner set,
  * so an empty set passes all of them.
  */
-const LIVE_SCANNER_FLOOR = 25;
+const LIVE_SCANNER_FLOOR = 20;
 
 /** The real supersession this control has to get right. */
 const SUPERSEDED_PATH =
