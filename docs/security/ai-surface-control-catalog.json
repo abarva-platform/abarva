@@ -367,6 +367,150 @@
       "unreachableReason": "The Tower route renders TowerCommandCenterAvaShell; nothing imports ProgramPressureCards. The brief's five controls exist in a component the Tower rebuild left behind. src/lib/qa/route-smoke-inventory.ts, src/lib/qa/founder-demo-route-checklist.ts and docs/demo/ABARVA_FOUNDER_DEMO_ROUTE_CHECKLIST.md now name src/components/tower/command-center/TowerCommandCenterAvaShell.tsx for that route. Fixed by mounting the accountability block in the command-center shell, or by moving these five controls to the component that now renders there and retiring this entry."
     },
     {
+      "id": "tower-command-center-ava-dock",
+      "surface": "Tower Command Center aVa dock (answered advisory turns)",
+      "lane": "global-control-lane",
+      "owner": "AbarVa",
+      "path": "src/components/tower/command-center/TowerCommandCenterAvaShell.tsx",
+      "requiredControls": [
+        {
+          "kind": "ai-label",
+          "evidence": [
+            "<AtlasChatPanel",
+            "variant=\"focused\""
+          ],
+          "behavioralTest": {
+            "status": "none",
+            "reason": "No behavioral test proves this control on this surface. MEASURED ABSENT by execution (item C-416): no AILabel element and no AI-assisted or AI Draft text in any of 16 states, including an answered aVa turn. The shell mounts AtlasChatPanel with variant=\"focused\", which switches the shared dock's review chrome off; mutating it to \"standard\" made this case fail, so the switch is load-bearing. The evidence tokens locate the code on this surface that decides the control's state today; they are not a rendered control and claim none. src/components/tower/command-center/__tests__/TowerCommandCenterAvaShell.brief-controls.test.tsx asserts that state and runs in the required AI surface control catalog job; docs/security/control-measurements/c416-tower-shell-brief-controls.md records the 16 states searched and the mutation evidence. That suite pins the ABSENCE; nothing proves the control reaches a reader, so no coverage is claimed. Whether the dock turns this control on is an open owner decision (item C-574, gated half). The other suites listed below reference the shell module without asserting this control on a rendered answer; src/__tests__/behaviors/c574-tower-dock-catalog-entry.test.ts proves only that this catalog entry is counted.",
+            "knownSuites": [
+              "src/__tests__/behaviors/c574-tower-dock-catalog-entry.test.ts",
+              "src/__tests__/behaviors/qa-inventory-tower-route-parity.test.ts",
+              "src/__tests__/behaviors/unreachable-reason-claims.test.ts",
+              "src/__tests__/integration/app-topbar-preserve-tenant-name.test.ts",
+              "src/__tests__/integration/tower-p6-handoff-panel.test.ts",
+              "src/__tests__/integration/tower/tower-db-only-surface.test.ts",
+              "src/__tests__/integration/tower/tower-invariants.test.ts",
+              "src/components/atlas/__tests__/atlas-timeout-contract.test.ts",
+              "src/components/shell/__tests__/shell-v2-mode-layout.test.tsx",
+              "src/components/tower/command-center/__tests__/TowerCommandCenterAvaShell.brief-controls.test.tsx",
+              "src/components/tower/command-center/__tests__/TowerCommandCenterAvaShell.test.tsx",
+              "src/lib/tower/__tests__/case-attribute-widening.test.ts",
+              "src/lib/tower/__tests__/ecl-projection-preview-degrades.test.ts",
+              "src/lib/tower/__tests__/tower-freshness-provenance.test.ts"
+            ]
+          }
+        },
+        {
+          "kind": "citation",
+          "evidence": [
+            "buildTowerChatAvaAnswerPacket",
+            "traceKey: json.traceKey ?? null"
+          ],
+          "behavioralTest": {
+            "status": "none",
+            "reason": "No behavioral test proves this control on this surface. MEASURED ABSENT by execution (item C-416): no evidence basis and no citation label in any of 16 states, although the answer packet the shell builds carries a trace citation. Absent in either variant: the dock thread mapping does not forward the packet's citations. The evidence tokens locate the code on this surface that decides the control's state today; they are not a rendered control and claim none. src/components/tower/command-center/__tests__/TowerCommandCenterAvaShell.brief-controls.test.tsx asserts that state and runs in the required AI surface control catalog job; docs/security/control-measurements/c416-tower-shell-brief-controls.md records the 16 states searched and the mutation evidence. That suite pins the ABSENCE; nothing proves the control reaches a reader, so no coverage is claimed. Whether the dock turns this control on is an open owner decision (item C-574, gated half). The other suites listed below reference the shell module without asserting this control on a rendered answer; src/__tests__/behaviors/c574-tower-dock-catalog-entry.test.ts proves only that this catalog entry is counted.",
+            "knownSuites": [
+              "src/__tests__/behaviors/c574-tower-dock-catalog-entry.test.ts",
+              "src/__tests__/behaviors/qa-inventory-tower-route-parity.test.ts",
+              "src/__tests__/behaviors/unreachable-reason-claims.test.ts",
+              "src/__tests__/integration/app-topbar-preserve-tenant-name.test.ts",
+              "src/__tests__/integration/tower-p6-handoff-panel.test.ts",
+              "src/__tests__/integration/tower/tower-db-only-surface.test.ts",
+              "src/__tests__/integration/tower/tower-invariants.test.ts",
+              "src/components/atlas/__tests__/atlas-timeout-contract.test.ts",
+              "src/components/shell/__tests__/shell-v2-mode-layout.test.tsx",
+              "src/components/tower/command-center/__tests__/TowerCommandCenterAvaShell.brief-controls.test.tsx",
+              "src/components/tower/command-center/__tests__/TowerCommandCenterAvaShell.test.tsx",
+              "src/lib/tower/__tests__/case-attribute-widening.test.ts",
+              "src/lib/tower/__tests__/ecl-projection-preview-degrades.test.ts",
+              "src/lib/tower/__tests__/tower-freshness-provenance.test.ts"
+            ]
+          }
+        },
+        {
+          "kind": "confidence",
+          "evidence": [
+            "buildTowerChatAvaAnswerPacket",
+            "variant=\"focused\""
+          ],
+          "behavioralTest": {
+            "status": "none",
+            "reason": "No behavioral test proves this control on this surface. MEASURED ABSENT by execution (item C-416): no confidence text in any of 16 states, although the packet grades its citation high. Mutating variant=\"focused\" to \"standard\" made this case fail. The evidence tokens locate the code on this surface that decides the control's state today; they are not a rendered control and claim none. src/components/tower/command-center/__tests__/TowerCommandCenterAvaShell.brief-controls.test.tsx asserts that state and runs in the required AI surface control catalog job; docs/security/control-measurements/c416-tower-shell-brief-controls.md records the 16 states searched and the mutation evidence. That suite pins the ABSENCE; nothing proves the control reaches a reader, so no coverage is claimed. Whether the dock turns this control on is an open owner decision (item C-574, gated half). The other suites listed below reference the shell module without asserting this control on a rendered answer; src/__tests__/behaviors/c574-tower-dock-catalog-entry.test.ts proves only that this catalog entry is counted.",
+            "knownSuites": [
+              "src/__tests__/behaviors/c574-tower-dock-catalog-entry.test.ts",
+              "src/__tests__/behaviors/qa-inventory-tower-route-parity.test.ts",
+              "src/__tests__/behaviors/unreachable-reason-claims.test.ts",
+              "src/__tests__/integration/app-topbar-preserve-tenant-name.test.ts",
+              "src/__tests__/integration/tower-p6-handoff-panel.test.ts",
+              "src/__tests__/integration/tower/tower-db-only-surface.test.ts",
+              "src/__tests__/integration/tower/tower-invariants.test.ts",
+              "src/components/atlas/__tests__/atlas-timeout-contract.test.ts",
+              "src/components/shell/__tests__/shell-v2-mode-layout.test.tsx",
+              "src/components/tower/command-center/__tests__/TowerCommandCenterAvaShell.brief-controls.test.tsx",
+              "src/components/tower/command-center/__tests__/TowerCommandCenterAvaShell.test.tsx",
+              "src/lib/tower/__tests__/case-attribute-widening.test.ts",
+              "src/lib/tower/__tests__/ecl-projection-preview-degrades.test.ts",
+              "src/lib/tower/__tests__/tower-freshness-provenance.test.ts"
+            ]
+          }
+        },
+        {
+          "kind": "human-approval-gate",
+          "evidence": [
+            "without approving anything on its own",
+            "variant=\"focused\""
+          ],
+          "behavioralTest": {
+            "status": "none",
+            "reason": "No behavioral test proves this control on this surface. MEASURED ABSENT as a statement by execution (item C-416) in all 16 states; only a partial clause, that aVa explains without approving anything on its own, reaches the opened dock, and it does not say a person must approve. Mutating variant=\"focused\" to \"standard\" made this case fail. The evidence tokens locate the code on this surface that decides the control's state today; they are not a rendered control and claim none. src/components/tower/command-center/__tests__/TowerCommandCenterAvaShell.brief-controls.test.tsx asserts that state and runs in the required AI surface control catalog job; docs/security/control-measurements/c416-tower-shell-brief-controls.md records the 16 states searched and the mutation evidence. That suite pins the ABSENCE; nothing proves the control reaches a reader, so no coverage is claimed. Whether the dock turns this control on is an open owner decision (item C-574, gated half). The other suites listed below reference the shell module without asserting this control on a rendered answer; src/__tests__/behaviors/c574-tower-dock-catalog-entry.test.ts proves only that this catalog entry is counted.",
+            "knownSuites": [
+              "src/__tests__/behaviors/c574-tower-dock-catalog-entry.test.ts",
+              "src/__tests__/behaviors/qa-inventory-tower-route-parity.test.ts",
+              "src/__tests__/behaviors/unreachable-reason-claims.test.ts",
+              "src/__tests__/integration/app-topbar-preserve-tenant-name.test.ts",
+              "src/__tests__/integration/tower-p6-handoff-panel.test.ts",
+              "src/__tests__/integration/tower/tower-db-only-surface.test.ts",
+              "src/__tests__/integration/tower/tower-invariants.test.ts",
+              "src/components/atlas/__tests__/atlas-timeout-contract.test.ts",
+              "src/components/shell/__tests__/shell-v2-mode-layout.test.tsx",
+              "src/components/tower/command-center/__tests__/TowerCommandCenterAvaShell.brief-controls.test.tsx",
+              "src/components/tower/command-center/__tests__/TowerCommandCenterAvaShell.test.tsx",
+              "src/lib/tower/__tests__/case-attribute-widening.test.ts",
+              "src/lib/tower/__tests__/ecl-projection-preview-degrades.test.ts",
+              "src/lib/tower/__tests__/tower-freshness-provenance.test.ts"
+            ]
+          }
+        },
+        {
+          "kind": "risk-caveat",
+          "evidence": [
+            "buildTowerChatAvaAnswerPacket",
+            "gaps: json.gaps"
+          ],
+          "behavioralTest": {
+            "status": "none",
+            "reason": "No behavioral test proves this control on this surface. MEASURED ABSENT by execution (item C-416): neither the server's gap text nor the packet's decision-support caveat reaches the answer in any of 16 states, in either variant. The evidence tokens locate the code on this surface that decides the control's state today; they are not a rendered control and claim none. src/components/tower/command-center/__tests__/TowerCommandCenterAvaShell.brief-controls.test.tsx asserts that state and runs in the required AI surface control catalog job; docs/security/control-measurements/c416-tower-shell-brief-controls.md records the 16 states searched and the mutation evidence. That suite pins the ABSENCE; nothing proves the control reaches a reader, so no coverage is claimed. Whether the dock turns this control on is an open owner decision (item C-574, gated half). The other suites listed below reference the shell module without asserting this control on a rendered answer; src/__tests__/behaviors/c574-tower-dock-catalog-entry.test.ts proves only that this catalog entry is counted.",
+            "knownSuites": [
+              "src/__tests__/behaviors/c574-tower-dock-catalog-entry.test.ts",
+              "src/__tests__/behaviors/qa-inventory-tower-route-parity.test.ts",
+              "src/__tests__/behaviors/unreachable-reason-claims.test.ts",
+              "src/__tests__/integration/app-topbar-preserve-tenant-name.test.ts",
+              "src/__tests__/integration/tower-p6-handoff-panel.test.ts",
+              "src/__tests__/integration/tower/tower-db-only-surface.test.ts",
+              "src/__tests__/integration/tower/tower-invariants.test.ts",
+              "src/components/atlas/__tests__/atlas-timeout-contract.test.ts",
+              "src/components/shell/__tests__/shell-v2-mode-layout.test.tsx",
+              "src/components/tower/command-center/__tests__/TowerCommandCenterAvaShell.brief-controls.test.tsx",
+              "src/components/tower/command-center/__tests__/TowerCommandCenterAvaShell.test.tsx",
+              "src/lib/tower/__tests__/case-attribute-widening.test.ts",
+              "src/lib/tower/__tests__/ecl-projection-preview-degrades.test.ts",
+              "src/lib/tower/__tests__/tower-freshness-provenance.test.ts"
+            ]
+          }
+        }
+      ]
+    },
+    {
       "id": "source-admin-event-approval-queue",
       "surface": "Source admin event approval queue",
       "lane": "global-control-lane",
@@ -1161,20 +1305,16 @@
     {
       "key": "generated-ui|Tower|aVa Command Center chat opener|citation",
       "status": "deferred",
+      "surfaceId": "tower-command-center-ava-dock",
       "controlKind": "citation",
-      "reason": "Tower answer packets preserve trace/evidence fields when available, but committed artifact reuse still needs explicit AI-assisted labeling.",
-      "surfaceJoin": {
-        "state": "uncatalogued"
-      }
+      "reason": "The Tower aVa dock is now catalogued as tower-command-center-ava-dock (item C-574) and its citation control carries behavioralTest status \"none\": C-416 measured no evidence basis or citation label in any of 16 states, although the answer packet carries a trace citation, because the dock thread mapping does not forward it. Deferred until the owner decides whether the dock forwards citations and a render test names the evidence basis."
     },
     {
       "key": "generated-ui|Tower|aVa Command Center chat opener|confidence",
       "status": "deferred",
+      "surfaceId": "tower-command-center-ava-dock",
       "controlKind": "confidence",
-      "reason": "The Command Center aVa shell has unavailable/timeout states, but a formal confidence badge for advisory answers remains follow-on.",
-      "surfaceJoin": {
-        "state": "uncatalogued"
-      }
+      "reason": "The Tower aVa dock is now catalogued as tower-command-center-ava-dock (item C-574) and its confidence control carries behavioralTest status \"none\": C-416 measured no confidence text in any of 16 states, because the shell mounts the dock with variant=\"focused\", which switches the shared review chrome off. Deferred until the owner decides whether the dock turns its review chrome on and a render test names the confidence label."
     },
     {
       "key": "generated-ui|Tower|Atlas synthesis API response|citation",

@@ -337,10 +337,16 @@ describe("legal catalog claims bind only when coverage is real", () => {
     // and still bound by `surfaceId`. 22/14/1 to 21/14/2. Nothing left or
     // entered `deferredWithJoin`, which is the check that the correction was
     // bookkeeping on one row and not a re-join of anything.
+    //
+    // C-574 catalogued the Tower aVa dock with all five controls uncovered.
+    // Its two chat-opener rows (citation, confidence) resolved to it, so each
+    // swapped its `uncatalogued` join for the surfaceId and stayed deferred —
+    // 21/14/2 to 21/12/4. `coveredWithSurfaceId` is unmoved: cataloguing an
+    // uncovered control earns no credit.
     expect(tally).toEqual({
       coveredWithSurfaceId: 21,
-      deferredWithJoin: 14,
-      deferredWithSurfaceId: 2,
+      deferredWithJoin: 12,
+      deferredWithSurfaceId: 4,
       unbound: 0,
     });
   });
