@@ -156,12 +156,13 @@ jest.mock('@/lib/source/canonical-specs/gate-criteria', () => ({
   criteriaByArtifactCode: (code: string) => criteriaByArtifactCodeMock(code),
 }));
 
-jest.mock('@/lib/source/artifact-registry/upload-text-extraction', () => ({
-  extractSourceUploadText: async () => ({
+const extractSourceUploadTextMock = jest.fn(async () => ({
     text: 'Pricing: fixed transition fee $1.2M.',
     method: 'xlsx-exceljs',
     warnings: [],
-  }),
+}));
+jest.mock('@/lib/source/artifact-registry/upload-text-extraction', () => ({
+  extractSourceUploadText: () => extractSourceUploadTextMock(),
 }));
 
 jest.mock('@/lib/security/sensitive-upload-guard', () => ({
@@ -256,6 +257,11 @@ beforeEach(() => {
   mockParseSourceTextArtifact.mockImplementation(
     async ({ artifact }: { artifact: unknown }) => artifact,
   );
+  extractSourceUploadTextMock.mockImplementation(async () => ({
+    text: 'Pricing: fixed transition fee $1.2M.',
+    method: 'xlsx-exceljs',
+    warnings: [],
+  }));
 });
 
 describe('POST /api/v1/source/[eventId]/artifacts/upload', () => {
@@ -354,6 +360,87 @@ describe('POST /api/v1/source/[eventId]/artifacts/upload', () => {
     };
     expect(registerSourceArtifactUploadMock).toHaveBeenCalledTimes(1);
     expect(body.landing?.satisfiedCriteria).toEqual([]);
+    expect(updateGateCriterionMock).not.toHaveBeenCalled();
+  });
+
+  it('does not treat a landed upload as a human gate decision', async () => {
+    criteriaByArtifactCodeMock.mockReturnValueOnce([
+      { criterionId: 'GATE-STRATEGY-02' },
+    ]);
+    maybeSingleMock.mockResolvedValueOnce({
+      data: { id: EVENT_ID, client_key: 'apexretail', current_stage_key: 'strategy' },
+      error: null,
+    });
+    maybeSingleMock.mockResolvedValueOnce({
+      data: { id: 'strategy-artifact', tier: 'stub', status: 'draft' },
+      error: null,
+    });
+    maybeSingleMock.mockResolvedValueOnce({
+      data: { id: 'strategy-gate', state: 'pending' },
+      error: null,
+    });
+
+    const res = await POST(
+      makeMultipartRequest('value-target.csv', CSV_MIME, 64, {
+        stageKey: 'strategy',
+        artifactCode: 'd02_value_target',
+      }),
+      EVENT_PARAMS,
+    );
+
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as {
+      landing?: { bodyLanded: boolean; satisfiedCriteria: string[] };
+    };
+    expect(body.landing).toMatchObject({
+      bodyLanded: true,
+      satisfiedCriteria: [],
+    });
+    expect(updateGateCriterionMock).not.toHaveBeenCalled();
+  });
+
+  it('does not satisfy a linked gate when the file has no extractable text', async () => {
+    extractSourceUploadTextMock.mockResolvedValueOnce({
+      text: '',
+      method: 'xlsx-exceljs',
+      warnings: [],
+    });
+    criteriaByArtifactCodeMock.mockReturnValueOnce([
+      { criterionId: 'GATE-STRATEGY-02' },
+    ]);
+    maybeSingleMock.mockResolvedValueOnce({
+      data: { id: EVENT_ID, client_key: 'apexretail', current_stage_key: 'strategy' },
+      error: null,
+    });
+    maybeSingleMock.mockResolvedValueOnce({
+      data: { id: 'strategy-artifact', tier: 'stub', status: 'draft' },
+      error: null,
+    });
+    maybeSingleMock.mockResolvedValueOnce({
+      data: { id: 'strategy-gate', state: 'pending' },
+      error: null,
+    });
+
+    const res = await POST(
+      makeMultipartRequest('value-target.csv', CSV_MIME, 64, {
+        stageKey: 'strategy',
+        artifactCode: 'd02_value_target',
+      }),
+      EVENT_PARAMS,
+    );
+
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as {
+      landing?: { bodyLanded: boolean; satisfiedCriteria: string[] };
+      parseWarnings?: string[];
+    };
+    expect(body.landing).toMatchObject({
+      bodyLanded: false,
+      satisfiedCriteria: [],
+    });
+    expect(body.parseWarnings).toEqual(expect.arrayContaining([
+      expect.stringContaining('No text was extracted'),
+    ]));
     expect(updateGateCriterionMock).not.toHaveBeenCalled();
   });
 
