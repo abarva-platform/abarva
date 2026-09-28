@@ -17,10 +17,10 @@
     "No timestamp is recorded, so refreshing this file on an unchanged tree is a no-op."
   ],
   "counts": {
-    "testFiles": 2539,
-    "coveredTestFiles": 2199,
-    "pullRequestCoveredTestFiles": 2198,
-    "uncoveredTestFiles": 340,
+    "testFiles": 2540,
+    "coveredTestFiles": 2201,
+    "pullRequestCoveredTestFiles": 2200,
+    "uncoveredTestFiles": 339,
     "directoriesWithTests": 492,
     "directoriesFullyCovered": 313,
     "directoriesPartiallyCovered": 28,
@@ -28,14 +28,14 @@
     "directoriesWithUnrunTestFiles": 179,
     "directoriesWithUntriagedUnrunTestFiles": 168,
     "declaredQuarantineTestFiles": 52,
-    "untriagedUnrunTestFiles": 288,
+    "untriagedUnrunTestFiles": 287,
     "indeterminateInvocations": 0,
     "unresolvedIgnoreArguments": 0,
     "criticalGovernedRiskDirectories": 2,
     "highGovernedRiskDirectories": 5,
     "unclassifiedRiskDirectories": 161,
     "rankedDirectories": 168,
-    "rankedUntriagedUnrunTestFiles": 288,
+    "rankedUntriagedUnrunTestFiles": 287,
     "unclassifiedRiskDirectoriesWithResolvedProductSources": 154,
     "unclassifiedRiskDirectoriesWithNoResolvedProductSource": 7
   },
@@ -223,9 +223,9 @@
     {
       "directory": "src/lib/intelligence/ask/__tests__",
       "testFiles": 24,
-      "coveredTestFiles": 4,
+      "coveredTestFiles": 5,
       "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 20,
+      "untriagedUnrunTestFiles": 19,
       "via": [
         "command"
       ]
@@ -1755,9 +1755,9 @@
     {
       "directory": "src/lib/intelligence/ask/__tests__",
       "testFiles": 24,
-      "unrunTestFiles": 20,
+      "unrunTestFiles": 19,
       "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 20,
+      "untriagedUnrunTestFiles": 19,
       "admittedBy": "untriaged_unrun_work",
       "governedRisk": {
         "score": 0,
@@ -6252,9 +6252,9 @@
     {
       "directory": "src/lib/intelligence/ask/__tests__",
       "testFiles": 24,
-      "unrunTestFiles": 20,
+      "unrunTestFiles": 19,
       "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 20,
+      "untriagedUnrunTestFiles": 19,
       "governedRisk": {
         "score": 0,
         "band": "unclassified",
