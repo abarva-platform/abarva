@@ -490,6 +490,41 @@ describe("buildSourceEventShellView", () => {
     });
   });
 
+  it("does not mistake canvas artifact slots for stored or parsed files", () => {
+    const view = buildSourceEventShellView({
+      event: { ...EVENT, currentStageKey: "strategy" },
+      tenantName: "FS Demo",
+      viewedStageKey: "strategy",
+      stageView: SAMPLE_STRATEGY_STAGE,
+      artifacts: [
+        {
+          id: "canvas-d01",
+          artifactCode: "d01_strategy_memo",
+          stageKey: "strategy",
+          status: "drafting",
+          recordKind: "canvas_state",
+        },
+        {
+          id: "canvas-d02",
+          artifactCode: "d02_value_target",
+          stageKey: "strategy",
+          status: "not_started",
+          recordKind: "canvas_state",
+        },
+      ],
+    });
+
+    expect(view.files.items).toEqual([]);
+    expect(
+      view.files.lifecycle.rows.find((row) => row.code === "d01_strategy_memo")
+        ?.lifecycleState,
+    ).toBe("not_registered");
+    expect(
+      view.files.lifecycle.rows.find((row) => row.code === "d02_value_target")
+        ?.lifecycleState,
+    ).toBe("not_registered");
+  });
+
   it("flags a file item for compliance review when the registry description carries the marker, without leaking the raw text", () => {
     const view = buildSourceEventShellView({
       event: EVENT,

@@ -248,6 +248,7 @@ export interface SourceEventShellView {
 
 export interface SourceShellArtifactLike {
   id: string;
+  recordKind?: "canvas_state" | "registry_artifact";
   artifactCode?: string | null;
   artifactKind?: string | null;
   stageKey?: string | null;
@@ -442,13 +443,16 @@ export function buildSourceEventShellView(
     tasks
       .map((task) => stepsById.get(task.id))
       .find((step) => step && step.status !== "captured") ?? null;
-  const artifacts = (input.artifacts ?? []).map((artifact) =>
+  const registeredArtifacts = (input.artifacts ?? []).filter(
+    (artifact) => artifact.recordKind !== "canvas_state",
+  );
+  const artifacts = registeredArtifacts.map((artifact) =>
     toFileItem(
       artifact,
       input.latestArtifactAcceptancesById?.get(artifact.id) ?? null,
     ),
   );
-  const lifecycle = buildSourceArtifactLifecycleSummary(input.artifacts ?? []);
+  const lifecycle = buildSourceArtifactLifecycleSummary(registeredArtifacts);
   const artifactReadiness = stageArtifactReadinessFor(
     lifecycle,
     input.viewedStageKey,

@@ -476,8 +476,10 @@ describe("SourceAnalyticsCanvas — AskAnythingBar reachability", () => {
     expect(reviewQueue).toHaveTextContent(
       "Clear these artifact actions before opening the gate.",
     );
-    expect(reviewQueue).toHaveTextContent("Review supporting evidence");
-    expect(reviewQueue).toHaveTextContent("Review evidence");
+    expect(reviewQueue).toHaveTextContent("Create a governed draft");
+    expect(
+      screen.getByTestId("source-generate-artifact-d07_ticket_synth"),
+    ).toBeInTheDocument();
     expect(
       screen.getByTestId("source-artifact-review-queue-row-d07_ticket_synth"),
     ).toHaveTextContent("Evidence registered");

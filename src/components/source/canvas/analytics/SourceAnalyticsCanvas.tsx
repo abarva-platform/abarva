@@ -6262,6 +6262,9 @@ function CurrentStageArtifactReviewRow({
   onClientFinalAccepted: () => void;
 }) {
   const action = artifactReviewAction(row);
+  const canGenerateFromEvidence =
+    row.lifecycleState === "evidence_only" &&
+    (row.requirementLabel === "Required" || row.gateLabel === "Gate-defining");
 
   return (
     <div
@@ -6342,7 +6345,8 @@ function CurrentStageArtifactReviewRow({
             hasGeneratedDraft
             onAccepted={onClientFinalAccepted}
           />
-        ) : row.lifecycleState === "not_registered" ? (
+        ) : row.lifecycleState === "not_registered" ||
+          canGenerateFromEvidence ? (
           <GenerateArtifactButton
             eventId={eventId}
             artifactCode={row.code}
@@ -6571,6 +6575,17 @@ function artifactReviewAction(row: SourceArtifactLifecycleRow): {
         row.quality.nextAction ||
         "No artifact is registered for this required slot yet.",
       cta: "Missing",
+    };
+  }
+  if (
+    row.lifecycleState === "evidence_only" &&
+    (row.requirementLabel === "Required" || row.gateLabel === "Gate-defining")
+  ) {
+    return {
+      title: "Create a governed draft from the available evidence.",
+      detail:
+        "Registered evidence is not a client-final deliverable. Generate a draft, then review and accept a final separately.",
+      cta: "Generate draft",
     };
   }
   return {
