@@ -125,7 +125,11 @@ filed work of its own, is not caused by this change, and is not covered by it.
   key left behind would silently change the behaviour of any sibling suite that asserts
   the unconfigured refusal. All five mutations were re-measured after this change, since
   amending the suite after measuring would otherwise have left the table describing a
-  different file: same five caught, same case firing for each.
+  different file: same five caught, same case firing for each. Stated as hygiene rather
+  than as a repaired break: the three env-sensitive suites in this area were run in one
+  jest process with `--runInBand`, so they genuinely shared one `process.env`, and all
+  three passed (3 suites / 31 tests). No cross-suite failure was observed, because the
+  other two save and restore the key themselves. The hazard is for a suite that does not.
 - Workflow YAML parsed and the step re-read from the parsed document to confirm it names
   the new file, rather than grepping the raw text.
 - `npm run audit:test-ci-coverage:check` — exit 0. `census shape: coverage shape matches
