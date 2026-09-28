@@ -3,6 +3,7 @@ import {
   isSolutionRouteValidationComplete,
   type ConfirmedSolutionRoute,
 } from "@/lib/programs/solution-route-assessment";
+import { evaluateEstimateModel } from "@/lib/programs/estimate-model";
 
 export interface PhaseCaptureSection {
   key: string;
@@ -14,7 +15,7 @@ export interface PhaseCaptureSection {
    * rows (stored as JSON in the value) rather than free text — see
    * `diagnosis-facts.ts`. The workspace renders a facts table for it.
    */
-  structured?: "facts" | "business-change" | "solution-route";
+  structured?: "facts" | "business-change" | "solution-route" | "estimate-model";
 }
 
 export interface PhaseCaptureSectionStatus extends PhaseCaptureSection {
@@ -248,7 +249,7 @@ const GENERIC_CAPTURE_SECTIONS: readonly PhaseCaptureSection[] = [
   },
 ] as const;
 
-// P3 — Compose: choose the future-state approach before locking architecture.
+// P3 — Design Future State: define the approach to an estimate-ready level.
 const P3_CAPTURE_SECTIONS: readonly PhaseCaptureSection[] = [
   {
     key: "solution_approach",
@@ -316,7 +317,36 @@ const P3_TECHNICAL_PRODUCT_CAPTURE_SECTIONS: readonly PhaseCaptureSection[] = [
   P3_CAPTURE_SECTIONS[6],
 ] as const;
 
-// P4 — Commit: turn the approach into a funded, sequenced plan.
+const P3_LIMITED_PROCESS_CAPTURE_SECTIONS: readonly PhaseCaptureSection[] = [
+  P3_CAPTURE_SECTIONS[0],
+  {
+    key: "workflow_delta",
+    label: "Workflow change delta",
+    description:
+      "Capture only the affected steps, handoffs, exceptions, and decisions needed to estimate the change. Do not produce a full end-to-end process redesign.",
+    required: true,
+  },
+  {
+    key: "process_adoption_boundary",
+    label: "Role and adoption boundary",
+    description:
+      "State what changes for people, what remains unchanged, and the accountable business adoption owner. Do not design a new operating model unless evidence shows material role or accountability change.",
+    required: true,
+  },
+  P3_CAPTURE_SECTIONS[3],
+  P3_CAPTURE_SECTIONS[4],
+  P3_CAPTURE_SECTIONS[5],
+  {
+    key: "estimate_assumptions",
+    label: "Estimate assumptions and open inputs",
+    description:
+      "List the evidence-backed sizing inputs, explicit assumptions, confidence, and questions that P4 must resolve before the estimate is final.",
+    required: true,
+  },
+  P3_CAPTURE_SECTIONS[6],
+] as const;
+
+// P4 — Roadmap & Business Case: turn the approach into a funded, sequenced plan.
 const P4_CAPTURE_SECTIONS: readonly PhaseCaptureSection[] = [
   {
     key: "roadmap_sequencing",
@@ -329,8 +359,9 @@ const P4_CAPTURE_SECTIONS: readonly PhaseCaptureSection[] = [
     key: "estimates_capacity",
     label: "Estimates & capacity",
     description:
-      "Effort, cost, and capacity estimates with the method and key assumptions stated.",
+      "Human-reviewable low/base/high effort and cost by work package and role: internal, vendor, or hybrid; effort × rate arithmetic; capacity and rate sources; evidence versus assumptions; confidence; Claude Code/Codex productivity assumptions where relevant; and review adjustments before final approval.",
     required: true,
+    structured: "estimate-model",
   },
   {
     key: "value_plan",
@@ -368,33 +399,34 @@ const P4_CAPTURE_SECTIONS: readonly PhaseCaptureSection[] = [
   },
 ] as const;
 
-// P5 — Mobilize: prepare to execute and prove value.
+// P5 — Mobilize & Handoff: prepare the approved roadmap for external execution.
 const P5_CAPTURE_SECTIONS: readonly PhaseCaptureSection[] = [
   {
     key: "mobilization_plan",
-    label: "Mobilization plan & RACI",
+    label: "Handoff owners & RACI",
     description:
-      "The mobilization plan with named owners (RACI), not role placeholders.",
+      "Named receiving, delivery, business, and Tower owners; responsibilities and handoff acceptance. This is not a project execution plan.",
     required: true,
   },
   {
     key: "launch_readiness",
-    label: "Launch readiness",
+    label: "Handoff readiness",
     description:
-      "Entry criteria, environments, access, and go/no-go readiness for launch.",
+      "Approved P4 roadmap, required authorizations, access/dependency owners, open conditions, and explicit handoff acceptance. Do not claim execution has started.",
     required: true,
   },
   {
     key: "value_proof_rules",
-    label: "Value-proof rules & metrics",
+    label: "Tower measurement handoff",
     description:
-      "How value is measured and what counts as realized vs forecast vs unsupported.",
+      "Accepted metric definitions, baselines, sources, owners, cadence, and forecast-versus-realized distinctions for Tower after handoff.",
     required: true,
   },
   {
     key: "first_90_days",
-    label: "First 90 days & milestones",
-    description: "The first-90-days plan, milestones, and early proof points.",
+    label: "Initial delivery milestones to hand off",
+    description:
+      "The approved roadmap's initial milestones, owners, dependencies, and reporting fields to transfer to the external execution team; do not run or manage those activities in Moves.",
     required: true,
   },
   {
@@ -413,8 +445,9 @@ const P5_CAPTURE_SECTIONS: readonly PhaseCaptureSection[] = [
   },
   {
     key: "recommendation",
-    label: "Recommendation to launch",
-    description: "Human rationale for launching and handing off to Tower.",
+    label: "Handoff recommendation",
+    description:
+      "Human rationale to accept, condition, defer, or return the roadmap handoff; execution remains outside Moves and Tower tracks outcomes.",
     required: true,
   },
 ] as const;
@@ -427,9 +460,17 @@ export function getPhaseCaptureSections(
   if (phase === 1) return P1_CAPTURE_SECTIONS;
   if (phase === 2) return P2_CAPTURE_SECTIONS;
   if (phase === 3) {
-    return confirmedSolutionRoute?.route === "technical_product"
-      ? P3_TECHNICAL_PRODUCT_CAPTURE_SECTIONS
-      : P3_CAPTURE_SECTIONS;
+    if (confirmedSolutionRoute?.route === "technical_product") {
+      return P3_TECHNICAL_PRODUCT_CAPTURE_SECTIONS;
+    }
+    if (
+      confirmedSolutionRoute?.route === "process_change" &&
+      confirmedSolutionRoute.workflowChange !== "material" &&
+      confirmedSolutionRoute.roleAccountabilityChange !== "material"
+    ) {
+      return P3_LIMITED_PROCESS_CAPTURE_SECTIONS;
+    }
+    return P3_CAPTURE_SECTIONS;
   }
   if (phase === 4) return P4_CAPTURE_SECTIONS;
   if (phase === 5) return P5_CAPTURE_SECTIONS;
@@ -457,14 +498,16 @@ export function evaluatePhaseCapture(
     const structuredComplete =
       section.structured === "business-change"
         ? isBusinessChangeAssessmentComplete(value)
-        : section.structured === "solution-route"
+          : section.structured === "solution-route"
           ? isSolutionRouteValidationComplete({
               businessChangeAssessment: context.businessChangeAssessment,
               routeValidation: value,
               approvedEvidenceReferences:
                 context.approvedEvidenceReferences ?? [],
             })
-          : true;
+            : section.structured === "estimate-model"
+              ? evaluateEstimateModel(value).readyForApproval
+              : true;
     return {
       ...section,
       value,

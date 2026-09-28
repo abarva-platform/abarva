@@ -386,6 +386,7 @@ export default async function StrategicMovePhaseWorkspacePage({
   }
 
   let evidenceNeedPackets: MoveEvidenceNeedPacket[] = [];
+  let evidenceReadinessAvailable = false;
   let syntheticEvidencePackHref: string | null = null;
   try {
     const tctx = await requireTenancy();
@@ -399,6 +400,7 @@ export default async function StrategicMovePhaseWorkspacePage({
       currentPhase: parsedPhase,
       readiness: evidenceReadiness,
     });
+    evidenceReadinessAvailable = true;
     if (parsedPhase < 5 && isFoundationTenantKey(tctx.clientKey)) {
       syntheticEvidencePackHref = `/api/v1/programs/${encodeURIComponent(
         moveId,
@@ -601,6 +603,7 @@ export default async function StrategicMovePhaseWorkspacePage({
       <MovesPhaseStandaloneClient
         carriesForwardContent={carriesForwardContent}
         currentStateReadiness={currentStateReadiness}
+        evidenceReadinessAvailable={evidenceReadinessAvailable}
         currentUser={{
           email: ctx.email ?? null,
           role: ctx.tenantRole ?? ctx.role ?? null,

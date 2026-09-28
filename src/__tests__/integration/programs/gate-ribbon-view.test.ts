@@ -16,28 +16,28 @@ import { buildProgramDetailView } from '@/lib/programs/programs-detail-view';
 // ─── Fixtures ────────────────────────────────────────────────────────────────
 
 function cdpView() {
-  // APX-CDP-2026 at P3 Design (pending gate to P4 Execution Roadmap)
+  // P3 Design Future State, pending gate to P4 Roadmap & Business Case.
   return buildProgramDetailView('apx-cdp-2026');
 }
 
 function ccView() {
-  // APX-CC-2026 at P4 Execution Roadmap (pending gate to P5 Approval & Mobilization)
+  // P4 Roadmap & Business Case, pending gate to P5 Mobilize & Handoff.
   return buildProgramDetailView('apx-cc-2026');
 }
 
 function sapView() {
-  // APX-SAP-2026 at P1 Discovery (gate open, not pending)
+  // P1 Charter with an open gate.
   return buildProgramDetailView('apx-sap-2026');
 }
 
 function dfv2View() {
-  // APX-DFV2-2025 at P6 Tower Handoff (gateStatus: na — no next gate)
+  // P6 Tower Track Outcomes has no next gate.
   return buildProgramDetailView('apx-dfv2-2025');
 }
 
-// ─── P-SMOKE-CDP: APX-CDP-2026 P3 Design → P4 Execution Roadmap ─────────────────────────
+// ─── P-SMOKE-CDP: P3 Design Future State → P4 Roadmap & Business Case ────────────────────────
 
-describe('P-SMOKE-CDP · APX-CDP-2026 gate ribbon (P3 Design → P4 Execution Roadmap)', () => {
+describe('P-SMOKE-CDP · phase gate ribbon (P3 Design Future State → P4 Roadmap & Business Case)', () => {
   const view = cdpView();
   const ribbon = buildGateRibbonView(view);
 
@@ -53,16 +53,16 @@ describe('P-SMOKE-CDP · APX-CDP-2026 gate ribbon (P3 Design → P4 Execution Ro
     expect(ribbon!.toPhase).toBe(4);
   });
 
-  it('fromPhaseLabel is "Design"', () => {
-    expect(ribbon!.fromPhaseLabel).toBe('Design');
+  it('fromPhaseLabel is "Design Future State"', () => {
+    expect(ribbon!.fromPhaseLabel).toBe('Design Future State');
   });
 
-  it('toPhaseLabel is "Execution Roadmap"', () => {
-    expect(ribbon!.toPhaseLabel).toBe('Execution Roadmap');
+  it('toPhaseLabel is "Roadmap & Business Case"', () => {
+    expect(ribbon!.toPhaseLabel).toBe('Roadmap & Business Case');
   });
 
-  it('ribbonLabel is "P3 Design → P4 Execution Roadmap"', () => {
-    expect(ribbon!.ribbonLabel).toBe('P3 Design → P4 Execution Roadmap');
+  it('ribbonLabel uses the canonical P3 and P4 labels', () => {
+    expect(ribbon!.ribbonLabel).toBe('P3 Design Future State → P4 Roadmap & Business Case');
   });
 
   // ── ANCHOR: P-SMOKE-CDP gate state must stay "2 of 5" ──
@@ -92,7 +92,7 @@ describe('P-SMOKE-CDP · APX-CDP-2026 gate ribbon (P3 Design → P4 Execution Ro
     );
   });
 
-  // At P3 Design the vendor scope conflict from P2 Synthesis was resolved at gate.
+  // At P3 Design Future State the vendor scope conflict from P2 Discover & Diagnose was resolved at gate.
   // The P3 evidence items (gate approval, BAFO award, pattern validation) have no contradictions.
   it('hasContradiction is false (P3 evidence has no contradictions — P2 conflict resolved)', () => {
     expect(ribbon!.hasContradiction).toBe(false);
@@ -118,20 +118,20 @@ describe('P-SMOKE-CDP · APX-CDP-2026 gate ribbon (P3 Design → P4 Execution Ro
     expect(getApprovalButtonLabel(ribbon!)).toBe('Approve with override');
   });
 
-  it('modal headline mentions Design and Execution Roadmap', () => {
+  it('modal headline mentions Design Future State and Roadmap & Business Case', () => {
     const headline = getGateModalHeadline(ribbon!);
-    expect(headline).toContain('Design');
-    expect(headline).toContain('Execution Roadmap');
+    expect(headline).toContain('Design Future State');
+    expect(headline).toContain('Roadmap & Business Case');
     expect(headline).toContain('P3');
     expect(headline).toContain('P4');
   });
 });
 
-describe('GW-01 · APX-SAP-2026 P1 phase summary', () => {
-  it('renders deterministic Discovery summary copy instead of the empty-state fallback', () => {
+describe('GW-01 · P1 phase summary', () => {
+  it('renders deterministic Charter summary copy instead of the empty-state fallback', () => {
     const view = sapView();
     expect(view.viewingPhase).toBe(1);
-    expect(view.phasePanel.summary).toContain('P1 Discovery is validating');
+    expect(view.phasePanel.summary).toContain('P1 Charter is validating');
     expect(view.phasePanel.summary).toContain('sponsor review still need to close');
   });
 
@@ -149,7 +149,7 @@ describe('GW-01 · APX-SAP-2026 P1 phase summary', () => {
   it('renders generic current-phase summary copy for newly created P1 programs', () => {
     const view = buildProgramDetailView('new-program-from-db', undefined, 1);
     expect(view.viewingPhase).toBe(1);
-    expect(view.phasePanel.summary).toContain('P1 Discovery is active');
+    expect(view.phasePanel.summary).toContain('P1 Charter is active');
     expect(view.phasePanel.summary).toContain('clear the next gate');
   });
 
@@ -165,7 +165,7 @@ describe('GW-01 · APX-SAP-2026 P1 phase summary', () => {
     });
     expect(view.phases[1]).toMatchObject({
       id: 1,
-      label: 'Discovery',
+      label: 'Charter',
       state: 'pending',
     });
     expect(view.workbench.title).toContain('P0 Originate');
@@ -175,7 +175,7 @@ describe('GW-01 · APX-SAP-2026 P1 phase summary', () => {
 
 // ─── APX-CC-2026 gate state is 'open' — ribbon returns null ──────────────────
 
-describe('APX-CC-2026 gate state (gateStatus open — no ribbon)', () => {
+describe('Open P4 gate state (no ribbon)', () => {
   const view = ccView();
 
   it('APX-CC-2026 gateStatus is "open" (not pending)', () => {
@@ -187,11 +187,11 @@ describe('APX-CC-2026 gate state (gateStatus open — no ribbon)', () => {
   });
 });
 
-// ─── Synthetic P4→P5 gate (Execution Roadmap → Approval & Mobilization) ─────
+// ─── Synthetic P4→P5 gate (Roadmap & Business Case → Mobilize & Handoff) ─────
 // Uses CC's gate criteria shape with a synthetic gateStatus='pending' override
 // to verify the 6-criteria / 2-met ribbon logic independently of fixture state.
 
-describe('Synthetic P4 Execution Roadmap → P5 Approval & Mobilization ribbon (6 criteria, 2 met)', () => {
+describe('Synthetic P4 Roadmap & Business Case → P5 Mobilize & Handoff ribbon (6 criteria, 2 met)', () => {
   const base = ccView();
   const syntheticPending = {
     ...base,
@@ -204,7 +204,7 @@ describe('Synthetic P4 Execution Roadmap → P5 Approval & Mobilization ribbon (
         { criterion: 'IVR routing rules complete', met: false },
         { criterion: 'Operator dashboard MVP complete', met: false },
         { criterion: 'Load test passing at 2× peak traffic', met: false },
-        { criterion: 'Sponsor sign-off on Approval & Mobilization criteria', met: false },
+        { criterion: 'Sponsor sign-off on Mobilize & Handoff criteria', met: false },
       ],
     },
   };
@@ -214,16 +214,16 @@ describe('Synthetic P4 Execution Roadmap → P5 Approval & Mobilization ribbon (
     expect(ribbon).not.toBeNull();
   });
 
-  it('fromPhase is 4 (Execution Roadmap)', () => {
+  it('fromPhase is 4 (Roadmap & Business Case)', () => {
     expect(ribbon!.fromPhase).toBe(4);
   });
 
-  it('toPhase is 5 (Approval & Mobilization)', () => {
+  it('toPhase is 5 (Mobilize & Handoff)', () => {
     expect(ribbon!.toPhase).toBe(5);
   });
 
-  it('ribbonLabel is "P4 Execution Roadmap → P5 Approval & Mobilization"', () => {
-    expect(ribbon!.ribbonLabel).toBe('P4 Execution Roadmap → P5 Approval & Mobilization');
+  it('ribbonLabel uses the canonical P4 and P5 labels', () => {
+    expect(ribbon!.ribbonLabel).toBe('P4 Roadmap & Business Case → P5 Mobilize & Handoff');
   });
 
   it('totalCriteria is 6', () => {
@@ -254,17 +254,15 @@ describe('Synthetic P4 Execution Roadmap → P5 Approval & Mobilization ribbon (
 // ─── Gates that are not 'pending' return null ─────────────────────────────────
 
 describe('buildGateRibbonView · null cases', () => {
-  it('returns null for gateStatus open (APX-CC-2026)', () => {
-    // APX-CC-2026 is at P4 Execution Roadmap with gateStatus 'open'
+  it('returns null for an open P4 gate', () => {
     expect(buildGateRibbonView(ccView())).toBeNull();
   });
 
-  it('returns null for gateStatus open (APX-SAP-2026)', () => {
-    // APX-SAP-2026 is at P1 Discovery with gateStatus 'open'
+  it('returns null for an open P1 gate', () => {
     expect(buildGateRibbonView(sapView())).toBeNull();
   });
 
-  it('returns null for gateStatus na (APX-DFV2-2025 P6)', () => {
+  it('returns null for a phase with no next gate', () => {
     const view = dfv2View();
     expect(buildGateRibbonView(view)).toBeNull();
   });
@@ -278,7 +276,7 @@ describe('buildGateRibbonView · null cases', () => {
     expect(buildGateRibbonView(noPanel)).toBeNull();
   });
 
-  it('returns null for currentPhase 6 (Tower Handoff — no next gate)', () => {
+  it('returns null for currentPhase 6 (Tower Track Outcomes — no next gate)', () => {
     const view = dfv2View();
     const atOperate = {
       ...view,
@@ -350,28 +348,28 @@ describe('buildGateRibbonView · all-criteria-met gate', () => {
 // ─── getPhaseLabel helper ─────────────────────────────────────────────────────
 
 describe('getPhaseLabel', () => {
-  it('returns "Discovery" for phase 1', () => {
-    expect(getPhaseLabel(1)).toBe('Discovery');
+  it('returns "Charter" for phase 1', () => {
+    expect(getPhaseLabel(1)).toBe('Charter');
   });
 
-  it('returns "Synthesis" for phase 2', () => {
-    expect(getPhaseLabel(2)).toBe('Synthesis');
+  it('returns "Discover & Diagnose" for phase 2', () => {
+    expect(getPhaseLabel(2)).toBe('Discover & Diagnose');
   });
 
-  it('returns "Design" for phase 3', () => {
-    expect(getPhaseLabel(3)).toBe('Design');
+  it('returns "Design Future State" for phase 3', () => {
+    expect(getPhaseLabel(3)).toBe('Design Future State');
   });
 
-  it('returns "Execution Roadmap" for phase 4', () => {
-    expect(getPhaseLabel(4)).toBe('Execution Roadmap');
+  it('returns "Roadmap & Business Case" for phase 4', () => {
+    expect(getPhaseLabel(4)).toBe('Roadmap & Business Case');
   });
 
-  it('returns "Approval & Mobilization" for phase 5', () => {
-    expect(getPhaseLabel(5)).toBe('Approval & Mobilization');
+  it('returns "Mobilize & Handoff" for phase 5', () => {
+    expect(getPhaseLabel(5)).toBe('Mobilize & Handoff');
   });
 
-  it('returns "Tower Handoff" for phase 6', () => {
-    expect(getPhaseLabel(6)).toBe('Tower Handoff');
+  it('returns "Tower Track Outcomes" for phase 6', () => {
+    expect(getPhaseLabel(6)).toBe('Tower Track Outcomes');
   });
 
   it('returns a non-empty fallback for an unknown phase', () => {

@@ -1,7 +1,7 @@
 // complete_deliverables tool
 //
 // Batch persistence for phase packages that naturally contain multiple signed
-// artifacts, especially P5 Approval & Mobilization. Without this tool, Nexus
+// artifacts, especially P5 Mobilize & Handoff. Without this tool, Nexus
 // can spend one model/tool turn per artifact and hit the client timeout before
 // the gate is evaluated.
 
@@ -39,7 +39,7 @@ export const completeDeliverablesTool: AgentTool<CompleteDeliverablesToolInput> 
   name: 'complete_deliverables',
   description:
     'Persist and optionally sign off several program deliverables in one batch. Use this for phase packages ' +
-    'that require multiple artifacts in the same user-approved turn, especially P5 Approval & Mobilization ' +
+    'that require multiple artifacts in the same user-approved turn, especially P5 Mobilize & Handoff ' +
     'packages with business_case, funding_approval, sponsor_alignment, readiness_and_change_plan, and ' +
     'tower_handoff_plan. For P0 seed packages use origination_brief. For P2 packages use synthesis_options_memo for options analysis, charter for the signed ' +
     'program charter, and workshop_facilitator_guide for workshop-running materials. Keep each artifact bounded: ' +

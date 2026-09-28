@@ -3,11 +3,9 @@
 // Phase semantics (from src/lib/programs/programs-fixture.ts PHASE_LABEL_MAP
 // and src/lib/intelligence/program-lifecycle-patterns.ts P3-Design stage):
 //
-//   P3 Design turns the P2 recommendation into a buildable, measurable
-//   pilot. It does not re-litigate the target-state path unless new evidence
-//   invalidates P2. It extends the architecture sketch into detailed design,
-//   names the pilot cohort, locks success criteria, and records the phase-3
-//   findings and CXO interview needed for the P3->P4 gate.
+//   P3 uses the human-validated P2 route to produce only the design detail
+//   needed for a transparent P4 estimate. Technical-only work does not trigger
+//   full process or operating-model redesign. P3 does not execute a pilot.
 //
 // Inputs inherited from P2 are binding:
 //   - recommended target-state path
@@ -18,11 +16,10 @@
 //   - kill criterion
 //   - named dissenter
 //
-// Exit output is the Execution Roadmap gate package: detailed design signed off, pilot
-// cohort named, success criteria locked, phase-3 findings written, and CXO
-// interview complete. A beautiful design without cohort and criteria is a
-// diagram. A named pilot without signed design is an experiment looking for
-// permission.
+// Exit output is an estimate-ready approach: approved evidence traceability,
+// route-appropriate architecture/process detail, adoption and operating
+// ownership, delivery assumptions, and material open questions. P4 estimates
+// the roadmap; execution follows approval and P5 handoff outside Moves.
 //
 // Gate checks (mirrors GATE_RULES P3->P4 in src/lib/programs/governance.ts):
 //   - phase_3_findings_written - soft
@@ -38,14 +35,7 @@ export const P3_DESIGN: PhasePack = {
   phase: 3,
   label: 'P3 Design',
   outcome:
-    'An Execution Roadmap gate package that converts the P2 recommendation into a buildable ' +
-    'pilot: detailed solution and integration design signed off by the right ' +
-    'architecture and operating owners; pilot cohort named with inclusion and ' +
-    'exclusion logic; success criteria locked against the P2 baseline KPI and ' +
-    'measurement source; phase-3 findings written; CXO interview completed; and ' +
-    'scope, kill criterion, sponsor commitment, and named dissenter carried ' +
-    'forward without being blurred. P3 is done when P4 can plan execution without ' +
-    'asking what we are building, who we are piloting with, or what counts as a win.',
+    'An estimate-ready approach derived from approved P2 evidence and the human-validated solution route. Include enough target architecture, data/integration design, traceability, ownership, and delivery assumptions to size work and compare internal, vendor, or hybrid approaches. Add process and operating-model detail only when validated evidence shows material change; otherwise state the adoption owner and business responsibility. P3 does not produce a full implementation specification or execute a pilot. P4 builds the reviewed roadmap and estimate; P5 hands it to external delivery.',
 
   definitionOfDone: [
     {
@@ -60,42 +50,44 @@ export const P3_DESIGN: PhasePack = {
     },
     {
       id: 'detailed-design-signed-off',
-      label: 'Detailed design signed off by accountable owners',
+      label: 'Route-appropriate design approach reviewed by accountable owners',
       severity: 'hard',
       evaluationHint:
         'deliverables_v2 row with deliverable_type_key="design_spec" or "design" ' +
-        'and status="signed_off", plus named architecture, data, security, and ' +
-        'business-operation reviewers in the design prose or approval metadata.',
+        'and status="signed_off", plus named technical reviewers as applicable. ' +
+        'Full process and operating-model detail is required only when the ' +
+        'approved P2 route shows material business change.',
       preventsFailureModes: [1, 6, 7],
     },
     {
       id: 'architecture-sketch-expanded',
-      label: 'P2 architecture sketch expanded into build architecture',
+      label: 'P2 architecture sketch expanded to estimate-ready detail',
       severity: 'hard',
       evaluationHint:
         'Design artifact shows integrations, data flows, system boundaries, owner ' +
-        'for each interface, and explicit deltas from the P2 architecture sketch. ' +
-        'A diagram without owner and interface detail is not build architecture.',
+        'for material interfaces, and explicit deltas from the P2 sketch. Include ' +
+        'detail that changes scope, estimate, risk, or approval; low-level build ' +
+        'specifications remain in delivery.',
       preventsFailureModes: [6, 7],
     },
     {
       id: 'pilot-cohort-named',
-      label: 'Pilot cohort named with inclusion and exclusion logic',
+      label: 'Validation scope identified when applicable to the approved route',
       severity: 'hard',
       evaluationHint:
-        'Execution Roadmap gate package names the pilot cohort as real teams, stores, intents, ' +
-        'users, customers, or data domains, not a generic segment. It also states ' +
-        'who is excluded and why, so P4 cannot cherry-pick success.',
+        'If a pilot or representative validation is needed, name the cohort and ' +
+        'the limits of what it proves. Do not require a business-process pilot ' +
+        'for a technical-only use case when technical validation is sufficient.',
       preventsFailureModes: [5, 8],
     },
     {
       id: 'success-criteria-locked',
-      label: 'Success criteria locked against baseline KPI and source',
+      label: 'Success criteria tied to P2 baseline and route',
       severity: 'hard',
       evaluationHint:
-        'Pilot measurement plan names numeric thresholds, comparison method, ' +
-        'baseline current value, baseline source, measurement owner, and decision ' +
-        'rule for pass/fail. Criteria must be locked before P4 pilot start.',
+        'Define measurable acceptance/validation criteria tied to the P2 baseline ' +
+        'and name the source, owner, and decision rule. P4 plans the roadmap; P3 ' +
+        'does not authorize or start execution.',
       preventsFailureModes: [8, 9],
     },
     {
@@ -388,39 +380,37 @@ export const P3_DESIGN: PhasePack = {
 
   coachingArc: {
     entry:
-      'Start by pinning P2 as the contract: recommended path, architecture sketch, ' +
-      'baseline source, sponsor commitment, scope boundary, kill criterion, and ' +
-      'dissenter. Do not let the conversation drift into solution brainstorming ' +
-      'until those inherited constraints are visible.',
+      'First verify the human-validated P2 solution route is tied to approved evidence. ' +
+      'If it is missing or stale, return to P2 rather than assuming a full redesign. ' +
+      'Carry forward the recommended path, architecture sketch, baseline source, ' +
+      'sponsor commitment, scope boundary, kill criterion, and dissenter.',
     midPhase:
-      'Drive from diagram to roadmap-readiness. Ask owner-by-owner, interface-by-interface, ' +
-      'cohort-by-cohort questions. Force success criteria to become numeric and ' +
-      'traceable to the P2 baseline. Surface dissent and operating-model gaps while ' +
-      'the design can still absorb them.',
+      'Right-size detail to the validated route. Ask only for architecture, process, ' +
+      'ownership, controls, and validation details that materially affect the P4 ' +
+      'estimate. Record internal/vendor/hybrid assumptions and P2 evidence lineage.',
     exit:
-      'Switch to gate-locking posture. Verify findings and CXO interview, but do ' +
-      'not confuse governance completion with readiness. Refuse to call P3 done if ' +
-      'Execution Roadmap would still need clarification on design, cohort, success criteria, ' +
-      'owners, assumptions, or stop rules.',
+      'Confirm human review, evidence citations, route-appropriate design depth, ' +
+      'adoption ownership, and explicit sizing assumptions. Carry unresolved ' +
+      'questions into P4; do not fill gaps with a full solution design or pretend ' +
+      'execution has begun.',
   },
 
   dependencies: {
     requiresFromPrior: [
       'P2 Synthesis: recommended target-state path with stated trade-offs - P3 designs against this, not around it',
-      'P2 Synthesis: architecture sketch with named reviewer - P3 expands it into roadmap-ready architecture',
-      'P2 Synthesis: baseline KPI with current value, source, and measurement method - P3 locks roadmap success criteria against it',
+      'P2 Synthesis: architecture sketch and human-validated solution route - P3 expands only to estimate-ready detail',
+      'P2 Synthesis: baseline KPI with source and method - P3 carries estimate-relevant validation criteria forward',
       'P2 Synthesis: sponsor commitment, decision cadence, and succession owner - P3/P4 use these for design and roadmap decisions',
-      'P2 Synthesis: scope boundary - P3 keeps investigation and execution-roadmap design inside it unless sponsor approves change',
+      'P2 Synthesis: scope boundary - P3 keeps estimate-ready design inside it unless sponsor approves a change',
       'P2 Synthesis: kill criterion - P3 turns it into a roadmap stop/re-baseline rule',
       'P2 Synthesis: named dissenter - P3 must engage, record, or explicitly escalate their objection',
     ],
     producesForNext: [
-      'Detailed design signed off - P4 execution roadmap plans from this design rather than inventing during execution',
-      'Target cohort named with inclusion/exclusion logic - P4 execution roadmap plans phases around the named cohort and records generalisation limits',
-      'Success criteria locked against baseline KPI/source/method - P4 execution roadmap defines observable milestones without moving the finish line',
-      'Phase 3 findings written - P4 execution roadmap inherits accepted risks, open assumptions, and design decisions',
-      'CXO interview complete - P4 execution roadmap has sponsor acceptance of success, failure, and kill/re-baseline consequences',
-      'Operating ownership and support assumptions - P4 execution roadmap defines who can run the capability after approval',
+      'Human-reviewed, route-appropriate estimate-ready design and traceability',
+      'Validation scope and success criteria when applicable to the approved route',
+      'Phase 3 findings with accepted risks, open assumptions, and decisions',
+      'Sponsor decisions and kill/re-baseline conditions carried forward',
+      'Adoption/operating ownership and internal/vendor/hybrid sizing assumptions for P4',
     ],
   },
 

@@ -5,6 +5,51 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { FileCabinetPanel } from "../FileCabinetPanel";
 
 describe("Moves File Cabinet evidence review", () => {
+  it("preserves a deliberate session-file classification through the upload request", async () => {
+    const uploadedForms: FormData[] = [];
+    const fetchMock = jest.fn(async (url: string, init?: RequestInit) => {
+      if (url.includes("/artifacts/upload") && init?.method === "POST") {
+        uploadedForms.push(init.body as FormData);
+        return {
+          ok: true,
+          json: async () => ({
+            ok: true,
+            blobStored: true,
+            evidence: {
+              id: "evidence-session-1",
+              reviewId: "review-session-1",
+              reviewStatus: "pending_review",
+              parseMethod: "markdown-text-extract",
+            },
+          }),
+        } as Response;
+      }
+      return {
+        ok: true,
+        json: async () => ({
+          artifacts: [],
+          pendingEvidenceReviews: [],
+          evidenceReviewStatus: "available",
+        }),
+      } as Response;
+    });
+    global.fetch = fetchMock as typeof fetch;
+
+    render(<FileCabinetPanel moveId="move-1" phase={2} />);
+    fireEvent.change(screen.getByLabelText("File Cabinet upload type"), {
+      target: { value: "session_artifact" },
+    });
+    fireEvent.change(screen.getByLabelText("Upload Move file"), {
+      target: {
+        files: [new File(["approved notes"], "operations_workshop.md", { type: "text/markdown" })],
+      },
+    });
+
+    await screen.findByText(/as a session file.*Human review is required/i);
+    expect(uploadedForms[0]?.get("family")).toBe("session_artifact");
+    expect(uploadedForms[0]?.get("phase")).toBe("2");
+  });
+
   it("lets a reviewer correct parsed facts against source text before approval", async () => {
     let pending = [
       {

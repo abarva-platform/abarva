@@ -44,7 +44,7 @@ function mockMove(overrides: Record<string, unknown> = {}) {
     },
     charter: { functionPackKey: "member_service_agent_assist" },
     functionPackKey: "member_service_agent_assist",
-    phaseLabel: "Understand Current State",
+    phaseLabel: "Discover & Diagnose",
     status: {
       text: "In progress",
       description: "Move is in progress.",

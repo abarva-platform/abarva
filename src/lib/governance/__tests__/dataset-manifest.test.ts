@@ -91,4 +91,47 @@ describe("validateManifest", () => {
     expect(v.ok).toBe(true);
     expect(v.warnings.join(" ")).toMatch(/retrieval-proven/);
   });
+
+  it("declares reviewed Move-scoped prompt context as its own retrieval plan", () => {
+    const v = validateManifest(
+      manifest({ retrieval_plan: "move_scoped_prompt_context" }),
+    );
+
+    expect(v.ok).toBe(true);
+    expect(v.errors).toHaveLength(0);
+    expect(v.warnings).toHaveLength(0);
+  });
+
+  it("resolves Move-scoped datasets from the authenticated Move registry", () => {
+    const v = validateManifest(
+      manifest({
+        client_key: null,
+        tenant_scope: "move_registry",
+        retrieval_plan: "move_scoped_prompt_context",
+      }),
+    );
+
+    expect(v.ok).toBe(true);
+    expect(v.errors).toHaveLength(0);
+  });
+
+  it("rejects a pinned tenant key on a Move-registry-scoped dataset", () => {
+    const v = validateManifest(
+      manifest({ tenant_scope: "move_registry" }),
+    );
+
+    expect(v.ok).toBe(false);
+    expect(v.errors.join(" ")).toMatch(/must not pin a client_key/);
+  });
+
+  it("rejects a Move-registry scope without explicit null client_key", () => {
+    const { client_key: _clientKey, ...withoutClientKey } = manifest({
+      client_key: null,
+      tenant_scope: "move_registry",
+    });
+    const v = validateManifest(withoutClientKey);
+
+    expect(v.ok).toBe(false);
+    expect(v.errors.join(" ")).toMatch(/move_registry scope must not pin/);
+  });
 });

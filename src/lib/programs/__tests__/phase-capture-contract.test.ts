@@ -35,6 +35,34 @@ function captureValues(phase: number): Record<string, string> {
       validatedBy: "Business sponsor",
     });
   }
+  if (phase === 4) {
+    const shared = {
+      pairId: "pair-1",
+      workPackage: "Reporting foundation",
+      role: "Data engineer",
+      lowHours: 10,
+      baseHours: 20,
+      highHours: 30,
+      rateSource: "Planning rate card",
+      inputBasis: "assumption",
+      evidenceReference: "",
+      assumption: "Bounded first release",
+      confidence: "medium",
+      aiEligiblePct: 0,
+      aiToolAssumption: "",
+      humanReviewHours: 0,
+    };
+    values.estimates_capacity = JSON.stringify({
+      currency: "USD",
+      reviewer: "Finance reviewer",
+      reviewConfirmed: true,
+      sourceNotes: "",
+      rows: [
+        { ...shared, deliveryModel: "internal", ratePerHour: 100 },
+        { ...shared, deliveryModel: "vendor", ratePerHour: 150 },
+      ],
+    });
+  }
   return values;
 }
 
@@ -99,6 +127,18 @@ describe("phase-capture-contract", () => {
     ).toBe(false);
   });
 
+  it("does not complete roadmap capture until estimate math and human review are valid", () => {
+    const p4 = captureValues(4);
+    expect(evaluatePhaseCapture(4, p4).complete).toBe(true);
+
+    const model = JSON.parse(p4.estimates_capacity);
+    model.reviewConfirmed = false;
+    p4.estimates_capacity = JSON.stringify(model);
+    const result = evaluatePhaseCapture(4, p4);
+    expect(result.complete).toBe(false);
+    expect(result.missing).toContain("Estimates & capacity");
+  });
+
   it("opens the technical-product P3 contract only after P2 confirms the matching P1 snapshot", () => {
     const p2 = captureValues(2);
     const confirmed = resolveConfirmedSolutionRoute({
@@ -128,5 +168,53 @@ describe("phase-capture-contract", () => {
         approvedEvidenceReferences: ["evidence-p2-1"],
       }),
     ).toBeNull();
+  });
+
+  it("uses bounded estimate-ready P3 capture for limited process change only", () => {
+    const p2 = captureValues(2);
+    const limitedProcess = resolveConfirmedSolutionRoute({
+      businessChangeAssessment,
+      routeValidation: JSON.stringify({
+        ...JSON.parse(p2.solution_route_validation),
+        solutionOutput: "workflow_automation",
+        workflowChange: "limited",
+        selectedRoute: "process_change",
+      }),
+      approvedEvidenceReferences: ["evidence-p2-1"],
+    });
+    expect(
+      getPhaseCaptureSections(3, limitedProcess).map((section) => section.key),
+    ).toEqual([
+      "solution_approach",
+      "workflow_delta",
+      "process_adoption_boundary",
+      "controls_governance",
+      "architecture_integration",
+      "evidence_confidence",
+      "estimate_assumptions",
+      "recommendation",
+    ]);
+
+    const materialProcess = resolveConfirmedSolutionRoute({
+      businessChangeAssessment,
+      routeValidation: JSON.stringify({
+        ...JSON.parse(p2.solution_route_validation),
+        solutionOutput: "workflow_automation",
+        workflowChange: "material",
+        selectedRoute: "process_change",
+      }),
+      approvedEvidenceReferences: ["evidence-p2-1"],
+    });
+    expect(
+      getPhaseCaptureSections(3, materialProcess).map((section) => section.key),
+    ).toEqual([
+      "solution_approach",
+      "operating_model",
+      "process_design",
+      "controls_governance",
+      "architecture_integration",
+      "evidence_confidence",
+      "recommendation",
+    ]);
   });
 });

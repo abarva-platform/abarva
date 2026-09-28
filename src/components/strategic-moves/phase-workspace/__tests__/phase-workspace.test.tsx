@@ -41,10 +41,10 @@ const INTERNAL_TERMS =
 describe('phase-workspace cards render the fixture', () => {
   it('completion guide shows client phase label + session/template counts', () => {
     const html = render(
-      <PhaseCompletionGuideCard phaseLabel="Understand Current State" templates={templatesForPhase('P2')} steps={['Do the thing']} />,
+      <PhaseCompletionGuideCard phaseLabel="Discover & Diagnose" templates={templatesForPhase('P2')} steps={['Do the thing']} />,
     );
     expect(html).toContain('How to complete this phase');
-    expect(html).toContain('Understand Current State');
+    expect(html).toContain('Discover &amp; Diagnose');
     expect(html).toContain('Templates to use');
   });
 
@@ -100,11 +100,11 @@ describe('phase-workspace cards render the fixture', () => {
   it('readiness pack presents the feed-forward for the next phase', () => {
     const html = render(
       <NextPhaseReadinessPackCard
-        toPhaseLabel="Build the Plan"
+        toPhaseLabel="Roadmap & Business Case"
         sections={[{ label: 'Selected approach', values: [F.p4WorkstreamInputsPack.selectedSolutionApproach] }]}
       />,
     );
-    expect(html).toContain('Ready to start: Build the Plan');
+    expect(html).toContain('Ready to start: Roadmap &amp; Business Case');
     expect(html).toContain('never starts blank');
     expect(html).toContain('Option B');
   });
@@ -179,7 +179,7 @@ describe('phase task checklist (increment 4) — Stripe-style, real-signal', () 
     const html = render(
       <MovePhaseWorkspacePanel
         phaseNum={5}
-        phaseLabel="P5 · Prepare to Execute"
+        phaseLabel="P5 · Mobilize & Handoff"
         nextPhaseLabel="Tower handoff"
         evidence={[{ priority: 'required', status: 'covered' }]}
         gate={[{ completed: true, severity: 'hard' }]}
@@ -209,7 +209,7 @@ describe('phase task checklist (increment 4) — Stripe-style, real-signal', () 
 });
 
 describe('feed-forward card (increment 6) — real current-state carried forward', () => {
-  const pack = buildFeedForwardPack(2, 'P3 Choose the Approach', {
+  const pack = buildFeedForwardPack(2, 'P3 Design Future State', {
     whereToStart: 'Start with data governance.',
     gaps: [{ capability: 'Data ownership model', severity: 'foundational' }],
     hardGaps: ['System of record unconfirmed'],
@@ -221,17 +221,17 @@ describe('feed-forward card (increment 6) — real current-state carried forward
 
   it('renders the "Prepared for" headline, carry-forward bullets, and named sections', () => {
     const html = render(<NextPhaseFeedForwardCard pack={pack} />);
-    expect(html).toContain('Prepared for P3 Choose the Approach');
+    expect(html).toContain('Prepared for P3 Design Future State');
     expect(html).toContain('AbarVa will carry forward');
     expect(html).toContain('Design inputs');
     expect(html).toContain('Data ownership model');
     expect(html).toContain('Evidence gaps');
     expect(html).toContain('Baseline metrics');
-    expect(html).toContain('Recommended P3 Choose the Approach focus');
+    expect(html).toContain('Recommended P3 Design Future State focus');
   });
 
   it('unpopulated sections render "Needs confirmation", never fabricated', () => {
-    const sparse = buildFeedForwardPack(3, 'P4 Build the Plan', {}); // no approach/workstreams
+    const sparse = buildFeedForwardPack(3, 'P4 Roadmap & Business Case', {}); // no approach/workstreams
     const html = render(<NextPhaseFeedForwardCard pack={sparse} />);
     expect(html).toContain('Selected approach');
     expect(html).toContain('Needs confirmation');
@@ -242,7 +242,7 @@ describe('feed-forward card (increment 6) — real current-state carried forward
       <MovePhaseWorkspacePanel
         phaseNum={2}
         phaseLabel="P2 · Discover"
-        nextPhaseLabel="P3 Choose the Approach"
+        nextPhaseLabel="P3 Design Future State"
         feedForward={{
           gaps: [{ capability: 'Data ownership model', severity: 'foundational' }],
           hardGaps: ['System of record unconfirmed'],
@@ -252,7 +252,7 @@ describe('feed-forward card (increment 6) — real current-state carried forward
         }}
       />,
     );
-    expect(withFF).toContain('Prepared for P3 Choose the Approach');
+    expect(withFF).toContain('Prepared for P3 Design Future State');
   });
 });
 
@@ -356,11 +356,11 @@ describe('approved Inputs Pack (increment 10) — inherited, Move-scoped, not pr
     moveId: 'm1',
     sourcePhase: 2,
     targetPhase: 3,
-    targetPhaseLabel: 'P3 Choose the Approach',
+    targetPhaseLabel: 'P3 Design Future State',
     approvedBy: 'person-1',
     approvedAt: '2026-07-08T00:00:00.000Z',
     sourceUploadId: 'decision.md',
-    feedForward: buildFF(2, 'P3 Choose the Approach', {
+    feedForward: buildFF(2, 'P3 Design Future State', {
       gaps: [{ capability: 'Data ownership model', severity: 'foundational' }],
       hardGaps: ['System of record unconfirmed'],
       softGaps: [],
@@ -466,8 +466,8 @@ describe('governance: no internal jargon or raw keys leak to the DOM', () => {
       'Recommended solution building blocks',
       'Solution options',
       'What AbarVa found',
-      'Ready to start: Build the Plan',
-      'Each block becomes a workstream',
+      'Ready to start: Roadmap &amp; Business Case',
+      'Each approved building block becomes a roadmap workstream',
       'What changed vs. the AbarVa draft',
     ]) {
       expect(html).toContain(needle);

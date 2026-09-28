@@ -1,7 +1,7 @@
-// P4 Execution Roadmap · Phase Intelligence Pack
+// P4 Roadmap & Business Case · Phase Intelligence Pack
 //
 // P4 is not build execution. It is where the signed solution design becomes an
-// executable delivery roadmap that external delivery teams, vendors, Jira,
+// estimate-ready delivery roadmap that external delivery teams, vendors, Jira,
 // Smartsheet, ServiceNow, and Tower can run against after AbarVa's strategy
 // lifecycle completes. Nexus must keep the user out of accidental build mode.
 
@@ -11,7 +11,7 @@ export const P4_BUILD: PhasePack = {
   phase: 4,
   label: 'P4 Roadmap & Business Case',
   outcome:
-    'An execution-ready roadmap package that translates the signed P3 solution design into external delivery workstreams, phases, milestones, estimates, assumptions, dependencies, owners, governance cadence, success criteria, and Tower monitoring requirements. P4 is complete when a sponsor can see exactly how execution will run outside AbarVa, what it will require, what choices drive the estimate range, which milestones matter, and what evidence Tower will monitor after funding is approved. P4 is not where Nexus executes the build.',
+    'An estimate-ready roadmap and business-case package that translates the signed P3 solution design into external delivery workstreams, phases, milestones, effort and cost ranges, assumptions, dependencies, owners, governance cadence, success criteria, and Tower monitoring requirements. P4 is complete when a sponsor can see how post-approval execution could run outside AbarVa, what it will require, what choices drive the estimate range, which milestones matter, and what evidence Tower will monitor after authorization. P4 plans and estimates; it does not execute the project.',
 
   definitionOfDone: [
     {
@@ -75,7 +75,7 @@ export const P4_BUILD: PhasePack = {
       label: 'Tower monitoring requirements drafted',
       severity: 'soft',
       evaluationHint:
-        'Roadmap names weekly/monthly status feed requirements, milestone/KPI fields, external source systems, alert thresholds, and data owner for P6 Tower Handoff.',
+        'Roadmap names weekly/monthly status feed requirements, milestone/KPI fields, external source systems, alert thresholds, and data owner for the Tower handoff.',
       preventsFailureModes: [5, 9],
     },
   ],
@@ -108,7 +108,7 @@ export const P4_BUILD: PhasePack = {
       {
         id: 'tower-fields',
         text: 'What data must Tower receive weekly or monthly to know execution is drifting?',
-        why: 'P6 handoff fails if monitoring requirements are invented after funding approval.',
+        why: 'Tower handoff fails if monitoring requirements are invented after funding approval.',
         expectedAnswerShape: 'Milestone/KPI/status fields, source system, owner, cadence, threshold.',
         preventsFailureModes: [5, 9],
       },
@@ -145,7 +145,7 @@ export const P4_BUILD: PhasePack = {
       id: 'unobservable-roadmap',
       label: 'Unobservable Roadmap',
       detectionHint: 'Execution plan lacks milestone/KPI data feeds for Tower.',
-      whatToFlag: 'P6 cannot monitor execution if P4 does not specify the reporting contract.',
+      whatToFlag: 'Tower cannot monitor post-approval execution if P4 does not specify the reporting contract.',
       mitigation: 'Add Tower feed requirements, owners, cadence, thresholds, and escalation rules.',
       preventsFailureModes: [5, 9],
     },
@@ -153,7 +153,7 @@ export const P4_BUILD: PhasePack = {
 
   coachingArc: {
     entry:
-      'Anchor the user: P4 is execution planning, not execution. Pull forward P3 design and P2 promise contract, then ask for workstream logic and external delivery boundary.',
+      'Anchor the user: P4 creates the roadmap, estimate, and business case; it does not execute the project. Pull forward P3 design and P2 promise contract, then ask for workstream logic and the external delivery boundary.',
     midPhase:
       'Force roadmap specificity: phases, milestones, owners, assumptions, estimates, dependencies, governance cadence, technology gaps, and Tower fields. Challenge flat task lists and unsupported estimates.',
     exit:
@@ -163,6 +163,7 @@ export const P4_BUILD: PhasePack = {
   dependencies: {
     requiresFromPrior: [
       'P3 signed solution / program design',
+      'Approved-route validation scope and success criteria, when applicable',
       'P2 promise contract, baseline, and kill criterion',
       'Known architecture, data, security, operating, and vendor implications',
       'Target cohort with inclusion/exclusion logic and generalisation limits',
@@ -174,7 +175,7 @@ export const P4_BUILD: PhasePack = {
       'Estimate range with assumptions',
       'Technology gap manifest',
       'Responsibility matrix',
-      'Tower monitoring requirements for P6 handoff',
+      'Tower monitoring requirements for handoff',
     ],
   },
 

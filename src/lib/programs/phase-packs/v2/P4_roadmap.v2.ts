@@ -8,7 +8,7 @@ export const P4_ROADMAP_PACK: PhasePack = {
   phase_id: 4,
   phase_name: 'P4 Roadmap & Business Case',
   phase_intent:
-    'Convert the P3-signed design into an executable plan with economics. P4 answers five questions: How do we sequence the work? How much does it cost? What value does it deliver and when? How do we govern and resource it? How do we prepare the organization for change and measure success after handoff? P4 is the last phase before execution and the correct phase to define Tower metrics — once P5 begins, measurement accountability must already be established.',
+    'Convert the P3-signed design into an estimate-ready roadmap and business case. P4 answers five questions: How could work be sequenced after approval? What effort and cost range does it require? What value could it deliver and when? How should it be governed and resourced? How will success be measured after handoff? P4 plans and estimates; it does not execute. Define Tower metrics here so they are ready for mobilization and external execution after required approvals.',
 
   entry_criteria: [
     {
@@ -62,7 +62,7 @@ export const P4_ROADMAP_PACK: PhasePack = {
     {
       step_id: 'P4.2',
       step_name: 'Resource and cost plan',
-      step_goal: 'Estimate the total cost and resource requirements: internal headcount, external SI/vendor, license costs, and infrastructure.',
+      step_goal: 'Build transparent low/base/high effort and cost scenarios by work package and role. Separate internal capacity/rates from vendor rates, show effort × rate arithmetic, and expose evidence, assumptions, confidence, and human-adjustable inputs.',
       required_user_inputs: ['Workstream plan from P4.1', 'Sourcing strategy from P3.4'],
       accepted_uploads: [
         'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
@@ -70,20 +70,22 @@ export const P4_ROADMAP_PACK: PhasePack = {
       ],
       patterns_to_load: ['seed-patterns-meta'],
       questions_to_ask: [
-        'What internal resources are needed, and are they available or must they be backfilled?',
-        'What is the estimated external cost — SI fees, SaaS licenses, infrastructure?',
-        'What is the investment phasing — when does spend occur relative to value realization?',
+        'Which roles and skills are needed, with low/base/high effort, internal capacity, loaded-rate source, and backfill assumptions?',
+        'Which work packages are internal, vendor-delivered, or hybrid, and what evidence supports each rate and effort assumption?',
+        'Where could Claude Code/Codex or similar product-development accelerators change effort, and how are human review, testing, security, and rework represented?',
+        'What other costs and dependencies apply, and when does spend occur relative to value realization?',
       ],
       artifact_sections_to_update: ['business_case.cost_plan', 'business_case.resource_plan'],
-      evidence_to_capture: ['cost_estimates_with_assumptions', 'resource_requirements', 'cost_phasing'],
+      evidence_to_capture: ['role_based_effort_and_rate_inputs', 'internal_vendor_hybrid_scenarios', 'ai_accelerator_assumptions_and_controls', 'cost_phasing', 'human_review_record'],
       quality_checks: [
-        'AH-P4-2: cost estimates must state their basis — not stated as precise figures without basis',
-        'Resource plan identifies named owners for key roles or flags open headcount',
+        'AH-P4-2: cost estimates show arithmetic, source or explicit assumption, range, and confidence',
+        'Internal and vendor scenarios are distinguishable and roles/rates/capacity are editable by reviewers',
+        'AI accelerator effects are assumptions, not guaranteed savings, and include human review/testing effort',
       ],
       completion_criteria: [
         'total_cost_estimated = true',
-        'cost_assumptions_stated = true',
-        'resource_plan_complete = true',
+        'cost_assumptions_and_ranges_stated = true',
+        'role_rate_and_delivery_model_inputs_reviewable = true',
       ],
     },
     {
@@ -121,7 +123,7 @@ export const P4_ROADMAP_PACK: PhasePack = {
     {
       step_id: 'P4.4',
       step_name: 'Tower metric plan',
-      step_goal: 'Define the Tower metrics: how value realization will be tracked in /tower after handoff. Every value lever must have at least one Tower metric. This is a P4-critical step — do not defer to P5.',
+      step_goal: 'Define the Tower metrics: how value realization will be tracked after handoff. Every value lever must have at least one Tower metric. This is a P4-critical step — do not defer beyond mobilization.',
       required_user_inputs: [
         'Value model from P4.3',
         'Success metrics from P1',
@@ -151,7 +153,7 @@ export const P4_ROADMAP_PACK: PhasePack = {
     {
       step_id: 'P4.5',
       step_name: 'P4 gate readiness and funding authorization',
-      step_goal: 'Self-evaluate P4→P5 gate criteria. Produce funding authorization package for sponsor sign-off.',
+      step_goal: 'Self-evaluate P4→P5 gate criteria. Produce the roadmap and business-case decision package for sponsor sign-off.',
       required_user_inputs: ['Completed P4.1–P4.4', 'Sponsor review'],
       accepted_uploads: ['application/pdf', 'text/plain', 'text/markdown'],
       patterns_to_load: ['PAT-PRG-001'],
@@ -175,12 +177,12 @@ export const P4_ROADMAP_PACK: PhasePack = {
   ],
 
   phase_outcome:
-    'Executable roadmap and business case with sponsor funding authorization: workstream plan with milestones, resource and cost plan with assumptions, business case (NPV, payback, sensitivity), Tower metric plan with named owners, and P4→P5 gate readiness summary.',
+    'Approved roadmap and business-case decision package: workstream plan with milestones, resource and cost ranges with assumptions, business case and sensitivity, Tower metric plan with named owners, and P4→P5 gate readiness summary. Project execution remains outside Moves and starts only after required approvals and handoff.',
 
   phase_scope_boundary: {
     in: [
       'Workstream decomposition and milestone planning',
-      'Resource and cost estimation',
+      'Role-based effort and cost estimates with internal/vendor/hybrid scenarios, ranges, rate basis, and human-adjustable assumptions',
       'Business case (NPV, payback, sensitivity)',
       'Tower metric plan (per value lever, with owners)',
       'Change management plan',
@@ -189,14 +191,14 @@ export const P4_ROADMAP_PACK: PhasePack = {
     out: [
       'Detailed project management planning (delivery team scope)',
       'Architecture specifications (P3 output — do not redesign)',
-      'Execution activities (P5 scope)',
+      'Project execution (outside Moves, after approval and P5 handoff)',
       'Vendor selection (source event scope — flag if needed)',
     ],
   },
 
   agent_posture_coaching_arc: {
     entry: 'Begin with the workstream plan — sequence is more important than precision at P4. Once the workstreams are clear, cost estimation can proceed. Do not start the business case before the workstream plan is complete.',
-    mid: 'Drive business case from the FIN-BASE-P2 baseline — every value claim must trace to the baseline. When the team tries to use benchmarks or analogies instead of the baseline, redirect: "Let us use the baseline we established in P2."',
+    mid: 'Build estimate math transparently: roles × effort × rate, other cost drivers, low/base/high cases, confidence, and evidence versus assumption. Keep internal, vendor, and hybrid cases separate. Treat AI development accelerators as adjustable productivity assumptions that include human review and testing. Drive value claims from P2 evidence; do not invent numbers.',
     exit: 'Before the gate passes, confirm the Tower metric plan is complete. This is P4-critical — it cannot be deferred to P5. Every value lever must have at least one Tower metric with a named owner.',
   },
 
@@ -239,7 +241,7 @@ export const P4_ROADMAP_PACK: PhasePack = {
       label: 'Sponsor funding authorization',
       type: 'hard',
       source: 'Upload or session capture',
-      evaluation_hint: 'Named sponsor has approved funding for P5 execution.',
+      evaluation_hint: 'The roadmap records the sponsor decision and any funding authority required before external execution.',
     },
   ],
 
@@ -247,7 +249,7 @@ export const P4_ROADMAP_PACK: PhasePack = {
     { id: 'EX-P4-1', description: 'Workstream plan with milestones and critical path', type: 'hard' },
     { id: 'EX-P4-2', description: 'Business case complete (NPV, payback, sensitivity)', type: 'hard' },
     { id: 'EX-P4-3', description: 'Tower metric plan complete (all value levers, named owners)', type: 'hard' },
-    { id: 'EX-P4-4', description: 'Sponsor approved funding for P5', type: 'hard' },
+    { id: 'EX-P4-4', description: 'Sponsor decision and required funding authority recorded', type: 'hard' },
     { id: 'EX-P4-5', description: 'Change management plan drafted', type: 'soft' },
   ],
 
@@ -276,9 +278,9 @@ export const P4_ROADMAP_PACK: PhasePack = {
     },
     {
       id: 'GC-P4-4',
-      label: 'Sponsor approved funding for P5',
+      label: 'Sponsor decision recorded for P5 mobilization',
       type: 'hard',
-      evaluation: 'Named sponsor has reviewed and approved the business case and authorized P5 funding.',
+      evaluation: 'Named sponsor has reviewed the business case and recorded the funding decision needed for P5 mobilization.',
       gating_rule: 'blocks_promotion',
       pilot_approval_note: 'Sponsor must confirm.',
     },
@@ -301,9 +303,9 @@ export const P4_ROADMAP_PACK: PhasePack = {
     },
     {
       id: 'AP-P4-2',
-      label: 'Tower metrics deferred to P5',
-      detection_hint: 'Team says Tower metrics will be defined after P5 starts or during execution',
-      what_to_flag: 'Tower metrics must be defined at P4. Once execution starts in P5, the team is focused on delivery — measurement accountability is established now or it slips.',
+      label: 'Tower metrics deferred beyond P4',
+      detection_hint: 'Team says Tower metrics will be defined after P5 handoff or when project execution starts',
+      what_to_flag: 'Tower metrics must be defined in the P4 roadmap. They must be ready before mobilization and external execution — not invented after handoff.',
       mitigation: 'Block gate if Tower metric plan is incomplete. Redirect: "Which value lever should we start with — let us define its Tower metric now."',
     },
     {
@@ -351,7 +353,7 @@ export const P4_ROADMAP_PACK: PhasePack = {
   first_message: [
     {
       variant: 'default',
-      template: 'I am scoped to [Move name], currently in P4 Roadmap & Business Case. The P3 design is approved. P4 goal: build the executable plan and economics — workstream plan, business case traced to FIN-BASE-P2, and Tower metric plan. Let us start with the workstream decomposition.',
+      template: 'I am scoped to [Move name], currently in P4 Roadmap & Business Case. The P3 design is approved. P4 goal: produce an estimate-ready roadmap and business case — workstreams, cost and effort ranges with assumptions, value logic traced to approved baselines, and Tower metrics. Moves plans the work; external project execution starts only after approval and handoff. Let us start with workstream decomposition.',
     },
   ],
 
@@ -359,8 +361,8 @@ export const P4_ROADMAP_PACK: PhasePack = {
     {
       id: 'FX-P4-1',
       name: 'Tower metrics deferred',
-      description: 'Team says Tower metrics will be defined after P5 starts',
-      input: { statement: 'We will define the Tower metrics once execution begins in P5.' },
+      description: 'Team says Tower metrics will be defined after P5 handoff',
+      input: { statement: 'We will define the Tower metrics after P5 handoff.' },
       expected_behaviors: [
         'Tower metric plan authority fires',
         'Nexus blocks Tower metric deferral',
@@ -385,7 +387,7 @@ export const P4_ROADMAP_PACK: PhasePack = {
   coaching_rules: [
     {
       id: 'CR-P4-1',
-      rule: 'When Tower metrics are deferred to P5, block and redirect to define them now',
+      rule: 'When Tower metrics are deferred beyond P4, block and redirect to define them now',
       trigger: "Team attempts to defer Tower metric plan to P5",
       required_behavior: '"Tower metrics must be defined at P4. Which value lever should we start with — let us define its Tower metric now."',
       prohibited_behavior: 'Allowing Tower metric plan to be deferred to P5',
@@ -457,13 +459,13 @@ export const P4_ROADMAP_PACK: PhasePack = {
     rule: 'TMP-P4-AUTHORITY',
     trigger: 'roadmap_draft_exists AND value_model_exists AND tower_metric_plan_incomplete',
     opening_message: 'We have the roadmap and value model. Before we proceed to the gate, we need to define the Tower metrics — how we will know the value is materializing after handoff. Which value lever should we start with?',
-    deferral_redirect: 'Tower metrics must be defined at P4 — not P5. Once execution starts, the team is focused on delivery. The measurement accountability has to be set now. Which lever do you want to start with?',
+    deferral_redirect: 'Tower metrics must be defined in the P4 roadmap — not deferred until after P5 handoff. External execution can only be monitored if the measures, owners, and cadence are ready before work starts. Which value lever should we define first?',
     prohibited_behavior: 'Accepting "we will define Tower metrics in P5" or "the delivery team will set them up"',
     required_pattern: '[Value lever name]: Tower metric = [metric name], baseline = [FIN-BASE-P2 value], target = [target value], owner = [named individual], reporting cadence = [monthly/quarterly].',
     gate_block: 'GC-P4-3',
     triggers: [
       'Team attempts to pass P4 gate without Tower metric plan',
-      'Team says Tower metrics will be defined during P5 execution',
+      'Team says Tower metrics will be defined after P5 handoff',
       'Tower metric plan is incomplete when roadmap and business case are complete',
     ],
   },

@@ -289,6 +289,48 @@ describe("evaluateGate", () => {
     ]);
   }
 
+  function addApprovedLimitedProcessRouteCapture() {
+    const businessChangeAssessment = {
+      expectedWorkflowChange: "limited",
+      expectedRoleAccountabilityChange: "none",
+      adoptionOwner: "Business process owner",
+      adoptionResponsibility: "business",
+      evidenceReference: "approved-evidence-1",
+      validatedBy: "Sponsor",
+    };
+    modulesFixture = [
+      {
+        module_key: "phase_1_business_change_assessment",
+        status: "completed",
+        state_jsonb: { value: JSON.stringify(businessChangeAssessment) },
+      },
+      {
+        module_key: "phase_2_solution_route_validation",
+        status: "completed",
+        state_jsonb: {
+          value: JSON.stringify({
+            businessChangeAssessmentSnapshot: businessChangeAssessment,
+            solutionOutput: "workflow_automation",
+            workflowChange: "limited",
+            roleAccountabilityChange: "none",
+            evidenceReference: "approved-evidence-1",
+            decision: "confirm",
+            selectedRoute: "process_change",
+            correctionRationale: "",
+            validatedBy: "Sponsor",
+          }),
+        },
+      },
+    ];
+    listApprovedPhaseEvidenceMock.mockResolvedValue([
+      {
+        evidenceId: "approved-evidence-1",
+        title: "Approved discovery notes",
+        familyKey: "workshop_notes",
+      },
+    ]);
+  }
+
   it("blocks P2 to P3 when the route decision has no approved evidence lineage", async () => {
     getProgramByIdMock.mockResolvedValue({
       id: "program-1",
@@ -763,6 +805,69 @@ describe("evaluateGate", () => {
     expect(result.failedChecks).toEqual(
       expect.arrayContaining([
         expect.objectContaining({ check: "design_approved", severity: "hard" }),
+      ]),
+    );
+  });
+
+  it("requires the bounded process-change brief as well as architecture and trace sign-off", async () => {
+    getProgramByIdMock.mockResolvedValue({
+      id: "program-1",
+      currentPhase: 3,
+      archetype: null,
+    });
+    addApprovedLimitedProcessRouteCapture();
+    deliverablesFixture = [
+      {
+        id: "architecture",
+        deliverable_type_key: "target_state_architecture",
+        status: "signed_off",
+      },
+      {
+        id: "trace",
+        deliverable_type_key: "requirements_traceability",
+        status: "signed_off",
+      },
+    ];
+    roleApprovalsFixture = ["technology", "risk_security"].map((role) => ({
+      role,
+      status: "approved",
+      approver_user_id: `reviewer-${role}`,
+      approver_name: null,
+      outstanding_conditions: null,
+      decided_at: "2026-09-28T00:00:00.000Z",
+    }));
+
+    const missingProcessBrief = await evaluateGate(
+      { clientId: "client-1", userId: "person-1" },
+      "program-1",
+      3,
+      4,
+    );
+    expect(missingProcessBrief.failedChecks).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ check: "design_approved", severity: "hard" }),
+      ]),
+    );
+
+    deliverablesFixture.push({
+      id: "process-brief",
+      deliverable_type_key: "process_change_estimate_brief",
+      status: "signed_off",
+    });
+    const signedOffProcessBrief = await evaluateGate(
+      { clientId: "client-1", userId: "person-1" },
+      "program-1",
+      3,
+      4,
+    );
+    expect(signedOffProcessBrief.failedChecks).not.toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ check: "design_approved" }),
+      ]),
+    );
+    expect(signedOffProcessBrief.failedChecks).not.toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ check: "requirements_design_outcome_trace" }),
       ]),
     );
   });

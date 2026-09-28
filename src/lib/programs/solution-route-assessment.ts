@@ -59,6 +59,11 @@ export interface SolutionRouteValidation {
 export interface ConfirmedSolutionRoute {
   route: Exclude<SolutionRoute, "unresolved">;
   recommendation: SolutionRoute;
+  solutionOutput: SolutionOutputType;
+  workflowChange: Exclude<ChangeImpactLevel, "unknown">;
+  roleAccountabilityChange: Exclude<ChangeImpactLevel, "unknown">;
+  adoptionOwner: string;
+  adoptionResponsibility: BusinessChangeAssessment["adoptionResponsibility"];
   decision: "confirm" | "correct";
   evidenceReference: string;
   validatedBy: string;
@@ -230,6 +235,11 @@ export function resolveConfirmedSolutionRoute(args: {
   return {
     route: validation.selectedRoute,
     recommendation,
+    solutionOutput: validation.solutionOutput,
+    workflowChange: validation.workflowChange,
+    roleAccountabilityChange: validation.roleAccountabilityChange,
+    adoptionOwner: business.adoptionOwner,
+    adoptionResponsibility: business.adoptionResponsibility,
     decision: validation.decision,
     evidenceReference: validation.evidenceReference,
     validatedBy: validation.validatedBy,
@@ -238,6 +248,66 @@ export function resolveConfirmedSolutionRoute(args: {
         ? validation.correctionRationale
         : `Confirmed system recommendation: ${SOLUTION_ROUTE_LABELS[recommendation]}.`,
   };
+}
+
+export function formatSolutionRouteDepthForPrompt(
+  route: ConfirmedSolutionRoute | null,
+): string {
+  if (!route) {
+    return [
+      "ROUTE GUARD: No current solution route is validated against approved evidence.",
+      "Do not assume a technical-only, process-change, or operating-model route; do not build route-specific deliverables.",
+      "Return to discovery to validate the recommendation with approved evidence before deciding design depth.",
+    ].join(" ");
+  }
+
+  const scope =
+    route.route === "technical_product"
+      ? "Use a compact technical design sufficient to estimate: target architecture, data/report outputs, integrations, controls, dependencies, and sizing assumptions. Do not request an end-to-end process redesign or a full target operating model. Keep training/adoption with the recorded business owner unless the validated assessment says otherwise."
+      : route.route === "process_change" &&
+          route.workflowChange !== "material" &&
+          route.roleAccountabilityChange !== "material"
+        ? "Capture only the process delta, affected handoffs, role/adoption boundary, and controls needed to estimate the change. Do not design the entire future process or operating model; leave detailed redesign to the approved delivery roadmap."
+        : "Right-size process and operating-model design to the material workflow or accountability changes evidenced in P2. Define the target-state elements needed to estimate scope and dependencies, not a complete implementation specification or project execution plan.";
+
+  return [
+    `VALIDATED SOLUTION ROUTE: ${SOLUTION_ROUTE_LABELS[route.route]}.`,
+    `Output: ${route.solutionOutput}; workflow change: ${route.workflowChange}; role/accountability change: ${route.roleAccountabilityChange}.`,
+    `Adoption owner: ${route.adoptionOwner} (${route.adoptionResponsibility}). Evidence record: ${route.evidenceReference}; validated by: ${route.validatedBy}.`,
+    `P3 depth: ${scope}`,
+    "The design phase defines only the route-appropriate detail needed to estimate. The subsequent estimate must show transparent low/base/high effort and cost scenarios with roles, capacity, internal and vendor rates, assumptions, and an editable human-review step. Where relevant, identify product-development skills and Claude Code/Codex or similar accelerators as explicit productivity assumptions, never guaranteed savings; include security, quality, and human-review effort. The final strategy phase prepares mobilization and handoff; project execution remains outside Moves.",
+  ].join(" ");
+}
+
+export function formatSolutionRouteForP4Prompt(
+  route: ConfirmedSolutionRoute | null,
+): string {
+  if (!route) {
+    return [
+      "ESTIMATE SCOPE GUARD: No current route is validated against approved evidence.",
+      "Use the approved P3 artifact as the scope boundary; do not infer a process or operating-model redesign from the use-case title.",
+      "Mark route-dependent estimate items as open assumptions and require human resolution before final approval.",
+    ].join(" ");
+  }
+
+  const routeBoundary =
+    route.route === "technical_product"
+      ? "Estimate only the approved technical/data product scope. Do not add end-to-end process redesign or a full operating-model workstream. Carry the named business adoption owner and responsibility forward."
+      : route.route === "process_change" &&
+          route.workflowChange !== "material" &&
+          route.roleAccountabilityChange !== "material"
+        ? "Estimate the bounded workflow delta only. Do not add full process redesign or operating-model work unless approved evidence shows material role/accountability change."
+        : "Estimate the material workflow/accountability changes established in approved discovery and design evidence; do not silently expand beyond that boundary.";
+
+  return [
+    `APPROVED SCOPE BASIS: ${SOLUTION_ROUTE_LABELS[route.route]}.`,
+    `Output: ${route.solutionOutput}; workflow change: ${route.workflowChange}; role/accountability change: ${route.roleAccountabilityChange}.`,
+    `Adoption owner: ${route.adoptionOwner} (${route.adoptionResponsibility}). Route evidence: ${route.evidenceReference}; validated by: ${route.validatedBy}.`,
+    routeBoundary,
+    "Show low/base/high effort and cost with work package, role, effort × rate arithmetic, internal/vendor/hybrid scenario, rate source, confidence, evidence-versus-assumption status, and named human reviewer. Keep inputs editable and do not present the estimate as final until human review.",
+    "Where Claude Code/Codex or similar accelerators apply, model productivity as an editable assumption and include human review, testing, security, and rework effort; never assert automatic savings.",
+    "This phase plans and estimates; the final strategy phase prepares handoff; execution remains outside Moves.",
+  ].join(" ");
 }
 
 export function isBusinessChangeAssessmentComplete(raw: unknown): boolean {

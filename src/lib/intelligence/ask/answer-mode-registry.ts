@@ -6,6 +6,7 @@ import {
   STRATEGY_TO_MOVES_EXECUTION_CONTRACT,
   type AbarvaAnswerMode,
 } from "./response-policy";
+import { PHASE_LABELS } from "@/lib/programs/phase-labels";
 
 export type CxoAnswerModeKey =
   | AbarvaAnswerMode
@@ -55,12 +56,12 @@ const ABARVA_SURFACE_PLAN_SENTENCE =
   "Have Intelligence frame the executive bet, Home verify current-state systems, data, owners, and gaps, Moves turn it into governed phase work, Source test vendor/commercial levers when relevant, and Tower track value, adoption, risk, and funding evidence.";
 
 export const MOVES_EXECUTION_PHASE_LABELS = [
-  "P0 Originate",
-  "P1 Charter",
-  "P2 Discover & Diagnose",
-  "P3 Design Future State",
-  "P4 Roadmap & Business Case",
-  "P5 Approval & Mobilization",
+  PHASE_LABELS[0],
+  PHASE_LABELS[1],
+  PHASE_LABELS[2],
+  PHASE_LABELS[3],
+  PHASE_LABELS[4],
+  PHASE_LABELS[5],
   "Tower Track Outcomes",
 ] as const;
 
@@ -84,18 +85,18 @@ export function ensureMovesExecutionPhaseTable(text: string): string {
       (label) => !presentPhaseLabels.includes(label),
     ).map((label) => {
       switch (label) {
-        case "P0 Originate":
+        case PHASE_LABELS[0]:
           return "- P0 Originate: frame the bet, sponsor, decision owner, and why-now logic.";
-        case "P1 Charter":
+        case PHASE_LABELS[1]:
           return "- P1 Charter: define scope, sponsor, success metric, and decision cadence.";
-        case "P2 Discover & Diagnose":
+        case PHASE_LABELS[2]:
           return "- P2 Discover & Diagnose: ground systems, data, owners, contracts, gaps, and evidence boundaries.";
-        case "P3 Design Future State":
+        case PHASE_LABELS[3]:
           return "- P3 Design Future State: compare options by value, readiness, risk, and dependency.";
-        case "P4 Roadmap & Business Case":
+        case PHASE_LABELS[4]:
           return "- P4 Roadmap & Business Case: turn the chosen approach into workstreams, milestones, risks, and funding asks.";
-        case "P5 Approval & Mobilization":
-          return "- P5 Approval & Mobilization: confirm owners, controls, vendors, adoption plan, and launch readiness.";
+        case PHASE_LABELS[5]:
+          return "- P5 Mobilize & Handoff: confirm owners, controls, adoption plan, and Tower handoff readiness; project execution starts after roadmap approval.";
         case "Tower Track Outcomes":
           return "- Tower Track Outcomes: track adoption, KPI movement, benefits, risks, and funding gates.";
       }
@@ -114,7 +115,7 @@ export function ensureMovesExecutionPhaseTable(text: string): string {
     "- P2 Discover & Diagnose: Home grounds systems, data, owners, contracts, gaps, and evidence boundaries. Output: current-state evidence pack.",
     "- P3 Design Future State: Moves compares options by value, readiness, risk, and dependency. Output: recommended approach and stop/go gate.",
     "- P4 Roadmap & Business Case: Moves turns the chosen approach into workstreams, milestones, risks, and funding asks. Output: roadmap and business case.",
-    "- P5 Approval & Mobilization: Moves confirms owners, controls, vendors, adoption plan, and launch readiness. Output: execution-ready plan.",
+    "- P5 Mobilize & Handoff: Moves confirms owners, controls, adoption plan, and Tower handoff readiness. Output: mobilization package; execution begins after roadmap approval.",
     "- Tower Track Outcomes: Tower tracks adoption, KPI movement, benefits, risks, and funding gates for accountable owner review. Output: value-realization scorecard.",
   ].join("\n");
 
@@ -356,7 +357,7 @@ export const CXO_ANSWER_MODE_REGISTRY = {
       "How would AbarVa solve this for supply-chain AI top bets? Include Intelligence, Home, Moves, Source, and Tower.",
     systemContract: STRATEGY_TO_ABARVA_SOLUTION_CONTRACT,
     promptDirective:
-      "ACTIVE ANSWER MODE: strategy_to_abarva_solution. Build the answer as a compact AbarVa Pyramid Brief, not a mini deck. Use exactly 3 short paragraphs by default: Answer, Proof, Move. The Move paragraph must explain the AbarVa path naturally: Intelligence frames the bet, Home validates current-state evidence, Moves turns it into governed execution, Source checks vendor/commercial levers when relevant, and Tower tracks value/adoption/risk evidence. Do not create a long surface-by-surface section unless the user explicitly asks for a deep implementation plan.",
+      "ACTIVE ANSWER MODE: strategy_to_abarva_solution. Build the answer as a compact AbarVa Pyramid Brief, not a mini deck. Use exactly 3 short paragraphs by default: Answer, Proof, Move. The Move paragraph must explain the AbarVa path naturally: Intelligence frames the bet, Home validates current-state evidence, Moves shapes the approved roadmap and mobilization handoff, Source checks vendor/commercial levers when relevant, and Tower tracks post-approval execution and value/adoption/risk evidence. Do not create a long surface-by-surface section unless the user explicitly asks for a deep implementation plan.",
     deterministicFallback: ensureAbarvaSolutionBrief,
   },
   strategy_to_moves_execution: {
@@ -377,8 +378,7 @@ export const CXO_ANSWER_MODE_REGISTRY = {
     liveProofPrompt:
       "If I run the supply-chain AI top bets through Moves for 8 weeks, what would the plan look like by phases?",
     systemContract: `${STRATEGY_TO_ABARVA_SOLUTION_CONTRACT}\n\n${STRATEGY_TO_MOVES_EXECUTION_CONTRACT}`,
-    promptDirective:
-      'ACTIVE ANSWER MODE: strategy_to_moves_execution. Build the answer as AbarVa product guidance, not generic advice. Include "How AbarVa would solve this" when execution is relevant. Use Intelligence for framing, Home for current-state evidence, Moves for governed execution, Source for vendor/commercial levers, and Tower for value/adoption tracking. Include a compact Moves phase plan with one clear item for each label: P0 Originate, P1 Charter, P2 Discover & Diagnose, P3 Design Future State, P4 Roadmap & Business Case, P5 Approval & Mobilization, and Tower Track Outcomes. Do not say Tower certifies by itself; Tower tracks value evidence for Finance or the accountable outcome owner to certify.',
+    promptDirective: `ACTIVE ANSWER MODE: strategy_to_moves_execution. Build the answer as AbarVa product guidance, not generic advice. Include "How AbarVa would solve this" when execution is relevant. Use Intelligence for framing, Home for current-state evidence, Moves for the approved roadmap and mobilization handoff, Source for vendor/commercial levers, and Tower for post-approval execution and value/adoption tracking. Include a compact Moves phase plan with one clear item for each label: ${MOVES_EXECUTION_PHASE_LABELS.slice(0, 6).join(", ")}, and Tower Track Outcomes. Do not say Tower certifies by itself; Tower tracks value evidence for Finance or the accountable outcome owner to certify.`,
     deterministicFallback: ensureMovesExecutionPhaseTable,
   },
   strategy_to_source_execution: {

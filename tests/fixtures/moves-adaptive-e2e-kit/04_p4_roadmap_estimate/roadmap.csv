@@ -1,0 +1,6 @@
+sequence,window,workstream,entry_evidence,exit_output,decision_gate,owner_role,dependency_or_assumption
+1,Weeks 1-2,Validate sources and measures,SYN-KPI-01 SYN-CONFLICT-01 SYN-SYS-01,Approved metric definitions and interface decision,Finance and source owners accept baseline/contract,Analytics Lead,No value target before reconciliation
+2,Weeks 2-4,Remediate knowledge and control design,SYN-KNOW-01 SYN-RED-01,Current approved content and testable red lines,Privacy/security and knowledge owner approval,Knowledge and Security Leads,K-014 conflict closed
+3,Weeks 3-6,Build read-only thin slice,Approved architecture and source access,One-queue panel with audited source retrieval,Product and operations acceptance,Product Owner,APIs remain assumptions until approved
+4,Weeks 6-8,Validate with synthetic scenarios,Red-line canaries and agent usability cases,Quality report with pass/fail and unresolved risks,Human acceptance gate,QA Lead,No real member data in demo tests
+5,Weeks 8-12,Pilot readiness and value measurement,Accepted tests and reviewed operations plan,Go/no-go package and measurement baseline,Executive sponsor decision,Operations and Finance,Execution begins only after roadmap approval

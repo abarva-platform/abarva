@@ -1,0 +1,3 @@
+delivery_case,low_adjusted_hours,base_adjusted_hours,high_adjusted_hours,ai_hours_saved_at_base,human_review_hours,low_planning_cost_usd,base_planning_cost_usd,high_planning_cost_usd,not_included
+internal,761.8,1015,1317.4,97.4,36.4,107943,143848,186774,Taxes vendor expenses contingency and actual negotiated rates; rate cards and scope remain unvalidated
+vendor,700.4,908.8,1177.2,84.4,33.2,131594,170708,221147,Taxes vendor expenses contingency and actual negotiated rates; no vendor quote or commitment

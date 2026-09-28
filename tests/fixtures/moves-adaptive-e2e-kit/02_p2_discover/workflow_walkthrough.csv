@@ -1,0 +1,10 @@
+case_id,contact_intent,step,time_seconds,actor,system_or_artifact,effort_or_wait,exception_or_control,evidence_ref
+WF-01,status inquiry,1,42,agent,CRM,agent effort,verify caller in approved workflow,SYN-SESSION-OPS-01 10:00-18:00
+WF-01,status inquiry,2,68,agent,claims status view,agent effort,source timestamp not always visible,SYN-SYS-01
+WF-01,status inquiry,3,53,agent,eligibility view,agent effort,agent confirms effective date,SYN-SYS-01
+WF-01,status inquiry,4,35,agent,approved knowledge,agent effort,article freshness varies,SYN-KNOW-01
+WF-01,status inquiry,5,74,agent,CRM interaction summary,after-call work,agent verifies before save,SYN-SESSION-OPS-01
+WF-02,authorization exception,1,55,agent,CRM,agent effort,verify approved workflow,SYN-SESSION-OPS-01
+WF-02,authorization exception,2,118,agent,authorization status,agent effort,attachment metadata may be wrong,SYN-DATA-01
+WF-02,authorization exception,3,210,agent,supervisor or specialist queue,wait,never infer medical necessity or approve authorization,SYN-RED-01
+WF-02,authorization exception,4,96,agent,CRM interaction summary,after-call work,write only after human confirmation,SYN-RED-01

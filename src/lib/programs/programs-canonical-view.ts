@@ -13,6 +13,7 @@ import type {
   ProgramSeedPlan,
   TenantSeedPlan,
 } from '@/lib/programs/enhancement-seed-planner';
+import { getMovesStageName } from './phase-labels';
 
 // --- Canonical six phases (per S8 readiness contract §H) -------------
 
@@ -27,38 +28,38 @@ export const CANONICAL_SIX_PHASES: ReadonlyArray<CanonicalPhase> = [
   {
     index: 1,
     key: 'origination',
-    label: 'Origination',
+    label: getMovesStageName(0),
     summary: 'Frame the problem, identify the sponsor, scope the opportunity.',
   },
   {
     index: 2,
     key: 'charter',
-    label: 'Discovery',
-    summary: 'Prove the problem, baseline current state, and capture source evidence.',
+    label: getMovesStageName(1),
+    summary: 'Charter the Move: confirm sponsor, scope, outcomes, evidence plan, and decision cadence.',
   },
   {
     index: 3,
     key: 'diagnose',
-    label: 'Synthesis',
-    summary: 'Convert findings and contradictions into a recommended strategic direction.',
+    label: getMovesStageName(2),
+    summary: 'Diagnose current state from approved evidence, baselines, workflows, and constraints.',
   },
   {
     index: 4,
     key: 'design',
-    label: 'Design',
-    summary: 'Solution match, vendor evaluation, business case, decision memo.',
+    label: getMovesStageName(3),
+    summary: 'Design the future state only to the level needed to estimate and choose a roadmap.',
   },
   {
     index: 5,
     key: 'execute',
-    label: 'Approval & Mobilization',
-    summary: 'Package business case, funding, readiness, change plan, and stakeholder approval.',
+    label: getMovesStageName(4),
+    summary: 'Sequence the approved approach, transparent estimates, value case, and funding decision.',
   },
   {
     index: 6,
     key: 'verify',
-    label: 'Tower Handoff',
-    summary: 'Define execution monitoring, data feeds, escalation thresholds, and benefits cadence.',
+    label: getMovesStageName(5),
+    summary: 'Prepare owners, controls, launch readiness, and the approved roadmap handoff to Tower.',
   },
 ];
 

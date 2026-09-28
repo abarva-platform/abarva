@@ -131,7 +131,7 @@ export function buildFeedForwardPack(
       'Value assumptions to validate',
     ];
   } else if (fromPhase === 4) {
-    // P4 → P5 Approval & Mobilization
+    // P4 → P5 Mobilize & Handoff
     sections = [
       section('Workstreams & owners', s.workstreams ?? []),
       section('Launch readiness', clean(s.openGateCriteria)),

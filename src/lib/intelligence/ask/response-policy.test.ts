@@ -223,7 +223,7 @@ describe("Ask Intelligence response policy", () => {
       "P2 Discover & Diagnose",
       "P3 Design Future State",
       "P4 Roadmap & Business Case",
-      "P5 Approval & Mobilization",
+      "P5 Mobilize & Handoff",
       "Tower Track Outcomes",
     ]) {
       expect(STRATEGY_TO_MOVES_EXECUTION_CONTRACT).toContain(phase);

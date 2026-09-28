@@ -35,6 +35,7 @@ import { strategicMoveBriefToDiscoveryShape } from "./strategicMoveBriefToDiscov
 import { resolveStrategicMoveOriginationRedirect } from "./resolveOriginationRedirect";
 import type { PhaseTallyRow } from "@/lib/programs/phase-explorer-tallies";
 import { MOVE_TIER_OPTIONS } from "@/lib/programs/p0-extended-intake-fields";
+import { getPhaseLabel } from "@/lib/programs/phase-labels";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -1003,14 +1004,14 @@ export function StrategicMoveOriginateClient({
     { phase: 1, label: "P1 Charter", met: 0, total: 5, state: "upcoming" },
     {
       phase: 2,
-      label: "P2 Current State",
+      label: getPhaseLabel(2),
       met: 0,
       total: 5,
       state: "upcoming",
     },
-    { phase: 3, label: "P3 Approach", met: 0, total: 4, state: "upcoming" },
-    { phase: 4, label: "P4 Plan", met: 0, total: 4, state: "upcoming" },
-    { phase: 5, label: "P5 Execute", met: 0, total: 4, state: "upcoming" },
+    { phase: 3, label: getPhaseLabel(3), met: 0, total: 4, state: "upcoming" },
+    { phase: 4, label: getPhaseLabel(4), met: 0, total: 4, state: "upcoming" },
+    { phase: 5, label: getPhaseLabel(5), met: 0, total: 4, state: "upcoming" },
   ];
   const dockThread: ChatMessage[] = turns.map((turn) => ({
     id: turn.id,
@@ -1388,7 +1389,7 @@ function P0OriginationRail({
 
       <div className={styles.p0RailFooter}>
         <span>Design contract &rarr;</span>
-        <p>aVa guides P0-P4 · Atlas takes over P5 Execute.</p>
+        <p>aVa guides P0-P5 · Tower tracks execution after handoff.</p>
       </div>
     </aside>
   );

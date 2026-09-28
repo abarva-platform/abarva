@@ -136,6 +136,9 @@ jobs:
           src/lib/deliverables/composer/__tests__
           --no-coverage --ci
 
+      - name: Validate Moves adaptive synthetic evidence kit
+        run: npm run test:moves:adaptive-e2e-kit
+
       - name: Run the deliverables worker boundary suite
         run: npx jest --runTestsByPath src/scripts/__tests__/process-deliverable-queue-worker-boundary.test.ts --no-coverage --ci
 

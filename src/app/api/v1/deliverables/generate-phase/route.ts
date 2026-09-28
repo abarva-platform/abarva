@@ -47,6 +47,8 @@ import {
 import { getModuleState } from "@/lib/programs/queries";
 import { listApprovedPhaseEvidence } from "@/lib/programs/approved-phase-evidence";
 import {
+  formatSolutionRouteForP4Prompt,
+  formatSolutionRouteDepthForPrompt,
   resolveConfirmedSolutionRoute,
   type ConfirmedSolutionRoute,
 } from "@/lib/programs/solution-route-assessment";
@@ -54,6 +56,10 @@ import {
   getPhaseCaptureSections,
   phaseCaptureModuleKey,
 } from "@/lib/programs/phase-capture-contract";
+import { formatEstimateModelForPrompt } from "@/lib/programs/estimate-model";
+import { loadDiscoveryEvidenceReadiness } from "@/lib/programs/discovery/evidence-readiness";
+import { buildMoveEvidenceNeedPackets } from "@/lib/programs/evidence-readiness/move-evidence-need-packet";
+import { currentPhaseRequiredEvidenceGaps } from "@/lib/programs/phase-progress-readiness";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -150,12 +156,17 @@ async function buildPhaseCaptureDecisionContext(args: {
     const state = (captureModule?.state ?? {}) as Record<string, unknown>;
     const value = typeof state.value === "string" ? state.value.trim() : "";
     if (!value) continue;
+    if (section.structured === "estimate-model") {
+      const formatted = formatEstimateModelForPrompt(value);
+      if (formatted) lines.push(formatted);
+      continue;
+    }
     lines.push(`- ${section.label}: ${value}`);
   }
   if (lines.length === 0) return null;
 
   return [
-    `SAVED P${args.phase} PHASE CAPTURE (authoritative input for this build)`,
+    "SAVED PHASE CAPTURE (authoritative input for this build)",
     `Use these captured values as the primary source for this phase artifact. Do not replace them with generic tenant context, and do not re-collect them in the artifact.`,
     ...lines,
   ].join("\n");
@@ -239,8 +250,23 @@ export async function POST(req: NextRequest) {
       const value = captureModule?.state?.value;
       return typeof value === "string" ? value : "";
     };
+    if (
+      phase === 4 &&
+      !formatEstimateModelForPrompt(captureValue(4, "estimates_capacity"))
+    ) {
+      return Response.json(
+        {
+          error: "estimate_model_review_required",
+          detail:
+            "Complete the internal/vendor role-based estimate, review the low/base/high calculations, and record a human reviewer before building the roadmap package.",
+          nextAction:
+            "Return to Estimates & capacity, resolve open inputs, and confirm the estimate review.",
+        },
+        { status: 409 },
+      );
+    }
     const confirmedSolutionRoute =
-      phase === 3
+      phase >= 3
         ? resolveConfirmedSolutionRoute({
             businessChangeAssessment: captureValue(
               1,
@@ -260,6 +286,50 @@ export async function POST(req: NextRequest) {
             "Complete the P1 business-change assessment and validate the P2 solution route against approved evidence before building P3 outputs.",
           nextAction:
             "Return to P2, select an approved evidence item, and confirm or correct the recommended route.",
+        },
+        { status: 409 },
+      );
+    }
+
+    let requiredEvidenceGaps: ReturnType<
+      typeof currentPhaseRequiredEvidenceGaps
+    >;
+    try {
+      const readiness = await loadDiscoveryEvidenceReadiness(ctx, moveId);
+      const packets = buildMoveEvidenceNeedPackets({
+        moveId,
+        moveName,
+        currentPhase: phase,
+        readiness,
+      });
+      requiredEvidenceGaps = currentPhaseRequiredEvidenceGaps(packets, phase);
+    } catch (err) {
+      console.error("[generate-phase] evidence_readiness_unavailable", {
+        moveId,
+        phase,
+        message: errorMessage(err),
+      });
+      return Response.json(
+        {
+          error: "evidence_readiness_unavailable",
+          detail:
+            "Required evidence readiness could not be verified. No phase build was queued; retry after evidence readiness is available.",
+        },
+        { status: 503 },
+      );
+    }
+    if (requiredEvidenceGaps.length > 0) {
+      return Response.json(
+        {
+          error: "required_evidence_open",
+          detail: `${requiredEvidenceGaps.length} required evidence item${requiredEvidenceGaps.length === 1 ? " is" : "s are"} not yet approved, covered, or formally waived. No phase build was queued.`,
+          requiredEvidenceGaps: requiredEvidenceGaps.map((gap) => ({
+            evidenceSlot: gap.evidenceSlot,
+            status: gap.status,
+            nextAction: gap.nextAction,
+          })),
+          nextAction:
+            "Upload the minimum required source evidence, review the extracted facts, and approve or formally waive each required item before building.",
         },
         { status: 409 },
       );
@@ -408,6 +478,12 @@ export async function POST(req: NextRequest) {
       confirmedSolutionRoute,
       modules: captureModules,
     });
+    const solutionRoutePromptBlock =
+      phase === 3
+        ? formatSolutionRouteDepthForPrompt(confirmedSolutionRoute)
+        : phase === 4
+          ? formatSolutionRouteForP4Prompt(confirmedSolutionRoute)
+          : null;
 
     const adaptiveDepth: AdaptiveDepthDecision = resolveAdaptiveDepth({
       archetype: useCaseArchetype,
@@ -477,6 +553,7 @@ export async function POST(req: NextRequest) {
         decisionContext: [
           `${moveName} — ${clientSafePhaseLabel}: ${spec.documentPurpose}`,
           phaseCaptureContext,
+          solutionRoutePromptBlock,
           approvedApproachBlock,
         ]
           .filter(Boolean)

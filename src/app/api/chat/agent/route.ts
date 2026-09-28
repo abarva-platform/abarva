@@ -127,6 +127,11 @@ import { loadDiscoveryEvidenceReadiness } from "@/lib/programs/discovery/evidenc
 import { buildMoveEvidenceNeedPackets } from "@/lib/programs/evidence-readiness/move-evidence-need-packet";
 import { buildGateCriteria } from "@/lib/programs/transformers";
 import { getModuleState, getStrategicMoveById } from "@/lib/programs/queries";
+import { listApprovedPhaseEvidence } from "@/lib/programs/approved-phase-evidence";
+import {
+  formatSolutionRouteDepthForPrompt,
+  resolveConfirmedSolutionRoute,
+} from "@/lib/programs/solution-route-assessment";
 import {
   getPhaseCaptureSections,
   phaseCaptureModuleKey,
@@ -816,6 +821,42 @@ export async function POST(request: Request) {
           if (pack) {
             phasePackBlock = formatPhasePackForPrompt(pack);
           }
+        }
+
+        if (
+          promptPhase === 3 &&
+          surface.startsWith("/strategic-moves/")
+        ) {
+          const modules = await getModuleState(tenancy, programId).catch(
+            () => [],
+          );
+          const moduleValue = (phase: number, key: string) => {
+            const row = modules.find(
+              (entry) => entry.moduleKey === phaseCaptureModuleKey(phase, key),
+            );
+            return readPhaseCaptureModuleValue(row?.state);
+          };
+          const approvedPhaseTwoEvidence = await listApprovedPhaseEvidence(
+            tenancy,
+            programId,
+            2,
+          );
+          const confirmedRoute = resolveConfirmedSolutionRoute({
+            businessChangeAssessment: moduleValue(
+              1,
+              "business_change_assessment",
+            ),
+            routeValidation: moduleValue(2, "solution_route_validation"),
+            approvedEvidenceReferences: approvedPhaseTwoEvidence.map(
+              (item) => item.evidenceId,
+            ),
+          });
+          phasePackBlock = [
+            phasePackBlock,
+            formatSolutionRouteDepthForPrompt(confirmedRoute),
+          ]
+            .filter(Boolean)
+            .join("\n\n");
         }
 
         const movesAvaChatHardeningEnabled = isFeatureEnabled(

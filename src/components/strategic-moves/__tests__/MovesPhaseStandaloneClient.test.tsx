@@ -327,6 +327,7 @@ function makeReviewRequiredCurrentStateReadiness(): ReadinessReport {
 describe("MovesPhaseStandaloneClient", () => {
   let uploadedEvidenceArtifacts: Array<{
     artifactId: string;
+    family?: string;
     fileName: string;
     title: string;
     phase: number;
@@ -436,6 +437,7 @@ describe("MovesPhaseStandaloneClient", () => {
           const file = form.get("file") as File;
           uploadedEvidenceArtifacts.push({
             artifactId: `artifact-${uploadedEvidenceArtifacts.length + 1}`,
+            family: String(form.get("family") ?? "uploaded_evidence"),
             fileName: file.name,
             title: String(form.get("title") ?? file.name),
             phase: Number(form.get("phase") ?? 0),
@@ -449,7 +451,25 @@ describe("MovesPhaseStandaloneClient", () => {
           return {
             ok: true,
             status: 200,
-            json: async () => ({ ok: true }),
+            json: async () =>
+              file.name === "parser-failure.csv"
+                ? {
+                    ok: true,
+                    evidence: {
+                      id: null,
+                      status: "not_captured",
+                      warning: "Parser did not produce a review record.",
+                    },
+                  }
+                : {
+                    ok: true,
+                    evidence: {
+                      id: `evidence-${uploadedEvidenceArtifacts.length}`,
+                      reviewId: `review-${uploadedEvidenceArtifacts.length}`,
+                      reviewStatus: "pending_review",
+                      parseMethod: "csv-structured-parser",
+                    },
+                  },
           } as Response;
         }
 
@@ -1150,7 +1170,7 @@ describe("MovesPhaseStandaloneClient", () => {
       expect(
         screen.getByRole("button", { name: /collapse phase rail/i }),
       ).toBeInTheDocument();
-      expect(screen.getByText("Understand Current State")).toBeInTheDocument();
+      expect(screen.getByText("Discover & Diagnose")).toBeInTheDocument();
       expect(screen.getByText("Stage workspace")).toBeInTheDocument();
     });
 
@@ -1167,7 +1187,7 @@ describe("MovesPhaseStandaloneClient", () => {
 
       const rail = screen.getByRole("complementary", { name: "Move phases" });
       expect(rail).not.toHaveClass("mxw-side-collapsed");
-      expect(screen.getByText("Understand Current State")).toBeInTheDocument();
+      expect(screen.getByText("Discover & Diagnose")).toBeInTheDocument();
 
       const toggle = screen.getByRole("button", {
         name: "Collapse phase rail",
@@ -1182,7 +1202,7 @@ describe("MovesPhaseStandaloneClient", () => {
       // stop rendering entirely.
       expect(rail).toHaveClass("mxw-side-collapsed");
       expect(
-        screen.queryByText("Understand Current State"),
+        screen.queryByText("Discover & Diagnose"),
       ).not.toBeInTheDocument();
       expect(screen.queryByText("Stage workspace")).not.toBeInTheDocument();
       const expandToggle = screen.getByRole("button", {
@@ -1194,7 +1214,7 @@ describe("MovesPhaseStandaloneClient", () => {
       fireEvent.click(expandToggle);
 
       expect(rail).not.toHaveClass("mxw-side-collapsed");
-      expect(screen.getByText("Understand Current State")).toBeInTheDocument();
+      expect(screen.getByText("Discover & Diagnose")).toBeInTheDocument();
       expect(
         screen.getByRole("button", { name: "Collapse phase rail" }),
       ).toBeInTheDocument();
@@ -1215,12 +1235,12 @@ describe("MovesPhaseStandaloneClient", () => {
         screen.getByRole("button", { name: "Collapse phase rail" }),
       );
 
-      // Phase 2 ("Understand Current State") is <= currentPhase (3), so it
+      // Phase 2 ("Discover & Diagnose") is <= currentPhase (3), so it
       // renders as a Link both expanded and collapsed — reuses the same
       // click/navigation handler, just hides the text label.
       const rail = screen.getByRole("complementary", { name: "Move phases" });
       const phaseLink = within(rail).getByTitle(
-        "Understand Current State · 2 of 2",
+        "Discover & Diagnose · 2 of 2",
       );
       expect(phaseLink.tagName).toBe("A");
       expect(phaseLink).toHaveAttribute(
@@ -1228,7 +1248,7 @@ describe("MovesPhaseStandaloneClient", () => {
         `/strategic-moves/${"37ee2d85-5dc0-4d1f-862e-ab8eff60fdd4"}/phase/2`,
       );
       expect(
-        within(phaseLink).queryByText("Understand Current State"),
+        within(phaseLink).queryByText("Discover & Diagnose"),
       ).toBeNull();
     });
   });
@@ -1551,7 +1571,7 @@ describe("MovesPhaseStandaloneClient", () => {
         evidenceNeedPackets={[]}
         move={makeMove({
           currentPhase: 5,
-          phaseLabel: "P5 Prepare to Execute",
+          phaseLabel: "P5 Mobilize & Handoff",
           terminalComplete: true,
         })}
         phaseNum={5}
@@ -1560,7 +1580,7 @@ describe("MovesPhaseStandaloneClient", () => {
     );
 
     expect(
-      screen.getByRole("link", { name: /Prepare to Execute\s+2 of 2/i }),
+      screen.getByRole("link", { name: /Mobilize & Handoff\s+2 of 2/i }),
     ).toBeInTheDocument();
     expect(screen.getByText("Open Tower →")).toBeInTheDocument();
     expect(
@@ -1591,7 +1611,7 @@ describe("MovesPhaseStandaloneClient", () => {
     ).not.toBeInTheDocument();
     expect(
       screen.queryByRole("button", {
-        name: /Continue to P5 Prepare to Execute/i,
+        name: /Continue to P5 Mobilize & Handoff/i,
       }),
     ).not.toBeInTheDocument();
   });
@@ -1896,9 +1916,37 @@ describe("MovesPhaseStandaloneClient", () => {
     // The list is real lifecycle data re-fetched from the artifact vault after
     // upload, not an ephemeral client-side echo of what was just picked.
     expect(screen.getAllByText(/v1 · draft/).length).toBe(2);
+    expect(screen.getByText(/awaiting human review before generation/i)).toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: "Open Files & Evidence" }),
     ).toBeInTheDocument();
+  });
+
+  it("does not report an upload as usable evidence when parsing did not create a review record", async () => {
+    render(
+      <MovesPhaseStandaloneClient
+        carriesForwardContent={[]}
+        evidenceNeedPackets={[]}
+        initialSubstepKey="decide"
+        move={makeMove({ currentPhase: 1, phaseLabel: "P1 Charter" })}
+        phaseNum={1}
+        phaseTallies={[...phaseTallies]}
+      />,
+    );
+
+    fireEvent.change(screen.getByLabelText("Upload decision files"), {
+      target: {
+        files: [new File(["test"], "parser-failure.csv", { type: "text/csv" })],
+      },
+    });
+
+    expect(
+      await screen.findByText(/not available to generation/i),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/parser did not produce a review record/i),
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/^Uploaded parser-failure\.csv$/)).not.toBeInTheDocument();
   });
 
   it("routes P2 current-state uploads through readiness evidence families instead of generic artifact upload", async () => {
@@ -1954,7 +2002,7 @@ describe("MovesPhaseStandaloneClient", () => {
         initialSubstepKey="current"
         move={makeMove({
           currentPhase: 2,
-          phaseLabel: "P2 Understand Current State",
+          phaseLabel: "P2 Discover & Diagnose",
         })}
         phaseNum={2}
         phaseTallies={[...phaseTallies]}
@@ -2002,6 +2050,39 @@ describe("MovesPhaseStandaloneClient", () => {
     expect(uploadedEvidenceArtifacts).toHaveLength(0);
   });
 
+  it("uploads workshop notes as review-pending session artifacts instead of mis-mapping them to a P2 family", async () => {
+    render(
+      <MovesPhaseStandaloneClient
+        carriesForwardContent={[]}
+        currentStateReadiness={makeCurrentStateReadiness()}
+        evidenceNeedPackets={[]}
+        initialSubstepKey="current"
+        move={makeMove({ currentPhase: 2, phaseLabel: "P2 Discover & Diagnose" })}
+        phaseNum={2}
+        phaseTallies={[...phaseTallies]}
+      />,
+    );
+
+    fireEvent.change(screen.getByLabelText("P2 upload mode"), {
+      target: { value: "session_notes" },
+    });
+    fireEvent.change(screen.getByLabelText("Upload P2 current-state evidence files"), {
+      target: {
+        files: [new File(["workshop notes"], "operations_workshop_45m.md", { type: "text/markdown" })],
+      },
+    });
+
+    await waitFor(() => {
+      expect(uploadedEvidenceArtifacts).toHaveLength(1);
+      expect(uploadedEvidenceArtifacts[0]?.family).toBe("session_artifact");
+      expect(document.body.textContent?.replace(/\s+/g, " ") ?? "").toMatch(
+        /1 session file parsed and awaiting human review/i,
+      );
+    });
+    expect(currentStateFamilyIngests).toEqual([]);
+    expect(structuredFamilyIngests).toEqual([]);
+  });
+
   // The gap card says "Upload CMDB export as CSV". Before this dispatch the
   // only uploader on the step routed canonical-backed families to the document
   // path, which cannot map them, so a user following that instruction exactly
@@ -2015,7 +2096,7 @@ describe("MovesPhaseStandaloneClient", () => {
         initialSubstepKey="current"
         move={makeMove({
           currentPhase: 2,
-          phaseLabel: "P2 Understand Current State",
+          phaseLabel: "P2 Discover & Diagnose",
         })}
         phaseNum={2}
         phaseTallies={[...phaseTallies]}
@@ -2072,7 +2153,7 @@ describe("MovesPhaseStandaloneClient", () => {
         initialSubstepKey="current"
         move={makeMove({
           currentPhase: 2,
-          phaseLabel: "P2 Understand Current State",
+          phaseLabel: "P2 Discover & Diagnose",
         })}
         phaseNum={2}
         phaseTallies={[...phaseTallies]}
@@ -2133,7 +2214,7 @@ describe("MovesPhaseStandaloneClient", () => {
         initialSubstepKey="current"
         move={makeMove({
           currentPhase: 2,
-          phaseLabel: "P2 Understand Current State",
+          phaseLabel: "P2 Discover & Diagnose",
         })}
         phaseNum={2}
         phaseTallies={[...phaseTallies]}
@@ -2294,7 +2375,7 @@ describe("MovesPhaseStandaloneClient", () => {
         initialSubstepKey="approve"
         move={makeMove({
           currentPhase: 3,
-          phaseLabel: "P3 Choose the Approach",
+          phaseLabel: "P3 Design Future State",
         })}
         phaseNum={3}
         phaseTallies={[...phaseTallies]}
@@ -2310,7 +2391,7 @@ describe("MovesPhaseStandaloneClient", () => {
     expect(screen.getByText("P3 inputs complete")).toBeInTheDocument();
     expect(
       screen.getByRole("button", {
-        name: /Approve & Build P3 Choose the Approach/i,
+        name: /Approve & Build P3 Design Future State/i,
       }),
     ).toBeEnabled();
   });
@@ -2366,7 +2447,7 @@ describe("MovesPhaseStandaloneClient", () => {
     fireEvent.click(contractStepButton(/Approve & Build/i));
 
     expect(
-      screen.getByText(/Next: P4 Build the Plan readiness/i),
+      screen.getByText(/Next: P4 Roadmap & Business Case readiness/i),
     ).toBeInTheDocument();
     expect(screen.getAllByText("Cost baseline").length).toBeGreaterThan(0);
     expect(screen.getByText(/Format: CSV, XLSX/i)).toBeInTheDocument();
@@ -2376,9 +2457,83 @@ describe("MovesPhaseStandaloneClient", () => {
       ),
     ).toBeInTheDocument();
     expect(
-      screen.getByText("Suggested working sessions for P4 Build the Plan"),
+      screen.getByText("Suggested working sessions for P4 Roadmap & Business Case"),
     ).toBeInTheDocument();
     expect(screen.getByText("Value case workshop")).toBeInTheDocument();
+  });
+
+  it("does not show saved phase inputs as complete while required evidence is open", () => {
+    const evidenceNeedPackets: MoveEvidenceNeedPacket[] = [
+      {
+        moveId: "37ee2d85-5dc0-4d1f-862e-ab8eff60fdd4",
+        phase: 3,
+        artifactType: "target_state_architecture",
+        evidenceSlot: "Current-state workflow evidence",
+        familyId: "current_state_workflow_map",
+        priority: "required",
+        ownerSource: "Business process owner",
+        acceptedFormats: ["DOCX", "CSV"],
+        exampleTemplate: "Workflow evidence",
+        exampleContent: [],
+        whyItMatters: "The target state needs an approved current-state basis.",
+        blockedArtifacts: [],
+        canDraftBoundary: {
+          canDraft: false,
+          canDraftLabel: "",
+          cannotDraftLabel: "",
+        },
+        preliminaryGenerationCaveat: null,
+        waiverOption: null,
+        nextAction: "Upload and approve the current-state workflow evidence.",
+        status: "missing",
+        evidenceTitles: [],
+      },
+    ];
+
+    render(
+      <MovesPhaseStandaloneClient
+        carriesForwardContent={[]}
+        evidenceNeedPackets={evidenceNeedPackets}
+        initialPhaseCaptureValues={completeP3CaptureValues}
+        initialSubstepKey="approve"
+        move={makeMove()}
+        phaseNum={3}
+        phaseTallies={[...phaseTallies]}
+      />,
+    );
+
+    const inputStep = contractStepButton(/Solution approach & options/i);
+    expect(inputStep.querySelector("span")).not.toHaveClass("done");
+    expect(inputStep).toHaveTextContent("Needs approved evidence");
+    expect(screen.getByLabelText("Phase progress")).toHaveTextContent(
+      /Evidence\s*1 open/,
+    );
+    expect(screen.getByTestId("mxw-decision-surface")).toHaveTextContent(
+      "P3 cannot advance yet",
+    );
+  });
+
+  it("keeps phase progress blocked when evidence readiness could not be checked", () => {
+    render(
+      <MovesPhaseStandaloneClient
+        carriesForwardContent={[]}
+        evidenceNeedPackets={[]}
+        evidenceReadinessAvailable={false}
+        initialPhaseCaptureValues={completeP3CaptureValues}
+        initialSubstepKey="approve"
+        move={makeMove()}
+        phaseNum={3}
+        phaseTallies={[...phaseTallies]}
+      />,
+    );
+
+    expect(screen.getByLabelText("Phase progress")).toHaveTextContent(
+      /Evidence\s*Not checked/,
+    );
+    expect(screen.getByText(/Evidence readiness could not be checked/i)).toBeInTheDocument();
+    expect(screen.getByTestId("mxw-decision-surface")).toHaveTextContent(
+      "P3 cannot advance yet",
+    );
   });
 
   it("surfaces real carries-forward content extracted from this phase's generated deliverable", () => {
@@ -2442,7 +2597,7 @@ describe("MovesPhaseStandaloneClient", () => {
     );
 
     expect(
-      screen.getByRole("heading", { name: "Choose the Approach" }),
+      screen.getByRole("heading", { name: "Design Future State" }),
     ).toBeInTheDocument();
     expect(screen.getByText("Files & Evidence")).toBeInTheDocument();
     expect(screen.getByTestId("mxw-contract-card")).toBeInTheDocument();
@@ -2506,7 +2661,7 @@ describe("MovesPhaseStandaloneClient", () => {
         evidenceNeedPackets={[]}
         move={makeMove({
           currentPhase: 4,
-          phaseLabel: "P4 Build the Plan",
+          phaseLabel: "P4 Roadmap & Business Case",
         })}
         phaseNum={4}
         phaseTallies={[...phaseTallies]}
@@ -2514,7 +2669,7 @@ describe("MovesPhaseStandaloneClient", () => {
     );
 
     expect(
-      screen.getByRole("heading", { name: "Build the Plan" }),
+      screen.getByRole("heading", { name: "Roadmap & Business Case" }),
     ).toBeInTheDocument();
     expect(screen.getByText("Files & Evidence")).toBeInTheDocument();
     expect(screen.getByTestId("mxw-contract-card")).toBeInTheDocument();
@@ -2559,6 +2714,19 @@ describe("MovesPhaseStandaloneClient", () => {
       screen.queryByRole("button", { name: "Review gate" }),
     ).not.toBeInTheDocument();
 
+    fireEvent.click(
+      within(menu).getByRole("button", { name: /Estimates & capacity/i }),
+    );
+    expect(
+      screen.getByRole("button", { name: /Add role \/ work package/i }),
+    ).toBeInTheDocument();
+    fireEvent.click(
+      screen.getByRole("button", { name: /Add role \/ work package/i }),
+    );
+    expect(screen.getByText("Internal delivery")).toBeInTheDocument();
+    expect(screen.getByText("Vendor delivery")).toBeInTheDocument();
+    expect(screen.getByText("Human estimate reviewer")).toBeInTheDocument();
+
     fireEvent.click(within(menu).getByRole("button", { name: /Value Case/i }));
     expect(screen.getByText("The value case")).toBeInTheDocument();
     expect(screen.getByText("Projected")).toBeInTheDocument();
@@ -2583,7 +2751,7 @@ describe("MovesPhaseStandaloneClient", () => {
       <MovesPhaseStandaloneClient
         carriesForwardContent={[]}
         evidenceNeedPackets={[]}
-        move={makeMove({ currentPhase: 4, phaseLabel: "P4 Build the Plan" })}
+        move={makeMove({ currentPhase: 4, phaseLabel: "P4 Roadmap & Business Case" })}
         phaseNum={4}
         phaseTallies={[...phaseTallies]}
       />,
@@ -2598,7 +2766,7 @@ describe("MovesPhaseStandaloneClient", () => {
       <MovesPhaseStandaloneClient
         carriesForwardContent={[]}
         evidenceNeedPackets={[]}
-        move={makeMove({ currentPhase: 4, phaseLabel: "P4 Build the Plan" })}
+        move={makeMove({ currentPhase: 4, phaseLabel: "P4 Roadmap & Business Case" })}
         phaseNum={4}
         phaseTallies={[...phaseTallies]}
         pricingEngineEnabled
@@ -2621,7 +2789,7 @@ describe("MovesPhaseStandaloneClient", () => {
         evidenceNeedPackets={[]}
         move={makeMove({
           currentPhase: 3,
-          phaseLabel: "P3 Choose the Approach",
+          phaseLabel: "P3 Design Future State",
         })}
         phaseNum={3}
         phaseTallies={[...phaseTallies]}
@@ -2680,7 +2848,7 @@ describe("MovesPhaseStandaloneClient", () => {
         evidenceNeedPackets={[]}
         move={makeMove({
           currentPhase: 3,
-          phaseLabel: "P3 Choose the Approach",
+          phaseLabel: "P3 Design Future State",
         })}
         phaseNum={3}
         phaseTallies={[...phaseTallies]}
@@ -2697,7 +2865,7 @@ describe("MovesPhaseStandaloneClient", () => {
       <MovesPhaseStandaloneClient
         carriesForwardContent={[]}
         evidenceNeedPackets={[]}
-        move={makeMove({ currentPhase: 4, phaseLabel: "P4 Build the Plan" })}
+        move={makeMove({ currentPhase: 4, phaseLabel: "P4 Roadmap & Business Case" })}
         phaseNum={4}
         phaseTallies={[...phaseTallies]}
         riskAssessmentEnabled
@@ -2715,7 +2883,7 @@ describe("MovesPhaseStandaloneClient", () => {
         evidenceNeedPackets={[]}
         move={makeMove({
           currentPhase: 3,
-          phaseLabel: "P3 Choose the Approach",
+          phaseLabel: "P3 Design Future State",
         })}
         phaseNum={3}
         phaseTallies={[...phaseTallies]}
@@ -2733,7 +2901,7 @@ describe("MovesPhaseStandaloneClient", () => {
         evidenceNeedPackets={[]}
         move={makeMove({
           currentPhase: 3,
-          phaseLabel: "P3 Choose the Approach",
+          phaseLabel: "P3 Design Future State",
         })}
         phaseNum={3}
         phaseTallies={[...phaseTallies]}
@@ -2776,7 +2944,7 @@ describe("MovesPhaseStandaloneClient", () => {
         evidenceNeedPackets={[]}
         move={makeMove({
           currentPhase: 5,
-          phaseLabel: "P5 Prepare to Execute",
+          phaseLabel: "P5 Mobilize & Handoff",
         })}
         phaseNum={5}
         phaseTallies={[...phaseTallies]}
@@ -2784,25 +2952,25 @@ describe("MovesPhaseStandaloneClient", () => {
     );
 
     expect(
-      screen.getByRole("heading", { name: "Prepare to Execute" }),
+      screen.getByRole("heading", { name: "Mobilize & Handoff" }),
     ).toBeInTheDocument();
     expect(screen.getByText("Files & Evidence")).toBeInTheDocument();
     expect(screen.getByTestId("mxw-contract-card")).toBeInTheDocument();
     expect(screen.queryByTestId("mxw-finder-steps")).not.toBeInTheDocument();
     const menu = screen.getByLabelText("P5 steps");
     expect(
-      within(menu).getByRole("button", { name: /Mobilization plan & RACI/i }),
+      within(menu).getByRole("button", { name: /Handoff owners & RACI/i }),
     ).toBeInTheDocument();
     expect(screen.getByText("Step 1 of 10")).toBeInTheDocument();
     expect(
-      screen.getByRole("heading", { name: /Mobilization plan & RACI/i }),
+      screen.getByRole("heading", { name: /Handoff owners & RACI/i }),
     ).toBeInTheDocument();
     expect(
-      within(menu).getByRole("button", { name: /Launch readiness/i }),
+      within(menu).getByRole("button", { name: "Handoff Readiness" }),
     ).toBeInTheDocument();
     expect(
       within(menu).getByRole("button", {
-        name: /Value-proof rules & metrics/i,
+        name: /Tower measurement handoff/i,
       }),
     ).toBeInTheDocument();
     expect(
@@ -2816,10 +2984,10 @@ describe("MovesPhaseStandaloneClient", () => {
       }),
     ).toBeInTheDocument();
     expect(
-      within(menu).getByRole("button", { name: /Recommendation to launch/i }),
+      within(menu).getByRole("button", { name: /Handoff recommendation/i }),
     ).toBeInTheDocument();
     expect(
-      within(menu).getByRole("button", { name: /Execution Readiness/i }),
+      within(menu).getByRole("button", { name: "Handoff Readiness" }),
     ).toBeInTheDocument();
     expect(
       within(menu).getByRole("button", { name: /Approve & Build/i }),
@@ -2832,10 +3000,10 @@ describe("MovesPhaseStandaloneClient", () => {
     ).not.toBeInTheDocument();
 
     fireEvent.click(
-      within(menu).getByRole("button", { name: /Execution Readiness/i }),
+      within(menu).getByRole("button", { name: "Handoff Readiness" }),
     );
     expect(
-      screen.getByRole("heading", { name: "Execution Readiness" }),
+      screen.getByRole("heading", { name: "Handoff Readiness" }),
     ).toBeInTheDocument();
     expect(
       screen.queryByText("How to complete this phase"),
@@ -2860,7 +3028,7 @@ describe("MovesPhaseStandaloneClient", () => {
         evidenceNeedPackets={[]}
         move={makeMove({
           currentPhase: 2,
-          phaseLabel: "P2 Understand Current State",
+          phaseLabel: "P2 Discover & Diagnose",
         })}
         phaseNum={2}
         phaseTallies={[...phaseTallies]}
@@ -2899,7 +3067,7 @@ describe("MovesPhaseStandaloneClient", () => {
         evidenceNeedPackets={[]}
         move={makeMove({
           currentPhase: 2,
-          phaseLabel: "P2 Understand Current State",
+          phaseLabel: "P2 Discover & Diagnose",
           linkedEvidence: [],
         })}
         phaseNum={2}
@@ -2959,7 +3127,7 @@ describe("MovesPhaseStandaloneClient", () => {
         initialSubstepKey="approve"
         move={makeMove({
           currentPhase: 2,
-          phaseLabel: "P2 Understand Current State",
+          phaseLabel: "P2 Discover & Diagnose",
           gateCriteria: [
             {
               id: "g1",
@@ -3016,7 +3184,7 @@ describe("MovesPhaseStandaloneClient", () => {
         initialSubstepKey="approve"
         move={makeMove({
           currentPhase: 2,
-          phaseLabel: "P2 Understand Current State",
+          phaseLabel: "P2 Discover & Diagnose",
         })}
         phaseNum={2}
         phaseTallies={[...phaseTallies]}
@@ -3059,7 +3227,7 @@ describe("MovesPhaseStandaloneClient", () => {
             },
           ],
           linkedEvidence: [],
-          phaseLabel: "P5 Prepare to Execute",
+          phaseLabel: "P5 Mobilize & Handoff",
           terminalComplete: true,
         })}
         phaseBuildArtifacts={[
@@ -3153,7 +3321,7 @@ describe("MovesPhaseStandaloneClient", () => {
             },
           ],
           linkedEvidence: [],
-          phaseLabel: "P5 Prepare to Execute",
+          phaseLabel: "P5 Mobilize & Handoff",
           terminalComplete: true,
         })}
         phaseBuildArtifacts={[]}
@@ -3268,7 +3436,7 @@ describe("MovesPhaseStandaloneClient", () => {
         evidenceNeedPackets={[]}
         move={makeMove({
           currentPhase: 5,
-          phaseLabel: "P5 Prepare to Execute",
+          phaseLabel: "P5 Mobilize & Handoff",
           terminalComplete: true,
         })}
         phaseBuildArtifacts={[]}
@@ -3427,7 +3595,7 @@ describe("MovesPhaseStandaloneClient", () => {
     ).toBeInTheDocument();
     expect(
       screen.queryByRole("button", {
-        name: /Approve & Build P3 Choose the Approach/i,
+        name: /Approve & Build P3 Design Future State/i,
       }),
     ).not.toBeInTheDocument();
   });
@@ -3549,12 +3717,12 @@ describe("MovesPhaseStandaloneClient", () => {
     ).not.toBeInTheDocument();
     expect(
       screen.getByRole("button", {
-        name: /Approve & Build P3 Choose the Approach/i,
+        name: /Approve & Build P3 Design Future State/i,
       }),
     ).toBeInTheDocument();
     fireEvent.click(
       screen.getByRole("button", {
-        name: /Approve & Build P3 Choose the Approach/i,
+        name: /Approve & Build P3 Design Future State/i,
       }),
     );
     fireEvent.click(
@@ -3704,7 +3872,7 @@ describe("MovesPhaseStandaloneClient", () => {
     fireEvent.click(contractStepButton(/Approve & Build/i));
     fireEvent.click(
       screen.getByRole("button", {
-        name: /Approve & Build P3 Choose the Approach/i,
+        name: /Approve & Build P3 Design Future State/i,
       }),
     );
     fireEvent.click(
@@ -3744,7 +3912,7 @@ describe("MovesPhaseStandaloneClient", () => {
     fireEvent.click(contractStepButton(/Approve & Build/i));
     fireEvent.click(
       screen.getByRole("button", {
-        name: /Approve & Build P3 Choose the Approach/i,
+        name: /Approve & Build P3 Design Future State/i,
       }),
     );
 
@@ -3779,7 +3947,7 @@ describe("MovesPhaseStandaloneClient", () => {
 
     fireEvent.click(
       screen.getByRole("button", {
-        name: /Approve & Build P3 Choose the Approach/i,
+        name: /Approve & Build P3 Design Future State/i,
       }),
     );
     fireEvent.click(
@@ -3827,7 +3995,7 @@ describe("MovesPhaseStandaloneClient", () => {
     fireEvent.click(contractStepButton(/Approve & Build/i));
     fireEvent.click(
       screen.getByRole("button", {
-        name: /Approve & Build P3 Choose the Approach/i,
+        name: /Approve & Build P3 Design Future State/i,
       }),
     );
     fireEvent.click(
@@ -3860,7 +4028,7 @@ describe("MovesPhaseStandaloneClient", () => {
     ).toBe(false);
     expect(
       screen.getByRole("button", {
-        name: /Approve & Build P3 Choose the Approach/i,
+        name: /Approve & Build P3 Design Future State/i,
       }),
     ).not.toBeDisabled();
 
@@ -3877,7 +4045,7 @@ describe("MovesPhaseStandaloneClient", () => {
         initialSubstepKey="approve"
         move={makeMove({
           currentPhase: 5,
-          phaseLabel: "P5 Prepare to Execute",
+          phaseLabel: "P5 Mobilize & Handoff",
           gateCriteria: [
             {
               id: "handoff_package_signed_off",
@@ -4288,7 +4456,7 @@ describe("MovesPhaseStandaloneClient", () => {
           evidenceNeedPackets={[]}
           move={makeMove({
             currentPhase: 2,
-            phaseLabel: "P2 Understand Current State",
+            phaseLabel: "P2 Discover & Diagnose",
           })}
           phaseNum={2}
           phaseTallies={[...phaseTallies]}
@@ -4312,7 +4480,7 @@ describe("MovesPhaseStandaloneClient", () => {
     it("renders the contract-card Steps view sourced only from getPhaseCaptureSections/phaseCaptureValues — no fabricated section names", () => {
       const move = makeMove({
         currentPhase: 2,
-        phaseLabel: "P2 Understand Current State",
+        phaseLabel: "P2 Discover & Diagnose",
       });
       render(
         <MovesPhaseStandaloneClient
@@ -4354,7 +4522,7 @@ describe("MovesPhaseStandaloneClient", () => {
     it("clicking a phase-input row updates the detail pane to that section's real captured value; clicking a workflow row restores the real substep content", () => {
       const move = makeMove({
         currentPhase: 2,
-        phaseLabel: "P2 Understand Current State",
+        phaseLabel: "P2 Discover & Diagnose",
       });
       render(
         <MovesPhaseStandaloneClient
@@ -4419,7 +4587,7 @@ describe("MovesPhaseStandaloneClient", () => {
           evidenceNeedPackets={[]}
           move={makeMove({
             currentPhase: 2,
-            phaseLabel: "P2 Understand Current State",
+            phaseLabel: "P2 Discover & Diagnose",
           })}
           phaseNum={2}
           phaseTallies={[...phaseTallies]}
@@ -4452,7 +4620,7 @@ describe("MovesPhaseStandaloneClient", () => {
           evidenceNeedPackets={[]}
           move={makeMove({
             currentPhase: 2,
-            phaseLabel: "P2 Understand Current State",
+            phaseLabel: "P2 Discover & Diagnose",
           })}
           phaseNum={2}
           phaseTallies={[...phaseTallies]}
@@ -4479,7 +4647,7 @@ describe("MovesPhaseStandaloneClient", () => {
           evidenceNeedPackets={[]}
           move={makeMove({
             currentPhase: 2,
-            phaseLabel: "P2 Understand Current State",
+            phaseLabel: "P2 Discover & Diagnose",
           })}
           phaseNum={2}
           phaseTallies={[...phaseTallies]}
@@ -4541,7 +4709,7 @@ describe("MovesPhaseStandaloneClient", () => {
           evidenceNeedPackets={[]}
           move={makeMove({
             currentPhase: 2,
-            phaseLabel: "P2 Understand Current State",
+            phaseLabel: "P2 Discover & Diagnose",
           })}
           phaseNum={2}
           phaseTallies={[...phaseTallies]}
@@ -4618,7 +4786,7 @@ describe("MovesPhaseStandaloneClient", () => {
           ]}
           move={makeMove({
             currentPhase: 2,
-            phaseLabel: "P2 Understand Current State",
+            phaseLabel: "P2 Discover & Diagnose",
           })}
           phaseNum={2}
           phaseTallies={[...phaseTallies]}
@@ -4627,7 +4795,7 @@ describe("MovesPhaseStandaloneClient", () => {
 
       const comingUp = screen.getByTestId("mxw-contract-comingup");
       const toggle = within(comingUp).getByRole("button", {
-        name: "What P3 Choose the Approach will need",
+        name: "What P3 Design Future State will need",
       });
       expect(toggle).toHaveAttribute("aria-expanded", "true");
       expect(

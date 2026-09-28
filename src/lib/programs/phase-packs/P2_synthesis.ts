@@ -109,7 +109,7 @@ export const P2_SYNTHESIS: PhasePack = {
       evaluationHint:
         'Charter explains *how* the value materializes, not just *that* it does. ' +
         '"$3M savings" alone is wishful; "$3M savings via 22% reduction in ' +
-        'escalations × $140 marginal cost per escalation" is testable in P5/P6.',
+        'escalations × $140 marginal cost per escalation" is testable through post-handoff Tower tracking.',
       preventsFailureModes: [2, 9],
     },
     {
@@ -258,7 +258,7 @@ export const P2_SYNTHESIS: PhasePack = {
           'changes, and how do we measure it?',
         why:
           'Distinguishes a testable value hypothesis from a wishful number. ' +
-          'Without a mechanism, P6 outcomes attestation becomes performative.',
+          'Without a mechanism, post-handoff Tower outcomes tracking becomes performative.',
         preventsFailureModes: [2, 9],
       },
       {

@@ -1,7 +1,8 @@
 {
   "dataset_id": "example-dataset-id-2026q2",
   "title": "Human-readable dataset name",
-  "client_key": "lakeshore-holdings",
+  "client_key": null,
+  "tenant_scope": "move_registry",
   "source_layer": "tenant_context",
   "classification": "internal",
   "owner": "name-or-team",
@@ -13,5 +14,5 @@
   "expected_object_count": 0,
   "approved_by": "name",
   "approved_at": "2026-06-08",
-  "notes": "Copy this file into docs/governance/dataset-manifests/<dataset_id>.json and fill it in before loading. client_key must be canonical or corpus_global."
+  "notes": "Copy this file into docs/governance/dataset-manifests/<dataset_id>.json and fill it in before loading. Move-scoped uploads resolve tenancy from the authenticated Move registry; fixed tenant or shared corpus datasets must declare their corresponding scope and key."
 }
