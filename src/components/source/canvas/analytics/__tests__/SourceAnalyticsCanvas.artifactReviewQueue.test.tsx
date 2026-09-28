@@ -148,6 +148,46 @@ it("shows a persisted generation review receipt for the matching draft in Files"
   expect(screen.getAllByText("Unsupported value claim.")).toHaveLength(2);
 });
 
+it("shows a receipt from a metadata-only linked state without hydrating draft body", () => {
+  render(
+    <SourceAnalyticsCanvas
+      event={event}
+      viewStage="strategy"
+      tenantName="Test Client"
+      stageView={SAMPLE_STRATEGY_STAGE}
+      initialWorkspace="files"
+      artifacts={[
+        {
+          id: "state-d01",
+          recordKind: "canvas_state",
+          artifactCode: "d01_strategy_memo",
+          artifactKind: "d01_strategy_memo",
+          stageKey: "strategy",
+          linkedArtifactId: "registry-d01",
+          body: null,
+          bodyGenerationMetadata: {
+            qualityGate: { passed: false, finalSummary: "The review rejected an unsupported claim." },
+          },
+        },
+        {
+          id: "registry-d01",
+          recordKind: "registry_artifact",
+          artifactCode: "d01_strategy_memo",
+          artifactKind: "d01_strategy_memo",
+          stageKey: "strategy",
+          sourceOrigin: "generated",
+          status: "draft",
+        },
+      ]}
+    />,
+  );
+
+  fireEvent.click(screen.getByRole("button", { name: "Show audit metrics" }));
+  expect(screen.getByTestId("source-artifact-consulting-gate-d01_strategy_memo"))
+    .toHaveTextContent("Gate B failed");
+  expect(screen.getAllByText("The review rejected an unsupported claim.")).toHaveLength(2);
+});
+
 it("does not attribute a persisted review receipt to different registry body bytes", () => {
   render(
     <SourceAnalyticsCanvas
@@ -187,6 +227,47 @@ it("does not attribute a persisted review receipt to different registry body byt
   expect(screen.getByTestId("source-artifact-consulting-gate-d01_strategy_memo"))
     .toHaveTextContent("Gate B required");
   expect(screen.queryByText("Review belongs to state body.")).not.toBeInTheDocument();
+});
+
+it("does not attribute a metadata-only receipt when registry body bytes cannot be compared", () => {
+  render(
+    <SourceAnalyticsCanvas
+      event={event}
+      viewStage="strategy"
+      tenantName="Test Client"
+      stageView={SAMPLE_STRATEGY_STAGE}
+      initialWorkspace="files"
+      artifacts={[
+        {
+          id: "state-d01",
+          recordKind: "canvas_state",
+          artifactCode: "d01_strategy_memo",
+          artifactKind: "d01_strategy_memo",
+          stageKey: "strategy",
+          linkedArtifactId: "registry-d01",
+          body: null,
+          bodyGenerationMetadata: {
+            qualityGate: { passed: true, finalSummary: "Unverifiable review." },
+          },
+        },
+        {
+          id: "registry-d01",
+          recordKind: "registry_artifact",
+          artifactCode: "d01_strategy_memo",
+          artifactKind: "d01_strategy_memo",
+          stageKey: "strategy",
+          sourceOrigin: "generated",
+          status: "draft",
+          bodyMarkdown: "Current registry body.",
+        },
+      ]}
+    />,
+  );
+
+  fireEvent.click(screen.getByRole("button", { name: "Show audit metrics" }));
+  expect(screen.getByTestId("source-artifact-consulting-gate-d01_strategy_memo"))
+    .toHaveTextContent("Gate B required");
+  expect(screen.queryByText("Unverifiable review.")).not.toBeInTheDocument();
 });
 
 it("does not attribute a receipt from an unlinked state to a same-code registry file", () => {
