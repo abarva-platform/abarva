@@ -34,7 +34,6 @@ import {
   isSynchronouslyParseableSourceFormat,
   parseSourceTextArtifact,
 } from "@/lib/source/artifact-registry/text-parser";
-import { criteriaByArtifactCode } from "@/lib/source/canonical-specs/gate-criteria";
 import { getCurrentUser } from "@/lib/auth/current-user";
 import {
   extractSourceUploadText,
@@ -56,10 +55,6 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 
 const STORAGE_BUCKET = "source-artifacts";
-const SCOPE_SIGNATURE_CRITERIA = new Set([
-  "GATE-SCOPE-02",
-  "GATE-SCOPE-04",
-]);
 
 type SourceUploadRouteContext = {
   params: Promise<{ eventId?: string }>;
@@ -198,18 +193,15 @@ interface UploadLandingResult {
 }
 
 /**
- * Land an artifact-scoped upload on the canvas: replace the target artifact's
- * body with the extracted text and mark linked gate criteria as met, except
- * Scope commitments that require independent signer proof. Best-effort and
- * non-fatal: any miss is returned as a warning so the upload still succeeds
- * as a registry document.
+ * Land extracted text on the canvas artifact. The upload may supply evidence,
+ * but it cannot make the accountable decision for a linked gate criterion.
+ * Best-effort and non-fatal: the file remains registered if landing fails.
  */
 async function landUploadOnArtifact(args: {
   eventId: string;
   clientKey: string;
   artifactCode: string;
   extracted: ExtractedUploadText;
-  reviewerPersonId: string | null;
   authorId: string | null;
 }): Promise<UploadLandingResult> {
   const warnings: string[] = [];
@@ -261,40 +253,7 @@ async function landUploadOnArtifact(args: {
     }
   }
 
-  // 2. Auto-satisfy the gate criteria this artifact is linked to.
-  const satisfiedCriteria: string[] = [];
-  for (const criterion of criteriaByArtifactCode(args.artifactCode)) {
-    if (
-      args.artifactCode === "d05_scope_memo" &&
-      SCOPE_SIGNATURE_CRITERIA.has(criterion.criterionId)
-    ) continue;
-    const { data: criterionRow } = await supabase
-      .from("source_event_gate_criterion_states")
-      .select("id, state")
-      .eq("source_event_id", args.eventId)
-      .eq("criterion_id", criterion.criterionId)
-      .maybeSingle<{ id: string; state: string }>();
-    if (!criterionRow) continue;
-    if (criterionRow.state === "met" || criterionRow.state === "waived") {
-      satisfiedCriteria.push(criterion.criterionId);
-      continue;
-    }
-    const nowIso = new Date().toISOString();
-    const write = await writer.updateGateCriterion({
-      criterionRowId: criterionRow.id,
-      state: "met",
-      reviewerUserId: args.reviewerPersonId,
-      reviewedAtIso: nowIso,
-      updatedAtIso: nowIso,
-    });
-    if (write.ok) satisfiedCriteria.push(criterion.criterionId);
-    else
-      warnings.push(
-        `Gate ${criterion.criterionId} flip failed: ${write.error}`,
-      );
-  }
-
-  return { bodyLanded, satisfiedCriteria, warnings };
+  return { bodyLanded, satisfiedCriteria: [], warnings };
 }
 
 export async function POST(
@@ -490,9 +449,8 @@ export async function POST(
       mimeType,
     });
 
-    // Land extracted text on the targeted canvas artifact and satisfy linked
-    // criteria only where upload alone is sufficient. Falls through to
-    // registry-only when no artifact code is supplied.
+    // Land extracted text on the targeted canvas artifact. Receipt alone
+    // never records the named decision required by a governance gate.
     const artifactCode = parseOptionalString(formData.get("artifactCode"));
     const landing = artifactCode
       ? await landUploadOnArtifact({
@@ -500,7 +458,6 @@ export async function POST(
           clientKey: client.key,
           artifactCode,
           extracted,
-          reviewerPersonId: currentUser?.personId ?? null,
           authorId: currentUser?.clerkUserId ?? null,
         })
       : null;
