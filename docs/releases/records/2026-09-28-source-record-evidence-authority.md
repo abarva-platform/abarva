@@ -36,7 +36,8 @@ Release lane: `global-control-lane`. Layer 4 Source workflow and its evidence pr
 - Pass: two practical mutations were caught: disabling record-class detection failed seven tests across five suites, and falsely claiming every row has a source failed five tests across four suites. Restoring the guard returned the focused suite to 87/87 green.
 - Pass: full TypeScript check with an 8 GB Node heap; scoped ESLint and `git diff --check`.
 - Pass: wider Source scope ran 444 suites, 442 passing; two unrelated suites had four failures also reproduced on the clean pre-change checkout.
-- Not run: PR CI, runtime deployment, signed-in replay. These are required before live acceptance is claimed.
+- Pass: the behavior-coverage job caught a stale canvas import-closure measurement. The repository generator changed only that closure count from 436 to 437; the measured covered and unaudited path sets did not change, and the guard passed 21/21 locally.
+- Not run: final-head PR CI, runtime deployment, signed-in replay. These are required before live acceptance is claimed.
 
 ## Rollout Plan
 
