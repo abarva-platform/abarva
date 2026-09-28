@@ -74,3 +74,16 @@ jobs:
           npx jest --runTestsByPath
           src/app/api/intelligence/ask/__tests__/c567-ask-route-answer-mode-wiring.test.ts
           --no-coverage --ci
+
+      # Item C-569. The same eight call sites, the five the C-567 suite does not
+      # reach -- measured by instrumenting all eight and running that suite,
+      # which enters 419, 874 and 1417 and no others. Same boundaries as the
+      # step above, plus `buildServerSourceAnswerContext`, the tenant-access and
+      # Source read-model seam the two Source sites sit behind. Named by exact
+      # file for the reason the header gives, and kept as its own step so a
+      # failure names which draw of sites broke rather than "the Ask route".
+      - name: Run the Ask route answer-mode call-site suite
+        run: >-
+          npx jest --runTestsByPath
+          src/app/api/intelligence/ask/__tests__/c569-ask-route-answer-mode-call-sites.test.ts
+          --no-coverage --ci
