@@ -22,6 +22,8 @@ import {
 import { formatRequiredSectionsForPrompt } from "./section-conformance";
 import { buildLanguagePolicyBlock } from "@/lib/source/documentation-standards/source-documentation-standards";
 import { SOURCE_ARTIFACT_SPECS } from "@/lib/source/canonical-specs";
+import { evidenceById } from "@/lib/source/canonical-specs/evidence-requirements";
+import { sourceEvidenceAppliesToApprovalPolicy } from "@/lib/source/approval-policy";
 
 // Environment-tiered model selection. Each environment (dev / preprod / prod,
 // and per-client preprod / prod) sets these via env so the highest-quality
@@ -922,17 +924,51 @@ function formatDraftEvidenceContext(
     .join("\n\n") || null;
 }
 
+export function resolveStrategyEvidenceGateRole(args: {
+  requirementId: string;
+  approvalPolicyCode: string | null | undefined;
+  applicabilityStatus?: "applicable" | "not_applicable";
+}): {
+  level: "required" | "recommended" | "unknown";
+  policyApplies: boolean;
+  gateBlocking: boolean;
+} {
+  const level = evidenceById(args.requirementId)?.level ?? "unknown";
+  const policyApplies = sourceEvidenceAppliesToApprovalPolicy(
+    args.requirementId,
+    args.approvalPolicyCode,
+  );
+  return {
+    level,
+    policyApplies,
+    gateBlocking:
+      level === "required" &&
+      policyApplies &&
+      args.applicabilityStatus !== "not_applicable",
+  };
+}
+
 function formatStrategyGovernanceContext(ctx: SourceGenerationContext): string {
   const evidence = ctx.evidence
     .filter((item) => item.stage === "strategy")
-    .map((item) => [
-      `- ${item.requirementId}`,
-      `applicability=${item.applicabilityStatus ?? "applicable"}`,
-      `state=${resolveGenerationEvidenceState(ctx, item)}`,
-      item.applicabilityStatus === "not_applicable" && item.applicabilityReason
-        ? `audited_reason=${item.applicabilityReason}`
-        : null,
-    ].filter(Boolean).join("; "));
+    .map((item) => {
+      const role = resolveStrategyEvidenceGateRole({
+        requirementId: item.requirementId,
+        approvalPolicyCode: ctx.event.approvalPolicyCode,
+        applicabilityStatus: item.applicabilityStatus,
+      });
+      return [
+        `- ${item.requirementId}`,
+        `applicability=${item.applicabilityStatus ?? "applicable"}`,
+        `level=${role.level}`,
+        `policy_applies=${role.policyApplies}`,
+        `gate_blocking=${role.gateBlocking}`,
+        `state=${resolveGenerationEvidenceState(ctx, item)}`,
+        item.applicabilityStatus === "not_applicable" && item.applicabilityReason
+          ? `audited_reason=${item.applicabilityReason}`
+          : null,
+      ].filter(Boolean).join("; ");
+    });
   const criteria = ctx.gateCriteria
     .filter((item) => item.fromStage === "strategy")
     .map((item) => `- ${item.criterionId}; state=${item.state}`);
@@ -940,9 +976,10 @@ function formatStrategyGovernanceContext(ctx: SourceGenerationContext): string {
     "— CURRENT STRATEGY GOVERNANCE STATE —",
     `approval_policy=${ctx.event.approvalPolicyCode ?? "unknown"}`,
     ctx.event.approvalPolicyCode === "self_v1"
-      ? "The Event Owner records the decision under SELF policy. Do not require or imply a separate executive-sponsor commitment for this event."
+      ? "The Event Owner records the decision under SELF policy. Sponsor commitment is excluded from this event's gate: do not request it, waive it, or list it as an open gate action."
       : "Do not assume Event Owner self-approval; follow the recorded policy and gate evidence.",
     "An audited not-applicable decision is an absence decision, not a missing request or a supplied contract/spend fact.",
+    "Recommended evidence is optional and cannot become a gate prerequisite. Do not request or waive it as a condition of gate closure. Only applicable, policy-relevant required evidence can block the gate.",
     "A pending or unread Strategy criterion does not authorize a claim that the gate is ready to advance. Recommend the next review action without recording approval.",
     "Strategy evidence requirements:",
     ...(evidence.length ? evidence : ["- no evidence states read back"]),

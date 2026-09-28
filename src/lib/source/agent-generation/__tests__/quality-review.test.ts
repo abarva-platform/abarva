@@ -339,6 +339,89 @@ describe("Source consulting-grade quality gate helpers", () => {
     expect(unsupported.some((item) => /vendor-pricing/i.test(item.reason))).toBe(true);
   });
 
+  it("rejects request-or-waive gate prerequisites for optional or SELF-excluded Strategy evidence", () => {
+    const ctx = makeContext();
+    ctx.event.currentStageKey = "strategy";
+    ctx.event.approvalPolicyCode = "self_v1";
+    ctx.evidence = [
+      {
+        ...ctx.evidence[0],
+        requirementId: "EVID-SRC-STR-MARKET-BENCHMARK",
+        stage: "strategy",
+        currentState: "Not Requested",
+      },
+      {
+        ...ctx.evidence[0],
+        id: "sponsor-evidence",
+        requirementId: "EVID-SRC-STR-SPONSOR-COMMIT",
+        stage: "strategy",
+        currentState: "Not Requested",
+      },
+    ];
+    const violations = findDeterministicSourceClaimViolations({
+      artifactCode: "d01_strategy_memo",
+      sourceContext: "",
+      ctx,
+      body: [
+        "Market benchmark (EVID-SRC-STR-MARKET-BENCHMARK): request-or-waive decision required at gate.",
+        "Sponsor commitment (EVID-SRC-STR-SPONSOR-COMMIT): request-or-waive decision required at gate.",
+      ].join("\n"),
+    });
+    expect(violations.map((item) => item.reason)).toEqual(expect.arrayContaining([
+      expect.stringContaining("Recommended evidence"),
+      expect.stringContaining("SELF policy"),
+    ]));
+
+    const contradictory = findDeterministicSourceClaimViolations({
+      artifactCode: "d01_strategy_memo",
+      sourceContext: "",
+      ctx,
+      body: "EVID-SRC-STR-MARKET-BENCHMARK is optional, but a request-or-waive decision is required before the gate closes.",
+    });
+    expect(contradictory.some((item) => item.reason.includes("Recommended evidence"))).toBe(true);
+
+    const accurate = findDeterministicSourceClaimViolations({
+      artifactCode: "d02_value_target",
+      sourceContext: "",
+      ctx,
+      body: "The market scan is optional and not required for the Strategy gate. A separate sponsor commitment is not required under SELF policy.",
+    });
+    expect(accurate).toEqual([]);
+
+    const statusOnly = findDeterministicSourceClaimViolations({
+      artifactCode: "d01_strategy_memo",
+      sourceContext: "",
+      ctx,
+      body: "Market benchmark (EVID-SRC-STR-MARKET-BENCHMARK): Not Requested; this scan is optional and does not block Strategy.",
+    });
+    expect(statusOnly).toEqual([]);
+
+    ctx.event.approvalPolicyCode = "legacy_signed_scope_v1";
+    const strict = findDeterministicSourceClaimViolations({
+      artifactCode: "d01_strategy_memo",
+      sourceContext: "",
+      ctx,
+      body: "EVID-SRC-STR-SPONSOR-COMMIT is required before the Strategy gate closes.",
+    });
+    expect(strict).toEqual([]);
+  });
+
+  it("binds effective Strategy evidence roles into the model quality review packet", () => {
+    const ctx = makeContext();
+    ctx.event.approvalPolicyCode = "self_v1";
+    ctx.evidence = [
+      { ...ctx.evidence[0], requirementId: "EVID-SRC-STR-MARKET-BENCHMARK", stage: "strategy" },
+      { ...ctx.evidence[0], id: "sponsor-evidence", requirementId: "EVID-SRC-STR-SPONSOR-COMMIT", stage: "strategy" },
+    ];
+    const packet = buildSourceQualitySourceContext({
+      ctx,
+      upstreamBound: {},
+      artifactCode: "d01_strategy_memo",
+    });
+    expect(packet).toMatch(/EVID-SRC-STR-MARKET-BENCHMARK;[^\n]*level=recommended;[^\n]*gate_blocking=false/);
+    expect(packet).toMatch(/EVID-SRC-STR-SPONSOR-COMMIT;[^\n]*policy_applies=false;[^\n]*gate_blocking=false/);
+  });
+
   it("forces evidence and source-discipline dimensions below the release bar", () => {
     const baseReview = {
       standardId: "partner-grade-consulting-deliverable-v1" as const,

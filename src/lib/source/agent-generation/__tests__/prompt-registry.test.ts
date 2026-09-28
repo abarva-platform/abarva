@@ -132,6 +132,34 @@ describe("Source artifact prompt registry provider config", () => {
     }
   });
 
+  it("marks recommended and policy-excluded Strategy evidence as nonblocking in both drafts", () => {
+    const ctx = makeD09Context([]);
+    ctx.event.currentStageKey = "strategy";
+    ctx.event.approvalPolicyCode = "self_v1";
+    ctx.evidence = [
+      {
+        ...ctx.evidence[0],
+        requirementId: "EVID-SRC-STR-MARKET-BENCHMARK",
+        stage: "strategy",
+        currentState: "Not Requested",
+      },
+      {
+        ...ctx.evidence[0],
+        id: "sponsor-evidence",
+        requirementId: "EVID-SRC-STR-SPONSOR-COMMIT",
+        stage: "strategy",
+        currentState: "Not Requested",
+      },
+    ];
+
+    for (const code of ["d01_strategy_memo", "d02_value_target"]) {
+      const message = getPromptTemplate(code)!.buildUserMessage(ctx, {});
+      expect(message).toMatch(/EVID-SRC-STR-MARKET-BENCHMARK;[^\n]*level=recommended;[^\n]*gate_blocking=false/);
+      expect(message).toMatch(/EVID-SRC-STR-SPONSOR-COMMIT;[^\n]*policy_applies=false;[^\n]*gate_blocking=false/);
+      expect(message).toContain("Recommended evidence is optional and cannot become a gate prerequisite.");
+    }
+  });
+
   it("does not call an unapproved d01 body approved in the d02 prompt", () => {
     const ctx = makeD09Context([]);
     ctx.event.currentStageKey = "strategy";
