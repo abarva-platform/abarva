@@ -461,7 +461,6 @@ export function buildSourceEventShellView(
       .filter((artifact) =>
         artifact.recordKind === "canvas_state" &&
         artifact.linkedArtifactId &&
-        artifact.body?.trim() &&
         artifact.bodyGenerationMetadata,
       )
       .map((artifact) => [artifact.linkedArtifactId!, artifact]),
@@ -472,7 +471,9 @@ export function buildSourceEventShellView(
       const state = statesByLinkedArtifactId.get(artifact.id);
       if (!state) return artifact;
       const registryBody = artifactBodyFor(artifact)?.trim();
-      if (registryBody && registryBody !== state.body?.trim()) return artifact;
+      if (registryBody && (!state.body || registryBody !== state.body.trim())) {
+        return artifact;
+      }
       return {
         ...artifact,
         bodyGenerationMetadata: state.bodyGenerationMetadata,

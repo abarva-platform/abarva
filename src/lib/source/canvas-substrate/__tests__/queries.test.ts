@@ -13,6 +13,7 @@ import type {
 const mockAdapter = {
   listArtifactStateRows: jest.fn(),
   listArtifactStateMetadataRows: jest.fn(),
+  listArtifactStateReviewRows: jest.fn(),
   listGateCriterionStateRows: jest.fn(),
   listEvidenceStateRows: jest.fn(),
   listEventFactRows: jest.fn(),
@@ -30,6 +31,7 @@ describe("canvas substrate queries", () => {
     jest.clearAllMocks();
     mockAdapter.listArtifactStateRows.mockResolvedValue([]);
     mockAdapter.listArtifactStateMetadataRows.mockResolvedValue([]);
+    mockAdapter.listArtifactStateReviewRows.mockResolvedValue([]);
     mockAdapter.listGateCriterionStateRows.mockResolvedValue([]);
     mockAdapter.listEvidenceStateRows.mockResolvedValue([]);
     mockAdapter.listEventFactRows.mockResolvedValue([]);
@@ -48,6 +50,81 @@ describe("canvas substrate queries", () => {
     );
     expect(rows[0]?.artifactCode).toBe("d09_rfp_pack");
     expect(rows[0]?.body).toBeNull();
+    expect(rows[0]?.bodyGenerationMetadata).toBeNull();
+  });
+
+  it("projects only a current-stage review receipt without sending body or reasoning", async () => {
+    mockAdapter.listArtifactStateMetadataRows.mockResolvedValue([
+      artifactRow({ id: "state-1", linked_artifact_id: "registry-1", artifact_code: "d01_strategy_memo", stage_key: "strategy" }),
+    ]);
+    mockAdapter.listArtifactStateReviewRows.mockResolvedValue([
+      artifactRow({
+        id: "state-1",
+        linked_artifact_id: "registry-1",
+        artifact_code: "d01_strategy_memo",
+        stage_key: "strategy",
+        body: "Large confidential draft body.",
+        body_generation_metadata: {
+          generatedAt: "2026-09-28T19:00:00Z",
+          reasoningEnvelope: { internal: "Do not forward" },
+          qualityGate: {
+            passed: false,
+            finalSummary: "Unsupported claim.",
+            reviews: [{ privateReasoning: "Do not forward review notes" }],
+          },
+        },
+      }),
+    ]);
+
+    const rows = await listArtifactStatesForEventStage("event-1", "strategy");
+
+    expect(mockAdapter.listArtifactStateReviewRows).toHaveBeenCalledWith("event-1", "strategy");
+    expect(rows[0]).toMatchObject({
+      linkedArtifactId: "registry-1",
+      body: null,
+      bodyGenerationMetadata: {
+        qualityGate: { passed: false, finalSummary: "Unsupported claim." },
+      },
+    });
+    expect(JSON.stringify(rows[0])).not.toContain("Large confidential draft body");
+    expect(JSON.stringify(rows[0])).not.toContain("Do not forward");
+  });
+
+  it("does not project a review receipt after a later human body edit", async () => {
+    mockAdapter.listArtifactStateMetadataRows.mockResolvedValue([
+      artifactRow({ id: "state-1", linked_artifact_id: "registry-1", stage_key: "strategy" }),
+    ]);
+    mockAdapter.listArtifactStateReviewRows.mockResolvedValue([
+      artifactRow({
+        id: "state-1",
+        stage_key: "strategy",
+        body_generation_metadata: {
+          generatedAt: "2026-09-28T19:00:00Z",
+          humanEditedAt: "2026-09-28T19:01:00Z",
+          qualityGate: { passed: true, finalSummary: "Prior body passed." },
+        },
+      }),
+    ]);
+
+    const rows = await listArtifactStatesForEventStage("event-1", "strategy");
+    expect(rows[0]?.bodyGenerationMetadata).toBeNull();
+  });
+
+  it("does not project a review receipt when a human edit cannot be ordered", async () => {
+    mockAdapter.listArtifactStateMetadataRows.mockResolvedValue([
+      artifactRow({ id: "state-1", stage_key: "strategy" }),
+    ]);
+    mockAdapter.listArtifactStateReviewRows.mockResolvedValue([
+      artifactRow({
+        id: "state-1",
+        body_generation_metadata: {
+          humanEditedAt: "unknown",
+          qualityGate: { passed: true },
+        },
+      }),
+    ]);
+
+    const rows = await listArtifactStatesForEventStage("event-1", "strategy");
     expect(rows[0]?.bodyGenerationMetadata).toBeNull();
   });
 
