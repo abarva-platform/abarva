@@ -303,6 +303,55 @@ describe("Source consulting-grade quality gate helpers", () => {
     ]));
   });
 
+  it("rejects a recommendation to approve or advance while Strategy criteria are pending", () => {
+    const ctx = makeContext();
+    ctx.event.currentStageKey = "strategy";
+    ctx.gateCriteria = [{ ...ctx.gateCriteria[0], fromStage: "strategy", state: "pending" }];
+
+    for (const artifactCode of ["d01_strategy_memo", "d02_value_target"]) {
+      const violations = findDeterministicSourceClaimViolations({
+        artifactCode,
+        sourceContext: "",
+        ctx,
+        body: "Recommendation | **Approve to advance** — scope is bounded and the event is ready for the next phase.",
+      });
+      expect(violations.some((item) => item.reason.includes("pending Strategy gate"))).toBe(true);
+    }
+
+    const refusal = findDeterministicSourceClaimViolations({
+      artifactCode: "d01_strategy_memo",
+      sourceContext: "",
+      ctx,
+      body: "Do not approve to advance yet; Strategy criteria are pending review.",
+    });
+    expect(refusal).toEqual([]);
+
+    const qualifiedRefusal = findDeterministicSourceClaimViolations({
+      artifactCode: "d01_strategy_memo",
+      sourceContext: "",
+      ctx,
+      body: "Do not recommend approval to advance while the Strategy gate is pending.",
+    });
+    expect(qualifiedRefusal).toEqual([]);
+
+    const mixed = findDeterministicSourceClaimViolations({
+      artifactCode: "d01_strategy_memo",
+      sourceContext: "",
+      ctx,
+      body: "Do not approve yet; Recommendation | Approve to advance into the next phase.",
+    });
+    expect(mixed.some((item) => item.reason.includes("pending Strategy gate"))).toBe(true);
+
+    ctx.gateCriteria = [{ ...ctx.gateCriteria[0], fromStage: "strategy", state: "met" }];
+    const cleared = findDeterministicSourceClaimViolations({
+      artifactCode: "d01_strategy_memo",
+      sourceContext: "",
+      ctx,
+      body: "Recommend approval to advance after the recorded review.",
+    });
+    expect(cleared).toEqual([]);
+  });
+
   it("allows accurate absence and policy language while refusing unsupported vendor-pricing lore", () => {
     const ctx = makeContext();
     ctx.event.currentStageKey = "strategy";
