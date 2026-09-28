@@ -98,6 +98,8 @@ export interface SourceShellStep {
   template: StageTaskView["template"] | null;
   provenance: StageTaskView["provenance"] | null;
   factTemplateCode: StageTaskView["factTemplateCode"] | null;
+  confirmationVersion?: string;
+  approvalPolicyCode?: string | null;
 }
 
 export interface SourceShellFileItem {
@@ -367,7 +369,8 @@ export function buildSourceEventShellView(
 ): SourceEventShellView {
   const activeWorkspace = input.activeWorkspace ?? "steps";
   const tasks = input.stageView.tasks;
-  const ready = tasks.filter((task) => isTaskCaptured(task)).length;
+  const ready = tasks.filter((task) =>
+    isTaskCaptured(task, input.event.approvalPolicyCode)).length;
   const total = tasks.length;
   const resolvedJourney = input.journey ?? SOURCE_JOURNEYS.competitive_rfp;
   const viewedStageLabel =
@@ -431,7 +434,7 @@ export function buildSourceEventShellView(
     },
   );
 
-  const groups = groupSteps(tasks);
+  const groups = groupSteps(tasks, input.event.approvalPolicyCode);
   const stepsById = new Map(
     groups.flatMap((group) => group.steps).map((step) => [step.id, step]),
   );
@@ -677,16 +680,25 @@ function normalizeCurrentStageApprovalItem(
   };
 }
 
-function isTaskCaptured(task: StageTaskView): boolean {
+function isTaskCaptured(
+  task: StageTaskView,
+  approvalPolicyCode?: string | null,
+): boolean {
+  if (task.id === "strategy.confirm" && approvalPolicyCode === "self_v1") {
+    return task.evidenceComplete === true;
+  }
   return task.state === "done" || task.evidenceComplete === true;
 }
 
-function groupSteps(tasks: readonly StageTaskView[]): SourceShellStepGroup[] {
+function groupSteps(
+  tasks: readonly StageTaskView[],
+  approvalPolicyCode?: string | null,
+): SourceShellStepGroup[] {
   const groups = new Map<string, SourceShellStep[]>();
   tasks.forEach((task, index) => {
     const label = taskGroupLabel(task);
     const list = groups.get(label) ?? [];
-    list.push(toShellStep(task, list.length === 0, index));
+    list.push(toShellStep(task, list.length === 0, index, approvalPolicyCode));
     groups.set(label, list);
   });
   return Array.from(groups.entries())
@@ -702,8 +714,9 @@ function toShellStep(
   task: StageTaskView,
   firstInGroup: boolean,
   order: number,
+  approvalPolicyCode?: string | null,
 ): SourceShellStep {
-  const captured = isTaskCaptured(task);
+  const captured = isTaskCaptured(task, approvalPolicyCode);
   return {
     id: task.id,
     order,
@@ -718,6 +731,8 @@ function toShellStep(
     template: task.template ?? null,
     provenance: task.provenance ?? null,
     factTemplateCode: task.factTemplateCode ?? null,
+    confirmationVersion: task.confirmationVersion,
+    approvalPolicyCode,
   };
 }
 

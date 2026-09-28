@@ -924,7 +924,9 @@ export async function buildStrategyStageForRoute(
             confirmationVersion: ownerConfirmationEvent.approval_policy_code === "self_v1"
               ? strategyConfirmationVersion(ownerConfirmationEvent)
               : undefined,
-            evidenceComplete: ownerConfirmed || task.evidenceComplete,
+            evidenceComplete: ownerConfirmationEvent.approval_policy_code === "self_v1"
+              ? ownerConfirmed
+              : task.evidenceComplete,
           }
         : task),
     }, journey);

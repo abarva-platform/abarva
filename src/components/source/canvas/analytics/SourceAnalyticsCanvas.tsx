@@ -635,6 +635,19 @@ const STEP_REQUIREMENTS: Record<string, WorkflowStepRequirement> = {
   },
 };
 
+const SELF_STRATEGY_REQUIREMENT: WorkflowStepRequirement = {
+  item: "Event Owner strategy confirmation",
+  requirement: "1 required confirmation",
+  sourceSystem: "Sourcing intake record",
+  ownerRole: "Event Owner or client admin",
+  acceptedFormats: "No upload required",
+  grainHistory: "One version-bound decision per event",
+  templateLabel: "Strategy intake fields",
+  parseTarget: "Mandate, decision owner, value thesis",
+  artifactImpact: "Strategy memo and Scope collection guide",
+  missingAction: "Review the mandate and value thesis, then confirm as Event Owner.",
+};
+
 function sampleStageViewFor(
   stageKey: SourceStageKey,
   journey?: SourceJourneyDefinition,
@@ -2498,7 +2511,11 @@ function FocusedWorkPanel({
                 stepInsight={view.intelligence.stepInsight}
                 isComplete={activeComplete}
                 missingEvidence={activeMissingEvidence}
-                onComplete={() => markComplete(activeStep.id)}
+                onComplete={() => {
+                  if (activeStep.id !== "strategy.confirm" || view.event.approvalPolicyCode !== "self_v1") {
+                    markComplete(activeStep.id);
+                  }
+                }}
               />
             </div>
             <div data-testid="source-shell-continue-guidance">
@@ -3241,6 +3258,8 @@ function activeStepNeed(
   isComplete: boolean,
 ): ActiveStepNeedView {
   const requirement = stepRequirementFor(step);
+  const isSelfStrategy = step.id === "strategy.confirm" &&
+    step.approvalPolicyCode === "self_v1";
   const uploaded = Boolean(step.file);
   const status = isComplete
     ? "Complete"
@@ -3255,8 +3274,8 @@ function activeStepNeed(
     item: requirement.item,
     requiredness: requirement.requiredness ?? "Required",
     requirement: requirement.requirement,
-    sourceSystem: step.provenance?.source ?? requirement.sourceSystem,
-    owner: step.provenance?.owner ?? requirement.ownerRole,
+    sourceSystem: isSelfStrategy ? requirement.sourceSystem : step.provenance?.source ?? requirement.sourceSystem,
+    owner: isSelfStrategy ? requirement.ownerRole : step.provenance?.owner ?? requirement.ownerRole,
     formats: requirement.acceptedFormats,
     grainHistory: requirement.grainHistory,
     template: step.template?.name ?? requirement.templateLabel,
@@ -3304,6 +3323,9 @@ function stepReadbackLabel(
 }
 
 function stepRequirementFor(step: SourceShellStep): WorkflowStepRequirement {
+  if (step.id === "strategy.confirm" && step.approvalPolicyCode === "self_v1") {
+    return SELF_STRATEGY_REQUIREMENT;
+  }
   const catalogRequirement = STEP_REQUIREMENTS[step.id];
   if (catalogRequirement) return catalogRequirement;
 
@@ -3501,8 +3523,12 @@ function StepDetail({
   )) {
     return null;
   }
-  const canPersistAction =
-    activeStep.type !== "provide" && Boolean(evidenceRequirementId);
+  const isStrategyConfirmation =
+    stageKey === "strategy" && activeStep.id === "strategy.confirm" &&
+    activeStep.approvalPolicyCode === "self_v1";
+  const canPersistAction = isStrategyConfirmation
+    ? Boolean(activeStep.confirmationVersion)
+    : activeStep.type !== "provide" && Boolean(evidenceRequirementId);
   const evidenceRow = (
     <ActiveStepRequirementRow
       step={activeStep}
@@ -3516,19 +3542,25 @@ function StepDetail({
     setActionState({ phase: "saving" });
     let response: Response;
     try {
-      response = await fetch(
-        `/api/v1/source/${encodeURIComponent(eventId)}/evidence/${encodeURIComponent(
-          evidenceRequirementId!,
-        )}/answer`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            stage: stageKey,
-            answer: `${activeStep.title}: ${activeStep.help}`,
-          }),
-        },
-      );
+      response = isStrategyConfirmation
+        ? await fetch(`/api/v1/source/${encodeURIComponent(eventId)}/strategy-confirmation`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ version: activeStep.confirmationVersion, confirmed: true }),
+          })
+        : await fetch(
+            `/api/v1/source/${encodeURIComponent(eventId)}/evidence/${encodeURIComponent(
+              evidenceRequirementId!,
+            )}/answer`,
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                stage: stageKey,
+                answer: `${activeStep.title}: ${activeStep.help}`,
+              }),
+            },
+          );
     } catch (error) {
       setActionState({
         phase: "error",
@@ -3556,12 +3588,16 @@ function StepDetail({
       return;
     }
 
-    onComplete();
+    if (!isStrategyConfirmation) onComplete();
     setActionState({ phase: "idle" });
     router.refresh();
   }
 
-  const actionButton = canPersistAction ? (
+  const actionButton = isStrategyConfirmation && !activeStep.confirmationVersion ? (
+    <span style={{ color: ANALYTICS.MUTED, fontSize: 12 }}>
+      A governed Event Owner confirmation is required for this step.
+    </span>
+  ) : canPersistAction ? (
     <StepActionButton
       saving={actionState.phase === "saving"}
       onClick={completeStepAction}
