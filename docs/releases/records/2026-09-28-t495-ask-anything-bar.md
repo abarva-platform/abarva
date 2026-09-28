@@ -100,6 +100,19 @@ Merges through the normal PR path. The repo-owned ACA main deploy workflow
 builds and rolls the image as for any merge; the image carries no product
 change from this PR.
 
+## Deployment Authority
+
+- Repo-owned deploy workflow: `.github/workflows/aca-main-deploy.yml` runs on
+  merge as usual; nothing here changes what it builds.
+- Shared runtime mutators: none. No `az` command, Container App, revision,
+  traffic weight, flag or environment variable is touched.
+- Approved image digest: not applicable — no runtime image change.
+- ACA runtime invariant: unchanged by this release; it is read after merge and
+  reported with the deploy, not claimed here.
+- Worker image invariant: unchanged; no worker job touched.
+- Feature/env flag update path: none.
+- Live signed-in proof required: **no.** Nothing reaches a product surface.
+
 ## Rollback Plan
 
 Revert the squash commit. That restores the file-reading suite and removes it
