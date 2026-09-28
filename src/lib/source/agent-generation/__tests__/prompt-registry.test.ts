@@ -206,6 +206,32 @@ describe("Source artifact prompt registry provider config", () => {
     );
   });
 
+  it("puts human trigger review and the actual next stage in the d01 gate agenda", () => {
+    const prompt = getPromptTemplate("d01_strategy_memo")!.systemPrompt;
+    expect(prompt).toContain(
+      "Make human review of available trigger evidence an explicit gate-session agenda action before any criterion outcome is recorded",
+    );
+    expect(prompt).toContain(
+      "Strategy approval advances only to Define/Scope, not directly to RFP or market release",
+    );
+  });
+
+  it("keeps optional evidence open and planning status visible in d02 excerpts", () => {
+    const ctx = makeD09Context([]);
+    ctx.event.currentStageKey = "strategy";
+    const template = getPromptTemplate("d02_value_target")!;
+    const message = template.buildUserMessage(ctx, {});
+    for (const text of [
+      "An available gate evidence file still needs explicit human review when the criterion is pending",
+      "Do not say all open evidence gaps must close or be formally deferred before the gate; recommended evidence may remain open without blocking",
+    ]) {
+      expect(message).toContain(text);
+    }
+    expect(template.systemPrompt).toContain(
+      "Put planning-only and unvalidated status in the sizing table header or adjacent caption",
+    );
+  });
+
   it("lets legacy suffixed prompt keys resolve without changing the legacy prompt keys", () => {
     expect(getSourceArtifactStoryContract("d02_value_target_legacy")).toMatchObject({
       artifactCode: "d02_value_target",
