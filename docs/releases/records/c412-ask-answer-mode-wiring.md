@@ -120,6 +120,12 @@ filed work of its own, is not caused by this change, and is not covered by it.
   0**, zero diagnostics. Judged on the exit code, not on a grep: a bare `npx tsc
   --noEmit` exits 134 on this host with no output, which greps as a false clean.
 - `npx eslint` on the new file — exit 0, no findings.
+- The suite saves and restores `ANTHROPIC_API_KEY` around its cases rather than setting
+  it at module scope. Jest shares one `process.env` across every suite in a worker, so a
+  key left behind would silently change the behaviour of any sibling suite that asserts
+  the unconfigured refusal. All five mutations were re-measured after this change, since
+  amending the suite after measuring would otherwise have left the table describing a
+  different file: same five caught, same case firing for each.
 - Workflow YAML parsed and the step re-read from the parsed document to confirm it names
   the new file, rather than grepping the raw text.
 - `npm run audit:test-ci-coverage:check` — exit 0. `census shape: coverage shape matches

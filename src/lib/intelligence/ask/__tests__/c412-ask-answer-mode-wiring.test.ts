@@ -54,11 +54,6 @@
  * left implied.
  */
 
-// The synthesizer refuses before any of the behaviour below when this is unset,
-// and it reads `process.env` at call time. No request is made — the client is
-// mocked. Set at module scope so it is in place before the first case runs.
-process.env.ANTHROPIC_API_KEY = "test-key-c412";
-
 jest.mock("server-only", () => ({}));
 
 // Retrieval, mocked at the same boundaries the sibling module suite uses, so
@@ -226,6 +221,23 @@ async function runAsk(args: {
 }
 
 describe("C-412 · answer-mode wiring inside the Ask module", () => {
+  // The synthesizer refuses before any of the behaviour below when this is
+  // unset, and it reads `process.env` at call time. No request is made — the
+  // client is mocked. Restored afterwards rather than left set: jest shares one
+  // `process.env` across every suite in a worker, so leaving a key behind would
+  // change the behaviour of any sibling suite that asserts the unconfigured
+  // refusal.
+  const ORIGINAL_API_KEY = process.env.ANTHROPIC_API_KEY;
+
+  beforeAll(() => {
+    process.env.ANTHROPIC_API_KEY = "test-key-c412";
+  });
+
+  afterAll(() => {
+    if (ORIGINAL_API_KEY === undefined) delete process.env.ANTHROPIC_API_KEY;
+    else process.env.ANTHROPIC_API_KEY = ORIGINAL_API_KEY;
+  });
+
   it("sends the classified mode's system contract and prompt directive to the model", async () => {
     expect(classifyAbarvaAnswerMode(MOVES_EXECUTION_QUERY)).toBe(
       "strategy_to_moves_execution",
