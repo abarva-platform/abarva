@@ -31,6 +31,7 @@ The Strategy checklist could appear complete in one browser session without savi
 - Bind the confirmation to the current event, client, policy, mandate, owner, value thesis, and revision.
 - Require current stage, tenant, owner/client-admin approval rights, an actual owner/mandate/planning value thesis, explicit confirmation, and a matching version before appending an activity receipt.
 - Show checklist completion only after the current receipt is read back. Do not offer a local-only Strategy completion when no governed confirmation path is available.
+- Refresh the committed tenancy-fence census for the new route; it directly invokes the fence and has behavioral coverage.
 
 ## QA / Validation
 
@@ -38,6 +39,7 @@ The Strategy checklist could appear complete in one browser session without savi
 - Pass: focused route, readback, policy and checklist suites, including denied actor, wrong tenant, strict-policy, changed mandate and failed-write cases.
 - Pass: a deliberate mutation ignoring the saved version was caught by two readback tests and restored.
 - Pass: adjacent Source UI suites, Node 24 TypeScript, scoped ESLint, and release control before PR.
+- Pass: the regenerated tenancy-fence census changes only the new route and classifies its direct fence and behavioral suite.
 - Not run: signed-in persisted confirmation until the exact main deployment.
 
 ## Rollout Plan
