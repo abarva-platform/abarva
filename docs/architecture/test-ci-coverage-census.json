@@ -18,24 +18,24 @@
   ],
   "counts": {
     "testFiles": 2528,
-    "coveredTestFiles": 2181,
-    "pullRequestCoveredTestFiles": 2180,
-    "uncoveredTestFiles": 347,
+    "coveredTestFiles": 2184,
+    "pullRequestCoveredTestFiles": 2183,
+    "uncoveredTestFiles": 344,
     "directoriesWithTests": 492,
     "directoriesFullyCovered": 312,
-    "directoriesPartiallyCovered": 26,
-    "directoriesUncovered": 154,
+    "directoriesPartiallyCovered": 27,
+    "directoriesUncovered": 153,
     "directoriesWithUnrunTestFiles": 180,
     "directoriesWithUntriagedUnrunTestFiles": 169,
     "declaredQuarantineTestFiles": 52,
-    "untriagedUnrunTestFiles": 295,
+    "untriagedUnrunTestFiles": 292,
     "indeterminateInvocations": 0,
     "unresolvedIgnoreArguments": 0,
     "criticalGovernedRiskDirectories": 1,
     "highGovernedRiskDirectories": 5,
     "unclassifiedRiskDirectories": 163,
     "rankedDirectories": 169,
-    "rankedUntriagedUnrunTestFiles": 295,
+    "rankedUntriagedUnrunTestFiles": 292,
     "unclassifiedRiskDirectoriesWithResolvedProductSources": 156,
     "unclassifiedRiskDirectoriesWithNoResolvedProductSource": 7
   },
@@ -256,6 +256,16 @@
       "coveredTestFiles": 14,
       "declaredQuarantineTestFiles": 6,
       "untriagedUnrunTestFiles": 0,
+      "via": [
+        "command"
+      ]
+    },
+    {
+      "directory": "src/__tests__/integration/ops",
+      "testFiles": 14,
+      "coveredTestFiles": 3,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 11,
       "via": [
         "command"
       ]
@@ -1290,9 +1300,9 @@
     {
       "directory": "src/__tests__/integration/ops",
       "testFiles": 14,
-      "unrunTestFiles": 14,
+      "unrunTestFiles": 11,
       "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 14,
+      "untriagedUnrunTestFiles": 11,
       "admittedBy": "untriaged_unrun_work",
       "governedRisk": {
         "score": 0,
@@ -5698,9 +5708,9 @@
     {
       "directory": "src/__tests__/integration/ops",
       "testFiles": 14,
-      "unrunTestFiles": 14,
+      "unrunTestFiles": 11,
       "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 14,
+      "untriagedUnrunTestFiles": 11,
       "governedRisk": {
         "score": 0,
         "band": "unclassified",
@@ -5962,14 +5972,6 @@
     }
   ],
   "uncoveredDirectories": [
-    {
-      "directory": "src/__tests__/integration/ops",
-      "testFiles": 14,
-      "coveredTestFiles": 0,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 14,
-      "via": []
-    },
     {
       "directory": "src/__tests__/integration/agents",
       "testFiles": 8,

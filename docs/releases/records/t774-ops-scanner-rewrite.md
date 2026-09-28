@@ -63,6 +63,49 @@ client-visible behaviour, no data-plane change and no public or demo surface.
 - `docs/architecture/t774-ops-scanner-rewrite-triage.json` — new triage record. Declares the three
   paths `sourceTextScanner: false` so the scanner-wiring control resolves their classification from
   the latest record rather than from the historical draw.
+- `.github/workflows/integration-suites.yml` — the three suites are wired, **as named file paths in
+  their own step, never as the directory**. See *A rule collision this change had to resolve*.
+- `docs/architecture/test-ci-coverage-census.json` — refreshed. The directory moves `uncovered` to
+  `partial`; covered test files 2181 → 2184, uncovered 347 → 344.
+- `src/__tests__/behaviors/t771-nda-suite-wiring.test.ts` — an existing control, lowered in the same
+  commit because wiring these three turned it red. See *A control that inverted*.
+
+## A rule collision this change had to resolve
+
+The owning item says the wiring unit is the **directory**, so this change planned to wire nothing.
+A repo-owned gate disagreed and failed the pull request: `check-integration-ci-visibility.mjs`
+requires a changed integration suite to have an executable CI owner, and it named exactly these
+three paths.
+
+Both rules are right and they cannot both be satisfied by any per-file slice of this item — which
+nobody had discovered because nobody had sliced it before. The resolution is to wire the three by
+**named file path**, the form this workflow's own header sanctions, and a different operation from
+the one the item forbids: a colliding *directory* is silent and drags in every sibling written
+afterwards, while a named *file* is loud and enumerated. Naming the directory here would also
+select the two red suites and the two remaining text-searching suites, and the scanner-wiring
+control would correctly go red.
+
+A rewrite nobody runs proves nothing, so the gate is right, and the item's sentence was written for
+the closing change rather than for a slice.
+
+## A control that inverted
+
+Wiring the three turned `t771-nda-suite-wiring.test.ts` red — **3 failed of 32**. That control
+asserts every path its draw judged and did not wire is *still unreached*, so it fails the moment a
+later item legitimately wires one. It went red because the corpus improved, which is the wrong
+direction for a gate to point.
+
+It is lowered in the same commit and **not** by exempting three paths. Its unreached list now
+subtracts any path a *strictly later* triage record declares wired, resolved by timestamp — the
+same supersession rule the scanner-wiring control already documents, and for the same reason. The
+freed set is read from the records, so a later item cannot free a path by editing the control.
+
+The subtraction is not a weakening, and that is asserted rather than claimed. A new case makes each
+freed path pay for its exemption twice: a later record must **name** it, and a command in a required
+job must actually **select** it. Proven by deleting the workflow step while leaving the record
+claiming the wiring — exactly that case fails, and nothing else does. The partition case that
+pinned three fixed counts now asserts conserved arithmetic instead, so the next item to wire one of
+these paths reads a number rather than lowering one.
 
 No script under test was modified. Mutations used to prove the suites were applied to working
 copies and reverted; `git diff` over those three scripts is empty.
@@ -84,7 +127,12 @@ after. **That is a pre-existing count and is not caused here.**
 - `npx tsc --noEmit --pretty false` after removing `tsconfig.tsbuildinfo` — **exit 0**, judged on
   the exit code, zero lines of output.
 - `npx eslint` over the three changed suites — exit 0.
-- `npm run test:behaviors` — 153 suites, 1668 passed, 0 failed.
+- `npm run test:behaviors` — 153 suites, **1668 passed / 0 failed** before the wiring; 153 suites,
+  **1666 passed / 0 failed** after. The net −2 is exact and accounted for: three per-path cases left
+  the unreached list and one exemption case replaced them.
+- `node scripts/quality/check-integration-ci-visibility.mjs --base origin/main` — **failed before
+  the wiring step, naming all three paths; exit 0 after.**
+- `npm run audit:test-ci-coverage:check` — drift reported before the census refresh, exit 0 after.
 - `src/__tests__/behaviors/t770-scanner-wiring-refusal.test.ts` — 7 passed before and after. Live
   declared scanners **34 → 31**, measured by re-deriving the set from the records, not asserted;
   floor is 25.
@@ -167,10 +215,11 @@ which is a loss of assurance rather than a restoration of it.
   agreed. Repairing the data and widening the reader are both coherent; choosing is an owner call
   and the acceptance says not to guess. This is recorded on the item so the next run does not
   rediscover it.
-- **This record is not independently enforced.** Deleting it turns no gate red: the three paths
-  would revert to "declared text search, wired nowhere", which is a state the control permits. It
-  changes what the control counts (34 live to 31) and nothing more, and it becomes enforced when
-  the directory is eventually wired. The sibling record for another item could claim the opposite
-  because its suite was wired in the same change; this one cannot, and says so.
 - No gate asserts that a suite declared free of text searching has actually stopped. The evidence
   for that claim is the mutation table above, measured in both directions.
+- **A correction to an earlier draft of this record**, kept rather than quietly edited away. It
+  claimed the triage record was independently unenforced, because nothing was wired. That was true
+  when written and is now false: with the three suites wired, a declared text search that *is*
+  reached is a breach. Verified by execution — with the record removed, the scanner-wiring control
+  goes 2 failed of 7 and names all three paths together with the exact selecting command; restored,
+  7 passed.

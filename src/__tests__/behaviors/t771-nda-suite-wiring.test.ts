@@ -1,5 +1,5 @@
 import { execFileSync } from "node:child_process";
-import { readFileSync } from "node:fs";
+import { readdirSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 
@@ -60,6 +60,7 @@ const DARK_BASELINE =
 
 type TriageRecord = {
   base: string;
+  recordedAt: string;
   wiring: { directories: string[]; suitesWired: number; casesWired: number };
   dischargedHold: { path: string; owningItem: string };
   suites: {
@@ -88,12 +89,59 @@ const WIRED = triage.suites
   .sort();
 
 /**
- * Every judged path this change does NOT wire. The positives above would all
- * pass under an ancestor sweep, which would also reach these, so the negatives
- * are what make "wired" mean the narrow claim.
+ * A path T-771 left unwired that a STRICTLY LATER triage record declares it
+ * wired. Resolved by `recordedAt`, the same supersession rule
+ * `t770-scanner-wiring-refusal.test.ts` documents and for the same reason: a
+ * suite that later gets rewritten and wired legitimately must not be held dark
+ * by a control whose subject is what an earlier item did.
+ *
+ * Read from the records rather than listed here, so a later item cannot free a
+ * path by editing this file.
+ */
+function wiredByALaterRecord(): Map<string, string> {
+  const freed = new Map<string, string>();
+  for (const file of readdirSync(path.join(repoRoot, "docs/architecture")).filter(
+    (name) => /triage.*\.json$/.test(name),
+  )) {
+    const relative = `docs/architecture/${file}`;
+    if (relative === TRIAGE_RECORD) continue;
+    let record: { recordedAt?: string; item?: string; suites?: Record<string, unknown>[] };
+    try {
+      record = JSON.parse(readFileSync(path.join(repoRoot, relative), "utf8")) as typeof record;
+    } catch {
+      continue;
+    }
+    if (!record.recordedAt || record.recordedAt <= triage.recordedAt) continue;
+    for (const suite of record.suites ?? []) {
+      if (suite.wiredInThisItem === true) {
+        freed.set(String(suite.path), `${relative} (${String(record.item ?? "?")})`);
+      }
+    }
+  }
+  return freed;
+}
+
+const FREED_BY_A_LATER_RECORD = wiredByALaterRecord();
+
+/**
+ * Every judged path this change does NOT wire, minus any a later record has
+ * since wired. The positives above would all pass under an ancestor sweep,
+ * which would also reach these, so the negatives are what make "wired" mean the
+ * narrow claim.
+ *
+ * The subtraction is NOT a weakening: every path it removes is asserted below
+ * to be named by a later record AND to be genuinely reached today, so a path
+ * cannot leave this list by going quiet.
  */
 const NOT_WIRED = triage.suites
   .filter((suite) => !suite.wiredInThisItem)
+  .map((suite) => suite.path)
+  .filter((suitePath) => !FREED_BY_A_LATER_RECORD.has(suitePath))
+  .sort();
+
+/** The freed paths that T-771 actually judged — the others are not this file's business. */
+const FREED_FROM_THIS_DRAW = triage.suites
+  .filter((suite) => !suite.wiredInThisItem && FREED_BY_A_LATER_RECORD.has(suite.path))
   .map((suite) => suite.path)
   .sort();
 
@@ -273,7 +321,13 @@ function probeCensus(): Probe {
         CENSUS_ROOT: repoRoot,
         WIRING_WORKFLOW,
         WIRING_STEP_NAME,
-        SUBJECT_PATHS: JSON.stringify([...WIRED, ...NOT_WIRED].sort()),
+        // The whole draw, including paths a later record has since wired. The
+        // probe measures coverage over every path T-771 judged; narrowing it to
+        // the paths still unwired would shrink the probe every time the corpus
+        // improved, which is the same inversion this file was just repaired for.
+        SUBJECT_PATHS: JSON.stringify(
+          [...WIRED, ...NOT_WIRED, ...FREED_FROM_THIS_DRAW].sort(),
+        ),
         IMPORTER_TARGET: SUBJECT_MODULE,
       },
       stdio: ["ignore", "pipe", "pipe"],
@@ -325,20 +379,34 @@ describe("T-771: the one directory the ninth draw could wire", () => {
     // Non-vacuous first. Every case below iterates one of these lists, so a
     // renamed field or a moved record would turn this whole file into passing
     // assertions about nothing.
+    //
+    // The partition is asserted as CONSERVED arithmetic rather than as three
+    // fixed numbers. `notWired` shrinks every time a later item legitimately
+    // wires one of this draw's paths, and a case that pinned it would fail
+    // that pull request and teach the next author to lower a constant instead
+    // of reading one. What cannot move is the total and the split: 25 judged,
+    // exactly 1 wired by T-771 itself, and every one of the other 24 either
+    // still unreached or accounted for by name in `FREED_FROM_THIS_DRAW` —
+    // which the case below then makes pay for its exemption twice.
     expect({
       judged: triage.suites.length,
       wired: WIRED.length,
-      notWired: NOT_WIRED.length,
+      notWiredPlusFreed: NOT_WIRED.length + FREED_FROM_THIS_DRAW.length,
+      freedAreDisjointFromNotWired: FREED_FROM_THIS_DRAW.every(
+        (suitePath) => !NOT_WIRED.includes(suitePath),
+      ),
       wiredIsTheDischargedHold: WIRED.includes(SUBJECT_SUITE),
       recordAgreesOnCount: triage.wiring.suitesWired,
-      probedSubjects: probe.mutation.scratchFiles,
+      probedSubjectsCoverTheDraw:
+        probe.mutation.scratchFiles === WIRED.length + NOT_WIRED.length + FREED_FROM_THIS_DRAW.length,
     }).toEqual({
       judged: 25,
       wired: 1,
-      notWired: 24,
+      notWiredPlusFreed: 24,
+      freedAreDisjointFromNotWired: true,
       wiredIsTheDischargedHold: true,
       recordAgreesOnCount: 1,
-      probedSubjects: 25,
+      probedSubjectsCoverTheDraw: true,
     });
   });
 
@@ -386,6 +454,32 @@ describe("T-771: the one directory the ninth draw could wire", () => {
         commandNamesExactly(command, testPath),
       ),
     ).toEqual([]);
+  });
+
+  it("frees a path from the unreached list only when a later record names it AND it is reached", () => {
+    // The subtraction above is the only way a path leaves NOT_WIRED, so it is
+    // the place this control could be quietly emptied. Each freed path has to
+    // pay for its exemption twice: a strictly later triage record declares it
+    // wired, and a command in a required job actually selects it. A path that
+    // went quiet, or a record that claims a wiring nobody performed, fails
+    // here rather than disappearing from the list above.
+    expect(
+      FREED_FROM_THIS_DRAW.map((suitePath) => ({
+        path: suitePath,
+        namedBy: FREED_BY_A_LATER_RECORD.get(suitePath) ?? null,
+        stillUnrun: unrun.has(suitePath),
+        selectingCommands: probe.pullRequestCommands.filter((command) =>
+          commandNamesExactly(command, suitePath),
+        ).length,
+      })),
+    ).toEqual(
+      FREED_FROM_THIS_DRAW.map((suitePath) => ({
+        path: suitePath,
+        namedBy: FREED_BY_A_LATER_RECORD.get(suitePath) ?? null,
+        stillUnrun: false,
+        selectingCommands: 1,
+      })),
+    );
   });
 
   it("wires a subject that product code actually imports", () => {
