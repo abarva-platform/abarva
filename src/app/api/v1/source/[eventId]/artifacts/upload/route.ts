@@ -17,6 +17,7 @@ import {
   SOURCE_STAGE_ORDER,
 } from "@/lib/source/constants";
 import { getSourcingEvent, type SourceEventRow } from "@/lib/source/queries";
+import { evidenceById } from "@/lib/source/canonical-specs/evidence-requirements";
 import type { SourceStageKey } from "@/lib/source/types";
 import {
   buildSourceArtifactBlobPath,
@@ -332,6 +333,23 @@ export async function POST(
   });
   if (!scope) return jsonError(403, "forbidden_event");
 
+  const requirementId = parseOptionalString(formData.get("evidenceRequirementId"));
+  if (formData.has("evidenceRequirementId") && !requirementId)
+    return jsonError(400, "invalid_evidence_requirement");
+  if (requirementId) {
+    const requirement = evidenceById(requirementId);
+    const extension = filename.split(".").pop()?.toLowerCase();
+    const format = sourceArtifactFormatFromMime(mimeType);
+    if (!requirement || requirement.stage !== scope.stageKey)
+      return jsonError(400, "invalid_evidence_requirement");
+    if (
+      !extension ||
+      !requirement.acceptedFileTypes.includes(extension) ||
+      (format !== extension && !(format === "markdown" && extension === "md"))
+    )
+      return jsonError(400, "invalid_evidence_file_type");
+  }
+
   const artifactId = randomUUID();
   let blobUri: string;
   try {
@@ -392,14 +410,15 @@ export async function POST(
   }
 
   try {
-    const artifactFamily = inferSourceArtifactFamily({
+    const artifactFamily = requirementId ? "other" : inferSourceArtifactFamily({
       stageKey: scope.stageKey,
       filename,
       requestedFamily: parseOptionalString(formData.get("artifactFamily")),
     });
-    const artifactKind =
-      parseOptionalString(formData.get("artifactKind")) ??
-      "uploaded_source_artifact";
+    const artifactKind = requirementId
+      ? "uploaded_source_artifact"
+      : parseOptionalString(formData.get("artifactKind")) ??
+        "uploaded_source_artifact";
     const sourceFormat = sourceArtifactFormatFromMime(mimeType);
     const fileFormat = sourceFormat === "markdown" ? "md" : sourceFormat;
     let artifact = await registerSourceArtifactUpload({
@@ -542,6 +561,7 @@ export async function POST(
           artifactId: artifact.id,
           artifactFamily: artifact.artifactFamily,
           filename,
+          requirementId,
           parsed: artifact.parseStatus === "parsed",
         });
       } catch (syncError) {

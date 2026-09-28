@@ -175,6 +175,40 @@ describe("matchEvidenceRequirementForUpload (filename → canonical requirement)
   });
 });
 
+describe("explicit evidence requirement upload", () => {
+  it("links to the selected stage requirement despite an unrelated filename", async () => {
+    const { db, writes } = fakeDb({});
+    const result = await syncUploadToCanvasSubstrate({
+      sourceEventRowId: "event-1",
+      tenantKey: "tenant-1",
+      stageKey: "strategy",
+      artifactId: "file-1",
+      artifactFamily: "sourcing_strategy",
+      filename: "operator-note.csv",
+      requirementId: "EVID-SRC-STR-TRIGGER",
+      parsed: true,
+    }, db);
+    expect(result.evidence?.requirementId).toBe("EVID-SRC-STR-TRIGGER");
+    expect(writes.find((write) => write.table === "source_event_evidence_states")?.payload)
+      .toMatchObject({ requirement_id: "EVID-SRC-STR-TRIGGER", current_state: "Parsed" });
+  });
+
+  it("refuses a selected requirement from another stage", async () => {
+    const { db, writes } = fakeDb({});
+    await expect(syncUploadToCanvasSubstrate({
+      sourceEventRowId: "event-1",
+      tenantKey: "tenant-1",
+      stageKey: "strategy",
+      artifactId: "file-1",
+      artifactFamily: "sourcing_strategy",
+      filename: "operator-note.csv",
+      requirementId: "EVID-SRC-SCOPE-APP-INV",
+      parsed: true,
+    }, db)).rejects.toThrow("requirement does not belong to stage");
+    expect(writes).toHaveLength(0);
+  });
+});
+
 describe("syncUploadToCanvasSubstrate (durable F1 fix)", () => {
   const base = {
     sourceEventRowId: "evt-row-1",

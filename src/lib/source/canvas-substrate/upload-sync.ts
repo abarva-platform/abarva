@@ -19,6 +19,7 @@
 import { getAzureWriteFluentClient } from "@/lib/data-plane/postgresCompat";
 import {
   SOURCE_EVIDENCE_REQUIREMENTS,
+  evidenceById,
   type SourceEvidenceRequirement,
 } from "@/lib/source/canonical-specs/evidence-requirements";
 import { getCriterionIdsForArtifactFamily } from "@/lib/source/artifact-gate-map";
@@ -109,6 +110,7 @@ export interface UploadSubstrateSyncInput {
   artifactId: string;
   artifactFamily: SourceArtifactFamily;
   filename: string;
+  requirementId?: string;
   /** true when the upload parsed synchronously (csv/txt/etc.). */
   parsed: boolean;
 }
@@ -137,7 +139,10 @@ export async function syncUploadToCanvasSubstrate(
   const nowIso = new Date().toISOString();
 
   // ── 1 · evidence readiness ladder ──
-  const matched = matchEvidenceRequirementForUpload({
+  const selected = input.requirementId ? evidenceById(input.requirementId) : null;
+  if (input.requirementId && (!selected || selected.stage !== input.stageKey))
+    throw new Error("requirement does not belong to stage");
+  const matched = selected ?? matchEvidenceRequirementForUpload({
     stageKey: input.stageKey,
     filename: input.filename,
   });

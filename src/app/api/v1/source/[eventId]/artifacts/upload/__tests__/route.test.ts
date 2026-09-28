@@ -265,6 +265,57 @@ beforeEach(() => {
 });
 
 describe('POST /api/v1/source/[eventId]/artifacts/upload', () => {
+  it('binds an explicitly selected requirement even when the filename has no matching token', async () => {
+    maybeSingleMock.mockResolvedValueOnce({
+      data: { id: EVENT_ID, client_key: 'apexretail', current_stage_key: 'strategy' },
+      error: null,
+    });
+    const res = await POST(
+      makeMultipartRequest('owner-note.csv', CSV_MIME, 32, {
+        stageKey: 'strategy',
+        evidenceRequirementId: 'EVID-SRC-STR-TRIGGER',
+        artifactFamily: 'sourcing_strategy',
+        artifactKind: 'sourcing_strategy_memo',
+      }),
+      EVENT_PARAMS,
+    );
+    expect(res.status).toBe(200);
+    expect(syncUploadToCanvasSubstrateMock.mock.calls[0]?.[0]?.[0]).toEqual(
+      expect.objectContaining({
+        requirementId: 'EVID-SRC-STR-TRIGGER',
+        artifactFamily: 'other',
+      }),
+    );
+    expect(registerSourceArtifactUploadMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        artifactFamily: 'other',
+        artifactKind: 'uploaded_source_artifact',
+      }),
+    );
+  });
+
+  it.each([
+    ['unknown', 'EVID-SRC-NOT-REAL', 'owner-note.csv', CSV_MIME],
+    ['wrong stage', 'EVID-SRC-SCOPE-APP-INV', 'owner-note.csv', CSV_MIME],
+    ['wrong file type', 'EVID-SRC-STR-INCUMBENT', 'owner-note.csv', CSV_MIME],
+    ['mismatched MIME', 'EVID-SRC-STR-TRIGGER', 'owner-note.pdf', CSV_MIME],
+  ])('rejects %s requirement binding before storing bytes', async (_reason, requirementId, filename, mime) => {
+    maybeSingleMock.mockResolvedValueOnce({
+      data: { id: EVENT_ID, client_key: 'apexretail', current_stage_key: 'strategy' },
+      error: null,
+    });
+    const res = await POST(
+      makeMultipartRequest(filename, mime, 32, {
+        stageKey: 'strategy',
+        evidenceRequirementId: requirementId,
+      }),
+      EVENT_PARAMS,
+    );
+    expect(res.status).toBe(400);
+    expect(storageUploadMock).not.toHaveBeenCalled();
+    expect(registerSourceArtifactUploadMock).not.toHaveBeenCalled();
+  });
+
   it('persists a CSV to Azure Blob at a tenant-scoped path + registers an artifact row', async () => {
     const req = makeMultipartRequest(
       'apex-svc-baseline-18mo.csv',
