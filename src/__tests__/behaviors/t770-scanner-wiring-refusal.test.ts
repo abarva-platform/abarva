@@ -50,6 +50,12 @@
 import { existsSync, readFileSync, readdirSync } from "node:fs";
 import path from "node:path";
 
+import { classifyModuleReferrers } from "../../../scripts/audit/lib/module-referrers.mjs";
+import {
+  computeRouteReachability,
+  isExcluded,
+  reachableFrom,
+} from "../../../scripts/audit/lib/route-reachability.mjs";
 import {
   collectReachableCommands,
   reachableEntrySelects,
@@ -353,5 +359,270 @@ describe("T-770 — no declared source-text scanner is wired into CI", () => {
     // And the two accounts agree, so neither number is quietly standing in for
     // the other.
     expect(declaredScanners.length).toBe(liveScanners.length + missing.length);
+  });
+});
+
+/**
+ * Item T-775. A rewrite that stops being a scanner can still be wired over
+ * code no user reaches, and nothing above could tell.
+ *
+ * Four T-495 rewrites merged on 28 Sep render AgentHiddenDrawer,
+ * AgentInlineRecommendation and AgentMissionPanel, or reach AskAnythingBar
+ * through its ProgramCanonicalDetail mount. Every one of those components is
+ * reached by no route, and the view builders they drive are reached only by
+ * tests. Each record said `verdict: "wired"` with `rendersComponent: true`, the
+ * mutation scores were real, and the census counted the files as covered — so
+ * a triage record could manufacture coverage for dead code and every gate
+ * above agreed. The schema had no reachability field and nothing here read
+ * either reachability register.
+ *
+ * COMPUTED, NOT DECLARED. The answer comes from the two walks the repository's
+ * reachability audits already share — `computeRouteReachability` for
+ * `src/components` and `src/app`, `classifyModuleReferrers` for `src/lib` —
+ * run now, over the suite's own import closure. The committed registers are
+ * not read: they are a snapshot, and a record could agree with a stale one.
+ * A record's `subjectReachability` is checked AGAINST the computation, so it
+ * cannot state an answer the graph does not give.
+ *
+ * WHAT IS NOT HERE, AND WHY. The item offers a way out for "an owner decision
+ * (a backlog id marked decided)". The backlog lives outside the repository, so
+ * CI cannot read whether an id is decided; honouring that citation would be a
+ * declaration this control takes on trust, which is the defect. A decision
+ * leaves this list by its EFFECT instead: retire deletes the suite, mount makes
+ * the subject reachable, and either takes the row out of the refusal.
+ */
+
+/**
+ * The four filed under T-775, held until its retire-versus-mount decision is
+ * executed. It may only SHRINK: each entry must still be computed unreachable,
+ * so the change that mounts or deletes the subject has to delete the line.
+ */
+const PENDING_OWNER_DECISION: Record<string, string> = {
+  "src/__tests__/integration/agents/agent-hidden-drawer.test.ts": "T-775",
+  "src/__tests__/integration/agents/agent-inline-recommendation.test.ts": "T-775",
+  "src/__tests__/integration/agents/agent-mission-panel.test.ts": "T-775",
+  "src/__tests__/integration/agents/ask-anything-bar.test.ts": "T-775",
+};
+
+/** Floor on the rows in scope, for the reason LIVE_SCANNER_FLOOR has one: 13 on `23c02c05b2`. */
+const WIRED_SUBJECT_FLOOR = 10;
+
+type WiredSubjectRow = {
+  path: string;
+  declaredBy: string;
+  recordedAt: string;
+  entryPoint: string;
+  subjectReachability?: { reachable?: unknown; pendingDecision?: unknown };
+};
+
+/** Every suite row resolved to its LATEST record, then narrowed to wired render/entry-point rows. */
+function wiredSubjectRows(): WiredSubjectRow[] {
+  const latest = new Map<string, WiredSubjectRow & { verdict?: string; inScope: boolean }>();
+  for (const file of readdirSync(path.join(repoRoot, RECORD_DIR)).filter((name) =>
+    /triage.*\.json$/.test(name),
+  )) {
+    let record: { recordedAt?: string; suites?: Record<string, unknown>[] };
+    try {
+      record = JSON.parse(readFileSync(path.join(repoRoot, RECORD_DIR, file), "utf8"));
+    } catch {
+      continue;
+    }
+    for (const suite of record.suites ?? []) {
+      const row = {
+        path: String(suite.path),
+        declaredBy: `${RECORD_DIR}/${file}`,
+        recordedAt: String(record.recordedAt ?? ""),
+        entryPoint: String(suite.drivesProductionEntryPoint ?? ""),
+        subjectReachability: suite.subjectReachability as WiredSubjectRow["subjectReachability"],
+        verdict: suite.verdict as string | undefined,
+        inScope:
+          suite.verdict === "wired" &&
+          (suite.rendersComponent === true ||
+            (typeof suite.drivesProductionEntryPoint === "string" &&
+              suite.drivesProductionEntryPoint.length > 0)),
+      };
+      const held = latest.get(row.path);
+      if (!held || row.recordedAt > held.recordedAt) latest.set(row.path, row);
+    }
+  }
+  return [...latest.values()].filter((row) => row.inScope);
+}
+
+const route = computeRouteReachability(repoRoot) as {
+  roots: string[];
+  reachable: Set<string>;
+};
+const referrers = classifyModuleReferrers(repoRoot, "src/lib") as {
+  testOnly: string[];
+  unreferenced: string[];
+  entryPointCounts: { product: number };
+};
+const deadLib = new Set([...referrers.testOnly, ...referrers.unreferenced]);
+
+/** A fixture is data a suite feeds in, not a subject it exercises. */
+const isFixture = (relative: string) => relative.includes("/__fixtures__/");
+
+/**
+ * Every non-test file in the suite's import closure that no user can reach: a
+ * component or app file no route reaches, or a src/lib module that only a test
+ * (or nothing) reaches.
+ */
+function unreachableSubjects(suitePath: string): string[] {
+  const out: string[] = [];
+  for (const file of reachableFrom(repoRoot, suitePath) as Set<string>) {
+    const relative = path.relative(repoRoot, file);
+    if (isExcluded(relative) || isFixture(relative)) continue;
+    if (relative.startsWith("src/lib/")) {
+      if (deadLib.has(relative)) out.push(relative);
+    } else if (
+      relative.startsWith("src/components/") ||
+      relative.startsWith("src/app/")
+    ) {
+      if (!route.reachable.has(file)) out.push(relative);
+    }
+  }
+  return out.sort();
+}
+
+const subjectRows = wiredSubjectRows().filter((row) =>
+  existsSync(path.join(repoRoot, row.path)),
+);
+const unreachableBySuite = new Map(
+  subjectRows.map((row) => [row.path, unreachableSubjects(row.path)]),
+);
+
+function refusals(excepted: Set<string>) {
+  return subjectRows
+    .filter((row) => (unreachableBySuite.get(row.path) ?? []).length > 0)
+    .filter((row) => !excepted.has(row.path))
+    .map((row) => ({
+      suite: row.path,
+      declaredBy: row.declaredBy,
+      entryPoint: row.entryPoint,
+      unreachableSubjects: unreachableBySuite.get(row.path),
+    }));
+}
+
+describe("T-775 — a wired render or entry-point suite must exercise code a user can reach", () => {
+  it("walks real entry points and a real population, so an empty answer is not a vacuous one", () => {
+    expect({
+      routeRoots: route.roots.length > 0,
+      productEntryPoints: referrers.entryPointCounts.product > 0,
+      rowsInScope: subjectRows.length >= WIRED_SUBJECT_FLOOR,
+    }).toEqual({ routeRoots: true, productEntryPoints: true, rowsInScope: true });
+  });
+
+  it("refuses a wired row whose subject no route or product entry point reaches", () => {
+    expect(refusals(new Set(Object.keys(PENDING_OWNER_DECISION)))).toEqual([]);
+  });
+
+  it("refuses exactly the four real known positives when the pending set is withheld", () => {
+    /*
+     * The positive control. Without it the case above passes on a blind
+     * detector, because the corpus is clean apart from the pending four. Each
+     * positive is pinned to the file that makes it dead, and AskAnythingBar —
+     * reachable, and the named entry point of one positive — is pinned as NOT
+     * in its list, so "everything is unreachable" cannot pass for "this is".
+     */
+    const refused = refusals(new Set());
+    expect(refused.map((r) => r.suite).sort()).toEqual(
+      Object.keys(PENDING_OWNER_DECISION).sort(),
+    );
+    const listFor = (suite: string) =>
+      refused.find((r) => r.suite === suite)?.unreachableSubjects ?? [];
+    expect({
+      hiddenDrawer: listFor("src/__tests__/integration/agents/agent-hidden-drawer.test.ts").includes(
+        "src/components/agents/AgentHiddenDrawer.tsx",
+      ),
+      hiddenDrawerView: listFor("src/__tests__/integration/agents/agent-hidden-drawer.test.ts").includes(
+        "src/lib/agent/agent-hidden-drawer-view.ts",
+      ),
+      inline: listFor("src/__tests__/integration/agents/agent-inline-recommendation.test.ts").includes(
+        "src/components/agents/AgentInlineRecommendation.tsx",
+      ),
+      panel: listFor("src/__tests__/integration/agents/agent-mission-panel.test.ts").includes(
+        "src/components/agent/AgentMissionPanel.tsx",
+      ),
+      askBarMount: listFor("src/__tests__/integration/agents/ask-anything-bar.test.ts").includes(
+        "src/components/programs/ProgramCanonicalDetail.tsx",
+      ),
+      askBarItself: listFor("src/__tests__/integration/agents/ask-anything-bar.test.ts").includes(
+        "src/components/agent/AskAnythingBar.tsx",
+      ),
+    }).toEqual({
+      hiddenDrawer: true,
+      hiddenDrawerView: true,
+      inline: true,
+      panel: true,
+      askBarMount: true,
+      askBarItself: false,
+    });
+  });
+
+  it("holds every row's declared subjectReachability to the computation, both ways", () => {
+    const disagreements = subjectRows
+      .map((row) => {
+        const computedReachable = (unreachableBySuite.get(row.path) ?? []).length === 0;
+        const declared = row.subjectReachability;
+        const ok = computedReachable
+          ? declared === undefined || declared.reachable === true
+          : declared?.reachable === false &&
+            declared.pendingDecision === PENDING_OWNER_DECISION[row.path];
+        return ok
+          ? null
+          : {
+              suite: row.path,
+              declaredBy: row.declaredBy,
+              computedReachable,
+              declared: declared ?? "absent",
+            };
+      })
+      .filter(Boolean);
+    expect(disagreements).toEqual([]);
+  });
+
+  it("keeps the pending set closed and shrinking", () => {
+    // An entry whose subject became reachable, or whose suite is gone, is a
+    // decision already executed; the same change deletes the line.
+    for (const [suite, item] of Object.entries(PENDING_OWNER_DECISION)) {
+      expect({
+        suite,
+        stillOnDisk: existsSync(path.join(repoRoot, suite)),
+        stillWiredInScope: subjectRows.some((row) => row.path === suite),
+        stillUnreachable: (unreachableBySuite.get(suite) ?? []).length > 0,
+        namesAnItem: /^[A-Z]-\d{3}$/.test(item),
+      }).toEqual({
+        suite,
+        stillOnDisk: true,
+        stillWiredInScope: true,
+        stillUnreachable: true,
+        namesAnItem: true,
+      });
+    }
+  });
+
+  it("excludes a fixture from the subject, and the exclusion is measured rather than assumed", () => {
+    /*
+     * shell-v2-mode-layout imports the Tower design fixture, which only tests
+     * reach. It is data the suite feeds in; counting it would refuse a suite
+     * whose subjects are all route-reachable. Pinned so the exclusion is seen
+     * to matter on a real row and cannot quietly widen.
+     */
+    const suite = "src/components/shell/__tests__/shell-v2-mode-layout.test.tsx";
+    const fixture = "src/lib/tower/command-center/__fixtures__/design-fixture.ts";
+    const closure = [...(reachableFrom(repoRoot, suite) as Set<string>)].map((file) =>
+      path.relative(repoRoot, file),
+    );
+    expect({
+      fixtureInClosure: closure.includes(fixture),
+      fixtureTestOnly: referrers.testOnly.includes(fixture),
+      suiteInScope: subjectRows.some((row) => row.path === suite),
+      refused: (unreachableBySuite.get(suite) ?? []).length > 0,
+    }).toEqual({
+      fixtureInClosure: true,
+      fixtureTestOnly: true,
+      suiteInScope: true,
+      refused: false,
+    });
   });
 });
