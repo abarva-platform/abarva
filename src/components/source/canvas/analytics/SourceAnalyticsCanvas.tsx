@@ -4179,11 +4179,7 @@ function FilesWorkspace({
         view={view}
         evidenceStates={evidenceStates}
         onEvidenceReviewed={onClientFinalAccepted}
-        onUploadClick={() => {
-          document
-            .getElementById("source-session-evidence-capture")
-            ?.scrollIntoView({ behavior: "smooth", block: "start" });
-        }}
+        onUploaded={onClientFinalAccepted}
       />
       <SessionEvidenceCapturePanel
         eventId={view.event.id}
@@ -4353,12 +4349,12 @@ function StageEvidenceChecklistPanel({
   view,
   evidenceStates,
   onEvidenceReviewed,
-  onUploadClick,
+  onUploaded,
 }: {
   view: SourceEventShellView;
   evidenceStates: readonly SourceEventEvidence[];
   onEvidenceReviewed: () => void;
-  onUploadClick: () => void;
+  onUploaded: () => void;
 }) {
   const rows = buildStageEvidenceRequirementRows(view, evidenceStates);
   const supportsApplicability = evidenceStates.some(
@@ -4560,13 +4556,12 @@ function StageEvidenceChecklistPanel({
                               Uploaded
                             </span>
                           ) : null}
-                          <button
-                            type="button"
-                            onClick={onUploadClick}
-                            style={TABLE_BUTTON_STYLE}
-                          >
-                            {uploaded ? "Upload more" : "Upload"}
-                          </button>
+                          <EvidenceRequirementUploadControl
+                            eventId={view.event.id}
+                            requirement={requirement}
+                            uploaded={uploaded}
+                            onUploaded={onUploaded}
+                          />
                         </div>
                       </td>
                       <td style={FILE_TD_CENTER}>
@@ -4645,6 +4640,84 @@ function StageEvidenceChecklistPanel({
         </div>
       )}
     </section>
+  );
+}
+
+function EvidenceRequirementUploadControl({
+  eventId,
+  requirement,
+  uploaded,
+  onUploaded,
+}: {
+  eventId: string;
+  requirement: SourceEvidenceRequirement;
+  uploaded: boolean;
+  onUploaded: () => void;
+}) {
+  const inputRef = useRef<HTMLInputElement | null>(null);
+  const [pending, setPending] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [receipt, setReceipt] = useState<string | null>(null);
+
+  const upload = async (file: File) => {
+    setPending(true);
+    setError(null);
+    setReceipt(null);
+    const formData = new FormData();
+    formData.append("file", file, file.name);
+    formData.append("stageKey", requirement.stage);
+    formData.append("evidenceRequirementId", requirement.requirementId);
+    formData.append("dataClassification", "Internal");
+    try {
+      const response = await fetch(
+        `/api/v1/source/${encodeURIComponent(eventId)}/artifacts/upload`,
+        { method: "POST", body: formData, credentials: "include" },
+      );
+      const payload = (await response.json().catch(() => null)) as
+        | SourceSessionEvidenceUploadPayload
+        | null;
+      if (!response.ok || payload?.ok !== true || !payload.artifact?.id) {
+        throw new Error(payload?.detail ?? payload?.error ?? `Upload failed with HTTP ${response.status}.`);
+      }
+      setReceipt(`Captured ${payload.artifact.originalName ?? file.name} · ${summarizeSubstrateSync(payload.substrateSync)}`);
+      onUploaded();
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "Upload failed.");
+    } finally {
+      setPending(false);
+    }
+  };
+
+  return (
+    <>
+      <input
+        ref={inputRef}
+        type="file"
+        accept={requirement.acceptedFileTypes.map((type) => `.${type}`).join(",")}
+        aria-label={`${requirement.label} source file`}
+        data-testid={`source-required-evidence-input-${requirement.requirementId}`}
+        style={{ display: "none" }}
+        onChange={(event) => {
+          const file = event.currentTarget.files?.[0];
+          event.currentTarget.value = "";
+          if (file) void upload(file);
+        }}
+      />
+      <button
+        type="button"
+        disabled={pending}
+        onClick={() => inputRef.current?.click()}
+        style={TABLE_BUTTON_STYLE}
+      >
+        {pending ? "Uploading..." : uploaded ? "Upload more" : "Upload"}
+      </button>
+      {receipt ? (
+        <span data-testid={`source-required-evidence-status-${requirement.requirementId}`} style={{ color: ANALYTICS.GREEN_TEXT, fontSize: 11 }}>
+          {receipt}
+        </span>
+      ) : null}
+      {error ? <span role="alert" style={{ color: ANALYTICS.RUST, fontSize: 11 }}>{error}</span> : null}
+    </>
   );
 }
 
