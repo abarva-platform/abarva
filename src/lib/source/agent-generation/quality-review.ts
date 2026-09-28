@@ -565,7 +565,36 @@ export function buildSourceConsultingGradeReviewPrompt(args: {
   bodyMarkdown: string;
   sourceContext: string;
 }): string {
-  return buildConsultingGradeReviewPrompt(args);
+  return withSourceReviewEvidenceLimits(buildConsultingGradeReviewPrompt(args));
+}
+
+const SOURCE_REVIEW_EVIDENCE_LIMITS = [
+  "Source review evidence limits override generic commercial-specificity guidance:",
+  "Do not request or add illustrative, proxy, or sector-typical financial amounts unless the bound source context supplies both the values and their evidence.",
+  "Commercial specificity can be shown through named levers, an unquantified range, and the evidence needed to size it when no baseline is available.",
+  "Do not turn recommended evidence into a gate requirement or invent a collection date; name the accountable owner and leave the date client-to-set.",
+  "Ignore review fixes that conflict with these evidence limits; keep the gap explicit instead of manufacturing a number, date, or authority.",
+].join("\n");
+
+function withSourceReviewEvidenceLimits(prompt: string): string {
+  return `${SOURCE_REVIEW_EVIDENCE_LIMITS}\n\n${prompt}`;
+}
+
+function boundedSourceReviewFix(fix: string, sourceContext: string): string {
+  const supportedNumbers = extractMaterialNumbers(sourceContext);
+  const unboundNumber = extractMaterialNumberClaims(fix).some(
+    (claim) => !supportedNumbers.some((value) => materiallyEqual(value, claim.value)),
+  );
+  const proxyAmount = /\b(?:illustrative|proxy|sector-typical)\b.{0,100}\b(?:financial|dollar|spend|range|rate|contribution|percent)\b/i.test(fix);
+  if (unboundNumber || proxyAmount) {
+    return "Keep the financial scale unquantified until bound evidence supplies its values.";
+  }
+
+  const supportedTiming = new Set(extractTemporalClaims(sourceContext).map((claim) => claim.key));
+  if (extractTemporalClaims(fix).some((claim) => !supportedTiming.has(claim.key))) {
+    return "Leave timing client-to-set until a bound source supplies the date or duration.";
+  }
+  return fix;
 }
 
 export function buildSourceConsultingGradeCompactRetryPrompt(args: {
@@ -575,7 +604,7 @@ export function buildSourceConsultingGradeCompactRetryPrompt(args: {
   sourceContext: string;
   previousError: string;
 }): string {
-  return buildConsultingGradeCompactRetryPrompt(args);
+  return withSourceReviewEvidenceLimits(buildConsultingGradeCompactRetryPrompt(args));
 }
 
 export function buildSourceConsultingGradeRewritePrompt(args: {
@@ -585,7 +614,20 @@ export function buildSourceConsultingGradeRewritePrompt(args: {
   sourceContext: string;
   review: ConsultingGradeReview;
 }): string {
-  return buildConsultingGradeRewritePrompt(args);
+  const review = {
+    ...args.review,
+    dimensionScores: args.review.dimensionScores.map((dimension) => ({
+      ...dimension,
+      requiredFixes: dimension.requiredFixes.map((fix) =>
+        boundedSourceReviewFix(fix, args.sourceContext)),
+    })),
+    rewriteGuidance: args.review.rewriteGuidance.map((fix) =>
+      boundedSourceReviewFix(fix, args.sourceContext)),
+  };
+  return withSourceReviewEvidenceLimits(buildConsultingGradeRewritePrompt({
+    ...args,
+    review,
+  }));
 }
 
 export function parseSourceConsultingGradeReview(args: {
