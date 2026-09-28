@@ -56,6 +56,8 @@ interface SourceArtifactGovernanceRow {
   lifecycle_state: string | null;
   approval_state: string | null;
   approved_by: string | null;
+  parse_status: string | null;
+  source_origin: string | null;
 }
 
 const DRIFT_STATUSES: ArtifactContentDriftStatus[] = [
@@ -287,7 +289,9 @@ export async function POST(req: NextRequest, { params }: RouteCtx) {
     const { data: sourceArtifactRow, error: sourceArtifactError } =
       await supabase
         .from("source_artifacts")
-        .select("id, status, lifecycle_state, approval_state, approved_by")
+        .select(
+          "id, status, lifecycle_state, approval_state, approved_by, parse_status, source_origin",
+        )
         .eq("id", artifactRow.linked_artifact_id)
         .maybeSingle<SourceArtifactGovernanceRow>();
     if (sourceArtifactError || !sourceArtifactRow) {
@@ -297,6 +301,19 @@ export async function POST(req: NextRequest, { params }: RouteCtx) {
           detail: `Linked artifact ${artifactRow.linked_artifact_id} could not be read.`,
         },
         { status: 404 },
+      );
+    }
+    if (
+      sourceArtifactRow.source_origin !== "generated" &&
+      sourceArtifactRow.parse_status !== "parsed"
+    ) {
+      return Response.json(
+        {
+          error: "artifact_not_reviewable",
+          detail:
+            "This file must be parsed before it can be accepted as authoritative.",
+        },
+        { status: 409 },
       );
     }
 

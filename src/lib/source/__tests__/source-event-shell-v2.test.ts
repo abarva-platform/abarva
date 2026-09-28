@@ -737,6 +737,7 @@ describe("buildSourceEventShellView", () => {
         expect.stringContaining("Vendor Shortlist: not registered"),
       ]),
     );
+    expect(view.files.items[0]?.sourceOrigin).toBe("generated");
     expect(view.stage.gateReadinessLine).toContain(
       "required/gate artifacts still need",
     );
@@ -779,6 +780,7 @@ describe("buildSourceEventShellView", () => {
     expect(view.files.items).toEqual([
       expect.objectContaining({
         id: "rfp-client-final",
+        sourceOrigin: "reuploaded",
         artifactRole: "authoritative",
         latestAcceptance: null,
         acceptedAsAuthoritative: true,

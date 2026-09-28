@@ -8371,6 +8371,7 @@ function FileCard({
         operation={operation}
         artifactRole={item.artifactRole}
         parseStatus={item.parseStatus}
+        sourceOrigin={item.sourceOrigin}
         embeddingStatus={item.embeddingStatus}
         graphStatus={item.graphStatus}
         needsComplianceReview={item.needsComplianceReview}

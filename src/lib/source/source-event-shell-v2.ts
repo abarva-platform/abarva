@@ -127,6 +127,8 @@ export interface SourceShellFileItem {
   complianceReviewMessage: string | null;
   /** First-mile extraction status from the durable Source artifact row. */
   parseStatus: string | null;
+  /** Registry origin distinguishes rendered work products from uploaded evidence. */
+  sourceOrigin?: string | null;
   /** Search/vector readiness status from the durable Source artifact row. */
   embeddingStatus: string | null;
   /** Graph/entity projection status from the durable Source artifact row. */
@@ -879,6 +881,7 @@ function toFileItem(
       ? SOURCE_COMPLIANCE_REVIEW_FLAG_MESSAGE
       : null,
     parseStatus: artifact.parseStatus ?? null,
+    sourceOrigin: artifact.sourceOrigin ?? null,
     embeddingStatus: artifact.embeddingStatus ?? null,
     graphStatus: artifact.graphStatus ?? null,
     latestAcceptance,
