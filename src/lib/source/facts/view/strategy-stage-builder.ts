@@ -133,8 +133,8 @@ export function buildStrategyStageView(
           tone: 'found',
           tag: isLive ? 'Assembled' : 'Sample',
           text: isLive
-            ? 'The sponsor, mandate, and value thesis below were assembled from this event’s captured intake — you are confirming, not authoring from scratch.'
-            : 'We drafted the mandate, sponsor, and value thesis from your intake — you are confirming, not authoring from scratch.',
+            ? 'The decision owner, mandate, and value thesis below were assembled from this event’s captured intake — you are confirming, not authoring from scratch.'
+            : 'We drafted the mandate, decision owner, and value thesis from your intake — you are confirming, not authoring from scratch.',
         },
         {
           tone: 'archetype',
@@ -143,13 +143,13 @@ export function buildStrategyStageView(
         },
         {
           tone: 'benchmark',
-          tag: 'Benchmark',
-          text: 'Comparable events set a value target in the 18–24% band — your confirmed thesis anchors where yours lands.',
+          tag: 'Evidence',
+          text: 'Use cited baseline and outcome drivers to substantiate the value target; comparable-event figures are not a substitute for this event’s evidence.',
         },
         {
           tone: 'without',
           tag: 'Without this',
-          text: 'Starting scope without a sponsor-backed mandate leaves the RFP exposed to mid-flight re-litigation of the goal.',
+          text: 'Starting scope without an accountable, recorded mandate can leave the sourcing goal unresolved.',
         },
       ],
     },

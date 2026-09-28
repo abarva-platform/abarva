@@ -23,7 +23,10 @@ import {
   archetypeForEventType,
   listSourceArchetypes,
 } from '@/lib/source/archetypes/registry';
-import { resolveArchetypeForEvent } from '@/lib/source/archetypes/event-archetype-resolver';
+import {
+  EVENT_TYPE_TO_ARCHETYPE_ID,
+  resolveArchetypeForEvent,
+} from '@/lib/source/archetypes/event-archetype-resolver';
 import {
   SOURCE_CATEGORY_IDS,
   type SourceCategoryId,
@@ -117,6 +120,12 @@ export function resolveValueArchetype(
   if (categoryId) return null;
 
   if (!eventType) return null;
+  // The canonical resolver explicitly leaves coarse legacy types unresolved.
+  // Do not re-resolve one by matching a pack's broad eventType label.
+  if (
+    Object.hasOwn(EVENT_TYPE_TO_ARCHETYPE_ID, eventType) &&
+    EVENT_TYPE_TO_ARCHETYPE_ID[eventType] === null
+  ) return null;
   const exactMatches = listSourceArchetypes().filter(
     (candidate) =>
       candidate.eventType === eventType &&

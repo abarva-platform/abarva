@@ -353,8 +353,8 @@ function resolveArchetypeById(id: string): SourceEventArchetype | null {
 /**
  * Value pool: one bar per QUANTIFIED lever (low–high $ at stake), biggest-first,
  * colored by value type. When facts quantify at least one lever → live. When they
- * don't but the archetype declares levers → a clearly-marked SAMPLE built from the
- * archetype's illustrative values. When neither → honest empty.
+ * don't but the archetype declares levers → name the unsized levers without
+ * sample amounts. When neither → honest empty.
  */
 export function buildValuePoolInsight(
   archetype: SourceEventArchetype,
@@ -379,17 +379,16 @@ export function buildValuePoolInsight(
     };
   }
 
-  // No live levers. If the archetype declares rules, show a SAMPLE value pool
-  // built from each rule's illustrative band so the buyer learns the shape.
+  // A declared lever is not a quantified value pool. Keep its name visible,
+  // but do not supply a plausible amount in the absence of event facts.
   if (rules.length > 0) {
-    const bars = sampleBarsFromRules(rules);
     return {
       kind: 'value_pool',
       provenance: 'sample',
-      headline: valuePoolHeadline(bars, 0, true),
-      bars,
-      needsEvidenceLevers: [],
-      note: 'Illustrative value pool — the shape of the prize this archetype chases. It sizes for real once your run-cost, ticket, and contract evidence lands. Not a tenant savings claim.',
+      headline: 'Provide evidence to size the value pool for this event.',
+      bars: [],
+      needsEvidenceLevers: rules.map((rule) => rule.name),
+      note: 'These value levers are unsized. No event-specific amount is asserted until the required source facts are recorded.',
     };
   }
 
