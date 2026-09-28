@@ -12,6 +12,7 @@ import {
 import {
   formatD09RfpEvidenceCoverage,
   resolveGenerationEvidenceState,
+  resolveStrategyEvidenceGateRole,
 } from "./prompt-registry";
 import type { SourceGenerationContext } from "./types";
 import { getSourceArtifactProfile } from "@/lib/source/documentation-standards/source-artifact-profiles";
@@ -103,7 +104,8 @@ export function findDeterministicSourceClaimViolations(args: {
   }
 
   const generalizationPatterns = [
-    /\b(?:typically|frequently|almost always|industry benchmark|market benchmark|best practice)\b/i,
+    /\b(?:typically|frequently|almost always|industry benchmark|best practice)\b/i,
+    /\bmarket benchmarks?\s+(?:show|indicate|suggest|confirm|prove|demonstrate)\b/i,
     /\bmarket\s+(?:is|remains|appears)\s+(?:active|receptive|competitive|favorable)\b/i,
     /\b(?:providers?|vendors?)\s+(?:are|remain)\s+competing\s+aggressively\b/i,
     /\bperiod of vendor capacity constraint\b/i,
@@ -144,6 +146,24 @@ export function findDeterministicSourceClaimViolations(args: {
 
   if (args.ctx) {
     const lines = args.body.split(/\n+/).map((line) => line.trim());
+    const blockingClaim = /\b(?:required|must|prerequisite|blocks?|cannot\s+(?:close|advance)|request-or-waive)\b/i;
+    const explicitNonblocking = /\b(?:not required|does not require|does not block|not a prerequisite)\b/i;
+    for (const item of args.ctx.evidence.filter((evidence) => evidence.stage === "strategy")) {
+      const role = resolveStrategyEvidenceGateRole({
+        requirementId: item.requirementId,
+        approvalPolicyCode: args.ctx.event.approvalPolicyCode,
+        applicabilityStatus: item.applicabilityStatus,
+      });
+      if (role.level !== "recommended") continue;
+      for (const line of lines.filter((text) =>
+        text.includes(item.requirementId) && blockingClaim.test(text) && !explicitNonblocking.test(text),
+      )) {
+        violations.push({
+          claim: line.slice(0, 220),
+          reason: "Recommended evidence cannot become a Strategy gate prerequisite.",
+        });
+      }
+    }
     for (const item of args.ctx.evidence.filter(
       (evidence) => evidence.stage === "strategy" && evidence.applicabilityStatus === "not_applicable",
     )) {
@@ -159,8 +179,8 @@ export function findDeterministicSourceClaimViolations(args: {
     if (args.ctx.event.approvalPolicyCode === "self_v1") {
       for (const line of lines.filter((text) =>
         /EVID-SRC-STR-SPONSOR-COMMIT|executive sponsor commitment/i.test(text) &&
-        /\b(?:required|must|blocks?|before (?:external )?release)\b/i.test(text) &&
-        !/\b(?:not required|does not require|optional|historical)\b/i.test(text),
+        blockingClaim.test(text) &&
+        !explicitNonblocking.test(text),
       )) {
         violations.push({
           claim: line.slice(0, 220),
@@ -447,10 +467,20 @@ export function buildSourceQualitySourceContext(args: {
   });
   const evidenceLines = ctx.evidence.map((item) => {
     const state = resolveGenerationEvidenceState(ctx, item, isRfpPackage);
+    const role = item.stage === "strategy"
+      ? resolveStrategyEvidenceGateRole({
+          requirementId: item.requirementId,
+          approvalPolicyCode: ctx.event.approvalPolicyCode,
+          applicabilityStatus: item.applicabilityStatus,
+        })
+      : null;
     return [
       `- ${item.requirementId}`,
       `state=${state}`,
       `applicability=${item.applicabilityStatus ?? "applicable"}`,
+      role ? `level=${role.level}` : null,
+      role ? `policy_applies=${role.policyApplies}` : null,
+      role ? `gate_blocking=${role.gateBlocking}` : null,
       item.sourceArtifactId ? "source=linked evidence record" : null,
       item.notes ? `notes=${item.notes}` : null,
     ]
