@@ -388,6 +388,37 @@ describe("SourceAnalyticsCanvas — artifact role badge (SOURCE-SHELL-002)", () 
     ).toBeInTheDocument();
   });
 
+  it("does not describe an unlinked trigger as Available in the Continue summary", () => {
+    const triggerEvidence: SourceEventEvidence = {
+      id: "trigger-evidence",
+      sourceEventId: "evt-1",
+      tenantKey: "demo-client",
+      requirementId: "EVID-SRC-STR-TRIGGER",
+      stage: "strategy",
+      currentState: "Available",
+      sourceArtifactId: null,
+      sourceEventFactIds: [],
+      notes: "Typed intake narrative without a linked source record.",
+      lastSyncedAt: null,
+      createdAt: "2026-09-28T00:00:00Z",
+      updatedAt: "2026-09-28T00:00:00Z",
+    };
+
+    render(
+      <SourceAnalyticsCanvas
+        event={makeEvent()}
+        viewStage="strategy"
+        tenantName="Test Tenant"
+        artifacts={[]}
+        evidenceStates={[triggerEvidence]}
+      />,
+    );
+
+    const needs = screen.getByTestId("source-shell-active-step-needs");
+    expect(needs).toHaveTextContent("Now: Not loaded");
+    expect(needs).not.toHaveTextContent("Now: Available");
+  });
+
   it("labels RFP evidence owners and reviews parsed evidence", async () => {
     const rfpEvent: SourcingEventSummary = {
       ...makeEvent(),

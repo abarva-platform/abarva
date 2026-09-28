@@ -183,7 +183,7 @@ describe("SourceAnalyticsCanvas — AskAnythingBar reachability", () => {
     expect(needs).toHaveTextContent("L2/L3 ticket history and service volumetrics");
     expect(needs).toHaveTextContent("Source: ServiceNow ITSM");
     expect(needs).toHaveTextContent("Needed: Available");
-    expect(needs).toHaveTextContent("Now: Not Requested");
+    expect(needs).toHaveTextContent("Now: Not loaded");
     expect(needs).toHaveTextContent("Download template");
     expect(needs).toHaveTextContent("Open Files to upload");
 

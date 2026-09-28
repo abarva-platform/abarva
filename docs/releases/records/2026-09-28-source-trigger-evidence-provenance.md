@@ -48,10 +48,13 @@ Release lane: `global-control-lane` with a narrow `client-data-lane` repair.
   fact; human review alone cannot turn unlinked narrative into record evidence.
 - Files checklist labels unlinked trigger state as `not loaded`, keeps the
   upload action available, and leaves the item open.
+- The Continue summary uses the same provenance rule and displays an unlinked
+  trigger as `Not loaded`, rather than echoing a stale `Available` state.
 - Regression coverage exercises legacy repair, artifact preservation, gate
   blocking, the unlinked parsed-trigger upload queue, and the rendered evidence
-  status. One pre-existing readiness fixture now includes the artifact link its
-  `Parsed` state claimed to have.
+  status in both the Files checklist and Continue summary. One pre-existing
+  readiness fixture now includes the artifact link its `Parsed` state claimed
+  to have.
 
 ## QA / Validation
 
@@ -68,8 +71,18 @@ Release lane: `global-control-lane` with a narrow `client-data-lane` repair.
 - **PASS:** `audit:test-ci-coverage:write` and `audit:test-ci-coverage:check`;
   generated census matches the base.
 - **PASS:** `node scripts/release-check.mjs --base origin/main --head HEAD`.
-- **NOT RUN:** PR CI, deployed runtime proof, and signed-in production
-  verification; these remain release gates.
+- **PASS:** PR #8642 merged at `a1ebd9316b12025622d47b9667b01fa5191a1240`;
+  required PR checks passed.
+- **PASS:** ACA run `36492521182` deployed that exact SHA. The template image,
+  100%-traffic revision, and both worker jobs read back at
+  `sha256:595a699f703bf30bb1255cfade2e29c40542a4fb4a652751471a5635142dee27`;
+  workflow runtime invariant and health checks passed.
+- **PASS:** Signed-in browser verification confirmed the Files checklist shows
+  the trigger as `NOT LOADED`, evidence readiness is 0/3, and approval remains
+  locked. This also exposed the separate stale `Now: Available` summary, which
+  this follow-up change corrects.
+- **NOT RUN:** Follow-up PR CI and signed-in verification of the Continue
+  summary correction; pending merge and deployment of this candidate.
 
 ## Rollout Plan
 
@@ -83,13 +96,14 @@ database edit or batch migration is part of this release.
 
 - Repo-owned deploy workflow: `.github/workflows/aca-main-deploy.yml`.
 - Shared runtime mutators: none outside that workflow.
-- Approved image digest: pending the exact merged-SHA deploy run.
-- ACA runtime invariant: not yet verified.
-- Worker image invariant: not yet verified.
+- First deployed SHA: `a1ebd9316b12025622d47b9667b01fa5191a1240`.
+- First deployed image digest: `sha256:595a699f703bf30bb1255cfade2e29c40542a4fb4a652751471a5635142dee27`.
+- ACA runtime invariant: passed for the first fix; follow-up deployment pending.
+- Worker image invariant: passed for the first fix; follow-up deployment pending.
 - Feature/env flag update path: none.
-- Live signed-in proof required: yes; verify the trigger is not shown as
-  uploaded/available without linked provenance and the Strategy gate remains
-  blocked.
+- Live signed-in proof required: yes; verify both the Files checklist and
+  Continue summary avoid showing an unlinked trigger as ready, and the Strategy
+  gate remains blocked.
 
 ## Rollback Plan
 
@@ -99,15 +113,17 @@ normal source upload and evidence-review path.
 
 ## Audit Evidence
 
-- PR and exact merged SHA: pending.
-- CI workflow results: pending.
-- ACA deploy run and digest verification: pending.
-- Signed-in evidence-checklist proof: pending.
+- First-fix PR: #8642; merged SHA `a1ebd9316b12025622d47b9667b01fa5191a1240`.
+- First-fix deploy run: `36492521182`.
+- Follow-up PR and exact merged SHA: pending.
+- Follow-up CI, deploy run, digest, and signed-in verification: pending.
 
 ## Known Gaps
 
 - The repair is lazy: a legacy row is normalized on the next event-intake
   correction or gate-criteria workflow, not by a global migration.
+- Existing unlinked legacy rows may still store `Available` until that repair
+  path runs; all readiness and UI projections must continue to fail closed.
 - This change does not supply the required source file or satisfy other open
   Strategy evidence requirements. It prevents narrative from being mistaken
   for that file and preserves the intended evidence blocker.

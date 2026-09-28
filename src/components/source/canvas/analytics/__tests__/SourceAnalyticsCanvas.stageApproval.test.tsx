@@ -665,7 +665,7 @@ describe("SourceAnalyticsCanvas stage workflow", () => {
     expect(activeNeed).toHaveTextContent("L2/L3 ticket history and service volumetrics");
     expect(activeNeed).toHaveTextContent("Source: ServiceNow ITSM");
     expect(activeNeed).toHaveTextContent("Needed: Available");
-    expect(activeNeed).toHaveTextContent("Now: Not Requested");
+    expect(activeNeed).toHaveTextContent("Now: Not loaded");
     expect(activeNeed).toHaveTextContent("Open Files to upload");
     expect(screen.getByTestId("task-dropzone")).toBeInTheDocument();
 

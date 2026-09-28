@@ -2933,6 +2933,10 @@ function ActiveStepNeedsPanel({
 }) {
   if (missingEvidence) {
     const { requirement, lifecycle, evidence, file } = missingEvidence;
+    const currentEvidenceState =
+      requiresRecordedSource(requirement) && !hasRecordedSource(evidence)
+        ? "Not loaded"
+        : evidence?.currentState ?? "Not Requested";
     const requiresHumanReview =
       lifecycle.parsed &&
       EVIDENCE_STATE_RANK[requirement.minimumState] > EVIDENCE_STATE_RANK.Parsed;
@@ -2962,7 +2966,7 @@ function ActiveStepNeedsPanel({
         <div style={{ display: "flex", flexWrap: "wrap", gap: 12, marginTop: 8 }}>
           <span>Source: {requirement.sourceSystems[0]}</span>
           <span>Needed: {requirement.minimumState}</span>
-          <span>Now: {evidence?.currentState ?? "Not Requested"}</span>
+          <span>Now: {currentEvidenceState}</span>
         </div>
         {step.file && evidenceRequirementIdForTask({
           id: step.id,
