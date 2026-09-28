@@ -184,6 +184,31 @@ describe("SourceAnalyticsCanvas stage workflow", () => {
     jest.restoreAllMocks();
   });
 
+  it("stays on the evidence-owning step when its second required item is missing", () => {
+    const withoutSla = SCOPE_READY_EVIDENCE.filter(
+      (evidence) => evidence.requirementId !== "EVID-SRC-SCOPE-SLA-BASELINE",
+    );
+    render(
+      <SourceAnalyticsCanvas
+        event={EVENT}
+        viewStage="scope"
+        tenantName="Demo Client"
+        stageView={COMPLETE_SCOPE_STAGE}
+        evidenceStates={withoutSla}
+        initialWorkspace="steps"
+      />,
+    );
+
+    expect(screen.getByRole("heading", { name: "Provide the volumetrics" })).toBeInTheDocument();
+    expect(screen.getByTestId("source-shell-active-step-needs")).toHaveTextContent(
+      "SLA and service-credit baseline",
+    );
+    expect(screen.getByRole("button", { name: "Open Files to upload" })).toBeInTheDocument();
+    expect(screen.queryByTestId("task-dropzone")).toBeNull();
+    expect(screen.queryByRole("button", { name: /^Continue/ })).toBeNull();
+    expect(screen.queryByRole("button", { name: /Open Scope gate/ })).toBeNull();
+  });
+
   it("does not restore the legacy sponsor task when a SELF event uses the canvas fallback", () => {
     render(
       <SourceAnalyticsCanvas
@@ -347,6 +372,10 @@ describe("SourceAnalyticsCanvas stage workflow", () => {
     expect(screen.getByTestId("source-stage-gate-approve")).toHaveTextContent(
       "Approve now",
     );
+    expect(screen.getByTestId("source-stage-gate-approve"))
+      .toHaveStyle({ background: "#2a5a3a", color: "#fff" });
+    expect(screen.getByTestId("source-shell-progress-dock"))
+      .toHaveStyle({ position: "fixed" });
     expect(screen.queryByText(/Approve with gaps/)).toBeNull();
     expect(
       screen.getByText(/Version binding, reviewer role, readiness/),
@@ -405,6 +434,27 @@ describe("SourceAnalyticsCanvas stage workflow", () => {
     expect(screen.queryByTestId("source-stage-gate-approve")).toBeNull();
     expect(screen.getByTestId("source-stage-gate-blocked"))
       .toHaveTextContent("Required workflow inputs are still open");
+    expect(screen.getByTestId("source-shell-progress-status"))
+      .toHaveTextContent("Approval locked");
+  });
+
+  it("keeps a visible blocked status when no approval item is routed", () => {
+    render(
+      <SourceAnalyticsCanvas
+        event={EVENT}
+        viewStage="scope"
+        tenantName="Demo Client"
+        stageView={SAMPLE_SCOPE_STAGE}
+        approvalItems={[]}
+        initialWorkspace="approvals"
+      />,
+    );
+
+    expect(screen.queryByTestId("source-stage-gate-approve")).toBeNull();
+    expect(screen.getByTestId("source-shell-progress-dock"))
+      .toHaveStyle({ position: "fixed" });
+    expect(screen.getByTestId("source-shell-progress-status"))
+      .toHaveTextContent("Approval locked");
   });
 
   it("hides stage approval on direct Approvals navigation while required evidence is missing", () => {
@@ -466,6 +516,8 @@ describe("SourceAnalyticsCanvas stage workflow", () => {
     );
 
     expect(screen.queryByTestId("source-stage-gate-approve")).toBeNull();
+    expect(screen.getByTestId("source-shell-progress-status"))
+      .toHaveTextContent("Enter an approval rationale");
     fireEvent.change(screen.getByLabelText("Scope approval rationale"), {
       target: { value: "Reviewed the required evidence." },
     });
@@ -535,6 +587,11 @@ describe("SourceAnalyticsCanvas stage workflow", () => {
 
     expect(screen.queryByRole("button", { name: /Continue/ })).toBeNull();
     expect(screen.getByText(/Required before Continue/)).toBeInTheDocument();
+    expect(screen.getByTestId("source-shell-progress-dock"))
+      .toHaveStyle({ position: "fixed" });
+    expect(screen.getByTestId("source-shell-progress-status"))
+      .toHaveTextContent("Continue locked");
+    expect(screen.queryByTestId("source-shell-progress-action")).toBeNull();
 
     expect(
       screen.getByTestId("source-scope-operating-status"),
@@ -549,25 +606,12 @@ describe("SourceAnalyticsCanvas stage workflow", () => {
       screen.getByTestId("source-scope-operating-status"),
     ).toHaveTextContent("Scope Memo with Boundaries");
     const activeNeed = screen.getByTestId("source-shell-active-step-needs");
-    expect(activeNeed).toHaveTextContent("Volumetrics file");
-    expect(activeNeed).toHaveTextContent("Required");
-    expect(activeNeed).toHaveTextContent("CSV or XLSX");
-    expect(activeNeed).toHaveTextContent("ITSM / finance baseline");
-    expect(activeNeed).toHaveTextContent("Ravi Menon, IT-Ops");
-    expect(activeNeed).toHaveTextContent(
-      "Monthly by service tower for 12-24 months",
-    );
-    expect(activeNeed).toHaveTextContent("Scope volumetrics template");
+    expect(activeNeed).toHaveTextContent("L2/L3 ticket history and service volumetrics");
+    expect(activeNeed).toHaveTextContent("Source: ServiceNow ITSM");
+    expect(activeNeed).toHaveTextContent("Needed: Available");
+    expect(activeNeed).toHaveTextContent("Now: Not Requested");
+    expect(activeNeed).toHaveTextContent("Open Files to upload");
     expect(screen.getByTestId("task-dropzone")).toBeInTheDocument();
-    expect(
-      screen.getByTestId("source-shell-active-step-needs"),
-    ).toHaveTextContent("Tickets, SLA misses, change orders, run volumes");
-    expect(
-      screen.getByTestId("source-shell-active-step-needs"),
-    ).toHaveTextContent("Scope memo, value lever sizing, pricing baseline");
-    expect(
-      screen.getByTestId("source-shell-active-step-needs"),
-    ).toHaveTextContent("Readback: no typed facts yet.");
 
     fireEvent.click(
       screen.getByRole("button", {
@@ -585,6 +629,9 @@ describe("SourceAnalyticsCanvas stage workflow", () => {
       screen.getByTestId("source-shell-active-step-needs"),
     ).toHaveTextContent("Input captured; Continue.");
     expect(screen.getByRole("button", { name: /Continue/ })).toBeEnabled();
+    expect(screen.getByTestId("source-shell-progress-action"))
+      .toHaveStyle({ background: "#2a5a3a", color: "#fff" });
+    expect(screen.queryByTestId("source-shell-progress-status")).toBeNull();
   });
 
   it("keeps progression out of sight and shows only the active step's evidence", () => {
@@ -601,7 +648,7 @@ describe("SourceAnalyticsCanvas stage workflow", () => {
     expect(screen.queryByRole("button", { name: /Continue/ })).toBeNull();
     expect(screen.getAllByTestId("source-shell-active-step-needs")).toHaveLength(1);
     expect(screen.getByTestId("source-shell-active-step-needs"))
-      .toHaveTextContent("Volumetrics file");
+      .toHaveTextContent("L2/L3 ticket history and service volumetrics");
     expect(screen.queryByTestId("source-shell-evidence-ask-table")).toBeNull();
   });
 
@@ -617,7 +664,7 @@ describe("SourceAnalyticsCanvas stage workflow", () => {
     );
 
     expect(screen.getByTestId("source-shell-active-step-needs"))
-      .toHaveTextContent("Volumetrics file");
+      .toHaveTextContent("L2/L3 ticket history and service volumetrics");
     expect(screen.getByTestId("task-dropzone")).toBeInTheDocument();
     expect(screen.queryByTestId("source-shell-evidence-ask-table")).toBeNull();
     expect(screen.queryByRole("button", { name: /Continue/ })).toBeNull();
@@ -639,7 +686,7 @@ describe("SourceAnalyticsCanvas stage workflow", () => {
     expect(screen.queryByRole("button", { name: /Continue/ })).toBeNull();
     expect(screen.queryByTestId("source-shell-stage-ready-panel")).toBeNull();
     expect(screen.getByTestId("source-shell-active-step-needs"))
-      .toHaveTextContent("Volumetrics file");
+      .toHaveTextContent("L2/L3 ticket history and service volumetrics");
     expect(screen.getByText("Required before Continue")).toBeInTheDocument();
   });
 
@@ -659,6 +706,8 @@ describe("SourceAnalyticsCanvas stage workflow", () => {
       .toBeInTheDocument();
     expect(screen.queryByTestId("source-stage-ready-open-approval"))
       .toBeNull();
+    expect(screen.getByTestId("source-shell-progress-status"))
+      .toHaveTextContent("Approval locked");
     expect(screen.queryByTestId("source-shell-evidence-ask-table"))
       .toBeNull();
   });
@@ -681,7 +730,7 @@ describe("SourceAnalyticsCanvas stage workflow", () => {
       .toBeNull();
     expect(screen.queryByRole("button", { name: /Continue/ })).toBeNull();
     expect(screen.getByTestId("source-shell-active-step-needs"))
-      .toHaveTextContent("Volumetrics file");
+      .toHaveTextContent("L2/L3 ticket history and service volumetrics");
   });
 
   it("shows a stored template file as awaiting extraction without unlocking Continue", () => {
@@ -711,9 +760,8 @@ describe("SourceAnalyticsCanvas stage workflow", () => {
       />,
     );
 
-    expect(
-      screen.getByTestId("source-shell-active-step-needs"),
-    ).toHaveTextContent("Readback: file stored; typed facts still pending.");
+    expect(screen.getByTestId("source-shell-active-step-needs"))
+      .toHaveTextContent("client-volumetrics-VOLUMETRICS_V1.csv");
     expect(screen.getByTestId("task-dropzone")).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /Continue/ })).toBeNull();
   });
@@ -777,7 +825,8 @@ describe("SourceAnalyticsCanvas stage workflow", () => {
             : task),
         }}
         evidenceStates={SCOPE_READY_EVIDENCE.filter((row) =>
-          row.requirementId === "EVID-SRC-SCOPE-TICKET-HISTORY")}
+          ["EVID-SRC-SCOPE-TICKET-HISTORY", "EVID-SRC-SCOPE-SLA-BASELINE"]
+            .includes(row.requirementId))}
         initialWorkspace="steps"
       />,
     );
@@ -1211,6 +1260,10 @@ describe("SourceAnalyticsCanvas stage workflow", () => {
     expect(
       screen.queryByTestId("source-stage-ready-primary-files"),
     ).not.toBeInTheDocument();
+    expect(screen.getByTestId("source-shell-progress-dock"))
+      .toHaveStyle({ position: "fixed" });
+    expect(screen.getByTestId("source-stage-ready-open-approval"))
+      .toHaveStyle({ background: "#2a5a3a", color: "#fff" });
 
     fireEvent.click(screen.getByTestId("source-stage-ready-open-approval"));
 
@@ -1250,9 +1303,9 @@ describe("SourceAnalyticsCanvas stage workflow", () => {
       />,
     );
 
-    expect(
-      screen.getByTestId("source-shell-stage-ready-panel"),
-    ).toHaveTextContent("Required inputs are complete");
+    expect(screen.queryByTestId("source-shell-stage-ready-panel")).toBeNull();
+    expect(screen.getByTestId("source-shell-active-step-needs"))
+      .toHaveTextContent("Negotiation issue and trap log");
     expect(
       screen.queryByTestId("source-bafo-scenario-compare"),
     ).not.toBeInTheDocument();

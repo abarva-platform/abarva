@@ -146,6 +146,7 @@ import {
 import {
   evidenceRequirementIdForTask,
   factTemplateCodeForTask,
+  requiredEvidenceRequirementIdsForTask,
 } from "@/lib/source/facts/task-evidence-requirements";
 import { templateFactMapByCode } from "@/lib/source/facts/template-fact-map";
 import { ValueWaterfall } from "./ValueWaterfall";
@@ -2097,12 +2098,16 @@ function FocusedWorkPanel({
   const requiredEvidenceById = new Map(
     requiredEvidenceRows.map((row) => [row.requirement.requirementId, row]),
   );
-  const evidenceReadyForStep = (step: SourceShellStep) => {
-    const requirementId = evidenceRequirementIdForTask({
+  const requiredRowsForStep = (step: SourceShellStep) =>
+    requiredEvidenceRequirementIdsForTask({
       id: step.id,
       factTemplateCode: step.factTemplateCode ?? undefined,
-    });
-    return !requirementId || requiredEvidenceById.get(requirementId)?.ready !== false;
+    }, view.stage.key)
+      .filter((id) => sourceEvidenceAppliesToApprovalPolicy(id, view.event.approvalPolicyCode))
+      .map((id) => requiredEvidenceById.get(id));
+  const evidenceReadyForStep = (step: SourceShellStep) => {
+    const rows = requiredRowsForStep(step);
+    return rows.every((row) => row?.ready === true);
   };
   const firstUnreadyStepId = flatSteps.find((step) =>
     step.status !== "captured" || !evidenceReadyForStep(step))?.id ??
@@ -2153,6 +2158,9 @@ function FocusedWorkPanel({
     ? flatSteps.findIndex((step) => step.id === activeStep.id)
     : -1;
   const activeComplete = activeStep ? isComplete(activeStep) : false;
+  const activeMissingEvidence = activeStep
+    ? requiredRowsForStep(activeStep).find((row) => row?.ready !== true)
+    : null;
   const canShowNext =
     activeComplete &&
     (activeIndex < flatSteps.length - 1 || stageInputsReady);
@@ -2219,7 +2227,6 @@ function FocusedWorkPanel({
         display: "grid",
         gridTemplateColumns: "286px minmax(0, 1fr)",
         maxWidth: "none",
-        overflow: "hidden",
         boxShadow: ANALYTICS.SHADOW_SM,
         width: "100%",
       }}
@@ -2354,9 +2361,9 @@ function FocusedWorkPanel({
 
       <div
         data-testid="source-shell-active-workflow-pane"
-        style={{ minWidth: 0 }}
+        style={{ minWidth: 0, paddingBottom: 88 }}
       >
-        {allReady ? (
+        {allReady || viewedStageApproved ? (
           <StageReadyPanel
             view={view}
             stageOperatingStatus={stageOperatingStatus}
@@ -2371,7 +2378,6 @@ function FocusedWorkPanel({
               style={{
                 display: "flex",
                 alignItems: "center",
-                justifyContent: "space-between",
                 gap: 16,
                 padding: "20px 24px",
                 borderBottom: `1px solid ${ANALYTICS.LINE}`,
@@ -2400,55 +2406,6 @@ function FocusedWorkPanel({
                 >
                   Step {activeIndex + 1} of {flatSteps.length}
                 </div>
-              </div>
-              <div
-                data-testid="source-shell-continue-guidance"
-                style={{
-                  display: "grid",
-                  gap: 6,
-                  justifyItems: "end",
-                  maxWidth: 260,
-                }}
-              >
-                {canShowNext ? (
-                  <button
-                    type="button"
-                    onClick={goNext}
-                    style={{
-                      border: `1px solid ${ANALYTICS.INK}`,
-                      borderRadius: 8,
-                      background: ANALYTICS.INK,
-                      color: "#fff",
-                      cursor: "pointer",
-                      fontFamily: ANALYTICS.SANS,
-                      fontSize: 13,
-                      fontWeight: 900,
-                      minHeight: 42,
-                      minWidth: activeIndex >= flatSteps.length - 1 ? 176 : 128,
-                      padding: "0 16px",
-                      whiteSpace: "nowrap",
-                    }}
-                  >
-                    {activeIndex >= flatSteps.length - 1
-                      ? `Open ${view.stage.label} gate →`
-                      : "Continue →"}
-                  </button>
-                ) : null}
-                {continueGuidance ? (
-                  <span
-                    style={{
-                      color: activeComplete
-                        ? ANALYTICS.GREEN_TEXT
-                        : ANALYTICS.AMBER_TEXT,
-                      fontSize: 12,
-                      fontWeight: 800,
-                      lineHeight: 1.35,
-                      textAlign: "right",
-                    }}
-                  >
-                    {continueGuidance}
-                  </span>
-                ) : null}
               </div>
             </div>
 
@@ -2506,6 +2463,10 @@ function FocusedWorkPanel({
               <ActiveStepNeedsPanel
                 step={activeStep}
                 isComplete={activeComplete}
+                missingEvidence={activeMissingEvidence}
+                eventId={view.event.id}
+                onOpenFiles={() => onWorkspaceChange("files")}
+                onEvidenceReviewed={() => router.refresh()}
               />
 
               <ActiveStepGuidePanel
@@ -2523,13 +2484,100 @@ function FocusedWorkPanel({
                 stageKey={view.stage.key}
                 stepInsight={view.intelligence.stepInsight}
                 isComplete={activeComplete}
+                missingEvidence={activeMissingEvidence}
                 onComplete={() => markComplete(activeStep.id)}
+              />
+            </div>
+            <div data-testid="source-shell-continue-guidance">
+              <ProgressActionDock
+                action={canShowNext ? {
+                  label: activeIndex >= flatSteps.length - 1
+                    ? `Open ${view.stage.label} gate →`
+                    : "Continue →",
+                  onClick: goNext,
+                  testId: "source-shell-progress-action",
+                } : null}
+                status={activeIndex >= flatSteps.length - 1
+                  ? "Approval locked"
+                  : "Continue locked"}
+                detail={continueGuidance}
               />
             </div>
           </>
         ) : null}
       </div>
     </section>
+  );
+}
+
+function ProgressActionDock({
+  action,
+  status,
+  detail,
+}: {
+  action: { label: string; onClick: () => void; testId: string } | null;
+  status: string;
+  detail?: string | null;
+}) {
+  return (
+    <div
+      data-testid="source-shell-progress-dock"
+      style={{
+        background: ANALYTICS.CARD,
+        border: `1px solid ${ANALYTICS.LINE_STRONG}`,
+        borderRadius: 8,
+        bottom: 16,
+        boxShadow: "0 8px 28px rgba(12, 26, 58, 0.18)",
+        boxSizing: "border-box",
+        fontFamily: ANALYTICS.SANS,
+        left: "max(16px, calc(50% - 250px))",
+        padding: 6,
+        position: "fixed",
+        width: "min(500px, calc(100vw - 112px))",
+        zIndex: 80,
+      }}
+    >
+      {action ? (
+        <button
+          type="button"
+          data-testid={action.testId}
+          onClick={action.onClick}
+          style={{
+            background: ANALYTICS.GREEN_TEXT,
+            border: `1px solid ${ANALYTICS.GREEN_TEXT}`,
+            borderRadius: 6,
+            color: "#fff",
+            cursor: "pointer",
+            fontFamily: ANALYTICS.SANS,
+            fontSize: 15,
+            fontWeight: 800,
+            minHeight: 48,
+            padding: "10px 14px",
+            textAlign: "center",
+            width: "100%",
+          }}
+        >
+          {action.label}
+        </button>
+      ) : (
+        <div
+          data-testid="source-shell-progress-status"
+          role="status"
+          style={{
+            background: "#e8ebee",
+            borderRadius: 6,
+            color: ANALYTICS.INK_2,
+            display: "grid",
+            gap: 2,
+            minHeight: 48,
+            padding: "9px 12px",
+          }}
+        >
+          <strong style={{ fontSize: 13 }}>{status}</strong>
+          {detail ? <span style={{ fontSize: 12, lineHeight: 1.35 }}>{detail}</span> : null}
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -2732,7 +2780,7 @@ function StageReadyPanel({
         </div>
       ) : null}
       <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
-        <button
+        {approvalRecorded || hasReadinessGaps ? <button
           type="button"
           data-testid={
             approvalRecorded
@@ -2744,8 +2792,8 @@ function StageReadyPanel({
           onClick={primaryAction}
           style={{
             ...BUTTON_STYLE,
-            background: ANALYTICS.INK,
-            color: "#fff",
+            background: approvalRecorded ? ANALYTICS.INK : "#e8ebee",
+            color: approvalRecorded ? "#fff" : ANALYTICS.INK_2,
             display: "inline-flex",
             justifyContent: "center",
             padding: "12px 16px",
@@ -2753,8 +2801,19 @@ function StageReadyPanel({
           }}
         >
           {primaryActionLabel}
-        </button>
+        </button> : null}
       </div>
+      <ProgressActionDock
+        action={!approvalRecorded && !hasReadinessGaps ? {
+          label: `${view.stage.approvalCtaLabel} →`,
+          onClick: onOpenApprovalPage,
+          testId: "source-stage-ready-open-approval",
+        } : null}
+        status={approvalRecorded ? "Approval recorded" : "Approval locked"}
+        detail={approvalRecorded
+          ? "The decision is already recorded."
+          : `${gapSummary} remain. Review evidence before approval.`}
+      />
       <Link
         href={view.stage.approvalHref}
         style={{
@@ -2830,10 +2889,81 @@ function clientTemplateName(
 function ActiveStepNeedsPanel({
   step,
   isComplete,
+  missingEvidence,
+  eventId,
+  onOpenFiles,
+  onEvidenceReviewed,
 }: {
   step: SourceShellStep;
   isComplete: boolean;
+  missingEvidence?: StageEvidenceRequirementRow | null;
+  eventId: string;
+  onOpenFiles: () => void;
+  onEvidenceReviewed: () => void;
 }) {
+  if (missingEvidence) {
+    const { requirement, lifecycle, evidence, file } = missingEvidence;
+    const requiresHumanReview =
+      lifecycle.parsed &&
+      EVIDENCE_STATE_RANK[requirement.minimumState] > EVIDENCE_STATE_RANK.Parsed;
+    return (
+      <div
+        data-testid="source-shell-active-step-needs"
+        style={{
+          border: `1px solid ${ANALYTICS.LINE}`,
+          borderRadius: 8,
+          background: ANALYTICS.CARD,
+          margin: "0 0 16px 42px",
+          padding: 12,
+        }}
+      >
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
+          <strong style={{ color: ANALYTICS.INK, fontSize: 13 }}>What Continue needs</strong>
+          <span style={{ color: ANALYTICS.AMBER_TEXT, fontSize: 10, fontWeight: 800, textTransform: "uppercase" }}>
+            Required evidence
+          </span>
+        </div>
+        <div style={{ color: ANALYTICS.INK, fontSize: 14, fontWeight: 750, marginTop: 8 }}>
+          {requirement.label}
+        </div>
+        <div style={{ color: ANALYTICS.MUTED, fontSize: 12, lineHeight: 1.45, marginTop: 4 }}>
+          {requirement.description}
+        </div>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 12, marginTop: 8 }}>
+          <span>Source: {requirement.sourceSystems[0]}</span>
+          <span>Needed: {requirement.minimumState}</span>
+          <span>Now: {evidence?.currentState ?? "Not Requested"}</span>
+        </div>
+        {step.file && evidenceRequirementIdForTask({
+          id: step.id,
+          factTemplateCode: step.factTemplateCode ?? undefined,
+        }) === requirement.requirementId ? (
+          <div style={{ color: ANALYTICS.MUTED, fontSize: 12, marginTop: 8 }}>
+            Stored: {step.file.name} · {step.file.meta}
+          </div>
+        ) : null}
+        <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 10, marginTop: 10 }}>
+          <a
+            href={`/api/v1/source/${encodeURIComponent(eventId)}/evidence/${encodeURIComponent(requirement.requirementId)}/template`}
+            style={TABLE_LINK_STYLE}
+          >
+            Download template
+          </a>
+          <button type="button" onClick={onOpenFiles} style={TABLE_BUTTON_STYLE}>
+            Open Files to upload
+          </button>
+          {requiresHumanReview ? (
+            <EvidenceReviewControl
+              eventId={eventId}
+              requirement={requirement}
+              fileName={file?.name ?? requirement.label}
+              onReviewed={onEvidenceReviewed}
+            />
+          ) : null}
+        </div>
+      </div>
+    );
+  }
   const need = activeStepNeed(step, isComplete);
   return (
     <div
@@ -3323,6 +3453,7 @@ function StepDetail({
   stageKey,
   stepInsight,
   isComplete,
+  missingEvidence,
   onComplete,
 }: {
   step: SourceEventShellView["stage"]["activeStep"];
@@ -3330,6 +3461,7 @@ function StepDetail({
   stageKey: SourceStageKey;
   stepInsight: SourceEventShellView["intelligence"]["stepInsight"];
   isComplete: boolean;
+  missingEvidence?: StageEvidenceRequirementRow | null;
   onComplete: () => void;
 }) {
   const router = useRouter();
@@ -3350,6 +3482,12 @@ function StepDetail({
     id: activeStep.id,
     factTemplateCode: activeStep.factTemplateCode ?? undefined,
   });
+  if (missingEvidence && (
+    activeStep.type !== "provide" ||
+    evidenceRequirementId !== missingEvidence.requirement.requirementId
+  )) {
+    return null;
+  }
   const canPersistAction =
     activeStep.type !== "provide" && Boolean(evidenceRequirementId);
   const evidenceRow = (
@@ -6762,7 +6900,16 @@ function ApprovalsWorkspace({
           onGoToSteps={onGoToSteps}
         />
       ) : (
-        <EmptyCard text={view.approvals.readinessLine} />
+        <>
+          <EmptyCard text={view.approvals.readinessLine} />
+          <ProgressActionDock
+            action={null}
+            status="Approval locked"
+            detail={view.stage.ready < view.stage.total
+              ? "No approval item is routed. Complete the current steps and evidence review."
+              : "No approval item is routed for this stage; no decision can be recorded yet."}
+          />
+        </>
       )}
       {view.approvals.items.length > 0 ? (
         <div style={{ marginTop: 14, display: "grid", gap: 10 }}>
@@ -8217,19 +8364,28 @@ function ApprovalCard({
             requiresSponsorContext={approvalPolicyCode === "self_v1" && item.stageKey === "scope"}
           />
         ) : gateAction && decision ? (
-          <span
-            data-testid="source-stage-gate-blocked"
-            role="status"
-            style={{
-              ...buttonStyle,
-              color: ANALYTICS.FAINT,
-            }}
-          >
-            {requiredEvidenceOpen > 0
-              ? `${requiredEvidenceOpen} required evidence item${requiredEvidenceOpen === 1 ? "" : "s"} remain open. `
-              : null}
-            {decision.primaryAction.disabledReason}
-          </span>
+          <>
+            <span
+              data-testid="source-stage-gate-blocked"
+              role="status"
+              style={{
+                ...buttonStyle,
+                color: ANALYTICS.FAINT,
+              }}
+            >
+              {requiredEvidenceOpen > 0
+                ? `${requiredEvidenceOpen} required evidence item${requiredEvidenceOpen === 1 ? "" : "s"} remain open. `
+                : null}
+              {decision.primaryAction.disabledReason}
+            </span>
+            {featured ? <ProgressActionDock
+              action={null}
+              status="Approval locked"
+              detail={requiredEvidenceOpen > 0
+                ? `${requiredEvidenceOpen} required evidence item${requiredEvidenceOpen === 1 ? "" : "s"} remain open.`
+                : decision.primaryAction.disabledReason}
+            /> : null}
+          </>
         ) : goToStepsInstead ? (
           <button
             type="button"
@@ -8416,22 +8572,21 @@ function StageGateApprovalButton({
           </label>
         </div>
       ) : null}
-      {!disabled || submitting ? (
-        <button
-          type="button"
-          data-testid="source-stage-gate-approve"
-          disabled={submitting}
-          onClick={() => void approve()}
-          style={{
-            ...BUTTON_STYLE,
-            padding: "10px 12px",
-            background: ANALYTICS.INK,
-            color: "#fff",
-          }}
-        >
-          {submitting ? "Approving..." : `${buttonLabel} →`}
-        </button>
-      ) : null}
+      <ProgressActionDock
+        action={!disabled ? {
+          label: `${buttonLabel} →`,
+          onClick: () => void approve(),
+          testId: "source-stage-gate-approve",
+        } : null}
+        status={submitting ? "Recording approval" : "Approval locked"}
+        detail={submitting
+          ? "Submitting the recorded decision."
+          : trimmedRationale.length < SOURCE_APPROVAL_REASON_MIN_LENGTH
+            ? `Enter an approval rationale of at least ${SOURCE_APPROVAL_REASON_MIN_LENGTH} characters.`
+            : requiresSponsorContext
+              ? "Complete the sponsor reference and acknowledge this decision."
+              : null}
+      />
       {requiresRationale ? (
         <span style={{ color: ANALYTICS.AMBER_TEXT, fontSize: 11.5 }}>
           Exception approval is audited. Name the open review gaps and the owner

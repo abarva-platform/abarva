@@ -180,16 +180,12 @@ describe("SourceAnalyticsCanvas — AskAnythingBar reachability", () => {
 
     const needs = screen.getByTestId("source-shell-active-step-needs");
     expect(needs).toHaveTextContent("What Continue needs");
-    expect(needs).toHaveTextContent("Volumetrics file");
-    expect(needs).toHaveTextContent("ITSM / finance baseline");
-    expect(needs).toHaveTextContent("Ravi Menon, IT-Ops");
-    expect(needs).toHaveTextContent("CSV or XLSX");
-    expect(needs).toHaveTextContent("1 required file");
-    expect(needs).toHaveTextContent("Tickets, SLA misses, change orders");
-    expect(needs).toHaveTextContent("Missing");
-    expect(needs).toHaveTextContent(
-      "Download the template, fill one row per tower, then upload.",
-    );
+    expect(needs).toHaveTextContent("L2/L3 ticket history and service volumetrics");
+    expect(needs).toHaveTextContent("Source: ServiceNow ITSM");
+    expect(needs).toHaveTextContent("Needed: Available");
+    expect(needs).toHaveTextContent("Now: Not Requested");
+    expect(needs).toHaveTextContent("Download template");
+    expect(needs).toHaveTextContent("Open Files to upload");
 
     const continueGuidance = screen.getByTestId(
       "source-shell-continue-guidance",
@@ -992,10 +988,9 @@ describe("SourceAnalyticsCanvas — docked aVa honesty against live stage state"
 
     const canvas = screen.getByTestId("source-analytics-canvas");
 
-    // The stale sample claim ("Two steps left on Scope — volumetrics and the
-    // sponsor letter") must NOT appear when the live view says complete.
+    // Task badges alone do not satisfy the newly mapped required evidence.
     expect(canvas.textContent).not.toContain("Two steps left");
-    expect(canvas.textContent).toContain("2 required workflow steps remain");
+    expect(canvas.textContent).toContain("5 required workflow steps remain");
   });
 
   it("derives an honest 'N of M left' claim from the SAME live task-completion evidence when incomplete", () => {
@@ -1062,12 +1057,8 @@ describe("SourceAnalyticsCanvas — docked aVa honesty against live stage state"
         tenantName="Lakeshore"
       />,
     );
-    const total = SAMPLE_SCOPE_STAGE.tasks.length;
-    const done = SAMPLE_SCOPE_STAGE.tasks.filter(
-      (task) => task.state === "done",
-    ).length;
     expect(screen.getByTestId("source-analytics-canvas").textContent).toContain(
-      `${total - done} required workflow steps remain for Scope`,
+      "6 required workflow steps remain for Scope",
     );
   });
 });
