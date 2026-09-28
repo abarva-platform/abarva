@@ -6,7 +6,7 @@ import type {
   SourceEventGateCriterion,
 } from "./canvas-substrate";
 import { isFactBackedEvidence } from "./canvas-substrate/fact-derived-evidence";
-import { evidenceHasMinimumState, evidenceMeetsRequirement, requiresRecordedSource, hasRecordedSource } from "./evidence-authority";
+import { evidenceHasMinimumState, evidenceMeetsRequirement, hasAuditedAbsence, requiresRecordedSource, hasRecordedSource } from "./evidence-authority";
 import type { SourceStageKey } from "./types";
 import { criterionForSourceApprovalPolicy, resolveSourceApprovalPolicy, sourceEvidenceAppliesToApprovalPolicy, type SourceApprovalPolicyCode } from "./approval-policy";
 
@@ -132,6 +132,7 @@ export function evaluateCriterionMetReadiness(input: {
       evidenceHasMinimumState(requirement, state) && !hasRecordedSource(state);
     const isClientStatedPlaceholder =
       !!state &&
+      !hasAuditedAbsence(requirement, state) &&
       state.sourceArtifactId === null &&
       !isFactBackedEvidence(state) &&
       state.currentState !== "Usable Evidence";

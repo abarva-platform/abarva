@@ -18,6 +18,33 @@ const RECORD_BACKED_CLASSES = new Set<SourceEvidenceClass>([
   "workforce",
 ]);
 
+const ABSENCE_DECLARATION_REQUIREMENTS = new Set([
+  "EVID-SRC-STR-INCUMBENT",
+  "EVID-SRC-STR-SPEND-BASELINE",
+]);
+
+export function permitsAbsenceDeclaration(requirementId: string): boolean {
+  return ABSENCE_DECLARATION_REQUIREMENTS.has(requirementId);
+}
+
+export function hasAuditedAbsence(
+  requirement: SourceEvidenceRequirement,
+  evidence: SourceEventEvidence | undefined,
+): boolean {
+  return Boolean(
+    evidence &&
+    permitsAbsenceDeclaration(requirement.requirementId) &&
+    evidence.requirementId === requirement.requirementId &&
+    evidence.applicabilityStatus === "not_applicable" &&
+    evidence.currentState === "Not Requested" &&
+    !hasRecordedSource(evidence) &&
+    (evidence.applicabilityReason?.trim().length ?? 0) >= 24 &&
+    evidence.applicabilityActorUserId?.trim() &&
+    evidence.applicabilityDecidedAt &&
+    !Number.isNaN(Date.parse(evidence.applicabilityDecidedAt)),
+  );
+}
+
 const EVIDENCE_RANK: Record<SourceEventEvidence["currentState"], number> = {
   "Not Requested": 0,
   Loaded: 1,
@@ -47,6 +74,7 @@ export function evidenceMeetsRequirement(
   requirement: SourceEvidenceRequirement,
   evidence: SourceEventEvidence | undefined,
 ): boolean {
+  if (hasAuditedAbsence(requirement, evidence)) return true;
   if (!evidenceHasMinimumState(requirement, evidence)) return false;
   if (requiresRecordedSource(requirement) && !hasRecordedSource(evidence)) return false;
   return true;

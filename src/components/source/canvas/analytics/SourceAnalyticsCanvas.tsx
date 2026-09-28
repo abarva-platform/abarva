@@ -31,7 +31,7 @@ import { SourceAwardSowHandoffReadinessPanel } from "@/components/source/SourceA
 import { buildSourceAwardSowHandoffReadiness } from "@/lib/source/award-sow-handoff-readiness";
 import { applySourceApprovalPolicyToStageView } from "@/lib/source/approval-policy-stage-view";
 import { sourceEvidenceAppliesToApprovalPolicy } from "@/lib/source/approval-policy";
-import { evidenceMeetsRequirement, hasRecordedSource, requiresRecordedSource } from "@/lib/source/evidence-authority";
+import { evidenceMeetsRequirement, hasAuditedAbsence, hasRecordedSource, permitsAbsenceDeclaration, requiresRecordedSource } from "@/lib/source/evidence-authority";
 import { SOURCE_APPROVAL_REASON_MIN_LENGTH } from "@/lib/source/source-governance-enforcement";
 import {
   buildSourceStage08AcceptanceSpine,
@@ -4321,10 +4321,14 @@ function StageEvidenceChecklistPanel({
   onUploadClick: () => void;
 }) {
   const rows = buildStageEvidenceRequirementRows(view, evidenceStates);
+  const supportsApplicability = evidenceStates.some(
+    (state) => state.applicabilityStatus !== undefined);
   const requiredRows = rows.filter(
     (row) => row.requirement.level === "required",
   );
   const requiredReady = requiredRows.filter((row) => row.ready).length;
+  const hasDeclaredAbsence = requiredRows.some((row) =>
+    hasAuditedAbsence(row.requirement, row.evidence));
   const allRequiredReady =
     requiredRows.length > 0 && requiredReady === requiredRows.length;
 
@@ -4357,8 +4361,9 @@ function StageEvidenceChecklistPanel({
               letterSpacing: 0,
             }}
           >
-            {requiredReady} of {requiredRows.length} required evidence items
-            ready
+            {requiredReady} of {requiredRows.length} required {hasDeclaredAbsence
+              ? "items resolved"
+              : "evidence items ready"}
           </h2>
           <p
             style={{
@@ -4421,6 +4426,7 @@ function StageEvidenceChecklistPanel({
                     !ready &&
                     EVIDENCE_STATE_RANK[requirement.minimumState] >
                       EVIDENCE_STATE_RANK.Parsed;
+                  const declaredAbsent = hasAuditedAbsence(requirement, evidence);
                   return (
                     <tr
                       key={requirement.requirementId}
@@ -4522,9 +4528,9 @@ function StageEvidenceChecklistPanel({
                       </td>
                       <td style={FILE_TD_CENTER}>
                         <ReadinessChip
-                          label={parseLabelForRequirement(lifecycle, evidence)}
+                          label={declaredAbsent ? "not applicable" : parseLabelForRequirement(lifecycle, evidence)}
                           tone={
-                            lifecycle.parsed ||
+                            declaredAbsent || lifecycle.parsed ||
                             evidence?.currentState === "Available" ||
                             evidence?.currentState === "Usable Evidence"
                               ? "good"
@@ -4559,12 +4565,23 @@ function StageEvidenceChecklistPanel({
                         </span>
                       </td>
                       <td style={FILE_TD_ACTION}>
-                        <strong>{ready ? "Ready" : "Open"}</strong>
+                        <strong>{declaredAbsent ? "Not applicable" : ready ? "Ready" : "Open"}</strong>
                         <span>
-                          {ready
+                          {declaredAbsent
+                            ? evidence?.applicabilityReason
+                            : ready
                             ? "Use in stage review and approval."
                             : nextActionForRequirement(requirement, lifecycle)}
                         </span>
+                        {supportsApplicability && permitsAbsenceDeclaration(requirement.requirementId) &&
+                          (!uploaded || declaredAbsent) ? (
+                            <EvidenceAbsenceControl
+                              eventId={view.event.id}
+                              requirement={requirement}
+                              declaredAbsent={declaredAbsent}
+                              onDecided={onEvidenceReviewed}
+                            />
+                          ) : null}
                         {requiresHumanReview ? (
                           <EvidenceReviewControl
                             eventId={view.event.id}
@@ -4583,6 +4600,87 @@ function StageEvidenceChecklistPanel({
         </div>
       )}
     </section>
+  );
+}
+
+function EvidenceAbsenceControl({
+  eventId,
+  requirement,
+  declaredAbsent,
+  onDecided,
+}: {
+  eventId: string;
+  requirement: SourceEvidenceRequirement;
+  declaredAbsent: boolean;
+  onDecided: () => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [reason, setReason] = useState("");
+  const [confirmed, setConfirmed] = useState(false);
+  const [pending, setPending] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const isIncumbent = requirement.requirementId === "EVID-SRC-STR-INCUMBENT";
+  const subject = isIncumbent ? "incumbent" : "historical spend";
+  const decision = declaredAbsent ? "applicable" : "not_applicable";
+
+  const submit = async () => {
+    setPending(true);
+    setError(null);
+    try {
+      const response = await fetch(
+        `/api/v1/source/${encodeURIComponent(eventId)}/evidence/${encodeURIComponent(requirement.requirementId)}/applicability`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ decision, reason: reason.trim(), confirmsAbsence: confirmed }),
+        },
+      );
+      const result = (await response.json()) as { detail?: string };
+      if (!response.ok) throw new Error(result.detail ?? "The decision was not recorded.");
+      setOpen(false);
+      setReason("");
+      setConfirmed(false);
+      onDecided();
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "The decision was not recorded.");
+    } finally {
+      setPending(false);
+    }
+  };
+
+  return (
+    <div style={{ display: "grid", gap: 7, marginTop: 6 }}>
+      <button type="button" style={TABLE_BUTTON_STYLE} onClick={() => setOpen(!open)}>
+        {declaredAbsent ? "Restore requirement" : `Declare no ${subject}`}
+      </button>
+      {open ? (
+        <div style={{ display: "grid", gap: 8, maxWidth: 300 }}>
+          <label style={{ display: "grid", gap: 4 }}>
+            <span>{declaredAbsent ? "Reason to restore requirement" : `Reason no ${subject} exists`}</span>
+            <textarea
+              aria-label={declaredAbsent ? "Reason to restore requirement" : `Reason no ${subject} exists`}
+              value={reason}
+              onChange={(event) => setReason(event.target.value)}
+              rows={3}
+              maxLength={2_000}
+              style={{ width: "100%", border: `1px solid ${ANALYTICS.LINE_STRONG}`, padding: 7 }}
+            />
+          </label>
+          {!declaredAbsent ? (
+            <label style={{ display: "flex", gap: 7, alignItems: "start" }}>
+              <input type="checkbox" checked={confirmed} onChange={(event) => setConfirmed(event.target.checked)} />
+              <span>I confirm no {subject} exists for this event. This is my accountable decision, not an uploaded record.</span>
+            </label>
+          ) : null}
+          {reason.trim().length >= 24 && (declaredAbsent || confirmed) ? (
+            <button type="button" style={TABLE_BUTTON_STYLE} onClick={submit} disabled={pending}>
+              {pending ? "Recording..." : "Record applicability"}
+            </button>
+          ) : null}
+          {error ? <span role="alert" style={{ color: ANALYTICS.AMBER_TEXT }}>{error}</span> : null}
+        </div>
+      ) : null}
+    </div>
   );
 }
 
@@ -4837,6 +4935,7 @@ function requirementMeetsMinimum(
   evidence: SourceEventEvidence | undefined,
   lifecycle: SourceEvidenceLifecycleResult,
 ): boolean {
+  if (hasAuditedAbsence(requirement, evidence)) return true;
   if (requiresRecordedSource(requirement) && !hasRecordedSource(evidence)) return false;
   if (lifecycle.stageReady || lifecycle.meetsMinimumState) return true;
   return evidenceMeetsRequirement(requirement, evidence);

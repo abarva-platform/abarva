@@ -160,6 +160,8 @@ export async function syncUploadToCanvasSubstrate(
     const targetRank = STATE_RANK[targetState];
 
     if (existing && targetRank > previousRank) {
+      const supersedesAbsence =
+        (existing as Record<string, unknown>).applicability_status === "not_applicable";
       const { error } = await db
         .from("source_event_evidence_states")
         .update({
@@ -168,6 +170,12 @@ export async function syncUploadToCanvasSubstrate(
           notes: `Uploaded: ${input.filename}`,
           last_synced_at: nowIso,
           updated_at: nowIso,
+          ...(supersedesAbsence ? {
+            applicability_status: "applicable",
+            applicability_reason: "A source artifact was uploaded for this requirement; the absence decision is superseded.",
+            applicability_actor_user_id: "system:upload-sync",
+            applicability_decided_at: nowIso,
+          } : {}),
         })
         .eq("source_event_id", input.sourceEventRowId)
         .eq("requirement_id", matched.requirementId);

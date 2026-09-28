@@ -63,3 +63,11 @@ Red/green focused tests, mutation output, CI checks, official ACA run and digest
 ## Known Gaps
 
 The synthetic event's Strategy source-record requirements remain open. This release changes the explanation of missing value evidence; it does not satisfy a gate or assert an event-specific value estimate.
+
+## Post-Release Verification (append-only, 2026-09-28 08:01 UTC)
+
+- Final-head CI: Pass, 37 applicable checks; five configured skips; no review finding.
+- Merge: PR #8612 squash-merged as `3c85d10bdf4b34d3ce456be8f45fc3ae091dfd6b`.
+- Deploy/runtime: Pass. Repo-owned ACA main run `36393721229` succeeded. Web template, Healthy/Running 100%-traffic revision, and both required delivery workers matched digest-pinned `sha256:1f68781d6c2e172023eae45113e05196e3bfb2d3b725ea91b069c8ffd57957bb` at readback.
+- Signed-in product replay: Pass for this presentation correction. After a full reload, the Strategy Intelligence Explorer for a synthetic coarse-classification event no longer rendered an unrelated sample dollar pool, uncited percentage benchmark, or unsupported sponsor-backed statement. The prior release-state statements above are preserved as the pre-rollout checkpoint.
+- Residual: Source-record and approval gates remain blocked. No stage acceptance, finance validation, supplier contact, award, or contract execution is claimed.

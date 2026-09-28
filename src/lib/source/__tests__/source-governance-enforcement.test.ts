@@ -188,6 +188,24 @@ describe("Source governance enforcement", () => {
     ]));
   });
 
+  it("accepts an audited no-incumbent decision during computed Strategy readiness", () => {
+    const verdict = evaluateCriterionMetReadiness({
+      criterion: criterion({ criterionId: "GATE-STRATEGY-01" }),
+      artifacts: [artifact({ artifactCode: "d01_strategy_memo", status: "approved", body: "Reviewed strategy memo." })],
+      evidence: strategyEvidenceReady({ incumbent: {
+        currentState: "Not Requested", sourceArtifactId: null,
+        applicabilityStatus: "not_applicable",
+        applicabilityReason: "This net-new service has no incumbent agreement or renewal history.",
+        applicabilityActorUserId: "event-owner",
+        applicabilityDecidedAt: "2026-09-28T00:00:00Z",
+      } }),
+      reason: "system-auto-assessment",
+      skipApprovalReasonCheck: true,
+      approvalPolicyCode: "self_v1",
+    });
+    expect(verdict.ok).toBe(true);
+  });
+
   it("does not treat a client-stated incumbent as an executed agreement even at Usable Evidence", () => {
     const verdict = evaluateCriterionMetReadiness({
       criterion: criterion({ criterionId: "GATE-STRATEGY-01" }),

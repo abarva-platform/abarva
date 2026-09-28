@@ -206,6 +206,23 @@ describe("syncUploadToCanvasSubstrate (durable F1 fix)", () => {
     expect(w?.payload.source_artifact_id).toBe("art-1");
   });
 
+  it("revokes an absence declaration when a real source artifact arrives", async () => {
+    const { db, writes } = fakeDb({ evidence: {
+      current_state: "Not Requested",
+      applicability_status: "not_applicable",
+      applicability_reason: "No incumbent agreement was known at the decision time.",
+    } });
+    await syncUploadToCanvasSubstrate({ ...base, artifactFamily: "other" }, db);
+    const write = writes.find((row) => row.table === "source_event_evidence_states");
+    expect(write?.payload).toEqual(expect.objectContaining({
+      current_state: "Parsed",
+      source_artifact_id: "art-1",
+      applicability_status: "applicable",
+      applicability_actor_user_id: "system:upload-sync",
+      applicability_reason: expect.stringContaining("source artifact"),
+    }));
+  });
+
   it("meets minimum when the requirement floor is Loaded", async () => {
     const { db } = fakeDb({ evidence: { current_state: "Not Requested" } });
     const res = await syncUploadToCanvasSubstrate(
