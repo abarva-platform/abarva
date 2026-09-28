@@ -17,12 +17,21 @@
  *   - getDrawerTriggerLabel returns view.triggerLabel
  *   - getActivePriorityLabel returns string
  *   - describeAgentHiddenDrawer format check
- *   - Component source attribute checks
- *   - Module hygiene: no Date.now / Math.random / fetch / new Date
+ *   - AgentHiddenDrawer RENDERED, not read: attributes, copy, badges, prop view
+ *   - AgentHiddenDrawer is a server component: callable with no React dispatcher
+ *   - View determinism under a moved clock, varied Math.random, and no network
+ *   - View derivation: panel is the AG11 hidden_drawer seed, portfolio counts
+ *     are the ACT2 inventory stage counts
+ *
+ * T-495: this suite used to read AgentHiddenDrawer.tsx and
+ * agent-hidden-drawer-view.ts as TEXT and grep them. Those 15 cases asserted
+ * what the files say, not what they do, and are replaced below by cases that
+ * render the component and run the builder. Rationale and mutation record:
+ * docs/architecture/t495-agent-hidden-drawer-triage.json.
  */
 
-import { readFileSync } from 'node:fs';
-import { resolve } from 'node:path';
+import { createElement, isValidElement } from 'react';
+import { renderToStaticMarkup } from 'react-dom/server';
 
 import {
   buildAgentHiddenDrawerView,
@@ -32,10 +41,12 @@ import {
   type AgentHiddenDrawerView,
   type AgentMissionPanelAgent,
 } from '@/lib/agent/agent-hidden-drawer-view';
-
-const root = process.cwd();
-const VIEW_SOURCE_PATH = 'src/lib/agent/agent-hidden-drawer-view.ts';
-const COMPONENT_SOURCE_PATH = 'src/components/agents/AgentHiddenDrawer.tsx';
+import { buildAgentMissionPanelSeedView } from '@/lib/agent/agent-mission-view';
+import {
+  buildAiPortfolioInventory,
+  summarizeAiPortfolioInventory,
+} from '@/lib/tower/ai-portfolio-inventory';
+import { AgentHiddenDrawer } from '@/components/agents/AgentHiddenDrawer';
 
 const CANONICAL_AGENTS: AgentMissionPanelAgent[] = ['nexus', 'sentinel', 'atlas', 'steward'];
 
@@ -299,97 +310,182 @@ describe('ACT3 — determinism', () => {
 });
 
 // ---------------------------------------------------------------------------
-// Component source attribute checks
+// AgentHiddenDrawer — rendered
 // ---------------------------------------------------------------------------
 
-describe('ACT3 — AgentHiddenDrawer component source checks', () => {
-  let source: string;
+function renderDrawer(view?: AgentHiddenDrawerView): string {
+  return renderToStaticMarkup(createElement(AgentHiddenDrawer, view ? { view } : {}));
+}
+
+/** The opening tag of the drawer's root element, attributes in source order. */
+function rootTag(html: string): string {
+  const match = html.match(/^<section\b[^>]*>/);
+  if (!match) throw new Error(`drawer did not render a <section> root: ${html.slice(0, 120)}`);
+  return match[0];
+}
+
+/** Every data-agent value rendered by an AgentBadge, in document order. */
+function renderedBadgeAgents(html: string): string[] {
+  return [...html.matchAll(/data-agent="([a-z]+)"/g)].map((m) => m[1]);
+}
+
+/** A view that differs from the seed on every field the component renders. */
+function variantView(seed: AgentHiddenDrawerView): AgentHiddenDrawerView {
+  return {
+    ...seed,
+    triggerLabel: '1 mission · 1 agent active',
+    highestPriorityLabel: 'P4 · Low',
+    agentSummaries: seed.agentSummaries.map((s) => ({ ...s, isActive: s.agent === 'steward' })),
+    activeAgents: ['steward'],
+    portfolioContext: { totalInventory: 7, activeUseCases: 3, evaluatingUseCases: 1 },
+    honestDisclaimer: 'variant disclaimer for the prop case',
+  };
+}
+
+describe('ACT3 — AgentHiddenDrawer renders the view it is given', () => {
+  let view: AgentHiddenDrawerView;
+  let html: string;
 
   beforeAll(() => {
-    source = readFileSync(resolve(root, COMPONENT_SOURCE_PATH), 'utf8');
+    view = buildAgentHiddenDrawerView();
+    html = renderDrawer();
   });
 
-  it('has data-agent-hidden-drawer="act3" attribute', () => {
-    expect(source).toMatch(/data-agent-hidden-drawer=["']act3["']/);
+  it('root is a <section> carrying the act3 marker, the collapsed drawer state and an aria-label', () => {
+    const tag = rootTag(html);
+    expect(tag).toContain('data-agent-hidden-drawer="act3"');
+    expect(tag).toContain(`data-drawer-state="${view.drawerState}"`);
+    expect(tag).toContain('data-drawer-state="collapsed"');
+    expect(tag).toContain('aria-label="Agent activity drawer"');
   });
 
-  it('keeps collapsed state in data attributes without unsupported aria-expanded', () => {
-    expect(source).toMatch(/data-drawer-state={view.drawerState}/);
-    expect(source).not.toMatch(/aria-expanded=/);
+  it('renders no aria-expanded anywhere — the drawer does not open, so it must not claim to', () => {
+    expect(html).not.toContain('aria-expanded');
   });
 
-  it('has aria-label for the drawer', () => {
-    expect(source).toMatch(/aria-label/);
+  it('renders the trigger label, the highest-priority badge and the honest disclaimer', () => {
+    expect(html).toContain(`>${view.triggerLabel}<`);
+    expect(view.highestPriorityLabel).not.toBeNull();
+    expect(html).toContain(`>${view.highestPriorityLabel}<`);
+    expect(html).toContain(`>${view.honestDisclaimer}<`);
   });
 
-  it('has data-drawer-state attribute', () => {
-    expect(source).toMatch(/data-drawer-state/);
+  it('renders the portfolio line from portfolioContext', () => {
+    expect(html).toContain(
+      `${view.portfolioContext.activeUseCases} of ${view.portfolioContext.totalInventory} portfolio items active`,
+    );
   });
 
-  it('does not have "use client"', () => {
-    expect(source).not.toMatch(/'use client'/);
-    expect(source).not.toMatch(/"use client"/);
+  it('renders "drawer collapsed · open deferred"', () => {
+    expect(html).toContain('>drawer collapsed · open deferred<');
   });
 
-  it('does not use useState or useEffect', () => {
-    expect(source).not.toMatch(/useState|useEffect/);
+  it('renders one AgentBadge per ACTIVE agent, in canonical order, and none for an inactive one', () => {
+    // Non-vacuity: the seed has at least one inactive agent, or this case
+    // could not tell "active only" from "every agent".
+    expect(view.agentSummaries.some((s) => !s.isActive)).toBe(true);
+    expect(renderedBadgeAgents(html)).toEqual([...view.activeAgents]);
   });
 
-  it('imports from abarva-theme', () => {
-    expect(source).toMatch(/@\/lib\/design\/abarva-theme/);
+  it('renders a supplied view prop instead of the seed', () => {
+    const variant = variantView(view);
+    const out = renderDrawer(variant);
+    expect(out).toContain(`>${variant.triggerLabel}<`);
+    expect(out).toContain(`>${variant.highestPriorityLabel}<`);
+    expect(out).toContain(`>${variant.honestDisclaimer}<`);
+    expect(out).toContain('3 of 7 portfolio items active');
+    expect(renderedBadgeAgents(out)).toEqual(['steward']);
+    expect(out).not.toContain(`>${view.triggerLabel}<`);
   });
 
-  it('imports AgentBadge from @/components/abarva/AgentBadge', () => {
-    expect(source).toMatch(/@\/components\/abarva\/AgentBadge/);
-  });
-
-  it('shows "drawer collapsed · open deferred"', () => {
-    expect(source).toMatch(/drawer collapsed/);
-    expect(source).toMatch(/open deferred/);
+  it('renders no priority badge when the view has no missions', () => {
+    const empty: AgentHiddenDrawerView = {
+      ...view,
+      highestPriorityLabel: null,
+      agentSummaries: view.agentSummaries.map((s) => ({ ...s, isActive: false })),
+      activeAgents: [],
+    };
+    const out = renderDrawer(empty);
+    for (const label of ['P1 · Critical', 'P2 · High', 'P3 · Medium', 'P4 · Low']) {
+      expect(out).not.toContain(label);
+    }
+    expect(renderedBadgeAgents(out)).toEqual([]);
   });
 });
 
 // ---------------------------------------------------------------------------
-// Module hygiene — view model
+// AgentHiddenDrawer — server component
 // ---------------------------------------------------------------------------
 
-describe('ACT3 — view model module hygiene', () => {
-  let source: string;
+describe('ACT3 — AgentHiddenDrawer is a server component', () => {
+  it('can be called as a plain function with no React dispatcher', () => {
+    // A hook (useState, useEffect, ...) called outside a render throws
+    // "Invalid hook call". A server component uses none, so calling it
+    // directly returns an element. This replaces the old grep for
+    // 'use client' / useState / useEffect in the file text.
+    let element: unknown;
+    expect(() => {
+      element = AgentHiddenDrawer({});
+    }).not.toThrow();
+    expect(isValidElement(element)).toBe(true);
+  });
+});
 
-  beforeAll(() => {
-    const raw = readFileSync(resolve(root, VIEW_SOURCE_PATH), 'utf8');
-    // Strip string literals and comments
-    source = raw
-      .replace(/`[\s\S]*?`/g, '``')
-      .replace(/"[^"]*"/g, '""')
-      .replace(/'[^']*'/g, "''")
-      .replace(/\/\/[^\n]*/g, '')
-      .replace(/\/\*[\s\S]*?\*\//g, '');
+// ---------------------------------------------------------------------------
+// View model — determinism and derivation
+// ---------------------------------------------------------------------------
+
+describe('ACT3 — view model determinism', () => {
+  afterEach(() => {
+    jest.useRealTimers();
+    jest.restoreAllMocks();
   });
 
-  it('does not call Date.now', () => {
-    expect(source).not.toMatch(/Date\.now\s*\(/);
+  it('output is identical under two different clocks and two different Math.random streams', () => {
+    // A view that reads the clock (Date.now, new Date) or Math.random would
+    // differ between these two builds. The old case grepped the file for
+    // those names, which a reference held under another name walked past.
+    jest.useFakeTimers({ now: new Date('2020-01-01T00:00:00Z') });
+    jest.spyOn(Math, 'random').mockReturnValue(0.01);
+    const a = JSON.stringify(buildAgentHiddenDrawerView());
+
+    jest.setSystemTime(new Date('2031-06-15T12:34:56Z'));
+    jest.spyOn(Math, 'random').mockReturnValue(0.99);
+    const b = JSON.stringify(buildAgentHiddenDrawerView());
+
+    expect(b).toBe(a);
   });
 
-  it('does not call Math.random', () => {
-    expect(source).not.toMatch(/Math\.random\s*\(/);
+  it('never calls fetch', () => {
+    const fetchSpy = jest.fn(() => {
+      throw new Error('agent-hidden-drawer-view must not fetch');
+    });
+    const g = globalThis as { fetch?: unknown };
+    const original = g.fetch;
+    g.fetch = fetchSpy;
+    try {
+      buildAgentHiddenDrawerView();
+    } finally {
+      g.fetch = original;
+    }
+    expect(fetchSpy).not.toHaveBeenCalled();
+  });
+});
+
+describe('ACT3 — view model derivation', () => {
+  it('panelView is the AG11 hidden_drawer seed', () => {
+    expect(buildAgentHiddenDrawerView().panelView).toEqual(
+      buildAgentMissionPanelSeedView('hidden_drawer'),
+    );
   });
 
-  it('does not call new Date()', () => {
-    expect(source).not.toMatch(/new\s+Date\s*\(/);
-  });
-
-  it('does not call fetch()', () => {
-    expect(source).not.toMatch(/\bfetch\s*\(/);
-  });
-
-  it('imports from @/lib/agent/agent-mission-view', () => {
-    const raw = readFileSync(resolve(root, VIEW_SOURCE_PATH), 'utf8');
-    expect(raw).toMatch(/@\/lib\/agent\/agent-mission-view/);
-  });
-
-  it('imports from @/lib/tower/ai-portfolio-inventory', () => {
-    const raw = readFileSync(resolve(root, VIEW_SOURCE_PATH), 'utf8');
-    expect(raw).toMatch(/@\/lib\/tower\/ai-portfolio-inventory/);
+  it('portfolioContext is the ACT2 inventory: total, pilot+production+scaled, discovery', () => {
+    const summary = summarizeAiPortfolioInventory(buildAiPortfolioInventory());
+    expect(buildAgentHiddenDrawerView().portfolioContext).toEqual({
+      totalInventory: summary.totalUseCases,
+      activeUseCases:
+        summary.byStage['pilot'] + summary.byStage['production'] + summary.byStage['scaled'],
+      evaluatingUseCases: summary.byStage['discovery'],
+    });
   });
 });
