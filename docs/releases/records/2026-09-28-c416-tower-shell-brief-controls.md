@@ -117,3 +117,17 @@ the CI step disappears; no data or runtime state is involved.
 
 - The pull request and its `AI surface control catalog` check run.
 - `docs/security/control-measurements/c416-tower-shell-brief-controls.md`.
+
+## Known Gaps
+
+- **The owner decision is not taken.** Whether the brief's accountability block is
+  mounted in the Tower shell, or the five controls move to the shell and the
+  catalog entry retires, remains open. The measurement makes one input concrete:
+  three of the five exist in the shared dock and are switched off by the shell's
+  `variant` prop; the other two would need the shell to pass the answer packet's
+  citations and caveats through to the dock, in either variant.
+- **jsdom against the design fixture, not the deployed route.** The suite measures
+  the shell's rendering logic over fixture data. It does not replace a signed-in
+  look at the live page, and none is claimed.
+- **One answer shape.** The answered turn uses a single rich response. A streamed
+  response and a failed-validation response were not separately measured.
