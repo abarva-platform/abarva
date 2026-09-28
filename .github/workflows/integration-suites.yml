@@ -250,6 +250,28 @@ jobs:
       - name: Run the integration directories that pass on main
         run: npx jest src/__tests__/integration/architecture src/__tests__/integration/corpus src/__tests__/integration/data-trust src/__tests__/integration/design src/__tests__/integration/demo src/__tests__/integration/deployment src/__tests__/integration/engagement src/__tests__/integration/knowledge src/__tests__/integration/nexus src/__tests__/integration/observability src/__tests__/integration/programs src/__tests__/integration/security src/__tests__/integration/sentinel src/__tests__/integration/setup src/__tests__/integration/solutions src/__tests__/integration/story-pack src/__tests__/integration/tenants src/__tests__/integration/agent/agent1-foundation.test.ts src/__tests__/integration/admin-context-uploads-tabs.test.tsx src/__tests__/integration/agent-column-agent-answer.test.ts src/__tests__/integration/app-rail-home-nav.test.tsx src/__tests__/integration/app-topbar-prefetch-guard.test.tsx src/__tests__/integration/app-topbar-preserve-tenant-name.test.ts src/__tests__/integration/ask-anything-bar-agent-answer.test.tsx src/__tests__/integration/atlas-ask-route.test.ts src/__tests__/integration/atlas-page-state-timeout.test.ts src/__tests__/integration/email-code-sign-in-panel.test.tsx src/__tests__/integration/evidence-registry.test.ts src/__tests__/integration/launch-user-route.test.ts src/__tests__/integration/learn-welcome-cxo-toggle.test.tsx src/__tests__/integration/marketing-nav-dropdowns.test.tsx src/__tests__/integration/pack-j-realistic-portfolio.test.ts src/__tests__/integration/pattern-deliverable-api.test.ts src/__tests__/integration/shell-topbar-auth.test.tsx src/__tests__/integration/sign-in-route-contract.test.ts src/__tests__/integration/sign-in-shell.test.tsx src/__tests__/integration/strategic-moves-chat-shape.test.ts src/__tests__/integration/supabase.test.ts src/__tests__/integration/tenant-empty-states.test.tsx src/__tests__/integration/tower-p6-handoff-panel.test.ts src/__tests__/integration/demo-code-sign-in-panel.test.tsx src/__tests__/integration/demo-code-sign-in-route.test.ts src/__tests__/integration/demo-p0-graceful-degradation.test.ts src/__tests__/integration/deliverable-render-contract.test.ts src/__tests__/integration/programs-api-contracts.test.ts src/__tests__/integration/programs-demo-beats.test.ts src/__tests__/integration/programs-enhancement-seed-planner.test.ts src/__tests__/integration/programs-enhancement-seed-writer.test.ts src/__tests__/integration/programs-enhancement-spec.test.ts src/__tests__/integration/programs-nexus-ask-route.test.ts src/__tests__/integration/programs-nexus-free-text.test.ts src/__tests__/integration/programs-quality-gates.test.ts --no-coverage --ci
 
+      # 2026-09-28 · item T-774. Three suites in `src/__tests__/integration/ops`
+      # are named as FILE paths, not as the directory, and the distinction is
+      # the whole point. That directory holds 14 files: two are red behind an
+      # unanswered operator-vocabulary question, and two more are source-text
+      # scanners the T-770 control refuses to see wired. Naming the directory
+      # would drag all four in, which is the silent-collision failure the header
+      # of this file describes.
+      #
+      # These three were rewritten from source-text scanners into behavioural
+      # suites in the same change, and `docs/architecture/t774-ops-scanner-rewrite-triage.json`
+      # declares them so. Delete that record and the T-770 control goes red
+      # naming these three paths, because a declared scanner that IS wired is a
+      # breach — so the wiring and the declaration hold each other up.
+      #
+      # They are wired here rather than left dark because
+      # `check-integration-ci-visibility.mjs` requires a changed integration
+      # suite to have an executable CI owner, and a rewrite nobody runs proves
+      # nothing. The directory stays unwired until its other four files are
+      # settled; that is T-774's closing change, not this one.
+      - name: Run the rewritten ops script suites (named per file, not as a directory)
+        run: npx jest --runTestsByPath src/__tests__/integration/ops/demo-pack-report-validator.test.ts src/__tests__/integration/ops/duplicate-slice-preflight.test.ts src/__tests__/integration/ops/worktree-cleanup-report.test.ts --no-coverage --ci
+
       - name: Refuse a stale, growing or mis-classified Intelligence quarantine list
         # Runs the check's own unit cases first, then the check. The cases pin
         # what clearing an entry would cost — a `covers` classification that no
