@@ -655,6 +655,7 @@ export async function evaluateGate(
     "solution_design",
     "operating_model_design",
     "target_state_architecture",
+    "process_change_estimate_brief",
   );
   const executionRoadmapRow = findDeliverable(
     "execution_roadmap",
@@ -1077,13 +1078,32 @@ export async function evaluateGate(
             failureReason =
               "Target architecture is not signed off with the required technology and risk/security reviews.";
           }
+        } else if (
+          confirmedSolutionRoute?.route === "process_change" &&
+          confirmedSolutionRoute.workflowChange !== "material" &&
+          confirmedSolutionRoute.roleAccountabilityChange !== "material"
+        ) {
+          pass =
+            (await meetsApprovalBar(
+              findDeliverable("target_state_architecture"),
+            )) &&
+            (await meetsApprovalBar(
+              findDeliverable("process_change_estimate_brief"),
+            ));
+          if (!pass) {
+            failureReason =
+              "The target architecture and bounded process-change estimate brief must both be signed off.";
+          }
         } else {
           pass = await anyMeetsApprovalBar(designRows);
         }
         break;
       case "requirements_design_outcome_trace":
         pass =
-          confirmedSolutionRoute?.route === "technical_product"
+          confirmedSolutionRoute?.route === "technical_product" ||
+          (confirmedSolutionRoute?.route === "process_change" &&
+            confirmedSolutionRoute.workflowChange !== "material" &&
+            confirmedSolutionRoute.roleAccountabilityChange !== "material")
             ? await meetsApprovalBar(requirementsTraceRow)
             : isPresent(requirementsTraceRow) ||
               (fromPhase === 3 &&

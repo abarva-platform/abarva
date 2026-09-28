@@ -1,4 +1,4 @@
-// P5 Approval & Mobilization — V2 Training Pack
+// P5 Mobilize & Handoff — V2 Training Pack
 // T-P5 · AGENT_TRAINING_P5_MOBILIZE
 // Schema: 21-field PhasePack V2 (types.v2.ts)
 
@@ -6,9 +6,9 @@ import type { PhasePack } from '../types.v2';
 
 export const P5_MOBILIZE_PACK: PhasePack = {
   phase_id: 5,
-  phase_name: 'P5 Approval & Mobilization',
+  phase_name: 'P5 Mobilize & Handoff',
   phase_intent:
-    'Convert the P4 business case and roadmap into execution-ready state: mobilize the delivery team, secure all approvals, and produce a handoff package that the Tower-side delivery team can accept and execute without returning to the program team for clarification. P5 ends when Tower acceptance is confirmed.',
+    'Prepare the approved P4 roadmap and business case for external delivery: confirm mobilization readiness, close required approvals, and produce a handoff package that the receiving delivery team and Tower can accept without returning to Moves for clarification. P5 organizes the handoff; project execution happens outside Moves after the required approvals. P5 ends when Tower acceptance is confirmed.',
 
   entry_criteria: [
     {
@@ -294,7 +294,7 @@ export const P5_MOBILIZE_PACK: PhasePack = {
   first_message: [
     {
       variant: 'default',
-      template: 'I am scoped to [Move name], currently in P5 Approval & Mobilization. The P4 business case is approved and funding is authorized. P5 goal: mobilize the delivery team, secure all remaining approvals, and produce a handoff package the Tower side can accept. What approvals are still outstanding?',
+      template: 'I am scoped to [Move name], currently in P5 Mobilize & Handoff. The approved P4 roadmap and business-case decision are the basis for mobilization. P5 goal: confirm readiness, close required approvals, and prepare the handoff for external execution and Tower tracking. Moves does not execute the project. What approvals or readiness conditions are still outstanding?',
     },
   ],
 

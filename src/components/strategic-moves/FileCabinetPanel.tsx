@@ -1784,6 +1784,9 @@ export function FileCabinetPanel({
     "idle" | "uploading" | "error"
   >("idle");
   const [uploadMsg, setUploadMsg] = useState<string>("");
+  const [uploadFamily, setUploadFamily] = useState<
+    "uploaded_evidence" | "session_artifact"
+  >("uploaded_evidence");
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -1857,7 +1860,7 @@ export function FileCabinetPanel({
         const fd = new FormData();
         fd.append("file", file);
         fd.append("phase", String(phase));
-        fd.append("family", "uploaded_evidence");
+        fd.append("family", uploadFamily);
         const r = await fetch(`/api/v1/programs/${moveId}/artifacts/upload`, {
           method: "POST",
           credentials: "include",
@@ -1880,7 +1883,7 @@ export function FileCabinetPanel({
           notCaptured
             ? `Uploaded ${file.name}, but parsing/review registration failed. This file is not available to generation. ${evidence.warning ?? "Retry ingestion or contact support."}`
             : evidence?.reviewStatus
-              ? `Uploaded ${file.name}${j.blobStored ? " to secure storage" : ""}; parsed via ${evidence.parseMethod ?? "parser"}. Human review is required before it can inform generation.`
+              ? `Uploaded ${file.name} as ${uploadFamily === "session_artifact" ? "a session file" : "evidence"}${j.blobStored ? " to secure storage" : ""}; parsed via ${evidence.parseMethod ?? "parser"}. Human review is required before it can inform generation.`
               : `Uploaded ${file.name}${j.blobStored ? " to secure storage" : ""}.`,
         );
         await load();
@@ -1889,7 +1892,7 @@ export function FileCabinetPanel({
         setUploadMsg(e instanceof Error ? e.message : "upload failed");
       }
     },
-    [moveId, phase, load],
+    [moveId, phase, load, uploadFamily],
   );
 
   useEffect(() => {
@@ -1965,8 +1968,21 @@ export function FileCabinetPanel({
             {downloadSummary || `${totalCurrent} current files.`}
           </p>
         </div>
-        <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+        <div style={{ display: "flex", gap: 8, alignItems: "end", flexWrap: "wrap" }}>
+          <label style={{ display: "grid", gap: 3, color: "#5A6472", fontSize: 10, fontWeight: 700 }}>
+            <span>Upload type</span>
+            <select
+              aria-label="File Cabinet upload type"
+              onChange={(event) => setUploadFamily(event.target.value as typeof uploadFamily)}
+              value={uploadFamily}
+              style={{ minHeight: 32, border: "1px solid #D5DAE2", borderRadius: 5, background: "#fff", color: "#1A1A18", fontSize: 11.5, padding: "5px 8px" }}
+            >
+              <option value="uploaded_evidence">Evidence</option>
+              <option value="session_artifact">Workshop / session notes</option>
+            </select>
+          </label>
           <input
+            aria-label="Upload Move file"
             ref={fileRef}
             type="file"
             style={{ display: "none" }}
@@ -1990,7 +2006,7 @@ export function FileCabinetPanel({
               cursor: uploadState === "uploading" ? "default" : "pointer",
             }}
           >
-            {uploadState === "uploading" ? "Uploading…" : "Upload evidence"}
+            {uploadState === "uploading" ? "Uploading…" : uploadFamily === "session_artifact" ? "Upload session file" : "Upload evidence"}
           </button>
           <button
             onClick={() => void load()}

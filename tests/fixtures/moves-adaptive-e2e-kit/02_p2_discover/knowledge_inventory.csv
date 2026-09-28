@@ -1,0 +1,6 @@
+article_id,topic,synthetic_owner_role,last_review_date,review_target_days,published_status,conflict_flag,required_behavior,evidence_ref
+K-011,eligibility effective date,Eligibility Knowledge Owner,2026-08-15,180,published,false,show source and date,SYN-KNOW-01
+K-014,authorization documentation,Authorization Knowledge Owner,2025-11-30,180,published,true,abstain and escalate until owner review,SYN-KNOW-01
+K-021,claim status explanation,Claims Knowledge Owner,2026-07-10,180,published,false,cite approved article,SYN-KNOW-01
+K-026,appeal next steps,Member Services Knowledge Owner,2026-06-01,180,published,false,provide process guidance only; agent confirms,SYN-KNOW-01
+K-032,urgent clinical symptom,Clinical Content Owner,2026-07-01,90,published,false,route to approved clinical escalation; no clinical advice,SYN-RED-01

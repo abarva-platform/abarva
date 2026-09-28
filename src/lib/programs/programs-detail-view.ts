@@ -88,9 +88,9 @@ function buildAgentRail(
 // ─── APX-SAP-2026 specific workbench (P1 Discovery · Active) ─────────────────
 
 const APX_SAP_2026_P1_WORKBENCH: ProgramWorkbenchContent = {
-  title: 'P1 Discovery · Active',
+  title: 'P1 Charter · Active',
   prose:
-    'Discovery phase is tracking well — 6 interviews scheduled across store operations and HR. Data access requests for the Point-of-Sale and scheduling systems are pending IT approval. The value hypothesis is strong but needs validation from field supervisors before Synthesis entry.',
+    'Charter phase is tracking well — 6 interviews scheduled across store operations and HR. Data access requests for the Point-of-Sale and scheduling systems are pending IT approval. The value hypothesis is strong but needs validation from field supervisors before P2 Discover & Diagnose.',
   actionsLabel: 'Nexus recommends',
   actions: [
     {
@@ -106,7 +106,7 @@ const APX_SAP_2026_P1_WORKBENCH: ProgramWorkbenchContent = {
     {
       letter: 'C',
       text: 'Draft value hypothesis',
-      detail: 'Needs field supervisor input before Synthesis gate',
+      detail: 'Needs field supervisor input before P2 Discover & Diagnose gate',
     },
   ],
 };
@@ -114,7 +114,7 @@ const APX_SAP_2026_P1_WORKBENCH: ProgramWorkbenchContent = {
 // ─── APX-CC-2026 specific workbench (P4 Execution Roadmap · Active — 68% Complete) ───────
 
 const APX_CC_2026_P4_WORKBENCH: ProgramWorkbenchContent = {
-  title: 'P4 Execution Roadmap · Active — 68% Complete',
+  title: 'P4 Roadmap & Business Case · Active — 68% Complete',
   prose:
     'Execution roadmap is taking shape. Nexus is packaging workstreams, estimate basis, milestone sequence, dependencies, readiness risks, and success criteria for approval. The remaining 32% covers IVR routing scope, operator dashboard dependency, and mobilization readiness.',
   actionsLabel: 'Nexus recommends',
@@ -137,11 +137,11 @@ const APX_CC_2026_P4_WORKBENCH: ProgramWorkbenchContent = {
   ],
 };
 
-// ─── APX-CC-2026 specific workbench (P5 Approval & Mobilization — locked/pending from P4 Roadmap) ──
+// ─── APX-CC-2026 specific workbench (P5 Mobilize & Handoff — locked/pending from P4 Roadmap) ──
 
 const APX_CC_2026_P5_WORKBENCH: ProgramWorkbenchContent = {
-  title: 'P5 Approval & Mobilization · Pending',
-  prose: 'P5 Approval & Mobilization is locked until the execution roadmap gate clears. IVR migration scope and dashboard delivery plan are the remaining roadmap blockers. Once cleared, P5 packages the business case, funding ask, readiness plan, change plan, and sponsor approval.',
+  title: 'P5 Mobilize & Handoff · Pending',
+  prose: 'P5 Mobilize & Handoff is locked until the execution roadmap gate clears. IVR migration scope and dashboard delivery plan are the remaining roadmap blockers. Once cleared, P5 packages the business case, funding ask, readiness plan, change plan, and sponsor approval.',
   actionsLabel: 'Unlock path',
   actions: [
     { letter: 'A', text: 'Complete IVR migration scope', detail: 'Last roadmap blocker — 3 sprints estimated' },
@@ -153,7 +153,7 @@ const APX_CC_2026_P5_WORKBENCH: ProgramWorkbenchContent = {
 // ─── APX-DFV2-2025 specific workbench (P6 Tower Handoff — monitoring active) ──────
 
 const APX_DFV2_P6_WORKBENCH: ProgramWorkbenchContent = {
-  title: 'P6 Tower Handoff · Monitoring Active',
+  title: 'P6 Tower Track Outcomes · Monitoring Active',
   prose: 'Demand Forecasting v2 has a Tower monitoring contract in place. Forecast accuracy is at 87% — 5pp above the 82% target. Inventory waste reduction is running $1.4M/yr against a $1.2M projection. Tower/Atlas monitor weekly value movement, drift, and escalation thresholds.',
   actionsLabel: 'Tower monitors',
   actions: [
@@ -166,7 +166,7 @@ const APX_DFV2_P6_WORKBENCH: ProgramWorkbenchContent = {
 // ─── APX-LPM-2026 specific workbench (P2 Synthesis · Active) ─────────────────
 
 const APX_LPM_2026_P2_WORKBENCH: ProgramWorkbenchContent = {
-  title: 'P2 Synthesis · Solution Options Under Review',
+  title: 'P2 Discover & Diagnose · Solution Options Under Review',
   prose:
     'Synthesis is progressing well. Sentinel has reviewed three loyalty platform modernization options: (1) Greenfield rebuild on the existing Snowflake data lake, (2) Vendor-managed SaaS loyalty engine with API integration, (3) Composable approach leveraging the in-flight CDP (APX-CDP-2026) as the identity backbone. Options 2 and 3 have conflicting cost models that Nexus is reconciling against the program budget. Design gate target is mid-May 2026.',
   actionsLabel: 'Nexus recommends',
@@ -189,20 +189,20 @@ const APX_LPM_2026_P2_WORKBENCH: ProgramWorkbenchContent = {
   ],
 };
 
-// ─── Generic P5 Approval & Mobilization workbench — intentional locked/preview copy ─────────
+// ─── Generic P5 Mobilize & Handoff workbench — intentional locked/preview copy ─────────
 // Shown when viewing P5 for any program that doesn't have a flagship override.
 // Covers both: a program at P4 peeking ahead, and a program at P1–P3 seeing P5.
 
 const GENERIC_P5_ACTIVATE_WORKBENCH: ProgramWorkbenchContent = {
-  title: 'P5 Approval & Mobilization · Preview',
+  title: 'P5 Mobilize & Handoff · Preview',
   prose:
-    'Approval & Mobilization packages the business case, funding ask, stakeholder alignment, readiness, change-management plan, governance model, and launch authority. No execution starts here; AbarVa prepares the approval packet for delivery outside the tool.',
+    'Mobilize & Handoff packages the approved roadmap, required decisions, stakeholder alignment, readiness, change approach, governance, and receiving-team acceptance. No execution starts here; Moves prepares the handoff for delivery outside the tool.',
   actionsLabel: 'Preview path',
   actions: [
     {
       letter: 'A',
       text: 'Clear roadmap gate first',
-      detail: 'Approval & Mobilization unlocks when all P4 roadmap criteria are met',
+      detail: 'Mobilize & Handoff unlocks when all P4 roadmap criteria are met',
     },
     {
       letter: 'B',
@@ -221,15 +221,15 @@ const GENERIC_P5_ACTIVATE_WORKBENCH: ProgramWorkbenchContent = {
 // Shown when viewing P6 for any program that doesn't have a flagship override.
 
 const GENERIC_P6_OPERATE_WORKBENCH: ProgramWorkbenchContent = {
-  title: 'P6 Tower Handoff · Preview',
+  title: 'P6 Tower Track Outcomes · Preview',
   prose:
-    'Tower Handoff sets up execution monitoring for work that happens outside Programs. Nexus defines the metrics, milestone cadence, data feeds, owners, escalation thresholds, and benefits tracking contract Tower will use.',
+    'Tower Track Outcomes establishes monitoring for work that happens outside Moves. Nexus defines the metrics, milestone cadence, data feeds, owners, escalation thresholds, and benefits tracking contract Tower will use.',
   actionsLabel: 'Preview path',
   actions: [
     {
       letter: 'A',
       text: 'Complete mobilization approval first',
-      detail: 'Tower Handoff unlocks when P5 approval and monitoring prerequisites are cleared',
+      detail: 'Tower Track Outcomes unlocks when P5 approval and monitoring prerequisites are cleared',
     },
     {
       letter: 'B',
@@ -247,7 +247,7 @@ const GENERIC_P6_OPERATE_WORKBENCH: ProgramWorkbenchContent = {
 // ─── APX-CDP-2026 P3 Design · post-gate-approval view ────────────────────────
 
 const APX_CDP_2026_P3_WORKBENCH: ProgramWorkbenchContent = {
-  title: 'P3 Design · Architecture Sprint Active',
+  title: 'P3 Design Future State · Architecture Sprint Active',
   prose:
     'Design gate approved. The CDP architecture sprint is underway — Nexus is orchestrating the data layer design, identity graph schema, and vendor integration contracts. The AMS Vendor Consolidation decision (Stage 7 BAFO) has locked Vendor C as the managed CDP layer, reducing in-house build scope. Sentinel is validating Unified Loyalty Intelligence (T3-H03) as the pattern reference for the personalization layer.',
   actionsLabel: 'Nexus recommends',
@@ -276,7 +276,7 @@ const APX_CDP_2026_P3_WORKBENCH: ProgramWorkbenchContent = {
 // Linked source: AMS Vendor Consolidation 2026 · Stage 7 BAFO
 
 const APX_CDP_2026_P2_WORKBENCH: ProgramWorkbenchContent = {
-  title: 'P2 Synthesis · Design Gate Pending',
+  title: 'P2 Discover & Diagnose · Design Gate Pending',
   prose:
     'Workshop 5 is incomplete — value hypothesis evidence is missing and privacy boundary confirmation has not been logged. Evidence coverage sits at 36%. The Design gate (P2 → P3) is held by Steward pending these three items. Linked source event AMS Vendor Consolidation 2026 is at Stage 7 BAFO — vendor data architecture decisions here will affect CDP scope.',
   actionsLabel: 'Nexus recommends',
@@ -302,7 +302,7 @@ const APX_CDP_2026_P2_WORKBENCH: ProgramWorkbenchContent = {
 // ─── Meridian simulation workbench (P3 Design · Execution Roadmap gate pending) ──────────
 
 const MH_AGENTIC_CARE_DATA_ACCELERATOR_P3_WORKBENCH: ProgramWorkbenchContent = {
-  title: 'P3 Design · Simulation Evidence Review',
+  title: 'P3 Design Future State · Simulation Evidence Review',
   prose:
     'The Meridian Agentic Care Data Accelerator is in Design with a live handoff package behind it: strategy minutes, architecture workshop notes, steering decisions, action register, solution inputs, and corpus publication audits. Nexus can safely use the deterministic fixture for navigation today, while Sentinel should still treat the published Pinecone index as not app-wired until live retrieved IDs are captured.',
   actionsLabel: 'Nexus recommends',
@@ -352,7 +352,7 @@ function buildWorkbenchContent(
   if (programId === 'apx-lpm-2026' && viewingPhase === 2 && viewingPhaseState === 'current') {
     return APX_LPM_2026_P2_WORKBENCH;
   }
-  // Generic P5 Approval & Mobilization preview — for any program without a flagship P5 override.
+  // Generic P5 Mobilize & Handoff preview — for any program without a flagship P5 override.
   // APX-CC-2026 has its own P5 workbench and is already handled above.
   if (viewingPhase === 5 && viewingPhaseState !== 'current') {
     return GENERIC_P5_ACTIVATE_WORKBENCH;
@@ -441,7 +441,7 @@ function buildPhasePanel(
   if (programId === 'apx-sap-2026' && viewingPhase === 1 && viewingPhaseState === 'current') {
     return {
       summary:
-        'P1 Discovery is validating the SAP finance modernization seed against current-state evidence. Nexus has stakeholder alignment logged, but interviews, data-access confirmation, value hypothesis detail, and sponsor review still need to close before Synthesis can make a credible options call.',
+        'P1 Charter is validating the SAP finance modernization seed against current-state evidence. Nexus has stakeholder alignment logged, but interviews, data-access confirmation, value hypothesis detail, and sponsor review still need to close before P2 Discover & Diagnose can make a credible options call.',
       deliverables: [
         { label: 'Origination approval', status: 'done' },
         { label: 'Discovery interview schedule', status: 'pending' },
@@ -467,7 +467,7 @@ function buildPhasePanel(
         { criterion: 'IVR routing rules complete', met: false },
         { criterion: 'Operator dashboard MVP complete', met: false },
         { criterion: 'Load test passing at 2× peak traffic', met: false },
-        { criterion: 'Sponsor sign-off on Activate criteria', met: false },
+        { criterion: 'Sponsor sign-off on Mobilize & Handoff criteria', met: false },
       ],
     };
   }
@@ -480,7 +480,7 @@ function buildPhasePanel(
         { criterion: 'Load test passed (500 concurrent)', met: false },
         { criterion: 'Sponsor sign-off on execution roadmap gate', met: false },
       ],
-      blockerNote: 'P5 Approval & Mobilization entry requires clearing the Execution Roadmap gate (P4). Two blockers remain: IVR migration scope and dashboard delivery plan.',
+      blockerNote: 'P5 Mobilize & Handoff entry requires clearing the P4 Roadmap & Business Case gate. Two blockers remain: IVR migration scope and dashboard delivery plan.',
     };
   }
   // APX-DFV2-2025 P6 gate — steady state operating view
@@ -525,14 +525,14 @@ function buildPhasePanel(
       ],
     };
   }
-  // Generic P5 Approval & Mobilization phase panel — intentional locked/pending copy
+  // Generic P5 Mobilize & Handoff phase panel — intentional locked/pending copy
   // APX-CC-2026 P5 is handled above; this covers all other programs.
   if (viewingPhase === 5 && viewingPhaseState !== 'current') {
     return {
       blockerNote:
-        'P5 Approval & Mobilization entry requires P4 Execution Roadmap gate approval. The gate criteria are managed in the active roadmap phase.',
+        'P5 Mobilize & Handoff entry requires P4 Roadmap & Business Case gate approval. The gate criteria are managed in the active roadmap phase.',
       gateCriteria: [
-        { criterion: 'P4 Execution Roadmap gate formally approved', met: false },
+        { criterion: 'P4 Roadmap & Business Case gate formally approved', met: false },
         { criterion: 'Business case reviewed by sponsor', met: false },
         { criterion: 'Change management plan filed', met: false },
         { criterion: 'Mobilization governance and escalation criteria documented', met: false },
@@ -544,9 +544,9 @@ function buildPhasePanel(
   if (viewingPhase === 6 && viewingPhaseState !== 'current') {
     return {
       blockerNote:
-        'P6 Tower Handoff entry requires P5 Approval & Mobilization gate approval. Programs enter Tower Handoff once monitoring metrics, data feeds, owners, and escalation thresholds are ready.',
+        'P6 Tower Track Outcomes entry requires P5 Mobilize & Handoff gate approval. Programs enter Tower Track Outcomes once monitoring metrics, data feeds, owners, and escalation thresholds are ready.',
       gateCriteria: [
-        { criterion: 'P5 Approval & Mobilization gate formally approved', met: false },
+        { criterion: 'P5 Mobilize & Handoff gate formally approved', met: false },
         { criterion: 'Tower monitoring metrics defined', met: false },
         { criterion: 'Data-feed owners confirmed', met: false },
         { criterion: 'Escalation thresholds filed', met: false },
@@ -561,7 +561,7 @@ function buildPhasePanel(
         { criterion: 'Value hypothesis evidence logged', met: false },
         { criterion: 'Privacy boundary confirmed', met: false },
         { criterion: 'AMS vendor architecture alignment noted', met: true },
-        { criterion: 'Sponsor sign-off on Synthesis findings', met: false },
+        { criterion: 'Sponsor sign-off on P2 findings', met: false },
       ],
       evidenceItems: [
         {

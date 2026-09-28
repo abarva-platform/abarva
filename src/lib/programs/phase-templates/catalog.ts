@@ -30,7 +30,7 @@ function derive(
 }
 
 export const PHASE_TEMPLATE_CATALOG: MovePhaseTemplateDefinition[] = [
-  // ─────────────── P2 — Understand Current State ───────────────
+  // ─────────────── P2 — Discover & Diagnose ───────────────
   derive({
     templateId: 'p2_current_state_interview_guide',
     phase: 'P2',
@@ -152,7 +152,7 @@ export const PHASE_TEMPLATE_CATALOG: MovePhaseTemplateDefinition[] = [
     },
   }),
 
-  // ─────────────── P3 — Choose the Approach ───────────────
+  // ─────────────── P3 — Design Future State ───────────────
   derive({
     templateId: 'p3_solution_options_canvas',
     phase: 'P3',
@@ -269,7 +269,7 @@ export const PHASE_TEMPLATE_CATALOG: MovePhaseTemplateDefinition[] = [
     },
   }),
 
-  // ─────────────── P4 — Build the Plan ───────────────
+  // ─────────────── P4 — Roadmap & Business Case ───────────────
   derive({
     templateId: 'p4_roadmap_workstream',
     phase: 'P4',
@@ -384,7 +384,7 @@ export const PHASE_TEMPLATE_CATALOG: MovePhaseTemplateDefinition[] = [
     },
   }),
 
-  // ─────────────── P5 — Prepare to Execute ───────────────
+  // ─────────────── P5 — Mobilize & Handoff ───────────────
   derive({
     templateId: 'p5_raci_ownership',
     phase: 'P5',

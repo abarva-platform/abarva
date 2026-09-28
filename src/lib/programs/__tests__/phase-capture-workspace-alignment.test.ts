@@ -50,6 +50,34 @@ describe("phase-capture workspace ↔ contract key alignment", () => {
         validatedBy: "Business sponsor",
       });
     }
+    if (phase === 4) {
+      const shared = {
+        pairId: "pair-1",
+        workPackage: "Reporting foundation",
+        role: "Data engineer",
+        lowHours: 10,
+        baseHours: 20,
+        highHours: 30,
+        rateSource: "Planning rate card",
+        inputBasis: "assumption",
+        evidenceReference: "",
+        assumption: "Bounded first release",
+        confidence: "medium",
+        aiEligiblePct: 0,
+        aiToolAssumption: "",
+        humanReviewHours: 0,
+      };
+      items.estimates_capacity = JSON.stringify({
+        currency: "USD",
+        reviewer: "Finance reviewer",
+        reviewConfirmed: true,
+        sourceNotes: "",
+        rows: [
+          { ...shared, deliveryModel: "internal", ratePerHour: 100 },
+          { ...shared, deliveryModel: "vendor", ratePerHour: 150 },
+        ],
+      });
+    }
     return items;
   }
 

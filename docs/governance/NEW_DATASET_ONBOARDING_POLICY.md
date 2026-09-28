@@ -26,13 +26,14 @@ up front, in a manifest, and checked in CI.
 | Field                         | Meaning                                                                     |
 | ----------------------------- | --------------------------------------------------------------------------- |
 | `dataset_id` / `title`        | Stable id + human name.                                                     |
-| `client_key`                  | Canonical key or `corpus_global` — **never a real client name**.            |
+| `tenant_scope`                | `canonical_tenant`, `corpus_global`, or `move_registry`.                    |
+| `client_key`                  | Required canonical key for fixed tenant datasets; `corpus_global` for shared corpus; null for `move_registry`. Never a real client name. |
 | `source_layer`                | One of the canonical `SOURCE_LAYERS`.                                       |
 | `classification`              | `public`/`internal`/`confidential`/`pii`/`phi`/`restricted`.                |
 | `owner`                       | Accountable person/team.                                                    |
 | `source_basis`                | Where the content comes from (citation root).                               |
 | `ingestion_method`            | How it loads.                                                               |
-| `retrieval_plan`              | `postgres_fts` / `azure_ai_search` / `fts_plus_search` / `not_retrievable`. |
+| `retrieval_plan`              | `postgres_fts` / `azure_ai_search` / `fts_plus_search` / `move_scoped_prompt_context` / `not_retrievable`. |
 | `retrieval_proof_required`    | Whether live retrieval proof gates `agent_ready`.                           |
 | `pii_phi_handling`            | Required for sensitive classifications.                                     |
 | `approved_by` / `approved_at` | Human sign-off.                                                             |
@@ -40,6 +41,8 @@ up front, in a manifest, and checked in CI.
 ## Hard rules enforced by CI
 
 - `client_key` outside `CANONICAL_TENANT_KEYS` + `corpus_global` → **fail**.
+- `move_registry` requires `client_key: null`; runtime tenancy is resolved from the authenticated Move and canonical tenant registry, never from a manifest, filename, or folder.
+- `canonical_tenant` requires a canonical `client_key`; `corpus_global` requires `client_key: "corpus_global"`.
 - Sensitive (pii/phi/restricted) targeting `corpus_global` → **fail**.
 - Sensitive classification without `pii_phi_handling` → **fail**.
 - Unknown manifest fields (strict schema) → **fail**.

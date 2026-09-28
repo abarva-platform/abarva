@@ -14,20 +14,21 @@ import type {
   ProgramPhaseSlot,
   ProgramRow,
 } from './programs-types';
+import { getMovesStageName } from './phase-labels';
 
-// ─── Phase label map (7-phase: P0–P6) ───────────────────────────────────────
+// ─── Phase label map: P0–P5 plus Tower outcome tracking ─────────────────────
 
 export const PHASE_LABEL_MAP: Record<ProgramPhaseId, string> = {
-  0: 'Originate',
-  1: 'Discovery',
-  2: 'Synthesis',
-  3: 'Design',
-  4: 'Execution Roadmap',
-  5: 'Approval & Mobilization',
-  6: 'Tower Handoff',
+  0: getMovesStageName(0),
+  1: getMovesStageName(1),
+  2: getMovesStageName(2),
+  3: getMovesStageName(3),
+  4: getMovesStageName(4),
+  5: getMovesStageName(5),
+  6: getMovesStageName(6),
 };
 
-// ─── Helper to build the 7-slot phase array for a given program ─────────────
+// ─── Helper to build the six-phase-plus-Tower stage array ───────────────────
 
 export function buildPhaseSlots(
   currentPhase: ProgramPhaseId,

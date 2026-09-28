@@ -10,6 +10,7 @@
 // traceable back to the catalog or registry it was seeded from.
 
 import type { ProductCapabilityEntry } from "./types";
+import { PHASE_LABELS } from "@/lib/programs/phase-labels";
 
 export const PRODUCT_CAPABILITY_REGISTRY: ReadonlyArray<ProductCapabilityEntry> = [
   // ── Live product truth anchors used by aVa when explaining AbarVa ──
@@ -37,7 +38,7 @@ export const PRODUCT_CAPABILITY_REGISTRY: ReadonlyArray<ProductCapabilityEntry> 
     label: "P0-P5 plus Tower Track Outcomes governance model",
     maturity: "shipped",
     claimGuidance:
-      "Moves structures work through P0 Originate, P1 Charter, P2 Discover & Diagnose, P3 Design Future State, P4 Roadmap & Business Case, P5 Approval & Mobilization, and Tower Track Outcomes.",
+      `Moves structures work through ${PHASE_LABELS[0]}, ${PHASE_LABELS[1]}, ${PHASE_LABELS[2]}, ${PHASE_LABELS[3]}, ${PHASE_LABELS[4]}, ${PHASE_LABELS[5]}, and Tower Track Outcomes.`,
     triggerPhrases: [/P0.*P5/i, /Tower Track Outcomes/i],
   },
   {

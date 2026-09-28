@@ -4,6 +4,7 @@ import { templatesForPhase } from "@/lib/programs/phase-templates/catalog";
 import type { MovePhaseCode } from "@/lib/programs/phase-templates/types";
 import { buildFeedForwardPack } from "@/lib/programs/phase-templates/feed-forward";
 import type { PhasePack } from "@/lib/programs/phase-packs/types.v2";
+import { PHASE_LABELS } from "@/lib/programs/phase-labels";
 
 export type PhaseSuccessPackageKind =
   | "phase_execution_package"
@@ -124,10 +125,10 @@ const PHASE_CODE_BY_NUM: Partial<Record<number, MovePhaseCode>> = {
 
 const NEXT_PHASE_LABEL: Record<number, string> = {
   0: "P1 Charter",
-  1: "P2 Discover & Diagnose",
-  2: "P3 Design Future State",
-  3: "P4 Roadmap & Business Case",
-  4: "P5 Approval & Mobilization",
+  1: PHASE_LABELS[2],
+  2: PHASE_LABELS[3],
+  3: PHASE_LABELS[4],
+  4: PHASE_LABELS[5],
   5: "Tower Track Outcomes",
 };
 

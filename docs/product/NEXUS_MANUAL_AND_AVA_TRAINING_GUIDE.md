@@ -376,7 +376,7 @@ Generated from `src/lib/agent/product-truth/capability-registry.ts`. Shipped doe
 | --- | --- | --- | --- | --- |
 | evidence-aware AI strategy synthesis | intelligence | shipped |  | Intelligence can synthesize loaded enterprise context, industry patterns, evidence gaps, and CXO next moves. It must caveat unsupported facts. |
 | loaded enterprise-context browser | home | shipped |  | Home shows loaded enterprise context, source boundaries, and gaps; it is not an authority to invent missing current-state facts. |
-| P0-P5 plus Tower Track Outcomes governance model | moves | shipped |  | Moves structures work through P0 Originate, P1 Charter, P2 Discover & Diagnose, P3 Design Future State, P4 Roadmap & Business Case, P5 Approval & Mobilization, and Tower Track Outcomes. |
+| P0-P5 plus Tower Track Outcomes governance model | moves | shipped |  | Moves structures work through P0 Originate, P1 Charter, P2 Discover & Diagnose, P3 Design Future State, P4 Roadmap & Business Case, P5 Mobilize & Handoff, and Tower Track Outcomes. |
 | Source evidence-bound sourcing workflow | source | shipped |  | Source supports vendor, RFP, contract, renewal, and commercial evidence workflows when the relevant source material is loaded. It does not autonomously negotiate or provide legal approval. |
 | Tower outcome and value tracking | tower | shipped |  | Tower tracks loaded value, adoption, funding, and outcome evidence for accountable owner review. It does not independently certify savings. |
 | aVa packet export to HTML and PDF | platform | shipped |  | aVa exports the same answer packet shown in chat to HTML or PDF. Export must not call the model again. |
@@ -467,9 +467,9 @@ Moves turns a signal into a governed Strategic Move through P0-P5 and then hands
 | P0 Originate | Convert a signal, pain point, CEO note, or hypothesis into a structured Move with sponsor candidate. Promote to P1 only when sponsor commits. | 6 | 5 | 6 |
 | P1 Charter | Engage the P0 sponsor candidate on scope and governance. Produce a charter that reflects their input. P1 = sponsor named + engaged + charter signed. Financial commitment (cost, solution, timeline approval) is a P4 gate - do NOT treat charter sign-off as investment approval. | 5 | 5 | 3 |
 | P2 Discover & Diagnose | Lock the current-state baseline with auditable evidence. P2 is the last gate before design investment. If the evidence does not support the hypothesis, recommend discontinuation here. This is the system working correctly. | 5 | 4 | 3 |
-| P3 Design Future State | Convert the P2 diagnosis into a signed decision: architecture, operating model, and target capability. P3 answers one question - "What should the solution look like?" - before funding decisions are made in P4. P3 scope is NOT a comprehensive architecture document. P3 produces enough design clarity to make a funding decision. | 5 | 5 | 3 |
-| P4 Roadmap & Business Case | Convert the P3-signed design into an executable plan with economics. P4 answers five questions: How do we sequence the work? How much does it cost? What value does it deliver and when? How do we govern and resource it? How do we prepare the organization for change and measure success after handoff? P4 is the last phase before execution and the correct phase to define Tower metrics - once P5 begins, measurement accountability must already be established. | 5 | 4 | 3 |
-| P5 Approval & Mobilization | Convert the P4 business case and roadmap into execution-ready state: mobilize the delivery team, secure all approvals, and produce a handoff package that the Tower-side delivery team can accept and execute without returning to the program team for clarification. P5 ends when Tower acceptance is confirmed. | 4 | 4 | 3 |
+| P3 Design Future State | Convert the approved P2 recommendation into an estimate-ready solution approach. The evidence-validated P2 route controls depth: technical-only work gets the target architecture and sizing inputs it needs; limited workflow change gets only the affected deltas; material business change gets the necessary process and accountability design. P3 is not a full implementation specification or a months-long operating-model redesign. P4 builds the transparent estimate and roadmap; P5 prepares handoff, while execution happens outside Moves. | 5 | 5 | 3 |
+| P4 Roadmap & Business Case | Convert the P3-signed design into an estimate-ready roadmap and business case. P4 answers five questions: How could work be sequenced after approval? What effort and cost range does it require? What value could it deliver and when? How should it be governed and resourced? How will success be measured after handoff? P4 plans and estimates; it does not execute. Define Tower metrics here so they are ready for mobilization and external execution after required approvals. | 5 | 4 | 3 |
+| P5 Mobilize & Handoff | Prepare the approved P4 roadmap and business case for external delivery: confirm mobilization readiness, close required approvals, and produce a handoff package that the receiving delivery team and Tower can accept without returning to Moves for clarification. P5 organizes the handoff; project execution happens outside Moves after the required approvals. P5 ends when Tower acceptance is confirmed. | 4 | 4 | 3 |
 
 ### P0 Originate
 
@@ -595,7 +595,7 @@ Lock the current-state baseline with auditable evidence. P2 is the last gate bef
 - AH-P2-4: Must surface contradicting evidence directly, not soften it Required behavior: State the contradiction directly: "This data challenges the hypothesis that [Y] because [X]."
 ### P3 Design Future State
 
-Convert the P2 diagnosis into a signed decision: architecture, operating model, and target capability. P3 answers one question - "What should the solution look like?" - before funding decisions are made in P4. P3 scope is NOT a comprehensive architecture document. P3 produces enough design clarity to make a funding decision.
+Convert the approved P2 recommendation into an estimate-ready solution approach. The evidence-validated P2 route controls depth: technical-only work gets the target architecture and sizing inputs it needs; limited workflow change gets only the affected deltas; material business change gets the necessary process and accountability design. P3 is not a full implementation specification or a months-long operating-model redesign. P4 builds the transparent estimate and roadmap; P5 prepares handoff, while execution happens outside Moves.
 
 **Workflow steps**
 
@@ -603,8 +603,8 @@ Convert the P2 diagnosis into a signed decision: architecture, operating model, 
 | --- | --- | --- |
 | P3.1 | Root cause to design requirements traceability | Trace each root cause from RCA-P2 to a design requirement so every design decision is grounded in the diagnosis, not in preference. |
 | P3.2 | Architecture and capability options | Develop 2-3 architecture options that address the design requirements. Present trade-offs. Recommend one option with rationale. |
-| P3.3 | Operating model design | Design the target operating model: how the capability will be owned, operated, and measured after deployment. |
-| P3.4 | Sourcing strategy decision | Decide the sourcing approach: build, buy, configure, or partner. If external SI or vendor involvement is required, flag for /source event at P4 gate. |
+| P3.3 | Operating and adoption ownership | Follow the validated P2 route. For technical-only or limited-change work, record the accountable owner, adoption responsibility, operational boundary, and estimate-relevant assumptions; design a broader operating model only when material role/accountability change is evidenced. |
+| P3.4 | Delivery approach and estimate basis | Record the internal, vendor, or hybrid delivery assumption needed for P4 sizing. Identify product-development skills and responsible use of Claude Code/Codex or similar accelerators where relevant; do not select a vendor or run procurement here. |
 | P3.5 | P3 gate readiness | Self-evaluate all P3P4 gate criteria. Produce gate readiness summary and design sign-off. |
 
 **Evidence requirements**
@@ -621,28 +621,28 @@ Convert the P2 diagnosis into a signed decision: architecture, operating model, 
 | --- | --- | --- |
 | Traceability matrix complete | hard | Every root cause from RCA-P2 has at least one design requirement. No orphaned design requirements. |
 | Architecture recommendation with options and rationale | hard | At least 2 architecture options with trade-offs; recommended option with explicit rationale tied to design requirements. |
-| Operating model designed | hard | Operating model has a named owner or owning team and is linked to success metrics from P1. |
-| Sourcing strategy decided | hard | Sourcing approach (build/buy/configure/partner) is stated. If sourcing event needed, flag exists. |
+| Route-appropriate operating and adoption ownership | hard | Record the named owner and responsibility for adoption/operation. Require broader process or operating-model design only when the approved P2 route and evidence show material change; for technical-only work, explicitly retain adoption with the named business owner. |
+| Delivery approach and estimate assumptions recorded | hard | State internal/vendor/hybrid assumptions, required skills, and sizing inputs for P4. Do not select vendors or claim procurement is complete; Source owns any sourcing event. |
 | Sponsor approved design | hard | Sponsor has reviewed and approved the design recommendation. |
 
 **Anti-hallucination rules**
 
 - AH-P3-1: Must not state a design requirement without linking it to a root cause from RCA-P2 Required behavior: Every design requirement must cite the root cause it addresses: "Design requirement [X] addresses root cause [Y] from RCA-P2."
 - AH-P3-2: Must not recommend an architecture without presenting alternatives and trade-offs Required behavior: Present at least 2 options with explicit trade-offs before stating the recommendation.
-- AH-P3-3: Must not defer the sourcing decision to P4 Required behavior: The sourcing approach must be decided at P3. If the answer is "TBD", ask: "What information is missing that prevents a sourcing decision now?"
+- AH-P3-3: Must not present vendor selection as a P3 decision Required behavior: Record the estimate-relevant internal/vendor/hybrid assumption, rate and role inputs, confidence, and decisions left for Source or P4.
 ### P4 Roadmap & Business Case
 
-Convert the P3-signed design into an executable plan with economics. P4 answers five questions: How do we sequence the work? How much does it cost? What value does it deliver and when? How do we govern and resource it? How do we prepare the organization for change and measure success after handoff? P4 is the last phase before execution and the correct phase to define Tower metrics - once P5 begins, measurement accountability must already be established.
+Convert the P3-signed design into an estimate-ready roadmap and business case. P4 answers five questions: How could work be sequenced after approval? What effort and cost range does it require? What value could it deliver and when? How should it be governed and resourced? How will success be measured after handoff? P4 plans and estimates; it does not execute. Define Tower metrics here so they are ready for mobilization and external execution after required approvals.
 
 **Workflow steps**
 
 | Step | Name | Goal |
 | --- | --- | --- |
 | P4.1 | Workstream and milestone planning | Decompose the design into workstreams and critical milestones. Sequence workstreams by dependency. Identify the critical path. |
-| P4.2 | Resource and cost plan | Estimate the total cost and resource requirements: internal headcount, external SI/vendor, license costs, and infrastructure. |
+| P4.2 | Resource and cost plan | Build transparent low/base/high effort and cost scenarios by work package and role. Separate internal capacity/rates from vendor rates, show effort rate arithmetic, and expose evidence, assumptions, confidence, and human-adjustable inputs. |
 | P4.3 | Business case and value model | Build the business case: NPV, payback period, and value realization timeline. Value claims must trace to the baseline from FIN-BASE-P2. |
-| P4.4 | Tower metric plan | Define the Tower metrics: how value realization will be tracked in /tower after handoff. Every value lever must have at least one Tower metric. This is a P4-critical step - do not defer to P5. |
-| P4.5 | P4 gate readiness and funding authorization | Self-evaluate P4P5 gate criteria. Produce funding authorization package for sponsor sign-off. |
+| P4.4 | Tower metric plan | Define the Tower metrics: how value realization will be tracked after handoff. Every value lever must have at least one Tower metric. This is a P4-critical step - do not defer beyond mobilization. |
+| P4.5 | P4 gate readiness and funding authorization | Self-evaluate P4P5 gate criteria. Produce the roadmap and business-case decision package for sponsor sign-off. |
 
 **Evidence requirements**
 
@@ -650,7 +650,7 @@ Convert the P3-signed design into an executable plan with economics. P4 answers 
 | --- | --- | --- | --- |
 | Business case with value claims traced to FIN-BASE-P2 | hard | P4.3 business case artifact | Every value claim cites a specific baseline value from FIN-BASE-P2. |
 | Tower metric plan (per value lever, named owners) | hard | P4.4 Tower metric plan artifact | All value levers have at least one Tower metric with a named owner. |
-| Sponsor funding authorization | hard | Upload or session capture | Named sponsor has approved funding for P5 execution. |
+| Sponsor funding authorization | hard | Upload or session capture | The roadmap records the sponsor decision and any funding authority required before external execution. |
 
 **Gate criteria**
 
@@ -659,7 +659,7 @@ Convert the P3-signed design into an executable plan with economics. P4 answers 
 | Workstream plan with milestones and critical path | hard | At least 3 workstreams, critical milestones defined, critical path identified. |
 | Business case complete with baseline-traced value claims | hard | Every value claim traces to FIN-BASE-P2. NPV and payback period calculated. Sensitivity analysis included. |
 | Tower metric plan complete | hard | All value levers have at least one Tower metric with a named owner. This criterion cannot be deferred to P5. |
-| Sponsor approved funding for P5 | hard | Named sponsor has reviewed and approved the business case and authorized P5 funding. |
+| Sponsor decision recorded for P5 mobilization | hard | Named sponsor has reviewed the business case and recorded the funding decision needed for P5 mobilization. |
 | Change management plan drafted | soft | A change management plan exists with stakeholder communication and training approach. |
 
 **Anti-hallucination rules**
@@ -668,9 +668,9 @@ Convert the P3-signed design into an executable plan with economics. P4 answers 
 - AH-P4-2: Must not state cost estimates as precise figures without stating their basis Required behavior: State the basis: "This estimate assumes [SI rate / license price / internal allocation]. The range is [low-high] depending on [variable]."
 - AH-P4-3: Must not accept benchmarks as the basis for value claims when FIN-BASE-P2 data is available Required behavior: "Every value claim must trace to FIN-BASE-P2. Benchmarks are context - they cannot substitute for our baseline."
 - AH-P4-4: Must not define Tower metrics without a baseline from FIN-BASE-P2 Required behavior: Each Tower metric must have a baseline value from FIN-BASE-P2 and a target based on the value model.
-### P5 Approval & Mobilization
+### P5 Mobilize & Handoff
 
-Convert the P4 business case and roadmap into execution-ready state: mobilize the delivery team, secure all approvals, and produce a handoff package that the Tower-side delivery team can accept and execute without returning to the program team for clarification. P5 ends when Tower acceptance is confirmed.
+Prepare the approved P4 roadmap and business case for external delivery: confirm mobilization readiness, close required approvals, and produce a handoff package that the receiving delivery team and Tower can accept without returning to Moves for clarification. P5 organizes the handoff; project execution happens outside Moves after the required approvals. P5 ends when Tower acceptance is confirmed.
 
 **Workflow steps**
 

@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import type { ExecuteSurfaceProps } from '@/lib/programs/types.ui';
 import { MilestoneSummary, PersonBadge } from '@/components/programs/common';
+import { getPhaseLabel } from '@/lib/programs/phase-labels';
 
 export function ExecuteSurface(props: ExecuteSurfaceProps) {
   const defaultTab = props.viewerRole === 'sponsor' ? 'milestones' : props.activeTab;
@@ -13,7 +14,7 @@ export function ExecuteSurface(props: ExecuteSurfaceProps) {
       <div className="programs-card programs-section">
         <div className="programs-header-bar">
           <div>
-            <div className="programs-eyebrow">Phase 5 approval & mobilization</div>
+            <div className="programs-eyebrow">{getPhaseLabel(5)}</div>
             <div className="programs-name" style={{ fontSize: 28 }}>Mobilization control surface</div>
             <div className="programs-muted" style={{ marginTop: 8 }}>
               Programs does not execute delivery work here. This surface packages the business case, readiness, risks, evidence, and milestone plan needed to approve execution outside AbarVa and hand monitoring to Tower.

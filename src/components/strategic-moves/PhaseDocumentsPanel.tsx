@@ -32,6 +32,7 @@ import {
 import { MoveEvidenceNeedsPanel } from "./MoveEvidenceNeedsPanel";
 import { DeliverableApprovalAction } from "./DeliverableApprovalAction";
 import { RoleApprovalsPanel } from "./RoleApprovalsPanel";
+import { getPhaseLabel } from "@/lib/programs/phase-labels";
 
 interface Props {
   moveId: string;
@@ -606,14 +607,6 @@ function AttachmentRow({
 
 // ── Main component ────────────────────────────────────────────────────────────
 
-const PHASE_LABELS: Record<number, string> = {
-  1: "P1 Charter",
-  2: "P2 Discover & Diagnose",
-  3: "P3 Design Future State",
-  4: "P4 Roadmap & Business Case",
-  5: "P5 Approval & Mobilization",
-};
-
 export async function PhaseDocumentsPanel({
   moveId,
   currentPhase,
@@ -873,7 +866,7 @@ export async function PhaseDocumentsPanel({
                     fontWeight: isCurrent ? "normal" : "normal",
                   }}
                 >
-                  {PHASE_LABELS[phase]}
+                  {getPhaseLabel(phase)}
                 </span>
                 {isCurrent && (
                   <span
@@ -918,7 +911,7 @@ export async function PhaseDocumentsPanel({
                   spec={spec}
                   dbRow={deliverablesByKey.get(spec.deliverableTypeKey)}
                   moveId={moveId}
-                  phaseLabel={PHASE_LABELS[phase] ?? `P${phase}`}
+                  phaseLabel={getPhaseLabel(phase)}
                   runArtifact={runByKey.get(spec.deliverableTypeKey)}
                   presentationMode={calmBrowse}
                 />

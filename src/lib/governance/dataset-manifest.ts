@@ -19,6 +19,7 @@ import {
 } from "./context-corpus-policy";
 
 const SCOPE_VALUES = [CORPUS_GLOBAL_SCOPE, ...CANONICAL_TENANT_KEYS] as const;
+const TENANT_SCOPE_MODES = ["canonical_tenant", "corpus_global", "move_registry"] as const;
 
 export const INGESTION_METHODS = [
   "admin_bulk_loader",
@@ -32,6 +33,7 @@ export const RETRIEVAL_PLANS = [
   "postgres_fts",
   "azure_ai_search",
   "fts_plus_search",
+  "move_scoped_prompt_context",
   "not_retrievable",
 ] as const;
 
@@ -39,8 +41,13 @@ export const DatasetManifestSchema = z
   .object({
     dataset_id: z.string().min(3),
     title: z.string().min(3),
-    /** Canonical cover key or corpus_global — never a real client name. */
-    client_key: z.enum(SCOPE_VALUES as unknown as [string, ...string[]]),
+    /** Concrete scope for fixed datasets; null when resolved from a selected Move. */
+    client_key: z
+      .enum(SCOPE_VALUES as unknown as [string, ...string[]])
+      .nullable()
+      .optional(),
+    /** Move-scoped uploads resolve tenancy from the authenticated Move registry. */
+    tenant_scope: z.enum(TENANT_SCOPE_MODES).optional(),
     source_layer: z.enum(SOURCE_LAYERS),
     classification: z.enum(CLASSIFICATIONS),
     owner: z.string().min(1),
@@ -85,8 +92,26 @@ export function validateManifest(raw: unknown): ManifestValidation {
   const errors: string[] = [];
   const warnings: string[] = [];
 
+  const scopeMode = m.tenant_scope ??
+    (m.client_key === CORPUS_GLOBAL_SCOPE ? "corpus_global" : "canonical_tenant");
+  if (scopeMode === "move_registry" && m.client_key !== null) {
+    errors.push("move_registry scope must not pin a client_key");
+  }
+  if (scopeMode === "canonical_tenant" && !m.client_key) {
+    errors.push("canonical_tenant scope requires a client_key");
+  }
+  if (scopeMode === "corpus_global" && m.client_key !== CORPUS_GLOBAL_SCOPE) {
+    errors.push('corpus_global scope requires client_key "corpus_global"');
+  }
+  if (m.tenant_scope === "corpus_global" && m.client_key !== CORPUS_GLOBAL_SCOPE) {
+    errors.push('tenant_scope "corpus_global" requires client_key "corpus_global"');
+  }
+  if (m.tenant_scope === "canonical_tenant" && (!m.client_key || m.client_key === CORPUS_GLOBAL_SCOPE)) {
+    errors.push("canonical_tenant scope requires a canonical tenant client_key");
+  }
+
   // Sensitive data in shared corpus is never allowed.
-  if (m.client_key === CORPUS_GLOBAL_SCOPE && SENSITIVE.has(m.classification)) {
+  if (scopeMode === "corpus_global" && SENSITIVE.has(m.classification)) {
     errors.push(
       `classification "${m.classification}" cannot be loaded into corpus_global (shared corpus)`,
     );

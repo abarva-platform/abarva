@@ -8,7 +8,7 @@ export const P3_DESIGN_PACK: PhasePack = {
   phase_id: 3,
   phase_name: 'P3 Design Future State',
   phase_intent:
-    'Convert the P2 diagnosis into a signed decision: architecture, operating model, and target capability. P3 answers one question — "What should the solution look like?" — before funding decisions are made in P4. P3 scope is NOT a comprehensive architecture document. P3 produces enough design clarity to make a funding decision.',
+    'Convert the approved P2 recommendation into an estimate-ready solution approach. The evidence-validated P2 route controls depth: technical-only work gets the target architecture and sizing inputs it needs; limited workflow change gets only the affected deltas; material business change gets the necessary process and accountability design. P3 is not a full implementation specification or a months-long operating-model redesign. P4 builds the transparent estimate and roadmap; P5 prepares handoff, while execution happens outside Moves.',
 
   entry_criteria: [
     {
@@ -30,6 +30,11 @@ export const P3_DESIGN_PACK: PhasePack = {
       id: 'EC-P3-4',
       description: 'Sponsor confirmed continuation (part of P2 gate verdict)',
       type: 'soft',
+    },
+    {
+      id: 'EC-P3-5',
+      description: 'P2 solution route is human-validated against approved evidence and names the adoption owner',
+      type: 'hard',
     },
   ],
 
@@ -80,48 +85,48 @@ export const P3_DESIGN_PACK: PhasePack = {
     },
     {
       step_id: 'P3.3',
-      step_name: 'Operating model design',
-      step_goal: 'Design the target operating model: how the capability will be owned, operated, and measured after deployment.',
+      step_name: 'Operating and adoption ownership',
+      step_goal: 'Follow the validated P2 route. For technical-only or limited-change work, record the accountable owner, adoption responsibility, operational boundary, and estimate-relevant assumptions; design a broader operating model only when material role/accountability change is evidenced.',
       required_user_inputs: ['Architecture recommendation from P3.2'],
       accepted_uploads: ['application/pdf', 'text/plain', 'text/markdown'],
       patterns_to_load: ['PAT-PRG-001'],
       questions_to_ask: [
-        'Who owns this capability after it is deployed — which team, which role?',
-        'How will the solution be operated day-to-day?',
-        'What KPIs will the operating team track to know the capability is performing?',
+        'What does the approved P2 route say about workflow and role/accountability change?',
+        'Who is the recorded business or delivery owner for adoption, training, and ongoing operation?',
+        'What operating or handoff assumptions materially affect the P4 estimate?',
       ],
-      artifact_sections_to_update: ['design.operating_model'],
-      evidence_to_capture: ['operating_model_owner', 'operating_kpis', 'handoff_conditions'],
+      artifact_sections_to_update: ['design.operating_and_adoption_ownership'],
+      evidence_to_capture: ['validated_change_route', 'adoption_owner_and_responsibility', 'estimate_relevant_operating_assumptions'],
       quality_checks: [
-        'Operating model has a named owner or owning team',
-        'Operating KPIs are linked to success metrics from P1',
+        'The scope matches the evidence-validated P2 route',
+        'Adoption owner and responsibility match the approved P1/P2 capture',
+        'No full process or operating-model redesign is requested unless material change is validated',
       ],
       completion_criteria: [
-        'operating_model_designed = true',
-        'operating_owner_named = true',
+        'route_appropriate_ownership_and_assumptions_recorded = true',
       ],
     },
     {
       step_id: 'P3.4',
-      step_name: 'Sourcing strategy decision',
-      step_goal: 'Decide the sourcing approach: build, buy, configure, or partner. If external SI or vendor involvement is required, flag for /source event at P4 gate.',
+      step_name: 'Delivery approach and estimate basis',
+      step_goal: 'Record the internal, vendor, or hybrid delivery assumption needed for P4 sizing. Identify product-development skills and responsible use of Claude Code/Codex or similar accelerators where relevant; do not select a vendor or run procurement here.',
       required_user_inputs: ['Architecture recommendation from P3.2'],
       accepted_uploads: [],
       patterns_to_load: ['seed-patterns-sourcing-process'],
       questions_to_ask: [
-        'Is this primarily a build, buy, configure, or partner engagement?',
-        'If external vendors are involved, which categories — SI, SaaS, AMS?',
-        'Do we have an existing relationship with the right vendor, or is a sourcing event needed?',
+        'Which work is expected to be delivered internally, by a vendor, or as a hybrid?',
+        'Which product-development skills and AI coding accelerators could shorten delivery, and what human review/security controls are assumed?',
+        'What rate, role, capacity, or procurement assumptions must P4 make explicit?',
       ],
-      artifact_sections_to_update: ['design.sourcing_strategy'],
-      evidence_to_capture: ['sourcing_approach', 'vendor_involvement_type', 'sourcing_event_needed'],
+      artifact_sections_to_update: ['design.delivery_approach'],
+      evidence_to_capture: ['internal_vendor_hybrid_assumption', 'skills_and_accelerators', 'estimate_rate_and_capacity_inputs'],
       quality_checks: [
-        'Sourcing approach is stated (not deferred)',
-        'If sourcing event needed, flag for P4 gate action',
+        'Internal-versus-vendor assumption is stated with evidence or labeled assumption',
+        'No vendor selection or procurement decision is represented as complete',
+        'P4 can expose and adjust the role, rate, and capacity assumptions',
       ],
       completion_criteria: [
-        'sourcing_approach_decided = true',
-        'sourcing_event_flag_set = true (if applicable)',
+        'delivery_approach_and_sizing_inputs_recorded = true',
       ],
     },
     {
@@ -151,19 +156,19 @@ export const P3_DESIGN_PACK: PhasePack = {
   ],
 
   phase_outcome:
-    'Sponsor-approved design with: root cause traceability matrix, architecture recommendation with options and trade-offs, target operating model, sourcing strategy decision, and P3→P4 gate readiness summary.',
+    'Human-reviewed, estimate-ready solution approach with route-appropriate architecture/process detail, traceability to approved P2 findings, adoption and operating ownership, delivery-model assumptions, unresolved sizing inputs, and P3→P4 gate readiness. This is not a complete implementation specification or project execution plan.',
 
   phase_scope_boundary: {
     in: [
       'Design requirements from root causes (traceability)',
       'Architecture options and recommended option',
-      'Operating model design',
-      'Sourcing strategy decision (build/buy/configure/partner)',
+      'Route-appropriate adoption, operating ownership, and delivery assumptions',
+      'Estimate inputs for internal, vendor, or hybrid delivery',
       'P3→P4 gate evaluation',
     ],
     out: [
-      'Detailed architecture documentation or technical specifications (delivery team scope)',
-      'Vendor selection or RFP process (source event scope)',
+      'Full implementation specifications, detailed work instructions, or complete process redesign',
+      'Vendor selection or RFP process (Source scope)',
       'Execution roadmap or milestones (P4 scope)',
       'Financial modeling (P4 scope)',
       'Implementation planning (P4 scope)',
@@ -171,9 +176,9 @@ export const P3_DESIGN_PACK: PhasePack = {
   },
 
   agent_posture_coaching_arc: {
-    entry: 'Start from root causes — not from the solution. Every design requirement must trace to a root cause from RCA-P2. If the team jumps to a solution before completing the traceability matrix, redirect: "Let us trace that to the root cause first."',
-    mid: 'Drive architecture options with explicit trade-offs. Avoid recommendation without trade-offs — the sponsor needs to make an informed decision. For the operating model, ensure a named owner is identified.',
-    exit: 'Before the design sign-off, confirm all design requirements are traced to root causes and all gate criteria have evidence. The design must be sufficient to make a funding decision in P4 — not a comprehensive architecture document.',
+    entry: 'Start from approved P2 evidence and the human-validated solution route. If that route is missing, stale, or not tied to approved evidence, return to P2; do not assume the use case needs process or operating-model redesign.',
+    mid: 'Trace design choices to validated findings, then right-size detail to the route. Ask for only the process, ownership, controls, architecture, and integration detail needed to estimate. Capture internal/vendor/hybrid assumptions and relevant product-development skills or AI coding accelerators without treating them as guaranteed savings.',
+    exit: 'Confirm the route-appropriate design, evidence, decisions, human edits, and open assumptions are carried forward. P4 must calculate transparent effort/cost/value scenarios with editable roles, rates, and assumptions. P5 prepares an approved roadmap for handoff; execution is outside Moves.',
   },
 
   question_sequencing: {
@@ -185,8 +190,8 @@ export const P3_DESIGN_PACK: PhasePack = {
     converge: [
       'What are the 2–3 architecture options, and what are the trade-offs?',
       'Which option is recommended, and why?',
-      'Who will own and operate this capability after deployment?',
-      'Is external SI or vendor involvement required, or is this primarily internal?',
+      'Who owns adoption, training, and ongoing operation under the approved route?',
+      'What internal, vendor, or hybrid resource assumptions should P4 model, including skills and AI development accelerators?',
     ],
     close: [
       'Has the sponsor reviewed and approved the design recommendation?',
@@ -222,8 +227,8 @@ export const P3_DESIGN_PACK: PhasePack = {
   exit_criteria: [
     { id: 'EX-P3-1', description: 'Traceability matrix complete (every root cause → design requirement)', type: 'hard' },
     { id: 'EX-P3-2', description: 'Architecture recommendation with options and trade-offs', type: 'hard' },
-    { id: 'EX-P3-3', description: 'Operating model designed with named owner', type: 'hard' },
-    { id: 'EX-P3-4', description: 'Sourcing strategy decided', type: 'hard' },
+    { id: 'EX-P3-3', description: 'Route-appropriate adoption/operating owner and responsibility recorded; full design only when material change is evidenced', type: 'hard' },
+    { id: 'EX-P3-4', description: 'Internal/vendor/hybrid delivery assumptions and P4 sizing inputs recorded', type: 'hard' },
     { id: 'EX-P3-5', description: 'Sponsor approved the design', type: 'hard' },
   ],
 
@@ -244,16 +249,16 @@ export const P3_DESIGN_PACK: PhasePack = {
     },
     {
       id: 'GC-P3-3',
-      label: 'Operating model designed',
+      label: 'Route-appropriate operating and adoption ownership',
       type: 'hard',
-      evaluation: 'Operating model has a named owner or owning team and is linked to success metrics from P1.',
+      evaluation: 'Record the named owner and responsibility for adoption/operation. Require broader process or operating-model design only when the approved P2 route and evidence show material change; for technical-only work, explicitly retain adoption with the named business owner.',
       gating_rule: 'blocks_promotion',
     },
     {
       id: 'GC-P3-4',
-      label: 'Sourcing strategy decided',
+      label: 'Delivery approach and estimate assumptions recorded',
       type: 'hard',
-      evaluation: 'Sourcing approach (build/buy/configure/partner) is stated. If sourcing event needed, flag exists.',
+      evaluation: 'State internal/vendor/hybrid assumptions, required skills, and sizing inputs for P4. Do not select vendors or claim procurement is complete; Source owns any sourcing event.',
       gating_rule: 'blocks_promotion',
     },
     {
@@ -283,25 +288,25 @@ export const P3_DESIGN_PACK: PhasePack = {
     },
     {
       id: 'AP-P3-3',
-      label: 'Ownerless operating model',
-      detection_hint: 'Operating model has no named owner — uses phrases like "the team" or "someone in operations"',
-      what_to_flag: 'Operating model without a named owner is not an operating model. Who specifically owns this capability after deployment?',
-      mitigation: 'Require a named individual or specific team as operating model owner.',
+      label: 'Ownerless adoption or operating responsibility',
+      detection_hint: 'The validated route has no named adoption or operating owner',
+      what_to_flag: 'The team needs an accountable owner for adoption and operation, but this does not automatically require a full operating-model redesign.',
+      mitigation: 'Confirm the owner and responsibility from approved P1/P2 capture; design broader role changes only when material change is evidenced.',
     },
     {
       id: 'AP-P3-4',
-      label: 'Deferred sourcing decision',
+      label: 'Unstated delivery-model assumptions',
       // dom-integrity-ignore-line — "TBD" here is the anti-pattern text Nexus detects, not a placeholder
-      detection_hint: 'Sourcing approach is listed as "TBD" or "to be determined in P4"',
-      what_to_flag: 'The sourcing approach must be decided at P3 — it affects P4 roadmap and business case significantly. Is this build, buy, configure, or partner?',
-      mitigation: 'Force sourcing approach decision at P3. If vendor involvement is required, flag for source event at P4.',
+      detection_hint: 'Internal/vendor/hybrid delivery assumptions needed for sizing are absent or presented as a vendor selection',
+      what_to_flag: 'P4 needs a transparent internal/vendor/hybrid estimate basis, not a premature vendor choice.',
+      mitigation: 'Record the delivery-model assumption, role mix, rate basis, confidence, and open decisions; use Source for vendor selection.',
     },
   ],
 
   self_approval_rules: [
     {
       criterion_id: 'GC-P3-1',
-      condition: 'Every root cause in RCA-P2 has at least one design requirement',
+      condition: 'Every root cause in the approved P2 diagnosis has at least one route-relevant design requirement',
       nexus_may_self_approve: true,
       approval_label: 'Nexus self-approved: traceability matrix complete',
     },
@@ -313,16 +318,16 @@ export const P3_DESIGN_PACK: PhasePack = {
     },
     {
       criterion_id: 'GC-P3-3',
-      condition: 'Named owner identified and KPIs linked to P1 success metrics',
+      condition: 'Named adoption/operating owner and responsibility recorded; broader model only when material change is evidenced',
       nexus_may_self_approve: false,
-      approval_label: 'Operating model — requires human confirmation of owner',
+      approval_label: 'Adoption and operating ownership — requires human confirmation',
     },
     {
       criterion_id: 'GC-P3-4',
       // dom-integrity-ignore-line — "TBD" is the anti-pattern text, not a placeholder
-      condition: 'Sourcing approach is stated (not "TBD")',
+      condition: 'Internal/vendor/hybrid delivery assumptions and P4 sizing inputs are stated (not vendor selection)',
       nexus_may_self_approve: true,
-      approval_label: 'Nexus self-approved: sourcing strategy decided',
+      approval_label: 'Nexus drafted delivery-model assumptions; human review remains required',
     },
     {
       criterion_id: 'GC-P3-5',
@@ -335,7 +340,7 @@ export const P3_DESIGN_PACK: PhasePack = {
   first_message: [
     {
       variant: 'default',
-      template: 'I am scoped to [Move name], currently in P3 Design Future State. The P2 gate passed with a CONTINUE_TO_P3 verdict. P3 goal: convert the diagnosis into a design decision. Let us start from the root causes in RCA-P2 and trace them to design requirements.',
+      template: 'I am scoped to [Move name], currently in P3 Design Future State. First I will confirm the P2 solution route and approved evidence. P3 produces only the route-appropriate design detail needed for P4 estimation: a technical solution, bounded process delta, or material business-change design. It does not create a full implementation specification or project execution plan.',
     },
   ],
 
@@ -397,12 +402,12 @@ export const P3_DESIGN_PACK: PhasePack = {
     },
     {
       id: 'AH-P3-3',
-      rule: 'Must not defer the sourcing decision to P4',
-      trigger: 'Sourcing approach discussion in P3.4',
+      rule: 'Must not present vendor selection as a P3 decision',
+      trigger: 'Delivery-model assumptions discussed in P3.4',
       // dom-integrity-ignore-line — "TBD" is the pattern Nexus watches for, not a placeholder
-      required_behavior: 'The sourcing approach must be decided at P3. If the answer is "TBD", ask: "What information is missing that prevents a sourcing decision now?"',
+      required_behavior: 'Record the estimate-relevant internal/vendor/hybrid assumption, rate and role inputs, confidence, and decisions left for Source or P4.',
       // dom-integrity-ignore-line — "TBD" is the pattern Nexus watches for, not a placeholder
-      prohibited_behavior: 'Marking sourcing_approach as TBD or deferring to P4.',
+      prohibited_behavior: 'Naming or selecting a vendor without a governed Source process, or claiming precise effort/cost without basis.',
     },
   ],
 
@@ -414,12 +419,13 @@ export const P3_DESIGN_PACK: PhasePack = {
       'RCA-P2 (≥2 ranked root causes with evidence)',
       'FIN-BASE-P2 (baseline with source citations)',
       'P1 success metrics and value range (PRELIMINARY_ESTIMATE)',
+      'Human-validated P2 solution route tied to approved evidence, with adoption owner recorded',
     ],
     produces_for_next: [
       'Root cause to design requirement traceability matrix',
       'Architecture recommendation (options, trade-offs, recommended)',
-      'Target operating model with named owner',
-      'Sourcing strategy decision',
+      'Route-appropriate adoption/operating ownership and delivery assumptions',
+      'Internal/vendor/hybrid estimate inputs for P4; vendor selection stays in Source',
       'Sponsor-approved design (P4 authorization input)',
     ],
   },

@@ -1,4 +1,6 @@
 import {
+  formatSolutionRouteForP4Prompt,
+  formatSolutionRouteDepthForPrompt,
   isBusinessChangeAssessmentComplete,
   isSolutionRouteValidationComplete,
   recommendSolutionRoute,
@@ -60,6 +62,90 @@ describe("Moves solution route assessment", () => {
         approvedEvidenceReferences: ["evidence-p2-1"],
       })?.route,
     ).toBe("technical_product");
+  });
+
+  it("preserves validated impact detail for downstream P3 scoping", () => {
+    const resolved = resolveConfirmedSolutionRoute({
+      businessChangeAssessment,
+      routeValidation: routeValidation({
+        solutionOutput: "workflow_automation",
+        workflowChange: "limited",
+        selectedRoute: "process_change",
+      }),
+      approvedEvidenceReferences: ["evidence-p2-1"],
+    });
+    expect(resolved).toMatchObject({
+      route: "process_change",
+      solutionOutput: "workflow_automation",
+      workflowChange: "limited",
+      roleAccountabilityChange: "none",
+      adoptionOwner: "Business analytics lead",
+      adoptionResponsibility: "business",
+    });
+  });
+
+  it("keeps technical-only P3 compact and assigns adoption to the validated owner", () => {
+    const route = resolveConfirmedSolutionRoute({
+      businessChangeAssessment,
+      routeValidation: routeValidation(),
+      approvedEvidenceReferences: ["evidence-p2-1"],
+    });
+    const prompt = formatSolutionRouteDepthForPrompt(route);
+
+    expect(prompt).toContain("Technical product / data solution");
+    expect(prompt).toContain("Do not request an end-to-end process redesign");
+    expect(prompt).toContain("Business analytics lead (business)");
+    expect(prompt).toContain("internal and vendor rates");
+    expect(prompt).toContain("project execution remains outside Moves");
+  });
+
+  it("does not turn limited workflow change into a full process redesign", () => {
+    const route = resolveConfirmedSolutionRoute({
+      businessChangeAssessment,
+      routeValidation: routeValidation({
+        solutionOutput: "workflow_automation",
+        workflowChange: "limited",
+        selectedRoute: "process_change",
+      }),
+      approvedEvidenceReferences: ["evidence-p2-1"],
+    });
+
+    expect(formatSolutionRouteDepthForPrompt(route)).toContain(
+      "Capture only the process delta",
+    );
+  });
+
+  it("refuses to assume P3 depth while route validation is missing", () => {
+    const prompt = formatSolutionRouteDepthForPrompt(null);
+
+    expect(prompt).toContain("No current solution route is validated");
+    expect(prompt).toContain("Do not assume a technical-only");
+    expect(prompt).toContain("Return to discovery");
+  });
+
+  it("makes P4's estimate method transparent and preserves the validated scope", () => {
+    const route = resolveConfirmedSolutionRoute({
+      businessChangeAssessment,
+      routeValidation: routeValidation(),
+      approvedEvidenceReferences: ["evidence-p2-1"],
+    });
+    const prompt = formatSolutionRouteForP4Prompt(route);
+
+    expect(prompt).toContain("APPROVED SCOPE BASIS: Technical product / data solution.");
+    expect(prompt).toContain("Do not add end-to-end process redesign");
+    expect(prompt).toContain("Business analytics lead (business)");
+    expect(prompt).toContain("effort × rate arithmetic");
+    expect(prompt).toContain("named human reviewer");
+    expect(prompt).toContain("Claude Code/Codex");
+    expect(prompt).toContain("execution remains outside Moves");
+  });
+
+  it("does not infer P4 scope if the upstream route is unavailable", () => {
+    const prompt = formatSolutionRouteForP4Prompt(null);
+
+    expect(prompt).toContain("No current route is validated");
+    expect(prompt).toContain("do not infer a process or operating-model redesign");
+    expect(prompt).toContain("require human resolution before final approval");
   });
 
   it.each([

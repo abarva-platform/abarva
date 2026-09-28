@@ -1,0 +1,7 @@
+layer,component,source_or_owner,design_for_estimation,decision_status,security_or_quality_control,dependency,evidence_reference
+Experience,Agent desktop panel,Contact center platform,Embed read-only context panel in one queue,option not selected,Agent identity and accessibility,Confirm extension/API support,SYN-SYS-01
+Orchestration,Context composition service,Product engineering,Retrieve scoped facts and approved content; no decision logic,concept for estimate,Prompt/data contracts and audit,Confirm approved model/runtime route,SYN-SESSION-SEC-01
+Data,Claims eligibility authorization,Respective source owners,Read-only APIs or curated views,unverified assumption,Source timestamp and freshness; least privilege,Interface owner approval,SYN-SYS-01;SYN-DATA-01
+Knowledge,Approved knowledge service,Knowledge Operations,Search current published content,quality gap open,Owner review date and conflict filter,Remediate K-014 and validate freshness,SYN-KNOW-01
+Audit,Security event sink,Security Architect,Record source versions and human confirmation,required design element,Retention and access policy,Retention rule approval,SYN-SESSION-SEC-01
+Analytics,Measurement layer,Contact Center Analytics,Log eligible exposure and outcomes with governed definitions,measurement plan only,No value claim until Finance validates,Metric definition and privacy review,SYN-KPI-01;SYN-CONFLICT-01

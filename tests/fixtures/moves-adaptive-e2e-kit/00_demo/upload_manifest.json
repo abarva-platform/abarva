@@ -1,0 +1,88 @@
+{
+  "dataset_id": "nexus_moves_adaptive_e2e_synthetic_20260927",
+  "manifest_version": 1,
+  "scope": "selected_move_registry_only",
+  "default_review_state": "pending",
+  "primary_uploads": [
+    {
+      "path": "01_p1_charter/charter_decisions.md",
+      "phase": 1,
+      "evidence_type": "uploaded_evidence"
+    },
+    {
+      "path": "01_p1_charter/business_change_hypothesis.csv",
+      "phase": 1,
+      "evidence_type": "uploaded_evidence"
+    },
+    {
+      "path": "01_p1_charter/evidence_plan.csv",
+      "phase": 1,
+      "evidence_type": "uploaded_evidence"
+    },
+    {
+      "path": "01_p1_charter/red_lines_draft.csv",
+      "phase": 1,
+      "evidence_type": "uploaded_evidence"
+    },
+    {
+      "path": "02_p2_discover/operations_workshop_45m.md",
+      "phase": 2,
+      "evidence_type": "session_artifact"
+    },
+    {
+      "path": "02_p2_discover/security_controls_session_20m.md",
+      "phase": 2,
+      "evidence_type": "session_artifact"
+    },
+    {
+      "path": "02_p2_discover/monthly_kpi_baseline.csv",
+      "phase": 2,
+      "evidence_type": "uploaded_evidence"
+    },
+    {
+      "path": "02_p2_discover/metric_dictionary.csv",
+      "phase": 2,
+      "evidence_type": "uploaded_evidence"
+    },
+    {
+      "path": "02_p2_discover/conflict_register.csv",
+      "phase": 2,
+      "evidence_type": "uploaded_evidence"
+    },
+    {
+      "path": "02_p2_discover/workflow_walkthrough.csv",
+      "phase": 2,
+      "evidence_type": "uploaded_evidence"
+    },
+    {
+      "path": "02_p2_discover/system_inventory.csv",
+      "phase": 2,
+      "evidence_type": "uploaded_evidence"
+    },
+    {
+      "path": "02_p2_discover/knowledge_inventory.csv",
+      "phase": 2,
+      "evidence_type": "uploaded_evidence"
+    },
+    {
+      "path": "02_p2_discover/data_quality_lineage.csv",
+      "phase": 2,
+      "evidence_type": "uploaded_evidence"
+    },
+    {
+      "path": "02_p2_discover/red_lines_validated.csv",
+      "phase": 2,
+      "evidence_type": "uploaded_evidence"
+    }
+  ],
+  "exclusions": [
+    "00_demo/P0_intake.md",
+    "00_demo/45_minute_interview_guide.md",
+    "03_p3_design/",
+    "04_p4_roadmap_estimate/",
+    "05_p5_mobilize/",
+    "06_technical_only_case/",
+    "90_QA_ONLY/",
+    "package_manifest.json"
+  ]
+}

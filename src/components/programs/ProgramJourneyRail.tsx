@@ -4,10 +4,7 @@
 // Status indicator + navigator — thin 36px chips on full, 4px segments on mini.
 // Pop via contrast only: active phase uses border+shadow+fill, NOT size change.
 //
-// Phase model: 7 canonical phases (indices 0-6):
-//   0 · Origination  1 · Discovery  2 · Synthesis
-//   3 · Design       4 · Execution Roadmap
-//   5 · Approval & Mobilization  6 · Tower Handoff
+// Six governed Moves phases (indices 0-5), then Tower outcome tracking (6).
 //
 // Source of truth: CANONICAL_SIX_PHASES in
 //   src/lib/programs/programs-canonical-view.ts
@@ -18,9 +15,9 @@ import type { CSSProperties } from 'react';
 // ─── Types ──────────────────────────────────────────────────────────────────
 
 export interface ProgramPhaseSlot {
-  /** Canonical phase index 0-6 (Origination=0 … Tower Handoff=6). */
+  /** Moves phase index 0-5, or 6 for Tower outcome tracking. */
   id: 0 | 1 | 2 | 3 | 4 | 5 | 6;
-  /** Phase label — one of: 'Origination' | 'Discovery' | 'Synthesis' | 'Design' | 'Approval & Mobilization' | 'Tower Handoff'. */
+  /** Canonical user-facing label from the Moves phase model. */
   label: string;
   state: 'done' | 'current' | 'pending' | 'locked';
   gateStatus?: 'open' | 'pending' | 'approved';

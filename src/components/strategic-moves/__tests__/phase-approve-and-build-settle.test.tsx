@@ -381,7 +381,7 @@ describe("PhaseApproveAndBuild onBuildSettled sequencing", () => {
         return fakeResponse(
           {
             phase: 3,
-            phaseLabel: "P3 Choose the Approach",
+            phaseLabel: "P3 Design Future State",
             queued: 3,
             total: 3,
             adaptiveDepth: {
@@ -449,14 +449,14 @@ describe("PhaseApproveAndBuild onBuildSettled sequencing", () => {
       <PhaseApproveAndBuild
         moveId="move-1"
         phaseNum={3}
-        phaseLabel="P3 Choose the Approach"
+        phaseLabel="P3 Design Future State"
         archetype="straightforward_dashboard"
         moveName="Executive KPI Dashboard"
         clientDisplayName="Client"
       />,
     );
 
-    await clickApproveAndBuild(/Approve & Build P3 Choose the Approach/i);
+    await clickApproveAndBuild(/Approve & Build P3 Design Future State/i);
 
     await waitFor(() =>
       expect(
