@@ -196,12 +196,13 @@ export function findDeterministicSourceClaimViolations(args: {
         (criterion) => criterion.state !== "met" && criterion.state !== "waived",
       ));
     if (strategyGatePending) {
-      for (const line of lines.filter((text) =>
-        /\b(?:event is ready to advance|approve at the strategy gate)\b/i.test(text) &&
-        !/\b(?:not ready|do not approve|cannot approve)\b/i.test(text),
+      const clauses = lines.flatMap((line) => line.split(/(?<=[.!?])\s+|[;|]/));
+      for (const clause of clauses.filter((text) =>
+        /\b(?:event is ready to advance|approve at the strategy gate|approve to advance|approval to advance)\b/i.test(text) &&
+        !/\b(?:not ready|do not (?:recommend )?approve|do not recommend approval|cannot approve|approval to advance is not recommended)\b/i.test(text),
       )) {
         violations.push({
-          claim: line.slice(0, 220),
+          claim: clause.trim().slice(0, 220),
           reason: "Advancement claim contradicts a pending Strategy gate.",
         });
       }

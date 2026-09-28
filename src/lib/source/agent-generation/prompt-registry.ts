@@ -980,7 +980,7 @@ function formatStrategyGovernanceContext(ctx: SourceGenerationContext): string {
       : "Do not assume Event Owner self-approval; follow the recorded policy and gate evidence.",
     "An audited not-applicable decision is an absence decision, not a missing request or a supplied contract/spend fact.",
     "Recommended evidence is optional and cannot become a gate prerequisite. Do not request or waive it as a condition of gate closure. Only applicable, policy-relevant required evidence can block the gate.",
-    "A pending or unread Strategy criterion does not authorize a claim that the gate is ready to advance. Recommend the next review action without recording approval.",
+    "When a Strategy criterion is pending, do not recommend approval or advancement; name the next review action instead. A pending or unread criterion does not authorize a claim that the gate is ready to advance.",
     "Strategy evidence requirements:",
     ...(evidence.length ? evidence : ["- no evidence states read back"]),
     "Strategy gate criteria:",

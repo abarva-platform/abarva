@@ -129,6 +129,7 @@ describe("Source artifact prompt registry provider config", () => {
       expect(message).toContain("EVID-SRC-STR-SPEND-BASELINE; applicability=not_applicable");
       expect(message).toContain("approval_policy=self_v1");
       expect(message).toContain("GATE-STRATEGY-01; state=pending");
+      expect(message).toContain("When a Strategy criterion is pending, do not recommend approval or advancement; name the next review action instead.");
     }
   });
 
