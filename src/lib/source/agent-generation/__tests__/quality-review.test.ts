@@ -1,6 +1,8 @@
 import {
   buildMalformedSourceConsultingGradeReview,
   buildSourceConsultingGradeCompactRetryPrompt,
+  buildSourceConsultingGradeReviewPrompt,
+  buildSourceConsultingGradeRewritePrompt,
   buildSourceQualityGateMetadata,
   buildSourceQualitySourceContext,
   applyDeterministicSourceClaimGate,
@@ -603,6 +605,80 @@ describe("Source consulting-grade quality gate helpers", () => {
     for (const dimension of CONSULTING_GRADE_DIMENSIONS) {
       expect(prompt).toContain(dimension.id);
     }
+  });
+
+  it("keeps review and rewrite guidance within the bound commercial evidence", () => {
+    const sourceContext = [
+      "Estimated value: not recorded",
+      "EVID-SRC-STR-SPEND-BASELINE; state=Not Applicable; applicability=not_applicable",
+      "EVID-SRC-STR-MARKET-BENCHMARK; state=Not Requested; level=recommended; gate_blocking=false",
+    ].join("\n");
+    const args = {
+      artifactCode: "d01_strategy_memo",
+      artifactName: "Sourcing Strategy Memo",
+      bodyMarkdown: "No spend baseline exists. Dollar sizing remains client-to-complete with Finance as owner.",
+      sourceContext,
+    };
+    const unsafeFix = "Add a sector-typical illustrative $5m-$20m annual range.";
+    const unboundProxyFix = "Add an illustrative proxy dollar range for the market.";
+    const review = {
+      standardId: "partner-grade-consulting-deliverable-v1" as const,
+      minRequiredScore: 8,
+      artifactCode: args.artifactCode,
+      artifactName: args.artifactName,
+      pass: false,
+      overallScore: 7,
+      dimensionScores: CONSULTING_GRADE_DIMENSIONS.map((dimension) => ({
+        id: dimension.id,
+        score: dimension.id === "commercial_specificity" ? 7 : 8,
+        rationale: "Commercial scale is unbound.",
+        requiredFixes: dimension.id === "commercial_specificity" ? [unsafeFix, unboundProxyFix] : [],
+      })),
+      unsupportedClaims: [],
+      missingEvidence: ["Finance baseline"],
+      rewriteGuidance: [unsafeFix, unboundProxyFix],
+    };
+
+    for (const prompt of [
+      buildSourceConsultingGradeReviewPrompt(args),
+      buildSourceConsultingGradeCompactRetryPrompt({ ...args, previousError: "Malformed review" }),
+      buildSourceConsultingGradeRewritePrompt({ ...args, review }),
+    ]) {
+      expect(prompt).toContain("Do not request or add illustrative, proxy, or sector-typical financial amounts");
+      expect(prompt).toContain("Commercial specificity can be shown through named levers, an unquantified range, and the evidence needed to size it");
+      expect(prompt).toContain("Do not turn recommended evidence into a gate requirement or invent a collection date");
+      expect(prompt).toContain(sourceContext);
+    }
+    const rewritePrompt = buildSourceConsultingGradeRewritePrompt({ ...args, review });
+    expect(rewritePrompt).toContain(
+      "Ignore review fixes that conflict with these evidence limits",
+    );
+    expect(rewritePrompt).not.toContain(unsafeFix);
+    expect(rewritePrompt).not.toContain(unboundProxyFix);
+    expect(rewritePrompt).toContain("Keep the financial scale unquantified until bound evidence supplies its values.");
+
+    const supportedReview = {
+      ...review,
+      rewriteGuidance: ["Reconcile the cited $12M Finance baseline with the value table."],
+      dimensionScores: review.dimensionScores.map((dimension) => ({
+        ...dimension,
+        requiredFixes: dimension.id === "commercial_specificity"
+          ? ["Reconcile the cited $12M Finance baseline with the value table."]
+          : [],
+      })),
+    };
+    expect(buildSourceConsultingGradeRewritePrompt({
+      ...args,
+      sourceContext: `${sourceContext}\nFinance approved baseline: $12M.`,
+      review: supportedReview,
+    })).toContain("Reconcile the cited $12M Finance baseline with the value table.");
+
+    const timingPrompt = buildSourceConsultingGradeRewritePrompt({
+      ...args,
+      review: { ...review, rewriteGuidance: ["Set a 30-day collection deadline."] },
+    });
+    expect(timingPrompt).not.toContain("Set a 30-day collection deadline.");
+    expect(timingPrompt).toContain("Leave timing client-to-set until a bound source supplies the date or duration.");
   });
 
   it("records malformed reviewer output as a failed Gate B review", () => {
