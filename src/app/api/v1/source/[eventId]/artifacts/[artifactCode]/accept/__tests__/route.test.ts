@@ -28,7 +28,11 @@ const sourceArtifactRow = {
   lifecycle_state: "current",
   approval_state: null,
   approved_by: "person-1",
+  parse_status: "parsed",
+  source_origin: "uploaded",
 };
+let artifactParseStatus = "parsed";
+let artifactSourceOrigin = "uploaded";
 
 jest.mock("@/lib/auth/tenancy", () => ({
   requireTenancy: jest.fn(async () => tenancy),
@@ -123,7 +127,14 @@ function fakeFluentClient() {
           }
           if (table === "source_artifacts") {
             return {
-              data: filters.id === "artifact-1" ? sourceArtifactRow : null,
+              data:
+                filters.id === "artifact-1"
+                  ? {
+                      ...sourceArtifactRow,
+                      parse_status: artifactParseStatus,
+                      source_origin: artifactSourceOrigin,
+                    }
+                  : null,
               error: null,
             };
           }
@@ -150,6 +161,8 @@ const ctx = {
 
 beforeEach(() => {
   jest.clearAllMocks();
+  artifactParseStatus = "parsed";
+  artifactSourceOrigin = "uploaded";
   insertArtifactAcceptance.mockImplementation(async (input) => ({
     ok: true,
     record: { id: "acceptance-1", ...(input as Record<string, unknown>) },
@@ -157,6 +170,33 @@ beforeEach(() => {
 });
 
 describe("POST /api/v1/source/:eventId/artifacts/:artifactCode/accept", () => {
+  it.each(["pending", "parsing", "failed", "needs_review"])(
+    "rejects a %s file before a person can accept it as authoritative",
+    async (parseStatus) => {
+      artifactParseStatus = parseStatus;
+      const res = await POST(
+        request({ approvalRationale: "I reviewed the filename." }),
+        ctx,
+      );
+      expect(res.status).toBe(409);
+      expect((await res.json()) as { error?: string }).toEqual(
+        expect.objectContaining({ error: "artifact_not_reviewable" }),
+      );
+      expect(insertArtifactAcceptance).not.toHaveBeenCalled();
+    },
+  );
+
+  it("preserves acceptance of a rendered generated artifact while its parser is pending", async () => {
+    artifactSourceOrigin = "generated";
+    artifactParseStatus = "pending";
+    const res = await POST(
+      request({ approvalRationale: "I reviewed the rendered document." }),
+      ctx,
+    );
+    expect(res.status).toBe(200);
+    expect(insertArtifactAcceptance).toHaveBeenCalledTimes(1);
+  });
+
   it("rejects a missing rationale", async () => {
     const res = await POST(request({}), ctx);
     expect(res.status).toBe(400);
