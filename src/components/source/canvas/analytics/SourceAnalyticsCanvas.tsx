@@ -6357,7 +6357,111 @@ function CurrentStageArtifactReviewRow({
           <span style={SMALL_STATUS_PILL}>{action.cta}</span>
         )}
       </div>
+      {row.lifecycleState === "ai_draft" ? (
+        <SourceDraftBodyPreview
+          key={`${eventId}:${row.code}`}
+          eventId={eventId}
+          artifactCode={row.code}
+        />
+      ) : null}
     </div>
+  );
+}
+
+function SourceDraftBodyPreview({
+  eventId,
+  artifactCode,
+}: {
+  eventId: string;
+  artifactCode: string;
+}) {
+  const [status, setStatus] = useState<
+    "idle" | "loading" | "loaded" | "error"
+  >("idle");
+  const [body, setBody] = useState<string | null>(null);
+
+  async function loadBody() {
+    setStatus("loading");
+    try {
+      const response = await fetch(
+        `/api/v1/source/${encodeURIComponent(eventId)}/artifacts/${encodeURIComponent(artifactCode)}/body`,
+        { cache: "no-store" },
+      );
+      if (!response.ok) throw new Error("draft_body_unavailable");
+      const payload = (await response.json()) as {
+        artifactCode?: unknown;
+        body?: unknown;
+      };
+      if (
+        payload.artifactCode !== artifactCode ||
+        typeof payload.body !== "string" ||
+        !payload.body.trim()
+      ) {
+        throw new Error("draft_body_unavailable");
+      }
+      setBody(payload.body);
+      setStatus("loaded");
+    } catch {
+      setStatus("error");
+    }
+  }
+
+  return (
+    <details
+      data-testid={`source-draft-preview-${artifactCode}`}
+      onToggle={(event) => {
+        if (event.currentTarget.open && status === "idle") void loadBody();
+      }}
+      style={{
+        gridColumn: "1 / -1",
+        borderTop: `1px solid ${ANALYTICS.LINE_SOFT}`,
+        paddingTop: 10,
+      }}
+    >
+      <summary
+        style={{
+          color: ANALYTICS.INK,
+          cursor: "pointer",
+          fontSize: 12.5,
+          fontWeight: 800,
+        }}
+      >
+        Preview AI draft
+      </summary>
+      <p style={{ color: ANALYTICS.MUTED, fontSize: 12, margin: "8px 0" }}>
+        Not a client-final artifact. Review source claims and quality findings
+        before accepting a separately reviewed final.
+      </p>
+      {status === "loading" ? <p>Loading draft...</p> : null}
+      {status === "error" ? (
+        <p role="alert">
+          Draft content is unavailable. No review is recorded.{" "}
+          <button
+            type="button"
+            style={TABLE_BUTTON_STYLE}
+            onClick={() => void loadBody()}
+          >
+            Retry
+          </button>
+        </p>
+      ) : null}
+      {status === "loaded" ? (
+        <pre
+          style={{
+            maxHeight: 520,
+            overflow: "auto",
+            overflowWrap: "anywhere",
+            whiteSpace: "pre-wrap",
+            fontFamily: ANALYTICS.MONO,
+            fontSize: 11.5,
+            lineHeight: 1.5,
+            margin: 0,
+          }}
+        >
+          {body}
+        </pre>
+      ) : null}
+    </details>
   );
 }
 
