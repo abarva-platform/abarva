@@ -404,6 +404,34 @@ describe("EventApprovalCard", () => {
     expect(body.notes).not.toMatch(/sponsor sign-off/i);
   });
 
+  it("presents a returned Strategy decision after the Request was already accepted", async () => {
+    (global.fetch as jest.Mock).mockResolvedValue({
+      ok: true,
+      json: async () => ({ ok: true }),
+    });
+    render(<EventApprovalCard {...baseProps} requestAlreadyAccepted />);
+
+    expect(screen.queryByTestId("source-approval-confirmation")).toBeNull();
+    expect(screen.getByTestId("source-approval-gate-sponsor")).not.toBeNull();
+    fireEvent.change(screen.getByTestId("source-approval-rationale"), {
+      target: { value: "Reviewed the returned Strategy evidence and decision." },
+    });
+    fireEvent.click(screen.getByTestId("source-approval-gate-sponsor"));
+    fireEvent.click(screen.getByTestId("source-approval-gate-value"));
+    fireEvent.click(screen.getByTestId("source-approval-gate-archetype"));
+    fireEvent.click(screen.getByTestId("source-approval-approve"));
+
+    await waitFor(() => expect(global.fetch).toHaveBeenCalledTimes(1));
+    const [, requestInit] = (global.fetch as jest.Mock).mock.calls[0];
+    const body = JSON.parse(requestInit.body as string);
+    expect(body.confirmations).toEqual({
+      strategyMemoReviewed: true,
+      valueTargetConfirmed: true,
+      archetypeRigorConfirmed: true,
+    });
+    expect(body.confirmations.requestFactsReviewed).toBeUndefined();
+  });
+
   it("sends selfApproveIfAuthorized on approve when the creator is self-approving in pilot mode", async () => {
     (global.fetch as jest.Mock).mockResolvedValue({
       ok: true,
@@ -431,6 +459,9 @@ describe("EventApprovalCard", () => {
     const body = JSON.parse(requestInit.body as string);
     expect(body.selfApproveIfAuthorized).toBe(true);
     expect(body.requestAuthorityVersionId).toBe("request-version-7");
+    expect(body.confirmations).toEqual({ requestFactsReviewed: true });
+    expect(body.notes).not.toMatch(/strategy memo review|sponsor sign-off/i);
+    await waitFor(() => expect(pushMock).toHaveBeenCalledWith(baseProps.currentStageHref));
   });
 
   it("does not send selfApproveIfAuthorized when the approver is not the event creator", async () => {

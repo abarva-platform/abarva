@@ -18,6 +18,7 @@ import { listSourceArtifactsForSourceEventId } from "@/lib/source/artifact-regis
 import { loadApprovalLedger } from "@/lib/source/approval-ledger";
 import { getContractOptimizationProfile } from "@/lib/source/contract-optimization/read";
 import { readSourceAuthorityVersionState } from "@/lib/source/new-workspace/authority-version-store";
+import { evaluateRequestVersionApproval } from "@/lib/source/new-workspace/source-version-authority";
 import { formatSourceFinancialValue } from "@/lib/source/financial-display";
 import { parseSourceScopeDescription } from "@/lib/source/intake-summary";
 import { requesterEstimateFieldLabel } from "@/lib/source/requester-estimate-label";
@@ -166,6 +167,14 @@ export default async function SourceEventApprovalPage({
             requestAuthority.kind === "available"
               ? (requestAuthority.currentVersion?.id ?? null)
               : null
+          }
+          requestAlreadyAccepted={
+            requestAuthority.kind === "available" &&
+            requestAuthority.currentVersion !== null &&
+            evaluateRequestVersionApproval({
+              currentVersionId: requestAuthority.currentVersion.id,
+              approvals: requestAuthority.approvals,
+            }).status === "accepted"
           }
           generateMemoOnApprove={isFeatureEnabled(
             {
