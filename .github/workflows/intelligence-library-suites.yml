@@ -97,6 +97,17 @@ jobs:
       # five above. Record:
       # `docs/architecture/t495-source-contract360-synthesis-context-triage.json`.
       #
+      # Item T-495 added `answer-length-depth.test.ts` on 2026-09-28, in the
+      # change that rewrote it. Three of its five cases read `synthesizer.ts` as
+      # text -- one sliced the file from the literal "ANSWER-ONLY STREAMING
+      # MODE" to its end -- and are deleted, not sharpened. They are replaced by
+      # cases that drive the real `synthesizeStream` down both paths and read the
+      # exact system and user input through `onModelInput`: the streaming path
+      # carries the deep-dive allowance, every "Target 90-160 words" line the
+      # model reads also allows roughly 400, and no "200-word target" is sent.
+      # Named individually for the same reason as the six above. Record:
+      # `docs/architecture/t495-answer-length-depth-triage.json`.
+      #
       # The quarantine ignore list below applies only to
       # src/lib/intelligence/__tests__; it names no file added here.
       - name: Run reachable Intelligence library suites
@@ -109,4 +120,5 @@ jobs:
             src/lib/intelligence/ask/__tests__/strategy-to-moves-contract.test.ts \
             src/lib/intelligence/ask/__tests__/c412-ask-answer-mode-wiring.test.ts \
             src/lib/intelligence/ask/__tests__/source-contract360-synthesis-context.test.ts \
+            src/lib/intelligence/ask/__tests__/answer-length-depth.test.ts \
             --no-coverage --ci $(node scripts/quality/intelligence-library-ignore-args.mjs)
