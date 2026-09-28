@@ -981,6 +981,7 @@ function formatStrategyGovernanceContext(ctx: SourceGenerationContext): string {
     "An audited not-applicable decision is an absence decision, not a missing request or a supplied contract/spend fact.",
     "Recommended evidence is optional and cannot become a gate prerequisite. Do not request or waive it as a condition of gate closure. Only applicable, policy-relevant required evidence can block the gate.",
     "When a Strategy criterion is pending, do not recommend approval or advancement; name the next review action instead. A pending or unread criterion does not authorize a claim that the gate is ready to advance.",
+    "Do not tell the decision owner to record approval or advance the event while any Strategy criterion is pending. A review may record approval only after each applicable criterion is actually met and recorded; until then, ask for the decision and name unresolved criteria without predicting the outcome.",
     "Strategy evidence requirements:",
     ...(evidence.length ? evidence : ["- no evidence states read back"]),
     "Strategy gate criteria:",

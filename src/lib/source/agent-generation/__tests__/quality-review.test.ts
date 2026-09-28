@@ -352,6 +352,51 @@ describe("Source consulting-grade quality gate helpers", () => {
     expect(cleared).toEqual([]);
   });
 
+  it("rejects positive approval instructions in a pending Strategy draft", () => {
+    const ctx = makeContext();
+    ctx.event.currentStageKey = "strategy";
+    ctx.gateCriteria = [{ ...ctx.gateCriteria[0], fromStage: "strategy", state: "pending" }];
+
+    for (const artifactCode of ["d01_strategy_memo", "d02_value_target"]) {
+      for (const body of [
+        "My recommendation: conduct the Strategy Gate Review session and record approval.",
+        "Advance this event.",
+        "There are no blocking gaps. The pending criteria are ready to be closed in the review.",
+      ]) {
+        const violations = findDeterministicSourceClaimViolations({
+          artifactCode,
+          sourceContext: "",
+          ctx,
+          body,
+        });
+        expect(violations.some((item) => item.reason.includes("pending Strategy gate"))).toBe(true);
+      }
+    }
+
+    for (const body of [
+      "Do not record approval or advance this event while criteria are pending.",
+      "Conduct the gate review and record a decision; approval only if each criterion is met.",
+      "After all criteria are met, record approval.",
+      "Record approval only if each criterion is met.",
+      "The review may determine whether the criteria can be closed; no approval is recorded yet.",
+    ]) {
+      expect(findDeterministicSourceClaimViolations({
+        artifactCode: "d01_strategy_memo",
+        sourceContext: "",
+        ctx,
+        body,
+      })).toEqual([]);
+    }
+
+    const mixed = findDeterministicSourceClaimViolations({
+      artifactCode: "d01_strategy_memo",
+      sourceContext: "",
+      ctx,
+      body: "Do not record approval yet; Advance this event.",
+    });
+    expect(mixed.some((item) => item.reason.includes("pending Strategy gate"))).toBe(true);
+  });
+
   it("allows accurate absence and policy language while refusing unsupported vendor-pricing lore", () => {
     const ctx = makeContext();
     ctx.event.currentStageKey = "strategy";

@@ -130,6 +130,7 @@ describe("Source artifact prompt registry provider config", () => {
       expect(message).toContain("approval_policy=self_v1");
       expect(message).toContain("GATE-STRATEGY-01; state=pending");
       expect(message).toContain("When a Strategy criterion is pending, do not recommend approval or advancement; name the next review action instead.");
+      expect(message).toContain("Do not tell the decision owner to record approval or advance the event while any Strategy criterion is pending.");
     }
   });
 

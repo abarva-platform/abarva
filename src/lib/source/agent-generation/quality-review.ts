@@ -198,8 +198,9 @@ export function findDeterministicSourceClaimViolations(args: {
     if (strategyGatePending) {
       const clauses = lines.flatMap((line) => line.split(/(?<=[.!?])\s+|[;|]/));
       for (const clause of clauses.filter((text) =>
-        /\b(?:event is ready to advance|approve at the strategy gate|approve to advance|approval to advance)\b/i.test(text) &&
-        !/\b(?:not ready|do not (?:recommend )?approve|do not recommend approval|cannot approve|approval to advance is not recommended)\b/i.test(text),
+        /\b(?:event is ready to advance|approve at the strategy gate|approve to advance|approval to advance|record approval|grant approval|advance (?:this|the) event|there are no blocking gaps|(?:pending|all (?:three|3) pending) (?:gate )?criteria (?:are ready to be|can be) closed)\b/i.test(text) &&
+        !/\b(?:not ready|do not (?:recommend )?approve|do not recommend approval|cannot approve|approval to advance is not recommended|(?:do not|don't|cannot|must not|should not|not yet)\b.{0,60}\b(?:record approval|grant approval|advance (?:this|the) event))\b/i.test(text) &&
+        !/\b(?:if|once|after|only after)\b[^.;|]{0,90}\b(?:all|each|every)\b[^.;|]{0,40}\bcriteri(?:on|a)\b[^.;|]{0,40}\b(?:met|closed|approved)\b/i.test(text),
       )) {
         violations.push({
           claim: clause.trim().slice(0, 220),
