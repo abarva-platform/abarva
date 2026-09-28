@@ -64,6 +64,7 @@ describe("phase-input-draft-proposals", () => {
       stakeholder_map: "Stakeholder map is already captured.",
       decision_rights: "Decision rights are already captured.",
       evidence_plan: "Evidence plan is already captured.",
+      business_change_assessment: "Business change owner is captured.",
     };
 
     expect(
