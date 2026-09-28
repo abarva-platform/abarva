@@ -33,6 +33,8 @@ interface EventApprovalCardProps {
   currentStageHref: string;
   /** Exact immutable Request version shown on this approval page. */
   requestAuthorityVersionId?: string | null;
+  /** The current Request version already has its intake acceptance receipt. */
+  requestAlreadyAccepted?: boolean;
   /** When true, approving also generates the strategy memo (Strategy-at-P0). */
   generateMemoOnApprove?: boolean;
 }
@@ -88,6 +90,7 @@ export function EventApprovalCard({
   currentUserCanApprove,
   currentStageHref,
   requestAuthorityVersionId = null,
+  requestAlreadyAccepted = false,
   generateMemoOnApprove = false,
 }: EventApprovalCardProps) {
   const router = useRouter();
@@ -111,10 +114,9 @@ export function EventApprovalCard({
   const reasonHelp = reasonReady
     ? "Minimum met"
     : `${reasonRemaining} more character${reasonRemaining === 1 ? "" : "s"} needed`;
-  // Strategy-at-P0 makes approval the strategy gate: the three GATE-STRATEGY
-  // criteria are confirmed here as explicit checkboxes. Other tenants keep the
-  // single accountable-decision confirm.
-  const gateReady = generateMemoOnApprove
+  // A returned Strategy decision must not be re-presented as Request intake.
+  const strategyDecision = generateMemoOnApprove || requestAlreadyAccepted;
+  const gateReady = strategyDecision
     ? strategyGate.mandate && strategyGate.value && strategyGate.archetype
     : confirmed;
   const actionReady =
@@ -145,7 +147,7 @@ export function EventApprovalCard({
       : !reasonReady
         ? `Add an audit rationale: ${reasonHelp}.`
         : !gateReady
-          ? generateMemoOnApprove
+          ? strategyDecision
             ? "Confirm all three strategy-gate checks."
             : "Confirm the accountable human decision."
           : "Ready to approve.";
@@ -162,32 +164,20 @@ export function EventApprovalCard({
         body: JSON.stringify({
           action: action === "reject" ? "reject" : "approve",
           notes:
-            action !== "reject" && generateMemoOnApprove
+            action !== "reject" && strategyDecision
               ? `${reason}\n\nEvent Owner confirmed the strategy mandate, value target, and archetype.`
               : reason,
-          // The approve route validates `confirmations` (all three required keys)
-          // via evaluateSourceApprovalDecision — sending a bare `confirmed` flag
-          // 422s for gate tenants. Map the gate checkboxes (or the single confirm
-          // for non-gate tenants) onto the canonical confirmation keys. The
-          // in-canvas Strategy gate sends the same shape.
+          // Request acceptance and Strategy-at-P0 attest different decisions.
           confirmed: true,
-          confirmations: {
-            strategyMemoReviewed: generateMemoOnApprove
-              ? strategyGate.mandate
-              : confirmed,
-            valueTargetConfirmed: generateMemoOnApprove
-              ? strategyGate.value
-              : confirmed,
-            archetypeRigorConfirmed: generateMemoOnApprove
-              ? strategyGate.archetype
-              : confirmed,
-          },
-          // The event-creation approval unlocks the working canvas where the
-          // strategy memo is actually drafted — the GATE-STRATEGY-01 readiness
-          // check it would otherwise trigger belongs to a LATER, separate
-          // stage-advance action (leaving Strategy once the memo exists), not
-          // to this first approval. The server verifies self-approval authority
-          // and still evaluates the current gate readiness.
+          confirmations: strategyDecision
+            ? {
+                strategyMemoReviewed: strategyGate.mandate,
+                valueTargetConfirmed: strategyGate.value,
+                archetypeRigorConfirmed: strategyGate.archetype,
+              }
+            : { requestFactsReviewed: confirmed },
+          // The server derives self-approval authority. In the standard journey,
+          // this Request decision opens Strategy; its evidence gate stays later.
           selfApproveIfAuthorized:
             action === "approve" && isSelfApproval && pilotMode,
           requestAuthorityVersionId,
@@ -203,7 +193,7 @@ export function EventApprovalCard({
       // heartbeat-protected for the ~30-60s Anthropic call). Best-effort: if the
       // memo can't be produced, the approval still stands and we navigate on —
       // the strategy substance lives in the captured intake facts regardless.
-      if (action === "approve" && generateMemoOnApprove) {
+      if (action === "approve" && generateMemoOnApprove && !requestAlreadyAccepted) {
         setNotice("Approved — generating your strategy memo…");
         try {
           await fetch(
@@ -258,7 +248,9 @@ export function EventApprovalCard({
           <div style={EYEBROW_STYLE}>Source Approval</div>
           <h1 style={H1_STYLE}>{eventName}</h1>
           <p style={LEDE_STYLE}>
-            Approve the event intake before the working canvas unlocks. AbarVa
+            {requestAlreadyAccepted
+              ? "Review the returned Strategy decision before stage advancement."
+              : "Approve the event intake before the working canvas unlocks."} AbarVa
             assists with the record; the client owns the decision.
           </p>
         </div>
@@ -366,7 +358,7 @@ export function EventApprovalCard({
             </span>
           </label>
 
-          {generateMemoOnApprove ? (
+          {strategyDecision ? (
             <div style={{ display: "grid", gap: 8, marginBottom: 4 }}>
               <div style={EYEBROW_STYLE}>Confirm the strategy gate</div>
               <label style={CHECKBOX_ROW_STYLE}>
@@ -503,8 +495,8 @@ export function EventApprovalCard({
               <div style={NEXT_STYLE}>
                 <strong>What happens next</strong>
                 <span>
-                  {generateMemoOnApprove
-                    ? "Approve: the strategy gate is cleared here — the event advances to Scope and the memo drafts."
+                  {strategyDecision
+                    ? "Approve: the Strategy gate is checked before the event advances to Scope."
                     : "Approve: event unlocks at Stage 1 Strategy."}
                 </span>
                 {coApprover ? (

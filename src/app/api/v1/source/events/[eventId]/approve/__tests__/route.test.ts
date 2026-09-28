@@ -30,7 +30,12 @@ const requestVersionState = {
     versionNumber: 1,
     contentHash: "a".repeat(64),
   },
-  approvals: [],
+  approvals: [] as Array<{
+    versionId: string;
+    role: "request_acceptor";
+    actorId: string;
+    decision: "approved";
+  }>,
 };
 
 jest.mock("@/lib/source/new-workspace/authority-version-store", () => ({
@@ -193,7 +198,8 @@ describe("POST Source event approve", () => {
     eventRow.created_by_user_id = "another-user";
     eventRow.approval_policy_code = null;
     mockIsGateApprovalStrictMode.mockReturnValue(false);
-    mockGateAdvance.mockClear();
+    mockGateAdvance.mockReset();
+    requestVersionState.approvals.length = 0;
     stageSubstrate.criteria = [];
     mockGateAdvance.mockImplementation(() => ({
       ok: true,
@@ -269,9 +275,7 @@ describe("POST Source event approve", () => {
               "Reviewed the governed intake and accept this exact version.",
             requestAuthorityVersionId: "request-version-1",
             confirmations: {
-              strategyMemoReviewed: true,
-              valueTargetConfirmed: true,
-              archetypeRigorConfirmed: true,
+              requestFactsReviewed: true,
             },
           }),
         },
@@ -282,6 +286,9 @@ describe("POST Source event approve", () => {
     expect(response.status).toBe(200);
     expect(applyApproval).toHaveBeenCalledWith(
       expect.objectContaining({
+        toState: "active",
+        stageKey: null,
+        notes: expect.not.stringContaining("Confirmed review of strategy memo"),
         authorityApproval: {
           authorityKind: "request",
           versionId: "request-version-1",
@@ -292,6 +299,148 @@ describe("POST Source event approve", () => {
         },
       }),
     );
+    expect(updateStage).not.toHaveBeenCalled();
+    expect(mockGateAdvance).not.toHaveBeenCalled();
+    expect(mockAutoDraftOnStageEntry).toHaveBeenCalledWith(
+      { eventId: "event-1", clientKey: "skyharbor", enteredStage: "strategy" },
+      expect.any(Object),
+    );
+    expect(insertActivityLog).toHaveBeenCalledWith(expect.objectContaining({
+      actionLabel: "Approved the Request intake",
+      metadata: expect.objectContaining({ authorityKind: "request" }),
+    }));
+    expect(sendStageDecisionUpdates).toHaveBeenCalledWith(expect.objectContaining({
+      stageLabel: "Request intake",
+    }));
+  });
+
+  it("accepts the Request while the later Strategy memo gate is still pending", async () => {
+    eventRow.current_stage_key = "strategy";
+    eventRow.created_by_user_id = "user-1";
+    eventRow.approval_policy_code = "self_v1";
+    stageSubstrate.criteria = [{
+      criterionId: "GATE-STRATEGY-01",
+      fromStage: "strategy",
+      state: "pending",
+    }];
+    mockGateAdvance.mockImplementationOnce(
+      jest.requireActual<typeof import("@/lib/source/gate-advance-contract")>(
+        "@/lib/source/gate-advance-contract",
+      ).evaluateSourceGateAdvanceContract,
+    );
+
+    const response = await POST(new Request("https://app.abarva.ai/api/v1/source/events/event-1/approve", {
+      method: "POST",
+      body: JSON.stringify({
+        action: "approve",
+        notes: "Synthetic Request facts reviewed for intake acceptance.",
+        requestAuthorityVersionId: "request-version-1",
+        confirmations: {
+          requestFactsReviewed: true,
+          strategyMemoReviewed: true,
+          valueTargetConfirmed: true,
+          archetypeRigorConfirmed: true,
+        },
+      }),
+    }), { params: Promise.resolve({ eventId: "event-1" }) });
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toMatchObject({
+      newLifecycleState: "active",
+      stageAdvancedTo: null,
+    });
+    expect(mockGateAdvance).not.toHaveBeenCalled();
+    expect(updateStage).not.toHaveBeenCalled();
+    expect(applyApproval).toHaveBeenCalledWith(expect.objectContaining({
+      stageKey: null,
+      authorityApproval: expect.objectContaining({
+        authorityKind: "request",
+        versionId: "request-version-1",
+      }),
+    }));
+  });
+
+  it("does not reinterpret a sent-back Strategy decision as a second Request acceptance", async () => {
+    eventRow.current_stage_key = "strategy";
+    requestVersionState.approvals.push({
+      versionId: "request-version-1",
+      role: "request_acceptor",
+      actorId: "user-1",
+      decision: "approved",
+    });
+    stageSubstrate.criteria = [{
+      criterionId: "GATE-STRATEGY-01",
+      fromStage: "strategy",
+      state: "pending",
+    }];
+    mockGateAdvance.mockImplementationOnce(
+      jest.requireActual<typeof import("@/lib/source/gate-advance-contract")>(
+        "@/lib/source/gate-advance-contract",
+      ).evaluateSourceGateAdvanceContract,
+    );
+
+    const response = await POST(new Request("https://app.abarva.ai/api/v1/source/events/event-1/approve", {
+      method: "POST",
+      body: JSON.stringify({
+        action: "approve",
+        notes: "Reviewing the returned Strategy decision after Request acceptance.",
+        confirmations: {
+          strategyMemoReviewed: true,
+          valueTargetConfirmed: true,
+          archetypeRigorConfirmed: true,
+        },
+      }),
+    }), { params: Promise.resolve({ eventId: "event-1" }) });
+
+    expect(response.status).toBe(409);
+    expect(mockGateAdvance).toHaveBeenCalledTimes(1);
+    expect(applyApproval).not.toHaveBeenCalled();
+    expect(updateStage).not.toHaveBeenCalled();
+  });
+
+  it("refuses Request acceptance without its explicit review confirmation", async () => {
+    eventRow.current_stage_key = "strategy";
+    const response = await POST(new Request("https://app.abarva.ai/api/v1/source/events/event-1/approve", {
+      method: "POST",
+      body: JSON.stringify({
+        action: "approve",
+        notes: "Synthetic Request facts were not confirmed by the approver.",
+        requestAuthorityVersionId: "request-version-1",
+        confirmations: { requestFactsReviewed: false },
+      }),
+    }), { params: Promise.resolve({ eventId: "event-1" }) });
+
+    expect(response.status).toBe(422);
+    expect((await response.json()).missingConfirmations).toEqual(["requestFactsReviewed"]);
+    expect(applyApproval).not.toHaveBeenCalled();
+    expect(updateStage).not.toHaveBeenCalled();
+  });
+
+  it("preserves Strategy-at-P0 promotion for an opted-in tenant", async () => {
+    mockGetActiveClientRow.mockResolvedValue(activeClientRow("lakeshore"));
+    eventRow.client_key = "lakeshore";
+    eventRow.current_stage_key = "strategy";
+    const response = await POST(new Request("https://app.abarva.ai/api/v1/source/events/event-1/approve", {
+      method: "POST",
+      body: JSON.stringify({
+        action: "approve",
+        notes: "Reviewed the Strategy-at-P0 decision and its governed Request version.",
+        requestAuthorityVersionId: "request-version-1",
+        confirmations: {
+          strategyMemoReviewed: true,
+          valueTargetConfirmed: true,
+          archetypeRigorConfirmed: true,
+        },
+      }),
+    }), { params: Promise.resolve({ eventId: "event-1" }) });
+
+    expect(response.status).toBe(200);
+    expect(mockGateAdvance).toHaveBeenCalledTimes(1);
+    expect(updateStage).toHaveBeenCalledWith(expect.objectContaining({ stageKey: "scope" }));
+    expect(applyApproval).toHaveBeenCalledWith(expect.objectContaining({
+      stageKey: "strategy",
+      notes: expect.stringContaining("Confirmed review of strategy memo"),
+    }));
   });
 
   it("refuses a stale Request version before writing the intake approval", async () => {
@@ -307,9 +456,7 @@ describe("POST Source event approve", () => {
               "Reviewed the governed intake and accept this exact version.",
             requestAuthorityVersionId: "request-version-old",
             confirmations: {
-              strategyMemoReviewed: true,
-              valueTargetConfirmed: true,
-              archetypeRigorConfirmed: true,
+              requestFactsReviewed: true,
             },
           }),
         },
@@ -326,6 +473,7 @@ describe("POST Source event approve", () => {
 
   it("does not approve or advance past a pending strategy criterion on self-approval", async () => {
     eventRow.current_stage_key = "strategy";
+    eventRow.lifecycle_state = "active";
     stageSubstrate.criteria = [
       {
         criterionId: "GATE-STRATEGY-01",
