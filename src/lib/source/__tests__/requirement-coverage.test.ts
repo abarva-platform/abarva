@@ -178,4 +178,15 @@ describe("requirement coverage", () => {
     expect(self.required).toBe(legacy.required - 1);
     expect(self.met).toBe(0);
   });
+
+  it("does not count an unbacked incumbent contract as covered", () => {
+    const requirement = requiredEvidenceForStage("strategy").find((row) => row.requirementId === "EVID-SRC-STR-INCUMBENT");
+    expect(requirement).toBeDefined();
+    expect(computeRequirementCoverage({
+      requiredArtifacts: [],
+      requiredEvidence: [requirement!],
+      artifactStates: [],
+      evidenceStates: [evidenceState("EVID-SRC-STR-INCUMBENT", "Available")],
+    }).displayValue).toBe("0 / 1");
+  });
 });

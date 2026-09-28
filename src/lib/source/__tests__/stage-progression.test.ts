@@ -90,6 +90,18 @@ const STRATEGY_GATES = (
 const GEN = ["d01_strategy_memo", "d05_scope_memo", "d09_rfp_pack"];
 
 describe("computeStageProgression", () => {
+  it("keeps an unbacked Available incumbent package in the upload queue", () => {
+    const view = computeStageProgression({
+      stage: "strategy",
+      criteria: STRATEGY_GATES(),
+      evidence: [evidence("EVID-SRC-STR-INCUMBENT", "Available")],
+      artifacts: [],
+      generatableCodes: GEN,
+    });
+    expect(view.needs).toEqual(expect.arrayContaining([
+      expect.objectContaining({ kind: "upload", requirementId: "EVID-SRC-STR-INCUMBENT" }),
+    ]));
+  });
   it("empty Strategy stage → upload evidence + generate/prepare deliverables, none clear", () => {
     const view = computeStageProgression({
       stage: "strategy",
@@ -131,9 +143,9 @@ describe("computeStageProgression", () => {
       ],
       evidence: [
         evidence("EVID-SRC-STR-TRIGGER", "Parsed"),
-        evidence("EVID-SRC-STR-INCUMBENT", "Available"),
-        evidence("EVID-SRC-STR-SPEND-BASELINE", "Available"),
-        evidence("EVID-SRC-STR-SPONSOR-COMMIT", "Loaded"),
+        { ...evidence("EVID-SRC-STR-INCUMBENT", "Available"), sourceArtifactId: "artifact-incumbent" },
+        { ...evidence("EVID-SRC-STR-SPEND-BASELINE", "Available"), sourceArtifactId: "artifact-spend" },
+        { ...evidence("EVID-SRC-STR-SPONSOR-COMMIT", "Loaded"), sourceArtifactId: "artifact-commitment" },
       ],
       artifacts: [artifact("d01_strategy_memo", "needs_review", "draft body")],
       generatableCodes: GEN,
