@@ -349,6 +349,36 @@ describe("buildSourceEventShellView", () => {
       title: "Confirm strategy & sponsor",
       sourceBasis: "missing",
     });
+
+    const governed = buildSourceEventShellView({
+      event: EVENT,
+      tenantName: "FS Demo",
+      viewedStageKey: "strategy",
+      stageView: {
+        ...SAMPLE_STRATEGY_STAGE,
+        tasks: SAMPLE_STRATEGY_STAGE.tasks.map((task) => ({
+          ...task,
+          confirmationVersion: "current-event-version",
+        })),
+      },
+    });
+    expect(governed.stage.activeStep?.confirmationVersion).toBe("current-event-version");
+
+    const misleadingDone = buildSourceEventShellView({
+      event: { ...EVENT, approvalPolicyCode: "self_v1" },
+      tenantName: "FS Demo",
+      viewedStageKey: "strategy",
+      stageView: {
+        ...SAMPLE_STRATEGY_STAGE,
+        tasks: SAMPLE_STRATEGY_STAGE.tasks.map((task) => ({
+          ...task,
+          state: "done" as const,
+          evidenceComplete: false,
+          confirmationVersion: "current-event-version",
+        })),
+      },
+    });
+    expect(misleadingDone.stage.groups[0]?.steps[0]?.status).not.toBe("captured");
   });
 
   it("uses a purpose-first RFP group so the left tree names the release package", () => {
