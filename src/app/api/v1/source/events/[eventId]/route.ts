@@ -16,7 +16,7 @@ import { loadUserSourceAccessPolicy } from "@/lib/auth/source-access-policy";
 import { selectSourceWriteAdapter } from "@/lib/data-plane/write-adapters/sourceWriteAdapter";
 import { getAzureReadFluentClient } from "@/lib/data-plane/postgresCompat";
 import { getSourcingEvent } from "@/lib/source/queries";
-import { syncEventIntakeEvidence } from "@/lib/source/canvas-substrate/event-intake-sync";
+import { repairLegacyClientStatedTriggerEvidence } from "@/lib/source/canvas-substrate/event-intake-sync";
 import {
   firstGovernanceBlocker,
   normalizeApprovalReason,
@@ -219,10 +219,9 @@ export async function PATCH(req: NextRequest, { params }: RouteCtx) {
   }
 
   if (triggerDescription !== undefined) {
-    await syncEventIntakeEvidence({
+    await repairLegacyClientStatedTriggerEvidence({
       sourceEventId: eventId,
       tenantKey: activeClient.key,
-      triggerDescription,
     }).catch((error) => {
       console.warn(
         "[PATCH /api/v1/source/events/:eventId] trigger evidence sync failed",

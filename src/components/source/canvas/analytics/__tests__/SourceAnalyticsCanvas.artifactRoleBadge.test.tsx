@@ -110,7 +110,7 @@ describe("SourceAnalyticsCanvas — artifact role badge (SOURCE-SHELL-002)", () 
       <SourceAnalyticsCanvas
         event={makeEvent()}
         viewStage="strategy"
-        tenantName="Lakeshore"
+        tenantName="Test Tenant"
         artifacts={artifacts}
       />,
     );
@@ -346,6 +346,46 @@ describe("SourceAnalyticsCanvas — artifact role badge (SOURCE-SHELL-002)", () 
       />,
     );
     expect(screen.queryByRole("button", { name: "Declare no incumbent" })).not.toBeInTheDocument();
+  });
+
+  it("does not render a narrative-only trigger as uploaded or available", () => {
+    const triggerEvidence: SourceEventEvidence = {
+      id: "trigger-evidence",
+      sourceEventId: "evt-1",
+      tenantKey: "demo-client",
+      requirementId: "EVID-SRC-STR-TRIGGER",
+      stage: "strategy",
+      currentState: "Available",
+      sourceArtifactId: null,
+      notes: "Client-stated trigger text without a linked source record.",
+      lastSyncedAt: null,
+      createdAt: "2026-09-28T00:00:00Z",
+      updatedAt: "2026-09-28T00:00:00Z",
+    };
+
+    render(
+      <SourceAnalyticsCanvas
+        event={makeEvent()}
+        viewStage="strategy"
+        tenantName="Test Tenant"
+        artifacts={[]}
+        evidenceStates={[triggerEvidence]}
+        initialWorkspace="files"
+      />,
+    );
+
+    const trigger = screen.getByTestId(
+      "source-stage-evidence-checklist-row-EVID-SRC-STR-TRIGGER",
+    );
+    expect(trigger).toHaveTextContent("not loaded");
+    expect(trigger).not.toHaveTextContent("available");
+    expect(
+      within(trigger).queryByLabelText("File uploaded"),
+    ).not.toBeInTheDocument();
+    expect(within(trigger).getByLabelText("Open")).toBeInTheDocument();
+    expect(
+      within(trigger).getByRole("button", { name: "Upload" }),
+    ).toBeInTheDocument();
   });
 
   it("labels RFP evidence owners and reviews parsed evidence", async () => {

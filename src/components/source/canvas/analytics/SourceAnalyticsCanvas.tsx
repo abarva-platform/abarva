@@ -4457,6 +4457,9 @@ function StageEvidenceChecklistPanel({
                   ready,
                   uploaded,
                 }) => {
+                  const missingRecordedSource =
+                    requiresRecordedSource(requirement) &&
+                    !hasRecordedSource(evidence);
                   const requiresHumanReview =
                     lifecycle.parsed &&
                     !ready &&
@@ -4564,11 +4567,13 @@ function StageEvidenceChecklistPanel({
                       </td>
                       <td style={FILE_TD_CENTER}>
                         <ReadinessChip
-                          label={declaredAbsent ? "not applicable" : parseLabelForRequirement(lifecycle, evidence)}
+                          label={declaredAbsent ? "not applicable" : parseLabelForRequirement(requirement, lifecycle, evidence)}
                           tone={
-                            declaredAbsent || lifecycle.parsed ||
-                            evidence?.currentState === "Available" ||
-                            evidence?.currentState === "Usable Evidence"
+                            declaredAbsent ||
+                            (!missingRecordedSource &&
+                              (lifecycle.parsed ||
+                                evidence?.currentState === "Available" ||
+                                evidence?.currentState === "Usable Evidence"))
                               ? "good"
                               : lifecycle.uploaded
                                 ? "warn"
@@ -4993,9 +4998,13 @@ function requirementHasUploadedEvidence(
 }
 
 function parseLabelForRequirement(
+  requirement: SourceEvidenceRequirement,
   lifecycle: SourceEvidenceLifecycleResult,
   evidence: SourceEventEvidence | undefined,
 ): string {
+  if (requiresRecordedSource(requirement) && !hasRecordedSource(evidence)) {
+    return "not loaded";
+  }
   if (evidence?.currentState === "Usable Evidence") return "usable";
   if (evidence?.currentState === "Available") return "available";
   if (lifecycle.parsed) return "parsed";

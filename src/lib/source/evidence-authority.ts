@@ -18,6 +18,10 @@ const RECORD_BACKED_CLASSES = new Set<SourceEvidenceClass>([
   "workforce",
 ]);
 
+const RECORD_BACKED_REQUIREMENTS = new Set([
+  "EVID-SRC-STR-TRIGGER",
+]);
+
 const ABSENCE_DECLARATION_REQUIREMENTS = new Set([
   "EVID-SRC-STR-INCUMBENT",
   "EVID-SRC-STR-SPEND-BASELINE",
@@ -56,7 +60,10 @@ const EVIDENCE_RANK: Record<SourceEventEvidence["currentState"], number> = {
 };
 
 export function requiresRecordedSource(requirement: SourceEvidenceRequirement): boolean {
-  return RECORD_BACKED_CLASSES.has(requirement.evidenceClass);
+  return (
+    RECORD_BACKED_REQUIREMENTS.has(requirement.requirementId) ||
+    RECORD_BACKED_CLASSES.has(requirement.evidenceClass)
+  );
 }
 
 export function hasRecordedSource(evidence: SourceEventEvidence | undefined): boolean {

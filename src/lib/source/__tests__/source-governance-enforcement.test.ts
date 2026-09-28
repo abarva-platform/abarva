@@ -101,7 +101,7 @@ describe("Source governance enforcement", () => {
     expect(evaluateCriterionMetReadiness({ ...base, evidence: base.evidence.filter((row) => row.requirementId !== "EVID-SRC-STR-TRIGGER"), approvalPolicyCode: "self_v1" }).ok).toBe(false);
   });
 
-  it("allows a named human review to clear ready client-stated evidence", () => {
+  it("keeps the file-backed Strategy trigger blocked when only client-stated narrative exists", () => {
     const verdict = evaluateCriterionMetReadiness({
       criterion: criterion({ criterionId: "GATE-STRATEGY-01" }),
       artifacts: [
@@ -120,7 +120,12 @@ describe("Source governance enforcement", () => {
       reason: REVIEW_REASON,
     });
 
-    expect(verdict.ok).toBe(true);
+    expect(verdict.ok).toBe(false);
+    expect(verdict.blockers).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ code: "required_evidence_unverified" }),
+      ]),
+    );
   });
 
   it("keeps client-stated evidence blocked during automatic assessment", () => {
