@@ -484,18 +484,17 @@ export function EventApprovalCard({
                 Send to {coApprover.displayName}
               </button>
             ) : null}
-            <button
-              type="button"
-              data-testid="source-approval-approve"
-              disabled={!actionReady}
-              onClick={() => void submitAction("approve")}
-              style={{
-                ...PRIMARY_BUTTON_STYLE,
-                opacity: actionReady ? 1 : 0.45,
-              }}
-            >
-              {busyAction === "approve" ? "Approving..." : "Approve"}
-            </button>
+            {actionReady || busyAction === "approve" ? (
+              <button
+                type="button"
+                data-testid="source-approval-approve"
+                disabled={Boolean(busyAction)}
+                onClick={() => void submitAction("approve")}
+                style={PRIMARY_BUTTON_STYLE}
+              >
+                {busyAction === "approve" ? "Approving..." : "Approve"}
+              </button>
+            ) : null}
           </div>
 
           {error ? <div style={ERROR_STYLE}>{error}</div> : null}

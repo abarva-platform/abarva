@@ -31,6 +31,7 @@ import { SourceAwardSowHandoffReadinessPanel } from "@/components/source/SourceA
 import { buildSourceAwardSowHandoffReadiness } from "@/lib/source/award-sow-handoff-readiness";
 import { applySourceApprovalPolicyToStageView } from "@/lib/source/approval-policy-stage-view";
 import { sourceEvidenceAppliesToApprovalPolicy } from "@/lib/source/approval-policy";
+import { SOURCE_APPROVAL_REASON_MIN_LENGTH } from "@/lib/source/source-governance-enforcement";
 import {
   buildSourceStage08AcceptanceSpine,
   type SourceStage08AcceptanceSpine,
@@ -2126,6 +2127,10 @@ function FocusedWorkPanel({
   const doneCount = flatSteps.filter(isComplete).length;
   const allReady = flatSteps.length > 0 && doneCount === flatSteps.length;
   const hasArtifactGaps = view.stage.artifactReadiness.blockerCount > 0;
+  const requiredEvidenceRows = buildStageEvidenceRequirementRows(view, evidenceStates)
+    .filter((row) => row.requirement.level === "required");
+  const requiredEvidenceOpen = requiredEvidenceRows.filter((row) => !row.ready).length;
+  const stageInputsReady = !hasArtifactGaps && requiredEvidenceOpen === 0;
   // An approval record exists for the stage being viewed. `approvalEvidenced` is
   // null when no approval ledger was supplied, which is not the same as "not
   // approved" — only an explicit true means a record backs it.
@@ -2141,6 +2146,9 @@ function FocusedWorkPanel({
     ? flatSteps.findIndex((step) => step.id === activeStep.id)
     : -1;
   const activeComplete = activeStep ? isComplete(activeStep) : false;
+  const canShowNext =
+    activeComplete &&
+    (activeIndex < flatSteps.length - 1 || stageInputsReady);
   const activeGroup =
     (activeStep
       ? view.stage.groups.find((group) =>
@@ -2151,15 +2159,18 @@ function FocusedWorkPanel({
         )) ??
     view.stage.groups[0] ??
     null;
-  const continueGuidance = activeStep
-    ? activeStepContinueGuidance(
-        activeStep,
-        activeComplete,
-        activeIndex,
-        flatSteps.length,
-        view.stage.label,
-      )
-    : null;
+  const continueGuidance =
+    activeComplete && activeIndex === flatSteps.length - 1 && !stageInputsReady
+      ? "Required evidence or file review is still open. Review Files."
+      : activeStep
+        ? activeStepContinueGuidance(
+            activeStep,
+            activeComplete,
+            activeIndex,
+            flatSteps.length,
+            view.stage.label,
+          )
+        : null;
   const stageOperatingStatus =
     view.stage.key === "strategy" ||
     view.stage.key === "scope" ||
@@ -2320,8 +2331,8 @@ function FocusedWorkPanel({
           }}
         >
           {allReady
-            ? hasArtifactGaps
-              ? `Required inputs are complete for ${view.stage.label}. Review Files first; the approval gate stays blocked until artifact review is cleared or an exception is recorded.`
+            ? !stageInputsReady
+              ? `Workflow inputs are complete for ${view.stage.label}. Review required evidence and Files before the approval action appears.`
               : `All required work is complete for ${view.stage.label}. Open the approval gate when the owner is ready.`
             : viewedStageApproved
               ? // Approve-with-gaps is a supported decision, but it must be
@@ -2342,6 +2353,7 @@ function FocusedWorkPanel({
           <StageReadyPanel
             view={view}
             stageOperatingStatus={stageOperatingStatus}
+            requiredEvidenceOpen={requiredEvidenceOpen}
             awardSowHandoffReadiness={awardSowHandoffReadiness}
             onOpenApprovalPage={openApprovalPage}
             onOpenFiles={() => onWorkspaceChange("files")}
@@ -2391,29 +2403,30 @@ function FocusedWorkPanel({
                   maxWidth: 260,
                 }}
               >
-                <button
-                  type="button"
-                  disabled={!activeComplete}
-                  onClick={goNext}
-                  style={{
-                    border: `1px solid ${activeComplete ? ANALYTICS.INK : ANALYTICS.LINE_STRONG}`,
-                    borderRadius: 8,
-                    background: activeComplete ? ANALYTICS.INK : "#e8e0d4",
-                    color: activeComplete ? "#fff" : "#81786a",
-                    cursor: activeComplete ? "pointer" : "not-allowed",
-                    fontFamily: ANALYTICS.SANS,
-                    fontSize: 13,
-                    fontWeight: 900,
-                    minHeight: 42,
-                    minWidth: activeIndex >= flatSteps.length - 1 ? 176 : 128,
-                    padding: "0 16px",
-                    whiteSpace: "nowrap",
-                  }}
-                >
-                  {activeIndex >= flatSteps.length - 1
-                    ? `Open ${view.stage.label} gate →`
-                    : "Continue →"}
-                </button>
+                {canShowNext ? (
+                  <button
+                    type="button"
+                    onClick={goNext}
+                    style={{
+                      border: `1px solid ${ANALYTICS.INK}`,
+                      borderRadius: 8,
+                      background: ANALYTICS.INK,
+                      color: "#fff",
+                      cursor: "pointer",
+                      fontFamily: ANALYTICS.SANS,
+                      fontSize: 13,
+                      fontWeight: 900,
+                      minHeight: 42,
+                      minWidth: activeIndex >= flatSteps.length - 1 ? 176 : 128,
+                      padding: "0 16px",
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    {activeIndex >= flatSteps.length - 1
+                      ? `Open ${view.stage.label} gate →`
+                      : "Continue →"}
+                  </button>
+                ) : null}
                 {continueGuidance ? (
                   <span
                     style={{
@@ -2498,7 +2511,7 @@ function FocusedWorkPanel({
 
               {activeGroup ? (
                 <EvidenceAskTable
-                  group={activeGroup}
+                  group={{ ...activeGroup, steps: [activeStep] }}
                   activeStepId={activeStep.id}
                 />
               ) : null}
@@ -2530,30 +2543,41 @@ function plainStageStepGroupLabel(label: string) {
 function StageReadyPanel({
   view,
   stageOperatingStatus,
+  requiredEvidenceOpen,
   awardSowHandoffReadiness,
   onOpenApprovalPage,
   onOpenFiles,
 }: {
   view: SourceEventShellView;
   stageOperatingStatus: StageOperatingStatus | null;
+  requiredEvidenceOpen: number;
   awardSowHandoffReadiness?: SourceAwardSowHandoffReadiness | null;
   onOpenApprovalPage: () => void;
   onOpenFiles: () => void;
 }) {
   const approvalRecorded = view.stage.approvalRecorded;
   const hasArtifactGaps = view.stage.artifactReadiness.blockerCount > 0;
+  const hasReadinessGaps = hasArtifactGaps || requiredEvidenceOpen > 0;
+  const gapSummary = [
+    requiredEvidenceOpen > 0
+      ? `${requiredEvidenceOpen} required evidence item${requiredEvidenceOpen === 1 ? "" : "s"}`
+      : null,
+    hasArtifactGaps
+      ? `${view.stage.artifactReadiness.blockerCount} artifact review item${view.stage.artifactReadiness.blockerCount === 1 ? "" : "s"}`
+      : null,
+  ].filter(Boolean).join(" and ");
   const stage08HandoffBlocked =
     awardSowHandoffReadiness !== null &&
     awardSowHandoffReadiness !== undefined &&
     !awardSowHandoffReadiness.readyForContract360Handoff;
   const primaryActionLabel = approvalRecorded
     ? "View approval record"
-    : hasArtifactGaps
-      ? "Review Files and accept artifacts"
+    : hasReadinessGaps
+      ? "Review evidence"
       : view.stage.approvalCtaLabel;
   const primaryAction = approvalRecorded
     ? onOpenApprovalPage
-    : hasArtifactGaps
+    : hasReadinessGaps
       ? onOpenFiles
       : onOpenApprovalPage;
   const fileStatus = approvalRecorded
@@ -2562,7 +2586,9 @@ function StageReadyPanel({
       : "No blockers"
     : hasArtifactGaps
       ? `${view.stage.artifactReadiness.blockerCount} file review gap${view.stage.artifactReadiness.blockerCount === 1 ? "" : "s"}`
-      : "Ready for approval";
+      : requiredEvidenceOpen > 0
+        ? "No file review gaps"
+        : "Ready for approval";
   return (
     <div
       data-testid="source-shell-stage-ready-panel"
@@ -2576,7 +2602,7 @@ function StageReadyPanel({
       <div>
         <div
           style={{
-            color: hasArtifactGaps || stage08HandoffBlocked
+            color: hasReadinessGaps || stage08HandoffBlocked
               ? ANALYTICS.AMBER_TEXT
               : ANALYTICS.GREEN_TEXT,
             fontFamily: ANALYTICS.MONO,
@@ -2591,15 +2617,15 @@ function StageReadyPanel({
             ? stage08HandoffBlocked
               ? "Stage approval recorded"
               : "Stage approved"
-            : hasArtifactGaps
-              ? "Inputs ready - artifact review open"
+            : hasReadinessGaps
+              ? "Inputs ready - evidence review open"
               : "Stage ready"}
         </div>
         <h2 style={{ fontSize: 20, lineHeight: 1.25, margin: 0 }}>
           {approvalRecorded
             ? `${view.stage.label} approval is recorded.`
-            : hasArtifactGaps
-              ? `Required inputs are complete, but ${view.stage.artifactReadiness.blockerCount} artifact review item${view.stage.artifactReadiness.blockerCount === 1 ? "" : "s"} remain.`
+            : hasReadinessGaps
+              ? `Required inputs are complete, but ${gapSummary} remain.`
               : `All required evidence is ready for ${view.stage.label}.`}
         </h2>
         <p
@@ -2619,8 +2645,8 @@ function StageReadyPanel({
                 ? "The event advanced before stage-level approval tracking captured a complete decision record. Current artifact gaps are follow-up remediation under today's controls; no duplicate approval is required."
                 : "The stage decision is complete. Current artifact-review gaps remain visible for remediation; no duplicate approval is required."
               : "The stage decision is complete and no further approval is required. Open the approval record to review its rationale and audit trail."
-            : hasArtifactGaps
-              ? "Review Files first to accept client-final artifacts and close quality gates. An exception decision is available only if the owner chooses to approve with the visible gaps."
+            : hasReadinessGaps
+              ? `${requiredEvidenceOpen > 0 ? `Required evidence remains open: ${requiredEvidenceOpen}. ` : ""}Review Files and accept client-final artifacts. The approval action appears only after the required evidence and artifact checks are complete.`
               : "The next step is the approval workspace. Review the captured evidence, record the decision, and advance the event from there."}
         </p>
       </div>
@@ -2657,14 +2683,14 @@ function StageReadyPanel({
                 : hasArtifactGaps
                 ? "Remediate current review gaps"
                 : "No further approval required"
-              : hasArtifactGaps
-                ? "Accept artifacts in Files"
+              : hasReadinessGaps
+                ? "Review required evidence in Files"
                 : "Open approval gate"
           }
-          tone={hasArtifactGaps || stage08HandoffBlocked ? "warn" : "good"}
+          tone={hasReadinessGaps || stage08HandoffBlocked ? "warn" : "good"}
         />
       </div>
-      {hasArtifactGaps && !approvalRecorded ? (
+      {hasReadinessGaps && !approvalRecorded ? (
         <div
           data-testid="source-stage-ready-approval-blocker"
           style={{
@@ -2692,8 +2718,8 @@ function StageReadyPanel({
             Approval gate blocker
           </strong>
           <span>
-            Continue to approval is blocked until these client-final artifacts
-            are accepted in Files, or the owner records an exception.
+            Continue to approval is blocked until required evidence and
+            client-final artifact review are complete.
           </span>
           {view.stage.artifactReadiness.blockers.slice(0, 3).map((blocker) => (
             <span key={blocker}>{blocker}</span>
@@ -2705,23 +2731,13 @@ function StageReadyPanel({
           ) : null}
         </div>
       ) : null}
-      <div style={{ display: "grid", gap: 12 }}>
-        {view.stage.groups.map((group) => (
-          <EvidenceAskTable
-            key={group.id}
-            group={group}
-            artifactReviewOpen={hasArtifactGaps}
-            inset={false}
-          />
-        ))}
-      </div>
       <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
         <button
           type="button"
           data-testid={
             approvalRecorded
               ? "source-stage-ready-view-approval"
-              : hasArtifactGaps
+              : hasReadinessGaps
                 ? "source-stage-ready-primary-files"
                 : "source-stage-ready-open-approval"
           }
@@ -2738,22 +2754,6 @@ function StageReadyPanel({
         >
           {primaryActionLabel}
         </button>
-        {hasArtifactGaps && !approvalRecorded ? (
-          <button
-            type="button"
-            data-testid="source-stage-ready-open-approval"
-            onClick={onOpenApprovalPage}
-            style={{
-              ...BUTTON_STYLE,
-              display: "inline-flex",
-              justifyContent: "center",
-              padding: "12px 16px",
-              width: "fit-content",
-            }}
-          >
-            Open exception approval
-          </button>
-        ) : null}
       </div>
       <Link
         href={view.stage.approvalHref}
@@ -8448,6 +8448,8 @@ function ApprovalCard({
     textDecoration: "none",
     flexShrink: 0,
   } as const;
+  const onlyRationaleOpen = decision?.blockers.length === 1 &&
+    decision.blockers[0]?.code === "approval_reason_required";
 
   return (
     <section
@@ -8474,7 +8476,7 @@ function ApprovalCard({
             {item.readiness}
           </div>
         </div>
-        {gateAction && (decision?.primaryAction.enabled ?? true) ? (
+        {gateAction && ((decision?.primaryAction.enabled ?? true) || onlyRationaleOpen) ? (
           <StageGateApprovalButton
             action={gateAction}
             status={item.status}
@@ -8482,20 +8484,16 @@ function ApprovalCard({
             requiresSponsorContext={approvalPolicyCode === "self_v1" && item.stageKey === "scope"}
           />
         ) : gateAction && decision ? (
-          <button
-            type="button"
+          <span
             data-testid="source-stage-gate-blocked"
-            disabled
-            title={decision.primaryAction.disabledReason ?? undefined}
+            role="status"
             style={{
               ...buttonStyle,
-              background: "rgba(10,10,11,0.14)",
               color: ANALYTICS.FAINT,
-              cursor: "not-allowed",
             }}
           >
-            {decision.primaryAction.label}
-          </button>
+            {decision.primaryAction.disabledReason}
+          </span>
         ) : goToStepsInstead ? (
           <button
             type="button"
@@ -8555,7 +8553,7 @@ function StageGateApprovalButton({
     padding: "7px 9px",
   };
   const disabled =
-    submitting || (requiresRationale && trimmedRationale.length === 0) ||
+    submitting || trimmedRationale.length < SOURCE_APPROVAL_REASON_MIN_LENGTH ||
     (requiresSponsorContext && (!ownerAcknowledged ||
       [sponsorName, sponsorTitle, sponsorRole].some((value) => value.trim().length < 2) ||
       !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(sponsorEmail.trim())));
@@ -8682,21 +8680,22 @@ function StageGateApprovalButton({
           </label>
         </div>
       ) : null}
-      <button
-        type="button"
-        data-testid="source-stage-gate-approve"
-        disabled={disabled}
-        onClick={() => void approve()}
-        style={{
-          ...BUTTON_STYLE,
-          padding: "10px 12px",
-          background: disabled ? "rgba(10,10,11,0.14)" : ANALYTICS.INK,
-          color: disabled ? ANALYTICS.FAINT : "#fff",
-          cursor: disabled ? "not-allowed" : "pointer",
-        }}
-      >
-        {submitting ? "Approving..." : `${buttonLabel} →`}
-      </button>
+      {!disabled || submitting ? (
+        <button
+          type="button"
+          data-testid="source-stage-gate-approve"
+          disabled={submitting}
+          onClick={() => void approve()}
+          style={{
+            ...BUTTON_STYLE,
+            padding: "10px 12px",
+            background: ANALYTICS.INK,
+            color: "#fff",
+          }}
+        >
+          {submitting ? "Approving..." : `${buttonLabel} →`}
+        </button>
+      ) : null}
       {requiresRationale ? (
         <span style={{ color: ANALYTICS.AMBER_TEXT, fontSize: 11.5 }}>
           Exception approval is audited. Name the open review gaps and the owner
