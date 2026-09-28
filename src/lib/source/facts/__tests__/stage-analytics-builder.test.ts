@@ -53,6 +53,10 @@ describe('resolveValueArchetype', () => {
     );
   });
 
+  it('does not turn an unclassified infrastructure event into Cloud FinOps', () => {
+    expect(resolveValueArchetype('infrastructure', null)).toBeNull();
+  });
+
   it('resolves Contract Renewal only from its governed classified category', () => {
     expect(resolveValueArchetype('managed_service', 'saas_renewal')?.id).toBe(
       'CONTRACT_RENEWAL',
