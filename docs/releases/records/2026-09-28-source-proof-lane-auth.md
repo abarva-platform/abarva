@@ -30,6 +30,7 @@ The signed-in browser proof now sends Clerk's testing token only to the Frontend
 - Derive the exact Clerk Frontend API host from `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` and restrict testing-token attachment to that host or the target app's Clerk proxy routes.
 - Treat `auth-bootstrap` and `candidate-preview-auth-bootstrap` findings as blocking crawl outcomes regardless of P0 count.
 - Add focused Jest and executable smoke coverage to the pull-request workflow.
+- Remove the newly CI-wired crawl test directory from the dark-directory ratchet baseline.
 - Add a preflight check for the private operator's Key Vault secret and environment binding.
 - Update the private operator infrastructure definition to preserve its deployed managed identities, database URL alias, timeout, and workload profile while adding the proof-token reference.
 
@@ -41,7 +42,9 @@ The signed-in browser proof now sends Clerk's testing token only to the Frontend
 - Pass: repository `npm run typecheck`.
 - Pass: `npm run audit:test-ci-coverage:check` and `git diff --check`.
 - Pass: Azure subscription what-if shows only the intended private operator job changes; web app and unrelated resources are unchanged.
-- Not run: GitHub CI, post-deploy signed-in crawl, and private operator product proof; these require merge/deployment and are release exit criteria.
+- Pass: the dark-directory ratchet test passes 4/4 after reconciling the newly wired test directory.
+- Not run: the full behavior-coverage gate after baseline reconciliation; its first run passed 153 suites and failed only because the newly wired directory remained in the dark-set baseline. The focused ratchet test passes on the corrected tree.
+- Not run: post-deploy signed-in crawl and private operator product proof; these require merge/deployment and are release exit criteria.
 
 ## Rollout Plan
 

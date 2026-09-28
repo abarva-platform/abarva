@@ -101,6 +101,8 @@ const GOVERNED_ELSEWHERE = "src/__tests__";
  *   `src/lib/intelligence/synthesis/__tests__`, is NOT wired and stays in this
  *   list: it holds a red suite and a source-text scanner, and a directory is
  *   wired by fixing it rather than by adding it to a green command.
+ * 2026-09-28: 153 after adding `src/lib/crawl/__tests__` to the Unit Suites
+ *   workflow for authenticated crawl proof contracts.
  */
 const DARK_PRODUCT_DIRECTORY_COUNT = DARK_PRODUCT_DIRECTORY_BASELINE.length;
 
@@ -142,9 +144,9 @@ describe("dark test directories outside src/__tests__", () => {
     // changed census shape — the comparison below would pass at zero against
     // an equally empty baseline and this file would be decoration.
     expect(darkProductDirectories.length).toBeGreaterThan(50);
-    expect(
-      darkProductDirectories.every((d) => d.startsWith("src/")),
-    ).toBe(true);
+    expect(darkProductDirectories.every((d) => d.startsWith("src/"))).toBe(
+      true,
+    );
   });
 
   it("keeps the committed baseline sorted, unique and non-empty", () => {
