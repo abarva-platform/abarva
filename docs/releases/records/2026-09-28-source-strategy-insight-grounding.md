@@ -29,11 +29,13 @@ Release lane: `global-control-lane`. Layer 4 Source projection and presentation 
 - Respect an explicit unresolved event-type mapping instead of selecting a more specific pack by matching its broad event-type label.
 - With no quantified value levers, show an unsized state and the lever names rather than illustrative dollar bars.
 - Replace an unlinked Strategy benchmark and universal sponsor-language claim with evidence-bound, decision-neutral guidance.
+- Preserve declared commercial-risk context for unsized levers in the governed aVa answer; an ambiguous coarse event type remains unresolved in vendor-coverage answers.
 
 ## QA / Validation
 
 - Pass: three red-first builder cases and one rendered empty-state case failed on the base implementation, then six focused suites passed 85/85.
 - Pass: two practical mutations, one restoring the ambiguous archetype fallback and one restoring numeric sample bars, each failed its targeted test; the restored code passed.
+- Pass: the first PR CI run found two aVa consumers of the changed Strategy contract. The risk-grounding answer now names declared risks without amounts; vendor-coverage tests use an actual managed-service type for managed-service facts and include a coarse-type refusal. The full Source aVa library passed 26 suites / 396 tests locally.
 - Not run: final-head CI, runtime deployment, and signed-in replay. They are required before live acceptance is claimed.
 
 ## Rollout Plan
