@@ -36,6 +36,8 @@ import {
   SAMPLE_TRANSITION_STAGE,
 } from "../sample-view-model";
 import type { ApprovalsInboxItem } from "@/lib/source/approvals-inbox";
+import type { SourceEventEvidence } from "@/lib/source/canvas-substrate";
+import { evidenceForStage } from "@/lib/source/canonical-specs/evidence-requirements";
 import type { SourcingEventSummary } from "@/lib/source/types";
 
 const EVENT: SourcingEventSummary = {
@@ -151,6 +153,23 @@ const SCOPE_READY_ARTIFACTS = [
   },
 ];
 
+const SCOPE_READY_EVIDENCE: SourceEventEvidence[] = evidenceForStage("scope")
+  .filter((requirement) => requirement.level === "required")
+  .map((requirement, index) => ({
+    id: `scope-evidence-${index}`,
+    sourceEventId: EVENT.id,
+    tenantKey: "demo-client",
+    requirementId: requirement.requirementId,
+    stage: "scope",
+    currentState: "Usable Evidence",
+    sourceArtifactId: null,
+    sourceEventFactIds: [`fact-${index}`],
+    notes: null,
+    lastSyncedAt: null,
+    createdAt: "2026-08-14T00:00:00.000Z",
+    updatedAt: "2026-08-14T00:00:00.000Z",
+  }));
+
 describe("SourceAnalyticsCanvas stage workflow", () => {
   beforeEach(() => {
     routerPush.mockClear();
@@ -199,11 +218,12 @@ describe("SourceAnalyticsCanvas stage workflow", () => {
       viewStage="scope"
       tenantName="Demo Client"
       stageView={sponsorPendingStage}
+      evidenceStates={SCOPE_READY_EVIDENCE}
       initialWorkspace="steps"
     />);
     expect(await screen.findByRole("button", { name: "Acknowledge and notify sponsor" })).toBeInTheDocument();
     expect(screen.getByText("Sponsor: Sam Sponsor")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /Open Scope gate/ })).toBeDisabled();
+    expect(screen.queryByRole("button", { name: /Open Scope gate/ })).toBeNull();
   });
 
   it("offers sponsor review from the mounted Scope step without approving the gate", async () => {
@@ -226,11 +246,12 @@ describe("SourceAnalyticsCanvas stage workflow", () => {
         viewStage="scope"
         tenantName="Demo Client"
         stageView={sponsorPendingStage}
+        evidenceStates={SCOPE_READY_EVIDENCE}
         initialWorkspace="steps"
       />,
     );
 
-    expect(screen.getByRole("button", { name: /Open Scope gate/ })).toBeDisabled();
+    expect(screen.queryByRole("button", { name: /Open Scope gate/ })).toBeNull();
     fireEvent.click(screen.getByRole("button", { name: "Request sponsor review" }));
     await waitFor(() => {
       expect(global.fetch).toHaveBeenCalledWith(
@@ -242,7 +263,7 @@ describe("SourceAnalyticsCanvas stage workflow", () => {
       );
     });
     expect(await screen.findByText("Notification logged; no email sent.")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /Open Scope gate/ })).toBeDisabled();
+    expect(screen.queryByRole("button", { name: /Open Scope gate/ })).toBeNull();
   });
 
   it("does not offer sponsor review from another Scope step", () => {
@@ -276,6 +297,7 @@ describe("SourceAnalyticsCanvas stage workflow", () => {
         viewStage="scope"
         tenantName="Demo Client"
         stageView={sponsorPendingStage}
+        evidenceStates={SCOPE_READY_EVIDENCE}
         approvalItems={[APPROVAL]}
         initialWorkspace="steps"
       />,
@@ -285,7 +307,7 @@ describe("SourceAnalyticsCanvas stage workflow", () => {
       "Review evidence, artifact status, and gate criteria separately in Approvals.",
     );
     expect(screen.queryByText(/1 step left before Scope can move to approval/)).toBeNull();
-    expect(screen.getByRole("button", { name: /Open Scope gate/ })).toBeDisabled();
+    expect(screen.queryByRole("button", { name: /Open Scope gate/ })).toBeNull();
   });
 
   it("renders a real approve action in the featured Approvals card instead of looping back to steps", async () => {
@@ -311,6 +333,7 @@ describe("SourceAnalyticsCanvas stage workflow", () => {
             },
           },
         }}
+        evidenceStates={SCOPE_READY_EVIDENCE}
         artifacts={SCOPE_READY_ARTIFACTS}
         approvalItems={[APPROVAL]}
         initialWorkspace="approvals"
@@ -356,6 +379,99 @@ describe("SourceAnalyticsCanvas stage workflow", () => {
     expect(routerRefresh).toHaveBeenCalled();
   });
 
+  it("does not render a blocked stage-gate approval button", () => {
+    render(
+      <SourceAnalyticsCanvas
+        event={EVENT}
+        viewStage="scope"
+        tenantName="Demo Client"
+        stageView={{
+          ...SAMPLE_SCOPE_STAGE,
+          gate: {
+            ...SAMPLE_SCOPE_STAGE.gate,
+            action: {
+              eventId: EVENT.id,
+              rationale: "Reviewed the current Scope decision basis.",
+              confirmationKeys: ["scopeEvidenceComplete"],
+            },
+          },
+        }}
+        approvalItems={[APPROVAL]}
+        initialWorkspace="approvals"
+      />,
+    );
+
+    expect(screen.queryByRole("button", { name: /Resolve blockers/ })).toBeNull();
+    expect(screen.queryByTestId("source-stage-gate-approve")).toBeNull();
+    expect(screen.getByTestId("source-stage-gate-blocked"))
+      .toHaveTextContent("Required workflow inputs are still open");
+  });
+
+  it("hides stage approval on direct Approvals navigation while required evidence is missing", () => {
+    render(
+      <SourceAnalyticsCanvas
+        event={EVENT}
+        viewStage="scope"
+        tenantName="Demo Client"
+        stageView={{
+          ...COMPLETE_SCOPE_STAGE,
+          gate: {
+            ...COMPLETE_SCOPE_STAGE.gate,
+            action: {
+              eventId: EVENT.id,
+              rationale: "Reviewed the current Scope decision basis.",
+              confirmationKeys: ["scopeEvidenceComplete", "scopeInputsReviewed", "scopeStageFinal"],
+              redirectStageKey: "rfp",
+            },
+          },
+        }}
+        artifacts={SCOPE_READY_ARTIFACTS}
+        approvalItems={[APPROVAL]}
+        initialWorkspace="approvals"
+      />,
+    );
+
+    expect(screen.queryByTestId("source-stage-gate-approve")).toBeNull();
+    expect(screen.getByTestId("source-stage-gate-blocked"))
+      .toHaveTextContent("required evidence");
+  });
+
+  it("keeps stage approval hidden until the rationale meets the server minimum", () => {
+    render(
+      <SourceAnalyticsCanvas
+        event={EVENT}
+        viewStage="scope"
+        tenantName="Demo Client"
+        stageView={{
+          ...COMPLETE_SCOPE_STAGE,
+          gate: {
+            ...COMPLETE_SCOPE_STAGE.gate,
+            action: {
+              eventId: EVENT.id,
+              rationale: "approved",
+              confirmationKeys: [
+                "scopeEvidenceComplete",
+                "scopeInputsReviewed",
+                "scopeStageFinal",
+              ],
+              redirectStageKey: "rfp",
+            },
+          },
+        }}
+        evidenceStates={SCOPE_READY_EVIDENCE}
+        artifacts={SCOPE_READY_ARTIFACTS}
+        approvalItems={[APPROVAL]}
+        initialWorkspace="approvals"
+      />,
+    );
+
+    expect(screen.queryByTestId("source-stage-gate-approve")).toBeNull();
+    fireEvent.change(screen.getByLabelText("Scope approval rationale"), {
+      target: { value: "Reviewed the required evidence." },
+    });
+    expect(screen.getByTestId("source-stage-gate-approve")).toBeEnabled();
+  });
+
   it("requires sponsor context but attributes SELF Scope approval to the signed-in user", async () => {
     render(
       <SourceAnalyticsCanvas
@@ -373,19 +489,20 @@ describe("SourceAnalyticsCanvas stage workflow", () => {
             },
           },
         }}
+        evidenceStates={SCOPE_READY_EVIDENCE}
         artifacts={SCOPE_READY_ARTIFACTS}
         approvalItems={[APPROVAL]}
         initialWorkspace="approvals"
       />,
     );
-    const approve = screen.getByTestId("source-stage-gate-approve");
-    expect(approve).toBeDisabled();
+    expect(screen.queryByTestId("source-stage-gate-approve")).toBeNull();
     fireEvent.change(screen.getByLabelText("Sponsor name"), { target: { value: "Morgan Lee" } });
     fireEvent.change(screen.getByLabelText("Sponsor title"), { target: { value: "Chief Technology Officer" } });
     fireEvent.change(screen.getByLabelText("Sponsor role"), { target: { value: "Executive sponsor" } });
     fireEvent.change(screen.getByLabelText("Sponsor notification email"), { target: { value: "morgan@example.test" } });
-    expect(approve).toBeDisabled();
+    expect(screen.queryByTestId("source-stage-gate-approve")).toBeNull();
     fireEvent.click(screen.getByLabelText("I am approving this stage, not the sponsor. A notification will be attempted after the decision; delivery is audited separately."));
+    const approve = screen.getByTestId("source-stage-gate-approve");
     expect(approve).toBeEnabled();
     fireEvent.click(approve);
     await waitFor(() => expect(global.fetch).toHaveBeenCalledWith(
@@ -416,8 +533,7 @@ describe("SourceAnalyticsCanvas stage workflow", () => {
     expect(screen.queryByText("Your inputs & feedback")).toBeNull();
     expect(screen.queryByText("steps ready")).toBeNull();
 
-    const continueButton = screen.getByRole("button", { name: /Continue/ });
-    expect(continueButton).toBeDisabled();
+    expect(screen.queryByRole("button", { name: /Continue/ })).toBeNull();
     expect(screen.getByText(/Required before Continue/)).toBeInTheDocument();
 
     expect(
@@ -496,6 +612,87 @@ describe("SourceAnalyticsCanvas stage workflow", () => {
     expect(screen.getByRole("button", { name: /Continue/ })).toBeEnabled();
   });
 
+  it("keeps progression out of sight and shows only the active step's evidence", () => {
+    render(
+      <SourceAnalyticsCanvas
+        event={EVENT}
+        viewStage="scope"
+        tenantName="Demo Client"
+        stageView={SAMPLE_SCOPE_STAGE}
+        initialWorkspace="steps"
+      />,
+    );
+
+    expect(screen.queryByRole("button", { name: /Continue/ })).toBeNull();
+    expect(screen.getAllByTestId("source-shell-evidence-ask-table")).toHaveLength(1);
+    expect(screen.getByTestId("source-shell-evidence-ask-row-scope.volumetrics"))
+      .toBeInTheDocument();
+    expect(screen.queryByTestId("source-shell-evidence-ask-row-scope.app-inventory"))
+      .toBeNull();
+  });
+
+  it("keeps a captured step open until its mapped required evidence is usable", () => {
+    render(
+      <SourceAnalyticsCanvas
+        event={EVENT}
+        viewStage="scope"
+        tenantName="Demo Client"
+        stageView={COMPLETE_SCOPE_STAGE}
+        artifacts={SCOPE_READY_ARTIFACTS}
+        initialWorkspace="steps"
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: /Provide the volumetrics/ }));
+    expect(screen.queryByRole("button", { name: /Continue/ })).toBeNull();
+    expect(screen.queryByTestId("source-shell-stage-ready-panel")).toBeNull();
+    expect(screen.getByTestId("source-shell-evidence-ask-row-scope.volumetrics"))
+      .toHaveTextContent("Provide the volumetrics");
+    expect(screen.getByTestId("source-shell-evidence-ask-row-scope.volumetrics"))
+      .toHaveAttribute("data-ready", "false");
+  });
+
+  it("keeps the gate action hidden while file review remains open", () => {
+    render(
+      <SourceAnalyticsCanvas
+        event={EVENT}
+        viewStage="scope"
+        tenantName="Demo Client"
+        stageView={COMPLETE_SCOPE_STAGE}
+        evidenceStates={SCOPE_READY_EVIDENCE}
+        initialWorkspace="steps"
+      />,
+    );
+
+    expect(screen.getByTestId("source-stage-ready-primary-files"))
+      .toBeInTheDocument();
+    expect(screen.queryByTestId("source-stage-ready-open-approval"))
+      .toBeNull();
+    expect(screen.queryByTestId("source-shell-evidence-ask-table"))
+      .toBeNull();
+  });
+
+  it("does not offer stage approval when tasks are complete but required evidence is missing", () => {
+    render(
+      <SourceAnalyticsCanvas
+        event={EVENT}
+        viewStage="scope"
+        tenantName="Demo Client"
+        stageView={COMPLETE_SCOPE_STAGE}
+        artifacts={SCOPE_READY_ARTIFACTS}
+        initialWorkspace="steps"
+      />,
+    );
+
+    expect(screen.queryByTestId("source-shell-stage-ready-panel"))
+      .toBeNull();
+    expect(screen.queryByTestId("source-stage-ready-open-approval"))
+      .toBeNull();
+    expect(screen.queryByRole("button", { name: /Continue/ })).toBeNull();
+    expect(screen.getByTestId("source-shell-evidence-ask-row-scope.volumetrics"))
+      .toHaveTextContent("Provide the volumetrics");
+  });
+
   it("shows a stored template file as awaiting extraction without unlocking Continue", () => {
     const storedFileStage = {
       ...SAMPLE_SCOPE_STAGE,
@@ -532,13 +729,14 @@ describe("SourceAnalyticsCanvas stage workflow", () => {
     expect(
       screen.getByTestId("source-shell-active-step-needs"),
     ).toHaveTextContent("Readback: file stored; typed facts still pending.");
-    expect(screen.getByRole("button", { name: /Continue/ })).toBeDisabled();
+    expect(screen.queryByRole("button", { name: /Continue/ })).toBeNull();
   });
 
-  it("resets the upload pane when Continue advances between provide steps", async () => {
+  it("resets the upload pane when evidence readback advances to the next provide step", async () => {
     const provideSteps = SAMPLE_SCOPE_STAGE.tasks.filter((task) =>
       ["scope.volumetrics", "scope.app-inventory"].includes(task.id),
     );
+    const stageView = { ...SAMPLE_SCOPE_STAGE, tasks: provideSteps };
     (global.fetch as jest.Mock)
       .mockResolvedValueOnce({
         ok: true,
@@ -563,12 +761,12 @@ describe("SourceAnalyticsCanvas stage workflow", () => {
         }),
       });
 
-    render(
+    const { rerender } = render(
       <SourceAnalyticsCanvas
         event={EVENT}
         viewStage="scope"
         tenantName="Demo Client"
-        stageView={{ ...SAMPLE_SCOPE_STAGE, tasks: provideSteps }}
+        stageView={stageView}
         initialWorkspace="steps"
       />,
     );
@@ -580,10 +778,23 @@ describe("SourceAnalyticsCanvas stage workflow", () => {
     });
 
     await screen.findByText("volumetrics.csv");
-    const continueButton = screen.getByRole("button", { name: /Continue/ });
-    await waitFor(() => expect(continueButton).toBeEnabled());
-    fireEvent.click(continueButton);
-
+    expect(screen.queryByRole("button", { name: /Continue/ })).toBeNull();
+    rerender(
+      <SourceAnalyticsCanvas
+        event={EVENT}
+        viewStage="scope"
+        tenantName="Demo Client"
+        stageView={{
+          ...stageView,
+          tasks: provideSteps.map((task) => task.id === "scope.volumetrics"
+            ? { ...task, state: "done" as const, evidenceComplete: true }
+            : task),
+        }}
+        evidenceStates={SCOPE_READY_EVIDENCE.filter((row) =>
+          row.requirementId === "EVID-SRC-SCOPE-TICKET-HISTORY")}
+        initialWorkspace="steps"
+      />,
+    );
     expect(
       screen.getByRole("heading", {
         name: "Provide the application inventory",
@@ -687,6 +898,7 @@ describe("SourceAnalyticsCanvas stage workflow", () => {
         viewStage="scope"
         tenantName="Demo Client"
         stageView={completedScopeStage}
+        evidenceStates={SCOPE_READY_EVIDENCE}
         approvalItems={[APPROVAL]}
         initialWorkspace="steps"
       />,
@@ -696,7 +908,7 @@ describe("SourceAnalyticsCanvas stage workflow", () => {
       screen.getByTestId("source-shell-stage-ready-panel"),
     ).toHaveTextContent("Required inputs are complete");
     expect(screen.getByTestId("source-shell-v2-steps")).toHaveTextContent(
-      "Review Files first; the approval gate stays blocked until artifact review is cleared or an exception is recorded",
+      "Review required evidence and Files before the approval action appears",
     );
     expect(screen.getByTestId("source-shell-v2-steps")).not.toHaveTextContent(
       "Open the approval gate when the owner is ready",
@@ -720,40 +932,29 @@ describe("SourceAnalyticsCanvas stage workflow", () => {
       "file review gaps",
     );
     expect(screen.getByTestId("source-stage-ready-status")).toHaveTextContent(
-      "Accept artifacts in Files",
+      "Review required evidence in Files",
     );
     expect(
       screen.getByTestId("source-stage-ready-primary-files"),
-    ).toHaveTextContent("Review Files and accept artifacts");
-    expect(
-      screen.getByTestId("source-stage-ready-open-approval"),
-    ).toHaveTextContent("Open exception approval");
+    ).toHaveTextContent("Review evidence");
+    expect(screen.queryByTestId("source-stage-ready-open-approval"))
+      .toBeNull();
     expect(
       screen.getByTestId("source-stage-ready-approval-blocker"),
     ).toHaveTextContent("Approval gate blocker");
     expect(
       screen.getByTestId("source-stage-ready-approval-blocker"),
     ).toHaveTextContent(
-      "Continue to approval is blocked until these client-final artifacts are accepted in Files, or the owner records an exception.",
+      "Continue to approval is blocked until required evidence and client-final artifact review are complete.",
     );
     expect(
       screen.queryByTestId("source-stage-ready-review-approval"),
     ).not.toBeInTheDocument();
-    expect(
-      screen.getByTestId("source-shell-evidence-ask-row-scope.volumetrics"),
-    ).toHaveTextContent("Readback: typed facts available.");
-    expect(
-      screen.getByTestId("source-shell-evidence-ask-row-scope.volumetrics"),
-    ).toHaveAttribute("data-ready", "true");
-    expect(
-      screen.getByTestId("source-shell-evidence-ask-row-scope.volumetrics"),
-    ).toHaveTextContent("Captured; review Files");
+    expect(screen.queryByTestId("source-shell-evidence-ask-table"))
+      .toBeNull();
 
-    fireEvent.click(screen.getByTestId("source-stage-ready-open-approval"));
+    fireEvent.click(screen.getByTestId("source-shell-workspace-approvals"));
 
-    expect(routerPush).toHaveBeenCalledWith(
-      `/source/events/${EVENT.id}?stage=scope&workspace=approvals`,
-    );
     expect(screen.getByTestId("source-shell-v2-approvals")).toBeInTheDocument();
     expect(
       screen.getByTestId("source-shell-approval-readiness"),
@@ -915,6 +1116,7 @@ describe("SourceAnalyticsCanvas stage workflow", () => {
         viewStage="scope"
         tenantName="Demo Client"
         stageView={completedScopeStage}
+        evidenceStates={SCOPE_READY_EVIDENCE}
         approvalItems={[APPROVAL]}
         initialWorkspace="steps"
       />,
@@ -941,6 +1143,7 @@ describe("SourceAnalyticsCanvas stage workflow", () => {
         viewStage="scope"
         tenantName="Demo Client"
         stageView={completedScopeStage}
+        evidenceStates={SCOPE_READY_EVIDENCE}
         artifacts={[
           {
             id: "scope-app-inventory",

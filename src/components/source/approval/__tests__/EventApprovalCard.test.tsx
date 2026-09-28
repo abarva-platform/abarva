@@ -1,6 +1,7 @@
 /**
  * @jest-environment jsdom
  */
+import "@testing-library/jest-dom";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { EventApprovalCard } from "../EventApprovalCard";
 
@@ -63,10 +64,7 @@ describe("EventApprovalCard", () => {
     render(<EventApprovalCard {...baseProps} />);
 
     expect(screen.getByTestId("source-approval-page")).not.toBeNull();
-    expect(
-      (screen.getByRole("button", { name: "Approve" }) as HTMLButtonElement)
-        .disabled,
-    ).toBe(true);
+    expect(screen.queryByRole("button", { name: "Approve" })).toBeNull();
     expect(
       (
         screen.getByRole("button", {
@@ -84,10 +82,7 @@ describe("EventApprovalCard", () => {
     render(
       <EventApprovalCard {...baseProps} requestAuthorityVersionId={null} />,
     );
-    expect(
-      (screen.getByRole("button", { name: "Approve" }) as HTMLButtonElement)
-        .disabled,
-    ).toBe(true);
+    expect(screen.queryByRole("button", { name: "Approve" })).toBeNull();
     expect(
       screen.getByText(/current Request version is unavailable/i),
     ).not.toBeNull();
@@ -239,8 +234,7 @@ describe("EventApprovalCard", () => {
   it("enables actions only after rationale and human confirmation", () => {
     render(<EventApprovalCard {...baseProps} />);
 
-    const approve = screen.getByTestId("source-approval-approve");
-    expect((approve as HTMLButtonElement).disabled).toBe(true);
+    expect(screen.queryByTestId("source-approval-approve")).toBeNull();
 
     fireEvent.change(screen.getByTestId("source-approval-rationale"), {
       target: {
@@ -248,14 +242,26 @@ describe("EventApprovalCard", () => {
           "Reviewed the trigger, owner, scope, value basis, and baseline owner for this event.",
       },
     });
-    expect((approve as HTMLButtonElement).disabled).toBe(true);
+    expect(screen.queryByTestId("source-approval-approve")).toBeNull();
 
     fireEvent.click(screen.getByTestId("source-approval-confirmation"));
-    expect((approve as HTMLButtonElement).disabled).toBe(false);
+    expect(screen.getByTestId("source-approval-approve")).toBeEnabled();
     expect(
       (screen.getByTestId("source-approval-co-approver") as HTMLButtonElement)
         .disabled,
     ).toBe(false);
+  });
+
+  it("does not show Approve until the Request decision is ready", () => {
+    render(<EventApprovalCard {...baseProps} />);
+
+    expect(screen.queryByTestId("source-approval-approve")).toBeNull();
+    fireEvent.change(screen.getByTestId("source-approval-rationale"), {
+      target: { value: "Reviewed the recorded Request facts and authority." },
+    });
+    expect(screen.queryByTestId("source-approval-approve")).toBeNull();
+    fireEvent.click(screen.getByTestId("source-approval-confirmation"));
+    expect(screen.getByTestId("source-approval-approve")).toBeEnabled();
   });
 
   it("explains the exact remaining rationale length beside a checked but disabled decision", () => {
@@ -266,10 +272,7 @@ describe("EventApprovalCard", () => {
     });
     fireEvent.click(screen.getByTestId("source-approval-confirmation"));
 
-    const approve = screen.getByTestId(
-      "source-approval-approve",
-    ) as HTMLButtonElement;
-    expect(approve.disabled).toBe(true);
+    expect(screen.queryByTestId("source-approval-approve")).toBeNull();
     expect(
       screen.getByTestId("source-approval-rationale-help").textContent,
     ).toContain("4 more characters needed");
@@ -283,7 +286,7 @@ describe("EventApprovalCard", () => {
     fireEvent.change(screen.getByTestId("source-approval-rationale"), {
       target: { value: " approved   " },
     });
-    expect(approve.disabled).toBe(true);
+    expect(screen.queryByTestId("source-approval-approve")).toBeNull();
     expect(
       screen.getByTestId("source-approval-rationale-help").textContent,
     ).toContain("4 more characters needed");
@@ -291,7 +294,7 @@ describe("EventApprovalCard", () => {
     fireEvent.change(screen.getByTestId("source-approval-rationale"), {
       target: { value: "Reviewed intake facts" },
     });
-    expect(approve.disabled).toBe(false);
+    expect(screen.getByTestId("source-approval-approve")).toBeEnabled();
     expect(
       screen.getByTestId("source-approval-rationale-help").textContent,
     ).toContain("Minimum met");
@@ -306,9 +309,7 @@ describe("EventApprovalCard", () => {
     expect(screen.getByTestId("source-approval-gate-value")).not.toBeNull();
     expect(screen.getByTestId("source-approval-gate-archetype")).not.toBeNull();
 
-    const approve = screen.getByTestId(
-      "source-approval-approve",
-    ) as HTMLButtonElement;
+    expect(screen.queryByTestId("source-approval-approve")).toBeNull();
     fireEvent.change(screen.getByTestId("source-approval-rationale"), {
       target: {
         value:
@@ -319,11 +320,11 @@ describe("EventApprovalCard", () => {
     // rationale + only two of three boxes → still blocked
     fireEvent.click(screen.getByTestId("source-approval-gate-sponsor"));
     fireEvent.click(screen.getByTestId("source-approval-gate-value"));
-    expect(approve.disabled).toBe(true);
+    expect(screen.queryByTestId("source-approval-approve")).toBeNull();
 
     // all three confirmed → Approve enables
     fireEvent.click(screen.getByTestId("source-approval-gate-archetype"));
-    expect(approve.disabled).toBe(false);
+    expect(screen.getByTestId("source-approval-approve")).toBeEnabled();
   });
 
   it("identifies the decision owner without implying a mandatory sponsor or co-approver", () => {

@@ -972,7 +972,7 @@ describe("SourceAnalyticsCanvas — docked aVa honesty against live stage state"
     mockAskAnythingBar.mockClear();
   });
 
-  it("does NOT show the stale sample claim when a LIVE stage view says all tasks are complete", () => {
+  it("does not call a stage complete when task badges are done but required evidence is absent", () => {
     const allDoneLiveView: StageAnalyticsView = {
       ...SAMPLE_SCOPE_STAGE,
       tasks: SAMPLE_SCOPE_STAGE.tasks.map((t) => ({
@@ -995,8 +995,7 @@ describe("SourceAnalyticsCanvas — docked aVa honesty against live stage state"
     // The stale sample claim ("Two steps left on Scope — volumetrics and the
     // sponsor letter") must NOT appear when the live view says complete.
     expect(canvas.textContent).not.toContain("Two steps left");
-    // And it must say something honest instead.
-    expect(canvas.textContent).toMatch(/complete/i);
+    expect(canvas.textContent).toContain("2 required workflow steps remain");
   });
 
   it("derives an honest 'N of M left' claim from the SAME live task-completion evidence when incomplete", () => {
