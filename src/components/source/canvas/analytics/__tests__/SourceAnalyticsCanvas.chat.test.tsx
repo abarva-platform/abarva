@@ -582,6 +582,9 @@ describe("SourceAnalyticsCanvas — AskAnythingBar reachability", () => {
     expect(
       screen.getByTestId("source-artifact-review-queue-row-d10_rfi_summary"),
     ).toHaveTextContent("Review supporting evidence");
+    expect(
+      screen.queryByTestId("source-generate-artifact-d10_rfi_summary"),
+    ).not.toBeInTheDocument();
   });
 
   it("summarizes Source evidence parsing and search readiness without implying enterprise promotion", () => {
