@@ -42,7 +42,7 @@ jest.mock("next/navigation", () => ({
 }));
 
 const view = buildTowerCommandCenterView(designFixtureMart(), {
-  tenantName: "Meridian",
+  tenantName: "Fixture Tenant",
 })!;
 
 /** Every tab and sub-tab TowerCommandCenter declares, in its own order. */
@@ -94,8 +94,8 @@ const RESPONSE = {
 
 /** The packet the shell builds from RESPONSE — the preconditions read it. */
 const packet = buildTowerChatAvaAnswerPacket({
-  tenantKey: "meridian",
-  tenantName: "Meridian",
+  tenantKey: "fixture-tenant",
+  tenantName: "Fixture Tenant",
   question: QUESTION,
   modelOutput: RESPONSE.modelOutput,
   response: RESPONSE.response,
@@ -127,9 +127,9 @@ function mountShell() {
   return render(
     <TowerCommandCenterAvaShell
       view={view}
-      tenantName="Meridian"
-      clientId="meridian"
-      clientKey="meridian"
+      tenantName="Fixture Tenant"
+      clientId="fixture-tenant"
+      clientKey="fixture-tenant"
     />,
   );
 }
