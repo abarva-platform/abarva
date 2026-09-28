@@ -17,7 +17,6 @@
   "src/components/__tests__",
   "src/components/agent-answer/__tests__",
   "src/components/ava-chat/__tests__",
-  "src/components/chrome/__tests__",
   "src/components/context-broker/__tests__",
   "src/components/evidence/__tests__",
   "src/components/intelligence-advisory/__tests__",
