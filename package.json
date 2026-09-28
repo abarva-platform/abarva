@@ -190,7 +190,7 @@
     "verify:pilot-data-plane": "node scripts/pilot-env/verify-data-plane.mjs",
     "auth:clerk-sso:verify": "node scripts/auth/verify-clerk-sso-readiness.mjs",
     "auth:fakeclient-sso:verify": "node scripts/auth/verify-fakeclient-sso-rehearsal.mjs",
-    "auth:agent-client-states": "npx tsx scripts/auth/prime-agent-client-auth-states.ts",
+    "auth:agent-client-states": "DOTENV_CONFIG_PATH=.env.local npx tsx -r dotenv/config scripts/auth/prime-agent-client-auth-states.ts",
     "auth:foundation-proof:provision": "npx tsx scripts/auth/provision-foundation-proof-logins.ts",
     "auth:foundation-proof:provision:airline:apply": "npx tsx scripts/auth/provision-foundation-proof-logins.ts --tenant airline-demo-new --apply --emit-proof-bundle",
     "auth:foundation-proof:prime": "npx tsx scripts/auth/prime-foundation-preview-session.ts",

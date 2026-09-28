@@ -17,26 +17,26 @@
     "No timestamp is recorded, so refreshing this file on an unchanged tree is a no-op."
   ],
   "counts": {
-    "testFiles": 2546,
-    "coveredTestFiles": 2211,
-    "pullRequestCoveredTestFiles": 2210,
-    "uncoveredTestFiles": 335,
+    "testFiles": 2549,
+    "coveredTestFiles": 2215,
+    "pullRequestCoveredTestFiles": 2214,
+    "uncoveredTestFiles": 334,
     "directoriesWithTests": 494,
-    "directoriesFullyCovered": 315,
+    "directoriesFullyCovered": 316,
     "directoriesPartiallyCovered": 29,
-    "directoriesUncovered": 150,
-    "directoriesWithUnrunTestFiles": 179,
-    "directoriesWithUntriagedUnrunTestFiles": 168,
+    "directoriesUncovered": 149,
+    "directoriesWithUnrunTestFiles": 178,
+    "directoriesWithUntriagedUnrunTestFiles": 167,
     "declaredQuarantineTestFiles": 52,
-    "untriagedUnrunTestFiles": 283,
+    "untriagedUnrunTestFiles": 282,
     "indeterminateInvocations": 0,
     "unresolvedIgnoreArguments": 0,
     "criticalGovernedRiskDirectories": 2,
     "highGovernedRiskDirectories": 5,
-    "unclassifiedRiskDirectories": 161,
-    "rankedDirectories": 168,
-    "rankedUntriagedUnrunTestFiles": 283,
-    "unclassifiedRiskDirectoriesWithResolvedProductSources": 154,
+    "unclassifiedRiskDirectories": 160,
+    "rankedDirectories": 167,
+    "rankedUntriagedUnrunTestFiles": 282,
+    "unclassifiedRiskDirectoriesWithResolvedProductSources": 153,
     "unclassifiedRiskDirectoriesWithNoResolvedProductSource": 7
   },
   "quarantineLists": [
@@ -3098,7 +3098,7 @@
       }
     },
     {
-      "directory": "src/lib/crawl/__tests__",
+      "directory": "src/lib/cxo-canvas/__tests__",
       "testFiles": 1,
       "unrunTestFiles": 1,
       "declaredQuarantineTestFiles": 0,
@@ -3113,7 +3113,7 @@
       }
     },
     {
-      "directory": "src/lib/cxo-canvas/__tests__",
+      "directory": "src/lib/cxo-intel/__tests__",
       "testFiles": 1,
       "unrunTestFiles": 1,
       "declaredQuarantineTestFiles": 0,
@@ -3128,7 +3128,7 @@
       }
     },
     {
-      "directory": "src/lib/cxo-intel/__tests__",
+      "directory": "src/lib/decisions/__tests__",
       "testFiles": 1,
       "unrunTestFiles": 1,
       "declaredQuarantineTestFiles": 0,
@@ -3143,21 +3143,6 @@
       }
     },
     {
-      "directory": "src/lib/decisions/__tests__",
-      "testFiles": 1,
-      "unrunTestFiles": 1,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 1,
-      "admittedBy": "untriaged_unrun_work",
-      "governedRisk": {
-        "score": 0,
-        "band": "unclassified",
-        "signals": [],
-        "productSourceCount": 2,
-        "rank": 100
-      }
-    },
-    {
       "directory": "src/lib/deliverables/synthesis/__tests__",
       "testFiles": 1,
       "unrunTestFiles": 1,
@@ -3169,7 +3154,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 3,
-        "rank": 101
+        "rank": 100
       }
     },
     {
@@ -3184,7 +3169,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 2,
-        "rank": 102
+        "rank": 101
       }
     },
     {
@@ -3199,7 +3184,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 103
+        "rank": 102
       }
     },
     {
@@ -3214,7 +3199,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 104
+        "rank": 103
       }
     },
     {
@@ -3229,7 +3214,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 2,
-        "rank": 105
+        "rank": 104
       }
     },
     {
@@ -3244,7 +3229,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 106
+        "rank": 105
       }
     },
     {
@@ -3259,7 +3244,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 107
+        "rank": 106
       }
     },
     {
@@ -3274,7 +3259,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 2,
-        "rank": 108
+        "rank": 107
       }
     },
     {
@@ -3289,7 +3274,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 109
+        "rank": 108
       }
     },
     {
@@ -3304,7 +3289,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 110
+        "rank": 109
       }
     },
     {
@@ -3319,7 +3304,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 111
+        "rank": 110
       }
     },
     {
@@ -3334,7 +3319,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 112
+        "rank": 111
       }
     },
     {
@@ -3349,7 +3334,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 2,
-        "rank": 113
+        "rank": 112
       }
     },
     {
@@ -3364,7 +3349,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 114
+        "rank": 113
       }
     },
     {
@@ -3379,7 +3364,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 3,
-        "rank": 115
+        "rank": 114
       }
     },
     {
@@ -3394,7 +3379,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 3,
-        "rank": 116
+        "rank": 115
       }
     },
     {
@@ -3409,7 +3394,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 2,
-        "rank": 117
+        "rank": 116
       }
     },
     {
@@ -3424,7 +3409,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 4,
-        "rank": 118
+        "rank": 117
       }
     },
     {
@@ -3439,7 +3424,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 119
+        "rank": 118
       }
     },
     {
@@ -3454,7 +3439,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 3,
-        "rank": 120
+        "rank": 119
       }
     },
     {
@@ -3469,7 +3454,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 121
+        "rank": 120
       }
     },
     {
@@ -3484,7 +3469,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 2,
-        "rank": 122
+        "rank": 121
       }
     },
     {
@@ -3499,7 +3484,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 2,
-        "rank": 123
+        "rank": 122
       }
     },
     {
@@ -3514,7 +3499,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 124
+        "rank": 123
       }
     },
     {
@@ -3529,7 +3514,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 125
+        "rank": 124
       }
     },
     {
@@ -3544,7 +3529,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 126
+        "rank": 125
       }
     },
     {
@@ -3559,7 +3544,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 127
+        "rank": 126
       }
     },
     {
@@ -3574,7 +3559,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 128
+        "rank": 127
       }
     },
     {
@@ -3589,7 +3574,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 2,
-        "rank": 129
+        "rank": 128
       }
     },
     {
@@ -3604,7 +3589,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 2,
-        "rank": 130
+        "rank": 129
       }
     },
     {
@@ -3619,7 +3604,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 2,
-        "rank": 131
+        "rank": 130
       }
     },
     {
@@ -3634,7 +3619,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 3,
-        "rank": 132
+        "rank": 131
       }
     },
     {
@@ -3649,7 +3634,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 133
+        "rank": 132
       }
     },
     {
@@ -3664,7 +3649,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 5,
-        "rank": 134
+        "rank": 133
       }
     },
     {
@@ -3679,7 +3664,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 3,
-        "rank": 135
+        "rank": 134
       }
     },
     {
@@ -3694,7 +3679,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 2,
-        "rank": 136
+        "rank": 135
       }
     },
     {
@@ -3709,7 +3694,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 137
+        "rank": 136
       }
     },
     {
@@ -3724,7 +3709,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 3,
-        "rank": 138
+        "rank": 137
       }
     },
     {
@@ -3739,7 +3724,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 139
+        "rank": 138
       }
     },
     {
@@ -3754,7 +3739,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 140
+        "rank": 139
       }
     },
     {
@@ -3769,7 +3754,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 141
+        "rank": 140
       }
     },
     {
@@ -3784,7 +3769,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 142
+        "rank": 141
       }
     },
     {
@@ -3799,7 +3784,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 2,
-        "rank": 143
+        "rank": 142
       }
     },
     {
@@ -3814,7 +3799,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 144
+        "rank": 143
       }
     },
     {
@@ -3829,7 +3814,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 2,
-        "rank": 145
+        "rank": 144
       }
     },
     {
@@ -3844,7 +3829,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 146
+        "rank": 145
       }
     },
     {
@@ -3859,7 +3844,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 2,
-        "rank": 147
+        "rank": 146
       }
     },
     {
@@ -3874,7 +3859,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 2,
-        "rank": 148
+        "rank": 147
       }
     },
     {
@@ -3889,7 +3874,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 2,
-        "rank": 149
+        "rank": 148
       }
     },
     {
@@ -3904,7 +3889,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 150
+        "rank": 149
       }
     },
     {
@@ -3919,7 +3904,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 151
+        "rank": 150
       }
     },
     {
@@ -3934,7 +3919,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 2,
-        "rank": 152
+        "rank": 151
       }
     },
     {
@@ -3949,7 +3934,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 4,
-        "rank": 153
+        "rank": 152
       }
     },
     {
@@ -3964,7 +3949,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 154
+        "rank": 153
       }
     },
     {
@@ -3979,7 +3964,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 2,
-        "rank": 155
+        "rank": 154
       }
     },
     {
@@ -3994,7 +3979,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 8,
-        "rank": 156
+        "rank": 155
       }
     },
     {
@@ -4009,7 +3994,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 2,
-        "rank": 157
+        "rank": 156
       }
     },
     {
@@ -4024,7 +4009,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 158
+        "rank": 157
       }
     },
     {
@@ -4039,7 +4024,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 159
+        "rank": 158
       }
     },
     {
@@ -4054,7 +4039,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 160
+        "rank": 159
       }
     },
     {
@@ -4069,7 +4054,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 4,
-        "rank": 161
+        "rank": 160
       }
     },
     {
@@ -4084,7 +4069,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 162
+        "rank": 161
       }
     },
     {
@@ -4099,7 +4084,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 163
+        "rank": 162
       }
     },
     {
@@ -4114,7 +4099,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 164
+        "rank": 163
       }
     },
     {
@@ -4129,7 +4114,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 165
+        "rank": 164
       }
     },
     {
@@ -4144,7 +4129,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 2,
-        "rank": 166
+        "rank": 165
       }
     },
     {
@@ -4159,7 +4144,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 3,
-        "rank": 167
+        "rank": 166
       }
     },
     {
@@ -4174,7 +4159,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 168
+        "rank": 167
       }
     }
   ],
@@ -5247,19 +5232,6 @@
     },
     {
       "directory": "src/lib/atlas/initiative-deep/joins/__tests__",
-      "testFiles": 1,
-      "unrunTestFiles": 1,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 1,
-      "governedRisk": {
-        "score": 0,
-        "band": "unclassified",
-        "signals": [],
-        "productSourceCount": 2
-      }
-    },
-    {
-      "directory": "src/lib/crawl/__tests__",
       "testFiles": 1,
       "unrunTestFiles": 1,
       "declaredQuarantineTestFiles": 0,
@@ -7048,14 +7020,6 @@
     },
     {
       "directory": "src/lib/corpus/__tests__",
-      "testFiles": 1,
-      "coveredTestFiles": 0,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 1,
-      "via": []
-    },
-    {
-      "directory": "src/lib/crawl/__tests__",
       "testFiles": 1,
       "coveredTestFiles": 0,
       "declaredQuarantineTestFiles": 0,

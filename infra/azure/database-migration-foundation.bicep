@@ -30,6 +30,18 @@ param registryServer string
 @description('Key Vault-backed secret references projected into the migration job.')
 param keyVaultSecretRefs array
 
+@description('Existing user-assigned identity assignments to preserve on the operator job.')
+param preservedManagedIdentities object = {}
+
+@description('Additional environment variable mappings to existing job secrets.')
+param additionalEnvironmentBindings array = []
+
+@description('Maximum time in seconds for one operator job execution.')
+param replicaTimeout int = 3600
+
+@description('Optional Container Apps workload profile for the job.')
+param workloadProfileName string = ''
+
 @description('Command run by the migration container.')
 param migrationCommand string = 'npx tsx src/scripts/bootstrap-azure-postgres-compat.ts && npx tsx src/scripts/run-migrations.ts --ci --allow-destructive'
 
@@ -75,6 +87,10 @@ module migrationJob './database-migration-job.bicep' = {
     imageName: imageName
     registryServer: registryServer
     keyVaultSecretRefs: keyVaultSecretRefs
+    preservedManagedIdentities: preservedManagedIdentities
+    additionalEnvironmentBindings: additionalEnvironmentBindings
+    replicaTimeout: replicaTimeout
+    workloadProfileName: workloadProfileName
     migrationCommand: migrationCommand
   }
 }

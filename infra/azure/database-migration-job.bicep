@@ -21,6 +21,12 @@ param registryServer string
 @description('Key Vault-backed secret references projected into the job. Each object requires envName, containerAppSecretName, and keyVaultSecretUri.')
 param keyVaultSecretRefs array
 
+@description('Existing user-assigned identity assignments to preserve on the job.')
+param preservedManagedIdentities object = {}
+
+@description('Additional environment variable mappings to existing job secrets.')
+param additionalEnvironmentBindings array = []
+
 @description('Command run by the migration container.')
 param migrationCommand string = 'npx tsx src/scripts/bootstrap-azure-postgres-compat.ts && npx tsx src/scripts/run-migrations.ts --ci --allow-destructive'
 
@@ -33,6 +39,9 @@ param memory string = '1Gi'
 @description('Maximum time in seconds for one migration execution.')
 param replicaTimeout int = 3600
 
+@description('Optional Container Apps workload profile for the job.')
+param workloadProfileName string = ''
+
 @description('Retry limit for failed executions. Keep low to avoid repeated destructive-looking attempts.')
 param replicaRetryLimit int = 0
 
@@ -44,6 +53,19 @@ resource managedIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2023-
   name: managedIdentityName
 }
 
+var keyVaultEnvironmentBindings = [for secretRef in keyVaultSecretRefs: {
+  name: secretRef.envName
+  secretRef: secretRef.containerAppSecretName
+}]
+var additionalEnvironmentVariableBindings = [for binding in additionalEnvironmentBindings: {
+  name: binding.envName
+  secretRef: binding.secretRef
+}]
+var environmentBindings = concat(
+  keyVaultEnvironmentBindings,
+  additionalEnvironmentVariableBindings
+)
+
 resource migrationJob 'Microsoft.App/jobs@2024-03-01' = {
   name: migrationJobName
   location: location
@@ -52,12 +74,13 @@ resource migrationJob 'Microsoft.App/jobs@2024-03-01' = {
   })
   identity: {
     type: 'UserAssigned'
-    userAssignedIdentities: {
+    userAssignedIdentities: union(preservedManagedIdentities, {
       '${managedIdentity.id}': {}
-    }
+    })
   }
   properties: {
     environmentId: containerAppsEnvironment.id
+    workloadProfileName: empty(workloadProfileName) ? null : workloadProfileName
     configuration: {
       triggerType: 'Manual'
       replicaTimeout: replicaTimeout
@@ -90,10 +113,7 @@ resource migrationJob 'Microsoft.App/jobs@2024-03-01' = {
             '-lc'
             migrationCommand
           ]
-          env: [for secretRef in keyVaultSecretRefs: {
-            name: secretRef.envName
-            secretRef: secretRef.containerAppSecretName
-          }]
+          env: environmentBindings
           resources: {
             cpu: json(cpu)
             memory: memory
