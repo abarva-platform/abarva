@@ -6,6 +6,7 @@ import { getActiveClientRow } from "@/lib/active-client";
 import { getCurrentUser } from "@/lib/auth/current-user";
 import { loadUserSourceAccessPolicy } from "@/lib/auth/source-access-policy";
 import { requireTenancy, tenancyErrorResponse } from "@/lib/auth/tenancy";
+import { azureRead } from "@/lib/data-plane/azureRead";
 import { getAzureWriteFluentClient } from "@/lib/data-plane/postgresCompat";
 import { evidenceById } from "@/lib/source/canonical-specs";
 import type { SourceEventEvidenceStateRow } from "@/lib/source/canvas-substrate/types";
@@ -85,15 +86,24 @@ export async function POST(req: NextRequest, { params }: RouteCtx): Promise<Resp
     return failure(403, "event_owner_or_admin_required", "The Event Owner or client admin must record this decision.");
   }
 
-  const { data: state, error: stateError } = await db
-    .from("source_event_evidence_states")
-    .select("*")
-    .eq("source_event_id", event.id)
-    .eq("requirement_id", requirementId)
-    .maybeSingle<SourceEventEvidenceStateRow>();
-  if (stateError) return failure(500, "lookup_failed", stateError.message);
+  let state: (SourceEventEvidenceStateRow & { updated_at_exact: string }) | undefined;
+  try {
+    const rows = await azureRead.query<SourceEventEvidenceStateRow & { updated_at_exact: string }>(
+      `SELECT *, updated_at::text AS updated_at_exact
+       FROM public.source_event_evidence_states
+       WHERE source_event_id = $1 AND requirement_id = $2 AND tenant_key = $3
+       LIMIT 1`,
+      [event.id, requirementId, activeClient.key],
+    );
+    state = rows[0];
+  } catch (error) {
+    return failure(500, "lookup_failed", error instanceof Error ? error.message : String(error));
+  }
   if (!state || state.tenant_key !== activeClient.key || state.stage_key !== requirement.stage) {
     return failure(409, "evidence_row_missing", "The event requirement row must be scaffolded first.");
+  }
+  if (!state.updated_at_exact) {
+    return failure(500, "lookup_failed", "The evidence row has no precise version.");
   }
   if (state.applicability_status === undefined) {
     return failure(503, "schema_pending", "Evidence applicability is not available in this environment yet.");
@@ -117,7 +127,7 @@ export async function POST(req: NextRequest, { params }: RouteCtx): Promise<Resp
     .eq("id", state.id)
     .eq("source_event_id", event.id)
     .eq("tenant_key", activeClient.key)
-    .eq("updated_at", state.updated_at)
+    .eq("updated_at", state.updated_at_exact)
     .select("*")
     .maybeSingle<SourceEventEvidenceStateRow>();
   if (updateError) return failure(500, "decision_failed", updateError.message);
