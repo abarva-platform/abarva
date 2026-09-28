@@ -270,6 +270,9 @@ describe("EventApprovalCard", () => {
 
     const dock = screen.getByTestId("source-approval-progress-dock");
     expect(dock).toHaveStyle({ position: "fixed", bottom: "16px" });
+    expect(dock).toHaveStyle({ right: "clamp(16px, 5vw, 60px)" });
+    expect(dock.style.left).toBe("");
+    expect(dock.style.transform).toBe("");
     expect(screen.getByTestId("source-approval-page"))
       .toHaveStyle({ paddingBottom: "100px" });
     expect(screen.getByTestId("source-approval-progress-status"))
