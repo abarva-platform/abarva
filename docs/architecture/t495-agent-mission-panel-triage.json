@@ -1,0 +1,175 @@
+{
+  "item": "T-495",
+  "title": "One suite of T-495's claimable half: agent-mission-panel rewritten from a source-text scanner into a behavioural suite, and wired",
+  "recordedAt": "2026-09-28T11:30:00.000Z",
+  "base": "b50ad84da0065336b3925a202c73f9682fb4b3fe",
+  "directory": "src/__tests__/integration/agents",
+  "scope": [
+    "One suite, because T-495's acceptance is per suite. It is suite 9 of the 11 in the claimable half; 2 remain, both in src/__tests__/integration/agents: agent-mission-surface-wiring (red on base) and mission-workflow-handoff.",
+    "The gated half of T-495 -- the rows carrying textIsTheSubject -- is NOT touched here.",
+    "This record exists so the T-770 control resolves this path's classification from the LATEST record rather than from the T-492 draw. Measured: with the workflow step extended and this record absent, t770-scanner-wiring-refusal fails 2 of 7 and names this suite."
+  ],
+  "method": [
+    "Re-verified on origin/main b50ad84da0 by running the suite: 41 of 41 green, and run by no workflow. 28 cases read AgentMissionPanel.tsx or agent-mission-view.ts as text: nine checked that attribute strings, the literal 'view.honestDisclaimer' and aria-expanded appeared in the component file; four banned <img, emoji, chat phrasing and placeholder copy in the file; eight banned 'use client', useState, useEffect, Date.now, new Date, Math.random, fetch, provider names and import paths in the file; seven did the same over the view module and grepped it for the disclaimer string. None rendered the component.",
+    "The 13 builder and label cases that were already behavioural are kept byte-for-byte. The 28 text cases are deleted and replaced by 28 cases: 4 builder cases (the exact mission ids each variant is given, the variant/disclaimer/label contract including the override, clock/Math.random/fetch independence, and a bucket-exact summary over controlled missions), 18 render cases in jsdom with @testing-library/react (every variant as one ag11 region with its variant, surface label and exactly one disclaimer; the view's disclaimer rather than a constant; only the drawer collapsed; no image, emoji, chat phrasing or placeholder in rendered text; compact strip count, badges and lead line including singular and empty; right panel one card per mission with every field and chip; priority chip colour by tier; inline recommendation first-mission-only and empty state; executive brief stats over a fixture where no two stats coincide and top-three only; drawer shows the count and none of the missions), and 6 server-component cases (every function component in each variant's tree invoked as a plain call outside a render, with the reached component names asserted so the walk is not vacuous; markup byte-equal across two system times with Math.random and fetch throwing).",
+    "Eighteen mutations -- fourteen against the component and four against the view module -- each verified by git diff --numstat on the product file to have changed it before the suite ran. Each was run against the new suite and against the deleted suite restored from origin/main as a sibling file; the deleted suite is 0 of 41 failing on the base.",
+    "One mutation (the Critical stat reading the high bucket) first SURVIVED the new suite: the executive-brief fixture had 2 critical and 2 high, while its own comment claimed all four stats differed. The fixture was changed to 1 critical, and the mutation is caught."
+  ],
+  "counts": {
+    "suites": 1,
+    "wired": 1,
+    "heldUnwired": 0,
+    "repaired": 1,
+    "deleted": 0
+  },
+  "suites": [
+    {
+      "path": "src/__tests__/integration/agents/agent-mission-panel.test.ts",
+      "priorShape": "never_reached",
+      "priorVia": [],
+      "priorCollected": true,
+      "priorCovered": false,
+      "priorGreen": true,
+      "collected": true,
+      "green": true,
+      "totalTests": 41,
+      "failedTests": 0,
+      "pendingTests": 0,
+      "readFileSyncCount": 0,
+      "sourceTextScanner": false,
+      "textIsTheSubject": false,
+      "rendersComponent": true,
+      "drivesProductionEntryPoint": "AgentMissionPanel",
+      "verdict": "wired",
+      "wiredBy": ".github/workflows/integration-suites.yml",
+      "ownerItem": "T-495",
+      "priorVerdict": {
+        "record": "docs/architecture/t492-stale-suite-triage.json",
+        "verdict": "rewrite_as_behavior",
+        "ownerItem": "T-495",
+        "sourceTextScanner": true
+      },
+      "priorVerdictStatus": "discharged_here",
+      "rationale": "The deleted suite was green and asserted what two files say, not what the panel renders. Against eighteen mutations that change what a variant renders or what the view builder returns, it caught 2 -- the two whose tokens it grepped for (aria-expanded=\"true\" and new Date() -- and missed 16, including a right panel silently dropping a mission, a variant dispatching to the wrong panel, the disclaimer hard-coded, a useMemo hook, and missions filed in the wrong summary bucket. The new suite caught all eighteen."
+    }
+  ],
+  "mutations": [
+    {
+      "mutation": "AgentMissionPanel.tsx: PriorityChip: medium coloured navy as high",
+      "result": "1 of 41 failed",
+      "deletedScanner": "0 of 41 failed -- missed",
+      "catches": "the priority chip's navy/muted split; the deleted suite never rendered a chip"
+    },
+    {
+      "mutation": "AgentMissionPanel.tsx: compact strip badges only the first mission",
+      "result": "1 of 41 failed",
+      "deletedScanner": "0 of 41 failed -- missed",
+      "catches": "compact strip silently dropping badges"
+    },
+    {
+      "mutation": "AgentMissionPanel.tsx: right panel drops the last mission",
+      "result": "3 of 41 failed",
+      "deletedScanner": "0 of 41 failed -- missed",
+      "catches": "the right panel silently dropping a mission; the count still said the full number"
+    },
+    {
+      "mutation": "AgentMissionPanel.tsx: executive brief lists four",
+      "result": "1 of 41 failed",
+      "deletedScanner": "0 of 41 failed -- missed",
+      "catches": "the executive brief listing more than its top three"
+    },
+    {
+      "mutation": "AgentMissionPanel.tsx: executive brief Critical stat shows the high count",
+      "result": "1 of 41 failed",
+      "deletedScanner": "0 of 41 failed -- missed",
+      "catches": "a stat reading the wrong bucket; the fixture has 5 queued, 1 critical, 2 high, 3 agents so no two coincide"
+    },
+    {
+      "mutation": "AgentMissionPanel.tsx: executive brief Agents stat counts missions",
+      "result": "1 of 41 failed",
+      "deletedScanner": "0 of 41 failed -- missed",
+      "catches": "the Agents stat counting missions instead of distinct agents"
+    },
+    {
+      "mutation": "AgentMissionPanel.tsx: inline recommendation shows the last mission",
+      "result": "1 of 41 failed",
+      "deletedScanner": "0 of 41 failed -- missed",
+      "catches": "which mission the inline recommendation shows"
+    },
+    {
+      "mutation": "AgentMissionPanel.tsx: hidden drawer claims to be expanded",
+      "result": "1 of 41 failed",
+      "deletedScanner": "1 of 41 failed -- caught",
+      "catches": "the drawer claiming to be expanded"
+    },
+    {
+      "mutation": "AgentMissionPanel.tsx: count loses its singular",
+      "result": "1 of 41 failed",
+      "deletedScanner": "0 of 41 failed -- missed",
+      "catches": "'1 mission' singular"
+    },
+    {
+      "mutation": "AgentMissionPanel.tsx: a hook (useMemo) added to MissionCard",
+      "result": "1 of 41 failed",
+      "deletedScanner": "0 of 41 failed -- missed",
+      "catches": "a hook in a server component; the deleted regexes named only useState and useEffect"
+    },
+    {
+      "mutation": "AgentMissionPanel.tsx: disclaimer is a constant, not the view's",
+      "result": "1 of 41 failed",
+      "deletedScanner": "0 of 41 failed -- missed",
+      "catches": "the disclaimer being a constant; the deleted case only checked that the text 'view.honestDisclaimer' appeared in the file"
+    },
+    {
+      "mutation": "AgentMissionPanel.tsx: card prints the action as its stop condition",
+      "result": "1 of 41 failed",
+      "deletedScanner": "0 of 41 failed -- missed",
+      "catches": "a card printing the wrong field under 'stops when'"
+    },
+    {
+      "mutation": "AgentMissionPanel.tsx: right_panel falls through to the drawer",
+      "result": "6 of 41 failed",
+      "deletedScanner": "0 of 41 failed -- missed",
+      "catches": "a variant dispatching to the wrong panel"
+    },
+    {
+      "mutation": "AgentMissionPanel.tsx: drawer reads the clock",
+      "result": "1 of 41 failed",
+      "deletedScanner": "1 of 41 failed -- caught",
+      "catches": "the clock reaching rendered markup"
+    },
+    {
+      "mutation": "agent-mission-view.ts: summary files low under medium",
+      "result": "1 of 41 failed",
+      "deletedScanner": "0 of 41 failed -- missed",
+      "catches": "a mission filed in the wrong priority bucket; the deleted case only reconciled sums"
+    },
+    {
+      "mutation": "agent-mission-view.ts: summary files steward under atlas",
+      "result": "1 of 41 failed",
+      "deletedScanner": "0 of 41 failed -- missed",
+      "catches": "a mission filed under the wrong agent; the deleted case only reconciled sums"
+    },
+    {
+      "mutation": "agent-mission-view.ts: override surface label ignored",
+      "result": "6 of 41 failed",
+      "deletedScanner": "0 of 41 failed -- missed",
+      "catches": "the surface-label override being ignored"
+    },
+    {
+      "mutation": "agent-mission-view.ts: drawer gets the four-mission subset",
+      "result": "1 of 41 failed",
+      "deletedScanner": "0 of 41 failed -- missed",
+      "catches": "the drawer counting a subset of the queue"
+    }
+  ],
+  "droppedWithoutReplacement": [
+    "'does not declare a \"use client\" directive'. A client directive does not change what the component renders or whether it can be called outside a render, so no behavioural case can observe it; the outside-render tree walk covers the property the directive was standing in for.",
+    "'does not import anthropic or openai providers' and 'does not import from forbidden lib paths', for both files. Import paths are not behaviour. The determinism cases make fetch throw and hold markup byte-equal across clocks, which is what a provider or data-path import would have to break to matter here.",
+    "'contains all 5 variant strings as literal occurrences'. Superseded by rendering each variant and reading its data-agent-mission-panel-variant attribute."
+  ],
+  "residualsNotClosedHere": [
+    "The directory src/__tests__/integration/agents still cannot be wired whole: agent-mission-surface-wiring is red on base and it and mission-workflow-handoff remain T-495 scanners. This suite is named individually for that reason.",
+    "AgentMissionPanel IS mounted: ProgramPressureCards, StewardSetupControlCenter and ProgramCanonicalDetail import it. Whether those mounts are reached by a route is agent-mission-surface-wiring's subject, not this suite's."
+  ]
+}
