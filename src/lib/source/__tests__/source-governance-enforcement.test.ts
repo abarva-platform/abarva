@@ -174,7 +174,21 @@ describe("Source governance enforcement", () => {
     expect(verdict.ok).toBe(true);
   });
 
-  it("allows a hard gate when client-stated evidence has explicit usable-evidence review", () => {
+  it("rejects an unbacked incumbent contract even after explicit human review", () => {
+    const verdict = evaluateCriterionMetReadiness({
+      criterion: criterion({ criterionId: "GATE-STRATEGY-01" }),
+      artifacts: [artifact({ artifactCode: "d01_strategy_memo", status: "approved", body: "Reviewed strategy memo." })],
+      evidence: strategyEvidenceReady({ incumbent: { sourceArtifactId: null, sourceEventFactIds: [] } }),
+      reason: REVIEW_REASON,
+      approvalPolicyCode: "self_v1",
+    });
+    expect(verdict.ok).toBe(false);
+    expect(verdict.blockers).toEqual(expect.arrayContaining([
+      expect.objectContaining({ code: "required_evidence_unverified", detail: expect.stringContaining("Incumbent contract package") }),
+    ]));
+  });
+
+  it("does not treat a client-stated incumbent as an executed agreement even at Usable Evidence", () => {
     const verdict = evaluateCriterionMetReadiness({
       criterion: criterion({ criterionId: "GATE-STRATEGY-01" }),
       artifacts: [
@@ -193,7 +207,10 @@ describe("Source governance enforcement", () => {
       reason: REVIEW_REASON,
     });
 
-    expect(verdict.ok).toBe(true);
+    expect(verdict.ok).toBe(false);
+    expect(verdict.blockers).toEqual(expect.arrayContaining([
+      expect.objectContaining({ code: "required_evidence_unverified" }),
+    ]));
   });
 
   it("does not apply the client-stated provenance hold to soft criteria", () => {
@@ -216,7 +233,7 @@ describe("Source governance enforcement", () => {
           requirementId: "EVID-SRC-EVAL-RATER-SCORES",
           stage: "evaluation",
           currentState: "Available",
-          sourceArtifactId: null,
+          sourceArtifactId: "artifact-rater-scores",
         }),
         evidence({
           requirementId: "EVID-SRC-EVAL-WEIGHT-RATIONALE",
@@ -234,7 +251,7 @@ describe("Source governance enforcement", () => {
           requirementId: "EVID-SRC-EVAL-TCO-NORMALIZATION",
           stage: "evaluation",
           currentState: "Available",
-          sourceArtifactId: null,
+          sourceArtifactId: "artifact-tco-model",
         }),
       ],
       reason: REVIEW_REASON,

@@ -159,6 +159,19 @@ beforeEach(() => {
 });
 
 describe("POST Source evidence answer", () => {
+  it.each([
+    "EVID-SRC-STR-INCUMBENT",
+    "EVID-SRC-STR-SPEND-BASELINE",
+  ])("does not turn a typed answer into record-backed %s", async (requirementId) => {
+    const res = await POST(
+      request({ answer: "No source extract is available for this synthetic test.", stage: "strategy" }),
+      { params: Promise.resolve({ eventId: "evt-1", requirementId }) },
+    );
+    expect(res.status).toBe(422);
+    expect(writes).toEqual([]);
+    expect(writeAdapter.insertActivityLog).not.toHaveBeenCalled();
+  });
+
   it("advances existing evidence to client-stated Available and logs provenance", async () => {
     const res = await POST(
       request({

@@ -515,6 +515,29 @@ describe("SourceAnalyticsCanvas stage workflow", () => {
       .toBeInTheDocument();
   });
 
+  it("does not offer approval when a record-backed evidence row is only client-stated", () => {
+    const evidenceStates = SCOPE_READY_EVIDENCE.map((row) =>
+      row.requirementId === "EVID-SRC-SCOPE-SLA-BASELINE"
+        ? { ...row, currentState: "Available" as const, sourceEventFactIds: [], sourceArtifactId: null }
+        : row,
+    );
+    render(
+      <SourceAnalyticsCanvas
+        event={EVENT}
+        viewStage="scope"
+        tenantName="Demo Client"
+        stageView={COMPLETE_SCOPE_STAGE}
+        artifacts={SCOPE_READY_ARTIFACTS}
+        evidenceStates={evidenceStates}
+        approvalItems={[APPROVAL]}
+        initialWorkspace="approvals"
+      />,
+    );
+    expect(screen.queryByTestId("source-stage-gate-approve")).toBeNull();
+    expect(screen.getByTestId("source-shell-approval-readiness"))
+      .toHaveTextContent("Required evidence still open");
+  });
+
   it("keeps stage approval hidden until the rationale meets the server minimum", () => {
     render(
       <SourceAnalyticsCanvas

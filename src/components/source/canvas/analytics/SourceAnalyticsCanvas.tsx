@@ -31,6 +31,7 @@ import { SourceAwardSowHandoffReadinessPanel } from "@/components/source/SourceA
 import { buildSourceAwardSowHandoffReadiness } from "@/lib/source/award-sow-handoff-readiness";
 import { applySourceApprovalPolicyToStageView } from "@/lib/source/approval-policy-stage-view";
 import { sourceEvidenceAppliesToApprovalPolicy } from "@/lib/source/approval-policy";
+import { evidenceMeetsRequirement, hasRecordedSource, requiresRecordedSource } from "@/lib/source/evidence-authority";
 import { SOURCE_APPROVAL_REASON_MIN_LENGTH } from "@/lib/source/source-governance-enforcement";
 import {
   buildSourceStage08AcceptanceSpine,
@@ -4239,7 +4240,7 @@ function buildStageEvidenceRequirementRows(
         : null,
     });
     const ready = requirementMeetsMinimum(requirement, evidence, lifecycle);
-    const uploaded = requirementHasUploadedEvidence(lifecycle, evidence, file);
+    const uploaded = requirementHasUploadedEvidence(requirement, lifecycle, evidence, file);
     return { requirement, evidence, file, lifecycle, ready, uploaded };
   });
 }
@@ -4836,19 +4837,18 @@ function requirementMeetsMinimum(
   evidence: SourceEventEvidence | undefined,
   lifecycle: SourceEvidenceLifecycleResult,
 ): boolean {
+  if (requiresRecordedSource(requirement) && !hasRecordedSource(evidence)) return false;
   if (lifecycle.stageReady || lifecycle.meetsMinimumState) return true;
-  if (!evidence) return false;
-  return (
-    (EVIDENCE_STATE_RANK[evidence.currentState] ?? -1) >=
-    (EVIDENCE_STATE_RANK[requirement.minimumState] ?? 99)
-  );
+  return evidenceMeetsRequirement(requirement, evidence);
 }
 
 function requirementHasUploadedEvidence(
+  requirement: SourceEvidenceRequirement,
   lifecycle: SourceEvidenceLifecycleResult,
   evidence: SourceEventEvidence | undefined,
   file: SourceShellFileItem | null,
 ): boolean {
+  if (requiresRecordedSource(requirement) && !hasRecordedSource(evidence)) return false;
   if (file || lifecycle.uploaded || lifecycle.parsed) return true;
   if (!evidence) return false;
   return (

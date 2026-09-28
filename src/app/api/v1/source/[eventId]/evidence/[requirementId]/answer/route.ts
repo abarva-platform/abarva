@@ -15,6 +15,7 @@ import { inferClientKeyFromEmail, isClientKey } from "@/lib/client-config";
 import { getAzureWriteFluentClient } from "@/lib/data-plane/postgresCompat";
 import { selectSourceWriteAdapter } from "@/lib/data-plane/write-adapters/sourceWriteAdapter";
 import { evidenceById } from "@/lib/source/canonical-specs";
+import { requiresRecordedSource } from "@/lib/source/evidence-authority";
 import {
   evidenceStateRowToView,
   type SourceEventEvidenceCurrentState,
@@ -155,6 +156,17 @@ export async function POST(req: NextRequest, { params }: RouteCtx) {
           detail: "Source contributor rights are required to answer evidence.",
         },
         { status: 403 },
+      );
+    }
+
+    if (requiresRecordedSource(requirement)) {
+      return Response.json(
+        {
+          ok: false,
+          error: "source_record_required",
+          detail: `${requirement.label} requires a linked source record; a typed answer cannot establish its readiness.`,
+        },
+        { status: 422 },
       );
     }
 
