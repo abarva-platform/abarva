@@ -1,0 +1,135 @@
+{
+  "item": "T-495",
+  "title": "Suite 2 of T-495's claimable half: the /home/learn single-top-nav rule rewritten from a source-text scanner into a render assertion, and its directory wired",
+  "recordedAt": "2026-09-28T02:26:05.000Z",
+  "base": "84b1759323",
+  "directory": "src/components/chrome/__tests__",
+  "scope": [
+    "One suite, because T-495's acceptance is per suite. The other rows of the T-492 draw are untouched and keep their T-492 verdicts.",
+    "The GATED half of T-495 -- the three rows carrying textIsTheSubject -- is not touched here. It needs a lane decision from the owner, and two of those three rows live in src/__tests__/hygiene, the directory this change deliberately leaves unwired.",
+    "This record exists so the T-770 control resolves the deleted path's classification from the LATEST record rather than from the T-492 draw, and so the reconciliation report's 'a verdict nothing can expire' line for that path is discharged rather than left dangling."
+  ],
+  "method": [
+    "Re-verified on origin/main 84b1759323 by RUNNING the suite, not by reading it: 1 case failed of 1, and the failure was the byte assertion the item's own note predicts.",
+    "The byte assertions were DELETED rather than repaired, per the acceptance. A tighter pattern would have been the same defect with a longer fuse.",
+    "The replacement renders MaestroChrome wrapping the real /home/learn layout, composed as the App Router composes them, so a second top nav inside the layout is visible to the assertion. Only Clerk, next/image, next/navigation, the sign-out hook, the client-context hook and the admin-inbox badge are mocked -- all of them I/O or session boundaries. The prefix list, the branch that reads it, the layout and both navs run for real.",
+    "Five mutations against the product, each verified to have changed the file before the suite was run.",
+    "Both halves of the wiring were proven necessary: removing the workflow COMMAND while leaving its comment block in place still fails the dark-directory ratchet, and re-adding the baseline line while keeping the command also fails it."
+  ],
+  "counts": {
+    "suites": 1,
+    "wired": 1,
+    "heldUnwired": 0,
+    "repaired": 1,
+    "deleted": 1
+  },
+  "suites": [
+    {
+      "path": "src/__tests__/hygiene/learn-layout-single-nav.test.ts",
+      "priorShape": "never_reached",
+      "priorVia": [],
+      "priorCollected": true,
+      "priorCovered": false,
+      "priorGreen": false,
+      "collected": false,
+      "green": null,
+      "totalTests": 0,
+      "failedTests": 0,
+      "pendingTests": 0,
+      "readFileSyncCount": 0,
+      "toContainCount": 0,
+      "sourceTextScanner": false,
+      "textIsTheSubject": false,
+      "rendersComponent": false,
+      "verdict": "deleted_and_replaced",
+      "replacedBy": "src/components/chrome/__tests__/MaestroChrome.learnShellChrome.test.tsx",
+      "ownerItem": "T-495",
+      "priorVerdict": {
+        "record": "docs/architecture/t492-stale-suite-triage.json",
+        "verdict": "rewrite_as_behavior",
+        "ownerItem": "T-495",
+        "sourceTextScanner": true
+      },
+      "priorVerdictStatus": "discharged_here",
+      "rationale": "Its single case read the bytes of src/components/chrome/MaestroChrome.tsx and src/app/(maestro)/home/learn/layout.tsx and asserted four substrings across them. It was red on the base because MaestroChrome.tsx was reformatted from single to double quotes, so the prefix it grepped for as '/home' is written \"/home\". Nothing about the behaviour had changed: the prefix is still in the list, the chrome still mounts one NexusTopNav for it, and the layout still carries none. The classification is set false here because the file no longer exists -- the assertions it held were not repaired into a narrower scan, they were replaced by assertions over rendered output.",
+      "sourceTextScannerNote": "false because the path is gone, not because its content was reclassified. T-770 resolves classification by path and filters its live set by existsSync, so this row lowers the live declared-scanner count by one, which is the honest effect of deleting a scanner."
+    },
+    {
+      "path": "src/components/chrome/__tests__/MaestroChrome.learnShellChrome.test.tsx",
+      "priorShape": "absent",
+      "priorVia": [],
+      "priorCollected": false,
+      "priorCovered": false,
+      "priorGreen": null,
+      "collected": true,
+      "green": true,
+      "totalTests": 5,
+      "failedTests": 0,
+      "pendingTests": 0,
+      "readFileSyncCount": 0,
+      "toContainCount": 0,
+      "sourceTextScanner": false,
+      "textIsTheSubject": false,
+      "rendersComponent": true,
+      "drivesProductionEntryPoint": "MaestroChrome + HomeLearnLayout",
+      "verdict": "wired",
+      "wiredBy": ".github/workflows/unit-suites.yml",
+      "wiredAs": "directory",
+      "ownerItem": "T-495",
+      "rationale": "Reads no repository file and holds no toContain. Each of the four old byte assertions has a behavioural counterpart, and each counterpart was proven able to fail by a mutation of the product: that the chrome renders a NexusTopNav, that the /home prefix is what selects that branch, that the nested Learn layout renders none of its own, and that the layout renders the Learn side nav. The fourth case is a negative control on a path outside SHELL_SURFACE_PREFIXES, without which the suite would pass for a chrome that mounts the nav unconditionally -- a different component from the one the rule describes."
+    }
+  ],
+  "wiring": {
+    "directory": "src/components/chrome/__tests__",
+    "namedAs": "directory",
+    "filesInDirectory": 2,
+    "unrunBefore": 2,
+    "unrunAfter": 0,
+    "measuredOnBranch": "2 suites / 15 tests / 0 failing",
+    "darkBaselineLineRemoved": "src/__tests__/behaviors/product-directory-ci-coverage.baseline.json",
+    "coverageFloorAvoidance": "The suite is placed beside the component rather than in src/__tests__/behaviors. That directory's Behavior coverage floor thresholds an aggregate across every file its suites touch, and it passes with about 0.9 points of line headroom, so a suite importing a component tree fails it with every case green. Beside the component it gates merges without entering that average.",
+    "siblingPrefixCheck": "No sibling directory under src/components is named with __tests__ as a prefix-extension of src/components/chrome/__tests__, so the bare Jest path argument -- which is a regex -- selects this directory and nothing that arrived without being chosen."
+  },
+  "mutations": [
+    {
+      "mutation": "remove \"/home\" from SHELL_SURFACE_PREFIXES in MaestroChrome.tsx",
+      "result": "2 of 5 failed",
+      "catches": "the prefix entry that makes /home/learn shell-native -- the assertion the deleted byte scan was making when it broke"
+    },
+    {
+      "mutation": "home/learn/layout.tsx renders its own <NexusTopNav />",
+      "result": "3 of 5 failed",
+      "catches": "the double render the rule exists against, in the composed cases and in the layout-alone case"
+    },
+    {
+      "mutation": "if (isShellNativePath(pathname)) -> if (true) in MaestroChrome.tsx",
+      "result": "1 of 5 failed",
+      "catches": "the negative control. This is the mutation that proves the control necessary: without that case the suite passes for an unconditional nav."
+    },
+    {
+      "mutation": "home/learn/layout.tsx drops <LearnSideNav />",
+      "result": "2 of 5 failed",
+      "catches": "the layout's own contribution to the shell"
+    },
+    {
+      "mutation": "home/learn/layout.tsx main loses aria-label=\"Learn content\"",
+      "result": "1 of 5 failed",
+      "catches": "the named content region"
+    },
+    {
+      "mutation": "remove the `npx jest src/components/chrome/__tests__` COMMAND from unit-suites.yml while leaving its comment block in place",
+      "result": "1 of 4 failed in product-directory-ci-coverage.test.ts",
+      "catches": "the wiring itself, and specifically that a comment naming the directory does not satisfy the gate"
+    },
+    {
+      "mutation": "re-add src/components/chrome/__tests__ to product-directory-ci-coverage.baseline.json with the command present",
+      "result": "2 of 4 failed in product-directory-ci-coverage.test.ts",
+      "catches": "the other direction of the same set equality -- a baseline left lying after a wiring"
+    }
+  ],
+  "residualsNotClosedHere": [
+    "src/__tests__/hygiene keeps five files and stays dark. Two are ordinary rows of other items; three are declared source-text scanners, and two of those three -- canonical-paths.test.ts and no-apex-literal-leak.test.ts -- carry textIsTheSubject and are T-495's GATED half. The directory is also red: shell-v2-mode-layout.test.ts fails 1 case on this base, a nav-label byte assertion of the same family as the one deleted here. It is a claimable row of T-495 and the next suite of this draw, not this change's to take.",
+    "9 suites remain in T-495's claimable half after this one.",
+    "OBSERVED, NOT FIXED and not asserted either way: the T-492 draw declares FOUR rows with textIsTheSubject true -- canonical-paths.test.ts, no-apex-literal-leak.test.ts, ai-egress-migration.test.ts and src/lib/intelligence/canonical/persistence-contract.test.ts -- while T-495's gate scope names THREE, and its prose counts 14 scanners against the 15 the record declares. Both counts are short by exactly persistence-contract.test.ts, which suggests it was excluded from the item rather than forgotten by it; T-494 treats src/lib/intelligence/canonical separately, which is the likely reason. It is recorded here because the letter of the gate scope -- 'the 3 rows carrying textIsTheSubject' -- does not resolve a fourth row that carries it, and an agent reading only the scope could take a gated row believing it claimable. Not touched here, and not a verdict on which half it belongs to."
+  ]
+}

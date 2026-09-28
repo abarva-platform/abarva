@@ -1713,6 +1713,40 @@ jobs:
           npx jest src/lib/source/nda/__tests__
           --no-coverage --ci
 
+      # Item T-495, claimable half, suite 2 of 11.
+      # `src/__tests__/hygiene/learn-layout-single-nav.test.ts` asserted the
+      # single-top-nav rule for `/home/learn` over the BYTES of two files, and was
+      # red on this change's base `84b1759323` for a reason that is not a product
+      # defect: `MaestroChrome.tsx` was reformatted from single to double quotes,
+      # so the literal `'/home'` it grepped for is written `"/home"`. The byte
+      # assertions are DELETED rather than repaired — a sharper pattern is the same
+      # defect with a longer fuse (T-550's rule) — and replaced by
+      # `MaestroChrome.learnShellChrome.test.tsx`, which renders the chrome and the
+      # nested Learn layout composed the way the route tree composes them.
+      #
+      # It lands in `src/components/chrome/__tests__` rather than in
+      # `src/__tests__/behaviors`, which is the remedy the behaviour-coverage floor
+      # forces: that directory thresholds an aggregate across every file its suites
+      # touch, so a suite importing a component tree drags the aggregate down while
+      # all cases pass. Beside the component it gates merges without entering that
+      # average.
+      #
+      # `src/__tests__/hygiene` is NOT wired by this change and keeps its five
+      # remaining files. It is a red directory — a red directory is wired by fixing
+      # it, never by adding it to a green command — and three of those five are
+      # T-495's GATED half, which an agent must not attempt.
+      #
+      # Named as a DIRECTORY, not file by file, for this file's header reason. The
+      # directory is 2 of 2 unrun and both are green: measured on the branch,
+      # 2 suites / 15 tests / 0 failing. Its line leaves
+      # `product-directory-ci-coverage.baseline.json` in the same change, which
+      # that ratchet asserts as set equality in both directions — so removing the
+      # line without this step, or this step without the line, both fail.
+      - name: Run the T-495 chrome shell-ownership suites
+        run: >-
+          npx jest src/components/chrome/__tests__
+          --no-coverage --ci
+
       - name: Refuse a test run that modified committed input data
         if: always()
         run: node scripts/ci/assert-datasets-unmodified.mjs
