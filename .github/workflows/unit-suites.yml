@@ -66,6 +66,9 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Run signed-in crawl proof contracts
+        run: npx jest src/lib/crawl/__tests__/post-deploy-crawl-guard.test.ts --no-coverage --ci
+
       # Named as a directory, without a trailing slash, for the two reasons in
       # the header. Naming the directory rather than the files is what makes a
       # suite written here tomorrow run the day it lands.
@@ -1587,7 +1590,6 @@ jobs:
         run: >-
           npx jest src/lib/visual-system/__tests__
           --no-coverage --ci
-
 
       # T-493 drew the next 50 untriaged unrun test files, five each across ten
       # directories. Every one of the 50 was EXECUTED on its own with

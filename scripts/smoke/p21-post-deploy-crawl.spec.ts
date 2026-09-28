@@ -73,6 +73,14 @@ const postDeployWorkflow = fs.readFileSync(
   ".github/workflows/post-deploy-crawl.yml",
   "utf8",
 );
+const atlasWorkflow = fs.readFileSync(
+  ".github/workflows/atlas-prod-comprehensive-surface.yml",
+  "utf8",
+);
+const eclProductLiveProofWorkflow = fs.readFileSync(
+  ".github/workflows/ecl-product-live-proof.yml",
+  "utf8",
+);
 const postDeployHarness = fs.readFileSync(
   "scripts/crawl/post-deploy-harness.ts",
   "utf8",
@@ -81,6 +89,8 @@ const atlasGauntletHarness = fs.readFileSync(
   "scripts/qa/atlas-prod-comprehensive-surface.ts",
   "utf8",
 );
+const crawlHarness = fs.readFileSync("scripts/crawl/post-deploy-harness.ts", "utf8");
+const clerkTestingToken = fs.readFileSync("src/lib/crawl/clerk-testing-token.ts", "utf8");
 const personaSwitcher = fs.readFileSync(
   "src/lib/crawl/persona-switcher.ts",
   "utf8",
@@ -88,6 +98,7 @@ const personaSwitcher = fs.readFileSync(
 assert.match(postDeployWorkflow, /CLERK_SECRET_KEY:/);
 assert.match(postDeployWorkflow, /AZURE_LAB_CLERK_SECRET_KEY/);
 assert.match(postDeployWorkflow, /CLERK_TESTING_TOKEN_SECRET_KEY:/);
+assert.match(postDeployWorkflow, /NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: \$\{\{ vars\.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY \}\}/);
 assert.match(postDeployWorkflow, /CRAWL_TOTAL_TIMEOUT_MS:/);
 assert.match(postDeployWorkflow, /CRAWL_SURFACE_TIMEOUT_MS:/);
 assert.match(postDeployWorkflow, /timeout-minutes: 50/);
@@ -104,6 +115,13 @@ assert.match(postDeployHarness, /isAuthAutomationBlockMessage/);
 assert.match(postDeployHarness, /candidate-preview-auth-bootstrap/);
 assert.match(atlasGauntletHarness, /agentLoginForClientKey/);
 assert.match(atlasGauntletHarness, /installClerkTestingTokenInterceptor/);
+assert.match(atlasWorkflow, /NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: \$\{\{ vars\.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY \}\}/);
+assert.match(eclProductLiveProofWorkflow, /Verify private operator proof token binding/);
+assert.match(eclProductLiveProofWorkflow, /parallel-run-token/);
+assert.match(eclProductLiveProofWorkflow, /ABARVA_PRIVATE_BROWSER_PROOF_TOKEN/);
+assert.match(crawlHarness, /hasBlockingCrawlProofFinding\(comparison\)/);
+assert.match(clerkTestingToken, /appendClerkTestingTokenToRequestUrl/);
+assert.match(clerkTestingToken, /page\.route\("\*\*\/\*"/);
 assert.match(atlasGauntletHarness, /atlasClientRequest: 'apexretail'/);
 assert.match(atlasGauntletHarness, /atlasClientRequest: 'meridian'/);
 assert.match(atlasGauntletHarness, /atlasClientRequest: 'skyharbor'/);

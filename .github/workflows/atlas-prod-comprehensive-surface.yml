@@ -29,6 +29,7 @@ jobs:
     env:
       PROD_URL: ${{ inputs.prod_url || vars.PRODUCTION_URL || 'https://app.abarva.ai' }}
       CLERK_SECRET_KEY: ${{ secrets.CLERK_SECRET_KEY }}
+      NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: ${{ vars.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY }}
       ATLAS_GAUNTLET_REPORT_DIR: reports/atlas-prod-comprehensive-surface
       ATLAS_GAUNTLET_API_TIMEOUT_MS: "90000"
       ATLAS_GAUNTLET_RETRIES: "2"

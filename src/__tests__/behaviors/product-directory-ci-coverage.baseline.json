@@ -51,7 +51,6 @@
   "src/lib/compliance/__tests__",
   "src/lib/context-trust/__tests__",
   "src/lib/corpus/__tests__",
-  "src/lib/crawl/__tests__",
   "src/lib/cxo-canvas/__tests__",
   "src/lib/cxo-intel/__tests__",
   "src/lib/decisions/__tests__",
