@@ -218,6 +218,7 @@ describe("SourceAnalyticsCanvas stage workflow", () => {
       viewStage="scope"
       tenantName="Demo Client"
       stageView={sponsorPendingStage}
+      evidenceStates={SCOPE_READY_EVIDENCE}
       initialWorkspace="steps"
     />);
     expect(await screen.findByRole("button", { name: "Acknowledge and notify sponsor" })).toBeInTheDocument();
@@ -245,6 +246,7 @@ describe("SourceAnalyticsCanvas stage workflow", () => {
         viewStage="scope"
         tenantName="Demo Client"
         stageView={sponsorPendingStage}
+        evidenceStates={SCOPE_READY_EVIDENCE}
         initialWorkspace="steps"
       />,
     );
@@ -295,6 +297,7 @@ describe("SourceAnalyticsCanvas stage workflow", () => {
         viewStage="scope"
         tenantName="Demo Client"
         stageView={sponsorPendingStage}
+        evidenceStates={SCOPE_READY_EVIDENCE}
         approvalItems={[APPROVAL]}
         initialWorkspace="steps"
       />,
@@ -628,6 +631,27 @@ describe("SourceAnalyticsCanvas stage workflow", () => {
       .toBeNull();
   });
 
+  it("keeps a captured step open until its mapped required evidence is usable", () => {
+    render(
+      <SourceAnalyticsCanvas
+        event={EVENT}
+        viewStage="scope"
+        tenantName="Demo Client"
+        stageView={COMPLETE_SCOPE_STAGE}
+        artifacts={SCOPE_READY_ARTIFACTS}
+        initialWorkspace="steps"
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: /Provide the volumetrics/ }));
+    expect(screen.queryByRole("button", { name: /Continue/ })).toBeNull();
+    expect(screen.queryByTestId("source-shell-stage-ready-panel")).toBeNull();
+    expect(screen.getByTestId("source-shell-evidence-ask-row-scope.volumetrics"))
+      .toHaveTextContent("Provide the volumetrics");
+    expect(screen.getByTestId("source-shell-evidence-ask-row-scope.volumetrics"))
+      .toHaveAttribute("data-ready", "false");
+  });
+
   it("keeps the gate action hidden while file review remains open", () => {
     render(
       <SourceAnalyticsCanvas
@@ -635,6 +659,7 @@ describe("SourceAnalyticsCanvas stage workflow", () => {
         viewStage="scope"
         tenantName="Demo Client"
         stageView={COMPLETE_SCOPE_STAGE}
+        evidenceStates={SCOPE_READY_EVIDENCE}
         initialWorkspace="steps"
       />,
     );
@@ -659,12 +684,13 @@ describe("SourceAnalyticsCanvas stage workflow", () => {
       />,
     );
 
-    expect(screen.getByTestId("source-shell-stage-ready-panel"))
-      .toHaveTextContent("Required evidence remains open");
+    expect(screen.queryByTestId("source-shell-stage-ready-panel"))
+      .toBeNull();
     expect(screen.queryByTestId("source-stage-ready-open-approval"))
       .toBeNull();
-    expect(screen.getByTestId("source-stage-ready-primary-files"))
-      .toHaveTextContent("Review evidence");
+    expect(screen.queryByRole("button", { name: /Continue/ })).toBeNull();
+    expect(screen.getByTestId("source-shell-evidence-ask-row-scope.volumetrics"))
+      .toHaveTextContent("Provide the volumetrics");
   });
 
   it("shows a stored template file as awaiting extraction without unlocking Continue", () => {
@@ -706,10 +732,11 @@ describe("SourceAnalyticsCanvas stage workflow", () => {
     expect(screen.queryByRole("button", { name: /Continue/ })).toBeNull();
   });
 
-  it("resets the upload pane when Continue advances between provide steps", async () => {
+  it("resets the upload pane when evidence readback advances to the next provide step", async () => {
     const provideSteps = SAMPLE_SCOPE_STAGE.tasks.filter((task) =>
       ["scope.volumetrics", "scope.app-inventory"].includes(task.id),
     );
+    const stageView = { ...SAMPLE_SCOPE_STAGE, tasks: provideSteps };
     (global.fetch as jest.Mock)
       .mockResolvedValueOnce({
         ok: true,
@@ -734,12 +761,12 @@ describe("SourceAnalyticsCanvas stage workflow", () => {
         }),
       });
 
-    render(
+    const { rerender } = render(
       <SourceAnalyticsCanvas
         event={EVENT}
         viewStage="scope"
         tenantName="Demo Client"
-        stageView={{ ...SAMPLE_SCOPE_STAGE, tasks: provideSteps }}
+        stageView={stageView}
         initialWorkspace="steps"
       />,
     );
@@ -751,10 +778,23 @@ describe("SourceAnalyticsCanvas stage workflow", () => {
     });
 
     await screen.findByText("volumetrics.csv");
-    const continueButton = screen.getByRole("button", { name: /Continue/ });
-    await waitFor(() => expect(continueButton).toBeEnabled());
-    fireEvent.click(continueButton);
-
+    expect(screen.queryByRole("button", { name: /Continue/ })).toBeNull();
+    rerender(
+      <SourceAnalyticsCanvas
+        event={EVENT}
+        viewStage="scope"
+        tenantName="Demo Client"
+        stageView={{
+          ...stageView,
+          tasks: provideSteps.map((task) => task.id === "scope.volumetrics"
+            ? { ...task, state: "done" as const, evidenceComplete: true }
+            : task),
+        }}
+        evidenceStates={SCOPE_READY_EVIDENCE.filter((row) =>
+          row.requirementId === "EVID-SRC-SCOPE-TICKET-HISTORY")}
+        initialWorkspace="steps"
+      />,
+    );
     expect(
       screen.getByRole("heading", {
         name: "Provide the application inventory",
@@ -858,6 +898,7 @@ describe("SourceAnalyticsCanvas stage workflow", () => {
         viewStage="scope"
         tenantName="Demo Client"
         stageView={completedScopeStage}
+        evidenceStates={SCOPE_READY_EVIDENCE}
         approvalItems={[APPROVAL]}
         initialWorkspace="steps"
       />,
@@ -1075,6 +1116,7 @@ describe("SourceAnalyticsCanvas stage workflow", () => {
         viewStage="scope"
         tenantName="Demo Client"
         stageView={completedScopeStage}
+        evidenceStates={SCOPE_READY_EVIDENCE}
         approvalItems={[APPROVAL]}
         initialWorkspace="steps"
       />,

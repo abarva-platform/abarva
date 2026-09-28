@@ -26,7 +26,7 @@ The Source workflow presents the evidence request for the active step and reveal
 
 ## Changes Included
 
-- Active-step evidence presentation and readiness-controlled progression.
+- Active-step evidence presentation and readiness-controlled progression based on governed requirement readback.
 - Stage-boundary evidence and artifact readiness presentation, including direct navigation to Approvals.
 - Request and stage approval action visibility aligned with the existing server rationale and acknowledgement checks.
 - Behavioral regression tests for incomplete steps, evidence gaps, and short rationales.
@@ -34,8 +34,8 @@ The Source workflow presents the evidence request for the active step and reveal
 ## QA / Validation
 
 - Pass: red-first behavior tests failed on the original visible disabled actions and end-of-stage evidence listing.
-- Pass: deliberate mutations reopening Continue and ignoring required evidence both failed their focused tests; guarded code restored.
-- Pass: `npx jest src/components/source --runInBand --silent` (90 suites, 611 tests).
+- Pass: deliberate mutations reopening Continue, ignoring stage-required evidence, bypassing direct Approvals readiness, and bypassing mapped step evidence each failed a focused test; guarded code restored.
+- Pass: `npx jest src/components/source --runInBand --silent` (90 suites, 612 tests).
 - Pass: scoped ESLint and `NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit --pretty false`.
 - Not run: signed-in acceptance of this change, pending main deployment.
 

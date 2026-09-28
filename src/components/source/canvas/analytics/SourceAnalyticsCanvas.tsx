@@ -2093,6 +2093,21 @@ function FocusedWorkPanel({
         .sort((a, b) => a.order - b.order),
     [view.stage.groups],
   );
+  const requiredEvidenceRows = buildStageEvidenceRequirementRows(view, evidenceStates)
+    .filter((row) => row.requirement.level === "required");
+  const requiredEvidenceById = new Map(
+    requiredEvidenceRows.map((row) => [row.requirement.requirementId, row]),
+  );
+  const evidenceReadyForStep = (step: SourceShellStep) => {
+    const requirementId = evidenceRequirementIdForTask({
+      id: step.id,
+      factTemplateCode: step.factTemplateCode ?? undefined,
+    });
+    return !requirementId || requiredEvidenceById.get(requirementId)?.ready !== false;
+  };
+  const firstUnreadyStepId = flatSteps.find((step) =>
+    step.status !== "captured" || !evidenceReadyForStep(step))?.id ??
+    flatSteps[0]?.id ?? null;
   const [completedIds, setCompletedIds] = useState<ReadonlySet<string>>(
     () =>
       new Set(
@@ -2102,10 +2117,7 @@ function FocusedWorkPanel({
       ),
   );
   const [activeStepId, setActiveStepId] = useState<string | null>(
-    () =>
-      flatSteps.find((step) => step.status !== "captured")?.id ??
-      flatSteps[0]?.id ??
-      null,
+    () => firstUnreadyStepId,
   );
 
   useEffect(() => {
@@ -2116,20 +2128,15 @@ function FocusedWorkPanel({
           .map((step) => step.id),
       ),
     );
-    setActiveStepId(
-      flatSteps.find((step) => step.status !== "captured")?.id ??
-        flatSteps[0]?.id ??
-        null,
-    );
-  }, [flatSteps, view.event.id, view.stage.key]);
+    setActiveStepId(firstUnreadyStepId);
+  }, [flatSteps, firstUnreadyStepId, view.event.id, view.stage.key]);
 
   const isComplete = (step: SourceShellStep) =>
-    step.status === "captured" || completedIds.has(step.id);
+    (step.status === "captured" || completedIds.has(step.id)) &&
+    evidenceReadyForStep(step);
   const doneCount = flatSteps.filter(isComplete).length;
   const allReady = flatSteps.length > 0 && doneCount === flatSteps.length;
   const hasArtifactGaps = view.stage.artifactReadiness.blockerCount > 0;
-  const requiredEvidenceRows = buildStageEvidenceRequirementRows(view, evidenceStates)
-    .filter((row) => row.requirement.level === "required");
   const requiredEvidenceOpen = requiredEvidenceRows.filter((row) => !row.ready).length;
   const stageInputsReady = !hasArtifactGaps && requiredEvidenceOpen === 0;
   // An approval record exists for the stage being viewed. `approvalEvidenced` is
@@ -2514,6 +2521,7 @@ function FocusedWorkPanel({
                 <EvidenceAskTable
                   group={{ ...activeGroup, steps: [activeStep] }}
                   activeStepId={activeStep.id}
+                  activeStepReady={activeComplete}
                 />
               ) : null}
 
@@ -2823,11 +2831,13 @@ function StageReadyStatusDatum({
 function EvidenceAskTable({
   group,
   activeStepId,
+  activeStepReady,
   artifactReviewOpen = false,
   inset = true,
 }: {
   group?: SourceShellStepGroup;
   activeStepId?: string;
+  activeStepReady?: boolean;
   artifactReviewOpen?: boolean;
   inset?: boolean;
 }) {
@@ -2877,7 +2887,9 @@ function EvidenceAskTable({
       </div>
       {group.steps.map((step, index) => {
         const active = step.id === activeStepId;
-        const captured = step.status === "captured";
+        const captured = step.id === activeStepId && activeStepReady !== undefined
+          ? activeStepReady
+          : step.status === "captured";
         const need = activeStepNeed(step, captured);
         const uploaded = Boolean(step.file);
         return (
