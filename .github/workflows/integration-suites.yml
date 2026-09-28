@@ -272,6 +272,20 @@ jobs:
       - name: Run the rewritten ops script suites (named per file, not as a directory)
         run: npx jest --runTestsByPath src/__tests__/integration/ops/demo-pack-report-validator.test.ts src/__tests__/integration/ops/duplicate-slice-preflight.test.ts src/__tests__/integration/ops/worktree-cleanup-report.test.ts --no-coverage --ci
 
+      # 2026-09-28 · item T-495, claimable half, suite 6 of 11. One suite in
+      # `src/__tests__/integration/agents` is named as a FILE path, for the
+      # reason the header of this file gives: that directory holds eight
+      # suites, two of them red, and five still source-text scanners owned by
+      # T-495. Naming the directory would drag all of them in.
+      #
+      # This suite used to read AgentHiddenDrawer.tsx and its view module as
+      # text. It now renders the component and runs the builder, and
+      # `docs/architecture/t495-agent-hidden-drawer-triage.json` declares the
+      # rewrite, which is what lets the T-770 control see it wired. The
+      # directory stays unwired until its other suites are settled.
+      - name: Run the rewritten agents suites (named per file, not as a directory)
+        run: npx jest --runTestsByPath src/__tests__/integration/agents/agent-hidden-drawer.test.ts --no-coverage --ci
+
       - name: Refuse a stale, growing or mis-classified Intelligence quarantine list
         # Runs the check's own unit cases first, then the check. The cases pin
         # what clearing an entry would cost — a `covers` classification that no

@@ -1,0 +1,124 @@
+{
+  "item": "T-495",
+  "title": "One suite of T-495's claimable half: agent-hidden-drawer rewritten from a source-text scanner into a behavioural suite, and wired",
+  "recordedAt": "2026-09-28T09:10:00.000Z",
+  "base": "d918410c10c2cf08a8cb8a67d2ea93a44b0a6f25",
+  "directory": "src/__tests__/integration/agents",
+  "scope": [
+    "One suite, because T-495's acceptance is per suite. It is suite 6 of the 11 in the claimable half; 5 remain, all in src/__tests__/integration/agents: agent-inline-recommendation, agent-mission-panel, agent-mission-surface-wiring, ask-anything-bar, mission-workflow-handoff.",
+    "The gated half of T-495 -- the rows carrying textIsTheSubject -- is NOT touched here.",
+    "This record exists so the T-770 control resolves this path's classification from the LATEST record rather than from the T-492 draw, which is left as the historical draw it is. Measured: with the workflow step added and this record absent, t770-scanner-wiring-refusal fails 2 of 7 and names this suite."
+  ],
+  "method": [
+    "Re-verified on origin/main d918410c10 by running the suite, not by reading it: 51 passed of 51. Fifteen of the 51 read a repository file as text: nine read src/components/agents/AgentHiddenDrawer.tsx and grepped it for attribute spellings, import specifiers, 'use client', useState/useEffect and the collapsed-drawer copy; six read src/lib/agent/agent-hidden-drawer-view.ts, stripped strings and comments, and grepped for Date.now, Math.random, new Date and fetch, or grepped the raw text for two import specifiers.",
+    "The fifteen text cases were DELETED rather than repaired. The 36 cases over buildAgentHiddenDrawerView and its helpers were already behaviour -- they call the builder and assert its return value -- and are kept byte-for-byte, as the T-492 verdict for this file asked.",
+    "Thirteen cases replace them. Eight RENDER AgentHiddenDrawer with react-dom/server: the root <section> carries the act3 marker, data-drawer-state and the aria-label; no aria-expanded is rendered; the trigger label, the highest-priority badge, the honest disclaimer, the portfolio line and the collapsed-drawer copy all render from the view; exactly one AgentBadge renders per ACTIVE agent in canonical order; a supplied view prop is rendered instead of the seed; an empty view renders no priority badge and no agent badge. One calls the component as a plain function with no React dispatcher -- a hook would throw 'Invalid hook call' there -- which is what 'server component, no hooks' means. Two build the view under two different fake clocks and two different Math.random values and require byte-identical output, and install a throwing fetch that must never be called. Two assert derivation: panelView equals the AG11 hidden_drawer seed, and portfolioContext equals the ACT2 inventory's total, pilot+production+scaled and discovery counts.",
+    "Non-vacuity measured, not assumed: the seed has steward inactive (2+2+2+3 missions; nexus, sentinel, atlas active), so the per-active-agent badge case can tell 'active only' from 'every agent', and the case asserts that precondition itself.",
+    "Dropped without replacement, with the reason: 'imports from abarva-theme' and 'imports AgentBadge from @/components/abarva/AgentBadge' asserted import specifiers. The badge half is replaced by the rendered data-agent check (AgentBadge is what emits data-agent); the theme-token import is a styling choice with no behaviour to assert.",
+    "Ten mutations -- six against AgentHiddenDrawer.tsx and four against agent-hidden-drawer-view.ts -- each verified by git diff --numstat to have changed the file before either suite ran, and each run against the new suite and against the deleted scanner restored from origin/main."
+  ],
+  "counts": {
+    "suites": 1,
+    "wired": 1,
+    "heldUnwired": 0,
+    "repaired": 1,
+    "deleted": 0
+  },
+  "suites": [
+    {
+      "path": "src/__tests__/integration/agents/agent-hidden-drawer.test.ts",
+      "priorShape": "never_reached",
+      "priorVia": [],
+      "priorCollected": true,
+      "priorCovered": false,
+      "priorGreen": true,
+      "collected": true,
+      "green": true,
+      "totalTests": 49,
+      "failedTests": 0,
+      "pendingTests": 0,
+      "readFileSyncCount": 0,
+      "sourceTextScanner": false,
+      "textIsTheSubject": false,
+      "rendersComponent": true,
+      "drivesProductionEntryPoint": "AgentHiddenDrawer",
+      "verdict": "wired",
+      "wiredBy": ".github/workflows/integration-suites.yml",
+      "ownerItem": "T-495",
+      "priorVerdict": {
+        "record": "docs/architecture/t492-stale-suite-triage.json",
+        "verdict": "rewrite_as_behavior",
+        "ownerItem": "T-495",
+        "sourceTextScanner": true
+      },
+      "priorVerdictStatus": "discharged_here",
+      "rationale": "The fifteen deleted cases asserted what two files say. Measured against ten mutations that change what the component renders or what the builder returns, the deleted scanner caught two -- data-drawer-state removed, and the panel built from the wrong variant (the latter through a kept builder case, not a scanner case) -- and missed eight, including a plain Date.now() field added to the view, which its own 'does not call Date.now' case should have caught and did not because its single-quote stripping regex, /'[^']*'/g, matches across newlines and removed the code lying between two quote characters on different lines (traced step by step: the call survives the template and double-quote passes and is gone after the single-quote pass). The new suite caught all ten."
+    }
+  ],
+  "mutations": [
+    {
+      "mutation": "AgentHiddenDrawer.tsx: drop the isActive filter, so an AgentBadge renders for every agent",
+      "result": "3 of 49 failed",
+      "deletedScanner": "PASSED -- missed",
+      "catches": "a badge for an inactive agent"
+    },
+    {
+      "mutation": "AgentHiddenDrawer.tsx: ignore the view prop and always build the seed",
+      "result": "2 of 49 failed",
+      "deletedScanner": "PASSED -- missed",
+      "catches": "the component rendering a view other than the one it is given"
+    },
+    {
+      "mutation": "AgentHiddenDrawer.tsx: stop rendering the honest disclaimer",
+      "result": "2 of 49 failed",
+      "deletedScanner": "PASSED -- missed",
+      "catches": "the disclaimer leaving the drawer"
+    },
+    {
+      "mutation": "AgentHiddenDrawer.tsx: spread a computed ['aria-' + 'expanded'] attribute onto the root",
+      "result": "1 of 49 failed",
+      "deletedScanner": "PASSED -- missed",
+      "catches": "a rendered aria-expanded however it is spelled in source"
+    },
+    {
+      "mutation": "AgentHiddenDrawer.tsx: call useState through a computed name on require('react')",
+      "result": "1 of 49 failed",
+      "deletedScanner": "PASSED -- missed",
+      "catches": "a hook in the component, which breaks it as a server component"
+    },
+    {
+      "mutation": "AgentHiddenDrawer.tsx: remove data-drawer-state from the root",
+      "result": "1 of 49 failed",
+      "deletedScanner": "2 of 51 failed",
+      "catches": "the drawer-state attribute leaving the rendered root"
+    },
+    {
+      "mutation": "agent-hidden-drawer-view.ts: add asOf: clock.now() with const clock = Date",
+      "result": "1 of 49 failed",
+      "deletedScanner": "PASSED -- missed",
+      "catches": "a clock-dependent view"
+    },
+    {
+      "mutation": "agent-hidden-drawer-view.ts: add stamp: Date.now() to the returned view",
+      "result": "1 of 49 failed",
+      "deletedScanner": "PASSED -- missed",
+      "catches": "a clock-dependent view, spelled exactly as the deleted case's regex describes"
+    },
+    {
+      "mutation": "agent-hidden-drawer-view.ts: activeUseCases counts pilot only",
+      "result": "1 of 49 failed",
+      "deletedScanner": "PASSED -- missed",
+      "catches": "portfolioContext diverging from the ACT2 inventory"
+    },
+    {
+      "mutation": "agent-hidden-drawer-view.ts: build the panel from a variant other than hidden_drawer",
+      "result": "2 of 49 failed",
+      "deletedScanner": "1 of 51 failed",
+      "catches": "the panel not being the AG11 hidden_drawer seed"
+    }
+  ],
+  "residualsNotClosedHere": [
+    "The directory src/__tests__/integration/agents still cannot be wired whole: agent-mission-surface-wiring and ask-anything-bar are red on base, and five suites remain T-495 scanners. The suite is named individually for that reason.",
+    "OBSERVED, not acted on: src/components/agents/AgentHiddenDrawer.tsx is imported by no file under src other than this suite -- no route mounts it. The suite now proves what the component renders, not that any user sees it. Delete-versus-mount is a product call and not this change's to take."
+  ]
+}
