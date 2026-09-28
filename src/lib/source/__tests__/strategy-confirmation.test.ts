@@ -1,6 +1,7 @@
 import {
   confirmationMatchesCurrentEvent,
   hasCurrentStrategyOwnerConfirmation,
+  strategyBasisReady,
   strategyConfirmationVersion,
 } from "../strategy-confirmation";
 
@@ -33,7 +34,7 @@ const event = {
   approval_policy_code: "self_v1",
   decision_owner: "Event Owner",
   trigger_description: "Synthetic renewal planning",
-  scope_description: "Planning scope only",
+  scope_description: "Scope boundary: Planning scope only\nValue target: Hypothetical service improvement",
   estimated_value_usd: null,
   updated_at: "2026-09-28T12:00:00.123Z",
 };
@@ -50,6 +51,14 @@ describe("Strategy owner confirmation", () => {
     expect(version).not.toBe(strategyConfirmationVersion({ ...event, decision_owner: "Different owner" }));
     expect(version).not.toBe(strategyConfirmationVersion({ ...event, approval_policy_code: "legacy_signed_scope_v1" }));
     expect(version).not.toBe(strategyConfirmationVersion({ ...event, updated_at: "2026-09-28T12:01:00.123Z" }));
+  });
+
+  it("requires a real owner, mandate and planning value thesis before confirmation", () => {
+    expect(strategyBasisReady(event)).toBe(true);
+    expect(strategyBasisReady({ ...event, decision_owner: "" })).toBe(false);
+    expect(strategyBasisReady({ ...event, trigger_description: "", scope_description: "" })).toBe(false);
+    expect(strategyBasisReady({ ...event, scope_description: "Scope boundary: Planning scope only" })).toBe(false);
+    expect(strategyBasisReady({ ...event, scope_description: "Scope boundary: Planning scope only", estimated_value_usd: "100" })).toBe(true);
   });
 
   it("accepts only an actual matching owner decision for a SELF event", () => {

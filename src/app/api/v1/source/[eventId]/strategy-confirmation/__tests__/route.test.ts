@@ -8,7 +8,7 @@ const event = {
   created_by_user_id: "owner-1",
   decision_owner: "Event Owner",
   trigger_description: "Synthetic renewal planning",
-  scope_description: "Planning scope only",
+  scope_description: "Scope boundary: Planning scope only\nValue target: Hypothetical service improvement",
   estimated_value_usd: null,
   updated_at: "2026-09-28T12:00:00.123Z",
 };
@@ -94,6 +94,15 @@ describe("POST Strategy Event Owner confirmation", () => {
     const shownVersion = strategyConfirmationVersion(event);
     persistedEvent.trigger_description = "Changed mandate after page render";
     const response = await POST(request(shownVersion), ctx);
+    expect(response.status).toBe(409);
+    expect(activityRows).toEqual([]);
+  });
+
+  it("does not confirm a placeholder mandate or value thesis", async () => {
+    persistedEvent.trigger_description = "";
+    persistedEvent.scope_description = "";
+    persistedEvent.decision_owner = "";
+    const response = await POST(request(strategyConfirmationVersion(persistedEvent)), ctx);
     expect(response.status).toBe(409);
     expect(activityRows).toEqual([]);
   });

@@ -5,7 +5,7 @@ import { getCurrentUser } from "@/lib/auth/current-user";
 import { loadUserSourceAccessPolicy } from "@/lib/auth/source-access-policy";
 import { requireTenancy, tenancyErrorResponse } from "@/lib/auth/tenancy";
 import { getAzureWriteFluentClient } from "@/lib/data-plane/postgresCompat";
-import { strategyConfirmationVersion, type StrategyConfirmationEvent } from "@/lib/source/strategy-confirmation";
+import { strategyBasisReady, strategyConfirmationVersion, type StrategyConfirmationEvent } from "@/lib/source/strategy-confirmation";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -64,6 +64,12 @@ export async function POST(request: NextRequest, { params }: Context) {
   if (body.version !== currentVersion) {
     return Response.json(
       { error: "stale_strategy", detail: "The strategy changed. Reload and review it before confirming." },
+      { status: 409 },
+    );
+  }
+  if (!strategyBasisReady(event)) {
+    return Response.json(
+      { error: "strategy_basis_incomplete", detail: "Complete the decision owner, mandate and planning value thesis before confirming." },
       { status: 409 },
     );
   }

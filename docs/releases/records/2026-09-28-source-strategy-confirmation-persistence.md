@@ -29,7 +29,7 @@ The Strategy checklist could appear complete in one browser session without savi
 ## Changes Included
 
 - Bind the confirmation to the current event, client, policy, mandate, owner, value thesis, and revision.
-- Require current stage, tenant, owner/client-admin approval rights, explicit confirmation, and a matching version before appending an activity receipt.
+- Require current stage, tenant, owner/client-admin approval rights, an actual owner/mandate/planning value thesis, explicit confirmation, and a matching version before appending an activity receipt.
 - Show checklist completion only after the current receipt is read back. Do not offer a local-only Strategy completion when no governed confirmation path is available.
 
 ## QA / Validation

@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
 
 import { getAzureReadFluentClient } from "@/lib/data-plane/postgresCompat";
+import { parseSourceScopeDescription } from "@/lib/source/intake-summary";
 
 export interface StrategyConfirmationEvent {
   id: string;
@@ -9,7 +10,7 @@ export interface StrategyConfirmationEvent {
   decision_owner: string | null;
   trigger_description: string | null;
   scope_description: string | null;
-  estimated_value_usd: number | null;
+  estimated_value_usd: number | string | null;
   updated_at: string | Date;
 }
 
@@ -32,6 +33,17 @@ export function strategyConfirmationVersion(event: StrategyConfirmationEvent): s
     revision,
   ];
   return createHash("sha256").update(JSON.stringify(basis)).digest("hex");
+}
+
+export function strategyBasisReady(event: StrategyConfirmationEvent): boolean {
+  const scope = parseSourceScopeDescription(event.scope_description);
+  const estimate = event.estimated_value_usd == null || event.estimated_value_usd === ""
+    ? NaN
+    : Number(event.estimated_value_usd);
+  return Boolean(event.decision_owner?.trim()) &&
+    Boolean(event.trigger_description?.trim() || scope.scopeBoundary?.trim()) &&
+    Boolean(scope.valueTarget?.trim() ||
+      (Number.isFinite(estimate) && estimate > 0));
 }
 
 export function confirmationMatchesCurrentEvent(
