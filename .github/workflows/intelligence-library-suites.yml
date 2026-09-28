@@ -77,6 +77,15 @@ jobs:
       # directories honestly -- two PARTIAL, one still dark -- so the remaining
       # files stay in its ranking instead of being silenced.
       #
+      # Item C-412 added `c412-ask-answer-mode-wiring.test.ts` on 2026-09-28, in
+      # the change that wrote it. T-495's rewrite above drives `synthesizeStream`
+      # and left `ask/index.ts` itself with no assertion that answer-mode
+      # classification and the deterministic fallback are still wired into the
+      # path a reader's question travels; this suite drives the real
+      # `askIntelligence` with retrieval and the audited Anthropic client mocked
+      # at their own boundaries and asserts that wiring by execution. Named
+      # individually for the same reason as the four above.
+      #
       # The quarantine ignore list below applies only to
       # src/lib/intelligence/__tests__; it names no file added here.
       - name: Run reachable Intelligence library suites
@@ -87,4 +96,5 @@ jobs:
             src/lib/intelligence/canonical/build-canonical-pattern.test.ts \
             src/lib/intelligence/ask/__tests__/tenant-identity-pin.test.ts \
             src/lib/intelligence/ask/__tests__/strategy-to-moves-contract.test.ts \
+            src/lib/intelligence/ask/__tests__/c412-ask-answer-mode-wiring.test.ts \
             --no-coverage --ci $(node scripts/quality/intelligence-library-ignore-args.mjs)
