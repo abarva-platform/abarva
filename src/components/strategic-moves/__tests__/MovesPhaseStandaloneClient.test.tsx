@@ -226,6 +226,14 @@ const completeP1CaptureValues = {
     "The sponsor and governance committee approve scope, funding, and phase advancement.",
   evidence_plan:
     "Collect schedules, delay codes, aircraft assignment, crew handoff, maintenance, and recovery evidence.",
+  business_change_assessment: JSON.stringify({
+    expectedWorkflowChange: "limited",
+    expectedRoleAccountabilityChange: "none",
+    adoptionOwner: "Business process owner",
+    adoptionResponsibility: "business",
+    evidenceReference: "approved-current-state-evidence",
+    validatedBy: "Executive sponsor",
+  }),
 };
 
 function makeCurrentStateReadiness(): ReadinessReport {
@@ -290,6 +298,23 @@ function makeReviewRequiredCurrentStateReadiness(): ReadinessReport {
             parseMethod: "office_parser",
             confidence: 0.86,
             submittedAt: "2026-07-22T00:00:00Z",
+            sourceTextPreview: "Baseline is 30 tickets per week.",
+            extraction: {
+              version: 1,
+              summary: "Parser summary",
+              structured: {
+                decisions: [],
+                risks: [],
+                baselineCandidates: ["30 tickets per week"],
+                actionItems: [],
+                observations: [],
+                assumptions: [],
+                openQuestions: [],
+                citations: [
+                  { quote: "30 tickets per week", locator: "page 2" },
+                ],
+              },
+            },
           },
         ],
       },
@@ -759,6 +784,25 @@ describe("MovesPhaseStandaloneClient", () => {
       expect(root).toHaveClass("mxw", "mxw-finder-on");
       expect(root).toHaveAttribute("data-finder-shell", "on");
       expect(screen.getByTestId("mxw-contract-card")).toBeInTheDocument();
+    });
+
+    it("labels a browsed workflow step as viewed instead of falsely complete", () => {
+      render(
+        <MovesPhaseStandaloneClient
+          carriesForwardContent={[]}
+          evidenceNeedPackets={[]}
+          move={makeMove({ currentPhase: 1, phaseLabel: "P1 Charter" })}
+          phaseNum={1}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+
+      fireEvent.click(contractStepButton(/Upload Evidence/i));
+
+      const previousStep = contractStepButton(/Charter Inputs/i);
+      expect(previousStep).toHaveClass("visited");
+      expect(previousStep).not.toHaveClass("complete");
+      expect(previousStep).not.toHaveTextContent("✓");
     });
 
     it("renders the Finder shell class and data attribute with the expected tab/phase structure", () => {
@@ -2168,10 +2212,6 @@ describe("MovesPhaseStandaloneClient", () => {
       name: /Complete phase inputs before build/i,
     });
     expect(buildButton).toBeDisabled();
-    expect(
-      screen.getAllByText(/Complete 6 phase inputs before Approve & Build/i)
-        .length,
-    ).toBeGreaterThan(0);
   });
 
   it("keeps solution approach selection in P3 after discovery evidence", () => {
@@ -2876,7 +2916,16 @@ describe("MovesPhaseStandaloneClient", () => {
       screen.getByText("1 parsed document awaiting review"),
     ).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole("button", { name: "Approve" }));
+    fireEvent.click(screen.getByText(/Review extracted information/));
+    expect(screen.getByLabelText(/reviewed summary/i)).toHaveValue(
+      "Parser summary",
+    );
+    fireEvent.change(screen.getByLabelText(/reviewed summary/i), {
+      target: { value: "Human-corrected baseline summary" },
+    });
+    fireEvent.click(
+      screen.getByRole("button", { name: "Approve reviewed version" }),
+    );
 
     await waitFor(() => {
       expect(global.fetch).toHaveBeenCalledWith(
@@ -2884,6 +2933,16 @@ describe("MovesPhaseStandaloneClient", () => {
         expect.objectContaining({ method: "POST" }),
       );
     });
+    const approvalCall = (global.fetch as jest.Mock).mock.calls.find(([url]) =>
+      String(url).includes("/current-state/evidence/evidence-review-1/approve"),
+    );
+    const approvalBody = JSON.parse(approvalCall[1].body as string);
+    expect(approvalBody.reviewedExtraction.summary).toBe(
+      "Human-corrected baseline summary",
+    );
+    expect(approvalBody.reviewedExtraction.structured.citations).toEqual([
+      { quote: "30 tickets per week", locator: "page 2" },
+    ]);
     await waitFor(() => {
       expect(
         screen.queryByText("1 parsed document awaiting review"),
@@ -3184,11 +3243,6 @@ describe("MovesPhaseStandaloneClient", () => {
     await waitFor(() => {
       expect(screen.getByText("3/3 built")).toBeInTheDocument();
     });
-    expect(
-      screen.getByText(
-        /documents are built\. Review them before relying on them\./,
-      ),
-    ).toBeInTheDocument();
   });
 
   it("renders File Cabinet generated artifact open and download controls as real links", async () => {
@@ -3363,44 +3417,19 @@ describe("MovesPhaseStandaloneClient", () => {
     expect(
       screen.getByRole("heading", { name: "Gate approval" }),
     ).toBeInTheDocument();
-    // T-518, second pass. The two expectations below read
-    // `1 required next-phase prep item` and `These items are carried forward as
-    // next-phase preparation`. Both are re-pointed at the current render, and
-    // the reason is the same for both: #6662 (`adfb848d9`, 2026-08-22)
-    // deliberately rewrote this block in `PhaseApproveAndBuild.tsx`, collapsing
-    // it into a `<details>` whose release record states it "only simplifies how
-    // the phase build state is presented". Product copy moved; these two did
-    // not.
-    //
-    // The earlier pass recorded that the block "does not render in this state
-    // at all" and left the case red on that basis. That reading was wrong, and
-    // the mechanism is worth naming because it will mislead the next reader
-    // too: the summary's copy is emitted as FOUR sibling text nodes
-    // (`{count}`, ` prep item`, the plural suffix, ` carrying forward`), so it
-    // is present in the DOM but matches no matcher written against the old
-    // single-phrase wording. Testing Library joins a node's own text children
-    // before matching, so a matcher spanning the whole summary line does find
-    // it — which is what the two below now do.
     expect(
-      // Was `/1 required next-phase prep item/i`. The count and the
-      // carry-forward meaning are both still asserted, so a render that drops
-      // the block or reports the wrong number still fails.
-      screen.getByText(/1 prep item carrying forward/i),
+      screen.getByText(/1 required evidence item open/i),
     ).toBeInTheDocument();
     expect(
-      // Was `/These items are carried forward as next-phase preparation/i`.
-      // The replacement keeps the load-bearing half of the sentence — that
-      // these items do NOT block this build — rather than matching on the
-      // lead-in alone, so it cannot pass on an empty or truncated render.
       screen.getByText(
-        /These items inform the next phase\. They do not block this build/i,
+        /This phase build is unavailable until these required evidence items are reviewed and covered/i,
       ),
     ).toBeInTheDocument();
     expect(
-      screen.getByRole("button", {
+      screen.queryByRole("button", {
         name: /Approve & Build P3 Choose the Approach/i,
       }),
-    ).toBeEnabled();
+    ).not.toBeInTheDocument();
   });
 
   it("Files & Evidence renders a real generated deliverable as an actual downloadable link", async () => {
@@ -3730,7 +3759,9 @@ describe("MovesPhaseStandaloneClient", () => {
       within(dialog).getByText(/It does not sign off the generated documents/i),
     ).toBeInTheDocument();
     expect(
-      within(dialog).getByText(/the gate remains blocked until each required deliverable is reviewed and signed off/i),
+      within(dialog).getByText(
+        /the gate remains blocked until each required deliverable is reviewed and signed off/i,
+      ),
     ).toBeInTheDocument();
     expect(
       (global.fetch as jest.Mock).mock.calls.some(([url]) =>

@@ -10,6 +10,11 @@ import {
 } from "@/lib/programs/deliverables/move-artifacts";
 import { listGeneratedArtifactsForMoveAllRefs } from "@/lib/artifacts/repository";
 import { DELIVERABLE_REGISTRY } from "@/lib/programs/deliverable-registry";
+import { getAzureWriteFluentClient } from "@/lib/data-plane/postgresCompat";
+import {
+  initialReviewedEvidenceExtraction,
+  reviewedExtractionFromStoredSourceRef,
+} from "@/lib/programs/evidence-review-contract";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -49,6 +54,113 @@ interface CabinetArtifact {
   visualCompanionArtifactType?: string | null;
   contextExtract?: CabinetContextExtract | null;
   downloadUrl: string;
+}
+
+interface CabinetPendingEvidenceReview {
+  evidenceId: string;
+  reviewId: string;
+  title: string;
+  familyKey: string;
+  phase: number | null;
+  parseMethod: string;
+  confidence: number;
+  sourceTextPreview: string;
+  extraction: ReturnType<typeof initialReviewedEvidenceExtraction>;
+}
+
+function objectValue(value: unknown): Record<string, unknown> {
+  return value && typeof value === "object" && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : {};
+}
+
+async function loadPendingEvidenceReviews(
+  ctx: Awaited<ReturnType<typeof requireTenancy>>,
+  programId: string,
+): Promise<{
+  items: CabinetPendingEvidenceReview[];
+  available: boolean;
+}> {
+  try {
+    const db = getAzureWriteFluentClient();
+    const tenantKey = ctx.clientKey ?? "";
+    const { data: reviews, error: reviewError } = await db
+      .from("program_evidence_reviews")
+      .select("id, evidence_id, family_key, phase, source_ref")
+      .eq("tenant_key", tenantKey)
+      .eq("program_id", programId)
+      .eq("decision", "pending")
+      .order("created_at", { ascending: false })
+      .limit(200);
+    if (reviewError || !Array.isArray(reviews)) {
+      return { items: [], available: false };
+    }
+    const reviewRows = reviews as Array<Record<string, unknown>>;
+    const evidenceIds = reviewRows
+      .map((row) => row.evidence_id)
+      .filter((id): id is string => typeof id === "string" && Boolean(id));
+    if (!evidenceIds.length) return { items: [], available: true };
+
+    const { data: evidenceRows, error: evidenceError } = await db
+      .from("program_evidence_items")
+      .select("id, title, summary, extracted_text, extracted_structured")
+      .eq("tenant_key", tenantKey)
+      .eq("program_id", programId)
+      .in("id", evidenceIds);
+    if (evidenceError || !Array.isArray(evidenceRows)) {
+      return { items: [], available: false };
+    }
+    const evidenceById = new Map(
+      (evidenceRows as Array<Record<string, unknown>>).map((row) => [
+        row.id,
+        row,
+      ]),
+    );
+    return {
+      available: true,
+      items: reviewRows.flatMap((review) => {
+        const evidenceId =
+          typeof review.evidence_id === "string" ? review.evidence_id : "";
+        const evidence = evidenceById.get(evidenceId);
+        if (!evidence) return [];
+        const sourceRef = objectValue(review.source_ref);
+        const sourceText =
+          typeof evidence.extracted_text === "string"
+            ? evidence.extracted_text
+            : "";
+        const reviewed = reviewedExtractionFromStoredSourceRef(sourceRef);
+        return [
+          {
+            evidenceId,
+            reviewId: String(review.id ?? ""),
+            title: String(
+              sourceRef.filename ??
+                sourceRef.title ??
+                evidence.title ??
+                "Uploaded evidence",
+            ),
+            familyKey: String(review.family_key ?? "uploaded_move_evidence"),
+            phase: typeof review.phase === "number" ? review.phase : null,
+            parseMethod: String(sourceRef.parse_method ?? "unknown"),
+            confidence:
+              typeof sourceRef.confidence === "number"
+                ? sourceRef.confidence
+                : 0,
+            sourceTextPreview: sourceText.slice(0, 12000),
+            extraction:
+              reviewed ??
+              initialReviewedEvidenceExtraction({
+                summary: evidence.summary,
+                extractedText: sourceText,
+                extractedStructured: evidence.extracted_structured,
+              }),
+          },
+        ];
+      }),
+    };
+  } catch {
+    return { items: [], available: false };
+  }
 }
 
 interface CabinetContextExtractItem {
@@ -369,6 +481,10 @@ export async function GET(
       family: family ?? undefined,
       currentOnly,
     });
+    const evidenceReviewQueue = await loadPendingEvidenceReviews(
+      ctx,
+      programId,
+    );
 
     const moveArtifacts: CabinetArtifact[] = rows.map((r) => {
       const fixtureControl = isFixtureControlArtifact(r);
@@ -476,7 +592,8 @@ export async function GET(
             return {
               artifactId: rec.id,
               artifactType: rec.artifactType,
-              deliverableTypeKey: deliverableKeyFromGeneratedArtifactMetadata(meta),
+              deliverableTypeKey:
+                deliverableKeyFromGeneratedArtifactMetadata(meta),
               family: "generated_deliverable",
               title: meta?.renderableDoc?.title ?? rec.artifactType,
               phase: phaseFromGeneratedArtifactMetadata(meta),
@@ -528,7 +645,15 @@ export async function GET(
         : mergedArtifacts
     ).sort((a, b) => artifactTime(b.createdAt) - artifactTime(a.createdAt));
 
-    return Response.json({ ok: true, count: artifacts.length, artifacts });
+    return Response.json({
+      ok: true,
+      count: artifacts.length,
+      artifacts,
+      pendingEvidenceReviews: evidenceReviewQueue.items,
+      evidenceReviewStatus: evidenceReviewQueue.available
+        ? "available"
+        : "unavailable",
+    });
   } catch (err) {
     return tenancyErrorResponse(err);
   }

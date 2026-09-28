@@ -6,6 +6,8 @@ import {
   phaseCaptureModuleKey,
 } from "@/lib/programs/phase-capture-contract";
 import { computeCaptureRevision } from "@/lib/programs/phase-capture-integrity";
+import { resolveConfirmedSolutionRoute } from "@/lib/programs/solution-route-assessment";
+import { listApprovedPhaseEvidence } from "@/lib/programs/approved-phase-evidence";
 import { getStrategicMovesTenancy } from "@/lib/programs/strategic-moves-context";
 import { MovesPhaseStandaloneClient } from "@/components/strategic-moves/MovesPhaseStandaloneClient";
 import {
@@ -152,11 +154,9 @@ function proposalSetPreviewFromJson(
               typeof proposal.dimensionId === "string"
                 ? proposal.dimensionId
                 : undefined,
-            requirement: (
-              proposal.requirement === "recommended"
-                ? "recommended"
-                : "required"
-            ) as "required" | "recommended",
+            requirement: (proposal.requirement === "recommended"
+              ? "recommended"
+              : "required") as "required" | "recommended",
             question:
               typeof proposal.question === "string"
                 ? proposal.question
@@ -196,7 +196,8 @@ function proposalSetPreviewFromJson(
       artifactId,
       artifactVersion,
       status: "review_required",
-      proposalCount: numberFromMetadata(summary, "proposalCount") || proposals.length,
+      proposalCount:
+        numberFromMetadata(summary, "proposalCount") || proposals.length,
       pendingCount: numberFromMetadata(summary, "pendingCount"),
       proposals,
       message:
@@ -544,8 +545,34 @@ export default async function StrategicMovePhaseWorkspacePage({
   // the real data. Handing it one authoritative snapshot removes both the
   // synthesis and the loading window in which it happened.
   const captureModules = await getModuleState(ctx, move.id).catch(() => []);
+  const captureValue = (capturePhase: number, key: string) => {
+    const moduleRow = captureModules.find(
+      (entry) => entry.moduleKey === phaseCaptureModuleKey(capturePhase, key),
+    );
+    const value = moduleRow?.state?.value;
+    return typeof value === "string" ? value : "";
+  };
+  const initialBusinessChangeAssessment = captureValue(
+    1,
+    "business_change_assessment",
+  );
+  const initialApprovedEvidenceReferences = await listApprovedPhaseEvidence(
+    ctx,
+    move.id,
+    2,
+  );
+  const initialConfirmedSolutionRoute = resolveConfirmedSolutionRoute({
+    businessChangeAssessment: initialBusinessChangeAssessment,
+    routeValidation: captureValue(2, "solution_route_validation"),
+    approvedEvidenceReferences: initialApprovedEvidenceReferences.map(
+      (item) => item.evidenceId,
+    ),
+  });
   const initialPhaseCaptureValues: Record<string, string> = {};
-  for (const section of getPhaseCaptureSections(parsedPhase)) {
+  for (const section of getPhaseCaptureSections(
+    parsedPhase,
+    initialConfirmedSolutionRoute,
+  )) {
     const moduleRow = captureModules.find(
       (entry) =>
         entry.moduleKey === phaseCaptureModuleKey(parsedPhase, section.key),
@@ -581,6 +608,9 @@ export default async function StrategicMovePhaseWorkspacePage({
         evidenceNeedPackets={evidenceNeedPackets}
         initialPhaseCaptureRevision={initialPhaseCaptureRevision}
         initialPhaseCaptureValues={initialPhaseCaptureValues}
+        initialBusinessChangeAssessment={initialBusinessChangeAssessment}
+        initialApprovedEvidenceReferences={initialApprovedEvidenceReferences}
+        initialConfirmedSolutionRoute={initialConfirmedSolutionRoute}
         initialStageReadinessPreview={initialStageReadinessPreview}
         syntheticEvidencePackHref={syntheticEvidencePackHref}
         moveContextExtractEvidenceCount={moveContextExtractEvidenceCount}

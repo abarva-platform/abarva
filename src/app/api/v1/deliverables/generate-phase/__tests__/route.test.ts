@@ -59,6 +59,43 @@ const loadApprovedSolutionApproach: jest.Mock = jest.fn(async () => ({
   },
 }));
 const getModuleState: jest.Mock = jest.fn(async () => []);
+const listApprovedPhaseEvidence: jest.Mock = jest.fn(async () => [
+  { evidenceId: "evidence-approved-1", title: "Approved evidence", familyKey: "workshop_notes" },
+]);
+
+function confirmedRouteModules(route: "technical_product" | "process_change") {
+  const businessChangeAssessment = {
+    expectedWorkflowChange: "none",
+    expectedRoleAccountabilityChange: "none",
+    adoptionOwner: "Business product owner",
+    adoptionResponsibility: "business",
+    evidenceReference: "interview-notes",
+    validatedBy: "Sponsor",
+  };
+  const technical = route === "technical_product";
+  return [
+    {
+      moduleKey: "phase_1_business_change_assessment",
+      state: { value: JSON.stringify(businessChangeAssessment) },
+    },
+    {
+      moduleKey: "phase_2_solution_route_validation",
+      state: {
+        value: JSON.stringify({
+          businessChangeAssessmentSnapshot: businessChangeAssessment,
+          solutionOutput: technical ? "reports_dashboards" : "workflow_automation",
+          workflowChange: technical ? "none" : "limited",
+          roleAccountabilityChange: "none",
+          evidenceReference: "evidence-approved-1",
+          decision: "confirm",
+          selectedRoute: route,
+          correctionRationale: "",
+          validatedBy: "Sponsor",
+        }),
+      },
+    },
+  ];
+}
 
 jest.mock("@/lib/auth/tenancy", () => ({
   requireTenancy: jest.fn(async () => tenancy),
@@ -114,6 +151,10 @@ jest.mock("@/lib/programs/approved-solution-approach", () => ({
 jest.mock("@/lib/programs/queries", () => ({
   getModuleState: (...args: unknown[]) => getModuleState(...args),
 }));
+jest.mock("@/lib/programs/approved-phase-evidence", () => ({
+  listApprovedPhaseEvidence: (...args: unknown[]) =>
+    listApprovedPhaseEvidence(...args),
+}));
 
 import { POST } from "../route";
 
@@ -141,7 +182,11 @@ beforeEach(() => {
   createMoveContextExtract.mockClear();
   loadApprovedSolutionApproach.mockClear();
   getModuleState.mockClear();
-  getModuleState.mockResolvedValue([]);
+  getModuleState.mockResolvedValue(confirmedRouteModules("process_change"));
+  listApprovedPhaseEvidence.mockClear();
+  listApprovedPhaseEvidence.mockResolvedValue([
+    { evidenceId: "evidence-approved-1", title: "Approved evidence", familyKey: "workshop_notes" },
+  ]);
   loadApprovedSolutionApproach.mockResolvedValue({
     decisionId: "decision-1",
     decisionVersion: "1",
@@ -241,7 +286,7 @@ describe("POST /api/v1/deliverables/generate-phase", () => {
       const decisionContext = (call.jobPayload as { decisionContext: string })
         .decisionContext;
       expect(decisionContext).toContain(
-        "APPROVED P1 PHASE CAPTURE (authoritative for this build)",
+        "SAVED P1 PHASE CAPTURE (authoritative input for this build)",
       );
       expect(decisionContext).toContain(
         "Sponsor commitment: VP Member Services sponsors the Move",
@@ -344,6 +389,39 @@ describe("POST /api/v1/deliverables/generate-phase", () => {
     }
   });
 
+  it("builds only estimation-stage outputs for an evidence-validated technical route", async () => {
+    getModuleState.mockResolvedValue(
+      confirmedRouteModules("technical_product"),
+    );
+    const res = await POST(
+      req({
+        moveId: "m-technical",
+        phase: 3,
+        useCaseArchetype: "straightforward_dashboard",
+      }),
+    );
+
+    expect(res.status).toBe(202);
+    const json = (await res.json()) as {
+      confirmedSolutionRoute: { route: string; evidenceReference: string };
+      deliverables: Array<{ deliverableTypeKey: string }>;
+    };
+    expect(json.confirmedSolutionRoute).toEqual(
+      expect.objectContaining({
+        route: "technical_product",
+        evidenceReference: "evidence-approved-1",
+      }),
+    );
+    expect(json.deliverables.map((item) => item.deliverableTypeKey)).toEqual([
+      "target_state_architecture",
+      "requirements_traceability",
+    ]);
+    expect(createCalls.map((call) => call.deliverableType)).toEqual([
+      "target_state_architecture",
+      "requirements_traceability",
+    ]);
+  });
+
   it("separates legitimate P3 reruns with an explicit generation attempt id", async () => {
     const first = await POST(
       req({
@@ -391,6 +469,20 @@ describe("POST /api/v1/deliverables/generate-phase", () => {
       expect.objectContaining({
         error: "solution_approach_approval_required",
       }),
+    );
+    expect(createMoveContextExtract).not.toHaveBeenCalled();
+    expect(createCalls).toHaveLength(0);
+  });
+
+  it("fails closed before P3 enqueue when the validated route lacks approved evidence", async () => {
+    listApprovedPhaseEvidence.mockResolvedValueOnce([]);
+    const res = await POST(
+      req({ moveId: "m-unverified-route", phase: 3, useCaseArchetype: "ams" }),
+    );
+
+    expect(res.status).toBe(409);
+    expect(await res.json()).toEqual(
+      expect.objectContaining({ error: "solution_route_validation_required" }),
     );
     expect(createMoveContextExtract).not.toHaveBeenCalled();
     expect(createCalls).toHaveLength(0);

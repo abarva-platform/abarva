@@ -22,10 +22,12 @@ import {
   resolveContextBudget,
   type ContextBudget,
 } from "./context-budget";
+import { buildContextCoverage, type ContextCoverage } from "./context-coverage";
+import { approvedGeneratedArtifactIds } from "./approved-artifact-context";
 import {
-  buildContextCoverage,
-  type ContextCoverage,
-} from "./context-coverage";
+  reviewedExtractionFromStoredSourceRef,
+  toStoredReviewedStructured,
+} from "@/lib/programs/evidence-review-contract";
 
 export interface AssembleEvidenceParams {
   tenantClientKey: string;
@@ -212,7 +214,8 @@ function captureValueSignals(
   const seen = new Set<string>();
   return out.filter((signal) => {
     const key = `${signal.label}:${signal.statement}`.toLowerCase();
-    if (seen.has(key) || signal.statement === `${label}: ${value}`) return false;
+    if (seen.has(key) || signal.statement === `${label}: ${value}`)
+      return false;
     seen.add(key);
     return true;
   });
@@ -275,6 +278,16 @@ function structuredSignals(value: unknown): string[] {
   take("risks", "Risk", 3);
   take("baseline_candidates", "Baseline", 5);
   take("action_items", "Action", 2);
+  const flexible = sourceRefObject(structured.flexible);
+  if (Array.isArray(flexible.citations)) {
+    for (const citation of flexible.citations.slice(0, 8)) {
+      const ref = sourceRefObject(citation);
+      const quote = stringOrNull(ref.quote);
+      if (!quote) continue;
+      const locator = stringOrNull(ref.locator) ?? "source file";
+      out.push(`Source reference: "${quote}" (${locator})`);
+    }
+  }
   return out;
 }
 
@@ -557,6 +570,8 @@ async function loadMoveCurrentStateCandidates(
           .select(
             "id, title, summary, extracted_text, extracted_structured, evidence_type, confidence, created_at",
           )
+          .eq("tenant_key", params.tenantClientKey)
+          .eq("program_id", moveId)
           .in("id", evidenceIds);
         const byId = new Map(
           (Array.isArray(evidenceRows) ? evidenceRows : []).map((row) => [
@@ -580,7 +595,19 @@ async function loadMoveCurrentStateCandidates(
             stringOrNull(sourceRef.filename) ??
             stringOrNull(row.title) ??
             family;
-          const candidate = evidenceItemToCandidate(row, {
+          const reviewed = reviewedExtractionFromStoredSourceRef(sourceRef);
+          const reviewedRow = reviewed
+            ? {
+                ...row,
+                summary: reviewed.summary,
+                extracted_text: null,
+                extracted_structured: toStoredReviewedStructured(
+                  reviewed,
+                  row.extracted_structured,
+                ),
+              }
+            : row;
+          const candidate = evidenceItemToCandidate(reviewedRow, {
             family,
             familyPrefix: "document_extract",
             title,
@@ -599,23 +626,68 @@ async function loadMoveCurrentStateCandidates(
   // clear the review lifecycle before generation can consume it; otherwise the
   // context extract, readiness, and generated deliverables can diverge.
 
-  // Prior generated artifacts are the reviewed working product of earlier Move
-  // phases. P5 handoff/value contracts must inherit that structured state
-  // instead of requiring an operator to upload it again as external evidence.
+  // Prior generated artifacts are context only after a human signs the exact
+  // deliverable version that links to them. A newer draft must never replace or
+  // contaminate the previously approved version in a later phase prompt.
   try {
-    const { data: artifacts } = await db
+    const { data: deliverables, error: deliverablesError } = await db
+      .from("deliverables_v2")
+      .select("id, status, signed_off_version")
+      .eq("engagement_id", moveId)
+      .limit(MOVE_GENERATED_ARTIFACT_LIMIT);
+    if (deliverablesError || !Array.isArray(deliverables))
+      return {
+        candidates,
+        approvedAvailable,
+        unreadable,
+      };
+    const deliverableRows = deliverables as Array<Record<string, unknown>>;
+    const deliverableIds = deliverableRows
+      .map((row) => stringOrNull(row.id))
+      .filter((id): id is string => Boolean(id));
+    if (deliverableIds.length === 0) {
+      return { candidates, approvedAvailable, unreadable };
+    }
+
+    const { data: versions, error: versionsError } = await db
+      .from("deliverable_versions")
+      .select("deliverable_id, version, structured_data")
+      .in("deliverable_id", deliverableIds)
+      .limit(MOVE_GENERATED_ARTIFACT_LIMIT * 4);
+    if (versionsError || !Array.isArray(versions)) {
+      return { candidates, approvedAvailable, unreadable };
+    }
+    const approvedArtifactIds = approvedGeneratedArtifactIds({
+      deliverables: deliverableRows as Array<{
+        id: string;
+        status: string;
+        signed_off_version: number | null;
+      }>,
+      versions: versions as Array<{
+        deliverable_id: string;
+        version: number;
+        structured_data: unknown;
+      }>,
+    });
+    if (approvedArtifactIds.length === 0) {
+      return { candidates, approvedAvailable, unreadable };
+    }
+
+    const { data: artifacts, error: artifactsError } = await db
       .from("generated_artifacts")
       .select(
         "id, quality_score, rendered_at, source_artifact_ref, superseded_by, quarantine_reason, metadata",
       )
       .eq("client_id", clientId)
       .eq("source_artifact_ref", moveId)
-      .is("superseded_by", null)
+      .in("id", approvedArtifactIds)
       .is("quarantine_reason", null)
       .order("rendered_at", { ascending: false })
       .limit(MOVE_GENERATED_ARTIFACT_LIMIT);
-    if (Array.isArray(artifacts)) {
+    if (!artifactsError && Array.isArray(artifacts)) {
+      const approvedIds = new Set(approvedArtifactIds);
       for (const row of artifacts as Array<Record<string, unknown>>) {
+        if (!approvedIds.has(stringOrNull(row.id) ?? "")) continue;
         const candidate = generatedArtifactToCandidate(row);
         if (candidate) candidates.push(candidate);
       }

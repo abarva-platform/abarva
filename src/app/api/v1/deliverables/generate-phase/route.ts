@@ -25,7 +25,7 @@ import {
   validateDeliverableTenantInvariant,
 } from "@/lib/deliverables/orchestrator/tenant-invariant";
 import {
-  PHASE_CANONICAL_KEYS,
+  phaseCanonicalKeysForRoute,
   DELIVERABLE_REGISTRY,
   type DeliverableSpec,
 } from "@/lib/programs/deliverable-registry";
@@ -45,6 +45,11 @@ import {
   type AdaptiveDepthDecision,
 } from "@/lib/deliverables/adaptive-depth";
 import { getModuleState } from "@/lib/programs/queries";
+import { listApprovedPhaseEvidence } from "@/lib/programs/approved-phase-evidence";
+import {
+  resolveConfirmedSolutionRoute,
+  type ConfirmedSolutionRoute,
+} from "@/lib/programs/solution-route-assessment";
 import {
   getPhaseCaptureSections,
   phaseCaptureModuleKey,
@@ -128,11 +133,16 @@ async function buildPhaseCaptureDecisionContext(args: {
   ctx: Awaited<ReturnType<typeof requireTenancy>>;
   moveId: string;
   phase: number;
+  confirmedSolutionRoute?: ConfirmedSolutionRoute | null;
+  modules?: Awaited<ReturnType<typeof getModuleState>>;
 }): Promise<string | null> {
-  const sections = getPhaseCaptureSections(args.phase);
+  const sections = getPhaseCaptureSections(
+    args.phase,
+    args.confirmedSolutionRoute,
+  );
   if (sections.length === 0) return null;
 
-  const modules = await getModuleState(args.ctx, args.moveId).catch(() => []);
+  const modules = args.modules ?? (await getModuleState(args.ctx, args.moveId));
   const lines: string[] = [];
   for (const section of sections) {
     const moduleKey = phaseCaptureModuleKey(args.phase, section.key);
@@ -145,7 +155,7 @@ async function buildPhaseCaptureDecisionContext(args: {
   if (lines.length === 0) return null;
 
   return [
-    `APPROVED P${args.phase} PHASE CAPTURE (authoritative for this build)`,
+    `SAVED P${args.phase} PHASE CAPTURE (authoritative input for this build)`,
     `Use these captured values as the primary source for this phase artifact. Do not replace them with generic tenant context, and do not re-collect them in the artifact.`,
     ...lines,
   ].join("\n");
@@ -221,9 +231,43 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    const captureModules = await getModuleState(ctx, moveId).catch(() => []);
+    const captureValue = (capturePhase: number, key: string) => {
+      const captureModule = captureModules.find(
+        (entry) => entry.moduleKey === phaseCaptureModuleKey(capturePhase, key),
+      );
+      const value = captureModule?.state?.value;
+      return typeof value === "string" ? value : "";
+    };
+    const confirmedSolutionRoute =
+      phase === 3
+        ? resolveConfirmedSolutionRoute({
+            businessChangeAssessment: captureValue(
+              1,
+              "business_change_assessment",
+            ),
+            routeValidation: captureValue(2, "solution_route_validation"),
+            approvedEvidenceReferences: (
+              await listApprovedPhaseEvidence(ctx, moveId, 2)
+            ).map((item) => item.evidenceId),
+          })
+        : null;
+    if (phase === 3 && !confirmedSolutionRoute) {
+      return Response.json(
+        {
+          error: "solution_route_validation_required",
+          detail:
+            "Complete the P1 business-change assessment and validate the P2 solution route against approved evidence before building P3 outputs.",
+          nextAction:
+            "Return to P2, select an approved evidence item, and confirm or correct the recommended route.",
+        },
+        { status: 409 },
+      );
+    }
+
     // Resolve the phase's canonical deliverables from the registry. These are the
     // documents an "Approve & Build" for this phase produces.
-    let specs = (PHASE_CANONICAL_KEYS[phase] ?? [])
+    let specs = phaseCanonicalKeysForRoute(phase, confirmedSolutionRoute)
       .map((key) =>
         DELIVERABLE_REGISTRY.find((d) => d.deliverableTypeKey === key),
       )
@@ -361,6 +405,8 @@ export async function POST(req: NextRequest) {
       ctx,
       moveId,
       phase,
+      confirmedSolutionRoute,
+      modules: captureModules,
     });
 
     const adaptiveDepth: AdaptiveDepthDecision = resolveAdaptiveDepth({
@@ -545,6 +591,7 @@ export async function POST(req: NextRequest) {
         contextExtract,
         adaptiveDepth,
         omittedDeliverables,
+        ...(confirmedSolutionRoute ? { confirmedSolutionRoute } : {}),
         queued,
         total: results.length,
         deliverables: results,

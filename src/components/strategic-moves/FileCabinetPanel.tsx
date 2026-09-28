@@ -8,6 +8,11 @@
 // lineage. Reads /api/v1/programs/:id/artifacts (no browser-only files).
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  EvidenceReviewEditor,
+  type PendingEvidenceReview,
+} from "@/components/strategic-moves/CurrentStateReadinessPanel";
+import type { ReviewedEvidenceExtraction } from "@/lib/programs/evidence-review-contract";
 
 interface Artifact {
   artifactId: string;
@@ -1763,6 +1768,13 @@ export function FileCabinetPanel({
   presentationMode?: boolean;
 }) {
   const [artifacts, setArtifacts] = useState<Artifact[]>([]);
+  const [pendingEvidenceReviews, setPendingEvidenceReviews] = useState<
+    PendingEvidenceReview[]
+  >([]);
+  const [evidenceReviewAvailable, setEvidenceReviewAvailable] = useState(true);
+  const [reviewingEvidenceId, setReviewingEvidenceId] = useState<string | null>(
+    null,
+  );
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [family, setFamily] = useState<string>("all");
@@ -1783,12 +1795,59 @@ export function FileCabinetPanel({
       if (!r.ok) throw new Error(`HTTP ${r.status}`);
       const j = await r.json();
       setArtifacts(Array.isArray(j.artifacts) ? j.artifacts : []);
+      setPendingEvidenceReviews(
+        Array.isArray(j.pendingEvidenceReviews) ? j.pendingEvidenceReviews : [],
+      );
+      setEvidenceReviewAvailable(j.evidenceReviewStatus !== "unavailable");
     } catch (e) {
       setError(e instanceof Error ? e.message : "load failed");
     } finally {
       setLoading(false);
     }
   }, [moveId]);
+
+  const decideEvidenceReview = useCallback(
+    async (
+      review: PendingEvidenceReview,
+      decision: "approved" | "rejected",
+      extraction?: ReviewedEvidenceExtraction,
+    ) => {
+      setReviewingEvidenceId(review.evidenceId);
+      setError(null);
+      try {
+        const response = await fetch(
+          `/api/v1/programs/${moveId}/current-state/evidence/${review.evidenceId}/approve`,
+          {
+            method: "POST",
+            credentials: "include",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify({
+              decision,
+              reviewedExtraction: extraction,
+              rationale:
+                decision === "approved"
+                  ? "Reviewer approved the corrected evidence extraction."
+                  : "Reviewer rejected the parsed evidence.",
+            }),
+          },
+        );
+        const result = await response.json().catch(() => ({}));
+        if (!response.ok || !result.ok) {
+          throw new Error(
+            result.detail || result.error || `HTTP ${response.status}`,
+          );
+        }
+        await load();
+      } catch (cause) {
+        setError(
+          cause instanceof Error ? cause.message : "Evidence review failed",
+        );
+      } finally {
+        setReviewingEvidenceId(null);
+      }
+    },
+    [load, moveId],
+  );
 
   const onUpload = useCallback(
     async (file: File) => {
@@ -1807,9 +1866,22 @@ export function FileCabinetPanel({
         const j = await r.json().catch(() => ({}));
         if (!r.ok || !j.ok)
           throw new Error(j.error || j.detail || `HTTP ${r.status}`);
-        setUploadState("idle");
+        const evidence = j.evidence as
+          | {
+              status?: string;
+              reviewStatus?: string;
+              parseMethod?: string;
+              warning?: string;
+            }
+          | undefined;
+        const notCaptured = evidence?.status === "not_captured";
+        setUploadState(notCaptured ? "error" : "idle");
         setUploadMsg(
-          `Uploaded ${file.name}${j.blobStored ? " → Azure Blob" : ""}.`,
+          notCaptured
+            ? `Uploaded ${file.name}, but parsing/review registration failed. This file is not available to generation. ${evidence.warning ?? "Retry ingestion or contact support."}`
+            : evidence?.reviewStatus
+              ? `Uploaded ${file.name}${j.blobStored ? " to secure storage" : ""}; parsed via ${evidence.parseMethod ?? "parser"}. Human review is required before it can inform generation.`
+              : `Uploaded ${file.name}${j.blobStored ? " to secure storage" : ""}.`,
         );
         await load();
       } catch (e) {
@@ -1947,6 +2019,60 @@ export function FileCabinetPanel({
         >
           {uploadMsg}
         </div>
+      )}
+
+      {!evidenceReviewAvailable && (
+        <div
+          role="alert"
+          style={{
+            margin: "8px 0",
+            padding: "8px 10px",
+            border: "1px solid #e6b5b1",
+            borderRadius: 6,
+            background: "#fff7f6",
+            color: "#9b2c24",
+            fontSize: 12,
+          }}
+        >
+          Evidence review status is unavailable. Do not use newly uploaded files
+          for phase decisions until the review state can be loaded.
+        </div>
+      )}
+
+      {pendingEvidenceReviews.length > 0 && (
+        <section
+          aria-label="Evidence awaiting review"
+          style={{
+            margin: "10px 0 14px",
+            padding: 12,
+            border: "1px solid #e5c792",
+            borderRadius: 6,
+            background: "#fffdf8",
+          }}
+        >
+          <h3 style={{ margin: 0, fontSize: 14, color: "#5d431a" }}>
+            {pendingEvidenceReviews.length} evidence item
+            {pendingEvidenceReviews.length === 1 ? "" : "s"} awaiting review
+          </h3>
+          <p style={{ margin: "4px 0 8px", fontSize: 12, color: "#655b4a" }}>
+            Check the parser’s facts against the original text, correct them,
+            then approve. Pending and rejected evidence is excluded from phase
+            generation.
+          </p>
+          <div style={{ display: "grid", gap: 8 }}>
+            {pendingEvidenceReviews.map((review) => (
+              <EvidenceReviewEditor
+                key={review.evidenceId}
+                review={review}
+                busy={reviewingEvidenceId === review.evidenceId}
+                disabled={reviewingEvidenceId !== null}
+                onDecision={(decision, extraction) =>
+                  void decideEvidenceReview(review, decision, extraction)
+                }
+              />
+            ))}
+          </div>
+        </section>
       )}
 
       {contextExtractReview && (

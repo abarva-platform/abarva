@@ -31,7 +31,10 @@ jest.mock("@/lib/programs/evidence-ingestion", () => ({
   recordProgramEvidence: (...args: unknown[]) => recordEvidence(...args),
 }));
 
-import { createMoveContextExtract } from "../move-context-extract";
+import {
+  createMoveContextExtract,
+  mapApprovedMoveEvidenceRows,
+} from "../move-context-extract";
 
 const ctx = {
   clientId: "client-uuid",
@@ -76,7 +79,8 @@ describe("createMoveContextExtract", () => {
         chunkId: "chunk-1",
         recordId: "record-1",
         sourceSegmentId: "it_landscape",
-        sourceDoc: "datasets/tenant-inputs/archive/meridian-health/consolidated-20260714/current-state-pack/v7/V7_10_ai_initiatives.csv",
+        sourceDoc:
+          "datasets/tenant-inputs/archive/meridian-health/consolidated-20260714/current-state-pack/v7/V7_10_ai_initiatives.csv",
         text: "AI agent assist is a relevant active data-layer context item for disruption operations.",
         embeddingStatus: "embedded",
         classification: "internal",
@@ -103,37 +107,47 @@ describe("createMoveContextExtract", () => {
       }),
     );
     expect(result.suggestedContextItems).toHaveLength(0);
-    expect(queryContext).toHaveBeenCalledWith(expect.objectContaining({
-      tenantClientKey: "skyharbor-air",
-      filters: expect.objectContaining({
-        sensitivity: ["public", "internal"],
-        extra: ["agent_readiness_status eq 'agent_ready'"],
-      }),
-    }));
-    expect(saveArtifact).toHaveBeenCalledWith(ctx, expect.objectContaining({
-      artifactType: "move_context_extract_p3",
-      artifactFamily: "session_artifact",
-      citationReady: true,
-      metadata: expect.objectContaining({
-        guardrails: expect.objectContaining({
-          suggestedContextUsedForGeneration: false,
-          candidatePromoted: false,
+    expect(queryContext).toHaveBeenCalledWith(
+      expect.objectContaining({
+        tenantClientKey: "skyharbor-air",
+        filters: expect.objectContaining({
+          sensitivity: ["public", "internal"],
+          extra: ["agent_readiness_status eq 'agent_ready'"],
         }),
       }),
-    }));
+    );
+    expect(saveArtifact).toHaveBeenCalledWith(
+      ctx,
+      expect.objectContaining({
+        artifactType: "move_context_extract_p3",
+        artifactFamily: "session_artifact",
+        citationReady: true,
+        metadata: expect.objectContaining({
+          guardrails: expect.objectContaining({
+            suggestedContextUsedForGeneration: false,
+            candidatePromoted: false,
+          }),
+        }),
+      }),
+    );
     const savedBody = saveArtifact.mock.calls[0]?.[1]?.body as string;
     expect(savedBody).toContain("Source: AI & Automation Use Cases");
-    expect(savedBody).toContain("Technical source file: V7_10_ai_initiatives.csv");
+    expect(savedBody).toContain(
+      "Technical source file: V7_10_ai_initiatives.csv",
+    );
     expect(savedBody).not.toContain("Source: V7_10_ai_initiatives.csv");
-    expect(recordEvidence).toHaveBeenCalledWith(ctx, expect.objectContaining({
-      evidenceType: "move_context_extract_attached",
-      extractedText: expect.stringContaining("AI & Automation Use Cases"),
-      extractedStructured: expect.objectContaining({
-        warnings: expect.arrayContaining([
-          expect.stringMatching(/Suggested Context.*excluded/i),
-        ]),
+    expect(recordEvidence).toHaveBeenCalledWith(
+      ctx,
+      expect.objectContaining({
+        evidenceType: "move_context_extract_attached",
+        extractedText: expect.stringContaining("AI & Automation Use Cases"),
+        extractedStructured: expect.objectContaining({
+          warnings: expect.arrayContaining([
+            expect.stringMatching(/Suggested Context.*excluded/i),
+          ]),
+        }),
       }),
-    }));
+    );
   });
 
   it("attaches Move-scoped uploaded evidence rows that readiness and generation can use", async () => {
@@ -147,8 +161,10 @@ describe("createMoveContextExtract", () => {
         phase: 1,
         evidenceType: "baseline_evidence",
         title: "current-state-process-operating-documentation-smoke.txt",
-        summary: "Current state process and operating workflow with service queues.",
-        extractedText: "Current state process, workflow, operating documentation, and success criteria.",
+        summary:
+          "Current state process and operating workflow with service queues.",
+        extractedText:
+          "Current state process, workflow, operating documentation, and success criteria.",
         extractedStructured: {
           source_type: "real_upload",
           citation: "current-state-process-operating-documentation-smoke.txt",
@@ -165,8 +181,10 @@ describe("createMoveContextExtract", () => {
         phase: 1,
         evidenceType: "architecture_inventory",
         title: "systems-landscape-application-integration-smoke.txt",
-        summary: "Systems landscape, application inventory, integration, architecture, and data flow.",
-        extractedText: "Application inventory, integration, architecture, data flow, platform systems.",
+        summary:
+          "Systems landscape, application inventory, integration, architecture, and data flow.",
+        extractedText:
+          "Application inventory, integration, architecture, data flow, platform systems.",
         extractedStructured: {
           source_type: "real_upload",
           citation: "systems-landscape-application-integration-smoke.txt",
@@ -182,12 +200,16 @@ describe("createMoveContextExtract", () => {
         phase: 1,
         evidenceType: "baseline_evidence",
         title: "kpi-metric-baseline-target-smoke.txt",
-        summary: "KPI metric baseline and target placeholders for readiness proof.",
+        summary:
+          "KPI metric baseline and target placeholders for readiness proof.",
         extractedText: "KPI metric baseline target success criteria.",
         extractedStructured: {
           source_type: "real_upload",
           citation: "kpi-metric-baseline-target-smoke.txt",
-          baseline_candidates: ["first-contact resolution", "average handle time"],
+          baseline_candidates: [
+            "first-contact resolution",
+            "average handle time",
+          ],
         },
         confidence: 0.79,
         createdAt: "2026-07-14T11:02:00Z",
@@ -201,7 +223,8 @@ describe("createMoveContextExtract", () => {
         evidenceType: "baseline_evidence",
         title: "cost-finance-budget-run-rate-baseline-smoke.txt",
         summary: "Cost baseline, finance, budget, and run-rate context.",
-        extractedText: "Cost baseline finance budget run-rate evidence for business case input.",
+        extractedText:
+          "Cost baseline finance budget run-rate evidence for business case input.",
         extractedStructured: {
           source_type: "real_upload",
           citation: "cost-finance-budget-run-rate-baseline-smoke.txt",
@@ -220,19 +243,17 @@ describe("createMoveContextExtract", () => {
     });
 
     expect(result.attachedEvidenceItems).toHaveLength(4);
-    expect(result.attachedEvidenceItems.map((item) => item.evidenceId)).toEqual([
-      "ev-process",
-      "ev-systems",
-      "ev-kpi",
-      "ev-cost",
-    ]);
+    expect(result.attachedEvidenceItems.map((item) => item.evidenceId)).toEqual(
+      ["ev-process", "ev-systems", "ev-kpi", "ev-cost"],
+    );
     expect(result.attachedEvidenceItems).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
           moveId: baseInput.moveId,
           tenantKey: "skyharbor-air",
           sourceType: "real_upload",
-          sourceFileRef: "current-state-process-operating-documentation-smoke.txt",
+          sourceFileRef:
+            "current-state-process-operating-documentation-smoke.txt",
           readinessStatus: "covered",
           whyAttached: expect.stringMatching(/readiness-covered/i),
         }),
@@ -246,20 +267,96 @@ describe("createMoveContextExtract", () => {
     expect(savedBody).toContain("Evidence ID: ev-process");
     expect(savedBody).toContain("Evidence Family Coverage");
     expect(savedBody).not.toMatch(/## Attached Evidence\nNone\./);
-    expect(recordEvidence).toHaveBeenCalledWith(ctx, expect.objectContaining({
-      evidenceType: "move_context_extract_attached",
-      extractedText: expect.stringContaining("ev-process"),
-    }));
+    expect(recordEvidence).toHaveBeenCalledWith(
+      ctx,
+      expect.objectContaining({
+        evidenceType: "move_context_extract_attached",
+        extractedText: expect.stringContaining("ev-process"),
+      }),
+    );
     const evidencePayload = recordEvidence.mock.calls[0]?.[1] as {
       extractedText: string;
       extractedStructured: { warnings: string[] };
     };
-    expect(evidencePayload.extractedText).toContain("current-state-process-operating-documentation-smoke.txt");
+    expect(evidencePayload.extractedText).toContain(
+      "current-state-process-operating-documentation-smoke.txt",
+    );
     expect(evidencePayload.extractedStructured.warnings).toEqual(
       expect.arrayContaining([
         expect.stringMatching(/Suggested Context.*excluded/i),
       ]),
     );
+  });
+
+  it("uses the human-reviewed extraction and its citation instead of conflicting parser text", async () => {
+    queryContext.mockResolvedValue([]);
+    const reviewedRows = mapApprovedMoveEvidenceRows({
+      tenantKey: "skyharbor-air",
+      moveId: baseInput.moveId,
+      reviews: [
+        {
+          evidence_id: "ev-reviewed",
+          decision: "approved",
+          reviewed_at: "2026-07-14T12:00:00Z",
+          source_ref: {
+            reviewed_extraction: {
+              version: 1,
+              summary: "Reviewer-confirmed baseline is 18%.",
+              structured: {
+                decisions: ["Use 18% as the validated baseline."],
+                risks: [],
+                baselineCandidates: ["Validated baseline: 18%"],
+                actionItems: [],
+                observations: [],
+                assumptions: [],
+                openQuestions: [],
+                citations: [
+                  { quote: "Baseline performance: 18%", locator: "page 4" },
+                ],
+              },
+            },
+          },
+        },
+      ],
+      evidence: [
+        {
+          id: "ev-reviewed",
+          tenant_key: "skyharbor-air",
+          program_id: baseInput.moveId,
+          attachment_id: "att-reviewed",
+          phase: 2,
+          evidence_type: "baseline_evidence",
+          title: "baseline.docx",
+          summary: "Parser guessed a baseline of 12%.",
+          extracted_text: "Parser guessed a baseline of 12% in the source.",
+          extracted_structured: {
+            source_type: "real_upload",
+            citation: "baseline.docx",
+            baseline_candidates: ["12%"],
+          },
+          confidence: 0.74,
+          created_at: "2026-07-14T11:00:00Z",
+        },
+      ],
+    });
+    loadMoveEvidence.mockResolvedValue(reviewedRows);
+
+    const result = await createMoveContextExtract(baseInput, {
+      queryContext,
+      saveArtifact,
+      recordEvidence,
+      loadMoveEvidence,
+      existingExtract,
+    });
+
+    expect(result.attachedEvidenceItems[0].summary).toContain(
+      "Reviewer-confirmed baseline is 18%.",
+    );
+    expect(result.attachedEvidenceItems[0].summary).toContain(
+      "Source quote (page 4): Baseline performance: 18%",
+    );
+    expect(result.attachedEvidenceItems[0].summary).not.toContain("12%");
+    expect(saveArtifact.mock.calls[0]?.[1]?.body).not.toContain("12%");
   });
 
   it("does not attach candidate-only or generated context-extract rows as approved evidence", async () => {
@@ -337,16 +434,19 @@ describe("createMoveContextExtract", () => {
     expect(result.suggestedContextItems).toHaveLength(1);
     expect(queryContext).not.toHaveBeenCalled();
     expect(loadMoveEvidence).not.toHaveBeenCalled();
-    expect(saveArtifact).toHaveBeenCalledWith(ctx, expect.objectContaining({
-      citationReady: false,
-      metadata: expect.objectContaining({
-        moveContextExtract: expect.objectContaining({
-          sourceMode: "candidate_preview",
-          candidateVersionId:
-            "skyharbor-air:skyharbor-air-pr10-candidate:candidate-dry-run",
+    expect(saveArtifact).toHaveBeenCalledWith(
+      ctx,
+      expect.objectContaining({
+        citationReady: false,
+        metadata: expect.objectContaining({
+          moveContextExtract: expect.objectContaining({
+            sourceMode: "candidate_preview",
+            candidateVersionId:
+              "skyharbor-air:skyharbor-air-pr10-candidate:candidate-dry-run",
+          }),
         }),
       }),
-    }));
+    );
     expect(recordEvidence).not.toHaveBeenCalled();
   });
 
@@ -405,17 +505,20 @@ describe("createMoveContextExtract", () => {
 
     expect(result.status).toBe("created");
     expect(result.artifactId).toBe("artifact-1");
-    expect(result.attachedEvidenceItems.map((item) => item.evidenceId)).toEqual([
-      "ev-new",
-    ]);
-    expect(saveArtifact).toHaveBeenCalledWith(ctx, expect.objectContaining({
-      metadata: expect.objectContaining({
-        previousMoveContextExtract: expect.objectContaining({
-          artifactId: "artifact-existing",
-          freshnessStatus: "rebuild_required",
+    expect(result.attachedEvidenceItems.map((item) => item.evidenceId)).toEqual(
+      ["ev-new"],
+    );
+    expect(saveArtifact).toHaveBeenCalledWith(
+      ctx,
+      expect.objectContaining({
+        metadata: expect.objectContaining({
+          previousMoveContextExtract: expect.objectContaining({
+            artifactId: "artifact-existing",
+            freshnessStatus: "rebuild_required",
+          }),
         }),
       }),
-    }));
+    );
   });
 
   it("reuses an existing current extract only when freshness metadata matches", async () => {

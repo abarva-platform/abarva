@@ -47,6 +47,20 @@ const SUPABASE = { mocked: true };
 const PROGRAM_ID = "program-visible";
 const MISSING_PROGRAM_ID = "program-hidden";
 const EVIDENCE_ID = "evidence-1";
+const REVIEWED_EXTRACTION = {
+  version: 1,
+  summary: "Reviewed summary",
+  structured: {
+    decisions: [],
+    risks: [],
+    baselineCandidates: [],
+    actionItems: [],
+    observations: [],
+    assumptions: [],
+    openQuestions: [],
+    citations: [],
+  },
+};
 
 function request(body: Record<string, unknown> = {}): NextRequest {
   return new Request(
@@ -101,7 +115,11 @@ describe("current-state evidence approval route", () => {
     const { POST } = await import("../route");
 
     const res = await POST(
-      request({ decision: "approved", rationale: "Reviewed synthetic evidence." }),
+      request({
+        decision: "approved",
+        rationale: "Reviewed synthetic evidence.",
+        reviewedExtraction: REVIEWED_EXTRACTION,
+      }),
       {
         params: Promise.resolve({
           programId: PROGRAM_ID,
@@ -116,6 +134,23 @@ describe("current-state evidence approval route", () => {
       evidenceId: EVIDENCE_ID,
       decision: "approved",
       rationale: "Reviewed synthetic evidence.",
+      reviewedExtraction: REVIEWED_EXTRACTION,
     });
+  });
+
+  it("requires the human-reviewed extraction snapshot before approval", async () => {
+    const { POST } = await import("../route");
+    const res = await POST(request({ decision: "approved" }), {
+      params: Promise.resolve({
+        programId: PROGRAM_ID,
+        evidenceId: EVIDENCE_ID,
+      }),
+    });
+
+    expect(res.status).toBe(400);
+    await expect(res.json()).resolves.toEqual({
+      error: "reviewed_extraction_required",
+    });
+    expect(decideEvidenceReview).not.toHaveBeenCalled();
   });
 });

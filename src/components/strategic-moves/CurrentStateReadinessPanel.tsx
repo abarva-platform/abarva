@@ -15,6 +15,7 @@ import type {
 import type { CurrentStateRecommendation } from "@/lib/programs/current-state-maturity";
 import type { CurrentStatePlan } from "@/lib/programs/current-state-plan";
 import { resolveSourceLabel } from "@/lib/programs/deliverables/source-labels";
+import type { ReviewedEvidenceExtraction } from "@/lib/programs/evidence-review-contract";
 
 const usd = (n: number) =>
   n >= 1_000_000
@@ -347,6 +348,264 @@ export function IndicativePlanBlock({ plan }: { plan: CurrentStatePlan }) {
   );
 }
 
+export type PendingEvidenceReview = {
+  evidenceId: string;
+  reviewId?: string;
+  title: string;
+  familyKey?: string;
+  phase?: number | null;
+  parseMethod: string;
+  confidence: number;
+  sourceTextPreview: string;
+  extraction: ReviewedEvidenceExtraction;
+};
+type ReviewSignalField =
+  | "decisions"
+  | "risks"
+  | "baselineCandidates"
+  | "actionItems"
+  | "observations"
+  | "assumptions"
+  | "openQuestions";
+
+export function EvidenceReviewEditor({
+  review,
+  busy,
+  disabled,
+  onDecision,
+}: {
+  review: PendingEvidenceReview;
+  busy: boolean;
+  disabled: boolean;
+  onDecision: (
+    decision: "approved" | "rejected",
+    extraction?: ReviewedEvidenceExtraction,
+  ) => void;
+}) {
+  const [extraction, setExtraction] = useState(review.extraction);
+  const [citationText, setCitationText] = useState(
+    review.extraction.structured.citations
+      .map((citation) => `${citation.quote} | ${citation.locator}`)
+      .join("\n"),
+  );
+  const setSignalLines = (field: ReviewSignalField, value: string) => {
+    const lines = value
+      .split("\n")
+      .map((line) => line.trim())
+      .filter(Boolean);
+    setExtraction((current) => ({
+      ...current,
+      structured: { ...current.structured, [field]: lines },
+    }));
+  };
+  const fieldLabels: Array<[ReviewSignalField, string]> = [
+    ["decisions", "Decisions"],
+    ["baselineCandidates", "Baseline candidates"],
+    ["risks", "Risks"],
+    ["actionItems", "Actions"],
+    ["observations", "Observations"],
+    ["assumptions", "Assumptions"],
+    ["openQuestions", "Open questions"],
+  ];
+  const parsedCitations = citationText
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .map((line) => {
+      const separator = line.indexOf("|");
+      return separator < 0
+        ? { quote: line, locator: "source file" }
+        : {
+            quote: line.slice(0, separator).trim(),
+            locator: line.slice(separator + 1).trim() || "source file",
+          };
+    })
+    .filter((citation) => citation.quote && citation.locator);
+
+  return (
+    <details
+      style={{
+        marginTop: 6,
+        padding: "8px 10px",
+        background: "#fff",
+        border: "1px solid var(--abarva-mist, #e6e3dc)",
+        borderRadius: 6,
+      }}
+    >
+      <summary style={{ cursor: "pointer", fontSize: 12, fontWeight: 650 }}>
+        Review extracted information
+        <span style={{ color: "var(--abarva-stone)", fontWeight: 400 }}>
+          {" "}
+          · {review.title}
+          {review.familyKey ? ` · ${review.familyKey}` : ""}
+          {review.phase !== undefined && review.phase !== null
+            ? ` · P${review.phase}`
+            : ""}
+          {` · ${review.parseMethod} · `}
+          {Math.round(review.confidence * 100)}%
+        </span>
+      </summary>
+      <div style={{ display: "grid", gap: 8, marginTop: 10 }}>
+        <label
+          style={{ display: "grid", gap: 4, fontSize: 11, fontWeight: 650 }}
+        >
+          Summary
+          <textarea
+            aria-label={`${review.title} reviewed summary`}
+            value={extraction.summary}
+            onChange={(event) =>
+              setExtraction((current) => ({
+                ...current,
+                summary: event.target.value,
+              }))
+            }
+            rows={3}
+            style={{
+              width: "100%",
+              font: "inherit",
+              fontWeight: 400,
+              padding: 7,
+              border: "1px solid #d8d4ca",
+              borderRadius: 5,
+            }}
+          />
+        </label>
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+            gap: 8,
+          }}
+        >
+          {fieldLabels.map(([field, label]) => (
+            <label
+              key={field}
+              style={{ display: "grid", gap: 4, fontSize: 11, fontWeight: 650 }}
+            >
+              {label}
+              <textarea
+                aria-label={`${review.title} reviewed ${label.toLowerCase()}`}
+                value={extraction.structured[field].join("\n")}
+                onChange={(event) => setSignalLines(field, event.target.value)}
+                rows={3}
+                placeholder="One item per line"
+                style={{
+                  width: "100%",
+                  font: "inherit",
+                  fontWeight: 400,
+                  padding: 7,
+                  border: "1px solid #d8d4ca",
+                  borderRadius: 5,
+                  resize: "vertical",
+                }}
+              />
+            </label>
+          ))}
+        </div>
+        <label
+          style={{ display: "grid", gap: 4, fontSize: 11, fontWeight: 650 }}
+        >
+          Evidence references
+          <textarea
+            aria-label={`${review.title} evidence references`}
+            value={citationText}
+            onChange={(event) => setCitationText(event.target.value)}
+            rows={2}
+            placeholder="Quoted text | page, slide, or section"
+            style={{
+              width: "100%",
+              font: "inherit",
+              fontWeight: 400,
+              padding: 7,
+              border: "1px solid #d8d4ca",
+              borderRadius: 5,
+              resize: "vertical",
+            }}
+          />
+        </label>
+        <details>
+          <summary style={{ cursor: "pointer", fontSize: 11 }}>
+            Original parsed source text
+          </summary>
+          <pre
+            style={{
+              whiteSpace: "pre-wrap",
+              maxHeight: 220,
+              overflow: "auto",
+              fontSize: 10,
+              lineHeight: 1.45,
+              background: "#f8f7f4",
+              padding: 8,
+              borderRadius: 4,
+            }}
+          >
+            {review.sourceTextPreview ||
+              "No text was extracted from this file."}
+          </pre>
+        </details>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: 8,
+            flexWrap: "wrap",
+          }}
+        >
+          <span style={{ fontSize: 10, color: "var(--abarva-stone)" }}>
+            Approval stores this reviewed snapshot as version 1. The original
+            upload and parser output remain unchanged.
+          </span>
+          <div style={{ display: "flex", gap: 6 }}>
+            <button
+              type="button"
+              disabled={disabled || busy}
+              onClick={() => onDecision("rejected")}
+              style={{
+                fontSize: 11,
+                fontWeight: 600,
+                color: "var(--abarva-slate)",
+                background: "transparent",
+                border: "1px solid var(--abarva-mist, #d8d4ca)",
+                borderRadius: 5,
+                padding: "4px 10px",
+              }}
+            >
+              Reject
+            </button>
+            <button
+              type="button"
+              disabled={disabled || busy || !extraction.summary.trim()}
+              onClick={() =>
+                onDecision("approved", {
+                  ...extraction,
+                  structured: {
+                    ...extraction.structured,
+                    citations: parsedCitations,
+                  },
+                })
+              }
+              style={{
+                fontSize: 11,
+                fontWeight: 600,
+                color: "#fff",
+                background: "var(--abarva-ink, #0a0a0a)",
+                border: "none",
+                borderRadius: 5,
+                padding: "4px 10px",
+                cursor: disabled || busy ? "default" : "pointer",
+                opacity: disabled || busy ? 0.5 : 1,
+              }}
+            >
+              {busy ? "Saving reviewed version…" : "Approve reviewed version"}
+            </button>
+          </div>
+        </div>
+      </div>
+    </details>
+  );
+}
+
 export function CurrentStateReadinessPanel({
   readiness,
   recommendation,
@@ -473,6 +732,7 @@ export function CurrentStateReadinessPanel({
     family: string,
     evidenceId: string,
     decision: "approved" | "rejected",
+    reviewedExtraction?: ReviewedEvidenceExtraction,
   ) {
     setBusy(`${family}:${evidenceId}`);
     setNote(null);
@@ -482,7 +742,7 @@ export function CurrentStateReadinessPanel({
         {
           method: "POST",
           headers: { "content-type": "application/json" },
-          body: JSON.stringify({ decision }),
+          body: JSON.stringify({ decision, reviewedExtraction }),
         },
       );
       const j = await res.json();
@@ -796,69 +1056,16 @@ export function CurrentStateReadinessPanel({
                     {pendingReviews.length} parsed document
                     {pendingReviews.length > 1 ? "s" : ""} awaiting review
                   </div>
-                  {pendingReviews.map((p) => (
-                    <div
-                      key={p.evidenceId}
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 8,
-                        padding: "3px 0",
-                        fontSize: 12,
-                      }}
-                    >
-                      <span style={{ flex: 1, color: "var(--abarva-slate)" }}>
-                        {p.title}
-                        <span
-                          style={{
-                            color: "var(--abarva-stone)",
-                            fontFamily: "var(--abarva-mono)",
-                            fontSize: 10,
-                          }}
-                        >
-                          {" "}
-                          · {p.parseMethod} · {Math.round(p.confidence * 100)}%
-                        </span>
-                      </span>
-                      <button
-                        type="button"
-                        disabled={busy !== null}
-                        onClick={() => decide(i.key, p.evidenceId, "approved")}
-                        style={{
-                          fontSize: 11,
-                          fontWeight: 600,
-                          color: "#fff",
-                          background: "var(--abarva-ink, #0a0a0a)",
-                          border: "none",
-                          borderRadius: 5,
-                          padding: "3px 10px",
-                          cursor: busy ? "default" : "pointer",
-                          opacity: busy ? 0.5 : 1,
-                        }}
-                      >
-                        {busy === `${i.key}:${p.evidenceId}`
-                          ? "Working…"
-                          : "Approve"}
-                      </button>
-                      <button
-                        type="button"
-                        disabled={busy !== null}
-                        onClick={() => decide(i.key, p.evidenceId, "rejected")}
-                        style={{
-                          fontSize: 11,
-                          fontWeight: 600,
-                          color: "var(--abarva-slate)",
-                          background: "transparent",
-                          border: "1px solid var(--abarva-mist, #d8d4ca)",
-                          borderRadius: 5,
-                          padding: "3px 10px",
-                          cursor: busy ? "default" : "pointer",
-                          opacity: busy ? 0.5 : 1,
-                        }}
-                      >
-                        Reject
-                      </button>
-                    </div>
+                  {pendingReviews.map((review) => (
+                    <EvidenceReviewEditor
+                      key={review.evidenceId}
+                      review={review}
+                      busy={busy === `${i.key}:${review.evidenceId}`}
+                      disabled={busy !== null}
+                      onDecision={(decision, extraction) =>
+                        decide(i.key, review.evidenceId, decision, extraction)
+                      }
+                    />
                   ))}
                 </div>
               )}

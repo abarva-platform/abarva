@@ -421,8 +421,9 @@ describe("assembleGovernedEvidence", () => {
     );
   });
 
-  it("uses current generated Move artifacts as internal evidence for later phases", async () => {
+  it("uses only the exact signed-off generated Move artifact version in later phases", async () => {
     const fakeQuery = (async () => []) as never;
+    let generatedArtifactFilter: string[] = [];
     const fakeDb = {
       from(table: string) {
         if (table === "program_modules") {
@@ -430,9 +431,7 @@ describe("assembleGovernedEvidence", () => {
             select: () => ({
               eq: () => ({
                 order: () => ({
-                  order: () => ({
-                    limit: async () => ({ data: [] }),
-                  }),
+                  order: () => ({ limit: async () => ({ data: [] }) }),
                 }),
               }),
             }),
@@ -443,9 +442,7 @@ describe("assembleGovernedEvidence", () => {
             select: () => ({
               eq: () => ({
                 eq: () => ({
-                  order: () => ({
-                    limit: async () => ({ data: [] }),
-                  }),
+                  order: () => ({ limit: async () => ({ data: [] }) }),
                 }),
               }),
             }),
@@ -454,11 +451,44 @@ describe("assembleGovernedEvidence", () => {
         if (table === "program_evidence_reviews") {
           return {
             select: () => ({
+              eq: () => ({ eq: () => ({ limit: async () => ({ data: [] }) }) }),
+            }),
+          };
+        }
+        if (table === "deliverables_v2") {
+          return {
+            select: () => ({
               eq: () => ({
-                eq: () => ({
-                  eq: () => ({
-                    limit: async () => ({ data: [] }),
-                  }),
+                limit: async () => ({
+                  data: [
+                    {
+                      id: "deliverable-business-case",
+                      status: "draft",
+                      signed_off_version: 2,
+                    },
+                  ],
+                }),
+              }),
+            }),
+          };
+        }
+        if (table === "deliverable_versions") {
+          return {
+            select: () => ({
+              in: () => ({
+                limit: async () => ({
+                  data: [
+                    {
+                      deliverable_id: "deliverable-business-case",
+                      version: 1,
+                      structured_data: { generated_artifact_id: "draft-v1" },
+                    },
+                    {
+                      deliverable_id: "deliverable-business-case",
+                      version: 2,
+                      structured_data: { generated_artifact_id: "approved-v2" },
+                    },
+                  ],
                 }),
               }),
             }),
@@ -469,44 +499,51 @@ describe("assembleGovernedEvidence", () => {
             select: () => ({
               eq: () => ({
                 eq: () => ({
-                  is: () => ({
-                    is: () => ({
-                      order: () => ({
-                        limit: async () => ({
-                          data: [
-                            {
-                              id: "artifact-business-case",
-                              quality_score: 0.92,
-                              rendered_at: "2026-08-21T12:00:00Z",
-                              metadata: {
-                                title: "Business Case",
-                                deliverableTypeKey: "business_case",
-                                generationMetrics: {
-                                  sectionCount: 7,
-                                  bodyWordCount: 2200,
-                                },
-                                renderableDoc: {
-                                  executiveSummary:
-                                    "Proceed only with readiness setup; do not claim savings until internal volume evidence is approved.",
-                                  generatedSections: [
-                                    {
-                                      title: "Value boundary",
-                                      bodyMarkdown:
-                                        "The $98.41/min benchmark is external and sensitivity-only. Internal volume is not approved for ROI, NPV, or payback claims.",
-                                    },
-                                  ],
-                                  sourceRegister: [
-                                    { label: "Approved P4 business case" },
-                                    { label: "Approved P4 financial model" },
-                                  ],
+                  in: (_column: string, ids: string[]) => {
+                    generatedArtifactFilter = ids;
+                    return {
+                      is: () => ({
+                        order: () => ({
+                          limit: async () => ({
+                            data: [
+                              {
+                                id: "approved-v2",
+                                quality_score: 0.92,
+                                rendered_at: "2026-08-21T12:00:00Z",
+                                metadata: {
+                                  title: "Approved Business Case",
+                                  deliverableTypeKey: "business_case",
+                                  renderableDoc: {
+                                    executiveSummary:
+                                      "The approved version carries the reviewed value boundary.",
+                                    generatedSections: [],
+                                    sourceRegister: [
+                                      { label: "Approved P4 evidence" },
+                                    ],
+                                  },
                                 },
                               },
-                            },
-                          ],
+                              {
+                                id: "draft-v1",
+                                quality_score: 0.92,
+                                rendered_at: "2026-08-22T12:00:00Z",
+                                metadata: {
+                                  title: "Unapproved Business Case Draft",
+                                  deliverableTypeKey: "business_case",
+                                  renderableDoc: {
+                                    executiveSummary:
+                                      "This newer draft must not feed the next phase.",
+                                    generatedSections: [],
+                                    sourceRegister: [],
+                                  },
+                                },
+                              },
+                            ],
+                          }),
                         }),
                       }),
-                    }),
-                  }),
+                    };
+                  },
                 }),
               }),
             }),
@@ -526,11 +563,13 @@ describe("assembleGovernedEvidence", () => {
       { queryTenantContext: fakeQuery, db: fakeDb },
     );
 
+    expect(generatedArtifactFilter).toEqual(["approved-v2"]);
     expect(out.retrievedCount).toBe(1);
     expect(out.evidence[0].evidenceFamily).toBe("Business Case");
-    expect(out.evidence[0].statement).toMatch(/sensitivity-only/);
+    expect(out.evidence[0].statement).toMatch(/reviewed value boundary/);
+    expect(out.evidence[0].statement).not.toMatch(/newer draft/);
     expect(out.evidence[0].disclosureTier).toBe("internal_only");
-    expect(out.sourceRegister[0].label).toBe("Business Case");
+    expect(out.sourceRegister[0].label).toBe("Approved Business Case");
   });
 
   it("does not use unreviewed program evidence items as move citations", async () => {

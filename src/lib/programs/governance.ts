@@ -50,6 +50,8 @@ import {
 } from "@/lib/auth/gate-approval-strict-mode";
 import { isFeatureEnabled } from "@/lib/features/is-feature-enabled";
 import { resolveMoveTier } from "./p0-extended-intake-fields";
+import { listApprovedPhaseEvidence } from "./approved-phase-evidence";
+import { resolveConfirmedSolutionRoute } from "./solution-route-assessment";
 
 function assertTenancy(ctx: TenancyCtx): void {
   if (!ctx?.clientId || !ctx?.userId) {
@@ -204,6 +206,12 @@ const GATE_RULES: GateRule[] = [
           "Diagnosis clears P2 without unresolved hard gaps or kill recommendation",
         severity: "hard",
       },
+      {
+        key: "solution_route_validated",
+        describe:
+          "P1 change assessment and P2 solution route are completed against approved evidence",
+        severity: "hard",
+      },
     ],
   },
   // P3 Design Future State → P4 Roadmap & Business Case
@@ -217,8 +225,14 @@ const GATE_RULES: GateRule[] = [
     approverRole: "sponsor",
     checks: [
       {
+        key: "solution_route_validated",
+        describe:
+          "The P1 change assessment and P2 solution route remain backed by approved evidence",
+        severity: "hard",
+      },
+      {
         key: "design_approved",
-        describe: "Future-state design and operating-model shift signed off",
+        describe: "P3 solution design for the confirmed route signed off",
         severity: "hard",
       },
       {
@@ -705,6 +719,36 @@ export async function evaluateGate(
     })
     .join("\n")
     .toLowerCase();
+  const captureValue = (phase: number, key: string) => {
+    const row = moduleRows.find(
+      (item) => item.module_key === `phase_${phase}_${key}`,
+    );
+    const value = row?.state_jsonb?.value;
+    return typeof value === "string" ? value : "";
+  };
+  const captureCompleted = (phase: number, key: string) =>
+    moduleRows.some(
+      (item) =>
+        item.module_key === `phase_${phase}_${key}` &&
+        item.status === "completed",
+    );
+  const routeEvidenceReferences =
+    fromPhase === 2 || fromPhase === 3
+      ? await listApprovedPhaseEvidence(ctx, programId, 2)
+      : [];
+  const confirmedSolutionRoute =
+    fromPhase === 2 || fromPhase === 3
+      ? resolveConfirmedSolutionRoute({
+          businessChangeAssessment: captureValue(
+            1,
+            "business_change_assessment",
+          ),
+          routeValidation: captureValue(2, "solution_route_validation"),
+          approvedEvidenceReferences: routeEvidenceReferences.map(
+            (item) => item.evidenceId,
+          ),
+        })
+      : null;
 
   let latestOriginationBriefText = "";
   if (originationBriefRow) {
@@ -982,6 +1026,12 @@ export async function evaluateGate(
             "No signed Discovery Report is available for P2 readiness. Approve or upload the client-approved Discovery Report in Files & Evidence, then rerun Approve & Build.";
         }
         break;
+      case "solution_route_validated":
+        pass =
+          captureCompleted(1, "business_change_assessment") &&
+          captureCompleted(2, "solution_route_validation") &&
+          confirmedSolutionRoute !== null;
+        break;
       case "discovery_notes_ingested":
         pass =
           isPresent(
@@ -1019,16 +1069,28 @@ export async function evaluateGate(
         pass = cxoInterviewModule?.status === "completed";
         break;
       case "design_approved":
-        pass = await anyMeetsApprovalBar(designRows);
+        if (confirmedSolutionRoute?.route === "technical_product") {
+          pass = await meetsApprovalBar(
+            findDeliverable("target_state_architecture"),
+          );
+          if (!pass) {
+            failureReason =
+              "Target architecture is not signed off with the required technology and risk/security reviews.";
+          }
+        } else {
+          pass = await anyMeetsApprovalBar(designRows);
+        }
         break;
       case "requirements_design_outcome_trace":
         pass =
-          isPresent(requirementsTraceRow) ||
-          (fromPhase === 3 &&
-            /\b(requirement|trace|outcome|root cause|design choice|evidence-backed|validation)\b/.test(
-              phaseCaptureText,
-            ) &&
-            phaseModulesCompleted(fromPhase));
+          confirmedSolutionRoute?.route === "technical_product"
+            ? await meetsApprovalBar(requirementsTraceRow)
+            : isPresent(requirementsTraceRow) ||
+              (fromPhase === 3 &&
+                /\b(requirement|trace|outcome|root cause|design choice|evidence-backed|validation)\b/.test(
+                  phaseCaptureText,
+                ) &&
+                phaseModulesCompleted(fromPhase));
         break;
       case "vendor_selection_approved": {
         const vendor = findDeliverable(
