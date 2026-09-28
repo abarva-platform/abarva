@@ -537,18 +537,6 @@ describe("SourceAnalyticsCanvas stage workflow", () => {
     expect(screen.getByText(/Required before Continue/)).toBeInTheDocument();
 
     expect(
-      screen.getByTestId("source-shell-evidence-ask-table"),
-    ).toHaveTextContent("Evidence needed");
-    expect(
-      screen.getByTestId("source-shell-evidence-ask-table"),
-    ).toHaveTextContent("Where to get it");
-    expect(
-      screen.getByTestId("source-shell-evidence-ask-table"),
-    ).toHaveTextContent("Template / grain");
-    expect(
-      screen.getByTestId("source-shell-evidence-ask-table"),
-    ).toHaveTextContent("Next action");
-    expect(
       screen.getByTestId("source-scope-operating-status"),
     ).toHaveTextContent("Scope gate readiness");
     expect(
@@ -560,30 +548,17 @@ describe("SourceAnalyticsCanvas stage workflow", () => {
     expect(
       screen.getByTestId("source-scope-operating-status"),
     ).toHaveTextContent("Scope Memo with Boundaries");
-    const activeEvidenceRow = screen.getByTestId(
-      "source-shell-evidence-ask-row-scope.volumetrics",
-    );
-    expect(activeEvidenceRow).toHaveTextContent("Provide the volumetrics");
-    expect(activeEvidenceRow).toHaveTextContent("Volumetrics file");
-    expect(activeEvidenceRow).toHaveTextContent("Required");
-    expect(activeEvidenceRow).toHaveTextContent("CSV or XLSX");
-    expect(activeEvidenceRow).toHaveTextContent("ITSM / finance baseline");
-    expect(activeEvidenceRow).toHaveTextContent("Ravi Menon, IT-Ops");
-    expect(activeEvidenceRow).toHaveTextContent(
+    const activeNeed = screen.getByTestId("source-shell-active-step-needs");
+    expect(activeNeed).toHaveTextContent("Volumetrics file");
+    expect(activeNeed).toHaveTextContent("Required");
+    expect(activeNeed).toHaveTextContent("CSV or XLSX");
+    expect(activeNeed).toHaveTextContent("ITSM / finance baseline");
+    expect(activeNeed).toHaveTextContent("Ravi Menon, IT-Ops");
+    expect(activeNeed).toHaveTextContent(
       "Monthly by service tower for 12-24 months",
     );
-    expect(activeEvidenceRow).toHaveTextContent("Scope volumetrics template");
-    // Item U-523: this row used to render the raw template code. The rail
-    // publishes "Ticket volumes & volumetrics" for VOLUMETRICS_V1, so the code
-    // was builder vocabulary on a client surface (item U-400 / N3), not a
-    // deliberate affordance — this assertion codified the defect. It now
-    // asserts the published label, and the render-measured control in
-    // src/components/source/__tests__/source-surface-builder-vocabulary.test.tsx
-    // fails if the code comes back.
-    expect(activeEvidenceRow).toHaveTextContent(
-      "Ticket volumes & volumetrics",
-    );
-    expect(activeEvidenceRow).toHaveTextContent("Upload below");
+    expect(activeNeed).toHaveTextContent("Scope volumetrics template");
+    expect(screen.getByTestId("task-dropzone")).toBeInTheDocument();
     expect(
       screen.getByTestId("source-shell-active-step-needs"),
     ).toHaveTextContent("Tickets, SLA misses, change orders, run volumes");
@@ -624,11 +599,28 @@ describe("SourceAnalyticsCanvas stage workflow", () => {
     );
 
     expect(screen.queryByRole("button", { name: /Continue/ })).toBeNull();
-    expect(screen.getAllByTestId("source-shell-evidence-ask-table")).toHaveLength(1);
-    expect(screen.getByTestId("source-shell-evidence-ask-row-scope.volumetrics"))
-      .toBeInTheDocument();
-    expect(screen.queryByTestId("source-shell-evidence-ask-row-scope.app-inventory"))
-      .toBeNull();
+    expect(screen.getAllByTestId("source-shell-active-step-needs")).toHaveLength(1);
+    expect(screen.getByTestId("source-shell-active-step-needs"))
+      .toHaveTextContent("Volumetrics file");
+    expect(screen.queryByTestId("source-shell-evidence-ask-table")).toBeNull();
+  });
+
+  it("keeps the active evidence request at the upload action without a duplicate table", () => {
+    render(
+      <SourceAnalyticsCanvas
+        event={EVENT}
+        viewStage="scope"
+        tenantName="Demo Client"
+        stageView={SAMPLE_SCOPE_STAGE}
+        initialWorkspace="steps"
+      />,
+    );
+
+    expect(screen.getByTestId("source-shell-active-step-needs"))
+      .toHaveTextContent("Volumetrics file");
+    expect(screen.getByTestId("task-dropzone")).toBeInTheDocument();
+    expect(screen.queryByTestId("source-shell-evidence-ask-table")).toBeNull();
+    expect(screen.queryByRole("button", { name: /Continue/ })).toBeNull();
   });
 
   it("keeps a captured step open until its mapped required evidence is usable", () => {
@@ -646,10 +638,9 @@ describe("SourceAnalyticsCanvas stage workflow", () => {
     fireEvent.click(screen.getByRole("button", { name: /Provide the volumetrics/ }));
     expect(screen.queryByRole("button", { name: /Continue/ })).toBeNull();
     expect(screen.queryByTestId("source-shell-stage-ready-panel")).toBeNull();
-    expect(screen.getByTestId("source-shell-evidence-ask-row-scope.volumetrics"))
-      .toHaveTextContent("Provide the volumetrics");
-    expect(screen.getByTestId("source-shell-evidence-ask-row-scope.volumetrics"))
-      .toHaveAttribute("data-ready", "false");
+    expect(screen.getByTestId("source-shell-active-step-needs"))
+      .toHaveTextContent("Volumetrics file");
+    expect(screen.getByText("Required before Continue")).toBeInTheDocument();
   });
 
   it("keeps the gate action hidden while file review remains open", () => {
@@ -689,8 +680,8 @@ describe("SourceAnalyticsCanvas stage workflow", () => {
     expect(screen.queryByTestId("source-stage-ready-open-approval"))
       .toBeNull();
     expect(screen.queryByRole("button", { name: /Continue/ })).toBeNull();
-    expect(screen.getByTestId("source-shell-evidence-ask-row-scope.volumetrics"))
-      .toHaveTextContent("Provide the volumetrics");
+    expect(screen.getByTestId("source-shell-active-step-needs"))
+      .toHaveTextContent("Volumetrics file");
   });
 
   it("shows a stored template file as awaiting extraction without unlocking Continue", () => {
@@ -720,15 +711,10 @@ describe("SourceAnalyticsCanvas stage workflow", () => {
       />,
     );
 
-    const evidenceRow = screen.getByTestId(
-      "source-shell-evidence-ask-row-scope.volumetrics",
-    );
-    expect(evidenceRow).toHaveTextContent("Uploaded");
-    expect(evidenceRow).toHaveTextContent("Review existing file");
-    expect(evidenceRow).not.toHaveTextContent("Upload below");
     expect(
       screen.getByTestId("source-shell-active-step-needs"),
     ).toHaveTextContent("Readback: file stored; typed facts still pending.");
+    expect(screen.getByTestId("task-dropzone")).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /Continue/ })).toBeNull();
   });
 
