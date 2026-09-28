@@ -2600,6 +2600,147 @@ function partialGateOf(dir, id) {
 
 
 /* ------------------------------------------------------------------------ *
+ * A DECLARATION IS NOT DISCARDED FOR BEING LONG — item C-568.
+ *
+ * `PARTIAL_GATE_DECLARATION` capped each half at 300 characters. That cap was
+ * a MATCH PRECONDITION, so a half one character over it did not truncate — the
+ * whole declaration failed to match, `declaredGateScope` returned null, and the
+ * row lost its gate in silence. The same bound already existed a second time,
+ * as `tidy`'s 240-character slice, where it is a display truncation and
+ * harmless. One bound, written twice, once fatally.
+ *
+ * MEASURED over the live operator root at 2026-09-28T03:44Z rather than read
+ * off the pattern: 3 backlog item rows declare the canonical form and only
+ * ONE parsed. `T-497` overran on its claimable half alone (gated 124, claimable
+ * 354) and kept a whole-item `Decision needed`, hiding a half its own row calls
+ * delivered. `C-416` overran on both (gated 404, claimable 1534) and, having no
+ * derived owner gate to keep, was offered as the SINGLE claimable lane-T row
+ * with no gate annotation anywhere in the queue — while its own gated half
+ * reads "do not edit `ProgramPressureCards.tsx` and do not flip
+ * `routeReachable`".
+ *
+ * So the cap failed in both directions at once: it hid claimable work behind a
+ * gate, and it offered gated work as free. The lengths below are the live
+ * ones, not round numbers, because a bound is only proven by the corpus that
+ * crosses it (the `T-495` note on sweeping a bound over the real corpus).       */
+
+/** Filler that crosses the old cap without containing a cell boundary. */
+const longHalf = (lead, chars) => {
+  const body = "and the reason it runs long is that the row states the remedy rather than naming it, ";
+  return `${lead} ${body.repeat(Math.ceil(chars / body.length))}`.slice(0, chars).trim();
+};
+
+/* --- (h) RED FIRST. A gated half over the old 300-char cap still parses. -- *
+ * `C-416`'s own gated half is 404 characters. Before the fix this declaration
+ * did not match at all.                                                      */
+{
+  const dir = freshFixture();
+  const gated = longHalf("which of the two remedies the catalog names is taken", 404);
+  addBacklogItem(
+    dir,
+    "U-406",
+    `${U406_BODY} **Gate scope — partial.** Gated half: ${gated} Claimable half: state the terminal Value contract in code and test it.`,
+    U406_ACCEPTANCE,
+  );
+  appendClaims(dir, [LIVE_U406_REGISTER_LINE]);
+  buildBoard(dir);
+  const scope = partialGateOf(dir, "U-406");
+  check(
+    "C-568 (h) a gated half longer than 300 characters still scopes the gate",
+    blockerOf(dir, "U-406") === null
+      && scope?.say === "Signed-in acceptance owed"
+      && /which of the two remedies the catalog names is taken/.test(scope?.gated ?? "")
+      && /terminal Value contract/.test(scope?.open ?? ""),
+    `gatedChars=${gated.length} blocker=${JSON.stringify(blockerOf(dir, "U-406"))} partialGate=${JSON.stringify(scope)}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+/* --- (i) RED FIRST. A claimable half over the cap still parses. ---------- *
+ * `T-497`'s failing half. This is the direction that HID work: the gate stayed
+ * over the whole item and the declared-claimable half reached no lane table.  */
+{
+  const dir = freshFixture();
+  const open = longHalf("rewrite the other 11, whose subject is behaviour", 354);
+  addBacklogItem(
+    dir,
+    "U-406",
+    `${U406_BODY} **Gate scope — partial.** Gated half: the signed-in Value readback, which needs a human. Claimable half: ${open}`,
+    U406_ACCEPTANCE,
+  );
+  appendClaims(dir, [LIVE_U406_REGISTER_LINE]);
+  buildBoard(dir);
+  const scope = partialGateOf(dir, "U-406");
+  check(
+    "C-568 (i) a claimable half longer than 300 characters still scopes the gate",
+    blockerOf(dir, "U-406") === null
+      && /signed-in Value readback/.test(scope?.gated ?? "")
+      && /rewrite the other 11/.test(scope?.open ?? ""),
+    `openChars=${open.length} blocker=${JSON.stringify(blockerOf(dir, "U-406"))} partialGate=${JSON.stringify(scope)}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+/* --- (j) THE HALVES ARE STILL TRUNCATED FOR DISPLAY, and that is the bound
+ * that was always meant to be here. Parsing must not be decided by length;
+ * rendering a 1,534-character cell into a queue table still must not happen.
+ * If this case ever fails because the slice was removed along with the cap,
+ * the queue grows an unreadable row rather than losing a gate — a different
+ * defect, and the reason both bounds are asserted separately.               */
+{
+  const dir = freshFixture();
+  const open = longHalf("establish by execution what the live surface renders", 1534);
+  addBacklogItem(
+    dir,
+    "U-406",
+    `${U406_BODY} **Gate scope — partial.** Gated half: the signed-in Value readback, which needs a human. Claimable half: ${open}`,
+    U406_ACCEPTANCE,
+  );
+  appendClaims(dir, [LIVE_U406_REGISTER_LINE]);
+  buildBoard(dir);
+  const scope = partialGateOf(dir, "U-406");
+  check(
+    "C-568 (j) a parsed half is truncated for display, not rejected for length",
+    scope !== null && (scope.open ?? "").length <= 240 && (scope.open ?? "").length > 0,
+    `openChars=${open.length} storedChars=${(scope?.open ?? "").length} partialGate=${JSON.stringify(scope)}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+/* --- (k) THE TERMINATOR STILL ENDS A HALF. With the length cap gone, the
+ * trailing `(?:\||\n|$)` alternation is the ONLY bound on the claimable half,
+ * so that is the one to assert: a half must not run past its cell and absorb
+ * the lane column.
+ *
+ * This case guards a DIRECTION; it does not prove the character class.
+ * Measured: narrowing the class to `[^\n|]` and then widening it back leaves
+ * this case green either way, because the alternation already stops a half at
+ * the first surviving pipe. The narrowed class was reverted for that reason
+ * rather than shipped as a guard nothing can fail.                           */
+{
+  const dir = freshFixture();
+  addBacklogItem(
+    dir,
+    "U-406",
+    `${U406_BODY} **Gate scope — partial.** Gated half: the signed-in Value readback, which needs a human. Claimable half: state the terminal Value contract in code`,
+    U406_ACCEPTANCE,
+  );
+  appendClaims(dir, [LIVE_U406_REGISTER_LINE]);
+  buildBoard(dir);
+  const scope = partialGateOf(dir, "U-406");
+  check(
+    "C-568 (k) a half stops at the table-cell boundary and does not absorb the lane column",
+    scope !== null
+      && !/\bT\b\s*$/.test(scope.open ?? "")
+      && !(scope.open ?? "").includes(U406_ACCEPTANCE)
+      && /terminal Value contract in code/.test(scope.open ?? ""),
+    `partialGate=${JSON.stringify(scope)}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+
+/* ------------------------------------------------------------------------ *
  * A GATE STATED THE WAY AN ACCEPTANCE STATES IT — item C-563.
  *
  * `BLOCKER_RULES` has been widened four times by measurement (T-596, T-703,

@@ -1368,9 +1368,43 @@ function deriveBlocker(body, claims = "", rung = null) {
  * parser second. Both halves are required and each stops at the next field, at
  * a table-cell boundary or at end of line — never at a bare full stop, because
  * a scope sentence routinely contains one.
+ *
+ * NO LENGTH BOUND DECIDES WHETHER THIS MATCHES — item C-568. Each half was
+ * capped at 300 characters, and because that cap sat in the pattern it was a
+ * MATCH PRECONDITION rather than a truncation: a half one character over it did
+ * not shorten, the whole declaration failed, and `declaredGateScope` returned
+ * null, so the row lost its gate with nothing reporting the loss. The same
+ * bound already existed a second time, as `tidy`'s 240-character slice below,
+ * where it truncates for display and is harmless. One bound written twice, once
+ * fatally.
+ *
+ * Measured over the live operator root at 2026-09-28T03:44Z: of the 3 backlog
+ * item rows declaring this form, only ONE parsed. It failed in both directions
+ * at once — `T-497` overran on its claimable half (354) and kept a whole-item
+ * `Decision needed`, hiding a half its own row calls delivered; `C-416` overran
+ * on both (404 and 1534) and, having no derived owner gate to keep, was offered
+ * as the single claimable lane-T row with no gate annotation anywhere in the
+ * queue, while its gated half says not to touch the file it names.
+ *
+ * The cap is therefore the ONLY thing removed: the terminators are untouched,
+ * so what ends each half is what ended it before — the next field, a surviving
+ * cell boundary, or end of line. Narrowing the character class to `[^\n|]` as
+ * well was tried and reverted: the mutation that widens it back leaves all 103
+ * cases green, because the trailing `(?:\||\n|$)` alternation already stops a
+ * half at the first surviving pipe. An unfalsifiable guard is the shape this
+ * directory exists against, so it is not here.
+ *
+ * Do not read `\n` in the class as a cell bound either. `bodyCorpus` is
+ * `title\n${acceptance} ${raw}`, and the `\s*` before `Claimable half:`
+ * matches a newline, so a declaration whose halves are written in DIFFERENT
+ * cells of one row still parses — measured, and correct on both halves. It can
+ * absorb one token of table text after the second half (the row id, via
+ * `raw`), which is cosmetic and pre-existing; it is recorded on the item rather
+ * than repaired here, because tightening it changes which rows are freed and
+ * that is a wider change than removing a cap.
  */
 const PARTIAL_GATE_DECLARATION =
-  /\*\*Gate scope\s*[—–-]\s*partial\.?\*\*\s*Gated half:\s*([^\n]{1,300}?)\s*Claimable half:\s*([^\n]{1,300}?)\s*(?:\||\n|$)/i;
+  /\*\*Gate scope\s*[—–-]\s*partial\.?\*\*\s*Gated half:\s*([^\n]+?)\s*Claimable half:\s*([^\n]+?)\s*(?:\||\n|$)/i;
 
 function declaredGateScope(text) {
   const m = PARTIAL_GATE_DECLARATION.exec(text ?? "");
