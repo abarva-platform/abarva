@@ -18,9 +18,9 @@
   ],
   "counts": {
     "testFiles": 2542,
-    "coveredTestFiles": 2204,
-    "pullRequestCoveredTestFiles": 2203,
-    "uncoveredTestFiles": 338,
+    "coveredTestFiles": 2205,
+    "pullRequestCoveredTestFiles": 2204,
+    "uncoveredTestFiles": 337,
     "directoriesWithTests": 493,
     "directoriesFullyCovered": 314,
     "directoriesPartiallyCovered": 29,
@@ -28,14 +28,14 @@
     "directoriesWithUnrunTestFiles": 179,
     "directoriesWithUntriagedUnrunTestFiles": 168,
     "declaredQuarantineTestFiles": 52,
-    "untriagedUnrunTestFiles": 286,
+    "untriagedUnrunTestFiles": 285,
     "indeterminateInvocations": 0,
     "unresolvedIgnoreArguments": 0,
     "criticalGovernedRiskDirectories": 2,
     "highGovernedRiskDirectories": 5,
     "unclassifiedRiskDirectories": 161,
     "rankedDirectories": 168,
-    "rankedUntriagedUnrunTestFiles": 286,
+    "rankedUntriagedUnrunTestFiles": 285,
     "unclassifiedRiskDirectoriesWithResolvedProductSources": 154,
     "unclassifiedRiskDirectoriesWithNoResolvedProductSource": 7
   },
@@ -304,9 +304,9 @@
     {
       "directory": "src/__tests__/integration/agents",
       "testFiles": 8,
-      "coveredTestFiles": 1,
+      "coveredTestFiles": 2,
       "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 7,
+      "untriagedUnrunTestFiles": 6,
       "via": [
         "command"
       ]
@@ -1795,15 +1795,15 @@
     {
       "directory": "src/__tests__/integration/agents",
       "testFiles": 8,
-      "unrunTestFiles": 7,
+      "unrunTestFiles": 6,
       "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 7,
+      "untriagedUnrunTestFiles": 6,
       "admittedBy": "untriaged_unrun_work",
       "governedRisk": {
         "score": 0,
         "band": "unclassified",
         "signals": [],
-        "productSourceCount": 9,
+        "productSourceCount": 12,
         "rank": 10
       }
     },
@@ -6249,14 +6249,14 @@
     {
       "directory": "src/__tests__/integration/agents",
       "testFiles": 8,
-      "unrunTestFiles": 7,
+      "unrunTestFiles": 6,
       "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 7,
+      "untriagedUnrunTestFiles": 6,
       "governedRisk": {
         "score": 0,
         "band": "unclassified",
         "signals": [],
-        "productSourceCount": 9
+        "productSourceCount": 12
       }
     },
     {
