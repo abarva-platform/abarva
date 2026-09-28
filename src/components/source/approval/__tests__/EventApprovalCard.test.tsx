@@ -83,9 +83,8 @@ describe("EventApprovalCard", () => {
       <EventApprovalCard {...baseProps} requestAuthorityVersionId={null} />,
     );
     expect(screen.queryByRole("button", { name: "Approve" })).toBeNull();
-    expect(
-      screen.getByText(/current Request version is unavailable/i),
-    ).not.toBeNull();
+    expect(screen.getByTestId("source-approval-progress-status"))
+      .toHaveTextContent(/current Request version is unavailable/i);
   });
 
   it("puts the approval brief first and moves supporting detail behind disclosures", () => {
@@ -111,9 +110,11 @@ describe("EventApprovalCard", () => {
   it("uses compact approval-screen typography instead of presentation-scale headers", () => {
     render(<EventApprovalCard {...baseProps} />);
 
+    expect(screen.getByTestId("source-approval-page"))
+      .toHaveStyle({ paddingBottom: "100px" });
     expect(
       screen.getByTestId("source-approval-page").getAttribute("style"),
-    ).toContain("padding: 10px clamp(18px, 2.4vw, 32px) 22px");
+    ).toContain("padding: 10px clamp(18px, 2.4vw, 32px)");
     expect(
       screen.getByRole("heading", { level: 1 }).getAttribute("style"),
     ).toContain('font-family: "Inter"');
@@ -262,6 +263,30 @@ describe("EventApprovalCard", () => {
     expect(screen.queryByTestId("source-approval-approve")).toBeNull();
     fireEvent.click(screen.getByTestId("source-approval-confirmation"));
     expect(screen.getByTestId("source-approval-approve")).toBeEnabled();
+  });
+
+  it("keeps the blocked status or ready approval visible at the viewport edge", () => {
+    render(<EventApprovalCard {...baseProps} />);
+
+    const dock = screen.getByTestId("source-approval-progress-dock");
+    expect(dock).toHaveStyle({ position: "fixed", bottom: "16px" });
+    expect(screen.getByTestId("source-approval-page"))
+      .toHaveStyle({ paddingBottom: "100px" });
+    expect(screen.getByTestId("source-approval-progress-status"))
+      .toHaveStyle({ background: "#e8ebee" });
+    expect(screen.getByTestId("source-approval-progress-status"))
+      .toHaveTextContent("12 more characters needed");
+    expect(screen.queryByTestId("source-approval-approve")).toBeNull();
+
+    fireEvent.change(screen.getByTestId("source-approval-rationale"), {
+      target: { value: "Reviewed the recorded Request facts and authority." },
+    });
+    fireEvent.click(screen.getByTestId("source-approval-confirmation"));
+
+    expect(screen.queryByTestId("source-approval-progress-status")).toBeNull();
+    expect(screen.getByTestId("source-approval-approve"))
+      .toHaveStyle({ background: "#2a5a3a", minHeight: "48px" });
+    expect(screen.getAllByRole("button", { name: "Approve" })).toHaveLength(1);
   });
 
   it("explains the exact remaining rationale length beside a checked but disabled decision", () => {

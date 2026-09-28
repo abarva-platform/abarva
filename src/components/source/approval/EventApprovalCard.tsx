@@ -484,17 +484,6 @@ export function EventApprovalCard({
                 Send to {coApprover.displayName}
               </button>
             ) : null}
-            {actionReady || busyAction === "approve" ? (
-              <button
-                type="button"
-                data-testid="source-approval-approve"
-                disabled={Boolean(busyAction)}
-                onClick={() => void submitAction("approve")}
-                style={PRIMARY_BUTTON_STYLE}
-              >
-                {busyAction === "approve" ? "Approving..." : "Approve"}
-              </button>
-            ) : null}
           </div>
 
           {error ? <div style={ERROR_STYLE}>{error}</div> : null}
@@ -534,6 +523,29 @@ export function EventApprovalCard({
           </details>
         </aside>
       </section>
+      <div data-testid="source-approval-progress-dock" style={PROGRESS_DOCK_STYLE}>
+        {actionReady || busyAction === "approve" ? (
+          <button
+            type="button"
+            data-testid="source-approval-approve"
+            disabled={Boolean(busyAction)}
+            onClick={() => void submitAction("approve")}
+            style={PROGRESS_BUTTON_STYLE}
+          >
+            {busyAction === "approve" ? "Approving..." : "Approve"}
+          </button>
+        ) : (
+          <div
+            data-testid="source-approval-progress-status"
+            role="status"
+            aria-live="polite"
+            style={PROGRESS_STATUS_STYLE}
+          >
+            <strong>{busyAction ? "Decision in progress" : "Approval locked"}</strong>
+            <span>{busyAction ? "Recording the decision." : blockerLabel}</span>
+          </div>
+        )}
+      </div>
     </main>
   );
 }
@@ -687,6 +699,7 @@ const PAGE_STYLE: CSSProperties = {
   minHeight: "100%",
   background: SHELL.PAPER,
   padding: "10px clamp(18px, 2.4vw, 32px) 22px",
+  paddingBottom: 100,
   overflow: "auto",
 };
 
@@ -1081,11 +1094,48 @@ const BASE_BUTTON_STYLE: CSSProperties = {
   cursor: "pointer",
 };
 
-const PRIMARY_BUTTON_STYLE: CSSProperties = {
-  ...BASE_BUTTON_STYLE,
-  border: `1px solid ${SHELL.INK}`,
-  background: SHELL.INK,
+const PROGRESS_DOCK_STYLE: CSSProperties = {
+  background: SHELL.CARD_WHITE,
+  border: `1px solid ${SHELL.CARD_LINE}`,
+  borderRadius: 8,
+  bottom: 16,
+  boxShadow: "0 8px 28px rgba(12, 26, 58, 0.18)",
+  boxSizing: "border-box",
+  left: "50%",
+  maxWidth: "calc(100vw - 32px)",
+  padding: 6,
+  position: "fixed",
+  transform: "translateX(-50%)",
+  width: 500,
+  zIndex: 80,
+};
+
+const PROGRESS_BUTTON_STYLE: CSSProperties = {
+  background: SHELL.MINT_TEXT,
+  border: `1px solid ${SHELL.MINT_TEXT}`,
+  borderRadius: 6,
   color: SHELL.CARD_WHITE,
+  cursor: "pointer",
+  fontFamily: SHELL.SANS,
+  fontSize: 15,
+  fontWeight: 800,
+  minHeight: 48,
+  padding: "10px 14px",
+  textAlign: "center",
+  width: "100%",
+};
+
+const PROGRESS_STATUS_STYLE: CSSProperties = {
+  background: "#e8ebee",
+  borderRadius: 6,
+  color: SHELL.INK_SOFT,
+  display: "grid",
+  fontFamily: SHELL.SANS,
+  fontSize: 12,
+  gap: 2,
+  lineHeight: 1.35,
+  minHeight: 48,
+  padding: "9px 12px",
 };
 
 const SECONDARY_BUTTON_STYLE: CSSProperties = {
