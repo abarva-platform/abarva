@@ -17,10 +17,10 @@
     "No timestamp is recorded, so refreshing this file on an unchanged tree is a no-op."
   ],
   "counts": {
-    "testFiles": 2538,
-    "coveredTestFiles": 2197,
-    "pullRequestCoveredTestFiles": 2196,
-    "uncoveredTestFiles": 341,
+    "testFiles": 2539,
+    "coveredTestFiles": 2199,
+    "pullRequestCoveredTestFiles": 2198,
+    "uncoveredTestFiles": 340,
     "directoriesWithTests": 492,
     "directoriesFullyCovered": 313,
     "directoriesPartiallyCovered": 28,
@@ -28,14 +28,14 @@
     "directoriesWithUnrunTestFiles": 179,
     "directoriesWithUntriagedUnrunTestFiles": 168,
     "declaredQuarantineTestFiles": 52,
-    "untriagedUnrunTestFiles": 289,
+    "untriagedUnrunTestFiles": 288,
     "indeterminateInvocations": 0,
     "unresolvedIgnoreArguments": 0,
     "criticalGovernedRiskDirectories": 2,
     "highGovernedRiskDirectories": 5,
     "unclassifiedRiskDirectories": 161,
     "rankedDirectories": 168,
-    "rankedUntriagedUnrunTestFiles": 289,
+    "rankedUntriagedUnrunTestFiles": 288,
     "unclassifiedRiskDirectoriesWithResolvedProductSources": 154,
     "unclassifiedRiskDirectoriesWithNoResolvedProductSource": 7
   },
@@ -223,9 +223,9 @@
     {
       "directory": "src/lib/intelligence/ask/__tests__",
       "testFiles": 24,
-      "coveredTestFiles": 3,
+      "coveredTestFiles": 4,
       "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 21,
+      "untriagedUnrunTestFiles": 20,
       "via": [
         "command"
       ]
@@ -1755,15 +1755,15 @@
     {
       "directory": "src/lib/intelligence/ask/__tests__",
       "testFiles": 24,
-      "unrunTestFiles": 21,
+      "unrunTestFiles": 20,
       "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 21,
+      "untriagedUnrunTestFiles": 20,
       "admittedBy": "untriaged_unrun_work",
       "governedRisk": {
         "score": 0,
         "band": "unclassified",
         "signals": [],
-        "productSourceCount": 26,
+        "productSourceCount": 27,
         "rank": 8
       }
     },
@@ -6252,14 +6252,14 @@
     {
       "directory": "src/lib/intelligence/ask/__tests__",
       "testFiles": 24,
-      "unrunTestFiles": 21,
+      "unrunTestFiles": 20,
       "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 21,
+      "untriagedUnrunTestFiles": 20,
       "governedRisk": {
         "score": 0,
         "band": "unclassified",
         "signals": [],
-        "productSourceCount": 26
+        "productSourceCount": 27
       }
     }
   ],
