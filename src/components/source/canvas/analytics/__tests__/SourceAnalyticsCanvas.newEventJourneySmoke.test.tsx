@@ -306,13 +306,9 @@ describe("SourceAnalyticsCanvas New Event journey smoke", () => {
 
     renderStage("rfp", completedRfpView);
 
-    expect(
-      screen.getByTestId("source-shell-stage-ready-panel"),
-    ).toBeInTheDocument();
-    expect(screen.getByTestId("source-shell-stage-ready-panel")).toHaveStyle({
-      width: "100%",
-      maxWidth: "none",
-    });
+    expect(screen.queryByTestId("source-shell-stage-ready-panel")).toBeNull();
+    expect(screen.getByTestId("source-shell-active-step-needs"))
+      .toHaveTextContent("Requirements and service levels");
     const readiness = screen.getByTestId("source-stage-operating-status");
     expect(readiness).toHaveTextContent("RFP gate readiness");
     expect(readiness).toHaveTextContent("RFP Package unlocks");
