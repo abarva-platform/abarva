@@ -71,6 +71,11 @@ import { requireTenancy } from "@/lib/auth/tenancy";
 import { loadUserSourceAccessPolicy } from "@/lib/auth/source-access-policy";
 import { getAzureReadFluentClient } from "@/lib/data-plane/postgresCompat";
 import { applySourceApprovalPolicyToStageView } from "@/lib/source/approval-policy-stage-view";
+import {
+  hasCurrentStrategyOwnerConfirmation,
+  strategyConfirmationVersion,
+  type StrategyConfirmationEvent,
+} from "@/lib/source/strategy-confirmation";
 import type { SourceEventRow } from "@/lib/source/queries";
 import type {
   StageAnalyticsView,
@@ -859,7 +864,7 @@ export async function buildStrategyStageForRoute(
     const { data } = await getAzureReadFluentClient()
       .from("source_events")
       .select(
-        "id, client_key, event_code, event_name, event_type, current_stage_key, lifecycle_state, linked_program_id, estimated_value_usd, trigger_description, scope_description, decision_owner, created_by_user_id, created_at, updated_at",
+        "id, client_key, event_code, event_name, event_type, current_stage_key, lifecycle_state, linked_program_id, estimated_value_usd, trigger_description, scope_description, decision_owner, created_by_user_id, approval_policy_code, created_at, updated_at",
       )
       .eq("id", eventId)
       .eq("client_key", clientKey)
@@ -895,8 +900,13 @@ export async function buildStrategyStageForRoute(
     const canApprove =
       awaitingApproval && policy?.canApproveSourceStages === true;
 
-    return adaptStageViewToSourceJourney(
-      buildStrategyStageView({
+    const ownerConfirmationEvent = row as SourceEventRow & StrategyConfirmationEvent;
+    const ownerConfirmed = await hasCurrentStrategyOwnerConfirmation(ownerConfirmationEvent)
+      .catch((error) => {
+        console.error("[SourceEventDetailPage] strategy confirmation read failed", error);
+        return false;
+      });
+    const stage = buildStrategyStageView({
         facts,
         provenance: "live",
         approve: canApprove
@@ -905,9 +915,19 @@ export async function buildStrategyStageForRoute(
               redirectStageKey: nextSourceStageForJourney("strategy", journey),
             }
           : null,
-      }),
-      journey,
-    );
+      });
+    return adaptStageViewToSourceJourney({
+      ...stage,
+      tasks: stage.tasks.map((task) => task.id === "strategy.confirm"
+        ? {
+            ...task,
+            confirmationVersion: ownerConfirmationEvent.approval_policy_code === "self_v1"
+              ? strategyConfirmationVersion(ownerConfirmationEvent)
+              : undefined,
+            evidenceComplete: ownerConfirmed || task.evidenceComplete,
+          }
+        : task),
+    }, journey);
   } catch (error) {
     console.error(
       "[SourceEventDetailPage] strategy stage build failed; falling back to sample",

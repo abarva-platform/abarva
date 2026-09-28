@@ -19,7 +19,7 @@ export function applySourceApprovalPolicyToStageView(
               ...task,
               title: "Confirm strategy",
               subtitle: "Mandate · value thesis",
-              guide: "Review the mandate and value thesis. Add a note if anything needs qualifying before the gate.",
+              guide: "Review the mandate and value thesis. Confirming records your Event Owner decision; artifact review and stage approval remain separate.",
               rows: task.rows?.filter((row) => row.key !== "Sponsor"),
               cta: "Confirm strategy",
             }
