@@ -1429,6 +1429,7 @@ function SourceWorkspace({
         view={view}
         canRetireEvent={canRetireEvent}
         gateAction={stageView.gate.action}
+        evidenceStates={evidenceStates ?? []}
         onGoToSteps={() => onWorkspaceChange("steps")}
       />
     );
@@ -7007,13 +7008,17 @@ function ApprovalsWorkspace({
   view,
   canRetireEvent,
   gateAction,
+  evidenceStates,
   onGoToSteps,
 }: {
   view: SourceEventShellView;
   canRetireEvent: boolean;
   gateAction?: StageGateActionView;
+  evidenceStates: readonly SourceEventEvidence[];
   onGoToSteps: () => void;
 }) {
+  const requiredEvidenceOpen = buildStageEvidenceRequirementRows(view, evidenceStates)
+    .filter((row) => row.requirement.level === "required" && !row.ready).length;
   return (
     <section data-testid="source-shell-v2-approvals">
       <WorkspaceTitle
@@ -7028,6 +7033,7 @@ function ApprovalsWorkspace({
           item={view.approvals.currentStageItem}
           gateAction={gateAction}
           decision={currentApprovalDecision(view)}
+          requiredEvidenceOpen={requiredEvidenceOpen}
           approvalPolicyCode={view.event.approvalPolicyCode}
           featured
           onGoToSteps={onGoToSteps}
@@ -8420,6 +8426,7 @@ function ApprovalCard({
   item,
   gateAction,
   decision,
+  requiredEvidenceOpen = 0,
   approvalPolicyCode,
   featured = false,
   onGoToSteps,
@@ -8427,6 +8434,7 @@ function ApprovalCard({
   item: ApprovalsInboxItem;
   gateAction?: StageGateActionView;
   decision?: ApprovalDecisionForCard | null;
+  requiredEvidenceOpen?: number;
   approvalPolicyCode?: string | null;
   featured?: boolean;
   onGoToSteps?: () => void;
@@ -8450,6 +8458,8 @@ function ApprovalCard({
   } as const;
   const onlyRationaleOpen = decision?.blockers.length === 1 &&
     decision.blockers[0]?.code === "approval_reason_required";
+  const canOfferGateAction = requiredEvidenceOpen === 0 &&
+    ((decision?.primaryAction.enabled ?? true) || onlyRationaleOpen);
 
   return (
     <section
@@ -8476,7 +8486,7 @@ function ApprovalCard({
             {item.readiness}
           </div>
         </div>
-        {gateAction && ((decision?.primaryAction.enabled ?? true) || onlyRationaleOpen) ? (
+        {gateAction && canOfferGateAction ? (
           <StageGateApprovalButton
             action={gateAction}
             status={item.status}
@@ -8492,6 +8502,9 @@ function ApprovalCard({
               color: ANALYTICS.FAINT,
             }}
           >
+            {requiredEvidenceOpen > 0
+              ? `${requiredEvidenceOpen} required evidence item${requiredEvidenceOpen === 1 ? "" : "s"} remain open. `
+              : null}
             {decision.primaryAction.disabledReason}
           </span>
         ) : goToStepsInstead ? (

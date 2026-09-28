@@ -330,6 +330,7 @@ describe("SourceAnalyticsCanvas stage workflow", () => {
             },
           },
         }}
+        evidenceStates={SCOPE_READY_EVIDENCE}
         artifacts={SCOPE_READY_ARTIFACTS}
         approvalItems={[APPROVAL]}
         initialWorkspace="approvals"
@@ -403,6 +404,35 @@ describe("SourceAnalyticsCanvas stage workflow", () => {
       .toHaveTextContent("Required workflow inputs are still open");
   });
 
+  it("hides stage approval on direct Approvals navigation while required evidence is missing", () => {
+    render(
+      <SourceAnalyticsCanvas
+        event={EVENT}
+        viewStage="scope"
+        tenantName="Demo Client"
+        stageView={{
+          ...COMPLETE_SCOPE_STAGE,
+          gate: {
+            ...COMPLETE_SCOPE_STAGE.gate,
+            action: {
+              eventId: EVENT.id,
+              rationale: "Reviewed the current Scope decision basis.",
+              confirmationKeys: ["scopeEvidenceComplete", "scopeInputsReviewed", "scopeStageFinal"],
+              redirectStageKey: "rfp",
+            },
+          },
+        }}
+        artifacts={SCOPE_READY_ARTIFACTS}
+        approvalItems={[APPROVAL]}
+        initialWorkspace="approvals"
+      />,
+    );
+
+    expect(screen.queryByTestId("source-stage-gate-approve")).toBeNull();
+    expect(screen.getByTestId("source-stage-gate-blocked"))
+      .toHaveTextContent("required evidence");
+  });
+
   it("keeps stage approval hidden until the rationale meets the server minimum", () => {
     render(
       <SourceAnalyticsCanvas
@@ -425,6 +455,7 @@ describe("SourceAnalyticsCanvas stage workflow", () => {
             },
           },
         }}
+        evidenceStates={SCOPE_READY_EVIDENCE}
         artifacts={SCOPE_READY_ARTIFACTS}
         approvalItems={[APPROVAL]}
         initialWorkspace="approvals"
@@ -455,6 +486,7 @@ describe("SourceAnalyticsCanvas stage workflow", () => {
             },
           },
         }}
+        evidenceStates={SCOPE_READY_EVIDENCE}
         artifacts={SCOPE_READY_ARTIFACTS}
         approvalItems={[APPROVAL]}
         initialWorkspace="approvals"
