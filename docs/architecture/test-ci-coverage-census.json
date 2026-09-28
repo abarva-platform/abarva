@@ -18,9 +18,9 @@
   ],
   "counts": {
     "testFiles": 2542,
-    "coveredTestFiles": 2206,
-    "pullRequestCoveredTestFiles": 2205,
-    "uncoveredTestFiles": 336,
+    "coveredTestFiles": 2207,
+    "pullRequestCoveredTestFiles": 2206,
+    "uncoveredTestFiles": 335,
     "directoriesWithTests": 493,
     "directoriesFullyCovered": 314,
     "directoriesPartiallyCovered": 29,
@@ -28,14 +28,14 @@
     "directoriesWithUnrunTestFiles": 179,
     "directoriesWithUntriagedUnrunTestFiles": 168,
     "declaredQuarantineTestFiles": 52,
-    "untriagedUnrunTestFiles": 284,
+    "untriagedUnrunTestFiles": 283,
     "indeterminateInvocations": 0,
     "unresolvedIgnoreArguments": 0,
     "criticalGovernedRiskDirectories": 2,
     "highGovernedRiskDirectories": 5,
     "unclassifiedRiskDirectories": 161,
     "rankedDirectories": 168,
-    "rankedUntriagedUnrunTestFiles": 284,
+    "rankedUntriagedUnrunTestFiles": 283,
     "unclassifiedRiskDirectoriesWithResolvedProductSources": 154,
     "unclassifiedRiskDirectoriesWithNoResolvedProductSource": 7
   },
@@ -304,9 +304,9 @@
     {
       "directory": "src/__tests__/integration/agents",
       "testFiles": 8,
-      "coveredTestFiles": 3,
+      "coveredTestFiles": 4,
       "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 5,
+      "untriagedUnrunTestFiles": 4,
       "via": [
         "command"
       ]
@@ -1808,21 +1808,6 @@
       }
     },
     {
-      "directory": "src/__tests__/integration/agents",
-      "testFiles": 8,
-      "unrunTestFiles": 5,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 5,
-      "admittedBy": "untriaged_unrun_work",
-      "governedRisk": {
-        "score": 0,
-        "band": "unclassified",
-        "signals": [],
-        "productSourceCount": 15,
-        "rank": 11
-      }
-    },
-    {
       "directory": "src/lib/intelligence/synthesis/__tests__",
       "testFiles": 5,
       "unrunTestFiles": 5,
@@ -1834,7 +1819,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 4,
-        "rank": 12
+        "rank": 11
       }
     },
     {
@@ -1849,6 +1834,21 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 2,
+        "rank": 12
+      }
+    },
+    {
+      "directory": "src/__tests__/integration/agents",
+      "testFiles": 8,
+      "unrunTestFiles": 4,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 4,
+      "admittedBy": "untriaged_unrun_work",
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 16,
         "rank": 13
       }
     },
@@ -6249,14 +6249,14 @@
     {
       "directory": "src/__tests__/integration/agents",
       "testFiles": 8,
-      "unrunTestFiles": 5,
+      "unrunTestFiles": 4,
       "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 5,
+      "untriagedUnrunTestFiles": 4,
       "governedRisk": {
         "score": 0,
         "band": "unclassified",
         "signals": [],
-        "productSourceCount": 15
+        "productSourceCount": 16
       }
     },
     {
