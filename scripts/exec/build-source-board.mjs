@@ -1096,8 +1096,56 @@ const BLOCKER_RULES = [
   // specific label its own acceptance names. Blocked-on-Anand goes 377 → 380
   // and claimable 7 → 4, so **nothing leaves a gate** and no item above rung 0
   // moves at all.
+  //
+  // ITEM C-417 — A DEFINITION IS NOT A STATUS. The negated alternative
+  // `\bnot\s+signed-in\b` admitted a clause that DEFINES a boundary rather
+  // than reporting an outstanding proof, and nothing could veto it — by
+  // construction, because the negation IS the match. The live row is `D-401`,
+  // the successor filed for an untouched model-row set, whose body reads
+  // *"A completed job is not signed-in acceptance; model readback, stale
+  // behavior and opposite-tenant refusal are three separate captures"*. That
+  // clause distinguishes a finished job from an owner proof; it states no
+  // debt. Its work is authoring-only, in the lane the last three watcher runs
+  // each recorded as idle, and the false gate put it in *Blocked on Anand —
+  // never claim these*.
+  //
+  // So the alternative now requires a RUNG-BEARING PARTICIPLE after the token.
+  // A status verdict says the proof has not happened — "DEPLOYED, NOT
+  // SIGNED-IN PROVEN", "NOT signed-in accepted" — and both keep their gate. A
+  // definition predicates a NOUN, and `acceptance` is deliberately absent from
+  // the list because it is the noun the definition uses.
+  //
+  // This is a NARROWING, which is the direction that frees work, so it is
+  // MEASURED rather than argued: run at `2026-09-28T05:0xZ` over a frozen copy
+  // of the operator root, reading `blocker` per item out of
+  // `source-board-summary.json` for all 668 items before and after. **Exactly
+  // one item moves** — `D-401` — and extras are zero in both directions. The
+  // two known negatives `D-400` and `T-750` each have a case below that passes
+  // on unfixed code, which is what makes a widening visible if one is
+  // attempted.
+  //
+  // THE OTHER HALF OF C-417 IS NOT HERE, AND THE REASON IS A MEASUREMENT.
+  // The item also names a row gated through *"no signed-in proof is owed"*.
+  // The veto's window is not the cause — `sentenceAround` searches BACKWARDS
+  // to the previous `". "`, so the negator is inside it; what defeats the veto
+  // is its adjacency bound `[\s*_]{0,4}`, with a noun phrase between the
+  // negator and `owed`. Both remedies the item offers were measured. Widening
+  // the bound is unsafe for the reason the rule above already carries: the
+  // register's most common OWED phrasing is "Not live-proven — signed-in check
+  // owed", whose negator belongs to `live-proven`. A denial matched as its own
+  // term is safe in shape but **moves 99 rows on the live corpus, one of them
+  // at rung 0 and therefore newly claimable**, which is past this item's own
+  // bound — its acceptance says a change moving more rows than can be named
+  // per item is not this item, and its body already calls that set a candidate
+  // list needing a reading each. Filed as a successor rather than guessed at.
+  //
+  // `D-401` also does not reach a claimable lane on this change alone: with
+  // the signed-in gate gone, the `blocked` rule below matches a DESCRIPTIVE
+  // sentence in the same row about a data object — "it names why it is still
+  // blocked", said of `event_queue_v1`, not of the item. That is a third
+  // shape, separate from both halves this item describes, and it is filed too.
   {
-    re: /(?:^|[.!?;:]\s+|\n\s*|\*\*)(?:Run|Perform|Capture|Generate|Open|Drive|Execute)\b[^.;\n]{0,120}\bsigned[- ]in\b|\bnot\s+signed-in\b|(?:^|[.!?]\s+)signed-in\s+check\b|signed-in[^.]{0,80}\b(pending|owed|not proven|not performed|not claimed|remains? (?:open|unproven))\b/i,
+    re: /(?:^|[.!?;:]\s+|\n\s*|\*\*)(?:Run|Perform|Capture|Generate|Open|Drive|Execute)\b[^.;\n]{0,120}\bsigned[- ]in\b|\bnot\s+signed-in\s+(?:proven|proved|accepted|verified|confirmed)\b|(?:^|[.!?]\s+)signed-in\s+check\b|signed-in[^.]{0,80}\b(pending|owed|not proven|not performed|not claimed|remains? (?:open|unproven))\b/i,
     veto: /\b(?:not|never|no longer|none)\b[\s*_]{0,4}(?:owed|required|needed)\b/i,
     say: "Signed-in acceptance owed",
     ownerGate: true,

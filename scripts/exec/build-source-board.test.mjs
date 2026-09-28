@@ -2961,5 +2961,91 @@ console.log("\nbuild-source-board — an owner gate stated as an acceptance stat
   fs.rmSync(dir, { recursive: true, force: true });
 }
 
+/* ------------------------------------------------------------------------ *
+ * ITEM C-417 — A DEFINITION IS NOT A STATUS.
+ *
+ * `C-549` shipped a residual bucket so a per-unit item at rung 1-6 stops being
+ * invisible. 10 of the 13 rows it surfaced carry a derived owner gate, and the
+ * queue's instruction for those is *surface it, do not claim it* — so for
+ * those the bucket reports the work and still does not offer it. One of the 10
+ * is a successor id filed for exactly that purpose, and its gate is derived
+ * from a sentence that says the opposite.
+ *
+ * Measured at `2026-09-28T05:0xZ` by running this generator over a frozen copy
+ * of the operator root and reading `blocker` per item out of
+ * `source-board-summary.json` — 668 items before and after, not by reading the
+ * pattern. `\bnot\s+signed-in\b` matched inside *"A completed job is not
+ * signed-in acceptance; model readback, stale behavior and opposite-tenant
+ * refusal are three separate captures"*. That clause DEFINES a boundary — it
+ * distinguishes a finished job from an owner proof — and reports no debt.
+ * Nothing could veto it, by construction, because the negation IS the match.
+ *
+ * The fix requires a RUNG-BEARING PARTICIPLE after the token. A status verdict
+ * says the proof has not happened ("DEPLOYED, NOT SIGNED-IN PROVEN", "NOT
+ * signed-in accepted"); a definition predicates a NOUN, and `acceptance` is
+ * deliberately absent from the participle list because it is the noun the
+ * definition uses.
+ *
+ * On the live corpus this moves EXACTLY ONE item and extras are zero in both
+ * directions. The regression block that follows carries the two live rows that
+ * must KEEP the gate, and both pass on unfixed code by design — which is what
+ * makes a widening visible if one is ever attempted here.
+ * ------------------------------------------------------------------------ */
+{
+  const dir = freshFixture();
+  addBacklogItem(
+    dir,
+    "T-990",
+    "**The successor id carries an untouched 13-model row set.** Boundary, and it is the whole reason this is agent-workable: authoring only. A completed job is not signed-in acceptance; model readback, stale behavior and opposite-tenant refusal are three separate captures.",
+    "Author the 13 rows and their fixtures.",
+  );
+  buildBoard(dir);
+  check(
+    "C-417 (a) a clause DEFINING that a completed job is not signed-in acceptance is not an owner gate",
+    blockerOf(dir, "T-990") !== "Signed-in acceptance owed",
+    `blocker=${JSON.stringify(blockerOf(dir, "T-990"))}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+/* ------------------------------------------------------------------------ *
+ * THE REGRESSION SET FOR C-417. Both are live rows and both must KEEP the
+ * gate. They pass on unfixed code by design: a change that took them with it
+ * would offer owner work as free work, which is the cost `C-563`, `T-596`,
+ * `T-703`, `T-705` and `T-761` each paid once.
+ *
+ * The two are written here split from the ids the item names as its known
+ * negatives, so this file does not acquire the gate it describes. The first is
+ * a status verdict ending in `PROVEN`, the second one ending in `accepted` —
+ * the two participles that separate a verdict from the definition above.
+ * ------------------------------------------------------------------------ */
+{
+  const dir = freshFixture();
+  addBacklogItem(
+    dir,
+    "T-993",
+    "**The Stage 07 scorecard authority has never been written or read back by a signed-in user.** The addendum table records it as DEPLOYED, NOT SIGNED-IN PROVEN because the accepted workspaces are at Scope and completed Value.",
+    "Write one scorecard and read it back.",
+  );
+  addBacklogItem(
+    dir,
+    "T-994",
+    "**The board verdict heading attribution shipped.** DEPLOYED with digest proof; CODE LIVE VIA DESCENDANT, IMAGE SUPERSEDED; NOT signed-in accepted.",
+    "Do not promote past deployed until the image matches.",
+  );
+  buildBoard(dir);
+  check(
+    "C-417 (b) \"NOT SIGNED-IN PROVEN\" is a status verdict and keeps its gate",
+    blockerOf(dir, "T-993") === "Signed-in acceptance owed",
+    `blocker=${JSON.stringify(blockerOf(dir, "T-993"))}`,
+  );
+  check(
+    "C-417 (c) \"NOT signed-in accepted\" is a status verdict and keeps its gate",
+    blockerOf(dir, "T-994") === "Signed-in acceptance owed",
+    `blocker=${JSON.stringify(blockerOf(dir, "T-994"))}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
 console.log(`\n${passes} passed, ${failures} failed`);
 process.exit(failures ? 1 : 0);
