@@ -58,8 +58,22 @@ jobs:
       # `ask-guardrails.test.ts` is also repaired but deliberately not wired: one
       # of its cases is gated on an owner decision and is still red on purpose.
       #
-      # Wire these directories properly once T-495 rewrites the two scanners and
-      # the gated decision lands. Until then the coverage census reports all three
+      # Item T-495 added `strategy-to-moves-contract.test.ts` on 2026-09-27, in
+      # the same change that rewrote it. Its one byte-scanning case is deleted --
+      # not sharpened -- and replaced by cases that drive the real
+      # `synthesizeStream` with only the audited Anthropic client mocked. It is
+      # named individually for the same reason as the three above: the directory
+      # still holds `ask-guardrails.test.ts`, red on purpose behind the owner
+      # decision named below, so `src/lib/intelligence/ask/__tests__` cannot be
+      # wired whole yet and the census keeps reporting it PARTIAL.
+      #
+      # `docs/architecture/t495-strategy-to-moves-contract-triage.json` is what
+      # lets this pass T-770's control: that control resolves a suite's scanner
+      # classification from the LATEST triage record, so the rewrite is declared
+      # rather than the T-492 draw being edited.
+      #
+      # Wire these directories properly once T-495 rewrites the remaining scanners
+      # and the gated decision lands. Until then the coverage census reports all three
       # directories honestly -- two PARTIAL, one still dark -- so the remaining
       # files stay in its ranking instead of being silenced.
       #
@@ -72,4 +86,5 @@ jobs:
             src/lib/intelligence/canonical/normalizers.test.ts \
             src/lib/intelligence/canonical/build-canonical-pattern.test.ts \
             src/lib/intelligence/ask/__tests__/tenant-identity-pin.test.ts \
+            src/lib/intelligence/ask/__tests__/strategy-to-moves-contract.test.ts \
             --no-coverage --ci $(node scripts/quality/intelligence-library-ignore-args.mjs)
