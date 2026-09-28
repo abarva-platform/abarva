@@ -320,7 +320,16 @@ export function mergeSourceShellArtifactsWithArtifactStateBodies(
   const merged = registryArtifacts.map((artifact) => {
     const code = artifactCodeFor(artifact);
     const state = code ? statesByCode.get(code) : undefined;
-    if (!state || artifactBodyFor(artifact)?.trim()) return artifact;
+    if (!state) return artifact;
+    const registryBody = artifactBodyFor(artifact)?.trim();
+    if (registryBody) {
+      if (registryBody !== state.body?.trim()) return artifact;
+      return {
+        ...artifact,
+        bodyGenerationMetadata:
+          state.bodyGenerationMetadata ?? artifact.bodyGenerationMetadata,
+      };
+    }
     return {
       ...artifact,
       body: state.body,
@@ -328,6 +337,8 @@ export function mergeSourceShellArtifactsWithArtifactStateBodies(
         state.bodyFormat === "markdown" ? state.body : artifact.bodyMarkdown,
       renderedText:
         state.bodyFormat !== "markdown" ? state.body : artifact.renderedText,
+      bodyGenerationMetadata:
+        state.bodyGenerationMetadata ?? artifact.bodyGenerationMetadata,
     };
   });
   const existingCodes = new Set(
@@ -358,6 +369,7 @@ export function mergeSourceShellArtifactsWithArtifactStateBodies(
       body: state.body,
       bodyMarkdown: state.bodyFormat === "markdown" ? state.body : null,
       renderedText: state.bodyFormat !== "markdown" ? state.body : null,
+      bodyGenerationMetadata: state.bodyGenerationMetadata,
     });
     existingCodes.add(state.artifactCode);
   }
