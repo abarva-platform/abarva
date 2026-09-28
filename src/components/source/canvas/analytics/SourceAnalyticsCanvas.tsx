@@ -1437,7 +1437,7 @@ function SourceWorkspace({
 
   return (
     <section data-testid="source-shell-v2-steps">
-      <StageHeader view={view} />
+      <StageHeader view={view} evidenceStates={evidenceStates ?? []} />
       <CommercialActiveCanvasStrip
         view={view}
         onWorkspaceChange={onWorkspaceChange}
@@ -1744,7 +1744,13 @@ function OffStageNotice({ view }: { view: SourceEventShellView }) {
   );
 }
 
-function StageHeader({ view }: { view: SourceEventShellView }) {
+function StageHeader({
+  view,
+  evidenceStates,
+}: {
+  view: SourceEventShellView;
+  evidenceStates: readonly SourceEventEvidence[];
+}) {
   const stageIndex =
     view.journey.find((stage) => stage.key === view.stage.key)?.index ?? 1;
   // Keep the headline owner simple; richer agent handoffs live in the stage
@@ -1755,11 +1761,17 @@ function StageHeader({ view }: { view: SourceEventShellView }) {
       : "aVa";
   const inputsComplete =
     view.stage.total > 0 && view.stage.ready >= view.stage.total;
+  const requiredEvidenceOpen = buildStageEvidenceRequirementRows(view, evidenceStates)
+    .filter((row) => row.requirement.level === "required" && !row.ready).length;
   const hasArtifactReviewBlockers =
     inputsComplete && view.stage.artifactReadiness.blockerCount > 0;
-  const readinessLabel = hasArtifactReviewBlockers ? "inputs ready" : "ready";
-  const readinessAriaLabel = hasArtifactReviewBlockers
-    ? `${view.stage.ready} of ${view.stage.total} inputs ready; ${view.stage.artifactReadiness.blockerCount} file review gap${view.stage.artifactReadiness.blockerCount === 1 ? "" : "s"} remain`
+  const readinessLabel = requiredEvidenceOpen > 0
+    ? "inputs captured"
+    : hasArtifactReviewBlockers ? "inputs ready" : "ready";
+  const readinessAriaLabel = requiredEvidenceOpen > 0
+    ? `${view.stage.ready} of ${view.stage.total} inputs captured; ${requiredEvidenceOpen} required evidence items open`
+    : hasArtifactReviewBlockers
+      ? `${view.stage.ready} of ${view.stage.total} inputs ready; ${view.stage.artifactReadiness.blockerCount} file review gap${view.stage.artifactReadiness.blockerCount === 1 ? "" : "s"} remain`
     : `${view.stage.ready} of ${view.stage.total} ready`;
 
   return (
@@ -1853,14 +1865,14 @@ function StageHeader({ view }: { view: SourceEventShellView }) {
               style={{
                 width: `${view.stage.readyPct}%`,
                 height: "100%",
-                background: ANALYTICS.GREEN,
+                background: requiredEvidenceOpen > 0 ? ANALYTICS.FAINT : ANALYTICS.GREEN,
               }}
             />
           </div>
           <span
             data-testid="source-stage-header-readiness-label"
             style={{
-              color: hasArtifactReviewBlockers
+              color: requiredEvidenceOpen > 0 || hasArtifactReviewBlockers
                 ? ANALYTICS.AMBER_TEXT
                 : ANALYTICS.FAINT,
               fontSize: 12,
@@ -6887,7 +6899,7 @@ function ApprovalsWorkspace({
         title="Stage decisions"
         subtitle="The workflow prepares the evidence; this page records the approval decision."
       />
-      <ApprovalReadinessBrief view={view} />
+      <ApprovalReadinessBrief view={view} requiredEvidenceOpen={requiredEvidenceOpen} />
       <PendingDecisionGroups view={view} />
       {view.approvals.currentStageItem ? (
         <ApprovalCard
@@ -7049,7 +7061,13 @@ function PendingDecisionGroups({ view }: { view: SourceEventShellView }) {
   );
 }
 
-function ApprovalReadinessBrief({ view }: { view: SourceEventShellView }) {
+function ApprovalReadinessBrief({
+  view,
+  requiredEvidenceOpen,
+}: {
+  view: SourceEventShellView;
+  requiredEvidenceOpen: number;
+}) {
   const stageApproved = view.stage.approvalRecorded;
   const approvalDecision = currentApprovalDecision(view);
   const approvalAuditBlockers = recordedApprovalAuditBlockers(approvalDecision);
@@ -7057,7 +7075,9 @@ function ApprovalReadinessBrief({ view }: { view: SourceEventShellView }) {
     stageApproved && approvalAuditBlockers.length > 0;
   const workflowComplete = view.stage.ready >= view.stage.total;
   const filesReady = view.stage.artifactReadiness.ready;
-  const ready = !stageApproved && workflowComplete && filesReady;
+  const approvalRouted = view.approvals.currentStageItem != null;
+  const ready =
+    !stageApproved && approvalRouted && workflowComplete && filesReady && requiredEvidenceOpen === 0;
   const stageHref = `/source/events/${encodeURIComponent(
     view.event.id,
   )}?stage=${encodeURIComponent(view.stage.key)}`;
@@ -7075,10 +7095,12 @@ function ApprovalReadinessBrief({ view }: { view: SourceEventShellView }) {
       : "No further approval required."
     : !workflowComplete
       ? "Return to steps."
-      : !filesReady
-        ? "Clear artifact queue."
-        : (view.approvals.currentStageItem?.actionLabel ??
-          "No approval action.");
+      : requiredEvidenceOpen > 0
+        ? "Review required evidence in the owning steps."
+        : !filesReady
+          ? "Clear artifact queue."
+          : (view.approvals.currentStageItem?.actionLabel ??
+            "Approval routing unavailable.");
   const readinessTitle = stageApproved
     ? approvalAuditGapsOpen
       ? "Approval recorded; audit gaps open"
@@ -7087,18 +7109,26 @@ function ApprovalReadinessBrief({ view }: { view: SourceEventShellView }) {
       : "Stage approved"
     : ready
       ? "Ready to decide"
-      : workflowComplete
-        ? "Artifact queue blocks the gate"
-        : "Workflow inputs still open";
+      : !workflowComplete
+        ? "Workflow inputs still open"
+        : requiredEvidenceOpen > 0
+          ? "Required evidence still open"
+          : !filesReady
+            ? "Artifact queue blocks the gate"
+            : "Approval routing unavailable";
   const readinessStatus = stageApproved
     ? approvalAuditGapsOpen
       ? "Recorded with gaps"
       : "Approved"
     : ready
       ? "Ready"
-      : workflowComplete
-        ? "Not gate-ready"
-        : "Inputs open";
+      : !workflowComplete
+        ? "Inputs open"
+        : requiredEvidenceOpen > 0
+          ? "Evidence open"
+          : !filesReady
+            ? "Not gate-ready"
+            : "Routing open";
 
   return (
     <section
@@ -7147,9 +7177,9 @@ function ApprovalReadinessBrief({ view }: { view: SourceEventShellView }) {
         }}
       >
         <StepNeedDatum
-          label="Workflow"
-          value={`${view.stage.ready}/${view.stage.total} steps complete`}
-          tone={workflowComplete ? "good" : "warn"}
+          label="Workflow inputs"
+          value={`${view.stage.ready}/${view.stage.total} inputs captured`}
+          tone={workflowComplete && requiredEvidenceOpen === 0 ? "good" : "warn"}
         />
         <StepNeedDatum
           label="Artifact queue"
@@ -7188,8 +7218,10 @@ function ApprovalReadinessBrief({ view }: { view: SourceEventShellView }) {
           </strong>
           <span>
             {workflowComplete
-              ? "Stage inputs are complete, but the approval gate is not decision-ready until the current-stage artifact queue is cleared or an owner records an explicit exception."
-              : `Stage inputs are still open (${view.stage.ready} of ${view.stage.total} complete) and the current-stage artifact queue is not cleared. Close both, or record an explicit owner exception, before the approval gate is decision-ready.`}
+              ? requiredEvidenceOpen > 0
+                ? `Task inputs are captured, but ${requiredEvidenceOpen} required evidence item${requiredEvidenceOpen === 1 ? " remains" : "s remain"} open and the artifact queue is not cleared.`
+                : "Stage inputs are complete, but the approval gate is not decision-ready until the current-stage artifact queue is cleared or an owner records an explicit exception."
+              : `Stage inputs are still open (${view.stage.ready} of ${view.stage.total} captured) and the current-stage artifact queue is not cleared. Close both, or record an explicit owner exception, before the approval gate is decision-ready.`}
           </span>
           {view.stage.artifactReadiness.blockers.slice(0, 4).map((blocker) => (
             <span key={blocker}>{blocker}</span>
@@ -7211,7 +7243,7 @@ function ApprovalReadinessBrief({ view }: { view: SourceEventShellView }) {
             marginTop: 14,
           }}
         >
-          {!workflowComplete ? (
+          {!workflowComplete || requiredEvidenceOpen > 0 ? (
             <Link
               data-testid="source-shell-approval-return-steps"
               href={stageHref}

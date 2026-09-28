@@ -457,6 +457,27 @@ describe("SourceAnalyticsCanvas stage workflow", () => {
       .toHaveTextContent("Approval locked");
   });
 
+  it("does not call a complete stage decision-ready without routed approval", () => {
+    render(
+      <SourceAnalyticsCanvas
+        event={EVENT}
+        viewStage="scope"
+        tenantName="Demo Client"
+        stageView={COMPLETE_SCOPE_STAGE}
+        evidenceStates={SCOPE_READY_EVIDENCE}
+        artifacts={SCOPE_READY_ARTIFACTS}
+        approvalItems={[]}
+        initialWorkspace="approvals"
+      />,
+    );
+
+    expect(screen.getByTestId("source-shell-approval-readiness"))
+      .toHaveTextContent("Approval routing unavailable");
+    expect(screen.getByTestId("source-shell-approval-readiness"))
+      .not.toHaveTextContent("Ready to decide");
+    expect(screen.queryByTestId("source-stage-gate-approve")).toBeNull();
+  });
+
   it("hides stage approval on direct Approvals navigation while required evidence is missing", () => {
     render(
       <SourceAnalyticsCanvas
@@ -484,6 +505,14 @@ describe("SourceAnalyticsCanvas stage workflow", () => {
     expect(screen.queryByTestId("source-stage-gate-approve")).toBeNull();
     expect(screen.getByTestId("source-stage-gate-blocked"))
       .toHaveTextContent("required evidence");
+    expect(screen.getByTestId("source-shell-approval-readiness"))
+      .toHaveTextContent("Required evidence still open");
+    expect(screen.getByTestId("source-shell-approval-readiness"))
+      .toHaveTextContent("7/7 inputs captured");
+    expect(screen.getByTestId("source-shell-approval-readiness"))
+      .not.toHaveTextContent("Ready to decide");
+    expect(screen.getByTestId("source-shell-approval-return-steps"))
+      .toBeInTheDocument();
   });
 
   it("keeps stage approval hidden until the rationale meets the server minimum", () => {
@@ -587,6 +616,10 @@ describe("SourceAnalyticsCanvas stage workflow", () => {
 
     expect(screen.queryByRole("button", { name: /Continue/ })).toBeNull();
     expect(screen.getByText(/Required before Continue/)).toBeInTheDocument();
+    expect(screen.getByTestId("source-stage-header-readiness-label"))
+      .toHaveTextContent(/^inputs captured$/);
+    expect(screen.getByTestId("source-stage-header-readiness"))
+      .toHaveAttribute("aria-label", expect.stringContaining("required evidence items open"));
     expect(screen.getByTestId("source-shell-progress-dock"))
       .toHaveStyle({ position: "fixed" });
     expect(screen.getByTestId("source-shell-progress-status"))
