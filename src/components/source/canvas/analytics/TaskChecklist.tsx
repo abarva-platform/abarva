@@ -89,8 +89,10 @@ export function TaskChecklist({
       ),
   );
 
-  const done = tasks.filter(
-    (t) => t.state === "done" || locallyDone.has(t.id),
+  const done = tasks.filter((t) =>
+    t.id === "strategy.confirm"
+      ? t.state === "done" || t.evidenceComplete === true
+      : t.state === "done" || locallyDone.has(t.id),
   ).length;
 
   return (
@@ -122,7 +124,9 @@ export function TaskChecklist({
 
       <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
         {tasks.map((task) => {
-          const isDone = task.state === "done" || locallyDone.has(task.id);
+          const isDone = task.id === "strategy.confirm"
+            ? task.state === "done" || task.evidenceComplete === true
+            : task.state === "done" || locallyDone.has(task.id);
           const isOpen = openId === task.id;
           return (
             <TaskRow
@@ -365,6 +369,10 @@ function TaskRow({
               <span style={{ color: ANALYTICS.MUTED, fontSize: 12 }}>
                 Completion is read back from verified commitment evidence.
               </span>
+            ) : task.id === "strategy.confirm" && eventId && !task.confirmationVersion && !isDone ? (
+              <span style={{ color: ANALYTICS.MUTED, fontSize: 12 }}>
+                This strategy decision requires the governed Event Owner approval path.
+              </span>
             ) : effectiveState === "done" ? (
               <span
                 style={{
@@ -379,6 +387,33 @@ function TaskRow({
               <button
                 type="button"
                 onClick={async () => {
+                  if (task.id === "strategy.confirm") {
+                    if (!eventId || stageKey !== "strategy" || !task.confirmationVersion) return;
+                    setIsCompleting(true);
+                    setCompletionError(null);
+                    try {
+                      const response = await fetch(
+                        `/api/v1/source/${encodeURIComponent(eventId)}/strategy-confirmation`,
+                        {
+                          method: "POST",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({ version: task.confirmationVersion, confirmed: true }),
+                        },
+                      );
+                      const result = (await response.json().catch(() => null)) as {
+                        ok?: boolean; detail?: string; error?: string;
+                      } | null;
+                      if (!response.ok || !result?.ok) {
+                        throw new Error(result?.detail ?? result?.error ?? "Strategy confirmation could not be saved.");
+                      }
+                      router.refresh();
+                    } catch (error) {
+                      setCompletionError(error instanceof Error ? error.message : "Strategy confirmation could not be saved.");
+                    } finally {
+                      setIsCompleting(false);
+                    }
+                    return;
+                  }
                   if (!canPersistAnswer) {
                     onComplete();
                     return;
