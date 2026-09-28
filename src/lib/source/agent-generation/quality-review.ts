@@ -242,6 +242,7 @@ function extractTemporalClaims(text: string): Array<{
     /\b20\d{2}-(?:0[1-9]|1[0-2])\b/g,
     /\b(?:\d+(?:\.\d+)?|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve)\s*(?:-|–|to)\s*(?:\d+(?:\.\d+)?|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve)\s+(?:business\s+)?(?:days?|weeks?|months?|years?)\b/gi,
     /\b(?:\d+(?:\.\d+)?|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve)(?:\s*-\s*|\s+)(?:business\s+)?(?:days?|weeks?|months?|years?)\b/gi,
+    /\b(?:\d+(?:\.\d+)?|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve)\s+(?:(?:post[- ]go[- ]live|after\s+go[- ]live)\s+)?quarters?\b/gi,
   ];
   for (const pattern of patterns) {
     for (const match of text.matchAll(pattern)) {
@@ -311,14 +312,16 @@ function normalizeTemporalClaim(raw: string): string {
   }
   const duration = normalized
     .replace(/(?<=\w)-(?=\w)/g, " ")
+    .replace(/\b(?:post go live|after go live)\s+/g, "")
     .match(
-      /^(\d+(?:\.\d+)?|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve)\s+(business\s+)?(day|days|week|weeks|month|months|year|years)$/,
+      /^(\d+(?:\.\d+)?|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve)\s+(business\s+)?(day|days|week|weeks|month|months|quarter|quarters|year|years)$/,
     );
   if (duration) {
     const amount = durationWordToNumber(duration[1]);
     const unit = duration[3].replace(/s$/, "");
     if (amount !== null) {
       if (unit === "year") return `duration-month:${amount * 12}`;
+      if (unit === "quarter") return `duration-month:${amount * 3}`;
       if (unit === "month") return `duration-month:${amount}`;
       return `duration-${duration[2] ? "business-" : ""}${unit}:${amount}`;
     }

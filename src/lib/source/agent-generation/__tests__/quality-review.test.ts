@@ -265,6 +265,57 @@ describe("Source consulting-grade quality gate helpers", () => {
     expect(violations).toEqual([]);
   });
 
+  it("rejects an unbound post-go-live quarter horizon even when model review passes", () => {
+    const violations = findDeterministicSourceClaimViolations({
+      artifactCode: "d02_value_target",
+      sourceContext: "The measurement window and start date are client-set.",
+      body: "The Event Owner will track measurement criteria through the first two post-go-live quarters.",
+    });
+
+    expect(violations).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          claim: "two post-go-live quarters",
+          reason: expect.stringContaining("Date or duration claim"),
+        }),
+      ]),
+    );
+    const review = applyDeterministicSourceClaimGate({
+      standardId: "partner-grade-consulting-deliverable-v1" as const,
+      minRequiredScore: 8,
+      artifactCode: "d02_value_target",
+      artifactName: "Value Target Brief",
+      pass: true,
+      overallScore: 9,
+      dimensionScores: CONSULTING_GRADE_DIMENSIONS.map((dimension) => ({
+        id: dimension.id,
+        score: 9,
+        rationale: "Model review passed.",
+        requiredFixes: [],
+      })),
+      unsupportedClaims: [],
+      missingEvidence: [],
+      rewriteGuidance: [],
+    }, violations);
+    expect(review.pass).toBe(false);
+    expect(review.unsupportedClaims.join(" ")).toContain("two post-go-live quarters");
+    expect(findDeterministicSourceClaimViolations({
+      artifactCode: "d02_value_target",
+      sourceContext: "The measurement window and start date are client-set.",
+      body: "The measurement window and start date will be set by the client.",
+    })).toEqual([]);
+  });
+
+  it("accepts a quarter-length horizon when an equivalent duration is bound", () => {
+    const violations = findDeterministicSourceClaimViolations({
+      artifactCode: "d02_value_target",
+      sourceContext: "The approved measurement period is six months after go-live.",
+      body: "The approved measurement period covers two post-go-live quarters.",
+    });
+
+    expect(violations).toEqual([]);
+  });
+
   it("accepts an explicit refusal to invent a missing benchmark", () => {
     const violations = findDeterministicSourceClaimViolations({
       artifactCode: "d01_strategy_memo",
