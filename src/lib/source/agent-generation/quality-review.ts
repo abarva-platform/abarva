@@ -179,8 +179,8 @@ export function findDeterministicSourceClaimViolations(args: {
     if (args.ctx.event.approvalPolicyCode === "self_v1") {
       for (const line of lines.filter((text) =>
         /EVID-SRC-STR-SPONSOR-COMMIT|executive sponsor commitment/i.test(text) &&
-        /\b(?:required|must|blocks?|before (?:external )?release)\b/i.test(text) &&
-        !/\b(?:not required|does not require|optional|historical)\b/i.test(text),
+        blockingClaim.test(text) &&
+        !explicitNonblocking.test(text),
       )) {
         violations.push({
           claim: line.slice(0, 220),

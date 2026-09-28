@@ -380,6 +380,14 @@ describe("Source consulting-grade quality gate helpers", () => {
     });
     expect(contradictory.some((item) => item.reason.includes("Recommended evidence"))).toBe(true);
 
+    const policyContradiction = findDeterministicSourceClaimViolations({
+      artifactCode: "d01_strategy_memo",
+      sourceContext: "",
+      ctx,
+      body: "EVID-SRC-STR-SPONSOR-COMMIT: request-or-waive decision before gate close.",
+    });
+    expect(policyContradiction.some((item) => item.reason.includes("SELF policy"))).toBe(true);
+
     const accurate = findDeterministicSourceClaimViolations({
       artifactCode: "d02_value_target",
       sourceContext: "",
