@@ -86,6 +86,17 @@ jobs:
       # at their own boundaries and asserts that wiring by execution. Named
       # individually for the same reason as the four above.
       #
+      # Item T-495 added `source-contract360-synthesis-context.test.ts` on
+      # 2026-09-28, in the change that rewrote it. Its one case read
+      # `ask/index.ts` as text and compared the positions of two substrings; it
+      # is deleted, not sharpened, and replaced by cases that drive the real
+      # `askIntelligence` with a Contract 360 surface context and read what
+      # reached the model through `onModelInput`: the selected contract's block
+      # is sent, ahead of the caller's conversation context, and is absent when
+      # no contract is selected. Named individually for the same reason as the
+      # five above. Record:
+      # `docs/architecture/t495-source-contract360-synthesis-context-triage.json`.
+      #
       # The quarantine ignore list below applies only to
       # src/lib/intelligence/__tests__; it names no file added here.
       - name: Run reachable Intelligence library suites
@@ -97,4 +108,5 @@ jobs:
             src/lib/intelligence/ask/__tests__/tenant-identity-pin.test.ts \
             src/lib/intelligence/ask/__tests__/strategy-to-moves-contract.test.ts \
             src/lib/intelligence/ask/__tests__/c412-ask-answer-mode-wiring.test.ts \
+            src/lib/intelligence/ask/__tests__/source-contract360-synthesis-context.test.ts \
             --no-coverage --ci $(node scripts/quality/intelligence-library-ignore-args.mjs)
