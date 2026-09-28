@@ -376,6 +376,7 @@ export default async function SourceEventDetailPage({
     const analyticsArtifacts = [
       ...currentStageArtifactStates.map((artifact) => ({
         id: artifact.id,
+        recordKind: "canvas_state" as const,
         artifactCode: artifact.artifactCode,
         artifactKind: artifact.artifactCode,
         stageKey: artifact.stage,
@@ -383,7 +384,10 @@ export default async function SourceEventDetailPage({
         body: artifact.body,
         bodyGenerationMetadata: artifact.bodyGenerationMetadata,
       })),
-      ...analyticsRegistryArtifacts,
+      ...analyticsRegistryArtifacts.map((artifact) => ({
+        ...artifact,
+        recordKind: "registry_artifact" as const,
+      })),
     ];
     const analyticsHydrationArtifacts: HydrationArtifact[] =
       analyticsArtifacts.flatMap((artifact) =>
@@ -425,7 +429,7 @@ export default async function SourceEventDetailPage({
     // ids (e.g. `artifact-state:<uuid>`, used for authored bodies with no
     // registry row yet) can never have an acceptance record and would fail
     // a UUID-typed `.in()` query.
-    const analyticsArtifactIds = analyticsArtifacts
+    const analyticsArtifactIds = analyticsRegistryArtifacts
       .map((artifact) => artifact.id)
       .filter((id): id is string => isUuid(id));
     const analyticsLatestAcceptances = analyticsArtifactIds.length

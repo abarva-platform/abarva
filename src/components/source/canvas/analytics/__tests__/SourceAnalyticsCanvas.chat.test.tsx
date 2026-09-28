@@ -476,8 +476,10 @@ describe("SourceAnalyticsCanvas — AskAnythingBar reachability", () => {
     expect(reviewQueue).toHaveTextContent(
       "Clear these artifact actions before opening the gate.",
     );
-    expect(reviewQueue).toHaveTextContent("Review supporting evidence");
-    expect(reviewQueue).toHaveTextContent("Review evidence");
+    expect(reviewQueue).toHaveTextContent("Create a governed draft");
+    expect(
+      screen.getByTestId("source-generate-artifact-d07_ticket_synth"),
+    ).toBeInTheDocument();
     expect(
       screen.getByTestId("source-artifact-review-queue-row-d07_ticket_synth"),
     ).toHaveTextContent("Evidence registered");
@@ -580,6 +582,9 @@ describe("SourceAnalyticsCanvas — AskAnythingBar reachability", () => {
     expect(
       screen.getByTestId("source-artifact-review-queue-row-d10_rfi_summary"),
     ).toHaveTextContent("Review supporting evidence");
+    expect(
+      screen.queryByTestId("source-generate-artifact-d10_rfi_summary"),
+    ).not.toBeInTheDocument();
   });
 
   it("summarizes Source evidence parsing and search readiness without implying enterprise promotion", () => {
