@@ -145,6 +145,15 @@ jobs:
       - name: Exercise Atlas drawer disclosure controls
         run: npx jest --runTestsByPath src/components/shell/__tests__/AtlasDrawer.controls.test.tsx --runInBand
 
+      # C-416. The Tower pressure brief's five controls live in a component no
+      # route mounts (routeReachable: false). This suite measures the component
+      # that DOES render on the Tower route, and asserts what it shows today:
+      # none of the five as statements. It is a measurement, not coverage — the
+      # catalog keeps all five at status "none" and cites it — so a control
+      # starting to render turns this step red until the catalog is reconciled.
+      - name: Measure Tower shell against the pressure brief controls
+        run: npx jest --runTestsByPath src/components/tower/command-center/__tests__/TowerCommandCenterAvaShell.brief-controls.test.tsx --runInBand
+
       - name: Exercise Moves deliverable canvas disclosure controls
         run: npx jest --runTestsByPath src/lib/programs/__tests__/deliverable-canvas-polish-view.controls.test.ts --runInBand
 

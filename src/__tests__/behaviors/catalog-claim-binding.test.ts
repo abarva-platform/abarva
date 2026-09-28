@@ -606,7 +606,12 @@ describe("a covered credit is a claim about proof", () => {
     expect(finding).toContain("a covered credit needs a proven control");
     expect(finding).toContain(UNPROVEN_SURFACE_ID);
     expect(finding).toContain("confidence");
-    expect(finding).toContain("no suite mounts the component");
+    // The whole live reason, read from the control rather than pinned as a
+    // phrase: C-416 rewrote that reason to cite a measurement, and a pinned
+    // phrase from the old prose went red for a sentence change, not a gate one.
+    const reason = control?.behavioralTest?.reason ?? "";
+    expect(reason.length).toBeGreaterThan(40);
+    expect(finding).toContain(`The control's own reason: ${reason}`);
     // Exactly one row moves. The gate reports every problem it finds, so a
     // check that is too broad shows up here as extra findings.
     expect(output.split("\n").filter((line) => line.startsWith("- "))).toHaveLength(1);
