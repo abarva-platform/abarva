@@ -271,6 +271,7 @@ export interface SourceShellArtifactLike {
   clientFinalAcceptedAt?: string | null;
   clientFinalAcceptedBy?: string | null;
   sourceGeneratedArtifactId?: string | null;
+  linkedArtifactId?: string | null;
   body?: string | null;
   bodyMarkdown?: string | null;
   renderedText?: string | null;
@@ -455,9 +456,28 @@ export function buildSourceEventShellView(
     tasks
       .map((task) => stepsById.get(task.id))
       .find((step) => step && step.status !== "captured") ?? null;
-  const registeredArtifacts = (input.artifacts ?? []).filter(
-    (artifact) => artifact.recordKind !== "canvas_state",
+  const statesByLinkedArtifactId = new Map(
+    (input.artifacts ?? [])
+      .filter((artifact) =>
+        artifact.recordKind === "canvas_state" &&
+        artifact.linkedArtifactId &&
+        artifact.body?.trim() &&
+        artifact.bodyGenerationMetadata,
+      )
+      .map((artifact) => [artifact.linkedArtifactId!, artifact]),
   );
+  const registeredArtifacts = (input.artifacts ?? [])
+    .filter((artifact) => artifact.recordKind !== "canvas_state")
+    .map((artifact) => {
+      const state = statesByLinkedArtifactId.get(artifact.id);
+      if (!state) return artifact;
+      const registryBody = artifactBodyFor(artifact)?.trim();
+      if (registryBody && registryBody !== state.body?.trim()) return artifact;
+      return {
+        ...artifact,
+        bodyGenerationMetadata: state.bodyGenerationMetadata,
+      };
+    });
   const artifacts = registeredArtifacts.map((artifact) =>
     toFileItem(
       artifact,

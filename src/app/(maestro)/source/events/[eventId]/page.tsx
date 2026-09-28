@@ -381,6 +381,7 @@ export default async function SourceEventDetailPage({
         artifactKind: artifact.artifactCode,
         stageKey: artifact.stage,
         status: artifact.status,
+        linkedArtifactId: artifact.linkedArtifactId,
         body: artifact.body,
         bodyGenerationMetadata: artifact.bodyGenerationMetadata,
       })),
