@@ -5104,7 +5104,9 @@ function EvidenceReadinessPanel({
 }) {
   const summary = summarizeEvidenceReadiness(files);
   const registeredOnly = files
-    .filter((file) => file.parseStatus !== "parsed")
+    .filter(
+      (file) => !isUnreviewedGeneratedDraft(file) && file.parseStatus !== "parsed",
+    )
     .slice(0, 3);
 
   return (
@@ -5156,8 +5158,9 @@ function EvidenceReadinessPanel({
               maxWidth: 780,
             }}
           >
-            Files are persisted in Source as soon as upload succeeds. Parsed
-            files can support Source evidence now; search indexing and
+            Uploaded files are persisted in Source as soon as capture succeeds.
+            Parsed evidence can support Source review; unreviewed AI drafts are
+            separate from evidence readiness. Search indexing and
             enterprise-context promotion remain separate governed steps.
           </p>
           {registeredOnly.length > 0 ? (
@@ -5189,11 +5192,12 @@ function EvidenceReadinessPanel({
           }}
         >
           {[
-            ["Stored", summary.storedCount],
+            ["Stored evidence", summary.storedCount],
             ["Parsed", summary.parsedCount],
             ["Needs parser", summary.registeredOnlyCount],
             ["Parser failed", summary.failedCount],
             ["Search-ready", summary.searchReadyCount],
+            ["Generated drafts", summary.generatedDraftCount],
           ].map(([label, value]) => (
             <div
               key={label}
@@ -5246,6 +5250,12 @@ function FileUseReadinessMap({
       readyForUse: fileReadyForUse(file),
     }))
     .sort((a, b) => {
+      if (
+        isUnreviewedGeneratedDraft(a.file) !==
+        isUnreviewedGeneratedDraft(b.file)
+      ) {
+        return isUnreviewedGeneratedDraft(a.file) ? 1 : -1;
+      }
       if (a.file.artifactRole !== b.file.artifactRole) {
         return a.file.artifactRole === "authoritative" ? -1 : 1;
       }
@@ -5253,6 +5263,9 @@ function FileUseReadinessMap({
       return a.file.name.localeCompare(b.file.name);
     })
     .slice(0, 6);
+  const evidenceRows = rows.filter(
+    (row) => !isUnreviewedGeneratedDraft(row.file),
+  );
 
   return (
     <div
@@ -5289,8 +5302,9 @@ function FileUseReadinessMap({
           </p>
         </div>
         <span style={SMALL_STATUS_PILL}>
-          {rows.filter((row) => row.readyForUse).length}/{rows.length}{" "}
-          workflow-usable
+          {evidenceRows.length === 0
+            ? "No evidence files eligible"
+            : `${evidenceRows.filter((row) => row.readyForUse).length}/${evidenceRows.length} workflow-usable`}
         </span>
       </div>
       {rows.length === 0 ? (
@@ -5322,21 +5336,29 @@ function FileUseReadinessMap({
                   <td style={FILE_TD_CENTER}>
                     <ReadinessChip
                       label={
-                        file.artifactRole === "authoritative"
-                          ? "Gate"
-                          : "Evidence"
+                        isUnreviewedGeneratedDraft(file)
+                          ? "AI draft"
+                          : file.artifactRole === "authoritative"
+                            ? "Gate"
+                            : "Evidence"
                       }
                       tone={
-                        file.artifactRole === "authoritative"
-                          ? "good"
-                          : "neutral"
+                        isUnreviewedGeneratedDraft(file)
+                          ? "warn"
+                          : file.artifactRole === "authoritative"
+                            ? "good"
+                            : "neutral"
                       }
                     />
                   </td>
                   <td style={FILE_TD_CENTER}>
                     <ReadinessChip
                       label={fileParseReadinessLabel(file)}
-                      tone={file.parseStatus === "parsed" ? "good" : "warn"}
+                      tone={isUnreviewedGeneratedDraft(file)
+                        ? "neutral"
+                        : file.parseStatus === "parsed"
+                          ? "good"
+                          : "warn"}
                     />
                   </td>
                   <td style={FILE_TD_CENTER}>
@@ -5372,17 +5394,18 @@ function FileUseReadinessMap({
 }
 
 function summarizeEvidenceReadiness(files: readonly SourceShellFileItem[]) {
-  const storedCount = files.length;
-  const parsedCount = files.filter(
+  const evidenceFiles = files.filter((file) => !isUnreviewedGeneratedDraft(file));
+  const storedCount = evidenceFiles.length;
+  const parsedCount = evidenceFiles.filter(
     (file) => file.parseStatus === "parsed",
   ).length;
-  const failedCount = files.filter(
+  const failedCount = evidenceFiles.filter(
     (file) => file.parseStatus === "failed",
   ).length;
-  const registeredOnlyCount = files.filter(
+  const registeredOnlyCount = evidenceFiles.filter(
     (file) => file.parseStatus !== "parsed",
   ).length;
-  const searchReadyCount = files.filter(
+  const searchReadyCount = evidenceFiles.filter(
     (file) => file.embeddingStatus === "embedded",
   ).length;
 
@@ -5392,11 +5415,17 @@ function summarizeEvidenceReadiness(files: readonly SourceShellFileItem[]) {
     failedCount,
     registeredOnlyCount,
     searchReadyCount,
+    generatedDraftCount: files.length - evidenceFiles.length,
   };
+}
+
+function isUnreviewedGeneratedDraft(file: SourceShellFileItem): boolean {
+  return file.sourceOrigin === "generated" && !file.acceptedAsAuthoritative;
 }
 
 function fileReadyForUse(file: SourceShellFileItem): boolean {
   return (
+    !isUnreviewedGeneratedDraft(file) &&
     file.parseStatus === "parsed" &&
     !file.needsComplianceReview &&
     (file.artifactRole === "evidence" || file.acceptedAsAuthoritative)
@@ -5404,6 +5433,7 @@ function fileReadyForUse(file: SourceShellFileItem): boolean {
 }
 
 function fileParseReadinessLabel(file: SourceShellFileItem): string {
+  if (isUnreviewedGeneratedDraft(file)) return "draft only";
   if (file.parseStatus === "parsed") return "parsed";
   if (file.parseStatus === "failed") return "failed";
   return "not parsed";
@@ -5418,6 +5448,9 @@ function fileGraphReadinessLabel(file: SourceShellFileItem): string {
 }
 
 function fileNextAction(file: SourceShellFileItem): string {
+  if (isUnreviewedGeneratedDraft(file)) {
+    return "Review the AI draft and accept a separately reviewed client-final version; do not parse this draft as evidence.";
+  }
   if (file.needsComplianceReview) {
     return "Resolve compliance review before this file influences scoring or approval.";
   }
