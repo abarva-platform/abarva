@@ -21,7 +21,7 @@ The mounted Strategy step could mark a confirmation complete only in browser sta
 ## Client Applicability
 
 - All clients: Forward `self_v1` Source events at the Strategy step.
-- Historical `legacy_signed_scope_v1` events: Existing external-signer policy remains in force; no local-only completion is offered for this step.
+- Historical `legacy_signed_scope_v1` events: Existing step behavior and external-signer gate remain unchanged.
 - Specific clients: None.
 - Internal only: No.
 - Public/demo only: No.
@@ -31,7 +31,7 @@ The mounted Strategy step could mark a confirmation complete only in browser sta
 
 - Forward the server-issued confirmation version from the stage task into the mounted shell step.
 - POST the mounted Strategy action to the existing tenant-scoped confirmation endpoint, wait for server readback, and show errors without optimistic completion.
-- Make the parent local-completion callback inert for `strategy.confirm`.
+- Make the parent local-completion callback inert for `self_v1` `strategy.confirm`; preserve historical strict-policy step behavior.
 - For self-policy events, derive task completion only from the current persisted owner receipt, not a generic task `done` or evidence flag.
 - Show Event Owner requirement language for `self_v1`; retain sponsor wording for the historical signed-scope policy.
 
@@ -40,7 +40,8 @@ The mounted Strategy step could mark a confirmation complete only in browser sta
 - Pass: red-first mounted behavior tests reproduced the local-only completion and missing-version fallback.
 - Pass: a deliberate removal of the shell version bridge failed three behavior assertions and was restored.
 - Pass: a misleading generic `done` task was red before the receipt-only shell guard and is now kept open.
-- Pass: 103 tests across the mounted Strategy, adjacent canvas, journey, guidebook, header, shell-adapter and page-builder suites.
+- Pass: a red-first legacy-policy regression test caught a missing strict-policy action; the policy guard was narrowed and the action remains available.
+- Pass: 91 tests across six mounted Strategy, adjacent canvas, journey, shell-adapter and confirmation suites.
 - Pass: Node 24 TypeScript and scoped ESLint with zero warnings.
 - Not run: signed-in post-deployment replay; it is required after the exact main deployment.
 

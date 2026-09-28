@@ -179,5 +179,6 @@ describe("mounted Strategy confirmation", () => {
     );
     expect(screen.getByTestId("source-shell-active-step-needs")).toHaveTextContent("Accountable sponsor");
     expect(screen.getByTestId("source-shell-active-step-guide")).toHaveTextContent("Accountable sponsor");
+    expect(screen.getByRole("button", { name: /^Confirm strategy & sponsor$/ })).toBeInTheDocument();
   });
 });

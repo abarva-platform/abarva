@@ -2512,7 +2512,9 @@ function FocusedWorkPanel({
                 isComplete={activeComplete}
                 missingEvidence={activeMissingEvidence}
                 onComplete={() => {
-                  if (activeStep.id !== "strategy.confirm") markComplete(activeStep.id);
+                  if (activeStep.id !== "strategy.confirm" || view.event.approvalPolicyCode !== "self_v1") {
+                    markComplete(activeStep.id);
+                  }
                 }}
               />
             </div>
@@ -3522,7 +3524,8 @@ function StepDetail({
     return null;
   }
   const isStrategyConfirmation =
-    stageKey === "strategy" && activeStep.id === "strategy.confirm";
+    stageKey === "strategy" && activeStep.id === "strategy.confirm" &&
+    activeStep.approvalPolicyCode === "self_v1";
   const canPersistAction = isStrategyConfirmation
     ? Boolean(activeStep.confirmationVersion)
     : activeStep.type !== "provide" && Boolean(evidenceRequirementId);
