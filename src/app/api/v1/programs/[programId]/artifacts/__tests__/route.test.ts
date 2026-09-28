@@ -9,6 +9,8 @@ const tenancy = {
 };
 let moveRows: Array<Record<string, unknown>> = [];
 let generatedRecs: Array<Record<string, unknown>> = [];
+let mockPendingEvidenceReviewRows: Array<Record<string, unknown>> = [];
+let mockPendingEvidenceRows: Array<Record<string, unknown>> = [];
 const moveCalls: Array<Record<string, unknown>> = [];
 let genCalled = 0;
 
@@ -32,6 +34,26 @@ jest.mock("@/lib/artifacts/repository", () => ({
     return generatedRecs;
   }),
 }));
+jest.mock("@/lib/data-plane/postgresCompat", () => ({
+  getAzureWriteFluentClient: jest.fn(() => ({
+    from: (table: string) => {
+      const query = {
+        select: () => query,
+        eq: () => query,
+        order: () => query,
+        limit: async () => ({
+          data:
+            table === "program_evidence_reviews"
+              ? mockPendingEvidenceReviewRows
+              : mockPendingEvidenceRows,
+          error: null,
+        }),
+        in: async () => ({ data: mockPendingEvidenceRows, error: null }),
+      };
+      return query;
+    },
+  })),
+}));
 
 import { GET } from "../route";
 
@@ -45,11 +67,66 @@ function params(programId: string) {
 beforeEach(() => {
   moveRows = [];
   generatedRecs = [];
+  mockPendingEvidenceReviewRows = [];
+  mockPendingEvidenceRows = [];
   moveCalls.length = 0;
   genCalled = 0;
 });
 
 describe("GET /api/v1/programs/[programId]/artifacts — Cabinet merge", () => {
+  it("returns parser facts and source text for pending human evidence review", async () => {
+    mockPendingEvidenceReviewRows = [
+      {
+        id: "review-1",
+        evidence_id: "evidence-1",
+        family_key: "baseline",
+        phase: 2,
+        source_ref: {
+          filename: "baseline.docx",
+          parse_method: "docx-text-extract/v1",
+          confidence: 0.86,
+        },
+      },
+    ];
+    mockPendingEvidenceRows = [
+      {
+        id: "evidence-1",
+        title: "baseline.docx",
+        summary: "Parser found the current baseline.",
+        extracted_text: "Original source says baseline is 18%.",
+        extracted_structured: {
+          baseline_candidates: ["18%"],
+        },
+      },
+    ];
+
+    const res = await GET(req(), params("move-x"));
+    const json = (await res.json()) as {
+      pendingEvidenceReviews: Array<Record<string, unknown>>;
+      evidenceReviewStatus: string;
+    };
+
+    expect(json.evidenceReviewStatus).toBe("available");
+    expect(json.pendingEvidenceReviews).toEqual([
+      expect.objectContaining({
+        evidenceId: "evidence-1",
+        reviewId: "review-1",
+        title: "baseline.docx",
+        familyKey: "baseline",
+        phase: 2,
+        parseMethod: "docx-text-extract/v1",
+        confidence: 0.86,
+        sourceTextPreview: "Original source says baseline is 18%.",
+        extraction: expect.objectContaining({
+          summary: "Parser found the current baseline.",
+          structured: expect.objectContaining({
+            baselineCandidates: ["18%"],
+          }),
+        }),
+      }),
+    ]);
+  });
+
   it("merges generated_artifacts with the move vault, newest first", async () => {
     moveRows = [
       {

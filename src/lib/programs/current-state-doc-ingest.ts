@@ -40,6 +40,13 @@ import {
   evaluateSensitiveUpload,
   type UploadProtectionResult,
 } from "@/lib/security/sensitive-upload-guard";
+import {
+  initialReviewedEvidenceExtraction,
+  normalizeReviewedEvidenceExtraction,
+  reviewedExtractionFromStoredSourceRef,
+  toStoredReviewedStructured,
+  type ReviewedEvidenceExtraction,
+} from "@/lib/programs/evidence-review-contract";
 
 export type ReviewDecision = "pending" | "approved" | "rejected";
 
@@ -115,6 +122,8 @@ export interface DocFamilyReviewState {
     parseMethod: string;
     confidence: number;
     submittedAt: string;
+    extraction: ReviewedEvidenceExtraction;
+    sourceTextPreview: string;
   }>;
   /** Real, citation-ready content lines extracted from the APPROVED (committed)
    *  document evidence — fed verbatim into grounded deliverables so the committed
@@ -138,6 +147,7 @@ export interface EnsureEvidenceReviewArgs {
   initialDecision?: ReviewDecision;
   rationale?: string | null;
   sourceRef?: Record<string, unknown>;
+  reviewedExtraction?: ReviewedEvidenceExtraction;
 }
 
 export interface EnsureEvidenceReviewResult {
@@ -375,6 +385,13 @@ export async function ensureEvidenceReviewForUploadedEvidence(
   const autoPromoted = args.autoPromoted === true;
   const decision: ReviewDecision =
     args.initialDecision ?? (autoPromoted ? "approved" : "pending");
+  const reviewedExtraction =
+    decision === "approved" && !autoPromoted
+      ? normalizeReviewedEvidenceExtraction(args.reviewedExtraction)
+      : null;
+  if (decision === "approved" && !autoPromoted && !reviewedExtraction) {
+    throw new Error("reviewed_extraction_required");
+  }
   const reviewedOnInsert = decision !== "pending";
   const sourceRef = {
     filename: args.filename ?? undefined,
@@ -394,7 +411,8 @@ export async function ensureEvidenceReviewForUploadedEvidence(
             ? "rejected"
             : "pending_review",
       attachment_status: "attached_to_move",
-      maturity_level: decision === "pending" ? "uploaded" : reviewStateForDecision(decision),
+      maturity_level:
+        decision === "pending" ? "uploaded" : reviewStateForDecision(decision),
       accepted_by: decision === "approved" ? ctx.userId : null,
       accepted_at: decision === "approved" ? new Date().toISOString() : null,
       attached_to_move_id: args.moveId,
@@ -403,6 +421,7 @@ export async function ensureEvidenceReviewForUploadedEvidence(
       blueprint_category: familyKey,
     },
     ...(args.sourceRef ?? {}),
+    ...(reviewedExtraction ? { reviewed_extraction: reviewedExtraction } : {}),
   };
   const rationale =
     args.rationale ??
@@ -471,11 +490,12 @@ export async function ensureEvidenceReviewForUploadedEvidence(
     tenantKey,
     programId: args.moveId,
     engagementId: args.moveId,
-    action: decision === "approved" && !autoPromoted
-      ? "workspace_evidence_committed"
-      : autoPromoted
-      ? "workspace_evidence_auto_accepted"
-      : "workspace_evidence_review_opened",
+    action:
+      decision === "approved" && !autoPromoted
+        ? "workspace_evidence_committed"
+        : autoPromoted
+          ? "workspace_evidence_auto_accepted"
+          : "workspace_evidence_review_opened",
     fromState: "uploaded",
     toState: reviewStateForDecision(decision),
     rationale,
@@ -666,6 +686,7 @@ export async function decideEvidenceReview(
     evidenceId: string;
     decision: Exclude<ReviewDecision, "pending">;
     rationale?: string;
+    reviewedExtraction?: ReviewedEvidenceExtraction;
   },
 ): Promise<{
   ok: boolean;
@@ -675,6 +696,41 @@ export async function decideEvidenceReview(
 }> {
   const tenantKey = ctx.clientKey ?? "";
   const sb = getAzureWriteFluentClient();
+  let reviewedSourceRef: Record<string, unknown> | null = null;
+  if (args.decision === "approved") {
+    const reviewedExtraction = normalizeReviewedEvidenceExtraction(
+      args.reviewedExtraction,
+    );
+    if (!reviewedExtraction) {
+      return {
+        ok: false,
+        evidenceId: args.evidenceId,
+        familyKey: null,
+        decision: "pending",
+      };
+    }
+    const { data: pendingReview, error: pendingReviewError } = await sb
+      .from("program_evidence_reviews")
+      .select("source_ref")
+      .eq("tenant_key", tenantKey)
+      .eq("program_id", args.moveId)
+      .eq("evidence_id", args.evidenceId)
+      .eq("decision", "pending")
+      .maybeSingle();
+    if (pendingReviewError) throw pendingReviewError;
+    if (pendingReview) {
+      const sourceRef =
+        pendingReview.source_ref &&
+        typeof pendingReview.source_ref === "object" &&
+        !Array.isArray(pendingReview.source_ref)
+          ? (pendingReview.source_ref as Record<string, unknown>)
+          : {};
+      reviewedSourceRef = {
+        ...sourceRef,
+        reviewed_extraction: reviewedExtraction,
+      };
+    }
+  }
   const { data, error } = await sb
     .from("program_evidence_reviews")
     .update({
@@ -682,9 +738,12 @@ export async function decideEvidenceReview(
       reviewed_by_user_id: ctx.userId,
       reviewed_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
+      ...(reviewedSourceRef ? { source_ref: reviewedSourceRef } : {}),
       rationale:
         args.rationale ??
-        `Reviewed ${args.decision} by ${ctx.userId} on the current-state evidence review.`,
+        (args.decision === "approved"
+          ? `Approved extraction version 1 after human review by ${ctx.userId}.`
+          : `Reviewed ${args.decision} by ${ctx.userId} on the current-state evidence review.`),
     })
     .eq("tenant_key", tenantKey)
     .eq("program_id", args.moveId)
@@ -726,7 +785,9 @@ export async function decideEvidenceReview(
 
     const { data: evidenceRow, error: evidenceError } = await sb
       .from("program_evidence_items")
-      .select("id, evidence_type, title, confidence, phase, extracted_structured")
+      .select(
+        "id, evidence_type, title, confidence, phase, extracted_structured",
+      )
       .eq("tenant_key", tenantKey)
       .eq("program_id", args.moveId)
       .eq("id", args.evidenceId)
@@ -761,6 +822,7 @@ export async function decideEvidenceReview(
         confidence: evidence.confidence,
         autoPromoted: false,
         initialDecision: args.decision,
+        reviewedExtraction: args.reviewedExtraction,
         rationale:
           args.rationale ??
           "Human reviewer accepted existing workspace-uploaded evidence.",
@@ -863,27 +925,77 @@ export async function resolveDocFamilyReviews(
           parseMethod: String(ref.parse_method ?? "unknown"),
           confidence: typeof ref.confidence === "number" ? ref.confidence : 0.7,
           submittedAt: r.created_at,
+          extraction: initialReviewedEvidenceExtraction({
+            summary: null,
+            extractedText: null,
+            extractedStructured: null,
+          }),
+          sourceTextPreview: "",
         });
       }
+    }
+
+    const allEvidenceIds = [
+      ...new Set([
+        ...approvedEvidenceIds,
+        ...state.pendingItems.map((item) => item.evidenceId),
+      ]),
+    ];
+    const evidenceById = new Map<string, Record<string, unknown>>();
+    if (allEvidenceIds.length) {
+      const { data: evidenceRows } = await sb
+        .from("program_evidence_items")
+        .select("id, extracted_structured, extracted_text, summary, title")
+        .eq("tenant_key", tenantKey)
+        .eq("program_id", moveId)
+        .in("id", allEvidenceIds);
+      if (Array.isArray(evidenceRows)) {
+        for (const item of evidenceRows as Array<Record<string, unknown>>) {
+          const id = String(item.id ?? "");
+          if (id) evidenceById.set(id, item);
+        }
+      }
+    }
+    for (const pending of state.pendingItems) {
+      const item = evidenceById.get(pending.evidenceId);
+      pending.extraction = initialReviewedEvidenceExtraction({
+        summary: item?.summary,
+        extractedText: item?.extracted_text,
+        extractedStructured: item?.extracted_structured,
+      });
+      pending.sourceTextPreview = String(item?.extracted_text ?? "");
     }
 
     // Pull the REAL extracted content from the approved (committed) evidence so
     // grounded deliverables can cite actual decisions/risks/baselines — not just
     // "committed". Generic across families (uses the shared extraction shape).
     if (approvedEvidenceIds.length) {
-      const { data: ev } = await sb
-        .from("program_evidence_items")
-        .select("extracted_structured, summary, title")
-        .in("id", approvedEvidenceIds);
-      if (Array.isArray(ev)) {
-        state.committedSignals = buildCommittedSignals(
-          ev as Array<{
-            extracted_structured: Record<string, unknown> | null;
-            summary: string | null;
-            title: string | null;
-          }>,
-        );
-      }
+      const reviewByEvidenceId = new Map(
+        rows
+          .filter((row) => row.decision === "approved")
+          .map((row) => [row.evidence_id, row.source_ref]),
+      );
+      state.committedSignals = buildCommittedSignals(
+        approvedEvidenceIds.flatMap((id) => {
+          const item = evidenceById.get(id);
+          if (!item) return [];
+          const reviewed = reviewedExtractionFromStoredSourceRef(
+            reviewByEvidenceId.get(id),
+          );
+          return [
+            {
+              extracted_structured: reviewed
+                ? toStoredReviewedStructured(
+                    reviewed,
+                    item.extracted_structured,
+                  )
+                : (item.extracted_structured as Record<string, unknown> | null),
+              summary: reviewed?.summary ?? (item.summary as string | null),
+              title: item.title as string | null,
+            },
+          ];
+        }),
+      );
     }
     return state;
   } catch {

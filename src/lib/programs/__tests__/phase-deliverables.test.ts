@@ -2,9 +2,26 @@ import { deliverableBelongsToPhase } from "../phase-deliverables";
 import {
   getPhaseDocumentSet,
   PHASE_CANONICAL_KEYS,
+  phaseCanonicalKeysForRoute,
 } from "../deliverable-registry";
 
 describe("deliverableBelongsToPhase", () => {
+  it("uses an estimation-sized P3 package for a confirmed technical product route", () => {
+    expect(
+      phaseCanonicalKeysForRoute(3, {
+        route: "technical_product",
+        recommendation: "technical_product",
+        decision: "confirm",
+        evidenceReference: "evidence-1",
+        validatedBy: "reviewer-1",
+        rationale: "Confirmed system recommendation.",
+      }),
+    ).toEqual(["target_state_architecture", "requirements_traceability"]);
+    expect(phaseCanonicalKeysForRoute(3, null)).toEqual(
+      PHASE_CANONICAL_KEYS[3],
+    );
+  });
+
   it("counts the canonical phase gate deliverable (the eval's missing charter)", () => {
     // P1 gate deliverable typeKey is "charter" (PHASE_WORKFLOW[1]).
     expect(deliverableBelongsToPhase("charter", 1, "charter")).toBe(true);

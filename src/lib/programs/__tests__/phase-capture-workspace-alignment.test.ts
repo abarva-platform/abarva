@@ -19,6 +19,39 @@ import {
 
 describe("phase-capture workspace ↔ contract key alignment", () => {
   const WORKFLOW_PHASES = [0, 1, 2, 3, 4, 5];
+  const businessChangeAssessment = JSON.stringify({
+    expectedWorkflowChange: "none",
+    expectedRoleAccountabilityChange: "none",
+    adoptionOwner: "Business analytics lead",
+    adoptionResponsibility: "business",
+    evidenceReference: "P1 operating-owner interview",
+    validatedBy: "Business sponsor",
+  });
+
+  function validCapture(phase: number) {
+    const items = Object.fromEntries(
+      getPhaseCaptureSections(phase).map((section) => [
+        section.key,
+        `${section.label} captured`,
+      ]),
+    );
+    if (phase === 1)
+      items.business_change_assessment = businessChangeAssessment;
+    if (phase === 2) {
+      items.solution_route_validation = JSON.stringify({
+        businessChangeAssessmentSnapshot: JSON.parse(businessChangeAssessment),
+        solutionOutput: "reports_dashboards",
+        workflowChange: "none",
+        roleAccountabilityChange: "none",
+        evidenceReference: "evidence-p2-1",
+        decision: "confirm",
+        selectedRoute: "technical_product",
+        correctionRationale: "",
+        validatedBy: "Business sponsor",
+      });
+    }
+    return items;
+  }
 
   it.each(WORKFLOW_PHASES)(
     "phase %s exposes canonical capture keys that fully satisfy the route",
@@ -28,10 +61,17 @@ describe("phase-capture workspace ↔ contract key alignment", () => {
 
       // A payload keyed by the contract keys (exactly what the derived cards
       // send) must be accepted as complete.
-      const items = Object.fromEntries(
-        sections.map((s) => [s.key, `${s.label} captured`]),
+      const items = validCapture(phase);
+      const result = evaluatePhaseCapture(
+        phase,
+        items,
+        phase === 2
+          ? {
+              businessChangeAssessment,
+              approvedEvidenceReferences: ["evidence-p2-1"],
+            }
+          : {},
       );
-      const result = evaluatePhaseCapture(phase, items);
       expect(result.complete).toBe(true);
       expect(result.missing).toEqual([]);
     },

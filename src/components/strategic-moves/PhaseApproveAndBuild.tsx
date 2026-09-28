@@ -20,6 +20,7 @@ import {
   type ReactNode,
 } from "react";
 import Link from "next/link";
+import { createPortal } from "react-dom";
 import {
   PHASE_CANONICAL_KEYS,
   DELIVERABLE_REGISTRY,
@@ -32,6 +33,7 @@ import {
 } from "@/lib/programs/deliverable-canvas-polish-view";
 import type { MoveEvidenceNeedPacket } from "@/lib/programs/evidence-readiness/move-evidence-need-packet";
 import { GateApprovalConfirmDialog } from "@/components/strategic-moves/GateApprovalConfirmDialog";
+import { currentPhaseRequiredEvidenceGaps } from "@/lib/programs/phase-progress-readiness";
 
 const NAVY = "#1B2B5C";
 const INK = "#1A1A18";
@@ -135,6 +137,8 @@ interface Props {
   evidenceNeedPackets?: MoveEvidenceNeedPacket[];
   /** Some older callers pass current-phase evidence blockers. The phase workspace passes next-phase readiness, so default false. */
   blockOnEvidenceGaps?: boolean;
+  /** Render the single build action in the active step header instead of beside the output list. */
+  actionPortalTargetId?: string;
   /** Parent-owned prerequisite work, such as phase capture finalization. */
   onBeforeBuild?: () => Promise<void>;
   /**
@@ -156,6 +160,8 @@ interface Props {
   approverLabel?: string | null;
   /** Current generated deliverables from the artifact registry, preloaded server-side. */
   initialArtifacts?: PhaseBuildArtifact[];
+  /** Server-confirmed route-specific package, when the parent has one. */
+  deliverableKeys?: readonly string[];
 }
 
 export interface BuildSettledResult {
@@ -239,21 +245,25 @@ export function PhaseApproveAndBuild({
   inputCount,
   evidenceNeedPackets = [],
   blockOnEvidenceGaps = false,
+  actionPortalTargetId,
   onBeforeBuild,
   onBuildSettled,
   disabledReason = null,
   approverLabel = null,
   initialArtifacts = [],
+  deliverableKeys,
 }: Props) {
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const [actionPortalTarget, setActionPortalTarget] =
+    useState<HTMLElement | null>(null);
   const specs = useMemo(
     () =>
-      (PHASE_CANONICAL_KEYS[phaseNum] ?? [])
+      (deliverableKeys ?? PHASE_CANONICAL_KEYS[phaseNum] ?? [])
         .map((key) =>
           DELIVERABLE_REGISTRY.find((d) => d.deliverableTypeKey === key),
         )
         .filter(Boolean) as DeliverableSpec[],
-    [phaseNum],
+    [deliverableKeys, phaseNum],
   );
 
   const [rows, setRows] = useState<DeliverableRow[]>(() =>
@@ -269,6 +279,12 @@ export function PhaseApproveAndBuild({
     signalBasis?: string;
     resolutionConfidence?: string;
   } | null>(null);
+  useEffect(() => {
+    if (!actionPortalTargetId) return;
+    setActionPortalTarget(
+      document.getElementById(actionPortalTargetId) as HTMLElement | null,
+    );
+  }, [actionPortalTargetId]);
   const timers = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
   const startedAt = useRef<number>(0);
   const initialArtifactSignature = initialArtifacts
@@ -507,8 +523,9 @@ export function PhaseApproveAndBuild({
       r.status === "blocked" || r.status === "failed" || r.status === "error",
   ).length;
   const gateCount = specs.filter((s) => s.gateArtifact).length;
-  const requiredGaps = evidenceNeedPackets.filter(
-    (packet) => packet.priority === "required" && packet.status !== "covered",
+  const requiredGaps = currentPhaseRequiredEvidenceGaps(
+    evidenceNeedPackets,
+    phaseNum,
   );
   const hasEvidenceGuidanceGaps = requiredGaps.length > 0;
   const hasRequiredGaps = blockOnEvidenceGaps && hasEvidenceGuidanceGaps;
@@ -530,7 +547,33 @@ export function PhaseApproveAndBuild({
           ? `${blockedCount} output${blockedCount === 1 ? "" : "s"} need evidence or quality fixes before the phase can advance.`
           : builtCount === specs.length
             ? `${phaseLabel} documents are built. Review them before relying on them.`
-            : "Capture is separate from gate readiness. Build once the record is ready for review.";
+          : "Capture is separate from gate readiness. Build once the record is ready for review.";
+
+  const buildActionButton = (
+    <button
+      type="button"
+      onClick={() => setConfirmOpen(true)}
+      disabled={building || anyRunning || hasRequiredGaps || hasParentBlocker}
+      className="mxw-phase-progress-button"
+      style={{
+        padding: "10px 16px",
+        background:
+          building || anyRunning || hasParentBlocker ? "#D8DDE5" : "#147C5B",
+        color: building || anyRunning || hasParentBlocker ? "#596579" : "#FFFFFF",
+        border: "1px solid transparent",
+        borderRadius: 8,
+        fontSize: 13,
+        fontWeight: 800,
+        cursor:
+          building || anyRunning || hasRequiredGaps || hasParentBlocker
+            ? "default"
+            : "pointer",
+        whiteSpace: "nowrap",
+      }}
+    >
+      {anyRunning ? `Building ${phaseLabel}…` : buildLabel}
+    </button>
+  );
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
@@ -606,12 +649,14 @@ export function PhaseApproveAndBuild({
         {hasEvidenceGuidanceGaps && (
           <details style={{ marginTop: 10, color: "#5C4320" }}>
             <summary style={{ cursor: "pointer", fontWeight: 700 }}>
-              {requiredGaps.length} prep item
-              {requiredGaps.length === 1 ? "" : "s"} carrying forward
+              {hasRequiredGaps
+                ? `${requiredGaps.length} required evidence item${requiredGaps.length === 1 ? "" : "s"} open`
+                : `${requiredGaps.length} prep item${requiredGaps.length === 1 ? "" : "s"} carrying forward`}
             </summary>
             <div style={{ marginTop: 6 }}>
-              These items inform the next phase. They do not block this build
-              unless the phase marks them as current-phase blockers.
+              {hasRequiredGaps
+                ? "This phase build is unavailable until these required evidence items are reviewed and covered."
+                : "These items inform the next phase and do not block this phase build."}
             </div>
           </details>
         )}
@@ -650,32 +695,12 @@ export function PhaseApproveAndBuild({
         )}
       </div>
 
-      {/* The single phase action */}
-      <button
-        type="button"
-        onClick={() => setConfirmOpen(true)}
-        disabled={building || anyRunning || hasRequiredGaps || hasParentBlocker}
-        style={{
-          alignSelf: "flex-start",
-          padding: "9px 16px",
-          background:
-            building || anyRunning || hasRequiredGaps || hasParentBlocker
-              ? "#C9C7BE"
-              : NAVY,
-          color: "#FFFFFF",
-          border: "none",
-          borderRadius: 8,
-          fontSize: 13,
-          fontWeight: 600,
-          cursor:
-            building || anyRunning || hasRequiredGaps || hasParentBlocker
-              ? "default"
-              : "pointer",
-          fontFamily: "Fraunces, Georgia, serif",
-        }}
-      >
-        {anyRunning ? `Building ${phaseLabel}…` : buildLabel}
-      </button>
+      {/* Evidence gaps suppress the progression action; the step header still explains why. */}
+      {actionPortalTargetId
+        ? !hasRequiredGaps &&
+          actionPortalTarget &&
+          createPortal(buildActionButton, actionPortalTarget)
+        : buildActionButton}
 
       <GateApprovalConfirmDialog
         open={confirmOpen}

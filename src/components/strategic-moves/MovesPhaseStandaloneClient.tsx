@@ -10,6 +10,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import { createPortal } from "react-dom";
 import {
   reconcileDraftWithAcknowledged,
   resolvePhaseCaptureStatus,
@@ -42,11 +43,28 @@ import { CostEffortWizard } from "@/components/strategic-moves/cost-effort";
 import { RiskAssessmentPanel } from "@/components/strategic-moves/risk-assessment";
 import { SolutioningPanel } from "@/components/strategic-moves/solutioning";
 import type { MoveEvidenceNeedPacket } from "@/lib/programs/evidence-readiness/move-evidence-need-packet";
+import {
+  currentPhaseRequiredEvidenceGaps,
+  phaseProgressReadiness,
+} from "@/lib/programs/phase-progress-readiness";
 import type { PhaseNavigationStatus } from "@/lib/programs/phase-navigation-status";
+import type { ApprovedPhaseEvidenceReference } from "@/lib/programs/approved-phase-evidence";
 import {
   getPhaseCaptureSections,
   type PhaseCaptureSection,
 } from "@/lib/programs/phase-capture-contract";
+import {
+  SOLUTION_OUTPUT_TYPES,
+  SOLUTION_ROUTE_LABELS,
+  isBusinessChangeAssessmentComplete,
+  parseBusinessChangeAssessment,
+  parseSolutionRouteValidation,
+  recommendSolutionRoute,
+  resolveConfirmedSolutionRoute,
+  type BusinessChangeAssessment,
+  type ConfirmedSolutionRoute,
+  type SolutionOutputType,
+} from "@/lib/programs/solution-route-assessment";
 import type { AvaPhaseInputProposal } from "@/lib/programs/phase-input-draft-proposals";
 import { parseDiagnosisFacts } from "@/lib/programs/diagnosis-facts";
 import type { PhaseTallyRow } from "@/lib/programs/phase-explorer-tallies";
@@ -63,7 +81,10 @@ import {
 } from "@/lib/programs/phase-templates/next-phase-readiness-pack";
 import { buildMovesChatAvaAnswerPacket } from "@/lib/programs/moves-chat-answer-packet";
 import { demoSafeClientText } from "@/lib/client-config";
-import { PHASE_CANONICAL_KEYS } from "@/lib/programs/deliverable-registry";
+import {
+  PHASE_CANONICAL_KEYS,
+  phaseCanonicalKeysForRoute,
+} from "@/lib/programs/deliverable-registry";
 import {
   APPROVAL_ROLE_LABELS,
   type ApprovalRole,
@@ -100,6 +121,12 @@ interface Substep {
   label: string;
 }
 
+interface PhaseProgressHeaderState {
+  label: string;
+  tone: "ready" | "open" | "complete";
+  openEvidenceCount: number;
+}
+
 interface PhaseContract {
   phase: number;
   code: string;
@@ -125,6 +152,9 @@ interface MovesPhaseStandaloneClientProps {
   initialPhaseCaptureValues?: Record<string, string>;
   /** Revision of those values; echoed on save so a stale write is rejected. */
   initialPhaseCaptureRevision?: string;
+  initialBusinessChangeAssessment?: string;
+  initialApprovedEvidenceReferences?: ApprovedPhaseEvidenceReference[];
+  initialConfirmedSolutionRoute?: ConfirmedSolutionRoute | null;
   move: StrategicMove;
   phaseNum: number;
   phaseTallies: PhaseTallyRow[];
@@ -659,6 +689,9 @@ function samePhaseBuildArtifactIds(
 export function MovesPhaseStandaloneClient({
   initialPhaseCaptureValues,
   initialPhaseCaptureRevision,
+  initialBusinessChangeAssessment = "",
+  initialApprovedEvidenceReferences = [],
+  initialConfirmedSolutionRoute = null,
   move,
   phaseNum,
   phaseTallies,
@@ -934,6 +967,13 @@ export function MovesPhaseStandaloneClient({
     useState<PhaseCaptureValues>(() =>
       normalizePhaseCaptureValues(initialPhaseCaptureValues),
     );
+  const [confirmedSolutionRoute, setConfirmedSolutionRoute] =
+    useState<ConfirmedSolutionRoute | null>(initialConfirmedSolutionRoute);
+  const businessChangeAssessment =
+    phase.phase === 1
+      ? (phaseCaptureValues.business_change_assessment ??
+        initialBusinessChangeAssessment)
+      : initialBusinessChangeAssessment;
   const [phaseCaptureRevision, setPhaseCaptureRevision] = useState(
     initialPhaseCaptureRevision ?? "",
   );
@@ -944,8 +984,8 @@ export function MovesPhaseStandaloneClient({
     Record<string, string>
   >({});
   const phaseCaptureSections = useMemo(
-    () => getPhaseCaptureSections(phase.phase),
-    [phase.phase],
+    () => getPhaseCaptureSections(phase.phase, confirmedSolutionRoute),
+    [confirmedSolutionRoute, phase.phase],
   );
   const inferredSelectedOption = useMemo(
     () =>
@@ -1028,10 +1068,24 @@ export function MovesPhaseStandaloneClient({
   }, [initialSubstepKey, isHistoricalPhase, phase.phase]);
   const phaseCaptureCompleteCount = useMemo(
     () =>
-      phaseCaptureSections.filter((section) =>
-        String(persistedPhaseCaptureValues[section.key] ?? "").trim(),
+      phaseCaptureSections.filter(
+        (section) =>
+          phaseCaptureStatusForSection(
+            section,
+            persistedPhaseCaptureValues,
+            persistedPhaseCaptureValues,
+            phaseCaptureSaveStatus,
+            businessChangeAssessment,
+            initialApprovedEvidenceReferences.map((item) => item.evidenceId),
+          ).complete,
       ).length,
-    [phaseCaptureSections, persistedPhaseCaptureValues],
+    [
+      businessChangeAssessment,
+      initialApprovedEvidenceReferences,
+      phaseCaptureSections,
+      persistedPhaseCaptureValues,
+      phaseCaptureSaveStatus,
+    ],
   );
   const phaseCaptureDirtyKeys = useMemo(
     () =>
@@ -1134,11 +1188,30 @@ export function MovesPhaseStandaloneClient({
               ? `Save ${phaseCaptureDirtyCount} phase input${
                   phaseCaptureDirtyCount === 1 ? "" : "s"
                 } before Approve & Build.`
-              : phase.phase >= 1 && phaseCaptureMissingCount > 0
-                ? `Complete ${phaseCaptureMissingCount} phase input${
+                : phase.phase >= 1 && phaseCaptureMissingCount > 0
+                  ? `Complete ${phaseCaptureMissingCount} phase input${
                     phaseCaptureMissingCount === 1 ? "" : "s"
                   } before Approve & Build.`
-                : null;
+                  : null;
+  const phaseProgress = phaseProgressReadiness({
+    phase: phase.phase,
+    phaseCaptureBlocker,
+    evidenceNeedPackets,
+  });
+  const phaseProgressHeaderState: PhaseProgressHeaderState | null =
+    finderSelectedSectionKey === null && substep.key === "approve"
+      ? isHistoricalPhase || gateApproved
+        ? { label: "Approved", tone: "complete", openEvidenceCount: 0 }
+        : phaseProgress.requiredEvidenceGaps.length > 0
+          ? {
+              label: "Review required evidence",
+              tone: "open",
+              openEvidenceCount: phaseProgress.requiredEvidenceGaps.length,
+            }
+          : phaseProgress.blocker
+            ? { label: "Inputs not ready", tone: "open", openEvidenceCount: 0 }
+            : { label: "Ready to build", tone: "ready", openEvidenceCount: 0 }
+      : null;
   // MOVES-UI-001 Steps two-column "Coming up" card. Same real inputs and same
   // function (`buildNextPhaseReadinessPack`) the Approve substep already uses
   // for its "Next phase readiness" section below — computed once here so the
@@ -1330,6 +1403,7 @@ export function MovesPhaseStandaloneClient({
           revision?: string;
           detail?: string;
           error?: string;
+          confirmedSolutionRoute?: ConfirmedSolutionRoute | null;
         };
         if (
           res.status === 409 &&
@@ -1360,6 +1434,7 @@ export function MovesPhaseStandaloneClient({
           [fieldKey]: savedValues[fieldKey] ?? "",
         }));
         if (body.revision) setPhaseCaptureRevision(body.revision);
+        setConfirmedSolutionRoute(body.confirmedSolutionRoute ?? null);
         setAvaDraftValues((prev) => {
           const next = { ...prev };
           delete next[fieldKey];
@@ -1443,6 +1518,7 @@ export function MovesPhaseStandaloneClient({
           revision?: string;
           detail?: string;
           error?: string;
+          confirmedSolutionRoute?: ConfirmedSolutionRoute | null;
         };
         if (
           res.status === 409 &&
@@ -1495,6 +1571,7 @@ export function MovesPhaseStandaloneClient({
           ),
         );
         if (body.revision) setPhaseCaptureRevision(body.revision);
+        setConfirmedSolutionRoute(body.confirmedSolutionRoute ?? null);
         setPhaseCaptureSaveStatus((prev) => {
           const next = { ...prev };
           for (const key of keysToSave) next[key] = "saved";
@@ -2423,7 +2500,8 @@ export function MovesPhaseStandaloneClient({
                             setWorkspaceView("phase");
                             setFinderSelectedSectionKey(null);
                             (
-                              workbookReviewRef.current ?? document.documentElement
+                              workbookReviewRef.current ??
+                              document.documentElement
                             ).scrollIntoView({
                               behavior: "smooth",
                               block: "start",
@@ -2510,6 +2588,16 @@ export function MovesPhaseStandaloneClient({
                         )
                       }
                       phase={phase}
+                      gateApproved={gateApproved}
+                      progressHeaderState={phaseProgressHeaderState}
+                      onOpenFiles={openFilesWorkspace}
+                      businessChangeAssessment={businessChangeAssessment}
+                      approvedEvidenceReferences={
+                        initialApprovedEvidenceReferences
+                      }
+                      reviewerIdentity={
+                        currentUser?.email ?? "signed-in reviewer"
+                      }
                       phaseCaptureSections={phaseCaptureSections}
                       phaseCaptureValues={displayPhaseCaptureValues}
                       persistedPhaseCaptureValues={persistedPhaseCaptureValues}
@@ -2534,6 +2622,14 @@ export function MovesPhaseStandaloneClient({
                           onContinueCurrentPhase={continueToCurrentPhase}
                           onApproveP0Gate={approveP0Gate}
                           approverLabel={approverLabel}
+                          businessChangeAssessment={businessChangeAssessment}
+                          confirmedSolutionRoute={confirmedSolutionRoute}
+                          approvedEvidenceReferences={
+                            initialApprovedEvidenceReferences
+                          }
+                          reviewerIdentity={
+                            currentUser?.email ?? "signed-in reviewer"
+                          }
                           onFinalizePhaseCapture={finalizePhaseCapture}
                           onOpenFiles={openFilesWorkspace}
                           onPhaseCaptureValueChange={setPhaseCaptureValue}
@@ -2572,6 +2668,15 @@ export function MovesPhaseStandaloneClient({
                         )
                       }
                       phase={phase}
+                      progressHeaderState={phaseProgressHeaderState}
+                      onOpenFiles={openFilesWorkspace}
+                      businessChangeAssessment={businessChangeAssessment}
+                      approvedEvidenceReferences={
+                        initialApprovedEvidenceReferences
+                      }
+                      reviewerIdentity={
+                        currentUser?.email ?? "signed-in reviewer"
+                      }
                       phaseCaptureSections={phaseCaptureSections}
                       phaseCaptureValues={phaseCaptureValues}
                       persistedPhaseCaptureValues={persistedPhaseCaptureValues}
@@ -2596,6 +2701,14 @@ export function MovesPhaseStandaloneClient({
                           onContinueCurrentPhase={continueToCurrentPhase}
                           onApproveP0Gate={approveP0Gate}
                           approverLabel={approverLabel}
+                          businessChangeAssessment={businessChangeAssessment}
+                          confirmedSolutionRoute={confirmedSolutionRoute}
+                          approvedEvidenceReferences={
+                            initialApprovedEvidenceReferences
+                          }
+                          reviewerIdentity={
+                            currentUser?.email ?? "signed-in reviewer"
+                          }
                           onFinalizePhaseCapture={finalizePhaseCapture}
                           onOpenFiles={openFilesWorkspace}
                           onPhaseCaptureValueChange={setPhaseCaptureValue}
@@ -3139,16 +3252,39 @@ function phaseCaptureStatusForSection(
   draftValues: PhaseCaptureValues,
   persistedValues: PhaseCaptureValues,
   saveStatus: Record<string, PhaseCaptureSaveStatus>,
+  businessChangeAssessment = "",
+  approvedEvidenceReferences: readonly string[] = [],
 ): PhaseCaptureStatusView {
   // Delegates to the shared, unit-tested state machine so the badge's meaning
   // is asserted somewhere other than a browser run. See phase-capture-status.ts
   // for the invariant: Done means the visible value is reproducible from the
   // server after a no-store reload.
-  return resolvePhaseCaptureStatus({
+  const status = resolvePhaseCaptureStatus({
     draft: String(draftValues[section.key] ?? ""),
     persisted: String(persistedValues[section.key] ?? ""),
     saveStatus: saveStatus[section.key],
   });
+  if (!status.complete) return status;
+
+  const persisted = String(persistedValues[section.key] ?? "");
+  const structuredValid =
+    section.structured === "business-change"
+      ? isBusinessChangeAssessmentComplete(persisted)
+      : section.structured === "solution-route"
+        ? Boolean(
+            resolveConfirmedSolutionRoute({
+              businessChangeAssessment:
+                businessChangeAssessment ||
+                parseSolutionRouteValidation(persisted)
+                  ?.businessChangeAssessmentSnapshot,
+              routeValidation: persisted,
+              approvedEvidenceReferences,
+            }),
+          )
+        : true;
+  return structuredValid
+    ? status
+    : { label: "Needs valid details", complete: false, tone: "open" };
 }
 
 function workflowIndexForSelectedSection(
@@ -3240,6 +3376,12 @@ function PhaseContractStepsCanvas({
   onSelectSubstep,
   onToggleComingUp,
   phase,
+  gateApproved,
+  progressHeaderState,
+  onOpenFiles,
+  businessChangeAssessment,
+  approvedEvidenceReferences,
+  reviewerIdentity,
   phaseCaptureSections,
   phaseCaptureValues,
   persistedPhaseCaptureValues,
@@ -3263,6 +3405,12 @@ function PhaseContractStepsCanvas({
   onSelectSubstep: (index: number) => void;
   onToggleComingUp: () => void;
   phase: PhaseContract;
+  gateApproved: boolean;
+  progressHeaderState: PhaseProgressHeaderState | null;
+  onOpenFiles: () => void;
+  businessChangeAssessment: string;
+  approvedEvidenceReferences: ApprovedPhaseEvidenceReference[];
+  reviewerIdentity: string;
   phaseCaptureSections: ReturnType<typeof getPhaseCaptureSections>;
   phaseCaptureValues: PhaseCaptureValues;
   persistedPhaseCaptureValues: PhaseCaptureValues;
@@ -3300,18 +3448,19 @@ function PhaseContractStepsCanvas({
         phaseCaptureValues,
         persistedPhaseCaptureValues,
         phaseCaptureSaveStatus,
+        businessChangeAssessment,
+        approvedEvidenceReferences.map((item) => item.evidenceId),
       ).complete
-    : terminalP5Complete
-      ? true
-      : substepIndex < phase.substeps.length - 1
-        ? true
-        : false;
+    : terminalP5Complete ||
+      (gateApproved && phase.substeps[substepIndex]?.key === "approve");
   const detailStatus = selectedSection
     ? phaseCaptureStatusForSection(
         selectedSection,
         phaseCaptureValues,
         persistedPhaseCaptureValues,
         phaseCaptureSaveStatus,
+        businessChangeAssessment,
+        approvedEvidenceReferences.map((item) => item.evidenceId),
       )
     : null;
   const selectedAvaProposal = selectedSection
@@ -3361,6 +3510,8 @@ function PhaseContractStepsCanvas({
               phaseCaptureValues,
               persistedPhaseCaptureValues,
               phaseCaptureSaveStatus,
+              businessChangeAssessment,
+              approvedEvidenceReferences.map((item) => item.evidenceId),
             );
             const selected = selectedSectionKey === section.key;
             return (
@@ -3387,10 +3538,12 @@ function PhaseContractStepsCanvas({
             const active = selectedWorkflow
               ? index === substepIndex
               : index === activeWorkflowIndex;
-            const complete = terminalP5Complete || index < substepIndex;
+            const complete =
+              terminalP5Complete || (gateApproved && item.key === "approve");
+            const visited = index < substepIndex && !complete;
             return (
               <button
-                className={`mxw-contract-step ${active ? "active" : ""}`}
+                className={`mxw-contract-step ${active ? "active" : ""} ${visited ? "visited" : ""} ${complete ? "complete" : ""}`}
                 key={item.key}
                 onClick={() => {
                   onSelectSubstep(index);
@@ -3399,10 +3552,14 @@ function PhaseContractStepsCanvas({
                 }}
                 type="button"
               >
-                <span className={complete ? "done" : ""} aria-hidden>
-                  {complete ? "✓" : ""}
+                <span
+                  className={complete ? "done" : visited ? "visited" : ""}
+                  aria-hidden
+                >
+                  {complete ? "✓" : visited ? "·" : ""}
                 </span>
                 <strong>{item.label}</strong>
+                {visited ? <small>Viewed</small> : null}
               </button>
             );
           })}
@@ -3453,7 +3610,31 @@ function PhaseContractStepsCanvas({
             Step {Math.max(detailStepNumber, 1)} of {totalStepCount}
           </small>
           <h2>{detailTitle}</h2>
-          <b>{detailStatus?.label ?? (detailComplete ? "Done" : "Open")}</b>
+          <b>
+            {detailStatus?.label ??
+              progressHeaderState?.label ??
+              (detailComplete ? "Done" : "Open")}
+          </b>
+          <div className="mxw-step-progress-actions">
+            {progressHeaderState ? (
+              progressHeaderState.openEvidenceCount > 0 ? (
+                <button
+                  className="mxw-step-progress-status open"
+                  onClick={onOpenFiles}
+                  type="button"
+                >
+                  {progressHeaderState.label} · {progressHeaderState.openEvidenceCount}
+                </button>
+              ) : (
+                <span
+                  className={`mxw-step-progress-status ${progressHeaderState.tone}`}
+                >
+                  {progressHeaderState.label}
+                </span>
+              )
+            ) : null}
+            <div id="mxw-step-progress-action" />
+          </div>
         </div>
 
         {selectedSection ? (
@@ -3511,19 +3692,38 @@ function PhaseContractStepsCanvas({
                 rawValue={phaseCaptureValues[selectedSection.key] ?? ""}
               />
             ) : null}
-            <textarea
-              aria-label={selectedSection.label}
-              className="mxw-contract-input"
-              onChange={(event) =>
-                onPhaseCaptureValueChange(
-                  selectedSection.key,
-                  event.target.value,
-                )
-              }
-              placeholder={selectedSection.description}
-              rows={selectedSection.structured === "facts" ? 4 : 6}
-              value={phaseCaptureValues[selectedSection.key] ?? ""}
-            />
+            {selectedSection.structured === "business-change" ? (
+              <BusinessChangeAssessmentForm
+                value={phaseCaptureValues[selectedSection.key] ?? ""}
+                onChange={(value) =>
+                  onPhaseCaptureValueChange(selectedSection.key, value)
+                }
+              />
+            ) : selectedSection.structured === "solution-route" ? (
+              <SolutionRouteValidationForm
+                assessment={businessChangeAssessment}
+                approvedEvidenceReferences={approvedEvidenceReferences}
+                reviewerIdentity={reviewerIdentity}
+                value={phaseCaptureValues[selectedSection.key] ?? ""}
+                onChange={(value) =>
+                  onPhaseCaptureValueChange(selectedSection.key, value)
+                }
+              />
+            ) : (
+              <textarea
+                aria-label={selectedSection.label}
+                className="mxw-contract-input"
+                onChange={(event) =>
+                  onPhaseCaptureValueChange(
+                    selectedSection.key,
+                    event.target.value,
+                  )
+                }
+                placeholder={selectedSection.description}
+                rows={selectedSection.structured === "facts" ? 4 : 6}
+                value={phaseCaptureValues[selectedSection.key] ?? ""}
+              />
+            )}
             {selectedAvaDraftApplied ? (
               <div className="mxw-ava-local-draft">
                 <span>
@@ -3579,6 +3779,9 @@ function FinderStepsColumns({
   onSelectSubstep,
   onToggleComingUp,
   phase,
+  businessChangeAssessment,
+  approvedEvidenceReferences,
+  reviewerIdentity,
   phaseCaptureSections,
   phaseCaptureValues,
   persistedPhaseCaptureValues,
@@ -3586,6 +3789,8 @@ function FinderStepsColumns({
   phaseCaptureSaveStatus,
   readinessPack,
   selectedSectionKey,
+  progressHeaderState,
+  onOpenFiles,
   substepBody,
   substepIndex,
 }: {
@@ -3595,6 +3800,9 @@ function FinderStepsColumns({
   onSelectSubstep: (index: number) => void;
   onToggleComingUp: () => void;
   phase: PhaseContract;
+  businessChangeAssessment: string;
+  approvedEvidenceReferences: ApprovedPhaseEvidenceReference[];
+  reviewerIdentity: string;
   phaseCaptureSections: ReturnType<typeof getPhaseCaptureSections>;
   phaseCaptureValues: PhaseCaptureValues;
   persistedPhaseCaptureValues: PhaseCaptureValues;
@@ -3602,6 +3810,8 @@ function FinderStepsColumns({
   phaseCaptureSaveStatus: Record<string, PhaseCaptureSaveStatus>;
   readinessPack: NextPhaseReadinessPack;
   selectedSectionKey: string | null;
+  progressHeaderState: PhaseProgressHeaderState | null;
+  onOpenFiles: () => void;
   substepBody: ReactNode;
   substepIndex: number;
 }) {
@@ -3621,6 +3831,8 @@ function FinderStepsColumns({
         phaseCaptureValues,
         persistedPhaseCaptureValues,
         phaseCaptureSaveStatus,
+        businessChangeAssessment,
+        approvedEvidenceReferences.map((item) => item.evidenceId),
       )
     : null;
 
@@ -3636,6 +3848,8 @@ function FinderStepsColumns({
                 phaseCaptureValues,
                 persistedPhaseCaptureValues,
                 phaseCaptureSaveStatus,
+                businessChangeAssessment,
+                approvedEvidenceReferences.map((item) => item.evidenceId),
               );
               const blocked = section.required && !status.complete;
               const selected = selectedSectionKey === section.key;
@@ -3752,10 +3966,43 @@ function FinderStepsColumns({
         }
         className="mxw-finder-detail"
       >
+        <header className="mxw-contract-detail-top">
+          <small>
+            Step {selectedSection
+              ? phaseCaptureSections.findIndex(
+                  (section) => section.key === selectedSection.key,
+                ) + 1
+              : phaseCaptureSections.length + substepIndex + 1} of {phaseCaptureSections.length + phase.substeps.length}
+          </small>
+          <h2>
+            {selectedSection?.label ??
+              phase.substeps[substepIndex]?.label ??
+              phase.title}
+          </h2>
+          <div className="mxw-step-progress-actions">
+            {progressHeaderState ? (
+              progressHeaderState.openEvidenceCount > 0 ? (
+                <button
+                  className="mxw-step-progress-status open"
+                  onClick={onOpenFiles}
+                  type="button"
+                >
+                  {progressHeaderState.label} · {progressHeaderState.openEvidenceCount}
+                </button>
+              ) : (
+                <span
+                  className={`mxw-step-progress-status ${progressHeaderState.tone}`}
+                >
+                  {progressHeaderState.label}
+                </span>
+              )
+            ) : null}
+            <div id="mxw-step-progress-action" />
+          </div>
+        </header>
         {selectedSection ? (
           <section className="mxw-finder-detail-panel">
             <header>
-              <h2>{selectedSection.label}</h2>
               <p>{selectedSection.description}</p>
             </header>
             {selectedSection.structured === "facts" ? (
@@ -3763,18 +4010,37 @@ function FinderStepsColumns({
                 rawValue={phaseCaptureValues[selectedSection.key] ?? ""}
               />
             ) : null}
-            <textarea
-              aria-label={selectedSection.label}
-              className="mxw-finder-detail-input"
-              onChange={(event) =>
-                onPhaseCaptureValueChange(
-                  selectedSection.key,
-                  event.target.value,
-                )
-              }
-              rows={selectedSection.structured === "facts" ? 3 : 6}
-              value={phaseCaptureValues[selectedSection.key] ?? ""}
-            />
+            {selectedSection.structured === "business-change" ? (
+              <BusinessChangeAssessmentForm
+                value={phaseCaptureValues[selectedSection.key] ?? ""}
+                onChange={(value) =>
+                  onPhaseCaptureValueChange(selectedSection.key, value)
+                }
+              />
+            ) : selectedSection.structured === "solution-route" ? (
+              <SolutionRouteValidationForm
+                assessment={businessChangeAssessment}
+                approvedEvidenceReferences={approvedEvidenceReferences}
+                reviewerIdentity={reviewerIdentity}
+                value={phaseCaptureValues[selectedSection.key] ?? ""}
+                onChange={(value) =>
+                  onPhaseCaptureValueChange(selectedSection.key, value)
+                }
+              />
+            ) : (
+              <textarea
+                aria-label={selectedSection.label}
+                className="mxw-finder-detail-input"
+                onChange={(event) =>
+                  onPhaseCaptureValueChange(
+                    selectedSection.key,
+                    event.target.value,
+                  )
+                }
+                rows={selectedSection.structured === "facts" ? 3 : 6}
+                value={phaseCaptureValues[selectedSection.key] ?? ""}
+              />
+            )}
             {selectedDetailStatus?.tone === "error" ? (
               <p className="mxw-capture-save-error" role="alert">
                 {phaseCaptureSaveErrors[selectedSection.key] ||
@@ -3794,6 +4060,18 @@ function FinderStepsColumns({
       </div>
     </div>
   );
+}
+
+function StepHeaderActionPortal({ children }: { children: ReactNode }) {
+  const [target, setTarget] = useState<HTMLElement | null>(null);
+
+  useEffect(() => {
+    setTarget(
+      document.getElementById("mxw-step-progress-action") as HTMLElement | null,
+    );
+  }, []);
+
+  return target ? createPortal(children, target) : null;
 }
 
 // Structured "facts" review table (metric · value, with an inline citation
@@ -3875,6 +4153,10 @@ function PhaseBody({
   onContinueCurrentPhase,
   onApproveP0Gate,
   approverLabel,
+  businessChangeAssessment,
+  confirmedSolutionRoute,
+  approvedEvidenceReferences,
+  reviewerIdentity,
   onFinalizePhaseCapture,
   onOpenFiles,
   onPhaseCaptureValueChange,
@@ -3914,6 +4196,10 @@ function PhaseBody({
   onContinueCurrentPhase: () => void;
   onApproveP0Gate: () => void | Promise<void>;
   approverLabel: string | null;
+  businessChangeAssessment: string;
+  confirmedSolutionRoute: ConfirmedSolutionRoute | null;
+  approvedEvidenceReferences: ApprovedPhaseEvidenceReference[];
+  reviewerIdentity: string;
   onFinalizePhaseCapture: () => Promise<void>;
   onOpenFiles: () => void;
   onPhaseCaptureValueChange: (key: string, value: string) => void;
@@ -3945,6 +4231,9 @@ function PhaseBody({
         <>
           <PhaseCaptureEditor
             completeCount={phaseCaptureCompleteCount}
+            businessChangeAssessment={businessChangeAssessment}
+            approvedEvidenceReferences={approvedEvidenceReferences}
+            reviewerIdentity={reviewerIdentity}
             onChange={onPhaseCaptureValueChange}
             phase={phase}
             persistedValues={persistedPhaseCaptureValues}
@@ -4255,6 +4544,10 @@ function PhaseBody({
     (criterion) => !criterion.completed,
   );
   const isGateBlocked = openHardCriteria.length > 0;
+  const openRequiredEvidence = currentPhaseRequiredEvidenceGaps(
+    evidenceNeedPackets,
+    phase.phase,
+  );
   const approvalDecisionTitle = isHistoricalPhase
     ? terminalComplete
       ? "Move handed off to Tower"
@@ -4350,7 +4643,8 @@ function PhaseBody({
     !isHistoricalPhase &&
     phase.phase >= 1 &&
     openHardCriteria.length === 0 &&
-    !phaseCaptureBlocker;
+    !phaseCaptureBlocker &&
+    openRequiredEvidence.length === 0;
   const gateOnlyConfirmTitle =
     phase.phase >= 5
       ? "Complete P5 and hand off to Tower?"
@@ -4394,6 +4688,9 @@ function PhaseBody({
         <PhaseCaptureEditor
           compact
           completeCount={phaseCaptureCompleteCount}
+          businessChangeAssessment={businessChangeAssessment}
+          approvedEvidenceReferences={approvedEvidenceReferences}
+          reviewerIdentity={reviewerIdentity}
           onChange={onPhaseCaptureValueChange}
           phase={phase}
           persistedValues={persistedPhaseCaptureValues}
@@ -4404,7 +4701,7 @@ function PhaseBody({
         />
       ) : null}
       <section className="mxw-review">
-        <h2>Gate approval</h2>
+        <h2>{phase.phase === 0 ? "Decision checks" : "Gate approval"}</h2>
         {isHistoricalPhase ? (
           terminalComplete ? (
             <p>
@@ -4547,29 +4844,33 @@ function PhaseBody({
         ) : null}
         <div className="mxw-approve-build" id="mxw-approve-build-action">
           {isHistoricalPhase ? (
-            <button
-              className="mxw-gate-button"
-              onClick={onContinueCurrentPhase}
-              type="button"
-            >
-              {terminalComplete
-                ? "Open Tower →"
-                : `Continue to ${nextOpenPhaseContract.code} ${nextOpenPhaseContract.title} →`}
-            </button>
-          ) : phase.phase >= 1 && canSubmitSatisfiedGate ? (
-            <>
+            <StepHeaderActionPortal>
               <button
-                className="mxw-gate-button"
-                disabled={gateApprovalStatus === "approving"}
-                onClick={() => setP0ConfirmOpen(true)}
+                className="mxw-gate-button mxw-step-gate-button"
+                onClick={onContinueCurrentPhase}
                 type="button"
               >
-                {gateApprovalStatus === "approving"
-                  ? "Approving..."
-                  : phase.phase >= 5
-                    ? "Complete P5 and open Tower →"
-                    : `Approve ${phase.code} gate →`}
+                {terminalComplete
+                  ? "Open Tower →"
+                  : `Continue to ${nextOpenPhaseContract.code} ${nextOpenPhaseContract.title} →`}
               </button>
+            </StepHeaderActionPortal>
+          ) : phase.phase >= 1 && canSubmitSatisfiedGate ? (
+            <>
+              <StepHeaderActionPortal>
+                <button
+                  className="mxw-gate-button mxw-step-gate-button"
+                  disabled={gateApprovalStatus === "approving"}
+                  onClick={() => setP0ConfirmOpen(true)}
+                  type="button"
+                >
+                  {gateApprovalStatus === "approving"
+                    ? "Approving..."
+                    : phase.phase >= 5
+                      ? "Complete P5 and open Tower →"
+                      : `Approve ${phase.code} gate →`}
+                </button>
+              </StepHeaderActionPortal>
               <GateApprovalConfirmDialog
                 open={p0ConfirmOpen}
                 title={gateOnlyConfirmTitle}
@@ -4595,6 +4896,10 @@ function PhaseBody({
               approverLabel={approverLabel}
               clientDisplayName={move.tenant.name}
               disabledReason={phaseCaptureBlocker}
+              deliverableKeys={phaseCanonicalKeysForRoute(
+                phase.phase,
+                confirmedSolutionRoute,
+              )}
               evidenceNeedPackets={evidenceNeedPackets}
               inputCount={phaseCaptureCompleteCount}
               initialArtifacts={phaseBuildArtifacts}
@@ -4602,21 +4907,27 @@ function PhaseBody({
               moveName={displayMoveName}
               onBeforeBuild={onFinalizePhaseCapture}
               onBuildSettled={onApproveAfterBuild}
+              blockOnEvidenceGaps
+              actionPortalTargetId="mxw-step-progress-action"
               phaseLabel={`${phase.code} ${phase.title}`}
               phaseNum={phase.phase}
             />
           ) : (
             <>
-              <button
-                className="mxw-gate-button"
-                disabled={gateApprovalStatus === "approving"}
-                onClick={() => setP0ConfirmOpen(true)}
-                type="button"
-              >
-                {gateApprovalStatus === "approving"
-                  ? "Approving..."
-                  : "Approve gate →"}
-              </button>
+              {openRequiredEvidence.length === 0 ? (
+                <StepHeaderActionPortal>
+                  <button
+                    className="mxw-gate-button mxw-step-gate-button"
+                    disabled={gateApprovalStatus === "approving"}
+                    onClick={() => setP0ConfirmOpen(true)}
+                    type="button"
+                  >
+                    {gateApprovalStatus === "approving"
+                      ? "Approving..."
+                      : "Approve gate →"}
+                  </button>
+                </StepHeaderActionPortal>
+              ) : null}
               <GateApprovalConfirmDialog
                 open={p0ConfirmOpen}
                 title="Approve the P0 gate?"
@@ -6115,7 +6426,9 @@ function StageReadinessWorkbookPreviewControl({
       : null;
   const pendingProposalCount = preview?.proposalSet?.pendingCount ?? 0;
   const storedProposalMessage =
-    preview?.proposalSet?.artifactId && status === "idle" && pendingProposalCount > 0
+    preview?.proposalSet?.artifactId &&
+    status === "idle" &&
+    pendingProposalCount > 0
       ? `Stored workbook responses awaiting review · ${pendingProposalCount}/${preview.proposalSet.proposalCount ?? pendingProposalCount} pending proposals`
       : "";
   const statusMessage = message || storedProposalMessage;
@@ -6263,9 +6576,374 @@ function TemplatesAndSessions({ phase }: { phase: PhaseContract }) {
   );
 }
 
+const ROUTE_IMPACT_CHOICES = ["none", "limited", "material"] as const;
+const SOLUTION_OUTPUT_LABELS: Record<SolutionOutputType, string> = {
+  reports_dashboards: "Reports / dashboards",
+  data_product: "Data product",
+  workflow_automation: "Workflow automation",
+  service_operating_model: "Service / operating model",
+  mixed: "Mixed solution",
+};
+
+function editableStructuredRecord(value: string): Record<string, unknown> {
+  try {
+    const parsed: unknown = JSON.parse(value);
+    return parsed && typeof parsed === "object" && !Array.isArray(parsed)
+      ? (parsed as Record<string, unknown>)
+      : {};
+  } catch {
+    return {};
+  }
+}
+
+function BusinessChangeAssessmentForm({
+  onChange,
+  value,
+}: {
+  onChange: (value: string) => void;
+  value: string;
+}) {
+  const record = editableStructuredRecord(value);
+  const update = (key: string, next: string) =>
+    onChange(JSON.stringify({ ...record, [key]: next }));
+
+  return (
+    <div className="mxw-structured-form">
+      <label>
+        Expected workflow change
+        <select
+          aria-label="Expected workflow change"
+          onChange={(event) =>
+            update("expectedWorkflowChange", event.target.value)
+          }
+          value={
+            typeof record.expectedWorkflowChange === "string"
+              ? record.expectedWorkflowChange
+              : ""
+          }
+        >
+          <option value="">Select impact</option>
+          {ROUTE_IMPACT_CHOICES.map((impact) => (
+            <option key={impact} value={impact}>
+              {impact}
+            </option>
+          ))}
+        </select>
+      </label>
+      <label>
+        Expected role / accountability change
+        <select
+          aria-label="Expected role or accountability change"
+          onChange={(event) =>
+            update("expectedRoleAccountabilityChange", event.target.value)
+          }
+          value={
+            typeof record.expectedRoleAccountabilityChange === "string"
+              ? record.expectedRoleAccountabilityChange
+              : ""
+          }
+        >
+          <option value="">Select impact</option>
+          {ROUTE_IMPACT_CHOICES.map((impact) => (
+            <option key={impact} value={impact}>
+              {impact}
+            </option>
+          ))}
+        </select>
+      </label>
+      <label>
+        Adoption owner
+        <input
+          aria-label="Adoption owner"
+          onChange={(event) => update("adoptionOwner", event.target.value)}
+          placeholder="Business owner or role"
+          value={
+            typeof record.adoptionOwner === "string" ? record.adoptionOwner : ""
+          }
+        />
+      </label>
+      <label>
+        Adoption responsibility
+        <select
+          aria-label="Adoption responsibility"
+          onChange={(event) =>
+            update("adoptionResponsibility", event.target.value)
+          }
+          value={
+            typeof record.adoptionResponsibility === "string"
+              ? record.adoptionResponsibility
+              : ""
+          }
+        >
+          <option value="">Select owner</option>
+          <option value="business">Business</option>
+          <option value="delivery_team">Delivery team</option>
+          <option value="shared">Shared</option>
+        </select>
+      </label>
+      <label>
+        Evidence reference for this hypothesis
+        <input
+          aria-label="Evidence reference for the business change hypothesis"
+          onChange={(event) => update("evidenceReference", event.target.value)}
+          placeholder="Interview, uploaded file, or source record"
+          value={
+            typeof record.evidenceReference === "string"
+              ? record.evidenceReference
+              : ""
+          }
+        />
+      </label>
+      <label>
+        Sponsor / validator
+        <input
+          aria-label="Sponsor or validator"
+          onChange={(event) => update("validatedBy", event.target.value)}
+          placeholder="Name or accountable role"
+          value={
+            typeof record.validatedBy === "string" ? record.validatedBy : ""
+          }
+        />
+      </label>
+      <p className="mxw-structured-note">
+        P1 records the hypothesis and adoption owner. P2 must validate or
+        correct it against current-state evidence before P3 depth changes.
+      </p>
+    </div>
+  );
+}
+
+function SolutionRouteValidationForm({
+  assessment,
+  approvedEvidenceReferences,
+  onChange,
+  reviewerIdentity,
+  value,
+}: {
+  assessment: string;
+  approvedEvidenceReferences: ApprovedPhaseEvidenceReference[];
+  onChange: (value: string) => void;
+  reviewerIdentity: string;
+  value: string;
+}) {
+  const record = editableStructuredRecord(value);
+  const p1Assessment: BusinessChangeAssessment | null =
+    parseBusinessChangeAssessment(assessment);
+  const output = record.solutionOutput;
+  const workflowChange = record.workflowChange;
+  const roleChange = record.roleAccountabilityChange;
+  const recommendation =
+    SOLUTION_OUTPUT_TYPES.includes(output as SolutionOutputType) &&
+    ROUTE_IMPACT_CHOICES.includes(
+      workflowChange as (typeof ROUTE_IMPACT_CHOICES)[number],
+    ) &&
+    ROUTE_IMPACT_CHOICES.includes(
+      roleChange as (typeof ROUTE_IMPACT_CHOICES)[number],
+    )
+      ? recommendSolutionRoute({
+          solutionOutput: output as SolutionOutputType,
+          workflowChange:
+            workflowChange as (typeof ROUTE_IMPACT_CHOICES)[number],
+          roleAccountabilityChange:
+            roleChange as (typeof ROUTE_IMPACT_CHOICES)[number],
+        })
+      : "unresolved";
+  const decision = record.decision;
+
+  const update = (key: string, next: unknown) => {
+    const routeImpactChanged = [
+      "solutionOutput",
+      "workflowChange",
+      "roleAccountabilityChange",
+      "evidenceReference",
+    ].includes(key);
+    onChange(
+      JSON.stringify({
+        ...record,
+        businessChangeAssessmentSnapshot: p1Assessment,
+        [key]: next,
+        ...(routeImpactChanged
+          ? { decision: "", selectedRoute: "", correctionRationale: "" }
+          : {}),
+        validatedBy: reviewerIdentity,
+      }),
+    );
+  };
+  const updateDecision = (nextDecision: string) => {
+    onChange(
+      JSON.stringify({
+        ...record,
+        businessChangeAssessmentSnapshot: p1Assessment,
+        decision: nextDecision,
+        selectedRoute:
+          nextDecision === "confirm" && recommendation !== "unresolved"
+            ? recommendation
+            : nextDecision === "correct"
+              ? (record.selectedRoute ?? "")
+              : "",
+        validatedBy: reviewerIdentity,
+      }),
+    );
+  };
+
+  return (
+    <div className="mxw-structured-form">
+      <div className="mxw-structured-context">
+        <strong>P1 hypothesis</strong>
+        {p1Assessment ? (
+          <span>
+            Workflow: {p1Assessment.expectedWorkflowChange}; roles:{" "}
+            {p1Assessment.expectedRoleAccountabilityChange}; adoption:{" "}
+            {p1Assessment.adoptionResponsibility} ({p1Assessment.adoptionOwner})
+          </span>
+        ) : (
+          <span>
+            Complete and save the P1 business-change assessment first.
+          </span>
+        )}
+      </div>
+      <label>
+        Solution output
+        <select
+          aria-label="Solution output"
+          onChange={(event) => update("solutionOutput", event.target.value)}
+          value={typeof output === "string" ? output : ""}
+        >
+          <option value="">Select solution output</option>
+          {SOLUTION_OUTPUT_TYPES.map((type) => (
+            <option key={type} value={type}>
+              {SOLUTION_OUTPUT_LABELS[type]}
+            </option>
+          ))}
+        </select>
+      </label>
+      <label>
+        Current-state workflow impact
+        <select
+          aria-label="Validated workflow impact"
+          onChange={(event) => update("workflowChange", event.target.value)}
+          value={typeof workflowChange === "string" ? workflowChange : ""}
+        >
+          <option value="">Select impact</option>
+          {ROUTE_IMPACT_CHOICES.map((impact) => (
+            <option key={impact} value={impact}>
+              {impact}
+            </option>
+          ))}
+        </select>
+      </label>
+      <label>
+        Current-state role / accountability impact
+        <select
+          aria-label="Validated role or accountability impact"
+          onChange={(event) =>
+            update("roleAccountabilityChange", event.target.value)
+          }
+          value={typeof roleChange === "string" ? roleChange : ""}
+        >
+          <option value="">Select impact</option>
+          {ROUTE_IMPACT_CHOICES.map((impact) => (
+            <option key={impact} value={impact}>
+              {impact}
+            </option>
+          ))}
+        </select>
+      </label>
+      <label>
+        Evidence reference
+        <select
+          aria-label="P2 evidence reference"
+          onChange={(event) => update("evidenceReference", event.target.value)}
+          value={
+            typeof record.evidenceReference === "string"
+              ? record.evidenceReference
+              : ""
+          }
+          disabled={approvedEvidenceReferences.length === 0}
+        >
+          <option value="">
+            {approvedEvidenceReferences.length === 0
+              ? "No approved P2 evidence yet"
+              : "Select approved P2 evidence"}
+          </option>
+          {approvedEvidenceReferences.map((evidence) => (
+            <option key={evidence.evidenceId} value={evidence.evidenceId}>
+              {evidence.title} · {evidence.familyKey}
+            </option>
+          ))}
+        </select>
+      </label>
+      <div className="mxw-structured-recommendation" aria-live="polite">
+        <span>System recommendation</span>
+        <strong>{SOLUTION_ROUTE_LABELS[recommendation]}</strong>
+      </div>
+      <label>
+        Human decision
+        <select
+          aria-label="Human route decision"
+          onChange={(event) => updateDecision(event.target.value)}
+          value={typeof decision === "string" ? decision : ""}
+        >
+          <option value="">Review before confirming</option>
+          <option value="confirm">Confirm recommendation</option>
+          <option value="correct">Correct recommendation</option>
+        </select>
+      </label>
+      {decision === "correct" ? (
+        <>
+          <label>
+            Selected route
+            <select
+              aria-label="Corrected solution route"
+              onChange={(event) => update("selectedRoute", event.target.value)}
+              value={
+                typeof record.selectedRoute === "string"
+                  ? record.selectedRoute
+                  : ""
+              }
+            >
+              <option value="">Select route</option>
+              {Object.entries(SOLUTION_ROUTE_LABELS)
+                .filter(([route]) => route !== "unresolved")
+                .map(([route, label]) => (
+                  <option key={route} value={route}>
+                    {label}
+                  </option>
+                ))}
+            </select>
+          </label>
+          <label>
+            Correction rationale
+            <textarea
+              aria-label="Route correction rationale"
+              onChange={(event) =>
+                update("correctionRationale", event.target.value)
+              }
+              rows={3}
+              value={
+                typeof record.correctionRationale === "string"
+                  ? record.correctionRationale
+                  : ""
+              }
+            />
+          </label>
+        </>
+      ) : null}
+      <p className="mxw-structured-note">
+        {approvedEvidenceReferences.length === 0
+          ? "Upload and approve at least one P2 evidence item before confirming this route."
+          : `Confirmation is saved with the authenticated reviewer identity (${reviewerIdentity}). P3 stays on the full contract until this decision matches the current P1 snapshot and an approved evidence item.`}
+      </p>
+    </div>
+  );
+}
+
 function PhaseCaptureEditor({
   compact = false,
   completeCount,
+  businessChangeAssessment,
+  approvedEvidenceReferences,
+  reviewerIdentity,
   onChange,
   phase,
   persistedValues,
@@ -6276,6 +6954,9 @@ function PhaseCaptureEditor({
 }: {
   compact?: boolean;
   completeCount: number;
+  businessChangeAssessment: string;
+  approvedEvidenceReferences: ApprovedPhaseEvidenceReference[];
+  reviewerIdentity: string;
   onChange: (key: string, value: string) => void;
   phase: PhaseContract;
   persistedValues: PhaseCaptureValues;
@@ -6311,6 +6992,8 @@ function PhaseCaptureEditor({
             values,
             persistedValues,
             saveStatus,
+            businessChangeAssessment,
+            approvedEvidenceReferences.map((item) => item.evidenceId),
           );
           return (
             <label
@@ -6321,13 +7004,30 @@ function PhaseCaptureEditor({
               <strong>{section.label}</strong>
               <small>{section.description}</small>
               <em>{status.label}</em>
-              <textarea
-                aria-label={section.label}
-                onChange={(event) => onChange(section.key, event.target.value)}
-                placeholder={section.description}
-                rows={compact ? 2 : 3}
-                value={value}
-              />
+              {section.structured === "business-change" ? (
+                <BusinessChangeAssessmentForm
+                  value={value}
+                  onChange={(next) => onChange(section.key, next)}
+                />
+              ) : section.structured === "solution-route" ? (
+                <SolutionRouteValidationForm
+                  assessment={businessChangeAssessment}
+                  approvedEvidenceReferences={approvedEvidenceReferences}
+                  reviewerIdentity={reviewerIdentity}
+                  value={value}
+                  onChange={(next) => onChange(section.key, next)}
+                />
+              ) : (
+                <textarea
+                  aria-label={section.label}
+                  onChange={(event) =>
+                    onChange(section.key, event.target.value)
+                  }
+                  placeholder={section.description}
+                  rows={compact ? 2 : 3}
+                  value={value}
+                />
+              )}
               {status.tone === "error" ? (
                 <small className="mxw-capture-save-error" role="alert">
                   {saveErrors[section.key] ||
@@ -7192,7 +7892,7 @@ function MovesStandaloneStyles() {
 .mxw-finder-fact-value{margin-right:6px}
 .mxw-finder-citation-toggle{border:none;background:#e4ecf9;color:#2a5aa8;border-radius:999px;width:20px;height:20px;line-height:20px;font-size:11px;cursor:pointer;padding:0}
 .mxw-finder-citation-caption{display:block;margin-top:4px;font-size:11.5px;color:#5b6c8a}
-.mxw-contract-card{display:grid;grid-template-columns:272px minmax(0,1fr);min-height:458px;border:1px solid rgba(12,26,58,.12);border-radius:14px;background:#fff;overflow:hidden;box-shadow:0 12px 32px rgba(12,26,58,.05)}
+.mxw-contract-card{display:grid;grid-template-columns:272px minmax(0,1fr);min-height:458px;border:1px solid rgba(12,26,58,.12);border-radius:14px;background:#fff;overflow:visible;box-shadow:0 12px 32px rgba(12,26,58,.05)}
 .mxw-contract-nav{border-right:1px solid rgba(12,26,58,.09);background:#fbfbfc;padding:24px 12px 16px;display:flex;flex-direction:column;gap:16px}
 .mxw-contract-group{display:grid;gap:5px}
 .mxw-contract-group-label{font-family:"JetBrains Mono",ui-monospace,monospace;font-size:9px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:#a7adb8;padding:0 8px 5px}
@@ -7201,7 +7901,10 @@ function MovesStandaloneStyles() {
 .mxw-contract-step.active{border-color:rgba(42,90,168,.14);background:#fff;color:#0c1a3a;box-shadow:inset 3px 0 0 #2a5aa8}
 .mxw-contract-step>span{width:18px;height:18px;border-radius:999px;border:1px solid rgba(12,26,58,.18);color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:10px;font-weight:900}
 .mxw-contract-step>span.done{border-color:#1d9e75;background:#1d9e75}
+.mxw-contract-step.visited{color:#8b95a8}
+.mxw-contract-step>span.visited{border-color:#d8dde5;background:#f1f3f6;color:#8b95a8}
 .mxw-contract-step strong{min-width:0;font-size:13px;font-weight:700;line-height:1.2;color:inherit}
+.mxw-contract-step small{color:#8b95a8;font-size:10px;font-weight:650}
 .mxw-contract-comingup{border-top:1px solid rgba(12,26,58,.12);padding:16px 8px 2px}
 .mxw-contract-comingup button{appearance:none;border:1px solid rgba(42,90,168,.14);border-radius:8px;background:#fff;color:#0c1a3a;cursor:pointer;font-size:12px;font-weight:850;line-height:1.35;padding:8px 10px;text-align:left;width:100%;box-shadow:0 1px 2px rgba(12,26,58,.04)}
 .mxw-contract-comingup div{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
@@ -7210,7 +7913,7 @@ function MovesStandaloneStyles() {
 .mxw-contract-comingup p{color:#8b95a8;font-size:11.5px;line-height:1.35;margin:10px 0 0}
 .mxw-contract-nav-foot{margin-top:4px;border-top:1px solid rgba(12,26,58,.14);padding:14px 8px 0;color:#8b95a8;font-size:11.5px;line-height:1.35}
 .mxw-contract-detail{padding:28px 30px 24px;min-width:0;scroll-margin-top:96px}
-.mxw-contract-detail-top{display:grid;grid-template-columns:22px auto minmax(0,auto) auto;align-items:center;gap:10px;margin-bottom:18px}
+.mxw-contract-detail-top{position:sticky;top:72px;z-index:24;display:grid;grid-template-columns:22px auto minmax(0,1fr) auto minmax(0,max-content);align-items:center;gap:10px;margin:-10px -12px 18px;padding:10px 12px;background:rgba(255,255,255,.97);border-bottom:1px solid rgba(12,26,58,.10);box-shadow:0 5px 14px rgba(12,26,58,.06);backdrop-filter:blur(8px)}
 .mxw-contract-detail-top>span{width:18px;height:18px;border-radius:999px;border:1px solid rgba(12,26,58,.18);color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:10px;font-weight:900}
 .mxw-contract-detail-top>span.done{border-color:#1d9e75;background:#1d9e75}
 .mxw-contract-detail-top small{color:#8b95a8;font-size:12px;font-weight:700;white-space:nowrap}
@@ -7218,6 +7921,15 @@ function MovesStandaloneStyles() {
 .mxw-contract-detail-top b{border-radius:8px;font-family:"JetBrains Mono",ui-monospace,monospace;font-size:9px;font-style:normal;font-weight:800;letter-spacing:.12em;padding:4px 7px;text-transform:uppercase}
 .mxw-contract-detail-top b{background:rgba(12,26,58,.06);color:#8b95a8}
 .mxw-contract-detail-top>span.done~b{background:rgba(29,158,117,.13);color:#147c5b}
+.mxw-step-progress-actions{display:flex;align-items:center;justify-content:flex-end;gap:8px;min-width:0}
+.mxw-step-progress-status{border:1px solid #d8dde5;border-radius:8px;background:#f1f3f6;color:#667085;padding:6px 9px;font-size:10px;font-weight:800;white-space:nowrap}
+button.mxw-step-progress-status{cursor:pointer}
+.mxw-step-progress-status.ready,.mxw-step-progress-status.complete{border-color:rgba(20,124,91,.18);background:#e8f5ef;color:#147c5b}
+.mxw-step-progress-status.open{border-color:#d8dde5;background:#f1f3f6;color:#667085}
+.mxw-phase-progress-button,.mxw-step-gate-button{border:0!important;border-radius:8px!important;background:#147c5b!important;color:#fff!important;box-shadow:0 2px 8px rgba(20,124,91,.20);font-size:12.5px!important;font-weight:850!important;line-height:1.2!important;min-height:38px;cursor:pointer}
+.mxw-phase-progress-button:hover,.mxw-step-gate-button:hover{background:#0f684c!important}
+.mxw-phase-progress-button:disabled,.mxw-step-gate-button:disabled{background:#d8dde5!important;color:#667085!important;box-shadow:none;cursor:not-allowed}
+.mxw-phase-progress-button:focus-visible,.mxw-step-gate-button:focus-visible{outline:3px solid rgba(42,90,168,.35);outline-offset:2px}
 .mxw-contract-form{display:grid;gap:13px}
 .mxw-contract-form p{margin:0;color:#4d5d79;font-size:14px;line-height:1.5}
 .mxw-ava-draft-card{display:grid;gap:10px;border:1px solid rgba(29,158,117,.22);border-radius:11px;background:#f8fffc;padding:12px}
@@ -7244,8 +7956,9 @@ function MovesStandaloneStyles() {
   .mxw-finder-steps-menu{width:100%;flex-basis:auto}
   .mxw-contract-card{grid-template-columns:1fr}
   .mxw-contract-nav{border-right:0;border-bottom:1px solid rgba(12,26,58,.09)}
-  .mxw-contract-detail-top{grid-template-columns:22px auto minmax(0,1fr)}
-  .mxw-contract-detail-top b{justify-self:start}
+  .mxw-contract-detail-top{top:60px;grid-template-columns:22px auto minmax(0,1fr)}
+  .mxw-contract-detail-top b{grid-column:2;justify-self:start}
+  .mxw-step-progress-actions{grid-column:1/-1;justify-content:flex-start;flex-wrap:wrap}
 }
 /*
  * Approvals overview. Rendered only when workspaceView === "approvals".
@@ -7269,6 +7982,17 @@ function MovesStandaloneStyles() {
 .mxw-approvals-action button,.mxw-approvals-action a{border:0;background:none;color:#2a5aa8;font-size:13px;font-weight:700;cursor:pointer;text-decoration:none}
 .mxw-approvals-action button:hover,.mxw-approvals-action a:hover{text-decoration:underline}
 .mxw-approvals-noaction{font-size:12.5px;color:#9aa4b5;font-weight:600}
+.mxw-structured-form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.mxw-structured-form>label{display:grid;align-content:start;gap:5px;color:#5b6c8a;font-size:11px;font-weight:800}
+.mxw-structured-form input,.mxw-structured-form select,.mxw-structured-form textarea{width:100%;min-width:0;border:1px solid rgba(12,26,58,.16);border-radius:8px;background:#fff;color:#0c1a3a;font:inherit;font-size:13px;font-weight:500;line-height:1.4;padding:9px 10px}
+.mxw-structured-form input:focus,.mxw-structured-form select:focus,.mxw-structured-form textarea:focus{outline:2px solid rgba(42,90,168,.18);border-color:rgba(42,90,168,.45)}
+.mxw-structured-context,.mxw-structured-recommendation,.mxw-structured-note{grid-column:1/-1;margin:0}
+.mxw-structured-context{display:grid;gap:4px;border-left:3px solid #2a5aa8;border-radius:5px;background:#f3f6fc;padding:9px 11px;color:#28364f;font-size:12px;line-height:1.45}
+.mxw-structured-context strong,.mxw-structured-recommendation span{color:#5b6c8a;font-size:10px;font-weight:850;letter-spacing:.08em;text-transform:uppercase}
+.mxw-structured-recommendation{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;border:1px solid rgba(29,158,117,.18);border-radius:8px;background:#f7fcf9;padding:10px 12px}
+.mxw-structured-recommendation strong{color:#147c5b;font-size:13px}
+.mxw-structured-note{color:#6c7890;font-size:11.5px;line-height:1.45}
+@media (max-width:720px){.mxw-structured-form{grid-template-columns:1fr}}
       `}</style>
   );
 }

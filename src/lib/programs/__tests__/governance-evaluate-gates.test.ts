@@ -1,5 +1,6 @@
 const getProgramByIdMock = jest.fn();
 const fromMock = jest.fn();
+const listApprovedPhaseEvidenceMock = jest.fn();
 
 let deliverablesFixture: Array<{
   id: string;
@@ -44,6 +45,12 @@ jest.mock("@/lib/programs/queries", () => ({
 jest.mock("@/lib/data-plane/postgresCompat", () => ({
   __esModule: true,
   getAzureWriteFluentClient: () => ({ from: fromMock }),
+}));
+
+jest.mock("@/lib/programs/approved-phase-evidence", () => ({
+  __esModule: true,
+  listApprovedPhaseEvidence: (...args: unknown[]) =>
+    listApprovedPhaseEvidenceMock(...args),
 }));
 
 import { evaluateGate } from "@/lib/programs/governance";
@@ -235,7 +242,210 @@ describe("evaluateGate", () => {
     evidenceFixture = [];
     deliverableVersionsFixture = [];
     roleApprovalsFixture = [];
+    listApprovedPhaseEvidenceMock.mockResolvedValue([]);
     fromMock.mockImplementation(tableResult);
+  });
+
+  function addApprovedTechnicalRouteCapture() {
+    const businessChangeAssessment = {
+      expectedWorkflowChange: "none",
+      expectedRoleAccountabilityChange: "none",
+      adoptionOwner: "Business product owner",
+      adoptionResponsibility: "business",
+      evidenceReference: "approved-evidence-1",
+      validatedBy: "Sponsor",
+    };
+    modulesFixture = [
+      ...modulesFixture,
+      {
+        module_key: "phase_1_business_change_assessment",
+        status: "completed",
+        state_jsonb: { value: JSON.stringify(businessChangeAssessment) },
+      },
+      {
+        module_key: "phase_2_solution_route_validation",
+        status: "completed",
+        state_jsonb: {
+          value: JSON.stringify({
+            businessChangeAssessmentSnapshot: businessChangeAssessment,
+            solutionOutput: "reports_dashboards",
+            workflowChange: "none",
+            roleAccountabilityChange: "none",
+            evidenceReference: "approved-evidence-1",
+            decision: "confirm",
+            selectedRoute: "technical_product",
+            correctionRationale: "",
+            validatedBy: "Sponsor",
+          }),
+        },
+      },
+    ];
+    listApprovedPhaseEvidenceMock.mockResolvedValue([
+      {
+        evidenceId: "approved-evidence-1",
+        title: "Approved discovery notes",
+        familyKey: "workshop_notes",
+      },
+    ]);
+  }
+
+  it("blocks P2 to P3 when the route decision has no approved evidence lineage", async () => {
+    getProgramByIdMock.mockResolvedValue({
+      id: "program-1",
+      currentPhase: 2,
+      archetype: "analytics_modernization",
+    });
+    modulesFixture = [];
+
+    const result = await evaluateGate(
+      { clientId: "client-1", userId: "person-1" },
+      "program-1",
+      2,
+      3,
+    );
+
+    expect(result.failedChecks).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          check: "solution_route_validated",
+          severity: "hard",
+        }),
+      ]),
+    );
+  });
+
+  it("keeps P3 blocked if the approved route evidence is no longer available", async () => {
+    getProgramByIdMock.mockResolvedValue({
+      id: "program-1",
+      currentPhase: 3,
+      archetype: "analytics_modernization",
+    });
+    deliverablesFixture = [
+      {
+        id: "architecture",
+        deliverable_type_key: "target_state_architecture",
+        status: "signed_off",
+      },
+      {
+        id: "traceability",
+        deliverable_type_key: "requirements_traceability",
+        status: "signed_off",
+      },
+    ];
+    modulesFixture = [];
+    listApprovedPhaseEvidenceMock.mockResolvedValue([]);
+
+    const result = await evaluateGate(
+      { clientId: "client-1", userId: "person-1" },
+      "program-1",
+      3,
+      4,
+    );
+
+    expect(result.failedChecks).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          check: "solution_route_validated",
+          severity: "hard",
+        }),
+      ]),
+    );
+  });
+
+  it("requires only the estimation package for a validated technical-product route", async () => {
+    getProgramByIdMock.mockResolvedValue({
+      id: "program-1",
+      currentPhase: 3,
+      archetype: "analytics_modernization",
+    });
+    addApprovedTechnicalRouteCapture();
+    deliverablesFixture = [
+      {
+        id: "architecture",
+        deliverable_type_key: "target_state_architecture",
+        status: "signed_off",
+      },
+      {
+        id: "traceability",
+        deliverable_type_key: "requirements_traceability",
+        status: "signed_off",
+      },
+    ];
+    roleApprovalsFixture = [
+      {
+        role: "technology",
+        status: "approved",
+        approver_user_id: "person-2",
+        approver_name: "Technology reviewer",
+        outstanding_conditions: null,
+        decided_at: "2026-09-27T00:00:00Z",
+      },
+      {
+        role: "risk_security",
+        status: "approved",
+        approver_user_id: "person-3",
+        approver_name: "Risk reviewer",
+        outstanding_conditions: null,
+        decided_at: "2026-09-27T00:01:00Z",
+      },
+    ];
+
+    const result = await evaluateGate(
+      { clientId: "client-1", userId: "person-1" },
+      "program-1",
+      3,
+      4,
+    );
+
+    expect(result.failedChecks).not.toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ check: "design_approved" }),
+        expect.objectContaining({ check: "requirements_design_outcome_trace" }),
+      ]),
+    );
+  });
+
+  it("does not let full-design artifacts substitute for technical-route architecture approval", async () => {
+    getProgramByIdMock.mockResolvedValue({
+      id: "program-1",
+      currentPhase: 3,
+      archetype: "analytics_modernization",
+    });
+    addApprovedTechnicalRouteCapture();
+    deliverablesFixture = [
+      {
+        id: "solution-design",
+        deliverable_type_key: "solution_design",
+        status: "signed_off",
+      },
+      {
+        id: "operating-model",
+        deliverable_type_key: "operating_model_design",
+        status: "signed_off",
+      },
+      {
+        id: "traceability",
+        deliverable_type_key: "requirements_traceability",
+        status: "signed_off",
+      },
+    ];
+    roleApprovalsFixture = [];
+
+    const result = await evaluateGate(
+      { clientId: "client-1", userId: "person-1" },
+      "program-1",
+      3,
+      4,
+    );
+
+    expect(result.failedChecks).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          check: "design_approved",
+          severity: "hard",
+        }),
+      ]),
+    );
   });
 
   it("does not let P4 module completion replace signed roadmap, business case, and change plan artifacts", async () => {
@@ -802,6 +1012,7 @@ describe("evaluateGate", () => {
         generated_at: "2026-05-02T00:00:00.000Z",
       },
     ];
+    addApprovedTechnicalRouteCapture();
 
     const result = await evaluateGate(
       { clientId: "client-1", userId: "person-1" },
@@ -892,6 +1103,7 @@ describe("evaluateGate", () => {
         },
       },
     ];
+    addApprovedTechnicalRouteCapture();
 
     const result = await evaluateGate(
       { clientId: "client-1", userId: "person-1" },
@@ -941,6 +1153,7 @@ describe("evaluateGate", () => {
         generated_at: "2026-05-02T00:00:00.000Z",
       },
     ];
+    addApprovedTechnicalRouteCapture();
 
     const result = await evaluateGate(
       { clientId: "client-1", userId: "person-1" },
@@ -985,6 +1198,7 @@ describe("evaluateGate", () => {
         generated_at: "2026-05-02T00:00:00.000Z",
       },
     ];
+    addApprovedTechnicalRouteCapture();
 
     const result = await evaluateGate(
       { clientId: "client-1", userId: "person-1" },

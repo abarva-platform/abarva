@@ -17,25 +17,25 @@
     "No timestamp is recorded, so refreshing this file on an unchanged tree is a no-op."
   ],
   "counts": {
-    "testFiles": 2528,
-    "coveredTestFiles": 2186,
-    "pullRequestCoveredTestFiles": 2185,
-    "uncoveredTestFiles": 342,
+    "testFiles": 2535,
+    "coveredTestFiles": 2192,
+    "pullRequestCoveredTestFiles": 2191,
+    "uncoveredTestFiles": 343,
     "directoriesWithTests": 492,
-    "directoriesFullyCovered": 313,
-    "directoriesPartiallyCovered": 27,
+    "directoriesFullyCovered": 312,
+    "directoriesPartiallyCovered": 28,
     "directoriesUncovered": 152,
-    "directoriesWithUnrunTestFiles": 179,
-    "directoriesWithUntriagedUnrunTestFiles": 168,
+    "directoriesWithUnrunTestFiles": 180,
+    "directoriesWithUntriagedUnrunTestFiles": 169,
     "declaredQuarantineTestFiles": 52,
-    "untriagedUnrunTestFiles": 290,
+    "untriagedUnrunTestFiles": 291,
     "indeterminateInvocations": 0,
     "unresolvedIgnoreArguments": 0,
-    "criticalGovernedRiskDirectories": 1,
+    "criticalGovernedRiskDirectories": 2,
     "highGovernedRiskDirectories": 5,
     "unclassifiedRiskDirectories": 162,
-    "rankedDirectories": 168,
-    "rankedUntriagedUnrunTestFiles": 290,
+    "rankedDirectories": 169,
+    "rankedUntriagedUnrunTestFiles": 291,
     "unclassifiedRiskDirectoriesWithResolvedProductSources": 155,
     "unclassifiedRiskDirectoriesWithNoResolvedProductSource": 7
   },
@@ -221,6 +221,16 @@
       ]
     },
     {
+      "directory": "src/lib/intelligence/ask/__tests__",
+      "testFiles": 24,
+      "coveredTestFiles": 3,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 21,
+      "via": [
+        "command"
+      ]
+    },
+    {
       "directory": "src/__tests__/integration/intelligence",
       "testFiles": 23,
       "coveredTestFiles": 8,
@@ -241,16 +251,6 @@
       ]
     },
     {
-      "directory": "src/lib/intelligence/ask/__tests__",
-      "testFiles": 23,
-      "coveredTestFiles": 2,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 21,
-      "via": [
-        "command"
-      ]
-    },
-    {
       "directory": "src/lib/auth/__tests__",
       "testFiles": 20,
       "coveredTestFiles": 14,
@@ -258,6 +258,17 @@
       "untriagedUnrunTestFiles": 0,
       "via": [
         "command"
+      ]
+    },
+    {
+      "directory": "src/components/strategic-moves/__tests__",
+      "testFiles": 17,
+      "coveredTestFiles": 16,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 1,
+      "via": [
+        "command",
+        "control-case-catalog"
       ]
     },
     {
@@ -443,6 +454,447 @@
   ],
   "governedRiskFiles": [
     {
+      "directory": "src/components/strategic-moves/__tests__",
+      "testPath": "src/components/strategic-moves/__tests__/BoardArtifactsPanel.test.tsx",
+      "enumerated": true,
+      "collected": true,
+      "run": "unknown",
+      "green": "unknown",
+      "covered": true,
+      "pullRequestCovered": true,
+      "declaredQuarantine": false,
+      "declaredQuarantineShape": null,
+      "untriaged": false,
+      "via": [
+        "command"
+      ],
+      "governedRisk": {
+        "score": 1100,
+        "band": "critical",
+        "signals": [
+          "declared_ai_surface_control",
+          "approval_or_lifecycle_write"
+        ],
+        "productSourceCount": 17,
+        "rank": 1
+      }
+    },
+    {
+      "directory": "src/components/strategic-moves/__tests__",
+      "testPath": "src/components/strategic-moves/__tests__/composeOriginateFirstMessage.grounding.test.ts",
+      "enumerated": true,
+      "collected": true,
+      "run": "unknown",
+      "green": "unknown",
+      "covered": true,
+      "pullRequestCovered": true,
+      "declaredQuarantine": false,
+      "declaredQuarantineShape": null,
+      "untriaged": false,
+      "via": [
+        "command"
+      ],
+      "governedRisk": {
+        "score": 1100,
+        "band": "critical",
+        "signals": [
+          "declared_ai_surface_control",
+          "approval_or_lifecycle_write"
+        ],
+        "productSourceCount": 17,
+        "rank": 1
+      }
+    },
+    {
+      "directory": "src/components/strategic-moves/__tests__",
+      "testPath": "src/components/strategic-moves/__tests__/deliverable-approval-action.test.tsx",
+      "enumerated": true,
+      "collected": true,
+      "run": "unknown",
+      "green": "unknown",
+      "covered": true,
+      "pullRequestCovered": true,
+      "declaredQuarantine": false,
+      "declaredQuarantineShape": null,
+      "untriaged": false,
+      "via": [
+        "command"
+      ],
+      "governedRisk": {
+        "score": 1100,
+        "band": "critical",
+        "signals": [
+          "declared_ai_surface_control",
+          "approval_or_lifecycle_write"
+        ],
+        "productSourceCount": 17,
+        "rank": 1
+      }
+    },
+    {
+      "directory": "src/components/strategic-moves/__tests__",
+      "testPath": "src/components/strategic-moves/__tests__/FileCabinetPanel.evidence-review.test.tsx",
+      "enumerated": true,
+      "collected": false,
+      "run": false,
+      "green": "unknown",
+      "covered": false,
+      "pullRequestCovered": false,
+      "declaredQuarantine": false,
+      "declaredQuarantineShape": null,
+      "untriaged": true,
+      "via": [],
+      "governedRisk": {
+        "score": 1100,
+        "band": "critical",
+        "signals": [
+          "declared_ai_surface_control",
+          "approval_or_lifecycle_write"
+        ],
+        "productSourceCount": 17,
+        "rank": 1
+      }
+    },
+    {
+      "directory": "src/components/strategic-moves/__tests__",
+      "testPath": "src/components/strategic-moves/__tests__/FileCabinetPanel.labels.test.ts",
+      "enumerated": true,
+      "collected": true,
+      "run": "unknown",
+      "green": "unknown",
+      "covered": true,
+      "pullRequestCovered": true,
+      "declaredQuarantine": false,
+      "declaredQuarantineShape": null,
+      "untriaged": false,
+      "via": [
+        "command"
+      ],
+      "governedRisk": {
+        "score": 1100,
+        "band": "critical",
+        "signals": [
+          "declared_ai_surface_control",
+          "approval_or_lifecycle_write"
+        ],
+        "productSourceCount": 17,
+        "rank": 1
+      }
+    },
+    {
+      "directory": "src/components/strategic-moves/__tests__",
+      "testPath": "src/components/strategic-moves/__tests__/move-list-format.test.ts",
+      "enumerated": true,
+      "collected": true,
+      "run": "unknown",
+      "green": "unknown",
+      "covered": true,
+      "pullRequestCovered": true,
+      "declaredQuarantine": false,
+      "declaredQuarantineShape": null,
+      "untriaged": false,
+      "via": [
+        "command"
+      ],
+      "governedRisk": {
+        "score": 1100,
+        "band": "critical",
+        "signals": [
+          "declared_ai_surface_control",
+          "approval_or_lifecycle_write"
+        ],
+        "productSourceCount": 17,
+        "rank": 1
+      }
+    },
+    {
+      "directory": "src/components/strategic-moves/__tests__",
+      "testPath": "src/components/strategic-moves/__tests__/MovePhaseExplorer.finder-shell.test.tsx",
+      "enumerated": true,
+      "collected": true,
+      "run": "unknown",
+      "green": "unknown",
+      "covered": true,
+      "pullRequestCovered": true,
+      "declaredQuarantine": false,
+      "declaredQuarantineShape": null,
+      "untriaged": false,
+      "via": [
+        "command"
+      ],
+      "governedRisk": {
+        "score": 1100,
+        "band": "critical",
+        "signals": [
+          "declared_ai_surface_control",
+          "approval_or_lifecycle_write"
+        ],
+        "productSourceCount": 17,
+        "rank": 1
+      }
+    },
+    {
+      "directory": "src/components/strategic-moves/__tests__",
+      "testPath": "src/components/strategic-moves/__tests__/moves-detail-route-sunset.test.ts",
+      "enumerated": true,
+      "collected": true,
+      "run": "unknown",
+      "green": "unknown",
+      "covered": true,
+      "pullRequestCovered": true,
+      "declaredQuarantine": false,
+      "declaredQuarantineShape": null,
+      "untriaged": false,
+      "via": [
+        "command"
+      ],
+      "governedRisk": {
+        "score": 1100,
+        "band": "critical",
+        "signals": [
+          "declared_ai_surface_control",
+          "approval_or_lifecycle_write"
+        ],
+        "productSourceCount": 17,
+        "rank": 1
+      }
+    },
+    {
+      "directory": "src/components/strategic-moves/__tests__",
+      "testPath": "src/components/strategic-moves/__tests__/moves-liability-visible-controls.test.tsx",
+      "enumerated": true,
+      "collected": true,
+      "run": "unknown",
+      "green": "unknown",
+      "covered": true,
+      "pullRequestCovered": true,
+      "declaredQuarantine": false,
+      "declaredQuarantineShape": null,
+      "untriaged": false,
+      "via": [
+        "command"
+      ],
+      "governedRisk": {
+        "score": 1100,
+        "band": "critical",
+        "signals": [
+          "declared_ai_surface_control",
+          "approval_or_lifecycle_write"
+        ],
+        "productSourceCount": 17,
+        "rank": 1
+      }
+    },
+    {
+      "directory": "src/components/strategic-moves/__tests__",
+      "testPath": "src/components/strategic-moves/__tests__/MovesPhaseStandaloneClient.test.tsx",
+      "enumerated": true,
+      "collected": true,
+      "run": "unknown",
+      "green": "unknown",
+      "covered": true,
+      "pullRequestCovered": true,
+      "declaredQuarantine": false,
+      "declaredQuarantineShape": null,
+      "untriaged": false,
+      "via": [
+        "command"
+      ],
+      "governedRisk": {
+        "score": 1100,
+        "band": "critical",
+        "signals": [
+          "declared_ai_surface_control",
+          "approval_or_lifecycle_write"
+        ],
+        "productSourceCount": 17,
+        "rank": 1
+      }
+    },
+    {
+      "directory": "src/components/strategic-moves/__tests__",
+      "testPath": "src/components/strategic-moves/__tests__/NexusCurrentStateBriefingPanel.controls.test.tsx",
+      "enumerated": true,
+      "collected": true,
+      "run": "unknown",
+      "green": "unknown",
+      "covered": true,
+      "pullRequestCovered": true,
+      "declaredQuarantine": false,
+      "declaredQuarantineShape": null,
+      "untriaged": false,
+      "via": [
+        "command",
+        "control-case-catalog"
+      ],
+      "governedRisk": {
+        "score": 1100,
+        "band": "critical",
+        "signals": [
+          "declared_ai_surface_control",
+          "approval_or_lifecycle_write"
+        ],
+        "productSourceCount": 17,
+        "rank": 1
+      }
+    },
+    {
+      "directory": "src/components/strategic-moves/__tests__",
+      "testPath": "src/components/strategic-moves/__tests__/phase-approve-and-build-settle.test.tsx",
+      "enumerated": true,
+      "collected": true,
+      "run": "unknown",
+      "green": "unknown",
+      "covered": true,
+      "pullRequestCovered": true,
+      "declaredQuarantine": false,
+      "declaredQuarantineShape": null,
+      "untriaged": false,
+      "via": [
+        "command"
+      ],
+      "governedRisk": {
+        "score": 1100,
+        "band": "critical",
+        "signals": [
+          "declared_ai_surface_control",
+          "approval_or_lifecycle_write"
+        ],
+        "productSourceCount": 17,
+        "rank": 1
+      }
+    },
+    {
+      "directory": "src/components/strategic-moves/__tests__",
+      "testPath": "src/components/strategic-moves/__tests__/phase-capture-autosave-lanes.test.tsx",
+      "enumerated": true,
+      "collected": true,
+      "run": "unknown",
+      "green": "unknown",
+      "covered": true,
+      "pullRequestCovered": true,
+      "declaredQuarantine": false,
+      "declaredQuarantineShape": null,
+      "untriaged": false,
+      "via": [
+        "command"
+      ],
+      "governedRisk": {
+        "score": 1100,
+        "band": "critical",
+        "signals": [
+          "declared_ai_surface_control",
+          "approval_or_lifecycle_write"
+        ],
+        "productSourceCount": 17,
+        "rank": 1
+      }
+    },
+    {
+      "directory": "src/components/strategic-moves/__tests__",
+      "testPath": "src/components/strategic-moves/__tests__/PhaseRoleApprovalsSummary.test.tsx",
+      "enumerated": true,
+      "collected": true,
+      "run": "unknown",
+      "green": "unknown",
+      "covered": true,
+      "pullRequestCovered": true,
+      "declaredQuarantine": false,
+      "declaredQuarantineShape": null,
+      "untriaged": false,
+      "via": [
+        "command"
+      ],
+      "governedRisk": {
+        "score": 1100,
+        "band": "critical",
+        "signals": [
+          "declared_ai_surface_control",
+          "approval_or_lifecycle_write"
+        ],
+        "productSourceCount": 17,
+        "rank": 1
+      }
+    },
+    {
+      "directory": "src/components/strategic-moves/__tests__",
+      "testPath": "src/components/strategic-moves/__tests__/strategicMoveBriefToDiscoveryShape.test.ts",
+      "enumerated": true,
+      "collected": true,
+      "run": "unknown",
+      "green": "unknown",
+      "covered": true,
+      "pullRequestCovered": true,
+      "declaredQuarantine": false,
+      "declaredQuarantineShape": null,
+      "untriaged": false,
+      "via": [
+        "command"
+      ],
+      "governedRisk": {
+        "score": 1100,
+        "band": "critical",
+        "signals": [
+          "declared_ai_surface_control",
+          "approval_or_lifecycle_write"
+        ],
+        "productSourceCount": 17,
+        "rank": 1
+      }
+    },
+    {
+      "directory": "src/components/strategic-moves/__tests__",
+      "testPath": "src/components/strategic-moves/__tests__/StrategicMoveOriginateClient.test.ts",
+      "enumerated": true,
+      "collected": true,
+      "run": "unknown",
+      "green": "unknown",
+      "covered": true,
+      "pullRequestCovered": true,
+      "declaredQuarantine": false,
+      "declaredQuarantineShape": null,
+      "untriaged": false,
+      "via": [
+        "command"
+      ],
+      "governedRisk": {
+        "score": 1100,
+        "band": "critical",
+        "signals": [
+          "declared_ai_surface_control",
+          "approval_or_lifecycle_write"
+        ],
+        "productSourceCount": 17,
+        "rank": 1
+      }
+    },
+    {
+      "directory": "src/components/strategic-moves/__tests__",
+      "testPath": "src/components/strategic-moves/__tests__/StrategicMoveOriginateClient.test.tsx",
+      "enumerated": true,
+      "collected": true,
+      "run": "unknown",
+      "green": "unknown",
+      "covered": true,
+      "pullRequestCovered": true,
+      "declaredQuarantine": false,
+      "declaredQuarantineShape": null,
+      "untriaged": false,
+      "via": [
+        "command"
+      ],
+      "governedRisk": {
+        "score": 1100,
+        "band": "critical",
+        "signals": [
+          "declared_ai_surface_control",
+          "approval_or_lifecycle_write"
+        ],
+        "productSourceCount": 17,
+        "rank": 1
+      }
+    },
+    {
       "directory": "src/app/(maestro)/source/__tests__",
       "testPath": "src/app/(maestro)/source/__tests__/approval-financial-permission.test.tsx",
       "enumerated": true,
@@ -465,7 +917,7 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 18,
-        "rank": 1
+        "rank": 2
       }
     },
     {
@@ -491,7 +943,7 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 18,
-        "rank": 1
+        "rank": 2
       }
     },
     {
@@ -517,7 +969,7 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 18,
-        "rank": 1
+        "rank": 2
       }
     },
     {
@@ -543,7 +995,7 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 18,
-        "rank": 1
+        "rank": 2
       }
     },
     {
@@ -567,7 +1019,7 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 18,
-        "rank": 1
+        "rank": 2
       }
     },
     {
@@ -590,7 +1042,7 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 5,
-        "rank": 2
+        "rank": 3
       }
     },
     {
@@ -613,7 +1065,7 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 5,
-        "rank": 2
+        "rank": 3
       }
     },
     {
@@ -638,7 +1090,7 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 5,
-        "rank": 2
+        "rank": 3
       }
     },
     {
@@ -663,7 +1115,7 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 5,
-        "rank": 2
+        "rank": 3
       }
     },
     {
@@ -688,7 +1140,7 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 3,
-        "rank": 3
+        "rank": 4
       }
     },
     {
@@ -713,7 +1165,7 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 3,
-        "rank": 3
+        "rank": 4
       }
     },
     {
@@ -736,7 +1188,7 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 3,
-        "rank": 3
+        "rank": 4
       }
     },
     {
@@ -759,7 +1211,7 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 3,
-        "rank": 3
+        "rank": 4
       }
     },
     {
@@ -784,7 +1236,7 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 4,
-        "rank": 4
+        "rank": 5
       }
     },
     {
@@ -807,7 +1259,7 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 4,
-        "rank": 4
+        "rank": 5
       }
     },
     {
@@ -830,7 +1282,7 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 4,
-        "rank": 4
+        "rank": 5
       }
     },
     {
@@ -855,7 +1307,7 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 4,
-        "rank": 4
+        "rank": 5
       }
     },
     {
@@ -880,7 +1332,7 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 5,
-        "rank": 5
+        "rank": 6
       }
     },
     {
@@ -905,7 +1357,7 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 5,
-        "rank": 5
+        "rank": 6
       }
     },
     {
@@ -928,7 +1380,7 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 5,
-        "rank": 5
+        "rank": 6
       }
     },
     {
@@ -951,7 +1403,7 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 5,
-        "rank": 5
+        "rank": 6
       }
     },
     {
@@ -976,7 +1428,7 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 8,
-        "rank": 6
+        "rank": 7
       }
     },
     {
@@ -1001,7 +1453,7 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 8,
-        "rank": 6
+        "rank": 7
       }
     },
     {
@@ -1024,7 +1476,7 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 8,
-        "rank": 6
+        "rank": 7
       }
     },
     {
@@ -1049,7 +1501,7 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 8,
-        "rank": 6
+        "rank": 7
       }
     },
     {
@@ -1074,7 +1526,7 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 8,
-        "rank": 6
+        "rank": 7
       }
     },
     {
@@ -1099,7 +1551,7 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 8,
-        "rank": 6
+        "rank": 7
       }
     },
     {
@@ -1124,7 +1576,7 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 8,
-        "rank": 6
+        "rank": 7
       }
     },
     {
@@ -1149,7 +1601,7 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 8,
-        "rank": 6
+        "rank": 7
       }
     },
     {
@@ -1174,11 +1626,29 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 8,
-        "rank": 6
+        "rank": 7
       }
     }
   ],
   "governedRiskRanking": [
+    {
+      "directory": "src/components/strategic-moves/__tests__",
+      "testFiles": 17,
+      "unrunTestFiles": 1,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 1,
+      "admittedBy": "governed_risk_signal",
+      "governedRisk": {
+        "score": 1100,
+        "band": "critical",
+        "signals": [
+          "declared_ai_surface_control",
+          "approval_or_lifecycle_write"
+        ],
+        "productSourceCount": 17,
+        "rank": 1
+      }
+    },
     {
       "directory": "src/app/(maestro)/source/__tests__",
       "testFiles": 5,
@@ -1194,7 +1664,7 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 18,
-        "rank": 1
+        "rank": 2
       }
     },
     {
@@ -1211,7 +1681,7 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 5,
-        "rank": 2
+        "rank": 3
       }
     },
     {
@@ -1228,7 +1698,7 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 3,
-        "rank": 3
+        "rank": 4
       }
     },
     {
@@ -1245,7 +1715,7 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 4,
-        "rank": 4
+        "rank": 5
       }
     },
     {
@@ -1262,7 +1732,7 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 5,
-        "rank": 5
+        "rank": 6
       }
     },
     {
@@ -1279,12 +1749,12 @@
           "tenant_scoped_read"
         ],
         "productSourceCount": 8,
-        "rank": 6
+        "rank": 7
       }
     },
     {
       "directory": "src/lib/intelligence/ask/__tests__",
-      "testFiles": 23,
+      "testFiles": 24,
       "unrunTestFiles": 21,
       "declaredQuarantineTestFiles": 0,
       "untriagedUnrunTestFiles": 21,
@@ -1294,7 +1764,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 26,
-        "rank": 7
+        "rank": 8
       }
     },
     {
@@ -1309,7 +1779,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 7,
-        "rank": 8
+        "rank": 9
       }
     },
     {
@@ -1324,7 +1794,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 7,
-        "rank": 9
+        "rank": 10
       }
     },
     {
@@ -1339,7 +1809,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 7,
-        "rank": 10
+        "rank": 11
       }
     },
     {
@@ -1354,7 +1824,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 2,
-        "rank": 11
+        "rank": 12
       }
     },
     {
@@ -1369,7 +1839,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 4,
-        "rank": 12
+        "rank": 13
       }
     },
     {
@@ -1384,7 +1854,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 3,
-        "rank": 13
+        "rank": 14
       }
     },
     {
@@ -1399,7 +1869,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 4,
-        "rank": 14
+        "rank": 15
       }
     },
     {
@@ -1414,7 +1884,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 5,
-        "rank": 15
+        "rank": 16
       }
     },
     {
@@ -1429,7 +1899,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 8,
-        "rank": 16
+        "rank": 17
       }
     },
     {
@@ -1444,7 +1914,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 8,
-        "rank": 17
+        "rank": 18
       }
     },
     {
@@ -1459,7 +1929,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 4,
-        "rank": 18
+        "rank": 19
       }
     },
     {
@@ -1474,7 +1944,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 3,
-        "rank": 19
+        "rank": 20
       }
     },
     {
@@ -1489,7 +1959,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 7,
-        "rank": 20
+        "rank": 21
       }
     },
     {
@@ -1504,7 +1974,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 4,
-        "rank": 21
+        "rank": 22
       }
     },
     {
@@ -1519,7 +1989,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 4,
-        "rank": 22
+        "rank": 23
       }
     },
     {
@@ -1534,7 +2004,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 2,
-        "rank": 23
+        "rank": 24
       }
     },
     {
@@ -1549,7 +2019,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 4,
-        "rank": 24
+        "rank": 25
       }
     },
     {
@@ -1564,7 +2034,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 5,
-        "rank": 25
+        "rank": 26
       }
     },
     {
@@ -1579,7 +2049,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 2,
-        "rank": 26
+        "rank": 27
       }
     },
     {
@@ -1594,7 +2064,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 27
+        "rank": 28
       }
     },
     {
@@ -1609,7 +2079,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 4,
-        "rank": 28
+        "rank": 29
       }
     },
     {
@@ -1624,7 +2094,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 3,
-        "rank": 29
+        "rank": 30
       }
     },
     {
@@ -1639,7 +2109,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 3,
-        "rank": 30
+        "rank": 31
       }
     },
     {
@@ -1654,7 +2124,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 31
+        "rank": 32
       }
     },
     {
@@ -1669,7 +2139,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 4,
-        "rank": 32
+        "rank": 33
       }
     },
     {
@@ -1684,7 +2154,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 2,
-        "rank": 33
+        "rank": 34
       }
     },
     {
@@ -1699,7 +2169,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 2,
-        "rank": 34
+        "rank": 35
       }
     },
     {
@@ -1714,7 +2184,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 2,
-        "rank": 35
+        "rank": 36
       }
     },
     {
@@ -1729,7 +2199,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 3,
-        "rank": 36
+        "rank": 37
       }
     },
     {
@@ -1744,7 +2214,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 2,
-        "rank": 37
+        "rank": 38
       }
     },
     {
@@ -1759,7 +2229,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 3,
-        "rank": 38
+        "rank": 39
       }
     },
     {
@@ -1774,7 +2244,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 3,
-        "rank": 39
+        "rank": 40
       }
     },
     {
@@ -1789,7 +2259,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 5,
-        "rank": 40
+        "rank": 41
       }
     },
     {
@@ -1804,7 +2274,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 2,
-        "rank": 41
+        "rank": 42
       }
     },
     {
@@ -1819,7 +2289,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 6,
-        "rank": 42
+        "rank": 43
       }
     },
     {
@@ -1834,7 +2304,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 4,
-        "rank": 43
+        "rank": 44
       }
     },
     {
@@ -1849,7 +2319,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 3,
-        "rank": 44
+        "rank": 45
       }
     },
     {
@@ -1864,7 +2334,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 7,
-        "rank": 45
+        "rank": 46
       }
     },
     {
@@ -1879,7 +2349,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 4,
-        "rank": 46
+        "rank": 47
       }
     },
     {
@@ -1894,7 +2364,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 3,
-        "rank": 47
+        "rank": 48
       }
     },
     {
@@ -1909,7 +2379,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 4,
-        "rank": 48
+        "rank": 49
       }
     },
     {
@@ -1924,7 +2394,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 3,
-        "rank": 49
+        "rank": 50
       }
     },
     {
@@ -1939,7 +2409,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 4,
-        "rank": 50
+        "rank": 51
       }
     },
     {
@@ -1954,7 +2424,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 7,
-        "rank": 51
+        "rank": 52
       }
     },
     {
@@ -1969,7 +2439,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 5,
-        "rank": 52
+        "rank": 53
       }
     },
     {
@@ -1984,7 +2454,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 2,
-        "rank": 53
+        "rank": 54
       }
     },
     {
@@ -1999,7 +2469,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 0,
-        "rank": 54
+        "rank": 55
       }
     },
     {
@@ -2014,7 +2484,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 0,
-        "rank": 55
+        "rank": 56
       }
     },
     {
@@ -2029,7 +2499,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 0,
-        "rank": 56
+        "rank": 57
       }
     },
     {
@@ -2044,7 +2514,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 0,
-        "rank": 57
+        "rank": 58
       }
     },
     {
@@ -2059,7 +2529,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 2,
-        "rank": 58
+        "rank": 59
       }
     },
     {
@@ -2074,7 +2544,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 0,
-        "rank": 59
+        "rank": 60
       }
     },
     {
@@ -2089,7 +2559,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 0,
-        "rank": 60
+        "rank": 61
       }
     },
     {
@@ -2104,7 +2574,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 61
+        "rank": 62
       }
     },
     {
@@ -2119,7 +2589,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 2,
-        "rank": 62
+        "rank": 63
       }
     },
     {
@@ -2134,7 +2604,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 63
+        "rank": 64
       }
     },
     {
@@ -2149,7 +2619,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 64
+        "rank": 65
       }
     },
     {
@@ -2164,7 +2634,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 0,
-        "rank": 65
+        "rank": 66
       }
     },
     {
@@ -2179,7 +2649,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 66
+        "rank": 67
       }
     },
     {
@@ -2194,7 +2664,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 67
+        "rank": 68
       }
     },
     {
@@ -2209,7 +2679,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 68
+        "rank": 69
       }
     },
     {
@@ -2224,7 +2694,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 4,
-        "rank": 69
+        "rank": 70
       }
     },
     {
@@ -2239,7 +2709,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 70
+        "rank": 71
       }
     },
     {
@@ -2254,7 +2724,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 71
+        "rank": 72
       }
     },
     {
@@ -2269,7 +2739,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 72
+        "rank": 73
       }
     },
     {
@@ -2284,7 +2754,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 73
+        "rank": 74
       }
     },
     {
@@ -2299,7 +2769,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 74
+        "rank": 75
       }
     },
     {
@@ -2314,7 +2784,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 2,
-        "rank": 75
+        "rank": 76
       }
     },
     {
@@ -2329,7 +2799,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 4,
-        "rank": 76
+        "rank": 77
       }
     },
     {
@@ -2344,7 +2814,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 77
+        "rank": 78
       }
     },
     {
@@ -2359,7 +2829,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 78
+        "rank": 79
       }
     },
     {
@@ -2374,7 +2844,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 79
+        "rank": 80
       }
     },
     {
@@ -2389,7 +2859,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 80
+        "rank": 81
       }
     },
     {
@@ -2404,7 +2874,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 81
+        "rank": 82
       }
     },
     {
@@ -2419,7 +2889,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 82
+        "rank": 83
       }
     },
     {
@@ -2434,7 +2904,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 83
+        "rank": 84
       }
     },
     {
@@ -2449,7 +2919,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 7,
-        "rank": 84
+        "rank": 85
       }
     },
     {
@@ -2464,7 +2934,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 3,
-        "rank": 85
+        "rank": 86
       }
     },
     {
@@ -2479,7 +2949,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 86
+        "rank": 87
       }
     },
     {
@@ -2494,7 +2964,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 87
+        "rank": 88
       }
     },
     {
@@ -2509,7 +2979,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 6,
-        "rank": 88
+        "rank": 89
       }
     },
     {
@@ -2524,7 +2994,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 89
+        "rank": 90
       }
     },
     {
@@ -2539,7 +3009,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 90
+        "rank": 91
       }
     },
     {
@@ -2554,7 +3024,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 91
+        "rank": 92
       }
     },
     {
@@ -2569,7 +3039,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 2,
-        "rank": 92
+        "rank": 93
       }
     },
     {
@@ -2584,7 +3054,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 93
+        "rank": 94
       }
     },
     {
@@ -2599,7 +3069,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 94
+        "rank": 95
       }
     },
     {
@@ -2614,7 +3084,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 95
+        "rank": 96
       }
     },
     {
@@ -2629,7 +3099,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 96
+        "rank": 97
       }
     },
     {
@@ -2644,7 +3114,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 2,
-        "rank": 97
+        "rank": 98
       }
     },
     {
@@ -2659,7 +3129,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 2,
-        "rank": 98
+        "rank": 99
       }
     },
     {
@@ -2674,7 +3144,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 2,
-        "rank": 99
+        "rank": 100
       }
     },
     {
@@ -2689,7 +3159,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 2,
-        "rank": 100
+        "rank": 101
       }
     },
     {
@@ -2704,7 +3174,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 3,
-        "rank": 101
+        "rank": 102
       }
     },
     {
@@ -2719,7 +3189,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 2,
-        "rank": 102
+        "rank": 103
       }
     },
     {
@@ -2734,7 +3204,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 103
+        "rank": 104
       }
     },
     {
@@ -2749,7 +3219,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 104
+        "rank": 105
       }
     },
     {
@@ -2764,7 +3234,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 2,
-        "rank": 105
+        "rank": 106
       }
     },
     {
@@ -2779,7 +3249,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 106
+        "rank": 107
       }
     },
     {
@@ -2794,7 +3264,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 107
+        "rank": 108
       }
     },
     {
@@ -2809,7 +3279,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 2,
-        "rank": 108
+        "rank": 109
       }
     },
     {
@@ -2824,7 +3294,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 109
+        "rank": 110
       }
     },
     {
@@ -2839,7 +3309,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 110
+        "rank": 111
       }
     },
     {
@@ -2854,7 +3324,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 111
+        "rank": 112
       }
     },
     {
@@ -2869,7 +3339,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 112
+        "rank": 113
       }
     },
     {
@@ -2884,7 +3354,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 2,
-        "rank": 113
+        "rank": 114
       }
     },
     {
@@ -2899,7 +3369,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 114
+        "rank": 115
       }
     },
     {
@@ -2914,7 +3384,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 3,
-        "rank": 115
+        "rank": 116
       }
     },
     {
@@ -2929,7 +3399,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 3,
-        "rank": 116
+        "rank": 117
       }
     },
     {
@@ -2944,7 +3414,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 2,
-        "rank": 117
+        "rank": 118
       }
     },
     {
@@ -2959,7 +3429,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 4,
-        "rank": 118
+        "rank": 119
       }
     },
     {
@@ -2974,7 +3444,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 119
+        "rank": 120
       }
     },
     {
@@ -2989,7 +3459,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 3,
-        "rank": 120
+        "rank": 121
       }
     },
     {
@@ -3004,7 +3474,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 121
+        "rank": 122
       }
     },
     {
@@ -3019,7 +3489,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 2,
-        "rank": 122
+        "rank": 123
       }
     },
     {
@@ -3034,7 +3504,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 2,
-        "rank": 123
+        "rank": 124
       }
     },
     {
@@ -3049,7 +3519,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 124
+        "rank": 125
       }
     },
     {
@@ -3064,7 +3534,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 125
+        "rank": 126
       }
     },
     {
@@ -3079,7 +3549,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 126
+        "rank": 127
       }
     },
     {
@@ -3094,7 +3564,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 127
+        "rank": 128
       }
     },
     {
@@ -3109,7 +3579,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 128
+        "rank": 129
       }
     },
     {
@@ -3124,7 +3594,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 2,
-        "rank": 129
+        "rank": 130
       }
     },
     {
@@ -3139,7 +3609,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 2,
-        "rank": 130
+        "rank": 131
       }
     },
     {
@@ -3154,7 +3624,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 2,
-        "rank": 131
+        "rank": 132
       }
     },
     {
@@ -3169,7 +3639,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 3,
-        "rank": 132
+        "rank": 133
       }
     },
     {
@@ -3184,7 +3654,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 133
+        "rank": 134
       }
     },
     {
@@ -3199,7 +3669,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 5,
-        "rank": 134
+        "rank": 135
       }
     },
     {
@@ -3214,7 +3684,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 3,
-        "rank": 135
+        "rank": 136
       }
     },
     {
@@ -3229,7 +3699,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 2,
-        "rank": 136
+        "rank": 137
       }
     },
     {
@@ -3244,7 +3714,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 137
+        "rank": 138
       }
     },
     {
@@ -3259,7 +3729,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 3,
-        "rank": 138
+        "rank": 139
       }
     },
     {
@@ -3274,7 +3744,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 139
+        "rank": 140
       }
     },
     {
@@ -3289,7 +3759,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 140
+        "rank": 141
       }
     },
     {
@@ -3304,7 +3774,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 141
+        "rank": 142
       }
     },
     {
@@ -3319,7 +3789,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 142
+        "rank": 143
       }
     },
     {
@@ -3334,7 +3804,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 2,
-        "rank": 143
+        "rank": 144
       }
     },
     {
@@ -3349,7 +3819,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 144
+        "rank": 145
       }
     },
     {
@@ -3364,7 +3834,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 2,
-        "rank": 145
+        "rank": 146
       }
     },
     {
@@ -3379,7 +3849,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 146
+        "rank": 147
       }
     },
     {
@@ -3394,7 +3864,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 2,
-        "rank": 147
+        "rank": 148
       }
     },
     {
@@ -3409,7 +3879,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 2,
-        "rank": 148
+        "rank": 149
       }
     },
     {
@@ -3424,7 +3894,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 2,
-        "rank": 149
+        "rank": 150
       }
     },
     {
@@ -3439,7 +3909,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 150
+        "rank": 151
       }
     },
     {
@@ -3454,7 +3924,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 151
+        "rank": 152
       }
     },
     {
@@ -3469,7 +3939,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 2,
-        "rank": 152
+        "rank": 153
       }
     },
     {
@@ -3484,7 +3954,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 4,
-        "rank": 153
+        "rank": 154
       }
     },
     {
@@ -3499,7 +3969,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 154
+        "rank": 155
       }
     },
     {
@@ -3514,7 +3984,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 2,
-        "rank": 155
+        "rank": 156
       }
     },
     {
@@ -3529,7 +3999,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 8,
-        "rank": 156
+        "rank": 157
       }
     },
     {
@@ -3544,7 +4014,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 2,
-        "rank": 157
+        "rank": 158
       }
     },
     {
@@ -3559,7 +4029,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 158
+        "rank": 159
       }
     },
     {
@@ -3574,7 +4044,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 159
+        "rank": 160
       }
     },
     {
@@ -3589,7 +4059,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 160
+        "rank": 161
       }
     },
     {
@@ -3604,7 +4074,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 4,
-        "rank": 161
+        "rank": 162
       }
     },
     {
@@ -3619,7 +4089,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 162
+        "rank": 163
       }
     },
     {
@@ -3634,7 +4104,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 163
+        "rank": 164
       }
     },
     {
@@ -3649,7 +4119,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 164
+        "rank": 165
       }
     },
     {
@@ -3664,7 +4134,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 165
+        "rank": 166
       }
     },
     {
@@ -3679,7 +4149,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 2,
-        "rank": 166
+        "rank": 167
       }
     },
     {
@@ -3694,7 +4164,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 3,
-        "rank": 167
+        "rank": 168
       }
     },
     {
@@ -3709,7 +4179,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 168
+        "rank": 169
       }
     }
   ],
@@ -5809,7 +6279,7 @@
     },
     {
       "directory": "src/lib/intelligence/ask/__tests__",
-      "testFiles": 23,
+      "testFiles": 24,
       "unrunTestFiles": 21,
       "declaredQuarantineTestFiles": 0,
       "untriagedUnrunTestFiles": 21,
@@ -5822,6 +6292,32 @@
     }
   ],
   "governedRiskEvidence": [
+    {
+      "directory": "src/components/strategic-moves/__tests__",
+      "testFiles": 17,
+      "unrunTestFiles": 1,
+      "governedRisk": {
+        "score": 1100,
+        "band": "critical",
+        "signals": [
+          "declared_ai_surface_control",
+          "approval_or_lifecycle_write"
+        ],
+        "productSourceCount": 17,
+        "controlIds": [
+          "moves-deliverable-canvas-view",
+          "moves-nexus-current-state-briefing-panel"
+        ],
+        "approvalOrLifecycleSourceCount": 4,
+        "approvalOrLifecycleSources": [
+          "src/components/strategic-moves/DeliverableApprovalAction.tsx",
+          "src/components/strategic-moves/MovesPhaseStandaloneClient.tsx",
+          "src/components/strategic-moves/PhaseApproveAndBuild.tsx",
+          "src/components/strategic-moves/PhaseRoleApprovalsSummary.tsx"
+        ],
+        "rank": 1
+      }
+    },
     {
       "directory": "src/app/(maestro)/source/__tests__",
       "testFiles": 5,
@@ -5847,7 +6343,7 @@
           "src/app/(maestro)/source/workspace/page.tsx",
           "src/lib/source/intake/servicenow-sourcing-request-repository.ts"
         ],
-        "rank": 1
+        "rank": 2
       }
     },
     {
@@ -5866,7 +6362,7 @@
           "src/app/(maestro)/home/page.tsx",
           "src/lib/tenant/resolveTenant.ts"
         ],
-        "rank": 2
+        "rank": 3
       }
     },
     {
@@ -5884,7 +6380,7 @@
         "tenantScopedReadSources": [
           "src/lib/active-client.ts"
         ],
-        "rank": 3
+        "rank": 4
       }
     },
     {
@@ -5902,7 +6398,7 @@
         "tenantScopedReadSources": [
           "src/lib/source/contract-evidence/read-model.ts"
         ],
-        "rank": 4
+        "rank": 5
       }
     },
     {
@@ -5920,7 +6416,7 @@
         "tenantScopedReadSources": [
           "src/lib/source/contract-intelligence/cloud-adapter.ts"
         ],
-        "rank": 5
+        "rank": 6
       }
     },
     {
@@ -5939,7 +6435,7 @@
           "src/lib/enterprise-context/derived-enterprise-read.ts",
           "src/lib/enterprise-context/intelligence-read-model.ts"
         ],
-        "rank": 6
+        "rank": 7
       }
     }
   ],

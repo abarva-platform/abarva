@@ -18,6 +18,7 @@ import {
   PhaseApproveAndBuild,
   type BuildSettledResult,
 } from "../PhaseApproveAndBuild";
+import type { MoveEvidenceNeedPacket } from "@/lib/programs/evidence-readiness/move-evidence-need-packet";
 
 async function clickApproveAndBuild(name: RegExp) {
   await act(async () => {
@@ -90,6 +91,73 @@ function mockFetchSequence(opts: {
 }
 
 describe("PhaseApproveAndBuild onBuildSettled sequencing", () => {
+  it("keeps the header progression action hidden while current-phase required evidence is open", async () => {
+    render(
+      <>
+        <div id="phase-progress-test-action" />
+        <PhaseApproveAndBuild
+          moveId="move-1"
+          phaseNum={1}
+          phaseLabel="P1 Charter"
+          archetype="ai_enabled_sdlc"
+          moveName="Example Move"
+          clientDisplayName="Client"
+          blockOnEvidenceGaps
+          actionPortalTargetId="phase-progress-test-action"
+          evidenceNeedPackets={[
+            {
+              phase: 1,
+              priority: "required",
+              status: "missing",
+            } as MoveEvidenceNeedPacket,
+          ]}
+        />
+      </>,
+    );
+
+    expect(
+      await screen.findByText("1 required evidence item open"),
+    ).toBeInTheDocument();
+    expect(
+      within(document.getElementById("phase-progress-test-action")!).queryByRole(
+        "button",
+        { name: /Approve & Build/i },
+      ),
+    ).not.toBeInTheDocument();
+  });
+
+  it("puts a green progression action in the header when current-phase evidence is covered", async () => {
+    render(
+      <>
+        <div id="phase-progress-test-action" />
+        <PhaseApproveAndBuild
+          moveId="move-1"
+          phaseNum={1}
+          phaseLabel="P1 Charter"
+          archetype="ai_enabled_sdlc"
+          moveName="Example Move"
+          clientDisplayName="Client"
+          blockOnEvidenceGaps
+          actionPortalTargetId="phase-progress-test-action"
+          evidenceNeedPackets={[
+            {
+              phase: 1,
+              priority: "required",
+              status: "covered",
+            } as MoveEvidenceNeedPacket,
+          ]}
+        />
+      </>,
+    );
+
+    const header = document.getElementById("phase-progress-test-action")!;
+    const button = await within(header).findByRole("button", {
+      name: /Approve & Build P1 Charter/i,
+    });
+    expect(button).toHaveStyle({ background: "rgb(20, 124, 91)" });
+    expect(button).not.toBeDisabled();
+  });
+
   it("seeds built rows from persisted Move artifacts on a fresh page load", () => {
     global.fetch = jest.fn() as unknown as typeof fetch;
 

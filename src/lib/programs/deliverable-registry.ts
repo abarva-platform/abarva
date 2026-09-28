@@ -14,6 +14,8 @@
 //   • Backward-compat keys: legacy keys ('p3_design', 'roadmap') are retained
 //     and displayed in the Evidence Hub; new keys are the canonical path forward
 
+import type { ConfirmedSolutionRoute } from "@/lib/programs/solution-route-assessment";
+
 export type DeliverableFormat =
   | "html-word"
   | "excel"
@@ -703,6 +705,17 @@ export const PHASE_CANONICAL_KEYS: Record<number, string[]> = {
     "execution_kickoff_guide",
   ],
 };
+
+/** Route-specific P3 scope; full design artifacts remain for change-led moves. */
+export function phaseCanonicalKeysForRoute(
+  phase: number,
+  route?: ConfirmedSolutionRoute | null,
+): string[] {
+  if (phase === 3 && route?.route === "technical_product") {
+    return ["target_state_architecture", "requirements_traceability"];
+  }
+  return [...(PHASE_CANONICAL_KEYS[phase] ?? [])];
+}
 
 /** Format badge labels */
 export const FORMAT_LABELS: Record<DeliverableFormat, string[]> = {

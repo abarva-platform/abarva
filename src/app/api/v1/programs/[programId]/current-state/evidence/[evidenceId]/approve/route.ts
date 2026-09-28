@@ -10,6 +10,7 @@ import { requireTenancy, tenancyErrorResponse } from "../../../../../_auth";
 import { decideEvidenceReview } from "@/lib/programs/current-state-doc-ingest";
 import { getProgramById } from "@/lib/programs/queries";
 import { getProgramsRouteSupabase } from "@/lib/programs/programs-auth-mode-server";
+import { normalizeReviewedEvidenceExtraction } from "@/lib/programs/evidence-review-contract";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -28,14 +29,26 @@ export async function POST(
     const body = (await req.json().catch(() => ({}))) as {
       decision?: string;
       rationale?: string;
+      reviewedExtraction?: unknown;
     };
     const decision = body.decision === "rejected" ? "rejected" : "approved";
+    const reviewedExtraction =
+      decision === "approved"
+        ? normalizeReviewedEvidenceExtraction(body.reviewedExtraction)
+        : undefined;
+    if (decision === "approved" && !reviewedExtraction) {
+      return Response.json(
+        { error: "reviewed_extraction_required" },
+        { status: 400 },
+      );
+    }
 
     const result = await decideEvidenceReview(ctx, {
       moveId: programId,
       evidenceId,
       decision,
       rationale: body.rationale,
+      reviewedExtraction: reviewedExtraction ?? undefined,
     });
 
     if (!result.ok) {

@@ -3,6 +3,40 @@ import {
   getPhaseCaptureSections,
   phaseCaptureModuleKey,
 } from "../phase-capture-contract";
+import { resolveConfirmedSolutionRoute } from "../solution-route-assessment";
+
+const businessChangeAssessment = JSON.stringify({
+  expectedWorkflowChange: "none",
+  expectedRoleAccountabilityChange: "none",
+  adoptionOwner: "Business analytics lead",
+  adoptionResponsibility: "business",
+  evidenceReference: "P1 operating-owner interview",
+  validatedBy: "Business sponsor",
+});
+
+function captureValues(phase: number): Record<string, string> {
+  const values = Object.fromEntries(
+    getPhaseCaptureSections(phase).map((section) => [
+      section.key,
+      `${section.label} captured`,
+    ]),
+  );
+  if (phase === 1) values.business_change_assessment = businessChangeAssessment;
+  if (phase === 2) {
+    values.solution_route_validation = JSON.stringify({
+      businessChangeAssessmentSnapshot: JSON.parse(businessChangeAssessment),
+      solutionOutput: "reports_dashboards",
+      workflowChange: "none",
+      roleAccountabilityChange: "none",
+      evidenceReference: "evidence-p2-1",
+      decision: "confirm",
+      selectedRoute: "technical_product",
+      correctionRationale: "",
+      validatedBy: "Business sponsor",
+    });
+  }
+  return values;
+}
 
 describe("phase-capture-contract", () => {
   it("defines a complete P0 capture binder for real Move origination", () => {
@@ -34,12 +68,7 @@ describe("phase-capture-contract", () => {
   });
 
   it("marks capture complete only when every required section has content", () => {
-    const values = Object.fromEntries(
-      getPhaseCaptureSections(0).map((section) => [
-        section.key,
-        `${section.label} captured`,
-      ]),
-    );
+    const values = captureValues(0);
     const result = evaluatePhaseCapture(0, values);
     expect(result.complete).toBe(true);
     expect(result.missing).toEqual([]);
@@ -53,5 +82,51 @@ describe("phase-capture-contract", () => {
     expect(phaseCaptureModuleKey(2, "current_state_findings")).toBe(
       "phase_2_current_state_findings",
     );
+  });
+
+  it("does not complete P1/P2 from arbitrary text in structured decisions", () => {
+    const p1 = captureValues(1);
+    p1.business_change_assessment = "looks technical, business owns adoption";
+    expect(evaluatePhaseCapture(1, p1).complete).toBe(false);
+
+    const p2 = captureValues(2);
+    p2.solution_route_validation = "technical product confirmed";
+    expect(
+      evaluatePhaseCapture(2, p2, {
+        businessChangeAssessment,
+        approvedEvidenceReferences: ["evidence-p2-1"],
+      }).complete,
+    ).toBe(false);
+  });
+
+  it("opens the technical-product P3 contract only after P2 confirms the matching P1 snapshot", () => {
+    const p2 = captureValues(2);
+    const confirmed = resolveConfirmedSolutionRoute({
+      businessChangeAssessment,
+      routeValidation: p2.solution_route_validation,
+      approvedEvidenceReferences: ["evidence-p2-1"],
+    });
+    expect(confirmed?.route).toBe("technical_product");
+    expect(
+      getPhaseCaptureSections(3, confirmed).map((section) => section.key),
+    ).toEqual([
+      "solution_approach",
+      "business_change_boundary",
+      "controls_governance",
+      "architecture_integration",
+      "evidence_confidence",
+      "recommendation",
+    ]);
+    const staleP1 = JSON.stringify({
+      ...JSON.parse(businessChangeAssessment),
+      adoptionOwner: "Different owner",
+    });
+    expect(
+      resolveConfirmedSolutionRoute({
+        businessChangeAssessment: staleP1,
+        routeValidation: p2.solution_route_validation,
+        approvedEvidenceReferences: ["evidence-p2-1"],
+      }),
+    ).toBeNull();
   });
 });
