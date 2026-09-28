@@ -41,7 +41,7 @@ The mounted Strategy step could mark a confirmation complete only in browser sta
 - Pass: a deliberate removal of the shell version bridge failed three behavior assertions and was restored.
 - Pass: a misleading generic `done` task was red before the receipt-only shell guard and is now kept open.
 - Pass: a red-first legacy-policy regression test caught a missing strict-policy action; the policy guard was narrowed and the action remains available.
-- Pass: 91 tests across six mounted Strategy, adjacent canvas, journey, shell-adapter and confirmation suites.
+- Pass: 109 tests across nine mounted Strategy, adjacent canvas, journey, shell-adapter, page-builder and confirmation suites.
 - Pass: Node 24 TypeScript and scoped ESLint with zero warnings.
 - Not run: signed-in post-deployment replay; it is required after the exact main deployment.
 
