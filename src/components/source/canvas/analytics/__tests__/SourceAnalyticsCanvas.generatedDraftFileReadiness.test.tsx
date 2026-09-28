@@ -1,7 +1,7 @@
 /** @jest-environment jsdom */
 
 import "@testing-library/jest-dom";
-import { render, screen, within } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 
 jest.mock("next/navigation", () => ({
   useRouter: () => ({ push: jest.fn(), replace: jest.fn(), refresh: jest.fn() }),
@@ -24,7 +24,14 @@ jest.mock("@/components/agent/AskAnythingBar", () => ({
 }));
 
 import { SourceAnalyticsCanvas } from "../SourceAnalyticsCanvas";
+import { SAMPLE_STRATEGY_STAGE } from "../strategy-sample-view-model";
 import type { SourcingEventSummary } from "@/lib/source/types";
+
+const originalFetch = global.fetch;
+
+afterEach(() => {
+  global.fetch = originalFetch;
+});
 
 const event = {
   id: "evt-1",
@@ -162,4 +169,73 @@ it("does not present an all-draft file set as a zero-of-zero evidence score", ()
   const map = screen.getByTestId("source-file-use-readiness-map");
   expect(map).toHaveTextContent("No evidence files eligible");
   expect(map).not.toHaveTextContent("0/0 workflow-usable");
+});
+
+it("can regenerate an existing AI draft without accepting it as client-final", async () => {
+  let bodyReads = 0;
+  const fetchMock = jest.fn(async (url: string) => {
+    if (url.endsWith("/body")) {
+      bodyReads += 1;
+      return {
+        ok: true,
+        json: async () => ({
+          artifactCode: "d01_strategy_memo",
+          body: bodyReads === 1 ? "Old AI draft" : "Regenerated AI draft",
+          format: "markdown",
+        }),
+      };
+    }
+    return { ok: true, json: async () => ({ ok: true }) };
+  });
+  global.fetch = fetchMock as unknown as typeof fetch;
+  render(
+    <SourceAnalyticsCanvas
+      event={event}
+      viewStage="strategy"
+      tenantName="Demo Client"
+      stageView={SAMPLE_STRATEGY_STAGE}
+      initialWorkspace="files"
+      artifacts={[
+        {
+          id: "canvas-draft",
+          recordKind: "canvas_state",
+          artifactCode: "d01_strategy_memo",
+          stageKey: "strategy",
+          status: "draft",
+          body: null,
+        },
+        {
+          id: "registered-draft",
+          recordKind: "registry_artifact",
+          artifactCode: "d01_strategy_memo",
+          stageKey: "strategy",
+          sourceOrigin: "generated",
+          originalName: "strategy-draft.docx",
+          sourceFormat: "docx",
+          status: "draft",
+        },
+      ]}
+    />,
+  );
+
+  const row = screen.getByTestId("source-artifact-review-queue-row-d01_strategy_memo");
+  expect(row).toHaveTextContent("AI draft awaiting review");
+  expect(within(row).getByRole("button", { name: "Accept Client Final" }))
+    .toBeInTheDocument();
+  fireEvent.click(within(row).getByText("Preview AI draft"));
+  await waitFor(() => expect(row).toHaveTextContent("Old AI draft"));
+  fireEvent.click(within(row).getByRole("button", { name: "Regenerate draft" }));
+  await waitFor(() => expect(fetchMock).toHaveBeenCalledWith(
+    "/api/v1/source/evt-1/artifacts/d01_strategy_memo/generate",
+    { method: "POST", credentials: "include" },
+  ));
+  await waitFor(() => expect(within(row).getByText("Preview AI draft").closest("details"))
+    .not.toHaveAttribute("open"));
+  fireEvent.click(within(row).getByText("Preview AI draft"));
+  await waitFor(() => expect(row).toHaveTextContent("Regenerated AI draft"));
+  expect(bodyReads).toBe(2);
+  expect(fetchMock).not.toHaveBeenCalledWith(
+    expect.stringContaining("/client-final"),
+    expect.anything(),
+  );
 });

@@ -10,7 +10,7 @@
 
 ## Plain-English Summary
 
-The Source file-readiness view now separates unreviewed AI-generated drafts from uploaded evidence. A generated draft no longer inflates the evidence parser backlog or prompts an operator to parse model output as evidence. Its next action is human review and acceptance of a separately reviewed client-final version.
+The Source file-readiness view now separates unreviewed AI-generated drafts from uploaded evidence. A generated draft no longer inflates the evidence parser backlog or prompts an operator to parse model output as evidence. An existing draft can be regenerated through the governed authoring route without treating regeneration as client-final acceptance.
 
 ## Layer Impact
 
@@ -30,6 +30,7 @@ The Source file-readiness view now separates unreviewed AI-generated drafts from
 
 - Count unreviewed generated drafts separately from stored, parsed, and parser-pending evidence.
 - Label generated draft rows as drafts, not gate-ready evidence, and direct their next action to human review.
+- Offer a separate Regenerate draft action beside Client Final acceptance. Successful regeneration resets the read-only preview so it fetches the current body rather than showing a stale draft.
 - Keep uploaded unparsed evidence on the existing parser path and accepted parsed client finals on the existing workflow-ready path.
 - Show a clear empty evidence state when all registered files are generated drafts.
 
@@ -38,7 +39,8 @@ The Source file-readiness view now separates unreviewed AI-generated drafts from
 - Pass: red-first mounted tests reproduced mixed-file miscounts and the all-draft zero-of-zero state.
 - Pass: negative behavior retained parser guidance for uploaded pending evidence and existing client-final readiness.
 - Pass: two practical mutations reintroduced draft-as-evidence counting and parser guidance for drafts; each failed the focused test and was restored.
-- Pass: five focused mounted suites / 68 tests.
+- Pass: the missing regeneration action failed a mounted route test before implementation; removing preview reset after implementation failed the stale-body test and was restored.
+- Pass: 18 Source canvas suites / 153 tests, TypeScript with an 8 GB Node 24 heap, scoped ESLint, release:check, and diff check.
 - Not run: signed-in post-deployment view replay; required before product acceptance.
 
 ## Rollout Plan

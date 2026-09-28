@@ -6295,6 +6295,7 @@ function CurrentStageArtifactReviewRow({
   onClientFinalAccepted: () => void;
 }) {
   const action = artifactReviewAction(row);
+  const [draftRevision, setDraftRevision] = useState(0);
   const canGenerateFromEvidence =
     row.lifecycleState === "evidence_only" &&
     (row.requirementLabel === "Required" || row.gateLabel === "Gate-defining");
@@ -6371,13 +6372,25 @@ function CurrentStageArtifactReviewRow({
             onAccepted={onClientFinalAccepted}
           />
         ) : row.lifecycleState === "ai_draft" ? (
-          <AcceptClientFinalButton
-            eventId={eventId}
-            artifactCode={row.code}
-            artifactName={row.name}
-            hasGeneratedDraft
-            onAccepted={onClientFinalAccepted}
-          />
+          <div style={{ display: "grid", gap: 8 }}>
+            <GenerateArtifactButton
+              eventId={eventId}
+              artifactCode={row.code}
+              artifactName={row.name}
+              buttonLabel="Regenerate draft"
+              onGenerated={() => {
+                setDraftRevision((revision) => revision + 1);
+                onClientFinalAccepted();
+              }}
+            />
+            <AcceptClientFinalButton
+              eventId={eventId}
+              artifactCode={row.code}
+              artifactName={row.name}
+              hasGeneratedDraft
+              onAccepted={onClientFinalAccepted}
+            />
+          </div>
         ) : row.lifecycleState === "not_registered" ||
           canGenerateFromEvidence ? (
           <GenerateArtifactButton
@@ -6392,7 +6405,7 @@ function CurrentStageArtifactReviewRow({
       </div>
       {row.lifecycleState === "ai_draft" ? (
         <SourceDraftBodyPreview
-          key={`${eventId}:${row.code}`}
+          key={`${eventId}:${row.code}:${draftRevision}`}
           eventId={eventId}
           artifactCode={row.code}
         />
@@ -6502,11 +6515,13 @@ function GenerateArtifactButton({
   eventId,
   artifactCode,
   artifactName,
+  buttonLabel = "Generate with aVa",
   onGenerated,
 }: {
   eventId: string;
   artifactCode: string;
   artifactName: string;
+  buttonLabel?: string;
   onGenerated: () => void;
 }) {
   const router = useRouter();
@@ -6568,7 +6583,7 @@ function GenerateArtifactButton({
           padding: "9px 12px",
         }}
       >
-        {state.phase === "generating" ? "Generating..." : "Generate with aVa"}
+        {state.phase === "generating" ? "Generating..." : buttonLabel}
       </button>
       {state.phase === "error" ? (
         <span
