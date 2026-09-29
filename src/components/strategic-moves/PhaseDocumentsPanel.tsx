@@ -74,7 +74,7 @@ async function fetchDeliverablesByKey(
       `
       id, deliverable_type_key, title, status, current_version, updated_at,
       signed_off_version, approved_artifact_id,
-      deliverable_versions!inner(content, version)
+      deliverable_versions(content, version)
     `,
     )
     .eq("engagement_id", programId)
@@ -326,9 +326,9 @@ function DocumentRow({
 }) {
   const calmBrowse = presentationMode;
   const hasContent = Boolean(dbRow?.latest_content?.trim());
-  // Approve & Build / orchestrator output lands in generated_artifacts, not
-  // deliverables_v2 — so a built document would otherwise read "not generated"
-  // here. Fall back to the run's artifact (download via /api/v1/artifacts/{id}).
+  // Keep the run artifact as a read-only fallback when its canonical
+  // deliverable version is unavailable in this projection. A run artifact
+  // alone never authorizes sign-off; approval remains bound to dbRow.id.
   const builtViaRun = !hasContent && Boolean(runArtifact);
   const dot = dbRow ? statusDot(dbRow.status) : null;
   const isExcel = spec.formatRecommendation === "excel";
@@ -508,8 +508,9 @@ function DocumentRow({
             )}
           </>
         ) : builtViaRun && runArtifact ? (
-          // Approve & Build output (generated_artifacts), downloaded via the
-          // governed artifacts route.
+          // The run artifact is only the preview/download source. If its
+          // deliverables_v2 row exists, sign-off still targets that row and the
+          // API applies the usual evidence/readiness checks.
           <>
             <a href={`${artBase}?format=html`} style={linkStyle("ghost")}>
               HTML preview
@@ -520,6 +521,13 @@ function DocumentRow({
             <span style={{ fontSize: 10, color: "#b4b4b8" }}>
               {formatDate(runArtifact.updatedAt)}
             </span>
+            {dbRow && !calmBrowse && (
+              <DeliverableApprovalAction
+                moveId={moveId}
+                deliverableId={dbRow.id}
+                alreadyApproved={dbRow.signed_off_version === dbRow.current_version}
+              />
+            )}
           </>
         ) : (
           // Read-only browse. Generation is NOT a per-document action here — a
@@ -538,7 +546,7 @@ function DocumentRow({
           types that don't require any (the default; see REQUIRED_APPROVAL_ROLES
           in deliverable-role-approvals.ts). flexBasis 100% pushes it onto its
           own line under the title/actions row above. */}
-      {hasContent && dbRow ? (
+      {dbRow && (hasContent || builtViaRun) ? (
         <div style={{ flexBasis: "100%" }}>
           <RoleApprovalsPanel moveId={moveId} deliverableId={dbRow.id} />
         </div>
@@ -638,11 +646,8 @@ export async function PhaseDocumentsPanel({
     })
     .catch(() => []);
 
-  // Approve & Build / orchestrator output lands in generated_artifacts (via a
-  // succeeded deliverable_run), NOT deliverables_v2 — so without this a built
-  // document reads "not generated" here. Map the latest succeeded run per registry
-  // key so a slot reads "Built" with a /api/v1/artifacts/{id} download. Additive:
-  // deliverables_v2 content still wins. Mirrors the Move Explorer.
+  // Map the latest succeeded run per registry key as a display/download fallback.
+  // The run is never approval authority: that remains the deliverables_v2 row.
   const runByKey = new Map<string, { artifactId: string; updatedAt: string }>();
   const activeClient = await getActiveClientRow().catch(() => null);
   if (activeClient) {
