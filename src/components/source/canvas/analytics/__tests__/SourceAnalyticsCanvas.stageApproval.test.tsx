@@ -1116,7 +1116,7 @@ describe("SourceAnalyticsCanvas stage workflow", () => {
     );
     expect(
       screen.getByRole("heading", {
-        name: "Provide the application inventory",
+        name: "Provide the application or service inventory",
       }),
     ).toBeInTheDocument();
     expect(screen.queryByText("volumetrics.csv")).not.toBeInTheDocument();

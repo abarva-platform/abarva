@@ -307,7 +307,8 @@ function TaskRow({
                     eventId={eventId}
                     stageKey={stageKey}
                     factTemplateCode={factTemplateCode}
-                    onUploaded={task.id === "scope.sponsor" ? () => router.refresh() : onComplete}
+                    evidenceRequirementId={task.id === "scope.app-inventory" ? evidenceRequirementId ?? undefined : undefined}
+                    onUploaded={task.id === "scope.sponsor" || task.id === "scope.app-inventory" ? () => router.refresh() : onComplete}
                   />
                 )}
               </EvidenceRequestPanel>
@@ -1006,6 +1007,7 @@ interface DropZoneProps {
    * LIVE. Absent → registry-only upload (the current behavior).
    */
   factTemplateCode?: string;
+  evidenceRequirementId?: string;
   onUploaded?: () => void;
   onUploadReadback?: (readback: TaskProvideUploadReadback) => void;
 }
@@ -1024,6 +1026,7 @@ export function TaskProvideUpload({
   eventId,
   stageKey,
   factTemplateCode,
+  evidenceRequirementId,
   onUploaded,
   onUploadReadback,
 }: DropZoneProps) {
@@ -1048,6 +1051,7 @@ export function TaskProvideUpload({
         eventId,
         stageKey,
         file,
+        evidenceRequirementId,
       });
 
       // 2) When this task binds a template, ALSO parse the file into typed facts.

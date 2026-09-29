@@ -47,6 +47,10 @@ export interface InputTemplateEventMeta {
  * immediately useful. Falls back to a single guidance column.
  */
 const INTAKE_COLUMNS: Record<string, string[]> = {
+  "EVID-SRC-SCOPE-APP-INV": [
+    "Service ID", "Service Name", "Scope Boundary", "Criticality",
+    "Lifecycle State", "Service Owner", "Source Basis", "As Of Date",
+  ],
   "EVID-SRC-SCOPE-ORG": [
     "Role / team",
     "Headcount (FTE)",
@@ -80,6 +84,9 @@ const DEFAULT_INTAKE_COLUMNS = ["What you have", "Details", "Source / date", "No
 
 function intakeColumnsFor(requirement: SourceEvidenceRequirement): string[] {
   const requirementId = requirement.requirementId;
+  if (requirementId === "EVID-SRC-SCOPE-APP-INV") {
+    return INTAKE_COLUMNS[requirementId];
+  }
   const templateCode = FACT_TEMPLATE_BY_REQUIREMENT_ID[requirementId];
   const template = templateCode ? templateFactMapByCode(templateCode) : undefined;
   if (template) {

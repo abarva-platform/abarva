@@ -68,6 +68,28 @@ function selectFile(file: File) {
 }
 
 describe("TaskChecklist provide-task upload", () => {
+  it("binds an operational Scope inventory upload to its evidence requirement without financial fact ingest", async () => {
+    const fetchMock = jest.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ ok: true, artifact: {
+        id: "source-artifact-1", originalName: "service_catalog_scope.csv",
+        sourceFormat: "csv", sizeBytes: 150, parseStatus: "parsed",
+      } }),
+    });
+    global.fetch = fetchMock as unknown as typeof fetch;
+    render(<TaskChecklist tasks={[{
+      ...PROVIDE_TASK, id: "scope.app-inventory", title: "Provide the application or service inventory",
+    }]} eventId="evt-1" stageKey="scope" />);
+    selectFile(new File(["Service ID,Service Name"], "service_catalog_scope.csv", { type: "text/csv" }));
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
+    const form = fetchMock.mock.calls[0][1].body as FormData;
+    expect(form.get("evidenceRequirementId")).toBe("EVID-SRC-SCOPE-APP-INV");
+    expect(form.get("stageKey")).toBe("scope");
+    expect(routerRefresh).toHaveBeenCalled();
+    await screen.findByText("service_catalog_scope.csv");
+    expect(screen.getByTestId("task-evidence-request")).toHaveTextContent("Action needed");
+  });
+
   it("offers an explicit sponsor review request only on the bound Scope sponsor step", async () => {
     const fetchMock = jest.fn().mockResolvedValue({
       ok: true,

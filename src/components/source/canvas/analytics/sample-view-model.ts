@@ -80,17 +80,14 @@ export const SAMPLE_SCOPE_STAGE: StageAnalyticsView = {
     },
     {
       id: 'scope.app-inventory',
-      title: 'Provide the application inventory',
-      subtitle: 'Run cost + retained-FTE cost per app',
+      title: 'Provide the application or service inventory',
+      subtitle: 'Operational scope and accountable source',
       type: 'provide',
       state: 'todo',
       guide:
-        'Upload your application & system inventory (CSV or XLSX). We read per-app annual run cost, loaded FTE cost, and the variable-cost share — the facts the volume-band pricing and retained-cost levers need.',
-      provenance: { owner: 'Ravi Menon, IT-Ops', source: 'CMDB / finance export' },
+        'Upload a service or application inventory with stable IDs, scope boundaries, criticality, lifecycle, owner, source basis and as-of date. Review the parsed file in Files before it becomes usable Scope evidence. Cost fields are separate and may remain unknown.',
+      provenance: { owner: 'IT operations owner', source: 'CMDB or service catalog' },
       cta: 'Confirm inventory',
-      // Parsed into APP_INVENTORY_V1 facts (annual_run_cost, loaded_fte_cost,
-      // variable_cost_share_pct) — flips the pricing / retained-cost levers LIVE.
-      factTemplateCode: 'APP_INVENTORY_V1',
     },
     {
       id: 'scope.vendor-commercials',

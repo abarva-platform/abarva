@@ -69,7 +69,7 @@ export interface HydrateTaskEvidenceInput {
   evidenceStates?: readonly (Pick<
     SourceEventEvidence,
     "requirementId" | "currentState"
-  > & Partial<Pick<SourceEventEvidence, "id" | "sourceEventFactIds">>)[];
+  > & Partial<Pick<SourceEventEvidence, "id" | "sourceEventFactIds" | "sourceArtifactId">>)[];
   /** The canonical stage key being rendered; retained for the caller contract. */
   stageKey?: string;
   /** Verified, current-artifact delegate receipt plus confirmed sponsor notice. */
@@ -139,6 +139,17 @@ export function hydrateTaskEvidenceState(
       ) {
         return { ...task, evidenceComplete: true };
       }
+      return task;
+    }
+
+    if (task.id === "scope.app-inventory") {
+      const reviewedInventory = evidenceStates.find((evidence) =>
+        evidence.requirementId === "EVID-SRC-SCOPE-APP-INV" &&
+        evidence.currentState === "Usable Evidence" &&
+        Boolean(evidence.id && !evidence.id.startsWith("fact-derived:")) &&
+        Boolean(evidence.sourceArtifactId),
+      );
+      if (reviewedInventory) return { ...task, evidenceComplete: true };
       return task;
     }
 

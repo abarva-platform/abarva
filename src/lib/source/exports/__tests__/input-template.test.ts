@@ -1,4 +1,5 @@
 import ExcelJS from "exceljs";
+import { createHash } from "node:crypto";
 
 import {
   SOURCE_EVIDENCE_REQUIREMENTS,
@@ -13,6 +14,7 @@ import {
   inputTemplateFilename,
 } from "@/lib/source/exports/input-template";
 import { templateFactMapByCode } from "@/lib/source/facts/template-fact-map";
+import { reviewOperationalInventory } from "@/lib/source/evidence-review/operational-inventory";
 
 const SAMPLE_EVENT = {
   eventCode: "SRC-2026-014",
@@ -77,7 +79,6 @@ describe("source input template", () => {
 
   it("gives fact-backed requirements parser-aligned intake headers", async () => {
     const factTemplatesByRequirement = {
-      "EVID-SRC-SCOPE-APP-INV": "APP_INVENTORY_V1",
       "EVID-SRC-SCOPE-TICKET-HISTORY": "TICKET_HISTORY_V1",
       "EVID-SRC-RESP-PROPOSALS": "RESPONSE_COVERAGE_V1",
       "EVID-SRC-PRICE-VENDOR-PRICING": "VENDOR_BIDS_V1",
@@ -121,5 +122,89 @@ describe("source input template", () => {
         expect(header).not.toContain("Annual Change-Order Spend (USD)");
       }
     }
+  });
+
+  it("offers a cover-first operational inventory that can be reviewed without cost facts", async () => {
+    const requirement = SOURCE_EVIDENCE_REQUIREMENTS.find(
+      (row) => row.requirementId === "EVID-SRC-SCOPE-APP-INV",
+    );
+    if (!requirement) throw new Error("missing inventory requirement");
+    const workbook = new ExcelJS.Workbook();
+    await workbook.xlsx.load(await buildInputTemplateWorkbook({ requirement, event: SAMPLE_EVENT }) as unknown as ArrayBuffer);
+    const sheet = workbook.getWorksheet("Intake");
+    if (!sheet) throw new Error("missing Intake worksheet");
+    expect(sheet.getRow(1).values).toEqual([,
+      "Service ID", "Service Name", "Scope Boundary", "Criticality",
+      "Lifecycle State", "Service Owner", "Source Basis", "As Of Date",
+    ]);
+    sheet.getRow(2).values = [,
+      "SVC-001", "Service desk", "Ticket intake", "high", "active",
+      "IT operations", "Synthetic service catalog", "2026-09-29",
+    ];
+    const bytes = Buffer.from(await workbook.xlsx.writeBuffer());
+    const result = await reviewOperationalInventory({
+      artifact: {
+        originalName: inputTemplateFilename(requirement),
+        mimeType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        sha256: createHash("sha256").update(bytes).digest("hex"),
+      },
+      bytes,
+    });
+    expect(result).toEqual(expect.objectContaining({ ok: true, rowCount: 1 }));
+  });
+});
+
+const operationalCsv = [
+  "Service ID,Service Name,Scope Boundary,Criticality,Lifecycle State,Service Owner,Source Basis,As Of Date",
+  "SVC-001,L1/L2 service desk,Intake triage and escalation,high,active,IT operations,Synthetic service catalog,2026-09-29",
+  "SVC-002,Endpoint management,Device build patch and lifecycle,medium,active,Endpoint operations,Synthetic service catalog,2026-09-29",
+].join("\n");
+
+function inventoryArtifact(bytes: Buffer, overrides: Record<string, string> = {}) {
+  return {
+    originalName: "service_catalog_scope.csv",
+    mimeType: "text/csv",
+    sha256: createHash("sha256").update(bytes).digest("hex"),
+    ...overrides,
+  };
+}
+
+describe("operational inventory file review", () => {
+  it("accepts a source-bound service inventory without inventing cost facts", async () => {
+    const bytes = Buffer.from(operationalCsv);
+    const result = await reviewOperationalInventory({
+      artifact: inventoryArtifact(bytes), bytes,
+    });
+    expect(result).toEqual({
+      ok: true, rowCount: 2, sourceSha256: inventoryArtifact(bytes).sha256,
+    });
+  });
+
+  it.each([
+    ["wrong byte hash", operationalCsv, { sha256: "0".repeat(64) }],
+    ["missing stable identity", operationalCsv.replace("SVC-002", ""), {}],
+    ["duplicate identity", operationalCsv.replace("SVC-002", "SVC-001"), {}],
+    ["missing source basis", operationalCsv.replace("Synthetic service catalog", ""), {}],
+    ["missing owner", operationalCsv.replace("Endpoint operations", ""), {}],
+    ["missing lifecycle", operationalCsv.replace(",active,Endpoint operations", ",,Endpoint operations"), {}],
+    ["invalid criticality", operationalCsv.replace(",medium,", ",unknown,"), {}],
+    ["invalid as-of date", operationalCsv.replace("2026-09-29", "not-a-date"), {}],
+    ["impossible as-of date", operationalCsv.replace("2026-09-29", "2026-02-30"), {}],
+    ["extra unbound column", operationalCsv.replace("2026-09-29", "2026-09-29,unbound"), {}],
+    ["empty data", operationalCsv.split("\n")[0], {}],
+    ["duplicate header", operationalCsv.replace("Service Name,", "Service ID,"), {}],
+  ])("refuses %s", async (_label, content, overrides) => {
+    const bytes = Buffer.from(content);
+    const result = await reviewOperationalInventory({
+      artifact: inventoryArtifact(bytes, overrides), bytes,
+    });
+    expect(result.ok).toBe(false);
+  });
+
+  it("rejects a mislabeled file instead of trusting its extension", async () => {
+    const bytes = Buffer.from(operationalCsv);
+    expect((await reviewOperationalInventory({
+      artifact: inventoryArtifact(bytes, { mimeType: "application/pdf" }), bytes,
+    })).ok).toBe(false);
   });
 });
