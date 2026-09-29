@@ -471,6 +471,23 @@ jobs:
       - name: Exercise the Programs orchestrated deliverables suites
         run: npx jest src/lib/programs/deliverables/orchestrated/__tests__ --runInBand
 
+      # C-415 slice 3: the Programs phase success package, next in the item's
+      # declared order.
+      #
+      # Measured BEFORE it was wired, each suite executed on its own: 2
+      # suites, 8 tests, GREEN — core 4, generate 4.
+      #
+      # Not coverage of nothing, checked before wiring: the subject is
+      # imported by live code outside this directory — the v1 Programs
+      # phase-success-package route handler.
+      #
+      # No suite here reads a file's bytes, so `T-770` has nothing to refuse
+      # and `textIsTheSubject` is negative for both, judged per suite.
+      #
+      # Wired as a DIRECTORY with no trailing slash. Nothing nests beneath it.
+      - name: Exercise the Programs phase success package suites
+        run: npx jest src/lib/programs/phase-success-package/__tests__ --runInBand
+
       # Two suites shipped on 18 Sep whose release records said "5 of 5 pass"
       # and "19 of 19 pass". Both were true locally and enforced by nothing:
       # neither file was named by any workflow, and no scoped jest script
