@@ -26,6 +26,7 @@ import {
 } from "@/lib/deliverables/shared/executive-story-contract";
 import { renderAdaptiveDepthPrompt } from "@/lib/deliverables/adaptive-depth";
 import type { MovesDeliverableKey } from "@/lib/deliverables/profiles/types";
+import { CHARTER_CONTRACT } from "@/lib/deliverables/shared/artifact-contracts";
 
 const USE_CASE_TITLE: Record<string, string> = {
   AMS_IT_OUTSOURCING: "application management services and IT outsourcing",
@@ -410,9 +411,24 @@ function conciseSectionDraftInstruction(
     ].join("\n");
   }
 
+  const charterSection = CHARTER_CONTRACT.sections.find(
+    (item) => item.key === section?.key,
+  );
+  const charterProseTarget = charterSection?.targetProseWords;
+  const charterProseTargetTotal = CHARTER_CONTRACT.sections.reduce(
+    (sum, item) => sum + (item.targetProseWords ?? 0),
+    0,
+  );
+
   return [
     `CONCISE SECTION RULES:`,
     `- This is one section of a concise approval instrument, not a standalone report.`,
+    ...(req.deliverableType === "charter" && charterProseTarget
+      ? [
+          `- Target approximately ${charterProseTarget} prose words in this section; across all seven sections, the targets total ${charterProseTargetTotal} prose words to clear the ${qb.minBodyWords}-word prose quality floor.`,
+          `- These are completeness targets, not permission to pad. If evidence does not support detail, preserve the gap and explain what must be validated; never add filler or unsupported detail to reach a target.`,
+        ]
+      : []),
     `- Hard cap for this section: ${wordBudget} body words.`,
     `- Section-specific instruction: ${sectionInstruction || "stay concise and decision-oriented"}.`,
     `- Use one compact table OR up to 4 tight bullets when it saves words; otherwise use one short paragraph.`,
