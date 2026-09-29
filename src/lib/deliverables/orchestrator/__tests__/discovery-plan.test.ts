@@ -87,24 +87,23 @@ describe("discovery blueprint", () => {
 });
 
 describe("discovery_plan brief", () => {
-  it("resolves a dedicated discovery-plan brief (not the default)", () => {
+  it("resolves the fixed five-section P1 guide brief, not the generic binder", () => {
     const brief = getArtifactBrief(
       movesDiscoveryReq("AI_OPERATIONS_DECISION_SUPPORT"),
     );
     expect(brief.deliverableType).toBe("discovery_plan");
-    expect(brief.requiredSections).toEqual(
-      expect.arrayContaining(["evidence_request_list", "interview_guide"]),
-    );
-    // structure carries both the request list and the interview guide
+    expect(brief.fixedStructure).toBe(true);
+    expect(brief.recommendedStructure).toHaveLength(5);
+    expect(brief.requiredSections).toEqual([
+      "charter_recap",
+      "discovery_workplan",
+      "evidence_requests",
+      "interview_guide",
+      "p2_readiness",
+    ]);
     const keys = brief.recommendedStructure.map((s) => s.key);
-    expect(keys).toEqual(
-      expect.arrayContaining([
-        "evidence_request_list",
-        "interview_guide",
-        "evidence_readiness",
-      ]),
-    );
-    // expected tables include the request table + business and IT interview tables
+    expect(keys).not.toContain("phase_gates");
+    expect(brief.prohibitedContent?.join(" ")).toMatch(/P2 discovery report/i);
     const tableKeys = brief.expectedTables.map((t) => t.key);
     expect(tableKeys).toEqual(
       expect.arrayContaining([
@@ -120,7 +119,7 @@ describe("discovery_plan brief", () => {
       movesDiscoveryReq("AI_OPERATIONS_DECISION_SUPPORT"),
     );
     const reqSection = brief.recommendedStructure.find(
-      (s) => s.key === "evidence_request_list",
+      (s) => s.key === "evidence_requests",
     );
     // the AI-Ops families flow into the brief and the data-estate family is present
     expect(reqSection?.intent).toMatch(
@@ -133,6 +132,12 @@ describe("discovery_plan brief", () => {
       (s) => s.key === "interview_guide",
     );
     expect(interview?.intent).toMatch(/BUSINESS|IT/);
+    expect(interview?.intent).toMatch(/test with:/i);
+    expect(
+      brief.recommendedStructure.find(
+        (section) => section.key === "discovery_workplan",
+      )?.expertLatitude,
+    ).toMatch(/45-minute/i);
   });
 
   it("`evidence_request_pack` resolves to the same brief", () => {

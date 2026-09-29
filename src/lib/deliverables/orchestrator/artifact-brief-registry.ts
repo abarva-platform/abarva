@@ -397,6 +397,98 @@ function buildDiscoveryPlanBrief(
   };
 }
 
+function buildMovesDiscoveryPlanBrief(
+  req: DeliverableIntelligenceRequest,
+): DeliverableArtifactBrief {
+  const structure = getDeliverableStructure("moves", "discovery_plan");
+  if (!structure) return buildDiscoveryPlanBrief(req);
+
+  const blueprint = getDiscoveryBlueprint(req.useCaseArchetype);
+  const evidenceBaseline = blueprint.evidenceFamilies
+    .map(
+      (family) =>
+        `- ${family.label} (${family.required ? "required" : "optional"}): ${family.grounds}; likely source: ${family.likelySource}; format: ${family.format}`,
+    )
+    .join("\n");
+  const interviewBaseline = blueprint.interviewRoster
+    .map((role) => {
+      const questions = role.questions.slice(0, 2).join(" | ");
+      return `- ${role.side.toUpperCase()} / ${role.role}: ${role.objectives}. Test with: ${questions}`;
+    })
+    .join("\n");
+
+  const recommendedStructure: BriefSection[] = structure.sections.map(
+    (section) => ({
+      ...section,
+      intent:
+        section.key === "evidence_requests"
+          ? `${section.intent}\nUse this scoped, archetype-specific evidence baseline; tailor owners, periods, and validation with the client:\n${evidenceBaseline}`
+          : section.key === "interview_guide"
+            ? `${section.intent}\nUse these role-specific discovery prompts as a starting point, not as recorded answers:\n${interviewBaseline}`
+            : section.intent,
+      expectedEvidenceFamilies:
+        section.key === "evidence_requests"
+          ? blueprint.evidenceFamilies.map((family) => family.id)
+          : section.expectedEvidenceFamilies,
+    }),
+  );
+
+  return {
+    module: "moves",
+    useCaseArchetype: req.useCaseArchetype,
+    deliverableType: "discovery_plan",
+    purpose: structure.purpose,
+    audience: req.audience.length
+      ? req.audience
+      : ["program_leadership", "steering_committee"],
+    decisionToSupport: structure.decisionToSupport,
+    recommendedStructure,
+    requiredSections: structure.requiredSectionKeys,
+    optionalSections: [],
+    fixedStructure: true,
+    forbiddenSectionTopics: structure.forbiddenSectionTopics,
+    prohibitedContent: structure.prohibitedContent,
+    expectedExhibits: structure.expectedExhibits ?? [],
+    expectedTables: [
+      {
+        key: "evidence_request_table",
+        title: "Evidence Request & Validation Plan",
+        columns: [
+          "Evidence item",
+          "Decision grounded",
+          "Likely owner/source",
+          "Format and period",
+          "Validation test",
+          "Status",
+        ],
+        groundingMode: "mixed",
+        moveToExcelIfWide: false,
+      },
+      {
+        key: "interview_business",
+        title: "Business Stakeholder Interview Plan",
+        columns: ["Role", "Objective", "45-minute prompts", "Capture"],
+        groundingMode: "mixed",
+        moveToExcelIfWide: false,
+      },
+      {
+        key: "interview_it",
+        title: "Technology and Data Stakeholder Interview Plan",
+        columns: ["Role", "Objective", "45-minute prompts", "Capture"],
+        groundingMode: "mixed",
+        moveToExcelIfWide: false,
+      },
+    ],
+    requiredPlaceholders: [],
+    requiredClientDecisions: [],
+    citationPolicy: CITATION_POLICY,
+    allowedExpertKnowledge: ALLOWED_EXPERT_KNOWLEDGE,
+    disallowedFabrication: DISALLOWED_FABRICATION,
+    formattingInstructions: FORMATTING_INSTRUCTIONS,
+    qualityCriteria: BOARD_QUALITY_CRITERIA,
+  };
+}
+
 function normalizeType(t: string): string {
   return t
     .trim()
@@ -599,6 +691,9 @@ export function getArtifactBrief(
   req: DeliverableIntelligenceRequest,
 ): DeliverableArtifactBrief {
   const t = normalizeType(req.deliverableType);
+  if (t === "discovery_plan" && req.module === "moves") {
+    return buildMovesDiscoveryPlanBrief(req);
+  }
   if (t === "discovery_plan" || t === "evidence_request_pack") {
     return buildDiscoveryPlanBrief(req);
   }

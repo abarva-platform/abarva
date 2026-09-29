@@ -4,6 +4,7 @@ import {
 } from "../orchestrated-deliverable-map";
 import { deliverableKeyForOrchestratorType } from "@/lib/deliverables/quality/deliverable-key-map";
 import { resolveQualityBar } from "@/lib/deliverables/orchestrator/quality-bar-registry";
+import { getDeliverableStructure } from "@/lib/deliverables/orchestrator/briefs/deliverable-structures";
 import { PHASE_CANONICAL_KEYS } from "../deliverable-registry";
 
 describe("orchestrated deliverable map", () => {
@@ -45,6 +46,24 @@ describe("orchestrated deliverable map", () => {
       "discovery_plan",
     );
     expect(prescribedFormatForDeliverableType(orchestratorType)).toBe("docx");
+    expect(
+      getDeliverableStructure("moves", orchestratorType)?.fixedStructure,
+    ).toBe(true);
+  });
+
+  it("does not alias later-phase workshop guides to the P1 discovery plan", () => {
+    for (const registryKey of [
+      "design_workshop_guide",
+      "planning_workshop_guide",
+      "mobilization_workshop_guide",
+      "execution_kickoff_guide",
+    ]) {
+      const orchestratorType = orchestratorDeliverableType(registryKey);
+      expect(orchestratorType).toBe(registryKey);
+      expect(
+        getDeliverableStructure("moves", orchestratorType),
+      ).toBeUndefined();
+    }
   });
 
   it("routes the P5 value measurement contract to its own quality profile", () => {

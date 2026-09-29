@@ -160,6 +160,95 @@ const MOVES_CHARTER: DeliverableStructure = {
   forbiddenSectionTopics: [...CHARTER_CONTRACT.forbiddenTopics],
 };
 
+const MOVES_DISCOVERY_PLAN: DeliverableStructure = {
+  module: "moves",
+  deliverableType: "discovery_plan",
+  purpose:
+    "Prepare the client and delivery team to conduct P2 discovery, interviews, and evidence validation against the approved Charter.",
+  decisionToSupport:
+    "Authorize and prepare the discovery workplan; do not report findings that have not yet been gathered.",
+  sections: [
+    s(
+      "charter_recap",
+      "Charter Recap & Decision Boundaries",
+      "Summarize only the approved mandate, scope, success measures, decisions, assumptions, and open questions that P2 must validate. Keep hypotheses explicitly labeled.",
+      "mixed",
+      [],
+      "Keep under 350 words. Do not restate the full Charter or turn hypotheses into findings.",
+    ),
+    s(
+      "discovery_workplan",
+      "Discovery Workplan",
+      "Sequence the P2 workshops and interviews with objectives, participants by role, facilitator, duration, and expected outputs. Distinguish confirmed participants from roles still to be assigned.",
+      "mixed",
+      [],
+      "Use one compact session table. Include a practical 45-minute stakeholder interview agenda with time-boxed segments.",
+    ),
+    s(
+      "evidence_requests",
+      "Evidence Requests & Validation Plan",
+      "List the files, extracts, system records, and metric definitions to request, why each matters, likely owner, date range, validation method, and sensitivity/access conditions.",
+      "mixed",
+      ["current state process", "kpi baseline", "it systems landscape"],
+      "Use one compact evidence-request table. Mark owner or period as Client Decision Required when it is not established.",
+    ),
+    s(
+      "interview_guide",
+      "Workshop & Interview Guide",
+      "Provide open, neutral questions for operations, technology, data, security/privacy, finance, and sponsor stakeholders. Capture answers as observations with source and confidence, not as established facts.",
+      "mixed",
+      ["stakeholder input", "current state process"],
+      "Group questions by role and purpose. Include prompts to test conflicting metrics, stale sources, red lines, and unsupported value hypotheses without assuming their resolution.",
+    ),
+    s(
+      "p2_readiness",
+      "P2 Readiness & Open Inputs",
+      "State the minimum evidence and human decisions required to close discovery, including unresolved transcript governance, API validation, platform readiness, metric ownership, and finance validation when not yet evidenced.",
+      "mixed",
+      ["governance", "data quality", "cost baseline"],
+      "Use a concise checklist. Do not imply the evidence has been collected or approved; identify the owner and acceptance test for each open item.",
+    ),
+  ],
+  requiredSectionKeys: [
+    "charter_recap",
+    "discovery_workplan",
+    "evidence_requests",
+    "interview_guide",
+    "p2_readiness",
+  ],
+  fixedStructure: true,
+  forbiddenSectionTopics: [
+    "current-state findings",
+    "root-cause conclusion",
+    "target architecture",
+    "solution design",
+    "investment estimate",
+    "implementation roadmap",
+  ],
+  prohibitedContent: [
+    "This is a P1 preparation guide, not the P2 discovery report. Do not invent workshop outcomes, interview quotes, measured baselines, validated value, or resolved governance decisions.",
+    "Do not include P2 findings, P3 architecture or solution design, P4 pricing or business case, or P5 execution commitments. The guide must request and test evidence, not claim it has been collected.",
+    "Keep the complete guide within the 3,000-word artifact ceiling. Prefer compact session and evidence-request tables to repeated explanatory prose.",
+  ],
+  expectedExhibits: [
+    {
+      key: "open_inputs_required",
+      title: "Open Inputs Required",
+      kind: "matrix",
+      purpose:
+        "Make uncollected evidence, owners, validation tests, and gate implications explicit before the discovery work begins.",
+      preferredFormat: "docx",
+      requiredElements: [
+        "input",
+        "owner",
+        "validation",
+        "status",
+        "gate implication",
+      ],
+    },
+  ],
+};
+
 const MOVES_BUSINESS_CASE: DeliverableStructure = {
   module: "moves",
   deliverableType: "business_case",
@@ -1602,6 +1691,7 @@ const SOURCE_EXEC_REC: DeliverableStructure = {
 
 export const DELIVERABLE_STRUCTURES: DeliverableStructure[] = [
   MOVES_CHARTER,
+  MOVES_DISCOVERY_PLAN,
   MOVES_BUSINESS_CASE,
   MOVES_ROADMAP,
   MOVES_DISCOVERY,

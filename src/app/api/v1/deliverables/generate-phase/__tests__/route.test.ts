@@ -459,7 +459,7 @@ describe("POST /api/v1/deliverables/generate-phase", () => {
       "operating_model",
       "requirements_traceability",
       "sourcing_strategy",
-      "discovery_plan",
+      "planning_workshop_guide",
     ]);
     for (const c of createCalls) {
       expect(c.clientId).toBe("client-uuid");
