@@ -26,26 +26,6 @@ const FACT_EVIDENCE_MAP: Record<string, FactEvidenceMapping> = {
     requirementId: "EVID-SRC-SCOPE-APP-INV",
     currentState: "Available",
   },
-  annual_change_order_spend: {
-    requirementId: "EVID-SRC-SCOPE-TICKET-HISTORY",
-    currentState: "Available",
-  },
-  recurring_avoidable_pct: {
-    requirementId: "EVID-SRC-SCOPE-TICKET-HISTORY",
-    currentState: "Available",
-  },
-  projected_volume_decline_pct: {
-    requirementId: "EVID-SRC-SCOPE-TICKET-HISTORY",
-    currentState: "Available",
-  },
-  automatable_effort_pool: {
-    requirementId: "EVID-SRC-SCOPE-TICKET-HISTORY",
-    currentState: "Available",
-  },
-  chronic_miss_rate: {
-    requirementId: "EVID-SRC-SCOPE-TICKET-HISTORY",
-    currentState: "Available",
-  },
   response_addressed: {
     requirementId: "EVID-SRC-RESP-PROPOSALS",
     currentState: "Available",
@@ -82,6 +62,7 @@ const FAILURE_STATES = new Set<SourceEventEvidenceCurrentState>([
 export function deriveFactBackedEvidenceStates(
   facts: SourceEventFactRow[],
 ): SourceEventEvidence[] {
+  const ticketFiles = new Map<string, SourceEventFactRow[]>();
   const grouped = new Map<
     string,
     {
@@ -91,6 +72,12 @@ export function deriveFactBackedEvidenceStates(
   >();
 
   for (const fact of facts) {
+    if (fact.fact_key === "ticket_count" && isValidTicketFact(fact)) {
+      const hash = String(fact.source_citation?.source_sha256);
+      const key = `${fact.client_key}:${fact.source_event_id}:${hash}`;
+      ticketFiles.set(key, [...(ticketFiles.get(key) ?? []), fact]);
+      continue;
+    }
     const mapping = FACT_EVIDENCE_MAP[fact.fact_key];
     if (!mapping || !isTrustedGateFact(fact)) continue;
     if (!evidenceById(mapping.requirementId)) continue;
@@ -100,6 +87,20 @@ export function deriveFactBackedEvidenceStates(
     };
     group.facts.push(fact);
     grouped.set(mapping.requirementId, group);
+  }
+
+  const completeTicketFiles = [...ticketFiles.values()]
+    .filter((rows) => {
+      const tiers = new Set(rows.map((row) => row.source_citation?.support_tier));
+      return tiers.has("L2") && tiers.has("L3");
+    })
+    .sort((a, b) => String(newestFact(b)?.captured_at ?? "")
+      .localeCompare(String(newestFact(a)?.captured_at ?? "")));
+  if (completeTicketFiles.length > 0) {
+    grouped.set("EVID-SRC-SCOPE-TICKET-HISTORY", {
+      mapping: { requirementId: "EVID-SRC-SCOPE-TICKET-HISTORY", currentState: "Available" },
+      facts: completeTicketFiles[0],
+    });
   }
 
   return [...grouped.entries()].map(([requirementId, group]) => {
@@ -124,6 +125,29 @@ export function deriveFactBackedEvidenceStates(
       updatedAt: timestamp,
     };
   });
+}
+
+function isValidTicketFact(fact: SourceEventFactRow): boolean {
+  const citation = fact.source_citation;
+  const rawCount = fact.value_numeric;
+  const count = typeof rawCount === "number" ||
+    (typeof rawCount === "string" && /^\d+$/.test(rawCount))
+      ? Number(rawCount)
+      : NaN;
+  return !fact.is_stale && TRUSTED_FACT_METHODS.has(fact.source_method) &&
+    TRUSTED_FACT_CONFIDENCE.has(fact.confidence) && hasCitation(fact) &&
+    fact.entity_kind === "tower" &&
+    Boolean(fact.entity_ref?.trim()) && fact.unit === "count" &&
+    Number.isSafeInteger(count) && count >= 0 &&
+    typeof citation?.source_sha256 === "string" &&
+    /^[a-f0-9]{64}$/i.test(citation.source_sha256) &&
+    (citation.support_tier === "L2" || citation.support_tier === "L3") &&
+    typeof citation.month === "string" &&
+    /^\d{4}-(0[1-9]|1[0-2])$/.test(citation.month) &&
+    typeof citation.time_window === "string" &&
+    citation.time_window.trim().length > 0 &&
+    typeof citation.source_basis === "string" &&
+    citation.source_basis.trim().length > 0;
 }
 
 export function mergeFactBackedEvidenceStates(

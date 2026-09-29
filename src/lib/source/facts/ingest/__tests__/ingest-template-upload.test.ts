@@ -153,6 +153,73 @@ describe("ingestTemplateUpload — VOLUMETRICS_V1", () => {
   });
 });
 
+describe("ingestTemplateUpload — TICKET_HISTORY_V1", () => {
+  const ticketUpload: ParsedTemplateUpload = {
+    headers: [
+      "Service Tower", "Support Tier", "Month", "Time Window",
+      "Ticket Count", "SLA Breach Count", "Source Basis", "Fixture Status",
+    ],
+    rows: [
+      {
+        "Service Tower": "Service desk", "Support Tier": "l2", Month: "2026-08",
+        "Time Window": "Business hours", "Ticket Count": 42,
+        "SLA Breach Count": 3, "Source Basis": "Synthetic smoke scenario",
+        "Fixture Status": "SYNTHETIC TEST DATA ONLY",
+      },
+      {
+        "Service Tower": "Service desk", "Support Tier": "L3", Month: "2026-08",
+        "Time Window": "After hours", "Ticket Count": 13,
+        "SLA Breach Count": 1, "Source Basis": "Synthetic smoke scenario",
+        "Fixture Status": "SYNTHETIC TEST DATA ONLY",
+      },
+    ],
+  };
+
+  it("writes ticket counts with file and cohort provenance, not financial levers", async () => {
+    const result = await ingestTemplateUpload(
+      {
+        templateCode: "TICKET_HISTORY_V1", upload: ticketUpload,
+        scope: { eventId: "evt-1", clientKey: "lakeshore" },
+        sourceFile: { name: "synthetic-ticket.csv", sha256: "a".repeat(64) },
+      },
+      deps(),
+    );
+
+    expect(result).toMatchObject({ ok: true, factsWritten: 4, unmappedColumns: [] });
+    const facts = insertFacts.mock.calls[0][0] as SourceEventFactInsert[];
+    expect(facts.map((fact) => fact.fact_key)).toEqual([
+      "ticket_count", "sla_breach_count", "ticket_count", "sla_breach_count",
+    ]);
+    expect(facts[0]).toMatchObject({
+      client_key: "lakeshore", entity_kind: "tower", entity_ref: "Service desk",
+      value_numeric: 42, source_citation: {
+        doc: "synthetic-ticket.csv", source_sha256: "a".repeat(64),
+        source_file: "synthetic-ticket.csv", source_row: 1,
+        source_system: "Synthetic smoke scenario", value_source: "ITSM ticket export",
+        support_tier: "L2", month: "2026-08", time_window: "Business hours",
+        source_basis: "Synthetic smoke scenario",
+      },
+    });
+  });
+
+  it("rejects an invalid breach count before any fact write", async () => {
+    const result = await ingestTemplateUpload(
+      {
+        templateCode: "TICKET_HISTORY_V1",
+        upload: {
+          ...ticketUpload,
+          rows: [{ ...ticketUpload.rows[0], "SLA Breach Count": 43 }, ticketUpload.rows[1]],
+        },
+        scope: { eventId: "evt-1", clientKey: "lakeshore" },
+        sourceFile: { name: "synthetic-ticket.csv", sha256: "a".repeat(64) },
+      },
+      deps(),
+    );
+    expect(result).toMatchObject({ ok: false, code: "invalid_upload" });
+    expect(insertFacts).not.toHaveBeenCalled();
+  });
+});
+
 describe("ingestTemplateUpload — APP_INVENTORY_V1", () => {
   it("writes 3 typed facts from one app row", async () => {
     const result = await ingestTemplateUpload(

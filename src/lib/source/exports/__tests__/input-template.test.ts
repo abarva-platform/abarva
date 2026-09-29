@@ -78,7 +78,7 @@ describe("source input template", () => {
   it("gives fact-backed requirements parser-aligned intake headers", async () => {
     const factTemplatesByRequirement = {
       "EVID-SRC-SCOPE-APP-INV": "APP_INVENTORY_V1",
-      "EVID-SRC-SCOPE-TICKET-HISTORY": "VOLUMETRICS_V1",
+      "EVID-SRC-SCOPE-TICKET-HISTORY": "TICKET_HISTORY_V1",
       "EVID-SRC-RESP-PROPOSALS": "RESPONSE_COVERAGE_V1",
       "EVID-SRC-PRICE-VENDOR-PRICING": "VENDOR_BIDS_V1",
     } as const;
@@ -97,6 +97,7 @@ describe("source input template", () => {
         ...(template.entityRefColumn
           ? [template.entityRefColumn]
           : template.entityRefColumns ?? []),
+        ...(template.contextColumns ?? []),
         ...template.columns.map((column) => column.header),
       ];
 
@@ -113,6 +114,12 @@ describe("source input template", () => {
       const header = rowValues.slice(1);
 
       expect(header).toEqual(expectedHeaders);
+      if (requirementId === "EVID-SRC-SCOPE-TICKET-HISTORY") {
+        expect(header).toContain("Ticket Count");
+        expect(header).toContain("Support Tier");
+        expect(header).toContain("Time Window");
+        expect(header).not.toContain("Annual Change-Order Spend (USD)");
+      }
     }
   });
 });

@@ -209,23 +209,16 @@ describe("SourceAnalyticsCanvas — guidebook workspace", () => {
     const volumetricsRow = screen.getByTestId(
       "source-shell-guidebook-prep-row-scope.volumetrics",
     );
-    expect(volumetricsRow).toHaveTextContent("Provide the volumetrics");
-    expect(volumetricsRow).toHaveTextContent("ITSM / finance baseline");
-    expect(volumetricsRow).toHaveTextContent("Ravi Menon, IT-Ops");
-    expect(volumetricsRow).toHaveTextContent("Volumetrics file");
+    expect(volumetricsRow).toHaveTextContent("Provide ticket volumes");
+    expect(volumetricsRow).toHaveTextContent("ITSM ticket export");
+    expect(volumetricsRow).toHaveTextContent("ITSM owner");
+    expect(volumetricsRow).toHaveTextContent("Ticket-history file");
     expect(volumetricsRow).toHaveTextContent("CSV or XLSX");
     expect(volumetricsRow).toHaveTextContent(
-      "Tickets, SLA misses, change orders, run volumes",
+      "Ticket counts and SLA breach counts",
     );
-    // Item U-523: this row used to render the raw template code. The rail
-    // publishes "Ticket volumes & volumetrics" for VOLUMETRICS_V1, so the code
-    // was builder vocabulary on a client surface (item U-400 / N3), not a
-    // deliberate affordance — this assertion codified the defect. It now
-    // asserts the published label, and the render-measured control in
-    // src/components/source/__tests__/source-surface-builder-vocabulary.test.tsx
-    // fails if the code comes back.
     expect(volumetricsRow).toHaveTextContent(
-      "Ticket volumes & volumetrics",
+      "ITSM ticket history by tier and time window",
     );
   });
 

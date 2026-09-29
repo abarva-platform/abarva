@@ -42,11 +42,11 @@ it.each(stages)("assigns every required $stageKey evidence item to exactly one t
   expect(assigned).toEqual(expected);
 });
 
-it("places Scope SLA proof beside volumetrics and workforce proof beside retained roles", () => {
-  expect(requiredEvidenceRequirementIdsForTask({ id: "scope.volumetrics", factTemplateCode: "VOLUMETRICS_V1" }, "scope"))
-    .toEqual(["EVID-SRC-SCOPE-TICKET-HISTORY", "EVID-SRC-SCOPE-SLA-BASELINE"]);
+it("keeps ticket history and SLA baseline visible on their own Scope steps", () => {
+  expect(requiredEvidenceRequirementIdsForTask({ id: "scope.volumetrics", factTemplateCode: "TICKET_HISTORY_V1" }, "scope"))
+    .toEqual(["EVID-SRC-SCOPE-TICKET-HISTORY"]);
   expect(requiredEvidenceRequirementIdsForTask({ id: "scope.matrix" }, "scope"))
-    .toEqual(["EVID-SRC-SCOPE-WORKFORCE"]);
+    .toEqual(["EVID-SRC-SCOPE-WORKFORCE", "EVID-SRC-SCOPE-SLA-BASELINE"]);
 });
 
 it("does not infer a binding for an unknown task", () => {
