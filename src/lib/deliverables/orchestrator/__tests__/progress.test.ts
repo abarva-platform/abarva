@@ -5,15 +5,24 @@ import {
 } from "../progress";
 
 describe("deliverable generation progress (decomposed)", () => {
-  it("has the three decomposed phases in order", () => {
+  it("lists the decomposed phases, including the conditional repair pass", () => {
     expect(GENERATION_PHASES.map((s) => s.pass)).toEqual([
       "architect",
       "section_draft",
+      "section_repair",
       "synthesis",
     ]);
     for (const s of GENERATION_PHASES) {
       expect(s.label.length).toBeGreaterThan(0);
     }
+  });
+
+  it("reports synthesis as next after the final targeted repair", () => {
+    expect(buildGenerationProgress("section_repair", 9, 10)).toMatchObject({
+      pct: 90,
+      label: "Repairing under-target sections",
+      nextLabel: "Assembling the final document",
+    });
   });
 
   it("reports a small fixed planning percent for the architect (total not yet known)", () => {
@@ -27,7 +36,7 @@ describe("deliverable generation progress (decomposed)", () => {
   });
 
   it("scales the percent to the dynamic total once the section count is known", () => {
-    // 12-section charter → total = 12 + architect + synthesis = 14
+    // 12-section document without the conditional charter repair → total 14
     // 3rd call completed (architect + 2 sections) → 3/14 ≈ 21%
     expect(buildGenerationProgress("section_draft", 3, 14)).toMatchObject({
       completed: 3,

@@ -137,7 +137,7 @@ export const CHARTER_CONTRACT: ArtifactContract = {
       title: "Charter Decision & Immediate Next Steps",
       intent:
         "State one of: Authorize Discovery / Authorize Discovery with Conditions / Do Not Authorize Discovery, plus the immediate owner actions and conditions.",
-      targetProseWords: 110,
+      targetProseWords: 120,
       maxWords: 140,
     },
     {
@@ -145,14 +145,14 @@ export const CHARTER_CONTRACT: ArtifactContract = {
       title: "Opportunity, Context & Intended Outcomes",
       intent:
         "Why this Move is being considered, why it matters now, the business opportunity or challenge, expected value direction, and the outcomes Discovery is intended to evaluate. These are objectives, not validated findings.",
-      targetProseWords: 180,
+      targetProseWords: 200,
       maxWords: 220,
     },
     {
       key: "scope",
       title: "Scope & Out of Scope",
       intent: "A simple two-column table: In Scope / Out of Scope. Concise.",
-      targetProseWords: 40,
+      targetProseWords: 50,
       maxWords: 150,
     },
     {
@@ -168,7 +168,7 @@ export const CHARTER_CONTRACT: ArtifactContract = {
       title: "Sponsorship & Governance",
       intent:
         "Executive sponsor, decision authority, working team, governance cadence (if known). Unknown items labeled Client Decision Required.",
-      targetProseWords: 65,
+      targetProseWords: 80,
       maxWords: 140,
     },
     {
@@ -176,7 +176,7 @@ export const CHARTER_CONTRACT: ArtifactContract = {
       title: "Known Constraints & Dependencies",
       intent:
         "Only constraints and dependencies already supported by approved evidence — do not infer risks. Unknown items labeled To Validate During Discovery.",
-      targetProseWords: 105,
+      targetProseWords: 110,
       maxWords: 120,
     },
     {
@@ -184,7 +184,7 @@ export const CHARTER_CONTRACT: ArtifactContract = {
       title: "Authorization Conditions & Open Inputs",
       intent:
         "State the conditions under which the sponsor is authorizing Discovery and the few open inputs that must carry into the separate Discovery Workshop Guide. Do not include agendas, interview scripts, data-request tables, questionnaires, or workshop operating instructions here.",
-      targetProseWords: 120,
+      targetProseWords: 140,
       maxWords: 170,
     },
   ],

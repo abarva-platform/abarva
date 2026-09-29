@@ -22,7 +22,6 @@ import type {
   SourceRegisterEntry,
 } from "./types";
 import { sanitizeClientFacingArtifactMarkdown } from "@/lib/deliverables/client-facing-artifact-sanitize";
-import { countBodyWords } from "@/lib/deliverables/shared/body-word-count";
 import { clientCompleteReasonLabel } from "./client-complete-labels";
 import { carriesRequiredEvidenceSignal } from "./evidence-signals";
 import { humanizeSourceFamily } from "./source-register";
@@ -844,64 +843,6 @@ function fallbackRiskTable(
   };
 }
 
-function ensureMovesCharterMinimumProse(
-  req: DeliverableIntelligenceRequest,
-  sections: readonly RenderableSection[],
-): RenderableSection[] {
-  if (req.module !== "moves" || req.deliverableType !== "charter") {
-    return [...sections];
-  }
-  const countWords = (candidate: readonly RenderableSection[]) =>
-    countBodyWords(candidate, {
-      excludeNonProse: req.qualityBar.excludeNonProseFromBody === true,
-    });
-  if (countWords(sections) >= req.qualityBar.minBodyWords) {
-    return [...sections];
-  }
-  if (sections.some((s) => s.key === "authorization_conditions")) {
-    return [...sections];
-  }
-
-  const paragraphs = [
-    "Discovery authorization should preserve the sponsor's known scope, decision rights, success measures, and evidence boundaries without turning unanswered questions into findings. The charter should therefore state what is approved now, what remains conditional, and which sponsor or operating owner must resolve each condition.",
-    "The next phase should use a separate Discovery Workshop Guide / Evidence Request Pack for session agendas, interview prompts, data extracts, templates, and working instructions. That separate guide can be operational and detailed; the charter should remain a CXO-facing authorization record.",
-    "Any unresolved dependency should stay visible until an accountable owner closes it. If a fact is not approved, the charter should carry it as an open input or assumption to validate rather than converting it into a commitment.",
-    "The sponsor review should test whether scope, decision rights, evidence handling, and value discipline are strong enough to proceed. This keeps the next phase bounded and auditable without converting charter approval into delivery authorization.",
-    "The charter should leave the team with a practical operating test: a reviewer can trace every material claim to accepted evidence, every caveat to a decision boundary, and every open input to an owner. Anything else remains outside the decision until Discovery closes the gap.",
-    "At the next gate, the team should be able to show what changed, what was approved, what stayed open, and what the evidence can responsibly support. That is the charter's real job: creating the conditions for a better decision later.",
-    "The charter should also make the stopping conditions visible. If the sponsor cannot confirm the operating owner, if evidence access is blocked, if the value baseline cannot be finance-reviewed, or if risk and compliance boundaries are not accepted, the Move should pause or narrow before the team advances to design.",
-    "Known facts should be carried forward exactly once. Scope, success measures, stakeholder roles, decision rights, exclusions, and caveats belong in this authorization record; the separate guide can translate them into meetings, file requests, and working-session outputs without changing the underlying decision.",
-    "This separation matters for executive trust. A sponsor should be able to read the charter as the approved mandate, then hand the workshop guide to the working team as the operating playbook for the next phase. If those two purposes are combined, the executive record becomes cluttered and the working guide becomes too shallow to run.",
-    "When evidence is incomplete, the charter should say so plainly. A missing baseline, unapproved source, unconfirmed owner, or unresolved risk is not a reason to invent detail; it is a condition for Discovery to close. That makes the document useful even before every input is known.",
-    "The final authorization should therefore read as a compact decision: proceed, proceed with conditions, or hold. It should tell leadership what is known, what is not yet known, who owns the next decision, and which boundaries cannot be crossed without returning to the sponsor.",
-    "If the next phase later discovers that the charter boundary was wrong, the remedy is not quiet expansion inside the workstream. The sponsor should amend the charter or approve a narrower path so the record stays aligned with what the team is actually authorized to do.",
-  ];
-  const body: string[] = [];
-  for (const paragraph of paragraphs) {
-    body.push(paragraph);
-    const candidate: RenderableSection = {
-      key: "authorization_conditions",
-      title: "Authorization Conditions & Open Inputs",
-      groundingMode: "expert_template",
-      citationsUsed: [],
-      bodyMarkdown: body.join("\n\n"),
-    };
-    if (countWords([...sections, candidate]) >= req.qualityBar.minBodyWords) {
-      return [...sections, candidate];
-    }
-  }
-  return [
-    ...sections,
-    {
-      key: "authorization_conditions",
-      title: "Authorization Conditions & Open Inputs",
-      groundingMode: "expert_template",
-      citationsUsed: [],
-      bodyMarkdown: body.join("\n\n"),
-    },
-  ];
-}
-
 /**
  * Assemble the final RenderableDeliverable in code from the per-section drafts + the synthesis
  * result. No monolithic render call → no single-blob ceiling. Falls back to the request's own
@@ -972,10 +913,7 @@ export function assembleDeliverable(
     recommendation,
     nextActions,
   );
-  const generatedSections = ensureMovesCharterMinimumProse(
-    req,
-    sectionsWithSignals,
-  );
+  const generatedSections = sectionsWithSignals;
   const deckSlides = ensureContractedDeckSlides({
     req,
     sections: generatedSections,

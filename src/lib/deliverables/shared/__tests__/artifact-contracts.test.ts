@@ -29,7 +29,7 @@ describe("shared artifact contracts", () => {
     );
     expect(
       targets.reduce<number>((sum, target) => sum + (target ?? 0), 0),
-    ).toBe(730);
+    ).toBe(810);
     for (const section of sections) {
       expect(section.targetProseWords).toBeLessThanOrEqual(section.maxWords);
     }

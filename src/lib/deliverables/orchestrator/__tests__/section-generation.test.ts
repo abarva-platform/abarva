@@ -13,6 +13,7 @@ import { validateDeliverableQuality } from "../quality-validator";
 import { resolveQualityBar } from "../quality-bar-registry";
 import { amsRfpRequest } from "../__fixtures__/ams-rfp";
 import { countBodyWords } from "@/lib/deliverables/shared/body-word-count";
+import { CHARTER_CONTRACT } from "@/lib/deliverables/shared/artifact-contracts";
 import type { GovernedEvidenceItem, RenderableSection } from "../types";
 
 describe("mapWithConcurrency", () => {
@@ -383,7 +384,7 @@ describe("assembleDeliverable", () => {
       {
         key: "charter_decision",
         title: "Charter Decision & Immediate Next Steps",
-      bodyMarkdown:
+        bodyMarkdown:
           "Approve Discovery with the charter scope, authorization conditions, evidence families, and caveats carried forward.",
         groundingMode: "mixed",
         citationsUsed: [],
@@ -407,7 +408,7 @@ describe("assembleDeliverable", () => {
     });
   });
 
-  it("adds decision-useful authorization conditions when a Moves charter is below its prose floor", () => {
+  it("does not pad a thin canonical Moves charter with boilerplate", () => {
     const req = amsRfpRequest({
       module: "moves",
       deliverableType: "charter",
@@ -422,13 +423,15 @@ describe("assembleDeliverable", () => {
     });
     const thinBody =
       "Sponsor alignment, evidence acceptance, decision rights, scope control, owner attendance, value discipline, review cadence, and caveat handling are confirmed for discovery.";
-    const sections: RenderableSection[] = Array.from({ length: 7 }, (_, i) => ({
-      key: `charter_section_${i + 1}`,
-      title: i === 0 ? "Charter Decision" : `Charter Working Section ${i + 1}`,
-      bodyMarkdown: thinBody,
-      groundingMode: "mixed",
-      citationsUsed: [],
-    }));
+    const sections: RenderableSection[] = CHARTER_CONTRACT.sections.map(
+      (section) => ({
+        key: section.key,
+        title: section.title,
+        bodyMarkdown: thinBody,
+        groundingMode: "mixed",
+        citationsUsed: [],
+      }),
+    );
 
     const doc = assembleDeliverable(
       req,
@@ -440,12 +443,16 @@ describe("assembleDeliverable", () => {
       excludeNonProse: req.qualityBar.excludeNonProseFromBody === true,
     });
 
+    expect(doc.generatedSections).toHaveLength(
+      CHARTER_CONTRACT.sections.length,
+    );
+    expect(wordCount).toBeLessThan(700);
+    expect(doc.generatedSections.map((section) => section.key)).toEqual(
+      CHARTER_CONTRACT.sections.map((section) => section.key),
+    );
     expect(
-      doc.generatedSections.some(
-        (section) => section.key === "authorization_conditions",
-      ),
-    ).toBe(true);
-    expect(wordCount).toBeGreaterThanOrEqual(700);
+      doc.generatedSections.map((section) => section.bodyMarkdown).join(" "),
+    ).not.toContain("Discovery authorization should preserve");
   });
 
   it("adds a risk-table fallback for Moves target architecture when synthesis omits it", () => {
