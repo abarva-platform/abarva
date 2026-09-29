@@ -83,6 +83,7 @@ export function factTemplateCodeForTask(task: {
   id: string;
   factTemplateCode?: string | null;
 }): string | undefined {
+  if (task.id === "scope.app-inventory") return undefined;
   return task.factTemplateCode ?? FACT_TEMPLATE_BY_TASK_ID[task.id];
 }
 

@@ -150,6 +150,7 @@ export function hydrateTaskEvidenceState(
         Boolean(evidence.sourceArtifactId),
       );
       if (reviewedInventory) return { ...task, evidenceComplete: true };
+      return task;
     }
 
     const taskFactTemplateCode = factTemplateCodeForTask(task);

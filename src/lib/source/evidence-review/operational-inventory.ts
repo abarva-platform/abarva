@@ -1,4 +1,5 @@
 import { createHash } from "node:crypto";
+import Papa from "papaparse";
 
 import { parseFileToRows } from "@/lib/source/facts/extraction/file-to-rows";
 
@@ -34,6 +35,18 @@ export async function reviewOperationalInventory(input: {
   const sourceSha256 = createHash("sha256").update(bytes).digest("hex");
   if (sourceSha256 !== artifact.sha256.toLowerCase()) {
     return { ok: false, reason: "The stored inventory bytes do not match its registered hash." };
+  }
+  if (kind === "csv") {
+    const parsed = Papa.parse<string[]>(bytes.toString("utf8"), {
+      header: false,
+      skipEmptyLines: "greedy",
+    });
+    const headerWidth = parsed.data[0]?.length;
+    if (parsed.errors.length > 0 ||
+        !headerWidth ||
+        parsed.data.some((row) => !Array.isArray(row) || row.length !== headerWidth)) {
+      return { ok: false, reason: "Inventory CSV has malformed or uneven rows." };
+    }
   }
   let upload;
   try {

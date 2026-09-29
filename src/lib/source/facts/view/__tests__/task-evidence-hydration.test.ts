@@ -8,6 +8,7 @@ import {
   hydrateTaskEvidenceState,
   templateFactsPresent,
 } from "../task-evidence-hydration";
+import { factTemplateCodeForTask } from "../../task-evidence-requirements";
 import { templateFactMapByCode } from "../../template-fact-map";
 import type { StageTaskView } from "@/components/source/canvas/analytics/view-model";
 
@@ -159,6 +160,18 @@ describe("hydrateTaskEvidenceState", () => {
         tasks: [task], factInputs: {}, evidenceStates: [evidence], stageKey: "scope",
       })[0].evidenceComplete).toBeUndefined();
     }
+  });
+
+  it("does not complete a legacy inventory task from an unrelated numeric fact", () => {
+    const map = templateFactMapByCode("APP_INVENTORY_V1");
+    expect(map?.columns.length).toBeGreaterThan(0);
+    expect(factTemplateCodeForTask(APP_INVENTORY_TASK)).toBeUndefined();
+    const hydrated = hydrateTaskEvidenceState({
+      tasks: [APP_INVENTORY_TASK],
+      factInputs: { [map!.columns[0].factKey]: 42 },
+      stageKey: "scope",
+    });
+    expect(hydrated[0].evidenceComplete).toBeUndefined();
   });
 
   it.each([

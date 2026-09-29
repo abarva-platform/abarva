@@ -153,3 +153,58 @@ describe("source input template", () => {
     expect(result).toEqual(expect.objectContaining({ ok: true, rowCount: 1 }));
   });
 });
+
+const operationalCsv = [
+  "Service ID,Service Name,Scope Boundary,Criticality,Lifecycle State,Service Owner,Source Basis,As Of Date",
+  "SVC-001,L1/L2 service desk,Intake triage and escalation,high,active,IT operations,Synthetic service catalog,2026-09-29",
+  "SVC-002,Endpoint management,Device build patch and lifecycle,medium,active,Endpoint operations,Synthetic service catalog,2026-09-29",
+].join("\n");
+
+function inventoryArtifact(bytes: Buffer, overrides: Record<string, string> = {}) {
+  return {
+    originalName: "service_catalog_scope.csv",
+    mimeType: "text/csv",
+    sha256: createHash("sha256").update(bytes).digest("hex"),
+    ...overrides,
+  };
+}
+
+describe("operational inventory file review", () => {
+  it("accepts a source-bound service inventory without inventing cost facts", async () => {
+    const bytes = Buffer.from(operationalCsv);
+    const result = await reviewOperationalInventory({
+      artifact: inventoryArtifact(bytes), bytes,
+    });
+    expect(result).toEqual({
+      ok: true, rowCount: 2, sourceSha256: inventoryArtifact(bytes).sha256,
+    });
+  });
+
+  it.each([
+    ["wrong byte hash", operationalCsv, { sha256: "0".repeat(64) }],
+    ["missing stable identity", operationalCsv.replace("SVC-002", ""), {}],
+    ["duplicate identity", operationalCsv.replace("SVC-002", "SVC-001"), {}],
+    ["missing source basis", operationalCsv.replace("Synthetic service catalog", ""), {}],
+    ["missing owner", operationalCsv.replace("Endpoint operations", ""), {}],
+    ["missing lifecycle", operationalCsv.replace(",active,Endpoint operations", ",,Endpoint operations"), {}],
+    ["invalid criticality", operationalCsv.replace(",medium,", ",unknown,"), {}],
+    ["invalid as-of date", operationalCsv.replace("2026-09-29", "not-a-date"), {}],
+    ["impossible as-of date", operationalCsv.replace("2026-09-29", "2026-02-30"), {}],
+    ["extra unbound column", operationalCsv.replace("2026-09-29", "2026-09-29,unbound"), {}],
+    ["empty data", operationalCsv.split("\n")[0], {}],
+    ["duplicate header", operationalCsv.replace("Service Name,", "Service ID,"), {}],
+  ])("refuses %s", async (_label, content, overrides) => {
+    const bytes = Buffer.from(content);
+    const result = await reviewOperationalInventory({
+      artifact: inventoryArtifact(bytes, overrides), bytes,
+    });
+    expect(result.ok).toBe(false);
+  });
+
+  it("rejects a mislabeled file instead of trusting its extension", async () => {
+    const bytes = Buffer.from(operationalCsv);
+    expect((await reviewOperationalInventory({
+      artifact: inventoryArtifact(bytes, { mimeType: "application/pdf" }), bytes,
+    })).ok).toBe(false);
+  });
+});
