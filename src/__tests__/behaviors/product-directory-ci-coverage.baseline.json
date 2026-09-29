@@ -93,7 +93,6 @@
   "src/lib/programs/evidence-readiness/__tests__",
   "src/lib/programs/learning-writeback/__tests__",
   "src/lib/programs/mobilization/__tests__",
-  "src/lib/programs/playbook/__tests__",
   "src/lib/programs/regulatory/__tests__",
   "src/lib/programs/source-trigger/__tests__",
   "src/lib/programs/suitability/__tests__",
