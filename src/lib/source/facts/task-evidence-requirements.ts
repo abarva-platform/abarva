@@ -4,7 +4,6 @@ import type { SourceStageKey } from "@/lib/source/types";
 
 export const FACT_TEMPLATE_BY_TASK_ID: Record<string, string> = {
   "scope.volumetrics": "TICKET_HISTORY_V1",
-  "scope.vendor-commercials": "CONTRACT_TERMS_V1",
   "rfp.clause-coverage": "RFP_CLAUSES_V1",
   "responses.coverage": "RESPONSE_COVERAGE_V1",
   "evaluation.vendor-bids": "VENDOR_BIDS_V1",
@@ -15,6 +14,7 @@ export const FACT_TEMPLATE_BY_TASK_ID: Record<string, string> = {
 
 const EVIDENCE_REQUIREMENT_BY_TASK_ID: Record<string, string> = {
   "scope.app-inventory": "EVID-SRC-SCOPE-APP-INV",
+  "scope.prior-baseline": "EVID-SRC-SCOPE-FY-CONTRACT",
   "executive-decision.recommendation-packet":
     "EVID-SRC-DEC-STAKEHOLDER-ENDORSEMENT",
 };
@@ -30,7 +30,7 @@ const REQUIRED_EVIDENCE_BY_TASK_ID: Record<string, readonly string[]> = {
   "scope.volumetrics": ["EVID-SRC-SCOPE-TICKET-HISTORY"],
   "scope.matrix": ["EVID-SRC-SCOPE-WORKFORCE", "EVID-SRC-SCOPE-SLA-BASELINE"],
   "scope.exclusions": ["EVID-SRC-SCOPE-CURRENT-SOW"],
-  "scope.vendor-commercials": ["EVID-SRC-SCOPE-FY-CONTRACT"],
+  "scope.prior-baseline": ["EVID-SRC-SCOPE-FY-CONTRACT"],
   "rfp.clause-coverage": [
     "EVID-SRC-RFP-REQUIREMENTS", "EVID-SRC-RFP-LEGAL-TEMPLATE",
     "EVID-SRC-RFP-SECURITY-PRIVACY", "EVID-SRC-RFP-SOURCING-RULES",
@@ -83,7 +83,7 @@ export function factTemplateCodeForTask(task: {
   id: string;
   factTemplateCode?: string | null;
 }): string | undefined {
-  if (task.id === "scope.app-inventory") return undefined;
+  if (task.id === "scope.app-inventory" || task.id === "scope.prior-baseline") return undefined;
   return task.factTemplateCode ?? FACT_TEMPLATE_BY_TASK_ID[task.id];
 }
 

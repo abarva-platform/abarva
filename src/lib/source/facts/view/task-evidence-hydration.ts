@@ -33,6 +33,7 @@ import type {
   SourceEventEvidenceCurrentState,
 } from "@/lib/source/canvas-substrate";
 import { evidenceById } from "@/lib/source/canonical-specs/evidence-requirements";
+import { evidenceMeetsRequirement, type EvidenceAssessment } from "@/lib/source/evidence-authority";
 import type { EvaluatorInputs } from "@/lib/source/facts/evaluators/types";
 import { templateFactMapByCode } from "@/lib/source/facts/template-fact-map";
 import {
@@ -66,10 +67,7 @@ export interface HydrateTaskEvidenceInput {
    * fact-backed evidence), from `listEffectiveEvidenceStatesForEvent`.
    * Used for ticket-history and non-upload confirm/decide readback.
    */
-  evidenceStates?: readonly (Pick<
-    SourceEventEvidence,
-    "requirementId" | "currentState"
-  > & Partial<Pick<SourceEventEvidence, "id" | "sourceEventFactIds" | "sourceArtifactId">>)[];
+  evidenceStates?: readonly (EvidenceAssessment & Partial<Pick<SourceEventEvidence, "id">>)[];
   /** The canonical stage key being rendered; retained for the caller contract. */
   stageKey?: string;
   /** Verified, current-artifact delegate receipt plus confirmed sponsor notice. */
@@ -151,6 +149,14 @@ export function hydrateTaskEvidenceState(
       );
       if (reviewedInventory) return { ...task, evidenceComplete: true };
       return task;
+    }
+
+    if (task.id === "scope.prior-baseline") {
+      const requirement = evidenceById("EVID-SRC-SCOPE-FY-CONTRACT");
+      const evidence = evidenceStates.find((row) => row.requirementId === requirement?.requirementId);
+      return requirement && evidenceMeetsRequirement(requirement, evidence)
+        ? { ...task, evidenceComplete: true }
+        : task;
     }
 
     const taskFactTemplateCode = factTemplateCodeForTask(task);

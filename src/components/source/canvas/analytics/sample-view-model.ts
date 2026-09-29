@@ -90,18 +90,15 @@ export const SAMPLE_SCOPE_STAGE: StageAnalyticsView = {
       cta: 'Confirm inventory',
     },
     {
-      id: 'scope.vendor-commercials',
-      title: 'Provide vendor commercials & contract terms',
-      subtitle: 'Transition, SLA credits, credits, term',
+      id: 'scope.prior-baseline',
+      title: 'Review the prior commercial baseline',
+      subtitle: 'Prior contract or accountable absence',
       type: 'provide',
       state: 'todo',
       guide:
-        'Upload the vendor commercials sheet (CSV or XLSX): transition fee, overrun probability & cost multiple, SLA credit cap and at-risk fee pool, committed productivity credit, retained-FTE delta, and contract term. This lands the vendor-side facts the SLA, productivity-credit, and transition-risk levers need.',
-      provenance: { owner: 'Procurement lead', source: 'Vendor proposal / commercials sheet' },
-      cta: 'Confirm commercials',
-      // Parsed into CONTRACT_TERMS_V1 facts — flips the SLA, productivity-credit,
-      // transition-risk, and retained-cost levers LIVE.
-      factTemplateCode: 'CONTRACT_TERMS_V1',
+        'Review a recorded prior contract and run-cost baseline if one exists. For a net-new service without either record, declare the absence with an accountable reason. Supplier proposal terms belong to the later response stage; do not enter planning values as actuals.',
+      provenance: { owner: 'Procurement and finance owners', source: 'Prior contract or finance baseline' },
+      cta: 'Review baseline',
     },
     {
       id: 'scope.exclusions',

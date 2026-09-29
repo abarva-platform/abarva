@@ -10,6 +10,7 @@ import type {
   SourceEventEvidence,
   SourceEventGateCriterion,
 } from "../canvas-substrate";
+import { evidenceForStage } from "../canonical-specs/evidence-requirements";
 
 const REVIEW_REASON =
   "Sponsor reviewed the evidence bundle and approves this gate.";
@@ -336,6 +337,42 @@ describe("Source governance enforcement", () => {
       );
     },
   );
+
+  it("accepts an audited prior-baseline absence without waiving other Scope evidence", () => {
+    const required = evidenceForStage("scope")
+      .filter((row) => row.level === "required")
+      .map((row) => evidence({
+        requirementId: row.requirementId,
+        stage: "scope",
+        currentState: "Usable Evidence",
+        sourceArtifactId: `artifact-${row.requirementId}`,
+      }));
+    const priorBaseline = required.find((row) => row.requirementId === "EVID-SRC-SCOPE-FY-CONTRACT")!;
+    const audited = required.map((row) => row === priorBaseline ? {
+      ...row,
+      currentState: "Not Requested" as const,
+      sourceArtifactId: null,
+      applicabilityStatus: "not_applicable" as const,
+      applicabilityReason: "No prior agreement or verified run-cost baseline exists for this new service.",
+      applicabilityActorUserId: "event-owner",
+      applicabilityDecidedAt: "2026-09-29T00:00:00Z",
+    } : row);
+    const input = {
+      criterion: criterion({ criterionId: "GATE-SCOPE-03", fromStage: "scope", toStage: "rfp" }),
+      artifacts: [artifact({ artifactCode: "d06_excl_log", stage: "scope", status: "approved", linkedArtifactId: "reviewed-exclusions" })],
+      evidence: audited,
+      reason: "The Event Owner reviewed the Scope boundary and its evidence limitations.",
+      approvalPolicyCode: "self_v1" as const,
+    };
+
+    expect(evaluateCriterionMetReadiness(input).ok).toBe(true);
+    expect(evaluateCriterionMetReadiness({
+      ...input,
+      evidence: audited.filter((row) => row.requirementId !== "EVID-SRC-SCOPE-WORKFORCE"),
+    }).blockers).toEqual(expect.arrayContaining([
+      expect.objectContaining({ code: "required_evidence_not_ready", detail: expect.stringContaining("Workforce") }),
+    ]));
+  });
 
   it.each(["GATE-SCOPE-02", "GATE-SCOPE-04"])(
     "uses Event Owner authority for %s only under explicit SELF policy",
