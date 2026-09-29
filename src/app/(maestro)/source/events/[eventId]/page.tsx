@@ -701,22 +701,22 @@ export default async function SourceEventDetailPage({
     // template-less `provide` tasks (e.g. the signed sponsor letter) derive from the
     // artifact registry. Honest: a task is stamped complete ONLY because its evidence
     // reached a usable, persisted state — never a fabricated done. Never fatal.
+    const verifiedDelegatedSponsorAcknowledgement =
+      viewStage === "scope" && activeClient?.key
+        ? await hasVerifiedSponsorDelegation({
+            eventId: event.id,
+            tenantKey: activeClient.key,
+          }).catch((error) => {
+            console.error("[SourceEventDetailPage] sponsor delegation read failed", error);
+            return false;
+          })
+        : false;
     if (liveStageView) {
       try {
         liveStageView = applySourceApprovalPolicyToStageView(
           liveStageView,
           event.approvalPolicyCode,
         );
-        const verifiedDelegatedSponsorAcknowledgement =
-          viewStage === "scope" && activeClient?.key
-            ? await hasVerifiedSponsorDelegation({
-                eventId: event.id,
-                tenantKey: activeClient.key,
-              }).catch((error) => {
-                console.error("[SourceEventDetailPage] sponsor delegation read failed", error);
-                return false;
-              })
-            : false;
         const journeyStageView = adaptStageViewToSourceJourney(
           liveStageView,
           sourceJourney,
@@ -762,6 +762,7 @@ export default async function SourceEventDetailPage({
         viewStage={viewStage}
         tenantName={analyticsTenantName}
         stageView={liveStageView}
+        verifiedFallbackSponsorAcknowledgement={verifiedDelegatedSponsorAcknowledgement}
         stepInsight={stepInsight}
         artifacts={analyticsArtifacts}
         approvalItems={analyticsApprovalItems}
