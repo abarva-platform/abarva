@@ -506,6 +506,27 @@ jobs:
       - name: Exercise the Programs playbook suites
         run: npx jest src/lib/programs/playbook/__tests__ --runInBand
 
+      # C-415 slice 5: the Programs suitability assessors. `source-trigger`
+      # comes first in the item's declared order and was NOT wired: its
+      # importer check found no runtime caller, which the item treats as a
+      # retire-or-mount decision rather than CI time.
+      #
+      # Measured BEFORE it was wired, each suite executed on its own: 2
+      # suites, 66 tests, GREEN — agentic-suitability 59,
+      # origination-suitability 7.
+      #
+      # Not coverage of nothing, checked before wiring: origination-suitability
+      # is imported by origination-submit (the Programs origination-submit
+      # route), and agentic-suitability by workflow decomposition, which the
+      # origination charter extensions import on that same path.
+      #
+      # No suite here reads a file's bytes, so `T-770` has nothing to refuse
+      # and `textIsTheSubject` is negative for both, judged per suite.
+      #
+      # Wired as a DIRECTORY with no trailing slash. Nothing nests beneath it.
+      - name: Exercise the Programs suitability suites
+        run: npx jest src/lib/programs/suitability/__tests__ --runInBand
+
       # Two suites shipped on 18 Sep whose release records said "5 of 5 pass"
       # and "19 of 19 pass". Both were true locally and enforced by nothing:
       # neither file was named by any workflow, and no scoped jest script
