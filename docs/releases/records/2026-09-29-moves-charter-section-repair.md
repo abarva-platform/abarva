@@ -48,7 +48,7 @@ that generate a P1 Charter. No canonical data, tenant identity, or authorization
 - `src/lib/deliverables/orchestrator/prompt-builder.ts` — supplies the current draft, measured word
   count, contract target, assigned evidence, and no-padding/phase-boundary instructions.
 - `src/lib/deliverables/shared/artifact-contracts.ts` — sets per-section completeness targets with
-  margin above the document-level prose floor and below each section cap.
+  an 810-word combined target above the 700-word document floor and below each section cap.
 - `src/lib/deliverables/orchestrator/section-generation.ts` — removes the generic append-only fallback
   so assembly cannot make a thin charter appear complete by adding boilerplate.
 - `src/lib/deliverables/orchestrator/progress.ts` and `src/lib/ai/document-generation-policy.ts` —
