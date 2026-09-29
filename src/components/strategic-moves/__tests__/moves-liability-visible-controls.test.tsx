@@ -13,15 +13,21 @@ import {
 } from "@/lib/programs/deliverable-canvas-polish-view";
 
 let mockDeliverablesData: unknown[] = [];
+let mockActiveClient: { id: string } | null = null;
+let mockSucceededRuns: unknown[] = [];
+let mockDeliverableSelect: string | undefined;
 
 jest.mock("@/lib/supabase-server", () => ({
   getServerSupabase: () => ({
     from: () => ({
-      select: () => ({
-        eq: () => ({
-          order: async () => ({ data: mockDeliverablesData, error: null }),
-        }),
-      }),
+      select: (query: string) => {
+        mockDeliverableSelect = query;
+        return {
+          eq: () => ({
+            order: async () => ({ data: mockDeliverablesData, error: null }),
+          }),
+        };
+      },
     }),
   }),
 }));
@@ -35,10 +41,10 @@ jest.mock("@/lib/programs/attachments", () => ({
 // data-plane (ESM) chain. Null active client → no run-built rows, leaving the
 // liability-label assertions unchanged.
 jest.mock("@/lib/active-client", () => ({
-  getActiveClientRow: async () => null,
+  getActiveClientRow: async () => mockActiveClient,
 }));
 jest.mock("@/lib/deliverables/orchestrator/runs-repository", () => ({
-  listSucceededRunsForMove: async () => [],
+  listSucceededRunsForMove: async () => mockSucceededRuns,
 }));
 
 // `PhaseDocumentsPanel` resolves tenancy to decide whether it can load discovery
@@ -76,6 +82,9 @@ function renderedText(needle: string): HTMLElement[] {
 describe("Strategic Moves visible AI liability controls", () => {
   beforeEach(() => {
     mockDeliverablesData = [];
+    mockActiveClient = null;
+    mockSucceededRuns = [];
+    mockDeliverableSelect = undefined;
   });
 
   it("labels the phase Approve & Build action as AI drafts requiring human edit before commit", () => {
@@ -162,6 +171,78 @@ describe("Strategic Moves visible AI liability controls", () => {
       screen.getByRole("button", { name: /Approve as-is/i }),
     ).toBeInTheDocument();
     expect(screen.getByText("Draft")).toBeInTheDocument();
+  });
+
+  it("keeps a run-built gate artifact signable when its deliverable row has no readable version content", async () => {
+    mockActiveClient = { id: "client-1" };
+    mockSucceededRuns = [
+      {
+        deliverableType: "charter",
+        artifactId: "generated-charter-1",
+        updatedAt: "2026-09-29T12:00:00Z",
+      },
+    ];
+    mockDeliverablesData = [
+      {
+        id: "deliverable-charter-1",
+        deliverable_type_key: "charter",
+        title: "Program Charter",
+        status: "draft",
+        current_version: 1,
+        updated_at: "2026-09-29T12:00:00Z",
+        signed_off_version: null,
+        approved_artifact_id: null,
+        deliverable_versions: [],
+      },
+    ];
+
+    render(
+      await PhaseDocumentsPanel({
+        moveId: "5f5d7993-18ba-4eb6-84a3-72373aab042b",
+        currentPhase: 1,
+        compact: false,
+        archetype: "ai_enabled_sdlc",
+        moveName: "Contact Center AI",
+        clientDisplayName: "Example Client",
+      }),
+    );
+
+    expect(mockDeliverableSelect).not.toContain("!inner");
+    expect(
+      screen.getByRole("button", { name: /Approve as-is/i }),
+    ).toBeInTheDocument();
+  });
+
+  it("never offers sign-off from a run artifact without its deliverables_v2 row", async () => {
+    mockActiveClient = { id: "client-1" };
+    mockSucceededRuns = [
+      {
+        deliverableType: "charter",
+        artifactId: "generated-charter-1",
+        updatedAt: "2026-09-29T12:00:00Z",
+      },
+    ];
+
+    render(
+      await PhaseDocumentsPanel({
+        moveId: "5f5d7993-18ba-4eb6-84a3-72373aab042b",
+        currentPhase: 1,
+        compact: false,
+        archetype: "ai_enabled_sdlc",
+        moveName: "Contact Center AI",
+        clientDisplayName: "Example Client",
+      }),
+    );
+
+    expect(
+      screen.getByRole("link", { name: "Download Word" }),
+    ).toHaveAttribute(
+      "href",
+      "/api/v1/artifacts/generated-charter-1?format=docx",
+    );
+    expect(
+      screen.queryByRole("button", { name: /Approve as-is/i }),
+    ).not.toBeInTheDocument();
   });
 
   // The suppression above is deliberate, and it is also the reason the previous
