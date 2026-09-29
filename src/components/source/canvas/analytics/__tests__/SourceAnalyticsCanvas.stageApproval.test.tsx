@@ -841,6 +841,61 @@ describe("SourceAnalyticsCanvas stage workflow", () => {
     expect(screen.queryByTestId("source-shell-evidence-ask-table")).toBeNull();
   });
 
+  it("reads a validated ticket receipt when no computed stage view exists", () => {
+    const ticketEvidence = SCOPE_READY_EVIDENCE.find(
+      (row) => row.requirementId === "EVID-SRC-SCOPE-TICKET-HISTORY",
+    )!;
+    render(
+      <SourceAnalyticsCanvas
+        event={EVENT}
+        viewStage="scope"
+        tenantName="Demo Client"
+        evidenceStates={[{
+          ...ticketEvidence,
+          id: `fact-derived:${EVENT.id}:${ticketEvidence.requirementId}`,
+          currentState: "Available",
+        }]}
+        initialWorkspace="steps"
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: /Provide ticket volumes/ }));
+    expect(screen.getByTestId("source-shell-active-step-needs"))
+      .toHaveTextContent("Readback: typed facts available.");
+    expect(screen.getByRole("button", { name: /Continue/ })).toBeEnabled();
+  });
+
+  it("does not unlock fallback steps from an unrelated or unvalidated receipt", () => {
+    const ticketEvidence = SCOPE_READY_EVIDENCE.find(
+      (row) => row.requirementId === "EVID-SRC-SCOPE-TICKET-HISTORY",
+    )!;
+    const { rerender } = render(
+      <SourceAnalyticsCanvas
+        event={EVENT}
+        viewStage="scope"
+        tenantName="Demo Client"
+        evidenceStates={[ticketEvidence]}
+        initialWorkspace="steps"
+      />,
+    );
+    expect(screen.queryByRole("button", { name: /Continue/ })).toBeNull();
+
+    rerender(
+      <SourceAnalyticsCanvas
+        event={EVENT}
+        viewStage="scope"
+        tenantName="Demo Client"
+        evidenceStates={[{
+          ...ticketEvidence,
+          id: `fact-derived:${EVENT.id}:EVID-SRC-SCOPE-APP-INV`,
+          requirementId: "EVID-SRC-SCOPE-APP-INV",
+        }]}
+        initialWorkspace="steps"
+      />,
+    );
+    expect(screen.queryByRole("button", { name: /Continue/ })).toBeNull();
+  });
+
   it("keeps the active evidence request at the upload action without a duplicate table", () => {
     render(
       <SourceAnalyticsCanvas

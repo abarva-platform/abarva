@@ -151,6 +151,10 @@ import {
   requiredEvidenceRequirementIdsForTask,
 } from "@/lib/source/facts/task-evidence-requirements";
 import { templateFactMapByCode } from "@/lib/source/facts/template-fact-map";
+import {
+  hydrateTaskEvidenceState,
+  type HydrateTaskEvidenceInput,
+} from "@/lib/source/facts/view/task-evidence-hydration";
 import { ValueWaterfall } from "./ValueWaterfall";
 import { StepInsightPanel } from "./insights";
 import {
@@ -245,6 +249,11 @@ interface SourceAnalyticsCanvasProps {
   viewStage: SourceStageKey;
   tenantName: string;
   stageView?: StageAnalyticsView;
+  /** Persisted inputs for task readback when no value-backed stage view can be built. */
+  fallbackTaskHydration?: Pick<
+    HydrateTaskEvidenceInput,
+    "factInputs" | "artifacts" | "verifiedDelegatedSponsorAcknowledgement"
+  >;
   stepInsight?: StepInsightView;
   artifacts?: readonly SourceShellArtifactLike[];
   approvalItems?: readonly ApprovalsInboxItem[];
@@ -757,6 +766,7 @@ export function SourceAnalyticsCanvas({
   viewStage,
   tenantName,
   stageView,
+  fallbackTaskHydration,
   stepInsight,
   artifacts = [],
   approvalItems = [],
@@ -799,15 +809,31 @@ export function SourceAnalyticsCanvas({
   );
 
   const baseStageView = useMemo(
-    () =>
-      applySourceApprovalPolicyToStageView(
-        adaptStageViewToSourceJourney(
-          stageView ?? sampleStageViewFor(viewStage, journey),
-          journey,
-        ),
+    () => {
+      const journeyStageView = adaptStageViewToSourceJourney(
+        stageView ?? sampleStageViewFor(viewStage, journey),
+        journey,
+      );
+      const hydratedStageView = stageView
+        ? journeyStageView
+        : {
+            ...journeyStageView,
+            tasks: hydrateTaskEvidenceState({
+              tasks: journeyStageView.tasks,
+              factInputs: fallbackTaskHydration?.factInputs ?? {},
+              artifacts: fallbackTaskHydration?.artifacts,
+              evidenceStates,
+              stageKey: journeyStageView.stageKey,
+              verifiedDelegatedSponsorAcknowledgement:
+                fallbackTaskHydration?.verifiedDelegatedSponsorAcknowledgement,
+            }),
+          };
+      return applySourceApprovalPolicyToStageView(
+        hydratedStageView,
         event.approvalPolicyCode,
-      ),
-    [event.approvalPolicyCode, journey, stageView, viewStage],
+      );
+    },
+    [event.approvalPolicyCode, evidenceStates, fallbackTaskHydration, journey, stageView, viewStage],
   );
   const resolvedStageView: StageAnalyticsView = useMemo(
     () => (stepInsight ? { ...baseStageView, stepInsight } : baseStageView),
