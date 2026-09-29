@@ -34,7 +34,8 @@ Release lane: `global-control-lane`. Layer 4 Source presentation derives step co
 
 - Pass: red-first test reproduced the receipt/step mismatch and false completion from one scalar.
 - Pass: a deliberate generic-ID mutation failed the unvalidated-row test, then was restored.
-- Pass: 3 focused Source suites / 60 tests, TypeScript, scoped ESLint, release check, and diff check.
+- Pass: broad route CI-equivalent command, 63 suites / 466 tests; focused Source hydration/shell/substrate 3 suites / 60 tests; TypeScript, scoped ESLint, release check, and diff check.
+- Pass: the first PR head exposed one stale route test that passed a scalar where a validated L2/L3 evidence receipt is required. The corrected test now derives the receipt from facts written by the upload route.
 - Not run: PR CI/review, runtime proof, and signed-in replay.
 
 ## Rollout Plan
