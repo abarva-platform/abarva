@@ -28,7 +28,7 @@ jest.mock("@clerk/nextjs", () => ({
   UserButton: () => null,
 }));
 
-import { SourceAnalyticsCanvas } from "../SourceAnalyticsCanvas";
+import { SourceAnalyticsCanvas, liveFallbackStageViewFor } from "../SourceAnalyticsCanvas";
 import {
   SAMPLE_BAFO_STAGE,
   SAMPLE_PRICING_STAGE,
@@ -863,6 +863,46 @@ describe("SourceAnalyticsCanvas stage workflow", () => {
     expect(screen.getByTestId("source-shell-active-step-needs"))
       .toHaveTextContent("Readback: typed facts available.");
     expect(screen.getByRole("button", { name: /Continue/ })).toBeEnabled();
+  });
+
+  it("does not present exemplar Scope completion or files as live event evidence", () => {
+    const fallback = liveFallbackStageViewFor("scope");
+    expect(fallback.tasks).toHaveLength(6);
+    expect(fallback.tasks.every((task) => task.state === "todo"))
+      .toBe(true);
+    expect(fallback.tasks.every((task) => !task.rows?.length && !task.file && !task.provenance))
+      .toBe(true);
+    expect(fallback.intel.points).toHaveLength(0);
+
+    render(
+      <SourceAnalyticsCanvas
+        event={EVENT}
+        viewStage="scope"
+        tenantName="Demo Client"
+        initialWorkspace="steps"
+      />,
+    );
+
+    expect(screen.queryByRole("button", { name: /Confirm the applications in scope/ }))
+      .toBeNull();
+    expect(screen.queryByText(/147 apps|147 across 3 tiers/i))
+      .toBeNull();
+    expect(screen.getByRole("button", { name: /Provide ticket volumes/ }))
+      .toBeInTheDocument();
+    expect(screen.getByTestId("source-stage-header-readiness"))
+      .toHaveTextContent(/0\s*\/\s*6/);
+    expect(screen.getByRole("button", { name: /Confirm retained vs\. vendor/ }))
+      .not.toHaveTextContent("✓");
+    expect(screen.getByRole("button", { name: /Confirm what's out of scope/ }))
+      .not.toHaveTextContent("✓");
+    fireEvent.click(screen.getByRole("button", { name: /Confirm retained vs\. vendor/ }));
+    expect(screen.getByRole("heading", { name: "Confirm retained vs. vendor" }))
+      .toBeInTheDocument();
+    expect(screen.queryByText(/current-sla-baseline-2025\.pdf|pre-filled with a row per tower/i))
+      .toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: /Confirm what's out of scope/ }));
+    expect(screen.queryByText(/6 exclusions|2 apps mid-decommission/i))
+      .toBeNull();
   });
 
   it("does not unlock fallback steps from an unrelated or unvalidated receipt", () => {

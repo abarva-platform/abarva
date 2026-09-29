@@ -693,6 +693,41 @@ function sampleStageViewFor(
   return adaptStageViewToSourceJourney(sample, journey);
 }
 
+export function liveFallbackStageViewFor(
+  stageKey: SourceStageKey,
+  journey?: SourceJourneyDefinition,
+): StageAnalyticsView {
+  const exemplar = sampleStageViewFor(stageKey, journey);
+  if (normalizeSourceStageKey(stageKey) !== "scope") return exemplar;
+
+  return {
+    ...exemplar,
+    intel: {
+      provenance: "sample",
+      lead: "Scope analytics await governed event facts; review the evidence ledger for current coverage.",
+      points: [],
+    },
+    tasks: exemplar.tasks
+      .filter((task) => task.id !== "scope.apps")
+      .map((task) => ({
+        ...task,
+        state: "todo" as const,
+        subtitle:
+          task.id === "scope.exclusions"
+            ? "Exclusions and retained work"
+            : task.subtitle,
+        guide:
+          task.id === "scope.exclusions"
+            ? "Record excluded work, its owner, and the supporting current-scope evidence."
+            : task.guide,
+        rows: undefined,
+        file: undefined,
+        template: undefined,
+        provenance: undefined,
+      })),
+  };
+}
+
 function placeholderStageViewFor(
   stageKey: string,
   journey?: SourceJourneyDefinition,
@@ -807,7 +842,7 @@ export function SourceAnalyticsCanvas({
   const baseStageView = useMemo(
     () => {
       const journeyStageView = adaptStageViewToSourceJourney(
-        stageView ?? sampleStageViewFor(viewStage, journey),
+        stageView ?? liveFallbackStageViewFor(viewStage, journey),
         journey,
       );
       const hydratedStageView = stageView
