@@ -196,6 +196,41 @@ describe("Source consulting-grade quality gate helpers", () => {
     expect(violations.some((item) => item.claim === "$7.85M")).toBe(false);
   });
 
+  it.each(["d01_strategy_memo", "d02_value_target"])(
+    "rejects unbound category rankings and routine outcomes in %s",
+    (artifactCode) => {
+      const body = [
+        "Service desk is among the highest-volume infrastructure services a health system operates.",
+        "These services are among the most commonly assessed for managed-service delivery.",
+        "Managed-service models routinely generate operational efficiency.",
+      ].join("\n");
+      const violations = findDeterministicSourceClaimViolations({
+        artifactCode,
+        sourceContext: "The synthetic trigger names a service desk and endpoint scope only.",
+        body,
+      });
+
+      expect(violations).toEqual(expect.arrayContaining([
+        expect.objectContaining({ claim: expect.stringContaining("highest-volume") }),
+        expect.objectContaining({ claim: expect.stringContaining("most commonly assessed") }),
+        expect.objectContaining({ claim: expect.stringContaining("routinely generate") }),
+      ]));
+    },
+  );
+
+  it("keeps equivalent category assertions when the bound source establishes them", () => {
+    const body = [
+      "Service desk is among the highest-volume infrastructure services a health system operates.",
+      "These services are among the most commonly assessed for managed-service delivery.",
+      "Managed-service models routinely generate operational efficiency.",
+    ].join("\n");
+    expect(findDeterministicSourceClaimViolations({
+      artifactCode: "d01_strategy_memo",
+      sourceContext: body,
+      body,
+    })).toEqual([]);
+  });
+
   it("rejects invented calendars, unsupported durations, comparisons, and internal ids", () => {
     const violations = findDeterministicSourceClaimViolations({
       artifactCode: "d01_strategy_memo",
