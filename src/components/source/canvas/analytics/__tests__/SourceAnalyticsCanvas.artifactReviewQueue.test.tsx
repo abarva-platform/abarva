@@ -52,6 +52,30 @@ const event: SourcingEventSummary = {
   approvalPolicyCode: "self_v1",
 };
 
+it("counts only gate-relevant artifacts in the approval queue", () => {
+  render(
+    <SourceAnalyticsCanvas
+      event={event}
+      viewStage="strategy"
+      tenantName="Test Client"
+      stageView={SAMPLE_STRATEGY_STAGE}
+      initialWorkspace="files"
+      artifacts={[]}
+    />,
+  );
+
+  const queue = screen.getByTestId("source-artifact-review-queue");
+  expect(queue).toHaveTextContent("2 blockers");
+  expect(screen.getByTestId("source-artifact-review-queue-row-d01_strategy_memo"))
+    .toBeInTheDocument();
+  expect(screen.getByTestId("source-artifact-review-queue-row-d02_value_target"))
+    .toBeInTheDocument();
+  expect(screen.queryByTestId("source-artifact-review-queue-row-d03_archetype_decision"))
+    .not.toBeInTheDocument();
+  expect(screen.getByTestId("source-artifact-lifecycle-row-d03_archetype_decision"))
+    .toBeInTheDocument();
+});
+
 it("offers governed draft generation when a required artifact has evidence but no final", async () => {
   global.fetch = jest.fn().mockResolvedValue({
     ok: false,

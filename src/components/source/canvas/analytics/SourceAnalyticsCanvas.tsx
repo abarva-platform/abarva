@@ -5920,10 +5920,12 @@ function ArtifactLifecyclePanel({
   );
   const currentStageActionRows = currentStageRows.filter(
     (row) =>
-      row.lifecycleState !== "client_final" ||
-      row.consultingGate.state === "required_not_run" ||
-      row.consultingGate.state === "failed" ||
-      row.contentQuality.state === "blocked",
+      row.lifecycleState === "evidence_only" ||
+      ((row.requirementLabel === "Required" || row.gateLabel === "Gate-defining") &&
+        (row.lifecycleState !== "client_final" ||
+          row.consultingGate.state === "required_not_run" ||
+          row.consultingGate.state === "failed" ||
+          row.contentQuality.state === "blocked")),
   );
   const standardsCsvHref = `data:text/csv;charset=utf-8,${encodeURIComponent(
     buildSourceArtifactStandardsCsv(lifecycle.rows),
