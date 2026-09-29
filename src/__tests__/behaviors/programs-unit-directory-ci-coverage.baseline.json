@@ -2,7 +2,6 @@
   "src/lib/programs/architecture/__tests__",
   "src/lib/programs/controls/__tests__",
   "src/lib/programs/decomposition/__tests__",
-  "src/lib/programs/deliverables/__tests__",
   "src/lib/programs/deliverables/orchestrated/__tests__",
   "src/lib/programs/evidence-readiness/__tests__",
   "src/lib/programs/learning-writeback/__tests__",
