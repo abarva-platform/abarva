@@ -1431,6 +1431,115 @@ function coverageFor(root, testPath, reachable, declaredQuarantinePathSet) {
 }
 
 /**
+ * A TRIAGE VERDICT, the third way a file can have been looked at (T-773).
+ *
+ * The two quarantine shapes above are read because they are declarations in
+ * something a workflow or a checker executes. A verdict in a repo-owned
+ * `docs/architecture/*triage*.json` record is neither, so until T-773 a file
+ * carrying one — with a written reason and a named owning item — still counted
+ * as untriaged and still admitted its directory to `governedRiskRanking`. The
+ * ninth stale-suite draw (T-771) spent eleven of its twenty rows re-judging
+ * exactly those files.
+ *
+ * `untriagedUnrunTestFiles` does NOT change. A verdict is a judgement, not a
+ * command that runs the file; the uncovered/quarantine arithmetic other gates
+ * read must not move because somebody wrote a JSON file. What changes is the
+ * ranking's ADMISSION: it now reads `drawableUnrunTestFiles`, the untriaged
+ * files a draw may still offer, and the rest are published as held, each with
+ * its verdict, record and owner — so the owed work is a row, not an absence.
+ *
+ * WHICH VERDICTS HOLD — the decision T-773 asked to be written down. A verdict
+ * holds a file out of the draw when it names residual work somebody owns:
+ * `repair` and `rewrite_as_behavior` included. An owned file is not a finished
+ * file, but a draw's job is to find files nobody has JUDGED; re-offering a
+ * judged one buys a second verdict, not the repair, and the repair is tracked by
+ * the item the verdict names. Three things stay drawable:
+ *   - no verdict;
+ *   - a COMPLETION verdict (`wired`, `rewritten_as_behavior_and_wired`,
+ *     `already_selected_no_action`, `deleted_and_replaced`) on a file the census
+ *     measures as unrun — the record says the work is done and the tree says it
+ *     is not, so the verdict is contradicted and is published as such;
+ *   - a verdict word not in either list. An unrecognised word cannot subtract
+ *     work from the queue; it is published so the vocabulary gap is visible.
+ *
+ * LATEST WINS. Per path, the verdict with the greatest `recordedAt` (the suite's
+ * own, else its record's) decides, as T-770's control already resolves it. A
+ * record with no `recordedAt` sorts before every dated one, and on equal stamps
+ * the later record file name wins, so the resolution is deterministic. A newer
+ * record is therefore how a held file is released, and nothing holds forever.
+ *
+ * A record that does not parse is reported, not skipped and not fatal: this is
+ * a work-order input, not a gate, and one malformed document must not take the
+ * whole census down with it. A verdict naming a path the census does not walk is
+ * reported too — it can never expire, because nothing re-reads it.
+ */
+const TRIAGE_RECORD_DIRECTORY = "docs/architecture";
+const TRIAGE_RECORD_RE = /triage.*\.json$/;
+const HOLDING_TRIAGE_VERDICTS = new Set([
+  "wire_into_ci",
+  "repair",
+  "rewrite_as_behavior",
+  "update_with_reason_recorded",
+  "real",
+  "vacuous_control_proof",
+  "held_unwired",
+  "already_verdicted_elsewhere",
+]);
+const COMPLETION_TRIAGE_VERDICTS = new Set([
+  "wired",
+  "rewritten_as_behavior_and_wired",
+  "already_selected_no_action",
+  "deleted_and_replaced",
+]);
+
+export function triageVerdicts(root) {
+  const directory = path.join(root, TRIAGE_RECORD_DIRECTORY);
+  const latest = new Map();
+  const recordsByPath = new Map();
+  const unreadableRecords = [];
+  if (!existsSync(directory)) return { latest, recordsByPath, unreadableRecords };
+  for (const file of readdirSync(directory).sort()) {
+    if (!TRIAGE_RECORD_RE.test(file)) continue;
+    const record = `${TRIAGE_RECORD_DIRECTORY}/${file}`;
+    let payload;
+    try {
+      payload = JSON.parse(readFileSync(path.join(directory, file), "utf8"));
+    } catch {
+      unreadableRecords.push(record);
+      continue;
+    }
+    for (const suite of Array.isArray(payload?.suites) ? payload.suites : []) {
+      if (typeof suite?.path !== "string") continue;
+      const recordedAt = suite.recordedAt ?? payload.recordedAt ?? null;
+      const candidate = {
+        verdict: typeof suite.verdict === "string" ? suite.verdict : null,
+        record,
+        recordedAt: typeof recordedAt === "string" ? recordedAt : null,
+        ownerItem:
+          suite.ownerItem ?? suite.owningItemThere ?? suite.wiredBy ?? payload.item ?? null,
+      };
+      const held = latest.get(suite.path);
+      // Files are visited in name order, so `>=` lets the later file win a tie.
+      if (!held || (candidate.recordedAt ?? "") >= (held.recordedAt ?? "")) {
+        latest.set(suite.path, candidate);
+      }
+      const records = recordsByPath.get(suite.path) ?? [];
+      if (!records.includes(record)) records.push(record);
+      recordsByPath.set(suite.path, records);
+    }
+  }
+  return { latest, recordsByPath, unreadableRecords };
+}
+
+/** `held`, `contradicted`, `unrecognised` or `none` for an untriaged file. */
+function triageDisposition(verdict) {
+  if (!verdict || verdict.verdict === null) return "none";
+  if (HOLDING_TRIAGE_VERDICTS.has(verdict.verdict)) return "held";
+  if (COMPLETION_TRIAGE_VERDICTS.has(verdict.verdict)) return "contradicted";
+  return "unrecognised";
+}
+
+/**
  * `includeUnrunPaths` adds `unrunTestPathsByDirectory` to the returned object.
  * It is OFF by default and the CLI turns it on only for `--explain`, which
  * never writes: the committed artifact must stay byte-identical, or `--check`
@@ -1453,6 +1562,11 @@ export function buildCensus(
   const catalogPaths = controlPaths(root);
   const { paths: declaredQuarantinePathSet, lists: quarantineLists } =
     declaredQuarantinePaths(root, testFiles);
+  const verdicts = triageVerdicts(root);
+  const walkedTestFiles = new Set(testFiles);
+  const heldTestPaths = [];
+  const contradictedVerdicts = [];
+  const unrecognisedVerdicts = [];
 
   const directories = new Map();
   let covered = 0;
@@ -1478,6 +1592,8 @@ export function buildCensus(
         via: new Set(),
         testPaths: [],
         unrunPaths: [],
+        verdictHeld: 0,
+        drawablePaths: [],
         fileStatuses: [],
       });
     }
@@ -1489,6 +1605,20 @@ export function buildCensus(
     if (result.declaredQuarantine) {
       entry.declaredQuarantine += 1;
       declaredQuarantine += 1;
+    }
+    const untriaged = !result.covered && !result.declaredQuarantine;
+    const verdict = verdicts.latest.get(testFile) ?? null;
+    const disposition = untriaged ? triageDisposition(verdict) : null;
+    if (disposition === "held") {
+      entry.verdictHeld += 1;
+      heldTestPaths.push({ testPath: testFile, ...verdict });
+    } else if (untriaged) {
+      entry.drawablePaths.push(testFile);
+      if (disposition === "contradicted") {
+        contradictedVerdicts.push({ testPath: testFile, ...verdict });
+      } else if (disposition === "unrecognised") {
+        unrecognisedVerdicts.push({ testPath: testFile, ...verdict });
+      }
     }
     entry.fileStatuses.push({
       directory,
@@ -1504,7 +1634,9 @@ export function buildCensus(
       pullRequestCovered: result.pullRequestCovered,
       declaredQuarantine: result.declaredQuarantine,
       declaredQuarantineShape: result.declaredQuarantineShape,
-      untriaged: !result.covered && !result.declaredQuarantine,
+      untriaged,
+      triageVerdict: verdict,
+      drawable: untriaged && disposition !== "held",
       via: result.via,
     });
     for (const via of result.via) entry.via.add(via);
@@ -1519,6 +1651,9 @@ export function buildCensus(
       declaredQuarantineTestFiles: entry.declaredQuarantine,
       untriagedUnrunTestFiles:
         entry.testFiles - entry.covered - entry.declaredQuarantine,
+      verdictHeldUntriagedUnrunTestFiles: entry.verdictHeld,
+      drawableUnrunTestFiles: entry.drawablePaths.length,
+      drawableTestPaths: [...entry.drawablePaths].sort(),
       unrunTestPaths: [...entry.unrunPaths].sort(),
       fileStatuses: entry.fileStatuses.sort((a, b) =>
         a.testPath.localeCompare(b.testPath),
@@ -1567,8 +1702,12 @@ export function buildCensus(
   // directory's risk is raised to buy it a place; `admittedBy` names the path
   // instead, on the row, so the two populations stay separable by a reader and
   // by a test.
+  //
+  // Admitted on DRAWABLE work since T-773: an untriaged file whose latest
+  // triage verdict names owned residual work no longer admits its directory.
+  // See `triageVerdicts` for which verdicts hold and why.
   const rankedRows = rows
-    .filter((row) => row.untriagedUnrunTestFiles > 0)
+    .filter((row) => row.drawableUnrunTestFiles > 0)
     .sort(
       (a, b) =>
         b.governedRisk.score - a.governedRisk.score ||
@@ -1593,6 +1732,9 @@ export function buildCensus(
     unrunTestFiles: row.unrunTestFiles,
     declaredQuarantineTestFiles: row.declaredQuarantineTestFiles,
     untriagedUnrunTestFiles: row.untriagedUnrunTestFiles,
+    verdictHeldUntriagedUnrunTestFiles: row.verdictHeldUntriagedUnrunTestFiles,
+    drawableUnrunTestFiles: row.drawableUnrunTestFiles,
+    drawableTestPaths: row.drawableTestPaths,
     admittedBy: row.admittedBy,
     governedRisk: {
       score: row.governedRisk.score,
@@ -1615,6 +1757,8 @@ export function buildCensus(
       declaredQuarantine: file.declaredQuarantine,
       declaredQuarantineShape: file.declaredQuarantineShape,
       untriaged: file.untriaged,
+      triageVerdict: file.triageVerdict,
+      drawable: file.drawable,
       via: file.via,
       governedRisk: {
         score: row.governedRisk.score,
@@ -1641,6 +1785,9 @@ export function buildCensus(
         unrunTestFiles: _unrun,
         unrunTestPaths: _unrunPaths,
         fileStatuses: _fileStatuses,
+        verdictHeldUntriagedUnrunTestFiles: _held,
+        drawableUnrunTestFiles: _drawable,
+        drawableTestPaths: _drawablePaths,
         ...row
       }) => row,
     );
@@ -1718,6 +1865,7 @@ export function buildCensus(
       "Governed-risk signals come from product modules a test loads at runtime, not from directory names alone; type-only imports are erased before the test runs and are not counted as edges.",
       "Evidence source lists for the top 25 governed-risk directories are sorted and capped at five paths per signal; companion counts preserve the full match cardinality.",
       "productSourceCount is the number of product modules the directory's tests resolved at run time, published on every directory including the unranked ones. An unclassified directory with a non-zero count was measured and matched no signal; one with zero resolved no import at all, so its band describes this census's reach rather than that directory's risk. unclassifiedRiskDirectories lists every such directory and the two counts beside it split them. Since C-555 it is a view ON the ranking rather than the ranking's complement: each of its rows is also a ranked row with admittedBy untriaged_unrun_work, and rankedDirectories against untriagedUnrunTestFiles is how far the work order reaches into its own pool.",
+      "A triage verdict in a docs/architecture/*triage*.json record is read per file, the latest recordedAt winning (an undated record sorts first; on equal stamps the later record file wins). It never changes untriagedUnrunTestFiles, because a verdict runs nothing. It changes what the ranking ADMITS: an untriaged file whose latest verdict names owned residual work (wire_into_ci, repair, rewrite_as_behavior, update_with_reason_recorded, real, vacuous_control_proof, held_unwired, already_verdicted_elsewhere) is held out of the draw and listed in triageVerdicts.heldTestPaths with its verdict, record and owner, and a directory is ranked only while drawableUnrunTestFiles is above zero. drawableTestPaths on each ranked row names the files a draw may offer. A completion verdict (wired, rewritten_as_behavior_and_wired, already_selected_no_action, deleted_and_replaced) on a file the census measures as unrun is contradicted and stays drawable, as does a verdict word in neither list; both are listed. unclassifiedRiskDirectories is still drawn from the untriaged pool, so a directory whose every untriaged file is held can appear there without a ranked row.",
       "No timestamp is recorded, so refreshing this file on an unchanged tree is a no-op.",
     ],
     counts: {
@@ -1792,11 +1940,45 @@ export function buildCensus(
         unrunTestFiles: _unrun,
         unrunTestPaths: _unrunPaths,
         fileStatuses: _fileStatuses,
+        verdictHeldUntriagedUnrunTestFiles: _held,
+        drawableUnrunTestFiles: _drawable,
+        drawableTestPaths: _drawablePaths,
         ...row
       }) => row,
     ),
     governedRiskFiles,
     governedRiskRanking,
+    // The half of the untriaged pool the ranking no longer admits, named file by
+    // file with the verdict that holds it (T-773). Deliberately NOT in `counts`:
+    // the drift report and the committed-shape test read that object's keys, and
+    // this is a work-order view, not a coverage measure.
+    triageVerdicts: {
+      heldUntriagedUnrunTestFiles: heldTestPaths.length,
+      drawableUntriagedUnrunTestFiles: rows.reduce(
+        (total, row) => total + row.drawableUnrunTestFiles,
+        0,
+      ),
+      heldByVerdict: Object.fromEntries(
+        [...new Set(heldTestPaths.map((entry) => entry.verdict))]
+          .sort()
+          .map((verdict) => [
+            verdict,
+            heldTestPaths.filter((entry) => entry.verdict === verdict).length,
+          ]),
+      ),
+      heldTestPaths: heldTestPaths.sort((a, b) => a.testPath.localeCompare(b.testPath)),
+      contradictedVerdicts: contradictedVerdicts.sort((a, b) =>
+        a.testPath.localeCompare(b.testPath),
+      ),
+      unrecognisedVerdicts: unrecognisedVerdicts.sort((a, b) =>
+        a.testPath.localeCompare(b.testPath),
+      ),
+      verdictsNamingNoFile: [...verdicts.recordsByPath.entries()]
+        .filter(([testPath]) => !walkedTestFiles.has(testPath))
+        .map(([testPath, records]) => ({ testPath, records: [...records].sort() }))
+        .sort((a, b) => a.testPath.localeCompare(b.testPath)),
+      unreadableRecords: verdicts.unreadableRecords,
+    },
     unclassifiedRiskDirectories,
     governedRiskEvidence,
     uncoveredDirectories,
