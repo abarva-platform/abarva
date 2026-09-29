@@ -264,11 +264,59 @@ describe("multi-pass prompt builder", () => {
         `Hard cap for this section: ${charterDecision?.maxWords} body words`,
       ),
     );
+    const charterTargetTotal = CHARTER_CONTRACT.sections.reduce(
+      (sum, section) => sum + (section.targetProseWords ?? 0),
+      0,
+    );
+    expect(p.user).toMatch(
+      new RegExp(
+        `Target approximately ${charterDecision?.targetProseWords} prose words in this section`,
+        "i",
+      ),
+    );
+    expect(p.user).toMatch(
+      new RegExp(
+        `across all seven sections, the targets total ${charterTargetTotal} prose words`,
+        "i",
+      ),
+    );
+    expect(p.user).toMatch(/never add filler or unsupported detail to reach a target/i);
     expect(p.user).toMatch(/WRITE ONLY THIS SECTION/);
     expect(p.user).toMatch(/do NOT write any other section/i);
     expect(p.user).toMatch(/Do not write .*P2 current-state findings/i);
     expect(p.user).not.toMatch(/DORA|AI Tooling Adoption|Phase Roadmap/i);
   });
+
+  it.each(CHARTER_CONTRACT.sections)(
+    "includes the prose target for charter section $key",
+    (contractSection) => {
+      const charterReq = amsRfpRequest({
+        module: "moves",
+        useCaseArchetype: "AI_PDLC",
+        deliverableType: "charter",
+        qualityBar: resolveQualityBar("moves", "charter"),
+      });
+      const p = buildPassPrompt("section_draft", {
+        req: charterReq,
+        brief: getArtifactBrief(charterReq),
+        evidence: [],
+        outlineSummary: "Charter section outline",
+        section: {
+          key: contractSection.key,
+          title: contractSection.title,
+          groundingMode: "mixed",
+          evidenceCitations: [],
+          assumptionsUsed: [],
+          placeholders: [],
+          rationale: contractSection.intent,
+        },
+      });
+
+      expect(p.user).toContain(
+        `Target approximately ${contractSection.targetProseWords} prose words in this section`,
+      );
+    },
+  );
 
   it("enforces fixed structure and hard document budgets for P3b solution artifacts", () => {
     const solutionReq = amsRfpRequest({

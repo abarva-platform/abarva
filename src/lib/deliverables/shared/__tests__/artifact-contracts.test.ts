@@ -17,6 +17,24 @@ describe("shared artifact contracts", () => {
     );
   });
 
+  it("allocates prose targets across charter sections above the prose quality floor", () => {
+    const sections = CHARTER_CONTRACT.sections;
+    const targets = sections.map((section) => section.targetProseWords);
+
+    expect(targets.every((target) => Number.isFinite(target))).toBe(true);
+    expect(
+      targets.reduce<number>((sum, target) => sum + (target ?? 0), 0),
+    ).toBeGreaterThanOrEqual(
+      (CHARTER_CONTRACT.wordBudget.minProseWords ?? 0) + 30,
+    );
+    expect(
+      targets.reduce<number>((sum, target) => sum + (target ?? 0), 0),
+    ).toBe(730);
+    for (const section of sections) {
+      expect(section.targetProseWords).toBeLessThanOrEqual(section.maxWords);
+    }
+  });
+
   it("keeps the word budget internally consistent (min <= target min <= target max <= hard max)", () => {
     const wb = CHARTER_CONTRACT.wordBudget;
     expect(wb.minWords).toBeLessThanOrEqual(wb.targetWords.min);
