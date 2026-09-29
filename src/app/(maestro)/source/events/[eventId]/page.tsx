@@ -762,11 +762,7 @@ export default async function SourceEventDetailPage({
         viewStage={viewStage}
         tenantName={analyticsTenantName}
         stageView={liveStageView}
-        fallbackTaskHydration={{
-          factInputs: hydrationFactInputs,
-          artifacts: analyticsHydrationArtifacts,
-          verifiedDelegatedSponsorAcknowledgement,
-        }}
+        verifiedFallbackSponsorAcknowledgement={verifiedDelegatedSponsorAcknowledgement}
         stepInsight={stepInsight}
         artifacts={analyticsArtifacts}
         approvalItems={analyticsApprovalItems}
