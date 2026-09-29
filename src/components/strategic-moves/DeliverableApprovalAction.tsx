@@ -37,6 +37,7 @@ export function DeliverableApprovalAction({
 }: Props) {
   const [busy, setBusy] = useState<"idle" | "approving" | "uploading">("idle");
   const [error, setError] = useState<ApprovalErrorState | null>(null);
+  const [pendingUpload, setPendingUpload] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   async function submitApproval(
@@ -47,11 +48,14 @@ export function DeliverableApprovalAction({
     setBusy(file ? "uploading" : "approving");
     try {
       const init: RequestInit = file
-        ? { method: "POST", body: (() => {
-            const form = new FormData();
-            form.append("file", file);
-            return form;
-          })() }
+          ? { method: "POST", body: (() => {
+              const form = new FormData();
+              form.append("file", file);
+              if (acknowledgeReadinessBlockers) {
+                form.append("acknowledgeReadinessBlockers", "true");
+              }
+              return form;
+            })() }
         : acknowledgeReadinessBlockers
           ? {
               method: "POST",
@@ -66,6 +70,7 @@ export function DeliverableApprovalAction({
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
         if (body?.error === "client_readiness_blockers") {
+          if (file) setPendingUpload(file);
           setError({
             message:
               body?.detail ||
@@ -76,6 +81,7 @@ export function DeliverableApprovalAction({
           setBusy("idle");
           return;
         }
+        setPendingUpload(null);
         setError({
           message:
             body?.detail ||
@@ -147,6 +153,7 @@ export function DeliverableApprovalAction({
         onChange={(e) => {
           const file = e.target.files?.[0];
           if (file) void submitApproval(file);
+          e.currentTarget.value = "";
         }}
       />
       {error ? (
@@ -180,7 +187,9 @@ export function DeliverableApprovalAction({
             <button
               type="button"
               disabled={busy !== "idle"}
-              onClick={() => void submitApproval(undefined, true)}
+              onClick={() =>
+                void submitApproval(pendingUpload ?? undefined, true)
+              }
               style={{
                 fontSize: 11,
                 fontWeight: 700,
@@ -192,7 +201,9 @@ export function DeliverableApprovalAction({
                 cursor: busy === "idle" ? "pointer" : "default",
               }}
             >
-              Acknowledge blockers and approve
+              {pendingUpload
+                ? "Acknowledge blockers and approve uploaded version"
+                : "Acknowledge blockers and approve"}
             </button>
           ) : null}
         </div>

@@ -84,6 +84,53 @@ describe("DeliverableApprovalAction", () => {
     });
   });
 
+  it("keeps the reviewed upload attached to an explicit readiness acknowledgement", async () => {
+    const fetchMock = jest
+      .fn()
+      .mockResolvedValueOnce(
+        jsonResponse(
+          {
+            error: "client_readiness_blockers",
+            detail: "The uploaded version contains client-readiness blockers.",
+            blockers: [{ kind: "uuid", match: "5bbf2d7c-328c-41e0-8a69-50094cd15f75" }],
+            acknowledgeField: "acknowledgeReadinessBlockers",
+          },
+          422,
+        ),
+      )
+      .mockReturnValueOnce(new Promise<Response>(() => undefined));
+    global.fetch = fetchMock as typeof fetch;
+
+    const { container } = render(
+      <DeliverableApprovalAction
+        moveId="move-1"
+        deliverableId="deliverable-1"
+        alreadyApproved={false}
+      />,
+    );
+    const file = new File(["reviewed charter"], "reviewed-charter.docx", {
+      type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    });
+    const fileInput = container.querySelector('input[type="file"]');
+
+    fireEvent.click(screen.getByRole("button", { name: /upload approved version/i }));
+    fireEvent.change(fileInput!, { target: { files: [file] } });
+
+    expect(
+      await screen.findByText("The uploaded version contains client-readiness blockers."),
+    ).toBeInTheDocument();
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: /acknowledge blockers and approve uploaded version/i,
+      }),
+    );
+
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
+    const form = fetchMock.mock.calls[1][1]?.body as FormData;
+    expect(form.get("file")).toBe(file);
+    expect(form.get("acknowledgeReadinessBlockers")).toBe("true");
+  });
+
   it("shows non-readiness sign-off errors as reviewer-visible messages", async () => {
     global.fetch = jest.fn().mockResolvedValue(
       jsonResponse(
