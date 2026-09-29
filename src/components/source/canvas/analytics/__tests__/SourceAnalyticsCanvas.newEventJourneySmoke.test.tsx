@@ -42,7 +42,7 @@ jest.mock("@clerk/nextjs", () => ({
 
 const EXPECTED_STAGE_MARKER: Partial<Record<SourceStageKey, string>> = {
   strategy: "Confirm strategy & sponsor",
-  scope: "Provide the volumetrics",
+  scope: "Provide ticket volumes",
   rfp: "Confirm RFP clause coverage",
   responses: "Confirm vendor response coverage",
   evaluation: "Confirm vendor bids for should-cost",

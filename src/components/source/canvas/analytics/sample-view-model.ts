@@ -68,17 +68,15 @@ export const SAMPLE_SCOPE_STAGE: StageAnalyticsView = {
     },
     {
       id: 'scope.volumetrics',
-      title: 'Provide the volumetrics',
-      subtitle: 'Service-tower economics',
+      title: 'Provide ticket volumes',
+      subtitle: 'L2/L3 history by month and time window',
       type: 'provide',
       state: 'todo',
       guide:
-        'Upload service-tower volumetrics: change-order spend, avoidable share, projected volume decline, automatable effort pool, and chronic SLA miss rate.',
-      provenance: { owner: 'Ravi Menon, IT-Ops', source: 'ITSM / finance baseline' },
-      cta: 'Confirm volumetrics',
-      // A CSV/XLSX dropped here is parsed into typed volumetrics facts, flipping
-      // the ✦ Intelligence step insight from MODEL to LIVE.
-      factTemplateCode: 'VOLUMETRICS_V1',
+        'Upload ITSM ticket counts and SLA breaches by service tower, L2/L3 support tier, month, and time window. Include the source basis; financial projections belong to a separate baseline.',
+      provenance: { owner: 'ITSM owner', source: 'ITSM ticket export' },
+      cta: 'Confirm ticket history',
+      factTemplateCode: 'TICKET_HISTORY_V1',
     },
     {
       id: 'scope.app-inventory',

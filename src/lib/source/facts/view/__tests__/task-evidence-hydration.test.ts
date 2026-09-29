@@ -125,13 +125,22 @@ describe("hydrateTaskEvidenceState", () => {
   });
 
   it("falls back to the canonical task id when live payload omits factTemplateCode", () => {
-    const inputs = { [volumetricsFactKey()]: 4200 };
+    const inputs = { ticket_count: 42 };
     const hydrated = hydrateTaskEvidenceState({
       tasks: [{ ...VOLUMETRICS_TASK, factTemplateCode: undefined }],
       factInputs: inputs,
       stageKey: "scope",
     });
     expect(hydrated[0].evidenceComplete).toBe(true);
+  });
+
+  it("does not complete the ticket task from a financial volumetrics fact", () => {
+    const hydrated = hydrateTaskEvidenceState({
+      tasks: [{ ...VOLUMETRICS_TASK, factTemplateCode: undefined }],
+      factInputs: { [volumetricsFactKey()]: 4200 },
+      stageKey: "scope",
+    });
+    expect(hydrated[0].evidenceComplete).toBeUndefined();
   });
 
   it("leaves a task with no persisted evidence not-complete", () => {

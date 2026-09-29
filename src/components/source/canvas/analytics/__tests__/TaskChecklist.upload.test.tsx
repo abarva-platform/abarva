@@ -358,7 +358,8 @@ describe("TaskChecklist provide-task upload", () => {
   it("renders a real template download link for template-bound uploads", () => {
     const boundTask: StageTaskView = {
       ...PROVIDE_TASK,
-      factTemplateCode: "VOLUMETRICS_V1",
+      id: "scope.volumetrics",
+      factTemplateCode: "TICKET_HISTORY_V1",
     };
     render(
       <TaskChecklist tasks={[boundTask]} eventId="evt-1" stageKey="scope" />,
@@ -428,7 +429,7 @@ describe("TaskChecklist provide-task upload", () => {
 
     await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
     const ingestBody = fetchMock.mock.calls[1][1]?.body as FormData;
-    expect(ingestBody.get("templateCode")).toBe("VOLUMETRICS_V1");
+    expect(ingestBody.get("templateCode")).toBe("TICKET_HISTORY_V1");
     expect(ingestBody.get("artifactId")).toBe("artifact-1");
   });
 

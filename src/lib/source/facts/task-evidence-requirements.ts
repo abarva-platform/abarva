@@ -3,7 +3,7 @@ import { requirementIdForFactTemplate } from "@/lib/source/facts/template-requir
 import type { SourceStageKey } from "@/lib/source/types";
 
 export const FACT_TEMPLATE_BY_TASK_ID: Record<string, string> = {
-  "scope.volumetrics": "VOLUMETRICS_V1",
+  "scope.volumetrics": "TICKET_HISTORY_V1",
   "scope.app-inventory": "APP_INVENTORY_V1",
   "scope.vendor-commercials": "CONTRACT_TERMS_V1",
   "rfp.clause-coverage": "RFP_CLAUSES_V1",
@@ -27,10 +27,8 @@ const REQUIRED_EVIDENCE_BY_TASK_ID: Record<string, readonly string[]> = {
     "EVID-SRC-STR-SPEND-BASELINE", "EVID-SRC-STR-SPONSOR-COMMIT",
   ],
   "scope.app-inventory": ["EVID-SRC-SCOPE-APP-INV"],
-  "scope.volumetrics": [
-    "EVID-SRC-SCOPE-TICKET-HISTORY", "EVID-SRC-SCOPE-SLA-BASELINE",
-  ],
-  "scope.matrix": ["EVID-SRC-SCOPE-WORKFORCE"],
+  "scope.volumetrics": ["EVID-SRC-SCOPE-TICKET-HISTORY"],
+  "scope.matrix": ["EVID-SRC-SCOPE-WORKFORCE", "EVID-SRC-SCOPE-SLA-BASELINE"],
   "scope.exclusions": ["EVID-SRC-SCOPE-CURRENT-SOW"],
   "scope.vendor-commercials": ["EVID-SRC-SCOPE-FY-CONTRACT"],
   "rfp.clause-coverage": [

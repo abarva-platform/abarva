@@ -86,7 +86,11 @@ function intakeColumnsFor(requirement: SourceEvidenceRequirement): string[] {
     const entityRefHeaders = template.entityRefColumn
       ? [template.entityRefColumn]
       : template.entityRefColumns ?? [];
-    return [...entityRefHeaders, ...template.columns.map((column) => column.header)];
+    return [
+      ...entityRefHeaders,
+      ...(template.contextColumns ?? []),
+      ...template.columns.map((column) => column.header),
+    ];
   }
   return (
     INTAKE_COLUMNS[requirementId] ??

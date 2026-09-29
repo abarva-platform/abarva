@@ -22,6 +22,7 @@
 // columns + rejected rows are surfaced, never silently dropped.
 
 import type { NextRequest } from "next/server";
+import { createHash } from "node:crypto";
 import { requireTenancy, tenancyErrorResponse } from "@/lib/auth/tenancy";
 import { getActiveClientRow } from "@/lib/active-client";
 import { getCurrentUser } from "@/lib/auth/current-user";
@@ -191,6 +192,10 @@ export async function POST(req: NextRequest, { params }: RouteCtx) {
       templateCode,
       upload,
       scope: { eventId, clientKey: effectiveClientKey },
+      sourceFile: {
+        name: file.name,
+        sha256: createHash("sha256").update(bytes).digest("hex"),
+      },
     });
     if (!result.ok) {
       await markArtifactTypedParseState({

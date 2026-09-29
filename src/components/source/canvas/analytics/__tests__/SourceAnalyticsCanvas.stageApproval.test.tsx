@@ -317,7 +317,7 @@ describe("SourceAnalyticsCanvas stage workflow", () => {
     expect(screen.getByTestId("source-shell-approval-readiness")).toHaveTextContent("Gate criteria still open");
   });
 
-  it("stays on the evidence-owning step when its second required item is missing", () => {
+  it("keeps the SLA baseline on its own evidence-owning step when missing", () => {
     const withoutSla = SCOPE_READY_EVIDENCE.filter(
       (evidence) => evidence.requirementId !== "EVID-SRC-SCOPE-SLA-BASELINE",
     );
@@ -332,7 +332,7 @@ describe("SourceAnalyticsCanvas stage workflow", () => {
       />,
     );
 
-    expect(screen.getByRole("heading", { name: "Provide the volumetrics" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Confirm retained vs. vendor" })).toBeInTheDocument();
     expect(screen.getByTestId("source-shell-active-step-needs")).toHaveTextContent(
       "SLA and service-credit baseline",
     );
@@ -871,7 +871,7 @@ describe("SourceAnalyticsCanvas stage workflow", () => {
       />,
     );
 
-    fireEvent.click(screen.getByRole("button", { name: /Provide the volumetrics/ }));
+    fireEvent.click(screen.getByRole("button", { name: /Provide ticket volumes/ }));
     expect(screen.queryByRole("button", { name: /Continue/ })).toBeNull();
     expect(screen.queryByTestId("source-shell-stage-ready-panel")).toBeNull();
     expect(screen.getByTestId("source-shell-active-step-needs"))
