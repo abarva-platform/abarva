@@ -606,6 +606,9 @@ export async function POST(
         mimeType: file.type || "application/octet-stream",
         parseMethod: parsed.extractedStructured.parse_method,
         warnings: parsed.extractedStructured.warnings,
+        ...(verifiedGenerationLineage
+          ? { generationLineage: verifiedGenerationLineage }
+          : {}),
       };
     } else {
       const body = (await req.json().catch(() => ({}))) as {
@@ -741,6 +744,14 @@ export async function POST(
         supabase,
         approvedArtifactId,
         approvedContent,
+        approvalLineage: {
+          source: "generated_artifact_acceptance",
+          generatedArtifactId: artifact.id,
+          evidenceSnapshotHash: currentEvidenceSnapshot.revision,
+          approvalMode: isFileUploadApproval
+            ? "client_approved_replacement"
+            : "accept_ai_draft_as_authoritative",
+        },
       },
     );
     if (!signedOff) {
