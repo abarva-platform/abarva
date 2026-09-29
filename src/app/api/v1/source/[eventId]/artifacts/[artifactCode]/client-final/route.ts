@@ -263,12 +263,9 @@ export async function POST(request: Request, { params }: RouteContext) {
     siblingArtifacts = allArtifacts.filter(
       (artifact) => artifact.artifactType === artifactCode,
     );
+    // The first Client Final supersedes its draft; later revisions still need that provenance.
     previousGenerated =
-      resolveAuthoritativeArtifact(
-        siblingArtifacts.filter(
-          (artifact) => artifact.artifactGroup === "generated",
-        ),
-      ) ?? null;
+      siblingArtifacts.find((artifact) => artifact.artifactGroup === "generated") ?? null;
     previousAuthoritative = resolveAuthoritativeArtifact(siblingArtifacts);
   } catch (error) {
     return jsonError(
