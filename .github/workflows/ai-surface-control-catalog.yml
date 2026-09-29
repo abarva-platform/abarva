@@ -543,6 +543,22 @@ jobs:
       - name: Exercise the Programs solution-architecture suite
         run: npx jest src/lib/programs/architecture/__tests__ --runInBand
 
+      # C-415 slice 7: the Programs control evaluation matrix.
+      #
+      # Measured BEFORE it was wired, the suite executed on its own: 1 suite,
+      # 22 tests, GREEN — control-eval-matrix 22.
+      #
+      # Not coverage of nothing, checked before wiring: the strategic-moves
+      # trace page imports buildControlEvalMatrix directly, and the origination
+      # charter extensions import it on the origination-submit path.
+      #
+      # The suite reads no file's bytes, so `T-770` has nothing to refuse and
+      # `textIsTheSubject` is negative.
+      #
+      # Wired as a DIRECTORY with no trailing slash. Nothing nests beneath it.
+      - name: Exercise the Programs control evaluation matrix suite
+        run: npx jest src/lib/programs/controls/__tests__ --runInBand
+
       # Two suites shipped on 18 Sep whose release records said "5 of 5 pass"
       # and "19 of 19 pass". Both were true locally and enforced by nothing:
       # neither file was named by any workflow, and no scoped jest script
