@@ -120,7 +120,11 @@ function req(body?: Record<string, unknown>): Request {
   );
 }
 
-function uploadReq(fileText: string, acknowledgeReadinessBlockers = false): Request {
+function uploadReq(
+  fileText: string,
+  acknowledgeReadinessBlockers = false,
+  approvalRationale?: string,
+): Request {
   const form = new FormData();
   form.append(
     "file",
@@ -131,6 +135,7 @@ function uploadReq(fileText: string, acknowledgeReadinessBlockers = false): Requ
   if (acknowledgeReadinessBlockers) {
     form.append("acknowledgeReadinessBlockers", "true");
   }
+  if (approvalRationale) form.append("approvalRationale", approvalRationale);
   return new Request(
     "http://test/api/v1/programs/prog-1/deliverables/deliverable-1/sign-off",
     { method: "POST", body: form },
@@ -240,6 +245,20 @@ describe("POST /api/v1/programs/[programId]/deliverables/[deliverableId]/sign-of
         approvedArtifactId: undefined,
         approvedContent: undefined,
       }),
+    );
+  });
+
+  it("passes an approval rationale to the lifecycle mutation", async () => {
+    const rationale = "Synthetic E2E smoke - reviewed current evidence-bound deliverable.";
+    const { POST } = await import("../route");
+    const res = await POST(req({ approvalRationale: rationale }), { params });
+
+    expect(res.status).toBe(200);
+    expect(mockSignOffDeliverable).toHaveBeenCalledWith(
+      ctx,
+      "prog-1",
+      "deliverable-1",
+      expect.objectContaining({ approvalRationale: rationale }),
     );
   });
 
@@ -366,6 +385,29 @@ describe("POST /api/v1/programs/[programId]/deliverables/[deliverableId]/sign-of
       await expect(res.json()).resolves.toMatchObject({
         clientReadiness: { verdict: "acknowledged" },
       });
+    });
+
+    it("passes an uploaded approval rationale to the lifecycle mutation", async () => {
+      const rationale = "Synthetic E2E smoke - reviewed current evidence-bound deliverable.";
+      mockExtractProgramEvidenceFromUploadBuffer.mockResolvedValue({
+        extractedText: "A bounded charter with supported scope and clear limitations.",
+        extractedStructured: { parse_method: "docx-mammoth", warnings: [] },
+      });
+      mockSaveMoveArtifact.mockResolvedValue({ artifactId: "artifact-approved-1" });
+
+      const { POST } = await import("../route");
+      const res = await POST(uploadReq("clean reviewed charter", false, rationale), { params });
+
+      expect(res.status).toBe(200);
+      expect(mockSignOffDeliverable).toHaveBeenCalledWith(
+        ctx,
+        "prog-1",
+        "deliverable-1",
+        expect.objectContaining({
+          approvedArtifactId: "artifact-approved-1",
+          approvalRationale: rationale,
+        }),
+      );
     });
 
     it("proceeds when the reviewer explicitly acknowledges the findings", async () => {

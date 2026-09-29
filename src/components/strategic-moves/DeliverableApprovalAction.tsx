@@ -38,6 +38,7 @@ export function DeliverableApprovalAction({
   const [busy, setBusy] = useState<"idle" | "approving" | "uploading">("idle");
   const [error, setError] = useState<ApprovalErrorState | null>(null);
   const [pendingUpload, setPendingUpload] = useState<File | null>(null);
+  const [approvalRationale, setApprovalRationale] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   async function submitApproval(
@@ -47,20 +48,27 @@ export function DeliverableApprovalAction({
     setError(null);
     setBusy(file ? "uploading" : "approving");
     try {
+      const rationale = approvalRationale.trim();
       const init: RequestInit = file
           ? { method: "POST", body: (() => {
               const form = new FormData();
               form.append("file", file);
+              if (rationale) form.append("approvalRationale", rationale);
               if (acknowledgeReadinessBlockers) {
                 form.append("acknowledgeReadinessBlockers", "true");
               }
               return form;
             })() }
-        : acknowledgeReadinessBlockers
+        : acknowledgeReadinessBlockers || rationale
           ? {
               method: "POST",
               headers: { "content-type": "application/json" },
-              body: JSON.stringify({ acknowledgeReadinessBlockers: true }),
+              body: JSON.stringify({
+                ...(rationale ? { approvalRationale: rationale } : {}),
+                ...(acknowledgeReadinessBlockers
+                  ? { acknowledgeReadinessBlockers: true }
+                  : {}),
+              }),
             }
           : { method: "POST" };
       const res = await fetch(
@@ -109,43 +117,71 @@ export function DeliverableApprovalAction({
   }
 
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-      <button
-        type="button"
-        disabled={busy !== "idle"}
-        onClick={() => void submitApproval()}
-        style={{
-          fontSize: 10,
-          fontWeight: 700,
-          color: "#14532D",
-          backgroundColor: "rgba(22,163,74,0.1)",
-          border: "1px solid rgba(22,163,74,0.3)",
-          borderRadius: 4,
-          padding: "4px 8px",
-          cursor: busy === "idle" ? "pointer" : "default",
-          whiteSpace: "nowrap",
-        }}
+    <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 6 }}>
+      <label
+        htmlFor={`approval-rationale-${deliverableId}`}
+        style={{ fontSize: 11, fontWeight: 600, color: "#475569" }}
       >
-        {busy === "approving" ? "Approving…" : "Approve as-is"}
-      </button>
-      <button
-        type="button"
-        disabled={busy !== "idle"}
-        onClick={() => fileInputRef.current?.click()}
+        Approval note (optional)
+      </label>
+      <textarea
+        id={`approval-rationale-${deliverableId}`}
+        aria-label="Approval note (optional)"
+        value={approvalRationale}
+        maxLength={1000}
+        rows={2}
+        placeholder="Record why this version is accepted"
+        onChange={(event) => setApprovalRationale(event.target.value)}
         style={{
-          fontSize: 10,
-          fontWeight: 600,
-          color: "#1B2B5C",
-          backgroundColor: "rgba(27,43,92,0.05)",
-          border: "1px solid rgba(27,43,92,0.2)",
+          width: "min(100%, 420px)",
+          minHeight: 46,
+          resize: "vertical",
+          border: "1px solid #CBD5E1",
           borderRadius: 4,
-          padding: "4px 8px",
-          cursor: busy === "idle" ? "pointer" : "default",
-          whiteSpace: "nowrap",
+          padding: "7px 9px",
+          color: "#243142",
+          fontSize: 12,
+          lineHeight: 1.4,
         }}
-      >
-        {busy === "uploading" ? "Uploading…" : "Upload approved version"}
-      </button>
+      />
+      <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+        <button
+          type="button"
+          disabled={busy !== "idle"}
+          onClick={() => void submitApproval()}
+          style={{
+            fontSize: 10,
+            fontWeight: 700,
+            color: "#14532D",
+            backgroundColor: "rgba(22,163,74,0.1)",
+            border: "1px solid rgba(22,163,74,0.3)",
+            borderRadius: 4,
+            padding: "4px 8px",
+            cursor: busy === "idle" ? "pointer" : "default",
+            whiteSpace: "nowrap",
+          }}
+        >
+          {busy === "approving" ? "Approving…" : "Approve as-is"}
+        </button>
+        <button
+          type="button"
+          disabled={busy !== "idle"}
+          onClick={() => fileInputRef.current?.click()}
+          style={{
+            fontSize: 10,
+            fontWeight: 600,
+            color: "#1B2B5C",
+            backgroundColor: "rgba(27,43,92,0.05)",
+            border: "1px solid rgba(27,43,92,0.2)",
+            borderRadius: 4,
+            padding: "4px 8px",
+            cursor: busy === "idle" ? "pointer" : "default",
+            whiteSpace: "nowrap",
+          }}
+        >
+          {busy === "uploading" ? "Uploading…" : "Upload approved version"}
+        </button>
+      </div>
       <input
         ref={fileInputRef}
         type="file"

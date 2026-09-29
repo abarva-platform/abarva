@@ -53,6 +53,10 @@ describe("DeliverableApprovalAction", () => {
       />,
     );
 
+    fireEvent.change(screen.getByRole("textbox", { name: /approval note/i }), {
+      target: { value: "Synthetic E2E smoke - reviewed current evidence-bound deliverable." },
+    });
+
     fireEvent.click(screen.getByRole("button", { name: /approve as-is/i }));
 
     expect(
@@ -68,7 +72,12 @@ describe("DeliverableApprovalAction", () => {
     ).toBeInTheDocument();
     expect(fetchMock).toHaveBeenCalledTimes(1);
     expect(fetchMock.mock.calls[0][1]).toMatchObject({ method: "POST" });
-    expect(fetchMock.mock.calls[0][1]).not.toHaveProperty("body");
+    expect(fetchMock.mock.calls[0][1]).toMatchObject({
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        approvalRationale: "Synthetic E2E smoke - reviewed current evidence-bound deliverable.",
+      }),
+    });
 
     fireEvent.click(
       screen.getByRole("button", {
@@ -80,7 +89,10 @@ describe("DeliverableApprovalAction", () => {
     expect(fetchMock.mock.calls[1][1]).toMatchObject({
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ acknowledgeReadinessBlockers: true }),
+      body: JSON.stringify({
+        approvalRationale: "Synthetic E2E smoke - reviewed current evidence-bound deliverable.",
+        acknowledgeReadinessBlockers: true,
+      }),
     });
   });
 
@@ -112,6 +124,11 @@ describe("DeliverableApprovalAction", () => {
       type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
     });
     const fileInput = container.querySelector('input[type="file"]');
+    const rationale = "Synthetic E2E smoke - reviewed current evidence-bound deliverable.";
+
+    fireEvent.change(screen.getByRole("textbox", { name: /approval note/i }), {
+      target: { value: rationale },
+    });
 
     fireEvent.click(screen.getByRole("button", { name: /upload approved version/i }));
     fireEvent.change(fileInput!, { target: { files: [file] } });
@@ -129,6 +146,7 @@ describe("DeliverableApprovalAction", () => {
     const form = fetchMock.mock.calls[1][1]?.body as FormData;
     expect(form.get("file")).toBe(file);
     expect(form.get("acknowledgeReadinessBlockers")).toBe("true");
+    expect(form.get("approvalRationale")).toBe(rationale);
   });
 
   it("shows non-readiness sign-off errors as reviewer-visible messages", async () => {
