@@ -271,7 +271,22 @@ export async function POST(
     // The JSON path historically accepts no body at all, so an absent or
     // unparseable body must stay valid — it means "approve as drafted".
     let acknowledgeReadinessBlockers = false;
-    if (!isFileUploadApproval) {
+    let uploadForm: FormData | null = null;
+    if (isFileUploadApproval) {
+      uploadForm = await req.formData();
+      acknowledgeReadinessBlockers =
+        uploadForm.get("acknowledgeReadinessBlockers") === "true";
+      const uploadedFile = uploadForm.get("file");
+      if (!(uploadedFile instanceof File) || uploadedFile.size === 0) {
+        return Response.json(
+          {
+            error: "file_required",
+            detail: "Select a non-empty replacement file before sign-off.",
+          },
+          { status: 400 },
+        );
+      }
+    } else {
       const parsedBody = (await req.json().catch(() => null)) as {
         acknowledgeReadinessBlockers?: unknown;
       } | null;
@@ -453,8 +468,7 @@ export async function POST(
       | undefined;
 
     if (isFileUploadApproval) {
-      const form = await req.formData();
-      const file = form.get("file");
+      const file = uploadForm?.get("file");
       if (file instanceof File && file.size > 0) {
         if (!isWithinSizeLimit(file.size)) {
           return Response.json(
@@ -498,6 +512,32 @@ export async function POST(
             { status: 422 },
           );
         }
+
+        // A client-edited replacement is still client-facing content. Scan
+        // the exact extracted upload before persisting or signing it; upload
+        // approval must not become a way around the readiness gate.
+        const readiness = evaluateClientReadinessForSignOff({
+          content: parsedText,
+          acknowledgeBlockers: acknowledgeReadinessBlockers,
+        });
+        if (!readiness.allowed) {
+          return Response.json(
+            {
+              error: "client_readiness_blockers",
+              detail: readiness.summary,
+              blockers: readiness.blockers.map((finding) => ({
+                kind: finding.kind,
+                match: finding.match,
+                why: finding.why,
+                context: finding.context,
+              })),
+              reviewItems: readiness.reviewItems.length,
+              acknowledgeField: "acknowledgeReadinessBlockers",
+            },
+            { status: 422 },
+          );
+        }
+        readinessOutcome = readiness;
 
         const saved = await saveMoveArtifact(ctx, {
           moveId: programId,

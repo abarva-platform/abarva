@@ -120,6 +120,31 @@ function req(body?: Record<string, unknown>): Request {
   );
 }
 
+function uploadReq(fileText: string, acknowledgeReadinessBlockers = false): Request {
+  const form = new FormData();
+  form.append(
+    "file",
+    new File([fileText], "client-reviewed-charter.docx", {
+      type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    }),
+  );
+  if (acknowledgeReadinessBlockers) {
+    form.append("acknowledgeReadinessBlockers", "true");
+  }
+  return new Request(
+    "http://test/api/v1/programs/prog-1/deliverables/deliverable-1/sign-off",
+    { method: "POST", body: form },
+  );
+}
+
+function emptyUploadReq(): Request {
+  const form = new FormData();
+  return new Request(
+    "http://test/api/v1/programs/prog-1/deliverables/deliverable-1/sign-off",
+    { method: "POST", body: form },
+  );
+}
+
 describe("POST /api/v1/programs/[programId]/deliverables/[deliverableId]/sign-off", () => {
   beforeEach(() => {
     jest.resetModules();
@@ -239,6 +264,16 @@ describe("POST /api/v1/programs/[programId]/deliverables/[deliverableId]/sign-of
       "<p>Target-state architecture. Generated with claude-sonnet-5 from record " +
       "5bbf2d7c-328c-41e0-8a69-50094cd15f75.</p>";
 
+    it("rejects an empty multipart approval rather than falling through to draft sign-off", async () => {
+      const { POST } = await import("../route");
+      const res = await POST(emptyUploadReq(), { params });
+
+      expect(res.status).toBe(400);
+      await expect(res.json()).resolves.toMatchObject({ error: "file_required" });
+      expect(mockSaveMoveArtifact).not.toHaveBeenCalled();
+      expect(mockSignOffDeliverable).not.toHaveBeenCalled();
+    });
+
     it("refuses sign-off when the document contains something a client must not see", async () => {
       versionRow = {
         id: "version-1",
@@ -269,6 +304,68 @@ describe("POST /api/v1/programs/[programId]/deliverables/[deliverableId]/sign-of
       const body = await (await POST(req(), { params })).json();
 
       expect(body.acknowledgeField).toBe("acknowledgeReadinessBlockers");
+    });
+
+    it("refuses an uploaded replacement with client-readiness blockers before saving or signing it off", async () => {
+      mockExtractProgramEvidenceFromUploadBuffer.mockResolvedValue({
+        extractedText: LEAKY,
+        extractedStructured: {
+          parse_method: "docx-mammoth",
+          warnings: [],
+        },
+      });
+      mockSaveMoveArtifact.mockResolvedValue({ artifactId: "artifact-approved-1" });
+
+      const { POST } = await import("../route");
+      const res = await POST(uploadReq(LEAKY), { params });
+
+      expect(res.status).toBe(422);
+      const body = await res.json();
+      expect(body.error).toBe("client_readiness_blockers");
+      expect(body.blockers.map((finding: { kind: string }) => finding.kind).sort()).toEqual(
+        ["model_name", "uuid"],
+      );
+      expect(mockSaveMoveArtifact).not.toHaveBeenCalled();
+      expect(mockSignOffDeliverable).not.toHaveBeenCalled();
+    });
+
+    it("records an explicit acknowledgement before accepting an uploaded replacement with blockers", async () => {
+      mockExtractProgramEvidenceFromUploadBuffer.mockResolvedValue({
+        extractedText: LEAKY,
+        extractedStructured: {
+          parse_method: "docx-mammoth",
+          warnings: [],
+        },
+      });
+      mockSaveMoveArtifact.mockResolvedValue({ artifactId: "artifact-approved-1" });
+
+      const { POST } = await import("../route");
+      const res = await POST(uploadReq(LEAKY, true), { params });
+
+      expect(res.status).toBe(200);
+      expect(mockSaveMoveArtifact).toHaveBeenCalledTimes(1);
+      expect(mockSignOffDeliverable).toHaveBeenCalledWith(
+        ctx,
+        "prog-1",
+        "deliverable-1",
+        expect.objectContaining({
+          approvedArtifactId: "artifact-approved-1",
+          approvedContent: expect.objectContaining({ content: LEAKY }),
+        }),
+      );
+      expect(mockWriteAuditLog).toHaveBeenCalledWith(
+        ctx,
+        expect.objectContaining({
+          action: "deliverable_signed_off_with_readiness_blockers",
+          evidenceRefs: expect.arrayContaining([
+            "model_name: claude-sonnet-5",
+            "uuid: 5bbf2d7c-328c-41e0-8a69-50094cd15f75",
+          ]),
+        }),
+      );
+      await expect(res.json()).resolves.toMatchObject({
+        clientReadiness: { verdict: "acknowledged" },
+      });
     });
 
     it("proceeds when the reviewer explicitly acknowledges the findings", async () => {
