@@ -74,6 +74,8 @@ jest.mock("@/lib/source/artifact-registry", () => ({
 import { POST } from "../route";
 import { updateSourceArtifactProcessingState } from "@/lib/source/artifact-registry";
 import { hydrateTaskEvidenceState } from "@/lib/source/facts/view/task-evidence-hydration";
+import { deriveFactBackedEvidenceStates } from "@/lib/source/canvas-substrate/fact-derived-evidence";
+import type { SourceEventFactInsert } from "@/lib/source/facts/fact-types";
 import type { StageTaskView } from "@/components/source/canvas/analytics/view-model";
 
 function fakeFluentClient() {
@@ -176,11 +178,7 @@ describe("POST facts/ingest-file — happy path", () => {
     }), ctx);
     expect(res.status).toBe(200);
 
-    const writtenFacts = insertFacts.mock.calls[0][0] as Array<{
-      fact_key: string;
-      value_numeric: number | null;
-      source_citation: Record<string, unknown>;
-    }>;
+    const writtenFacts = insertFacts.mock.calls[0][0] as SourceEventFactInsert[];
     expect(writtenFacts).toHaveLength(4);
     expect(writtenFacts[0].source_citation).toMatchObject({
       doc: "ticket-history.csv",
@@ -193,6 +191,17 @@ describe("POST facts/ingest-file — happy path", () => {
       }
       return acc;
     }, {});
+    const evidenceStates = deriveFactBackedEvidenceStates(writtenFacts.map((fact, index) => ({
+      ...fact,
+      id: `fact-${index}`,
+      captured_at: "2026-08-31T00:00:00.000Z",
+      is_stale: false,
+    })));
+    expect(evidenceStates).toMatchObject([{
+      requirementId: "EVID-SRC-SCOPE-TICKET-HISTORY",
+      currentState: "Available",
+      sourceEventFactIds: ["fact-0", "fact-2"],
+    }]);
     const volumetricsTask: StageTaskView = {
       id: "scope.volumetrics",
       title: "Provide ticket volumes",
@@ -207,6 +216,7 @@ describe("POST facts/ingest-file — happy path", () => {
     const [hydrated] = hydrateTaskEvidenceState({
       tasks: [volumetricsTask],
       factInputs,
+      evidenceStates,
       stageKey: "scope",
     });
 

@@ -13,9 +13,8 @@
 //
 // HONESTY RULE (load-bearing): `evidenceComplete` is true ONLY because the task's
 // evidence reached a usable, PERSISTED state —
-//   • a `provide` task bound to a `factTemplateCode` is complete when ANY of that
-//     template's column fact keys already exists in the event's committed facts
-//     (the same facts that flip the step insight LIVE); and
+//   • a ticket-history task needs its validated fact-derived evidence receipt;
+//     other template tasks use committed column facts; and
 //   • a `provide` task with no template needs an exact governed evidence binding;
 //     an arbitrary artifact registered for the stage cannot prove its content
 //     or signature; and
@@ -56,8 +55,8 @@ export interface HydrateTaskEvidenceInput {
   /** The stage tasks to stamp (returned unchanged in count/order). */
   tasks: readonly StageTaskView[];
   /**
-   * factKey → numeric value for the event, from `readEventFacts`. A template's
-   * task is complete when ANY of its bound column fact keys is present here.
+   * factKey → numeric value for the event, from `readEventFacts`. Non-ticket
+   * template tasks use the presence of a bound column fact key.
    */
   factInputs: EvaluatorInputs;
   /** The event's registered artifacts (from `listSourceArtifactsForSourceEventId`). */
@@ -65,12 +64,12 @@ export interface HydrateTaskEvidenceInput {
   /**
    * Effective evidence states for this event (persisted evidence plus
    * fact-backed evidence), from `listEffectiveEvidenceStatesForEvent`.
-   * Used for non-upload confirm/decide rows that still need audited readback.
+   * Used for ticket-history and non-upload confirm/decide readback.
    */
-  evidenceStates?: readonly Pick<
+  evidenceStates?: readonly (Pick<
     SourceEventEvidence,
     "requirementId" | "currentState"
-  >[];
+  > & Partial<Pick<SourceEventEvidence, "id" | "sourceEventFactIds">>)[];
   /** The canonical stage key being rendered; retained for the caller contract. */
   stageKey?: string;
   /** Verified, current-artifact delegate receipt plus confirmed sponsor notice. */
@@ -145,7 +144,18 @@ export function hydrateTaskEvidenceState(
 
     const taskFactTemplateCode = factTemplateCodeForTask(task);
     if (taskFactTemplateCode) {
-      if (templateFactsPresent(taskFactTemplateCode, factInputs)) {
+      if (taskFactTemplateCode === "TICKET_HISTORY_V1") {
+        const requirementId = evidenceRequirementIdForTask(task);
+        const requirement = requirementId ? evidenceById(requirementId) : null;
+        const factReceipt = evidenceStates.find((evidence) =>
+          evidence.requirementId === requirementId &&
+          evidence.id?.startsWith("fact-derived:") &&
+          (evidence.sourceEventFactIds?.length ?? 0) > 0 &&
+          requirement &&
+          evidenceStateMeetsMinimum(evidence.currentState, requirement.minimumState),
+        );
+        if (factReceipt) return { ...task, evidenceComplete: true };
+      } else if (templateFactsPresent(taskFactTemplateCode, factInputs)) {
         return { ...task, evidenceComplete: true };
       }
       const storedArtifact = artifacts.find((artifact) =>
