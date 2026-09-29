@@ -4924,6 +4924,8 @@ function EvidenceReviewControl({
     };
     targetState: string;
     disclaimer: string;
+    sourceArtifactId?: string;
+    sourceSha256?: string;
   } | null>(null);
   const [loadingPreview, setLoadingPreview] = useState(false);
   const [pending, setPending] = useState(false);
@@ -4980,6 +4982,10 @@ function EvidenceReviewControl({
         body: JSON.stringify({
           rationale: note.trim(),
           stage: requirement.stage,
+          ...(requirement.requirementId === "EVID-SRC-SCOPE-APP-INV" ? {
+            sourceArtifactId: preview?.sourceArtifactId,
+            sourceSha256: preview?.sourceSha256,
+          } : {}),
         }),
       });
       const payload = (await response.json().catch(() => null)) as {

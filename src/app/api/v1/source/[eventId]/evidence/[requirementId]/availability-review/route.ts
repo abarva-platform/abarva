@@ -136,7 +136,11 @@ function reviewPreview(context: ReviewContext) {
     disclaimer: context.inventoryProof
       ? "Confirms this source-bound operational inventory is valid for Scope. It does not validate costs, approve a contract, or create canonical service records."
       : REVIEW_DISCLAIMER,
-    ...(context.inventoryProof ? { rowCount: context.inventoryProof.rowCount } : {}),
+    ...(context.inventoryProof ? {
+      rowCount: context.inventoryProof.rowCount,
+      sourceArtifactId: context.inventoryProof.sourceArtifactId,
+      sourceSha256: context.inventoryProof.sourceSha256,
+    } : {}),
   };
 }
 
@@ -438,6 +442,8 @@ export async function POST(request: NextRequest, { params }: RouteCtx) {
     const body = (await request.json().catch(() => null)) as {
       rationale?: unknown;
       stage?: unknown;
+      sourceArtifactId?: unknown;
+      sourceSha256?: unknown;
     } | null;
     const rationale = cleanRationale(body?.rationale);
     if (!rationale)
@@ -445,6 +451,15 @@ export async function POST(request: NextRequest, { params }: RouteCtx) {
 
     const context = await resolveReviewContext(eventId, requirementId);
     if (context instanceof Response) return context;
+    if (context.inventoryProof && (
+      body?.sourceArtifactId !== context.inventoryProof.sourceArtifactId ||
+      body?.sourceSha256 !== context.inventoryProof.sourceSha256
+    )) {
+      return Response.json(
+        { ok: false, error: "stale_inventory_review", detail: "The linked inventory changed. Review the current file before confirming." },
+        { status: 409 },
+      );
+    }
     const requestedStage =
       typeof body?.stage === "string"
         ? normalizeSourceStageKey(body.stage)

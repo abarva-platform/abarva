@@ -37,8 +37,8 @@ Source Scope can accept a sourced application or service inventory without requi
 ## QA / Validation
 
 - Pass: Red-first behavioral tests reproduced the missing validated review, unsupported finance-template requirement and premature local task completion.
-- Pass: Same-tenant/event positive and wrong-tenant, wrong-event, wrong-stage, unparsed, hash-mismatch, malformed-row, duplicate-ID, missing-field and invalid-date negatives.
-- Pass: 95 adjacent Source suites / 1,072 tests, exact upload/review route suites, TypeScript, scoped ESLint, release check and diff check before PR.
+- Pass: Same-tenant/event positive and wrong-tenant, wrong-event, wrong-stage, unparsed, stale-preview, hash-mismatch, malformed-row, duplicate-ID, missing-field and invalid-date negatives.
+- Pass: 95 adjacent Source suites / 1,087 tests, exact upload/review route suites, TypeScript, scoped ESLint, release check and diff check before PR.
 - Not run: PR CI, deployment and live signed-in replay until the candidate merges.
 
 ## Rollout Plan

@@ -259,11 +259,15 @@ describe("Source parsed-evidence availability review", () => {
       review: expect.objectContaining({
         targetState: "Usable Evidence",
         reviewScope: "validated_operational_inventory",
+        sourceArtifactId: "artifact-1",
+        sourceSha256: inventoryArtifact?.sha256,
       }),
     }));
     const response = await POST(request({
       rationale: "I reviewed the service rows and their source for this synthetic scope boundary.",
       stage: "scope",
+      sourceArtifactId: "artifact-1",
+      sourceSha256: inventoryArtifact?.sha256,
     }), inventoryCtx);
     expect(response.status).toBe(200);
     expect(writes).toContainEqual(expect.objectContaining({
@@ -281,6 +285,18 @@ describe("Source parsed-evidence availability review", () => {
         sourceArtifactId: "artifact-1",
       }),
     }));
+  });
+
+  it("refuses a review when the linked inventory changed after preview", async () => {
+    setupInventory();
+    const response = await POST(request({
+      rationale: "I reviewed the prior inventory version for this synthetic scope.",
+      stage: "scope",
+      sourceArtifactId: "artifact-old",
+      sourceSha256: "0".repeat(64),
+    }), inventoryCtx);
+    expect(response.status).toBe(409);
+    expect(writes).toHaveLength(0);
   });
 
   it.each([

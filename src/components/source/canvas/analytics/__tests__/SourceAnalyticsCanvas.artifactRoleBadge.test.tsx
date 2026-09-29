@@ -512,4 +512,63 @@ describe("SourceAnalyticsCanvas — artifact role badge (SOURCE-SHELL-002)", () 
       global.fetch = previousFetch;
     }
   });
+
+  it("binds an operational inventory review to the previewed artifact and hash", async () => {
+    const scopeEvent: SourcingEventSummary = {
+      ...makeEvent(),
+      currentStageKey: "scope",
+      currentStageLabel: "Scope",
+    } as SourcingEventSummary;
+    const fetchMock = jest.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        ok: true,
+        review: {
+          actionLabel: "Reviewed parsed evidence: Application and service inventory",
+          reviewer: { displayName: "Evidence Reviewer", email: "reviewer@example.test", role: "maestro" },
+          targetState: "Usable Evidence",
+          disclaimer: "Confirms the operational inventory only.",
+          sourceArtifactId: "artifact-1",
+          sourceSha256: "a".repeat(64),
+        },
+      }),
+    });
+    const previousFetch = global.fetch;
+    global.fetch = fetchMock as unknown as typeof fetch;
+    try {
+      render(<SourceAnalyticsCanvas
+        event={scopeEvent}
+        viewStage="scope"
+        tenantName="Demo Client"
+        artifacts={[{
+          id: "artifact-1",
+          artifactCode: "workshop_output",
+          stageKey: "scope",
+          title: "service_catalog_scope.csv",
+          status: "draft",
+          parseStatus: "parsed",
+        }]}
+        evidenceStates={[]}
+        initialWorkspace="files"
+      />);
+      const row = screen.getByTestId(
+        "source-stage-evidence-checklist-row-EVID-SRC-SCOPE-APP-INV",
+      );
+      fireEvent.click(within(row).getByRole("button", { name: "Review parsed evidence" }));
+      await within(row).findByLabelText("Review rationale for Application and service inventory");
+      fireEvent.click(within(row).getByRole("button", { name: "Record evidence review" }));
+      await waitFor(() => expect(fetchMock).toHaveBeenCalledWith(
+        "/api/v1/source/evt-1/evidence/EVID-SRC-SCOPE-APP-INV/availability-review",
+        expect.objectContaining({
+          method: "POST",
+          body: expect.stringContaining('"sourceArtifactId":"artifact-1"'),
+        }),
+      ));
+      expect(JSON.parse(fetchMock.mock.calls.at(-1)?.[1]?.body as string)).toEqual(
+        expect.objectContaining({ sourceSha256: "a".repeat(64) }),
+      );
+    } finally {
+      global.fetch = previousFetch;
+    }
+  });
 });
