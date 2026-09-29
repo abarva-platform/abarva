@@ -7,6 +7,7 @@ import { loadUserSourceAccessPolicy } from "@/lib/auth/source-access-policy";
 import { inferClientKeyFromEmail, isClientKey } from "@/lib/client-config";
 import { getAzureWriteFluentClient } from "@/lib/data-plane/postgresCompat";
 import { getObjectStorageAdapter } from "@/lib/data-plane/objectStorage";
+import { clientKeyToInventorySubstrateKey } from "@/lib/agent/tools/intelligence/_shared";
 import { selectSourceWriteAdapter } from "@/lib/data-plane/write-adapters/sourceWriteAdapter";
 import { evidenceById } from "@/lib/source/canonical-specs";
 import {
@@ -353,7 +354,7 @@ async function resolveReviewContext(
       .from("source_artifacts")
       .select("id, original_name, mime_type, sha256, blob_uri")
       .eq("id", reviewEvidence.source_artifact_id)
-      .eq("tenant_key", effectiveClientKey)
+      .eq("tenant_key", clientKeyToInventorySubstrateKey(effectiveClientKey))
       .eq("source_event_id", persistedEvent.id)
       .eq("source_event_row_id", persistedEvent.id)
       .eq("stage_key", "scope")
