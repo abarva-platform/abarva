@@ -12,6 +12,7 @@ const updateArtifactBody = jest.fn(async (input: unknown) => ({
 }));
 const uploadBlob = jest.fn(async () => undefined);
 let artifactStateMetadata: Record<string, unknown> = {};
+let listedArtifacts: Array<Record<string, unknown>> = [];
 
 jest.mock("@/app/api/v1/_intel-auth", () => ({
   requireTenancy: jest.fn(async () => ({
@@ -132,22 +133,15 @@ jest.mock("@/lib/source/artifact-registry/upload-text-extraction", () => ({
 }));
 
 jest.mock("@/lib/source/file-cabinet/repository", () => ({
-  listSourceArtifacts: jest.fn(async () => [
-    {
-      id: "generated-1",
-      artifactType: "d13_vendor_responses",
-      artifactGroup: "generated",
-      originalName: "generated.docx",
-      version: 1,
-    },
-  ]),
+  listSourceArtifacts: jest.fn(async () => listedArtifacts),
   supersedePriorVersions: jest.fn(async () => undefined),
 }));
 
 jest.mock("@/lib/source/client-final-artifacts", () => ({
   CLIENT_FINAL_GOVERNANCE_MESSAGE: "Client final is authoritative.",
   buildClientFinalChangeSummary: jest.fn(() => "Client final accepted."),
-  resolveAuthoritativeArtifact: jest.fn((rows: unknown[]) => rows[0] ?? null),
+  resolveAuthoritativeArtifact: jest.fn((rows: Array<{ lifecycleState?: string | null }>) =>
+    rows.find((row) => !row.lifecycleState || row.lifecycleState === "current") ?? null),
 }));
 
 jest.mock("@/lib/source/canonical-specs", () => ({
@@ -193,6 +187,14 @@ describe("client-final artifact body landing", () => {
   beforeEach(() => {
     jest.clearAllMocks();
     artifactStateMetadata = {};
+    listedArtifacts = [{
+      id: "generated-1",
+      artifactType: "d13_vendor_responses",
+      artifactGroup: "generated",
+      lifecycleState: "current",
+      originalName: "generated.docx",
+      version: 1,
+    }];
     policy.mockResolvedValue({
       canUploadSourceArtifacts: true,
       canApproveSourceStages: true,
@@ -238,6 +240,59 @@ describe("client-final artifact body landing", () => {
     } };
     expect(update.columns.body_generation_metadata).not.toHaveProperty("qualityGate");
     expect(update.columns.body_generation_metadata).toHaveProperty("clientFinal");
+  });
+
+  it("accepts a reviewed revision after the first final supersedes its generated draft", async () => {
+    listedArtifacts = [
+      {
+        id: "final-1",
+        artifactType: "d13_vendor_responses",
+        artifactGroup: "approval",
+        lifecycleState: "current",
+        status: "client_final",
+        originalName: "first-final.html",
+        version: 2,
+      },
+      {
+        id: "generated-1",
+        artifactType: "d13_vendor_responses",
+        artifactGroup: "generated",
+        lifecycleState: "superseded",
+        status: "superseded",
+        originalName: "generated.docx",
+        version: 1,
+      },
+    ];
+
+    const response = await postClientFinal(clientFinalForm("Reviewed revised final against the generated draft."));
+
+    expect(response.status).toBe(200);
+    expect(registerArtifact).toHaveBeenCalledWith(expect.objectContaining({
+      supersedesArtifactVersionId: "final-1",
+      fileCabinet: expect.objectContaining({
+        version: 3,
+        sourceGeneratedArtifactId: "generated-1",
+        supersedesArtifactId: "final-1",
+      }),
+    }));
+  });
+
+  it("still refuses a Client Final when no generated draft exists in history", async () => {
+    listedArtifacts = [{
+      id: "final-1",
+      artifactType: "d13_vendor_responses",
+      artifactGroup: "approval",
+      lifecycleState: "current",
+      status: "client_final",
+      version: 2,
+    }];
+
+    const response = await postClientFinal(clientFinalForm("Reviewed revised final."));
+
+    expect(response.status).toBe(409);
+    expect(await response.json()).toEqual(expect.objectContaining({ error: "generated_draft_required" }));
+    expect(uploadBlob).not.toHaveBeenCalled();
+    expect(registerArtifact).not.toHaveBeenCalled();
   });
 
   it("refuses an uploader who lacks named approval authority before any blob or metadata write", async () => {
