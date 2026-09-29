@@ -40,7 +40,8 @@ Release lane: `global-control-lane`. This changes the shared Source intake contr
 
 - Pass: red-first focused tests reproduced the missing ticket template and false financial-fact evidence receipt.
 - Pass: removing the breach bound made the invalid-file test fail; removing file-hash grouping made the cross-file gate test fail. Both guards were restored.
-- Pass: 70 Source fact/canvas suites / 776 tests, route upload suite / 11 tests, TypeScript, scoped ESLint, release check, and exact generated-scaffold measurement diff.
+- Pass: 76 Source fact/canvas/substrate suites / 837 tests, route upload suite / 11 tests, TypeScript, scoped ESLint, release check, and exact generated-scaffold measurement diff.
+- Pass: broad CI exposed two stale substrate expectations that treated a finance fact as ticket history; the fixtures now require cited L2/L3 cohorts and a finance-only negative case.
 - Not run: PR CI, post-merge ACA runtime proof, and signed-in production replay of the exact failed Scope upload.
 
 ## Rollout Plan

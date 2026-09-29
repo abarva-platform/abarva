@@ -138,10 +138,8 @@ describe("canvas substrate queries", () => {
       }),
     ]);
     mockAdapter.listEventFactRows.mockResolvedValue([
-      factRow({
-        id: "fact-ticket-history",
-        fact_key: "annual_change_order_spend",
-      }),
+      ticketFactRow("L2", "fact-ticket-l2"),
+      ticketFactRow("L3", "fact-ticket-l3"),
     ]);
 
     const evidence = await listEffectiveEvidenceStatesForEvent("event-1");
@@ -152,8 +150,16 @@ describe("canvas substrate queries", () => {
       requirementId: "EVID-SRC-SCOPE-TICKET-HISTORY",
       currentState: "Available",
       sourceArtifactId: null,
-      sourceEventFactIds: ["fact-ticket-history"],
+      sourceEventFactIds: ["fact-ticket-l2", "fact-ticket-l3"],
     });
+  });
+
+  it("does not derive ticket-history readiness from finance facts", async () => {
+    mockAdapter.listEventFactRows.mockResolvedValue([
+      factRow({ id: "fact-finance", fact_key: "annual_change_order_spend" }),
+    ]);
+
+    expect(await listEffectiveEvidenceStatesForEvent("event-1")).toEqual([]);
   });
 
   it("returns stage substrate with fact-backed evidence filtered to the requested stage", async () => {
@@ -164,10 +170,8 @@ describe("canvas substrate queries", () => {
       criterionRow({ criterion_id: "EVID-SCOPE-01" }),
     ]);
     mockAdapter.listEventFactRows.mockResolvedValue([
-      factRow({
-        id: "fact-ticket-history",
-        fact_key: "annual_change_order_spend",
-      }),
+      ticketFactRow("L2", "fact-ticket-l2"),
+      ticketFactRow("L3", "fact-ticket-l3"),
       factRow({
         id: "fact-pricing",
         fact_key: "vendor_headline_bid",
@@ -185,7 +189,7 @@ describe("canvas substrate queries", () => {
     expect(substrate.evidence).toHaveLength(1);
     expect(substrate.evidence[0]).toMatchObject({
       requirementId: "EVID-SRC-SCOPE-TICKET-HISTORY",
-      sourceEventFactIds: ["fact-ticket-history"],
+      sourceEventFactIds: ["fact-ticket-l2", "fact-ticket-l3"],
     });
   });
 });
@@ -281,4 +285,24 @@ function factRow(
     is_stale: false,
     ...overrides,
   };
+}
+
+function ticketFactRow(tier: "L2" | "L3", id: string): SourceEventFactRow {
+  return factRow({
+    id,
+    fact_key: "ticket_count",
+    entity_kind: "tower",
+    entity_ref: "Service desk",
+    value_numeric: tier === "L2" ? 42 : 13,
+    unit: "count",
+    source_citation: {
+      doc: "ticket-history.csv",
+      locator: `${tier} ticket count`,
+      source_sha256: "a".repeat(64),
+      support_tier: tier,
+      month: "2026-08",
+      time_window: "Business hours",
+      source_basis: "Synthetic smoke scenario",
+    },
+  });
 }
