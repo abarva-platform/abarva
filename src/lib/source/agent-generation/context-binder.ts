@@ -461,9 +461,9 @@ async function listUploadedEvidenceForGeneration(
       // The text parser emits chunks up to 1,800 characters. Controlled bidder
       // Q&A records often contain two complete entries in one chunk, so the
       // generic 900-character prompt excerpt can silently drop the second
-      // authoritative answer. Preserve the parser chunk for this evidence
-      // class while keeping the tighter cap for ordinary uploads.
-      list.push(isResponseQaArtifact ? chunkText : chunkText.slice(0, 900));
+      // authoritative answer. Keep raw chunks until the prompt budget is
+      // allocated below, where ordinary single- and multi-chunk files differ.
+      list.push(chunkText);
       chunksByArtifact.set(artifactId, list);
     }
   }
@@ -501,6 +501,12 @@ async function listUploadedEvidenceForGeneration(
       evidence_state: string | null;
       stage_key: SourceGenerationUploadedArtifact["stageKey"];
     };
+    const chunks = chunksByArtifact.get(typed.id) ?? [];
+    const chunkExcerpts = responseQaArtifactIds.has(typed.id)
+      ? chunks
+      : chunks.length === 1
+        ? [chunks[0].slice(0, 1_800)]
+        : chunks.map((chunk) => chunk.slice(0, 900));
     return {
       id: typed.id,
       originalName: typed.original_name ?? typed.id,
@@ -509,7 +515,7 @@ async function listUploadedEvidenceForGeneration(
       parseStatus: typed.parse_status ?? "pending",
       evidenceState: typed.evidence_state ?? "unparsed",
       stageKey: typed.stage_key ?? "strategy",
-      chunkExcerpts: chunksByArtifact.get(typed.id) ?? [],
+      chunkExcerpts,
       factSummaries: factsByArtifact.get(typed.id) ?? [],
     };
   });
