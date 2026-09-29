@@ -32,6 +32,7 @@ Release lane: `global-control-lane`.
 - Pass the route's already-read fact inputs, artifact metadata, and verified delegation state to fallback step hydration.
 - Hydrate fallback tasks from effective evidence states before constructing the Source shell. The existing live-view hydration path is unchanged.
 - Add mounted positive and negative tests for the no-value-lever Scope path.
+- Regenerate the audited Source canvas import-closure count for the new readback import; no covered or remainder paths change.
 - No migration, data build, notification, supplier action, or approval action.
 
 ## QA / Validation
@@ -39,7 +40,8 @@ Release lane: `global-control-lane`.
 - Pass: red-first mounted test showed a validated ticket receipt still rendered as missing when the stage view was absent.
 - Pass: severing the fallback evidence binding made that test fail again; restored binding passes. Unrelated and unvalidated receipts stay locked.
 - Pass: 22 adjacent Source canvas, shell, and fact-view suites (225 tests); scoped ESLint; canonical `npm run typecheck`; `git diff --check`.
-- Not run: PR CI, post-merge runtime proof, and signed-in production replay.
+- Pass: the first PR CI head passed 36 checks but failed its behavior-coverage measurement (committed canvas import closure 435, measured 436). The documented generator changed only that count; the focused guard passes 21/21 with and without regeneration.
+- Not run: rerun PR CI, post-merge runtime proof, and signed-in production replay.
 
 ## Rollout Plan
 
