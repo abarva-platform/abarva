@@ -3809,7 +3809,8 @@ function StepDetail({
           eventId={eventId}
           stageKey={stageKey}
           factTemplateCode={factTemplateCode}
-          onUploaded={activeStep.id === "scope.sponsor" ? () => router.refresh() : onComplete}
+          evidenceRequirementId={activeStep.id === "scope.app-inventory" ? "EVID-SRC-SCOPE-APP-INV" : undefined}
+          onUploaded={activeStep.id === "scope.sponsor" || activeStep.id === "scope.app-inventory" ? () => router.refresh() : onComplete}
           onUploadReadback={setUploadReadback}
         />
         <ActiveStepUploadReadback
@@ -4949,9 +4950,9 @@ function EvidenceReviewControl({
         );
       }
       setPreview(payload.review);
-      setNote(
-        `Reviewed ${fileName} for evidence availability and confirmed that its parsed content is relevant to this workflow requirement. This is not legal, security, commercial, supplier, or finance approval.`,
-      );
+      setNote(requirement.requirementId === "EVID-SRC-SCOPE-APP-INV"
+        ? `Reviewed ${fileName} as the operational service inventory for this Scope boundary. This does not validate costs or approve contractual terms.`
+        : `Reviewed ${fileName} for evidence availability and confirmed that its parsed content is relevant to this workflow requirement. This is not legal, security, commercial, supplier, or finance approval.`);
       setOpen(true);
     } catch (previewError) {
       setError(

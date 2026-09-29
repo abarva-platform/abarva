@@ -1,4 +1,5 @@
 import ExcelJS from "exceljs";
+import { createHash } from "node:crypto";
 
 import {
   SOURCE_EVIDENCE_REQUIREMENTS,
@@ -13,6 +14,7 @@ import {
   inputTemplateFilename,
 } from "@/lib/source/exports/input-template";
 import { templateFactMapByCode } from "@/lib/source/facts/template-fact-map";
+import { reviewOperationalInventory } from "@/lib/source/evidence-review/operational-inventory";
 
 const SAMPLE_EVENT = {
   eventCode: "SRC-2026-014",
@@ -77,7 +79,6 @@ describe("source input template", () => {
 
   it("gives fact-backed requirements parser-aligned intake headers", async () => {
     const factTemplatesByRequirement = {
-      "EVID-SRC-SCOPE-APP-INV": "APP_INVENTORY_V1",
       "EVID-SRC-SCOPE-TICKET-HISTORY": "TICKET_HISTORY_V1",
       "EVID-SRC-RESP-PROPOSALS": "RESPONSE_COVERAGE_V1",
       "EVID-SRC-PRICE-VENDOR-PRICING": "VENDOR_BIDS_V1",
@@ -121,5 +122,34 @@ describe("source input template", () => {
         expect(header).not.toContain("Annual Change-Order Spend (USD)");
       }
     }
+  });
+
+  it("offers a cover-first operational inventory that can be reviewed without cost facts", async () => {
+    const requirement = SOURCE_EVIDENCE_REQUIREMENTS.find(
+      (row) => row.requirementId === "EVID-SRC-SCOPE-APP-INV",
+    );
+    if (!requirement) throw new Error("missing inventory requirement");
+    const workbook = new ExcelJS.Workbook();
+    await workbook.xlsx.load(await buildInputTemplateWorkbook({ requirement, event: SAMPLE_EVENT }) as unknown as ArrayBuffer);
+    const sheet = workbook.getWorksheet("Intake");
+    if (!sheet) throw new Error("missing Intake worksheet");
+    expect(sheet.getRow(1).values).toEqual([,
+      "Service ID", "Service Name", "Scope Boundary", "Criticality",
+      "Lifecycle State", "Service Owner", "Source Basis", "As Of Date",
+    ]);
+    sheet.getRow(2).values = [,
+      "SVC-001", "Service desk", "Ticket intake", "high", "active",
+      "IT operations", "Synthetic service catalog", "2026-09-29",
+    ];
+    const bytes = Buffer.from(await workbook.xlsx.writeBuffer());
+    const result = await reviewOperationalInventory({
+      artifact: {
+        originalName: inputTemplateFilename(requirement),
+        mimeType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        sha256: createHash("sha256").update(bytes).digest("hex"),
+      },
+      bytes,
+    });
+    expect(result).toEqual(expect.objectContaining({ ok: true, rowCount: 1 }));
   });
 });

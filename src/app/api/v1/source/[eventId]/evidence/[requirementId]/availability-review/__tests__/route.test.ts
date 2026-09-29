@@ -1,4 +1,5 @@
 import type { SourceEventEvidenceStateRow } from "@/lib/source/canvas-substrate/types";
+import { createHash } from "node:crypto";
 
 const tenancy = {
   clientId: "client-1",
@@ -64,6 +65,12 @@ jest.mock("@/lib/data-plane/postgresCompat", () => ({
   getAzureWriteFluentClient: jest.fn(() => fakeFluentClient()),
 }));
 
+jest.mock("@/lib/data-plane/objectStorage", () => ({
+  getObjectStorageAdapter: jest.fn(() => ({
+    download: jest.fn(async () => inventoryBytes),
+  })),
+}));
+
 import { GET, POST } from "../route";
 
 const evidenceRow: SourceEventEvidenceStateRow = {
@@ -96,6 +103,11 @@ let parsedArtifacts: Array<{
   parse_status: string;
   updated_at: string;
 }> = [];
+const inventoryBytes = Buffer.from([
+  "Service ID,Service Name,Scope Boundary,Criticality,Lifecycle State,Service Owner,Source Basis,As Of Date",
+  "SVC-001,Service desk,Intake and triage,high,active,IT operations,Synthetic service catalog,2026-09-29",
+].join("\n"));
+let inventoryArtifact: Record<string, unknown> | null = null;
 
 function fakeFluentClient() {
   return {
@@ -156,6 +168,14 @@ function fakeFluentClient() {
           if (table === "source_event_evidence_states") {
             return { data: existingEvidence, error: null };
           }
+          if (table === "source_artifacts") {
+            return {
+              data: inventoryArtifact && Array.from(equalityFilters.entries()).every(
+                ([column, value]) => inventoryArtifact?.[column] === value,
+              ) ? inventoryArtifact : null,
+              error: null,
+            };
+          }
           return { data: null, error: null };
         },
         single: async () => {
@@ -194,6 +214,7 @@ beforeEach(() => {
   currentUser.personId = "person-1";
   queriedPersonId = null;
   parsedArtifacts = [];
+  inventoryArtifact = null;
   personRow = {
     id: "person-1",
     name: "Evidence Reviewer",
@@ -202,6 +223,107 @@ beforeEach(() => {
 });
 
 describe("Source parsed-evidence availability review", () => {
+  const inventoryCtx = {
+    params: Promise.resolve({
+      eventId: "evt-1",
+      requirementId: "EVID-SRC-SCOPE-APP-INV",
+    }),
+  };
+
+  function setupInventory() {
+    existingEvidence = {
+      ...evidenceRow,
+      requirement_id: "EVID-SRC-SCOPE-APP-INV",
+      stage_key: "scope",
+    };
+    inventoryArtifact = {
+      id: "artifact-1",
+      tenant_key: "client-one",
+      source_event_id: "evt-1",
+      source_event_row_id: "evt-1",
+      stage_key: "scope",
+      original_name: "service_catalog_scope.csv",
+      mime_type: "text/csv",
+      blob_uri: "private/evt-1/artifact-1.csv",
+      parse_status: "parsed",
+      deleted_at: null,
+      sha256: createHash("sha256").update(inventoryBytes).digest("hex"),
+    };
+  }
+
+  it("offers and records usable operational inventory only after validated file review", async () => {
+    setupInventory();
+    const preview = await GET(request(), inventoryCtx);
+    expect(preview.status).toBe(200);
+    await expect(preview.json()).resolves.toEqual(expect.objectContaining({
+      review: expect.objectContaining({
+        targetState: "Usable Evidence",
+        reviewScope: "validated_operational_inventory",
+      }),
+    }));
+    const response = await POST(request({
+      rationale: "I reviewed the service rows and their source for this synthetic scope boundary.",
+      stage: "scope",
+    }), inventoryCtx);
+    expect(response.status).toBe(200);
+    expect(writes).toContainEqual(expect.objectContaining({
+      table: "source_event_evidence_states",
+      payload: expect.objectContaining({
+        current_state: "Usable Evidence",
+        source_artifact_id: "artifact-1",
+        notes: expect.stringContaining("sha256="),
+      }),
+    }));
+    expect(writeAdapter.insertActivityLog).toHaveBeenCalledWith(expect.objectContaining({
+      metadata: expect.objectContaining({
+        reviewScope: "validated_operational_inventory",
+        rowCount: 1,
+        sourceArtifactId: "artifact-1",
+      }),
+    }));
+  });
+
+  it.each([
+    ["other-tenant artifact", { tenant_key: "other-client" }],
+    ["other-event artifact", { source_event_id: "evt-other" }],
+    ["other-stage artifact", { stage_key: "strategy" }],
+    ["unparsed artifact", { parse_status: "failed" }],
+    ["wrong registered hash", { sha256: "0".repeat(64) }],
+  ])("does not promote inventory from %s", async (_label, change) => {
+    setupInventory();
+    inventoryArtifact = { ...inventoryArtifact, ...change };
+    const response = await POST(request({
+      rationale: "I reviewed this inventory for the synthetic operational boundary.",
+      stage: "scope",
+    }), inventoryCtx);
+    expect(response.status).toBe(409);
+    expect(writes).toHaveLength(0);
+  });
+
+  it("does not promote inventory via a filename-matched parsed artifact", async () => {
+    setupInventory();
+    existingEvidence = {
+      ...existingEvidence!,
+      current_state: "Loaded",
+      source_artifact_id: null,
+    };
+    parsedArtifacts = [{
+      id: "artifact-1",
+      tenant_key: "client-one",
+      source_event_row_id: "evt-1",
+      stage_key: "scope",
+      original_name: "service_catalog_scope.csv",
+      parse_status: "parsed",
+      updated_at: "2026-09-29T00:00:00Z",
+    }];
+    const response = await POST(request({
+      rationale: "I reviewed the linked inventory for this synthetic scope.",
+      stage: "scope",
+    }), inventoryCtx);
+    expect(response.status).toBe(409);
+    expect(writes).toHaveLength(0);
+  });
+
   it("previews the exact named audit record without granting approval", async () => {
     const response = await GET(request(), ctx);
     expect(response.status).toBe(200);

@@ -139,6 +139,28 @@ describe("hydrateTaskEvidenceState", () => {
     expect(hydrated[0].evidenceComplete).toBe(true);
   });
 
+  it("completes an operational inventory only from a usable, source-linked review receipt", () => {
+    const task = { ...APP_INVENTORY_TASK, factTemplateCode: undefined };
+    const reviewed = {
+      id: "evidence-row-1",
+      requirementId: "EVID-SRC-SCOPE-APP-INV",
+      currentState: "Usable Evidence" as const,
+      sourceArtifactId: "source-artifact-1",
+    };
+    expect(hydrateTaskEvidenceState({
+      tasks: [task], factInputs: {}, evidenceStates: [reviewed], stageKey: "scope",
+    })[0].evidenceComplete).toBe(true);
+    for (const evidence of [
+      { ...reviewed, currentState: "Available" as const },
+      { ...reviewed, sourceArtifactId: null },
+      { ...reviewed, id: "fact-derived:invented" },
+    ]) {
+      expect(hydrateTaskEvidenceState({
+        tasks: [task], factInputs: {}, evidenceStates: [evidence], stageKey: "scope",
+      })[0].evidenceComplete).toBeUndefined();
+    }
+  });
+
   it.each([
     ["a single scalar", { ticket_count: 42 }, []],
     ["a merely uploaded file", {}, [{ requirementId: "EVID-SRC-SCOPE-TICKET-HISTORY", currentState: "Available" as const, sourceEventFactIds: [] }]],

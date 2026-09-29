@@ -4,7 +4,6 @@ import type { SourceStageKey } from "@/lib/source/types";
 
 export const FACT_TEMPLATE_BY_TASK_ID: Record<string, string> = {
   "scope.volumetrics": "TICKET_HISTORY_V1",
-  "scope.app-inventory": "APP_INVENTORY_V1",
   "scope.vendor-commercials": "CONTRACT_TERMS_V1",
   "rfp.clause-coverage": "RFP_CLAUSES_V1",
   "responses.coverage": "RESPONSE_COVERAGE_V1",
@@ -15,6 +14,7 @@ export const FACT_TEMPLATE_BY_TASK_ID: Record<string, string> = {
 };
 
 const EVIDENCE_REQUIREMENT_BY_TASK_ID: Record<string, string> = {
+  "scope.app-inventory": "EVID-SRC-SCOPE-APP-INV",
   "executive-decision.recommendation-packet":
     "EVID-SRC-DEC-STAKEHOLDER-ENDORSEMENT",
 };
