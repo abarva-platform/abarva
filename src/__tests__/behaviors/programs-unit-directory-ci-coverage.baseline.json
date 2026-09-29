@@ -1,5 +1,4 @@
 [
-  "src/lib/programs/architecture/__tests__",
   "src/lib/programs/controls/__tests__",
   "src/lib/programs/decomposition/__tests__",
   "src/lib/programs/evidence-readiness/__tests__",
