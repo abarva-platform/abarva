@@ -423,6 +423,32 @@ jobs:
       - name: Exercise the Programs attachment suites
         run: npx jest src/lib/programs/attachments/__tests__ --runInBand
 
+      # The next dark directory under `src/lib/programs` in the order item
+      # C-415 declares (T-772's successor): census rank, then file count.
+      #
+      # Measured BEFORE it was wired, every suite executed on its own: 4
+      # suites, 28 tests, GREEN — artifact-review-decisions 4,
+      # deliverable-quality 17, move-artifacts 4, review-regeneration 3. A
+      # green directory buys the future; it does not repair the past.
+      #
+      # Not coverage of nothing, checked before wiring: the subjects are
+      # imported by live code outside this directory — the v1 artifact
+      # review-decision, review-regenerate, list, upload and
+      # stage-readiness-workbook route handlers, the strategic-move phase
+      # page, and the deliverable orchestrators that call the quality
+      # validator.
+      #
+      # No suite here reads a file's bytes, so `T-770` has nothing to refuse
+      # and `textIsTheSubject` is negative for all four, judged per suite.
+      #
+      # Wired as a DIRECTORY with no trailing slash. The path regex does not
+      # reach `deliverables/orchestrated/__tests__`, which is a separate dark
+      # directory with its own slice; nothing nests beneath this one. The
+      # directory leaves `programs-unit-directory-ci-coverage.baseline.json`
+      # and `product-directory-ci-coverage.baseline.json` in the same change.
+      - name: Exercise the Programs deliverables suites
+        run: npx jest src/lib/programs/deliverables/__tests__ --runInBand
+
       # Two suites shipped on 18 Sep whose release records said "5 of 5 pass"
       # and "19 of 19 pass". Both were true locally and enforced by nothing:
       # neither file was named by any workflow, and no scoped jest script
