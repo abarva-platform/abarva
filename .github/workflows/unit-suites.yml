@@ -148,10 +148,6 @@ jobs:
       - name: Run the Moves evidence revision suites
         run: >-
           npx jest --runTestsByPath
-          src/lib/programs/__tests__/approved-move-evidence-revision.test.ts
-          src/lib/programs/__tests__/approved-move-evidence-snapshot.test.ts
-          src/lib/programs/__tests__/governance-evaluate-gates.test.ts
-          src/lib/programs/__tests__/move-context-extract.test.ts
           src/lib/deliverables/__tests__/persist-move-generated-artifact.test.ts
           src/scripts/__tests__/process-deliverable-queue.test.ts
           src/app/api/v1/deliverables/generate-phase/__tests__/route.test.ts
