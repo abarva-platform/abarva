@@ -10,7 +10,7 @@
 
 ## Plain-English Summary
 
-Source generation now includes the complete parsed text of an ordinary upload when it fits in one short parser chunk. Both the context binder and the draft prompt preserve that ending, instead of independently truncating it. Multi-chunk uploads retain their existing excerpt budgets; this does not make generated prose authoritative.
+Source generation now includes the complete parsed text of an ordinary upload when it fits in one short parser chunk. Both the context binder and the Strategy memo/value-target prompts preserve that ending, instead of independently truncating it. Other draft prompts retain their existing excerpt limit; this does not make generated prose authoritative.
 
 ## Layer Impact
 
@@ -30,14 +30,14 @@ Source generation now includes the complete parsed text of an ordinary upload wh
 ## Changes Included
 
 - Preserve up to the parser's 1,800-character bound for a single ordinary evidence chunk.
-- Preserve a complete single short chunk in the draft prompt; retain its 500-character excerpt for multi-chunk evidence.
+- Preserve a complete single short chunk in the two Strategy draft prompts. Other draft prompts, and multi-chunk Strategy evidence, retain the existing 500-character excerpt.
 - Preserve the existing 900-character per-chunk binder limit for multi-chunk ordinary evidence and the complete bidder Q&A behavior.
-- Add behavioral tests for the binder and actual Strategy artifact prompts.
+- Add behavioral tests for the binder, actual Strategy artifact prompts, and unchanged Scope prompt limit.
 - No migration, data job, or approval-policy change.
 
 ## QA / Validation
 
-- Pass: red-first tests caught the binder's 900-character and the draft prompt's 500-character truncation.
+- Pass: red-first tests caught the binder's 900-character and the Strategy draft prompt's 500-character truncation; an unscoped formatter failed the Scope negative test.
 - Pass: restoring each truncation as a mutation made its targeted test fail.
 - Pass: Source generation suites, 13 suites and 154 tests.
 - Pass: TypeScript (`tsc --noEmit --incremental false`), scoped ESLint, `npm run release:check`, and `git diff --check`.

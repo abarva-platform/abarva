@@ -146,6 +146,10 @@ describe("Source artifact prompt registry provider config", () => {
       expect(message).toContain(completeChunk);
       expect(message).toContain("Final approval boundary.");
     }
+
+    const scopeMessage = getPromptTemplate("d05_scope_memo")!.buildUserMessage(ctx, {});
+    expect(scopeMessage).toContain(`Excerpt: ${completeChunk.slice(0, 500)}`);
+    expect(scopeMessage).not.toContain("Final approval boundary.");
   });
 
   it("keeps the existing draft excerpt limit for multi-chunk uploads", () => {
