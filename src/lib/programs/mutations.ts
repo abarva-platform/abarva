@@ -687,6 +687,7 @@ export async function signOffDeliverable(
       warnings?: string[];
       generationLineage?: Record<string, unknown>;
     };
+    approvalRationale?: string | null;
   } = {},
 ): Promise<boolean> {
   assertTenancy(ctx);
@@ -829,6 +830,7 @@ export async function signOffDeliverable(
     approvalScope: approvedContent
       ? "Approved client-uploaded replacement."
       : "Approved AI-generated draft as-is.",
+    comments: opts.approvalRationale?.trim() || null,
     decision: "approved",
     decidedAt: new Date().toISOString(),
   });

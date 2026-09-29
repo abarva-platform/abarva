@@ -115,6 +115,7 @@ describe("signOffDeliverable", () => {
           evidenceSnapshotHash: "revision-current",
           approvalMode: "client_approved_replacement",
         },
+        approvalRationale: "Synthetic review accepted the current evidence-bound version.",
       },
     );
 
@@ -156,7 +157,12 @@ describe("signOffDeliverable", () => {
       expect.arrayContaining([
         expect.objectContaining({ event_type: "version_created", origin: "client_uploaded", version: 3 }),
         expect.objectContaining({ event_type: "submitted_for_review", version: 3 }),
-        expect.objectContaining({ event_type: "approval_granted", decision: "approved", version: 3 }),
+        expect.objectContaining({
+          event_type: "approval_granted",
+          decision: "approved",
+          version: 3,
+          comments: "Synthetic review accepted the current evidence-bound version.",
+        }),
         expect.objectContaining({ event_type: "superseded", version: 1, related_version: 3 }),
       ]),
     );

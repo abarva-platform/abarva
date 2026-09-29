@@ -271,11 +271,21 @@ export async function POST(
     // The JSON path historically accepts no body at all, so an absent or
     // unparseable body must stay valid — it means "approve as drafted".
     let acknowledgeReadinessBlockers = false;
+    let approvalRationale: string | null = null;
     let uploadForm: FormData | null = null;
     if (isFileUploadApproval) {
       uploadForm = await req.formData();
       acknowledgeReadinessBlockers =
         uploadForm.get("acknowledgeReadinessBlockers") === "true";
+      const rationaleValue = uploadForm.get("approvalRationale");
+      if (rationaleValue !== null && typeof rationaleValue !== "string") {
+        return Response.json(
+          { error: "invalid_approval_rationale", detail: "Approval note must be text." },
+          { status: 400 },
+        );
+      }
+      approvalRationale =
+        typeof rationaleValue === "string" ? rationaleValue.trim() || null : null;
       const uploadedFile = uploadForm.get("file");
       if (!(uploadedFile instanceof File) || uploadedFile.size === 0) {
         return Response.json(
@@ -289,9 +299,29 @@ export async function POST(
     } else {
       const parsedBody = (await req.json().catch(() => null)) as {
         acknowledgeReadinessBlockers?: unknown;
+        approvalRationale?: unknown;
       } | null;
       acknowledgeReadinessBlockers =
         parsedBody?.acknowledgeReadinessBlockers === true;
+      if (
+        parsedBody?.approvalRationale !== undefined &&
+        typeof parsedBody.approvalRationale !== "string"
+      ) {
+        return Response.json(
+          { error: "invalid_approval_rationale", detail: "Approval note must be text." },
+          { status: 400 },
+        );
+      }
+      approvalRationale =
+        typeof parsedBody?.approvalRationale === "string"
+          ? parsedBody.approvalRationale.trim() || null
+          : null;
+    }
+    if (approvalRationale && approvalRationale.length > 1000) {
+      return Response.json(
+        { error: "invalid_approval_rationale", detail: "Approval note must be 1,000 characters or fewer." },
+        { status: 400 },
+      );
     }
 
     let readinessOutcome: ReturnType<
@@ -579,6 +609,7 @@ export async function POST(
       supabase,
       approvedArtifactId,
       approvedContent,
+      approvalRationale,
     });
     if (!signedOff)
       return Response.json({ error: "not_found" }, { status: 404 });
