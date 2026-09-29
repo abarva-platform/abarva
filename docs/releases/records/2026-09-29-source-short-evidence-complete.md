@@ -10,12 +10,12 @@
 
 ## Plain-English Summary
 
-Source generation now includes the complete parsed text of an ordinary upload when it fits in one short parser chunk. This prevents a decision-relevant ending from being silently omitted at the prompt boundary. Multi-chunk uploads retain the existing excerpt budget; this does not make generated prose authoritative.
+Source generation now includes the complete parsed text of an ordinary upload when it fits in one short parser chunk. Both the context binder and the draft prompt preserve that ending, instead of independently truncating it. Multi-chunk uploads retain their existing excerpt budgets; this does not make generated prose authoritative.
 
 ## Layer Impact
 
 - Release lane: `global-control-lane`.
-- Layer 4, Source: changes only the generation-context excerpt for short uploaded evidence.
+- Layer 4, Source: changes only generation-context and draft-prompt excerpts for short uploaded evidence.
 - Layer 3, canonical model: no facts or approvals are written or reclassified.
 - Layers 1 and 2: no intake or adapter change.
 
@@ -30,15 +30,16 @@ Source generation now includes the complete parsed text of an ordinary upload wh
 ## Changes Included
 
 - Preserve up to the parser's 1,800-character bound for a single ordinary evidence chunk.
-- Preserve the existing 900-character per-chunk limit for multi-chunk ordinary evidence and the complete bidder Q&A behavior.
-- Add behavioral tests for both boundaries.
+- Preserve a complete single short chunk in the draft prompt; retain its 500-character excerpt for multi-chunk evidence.
+- Preserve the existing 900-character per-chunk binder limit for multi-chunk ordinary evidence and the complete bidder Q&A behavior.
+- Add behavioral tests for the binder and actual Strategy artifact prompts.
 - No migration, data job, or approval-policy change.
 
 ## QA / Validation
 
-- Pass: red-first single-chunk test caught the existing 900-character truncation.
-- Pass: restoring that truncation as a mutation made the new test fail.
-- Pass: context-binder and prompt-registry suites, 73/73 tests.
+- Pass: red-first tests caught the binder's 900-character and the draft prompt's 500-character truncation.
+- Pass: restoring each truncation as a mutation made its targeted test fail.
+- Pass: Source generation suites, 13 suites and 154 tests.
 - Pass: TypeScript (`tsc --noEmit --incremental false`), scoped ESLint, `npm run release:check`, and `git diff --check`.
 - Not run: PR CI/review and signed-in replay at record creation.
 

@@ -912,8 +912,12 @@ function formatDraftEvidenceContext(
             const facts = a.factSummaries?.length
               ? `\n    Facts: ${a.factSummaries.slice(0, 6).join("; ")}`
               : "";
+            const excerptLimit =
+              a.chunkExcerpts?.length === 1 && a.chunkExcerpts[0].length <= 1_800
+                ? 1_800
+                : 500;
             const excerpt = a.chunkExcerpts?.length
-              ? `\n    Excerpt: ${a.chunkExcerpts[0].slice(0, 500)}`
+              ? `\n    Excerpt: ${a.chunkExcerpts[0].slice(0, excerptLimit)}`
               : "";
             return `  - ${a.originalName} (${a.artifactFamily} · ${a.evidenceState})${facts}${excerpt}`;
           }),
