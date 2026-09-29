@@ -399,6 +399,73 @@ describe("buildSourceGenerationContext", () => {
     );
   });
 
+  it("keeps a short single-chunk upload complete for generation", async () => {
+    getSourcingEvent.mockResolvedValue({
+      ...makeSeedEvent(),
+      id: "522eedf2-ff6b-4307-b312-3e0903c6fd42",
+    });
+    isUuid.mockReturnValue(true);
+    const completeChunk = `${"Planning context. ".repeat(70)}Final approval boundary.`;
+    expect(completeChunk.length).toBeGreaterThan(900);
+    expect(completeChunk.length).toBeLessThan(1800);
+    mockUploadedEvidenceQueries({
+      artifacts: [{
+        id: "short-upload",
+        original_name: "synthetic-planning-trigger.txt",
+        artifact_family: "other",
+        source_format: "txt",
+        parse_status: "parsed",
+        evidence_state: "parsed",
+        stage_key: "strategy",
+        source_origin: "uploaded",
+        created_at: "2026-09-09T00:00:00.000Z",
+      }],
+      chunks: [{ artifact_id: "short-upload", chunk_text: completeChunk }],
+    });
+
+    const ctx = await buildSourceGenerationContext(
+      "522eedf2-ff6b-4307-b312-3e0903c6fd42",
+    );
+
+    expect(ctx?.uploadedEvidence?.[0]?.chunkExcerpts).toEqual([completeChunk]);
+  });
+
+  it("keeps ordinary multi-chunk excerpts within the existing prompt budget", async () => {
+    getSourcingEvent.mockResolvedValue({
+      ...makeSeedEvent(),
+      id: "522eedf2-ff6b-4307-b312-3e0903c6fd42",
+    });
+    isUuid.mockReturnValue(true);
+    const firstChunk = "A".repeat(1200);
+    const secondChunk = "B".repeat(1200);
+    mockUploadedEvidenceQueries({
+      artifacts: [{
+        id: "long-upload",
+        original_name: "synthetic-long-evidence.txt",
+        artifact_family: "other",
+        source_format: "txt",
+        parse_status: "parsed",
+        evidence_state: "parsed",
+        stage_key: "strategy",
+        source_origin: "uploaded",
+        created_at: "2026-09-09T00:00:00.000Z",
+      }],
+      chunks: [
+        { artifact_id: "long-upload", chunk_text: firstChunk },
+        { artifact_id: "long-upload", chunk_text: secondChunk },
+      ],
+    });
+
+    const ctx = await buildSourceGenerationContext(
+      "522eedf2-ff6b-4307-b312-3e0903c6fd42",
+    );
+
+    expect(ctx?.uploadedEvidence?.[0]?.chunkExcerpts).toEqual([
+      firstChunk.slice(0, 900),
+      secondChunk.slice(0, 900),
+    ]);
+  });
+
   it("preserves the complete parsed bidder Q&A chunk set for parity-log generation", async () => {
     getSourcingEvent.mockResolvedValue({
       ...makeSeedEvent(),

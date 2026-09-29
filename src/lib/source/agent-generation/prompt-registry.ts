@@ -899,6 +899,7 @@ function formatGovernanceReviewFields(): string {
 // without this block the draft is blind to evidence it is graded on.
 function formatDraftEvidenceContext(
   ctx: SourceGenerationContext,
+  options?: { completeShortChunk?: boolean },
 ): string | null {
   const guidebookBlock = formatStageGuidebookContext(ctx);
   const items = ctx.uploadedEvidence ?? [];
@@ -912,8 +913,14 @@ function formatDraftEvidenceContext(
             const facts = a.factSummaries?.length
               ? `\n    Facts: ${a.factSummaries.slice(0, 6).join("; ")}`
               : "";
+            const excerptLimit =
+              options?.completeShortChunk === true &&
+              a.chunkExcerpts?.length === 1 &&
+              a.chunkExcerpts[0].length <= 1_800
+                ? 1_800
+                : 500;
             const excerpt = a.chunkExcerpts?.length
-              ? `\n    Excerpt: ${a.chunkExcerpts[0].slice(0, 500)}`
+              ? `\n    Excerpt: ${a.chunkExcerpts[0].slice(0, excerptLimit)}`
               : "";
             return `  - ${a.originalName} (${a.artifactFamily} · ${a.evidenceState})${facts}${excerpt}`;
           }),
@@ -1059,7 +1066,7 @@ This memo is your recommendation to the CIO on whether and how to take this to m
         ctx.event.scopeDescription || "(not provided)",
         "",
         formatStrategyGovernanceContext(ctx),
-        formatDraftEvidenceContext(ctx),
+        formatDraftEvidenceContext(ctx, { completeShortChunk: true }),
         "",
         ctx.archetypeAdvisory
           ? `— SOURCING-ADVISOR PLAYBOOK (archetype-specific commercial intelligence) —\n\n${ctx.archetypeAdvisory}\n`
@@ -1123,7 +1130,7 @@ Requirements:
           : "Strategy memo is not yet approved — derive the thesis from current intake and governed evidence; do not inherit claims from an unreviewed draft.",
         "",
         formatStrategyGovernanceContext(ctx),
-        formatDraftEvidenceContext(ctx),
+        formatDraftEvidenceContext(ctx, { completeShortChunk: true }),
         "",
         `Draft the Value Target Brief per the system prompt requirements.`,
       ]

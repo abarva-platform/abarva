@@ -134,6 +134,38 @@ describe("Source artifact prompt registry provider config", () => {
     }
   });
 
+  it("includes the ending of a short single-chunk upload in the actual Strategy prompts", () => {
+    const ctx = makeD09Context(["synthetic-planning-trigger.txt"]);
+    ctx.event.currentStageKey = "strategy";
+    const completeChunk = `${"Planning context. ".repeat(70)}Final approval boundary.`;
+    ctx.uploadedEvidence![0].chunkExcerpts = [completeChunk];
+
+    for (const code of ["d01_strategy_memo", "d02_value_target"]) {
+      const message = getPromptTemplate(code)!.buildUserMessage(ctx, {});
+      expect(message).toContain("synthetic-planning-trigger.txt");
+      expect(message).toContain(completeChunk);
+      expect(message).toContain("Final approval boundary.");
+    }
+
+    const scopeMessage = getPromptTemplate("d05_scope_memo")!.buildUserMessage(ctx, {});
+    expect(scopeMessage).toContain(`Excerpt: ${completeChunk.slice(0, 500)}`);
+    expect(scopeMessage).not.toContain("Final approval boundary.");
+  });
+
+  it("keeps the existing draft excerpt limit for multi-chunk uploads", () => {
+    const ctx = makeD09Context(["synthetic-long-evidence.txt"]);
+    ctx.event.currentStageKey = "strategy";
+    ctx.uploadedEvidence![0].chunkExcerpts = [
+      "A".repeat(900),
+      "B".repeat(900),
+    ];
+
+    const message = getPromptTemplate("d01_strategy_memo")!.buildUserMessage(ctx, {});
+    expect(message).toContain(`Excerpt: ${"A".repeat(500)}`);
+    expect(message).not.toContain("A".repeat(501));
+    expect(message).not.toContain("B".repeat(500));
+  });
+
   it("marks recommended and policy-excluded Strategy evidence as nonblocking in both drafts", () => {
     const ctx = makeD09Context([]);
     ctx.event.currentStageKey = "strategy";
