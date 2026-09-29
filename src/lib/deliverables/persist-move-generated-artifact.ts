@@ -59,6 +59,7 @@ export interface PersistMoveGeneratedArtifactInput {
   artifact: DeliverableKey;
   title?: string;
   result: GeneratedArtifactResult;
+  evidenceSnapshotHash: string;
 }
 
 export interface PersistMoveGeneratedArtifactResult {
@@ -79,6 +80,7 @@ export async function persistMoveGeneratedArtifact({
   artifact,
   title,
   result,
+  evidenceSnapshotHash,
 }: PersistMoveGeneratedArtifactInput): Promise<PersistMoveGeneratedArtifactResult> {
   const profile = getDeliverableProfile(artifact);
   const deliverablePackageContract = getPhaseDeliverablePackageContract({
@@ -130,7 +132,9 @@ export async function persistMoveGeneratedArtifact({
     title: artifactTitle,
     draftContent: result.html,
     structuredData: {
+      source: "moves_program_generate",
       phase,
+      evidenceSnapshotHash,
       artifact,
       output_format: "html",
       output_role: "html_visual_review_companion",
@@ -200,6 +204,7 @@ export async function persistMoveGeneratedArtifact({
     confidence: result.goldenBar.hasDataGap ? "medium" : "high",
     citationReady: !result.goldenBar.hasDataGap,
     metadata: {
+      evidenceSnapshotHash,
       deliverableId,
       versionId,
       phaseLabel,
@@ -265,6 +270,7 @@ export async function persistMoveGeneratedArtifact({
     confidence: result.goldenBar.hasDataGap ? "medium" : "high",
     citationReady: !result.goldenBar.hasDataGap,
     metadata: {
+      evidenceSnapshotHash,
       deliverableId,
       versionId,
       phaseLabel,

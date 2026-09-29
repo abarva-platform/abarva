@@ -19,6 +19,7 @@ import { getDeliverableProfile } from "@/lib/deliverables/profiles/registry";
 import { createDeliverableRun, type DeliverableRunJobPayload } from "@/lib/deliverables/orchestrator/runs-repository";
 import { assertPhaseReadyForGeneration } from "@/lib/programs/assert-phase-ready";
 import { persistMoveGeneratedArtifact } from "@/lib/deliverables/persist-move-generated-artifact";
+import { loadApprovedMoveEvidenceSnapshot } from "@/lib/programs/approved-move-evidence-snapshot";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -100,6 +101,19 @@ export async function POST(
   );
   const profile = getDeliverableProfile(artifact);
   const deps = createMovesGenerateArtifactDeps(ctx);
+  const evidenceSnapshot = await loadApprovedMoveEvidenceSnapshot({
+    tenantKey: clientKey,
+    moveId: programId,
+  });
+  if (!evidenceSnapshot) {
+    return Response.json(
+      {
+        error: "evidence_snapshot_unavailable",
+        detail: "Approved evidence could not be verified. No artifact was generated.",
+      },
+      { status: 503 },
+    );
+  }
 
   if (shouldEnqueuePremiumArtifact({ phase: targetPhase, artifact, generationMode })) {
     const gate = await assertPhaseReadyForGeneration(
@@ -132,6 +146,7 @@ export async function POST(
       clientDisplayName: "Client",
       initiativeDisplayName: program.name,
       sourceArtifactRef: programId,
+      evidenceSnapshotHash: evidenceSnapshot.revision,
       phase: targetPhase,
       artifact,
       generationMode,
@@ -219,6 +234,7 @@ export async function POST(
     artifact,
     title: body.title ?? profile.title,
     result,
+    evidenceSnapshotHash: evidenceSnapshot.revision,
   });
 
   return Response.json({

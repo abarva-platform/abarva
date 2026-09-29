@@ -145,6 +145,23 @@ jobs:
       - name: Run the deliverables worker boundary suite
         run: npx jest --runTestsByPath src/scripts/__tests__/process-deliverable-queue-worker-boundary.test.ts --no-coverage --ci
 
+      - name: Run the Moves evidence revision suites
+        run: >-
+          npx jest --runTestsByPath
+          src/lib/programs/__tests__/approved-move-evidence-revision.test.ts
+          src/lib/programs/__tests__/approved-move-evidence-snapshot.test.ts
+          src/lib/programs/__tests__/governance-evaluate-gates.test.ts
+          src/lib/programs/__tests__/move-context-extract.test.ts
+          src/lib/deliverables/__tests__/persist-move-generated-artifact.test.ts
+          src/scripts/__tests__/process-deliverable-queue.test.ts
+          src/app/api/v1/deliverables/generate-phase/__tests__/route.test.ts
+          src/app/api/v1/programs/[programId]/generate/__tests__/route.test.ts
+          src/app/api/v1/programs/[programId]/artifacts/__tests__/route.test.ts
+          src/app/api/v1/programs/[programId]/artifacts/[artifactId]/client-approval/__tests__/route.test.ts
+          src/components/strategic-moves/__tests__/FileCabinetPanel.labels.test.ts
+          src/components/strategic-moves/__tests__/FileCabinetPanel.evidence-review.test.tsx
+          --no-coverage --ci
+
       - name: Run the uncovered deliverables component suite
         run: npx jest --runTestsByPath src/components/deliverables/__tests__/ApproveActions.test.tsx --no-coverage --ci
 

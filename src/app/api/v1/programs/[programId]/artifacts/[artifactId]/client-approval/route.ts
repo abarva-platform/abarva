@@ -37,6 +37,7 @@ import {
   validateArchitectureGenerationLineage,
 } from "@/lib/programs/approved-solution-approach";
 import { loadCurrentMoveContextExtractFreshness } from "@/lib/programs/move-context-extract";
+import { loadApprovedMoveEvidenceSnapshot } from "@/lib/programs/approved-move-evidence-snapshot";
 import {
   renderDeliverableDocx,
   renderDeliverablePptx,
@@ -369,6 +370,46 @@ export async function POST(
     }
 
     let verifiedGenerationLineage: Record<string, unknown> | null = null;
+    if (!ctx.clientKey) {
+      return Response.json(
+        {
+          error: "evidence_snapshot_not_current",
+          detail: "The active tenant key is unavailable; the evidence snapshot cannot be verified.",
+        },
+        { status: 409 },
+      );
+    }
+    const currentEvidenceSnapshot = await loadApprovedMoveEvidenceSnapshot({
+      tenantKey: ctx.clientKey,
+      moveId: programId,
+    });
+    const artifactSnapshotHash =
+      typeof artifact.metadata.evidenceSnapshotHash === "string"
+        ? artifact.metadata.evidenceSnapshotHash
+        : null;
+    if (
+      !currentEvidenceSnapshot ||
+      !artifactSnapshotHash ||
+      currentEvidenceSnapshot.revision !== artifactSnapshotHash
+    ) {
+      return Response.json(
+        {
+          error: "stale_evidence_snapshot",
+          detail:
+            "Approved evidence changed after this document was generated, or its evidence revision cannot be verified. Rebuild the phase outputs before approval.",
+        },
+        { status: 409 },
+      );
+    }
+    verifiedGenerationLineage = {
+      ...((artifact.metadata.generationLineage &&
+      typeof artifact.metadata.generationLineage === "object" &&
+      !Array.isArray(artifact.metadata.generationLineage)
+        ? artifact.metadata.generationLineage
+        : {}) as Record<string, unknown>),
+      evidenceSnapshotHash: currentEvidenceSnapshot.revision,
+    };
+
     if (
       phase === 3 &&
       P3_ARCHITECTURE_DELIVERABLE_KEYS.has(deliverableTypeKey)
@@ -391,7 +432,11 @@ export async function POST(
         moveId: programId,
         phase: 3,
       });
-      if (!approved || !freshness?.evidenceFingerprint) {
+      if (
+        !approved ||
+        !freshness?.evidenceFingerprint ||
+        freshness.freshnessStatus !== "fresh"
+      ) {
         return Response.json(
           {
             error: "architecture_lineage_not_current",
@@ -415,10 +460,10 @@ export async function POST(
           { status: 409 },
         );
       }
-      verifiedGenerationLineage = validation.lineage as unknown as Record<
-        string,
-        unknown
-      >;
+      verifiedGenerationLineage = {
+        ...(validation.lineage as unknown as Record<string, unknown>),
+        evidenceSnapshotHash: currentEvidenceSnapshot.revision,
+      };
     }
 
     if (phase === 1) {
@@ -550,6 +595,8 @@ export async function POST(
           approvalReason: reason,
           parseMethod: parsed.extractedStructured.parse_method,
           parseWarnings: parsed.extractedStructured.warnings,
+          evidenceSnapshotHash: currentEvidenceSnapshot.revision,
+          generationLineage: verifiedGenerationLineage,
         },
       });
       approvedArtifactId = saved.artifactId;
@@ -636,6 +683,7 @@ export async function POST(
             ...(verifiedGenerationLineage
               ? { generationLineage: verifiedGenerationLineage }
               : {}),
+            evidenceSnapshotHash: currentEvidenceSnapshot.revision,
           },
         });
       } catch (err) {
@@ -668,6 +716,7 @@ export async function POST(
         generatedArtifactId: artifact.id,
         generatedArtifactType: artifact.artifactType,
         sourceArtifactRef: artifact.sourceArtifactRef,
+        evidenceSnapshotHash: currentEvidenceSnapshot.revision,
         approvalReason: reason,
         mode: isFileUploadApproval
           ? "client_approved_replacement"

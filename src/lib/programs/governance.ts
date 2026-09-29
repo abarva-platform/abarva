@@ -52,6 +52,7 @@ import { isFeatureEnabled } from "@/lib/features/is-feature-enabled";
 import { resolveMoveTier } from "./p0-extended-intake-fields";
 import { listApprovedPhaseEvidence } from "./approved-phase-evidence";
 import { resolveConfirmedSolutionRoute } from "./solution-route-assessment";
+import { loadApprovedMoveEvidenceSnapshot } from "@/lib/programs/approved-move-evidence-snapshot";
 
 function assertTenancy(ctx: TenancyCtx): void {
   if (!ctx?.clientId || !ctx?.userId) {
@@ -540,7 +541,7 @@ export async function evaluateGate(
   ] = await Promise.all([
     sb
       .from("deliverables_v2")
-      .select("id, deliverable_type_key, status")
+      .select("id, deliverable_type_key, status, structured_data")
       .eq("engagement_id", programId),
     sb
       .from("program_modules")
@@ -568,6 +569,7 @@ export async function evaluateGate(
       id: string;
       deliverable_type_key: string;
       status: string;
+      structured_data?: Record<string, unknown> | null;
     }> | null) ?? [];
   const moduleRows =
     (modules as Array<{
@@ -585,8 +587,38 @@ export async function evaluateGate(
     deliverableRows.find((d) => keys.includes(d.deliverable_type_key));
   const findDeliverables = (...keys: string[]) =>
     deliverableRows.filter((d) => keys.includes(d.deliverable_type_key));
-  const isSignedOff = (row: { status: string } | undefined) =>
-    row?.status === "signed_off";
+  const currentEvidenceSnapshot = ctx.clientKey
+    ? await loadApprovedMoveEvidenceSnapshot({
+        tenantKey: ctx.clientKey,
+        moveId: programId,
+      }).catch(() => null)
+    : null;
+  const isSignedOff = (
+    row:
+      | {
+          status: string;
+          structured_data?: Record<string, unknown> | null;
+        }
+      | undefined,
+  ) => {
+    if (row?.status !== "signed_off") return false;
+    const structured = row.structured_data ?? {};
+    const generated =
+      structured.source === "generated_by_orchestrator" ||
+      structured.source === "generated_artifact_acceptance" ||
+      typeof structured.generated_artifact_id === "string" ||
+      typeof structured.generatedArtifactId === "string";
+    if (!generated) return true;
+    const evidenceSnapshotHash =
+      typeof structured.evidenceSnapshotHash === "string"
+        ? structured.evidenceSnapshotHash
+        : null;
+    return Boolean(
+      currentEvidenceSnapshot &&
+        evidenceSnapshotHash &&
+        evidenceSnapshotHash === currentEvidenceSnapshot.revision,
+    );
+  };
   // A deliverable TYPE that requires named role approvals (see
   // deliverable-role-approvals.ts's REQUIRED_APPROVAL_ROLES) must have every
   // required role recorded as `approved`, IN ADDITION TO the existing
@@ -595,7 +627,12 @@ export async function evaluateGate(
   // (business_case, target_state_architecture, operating_model_design).
   const meetsApprovalBar = async (
     row:
-      | { id: string; deliverable_type_key: string; status: string }
+      | {
+          id: string;
+          deliverable_type_key: string;
+          status: string;
+          structured_data?: Record<string, unknown> | null;
+        }
       | undefined,
   ): Promise<boolean> => {
     if (!isSignedOff(row)) return false;
@@ -611,7 +648,12 @@ export async function evaluateGate(
     return summary.allRequiredApproved;
   };
   const anyMeetsApprovalBar = async (
-    rows: Array<{ id: string; deliverable_type_key: string; status: string }>,
+    rows: Array<{
+      id: string;
+      deliverable_type_key: string;
+      status: string;
+      structured_data?: Record<string, unknown> | null;
+    }>,
   ): Promise<boolean> => {
     for (const row of rows) {
       if (await meetsApprovalBar(row)) return true;

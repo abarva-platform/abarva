@@ -53,6 +53,8 @@ export interface OrchestratorDeliverableRunJobPayload {
     contextSnapshotHash: string;
     architectureModelVersion: string;
   };
+  /** Opaque approved-evidence revision captured when this run was queued. */
+  evidenceSnapshotHash?: string;
   clientDisplayName: string;
   initiativeDisplayName: string;
   sourceArtifactRef: string;
@@ -71,6 +73,7 @@ export interface MovesPremiumArtifactRunJobPayload {
   clientDisplayName: string;
   initiativeDisplayName: string;
   sourceArtifactRef: string;
+  evidenceSnapshotHash?: string;
   phase: number;
   artifact: DeliverableKey;
   generationMode: GenerationMode;

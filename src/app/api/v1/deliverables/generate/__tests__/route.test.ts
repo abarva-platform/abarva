@@ -5,6 +5,7 @@
 
 const tenancy = { clientId: 'client-uuid', clientKey: 'skyharbor-air', userId: 'u1' };
 const created: Array<Record<string, unknown>> = [];
+const mockLoadApprovedMoveEvidenceSnapshot = jest.fn();
 
 jest.mock('@/lib/auth/tenancy', () => ({
   requireTenancy: jest.fn(async () => tenancy),
@@ -12,6 +13,9 @@ jest.mock('@/lib/auth/tenancy', () => ({
 }));
 jest.mock('@/lib/deliverables/orchestrator/runs-repository', () => ({
   createDeliverableRun: jest.fn(async (input: Record<string, unknown>) => { created.push(input); return { id: 'run-1' }; }),
+}));
+jest.mock('@/lib/programs/approved-move-evidence-snapshot', () => ({
+  loadApprovedMoveEvidenceSnapshot: (...args: unknown[]) => mockLoadApprovedMoveEvidenceSnapshot(...args),
 }));
 const validateDeliverableTenantInvariant: jest.Mock<Promise<unknown>, unknown[]> = jest.fn(
   async () => ({ ok: true, sourceKind: 'unsupported', sourceId: null }),
@@ -41,6 +45,12 @@ beforeEach(() => {
   runDeliverableForTenant.mockClear();
   validateDeliverableTenantInvariant.mockClear();
   validateDeliverableTenantInvariant.mockResolvedValue({ ok: true, sourceKind: 'unsupported', sourceId: null });
+  mockLoadApprovedMoveEvidenceSnapshot.mockReset();
+  mockLoadApprovedMoveEvidenceSnapshot.mockResolvedValue({
+    revision: 'approved-revision-1',
+    approvedEvidenceCount: 1,
+    rows: [],
+  });
 });
 
 describe('POST /api/v1/deliverables/generate (enqueue-only)', () => {
@@ -86,6 +96,37 @@ describe('POST /api/v1/deliverables/generate (enqueue-only)', () => {
 
     // The request must not run the generation engine — that is the worker's job.
     expect(runDeliverableForTenant).not.toHaveBeenCalled();
+  });
+
+  it('binds a queued Moves run to the current approved-evidence revision', async () => {
+    const res = await POST(reqWith({
+      ...validBody,
+      module: 'moves',
+      sourceArtifactRef: 'move-1',
+    }));
+
+    expect(res.status).toBe(202);
+    expect(mockLoadApprovedMoveEvidenceSnapshot).toHaveBeenCalledWith({
+      tenantKey: 'skyharbor-air',
+      moveId: 'move-1',
+    });
+    expect((created[0]?.jobPayload as Record<string, unknown>)).toEqual(
+      expect.objectContaining({ evidenceSnapshotHash: 'approved-revision-1' }),
+    );
+  });
+
+  it('does not queue a Moves run when the evidence revision cannot be verified', async () => {
+    mockLoadApprovedMoveEvidenceSnapshot.mockResolvedValueOnce(null);
+
+    const res = await POST(reqWith({
+      ...validBody,
+      module: 'moves',
+      sourceArtifactRef: 'move-1',
+    }));
+
+    expect(res.status).toBe(503);
+    expect(await res.json()).toMatchObject({ error: 'evidence_snapshot_unavailable' });
+    expect(created).toHaveLength(0);
   });
 
   it('403 when the source artifact belongs to another tenant', async () => {

@@ -1,11 +1,13 @@
 const getProgramByIdMock = jest.fn();
 const fromMock = jest.fn();
 const listApprovedPhaseEvidenceMock = jest.fn();
+const loadApprovedMoveEvidenceSnapshotMock = jest.fn();
 
 let deliverablesFixture: Array<{
   id: string;
   deliverable_type_key: string;
   status: string;
+  structured_data?: Record<string, unknown> | null;
 }>;
 let modulesFixture: Array<{
   module_key: string;
@@ -51,6 +53,12 @@ jest.mock("@/lib/programs/approved-phase-evidence", () => ({
   __esModule: true,
   listApprovedPhaseEvidence: (...args: unknown[]) =>
     listApprovedPhaseEvidenceMock(...args),
+}));
+
+jest.mock("@/lib/programs/approved-move-evidence-snapshot", () => ({
+  __esModule: true,
+  loadApprovedMoveEvidenceSnapshot: (...args: unknown[]) =>
+    loadApprovedMoveEvidenceSnapshotMock(...args),
 }));
 
 import { evaluateGate } from "@/lib/programs/governance";
@@ -243,6 +251,11 @@ describe("evaluateGate", () => {
     deliverableVersionsFixture = [];
     roleApprovalsFixture = [];
     listApprovedPhaseEvidenceMock.mockResolvedValue([]);
+    loadApprovedMoveEvidenceSnapshotMock.mockResolvedValue({
+      revision: "revision-current",
+      approvedEvidenceCount: 0,
+      rows: [],
+    });
     fromMock.mockImplementation(tableResult);
   });
 
@@ -585,6 +598,47 @@ describe("evaluateGate", () => {
     expect(result.failedChecks).toEqual(
       expect.not.arrayContaining([
         expect.objectContaining({ check: "sponsor_assigned" }),
+      ]),
+    );
+  });
+
+  it("blocks a signed-off generated deliverable when approved evidence has moved, then opens for the current revision", async () => {
+    getProgramByIdMock.mockResolvedValue({
+      id: "program-1",
+      currentPhase: 1,
+      archetype: "agent_assist",
+    });
+    deliverablesFixture = [
+      {
+        id: "charter",
+        deliverable_type_key: "charter",
+        status: "signed_off",
+        structured_data: {
+          source: "generated_artifact_acceptance",
+          evidenceSnapshotHash: "revision-before-new-evidence",
+        },
+      },
+    ];
+    participantsFixture = [{ approval_authority: "sponsor" }];
+    const ctx = {
+      clientId: "client-1",
+      clientKey: "tenant-1",
+      userId: "person-1",
+    };
+
+    const stale = await evaluateGate(ctx, "program-1", 1, 2);
+    expect(stale.failedChecks).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ check: "charter_signed_off", severity: "hard" }),
+      ]),
+    );
+
+    deliverablesFixture[0]!.structured_data!.evidenceSnapshotHash =
+      "revision-current";
+    const current = await evaluateGate(ctx, "program-1", 1, 2);
+    expect(current.failedChecks).not.toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ check: "charter_signed_off" }),
       ]),
     );
   });

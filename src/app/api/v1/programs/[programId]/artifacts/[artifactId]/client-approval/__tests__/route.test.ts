@@ -10,6 +10,7 @@ const mockGetGeneratedArtifactById = jest.fn();
 const mockExtractProgramEvidenceFromUploadBuffer = jest.fn();
 const mockLoadApprovedSolutionApproach = jest.fn();
 const mockLoadCurrentMoveContextExtractFreshness = jest.fn();
+const mockLoadApprovedMoveEvidenceSnapshot = jest.fn();
 const mockPackerToBuffer = jest.fn();
 const mockRenderDeliverableDocx = jest.fn();
 const mockRenderDeliverablePptx = jest.fn();
@@ -123,6 +124,11 @@ jest.mock("@/lib/programs/move-context-extract", () => ({
     mockLoadCurrentMoveContextExtractFreshness(input),
 }));
 
+jest.mock("@/lib/programs/approved-move-evidence-snapshot", () => ({
+  loadApprovedMoveEvidenceSnapshot: (input: unknown) =>
+    mockLoadApprovedMoveEvidenceSnapshot(input),
+}));
+
 jest.mock("@/lib/deliverables/orchestrator/renderers", () => ({
   renderDeliverableDocx: (doc: unknown) => mockRenderDeliverableDocx(doc),
   renderDeliverablePptx: (doc: unknown) => mockRenderDeliverablePptx(doc),
@@ -169,6 +175,7 @@ const generatedArtifact = {
   quarantineReason: null,
   supersededBy: null,
   metadata: {
+    evidenceSnapshotHash: "revision-current",
     renderableDoc: {
       title: "Program Charter",
       deliverableTypeKey: "charter",
@@ -226,6 +233,11 @@ beforeEach(() => {
   mockGetProgramsRouteSupabase.mockResolvedValue({ supabase: makeSupabase() });
   mockGetProgramById.mockResolvedValue({ id: "prog-1", currentPhase: 1 });
   mockGetGeneratedArtifactById.mockResolvedValue(generatedArtifact);
+  mockLoadApprovedMoveEvidenceSnapshot.mockResolvedValue({
+    revision: "revision-current",
+    approvedEvidenceCount: 1,
+    rows: [],
+  });
   mockHasAuthority.mockResolvedValue(false);
   mockLoadUserProgramAccessPolicy.mockResolvedValue({ canApproveGates: true });
   mockDraftModuleDeliverable.mockResolvedValue({
@@ -250,6 +262,7 @@ beforeEach(() => {
   });
   mockLoadCurrentMoveContextExtractFreshness.mockResolvedValue({
     evidenceFingerprint: "context-hash",
+    freshnessStatus: "fresh",
   });
 });
 
@@ -285,6 +298,10 @@ describe("POST /api/v1/programs/[programId]/artifacts/[artifactId]/client-approv
         programId: "prog-1",
         moduleKey: "charter",
         deliverableTypeKey: "charter",
+        structuredData: expect.objectContaining({
+          evidenceSnapshotHash: "revision-current",
+          generatedArtifactId: "artifact-1",
+        }),
       }),
     );
     expect(mockSignOffDeliverable).toHaveBeenCalled();
@@ -299,6 +316,10 @@ describe("POST /api/v1/programs/[programId]/artifacts/[artifactId]/client-approv
         status: "approved",
         sourceBasis: "generated_artifact_acceptance",
         requireBlobStored: true,
+        metadata: expect.objectContaining({
+          evidenceSnapshotHash: "revision-current",
+          generatedArtifactId: "artifact-1",
+        }),
       }),
     );
     expect(mockSignOffDeliverable).toHaveBeenCalledWith(
@@ -336,6 +357,7 @@ describe("POST /api/v1/programs/[programId]/artifacts/[artifactId]/client-approv
     mockGetGeneratedArtifactById.mockResolvedValue({
       ...generatedArtifact,
       metadata: {
+        evidenceSnapshotHash: "revision-current",
         deliverableTypeKey: "charter",
         renderedHtml: "<h1>Program Charter</h1><p>Preview only.</p>",
       },
@@ -421,6 +443,7 @@ describe("POST /api/v1/programs/[programId]/artifacts/[artifactId]/client-approv
       ...generatedArtifact,
       sourceArtifactRef: "move:prog-1:phase:2",
       metadata: {
+        evidenceSnapshotHash: "revision-current",
         deliverableTypeKey: "root_cause_worksheet",
         renderableDoc: {
           title: "FS Demo — Onboarding & KYC Agent-Assist Discovery",
@@ -468,6 +491,7 @@ describe("POST /api/v1/programs/[programId]/artifacts/[artifactId]/client-approv
       ...generatedArtifact,
       sourceArtifactRef: "move:prog-1:phase:2",
       metadata: {
+        evidenceSnapshotHash: "revision-current",
         renderableDoc: {
           title:
             "Commercial Onboarding & KYC-Evidence Agent-Assist — Discovery & Root Cause Diagnostic",
@@ -516,6 +540,7 @@ describe("POST /api/v1/programs/[programId]/artifacts/[artifactId]/client-approv
       sourceArtifactRef: "move:prog-1:phase:3",
       artifactType: "target_state_architecture",
       metadata: {
+        evidenceSnapshotHash: "revision-current",
         deliverableTypeKey: "target_state_architecture",
         renderableDoc: {
           title: "Target Architecture",
@@ -556,6 +581,7 @@ describe("POST /api/v1/programs/[programId]/artifacts/[artifactId]/client-approv
       sourceArtifactRef: "move:prog-1:phase:3",
       artifactType: "target_state_architecture",
       metadata: {
+        evidenceSnapshotHash: "revision-current",
         deliverableTypeKey: "target_state_architecture",
         generationLineage: lineage,
         renderableDoc: {
@@ -579,8 +605,34 @@ describe("POST /api/v1/programs/[programId]/artifacts/[artifactId]/client-approv
     expect(mockDraftModuleDeliverable).toHaveBeenCalledWith(
       ctx,
       expect.objectContaining({
-        structuredData: expect.objectContaining({ generationLineage: lineage }),
+        structuredData: expect.objectContaining({
+          evidenceSnapshotHash: "revision-current",
+          generationLineage: expect.objectContaining({
+            ...lineage,
+            evidenceSnapshotHash: "revision-current",
+          }),
+        }),
       }),
     );
+  });
+
+  it("blocks approval when approved evidence changed after generation", async () => {
+    mockLoadApprovedMoveEvidenceSnapshot.mockResolvedValue({
+      revision: "revision-after-review",
+      approvedEvidenceCount: 2,
+      rows: [],
+    });
+    const { POST } = await import("../route");
+
+    const res = await POST(
+      request({ reason: "Review the current generated document." }) as never,
+      { params },
+    );
+
+    expect(res.status).toBe(409);
+    expect(await res.json()).toMatchObject({ error: "stale_evidence_snapshot" });
+    expect(mockSaveMoveArtifact).not.toHaveBeenCalled();
+    expect(mockDraftModuleDeliverable).not.toHaveBeenCalled();
+    expect(mockSignOffDeliverable).not.toHaveBeenCalled();
   });
 });

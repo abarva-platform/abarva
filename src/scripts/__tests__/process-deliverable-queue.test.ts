@@ -35,6 +35,9 @@ jest.mock('@/lib/programs/approved-solution-approach', () => ({
 jest.mock('@/lib/programs/move-context-extract-freshness', () => ({
   loadCurrentMoveContextExtractFreshness: jest.fn(),
 }));
+jest.mock('@/lib/programs/approved-move-evidence-snapshot', () => ({
+  loadApprovedMoveEvidenceSnapshot: jest.fn(),
+}));
 jest.mock('@/lib/deliverables/orchestrator/tenant-invariant', () => ({
   validateDeliverableTenantInvariant: jest.fn(async () => ({ ok: true, sourceKind: 'move', sourceId: 'evt-1' })),
 }));
@@ -68,6 +71,9 @@ const approvedApproach = jest.requireMock('@/lib/programs/approved-solution-appr
 };
 const contextExtract = jest.requireMock('@/lib/programs/move-context-extract-freshness') as {
   loadCurrentMoveContextExtractFreshness: jest.Mock;
+};
+const approvedEvidence = jest.requireMock('@/lib/programs/approved-move-evidence-snapshot') as {
+  loadApprovedMoveEvidenceSnapshot: jest.Mock;
 };
 const { sweepStaleDeliverableRuns, claimNextDeliverableRun, completeDeliverableRun } = repo;
 const { runDeliverableForTenant } = svc;
@@ -104,6 +110,11 @@ beforeEach(() => {
   getProgramById.mockResolvedValue({ id: 'move-1', name: 'Move One' });
   approvedApproach.loadApprovedSolutionApproach.mockResolvedValue({ decisionHash: 'decision-hash-1' });
   contextExtract.loadCurrentMoveContextExtractFreshness.mockResolvedValue({ evidenceFingerprint: 'context-hash-1' });
+  approvedEvidence.loadApprovedMoveEvidenceSnapshot.mockResolvedValue({
+    revision: 'revision-current',
+    approvedEvidenceCount: 0,
+    rows: [],
+  });
   generateArtifact.mockResolvedValue({
     status: 'generated',
     html: '<html><body><svg></svg><table></table>Diagnostic</body></html>',
@@ -176,6 +187,7 @@ describe('processDeliverableQueue', () => {
         clientDisplayName: 'First Capital',
         initiativeDisplayName: 'Commercial Lending Agent Assist',
         sourceArtifactRef: 'move-1',
+        evidenceSnapshotHash: 'revision-current',
       },
     };
     claimNextDeliverableRun.mockResolvedValueOnce(movesRun).mockResolvedValueOnce(null);
@@ -212,6 +224,7 @@ describe('processDeliverableQueue', () => {
         ...jobPayload,
         module: 'moves',
         sourceArtifactRef: 'move-1',
+        evidenceSnapshotHash: 'revision-current',
         decisionLineage: {
           decisionHash: 'queued-hash',
           decisionVersion: '1',
@@ -267,6 +280,7 @@ describe('processDeliverableQueue', () => {
         generationMode: 'draft',
         title: 'Current Work Diagnostic',
         useCaseQuery: 'Reduce AP exceptions',
+        evidenceSnapshotHash: 'revision-current',
       },
     };
     claimNextDeliverableRun.mockResolvedValueOnce(premiumRun).mockResolvedValueOnce(null);
@@ -337,6 +351,7 @@ describe('processDeliverableQueue', () => {
         generationMode: 'draft',
         title: 'P3 Future-State Blueprint Draft',
         useCaseQuery: 'Reduce AP exceptions',
+        evidenceSnapshotHash: 'revision-current',
       },
     };
     claimNextDeliverableRun.mockResolvedValueOnce(premiumRun).mockResolvedValueOnce(null);

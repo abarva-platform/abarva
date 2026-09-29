@@ -17,6 +17,7 @@ import {
   validateDeliverableTenantInvariant,
 } from '@/lib/deliverables/orchestrator/tenant-invariant';
 import type { AudienceRole, DeliverableModule, OutputFormat } from '@/lib/deliverables/orchestrator/types';
+import { loadApprovedMoveEvidenceSnapshot } from '@/lib/programs/approved-move-evidence-snapshot';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -85,6 +86,22 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    const evidenceSnapshot = body.module === 'moves'
+      ? await loadApprovedMoveEvidenceSnapshot({
+          tenantKey: clientKey,
+          moveId: sourceArtifactRef,
+        })
+      : null;
+    if (body.module === 'moves' && !evidenceSnapshot) {
+      return Response.json(
+        {
+          error: 'evidence_snapshot_unavailable',
+          detail: 'Approved Move evidence could not be verified. No artifact was queued.',
+        },
+        { status: 503 },
+      );
+    }
+
     // Build the self-contained job payload the worker reconstructs the generation input
     // from. clientId/tenantKey/userId are stored as first-class run columns; everything
     // else the generation needs travels here so the run is runnable from the row alone.
@@ -97,6 +114,9 @@ export async function POST(req: NextRequest) {
       clientDisplayName: body.clientDisplayName?.trim() || 'Client',
       initiativeDisplayName: body.initiativeDisplayName?.trim() || useCaseArchetype,
       sourceArtifactRef,
+      ...(evidenceSnapshot
+        ? { evidenceSnapshotHash: evidenceSnapshot.revision }
+        : {}),
       ...(body.evidenceQuery ? { evidenceQuery: body.evidenceQuery } : {}),
       ...(body.outputFormats ? { outputFormats: body.outputFormats } : {}),
       ...(body.model ? { model: body.model } : {}),

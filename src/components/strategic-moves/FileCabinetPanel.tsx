@@ -47,6 +47,7 @@ interface Artifact {
   pairedVisualCompanionArtifactId?: string | null;
   visualCompanionArtifactType?: string | null;
   contextExtract?: MoveContextExtractReview | null;
+  evidenceSnapshotStatus?: "current" | "stale" | "unverified";
   downloadUrl: string;
 }
 
@@ -75,6 +76,10 @@ interface MoveContextExtractReview {
   suggestedContextItems?: MoveContextExtractReviewItem[];
   excludedContextItems?: MoveContextExtractReviewItem[];
   gapItems?: MoveContextExtractReviewItem[];
+  freshness?: {
+    freshnessStatus?: "fresh" | "stale" | "rebuild_required";
+    currentApprovedEvidenceCount?: number;
+  };
 }
 
 interface ContextExtractReviewModel {
@@ -88,6 +93,8 @@ interface ContextExtractReviewModel {
   gatheredMessage: string;
   nextPhaseMessage: string;
   coverageItems: string[];
+  freshnessStatus: "fresh" | "stale" | "rebuild_required";
+  currentApprovedEvidenceCount: number | null;
 }
 
 type SponsorReviewDecision =
@@ -198,6 +205,7 @@ export function supportsGeneratedClientApproval(
     | "lifecycleState"
     | "outputRole"
     | "status"
+    | "evidenceSnapshotStatus"
   >,
 ): boolean {
   return (
@@ -206,7 +214,8 @@ export function supportsGeneratedClientApproval(
     artifact.downloadUrl.startsWith("/api/v1/artifacts/") &&
     artifact.fileFormat !== "html" &&
     artifact.outputRole !== "html_visual_review_companion" &&
-    artifact.status !== "approved"
+    artifact.status !== "approved" &&
+    artifact.evidenceSnapshotStatus === "current"
   );
 }
 
@@ -364,12 +373,18 @@ export function buildContextExtractReviewModel(
   const coverageItems = [...coverageCounts.entries()]
     .sort(([a], [b]) => a.localeCompare(b))
     .map(([family, count]) => `${metaLabel(family)}: ${count}`);
+  const freshnessStatus =
+    extract.freshness?.freshnessStatus ?? "rebuild_required";
   const gatheredMessage =
-    extract.sourceMode === "candidate_preview"
+    freshnessStatus !== "fresh"
+      ? "This is a saved context snapshot, not a live view of approved evidence. Its attached-evidence count and content may be out of date."
+      : extract.sourceMode === "candidate_preview"
       ? "AbarVa reviewed an explicitly acknowledged candidate preview. It is visible for review, not treated as active runtime truth."
       : `AbarVa reviewed active Move evidence and active module context for P${phase}. Candidate preview data stayed out of the default path.`;
   const nextPhaseMessage =
-    gaps.length > 0
+    freshnessStatus !== "fresh"
+      ? "Rebuild the context snapshot and phase outputs from the current approved evidence before relying on them for a phase decision."
+      : gaps.length > 0
       ? `Do not treat P${targetPhase} as evidence-complete yet. Resolve the listed gaps before relying on this extract for phase decisions.`
       : attached.length > 0
         ? `P${targetPhase} has usable attached evidence, but phase advancement still requires the governed Approve & Build gate. Suggested and excluded context remain review-only until a human approves or loads it as evidence.`
@@ -385,6 +400,11 @@ export function buildContextExtractReviewModel(
     gatheredMessage,
     nextPhaseMessage,
     coverageItems,
+    freshnessStatus,
+    currentApprovedEvidenceCount:
+      typeof extract.freshness?.currentApprovedEvidenceCount === "number"
+        ? extract.freshness.currentApprovedEvidenceCount
+        : null,
   };
 }
 
@@ -565,13 +585,37 @@ function ContextExtractReviewPanel({
           }}
         >
           <strong style={{ display: "block", color: "#0F172A", fontSize: 12 }}>
-            {model.attached.length} attached
+            {model.freshnessStatus === "fresh"
+              ? `${model.attached.length} attached`
+              : `Last snapshot: ${model.attached.length} attached`}
           </strong>
           {model.sourceModeLabel}
           <br />
           {model.generatedLabel}
         </div>
       </div>
+
+      {model.freshnessStatus !== "fresh" && (
+        <div
+          role="alert"
+          style={{
+            marginTop: 12,
+            border: "1px solid #e7c98c",
+            borderRadius: 6,
+            background: "#fffaf0",
+            color: "#704b12",
+            padding: "9px 11px",
+            fontSize: 12,
+            lineHeight: 1.45,
+          }}
+        >
+          <strong>Snapshot out of date.</strong> This is the evidence set
+          captured when it was generated, not the current approved set
+          {model.currentApprovedEvidenceCount != null
+            ? ` (${model.currentApprovedEvidenceCount} currently approved)`
+            : ""}. Rebuild before using it for a phase decision.
+        </div>
+      )}
 
       <div
         style={{
@@ -1109,6 +1153,26 @@ function ArtifactRow({
               </span>
             )}
             <StatusChip status={a.status} />
+            {a.evidenceSnapshotStatus && a.evidenceSnapshotStatus !== "current" && (
+              <span
+                role="status"
+                title="Approved evidence changed after this artifact was built, or its evidence revision cannot be verified. Rebuild and review before phase close."
+                style={{
+                  fontSize: 10,
+                  fontWeight: 750,
+                  color: "#8a5712",
+                  background: "#fff3d6",
+                  border: "1px solid #ead09d",
+                  padding: "1px 6px",
+                  borderRadius: 4,
+                  textTransform: "uppercase",
+                }}
+              >
+                {a.evidenceSnapshotStatus === "stale"
+                  ? "Evidence stale"
+                  : "Evidence unverified"}
+              </span>
+            )}
             {previewOnly && (
               <span
                 title="HTML is a browser preview only. Client-final artifacts must be DOCX or PPTX."
@@ -1762,10 +1826,12 @@ export function FileCabinetPanel({
   moveId,
   phase = 0,
   presentationMode = false,
+  onEvidenceChanged,
 }: {
   moveId: string;
   phase?: number;
   presentationMode?: boolean;
+  onEvidenceChanged?: () => void;
 }) {
   const [artifacts, setArtifacts] = useState<Artifact[]>([]);
   const [pendingEvidenceReviews, setPendingEvidenceReviews] = useState<
@@ -1841,6 +1907,7 @@ export function FileCabinetPanel({
           );
         }
         await load();
+        onEvidenceChanged?.();
       } catch (cause) {
         setError(
           cause instanceof Error ? cause.message : "Evidence review failed",
@@ -1849,7 +1916,7 @@ export function FileCabinetPanel({
         setReviewingEvidenceId(null);
       }
     },
-    [load, moveId],
+    [load, moveId, onEvidenceChanged],
   );
 
   const onUpload = useCallback(
@@ -1887,12 +1954,13 @@ export function FileCabinetPanel({
               : `Uploaded ${file.name}${j.blobStored ? " to secure storage" : ""}.`,
         );
         await load();
+        onEvidenceChanged?.();
       } catch (e) {
         setUploadState("error");
         setUploadMsg(e instanceof Error ? e.message : "upload failed");
       }
     },
-    [moveId, phase, load, uploadFamily],
+    [moveId, phase, load, uploadFamily, onEvidenceChanged],
   );
 
   useEffect(() => {

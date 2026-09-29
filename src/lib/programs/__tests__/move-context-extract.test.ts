@@ -35,6 +35,7 @@ import {
   createMoveContextExtract,
   mapApprovedMoveEvidenceRows,
 } from "../move-context-extract";
+import { approvedMoveEvidenceRevision } from "../approved-move-evidence-revision";
 
 const ctx = {
   clientId: "client-uuid",
@@ -546,6 +547,11 @@ describe("createMoveContextExtract", () => {
           generatedAt: "2026-07-14T10:00:00Z",
           freshness: {
             evidenceFingerprint: "no-accepted-evidence",
+            approvedEvidenceRevision: approvedMoveEvidenceRevision({
+              tenantKey: "skyharbor-air",
+              moveId: baseInput.moveId,
+              rows: [],
+            }),
             attachedEvidenceCount: 0,
             acceptedEvidenceCount: 0,
             acceptedEvidenceLatestReviewAt: null,

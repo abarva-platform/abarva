@@ -2343,7 +2343,11 @@ export function MovesPhaseStandaloneClient({
                     activeView={workspaceView}
                     onSelect={setWorkspaceView}
                   />
-                  <FileCabinetPanel moveId={move.id} phase={phase.phase} />
+                  <FileCabinetPanel
+                    moveId={move.id}
+                    phase={phase.phase}
+                    onEvidenceChanged={refreshPhase}
+                  />
                 </>
               ) : workspaceView === "intelligence" ? (
                 <>

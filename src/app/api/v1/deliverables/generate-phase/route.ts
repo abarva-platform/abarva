@@ -445,6 +445,7 @@ export async function POST(req: NextRequest) {
           moveId,
           tenantKey: clientKey,
           evidenceFingerprint: "error",
+          approvedEvidenceRevision: null,
           attachedEvidenceCount: 0,
           acceptedEvidenceCount: 0,
           latestEvidenceUpdatedAt: null,
@@ -456,6 +457,23 @@ export async function POST(req: NextRequest) {
         generatedAt: new Date().toISOString(),
         message: errorMessage(err),
       };
+    }
+
+    const evidenceSnapshotHash =
+      contextExtract?.freshness.approvedEvidenceRevision;
+    if (
+      !contextExtract ||
+      contextExtract.status === "error" ||
+      !evidenceSnapshotHash
+    ) {
+      return Response.json(
+        {
+          error: "evidence_snapshot_unavailable",
+          detail:
+            "The current approved-evidence revision could not be captured. No phase build was queued; retry after evidence review state is available.",
+        },
+        { status: 503 },
+      );
     }
 
     const decisionLineage = approvedSolutionApproach
@@ -566,6 +584,7 @@ export async function POST(req: NextRequest) {
           ? { approvedSolutionApproach: approvedApproachBlock }
           : {}),
         ...(decisionLineage ? { decisionLineage } : {}),
+        evidenceSnapshotHash,
       };
     };
 

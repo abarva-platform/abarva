@@ -29,6 +29,8 @@ import {
   reviewedExtractionFromStoredSourceRef,
   type ReviewedEvidenceExtraction,
 } from "@/lib/programs/evidence-review-contract";
+import { approvedMoveEvidenceRevision } from "@/lib/programs/approved-move-evidence-revision";
+import { loadApprovedMoveEvidenceSnapshot } from "@/lib/programs/approved-move-evidence-snapshot";
 export {
   loadCurrentMoveContextExtractFreshness,
   type MoveContextExtractFreshness,
@@ -385,41 +387,13 @@ async function defaultLoadMoveEvidenceRows(args: {
   tenantKey: string;
   moveId: string;
 }): Promise<MoveEvidenceRow[]> {
-  const sb = getAzureWriteFluentClient();
-  const { data: reviewData, error: reviewError } = await sb
-    .from("program_evidence_reviews")
-    .select(
-      "evidence_id, decision, source_ref, reviewed_at, updated_at, created_at",
-    )
-    .eq("tenant_key", args.tenantKey)
-    .eq("program_id", args.moveId)
-    .eq("decision", "approved")
-    .order("updated_at", { ascending: false })
-    .limit(80);
-  if (reviewError || !Array.isArray(reviewData)) return [];
-
-  const reviewRows = reviewData as Array<Record<string, unknown>>;
-  const evidenceIds = reviewRows
-    .map((row) => stringOrNull(row.evidence_id))
-    .filter((id): id is string => Boolean(id));
-  if (evidenceIds.length === 0) return [];
-
-  const { data: evidenceData, error: evidenceError } = await sb
-    .from("program_evidence_items")
-    .select(
-      "id, tenant_key, program_id, attachment_id, phase, evidence_type, title, summary, extracted_text, extracted_structured, confidence, created_at",
-    )
-    .eq("tenant_key", args.tenantKey)
-    .eq("program_id", args.moveId)
-    .in("id", evidenceIds);
-  if (evidenceError || !Array.isArray(evidenceData)) return [];
-
-  return mapApprovedMoveEvidenceRows({
+  const snapshot = await loadApprovedMoveEvidenceSnapshot(args);
+  if (!snapshot) throw new Error("approved_move_evidence_snapshot_unavailable");
+  return snapshot.rows.map((row) => ({
+    ...row,
     tenantKey: args.tenantKey,
-    moveId: args.moveId,
-    reviews: reviewRows,
-    evidence: evidenceData as Array<Record<string, unknown>>,
-  });
+    programId: args.moveId,
+  }));
 }
 
 export function mapApprovedMoveEvidenceRows(args: {
@@ -528,6 +502,7 @@ function freshnessFor(args: {
   extractId: string | null;
   attachedEvidenceCount: number;
   acceptedEvidenceRows: MoveEvidenceRow[];
+  approvedEvidenceRows: MoveEvidenceRow[];
   blueprintId: string;
   blueprintVersion: string;
   sourceMode: MoveContextExtractSourceMode;
@@ -542,6 +517,11 @@ function freshnessFor(args: {
       blueprintId: args.blueprintId,
       blueprintVersion: args.blueprintVersion,
       sourceMode: args.sourceMode,
+    }),
+    approvedEvidenceRevision: approvedMoveEvidenceRevision({
+      tenantKey: args.input.tenantKey,
+      moveId: args.input.moveId,
+      rows: args.approvedEvidenceRows,
     }),
     attachedEvidenceCount: args.attachedEvidenceCount,
     acceptedEvidenceCount: args.acceptedEvidenceRows.length,
@@ -616,6 +596,8 @@ function isExistingFresh(args: {
   const createdTime = previous.createdAt ? Date.parse(previous.createdAt) : 0;
   return (
     previous.evidenceFingerprint === args.current.evidenceFingerprint &&
+    previous.approvedEvidenceRevision ===
+      args.current.approvedEvidenceRevision &&
     previous.attachedEvidenceCount === args.current.attachedEvidenceCount &&
     previous.acceptedEvidenceCount === args.current.acceptedEvidenceCount &&
     previous.blueprintId === args.current.blueprintId &&
@@ -814,6 +796,7 @@ export async function createMoveContextExtract(
     acceptedEvidenceRows: moveEvidenceRows.filter(
       evidencePolicyAllowsAttachment,
     ),
+    approvedEvidenceRows: moveEvidenceRows,
     blueprintId: blueprint.blueprintId,
     blueprintVersion: blueprint.blueprintVersion,
     sourceMode,
@@ -885,6 +868,7 @@ export async function createMoveContextExtract(
       acceptedEvidenceRows: moveEvidenceRows.filter(
         evidencePolicyAllowsAttachment,
       ),
+      approvedEvidenceRows: moveEvidenceRows,
       blueprintId: blueprint.blueprintId,
       blueprintVersion: blueprint.blueprintVersion,
       sourceMode,
