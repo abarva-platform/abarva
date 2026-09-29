@@ -161,9 +161,11 @@ jest.mock("@/lib/security/sensitive-upload-guard", () => ({
 import { POST } from "../route";
 import { loadUserSourceAccessPolicy } from "@/lib/auth/source-access-policy";
 import { registerSourceArtifactUpload } from "@/lib/source/artifact-registry";
+import { extractSourceUploadText } from "@/lib/source/artifact-registry/upload-text-extraction";
 
 const policy = jest.mocked(loadUserSourceAccessPolicy);
 const registerArtifact = jest.mocked(registerSourceArtifactUpload);
+const extractText = jest.mocked(extractSourceUploadText);
 
 function clientFinalForm(note?: string): FormData {
   const form = new FormData();
@@ -273,4 +275,27 @@ describe("client-final artifact body landing", () => {
     expect(uploadBlob).not.toHaveBeenCalled();
     expect(registerArtifact).not.toHaveBeenCalled();
   });
+
+  it.each([null, "   "])(
+    "does not promote a client final with unreadable extracted content (%p)",
+    async (text) => {
+      extractText.mockResolvedValueOnce({
+        text,
+        method: "pdf-parse",
+        warnings: ["No readable text found"],
+      });
+
+      const response = await postClientFinal(
+        clientFinalForm("Reviewed against the approved draft."),
+      );
+
+      expect(response.status).toBe(422);
+      expect(await response.json()).toEqual(
+        expect.objectContaining({ error: "unreadable_client_final" }),
+      );
+      expect(uploadBlob).not.toHaveBeenCalled();
+      expect(registerArtifact).not.toHaveBeenCalled();
+      expect(updateArtifactBody).not.toHaveBeenCalled();
+    },
+  );
 });
