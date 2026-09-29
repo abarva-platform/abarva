@@ -124,14 +124,35 @@ describe("hydrateTaskEvidenceState", () => {
     expect(done).toBe(1);
   });
 
-  it("falls back to the canonical task id when live payload omits factTemplateCode", () => {
-    const inputs = { ticket_count: 42 };
+  it("reads the validated ticket-history receipt when the scalar map is empty", () => {
     const hydrated = hydrateTaskEvidenceState({
       tasks: [{ ...VOLUMETRICS_TASK, factTemplateCode: undefined }],
-      factInputs: inputs,
+      factInputs: {},
+      evidenceStates: [{
+        id: "fact-derived:event-1:EVID-SRC-SCOPE-TICKET-HISTORY",
+        requirementId: "EVID-SRC-SCOPE-TICKET-HISTORY",
+        currentState: "Available",
+        sourceEventFactIds: ["l2-ticket-fact", "l3-ticket-fact"],
+      }],
       stageKey: "scope",
     });
     expect(hydrated[0].evidenceComplete).toBe(true);
+  });
+
+  it.each([
+    ["a single scalar", { ticket_count: 42 }, []],
+    ["a merely uploaded file", {}, [{ requirementId: "EVID-SRC-SCOPE-TICKET-HISTORY", currentState: "Available" as const, sourceEventFactIds: [] }]],
+    ["stale ticket evidence", {}, [{ requirementId: "EVID-SRC-SCOPE-TICKET-HISTORY", currentState: "Stale" as const, sourceEventFactIds: ["l2", "l3"] }]],
+    ["an unrelated requirement", {}, [{ requirementId: "EVID-SRC-SCOPE-APP-INV", currentState: "Available" as const, sourceEventFactIds: ["l2", "l3"] }]],
+    ["an unvalidated evidence row", {}, [{ id: "stored-evidence-1", requirementId: "EVID-SRC-SCOPE-TICKET-HISTORY", currentState: "Available" as const, sourceEventFactIds: ["l2", "l3"] }]],
+  ])("does not complete ticket history from %s", (_label, factInputs, evidenceStates) => {
+    const hydrated = hydrateTaskEvidenceState({
+      tasks: [{ ...VOLUMETRICS_TASK, factTemplateCode: undefined }],
+      factInputs,
+      evidenceStates,
+      stageKey: "scope",
+    });
+    expect(hydrated[0].evidenceComplete).toBeUndefined();
   });
 
   it("does not complete the ticket task from a financial volumetrics fact", () => {
