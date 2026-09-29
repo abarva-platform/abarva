@@ -74,6 +74,56 @@ it("counts only gate-relevant artifacts in the approval queue", () => {
     .not.toBeInTheDocument();
   expect(screen.getByTestId("source-artifact-lifecycle-row-d03_archetype_decision"))
     .toBeInTheDocument();
+  expect(screen.getByTestId("source-generate-artifact-d03_archetype_decision"))
+    .toBeInTheDocument();
+});
+
+it("does not offer draft generation from a past stage's missing catalog row", () => {
+  render(
+    <SourceAnalyticsCanvas
+      event={{ ...event, currentStageKey: "scope", currentStageLabel: "Scope" }}
+      viewStage="strategy"
+      tenantName="Test Client"
+      stageView={SAMPLE_STRATEGY_STAGE}
+      initialWorkspace="files"
+      artifacts={[]}
+    />,
+  );
+
+  expect(screen.getByTestId("source-artifact-lifecycle-row-d03_archetype_decision"))
+    .toBeInTheDocument();
+  expect(screen.queryByTestId("source-generate-artifact-d03_archetype_decision"))
+    .not.toBeInTheDocument();
+});
+
+it("offers a current-stage Client Final revision without allowing past-stage replacement", () => {
+  const artifacts = [{
+    id: "reviewed-d02",
+    artifactCode: "d02_value_target",
+    stageKey: "strategy" as const,
+    status: "client_final",
+    sourceOrigin: "reuploaded",
+    isClientFinal: true,
+    isCurrentAuthoritative: true,
+    bodyGenerationMetadata: { qualityGate: {
+      passed: true, overallScore: 9, finalSummary: "Passed synthetic review.",
+      unsupportedClaims: [], missingEvidence: [],
+    } },
+  }];
+  const { rerender } = render(
+    <SourceAnalyticsCanvas event={event} viewStage="strategy" tenantName="Test Client"
+      stageView={SAMPLE_STRATEGY_STAGE} initialWorkspace="files" artifacts={artifacts} />,
+  );
+  expect(screen.getByTestId("source-artifact-lifecycle-row-d02_value_target"))
+    .toHaveTextContent("Client-approved final");
+  expect(screen.getByTestId("source-accept-client-final-toggle-d02_value_target"))
+    .toHaveTextContent("Replace Client Final");
+
+  rerender(<SourceAnalyticsCanvas event={{ ...event, currentStageKey: "scope", currentStageLabel: "Scope" }}
+    viewStage="strategy" tenantName="Test Client" stageView={SAMPLE_STRATEGY_STAGE}
+    initialWorkspace="files" artifacts={artifacts} />);
+  expect(screen.queryByTestId("source-accept-client-final-toggle-d02_value_target"))
+    .not.toBeInTheDocument();
 });
 
 it("offers governed draft generation when a required artifact has evidence but no final", async () => {

@@ -366,3 +366,42 @@ describe("U-517 · the event detail route resolves the flag it passes", () => {
     expect(await strategyValueThesis()).toBe("Restricted");
   });
 });
+
+describe("Strategy approval action after Request acceptance", () => {
+  const journey = getSourceJourneyForEvent({ sourcingMotion: "competitive_rfp" });
+
+  it("arms the current active Strategy gate for an authorized owner", async () => {
+    persistedEventRow = {
+      ...EVENT_ROW,
+      current_stage_key: "strategy",
+      lifecycle_state: "active",
+    };
+    loadUserSourceAccessPolicy.mockResolvedValue({
+      canApproveSourceStages: true,
+      canViewFinancialData: false,
+    });
+    const { buildStrategyStageForRoute } = await import(
+      "@/app/(maestro)/source/events/[eventId]/page"
+    );
+
+    const view = await buildStrategyStageForRoute(EVENT_ROW.id, CLIENT.key, "strategy", journey);
+    expect(view?.gate.action).toMatchObject({
+      eventId: EVENT_ROW.id,
+      redirectStageKey: "scope",
+    });
+  });
+
+  it("does not arm a past, archived, or unauthorized Strategy gate", async () => {
+    const { buildStrategyStageForRoute } = await import(
+      "@/app/(maestro)/source/events/[eventId]/page"
+    );
+    loadUserSourceAccessPolicy.mockResolvedValue({ canApproveSourceStages: true });
+    persistedEventRow = { ...EVENT_ROW, lifecycle_state: "active" };
+    expect((await buildStrategyStageForRoute(EVENT_ROW.id, CLIENT.key, "scope", journey))?.gate.action).toBeUndefined();
+    persistedEventRow = { ...EVENT_ROW, lifecycle_state: "archived" };
+    expect((await buildStrategyStageForRoute(EVENT_ROW.id, CLIENT.key, "strategy", journey))?.gate.action).toBeUndefined();
+    persistedEventRow = { ...EVENT_ROW, lifecycle_state: "active" };
+    loadUserSourceAccessPolicy.mockResolvedValue({ canApproveSourceStages: false });
+    expect((await buildStrategyStageForRoute(EVENT_ROW.id, CLIENT.key, "strategy", journey))?.gate.action).toBeUndefined();
+  });
+});

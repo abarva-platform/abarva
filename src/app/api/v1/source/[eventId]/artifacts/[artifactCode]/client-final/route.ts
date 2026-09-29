@@ -450,11 +450,13 @@ export async function POST(request: Request, { params }: RouteContext) {
         previousGenerated?.id ?? artifactState.linked_artifact_id,
       governanceMessage: CLIENT_FINAL_GOVERNANCE_MESSAGE,
     };
-    const updatedMetadata = {
+    const updatedMetadata: Record<string, unknown> = {
       ...previousMetadata,
       clientFinal: clientFinalMetadata,
       clientFinalChangeSummary: changeSummary,
     };
+    // A review of the previous draft or final cannot certify new uploaded bytes.
+    delete updatedMetadata.qualityGate;
     const updateResult = await selectSourceWriteAdapter(
       undefined,
       client.key,

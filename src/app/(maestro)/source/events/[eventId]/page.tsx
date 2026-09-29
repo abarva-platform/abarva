@@ -9,6 +9,7 @@ import { clientKeyToInventorySubstrateKey } from "@/lib/agent/tools/intelligence
 import {
   listArtifactStatesForEventStage,
   listEffectiveEvidenceStatesForEvent,
+  listGateCriterionStatesForEvent,
 } from "@/lib/source/canvas-substrate";
 import { getContractOptimizationProfile } from "@/lib/source/contract-optimization/read";
 import { buildSourceAwardSowHandoffReadiness } from "@/lib/source/award-sow-handoff-readiness";
@@ -336,6 +337,7 @@ export default async function SourceEventDetailPage({
     const [
       analyticsRegistryArtifacts,
       currentStageArtifactStates,
+      gateCriterionStates,
       fileCabinetArtifacts,
     ] = await Promise.all([
       listSourceArtifactsForSourceEventId(event.id).catch((error) => {
@@ -348,6 +350,13 @@ export default async function SourceEventDetailPage({
       listArtifactStatesForEventStage(event.id, viewStage).catch((error) => {
         console.error(
           "[SourceEventDetailPage] current-stage artifact state read failed for analytics shell",
+          error instanceof Error ? error.message : String(error),
+        );
+        return [];
+      }),
+      listGateCriterionStatesForEvent(event.id).catch((error) => {
+        console.error(
+          "[SourceEventDetailPage] gate criterion state read failed for analytics shell",
           error instanceof Error ? error.message : String(error),
         );
         return [];
@@ -760,6 +769,8 @@ export default async function SourceEventDetailPage({
         guidebook={analyticsGuidebook}
         latestArtifactAcceptances={analyticsLatestAcceptances}
         evidenceStates={analyticsEvidenceStates}
+        gateCriterionStates={gateCriterionStates.filter((row) => row.fromStage === viewStage)}
+        stageArtifactStates={currentStageArtifactStates}
         initialWorkspace={initialWorkspace}
         contractOptimizationProfile={contractOptimizationProfile}
         journey={sourceJourney}
@@ -902,8 +913,10 @@ export async function buildStrategyStageForRoute(
     const awaitingApproval =
       currentStageKey === "strategy" &&
       STRATEGY_APPROVAL_STATES.has(row.lifecycle_state);
+    const activeStrategyGate =
+      currentStageKey === "strategy" && row.lifecycle_state === "active";
     const canApprove =
-      awaitingApproval && policy?.canApproveSourceStages === true;
+      (awaitingApproval || activeStrategyGate) && policy?.canApproveSourceStages === true;
 
     const ownerConfirmationEvent = row as SourceEventRow & StrategyConfirmationEvent;
     const ownerConfirmed = await hasCurrentStrategyOwnerConfirmation(ownerConfirmationEvent)
