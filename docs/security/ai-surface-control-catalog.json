@@ -1331,15 +1331,6 @@
       "surfaceJoin": {
         "state": "uncatalogued"
       }
-    },
-    {
-      "key": "generated-ui|Setup|Agent readiness drill-down|confidence",
-      "status": "deferred",
-      "controlKind": "confidence",
-      "reason": "Agent readiness has deterministic source captions, but factor-level evidence links and formal confidence coverage remain follow-on.",
-      "surfaceJoin": {
-        "state": "uncatalogued"
-      }
     }
   ]
 }
