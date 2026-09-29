@@ -294,6 +294,7 @@ export interface BuildSourceEventShellViewInput {
   tenantName: string;
   viewedStageKey: SourceStageKey;
   stageView: StageAnalyticsView;
+  gateCriteriaReady?: boolean;
   stepInsight?: StepInsightView | null;
   artifacts?: readonly SourceShellArtifactLike[];
   approvalItems?: readonly ApprovalsInboxItem[];
@@ -576,6 +577,7 @@ export function buildSourceEventShellView(
         approvalRecorded: viewedStageApprovalRecorded,
         workflowComplete: completedViewedStage,
         artifactsReady: artifactReadiness.ready,
+        gateCriteriaReady: input.gateCriteriaReady,
         gateActionArmed:
           viewedStageIsCurrent && Boolean(input.stageView.gate.action),
         approvalRationale: viewedStageIsCurrent

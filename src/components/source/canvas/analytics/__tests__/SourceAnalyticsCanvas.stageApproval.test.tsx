@@ -35,8 +35,10 @@ import {
   SAMPLE_SCOPE_STAGE,
   SAMPLE_TRANSITION_STAGE,
 } from "../sample-view-model";
+import { SAMPLE_STRATEGY_STAGE } from "../strategy-sample-view-model";
 import type { ApprovalsInboxItem } from "@/lib/source/approvals-inbox";
-import type { SourceEventEvidence } from "@/lib/source/canvas-substrate";
+import type { SourceEventArtifactState, SourceEventEvidence, SourceEventGateCriterion } from "@/lib/source/canvas-substrate";
+import { criteriaForStage, evidenceForStage as canonicalEvidenceForStage, specByCode } from "@/lib/source/canonical-specs";
 import { evidenceForStage } from "@/lib/source/canonical-specs/evidence-requirements";
 import type { SourcingEventSummary } from "@/lib/source/types";
 
@@ -182,6 +184,137 @@ describe("SourceAnalyticsCanvas stage workflow", () => {
 
   afterEach(() => {
     jest.restoreAllMocks();
+  });
+
+  it("reviews the current Strategy criteria before offering stage approval", async () => {
+    const strategyEvent = {
+      ...EVENT,
+      currentStageKey: "strategy" as const,
+      currentStageLabel: "Strategy",
+      approvalPolicyCode: "self_v1" as const,
+    };
+    const states: SourceEventGateCriterion[] = criteriaForStage("strategy").map((criterion) => ({
+      id: `${EVENT.id}:${criterion.criterionId}`,
+      sourceEventId: EVENT.id,
+      tenantKey: "demo-client",
+      criterionId: criterion.criterionId,
+      fromStage: criterion.fromStage,
+      toStage: criterion.toStage,
+      state: "pending",
+      reviewerUserId: null,
+      reviewedAt: null,
+      notes: null,
+      evidenceArtifactIds: [],
+      waiverApprovalId: null,
+      createdAt: "2026-09-29T00:00:00Z",
+      updatedAt: "2026-09-29T00:00:00Z",
+    }));
+    const approval = {
+      ...APPROVAL,
+      stageKey: "strategy" as const,
+      stageLabel: "Strategy",
+      versionKey: `${EVENT.id}:strategy`,
+      versionLabel: "Strategy",
+    };
+    render(<SourceAnalyticsCanvas
+      event={strategyEvent}
+      viewStage="strategy"
+      tenantName="Demo Client"
+      stageView={{
+        ...SAMPLE_STRATEGY_STAGE,
+        tasks: SAMPLE_STRATEGY_STAGE.tasks.map((task) => ({ ...task, state: "done" as const, evidenceComplete: true })),
+        gate: { ...SAMPLE_STRATEGY_STAGE.gate, action: {
+          eventId: EVENT.id,
+          rationale: "Synthetic Event Owner review of Strategy evidence and artifacts.",
+          confirmationKeys: ["strategyMemoReviewed", "valueTargetReviewed", "archetypeReviewed"],
+          redirectStageKey: "scope",
+        } },
+      }}
+      approvalItems={[approval]}
+      gateCriterionStates={states}
+      stageArtifactStates={[
+        { id: "d01", sourceEventId: EVENT.id, tenantKey: "demo-client", artifactCode: "d01_strategy_memo", stage: "strategy", family: "sourcing_strategy", tier: "stub", status: "approved", requirementLevel: "required", gateDefining: true, linkedArtifactId: "file-d01", notes: null, body: null, bodyFormat: "markdown", bodyAuthoredBy: null, bodyUpdatedAt: null, bodyGenerationMetadata: null, createdAt: "", updatedAt: "" },
+        { id: "d02", sourceEventId: EVENT.id, tenantKey: "demo-client", artifactCode: "d02_value_target", stage: "strategy", family: "sourcing_strategy", tier: "stub", status: "approved", requirementLevel: "required", gateDefining: true, linkedArtifactId: "file-d02", notes: null, body: null, bodyFormat: "markdown", bodyAuthoredBy: null, bodyUpdatedAt: null, bodyGenerationMetadata: null, createdAt: "", updatedAt: "" },
+      ]}
+      initialWorkspace="approvals"
+      canRetireEvent
+    />);
+
+    expect(screen.getByTestId("source-stage-criterion-review")).toHaveTextContent("0 of 3 recorded");
+    expect(screen.getByTestId("source-stage-criterion-review")).toHaveTextContent("Archetype + rigor level chosen");
+    expect(screen.getByTestId("source-stage-criterion-review")).toHaveTextContent("Client Final required for d03_archetype_decision");
+    expect(screen.queryByTestId("source-stage-gate-approve")).toBeNull();
+    expect(screen.queryByText("This viewer does not currently have the server-side approval action armed.")).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Review Sourcing strategy memo approved by Event Owner" }));
+    fireEvent.change(screen.getByLabelText("Criterion rationale"), { target: { value: "synthetic_e2e_smoke: Event Owner reviewed the accepted Strategy memo." } });
+    fireEvent.click(screen.getByRole("button", { name: "Mark criterion met" }));
+    await waitFor(() => expect(global.fetch).toHaveBeenCalledWith(
+      `/api/v1/source/${EVENT.id}/gate-criteria/GATE-STRATEGY-01/state`,
+      expect.objectContaining({ method: "PATCH", credentials: "include" }),
+    ));
+    const body = JSON.parse((global.fetch as jest.Mock).mock.calls[0][1].body);
+    expect(body).toMatchObject({ state: "met", reason: expect.stringContaining("synthetic_e2e_smoke") });
+    expect(routerRefresh).toHaveBeenCalled();
+  });
+
+  it("offers Strategy approval only after every canonical criterion and its evidence are ready", () => {
+    const states: SourceEventGateCriterion[] = criteriaForStage("strategy").map((criterion) => ({
+      id: `${EVENT.id}:${criterion.criterionId}`, sourceEventId: EVENT.id, tenantKey: "demo-client",
+      criterionId: criterion.criterionId, fromStage: criterion.fromStage, toStage: criterion.toStage,
+      state: "met", reviewerUserId: "owner", reviewedAt: "2026-09-29T00:00:00Z",
+      notes: "synthetic_e2e_smoke: reviewed the governed Strategy evidence.", evidenceArtifactIds: [],
+      waiverApprovalId: null, createdAt: "", updatedAt: "",
+    }));
+    const stageArtifactStates: SourceEventArtifactState[] = ["d01_strategy_memo", "d02_value_target", "d03_archetype_decision"].map((code) => {
+      const spec = specByCode(code)!;
+      return {
+        id: code, sourceEventId: EVENT.id, tenantKey: "demo-client", artifactCode: code,
+        stage: "strategy", family: spec.family, tier: spec.defaultTier, status: "approved",
+        requirementLevel: spec.requirementLevel, gateDefining: spec.gateDefining,
+        linkedArtifactId: `file-${code}`, notes: null, body: null, bodyFormat: "markdown",
+        bodyAuthoredBy: null, bodyUpdatedAt: null, bodyGenerationMetadata: null, createdAt: "", updatedAt: "",
+      };
+    });
+    const evidenceStates: SourceEventEvidence[] = canonicalEvidenceForStage("strategy")
+      .filter((requirement) => requirement.level === "required")
+      .map((requirement) => ({
+        id: requirement.requirementId, sourceEventId: EVENT.id, tenantKey: "demo-client",
+        requirementId: requirement.requirementId, stage: "strategy", currentState: "Usable Evidence",
+        sourceArtifactId: `source-${requirement.requirementId}`, sourceEventFactIds: [],
+        notes: null, lastSyncedAt: null, createdAt: "", updatedAt: "",
+      }));
+    const strategyEvent = { ...EVENT, currentStageKey: "strategy" as const,
+      currentStageLabel: "Strategy", approvalPolicyCode: "self_v1" as const };
+    const stageView = { ...SAMPLE_STRATEGY_STAGE,
+      tasks: SAMPLE_STRATEGY_STAGE.tasks.map((task) => ({ ...task, state: "done" as const, evidenceComplete: true })),
+      gate: { ...SAMPLE_STRATEGY_STAGE.gate, action: {
+        eventId: EVENT.id, rationale: "Reviewed the current Strategy evidence and all criteria.",
+        confirmationKeys: ["strategyMemoReviewed", "valueTargetReviewed", "archetypeReviewed"],
+        redirectStageKey: "scope",
+      } },
+    };
+    const approval = { ...APPROVAL, stageKey: "strategy" as const,
+      stageLabel: "Strategy", versionKey: `${EVENT.id}:strategy`, versionLabel: "Strategy" };
+    const props = {
+      event: strategyEvent, viewStage: "strategy" as const, tenantName: "Demo Client", stageView,
+      evidenceStates, gateCriterionStates: states, stageArtifactStates,
+      artifacts: stageArtifactStates.map((artifact) => ({
+        id: artifact.linkedArtifactId!, artifactCode: artifact.artifactCode,
+        stageKey: "strategy" as const, status: "client_final", isClientFinal: true,
+        bodyGenerationMetadata: { qualityGate: {
+          passed: true, overallScore: 9, finalSummary: "Passed synthetic quality review.",
+          unsupportedClaims: [], missingEvidence: [],
+        } },
+      })),
+      approvalItems: [approval], initialWorkspace: "approvals" as const, canRetireEvent: true,
+    };
+    const { rerender } = render(<SourceAnalyticsCanvas {...props} />);
+    expect(screen.getByTestId("source-stage-gate-approve")).toBeEnabled();
+    rerender(<SourceAnalyticsCanvas {...props} gateCriterionStates={states.map((state) =>
+      state.criterionId === "GATE-STRATEGY-03" ? { ...state, state: "pending" } : state)} />);
+    expect(screen.queryByTestId("source-stage-gate-approve")).toBeNull();
+    expect(screen.getByTestId("source-stage-gate-blocked")).toHaveTextContent("Review the required gate criteria before approving this stage.");
+    expect(screen.getByTestId("source-shell-approval-readiness")).toHaveTextContent("Gate criteria still open");
   });
 
   it("stays on the evidence-owning step when its second required item is missing", () => {

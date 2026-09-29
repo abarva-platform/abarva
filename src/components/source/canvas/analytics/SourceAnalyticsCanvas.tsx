@@ -30,9 +30,9 @@ import { SourceWorkflowFrame } from "@/components/source/SourceWorkflowFrame";
 import { SourceAwardSowHandoffReadinessPanel } from "@/components/source/SourceAwardSowHandoffReadinessPanel";
 import { buildSourceAwardSowHandoffReadiness } from "@/lib/source/award-sow-handoff-readiness";
 import { applySourceApprovalPolicyToStageView } from "@/lib/source/approval-policy-stage-view";
-import { sourceEvidenceAppliesToApprovalPolicy } from "@/lib/source/approval-policy";
+import { criterionForSourceApprovalPolicy, sourceEvidenceAppliesToApprovalPolicy } from "@/lib/source/approval-policy";
 import { evidenceMeetsRequirement, hasAuditedAbsence, hasRecordedSource, permitsAbsenceDeclaration, requiresRecordedSource } from "@/lib/source/evidence-authority";
-import { SOURCE_APPROVAL_REASON_MIN_LENGTH } from "@/lib/source/source-governance-enforcement";
+import { evaluateStagePromotionReadiness, isArtifactGateReady, SOURCE_APPROVAL_REASON_MIN_LENGTH } from "@/lib/source/source-governance-enforcement";
 import {
   buildSourceStage08AcceptanceSpine,
   type SourceStage08AcceptanceSpine,
@@ -96,6 +96,7 @@ import type {
   SourceEventEvidence,
   SourceEventEvidenceCurrentState,
   SourceEventGateCriterion,
+  SourceEventGateCriterionState,
 } from "@/lib/source/canvas-substrate";
 import {
   deriveSourceEvidenceLifecycle,
@@ -256,6 +257,8 @@ interface SourceAnalyticsCanvasProps {
   latestArtifactAcceptances?: readonly ArtifactAcceptanceRecord[];
   /** Durable per-requirement evidence readiness rows already read by the route. */
   evidenceStates?: readonly SourceEventEvidence[];
+  gateCriterionStates?: readonly SourceEventGateCriterion[];
+  stageArtifactStates?: readonly SourceEventArtifactState[];
   /** Initial workspace selected by the route, e.g. from ?workspace=approvals. */
   initialWorkspace?: SourceShellWorkspace;
   /**
@@ -761,6 +764,8 @@ export function SourceAnalyticsCanvas({
   guidebook = null,
   latestArtifactAcceptances = [],
   evidenceStates = [],
+  gateCriterionStates = [],
+  stageArtifactStates = [],
   initialWorkspace,
   contractOptimizationProfile = null,
   journey,
@@ -808,6 +813,11 @@ export function SourceAnalyticsCanvas({
     () => (stepInsight ? { ...baseStageView, stepInsight } : baseStageView),
     [baseStageView, stepInsight],
   );
+  const gateCriteriaReady = useMemo(
+    () => viewStage !== "strategy" || event.currentStageKey !== "strategy" || event.status !== "active" ||
+      strategyGateReady(gateCriterionStates, stageArtifactStates, evidenceStates, event.approvalPolicyCode),
+    [viewStage, event.currentStageKey, event.status, event.approvalPolicyCode, gateCriterionStates, stageArtifactStates, evidenceStates],
+  );
 
   const shellView = useMemo(
     () =>
@@ -816,6 +826,7 @@ export function SourceAnalyticsCanvas({
         tenantName,
         viewedStageKey: viewStage,
         stageView: resolvedStageView,
+        gateCriteriaReady,
         stepInsight,
         artifacts,
         approvalItems,
@@ -835,6 +846,7 @@ export function SourceAnalyticsCanvas({
       latestArtifactAcceptancesById,
       journey,
       resolvedStageView,
+      gateCriteriaReady,
       stepInsight,
       tenantName,
       viewStage,
@@ -931,6 +943,8 @@ export function SourceAnalyticsCanvas({
               awardSowHandoffReadiness={resolvedAwardSowHandoffReadiness}
               stage08AcceptanceSpine={computedStage08AcceptanceSpine}
               evidenceStates={evidenceStates}
+              gateCriterionStates={gateCriterionStates}
+              stageArtifactStates={stageArtifactStates}
               eventDisplayName={event.name}
               contractOptimizationProfile={contractOptimizationProfile}
               onWorkspaceChange={setWorkspace}
@@ -953,6 +967,27 @@ export function SourceAnalyticsCanvas({
       ) : null}
     </AppShell>
   );
+}
+
+function strategyGateReady(
+  states: readonly SourceEventGateCriterion[],
+  artifacts: readonly SourceEventArtifactState[],
+  evidence: readonly SourceEventEvidence[],
+  approvalPolicyCode: SourcingEventSummary["approvalPolicyCode"],
+): boolean {
+  const definitions = criteriaForStage("strategy");
+  if (!definitions.length || !definitions.every((definition) =>
+    states.some((state) => state.criterionId === definition.criterionId && state.fromStage === "strategy")
+  )) return false;
+  return evaluateStagePromotionReadiness({
+    currentStage: "strategy",
+    targetStage: "scope",
+    criteria: [...states],
+    artifacts: [...artifacts],
+    evidence: evidence.filter((row) => row.stage === "strategy"),
+    reason: "Review of the current Strategy gate is ready.",
+    approvalPolicyCode,
+  }).ok;
 }
 
 function SourceShellRail({
@@ -1390,6 +1425,8 @@ function SourceWorkspace({
   canViewFinancialValues = false,
   stage08AcceptanceSpine,
   evidenceStates,
+  gateCriterionStates,
+  stageArtifactStates,
   eventDisplayName,
   contractOptimizationProfile,
   onWorkspaceChange,
@@ -1414,6 +1451,8 @@ function SourceWorkspace({
   canViewFinancialValues?: boolean;
   stage08AcceptanceSpine?: SourceStage08AcceptanceSpine | null;
   evidenceStates?: readonly SourceEventEvidence[];
+  gateCriterionStates?: readonly SourceEventGateCriterion[];
+  stageArtifactStates?: readonly SourceEventArtifactState[];
   eventDisplayName?: string;
   contractOptimizationProfile?: ContractOptimizationMveProfile | null;
   onWorkspaceChange: (workspace: SourceShellWorkspace) => void;
@@ -1444,6 +1483,11 @@ function SourceWorkspace({
         canRetireEvent={canRetireEvent}
         gateAction={stageView.gate.action}
         evidenceStates={evidenceStates ?? []}
+        gateCriterionStates={gateCriterionStates ?? []}
+        stageArtifactStates={stageArtifactStates ?? []}
+        canReviewCriteria={canRetireEvent}
+        onCriterionSaved={onClientFinalAccepted}
+        onGoToFiles={() => onWorkspaceChange("files")}
         onGoToSteps={() => onWorkspaceChange("steps")}
       />
     );
@@ -6256,6 +6300,8 @@ function ArtifactLifecyclePanel({
               key={group.stageLabel}
               eventId={view.event.id}
               group={group}
+              activeStageKey={view.event.lifecycle === "active" ? view.event.currentStageKey : null}
+              queuedArtifactCodes={new Set(currentStageActionRows.map((row) => row.code))}
               onClientFinalAccepted={onClientFinalAccepted}
             />
           ))
@@ -6839,10 +6885,14 @@ function artifactReviewAction(row: SourceArtifactLifecycleRow): {
 function LifecycleStageRows({
   eventId,
   group,
+  activeStageKey,
+  queuedArtifactCodes,
   onClientFinalAccepted,
 }: {
   eventId: string;
   group: { stageLabel: string; rows: SourceArtifactLifecycleRow[] };
+  activeStageKey: SourceStageKey | null;
+  queuedArtifactCodes: ReadonlySet<string>;
   onClientFinalAccepted: () => void;
 }) {
   return (
@@ -7062,6 +7112,15 @@ function LifecycleStageRows({
                   onAccepted={onClientFinalAccepted}
                 />
               </div>
+            ) : row.lifecycleState === "not_registered" && row.stageKey === activeStageKey && !queuedArtifactCodes.has(row.code) ? (
+              <div style={{ marginTop: 10 }}>
+                <GenerateArtifactButton
+                  eventId={eventId}
+                  artifactCode={row.code}
+                  artifactName={row.name}
+                  onGenerated={onClientFinalAccepted}
+                />
+              </div>
             ) : row.lifecycleState === "client_final" &&
               row.consultingGate.required &&
               row.consultingGate.state !== "passed" ? (
@@ -7071,6 +7130,16 @@ function LifecycleStageRows({
                   artifactCode={row.code}
                   artifactName={row.name}
                   onReviewed={onClientFinalAccepted}
+                />
+              </div>
+            ) : row.lifecycleState === "client_final" && row.stageKey === activeStageKey && !queuedArtifactCodes.has(row.code) ? (
+              <div style={{ marginTop: 10 }}>
+                <AcceptClientFinalButton
+                  eventId={eventId}
+                  artifactCode={row.code}
+                  artifactName={row.name}
+                  buttonLabel="Replace Client Final"
+                  onAccepted={onClientFinalAccepted}
                 />
               </div>
             ) : null}
@@ -7272,12 +7341,22 @@ function ApprovalsWorkspace({
   canRetireEvent,
   gateAction,
   evidenceStates,
+  gateCriterionStates,
+  stageArtifactStates,
+  canReviewCriteria,
+  onCriterionSaved,
+  onGoToFiles,
   onGoToSteps,
 }: {
   view: SourceEventShellView;
   canRetireEvent: boolean;
   gateAction?: StageGateActionView;
   evidenceStates: readonly SourceEventEvidence[];
+  gateCriterionStates: readonly SourceEventGateCriterion[];
+  stageArtifactStates: readonly SourceEventArtifactState[];
+  canReviewCriteria: boolean;
+  onCriterionSaved: () => void;
+  onGoToFiles: () => void;
   onGoToSteps: () => void;
 }) {
   const requiredEvidenceOpen = buildStageEvidenceRequirementRows(view, evidenceStates)
@@ -7290,6 +7369,16 @@ function ApprovalsWorkspace({
         subtitle="The workflow prepares the evidence; this page records the approval decision."
       />
       <ApprovalReadinessBrief view={view} requiredEvidenceOpen={requiredEvidenceOpen} />
+      {view.stage.key === "strategy" && view.event.currentStageKey === "strategy" && view.event.lifecycle === "active" ? (
+        <StrategyCriterionReview
+          view={view}
+          states={gateCriterionStates}
+          artifacts={stageArtifactStates}
+          canReview={canReviewCriteria}
+          onSaved={onCriterionSaved}
+          onGoToFiles={onGoToFiles}
+        />
+      ) : null}
       <PendingDecisionGroups view={view} />
       {view.approvals.currentStageItem ? (
         <ApprovalCard
@@ -7329,6 +7418,114 @@ function ApprovalsWorkspace({
       {canRetireEvent && view.event.lifecycle === "active" ? (
         <EventRetirementControl eventId={view.event.id} eventCode={view.event.code} />
       ) : null}
+    </section>
+  );
+}
+
+function StrategyCriterionReview({
+  view,
+  states,
+  artifacts,
+  canReview,
+  onSaved,
+  onGoToFiles,
+}: {
+  view: SourceEventShellView;
+  states: readonly SourceEventGateCriterion[];
+  artifacts: readonly SourceEventArtifactState[];
+  canReview: boolean;
+  onSaved: () => void;
+  onGoToFiles: () => void;
+}) {
+  const [openId, setOpenId] = useState<string | null>(null);
+  const [reason, setReason] = useState("");
+  const [pendingId, setPendingId] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const definitions = criteriaForStage("strategy");
+  const recorded = definitions.filter((definition) =>
+    states.some((state) => state.criterionId === definition.criterionId &&
+      (state.state === "met" || state.state === "waived")),
+  ).length;
+
+  async function changeState(criterionId: string, state: SourceEventGateCriterionState, rationale: string) {
+    setPendingId(criterionId);
+    setError(null);
+    try {
+      const response = await fetch(
+        `/api/v1/source/${encodeURIComponent(view.event.id)}/gate-criteria/${encodeURIComponent(criterionId)}/state`,
+        {
+          method: "PATCH",
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ state, reason: rationale }),
+        },
+      );
+      const result = await response.json().catch(() => null) as { detail?: string } | null;
+      if (!response.ok) throw new Error(result?.detail ?? "Criterion review could not be recorded.");
+      setOpenId(null);
+      setReason("");
+      onSaved();
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "Criterion review could not be recorded.");
+    } finally {
+      setPendingId(null);
+    }
+  }
+
+  return (
+    <section data-testid="source-stage-criterion-review" style={{ margin: "18px 0", borderTop: `1px solid ${ANALYTICS.LINE}` }}>
+      <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 12, padding: "14px 0 8px" }}>
+        <h3 style={{ margin: 0, fontSize: 16 }}>Strategy gate criteria</h3>
+        <span style={{ color: ANALYTICS.MUTED, fontSize: 12 }}>{recorded} of {definitions.length} recorded</span>
+      </div>
+      {definitions.map((definition) => {
+        const current = states.find((state) => state.criterionId === definition.criterionId);
+        const title = criterionForSourceApprovalPolicy(definition, view.event.approvalPolicyCode)?.title ?? definition.title;
+        const missingArtifacts = definition.linkedArtifactCodes.filter((code) =>
+          !isArtifactGateReady(artifacts.find((artifact) => artifact.artifactCode === code)),
+        );
+        const isRecorded = current?.state === "met" || current?.state === "waived";
+        return (
+          <div key={definition.criterionId} style={{ borderBottom: `1px solid ${ANALYTICS.LINE_SOFT}`, padding: "12px 0" }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
+              <div style={{ display: "grid", gap: 4 }}>
+                <strong style={{ fontSize: 13 }}>{title}</strong>
+                <span style={{ color: isRecorded ? ANALYTICS.GREEN_TEXT : ANALYTICS.MUTED, fontSize: 12 }}>
+                  {isRecorded ? "Recorded" : missingArtifacts.length
+                    ? `Client Final required for ${missingArtifacts.join(", ")}`
+                    : current ? "Ready for Event Owner review" : "Criterion state unavailable"}
+                </span>
+              </div>
+              {canReview && current && isRecorded ? (
+                <button type="button" style={BUTTON_STYLE} disabled={pendingId !== null}
+                  onClick={() => void changeState(definition.criterionId, "pending", "")}>Reopen</button>
+              ) : canReview && current && missingArtifacts.length === 0 ? (
+                <button type="button" style={BUTTON_STYLE} disabled={pendingId !== null}
+                  onClick={() => { setOpenId(definition.criterionId); setReason(""); setError(null); }}>
+                  Review {title}
+                </button>
+              ) : missingArtifacts.length > 0 ? (
+                <button type="button" style={BUTTON_STYLE} onClick={onGoToFiles}>Open files</button>
+              ) : null}
+            </div>
+            {openId === definition.criterionId ? (
+              <div style={{ display: "grid", gap: 8, maxWidth: 560, paddingTop: 12 }}>
+                <label htmlFor="source-criterion-rationale" style={{ fontSize: 12, fontWeight: 700 }}>Criterion rationale</label>
+                <textarea id="source-criterion-rationale" value={reason} rows={3}
+                  onChange={(event) => setReason(event.target.value)}
+                  placeholder="Record what you reviewed and why this criterion is met."
+                  style={{ width: "100%", border: `1px solid ${ANALYTICS.LINE}`, borderRadius: 6, padding: 9 }} />
+                <div>
+                  <button type="button" style={{ ...BUTTON_STYLE, padding: "8px 12px", background: reason.trim().length >= SOURCE_APPROVAL_REASON_MIN_LENGTH ? ANALYTICS.GREEN : ANALYTICS.SOFT, color: reason.trim().length >= SOURCE_APPROVAL_REASON_MIN_LENGTH ? "#fff" : ANALYTICS.MUTED }}
+                    disabled={reason.trim().length < SOURCE_APPROVAL_REASON_MIN_LENGTH || pendingId !== null}
+                    onClick={() => void changeState(definition.criterionId, "met", reason.trim())}>Mark criterion met</button>
+                </div>
+              </div>
+            ) : null}
+          </div>
+        );
+      })}
+      {error ? <p role="alert" style={{ color: ANALYTICS.RUST, fontSize: 12 }}>{error}</p> : null}
     </section>
   );
 }
@@ -7460,6 +7657,7 @@ function ApprovalReadinessBrief({
 }) {
   const stageApproved = view.stage.approvalRecorded;
   const approvalDecision = currentApprovalDecision(view);
+  const gateCriteriaOpen = approvalDecision?.blockers.some((blocker) => blocker.code === "gate_criteria_open") ?? false;
   const approvalAuditBlockers = recordedApprovalAuditBlockers(approvalDecision);
   const approvalAuditGapsOpen =
     stageApproved && approvalAuditBlockers.length > 0;
@@ -7467,7 +7665,7 @@ function ApprovalReadinessBrief({
   const filesReady = view.stage.artifactReadiness.ready;
   const approvalRouted = view.approvals.currentStageItem != null;
   const ready =
-    !stageApproved && approvalRouted && workflowComplete && filesReady && requiredEvidenceOpen === 0;
+    !stageApproved && approvalRouted && workflowComplete && filesReady && requiredEvidenceOpen === 0 && !gateCriteriaOpen;
   const stageHref = `/source/events/${encodeURIComponent(
     view.event.id,
   )}?stage=${encodeURIComponent(view.stage.key)}`;
@@ -7489,6 +7687,8 @@ function ApprovalReadinessBrief({
         ? "Review required evidence in the owning steps."
         : !filesReady
           ? "Clear artifact queue."
+          : gateCriteriaOpen
+            ? "Review required gate criteria."
           : (view.approvals.currentStageItem?.actionLabel ??
             "Approval routing unavailable.");
   const readinessTitle = stageApproved
@@ -7505,6 +7705,8 @@ function ApprovalReadinessBrief({
           ? "Required evidence still open"
           : !filesReady
             ? "Artifact queue blocks the gate"
+            : gateCriteriaOpen
+              ? "Gate criteria still open"
             : "Approval routing unavailable";
   const readinessStatus = stageApproved
     ? approvalAuditGapsOpen
@@ -7518,6 +7720,8 @@ function ApprovalReadinessBrief({
           ? "Evidence open"
           : !filesReady
             ? "Not gate-ready"
+            : gateCriteriaOpen
+              ? "Criteria open"
             : "Routing open";
 
   return (

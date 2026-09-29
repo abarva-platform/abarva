@@ -11,6 +11,7 @@ const updateArtifactBody = jest.fn(async (input: unknown) => ({
   },
 }));
 const uploadBlob = jest.fn(async () => undefined);
+let artifactStateMetadata: Record<string, unknown> = {};
 
 jest.mock("@/app/api/v1/_intel-auth", () => ({
   requireTenancy: jest.fn(async () => ({
@@ -80,7 +81,7 @@ function fluentClient() {
                 status: "draft",
                 tier: "outline",
                 body: "stale generated body",
-                body_generation_metadata: {},
+                body_generation_metadata: artifactStateMetadata,
                 linked_artifact_id: "generated-1",
               },
               error: null,
@@ -191,6 +192,7 @@ function postClientFinal(form: FormData) {
 describe("client-final artifact body landing", () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    artifactStateMetadata = {};
     policy.mockResolvedValue({
       canUploadSourceArtifacts: true,
       canApproveSourceStages: true,
@@ -220,6 +222,22 @@ describe("client-final artifact body landing", () => {
         status: "approved",
       }),
     });
+  });
+
+  it("invalidates an earlier quality receipt when different Client Final bytes are accepted", async () => {
+    artifactStateMetadata = {
+      generatedAt: "2026-09-28T10:00:00.000Z",
+      qualityGate: { passed: true, overallScore: 9, finalSummary: "Reviewed older draft." },
+    };
+
+    const response = await postClientFinal(clientFinalForm("Reviewed revised synthetic final."));
+
+    expect(response.status).toBe(200);
+    const update = updateArtifactBody.mock.calls[0]?.[0] as { columns: {
+      body_generation_metadata: Record<string, unknown>;
+    } };
+    expect(update.columns.body_generation_metadata).not.toHaveProperty("qualityGate");
+    expect(update.columns.body_generation_metadata).toHaveProperty("clientFinal");
   });
 
   it("refuses an uploader who lacks named approval authority before any blob or metadata write", async () => {
