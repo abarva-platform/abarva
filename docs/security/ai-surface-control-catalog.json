@@ -1317,15 +1317,6 @@
       "reason": "The Tower aVa dock is now catalogued as tower-command-center-ava-dock (item C-574) and its confidence control carries behavioralTest status \"none\": C-416 measured no confidence text in any of 16 states, because the shell mounts the dock with variant=\"focused\", which switches the shared review chrome off. Deferred until the owner decides whether the dock turns its review chrome on and a render test names the confidence label."
     },
     {
-      "key": "generated-ui|Tower|Atlas synthesis API response|citation",
-      "status": "deferred",
-      "controlKind": "citation",
-      "reason": "Telemetry records citation counts, but streamed UI response-level watermark and assumption controls remain follow-on.",
-      "surfaceJoin": {
-        "state": "uncatalogued"
-      }
-    },
-    {
       "key": "generated-ui|Tower|Pressure/action cards|confidence",
       "status": "deferred",
       "surfaceId": "tower-atlas-program-pressure-brief",

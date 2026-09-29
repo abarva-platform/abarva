@@ -343,9 +343,17 @@ describe("legal catalog claims bind only when coverage is real", () => {
     // swapped its `uncatalogued` join for the surfaceId and stayed deferred —
     // 21/14/2 to 21/12/4. `coveredWithSurfaceId` is unmoved: cataloguing an
     // uncovered control earns no credit.
+    //
+    // C-549 retracted a claim rather than joining it: the Tower synthesis
+    // route's legal row said "Yes" to citations on the strength of a telemetry
+    // count, and executing the route showed the response carries none. The
+    // legal cell now reads "Partial", the gate no longer derives a claim from
+    // it, and its `uncatalogued` coverage row left with it — 21/12/4 to
+    // 21/11/4. Nothing else moved, which is the check that one row was
+    // removed and none re-joined.
     expect(tally).toEqual({
       coveredWithSurfaceId: 21,
-      deferredWithJoin: 12,
+      deferredWithJoin: 11,
       deferredWithSurfaceId: 4,
       unbound: 0,
     });
