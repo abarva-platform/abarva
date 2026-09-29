@@ -527,6 +527,22 @@ jobs:
       - name: Exercise the Programs suitability suites
         run: npx jest src/lib/programs/suitability/__tests__ --runInBand
 
+      # C-415 slice 6: the Programs solution-architecture option scorer.
+      #
+      # Measured BEFORE it was wired, the suite executed on its own: 1 suite,
+      # 13 tests, GREEN — solution-architecture-options 13.
+      #
+      # Not coverage of nothing, checked before wiring: the origination charter
+      # extensions import buildSolutionArchitectureOptions, and origination-submit
+      # (the Programs origination-submit route) imports those extensions.
+      #
+      # The suite reads no file's bytes, so `T-770` has nothing to refuse and
+      # `textIsTheSubject` is negative.
+      #
+      # Wired as a DIRECTORY with no trailing slash. Nothing nests beneath it.
+      - name: Exercise the Programs solution-architecture suite
+        run: npx jest src/lib/programs/architecture/__tests__ --runInBand
+
       # Two suites shipped on 18 Sep whose release records said "5 of 5 pass"
       # and "19 of 19 pass". Both were true locally and enforced by nothing:
       # neither file was named by any workflow, and no scoped jest script
