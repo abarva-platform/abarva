@@ -12,8 +12,15 @@
  * It is a measurement, not a gate. It always exits 0 and decides nothing.
  * The gate is `check-source-workspace-quarantine.mjs`, which is scoped to the
  * verdicts that declare a HOLD; the rows this prints under any other verdict
- * are work that is owed, and crediting those as triaged would subtract queued
- * work from the ranking that decides what gets wired next.
+ * are work that is owed.
+ *
+ * Since T-773 the census reads the same records itself: it still counts these
+ * files in `untriagedUnrunTestFiles` (a verdict runs nothing), but a file whose
+ * LATEST verdict names owned work no longer admits its directory to
+ * `governedRiskRanking`, and is listed in `triageVerdicts.heldTestPaths` with
+ * its owner instead. So the owed work is still a row — it has just stopped
+ * being offered to a draw as if nobody had judged it. This script lists every
+ * verdict a file has ever carried; the census resolves to the latest one.
  *
  *   node scripts/quality/triage-record-census-reconciliation.mjs
  *   node scripts/quality/triage-record-census-reconciliation.mjs --json
