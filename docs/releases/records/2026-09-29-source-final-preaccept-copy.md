@@ -32,6 +32,7 @@ The Client Final form now describes artifact authority as a future result of a s
 - Replace the post-acceptance governance statement in the pre-submit form with conditional language.
 - Keep the post-acceptance governance record and server-side validation unchanged.
 - Add render tests for untouched and rejected-upload states.
+- Refresh the derived Source render-control import-closure count after removing an obsolete form import; the covered component set is unchanged.
 - No migration, data job, or approval-policy change.
 
 ## QA / Validation
@@ -39,6 +40,7 @@ The Client Final form now describes artifact authority as a future result of a s
 - Pass: red-first render tests reproduced the premature authority claim before submit and after a rejected upload.
 - Pass: restoring the prior statement as a mutation failed both tests.
 - Pass: workspace-tab suites, 4 suites and 20 tests.
+- Pass: Source render-control census, 21 tests; its derived artifact changes one closure count from 437 to 435, with no component path-set change.
 - Pass: TypeScript (`tsc --noEmit --incremental false`), scoped ESLint, `npm run release:check`, and `git diff --check`.
 - Not run: PR CI/review and signed-in replay at record creation.
 
