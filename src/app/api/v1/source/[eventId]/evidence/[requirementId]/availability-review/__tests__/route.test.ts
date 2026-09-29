@@ -71,6 +71,12 @@ jest.mock("@/lib/data-plane/objectStorage", () => ({
   })),
 }));
 
+jest.mock("@/lib/agent/tools/intelligence/_shared", () => ({
+  clientKeyToInventorySubstrateKey: jest.fn((key: string) =>
+    key === "client-one" ? "client-one-global" : key,
+  ),
+}));
+
 import { GET, POST } from "../route";
 
 const evidenceRow: SourceEventEvidenceStateRow = {
@@ -238,7 +244,7 @@ describe("Source parsed-evidence availability review", () => {
     };
     inventoryArtifact = {
       id: "artifact-1",
-      tenant_key: "client-one",
+      tenant_key: "client-one-global",
       source_event_id: "evt-1",
       source_event_row_id: "evt-1",
       stage_key: "scope",
@@ -311,6 +317,8 @@ describe("Source parsed-evidence availability review", () => {
     const response = await POST(request({
       rationale: "I reviewed this inventory for the synthetic operational boundary.",
       stage: "scope",
+      sourceArtifactId: "artifact-1",
+      sourceSha256: inventoryArtifact?.sha256,
     }), inventoryCtx);
     expect(response.status).toBe(409);
     expect(writes).toHaveLength(0);
