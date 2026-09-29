@@ -114,6 +114,11 @@ export function findDeterministicSourceClaimViolations(args: {
     /\bcompared\s+with\s+[^.!?]*\b(?:typical|equivalent)\b/i,
     /\bpricing\s+can\s+diverge\s+from\s+market\b/i,
   ];
+  const sourceBoundGeneralizationPatterns = [
+    /\bamong the (?:highest|lowest)[-\w]*(?:\s+[\w-]+){0,8}\s+(?:services?|categories?|segments?)\b/i,
+    /\bamong the most commonly (?:assessed|sourced|outsourced|used)\b/i,
+    /\broutinely (?:generate|generates|deliver|delivers|produce|produces|achieve|achieves)\b/i,
+  ].filter((pattern) => !pattern.test(args.sourceContext));
   for (const sentence of args.body.split(/(?<=[.!?])\s+|\n+/)) {
     const text = sentence.replace(/\s+/g, " ").trim();
     if (!text) continue;
@@ -132,6 +137,12 @@ export function findDeterministicSourceClaimViolations(args: {
         claim: text.slice(0, 220),
         reason:
           "External benchmark or current-market assertion is not established by the bound event evidence.",
+      });
+    }
+    if (sourceBoundGeneralizationPatterns.some((pattern) => pattern.test(text))) {
+      violations.push({
+        claim: text.slice(0, 220),
+        reason: "Category ranking or routine outcome claim is absent from the bound event evidence.",
       });
     }
   }
