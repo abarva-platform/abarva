@@ -8,8 +8,8 @@
 // is the missing durable write path:
 //
 //   upload → match canonical evidence requirement (filename + stage)
-//          → upgrade source_event_evidence_states (7-state ramp; never downgrade;
-//            link source_artifact_id)
+//          → reconcile source_event_evidence_states (7-state ramp; link
+//            source_artifact_id without inheriting an unbacked high state)
 //          → update source_event_gate_criterion_states for the artifact's family
 //            (append evidence_artifact_ids; auto-'met' ONLY for ART-* presence
 //            criteria — HARD human gates stay pending for a named approver)
@@ -24,12 +24,13 @@ import {
 } from "@/lib/source/canonical-specs/evidence-requirements";
 import { getCriterionIdsForArtifactFamily } from "@/lib/source/artifact-gate-map";
 import type { SourceArtifactFamily } from "@/lib/source/artifact-registry/types";
+import { requiresRecordedSource } from "@/lib/source/evidence-authority";
 import type { SourceStageKey } from "@/lib/source/types";
 
 type DbClient = ReturnType<typeof getAzureWriteFluentClient>;
 
-// ── Evidence-state ramp ordering (upgrade-only; Stale/Low Confidence are
-//    flags a fresh upload may replace) ──────────────────────────────────────
+// ── Evidence-state ramp ordering (Stale/Low Confidence are flags a fresh
+//    upload may replace) ────────────────────────────────────────────────────
 const STATE_RANK: Record<string, number> = {
   "Not Requested": 0,
   Stale: 0,
@@ -128,8 +129,9 @@ export interface UploadSubstrateSyncResult {
 }
 
 /**
- * Durably reflect an upload in the canvas substrate. Never downgrades an
- * evidence state; never auto-meets a non-ART (human/HARD) gate criterion.
+ * Durably reflect an upload in the canvas substrate. Preserves an established
+ * source-backed state, but resets an unbacked record-backed state to the file's
+ * actual parse state. Never auto-meets a non-ART (human/HARD) gate criterion.
  */
 export async function syncUploadToCanvasSubstrate(
   input: UploadSubstrateSyncInput,
@@ -163,14 +165,29 @@ export async function syncUploadToCanvasSubstrate(
     const previousRank =
       previousState !== null ? (STATE_RANK[previousState] ?? 0) : -1;
     const targetRank = STATE_RANK[targetState];
+    const existingSourceId =
+      existing &&
+      typeof (existing as Record<string, unknown>).source_artifact_id ===
+        "string"
+        ? String((existing as Record<string, unknown>).source_artifact_id).trim()
+        : "";
+    const attachMissingSource = Boolean(existing && !existingSourceId);
+    const resetUnbackedState =
+      attachMissingSource &&
+      requiresRecordedSource(matched) &&
+      previousRank > targetRank;
+    const newState =
+      existing && !resetUnbackedState && targetRank <= previousRank
+        ? (previousState as string)
+        : targetState;
 
-    if (existing && targetRank > previousRank) {
+    if (existing && (targetRank > previousRank || attachMissingSource)) {
       const supersedesAbsence =
         (existing as Record<string, unknown>).applicability_status === "not_applicable";
       const { error } = await db
         .from("source_event_evidence_states")
         .update({
-          current_state: targetState,
+          current_state: newState,
           source_artifact_id: input.artifactId,
           notes: `Uploaded: ${input.filename}`,
           last_synced_at: nowIso,
@@ -201,10 +218,6 @@ export async function syncUploadToCanvasSubstrate(
         throw new Error(`evidence_state insert failed: ${error.message}`);
     }
 
-    const newState =
-      existing && targetRank <= previousRank
-        ? (previousState as string)
-        : targetState;
     const newRank = STATE_RANK[newState] ?? 0;
     result.evidence = {
       requirementId: matched.requirementId,

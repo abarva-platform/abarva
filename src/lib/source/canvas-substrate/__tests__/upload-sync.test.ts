@@ -207,6 +207,77 @@ describe("explicit evidence requirement upload", () => {
     }, db)).rejects.toThrow("requirement does not belong to stage");
     expect(writes).toHaveLength(0);
   });
+
+  it("binds a parsed trigger to a legacy narrative-only row without inheriting its Available state", async () => {
+    const { db, writes } = fakeDb({ evidence: {
+      current_state: "Available",
+      source_artifact_id: null,
+      notes: "Client-stated sourcing trigger captured in the governed event intake; explicit human review is required before a hard gate can clear.",
+    } });
+    const result = await syncUploadToCanvasSubstrate({
+      sourceEventRowId: "event-1",
+      tenantKey: "tenant-1",
+      stageKey: "strategy",
+      artifactId: "parsed-trigger-1",
+      artifactFamily: "other",
+      filename: "synthetic-trigger.txt",
+      requirementId: "EVID-SRC-STR-TRIGGER",
+      parsed: true,
+    }, db);
+    expect(result.evidence).toMatchObject({
+      requirementId: "EVID-SRC-STR-TRIGGER",
+      previousState: "Available",
+      newState: "Parsed",
+      meetsMinimum: true,
+    });
+    expect(writes.find((write) => write.table === "source_event_evidence_states"))
+      .toMatchObject({ op: "update", payload: {
+        current_state: "Parsed",
+        source_artifact_id: "parsed-trigger-1",
+      } });
+    expect(writes.some((write) => write.table === "source_event_gate_criterion_states"))
+      .toBe(false);
+  });
+
+  it("binds an equal-rank evidence row that has no recorded source", async () => {
+    const { db, writes } = fakeDb({ evidence: {
+      current_state: "Parsed",
+      source_artifact_id: null,
+    } });
+    const result = await syncUploadToCanvasSubstrate({
+      sourceEventRowId: "event-1",
+      tenantKey: "tenant-1",
+      stageKey: "strategy",
+      artifactId: "parsed-trigger-2",
+      artifactFamily: "other",
+      filename: "trigger.txt",
+      requirementId: "EVID-SRC-STR-TRIGGER",
+      parsed: true,
+    }, db);
+    expect(result.evidence?.newState).toBe("Parsed");
+    expect(writes.find((write) => write.table === "source_event_evidence_states")?.payload)
+      .toMatchObject({ current_state: "Parsed", source_artifact_id: "parsed-trigger-2" });
+  });
+
+  it("keeps a client-stated non-record-backed state when attaching a file", async () => {
+    const { db, writes } = fakeDb({ evidence: {
+      current_state: "Available",
+      source_artifact_id: null,
+    } });
+    const result = await syncUploadToCanvasSubstrate({
+      sourceEventRowId: "event-1",
+      tenantKey: "tenant-1",
+      stageKey: "strategy",
+      artifactId: "market-scan-1",
+      artifactFamily: "other",
+      filename: "market-scan.pdf",
+      requirementId: "EVID-SRC-STR-MARKET-BENCHMARK",
+      parsed: false,
+    }, db);
+    expect(result.evidence?.newState).toBe("Available");
+    expect(writes.find((write) => write.table === "source_event_evidence_states")?.payload)
+      .toMatchObject({ current_state: "Available", source_artifact_id: "market-scan-1" });
+  });
 });
 
 describe("syncUploadToCanvasSubstrate (durable F1 fix)", () => {
@@ -275,7 +346,7 @@ describe("syncUploadToCanvasSubstrate (durable F1 fix)", () => {
 
   it("never downgrades a validated state", async () => {
     const { db, writes } = fakeDb({
-      evidence: { current_state: "Usable Evidence" },
+      evidence: { current_state: "Usable Evidence", source_artifact_id: "validated-artifact" },
     });
     const res = await syncUploadToCanvasSubstrate(
       { ...base, artifactFamily: "other" },
