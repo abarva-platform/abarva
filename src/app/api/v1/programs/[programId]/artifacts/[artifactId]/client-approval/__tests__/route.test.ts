@@ -221,6 +221,21 @@ function request(body: Record<string, unknown>): Request {
   );
 }
 
+function uploadedReviewRequest(): Request {
+  const form = new FormData();
+  form.append("reason", "Synthetic reviewer approved the reviewed charter.");
+  form.append(
+    "file",
+    new File(["Reviewed charter content."], "client-reviewed-charter.docx", {
+      type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    }),
+  );
+  return new Request(
+    "http://test/api/v1/programs/prog-1/artifacts/artifact-1/client-approval",
+    { method: "POST", body: form },
+  );
+}
+
 const params = Promise.resolve({
   programId: "prog-1",
   artifactId: "artifact-1",
@@ -329,6 +344,53 @@ describe("POST /api/v1/programs/[programId]/artifacts/[artifactId]/client-approv
       expect.objectContaining({
         approvedArtifactId: "stored-final-artifact-1",
         approvedContent: undefined,
+        approvalLineage: {
+          source: "generated_artifact_acceptance",
+          generatedArtifactId: "artifact-1",
+          evidenceSnapshotHash: "revision-current",
+          approvalMode: "accept_ai_draft_as_authoritative",
+        },
+      }),
+    );
+  });
+
+  it("copies the reviewed upload's verified artifact lineage onto the gate row", async () => {
+    mockExtractProgramEvidenceFromUploadBuffer.mockResolvedValue({
+      extractedText: "Reviewed charter content.",
+      extractedStructured: {
+        parse_method: "docx-mammoth",
+        warnings: [],
+      },
+    });
+    const { POST } = await import("../route");
+
+    const res = await POST(uploadedReviewRequest() as never, { params });
+    const json = (await res.json()) as Record<string, unknown>;
+
+    expect(res.status).toBe(200);
+    expect(json).toMatchObject({
+      ok: true,
+      approvalMode: "client_approved_replacement",
+      deliverableTypeKey: "charter",
+    });
+    expect(mockSignOffDeliverable).toHaveBeenCalledWith(
+      ctx,
+      "prog-1",
+      "deliverable-1",
+      expect.objectContaining({
+        approvedArtifactId: "stored-final-artifact-1",
+        approvedContent: expect.objectContaining({
+          content: "Reviewed charter content.",
+          generationLineage: expect.objectContaining({
+            evidenceSnapshotHash: "revision-current",
+          }),
+        }),
+        approvalLineage: {
+          source: "generated_artifact_acceptance",
+          generatedArtifactId: "artifact-1",
+          evidenceSnapshotHash: "revision-current",
+          approvalMode: "client_approved_replacement",
+        },
       }),
     );
   });

@@ -69,7 +69,16 @@ describe("signOffDeliverable", () => {
         const deliverableCalls = fromMock.mock.calls.filter(([t]) => t === "deliverables_v2").length;
         if (deliverableCalls === 1) {
           return selectDeliverable({
-            data: { current_version: 2, signed_off_version: 1 },
+            data: {
+              current_version: 2,
+              signed_off_version: 1,
+              structured_data: {
+                source: "generated_artifact_acceptance",
+                generatedArtifactId: "artifact-old",
+                evidenceSnapshotHash: "revision-old",
+                retained: "existing governed metadata",
+              },
+            },
             error: null,
           });
         }
@@ -96,6 +105,15 @@ describe("signOffDeliverable", () => {
           mimeType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
           parseMethod: "docx-mammoth",
           warnings: [],
+          generationLineage: {
+            evidenceSnapshotHash: "revision-current",
+          },
+        },
+        approvalLineage: {
+          source: "generated_artifact_acceptance",
+          generatedArtifactId: "artifact-current",
+          evidenceSnapshotHash: "revision-current",
+          approvalMode: "client_approved_replacement",
         },
       },
     );
@@ -125,6 +143,13 @@ describe("signOffDeliverable", () => {
         authoritative_lifecycle_state: "human_approved",
         authoritative_flag_source: "normal_flow",
         requires_revalidation: false,
+        structured_data: {
+          source: "generated_artifact_acceptance",
+          generatedArtifactId: "artifact-current",
+          evidenceSnapshotHash: "revision-current",
+          approvalMode: "client_approved_replacement",
+          retained: "existing governed metadata",
+        },
       }),
     );
     expect(lifecycleEvents).toEqual(

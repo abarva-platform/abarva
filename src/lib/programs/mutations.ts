@@ -658,6 +658,15 @@ export async function signOffDeliverable(
   deliverableId: string,
   opts: {
     supabase?: SupabaseClient;
+    /** Validated lineage for a generated artifact accepted as this deliverable. */
+    approvalLineage?: {
+      source: "generated_artifact_acceptance";
+      generatedArtifactId: string;
+      evidenceSnapshotHash: string;
+      approvalMode:
+        | "client_approved_replacement"
+        | "accept_ai_draft_as_authoritative";
+    };
     /**
      * Set when the client approved by uploading an edited replacement
      * (move_artifacts row, artifact_family=generated_deliverable) rather
@@ -686,7 +695,7 @@ export async function signOffDeliverable(
 
   const { data: existing, error: readError } = await sb
     .from("deliverables_v2")
-    .select("current_version, signed_off_version")
+    .select("current_version, signed_off_version, structured_data")
     .eq("id", deliverableId)
     .eq("engagement_id", programId)
     .maybeSingle();
@@ -695,6 +704,7 @@ export async function signOffDeliverable(
   const existingPointer = existing as {
     current_version: number | null;
     signed_off_version: number | null;
+    structured_data?: Record<string, unknown> | null;
   };
   const currentVersion = existingPointer.current_version ?? 0;
   const priorAuthoritativeVersion = existingPointer.signed_off_version ?? null;
@@ -746,6 +756,14 @@ export async function signOffDeliverable(
       authoritative_lifecycle_state: "human_approved",
       authoritative_flag_source: "normal_flow",
       requires_revalidation: false,
+      ...(opts.approvalLineage
+        ? {
+            structured_data: {
+              ...(existingPointer.structured_data ?? {}),
+              ...opts.approvalLineage,
+            },
+          }
+        : {}),
       updated_at: new Date().toISOString(),
     })
     .eq("id", deliverableId)
