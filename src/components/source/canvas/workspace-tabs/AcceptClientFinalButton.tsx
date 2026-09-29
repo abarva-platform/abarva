@@ -121,6 +121,9 @@ export function AcceptClientFinalButton({
               style={INPUT_STYLE}
             />
           </label>
+          <p style={COPY_STYLE}>
+            Use a text-readable final. Image-only scans cannot clear this gate.
+          </p>
           <label style={LABEL_STYLE}>
             Approval rationale
             <textarea name="note" rows={3} required style={TEXTAREA_STYLE} />

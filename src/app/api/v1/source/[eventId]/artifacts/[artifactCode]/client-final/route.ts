@@ -245,6 +245,13 @@ export async function POST(request: Request, { params }: RouteContext) {
   if (dataProtection.decision === "quarantine") {
     return sensitiveUploadRejectedResponse(dataProtection);
   }
+  if (!extractedClientFinal.text?.trim()) {
+    return jsonError(
+      422,
+      "unreadable_client_final",
+      "This file has no readable text. Upload a text-readable final; an image-only scan cannot become the authoritative artifact.",
+    );
+  }
 
   let siblingArtifacts: SourceArtifactRecord[];
   let previousGenerated: SourceArtifactRecord | null;
@@ -436,7 +443,7 @@ export async function POST(request: Request, { params }: RouteContext) {
       stakeholderGroup,
       textExtraction: {
         method: extractedClientFinal.method,
-        bodyAvailable: Boolean(extractedClientFinal.text),
+        bodyAvailable: true,
         warnings: extractedClientFinal.warnings,
       },
       sourceGeneratedArtifactId:
@@ -455,7 +462,7 @@ export async function POST(request: Request, { params }: RouteContext) {
       artifactRowId: artifactState.id,
       columns: {
         body: extractedClientFinal.text,
-        body_format: extractedClientFinal.text ? "markdown" : null,
+        body_format: "markdown",
         body_authored_by: tenancy.userId,
         body_updated_at: acceptedAt,
         linked_artifact_id: artifact.id,
