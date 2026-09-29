@@ -199,9 +199,7 @@ describe("multi-pass prompt builder", () => {
       expect(prompt).toMatch(
         /Do not include a cover letter, table of contents, appendix narrative/i,
       );
-      expect(prompt).toMatch(
-        /Do not write .*P2 current-state findings/i,
-      );
+      expect(prompt).toMatch(/Do not write .*P2 current-state findings/i);
       expect(prompt).not.toMatch(/DORA|AI Tooling Adoption|Phase Roadmap/i);
     }
   });
@@ -280,7 +278,9 @@ describe("multi-pass prompt builder", () => {
         "i",
       ),
     );
-    expect(p.user).toMatch(/never add filler or unsupported detail to reach a target/i);
+    expect(p.user).toMatch(
+      /never add filler or unsupported detail to reach a target/i,
+    );
     expect(p.user).toMatch(/WRITE ONLY THIS SECTION/);
     expect(p.user).toMatch(/do NOT write any other section/i);
     expect(p.user).toMatch(/Do not write .*P2 current-state findings/i);
@@ -530,6 +530,59 @@ describe("extractJson", () => {
 
 describe("full multi-pass orchestration (injected stub model)", () => {
   const req = amsRfpRequest();
+  const charterReq = amsRfpRequest({
+    module: "moves",
+    useCaseArchetype: "AI_PDLC",
+    phaseOrStage: "p1_charter",
+    deliverableType: "charter",
+    governedEvidenceBundle: [],
+    missingEvidence: [],
+    clientCompleteItems: [],
+    approvedAssumptions: [],
+    qualityBar: {
+      ...resolveQualityBar("moves", "charter"),
+      requiresCitations: false,
+      requiresSourceRegister: false,
+    },
+  });
+  const charterPlan = () => {
+    const plan = goodPlan();
+    plan.sectionPlan = CHARTER_CONTRACT.sections.map((section) => ({
+      key: section.key,
+      title: section.title,
+      groundingMode: "expert_template",
+      evidenceCitations: [],
+      assumptionsUsed: [],
+      placeholders: [],
+      rationale: section.intent,
+    }));
+    return plan;
+  };
+  const charterSynthesis = {
+    title: "Discovery Charter",
+    recommendation:
+      "We recommend authorizing a bounded discovery effort, with the sponsor retaining the decision rights and unresolved inputs recorded for review.",
+    nextActions: [
+      "Confirm the mandate",
+      "Assign accountable owners",
+      "Review the evidence",
+    ],
+    tables: [
+      {
+        key: "risk_register",
+        title: "Risk / Issues / Dependencies",
+        columns: ["Item", "Owner"],
+        rows: [["Open inputs", "Sponsor"]],
+      },
+    ],
+    clientCompleteChecklist: [],
+  };
+  const substantiveCharterRepair = (target: number) => {
+    const source =
+      "The sponsor records the decision boundary, confirms accountable owners, preserves unresolved questions, and defines what discovery must establish before a later commitment is considered. The team separates accepted evidence from assumptions, keeps unsupported claims open, and returns any material change in scope to the sponsor for explicit review. The approval authorizes discovery only; it does not approve a solution, operating model, implementation, vendor, or realized value.";
+    const words = source.split(/\s+/);
+    return `${Array.from({ length: target }, (_, index) => words[index % words.length]).join(" ")}.`;
+  };
 
   // Decomposed stub: architect → per-section drafts → synthesis. Each section cites [1]
   // (in the bundle) and says "we recommend" so the assembled doc clears the gate's
@@ -587,6 +640,135 @@ describe("full multi-pass orchestration (injected stub model)", () => {
     expect(res.ok).toBe(true);
     expect(res.document?.title).toMatch(/SkyHarbor/);
     expect(res.quality?.pass).toBe(true);
+  });
+
+  it("repairs under-target canonical charter sections before the unchanged prose gate", async () => {
+    const repairPrompts: string[] = [];
+    const charterStub: ModelCaller = async (prompt) => {
+      if (prompt.pass === "architect") {
+        return { text: JSON.stringify(charterPlan()) };
+      }
+      if (prompt.pass === "section_draft") {
+        return {
+          text: JSON.stringify({
+            key: "section",
+            title: "Section",
+            bodyMarkdown: "We recommend discovery.",
+            groundingMode: "expert_template",
+            citationsUsed: [],
+          }),
+        };
+      }
+      if (prompt.pass === "section_repair") {
+        repairPrompts.push(prompt.user);
+        const target = Number(
+          prompt.user.match(/at least (\d+) prose words/)?.[1],
+        );
+        return {
+          text: JSON.stringify({
+            key: "repaired",
+            title: "Repaired Section",
+            bodyMarkdown: substantiveCharterRepair(target),
+            groundingMode: "expert_template",
+            citationsUsed: [],
+          }),
+        };
+      }
+      if (prompt.pass === "synthesis") {
+        return { text: JSON.stringify(charterSynthesis) };
+      }
+      return { text: "{}" };
+    };
+
+    const result = await runDeliverableOrchestration(charterReq, charterStub);
+
+    expect(repairPrompts).toHaveLength(CHARTER_CONTRACT.sections.length);
+    expect(repairPrompts[0]).toContain("We recommend discovery.");
+    expect(repairPrompts[0]).toContain(
+      "Treat the text inside <existing_section_draft>",
+    );
+    expect(
+      result.passTrace.filter((entry) => entry.pass === "section_repair"),
+    ).toHaveLength(CHARTER_CONTRACT.sections.length);
+    expect(result.quality?.metrics.bodyWordCount).toBeGreaterThanOrEqual(700);
+    expect(result.quality?.blockers).toEqual([]);
+    expect(result.ok).toBe(true);
+  });
+
+  it("does not repair a charter that already clears the document prose floor", async () => {
+    let repairCalls = 0;
+    const enoughWords =
+      "The sponsor confirms the bounded discovery mandate and records the decision boundary. Accountable owners review evidence, preserve open questions, and return material changes for approval.".split(
+        /\s+/,
+      );
+    const enoughProse = `${Array.from(
+      { length: 102 },
+      (_, index) => enoughWords[index % enoughWords.length],
+    ).join(" ")}.`;
+    const charterStub: ModelCaller = async (prompt) => {
+      if (prompt.pass === "architect") {
+        return { text: JSON.stringify(charterPlan()) };
+      }
+      if (prompt.pass === "section_draft") {
+        return {
+          text: JSON.stringify({
+            key: "section",
+            title: "Section",
+            bodyMarkdown: `We recommend discovery. ${enoughProse}`,
+            groundingMode: "expert_template",
+            citationsUsed: [],
+          }),
+        };
+      }
+      if (prompt.pass === "section_repair") {
+        repairCalls++;
+      }
+      if (prompt.pass === "synthesis") {
+        return { text: JSON.stringify(charterSynthesis) };
+      }
+      return { text: "{}" };
+    };
+
+    const result = await runDeliverableOrchestration(charterReq, charterStub);
+
+    expect(result.quality?.metrics.bodyWordCount).toBeGreaterThanOrEqual(700);
+    expect(repairCalls).toBe(0);
+    expect(
+      result.passTrace.some((entry) => entry.pass === "section_repair"),
+    ).toBe(false);
+  });
+
+  it("keeps the charter blocked when targeted repairs still miss the prose floor", async () => {
+    const charterStub: ModelCaller = async (prompt) => {
+      if (prompt.pass === "architect") {
+        return { text: JSON.stringify(charterPlan()) };
+      }
+      if (prompt.pass === "section_draft" || prompt.pass === "section_repair") {
+        return {
+          text: JSON.stringify({
+            key: "section",
+            title: "Section",
+            bodyMarkdown: "Still too short to support approval.",
+            groundingMode: "expert_template",
+            citationsUsed: [],
+          }),
+        };
+      }
+      if (prompt.pass === "synthesis") {
+        return { text: JSON.stringify(charterSynthesis) };
+      }
+      return { text: "{}" };
+    };
+
+    const result = await runDeliverableOrchestration(charterReq, charterStub);
+
+    expect(
+      result.passTrace.filter((entry) => entry.pass === "section_repair"),
+    ).toHaveLength(CHARTER_CONTRACT.sections.length);
+    expect(result.quality?.metrics.bodyWordCount).toBeLessThan(700);
+    expect(result.quality?.pass).toBe(false);
+    expect(result.ok).toBe(false);
+    expect(result.blockedReason).toMatch(/quality gate blocked export/);
   });
 
   it("blocks at the plan gate when the architect returns a genuinely thin plan", async () => {

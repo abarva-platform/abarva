@@ -1,9 +1,9 @@
 // Human-facing progress stages for the DECOMPOSED deliverable orchestrator.
 //
 // Generation is no longer six monolithic passes. It is: plan the structure
-// (architect) → write each planned section in its own bounded-parallel call
-// (section_draft, fired N times) → assemble the doc-level fields (synthesis).
-// Total model calls = N + 2, so the band's denominator is dynamic, not a fixed 6.
+// (architect) → draft each planned section → optionally repair under-target
+// sections → assemble the doc-level fields (synthesis). The denominator is
+// dynamic and reserves bounded repair capacity for fixed-structure charters.
 //
 // Rather than a spinner, the UI shows a percent band with a plain-English label
 // for the phase in flight, so the wait tells the value story (planning → writing
@@ -35,6 +35,7 @@ export interface GenerationProgress {
 const PASS_LABELS: Record<GenerationPass, string> = {
   architect: "Planning the structure",
   section_draft: "Writing the document, section by section",
+  section_repair: "Repairing under-target sections",
   synthesis: "Assembling the final document",
   // legacy monolithic passes — no longer fired by the decomposed orchestrator
   evidence_grounding: "Grounding in your evidence",
@@ -45,9 +46,13 @@ const PASS_LABELS: Record<GenerationPass, string> = {
 };
 
 /** The phases shown in the band, in order, for the decomposed run. */
-export const GENERATION_PHASES: readonly { pass: GenerationPass; label: string }[] = [
+export const GENERATION_PHASES: readonly {
+  pass: GenerationPass;
+  label: string;
+}[] = [
   { pass: "architect", label: PASS_LABELS.architect },
   { pass: "section_draft", label: PASS_LABELS.section_draft },
+  { pass: "section_repair", label: PASS_LABELS.section_repair },
   { pass: "synthesis", label: PASS_LABELS.synthesis },
 ];
 
@@ -91,6 +96,9 @@ export function buildGenerationProgress(
   let nextLabel: string | null;
   if (pass === "synthesis") {
     nextLabel = null;
+  } else if (pass === "section_repair") {
+    nextLabel =
+      capped >= total - 1 ? PASS_LABELS.synthesis : PASS_LABELS.section_repair;
   } else if (capped >= total - 1) {
     // the last section is done → synthesis is what runs next
     nextLabel = PASS_LABELS.synthesis;

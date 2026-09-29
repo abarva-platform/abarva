@@ -395,6 +395,7 @@ export type GenerationPass =
   | "board_grade_rewrite" // Pass 5 — revise to board-grade
   | "render_package" // Pass 6 — structure for renderers
   | "section_draft" // decomposed: write ONE planned section (bounded-parallel fan-out)
+  | "section_repair" // targeted repair for a section below its contract prose target
   | "synthesis"; // decomposed: the doc-level structured fields (recommendation, tables, checklist)
 
 export interface PassPrompt {
