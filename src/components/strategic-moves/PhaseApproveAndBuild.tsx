@@ -68,6 +68,7 @@ interface DeliverableRow {
   artifactId: string | null;
   blobUrl: string | null;
   packageReadiness: PackageReadiness | null;
+  blockers: string[];
   error?: string;
 }
 
@@ -107,6 +108,7 @@ interface RunStatusResponse {
   progressPct?: number;
   progressLabel?: string | null;
   blockers?: string[];
+  error?: string | null;
   packageReadiness?: PackageReadiness | null;
 }
 
@@ -201,7 +203,7 @@ const STATUS_LABEL: Record<RunStatus | "idle", string> = {
   queued: "Queued",
   running: "Building",
   succeeded: "Built",
-  blocked: "Needs evidence",
+  blocked: "Build blocked",
   failed: "Failed",
   error: "Could not start",
 };
@@ -231,6 +233,7 @@ function buildInitialRows(
       artifactId: artifact?.artifactId ?? null,
       blobUrl: artifact?.downloadUrl ?? null,
       packageReadiness: null,
+      blockers: [],
     };
   });
 }
@@ -349,6 +352,7 @@ export function PhaseApproveAndBuild({
             progressPct: data.progressPct ?? 0,
             progressLabel: data.progressLabel ?? null,
             packageReadiness: data.packageReadiness ?? null,
+            blockers: data.blockers ?? [],
           });
           if (Date.now() - startedAt.current < MAX_MS) {
             timers.current[key] = setTimeout(
@@ -365,6 +369,8 @@ export function PhaseApproveAndBuild({
           artifactId: data.artifactId,
           blobUrl: data.blobUrl,
           packageReadiness: data.packageReadiness ?? null,
+          blockers: data.blockers ?? [],
+          error: data.error ?? undefined,
         });
       } catch {
         // transient — back off and retry within the window
@@ -474,6 +480,7 @@ export function PhaseApproveAndBuild({
           artifactId: null,
           blobUrl: null,
           packageReadiness: null,
+          blockers: [],
           error: d.error,
         })),
       );
@@ -544,10 +551,10 @@ export function PhaseApproveAndBuild({
       : hasRequiredGaps
         ? `${requiredGaps.length} required evidence item${requiredGaps.length === 1 ? "" : "s"} must be covered before final build.`
         : blockedCount > 0
-          ? `${blockedCount} output${blockedCount === 1 ? "" : "s"} need evidence or quality fixes before the phase can advance.`
+          ? `${blockedCount} output${blockedCount === 1 ? "" : "s"} blocked by evidence or build-quality checks before the phase can advance.`
           : builtCount === specs.length
             ? `${phaseLabel} documents are built. Review them before relying on them.`
-          : "Capture is separate from gate readiness. Build once the record is ready for review.";
+            : "Capture is separate from gate readiness. Build once the record is ready for review.";
 
   const buildActionButton = (
     <button
@@ -804,51 +811,66 @@ export function PhaseApproveAndBuild({
                 Download final →
               </Link>
             )}
-            {r.status === "blocked" && r.packageReadiness && (
-              <details
-                style={{
-                  gridColumn: "2 / -1",
-                  marginTop: 2,
-                  color: "#5C4320",
-                  fontSize: 11.5,
-                  lineHeight: 1.45,
-                }}
-              >
-                <summary style={{ cursor: "pointer", fontWeight: 700 }}>
-                  Why this still needs evidence
-                </summary>
-                <div
+            {r.status === "blocked" &&
+              (r.packageReadiness || r.blockers.length > 0 || r.error) && (
+                <details
                   style={{
-                    marginTop: 8,
-                    padding: "10px 12px",
-                    borderRadius: 6,
-                    border: "1px solid rgba(181,133,42,0.24)",
-                    background: "rgba(181,133,42,0.06)",
+                    gridColumn: "2 / -1",
+                    marginTop: 2,
+                    color: "#5C4320",
+                    fontSize: 11.5,
+                    lineHeight: 1.45,
                   }}
                 >
-                  <div style={{ color: ATTENTION, fontWeight: 700 }}>
-                    {r.packageReadiness.headline}
+                  <summary style={{ cursor: "pointer", fontWeight: 700 }}>
+                    Why this output is blocked
+                  </summary>
+                  <div
+                    style={{
+                      marginTop: 8,
+                      padding: "10px 12px",
+                      borderRadius: 6,
+                      border: "1px solid rgba(181,133,42,0.24)",
+                      background: "rgba(181,133,42,0.06)",
+                    }}
+                  >
+                    {r.packageReadiness && (
+                      <>
+                        <div style={{ color: ATTENTION, fontWeight: 700 }}>
+                          {r.packageReadiness.headline}
+                        </div>
+                        <div style={{ marginTop: 6 }}>
+                          Evidence retrieved:{" "}
+                          {r.packageReadiness.retrievedEvidence}/
+                          {r.packageReadiness.minimumEvidenceItems} · Readiness:{" "}
+                          {r.packageReadiness.executiveReadinessPct}%
+                        </div>
+                      </>
+                    )}
+                    {(r.blockers.length > 0 || r.error) && (
+                      <div style={{ marginTop: 6 }}>
+                        <span style={{ fontWeight: 700 }}>Build blocker: </span>
+                        {r.blockers.length > 0
+                          ? r.blockers.join("; ")
+                          : r.error}
+                      </div>
+                    )}
+                    {r.packageReadiness?.missing.length ? (
+                      <div style={{ marginTop: 6 }}>
+                        <span style={{ fontWeight: 700 }}>Evidence gaps: </span>
+                        {r.packageReadiness.missing.slice(0, 3).join("; ")}
+                        {r.packageReadiness.missing.length > 3 ? "…" : ""}
+                      </div>
+                    ) : null}
+                    {r.packageReadiness?.recommendedNextStep && (
+                      <div style={{ marginTop: 6 }}>
+                        <span style={{ fontWeight: 700 }}>Next: </span>
+                        {r.packageReadiness.recommendedNextStep}
+                      </div>
+                    )}
                   </div>
-                  <div style={{ marginTop: 6 }}>
-                    Evidence: {r.packageReadiness.retrievedEvidence}/
-                    {r.packageReadiness.minimumEvidenceItems} · Readiness:{" "}
-                    {r.packageReadiness.executiveReadinessPct}% (
-                    {r.packageReadiness.confidenceLabel})
-                  </div>
-                  {r.packageReadiness.missing.length > 0 && (
-                    <div style={{ marginTop: 6 }}>
-                      <span style={{ fontWeight: 700 }}>Missing: </span>
-                      {r.packageReadiness.missing.slice(0, 3).join("; ")}
-                      {r.packageReadiness.missing.length > 3 ? "…" : ""}
-                    </div>
-                  )}
-                  <div style={{ marginTop: 6 }}>
-                    <span style={{ fontWeight: 700 }}>Next: </span>
-                    {r.packageReadiness.recommendedNextStep}
-                  </div>
-                </div>
-              </details>
-            )}
+                </details>
+              )}
           </div>
         ))}
       </div>
