@@ -351,9 +351,17 @@ describe("legal catalog claims bind only when coverage is real", () => {
     // it, and its `uncatalogued` coverage row left with it — 21/12/4 to
     // 21/11/4. Nothing else moved, which is the check that one row was
     // removed and none re-joined.
+    //
+    // C-549 retracted a second claim the same way: the Agent readiness
+    // drill-down's legal row said "Yes" to a confidence disclosure on the
+    // strength of a source caption and a generated date. Rendering the
+    // component showed no confidence value or assumption, its own confidence
+    // factor reading deferred, and nothing mounting it. The cell now reads
+    // "Partial" and its `uncatalogued` coverage row left with it — 21/11/4 to
+    // 21/10/4.
     expect(tally).toEqual({
       coveredWithSurfaceId: 21,
-      deferredWithJoin: 11,
+      deferredWithJoin: 10,
       deferredWithSurfaceId: 4,
       unbound: 0,
     });
