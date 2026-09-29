@@ -11,6 +11,7 @@ const generateArtifact = jest.fn();
 const createMovesGenerateArtifactDeps = jest.fn();
 const draftModuleDeliverable = jest.fn();
 const saveMoveArtifact = jest.fn();
+const loadApprovedMoveEvidenceSnapshot = jest.fn();
 
 jest.mock("@/app/api/v1/programs/_auth", () => ({
   requireTenancy,
@@ -57,6 +58,10 @@ jest.mock("@/lib/programs/deliverables/move-artifacts", () => ({
   saveMoveArtifact,
 }));
 
+jest.mock("@/lib/programs/approved-move-evidence-snapshot", () => ({
+  loadApprovedMoveEvidenceSnapshot,
+}));
+
 function makeRequest(body: unknown): Request {
   return new Request("http://localhost/api/v1/programs/program_1/generate", {
     method: "POST",
@@ -76,6 +81,11 @@ describe("POST /api/v1/programs/[programId]/generate delegates to generateArtifa
     });
     tenancyErrorResponse.mockImplementation((err: unknown) => {
       throw err;
+    });
+    loadApprovedMoveEvidenceSnapshot.mockResolvedValue({
+      revision: "approved-evidence-revision-1",
+      approvedEvidenceCount: 1,
+      rows: [],
     });
     getProgramById.mockResolvedValue({
       id: "program_1",

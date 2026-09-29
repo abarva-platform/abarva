@@ -12,6 +12,7 @@ let generatedRecs: Array<Record<string, unknown>> = [];
 let mockPendingEvidenceReviewRows: Array<Record<string, unknown>> = [];
 let mockPendingEvidenceRows: Array<Record<string, unknown>> = [];
 const moveCalls: Array<Record<string, unknown>> = [];
+const mockLoadApprovedMoveEvidenceSnapshot = jest.fn();
 let genCalled = 0;
 
 jest.mock("../../../_auth", () => ({
@@ -33,6 +34,10 @@ jest.mock("@/lib/artifacts/repository", () => ({
     genCalled += 1;
     return generatedRecs;
   }),
+}));
+jest.mock("@/lib/programs/approved-move-evidence-snapshot", () => ({
+  loadApprovedMoveEvidenceSnapshot: (...args: unknown[]) =>
+    mockLoadApprovedMoveEvidenceSnapshot(...args),
 }));
 jest.mock("@/lib/data-plane/postgresCompat", () => ({
   getAzureWriteFluentClient: jest.fn(() => ({
@@ -71,6 +76,11 @@ beforeEach(() => {
   mockPendingEvidenceRows = [];
   moveCalls.length = 0;
   genCalled = 0;
+  mockLoadApprovedMoveEvidenceSnapshot.mockResolvedValue({
+    revision: "revision-current",
+    approvedEvidenceCount: 2,
+    rows: [],
+  });
 });
 
 describe("GET /api/v1/programs/[programId]/artifacts — Cabinet merge", () => {
@@ -175,6 +185,39 @@ describe("GET /api/v1/programs/[programId]/artifacts — Cabinet merge", () => {
     expect(json.artifacts[0]!.title).toBe("Program Charter");
     expect(json.artifacts[0]!.downloadUrl).toBe("/api/v1/artifacts/gen-1");
     expect(json.artifacts[1]!.artifactId).toBe("mv-1");
+  });
+
+  it("labels generated output stale when approved evidence has changed", async () => {
+    generatedRecs = [
+      {
+        id: "gen-stale",
+        artifactType: "program_charter",
+        sourceArtifactRef: "move-x",
+        outputFormat: "docx",
+        blobUrl: "b",
+        qualityScore: 0.9,
+        renderedAt: "2026-09-27T00:00:00Z",
+        renderedBy: "u",
+        quarantineReason: null,
+        metadata: {
+          evidenceSnapshotHash: "revision-before-review",
+          renderableDoc: { title: "Program Charter" },
+        },
+      },
+    ];
+
+    const res = await GET(req(), params("move-x"));
+    const json = (await res.json()) as {
+      artifacts: Array<Record<string, unknown>>;
+    };
+
+    expect(res.status).toBe(200);
+    expect(json.artifacts[0]).toEqual(
+      expect.objectContaining({
+        artifactId: "gen-stale",
+        evidenceSnapshotStatus: "stale",
+      }),
+    );
   });
 
   it("derives generated artifact phase from the deliverable registry metadata", async () => {
@@ -733,6 +776,9 @@ describe("GET /api/v1/programs/[programId]/artifacts — Cabinet merge", () => {
             phase: 1,
             targetPhase: 1,
             generatedAt: "2026-07-14T12:52:25Z",
+            freshness: {
+              approvedEvidenceRevision: "revision-before-review",
+            },
             candidateVersionId: null,
             attachedEvidenceItems: [
               {
@@ -774,6 +820,10 @@ describe("GET /api/v1/programs/[programId]/artifacts — Cabinet merge", () => {
             expect.objectContaining({ label: "Candidate preview data" }),
           ],
           gapItems: [],
+          freshness: expect.objectContaining({
+            freshnessStatus: "stale",
+            currentApprovedEvidenceCount: 2,
+          }),
         }),
       }),
     );

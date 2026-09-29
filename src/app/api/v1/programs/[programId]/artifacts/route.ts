@@ -15,6 +15,7 @@ import {
   initialReviewedEvidenceExtraction,
   reviewedExtractionFromStoredSourceRef,
 } from "@/lib/programs/evidence-review-contract";
+import { loadApprovedMoveEvidenceSnapshot } from "@/lib/programs/approved-move-evidence-snapshot";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -53,6 +54,7 @@ interface CabinetArtifact {
   pairedVisualCompanionArtifactId?: string | null;
   visualCompanionArtifactType?: string | null;
   contextExtract?: CabinetContextExtract | null;
+  evidenceSnapshotStatus?: "current" | "stale" | "unverified";
   downloadUrl: string;
 }
 
@@ -188,6 +190,11 @@ interface CabinetContextExtract {
   suggestedContextItems?: CabinetContextExtractItem[];
   excludedContextItems?: CabinetContextExtractItem[];
   gapItems?: CabinetContextExtractItem[];
+  freshness?: {
+    approvedEvidenceRevision?: string | null;
+    freshnessStatus?: "fresh" | "stale" | "rebuild_required";
+    currentApprovedEvidenceCount?: number;
+  };
 }
 
 function contextExtractFromMetadata(
@@ -485,6 +492,12 @@ export async function GET(
       ctx,
       programId,
     );
+    const approvedSnapshot = ctx.clientKey
+      ? await loadApprovedMoveEvidenceSnapshot({
+          tenantKey: ctx.clientKey,
+          moveId: programId,
+        }).catch(() => null)
+      : null;
 
     const moveArtifacts: CabinetArtifact[] = rows.map((r) => {
       const fixtureControl = isFixtureControlArtifact(r);
@@ -509,7 +522,29 @@ export async function GET(
         pairedVisualCompanionArtifactId?: string;
         visualCompanionArtifactType?: string;
         moveContextExtract?: unknown;
+        evidenceSnapshotHash?: string;
       };
+      const contextExtract = contextExtractFromMetadata(
+        meta?.moveContextExtract,
+      );
+      if (contextExtract?.freshness) {
+        const savedRevision = contextExtract.freshness.approvedEvidenceRevision;
+        contextExtract.freshness.currentApprovedEvidenceCount =
+          approvedSnapshot?.approvedEvidenceCount;
+        contextExtract.freshness.freshnessStatus = !approvedSnapshot ||
+          !savedRevision
+            ? "rebuild_required"
+            : savedRevision === approvedSnapshot.revision
+              ? "fresh"
+              : "stale";
+      }
+      const evidenceSnapshotStatus = r.artifact_family === "generated_deliverable"
+        ? !approvedSnapshot || !meta?.evidenceSnapshotHash
+          ? "unverified"
+          : meta.evidenceSnapshotHash === approvedSnapshot.revision
+            ? "current"
+            : "stale"
+        : undefined;
       return {
         artifactId: r.artifact_id,
         artifactType: r.artifact_type,
@@ -553,7 +588,8 @@ export async function GET(
         pairedVisualCompanionArtifactId:
           meta?.pairedVisualCompanionArtifactId ?? null,
         visualCompanionArtifactType: meta?.visualCompanionArtifactType ?? null,
-        contextExtract: contextExtractFromMetadata(meta?.moveContextExtract),
+        contextExtract,
+        ...(evidenceSnapshotStatus ? { evidenceSnapshotStatus } : {}),
         downloadUrl: `/api/v1/programs/${programId}/artifacts/${r.artifact_id}/download`,
       };
     });
@@ -588,6 +624,7 @@ export async function GET(
               artifactStatus?: string;
               outputRole?: string;
               provenanceCategory?: string;
+              evidenceSnapshotHash?: string;
             } | null;
             return {
               artifactId: rec.id,
@@ -623,6 +660,12 @@ export async function GET(
               artifactStatus: meta?.artifactStatus ?? null,
               outputRole: meta?.outputRole ?? null,
               provenanceCategory: meta?.provenanceCategory ?? null,
+              evidenceSnapshotStatus: !approvedSnapshot ||
+                !meta?.evidenceSnapshotHash
+                  ? "unverified"
+                  : meta.evidenceSnapshotHash === approvedSnapshot.revision
+                    ? "current"
+                    : "stale",
               generatedBy: rec.renderedBy,
               createdAt: rec.renderedAt,
               downloadUrl: `/api/v1/artifacts/${rec.id}`,

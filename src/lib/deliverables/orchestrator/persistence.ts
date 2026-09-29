@@ -87,6 +87,8 @@ export interface PersistDeliverableOptions {
   outputFormat?: GeneratedArtifactFormat; // default 'docx'
   /** governed evidence ledger ids used (for the artifact's audit trail). */
   evidenceLedgerIds?: string[];
+  /** Approved Move evidence revision captured for this generated artifact. */
+  evidenceSnapshotHash?: string;
   /** Canonical deliverables_v2 registry key, when it differs from the orchestrator type. */
   deliverableTypeKey?: string;
   userId?: string;
@@ -642,6 +644,9 @@ export async function persistDeliverable(
     ...(opts.generationLineage
       ? { generationLineage: opts.generationLineage }
       : {}),
+    ...(opts.evidenceSnapshotHash
+      ? { evidenceSnapshotHash: opts.evidenceSnapshotHash }
+      : {}),
     ...(opts.structuredModels?.architectureModel
       ? { architectureModel: opts.structuredModels.architectureModel }
       : {}),
@@ -682,6 +687,9 @@ export async function persistDeliverable(
           requiresOfficeCompanionScan: Boolean(officeCompanion),
           ...(opts.generationLineage
             ? { generationLineage: opts.generationLineage }
+            : {}),
+          ...(opts.evidenceSnapshotHash
+            ? { evidenceSnapshotHash: opts.evidenceSnapshotHash }
             : {}),
         },
       },
@@ -724,6 +732,9 @@ export async function persistDeliverable(
             versionId: materialized.versionId,
             generatedArtifactId: record.id,
             outputFormat,
+            ...(opts.evidenceSnapshotHash
+              ? { evidenceSnapshotHash: opts.evidenceSnapshotHash }
+              : {}),
             outputRole: `${officeCompanion.fileFormat}_editable_phase_record`,
           },
         },

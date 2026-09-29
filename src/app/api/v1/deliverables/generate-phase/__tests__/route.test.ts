@@ -27,7 +27,10 @@ const createMoveContextExtract = jest.fn(
       suggestedContextItems: [],
       excludedContextItems: [],
       gapItems: [],
-      freshness: { evidenceFingerprint: "ctx-hash-1" },
+      freshness: {
+        evidenceFingerprint: "ctx-hash-1",
+        approvedEvidenceRevision: "approved-revision-1",
+      },
     };
   },
 );
@@ -477,6 +480,7 @@ describe("POST /api/v1/deliverables/generate-phase", () => {
             decisionHash: "decision-hash-1",
             contextSnapshotHash: "ctx-hash-1",
           }),
+          evidenceSnapshotHash: "approved-revision-1",
         }),
       );
     }

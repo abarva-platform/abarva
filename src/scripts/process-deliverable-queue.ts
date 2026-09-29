@@ -104,6 +104,26 @@ async function runMovesPremiumArtifact(
 ): Promise<void> {
   const ctx = workerCtxForRun(run);
   try {
+    const { loadApprovedMoveEvidenceSnapshot } =
+      await import("@/lib/programs/approved-move-evidence-snapshot");
+    const evidenceSnapshot = await loadApprovedMoveEvidenceSnapshot({
+      tenantKey: run.tenantKey,
+      moveId: payload.sourceArtifactRef,
+    });
+    if (
+      !evidenceSnapshot ||
+      !payload.evidenceSnapshotHash ||
+      evidenceSnapshot.revision !== payload.evidenceSnapshotHash
+    ) {
+      await completeDeliverableRun(run.id, {
+        status: "blocked",
+        error: "stale_approved_evidence_snapshot",
+        blockers: [
+          "Approved Move evidence changed after this build was queued. Re-run the build from the current evidence set.",
+        ],
+      }).catch(() => {});
+      return;
+    }
     await updateDeliverableRunProgress(run.id, {
       pct: 5,
       label: "Claimed by private operator",
@@ -185,6 +205,7 @@ async function runMovesPremiumArtifact(
       artifact: payload.artifact,
       title: payload.title,
       result,
+      evidenceSnapshotHash: evidenceSnapshot.revision,
     });
 
     await completeDeliverableRun(run.id, {
@@ -248,6 +269,29 @@ async function runClaimed(
       return;
     }
 
+    if (orchestratorPayload.module === "moves") {
+      const { loadApprovedMoveEvidenceSnapshot } =
+        await import("@/lib/programs/approved-move-evidence-snapshot");
+      const snapshot = await loadApprovedMoveEvidenceSnapshot({
+        tenantKey: run.tenantKey,
+        moveId: orchestratorPayload.sourceArtifactRef,
+      });
+      if (
+        !snapshot ||
+        !orchestratorPayload.evidenceSnapshotHash ||
+        snapshot.revision !== orchestratorPayload.evidenceSnapshotHash
+      ) {
+        await completeDeliverableRun(run.id, {
+          status: "blocked",
+          error: "stale_approved_evidence_snapshot",
+          blockers: [
+            "Approved Move evidence changed after this build was queued. Re-run Approve & Build from the current evidence set.",
+          ],
+        }).catch(() => {});
+        return;
+      }
+    }
+
     if (orchestratorPayload.decisionLineage) {
       const { loadApprovedSolutionApproach } =
         await import("@/lib/programs/approved-solution-approach");
@@ -278,6 +322,7 @@ async function runClaimed(
       });
       if (
         !freshness ||
+        freshness.freshnessStatus !== "fresh" ||
         freshness.evidenceFingerprint !==
           orchestratorPayload.decisionLineage.contextSnapshotHash
       ) {
@@ -346,6 +391,7 @@ async function runClaimed(
         .join("\n\n"),
       approvedSolutionApproach: orchestratorPayload.approvedSolutionApproach,
       decisionLineage: orchestratorPayload.decisionLineage,
+      evidenceSnapshotHash: orchestratorPayload.evidenceSnapshotHash,
       clientDisplayName: orchestratorPayload.clientDisplayName || "Client",
       initiativeDisplayName:
         orchestratorPayload.initiativeDisplayName ||

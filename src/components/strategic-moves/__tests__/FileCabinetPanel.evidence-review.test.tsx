@@ -78,6 +78,7 @@ describe("Moves File Cabinet evidence review", () => {
       },
     ];
     let postedBody: Record<string, unknown> | null = null;
+    const onEvidenceChanged = jest.fn();
     const fetchMock = jest.fn(async (_url: string, init?: RequestInit) => {
       if (init?.method === "POST") {
         postedBody = JSON.parse(String(init.body)) as Record<string, unknown>;
@@ -95,7 +96,13 @@ describe("Moves File Cabinet evidence review", () => {
     });
     global.fetch = fetchMock as typeof fetch;
 
-    render(<FileCabinetPanel moveId="move-1" phase={2} />);
+    render(
+      <FileCabinetPanel
+        moveId="move-1"
+        phase={2}
+        onEvidenceChanged={onEvidenceChanged}
+      />,
+    );
 
     await screen.findByText("1 evidence item awaiting review");
     fireEvent.click(screen.getByText(/Review extracted information/));
@@ -128,5 +135,6 @@ describe("Moves File Cabinet evidence review", () => {
     await waitFor(() =>
       expect(screen.queryByText("1 evidence item awaiting review")).toBeNull(),
     );
+    expect(onEvidenceChanged).toHaveBeenCalledTimes(1);
   });
 });

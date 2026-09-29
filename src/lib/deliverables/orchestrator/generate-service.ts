@@ -69,6 +69,7 @@ export interface GenerateDeliverableServiceInput extends Omit<
     contextSnapshotHash: string;
     architectureModelVersion: string;
   };
+  evidenceSnapshotHash?: string;
   outputFormats?: OutputFormat[];
   adaptiveDepth?: AdaptiveDepthDecision;
   model?: string;
@@ -505,7 +506,19 @@ export async function runDeliverableForTenant(
     // renderer draws them and they count toward exhibit enforcement.
     ...(structuredModels ? { structuredModels, renderViaProfile: true } : {}),
     ...(input.decisionLineage
-      ? { generationLineage: input.decisionLineage }
+      ? {
+          generationLineage: {
+            ...input.decisionLineage,
+            ...(input.evidenceSnapshotHash
+              ? { evidenceSnapshotHash: input.evidenceSnapshotHash }
+              : {}),
+          },
+        }
+      : input.evidenceSnapshotHash
+        ? { generationLineage: { evidenceSnapshotHash: input.evidenceSnapshotHash } }
+        : {}),
+    ...(input.evidenceSnapshotHash
+      ? { evidenceSnapshotHash: input.evidenceSnapshotHash }
       : {}),
     enforceQualityContract,
     governanceOk: true, // the multi-pass generation already cleared audited egress
