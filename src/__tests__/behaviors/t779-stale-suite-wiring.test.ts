@@ -1,4 +1,13 @@
-import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
+import { spawnSync } from "node:child_process";
+import {
+  existsSync,
+  mkdtempSync,
+  readdirSync,
+  readFileSync,
+  rmSync,
+  statSync,
+} from "node:fs";
+import os from "node:os";
 import path from "node:path";
 
 import {
@@ -36,6 +45,13 @@ import { isCanonicalClientKey } from "@/lib/governance/context-corpus-policy";
  * record both names and marks `wiredInThisItem` is released from (a), and a
  * directory holding such a row leaves the dark baseline because it is PARTIAL
  * rather than dark. Every row nobody superseded is held exactly as before.
+ *
+ * T-798 (T-796's fix, applied here as T-797 applied it to T-781): a red hold
+ * also asks the TEST, not only the code — the held file's `failingCase` is run
+ * out of process and must still fail. Asking only `isCanonicalClientKey` let a
+ * row stay "red" after its test was updated to agree with the code. A row whose
+ * case a later item fixed is marked `redResolved`, carries no red reason any
+ * more, and its case must now pass, so the annotation cannot outlive the fix.
  */
 
 const repoRoot = path.resolve(__dirname, "../../..");
@@ -56,6 +72,8 @@ type SuiteRow = {
   wiredInThisItem: boolean;
   unreachableSubject?: string;
   blockedClientKey?: string;
+  failingCase?: string;
+  redResolved?: { item: string; pullRequest: number; mergeSha: string };
 };
 
 type TriageRecord = {
@@ -111,6 +129,55 @@ function listSource(dir: string): string[] {
 
 const isTestFile = (file: string) =>
   /(^|\/)__tests__\//.test(file) || /\.(test|spec)\.tsx?$/.test(file);
+
+/**
+ * Ask the held TEST what it says, out of process: run the file with jest,
+ * filtered to the one named case, and read that case's own status from the
+ * JSON report. The record names a case by its full name (describe + title).
+ * "missing" means the filter reached no case of that exact name, which proves
+ * nothing either way and so never counts as failing.
+ */
+const testVerdicts = new Map<string, "passed" | "failed" | "missing">();
+function askTheTest(suitePath: string, caseName: string) {
+  const key = `${suitePath}\u0000${caseName}`;
+  const cached = testVerdicts.get(key);
+  if (cached) return cached;
+  const dir = mkdtempSync(path.join(os.tmpdir(), "t798-"));
+  const report = path.join(dir, "report.json");
+  try {
+    spawnSync(
+      path.join(repoRoot, "node_modules/.bin/jest"),
+      [
+        "--ci",
+        "--runTestsByPath",
+        suitePath,
+        "-t",
+        caseName.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"),
+        "--json",
+        `--outputFile=${report}`,
+      ],
+      { cwd: repoRoot, encoding: "utf8", env: { ...process.env, CI: "true" } },
+    );
+    const assertions = existsSync(report)
+      ? (JSON.parse(readFileSync(report, "utf8")) as {
+          testResults: { assertionResults: { fullName: string; status: string }[] }[];
+        }).testResults.flatMap((result) => result.assertionResults)
+      : [];
+    const named = assertions.filter((a) => a.fullName === caseName);
+    const verdict =
+      named.length === 0
+        ? "missing"
+        : named.every((a) => a.status === "passed")
+          ? "passed"
+          : named.some((a) => a.status === "failed")
+            ? "failed"
+            : "missing";
+    testVerdicts.set(key, verdict);
+    return verdict;
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+}
 
 /** The subject of a wired directory: the module directory its tests import. */
 function subjectDirectory(testDirectory: string): string {
@@ -278,6 +345,14 @@ describe("T-779 — ninth stale-suite draw, wiring and holds", () => {
         ) as { orphans: string[] }
       ).orphans,
     );
+    // A red row holds only while the live gate still refuses its key AND its
+    // own case, asked out of process, still fails.
+    const redReasonHolds = (row: SuiteRow) =>
+      !row.green &&
+      typeof row.blockedClientKey === "string" &&
+      !isCanonicalClientKey(row.blockedClientKey) &&
+      row.failingCase !== undefined &&
+      askTheTest(row.path, row.failingCase) === "failed";
     for (const directory of heldDirectories) {
       const rows = record.suites.filter((suite) => suite.directory === directory);
       const { holdKind, successorFiledAs } = record.heldDirectories[directory];
@@ -294,15 +369,29 @@ describe("T-779 — ninth stale-suite draw, wiring and holds", () => {
         holdKind,
         reasonHolds:
           holdKind === "red"
-            ? rows.some(
-                (row) =>
-                  !row.green &&
-                  typeof row.blockedClientKey === "string" &&
-                  !isCanonicalClientKey(row.blockedClientKey),
-              )
+            ? rows.some(redReasonHolds)
             : rendersUnreachable.length > 0,
+        // Named per row, so a stale red row says which file lost its reason.
+        redReasonGone: rows
+          .filter((row) => !row.green && row.redResolved === undefined)
+          .filter((row) => !redReasonHolds(row))
+          .map((row) => row.path),
+        resolvedButNotPassing: rows
+          .filter(
+            (row) =>
+              row.redResolved !== undefined &&
+              (!row.failingCase || askTheTest(row.path, row.failingCase) !== "passed"),
+          )
+          .map((row) => row.path),
         successor: /^(T-\d+|item \d+)$/.test(successorFiledAs),
-      }).toEqual({ directory, holdKind, reasonHolds: true, successor: true });
+      }).toEqual({
+        directory,
+        holdKind,
+        reasonHolds: true,
+        redReasonGone: [],
+        resolvedButNotPassing: [],
+        successor: true,
+      });
     }
-  });
+  }, 180_000);
 });
