@@ -5,6 +5,40 @@ import type {
 } from "../types";
 
 describe("completeD09RfpGovernanceSections", () => {
+  it("does not add an internal event title or closure status to a bidder draft", () => {
+    const ctx = makeContext();
+    ctx.event.name = "Private workflow test: legal release hold RH-05";
+    const completed = completeD09RfpGovernanceSections({
+      artifactCode: "d09_rfp_pack",
+      body: "# RFP Package\n\n## §1 · Executive summary\n\nVendor response instructions follow.",
+      ctx,
+    });
+
+    expect(completed).not.toContain(ctx.event.name);
+    expect(completed).not.toMatch(/release hold|RH-05|pending client closure|registered gaps/i);
+    expect(completed).toContain("Vendor Response Workbook Tab Guide");
+  });
+
+  it("removes the former internal completion marker and closure line on reprocessing", () => {
+    const completed = completeD09RfpGovernanceSections({
+      artifactCode: "d09_rfp_pack",
+      body: [
+        "# RFP Package",
+        "## Solicitation purpose and scope",
+        "Vendor response instructions follow.",
+        "<!-- abarva-d09-vendor-completion-v2 -->",
+        "## Appendix A · Vendor Response Workbook Tab Guide",
+        "Guide table.",
+        "RFP package draft complete — pending client closure of registered gaps.",
+      ].join("\n\n"),
+      ctx: makeContext(),
+    });
+
+    expect(completed).not.toContain("abarva-d09-vendor-completion-v2");
+    expect(completed).not.toContain("pending client closure");
+    expect(completed.match(/Vendor Response Workbook Tab Guide/g)).toHaveLength(1);
+  });
+
   it("appends vendor workbook instructions without buyer-private appendices", () => {
     const body = [
       "# RFP Package",
@@ -41,9 +75,7 @@ describe("completeD09RfpGovernanceSections", () => {
     expect(completed).not.toContain("### §11B · Gap closure register");
     expect(completed).not.toContain("Exhibit 09 — Approved evaluation criteria and weights");
     expect(completed).not.toContain("Available parsed evidence — citation review pending");
-    expect(completed).toContain(
-      "RFP package draft complete — pending client closure of registered gaps.",
-    );
+    expect(completed).not.toContain("pending client closure of registered gaps");
     expect(completed).toContain("## Solicitation purpose and scope");
     expect(completed).toContain(
       "Vendors must complete the Vendor Response Workbook",

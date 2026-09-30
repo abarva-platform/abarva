@@ -121,4 +121,57 @@ describe("D09 RFP map-reduce generation", () => {
     const registerCall = calls.find((call) => call.system.includes("§11 ·"));
     expect(registerCall?.messages[0]?.content).not.toContain("Gap closure register");
   });
+
+  it("does not send internal scope holds or evidence workflow fields to bidder section calls", async () => {
+    const calls: Array<{ messages: Array<{ content: string }> }> = [];
+    const stream = jest.fn((params: { messages: Array<{ content: string }> }) => {
+      calls.push(params);
+      return makeStream("## §1 · Executive summary and decision context\n\nVendor instructions.");
+    });
+    const ctx = makeContext();
+    ctx.event.name = "Internal workflow test with private owner note";
+    ctx.evidence = [{
+      id: "evidence-1",
+      sourceEventId: ctx.event.id,
+      tenantKey: ctx.tenantKey,
+      stage: "rfp",
+      requirementId: "EVID-SRC-RFP-LEGAL-TEMPLATE",
+      currentState: "Not Requested",
+      sourceArtifactId: null,
+      notes: "Release-Hold RH-05: counsel has not approved this package.",
+      lastSyncedAt: null,
+      createdAt: "2026-09-30T00:00:00Z",
+      updatedAt: "2026-09-30T00:00:00Z",
+    }];
+    ctx.uploadedEvidence = [{
+      id: "upload-1",
+      originalName: "buyer_private_release_register.csv",
+      artifactFamily: "other",
+      sourceFormat: "csv",
+      parseStatus: "parsed",
+      evidenceState: "parsed_uncited",
+      stageKey: "rfp",
+      chunkExcerpts: ["Internal negotiation target: 12-15%."],
+      factSummaries: [],
+    }];
+
+    await generateD09ViaMapReduce({
+      ctx,
+      upstreamBound: {
+        d05_scope_memo: "# Scope\n\nRelease-Hold Governing Table\n\nRH-05 blocks external distribution.",
+        d04_app_inv: "Internal application owner map.",
+      },
+      client: { messages: { stream } } as unknown as AnthropicDirectClient,
+    });
+
+    expect(calls).toHaveLength(11);
+    for (const call of calls) {
+      const prompt = call.messages[0]?.content ?? "";
+      expect(prompt).not.toMatch(/Release-Hold|RH-05|internal negotiation target/i);
+      expect(prompt).not.toContain("buyer_private_release_register.csv");
+      expect(prompt).not.toContain("Internal application owner map");
+      expect(prompt).not.toContain(ctx.event.name);
+      expect(prompt).toContain(ctx.tenantName);
+    }
+  });
 });
