@@ -18,26 +18,26 @@
     "No timestamp is recorded, so refreshing this file on an unchanged tree is a no-op."
   ],
   "counts": {
-    "testFiles": 2567,
-    "coveredTestFiles": 2274,
-    "pullRequestCoveredTestFiles": 2273,
-    "uncoveredTestFiles": 293,
+    "testFiles": 2569,
+    "coveredTestFiles": 2284,
+    "pullRequestCoveredTestFiles": 2283,
+    "uncoveredTestFiles": 285,
     "directoriesWithTests": 496,
-    "directoriesFullyCovered": 337,
+    "directoriesFullyCovered": 339,
     "directoriesPartiallyCovered": 28,
-    "directoriesUncovered": 131,
-    "directoriesWithUnrunTestFiles": 159,
-    "directoriesWithUntriagedUnrunTestFiles": 148,
+    "directoriesUncovered": 129,
+    "directoriesWithUnrunTestFiles": 157,
+    "directoriesWithUntriagedUnrunTestFiles": 146,
     "declaredQuarantineTestFiles": 52,
-    "untriagedUnrunTestFiles": 241,
+    "untriagedUnrunTestFiles": 233,
     "indeterminateInvocations": 0,
     "unresolvedIgnoreArguments": 0,
     "criticalGovernedRiskDirectories": 0,
     "highGovernedRiskDirectories": 0,
-    "unclassifiedRiskDirectories": 142,
-    "rankedDirectories": 129,
-    "rankedUntriagedUnrunTestFiles": 172,
-    "unclassifiedRiskDirectoriesWithResolvedProductSources": 135,
+    "unclassifiedRiskDirectories": 140,
+    "rankedDirectories": 124,
+    "rankedUntriagedUnrunTestFiles": 154,
+    "unclassifiedRiskDirectoriesWithResolvedProductSources": 133,
     "unclassifiedRiskDirectoriesWithNoResolvedProductSource": 7
   },
   "quarantineLists": [
@@ -455,119 +455,6 @@
   "governedRiskFiles": [],
   "governedRiskRanking": [
     {
-      "directory": "src/lib/source/reasoning/__tests__",
-      "testFiles": 4,
-      "unrunTestFiles": 4,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 4,
-      "verdictHeldUntriagedUnrunTestFiles": 0,
-      "drawableUnrunTestFiles": 4,
-      "drawableTestPaths": [
-        "src/lib/source/reasoning/__tests__/capture.test.ts",
-        "src/lib/source/reasoning/__tests__/envelope-gate.test.ts",
-        "src/lib/source/reasoning/__tests__/framework-registry.test.ts",
-        "src/lib/source/reasoning/__tests__/reasoning-stages.test.ts"
-      ],
-      "admittedBy": "untriaged_unrun_work",
-      "governedRisk": {
-        "score": 0,
-        "band": "unclassified",
-        "signals": [],
-        "productSourceCount": 7,
-        "rank": 1
-      }
-    },
-    {
-      "directory": "src/lib/source/vendor-proposals/__tests__",
-      "testFiles": 4,
-      "unrunTestFiles": 4,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 4,
-      "verdictHeldUntriagedUnrunTestFiles": 0,
-      "drawableUnrunTestFiles": 4,
-      "drawableTestPaths": [
-        "src/lib/source/vendor-proposals/__tests__/extract-vendor-proposal-facts.test.ts",
-        "src/lib/source/vendor-proposals/__tests__/governed-vendor-proposal-facts.test.ts",
-        "src/lib/source/vendor-proposals/__tests__/tenant-scoped-session.test.ts",
-        "src/lib/source/vendor-proposals/__tests__/vendor-proposal-facts.test.ts"
-      ],
-      "admittedBy": "untriaged_unrun_work",
-      "governedRisk": {
-        "score": 0,
-        "band": "unclassified",
-        "signals": [],
-        "productSourceCount": 4,
-        "rank": 2
-      }
-    },
-    {
-      "directory": "src/lib/workspace-explorer/__tests__",
-      "testFiles": 4,
-      "unrunTestFiles": 4,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 4,
-      "verdictHeldUntriagedUnrunTestFiles": 0,
-      "drawableUnrunTestFiles": 4,
-      "drawableTestPaths": [
-        "src/lib/workspace-explorer/__tests__/moves-adapter-mapping.test.ts",
-        "src/lib/workspace-explorer/__tests__/source-adapter-mapping.test.ts",
-        "src/lib/workspace-explorer/__tests__/source-progression.test.ts",
-        "src/lib/workspace-explorer/__tests__/tenant-vault-policy.test.ts"
-      ],
-      "admittedBy": "untriaged_unrun_work",
-      "governedRisk": {
-        "score": 0,
-        "band": "unclassified",
-        "signals": [],
-        "productSourceCount": 4,
-        "rank": 3
-      }
-    },
-    {
-      "directory": "src/components/agent-answer/__tests__",
-      "testFiles": 3,
-      "unrunTestFiles": 3,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 3,
-      "verdictHeldUntriagedUnrunTestFiles": 0,
-      "drawableUnrunTestFiles": 3,
-      "drawableTestPaths": [
-        "src/components/agent-answer/__tests__/AgentAnswerRenderer.test.tsx",
-        "src/components/agent-answer/__tests__/AvaAsk.test.tsx",
-        "src/components/agent-answer/__tests__/AvaAskMark.assets.test.ts"
-      ],
-      "admittedBy": "untriaged_unrun_work",
-      "governedRisk": {
-        "score": 0,
-        "band": "unclassified",
-        "signals": [],
-        "productSourceCount": 2,
-        "rank": 4
-      }
-    },
-    {
-      "directory": "src/components/context-broker/__tests__",
-      "testFiles": 3,
-      "unrunTestFiles": 3,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 3,
-      "verdictHeldUntriagedUnrunTestFiles": 0,
-      "drawableUnrunTestFiles": 3,
-      "drawableTestPaths": [
-        "src/components/context-broker/__tests__/ContextAssembledPanel.test.tsx",
-        "src/components/context-broker/__tests__/FourModeDemoSurface.test.tsx",
-        "src/components/context-broker/__tests__/ModeToggle.test.tsx"
-      ],
-      "admittedBy": "untriaged_unrun_work",
-      "governedRisk": {
-        "score": 0,
-        "band": "unclassified",
-        "signals": [],
-        "productSourceCount": 4,
-        "rank": 5
-      }
-    },
-    {
       "directory": "src/lib/atlas/composition/__tests__",
       "testFiles": 3,
       "unrunTestFiles": 3,
@@ -586,7 +473,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 5,
-        "rank": 6
+        "rank": 1
       }
     },
     {
@@ -608,7 +495,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 2,
-        "rank": 7
+        "rank": 2
       }
     },
     {
@@ -630,7 +517,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 8
+        "rank": 3
       }
     },
     {
@@ -652,7 +539,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 4,
-        "rank": 9
+        "rank": 4
       }
     },
     {
@@ -674,7 +561,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 3,
-        "rank": 10
+        "rank": 5
       }
     },
     {
@@ -696,7 +583,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 3,
-        "rank": 11
+        "rank": 6
       }
     },
     {
@@ -717,7 +604,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 12
+        "rank": 7
       }
     },
     {
@@ -738,7 +625,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 4,
-        "rank": 13
+        "rank": 8
       }
     },
     {
@@ -759,7 +646,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 2,
-        "rank": 14
+        "rank": 9
       }
     },
     {
@@ -780,7 +667,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 2,
-        "rank": 15
+        "rank": 10
       }
     },
     {
@@ -801,7 +688,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 2,
-        "rank": 16
+        "rank": 11
       }
     },
     {
@@ -822,7 +709,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 3,
-        "rank": 17
+        "rank": 12
       }
     },
     {
@@ -843,7 +730,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 2,
-        "rank": 18
+        "rank": 13
       }
     },
     {
@@ -864,7 +751,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 3,
-        "rank": 19
+        "rank": 14
       }
     },
     {
@@ -885,7 +772,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 3,
-        "rank": 20
+        "rank": 15
       }
     },
     {
@@ -906,7 +793,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 5,
-        "rank": 21
+        "rank": 16
       }
     },
     {
@@ -927,7 +814,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 2,
-        "rank": 22
+        "rank": 17
       }
     },
     {
@@ -948,7 +835,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 7,
-        "rank": 23
+        "rank": 18
       }
     },
     {
@@ -969,7 +856,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 3,
-        "rank": 24
+        "rank": 19
       }
     },
     {
@@ -990,7 +877,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 4,
-        "rank": 25
+        "rank": 20
       }
     },
     {
@@ -1011,7 +898,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 3,
-        "rank": 26
+        "rank": 21
       }
     },
     {
@@ -1032,7 +919,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 4,
-        "rank": 27
+        "rank": 22
       }
     },
     {
@@ -1053,7 +940,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 7,
-        "rank": 28
+        "rank": 23
       }
     },
     {
@@ -1074,7 +961,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 5,
-        "rank": 29
+        "rank": 24
       }
     },
     {
@@ -1094,7 +981,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 2,
-        "rank": 30
+        "rank": 25
       }
     },
     {
@@ -1114,7 +1001,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 2,
-        "rank": 31
+        "rank": 26
       }
     },
     {
@@ -1134,7 +1021,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 0,
-        "rank": 32
+        "rank": 27
       }
     },
     {
@@ -1154,7 +1041,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 33
+        "rank": 28
       }
     },
     {
@@ -1174,7 +1061,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 2,
-        "rank": 34
+        "rank": 29
       }
     },
     {
@@ -1194,7 +1081,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 35
+        "rank": 30
       }
     },
     {
@@ -1214,7 +1101,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 36
+        "rank": 31
       }
     },
     {
@@ -1234,7 +1121,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 37
+        "rank": 32
       }
     },
     {
@@ -1254,7 +1141,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 38
+        "rank": 33
       }
     },
     {
@@ -1274,7 +1161,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 39
+        "rank": 34
       }
     },
     {
@@ -1294,7 +1181,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 4,
-        "rank": 40
+        "rank": 35
       }
     },
     {
@@ -1314,7 +1201,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 41
+        "rank": 36
       }
     },
     {
@@ -1334,7 +1221,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 42
+        "rank": 37
       }
     },
     {
@@ -1354,7 +1241,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 43
+        "rank": 38
       }
     },
     {
@@ -1374,7 +1261,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 44
+        "rank": 39
       }
     },
     {
@@ -1394,7 +1281,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 2,
-        "rank": 45
+        "rank": 40
       }
     },
     {
@@ -1414,7 +1301,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 4,
-        "rank": 46
+        "rank": 41
       }
     },
     {
@@ -1434,7 +1321,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 47
+        "rank": 42
       }
     },
     {
@@ -1454,7 +1341,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 48
+        "rank": 43
       }
     },
     {
@@ -1474,7 +1361,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 49
+        "rank": 44
       }
     },
     {
@@ -1494,7 +1381,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 50
+        "rank": 45
       }
     },
     {
@@ -1514,7 +1401,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 51
+        "rank": 46
       }
     },
     {
@@ -1534,7 +1421,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 52
+        "rank": 47
       }
     },
     {
@@ -1554,7 +1441,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 53
+        "rank": 48
       }
     },
     {
@@ -1574,7 +1461,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 7,
-        "rank": 54
+        "rank": 49
       }
     },
     {
@@ -1594,7 +1481,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 3,
-        "rank": 55
+        "rank": 50
       }
     },
     {
@@ -1614,7 +1501,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 56
+        "rank": 51
       }
     },
     {
@@ -1634,7 +1521,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 57
+        "rank": 52
       }
     },
     {
@@ -1654,7 +1541,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 6,
-        "rank": 58
+        "rank": 53
       }
     },
     {
@@ -1674,7 +1561,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 59
+        "rank": 54
       }
     },
     {
@@ -1694,7 +1581,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 60
+        "rank": 55
       }
     },
     {
@@ -1714,7 +1601,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 61
+        "rank": 56
       }
     },
     {
@@ -1734,7 +1621,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 2,
-        "rank": 62
+        "rank": 57
       }
     },
     {
@@ -1754,7 +1641,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 63
+        "rank": 58
       }
     },
     {
@@ -1774,7 +1661,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 64
+        "rank": 59
       }
     },
     {
@@ -1794,7 +1681,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 65
+        "rank": 60
       }
     },
     {
@@ -1814,7 +1701,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 66
+        "rank": 61
       }
     },
     {
@@ -1834,7 +1721,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 2,
-        "rank": 67
+        "rank": 62
       }
     },
     {
@@ -1854,7 +1741,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 2,
-        "rank": 68
+        "rank": 63
       }
     },
     {
@@ -1874,7 +1761,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 2,
-        "rank": 69
+        "rank": 64
       }
     },
     {
@@ -1894,7 +1781,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 3,
-        "rank": 70
+        "rank": 65
       }
     },
     {
@@ -1914,7 +1801,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 2,
-        "rank": 71
+        "rank": 66
       }
     },
     {
@@ -1934,7 +1821,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 72
+        "rank": 67
       }
     },
     {
@@ -1954,7 +1841,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 73
+        "rank": 68
       }
     },
     {
@@ -1974,7 +1861,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 2,
-        "rank": 74
+        "rank": 69
       }
     },
     {
@@ -1994,7 +1881,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 75
+        "rank": 70
       }
     },
     {
@@ -2014,7 +1901,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 76
+        "rank": 71
       }
     },
     {
@@ -2034,7 +1921,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 2,
-        "rank": 77
+        "rank": 72
       }
     },
     {
@@ -2054,7 +1941,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 78
+        "rank": 73
       }
     },
     {
@@ -2074,7 +1961,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 79
+        "rank": 74
       }
     },
     {
@@ -2094,7 +1981,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 80
+        "rank": 75
       }
     },
     {
@@ -2114,7 +2001,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 81
+        "rank": 76
       }
     },
     {
@@ -2134,7 +2021,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 2,
-        "rank": 82
+        "rank": 77
       }
     },
     {
@@ -2154,7 +2041,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 83
+        "rank": 78
       }
     },
     {
@@ -2174,7 +2061,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 3,
-        "rank": 84
+        "rank": 79
       }
     },
     {
@@ -2194,7 +2081,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 3,
-        "rank": 85
+        "rank": 80
       }
     },
     {
@@ -2214,7 +2101,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 2,
-        "rank": 86
+        "rank": 81
       }
     },
     {
@@ -2234,7 +2121,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 4,
-        "rank": 87
+        "rank": 82
       }
     },
     {
@@ -2254,7 +2141,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 88
+        "rank": 83
       }
     },
     {
@@ -2274,7 +2161,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 3,
-        "rank": 89
+        "rank": 84
       }
     },
     {
@@ -2294,7 +2181,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 90
+        "rank": 85
       }
     },
     {
@@ -2314,7 +2201,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 2,
-        "rank": 91
+        "rank": 86
       }
     },
     {
@@ -2334,7 +2221,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 2,
-        "rank": 92
+        "rank": 87
       }
     },
     {
@@ -2354,7 +2241,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 93
+        "rank": 88
       }
     },
     {
@@ -2374,7 +2261,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 94
+        "rank": 89
       }
     },
     {
@@ -2394,7 +2281,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 95
+        "rank": 90
       }
     },
     {
@@ -2414,7 +2301,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 96
+        "rank": 91
       }
     },
     {
@@ -2434,7 +2321,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 97
+        "rank": 92
       }
     },
     {
@@ -2454,7 +2341,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 98
+        "rank": 93
       }
     },
     {
@@ -2474,7 +2361,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 5,
-        "rank": 99
+        "rank": 94
       }
     },
     {
@@ -2494,7 +2381,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 100
+        "rank": 95
       }
     },
     {
@@ -2514,7 +2401,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 101
+        "rank": 96
       }
     },
     {
@@ -2534,7 +2421,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 102
+        "rank": 97
       }
     },
     {
@@ -2554,7 +2441,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 103
+        "rank": 98
       }
     },
     {
@@ -2574,7 +2461,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 2,
-        "rank": 104
+        "rank": 99
       }
     },
     {
@@ -2594,7 +2481,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 105
+        "rank": 100
       }
     },
     {
@@ -2614,7 +2501,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 2,
-        "rank": 106
+        "rank": 101
       }
     },
     {
@@ -2634,7 +2521,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 107
+        "rank": 102
       }
     },
     {
@@ -2654,7 +2541,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 2,
-        "rank": 108
+        "rank": 103
       }
     },
     {
@@ -2674,7 +2561,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 2,
-        "rank": 109
+        "rank": 104
       }
     },
     {
@@ -2694,7 +2581,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 2,
-        "rank": 110
+        "rank": 105
       }
     },
     {
@@ -2714,7 +2601,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 111
+        "rank": 106
       }
     },
     {
@@ -2734,7 +2621,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 112
+        "rank": 107
       }
     },
     {
@@ -2754,7 +2641,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 2,
-        "rank": 113
+        "rank": 108
       }
     },
     {
@@ -2774,7 +2661,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 4,
-        "rank": 114
+        "rank": 109
       }
     },
     {
@@ -2794,7 +2681,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 115
+        "rank": 110
       }
     },
     {
@@ -2814,7 +2701,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 2,
-        "rank": 116
+        "rank": 111
       }
     },
     {
@@ -2834,7 +2721,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 8,
-        "rank": 117
+        "rank": 112
       }
     },
     {
@@ -2854,7 +2741,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 2,
-        "rank": 118
+        "rank": 113
       }
     },
     {
@@ -2874,7 +2761,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 119
+        "rank": 114
       }
     },
     {
@@ -2894,7 +2781,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 120
+        "rank": 115
       }
     },
     {
@@ -2914,7 +2801,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 121
+        "rank": 116
       }
     },
     {
@@ -2934,7 +2821,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 4,
-        "rank": 122
+        "rank": 117
       }
     },
     {
@@ -2954,7 +2841,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 123
+        "rank": 118
       }
     },
     {
@@ -2974,7 +2861,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 124
+        "rank": 119
       }
     },
     {
@@ -2994,7 +2881,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 125
+        "rank": 120
       }
     },
     {
@@ -3014,7 +2901,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 126
+        "rank": 121
       }
     },
     {
@@ -3034,7 +2921,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 2,
-        "rank": 127
+        "rank": 122
       }
     },
     {
@@ -3054,7 +2941,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 3,
-        "rank": 128
+        "rank": 123
       }
     },
     {
@@ -3074,21 +2961,21 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 129
+        "rank": 124
       }
     }
   ],
   "triageVerdicts": {
-    "heldUntriagedUnrunTestFiles": 69,
-    "drawableUntriagedUnrunTestFiles": 172,
+    "heldUntriagedUnrunTestFiles": 79,
+    "drawableUntriagedUnrunTestFiles": 154,
     "heldByVerdict": {
-      "already_verdicted_elsewhere": 10,
+      "already_verdicted_elsewhere": 13,
       "real": 1,
       "repair": 3,
       "rewrite_as_behavior": 7,
-      "update_with_reason_recorded": 4,
+      "update_with_reason_recorded": 5,
       "vacuous_control_proof": 3,
-      "wire_into_ci": 41
+      "wire_into_ci": 47
     },
     "heldTestPaths": [
       {
@@ -3286,6 +3173,48 @@
         "record": "docs/architecture/t758-zero-product-source-triage.json",
         "recordedAt": "2026-09-24T12:48:05.000Z",
         "ownerItem": "26"
+      },
+      {
+        "testPath": "src/components/agent-answer/__tests__/AgentAnswerRenderer.test.tsx",
+        "verdict": "wire_into_ci",
+        "record": "docs/architecture/t779-stale-suite-triage.json",
+        "recordedAt": "2026-09-30T08:39:08Z",
+        "ownerItem": "T-780"
+      },
+      {
+        "testPath": "src/components/agent-answer/__tests__/AvaAsk.test.tsx",
+        "verdict": "already_verdicted_elsewhere",
+        "record": "docs/architecture/t779-stale-suite-triage.json",
+        "recordedAt": "2026-09-30T08:39:08Z",
+        "ownerItem": "T-775"
+      },
+      {
+        "testPath": "src/components/agent-answer/__tests__/AvaAskMark.assets.test.ts",
+        "verdict": "update_with_reason_recorded",
+        "record": "docs/architecture/t779-stale-suite-triage.json",
+        "recordedAt": "2026-09-30T08:39:08Z",
+        "ownerItem": "T-780"
+      },
+      {
+        "testPath": "src/components/context-broker/__tests__/ContextAssembledPanel.test.tsx",
+        "verdict": "wire_into_ci",
+        "record": "docs/architecture/t779-stale-suite-triage.json",
+        "recordedAt": "2026-09-30T08:39:08Z",
+        "ownerItem": "T-780"
+      },
+      {
+        "testPath": "src/components/context-broker/__tests__/FourModeDemoSurface.test.tsx",
+        "verdict": "already_verdicted_elsewhere",
+        "record": "docs/architecture/t779-stale-suite-triage.json",
+        "recordedAt": "2026-09-30T08:39:08Z",
+        "ownerItem": "T-775"
+      },
+      {
+        "testPath": "src/components/context-broker/__tests__/ModeToggle.test.tsx",
+        "verdict": "wire_into_ci",
+        "record": "docs/architecture/t779-stale-suite-triage.json",
+        "recordedAt": "2026-09-30T08:39:08Z",
+        "ownerItem": "T-780"
       },
       {
         "testPath": "src/lib/__tests__/control-plane-tenant-purity.test.ts",
@@ -3573,6 +3502,34 @@
         "record": "docs/architecture/t771-stale-suite-triage.json",
         "recordedAt": "2026-09-27T19:10:49.000Z",
         "ownerItem": "T-754"
+      },
+      {
+        "testPath": "src/lib/source/vendor-proposals/__tests__/extract-vendor-proposal-facts.test.ts",
+        "verdict": "wire_into_ci",
+        "record": "docs/architecture/t779-stale-suite-triage.json",
+        "recordedAt": "2026-09-30T08:39:08Z",
+        "ownerItem": "item 51"
+      },
+      {
+        "testPath": "src/lib/source/vendor-proposals/__tests__/governed-vendor-proposal-facts.test.ts",
+        "verdict": "already_verdicted_elsewhere",
+        "record": "docs/architecture/t779-stale-suite-triage.json",
+        "recordedAt": "2026-09-30T08:39:08Z",
+        "ownerItem": "item 51"
+      },
+      {
+        "testPath": "src/lib/source/vendor-proposals/__tests__/tenant-scoped-session.test.ts",
+        "verdict": "wire_into_ci",
+        "record": "docs/architecture/t779-stale-suite-triage.json",
+        "recordedAt": "2026-09-30T08:39:08Z",
+        "ownerItem": "item 51"
+      },
+      {
+        "testPath": "src/lib/source/vendor-proposals/__tests__/vendor-proposal-facts.test.ts",
+        "verdict": "wire_into_ci",
+        "record": "docs/architecture/t779-stale-suite-triage.json",
+        "recordedAt": "2026-09-30T08:39:08Z",
+        "ownerItem": "item 51"
       }
     ],
     "contradictedVerdicts": [],
@@ -5147,19 +5104,6 @@
       }
     },
     {
-      "directory": "src/lib/workspace-explorer/__tests__",
-      "testFiles": 4,
-      "unrunTestFiles": 4,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 4,
-      "governedRisk": {
-        "score": 0,
-        "band": "unclassified",
-        "signals": [],
-        "productSourceCount": 4
-      }
-    },
-    {
       "directory": "src/components/context-broker/__tests__",
       "testFiles": 3,
       "unrunTestFiles": 3,
@@ -5381,19 +5325,6 @@
       }
     },
     {
-      "directory": "src/lib/source/reasoning/__tests__",
-      "testFiles": 4,
-      "unrunTestFiles": 4,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 4,
-      "governedRisk": {
-        "score": 0,
-        "band": "unclassified",
-        "signals": [],
-        "productSourceCount": 7
-      }
-    },
-    {
       "directory": "src/lib/programs/source-trigger/__tests__",
       "testFiles": 2,
       "unrunTestFiles": 2,
@@ -5512,23 +5443,7 @@
       "via": []
     },
     {
-      "directory": "src/lib/source/reasoning/__tests__",
-      "testFiles": 4,
-      "coveredTestFiles": 0,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 4,
-      "via": []
-    },
-    {
       "directory": "src/lib/source/vendor-proposals/__tests__",
-      "testFiles": 4,
-      "coveredTestFiles": 0,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 4,
-      "via": []
-    },
-    {
-      "directory": "src/lib/workspace-explorer/__tests__",
       "testFiles": 4,
       "coveredTestFiles": 0,
       "declaredQuarantineTestFiles": 0,
