@@ -83,4 +83,42 @@ describe("D09 RFP map-reduce generation", () => {
     );
     expect(result.tokensTotal).toBe(11 * 42);
   });
+
+  it("keeps the private value brief and decision-owner identity out of vendor section context", async () => {
+    const calls: Array<{ system: string; messages: Array<{ content: string }> }> = [];
+    const stream = jest.fn((params: { system: string; messages: Array<{ content: string }> }) => {
+      calls.push(params);
+      return makeStream("## §1 · Executive summary and decision context\n\nVendor instructions.");
+    });
+    const client = { messages: { stream } } as unknown as AnthropicDirectClient;
+
+    await generateD09ViaMapReduce({
+      ctx: makeContext(),
+      upstreamBound: {
+        d01_strategy_memo: "Scope is managed services.",
+        d02_value_target: "Buyer-private 12–15% run-rate improvement target.",
+        d05_scope_memo: "Seven service towers are in scope.",
+      },
+      client,
+    });
+
+    expect(calls).toHaveLength(11);
+    for (const call of calls) {
+      expect(call.messages[0]?.content).not.toContain("Buyer-private 12–15%");
+      expect(call.messages[0]?.content).not.toContain("Decision owner: CIO and Procurement Lead");
+      expect(call.system).toMatch(/vendor-facing|vendor package/i);
+      expect(call.system).toMatch(/internal.*(?:target|planning|metadata)/i);
+      expect(call.system).not.toContain("writing for a CIO and their leadership team");
+    }
+    const commercialCall = calls.find((call) => call.system.includes("§7 ·"));
+    expect(commercialCall?.messages[0]?.content).not.toContain("Reference the value-target range");
+    const transitionCall = calls.find((call) => call.system.includes("§6 ·"));
+    expect(transitionCall?.messages[0]?.content).not.toContain("Use gate-relative target dates");
+    const responseCall = calls.find((call) => call.system.includes("§8 ·"));
+    expect(responseCall?.messages[0]?.content).not.toContain("Use gate-relative target dates");
+    const riskCall = calls.find((call) => call.system.includes("§10 ·"));
+    expect(riskCall?.messages[0]?.content).not.toContain("Blocking Gate");
+    const registerCall = calls.find((call) => call.system.includes("§11 ·"));
+    expect(registerCall?.messages[0]?.content).not.toContain("Gap closure register");
+  });
 });

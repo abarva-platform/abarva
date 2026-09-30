@@ -40,6 +40,7 @@ import type {
 import type { SourceArtifactFamily } from "@/lib/source/artifact-registry/types";
 import type { SourceEventRow } from "@/lib/source/queries";
 import type { SourceStageKey } from "@/lib/source/types";
+import { findD09VendorDisclosureViolations } from "@/lib/source/agent-generation/vendor-pack-disclosure";
 import {
   evaluateSensitiveUpload,
   sensitiveUploadRejectedResponse,
@@ -251,6 +252,21 @@ export async function POST(request: Request, { params }: RouteContext) {
       "unreadable_client_final",
       "This file has no readable text. Upload a text-readable final; an image-only scan cannot become the authoritative artifact.",
     );
+  }
+
+  if (artifactCode === "d09_rfp_pack") {
+    const violations = findD09VendorDisclosureViolations(extractedClientFinal.text);
+    if (violations.length > 0) {
+      return Response.json(
+        {
+          ok: false,
+          error: "vendor_disclosure_violation",
+          detail: "Remove buyer-private targets and internal workflow material before accepting a vendor package.",
+          violations: violations.map(({ code }) => code),
+        },
+        { status: 422 },
+      );
+    }
   }
 
   let siblingArtifacts: SourceArtifactRecord[];

@@ -5,7 +5,7 @@ import type {
 } from "../types";
 
 describe("completeD09RfpGovernanceSections", () => {
-  it("appends gate-critical D09 appendix tables before quality review", () => {
+  it("appends vendor workbook instructions without buyer-private appendices", () => {
     const body = [
       "# RFP Package",
       "",
@@ -24,35 +24,23 @@ describe("completeD09RfpGovernanceSections", () => {
       ctx: makeContext(),
     });
 
-    expect(completed).toContain("## §8A · Process timeline and date-closure controls");
-    expect(completed).toContain("## §9A · Evaluation controls and normalization closure");
-    expect(completed).toContain("## §0 · Issuance readiness checklist");
-    expect(completed).toContain("## §7A · Directional commercial leverage assumptions");
+    expect(completed).not.toContain("## §8A · Process timeline and date-closure controls");
+    expect(completed).not.toContain("## §9A · Evaluation controls and normalization closure");
+    expect(completed).not.toContain("## §0 · Issuance readiness checklist");
+    expect(completed).not.toContain("## §7A · Directional commercial leverage assumptions");
     expect(completed).toContain("## §10 · Risk register, transition controls, and failure modes");
-    expect(completed).toContain("## §12 · Legal, commercial, and submission terms for client counsel review");
+    expect(completed).not.toContain("## §12 · Legal, commercial, and submission terms for client counsel review");
     expect(completed).toContain("## Appendix A · Vendor Response Workbook Tab Guide");
-    expect(completed).toContain("## Appendix B · Vendor Response Workbook Commercial Leverage Map");
-    expect(completed).toContain("## Appendix C · Internal Review and Negotiation Workbook");
-    expect(completed).toContain("## Appendix D · BAFO and Clarification Round Instructions");
-    expect(completed).toContain("R-08");
-    expect(completed).toContain(
-      "applicable security, privacy, and regulatory-control",
-    );
-    expect(completed).toContain(
-      "service continuity degrade during service transition",
-    );
+    expect(completed).not.toContain("## Appendix B · Vendor Response Workbook Commercial Leverage Map");
+    expect(completed).not.toContain("## Appendix C · Internal Review and Negotiation Workbook");
+    expect(completed).not.toContain("## Appendix D · BAFO and Clarification Round Instructions");
     expect(completed).toContain("Vendor Claim Register");
     expect(completed).toContain("Assumptions and Exclusions");
-    expect(completed).toContain(
-      "Bundled run/change economics",
-    );
-    expect(completed).toContain("Written clarification");
-    expect(completed).toContain("### §11A · Source register");
-    expect(completed).toContain("### §11B · Gap closure register");
-    expect(completed).toContain("G-04");
-    expect(completed).toContain("G-09");
-    expect(completed).toContain("Exhibit 09 — Approved evaluation criteria and weights");
-    expect(completed).toContain("Available parsed evidence — citation review pending");
+    expect(completed).not.toContain("Application Support 35-45%");
+    expect(completed).not.toContain("### §11A · Source register");
+    expect(completed).not.toContain("### §11B · Gap closure register");
+    expect(completed).not.toContain("Exhibit 09 — Approved evaluation criteria and weights");
+    expect(completed).not.toContain("Available parsed evidence — citation review pending");
     expect(completed).toContain(
       "RFP package draft complete — pending client closure of registered gaps.",
     );
@@ -60,7 +48,7 @@ describe("completeD09RfpGovernanceSections", () => {
     expect(completed).toContain(
       "Vendors must complete the Vendor Response Workbook",
     );
-    expect(completed).toContain(
+    expect(completed).not.toContain(
       "To be confirmed from the client-approved sourcing calendar",
     );
     expect(completed).not.toMatch(/airline|airport|\bOCC\b|1,800\+ FTE|Sep 2026/i);
@@ -132,12 +120,10 @@ describe("completeD09RfpGovernanceSections", () => {
 
     expect(completed).not.toMatch(/\[CLIENT TO (SET|CONFIRM|COMPLETE)\]/);
     expect(completed).not.toMatch(/placeholder/i);
-    expect(completed).toContain("T+5 weeks from sponsor sign-off");
+    expect(completed).not.toContain("T+5 weeks from sponsor sign-off");
     expect(completed).toContain("Vendor Response Workbook Tab Guide");
-    expect(completed).toContain("Pricing Response: run vs change split");
-    expect(completed).toContain(
-      "Approved evaluation criteria and weights are loaded",
-    );
+    expect(completed).toContain("Pricing Response | Separate recurring run");
+    expect(completed).not.toContain("Approved evaluation criteria and weights are loaded");
   });
 });
 
