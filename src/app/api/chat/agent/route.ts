@@ -189,9 +189,7 @@ import {
   isGroundedAnswerMode,
   shouldSuppressGenericContextBundleForSourceMode,
 } from "@/lib/source/ava/answer-mode";
-import {
-  buildSourcePortfolioFallbackAnswer,
-} from "@/lib/source/ava/portfolio-fallback-answer";
+import { buildSourcePortfolioFallbackAnswer } from "@/lib/source/ava/portfolio-fallback-answer";
 import { buildAuthorizedSourceContract360PromptBlock } from "@/lib/source/ava/server-contract-answer-context";
 import { buildModeGrounding } from "@/lib/source/ava/mode-grounding";
 import { resolveContractQuestionId } from "@/lib/source/ava/contract-question-identity";
@@ -823,10 +821,7 @@ export async function POST(request: Request) {
           }
         }
 
-        if (
-          promptPhase === 3 &&
-          surface.startsWith("/strategic-moves/")
-        ) {
+        if (promptPhase === 3 && surface.startsWith("/strategic-moves/")) {
           const modules = await getModuleState(tenancy, programId).catch(
             () => [],
           );
@@ -929,6 +924,25 @@ export async function POST(request: Request) {
                     programId,
                   ),
                 });
+            const mode = movesAvaMode ?? "phase_guidance";
+            let approvedEvidenceUnavailable = false;
+            let approvedEvidenceItems: Awaited<
+              ReturnType<typeof listProgramEvidenceForPrompt>
+            > = [];
+            let approvedEvidenceTotal = 0;
+            if (mode === "evidence_summary") {
+              try {
+                const loadedEvidenceItems = await listProgramEvidenceForPrompt(
+                  tenancy,
+                  programId,
+                  promptPhase,
+                );
+                approvedEvidenceTotal = loadedEvidenceItems.length;
+                approvedEvidenceItems = loadedEvidenceItems.slice(0, 8);
+              } catch {
+                approvedEvidenceUnavailable = true;
+              }
+            }
             const packet = buildMovesAvaChatPacket(
               {
                 tenant: tenantName,
@@ -954,6 +968,17 @@ export async function POST(request: Request) {
                 evidenceNeedPackets: evidenceNeedPackets.map(
                   formatMoveEvidenceNeedForAva,
                 ),
+                approvedEvidence: approvedEvidenceItems.map((item) => ({
+                  title: item.title,
+                  summary: item.summary,
+                  statements: item.structuredSignals.slice(0, 8),
+                  observations: item.observations.slice(0, 3),
+                  assumptions: item.assumptions.slice(0, 3),
+                  openQuestions: item.openQuestions.slice(0, 3),
+                  citations: item.citations.slice(0, 3),
+                })),
+                approvedEvidenceTotal,
+                approvedEvidenceUnavailable,
                 gateCriteria: liveGateCriteria.map((criterion) => ({
                   label: criterion.label,
                   met: criterion.completed,
@@ -963,7 +988,6 @@ export async function POST(request: Request) {
               },
               message,
             );
-            const mode = movesAvaMode ?? "phase_guidance";
             movesAvaHardeningBlock = movesAvaChatHardeningEnabled
               ? formatMovesAvaChatPacketForPrompt(packet, mode)
               : "";
@@ -989,14 +1013,36 @@ export async function POST(request: Request) {
                   }),
                 });
             }
-            movesAvaDeterministicAnswer = movesAvaChatHardeningEnabled
-              ? buildDeterministicMovesAvaStatusAnswer(packet, mode)
-              : null;
+            movesAvaDeterministicAnswer =
+              mode === "evidence_summary"
+                ? buildDeterministicMovesAvaStatusAnswer(packet, mode)
+                : movesAvaChatHardeningEnabled
+                  ? buildDeterministicMovesAvaStatusAnswer(packet, mode)
+                  : null;
           } catch {
-            // Never block the chat turn on the hardening layer — fall back
-            // to the existing phase-pack-only prompt.
+            // Evidence-summary questions are fail-closed even if another
+            // packet dependency fails; never fall back to free-form claims.
             movesAvaHardeningBlock = "";
-            movesAvaDeterministicAnswer = null;
+            if (movesAvaMode === "evidence_summary") {
+              const unavailableEvidencePacket = buildMovesAvaChatPacket(
+                {
+                  tenant: tenantName,
+                  moveId: programId,
+                  moveTitle: engagement.name,
+                  currentPhase: promptPhase,
+                  currentPhaseClientLabel: `P${promptPhase} ${promptPhaseLabel}`,
+                  approvedEvidenceUnavailable: true,
+                },
+                message,
+              );
+              movesAvaDeterministicAnswer =
+                buildDeterministicMovesAvaStatusAnswer(
+                  unavailableEvidencePacket,
+                  movesAvaMode,
+                );
+            } else {
+              movesAvaDeterministicAnswer = null;
+            }
             movesAvaPhaseInputDraftAnswer = null;
           }
         }
@@ -2009,9 +2055,12 @@ export async function POST(request: Request) {
     hasSourceContractGrounding
       ? ""
       : contextBundlePromptBlock;
-  const authorizedSourceTenantKey = activeClientKey ?? tenancy?.clientKey ?? null;
+  const authorizedSourceTenantKey =
+    activeClientKey ?? tenancy?.clientKey ?? null;
   const sourceContract360PromptBlock =
-    isSourceSurface(surface) && contractIdFromContext && authorizedSourceTenantKey
+    isSourceSurface(surface) &&
+    contractIdFromContext &&
+    authorizedSourceTenantKey
       ? await buildAuthorizedSourceContract360PromptBlock({
           query: message,
           requestContext: {

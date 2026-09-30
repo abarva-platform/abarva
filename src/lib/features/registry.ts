@@ -120,7 +120,7 @@ export const FEATURE_FLAGS: ReadonlyArray<FeatureFlagDefinition> = [
   {
     key: "moves_ava_chat_hardening",
     summary:
-      "2026-09-05: Nexus/aVa chat inside Moves phase workspaces is grounded by a deterministic MovesAvaChatPacket (checklist, gate criteria, evidence gaps, feed-forward, approved-inputs-pack presence, Source/Tower keyword awareness) instead of a blank prompt, and every answer is post-hoc scanned for banned language (Claude-deflection, internal-ID leaks, workflow-bypass claims). Phase-grounded and workflow-safe by design: Moves aVa never approves or advances a gate, never claims a promotion happened, and stays narrower than Intelligence. Tenant opt-in remains in force until signed-in tenant proof supports platform promotion. Env: ABARVA_FEATURE_MOVES_AVA_CHAT_HARDENING_TENANTS.",
+      "2026-09-05: Nexus/aVa chat inside Moves phase workspaces can use a deterministic MovesAvaChatPacket (checklist, gate criteria, evidence gaps, feed-forward, approved-inputs-pack presence, Source/Tower keyword awareness) to ground model answers and suppress generic tenant context. Status, blocker, readiness, and phase-input draft modes have deterministic response paths; explicit evidence-summary questions use only phase-scoped approved evidence and return a cited, deterministic summary even when hardening is otherwise off. Other free-form responses remain model-generated from prompt guidance and are not post-hoc quality-gated. Tenant opt-in remains in force until signed-in tenant proof supports platform promotion. Env: ABARVA_FEATURE_MOVES_AVA_CHAT_HARDENING_TENANTS.",
     policy: "tenant",
     includeTenants: ["lakeshore", "meridian"],
   },
