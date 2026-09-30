@@ -1884,6 +1884,38 @@ jobs:
           src/lib/agent-grounding/__tests__
           --no-coverage --ci
 
+      # Item T-795, the thirteenth stale-suite draw. Its verdicts were recorded
+      # read-only, the three red files were repaired in #8729, and the byte case
+      # in `setup/__tests__/ai-initiatives.test.ts` was replaced in #8732.
+      # Re-executed on base `0f662a090c` before wiring: 19 files, 168 cases, all
+      # green. The seven directories whose every test file is in the draw are
+      # named whole, and they leave `product-directory-ci-coverage.baseline.json`
+      # in the same change. Three are named BY FILE because the directory holds
+      # files outside the draw: `observability/__tests__` (a third, already-run
+      # file), `new-workspace/__tests__` (three already-run files) and
+      # `src/__tests__/features`.
+      - name: Run the T-795 Source, programs, setup and patternops suites
+        run: >-
+          npx jest
+          src/lib/patternops
+          src/lib/programs/source-trigger/__tests__
+          src/lib/setup/__tests__
+          src/lib/source/decision-queue/__tests__
+          src/lib/source/disclosure-flag/__tests__
+          src/lib/source/execution-room/__tests__
+          src/lib/source/pricing-submissions/__tests__
+          --no-coverage --ci
+
+      - name: Run the T-795 observability, new-workspace and graph-gate suites by named file
+        run: >-
+          npx jest --runTestsByPath
+          src/lib/observability/__tests__/structured-logger.test.ts
+          src/lib/observability/__tests__/tenant-bleed-alerts.test.ts
+          src/lib/source/new-workspace/__tests__/historical-request-summary.test.ts
+          src/lib/source/new-workspace/__tests__/stage05-nda-coverage.test.ts
+          src/__tests__/features/neo4j-gate.test.ts
+          --no-coverage --ci
+
       # Item T-786, claimable half. T-785 held `src/components/__tests__` whole
       # because both suites read component source bytes. The AbarvaNav suite is
       # rewritten as a render (a plain `<a>` in place of `next/link` fails it)
