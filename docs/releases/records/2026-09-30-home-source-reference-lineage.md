@@ -10,7 +10,7 @@
 
 ## Plain-English Summary
 
-Home now carries source-row references from the served record into its fact browser and evidence labels. A fact with no admitted source link is identified as unmapped rather than described as source-backed. The context version records a source-set hash only when all citable served rows have admitted source links.
+Home now carries source-row references from the served record into its fact browser and evidence labels, but only when the references resolve through the tenant-scoped, foreign-key-backed source-record bridge. A fact with no resolved source link is identified as unmapped rather than described as source-backed. The context version records a source-set hash only when all citable served rows have resolved source links.
 
 ## Layer Impact
 
@@ -27,9 +27,9 @@ Home now carries source-row references from the served record into its fact brow
 
 ## Changes Included
 
-- Select source hash, source references, object ID, and admission status from existing Home serving views.
-- Carry admitted source references into deterministic context facts and the record browser.
-- Keep unmapped or refused rows explicitly unverified in evidence labels and context coherence.
+- Select source hash, source references, object ID, projection entry ID, and admission status from existing Home serving views.
+- Resolve declared source-row IDs against the tenant-scoped projection-to-source bridge before carrying them into deterministic context facts and the record browser.
+- Keep missing, invalid, refused, or unreadable source links explicitly unverified in evidence labels and context coherence.
 - Add reader, rendering, and filtering regression tests.
 
 ## QA / Validation
@@ -62,4 +62,4 @@ PR, CI, deploy run, digest invariant, and signed-in browser evidence will be lin
 
 ## Known Gaps
 
-This does not regenerate stored chapter narrative or assert that a resolved context ID alone is a governed source citation. Full source-to-claim coherence remains gated on published claims whose packet hash and source links match the served record.
+This does not regenerate stored chapter narrative or assert that a resolved context ID alone is a governed source citation. Full source-to-claim coherence remains gated on published claims whose packet hash and source links match the served record. A serving-row source declaration without a matching canonical bridge link remains unmapped.

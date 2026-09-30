@@ -55,6 +55,7 @@ export interface HomeProjectionRow {
   display_payload_json: JsonRecord | null;
   source_hash?: string | null;
   source_refs_json?: unknown;
+  projection_entry_id?: string | null;
   primary_object_id?: string | null;
   admission_status?: string | null;
 }
@@ -413,22 +414,27 @@ function sourceRefIds(value: unknown): string[] {
       return (
         text(ref.source_record_id) ??
         text(ref.sourceRecordId) ??
-        text(ref.record_id) ??
-        text(ref.source_file_id) ??
-        text(ref.id)
+        text(ref.record_id)
       );
     })
     .filter((ref): ref is string => Boolean(ref));
   return [...new Set(refs)];
 }
 
-function admittedSourceRefs(row: HomeProjectionRow): string[] {
+type VerifiedSourceRefs = Map<string, Set<string>>;
+
+function admittedSourceRefs(
+  row: HomeProjectionRow,
+  verifiedSourceRefs: VerifiedSourceRefs,
+): string[] {
   if (
     !["admitted", "not_applicable"].includes(row.admission_status ?? "") ||
     !text(row.source_hash)
   )
     return [];
-  return sourceRefIds(row.source_refs_json);
+  const linked = verifiedSourceRefs.get(row.projection_entry_id ?? "");
+  if (!linked) return [];
+  return sourceRefIds(row.source_refs_json).filter((ref) => linked.has(ref));
 }
 
 /**
@@ -1454,7 +1460,10 @@ function rowContextStatement(
   }
 }
 
-function projectionContextItems(rows: HomeProjectionRow[]): ContextItem[] {
+function projectionContextItems(
+  rows: HomeProjectionRow[],
+  verifiedSourceRefs: VerifiedSourceRefs,
+): ContextItem[] {
   const labelsByRef = endpointLabelsFromRows(rows);
   return rows
     .filter(
@@ -1464,7 +1473,7 @@ function projectionContextItems(rows: HomeProjectionRow[]): ContextItem[] {
       id: contextIdForRow(row),
       statement: rowContextStatement(row, labelsByRef),
       domains: rowDomains(row),
-      evidenceRefs: admittedSourceRefs(row),
+      evidenceRefs: admittedSourceRefs(row, verifiedSourceRefs),
     }));
 }
 
@@ -1472,6 +1481,7 @@ function buildEclSignalPacket(
   rows: HomeProjectionRow[],
   estate: TechnologyEstateBundle,
   assessmentId: string,
+  verifiedSourceRefs: VerifiedSourceRefs,
 ): EnterpriseSignalPacket {
   const applications = rowsForType(estate, "application_system");
   const contracts = rowsForType(estate, "vendor_contract");
@@ -1747,7 +1757,7 @@ function buildEclSignalPacket(
             "Leadership interview excerpts are not supplied by the current Home narrative input; leadership perspective should remain deferred until cited interview evidence is loaded.",
           domains: ["evidence_sources"],
         },
-    ...projectionContextItems(rows),
+    ...projectionContextItems(rows, verifiedSourceRefs),
   ];
   const sourceSummaries = buildEclSourceSummaries(estate);
 
@@ -2284,6 +2294,7 @@ function contextVersionForRows(
   signalPacket: EnterpriseSignalPacket,
   claims: Map<ChapterId, GroundedClaim[]>,
   hasPublishedClaims: boolean,
+  verifiedSourceRefs: VerifiedSourceRefs,
 ): HomeContextVersion {
   const hash = (value: unknown) =>
     createHash("sha256").update(JSON.stringify(value)).digest("hex");
@@ -2315,14 +2326,16 @@ function contextVersionForRows(
       pageKey: row.page_key,
       rowKey: row.row_key,
       sourceHash: row.source_hash,
-      sourceRefs: admittedSourceRefs(row).sort(),
+      sourceRefs: admittedSourceRefs(row, verifiedSourceRefs).sort(),
     }))
     .sort((a, b) =>
       `${a.pageKey}:${a.rowKey}`.localeCompare(`${b.pageKey}:${b.rowKey}`),
     );
   const sourceSetHash =
     citableRows.length > 0 &&
-    citableRows.every((row) => admittedSourceRefs(row).length > 0)
+    citableRows.every(
+      (row) => admittedSourceRefs(row, verifiedSourceRefs).length > 0,
+    )
       ? hash(sourceRows)
       : null;
   const narrativePacketHash =
@@ -2378,12 +2391,14 @@ export function buildHomeReviewBundleFromEclProjectionRows(
   base: HomeReviewBundle,
   rows: HomeProjectionRow[],
   assessmentId = denseAssessmentIdForTenant(base.tenantKey),
+  verifiedSourceRefs: VerifiedSourceRefs = new Map(),
 ): HomeReviewBundle {
   const technologyEstate = buildTechnologyEstateFromHomeProjectionRows(rows);
   const signalPacket = buildEclSignalPacket(
     rows,
     technologyEstate,
     assessmentId,
+    verifiedSourceRefs,
   );
   const claims = chapterClaimsByPage(rows);
   const hasPublishedClaims = hasPublishedChapterClaims(claims);
@@ -2394,6 +2409,7 @@ export function buildHomeReviewBundleFromEclProjectionRows(
     signalPacket,
     claims,
     hasPublishedClaims,
+    verifiedSourceRefs,
   );
   const thesis = hasPublishedClaims
     ? publishedThesisFromRows(rows)
@@ -2516,6 +2532,7 @@ async function readHomeProjectionRows(
         row_type,
         title,
         summary,
+        projection_entry_id,
         source_hash,
         source_refs_json,
         primary_object_id,
@@ -2531,6 +2548,34 @@ async function readHomeProjectionRows(
     { missingTable: "empty" },
   );
   return { rows, absentViews };
+}
+
+async function readVerifiedSourceRefs(
+  tenantKey: string,
+  assessmentId: string,
+): Promise<VerifiedSourceRefs> {
+  try {
+    const links = await azureRead.query<{
+      projection_entry_id: string;
+      source_record_id: string;
+    }>(
+      `select projection_entry_id::text, source_record_id::text
+       from ecl_projection.projection_entry_source_record_ref
+       where tenant_key = $1 and assessment_id = $2`,
+      [tenantKey, assessmentId],
+      { missingTable: "empty" },
+    );
+    const verified = new Map<string, Set<string>>();
+    for (const link of links) {
+      const refs = verified.get(link.projection_entry_id) ?? new Set<string>();
+      refs.add(link.source_record_id);
+      verified.set(link.projection_entry_id, refs);
+    }
+    return verified;
+  } catch (error) {
+    console.warn("[home] source-reference resolution unavailable", error);
+    return new Map();
+  }
 }
 
 export async function getHomeEclProjectionBundle(
@@ -2566,8 +2611,17 @@ export async function getHomeEclProjectionBundle(
     );
   }
 
+  const verifiedSourceRefs = await readVerifiedSourceRefs(
+    tenantKey,
+    assessmentId,
+  );
   return {
-    ...buildHomeReviewBundleFromEclProjectionRows(base, rows, assessmentId),
+    ...buildHomeReviewBundleFromEclProjectionRows(
+      base,
+      rows,
+      assessmentId,
+      verifiedSourceRefs,
+    ),
   };
 }
 
