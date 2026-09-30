@@ -35,6 +35,7 @@ An authorized stage decision is now offered even when an event has no computable
 ## QA / Validation
 
 - Red-first tests reproduced the absent action on the event page and canvas. Focused tests pass after the change.
+- The new route test is named in the Source CI suite; its directory census is 6 files / 5 covered, with the existing exact quarantine unchanged. The census check and ownership control pass.
 - TypeScript, scoped ESLint, release check, broader adjacent tests, and PR CI are required before merge; record their results in the PR.
 - Signed-in stage-action and approval replay is required after official deployment.
 

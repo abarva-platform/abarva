@@ -18,9 +18,9 @@
     "No timestamp is recorded, so refreshing this file on an unchanged tree is a no-op."
   ],
   "counts": {
-    "testFiles": 2580,
-    "coveredTestFiles": 2324,
-    "pullRequestCoveredTestFiles": 2323,
+    "testFiles": 2581,
+    "coveredTestFiles": 2325,
+    "pullRequestCoveredTestFiles": 2324,
     "uncoveredTestFiles": 256,
     "directoriesWithTests": 497,
     "directoriesFullyCovered": 349,
@@ -302,6 +302,16 @@
       ]
     },
     {
+      "directory": "src/app/(maestro)/source/__tests__",
+      "testFiles": 6,
+      "coveredTestFiles": 5,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 1,
+      "via": [
+        "command"
+      ]
+    },
+    {
       "directory": "src/lib/intelligence/canonical",
       "testFiles": 6,
       "coveredTestFiles": 2,
@@ -315,16 +325,6 @@
       "directory": "src/lib/source/new-workspace",
       "testFiles": 6,
       "coveredTestFiles": 5,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 1,
-      "via": [
-        "command"
-      ]
-    },
-    {
-      "directory": "src/app/(maestro)/source/__tests__",
-      "testFiles": 5,
-      "coveredTestFiles": 4,
       "declaredQuarantineTestFiles": 0,
       "untriagedUnrunTestFiles": 1,
       "via": [
@@ -491,7 +491,7 @@
         "score": 0,
         "band": "unclassified",
         "signals": [],
-        "productSourceCount": 5,
+        "productSourceCount": 6,
         "rank": 1
       }
     },
@@ -554,7 +554,7 @@
         "score": 0,
         "band": "unclassified",
         "signals": [],
-        "productSourceCount": 3,
+        "productSourceCount": 4,
         "rank": 4
       }
     },
@@ -4618,19 +4618,6 @@
       }
     },
     {
-      "directory": "src/lib/setup/__tests__",
-      "testFiles": 2,
-      "unrunTestFiles": 2,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 2,
-      "governedRisk": {
-        "score": 0,
-        "band": "unclassified",
-        "signals": [],
-        "productSourceCount": 3
-      }
-    },
-    {
       "directory": "src/lib/source/disclosure-flag/__tests__",
       "testFiles": 2,
       "unrunTestFiles": 2,
@@ -4774,6 +4761,19 @@
       }
     },
     {
+      "directory": "src/lib/setup/__tests__",
+      "testFiles": 2,
+      "unrunTestFiles": 2,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 2,
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 4
+      }
+    },
+    {
       "directory": "src/lib/source/decision-queue/__tests__",
       "testFiles": 2,
       "unrunTestFiles": 2,
@@ -4878,19 +4878,6 @@
       }
     },
     {
-      "directory": "src/lib/observability/__tests__",
-      "testFiles": 3,
-      "unrunTestFiles": 2,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 2,
-      "governedRisk": {
-        "score": 0,
-        "band": "unclassified",
-        "signals": [],
-        "productSourceCount": 5
-      }
-    },
-    {
       "directory": "src/lib/source/pricing-submissions/__tests__",
       "testFiles": 2,
       "unrunTestFiles": 2,
@@ -4914,6 +4901,19 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 5
+      }
+    },
+    {
+      "directory": "src/lib/observability/__tests__",
+      "testFiles": 3,
+      "unrunTestFiles": 2,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 2,
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 6
       }
     },
     {
