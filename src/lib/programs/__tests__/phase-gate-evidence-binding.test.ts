@@ -33,7 +33,7 @@ describe("phase-gate evidence binding", () => {
   it("keeps an approval current only for the evidence revision it reviewed", () => {
     const snapshot = approvedSnapshot(
       1,
-      "2026-09-29T17:00:00.000Z",
+      "2026-09-29T19:00:00.000Z",
       "evidence-revision-2",
     );
 
@@ -46,6 +46,27 @@ describe("phase-gate evidence binding", () => {
         revision: "evidence-revision-3",
       }),
     ).toBe(false);
+  });
+
+  it("reopens a hash-bound approval when approved evidence activity is later", () => {
+    const approval = approvedSnapshot(
+      1,
+      "2026-09-29T17:00:00.000Z",
+      "evidence-revision-2",
+    );
+
+    expect(
+      phaseApprovalMatchesEvidence(1, [approval], {
+        revision: "evidence-revision-2",
+        latestEvidenceActivityAt: "2026-09-30T02:56:00.000Z",
+      }),
+    ).toBe(false);
+    expect(
+      effectivePhaseAfterEvidenceChange(2, [approval], {
+        revision: "evidence-revision-2",
+        latestEvidenceActivityAt: "2026-09-30T02:56:00.000Z",
+      }),
+    ).toBe(1);
   });
 
   it("invalidates a legacy approval when approved evidence changed after it", () => {

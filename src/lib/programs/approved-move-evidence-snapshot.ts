@@ -106,6 +106,7 @@ export async function loadApprovedMoveEvidenceSnapshot(args: {
       .select("updated_at, reviewed_at, created_at")
       .eq("tenant_key", args.tenantKey)
       .eq("program_id", args.moveId)
+      .eq("decision", "approved")
       .limit(MAX_REVIEW_ACTIVITY_ROWS + 1),
   ]);
   if (

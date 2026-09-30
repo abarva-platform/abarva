@@ -114,7 +114,7 @@ describe("approved Move evidence snapshot", () => {
     );
   });
 
-  it("tracks later review activity without adding pending evidence to the approved revision", async () => {
+  it("excludes pending review activity from approved-evidence freshness", async () => {
     mockReviewRows.push(
       {
         evidence_id: "evidence-approved",
@@ -146,7 +146,12 @@ describe("approved Move evidence snapshot", () => {
 
     expect(snapshot).toMatchObject({
       approvedEvidenceCount: 1,
-      latestEvidenceActivityAt: "2026-09-29T12:30:00.000Z",
+      latestEvidenceActivityAt: "2026-09-28T12:30:00.000Z",
+    });
+    expect(mockFilters).toContainEqual({
+      table: "program_evidence_reviews",
+      column: "decision",
+      value: "approved",
     });
   });
 
@@ -297,7 +302,7 @@ describe("approved Move evidence snapshot", () => {
     mockReviewRows.push(
       ...Array.from({ length: 501 }, (_, index) => ({
         evidence_id: `pending-${index}`,
-        decision: "pending",
+        decision: "approved",
         created_at: `2026-09-${String(1 + (index % 28)).padStart(2, "0")}T12:00:00.000Z`,
       })),
     );
