@@ -14,6 +14,67 @@ import { SOURCE_ARTIFACT_SPECS } from "@/lib/source/canonical-specs";
 import type { SourceEventArtifactState } from "@/lib/source/canvas-substrate/types";
 
 describe("Source artifact prompt registry provider config", () => {
+  it("binds later parsed ticket excerpts and refuses an invented baseline in d07", () => {
+    const ctx = makeD09Context(["synthetic-ticket-export.csv"]);
+    ctx.event.currentStageKey = "scope";
+    ctx.uploadedEvidence![0].chunkExcerpts = [
+      "ticket_group,volume\nservice_desk,68",
+      "ticket_group,volume\nendpoint_patch,47",
+    ];
+
+    const template = getPromptTemplate("d07_ticket_synth");
+    expect(template?.version).toBe(3);
+    const message = template?.buildUserMessage(ctx, { d01_strategy_memo: "Approved process strategy." });
+
+    expect(message).toContain("synthetic-ticket-export.csv");
+    expect(message).toContain("service_desk,68");
+    expect(message).toContain("endpoint_patch,47");
+    expect(message).toMatch(/excerpts? (?:may be|are) incomplete/i);
+    expect(template?.systemPrompt).not.toMatch(/construct a representative baseline/i);
+    expect(message).toContain("never construct a plausible baseline");
+  });
+
+  it("keeps ticket rows beyond the old 500-character cut within one parsed chunk", () => {
+    const ctx = makeD09Context(["synthetic-ticket-export.csv"]);
+    ctx.event.currentStageKey = "scope";
+    ctx.uploadedEvidence![0].chunkExcerpts = [
+      [
+        "Service Tower,Support Tier,Month,Time Window,Ticket Count,SLA Breach Count,Source Basis",
+        ...Array.from({ length: 7 }, (_, index) =>
+          `Service desk,L2,2026-08,Business hours,${index + 1},0,Synthetic scenario for workflow testing`,
+        ),
+        "Endpoint and patch,L3,2026-08,After hours,3,0,Synthetic scenario for workflow testing",
+      ].join("\n"),
+    ];
+    expect(ctx.uploadedEvidence![0].chunkExcerpts[0].length).toBeGreaterThan(500);
+
+    const message = getPromptTemplate("d07_ticket_synth")?.buildUserMessage(ctx, {
+      d01_strategy_memo: "Approved process strategy.",
+    });
+
+    expect(message).toContain("Endpoint and patch,L3,2026-08,After hours,3,0");
+  });
+
+  it("bounds the extra d07 context to scope CSV evidence and marks truncation", () => {
+    const ctx = makeD09Context(["scope-tickets.csv", "strategy-note.csv"]);
+    ctx.uploadedEvidence![0].chunkExcerpts = Array.from(
+      { length: 5 },
+      (_, index) => `SCOPE_ROW_${index + 1}_${"x".repeat(850)}`,
+    );
+    ctx.uploadedEvidence![1].stageKey = "strategy";
+    ctx.uploadedEvidence![1].chunkExcerpts = ["STRATEGY_FIRST", "STRATEGY_SECOND"];
+
+    const message = getPromptTemplate("d07_ticket_synth")?.buildUserMessage(ctx, {
+      d01_strategy_memo: "Approved process strategy.",
+    });
+
+    expect(message).toContain("SCOPE_ROW_1_");
+    expect(message).toContain("[TRUNCATED]");
+    expect(message).not.toContain("SCOPE_ROW_5_");
+    expect(message).toContain("STRATEGY_FIRST");
+    expect(message).not.toContain("STRATEGY_SECOND");
+  });
+
   it("maps every canonical artifact into a Source decision-package story contract", () => {
     expect(() => assertSourceArtifactStoryContractCoverage()).not.toThrow();
 

@@ -899,7 +899,7 @@ function formatGovernanceReviewFields(): string {
 // without this block the draft is blind to evidence it is graded on.
 function formatDraftEvidenceContext(
   ctx: SourceGenerationContext,
-  options?: { completeShortChunk?: boolean },
+  options?: { completeShortChunk?: boolean; ticketExcerptCoverage?: boolean },
 ): string | null {
   const guidebookBlock = formatStageGuidebookContext(ctx);
   const items = ctx.uploadedEvidence ?? [];
@@ -919,9 +919,17 @@ function formatDraftEvidenceContext(
               a.chunkExcerpts[0].length <= 1_800
                 ? 1_800
                 : 500;
-            const excerpt = a.chunkExcerpts?.length
-              ? `\n    Excerpt: ${a.chunkExcerpts[0].slice(0, excerptLimit)}`
-              : "";
+            const ticketExcerpts =
+              options?.ticketExcerptCoverage === true &&
+              a.stageKey === "scope" &&
+              a.sourceFormat.toLowerCase() === "csv"
+                ? a.chunkExcerpts.slice(0, 5).join("\n    Continuation: ")
+                : null;
+            const excerpt = ticketExcerpts
+              ? `\n    Excerpts may be incomplete; verify row coverage before totals: ${ticketExcerpts.slice(0, 3_000)}${ticketExcerpts.length > 3_000 ? " [TRUNCATED]" : ""}`
+              : a.chunkExcerpts?.length
+                ? `\n    Excerpt: ${a.chunkExcerpts[0].slice(0, excerptLimit)}`
+                : "";
             return `  - ${a.originalName} (${a.artifactFamily} · ${a.evidenceState})${facts}${excerpt}`;
           }),
         ].join("\n");
@@ -2756,7 +2764,7 @@ Requirements:
 
   d07_ticket_synth: {
     artifactCode: "d07_ticket_synth",
-    version: 2,
+    version: 3,
     model: DEFAULT_MODEL,
     maxTokens: DEFAULT_MAX_TOKENS,
     upstreamRequired: ["d01_strategy_memo"],
@@ -2805,7 +2813,9 @@ Requirements:
         lines.push("");
       }
 
-      const evidenceBlock = formatDraftEvidenceContext(ctx);
+      const evidenceBlock = formatDraftEvidenceContext(ctx, {
+        ticketExcerptCoverage: true,
+      });
       if (evidenceBlock) {
         lines.push(evidenceBlock);
         lines.push("");
