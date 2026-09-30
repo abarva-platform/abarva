@@ -10,13 +10,13 @@
     "This census ranks and does not repair. Each repair is its own backlog item so that a sweep finding twenty routes is not one change nobody reads."
   ],
   "counts": {
-    "routes": 392,
-    "fenced": 216,
-    "fencedDirect": 92,
+    "routes": 393,
+    "fenced": 217,
+    "fencedDirect": 93,
     "fencedIndirect": 124,
     "unfenced": 176,
     "unfencedButReachesFenceModule": 94,
-    "behavioral": 70,
+    "behavioral": 71,
     "byteScannerOnly": 6,
     "none": 140
   },
@@ -4165,6 +4165,7 @@
       "suites": {
         "behavioral": [
           "src/app/api/tower/synthesis/route-fix-c.test.ts",
+          "src/app/api/tower/synthesis/route.citation-claim.test.ts",
           "src/app/api/tower/synthesis/route.invariants.test.ts"
         ],
         "byteScanner": [
@@ -5952,6 +5953,23 @@
         "behavioral": [
           "src/__tests__/integration/source/source-pricing-upload-download-routes.test.ts",
           "src/app/api/v1/source/[eventId]/artifacts/[artifactCode]/render/__tests__/route.test.ts"
+        ],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/v1/source/[eventId]/artifacts/[artifactCode]/restore-current-final/route.ts",
+      "fence": "direct",
+      "fenceSymbols": [
+        "requireTenancy",
+        "tenancyErrorResponse"
+      ],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": "behavioral",
+      "suites": {
+        "behavioral": [
+          "src/app/api/v1/source/[eventId]/artifacts/[artifactCode]/restore-current-final/route.test.ts"
         ],
         "byteScanner": []
       }

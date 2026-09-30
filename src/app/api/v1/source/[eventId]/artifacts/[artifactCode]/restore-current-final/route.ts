@@ -1,4 +1,4 @@
-import { requireTenancy, tenancyErrorResponse } from "@/app/api/v1/_intel-auth";
+import { requireTenancy, tenancyErrorResponse } from "@/lib/auth/tenancy";
 import { getActiveClientRow } from "@/lib/active-client";
 import { clientKeyToInventorySubstrateKey } from "@/lib/agent/tools/intelligence/_shared";
 import { loadUserSourceAccessPolicy } from "@/lib/auth/source-access-policy";

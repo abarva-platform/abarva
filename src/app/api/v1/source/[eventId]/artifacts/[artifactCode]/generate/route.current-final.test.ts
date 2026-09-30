@@ -82,7 +82,7 @@ jest.mock("@/lib/data-plane/postgresCompat", () => ({
 
 it("rejects regeneration before AI or artifact writes when a Client Final is current", async () => {
   const response = await generateSourceArtifactDraft(
-    new Request("http://localhost/generate", { method: "POST", body: "{}" }),
+    new Request("https://app.abarva.ai/generate", { method: "POST", body: "{}" }),
     { params: Promise.resolve({ eventId: "event-1", artifactCode: "d01_strategy_memo" }) },
   );
   expect(response.status).toBe(409);
@@ -98,7 +98,7 @@ it("rejects quality review of a stale substrate link without replacing the accep
     error: null,
   });
   const response = await generateSourceArtifactDraft(
-    new Request("http://localhost/generate", {
+    new Request("https://app.abarva.ai/generate", {
       method: "POST", body: JSON.stringify({ reviewExistingBody: true }),
     }),
     { params: Promise.resolve({ eventId: "event-1", artifactCode: "d01_strategy_memo" }) },
@@ -125,7 +125,7 @@ it("records a failed review of the verified final without writing body, status, 
   }));
   try {
     const response = await generateSourceArtifactDraft(
-      new Request("http://localhost/generate", {
+      new Request("https://app.abarva.ai/generate", {
         method: "POST", body: JSON.stringify({ reviewExistingBody: true }),
       }),
       { params: Promise.resolve({ eventId: "event-1", artifactCode: "d01_strategy_memo" }) },

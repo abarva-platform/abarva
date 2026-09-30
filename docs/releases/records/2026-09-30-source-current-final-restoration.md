@@ -41,6 +41,7 @@ A later draft or quality review could replace the working body's link after a re
 - Pass: Five practical mutations were caught: removal of current-authority filtering, hash verification, UI mismatch check, generation rejection and review-only mode.
 - Pass: Review-only failure test confirms metadata-only persistence and no rewrite or link mutation.
 - Pass: TypeScript with a larger Node heap.
+- Pass: Direct tenancy-fence census and behavioral classification for the new route; DOM integrity and Source stage-shell layout harnesses pass locally.
 - Not run: Signed-in restoration and downstream replay until the official main deploy.
 
 ## Rollout Plan

@@ -15,7 +15,7 @@ let linkedArtifactId = "later-draft";
 let artifactBody = "later draft";
 let eventClientKey = "synthetic-tenant";
 
-jest.mock("@/app/api/v1/_intel-auth", () => ({
+jest.mock("@/lib/auth/tenancy", () => ({
   requireTenancy: jest.fn(async () => ({
     clientId: "client-1", clientKey: "synthetic-tenant", userId: "owner-1",
   })),
@@ -79,7 +79,7 @@ const findFinal = jest.mocked(findCurrentAcceptedClientFinal);
 const policy = jest.mocked(loadUserSourceAccessPolicy);
 
 function restore() {
-  return POST(new Request("http://localhost/restore", { method: "POST" }), {
+  return POST(new Request("https://app.abarva.ai/restore", { method: "POST" }), {
     params: Promise.resolve({ eventId: "event-1", artifactCode: "d01_strategy_memo" }),
   });
 }
