@@ -55,12 +55,14 @@ Moves experience for every tenant.
   field.
 - **Pass:** 9 targeted suites, 70 tests, including Moves aVa and approved
   evidence retrieval.
+- **Pass:** agent chat route suite, 10 suites / 98 tests, including the
+  current-phase evidence-read scope and refusal wiring.
 - **Pass:** `npm run typecheck` using the repository's guarded TypeScript runner.
 - **Pass:** targeted ESLint on all changed TypeScript files.
 - **Pass:** CI coverage census check; committed census is current and these
   suites are already owned by workflow commands.
-- **Pass:** `git diff --check` and `node scripts/release-check.mjs --base
-  origin/main --head HEAD`.
+- **Pass:** `git diff --check`.
+- **Pass:** `node scripts/release-check.mjs` with `--base origin/main --head HEAD`.
 - **Pending:** GitHub CI and deployed signed-in verification.
 
 ## Rollout Plan
