@@ -377,7 +377,7 @@ describe("Moves signed-in phase capture/gate routes", () => {
     });
     loadApprovedMoveEvidenceSnapshot.mockResolvedValue({
       revision: "approved-evidence-revision",
-      latestReviewUpdatedAt: "2026-09-29T17:00:00.000Z",
+      latestEvidenceActivityAt: "2026-09-29T17:00:00.000Z",
     });
     getPhaseSnapshots.mockImplementation(
       async (_ctx: unknown, _programId: string, phase: number) =>

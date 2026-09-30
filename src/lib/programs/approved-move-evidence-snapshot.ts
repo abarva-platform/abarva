@@ -11,7 +11,7 @@ export interface ApprovedMoveEvidenceSnapshot {
   revision: string;
   approvedEvidenceCount: number;
   rows: ApprovedMoveEvidenceRevisionRow[];
-  latestReviewUpdatedAt: string | null;
+  latestEvidenceActivityAt: string | null;
 }
 
 const MAX_APPROVED_EVIDENCE_ROWS = 80;
@@ -123,7 +123,7 @@ export async function loadApprovedMoveEvidenceSnapshot(args: {
     Record<string, unknown>
   >;
   if (reviewActivityRows.length > MAX_REVIEW_ACTIVITY_ROWS) return null;
-  const latestReviewUpdatedAt = latestReviewTimestamp(reviewActivityRows);
+  const latestReviewActivityAt = latestReviewTimestamp(reviewActivityRows);
   const evidenceIds = reviewRows
     .map((row) => stringOrNull(row.evidence_id))
     .filter((id): id is string => Boolean(id));
@@ -133,7 +133,7 @@ export async function loadApprovedMoveEvidenceSnapshot(args: {
       revision: approvedMoveEvidenceRevision({ ...args, rows }),
       approvedEvidenceCount: 0,
       rows,
-      latestReviewUpdatedAt,
+      latestEvidenceActivityAt: latestReviewActivityAt,
     };
   }
 
@@ -161,11 +161,15 @@ export async function loadApprovedMoveEvidenceSnapshot(args: {
     return row ? [row] : [];
   });
   if (rows.length !== evidenceIds.length) return null;
+  const latestEvidenceActivityAt = latestReviewTimestamp([
+    ...reviewActivityRows,
+    ...rows.map((row) => ({ created_at: row.createdAt })),
+  ]);
 
   return {
     revision: approvedMoveEvidenceRevision({ ...args, rows }),
     approvedEvidenceCount: rows.length,
     rows,
-    latestReviewUpdatedAt,
+    latestEvidenceActivityAt,
   };
 }

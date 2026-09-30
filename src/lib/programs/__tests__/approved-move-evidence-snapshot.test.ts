@@ -85,7 +85,7 @@ describe("approved Move evidence snapshot", () => {
 
     expect(snapshot).toMatchObject({
       approvedEvidenceCount: 1,
-      latestReviewUpdatedAt: "2026-09-28T12:30:00.000Z",
+      latestEvidenceActivityAt: "2026-09-28T12:30:00.000Z",
     });
     expect(snapshot?.revision).toMatch(/^[a-f0-9]{64}$/);
     expect(mockFilters).toEqual(
@@ -146,7 +146,7 @@ describe("approved Move evidence snapshot", () => {
 
     expect(snapshot).toMatchObject({
       approvedEvidenceCount: 1,
-      latestReviewUpdatedAt: "2026-09-29T12:30:00.000Z",
+      latestEvidenceActivityAt: "2026-09-29T12:30:00.000Z",
     });
   });
 
@@ -196,7 +196,7 @@ describe("approved Move evidence snapshot", () => {
       tenantKey: "tenant-a",
       moveId: "move-a",
     });
-    expect(evidence?.latestReviewUpdatedAt).toBe("2026-09-29T19:00:00.000Z");
+    expect(evidence?.latestEvidenceActivityAt).toBe("2026-09-29T19:00:00.000Z");
 
     expect(
       effectivePhaseAfterEvidenceChange(
@@ -217,7 +217,59 @@ describe("approved Move evidence snapshot", () => {
         evidence
           ? {
               revision: evidence.revision,
-              latestReviewUpdatedAt: evidence.latestReviewUpdatedAt,
+              latestEvidenceActivityAt: evidence.latestEvidenceActivityAt,
+            }
+          : null,
+      ),
+    ).toBe(1);
+  });
+
+  it("reopens a legacy approval when an approved evidence item was created later", async () => {
+    mockReviewRows.push({
+      evidence_id: "evidence-created-later",
+      decision: "approved",
+      reviewed_at: "2026-09-29T18:00:00.000Z",
+      updated_at: "2026-09-29T18:00:00.000Z",
+      created_at: "2026-09-29T17:30:00.000Z",
+    });
+    mockEvidenceRows.push({
+      id: "evidence-created-later",
+      tenant_key: "tenant-a",
+      program_id: "move-a",
+      phase: 2,
+      evidence_type: "upload",
+      title: "Newly approved evidence",
+      summary: "Approved after the legacy phase gate.",
+      extracted_structured: {},
+      created_at: "2026-09-29T19:00:00.000Z",
+    });
+
+    const evidence = await loadApprovedMoveEvidenceSnapshot({
+      tenantKey: "tenant-a",
+      moveId: "move-a",
+    });
+
+    expect(evidence?.latestEvidenceActivityAt).toBe("2026-09-29T19:00:00.000Z");
+    expect(
+      effectivePhaseAfterEvidenceChange(
+        2,
+        [
+          {
+            id: "legacy-p1-approval",
+            engagementId: "move-a",
+            phaseNumber: 1,
+            phaseName: null,
+            snapshot: {},
+            lockedByUserId: null,
+            lockedAt: "2026-09-29T18:30:00.000Z",
+            approvalStatus: "approved",
+            createdAt: "2026-09-29T18:30:00.000Z",
+          },
+        ],
+        evidence
+          ? {
+              revision: evidence.revision,
+              latestEvidenceActivityAt: evidence.latestEvidenceActivityAt,
             }
           : null,
       ),

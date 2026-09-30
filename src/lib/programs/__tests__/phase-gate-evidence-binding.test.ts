@@ -6,7 +6,7 @@ import type { PhaseSnapshot } from "../types.db";
 
 const currentEvidence = {
   revision: "evidence-revision-2",
-  latestReviewUpdatedAt: "2026-09-29T18:00:00.000Z",
+  latestEvidenceActivityAt: "2026-09-29T18:00:00.000Z",
 };
 
 function approvedSnapshot(
@@ -62,13 +62,13 @@ describe("phase-gate evidence binding", () => {
     expect(
       phaseApprovalMatchesEvidence(1, [legacyApproval], {
         revision: "evidence-revision-2",
-        latestReviewUpdatedAt: "2026-09-29T16:00:00.000Z",
+        latestEvidenceActivityAt: "2026-09-29T16:00:00.000Z",
       }),
     ).toBe(true);
     expect(
       phaseApprovalMatchesEvidence(1, [legacyApproval], {
         revision: "evidence-revision-2",
-        latestReviewUpdatedAt: null,
+        latestEvidenceActivityAt: null,
       }),
     ).toBe(true);
   });
@@ -82,7 +82,7 @@ describe("phase-gate evidence binding", () => {
     expect(
       effectivePhaseAfterEvidenceChange(3, snapshots, {
         revision: "evidence-revision-2",
-        latestReviewUpdatedAt: "2026-09-29T18:00:00.000Z",
+        latestEvidenceActivityAt: "2026-09-29T18:00:00.000Z",
       }),
     ).toBe(1);
   });
@@ -96,7 +96,7 @@ describe("phase-gate evidence binding", () => {
     expect(
       effectivePhaseAfterEvidenceChange(2, snapshots, {
         revision: "evidence-revision-2",
-        latestReviewUpdatedAt: "2026-09-29T18:00:00.000Z",
+        latestEvidenceActivityAt: "2026-09-29T18:00:00.000Z",
       }),
     ).toBe(1);
   });

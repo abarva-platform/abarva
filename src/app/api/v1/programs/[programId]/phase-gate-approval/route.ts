@@ -180,7 +180,7 @@ async function loadEvidenceState(
     return snapshot
       ? {
           revision: snapshot.revision,
-          latestReviewUpdatedAt: snapshot.latestReviewUpdatedAt,
+          latestEvidenceActivityAt: snapshot.latestEvidenceActivityAt,
         }
       : null;
   } catch {

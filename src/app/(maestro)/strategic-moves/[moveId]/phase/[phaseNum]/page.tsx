@@ -328,7 +328,7 @@ export default async function StrategicMovePhaseWorkspacePage({
         evidenceSnapshot
           ? {
               revision: evidenceSnapshot.revision,
-              latestReviewUpdatedAt: evidenceSnapshot.latestReviewUpdatedAt,
+              latestEvidenceActivityAt: evidenceSnapshot.latestEvidenceActivityAt,
             }
           : null,
       );
