@@ -4747,6 +4747,83 @@ describe("MovesPhaseStandaloneClient", () => {
       ).not.toBeInTheDocument();
     });
 
+    it("keeps P2 evidence progress open when current-state readiness has hard gaps", () => {
+      render(
+        <MovesPhaseStandaloneClient
+          carriesForwardContent={[]}
+          currentStateReadiness={makeCurrentStateReadiness()}
+          evidenceNeedPackets={[]}
+          move={makeMove({
+            currentPhase: 2,
+            phaseLabel: "P2 Discover & Diagnose",
+          })}
+          phaseNum={2}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+
+      const progressCard = screen.getByLabelText("Phase progress");
+      expect(within(progressCard).getByText("1 open")).toBeInTheDocument();
+      expect(
+        within(progressCard).queryByText("Covered"),
+      ).not.toBeInTheDocument();
+    });
+
+    it("reports P2 evidence covered when every current-state instrument is committed", () => {
+      const readiness = makeCurrentStateReadiness();
+      const coveredReadiness: ReadinessReport = {
+        ...readiness,
+        instruments: readiness.instruments.map((instrument) => ({
+          ...instrument,
+          status: "committed",
+          committedRows: 1,
+        })),
+        coverageScore: 100,
+        hardGaps: [],
+      };
+
+      render(
+        <MovesPhaseStandaloneClient
+          carriesForwardContent={[]}
+          currentStateReadiness={coveredReadiness}
+          evidenceNeedPackets={[]}
+          move={makeMove({
+            currentPhase: 2,
+            phaseLabel: "P2 Discover & Diagnose",
+          })}
+          phaseNum={2}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+
+      const progressCard = screen.getByLabelText("Phase progress");
+      expect(within(progressCard).getByText("Covered")).toBeInTheDocument();
+      expect(within(progressCard).queryByText(/open$/)).not.toBeInTheDocument();
+    });
+
+    it("does not report P2 evidence as covered when current-state readiness is unavailable", () => {
+      render(
+        <MovesPhaseStandaloneClient
+          carriesForwardContent={[]}
+          currentStateReadiness={null}
+          evidenceNeedPackets={[]}
+          evidenceReadinessAvailable
+          move={makeMove({
+            currentPhase: 2,
+            phaseLabel: "P2 Discover & Diagnose",
+          })}
+          phaseNum={2}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+
+      const progressCard = screen.getByLabelText("Phase progress");
+      expect(within(progressCard).getByText("Not checked")).toBeInTheDocument();
+      expect(
+        within(progressCard).queryByText("Covered"),
+      ).not.toBeInTheDocument();
+    });
+
     it("citation toggle: absent by default (no captured source), then appears and actually reveals/hides the source caption once a real source is captured", () => {
       render(
         <MovesPhaseStandaloneClient
