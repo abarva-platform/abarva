@@ -35,6 +35,12 @@ import {
  * loads the pattern-index modules behind it and measured the floor at 89.92
  * lines against 90. The child process asks the same exported function and is
  * not instrumented, so the floor measures what it measured before.
+ *
+ * A held row can be superseded, by T-779's rule: a triage record beside this
+ * one with a later `recordedAt` that wires the row takes it out of the holds.
+ * A directory whose every row is superseded must be reached by a merge-blocking
+ * invocation and be out of the dark baseline; a partly superseded one keeps its
+ * remaining rows held. T-782 supersedes the whole initiative-deep directory.
  */
 
 const repoRoot = path.resolve(__dirname, "../../..");
@@ -78,6 +84,33 @@ const record = JSON.parse(
 const wiredRows = record.suites.filter((suite) => suite.wiredInThisItem);
 const wiredDirectories = [...new Set(wiredRows.map((row) => row.directory))].sort();
 const heldDirectories = Object.keys(record.heldDirectories).sort();
+
+/**
+ * Paths a triage record dated AFTER this one wires. Read from every
+ * `*triage*.json` beside this record, not from a named successor, so a later
+ * record cannot be missed by being filed under a different item.
+ */
+function wiredByALaterRecord(): Set<string> {
+  const dir = path.dirname(TRIAGE_RECORD);
+  const wired = new Set<string>();
+  for (const name of readdirSync(path.join(repoRoot, dir))) {
+    if (!/triage.*\.json$/.test(name)) continue;
+    const later = JSON.parse(
+      readFileSync(path.join(repoRoot, dir, name), "utf8"),
+    ) as { recordedAt?: string; suites?: { path: string; wiredInThisItem?: boolean }[] };
+    if (!later.recordedAt || later.recordedAt <= record.recordedAt) continue;
+    for (const row of later.suites ?? []) {
+      if (row.wiredInThisItem === true) wired.add(row.path);
+    }
+  }
+  return wired;
+}
+
+const supersededByWiring = wiredByALaterRecord();
+const stillHeldRows = (directory: string) =>
+  record.suites.filter(
+    (suite) => suite.directory === directory && !supersededByWiring.has(suite.path),
+  );
 
 const packageScripts = JSON.parse(
   readFileSync(path.join(repoRoot, "package.json"), "utf8"),
@@ -270,14 +303,26 @@ describe("T-781 — tenth stale-suite draw, wiring and holds", () => {
     expect(heldDirectories.length).toBeGreaterThan(0);
     for (const directory of heldDirectories) {
       const rows = record.suites.filter((suite) => suite.directory === directory);
+      const stillHeld = stillHeldRows(directory);
+      const superseded = rows.filter((row) => supersededByWiring.has(row.path));
+      // A directory is dark only while every row in it is still held.
       expect({
         directory,
         wiredHere: rows.filter((row) => row.wiredInThisItem).length,
-        reached: rows
+        reached: stillHeld
           .map((row) => row.path)
           .filter((suitePath) => reachedByAMergeBlockingInvocation(suitePath)),
+        supersededButUnreached: superseded
+          .map((row) => row.path)
+          .filter((suitePath) => !reachedByAMergeBlockingInvocation(suitePath)),
         inDarkBaseline: darkBaseline.includes(directory),
-      }).toEqual({ directory, wiredHere: 0, reached: [], inDarkBaseline: true });
+      }).toEqual({
+        directory,
+        wiredHere: 0,
+        reached: [],
+        supersededButUnreached: [],
+        inDarkBaseline: superseded.length === 0,
+      });
     }
   });
 
@@ -300,7 +345,9 @@ describe("T-781 — tenth stale-suite draw, wiring and holds", () => {
       },
     };
     for (const directory of heldDirectories) {
-      const rows = record.suites.filter((suite) => suite.directory === directory);
+      const rows = stillHeldRows(directory);
+      // Wholly superseded: the case above proves it is reached instead.
+      if (rows.length === 0) continue;
       const { holdKinds, successorFiledAs } = record.heldDirectories[directory];
       expect(holdKinds.length).toBeGreaterThan(0);
       expect({

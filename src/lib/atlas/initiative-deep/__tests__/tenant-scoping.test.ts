@@ -8,6 +8,7 @@
 
 import { getInitiativeDeepView } from '../retrieve';
 import { mockClient } from '../_test-mock-client';
+import { CANONICAL_TENANT_KEYS, LEGACY_TENANT_ALIASES } from '@/lib/tenant/aliases';
 
 const MERIDIAN = { clientId: 'client-meridian', userId: null };
 const APEX = { clientId: 'client-apex', userId: null };
@@ -372,9 +373,12 @@ describe('tenant scoping — P0 invariant', () => {
 
   // The byte scan this replaces asked whether a tenant key is written into the
   // module. What matters is whether one changes its behaviour, so ask that: the
-  // same data under a named tenant key and under a neutral one must produce the
-  // same view, whether the key is special-cased or used as a literal filter.
-  it.each(['meridian', 'apexretail', 'arcturus'])(
+  // same data under a tenant key and under a neutral one must produce the same
+  // view, whether the key is special-cased or used as a literal filter. The
+  // keys come from code, canonical and legacy alike, never a typed list.
+  const tenantKeys = [...new Set([...CANONICAL_TENANT_KEYS, ...LEGACY_TENANT_ALIASES])];
+
+  it.each(tenantKeys)(
     'treats tenant key %s exactly like a neutral key',
     async (tenantKey) => {
       const relabel = (from: string, to: string) => {
