@@ -1,4 +1,8 @@
 import { buildMoveEvidenceNeedPackets } from "../move-evidence-need-packet";
+import {
+  currentPhaseRequiredEvidenceGaps,
+  p0SourceEvidenceNeedPacket,
+} from "../../phase-progress-readiness";
 import type { DiscoveryEvidenceReadiness } from "@/lib/programs/discovery/evidence-readiness";
 import { buildMovesAvaChatPacket } from "@/lib/programs/ava-chat/packet";
 import { buildDeterministicMovesAvaStatusAnswer } from "@/lib/programs/ava-chat/deterministic-answer";
@@ -56,6 +60,46 @@ function readiness(): DiscoveryEvidenceReadiness {
 }
 
 describe("buildMoveEvidenceNeedPackets", () => {
+  it.each([0, 1])(
+    "keeps discovery-family evidence out of P%d readiness and blocks it in P2",
+    (currentPhase) => {
+      const packets = buildMoveEvidenceNeedPackets({
+        moveId: "move-1",
+        moveName: "Contact Center Agent Assist",
+        currentPhase,
+        readiness: readiness(),
+      });
+
+      expect(packets.map((packet) => packet.phase)).toEqual([2, 2]);
+      expect(
+        currentPhaseRequiredEvidenceGaps(packets, currentPhase),
+      ).toHaveLength(0);
+      expect(currentPhaseRequiredEvidenceGaps(packets, 2)).toHaveLength(2);
+      if (currentPhase === 0) {
+        const missingP0Source = p0SourceEvidenceNeedPacket({
+          moveId: "move-1",
+          evidenceTitles: [],
+        });
+        const reviewedP0Source = p0SourceEvidenceNeedPacket({
+          moveId: "move-1",
+          evidenceTitles: ["source-note.md"],
+        });
+        expect(
+          currentPhaseRequiredEvidenceGaps(
+            [...packets, missingP0Source],
+            currentPhase,
+          ),
+        ).toEqual([missingP0Source]);
+        expect(
+          currentPhaseRequiredEvidenceGaps(
+            [...packets, reviewedP0Source],
+            currentPhase,
+          ),
+        ).toHaveLength(0);
+      }
+    },
+  );
+
   it("turns AP invoice readiness gaps into AP-specific client actions", () => {
     const packets = buildMoveEvidenceNeedPackets({
       moveId: "move-1",

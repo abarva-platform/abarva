@@ -580,6 +580,15 @@ function gapForFamily(
 export function buildMoveEvidenceNeedPackets(
   input: MoveEvidenceNeedPacketInput,
 ): MoveEvidenceNeedPacket[] {
+  // These families come from DiscoveryEvidenceReadiness. Keep their minimum
+  // collection phase at P2 so a P0/P1 look-ahead cannot become a premature gate.
+  // Once discovery is active, retain the current phase so reopened evidence
+  // continues to participate in the active gate.
+  const evidencePhase =
+    input.currentPhase === null || input.currentPhase === undefined
+      ? null
+      : Math.max(2, input.currentPhase);
+
   return input.readiness.families.map((family) => {
     const gap = gapForFamily(family, input.readiness.gapRegister);
     const guidance = familyGuidance(family.familyId, input.moveName);
@@ -604,7 +613,7 @@ export function buildMoveEvidenceNeedPackets(
 
     return {
       moveId: input.moveId,
-      phase: input.currentPhase ?? null,
+      phase: evidencePhase,
       artifactType: blockedArtifacts[0]?.artifactType ?? null,
       evidenceSlot: family.label,
       familyId: family.familyId,
