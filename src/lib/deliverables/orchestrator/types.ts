@@ -465,6 +465,8 @@ export interface QualityValidationResult {
 /** The structured document the model returns at render_package time. */
 export interface RenderableDeliverable {
   title: string;
+  /** Canonical deliverable key, carried by persistence for format-specific layout. */
+  deliverableType?: string;
   subtitle?: string;
   clientDisplayName: string;
   initiativeDisplayName: string;

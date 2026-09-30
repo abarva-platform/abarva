@@ -124,6 +124,53 @@ describe("DOCX/HTML/PDF renderers — duplicate section-heading suppression", ()
     const html = renderDeliverableHtml(doc);
     expect(html).toMatch(/A Different Sub-heading/);
   });
+
+  it("suppresses a numbered copy of the section title", async () => {
+    const doc = goodDocument();
+    doc.generatedSections = [
+      {
+        key: "opportunity_context",
+        title: "Opportunity, Context & Intended Outcomes",
+        bodyMarkdown:
+          "## 2. Opportunity, Context & Intended Outcomes\n\nThe evidence-bounded charter summary.",
+        groundingMode: "mixed",
+        citationsUsed: [],
+      },
+    ];
+
+    const buf = await Packer.toBuffer(renderDeliverableDocx(doc));
+    const zip = await JSZip.loadAsync(buf);
+    const documentXml = await zip.file("word/document.xml")!.async("string");
+    const occurrences =
+      documentXml.match(/Opportunity, Context &amp; Intended Outcomes/g) ?? [];
+
+    expect(occurrences).toHaveLength(1);
+    expect(documentXml).toContain("The evidence-bounded charter summary.");
+  });
+
+  it("flows a charter through tables and the recommendation without stranded page breaks", async () => {
+    const doc = goodDocument();
+    doc.deliverableType = "charter";
+
+    const buf = await Packer.toBuffer(renderDeliverableDocx(doc));
+    const zip = await JSZip.loadAsync(buf);
+    const documentXml = await zip.file("word/document.xml")!.async("string");
+    const explicitPageBreaks = documentXml.match(/<w:pageBreakBefore\s*\/>/g) ?? [];
+
+    expect(documentXml).toContain("Risks, Issues &amp; Dependencies");
+    expect(documentXml).toContain("Recommendation");
+    expect(documentXml).toContain("Source Register");
+    expect(explicitPageBreaks).toHaveLength(0);
+  });
+
+  it("preserves section page breaks for non-charter deliverables", async () => {
+    const buf = await Packer.toBuffer(renderDeliverableDocx(goodDocument()));
+    const zip = await JSZip.loadAsync(buf);
+    const documentXml = await zip.file("word/document.xml")!.async("string");
+    const explicitPageBreaks = documentXml.match(/<w:pageBreakBefore\s*\/>/g) ?? [];
+
+    expect(explicitPageBreaks).toHaveLength(4);
+  });
 });
 
 describe("renderers — malformed section-object body recovery", () => {
