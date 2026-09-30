@@ -1,3 +1,4 @@
+import { execFileSync } from "node:child_process";
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import path from "node:path";
 
@@ -5,7 +6,6 @@ import {
   collectReachableCommands,
   reachableEntrySelects,
 } from "../../../scripts/quality/test-ci-coverage-census.mjs";
-import { normalizeCanonicalIndustry } from "@/lib/sentinel/canonical-grounding";
 
 /**
  * Item T-781, the tenth stale-suite triage draw: ranks 1-5 of the
@@ -28,6 +28,13 @@ import { normalizeCanonicalIndustry } from "@/lib/sentinel/canonical-grounding";
  * the live `normalizeCanonicalIndustry`; and a test-only subject that must
  * still be listed `testOnly` in `docs/architecture/orphaned-lib-modules.json`.
  * When the reason goes away, the hold goes red and says so.
+ *
+ * The live function is called in a `tsx` child process, not imported. This
+ * directory runs under the behavior coverage floor, which thresholds an
+ * aggregate over every module its suites load; importing `canonical-grounding`
+ * loads the pattern-index modules behind it and measured the floor at 89.92
+ * lines against 90. The child process asks the same exported function and is
+ * not instrumented, so the floor measures what it measured before.
  */
 
 const repoRoot = path.resolve(__dirname, "../../..");
@@ -141,6 +148,22 @@ function nonTestImporters(subject: string, sourceFiles: string[]): string[] {
 const darkBaseline = JSON.parse(
   readFileSync(path.join(repoRoot, DARK_BASELINE), "utf8"),
 ) as string[];
+
+/** Ask the live `normalizeCanonicalIndustry` for each input, out of process. */
+function normalizeOutOfProcess(inputs: string[]): Record<string, string | null> {
+  const script = [
+    'import { normalizeCanonicalIndustry } from "./src/lib/sentinel/canonical-grounding";',
+    "const inputs = JSON.parse(process.env.T781_INPUTS ?? '[]');",
+    "process.stdout.write(JSON.stringify(Object.fromEntries(",
+    "  inputs.map((input) => [input, normalizeCanonicalIndustry(input) ?? null]))));",
+  ].join("\n");
+  const out = execFileSync(path.join(repoRoot, "node_modules/.bin/tsx"), ["-e", script], {
+    cwd: repoRoot,
+    env: { ...process.env, T781_INPUTS: JSON.stringify(inputs) },
+    encoding: "utf8",
+  });
+  return JSON.parse(out) as Record<string, string | null>;
+}
 
 const testOnlyModules = new Set(
   (
@@ -259,11 +282,15 @@ describe("T-781 — tenth stale-suite draw, wiring and holds", () => {
   });
 
   it("holds each directory for reasons this suite recomputes, not ones it is told", () => {
+    const probed = normalizeOutOfProcess(
+      record.suites.flatMap((row) => (row.redProbe ? [row.redProbe.input] : [])),
+    );
     const reasonHolds: Record<HoldKind, (row: SuiteRow) => boolean> = {
       red: (row) =>
         !row.green &&
         row.redProbe !== undefined &&
-        normalizeCanonicalIndustry(row.redProbe.input) !== row.redProbe.expectedByTest,
+        probed[row.redProbe.input] === row.redProbe.returnedByCode &&
+        probed[row.redProbe.input] !== row.redProbe.expectedByTest,
       test_only_subject: (row) =>
         row.testOnlySubject !== undefined && testOnlyModules.has(row.testOnlySubject),
       source_text_scanner: (row) => {
