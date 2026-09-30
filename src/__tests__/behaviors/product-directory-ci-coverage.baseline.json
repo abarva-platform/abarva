@@ -87,7 +87,6 @@
   "src/lib/parallel-run/__tests__",
   "src/lib/patternops",
   "src/lib/pilot-dashboard/__tests__",
-  "src/lib/programs/controls/__tests__",
   "src/lib/programs/decomposition/__tests__",
   "src/lib/programs/evidence-readiness/__tests__",
   "src/lib/programs/learning-writeback/__tests__",
