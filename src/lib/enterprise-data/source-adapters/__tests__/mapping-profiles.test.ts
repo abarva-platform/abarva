@@ -360,6 +360,55 @@ function csvValueFor(
 }
 
 describe("contract-aligned mapping profiles", () => {
+  it("maps declared business segments as named canonical objects", async () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "nexus-segments-"));
+    const sourcePath = path.join(dir, "01b_business_segments.csv");
+    fs.writeFileSync(
+      sourcePath,
+      "tenant_key,segment_key,segment_name,revenue_share_pct,revenue_usd,pnl_owner_role,source_file\n" +
+        "test-tenant,care_delivery,Care Delivery,42,10500000000,Chief Operating Officer,declared-profile.csv\n",
+    );
+
+    try {
+      const result = await new CsvSourceAdapter().parse({
+        tenantKey: "test-tenant",
+        packetId: "test-packet",
+        packetVersion: "test-version",
+        sourcePath,
+        packetFile: {
+          path: sourcePath,
+          sourceClass: "business_segments",
+          sourceProfile: "business-segments/v1",
+          mappingProfile: "business-segments/v1",
+          adapterKey: "csv",
+          dataStatus: "synthetic",
+          sensitivity: "internal",
+          evidenceBasis: "source_file",
+          required: true,
+          expectedDomains: ["enterprise_structure", "financial_value"],
+        },
+        sourceProfile: "business-segments/v1",
+        parserVersion: "csv-adapter/v1",
+        mappingProfile: "business-segments/v1",
+        observedAt: "2026-09-30T00:00:00.000Z",
+      });
+
+      expect(result.quarantinedRecordCount).toBe(0);
+      expect(result.records[0]).toMatchObject({
+        objectType: "business_segment",
+        sourceObjectId: "care-delivery",
+        qualityStatus: "valid",
+      });
+      expect(result.records[0].attributes).toMatchObject({
+        segmentName: { value: "Care Delivery" },
+        revenueSharePct: { value: 42 },
+        revenueUsd: { value: 10500000000 },
+      });
+    } finally {
+      fs.rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
   it.each(contractAlignedProfiles)(
     "uses only declared columns for $mappingProfile",
     ({ mappingProfile, templateFile, sourceClass }) => {
