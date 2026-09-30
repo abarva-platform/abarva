@@ -7751,13 +7751,14 @@ function StageCriterionReview({
           !isArtifactGateReady(artifacts.find((artifact) => artifact.artifactCode === code)),
         );
         const isRecorded = current?.state === "met" || current?.state === "waived";
+        const isNotMet = current?.state === "not_met";
         return (
           <div key={definition.criterionId} style={{ borderBottom: `1px solid ${ANALYTICS.LINE_SOFT}`, padding: "12px 0" }}>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
               <div style={{ display: "grid", gap: 4 }}>
                 <strong style={{ fontSize: 13 }}>{title}</strong>
                 <span style={{ color: isRecorded ? ANALYTICS.GREEN_TEXT : ANALYTICS.MUTED, fontSize: 12 }}>
-                  {isRecorded ? "Recorded" : missingArtifacts.length
+                  {isRecorded ? "Recorded" : isNotMet ? "Not met" : missingArtifacts.length
                     ? `Client Final required for ${missingArtifacts.map((code) => specByCode(code)?.name ?? "required artifact").join(", ")}`
                     : current ? "Ready for Event Owner review" : "Criterion state unavailable"}
                 </span>
@@ -7765,11 +7766,16 @@ function StageCriterionReview({
               {canReview && current && isRecorded ? (
                 <button type="button" style={BUTTON_STYLE} disabled={pendingId !== null}
                   onClick={() => void changeState(definition.criterionId, "pending", "")}>Reopen</button>
-              ) : canReview && current && missingArtifacts.length === 0 ? (
-                <button type="button" style={BUTTON_STYLE} disabled={pendingId !== null}
-                  onClick={() => { setOpenId(definition.criterionId); setReason(""); setError(null); }}>
-                  Review {title}
-                </button>
+              ) : canReview && current ? (
+                <div style={{ display: "flex", gap: 8 }}>
+                  {missingArtifacts.length > 0 ? (
+                    <button type="button" style={BUTTON_STYLE} onClick={onGoToFiles}>Open files</button>
+                  ) : null}
+                  <button type="button" style={BUTTON_STYLE} disabled={pendingId !== null}
+                    onClick={() => { setOpenId(definition.criterionId); setReason(""); setError(null); }}>
+                    Review {title}
+                  </button>
+                </div>
               ) : missingArtifacts.length > 0 ? (
                 <button type="button" style={BUTTON_STYLE} onClick={onGoToFiles}>Open files</button>
               ) : null}
@@ -7779,12 +7785,17 @@ function StageCriterionReview({
                 <label htmlFor="source-criterion-rationale" style={{ fontSize: 12, fontWeight: 700 }}>Criterion rationale</label>
                 <textarea id="source-criterion-rationale" value={reason} rows={3}
                   onChange={(event) => setReason(event.target.value)}
-                  placeholder="Record what you reviewed and why this criterion is met."
+                  placeholder="Record what you reviewed and why this criterion is met or not met."
                   style={{ width: "100%", border: `1px solid ${ANALYTICS.LINE}`, borderRadius: 6, padding: 9 }} />
-                <div>
-                  <button type="button" style={{ ...BUTTON_STYLE, padding: "8px 12px", background: reason.trim().length >= SOURCE_APPROVAL_REASON_MIN_LENGTH ? ANALYTICS.GREEN : ANALYTICS.SOFT, color: reason.trim().length >= SOURCE_APPROVAL_REASON_MIN_LENGTH ? "#fff" : ANALYTICS.MUTED }}
+                <div style={{ display: "flex", gap: 8 }}>
+                  {missingArtifacts.length === 0 ? (
+                    <button type="button" style={{ ...BUTTON_STYLE, padding: "8px 12px", background: reason.trim().length >= SOURCE_APPROVAL_REASON_MIN_LENGTH ? ANALYTICS.GREEN : ANALYTICS.SOFT, color: reason.trim().length >= SOURCE_APPROVAL_REASON_MIN_LENGTH ? "#fff" : ANALYTICS.MUTED }}
+                      disabled={reason.trim().length < SOURCE_APPROVAL_REASON_MIN_LENGTH || pendingId !== null}
+                      onClick={() => void changeState(definition.criterionId, "met", reason.trim())}>Mark criterion met</button>
+                  ) : null}
+                  <button type="button" style={{ ...BUTTON_STYLE, padding: "8px 12px" }}
                     disabled={reason.trim().length < SOURCE_APPROVAL_REASON_MIN_LENGTH || pendingId !== null}
-                    onClick={() => void changeState(definition.criterionId, "met", reason.trim())}>Mark criterion met</button>
+                    onClick={() => void changeState(definition.criterionId, "not_met", reason.trim())}>Record not met</button>
                 </div>
               </div>
             ) : null}

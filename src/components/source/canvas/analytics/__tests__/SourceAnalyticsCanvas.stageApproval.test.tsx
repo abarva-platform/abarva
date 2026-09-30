@@ -317,6 +317,38 @@ describe("SourceAnalyticsCanvas stage workflow", () => {
     rerender(<SourceAnalyticsCanvas {...props} stageArtifactStates={artifacts.filter((artifact) => artifact.artifactCode !== "d04_app_inv")} />);
     expect(screen.getByTestId("source-stage-criterion-review")).toHaveTextContent("Client Final required for Application Inventory & Tiering");
     expect(screen.getByTestId("source-stage-criterion-review")).not.toHaveTextContent("d04_app_inv");
+
+    (global.fetch as jest.Mock).mockClear();
+    fireEvent.click(within(screen.getByTestId("source-stage-criterion-review")).getByRole("button", {
+      name: "Review Application portfolio reviewed by Event Owner",
+    }));
+    expect(screen.queryByRole("button", { name: "Mark criterion met" })).toBeNull();
+    expect(screen.getByRole("button", { name: "Record not met" })).toBeDisabled();
+    fireEvent.change(screen.getByLabelText("Criterion rationale"), { target: {
+      value: "Synthetic review: the service-tower list has no validated application tiers or EA classification.",
+    } });
+    expect(screen.getByRole("button", { name: "Record not met" })).toBeEnabled();
+    fireEvent.click(screen.getByRole("button", { name: "Record not met" }));
+    await waitFor(() => expect(global.fetch).toHaveBeenCalledWith(
+      `/api/v1/source/${EVENT.id}/gate-criteria/GATE-SCOPE-01/state`,
+      expect.objectContaining({ method: "PATCH", credentials: "include" }),
+    ));
+    expect(JSON.parse((global.fetch as jest.Mock).mock.calls[0][1].body)).toEqual({
+      state: "not_met",
+      reason: "Synthetic review: the service-tower list has no validated application tiers or EA classification.",
+    });
+
+    rerender(<SourceAnalyticsCanvas {...props} gateCriterionStates={states.map((state) =>
+      state.criterionId === "GATE-SCOPE-01"
+        ? { ...state, state: "not_met" as const, notes: "Application tiers remain unvalidated." }
+        : state)} />);
+    expect(screen.getByTestId("source-stage-criterion-review")).toHaveTextContent("Not met");
+    expect(screen.getByTestId("source-shell-approval-readiness")).toHaveTextContent("Gate criteria still open");
+    rerender(<SourceAnalyticsCanvas {...props} canRetireEvent={false}
+      stageArtifactStates={artifacts.filter((artifact) => artifact.artifactCode !== "d04_app_inv")} />);
+    expect(within(screen.getByTestId("source-stage-criterion-review")).queryByRole("button", {
+      name: "Review Application portfolio reviewed by Event Owner",
+    })).toBeNull();
   });
 
   it("offers Strategy approval only after every canonical criterion and its evidence are ready", () => {
