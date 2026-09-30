@@ -89,6 +89,7 @@ import {
   evidenceForStage,
   requiredEvidenceForStage,
   requiredSpecsForStage,
+  specByCode,
   type SourceEvidenceRequirement,
 } from "@/lib/source/canonical-specs";
 import type {
@@ -7757,7 +7758,7 @@ function StageCriterionReview({
                 <strong style={{ fontSize: 13 }}>{title}</strong>
                 <span style={{ color: isRecorded ? ANALYTICS.GREEN_TEXT : ANALYTICS.MUTED, fontSize: 12 }}>
                   {isRecorded ? "Recorded" : missingArtifacts.length
-                    ? `Client Final required for ${missingArtifacts.join(", ")}`
+                    ? `Client Final required for ${missingArtifacts.map((code) => specByCode(code)?.name ?? "required artifact").join(", ")}`
                     : current ? "Ready for Event Owner review" : "Criterion state unavailable"}
                 </span>
               </div>

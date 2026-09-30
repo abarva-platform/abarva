@@ -242,7 +242,7 @@ describe("SourceAnalyticsCanvas stage workflow", () => {
 
     expect(screen.getByTestId("source-stage-criterion-review")).toHaveTextContent("0 of 3 recorded");
     expect(screen.getByTestId("source-stage-criterion-review")).toHaveTextContent("Archetype + rigor level chosen");
-    expect(screen.getByTestId("source-stage-criterion-review")).toHaveTextContent("Client Final required for d03_archetype_decision");
+    expect(screen.getByTestId("source-stage-criterion-review")).toHaveTextContent("Client Final required for Archetype Decision Record");
     expect(screen.queryByTestId("source-stage-gate-approve")).toBeNull();
     expect(screen.queryByText("This viewer does not currently have the server-side approval action armed.")).toBeNull();
     fireEvent.click(screen.getByRole("button", { name: "Review Sourcing strategy memo approved by Event Owner" }));
@@ -313,6 +313,10 @@ describe("SourceAnalyticsCanvas stage workflow", () => {
     expect(within(screen.getByTestId("source-stage-criterion-review")).queryByRole("button", {
       name: "Review Exclusion log reviewed by Event Owner",
     })).toBeNull();
+
+    rerender(<SourceAnalyticsCanvas {...props} stageArtifactStates={artifacts.filter((artifact) => artifact.artifactCode !== "d04_app_inv")} />);
+    expect(screen.getByTestId("source-stage-criterion-review")).toHaveTextContent("Client Final required for Application Inventory & Tiering");
+    expect(screen.getByTestId("source-stage-criterion-review")).not.toHaveTextContent("d04_app_inv");
   });
 
   it("offers Strategy approval only after every canonical criterion and its evidence are ready", () => {

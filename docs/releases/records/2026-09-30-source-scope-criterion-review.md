@@ -30,6 +30,7 @@ Layer 4 Source presentation only. No canonical data, adapter, or intake contract
 
 - Reuse the governed stage-criterion review control for Scope as well as Strategy.
 - Derive Scope approval readiness from the recorded criteria and the server-armed action, while preserving the distinct unrouted-approval state.
+- Name missing linked Client Finals with the canonical artifact title instead of a storage code.
 - Keep current-stage, active-event, linked Client Final, and authorized-review checks.
 - Add a mounted Scope interaction test covering the criterion PATCH and unavailable review controls for an unauthorized viewer.
 
@@ -38,6 +39,7 @@ Layer 4 Source presentation only. No canonical data, adapter, or intake contract
 - Red-first mounted Scope test failed because no criterion review was rendered; passed after the change.
 - Focused Source stage-approval tests, TypeScript, scoped ESLint, release check, and diff check before PR.
 - Negative mutation of the review authorization guard before PR.
+- Red-first missing-artifact label test and full Source component group (29 suites / 206 tests) after CI exposed a builder-code disclosure.
 - Signed-in replay remains required after the official deploy.
 
 ## Rollout Plan
