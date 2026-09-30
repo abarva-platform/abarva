@@ -29,7 +29,7 @@ The Scope responsibility step now asks the authorized Event Owner to name retain
 ## Changes Included
 
 - Scope decision evidence definition, task binding, validated answer route, source-aware readback, and step form.
-- Keep the decision out of file-upload checklists and templates; it is recorded in the accountable workflow step.
+- Keep the decision in a separate workflow-decision registry, outside file-upload checklists and templates; it is recorded in the accountable step.
 - No schema migration or data build.
 
 ## QA / Validation
@@ -37,7 +37,7 @@ The Scope responsibility step now asks the authorized Event Owner to name retain
 - Pass: red-first route, task binding, readback, and mounted UI behavior tests.
 - Pass: authorization and changed-source mutations each caused their expected regression test to fail, then were restored.
 - Pass: focused tests, TypeScript, scoped ESLint, release check, and diff check before PR.
-- Pass: the Source core CI failure exposed an upload-only catalog assumption; the corrected 89-suite/880-test core run and mounted Files regression pass locally.
+- Pass: two upload-only catalog assumptions surfaced in CI; the corrected Source core, export, canvas, and facts run passes locally (182 suites/1,938 tests). Mounted Files and direct-template negatives pass.
 - Not run: CI and signed-in acceptance until the PR is opened, merged, and officially deployed.
 
 ## Rollout Plan
