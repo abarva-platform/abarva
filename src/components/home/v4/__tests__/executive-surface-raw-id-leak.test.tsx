@@ -152,6 +152,39 @@ describe("the executive Home surface keeps raw evidence identifiers off the page
     expect(asserted).toBe(reviewedTenants.length);
   });
 
+  it("distinguishes a resolved context id from a source-backed context fact", () => {
+    const packet = {
+      signals: [],
+      contextItems: [
+        {
+          id: "ctx_ecl_applications_application_APP_1",
+          statement: "A sourced application record.",
+          domains: ["application_system"],
+          evidenceRefs: ["canonical-source-1"],
+        },
+        {
+          id: "ctx_ecl_applications_application_APP_2",
+          statement: "A row without an admitted source link.",
+          domains: ["application_system"],
+          evidenceRefs: [],
+        },
+      ],
+    } as unknown as EnterpriseSignalPacket;
+
+    const sourced = sourceForIds(
+      ["ctx_ecl_applications_application_APP_1"],
+      packet,
+    );
+    const unlinked = sourceForIds(
+      ["ctx_ecl_applications_application_APP_2"],
+      packet,
+    );
+    expect(sourced.hasUnresolved).toBe(false);
+    expect(unlinked.hasUnresolved).toBe(true);
+    expect(unlinked.ids).toContain("need source mapping");
+    expect(unlinked.ids).not.toContain("APP_2");
+  });
+
   it("renders no cited identifier anywhere a reader of the record band can see it", () => {
     let asserted = 0;
     for (const tenant of reviewedTenants) {
@@ -187,7 +220,10 @@ describe("the executive Home surface keeps raw evidence identifiers off the page
        * The property here is the internal key, and only that. */
       const claim = claimWhoseEvidenceCarriesReferences(tenant);
       expect(claim).not.toBeNull();
-      const resolved = resolveEvidence(claim!.evidence_ids, tenant.signalPacket);
+      const resolved = resolveEvidence(
+        claim!.evidence_ids,
+        tenant.signalPacket,
+      );
       expect(
         resolved.filter((item) => (item.evidenceRefs ?? []).length > 0).length,
       ).toBeGreaterThan(0);

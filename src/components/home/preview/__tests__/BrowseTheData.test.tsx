@@ -12,18 +12,27 @@ describe("BrowseTheData", () => {
 
   it("shows a slice/dice browser with every signal and context item available", () => {
     render(<BrowseTheData signalPacket={bundle.thesis.signalPacket} />);
-    const total = bundle.thesis.signalPacket.signals.length + bundle.thesis.signalPacket.contextItems.length;
+    const total =
+      bundle.thesis.signalPacket.signals.length +
+      bundle.thesis.signalPacket.contextItems.length;
     expect(screen.getByText("Slice / dice viewer")).toBeInTheDocument();
     expect(screen.getByLabelText("Slice by")).toBeInTheDocument();
     expect(screen.getByLabelText("Dice by")).toBeInTheDocument();
-    expect(screen.getByRole("columnheader", { name: "Fact ID" })).toBeInTheDocument();
-    expect(screen.getByRole("columnheader", { name: "Statement" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("columnheader", { name: "Fact ID" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("columnheader", { name: "Statement" }),
+    ).toBeInTheDocument();
     const metrics = screen.getByText("facts in packet").closest("section");
     expect(metrics).not.toBeNull();
-    expect(within(metrics as HTMLElement).getByText(total.toLocaleString())).toBeInTheDocument();
     expect(
-      screen.getByText((_, element) =>
-        element?.textContent === `${total} of ${total} facts shown`,
+      within(metrics as HTMLElement).getByText(total.toLocaleString()),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        (_, element) =>
+          element?.textContent === `${total} of ${total} facts shown`,
       ),
     ).toBeInTheDocument();
   });
@@ -31,21 +40,35 @@ describe("BrowseTheData", () => {
   it("narrows results on search text", () => {
     render(<BrowseTheData signalPacket={bundle.thesis.signalPacket} />);
     const target = bundle.thesis.signalPacket.signals[0];
-    const searchTerm = target.statement.split(" ").find((w) => w.length > 5) ?? target.statement.slice(0, 8);
-    fireEvent.change(screen.getByLabelText("Search facts"), { target: { value: searchTerm } });
+    const searchTerm =
+      target.statement.split(" ").find((w) => w.length > 5) ??
+      target.statement.slice(0, 8);
+    fireEvent.change(screen.getByLabelText("Search facts"), {
+      target: { value: searchTerm },
+    });
     expect(screen.getAllByText(target.statement).length).toBeGreaterThan(0);
   });
 
   it("shows an honest empty state for a search matching nothing", () => {
     render(<BrowseTheData signalPacket={bundle.thesis.signalPacket} />);
-    fireEvent.change(screen.getByLabelText("Search facts"), { target: { value: "zzz_no_such_fact_zzz" } });
-    expect(screen.getByText("No facts match the current filters.")).toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText("Search facts"), {
+      target: { value: "zzz_no_such_fact_zzz" },
+    });
+    expect(
+      screen.getByText("No facts match the current filters."),
+    ).toBeInTheDocument();
   });
 
   it("narrows by a selected dimension value", () => {
     render(<BrowseTheData signalPacket={bundle.thesis.signalPacket} />);
-    fireEvent.change(screen.getByLabelText("Slice value"), { target: { value: "vendor_contract" } });
-    expect(screen.getByText((_, element) => element?.textContent === "4 of 114 facts shown")).toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText("Slice value"), {
+      target: { value: "vendor_contract" },
+    });
+    expect(
+      screen.getByText(
+        (_, element) => element?.textContent === "4 of 114 facts shown",
+      ),
+    ).toBeInTheDocument();
   });
 
   it("shows source-family coverage when the producer supplies source summaries", () => {
@@ -64,7 +87,11 @@ describe("BrowseTheData", () => {
               basis: ["deterministic_ecl_projection"],
               authority: ["serving.home_applications_systems"],
               qualityStates: ["projection_row_read"],
-              materialFields: ["systemName", "businessFunction", "annualCostUsd"],
+              materialFields: [
+                "systemName",
+                "businessFunction",
+                "annualCostUsd",
+              ],
               exampleRecords: ["Epic Tapestry"],
             },
             {
@@ -86,8 +113,59 @@ describe("BrowseTheData", () => {
     );
 
     expect(screen.getByLabelText("Source family coverage")).toBeInTheDocument();
-    expect(screen.getByText("serving.home_applications_systems")).toBeInTheDocument();
-    expect(screen.getByText("2 source families · 980 records summarized")).toBeInTheDocument();
-    expect(screen.queryByText("Source-file rollup not supplied in this packet")).not.toBeInTheDocument();
+    expect(
+      screen.getByText("serving.home_applications_systems"),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText("2 source families · 980 records summarized"),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByText("Source-file rollup not supplied in this packet"),
+    ).not.toBeInTheDocument();
+  });
+
+  it("counts and exposes source references carried by context facts", () => {
+    render(
+      <BrowseTheData
+        signalPacket={{
+          ...bundle.thesis.signalPacket,
+          signals: [],
+          sourceSummaries: [],
+          contextItems: [
+            {
+              id: "ctx_sourced",
+              statement: "A sourced context fact",
+              domains: ["application_system"],
+              evidenceRefs: ["source-row-001"],
+            },
+            {
+              id: "ctx_unlinked",
+              statement: "An unlinked context fact",
+              domains: ["application_system"],
+              evidenceRefs: [],
+            },
+          ],
+        }}
+      />,
+    );
+
+    const metrics = screen.getByText("evidence referenced").closest("section");
+    expect(within(metrics as HTMLElement).getByText("1")).toBeInTheDocument();
+    expect(screen.getByText("source-row-001")).toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText("Slice by"), {
+      target: { value: "evidence_state" },
+    });
+    fireEvent.change(screen.getByLabelText("Slice value"), {
+      target: { value: "referenced" },
+    });
+    expect(
+      screen.getByText(
+        (_, element) => element?.textContent === "1 of 2 facts shown",
+      ),
+    ).toBeInTheDocument();
+    expect(screen.getAllByText("A sourced context fact")).toHaveLength(2);
+    expect(
+      screen.queryByText("An unlinked context fact"),
+    ).not.toBeInTheDocument();
   });
 });

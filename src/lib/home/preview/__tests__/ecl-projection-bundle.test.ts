@@ -1,6 +1,7 @@
 import {
   buildHomeReviewBundleFromEclProjectionRows,
   buildTechnologyEstateFromHomeProjectionRows,
+  getHomeEclProjectionBundle,
   getHomeEclProjectionBundleOrReviewedSnapshot,
   getHomeEclProjectionBundleOrReviewedSnapshotWithSource,
   type HomeProjectionRow,
@@ -128,6 +129,98 @@ function storyPlanFixture(
 describe("buildTechnologyEstateFromHomeProjectionRows", () => {
   afterEach(() => {
     jest.restoreAllMocks();
+  });
+
+  it("reads source lineage columns from the serving projection", async () => {
+    const query = jest
+      .spyOn(azureRead, "query")
+      .mockResolvedValueOnce([
+        { full_name: "serving.home_applications_systems" },
+      ])
+      .mockResolvedValueOnce([
+        row({
+          page_key: "applications_systems",
+          row_key: "APP-001",
+          row_type: "application",
+          title: "A sourced application",
+          projection_entry_id: "projection-entry-001",
+          source_hash: "source-hash-001",
+          source_refs_json: ["source-row-001"],
+          admission_status: "admitted",
+        }),
+      ])
+      .mockResolvedValueOnce([
+        {
+          projection_entry_id: "projection-entry-001",
+          source_record_id: "source-row-001",
+        },
+      ]);
+    jest.spyOn(console, "warn").mockImplementation(() => {});
+
+    const bundle = await getHomeEclProjectionBundle("meridian-health");
+
+    expect(query.mock.calls[1]?.[0]).toEqual(
+      expect.stringContaining("source_hash"),
+    );
+    expect(query.mock.calls[1]?.[0]).toEqual(
+      expect.stringContaining("source_refs_json"),
+    );
+    expect(query.mock.calls[1]?.[0]).toEqual(
+      expect.stringContaining("admission_status"),
+    );
+    expect(query.mock.calls[1]?.[0]).toEqual(
+      expect.stringContaining("projection_entry_id"),
+    );
+    expect(query.mock.calls[2]?.[0]).toEqual(
+      expect.stringContaining("projection_entry_source_record_ref"),
+    );
+    expect(query.mock.calls[2]?.[1]).toEqual([
+      "meridian-health",
+      "assessment-dense-source-room-20260823",
+    ]);
+    expect(bundle.thesis.signalPacket.contextItems).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ evidenceRefs: ["source-row-001"] }),
+      ]),
+    );
+  });
+
+  it("keeps served rows visible but unlinked when source resolution fails", async () => {
+    jest
+      .spyOn(azureRead, "query")
+      .mockResolvedValueOnce([
+        { full_name: "serving.home_applications_systems" },
+      ])
+      .mockResolvedValueOnce([
+        row({
+          page_key: "applications_systems",
+          row_key: "APP-001",
+          row_type: "application",
+          title: "A sourced application",
+          projection_entry_id: "projection-entry-001",
+          source_hash: "source-hash-001",
+          source_refs_json: ["source-row-001"],
+          admission_status: "admitted",
+        }),
+      ])
+      .mockRejectedValueOnce(new Error("bridge unavailable"));
+    const warn = jest.spyOn(console, "warn").mockImplementation(() => {});
+
+    const bundle = await getHomeEclProjectionBundle("meridian-health");
+
+    expect(bundle.technologyEstate?.recordTypes[0]?.rows).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ systemName: "A sourced application" }),
+      ]),
+    );
+    expect(bundle.contextVersion?.sourceSetHash).toBeNull();
+    expect(bundle.thesis.signalPacket.contextItems).toEqual(
+      expect.arrayContaining([expect.objectContaining({ evidenceRefs: [] })]),
+    );
+    expect(warn).toHaveBeenCalledWith(
+      "[home] source-reference resolution unavailable",
+      expect.any(Error),
+    );
   });
 
   it("falls back to the reviewed Home bundle when the Meridian ECL serving projection is empty", async () => {
@@ -783,6 +876,98 @@ describe("buildTechnologyEstateFromHomeProjectionRows", () => {
         }),
       ]),
     );
+  });
+
+  it("carries admitted source references into a citable served context item", () => {
+    const base = getHomeReviewBundle("meridian-health");
+    if (!base) throw new Error("stored copy missing");
+    const bundle = buildHomeReviewBundleFromEclProjectionRows(
+      base,
+      [
+        row({
+          page_key: "applications_systems",
+          row_key: "APP-001",
+          row_type: "application",
+          title: "Claims Administration Platform",
+          projection_entry_id: "projection-entry-001",
+          source_hash: "source-hash-001",
+          source_refs_json: [
+            { source_record_id: "source-row-001" },
+            { source_record_id: "source-row-001" },
+          ],
+          primary_object_id: "canonical-app-001",
+          admission_status: "admitted",
+        }),
+      ],
+      undefined,
+      new Map([["projection-entry-001", new Set(["source-row-001"])]]),
+    );
+
+    const contextId = "ctx_ecl_applications_systems_application_APP_001";
+    expect(
+      bundle.thesis.signalPacket.contextItems.find(
+        (item) => item.id === contextId,
+      )?.evidenceRefs,
+    ).toEqual(["source-row-001"]);
+    expect(resolveEvidence([contextId], bundle.thesis.signalPacket)[0]).toEqual(
+      expect.objectContaining({ evidenceRefs: ["source-row-001"] }),
+    );
+    expect(bundle.contextVersion?.sourceSetHash).toEqual(expect.any(String));
+  });
+
+  it("does not treat a refused or unlinked serving row as source-backed", () => {
+    const base = getHomeReviewBundle("meridian-health");
+    if (!base) throw new Error("stored copy missing");
+    const bundle = buildHomeReviewBundleFromEclProjectionRows(base, [
+      row({
+        page_key: "applications_systems",
+        row_key: "APP-002",
+        row_type: "application",
+        title: "Unlinked application",
+        source_hash: "source-hash-002",
+        source_refs_json: ["source-row-002"],
+        admission_status: "refused",
+      }),
+    ]);
+
+    expect(
+      bundle.thesis.signalPacket.contextItems.find(
+        (item) =>
+          item.id === "ctx_ecl_applications_systems_application_APP_002",
+      )?.evidenceRefs,
+    ).toEqual([]);
+    expect(bundle.contextVersion?.sourceSetHash).toBeNull();
+    expect(bundle.contextVersion?.coherence).toBe("stored_narrative");
+  });
+
+  it("does not verify a declared source ref missing from the canonical bridge", () => {
+    const base = getHomeReviewBundle("meridian-health");
+    if (!base) throw new Error("stored copy missing");
+    const bundle = buildHomeReviewBundleFromEclProjectionRows(
+      base,
+      [
+        row({
+          page_key: "applications_systems",
+          row_key: "APP-003",
+          row_type: "application",
+          title: "Unverified application",
+          projection_entry_id: "projection-entry-003",
+          source_hash: "source-hash-003",
+          source_refs_json: [{ source_record_id: "missing-source-row" }],
+          admission_status: "admitted",
+        }),
+      ],
+      undefined,
+      new Map([["projection-entry-003", new Set(["different-source-row"])]]),
+    );
+
+    expect(
+      bundle.thesis.signalPacket.contextItems.find(
+        (item) =>
+          item.id === "ctx_ecl_applications_systems_application_APP_003",
+      )?.evidenceRefs,
+    ).toEqual([]);
+    expect(bundle.contextVersion?.sourceSetHash).toBeNull();
   });
 
   it("resolves deterministic writer evidence ids on the Home runtime signal packet", () => {

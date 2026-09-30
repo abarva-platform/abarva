@@ -140,6 +140,8 @@ export type HomeRecordSourceKind =
 export interface HomeContextVersion {
   assessmentId: string;
   projectionContentHash: string;
+  /** Null until every citable serving row has admitted source references and a source hash. */
+  sourceSetHash?: string | null;
   deterministicPacketHash: string;
   narrativePacketHash: string | null;
   narrativeGeneratedAt: string | null;
