@@ -13,7 +13,7 @@ import {
 import { SAMPLE_STRATEGY_STAGE } from "@/components/source/canvas/analytics/strategy-sample-view-model";
 import { evidenceForStage } from "@/lib/source/canonical-specs/evidence-requirements";
 import type { SourceStageKey } from "@/lib/source/types";
-import { requiredEvidenceRequirementIdsForTask } from "../task-evidence-requirements";
+import { evidenceRequirementIdForTask, requiredEvidenceRequirementIdsForTask } from "../task-evidence-requirements";
 
 const stages = [
   SAMPLE_STRATEGY_STAGE,
@@ -52,4 +52,10 @@ it("keeps ticket history and SLA baseline visible on their own Scope steps", () 
 it("does not infer a binding for an unknown task", () => {
   expect(requiredEvidenceRequirementIdsForTask({ id: "scope.unknown" }, "scope"))
     .toEqual([]);
+});
+
+it("binds the retained/vendor decision to its own persisted receipt, not the source files", () => {
+  expect(evidenceRequirementIdForTask({ id: "scope.matrix" }))
+    .toBe("EVID-SRC-SCOPE-RETAINED-VENDOR-DECISION");
+  expect(evidenceRequirementIdForTask({ id: "scope.exclusions" })).toBeNull();
 });

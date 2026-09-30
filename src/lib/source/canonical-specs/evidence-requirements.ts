@@ -157,6 +157,26 @@ const STRATEGY: SourceEvidenceRequirement[] = [
   }),
 ];
 
+const WORKFLOW_DECISIONS: readonly SourceEvidenceRequirement[] = [
+  req({
+    requirementId: "EVID-SRC-SCOPE-RETAINED-VENDOR-DECISION",
+    stage: "scope",
+    label: "Retained and vendor responsibility decision",
+    evidenceClass: "scope",
+    sourceLabel: "Event Owner decision based on workforce and SLA evidence",
+    sourceSystems: ["Source decision workflow"],
+    acceptedFileTypes: [],
+    recordGrain: "one accountable responsibility split per event and source revision",
+    criticalFields: ["retained_responsibilities", "vendor_responsibilities", "rationale", "actor", "decided_at"],
+    filenameTokens: [],
+    qualityChecks: ["Both sides are explicit", "Current workforce and SLA source identities are retained"],
+    minimumState: "Available",
+    level: "recommended",
+    description: "The Event Owner's reviewed responsibility split. This is a decision, not a supplier commitment or contract.",
+    unlocks: "The Scope retained/vendor workflow step after source evidence is ready.",
+  }),
+];
+
 // Stage 2 - Scope
 const SCOPE: SourceEvidenceRequirement[] = [
   req({
@@ -1082,5 +1102,6 @@ export function requiredEvidenceForStage(stage: SourceStageKey): SourceEvidenceR
 }
 
 export function evidenceById(id: string): SourceEvidenceRequirement | undefined {
-  return SOURCE_EVIDENCE_REQUIREMENTS.find((e) => e.requirementId === id);
+  return SOURCE_EVIDENCE_REQUIREMENTS.find((e) => e.requirementId === id) ??
+    WORKFLOW_DECISIONS.find((e) => e.requirementId === id);
 }

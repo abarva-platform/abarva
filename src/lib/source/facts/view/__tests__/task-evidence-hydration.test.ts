@@ -352,6 +352,40 @@ describe("hydrateTaskEvidenceState", () => {
     expect(hydrated[0].evidenceComplete).toBeUndefined();
   });
 
+  it("reads back a retained/vendor decision only when its receipt still cites the current workforce and SLA sources", () => {
+    const task: StageTaskView = {
+      id: "scope.matrix", title: "Confirm retained vs. vendor", subtitle: "Decision",
+      type: "decide", state: "todo", guide: "Review the split.", cta: "Confirm matrix",
+    };
+    const workforce = {
+      requirementId: "EVID-SRC-SCOPE-WORKFORCE", currentState: "Available" as const,
+      sourceArtifactId: "workforce-v1",
+    };
+    const sla = {
+      requirementId: "EVID-SRC-SCOPE-SLA-BASELINE", currentState: "Parsed" as const,
+      sourceArtifactId: "sla-v1",
+    };
+    const receipt = {
+      requirementId: "EVID-SRC-SCOPE-RETAINED-VENDOR-DECISION",
+      currentState: "Available" as const,
+      notes: JSON.stringify({
+        kind: "scope_matrix_decision_v1", actorUserId: "owner-1",
+        decidedAt: "2026-09-30T09:00:00Z", retainedResponsibilities: "Client operations retains service ownership and security policy.",
+        vendorResponsibilities: "Prospective vendor handles L1/L2 desk and endpoint support.",
+        rationale: "Synthetic owner review of the current workforce and SLA source records.",
+        workforceArtifactId: "workforce-v1", slaArtifactId: "sla-v1",
+      }),
+    };
+    const done = (evidenceStates: NonNullable<Parameters<typeof hydrateTaskEvidenceState>[0]["evidenceStates"]>) =>
+      hydrateTaskEvidenceState({ tasks: [task], factInputs: {}, evidenceStates, stageKey: "scope" })[0]
+        .evidenceComplete;
+    expect(done([workforce, sla, receipt])).toBe(true);
+    expect(done([workforce, { ...sla, sourceArtifactId: "sla-v2" }, receipt])).toBeUndefined();
+    expect(done([{ ...workforce, currentState: "Stale" }, sla, receipt])).toBeUndefined();
+    expect(done([workforce, sla, { ...receipt, notes: null }])).toBeUndefined();
+    expect(done([workforce, sla])).toBeUndefined();
+  });
+
   it("marks a mapped decide task complete when governed evidence meets minimum state", () => {
     const hydrated = hydrateTaskEvidenceState({
       tasks: [EXECUTIVE_DECISION_TASK],

@@ -16,9 +16,9 @@
     "fencedIndirect": 124,
     "unfenced": 176,
     "unfencedButReachesFenceModule": 94,
-    "behavioral": 71,
+    "behavioral": 72,
     "byteScannerOnly": 6,
-    "none": 140
+    "none": 139
   },
   "ranking": [
     {
@@ -477,14 +477,6 @@
     },
     {
       "route": "src/app/api/v1/source/[eventId]/evidence/[requirementId]/review/route.ts",
-      "coverage": "none",
-      "fence": "indirect",
-      "fenceVia": [
-        "src/lib/source/queries.ts"
-      ]
-    },
-    {
-      "route": "src/app/api/v1/source/[eventId]/evidence/[requirementId]/template/route.ts",
       "coverage": "none",
       "fence": "indirect",
       "fenceVia": [
@@ -6317,9 +6309,11 @@
         "src/lib/source/queries.ts"
       ],
       "reachesFenceModule": true,
-      "coverage": "none",
+      "coverage": "behavioral",
       "suites": {
-        "behavioral": [],
+        "behavioral": [
+          "src/app/api/v1/source/[eventId]/evidence/[requirementId]/template/__tests__/route.test.ts"
+        ],
         "byteScanner": []
       }
     },
