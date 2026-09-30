@@ -11,6 +11,7 @@ export interface ApprovedMoveEvidenceSnapshot {
   revision: string;
   approvedEvidenceCount: number;
   rows: ApprovedMoveEvidenceRevisionRow[];
+  latestReviewUpdatedAt: string | null;
 }
 
 const MAX_APPROVED_EVIDENCE_ROWS = 80;
@@ -27,7 +28,11 @@ function stringOrNull(value: unknown): string | null {
 
 function numberOrNull(value: unknown): number | null {
   if (typeof value === "number" && Number.isFinite(value)) return value;
-  if (typeof value === "string" && value.trim() && Number.isFinite(Number(value))) {
+  if (
+    typeof value === "string" &&
+    value.trim() &&
+    Number.isFinite(Number(value))
+  ) {
     return Number(value);
   }
   return null;
@@ -66,18 +71,45 @@ export async function loadApprovedMoveEvidenceSnapshot(args: {
 }): Promise<ApprovedMoveEvidenceSnapshot | null> {
   if (!args.tenantKey || !args.moveId) return null;
   const db = getAzureReadFluentClient();
-  const { data: reviews, error: reviewError } = await db
-    .from("program_evidence_reviews")
-    .select("evidence_id, decision, source_ref, reviewed_at, updated_at, created_at")
-    .eq("tenant_key", args.tenantKey)
-    .eq("program_id", args.moveId)
-    .eq("decision", "approved")
-    .order("updated_at", { ascending: false })
-    .limit(MAX_APPROVED_EVIDENCE_ROWS + 1);
-  if (reviewError || !Array.isArray(reviews)) return null;
+  const [reviewResult, latestReviewResult] = await Promise.all([
+    db
+      .from("program_evidence_reviews")
+      .select(
+        "evidence_id, decision, source_ref, reviewed_at, updated_at, created_at",
+      )
+      .eq("tenant_key", args.tenantKey)
+      .eq("program_id", args.moveId)
+      .eq("decision", "approved")
+      .order("updated_at", { ascending: false })
+      .limit(MAX_APPROVED_EVIDENCE_ROWS + 1),
+    db
+      .from("program_evidence_reviews")
+      .select("updated_at, reviewed_at, created_at")
+      .eq("tenant_key", args.tenantKey)
+      .eq("program_id", args.moveId)
+      .order("updated_at", { ascending: false, nullsFirst: false })
+      .order("reviewed_at", { ascending: false, nullsFirst: false })
+      .order("created_at", { ascending: false, nullsFirst: false })
+      .limit(1),
+  ]);
+  if (
+    reviewResult.error ||
+    latestReviewResult.error ||
+    !Array.isArray(reviewResult.data) ||
+    !Array.isArray(latestReviewResult.data)
+  ) {
+    return null;
+  }
 
-  const reviewRows = reviews as Array<Record<string, unknown>>;
+  const reviewRows = reviewResult.data as Array<Record<string, unknown>>;
   if (reviewRows.length > MAX_APPROVED_EVIDENCE_ROWS) return null;
+  const latestReview =
+    (latestReviewResult.data as Array<Record<string, unknown>>)[0] ?? null;
+  const latestReviewUpdatedAt = latestReview
+    ? (stringOrNull(latestReview.updated_at) ??
+      stringOrNull(latestReview.reviewed_at) ??
+      stringOrNull(latestReview.created_at))
+    : null;
   const evidenceIds = reviewRows
     .map((row) => stringOrNull(row.evidence_id))
     .filter((id): id is string => Boolean(id));
@@ -87,6 +119,7 @@ export async function loadApprovedMoveEvidenceSnapshot(args: {
       revision: approvedMoveEvidenceRevision({ ...args, rows }),
       approvedEvidenceCount: 0,
       rows,
+      latestReviewUpdatedAt,
     };
   }
 
@@ -119,5 +152,6 @@ export async function loadApprovedMoveEvidenceSnapshot(args: {
     revision: approvedMoveEvidenceRevision({ ...args, rows }),
     approvedEvidenceCount: rows.length,
     rows,
+    latestReviewUpdatedAt,
   };
 }

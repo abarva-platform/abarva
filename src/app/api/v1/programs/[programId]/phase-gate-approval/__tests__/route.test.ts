@@ -14,6 +14,7 @@ const mockLoadUserProgramAccessPolicy = jest.fn();
 const mockGetProgramById = jest.fn();
 const mockGetModuleState = jest.fn();
 const mockGetPhaseSnapshots = jest.fn();
+const mockLoadApprovedMoveEvidenceSnapshot = jest.fn();
 const mockEvaluateGate = jest.fn();
 const mockAdvancePhase = jest.fn();
 const mockCloseP0OnApproval = jest.fn();
@@ -46,6 +47,11 @@ jest.mock("@/lib/programs/queries", () => ({
     mockGetModuleState(ctx, programId),
   getPhaseSnapshots: (ctx: unknown, programId: string, phase: number) =>
     mockGetPhaseSnapshots(ctx, programId, phase),
+}));
+
+jest.mock("@/lib/programs/approved-move-evidence-snapshot", () => ({
+  loadApprovedMoveEvidenceSnapshot: (...args: unknown[]) =>
+    mockLoadApprovedMoveEvidenceSnapshot(...args),
 }));
 
 jest.mock("@/lib/programs/governance", () => ({
@@ -100,6 +106,12 @@ function req(body: unknown): Request {
   });
 }
 
+function getReq(phase: number) {
+  return {
+    nextUrl: { searchParams: new URLSearchParams({ phase: String(phase) }) },
+  };
+}
+
 const params = Promise.resolve({ programId: "prog-1" });
 const ctx = {
   clientId: "client-1",
@@ -127,7 +139,27 @@ beforeEach(() => {
   mockGetModuleState.mockResolvedValue([
     { moduleKey: "phase_3_review", status: "completed" },
   ]);
-  mockGetPhaseSnapshots.mockResolvedValue([]);
+  mockLoadApprovedMoveEvidenceSnapshot.mockResolvedValue({
+    revision: "evidence-revision-1",
+    latestReviewUpdatedAt: "2026-09-29T16:00:00.000Z",
+    approvedEvidenceCount: 1,
+    rows: [],
+  });
+  mockGetPhaseSnapshots.mockImplementation(
+    async (_ctx: unknown, _programId: string, phase: number) =>
+      phase === 2 || phase === 4
+        ? [
+            {
+              id: `phase-${phase}-approved`,
+              phaseNumber: phase,
+              approvalStatus: "approved",
+              lockedAt: "2026-09-29T17:00:00.000Z",
+              createdAt: "2026-09-29T17:00:00.000Z",
+              snapshot: { evidenceSnapshotHash: "evidence-revision-1" },
+            },
+          ]
+        : [],
+  );
   mockEvaluateGate.mockResolvedValue({
     failedChecks: [],
     requiresApproval: false,
@@ -200,6 +232,9 @@ describe("POST /api/v1/programs/[programId]/phase-gate-approval", () => {
         programId: "prog-1",
         fromPhase: 3,
         toPhase: 4,
+        snapshot: expect.objectContaining({
+          evidenceSnapshotHash: "evidence-revision-1",
+        }),
       }),
       expect.anything(),
     );
@@ -213,6 +248,177 @@ describe("POST /api/v1/programs/[programId]/phase-gate-approval", () => {
     );
   });
 
+  it("shows a prior approval as stale after approved evidence changes", async () => {
+    mockGetProgramById.mockResolvedValue({
+      id: "prog-1",
+      currentPhase: 2,
+      gatesPassed: [1],
+    });
+    mockLoadApprovedMoveEvidenceSnapshot.mockResolvedValue({
+      revision: "evidence-revision-2",
+      latestReviewUpdatedAt: "2026-09-29T18:00:00.000Z",
+      approvedEvidenceCount: 2,
+      rows: [],
+    });
+    mockGetPhaseSnapshots.mockImplementation(
+      async (_ctx: unknown, _programId: string, phase: number) =>
+        phase === 1
+          ? [
+              {
+                id: "p1-old-approval",
+                phaseNumber: 1,
+                approvalStatus: "approved",
+                lockedAt: "2026-09-29T17:00:00.000Z",
+                createdAt: "2026-09-29T17:00:00.000Z",
+                snapshot: { evidenceSnapshotHash: "evidence-revision-1" },
+              },
+            ]
+          : [],
+    );
+
+    const { GET } = await import("../route");
+    const res = await GET(getReq(1) as never, { params });
+
+    expect(res.status).toBe(200);
+    await expect(res.json()).resolves.toMatchObject({
+      approved: false,
+      approvalStale: true,
+      evidenceSnapshotAvailable: true,
+      currentPhase: 2,
+    });
+  });
+
+  it("reapproves a stale earlier phase against current evidence without rolling phase back", async () => {
+    const writes: Array<{ table: string; payload: Record<string, unknown> }> =
+      [];
+    mockGetProgramById.mockResolvedValue({
+      id: "prog-1",
+      currentPhase: 2,
+      gatesPassed: [1],
+    });
+    mockLoadApprovedMoveEvidenceSnapshot.mockResolvedValue({
+      revision: "evidence-revision-2",
+      latestReviewUpdatedAt: "2026-09-29T18:00:00.000Z",
+      approvedEvidenceCount: 2,
+      rows: [],
+    });
+    mockGetPhaseSnapshots.mockImplementation(
+      async (_ctx: unknown, _programId: string, phase: number) =>
+        phase === 1
+          ? [
+              {
+                id: "p1-old-approval",
+                phaseNumber: 1,
+                approvalStatus: "approved",
+                lockedAt: "2026-09-29T17:00:00.000Z",
+                createdAt: "2026-09-29T17:00:00.000Z",
+                snapshot: { evidenceSnapshotHash: "evidence-revision-1" },
+              },
+            ]
+          : [],
+    );
+    mockSbFrom.mockImplementation((table: string) => {
+      if (table === "phase_snapshots") {
+        return {
+          insert: jest.fn((payload: Record<string, unknown>) => {
+            writes.push({ table, payload });
+            return {
+              select: jest.fn(() => ({
+                single: async () => ({
+                  data: { id: "p1-reapproval" },
+                  error: null,
+                }),
+              })),
+            };
+          }),
+        };
+      }
+      return {
+        select: () => ({
+          eq: () => ({
+            eq: () => ({
+              limit: async () => ({ data: [{ id: "reviewer" }], error: null }),
+            }),
+          }),
+        }),
+      };
+    });
+
+    const { POST } = await import("../route");
+    const res = await POST(
+      req({
+        phase: 1,
+        rationale: "Re-reviewed against the current evidence set.",
+      }) as never,
+      { params },
+    );
+
+    expect(res.status).toBe(200);
+    await expect(res.json()).resolves.toMatchObject({
+      ok: true,
+      newPhase: 2,
+      reapproved: true,
+      reapprovedPhase: 1,
+      snapshotId: "p1-reapproval",
+    });
+    expect(mockAdvancePhase).not.toHaveBeenCalled();
+    expect(
+      JSON.parse(writes[0].payload.snapshot_jsonb as string),
+    ).toMatchObject({
+      evidenceSnapshotHash: "evidence-revision-2",
+      humanRationale: "Re-reviewed against the current evidence set.",
+    });
+  });
+
+  it("blocks a later phase while its immediately preceding gate is stale", async () => {
+    mockLoadApprovedMoveEvidenceSnapshot.mockResolvedValue({
+      revision: "evidence-revision-2",
+      latestReviewUpdatedAt: "2026-09-29T18:00:00.000Z",
+      approvedEvidenceCount: 2,
+      rows: [],
+    });
+    mockGetPhaseSnapshots.mockImplementation(
+      async (_ctx: unknown, _programId: string, phase: number) =>
+        phase === 2
+          ? [
+              {
+                id: "p2-old-approval",
+                phaseNumber: 2,
+                approvalStatus: "approved",
+                lockedAt: "2026-09-29T17:00:00.000Z",
+                createdAt: "2026-09-29T17:00:00.000Z",
+                snapshot: { evidenceSnapshotHash: "evidence-revision-1" },
+              },
+            ]
+          : [],
+    );
+
+    const { POST } = await import("../route");
+    const res = await POST(req({ phase: 3 }) as never, { params });
+
+    expect(res.status).toBe(409);
+    await expect(res.json()).resolves.toMatchObject({
+      error: "prior_gate_stale",
+      stalePhase: 2,
+    });
+    expect(mockEvaluateGate).not.toHaveBeenCalled();
+    expect(mockAdvancePhase).not.toHaveBeenCalled();
+  });
+
+  it("fails closed when the approved evidence revision cannot be loaded", async () => {
+    mockLoadApprovedMoveEvidenceSnapshot.mockResolvedValue(null);
+
+    const { POST } = await import("../route");
+    const res = await POST(req({ phase: 3 }) as never, { params });
+
+    expect(res.status).toBe(503);
+    await expect(res.json()).resolves.toMatchObject({
+      error: "evidence_snapshot_unavailable",
+    });
+    expect(mockEvaluateGate).not.toHaveBeenCalled();
+    expect(mockAdvancePhase).not.toHaveBeenCalled();
+  });
+
   it("completes terminal P5 from signed deliverable gates and records gate 5 even when duplicate capture text is absent", async () => {
     const writes: Array<{ table: string; payload: Record<string, unknown> }> =
       [];
@@ -222,6 +428,21 @@ describe("POST /api/v1/programs/[programId]/phase-gate-approval", () => {
       currentPhase: 5,
       gatesPassed: [],
     });
+    mockGetPhaseSnapshots.mockImplementation(
+      async (_ctx: unknown, _programId: string, phase: number) =>
+        phase === 4
+          ? [
+              {
+                id: "phase-4-approved",
+                phaseNumber: 4,
+                approvalStatus: "approved",
+                lockedAt: "2026-09-29T17:00:00.000Z",
+                createdAt: "2026-09-29T17:00:00.000Z",
+                snapshot: { evidenceSnapshotHash: "evidence-revision-1" },
+              },
+            ]
+          : [],
+    );
     mockGetPhaseCaptureSections.mockReturnValue([
       { key: "launch_readiness", label: "Launch readiness" },
     ]);
@@ -317,17 +538,27 @@ describe("POST /api/v1/programs/[programId]/phase-gate-approval", () => {
         }),
       ]),
     );
-    const snapshotWrite = writes.find((write) => write.table === "phase_snapshots");
-    const engagementWrite = writes.find((write) => write.table === "engagements");
+    const snapshotWrite = writes.find(
+      (write) => write.table === "phase_snapshots",
+    );
+    const engagementWrite = writes.find(
+      (write) => write.table === "engagements",
+    );
     const logWrite = writes.find((write) => write.table === "module_state_log");
-    expect(JSON.parse(snapshotWrite?.payload.snapshot_jsonb as string)).toMatchObject({
+    expect(
+      JSON.parse(snapshotWrite?.payload.snapshot_jsonb as string),
+    ).toMatchObject({
       terminal_tower_handoff: true,
     });
-    expect(JSON.parse(engagementWrite?.payload.gates_passed as string)).toEqual([5]);
-    expect(JSON.parse(logWrite?.payload.context_jsonb as string)).toMatchObject({
-      terminal_tower_handoff: true,
-      snapshot_id: "p5-snap-1",
-    });
+    expect(JSON.parse(engagementWrite?.payload.gates_passed as string)).toEqual(
+      [5],
+    );
+    expect(JSON.parse(logWrite?.payload.context_jsonb as string)).toMatchObject(
+      {
+        terminal_tower_handoff: true,
+        snapshot_id: "p5-snap-1",
+      },
+    );
   });
 
   it("repairs a partial P5 approval snapshot instead of short-circuiting terminal handoff completion", async () => {
@@ -340,9 +571,32 @@ describe("POST /api/v1/programs/[programId]/phase-gate-approval", () => {
       lifecycleState: "active",
       gatesPassed: [],
     });
-    mockGetPhaseSnapshots.mockResolvedValue([
-      { id: "partial-snapshot", approvalStatus: "approved" },
-    ]);
+    mockGetPhaseSnapshots.mockImplementation(
+      async (_ctx: unknown, _programId: string, phase: number) =>
+        phase === 4
+          ? [
+              {
+                id: "phase-4-approved",
+                phaseNumber: 4,
+                approvalStatus: "approved",
+                lockedAt: "2026-09-29T17:00:00.000Z",
+                createdAt: "2026-09-29T17:00:00.000Z",
+                snapshot: { evidenceSnapshotHash: "evidence-revision-1" },
+              },
+            ]
+          : phase === 5
+            ? [
+                {
+                  id: "partial-snapshot",
+                  phaseNumber: 5,
+                  approvalStatus: "approved",
+                  lockedAt: "2026-09-29T17:00:00.000Z",
+                  createdAt: "2026-09-29T17:00:00.000Z",
+                  snapshot: {},
+                },
+              ]
+            : [],
+    );
     mockGetPhaseCaptureSections.mockReturnValue([
       { key: "launch_readiness", label: "Launch readiness" },
     ]);
@@ -398,7 +652,10 @@ describe("POST /api/v1/programs/[programId]/phase-gate-approval", () => {
 
     const { POST } = await import("../route");
     const res = await POST(
-      req({ phase: 5, rationale: "Complete partial terminal handoff." }) as never,
+      req({
+        phase: 5,
+        rationale: "Complete partial terminal handoff.",
+      }) as never,
       { params },
     );
 
@@ -527,7 +784,32 @@ describe("POST /api/v1/programs/[programId]/phase-gate-approval", () => {
   });
 
   it("short-circuits when the phase is already approved", async () => {
-    mockGetPhaseSnapshots.mockResolvedValue([{ approvalStatus: "approved" }]);
+    mockGetPhaseSnapshots.mockImplementation(
+      async (_ctx: unknown, _programId: string, phase: number) =>
+        phase === 2
+          ? [
+              {
+                id: "phase-2-approved",
+                phaseNumber: 2,
+                approvalStatus: "approved",
+                lockedAt: "2026-09-29T17:00:00.000Z",
+                createdAt: "2026-09-29T17:00:00.000Z",
+                snapshot: { evidenceSnapshotHash: "evidence-revision-1" },
+              },
+            ]
+          : phase === 3
+            ? [
+                {
+                  id: "phase-3-approved",
+                  phaseNumber: 3,
+                  approvalStatus: "approved",
+                  lockedAt: "2026-09-29T17:00:00.000Z",
+                  createdAt: "2026-09-29T17:00:00.000Z",
+                  snapshot: {},
+                },
+              ]
+            : [],
+    );
 
     const { POST } = await import("../route");
     const res = await POST(req({ phase: 3 }) as never, { params });
