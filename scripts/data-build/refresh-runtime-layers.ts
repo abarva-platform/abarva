@@ -16,6 +16,7 @@ import { RELATIONSHIP_TYPE_DICTIONARY } from "../../src/lib/enterprise-data/cont
 import { postgresClientOptions } from "../../src/scripts/postgres-client-options";
 import { augmentDeclaredSegmentGraph } from "./declared-segment-graph";
 import { assertSegmentWriteManifest } from "./segment-write-manifest-gate";
+import { type CurrentRowConflict, upsertCurrentRowColumns } from "./runtime-layer-upsert";
 
 const APPROVED_TENANTS = new Set<string>(CANONICAL_TENANT_KEYS);
 const DEFAULT_TENANTS: string[] = [...CANONICAL_TENANT_KEYS];
@@ -336,9 +337,10 @@ async function insertRows(
   table: string,
   columns: string[],
   rows: unknown[][],
-  conflict: string,
+  conflict: string | CurrentRowConflict,
 ): Promise<void> {
   if (rows.length === 0) return;
+  const conflictSql = typeof conflict === "string" ? conflict : upsertCurrentRowColumns(columns, conflict);
   const batchSize = 250;
   for (let offset = 0; offset < rows.length; offset += batchSize) {
     const batch = rows.slice(offset, offset + batchSize);
@@ -353,7 +355,7 @@ async function insertRows(
       })
       .join(",");
     await client.query(
-      `INSERT INTO ${table} (${columns.join(",")}) VALUES ${placeholders} ${conflict}`,
+      `INSERT INTO ${table} (${columns.join(",")}) VALUES ${placeholders} ${conflictSql}`,
       values,
     );
   }
@@ -493,12 +495,10 @@ async function writeToDatabase(args: Args, input: Awaited<ReturnType<typeof buil
         ratio,
         JSON.stringify({ validationFindings: record.validationFindings ?? [] }),
       ]),
-      `ON CONFLICT (tenant_key, contract_version, object_type, source_object_id)
-       DO UPDATE SET build_version=excluded.build_version, input_source_version=excluded.input_source_version,
-         idempotency_key=excluded.idempotency_key,
-         attributes=excluded.attributes, relationships=excluded.relationships, source_evidence_refs=excluded.source_evidence_refs,
-         quality_status=excluded.quality_status, fact_status=excluded.fact_status, blocked_claims=excluded.blocked_claims,
-         quarantine_ratio=excluded.quarantine_ratio, metadata=excluded.metadata, updated_at=now()`,
+      {
+        keys: ["tenant_key", "contract_version", "object_type", "source_object_id"],
+        immutable: ["record_key"],
+      },
     );
 
     await insertRows(
@@ -534,8 +534,10 @@ async function writeToDatabase(args: Args, input: Awaited<ReturnType<typeof buil
         "v6_business_record",
         JSON.stringify({ mappingProfile: node.mappingProfile, buildVersion: args.buildVersion, quarantineRatio: ratio }),
       ]),
-      `ON CONFLICT (node_key) DO UPDATE SET business_display_name=excluded.business_display_name,
-       canonical_name=excluded.canonical_name, metadata=excluded.metadata, updated_at=now()`,
+      {
+        keys: ["node_key"],
+        immutable: ["tenant_key", "contract_version", "node_id"],
+      },
     );
 
     await insertRows(
@@ -585,12 +587,10 @@ async function writeToDatabase(args: Args, input: Awaited<ReturnType<typeof buil
         ratio,
         JSON.stringify({ fromNodeId: edge.fromNodeId, toNodeId: edge.toNodeId, rawRelationshipType: edge.rawRelationshipType }),
       ]),
-      `ON CONFLICT (tenant_key, contract_version, relationship_id, source_file, source_row_number)
-       DO UPDATE SET build_version=excluded.build_version, input_source_version=excluded.input_source_version,
-       idempotency_key=excluded.idempotency_key,
-       relationship_type=excluded.relationship_type, evidence_basis=excluded.evidence_basis,
-       node_resolution_state=excluded.node_resolution_state, quarantine_ratio=excluded.quarantine_ratio,
-       metadata=excluded.metadata, updated_at=now()`,
+      {
+        keys: ["tenant_key", "contract_version", "relationship_id", "source_file", "source_row_number"],
+        immutable: ["edge_key"],
+      },
     );
 
     await insertRows(
@@ -642,9 +642,10 @@ async function writeToDatabase(args: Args, input: Awaited<ReturnType<typeof buil
         "resolved",
         JSON.stringify({ buildVersion: args.buildVersion, quarantineRatio: ratio, knownGaps: edge.knownGaps }),
       ]),
-      `ON CONFLICT (tenant_key, contract_version, relationship_id, source_file, source_row_number)
-       DO UPDATE SET relationship_type=excluded.relationship_type, evidence_basis=excluded.evidence_basis,
-       node_resolution_state=excluded.node_resolution_state, metadata=excluded.metadata, updated_at=now()`,
+      {
+        keys: ["tenant_key", "contract_version", "relationship_id", "source_file", "source_row_number"],
+        immutable: ["edge_key"],
+      },
     );
 
     for (const tenant of args.tenants) {
