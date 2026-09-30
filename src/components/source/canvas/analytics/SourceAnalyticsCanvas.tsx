@@ -6038,13 +6038,18 @@ function ArtifactLifecyclePanel({
   const lifecycle = view.files.lifecycle;
   const driftedFinalCodes = new Set(
     artifacts
-      .filter((artifact) =>
-        artifact.recordKind === "registry_artifact" &&
-        artifact.isClientFinal === true &&
-        artifact.isCurrentAuthoritative === true &&
-        Boolean(artifact.clientFinalAcceptedBy?.trim()) &&
-        Boolean(artifact.clientFinalAcceptedAt?.trim()),
-      )
+      .filter((artifact) => {
+        const acceptedAt: unknown = artifact.clientFinalAcceptedAt;
+        const hasAcceptedAt =
+          (typeof acceptedAt === "string" && acceptedAt.trim().length > 0) ||
+          (acceptedAt instanceof Date && !Number.isNaN(acceptedAt.getTime()));
+        return artifact.recordKind === "registry_artifact" &&
+          artifact.isClientFinal === true &&
+          artifact.isCurrentAuthoritative === true &&
+          typeof artifact.clientFinalAcceptedBy === "string" &&
+          artifact.clientFinalAcceptedBy.trim().length > 0 &&
+          hasAcceptedAt;
+      })
       .filter((final) => {
         const code = final.artifactCode ?? final.artifactType ?? final.artifactKind;
         const state = artifacts.find((artifact) =>
