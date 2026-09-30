@@ -1883,6 +1883,22 @@ jobs:
           src/lib/agent-grounding/__tests__
           --no-coverage --ci
 
+      # Item T-786, claimable half. T-785 held `src/components/__tests__` whole
+      # because both suites read component source bytes. The AbarvaNav suite is
+      # rewritten as a render (a plain `<a>` in place of `next/link` fails it)
+      # and is named BY FILE, as T-784 did. Do NOT replace this path with the
+      # directory: that would also select `legacy-setup-links.test.ts`, still a
+      # byte scan over an unreachable component and held for T-786's gated
+      # half. The directory is PARTIAL after this, so the dark-directory ratchet
+      # no longer sees it; `t786-abarvanav-render-wiring.test.ts` pins its exact
+      # file set in its place.
+      # Record: `docs/architecture/t786-abarvanav-render-triage.json`.
+      - name: Run the T-786 AbarvaNav render suite by named file
+        run: >-
+          npx jest --runTestsByPath
+          src/components/__tests__/AbarvaNav.client-routing.test.ts
+          --no-coverage --ci
+
       # Item T-495, claimable half, suite 2 of 11.
       # `src/__tests__/hygiene/learn-layout-single-nav.test.ts` asserted the
       # single-top-nav rule for `/home/learn` over the BYTES of two files, and was

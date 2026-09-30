@@ -18,18 +18,18 @@
     "No timestamp is recorded, so refreshing this file on an unchanged tree is a no-op."
   ],
   "counts": {
-    "testFiles": 2578,
-    "coveredTestFiles": 2315,
-    "pullRequestCoveredTestFiles": 2314,
-    "uncoveredTestFiles": 263,
+    "testFiles": 2579,
+    "coveredTestFiles": 2317,
+    "pullRequestCoveredTestFiles": 2316,
+    "uncoveredTestFiles": 262,
     "directoriesWithTests": 497,
     "directoriesFullyCovered": 346,
-    "directoriesPartiallyCovered": 30,
-    "directoriesUncovered": 121,
+    "directoriesPartiallyCovered": 31,
+    "directoriesUncovered": 120,
     "directoriesWithUnrunTestFiles": 151,
     "directoriesWithUntriagedUnrunTestFiles": 140,
     "declaredQuarantineTestFiles": 52,
-    "untriagedUnrunTestFiles": 211,
+    "untriagedUnrunTestFiles": 210,
     "indeterminateInvocations": 0,
     "unresolvedIgnoreArguments": 0,
     "criticalGovernedRiskDirectories": 0,
@@ -455,6 +455,16 @@
       "directory": "src/lib/shell/__tests__",
       "testFiles": 3,
       "coveredTestFiles": 2,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 1,
+      "via": [
+        "command"
+      ]
+    },
+    {
+      "directory": "src/components/__tests__",
+      "testFiles": 2,
+      "coveredTestFiles": 1,
       "declaredQuarantineTestFiles": 0,
       "untriagedUnrunTestFiles": 1,
       "via": [
@@ -2770,13 +2780,13 @@
     }
   ],
   "triageVerdicts": {
-    "heldUntriagedUnrunTestFiles": 83,
+    "heldUntriagedUnrunTestFiles": 82,
     "drawableUntriagedUnrunTestFiles": 128,
     "heldByVerdict": {
       "already_verdicted_elsewhere": 15,
       "real": 1,
       "repair": 3,
-      "rewrite_as_behavior": 9,
+      "rewrite_as_behavior": 8,
       "update_with_reason_recorded": 7,
       "vacuous_control_proof": 3,
       "wire_into_ci": 45
@@ -2979,17 +2989,10 @@
         "ownerItem": "26"
       },
       {
-        "testPath": "src/components/__tests__/AbarvaNav.client-routing.test.ts",
-        "verdict": "rewrite_as_behavior",
-        "record": "docs/architecture/t785-stale-suite-triage.json",
-        "recordedAt": "2026-09-30T13:19:02Z",
-        "ownerItem": "T-786"
-      },
-      {
         "testPath": "src/components/__tests__/legacy-setup-links.test.ts",
         "verdict": "rewrite_as_behavior",
-        "record": "docs/architecture/t785-stale-suite-triage.json",
-        "recordedAt": "2026-09-30T13:19:02Z",
+        "record": "docs/architecture/t786-abarvanav-render-triage.json",
+        "recordedAt": "2026-09-30T14:40:00Z",
         "ownerItem": "T-786"
       },
       {
@@ -3516,19 +3519,6 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 0
-      }
-    },
-    {
-      "directory": "src/components/__tests__",
-      "testFiles": 2,
-      "unrunTestFiles": 2,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 2,
-      "governedRisk": {
-        "score": 0,
-        "band": "unclassified",
-        "signals": [],
-        "productSourceCount": 1
       }
     },
     {
@@ -4416,6 +4406,19 @@
       }
     },
     {
+      "directory": "src/components/__tests__",
+      "testFiles": 2,
+      "unrunTestFiles": 1,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 1,
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 2
+      }
+    },
+    {
       "directory": "src/components/agent-answer/__tests__",
       "testFiles": 3,
       "unrunTestFiles": 1,
@@ -5210,14 +5213,6 @@
       "coveredTestFiles": 0,
       "declaredQuarantineTestFiles": 0,
       "untriagedUnrunTestFiles": 3,
-      "via": []
-    },
-    {
-      "directory": "src/components/__tests__",
-      "testFiles": 2,
-      "coveredTestFiles": 0,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 2,
       "via": []
     },
     {
