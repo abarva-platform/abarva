@@ -933,6 +933,15 @@ describe("SourceAnalyticsCanvas stage workflow", () => {
     });
   });
 
+  it("keeps the in-step responsibility decision out of the file-upload checklist", () => {
+    render(<SourceAnalyticsCanvas
+      event={EVENT} viewStage="scope" tenantName="Demo Client"
+      evidenceStates={SCOPE_READY_EVIDENCE} initialWorkspace="files"
+    />);
+    expect(screen.getByTestId("source-stage-evidence-checklist")).toBeInTheDocument();
+    expect(screen.queryByTestId("source-stage-evidence-checklist-row-EVID-SRC-SCOPE-RETAINED-VENDOR-DECISION")).toBeNull();
+  });
+
   it("shows the retained/vendor step captured only from a matching persisted decision receipt", () => {
     const workforce = SCOPE_READY_EVIDENCE.find((row) => row.requirementId === "EVID-SRC-SCOPE-WORKFORCE")!;
     const sla = SCOPE_READY_EVIDENCE.find((row) => row.requirementId === "EVID-SRC-SCOPE-SLA-BASELINE")!;

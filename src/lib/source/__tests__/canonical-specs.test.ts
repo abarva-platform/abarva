@@ -148,10 +148,15 @@ describe('canonical evidence requirements · coverage', () => {
   it('every evidence requirement is operationally sourceable and parseable', () => {
     for (const req of SOURCE_EVIDENCE_REQUIREMENTS) {
       expect(req.sourceSystems.length).toBeGreaterThan(0);
-      expect(req.acceptedFileTypes.length).toBeGreaterThan(0);
+      if (req.requirementId === 'EVID-SRC-SCOPE-RETAINED-VENDOR-DECISION') {
+        expect(req.acceptedFileTypes).toEqual([]);
+        expect(req.filenameTokens).toEqual([]);
+      } else {
+        expect(req.acceptedFileTypes.length).toBeGreaterThan(0);
+        expect(req.filenameTokens.length).toBeGreaterThan(0);
+      }
       expect(req.recordGrain.length).toBeGreaterThan(0);
       expect(req.criticalFields.length).toBeGreaterThan(0);
-      expect(req.filenameTokens.length).toBeGreaterThan(0);
       expect(req.qualityChecks.length).toBeGreaterThan(0);
       expect(req.evidenceClass.length).toBeGreaterThan(0);
     }

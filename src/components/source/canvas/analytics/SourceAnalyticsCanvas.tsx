@@ -4409,6 +4409,7 @@ function buildStageEvidenceRequirementRows(
   evidenceStates: readonly SourceEventEvidence[],
 ): StageEvidenceRequirementRow[] {
   const requirements = evidenceForStage(view.stage.key).filter((row) =>
+    row.acceptedFileTypes.length > 0 &&
     sourceEvidenceAppliesToApprovalPolicy(row.requirementId, view.event.approvalPolicyCode)).sort((a, b) => {
     if (a.level !== b.level) return a.level === "required" ? -1 : 1;
     return a.label.localeCompare(b.label);
