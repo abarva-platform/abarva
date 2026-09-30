@@ -216,6 +216,7 @@ function tableToDocx(table: RenderableTable): Paragraph | Table {
 
 function normalizeHeadingText(value: string): string {
   return value
+    .replace(/^\d+(?:\.\d+)+[.):]?\s+|^\d+[.):]\s+/, "")
     .replace(/[*_`]/g, "")
     .replace(/&amp;/gi, "&")
     .replace(/\s+/g, " ")
@@ -335,6 +336,8 @@ function normalizeSectionMarkdown(markdown: string, title: string): string {
 
 export function renderDeliverableDocx(doc: RenderableDeliverable): Document {
   const children: (Paragraph | Table)[] = [];
+  const compactMovesCharter =
+    doc.deliverableType === "charter";
 
   // Cover
   children.push(eyebrowParagraph("AbarVa · Board-grade deliverable"));
@@ -351,7 +354,7 @@ export function renderDeliverableDocx(doc: RenderableDeliverable): Document {
     bodyParagraph([boldRun("Document status: "), bodyRun(DOC_STATUS_LABEL)]),
   );
   children.push(bodyParagraph([bodyRun(DOC_STATUS_BODY)]));
-  children.push(pageBreak());
+  if (!compactMovesCharter) children.push(pageBreak());
 
   // Sections — render the authored markdown body PROPERLY (headings, bold,
   // ordered/unordered + nested lists, inline GFM tables) via the shared
@@ -368,7 +371,7 @@ export function renderDeliverableDocx(doc: RenderableDeliverable): Document {
   // In-document tables (those NOT routed to the Excel companion)
   const inDocTables = doc.tables.filter((t) => t.targetFormat !== "xlsx");
   if (inDocTables.length) {
-    children.push(pageBreak());
+    if (!compactMovesCharter) children.push(pageBreak());
     children.push(heading1("Tables & Exhibits"));
     for (const t of inDocTables) {
       children.push(heading2(t.title));
@@ -383,13 +386,13 @@ export function renderDeliverableDocx(doc: RenderableDeliverable): Document {
     exhibitToDocxBlocks(exhibit, index),
   );
   if (exhibitBlocks.length) {
-    children.push(pageBreak());
+    if (!compactMovesCharter) children.push(pageBreak());
     children.push(heading1("Visual Exhibits"));
     children.push(...exhibitBlocks);
   }
 
   // Recommendation + next actions
-  children.push(pageBreak());
+  if (!compactMovesCharter) children.push(pageBreak());
   children.push(heading1("Recommendation"));
   children.push(bodyParagraph([bodyRun(doc.recommendation)]));
   if (doc.nextActions.length) {
