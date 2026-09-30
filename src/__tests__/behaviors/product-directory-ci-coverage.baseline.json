@@ -56,7 +56,6 @@
   "src/lib/enterprise-knowledge/tower/__tests__",
   "src/lib/evidence/__tests__",
   "src/lib/features/__tests__",
-  "src/lib/instruments/__tests__",
   "src/lib/integrations/ai-egress/__tests__",
   "src/lib/intelligence/advisory-packet/__tests__",
   "src/lib/intelligence/analytics/__tests__",
