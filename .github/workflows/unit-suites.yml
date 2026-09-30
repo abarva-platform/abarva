@@ -1848,6 +1848,24 @@ jobs:
           src/lib/atlas/initiative-deep/__tests__
           --no-coverage --ci
 
+      # Item T-784, claimable half. T-781 held `src/lib/shell/__tests__` whole
+      # because `atrium-contract.test.ts` tests a module
+      # `docs/architecture/orphaned-lib-modules.json` lists `testOnly`
+      # (retire-or-mount is T-784's gated half, not taken here). The other two
+      # suites are green and their subjects are imported by product code, so
+      # they are named FILE BY FILE, as T-780 did. Do NOT replace these paths
+      # with the directory: that would count coverage over code no route
+      # reaches. The directory is PARTIAL after this, so the dark-directory
+      # ratchet no longer sees it; `t784-shell-named-file-wiring.test.ts` pins
+      # its exact file set in its place.
+      # Record: `docs/architecture/t784-shell-named-file-triage.json`.
+      - name: Run the T-784 shell suites by named file
+        run: >-
+          npx jest --runTestsByPath
+          src/lib/shell/__tests__/origination-handoff.test.ts
+          src/lib/shell/__tests__/working-pane-shape.test.ts
+          --no-coverage --ci
+
       # Item T-495, claimable half, suite 2 of 11.
       # `src/__tests__/hygiene/learn-layout-single-nav.test.ts` asserted the
       # single-top-nav rule for `/home/learn` over the BYTES of two files, and was

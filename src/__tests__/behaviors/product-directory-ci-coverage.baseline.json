@@ -90,7 +90,6 @@
   "src/lib/semantic2/dossiers/__tests__",
   "src/lib/sentinel/__tests__",
   "src/lib/setup/__tests__",
-  "src/lib/shell/__tests__",
   "src/lib/source/analytics/__tests__",
   "src/lib/source/classifier/__tests__",
   "src/lib/source/context-writeback/__tests__",
