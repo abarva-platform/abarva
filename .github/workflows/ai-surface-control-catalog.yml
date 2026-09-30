@@ -93,6 +93,12 @@ jobs:
       - name: Exercise Moves Nexus current-state briefing disclosure controls
         run: npx jest --runTestsByPath src/components/strategic-moves/__tests__/NexusCurrentStateBriefingPanel.controls.test.tsx --runInBand
 
+      # C-549. src/components/setup/__tests__ is also swept by directory in
+      # unit-suites.yml, but the catalog gate credits a control only when THIS
+      # workflow runs its suite, so it is named here by exact path as well.
+      - name: Exercise Setup Steward reconnect guidance assumption disclosure
+        run: npx jest --runTestsByPath src/components/setup/__tests__/ConnectorReconnectPage.assumption-disclosure.test.tsx --runInBand
+
       - name: Exercise Moves phase-gate route approval
         run: npx jest --runTestsByPath src/app/api/programs/phase-gate/__tests__/approval-gate.test.ts --runInBand
 

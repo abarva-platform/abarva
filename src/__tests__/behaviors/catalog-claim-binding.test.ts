@@ -359,9 +359,16 @@ describe("legal catalog claims bind only when coverage is real", () => {
     // factor reading deferred, and nothing mounting it. The cell now reads
     // "Partial" and its `uncatalogued` coverage row left with it — 21/11/4 to
     // 21/10/4.
+    //
+    // C-549 then joined a claim that measured true: the Steward setup
+    // guidance row's seeded/live disclosure renders beside the reconnect
+    // guidance on a mounted route. The reconnect page was catalogued with that
+    // one control, and its `uncatalogued` row became covered — 21/10/4 to
+    // 22/9/4. `deferredWithSurfaceId` is unmoved because the legal row claims
+    // no other kind on that surface.
     expect(tally).toEqual({
-      coveredWithSurfaceId: 21,
-      deferredWithJoin: 10,
+      coveredWithSurfaceId: 22,
+      deferredWithJoin: 9,
       deferredWithSurfaceId: 4,
       unbound: 0,
     });
@@ -589,14 +596,15 @@ describe("a covered credit is a claim about proof", () => {
 
   it("counts a covered set that is not vacuously clean", () => {
     // Without this, deleting every covered row would satisfy the case above.
-    // 22 rows carried the credit when C-409 was filed and 21 do now, the one
-    // removal being the row it corrected.
-    expect(coveredRows).toHaveLength(21);
+    // 22 rows carried the credit when C-409 was filed and 21 after, the one
+    // removal being the row it corrected. C-549 added one back: the Steward
+    // setup guidance row, joined to a control whose suite names its cases.
+    expect(coveredRows).toHaveLength(22);
     const proven = coveredRows.filter((entry) => {
       const test = joinedControl(entry, live)?.behavioralTest;
       return Boolean(test?.path) && (test?.provenCases ?? []).length > 0;
     });
-    expect(proven).toHaveLength(21);
+    expect(proven).toHaveLength(22);
   });
 
   it("goes red when a covered credit names a control declaring no behavioral test", () => {

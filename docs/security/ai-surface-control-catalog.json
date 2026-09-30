@@ -1075,6 +1075,30 @@
       ],
       "routeReachable": false,
       "unreachableReason": "The Moves phase Prepare tab mounted this panel until the old phase shell was sunset, and nothing imports NexusCurrentStateBriefingPanel today, so no route reaches it: the citation and confidence disclosures below are real code that no user can open. The unmounted state is recorded in docs/architecture/unreachable-components.json. The endpoint it calls, src/app/api/v1/programs/[programId]/nexus/current-state-brief/route.ts, is still in the tree, so the panel would work the day something mounts it. Fixed by mounting it in the Moves phase shell that renders today, or by moving both controls to that shell and retiring this entry."
+    },
+    {
+      "id": "setup-steward-connector-reconnect-guidance",
+      "surface": "Setup Steward connector reconnect guidance",
+      "lane": "global-control-lane",
+      "owner": "AbarVa",
+      "path": "src/components/setup/ConnectorReconnectPage.tsx",
+      "requiredControls": [
+        {
+          "kind": "confidence",
+          "evidence": [
+            "detail.dataMode === 'seeded' ? 'Seeded fixture' : 'Live signal'",
+            "Mode: {modeLabel} · no live API call is made from this setup surface"
+          ],
+          "behavioralTest": {
+            "path": "src/components/setup/__tests__/ConnectorReconnectPage.assumption-disclosure.test.tsx",
+            "provenCases": [
+              "Steward setup guidance — the assumption disclosure, measured states beside that guidance that the profile is seeded and no live call is made",
+              "Steward setup guidance — the assumption disclosure, measured derives the disclosure from the connector data mode rather than printing a constant",
+              "Steward setup guidance — the assumption disclosure, measured keeps the disclosure on the page once the reader authorizes and Steward's success message appears"
+            ]
+          }
+        }
+      ]
     }
   ],
   "catalogClaimCoverage": [
@@ -1325,12 +1349,10 @@
     },
     {
       "key": "generated-ui|Setup|Steward setup guidance|confidence",
-      "status": "deferred",
+      "status": "covered",
       "controlKind": "confidence",
-      "reason": "Setup guidance separates seeded/live state, but it is not yet a formal confidence control in the machine catalog.",
-      "surfaceJoin": {
-        "state": "uncatalogued"
-      }
+      "reason": "Bound to the catalogued surface by C-549. The Steward guidance a reader sees from the setup fixture is the connector reconnect flow: its summary, numbered steps and success message render beside \"Mode: Seeded fixture · no live API call is made from this setup surface\", which the page derives from the connector's dataMode. No component reads the fixture's per-connector agentQuote or actions, and nothing imports its index, users, audit or policies agent voices, so that prose reaches no reader and is outside this claim. Held to evidence tokens and to a render suite over the real fixture.",
+      "surfaceId": "setup-steward-connector-reconnect-guidance"
     }
   ]
 }
