@@ -108,6 +108,12 @@ function rowToRecord(row: Record<string, unknown>): SourceArtifactRecord {
     v === null || v === undefined ? null : Number(v);
   const strOrNull = (v: unknown) =>
     typeof v === "string" && v.length ? v : null;
+  const acceptedAtOrNull = (v: unknown) => {
+    if (v instanceof Date) {
+      return Number.isNaN(v.getTime()) ? null : v.toISOString();
+    }
+    return strOrNull(v);
+  };
   const jsonObjOrEmpty = (v: unknown): Record<string, unknown> => {
     if (v && typeof v === "object" && !Array.isArray(v)) {
       return v as Record<string, unknown>;
@@ -182,7 +188,7 @@ function rowToRecord(row: Record<string, unknown>): SourceArtifactRecord {
     clientFinalUploadedBy: strOrNull(row.client_final_uploaded_by),
     clientFinalUploadedAt: strOrNull(row.client_final_uploaded_at),
     clientFinalAcceptedBy: strOrNull(row.client_final_accepted_by),
-    clientFinalAcceptedAt: strOrNull(row.client_final_accepted_at),
+    clientFinalAcceptedAt: acceptedAtOrNull(row.client_final_accepted_at),
     clientFinalNote: strOrNull(row.client_final_note),
     clientFinalReviewMeetingDate: strOrNull(
       row.client_final_review_meeting_date,
