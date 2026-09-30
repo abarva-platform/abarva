@@ -58,9 +58,9 @@ client's build equally, behind no feature gate.
 - `src/__tests__/behaviors/product-directory-ci-coverage.baseline.json` — the
   directory's line is removed (set equality over the census's dark list).
 - `docs/architecture/test-ci-coverage-census.json` — regenerated with
-  `npm run audit:test-ci-coverage:write`. Test files unchanged at 2557; covered
-  2238 → 2239 and uncovered 319 → 318, all of it this directory (the base
-  census was current). Directories uncovered 142 → 141. Exactly one directory leaves the dark list
+  `npm run audit:test-ci-coverage:write`. Against `main` after #8681 merged
+  (which added one covered suite), covered 2239 → 2240 and uncovered
+  319 → 318, all of it this directory. Directories uncovered 142 → 141. Exactly one directory leaves the dark list
   (`src/lib/programs/decomposition/__tests__`) and none joins, checked by set
   difference over the two files. The rest of the diff is rank renumbering.
 
