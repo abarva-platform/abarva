@@ -67,7 +67,7 @@ const D09_SERVICE_TARGET =
   /\b(?:availability|uptime|(?:p[1-4]|critical|standard)\s+(?:incident\s+)?(?:response|resolution)|request\s+fulfillment|recovery|rto|rpo|reporting\s+(?:accuracy|timeliness)|maintenance\s+notice|security\s+incident\s+reporting)\b[^\n]{0,100}\b\d+(?:\.\d+)?\s*(?:%|percent\b|business\s+days?\b|minutes?\b|hours?\b|days?\b)/i;
 const D09_REGULATED_OBLIGATION =
   /\b(?:HIPAA|HITECH|PHI|protected\s+health\s+information|HITRUST|healthcare[-\s]regulated|45\s+CFR|NIST\s+(?:CSF|SP)|SOC\s*2\s*Type\s*II|ISO\s*27001)\b/i;
-const D09_MATERIAL_VALUE = /\$\s*\d[\d,]*(?:\.\d+)?|\b\d+(?:\.\d+)?\s*%/i;
+const D09_MATERIAL_VALUES = /\$\s*\d[\d,]*(?:\.\d+)?|\b\d+(?:\.\d+)?\s*%/gi;
 const D09_TARGET_VALUE = /\b\d+(?:\.\d+)?\s*(?:%|business\s+days?|minutes?|hours?|days?)/i;
 const D09_TARGET_METRIC =
   /\b(?:availability|uptime|p[1-4]\s+(?:incident\s+)?(?:response|resolution)|request\s+fulfillment|recovery|rto|rpo|reporting\s+(?:accuracy|timeliness)|maintenance\s+notice|security\s+incident\s+reporting)\b/i;
@@ -88,14 +88,18 @@ function findUnboundD09Obligations(
     const supportedTarget = Boolean(target && metric && sourceLines.some(
       (sourceLine) => sourceLine.includes(target) && sourceLine.includes(metric),
     ));
+    const materialValues = line.match(D09_MATERIAL_VALUES) ?? [];
+    const onlyResponseCompletion =
+      /\b100\s*%\s+of\s+(?:mandatory\s+)?(?:response\s+)?(?:fields?|items?|requirements?)\b/i.test(line) &&
+      materialValues.every((value) => /^100\s*%$/i.test(value));
     if (D09_SERVICE_TARGET.test(line) && !supportedTarget) {
       violations.push({
         claim: line.slice(0, 220),
         reason: "Specific service target is absent from the bounded vendor-facing evidence.",
       });
     } else if (!D09_SERVICE_TARGET.test(line) &&
-      D09_MATERIAL_VALUE.test(line) &&
-      !/\b100\s*%\s+of\s+(?:mandatory\s+)?(?:response\s+)?(?:fields?|items?|requirements?)\b/i.test(line)
+      materialValues.length > 0 &&
+      !onlyResponseCompletion
     ) {
       violations.push({
         claim: line.slice(0, 220),

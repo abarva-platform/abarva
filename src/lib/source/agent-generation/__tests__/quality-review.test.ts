@@ -247,6 +247,17 @@ describe("Source consulting-grade quality gate helpers", () => {
     })).toEqual([]);
   });
 
+  it("does not let a completion percentage hide a separate commercial target", () => {
+    const violations = findDeterministicSourceClaimViolations({
+      artifactCode: "d09_rfp_pack",
+      sourceContext: "Buyer: Example Buyer. Commercial terms: Not issued.",
+      body: "Complete 100% of mandatory response fields; buyer savings target 12%.",
+    });
+    expect(violations).toEqual(expect.arrayContaining([
+      expect.objectContaining({ claim: expect.stringContaining("12%") }),
+    ]));
+  });
+
   it("allows a D09 obligation when the bounded context actually contains it", () => {
     const body = "Service availability must be >= 99.9% monthly. HIPAA applies to the contracted service.";
     expect(findDeterministicSourceClaimViolations({

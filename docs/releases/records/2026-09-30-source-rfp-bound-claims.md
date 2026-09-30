@@ -33,7 +33,7 @@ The RFP draft quality review now identifies service targets, quantified commerci
 ## QA / Validation
 
 - Before: the focused test for unbound 99.9% availability, 30-minute response, and a regulated-data obligation received zero violations; 1 test failed and 30 passed.
-- After: the adjacent quality-review suite passed 32/32 tests, including a positive approved-term case and a negative pending-term case. Removing D09 from the gate deliberately made the unbound-obligation test fail again.
+- After: the adjacent generation group passed 15 suites / 176 tests, including a positive approved-term case and a negative pending-term case. A mixed-line 100% response-completeness plus 12% commercial-target case failed before the whitelist correction and passed after it. Removing D09 from the gate deliberately made the unbound-obligation test fail again.
 - Typecheck, lint, release check, applicable CI, and signed-in post-deploy replay are recorded when completed; they are not claimed by this candidate record.
 
 ## Rollout Plan
