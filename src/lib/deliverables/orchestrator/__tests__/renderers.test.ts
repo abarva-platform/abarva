@@ -60,6 +60,95 @@ describe("DOCX renderer", () => {
     expect(documentXml).not.toContain("generated_artifact:");
     expect(documentXml).not.toContain("tower_metrics_plan");
   });
+
+  it("keeps table rows together, anchors table headings, and weights narrative columns", async () => {
+    const doc = goodDocument();
+    doc.generatedSections = [];
+    doc.sourceRegister = Array.from(
+      { length: 12 },
+      (_, index) => ({
+        citationNumber: index + 1,
+        label: `Approved source record ${index + 1} with a long descriptive title`,
+        evidenceFamily: "business_interview",
+        confidence: "high",
+      }),
+    );
+    doc.tables = [
+      {
+        key: "risk_register",
+        title: "Risk Register",
+        columns: [
+          "#",
+          "Type",
+          "Description",
+          "Evidence Position",
+          "Owner",
+          "Mitigation / Resolution Path",
+        ],
+        rows: [
+          [
+            "1",
+            "Issue",
+            "Sponsor authority and scope acceptance remain unconfirmed.",
+            "[6][22]",
+            "Client input required: sponsor",
+            "Confirm the accountable decision owner before the discovery work begins.",
+          ],
+        ],
+        targetFormat: "docx",
+      },
+    ];
+
+    const buf = await Packer.toBuffer(renderDeliverableDocx(doc));
+    const zip = await JSZip.loadAsync(buf);
+    const documentXml = await zip.file("word/document.xml")!.async("string");
+    const tableXml = (
+      documentXml.match(/<w:tbl>[\s\S]*?<\/w:tbl>/g) ?? []
+    ).find((table) => table.includes("MITIGATION / RESOLUTION PATH"));
+
+    expect(tableXml).toBeDefined();
+    const rows = tableXml?.match(/<w:tr(?:\s[^>]*)?>[\s\S]*?<\/w:tr>/g) ?? [];
+    expect(rows).toHaveLength(2);
+    expect(rows.every((row) => row.includes("<w:cantSplit/>"))).toBe(true);
+    expect(rows[0]).toContain("<w:tblHeader/>");
+    expect(rows[1]).toContain('<w:sz w:val="18"/>');
+
+    const headerWidths = [
+      ...(rows[0]?.matchAll(/<w:tcW[^>]*w:w="(\d+)%?"[^>]*\/>/g) ?? []),
+    ].map((match) => Number(match[1]));
+    expect(headerWidths).toHaveLength(6);
+    expect(headerWidths[0]).toBeLessThan(headerWidths[2]);
+    expect(headerWidths[1]).toBeGreaterThanOrEqual(13);
+    expect(headerWidths[3]).toBeGreaterThanOrEqual(11);
+    expect(headerWidths[2]).toBeGreaterThan(headerWidths[4]);
+
+    const gridWidths = [
+      ...(tableXml?.matchAll(/<w:gridCol w:w="(\d+)"\/>/g) ?? []),
+    ].map((match) => Number(match[1]));
+    expect(gridWidths).toHaveLength(6);
+    expect(gridWidths[0]).toBeLessThan(gridWidths[2]);
+    expect(gridWidths[2]).toBeGreaterThan(gridWidths[4]);
+    expect(gridWidths.reduce((sum, width) => sum + width, 0)).toBe(10000);
+
+    const heading = documentXml.match(
+      /<w:p>[\s\S]*?<w:t[^>]*>Risk Register<\/w:t>[\s\S]*?<\/w:p>/,
+    )?.[0];
+    expect(heading).toContain("<w:keepNext/>");
+
+    const sourceTable = (
+      documentXml.match(/<w:tbl>[\s\S]*?<\/w:tbl>/g) ?? []
+    ).find((table) => table.includes("Approved source record"));
+    expect(sourceTable).toBeDefined();
+    const sourceRows =
+      sourceTable?.match(/<w:tr(?:\s[^>]*)?>[\s\S]*?<\/w:tr>/g) ?? [];
+    expect(sourceRows).toHaveLength(13);
+    expect(sourceRows.every((row) => row.includes("<w:cantSplit/>"))).toBe(true);
+    const sourceHeading = documentXml.match(
+      /<w:p>[\s\S]*?<w:t[^>]*>Source Register<\/w:t>[\s\S]*?<\/w:p>/,
+    )?.[0];
+    expect(sourceHeading).toContain("<w:keepNext/>");
+    expect(sourceHeading).toContain("<w:pageBreakBefore/>");
+  });
 });
 
 describe("DOCX/HTML/PDF renderers — duplicate section-heading suppression", () => {
