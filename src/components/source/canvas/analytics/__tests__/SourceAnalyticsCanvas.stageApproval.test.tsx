@@ -32,6 +32,7 @@ import { SourceAnalyticsCanvas, liveFallbackStageViewFor } from "../SourceAnalyt
 import {
   SAMPLE_BAFO_STAGE,
   SAMPLE_PRICING_STAGE,
+  SAMPLE_RFP_STAGE,
   SAMPLE_SCOPE_STAGE,
   SAMPLE_TRANSITION_STAGE,
 } from "../sample-view-model";
@@ -184,6 +185,53 @@ describe("SourceAnalyticsCanvas stage workflow", () => {
 
   afterEach(() => {
     jest.restoreAllMocks();
+  });
+
+  it("keeps the RFP checklist upload available while unrelated legal evidence blocks Continue", () => {
+    const event = {
+      ...EVENT,
+      currentStageKey: "rfp" as const,
+      currentStageLabel: "RFP",
+    };
+    const evidenceStates: SourceEventEvidence[] = evidenceForStage("rfp")
+      .filter((requirement) =>
+        requirement.level === "required" &&
+        requirement.requirementId !== "EVID-SRC-RFP-LEGAL-TEMPLATE",
+      )
+      .map((requirement, index) => ({
+        id: `rfp-evidence-${index}`,
+        sourceEventId: event.id,
+        tenantKey: "demo-client",
+        requirementId: requirement.requirementId,
+        stage: "rfp",
+        currentState: "Usable Evidence",
+        sourceArtifactId: null,
+        sourceEventFactIds: [`fact-${index}`],
+        notes: null,
+        lastSyncedAt: null,
+        createdAt: "2026-09-30T00:00:00Z",
+        updatedAt: "2026-09-30T00:00:00Z",
+      }));
+
+    render(
+      <SourceAnalyticsCanvas
+        event={event}
+        viewStage="rfp"
+        tenantName="Demo Client"
+        stageView={SAMPLE_RFP_STAGE}
+        evidenceStates={evidenceStates}
+        initialWorkspace="steps"
+      />,
+    );
+
+    expect(screen.getByRole("heading", { name: "Confirm RFP clause coverage" }))
+      .toBeInTheDocument();
+    expect(screen.getByTestId("source-shell-active-step-needs"))
+      .toHaveTextContent("Approved legal and commercial template");
+    expect(screen.getByTestId("task-dropzone")).toBeInTheDocument();
+    expect(screen.getByTestId("source-shell-progress-status"))
+      .toHaveTextContent("Approval locked");
+    expect(screen.queryByTestId("source-shell-progress-action")).toBeNull();
   });
 
   it("reviews the current Strategy criteria before offering stage approval", async () => {
