@@ -212,6 +212,62 @@ describe("Source consulting-grade quality gate helpers", () => {
     expect(violations.some((item) => item.claim === "$7.85M")).toBe(false);
   });
 
+  it("rejects vendor-pack obligations absent from its bounded source context", () => {
+    const violations = findDeterministicSourceClaimViolations({
+      artifactCode: "d09_rfp_pack",
+      sourceContext: "Buyer: Example Buyer. Vendor-disclosable service and legal terms: Not issued.",
+      body: [
+        "| Service availability | >= 99.9% monthly |",
+        "| P1 incident response | <= 30 minutes |",
+        "The supplier must comply with HIPAA and report PHI breaches within 24 hours.",
+      ].join("\n"),
+    });
+
+    expect(violations).toEqual(expect.arrayContaining([
+      expect.objectContaining({ claim: expect.stringContaining("99.9%") }),
+      expect.objectContaining({ claim: expect.stringContaining("30 minutes") }),
+      expect.objectContaining({ claim: expect.stringContaining("HIPAA") }),
+    ]));
+  });
+
+  it("does not treat response completeness as an unapproved D09 service level", () => {
+    const body = [
+      "Bidders must complete 100% of mandatory response fields.",
+      "Service levels and data protection obligations: Not issued.",
+    ].join("\n");
+    expect(findDeterministicSourceClaimViolations({
+      artifactCode: "d09_rfp_pack",
+      sourceContext: "Buyer: Example Buyer. Vendor-disclosable terms: Not issued.",
+      body,
+    })).toEqual([]);
+    expect(findDeterministicSourceClaimViolations({
+      artifactCode: "d05_scope_memo",
+      sourceContext: "Buyer: Example Buyer.",
+      body: "The supplier must meet a 30 minute P1 response target and HIPAA obligations.",
+    })).toEqual([]);
+  });
+
+  it("allows a D09 obligation when the bounded context actually contains it", () => {
+    const body = "Service availability must be >= 99.9% monthly. HIPAA applies to the contracted service.";
+    expect(findDeterministicSourceClaimViolations({
+      artifactCode: "d09_rfp_pack",
+      sourceContext: "Vendor-disclosable approved terms: Service availability >= 99.9% monthly. HIPAA applies to the contracted service.",
+      body,
+    })).toEqual([]);
+  });
+
+  it("does not treat pending or rejected source terms as vendor-approved authority", () => {
+    const violations = findDeterministicSourceClaimViolations({
+      artifactCode: "d09_rfp_pack",
+      sourceContext: "Service availability 99.9% target pending. HIPAA not approved for this package.",
+      body: "Service availability must be 99.9%. The supplier must comply with HIPAA.",
+    });
+    expect(violations).toEqual(expect.arrayContaining([
+      expect.objectContaining({ claim: expect.stringContaining("99.9%") }),
+      expect.objectContaining({ claim: expect.stringContaining("HIPAA") }),
+    ]));
+  });
+
   it.each(["d01_strategy_memo", "d02_value_target"])(
     "rejects unbound category rankings and routine outcomes in %s",
     (artifactCode) => {
