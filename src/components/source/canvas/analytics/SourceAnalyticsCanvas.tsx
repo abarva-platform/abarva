@@ -6322,6 +6322,7 @@ function ArtifactLifecyclePanel({
         eventId={view.event.id}
         stageLabel={view.stage.label}
         rows={currentStageActionRows}
+        canReviseFinal={view.event.lifecycle === "active" && view.event.currentStageKey === view.stage.key}
         onClientFinalAccepted={onClientFinalAccepted}
       />
       {showAuditMetrics ? (
@@ -6426,11 +6427,13 @@ function CurrentStageArtifactReviewQueue({
   eventId,
   stageLabel,
   rows,
+  canReviseFinal,
   onClientFinalAccepted,
 }: {
   eventId: string;
   stageLabel: string;
   rows: SourceArtifactLifecycleRow[];
+  canReviseFinal: boolean;
   onClientFinalAccepted: () => void;
 }) {
   const blockers = rows.filter(
@@ -6521,6 +6524,7 @@ function CurrentStageArtifactReviewQueue({
               key={row.code}
               eventId={eventId}
               row={row}
+              canReviseFinal={canReviseFinal}
               onClientFinalAccepted={onClientFinalAccepted}
             />
           ))}
@@ -6533,10 +6537,12 @@ function CurrentStageArtifactReviewQueue({
 function CurrentStageArtifactReviewRow({
   eventId,
   row,
+  canReviseFinal,
   onClientFinalAccepted,
 }: {
   eventId: string;
   row: SourceArtifactLifecycleRow;
+  canReviseFinal: boolean;
   onClientFinalAccepted: () => void;
 }) {
   const action = artifactReviewAction(row);
@@ -6600,12 +6606,23 @@ function CurrentStageArtifactReviewRow({
         {row.lifecycleState === "client_final" &&
         row.consultingGate.required &&
         row.consultingGate.state !== "passed" ? (
-          <ReviewArtifactQualityButton
-            eventId={eventId}
-            artifactCode={row.code}
-            artifactName={row.name}
-            onReviewed={onClientFinalAccepted}
-          />
+          <div style={{ display: "grid", gap: 8 }}>
+            <ReviewArtifactQualityButton
+              eventId={eventId}
+              artifactCode={row.code}
+              artifactName={row.name}
+              onReviewed={onClientFinalAccepted}
+            />
+            {canReviseFinal && row.consultingGate.state === "failed" ? (
+              <AcceptClientFinalButton
+                eventId={eventId}
+                artifactCode={row.code}
+                artifactName={row.name}
+                buttonLabel="Replace Client Final"
+                onAccepted={onClientFinalAccepted}
+              />
+            ) : null}
+          </div>
         ) : row.lifecycleState === "client_final" &&
           row.contentQuality.state === "blocked" ? (
           <AcceptClientFinalButton
