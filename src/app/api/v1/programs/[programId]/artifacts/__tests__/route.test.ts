@@ -92,6 +92,7 @@ describe("GET /api/v1/programs/[programId]/artifacts — Cabinet merge", () => {
         family_key: "baseline",
         phase: 2,
         source_ref: {
+          move_artifact_id: "source-artifact-1",
           filename: "baseline.docx",
           parse_method: "docx-text-extract/v1",
           confidence: 0.86,
@@ -121,6 +122,7 @@ describe("GET /api/v1/programs/[programId]/artifacts — Cabinet merge", () => {
       expect.objectContaining({
         evidenceId: "evidence-1",
         reviewId: "review-1",
+        sourceArtifactId: "source-artifact-1",
         title: "baseline.docx",
         familyKey: "baseline",
         phase: 2,

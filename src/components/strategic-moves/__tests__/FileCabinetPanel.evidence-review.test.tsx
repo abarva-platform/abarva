@@ -41,7 +41,11 @@ describe("Moves File Cabinet evidence review", () => {
     });
     fireEvent.change(screen.getByLabelText("Upload Move file"), {
       target: {
-        files: [new File(["approved notes"], "operations_workshop.md", { type: "text/markdown" })],
+        files: [
+          new File(["approved notes"], "operations_workshop.md", {
+            type: "text/markdown",
+          }),
+        ],
       },
     });
 
@@ -55,6 +59,7 @@ describe("Moves File Cabinet evidence review", () => {
       {
         evidenceId: "evidence-1",
         reviewId: "review-1",
+        sourceArtifactId: "source-artifact-1",
         title: "baseline.docx",
         familyKey: "baseline",
         phase: 2,
@@ -105,6 +110,16 @@ describe("Moves File Cabinet evidence review", () => {
     );
 
     await screen.findByText("1 evidence item awaiting review");
+    expect(screen.getByRole("link", { name: "Open original" })).toHaveAttribute(
+      "href",
+      "/api/v1/programs/move-1/artifacts/source-artifact-1/download?inline=1",
+    );
+    expect(
+      screen.getByRole("link", { name: "Download original" }),
+    ).toHaveAttribute(
+      "href",
+      "/api/v1/programs/move-1/artifacts/source-artifact-1/download",
+    );
     fireEvent.click(screen.getByText(/Review extracted information/));
     fireEvent.click(screen.getByText("Original parsed source text"));
     expect(

@@ -20,6 +20,10 @@ import {
 } from "@/lib/programs/current-state-doc-ingest";
 import { structuredCurrentStateUploadDetail } from "@/lib/programs/current-state-routing";
 import {
+  artifactTypeForUpload,
+  saveMoveArtifact,
+} from "@/lib/programs/deliverables/move-artifacts";
+import {
   evaluateSensitiveUpload,
   sensitiveUploadRejectedResponse,
 } from "@/lib/security/sensitive-upload-guard";
@@ -119,6 +123,38 @@ export async function POST(
         typeof declaredClassification === "string"
           ? declaredClassification
           : null,
+      persistSourceArtifact: async () => {
+        const artifactPhase = Number.isFinite(phase) ? phase : 1;
+        const saved = await saveMoveArtifact(ctx, {
+          moveId: programId,
+          phase: artifactPhase,
+          artifactType: artifactTypeForUpload({
+            body: buffer,
+            family: "uploaded_evidence",
+            fileName: file.name,
+            phase: artifactPhase,
+          }),
+          artifactFamily: "uploaded_evidence",
+          title: file.name,
+          description: `Current-state evidence for ${family.label}.`,
+          fileName: file.name,
+          fileFormat: file.name.split(".").pop()?.toLowerCase() || "bin",
+          body: buffer,
+          status: "review_required",
+          sourceBasis: "client_upload",
+          confidence: "pending_review",
+          citationReady: false,
+          generatedBy: ctx.email ?? "upload",
+          metadata: {
+            uploadedBy: ctx.email ?? null,
+            mime: mimeType,
+            evidenceFamily: family.key,
+            phase: artifactPhase,
+          },
+          requireBlobStored: true,
+        });
+        return { artifactId: saved.artifactId, blobStored: saved.blobStored };
+      },
     });
 
     return Response.json(result, { status: 200 });

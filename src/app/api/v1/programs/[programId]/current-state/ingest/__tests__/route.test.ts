@@ -7,6 +7,7 @@ const ingestCurrentStateCsv = jest.fn();
 const ingestCurrentStateDoc = jest.fn();
 const evaluateSensitiveUpload = jest.fn();
 const isDocumentFamily = jest.fn();
+const mockSaveMoveArtifact = jest.fn();
 
 class MockTenancyError extends Error {
   constructor(public readonly code: "unauthenticated" | "no_client") {
@@ -46,6 +47,13 @@ jest.mock("@/lib/programs/current-state-doc-ingest", () => ({
   QuarantinedDocumentError: class QuarantinedDocumentError extends Error {
     result = { decision: "quarantine" };
   },
+}));
+
+jest.mock("@/lib/programs/deliverables/move-artifacts", () => ({
+  artifactTypeForUpload: jest.fn(
+    () => "uploaded_evidence_p2_source_123456789abc",
+  ),
+  saveMoveArtifact: mockSaveMoveArtifact,
 }));
 
 jest.mock("@/lib/programs/archetypes/registry", () => ({
@@ -149,6 +157,12 @@ beforeEach(() => {
   });
   isDocumentFamily.mockReturnValue(true);
   ingestCurrentStateDoc.mockResolvedValue({ status: "review_required" });
+  mockSaveMoveArtifact.mockResolvedValue({
+    artifactId: "source-artifact-1",
+    blobStored: true,
+    version: 1,
+    blobPath: "moves/tenant-one/program-visible/uploads/source/v1/source.txt",
+  });
 });
 
 describe("current-state upload routes", () => {
@@ -205,5 +219,53 @@ describe("current-state upload routes", () => {
     });
     expect(evaluateSensitiveUpload).not.toHaveBeenCalled();
     expect(ingestCurrentStateDoc).not.toHaveBeenCalled();
+  });
+
+  it("retains the original in Blob and links it to the evidence review", async () => {
+    ingestCurrentStateDoc.mockImplementation(async (_ctx, args) => {
+      const source = await args.persistSourceArtifact();
+      return {
+        ok: true,
+        reviewState: "review_required",
+        sourceArtifactId: source.artifactId,
+        sourceArtifactStored: source.blobStored,
+      };
+    });
+    const { POST } = await import("../../ingest-doc/route");
+
+    const res = await POST(docRequest(), {
+      params: Promise.resolve({ programId: PROGRAM_ID }),
+    });
+
+    expect(res.status).toBe(200);
+    await expect(res.json()).resolves.toEqual(
+      expect.objectContaining({
+        sourceArtifactId: "source-artifact-1",
+        sourceArtifactStored: true,
+      }),
+    );
+    expect(mockSaveMoveArtifact).toHaveBeenCalledWith(
+      CTX,
+      expect.objectContaining({
+        moveId: PROGRAM_ID,
+        phase: 2,
+        artifactFamily: "uploaded_evidence",
+        status: "review_required",
+        requireBlobStored: true,
+      }),
+    );
+  });
+
+  it("never retains a source that the raw sensitivity scan quarantines", async () => {
+    evaluateSensitiveUpload.mockReturnValueOnce({ decision: "quarantine" });
+    const { POST } = await import("../../ingest-doc/route");
+
+    const res = await POST(docRequest(), {
+      params: Promise.resolve({ programId: PROGRAM_ID }),
+    });
+
+    expect(res.status).toBe(422);
+    expect(ingestCurrentStateDoc).not.toHaveBeenCalled();
+    expect(mockSaveMoveArtifact).not.toHaveBeenCalled();
   });
 });
