@@ -1972,6 +1972,44 @@ jobs:
           src/lib/instruments/__tests__/render.test.ts
           --no-coverage --ci
 
+      # Item T-799, second half: the fourteenth stale-suite draw's seventeen
+      # `wire_into_ci` rows. Verdicts: `docs/architecture/t799-stale-suite-triage.json`
+      # (#8757). Re-executed on base `a1990c0457` before wiring: 17 suites, 80
+      # cases, all green. Fifteen directories hold exactly one test file, the
+      # drawn one, so they are named whole and leave the dark-directory baseline
+      # in the same change. Two are named BY FILE: the `(maestro)` route-group
+      # segment would be read as a capture group by a bare Jest pattern, and
+      # `source/new-workspace` holds two files that already run elsewhere.
+      # Not wired here, by verdict: the Tower route-scope byte scan
+      # (rewrite_as_behavior), the LivingMoveView stale label
+      # (update_with_reason_recorded) and ProofPointFooter (held for T-775).
+      - name: Run the T-799 route handler, setup, programs and strategic-moves suites
+        run: >-
+          npx jest
+          src/app/api/cron/board-pack/__tests__
+          src/app/api/cron/notifications-tick/__tests__
+          src/app/api/health/__tests__
+          src/app/api/health/postgres-disruption/__tests__
+          src/app/api/knowledge/chunk/__tests__
+          src/app/api/programs/expert-kernel/export/__tests__
+          src/app/api/request-access/__tests__
+          src/app/api/webhooks/resend/__tests__
+          src/components/ava-chat/__tests__
+          src/components/programs/attachments/__tests__
+          src/components/setup/loader/__tests__
+          src/components/source/setup/__tests__
+          src/components/strategic-moves/cost-effort/__tests__
+          src/components/strategic-moves/risk-assessment/__tests__
+          src/components/strategic-moves/solutioning/__tests__
+          --no-coverage --ci
+
+      - name: Run the T-799 docs page and Source request-first suites by named file
+        run: >-
+          npx jest --runTestsByPath
+          "src/app/(maestro)/docs/__tests__/product-docs-page.test.tsx"
+          src/components/source/new-workspace/SourceNewRequestFirstPage.test.tsx
+          --no-coverage --ci
+
       # Item T-495, claimable half, suite 2 of 11.
       # `src/__tests__/hygiene/learn-layout-single-nav.test.ts` asserted the
       # single-top-nav rule for `/home/learn` over the BYTES of two files, and was
