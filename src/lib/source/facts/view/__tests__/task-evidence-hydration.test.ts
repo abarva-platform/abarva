@@ -386,6 +386,52 @@ describe("hydrateTaskEvidenceState", () => {
     expect(done([workforce, sla])).toBeUndefined();
   });
 
+  it("reads back an exclusions decision only while its SOW source or audited absence is current", () => {
+    const task: StageTaskView = {
+      id: "scope.exclusions", title: "Confirm what's out of scope", subtitle: "Decision",
+      type: "decide", state: "todo", guide: "Review exclusions.", cta: "Confirm exclusions",
+    };
+    const sow = {
+      requirementId: "EVID-SRC-SCOPE-CURRENT-SOW", currentState: "Available" as const,
+      sourceArtifactId: "sow-v1",
+    };
+    const decision = {
+      kind: "scope_exclusions_decision_v1", actorUserId: "owner-1", decidedAt: "2026-09-30T09:00:00Z",
+      excludedWork: "Security operations and application retirement are outside the proposed supplier scope.",
+      responsibleOwner: "Retained client operations and application owners remain accountable for excluded work.",
+      rationale: "Synthetic scope decision without asserting contractual exclusion or supplier acceptance.",
+      basis: { kind: "source", sourceId: "sow-v1" },
+    };
+    const receipt = {
+      requirementId: "EVID-SRC-SCOPE-EXCLUSIONS-DECISION", currentState: "Available" as const,
+      notes: JSON.stringify(decision),
+    };
+    const done = (evidenceStates: NonNullable<Parameters<typeof hydrateTaskEvidenceState>[0]["evidenceStates"]>) =>
+      hydrateTaskEvidenceState({ tasks: [task], factInputs: {}, evidenceStates, stageKey: "scope" })[0]
+        .evidenceComplete;
+    expect(done([sow, receipt])).toBe(true);
+    expect(done([{ ...sow, sourceArtifactId: "sow-v2" }, receipt])).toBeUndefined();
+    expect(done([{ ...sow, currentState: "Stale" }, receipt])).toBeUndefined();
+    expect(done([sow, { ...receipt, notes: null }])).toBeUndefined();
+
+    const absent = {
+      requirementId: "EVID-SRC-SCOPE-CURRENT-SOW", currentState: "Not Requested" as const,
+      sourceArtifactId: null, sourceEventFactIds: [], applicabilityStatus: "not_applicable" as const,
+      applicabilityReason: "This synthetic net-new service has no current SOW or change-order history.",
+      applicabilityActorUserId: "owner-2", applicabilityDecidedAt: "2026-09-30T10:00:00Z",
+    };
+    const absenceReceipt = {
+      ...receipt,
+      notes: JSON.stringify({ ...decision, basis: {
+        kind: "audited_absence", actorUserId: absent.applicabilityActorUserId,
+        decidedAt: absent.applicabilityDecidedAt, reason: absent.applicabilityReason,
+      } }),
+    };
+    expect(done([absent, absenceReceipt])).toBe(true);
+    expect(done([{ ...absent, applicabilityReason: `${absent.applicabilityReason} Revised.` }, absenceReceipt])).toBeUndefined();
+    expect(done([{ ...absent, applicabilityStatus: "applicable" as const }, absenceReceipt])).toBeUndefined();
+  });
+
   it("marks a mapped decide task complete when governed evidence meets minimum state", () => {
     const hydrated = hydrateTaskEvidenceState({
       tasks: [EXECUTIVE_DECISION_TASK],

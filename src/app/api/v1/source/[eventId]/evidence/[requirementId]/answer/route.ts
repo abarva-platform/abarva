@@ -17,6 +17,7 @@ import { selectSourceWriteAdapter } from "@/lib/data-plane/write-adapters/source
 import { evidenceById } from "@/lib/source/canonical-specs";
 import { evidenceMeetsRequirement, requiresRecordedSource } from "@/lib/source/evidence-authority";
 import { scopeMatrixSourceId, SCOPE_MATRIX_DECISION_ID } from "@/lib/source/facts/scope-matrix-decision";
+import { scopeExclusionBasis, SCOPE_EXCLUSIONS_DECISION_ID, type ScopeExclusionBasis } from "@/lib/source/facts/scope-exclusion-decision";
 import { listEffectiveEvidenceStatesForEvent } from "@/lib/source/canvas-substrate/queries";
 import {
   evidenceStateRowToView,
@@ -87,8 +88,15 @@ export async function POST(req: NextRequest, { params }: RouteCtx) {
         vendorResponsibilities?: unknown;
         rationale?: unknown;
       };
+      scopeExclusions?: {
+        excludedWork?: unknown;
+        responsibleOwner?: unknown;
+        rationale?: unknown;
+      };
     } | null;
     const isScopeMatrix = requirementId === SCOPE_MATRIX_DECISION_ID;
+    const isScopeExclusions = requirementId === SCOPE_EXCLUSIONS_DECISION_ID;
+    const isScopeDecision = isScopeMatrix || isScopeExclusions;
     const retainedResponsibilities = isScopeMatrix
       ? cleanDecisionField(body?.scopeMatrix?.retainedResponsibilities) : null;
     const vendorResponsibilities = isScopeMatrix
@@ -98,9 +106,17 @@ export async function POST(req: NextRequest, { params }: RouteCtx) {
     if (isScopeMatrix && (!retainedResponsibilities || !vendorResponsibilities || !rationale)) {
       return badRequest("Retained work, prospective vendor work, and decision rationale must each be at least 24 characters.");
     }
+    const excludedWork = isScopeExclusions ? cleanDecisionField(body?.scopeExclusions?.excludedWork) : null;
+    const responsibleOwner = isScopeExclusions ? cleanDecisionField(body?.scopeExclusions?.responsibleOwner) : null;
+    const exclusionsRationale = isScopeExclusions ? cleanDecisionField(body?.scopeExclusions?.rationale) : null;
+    if (isScopeExclusions && (!excludedWork || !responsibleOwner || !exclusionsRationale)) {
+      return badRequest("Excluded work, responsible owner, and rationale must each be at least 24 characters.");
+    }
     const answer = isScopeMatrix
       ? `${retainedResponsibilities}\n${vendorResponsibilities}\n${rationale}`
-      : cleanAnswer(body?.answer);
+      : isScopeExclusions
+        ? `${excludedWork}\n${responsibleOwner}\n${exclusionsRationale}`
+        : cleanAnswer(body?.answer);
     if (!answer) return badRequest("answer must be at least 8 characters.");
 
     const requestedStage =
@@ -184,13 +200,13 @@ export async function POST(req: NextRequest, { params }: RouteCtx) {
       );
     }
 
-    if (isScopeMatrix && !accessPolicy?.canApproveSourceStages) {
+    if (isScopeDecision && !accessPolicy?.canApproveSourceStages) {
       return Response.json(
         { ok: false, error: "forbidden", detail: "Stage approval authority is required for this decision." },
         { status: 403 },
       );
     }
-    if (isScopeMatrix && persistedEvent.current_stage_key !== "scope") {
+    if (isScopeDecision && persistedEvent.current_stage_key !== "scope") {
       return Response.json(
         { ok: false, error: "wrong_stage", detail: "Scope must be the active stage." },
         { status: 409 },
@@ -209,8 +225,10 @@ export async function POST(req: NextRequest, { params }: RouteCtx) {
     }
 
     let matrixSourceIds: { workforceArtifactId: string; slaArtifactId: string } | null = null;
+    const effectiveEvidence = isScopeDecision
+      ? await listEffectiveEvidenceStatesForEvent(persistedEvent.id)
+      : [];
     if (isScopeMatrix) {
-      const effectiveEvidence = await listEffectiveEvidenceStatesForEvent(persistedEvent.id);
       const workforce = effectiveEvidence.find((row) => row.requirementId === "EVID-SRC-SCOPE-WORKFORCE");
       const sla = effectiveEvidence.find((row) => row.requirementId === "EVID-SRC-SCOPE-SLA-BASELINE");
       const workforceRequirement = evidenceById("EVID-SRC-SCOPE-WORKFORCE");
@@ -228,10 +246,21 @@ export async function POST(req: NextRequest, { params }: RouteCtx) {
       }
       matrixSourceIds = { workforceArtifactId, slaArtifactId };
     }
+    let exclusionBasis: ScopeExclusionBasis | null = null;
+    if (isScopeExclusions) {
+      const currentSow = effectiveEvidence.find((row) => row.requirementId === "EVID-SRC-SCOPE-CURRENT-SOW");
+      exclusionBasis = scopeExclusionBasis(currentSow);
+      if (!exclusionBasis) {
+        return Response.json(
+          { ok: false, error: "source_evidence_required", detail: "Current SOW evidence or an audited absence is required before recording exclusions." },
+          { status: 422 },
+        );
+      }
+    }
 
     const nowIso = new Date().toISOString();
     const actorUserId = currentUser?.personId ?? currentUser?.clerkUserId ?? tenancy?.userId ?? null;
-    if (isScopeMatrix && !actorUserId) {
+    if (isScopeDecision && !actorUserId) {
       return Response.json({ ok: false, error: "actor_required" }, { status: 403 });
     }
     const clientStatedNote = isScopeMatrix
@@ -244,6 +273,16 @@ export async function POST(req: NextRequest, { params }: RouteCtx) {
           rationale,
           ...matrixSourceIds,
         })
+      : isScopeExclusions
+        ? JSON.stringify({
+            kind: "scope_exclusions_decision_v1",
+            actorUserId,
+            decidedAt: nowIso,
+            excludedWork,
+            responsibleOwner,
+            rationale: exclusionsRationale,
+            basis: exclusionBasis,
+          })
       : [`Client-stated answer (${nowIso})`, answer].join(": ");
     const { data: existing, error: readError } = await db
       .from("source_event_evidence_states")
@@ -263,7 +302,7 @@ export async function POST(req: NextRequest, { params }: RouteCtx) {
       existing && existingRank > STATE_RANK[CLIENT_STATED_STATE]
         ? existing.current_state
         : CLIENT_STATED_STATE;
-    const notes = isScopeMatrix ? clientStatedNote : existing?.notes
+    const notes = isScopeDecision ? clientStatedNote : existing?.notes
       ? `${existing.notes}\n${clientStatedNote}`
       : clientStatedNote;
 
@@ -330,6 +369,7 @@ export async function POST(req: NextRequest, { params }: RouteCtx) {
         provenance: "client-stated",
         answer,
         ...(isScopeMatrix ? { matrixSourceIds, decisionKind: "scope_matrix_decision_v1" } : {}),
+        ...(isScopeExclusions ? { exclusionBasis, decisionKind: "scope_exclusions_decision_v1" } : {}),
         state: targetState,
       },
       occurredAtIso: nowIso,
