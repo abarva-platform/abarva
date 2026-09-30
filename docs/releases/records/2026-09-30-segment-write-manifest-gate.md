@@ -42,6 +42,8 @@ Release lane: `client-data-lane`.
 - Seven focused gate tests: passed.
 - TypeScript typecheck: passed.
 - Touched-file ESLint and release check: passed.
+- Operator dry-run: passed, with zero database writes and the declared segment links still visible as proposed/withheld.
+- Negative operator `--write` run with database credentials removed: refused before constructing a database client because no dataset manifest ID was supplied.
 - Behavior coverage and PR CI: pending at release-record creation; the behavior suite is unchanged by this operator guard.
 - No database connection, tenant write, manifest approval, or signed-in segment proof is claimed.
 
