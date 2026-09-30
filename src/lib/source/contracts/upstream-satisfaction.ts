@@ -27,6 +27,23 @@ interface SourceArtifactGovernanceRow {
   lifecycle_state: string | null;
   approval_state: string | null;
   approved_by: string | null;
+  is_client_final: boolean | null;
+  is_current_authoritative: boolean | null;
+  client_final_accepted_by: string | null;
+  client_final_accepted_at: string | null;
+}
+
+function hasCurrentClientFinalAcceptance(
+  row: SourceArtifactGovernanceRow,
+): boolean {
+  return (
+    row.status === "client_final" &&
+    row.lifecycle_state === "current" &&
+    row.is_client_final === true &&
+    row.is_current_authoritative === true &&
+    Boolean(row.client_final_accepted_by?.trim()) &&
+    Boolean(row.client_final_accepted_at?.trim())
+  );
 }
 
 /**
@@ -61,7 +78,10 @@ export async function findUnsatisfiedRequiredUpstream(
   const supabase = getAzureReadFluentClient();
   const { data, error } = await supabase
     .from("source_artifacts")
-    .select("id, status, lifecycle_state, approval_state, approved_by")
+    .select(
+      "id, status, lifecycle_state, approval_state, approved_by, is_client_final, is_current_authoritative, client_final_accepted_by, client_final_accepted_at",
+    )
+    .eq("source_event_id", ctx.event.id)
     .in("id", linkedIds);
   const governanceById = new Map<string, SourceArtifactGovernanceRow>(
     error || !Array.isArray(data)
@@ -85,7 +105,9 @@ export async function findUnsatisfiedRequiredUpstream(
       lifecycleState: governance.lifecycle_state,
       approvalState: governance.approval_state,
       approvedBy: governance.approved_by,
-      hasActiveAcceptance: acceptanceById.has(linkedId),
+      hasActiveAcceptance:
+        acceptanceById.has(linkedId) ||
+        hasCurrentClientFinalAcceptance(governance),
       eventStageKey,
     });
     return !satisfied;
