@@ -110,8 +110,10 @@ describe("segment write manifest gate", () => {
 
   it("keeps approved manifests in the ACA operator image", () => {
     const dockerfile = fs.readFileSync(path.resolve(__dirname, "../../../Dockerfile"), "utf8");
+    const dockerignore = fs.readFileSync(path.resolve(__dirname, "../../../.dockerignore"), "utf8");
     expect(dockerfile).toContain(
       "/app/docs/governance/dataset-manifests ./docs/governance/dataset-manifests",
     );
+    expect(dockerignore).toContain("!docs/governance/dataset-manifests/**");
   });
 });

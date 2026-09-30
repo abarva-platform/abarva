@@ -34,7 +34,7 @@ Release lane: `client-data-lane`.
 - Require a single canonical tenant scope and a safe manifest ID before a segment-bearing write.
 - Validate the manifest's approval fields, tenant, source layer, ACA Job ingestion method, retrieval-proof requirement, exact registered source-file hashes and object count.
 - Keep non-segment refreshes unaffected; a segment dry-run still shows its proposed and withheld links without writing data.
-- Include approved dataset manifests in the ACA operator image so the same gate can run there.
+- Include approved dataset manifests in the ACA operator image and its narrowly scoped Docker build context so the same gate can run there.
 - Add planted failures for missing approval, changed source bytes, wrong scope and count, and multi-tenant reuse.
 
 ## QA / Validation
