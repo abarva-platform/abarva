@@ -128,8 +128,9 @@ and the dark baseline. After the wiring, 0 of 9 fail.
   sentinel grounding module to recompute the red hold, and that measured
   **89.92 lines against the floor of 90**. The floor was not changed. Instead,
   the control now calls the same exported function in a `tsx` child process,
-  which coverage does not instrument. The final result is recorded in the pull
-  request.
+  which coverage does not instrument. Final result: exit 0, lines 90.12 and
+  functions 69.42, identical to the base (90.12 / 69.42). Headroom is still 0.12
+  lines.
 
 **Mutations.** Each was applied, run against the control, and restored.
 
