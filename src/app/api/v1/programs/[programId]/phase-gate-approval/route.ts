@@ -55,6 +55,11 @@ import {
   phaseCaptureModuleKey,
 } from "@/lib/programs/phase-capture-contract";
 import { persistP0PhaseCaptureFromSource } from "@/lib/programs/p0-phase-capture";
+import { loadApprovedMoveEvidenceSnapshot } from "@/lib/programs/approved-move-evidence-snapshot";
+import {
+  phaseApprovalMatchesEvidence,
+  type PhaseGateEvidenceState,
+} from "@/lib/programs/phase-gate-evidence-binding";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -155,23 +160,32 @@ async function isPhaseApproved(
   ctx: Awaited<ReturnType<typeof requireTenancy>>,
   programId: string,
   phase: number,
+  evidence: PhaseGateEvidenceState | null,
 ): Promise<boolean> {
-  const program = await getProgramById(ctx, programId);
-  const gatesPassed = Array.isArray(program?.gatesPassed)
-    ? program.gatesPassed
-    : [];
-  if (
-    gatesPassed.some(
-      (entry) =>
-        entry === phase || entry === String(phase) || entry === `P${phase}`,
-    )
-  ) {
-    return true;
-  }
   const snapshots = await getPhaseSnapshots(ctx, programId, phase).catch(
     () => [],
   );
-  return snapshots.some((snapshot) => snapshot.approvalStatus === "approved");
+  return phaseApprovalMatchesEvidence(phase, snapshots, evidence);
+}
+
+async function loadEvidenceState(
+  ctx: Awaited<ReturnType<typeof requireTenancy>>,
+  programId: string,
+): Promise<PhaseGateEvidenceState | null> {
+  try {
+    const snapshot = await loadApprovedMoveEvidenceSnapshot({
+      tenantKey: ctx.clientKey ?? ctx.clientId,
+      moveId: programId,
+    });
+    return snapshot
+      ? {
+          revision: snapshot.revision,
+          latestReviewUpdatedAt: snapshot.latestReviewUpdatedAt,
+        }
+      : null;
+  } catch {
+    return null;
+  }
 }
 
 async function ensureSponsorAuthorityForApprover(
@@ -227,6 +241,7 @@ async function completeTerminalTowerHandoff(
   programId: string,
   rationale: string,
   gatesPassed: unknown,
+  evidenceRevision: string,
 ): Promise<{ snapshotId: string }> {
   const nowIso = new Date().toISOString();
   const snapshot = {
@@ -234,6 +249,7 @@ async function completeTerminalTowerHandoff(
     signed_in_phase_gate_approval: true,
     terminal_tower_handoff: true,
     capture_path: `/api/v1/programs/${programId}/phase-capture`,
+    evidenceSnapshotHash: evidenceRevision,
   };
   const { data: snap, error: snapError } = await sb
     .from("phase_snapshots")
@@ -283,6 +299,31 @@ async function completeTerminalTowerHandoff(
   return { snapshotId };
 }
 
+async function recordReapprovalSnapshot(
+  sb: ReturnType<typeof getAzureWriteFluentClient>,
+  ctx: Awaited<ReturnType<typeof requireTenancy>>,
+  programId: string,
+  phase: number,
+  snapshot: Record<string, unknown>,
+): Promise<string> {
+  const { data, error } = await sb
+    .from("phase_snapshots")
+    .insert({
+      engagement_id: programId,
+      phase_number: phase,
+      snapshot_jsonb: toJsonbParam(snapshot),
+      locked_by_user_id: ctx.userId,
+      locked_at: new Date().toISOString(),
+      approval_status: "approved",
+    })
+    .select("id")
+    .single();
+  if (error) throw error;
+  const snapshotId = (data as { id?: string } | null)?.id;
+  if (!snapshotId) throw new Error("Phase reapproval snapshot returned no id");
+  return snapshotId;
+}
+
 export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ programId: string }> },
@@ -299,10 +340,15 @@ export async function GET(
     }
     const program = await getProgramById(ctx, programId);
     if (!program) return Response.json({ error: "not_found" }, { status: 404 });
-    const [capture, approved] = await Promise.all([
+    const evidence = await loadEvidenceState(ctx, programId);
+    const [capture, snapshots] = await Promise.all([
       captureCompletion(ctx, programId, phase, program),
-      isPhaseApproved(ctx, programId, phase),
+      getPhaseSnapshots(ctx, programId, phase).catch(() => []),
     ]);
+    const approved = phaseApprovalMatchesEvidence(phase, snapshots, evidence);
+    const approvalStale =
+      !approved &&
+      snapshots.some((snapshot) => snapshot.approvalStatus === "approved");
     return Response.json({
       ok: true,
       programId,
@@ -315,7 +361,10 @@ export async function GET(
       currentPhase: program.currentPhase,
       capture,
       approved,
-      canApprove: capture.complete && !approved,
+      approvalStale,
+      evidenceSnapshotAvailable: Boolean(evidence),
+      canApprove:
+        capture.complete && !approved && (phase === 0 || Boolean(evidence)),
       approvePath: `/api/v1/programs/${programId}/phase-gate-approval`,
     });
   } catch (err) {
@@ -363,6 +412,34 @@ export async function POST(
       );
     }
 
+    const evidence =
+      phase === 0 ? null : await loadEvidenceState(ctx, programId);
+    if (phase > 0 && !evidence) {
+      return Response.json(
+        {
+          error: "evidence_snapshot_unavailable",
+          phase,
+          detail:
+            "Approved evidence could not be verified. The phase gate was not submitted.",
+        },
+        { status: 503 },
+      );
+    }
+    if (
+      phase > 1 &&
+      !(await isPhaseApproved(ctx, programId, phase - 1, evidence))
+    ) {
+      return Response.json(
+        {
+          error: "prior_gate_stale",
+          phase,
+          stalePhase: phase - 1,
+          detail: `P${phase - 1} must be current against approved evidence before P${phase} can be approved.`,
+        },
+        { status: 409 },
+      );
+    }
+
     const capture = await captureCompletion(ctx, programId, phase, program);
     if (phase === 0 && !capture.complete) {
       return Response.json(
@@ -378,7 +455,17 @@ export async function POST(
       );
     }
 
-    const approved = await isPhaseApproved(ctx, programId, phase);
+    const approved = await isPhaseApproved(ctx, programId, phase, evidence);
+    const existingSnapshots = await getPhaseSnapshots(
+      ctx,
+      programId,
+      phase,
+    ).catch(() => []);
+    const approvalStale =
+      !approved &&
+      existingSnapshots.some(
+        (snapshot) => snapshot.approvalStatus === "approved",
+      );
     const terminalHandoffNeedsCompletion =
       phase === 5 && approved && !terminalTowerHandoffComplete(program);
     if (approved && !terminalHandoffNeedsCompletion) {
@@ -459,6 +546,7 @@ export async function POST(
         {
           error: "gate_blocked",
           phase,
+          approvalStale,
           gateId: gateIdFor(programId, phase),
           gate,
           capture,
@@ -481,8 +569,26 @@ export async function POST(
             severity: "soft" as const,
           }))
         : [];
-    const advanced =
-      phase === 5
+    const evidenceBoundSnapshot = {
+      humanRationale: rationale,
+      signed_in_phase_gate_approval: true,
+      capture_path: `/api/v1/programs/${programId}/phase-capture`,
+      ...(evidence ? { evidenceSnapshotHash: evidence.revision } : {}),
+    };
+    const reapprovingEarlierPhase = phase < (program.currentPhase ?? 0);
+    const advanced = reapprovingEarlierPhase
+      ? {
+          programId,
+          newPhase: program.currentPhase ?? phase + 1,
+          snapshotId: await recordReapprovalSnapshot(
+            sb,
+            ctx,
+            programId,
+            phase,
+            evidenceBoundSnapshot,
+          ),
+        }
+      : phase === 5
         ? {
             programId,
             newPhase: 6,
@@ -492,6 +598,7 @@ export async function POST(
               programId,
               rationale,
               program.gatesPassed,
+              evidence?.revision ?? "",
             )),
           }
         : await advancePhase(
@@ -500,11 +607,7 @@ export async function POST(
               programId,
               fromPhase: phase,
               toPhase,
-              snapshot: {
-                humanRationale: rationale,
-                signed_in_phase_gate_approval: true,
-                capture_path: `/api/v1/programs/${programId}/phase-capture`,
-              },
+              snapshot: evidenceBoundSnapshot,
               approvedByUserId: ctx.userId,
             },
             { supabase: sb },
@@ -553,6 +656,8 @@ export async function POST(
           ? "open_tower_handoff"
           : `open_phase_${advanced.newPhase}`,
       terminalHandoff: toPhase === 6,
+      reapproved: reapprovingEarlierPhase,
+      reapprovedPhase: reapprovingEarlierPhase ? phase : undefined,
       snapshotId: advanced.snapshotId,
       carriedGaps: [
         ...carried.map((check) => check.check),

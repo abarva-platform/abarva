@@ -1,6 +1,10 @@
 import { notFound, redirect } from "next/navigation";
 import { requireProductModule } from "@/lib/auth/server-module-access";
-import { getModuleState, getStrategicMoveById } from "@/lib/programs/queries";
+import {
+  getModuleState,
+  getPhaseSnapshots,
+  getStrategicMoveById,
+} from "@/lib/programs/queries";
 import {
   getPhaseCaptureSections,
   phaseCaptureModuleKey,
@@ -53,6 +57,10 @@ import {
 } from "@/lib/programs/current-state-readiness";
 import { resolveMoveArchetypeForProgram } from "@/lib/programs/move-archetype-resolution";
 import { isFeatureEnabled } from "@/lib/features/is-feature-enabled";
+import { loadApprovedMoveEvidenceSnapshot } from "@/lib/programs/approved-move-evidence-snapshot";
+import { effectivePhaseAfterEvidenceChange } from "@/lib/programs/phase-gate-evidence-binding";
+import { buildGateCriteria } from "@/lib/programs/transformers";
+import { getPhaseLabel } from "@/lib/programs/phase-labels";
 
 export const dynamic = "force-dynamic";
 
@@ -303,8 +311,42 @@ export default async function StrategicMovePhaseWorkspacePage({
     notFound();
   }
 
-  const move = await getStrategicMoveById(ctx, moveId);
-  if (!move) notFound();
+  const loadedMove = await getStrategicMoveById(ctx, moveId);
+  if (!loadedMove) notFound();
+  const [phaseSnapshots, evidenceSnapshot] = await Promise.all([
+    getPhaseSnapshots(ctx, moveId).catch(() => []),
+    loadApprovedMoveEvidenceSnapshot({
+      tenantKey: ctx.clientKey ?? ctx.clientId,
+      moveId,
+    }).catch(() => null),
+  ]);
+  const effectiveCurrentPhase = loadedMove.terminalComplete
+    ? loadedMove.currentPhase
+    : effectivePhaseAfterEvidenceChange(
+        loadedMove.currentPhase,
+        phaseSnapshots,
+        evidenceSnapshot
+          ? {
+              revision: evidenceSnapshot.revision,
+              latestReviewUpdatedAt: evidenceSnapshot.latestReviewUpdatedAt,
+            }
+          : null,
+      );
+  const reopenedForEvidenceReview =
+    effectiveCurrentPhase < loadedMove.currentPhase;
+  const move =
+    effectiveCurrentPhase === loadedMove.currentPhase
+      ? loadedMove
+      : {
+          ...loadedMove,
+          currentPhase: effectiveCurrentPhase,
+          phaseLabel: getPhaseLabel(effectiveCurrentPhase),
+          gateCriteria: await buildGateCriteria(
+            ctx,
+            moveId,
+            effectiveCurrentPhase,
+          ),
+        };
 
   const pricingEngineEnabled = isFeatureEnabled(
     { clientKey: ctx.clientKey, clientId: ctx.clientId },
@@ -373,7 +415,9 @@ export default async function StrategicMovePhaseWorkspacePage({
     currentPhase,
     requestedPhase: parsedPhase,
     blockedPhase: blockedPhaseFromQuery,
-    p1ToP2WorkbookReview,
+    p1ToP2WorkbookReview: reopenedForEvidenceReview
+      ? null
+      : p1ToP2WorkbookReview,
   });
   if (!phaseNavigationStatus.canOpenRequestedPhase) {
     // Carry the reason as a query param — a silent redirect here reads as a
