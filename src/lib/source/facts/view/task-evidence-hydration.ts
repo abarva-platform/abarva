@@ -40,6 +40,11 @@ import {
   evidenceRequirementIdForTask,
   factTemplateCodeForTask,
 } from "@/lib/source/facts/task-evidence-requirements";
+import {
+  parseScopeMatrixDecision,
+  scopeMatrixDecisionMatchesSources,
+  SCOPE_MATRIX_DECISION_ID,
+} from "@/lib/source/facts/scope-matrix-decision";
 
 /** The minimal artifact shape this hydrator needs (from the registry record). */
 export interface HydrationArtifact {
@@ -67,7 +72,7 @@ export interface HydrateTaskEvidenceInput {
    * fact-backed evidence), from `listEffectiveEvidenceStatesForEvent`.
    * Used for ticket-history and non-upload confirm/decide readback.
    */
-  evidenceStates?: readonly (EvidenceAssessment & Partial<Pick<SourceEventEvidence, "id">>)[];
+  evidenceStates?: readonly (EvidenceAssessment & Partial<Pick<SourceEventEvidence, "id" | "notes">>)[];
   /** The canonical stage key being rendered; retained for the caller contract. */
   stageKey?: string;
   /** Verified, current-artifact delegate receipt plus confirmed sponsor notice. */
@@ -128,6 +133,22 @@ export function hydrateTaskEvidenceState(
     if (task.type !== "provide") {
       const requirementId = evidenceRequirementIdForTask(task);
       if (!requirementId) return task;
+      if (requirementId === SCOPE_MATRIX_DECISION_ID) {
+        const receipt = evidenceStates.find((row) => row.requirementId === requirementId);
+        const workforce = evidenceStates.find((row) => row.requirementId === "EVID-SRC-SCOPE-WORKFORCE");
+        const sla = evidenceStates.find((row) => row.requirementId === "EVID-SRC-SCOPE-SLA-BASELINE");
+        const decision = parseScopeMatrixDecision(receipt?.notes);
+        const receiptRequirement = evidenceById(requirementId);
+        const workforceRequirement = evidenceById("EVID-SRC-SCOPE-WORKFORCE");
+        const slaRequirement = evidenceById("EVID-SRC-SCOPE-SLA-BASELINE");
+        return receiptRequirement && workforceRequirement && slaRequirement &&
+          evidenceMeetsRequirement(receiptRequirement, receipt) &&
+          evidenceMeetsRequirement(workforceRequirement, workforce) &&
+          evidenceMeetsRequirement(slaRequirement, sla) &&
+          scopeMatrixDecisionMatchesSources(decision, workforce, sla)
+          ? { ...task, evidenceComplete: true }
+          : task;
+      }
       const requirement = evidenceById(requirementId);
       const currentState = evidenceStateByRequirementId.get(requirementId);
       if (

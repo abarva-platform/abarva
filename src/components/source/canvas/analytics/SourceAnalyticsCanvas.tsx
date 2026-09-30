@@ -3626,9 +3626,15 @@ function StepDetail({
   >({ phase: "idle" });
   const [uploadReadback, setUploadReadback] =
     useState<TaskProvideUploadReadback | null>(null);
+  const [scopeMatrix, setScopeMatrix] = useState({
+    retainedResponsibilities: "",
+    vendorResponsibilities: "",
+    rationale: "",
+  });
   const activeStepId = step?.id;
   useEffect(() => {
     setUploadReadback(null);
+    setScopeMatrix({ retainedResponsibilities: "", vendorResponsibilities: "", rationale: "" });
   }, [activeStepId]);
   if (!step) return null;
   const activeStep = step;
@@ -3645,6 +3651,8 @@ function StepDetail({
   const isStrategyConfirmation =
     stageKey === "strategy" && activeStep.id === "strategy.confirm" &&
     activeStep.approvalPolicyCode === "self_v1";
+  const isScopeMatrix = stageKey === "scope" && activeStep.id === "scope.matrix";
+  const matrixReady = Object.values(scopeMatrix).every((value) => value.trim().length >= 24);
   const canPersistAction = isStrategyConfirmation
     ? Boolean(activeStep.confirmationVersion)
     : activeStep.type !== "provide" && Boolean(evidenceRequirementId);
@@ -3676,7 +3684,9 @@ function StepDetail({
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({
                 stage: stageKey,
-                answer: `${activeStep.title}: ${activeStep.help}`,
+                ...(isScopeMatrix
+                  ? { scopeMatrix }
+                  : { answer: `${activeStep.title}: ${activeStep.help}` }),
               }),
             },
           );
@@ -3707,7 +3717,7 @@ function StepDetail({
       return;
     }
 
-    if (!isStrategyConfirmation) onComplete();
+    if (!isStrategyConfirmation && !isScopeMatrix) onComplete();
     setActionState({ phase: "idle" });
     router.refresh();
   }
@@ -3719,6 +3729,8 @@ function StepDetail({
   ) : canPersistAction ? (
     <StepActionButton
       saving={actionState.phase === "saving"}
+      ready={!isScopeMatrix || matrixReady}
+      highlight={isScopeMatrix}
       onClick={completeStepAction}
     >
       {step.cta}
@@ -3745,6 +3757,26 @@ function StepDetail({
         {actionState.message}
       </div>
     ) : null;
+  const matrixFields = isScopeMatrix ? (
+    <div style={{ display: "grid", gap: 10, maxWidth: 680, marginBottom: 12 }}>
+      {([
+        ["retainedResponsibilities", "Retained responsibilities"],
+        ["vendorResponsibilities", "Prospective vendor responsibilities"],
+        ["rationale", "Decision rationale"],
+      ] as const).map(([field, label]) => (
+        <label key={field} style={{ display: "grid", gap: 5, color: ANALYTICS.INK, fontSize: 12, fontWeight: 700 }}>
+          {label}
+          <textarea
+            value={scopeMatrix[field]}
+            onChange={(event) => setScopeMatrix((previous) => ({ ...previous, [field]: event.target.value }))}
+            rows={2}
+            maxLength={2000}
+            style={{ width: "100%", resize: "vertical", border: `1px solid ${ANALYTICS.LINE}`, borderRadius: 6, padding: "9px 10px", font: "inherit", fontWeight: 400, color: ANALYTICS.INK }}
+          />
+        </label>
+      ))}
+    </div>
+  ) : null;
 
   if (activeStep.rows.length > 0) {
     return (
@@ -3788,6 +3820,7 @@ function StepDetail({
               borderTop: `1px solid ${ANALYTICS.LINE_SOFT}`,
             }}
           >
+            {matrixFields}
             {actionButton}
             {actionError}
           </div>
@@ -3863,6 +3896,7 @@ function StepDetail({
   return (
     <div style={{ marginLeft: 42 }}>
       {evidenceRow}
+      {matrixFields}
       {actionButton}
       {actionError}
     </div>
@@ -4236,23 +4270,27 @@ function ActionButton({
 function StepActionButton({
   children,
   saving,
+  ready = true,
+  highlight = false,
   onClick,
 }: {
   children: ReactNode;
   saving: boolean;
+  ready?: boolean;
+  highlight?: boolean;
   onClick: () => void;
 }) {
   return (
     <button
       type="button"
       onClick={onClick}
-      disabled={saving}
+      disabled={saving || !ready}
       style={{
         border: "none",
         borderRadius: 8,
-        background: saving ? ANALYTICS.FAINT : ANALYTICS.INK,
-        color: "#fff",
-        cursor: saving ? "wait" : "pointer",
+        background: saving || !ready ? ANALYTICS.SOFT : highlight ? ANALYTICS.GREEN : ANALYTICS.INK,
+        color: saving || !ready ? ANALYTICS.MUTED : "#fff",
+        cursor: saving ? "wait" : !ready ? "not-allowed" : "pointer",
         fontFamily: ANALYTICS.SANS,
         fontSize: 13,
         fontWeight: 800,

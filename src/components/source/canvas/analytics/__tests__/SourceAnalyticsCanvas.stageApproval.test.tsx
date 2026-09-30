@@ -905,6 +905,67 @@ describe("SourceAnalyticsCanvas stage workflow", () => {
       .toBeNull();
   });
 
+  it("requires an explicit retained/vendor split before posting a durable Scope decision", async () => {
+    render(<SourceAnalyticsCanvas
+      event={EVENT}
+      viewStage="scope"
+      tenantName="Demo Client"
+      evidenceStates={SCOPE_READY_EVIDENCE}
+      initialWorkspace="steps"
+    />);
+    fireEvent.click(screen.getByRole("button", { name: /Confirm retained vs\. vendor/ }));
+    expect(screen.getByRole("button", { name: "Confirm matrix" })).toBeDisabled();
+    fireEvent.change(screen.getByLabelText("Retained responsibilities"), { target: { value: "Client operations retains service ownership, policy and final approvals." } });
+    fireEvent.change(screen.getByLabelText("Prospective vendor responsibilities"), { target: { value: "Prospective vendor handles L1/L2 desk and endpoint support only." } });
+    fireEvent.change(screen.getByLabelText("Decision rationale"), { target: { value: "Synthetic owner review of the workforce and SLA evidence for this event." } });
+    expect(screen.getByRole("button", { name: "Confirm matrix" })).toBeEnabled();
+    fireEvent.click(screen.getByRole("button", { name: "Confirm matrix" }));
+    await waitFor(() => expect(global.fetch).toHaveBeenCalledWith(
+      `/api/v1/source/${EVENT.id}/evidence/EVID-SRC-SCOPE-RETAINED-VENDOR-DECISION/answer`,
+      expect.objectContaining({ method: "POST" }),
+    ));
+    expect(JSON.parse((global.fetch as jest.Mock).mock.calls[0][1].body)).toMatchObject({
+      scopeMatrix: {
+        retainedResponsibilities: expect.stringContaining("Client operations"),
+        vendorResponsibilities: expect.stringContaining("Prospective vendor"),
+        rationale: expect.stringContaining("Synthetic owner review"),
+      },
+    });
+  });
+
+  it("shows the retained/vendor step captured only from a matching persisted decision receipt", () => {
+    const workforce = SCOPE_READY_EVIDENCE.find((row) => row.requirementId === "EVID-SRC-SCOPE-WORKFORCE")!;
+    const sla = SCOPE_READY_EVIDENCE.find((row) => row.requirementId === "EVID-SRC-SCOPE-SLA-BASELINE")!;
+    const receipt: SourceEventEvidence = {
+      ...workforce,
+      id: "scope-matrix-decision-1",
+      requirementId: "EVID-SRC-SCOPE-RETAINED-VENDOR-DECISION",
+      currentState: "Available",
+      sourceEventFactIds: [],
+      notes: JSON.stringify({
+        kind: "scope_matrix_decision_v1",
+        actorUserId: "owner-1",
+        decidedAt: "2026-09-30T09:00:00Z",
+        retainedResponsibilities: "Client operations retains service ownership, policy and approvals.",
+        vendorResponsibilities: "Prospective vendor handles L1/L2 desk and endpoint support only.",
+        rationale: "Synthetic owner review of the workforce and SLA evidence for this event.",
+        workforceArtifactId: `facts:${workforce.sourceEventFactIds![0]}`,
+        slaArtifactId: `facts:${sla.sourceEventFactIds![0]}`,
+      }),
+    };
+    const { rerender } = render(<SourceAnalyticsCanvas
+      event={EVENT} viewStage="scope" tenantName="Demo Client"
+      evidenceStates={[...SCOPE_READY_EVIDENCE, receipt]} initialWorkspace="steps"
+    />);
+    expect(screen.getByRole("button", { name: /Confirm retained vs\. vendor/ })).toHaveTextContent("✓");
+    rerender(<SourceAnalyticsCanvas
+      event={EVENT} viewStage="scope" tenantName="Demo Client"
+      evidenceStates={[...SCOPE_READY_EVIDENCE, { ...receipt, notes: receipt.notes?.replace(`facts:${sla.sourceEventFactIds![0]}`, "facts:old-sla") ?? null }]}
+      initialWorkspace="steps"
+    />);
+    expect(screen.getByRole("button", { name: /Confirm retained vs\. vendor/ })).not.toHaveTextContent("✓");
+  });
+
   it("does not unlock fallback steps from an unrelated or unvalidated receipt", () => {
     const ticketEvidence = SCOPE_READY_EVIDENCE.find(
       (row) => row.requirementId === "EVID-SRC-SCOPE-TICKET-HISTORY",

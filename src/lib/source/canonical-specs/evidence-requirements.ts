@@ -160,6 +160,23 @@ const STRATEGY: SourceEvidenceRequirement[] = [
 // Stage 2 - Scope
 const SCOPE: SourceEvidenceRequirement[] = [
   req({
+    requirementId: "EVID-SRC-SCOPE-RETAINED-VENDOR-DECISION",
+    stage: "scope",
+    label: "Retained and vendor responsibility decision",
+    evidenceClass: "scope",
+    sourceLabel: "Event Owner decision based on workforce and SLA evidence",
+    sourceSystems: ["Source decision workflow"],
+    acceptedFileTypes: [],
+    recordGrain: "one accountable responsibility split per event and source revision",
+    criticalFields: ["retained_responsibilities", "vendor_responsibilities", "rationale", "actor", "decided_at"],
+    filenameTokens: [],
+    qualityChecks: ["Both sides are explicit", "Current workforce and SLA source identities are retained"],
+    minimumState: "Available",
+    level: "recommended",
+    description: "The Event Owner's reviewed responsibility split. This is a decision, not a supplier commitment or contract.",
+    unlocks: "The Scope retained/vendor workflow step after source evidence is ready.",
+  }),
+  req({
     requirementId: "EVID-SRC-SCOPE-APP-INV",
     stage: "scope",
     label: "Application and service inventory",
