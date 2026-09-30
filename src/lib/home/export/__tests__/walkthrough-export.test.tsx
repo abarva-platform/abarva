@@ -22,6 +22,15 @@ async function pdfText(element: ReturnType<typeof buildHomeWalkthroughPdf>) {
 const recordSource: HomeRecordRenderSource = {
   kind: "ecl_serving_projection",
   canonicalSnapshotHash: "ecl:test:serving.home_*:3311",
+  contextVersion: {
+    assessmentId: "assessment-test",
+    projectionContentHash: "rows-hash",
+    deterministicPacketHash: "read-packet-hash",
+    narrativePacketHash: null,
+    narrativeGeneratedAt: "2026-08-21T00:00:00Z",
+    dataAsOf: null,
+    coherence: "stored_narrative",
+  },
 };
 
 function bundleWithGraph(): HomeReviewBundle {
@@ -114,7 +123,9 @@ describe("Home walkthrough export", () => {
     });
 
     expect(html).toContain("AbarVa Home Walkthrough Export");
-    expect(html).toContain("Record on screen: Live governed record");
+    expect(html).toContain("Record on screen: Live governed rows");
+    expect(html).toContain("Reviewed narrative; live rows may differ");
+    expect(html).toContain("Data as of not established");
     expect(html).toContain("home_*:3311");
     expect(html).toContain("Vendor Contracts");
     expect(html).toContain("Data Assets &amp; Integrations");
@@ -140,7 +151,8 @@ describe("Home walkthrough export", () => {
 
     expect(output.startsWith("%PDF-")).toBe(true);
     expect(output).toContain("AbarVa Home Walkthrough Export");
-    expect(output).toContain("Live governed record");
+    expect(output).toContain("Live governed rows");
+    expect(output).toContain("Reviewed narrative; live rows may differ");
     expect(output).toContain("Home chapters");
   });
 });

@@ -23,7 +23,7 @@ type AvaAnswerBundleSlice = Pick<
   HomeReviewBundle,
   "chapters" | "technologyEstate"
 > &
-  Partial<Pick<HomeReviewBundle, "thesis">>;
+  Partial<Pick<HomeReviewBundle, "thesis" | "contextVersion">>;
 
 const PROMPT_VERSION = "home-preview-ava-answer-v1";
 const CLAUDE_MODEL = "claude-sonnet-5";
@@ -816,6 +816,18 @@ export async function answerHomeAvaQuestion(args: {
   userId?: string | null;
 }): Promise<AvaAnswerPacket> {
   const question = args.question.trim();
+  if (
+    args.bundle.contextVersion &&
+    args.bundle.contextVersion.coherence !== "coherent"
+  ) {
+    return buildFallbackPacket(
+      args.tenantKey,
+      question,
+      "no_data",
+      "The live record is available, but its executive narrative has not been verified against those rows. I cannot give a cited synthesis yet.",
+      [],
+    );
+  }
   const context = buildGroundingContext(
     args.bundle,
     args.tenantKey,
@@ -1022,6 +1034,65 @@ function packageModelResponse(
     if (recovered) return recovered;
   }
 
+  if (status !== "no_data" && citations.length === 0 && artifacts.length > 0) {
+    const dataset = datasetRef
+      ? context.plottableDatasets.get(datasetRef)
+      : undefined;
+    const largest = dataset?.rows.reduce(
+      (best, row) => (row.value > best.value ? row : best),
+      dataset.rows[0],
+    );
+    if (dataset && largest && datasetRef) {
+      const citation: AvaCitation = {
+        id: datasetRef,
+        label: dataset.label,
+        sourceClass: "tenant-fact",
+        excerpt: `${dataset.label}: ${largest.label} has the largest count (${largest.value}).`,
+        confidence: "high",
+      };
+      const visualPacket: AvaAnswerPacket = {
+        ...buildFallbackPacket(
+          tenantKey,
+          question,
+          "no_data",
+          `${dataset.label}: ${largest.label} has the largest count (${largest.value}).`,
+          [citation],
+        ),
+        status: "partial",
+        artifacts: artifacts.map((artifact) => ({
+          ...artifact,
+          citationIds: [citation.id],
+        })),
+        gaps: [
+          {
+            id: "home-ava-gap-1",
+            label: "Evidence limit",
+            detail:
+              "The exhibit shows recorded counts; it does not establish a broader business judgment.",
+            severity: "medium",
+          },
+        ],
+        quality: {
+          confidence: "medium",
+          evidenceStrength: "strong",
+          tenantGrounding: "complete",
+          answerCompleteness: "partial",
+        },
+      };
+      if (validateAvaAnswerPacket(visualPacket).passed) return visualPacket;
+    }
+  }
+
+  if (status === "no_data" || citations.length === 0) {
+    return buildFallbackPacket(
+      tenantKey,
+      question,
+      "no_data",
+      "I cannot verify an answer from the cited Home evidence available here.",
+      [],
+    );
+  }
+
   const directAnswer = sanitizeAvaVisibleText(
     directAnswerRaw,
     context,
@@ -1053,25 +1124,10 @@ function packageModelResponse(
     })),
     nextSteps: [],
     quality: {
-      confidence:
-        status === "answered"
-          ? "high"
-          : status === "partial"
-            ? "medium"
-            : "low",
-      evidenceStrength:
-        citations.length > 0
-          ? "strong"
-          : status === "no_data"
-            ? "thin"
-            : "partial",
+      confidence: status === "answered" ? "high" : "medium",
+      evidenceStrength: "strong",
       tenantGrounding: "complete",
-      answerCompleteness:
-        status === "answered"
-          ? "complete"
-          : status === "partial"
-            ? "partial"
-            : "blocked",
+      answerCompleteness: status === "answered" ? "complete" : "partial",
     },
     safety: {
       tenantFencePassed: true,
@@ -1567,8 +1623,7 @@ function buildFallbackPacket(
       {
         id: "home-ava-gap-1",
         label: "Evidence limit",
-        detail:
-          "The requested answer was not available in a safely exportable form.",
+        detail: "No cited Home evidence supports the requested answer.",
         severity: "high",
       },
     ],

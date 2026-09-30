@@ -410,6 +410,7 @@ describe("buildTechnologyEstateFromHomeProjectionRows", () => {
       "ecl:assessment-dense-source-room-20260823:serving.home_*:15",
     );
     expect(bundle.provenance.model).toBe("deterministic-ecl-projection");
+    expect(bundle.contextVersion?.coherence).toBe("unverified");
     expect(
       bundle.chapters.find((chapter) => chapter.chapterId === "executive_brief")
         ?.headline,
@@ -752,6 +753,17 @@ describe("buildTechnologyEstateFromHomeProjectionRows", () => {
       "ecl:assessment-dense-source-room-20260823:serving.home_*:2",
     );
     expect(bundle.provenance.model).toBe("deterministic-ecl-projection");
+    expect(bundle.contextVersion).toEqual(
+      expect.objectContaining({
+        assessmentId: "assessment-dense-source-room-20260823",
+        coherence: "stored_narrative",
+        narrativePacketHash: null,
+        narrativeGeneratedAt: base!.provenance.generated_at,
+        dataAsOf: null,
+        projectionContentHash: expect.any(String),
+        deterministicPacketHash: expect.any(String),
+      }),
+    );
     expect(
       bundle.technologyEstate?.recordTypes.find(
         (recordType) => recordType.objectType === "application_system",

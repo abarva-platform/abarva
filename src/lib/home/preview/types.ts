@@ -111,6 +111,8 @@ export interface HomeExecutiveStoryPlanV1 {
 export interface HomeReviewBundle {
   tenantKey: string;
   provenance: HomeReviewBundleProvenance;
+  /** Read-time lineage for a served projection. Absent on stored snapshots. */
+  contextVersion?: HomeContextVersion;
   executiveStoryPlan?: HomeExecutiveStoryPlanV1;
   chapters: ChapterView[];
   thesis: {
@@ -135,7 +137,19 @@ export type HomeRecordSourceKind =
   | "reviewed_snapshot"
   | "reviewed_snapshot_fallback";
 
+export interface HomeContextVersion {
+  assessmentId: string;
+  projectionContentHash: string;
+  deterministicPacketHash: string;
+  narrativePacketHash: string | null;
+  narrativeGeneratedAt: string | null;
+  /** Not inferred from the narrative build time. */
+  dataAsOf: string | null;
+  coherence: "coherent" | "stored_narrative" | "unverified";
+}
+
 export interface HomeRecordRenderSource {
   kind: HomeRecordSourceKind;
   canonicalSnapshotHash: string;
+  contextVersion?: HomeContextVersion;
 }

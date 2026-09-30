@@ -358,7 +358,7 @@ export function HomeV4App({
   // Built once for the rail so a chapter's sections and its exposure mark come from the same rows
   // the chapter itself renders, rather than from a second, drifting source.
   const estateForRail = {
-    asOf: displayBundle.provenance?.generated_at?.slice(0, 10),
+    asOf: displayBundle.contextVersion?.dataAsOf ?? undefined,
     applications: applications?.rows as EstateRow[] | undefined,
     vendors: techRecordTypes.find((r) => r.objectType === "vendor_contract")
       ?.rows as EstateRow[] | undefined,
@@ -466,9 +466,14 @@ export function HomeV4App({
         ? "ecl_serving_projection"
         : "reviewed_snapshot",
       canonicalSnapshotHash,
+      contextVersion: displayBundle.contextVersion,
     } satisfies HomeRecordRenderSource);
   const compiledLine = [
-    formatCompiledDate(provenance.generated_at),
+    `Data as of ${displayBundle.contextVersion?.dataAsOf ?? "not established"}`,
+    `Narrative generated ${formatCompiledDate(
+      displayBundle.contextVersion?.narrativeGeneratedAt ??
+        provenance.generated_at,
+    )}`,
     `from ${signalPacket.signals.length} signals`,
     `and ${signalPacket.contextItems.length} governed facts`,
   ];
@@ -535,7 +540,7 @@ export function HomeV4App({
                       )?.rows
                     : undefined
                 }
-                asOf={displayBundle.provenance?.generated_at?.slice(0, 10)}
+                asOf={displayBundle.contextVersion?.dataAsOf ?? undefined}
                 queue={
                   activeChapter.chapterId === "what_needs_attention"
                     ? {
@@ -556,10 +561,8 @@ export function HomeV4App({
                   activeBriefingOpening
                     ? undefined
                     : chapterDepth(activeChapter.chapterId, {
-                        asOf: displayBundle.provenance?.generated_at?.slice(
-                          0,
-                          10,
-                        ),
+                        asOf:
+                          displayBundle.contextVersion?.dataAsOf ?? undefined,
                         applications: applications?.rows,
                         vendors: techRecordTypes.find(
                           (r) => r.objectType === "vendor_contract",
@@ -600,7 +603,7 @@ export function HomeV4App({
                 guidingQuestion={activeChapter.guidingQuestion}
                 onOpenRows={openRecordRows}
                 depth={chapterDepth(activeChapter.chapterId, {
-                  asOf: displayBundle.provenance?.generated_at?.slice(0, 10),
+                  asOf: displayBundle.contextVersion?.dataAsOf ?? undefined,
                   applications: applications?.rows,
                   vendors: techRecordTypes.find(
                     (r) => r.objectType === "vendor_contract",
