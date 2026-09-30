@@ -2,6 +2,7 @@ import type { TenancyCtx, ProgramCore } from "@/lib/programs/types.db";
 import {
   buildStageReadinessProposalReview,
   buildStageReadinessProposalSet,
+  isReviewForStageReadinessProposalSet,
   persistStageReadinessProposalReview,
   persistStageReadinessProposalSet,
 } from "../proposals";
@@ -81,6 +82,43 @@ const parsed: StageReadinessWorkbookParseResult = {
 };
 
 describe("stage readiness workbook proposals", () => {
+  it("matches a saved review only to its exact proposal artifact and version", () => {
+    const proposalSet = {
+      proposalSetId: "proposal-set-1",
+      artifactId: "proposal-artifact-1",
+      artifactVersion: 2,
+    };
+    const review = {
+      proposalSetId: "proposal-set-1",
+      sourceProposalSetArtifact: {
+        artifactId: "proposal-artifact-1",
+        artifactVersion: 2,
+      },
+    };
+
+    expect(isReviewForStageReadinessProposalSet({ proposalSet, review })).toBe(
+      true,
+    );
+    expect(
+      isReviewForStageReadinessProposalSet({
+        proposalSet,
+        review: {
+          ...review,
+          sourceProposalSetArtifact: {
+            ...review.sourceProposalSetArtifact,
+            artifactVersion: 1,
+          },
+        },
+      }),
+    ).toBe(false);
+    expect(
+      isReviewForStageReadinessProposalSet({
+        proposalSet,
+        review: { ...review, proposalSetId: "older-proposal-set" },
+      }),
+    ).toBe(false);
+  });
+
   it("builds pending proposals without treating unknown or insufficient evidence as readiness", () => {
     const proposalSet = buildStageReadinessProposalSet({
       ctx,
