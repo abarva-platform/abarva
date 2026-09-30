@@ -19,25 +19,25 @@
   ],
   "counts": {
     "testFiles": 2563,
-    "coveredTestFiles": 2248,
-    "pullRequestCoveredTestFiles": 2247,
-    "uncoveredTestFiles": 315,
+    "coveredTestFiles": 2249,
+    "pullRequestCoveredTestFiles": 2248,
+    "uncoveredTestFiles": 314,
     "directoriesWithTests": 496,
-    "directoriesFullyCovered": 330,
+    "directoriesFullyCovered": 331,
     "directoriesPartiallyCovered": 28,
-    "directoriesUncovered": 138,
-    "directoriesWithUnrunTestFiles": 166,
-    "directoriesWithUntriagedUnrunTestFiles": 155,
+    "directoriesUncovered": 137,
+    "directoriesWithUnrunTestFiles": 165,
+    "directoriesWithUntriagedUnrunTestFiles": 154,
     "declaredQuarantineTestFiles": 52,
-    "untriagedUnrunTestFiles": 263,
+    "untriagedUnrunTestFiles": 262,
     "indeterminateInvocations": 0,
     "unresolvedIgnoreArguments": 0,
     "criticalGovernedRiskDirectories": 0,
     "highGovernedRiskDirectories": 0,
-    "unclassifiedRiskDirectories": 149,
-    "rankedDirectories": 136,
-    "rankedUntriagedUnrunTestFiles": 194,
-    "unclassifiedRiskDirectoriesWithResolvedProductSources": 142,
+    "unclassifiedRiskDirectories": 148,
+    "rankedDirectories": 135,
+    "rankedUntriagedUnrunTestFiles": 193,
+    "unclassifiedRiskDirectoriesWithResolvedProductSources": 141,
     "unclassifiedRiskDirectoriesWithNoResolvedProductSource": 7
   },
   "quarantineLists": [
@@ -2593,26 +2593,6 @@
       }
     },
     {
-      "directory": "src/lib/programs/tower-trigger/__tests__",
-      "testFiles": 1,
-      "unrunTestFiles": 1,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 1,
-      "verdictHeldUntriagedUnrunTestFiles": 0,
-      "drawableUnrunTestFiles": 1,
-      "drawableTestPaths": [
-        "src/lib/programs/tower-trigger/__tests__/tower-to-moves-action-handoff.test.ts"
-      ],
-      "admittedBy": "untriaged_unrun_work",
-      "governedRisk": {
-        "score": 0,
-        "band": "unclassified",
-        "signals": [],
-        "productSourceCount": 1,
-        "rank": 105
-      }
-    },
-    {
       "directory": "src/lib/programs/vendor-platform-intelligence/__tests__",
       "testFiles": 1,
       "unrunTestFiles": 1,
@@ -2629,7 +2609,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 3,
-        "rank": 106
+        "rank": 105
       }
     },
     {
@@ -2649,7 +2629,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 107
+        "rank": 106
       }
     },
     {
@@ -2669,7 +2649,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 108
+        "rank": 107
       }
     },
     {
@@ -2689,7 +2669,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 109
+        "rank": 108
       }
     },
     {
@@ -2709,7 +2689,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 110
+        "rank": 109
       }
     },
     {
@@ -2729,7 +2709,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 2,
-        "rank": 111
+        "rank": 110
       }
     },
     {
@@ -2749,7 +2729,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 112
+        "rank": 111
       }
     },
     {
@@ -2769,7 +2749,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 2,
-        "rank": 113
+        "rank": 112
       }
     },
     {
@@ -2789,7 +2769,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 114
+        "rank": 113
       }
     },
     {
@@ -2809,7 +2789,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 2,
-        "rank": 115
+        "rank": 114
       }
     },
     {
@@ -2829,7 +2809,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 2,
-        "rank": 116
+        "rank": 115
       }
     },
     {
@@ -2849,7 +2829,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 2,
-        "rank": 117
+        "rank": 116
       }
     },
     {
@@ -2869,7 +2849,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 118
+        "rank": 117
       }
     },
     {
@@ -2889,7 +2869,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 119
+        "rank": 118
       }
     },
     {
@@ -2909,7 +2889,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 2,
-        "rank": 120
+        "rank": 119
       }
     },
     {
@@ -2929,7 +2909,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 4,
-        "rank": 121
+        "rank": 120
       }
     },
     {
@@ -2949,7 +2929,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 122
+        "rank": 121
       }
     },
     {
@@ -2969,7 +2949,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 2,
-        "rank": 123
+        "rank": 122
       }
     },
     {
@@ -2989,7 +2969,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 8,
-        "rank": 124
+        "rank": 123
       }
     },
     {
@@ -3009,7 +2989,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 2,
-        "rank": 125
+        "rank": 124
       }
     },
     {
@@ -3029,7 +3009,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 126
+        "rank": 125
       }
     },
     {
@@ -3049,7 +3029,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 127
+        "rank": 126
       }
     },
     {
@@ -3069,7 +3049,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 128
+        "rank": 127
       }
     },
     {
@@ -3089,7 +3069,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 4,
-        "rank": 129
+        "rank": 128
       }
     },
     {
@@ -3109,7 +3089,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 130
+        "rank": 129
       }
     },
     {
@@ -3129,7 +3109,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 131
+        "rank": 130
       }
     },
     {
@@ -3149,7 +3129,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 132
+        "rank": 131
       }
     },
     {
@@ -3169,7 +3149,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 133
+        "rank": 132
       }
     },
     {
@@ -3189,7 +3169,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 2,
-        "rank": 134
+        "rank": 133
       }
     },
     {
@@ -3209,7 +3189,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 3,
-        "rank": 135
+        "rank": 134
       }
     },
     {
@@ -3229,13 +3209,13 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 136
+        "rank": 135
       }
     }
   ],
   "triageVerdicts": {
     "heldUntriagedUnrunTestFiles": 69,
-    "drawableUntriagedUnrunTestFiles": 194,
+    "drawableUntriagedUnrunTestFiles": 193,
     "heldByVerdict": {
       "already_verdicted_elsewhere": 10,
       "real": 1,
@@ -4458,19 +4438,6 @@
     },
     {
       "directory": "src/lib/programs/learning-writeback/__tests__",
-      "testFiles": 1,
-      "unrunTestFiles": 1,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 1,
-      "governedRisk": {
-        "score": 0,
-        "band": "unclassified",
-        "signals": [],
-        "productSourceCount": 1
-      }
-    },
-    {
-      "directory": "src/lib/programs/tower-trigger/__tests__",
       "testFiles": 1,
       "unrunTestFiles": 1,
       "declaredQuarantineTestFiles": 0,
@@ -6583,14 +6550,6 @@
     },
     {
       "directory": "src/lib/programs/mobilization/__tests__",
-      "testFiles": 1,
-      "coveredTestFiles": 0,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 1,
-      "via": []
-    },
-    {
-      "directory": "src/lib/programs/tower-trigger/__tests__",
       "testFiles": 1,
       "coveredTestFiles": 0,
       "declaredQuarantineTestFiles": 0,

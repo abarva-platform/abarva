@@ -631,6 +631,23 @@ jobs:
       - name: Exercise the Programs solution-archetype taxonomy suite
         run: npx jest src/lib/programs/taxonomy/__tests__ --runInBand
 
+      # C-415 slice 12: the Programs Tower-to-Moves action handoff.
+      #
+      # Measured BEFORE it was wired, the suite executed on its own: 1 suite,
+      # 4 tests, GREEN — tower-to-moves-action-handoff 4.
+      #
+      # Not coverage of nothing, checked before wiring:
+      # runTowerToMovesActionHandoff is imported at runtime by
+      # cross-module-trace-view, which the strategic-moves trace page and the
+      # CrossModuleTraceView component render.
+      #
+      # The suite reads no file's bytes, so `T-770` has nothing to refuse and
+      # `textIsTheSubject` is negative.
+      #
+      # Wired as a DIRECTORY with no trailing slash. Nothing nests beneath it.
+      - name: Exercise the Programs Tower-to-Moves action handoff suite
+        run: npx jest src/lib/programs/tower-trigger/__tests__ --runInBand
+
       # Two suites shipped on 18 Sep whose release records said "5 of 5 pass"
       # and "19 of 19 pass". Both were true locally and enforced by nothing:
       # neither file was named by any workflow, and no scoped jest script
