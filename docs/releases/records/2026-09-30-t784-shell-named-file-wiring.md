@@ -72,7 +72,10 @@ to every client's build equally, behind no feature gate.
   `npm run audit:test-ci-coverage:write`. Test files went from 2573 to 2574
   (the new control) and covered files from 2301 to 2304 (the two wired files
   plus the control). Uncovered directories went from 125 to 124, and partial
-  directories from 29 to 30.
+  directories from 29 to 30. After rebasing onto `9c58cfd88f`, the census
+  also counts one test file that commit added under `src/lib/source/facts`
+  without regenerating it (2574 -> 2575 test files, 2304 -> 2305 covered);
+  that row is its change, carried here only so the census matches the tree.
 
 ## QA / Validation
 
