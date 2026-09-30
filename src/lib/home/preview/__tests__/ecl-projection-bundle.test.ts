@@ -131,6 +131,168 @@ describe("buildTechnologyEstateFromHomeProjectionRows", () => {
     jest.restoreAllMocks();
   });
 
+  it("reads identified enterprise families without inventing missing or refused rows", () => {
+    const rows: HomeProjectionRow[] = [
+      row({
+        page_key: "business_unit_profile",
+        row_key: "segment-a",
+        row_type: "business_segment",
+        title: "Operating Segment",
+        admission_status: "admitted",
+        display_payload_json: {
+          segment_key: "segment-a",
+          segment_name: "Operating Segment",
+          revenue_share_pct: "40",
+          pnl_owner_role: "Operating Executive",
+        },
+      }),
+      row({
+        page_key: "business_unit_profile",
+        row_key: "function-a",
+        row_type: "business_function",
+        title: "Service Operations",
+        admission_status: "admitted",
+        display_payload_json: {
+          function_name: "Service Operations",
+          business_segment_key: "segment-a",
+          business_segment: "Operating Segment",
+        },
+      }),
+      row({
+        page_key: "business_unit_profile",
+        row_key: "role-a",
+        row_type: "workforce_role",
+        title: "Service Lead",
+        admission_status: "admitted",
+        display_payload_json: {
+          persona_or_role: "Service Lead",
+          function_name: "Service Operations",
+          role_count: 12,
+        },
+      }),
+      row({
+        page_key: "business_unit_profile",
+        row_key: "process-a",
+        row_type: "operational_process",
+        title: "Service Review",
+        admission_status: "admitted",
+        display_payload_json: {
+          process_name: "Service Review",
+          business_function: "Service Operations",
+          process_owner: "Service Lead",
+        },
+      }),
+      row({
+        page_key: "business_unit_profile",
+        row_key: "missing-id",
+        row_type: "business_segment",
+        title: "Unnamed segment",
+        admission_status: "admitted",
+        display_payload_json: { segment_name: "Unnamed segment" },
+      }),
+      row({
+        page_key: "business_unit_profile",
+        row_key: "refused-segment",
+        row_type: "business_segment",
+        title: "Refused segment",
+        admission_status: "refused",
+        display_payload_json: {
+          segment_key: "refused-segment",
+          segment_name: "Refused segment",
+        },
+      }),
+      row({
+        page_key: "business_unit_profile",
+        row_key: "pending-segment",
+        row_type: "business_segment",
+        title: "Pending segment",
+        admission_status: "pending_review",
+        display_payload_json: {
+          segment_key: "pending-segment",
+          segment_name: "Pending segment",
+        },
+      }),
+    ];
+    const estate = buildTechnologyEstateFromHomeProjectionRows(rows);
+
+    expect(estate.recordTypes.map((type) => type.objectType)).toEqual([
+      "business_segment",
+      "business_function",
+      "workforce_role",
+      "operational_process",
+    ]);
+    expect(estate.recordTypes.map((type) => type.rows.length)).toEqual([
+      1, 1, 1, 1,
+    ]);
+    expect(estate.recordTypes[0]?.rows[0]).toMatchObject({
+      segmentName: "Operating Segment",
+      segmentKey: "segment-a",
+      revenueSharePct: 40,
+    });
+
+    const base = getHomeReviewBundle("meridian-health");
+    if (!base) throw new Error("stored copy missing");
+    const bundle = buildHomeReviewBundleFromEclProjectionRows(base, rows);
+    expect(bundle.thesis.signalPacket.contextItems).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: "ctx_ecl_business_unit_profile_business_segment_segment_a",
+          domains: ["business_segment"],
+        }),
+        expect.objectContaining({
+          id: "ctx_ecl_gap_withheld_rows_001",
+          statement: expect.stringContaining("3 records were excluded"),
+        }),
+      ]),
+    );
+    expect(bundle.thesis.signalPacket.contextItems.some((item) =>
+      item.id.includes("refused_segment") ||
+      item.id.includes("missing_id") ||
+      item.id.includes("pending_segment"),
+    )).toBe(false);
+    expect(bundle.thesis.signalPacket.sourceSummaries.find(
+      (summary) => summary.domain === "business_segment",
+    )?.exampleRecords).toEqual(["Operating Segment"]);
+  });
+
+  it("keeps every served intake family in its own context domain", () => {
+    const base = getHomeReviewBundle("meridian-health");
+    if (!base) throw new Error("stored copy missing");
+    const families = [
+      ["metrics_outcomes", "metric_outcome"],
+      ["risks_controls", "risk_control"],
+      ["programs_initiatives", "program_initiative"],
+      ["org_ownership", "organization_ownership"],
+      ["ai_use_cases", "ai_use_case"],
+      ["executive_interviews", "executive_interview"],
+      ["relationships", "relationship_edge"],
+    ] as const;
+    const bundle = buildHomeReviewBundleFromEclProjectionRows(
+      base,
+      families.map(([pageKey], index) => row({
+        page_key: pageKey,
+        row_key: `row-${index}`,
+        row_type: "record",
+        title: `Family ${index}`,
+        admission_status: "admitted",
+      })),
+    );
+
+    for (const [pageKey, domain] of families) {
+      expect(bundle.thesis.signalPacket.contextItems.find(
+        (item) => item.id.startsWith(`ctx_ecl_${pageKey}_record_`),
+      )?.domains).toEqual([domain]);
+    }
+    expect(bundle.thesis.signalPacket.contextItems).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: "ctx_ecl_gap_enterprise_families_001",
+          statement: expect.stringContaining("Business Segments"),
+        }),
+      ]),
+    );
+  });
+
   it("reads source lineage columns from the serving projection", async () => {
     const query = jest
       .spyOn(azureRead, "query")
@@ -255,6 +417,36 @@ describe("buildTechnologyEstateFromHomeProjectionRows", () => {
       kind: "reviewed_snapshot_fallback",
       canonicalSnapshotHash: base.provenance.canonical_snapshot_hash,
     });
+  });
+
+  it("does not label an entirely refused projection as live", async () => {
+    jest
+      .spyOn(azureRead, "query")
+      .mockResolvedValueOnce([
+        { full_name: "serving.home_business_unit_profile" },
+      ])
+      .mockResolvedValueOnce([
+        row({
+          page_key: "business_unit_profile",
+          row_key: "refused-segment",
+          row_type: "business_segment",
+          title: "Refused segment",
+          admission_status: "refused",
+          display_payload_json: {
+            segment_key: "refused-segment",
+            segment_name: "Refused segment",
+          },
+        }),
+      ]);
+    jest.spyOn(console, "warn").mockImplementation(() => {});
+
+    const result =
+      await getHomeEclProjectionBundleOrReviewedSnapshotWithSource(
+        "meridian-health",
+      );
+
+    expect(result.recordSource.kind).toBe("reviewed_snapshot_fallback");
+    expect(result.bundle).toBe(getHomeReviewBundle("meridian-health"));
   });
 
   it("maps ECL Home projection rows into the Home v4 technology estate contract", () => {
@@ -930,12 +1122,17 @@ describe("buildTechnologyEstateFromHomeProjectionRows", () => {
       }),
     ]);
 
-    expect(
-      bundle.thesis.signalPacket.contextItems.find(
-        (item) =>
-          item.id === "ctx_ecl_applications_systems_application_APP_002",
-      )?.evidenceRefs,
-    ).toEqual([]);
+    expect(bundle.technologyEstate?.recordTypes.some(
+      (type) => type.objectType === "application_system",
+    )).toBe(false);
+    expect(bundle.thesis.signalPacket.contextItems.some(
+      (item) => item.id === "ctx_ecl_applications_systems_application_APP_002",
+    )).toBe(false);
+    expect(bundle.thesis.signalPacket.contextItems).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ id: "ctx_ecl_gap_withheld_rows_001" }),
+      ]),
+    );
     expect(bundle.contextVersion?.sourceSetHash).toBeNull();
     expect(bundle.contextVersion?.coherence).toBe("stored_narrative");
   });

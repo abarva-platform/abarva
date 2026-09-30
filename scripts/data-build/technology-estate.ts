@@ -14,14 +14,15 @@ import type { CanonicalIngestionRecord } from "../../src/lib/enterprise-data/con
 /**
  * The record types a product surface can browse.
  *
- * The first four are the technology estate this file was named for. The rest are the intake
- * families the Home projection now carries -- metrics, risks, programs, org ownership and AI use
- * cases -- which are browsable records in exactly the same sense even though "technology estate" is
- * no longer the right name for the set. Renaming the bundle field would ripple through the checked-in
- * snapshots and every type that reads them; adding the types is additive and safe, so the name is
- * left alone deliberately rather than by oversight.
+ * This began as the technology estate but now carries enterprise and operating families too.
+ * Renaming the bundle field would ripple through checked-in snapshots and every reader; the
+ * broader type list is additive until that storage contract can be changed deliberately.
  */
 export const TECH_OBJECT_TYPES = [
+  "business_segment",
+  "business_function",
+  "workforce_role",
+  "operational_process",
   "application_system",
   "vendor_contract",
   "infrastructure_platform",
@@ -37,6 +38,10 @@ export const TECH_OBJECT_TYPES = [
 export type TechObjectType = (typeof TECH_OBJECT_TYPES)[number];
 
 const TECH_OBJECT_TYPE_LABELS: Record<TechObjectType, string> = {
+  business_segment: "Business Segments",
+  business_function: "Business Functions",
+  workforce_role: "Workforce & Roles",
+  operational_process: "Operating Processes",
   application_system: "Applications & Systems",
   vendor_contract: "Vendor Contracts",
   infrastructure_platform: "Infrastructure & Platforms",
@@ -59,6 +64,10 @@ const TECH_OBJECT_TYPE_LABELS: Record<TechObjectType, string> = {
  * are the columns that actually carry that meaning in the source data -- not just any column that
  * happens to have few distinct values. */
 const PRIMARY_DIMENSION_KEY: Record<TechObjectType, string> = {
+  business_segment: "pnlOwnerRole",
+  business_function: "businessSegment",
+  workforce_role: "functionName",
+  operational_process: "businessFunction",
   // Executive area, not stakeholder role: 8 areas against 19 roles, and the question the chapter
   // asks is where the leadership of a function stands, not where one named person does.
   executive_interview: "executiveArea",
@@ -142,9 +151,7 @@ export interface TechnologyEstateBundle {
   recordTypes: TechRecordType[];
 }
 
-/** Extracts and trims the raw canonical records for the four tech object types into a table-ready
- * shape. Deterministic, no model call -- callable directly from build-home-chapters.ts alongside
- * the Claude-generated chapters, or standalone for a quick local check. */
+/** Extracts canonical records into table-ready rows without a model call. */
 export function buildTechnologyEstateBundle(records: CanonicalIngestionRecord[]): TechnologyEstateBundle {
   const recordTypes: TechRecordType[] = [];
   for (const objectType of TECH_OBJECT_TYPES) {

@@ -61,6 +61,49 @@ export interface HomeProjectionRow {
 }
 
 const COLUMN_ORDER: Record<TechObjectType, string[]> = {
+  business_segment: [
+    "segmentName",
+    "segmentKey",
+    "revenueSharePct",
+    "revenueUsd",
+    "pnlOwnerRole",
+    "businessCaseSponsorRole",
+    "governanceCouncil",
+    "regulatoryRegime",
+    "classificationBasis",
+  ],
+  business_function: [
+    "functionName",
+    "businessSegment",
+    "businessSegmentKey",
+    "parentFunction",
+    "executiveOwner",
+    "businessCapabilities",
+    "criticality",
+    "annualBudgetUsd",
+    "fteCount",
+    "outsourcedSupport",
+  ],
+  workforce_role: [
+    "personaOrRole",
+    "functionName",
+    "roleCount",
+    "locationModel",
+    "employmentType",
+    "vendorSupported",
+    "skills",
+  ],
+  operational_process: [
+    "processName",
+    "businessFunction",
+    "processOwner",
+    "systemsUsed",
+    "volumeMetric",
+    "cycleTime",
+    "painPoints",
+    "controlPoints",
+    "automationCandidate",
+  ],
   // An edge reads as a sentence: this object, this verb, that object. The endpoints sit either side
   // of the verb rather than being grouped as "from" fields and "to" fields, because that is how a
   // reader parses it.
@@ -235,6 +278,10 @@ const COLUMN_ORDER: Record<TechObjectType, string[]> = {
 };
 
 const LABELS: Record<TechObjectType, string> = {
+  business_segment: "Business Segments",
+  business_function: "Business Functions",
+  workforce_role: "Workforce & Roles",
+  operational_process: "Operating Processes",
   application_system: "Applications & Systems",
   vendor_contract: "Vendor Contracts",
   infrastructure_platform: "Infrastructure & Platforms",
@@ -249,6 +296,10 @@ const LABELS: Record<TechObjectType, string> = {
 };
 
 const PRIMARY_DIMENSION: Record<TechObjectType, string> = {
+  business_segment: "pnlOwnerRole",
+  business_function: "businessSegment",
+  workforce_role: "functionName",
+  operational_process: "businessFunction",
   executive_interview: "executiveArea",
   relationship_edge: "relationshipType",
   application_system: "businessFunction",
@@ -266,6 +317,22 @@ const SOURCE_SUMMARY_BY_OBJECT_TYPE: Record<
   TechObjectType,
   { domain: string; sourcePath: string; authority?: string[] }
 > = {
+  business_segment: {
+    domain: "business_segment",
+    sourcePath: "serving.home_business_unit_profile",
+  },
+  business_function: {
+    domain: "business_function",
+    sourcePath: "serving.home_business_unit_profile",
+  },
+  workforce_role: {
+    domain: "workforce_role",
+    sourcePath: "serving.home_business_unit_profile",
+  },
+  operational_process: {
+    domain: "operational_process",
+    sourcePath: "serving.home_business_unit_profile",
+  },
   metric_outcome: {
     domain: "metric_outcome",
     sourcePath: "serving.home_metrics_outcomes",
@@ -437,14 +504,83 @@ function admittedSourceRefs(
   return sourceRefIds(row.source_refs_json).filter((ref) => linked.has(ref));
 }
 
-/**
- * The five intake families the projection now carries.
- *
- * The loader puts the whole intake row into the payload, so the keys here are the CSV's own column
- * names. Each mapper renames to camelCase and does nothing else: no defaulting, no deriving, no
- * filling. A field the intake did not record stays undefined, which is what lets a surface say the
- * view cannot be built rather than showing a zero that reads as an assessment.
- */
+function enterpriseRow(row: HomeProjectionRow): JsonRecord {
+  const payload = rowPayload(row);
+  switch (row.row_type) {
+    case "business_segment":
+      return {
+        segmentKey: text(payload.segment_key),
+        segmentName: text(payload.segment_name),
+        revenueSharePct: numberValue(payload.revenue_share_pct),
+        revenueUsd: numberValue(payload.revenue_usd),
+        pnlOwnerRole: text(payload.pnl_owner_role),
+        businessCaseSponsorRole: text(payload.business_case_sponsor_role),
+        governanceCouncil: text(payload.governance_council),
+        regulatoryRegime: text(payload.regulatory_regime),
+        classificationBasis: text(payload.classification_basis),
+      };
+    case "business_function":
+      return {
+        functionName: text(payload.function_name),
+        businessSegment: text(payload.business_segment),
+        businessSegmentKey: text(payload.business_segment_key),
+        parentFunction: text(payload.parent_function),
+        executiveOwner: text(payload.executive_owner),
+        businessCapabilities: text(payload.business_capabilities),
+        criticality: text(payload.criticality),
+        annualBudgetUsd: numberValue(payload.annual_budget_usd),
+        fteCount: numberValue(payload.fte_count),
+        outsourcedSupport: text(payload.outsourced_support),
+      };
+    case "workforce_role":
+      return {
+        personaOrRole: text(payload.persona_or_role),
+        functionName: text(payload.function_name),
+        roleCount: numberValue(payload.role_count),
+        locationModel: text(payload.location_model),
+        employmentType: text(payload.employment_type),
+        vendorSupported: text(payload.vendor_supported),
+        skills: text(payload.skills),
+      };
+    case "operational_process":
+      return {
+        processName: text(payload.process_name),
+        businessFunction: text(payload.business_function),
+        processOwner: text(payload.process_owner),
+        systemsUsed: text(payload.systems_used),
+        volumeMetric: text(payload.volume_metric),
+        cycleTime: text(payload.cycle_time),
+        painPoints: text(payload.pain_points),
+        controlPoints: text(payload.control_points),
+        automationCandidate: text(payload.automation_candidate),
+      };
+    default:
+      return {};
+  }
+}
+
+function isFactualHomeRow(row: HomeProjectionRow): boolean {
+  if (row.admission_status === "refused") return false;
+  if (row.page_key !== "business_unit_profile") return true;
+  if (!["admitted", "not_applicable"].includes(row.admission_status ?? "")) {
+    return false;
+  }
+  const payload = rowPayload(row);
+  switch (row.row_type) {
+    case "business_segment":
+      return Boolean(text(payload.segment_key) && text(payload.segment_name));
+    case "business_function":
+      return Boolean(text(payload.function_name));
+    case "workforce_role":
+      return Boolean(text(payload.persona_or_role));
+    case "operational_process":
+      return Boolean(text(payload.process_name));
+    default:
+      return false;
+  }
+}
+
+/** Map serving payload fields without filling absent intake values. */
 function metricOutcomeRow(row: HomeProjectionRow): JsonRecord {
   const payload = rowPayload(row);
   return {
@@ -1092,23 +1228,36 @@ function recordType(
 export function buildTechnologyEstateFromHomeProjectionRows(
   rows: HomeProjectionRow[],
 ): TechnologyEstateBundle {
-  const applicationRows = rows.filter(
+  const factualRows = rows.filter(isFactualHomeRow);
+  const enterpriseFamily = (rowType: TechObjectType) =>
+    factualRows
+      .filter(
+        (row) =>
+          row.page_key === "business_unit_profile" &&
+          row.row_type === rowType,
+      )
+      .map((row) => stripEmpty(enterpriseRow(row)));
+  const segments = enterpriseFamily("business_segment");
+  const functions = enterpriseFamily("business_function");
+  const workforce = enterpriseFamily("workforce_role");
+  const processes = enterpriseFamily("operational_process");
+  const applicationRows = factualRows.filter(
     (row) =>
       row.page_key === "applications_systems" && row.row_type === "application",
   );
-  const infrastructureRows = rows.filter(
+  const infrastructureRows = factualRows.filter(
     (row) =>
       row.page_key === "infrastructure_platforms" &&
       row.row_type === "infrastructure",
   );
-  const applications = rows
+  const applications = factualRows
     .filter(
       (row) =>
         row.page_key === "applications_systems" &&
         row.row_type === "application",
     )
     .map((row) => stripEmpty(applicationRow(row)));
-  const contracts = rows
+  const contracts = factualRows
     .filter(
       (row) =>
         row.page_key === "vendor_contracts" && row.row_type === "contract",
@@ -1130,14 +1279,14 @@ export function buildTechnologyEstateFromHomeProjectionRows(
     const label = text(mapped.platformName);
     if (ref && label) labelsByRef.set(ref, label);
   }
-  const dataFlows = rows
+  const dataFlows = factualRows
     .filter(
       (row) =>
         row.page_key === "current_state_data_flow" &&
         row.row_type === "data_flow",
     )
     .map((row) => stripEmpty(dataFlowRow(row, labelsByRef)));
-  const dataWorkloads = rows
+  const dataWorkloads = factualRows
     .filter(
       (row) =>
         row.page_key === "data_assets_integrations" &&
@@ -1152,7 +1301,7 @@ export function buildTechnologyEstateFromHomeProjectionRows(
     pageKey: string,
     map: (row: HomeProjectionRow) => JsonRecord,
   ) =>
-    rows
+    factualRows
       .filter((row) => row.page_key === pageKey)
       .map((row) => stripEmpty(map(row)));
 
@@ -1169,6 +1318,10 @@ export function buildTechnologyEstateFromHomeProjectionRows(
 
   return {
     recordTypes: [
+      recordType("business_segment", segments),
+      recordType("business_function", functions),
+      recordType("workforce_role", workforce),
+      recordType("operational_process", processes),
       recordType("application_system", applications),
       recordType("vendor_contract", contracts),
       recordType("infrastructure_platform", infrastructure),
@@ -1344,6 +1497,8 @@ function contextIdForRow(row: HomeProjectionRow): string {
 
 function rowDomains(row: HomeProjectionRow): string[] {
   switch (row.page_key) {
+    case "business_unit_profile":
+      return [row.row_type];
     case "applications_systems":
       return ["application_system"];
     case "vendor_contracts":
@@ -1354,6 +1509,20 @@ function rowDomains(row: HomeProjectionRow): string[] {
       return ["data_asset_or_integration", "application_system"];
     case "data_assets_integrations":
       return ["data_asset_or_integration", "infrastructure_platform"];
+    case "metrics_outcomes":
+      return ["metric_outcome"];
+    case "risks_controls":
+      return ["risk_control"];
+    case "programs_initiatives":
+      return ["program_initiative"];
+    case "org_ownership":
+      return ["organization_ownership"];
+    case "ai_use_cases":
+      return ["ai_use_case"];
+    case "executive_interviews":
+      return ["executive_interview"];
+    case "relationships":
+      return ["relationship_edge"];
     default:
       return ["evidence_sources"];
   }
@@ -1364,6 +1533,21 @@ function rowContextStatement(
   labelsByRef: Map<string, string> = new Map(),
 ): string {
   switch (row.page_key) {
+    case "business_unit_profile": {
+      const record = enterpriseRow(row);
+      switch (row.row_type) {
+        case "business_segment":
+          return `${text(record.segmentName)} is a declared business segment${text(record.pnlOwnerRole) ? ` with ${text(record.pnlOwnerRole)} named as P&L owner` : ""}.`;
+        case "business_function":
+          return `${text(record.functionName)} is a declared business function${text(record.businessSegment) ? ` within ${text(record.businessSegment)}` : ""}.`;
+        case "workforce_role":
+          return `${text(record.personaOrRole)} is a declared workforce role${text(record.functionName) ? ` supporting ${text(record.functionName)}` : ""}.`;
+        case "operational_process":
+          return `${text(record.processName)} is a declared operating process${text(record.businessFunction) ? ` within ${text(record.businessFunction)}` : ""}.`;
+        default:
+          return row.summary ?? row.title;
+      }
+    }
     case "applications_systems": {
       const app = applicationRow(row);
       const parts = [
@@ -1482,12 +1666,23 @@ function buildEclSignalPacket(
   estate: TechnologyEstateBundle,
   assessmentId: string,
   verifiedSourceRefs: VerifiedSourceRefs,
+  withheldRowCount = 0,
 ): EnterpriseSignalPacket {
+  const segments = rowsForType(estate, "business_segment");
+  const programs = rowsForType(estate, "program_initiative");
   const applications = rowsForType(estate, "application_system");
   const contracts = rowsForType(estate, "vendor_contract");
   const infrastructure = rowsForType(estate, "infrastructure_platform");
   const dataRecords = rowsForType(estate, "data_asset_or_integration");
   const interviews = rowsForType(estate, "executive_interview");
+  const missingEnterpriseFamilies = ([
+    "business_segment",
+    "business_function",
+    "workforce_role",
+    "operational_process",
+  ] as const)
+    .filter((objectType) => !estate.recordTypes.some((type) => type.objectType === objectType))
+    .map((objectType) => LABELS[objectType]);
   const dataFlows = dataRecords.filter(
     (row) => row.recordKind !== "data_analytics_workload",
   );
@@ -1730,8 +1925,9 @@ function buildEclSignalPacket(
     },
     {
       id: "ctx_ecl_scope_business_economics_001",
-      statement:
-        "Segment revenue, customer/channel economics, and formal enterprise identity attributes are not supplied by the current Home narrative input; business-model conclusions should therefore be limited to cited technology, commercial, infrastructure, and data-movement facts.",
+      statement: segments.length > 0
+        ? "Business-segment records are present in the served Home record. Customer and channel economics still require their own cited evidence; do not infer them from segment totals."
+        : "Business-segment records are not supplied by the current Home read. Do not infer the business model from technology and vendor counts.",
       domains: [
         "enterprise_profile",
         "spend_value_fact",
@@ -1741,10 +1937,25 @@ function buildEclSignalPacket(
     },
     {
       id: "ctx_ecl_scope_strategy_programs_001",
-      statement:
-        "Declared strategic priorities, funded programs, and program-to-outcome linkage are not supplied by the current Home narrative input; strategy chapters should treat strategy as an evidence gap rather than infer a transformation agenda.",
+      statement: programs.length > 0
+        ? "Program records are present in the served Home record. Priority-to-program and program-to-outcome links still require explicit cited relationships."
+        : "Program records are not supplied by the current Home read. Do not infer an execution portfolio from chapter prose.",
       domains: ["spend_value_fact", "vendor_contract", "evidence_sources"],
     },
+    ...(missingEnterpriseFamilies.length > 0
+      ? [{
+          id: "ctx_ecl_gap_enterprise_families_001",
+          statement: `The served Home record does not yet include ${missingEnterpriseFamilies.join(", ")}. That is a coverage gap, not evidence the enterprise lacks them.`,
+          domains: ["evidence_sources"],
+        }]
+      : []),
+    ...(withheldRowCount > 0
+      ? [{
+          id: "ctx_ecl_gap_withheld_rows_001",
+          statement: `${withheldRowCount} record${withheldRowCount === 1 ? " was" : "s were"} excluded from Home facts because source review or identifying fields were insufficient.`,
+          domains: ["evidence_sources"],
+        }]
+      : []),
     interviews.length > 0
       ? {
           id: "ctx_ecl_scope_leadership_001",
@@ -1804,6 +2015,10 @@ function buildEclSourceSummaries(
       const exampleRecords = recordType.rows
         .map(
           (row) =>
+            text(row.segmentName) ??
+            text(row.functionName) ??
+            text(row.personaOrRole) ??
+            text(row.processName) ??
             text(row.systemName) ??
             text(row.vendorName) ??
             text(row.platformName) ??
@@ -2393,14 +2608,16 @@ export function buildHomeReviewBundleFromEclProjectionRows(
   assessmentId = denseAssessmentIdForTenant(base.tenantKey),
   verifiedSourceRefs: VerifiedSourceRefs = new Map(),
 ): HomeReviewBundle {
-  const technologyEstate = buildTechnologyEstateFromHomeProjectionRows(rows);
+  const factualRows = rows.filter(isFactualHomeRow);
+  const technologyEstate = buildTechnologyEstateFromHomeProjectionRows(factualRows);
   const signalPacket = buildEclSignalPacket(
-    rows,
+    factualRows,
     technologyEstate,
     assessmentId,
     verifiedSourceRefs,
+    rows.length - factualRows.length,
   );
-  const claims = chapterClaimsByPage(rows);
+  const claims = chapterClaimsByPage(factualRows);
   const hasPublishedClaims = hasPublishedChapterClaims(claims);
   const contextVersion = contextVersionForRows(
     base,
@@ -2412,13 +2629,13 @@ export function buildHomeReviewBundleFromEclProjectionRows(
     verifiedSourceRefs,
   );
   const thesis = hasPublishedClaims
-    ? publishedThesisFromRows(rows)
+    ? publishedThesisFromRows(factualRows)
     : base.thesis.publishedGeneration;
   const chapters = hasPublishedClaims
-    ? buildPublishedChapters(rows, claims)
+    ? buildPublishedChapters(factualRows, claims)
     : base.chapters;
-  const executiveStoryPlan = storyPlanRow(rows)
-    ? storyPlanFromRows(base.tenantKey, assessmentId, rows, claims)
+  const executiveStoryPlan = storyPlanRow(factualRows)
+    ? storyPlanFromRows(base.tenantKey, assessmentId, factualRows, claims)
     : base.executiveStoryPlan;
   return normalizeHomeReviewBundle({
     tenantKey: base.tenantKey,
@@ -2601,6 +2818,11 @@ export async function getHomeEclProjectionBundle(
       : "";
     throw new Error(
       `Home ECL preview: no serving Home rows for ${tenantKey}/${assessmentId}.${missing}`,
+    );
+  }
+  if (!rows.some(isFactualHomeRow)) {
+    throw new Error(
+      `Home ECL preview: no admissible Home rows for ${tenantKey}/${assessmentId}.`,
     );
   }
   if (absentViews.length > 0) {
