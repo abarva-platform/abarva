@@ -2,9 +2,11 @@ import type { CanonicalIngestionRecord } from "../../../src/lib/enterprise-data/
 import { CANONICAL_TENANT_KEYS } from "../../../src/config/tenants/CANONICAL_TENANTS";
 import {
   buildHomeSegmentServingPlan,
+  homeSegmentSourceSetHash,
   type DeclaredSegmentEdge,
   type EclSourceFile,
   type EclSourceRecord,
+  type SegmentSourceSetBinding,
 } from "../home-segment-serving-plan";
 
 const tenantKey = CANONICAL_TENANT_KEYS[0];
@@ -13,6 +15,32 @@ const segmentPath = `datasets/tenant-inputs/active/${tenantKey}/current/01b_busi
 const functionPath = `datasets/tenant-inputs/active/${tenantKey}/current/01_business_functions.csv`;
 const segmentHash = "a".repeat(64);
 const functionHash = "b".repeat(64);
+const expectedSourceHashes = {
+  [segmentPath]: segmentHash,
+  [functionPath]: functionHash,
+};
+const sourceSetHash = homeSegmentSourceSetHash(expectedSourceHashes)!;
+const sourceSetBinding: SegmentSourceSetBinding = {
+  tenantKey,
+  assessmentId,
+  reviewState: "approved",
+  sourceSetHash,
+  files: expectedSourceHashes,
+  snapshot: {
+    id: "snapshot-one",
+    tenantKey,
+    assessmentId,
+    sourceHash: sourceSetHash,
+    qualityState: "passed",
+  },
+  projection: {
+    tenantKey,
+    assessmentId,
+    snapshotId: "snapshot-one",
+    sourceHash: sourceSetHash,
+    qualityState: "passed",
+  },
+};
 
 function record(
   objectType: "business_segment" | "business_function",
@@ -130,10 +158,8 @@ function plan(
     assessmentId,
     records: [segment, businessFunction],
     edges: [edge],
-    expectedSourceHashes: {
-      [segmentPath]: segmentHash,
-      [functionPath]: functionHash,
-    },
+    expectedSourceHashes,
+    sourceSetBinding,
     sourceFiles,
     sourceRecords,
     ...overrides,
@@ -143,6 +169,7 @@ function plan(
 describe("Home segment serving admission plan", () => {
   it("carries only source-matched segment facts and declared function links", () => {
     expect(plan()).toEqual({
+      sourceSet: { state: "verified", hash: sourceSetHash, reason: null },
       candidates: [
         {
           canonicalObjectKey: "segment:one",
@@ -166,7 +193,7 @@ describe("Home segment serving admission plan", () => {
     });
   });
 
-  it("withholds a segment when the registered source hash changes", () => {
+  it("blocks a changed canonical file before inspecting individual rows", () => {
     const result = plan({
       expectedSourceHashes: {
         [segmentPath]: "c".repeat(64),
@@ -174,14 +201,95 @@ describe("Home segment serving admission plan", () => {
       },
     });
     expect(result.candidates).toEqual([]);
+    expect(result.sourceSet.reason).toBe("reviewed-source-set-mismatch");
     expect(result.withheld).toContainEqual({
       objectKey: "segment:one",
-      reason: "source-record-not-verified",
+      reason: "reviewed-source-set-mismatch",
     });
-    expect(result.withheld).toContainEqual({
-      objectKey: "function:one",
-      reason: "segment-relationship-not-verified",
+  });
+
+  it("keeps source-set identity tied to registered paths, not just basenames", () => {
+    const movedPath = `datasets/tenant-inputs/active/${tenantKey}/replaced/01b_business_segments.csv`;
+    const result = plan({
+      expectedSourceHashes: {
+        [movedPath]: segmentHash,
+        [functionPath]: functionHash,
+      },
     });
+    expect(result.sourceSet.reason).toBe("reviewed-source-set-mismatch");
+    expect(result.candidates).toEqual([]);
+  });
+
+  it("requires an approved source-set binding for the exact assessment", () => {
+    expect(plan({ sourceSetBinding: null }).sourceSet.reason).toBe(
+      "source-set-proof-missing",
+    );
+    expect(
+      plan({
+        sourceSetBinding: { ...sourceSetBinding, reviewState: "candidate" },
+      }).sourceSet.reason,
+    ).toBe("reviewed-source-set-mismatch");
+    expect(plan({ assessmentId: "another-assessment" }).sourceSet.reason).toBe(
+      "reviewed-source-set-mismatch",
+    );
+  });
+
+  it("blocks a different snapshot or projection source set", () => {
+    expect(
+      plan({
+        sourceSetBinding: {
+          ...sourceSetBinding,
+          snapshot: { ...sourceSetBinding.snapshot, sourceHash: "c".repeat(64) },
+        },
+      }).sourceSet.reason,
+    ).toBe("target-snapshot-mismatch");
+    expect(
+      plan({
+        sourceSetBinding: {
+          ...sourceSetBinding,
+          projection: {
+            ...sourceSetBinding.projection,
+            snapshotId: "older-snapshot",
+          },
+        },
+      }).sourceSet.reason,
+    ).toBe("target-snapshot-mismatch");
+  });
+
+  it("blocks extra, missing, or duplicate accepted source files", () => {
+    expect(
+      plan({ sourceFiles: sourceFiles.slice(0, 1) }).sourceSet.reason,
+    ).toBe("source-catalog-mismatch");
+    expect(
+      plan({
+        sourceFiles: [
+          ...sourceFiles,
+          {
+            id: "unreviewed-file",
+            tenantKey,
+            assessmentId,
+            fileName: "unreviewed.csv",
+            fileHash: "c".repeat(64),
+            qualityState: "accepted",
+          },
+        ],
+      }).sourceSet.reason,
+    ).toBe("source-catalog-mismatch");
+    expect(
+      plan({ sourceFiles: [...sourceFiles, sourceFiles[0]] }).sourceSet.reason,
+    ).toBe("source-catalog-mismatch");
+  });
+
+  it("rejects ambiguous file names in the declared full source set", () => {
+    expect(
+      homeSegmentSourceSetHash({
+        "first/01.csv": "a".repeat(64),
+        "second/01.csv": "b".repeat(64),
+      }),
+    ).toBeNull();
+    expect(
+      homeSegmentSourceSetHash({ "first/../01.csv": "a".repeat(64) }),
+    ).toBeNull();
   });
 
   it("withholds a source row when its native ID or assessment differs", () => {
