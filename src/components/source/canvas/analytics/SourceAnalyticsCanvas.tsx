@@ -3652,10 +3652,7 @@ function StepDetail({
     id: activeStep.id,
     factTemplateCode: activeStep.factTemplateCode ?? undefined,
   });
-  if (missingEvidence && (
-    activeStep.type !== "provide" ||
-    evidenceRequirementId !== missingEvidence.requirement.requirementId
-  )) {
+  if (missingEvidence && activeStep.type !== "provide") {
     return null;
   }
   const isStrategyConfirmation =
