@@ -53,6 +53,10 @@ export interface HomeProjectionRow {
   title: string;
   summary: string | null;
   display_payload_json: JsonRecord | null;
+  source_hash?: string | null;
+  source_refs_json?: unknown;
+  primary_object_id?: string | null;
+  admission_status?: string | null;
 }
 
 const COLUMN_ORDER: Record<TechObjectType, string[]> = {
@@ -397,6 +401,34 @@ function rowPayload(row: HomeProjectionRow): JsonRecord {
   )
     return payload;
   return { ...payload, ...(nestedPayload as JsonRecord) };
+}
+
+function sourceRefIds(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  const refs = value
+    .map((item) => {
+      if (typeof item === "string") return text(item);
+      if (!item || typeof item !== "object" || Array.isArray(item)) return null;
+      const ref = item as JsonRecord;
+      return (
+        text(ref.source_record_id) ??
+        text(ref.sourceRecordId) ??
+        text(ref.record_id) ??
+        text(ref.source_file_id) ??
+        text(ref.id)
+      );
+    })
+    .filter((ref): ref is string => Boolean(ref));
+  return [...new Set(refs)];
+}
+
+function admittedSourceRefs(row: HomeProjectionRow): string[] {
+  if (
+    !["admitted", "not_applicable"].includes(row.admission_status ?? "") ||
+    !text(row.source_hash)
+  )
+    return [];
+  return sourceRefIds(row.source_refs_json);
 }
 
 /**
@@ -1432,6 +1464,7 @@ function projectionContextItems(rows: HomeProjectionRow[]): ContextItem[] {
       id: contextIdForRow(row),
       statement: rowContextStatement(row, labelsByRef),
       domains: rowDomains(row),
+      evidenceRefs: admittedSourceRefs(row),
     }));
 }
 
@@ -2271,6 +2304,27 @@ function contextVersionForRows(
       .filter((value): value is string => Boolean(value)),
   );
   const deterministicPacketHash = hash(signalPacket);
+  const citableRows = rows.filter(
+    (row) =>
+      row.row_type !== "summary" &&
+      row.row_type !== "chapter_claim" &&
+      row.row_type !== STORY_PLAN_ROW_TYPE,
+  );
+  const sourceRows = citableRows
+    .map((row) => ({
+      pageKey: row.page_key,
+      rowKey: row.row_key,
+      sourceHash: row.source_hash,
+      sourceRefs: admittedSourceRefs(row).sort(),
+    }))
+    .sort((a, b) =>
+      `${a.pageKey}:${a.rowKey}`.localeCompare(`${b.pageKey}:${b.rowKey}`),
+    );
+  const sourceSetHash =
+    citableRows.length > 0 &&
+    citableRows.every((row) => admittedSourceRefs(row).length > 0)
+      ? hash(sourceRows)
+      : null;
   const narrativePacketHash =
     writerHashes.size === 1 ? [...writerHashes][0]! : null;
   const evidenceIds = new Set([
@@ -2289,7 +2343,8 @@ function contextVersionForRows(
     writerHashes.size === 1 &&
     narrativePacketHash === deterministicPacketHash &&
     writerDates.size === 1 &&
-    claimEvidenceResolved;
+    claimEvidenceResolved &&
+    sourceSetHash !== null;
   const hasCurrentStoryPlan =
     Boolean(storyPlanRow(rows)) || !base.executiveStoryPlan;
 
@@ -2302,6 +2357,7 @@ function contextVersionForRows(
         ),
       ),
     ),
+    sourceSetHash,
     deterministicPacketHash,
     narrativePacketHash,
     narrativeGeneratedAt: hasPublishedClaims
@@ -2460,6 +2516,10 @@ async function readHomeProjectionRows(
         row_type,
         title,
         summary,
+        source_hash,
+        source_refs_json,
+        primary_object_id,
+        admission_status,
         payload_json as display_payload_json
       from ${view}
       where tenant_key = $1 and assessment_id = $2`,

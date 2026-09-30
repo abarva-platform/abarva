@@ -47,7 +47,7 @@ describe("ClaimCard", () => {
     expect(screen.getByText(resolvedStatement!)).toBeInTheDocument();
     expect(
       screen.getAllByText(
-        /Derived from governed records|Governed record|Leadership interviews/,
+        /Derived from governed records|Governed record|Leadership interviews|Source mapping not established/,
       ).length,
     ).toBeGreaterThan(0);
   });

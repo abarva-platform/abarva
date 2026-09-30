@@ -1,6 +1,7 @@
 import {
   buildHomeReviewBundleFromEclProjectionRows,
   buildTechnologyEstateFromHomeProjectionRows,
+  getHomeEclProjectionBundle,
   getHomeEclProjectionBundleOrReviewedSnapshot,
   getHomeEclProjectionBundleOrReviewedSnapshotWithSource,
   type HomeProjectionRow,
@@ -128,6 +129,43 @@ function storyPlanFixture(
 describe("buildTechnologyEstateFromHomeProjectionRows", () => {
   afterEach(() => {
     jest.restoreAllMocks();
+  });
+
+  it("reads source lineage columns from the serving projection", async () => {
+    const query = jest
+      .spyOn(azureRead, "query")
+      .mockResolvedValueOnce([
+        { full_name: "serving.home_applications_systems" },
+      ])
+      .mockResolvedValueOnce([
+        row({
+          page_key: "applications_systems",
+          row_key: "APP-001",
+          row_type: "application",
+          title: "A sourced application",
+          source_hash: "source-hash-001",
+          source_refs_json: ["source-row-001"],
+          admission_status: "admitted",
+        }),
+      ]);
+    jest.spyOn(console, "warn").mockImplementation(() => {});
+
+    const bundle = await getHomeEclProjectionBundle("meridian-health");
+
+    expect(query.mock.calls[1]?.[0]).toEqual(
+      expect.stringContaining("source_hash"),
+    );
+    expect(query.mock.calls[1]?.[0]).toEqual(
+      expect.stringContaining("source_refs_json"),
+    );
+    expect(query.mock.calls[1]?.[0]).toEqual(
+      expect.stringContaining("admission_status"),
+    );
+    expect(bundle.thesis.signalPacket.contextItems).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ evidenceRefs: ["source-row-001"] }),
+      ]),
+    );
   });
 
   it("falls back to the reviewed Home bundle when the Meridian ECL serving projection is empty", async () => {
@@ -783,6 +821,62 @@ describe("buildTechnologyEstateFromHomeProjectionRows", () => {
         }),
       ]),
     );
+  });
+
+  it("carries admitted source references into a citable served context item", () => {
+    const base = getHomeReviewBundle("meridian-health");
+    if (!base) throw new Error("stored copy missing");
+    const bundle = buildHomeReviewBundleFromEclProjectionRows(base, [
+      row({
+        page_key: "applications_systems",
+        row_key: "APP-001",
+        row_type: "application",
+        title: "Claims Administration Platform",
+        source_hash: "source-hash-001",
+        source_refs_json: [
+          { source_record_id: "source-row-001" },
+          { source_record_id: "source-row-001" },
+        ],
+        primary_object_id: "canonical-app-001",
+        admission_status: "admitted",
+      }),
+    ]);
+
+    const contextId = "ctx_ecl_applications_systems_application_APP_001";
+    expect(
+      bundle.thesis.signalPacket.contextItems.find(
+        (item) => item.id === contextId,
+      )?.evidenceRefs,
+    ).toEqual(["source-row-001"]);
+    expect(resolveEvidence([contextId], bundle.thesis.signalPacket)[0]).toEqual(
+      expect.objectContaining({ evidenceRefs: ["source-row-001"] }),
+    );
+    expect(bundle.contextVersion?.sourceSetHash).toEqual(expect.any(String));
+  });
+
+  it("does not treat a refused or unlinked serving row as source-backed", () => {
+    const base = getHomeReviewBundle("meridian-health");
+    if (!base) throw new Error("stored copy missing");
+    const bundle = buildHomeReviewBundleFromEclProjectionRows(base, [
+      row({
+        page_key: "applications_systems",
+        row_key: "APP-002",
+        row_type: "application",
+        title: "Unlinked application",
+        source_hash: "source-hash-002",
+        source_refs_json: ["source-row-002"],
+        admission_status: "refused",
+      }),
+    ]);
+
+    expect(
+      bundle.thesis.signalPacket.contextItems.find(
+        (item) =>
+          item.id === "ctx_ecl_applications_systems_application_APP_002",
+      )?.evidenceRefs,
+    ).toEqual([]);
+    expect(bundle.contextVersion?.sourceSetHash).toBeNull();
+    expect(bundle.contextVersion?.coherence).toBe("stored_narrative");
   });
 
   it("resolves deterministic writer evidence ids on the Home runtime signal packet", () => {
