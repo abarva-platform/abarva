@@ -165,7 +165,12 @@ async function isPhaseApproved(
   const snapshots = await getPhaseSnapshots(ctx, programId, phase).catch(
     () => [],
   );
-  return phaseApprovalMatchesEvidence(phase, snapshots, evidence);
+  if (!phaseApprovalMatchesEvidence(phase, snapshots, evidence)) return false;
+  if (phase === 0) return true;
+  const gate = await evaluateGate(ctx, programId, phase, phase + 1, {
+    allowHistoricalPhase: true,
+  });
+  return !gate.failedChecks.some((check) => check.severity === "hard");
 }
 
 async function loadEvidenceState(
@@ -345,7 +350,20 @@ export async function GET(
       captureCompletion(ctx, programId, phase, program),
       getPhaseSnapshots(ctx, programId, phase).catch(() => []),
     ]);
-    const approved = phaseApprovalMatchesEvidence(phase, snapshots, evidence);
+    const snapshotApproved = phaseApprovalMatchesEvidence(
+      phase,
+      snapshots,
+      evidence,
+    );
+    const gate =
+      phase === 0
+        ? null
+        : await evaluateGate(ctx, programId, phase, phase + 1, {
+            allowHistoricalPhase: true,
+          });
+    const gateReady =
+      !gate || !gate.failedChecks.some((check) => check.severity === "hard");
+    const approved = snapshotApproved && gateReady;
     const approvalStale =
       !approved &&
       snapshots.some((snapshot) => snapshot.approvalStatus === "approved");
@@ -362,9 +380,13 @@ export async function GET(
       capture,
       approved,
       approvalStale,
+      gate,
       evidenceSnapshotAvailable: Boolean(evidence),
       canApprove:
-        capture.complete && !approved && (phase === 0 || Boolean(evidence)),
+        capture.complete &&
+        gateReady &&
+        !approved &&
+        (phase === 0 || Boolean(evidence)),
       approvePath: `/api/v1/programs/${programId}/phase-gate-approval`,
     });
   } catch (err) {
@@ -537,6 +559,7 @@ export async function POST(
     }
     const gate = await evaluateGate(ctx, programId, phase, toPhase, {
       supabase: sb,
+      allowHistoricalPhase: phase < (program.currentPhase ?? 0),
     });
     const hardFails = gate.failedChecks.filter(
       (check) => check.severity === "hard",

@@ -60,6 +60,7 @@ import {
   validateArchitectureGenerationLineage,
 } from "@/lib/programs/approved-solution-approach";
 import { loadCurrentMoveContextExtractFreshness } from "@/lib/programs/move-context-extract";
+import { loadApprovedMoveEvidenceSnapshot } from "@/lib/programs/approved-move-evidence-snapshot";
 import type { TenancyCtx } from "@/lib/programs/types.db";
 
 // Union of every deliberately registered/agent-authorable deliverable type
@@ -328,6 +329,15 @@ export async function POST(
       typeof evaluateClientReadinessForSignOff
     > | null = null;
     let readinessScannedArtifacts: GeneratedOfficeScanArtifact[] = [];
+    let generatedApprovalLineage:
+      | {
+          source: "moves_program_generate";
+          generatedArtifactId?: string;
+          evidenceSnapshotHash: string;
+          approvalMode: "approve_generated_deliverable_as_is";
+        }
+      | undefined;
+    let generatedApprovalArtifactId: string | undefined;
 
     if (!isFileUploadApproval && currentVersion) {
       const { data: versionRow, error: versionError } = await supabase
@@ -342,6 +352,10 @@ export async function POST(
           structured_data?: Record<string, unknown> | null;
         } | null
       )?.structured_data?.source;
+      const versionStructuredData =
+        (versionRow as {
+          structured_data?: Record<string, unknown> | null;
+        } | null)?.structured_data ?? {};
       if (source === "phase_capture") {
         return Response.json(
           {
@@ -353,6 +367,65 @@ export async function POST(
           },
           { status: 422 },
         );
+      }
+
+      const generatedVersion =
+        source === "generated_by_orchestrator" ||
+        source === "generated_artifact_acceptance" ||
+        source === "moves_program_generate" ||
+        typeof versionStructuredData.generated_artifact_id === "string" ||
+        typeof versionStructuredData.generatedArtifactId === "string";
+      if (generatedVersion) {
+        const evidenceSnapshot = ctx.clientKey
+          ? await loadApprovedMoveEvidenceSnapshot({
+              tenantKey: ctx.clientKey,
+              moveId: programId,
+            }).catch(() => null)
+          : null;
+        const recordedRevision =
+          typeof versionStructuredData.evidenceSnapshotHash === "string"
+            ? versionStructuredData.evidenceSnapshotHash
+            : null;
+        if (
+          !evidenceSnapshot ||
+          !recordedRevision ||
+          recordedRevision !== evidenceSnapshot.revision
+        ) {
+          return Response.json(
+            {
+              error: "generated_artifact_evidence_not_current",
+              detail:
+                "This generated version is not bound to the current approved evidence. Rebuild it from the current evidence set before approval.",
+            },
+            { status: 409 },
+          );
+        }
+        const versionId = (versionRow as { id?: string | null } | null)?.id;
+        if (versionId) {
+          const currentArtifacts = await listMoveArtifacts(ctx, programId, {
+            family: "generated_deliverable",
+            currentOnly: true,
+          });
+          const versionArtifact = currentArtifacts.find((artifact) => {
+            const metadata = asRecord(artifact.metadata);
+            return (
+              metadata.deliverableId === deliverableId &&
+              metadata.versionId === versionId &&
+              metadata.evidenceSnapshotHash === evidenceSnapshot.revision
+            );
+          });
+          generatedApprovalArtifactId = versionArtifact?.artifact_id;
+        }
+        generatedApprovalLineage = {
+          source: "moves_program_generate",
+          ...(typeof versionStructuredData.generatedArtifactId === "string"
+            ? { generatedArtifactId: versionStructuredData.generatedArtifactId }
+            : typeof versionStructuredData.generated_artifact_id === "string"
+              ? { generatedArtifactId: versionStructuredData.generated_artifact_id }
+              : {}),
+          evidenceSnapshotHash: evidenceSnapshot.revision,
+          approvalMode: "approve_generated_deliverable_as_is",
+        };
       }
 
       // Client-readiness gate. Signing off is the moment a document becomes
@@ -486,7 +559,7 @@ export async function POST(
       }
     }
 
-    let approvedArtifactId: string | undefined;
+    let approvedArtifactId: string | undefined = generatedApprovalArtifactId;
     let approvedContent:
       | {
           content: string;
@@ -569,6 +642,24 @@ export async function POST(
         }
         readinessOutcome = readiness;
 
+        const approvalEvidenceSnapshot =
+          phase > 0 && ctx.clientKey
+            ? await loadApprovedMoveEvidenceSnapshot({
+                tenantKey: ctx.clientKey,
+                moveId: programId,
+              }).catch(() => null)
+            : null;
+        if (phase > 0 && !approvalEvidenceSnapshot) {
+          return Response.json(
+            {
+              error: "evidence_snapshot_unavailable",
+              detail:
+                "Approved evidence could not be verified. The replacement was not signed off.",
+            },
+            { status: 503 },
+          );
+        }
+
         const saved = await saveMoveArtifact(ctx, {
           moveId: programId,
           phase,
@@ -589,6 +680,9 @@ export async function POST(
             uploadedBy: ctx.email ?? null,
             mime: file.type || null,
             deliverableId,
+            ...(approvalEvidenceSnapshot
+              ? { evidenceSnapshotHash: approvalEvidenceSnapshot.revision }
+              : {}),
             clientApprovedReplacement: true,
             parseMethod: parsed.extractedStructured.parse_method,
             parseWarnings: parsed.extractedStructured.warnings,
@@ -609,6 +703,7 @@ export async function POST(
       supabase,
       approvedArtifactId,
       approvedContent,
+      approvalLineage: generatedApprovalLineage,
       approvalRationale,
     });
     if (!signedOff)

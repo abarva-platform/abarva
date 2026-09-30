@@ -460,7 +460,7 @@ export async function evaluateGate(
   programId: string,
   fromPhase: number,
   toPhase: number,
-  opts: { supabase?: SupabaseClient } = {},
+  opts: { supabase?: SupabaseClient; allowHistoricalPhase?: boolean } = {},
 ): Promise<GateCheck> {
   assertTenancy(ctx);
   let rule = findGateRule(fromPhase, toPhase);
@@ -514,7 +514,11 @@ export async function evaluateGate(
       approverRole: null,
     };
   }
-  if (program.currentPhase !== fromPhase) {
+  const historicalReapproval =
+    opts.allowHistoricalPhase === true &&
+    typeof program.currentPhase === "number" &&
+    program.currentPhase > fromPhase;
+  if (program.currentPhase !== fromPhase && !historicalReapproval) {
     return {
       pass: false,
       failedChecks: [
@@ -541,7 +545,9 @@ export async function evaluateGate(
   ] = await Promise.all([
     sb
       .from("deliverables_v2")
-      .select("id, deliverable_type_key, status, structured_data")
+      .select(
+        "id, deliverable_type_key, status, approved_artifact_id, structured_data",
+      )
       .eq("engagement_id", programId),
     sb
       .from("program_modules")
@@ -569,6 +575,7 @@ export async function evaluateGate(
       id: string;
       deliverable_type_key: string;
       status: string;
+      approved_artifact_id?: string | null;
       structured_data?: Record<string, unknown> | null;
     }> | null) ?? [];
   const moduleRows =
@@ -593,31 +600,88 @@ export async function evaluateGate(
         moveId: programId,
       }).catch(() => null)
     : null;
+  const linkedArtifactIds = deliverableRows
+    .map((row) => row.approved_artifact_id)
+    .filter((id): id is string => typeof id === "string" && id.length > 0);
+  const linkedArtifactRows =
+    ctx.clientKey && linkedArtifactIds.length > 0
+      ? await sb
+          .from("move_artifacts")
+          .select(
+            "artifact_id, tenant_key, move_id, artifact_family, lifecycle_state, metadata",
+          )
+          .eq("tenant_key", ctx.clientKey)
+          .eq("move_id", programId)
+          .in("artifact_id", linkedArtifactIds)
+      : { data: [] };
+  const linkedArtifactById = new Map(
+    ((linkedArtifactRows.data as Array<{
+      artifact_id: string;
+      tenant_key: string;
+      move_id: string;
+      artifact_family: string;
+      lifecycle_state: string;
+      metadata?: Record<string, unknown> | null;
+    }> | null) ?? []).map((artifact) => [artifact.artifact_id, artifact]),
+  );
   const isSignedOff = (
     row:
       | {
+          id: string;
           status: string;
+          approved_artifact_id?: string | null;
           structured_data?: Record<string, unknown> | null;
         }
       | undefined,
   ) => {
     if (row?.status !== "signed_off") return false;
     const structured = row.structured_data ?? {};
-    const generated =
+    const structuredGenerated =
       structured.source === "generated_by_orchestrator" ||
       structured.source === "generated_artifact_acceptance" ||
+      structured.source === "moves_program_generate" ||
       typeof structured.generated_artifact_id === "string" ||
       typeof structured.generatedArtifactId === "string";
-    if (!generated) return true;
-    const evidenceSnapshotHash =
+    const structuredEvidenceSnapshotHash =
       typeof structured.evidenceSnapshotHash === "string"
         ? structured.evidenceSnapshotHash
         : null;
-    return Boolean(
+    const structuredLineageCurrent = Boolean(
       currentEvidenceSnapshot &&
-        evidenceSnapshotHash &&
-        evidenceSnapshotHash === currentEvidenceSnapshot.revision,
+        structuredEvidenceSnapshotHash === currentEvidenceSnapshot.revision,
     );
+    const linkedArtifactId = row.approved_artifact_id;
+    const linkedArtifact = linkedArtifactId
+      ? linkedArtifactById.get(linkedArtifactId)
+      : null;
+    const linkedMetadata = linkedArtifact?.metadata ?? {};
+    const linkedArtifactMatchesDeliverable = Boolean(
+      row &&
+        (linkedMetadata.deliverableId === row.id ||
+          (typeof structured.generatedArtifactId === "string" &&
+            linkedMetadata.generatedArtifactId ===
+              structured.generatedArtifactId)),
+    );
+    const linkedArtifactCurrent = Boolean(
+      currentEvidenceSnapshot &&
+        linkedArtifact &&
+        linkedArtifact.tenant_key === ctx.clientKey &&
+        linkedArtifact.move_id === programId &&
+        linkedArtifact.artifact_family === "generated_deliverable" &&
+        linkedArtifact.lifecycle_state === "current" &&
+        linkedArtifactMatchesDeliverable &&
+        linkedMetadata.evidenceSnapshotHash === currentEvidenceSnapshot.revision,
+    );
+
+    if (linkedArtifactId && !linkedArtifactCurrent) return false;
+    if (
+      structuredGenerated &&
+      !structuredLineageCurrent &&
+      !linkedArtifactCurrent
+    ) {
+      return false;
+    }
+    return true;
   };
   // A deliverable TYPE that requires named role approvals (see
   // deliverable-role-approvals.ts's REQUIRED_APPROVAL_ROLES) must have every

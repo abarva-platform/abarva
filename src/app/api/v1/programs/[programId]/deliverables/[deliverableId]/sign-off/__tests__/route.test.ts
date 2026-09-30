@@ -9,6 +9,7 @@ const mockDownloadArtifactBytes = jest.fn();
 const mockExtractProgramEvidenceFromUploadBuffer = jest.fn();
 const mockWriteAuditLog = jest.fn();
 const mockExtractOfficeText = jest.fn();
+const mockLoadApprovedMoveEvidenceSnapshot = jest.fn();
 
 jest.mock("../../../../../_auth", () => ({
   requireTenancy: () => mockRequireTenancy(),
@@ -46,6 +47,11 @@ jest.mock("@/lib/programs/audit-log", () => ({
 jest.mock("@/lib/programs/evidence-ingestion", () => ({
   extractProgramEvidenceFromUploadBuffer: (...args: unknown[]) =>
     mockExtractProgramEvidenceFromUploadBuffer(...args),
+}));
+
+jest.mock("@/lib/programs/approved-move-evidence-snapshot", () => ({
+  loadApprovedMoveEvidenceSnapshot: (...args: unknown[]) =>
+    mockLoadApprovedMoveEvidenceSnapshot(...args),
 }));
 
 let deliverableRow: {
@@ -96,6 +102,7 @@ jest.mock("@/lib/programs/programs-auth-mode-server", () => ({
 
 const ctx = {
   clientId: "client-1",
+  clientKey: "tenant-1",
   userId: "person-1",
   role: "client_admin",
   email: "reviewer@example.com",
@@ -161,6 +168,12 @@ describe("POST /api/v1/programs/[programId]/deliverables/[deliverableId]/sign-of
     mockGetProgramById.mockResolvedValue({ id: "prog-1", name: "Test Move" });
     mockHasAuthority.mockResolvedValue(true);
     mockSignOffDeliverable.mockResolvedValue(true);
+    mockLoadApprovedMoveEvidenceSnapshot.mockResolvedValue({
+      revision: "revision-current",
+      approvedEvidenceCount: 1,
+      rows: [],
+      latestEvidenceActivityAt: "2026-09-29T16:00:00.000Z",
+    });
     deliverableRow = {
       deliverable_type_key: "business_case",
       title: "Business Case",
@@ -168,7 +181,10 @@ describe("POST /api/v1/programs/[programId]/deliverables/[deliverableId]/sign-of
     };
     versionRow = {
       id: "version-1",
-      structured_data: { source: "generated_by_orchestrator" },
+      structured_data: {
+        source: "generated_by_orchestrator",
+        evidenceSnapshotHash: "revision-current",
+      },
       content:
         "<p>SkyHarbor Global should instrument turnaround delay before committing to a predictive model.</p>",
     };
@@ -244,8 +260,31 @@ describe("POST /api/v1/programs/[programId]/deliverables/[deliverableId]/sign-of
       expect.objectContaining({
         approvedArtifactId: undefined,
         approvedContent: undefined,
+        approvalLineage: expect.objectContaining({
+          source: "moves_program_generate",
+          evidenceSnapshotHash: "revision-current",
+          approvalMode: "approve_generated_deliverable_as_is",
+        }),
       }),
     );
+  });
+
+  it("refuses generated sign-off when approved evidence changed after generation", async () => {
+    mockLoadApprovedMoveEvidenceSnapshot.mockResolvedValue({
+      revision: "revision-newer",
+      approvedEvidenceCount: 2,
+      rows: [],
+      latestEvidenceActivityAt: "2026-09-29T18:00:00.000Z",
+    });
+
+    const { POST } = await import("../route");
+    const res = await POST(req(), { params });
+
+    expect(res.status).toBe(409);
+    await expect(res.json()).resolves.toMatchObject({
+      error: "generated_artifact_evidence_not_current",
+    });
+    expect(mockSignOffDeliverable).not.toHaveBeenCalled();
   });
 
   it("passes an approval rationale to the lifecycle mutation", async () => {
@@ -296,7 +335,10 @@ describe("POST /api/v1/programs/[programId]/deliverables/[deliverableId]/sign-of
     it("refuses sign-off when the document contains something a client must not see", async () => {
       versionRow = {
         id: "version-1",
-        structured_data: { source: "generated_by_orchestrator" },
+        structured_data: {
+          source: "generated_by_orchestrator",
+          evidenceSnapshotHash: "revision-current",
+        },
         content: LEAKY,
       };
 
@@ -315,7 +357,10 @@ describe("POST /api/v1/programs/[programId]/deliverables/[deliverableId]/sign-of
     it("names the escape hatch in the refusal, so the reviewer is not stuck", async () => {
       versionRow = {
         id: "version-1",
-        structured_data: { source: "generated_by_orchestrator" },
+        structured_data: {
+          source: "generated_by_orchestrator",
+          evidenceSnapshotHash: "revision-current",
+        },
         content: LEAKY,
       };
 
@@ -413,7 +458,10 @@ describe("POST /api/v1/programs/[programId]/deliverables/[deliverableId]/sign-of
     it("proceeds when the reviewer explicitly acknowledges the findings", async () => {
       versionRow = {
         id: "version-1",
-        structured_data: { source: "generated_by_orchestrator" },
+        structured_data: {
+          source: "generated_by_orchestrator",
+          evidenceSnapshotHash: "revision-current",
+        },
         content: LEAKY,
       };
 
@@ -432,7 +480,10 @@ describe("POST /api/v1/programs/[programId]/deliverables/[deliverableId]/sign-of
     it("writes the accepted findings to the audit log, so the override is not silent", async () => {
       versionRow = {
         id: "version-1",
-        structured_data: { source: "generated_by_orchestrator" },
+        structured_data: {
+          source: "generated_by_orchestrator",
+          evidenceSnapshotHash: "revision-current",
+        },
         content: LEAKY,
       };
 
@@ -465,7 +516,10 @@ describe("POST /api/v1/programs/[programId]/deliverables/[deliverableId]/sign-of
     it("does not block on review-only findings", async () => {
       versionRow = {
         id: "version-1",
-        structured_data: { source: "generated_by_orchestrator" },
+        structured_data: {
+          source: "generated_by_orchestrator",
+          evidenceSnapshotHash: "revision-current",
+        },
         content: "<p>The quality score was 80 for this operating model.</p>",
       };
 
@@ -481,7 +535,10 @@ describe("POST /api/v1/programs/[programId]/deliverables/[deliverableId]/sign-of
     it("reports not_scanned rather than clear when there is no content", async () => {
       versionRow = {
         id: "version-1",
-        structured_data: { source: "generated_by_orchestrator" },
+        structured_data: {
+          source: "generated_by_orchestrator",
+          evidenceSnapshotHash: "revision-current",
+        },
         content: null,
       };
 
@@ -591,6 +648,7 @@ describe("POST /api/v1/programs/[programId]/deliverables/[deliverableId]/sign-of
         structured_data: {
           source: "generated_by_orchestrator",
           requiresOfficeCompanionScan: true,
+          evidenceSnapshotHash: "revision-current",
         },
         content:
           "<p>SkyHarbor Global should instrument turnaround delay before committing to a predictive model.</p>",
@@ -629,6 +687,7 @@ describe("POST /api/v1/programs/[programId]/deliverables/[deliverableId]/sign-of
         structured_data: {
           source: "generated_by_orchestrator",
           requiresOfficeCompanionScan: true,
+          evidenceSnapshotHash: "revision-current",
         },
         content:
           "<p>SkyHarbor Global should instrument turnaround delay before committing to a predictive model.</p>",

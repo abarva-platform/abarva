@@ -660,12 +660,13 @@ export async function signOffDeliverable(
     supabase?: SupabaseClient;
     /** Validated lineage for a generated artifact accepted as this deliverable. */
     approvalLineage?: {
-      source: "generated_artifact_acceptance";
-      generatedArtifactId: string;
+      source: "generated_artifact_acceptance" | "moves_program_generate";
+      generatedArtifactId?: string;
       evidenceSnapshotHash: string;
       approvalMode:
         | "client_approved_replacement"
-        | "accept_ai_draft_as_authoritative";
+        | "accept_ai_draft_as_authoritative"
+        | "approve_generated_deliverable_as_is";
     };
     /**
      * Set when the client approved by uploading an edited replacement

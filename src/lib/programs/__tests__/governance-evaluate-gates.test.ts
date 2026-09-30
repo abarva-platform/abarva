@@ -7,7 +7,16 @@ let deliverablesFixture: Array<{
   id: string;
   deliverable_type_key: string;
   status: string;
+  approved_artifact_id?: string | null;
   structured_data?: Record<string, unknown> | null;
+}>;
+let moveArtifactsFixture: Array<{
+  artifact_id: string;
+  tenant_key: string;
+  move_id: string;
+  artifact_family: string;
+  lifecycle_state: string;
+  metadata: Record<string, unknown> | null;
 }>;
 let modulesFixture: Array<{
   module_key: string;
@@ -212,6 +221,43 @@ function tableResult(table: string) {
     };
   }
 
+  if (table === "move_artifacts") {
+    const filters: Record<string, unknown> = {};
+    const chain: {
+      select: jest.Mock;
+      eq: jest.Mock;
+      in: jest.Mock;
+      then: <TResult1 = { data: typeof moveArtifactsFixture }, TResult2 = never>(
+        onfulfilled?:
+          | ((value: { data: typeof moveArtifactsFixture }) => TResult1 | PromiseLike<TResult1>)
+          | null,
+        onrejected?: ((reason: unknown) => TResult2 | PromiseLike<TResult2>) | null,
+      ) => Promise<TResult1 | TResult2>;
+    } = {
+      select: jest.fn(() => chain),
+      eq: jest.fn((field: string, value: unknown) => {
+        filters[field] = value;
+        return chain;
+      }),
+      in: jest.fn((field: string, values: unknown[]) => {
+        filters[field] = values;
+        return chain;
+      }),
+      then: (onfulfilled, onrejected) =>
+        Promise.resolve({
+          data: moveArtifactsFixture.filter((artifact) =>
+            Object.entries(filters).every(([field, value]) => {
+              const actual = artifact[field as keyof typeof artifact];
+              return Array.isArray(value)
+                ? value.includes(actual)
+                : actual === value;
+            }),
+          ),
+        }).then(onfulfilled, onrejected),
+    };
+    return { select: chain.select };
+  }
+
   throw new Error(`Unexpected table ${table}`);
 }
 
@@ -249,6 +295,7 @@ describe("evaluateGate", () => {
     milestonesFixture = [{ id: "m-1", name: "Mobilize", status: "upcoming" }];
     evidenceFixture = [];
     deliverableVersionsFixture = [];
+    moveArtifactsFixture = [];
     roleApprovalsFixture = [];
     listApprovedPhaseEvidenceMock.mockResolvedValue([]);
     loadApprovedMoveEvidenceSnapshotMock.mockResolvedValue({
@@ -640,6 +687,178 @@ describe("evaluateGate", () => {
       expect.arrayContaining([
         expect.objectContaining({ check: "charter_signed_off" }),
       ]),
+    );
+  });
+
+  it("blocks a signed-off deliverable whose linked artifact has no current evidence lineage", async () => {
+    getProgramByIdMock.mockResolvedValue({
+      id: "program-1",
+      currentPhase: 1,
+      archetype: "agent_assist",
+    });
+    deliverablesFixture = [
+      {
+        id: "charter",
+        deliverable_type_key: "charter",
+        status: "signed_off",
+        approved_artifact_id: "artifact-current-but-unbound",
+      },
+    ];
+    moveArtifactsFixture = [
+      {
+        artifact_id: "artifact-current-but-unbound",
+        tenant_key: "tenant-1",
+        move_id: "program-1",
+        artifact_family: "generated_deliverable",
+        lifecycle_state: "current",
+        metadata: { deliverableId: "charter" },
+      },
+    ];
+    participantsFixture = [{ approval_authority: "sponsor" }];
+
+    const result = await evaluateGate(
+      {
+        clientId: "client-1",
+        clientKey: "tenant-1",
+        userId: "person-1",
+      },
+      "program-1",
+      1,
+      2,
+    );
+
+    expect(result.failedChecks).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ check: "charter_signed_off", severity: "hard" }),
+      ]),
+    );
+  });
+
+  it("opens the charter gate when the linked artifact is current for this tenant, Move, and evidence revision", async () => {
+    getProgramByIdMock.mockResolvedValue({
+      id: "program-1",
+      currentPhase: 1,
+      archetype: "agent_assist",
+    });
+    deliverablesFixture = [
+      {
+        id: "charter",
+        deliverable_type_key: "charter",
+        status: "signed_off",
+        approved_artifact_id: "artifact-current",
+      },
+    ];
+    moveArtifactsFixture = [
+      {
+        artifact_id: "artifact-current",
+        tenant_key: "tenant-1",
+        move_id: "program-1",
+        artifact_family: "generated_deliverable",
+        lifecycle_state: "current",
+        metadata: {
+          deliverableId: "charter",
+          evidenceSnapshotHash: "revision-current",
+        },
+      },
+    ];
+    participantsFixture = [{ approval_authority: "sponsor" }];
+
+    const result = await evaluateGate(
+      {
+        clientId: "client-1",
+        clientKey: "tenant-1",
+        userId: "person-1",
+      },
+      "program-1",
+      1,
+      2,
+    );
+
+    expect(result.failedChecks).not.toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ check: "charter_signed_off" }),
+      ]),
+    );
+  });
+
+  it("does not resolve an artifact link from another tenant", async () => {
+    getProgramByIdMock.mockResolvedValue({
+      id: "program-1",
+      currentPhase: 1,
+      archetype: "agent_assist",
+    });
+    deliverablesFixture = [
+      {
+        id: "charter",
+        deliverable_type_key: "charter",
+        status: "signed_off",
+        approved_artifact_id: "foreign-artifact",
+      },
+    ];
+    moveArtifactsFixture = [
+      {
+        artifact_id: "foreign-artifact",
+        tenant_key: "another-tenant",
+        move_id: "program-1",
+        artifact_family: "generated_deliverable",
+        lifecycle_state: "current",
+        metadata: {
+          deliverableId: "charter",
+          evidenceSnapshotHash: "revision-current",
+        },
+      },
+    ];
+    participantsFixture = [{ approval_authority: "sponsor" }];
+
+    const result = await evaluateGate(
+      {
+        clientId: "client-1",
+        clientKey: "tenant-1",
+        userId: "person-1",
+      },
+      "program-1",
+      1,
+      2,
+    );
+
+    expect(result.failedChecks).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ check: "charter_signed_off", severity: "hard" }),
+      ]),
+    );
+  });
+
+  it("evaluates an earlier gate for reapproval without changing the stored phase", async () => {
+    getProgramByIdMock.mockResolvedValue({
+      id: "program-1",
+      currentPhase: 2,
+      archetype: "agent_assist",
+    });
+    deliverablesFixture = [
+      {
+        id: "charter",
+        deliverable_type_key: "charter",
+        status: "signed_off",
+      },
+    ];
+    participantsFixture = [{ approval_authority: "sponsor" }];
+
+    const result = await evaluateGate(
+      { clientId: "client-1", userId: "person-1" },
+      "program-1",
+      1,
+      2,
+      { allowHistoricalPhase: true },
+    );
+
+    expect(result.failedChecks).not.toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ check: "phase_mismatch" }),
+      ]),
+    );
+    expect(getProgramByIdMock).toHaveBeenCalledWith(
+      expect.anything(),
+      "program-1",
     );
   });
 
