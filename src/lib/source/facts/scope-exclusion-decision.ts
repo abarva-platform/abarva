@@ -21,7 +21,7 @@ export interface ScopeExclusionDecision {
 
 export function scopeExclusionBasis(evidence: EvidenceAssessment | undefined): ScopeExclusionBasis | null {
   const requirement = evidenceById(CURRENT_SOW_ID);
-  if (!requirement || !evidenceMeetsRequirement(requirement, evidence)) return null;
+  if (!requirement || evidence?.requirementId !== CURRENT_SOW_ID || !evidenceMeetsRequirement(requirement, evidence)) return null;
   const sourceId = scopeMatrixSourceId(evidence);
   if (sourceId) return { kind: "source", sourceId };
   if (hasAuditedAbsence(requirement, evidence)) {
