@@ -4860,6 +4860,8 @@ function EvidenceAbsenceControl({
     ? "incumbent"
     : requirement.requirementId === "EVID-SRC-SCOPE-FY-CONTRACT"
       ? "prior contract or run-cost baseline"
+      : requirement.requirementId === "EVID-SRC-SCOPE-CURRENT-SOW"
+        ? "current SOW or change-order history"
       : "historical spend";
   const decision = declaredAbsent ? "applicable" : "not_applicable";
 
