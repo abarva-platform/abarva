@@ -14,7 +14,6 @@
   "src/app/api/programs/expert-kernel/export/__tests__",
   "src/app/api/request-access/__tests__",
   "src/app/api/webhooks/resend/__tests__",
-  "src/components/__tests__",
   "src/components/ava-chat/__tests__",
   "src/components/evidence/__tests__",
   "src/components/moves/living/__tests__",
