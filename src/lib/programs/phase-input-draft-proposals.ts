@@ -1,7 +1,4 @@
-import {
-  getPhaseCaptureSections,
-  type PhaseCaptureSection,
-} from "@/lib/programs/phase-capture-contract";
+import { getPhaseCaptureSections } from "@/lib/programs/phase-capture-contract";
 
 export type AvaPhaseInputSourceClass =
   | "approved_phase_input"
@@ -30,6 +27,8 @@ export interface PhaseInputDraftProposalInput {
     number,
     Record<string, string | null | undefined>
   >;
+  approvedEvidenceCount?: number;
+  approvedEvidenceUnavailable?: boolean;
 }
 
 function clean(value: string | null | undefined): string {
@@ -49,30 +48,6 @@ function evidenceRef(phase: number, key: string): string {
 
 function joinLines(lines: Array<string | null | undefined>): string {
   return lines.map(clean).filter(Boolean).join("\n\n");
-}
-
-function materialityFor(
-  section: PhaseCaptureSection,
-): "ordinary" | "governed_material" {
-  const text = `${section.key} ${section.label}`.toLowerCase();
-  return [
-    "money",
-    "percentage",
-    "date",
-    "deadline",
-    "scope",
-    "sponsor",
-    "owner",
-    "commitment",
-    "risk",
-    "decision",
-    "option",
-    "approval",
-    "funding",
-    "value",
-  ].some((term) => text.includes(term))
-    ? "governed_material"
-    : "ordinary";
 }
 
 function proposal(args: {
@@ -196,45 +171,6 @@ function buildP1Proposals(
   ].filter((item): item is AvaPhaseInputProposal => Boolean(item));
 }
 
-function buildGenericProposals(
-  phase: number,
-  currentValues: Record<string, string | null | undefined>,
-  upstreamValuesByPhase: Record<
-    number,
-    Record<string, string | null | undefined>
-  >,
-): AvaPhaseInputProposal[] {
-  const previousPhase = Math.max(phase - 1, 0);
-  const previous = upstreamValuesByPhase[previousPhase] ?? {};
-  const previousSummary = getPhaseCaptureSections(previousPhase)
-    .map((section) => {
-      const value = clean(previous[section.key]);
-      return value ? `${section.label}: ${value}` : "";
-    })
-    .filter(Boolean)
-    .join("\n\n");
-  if (!previousSummary) return [];
-
-  return getPhaseCaptureSections(phase)
-    .filter((section) => !clean(currentValues[section.key]))
-    .map((section) =>
-      proposal({
-        currentValues,
-        fieldKey: section.key,
-        materiality: materialityFor(section),
-        proposedValue: `Draft from prior approved context:\n\n${previousSummary}`,
-        rationale:
-          "Uses the immediately preceding phase capture as a starter draft. Review, shorten, and add phase-specific decisions before saving.",
-        evidenceRefs: [`P${previousPhase} approved phase inputs`],
-        confidence: "medium",
-        unresolvedGaps: [
-          `Confirm the ${section.label.toLowerCase()} details specific to P${phase}.`,
-        ],
-      }),
-    )
-    .filter((item): item is AvaPhaseInputProposal => Boolean(item));
-}
-
 export function buildAvaPhaseInputProposals(
   input: PhaseInputDraftProposalInput,
 ): AvaPhaseInputProposal[] {
@@ -251,11 +187,9 @@ export function buildAvaPhaseInputProposals(
     );
   }
 
-  return buildGenericProposals(
-    input.phase,
-    currentValues,
-    input.upstreamValuesByPhase,
-  );
+  // Later phases need phase-specific, field-linked evidence. A prior phase is
+  // useful context, but copying it into every empty field creates false drafts.
+  return [];
 }
 
 export function describeAvaPhaseInputDraftRefusal(
@@ -270,5 +204,14 @@ export function describeAvaPhaseInputDraftRefusal(
     return `P${input.phase} inputs already have current values. There is nothing empty for aVa to draft; edit a field manually if you want an override.`;
   }
 
-  return "No cited draft is available from approved upstream phase inputs. Add source context first or write the field manually.";
+  if (input.phase > 1) {
+    const evidenceStatus = input.approvedEvidenceUnavailable
+      ? `The approved P${input.phase} evidence set could not be verified.`
+      : input.approvedEvidenceCount
+        ? `${input.approvedEvidenceCount} approved P${input.phase} evidence item${input.approvedEvidenceCount === 1 ? " is" : "s are"} available, but no field-level evidence mapping connects them to these capture inputs.`
+        : `No approved P${input.phase} evidence is available, and no field-level evidence mapping is available for these capture inputs.`;
+    return `${evidenceStatus} Prior-phase captures are context, not evidence for P${input.phase}, so aVa did not copy them into the fields. Review the phase evidence and complete each field with human judgment; nothing was saved.`;
+  }
+
+  return "No cited draft is available from the approved P0 capture. Add source context first or write the field manually.";
 }
