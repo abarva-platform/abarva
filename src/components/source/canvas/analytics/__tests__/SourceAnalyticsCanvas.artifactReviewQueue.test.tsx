@@ -126,6 +126,40 @@ it("offers a current-stage Client Final revision without allowing past-stage rep
     .not.toBeInTheDocument();
 });
 
+it("offers restoration only when a prior accepted final has a drifted stage link", async () => {
+  global.fetch = jest.fn().mockResolvedValue({ ok: true, json: async () => ({ ok: true }) }) as jest.Mock;
+  const final = {
+    id: "final-d01", recordKind: "registry_artifact" as const,
+    artifactKind: "d01_strategy_memo", stageKey: "strategy", sourceOrigin: "reuploaded",
+    isClientFinal: true, isCurrentAuthoritative: true,
+    clientFinalAcceptedBy: "owner-1", clientFinalAcceptedAt: "2026-09-29T14:55:28Z",
+  };
+  const state = {
+    id: "state-d01", recordKind: "canvas_state" as const,
+    artifactCode: "d01_strategy_memo", stageKey: "strategy", status: "approved",
+    linkedArtifactId: "later-draft",
+  };
+  const props = {
+    event: { ...event, currentStageKey: "scope" as const, currentStageLabel: "Scope" },
+    viewStage: "strategy" as const, tenantName: "Test Client",
+    stageView: SAMPLE_STRATEGY_STAGE, initialWorkspace: "files" as const,
+  };
+  const { rerender } = render(<SourceAnalyticsCanvas {...props} artifacts={[state, final]} />);
+  expect(screen.getByTestId("source-restore-client-final-d01_strategy_memo"))
+    .toHaveTextContent("Restore accepted final");
+  expect(screen.queryByTestId("source-accept-client-final-toggle-d01_strategy_memo"))
+    .not.toBeInTheDocument();
+  fireEvent.click(screen.getByTestId("source-restore-client-final-d01_strategy_memo"));
+  await waitFor(() => expect(global.fetch).toHaveBeenCalledWith(
+    "/api/v1/source/event-1/artifacts/d01_strategy_memo/restore-current-final",
+    { method: "POST", credentials: "include" },
+  ));
+
+  rerender(<SourceAnalyticsCanvas {...props} artifacts={[{ ...state, linkedArtifactId: final.id }, final]} />);
+  expect(screen.queryByTestId("source-restore-client-final-d01_strategy_memo"))
+    .not.toBeInTheDocument();
+});
+
 it("offers governed draft generation when a required artifact has evidence but no final", async () => {
   global.fetch = jest.fn().mockResolvedValue({
     ok: false,

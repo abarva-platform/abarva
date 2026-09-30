@@ -1517,6 +1517,7 @@ function SourceWorkspace({
     return (
       <FilesWorkspace
         view={view}
+        artifacts={artifacts}
         evidenceStates={evidenceStates ?? []}
         onClientFinalAccepted={onClientFinalAccepted}
       />
@@ -4265,10 +4266,12 @@ function StepActionButton({
 
 function FilesWorkspace({
   view,
+  artifacts,
   evidenceStates,
   onClientFinalAccepted,
 }: {
   view: SourceEventShellView;
+  artifacts: readonly SourceShellArtifactLike[];
   evidenceStates: readonly SourceEventEvidence[];
   onClientFinalAccepted: () => void;
 }) {
@@ -4305,6 +4308,7 @@ function FilesWorkspace({
       <EvidenceReadinessPanel files={view.files.items} />
       <ArtifactLifecyclePanel
         view={view}
+        artifacts={artifacts}
         onClientFinalAccepted={onClientFinalAccepted}
       />
       {view.files.byStage.length === 0 ? (
@@ -6024,12 +6028,33 @@ function summarizeSubstrateSync(
 
 function ArtifactLifecyclePanel({
   view,
+  artifacts,
   onClientFinalAccepted,
 }: {
   view: SourceEventShellView;
+  artifacts: readonly SourceShellArtifactLike[];
   onClientFinalAccepted: () => void;
 }) {
   const lifecycle = view.files.lifecycle;
+  const driftedFinalCodes = new Set(
+    artifacts
+      .filter((artifact) =>
+        artifact.recordKind === "registry_artifact" &&
+        artifact.isClientFinal === true &&
+        artifact.isCurrentAuthoritative === true &&
+        Boolean(artifact.clientFinalAcceptedBy?.trim()) &&
+        Boolean(artifact.clientFinalAcceptedAt?.trim()),
+      )
+      .filter((final) => {
+        const code = final.artifactCode ?? final.artifactType ?? final.artifactKind;
+        const state = artifacts.find((artifact) =>
+          artifact.recordKind === "canvas_state" && artifact.artifactCode === code,
+        );
+        return Boolean(state && state.linkedArtifactId !== final.id);
+      })
+      .map((artifact) => artifact.artifactCode ?? artifact.artifactType ?? artifact.artifactKind)
+      .filter((code): code is string => Boolean(code)),
+  );
   // Default to the stage the user is actually viewing — a wall of every
   // artifact standard across all 11 stages (most of them not reached yet)
   // is exactly the "lines and lines of content" this panel should avoid.
@@ -6382,6 +6407,7 @@ function ArtifactLifecyclePanel({
               group={group}
               activeStageKey={view.event.lifecycle === "active" ? view.event.currentStageKey : null}
               queuedArtifactCodes={new Set(currentStageActionRows.map((row) => row.code))}
+              driftedFinalCodes={driftedFinalCodes}
               onClientFinalAccepted={onClientFinalAccepted}
             />
           ))
@@ -6962,17 +6988,68 @@ function artifactReviewAction(row: SourceArtifactLifecycleRow): {
   };
 }
 
+function RestoreCurrentFinalButton({
+  eventId,
+  artifactCode,
+  onRestored,
+}: {
+  eventId: string;
+  artifactCode: string;
+  onRestored: () => void;
+}) {
+  const [state, setState] = useState<"idle" | "restoring" | "error">("idle");
+  const [message, setMessage] = useState("");
+  const restore = async () => {
+    setState("restoring");
+    try {
+      const response = await fetch(
+        `/api/v1/source/${encodeURIComponent(eventId)}/artifacts/${encodeURIComponent(artifactCode)}/restore-current-final`,
+        { method: "POST", credentials: "include" },
+      );
+      const payload = (await response.json().catch(() => null)) as {
+        error?: string;
+      } | null;
+      if (!response.ok) {
+        throw new Error(payload?.error ?? `Restore failed with HTTP ${response.status}.`);
+      }
+      setState("idle");
+      onRestored();
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Could not restore the accepted final.");
+      setState("error");
+    }
+  };
+
+  return (
+    <div style={{ display: "grid", gap: 6 }}>
+      <button
+        type="button"
+        data-testid={`source-restore-client-final-${artifactCode}`}
+        title="Restore the already accepted file after its stage link drifted"
+        disabled={state === "restoring"}
+        onClick={() => void restore()}
+        style={{ ...BUTTON_STYLE, padding: "9px 12px", cursor: state === "restoring" ? "wait" : "pointer" }}
+      >
+        {state === "restoring" ? "Restoring..." : "Restore accepted final"}
+      </button>
+      {state === "error" ? <span role="alert" style={{ color: ANALYTICS.RUST, fontSize: 11.5 }}>{message}</span> : null}
+    </div>
+  );
+}
+
 function LifecycleStageRows({
   eventId,
   group,
   activeStageKey,
   queuedArtifactCodes,
+  driftedFinalCodes,
   onClientFinalAccepted,
 }: {
   eventId: string;
   group: { stageLabel: string; rows: SourceArtifactLifecycleRow[] };
   activeStageKey: SourceStageKey | null;
   queuedArtifactCodes: ReadonlySet<string>;
+  driftedFinalCodes: ReadonlySet<string>;
   onClientFinalAccepted: () => void;
 }) {
   return (
@@ -7182,7 +7259,15 @@ function LifecycleStageRows({
                   row.consultingGate.nextAction}
               </div>
             ) : null}
-            {row.lifecycleState === "ai_draft" ? (
+            {driftedFinalCodes.has(row.code) ? (
+              <div style={{ marginTop: 10 }}>
+                <RestoreCurrentFinalButton
+                  eventId={eventId}
+                  artifactCode={row.code}
+                  onRestored={onClientFinalAccepted}
+                />
+              </div>
+            ) : row.lifecycleState === "ai_draft" ? (
               <div style={{ marginTop: 10 }}>
                 <AcceptClientFinalButton
                   eventId={eventId}
