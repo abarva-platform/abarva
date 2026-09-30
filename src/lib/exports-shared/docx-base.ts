@@ -140,9 +140,14 @@ export function eyebrowParagraph(text: string): Paragraph {
 }
 
 /** Heading 1 paragraph (big section). */
-export function heading1(text: string): Paragraph {
+export function heading1(
+  text: string,
+  options: { keepNext?: boolean; pageBreakBefore?: boolean } = {},
+): Paragraph {
   return new Paragraph({
     heading: HeadingLevel.HEADING_1,
+    keepNext: options.keepNext,
+    pageBreakBefore: options.pageBreakBefore,
     spacing: { before: 360, after: 120 },
     children: [
       new TextRun({
@@ -157,9 +162,13 @@ export function heading1(text: string): Paragraph {
 }
 
 /** Heading 2 paragraph (subsection). */
-export function heading2(text: string): Paragraph {
+export function heading2(
+  text: string,
+  options: { keepNext?: boolean } = {},
+): Paragraph {
   return new Paragraph({
     heading: HeadingLevel.HEADING_2,
+    keepNext: options.keepNext,
     spacing: { before: 280, after: 100 },
     children: [
       new TextRun({

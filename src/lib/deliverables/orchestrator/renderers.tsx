@@ -110,17 +110,54 @@ const TOKENS = {
   LINE2: "EFECE5", // --line2 (row divider)
 } as const;
 
+const SOURCE_REGISTER_APPENDIX_THRESHOLD = 10;
+
 /** A light, board-grade table: muted uppercase header (bottom border only),
  *  hairline row dividers, no per-cell boxes, no navy fill. */
 function lightTable(columns: string[], rows: string[][]): Table {
-  const widthEach = Math.max(8, Math.floor(100 / columns.length));
-  const width = (i: number): number =>
-    i === columns.length - 1
-      ? 100 - widthEach * (columns.length - 1)
-      : widthEach;
+  const bodyFontSize = columns.length >= 5 ? 18 : 20;
+  const columnWeights = columns.map((column) => {
+    const label = column.trim().toLowerCase();
+    if (/^(?:#|\[n\]|id|no\.?|number|citation(?: number)?)$/.test(label)) {
+      return 0.45;
+    }
+    if (label === "evidence position") {
+      return 0.9;
+    }
+    if (label === "type") {
+      return 1.1;
+    }
+    if (
+      /\b(status|confidence|rating|family|date)\b/.test(
+        label,
+      )
+    ) {
+      return 0.85;
+    }
+    if (/\b(owner|role|responsible)\b/.test(label)) return 1.2;
+    if (
+      /\b(description|mitigation|resolution|path|action|rationale|comment|scope|condition|input|source|impact|dependency|risk|issue|detail|notes)\b/.test(
+        label,
+      )
+    ) {
+      return 2.2;
+    }
+    return 1.1;
+  });
+  const totalWeight = columnWeights.reduce((sum, weight) => sum + weight, 0);
+  const columnWidths = columnWeights.map((weight) =>
+    Math.floor((weight / totalWeight) * 100),
+  );
+  if (columnWidths.length > 0) {
+    columnWidths[columnWidths.length - 1] =
+      (columnWidths[columnWidths.length - 1] ?? 0) +
+      (100 - columnWidths.reduce((sum, width) => sum + width, 0));
+  }
+  const width = (i: number): number => columnWidths[i] ?? 0;
 
   const headerRow = new TableRow({
     tableHeader: true,
+    cantSplit: true,
     children: columns.map(
       (c, i) =>
         new TableCell({
@@ -152,6 +189,7 @@ function lightTable(columns: string[], rows: string[][]): Table {
   const dataRows = rows.map(
     (row, ri) =>
       new TableRow({
+        cantSplit: true,
         children: columns.map(
           (_, i) =>
             new TableCell({
@@ -177,7 +215,7 @@ function lightTable(columns: string[], rows: string[][]): Table {
                     new TextRun({
                       text: row[i] ?? "",
                       font: SOURCE_DOCX.BODY_FONT,
-                      size: 20,
+                      size: bodyFontSize,
                       color: TOKENS.INK,
                     }),
                   ],
@@ -190,6 +228,7 @@ function lightTable(columns: string[], rows: string[][]): Table {
 
   return new Table({
     rows: [headerRow, ...dataRows],
+    columnWidths: columnWidths.map((width) => width * 100),
     width: { size: 100, type: WidthType.PERCENTAGE },
     borders: {
       top: { style: BorderStyle.NONE, size: 0, color: "auto" },
@@ -374,7 +413,7 @@ export function renderDeliverableDocx(doc: RenderableDeliverable): Document {
     if (!compactMovesCharter) children.push(pageBreak());
     children.push(heading1("Tables & Exhibits"));
     for (const t of inDocTables) {
-      children.push(heading2(t.title));
+      children.push(heading2(t.title, { keepNext: true }));
       children.push(tableToDocx(t));
     }
   }
@@ -432,7 +471,13 @@ export function renderDeliverableDocx(doc: RenderableDeliverable): Document {
 
   // Source register
   if (doc.sourceRegister.length) {
-    children.push(heading1("Source Register"));
+    children.push(
+      heading1("Source Register", {
+        keepNext: true,
+        pageBreakBefore:
+          doc.sourceRegister.length >= SOURCE_REGISTER_APPENDIX_THRESHOLD,
+      }),
+    );
     children.push(
       lightTable(
         ["[n]", "Source", "Family", "Confidence"],
