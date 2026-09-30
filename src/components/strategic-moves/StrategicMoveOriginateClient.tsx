@@ -293,7 +293,7 @@ const EXTENDED_SCAFFOLD_DEFS: ScaffoldDef[] = [
 ];
 
 const P0_STAGE_GROUPS: Array<{
-  label: "Frame" | "Govern" | "Readiness" | "Segment" | "Approve";
+  label: "Frame" | "Govern" | "Readiness" | "Segment" | "Submit";
   stepIds: P0StepId[];
 }> = [
   { label: "Frame", stepIds: ["problem-statement", "archetype"] },
@@ -311,7 +311,7 @@ const P0_STAGE_GROUPS: Array<{
       "foundation-readiness",
     ],
   },
-  { label: "Approve", stepIds: ["approve-build"] },
+  { label: "Submit", stepIds: ["approve-build"] },
 ];
 
 const EXTENDED_STAGE_GROUP: { label: "Segment"; stepIds: P0StepId[] } = {
@@ -1490,7 +1490,7 @@ function P0OriginationContractCanvas({
               <span>
                 {requiredFilled} / {requiredFieldCount}
               </span>
-              <small>steps ready</small>
+              <small>answers captured</small>
             </div>
             <div className={styles.p0ProgressTrack} aria-hidden>
               <div
@@ -1498,7 +1498,9 @@ function P0OriginationContractCanvas({
                 style={{ width: `${completionPercent}%` }}
               />
             </div>
-            <small>{completionPercent}% ready · Intake · mandate</small>
+            <small>
+              {completionPercent}% intake answers · P0 evidence review still required
+            </small>
           </div>
         </div>
       </div>
@@ -1547,7 +1549,7 @@ function P0OriginationContractCanvas({
                         : scaffoldDefs.find((item) => item.id === id);
                     const label =
                       id === "approve-build"
-                        ? "Approve and Build the Charter"
+                        ? "Review P0 intake"
                         : (def?.label ?? id);
                     return (
                       <button
@@ -1574,7 +1576,7 @@ function P0OriginationContractCanvas({
               ))}
               <div className={styles.p0ContractNavFoot}>
                 {canPromote
-                  ? "All steps complete · approve in Approvals"
+                  ? "Answers complete · P0 evidence and sponsor review remain"
                   : `${requiredFilled} of ${requiredFieldCount} complete · finish required steps`}
               </div>
             </aside>
@@ -1594,7 +1596,7 @@ function P0OriginationContractCanvas({
                 </span>
                 <h2>
                   {isApproveStep
-                    ? "Approve and Build the Charter"
+                    ? "Submit P0 for review"
                     : activeP0Def?.label}
                 </h2>
                 <span className={styles.p0ContractProvide}>Provide</span>
@@ -1767,14 +1769,16 @@ function P0OriginationContractCanvas({
           <section className={styles.p0ContractEmptyPane}>
             <h2>Files</h2>
             <p>
-              P0 does not require uploads before approval. Approve and Build
-              creates the AI-draft Charter, then P1 opens the file workflow for
-              review and client-approved evidence.
+              Intake answers are not evidence and do not approve this Move.
+              Submit the P0 intake to open its review record, then upload one
+              source file in Files & Evidence and approve its extraction. P0
+              stays open until that evidence is reviewed and the sponsor
+              approves the brief.
             </p>
             <div className={styles.p0EvidencePills}>
-              <span>Move charter (AI draft)</span>
-              <span>Origination transcript</span>
-              <span>P1 evidence plan</span>
+              <span>1 uploaded P0 source file</span>
+              <span>Human-reviewed extraction</span>
+              <span>Sponsor approval unlocks P1</span>
             </div>
           </section>
         ) : (
@@ -1818,12 +1822,13 @@ function P0ApproveDetail({
   return (
     <div className={styles.p0ContractApprove}>
       <p>
-        Approving generates the AI-draft Charter and opens P1. The draft is not
-        authoritative until reviewed.
+        Submit the intake to create a P0 review record. This does not approve or
+        advance the Move. Upload and approve at least one P0 source file in Files
+        &amp; Evidence before the sponsor can approve the brief and unlock P1.
       </p>
       <div className={styles.p0ExpectedEvidence}>
-        <span>Evidence expected</span>
-        <div>Move charter (AI draft)</div>
+        <span>Required before approval</span>
+        <div>One uploaded, human-reviewed P0 source file</div>
       </div>
       <div className={styles.p0ContractActionRow}>
         <button
@@ -1834,12 +1839,12 @@ function P0ApproveDetail({
           aria-disabled={!canPromote}
           onClick={() => void promote()}
         >
-          Approve and Build <span aria-hidden>&rarr;</span>
+          Submit P0 for review <span aria-hidden>&rarr;</span>
         </button>
         <span>
           {canPromote
-            ? "All steps complete — runs Approve and Build."
-            : `${requiredFilled} of ${requiredFieldCount} complete — finish the remaining P0 answers.`}
+            ? "P0 remains open for evidence upload and sponsor review."
+            : `${requiredFilled} of ${requiredFieldCount} answers captured — finish the remaining P0 answers.`}
         </span>
       </div>
       {submitError ? (

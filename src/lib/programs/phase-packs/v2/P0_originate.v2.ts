@@ -210,9 +210,11 @@ export const P0_ORIGINATE_PACK: PhasePack = {
       step_id: 'P0.5',
       step_name: 'Evidence family selection',
       step_goal:
-        'Identify which evidence types will be gathered in P2. Planning only — no evidence gathered in P0.',
+        'Identify which evidence types will be gathered in P2. Before sponsor approval, collect at least one uploaded, parsed, and human-reviewed source file supporting the P0 mandate or scope; detailed discovery evidence remains in P2.',
       required_user_inputs: ['Completed P0.1–P0.4'],
-      accepted_uploads: [],
+      accepted_uploads: [
+        'One uploaded source file supporting the Move mandate or scope',
+      ],
       patterns_to_load: [
         'PAT-PRG-001',
         'seed-patterns-ai-programs',

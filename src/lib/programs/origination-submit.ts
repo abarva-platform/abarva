@@ -988,6 +988,7 @@ export async function submitOriginationBrief(
     });
 
     const briefSnapshot: Record<string, unknown> = {
+      phase: 0,
       program_name: input.programName,
       problem_statement: input.problemStatement,
       sponsor_person_id: sponsor.id,

@@ -1,6 +1,7 @@
 import {
   currentPhaseRequiredEvidenceGaps,
   phaseProgressReadiness,
+  p0SourceEvidenceNeedPacket,
 } from "../phase-progress-readiness";
 import type { MoveEvidenceNeedPacket } from "../evidence-readiness/move-evidence-need-packet";
 
@@ -13,6 +14,38 @@ function packet(
 }
 
 describe("phase progress readiness", () => {
+  it("treats P0 intake as incomplete for progression until source evidence is approved", () => {
+    const missing = p0SourceEvidenceNeedPacket({
+      moveId: "move-1",
+      evidenceTitles: [],
+    });
+    expect(currentPhaseRequiredEvidenceGaps([missing], 0)).toEqual([missing]);
+    expect(
+      phaseProgressReadiness({
+        phase: 0,
+        phaseCaptureBlocker: null,
+        evidenceNeedPackets: [missing],
+      }).ready,
+    ).toBe(false);
+
+    const awaitingReview = p0SourceEvidenceNeedPacket({
+      moveId: "move-1",
+      evidenceTitles: [],
+      pendingReviewCount: 1,
+    });
+    expect(awaitingReview.status).toBe("partial");
+    expect(awaitingReview.nextAction).toMatch(/review the uploaded/i);
+    expect(currentPhaseRequiredEvidenceGaps([awaitingReview], 0)).toEqual([
+      awaitingReview,
+    ]);
+
+    const covered = p0SourceEvidenceNeedPacket({
+      moveId: "move-1",
+      evidenceTitles: ["synthetic-intake.md"],
+    });
+    expect(currentPhaseRequiredEvidenceGaps([covered], 0)).toHaveLength(0);
+  });
+
   it("keeps progression closed while required evidence for this phase is open", () => {
     const packets = [packet(3, "missing"), packet(2, "missing")];
 

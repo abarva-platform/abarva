@@ -791,9 +791,27 @@ export function MovesPhaseStandaloneClient({
     null,
   );
   const substep = phase.substeps[substepIndex] ?? phase.substeps[0];
-  const topLevelHardGateCriteria = move.gateCriteria.filter(
-    (criterion) => criterion.severity === "hard",
+  const topLevelRequiredEvidenceGaps = currentPhaseRequiredEvidenceGaps(
+    evidenceNeedPackets,
+    phase.phase,
   );
+  const topLevelEvidenceCheckAvailable =
+    evidenceReadinessAvailable &&
+    (phase.phase !== 2 || currentStateReadiness !== null);
+  const p0EvidencePacket = evidenceNeedPackets.find(
+    (packet) => packet.phase === 0 && packet.familyId === "p0_origination_source",
+  );
+  const p0EvidenceGateCriterion = {
+    id: "p0_source_evidence",
+    label: "One uploaded P0 source file reviewed",
+    severity: "hard" as const,
+    completed:
+      topLevelEvidenceCheckAvailable && p0EvidencePacket?.status === "covered",
+  };
+  const topLevelHardGateCriteria = [
+    ...move.gateCriteria.filter((criterion) => criterion.severity === "hard"),
+    ...(phase.phase === 0 ? [p0EvidenceGateCriterion] : []),
+  ];
   const topLevelHardGateMet = topLevelHardGateCriteria.filter(
     (criterion) => criterion.completed,
   ).length;
@@ -803,6 +821,10 @@ export function MovesPhaseStandaloneClient({
     topLevelHardGateTotal > 0
       ? `${topLevelHardGateMet}/${topLevelHardGateTotal} hard met`
       : "no hard gates";
+  const topLevelEvidenceReady =
+    topLevelEvidenceCheckAvailable &&
+    topLevelRequiredEvidenceGaps.length === 0 &&
+    (phase.phase !== 2 || currentStateReadiness?.hardGaps.length === 0);
   const progressPct = Math.round(
     ((substepIndex + 1) / phase.substeps.length) * 100,
   );
@@ -810,7 +832,7 @@ export function MovesPhaseStandaloneClient({
     isHistoricalPhase || gateApproved
       ? "Complete"
       : substep.key === "approve" && topLevelHardGateTotal > 0
-        ? topLevelHardGateMet >= topLevelHardGateTotal
+        ? topLevelHardGateMet >= topLevelHardGateTotal && topLevelEvidenceReady
           ? `Ready · ${hardGateProgressLabel}`
           : `Blocked · ${hardGateProgressLabel}`
         : hardGateProgressLabel;
@@ -4673,9 +4695,27 @@ function PhaseBody({
 
   const nextPhaseContract =
     PHASES.find((item) => item.phase === phase.phase + 1) ?? null;
-  const hardGateCriteria = move.gateCriteria.filter(
-    (criterion) => criterion.severity === "hard",
+  const openRequiredEvidence = currentPhaseRequiredEvidenceGaps(
+    evidenceNeedPackets,
+    phase.phase,
   );
+  const p0EvidenceGateCriterion = {
+    id: "p0_source_evidence",
+    label: "One uploaded P0 source file reviewed",
+    completed:
+      evidenceReadinessAvailable &&
+      evidenceNeedPackets.some(
+        (packet) =>
+          packet.phase === 0 &&
+          packet.familyId === "p0_origination_source" &&
+          packet.status === "covered",
+      ),
+    severity: "hard" as const,
+  };
+  const hardGateCriteria = [
+    ...move.gateCriteria.filter((criterion) => criterion.severity === "hard"),
+    ...(phase.phase === 0 ? [p0EvidenceGateCriterion] : []),
+  ];
   const softGateCriteria = move.gateCriteria.filter(
     (criterion) => criterion.severity === "soft",
   );
@@ -4689,11 +4729,13 @@ function PhaseBody({
   const openSoftCriteria = softGateCriteria.filter(
     (criterion) => !criterion.completed,
   );
-  const isGateBlocked = openHardCriteria.length > 0;
-  const openRequiredEvidence = currentPhaseRequiredEvidenceGaps(
-    evidenceNeedPackets,
-    phase.phase,
-  );
+  const isGateBlocked =
+    !isHistoricalPhase &&
+    !gateApproved &&
+    (openHardCriteria.length > 0 ||
+      openRequiredEvidence.length > 0 ||
+      !evidenceReadinessAvailable ||
+      Boolean(phaseCaptureBlocker));
   const approvalDecisionTitle = isHistoricalPhase
     ? terminalComplete
       ? "Move handed off to Tower"
@@ -4710,7 +4752,12 @@ function PhaseBody({
     : gateApproved
       ? "The governed build and gate record are on file. Review artifacts in Files & Evidence before using them externally."
       : isGateBlocked
-        ? `Resolve ${openHardCriteria.length} hard gate blocker${openHardCriteria.length === 1 ? "" : "s"} before advancing. Soft items can carry as caveats.`
+        ? !evidenceReadinessAvailable
+          ? "Evidence readiness could not be verified. Refresh this phase before approval."
+          : openRequiredEvidence.length > 0
+            ? `${openRequiredEvidence.length} required evidence item${openRequiredEvidence.length === 1 ? "" : "s"} still need upload and human review before this phase can advance.`
+            : phaseCaptureBlocker ??
+              `Resolve ${openHardCriteria.length} hard gate blocker${openHardCriteria.length === 1 ? "" : "s"} before advancing. Soft items can carry as caveats.`
         : "Inputs, evidence posture, and hard gates are aligned. Run Approve & Build to create the governed package and submit the gate.";
   const approvalDecisionState =
     isHistoricalPhase || gateApproved
@@ -4724,8 +4771,12 @@ function PhaseBody({
       : `Continue to ${nextOpenPhaseContract.code}`
     : gateApproved
       ? "Review generated artifacts"
-      : isGateBlocked
-        ? "Clear hard blockers"
+    : isGateBlocked
+      ? openRequiredEvidence.length > 0
+        ? "Upload and review evidence"
+        : !evidenceReadinessAvailable
+          ? "Refresh evidence status"
+          : "Clear hard blockers"
         : "Run Approve & Build";
   const p0ApprovalGeneratedCriteria = new Set([
     "program_seed_recorded",
@@ -4985,9 +5036,10 @@ function PhaseBody({
           <div className="mxw-gate-note">
             <strong>Why some checks are still open</strong>
             <span>
-              P0 approval itself signs the origination brief, so the seed and
-              value checks turn green during approval. If anything remains
-              blocked after approval, the exact failed check will appear here.
+              P0 cannot advance on intake answers alone. Upload one source file
+              for this Move in Files &amp; Evidence, review its extracted content,
+              then return here for sponsor approval. The brief is signed and P1
+              opens only after the evidence requirement and other hard checks pass.
             </span>
           </div>
         ) : null}
@@ -5080,7 +5132,7 @@ function PhaseBody({
               <GateApprovalConfirmDialog
                 open={p0ConfirmOpen}
                 title="Approve the P0 gate?"
-                summary="This approves the origination brief and unlocks P1 Charter. The approved brief is what carries forward — review it before confirming."
+                summary="This records sponsor approval of the origination brief and unlocks P1 Charter. At least one uploaded P0 source file must already have a human-approved extraction."
                 approverLabel={approverLabel}
                 confirmLabel="Approve gate"
                 onCancel={() => setP0ConfirmOpen(false)}

@@ -56,6 +56,7 @@ import {
 } from "@/lib/programs/phase-capture-contract";
 import { persistP0PhaseCaptureFromSource } from "@/lib/programs/p0-phase-capture";
 import { loadApprovedMoveEvidenceSnapshot } from "@/lib/programs/approved-move-evidence-snapshot";
+import { loadP0MinimumEvidenceStatus } from "@/lib/programs/p0-source-evidence";
 import {
   phaseApprovalMatchesEvidence,
   type PhaseGateEvidenceState,
@@ -346,6 +347,13 @@ export async function GET(
     const program = await getProgramById(ctx, programId);
     if (!program) return Response.json({ error: "not_found" }, { status: 404 });
     const evidence = await loadEvidenceState(ctx, programId);
+    const p0Evidence =
+      phase === 0
+        ? await loadP0MinimumEvidenceStatus({
+            tenantKey: ctx.clientKey ?? ctx.clientId,
+            moveId: programId,
+          })
+        : null;
     const [capture, snapshots] = await Promise.all([
       captureCompletion(ctx, programId, phase, program),
       getPhaseSnapshots(ctx, programId, phase).catch(() => []),
@@ -382,11 +390,17 @@ export async function GET(
       approvalStale,
       gate,
       evidenceSnapshotAvailable: Boolean(evidence),
+      p0Evidence,
       canApprove:
         capture.complete &&
         gateReady &&
         !approved &&
-        (phase === 0 || Boolean(evidence)),
+        Boolean(evidence) &&
+        (phase === 0
+          ? Boolean(
+              p0Evidence?.available && p0Evidence.approvedSourceFileCount >= 1,
+            )
+          : true),
       approvePath: `/api/v1/programs/${programId}/phase-gate-approval`,
     });
   } catch (err) {
@@ -434,9 +448,8 @@ export async function POST(
       );
     }
 
-    const evidence =
-      phase === 0 ? null : await loadEvidenceState(ctx, programId);
-    if (phase > 0 && !evidence) {
+    const evidence = await loadEvidenceState(ctx, programId);
+    if (!evidence) {
       return Response.json(
         {
           error: "evidence_snapshot_unavailable",
@@ -475,6 +488,39 @@ export async function POST(
         },
         { status: 409 },
       );
+    }
+
+    if (phase === 0) {
+      const p0Evidence = await loadP0MinimumEvidenceStatus({
+        tenantKey: ctx.clientKey ?? ctx.clientId,
+        moveId: programId,
+      });
+      if (!p0Evidence.available) {
+        return Response.json(
+          {
+            error: "p0_evidence_status_unavailable",
+            phase,
+            detail:
+              "P0 evidence review could not be verified. The phase gate was not submitted.",
+          },
+          { status: 503 },
+        );
+      }
+      if (p0Evidence.approvedSourceFileCount < 1) {
+        return Response.json(
+          {
+            error: "p0_evidence_required",
+            phase,
+            requiredSourceFiles: 1,
+            approvedSourceFiles: p0Evidence.approvedSourceFileCount,
+            pendingReviewCount: p0Evidence.pendingReviewCount,
+            evidenceTitles: p0Evidence.evidenceTitles,
+            detail:
+              "Upload at least one P0 source file in Files & Evidence and approve its extraction before approving P0.",
+          },
+          { status: 409 },
+        );
+      }
     }
 
     const approved = await isPhaseApproved(ctx, programId, phase, evidence);
