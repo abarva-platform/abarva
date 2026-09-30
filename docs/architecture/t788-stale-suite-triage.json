@@ -1,0 +1,293 @@
+{
+  "item": "T-788",
+  "title": "Twelfth stale-suite triage draw: ranks 1-5 of the verdict-aware ranking, 5 directories, 10 drawn files, each executed",
+  "recordedAt": "2026-09-30T14:44:02Z",
+  "base": "f92952c32ade19a10cc6d8c2821d6aa5c215487c",
+  "reExecutedOn": {
+    "sha": "c334308aed",
+    "result": "after rebasing onto the merge of T-786, all 10 files were run again on their own: the same 8 green and 2 red, same case counts"
+  },
+  "verdictVocabulary": [
+    "wire_into_ci",
+    "rewrite_as_behavior",
+    "update_with_reason_recorded",
+    "repair",
+    "already_verdicted_elsewhere"
+  ],
+  "scope": {
+    "drawnFrom": "governedRiskRanking ranks 1-5 of docs/architecture/test-ci-coverage-census.json on the base. Four directories are fully unrun; src/lib/atlas holds three direct test files of which one (llm-determinism.test.ts) already runs by named file, so it is pinned below rather than drawn.",
+    "drawSize": 10,
+    "drawnUntriaged": 10,
+    "coveredSiblingsJudged": 0,
+    "everyFileWasExecuted": "Each of the 10 was run on its own with npx jest --runTestsByPath on the base. Counts are suites RUN, never read from the census.",
+    "greenOnRun": 8,
+    "redOnRun": 2
+  },
+  "wiring": {
+    "workflow": ".github/workflows/unit-suites.yml",
+    "directories": [
+      "src/lib/artifacts/__tests__",
+      "src/lib/ava-answer/export/__tests__"
+    ],
+    "namedFiles": [
+      "src/lib/atlas/classifier.test.ts",
+      "src/lib/atlas/value-grounding.test.ts"
+    ],
+    "suitesWired": 6,
+    "casesWired": 27,
+    "namedAsADirectory": "The two __tests__ directories are named as DIRECTORIES without a trailing slash and leave product-directory-ci-coverage.baseline.json in the same change. src/lib/atlas is a product directory whose own sibling already runs by named file, so its two drawn suites are named as FILES in T-780's shape; naming the directory would also select src/lib/atlas/__tests__ and every future file dropped beside them.",
+    "fixtureReadsRule": "No wired suite reads a repository file; the control asserts that no wired row reads repository file text at all.",
+    "provenBy": "src/__tests__/behaviors/t788-stale-suite-wiring.test.ts, answering through the census resolver (collectReachableCommands + reachableEntrySelects), never by grepping the workflow."
+  },
+  "pinnedDirectories": {
+    "src/lib/atlas": {
+      "why": "Named-file wiring leaves the directory partial, and the dark-directory ratchet only sees directories with nothing covered. The control pins the direct test files of src/lib/atlas to the drawn rows plus the sibling below, so a new file added beside them fails the control instead of running nowhere unseen.",
+      "alreadyCovered": [
+        "src/lib/atlas/llm-determinism.test.ts"
+      ]
+    }
+  },
+  "heldDirectories": {
+    "src/lib/instruments/__tests__": {
+      "testFiles": 2,
+      "green": 2,
+      "red": 0,
+      "totalCases": 5,
+      "holdKinds": [
+        "source_text_scanner"
+      ],
+      "reasonNotWired": "instrument-data-layer-migration.test.ts reads a migration's SQL and asserts literals over its bytes. Held whole on the T-781 precedent rather than splitting the directory in a draw; render.test.ts is green and clean and is the claimable half of the successor.",
+      "successorFiledAs": "T-789",
+      "recomputedBy": "the row's scannerCase title must still appear in the file beside a node:fs import."
+    },
+    "src/lib/lakeshore/__tests__": {
+      "testFiles": 2,
+      "green": 0,
+      "red": 2,
+      "totalCases": 8,
+      "holdKinds": [
+        "red"
+      ],
+      "reasonNotWired": "Both suites are red on base, one case each, and neither disagreement is a wiring side effect: one case pins a persona count the persona register has since grown past; the other dry-runs a frozen synthetic CSV fixture through a connector whose template contract gained required fields after the fixture was generated.",
+      "successorFiledAs": "T-790",
+      "recomputedBy": "each row's redProbe is re-asked of the live code out of process; when the code returns what the test expects, the hold has lost its reason and the control goes red."
+    }
+  },
+  "forbiddenEdits": "No file this record judges was edited. The instruments split and the migration byte-scan verdict are T-789; both lakeshore reds are T-790.",
+  "followOnItems": {
+    "T-789": "Wire src/lib/instruments/__tests__/render.test.ts by named file (claimable), and decide instrument-data-layer-migration.test.ts: rewrite over the applied schema, keep as a byte assertion over an immutable applied migration, or retire.",
+    "T-790": "Lakeshore suites, two reds: update the persona-count case with the reason recorded (the admin persona was added deliberately), and repair the load rehearsal by regenerating the fixture or amending the template contract, which is data-plane work."
+  },
+  "idBandNote": "T-400 through T-599 are exhausted; T-771 to T-787 set the 700 band as precedent. T-788 to T-790 were checked absent from the backlog, the register and the pulse, and each passed id-collision.mjs --preclaim, before filing.",
+  "claimedWriteFiles": [
+    ".github/workflows/unit-suites.yml",
+    "docs/architecture/t788-stale-suite-triage.json",
+    "docs/architecture/test-ci-coverage-census.json",
+    "docs/releases/records/2026-09-30-t788-stale-suite-triage.md",
+    "src/__tests__/behaviors/product-directory-ci-coverage.baseline.json",
+    "src/__tests__/behaviors/t788-stale-suite-wiring.test.ts"
+  ],
+  "suites": [
+    {
+      "path": "src/lib/artifacts/__tests__/cxo-storytelling-contract.test.ts",
+      "directory": "src/lib/artifacts/__tests__",
+      "subject": "src/lib/artifacts/cxo-storytelling-contract.ts",
+      "draw": "T-788 rank 1, band unclassified",
+      "governedRiskBand": "unclassified",
+      "run": true,
+      "green": true,
+      "totalTests": 3,
+      "passedTests": 3,
+      "failedTests": 0,
+      "readsRepositoryFileText": false,
+      "sourceTextScanner": false,
+      "textIsTheSubject": false,
+      "verdict": "wire_into_ci",
+      "ownerItem": "T-788",
+      "wiredInThisItem": true,
+      "rationale": "Green 3 of 3, behavioural over the CXO storytelling contract, reads no repository file. Subject reached by src/lib/source/contract-optimization/story-pack.ts. Wired as part of its directory."
+    },
+    {
+      "path": "src/lib/artifacts/__tests__/repository.test.ts",
+      "directory": "src/lib/artifacts/__tests__",
+      "subject": "src/lib/artifacts/repository.ts",
+      "draw": "T-788 rank 1, band unclassified",
+      "governedRiskBand": "unclassified",
+      "run": true,
+      "green": true,
+      "totalTests": 6,
+      "passedTests": 6,
+      "failedTests": 0,
+      "readsRepositoryFileText": false,
+      "sourceTextScanner": false,
+      "textIsTheSubject": false,
+      "verdict": "wire_into_ci",
+      "ownerItem": "T-788",
+      "wiredInThisItem": true,
+      "rationale": "Green 6 of 6, behavioural over the artifact repository with the Postgres compat layer mocked, reads no repository file. Subject reached by the strategic-move phase page and the artifact API routes (api/v1/artifacts/[artifactId], api/v1/programs/[programId]/artifacts and its client-approval route). Wired as part of its directory."
+    },
+    {
+      "path": "src/lib/atlas/classifier.test.ts",
+      "directory": "src/lib/atlas",
+      "subject": "src/lib/atlas/classifier.ts",
+      "draw": "T-788 rank 2, band unclassified",
+      "governedRiskBand": "unclassified",
+      "run": true,
+      "green": true,
+      "totalTests": 5,
+      "passedTests": 5,
+      "failedTests": 0,
+      "readsRepositoryFileText": false,
+      "sourceTextScanner": false,
+      "textIsTheSubject": false,
+      "verdict": "wire_into_ci",
+      "ownerItem": "T-788",
+      "wiredInThisItem": true,
+      "rationale": "Green 5 of 5, behavioural over classifyAtlasIntent, reads no repository file. Subject reached by src/lib/intelligence/ask/index.ts and src/lib/atlas/orchestrator.ts. Wired by named file."
+    },
+    {
+      "path": "src/lib/atlas/value-grounding.test.ts",
+      "directory": "src/lib/atlas",
+      "subject": "src/lib/atlas/value-grounding.ts",
+      "draw": "T-788 rank 2, band unclassified",
+      "governedRiskBand": "unclassified",
+      "run": true,
+      "green": true,
+      "totalTests": 2,
+      "passedTests": 2,
+      "failedTests": 0,
+      "readsRepositoryFileText": false,
+      "sourceTextScanner": false,
+      "textIsTheSubject": false,
+      "verdict": "wire_into_ci",
+      "ownerItem": "T-788",
+      "wiredInThisItem": true,
+      "rationale": "Green 2 of 2, behavioural over the Atlas value-grounding builder, reads no repository file. Subject reached by src/lib/atlas/orchestrator.ts, scripted-engine.ts and llm.ts. Wired by named file."
+    },
+    {
+      "path": "src/lib/ava-answer/export/__tests__/render-answer-html.test.ts",
+      "directory": "src/lib/ava-answer/export/__tests__",
+      "subject": "src/lib/ava-answer/export/render-answer-html.ts",
+      "draw": "T-788 rank 3, band unclassified",
+      "governedRiskBand": "unclassified",
+      "run": true,
+      "green": true,
+      "totalTests": 10,
+      "passedTests": 10,
+      "failedTests": 0,
+      "readsRepositoryFileText": false,
+      "sourceTextScanner": false,
+      "textIsTheSubject": false,
+      "verdict": "wire_into_ci",
+      "ownerItem": "T-788",
+      "wiredInThisItem": true,
+      "rationale": "Green 10 of 10, behavioural over the answer HTML export renderer, reads no repository file. Subject reached by src/app/api/intelligence/ask/export/route.ts. Wired as part of its directory."
+    },
+    {
+      "path": "src/lib/ava-answer/export/__tests__/render-answer-pdf.test.tsx",
+      "directory": "src/lib/ava-answer/export/__tests__",
+      "subject": "src/lib/ava-answer/export/render-answer-pdf.tsx",
+      "draw": "T-788 rank 3, band unclassified",
+      "governedRiskBand": "unclassified",
+      "run": true,
+      "green": true,
+      "totalTests": 1,
+      "passedTests": 1,
+      "failedTests": 0,
+      "readsRepositoryFileText": false,
+      "sourceTextScanner": false,
+      "textIsTheSubject": false,
+      "verdict": "wire_into_ci",
+      "ownerItem": "T-788",
+      "wiredInThisItem": true,
+      "rationale": "Green 1 of 1, renders a real PDF from an answer packet, reads no repository file. Subject reached by src/app/api/intelligence/ask/export/route.ts. Wired as part of its directory."
+    },
+    {
+      "path": "src/lib/instruments/__tests__/instrument-data-layer-migration.test.ts",
+      "directory": "src/lib/instruments/__tests__",
+      "draw": "T-788 rank 4, band unclassified",
+      "governedRiskBand": "unclassified",
+      "run": true,
+      "green": true,
+      "totalTests": 3,
+      "passedTests": 3,
+      "failedTests": 0,
+      "readsRepositoryFileText": true,
+      "sourceTextScanner": true,
+      "textIsTheSubject": true,
+      "verdict": "rewrite_as_behavior",
+      "ownerItem": "T-789",
+      "wiredInThisItem": false,
+      "scannerCase": "creates versioned instrument tables with RLS",
+      "rationale": "Green 3 of 3. Reads supabase/migrations/20260523100000_instruments_data_layer.sql and asserts table names, RLS statements and FK literals are present in its bytes; one case calls scanForDestructivePatterns, which is behavioural. The subject is an applied migration, so the bytes cannot drift without a new migration, and the byte cases therefore guard nothing going forward. Whether to rewrite over the applied schema, keep, or retire is T-789's decision."
+    },
+    {
+      "path": "src/lib/instruments/__tests__/render.test.ts",
+      "directory": "src/lib/instruments/__tests__",
+      "subject": "src/lib/instruments/render.ts",
+      "draw": "T-788 rank 4, band unclassified",
+      "governedRiskBand": "unclassified",
+      "run": true,
+      "green": true,
+      "totalTests": 2,
+      "passedTests": 2,
+      "failedTests": 0,
+      "readsRepositoryFileText": false,
+      "sourceTextScanner": false,
+      "textIsTheSubject": false,
+      "verdict": "wire_into_ci",
+      "ownerItem": "T-789",
+      "wiredInThisItem": false,
+      "heldWithSibling": true,
+      "rationale": "Green 2 of 2, behavioural over the instrument renderer with authoring and db mocked, reads no repository file. Subject reached by src/app/api/instruments/[id]/download/route.ts and src/lib/workshops/index.ts. Held with its directory, not on its own merits: wiring it by named file is T-789's claimable half."
+    },
+    {
+      "path": "src/lib/lakeshore/__tests__/corpus-activation.test.ts",
+      "directory": "src/lib/lakeshore/__tests__",
+      "draw": "T-788 rank 5, band unclassified",
+      "governedRiskBand": "unclassified",
+      "run": true,
+      "green": false,
+      "totalTests": 5,
+      "passedTests": 4,
+      "failedTests": 1,
+      "readsRepositoryFileText": false,
+      "sourceTextScanner": false,
+      "textIsTheSubject": false,
+      "verdict": "update_with_reason_recorded",
+      "ownerItem": "T-790",
+      "wiredInThisItem": false,
+      "failingCase": "has matching canonical CXO persona records for Clerk provisioning",
+      "redProbe": {
+        "kind": "lakeshore_persona_count",
+        "expectedByTest": 2,
+        "returnedByCode": 3
+      },
+      "rationale": "Red 1 of 5. The case expects exactly two personas with clientKey lakeshore in CXO_PERSONAS; the register holds three, because a tenant-admin persona (slug admin-lakeshore) was added deliberately after the test was written. The test is stale, not the code. Not edited here; T-790 carries the update with its reason."
+    },
+    {
+      "path": "src/lib/lakeshore/__tests__/load-rehearsal.test.ts",
+      "directory": "src/lib/lakeshore/__tests__",
+      "draw": "T-788 rank 5, band unclassified",
+      "governedRiskBand": "unclassified",
+      "run": true,
+      "green": false,
+      "totalTests": 3,
+      "passedTests": 2,
+      "failedTests": 1,
+      "readsRepositoryFileText": true,
+      "sourceTextScanner": false,
+      "textIsTheSubject": false,
+      "verdict": "repair",
+      "ownerItem": "T-790",
+      "wiredInThisItem": false,
+      "failingCase": "dry-runs every CSV through the real connector without writing tenant rows",
+      "redProbe": {
+        "kind": "lakeshore_dry_run_error",
+        "expectedByTest": null,
+        "returnedByCode": "csv_missing_required_fields:tenant_key,company_name,fiscal_year_end"
+      },
+      "rationale": "Red 1 of 3. The dry run throws on the first data file: the enterprise-profile template now requires tenant_key, company_name and fiscal_year_end, and the frozen synthetic fixture under docs/build/lakeshore/loaded was generated before those fields were required. The suite reads that fixture as test data, which is not what makes it held. Regenerating the fixture or amending the contract is data-plane work; T-790 carries it."
+    }
+  ]
+}

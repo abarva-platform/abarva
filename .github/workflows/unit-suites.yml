@@ -1899,6 +1899,31 @@ jobs:
           src/components/__tests__/AbarvaNav.client-routing.test.ts
           --no-coverage --ci
 
+      # Item T-788, the twelfth stale-suite draw, executed file by file on base
+      # `c334308aed`: 6 suites, 27 cases wired, all green, none reading a
+      # repository file, each subject imported by non-test code. The two
+      # `__tests__` directories are named whole, without a trailing slash, and
+      # leave `product-directory-ci-coverage.baseline.json` in the same change.
+      # The two Atlas files are named individually: `src/lib/atlas` already runs
+      # `llm-determinism.test.ts` by name, and naming the directory would also
+      # select `src/lib/atlas/__tests__`. Held: `src/lib/instruments/__tests__`
+      # (migration byte-scan, T-789) and `src/lib/lakeshore/__tests__` (two red
+      # cases, T-790). `src/__tests__/behaviors/t788-stale-suite-wiring.test.ts`
+      # proves both partitions through the census resolver.
+      - name: Run the T-788 artifacts and answer-export suites
+        run: >-
+          npx jest
+          src/lib/artifacts/__tests__
+          src/lib/ava-answer/export/__tests__
+          --no-coverage --ci
+
+      - name: Run the T-788 Atlas suites by named file
+        run: >-
+          npx jest --runTestsByPath
+          src/lib/atlas/classifier.test.ts
+          src/lib/atlas/value-grounding.test.ts
+          --no-coverage --ci
+
       # Item T-495, claimable half, suite 2 of 11.
       # `src/__tests__/hygiene/learn-layout-single-nav.test.ts` asserted the
       # single-top-nav rule for `/home/learn` over the BYTES of two files, and was
