@@ -5843,11 +5843,69 @@ function normalizeUploadName(value: string): string {
   return value.toLowerCase().replace(/[^a-z0-9]+/g, " ");
 }
 
+const CURRENT_STATE_FILENAME_ALIASES: Record<string, readonly string[]> = {
+  member_service_process_map: [
+    "workflow walkthrough",
+    "member service process",
+    "process and escalation map",
+    "agent journey",
+  ],
+  member_service_metrics_baseline: [
+    "monthly kpi baseline",
+    "metric dictionary",
+    "contact center performance baseline",
+    "contact center kpi",
+    "conflict register",
+  ],
+  member_service_systems_data_landscape: [
+    "system inventory",
+    "systems data landscape",
+    "integration inventory",
+    "application inventory",
+    "data source inventory",
+  ],
+  knowledge_policy_content_inventory: [
+    "knowledge inventory",
+    "policy inventory",
+    "script inventory",
+  ],
+  contact_center_transcripts_intents: [
+    "transcript",
+    "intent taxonomy",
+    "speech analytics",
+  ],
+  phi_controls_and_human_approval: [
+    "security control matrix",
+    "phi controls",
+    "privacy control inventory",
+    "human approval control matrix",
+    "human approval boundaries",
+  ],
+  member_service_org_change_readiness: [
+    "org change readiness",
+    "stakeholder map",
+    "training adoption",
+    "change readiness",
+  ],
+  solution_delivery_estimation_context: [
+    "delivery estimation context",
+    "implementation capacity",
+    "delivery cadence",
+  ],
+};
+
 function inferCurrentStateFamilies(
   fileName: string,
   instruments: CurrentStateInstrument[],
 ): CurrentStateInstrument[] {
   const normalized = normalizeUploadName(fileName);
+  const explicitMatches = instruments.filter((instrument) =>
+    (CURRENT_STATE_FILENAME_ALIASES[instrument.key] ?? []).some((alias) =>
+      normalized.includes(normalizeUploadName(alias)),
+    ),
+  );
+  if (explicitMatches.length > 0) return explicitMatches;
+
   const semanticMatches = instruments.filter((instrument) => {
     const family = normalizeUploadName(
       `${instrument.key} ${instrument.label} ${instrument.documentFamily ?? ""}`,
@@ -5945,21 +6003,7 @@ function inferCurrentStateFamilies(
   const directMatches = instruments.filter((instrument) =>
     candidateKeys.has(instrument.key),
   );
-  if (directMatches.length > 0) return directMatches;
-
-  const firstMissingHard = instruments.find(
-    (instrument) =>
-      instrument.documentFamily &&
-      instrument.severity === "hard" &&
-      instrument.status !== "committed",
-  );
-  if (firstMissingHard) return [firstMissingHard];
-
-  const firstMissing = instruments.find(
-    (instrument) =>
-      instrument.documentFamily && instrument.status !== "committed",
-  );
-  return firstMissing ? [firstMissing] : [];
+  return directMatches;
 }
 
 function CurrentStateFamilyUploadPanel({

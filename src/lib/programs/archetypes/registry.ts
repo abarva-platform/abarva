@@ -1530,7 +1530,7 @@ const CONTACT_CENTER_AGENT_ASSIST_FAMILIES: EvidenceFamilySpec[] = [
     whyNeeded:
       "Shows how agents handle eligibility, benefits, claims, prior authorization, CRM history, knowledge lookup, transfers, and escalation today.",
     sourceDocHint: "Current-state process map, SOP, or workshop notes",
-    acceptedFormats: ["docx", "pdf", "pptx"],
+    acceptedFormats: ["docx", "pdf", "pptx", "csv"],
     feedsMethods: ["two_gap", "leverage_ranking"],
   },
   {
