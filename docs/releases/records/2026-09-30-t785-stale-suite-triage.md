@@ -87,7 +87,9 @@ to every client's build equally and sits behind no feature gate.
 - `docs/architecture/test-ci-coverage-census.json`: regenerated with the
   repo-owned `--write`. Covered test files 2305 → 2313 and uncovered 270 → 263
   (the seven newly reached files plus the new control). Ranked directories
-  119 → 114, ranked untriaged unrun files 139 → 128.
+  119 → 114, ranked untriaged unrun files 139 → 128. After merging `main` at
+  `a2f7f5e5a2` (two unrelated PRs added two test files), the census was
+  regenerated rather than hand-merged: 2307 → 2315 covered, the same +8.
 
 ## QA / Validation
 
