@@ -126,6 +126,46 @@ it("offers a current-stage Client Final revision without allowing past-stage rep
     .not.toBeInTheDocument();
 });
 
+it("keeps failed-quality Client Finals replaceable without treating them as passed", () => {
+  const failedFinal = {
+    id: "reviewed-d02",
+    artifactCode: "d02_value_target",
+    stageKey: "strategy" as const,
+    status: "client_final",
+    sourceOrigin: "reuploaded",
+    isClientFinal: true,
+    isCurrentAuthoritative: true,
+    bodyGenerationMetadata: { qualityGate: {
+      passed: false,
+      overallScore: 6,
+      finalSummary: "Failed review; revise the accepted file.",
+      unsupportedClaims: [],
+      missingEvidence: [],
+    } },
+  };
+  const { rerender } = render(
+    <SourceAnalyticsCanvas event={event} viewStage="strategy" tenantName="Test Client"
+      stageView={SAMPLE_STRATEGY_STAGE} initialWorkspace="files" artifacts={[failedFinal]} />,
+  );
+
+  const queue = screen.getByTestId("source-artifact-review-queue-row-d02_value_target");
+  expect(queue).toHaveTextContent("Client-approved final");
+  expect(queue).toHaveTextContent("Run quality review");
+  expect(queue).toHaveTextContent("Replace Client Final");
+  fireEvent.click(screen.getByTestId("source-accept-client-final-toggle-d02_value_target"));
+  expect(screen.getByTestId("source-accept-client-final-panel-d02_value_target"))
+    .toHaveTextContent("Confirm client final");
+  fireEvent.click(screen.getByRole("button", { name: "Show audit metrics" }));
+  expect(screen.getByTestId("source-artifact-consulting-gate-d02_value_target"))
+    .toHaveTextContent("Gate B failed");
+
+  rerender(<SourceAnalyticsCanvas event={{ ...event, currentStageKey: "scope", currentStageLabel: "Scope" }}
+    viewStage="strategy" tenantName="Test Client" stageView={SAMPLE_STRATEGY_STAGE}
+    initialWorkspace="files" artifacts={[failedFinal]} />);
+  expect(screen.queryByTestId("source-accept-client-final-toggle-d02_value_target"))
+    .not.toBeInTheDocument();
+});
+
 it("offers restoration only when a prior accepted final has a drifted stage link", async () => {
   global.fetch = jest.fn().mockResolvedValue({ ok: true, json: async () => ({ ok: true }) }) as jest.Mock;
   const final = {
