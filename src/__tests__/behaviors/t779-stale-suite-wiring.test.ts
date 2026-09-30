@@ -60,6 +60,7 @@ type SuiteRow = {
 
 type TriageRecord = {
   item: string;
+  recordedAt: string;
   verdictVocabulary: string[];
   scope: { drawSize: number };
   wiring: { directories: string[]; suitesWired: number; casesWired: number };
