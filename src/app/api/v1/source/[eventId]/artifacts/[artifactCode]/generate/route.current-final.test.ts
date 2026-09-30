@@ -40,6 +40,9 @@ jest.mock("@/lib/source/contracts/current-client-final", () => ({
 jest.mock("@/lib/source/contracts/verified-client-final-text", () => ({
   readVerifiedClientFinalText: jest.fn(async () => ({ text: "Accepted body", method: "text" })),
 }));
+jest.mock("@/lib/agent/tools/intelligence/_shared", () => ({
+  clientKeyToInventorySubstrateKey: jest.fn(() => "canonical-tenant"),
+}));
 jest.mock("@/lib/data-plane/write-adapters/sourceWriteAdapter", () => ({
   selectSourceWriteAdapter: jest.fn(() => ({ updateArtifactBody: mockUpdateArtifactBody })),
 }));
@@ -129,7 +132,9 @@ it("records a failed review of the verified final without writing body, status, 
     );
     expect(response.status).toBe(200);
     expect(await response.json()).toMatchObject({ ok: true, qualityGateFailed: true });
-    expect(readVerifiedClientFinalText).toHaveBeenCalled();
+    expect(readVerifiedClientFinalText).toHaveBeenCalledWith(
+      expect.objectContaining({ id: "final-1" }), "canonical-tenant", "event-1",
+    );
     expect(mockReviewStream).toHaveBeenCalledTimes(1);
     expect(mockUpdateArtifactBody).toHaveBeenCalledTimes(1);
     const columns = mockUpdateArtifactBody.mock.calls[0]?.[0].columns;

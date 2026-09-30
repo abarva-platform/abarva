@@ -63,7 +63,7 @@ export async function POST(_request: Request, { params }: RouteContext) {
 
   let final;
   try {
-    final = await findCurrentAcceptedClientFinal(event.id, tenantKey, artifactCode);
+    final = await findCurrentAcceptedClientFinal(event.id, client.key, artifactCode);
   } catch {
     return error(500, "client_final_lookup_failed");
   }

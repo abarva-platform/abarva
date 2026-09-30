@@ -559,7 +559,7 @@ export async function generateSourceArtifactDraft(
     let verifiedText: string;
     try {
       verifiedText = (await readVerifiedClientFinalText(
-        currentClientFinal, ctx.tenantKey, ctx.event.id,
+        currentClientFinal, clientKeyToInventorySubstrateKey(ctx.tenantKey), ctx.event.id,
       )).text;
     } catch {
       return Response.json({ error: "client_final_verification_failed" }, { status: 409 });

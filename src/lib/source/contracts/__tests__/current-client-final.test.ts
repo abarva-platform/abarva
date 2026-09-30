@@ -4,9 +4,13 @@ import { listSourceArtifacts } from "@/lib/source/file-cabinet/repository";
 jest.mock("@/lib/source/file-cabinet/repository", () => ({
   listSourceArtifacts: jest.fn(),
 }));
+jest.mock("@/lib/agent/tools/intelligence/_shared", () => ({
+  clientKeyToInventorySubstrateKey: jest.fn(() => "canonical-tenant"),
+}));
 
 const list = jest.mocked(listSourceArtifacts);
-const scope = { tenantKey: "synthetic-tenant" };
+const appTenantKey = "synthetic-tenant";
+const scope = { tenantKey: "canonical-tenant" };
 const accepted = {
   id: "final-1",
   sourceEventId: "event-1",
@@ -25,7 +29,7 @@ beforeEach(() => list.mockReset());
 
 it("returns only an event- and tenant-scoped accepted current Client Final", async () => {
   list.mockResolvedValue([accepted] as never);
-  await expect(findCurrentAcceptedClientFinal("event-1", scope.tenantKey, "d01_strategy_memo"))
+  await expect(findCurrentAcceptedClientFinal("event-1", appTenantKey, "d01_strategy_memo"))
     .resolves.toMatchObject({ id: "final-1" });
   expect(list).toHaveBeenCalledWith("event-1", scope, {}, expect.anything());
 });
@@ -42,12 +46,12 @@ it.each([
   ["other artifact", { artifactType: "d02_value_target" }],
 ])("does not promote %s", async (_label, change) => {
   list.mockResolvedValue([{ ...accepted, ...change }] as never);
-  await expect(findCurrentAcceptedClientFinal("event-1", scope.tenantKey, "d01_strategy_memo"))
+  await expect(findCurrentAcceptedClientFinal("event-1", appTenantKey, "d01_strategy_memo"))
     .resolves.toBeNull();
 });
 
 it("fails closed when two current finals claim the same authority", async () => {
   list.mockResolvedValue([accepted, { ...accepted, id: "final-2" }] as never);
-  await expect(findCurrentAcceptedClientFinal("event-1", scope.tenantKey, "d01_strategy_memo"))
+  await expect(findCurrentAcceptedClientFinal("event-1", appTenantKey, "d01_strategy_memo"))
     .rejects.toThrow(/multiple current Client Finals/i);
 });

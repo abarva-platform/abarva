@@ -37,7 +37,7 @@ A later draft or quality review could replace the working body's link after a re
 ## QA / Validation
 
 - Pass: Red-first focused tests, then 37/37 focused tests after implementation.
-- Pass: Negative cases cover cross-tenant/event authority, supersession, missing actor/time, duplicate finals, insufficient rights, mismatched blob hash and idempotence.
+- Pass: Negative cases cover cross-tenant/event authority, distinct app and registry tenant keys, supersession, missing actor/time, duplicate finals, insufficient rights, mismatched blob hash and idempotence.
 - Pass: Five practical mutations were caught: removal of current-authority filtering, hash verification, UI mismatch check, generation rejection and review-only mode.
 - Pass: Review-only failure test confirms metadata-only persistence and no rewrite or link mutation.
 - Pass: TypeScript with a larger Node heap.
