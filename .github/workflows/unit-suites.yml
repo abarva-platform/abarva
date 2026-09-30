@@ -1866,6 +1866,23 @@ jobs:
           src/lib/shell/__tests__/working-pane-shape.test.ts
           --no-coverage --ci
 
+      # Item T-785, the eleventh stale-suite draw. Three directories, each
+      # judged whole and each executed file by file on base `6ce86fc134`: 7
+      # suites, 42 cases, all green, none reading a repository file, and each
+      # subject imported by a non-test module (`src/lib/source/execution-room`;
+      # the `/home/learn/[section]/[slug]` page; the agent-grounding QA runner).
+      # Named as DIRECTORIES without a trailing slash; each line leaves
+      # `product-directory-ci-coverage.baseline.json` in the same change. Two
+      # drawn directories are held (T-786 source-text scanners, T-787 test-only
+      # subjects). Record: `docs/architecture/t785-stale-suite-triage.json`.
+      - name: Run the T-785 renewal-cockpit, learn case-study and agent-grounding suites
+        run: >-
+          npx jest
+          src/lib/source/renewal-cockpit/__tests__
+          src/components/source/learn/case-study/__tests__
+          src/lib/agent-grounding/__tests__
+          --no-coverage --ci
+
       # Item T-495, claimable half, suite 2 of 11.
       # `src/__tests__/hygiene/learn-layout-single-nav.test.ts` asserted the
       # single-top-nav rule for `/home/learn` over the BYTES of two files, and was
