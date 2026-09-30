@@ -614,6 +614,23 @@ jobs:
       - name: Exercise the Programs SR 11-7 control deliverable suite
         run: npx jest src/lib/programs/regulatory/__tests__ --runInBand
 
+      # C-415 slice 11: the Programs solution-archetype taxonomy.
+      #
+      # Measured BEFORE it was wired, the suite executed on its own: 1 suite,
+      # 20 tests, GREEN — archetype-fixtures 20.
+      #
+      # Not coverage of nothing, checked before wiring: getSolutionArchetype
+      # and the archetype keys are imported at runtime by the SR 11-7 control
+      # deliverable, the architecture, controls, decomposition and suitability
+      # modules, and the origination charter extensions.
+      #
+      # The suite reads no file's bytes, so `T-770` has nothing to refuse and
+      # `textIsTheSubject` is negative.
+      #
+      # Wired as a DIRECTORY with no trailing slash. Nothing nests beneath it.
+      - name: Exercise the Programs solution-archetype taxonomy suite
+        run: npx jest src/lib/programs/taxonomy/__tests__ --runInBand
+
       # Two suites shipped on 18 Sep whose release records said "5 of 5 pass"
       # and "19 of 19 pass". Both were true locally and enforced by nothing:
       # neither file was named by any workflow, and no scoped jest script
