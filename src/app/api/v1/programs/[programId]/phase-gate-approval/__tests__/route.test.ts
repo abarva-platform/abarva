@@ -141,7 +141,7 @@ beforeEach(() => {
   ]);
   mockLoadApprovedMoveEvidenceSnapshot.mockResolvedValue({
     revision: "evidence-revision-1",
-    latestReviewUpdatedAt: "2026-09-29T16:00:00.000Z",
+    latestEvidenceActivityAt: "2026-09-29T16:00:00.000Z",
     approvedEvidenceCount: 1,
     rows: [],
   });
@@ -256,7 +256,7 @@ describe("POST /api/v1/programs/[programId]/phase-gate-approval", () => {
     });
     mockLoadApprovedMoveEvidenceSnapshot.mockResolvedValue({
       revision: "evidence-revision-2",
-      latestReviewUpdatedAt: "2026-09-29T18:00:00.000Z",
+      latestEvidenceActivityAt: "2026-09-29T18:00:00.000Z",
       approvedEvidenceCount: 2,
       rows: [],
     });
@@ -298,7 +298,7 @@ describe("POST /api/v1/programs/[programId]/phase-gate-approval", () => {
     });
     mockLoadApprovedMoveEvidenceSnapshot.mockResolvedValue({
       revision: "evidence-revision-2",
-      latestReviewUpdatedAt: "2026-09-29T18:00:00.000Z",
+      latestEvidenceActivityAt: "2026-09-29T18:00:00.000Z",
       approvedEvidenceCount: 2,
       rows: [],
     });
@@ -373,7 +373,7 @@ describe("POST /api/v1/programs/[programId]/phase-gate-approval", () => {
   it("blocks a later phase while its immediately preceding gate is stale", async () => {
     mockLoadApprovedMoveEvidenceSnapshot.mockResolvedValue({
       revision: "evidence-revision-2",
-      latestReviewUpdatedAt: "2026-09-29T18:00:00.000Z",
+      latestEvidenceActivityAt: "2026-09-29T18:00:00.000Z",
       approvedEvidenceCount: 2,
       rows: [],
     });

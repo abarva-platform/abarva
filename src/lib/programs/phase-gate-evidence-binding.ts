@@ -2,7 +2,7 @@ import type { PhaseSnapshot } from "./types.db";
 
 export interface PhaseGateEvidenceState {
   revision: string;
-  latestReviewUpdatedAt: string | null;
+  latestEvidenceActivityAt: string | null;
 }
 
 function latestSnapshotForPhase(
@@ -35,11 +35,11 @@ export function phaseApprovalMatchesEvidence(
     return recordedRevision === evidence.revision;
   }
 
-  // Older approvals predate revision binding. Preserve them unless an evidence
-  // review changed after the recorded gate decision; then fail closed.
-  if (!evidence.latestReviewUpdatedAt) return true;
+  // Older approvals predate revision binding. Preserve them unless approved
+  // evidence or its review changed after the recorded gate decision.
+  if (!evidence.latestEvidenceActivityAt) return true;
   const approvalAt = Date.parse(approval.lockedAt ?? approval.createdAt);
-  const evidenceChangedAt = Date.parse(evidence.latestReviewUpdatedAt);
+  const evidenceChangedAt = Date.parse(evidence.latestEvidenceActivityAt);
   return (
     Number.isFinite(approvalAt) &&
     Number.isFinite(evidenceChangedAt) &&
