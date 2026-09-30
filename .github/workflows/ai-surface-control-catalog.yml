@@ -648,6 +648,23 @@ jobs:
       - name: Exercise the Programs Tower-to-Moves action handoff suite
         run: npx jest src/lib/programs/tower-trigger/__tests__ --runInBand
 
+      # C-415 slice 13: the Programs vendor-platform intelligence registry.
+      #
+      # Measured BEFORE it was wired, the suite executed on its own: 1 suite,
+      # 6 tests, GREEN — registry 6.
+      #
+      # Not coverage of nothing, checked before wiring:
+      # listVendorPlatformProfiles is imported at runtime by
+      # client-readiness-scan, which client-readiness-gate calls from the
+      # deliverable sign-off route.
+      #
+      # The suite reads no file's bytes, so `T-770` has nothing to refuse and
+      # `textIsTheSubject` is negative.
+      #
+      # Wired as a DIRECTORY with no trailing slash. Nothing nests beneath it.
+      - name: Exercise the Programs vendor-platform intelligence registry suite
+        run: npx jest src/lib/programs/vendor-platform-intelligence/__tests__ --runInBand
+
       # Two suites shipped on 18 Sep whose release records said "5 of 5 pass"
       # and "19 of 19 pass". Both were true locally and enforced by nothing:
       # neither file was named by any workflow, and no scoped jest script
