@@ -89,6 +89,7 @@ import {
   evidenceForStage,
   requiredEvidenceForStage,
   requiredSpecsForStage,
+  specByCode,
   type SourceEvidenceRequirement,
 } from "@/lib/source/canonical-specs";
 import type {
@@ -7627,9 +7628,15 @@ function ApprovalsWorkspace({
         title="Stage decisions"
         subtitle="The workflow prepares the evidence; this page records the approval decision."
       />
-      <ApprovalReadinessBrief view={view} requiredEvidenceOpen={requiredEvidenceOpen} />
-      {view.stage.key === "strategy" && view.event.currentStageKey === "strategy" && view.event.lifecycle === "active" ? (
-        <StrategyCriterionReview
+      <ApprovalReadinessBrief
+        view={view}
+        requiredEvidenceOpen={requiredEvidenceOpen}
+        gateCriterionStates={gateCriterionStates}
+        gateAction={gateAction}
+      />
+      {(view.stage.key === "strategy" || view.stage.key === "scope") &&
+      view.event.currentStageKey === view.stage.key && view.event.lifecycle === "active" ? (
+        <StageCriterionReview
           view={view}
           states={gateCriterionStates}
           artifacts={stageArtifactStates}
@@ -7681,7 +7688,7 @@ function ApprovalsWorkspace({
   );
 }
 
-function StrategyCriterionReview({
+function StageCriterionReview({
   view,
   states,
   artifacts,
@@ -7700,7 +7707,7 @@ function StrategyCriterionReview({
   const [reason, setReason] = useState("");
   const [pendingId, setPendingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const definitions = criteriaForStage("strategy");
+  const definitions = criteriaForStage(view.stage.key);
   const recorded = definitions.filter((definition) =>
     states.some((state) => state.criterionId === definition.criterionId &&
       (state.state === "met" || state.state === "waived")),
@@ -7734,7 +7741,7 @@ function StrategyCriterionReview({
   return (
     <section data-testid="source-stage-criterion-review" style={{ margin: "18px 0", borderTop: `1px solid ${ANALYTICS.LINE}` }}>
       <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 12, padding: "14px 0 8px" }}>
-        <h3 style={{ margin: 0, fontSize: 16 }}>Strategy gate criteria</h3>
+        <h3 style={{ margin: 0, fontSize: 16 }}>{view.stage.label} gate criteria</h3>
         <span style={{ color: ANALYTICS.MUTED, fontSize: 12 }}>{recorded} of {definitions.length} recorded</span>
       </div>
       {definitions.map((definition) => {
@@ -7751,7 +7758,7 @@ function StrategyCriterionReview({
                 <strong style={{ fontSize: 13 }}>{title}</strong>
                 <span style={{ color: isRecorded ? ANALYTICS.GREEN_TEXT : ANALYTICS.MUTED, fontSize: 12 }}>
                   {isRecorded ? "Recorded" : missingArtifacts.length
-                    ? `Client Final required for ${missingArtifacts.join(", ")}`
+                    ? `Client Final required for ${missingArtifacts.map((code) => specByCode(code)?.name ?? "required artifact").join(", ")}`
                     : current ? "Ready for Event Owner review" : "Criterion state unavailable"}
                 </span>
               </div>
@@ -7910,21 +7917,29 @@ function PendingDecisionGroups({ view }: { view: SourceEventShellView }) {
 function ApprovalReadinessBrief({
   view,
   requiredEvidenceOpen,
+  gateCriterionStates,
+  gateAction,
 }: {
   view: SourceEventShellView;
   requiredEvidenceOpen: number;
+  gateCriterionStates: readonly SourceEventGateCriterion[];
+  gateAction?: StageGateActionView;
 }) {
   const stageApproved = view.stage.approvalRecorded;
   const approvalDecision = currentApprovalDecision(view);
-  const gateCriteriaOpen = approvalDecision?.blockers.some((blocker) => blocker.code === "gate_criteria_open") ?? false;
+  const approvalRouted = view.approvals.currentStageItem != null;
+  const gateCriteriaOpen =
+    (approvalDecision?.blockers.some((blocker) => blocker.code === "gate_criteria_open") ?? false) ||
+    (view.stage.key === "scope" && approvalRouted && gateAction == null && criteriaForStage("scope").some((criterion) =>
+      !gateCriterionStates.some((state) => state.criterionId === criterion.criterionId &&
+        (state.state === "met" || state.state === "waived"))));
   const approvalAuditBlockers = recordedApprovalAuditBlockers(approvalDecision);
   const approvalAuditGapsOpen =
     stageApproved && approvalAuditBlockers.length > 0;
   const workflowComplete = view.stage.ready >= view.stage.total;
   const filesReady = view.stage.artifactReadiness.ready;
-  const approvalRouted = view.approvals.currentStageItem != null;
   const ready =
-    !stageApproved && approvalRouted && workflowComplete && filesReady && requiredEvidenceOpen === 0 && !gateCriteriaOpen;
+    !stageApproved && approvalRouted && workflowComplete && filesReady && requiredEvidenceOpen === 0 && !gateCriteriaOpen && gateAction != null;
   const stageHref = `/source/events/${encodeURIComponent(
     view.event.id,
   )}?stage=${encodeURIComponent(view.stage.key)}`;
@@ -7946,8 +7961,12 @@ function ApprovalReadinessBrief({
         ? "Review required evidence in the owning steps."
         : !filesReady
           ? "Clear artifact queue."
+          : !approvalRouted
+            ? "Approval routing unavailable."
           : gateCriteriaOpen
             ? "Review required gate criteria."
+          : !gateAction
+            ? "Review stage gate blockers."
           : (view.approvals.currentStageItem?.actionLabel ??
             "Approval routing unavailable.");
   const readinessTitle = stageApproved
@@ -7962,10 +7981,14 @@ function ApprovalReadinessBrief({
         ? "Workflow inputs still open"
         : requiredEvidenceOpen > 0
           ? "Required evidence still open"
-          : !filesReady
-            ? "Artifact queue blocks the gate"
+        : !filesReady
+          ? "Artifact queue blocks the gate"
+          : !approvalRouted
+            ? "Approval routing unavailable"
             : gateCriteriaOpen
               ? "Gate criteria still open"
+            : !gateAction
+              ? "Stage gate still blocked"
             : "Approval routing unavailable";
   const readinessStatus = stageApproved
     ? approvalAuditGapsOpen
@@ -7977,10 +8000,14 @@ function ApprovalReadinessBrief({
         ? "Inputs open"
         : requiredEvidenceOpen > 0
           ? "Evidence open"
-          : !filesReady
-            ? "Not gate-ready"
+        : !filesReady
+          ? "Not gate-ready"
+          : !approvalRouted
+            ? "Routing open"
             : gateCriteriaOpen
               ? "Criteria open"
+            : !gateAction
+              ? "Gate blocked"
             : "Routing open";
 
   return (

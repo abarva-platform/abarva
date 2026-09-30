@@ -242,7 +242,7 @@ describe("SourceAnalyticsCanvas stage workflow", () => {
 
     expect(screen.getByTestId("source-stage-criterion-review")).toHaveTextContent("0 of 3 recorded");
     expect(screen.getByTestId("source-stage-criterion-review")).toHaveTextContent("Archetype + rigor level chosen");
-    expect(screen.getByTestId("source-stage-criterion-review")).toHaveTextContent("Client Final required for d03_archetype_decision");
+    expect(screen.getByTestId("source-stage-criterion-review")).toHaveTextContent("Client Final required for Archetype Decision Record");
     expect(screen.queryByTestId("source-stage-gate-approve")).toBeNull();
     expect(screen.queryByText("This viewer does not currently have the server-side approval action armed.")).toBeNull();
     fireEvent.click(screen.getByRole("button", { name: "Review Sourcing strategy memo approved by Event Owner" }));
@@ -255,6 +255,68 @@ describe("SourceAnalyticsCanvas stage workflow", () => {
     const body = JSON.parse((global.fetch as jest.Mock).mock.calls[0][1].body);
     expect(body).toMatchObject({ state: "met", reason: expect.stringContaining("synthetic_e2e_smoke") });
     expect(routerRefresh).toHaveBeenCalled();
+  });
+
+  it("offers governed Scope criterion review without implying the stage gate is approved", async () => {
+    const states: SourceEventGateCriterion[] = criteriaForStage("scope").map((criterion) => ({
+      id: `${EVENT.id}:${criterion.criterionId}`, sourceEventId: EVENT.id, tenantKey: "demo-client",
+      criterionId: criterion.criterionId, fromStage: criterion.fromStage, toStage: criterion.toStage,
+      state: "pending", reviewerUserId: null, reviewedAt: null, notes: null,
+      evidenceArtifactIds: [], waiverApprovalId: null, createdAt: "", updatedAt: "",
+    }));
+    const artifacts: SourceEventArtifactState[] = ["d04_app_inv", "d05_scope_memo", "d06_excl_log", "d07_ticket_synth"].map((code) => {
+      const spec = specByCode(code)!;
+      return {
+        id: code, sourceEventId: EVENT.id, tenantKey: "demo-client", artifactCode: code,
+        stage: "scope", family: spec.family, tier: spec.defaultTier, status: "approved",
+        requirementLevel: spec.requirementLevel, gateDefining: spec.gateDefining,
+        linkedArtifactId: `file-${code}`, notes: null, body: null, bodyFormat: "markdown",
+        bodyAuthoredBy: null, bodyUpdatedAt: null, bodyGenerationMetadata: null,
+        createdAt: "", updatedAt: "",
+      };
+    });
+    const props = {
+      event: { ...EVENT, approvalPolicyCode: "self_v1" as const },
+      viewStage: "scope" as const,
+      tenantName: "Demo Client",
+      stageView: { ...COMPLETE_SCOPE_STAGE, gate: { ...COMPLETE_SCOPE_STAGE.gate, action: undefined } },
+      approvalItems: [APPROVAL],
+      artifacts: SCOPE_READY_ARTIFACTS,
+      gateCriterionStates: states,
+      stageArtifactStates: artifacts,
+      evidenceStates: SCOPE_READY_EVIDENCE,
+      initialWorkspace: "approvals" as const,
+      canRetireEvent: true,
+    };
+    const { rerender } = render(<SourceAnalyticsCanvas {...props} />);
+    expect(screen.getByTestId("source-shell-approval-readiness")).toHaveTextContent("Gate criteria still open");
+    expect(screen.getByTestId("source-shell-approval-readiness")).not.toHaveTextContent("Ready to decide");
+    const review = screen.getByTestId("source-stage-criterion-review");
+    expect(review).toHaveTextContent("Scope gate criteria");
+    expect(review).toHaveTextContent("0 of 5 recorded");
+    expect(screen.queryByTestId("source-stage-gate-approve")).toBeNull();
+    fireEvent.click(within(review).getByRole("button", { name: "Review Exclusion log reviewed by Event Owner" }));
+    fireEvent.change(screen.getByLabelText("Criterion rationale"), { target: { value: "Synthetic Event Owner reviewed the exclusions and retained the six unresolved service domains as open." } });
+    fireEvent.click(screen.getByRole("button", { name: "Mark criterion met" }));
+    await waitFor(() => expect(global.fetch).toHaveBeenCalledWith(
+      `/api/v1/source/${EVENT.id}/gate-criteria/GATE-SCOPE-03/state`,
+      expect.objectContaining({ method: "PATCH", credentials: "include" }),
+    ));
+    const body = JSON.parse((global.fetch as jest.Mock).mock.calls[0][1].body);
+    expect(body).toMatchObject({ state: "met", reason: expect.stringContaining("six unresolved") });
+
+    rerender(<SourceAnalyticsCanvas {...props} gateCriterionStates={states.map((state) => ({ ...state, state: "met" as const }))} />);
+    expect(screen.getByTestId("source-shell-approval-readiness")).toHaveTextContent("Stage gate still blocked");
+    expect(screen.getByTestId("source-shell-approval-readiness")).not.toHaveTextContent("Ready to decide");
+
+    rerender(<SourceAnalyticsCanvas {...props} canRetireEvent={false} />);
+    expect(within(screen.getByTestId("source-stage-criterion-review")).queryByRole("button", {
+      name: "Review Exclusion log reviewed by Event Owner",
+    })).toBeNull();
+
+    rerender(<SourceAnalyticsCanvas {...props} stageArtifactStates={artifacts.filter((artifact) => artifact.artifactCode !== "d04_app_inv")} />);
+    expect(screen.getByTestId("source-stage-criterion-review")).toHaveTextContent("Client Final required for Application Inventory & Tiering");
+    expect(screen.getByTestId("source-stage-criterion-review")).not.toHaveTextContent("d04_app_inv");
   });
 
   it("offers Strategy approval only after every canonical criterion and its evidence are ready", () => {
@@ -1714,7 +1776,7 @@ describe("SourceAnalyticsCanvas stage workflow", () => {
     expect(screen.getByTestId("source-shell-v2-approvals")).toBeInTheDocument();
     expect(
       screen.getByTestId("source-shell-approval-readiness"),
-    ).toHaveTextContent("Ready to decide");
+    ).toHaveTextContent("Gate criteria still open");
   });
 
   it("does not substitute a modeled BAFO scenario without live vendor context", () => {
