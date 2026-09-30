@@ -219,6 +219,12 @@ export function supportsGeneratedClientApproval(
   );
 }
 
+export function supportsReviewRegeneration(
+  artifact: Pick<Artifact, "downloadUrl">,
+): boolean {
+  return !artifact.downloadUrl.startsWith("/api/v1/artifacts/");
+}
+
 const REVIEW_READY_STATUSES = new Set(["approved", "board_ready", "ready"]);
 
 export function isGeneratedExportArtifact(
@@ -772,6 +778,7 @@ function ArtifactRow({
     a.fileFormat === "html" || a.outputRole === "html_visual_review_companion";
   const isGeneratedArtifactRoute =
     a.downloadUrl.startsWith("/api/v1/artifacts/");
+  const canRegenerateReview = supportsReviewRegeneration(a);
 
   const submitReviewFeedback = useCallback(async () => {
     const text = feedbackText.trim();
@@ -1750,34 +1757,38 @@ function ArtifactRow({
               </div>
             </div>
           ) : null}
-          <label
-            style={{
-              display: "block",
-              fontSize: 11.5,
-              fontWeight: 700,
-              color: "#5A6472",
-              marginBottom: 6,
-            }}
-          >
-            Paste review notes to create the next version
-          </label>
-          <textarea
-            value={feedbackText}
-            onChange={(e) => setFeedbackText(e.target.value)}
-            rows={4}
-            placeholder="Example: Add the missing AP exception aging caveat, keep this preliminary, and show what the client must upload before final approval."
-            style={{
-              width: "100%",
-              resize: "vertical",
-              border: "1px solid #D5DAE2",
-              borderRadius: 6,
-              padding: 8,
-              fontSize: 12,
-              lineHeight: 1.45,
-              color: "#1A1A18",
-              background: "#fff",
-            }}
-          />
+          {canRegenerateReview && (
+            <>
+              <label
+                style={{
+                  display: "block",
+                  fontSize: 11.5,
+                  fontWeight: 700,
+                  color: "#5A6472",
+                  marginBottom: 6,
+                }}
+              >
+                Paste review notes to create the next version
+              </label>
+              <textarea
+                value={feedbackText}
+                onChange={(e) => setFeedbackText(e.target.value)}
+                rows={4}
+                placeholder="Example: Add the missing AP exception aging caveat, keep this preliminary, and show what the client must upload before final approval."
+                style={{
+                  width: "100%",
+                  resize: "vertical",
+                  border: "1px solid #D5DAE2",
+                  borderRadius: 6,
+                  padding: 8,
+                  fontSize: 12,
+                  lineHeight: 1.45,
+                  color: "#1A1A18",
+                  background: "#fff",
+                }}
+              />
+            </>
+          )}
           <div
             style={{
               display: "flex",
@@ -1801,22 +1812,24 @@ function ArtifactRow({
             >
               Cancel
             </button>
-            <button
-              onClick={submitReviewFeedback}
-              disabled={!feedbackText.trim() || reviewBusy}
-              style={{
-                fontSize: 11.5,
-                fontWeight: 600,
-                color: "#fff",
-                background:
-                  !feedbackText.trim() || reviewBusy ? "#9AA3B2" : "#1B2B5C",
-                border: "none",
-                borderRadius: 5,
-                padding: "5px 11px",
-              }}
-            >
-              {reviewBusy ? "Creating version…" : "Create next version"}
-            </button>
+            {canRegenerateReview && (
+              <button
+                onClick={submitReviewFeedback}
+                disabled={!feedbackText.trim() || reviewBusy}
+                style={{
+                  fontSize: 11.5,
+                  fontWeight: 600,
+                  color: "#fff",
+                  background:
+                    !feedbackText.trim() || reviewBusy ? "#9AA3B2" : "#1B2B5C",
+                  border: "none",
+                  borderRadius: 5,
+                  padding: "5px 11px",
+                }}
+              >
+                {reviewBusy ? "Creating version..." : "Create next version"}
+              </button>
+            )}
           </div>
         </div>
       )}

@@ -1,3 +1,5 @@
+import JSZip from "jszip";
+
 const tenancy = {
   clientId: "client-lakeshore",
   clientKey: "lakeshore",
@@ -15,7 +17,8 @@ const artifact = {
   file_name: "discovery-quality-proof.md",
   file_format: "md",
   blob_container: "context-drops",
-  blob_path: "moves/lakeshore/move-1/sessions/session_artifact/discovery-quality-proof.md",
+  blob_path:
+    "moves/lakeshore/move-1/sessions/session_artifact/discovery-quality-proof.md",
   file_size: 100,
   version: 1,
   status: "aligned",
@@ -29,6 +32,11 @@ const artifact = {
 };
 
 let currentArtifact: Record<string, unknown> | null = artifact;
+let originalDownload: { bytes: Buffer; fileName: string; fileFormat: string } = {
+  bytes: Buffer.from("<html><body><h1>Original artifact</h1></body></html>"),
+  fileName: "original.html",
+  fileFormat: "html",
+};
 const saveMoveArtifact = jest.fn(async (...args: [unknown, unknown]) => {
   void args;
   return {
@@ -38,7 +46,8 @@ const saveMoveArtifact = jest.fn(async (...args: [unknown, unknown]) => {
     blobStored: true,
   };
 });
-const mockStreamAgentTurn = jest.fn(async function* () {
+const mockStreamAgentTurn = jest.fn(async function* (_input?: unknown) {
+  void _input;
   yield "<html><body><svg>Current-State Handoff Map</svg><table>Process vs Data vs Policy vs Ownership vs AI Matrix</table><p>Complete regenerated draft.</p></body></html>";
 });
 
@@ -51,11 +60,7 @@ jest.mock("../../../../../_auth", () => ({
 
 jest.mock("@/lib/programs/deliverables/move-artifacts", () => ({
   getMoveArtifactForTenant: jest.fn(async () => currentArtifact),
-  downloadArtifactBytes: jest.fn(async () => ({
-    bytes: Buffer.from("<html><body><h1>Original artifact</h1></body></html>"),
-    fileName: "original.html",
-    fileFormat: "html",
-  })),
+  downloadArtifactBytes: jest.fn(async () => originalDownload),
   saveMoveArtifact: (ctx: unknown, input: unknown) =>
     saveMoveArtifact(ctx, input),
 }));
@@ -79,6 +84,11 @@ function params(programId = "move-1", artifactId = "artifact-v1") {
 
 beforeEach(() => {
   currentArtifact = artifact;
+  originalDownload = {
+    bytes: Buffer.from("<html><body><h1>Original artifact</h1></body></html>"),
+    fileName: "original.html",
+    fileFormat: "html",
+  };
   saveMoveArtifact.mockClear();
   mockStreamAgentTurn.mockClear();
 });
@@ -225,5 +235,84 @@ describe("POST /api/v1/programs/[programId]/artifacts/[artifactId]/review-regene
         }),
       }),
     );
+  });
+
+  it("uses full regeneration for layout feedback on an editable document", async () => {
+    const res = await POST(
+      req({
+        feedbackText:
+          "Create an editable Word-equivalent record and fix its layout and pagination while preserving the approved content.",
+      }),
+      params(),
+    );
+
+    expect(res.status).toBe(200);
+    expect(mockStreamAgentTurn).toHaveBeenCalled();
+    expect(saveMoveArtifact).toHaveBeenCalledWith(
+      tenancy,
+      expect.objectContaining({
+        metadata: expect.objectContaining({
+          regenerationMode: "complete_artifact",
+        }),
+      }),
+    );
+  });
+
+  it("extracts readable DOCX text before sending a revision prompt", async () => {
+    const zip = new JSZip();
+    zip.file(
+      "word/document.xml",
+      '<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:body><w:p><w:r><w:t>Source charter paragraph</w:t></w:r></w:p></w:body></w:document>',
+    );
+    originalDownload = {
+      bytes: await zip.generateAsync({ type: "nodebuffer" }),
+      fileName: "original.docx",
+      fileFormat: "docx",
+    };
+    currentArtifact = { ...artifact, file_format: "docx" };
+
+    const res = await POST(
+      req({
+        feedbackText:
+          "Create the editable Word-equivalent record and fix layout and pagination while preserving the current facts.",
+      }),
+      params(),
+    );
+
+    expect(res.status).toBe(200);
+    expect(mockStreamAgentTurn).toHaveBeenCalledWith(
+      expect.objectContaining({
+        messages: [
+          expect.objectContaining({
+            content: expect.stringContaining("Source charter paragraph"),
+          }),
+        ],
+      }),
+    );
+    const prompt = mockStreamAgentTurn.mock.calls[0]?.[0] as {
+      messages?: Array<{ content?: string }>;
+    };
+    expect(prompt.messages?.[0]?.content).not.toContain("PK");
+    expect(prompt.messages?.[0]?.content).not.toContain("word/document.xml");
+  });
+
+  it("fails closed when a DOCX source cannot be extracted", async () => {
+    originalDownload = {
+      bytes: Buffer.from("not-a-docx"),
+      fileName: "broken.docx",
+      fileFormat: "docx",
+    };
+    currentArtifact = { ...artifact, file_format: "docx" };
+
+    const res = await POST(
+      req({ feedbackText: "Rewrite the charter from its source content." }),
+      params(),
+    );
+    const json = (await res.json()) as { error?: string };
+
+    expect(res.status).toBe(422);
+    expect(json.error).toBe("source_artifact_not_extractable");
+    expect(mockStreamAgentTurn).not.toHaveBeenCalled();
+    expect(saveMoveArtifact).not.toHaveBeenCalled();
   });
 });

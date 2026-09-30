@@ -10,7 +10,7 @@
 
 ## Plain-English Summary
 
-Moves charter DOCX files now flow continuously through the charter, exhibits, recommendation, and evidence register instead of forcing each portion onto a new page. Numbered copies of a section title are suppressed when the renderer already supplies that title.
+Moves charter DOCX files now flow continuously through the charter, exhibits, recommendation, and evidence register instead of forcing each portion onto a new page. Numbered copies of a section title are suppressed when the renderer already supplies that title. Review regeneration now reads Office document text before prompting, treats layout feedback as a substantive revision, and only offers the revision action for durable Move artifacts.
 
 ## Layer Impact
 
@@ -30,19 +30,22 @@ Moves charter DOCX files now flow continuously through the charter, exhibits, re
 - `src/lib/deliverables/orchestrator/renderers.tsx`: use a continuous layout for Moves charters and normalize numbered heading duplicates.
 - `src/lib/deliverables/orchestrator/types.ts`: carry the canonical deliverable type to the renderer.
 - `src/lib/deliverables/orchestrator/__tests__/renderers.test.ts`: cover charter flow, numbered duplicate headings, and unchanged pagination for other deliverables.
+- `src/app/api/v1/programs/[programId]/artifacts/[artifactId]/review-regenerate/route.ts`: extract readable DOCX/PPTX text for revision prompts and fail closed when the source cannot be read.
+- `src/components/strategic-moves/FileCabinetPanel.tsx`: hide the durable-store revision action on run artifacts that the endpoint cannot resolve.
+- Review-regeneration and File Cabinet tests: cover layout feedback, DOCX extraction, unreadable Office inputs, and durable-versus-run artifact actions.
 
 ## QA / Validation
 
-- Regression tests were run red before implementation: the numbered duplicate heading appeared twice and the charter contained four forced page breaks.
-- Targeted renderer suite: 43 passed.
-- Deliverables orchestrator suites: 29 suites / 387 tests passed.
+- Regression tests were run red before implementation: the numbered duplicate heading appeared twice, the charter contained four forced page breaks, structural feedback took the packaging-only fast lane, and DOCX source text was not available to the revision prompt.
+- Targeted review-regeneration, File Cabinet, renderer, and Word-equivalent suites: 5 suites / 65 tests passed.
 - Typecheck: clean.
-- ESLint and `git diff --check`: clean.
-- Release check and signed-in post-deploy DOCX review: pending.
+- ESLint and Prettier checks: clean.
+- `git diff --check` and release check: pending.
+- Signed-in post-deploy DOCX review: pending.
 
 ## Rollout Plan
 
-Merge to `main`, then deploy through the repository-owned ACA main deploy workflow. No migration or flag change is required.
+Merge to `main`, then deploy through the repository-owned ACA main deploy workflow. No migration or flag change is required. After deploy, regenerate the charter through the product, inspect the rendered DOCX, and use the durable-artifact review path for revisions.
 
 ## Deployment Authority
 
