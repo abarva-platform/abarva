@@ -366,9 +366,17 @@ describe("legal catalog claims bind only when coverage is real", () => {
     // one control, and its `uncatalogued` row became covered — 21/10/4 to
     // 22/9/4. `deferredWithSurfaceId` is unmoved because the legal row claims
     // no other kind on that surface.
+    //
+    // C-549 retracted a third claim: the Source commercial summary surface's
+    // legal row said "Yes" to a confidence disclosure on the strength of its
+    // no-live-benchmark limitation copy. Rendering the component showed no
+    // confidence value beside any verdict, a seeded benchmark figure beside
+    // the copy that says there are no benchmarks, and nothing mounting it.
+    // The cell now reads "Partial" and its `uncatalogued` coverage row left
+    // with it — 22/9/4 to 22/8/4.
     expect(tally).toEqual({
       coveredWithSurfaceId: 22,
-      deferredWithJoin: 9,
+      deferredWithJoin: 8,
       deferredWithSurfaceId: 4,
       unbound: 0,
     });
