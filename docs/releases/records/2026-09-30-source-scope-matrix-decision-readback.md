@@ -38,6 +38,7 @@ The Scope responsibility step now asks the authorized Event Owner to name retain
 - Pass: authorization and changed-source mutations each caused their expected regression test to fail, then were restored.
 - Pass: focused tests, TypeScript, scoped ESLint, release check, and diff check before PR.
 - Pass: two upload-only catalog assumptions surfaced in CI; the corrected Source core, export, canvas, and facts run passes locally (182 suites/1,938 tests). Mounted Files and direct-template negatives pass.
+- Pass: the measured Source canvas import-closure census was regenerated; its behavior control passes without update mode.
 - Not run: CI and signed-in acceptance until the PR is opened, merged, and officially deployed.
 
 ## Rollout Plan
