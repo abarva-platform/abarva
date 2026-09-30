@@ -9,6 +9,7 @@ import {
   isGeneratedExportArtifact,
   isContextExtractArtifact,
   supportsGeneratedClientApproval,
+  supportsReviewRegeneration,
   supportsSponsorReviewDecisionArtifact,
 } from "../FileCabinetPanel";
 
@@ -217,6 +218,19 @@ describe("FileCabinetPanel artifact labels", () => {
         },
         "move-1",
       ),
+    ).toBe(true);
+  });
+
+  it("offers review regeneration only for durable Move artifacts", () => {
+    expect(
+      supportsReviewRegeneration({
+        downloadUrl: "/api/v1/artifacts/generated-charter-1",
+      }),
+    ).toBe(false);
+    expect(
+      supportsReviewRegeneration({
+        downloadUrl: "/api/v1/programs/move-1/artifacts/charter-v1/download",
+      }),
     ).toBe(true);
   });
 

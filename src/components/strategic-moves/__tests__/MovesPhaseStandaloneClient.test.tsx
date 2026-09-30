@@ -587,7 +587,7 @@ describe("MovesPhaseStandaloneClient", () => {
               ok: true,
               proposalReview: {
                 artifactId: "review-artifact-1",
-                status: "review_required",
+                status: "accepted",
                 acceptedCount: 2,
                 rejectedCount: 0,
                 needsValidationCount: 0,
@@ -923,6 +923,18 @@ describe("MovesPhaseStandaloneClient", () => {
       await waitFor(() => {
         expect(screen.getByText(/Review saved/)).toBeInTheDocument();
       });
+      expect(
+        screen.queryByText(/Stored workbook responses awaiting review/),
+      ).not.toBeInTheDocument();
+      expect(
+        screen.getByText(/Workbook review recorded · 2 accepted/),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByText("Workbook responses reviewed"),
+      ).toBeInTheDocument();
+      expect(
+        screen.queryByRole("button", { name: "Accept selected" }),
+      ).not.toBeInTheDocument();
       const reviewCall = (global.fetch as jest.Mock).mock.calls.find(
         ([url, init]) =>
           String(url).includes("/stage-readiness-workbook") &&
@@ -973,6 +985,71 @@ describe("MovesPhaseStandaloneClient", () => {
       expect(
         screen.getByText(/Approve & Build runs context extract/i),
       ).toBeInTheDocument();
+    });
+
+    it("restores a completed workbook review without reopening pending actions", () => {
+      const move = makeMove({
+        currentPhase: 1,
+        phaseLabel: "P1 Charter",
+      });
+      render(
+        <MovesPhaseStandaloneClient
+          carriesForwardContent={[]}
+          evidenceNeedPackets={[]}
+          initialStageReadinessPreview={{
+            ok: true,
+            proposalSet: {
+              artifactId: "proposal-artifact-1",
+              artifactVersion: 2,
+              proposalSetId: "proposal-set-1",
+              status: "accepted",
+              proposalCount: 1,
+              pendingCount: 0,
+              review: {
+                status: "accepted",
+                acceptedCount: 1,
+                rejectedCount: 0,
+                needsValidationCount: 0,
+                pendingCount: 0,
+                readiness: {
+                  ready: 0,
+                  insufficientEvidence: 1,
+                  unknown: 0,
+                },
+              },
+              proposals: [
+                {
+                  proposalId: "proposal-1",
+                  question: "Provide baseline metrics.",
+                  answerState: "insufficient_evidence",
+                  disposition: "accepted",
+                },
+              ],
+            },
+          }}
+          move={move}
+          phaseNum={1}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+
+      expect(
+        screen.getByText(/Workbook review recorded · 1 accepted/),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByText("Workbook responses reviewed"),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByText("1 responses reviewed · 0 still open"),
+      ).toBeInTheDocument();
+      expect(
+        screen.queryByRole("button", { name: "Accept selected" }),
+      ).not.toBeInTheDocument();
+      expect(
+        screen.getByRole("checkbox", {
+          name: /Provide baseline metrics.*accepted/,
+        }),
+      ).toBeDisabled();
     });
 
     it("keeps a blocked P2 request on P1 with the server-derived why, remains, and next action above the fold", () => {

@@ -18,6 +18,7 @@ import {
   buildPhaseWordEquivalentDocx,
   phaseWordEquivalentFileName,
 } from "@/lib/deliverables/phase-word-equivalent";
+import { extractOfficeText } from "@/lib/deliverables/shared/office-text-extract";
 import { getPhaseDeliverablePackageContract } from "@/lib/programs/phase-deliverable-package-contract";
 import { streamAgentTurn } from "@/lib/agent/stream";
 import type { DeliverableKey } from "@/lib/deliverables/profiles/types";
@@ -66,8 +67,47 @@ function isEditablePackagingRequest(feedbackText: string): boolean {
   const asksForSubstantiveRewrite =
     /(rewrite|redo|rework|replace|add diagram|add chart|add table|change section|new analysis|new recommendation|revise architecture|revise roadmap|revise business case)/.test(
       text,
+    ) ||
+    /(layout|pagination|page break|page layout|formatting|duplicate|repeated section|consolidate|restructure|table row|section heading)/.test(
+      text,
     );
   return asksForEditableRecord && !asksForSubstantiveRewrite;
+}
+
+async function readableArtifactBody(
+  bytes: Buffer,
+  fileFormat: string,
+): Promise<string | null> {
+  const format = fileFormat.trim().toLowerCase().replace(/^\./, "");
+  if (format === "docx" || format === "pptx") {
+    const extracted = await extractOfficeText(bytes, format);
+    return extracted.ok ? extracted.text : null;
+  }
+
+  if (
+    !["html", "htm", "md", "markdown", "txt", "csv", "json", "xml"].includes(
+      format,
+    )
+  ) {
+    return null;
+  }
+
+  const source = bytes.toString("utf8");
+  if (format === "html" || format === "htm") {
+    return source
+      .replace(/<script[\s\S]*?<\/script>/gi, " ")
+      .replace(/<style[\s\S]*?<\/style>/gi, " ")
+      .replace(/<[^>]+>/g, " ")
+      .replace(/&nbsp;/gi, " ")
+      .replace(/&amp;/gi, "&")
+      .replace(/&lt;/gi, "<")
+      .replace(/&gt;/gi, ">")
+      .replace(/&quot;/gi, '"')
+      .replace(/&#39;/gi, "'")
+      .replace(/\s+/g, " ")
+      .trim();
+  }
+  return source.trim() || null;
 }
 
 function renderDeterministicReviewCompanionHtml(args: {
@@ -199,9 +239,7 @@ function normalizeReviewArtifactKey(
 
 export async function POST(
   req: NextRequest,
-  {
-    params,
-  }: { params: Promise<{ programId: string; artifactId: string }> },
+  { params }: { params: Promise<{ programId: string; artifactId: string }> },
 ) {
   try {
     const { programId, artifactId } = await params;
@@ -236,8 +274,19 @@ export async function POST(
     });
     const original = await downloadArtifactBytes(ctx, artifactId);
     const originalArtifactBody = original
-      ? original.bytes.toString("utf8")
+      ? await readableArtifactBody(original.bytes, original.fileFormat)
       : "[MISSING — prior artifact body could not be retrieved from artifact storage. Use metadata and feedback, and preserve this as a client-to-complete caveat.]";
+    if (original && !originalArtifactBody) {
+      return Response.json(
+        {
+          ok: false,
+          error: "source_artifact_not_extractable",
+          detail:
+            "The source artifact could not be read as a supported text, DOCX, or PPTX document. No revised version was created.",
+        },
+        { status: 422 },
+      );
+    }
     const artifactKey = normalizeReviewArtifactKey(
       artifact.artifact_type,
       artifact.phase ?? 0,
@@ -264,7 +313,7 @@ export async function POST(
         artifactKey,
         feedbackText,
         feedbackItems: plan.feedbackItems,
-        originalArtifactBody,
+        originalArtifactBody: originalArtifactBody ?? "",
         phase: artifact.phase ?? 0,
         contextSummary:
           typeof artifact.metadata?.solutionContextDigest === "string"

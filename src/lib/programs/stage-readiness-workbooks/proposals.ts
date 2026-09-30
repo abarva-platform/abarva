@@ -143,6 +143,33 @@ export interface StageReadinessProposalReview {
   proposals: StageReadinessWorkbookProposal[];
 }
 
+export function isReviewForStageReadinessProposalSet(input: {
+  proposalSet: {
+    proposalSetId: string;
+    artifactId: string;
+    artifactVersion: number | null;
+  };
+  review:
+    | {
+        proposalSetId?: unknown;
+        sourceProposalSetArtifact?: {
+          artifactId?: unknown;
+          artifactVersion?: unknown;
+        };
+      }
+    | null
+    | undefined;
+}): boolean {
+  return Boolean(
+    input.review &&
+    input.review.proposalSetId === input.proposalSet.proposalSetId &&
+    input.review.sourceProposalSetArtifact?.artifactId ===
+      input.proposalSet.artifactId &&
+    input.review.sourceProposalSetArtifact?.artifactVersion ===
+      input.proposalSet.artifactVersion,
+  );
+}
+
 export interface PersistStageReadinessProposalSetInput {
   ctx: TenancyCtx;
   program: ProgramCore;

@@ -368,9 +368,23 @@ interface StageReadinessWorkbookParsePreview {
   proposalSet?: {
     artifactId?: string;
     artifactVersion?: number;
+    proposalSetId?: string;
     status?: string;
     proposalCount?: number;
     pendingCount?: number;
+    review?: {
+      status?: string;
+      acceptedCount?: number;
+      rejectedCount?: number;
+      needsValidationCount?: number;
+      pendingCount?: number;
+      readiness?: {
+        ready?: number;
+        partial?: number;
+        insufficientEvidence?: number;
+        unknown?: number;
+      };
+    };
     proposals?: Array<{
       proposalId?: string;
       questionId?: string;
@@ -799,7 +813,8 @@ export function MovesPhaseStandaloneClient({
     evidenceReadinessAvailable &&
     (phase.phase !== 2 || currentStateReadiness !== null);
   const p0EvidencePacket = evidenceNeedPackets.find(
-    (packet) => packet.phase === 0 && packet.familyId === "p0_origination_source",
+    (packet) =>
+      packet.phase === 0 && packet.familyId === "p0_origination_source",
   );
   const p0EvidenceGateCriterion = {
     id: "p0_source_evidence",
@@ -2616,6 +2631,11 @@ export function MovesPhaseStandaloneClient({
                         ) : null}
                         <div ref={workbookReviewRef}>
                           <StageReadinessWorkbookPreviewControl
+                            key={
+                              initialStageReadinessPreview?.proposalSet
+                                ? `${initialStageReadinessPreview.proposalSet.artifactId ?? ""}:${initialStageReadinessPreview.proposalSet.artifactVersion ?? ""}:${initialStageReadinessPreview.proposalSet.review?.status ?? "unreviewed"}:${initialStageReadinessPreview.proposalSet.review?.pendingCount ?? ""}`
+                                : "no-stored-proposal-set"
+                            }
                             apiPath={readinessWorkbookHref}
                             initialPreview={initialStageReadinessPreview}
                             onReviewSaved={() => router.refresh()}
@@ -4756,8 +4776,8 @@ function PhaseBody({
           ? "Evidence readiness could not be verified. Refresh this phase before approval."
           : openRequiredEvidence.length > 0
             ? `${openRequiredEvidence.length} required evidence item${openRequiredEvidence.length === 1 ? "" : "s"} still need upload and human review before this phase can advance.`
-            : phaseCaptureBlocker ??
-              `Resolve ${openHardCriteria.length} hard gate blocker${openHardCriteria.length === 1 ? "" : "s"} before advancing. Soft items can carry as caveats.`
+            : (phaseCaptureBlocker ??
+              `Resolve ${openHardCriteria.length} hard gate blocker${openHardCriteria.length === 1 ? "" : "s"} before advancing. Soft items can carry as caveats.`)
         : "Inputs, evidence posture, and hard gates are aligned. Run Approve & Build to create the governed package and submit the gate.";
   const approvalDecisionState =
     isHistoricalPhase || gateApproved
@@ -4771,12 +4791,12 @@ function PhaseBody({
       : `Continue to ${nextOpenPhaseContract.code}`
     : gateApproved
       ? "Review generated artifacts"
-    : isGateBlocked
-      ? openRequiredEvidence.length > 0
-        ? "Upload and review evidence"
-        : !evidenceReadinessAvailable
-          ? "Refresh evidence status"
-          : "Clear hard blockers"
+      : isGateBlocked
+        ? openRequiredEvidence.length > 0
+          ? "Upload and review evidence"
+          : !evidenceReadinessAvailable
+            ? "Refresh evidence status"
+            : "Clear hard blockers"
         : "Run Approve & Build";
   const p0ApprovalGeneratedCriteria = new Set([
     "program_seed_recorded",
@@ -5037,9 +5057,10 @@ function PhaseBody({
             <strong>Why some checks are still open</strong>
             <span>
               P0 cannot advance on intake answers alone. Upload one source file
-              for this Move in Files &amp; Evidence, review its extracted content,
-              then return here for sponsor approval. The brief is signed and P1
-              opens only after the evidence requirement and other hard checks pass.
+              for this Move in Files &amp; Evidence, review its extracted
+              content, then return here for sponsor approval. The brief is
+              signed and P1 opens only after the evidence requirement and other
+              hard checks pass.
             </span>
           </div>
         ) : null}
@@ -6669,7 +6690,11 @@ function StageReadinessWorkbookPreviewControl({
     () =>
       new Set(
         initialPreview?.proposalSet?.proposals
-          ?.filter((proposal) => proposal.disposition === "pending")
+          ?.filter(
+            (proposal) =>
+              proposal.disposition === "pending" ||
+              proposal.disposition === "needs_validation",
+          )
           .map((proposal) => proposal.proposalId)
           .filter((proposalId): proposalId is string => Boolean(proposalId)) ??
           [],
@@ -6777,6 +6802,50 @@ function StageReadinessWorkbookPreviewControl({
         );
       }
       const review = payload.proposalReview ?? {};
+      const reviewSummary = {
+        status:
+          review.status ??
+          (review.pendingCount === 0 && review.needsValidationCount === 0
+            ? "accepted"
+            : "review_required"),
+        acceptedCount: review.acceptedCount ?? 0,
+        rejectedCount: review.rejectedCount ?? 0,
+        needsValidationCount: review.needsValidationCount ?? 0,
+        pendingCount: review.pendingCount ?? 0,
+        readiness: review.readiness,
+      };
+      const selectedIdsSet = new Set(selectedIds);
+      const reviewedProposals = (proposalSet.proposals ?? []).map((proposal) =>
+        proposal.proposalId && selectedIdsSet.has(proposal.proposalId)
+          ? { ...proposal, disposition }
+          : proposal,
+      );
+      setPreview((current) =>
+        current?.proposalSet
+          ? {
+              ...current,
+              proposalSet: {
+                ...current.proposalSet,
+                status: reviewSummary.status,
+                pendingCount: reviewSummary.pendingCount,
+                review: reviewSummary,
+                proposals: reviewedProposals,
+              },
+            }
+          : current,
+      );
+      setSelectedProposalIds(
+        new Set(
+          reviewedProposals
+            .filter(
+              (proposal) =>
+                proposal.disposition === "pending" ||
+                proposal.disposition === "needs_validation",
+            )
+            .map((proposal) => proposal.proposalId)
+            .filter((proposalId): proposalId is string => Boolean(proposalId)),
+        ),
+      );
       setReviewStatus("saved");
       setReviewMessage(
         `Review saved · ${review.acceptedCount ?? 0} accepted · ${review.needsValidationCount ?? 0} needs validation · ${review.rejectedCount ?? 0} rejected`,
@@ -6801,13 +6870,28 @@ function StageReadinessWorkbookPreviewControl({
       ? `${preview.summary.requiredAnswered ?? 0}/${preview.summary.requiredTotal} required`
       : null;
   const pendingProposalCount = preview?.proposalSet?.pendingCount ?? 0;
+  const proposalReview = preview?.proposalSet?.review;
+  const reviewActionCount =
+    preview?.proposalSet?.proposals?.filter(
+      (proposal) =>
+        proposal.disposition === "pending" ||
+        proposal.disposition === "needs_validation",
+    ).length ?? 0;
+  const proposalReviewMessage = proposalReview
+    ? `Workbook review recorded · ${proposalReview.acceptedCount ?? 0} accepted · ${proposalReview.needsValidationCount ?? 0} needs validation · ${proposalReview.rejectedCount ?? 0} rejected · ${proposalReview.pendingCount ?? 0} pending` +
+      (proposalReview.readiness
+        ? ` · readiness ${proposalReview.readiness.ready ?? 0} ready / ${proposalReview.readiness.insufficientEvidence ?? 0} insufficient / ${proposalReview.readiness.unknown ?? 0} unknown`
+        : "")
+    : "";
   const storedProposalMessage =
     preview?.proposalSet?.artifactId &&
     status === "idle" &&
+    preview.proposalSet.status !== "accepted" &&
     pendingProposalCount > 0
       ? `Stored workbook responses awaiting review · ${pendingProposalCount}/${preview.proposalSet.proposalCount ?? pendingProposalCount} pending proposals`
       : "";
-  const statusMessage = message || storedProposalMessage;
+  const statusMessage =
+    proposalReviewMessage || message || storedProposalMessage;
 
   return (
     <div className="mxw-workbook-preview">
@@ -6842,10 +6926,17 @@ function StageReadinessWorkbookPreviewControl({
       preview.proposalSet.proposals?.length ? (
         <div className="mxw-workbook-review">
           <div className="mxw-workbook-review-summary">
-            <strong>Workbook responses awaiting review</strong>
+            <strong>
+              {proposalReview?.status === "accepted"
+                ? "Workbook responses reviewed"
+                : proposalReview
+                  ? "Workbook review recorded"
+                  : "Workbook responses awaiting review"}
+            </strong>
             <span>
-              {selectedProposalIds.size}/{preview.proposalSet.proposals.length}{" "}
-              selected · upload is not acceptance
+              {proposalReview
+                ? `${preview.proposalSet.proposals.length} responses reviewed · ${reviewActionCount} still open`
+                : `${selectedProposalIds.size}/${preview.proposalSet.proposals.length} selected · upload is not acceptance`}
             </span>
           </div>
           <div className="mxw-workbook-review-list">
@@ -6855,7 +6946,12 @@ function StageReadinessWorkbookPreviewControl({
                 <label key={proposalId || proposal.questionId}>
                   <input
                     checked={selectedProposalIds.has(proposalId)}
-                    disabled={!proposalId || reviewStatus === "saving"}
+                    disabled={
+                      !proposalId ||
+                      reviewStatus === "saving" ||
+                      (proposal.disposition !== "pending" &&
+                        proposal.disposition !== "needs_validation")
+                    }
                     onChange={(event) => {
                       setSelectedProposalIds((current) => {
                         const next = new Set(current);
@@ -6873,42 +6969,45 @@ function StageReadinessWorkbookPreviewControl({
                     <b>{proposal.question ?? proposal.questionId}</b>
                     <em>
                       {proposal.requirement ?? "required"} ·{" "}
-                      {proposal.answerState ?? "answered"}
+                      {proposal.answerState ?? "answered"} ·{" "}
+                      {proposal.disposition ?? "pending"}
                     </em>
                   </span>
                 </label>
               );
             })}
           </div>
-          <div className="mxw-workbook-review-actions">
-            <button
-              disabled={
-                selectedProposalIds.size === 0 || reviewStatus === "saving"
-              }
-              onClick={() => void reviewSelectedProposals("accepted")}
-              type="button"
-            >
-              Accept selected
-            </button>
-            <button
-              disabled={
-                selectedProposalIds.size === 0 || reviewStatus === "saving"
-              }
-              onClick={() => void reviewSelectedProposals("needs_validation")}
-              type="button"
-            >
-              Mark needs validation
-            </button>
-            <button
-              disabled={
-                selectedProposalIds.size === 0 || reviewStatus === "saving"
-              }
-              onClick={() => void reviewSelectedProposals("rejected")}
-              type="button"
-            >
-              Reject selected
-            </button>
-          </div>
+          {reviewActionCount > 0 ? (
+            <div className="mxw-workbook-review-actions">
+              <button
+                disabled={
+                  selectedProposalIds.size === 0 || reviewStatus === "saving"
+                }
+                onClick={() => void reviewSelectedProposals("accepted")}
+                type="button"
+              >
+                Accept selected
+              </button>
+              <button
+                disabled={
+                  selectedProposalIds.size === 0 || reviewStatus === "saving"
+                }
+                onClick={() => void reviewSelectedProposals("needs_validation")}
+                type="button"
+              >
+                Mark needs validation
+              </button>
+              <button
+                disabled={
+                  selectedProposalIds.size === 0 || reviewStatus === "saving"
+                }
+                onClick={() => void reviewSelectedProposals("rejected")}
+                type="button"
+              >
+                Reject selected
+              </button>
+            </div>
+          ) : null}
           {reviewMessage ? (
             <span className={`mxw-workbook-review-status ${reviewStatus}`}>
               {reviewMessage}

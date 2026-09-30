@@ -29,6 +29,7 @@ import {
 } from "@/lib/programs/deliverables/move-artifacts";
 import { listGeneratedArtifactsForMoveAllRefs } from "@/lib/artifacts/repository";
 import {
+  isReviewForStageReadinessProposalSet,
   STAGE_READINESS_PROPOSAL_REVIEW_ARTIFACT_TYPE,
   STAGE_READINESS_PROPOSAL_SET_ARTIFACT_TYPE,
 } from "@/lib/programs/stage-readiness-workbooks/proposals";
@@ -115,9 +116,23 @@ interface StageReadinessProposalSetPreview {
   proposalSet?: {
     artifactId?: string;
     artifactVersion?: number;
+    proposalSetId?: string;
     status?: string;
     proposalCount?: number;
     pendingCount?: number;
+    review?: {
+      status?: string;
+      acceptedCount?: number;
+      rejectedCount?: number;
+      needsValidationCount?: number;
+      pendingCount?: number;
+      readiness?: {
+        ready?: number;
+        partial?: number;
+        insufficientEvidence?: number;
+        unknown?: number;
+      };
+    };
     proposals?: Array<{
       proposalId?: string;
       questionId?: string;
@@ -205,6 +220,10 @@ function proposalSetPreviewFromJson(
     proposalSet: {
       artifactId,
       artifactVersion,
+      proposalSetId:
+        typeof proposalSet.proposalSetId === "string"
+          ? proposalSet.proposalSetId
+          : undefined,
       status: "review_required",
       proposalCount:
         numberFromMetadata(summary, "proposalCount") || proposals.length,
@@ -330,7 +349,8 @@ export default async function StrategicMovePhaseWorkspacePage({
         evidenceSnapshot
           ? {
               revision: evidenceSnapshot.revision,
-              latestEvidenceActivityAt: evidenceSnapshot.latestEvidenceActivityAt,
+              latestEvidenceActivityAt:
+                evidenceSnapshot.latestEvidenceActivityAt,
             }
           : null,
       );
@@ -384,9 +404,6 @@ export default async function StrategicMovePhaseWorkspacePage({
         artifact.artifact_type ===
           STAGE_READINESS_PROPOSAL_REVIEW_ARTIFACT_TYPE,
     );
-    p1ToP2WorkbookReview = p1ToP2ReviewStatusFromMetadata(
-      currentReview?.metadata,
-    );
     const currentProposalSet = approvalArtifacts.find(
       (artifact) =>
         artifact.phase === 1 &&
@@ -399,11 +416,115 @@ export default async function StrategicMovePhaseWorkspacePage({
         currentProposalSet.artifact_id,
       );
       if (downloaded?.fileFormat === "json") {
+        const proposalSetJson = JSON.parse(downloaded.bytes.toString("utf8"));
         initialStageReadinessPreview = proposalSetPreviewFromJson(
           currentProposalSet.artifact_id,
           currentProposalSet.version,
-          JSON.parse(downloaded.bytes.toString("utf8")),
+          proposalSetJson,
         );
+
+        if (currentReview && initialStageReadinessPreview?.proposalSet) {
+          const reviewDownload = await downloadArtifactBytes(
+            tctx,
+            currentReview.artifact_id,
+          );
+          if (reviewDownload?.fileFormat === "json") {
+            const reviewJson = JSON.parse(
+              reviewDownload.bytes.toString("utf8"),
+            );
+            const reviewMetadata = objectMetadata(currentReview.metadata);
+            const proposalReference = {
+              proposalSetId:
+                initialStageReadinessPreview.proposalSet.proposalSetId ?? "",
+              artifactId: currentProposalSet.artifact_id,
+              artifactVersion: currentProposalSet.version,
+            };
+            if (
+              proposalReference.proposalSetId &&
+              isReviewForStageReadinessProposalSet({
+                proposalSet: proposalReference,
+                review: reviewJson,
+              }) &&
+              isReviewForStageReadinessProposalSet({
+                proposalSet: proposalReference,
+                review: reviewMetadata,
+              })
+            ) {
+              const review = objectValue(reviewJson);
+              const reviewSummary = objectValue(review?.summary);
+              const reviewedDispositions = new Map(
+                (Array.isArray(review?.proposals) ? review.proposals : [])
+                  .map((raw) => {
+                    const proposal = objectValue(raw);
+                    return typeof proposal?.proposalId === "string" &&
+                      typeof proposal.disposition === "string"
+                      ? [proposal.proposalId, proposal.disposition]
+                      : null;
+                  })
+                  .filter((item): item is [string, string] => item !== null),
+              );
+              const savedReview = {
+                status:
+                  currentReview.status === "approved"
+                    ? "accepted"
+                    : "review_required",
+                acceptedCount: numberFromMetadata(
+                  reviewSummary,
+                  "acceptedCount",
+                ),
+                rejectedCount: numberFromMetadata(
+                  reviewSummary,
+                  "rejectedCount",
+                ),
+                needsValidationCount: numberFromMetadata(
+                  reviewSummary,
+                  "needsValidationCount",
+                ),
+                pendingCount: numberFromMetadata(reviewSummary, "pendingCount"),
+                readiness: {
+                  ready: numberFromMetadata(
+                    objectValue(reviewSummary?.readiness),
+                    "ready",
+                  ),
+                  partial: numberFromMetadata(
+                    objectValue(reviewSummary?.readiness),
+                    "partial",
+                  ),
+                  insufficientEvidence: numberFromMetadata(
+                    objectValue(reviewSummary?.readiness),
+                    "insufficientEvidence",
+                  ),
+                  unknown: numberFromMetadata(
+                    objectValue(reviewSummary?.readiness),
+                    "unknown",
+                  ),
+                },
+              };
+              initialStageReadinessPreview = {
+                ...initialStageReadinessPreview,
+                proposalSet: {
+                  ...initialStageReadinessPreview.proposalSet,
+                  status: savedReview.status,
+                  pendingCount: savedReview.pendingCount,
+                  review: savedReview,
+                  proposals:
+                    initialStageReadinessPreview.proposalSet.proposals?.map(
+                      (proposal) => ({
+                        ...proposal,
+                        disposition:
+                          proposal.proposalId &&
+                          reviewedDispositions.has(proposal.proposalId)
+                            ? reviewedDispositions.get(proposal.proposalId)
+                            : proposal.disposition,
+                      }),
+                    ),
+                },
+              };
+              p1ToP2WorkbookReview =
+                p1ToP2ReviewStatusFromMetadata(reviewMetadata);
+            }
+          }
+        }
       }
     }
   } catch {
