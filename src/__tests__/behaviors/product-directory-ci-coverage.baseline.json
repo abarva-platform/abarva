@@ -89,7 +89,6 @@
   "src/lib/pilot-dashboard/__tests__",
   "src/lib/programs/learning-writeback/__tests__",
   "src/lib/programs/mobilization/__tests__",
-  "src/lib/programs/regulatory/__tests__",
   "src/lib/programs/source-trigger/__tests__",
   "src/lib/programs/taxonomy/__tests__",
   "src/lib/programs/tower-trigger/__tests__",
