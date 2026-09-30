@@ -26,6 +26,7 @@ const ABSENCE_DECLARATION_REQUIREMENTS = new Set([
   "EVID-SRC-STR-INCUMBENT",
   "EVID-SRC-STR-SPEND-BASELINE",
   "EVID-SRC-SCOPE-FY-CONTRACT",
+  "EVID-SRC-SCOPE-CURRENT-SOW",
 ]);
 
 export type EvidenceAssessment = Pick<SourceEventEvidence, "requirementId" | "currentState"> &

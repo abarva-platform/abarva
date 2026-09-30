@@ -11,6 +11,10 @@ const extensionPath = join(
   process.cwd(),
   "supabase/migrations/20260930003800_source_scope_prior_baseline_applicability.sql",
 );
+const currentSowPath = join(
+  process.cwd(),
+  "supabase/migrations/20260930082400_source_scope_current_sow_applicability.sql",
+);
 
 function checkExpression(sql: string): string {
   const match = sql.match(
@@ -39,7 +43,7 @@ describe("Source evidence applicability storage contract", () => {
     expect(checkExpression(extension)).toBe(expected);
   });
 
-  it("keeps the application and database allowlists aligned", () => {
+  it("preserves the prior migration's allowed subset in the application", () => {
     expect(existsSync(extensionPath)).toBe(true);
     const extension = readFileSync(extensionPath, "utf8");
     const allowed = [...checkExpression(extension).matchAll(/'EVID-SRC-[A-Z-]+'/g)]
@@ -53,6 +57,19 @@ describe("Source evidence applicability storage contract", () => {
     for (const requirementId of allowed) {
       expect(permitsAbsenceDeclaration(requirementId)).toBe(true);
     }
-    expect(permitsAbsenceDeclaration("EVID-SRC-SCOPE-CURRENT-SOW")).toBe(false);
+  });
+
+  it("adds only the current-SOW absence case after the prior-baseline migration", () => {
+    expect(existsSync(currentSowPath)).toBe(true);
+    const prior = readFileSync(extensionPath, "utf8");
+    const current = readFileSync(currentSowPath, "utf8");
+    expect(current).toMatch(/^BEGIN;\s+ALTER TABLE public\.source_event_evidence_states\s+DROP CONSTRAINT source_event_evidence_applicability_check;/);
+    expect(current.trimEnd()).toMatch(/COMMIT;$/);
+    expect(checkExpression(current)).toBe(checkExpression(prior).replace(
+      "'EVID-SRC-SCOPE-FY-CONTRACT'",
+      "'EVID-SRC-SCOPE-FY-CONTRACT', 'EVID-SRC-SCOPE-CURRENT-SOW'",
+    ));
+    expect(permitsAbsenceDeclaration("EVID-SRC-SCOPE-CURRENT-SOW")).toBe(true);
+    expect(permitsAbsenceDeclaration("EVID-SRC-SCOPE-WORKFORCE")).toBe(false);
   });
 });

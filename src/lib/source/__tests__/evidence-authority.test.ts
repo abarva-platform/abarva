@@ -80,4 +80,22 @@ describe("event-specific evidence applicability", () => {
     expect(evidenceMeetsRequirement(scopeBaseline, { ...valid, currentState: "Loaded" })).toBe(false);
     expect(evidenceMeetsRequirement(scopeBaseline, { ...valid, sourceArtifactId: "artifact-1" })).toBe(false);
   });
+
+  it("resolves an absent current SOW only for the exact requirement and accountable decision", () => {
+    const valid = {
+      ...evidence("EVID-SRC-SCOPE-CURRENT-SOW"),
+      stage: "scope",
+      applicabilityStatus: "not_applicable",
+      applicabilityReason: "This net-new service has no current SOW, work order, or change-order history.",
+      applicabilityActorUserId: "event-owner",
+      applicabilityDecidedAt: "2026-09-30T00:00:00Z",
+    } as SourceEventEvidence;
+    const currentSow = requirement("EVID-SRC-SCOPE-CURRENT-SOW");
+
+    expect(evidenceMeetsRequirement(currentSow, valid)).toBe(true);
+    expect(evidenceMeetsRequirement(currentSow, { ...valid, applicabilityActorUserId: null })).toBe(false);
+    expect(evidenceMeetsRequirement(currentSow, { ...valid, applicabilityReason: "No SOW" })).toBe(false);
+    expect(evidenceMeetsRequirement(currentSow, { ...valid, sourceArtifactId: "artifact-1" })).toBe(false);
+    expect(evidenceMeetsRequirement(requirement("EVID-SRC-SCOPE-WORKFORCE"), valid)).toBe(false);
+  });
 });

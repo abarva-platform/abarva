@@ -129,6 +129,41 @@ describe("Source requirement applicability decision", () => {
     );
   });
 
+  it("records a current-SOW absence for an empty Scope requirement", async () => {
+    eventStage = "scope";
+    stateRequirementId = "EVID-SRC-SCOPE-CURRENT-SOW";
+    const sowReason = "This is a net-new service with no current SOW or change-order history.";
+    const response = await POST(request({
+      decision: "not_applicable", reason: sowReason, confirmsAbsence: true,
+    }), ctx(stateRequirementId));
+    expect(response.status).toBe(200);
+    expect(writes).toContainEqual(expect.objectContaining({
+      table: "source_event_evidence_states",
+      applicability_status: "not_applicable",
+      applicability_reason: sowReason,
+      applicability_actor_user_id: "owner-1",
+    }));
+    expect(writes[0]).not.toHaveProperty("current_state", "Available");
+    expect(azureRead.query).toHaveBeenCalledWith(
+      expect.stringContaining("tenant_key = $3"),
+      ["event-1", stateRequirementId, "test-tenant"],
+    );
+  });
+
+  it("refuses current-SOW absence outside Scope or when a source is present", async () => {
+    stateRequirementId = "EVID-SRC-SCOPE-CURRENT-SOW";
+    const body = {
+      decision: "not_applicable",
+      reason: "This is a net-new service with no current SOW or change-order history.",
+      confirmsAbsence: true,
+    };
+    expect((await POST(request(body), ctx(stateRequirementId))).status).toBe(409);
+    eventStage = "scope";
+    sourceArtifactId = "recorded-sow";
+    expect((await POST(request(body), ctx(stateRequirementId))).status).toBe(409);
+    expect(writes).toEqual([]);
+  });
+
   it("refuses a prior-baseline absence outside Scope or over an existing record", async () => {
     stateRequirementId = "EVID-SRC-SCOPE-FY-CONTRACT";
     const body = { decision: "not_applicable", reason: "There is no prior contract or verified finance baseline for this event.", confirmsAbsence: true };

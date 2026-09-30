@@ -1080,6 +1080,34 @@ describe("SourceAnalyticsCanvas stage workflow", () => {
     expect(screen.queryByText("Vendor commercials file")).toBeNull();
   });
 
+  it("offers an accountable no-current-SOW decision in the exclusions step without unlocking Continue", () => {
+    const exclusionsTask = SAMPLE_SCOPE_STAGE.tasks.find((task) => task.id === "scope.exclusions");
+    expect(exclusionsTask).toBeDefined();
+    if (!exclusionsTask) return;
+    render(
+      <SourceAnalyticsCanvas
+        event={EVENT}
+        viewStage="scope"
+        tenantName="Demo Client"
+        stageView={{ ...SAMPLE_SCOPE_STAGE, tasks: [exclusionsTask] }}
+        evidenceStates={[{
+          ...SCOPE_READY_EVIDENCE.find((row) => row.requirementId === "EVID-SRC-SCOPE-CURRENT-SOW")!,
+          currentState: "Not Requested",
+          sourceArtifactId: null,
+          sourceEventFactIds: [],
+          applicabilityStatus: "applicable",
+        }]}
+        initialWorkspace="steps"
+      />,
+    );
+
+    const needs = screen.getByTestId("source-shell-active-step-needs");
+    expect(needs).toHaveTextContent("Current SOW and change-order scope");
+    fireEvent.click(within(needs).getByRole("button", { name: "Declare no current SOW or change-order history" }));
+    expect(within(needs).getByRole("checkbox")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /Continue/ })).toBeNull();
+  });
+
   it("resets the upload pane when evidence readback advances to the next provide step", async () => {
     const provideSteps = SAMPLE_SCOPE_STAGE.tasks.filter((task) =>
       ["scope.volumetrics", "scope.app-inventory"].includes(task.id),
