@@ -54,8 +54,11 @@ it("does not infer a binding for an unknown task", () => {
     .toEqual([]);
 });
 
-it("binds the retained/vendor decision to its own persisted receipt, not the source files", () => {
+it("binds Scope decisions to their own persisted receipts, not the source files", () => {
   expect(evidenceRequirementIdForTask({ id: "scope.matrix" }))
     .toBe("EVID-SRC-SCOPE-RETAINED-VENDOR-DECISION");
-  expect(evidenceRequirementIdForTask({ id: "scope.exclusions" })).toBeNull();
+  expect(evidenceRequirementIdForTask({ id: "scope.exclusions" }))
+    .toBe("EVID-SRC-SCOPE-EXCLUSIONS-DECISION");
+  expect(requiredEvidenceRequirementIdsForTask({ id: "scope.exclusions" }, "scope"))
+    .toEqual(["EVID-SRC-SCOPE-CURRENT-SOW"]);
 });

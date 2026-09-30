@@ -933,6 +933,34 @@ describe("SourceAnalyticsCanvas stage workflow", () => {
     });
   });
 
+  it("requires explicit exclusions, owner and rationale before posting a durable Scope decision", async () => {
+    render(<SourceAnalyticsCanvas
+      event={EVENT}
+      viewStage="scope"
+      tenantName="Demo Client"
+      evidenceStates={SCOPE_READY_EVIDENCE}
+      initialWorkspace="steps"
+    />);
+    fireEvent.click(screen.getByRole("button", { name: /Confirm what's out of scope/ }));
+    expect(screen.getByRole("button", { name: "Confirm exclusions" })).toBeDisabled();
+    fireEvent.change(screen.getByLabelText("Excluded work"), { target: { value: "Security operations and application retirement are excluded from proposed supplier scope." } });
+    fireEvent.change(screen.getByLabelText("Responsible owner"), { target: { value: "Retained client operations and application owners remain accountable for excluded activities." } });
+    fireEvent.change(screen.getByLabelText("Exclusions rationale"), { target: { value: "Synthetic scope planning decision; no existing agreement or supplier acceptance is asserted." } });
+    expect(screen.getByRole("button", { name: "Confirm exclusions" })).toBeEnabled();
+    fireEvent.click(screen.getByRole("button", { name: "Confirm exclusions" }));
+    await waitFor(() => expect(global.fetch).toHaveBeenCalledWith(
+      `/api/v1/source/${EVENT.id}/evidence/EVID-SRC-SCOPE-EXCLUSIONS-DECISION/answer`,
+      expect.objectContaining({ method: "POST" }),
+    ));
+    expect(JSON.parse((global.fetch as jest.Mock).mock.calls[0][1].body)).toMatchObject({
+      scopeExclusions: {
+        excludedWork: expect.stringContaining("Security operations"),
+        responsibleOwner: expect.stringContaining("Retained client operations"),
+        rationale: expect.stringContaining("Synthetic scope planning"),
+      },
+    });
+  });
+
   it("keeps the in-step responsibility decision out of the file-upload checklist", () => {
     render(<SourceAnalyticsCanvas
       event={EVENT} viewStage="scope" tenantName="Demo Client"
@@ -940,6 +968,7 @@ describe("SourceAnalyticsCanvas stage workflow", () => {
     />);
     expect(screen.getByTestId("source-stage-evidence-checklist")).toBeInTheDocument();
     expect(screen.queryByTestId("source-stage-evidence-checklist-row-EVID-SRC-SCOPE-RETAINED-VENDOR-DECISION")).toBeNull();
+    expect(screen.queryByTestId("source-stage-evidence-checklist-row-EVID-SRC-SCOPE-EXCLUSIONS-DECISION")).toBeNull();
   });
 
   it("shows the retained/vendor step captured only from a matching persisted decision receipt", () => {

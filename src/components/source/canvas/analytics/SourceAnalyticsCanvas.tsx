@@ -3631,10 +3631,16 @@ function StepDetail({
     vendorResponsibilities: "",
     rationale: "",
   });
+  const [scopeExclusions, setScopeExclusions] = useState({
+    excludedWork: "",
+    responsibleOwner: "",
+    rationale: "",
+  });
   const activeStepId = step?.id;
   useEffect(() => {
     setUploadReadback(null);
     setScopeMatrix({ retainedResponsibilities: "", vendorResponsibilities: "", rationale: "" });
+    setScopeExclusions({ excludedWork: "", responsibleOwner: "", rationale: "" });
   }, [activeStepId]);
   if (!step) return null;
   const activeStep = step;
@@ -3652,7 +3658,9 @@ function StepDetail({
     stageKey === "strategy" && activeStep.id === "strategy.confirm" &&
     activeStep.approvalPolicyCode === "self_v1";
   const isScopeMatrix = stageKey === "scope" && activeStep.id === "scope.matrix";
+  const isScopeExclusions = stageKey === "scope" && activeStep.id === "scope.exclusions";
   const matrixReady = Object.values(scopeMatrix).every((value) => value.trim().length >= 24);
+  const exclusionsReady = Object.values(scopeExclusions).every((value) => value.trim().length >= 24);
   const canPersistAction = isStrategyConfirmation
     ? Boolean(activeStep.confirmationVersion)
     : activeStep.type !== "provide" && Boolean(evidenceRequirementId);
@@ -3686,6 +3694,8 @@ function StepDetail({
                 stage: stageKey,
                 ...(isScopeMatrix
                   ? { scopeMatrix }
+                  : isScopeExclusions
+                    ? { scopeExclusions }
                   : { answer: `${activeStep.title}: ${activeStep.help}` }),
               }),
             },
@@ -3717,7 +3727,7 @@ function StepDetail({
       return;
     }
 
-    if (!isStrategyConfirmation && !isScopeMatrix) onComplete();
+    if (!isStrategyConfirmation && !isScopeMatrix && !isScopeExclusions) onComplete();
     setActionState({ phase: "idle" });
     router.refresh();
   }
@@ -3729,8 +3739,8 @@ function StepDetail({
   ) : canPersistAction ? (
     <StepActionButton
       saving={actionState.phase === "saving"}
-      ready={!isScopeMatrix || matrixReady}
-      highlight={isScopeMatrix}
+      ready={isScopeMatrix ? matrixReady : isScopeExclusions ? exclusionsReady : true}
+      highlight={isScopeMatrix || isScopeExclusions}
       onClick={completeStepAction}
     >
       {step.cta}
@@ -3769,6 +3779,26 @@ function StepDetail({
           <textarea
             value={scopeMatrix[field]}
             onChange={(event) => setScopeMatrix((previous) => ({ ...previous, [field]: event.target.value }))}
+            rows={2}
+            maxLength={2000}
+            style={{ width: "100%", resize: "vertical", border: `1px solid ${ANALYTICS.LINE}`, borderRadius: 6, padding: "9px 10px", font: "inherit", fontWeight: 400, color: ANALYTICS.INK }}
+          />
+        </label>
+      ))}
+    </div>
+  ) : null;
+  const exclusionFields = isScopeExclusions ? (
+    <div style={{ display: "grid", gap: 10, maxWidth: 680, marginBottom: 12 }}>
+      {([
+        ["excludedWork", "Excluded work"],
+        ["responsibleOwner", "Responsible owner"],
+        ["rationale", "Exclusions rationale"],
+      ] as const).map(([field, label]) => (
+        <label key={field} style={{ display: "grid", gap: 5, color: ANALYTICS.INK, fontSize: 12, fontWeight: 700 }}>
+          {label}
+          <textarea
+            value={scopeExclusions[field]}
+            onChange={(event) => setScopeExclusions((previous) => ({ ...previous, [field]: event.target.value }))}
             rows={2}
             maxLength={2000}
             style={{ width: "100%", resize: "vertical", border: `1px solid ${ANALYTICS.LINE}`, borderRadius: 6, padding: "9px 10px", font: "inherit", fontWeight: 400, color: ANALYTICS.INK }}
@@ -3821,6 +3851,7 @@ function StepDetail({
             }}
           >
             {matrixFields}
+            {exclusionFields}
             {actionButton}
             {actionError}
           </div>
@@ -3897,6 +3928,7 @@ function StepDetail({
     <div style={{ marginLeft: 42 }}>
       {evidenceRow}
       {matrixFields}
+      {exclusionFields}
       {actionButton}
       {actionError}
     </div>

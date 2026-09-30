@@ -45,6 +45,11 @@ import {
   scopeMatrixDecisionMatchesSources,
   SCOPE_MATRIX_DECISION_ID,
 } from "@/lib/source/facts/scope-matrix-decision";
+import {
+  parseScopeExclusionDecision,
+  scopeExclusionDecisionMatchesBasis,
+  SCOPE_EXCLUSIONS_DECISION_ID,
+} from "@/lib/source/facts/scope-exclusion-decision";
 
 /** The minimal artifact shape this hydrator needs (from the registry record). */
 export interface HydrationArtifact {
@@ -133,6 +138,16 @@ export function hydrateTaskEvidenceState(
     if (task.type !== "provide") {
       const requirementId = evidenceRequirementIdForTask(task);
       if (!requirementId) return task;
+      if (requirementId === SCOPE_EXCLUSIONS_DECISION_ID) {
+        const receipt = evidenceStates.find((row) => row.requirementId === requirementId);
+        const sow = evidenceStates.find((row) => row.requirementId === "EVID-SRC-SCOPE-CURRENT-SOW");
+        const receiptRequirement = evidenceById(requirementId);
+        const decision = parseScopeExclusionDecision(receipt?.notes);
+        return receiptRequirement && evidenceMeetsRequirement(receiptRequirement, receipt) &&
+          scopeExclusionDecisionMatchesBasis(decision, sow)
+          ? { ...task, evidenceComplete: true }
+          : task;
+      }
       if (requirementId === SCOPE_MATRIX_DECISION_ID) {
         const receipt = evidenceStates.find((row) => row.requirementId === requirementId);
         const workforce = evidenceStates.find((row) => row.requirementId === "EVID-SRC-SCOPE-WORKFORCE");

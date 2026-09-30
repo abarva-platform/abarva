@@ -159,6 +159,23 @@ const STRATEGY: SourceEvidenceRequirement[] = [
 
 const WORKFLOW_DECISIONS: readonly SourceEvidenceRequirement[] = [
   req({
+    requirementId: "EVID-SRC-SCOPE-EXCLUSIONS-DECISION",
+    stage: "scope",
+    label: "Scope exclusions and accountable owner decision",
+    evidenceClass: "scope",
+    sourceLabel: "Event Owner decision based on current scope evidence or audited absence",
+    sourceSystems: ["Source decision workflow"],
+    acceptedFileTypes: [],
+    recordGrain: "one accountable exclusion decision per event and source revision",
+    criticalFields: ["excluded_work", "responsible_owner", "rationale", "actor", "decided_at"],
+    filenameTokens: [],
+    qualityChecks: ["Excluded work and accountable owner are explicit", "Current SOW source or audited absence is retained"],
+    minimumState: "Available",
+    level: "recommended",
+    description: "The Event Owner's reviewed exclusions. This does not amend or create an agreement.",
+    unlocks: "The Scope exclusions workflow step after current-scope evidence is ready.",
+  }),
+  req({
     requirementId: "EVID-SRC-SCOPE-RETAINED-VENDOR-DECISION",
     stage: "scope",
     label: "Retained and vendor responsibility decision",

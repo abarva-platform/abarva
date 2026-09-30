@@ -15,6 +15,7 @@ export const FACT_TEMPLATE_BY_TASK_ID: Record<string, string> = {
 const EVIDENCE_REQUIREMENT_BY_TASK_ID: Record<string, string> = {
   "scope.app-inventory": "EVID-SRC-SCOPE-APP-INV",
   "scope.prior-baseline": "EVID-SRC-SCOPE-FY-CONTRACT",
+  "scope.exclusions": "EVID-SRC-SCOPE-EXCLUSIONS-DECISION",
   "scope.matrix": "EVID-SRC-SCOPE-RETAINED-VENDOR-DECISION",
   "executive-decision.recommendation-packet":
     "EVID-SRC-DEC-STAKEHOLDER-ENDORSEMENT",

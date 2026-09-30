@@ -25,6 +25,8 @@ let eventStage = "scope";
 let workforceState = "Available";
 let slaArtifactId: string | null = "sla-v1";
 let factBackedSources = false;
+let currentSowArtifactId: string | null = "sow-v1";
+let currentSowAbsence = false;
 
 jest.mock("@/lib/auth/tenancy", () => ({
   requireTenancy: jest.fn(async () => tenancy),
@@ -63,6 +65,17 @@ jest.mock("@/lib/source/canvas-substrate/queries", () => ({
       requirementId: "EVID-SRC-SCOPE-SLA-BASELINE",
       currentState: "Parsed",
       ...(factBackedSources ? { sourceEventFactIds: ["sla-fact-1"] } : { sourceArtifactId: slaArtifactId }),
+    },
+    {
+      requirementId: "EVID-SRC-SCOPE-CURRENT-SOW",
+      currentState: currentSowAbsence ? "Not Requested" : "Available",
+      sourceArtifactId: currentSowArtifactId,
+      ...(currentSowAbsence ? {
+        applicabilityStatus: "not_applicable",
+        applicabilityReason: "This synthetic net-new service has no prior current SOW or change-order history.",
+        applicabilityActorUserId: "owner-1",
+        applicabilityDecidedAt: "2026-09-30T09:00:00Z",
+      } : {}),
     },
   ]),
 }));
@@ -127,7 +140,7 @@ function fakeFluentClient() {
             };
           }
           if (table === "source_event_evidence_states") {
-            if (filters.requirement_id === "EVID-SRC-SCOPE-RETAINED-VENDOR-DECISION") {
+            if (["EVID-SRC-SCOPE-RETAINED-VENDOR-DECISION", "EVID-SRC-SCOPE-EXCLUSIONS-DECISION"].includes(String(filters.requirement_id))) {
               return { data: null, error: null };
             }
             if (filters.requirement_id === "EVID-SRC-SCOPE-WORKFORCE") {
@@ -191,9 +204,61 @@ beforeEach(() => {
   workforceState = "Available";
   slaArtifactId = "sla-v1";
   factBackedSources = false;
+  currentSowArtifactId = "sow-v1";
+  currentSowAbsence = false;
 });
 
 describe("POST Source evidence answer", () => {
+  const exclusionsCtx = { params: Promise.resolve({ eventId: "evt-1", requirementId: "EVID-SRC-SCOPE-EXCLUSIONS-DECISION" }) };
+  const exclusionsBody = {
+    stage: "scope",
+    scopeExclusions: {
+      excludedWork: "Security operations and application retirement are outside the proposed supplier service boundary.",
+      responsibleOwner: "The retained client operations and application owners remain accountable for those excluded activities.",
+      rationale: "Synthetic owner decision for scope planning only, without asserting a contract exclusion or supplier acceptance.",
+    },
+  };
+
+  it("persists a structured exclusions decision bound to current SOW evidence", async () => {
+    const res = await POST(request(exclusionsBody), exclusionsCtx);
+    expect(res.status).toBe(200);
+    expect(writes).toContainEqual(expect.objectContaining({
+      table: "source_event_evidence_states",
+      payload: expect.objectContaining({
+        requirement_id: "EVID-SRC-SCOPE-EXCLUSIONS-DECISION",
+        notes: expect.stringContaining('"sourceId":"sow-v1"'),
+      }),
+    }));
+  });
+
+  it("binds an exclusions decision to a genuine audited absence, not a fabricated agreement", async () => {
+    currentSowArtifactId = null;
+    currentSowAbsence = true;
+    const res = await POST(request(exclusionsBody), exclusionsCtx);
+    expect(res.status).toBe(200);
+    expect(writes).toContainEqual(expect.objectContaining({
+      table: "source_event_evidence_states",
+      payload: expect.objectContaining({
+        source_artifact_id: null,
+        notes: expect.stringContaining('"kind":"audited_absence"'),
+      }),
+    }));
+  });
+
+  it("rejects an exclusions decision without authority, current stage, source, or explicit fields", async () => {
+    canApproveSourceStages = false;
+    expect((await POST(request(exclusionsBody), exclusionsCtx)).status).toBe(403);
+    canApproveSourceStages = true;
+    eventStage = "rfp";
+    expect((await POST(request(exclusionsBody), exclusionsCtx)).status).toBe(409);
+    eventStage = "scope";
+    currentSowArtifactId = null;
+    expect((await POST(request(exclusionsBody), exclusionsCtx)).status).toBe(422);
+    currentSowArtifactId = "sow-v1";
+    expect((await POST(request({ stage: "scope", answer: "Confirm exclusions" }), exclusionsCtx)).status).toBe(400);
+    expect(writes).toEqual([]);
+  });
+
   const matrixCtx = { params: Promise.resolve({ eventId: "evt-1", requirementId: "EVID-SRC-SCOPE-RETAINED-VENDOR-DECISION" }) };
   const matrixBody = {
     stage: "scope",
