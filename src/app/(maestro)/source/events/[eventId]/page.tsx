@@ -654,25 +654,6 @@ export default async function SourceEventDetailPage({
               realizedValueByLeverKey,
             }) ?? undefined;
 
-          // Arm the LIVE approve action on the gate ONLY when the event actually
-          // SITS on the stage being viewed (viewStage === current stage) and the
-          // user can approve. A future stage the event has not reached stays
-          // presentational (no action). Strategy is handled on its own path below.
-          if (liveStageView) {
-            const approveAction = await resolveStageGateAction(
-              event.id,
-              activeClient.key,
-              viewStage,
-              effectiveCurrentStageKey,
-              sourceJourney,
-            );
-            if (approveAction) {
-              liveStageView = {
-                ...liveStageView,
-                gate: { ...liveStageView.gate, action: approveAction },
-              };
-            }
-          }
         }
       } catch (error) {
         console.error(
@@ -740,6 +721,16 @@ export default async function SourceEventDetailPage({
       }
     }
 
+    const stageGateAction = activeClient?.key && viewStage !== "strategy"
+      ? await resolveStageGateAction(
+          event.id,
+          activeClient.key,
+          viewStage,
+          effectiveCurrentStageKey,
+          sourceJourney,
+        )
+      : null;
+
     const awardSowHandoffReadiness =
       normalizeSourceStageKey(viewStage) === "transition"
         ? buildSourceAwardSowHandoffReadiness({
@@ -762,6 +753,7 @@ export default async function SourceEventDetailPage({
         viewStage={viewStage}
         tenantName={analyticsTenantName}
         stageView={liveStageView}
+        stageGateAction={stageGateAction ?? undefined}
         verifiedFallbackSponsorAcknowledgement={verifiedDelegatedSponsorAcknowledgement}
         stepInsight={stepInsight}
         artifacts={analyticsArtifacts}

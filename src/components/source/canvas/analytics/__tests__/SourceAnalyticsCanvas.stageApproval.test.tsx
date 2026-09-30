@@ -635,6 +635,51 @@ describe("SourceAnalyticsCanvas stage workflow", () => {
     expect(routerRefresh).toHaveBeenCalled();
   });
 
+  it("uses a server-verified stage action even when the analytics view has no action", () => {
+    render(
+      <SourceAnalyticsCanvas
+        event={EVENT}
+        viewStage="scope"
+        tenantName="Demo Client"
+        stageView={COMPLETE_SCOPE_STAGE}
+        stageGateAction={{
+          eventId: EVENT.id,
+          rationale: "Reviewed the complete Scope evidence and recorded decision.",
+          confirmationKeys: ["scopeEvidenceComplete", "scopeInputsReviewed", "scopeStageFinal"],
+          redirectStageKey: "rfp",
+        }}
+        evidenceStates={SCOPE_READY_EVIDENCE}
+        artifacts={SCOPE_READY_ARTIFACTS}
+        approvalItems={[APPROVAL]}
+        initialWorkspace="approvals"
+      />,
+    );
+
+    expect(screen.getByTestId("source-stage-gate-approve")).toBeEnabled();
+    expect(screen.queryByText(/server-side approval action armed/)).toBeNull();
+  });
+
+  it("does not let a server action alone skip missing workflow inputs", () => {
+    render(
+      <SourceAnalyticsCanvas
+        event={EVENT}
+        viewStage="scope"
+        tenantName="Demo Client"
+        stageGateAction={{
+          eventId: EVENT.id,
+          rationale: "Reviewed the current Scope decision basis.",
+          confirmationKeys: ["scopeEvidenceComplete", "scopeInputsReviewed", "scopeStageFinal"],
+          redirectStageKey: "rfp",
+        }}
+        approvalItems={[APPROVAL]}
+        initialWorkspace="approvals"
+      />,
+    );
+    expect(screen.queryByTestId("source-stage-gate-approve")).toBeNull();
+    expect(screen.getByTestId("source-stage-gate-blocked"))
+      .toHaveTextContent("Required workflow inputs are still open");
+  });
+
   it("does not render a blocked stage-gate approval button", () => {
     render(
       <SourceAnalyticsCanvas
