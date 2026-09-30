@@ -1,3 +1,5 @@
+import type { SourceArtifactQualityGateMetadata } from "./quality-review";
+
 export type D09VendorDisclosureCode =
   | "buyer_value_target"
   | "internal_workflow_metadata"
@@ -65,4 +67,28 @@ export function findD09VendorDisclosureViolations(
     violations.push({ code: "internal_release_control" });
   }
   return violations;
+}
+
+export function markD09VendorDisclosureReview(args: {
+  artifactCode: string;
+  body: string;
+  qualityGate: SourceArtifactQualityGateMetadata | undefined;
+}): {
+  qualityGate: SourceArtifactQualityGateMetadata | undefined;
+  failureDetail: string | null;
+} {
+  if (args.artifactCode !== "d09_rfp_pack") {
+    return { qualityGate: args.qualityGate, failureDetail: null };
+  }
+  const violations = findD09VendorDisclosureViolations(args.body);
+  if (violations.length === 0) {
+    return { qualityGate: args.qualityGate, failureDetail: null };
+  }
+  const failureDetail = `Vendor disclosure check failed: ${violations.map(({ code }) => code).join(", ")}.`;
+  return {
+    qualityGate: args.qualityGate
+      ? { ...args.qualityGate, passed: false, finalSummary: failureDetail }
+      : undefined,
+    failureDetail,
+  };
 }

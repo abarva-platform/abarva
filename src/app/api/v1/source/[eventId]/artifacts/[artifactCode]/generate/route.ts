@@ -46,6 +46,7 @@ import {
 } from "@/lib/source/contracts/upstream-satisfaction";
 import { sanitizeClientFacingSourceDraft } from "@/lib/source/agent-generation/client-facing-hygiene";
 import { completeD09RfpGovernanceSections } from "@/lib/source/agent-generation/d09-completion";
+import { markD09VendorDisclosureReview } from "@/lib/source/agent-generation/vendor-pack-disclosure";
 import { completeD11ResponseControlSections } from "@/lib/source/agent-generation/d11-completion";
 import { generateD09ViaMapReduce } from "@/lib/source/agent-generation/d09-map-reduce";
 import {
@@ -836,6 +837,15 @@ export async function generateSourceArtifactDraft(
   // Persist body + provenance.
   const nowIso = new Date().toISOString();
   body = normalizeRequiredSectionHeadings(artifactCode, body);
+  const disclosureReview = markD09VendorDisclosureReview({
+    artifactCode,
+    body,
+    qualityGate,
+  });
+  if (disclosureReview.failureDetail) {
+    qualityGate = disclosureReview.qualityGate;
+    qualityGateFailedDetail = disclosureReview.failureDetail;
+  }
   const sectionVerification = verifyArtifactSections(
     artifactCode,
     body,

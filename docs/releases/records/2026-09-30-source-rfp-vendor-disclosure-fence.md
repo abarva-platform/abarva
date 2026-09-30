@@ -10,7 +10,7 @@
 
 ## Plain-English Summary
 
-RFP drafting no longer automatically appends buyer-only negotiation material or sends the strategy value brief to the vendor-package generator. The RFP Client Final upload refuses recognizable private buyer targets, internal workflow markers, unapproved evaluation language, and invented relative deadlines before storing the file.
+RFP drafting no longer automatically appends buyer-only negotiation material or sends the strategy value brief to the vendor-package generator. A draft with recognizable disclosure violations now fails its quality receipt after final text assembly. The RFP Client Final upload refuses the same content before storing the file.
 
 ## Layer Impact
 
@@ -27,7 +27,7 @@ RFP drafting no longer automatically appends buyer-only negotiation material or 
 ## Changes Included
 
 - D09 map-reduce instructions and completion helper.
-- D09 disclosure detector and the Client Final upload boundary.
+- D09 disclosure detector, generated-draft quality receipt, and Client Final upload boundary.
 - Focused generator, detector, and route behavior tests.
 - No migration or data build.
 
@@ -35,7 +35,8 @@ RFP drafting no longer automatically appends buyer-only negotiation material or 
 
 - Red-first detector tests for private value, workflow, negotiation, evaluation, timing, and release-control content; clean vendor pricing control passes.
 - Measured upload path: with the admission check deliberately disabled, the same unsafe D09 Client Final request returned `200` and reached the storage path; with the check restored, it returned `422` with zero blob, registry, or body writes.
-- Source agent-generation and export suites: 41 suites, 476 tests passed. Client Final route suite: 13 tests passed.
+- Generated-draft receipt: a previously passing model receipt becomes failed on the final assembled D09 text; removing the route call fails its AST wiring control.
+- Source agent-generation and export suites: 41 suites, 477 tests passed. Adjacent generation and Client Final route suites: 3 suites, 17 tests passed.
 - `npx tsc --noEmit` and scoped ESLint passed.
 - CI and signed-in post-deploy replay: pending.
 
