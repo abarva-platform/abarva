@@ -326,6 +326,13 @@ describe("CONTACT_CENTER_AGENT_ASSIST — registry shape", () => {
     expect(byFamily["solution_delivery_estimation_context"]).toBe("soft");
   });
 
+  it("accepts structured CSV workflow maps for member-service process evidence", () => {
+    const processMap = CONTACT_CENTER_AGENT_ASSIST.evidenceFamilies.find(
+      (family) => family.key === "member_service_process_map",
+    );
+    expect(processMap?.acceptedFormats).toContain("csv");
+  });
+
   it("renders soft P2 delivery-estimation rationale as optional, not required", () => {
     const resolved = resolveArchetypeRequirements(
       CONTACT_CENTER_AGENT_ASSIST,

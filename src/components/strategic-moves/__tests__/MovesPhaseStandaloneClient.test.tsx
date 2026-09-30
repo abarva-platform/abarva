@@ -2050,6 +2050,110 @@ describe("MovesPhaseStandaloneClient", () => {
     expect(uploadedEvidenceArtifacts).toHaveLength(0);
   });
 
+  it("routes contact-center evidence by its declared family and leaves unknown files unmapped", async () => {
+    const base = makeCurrentStateReadiness();
+    const families = [
+      [
+        "member_service_process_map",
+        "Member-service process and escalation map",
+      ],
+      [
+        "member_service_metrics_baseline",
+        "Contact-center performance baseline",
+      ],
+      [
+        "member_service_systems_data_landscape",
+        "Member-service systems and data landscape",
+      ],
+      [
+        "knowledge_policy_content_inventory",
+        "Knowledge, policy, and script inventory",
+      ],
+    ] as const;
+
+    render(
+      <MovesPhaseStandaloneClient
+        carriesForwardContent={[]}
+        currentStateReadiness={{
+          ...base,
+          archetypeId: "CONTACT_CENTER_AGENT_ASSIST",
+          archetypeName: "Contact Center Agent Assist",
+          instruments: families.map(([key, label]) => ({
+            ...base.instruments[0],
+            key,
+            label,
+            kind:
+              key === "member_service_metrics_baseline"
+                ? "metric_baseline"
+                : "document",
+            severity: "hard",
+            status: "missing",
+            backingTable: null,
+            documentFamily: true,
+            pendingReviews: [],
+            evidenceDigest: [],
+          })),
+          hardGaps: families.map(([key]) => key),
+        }}
+        evidenceNeedPackets={[]}
+        initialSubstepKey="current"
+        move={makeMove({ currentPhase: 2, phaseLabel: "P2 Discover & Diagnose" })}
+        phaseNum={2}
+        phaseTallies={[...phaseTallies]}
+      />,
+    );
+
+    fireEvent.change(
+      screen.getByLabelText("Upload P2 current-state evidence files"),
+      {
+        target: {
+          files: [
+            new File(["workflow"], "workflow_walkthrough.csv", {
+              type: "text/csv",
+            }),
+            new File(["metrics"], "monthly_kpi_baseline.csv", {
+              type: "text/csv",
+            }),
+            new File(["systems"], "system_inventory.csv", { type: "text/csv" }),
+            new File(["knowledge"], "knowledge_inventory.csv", {
+              type: "text/csv",
+            }),
+            new File(["unrelated"], "unmapped_notes.csv", { type: "text/csv" }),
+          ],
+        },
+      },
+    );
+
+    await waitFor(() => {
+      expect(currentStateFamilyIngests).toEqual([
+        {
+          family: "member_service_process_map",
+          fileName: "workflow_walkthrough.csv",
+          phase: 2,
+        },
+        {
+          family: "member_service_metrics_baseline",
+          fileName: "monthly_kpi_baseline.csv",
+          phase: 2,
+        },
+        {
+          family: "member_service_systems_data_landscape",
+          fileName: "system_inventory.csv",
+          phase: 2,
+        },
+        {
+          family: "knowledge_policy_content_inventory",
+          fileName: "knowledge_inventory.csv",
+          phase: 2,
+        },
+      ]);
+    });
+    expect(document.body.textContent?.replace(/\s+/g, " ") ?? "").toMatch(
+      /No open current-state family matched this file/i,
+    );
+    expect(uploadedEvidenceArtifacts).toHaveLength(0);
+  });
+
   it("uploads workshop notes as review-pending session artifacts instead of mis-mapping them to a P2 family", async () => {
     render(
       <MovesPhaseStandaloneClient
@@ -2057,7 +2161,10 @@ describe("MovesPhaseStandaloneClient", () => {
         currentStateReadiness={makeCurrentStateReadiness()}
         evidenceNeedPackets={[]}
         initialSubstepKey="current"
-        move={makeMove({ currentPhase: 2, phaseLabel: "P2 Discover & Diagnose" })}
+        move={makeMove({
+          currentPhase: 2,
+          phaseLabel: "P2 Discover & Diagnose",
+        })}
         phaseNum={2}
         phaseTallies={[...phaseTallies]}
       />,
@@ -2659,10 +2766,7 @@ describe("MovesPhaseStandaloneClient", () => {
       <MovesPhaseStandaloneClient
         carriesForwardContent={[]}
         evidenceNeedPackets={[]}
-        move={makeMove({
-          currentPhase: 4,
-          phaseLabel: "P4 Roadmap & Business Case",
-        })}
+        move={makeMove({ currentPhase: 4, phaseLabel: "P4 Roadmap & Business Case" })}
         phaseNum={4}
         phaseTallies={[...phaseTallies]}
       />,
@@ -2865,7 +2969,10 @@ describe("MovesPhaseStandaloneClient", () => {
       <MovesPhaseStandaloneClient
         carriesForwardContent={[]}
         evidenceNeedPackets={[]}
-        move={makeMove({ currentPhase: 4, phaseLabel: "P4 Roadmap & Business Case" })}
+        move={makeMove({
+          currentPhase: 4,
+          phaseLabel: "P4 Roadmap & Business Case",
+        })}
         phaseNum={4}
         phaseTallies={[...phaseTallies]}
         riskAssessmentEnabled
