@@ -1,5 +1,4 @@
 [
-  "src/lib/programs/evidence-readiness/__tests__",
   "src/lib/programs/learning-writeback/__tests__",
   "src/lib/programs/mobilization/__tests__",
   "src/lib/programs/regulatory/__tests__",
