@@ -1731,6 +1731,22 @@ jobs:
           npx jest src/lib/source/nda/__tests__
           --no-coverage --ci
 
+      # Item T-776, the eighth stale-suite draw. Three fully-unrun directories,
+      # each judged whole and each executed file by file on base `9f17c47d6f`:
+      # 12 suites, 236 cases, all green, none reading a repository file, and
+      # every subject imported by a live product path (the agent chat route,
+      # the Source CXO report route). Named as DIRECTORIES without a trailing
+      # slash, and each line leaves `product-directory-ci-coverage.baseline.json`
+      # in the same change. The other two drawn directories are held behind
+      # declared scanner rows in `docs/architecture/t776-stale-suite-triage.json`.
+      - name: Run the T-776 agent output-discipline, voice-doctrine and Source expert-judgment suites
+        run: >-
+          npx jest
+          src/lib/agent/output-discipline
+          src/lib/agent/voice-doctrine/__tests__
+          src/lib/source/expert-judgment/__tests__
+          --no-coverage --ci
+
       # Item T-495, claimable half, suite 2 of 11.
       # `src/__tests__/hygiene/learn-layout-single-nav.test.ts` asserted the
       # single-top-nav rule for `/home/learn` over the BYTES of two files, and was
