@@ -483,7 +483,7 @@ Convert a signal, pain point, CEO note, or hypothesis into a structured Move wit
 | P0.2 | Classify archetype | Determine which AbarVa archetype best fits. Present with confidence rationale. If ambiguous, present top 2. |
 | P0.3 | Propose sponsor candidate | Identify 1-2 executive sponsor candidates from ACL/people data. Never fabricate a name. |
 | P0.4 | Scope boundary | Define what is IN and OUT of scope. Requires human deliberation - not self-approvable. |
-| P0.5 | Evidence family selection | Identify which evidence types will be gathered in P2. Planning only - no evidence gathered in P0. |
+| P0.5 | Evidence family selection | Identify which evidence types will be gathered in P2. Before sponsor approval, collect at least one uploaded, parsed, and human-reviewed source file supporting the P0 mandate or scope; detailed discovery evidence remains in P2. |
 | P0.6 | Value hypothesis seed | Draft preliminary value hypothesis with lever identification and magnitude (labeled UNVALIDATED_HYPOTHESIS). |
 
 **Evidence requirements**

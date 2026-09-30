@@ -3258,6 +3258,10 @@ describe("MovesPhaseStandaloneClient", () => {
       <MovesPhaseStandaloneClient
         carriesForwardContent={[]}
         evidenceNeedPackets={[]}
+        currentStateReadiness={{
+          ...makeCurrentStateReadiness(),
+          hardGaps: [],
+        }}
         initialSubstepKey="approve"
         move={makeMove({
           currentPhase: 2,
@@ -3302,7 +3306,7 @@ describe("MovesPhaseStandaloneClient", () => {
       ),
     ).toBeInTheDocument();
     expect(screen.getByTestId("mxw-decision-surface")).toHaveTextContent(
-      "Resolve 1 hard gate blocker before advancing",
+      "Complete 8 phase inputs before Approve & Build.",
     );
     expect(screen.getByTestId("mxw-decision-surface")).toHaveTextContent(
       "Hard: Discovery synthesis signed off",

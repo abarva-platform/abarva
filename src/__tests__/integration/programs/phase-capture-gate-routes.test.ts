@@ -4,6 +4,7 @@ const getProgramById = jest.fn();
 const getModuleState = jest.fn();
 const getPhaseSnapshots = jest.fn();
 const loadApprovedMoveEvidenceSnapshot = jest.fn();
+const loadP0MinimumEvidenceStatus = jest.fn();
 const loadUserProgramAccessPolicy = jest.fn();
 const getAzureWriteFluentClient = jest.fn();
 const writeProgramAuditLogBestEffort = jest.fn();
@@ -27,6 +28,10 @@ jest.mock("@/lib/programs/queries", () => ({
 
 jest.mock("@/lib/programs/approved-move-evidence-snapshot", () => ({
   loadApprovedMoveEvidenceSnapshot,
+}));
+
+jest.mock("@/lib/programs/p0-source-evidence", () => ({
+  loadP0MinimumEvidenceStatus,
 }));
 
 jest.mock("@/lib/auth/program-access-policy", () => ({
@@ -117,6 +122,16 @@ describe("Moves signed-in phase capture/gate routes", () => {
     getProgramById.mockResolvedValue(program);
     getModuleState.mockResolvedValue([]);
     getPhaseSnapshots.mockResolvedValue([]);
+    loadApprovedMoveEvidenceSnapshot.mockResolvedValue({
+      revision: "approved-evidence-revision",
+      latestEvidenceActivityAt: "2026-09-29T17:00:00.000Z",
+    });
+    loadP0MinimumEvidenceStatus.mockResolvedValue({
+      available: true,
+      approvedSourceFileCount: 1,
+      pendingReviewCount: 0,
+      evidenceTitles: ["P0 source file"],
+    });
     loadUserProgramAccessPolicy.mockResolvedValue({ canApproveGates: true });
     getAzureWriteFluentClient.mockReturnValue(makeWriteClient());
     writeProgramAuditLogBestEffort.mockResolvedValue(undefined);

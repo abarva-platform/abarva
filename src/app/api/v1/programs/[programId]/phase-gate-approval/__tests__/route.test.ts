@@ -15,6 +15,7 @@ const mockGetProgramById = jest.fn();
 const mockGetModuleState = jest.fn();
 const mockGetPhaseSnapshots = jest.fn();
 const mockLoadApprovedMoveEvidenceSnapshot = jest.fn();
+const mockLoadP0MinimumEvidenceStatus = jest.fn();
 const mockEvaluateGate = jest.fn();
 const mockAdvancePhase = jest.fn();
 const mockCloseP0OnApproval = jest.fn();
@@ -52,6 +53,11 @@ jest.mock("@/lib/programs/queries", () => ({
 jest.mock("@/lib/programs/approved-move-evidence-snapshot", () => ({
   loadApprovedMoveEvidenceSnapshot: (...args: unknown[]) =>
     mockLoadApprovedMoveEvidenceSnapshot(...args),
+}));
+
+jest.mock("@/lib/programs/p0-source-evidence", () => ({
+  loadP0MinimumEvidenceStatus: (...args: unknown[]) =>
+    mockLoadP0MinimumEvidenceStatus(...args),
 }));
 
 jest.mock("@/lib/programs/governance", () => ({
@@ -144,6 +150,12 @@ beforeEach(() => {
     latestEvidenceActivityAt: "2026-09-29T16:00:00.000Z",
     approvedEvidenceCount: 1,
     rows: [],
+  });
+  mockLoadP0MinimumEvidenceStatus.mockResolvedValue({
+    available: true,
+    approvedSourceFileCount: 1,
+    pendingReviewCount: 0,
+    evidenceTitles: ["p0-intake.md"],
   });
   mockGetPhaseSnapshots.mockImplementation(
     async (_ctx: unknown, _programId: string, phase: number) =>
@@ -902,6 +914,72 @@ describe("POST /api/v1/programs/[programId]/phase-gate-approval", () => {
     });
     expect(mockEvaluateGate).not.toHaveBeenCalled();
     expect(mockAdvancePhase).not.toHaveBeenCalled();
+  });
+
+  it("blocks P0 approval until one uploaded source file has approved review", async () => {
+    mockGetProgramById.mockResolvedValue({
+      id: "prog-1",
+      currentPhase: 0,
+      gatesPassed: [],
+    });
+    mockGetPhaseCaptureSections.mockReturnValue([
+      { key: "brief", label: "Brief" },
+    ]);
+    mockGetModuleState.mockResolvedValue([
+      { moduleKey: "phase_0_brief", status: "completed" },
+    ]);
+    mockLoadP0MinimumEvidenceStatus.mockResolvedValue({
+      available: true,
+      approvedSourceFileCount: 0,
+      pendingReviewCount: 1,
+      evidenceTitles: [],
+    });
+
+    const { POST } = await import("../route");
+    const res = await POST(req({ phase: 0 }) as never, { params });
+
+    expect(res.status).toBe(409);
+    await expect(res.json()).resolves.toMatchObject({
+      error: "p0_evidence_required",
+      requiredSourceFiles: 1,
+      approvedSourceFiles: 0,
+      pendingReviewCount: 1,
+    });
+    expect(mockCloseP0OnApproval).not.toHaveBeenCalled();
+    expect(mockAdvancePhase).not.toHaveBeenCalled();
+  });
+
+  it("reports P0 as not approvable while the only file is awaiting review", async () => {
+    mockGetProgramById.mockResolvedValue({
+      id: "prog-1",
+      currentPhase: 0,
+      gatesPassed: [],
+    });
+    mockGetPhaseCaptureSections.mockReturnValue([
+      { key: "brief", label: "Brief" },
+    ]);
+    mockGetModuleState.mockResolvedValue([
+      { moduleKey: "phase_0_brief", status: "completed" },
+    ]);
+    mockLoadP0MinimumEvidenceStatus.mockResolvedValue({
+      available: true,
+      approvedSourceFileCount: 0,
+      pendingReviewCount: 1,
+      evidenceTitles: [],
+    });
+
+    const { GET } = await import("../route");
+    const res = await GET(getReq(0) as never, { params });
+
+    expect(res.status).toBe(200);
+    await expect(res.json()).resolves.toMatchObject({
+      canApprove: false,
+      p0Evidence: {
+        available: true,
+        approvedSourceFileCount: 0,
+        pendingReviewCount: 1,
+      },
+    });
   });
 
   it("carries P1-P5 capture gaps as audit context when the hard gate passes", async () => {
