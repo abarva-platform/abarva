@@ -31,6 +31,7 @@ Bounded D09 model context, revised fallback prompt, and vendor-only completion w
 ## QA / Validation
 
 Red-first tests reproduced the private-context leak in section generation, fallback drafting, quality review, and completion. A deliberate reintroduction of buyer-only scope into the bounded context failed the negative test; restoring the boundary returned it to green. Local TypeScript check passed. All 15 Source generation suites passed (171 tests); adjacent generation and Client Final route suites passed (17 tests). CI and signed-in runtime results will be recorded separately.
+The first behavior-coverage CI run found a stale derived Source canvas import-closure count (committed 438, measured 439) after the new bounded-context module entered that graph. Regenerating the coverage artifact through its documented measurement command recorded 439; the focused coverage suite then passed 21/21 assertions. The full CI rerun is still required before merge.
 
 ## Rollout Plan
 
