@@ -351,6 +351,7 @@ export function IndicativePlanBlock({ plan }: { plan: CurrentStatePlan }) {
 export type PendingEvidenceReview = {
   evidenceId: string;
   reviewId?: string;
+  sourceArtifactId?: string | null;
   title: string;
   familyKey?: string;
   phase?: number | null;
@@ -370,11 +371,13 @@ type ReviewSignalField =
 
 export function EvidenceReviewEditor({
   review,
+  programId,
   busy,
   disabled,
   onDecision,
 }: {
   review: PendingEvidenceReview;
+  programId?: string;
   busy: boolean;
   disabled: boolean;
   onDecision: (
@@ -446,6 +449,22 @@ export function EvidenceReviewEditor({
         </span>
       </summary>
       <div style={{ display: "grid", gap: 8, marginTop: 10 }}>
+        {review.sourceArtifactId && programId ? (
+          <div style={{ display: "flex", gap: 12, fontSize: 12 }}>
+            <a
+              href={`/api/v1/programs/${programId}/artifacts/${review.sourceArtifactId}/download?inline=1`}
+              target="_blank"
+              rel="noreferrer"
+            >
+              Open original
+            </a>
+            <a
+              href={`/api/v1/programs/${programId}/artifacts/${review.sourceArtifactId}/download`}
+            >
+              Download original
+            </a>
+          </div>
+        ) : null}
         <label
           style={{ display: "grid", gap: 4, fontSize: 11, fontWeight: 650 }}
         >
@@ -1060,6 +1079,7 @@ export function CurrentStateReadinessPanel({
                     <EvidenceReviewEditor
                       key={review.evidenceId}
                       review={review}
+                      programId={programId}
                       busy={busy === `${i.key}:${review.evidenceId}`}
                       disabled={busy !== null}
                       onDecision={(decision, extraction) =>

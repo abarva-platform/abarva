@@ -379,16 +379,16 @@ export function buildContextExtractReviewModel(
     freshnessStatus !== "fresh"
       ? "This is a saved context snapshot, not a live view of approved evidence. Its attached-evidence count and content may be out of date."
       : extract.sourceMode === "candidate_preview"
-      ? "AbarVa reviewed an explicitly acknowledged candidate preview. It is visible for review, not treated as active runtime truth."
-      : `AbarVa reviewed active Move evidence and active module context for P${phase}. Candidate preview data stayed out of the default path.`;
+        ? "AbarVa reviewed an explicitly acknowledged candidate preview. It is visible for review, not treated as active runtime truth."
+        : `AbarVa reviewed active Move evidence and active module context for P${phase}. Candidate preview data stayed out of the default path.`;
   const nextPhaseMessage =
     freshnessStatus !== "fresh"
       ? "Rebuild the context snapshot and phase outputs from the current approved evidence before relying on them for a phase decision."
       : gaps.length > 0
-      ? `Do not treat P${targetPhase} as evidence-complete yet. Resolve the listed gaps before relying on this extract for phase decisions.`
-      : attached.length > 0
-        ? `P${targetPhase} has usable attached evidence, but phase advancement still requires the governed Approve & Build gate. Suggested and excluded context remain review-only until a human approves or loads it as evidence.`
-        : `No agent-ready evidence is attached yet. Upload or approve source-backed evidence before using this extract for P${targetPhase}.`;
+        ? `Do not treat P${targetPhase} as evidence-complete yet. Resolve the listed gaps before relying on this extract for phase decisions.`
+        : attached.length > 0
+          ? `P${targetPhase} has usable attached evidence, but phase advancement still requires the governed Approve & Build gate. Suggested and excluded context remain review-only until a human approves or loads it as evidence.`
+          : `No agent-ready evidence is attached yet. Upload or approve source-backed evidence before using this extract for P${targetPhase}.`;
   return {
     artifact,
     sourceModeLabel,
@@ -613,7 +613,8 @@ function ContextExtractReviewPanel({
           captured when it was generated, not the current approved set
           {model.currentApprovedEvidenceCount != null
             ? ` (${model.currentApprovedEvidenceCount} currently approved)`
-            : ""}. Rebuild before using it for a phase decision.
+            : ""}
+          . Rebuild before using it for a phase decision.
         </div>
       )}
 
@@ -1153,26 +1154,27 @@ function ArtifactRow({
               </span>
             )}
             <StatusChip status={a.status} />
-            {a.evidenceSnapshotStatus && a.evidenceSnapshotStatus !== "current" && (
-              <span
-                role="status"
-                title="Approved evidence changed after this artifact was built, or its evidence revision cannot be verified. Rebuild and review before phase close."
-                style={{
-                  fontSize: 10,
-                  fontWeight: 750,
-                  color: "#8a5712",
-                  background: "#fff3d6",
-                  border: "1px solid #ead09d",
-                  padding: "1px 6px",
-                  borderRadius: 4,
-                  textTransform: "uppercase",
-                }}
-              >
-                {a.evidenceSnapshotStatus === "stale"
-                  ? "Evidence stale"
-                  : "Evidence unverified"}
-              </span>
-            )}
+            {a.evidenceSnapshotStatus &&
+              a.evidenceSnapshotStatus !== "current" && (
+                <span
+                  role="status"
+                  title="Approved evidence changed after this artifact was built, or its evidence revision cannot be verified. Rebuild and review before phase close."
+                  style={{
+                    fontSize: 10,
+                    fontWeight: 750,
+                    color: "#8a5712",
+                    background: "#fff3d6",
+                    border: "1px solid #ead09d",
+                    padding: "1px 6px",
+                    borderRadius: 4,
+                    textTransform: "uppercase",
+                  }}
+                >
+                  {a.evidenceSnapshotStatus === "stale"
+                    ? "Evidence stale"
+                    : "Evidence unverified"}
+                </span>
+              )}
             {previewOnly && (
               <span
                 title="HTML is a browser preview only. Client-final artifacts must be DOCX or PPTX."
@@ -2036,14 +2038,39 @@ export function FileCabinetPanel({
             {downloadSummary || `${totalCurrent} current files.`}
           </p>
         </div>
-        <div style={{ display: "flex", gap: 8, alignItems: "end", flexWrap: "wrap" }}>
-          <label style={{ display: "grid", gap: 3, color: "#5A6472", fontSize: 10, fontWeight: 700 }}>
+        <div
+          style={{
+            display: "flex",
+            gap: 8,
+            alignItems: "end",
+            flexWrap: "wrap",
+          }}
+        >
+          <label
+            style={{
+              display: "grid",
+              gap: 3,
+              color: "#5A6472",
+              fontSize: 10,
+              fontWeight: 700,
+            }}
+          >
             <span>Upload type</span>
             <select
               aria-label="File Cabinet upload type"
-              onChange={(event) => setUploadFamily(event.target.value as typeof uploadFamily)}
+              onChange={(event) =>
+                setUploadFamily(event.target.value as typeof uploadFamily)
+              }
               value={uploadFamily}
-              style={{ minHeight: 32, border: "1px solid #D5DAE2", borderRadius: 5, background: "#fff", color: "#1A1A18", fontSize: 11.5, padding: "5px 8px" }}
+              style={{
+                minHeight: 32,
+                border: "1px solid #D5DAE2",
+                borderRadius: 5,
+                background: "#fff",
+                color: "#1A1A18",
+                fontSize: 11.5,
+                padding: "5px 8px",
+              }}
             >
               <option value="uploaded_evidence">Evidence</option>
               <option value="session_artifact">Workshop / session notes</option>
@@ -2074,7 +2101,11 @@ export function FileCabinetPanel({
               cursor: uploadState === "uploading" ? "default" : "pointer",
             }}
           >
-            {uploadState === "uploading" ? "Uploading…" : uploadFamily === "session_artifact" ? "Upload session file" : "Upload evidence"}
+            {uploadState === "uploading"
+              ? "Uploading…"
+              : uploadFamily === "session_artifact"
+                ? "Upload session file"
+                : "Upload evidence"}
           </button>
           <button
             onClick={() => void load()}
@@ -2148,6 +2179,7 @@ export function FileCabinetPanel({
               <EvidenceReviewEditor
                 key={review.evidenceId}
                 review={review}
+                programId={moveId}
                 busy={reviewingEvidenceId === review.evidenceId}
                 disabled={reviewingEvidenceId !== null}
                 onDecision={(decision, extraction) =>

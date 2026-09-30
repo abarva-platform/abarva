@@ -1212,8 +1212,7 @@ export function MovesPhaseStandaloneClient({
   ];
   const phaseCaptureBlocker = !phaseEvidenceCheckAvailable
     ? "Evidence readiness could not be verified. Refresh this phase before Approve & Build."
-    : currentStateEvidenceGapCount !== null &&
-        currentStateEvidenceGapCount > 0
+    : currentStateEvidenceGapCount !== null && currentStateEvidenceGapCount > 0
       ? `${currentStateEvidenceGapCount} current-state evidence famil${
           currentStateEvidenceGapCount === 1 ? "y" : "ies"
         } still need approval or coverage before Approve & Build.`
@@ -2322,7 +2321,8 @@ export function MovesPhaseStandaloneClient({
               </div>
               {!collapsedRail && (
                 <p className="mxw-foot">
-                  <b>aVa</b> guides P0-P5 · Tower tracks execution after handoff.
+                  <b>aVa</b> guides P0-P5 · Tower tracks execution after
+                  handoff.
                 </p>
               )}
             </aside>
@@ -3358,7 +3358,7 @@ function phaseCaptureStatusForSection(
           )
         : section.structured === "estimate-model"
           ? evaluateEstimateModel(persisted).readyForApproval
-        : true;
+          : true;
   if (!structuredValid) {
     return { label: "Needs valid details", complete: false, tone: "open" };
   }
@@ -3730,7 +3730,8 @@ function PhaseContractStepsCanvas({
                   onClick={onOpenFiles}
                   type="button"
                 >
-                  {progressHeaderState.label} · {progressHeaderState.openEvidenceCount}
+                  {progressHeaderState.label} ·{" "}
+                  {progressHeaderState.openEvidenceCount}
                 </button>
               ) : (
                 <span
@@ -3995,7 +3996,7 @@ function FinderStepsColumns({
                             ? "Needs approved evidence"
                             : status.label === "Evidence check unavailable"
                               ? "Evidence check unavailable"
-                            : status.label}
+                              : status.label}
                       </span>
                     ) : status.complete ? (
                       <span className="mxw-finder-step-state">Captured</span>
@@ -4096,11 +4097,13 @@ function FinderStepsColumns({
       >
         <header className="mxw-contract-detail-top">
           <small>
-            Step {selectedSection
+            Step{" "}
+            {selectedSection
               ? phaseCaptureSections.findIndex(
                   (section) => section.key === selectedSection.key,
                 ) + 1
-              : phaseCaptureSections.length + substepIndex + 1} of {phaseCaptureSections.length + phase.substeps.length}
+              : phaseCaptureSections.length + substepIndex + 1}{" "}
+            of {phaseCaptureSections.length + phase.substeps.length}
           </small>
           <h2>
             {selectedSection?.label ??
@@ -4115,7 +4118,8 @@ function FinderStepsColumns({
                   onClick={onOpenFiles}
                   type="button"
                 >
-                  {progressHeaderState.label} · {progressHeaderState.openEvidenceCount}
+                  {progressHeaderState.label} ·{" "}
+                  {progressHeaderState.openEvidenceCount}
                 </button>
               ) : (
                 <span
@@ -4739,7 +4743,8 @@ function PhaseBody({
     carriesForwardContent,
   });
   const phaseInputsReady = phase.phase === 0 || !phaseCaptureBlocker;
-  const evidenceReady = phaseEvidencePassed || isHistoricalPhase || gateApproved;
+  const evidenceReady =
+    phaseEvidencePassed || isHistoricalPhase || gateApproved;
   const generatedArtifactCount = phaseBuildArtifacts.length;
   const gateProofCount = evidenceCount || generatedArtifactCount;
   const gateProofNoun =
@@ -6041,7 +6046,9 @@ function CurrentStateFamilyUploadPanel({
 }) {
   const inputRef = useRef<HTMLInputElement | null>(null);
   const [busy, setBusy] = useState(false);
-  const [uploadMode, setUploadMode] = useState<"readiness_evidence" | "session_notes">("readiness_evidence");
+  const [uploadMode, setUploadMode] = useState<
+    "readiness_evidence" | "session_notes"
+  >("readiness_evidence");
   const [message, setMessage] = useState("");
   const [results, setResults] = useState<FamilyUploadResult[]>([]);
   const documentFamilies = readiness.instruments.filter(
@@ -6073,6 +6080,8 @@ function CurrentStateFamilyUploadPanel({
     );
     const payload = (await res.json().catch(() => ({}))) as {
       reviewState?: string;
+      sourceArtifactId?: string;
+      sourceArtifactStored?: boolean;
       detail?: string;
       error?: string;
     };
@@ -6088,6 +6097,16 @@ function CurrentStateFamilyUploadPanel({
           `Upload failed (HTTP ${res.status})`,
       };
     }
+    if (!payload.sourceArtifactId || payload.sourceArtifactStored !== true) {
+      return {
+        familyKey: instrument.key,
+        familyLabel: instrument.label,
+        fileName: file.name,
+        status: "error",
+        detail:
+          "The original source was not retained in the Artifact Vault, so this upload is not available for review or generation.",
+      };
+    }
     return {
       familyKey: instrument.key,
       familyLabel: instrument.label,
@@ -6095,8 +6114,8 @@ function CurrentStateFamilyUploadPanel({
       status: "uploaded",
       detail:
         payload.reviewState === "committed"
-          ? "Committed to readiness"
-          : "Uploaded for review",
+          ? "Original retained in the Artifact Vault; committed to readiness"
+          : "Original retained in the Artifact Vault; awaiting human review",
     };
   }
 
@@ -6166,7 +6185,9 @@ function CurrentStateFamilyUploadPanel({
     };
   }
 
-  async function uploadSessionArtifact(file: File): Promise<FamilyUploadResult> {
+  async function uploadSessionArtifact(
+    file: File,
+  ): Promise<FamilyUploadResult> {
     const form = new FormData();
     form.append("file", file);
     form.append("phase", String(phase));
@@ -6180,15 +6201,30 @@ function CurrentStateFamilyUploadPanel({
       ok?: boolean;
       detail?: string;
       error?: string;
-      evidence?: { id?: string | null; reviewId?: string | null; status?: string; warning?: string };
+      evidence?: {
+        id?: string | null;
+        reviewId?: string | null;
+        status?: string;
+        warning?: string;
+      };
     };
-    if (!res.ok || !payload.ok || !payload.evidence?.id || !payload.evidence.reviewId || payload.evidence.status === "not_captured") {
+    if (
+      !res.ok ||
+      !payload.ok ||
+      !payload.evidence?.id ||
+      !payload.evidence.reviewId ||
+      payload.evidence.status === "not_captured"
+    ) {
       return {
         familyKey: "session_artifact",
         familyLabel: "Workshop / session notes",
         fileName: file.name,
         status: "error",
-        detail: payload.evidence?.warning || payload.detail || payload.error || "Parsing and review registration did not complete; this file cannot ground a build.",
+        detail:
+          payload.evidence?.warning ||
+          payload.detail ||
+          payload.error ||
+          "Parsing and review registration did not complete; this file cannot ground a build.",
       };
     }
     return {
@@ -6196,7 +6232,8 @@ function CurrentStateFamilyUploadPanel({
       familyLabel: "Workshop / session notes",
       fileName: file.name,
       status: "uploaded",
-      detail: "Parsed and awaiting human review; it cannot ground generation until approved.",
+      detail:
+        "Parsed and awaiting human review; it cannot ground generation until approved.",
     };
   }
 
@@ -6254,9 +6291,11 @@ function CurrentStateFamilyUploadPanel({
         (row) => row.status === "uploaded",
       ).length;
       const failed = nextResults.length - succeeded;
-      setMessage(uploadMode === "session_notes"
-        ? `${succeeded} session file${succeeded === 1 ? "" : "s"} parsed and awaiting human review${failed ? `; ${failed} failed` : ""}. Approved evidence is required before generation.`
-        : `${succeeded} mapped upload${succeeded === 1 ? "" : "s"} created${failed ? `; ${failed} failed` : ""}. Review-required items must still be accepted before they become gate-ready.`);
+      setMessage(
+        uploadMode === "session_notes"
+          ? `${succeeded} session file${succeeded === 1 ? "" : "s"} parsed and awaiting human review${failed ? `; ${failed} failed` : ""}. Approved evidence is required before generation.`
+          : `${succeeded} mapped upload${succeeded === 1 ? "" : "s"} created${failed ? `; ${failed} failed` : ""}. Review-required items must still be accepted before they become gate-ready.`,
+      );
       onRefreshPhase();
     } finally {
       setBusy(false);
@@ -6288,10 +6327,14 @@ function CurrentStateFamilyUploadPanel({
           <span>Upload type</span>
           <select
             aria-label="P2 upload mode"
-            onChange={(event) => setUploadMode(event.target.value as typeof uploadMode)}
+            onChange={(event) =>
+              setUploadMode(event.target.value as typeof uploadMode)
+            }
             value={uploadMode}
           >
-            <option value="readiness_evidence">Evidence mapped to P2 readiness</option>
+            <option value="readiness_evidence">
+              Evidence mapped to P2 readiness
+            </option>
             <option value="session_notes">Workshop / session notes</option>
           </select>
         </label>
@@ -6367,7 +6410,9 @@ function EvidenceUploadControl({
 }) {
   const inputRef = useRef<HTMLInputElement | null>(null);
   const [status, setStatus] = useState<UploadWorkStatus>("idle");
-  const [uploadFamily, setUploadFamily] = useState<"uploaded_evidence" | "session_artifact">("uploaded_evidence");
+  const [uploadFamily, setUploadFamily] = useState<
+    "uploaded_evidence" | "session_artifact"
+  >("uploaded_evidence");
   const [message, setMessage] = useState("");
   const [phaseArtifacts, setPhaseArtifacts] = useState<PhaseEvidenceArtifact[]>(
     [],
@@ -6375,14 +6420,23 @@ function EvidenceUploadControl({
 
   const loadPhaseArtifacts = useCallback(async () => {
     try {
-      const responses = await Promise.all(["uploaded_evidence", "session_artifact"].map((family) =>
-        fetch(`/api/v1/programs/${moveId}/artifacts?family=${family}`, { credentials: "include" }),
-      ));
-      if (responses.some((res) => !res.ok)) throw new Error("Artifact list unavailable");
-      const payloads = await Promise.all(responses.map((res) => res.json().catch(() => ({})))) as Array<{
+      const responses = await Promise.all(
+        ["uploaded_evidence", "session_artifact"].map((family) =>
+          fetch(`/api/v1/programs/${moveId}/artifacts?family=${family}`, {
+            credentials: "include",
+          }),
+        ),
+      );
+      if (responses.some((res) => !res.ok))
+        throw new Error("Artifact list unavailable");
+      const payloads = (await Promise.all(
+        responses.map((res) => res.json().catch(() => ({}))),
+      )) as Array<{
         artifacts?: PhaseEvidenceArtifact[];
       }>;
-      const rows = payloads.flatMap((payload) => Array.isArray(payload.artifacts) ? payload.artifacts : []);
+      const rows = payloads.flatMap((payload) =>
+        Array.isArray(payload.artifacts) ? payload.artifacts : [],
+      );
       setPhaseArtifacts(
         rows.filter(
           (a) => a.phase === phase && a.lifecycleState !== "superseded",
@@ -6482,7 +6536,9 @@ function EvidenceUploadControl({
           <span>File type</span>
           <select
             aria-label="Evidence file type"
-            onChange={(event) => setUploadFamily(event.target.value as typeof uploadFamily)}
+            onChange={(event) =>
+              setUploadFamily(event.target.value as typeof uploadFamily)
+            }
             value={uploadFamily}
           >
             <option value="uploaded_evidence">Evidence</option>
@@ -6525,7 +6581,10 @@ function EvidenceUploadControl({
             <div key={artifact.artifactId}>
               <span>{artifact.fileName ?? artifact.title}</span>
               <em>
-                {artifact.family === "session_artifact" ? "Session file" : "Evidence"} · v{artifact.version} · {artifactStatusLabel(artifact.status)}
+                {artifact.family === "session_artifact"
+                  ? "Session file"
+                  : "Evidence"}{" "}
+                · v{artifact.version} · {artifactStatusLabel(artifact.status)}
                 {artifact.qualityScore != null
                   ? ` · Automated quality signal ${artifact.qualityScore}/100`
                   : ""}
@@ -7246,8 +7305,8 @@ function PhaseCaptureEditor({
           </h2>
           <p>
             Saved inputs are not phase completion. Required evidence must be
-            approved or formally waived before these inputs can show complete
-            or the phase can advance.
+            approved or formally waived before these inputs can show complete or
+            the phase can advance.
           </p>
         </div>
         <strong>
@@ -7262,11 +7321,11 @@ function PhaseCaptureEditor({
             values,
             persistedValues,
             saveStatus,
-                businessChangeAssessment,
-                approvedEvidenceReferences.map((item) => item.evidenceId),
-                evidencePassed,
-                evidenceReadinessAvailable,
-              );
+            businessChangeAssessment,
+            approvedEvidenceReferences.map((item) => item.evidenceId),
+            evidencePassed,
+            evidenceReadinessAvailable,
+          );
           return (
             <label
               className={`mxw-capture-card ${status.complete ? "complete" : ""} ${status.tone}`}

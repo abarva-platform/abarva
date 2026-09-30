@@ -1,7 +1,11 @@
 import { getObjectStorageAdapter } from "@/lib/data-plane/objectStorage";
 import { getAzureWriteFluentClient } from "@/lib/data-plane/postgresCompat";
 import type { TenancyCtx } from "@/lib/programs/types.db";
-import { saveMoveArtifact, type ArtifactFamily } from "../move-artifacts";
+import {
+  downloadArtifactBytes,
+  saveMoveArtifact,
+  type ArtifactFamily,
+} from "../move-artifacts";
 
 jest.mock("@/lib/data-plane/objectStorage", () => ({
   getObjectStorageAdapter: jest.fn(),
@@ -12,6 +16,7 @@ jest.mock("@/lib/data-plane/postgresCompat", () => ({
 }));
 
 const uploadMock = jest.fn();
+const downloadMock = jest.fn();
 let insertedRow: Record<string, unknown> | null = null;
 let updatedRow: Record<string, unknown> | null = null;
 let priorVersion = 3;
@@ -32,6 +37,7 @@ beforeEach(() => {
   uploadMock.mockResolvedValue(undefined);
   (getObjectStorageAdapter as jest.Mock).mockReturnValue({
     upload: uploadMock,
+    download: downloadMock,
   });
   (getAzureWriteFluentClient as jest.Mock).mockReturnValue({
     from: () => ({
@@ -110,7 +116,9 @@ describe("saveMoveArtifact", () => {
         "context-drops",
         expect.stringContaining(expectedSegment),
         expect.any(Buffer),
-        expect.objectContaining({ contentType: "text/markdown; charset=utf-8" }),
+        expect.objectContaining({
+          contentType: "text/markdown; charset=utf-8",
+        }),
       );
       expect(insertedRow?.blob_path).toContain(expectedSegment);
       expect(updatedRow).toMatchObject({
@@ -120,4 +128,41 @@ describe("saveMoveArtifact", () => {
       });
     },
   );
+
+  it("fences original downloads to the requested Move and tenant", async () => {
+    const filters: Array<[string, unknown]> = [];
+    const query = {
+      eq(column: string, value: unknown) {
+        filters.push([column, value]);
+        return query;
+      },
+      maybeSingle: async () => ({
+        data: {
+          blob_container: "context-drops",
+          blob_path: "moves/tenant-1/move-1/uploads/source/v1/source.txt",
+          file_name: "source.txt",
+          file_format: "txt",
+          tenant_key: "meridian",
+        },
+        error: null,
+      }),
+    };
+    (getAzureWriteFluentClient as jest.Mock).mockReturnValue({
+      from: () => ({ select: () => query }),
+    });
+    downloadMock.mockResolvedValue(Buffer.from("source bytes"));
+
+    const result = await downloadArtifactBytes(ctx, "artifact-1", "move-1");
+
+    expect(result?.bytes.toString()).toBe("source bytes");
+    expect(filters).toEqual([
+      ["artifact_id", "artifact-1"],
+      ["tenant_key", "meridian"],
+      ["move_id", "move-1"],
+    ]);
+    expect(downloadMock).toHaveBeenCalledWith(
+      "context-drops",
+      "moves/tenant-1/move-1/uploads/source/v1/source.txt",
+    );
+  });
 });

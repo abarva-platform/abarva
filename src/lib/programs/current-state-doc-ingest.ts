@@ -91,6 +91,8 @@ export interface DocIngestResult {
   ok: boolean;
   evidenceId: string;
   reviewId: string;
+  sourceArtifactId: string;
+  sourceArtifactStored: true;
   familyKey: string;
   /** 'review_required' (pending) or 'committed' (auto-promoted structured). */
   reviewState: "review_required" | "committed";
@@ -118,6 +120,7 @@ export interface DocFamilyReviewState {
   pendingItems: Array<{
     evidenceId: string;
     reviewId: string;
+    sourceArtifactId: string | null;
     title: string;
     parseMethod: string;
     confidence: number;
@@ -211,6 +214,10 @@ export interface IngestDocArgs {
   filename: string;
   mimeType: string;
   buffer: Buffer;
+  persistSourceArtifact: () => Promise<{
+    artifactId: string;
+    blobStored: boolean;
+  }>;
   /** Optional declared data classification (e.g. "phi") from the upload form. */
   declaredClassification?: string | null;
 }
@@ -276,6 +283,13 @@ export async function ingestCurrentStateDoc(
       : { valid: false, rows: 0 };
   const autoPromoted = kpiCheck.valid;
 
+  // Keep the original file in the same Move-scoped vault as other evidence.
+  // This runs only after extracted-text sensitivity checks and parsing pass.
+  const sourceArtifact = await args.persistSourceArtifact();
+  if (!sourceArtifact.artifactId || !sourceArtifact.blobStored) {
+    throw new Error("source_artifact_not_durably_stored");
+  }
+
   // 1) Append-only evidence row (cited; step_id tags the current-state family).
   const evidenceId = await recordProgramEvidence(ctx, {
     ...evidence,
@@ -307,6 +321,7 @@ export async function ingestCurrentStateDoc(
       auto_promoted: autoPromoted,
       rationale,
       source_ref: {
+        move_artifact_id: sourceArtifact.artifactId,
         filename: args.filename,
         mime_type: args.mimeType,
         parse_method: parseMethod,
@@ -340,6 +355,8 @@ export async function ingestCurrentStateDoc(
     ok: true,
     evidenceId,
     reviewId,
+    sourceArtifactId: sourceArtifact.artifactId,
+    sourceArtifactStored: true,
     familyKey,
     reviewState: autoPromoted ? "committed" : "review_required",
     autoPromoted,
@@ -921,6 +938,10 @@ export async function resolveDocFamilyReviews(
         state.pendingItems.push({
           evidenceId: r.evidence_id,
           reviewId: r.id,
+          sourceArtifactId:
+            typeof ref.move_artifact_id === "string"
+              ? ref.move_artifact_id
+              : null,
           title: String(ref.title ?? ref.filename ?? "Uploaded document"),
           parseMethod: String(ref.parse_method ?? "unknown"),
           confidence: typeof ref.confidence === "number" ? ref.confidence : 0.7,

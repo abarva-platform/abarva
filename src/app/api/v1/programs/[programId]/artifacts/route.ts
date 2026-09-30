@@ -61,6 +61,7 @@ interface CabinetArtifact {
 interface CabinetPendingEvidenceReview {
   evidenceId: string;
   reviewId: string;
+  sourceArtifactId: string | null;
   title: string;
   familyKey: string;
   phase: number | null;
@@ -135,6 +136,10 @@ async function loadPendingEvidenceReviews(
           {
             evidenceId,
             reviewId: String(review.id ?? ""),
+            sourceArtifactId:
+              typeof sourceRef.move_artifact_id === "string"
+                ? sourceRef.move_artifact_id
+                : null,
             title: String(
               sourceRef.filename ??
                 sourceRef.title ??
@@ -531,20 +536,21 @@ export async function GET(
         const savedRevision = contextExtract.freshness.approvedEvidenceRevision;
         contextExtract.freshness.currentApprovedEvidenceCount =
           approvedSnapshot?.approvedEvidenceCount;
-        contextExtract.freshness.freshnessStatus = !approvedSnapshot ||
-          !savedRevision
+        contextExtract.freshness.freshnessStatus =
+          !approvedSnapshot || !savedRevision
             ? "rebuild_required"
             : savedRevision === approvedSnapshot.revision
               ? "fresh"
               : "stale";
       }
-      const evidenceSnapshotStatus = r.artifact_family === "generated_deliverable"
-        ? !approvedSnapshot || !meta?.evidenceSnapshotHash
-          ? "unverified"
-          : meta.evidenceSnapshotHash === approvedSnapshot.revision
-            ? "current"
-            : "stale"
-        : undefined;
+      const evidenceSnapshotStatus =
+        r.artifact_family === "generated_deliverable"
+          ? !approvedSnapshot || !meta?.evidenceSnapshotHash
+            ? "unverified"
+            : meta.evidenceSnapshotHash === approvedSnapshot.revision
+              ? "current"
+              : "stale"
+          : undefined;
       return {
         artifactId: r.artifact_id,
         artifactType: r.artifact_type,
@@ -660,8 +666,8 @@ export async function GET(
               artifactStatus: meta?.artifactStatus ?? null,
               outputRole: meta?.outputRole ?? null,
               provenanceCategory: meta?.provenanceCategory ?? null,
-              evidenceSnapshotStatus: !approvedSnapshot ||
-                !meta?.evidenceSnapshotHash
+              evidenceSnapshotStatus:
+                !approvedSnapshot || !meta?.evidenceSnapshotHash
                   ? "unverified"
                   : meta.evidenceSnapshotHash === approvedSnapshot.revision
                     ? "current"
