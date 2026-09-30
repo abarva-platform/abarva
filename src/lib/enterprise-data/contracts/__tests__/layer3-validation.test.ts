@@ -26,6 +26,7 @@ describe("Layer 3 validation scaffold", () => {
     expect(report.mappedObjectTypes).toEqual(
       expect.arrayContaining([
         "enterprise_profile",
+        "business_segment",
         "application_system",
         "vendor_contract",
         "spend_value_signal",
@@ -40,6 +41,8 @@ describe("Layer 3 validation scaffold", () => {
     expect(report.factAuthorityGaps).toStrictEqual([]);
     expect(report.factAuthorityCheckedRules).toEqual(
       expect.arrayContaining([
+        "business_segment.revenueSharePct",
+        "business_segment.revenueUsd",
         "business_function.annualBudgetUsd",
         "business_function.fteCount",
         "enterprise_profile.employeeCount",
@@ -64,6 +67,9 @@ describe("Layer 3 validation scaffold", () => {
     );
     expect(normalizeRelationshipType("depends on")?.relationshipType).toBe(
       "DEPENDS_ON",
+    );
+    expect(normalizeRelationshipType("belongs_to_segment")?.relationshipType).toBe(
+      "BELONGS_TO_SEGMENT",
     );
     expect(
       normalizeRelationshipType("system_of_record")?.relationshipType,
@@ -97,6 +103,7 @@ describe("Layer 3 validation scaffold", () => {
 
     expect(relationshipTypes).toEqual(
       expect.arrayContaining([
+        "BELONGS_TO_SEGMENT",
         "SUPPORTS",
         "DEPENDS_ON",
         "HOSTED_ON",

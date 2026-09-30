@@ -5,6 +5,7 @@ import path from "node:path";
 import { spawnSync } from "node:child_process";
 import { Client } from "pg";
 
+import { CANONICAL_TENANT_KEYS } from "../../src/config/tenants/CANONICAL_TENANTS";
 import {
   buildCanonicalTenantDataReport,
   writeCanonicalTenantDataReport,
@@ -13,9 +14,10 @@ import {
 import type { CanonicalIngestionRecord } from "../../src/lib/enterprise-data/contracts/canonical-ingestion";
 import { RELATIONSHIP_TYPE_DICTIONARY } from "../../src/lib/enterprise-data/contracts/layer3-validation";
 import { postgresClientOptions } from "../../src/scripts/postgres-client-options";
+import { augmentDeclaredSegmentGraph } from "./declared-segment-graph";
 
-const APPROVED_TENANTS = new Set(["meridian-health", "skyharbor-air"]);
-const DEFAULT_TENANTS = ["meridian-health", "skyharbor-air"];
+const APPROVED_TENANTS = new Set<string>(CANONICAL_TENANT_KEYS);
+const DEFAULT_TENANTS: string[] = [...CANONICAL_TENANT_KEYS];
 const CONTRACT_VERSION = "enterprise-intelligence-template-pack-v6-runtime-baseline";
 const DEFAULT_OUT_DIR = "reports/runtime-layer-refresh/latest";
 const TRUE_VALUES = new Set(["1", "true", "yes"]);
@@ -296,6 +298,8 @@ async function buildInputs(args: Args, repoRoot: string): Promise<{
   nodes: CsvRow[];
   edges: CsvRow[];
   quarantine: CsvRow[];
+  acceptedSegmentEdges: number;
+  quarantinedSegmentEdges: number;
 }> {
   const canonical = await buildCanonicalTenantDataReport({
     repoRoot,
@@ -303,11 +307,26 @@ async function buildInputs(args: Args, repoRoot: string): Promise<{
   });
   await writeCanonicalTenantDataReport(repoRoot, path.join(args.outDir, "canonical-build"), canonical);
   await runGraphReconciliation(args, repoRoot);
-  return {
-    canonical,
+  const graph = augmentDeclaredSegmentGraph({
+    records: canonical.canonicalRecords,
+    relationships: canonical.relationshipCandidates,
     nodes: parseCsv(fs.readFileSync(tablePath(path.resolve(repoRoot, args.outDir), "graph-node-index.csv"), "utf8")),
     edges: parseCsv(fs.readFileSync(tablePath(path.resolve(repoRoot, args.outDir), "graph-edge-candidates.csv"), "utf8")),
     quarantine: parseCsv(fs.readFileSync(tablePath(path.resolve(repoRoot, args.outDir), "graph-quarantine.csv"), "utf8")),
+  });
+  writeJson(path.join(path.resolve(repoRoot, args.outDir), "declared-segment-graph.json"), {
+    acceptedSegmentEdges: graph.acceptedSegmentEdges,
+    quarantinedSegmentEdges: graph.quarantinedSegmentEdges,
+    edges: graph.edges.filter((edge) => edge.normalizedRelationshipType === "BELONGS_TO_SEGMENT"),
+    quarantine: graph.quarantine.filter((edge) => edge.normalizedRelationshipType === "BELONGS_TO_SEGMENT"),
+  });
+  return {
+    canonical,
+    nodes: graph.nodes,
+    edges: graph.edges,
+    quarantine: graph.quarantine,
+    acceptedSegmentEdges: graph.acceptedSegmentEdges,
+    quarantinedSegmentEdges: graph.quarantinedSegmentEdges,
   };
 }
 
@@ -499,7 +518,7 @@ async function writeToDatabase(args: Args, input: Awaited<ReturnType<typeof buil
         node.displayName.trim().toLowerCase(),
         node.sourceFile,
         Number(node.sourceRowNumber) || null,
-        JSON.stringify([]),
+        JSON.stringify([node.sourceEvidenceKey].filter(Boolean)),
         "medium",
         "v6_business_record",
         JSON.stringify({ mappingProfile: node.mappingProfile, buildVersion: args.buildVersion, quarantineRatio: ratio }),
@@ -548,7 +567,7 @@ async function writeToDatabase(args: Args, input: Awaited<ReturnType<typeof buil
         edge.normalizedRelationshipType,
         confidence(edge.confidence),
         edge.evidenceBasis,
-        `${edge.tenantKey}/current/12_relationships.csv`,
+        edge.sourceFile ?? `${edge.tenantKey}/current/12_relationships.csv`,
         Number(edge.sourceRowNumber) || null,
         JSON.stringify([edge.evidenceBasis].filter(Boolean)),
         "resolved",
@@ -606,7 +625,7 @@ async function writeToDatabase(args: Args, input: Awaited<ReturnType<typeof buil
         edge.evidenceBasis,
         edge.rawRelationshipType,
         edge.relationshipId,
-        `${edge.tenantKey}/current/12_relationships.csv`,
+        edge.sourceFile ?? `${edge.tenantKey}/current/12_relationships.csv`,
         Number(edge.sourceRowNumber) || null,
         JSON.stringify([edge.evidenceBasis].filter(Boolean)),
         "resolved",
@@ -800,6 +819,8 @@ async function main(): Promise<void> {
     ).length,
     graphEdgesWritten: input.edges.length,
     quarantinedRelationships: input.quarantine.length,
+    declaredSegmentEdges: input.acceptedSegmentEdges,
+    withheldSegmentEdges: input.quarantinedSegmentEdges,
     validationFailures: 0,
   };
   const written = args.write ? await writeToDatabase(args, input) : planned;
@@ -821,6 +842,8 @@ async function main(): Promise<void> {
     graphNodesPlanned: planned.graphNodesWritten,
     graphEdgesWritten: args.write ? written.graphEdgesWritten : 0,
     graphEdgesPlanned: planned.graphEdgesWritten,
+    declaredSegmentEdges: input.acceptedSegmentEdges,
+    withheldSegmentEdges: input.quarantinedSegmentEdges,
     quarantinedRelationships: input.quarantine.length,
     quarantineRatio: ratio,
     graphTablesWritten: args.write,

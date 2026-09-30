@@ -97,6 +97,14 @@ export const CANONICAL_OBJECT_REGISTRY: CanonicalObjectDefinition[] = [
     ["entityName"],
   ),
   objectDefinition(
+    "business_segment",
+    "enterprise",
+    "enterprise_structure",
+    ["business_segments"],
+    ["segmentKey"],
+    "segmentName",
+  ),
+  objectDefinition(
     "business_function",
     "organization",
     "enterprise_structure",
@@ -225,6 +233,18 @@ export const CANONICAL_OBJECT_REGISTRY: CanonicalObjectDefinition[] = [
 ];
 
 export const FACT_AUTHORITY_REGISTRY: FactAuthorityDefinition[] = [
+  financialFact("business_segment.revenueUsd", "business_segment", "revenueUsd"),
+  {
+    factKey: "business_segment.revenueSharePct",
+    objectType: "business_segment",
+    attribute: "revenueSharePct",
+    valueType: "percent",
+    authorityKind: "source_owned_financial",
+    sourceLayer: "Layer 3",
+    deterministic: true,
+    usePolicy: "must_not_be_model_invented",
+    evidenceRequired: "source_file_and_row",
+  },
   financialFact(
     "enterprise_profile.revenueUsd",
     "enterprise_profile",
@@ -275,6 +295,13 @@ export const FACT_AUTHORITY_REGISTRY: FactAuthorityDefinition[] = [
 ];
 
 export const RELATIONSHIP_TYPE_DICTIONARY: RelationshipDictionaryEntry[] = [
+  relationship(
+    "BELONGS_TO_SEGMENT",
+    "belongs to segment",
+    "includes function",
+    "rollup",
+    ["belongs_to_segment"],
+  ),
   relationship("SUPPORTS", "supports", "is supported by", "dependency", [
     "supporting",
   ]),
@@ -532,6 +559,7 @@ function objectDefinition(
   canonicalDomain: CanonicalDomain,
   sourceClasses: TenantPacketSourceClass[],
   identityAttributes: string[],
+  displayNameAttribute = identityAttributes[0],
 ): CanonicalObjectDefinition {
   return {
     objectType,
@@ -539,7 +567,7 @@ function objectDefinition(
     canonicalDomain,
     sourceClasses,
     identityAttributes,
-    displayNameAttribute: identityAttributes[0],
+    displayNameAttribute,
     evidenceRequired: "source_file_and_row",
   };
 }
