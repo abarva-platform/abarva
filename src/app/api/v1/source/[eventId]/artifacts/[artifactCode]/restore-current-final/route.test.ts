@@ -14,6 +14,7 @@ const download = jest.fn(async () => bytes);
 let linkedArtifactId = "later-draft";
 let artifactBody = "later draft";
 let eventClientKey = "synthetic-tenant";
+let stateTenantKey = "synthetic-tenant";
 
 jest.mock("@/lib/auth/tenancy", () => ({
   requireTenancy: jest.fn(async () => ({
@@ -30,7 +31,8 @@ jest.mock("@/lib/auth/source-access-policy", () => ({
   })),
 }));
 jest.mock("@/lib/agent/tools/intelligence/_shared", () => ({
-  clientKeyToInventorySubstrateKey: jest.fn((key: string) => key),
+  clientKeyToInventorySubstrateKey: jest.fn((key: string) =>
+    key === "synthetic-tenant" ? "canonical-tenant" : key),
 }));
 jest.mock("@/lib/source/contracts/current-client-final", () => ({
   findCurrentAcceptedClientFinal: jest.fn(),
@@ -50,17 +52,24 @@ jest.mock("@/lib/data-plane/write-adapters/sourceWriteAdapter", () => ({
 jest.mock("@/lib/data-plane/postgresCompat", () => ({
   getAzureReadFluentClient: jest.fn(() => ({
     from: (table: string) => {
+      const filters: Record<string, unknown> = {};
       const chain: Record<string, unknown> = {
         select: () => chain,
-        eq: () => chain,
+        eq: (column: string, value: unknown) => {
+          filters[column] = value;
+          return chain;
+        },
         maybeSingle: async () => table === "source_events"
-          ? { data: { id: "event-1", client_key: eventClientKey }, error: null }
-          : { data: {
-              id: "state-1", source_event_id: "event-1", tenant_key: "synthetic-tenant",
+          ? { data: filters.id === "event-1" && filters.client_key === eventClientKey
+            ? { id: "event-1", client_key: eventClientKey } : null, error: null }
+          : { data: filters.source_event_id === "event-1" &&
+              filters.tenant_key === stateTenantKey &&
+              filters.artifact_code === "d01_strategy_memo" ? {
+              id: "state-1", source_event_id: "event-1", tenant_key: stateTenantKey,
               artifact_code: "d01_strategy_memo", stage_key: "strategy",
               status: "approved", body: artifactBody, linked_artifact_id: linkedArtifactId,
               body_generation_metadata: { qualityGate: { passed: true } },
-            }, error: null },
+            } : null, error: null },
       };
       return chain;
     },
@@ -68,11 +77,11 @@ jest.mock("@/lib/data-plane/postgresCompat", () => ({
 }));
 
 const currentFinal = {
-  id: "final-1", sourceEventId: "event-1", tenantKey: "synthetic-tenant",
+  id: "final-1", sourceEventId: "event-1", tenantKey: "canonical-tenant",
   artifactType: "d01_strategy_memo", artifactGroup: "approval", status: "client_final",
   lifecycleState: "current", isClientFinal: true, isCurrentAuthoritative: true,
   clientFinalAcceptedBy: "owner-1", clientFinalAcceptedAt: "2026-09-29T14:55:28Z",
-  blobContainer: "source-artifacts", blobPath: "synthetic-tenant/event-1/final-1/final.md",
+  blobContainer: "source-artifacts", blobPath: "canonical-tenant/event-1/final-1/final.md",
   blobSha256: sha256, fileFormat: "md", fileName: "reviewed-final.md", version: 3,
 };
 const findFinal = jest.mocked(findCurrentAcceptedClientFinal);
@@ -89,6 +98,7 @@ beforeEach(() => {
   linkedArtifactId = "later-draft";
   artifactBody = "later draft";
   eventClientKey = "synthetic-tenant";
+  stateTenantKey = "synthetic-tenant";
   download.mockResolvedValue(bytes);
   findFinal.mockResolvedValue(currentFinal as never);
   policy.mockResolvedValue({ canUploadSourceArtifacts: true, canApproveSourceStages: true } as never);
@@ -130,6 +140,13 @@ it("does not write without current accepted authority", async () => {
 it("does not write across tenants", async () => {
   eventClientKey = "other-tenant";
   expect((await restore()).status).toBe(403);
+  expect(updateArtifactBody).not.toHaveBeenCalled();
+});
+
+it("does not write from an artifact state belonging to another tenant", async () => {
+  stateTenantKey = "other-tenant";
+  expect((await restore()).status).toBe(404);
+  expect(findFinal).not.toHaveBeenCalled();
   expect(updateArtifactBody).not.toHaveBeenCalled();
 });
 

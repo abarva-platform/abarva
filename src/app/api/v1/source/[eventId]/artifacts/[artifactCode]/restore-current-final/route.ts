@@ -54,7 +54,7 @@ export async function POST(_request: Request, { params }: RouteContext) {
     .from("source_event_artifact_states")
     .select("*")
     .eq("source_event_id", event.id)
-    .eq("tenant_key", tenantKey)
+    .eq("tenant_key", client.key)
     .eq("artifact_code", artifactCode)
     .maybeSingle<SourceEventArtifactStateRow>();
   if (stateError) return error(500, "artifact_state_lookup_failed");
