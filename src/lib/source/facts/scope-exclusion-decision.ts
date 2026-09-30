@@ -28,7 +28,7 @@ export function scopeExclusionBasis(evidence: EvidenceAssessment | undefined): S
     return {
       kind: "audited_absence",
       actorUserId: evidence!.applicabilityActorUserId!,
-      decidedAt: evidence!.applicabilityDecidedAt!,
+      decidedAt: new Date(evidence!.applicabilityDecidedAt!).toISOString(),
       reason: evidence!.applicabilityReason!.trim(),
     };
   }
@@ -76,6 +76,6 @@ export function scopeExclusionDecisionMatchesBasis(
   }
   return decision.basis.kind === "audited_absence" &&
     decision.basis.actorUserId === current.actorUserId &&
-    decision.basis.decidedAt === current.decidedAt &&
+    Date.parse(decision.basis.decidedAt) === Date.parse(current.decidedAt) &&
     decision.basis.reason === current.reason;
 }
