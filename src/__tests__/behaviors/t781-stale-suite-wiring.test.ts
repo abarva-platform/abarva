@@ -1,5 +1,13 @@
-import { execFileSync } from "node:child_process";
-import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
+import { execFileSync, spawnSync } from "node:child_process";
+import {
+  existsSync,
+  mkdtempSync,
+  readdirSync,
+  readFileSync,
+  rmSync,
+  statSync,
+} from "node:fs";
+import os from "node:os";
 import path from "node:path";
 
 import {
@@ -41,6 +49,13 @@ import {
  * A directory whose every row is superseded must be reached by a merge-blocking
  * invocation and be out of the dark baseline; a partly superseded one keeps its
  * remaining rows held. T-782 supersedes the whole initiative-deep directory.
+ *
+ * T-797 (T-796's fix, applied here): a red hold also asks the TEST, not only
+ * the code — the held file's `failingCase` is run out of process and must
+ * still fail. Asking only the code let a row stay "red" after its test was
+ * updated to agree with the code. A row whose case a later item fixed is
+ * marked `redResolved`, carries no red reason any more, and its case must now
+ * pass, so the annotation cannot outlive the fix either.
  */
 
 const repoRoot = path.resolve(__dirname, "../../..");
@@ -64,7 +79,9 @@ type SuiteRow = {
   wiredInThisItem: boolean;
   scannerCase?: string;
   testOnlySubject?: string;
+  failingCase?: string;
   redProbe?: { input: string; expectedByTest: string; returnedByCode: string };
+  redResolved?: { item: string; pullRequest: number; mergeSha: string };
 };
 
 type TriageRecord = {
@@ -196,6 +213,54 @@ function normalizeOutOfProcess(inputs: string[]): Record<string, string | null> 
     encoding: "utf8",
   });
   return JSON.parse(out) as Record<string, string | null>;
+}
+
+/**
+ * Ask the held TEST what it says, out of process: run the file with jest,
+ * filtered to the one named case, and read that case's own status from the
+ * JSON report. "missing" means the filter reached no case of that exact
+ * title, which proves nothing either way and so never counts as failing.
+ */
+const testVerdicts = new Map<string, "passed" | "failed" | "missing">();
+function askTheTest(suitePath: string, caseTitle: string) {
+  const key = `${suitePath}\u0000${caseTitle}`;
+  const cached = testVerdicts.get(key);
+  if (cached) return cached;
+  const dir = mkdtempSync(path.join(os.tmpdir(), "t797-"));
+  const report = path.join(dir, "report.json");
+  try {
+    spawnSync(
+      path.join(repoRoot, "node_modules/.bin/jest"),
+      [
+        "--ci",
+        "--runTestsByPath",
+        suitePath,
+        "-t",
+        caseTitle.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"),
+        "--json",
+        `--outputFile=${report}`,
+      ],
+      { cwd: repoRoot, encoding: "utf8", env: { ...process.env, CI: "true" } },
+    );
+    const assertions = existsSync(report)
+      ? (JSON.parse(readFileSync(report, "utf8")) as {
+          testResults: { assertionResults: { title: string; status: string }[] }[];
+        }).testResults.flatMap((result) => result.assertionResults)
+      : [];
+    const named = assertions.filter((a) => a.title === caseTitle);
+    const verdict =
+      named.length === 0
+        ? "missing"
+        : named.every((a) => a.status === "passed")
+          ? "passed"
+          : named.some((a) => a.status === "failed")
+            ? "failed"
+            : "missing";
+    testVerdicts.set(key, verdict);
+    return verdict;
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
 }
 
 const testOnlyModules = new Set(
@@ -334,8 +399,11 @@ describe("T-781 — tenth stale-suite draw, wiring and holds", () => {
       red: (row) =>
         !row.green &&
         row.redProbe !== undefined &&
+        row.failingCase !== undefined &&
+        readFileSync(path.join(repoRoot, row.path), "utf8").includes(row.failingCase) &&
         probed[row.redProbe.input] === row.redProbe.returnedByCode &&
-        probed[row.redProbe.input] !== row.redProbe.expectedByTest,
+        probed[row.redProbe.input] !== row.redProbe.expectedByTest &&
+        askTheTest(row.path, row.failingCase) === "failed",
       test_only_subject: (row) =>
         row.testOnlySubject !== undefined && testOnlyModules.has(row.testOnlySubject),
       source_text_scanner: (row) => {
@@ -353,8 +421,26 @@ describe("T-781 — tenth stale-suite draw, wiring and holds", () => {
       expect({
         directory,
         unsupported: holdKinds.filter((kind) => !rows.some(reasonHolds[kind])),
+        // Named per row, so a stale red row says which file lost its reason.
+        redReasonGone: rows
+          .filter((row) => row.redProbe !== undefined && row.redResolved === undefined)
+          .filter((row) => !reasonHolds.red(row))
+          .map((row) => row.path),
+        resolvedButNotPassing: rows
+          .filter(
+            (row) =>
+              row.redResolved !== undefined &&
+              (!row.failingCase || askTheTest(row.path, row.failingCase) !== "passed"),
+          )
+          .map((row) => row.path),
         successor: /^T-\d+$/.test(successorFiledAs),
-      }).toEqual({ directory, unsupported: [], successor: true });
+      }).toEqual({
+        directory,
+        unsupported: [],
+        redReasonGone: [],
+        resolvedButNotPassing: [],
+        successor: true,
+      });
     }
-  });
+  }, 180_000);
 });
