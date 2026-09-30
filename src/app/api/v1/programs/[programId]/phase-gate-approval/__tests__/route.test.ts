@@ -288,6 +288,46 @@ describe("POST /api/v1/programs/[programId]/phase-gate-approval", () => {
     });
   });
 
+  it("shows a hash-matching approval as stale when later approved activity exists", async () => {
+    mockGetProgramById.mockResolvedValue({
+      id: "prog-1",
+      currentPhase: 2,
+      gatesPassed: [1],
+    });
+    mockLoadApprovedMoveEvidenceSnapshot.mockResolvedValue({
+      revision: "evidence-revision-1",
+      latestEvidenceActivityAt: "2026-09-29T18:00:00.000Z",
+      approvedEvidenceCount: 2,
+      rows: [],
+    });
+    mockGetPhaseSnapshots.mockImplementation(
+      async (_ctx: unknown, _programId: string, phase: number) =>
+        phase === 1
+          ? [
+              {
+                id: "p1-hash-matching-approval",
+                phaseNumber: 1,
+                approvalStatus: "approved",
+                lockedAt: "2026-09-29T17:00:00.000Z",
+                createdAt: "2026-09-29T17:00:00.000Z",
+                snapshot: { evidenceSnapshotHash: "evidence-revision-1" },
+              },
+            ]
+          : [],
+    );
+
+    const { GET } = await import("../route");
+    const res = await GET(getReq(1) as never, { params });
+
+    expect(res.status).toBe(200);
+    await expect(res.json()).resolves.toMatchObject({
+      approved: false,
+      approvalStale: true,
+      evidenceSnapshotAvailable: true,
+      currentPhase: 2,
+    });
+  });
+
   it("reapproves a stale earlier phase against current evidence without rolling phase back", async () => {
     const writes: Array<{ table: string; payload: Record<string, unknown> }> =
       [];

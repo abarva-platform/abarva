@@ -32,11 +32,11 @@ export function phaseApprovalMatchesEvidence(
 
   const recordedRevision = approval.snapshot.evidenceSnapshotHash;
   if (typeof recordedRevision === "string" && recordedRevision.length > 0) {
-    return recordedRevision === evidence.revision;
+    if (recordedRevision !== evidence.revision) return false;
   }
 
-  // Older approvals predate revision binding. Preserve them unless approved
-  // evidence or its review changed after the recorded gate decision.
+  // Keep a timestamp check alongside the revision so later approved evidence
+  // activity cannot be masked by a stale or incorrectly preserved hash.
   if (!evidence.latestEvidenceActivityAt) return true;
   const approvalAt = Date.parse(approval.lockedAt ?? approval.createdAt);
   const evidenceChangedAt = Date.parse(evidence.latestEvidenceActivityAt);
