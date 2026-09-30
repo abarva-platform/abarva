@@ -58,9 +58,11 @@ import {
 import { resolveMoveArchetypeForProgram } from "@/lib/programs/move-archetype-resolution";
 import { isFeatureEnabled } from "@/lib/features/is-feature-enabled";
 import { loadApprovedMoveEvidenceSnapshot } from "@/lib/programs/approved-move-evidence-snapshot";
+import { loadP0MinimumEvidenceStatus } from "@/lib/programs/p0-source-evidence";
 import { effectivePhaseAfterEvidenceChange } from "@/lib/programs/phase-gate-evidence-binding";
 import { buildGateCriteria } from "@/lib/programs/transformers";
 import { getPhaseLabel } from "@/lib/programs/phase-labels";
+import { p0SourceEvidenceNeedPacket } from "@/lib/programs/phase-progress-readiness";
 
 export const dynamic = "force-dynamic";
 
@@ -445,6 +447,20 @@ export default async function StrategicMovePhaseWorkspacePage({
       readiness: evidenceReadiness,
     });
     evidenceReadinessAvailable = true;
+    if (parsedPhase === 0) {
+      const p0Evidence = await loadP0MinimumEvidenceStatus({
+        tenantKey: tctx.clientKey ?? tctx.clientId,
+        moveId,
+      });
+      evidenceNeedPackets.push(
+        p0SourceEvidenceNeedPacket({
+          moveId,
+          evidenceTitles: p0Evidence.evidenceTitles,
+          pendingReviewCount: p0Evidence.pendingReviewCount,
+        }),
+      );
+      evidenceReadinessAvailable = p0Evidence.available;
+    }
     if (parsedPhase < 5 && isFoundationTenantKey(tctx.clientKey)) {
       syntheticEvidencePackHref = `/api/v1/programs/${encodeURIComponent(
         moveId,

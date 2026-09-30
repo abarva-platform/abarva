@@ -20,6 +20,12 @@ function statusMeta(packet: MoveEvidenceNeedPacket): {
   if (packet.status === "waived") {
     return { label: "Waived", color: WARN, bg: "rgba(181,133,42,0.1)" };
   }
+  if (packet.familyId === "p0_origination_source" && packet.status === "partial") {
+    return { label: "Awaiting review", color: WARN, bg: "rgba(181,133,42,0.1)" };
+  }
+  if (packet.status === "partial") {
+    return { label: "Partial", color: WARN, bg: "rgba(181,133,42,0.1)" };
+  }
   if (packet.priority === "required") {
     return { label: "Required missing", color: BAD, bg: "rgba(180,81,60,0.09)" };
   }

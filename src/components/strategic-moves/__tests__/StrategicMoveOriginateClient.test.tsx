@@ -193,10 +193,10 @@ describe("StrategicMoveOriginateClient", () => {
     expect(screen.queryByText(/^Ava$/)).not.toBeInTheDocument();
 
     fireEvent.click(
-      screen.getByRole("button", { name: /approve and build the charter/i }),
+      screen.getByRole("button", { name: /review p0 intake/i }),
     );
     const approveButton = screen.getByRole("button", {
-      name: /^approve and build$/i,
+      name: /^submit p0 for review$/i,
     });
     expect(approveButton).toBeDisabled();
     expect(screen.getAllByText("0 of 10")[0]).toBeInTheDocument();
@@ -322,7 +322,7 @@ describe("StrategicMoveOriginateClient", () => {
     });
 
     await waitFor(() => {
-      expect(screen.getByText(/All steps complete/i)).toBeInTheDocument();
+      expect(screen.getByText(/Answers complete/i)).toBeInTheDocument();
     });
     selectP0Tab(3);
     expect(
@@ -332,10 +332,10 @@ describe("StrategicMoveOriginateClient", () => {
       screen.queryByText("Dr. Anita Krishnamurthy"),
     ).not.toBeInTheDocument();
     fireEvent.click(
-      screen.getByRole("button", { name: /approve and build the charter/i }),
+      screen.getByRole("button", { name: /review p0 intake/i }),
     );
     expect(
-      screen.getByRole("button", { name: /^approve and build$/i }),
+      screen.getByRole("button", { name: /^submit p0 for review$/i }),
     ).toBeEnabled();
   });
 
@@ -352,7 +352,7 @@ describe("StrategicMoveOriginateClient", () => {
     });
 
     await waitFor(() => {
-      expect(screen.getByText(/All steps complete/i)).toBeInTheDocument();
+      expect(screen.getByText(/Answers complete/i)).toBeInTheDocument();
     });
     expect(
       screen.getByDisplayValue("Kyriba Treasury Controls Proof"),
@@ -368,10 +368,10 @@ describe("StrategicMoveOriginateClient", () => {
       )[0],
     ).toBeInTheDocument();
     fireEvent.click(
-      screen.getByRole("button", { name: /approve and build the charter/i }),
+      screen.getByRole("button", { name: /review p0 intake/i }),
     );
     expect(
-      screen.getByRole("button", { name: /^approve and build$/i }),
+      screen.getByRole("button", { name: /^submit p0 for review$/i }),
     ).toBeEnabled();
   });
 
@@ -418,12 +418,12 @@ describe("StrategicMoveOriginateClient", () => {
       submitP0Section(container, index + 1, value);
     });
 
-    expect(screen.getByText(/All steps complete/i)).toBeInTheDocument();
+    expect(screen.getByText(/Answers complete/i)).toBeInTheDocument();
     fireEvent.click(
-      screen.getByRole("button", { name: /approve and build the charter/i }),
+      screen.getByRole("button", { name: /review p0 intake/i }),
     );
     expect(
-      screen.getByRole("button", { name: /^approve and build$/i }),
+      screen.getByRole("button", { name: /^submit p0 for review$/i }),
     ).toBeEnabled();
     expect(fetchMock).not.toHaveBeenCalledWith(
       "/api/chat/agent",
@@ -432,7 +432,7 @@ describe("StrategicMoveOriginateClient", () => {
 
     await act(async () => {
       fireEvent.click(
-        screen.getByRole("button", { name: /^approve and build$/i }),
+        screen.getByRole("button", { name: /^submit p0 for review$/i }),
       );
     });
 
@@ -516,11 +516,11 @@ describe("StrategicMoveOriginateClient", () => {
     });
 
     fireEvent.click(
-      screen.getByRole("button", { name: /approve and build the charter/i }),
+      screen.getByRole("button", { name: /review p0 intake/i }),
     );
     await act(async () => {
       fireEvent.click(
-        screen.getByRole("button", { name: /^approve and build$/i }),
+        screen.getByRole("button", { name: /^submit p0 for review$/i }),
       );
     });
 
@@ -567,8 +567,26 @@ describe("StrategicMoveOriginateClient", () => {
       ).toBeInTheDocument();
       expect(
         screen.getByRole("button", {
-          name: /approve and build the charter/i,
+          name: /review p0 intake/i,
         }),
+      ).toBeInTheDocument();
+    });
+
+    it("distinguishes intake submission from evidence-backed sponsor approval", () => {
+      render(<StrategicMoveOriginateClient tenantName="Tenant A" />);
+
+      fireEvent.click(
+        screen.getByRole("button", { name: /review p0 intake/i }),
+      );
+
+      expect(
+        screen.getByRole("heading", { name: "Submit P0 for review" }),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByText(/this does not approve or advance the Move/i),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByText("One uploaded, human-reviewed P0 source file"),
       ).toBeInTheDocument();
     });
 
@@ -578,10 +596,10 @@ describe("StrategicMoveOriginateClient", () => {
       );
 
       fireEvent.click(
-        screen.getByRole("button", { name: /approve and build the charter/i }),
+        screen.getByRole("button", { name: /review p0 intake/i }),
       );
       const approveButton = screen.getByRole("button", {
-        name: /^approve and build$/i,
+        name: /^submit p0 for review$/i,
       });
       expect(approveButton).toBeDisabled();
 
@@ -807,11 +825,11 @@ describe("StrategicMoveOriginateClient", () => {
       );
 
       fireEvent.click(
-        screen.getByRole("button", { name: /approve and build the charter/i }),
+        screen.getByRole("button", { name: /review p0 intake/i }),
       );
       await act(async () => {
         fireEvent.click(
-          screen.getByRole("button", { name: /^approve and build$/i }),
+          screen.getByRole("button", { name: /^submit p0 for review$/i }),
         );
       });
 
@@ -874,11 +892,11 @@ describe("StrategicMoveOriginateClient", () => {
         submitP0Section(container, index + 1, value);
       });
       fireEvent.click(
-        screen.getByRole("button", { name: /approve and build the charter/i }),
+        screen.getByRole("button", { name: /review p0 intake/i }),
       );
       await act(async () => {
         fireEvent.click(
-          screen.getByRole("button", { name: /^approve and build$/i }),
+          screen.getByRole("button", { name: /^submit p0 for review$/i }),
         );
       });
 
