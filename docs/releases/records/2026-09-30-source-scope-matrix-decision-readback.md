@@ -15,8 +15,8 @@ The Scope responsibility step now asks the authorized Event Owner to name retain
 ## Layer Impact
 
 - Release lane: `global-control-lane`.
-- Layer 3 canonical evidence: a source-scoped decision receipt is stored against the existing event evidence record with actor, time, rationale, and source identities. No supplier, finance, or contract fact is created.
-- Layer 4 Source: the step asks for a real decision and reads its result back instead of treating a browser-local click as completion.
+- Layer 3 canonical model: no supplier, finance, contract, or operational baseline fact is created or changed.
+- Layer 4 Source: the event-scoped workflow stores the decision receipt with actor, time, rationale, and source identities, then reads it back instead of treating a browser-local click as completion.
 
 ## Client Applicability
 
