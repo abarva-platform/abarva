@@ -1761,6 +1761,20 @@ jobs:
           src/lib/security/__tests__
           --no-coverage --ci
 
+      # Item T-778. `src/components/intelligence-advisory/__tests__` was held by
+      # T-776 behind one case that read `AdvisoryIntelligencePage.tsx` for the
+      # text of the finalizer call, which a comment could satisfy. It is replaced
+      # by rendered cases that mount the page and release a stream chunk by
+      # chunk with no answer packet. 4 suites, 20 cases. Named as a DIRECTORY
+      # without a trailing slash, and the line leaves
+      # `product-directory-ci-coverage.baseline.json` in the same change.
+      # Record: `docs/architecture/t778-intelligence-advisory-triage.json`.
+      - name: Run the T-778 intelligence-advisory suites
+        run: >-
+          npx jest
+          src/components/intelligence-advisory/__tests__
+          --no-coverage --ci
+
       # Item T-495, claimable half, suite 2 of 11.
       # `src/__tests__/hygiene/learn-layout-single-nav.test.ts` asserted the
       # single-top-nav rule for `/home/learn` over the BYTES of two files, and was
