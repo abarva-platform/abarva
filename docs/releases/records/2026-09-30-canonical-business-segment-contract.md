@@ -37,12 +37,13 @@ Release lane: `client-data-lane`. This is a shared intake/canonical contract, bu
 
 ## QA / Validation
 
-- Source-adapter suite: 57 passed.
-- CI-covered behavior suite, including the canonical segment test and coverage census: 168 suites and 1,765 tests passed.
+- Source-adapter suite, including the canonical segment integration assertion: 58 passed.
+- Required behavior coverage gate: 167 suites and 1,764 tests passed; lines and statements were 90.12% against the 90% floor.
 - TypeScript typecheck with an 8 GB Node heap: passed.
 - ESLint on changed TypeScript files: passed.
 - `git diff --check`: passed.
 - Full canonical-build audit: still fails on seven unmapped guide/extract inputs outside this segment contract; no whole-pipeline pass is claimed.
+- The initial PR coverage run reached 89.93% when the integration assertion sat inside the behavior coverage suite. Moving it into the already CI-covered adapter suite restored the required gate without changing thresholds or suppressing the test.
 - No runtime or data-plane validation is claimed.
 
 ## Rollout Plan
