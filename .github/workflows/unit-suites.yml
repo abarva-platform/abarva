@@ -1812,6 +1812,24 @@ jobs:
           src/components/context-broker/__tests__/ModeToggle.test.tsx
           --no-coverage --ci
 
+      # Item T-781, the tenth stale-suite draw. Two directories, each judged
+      # whole and each executed file by file on base `5b976bdbbf`: 7 suites, 28
+      # cases, all green, and both subjects imported by non-test modules
+      # (`src/lib/agent/retrieval.ts`; the answer-eval harness and the
+      # answer-quality CI gate). Three answer-quality suites read JSONL fixture
+      # files, which are test data, not source text. `scorer.test.ts` is already
+      # run by `wave0:quality-gate` and runs here too, because the directory
+      # line selects it. Named as DIRECTORIES without a trailing slash; the
+      # atlas line leaves `product-directory-ci-coverage.baseline.json` in the
+      # same change. Three drawn directories are held (T-782, T-783, T-784).
+      # Record: `docs/architecture/t781-stale-suite-triage.json`.
+      - name: Run the T-781 atlas composition and answer-quality suites
+        run: >-
+          npx jest
+          src/lib/atlas/composition/__tests__
+          src/lib/eval/answer-quality/__tests__
+          --no-coverage --ci
+
       # Item T-495, claimable half, suite 2 of 11.
       # `src/__tests__/hygiene/learn-layout-single-nav.test.ts` asserted the
       # single-top-nav rule for `/home/learn` over the BYTES of two files, and was

@@ -38,7 +38,6 @@
   "src/lib/answer/__tests__",
   "src/lib/artifact-excellence/__tests__",
   "src/lib/artifacts/__tests__",
-  "src/lib/atlas/composition/__tests__",
   "src/lib/atlas/initiative-deep/__tests__",
   "src/lib/atlas/initiative-deep/joins/__tests__",
   "src/lib/ava-answer/export/__tests__",
