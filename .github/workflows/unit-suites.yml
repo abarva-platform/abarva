@@ -1747,6 +1747,20 @@ jobs:
           src/lib/source/expert-judgment/__tests__
           --no-coverage --ci
 
+      # Item T-777. `src/lib/security/__tests__` was held by T-776 behind one
+      # suite that had never passed: it mocked a client module its subject does
+      # not import, and carried a migration-text case. The suite now mocks the
+      # data-plane client the subject calls, and the grant check lives with the
+      # live-Postgres assertion `assert:sensitive-upload-audit-immutability`.
+      # 4 suites, 25 cases. Named as a DIRECTORY without a trailing slash, and
+      # the line leaves `product-directory-ci-coverage.baseline.json` in the
+      # same change. Record: `docs/architecture/t777-security-suite-repair-triage.json`.
+      - name: Run the T-777 security suites
+        run: >-
+          npx jest
+          src/lib/security/__tests__
+          --no-coverage --ci
+
       # Item T-495, claimable half, suite 2 of 11.
       # `src/__tests__/hygiene/learn-layout-single-nav.test.ts` asserted the
       # single-top-nav rule for `/home/learn` over the BYTES of two files, and was
