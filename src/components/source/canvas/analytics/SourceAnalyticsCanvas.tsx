@@ -6613,7 +6613,7 @@ function CurrentStageArtifactReviewRow({
               artifactName={row.name}
               onReviewed={onClientFinalAccepted}
             />
-            {canReviseFinal ? (
+            {canReviseFinal && row.consultingGate.state === "failed" ? (
               <AcceptClientFinalButton
                 eventId={eventId}
                 artifactCode={row.code}
