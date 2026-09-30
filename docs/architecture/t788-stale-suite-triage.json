@@ -263,7 +263,14 @@
         "expectedByTest": 2,
         "returnedByCode": 3
       },
-      "rationale": "Red 1 of 5. The case expects exactly two personas with clientKey lakeshore in CXO_PERSONAS; the register holds three, because a tenant-admin persona (slug admin-lakeshore) was added deliberately after the test was written. The test is stale, not the code. Not edited here; T-790 carries the update with its reason."
+      "rationale": "Red 1 of 5. The case expects exactly two personas with clientKey lakeshore in CXO_PERSONAS; the register holds three, because a tenant-admin persona (slug admin-lakeshore) was added deliberately after the test was written. The test is stale, not the code. Not edited here; T-790 carries the update with its reason.",
+      "heldWithSibling": true,
+      "redResolved": {
+        "item": "T-790a",
+        "pullRequest": 8736,
+        "mergeSha": "5e7f1ed4828fca55ab0047bf9e1d8c5875495a55"
+      },
+      "redResolvedNote": "Added by T-796. The failing case was updated to the three-persona register by T-790 half (a); it now passes. green, redProbe and failingCase stay as the triage observed them on the base. The row is no longer a red carrier: it is held beside load-rehearsal.test.ts, and the control re-runs failingCase out of process and requires it to PASS, so this annotation cannot outlive the fix either."
     },
     {
       "path": "src/lib/lakeshore/__tests__/load-rehearsal.test.ts",
