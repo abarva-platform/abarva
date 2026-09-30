@@ -184,16 +184,21 @@ beforeEach(() => {
 
 describe("POST /api/v1/programs/[programId]/phase-gate-approval", () => {
   it("blocks approval on a hard gate failure and fabricates nothing", async () => {
-    mockEvaluateGate.mockResolvedValue({
-      failedChecks: [
-        {
-          check: "design_approved",
-          reason: "No approved P3 architecture deliverable exists",
-          severity: "hard",
-        },
-      ],
-      requiresApproval: false,
-    });
+    mockEvaluateGate.mockImplementation(
+      async (_ctx: unknown, _programId: string, phase: number) => ({
+        failedChecks:
+          phase === 3
+            ? [
+                {
+                  check: "design_approved",
+                  reason: "No approved P3 architecture deliverable exists",
+                  severity: "hard",
+                },
+              ]
+            : [],
+        requiresApproval: false,
+      }),
+    );
 
     const { POST } = await import("../route");
     const res = await POST(
@@ -203,6 +208,13 @@ describe("POST /api/v1/programs/[programId]/phase-gate-approval", () => {
 
     expect(res.status).toBe(409);
     await expect(res.json()).resolves.toMatchObject({ error: "gate_blocked" });
+    expect(mockEvaluateGate).toHaveBeenCalledWith(
+      ctx,
+      "prog-1",
+      3,
+      4,
+      expect.objectContaining({ allowHistoricalPhase: false }),
+    );
     // No fabrication helper exists in this route anymore; the only writes
     // possible on a hard fail are none — advancePhase must never be called.
     expect(mockAdvancePhase).not.toHaveBeenCalled();
@@ -328,6 +340,107 @@ describe("POST /api/v1/programs/[programId]/phase-gate-approval", () => {
     });
   });
 
+  it("does not present an approved historical snapshot as valid when its hard gate is now blocked", async () => {
+    mockGetProgramById.mockResolvedValue({
+      id: "prog-1",
+      currentPhase: 2,
+      gatesPassed: [1],
+    });
+    mockGetPhaseSnapshots.mockImplementation(
+      async (_ctx: unknown, _programId: string, phase: number) =>
+        phase === 1
+          ? [
+              {
+                id: "p1-approved",
+                phaseNumber: 1,
+                approvalStatus: "approved",
+                lockedAt: "2026-09-29T17:00:00.000Z",
+                createdAt: "2026-09-29T17:00:00.000Z",
+                snapshot: { evidenceSnapshotHash: "evidence-revision-1" },
+              },
+            ]
+          : [],
+    );
+    mockEvaluateGate.mockResolvedValue({
+      failedChecks: [
+        {
+          check: "charter_signed_off",
+          reason: "The approved artifact is not bound to current evidence.",
+          severity: "hard",
+        },
+      ],
+      requiresApproval: false,
+    });
+
+    const { GET } = await import("../route");
+    const res = await GET(getReq(1) as never, { params });
+
+    expect(res.status).toBe(200);
+    await expect(res.json()).resolves.toMatchObject({
+      approved: false,
+      approvalStale: true,
+      canApprove: false,
+      gate: {
+        failedChecks: [
+          expect.objectContaining({ check: "charter_signed_off", severity: "hard" }),
+        ],
+      },
+    });
+  });
+
+  it("blocks historical reapproval until the deliverable gate is current", async () => {
+    mockGetProgramById.mockResolvedValue({
+      id: "prog-1",
+      currentPhase: 2,
+      gatesPassed: [1],
+    });
+    mockGetModuleState.mockResolvedValue([
+      { moduleKey: "phase_1_review", status: "completed" },
+    ]);
+    mockGetPhaseSnapshots.mockImplementation(
+      async (_ctx: unknown, _programId: string, phase: number) =>
+        phase === 1
+          ? [
+              {
+                id: "p1-approved",
+                phaseNumber: 1,
+                approvalStatus: "approved",
+                lockedAt: "2026-09-29T17:00:00.000Z",
+                createdAt: "2026-09-29T17:00:00.000Z",
+                snapshot: { evidenceSnapshotHash: "evidence-revision-1" },
+              },
+            ]
+          : [],
+    );
+    mockEvaluateGate.mockResolvedValue({
+      failedChecks: [
+        {
+          check: "charter_signed_off",
+          reason: "The approved artifact is not bound to current evidence.",
+          severity: "hard",
+        },
+      ],
+      requiresApproval: false,
+    });
+
+    const { POST } = await import("../route");
+    const res = await POST(
+      req({ phase: 1, rationale: "Re-review historical phase." }) as never,
+      { params },
+    );
+
+    expect(res.status).toBe(409);
+    await expect(res.json()).resolves.toMatchObject({ error: "gate_blocked" });
+    expect(mockEvaluateGate).toHaveBeenCalledWith(
+      ctx,
+      "prog-1",
+      1,
+      2,
+      expect.objectContaining({ allowHistoricalPhase: true }),
+    );
+    expect(mockAdvancePhase).not.toHaveBeenCalled();
+  });
+
   it("reapproves a stale earlier phase against current evidence without rolling phase back", async () => {
     const writes: Array<{ table: string; payload: Record<string, unknown> }> =
       [];
@@ -402,6 +515,13 @@ describe("POST /api/v1/programs/[programId]/phase-gate-approval", () => {
       snapshotId: "p1-reapproval",
     });
     expect(mockAdvancePhase).not.toHaveBeenCalled();
+    expect(mockEvaluateGate).toHaveBeenCalledWith(
+      ctx,
+      "prog-1",
+      1,
+      2,
+      expect.objectContaining({ allowHistoricalPhase: true }),
+    );
     expect(
       JSON.parse(writes[0].payload.snapshot_jsonb as string),
     ).toMatchObject({
@@ -856,7 +976,13 @@ describe("POST /api/v1/programs/[programId]/phase-gate-approval", () => {
 
     expect(res.status).toBe(200);
     await expect(res.json()).resolves.toMatchObject({ alreadyApproved: true });
-    expect(mockEvaluateGate).not.toHaveBeenCalled();
+    expect(mockEvaluateGate).toHaveBeenCalledWith(
+      ctx,
+      "prog-1",
+      3,
+      4,
+      expect.objectContaining({ allowHistoricalPhase: true }),
+    );
     expect(mockAdvancePhase).not.toHaveBeenCalled();
   });
 
