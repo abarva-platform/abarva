@@ -60,7 +60,62 @@ export interface DeterministicSourceClaimViolation {
 const DETERMINISTIC_CLAIM_GATE_CODES = new Set([
   "d01_strategy_memo",
   "d02_value_target",
+  "d09_rfp_pack",
 ]);
+
+const D09_SERVICE_TARGET =
+  /\b(?:availability|uptime|(?:p[1-4]|critical|standard)\s+(?:incident\s+)?(?:response|resolution)|request\s+fulfillment|recovery|rto|rpo|reporting\s+(?:accuracy|timeliness)|maintenance\s+notice|security\s+incident\s+reporting)\b[^\n]{0,100}\b\d+(?:\.\d+)?\s*(?:%|percent\b|business\s+days?\b|minutes?\b|hours?\b|days?\b)/i;
+const D09_REGULATED_OBLIGATION =
+  /\b(?:HIPAA|HITECH|PHI|protected\s+health\s+information|HITRUST|healthcare[-\s]regulated|45\s+CFR|NIST\s+(?:CSF|SP)|SOC\s*2\s*Type\s*II|ISO\s*27001)\b/i;
+const D09_MATERIAL_VALUES = /\$\s*\d[\d,]*(?:\.\d+)?|\b\d+(?:\.\d+)?\s*%/gi;
+const D09_TARGET_VALUE = /\b\d+(?:\.\d+)?\s*(?:%|business\s+days?|minutes?|hours?|days?)/i;
+const D09_TARGET_METRIC =
+  /\b(?:availability|uptime|p[1-4]\s+(?:incident\s+)?(?:response|resolution)|request\s+fulfillment|recovery|rto|rpo|reporting\s+(?:accuracy|timeliness)|maintenance\s+notice|security\s+incident\s+reporting)\b/i;
+
+function findUnboundD09Obligations(
+  body: string,
+  sourceContext: string,
+): DeterministicSourceClaimViolation[] {
+  const sourceLines = sourceContext.split("\n")
+    .map((line) => line.replace(/\s+/g, " ").toLowerCase())
+    .filter((line) => !/\b(?:pending|not issued|not applicable|unapproved|not approved|no approval)\b/.test(line));
+  return body.split("\n").flatMap((rawLine) => {
+    const line = rawLine.replace(/\s+/g, " ").trim();
+    if (!line || sourceLines.some((sourceLine) => sourceLine.includes(line.toLowerCase()))) return [];
+    const violations: DeterministicSourceClaimViolation[] = [];
+    const target = line.match(D09_TARGET_VALUE)?.[0].toLowerCase();
+    const metric = line.match(D09_TARGET_METRIC)?.[0].toLowerCase();
+    const supportedTarget = Boolean(target && metric && sourceLines.some(
+      (sourceLine) => sourceLine.includes(target) && sourceLine.includes(metric),
+    ));
+    const materialValues = line.match(D09_MATERIAL_VALUES) ?? [];
+    const onlyResponseCompletion =
+      /\b100\s*%\s+of\s+(?:mandatory\s+)?(?:response\s+)?(?:fields?|items?|requirements?)\b/i.test(line) &&
+      materialValues.every((value) => /^100\s*%$/i.test(value));
+    if (D09_SERVICE_TARGET.test(line) && !supportedTarget) {
+      violations.push({
+        claim: line.slice(0, 220),
+        reason: "Specific service target is absent from the bounded vendor-facing evidence.",
+      });
+    } else if (!D09_SERVICE_TARGET.test(line) &&
+      materialValues.length > 0 &&
+      !onlyResponseCompletion
+    ) {
+      violations.push({
+        claim: line.slice(0, 220),
+        reason: "Quantified commercial or performance claim is absent from the bounded vendor-facing evidence.",
+      });
+    }
+    const regulatedTerm = line.match(D09_REGULATED_OBLIGATION)?.[0].toLowerCase();
+    if (regulatedTerm && !sourceLines.some((sourceLine) => sourceLine.includes(regulatedTerm))) {
+      violations.push({
+        claim: line.slice(0, 220),
+        reason: "Regulated-data or compliance obligation is absent from the bounded vendor-facing evidence.",
+      });
+    }
+    return violations;
+  });
+}
 
 /**
  * Deterministic backstop for the artifacts that establish the event's
@@ -75,6 +130,9 @@ export function findDeterministicSourceClaimViolations(args: {
   ctx?: SourceGenerationContext;
 }): DeterministicSourceClaimViolation[] {
   if (!DETERMINISTIC_CLAIM_GATE_CODES.has(args.artifactCode)) return [];
+  if (args.artifactCode === "d09_rfp_pack") {
+    return findUnboundD09Obligations(args.body, args.sourceContext);
+  }
 
   const supportedNumbers = extractMaterialNumbers(args.sourceContext);
   const violations: DeterministicSourceClaimViolation[] = [];
