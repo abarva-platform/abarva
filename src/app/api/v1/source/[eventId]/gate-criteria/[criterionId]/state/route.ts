@@ -37,10 +37,15 @@ import {
   gateCriterionStateRowToView,
   type SourceEventArtifactStateRow,
   type SourceEventEvidenceStateRow,
+  type SourceEventFactRow,
   type SourceEventGateCriterion,
   type SourceEventGateCriterionState,
   type SourceEventGateCriterionStateRow,
 } from "@/lib/source/canvas-substrate/types";
+import {
+  deriveFactBackedEvidenceStates,
+  mergeFactBackedEvidenceStates,
+} from "@/lib/source/canvas-substrate/fact-derived-evidence";
 import {
   evaluateCriterionMetReadiness,
   firstGovernanceBlocker,
@@ -274,6 +279,7 @@ export async function PATCH(req: NextRequest, { params }: RouteCtx) {
       const [
         { data: artifactRows, error: artifactFetchError },
         { data: evidenceRows, error: evidenceFetchError },
+        { data: factRows, error: factFetchError },
       ] = await Promise.all([
         supabase
           .from("source_event_artifact_states")
@@ -285,6 +291,12 @@ export async function PATCH(req: NextRequest, { params }: RouteCtx) {
           .select("*")
           .eq("source_event_id", persistedEvent.id)
           .eq("stage_key", criterionRow.from_stage),
+        supabase
+          .from("source_event_facts")
+          .select("*")
+          .eq("source_event_id", persistedEvent.id)
+          .eq("client_key", effectiveClientKey)
+          .eq("is_stale", false),
       ]);
       if (artifactFetchError) {
         return Response.json(
@@ -298,14 +310,27 @@ export async function PATCH(req: NextRequest, { params }: RouteCtx) {
           { status: 500 },
         );
       }
+      if (factFetchError) {
+        return Response.json(
+          { error: "lookup_failed", detail: factFetchError.message },
+          { status: 500 },
+        );
+      }
+
+      const persistedEvidence = ((evidenceRows ?? []) as SourceEventEvidenceStateRow[])
+        .map(evidenceStateRowToView);
+      const eventFacts = ((factRows ?? []) as SourceEventFactRow[]).filter(
+        (fact) => fact.source_event_id === persistedEvent.id && fact.client_key === effectiveClientKey,
+      );
 
       const readiness = evaluateCriterionMetReadiness({
         criterion: gateCriterionStateRowToView(criterionRow),
         artifacts: ((artifactRows ?? []) as SourceEventArtifactStateRow[]).map(
           artifactStateRowToView,
         ),
-        evidence: ((evidenceRows ?? []) as SourceEventEvidenceStateRow[]).map(
-          evidenceStateRowToView,
+        evidence: mergeFactBackedEvidenceStates(
+          persistedEvidence,
+          deriveFactBackedEvidenceStates(eventFacts),
         ),
         reason,
         approvalPolicyCode: approvalPolicy.code,
