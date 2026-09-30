@@ -35,6 +35,34 @@ interface Dimension {
 }
 
 const COLUMN_PRESETS: Record<TechObjectType, Column[]> = {
+  business_segment: [
+    { key: "segmentName", label: "Segment", width: 260, priority: "core" },
+    { key: "revenueSharePct", label: "Revenue share %", width: 145, align: "right" },
+    { key: "revenueUsd", label: "Revenue", width: 150, kind: "money" },
+    { key: "pnlOwnerRole", label: "P&L owner", width: 240 },
+    { key: "classificationBasis", label: "Basis", width: 230, kind: "muted" },
+  ],
+  business_function: [
+    { key: "functionName", label: "Function", width: 270, priority: "core" },
+    { key: "businessSegment", label: "Segment", width: 220 },
+    { key: "executiveOwner", label: "Executive owner", width: 220 },
+    { key: "criticality", label: "Criticality", width: 110, kind: "pill" },
+    { key: "fteCount", label: "FTE", width: 100, align: "right" },
+  ],
+  workforce_role: [
+    { key: "personaOrRole", label: "Role", width: 270, priority: "core" },
+    { key: "functionName", label: "Function", width: 230 },
+    { key: "roleCount", label: "Count", width: 100, align: "right" },
+    { key: "employmentType", label: "Employment", width: 150 },
+    { key: "vendorSupported", label: "Vendor supported", width: 150 },
+  ],
+  operational_process: [
+    { key: "processName", label: "Process", width: 290, priority: "core" },
+    { key: "businessFunction", label: "Function", width: 230 },
+    { key: "processOwner", label: "Owner", width: 220 },
+    { key: "systemsUsed", label: "Systems", width: 250 },
+    { key: "controlPoints", label: "Control points", width: 240, kind: "muted" },
+  ],
   // Read as a sentence, left to right: this object, this verb, that object. The verb sits between
   // its endpoints rather than after them, because a grid that lists both names then the type makes
   // a reader hold two things in mind before learning what connects them.
@@ -1598,6 +1626,49 @@ function relationshipPairsFor(objectType: TechObjectType, rows: RecordRow[]) {
       right: string;
     }>
   > = {
+    business_segment: [
+      {
+        key: "segment-owner",
+        title: "Segments and accountable owners",
+        caption: "The ownership declared for each business segment.",
+        left: "segmentName",
+        right: "pnlOwnerRole",
+      },
+    ],
+    business_function: [
+      {
+        key: "segment-criticality",
+        title: "Function criticality by segment",
+        caption: "How declared function criticality is distributed across segments.",
+        left: "businessSegment",
+        right: "criticality",
+      },
+      {
+        key: "segment-owner",
+        title: "Function ownership by segment",
+        caption: "Which executive roles own the functions in each segment.",
+        left: "businessSegment",
+        right: "executiveOwner",
+      },
+    ],
+    workforce_role: [
+      {
+        key: "function-employment",
+        title: "Workforce mix by function",
+        caption: "Employment types declared for each function's roles.",
+        left: "functionName",
+        right: "employmentType",
+      },
+    ],
+    operational_process: [
+      {
+        key: "function-owner",
+        title: "Process ownership by function",
+        caption: "Who is recorded as owning work in each function.",
+        left: "businessFunction",
+        right: "processOwner",
+      },
+    ],
     // Each pairing is a question someone actually asks of this record type, not every column
     // against every other. A crossing nobody would ask for is noise with a title on it.
     relationship_edge: [
