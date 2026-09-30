@@ -1318,15 +1318,6 @@
       "controlKind": "ai-label"
     },
     {
-      "key": "generated-ui|Source|Commercial summary surface|confidence",
-      "status": "deferred",
-      "controlKind": "confidence",
-      "reason": "The control is deterministic/no-live-benchmark limitation copy, not a formal confidence control yet.",
-      "surfaceJoin": {
-        "state": "uncatalogued"
-      }
-    },
-    {
       "key": "generated-ui|Tower|aVa Command Center chat opener|citation",
       "status": "deferred",
       "surfaceId": "tower-command-center-ava-dock",
