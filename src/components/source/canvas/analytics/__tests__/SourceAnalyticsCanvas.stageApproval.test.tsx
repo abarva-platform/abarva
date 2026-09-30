@@ -281,6 +281,7 @@ describe("SourceAnalyticsCanvas stage workflow", () => {
       tenantName: "Demo Client",
       stageView: { ...COMPLETE_SCOPE_STAGE, gate: { ...COMPLETE_SCOPE_STAGE.gate, action: undefined } },
       approvalItems: [APPROVAL],
+      artifacts: SCOPE_READY_ARTIFACTS,
       gateCriterionStates: states,
       stageArtifactStates: artifacts,
       evidenceStates: SCOPE_READY_EVIDENCE,
@@ -288,6 +289,8 @@ describe("SourceAnalyticsCanvas stage workflow", () => {
       canRetireEvent: true,
     };
     const { rerender } = render(<SourceAnalyticsCanvas {...props} />);
+    expect(screen.getByTestId("source-shell-approval-readiness")).toHaveTextContent("Gate criteria still open");
+    expect(screen.getByTestId("source-shell-approval-readiness")).not.toHaveTextContent("Ready to decide");
     const review = screen.getByTestId("source-stage-criterion-review");
     expect(review).toHaveTextContent("Scope gate criteria");
     expect(review).toHaveTextContent("0 of 5 recorded");
@@ -301,6 +304,10 @@ describe("SourceAnalyticsCanvas stage workflow", () => {
     ));
     const body = JSON.parse((global.fetch as jest.Mock).mock.calls[0][1].body);
     expect(body).toMatchObject({ state: "met", reason: expect.stringContaining("six unresolved") });
+
+    rerender(<SourceAnalyticsCanvas {...props} gateCriterionStates={states.map((state) => ({ ...state, state: "met" as const }))} />);
+    expect(screen.getByTestId("source-shell-approval-readiness")).toHaveTextContent("Stage gate still blocked");
+    expect(screen.getByTestId("source-shell-approval-readiness")).not.toHaveTextContent("Ready to decide");
 
     rerender(<SourceAnalyticsCanvas {...props} canRetireEvent={false} />);
     expect(within(screen.getByTestId("source-stage-criterion-review")).queryByRole("button", {
@@ -1765,7 +1772,7 @@ describe("SourceAnalyticsCanvas stage workflow", () => {
     expect(screen.getByTestId("source-shell-v2-approvals")).toBeInTheDocument();
     expect(
       screen.getByTestId("source-shell-approval-readiness"),
-    ).toHaveTextContent("Ready to decide");
+    ).toHaveTextContent("Gate criteria still open");
   });
 
   it("does not substitute a modeled BAFO scenario without live vendor context", () => {

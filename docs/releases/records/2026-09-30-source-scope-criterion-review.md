@@ -10,7 +10,7 @@
 
 ## Plain-English Summary
 
-Event Owners can review the current Scope gate criteria in the approvals workspace. The existing server-side decision and evidence checks still determine whether a criterion can be recorded and whether the stage can advance.
+Event Owners can review the current Scope gate criteria in the approvals workspace. Approval readiness no longer claims that the stage is ready while criteria remain open or the server-side action is unarmed. The existing decision and evidence checks still determine whether a criterion can be recorded and whether the stage can advance.
 
 ## Layer Impact
 
@@ -29,6 +29,7 @@ Layer 4 Source presentation only. No canonical data, adapter, or intake contract
 ## Changes Included
 
 - Reuse the governed stage-criterion review control for Scope as well as Strategy.
+- Derive Scope approval readiness from the recorded criteria and the server-armed action, while preserving the distinct unrouted-approval state.
 - Keep current-stage, active-event, linked Client Final, and authorized-review checks.
 - Add a mounted Scope interaction test covering the criterion PATCH and unavailable review controls for an unauthorized viewer.
 

@@ -7627,7 +7627,12 @@ function ApprovalsWorkspace({
         title="Stage decisions"
         subtitle="The workflow prepares the evidence; this page records the approval decision."
       />
-      <ApprovalReadinessBrief view={view} requiredEvidenceOpen={requiredEvidenceOpen} />
+      <ApprovalReadinessBrief
+        view={view}
+        requiredEvidenceOpen={requiredEvidenceOpen}
+        gateCriterionStates={gateCriterionStates}
+        gateAction={gateAction}
+      />
       {(view.stage.key === "strategy" || view.stage.key === "scope") &&
       view.event.currentStageKey === view.stage.key && view.event.lifecycle === "active" ? (
         <StageCriterionReview
@@ -7911,21 +7916,29 @@ function PendingDecisionGroups({ view }: { view: SourceEventShellView }) {
 function ApprovalReadinessBrief({
   view,
   requiredEvidenceOpen,
+  gateCriterionStates,
+  gateAction,
 }: {
   view: SourceEventShellView;
   requiredEvidenceOpen: number;
+  gateCriterionStates: readonly SourceEventGateCriterion[];
+  gateAction?: StageGateActionView;
 }) {
   const stageApproved = view.stage.approvalRecorded;
   const approvalDecision = currentApprovalDecision(view);
-  const gateCriteriaOpen = approvalDecision?.blockers.some((blocker) => blocker.code === "gate_criteria_open") ?? false;
+  const approvalRouted = view.approvals.currentStageItem != null;
+  const gateCriteriaOpen =
+    (approvalDecision?.blockers.some((blocker) => blocker.code === "gate_criteria_open") ?? false) ||
+    (view.stage.key === "scope" && approvalRouted && gateAction == null && criteriaForStage("scope").some((criterion) =>
+      !gateCriterionStates.some((state) => state.criterionId === criterion.criterionId &&
+        (state.state === "met" || state.state === "waived"))));
   const approvalAuditBlockers = recordedApprovalAuditBlockers(approvalDecision);
   const approvalAuditGapsOpen =
     stageApproved && approvalAuditBlockers.length > 0;
   const workflowComplete = view.stage.ready >= view.stage.total;
   const filesReady = view.stage.artifactReadiness.ready;
-  const approvalRouted = view.approvals.currentStageItem != null;
   const ready =
-    !stageApproved && approvalRouted && workflowComplete && filesReady && requiredEvidenceOpen === 0 && !gateCriteriaOpen;
+    !stageApproved && approvalRouted && workflowComplete && filesReady && requiredEvidenceOpen === 0 && !gateCriteriaOpen && gateAction != null;
   const stageHref = `/source/events/${encodeURIComponent(
     view.event.id,
   )}?stage=${encodeURIComponent(view.stage.key)}`;
@@ -7947,8 +7960,12 @@ function ApprovalReadinessBrief({
         ? "Review required evidence in the owning steps."
         : !filesReady
           ? "Clear artifact queue."
+          : !approvalRouted
+            ? "Approval routing unavailable."
           : gateCriteriaOpen
             ? "Review required gate criteria."
+          : !gateAction
+            ? "Review stage gate blockers."
           : (view.approvals.currentStageItem?.actionLabel ??
             "Approval routing unavailable.");
   const readinessTitle = stageApproved
@@ -7963,10 +7980,14 @@ function ApprovalReadinessBrief({
         ? "Workflow inputs still open"
         : requiredEvidenceOpen > 0
           ? "Required evidence still open"
-          : !filesReady
-            ? "Artifact queue blocks the gate"
+        : !filesReady
+          ? "Artifact queue blocks the gate"
+          : !approvalRouted
+            ? "Approval routing unavailable"
             : gateCriteriaOpen
               ? "Gate criteria still open"
+            : !gateAction
+              ? "Stage gate still blocked"
             : "Approval routing unavailable";
   const readinessStatus = stageApproved
     ? approvalAuditGapsOpen
@@ -7978,10 +7999,14 @@ function ApprovalReadinessBrief({
         ? "Inputs open"
         : requiredEvidenceOpen > 0
           ? "Evidence open"
-          : !filesReady
-            ? "Not gate-ready"
+        : !filesReady
+          ? "Not gate-ready"
+          : !approvalRouted
+            ? "Routing open"
             : gateCriteriaOpen
               ? "Criteria open"
+            : !gateAction
+              ? "Gate blocked"
             : "Routing open";
 
   return (
