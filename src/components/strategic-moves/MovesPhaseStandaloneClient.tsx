@@ -1076,8 +1076,17 @@ export function MovesPhaseStandaloneClient({
     evidenceNeedPackets,
     phase.phase,
   );
+  const currentStateEvidenceGapCount =
+    phase.phase === 2 && currentStateReadiness
+      ? currentStateReadiness.hardGaps.length
+      : null;
+  const phaseEvidenceCheckAvailable =
+    evidenceReadinessAvailable &&
+    (phase.phase !== 2 || currentStateReadiness !== null);
+  const phaseEvidenceGapCount =
+    requiredEvidenceGaps.length + (currentStateEvidenceGapCount ?? 0);
   const phaseEvidencePassed =
-    evidenceReadinessAvailable && requiredEvidenceGaps.length === 0;
+    phaseEvidenceCheckAvailable && phaseEvidenceGapCount === 0;
   const phaseCaptureCompleteCount = useMemo(
     () =>
       phaseCaptureSections.filter(
@@ -1146,22 +1155,22 @@ export function MovesPhaseStandaloneClient({
     ? blockedPhaseRequest.reason
     : terminalP5Complete
       ? "Move handed off to Tower."
-      : !evidenceReadinessAvailable
+      : !phaseEvidenceCheckAvailable
         ? "Evidence readiness could not be checked. Refresh this phase before continuing."
-      : requiredEvidenceGaps.length > 0
-        ? `${requiredEvidenceGaps.length} required evidence item${
-            requiredEvidenceGaps.length === 1 ? "" : "s"
-          } still need approval or coverage.`
-      : phaseCaptureMissingCount > 0
-        ? `${phaseCaptureMissingCount} phase input${
-            phaseCaptureMissingCount === 1 ? "" : "s"
-          } still missing from persisted server state.`
-        : substep.key === "approve" &&
-            topLevelHardGateMet < topLevelHardGateTotal
-          ? `${topLevelHardGateTotal - topLevelHardGateMet} hard gate blocker${
-              topLevelHardGateTotal - topLevelHardGateMet === 1 ? "" : "s"
-            } remain.`
-          : "No required input blockers for the current step.";
+        : phaseEvidenceGapCount > 0
+          ? `${phaseEvidenceGapCount} required evidence item${
+              phaseEvidenceGapCount === 1 ? "" : "s"
+            } still need approval or coverage.`
+          : phaseCaptureMissingCount > 0
+            ? `${phaseCaptureMissingCount} phase input${
+                phaseCaptureMissingCount === 1 ? "" : "s"
+              } still missing from persisted server state.`
+            : substep.key === "approve" &&
+                topLevelHardGateMet < topLevelHardGateTotal
+              ? `${topLevelHardGateTotal - topLevelHardGateMet} hard gate blocker${
+                  topLevelHardGateTotal - topLevelHardGateMet === 1 ? "" : "s"
+                } remain.`
+              : "No required input blockers for the current step.";
   const phaseProgressSignals = [
     {
       label: "Inputs",
@@ -1175,14 +1184,13 @@ export function MovesPhaseStandaloneClient({
     },
     {
       label: "Evidence",
-      value:
-        !evidenceReadinessAvailable
-          ? "Not checked"
-          : requiredEvidenceGaps.length === 0
+      value: !phaseEvidenceCheckAvailable
+        ? "Not checked"
+        : phaseEvidenceGapCount === 0
           ? "Covered"
-          : `${requiredEvidenceGaps.length} open`,
+          : `${phaseEvidenceGapCount} open`,
       tone:
-        !evidenceReadinessAvailable || requiredEvidenceGaps.length > 0
+        !phaseEvidenceCheckAvailable || phaseEvidenceGapCount > 0
           ? "blocked"
           : "ready",
     },
@@ -1202,31 +1210,35 @@ export function MovesPhaseStandaloneClient({
       tone: phaseCaptureMissingCount > 0 ? "open" : "neutral",
     },
   ];
-  const phaseCaptureBlocker =
-    !evidenceReadinessAvailable
-      ? "Evidence readiness could not be verified. Refresh this phase before Approve & Build."
+  const phaseCaptureBlocker = !phaseEvidenceCheckAvailable
+    ? "Evidence readiness could not be verified. Refresh this phase before Approve & Build."
+    : currentStateEvidenceGapCount !== null &&
+        currentStateEvidenceGapCount > 0
+      ? `${currentStateEvidenceGapCount} current-state evidence famil${
+          currentStateEvidenceGapCount === 1 ? "y" : "ies"
+        } still need approval or coverage before Approve & Build.`
       : phase.phase === 3 && !selectedP3Option
-      ? "Select the solution option that architecture should implement before Approve & Build."
-      : phase.phase >= 1 && avaLocalDraftCount > 0
-        ? `Save ${avaLocalDraftCount} aVa draft${
-            avaLocalDraftCount === 1 ? "" : "s"
-          } before Approve & Build.`
-        : phase.phase >= 1 && phaseCaptureFailedCount > 0
-          ? `Resolve ${phaseCaptureFailedCount} unsaved phase input${
-              phaseCaptureFailedCount === 1 ? "" : "s"
+        ? "Select the solution option that architecture should implement before Approve & Build."
+        : phase.phase >= 1 && avaLocalDraftCount > 0
+          ? `Save ${avaLocalDraftCount} aVa draft${
+              avaLocalDraftCount === 1 ? "" : "s"
             } before Approve & Build.`
-          : phase.phase >= 1 && phaseCaptureSavingCount > 0
-            ? `Wait for ${phaseCaptureSavingCount} phase input${
-                phaseCaptureSavingCount === 1 ? "" : "s"
-              } to save before Approve & Build.`
-            : phase.phase >= 1 && phaseCaptureDirtyCount > 0
-              ? `Save ${phaseCaptureDirtyCount} phase input${
-                  phaseCaptureDirtyCount === 1 ? "" : "s"
-                } before Approve & Build.`
+          : phase.phase >= 1 && phaseCaptureFailedCount > 0
+            ? `Resolve ${phaseCaptureFailedCount} unsaved phase input${
+                phaseCaptureFailedCount === 1 ? "" : "s"
+              } before Approve & Build.`
+            : phase.phase >= 1 && phaseCaptureSavingCount > 0
+              ? `Wait for ${phaseCaptureSavingCount} phase input${
+                  phaseCaptureSavingCount === 1 ? "" : "s"
+                } to save before Approve & Build.`
+              : phase.phase >= 1 && phaseCaptureDirtyCount > 0
+                ? `Save ${phaseCaptureDirtyCount} phase input${
+                    phaseCaptureDirtyCount === 1 ? "" : "s"
+                  } before Approve & Build.`
                 : phase.phase >= 1 && phaseCaptureMissingCount > 0
                   ? `Complete ${phaseCaptureMissingCount} phase input${
-                    phaseCaptureMissingCount === 1 ? "" : "s"
-                  } before Approve & Build.`
+                      phaseCaptureMissingCount === 1 ? "" : "s"
+                    } before Approve & Build.`
                   : null;
   const phaseProgress = phaseProgressReadiness({
     phase: phase.phase,
@@ -1237,21 +1249,25 @@ export function MovesPhaseStandaloneClient({
     finderSelectedSectionKey === null && substep.key === "approve"
       ? isHistoricalPhase || gateApproved
         ? { label: "Approved", tone: "complete", openEvidenceCount: 0 }
-        : !evidenceReadinessAvailable
+        : !phaseEvidenceCheckAvailable
           ? {
               label: "Evidence check unavailable",
               tone: "open",
               openEvidenceCount: 0,
             }
-        : phaseProgress.requiredEvidenceGaps.length > 0
-          ? {
-              label: "Review required evidence",
-              tone: "open",
-              openEvidenceCount: phaseProgress.requiredEvidenceGaps.length,
-            }
-          : phaseProgress.blocker
-            ? { label: "Inputs not ready", tone: "open", openEvidenceCount: 0 }
-            : { label: "Ready to build", tone: "ready", openEvidenceCount: 0 }
+          : phaseEvidenceGapCount > 0
+            ? {
+                label: "Review required evidence",
+                tone: "open",
+                openEvidenceCount: phaseEvidenceGapCount,
+              }
+            : phaseProgress.blocker
+              ? {
+                  label: "Inputs not ready",
+                  tone: "open",
+                  openEvidenceCount: 0,
+                }
+              : { label: "Ready to build", tone: "ready", openEvidenceCount: 0 }
       : null;
   // MOVES-UI-001 Steps two-column "Coming up" card. Same real inputs and same
   // function (`buildNextPhaseReadinessPack`) the Approve substep already uses
@@ -2635,7 +2651,7 @@ export function MovesPhaseStandaloneClient({
                       phase={phase}
                       gateApproved={gateApproved}
                       phaseEvidencePassed={phaseEvidencePassed}
-                      evidenceReadinessAvailable={evidenceReadinessAvailable}
+                      evidenceReadinessAvailable={phaseEvidenceCheckAvailable}
                       progressHeaderState={phaseProgressHeaderState}
                       onOpenFiles={openFilesWorkspace}
                       businessChangeAssessment={businessChangeAssessment}
@@ -2660,7 +2676,9 @@ export function MovesPhaseStandaloneClient({
                           findingsEvidenceLabel={findingsEvidenceLabel}
                           evidenceNeedPackets={evidenceNeedPackets}
                           phaseEvidencePassed={phaseEvidencePassed}
-                          evidenceReadinessAvailable={evidenceReadinessAvailable}
+                          evidenceReadinessAvailable={
+                            phaseEvidenceCheckAvailable
+                          }
                           gateApproved={gateApproved}
                           gateApprovalMessage={gateApprovalMessage}
                           gateApprovalStatus={gateApprovalStatus}
@@ -2718,7 +2736,7 @@ export function MovesPhaseStandaloneClient({
                       }
                       phase={phase}
                       phaseEvidencePassed={phaseEvidencePassed}
-                      evidenceReadinessAvailable={evidenceReadinessAvailable}
+                      evidenceReadinessAvailable={phaseEvidenceCheckAvailable}
                       progressHeaderState={phaseProgressHeaderState}
                       onOpenFiles={openFilesWorkspace}
                       businessChangeAssessment={businessChangeAssessment}
@@ -2743,7 +2761,9 @@ export function MovesPhaseStandaloneClient({
                           findingsEvidenceLabel={findingsEvidenceLabel}
                           evidenceNeedPackets={evidenceNeedPackets}
                           phaseEvidencePassed={phaseEvidencePassed}
-                          evidenceReadinessAvailable={evidenceReadinessAvailable}
+                          evidenceReadinessAvailable={
+                            phaseEvidenceCheckAvailable
+                          }
                           gateApproved={gateApproved}
                           gateApprovalMessage={gateApprovalMessage}
                           gateApprovalStatus={gateApprovalStatus}
