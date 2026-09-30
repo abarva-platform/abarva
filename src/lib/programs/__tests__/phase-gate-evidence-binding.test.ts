@@ -1,5 +1,6 @@
 import {
   effectivePhaseAfterEvidenceChange,
+  effectivePhaseAfterGateValidation,
   phaseApprovalMatchesEvidence,
 } from "../phase-gate-evidence-binding";
 import type { PhaseSnapshot } from "../types.db";
@@ -120,5 +121,50 @@ describe("phase-gate evidence binding", () => {
         latestEvidenceActivityAt: "2026-09-29T18:00:00.000Z",
       }),
     ).toBe(1);
+  });
+
+  it("reopens a historical phase when its current hard gate no longer passes even if its evidence approval hash matches", () => {
+    const currentApproval = approvedSnapshot(
+      1,
+      "2026-09-29T19:00:00.000Z",
+      "evidence-revision-2",
+    );
+    const evidenceCurrentPhase = effectivePhaseAfterEvidenceChange(
+      2,
+      [currentApproval],
+      currentEvidence,
+    );
+
+    expect(evidenceCurrentPhase).toBe(2);
+    expect(
+      effectivePhaseAfterGateValidation(
+        evidenceCurrentPhase,
+        new Map([[1, false]]),
+      ),
+    ).toBe(1);
+  });
+
+  it("keeps the current phase only when every prior hard gate is verified ready", () => {
+    expect(
+      effectivePhaseAfterGateValidation(
+        4,
+        new Map([
+          [1, true],
+          [2, true],
+          [3, true],
+        ]),
+      ),
+    ).toBe(4);
+    expect(
+      effectivePhaseAfterGateValidation(
+        4,
+        new Map([
+          [1, true],
+          [2, false],
+          [3, true],
+        ]),
+      ),
+    ).toBe(2);
+    expect(effectivePhaseAfterGateValidation(3, new Map([[1, true]]))).toBe(2);
   });
 });

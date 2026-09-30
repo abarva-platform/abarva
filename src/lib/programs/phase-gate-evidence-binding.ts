@@ -58,3 +58,17 @@ export function effectivePhaseAfterEvidenceChange(
   }
   return currentPhase;
 }
+
+export function effectivePhaseAfterGateValidation(
+  currentPhase: number,
+  gateReadinessByPhase: ReadonlyMap<number, boolean>,
+): number {
+  const boundedCurrentPhase = Math.max(
+    0,
+    Math.min(5, Math.trunc(currentPhase)),
+  );
+  for (let phase = 1; phase < boundedCurrentPhase; phase += 1) {
+    if (gateReadinessByPhase.get(phase) !== true) return phase;
+  }
+  return boundedCurrentPhase;
+}
