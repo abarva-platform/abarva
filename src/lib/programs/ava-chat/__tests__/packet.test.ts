@@ -174,6 +174,86 @@ describe("buildMovesAvaChatPacket — no blank-prompt chat", () => {
     expect(prompt).toContain("the user must insert the draft and save");
   });
 
+  it("builds an evidence packet for an evidence-summary question even when hardening is off", () => {
+    const mode = classifyMovesAvaQuestion("What does the evidence prove?").mode;
+    expect(mode).toBe("evidence_summary");
+    expect(
+      shouldBuildMovesAvaPacketForMode({ hardeningEnabled: false, mode }),
+    ).toBe(true);
+
+    const packet = buildMovesAvaChatPacket(
+      {
+        ...BASE_INPUT,
+        approvedEvidence: [
+          {
+            title: "reviewed_metrics.csv",
+            summary: "Synthetic candidate series; denominator not validated.",
+            statements: ["FCR candidate: 68.2%"],
+            observations: ["Team described duplicate contacts as common."],
+            assumptions: ["Annualized extrapolation is unvalidated."],
+            openQuestions: ["Which denominator governs FCR?"],
+            citations: [
+              { quote: "Synthetic candidate", locator: "README, p. 1" },
+            ],
+          },
+        ],
+        approvedEvidenceTotal: 9,
+      },
+      "What does the evidence prove?",
+    );
+    const answer = buildDeterministicMovesAvaStatusAnswer(packet, mode);
+    expect(answer).toContain("[E1] reviewed_metrics.csv");
+    expect(answer).toContain(
+      "Review approval confirms the extraction was accepted",
+    );
+    expect(answer).toContain("Stakeholder observations (not verified facts)");
+    expect(answer).toContain("Assumptions (not verified)");
+    expect(answer).toContain("Which denominator governs FCR?");
+    expect(answer).toContain("8 additional approved evidence items omitted");
+    for (const unsupportedClaim of [
+      "named approver",
+      "365K",
+      "438K",
+      "612-671 seconds",
+      "73-76%",
+      "638-second",
+      "703-second",
+      "seven of nine",
+    ]) {
+      expect(answer).not.toContain(unsupportedClaim);
+    }
+  });
+
+  it("fails closed when no approved evidence exists or its read is unavailable", () => {
+    const packet = buildMovesAvaChatPacket(
+      {
+        ...BASE_INPUT,
+        approvedEvidence: [],
+      },
+      "What does the evidence prove?",
+    );
+    const emptyAnswer = buildDeterministicMovesAvaStatusAnswer(
+      packet,
+      "evidence_summary",
+    );
+    expect(emptyAnswer).toContain("None for this phase");
+    expect(emptyAnswer).toContain(
+      "No operational claim should be treated as established",
+    );
+
+    const unavailablePacket = buildMovesAvaChatPacket(
+      { ...BASE_INPUT, approvedEvidenceUnavailable: true },
+      "What does the evidence prove?",
+    );
+    const unavailableAnswer = buildDeterministicMovesAvaStatusAnswer(
+      unavailablePacket,
+      "evidence_summary",
+    );
+    expect(unavailableAnswer).toContain(
+      "no factual conclusion is safe to state",
+    );
+  });
+
   it("builds deterministic capture-field artifacts for cited phase-input proposals", () => {
     const packet = buildMovesAvaChatPacket(
       {

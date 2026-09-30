@@ -63,6 +63,43 @@ describe("agent route · Moves aVa scoped-context gate", () => {
     expect(resolverBlock).toContain("resolveMovesAvaVisibleEvidenceCount");
   });
 
+  it("loads only approved evidence scoped to the active phase for deterministic evidence summaries", () => {
+    const modeStart = source.indexOf(
+      'const mode = movesAvaMode ?? "phase_guidance";',
+    );
+    const evidenceLoadBlock = source.slice(
+      modeStart,
+      source.indexOf("const packet = buildMovesAvaChatPacket(", modeStart),
+    );
+
+    expect(modeStart).toBeGreaterThan(-1);
+    expect(evidenceLoadBlock).toContain('if (mode === "evidence_summary")');
+    expect(evidenceLoadBlock).toContain(
+      "loadedEvidenceItems = await listProgramEvidenceForPrompt(",
+    );
+    expect(evidenceLoadBlock).toContain(
+      "programId,\n                  promptPhase,",
+    );
+    expect(evidenceLoadBlock).toContain(
+      "approvedEvidenceItems = loadedEvidenceItems.slice(0, 8)",
+    );
+    expect(source).toContain(
+      "buildDeterministicMovesAvaStatusAnswer(packet, mode)",
+    );
+  });
+
+  it("returns deterministic evidence summaries before Anthropic preflight", () => {
+    const deterministicReturn = source.indexOf(
+      "if (movesAvaDeterministicAnswer)",
+    );
+    const modelPreflight = source.indexOf(
+      "const preflight = await preflightAnthropicDirectClient(",
+    );
+
+    expect(deterministicReturn).toBeGreaterThan(-1);
+    expect(modelPreflight).toBeGreaterThan(deterministicReturn);
+  });
+
   it("suppresses the generic tenant system block when Moves scoped grounding is present", () => {
     const derivation = source.slice(
       source.indexOf("const tenantSystemBlockForPrompt ="),

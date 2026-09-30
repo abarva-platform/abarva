@@ -7,10 +7,99 @@ const DETERMINISTIC_STATUS_MODES = new Set<MovesAvaAnswerMode>([
   "next_phase_readiness",
 ]);
 
+function compactEvidenceText(value: string, limit = 360): string {
+  const compact = value.replace(/\s+/g, " ").trim();
+  return compact.length > limit ? `${compact.slice(0, limit - 1)}…` : compact;
+}
+
+function cappedList(values: string[], limit: number): string[] {
+  const shown = values
+    .slice(0, limit)
+    .map((value) => compactEvidenceText(value, 220));
+  const remaining = values.length - shown.length;
+  return remaining > 0 ? [...shown, `${remaining} more omitted`] : shown;
+}
+
+function buildEvidenceSummaryAnswer(packet: MovesAvaChatPacket): string {
+  const lines = [
+    `For ${packet.currentPhaseClientLabel}, I can state only what appears in the approved evidence reviewed for this phase. Review approval confirms the extraction was accepted; it does not by itself make a hypothesis finance-validated or independently verified.`,
+    "",
+    "Approved evidence on record:",
+  ];
+
+  if (packet.approvedEvidenceUnavailable) {
+    lines.push(
+      "- Approved evidence could not be loaded for this answer, so no factual conclusion is safe to state.",
+    );
+  } else if (packet.approvedEvidence.length === 0) {
+    lines.push(
+      "- None for this phase. No operational claim should be treated as established from the current phase evidence.",
+    );
+  } else {
+    packet.approvedEvidence.slice(0, 8).forEach((item, index) => {
+      lines.push(`- [E${index + 1}] ${compactEvidenceText(item.title, 180)}.`);
+      if (item.summary) {
+        lines.push(`  Approved summary: ${compactEvidenceText(item.summary)}`);
+      }
+      if (item.statements.length) {
+        lines.push(
+          `  Captured statements: ${cappedList(item.statements, 5).join("; ")}`,
+        );
+      }
+      if (item.observations.length) {
+        lines.push(
+          `  Stakeholder observations (not verified facts): ${cappedList(item.observations, 3).join("; ")}`,
+        );
+      }
+      if (item.assumptions.length) {
+        lines.push(
+          `  Assumptions (not verified): ${cappedList(item.assumptions, 3).join("; ")}`,
+        );
+      }
+      if (item.openQuestions.length) {
+        lines.push(
+          `  Open questions: ${cappedList(item.openQuestions, 3).join("; ")}`,
+        );
+      }
+      if (item.citations.length) {
+        const sourceReferences = item.citations
+          .slice(0, 3)
+          .map(
+            (citation) =>
+              `"${compactEvidenceText(citation.quote, 150)}" (${compactEvidenceText(citation.locator, 120)})`,
+          );
+        lines.push(`  Source references: ${sourceReferences.join("; ")}`);
+      }
+    });
+    if (packet.approvedEvidenceTotal > packet.approvedEvidence.length) {
+      lines.push(
+        `- ${packet.approvedEvidenceTotal - packet.approvedEvidence.length} additional approved evidence items omitted from this concise summary.`,
+      );
+    }
+  }
+
+  if (packet.evidenceNeedPackets.length > 0) {
+    lines.push(
+      "",
+      "Still needed before drawing a broader current-state conclusion:",
+    );
+    for (const need of packet.evidenceNeedPackets.slice(0, 6)) {
+      lines.push(`- ${need}`);
+    }
+  }
+
+  lines.push(
+    "",
+    "Next action: review the cited items in Files & Evidence and add source-backed evidence for any open family in this phase. Do not infer a value, owner, approval, or outcome that is not stated in those reviewed records.",
+  );
+  return lines.join("\n");
+}
+
 export function buildDeterministicMovesAvaStatusAnswer(
   packet: MovesAvaChatPacket,
   mode: MovesAvaAnswerMode,
 ): string | null {
+  if (mode === "evidence_summary") return buildEvidenceSummaryAnswer(packet);
   if (!DETERMINISTIC_STATUS_MODES.has(mode)) return null;
   const checklist = packet.checklistStatus;
   if (!checklist) return null;
