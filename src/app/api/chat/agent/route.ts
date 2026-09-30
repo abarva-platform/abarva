@@ -930,7 +930,10 @@ export async function POST(request: Request) {
               ReturnType<typeof listProgramEvidenceForPrompt>
             > = [];
             let approvedEvidenceTotal = 0;
-            if (mode === "evidence_summary") {
+            if (
+              mode === "evidence_summary" ||
+              (mode === "phase_input_draft" && promptPhase > 1)
+            ) {
               try {
                 const loadedEvidenceItems = await listProgramEvidenceForPrompt(
                   tenancy,
@@ -1000,6 +1003,8 @@ export async function POST(request: Request) {
                 phase: promptPhase,
                 currentValues: valuesByPhase[promptPhase] ?? {},
                 upstreamValuesByPhase: valuesByPhase,
+                approvedEvidenceCount: approvedEvidenceTotal,
+                approvedEvidenceUnavailable,
               });
               movesAvaPhaseInputDraftAnswer =
                 buildDeterministicPhaseInputDraftAnswer({
@@ -1010,6 +1015,8 @@ export async function POST(request: Request) {
                     phase: promptPhase,
                     currentValues: valuesByPhase[promptPhase] ?? {},
                     upstreamValuesByPhase: valuesByPhase,
+                    approvedEvidenceCount: approvedEvidenceTotal,
+                    approvedEvidenceUnavailable,
                   }),
                 });
             }

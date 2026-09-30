@@ -170,8 +170,52 @@ describe("buildMovesAvaChatPacket — no blank-prompt chat", () => {
     expect(prompt).toContain("Phase-input drafting mode");
     expect(prompt).toContain("[[artifact:capture-field]]");
     expect(prompt).toContain("citations");
-    expect(prompt).toContain("Do not render uncited field drafts");
+    expect(prompt).toContain("prior-phase captures are context only");
+    expect(prompt).toContain(
+      "field-level support is unclear, emit no artifact",
+    );
     expect(prompt).toContain("the user must insert the draft and save");
+  });
+
+  it("grounds phase-input drafting in the current phase evidence and preserves its limits", () => {
+    const packet = buildMovesAvaChatPacket(
+      {
+        ...BASE_INPUT,
+        currentPhase: 2,
+        currentPhaseClientLabel: "P2 Discover & Diagnose",
+        approvedEvidence: [
+          {
+            title: "synthetic-contact-center-workshop.md",
+            summary:
+              "Current-state workshop notes; metrics remain unvalidated.",
+            statements: ["Repeat contacts are a reported pain point."],
+            observations: [
+              "Supervisors described inconsistent disposition coding.",
+            ],
+            assumptions: ["A unified taxonomy may reduce rework."],
+            openQuestions: ["Which denominator is used for repeat contacts?"],
+            citations: [
+              {
+                quote: "disposition coding varies by team",
+                locator: "Workshop, section 2",
+              },
+            ],
+          },
+        ],
+        approvedEvidenceTotal: 1,
+      },
+      "Draft P2 inputs from approved evidence",
+    );
+    const prompt = formatMovesAvaChatPacketForPrompt(
+      packet,
+      "phase_input_draft",
+    );
+
+    expect(prompt).toContain("[E1] synthetic-contact-center-workshop.md");
+    expect(prompt).toContain("Approval confirms the extraction was reviewed");
+    expect(prompt).toContain("Repeat contacts are a reported pain point.");
+    expect(prompt).toContain("(Workshop, section 2)");
+    expect(prompt).toContain("P2-P5, prior-phase captures are context only");
   });
 
   it("builds an evidence packet for an evidence-summary question even when hardening is off", () => {
@@ -289,6 +333,29 @@ describe("buildMovesAvaChatPacket — no blank-prompt chat", () => {
     expect(answer).toContain(
       '"citations":["P0 · Affected function / process"]',
     );
+  });
+
+  it("returns an explicit no-draft explanation instead of copying prior-phase text", () => {
+    const packet = buildMovesAvaChatPacket(
+      {
+        ...BASE_INPUT,
+        currentPhase: 2,
+        currentPhaseClientLabel: "P2 Discover & Diagnose",
+      },
+      "Draft P2 inputs from approved evidence only",
+    );
+    const answer = buildDeterministicPhaseInputDraftAnswer({
+      packet,
+      phase: 2,
+      proposals: [],
+      refusal:
+        "8 approved P2 evidence items are available, but no field-level evidence mapping connects them to these capture inputs. Prior-phase captures are context, not evidence for P2, so aVa did not copy them into the fields. Nothing was saved.",
+    });
+
+    expect(answer).toContain("8 approved P2 evidence items are available");
+    expect(answer).toContain("no field-level evidence mapping");
+    expect(answer).not.toContain("[[artifact:capture-field]]");
+    expect(answer).not.toContain("P1 approved phase inputs");
   });
 
   it("builds a deterministic live-status answer without substituting old phase-pack gate counts", () => {

@@ -2,6 +2,7 @@ import {
   buildAvaPhaseInputProposals,
   describeAvaPhaseInputDraftRefusal,
 } from "../phase-input-draft-proposals";
+import { getPhaseCaptureSections } from "../phase-capture-contract";
 
 describe("phase-input-draft-proposals", () => {
   it("drafts P1 charter inputs from approved P0 capture with evidence refs", () => {
@@ -56,6 +57,38 @@ describe("phase-input-draft-proposals", () => {
     expect(proposals).toEqual([]);
   });
 
+  it.each([2, 3, 4, 5])(
+    "does not copy P%d prior-phase values into phase-specific draft fields",
+    (phase) => {
+      const priorPhase = phase - 1;
+      const sentinel = `UPSTREAM_ONLY_P${priorPhase}_MUST_NOT_BE_COPIED`;
+      const proposals = buildAvaPhaseInputProposals({
+        phase,
+        currentValues: {},
+        upstreamValuesByPhase: {
+          [priorPhase]: {
+            [getPhaseCaptureSections(priorPhase)[0].key]: sentinel,
+          },
+        },
+      });
+
+      expect(proposals).toEqual([]);
+      expect(JSON.stringify(proposals)).not.toContain(sentinel);
+      expect(
+        describeAvaPhaseInputDraftRefusal({
+          phase,
+          currentValues: {},
+          approvedEvidenceCount: 8,
+          upstreamValuesByPhase: {
+            [priorPhase]: {
+              [getPhaseCaptureSections(priorPhase)[0].key]: sentinel,
+            },
+          },
+        }),
+      ).toContain("field-level evidence mapping");
+    },
+  );
+
   it("explains that a complete phase has nothing empty to draft", () => {
     const currentValues = {
       sponsor_commitment: "Sponsor commitment is already captured.",
@@ -91,5 +124,29 @@ describe("phase-input-draft-proposals", () => {
         upstreamValuesByPhase: { 0: {} },
       }),
     ).toContain("No cited draft is available");
+  });
+
+  it("distinguishes present approved evidence from evidence mapped to a field", () => {
+    expect(
+      describeAvaPhaseInputDraftRefusal({
+        phase: 2,
+        currentValues: {},
+        upstreamValuesByPhase: { 1: {} },
+        approvedEvidenceCount: 8,
+      }),
+    ).toContain("8 approved P2 evidence items are available");
+  });
+
+  it("fails closed when the approved current-phase evidence read is unavailable", () => {
+    const refusal = describeAvaPhaseInputDraftRefusal({
+      phase: 2,
+      currentValues: {},
+      upstreamValuesByPhase: { 1: { sponsor_commitment: "prior context" } },
+      approvedEvidenceUnavailable: true,
+    });
+
+    expect(refusal).toContain("could not be verified");
+    expect(refusal).toContain("Prior-phase captures are context");
+    expect(refusal).not.toContain("No approved P2 evidence is available");
   });
 });

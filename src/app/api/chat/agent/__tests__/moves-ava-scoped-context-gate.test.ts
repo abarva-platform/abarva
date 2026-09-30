@@ -63,7 +63,7 @@ describe("agent route · Moves aVa scoped-context gate", () => {
     expect(resolverBlock).toContain("resolveMovesAvaVisibleEvidenceCount");
   });
 
-  it("loads only approved evidence scoped to the active phase for deterministic evidence summaries", () => {
+  it("loads only approved evidence scoped to the active phase for summaries and later-phase draft disclosures", () => {
     const modeStart = source.indexOf(
       'const mode = movesAvaMode ?? "phase_guidance";',
     );
@@ -73,7 +73,10 @@ describe("agent route · Moves aVa scoped-context gate", () => {
     );
 
     expect(modeStart).toBeGreaterThan(-1);
-    expect(evidenceLoadBlock).toContain('if (mode === "evidence_summary")');
+    expect(evidenceLoadBlock).toContain('mode === "evidence_summary"');
+    expect(evidenceLoadBlock).toContain(
+      'mode === "phase_input_draft" && promptPhase > 1',
+    );
     expect(evidenceLoadBlock).toContain(
       "loadedEvidenceItems = await listProgramEvidenceForPrompt(",
     );
@@ -83,6 +86,8 @@ describe("agent route · Moves aVa scoped-context gate", () => {
     expect(evidenceLoadBlock).toContain(
       "approvedEvidenceItems = loadedEvidenceItems.slice(0, 8)",
     );
+    expect(source).toContain("approvedEvidenceCount: approvedEvidenceTotal");
+    expect(source).toContain("approvedEvidenceUnavailable,");
     expect(source).toContain(
       "buildDeterministicMovesAvaStatusAnswer(packet, mode)",
     );
