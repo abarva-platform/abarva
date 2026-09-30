@@ -428,6 +428,14 @@ describe("hydrateTaskEvidenceState", () => {
       } }),
     };
     expect(done([absent, absenceReceipt])).toBe(true);
+    expect(done([{
+      ...absent,
+      applicabilityDecidedAt: new Date(absent.applicabilityDecidedAt) as unknown as string,
+    }, absenceReceipt])).toBe(true);
+    expect(done([{
+      ...absent,
+      applicabilityDecidedAt: "2026-09-30T10:00:01Z",
+    }, absenceReceipt])).toBeUndefined();
     expect(done([{ ...absent, applicabilityReason: `${absent.applicabilityReason} Revised.` }, absenceReceipt])).toBeUndefined();
     expect(done([{ ...absent, applicabilityStatus: "applicable" as const }, absenceReceipt])).toBeUndefined();
   });
