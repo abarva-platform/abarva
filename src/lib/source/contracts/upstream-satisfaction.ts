@@ -30,7 +30,12 @@ interface SourceArtifactGovernanceRow {
   is_client_final: boolean | null;
   is_current_authoritative: boolean | null;
   client_final_accepted_by: string | null;
-  client_final_accepted_at: string | null;
+  client_final_accepted_at: string | Date | null;
+}
+
+function hasAcceptedTimestamp(value: string | Date | null): boolean {
+  if (typeof value === "string") return value.trim().length > 0;
+  return value instanceof Date && Number.isFinite(value.getTime());
 }
 
 function hasCurrentClientFinalAcceptance(
@@ -42,7 +47,7 @@ function hasCurrentClientFinalAcceptance(
     row.is_client_final === true &&
     row.is_current_authoritative === true &&
     Boolean(row.client_final_accepted_by?.trim()) &&
-    Boolean(row.client_final_accepted_at?.trim())
+    hasAcceptedTimestamp(row.client_final_accepted_at)
   );
 }
 

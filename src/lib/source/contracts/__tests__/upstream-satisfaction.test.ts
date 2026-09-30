@@ -170,12 +170,67 @@ describe("findUnsatisfiedRequiredUpstream", () => {
     );
   });
 
+  it("accepts a valid Postgres Date timestamp on the current Client Final", async () => {
+    sourceArtifactsMock.mockResolvedValue({
+      data: [
+        {
+          id: "client-final-1",
+          status: "client_final",
+          lifecycle_state: "current",
+          approval_state: "draft",
+          approved_by: null,
+          is_client_final: true,
+          is_current_authoritative: true,
+          client_final_accepted_by: "owner-1",
+          client_final_accepted_at: new Date("2026-09-29T15:30:00Z"),
+        },
+      ],
+      error: null,
+    });
+    const ctx = makeCtx(
+      [{ artifactCode: "d01_strategy_memo", linkedArtifactId: "client-final-1" }],
+      "scope",
+    );
+
+    await expect(
+      findUnsatisfiedRequiredUpstream(ctx, ["d01_strategy_memo"]),
+    ).resolves.toEqual([]);
+  });
+
+  it("rejects an invalid Postgres Date timestamp on the current Client Final", async () => {
+    sourceArtifactsMock.mockResolvedValue({
+      data: [
+        {
+          id: "client-final-1",
+          status: "client_final",
+          lifecycle_state: "current",
+          approval_state: "draft",
+          approved_by: null,
+          is_client_final: true,
+          is_current_authoritative: true,
+          client_final_accepted_by: "owner-1",
+          client_final_accepted_at: new Date(NaN),
+        },
+      ],
+      error: null,
+    });
+    const ctx = makeCtx(
+      [{ artifactCode: "d01_strategy_memo", linkedArtifactId: "client-final-1" }],
+      "scope",
+    );
+
+    await expect(
+      findUnsatisfiedRequiredUpstream(ctx, ["d01_strategy_memo"]),
+    ).resolves.toEqual(["d01_strategy_memo"]);
+  });
+
   it.each([
     ["draft", { status: "draft" }],
     ["not a Client Final", { is_client_final: false }],
     ["not current authority", { is_current_authoritative: false }],
     ["missing actor", { client_final_accepted_by: null }],
     ["missing timestamp", { client_final_accepted_at: null }],
+    ["blank timestamp", { client_final_accepted_at: "  " }],
     ["superseded", { lifecycle_state: "superseded" }],
   ])(
     "rejects a %s as approved Client Final upstream",
