@@ -10,13 +10,15 @@ let sourceArtifactId: string | null = null;
 let schemaAvailable = true;
 let concurrentUpdate = false;
 let eventCreatedBy = "owner-1";
+let eventStage = "strategy";
+let stateRequirementId = "EVID-SRC-STR-INCUMBENT";
 const exactUpdatedAt = "2026-09-28 00:00:00.123456+00";
 const roundedUpdatedAt = new Date("2026-09-28T00:00:00.123Z");
 
 function stateRow() {
   return {
     id: "evidence-1", source_event_id: "event-1", tenant_key: "test-tenant",
-    requirement_id: "EVID-SRC-STR-INCUMBENT", stage_key: "strategy",
+    requirement_id: stateRequirementId, stage_key: eventStage,
     current_state: evidenceState, source_artifact_id: sourceArtifactId,
     ...(schemaAvailable ? { applicability_status: "applicable" } : {}),
     updated_at: roundedUpdatedAt,
@@ -49,7 +51,7 @@ function db() {
         update: (next: Record<string, unknown>) => { payload = next; writes.push({ table, ...next }); return query; },
         maybeSingle: async () => ({
           data: table === "source_events"
-            ? { id: "event-1", client_key: eventClientKey, current_stage_key: "strategy", lifecycle_state: "active", created_by_user_id: eventCreatedBy }
+            ? { id: "event-1", client_key: eventClientKey, current_stage_key: eventStage, lifecycle_state: "active", created_by_user_id: eventCreatedBy }
             : table === "source_event_evidence_states"
               ? payload && (concurrentUpdate || updateVersion !== exactUpdatedAt) ? null
               : { ...stateRow(), ...payload }
@@ -80,6 +82,8 @@ beforeEach(() => {
   schemaAvailable = true;
   concurrentUpdate = false;
   eventCreatedBy = "owner-1";
+  eventStage = "strategy";
+  stateRequirementId = "EVID-SRC-STR-INCUMBENT";
   access.canApproveSourceStages = true;
   access.accessLevel = "client_admin";
   tenancy.userId = "owner-1";
@@ -102,6 +106,37 @@ describe("Source requirement applicability decision", () => {
       expect.stringMatching(/updated_at::text AS updated_at_exact[\s\S]*tenant_key = \$3/),
       ["event-1", "EVID-SRC-STR-INCUMBENT", "test-tenant"],
     );
+  });
+
+  it("records a Scope prior-baseline absence only for the current requirement and tenant", async () => {
+    eventStage = "scope";
+    stateRequirementId = "EVID-SRC-SCOPE-FY-CONTRACT";
+    const response = await POST(request({
+      decision: "not_applicable",
+      reason: "This new sourcing event has no prior contract or validated finance run-cost baseline.",
+      confirmsAbsence: true,
+    }), ctx(stateRequirementId));
+    expect(response.status).toBe(200);
+    expect(writes).toContainEqual(expect.objectContaining({
+      table: "source_event_evidence_states",
+      applicability_status: "not_applicable",
+      applicability_actor_user_id: "owner-1",
+    }));
+    expect(writes[0]).not.toHaveProperty("current_state", "Available");
+    expect(azureRead.query).toHaveBeenCalledWith(
+      expect.stringContaining("tenant_key = $3"),
+      ["event-1", stateRequirementId, "test-tenant"],
+    );
+  });
+
+  it("refuses a prior-baseline absence outside Scope or over an existing record", async () => {
+    stateRequirementId = "EVID-SRC-SCOPE-FY-CONTRACT";
+    const body = { decision: "not_applicable", reason: "There is no prior contract or verified finance baseline for this event.", confirmsAbsence: true };
+    expect((await POST(request(body), ctx(stateRequirementId))).status).toBe(409);
+    eventStage = "scope";
+    sourceArtifactId = "recorded-contract";
+    expect((await POST(request(body), ctx(stateRequirementId))).status).toBe(409);
+    expect(writes).toEqual([]);
   });
 
   it("refuses an unrelated requirement before any write", async () => {

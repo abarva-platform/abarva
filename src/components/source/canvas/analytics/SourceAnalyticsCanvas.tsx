@@ -508,17 +508,17 @@ const STEP_REQUIREMENTS: Record<string, WorkflowStepRequirement> = {
     artifactImpact: "Scope boundaries, transition risk, RFP exhibits",
     missingAction: "Download the template, fill one row per app, then upload.",
   },
-  "scope.vendor-commercials": {
-    item: "Vendor commercials file",
-    requirement: "1 required file",
-    sourceSystem: "Commercial workbook / proposal",
-    ownerRole: "Procurement lead",
-    acceptedFormats: "CSV or XLSX",
-    grainHistory: "One row per rate, service line, term, and pricing unit",
-    templateLabel: "Vendor commercials template",
-    parseTarget: "Transition fee, credits, term, productivity, SLA caps",
-    artifactImpact: "Commercial baseline, pricing traps, BAFO asks",
-    missingAction: "Upload the required vendor-commercials workbook.",
+  "scope.prior-baseline": {
+    item: "Prior commercial baseline",
+    requirement: "Recorded prior baseline or audited absence",
+    sourceSystem: "Prior contract or finance baseline",
+    ownerRole: "Procurement and finance owners",
+    acceptedFormats: "CSV, XLSX, PDF or DOCX",
+    grainHistory: "Prior agreement, fiscal period or run-cost line",
+    templateLabel: "Prior baseline template",
+    parseTarget: "Contract and run-cost basis, if present",
+    artifactImpact: "Scope economics and future pricing assumptions",
+    missingAction: "Upload a recorded prior baseline or declare its absence with a reason.",
   },
   "scope.sponsor": {
     item: "Sponsor commitment",
@@ -3085,6 +3085,16 @@ function ActiveStepNeedsPanel({
           <button type="button" onClick={onOpenFiles} style={TABLE_BUTTON_STYLE}>
             Open Files to upload
           </button>
+          {evidence?.applicabilityStatus !== undefined &&
+            permitsAbsenceDeclaration(requirement.requirementId) &&
+            (!file || hasAuditedAbsence(requirement, evidence)) ? (
+              <EvidenceAbsenceControl
+                eventId={eventId}
+                requirement={requirement}
+                declaredAbsent={hasAuditedAbsence(requirement, evidence)}
+                onDecided={onEvidenceReviewed}
+              />
+            ) : null}
           {requiresHumanReview ? (
             <EvidenceReviewControl
               eventId={eventId}
@@ -3396,6 +3406,9 @@ function stepReadbackLabel(
   isComplete: boolean,
   uploaded: boolean,
 ): string {
+  if (isComplete && step.id === "scope.prior-baseline") {
+    return "Readback: baseline requirement resolved from governed evidence.";
+  }
   if (isComplete) {
     switch (step.sourceBasis) {
       case "live_fact":
@@ -3562,6 +3575,8 @@ function activeStepGuide(
     step.type === "provide" ? need.item : firstSentence(step.help);
   const template = step.template
     ? `${step.template.name} (${step.template.format})`
+    : step.id === "scope.prior-baseline"
+      ? "Prior record or absence decision"
     : step.type === "provide"
       ? "Upload file"
       : "No template";
@@ -3809,8 +3824,8 @@ function StepDetail({
           eventId={eventId}
           stageKey={stageKey}
           factTemplateCode={factTemplateCode}
-          evidenceRequirementId={activeStep.id === "scope.app-inventory" ? "EVID-SRC-SCOPE-APP-INV" : undefined}
-          onUploaded={activeStep.id === "scope.sponsor" || activeStep.id === "scope.app-inventory" ? () => router.refresh() : onComplete}
+          evidenceRequirementId={activeStep.id === "scope.app-inventory" ? "EVID-SRC-SCOPE-APP-INV" : activeStep.id === "scope.prior-baseline" ? "EVID-SRC-SCOPE-FY-CONTRACT" : undefined}
+          onUploaded={activeStep.id === "scope.sponsor" || activeStep.id === "scope.app-inventory" || activeStep.id === "scope.prior-baseline" ? () => router.refresh() : onComplete}
           onUploadReadback={setUploadReadback}
         />
         <ActiveStepUploadReadback
@@ -4837,8 +4852,11 @@ function EvidenceAbsenceControl({
   const [confirmed, setConfirmed] = useState(false);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const isIncumbent = requirement.requirementId === "EVID-SRC-STR-INCUMBENT";
-  const subject = isIncumbent ? "incumbent" : "historical spend";
+  const subject = requirement.requirementId === "EVID-SRC-STR-INCUMBENT"
+    ? "incumbent"
+    : requirement.requirementId === "EVID-SRC-SCOPE-FY-CONTRACT"
+      ? "prior contract or run-cost baseline"
+      : "historical spend";
   const decision = declaredAbsent ? "applicable" : "not_applicable";
 
   const submit = async () => {

@@ -8,9 +8,10 @@ import {
   hydrateTaskEvidenceState,
   templateFactsPresent,
 } from "../task-evidence-hydration";
-import { factTemplateCodeForTask } from "../../task-evidence-requirements";
+import { evidenceRequirementIdForTask, factTemplateCodeForTask } from "../../task-evidence-requirements";
 import { templateFactMapByCode } from "../../template-fact-map";
 import type { StageTaskView } from "@/components/source/canvas/analytics/view-model";
+import type { SourceEventEvidence } from "@/lib/source/canvas-substrate";
 
 const VOLUMETRICS_TASK: StageTaskView = {
   id: "scope.volumetrics",
@@ -32,6 +33,16 @@ const APP_INVENTORY_TASK: StageTaskView = {
   guide: "Upload your application inventory.",
   cta: "Confirm inventory",
   factTemplateCode: "APP_INVENTORY_V1",
+};
+
+const PRIOR_BASELINE_TASK: StageTaskView = {
+  id: "scope.prior-baseline",
+  title: "Review the prior commercial baseline",
+  subtitle: "Prior contract or audited absence",
+  type: "provide",
+  state: "todo",
+  guide: "Review prior contract and run-cost evidence or record its absence.",
+  cta: "Review baseline",
 };
 
 const SPONSOR_LETTER_TASK: StageTaskView = {
@@ -172,6 +183,50 @@ describe("hydrateTaskEvidenceState", () => {
       stageKey: "scope",
     });
     expect(hydrated[0].evidenceComplete).toBeUndefined();
+  });
+
+  it("binds Scope's baseline step to the prior-contract requirement, not supplier proposal facts", () => {
+    expect(factTemplateCodeForTask(PRIOR_BASELINE_TASK)).toBeUndefined();
+    expect(factTemplateCodeForTask({ ...PRIOR_BASELINE_TASK, factTemplateCode: "CONTRACT_TERMS_V1" })).toBeUndefined();
+    expect(evidenceRequirementIdForTask(PRIOR_BASELINE_TASK)).toBe("EVID-SRC-SCOPE-FY-CONTRACT");
+    const terms = templateFactMapByCode("CONTRACT_TERMS_V1");
+    expect(terms?.columns.length).toBeGreaterThan(0);
+    expect(hydrateTaskEvidenceState({
+      tasks: [PRIOR_BASELINE_TASK],
+      factInputs: { [terms!.columns[0].factKey]: 1200 },
+      stageKey: "scope",
+    })[0].evidenceComplete).toBeUndefined();
+  });
+
+  it("completes the prior-baseline step only from its recorded source or accountable absence", () => {
+    const absent = {
+      id: "evidence-baseline-1",
+      sourceEventId: "event-1",
+      tenantKey: "test-tenant",
+      requirementId: "EVID-SRC-SCOPE-FY-CONTRACT",
+      stage: "scope",
+      currentState: "Not Requested",
+      sourceArtifactId: null,
+      applicabilityStatus: "not_applicable",
+      applicabilityReason: "This net-new service has no prior contract or verified finance baseline.",
+      applicabilityActorUserId: "event-owner",
+      applicabilityDecidedAt: "2026-09-29T00:00:00Z",
+      notes: null,
+      lastSyncedAt: null,
+      createdAt: "2026-09-29T00:00:00Z",
+      updatedAt: "2026-09-29T00:00:00Z",
+    } as SourceEventEvidence;
+    const done = (evidence: SourceEventEvidence) => hydrateTaskEvidenceState({
+      tasks: [PRIOR_BASELINE_TASK], factInputs: {}, evidenceStates: [evidence], stageKey: "scope",
+    })[0].evidenceComplete;
+
+    expect(done(absent)).toBe(true);
+    expect(done({ ...absent, applicabilityReason: "No contract" })).toBeUndefined();
+    expect(done({ ...absent, sourceArtifactId: "artifact-1" })).toBeUndefined();
+    expect(done({ ...absent, requirementId: "EVID-SRC-SCOPE-CURRENT-SOW" })).toBeUndefined();
+    expect(done({ ...absent, applicabilityStatus: "applicable" })).toBeUndefined();
+    expect(done({ ...absent, applicabilityStatus: "applicable", currentState: "Available", sourceArtifactId: "artifact-1" })).toBe(true);
+    expect(done({ ...absent, applicabilityStatus: "applicable", currentState: "Available" })).toBeUndefined();
   });
 
   it.each([

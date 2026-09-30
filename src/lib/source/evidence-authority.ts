@@ -25,7 +25,14 @@ const RECORD_BACKED_REQUIREMENTS = new Set([
 const ABSENCE_DECLARATION_REQUIREMENTS = new Set([
   "EVID-SRC-STR-INCUMBENT",
   "EVID-SRC-STR-SPEND-BASELINE",
+  "EVID-SRC-SCOPE-FY-CONTRACT",
 ]);
+
+export type EvidenceAssessment = Pick<SourceEventEvidence, "requirementId" | "currentState"> &
+  Partial<Pick<SourceEventEvidence,
+    "sourceArtifactId" | "sourceEventFactIds" | "applicabilityStatus" |
+    "applicabilityReason" | "applicabilityActorUserId" | "applicabilityDecidedAt"
+  >>;
 
 export function permitsAbsenceDeclaration(requirementId: string): boolean {
   return ABSENCE_DECLARATION_REQUIREMENTS.has(requirementId);
@@ -33,7 +40,7 @@ export function permitsAbsenceDeclaration(requirementId: string): boolean {
 
 export function hasAuditedAbsence(
   requirement: SourceEvidenceRequirement,
-  evidence: SourceEventEvidence | undefined,
+  evidence: EvidenceAssessment | undefined,
 ): boolean {
   return Boolean(
     evidence &&
@@ -66,20 +73,20 @@ export function requiresRecordedSource(requirement: SourceEvidenceRequirement): 
   );
 }
 
-export function hasRecordedSource(evidence: SourceEventEvidence | undefined): boolean {
+export function hasRecordedSource(evidence: EvidenceAssessment | undefined): boolean {
   return Boolean(evidence?.sourceArtifactId || evidence?.sourceEventFactIds?.length);
 }
 
 export function evidenceHasMinimumState(
   requirement: SourceEvidenceRequirement,
-  evidence: SourceEventEvidence | undefined,
+  evidence: EvidenceAssessment | undefined,
 ): boolean {
   return Boolean(evidence && EVIDENCE_RANK[evidence.currentState] >= EVIDENCE_RANK[requirement.minimumState]);
 }
 
 export function evidenceMeetsRequirement(
   requirement: SourceEvidenceRequirement,
-  evidence: SourceEventEvidence | undefined,
+  evidence: EvidenceAssessment | undefined,
 ): boolean {
   if (hasAuditedAbsence(requirement, evidence)) return true;
   if (!evidenceHasMinimumState(requirement, evidence)) return false;

@@ -3,7 +3,7 @@
  */
 
 import "@testing-library/jest-dom";
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 
 const routerPush = jest.fn();
 const routerRefresh = jest.fn();
@@ -1048,6 +1048,36 @@ describe("SourceAnalyticsCanvas stage workflow", () => {
       .toHaveTextContent("client-volumetrics-VOLUMETRICS_V1.csv");
     expect(screen.getByTestId("task-dropzone")).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /Continue/ })).toBeNull();
+  });
+
+  it("offers a prior-baseline absence decision in the active Scope step without requiring vendor terms", () => {
+    const baselineTask = SAMPLE_SCOPE_STAGE.tasks.find((task) => task.id === "scope.prior-baseline");
+    expect(baselineTask).toBeDefined();
+    if (!baselineTask) return;
+    render(
+      <SourceAnalyticsCanvas
+        event={EVENT}
+        viewStage="scope"
+        tenantName="Demo Client"
+        stageView={{ ...SAMPLE_SCOPE_STAGE, tasks: [baselineTask] }}
+        evidenceStates={[{
+          ...SCOPE_READY_EVIDENCE.find((row) => row.requirementId === "EVID-SRC-SCOPE-FY-CONTRACT")!,
+          currentState: "Not Requested",
+          sourceArtifactId: null,
+          sourceEventFactIds: [],
+          applicabilityStatus: "applicable",
+        }]}
+        initialWorkspace="steps"
+      />,
+    );
+
+    const needs = screen.getByTestId("source-shell-active-step-needs");
+    expect(needs).toHaveTextContent("Prior fiscal contract and run-cost baseline");
+    expect(screen.getByText("Prior record or absence decision")).toBeInTheDocument();
+    fireEvent.click(within(needs).getByRole("button", { name: "Declare no prior contract or run-cost baseline" }));
+    expect(within(needs).getByRole("checkbox")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /Continue/ })).toBeNull();
+    expect(screen.queryByText("Vendor commercials file")).toBeNull();
   });
 
   it("resets the upload pane when evidence readback advances to the next provide step", async () => {

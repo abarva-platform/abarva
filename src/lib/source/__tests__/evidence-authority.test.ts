@@ -62,4 +62,22 @@ describe("event-specific evidence applicability", () => {
 
     expect(evidenceMeetsRequirement(requirement("EVID-SRC-STR-SPEND-BASELINE"), state)).toBe(false);
   });
+
+  it("resolves a net-new event's prior-contract baseline only from an audited absence", () => {
+    const valid = {
+      ...evidence("EVID-SRC-SCOPE-FY-CONTRACT"),
+      stage: "scope",
+      applicabilityStatus: "not_applicable",
+      applicabilityReason: "No prior agreement or finance run-cost baseline exists for this net-new sourcing event.",
+      applicabilityActorUserId: "event-owner",
+      applicabilityDecidedAt: "2026-09-29T00:00:00Z",
+    } as SourceEventEvidence;
+    const scopeBaseline = requirement("EVID-SRC-SCOPE-FY-CONTRACT");
+
+    expect(evidenceMeetsRequirement(scopeBaseline, valid)).toBe(true);
+    expect(evidenceMeetsRequirement(scopeBaseline, { ...valid, applicabilityActorUserId: null })).toBe(false);
+    expect(evidenceMeetsRequirement(scopeBaseline, { ...valid, applicabilityReason: "No baseline" })).toBe(false);
+    expect(evidenceMeetsRequirement(scopeBaseline, { ...valid, currentState: "Loaded" })).toBe(false);
+    expect(evidenceMeetsRequirement(scopeBaseline, { ...valid, sourceArtifactId: "artifact-1" })).toBe(false);
+  });
 });
