@@ -160,6 +160,35 @@ it("offers restoration only when a prior accepted final has a drifted stage link
     .not.toBeInTheDocument();
 });
 
+it("renders a Date-shaped acceptance timestamp without losing the restore action", () => {
+  const state = {
+    id: "state-d01", recordKind: "canvas_state" as const,
+    artifactCode: "d01_strategy_memo", stageKey: "strategy", status: "approved",
+    linkedArtifactId: "later-draft",
+  };
+  const final = {
+    id: "final-d01", recordKind: "registry_artifact" as const,
+    artifactKind: "d01_strategy_memo", stageKey: "strategy", sourceOrigin: "reuploaded",
+    isClientFinal: true, isCurrentAuthoritative: true,
+    clientFinalAcceptedBy: "owner-1",
+    clientFinalAcceptedAt: new Date("2026-09-29T14:55:28Z") as unknown as string,
+  };
+  const props = {
+    event: { ...event, currentStageKey: "scope" as const, currentStageLabel: "Scope" },
+    viewStage: "strategy" as const, tenantName: "Test Client",
+    stageView: SAMPLE_STRATEGY_STAGE, initialWorkspace: "files" as const,
+  };
+  const { rerender } = render(<SourceAnalyticsCanvas {...props} artifacts={[state, final]} />);
+  expect(screen.getByTestId("source-restore-client-final-d01_strategy_memo"))
+    .toBeInTheDocument();
+
+  rerender(<SourceAnalyticsCanvas {...props} artifacts={[
+    state, { ...final, clientFinalAcceptedAt: { invalid: true } as unknown as string },
+  ]} />);
+  expect(screen.queryByTestId("source-restore-client-final-d01_strategy_memo"))
+    .not.toBeInTheDocument();
+});
+
 it("offers governed draft generation when a required artifact has evidence but no final", async () => {
   global.fetch = jest.fn().mockResolvedValue({
     ok: false,
