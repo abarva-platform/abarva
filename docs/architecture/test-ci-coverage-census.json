@@ -18,18 +18,18 @@
     "No timestamp is recorded, so refreshing this file on an unchanged tree is a no-op."
   ],
   "counts": {
-    "testFiles": 2583,
-    "coveredTestFiles": 2346,
-    "pullRequestCoveredTestFiles": 2345,
-    "uncoveredTestFiles": 237,
+    "testFiles": 2584,
+    "coveredTestFiles": 2348,
+    "pullRequestCoveredTestFiles": 2347,
+    "uncoveredTestFiles": 236,
     "directoriesWithTests": 497,
     "directoriesFullyCovered": 359,
-    "directoriesPartiallyCovered": 28,
-    "directoriesUncovered": 110,
+    "directoriesPartiallyCovered": 29,
+    "directoriesUncovered": 109,
     "directoriesWithUnrunTestFiles": 138,
     "directoriesWithUntriagedUnrunTestFiles": 127,
     "declaredQuarantineTestFiles": 52,
-    "untriagedUnrunTestFiles": 185,
+    "untriagedUnrunTestFiles": 184,
     "indeterminateInvocations": 0,
     "unresolvedIgnoreArguments": 0,
     "criticalGovernedRiskDirectories": 0,
@@ -443,6 +443,16 @@
     },
     {
       "directory": "src/lib/agent/quality/__tests__",
+      "testFiles": 2,
+      "coveredTestFiles": 1,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 1,
+      "via": [
+        "command"
+      ]
+    },
+    {
+      "directory": "src/lib/instruments/__tests__",
       "testFiles": 2,
       "coveredTestFiles": 1,
       "declaredQuarantineTestFiles": 0,
@@ -2436,7 +2446,7 @@
     }
   ],
   "triageVerdicts": {
-    "heldUntriagedUnrunTestFiles": 86,
+    "heldUntriagedUnrunTestFiles": 85,
     "drawableUntriagedUnrunTestFiles": 99,
     "heldByVerdict": {
       "already_verdicted_elsewhere": 15,
@@ -2445,7 +2455,7 @@
       "rewrite_as_behavior": 9,
       "update_with_reason_recorded": 8,
       "vacuous_control_proof": 3,
-      "wire_into_ci": 46
+      "wire_into_ci": 45
     },
     "heldTestPaths": [
       {
@@ -2703,15 +2713,8 @@
       {
         "testPath": "src/lib/instruments/__tests__/instrument-data-layer-migration.test.ts",
         "verdict": "rewrite_as_behavior",
-        "record": "docs/architecture/t788-stale-suite-triage.json",
-        "recordedAt": "2026-09-30T14:44:02Z",
-        "ownerItem": "T-789"
-      },
-      {
-        "testPath": "src/lib/instruments/__tests__/render.test.ts",
-        "verdict": "wire_into_ci",
-        "record": "docs/architecture/t788-stale-suite-triage.json",
-        "recordedAt": "2026-09-30T14:44:02Z",
+        "record": "docs/architecture/t789-instruments-render-triage.json",
+        "recordedAt": "2026-09-30T21:20:00Z",
         "ownerItem": "T-789"
       },
       {
@@ -4337,19 +4340,6 @@
       }
     },
     {
-      "directory": "src/lib/instruments/__tests__",
-      "testFiles": 2,
-      "unrunTestFiles": 2,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 2,
-      "governedRisk": {
-        "score": 0,
-        "band": "unclassified",
-        "signals": [],
-        "productSourceCount": 3
-      }
-    },
-    {
       "directory": "src/lib/lakeshore/__tests__",
       "testFiles": 2,
       "unrunTestFiles": 2,
@@ -4378,6 +4368,19 @@
     {
       "directory": "src/lib/deliverables/synthesis/__tests__",
       "testFiles": 1,
+      "unrunTestFiles": 1,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 1,
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 3
+      }
+    },
+    {
+      "directory": "src/lib/instruments/__tests__",
+      "testFiles": 2,
       "unrunTestFiles": 1,
       "declaredQuarantineTestFiles": 0,
       "untriagedUnrunTestFiles": 1,
@@ -4732,14 +4735,6 @@
     },
     {
       "directory": "src/lib/artifact-excellence/__tests__",
-      "testFiles": 2,
-      "coveredTestFiles": 0,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 2,
-      "via": []
-    },
-    {
-      "directory": "src/lib/instruments/__tests__",
       "testFiles": 2,
       "coveredTestFiles": 0,
       "declaredQuarantineTestFiles": 0,
