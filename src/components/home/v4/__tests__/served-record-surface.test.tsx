@@ -264,7 +264,7 @@ describe("the served path", () => {
 
     expect(screen.getByText("Record on screen")).toBeInTheDocument();
     const recordSource = screen
-      .getByText("Live governed record")
+      .getByText("Live governed rows")
       .closest("[data-home-record-source]");
     expect(recordSource).toHaveAttribute(
       "data-home-record-source",
@@ -274,6 +274,13 @@ describe("the served path", () => {
       "data-home-canonical-snapshot-hash",
       "ecl:assessment-test:serving.home_*:1",
     );
+    expect(recordSource).toHaveAttribute(
+      "data-home-narrative-coherence",
+      "stored_narrative",
+    );
+    expect(
+      screen.getByText("Reviewed narrative; live rows may differ"),
+    ).toBeInTheDocument();
   });
 
   it("states when the record on screen is the reviewed snapshot fallback", () => {

@@ -1,5 +1,7 @@
 import "server-only";
 
+import { createHash } from "node:crypto";
+
 import { azureRead } from "@/lib/data-plane/azureRead";
 import { denseAssessmentIdForTenant } from "@/lib/ecl/denseAssessment";
 import { normalizeHomeReviewBundle } from "./bundle-normalization";
@@ -17,6 +19,7 @@ import type {
   HomeExecutiveStoryPlanV1,
   HomeExecutiveStorySectionId,
   HomeExecutiveStoryTerminalState,
+  HomeContextVersion,
   GroundedClaim,
   HomeRecordRenderSource,
   HomeReviewBundle,
@@ -2241,6 +2244,80 @@ function buildPublishedChapters(
   });
 }
 
+function contextVersionForRows(
+  base: HomeReviewBundle,
+  rows: HomeProjectionRow[],
+  assessmentId: string,
+  signalPacket: EnterpriseSignalPacket,
+  claims: Map<ChapterId, GroundedClaim[]>,
+  hasPublishedClaims: boolean,
+): HomeContextVersion {
+  const hash = (value: unknown) =>
+    createHash("sha256").update(JSON.stringify(value)).digest("hex");
+  const summaries = [...chapterSummaryRows(rows).values()];
+  const writers = summaries
+    .map((row) => rowPayload(row).writer)
+    .filter((value): value is JsonRecord =>
+      Boolean(value && typeof value === "object" && !Array.isArray(value)),
+    );
+  const writerHashes = new Set(
+    writers
+      .map((writer) => text(writer.signal_packet_hash))
+      .filter((value): value is string => Boolean(value)),
+  );
+  const writerDates = new Set(
+    writers
+      .map((writer) => text(writer.generated_at))
+      .filter((value): value is string => Boolean(value)),
+  );
+  const deterministicPacketHash = hash(signalPacket);
+  const narrativePacketHash =
+    writerHashes.size === 1 ? [...writerHashes][0]! : null;
+  const evidenceIds = new Set([
+    ...signalPacket.signals.map((signal) => signal.id),
+    ...signalPacket.contextItems.map((item) => item.id),
+  ]);
+  const claimEvidenceResolved = [...claims.values()]
+    .flat()
+    .every(
+      (claim) =>
+        claim.evidence_ids.length > 0 &&
+        claim.evidence_ids.every((id) => evidenceIds.has(id)),
+    );
+  const writerMatchesRead =
+    writers.length === summaries.length &&
+    writerHashes.size === 1 &&
+    narrativePacketHash === deterministicPacketHash &&
+    writerDates.size === 1 &&
+    claimEvidenceResolved;
+  const hasCurrentStoryPlan =
+    Boolean(storyPlanRow(rows)) || !base.executiveStoryPlan;
+
+  return {
+    assessmentId,
+    projectionContentHash: hash(
+      [...rows].sort((a, b) =>
+        `${a.page_key}:${a.row_key}:${a.row_type}`.localeCompare(
+          `${b.page_key}:${b.row_key}:${b.row_type}`,
+        ),
+      ),
+    ),
+    deterministicPacketHash,
+    narrativePacketHash,
+    narrativeGeneratedAt: hasPublishedClaims
+      ? writerDates.size === 1
+        ? [...writerDates][0]!
+        : null
+      : base.provenance.generated_at,
+    dataAsOf: null,
+    coherence: !hasPublishedClaims
+      ? "stored_narrative"
+      : writerMatchesRead && hasCurrentStoryPlan
+        ? "coherent"
+        : "unverified",
+  };
+}
+
 export function buildHomeReviewBundleFromEclProjectionRows(
   base: HomeReviewBundle,
   rows: HomeProjectionRow[],
@@ -2254,6 +2331,14 @@ export function buildHomeReviewBundleFromEclProjectionRows(
   );
   const claims = chapterClaimsByPage(rows);
   const hasPublishedClaims = hasPublishedChapterClaims(claims);
+  const contextVersion = contextVersionForRows(
+    base,
+    rows,
+    assessmentId,
+    signalPacket,
+    claims,
+    hasPublishedClaims,
+  );
   const thesis = hasPublishedClaims
     ? publishedThesisFromRows(rows)
     : base.thesis.publishedGeneration;
@@ -2265,6 +2350,7 @@ export function buildHomeReviewBundleFromEclProjectionRows(
     : base.executiveStoryPlan;
   return normalizeHomeReviewBundle({
     tenantKey: base.tenantKey,
+    contextVersion,
     provenance: {
       ...base.provenance,
       home_synthesis_contract_version: `${base.provenance.home_synthesis_contract_version}+ecl-projection-v1`,
@@ -2445,6 +2531,7 @@ export async function getHomeEclProjectionBundleOrReviewedSnapshotWithSource(
       recordSource: {
         kind: "ecl_serving_projection",
         canonicalSnapshotHash: bundle.provenance.canonical_snapshot_hash,
+        contextVersion: bundle.contextVersion,
       },
     };
   } catch (error) {

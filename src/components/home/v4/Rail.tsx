@@ -1,9 +1,10 @@
 import type { CSSProperties } from "react";
 
-import type {
-  HomeRecordRenderSource,
-  HomeRecordSourceKind,
-} from "@/lib/home/preview/types";
+import {
+  homeNarrativeStatusLabel,
+  homeRecordSourceLabel,
+} from "@/lib/home/preview/record-source";
+import type { HomeRecordRenderSource } from "@/lib/home/preview/types";
 import { MONO, SANS, SERIF, V4, eyebrow } from "./tokens";
 
 /**
@@ -109,12 +110,6 @@ const sectionLinkStyle: CSSProperties = {
   overflow: "hidden",
   textOverflow: "ellipsis",
   whiteSpace: "nowrap",
-};
-
-const RECORD_SOURCE_LABELS: Record<HomeRecordSourceKind, string> = {
-  ecl_serving_projection: "Live governed record",
-  reviewed_snapshot: "Reviewed stored record",
-  reviewed_snapshot_fallback: "Reviewed stored record fallback",
 };
 
 export function Rail({
@@ -373,7 +368,10 @@ export function Rail({
         <p
           data-home-record-source={recordSource.kind}
           data-home-canonical-snapshot-hash={recordSource.canonicalSnapshotHash}
-          title={`canonical_snapshot_hash: ${recordSource.canonicalSnapshotHash}`}
+          data-home-projection-content-hash={
+            recordSource.contextVersion?.projectionContentHash
+          }
+          data-home-narrative-coherence={recordSource.contextVersion?.coherence}
           style={{
             margin: 0,
             fontFamily: MONO,
@@ -382,12 +380,23 @@ export function Rail({
             color: V4.slate,
           }}
         >
-          <span>{RECORD_SOURCE_LABELS[recordSource.kind]}</span>
+          <span>{homeRecordSourceLabel(recordSource)}</span>
+        </p>
+        <p
+          style={{
+            margin: "6px 0 0",
+            fontFamily: SANS,
+            fontSize: 12,
+            lineHeight: 1.4,
+            color: V4.slate,
+          }}
+        >
+          {homeNarrativeStatusLabel(recordSource)}
         </p>
       </div>
 
       <div style={{ borderTop: `1px solid ${V4.rule}`, paddingTop: 13 }}>
-        <div style={{ ...eyebrow(V4.slate), marginBottom: 7 }}>Compiled</div>
+        <div style={{ ...eyebrow(V4.slate), marginBottom: 7 }}>Context</div>
         <p
           style={{
             margin: 0,

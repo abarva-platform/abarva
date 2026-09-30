@@ -15,6 +15,10 @@ import {
   type EstateRecordTypes,
 } from "@/components/home/v4/chapter-page-content";
 import type { Finding, TableSpec } from "@/components/home/v4/page-tables";
+import {
+  homeNarrativeStatusLabel,
+  homeRecordSourceLabel,
+} from "@/lib/home/preview/record-source";
 import type {
   ChapterView,
   HomeRecordRenderSource,
@@ -31,12 +35,6 @@ export interface HomeWalkthroughExportInput {
   tenantLabel: string;
   format: ExportFormat;
 }
-
-const RECORD_SOURCE_LABELS: Record<HomeRecordRenderSource["kind"], string> = {
-  ecl_serving_projection: "Live governed record",
-  reviewed_snapshot: "Reviewed stored record",
-  reviewed_snapshot_fallback: "Reviewed stored record fallback",
-};
 
 const RECORD_TYPE_ORDER: TechObjectType[] = [
   "application_system",
@@ -93,7 +91,7 @@ function recordType(
 
 function estateFromBundle(bundle: HomeReviewBundle): EstateRecordTypes {
   return {
-    asOf: bundle.provenance?.generated_at?.slice(0, 10),
+    asOf: bundle.contextVersion?.dataAsOf ?? undefined,
     applications: recordType(bundle, "application_system")?.rows,
     vendors: recordType(bundle, "vendor_contract")?.rows,
     infrastructure: recordType(bundle, "infrastructure_platform")?.rows,
@@ -212,8 +210,13 @@ export function renderHomeWalkthroughHtml({
   tenantLabel,
 }: HomeWalkthroughExportInput): string {
   const estate = estateFromBundle(bundle);
-  const sourceLabel = RECORD_SOURCE_LABELS[recordSource.kind];
-  const compiled = formatCompiledDate(bundle.provenance.generated_at);
+  const sourceLabel = homeRecordSourceLabel(recordSource);
+  const narrativeStatus = homeNarrativeStatusLabel(recordSource);
+  const compiled = formatCompiledDate(
+    recordSource.contextVersion?.narrativeGeneratedAt ??
+      bundle.provenance.generated_at,
+  );
+  const dataAsOf = recordSource.contextVersion?.dataAsOf ?? "not established";
   const signalCount = bundle.thesis.signalPacket.signals.length;
   const factCount = bundle.thesis.signalPacket.contextItems.length;
   return `<!doctype html>
@@ -250,9 +253,10 @@ export function renderHomeWalkthroughHtml({
 <main>
   <p class="eyebrow">AbarVa Home Walkthrough Export</p>
   <h1>${escapeHtml(tenantLabel)}</h1>
-  <p class="meta">Compiled ${escapeHtml(compiled)} from ${signalCount.toLocaleString()} signals and ${factCount.toLocaleString()} governed facts.</p>
+  <p class="meta">Narrative generated ${escapeHtml(compiled)}. Data as of ${escapeHtml(dataAsOf)}. ${signalCount.toLocaleString()} signals and ${factCount.toLocaleString()} governed facts.</p>
   <section class="scope">
     <strong>Record on screen: ${escapeHtml(sourceLabel)}</strong>
+    <p>${escapeHtml(narrativeStatus)}</p>
     <p>Canonical marker: ${escapeHtml(recordSource.canonicalSnapshotHash)}. ${escapeHtml(markerScope(recordSource))} This export is a Home walkthrough export: chapters, deterministic tables, findings, evidence labels, architecture/data-flow summaries, and record-source state. It is not an aVa chat transcript.</p>
   </section>
   ${familySummaryHtml(bundle)}
@@ -437,8 +441,13 @@ export function buildHomeWalkthroughPdf({
   tenantLabel,
 }: HomeWalkthroughExportInput): ReactElement<DocumentProps> {
   const estate = estateFromBundle(bundle);
-  const sourceLabel = RECORD_SOURCE_LABELS[recordSource.kind];
-  const compiled = formatCompiledDate(bundle.provenance.generated_at);
+  const sourceLabel = homeRecordSourceLabel(recordSource);
+  const narrativeStatus = homeNarrativeStatusLabel(recordSource);
+  const compiled = formatCompiledDate(
+    recordSource.contextVersion?.narrativeGeneratedAt ??
+      bundle.provenance.generated_at,
+  );
+  const dataAsOf = recordSource.contextVersion?.dataAsOf ?? "not established";
   const types = bundle.technologyEstate?.recordTypes ?? [];
   return (
     <Document title={`Home walkthrough export - ${tenantLabel}`}>
@@ -446,13 +455,14 @@ export function buildHomeWalkthroughPdf({
         <Text style={pdfStyles.eyebrow}>AbarVa Home Walkthrough Export</Text>
         <Text style={pdfStyles.title}>{tenantLabel}</Text>
         <Text style={pdfStyles.meta}>
-          Compiled {compiled} from{" "}
+          Narrative generated {compiled}. Data as of {dataAsOf}. From{" "}
           {bundle.thesis.signalPacket.signals.length.toLocaleString()} signals
           and {bundle.thesis.signalPacket.contextItems.length.toLocaleString()}{" "}
           governed facts.
         </Text>
         <View style={pdfStyles.scope}>
           <Text style={pdfStyles.text}>Record on screen: {sourceLabel}</Text>
+          <Text style={pdfStyles.text}>{narrativeStatus}</Text>
           <Text style={pdfStyles.meta}>
             Canonical marker: {recordSource.canonicalSnapshotHash}
           </Text>
