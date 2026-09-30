@@ -18,26 +18,26 @@
     "No timestamp is recorded, so refreshing this file on an unchanged tree is a no-op."
   ],
   "counts": {
-    "testFiles": 2571,
-    "coveredTestFiles": 2296,
-    "pullRequestCoveredTestFiles": 2295,
-    "uncoveredTestFiles": 275,
-    "directoriesWithTests": 496,
-    "directoriesFullyCovered": 341,
+    "testFiles": 2573,
+    "coveredTestFiles": 2301,
+    "pullRequestCoveredTestFiles": 2300,
+    "uncoveredTestFiles": 272,
+    "directoriesWithTests": 497,
+    "directoriesFullyCovered": 343,
     "directoriesPartiallyCovered": 29,
-    "directoriesUncovered": 126,
-    "directoriesWithUnrunTestFiles": 155,
-    "directoriesWithUntriagedUnrunTestFiles": 144,
+    "directoriesUncovered": 125,
+    "directoriesWithUnrunTestFiles": 154,
+    "directoriesWithUntriagedUnrunTestFiles": 143,
     "declaredQuarantineTestFiles": 52,
-    "untriagedUnrunTestFiles": 223,
+    "untriagedUnrunTestFiles": 220,
     "indeterminateInvocations": 0,
     "unresolvedIgnoreArguments": 0,
     "criticalGovernedRiskDirectories": 0,
     "highGovernedRiskDirectories": 0,
-    "unclassifiedRiskDirectories": 138,
+    "unclassifiedRiskDirectories": 137,
     "rankedDirectories": 119,
     "rankedUntriagedUnrunTestFiles": 139,
-    "unclassifiedRiskDirectoriesWithResolvedProductSources": 131,
+    "unclassifiedRiskDirectoriesWithResolvedProductSources": 130,
     "unclassifiedRiskDirectoriesWithNoResolvedProductSource": 7
   },
   "quarantineLists": [
@@ -2866,16 +2866,16 @@
     }
   ],
   "triageVerdicts": {
-    "heldUntriagedUnrunTestFiles": 84,
+    "heldUntriagedUnrunTestFiles": 81,
     "drawableUntriagedUnrunTestFiles": 139,
     "heldByVerdict": {
       "already_verdicted_elsewhere": 15,
       "real": 1,
       "repair": 3,
-      "rewrite_as_behavior": 8,
+      "rewrite_as_behavior": 7,
       "update_with_reason_recorded": 5,
       "vacuous_control_proof": 3,
-      "wire_into_ci": 49
+      "wire_into_ci": 47
     },
     "heldTestPaths": [
       {
@@ -3101,27 +3101,6 @@
         "record": "docs/architecture/t771-stale-suite-triage.json",
         "recordedAt": "2026-09-27T19:10:49.000Z",
         "ownerItem": "T-557"
-      },
-      {
-        "testPath": "src/lib/atlas/initiative-deep/__tests__/business-case-fallback.test.ts",
-        "verdict": "wire_into_ci",
-        "record": "docs/architecture/t781-stale-suite-triage.json",
-        "recordedAt": "2026-09-30T10:32:27Z",
-        "ownerItem": "T-782"
-      },
-      {
-        "testPath": "src/lib/atlas/initiative-deep/__tests__/retrieve.test.ts",
-        "verdict": "wire_into_ci",
-        "record": "docs/architecture/t781-stale-suite-triage.json",
-        "recordedAt": "2026-09-30T10:32:27Z",
-        "ownerItem": "T-782"
-      },
-      {
-        "testPath": "src/lib/atlas/initiative-deep/__tests__/tenant-scoping.test.ts",
-        "verdict": "rewrite_as_behavior",
-        "record": "docs/architecture/t781-stale-suite-triage.json",
-        "recordedAt": "2026-09-30T10:32:27Z",
-        "ownerItem": "T-782"
       },
       {
         "testPath": "src/lib/enterprise-context/__tests__/derived-enterprise-read.test.ts",
@@ -4428,19 +4407,6 @@
       }
     },
     {
-      "directory": "src/lib/atlas/initiative-deep/__tests__",
-      "testFiles": 3,
-      "unrunTestFiles": 3,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 3,
-      "governedRisk": {
-        "score": 0,
-        "band": "unclassified",
-        "signals": [],
-        "productSourceCount": 2
-      }
-    },
-    {
       "directory": "src/lib/agent-grounding/__tests__",
       "testFiles": 2,
       "unrunTestFiles": 2,
@@ -5357,14 +5323,6 @@
       "coveredTestFiles": 0,
       "declaredQuarantineTestFiles": 0,
       "untriagedUnrunTestFiles": 4,
-      "via": []
-    },
-    {
-      "directory": "src/lib/atlas/initiative-deep/__tests__",
-      "testFiles": 3,
-      "coveredTestFiles": 0,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 3,
       "via": []
     },
     {

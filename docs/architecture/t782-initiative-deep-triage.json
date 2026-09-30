@@ -1,0 +1,122 @@
+{
+  "item": "T-782",
+  "title": "Replace the initiative-deep tenant byte scan with behavioural probes, then wire the directory whole",
+  "recordedAt": "2026-09-30T11:36:00Z",
+  "base": "ebd9a8743fb16884aa445a4c8c116511e6a8adc0",
+  "supersedes": "docs/architecture/t781-stale-suite-triage.json",
+  "verdictVocabulary": [
+    "wire_into_ci",
+    "rewrite_as_behavior",
+    "update_with_reason_recorded",
+    "repair",
+    "already_verdicted_elsewhere"
+  ],
+  "scope": {
+    "directory": "src/lib/atlas/initiative-deep/__tests__",
+    "testFiles": 3,
+    "judgedWhole": "Every test file in the directory is a row, so the directory leaves the dark baseline whole rather than partial.",
+    "everyFileWasExecuted": "Each file was run on its own with npx jest --runTestsByPath <file> --no-coverage --ci on the branch: 3 of 3 green, 65 cases (4 + 7 + 54)."
+  },
+  "rewrite": {
+    "file": "src/lib/atlas/initiative-deep/__tests__/tenant-scoping.test.ts",
+    "removedCase": "grep invariant — no hardcoded tenant key in src/lib/atlas/initiative-deep/",
+    "whyRemoved": "It asserted that six quoted spellings of three tenant keys were absent from the bytes of nine files. A key written any other way (a template literal, a concatenation) passed it with the behaviour unchanged, and a comment naming a key failed it with no behaviour at all.",
+    "addedCases": {
+      "perCarrierFence": "Every tenant-keyed read the view makes (engagement lookup behind gates.passed and gates.upcoming, the engagement-scoped and portfolio signal reads, tower_ai_tool_usage, tower_dora_metrics) is seeded for both tenants with a marker per carrier, and each carrier is asserted on its own for each caller: own marker present, other tenant's marker absent. The fixture carries hostile rows only a fence can exclude: an engagement in each tenant tagged with the other tenant's initiative id and listed first, and a signal in each tenant pointing at the other tenant's engagement. 12 cases.",
+      "industryRead": "The clients row read for the industry code is recorded and must be the caller's own id. 1 case.",
+      "tenantKeyInvariance": "For every key in CANONICAL_TENANT_KEYS and LEGACY_TENANT_ALIASES from src/lib/tenant/aliases.ts (36 distinct keys, read from code rather than typed), the same data under that key and under a neutral key must produce deep-equal views. This fails whether a key is special-cased or used as a literal filter, however it is spelled. The three keys the byte scan listed are all members of the legacy alias list (measured on the branch). 36 cases."
+    },
+    "unchanged": "The five existing behavioural cases (two leak checks, two wrong-tenant-id nulls, the in-tenant percentile) are kept verbatim."
+  },
+  "mutations": {
+    "howRun": "Each mutation was applied to one product file, the suite run, and the file restored with git checkout. The same eleven were run against the pre-change suite from origin/main.",
+    "list": [
+      "M1 drop the client_id fence on tower_ai_tool_usage",
+      "M2 drop the client_id fence on tower_dora_metrics",
+      "M3 drop the client_id fence on the engagement lookup (gates.ts)",
+      "M4 drop the client_id fence on the engagement-scoped signal read",
+      "M5 drop the client_id fence on the portfolio signal backfill",
+      "M6 hard-code the clients.id filter to one tenant id",
+      "M7 special-case one tenant key with a quoted literal (return no tower samples)",
+      "M8 add a literal-key filter on the signal backfill",
+      "M9 drop the client_id fence on the portfolio-position read",
+      "M10 drop the client_id fence on the initiative row",
+      "M7b as M7, with the key written as a concatenation of two template literals"
+    ],
+    "caughtByNewSuite": "11 of 11",
+    "caughtByPreChangeSuite": "4 of 11 (M7, M8, M9, M10). M7b, the same behaviour as M7 spelled differently, passed the byte scan.",
+    "firstDraftFinding": "The first draft of the per-carrier fixture caught 8 of 10: M3 and M4 survived because no cross-tenant row existed that only those fences excluded. The hostile engagement and stray signal rows were added for that reason, and both are caught now."
+  },
+  "wiring": {
+    "workflow": ".github/workflows/unit-suites.yml",
+    "step": "Run the T-782 atlas initiative-deep suites",
+    "directories": [
+      "src/lib/atlas/initiative-deep/__tests__"
+    ],
+    "suitesWired": 3,
+    "casesWired": 65,
+    "namedAsADirectory": "Named as a DIRECTORY without a trailing slash; it leaves product-directory-ci-coverage.baseline.json in the same change (123 -> 122 lines)."
+  },
+  "notInScope": "src/lib/atlas/initiative-deep/joins/__tests__ is a separate dark directory and is not judged here. phase_approvals and engagement_phases are read by engagement_id only; their fence is the engagement lookup, which M3 now proves.",
+  "claimedWriteFiles": [
+    "src/lib/atlas/initiative-deep/__tests__/tenant-scoping.test.ts",
+    ".github/workflows/unit-suites.yml",
+    "docs/architecture/t782-initiative-deep-triage.json",
+    "src/__tests__/behaviors/t781-stale-suite-wiring.test.ts",
+    "src/__tests__/behaviors/t782-initiative-deep-wiring.test.ts",
+    "src/__tests__/behaviors/product-directory-ci-coverage.baseline.json",
+    "docs/architecture/test-ci-coverage-census.json",
+    "docs/releases/records/2026-09-30-t782-initiative-deep-tenant-probe.md"
+  ],
+  "suites": [
+    {
+      "path": "src/lib/atlas/initiative-deep/__tests__/business-case-fallback.test.ts",
+      "directory": "src/lib/atlas/initiative-deep/__tests__",
+      "run": true,
+      "green": true,
+      "totalTests": 4,
+      "passedTests": 4,
+      "failedTests": 0,
+      "readsRepositoryFileText": false,
+      "sourceTextScanner": false,
+      "textIsTheSubject": false,
+      "verdict": "wire_into_ci",
+      "ownerItem": "T-782",
+      "wiredInThisItem": true,
+      "rationale": "Unchanged. Green, behavioural, reads no repository file. Held by T-781 only for its sibling's scanner case."
+    },
+    {
+      "path": "src/lib/atlas/initiative-deep/__tests__/retrieve.test.ts",
+      "directory": "src/lib/atlas/initiative-deep/__tests__",
+      "run": true,
+      "green": true,
+      "totalTests": 7,
+      "passedTests": 7,
+      "failedTests": 0,
+      "readsRepositoryFileText": false,
+      "sourceTextScanner": false,
+      "textIsTheSubject": false,
+      "verdict": "wire_into_ci",
+      "ownerItem": "T-782",
+      "wiredInThisItem": true,
+      "rationale": "Unchanged. Green, behavioural, reads no repository file. Held by T-781 only for its sibling's scanner case."
+    },
+    {
+      "path": "src/lib/atlas/initiative-deep/__tests__/tenant-scoping.test.ts",
+      "directory": "src/lib/atlas/initiative-deep/__tests__",
+      "run": true,
+      "green": true,
+      "totalTests": 54,
+      "passedTests": 54,
+      "failedTests": 0,
+      "readsRepositoryFileText": false,
+      "sourceTextScanner": false,
+      "textIsTheSubject": false,
+      "verdict": "wire_into_ci",
+      "ownerItem": "T-782",
+      "wiredInThisItem": true,
+      "rationale": "Rewritten: the byte-scan case is deleted and replaced by 49 behavioural cases; the file no longer imports node:fs. Green 54 of 54.",
+      "supersedesVerdict": "rewrite_as_behavior"
+    }
+  ]
+}

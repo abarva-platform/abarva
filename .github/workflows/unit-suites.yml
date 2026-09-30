@@ -1830,6 +1830,24 @@ jobs:
           src/lib/eval/answer-quality/__tests__
           --no-coverage --ci
 
+      # Item T-782. T-781 held `src/lib/atlas/initiative-deep/__tests__` for one
+      # case in `tenant-scoping.test.ts` that asserted over the BYTES of nine
+      # source files that no tenant key was written in them. That case is
+      # replaced by behavioural probes: every tenant-keyed read the deep view
+      # makes is seeded for two tenants, including hostile rows only the fence
+      # excludes, and each carrier is asserted on its own; and every tenant key
+      # the registry knows (canonical and legacy, read from code) must produce
+      # the same view as a neutral key. The directory is judged whole (3 files,
+      # 65 cases, all green) and named as a
+      # DIRECTORY without a trailing slash; it leaves
+      # `product-directory-ci-coverage.baseline.json` in the same change.
+      # Record: `docs/architecture/t782-initiative-deep-triage.json`.
+      - name: Run the T-782 atlas initiative-deep suites
+        run: >-
+          npx jest
+          src/lib/atlas/initiative-deep/__tests__
+          --no-coverage --ci
+
       # Item T-495, claimable half, suite 2 of 11.
       # `src/__tests__/hygiene/learn-layout-single-nav.test.ts` asserted the
       # single-top-nav rule for `/home/learn` over the BYTES of two files, and was
