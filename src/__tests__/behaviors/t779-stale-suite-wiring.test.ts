@@ -28,6 +28,14 @@ import { isCanonicalClientKey } from "@/lib/governance/context-corpus-policy";
  * A row's own `green: false` is NOT accepted as the reason, because that is the
  * record vouching for itself. When item 51 widens the key list or the
  * component is mounted, (c) goes red and says the hold has lost its reason.
+ *
+ * A held row can be superseded. T-780 wires four rows of the two
+ * unreachable-sibling directories by named file, in a LATER triage record —
+ * the latest `recordedAt` wins, which is the rule
+ * `t770-scanner-wiring-refusal.test.ts` resolves by. Only a row that later
+ * record both names and marks `wiredInThisItem` is released from (a), and a
+ * directory holding such a row leaves the dark baseline because it is PARTIAL
+ * rather than dark. Every row nobody superseded is held exactly as before.
  */
 
 const repoRoot = path.resolve(__dirname, "../../..");
@@ -52,6 +60,7 @@ type SuiteRow = {
 
 type TriageRecord = {
   item: string;
+  recordedAt: string;
   verdictVocabulary: string[];
   scope: { drawSize: number };
   wiring: { directories: string[]; suitesWired: number; casesWired: number };
@@ -142,6 +151,29 @@ const darkBaseline = JSON.parse(
   readFileSync(path.join(repoRoot, DARK_BASELINE), "utf8"),
 ) as string[];
 
+/**
+ * Paths a triage record dated AFTER this one wires. Read from every
+ * `*triage*.json` beside this record, not from a named successor, so a later
+ * record cannot be missed by being filed under a different item.
+ */
+function wiredByALaterRecord(): Set<string> {
+  const dir = path.dirname(TRIAGE_RECORD);
+  const wired = new Set<string>();
+  for (const name of readdirSync(path.join(repoRoot, dir))) {
+    if (!/triage.*\.json$/.test(name)) continue;
+    const later = JSON.parse(
+      readFileSync(path.join(repoRoot, dir, name), "utf8"),
+    ) as { recordedAt?: string; suites?: { path: string; wiredInThisItem?: boolean }[] };
+    if (!later.recordedAt || later.recordedAt <= record.recordedAt) continue;
+    for (const row of later.suites ?? []) {
+      if (row.wiredInThisItem === true) wired.add(row.path);
+    }
+  }
+  return wired;
+}
+
+const supersededByWiring = wiredByALaterRecord();
+
 describe("T-779 — ninth stale-suite draw, wiring and holds", () => {
   it("judges every drawn file once, executed, with a verdict from the vocabulary", () => {
     const paths = record.suites.map((suite) => suite.path);
@@ -223,14 +255,18 @@ describe("T-779 — ninth stale-suite draw, wiring and holds", () => {
     expect(heldDirectories.length).toBeGreaterThan(0);
     for (const directory of heldDirectories) {
       const rows = record.suites.filter((suite) => suite.directory === directory);
+      const stillHeld = rows.filter((row) => !supersededByWiring.has(row.path));
+      // A directory is dark only while every row in it is still held.
+      const partial = stillHeld.length < rows.length;
+      expect(stillHeld.length).toBeGreaterThan(0);
       expect({
         directory,
         wiredHere: rows.filter((row) => row.wiredInThisItem).length,
-        reached: rows
+        reached: stillHeld
           .map((row) => row.path)
           .filter((suitePath) => reachedByAMergeBlockingInvocation(suitePath)),
         inDarkBaseline: darkBaseline.includes(directory),
-      }).toEqual({ directory, wiredHere: 0, reached: [], inDarkBaseline: true });
+      }).toEqual({ directory, wiredHere: 0, reached: [], inDarkBaseline: !partial });
     }
   });
 

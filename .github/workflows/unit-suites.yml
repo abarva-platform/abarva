@@ -1792,6 +1792,26 @@ jobs:
           src/lib/workspace-explorer/__tests__
           --no-coverage --ci
 
+      # Item T-780. T-779 held `src/components/agent-answer/__tests__` and
+      # `src/components/context-broker/__tests__` whole because one suite in
+      # each renders a component `docs/architecture/unreachable-components.json`
+      # lists (`AvaAsk`, `FourModeDemoSurface`; retire-or-mount is T-775's
+      # decision). The other four suites are green and their subjects are
+      # mounted, so they are named FILE BY FILE here and the two unreachable
+      # renders stay out. Do NOT replace these paths with either directory:
+      # that would count coverage over code no route reaches. Both directories
+      # are PARTIAL after this, so the dark-directory ratchet no longer sees
+      # them; `t780-named-file-wiring.test.ts` pins their exact file set in its
+      # place. Record: `docs/architecture/t780-named-file-triage.json`.
+      - name: Run the T-780 agent-answer and context-broker suites by named file
+        run: >-
+          npx jest --runTestsByPath
+          src/components/agent-answer/__tests__/AgentAnswerRenderer.test.tsx
+          src/components/agent-answer/__tests__/AvaAskMark.assets.test.ts
+          src/components/context-broker/__tests__/ContextAssembledPanel.test.tsx
+          src/components/context-broker/__tests__/ModeToggle.test.tsx
+          --no-coverage --ci
+
       # Item T-495, claimable half, suite 2 of 11.
       # `src/__tests__/hygiene/learn-layout-single-nav.test.ts` asserted the
       # single-top-nav rule for `/home/learn` over the BYTES of two files, and was
