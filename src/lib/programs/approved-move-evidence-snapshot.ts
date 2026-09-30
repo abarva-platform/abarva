@@ -15,6 +15,7 @@ export interface ApprovedMoveEvidenceSnapshot {
 }
 
 const MAX_APPROVED_EVIDENCE_ROWS = 80;
+const MAX_REVIEW_ACTIVITY_ROWS = 500;
 
 function objectValue(value: unknown): Record<string, unknown> {
   return value && typeof value === "object" && !Array.isArray(value)
@@ -36,6 +37,24 @@ function numberOrNull(value: unknown): number | null {
     return Number(value);
   }
   return null;
+}
+
+function latestReviewTimestamp(
+  rows: readonly Record<string, unknown>[],
+): string | null {
+  let latest: string | null = null;
+  let latestTime = Number.NEGATIVE_INFINITY;
+  for (const row of rows) {
+    for (const field of ["reviewed_at", "updated_at", "created_at"]) {
+      const timestamp = stringOrNull(row[field]);
+      const time = timestamp ? Date.parse(timestamp) : Number.NaN;
+      if (Number.isFinite(time) && time > latestTime) {
+        latest = timestamp;
+        latestTime = time;
+      }
+    }
+  }
+  return latest;
 }
 
 function toRevisionRow(
@@ -71,7 +90,7 @@ export async function loadApprovedMoveEvidenceSnapshot(args: {
 }): Promise<ApprovedMoveEvidenceSnapshot | null> {
   if (!args.tenantKey || !args.moveId) return null;
   const db = getAzureReadFluentClient();
-  const [reviewResult, latestReviewResult] = await Promise.all([
+  const [reviewResult, reviewActivityResult] = await Promise.all([
     db
       .from("program_evidence_reviews")
       .select(
@@ -87,29 +106,24 @@ export async function loadApprovedMoveEvidenceSnapshot(args: {
       .select("updated_at, reviewed_at, created_at")
       .eq("tenant_key", args.tenantKey)
       .eq("program_id", args.moveId)
-      .order("updated_at", { ascending: false, nullsFirst: false })
-      .order("reviewed_at", { ascending: false, nullsFirst: false })
-      .order("created_at", { ascending: false, nullsFirst: false })
-      .limit(1),
+      .limit(MAX_REVIEW_ACTIVITY_ROWS + 1),
   ]);
   if (
     reviewResult.error ||
-    latestReviewResult.error ||
+    reviewActivityResult.error ||
     !Array.isArray(reviewResult.data) ||
-    !Array.isArray(latestReviewResult.data)
+    !Array.isArray(reviewActivityResult.data)
   ) {
     return null;
   }
 
   const reviewRows = reviewResult.data as Array<Record<string, unknown>>;
   if (reviewRows.length > MAX_APPROVED_EVIDENCE_ROWS) return null;
-  const latestReview =
-    (latestReviewResult.data as Array<Record<string, unknown>>)[0] ?? null;
-  const latestReviewUpdatedAt = latestReview
-    ? (stringOrNull(latestReview.updated_at) ??
-      stringOrNull(latestReview.reviewed_at) ??
-      stringOrNull(latestReview.created_at))
-    : null;
+  const reviewActivityRows = reviewActivityResult.data as Array<
+    Record<string, unknown>
+  >;
+  if (reviewActivityRows.length > MAX_REVIEW_ACTIVITY_ROWS) return null;
+  const latestReviewUpdatedAt = latestReviewTimestamp(reviewActivityRows);
   const evidenceIds = reviewRows
     .map((row) => stringOrNull(row.evidence_id))
     .filter((id): id is string => Boolean(id));

@@ -12,6 +12,7 @@ jest.mock("@/lib/data-plane/postgresCompat", () => ({
 }));
 
 import { loadApprovedMoveEvidenceSnapshot } from "../approved-move-evidence-snapshot";
+import { effectivePhaseAfterEvidenceChange } from "../phase-gate-evidence-binding";
 
 beforeEach(() => {
   mockReviewRows.length = 0;
@@ -149,6 +150,80 @@ describe("approved Move evidence snapshot", () => {
     });
   });
 
+  it("reopens a legacy phase approval when reviewed_at is newer than updated_at", async () => {
+    mockReviewRows.push(
+      {
+        evidence_id: "older-review",
+        decision: "approved",
+        updated_at: "2026-09-29T18:00:00.000Z",
+        reviewed_at: "2026-09-29T18:00:00.000Z",
+        created_at: "2026-09-29T17:30:00.000Z",
+      },
+      {
+        evidence_id: "later-review",
+        decision: "approved",
+        updated_at: "2026-09-29T17:00:00.000Z",
+        reviewed_at: "2026-09-29T19:00:00.000Z",
+        created_at: "2026-09-29T16:30:00.000Z",
+      },
+    );
+    mockEvidenceRows.push(
+      {
+        id: "older-review",
+        tenant_key: "tenant-a",
+        program_id: "move-a",
+        phase: 1,
+        evidence_type: "upload",
+        title: "Earlier evidence",
+        summary: "Previously reviewed.",
+        extracted_structured: {},
+        created_at: "2026-09-29T17:00:00.000Z",
+      },
+      {
+        id: "later-review",
+        tenant_key: "tenant-a",
+        program_id: "move-a",
+        phase: 2,
+        evidence_type: "upload",
+        title: "Later evidence",
+        summary: "Approved after the legacy phase gate.",
+        extracted_structured: {},
+        created_at: "2026-09-29T16:00:00.000Z",
+      },
+    );
+
+    const evidence = await loadApprovedMoveEvidenceSnapshot({
+      tenantKey: "tenant-a",
+      moveId: "move-a",
+    });
+    expect(evidence?.latestReviewUpdatedAt).toBe("2026-09-29T19:00:00.000Z");
+
+    expect(
+      effectivePhaseAfterEvidenceChange(
+        2,
+        [
+          {
+            id: "legacy-p1-approval",
+            engagementId: "move-a",
+            phaseNumber: 1,
+            phaseName: null,
+            snapshot: {},
+            lockedByUserId: null,
+            lockedAt: "2026-09-29T18:30:00.000Z",
+            approvalStatus: "approved",
+            createdAt: "2026-09-29T18:30:00.000Z",
+          },
+        ],
+        evidence
+          ? {
+              revision: evidence.revision,
+              latestReviewUpdatedAt: evidence.latestReviewUpdatedAt,
+            }
+          : null,
+      ),
+    ).toBe(1);
+  });
+
   it("fails closed instead of hashing a truncated approved-evidence set", async () => {
     mockReviewRows.push(
       ...Array.from({ length: 81 }, (_, index) => ({
@@ -164,6 +239,23 @@ describe("approved Move evidence snapshot", () => {
       }),
     ).resolves.toBeNull();
     expect(mockFrom).toHaveBeenCalledTimes(2);
+  });
+
+  it("fails closed when review activity exceeds the bounded freshness scan", async () => {
+    mockReviewRows.push(
+      ...Array.from({ length: 501 }, (_, index) => ({
+        evidence_id: `pending-${index}`,
+        decision: "pending",
+        created_at: `2026-09-${String(1 + (index % 28)).padStart(2, "0")}T12:00:00.000Z`,
+      })),
+    );
+
+    await expect(
+      loadApprovedMoveEvidenceSnapshot({
+        tenantKey: "tenant-a",
+        moveId: "move-a",
+      }),
+    ).resolves.toBeNull();
   });
 
   it("fails closed when an approved review has no tenant-scoped evidence row", async () => {
