@@ -171,14 +171,14 @@ function clientFinalForm(note?: string): FormData {
   return form;
 }
 
-function postClientFinal(form: FormData) {
+function postClientFinal(form: FormData, artifactCode = "d13_vendor_responses") {
   return POST(new Request("http://localhost", {
     method: "POST",
     body: form,
   }), {
     params: Promise.resolve({
       eventId: "11111111-1111-1111-1111-111111111111",
-      artifactCode: "d13_vendor_responses",
+      artifactCode,
     }),
   });
 }
@@ -224,6 +224,59 @@ describe("client-final artifact body landing", () => {
         status: "approved",
       }),
     });
+  });
+
+  it("refuses an RFP Client Final containing buyer-private savings targets before storage", async () => {
+    listedArtifacts = [{
+      id: "generated-1",
+      artifactType: "d09_rfp_pack",
+      artifactGroup: "generated",
+      lifecycleState: "current",
+      originalName: "generated.docx",
+      version: 1,
+    }];
+    extractText.mockResolvedValueOnce({
+      text: "The commercial rationale is a 12–15% run-rate improvement planning hypothesis. approval_granted=false.",
+      method: "text",
+      warnings: [],
+    });
+
+    const response = await postClientFinal(
+      clientFinalForm("Reviewed for vendor release."),
+      "d09_rfp_pack",
+    );
+
+    expect(response.status).toBe(422);
+    expect(await response.json()).toEqual(expect.objectContaining({
+      error: "vendor_disclosure_violation",
+    }));
+    expect(uploadBlob).not.toHaveBeenCalled();
+    expect(registerArtifact).not.toHaveBeenCalled();
+    expect(updateArtifactBody).not.toHaveBeenCalled();
+  });
+
+  it("allows a D09 Client Final with ordinary vendor pricing instructions", async () => {
+    extractText.mockResolvedValueOnce({
+      text: "Submit separate run and change prices in the Pricing Response tab.",
+      method: "text",
+      warnings: [],
+    });
+    listedArtifacts = [{
+      id: "generated-1",
+      artifactType: "d09_rfp_pack",
+      artifactGroup: "generated",
+      lifecycleState: "current",
+      originalName: "generated.docx",
+      version: 1,
+    }];
+
+    const response = await postClientFinal(
+      clientFinalForm("Reviewed and redlined for vendor use."),
+      "d09_rfp_pack",
+    );
+
+    expect(response.status).toBe(200);
+    expect(uploadBlob).toHaveBeenCalledTimes(1);
   });
 
   it("invalidates an earlier quality receipt when different Client Final bytes are accepted", async () => {
