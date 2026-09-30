@@ -7628,8 +7628,9 @@ function ApprovalsWorkspace({
         subtitle="The workflow prepares the evidence; this page records the approval decision."
       />
       <ApprovalReadinessBrief view={view} requiredEvidenceOpen={requiredEvidenceOpen} />
-      {view.stage.key === "strategy" && view.event.currentStageKey === "strategy" && view.event.lifecycle === "active" ? (
-        <StrategyCriterionReview
+      {(view.stage.key === "strategy" || view.stage.key === "scope") &&
+      view.event.currentStageKey === view.stage.key && view.event.lifecycle === "active" ? (
+        <StageCriterionReview
           view={view}
           states={gateCriterionStates}
           artifacts={stageArtifactStates}
@@ -7681,7 +7682,7 @@ function ApprovalsWorkspace({
   );
 }
 
-function StrategyCriterionReview({
+function StageCriterionReview({
   view,
   states,
   artifacts,
@@ -7700,7 +7701,7 @@ function StrategyCriterionReview({
   const [reason, setReason] = useState("");
   const [pendingId, setPendingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const definitions = criteriaForStage("strategy");
+  const definitions = criteriaForStage(view.stage.key);
   const recorded = definitions.filter((definition) =>
     states.some((state) => state.criterionId === definition.criterionId &&
       (state.state === "met" || state.state === "waived")),
@@ -7734,7 +7735,7 @@ function StrategyCriterionReview({
   return (
     <section data-testid="source-stage-criterion-review" style={{ margin: "18px 0", borderTop: `1px solid ${ANALYTICS.LINE}` }}>
       <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 12, padding: "14px 0 8px" }}>
-        <h3 style={{ margin: 0, fontSize: 16 }}>Strategy gate criteria</h3>
+        <h3 style={{ margin: 0, fontSize: 16 }}>{view.stage.label} gate criteria</h3>
         <span style={{ color: ANALYTICS.MUTED, fontSize: 12 }}>{recorded} of {definitions.length} recorded</span>
       </div>
       {definitions.map((definition) => {
