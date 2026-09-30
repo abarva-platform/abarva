@@ -35,7 +35,7 @@ The ticket-history draft prompt can now see later excerpts from an uploaded, par
 
 - Pass: the prompt test failed before the fix because a later ticket row was absent.
 - Pass: disabling the d07 option after the fix made both new tests fail; restoring it passed the focused suite (61/61).
-- Pass: all 13 adjacent generation suites, 159 tests; scoped ESLint; TypeScript `--noEmit`; `npm run release:check`; diff check.
+- Pass: all 13 adjacent generation suites, 160 tests; scoped ESLint; TypeScript `--noEmit`; `npm run release:check`; diff check.
 - Not run: applicable CI, live signed-in regeneration and source-row reconciliation; record these separately before claiming acceptance.
 
 ## Rollout Plan

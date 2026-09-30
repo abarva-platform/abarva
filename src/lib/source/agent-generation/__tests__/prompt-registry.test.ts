@@ -34,6 +34,27 @@ describe("Source artifact prompt registry provider config", () => {
     expect(message).toContain("never construct a plausible baseline");
   });
 
+  it("keeps ticket rows beyond the old 500-character cut within one parsed chunk", () => {
+    const ctx = makeD09Context(["synthetic-ticket-export.csv"]);
+    ctx.event.currentStageKey = "scope";
+    ctx.uploadedEvidence![0].chunkExcerpts = [
+      [
+        "Service Tower,Support Tier,Month,Time Window,Ticket Count,SLA Breach Count,Source Basis",
+        ...Array.from({ length: 7 }, (_, index) =>
+          `Service desk,L2,2026-08,Business hours,${index + 1},0,Synthetic scenario for workflow testing`,
+        ),
+        "Endpoint and patch,L3,2026-08,After hours,3,0,Synthetic scenario for workflow testing",
+      ].join("\n"),
+    ];
+    expect(ctx.uploadedEvidence![0].chunkExcerpts[0].length).toBeGreaterThan(500);
+
+    const message = getPromptTemplate("d07_ticket_synth")?.buildUserMessage(ctx, {
+      d01_strategy_memo: "Approved process strategy.",
+    });
+
+    expect(message).toContain("Endpoint and patch,L3,2026-08,After hours,3,0");
+  });
+
   it("bounds the extra d07 context to scope CSV evidence and marks truncation", () => {
     const ctx = makeD09Context(["scope-tickets.csv", "strategy-note.csv"]);
     ctx.uploadedEvidence![0].chunkExcerpts = Array.from(
