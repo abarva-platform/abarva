@@ -249,6 +249,8 @@ interface SourceAnalyticsCanvasProps {
   viewStage: SourceStageKey;
   tenantName: string;
   stageView?: StageAnalyticsView;
+  /** Current-stage action resolved from the server approval policy, independent of value analytics. */
+  stageGateAction?: StageGateActionView;
   /** A server-verified delegation receipt, never a raw fact or artifact payload. */
   verifiedFallbackSponsorAcknowledgement?: boolean;
   stepInsight?: StepInsightView;
@@ -798,6 +800,7 @@ export function SourceAnalyticsCanvas({
   viewStage,
   tenantName,
   stageView,
+  stageGateAction,
   verifiedFallbackSponsorAcknowledgement = false,
   stepInsight,
   artifacts = [],
@@ -858,12 +861,12 @@ export function SourceAnalyticsCanvas({
               verifiedDelegatedSponsorAcknowledgement: verifiedFallbackSponsorAcknowledgement,
             }),
           };
-      return applySourceApprovalPolicyToStageView(
-        hydratedStageView,
-        event.approvalPolicyCode,
-      );
+      const actionableStageView = stageGateAction
+        ? { ...hydratedStageView, gate: { ...hydratedStageView.gate, action: stageGateAction } }
+        : hydratedStageView;
+      return applySourceApprovalPolicyToStageView(actionableStageView, event.approvalPolicyCode);
     },
-    [event.approvalPolicyCode, evidenceStates, verifiedFallbackSponsorAcknowledgement, journey, stageView, viewStage],
+    [event.approvalPolicyCode, evidenceStates, verifiedFallbackSponsorAcknowledgement, journey, stageGateAction, stageView, viewStage],
   );
   const resolvedStageView: StageAnalyticsView = useMemo(
     () => (stepInsight ? { ...baseStageView, stepInsight } : baseStageView),
