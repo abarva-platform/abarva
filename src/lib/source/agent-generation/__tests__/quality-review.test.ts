@@ -115,13 +115,13 @@ describe("Source consulting-grade quality gate helpers", () => {
     expect(requiresSourceConsultingGradeGate("d04_app_inv")).toBe(false);
   });
 
-  it("summarizes evidence, upstream bodies, and gate states for the reviewer", () => {
+  it("summarizes evidence, upstream bodies, and gate states for a buyer-internal reviewer", () => {
     const context = buildSourceQualitySourceContext({
       ctx: makeContext(),
       upstreamBound: {
         d01_strategy_memo: "Strategy memo with $300M baseline.",
       },
-      artifactCode: "d09_rfp_pack",
+      artifactCode: "d01_strategy_memo",
     });
 
     expect(context).toContain("SkyHarbor Air");
@@ -132,21 +132,37 @@ describe("Source consulting-grade quality gate helpers", () => {
     );
     expect(context).toContain("dc-infra-inventory");
     expect(context).toContain("11_Data_Center_Infrastructure_Inventory.csv");
-    expect(context).toContain("D09 RFP evidence coverage semantics");
-    expect(context).toContain("Exhibit 09 — Approved evaluation criteria");
-    expect(context).toContain("satisfies=EVID-SRC-EVAL-WEIGHT-RATIONALE");
-    expect(context).toContain(
-      "Available parsed evidence — citation review pending (normalized from uploaded D09 coverage map)",
-    );
-    expect(context).not.toContain("EVID-SRC-EVAL-WEIGHT-RATIONALE; state=Not Requested");
-    expect(context).toContain(
-      "Blocking gaps are only items still missing after this coverage map",
-    );
+    expect(context).not.toContain("D09 RFP evidence coverage semantics");
+    expect(context).toContain("EVID-SRC-EVAL-WEIGHT-RATIONALE; state=Not Requested");
     expect(context).toContain("rfp-package-complete");
     expect(context).toContain("Artifact-specific requirements (from source-artifact-profiles.ts)");
     expect(context).toContain("Decision purpose:");
     expect(context).toContain("source=linked evidence record");
     expect(context).not.toContain("artifact=artifact-1");
+  });
+
+  it("keeps private upstream and workflow evidence out of the D09 reviewer and rewrite context", () => {
+    const ctx = makeContext();
+    ctx.event.name = "Private internal workflow test";
+    ctx.event.owner = "Confidential decision owner";
+    ctx.event.estimatedValueUsd = 300_000_000;
+    ctx.evidence[0].notes = "Release-Hold RH-05: no legal approval";
+    ctx.uploadedEvidence![0].originalName = "buyer_private_release_register.csv";
+    ctx.uploadedEvidence![0].chunkExcerpts = ["Internal negotiation target: 12-15%."];
+    const context = buildSourceQualitySourceContext({
+      ctx,
+      upstreamBound: {
+        d05_scope_memo: "Release-Hold Governing Table: RH-05 blocks distribution.",
+      },
+      artifactCode: "d09_rfp_pack",
+    });
+
+    expect(context).toContain(ctx.tenantName);
+    expect(context).not.toMatch(/Release-Hold|RH-05|internal negotiation target/i);
+    expect(context).not.toContain("buyer_private_release_register.csv");
+    expect(context).not.toContain(ctx.event.name);
+    expect(context).not.toContain("Confidential decision owner");
+    expect(context).not.toContain("$300,000,000");
   });
 
   it("does not leak D09 RFP evidence-coverage language into other artifact codes", () => {

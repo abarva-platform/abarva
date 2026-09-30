@@ -24,6 +24,7 @@ import { buildLanguagePolicyBlock } from "@/lib/source/documentation-standards/s
 import { SOURCE_ARTIFACT_SPECS } from "@/lib/source/canonical-specs";
 import { evidenceById } from "@/lib/source/canonical-specs/evidence-requirements";
 import { sourceEvidenceAppliesToApprovalPolicy } from "@/lib/source/approval-policy";
+import { buildD09VendorDraftContext } from "./d09-vendor-context";
 
 // Environment-tiered model selection. Each environment (dev / preprod / prod,
 // and per-client preprod / prod) sets these via env so the highest-quality
@@ -1571,19 +1572,16 @@ Writing and format requirements:
 
   d09_rfp_pack: {
     artifactCode: "d09_rfp_pack",
-    version: 12,
+    version: 13,
     model: BOARD_GRADE_MODEL,
     maxTokens: 128_000,
     upstreamRequired: ["d01_strategy_memo", "d05_scope_memo"],
     upstreamOptional: ["d02_value_target", "d04_app_inv", "d07_ticket_synth"],
-    systemPrompt: `${AVA_SOURCE_ADVISOR_VOICE}
+    systemPrompt: `You are a procurement writer drafting a vendor-facing RFP package, not an internal sourcing memo. The only case facts you may use are in the bounded vendor-draft context. Prior-stage artifacts, buyer evidence-room files, workflow approvals, release holds, owner names, private cost or value targets, and negotiation strategy are not approved for bidder disclosure merely because Source holds them. Never reproduce or infer them.
 
-You are drafting the RFP Package (artifact d09_rfp_pack) — the flagship vendor-facing solicitation document. Vendors will price + propose against this, and executives will judge whether the event is ready to enter market. It must read like a real procurement RFP for a large-enterprise sourcing event: formal, complete, unambiguous, quantified, evidence-aware, and structured so vendor responses are comparable downstream.
+Use formal, concise procurement language. Do not invent names, dates, volumes, baseline amounts, evaluation weights, service levels, issued exhibits, legal terms, or approvals. Mark any unavailable detail as "Not issued" in the relevant vendor-facing table. Do not create an internal source register, release-hold table, gap-closure register, approval checklist, or owner action list. This is an incomplete draft until the release boundary separately approves the full package.
 
-North-star workflow principle:
-Keep the sourcing-user workflow simple. The default generated RFP pack is one vendor-facing RFP document plus one vendor response workbook. Do not create a file-management burden in the document. Refer to workbook tabs, schedules, and exhibits inside the pack rather than asking the sourcing lead to manage many standalone files.
-
-Required structural sections:
+Required sections:
 ## §1 · Executive summary and decision context
 ## §2 · Enterprise current-state baseline
 ## §3 · Scope, service towers, and exclusions
@@ -1594,137 +1592,22 @@ Required structural sections:
 ## §8 · Vendor response instructions and mandatory submission tables
 ## §9 · Evaluation framework, weights, and disqualification rules
 ## §10 · Risk register, transition controls, and failure modes
-## §11 · Source register, assumptions, and client-to-complete gaps
+## §11 · Vendor exhibits and response assumptions
 
-Mandatory response-compliance language for §8:
+Preserve sections §7–§11 and Never stop after a partial table. Use compact tables for service scope, current-state baseline, service levels, transition, pricing, evaluation, and vendor-facing response requirements. Cite friendly exhibit labels only when an exhibit is explicitly identified as vendor-disclosable in the bounded context; otherwise say "Not issued". Evaluation Criterion ID and requirement IDs must be stable only when supplied; do not invent an approved scoring system.
+
+The default vendor response uses one Vendor Response Workbook with these tabs: Guide, Mandatory Compliance, Requirement Response Matrix, Vendor Claim Register, Solution Approach, Pricing Response, Staffing and Location Model, SLA Commitment Table, Transition Plan, Assumptions and Exclusions Log, Commercial Exceptions Table, and Evidence Checklist. Capture Comply | Partially Comply | Exception | Not Applicable dispositions. Do not assert that a workbook or template has been legally approved or released.
+
+Mandatory response language for §8:
 ${SOURCE_VENDOR_RESPONSE_CONTROL_MANDATE}
 
-Mandatory response-control components to reference in §8:
-${formatVendorResponseControlSections()}
-
-Mandatory tables:
-- In-scope / out-of-scope service tower matrix.
-- Current-state baseline table covering applications, workloads, tickets, FTE, run cost, data center/private cloud, network, security/compliance, contracts, and run-vs-change spend.
-- SLA and operational obligations table.
-- Transition constraints and blackout calendar table.
-- Pricing and volume-basis instruction table.
-- Vendor response control table covering the single Vendor Response Workbook and its required tabs: Guide, Mandatory Compliance, Requirement Response Matrix, Vendor Claim Register, Solution Approach, Pricing Response, Staffing and Location Model, SLA Commitment Table, Transition Plan, Assumptions and Exclusions Log, Commercial Exceptions Table, and Evidence Checklist.
-- Requirement-to-response matrix defining stable requirement IDs, normalized response categories, required evidence, pricing/SLA linkages, and the evaluation criterion tied to each scored requirement.
-- Evaluation weights and evidence-required scoring table.
-- Risk, issue, dependency, and mitigation table.
-- Process timeline table using governed dates from evidence or explicit gate-relative anchors when dates are genuinely missing.
-- Source register separating locked uploaded evidence, upstream draft artifacts, working assumptions, and client-to-complete gaps.
-- Client-to-complete / vendor-to-confirm register with accountable role, target date or gate-relative trigger, why it matters, and downstream impact.
-
-Tone: formal procurement style, but executive-polished. Vendor-facing draft — assume the reader is a senior sales engineer or pursuit partner at a tier-one infrastructure, cloud, managed services, or application operations vendor. Be explicit, evidence-disciplined, and compact enough to complete in one synchronous generation: target 3,500-5,500 words. Quote scope from d05 only where needed. Reference the value-target range from d01 without disclosing internal sensitivity. Distinguish locked facts, working assumptions, validation gates, and missing evidence. Do not use generic procurement boilerplate. Do not invent names, dates, systems, or volumes not present in the bound context. If evidence is missing, label it as an issue-to-release gap in §11, not as a vendor instruction.
-
-Vendor/internal separation:
-This artifact is vendor-facing. Do not expose model/provider names, prompt details, raw parser status, confidence scores, internal gate IDs, quality-review blockers, negotiation targets, benchmark deltas, or private legal fallback positions. Those belong in the internal review and negotiation workbook, not the RFP.
-
-Source discipline requirement: treat parsed uploaded evidence as governed draft evidence. Assign friendly exhibit labels such as Exhibit 01 — Run/Change Financial Baseline and cite those labels in the body. Do not expose artifact_id, chunk_id, raw table names, or other internal ids. If an evidence row is parsed_uncited, mark it as "Available parsed evidence — citation review pending" in the source register instead of ignoring it.
-
-Hard output budget and completion requirement: every required section and mandatory table must be present, even if concise. Never stop after a partial table or omit downstream sections. Preserve sections §7–§11; they are more important than long prose in §2–§6. If token budget feels tight, shorten narrative first; use exhibit references instead of restating full datasets; keep every table to 4–8 rows unless the row is mandatory. Do not end mid-sentence. The final line must be: "RFP package draft complete — pending client closure of registered gaps."
-
-Section budget:
-- §1: 250 words max plus a 5-row decision table.
-- §2: 300 words max plus one current-state baseline table, 6 rows max.
-- §3: 250 words max plus one tower matrix, 6 rows max.
-- §4: 250 words max plus one estate table, 6 rows max.
-- §5: 250 words max plus one obligations table, 6 rows max.
-- §6: 300 words max plus one transition/blackout table, 6 rows max.
-- §7: must include commercial terms and pricing instructions table.
-- §8: must include the response-compliance mandate above, vendor response/submission requirements table, and explicit completion instructions for every required tab in the single Vendor Response Workbook.
-- §9: table only, 6 rows max, must include weights/scoring/disqualification controls.
-- §10: table only, 8 rows max, must include accountable risk roles/mitigations from Exhibits 07, 13, and 14.
-- §11: two tables only, 8 rows max each, must include source register and gap closure register.
-
-Compact required appendix block:
-After §8, use compact tables instead of long prose for the remaining governance material:
-- §9 table: Evaluation area | Weight | Scoring basis | Disqualification / red flag | Evidence source.
-- §10 table: Risk ID | Failure mode | Evidence source | Accountable role | Mitigation | Blocking gate.
-- §11A table: Source | Status | Used in sections | Remaining action.
-- §11B table: Gap ID | Item | Accountable role | Target date / trigger | Blocking gate | Downstream impact.
-
-Required compact section skeleton:
-## §1 · Executive summary and decision context
-## §2 · Enterprise current-state baseline
-## §3 · Scope, service towers, and exclusions
-## §4 · Application, workload, infrastructure, network, and cloud estate
-## §5 · Service-level, operational, and security obligations
-## §6 · Transition approach, blackout constraints, and risk controls
-## §7 · Commercial model, run/change baseline, and pricing instructions
-## §8 · Vendor response instructions and mandatory submission tables
-## §9 · Evaluation framework, weights, and disqualification rules
-## §10 · Risk register, transition controls, and failure modes
-## §11 · Source register, assumptions, and client-to-complete gaps
-
-Quality requirement: produce a draft that can pass the partner-grade quality review without a follow-up rewrite. Every major claim must either cite/derive from bound evidence, be framed as an assumption to validate, or be listed as an issue-to-release gap with accountable role/action. Include practical mitigations for risks; do not merely flag them. Do not use bracketed client fill-in markers. If exact names or dates are not loaded, provide the accountable role and a gate-relative target date or trigger in the §11 closure table with blocking gate and downstream impact.
-
-Analytics continuity requirement: assign each issued requirement a unique stable ID and one normalized category from service scope | service management | staffing and location | SLA and performance | transition | security and compliance | architecture and tooling | automation and productivity | commercial and pricing | governance | innovation and value. The Vendor Response Workbook must preserve that ID and category and capture a normalized disposition of Comply | Partially Comply | Exception | Not Applicable. Tie every scored requirement to an Evaluation Criterion ID and every commercial requirement to a pricing, SLA/KPI, claim, assumption, or exception reference as applicable. These identifiers must remain usable without reinterpretation in response completeness, evaluation scoring, pricing normalization, BAFO challenge, and executive decision artifacts.`,
-    buildUserMessage: (ctx, upstream) => {
-      const lines: string[] = [
-        `Company: ${ctx.tenantName}`,
-        `Event: ${ctx.event.name} (${ctx.event.code})`,
-        ctx.event.archetype ? `Archetype: ${ctx.event.archetype}` : null,
-        ctx.event.rigor ? `Rigor: ${ctx.event.rigor}` : null,
-        ctx.event.owner ? `Decision owner: ${ctx.event.owner}` : null,
+Do not use bracketed client fill-in markers. Absence of vendor-approved facts cannot be repaired with generic invented numbers or buyer-internal closure actions.`,
+    buildUserMessage: (ctx) =>
+      [
+        buildD09VendorDraftContext(ctx),
         "",
-        "— UPSTREAM CONTEXT —",
-        "",
-        "Approved Sourcing Strategy Memo (d01_strategy_memo):",
-        upstream.d01_strategy_memo ??
-          "(NOT YET AUTHORED — DO NOT FABRICATE; surface the gap in the draft)",
-        "",
-        "Approved Scope Memo (d05_scope_memo):",
-        upstream.d05_scope_memo ??
-          "(NOT YET AUTHORED — DO NOT FABRICATE; surface the gap in the draft)",
-        "",
-        "— GOVERNED EVIDENCE STATE SUMMARY (NORMALIZED FOR D09) —",
-        formatEvidenceStates(ctx),
-        "",
-        "— PARSED UPLOADED EVIDENCE EXCERPTS —",
-        formatUploadedEvidence(ctx),
-        "",
-      ].filter((line): line is string => line !== null);
-
-      if (upstream.d02_value_target) {
-        lines.push("Value Target Brief (d02_value_target):");
-        lines.push(upstream.d02_value_target);
-        lines.push("");
-      }
-      if (upstream.d04_app_inv) {
-        lines.push("Application Inventory (d04_app_inv) — drives §3:");
-        lines.push(upstream.d04_app_inv);
-        lines.push("");
-      }
-      if (upstream.d07_ticket_synth) {
-        lines.push(
-          "Ticket History Synthesis (d07_ticket_synth) — drives §4 SLA expectations:",
-        );
-        lines.push(upstream.d07_ticket_synth);
-        lines.push("");
-      }
-
-      lines.push(
-        "— D09 RFP EVIDENCE COVERAGE MAP —",
-        formatD09RfpEvidenceCoverage(ctx),
-        "",
-      );
-
-      if (ctx.archetypeAdvisory) {
-        lines.push(
-          "— SOURCING-ADVISOR PLAYBOOK (archetype-specific commercial intelligence) —",
-          "",
-          ctx.archetypeAdvisory,
-          "",
-        );
-      }
-
-      lines.push(
-        "Draft the RFP Package per the system prompt requirements. Use the evidence-state summary and uploaded evidence excerpts as a completeness checklist: when a category is loaded or usable, reflect it in the right section and cite a friendly exhibit label; when a coverage-map rule says an uploaded exhibit satisfies an EVID-SRC-* requirement, do not call that requirement Not Requested in the source register. When a category is missing or low confidence, add it to the issue-to-release register with accountable role/action/why-it-matters instead of filling with generic text. Keep the vendor workflow simple: reference one Vendor Response Workbook with tabs, not many standalone response files. This is a governed vendor-facing draft, not an issued final; do not use bracketed client fill-in markers. If exact human names or calendar dates are missing, use accountable role names and gate-relative target triggers. Keep the draft section-complete: every section §1 through §11 must appear, §7–§11 must not be sacrificed for long baseline prose, §9 must include weights/scoring/disqualification controls, §10 must include risk owners/mitigations, §11 must include a blocking-gap closure table with accountable role, target date or trigger, blocking gate, and downstream impact for every unresolved item, and the final line must confirm the draft is complete pending registered gap closure.",
-      );
-      return lines.join("\n");
-    },
+        "Draft only from the bounded vendor-draft context. Keep unsupported fields marked Not issued.",
+      ].join("\n"),
   },
 
   d10_rfi_summary: {

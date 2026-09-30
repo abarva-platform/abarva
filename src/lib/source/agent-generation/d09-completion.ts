@@ -1,7 +1,7 @@
 import type { SourceGenerationContext } from "./types";
 
 const COMPLETION_MARKER = "<!-- abarva-d09-vendor-completion-v2 -->";
-const FINAL_LINE = "RFP package draft complete — pending client closure of registered gaps.";
+const WORKBOOK_HEADING = "## Appendix A · Vendor Response Workbook Tab Guide";
 
 export function completeD09RfpGovernanceSections(args: {
   artifactCode: string;
@@ -9,17 +9,18 @@ export function completeD09RfpGovernanceSections(args: {
   ctx: SourceGenerationContext;
 }): string {
   if (args.artifactCode !== "d09_rfp_pack") return args.body;
-  const draft = ensureD09VendorOpening(
-    sanitizeD09ClientFacingNames(args.body),
-    args.ctx,
-  );
-  if (draft.includes(COMPLETION_MARKER)) return draft;
+  const draft = ensureD09VendorOpening(sanitizeD09ClientFacingNames(args.body));
 
-  const body = draft.replace(/\n*RFP package draft complete — pending client closure of registered gaps\.\s*$/u, "").trim();
-  return [body, vendorWorkbookInstructions(), FINAL_LINE].join("\n\n");
+  const body = draft
+    .replaceAll(COMPLETION_MARKER, "")
+    .replace(/\n*RFP package draft complete — pending client closure of registered gaps\.\s*$/u, "")
+    .trim();
+  return body.includes(WORKBOOK_HEADING)
+    ? body
+    : [body, vendorWorkbookInstructions()].join("\n\n");
 }
 
-function ensureD09VendorOpening(body: string, ctx: SourceGenerationContext): string {
+function ensureD09VendorOpening(body: string): string {
   const opening = body.slice(0, 1_200).toLowerCase().replace(/[^a-z0-9]+/g, " ");
   const hasPurpose = ["request for proposal", "invitation to bid", "purpose and scope", "scope of services"]
     .some((phrase) => opening.includes(phrase));
@@ -30,7 +31,7 @@ function ensureD09VendorOpening(body: string, ctx: SourceGenerationContext): str
   const preface = [
     "## Solicitation purpose and scope",
     "",
-    `This request for proposal invites qualified service providers to respond to the stated service scope for ${ctx.event.name}.`,
+    "This request for proposal invites qualified service providers to respond to the service requirements stated in this draft.",
     "",
     "Vendors must complete the Vendor Response Workbook and submit a proposal response against every mandatory requirement, pricing field, SLA, staffing commitment, transition obligation, assumption, exception, and evidence pointer.",
   ].join("\n");
@@ -50,8 +51,7 @@ export function sanitizeD09ClientFacingNames(body: string): string {
 
 function vendorWorkbookInstructions(): string {
   return [
-    COMPLETION_MARKER,
-    "## Appendix A · Vendor Response Workbook Tab Guide",
+    WORKBOOK_HEADING,
     "",
     "Vendors must complete one Vendor Response Workbook. Narrative files may supplement workbook answers, but they do not replace required workbook tabs or fields.",
     "",

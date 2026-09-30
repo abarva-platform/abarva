@@ -19,6 +19,7 @@ import type {
 } from "@/lib/integrations/ai-egress";
 import type { SourceGenerationContext } from "./types";
 import { SOURCE_VENDOR_RESPONSE_CONTROL_MANDATE } from "./prompt-registry";
+import { buildD09VendorDraftContext } from "./d09-vendor-context";
 
 const SECTION_MODEL = "claude-opus-4-8";
 const SECTION_MAX_TOKENS = 4_000;
@@ -32,7 +33,7 @@ Format requirements:
 - Markdown only. Use ## for section headers and ### for subsections.
 - Tables when comparing. Bullet lists when enumerating.
 - Numbered §-prefixed sections (## §N · …) match the AbarVa house style.
-- No fabrication. If evidence is missing, say so explicitly and surface it as a gap.`;
+- No fabrication. Mark an unavailable bidder-facing detail as Not issued; do not create an internal closure register.`;
 
 // ── Section definitions ─────────────────────────────────────────────────────
 
@@ -57,7 +58,7 @@ Application/Workload | Hosting | Criticality | Scope/Volume Assumption | Data Ce
     instruction: `Write ONLY ## §3 · Scope, service towers, and exclusions.
 250 words max. Include one in-scope/out-of-scope service tower matrix:
 Tower | In/Out | Description | Exclusions
-6 rows max. Quote scope from the d05 scope memo verbatim where applicable. Be exhaustive about exclusions — anything not listed is implicitly out. Reference Exhibit 06 (tower scope/service catalog) if uploaded.`,
+6 rows max. Use only scope explicitly present in the bounded vendor-draft context. Do not quote the buyer's internal scope memo or imply an exhibit was issued.`,
   },
   {
     key: "s4",
@@ -65,7 +66,7 @@ Tower | In/Out | Description | Exclusions
     instruction: `Write ONLY ## §4 · Application, workload, infrastructure, network, and cloud estate.
 250 words max. Include one estate table:
 App/System | Workload Type | Hosting | Criticality | Support Tier | Volume Indicator
-6 rows max. Draw from d04 application inventory and Exhibits 01, 03, 11, 12 where available. Note data center / private cloud / SD-WAN / cloud mix.`,
+6 rows max. Use only estate details explicitly present in the bounded vendor-draft context; otherwise mark them Not issued.`,
   },
   {
     key: "s5",
@@ -81,7 +82,7 @@ Metric | Current Baseline | Required SLA | Measurement Period | Credit/Penalty
     instruction: `Write ONLY ## §6 · Transition approach, blackout constraints, and risk controls.
 300 words max. Include one transition/blackout table:
 Milestone | Planned Date | Blackout Window | Risk | Mitigation | Owner
-6 rows max. Reference Exhibit 14 only if approved for vendor disclosure. When no approved calendar exists, mark dates as not issued; do not invent relative milestones or blackout windows.`,
+6 rows max. Use only a calendar explicitly present in the bounded vendor-draft context. Otherwise mark dates Not issued; do not invent relative milestones or blackout windows.`,
   },
   {
     key: "s7",
@@ -89,7 +90,7 @@ Milestone | Planned Date | Blackout Window | Risk | Mitigation | Owner
     instruction: `Write ONLY ## §7 · Commercial model, run/change baseline, and pricing instructions.
 Include one pricing/commercial table:
 Item | Basis | Vendor-to-Complete | Notes
-Minimum 4 rows. Reference Exhibit 08 (pricing assumptions) and Exhibit 15 (run-vs-change baseline) only if approved for vendor disclosure. Never state or allude to the buyer's internal value target or savings range. Instruct vendors to complete the Pricing Response tab in the single Vendor Response Workbook. Do not create separate pricing-file burden unless a counsel-approved schedule explicitly requires it.`,
+Minimum 4 rows. Use only pricing assumptions explicitly present in the bounded vendor-draft context; otherwise mark them Not issued. Never state or allude to the buyer's internal value target or savings range. Instruct vendors to complete the Pricing Response tab in the single Vendor Response Workbook.`,
   },
   {
     key: "s8",
@@ -100,7 +101,7 @@ ${SOURCE_VENDOR_RESPONSE_CONTROL_MANDATE}
 
 Include one vendor response-control table:
 Required Deliverable | Format | Required Completion Rule | Downstream Use | Due Date | Notes
-Minimum 8 rows and include the single Vendor Response Workbook tabs: Guide, Mandatory Compliance, Vendor Claim Register, Solution Approach, Pricing Response, Staffing and Location Model, SLA Commitment Table, Assumptions and Exclusions Log, Transition Plan Template, Commercial Exceptions Table, and Evidence Checklist. Reference Exhibit 10 only if approved for vendor disclosure. When the response calendar is not approved, mark due dates as not issued; do not invent relative deadlines.`,
+Minimum 8 rows and include the single Vendor Response Workbook tabs: Guide, Mandatory Compliance, Vendor Claim Register, Solution Approach, Pricing Response, Staffing and Location Model, SLA Commitment Table, Assumptions and Exclusions Log, Transition Plan Template, Commercial Exceptions Table, and Evidence Checklist. Reference only exhibits explicitly present in the bounded vendor-draft context. Otherwise mark due dates Not issued; do not invent relative deadlines.`,
   },
   {
     key: "s9",
@@ -108,7 +109,7 @@ Minimum 8 rows and include the single Vendor Response Workbook tabs: Guide, Mand
     instruction: `Write ONLY ## §9 · Evaluation framework, weights, and disqualification rules.
 Table only. 6 rows max. Columns:
 Evaluation Area | Weight (%) | Scoring Basis | Disqualification / Red Flag | Evidence Source
-Use only approved vendor-disclosable weights. If no approved weights exist, state that evaluation weights are not issued; do not invent a set summing to 100%. Include a shortlist threshold only when approved. Reference Exhibit 09 only if approved for vendor disclosure.`,
+Use only weights explicitly present in the bounded vendor-draft context. Otherwise state that evaluation weights are Not issued; do not invent a set summing to 100%. Include a shortlist threshold only when explicitly supplied.`,
   },
   {
     key: "s10",
@@ -116,7 +117,7 @@ Use only approved vendor-disclosable weights. If no approved weights exist, stat
     instruction: `Write ONLY ## §10 · Risk register, transition controls, and failure modes.
 Table only. 8 rows max. Columns:
 Service Risk | Supplier Response Requirement | Required Evidence | Proposed Mitigation
-Describe vendor obligations only; omit buyer-internal risk IDs, release holds, owner placeholders, and gate status. Reference only exhibits approved for vendor disclosure.`,
+Describe vendor obligations only; omit buyer-internal risk IDs, release holds, owner placeholders, and gate status. Reference only exhibits explicitly present in the bounded vendor-draft context.`,
   },
   {
     key: "s11",
@@ -126,7 +127,7 @@ Two tables only. 8 rows max each.
 
 Table A — Vendor-shared exhibits:
 Exhibit | Vendor-facing purpose | Response reference
-List only exhibits approved for vendor disclosure; do not expose internal draft, parser, quality-review, or approval status.
+List only exhibits explicitly present in the bounded vendor-draft context; do not expose internal draft, parser, quality-review, or approval status.
 
 Table B — Vendor-facing gap register:
 Missing Issued Information | Supplier Must State | Clarification Channel
@@ -136,72 +137,8 @@ List only information gaps that bidders need to price or respond. Do not include
 
 // ── Shared context block ────────────────────────────────────────────────────
 
-function buildSharedContext(
-  ctx: SourceGenerationContext,
-  upstream: Record<string, string | null>,
-): string {
-  const lines: string[] = [
-    `Company: ${ctx.tenantName}`,
-    `Event: ${ctx.event.name} (${ctx.event.code})`,
-    ctx.event.archetype ? `Archetype: ${ctx.event.archetype}` : null,
-    ctx.event.rigor ? `Rigor: ${ctx.event.rigor}` : null,
-    "",
-    "— UPSTREAM CONTEXT —",
-    "",
-    "Approved Scope Memo (d05_scope_memo):",
-    upstream.d05_scope_memo ??
-      "(NOT YET AUTHORED — surface the gap in the draft, do not fabricate)",
-    "",
-  ].filter((l): l is string => l !== null);
-
-  if (upstream.d04_app_inv) {
-    lines.push("Application Inventory (d04_app_inv):");
-    lines.push(upstream.d04_app_inv);
-    lines.push("");
-  }
-  if (upstream.d07_ticket_synth) {
-    lines.push("Ticket History Synthesis (d07_ticket_synth):");
-    lines.push(upstream.d07_ticket_synth);
-    lines.push("");
-  }
-
-  if (ctx.evidence.length > 0) {
-    lines.push("— EVIDENCE STATE SUMMARY —");
-    lines.push(
-      ctx.evidence
-        .map((e) =>
-          [
-            `- ${e.requirementId}`,
-            `state=${e.currentState}`,
-            e.notes ? `notes=${e.notes}` : null,
-          ]
-            .filter(Boolean)
-            .join("; "),
-        )
-        .join("\n"),
-    );
-    lines.push("");
-  }
-
-  const uploaded = ctx.uploadedEvidence ?? [];
-  if (uploaded.length > 0) {
-    lines.push("— PARSED UPLOADED EVIDENCE —");
-    for (const artifact of uploaded) {
-      lines.push(`### ${artifact.originalName}`);
-      lines.push(
-        `parse=${artifact.parseStatus}; evidence=${artifact.evidenceState}; stage=${artifact.stageKey}`,
-      );
-      for (const excerpt of artifact.chunkExcerpts.slice(0, 2)) {
-        lines.push(`- ${excerpt}`);
-      }
-      for (const fact of artifact.factSummaries.slice(0, 2)) {
-        lines.push(`- ${fact}`);
-      }
-      lines.push("");
-    }
-  }
-
-  return lines.join("\n");
+function buildSharedContext(ctx: SourceGenerationContext): string {
+  return buildD09VendorDraftContext(ctx);
 }
 
 // ── Section generation ──────────────────────────────────────────────────────
@@ -337,8 +274,8 @@ export async function generateD09ViaMapReduce(args: {
   upstreamBound: Record<string, string | null>;
   client: AnthropicDirectClient;
 }): Promise<D09MapReduceResult> {
-  const { ctx, upstreamBound, client } = args;
-  const sharedContext = buildSharedContext(ctx, upstreamBound);
+  const { ctx, client } = args;
+  const sharedContext = buildSharedContext(ctx);
 
   // Pass 1: parallel section generation §2-§11
   const sectionResults = await Promise.all(

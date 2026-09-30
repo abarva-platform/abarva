@@ -10,10 +10,10 @@ import {
   type ConsultingGradeReview,
 } from "@/lib/deliverables/quality/consulting-grade-rubric";
 import {
-  formatD09RfpEvidenceCoverage,
   resolveGenerationEvidenceState,
   resolveStrategyEvidenceGateRole,
 } from "./prompt-registry";
+import { buildD09VendorDraftContext } from "./d09-vendor-context";
 import type { SourceGenerationContext } from "./types";
 import { getSourceArtifactProfile } from "@/lib/source/documentation-standards/source-artifact-profiles";
 
@@ -491,6 +491,7 @@ export function buildSourceQualitySourceContext(args: {
 }): string {
   const { ctx, upstreamBound, artifactCode } = args;
   const isRfpPackage = artifactCode === "d09_rfp_pack";
+  if (isRfpPackage) return buildD09VendorDraftContext(ctx);
   const upstreamLines = Object.entries(upstreamBound).map(([code, body]) => {
     const excerpt = body.replace(/\s+/g, " ").trim().slice(0, 900);
     return `- ${code}: ${excerpt}${body.length > 900 ? "..." : ""}`;
@@ -574,13 +575,6 @@ export function buildSourceQualitySourceContext(args: {
     uploadedEvidenceLines.length
       ? uploadedEvidenceLines.join("\n")
       : "- none",
-    ...(isRfpPackage
-      ? [
-          "",
-          "D09 RFP evidence coverage semantics:",
-          formatD09RfpEvidenceCoverage(ctx),
-        ]
-      : []),
     "",
     "Gate criteria states:",
     gateLines.length ? gateLines.join("\n") : "- none",
