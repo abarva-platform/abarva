@@ -3,6 +3,7 @@ import os from "node:os";
 import path from "node:path";
 
 import type { TenantPacketFile } from "../../contracts/tenant-packet";
+import { buildCanonicalTenantDataReport } from "../../canonical-build/canonical-tenant-data-build";
 import { CsvSourceAdapter } from "../csv-source-adapter";
 import { getBuiltInMappingProfile } from "../mapping-profiles";
 
@@ -360,6 +361,55 @@ function csvValueFor(
 }
 
 describe("contract-aligned mapping profiles", () => {
+  it("maps declared business segments as named canonical objects", async () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "nexus-segments-"));
+    const sourcePath = path.join(dir, "01b_business_segments.csv");
+    fs.writeFileSync(
+      sourcePath,
+      "tenant_key,segment_key,segment_name,revenue_share_pct,revenue_usd,pnl_owner_role,source_file\n" +
+        "test-tenant,care_delivery,Care Delivery,42,10500000000,Chief Operating Officer,declared-profile.csv\n",
+    );
+
+    try {
+      const result = await new CsvSourceAdapter().parse({
+        tenantKey: "test-tenant",
+        packetId: "test-packet",
+        packetVersion: "test-version",
+        sourcePath,
+        packetFile: {
+          path: sourcePath,
+          sourceClass: "business_segments",
+          sourceProfile: "business-segments/v1",
+          mappingProfile: "business-segments/v1",
+          adapterKey: "csv",
+          dataStatus: "synthetic",
+          sensitivity: "internal",
+          evidenceBasis: "source_file",
+          required: true,
+          expectedDomains: ["enterprise_structure", "financial_value"],
+        },
+        sourceProfile: "business-segments/v1",
+        parserVersion: "csv-adapter/v1",
+        mappingProfile: "business-segments/v1",
+        observedAt: "2026-09-30T00:00:00.000Z",
+      });
+
+      expect(result.quarantinedRecordCount).toBe(0);
+      expect(result.records[0]).toMatchObject({
+        objectType: "business_segment",
+        sourceObjectId: "care-delivery",
+        qualityStatus: "valid",
+      });
+      expect(result.records[0].attributes).toMatchObject({
+        segmentName: { value: "Care Delivery" },
+        revenueSharePct: { value: 42 },
+        revenueUsd: { value: 10500000000 },
+      });
+    } finally {
+      fs.rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
   it.each(contractAlignedProfiles)(
     "uses only declared columns for $mappingProfile",
     ({ mappingProfile, templateFile, sourceClass }) => {
@@ -550,4 +600,72 @@ describe("contract-aligned mapping profiles", () => {
       });
     },
   );
+});
+
+describe("declared business segments in the canonical build", () => {
+  it("keeps stable segment identity and resolves function membership", async () => {
+    const registry = JSON.parse(
+      fs.readFileSync(
+        path.join(repoRoot, "datasets/tenant-inputs/tenant-input-registry.json"),
+        "utf8",
+      ),
+    ) as {
+      activeTenants: Array<{ tenantKey: string; canonicalInputRoot: string }>;
+    };
+    const tenant = registry.activeTenants.find((candidate) =>
+      fs.existsSync(
+        path.join(
+          repoRoot,
+          candidate.canonicalInputRoot,
+          "01b_business_segments.csv",
+        ),
+      ),
+    );
+    expect(tenant).toBeDefined();
+    const tenantKey = tenant!.tenantKey;
+    const report = await buildCanonicalTenantDataReport({
+      repoRoot,
+      tenantKeys: [tenantKey],
+      generatedAt: "2026-09-30T00:00:00.000Z",
+    });
+    const segments = report.canonicalRecords.filter(
+      (record) => record.objectType === "business_segment",
+    );
+    const functions = report.canonicalRecords.filter(
+      (record) => record.objectType === "business_function",
+    );
+
+    expect(segments.length).toBeGreaterThan(0);
+    expect(
+      segments.every(
+        (record) =>
+          record.canonicalObjectKey ===
+          `${tenantKey}:business_segment:${record.attributes.segmentKey?.value}`,
+      ),
+    ).toBe(true);
+    expect(
+      segments.every((record) =>
+        Boolean(record.attributes.segmentName?.value && record.evidenceReferences.length),
+      ),
+    ).toBe(true);
+    expect(
+      functions.some((record) =>
+        record.relationships.some(
+          (relationship) =>
+            relationship.relationshipType === "belongs_to_segment" &&
+            segments.some(
+              (segment) =>
+                segment.canonicalObjectKey === relationship.targetObjectKey,
+            ),
+        ),
+      ),
+    ).toBe(true);
+    expect(
+      report.sourceIntegrationCoverage.some(
+        (source) =>
+          source.sourcePath.endsWith("01b_business_segments.csv") &&
+          source.disposition === "blocked_unmapped_source_file",
+      ),
+    ).toBe(false);
+  });
 });
