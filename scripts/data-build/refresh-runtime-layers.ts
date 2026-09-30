@@ -15,6 +15,7 @@ import type { CanonicalIngestionRecord } from "../../src/lib/enterprise-data/con
 import { RELATIONSHIP_TYPE_DICTIONARY } from "../../src/lib/enterprise-data/contracts/layer3-validation";
 import { postgresClientOptions } from "../../src/scripts/postgres-client-options";
 import { augmentDeclaredSegmentGraph } from "./declared-segment-graph";
+import { assertSegmentWriteManifest } from "./segment-write-manifest-gate";
 
 const APPROVED_TENANTS = new Set<string>(CANONICAL_TENANT_KEYS);
 const DEFAULT_TENANTS: string[] = [...CANONICAL_TENANT_KEYS];
@@ -362,12 +363,22 @@ async function writeToDatabase(args: Args, input: Awaited<ReturnType<typeof buil
   if (process.env.RUNTIME_LAYER_REFRESH_WRITE_APPROVED !== "true") {
     throw new Error("Refusing write: set RUNTIME_LAYER_REFRESH_WRITE_APPROVED=true in the governed ACA job.");
   }
+  const acceptedRecords = input.canonical.canonicalRecords.filter((record) => record.qualityStatus !== "quarantined");
+  assertSegmentWriteManifest({
+    repoRoot: path.resolve(__dirname, "../.."),
+    tenantKeys: args.tenants,
+    segmentRecordCount: acceptedRecords.filter((record) => record.objectType === "business_segment").length,
+    segmentObjectCount: acceptedRecords.filter((record) =>
+      record.objectType === "business_segment" || record.objectType === "business_function",
+    ).length,
+    segmentCandidateCount: input.acceptedSegmentEdges + input.quarantinedSegmentEdges,
+    manifestId: process.env.RUNTIME_LAYER_REFRESH_SEGMENT_MANIFEST_ID,
+  });
   const client = new Client({
     ...postgresClientOptions(databaseUrl(), "abarva-runtime-layer-refresh"),
   });
   const ratio = quarantineRatio(input.edges.length, input.quarantine.length);
   const runKey = `runtime-layer-refresh:${sha256(args.idempotencyKey)}`;
-  const acceptedRecords = input.canonical.canonicalRecords.filter((record) => record.qualityStatus !== "quarantined");
   const nodeIdsUsed = new Set(input.edges.flatMap((edge) => [edge.fromNodeId, edge.toNodeId]).filter(Boolean));
   const materializedNodes = uniqueRowsBy(
     input.nodes.filter((node) => nodeIdsUsed.has(node.nodeId)),
