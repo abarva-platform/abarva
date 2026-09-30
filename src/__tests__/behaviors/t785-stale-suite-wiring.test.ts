@@ -22,7 +22,8 @@ import {
  * record: a scanner case whose title must still sit in a file that imports
  * `node:fs`, and a test-only subject that must still be listed `testOnly` in
  * `docs/architecture/orphaned-lib-modules.json`. When the reason goes away,
- * the hold goes red and says so. A held row can be superseded by T-779's rule:
+ * the hold goes red and says so — per row, so a sibling whose reason still
+ * holds cannot carry one whose reason has gone. A held row can be superseded by T-779's rule:
  * a triage record beside this one with a later `recordedAt` that wires it.
  */
 
@@ -292,11 +293,31 @@ describe("T-785 — eleventh stale-suite draw, wiring and holds", () => {
       if (rows.length === 0) continue;
       const { holdKinds, successorFiledAs } = record.heldDirectories[directory];
       expect(holdKinds.length).toBeGreaterThan(0);
+      // Per row, not per directory: a sibling whose reason still holds must
+      // not carry a row whose own reason has gone. Each row is held by the
+      // kind its own fields declare, and that kind must be the directory's.
+      const kindOf = (row: SuiteRow): HoldKind | null =>
+        row.sourceTextScanner
+          ? "source_text_scanner"
+          : row.testOnlySubject !== undefined
+            ? "test_only_subject"
+            : null;
       expect({
         directory,
-        unsupported: holdKinds.filter((kind) => !rows.some(reasonHolds[kind])),
+        undeclaredKind: rows
+          .filter((row) => {
+            const kind = kindOf(row);
+            return kind === null || !holdKinds.includes(kind);
+          })
+          .map((row) => row.path),
+        reasonGone: rows
+          .filter((row) => {
+            const kind = kindOf(row);
+            return kind !== null && !reasonHolds[kind](row);
+          })
+          .map((row) => row.path),
         successor: /^T-\d+$/.test(successorFiledAs),
-      }).toEqual({ directory, unsupported: [], successor: true });
+      }).toEqual({ directory, undeclaredKind: [], reasonGone: [], successor: true });
     }
   });
 });
