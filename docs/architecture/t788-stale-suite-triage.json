@@ -3,6 +3,10 @@
   "title": "Twelfth stale-suite triage draw: ranks 1-5 of the verdict-aware ranking, 5 directories, 10 drawn files, each executed",
   "recordedAt": "2026-09-30T14:44:02Z",
   "base": "f92952c32ade19a10cc6d8c2821d6aa5c215487c",
+  "reExecutedOn": {
+    "sha": "c334308aed",
+    "result": "after rebasing onto the merge of T-786, all 10 files were run again on their own: the same 8 green and 2 red, same case counts"
+  },
   "verdictVocabulary": [
     "wire_into_ci",
     "rewrite_as_behavior",
