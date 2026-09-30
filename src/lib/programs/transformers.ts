@@ -169,6 +169,7 @@ export async function buildGateCriteria(
   ctx: TenancyCtx,
   moveId: string,
   currentPhase: number,
+  opts: { allowHistoricalPhase?: boolean } = {},
 ): Promise<StrategicMove["gateCriteria"]> {
   const criteria = gateCriteriaForPhase(currentPhase);
   // Terminal phase (or unknown phase) — no outgoing gate to evaluate.
@@ -177,12 +178,11 @@ export async function buildGateCriteria(
   // Evaluate the current → next transition against real program state.
   let failedKeys: Set<string> | null = null;
   try {
-    const check = await evaluateGate(
-      ctx,
-      moveId,
-      currentPhase,
-      currentPhase + 1,
-    );
+    const check = opts.allowHistoricalPhase
+      ? await evaluateGate(ctx, moveId, currentPhase, currentPhase + 1, {
+          allowHistoricalPhase: true,
+        })
+      : await evaluateGate(ctx, moveId, currentPhase, currentPhase + 1);
     // A `phase_mismatch` / `program_not_found` failure is not a per-criterion
     // signal — in that case treat the criteria as not yet verified rather
     // than marking every concrete criterion failed.

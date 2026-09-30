@@ -245,6 +245,37 @@ describe("strategic move transformer helpers", () => {
     ]);
   });
 
+  it("evaluates reopened prior-phase criteria against the historical gate", async () => {
+    evaluateGateMock.mockResolvedValue({
+      pass: false,
+      failedChecks: [
+        {
+          check: "charter_signed_off",
+          reason: "The charter is not bound to current approved evidence.",
+          severity: "hard",
+        },
+      ],
+      requiresApproval: false,
+      approverRole: null,
+    });
+
+    const criteria = await buildGateCriteria(
+      { clientId: "client-1", userId: "user-1" },
+      "move-1",
+      1,
+      { allowHistoricalPhase: true },
+    );
+
+    expect(evaluateGateMock).toHaveBeenCalledWith(
+      { clientId: "client-1", userId: "user-1" },
+      "move-1",
+      1,
+      2,
+      { allowHistoricalPhase: true },
+    );
+    expect(criteria[0]).toMatchObject({ verified: true, completed: false });
+  });
+
   it("marks the Strategic Move page model terminal-complete from an approved P5 snapshot", async () => {
     selectMock.mockImplementation(async (request) => {
       if (request.table === "phase_snapshots") {

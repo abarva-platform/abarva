@@ -60,7 +60,11 @@ import { resolveMoveArchetypeForProgram } from "@/lib/programs/move-archetype-re
 import { isFeatureEnabled } from "@/lib/features/is-feature-enabled";
 import { loadApprovedMoveEvidenceSnapshot } from "@/lib/programs/approved-move-evidence-snapshot";
 import { loadP0MinimumEvidenceStatus } from "@/lib/programs/p0-source-evidence";
-import { effectivePhaseAfterEvidenceChange } from "@/lib/programs/phase-gate-evidence-binding";
+import {
+  effectivePhaseAfterEvidenceChange,
+  effectivePhaseAfterGateValidation,
+} from "@/lib/programs/phase-gate-evidence-binding";
+import { evaluateGate } from "@/lib/programs/governance";
 import { buildGateCriteria } from "@/lib/programs/transformers";
 import { getPhaseLabel } from "@/lib/programs/phase-labels";
 import { p0SourceEvidenceNeedPacket } from "@/lib/programs/phase-progress-readiness";
@@ -341,7 +345,7 @@ export default async function StrategicMovePhaseWorkspacePage({
       moveId,
     }).catch(() => null),
   ]);
-  const effectiveCurrentPhase = loadedMove.terminalComplete
+  const evidenceEffectiveCurrentPhase = loadedMove.terminalComplete
     ? loadedMove.currentPhase
     : effectivePhaseAfterEvidenceChange(
         loadedMove.currentPhase,
@@ -355,7 +359,39 @@ export default async function StrategicMovePhaseWorkspacePage({
           : null,
       );
   const reopenedForEvidenceReview =
-    effectiveCurrentPhase < loadedMove.currentPhase;
+    evidenceEffectiveCurrentPhase < loadedMove.currentPhase;
+  let effectiveCurrentPhase = evidenceEffectiveCurrentPhase;
+  if (!loadedMove.terminalComplete && effectiveCurrentPhase > 1) {
+    const gateReadinessByPhase = new Map<number, boolean>();
+    for (
+      let priorPhase = 1;
+      priorPhase < effectiveCurrentPhase;
+      priorPhase += 1
+    ) {
+      try {
+        const gate = await evaluateGate(
+          ctx,
+          moveId,
+          priorPhase,
+          priorPhase + 1,
+          {
+            allowHistoricalPhase: true,
+          },
+        );
+        gateReadinessByPhase.set(
+          priorPhase,
+          !gate.failedChecks.some((check) => check.severity === "hard"),
+        );
+      } catch {
+        gateReadinessByPhase.set(priorPhase, false);
+      }
+    }
+    effectiveCurrentPhase = effectivePhaseAfterGateValidation(
+      effectiveCurrentPhase,
+      gateReadinessByPhase,
+    );
+  }
+  const reopenedForGateReview = effectiveCurrentPhase < loadedMove.currentPhase;
   const move =
     effectiveCurrentPhase === loadedMove.currentPhase
       ? loadedMove
@@ -367,6 +403,7 @@ export default async function StrategicMovePhaseWorkspacePage({
             ctx,
             moveId,
             effectiveCurrentPhase,
+            { allowHistoricalPhase: reopenedForGateReview },
           ),
         };
 
