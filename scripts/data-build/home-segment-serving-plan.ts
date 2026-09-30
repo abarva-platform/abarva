@@ -1,3 +1,4 @@
+import crypto from "node:crypto";
 import path from "node:path";
 
 import type { CanonicalIngestionRecord } from "../../src/lib/enterprise-data/contracts/canonical-ingestion";
@@ -19,6 +20,28 @@ export type EclSourceRecord = {
   nativeId: string | null;
   rowNumber: number | null;
   parseState: string;
+};
+
+export type SegmentSourceSetBinding = {
+  tenantKey: string;
+  assessmentId: string;
+  reviewState: "approved" | "candidate";
+  sourceSetHash: string;
+  files: Readonly<Record<string, string>>;
+  snapshot: {
+    id: string;
+    tenantKey: string;
+    assessmentId: string;
+    sourceHash: string;
+    qualityState: string;
+  };
+  projection: {
+    tenantKey: string;
+    assessmentId: string;
+    snapshotId: string;
+    sourceHash: string;
+    qualityState: string;
+  };
 };
 
 export type DeclaredSegmentEdge = {
@@ -51,6 +74,9 @@ export type SegmentServingCandidate = {
 };
 
 export type SegmentServingPlan = {
+  sourceSet:
+    | { state: "verified"; hash: string; reason: null }
+    | { state: "blocked"; hash: string | null; reason: string };
   candidates: SegmentServingCandidate[];
   withheld: Array<{ objectKey: string; reason: string }>;
 };
@@ -61,6 +87,7 @@ type Input = {
   records: readonly CanonicalIngestionRecord[];
   edges: readonly DeclaredSegmentEdge[];
   expectedSourceHashes: Readonly<Record<string, string>>;
+  sourceSetBinding: SegmentSourceSetBinding | null;
   sourceFiles: readonly EclSourceFile[];
   sourceRecords: readonly EclSourceRecord[];
 };
@@ -89,6 +116,95 @@ function sourceRow(record: CanonicalIngestionRecord): number | null {
   return typeof value === "number" && Number.isInteger(value) && value > 0
     ? value
     : null;
+}
+
+function sourceSetFiles(
+  files: Readonly<Record<string, string>>,
+): Array<[string, string]> | null {
+  const entries = Object.entries(files);
+  if (entries.length === 0) return null;
+  const names = new Set<string>();
+  const normalized: Array<[string, string]> = [];
+  for (const [filePath, fileHash] of entries) {
+    const name = path.posix.basename(filePath);
+    if (
+      !filePath ||
+      name === "." ||
+      path.posix.isAbsolute(filePath) ||
+      path.posix.normalize(filePath) !== filePath ||
+      filePath.split("/").includes("..") ||
+      names.has(name) ||
+      !/^[a-f0-9]{64}$/.test(fileHash)
+    )
+      return null;
+    names.add(name);
+    normalized.push([filePath, fileHash]);
+  }
+  return normalized.sort(([left], [right]) => left.localeCompare(right));
+}
+
+export function homeSegmentSourceSetHash(
+  files: Readonly<Record<string, string>>,
+): string | null {
+  const normalized = sourceSetFiles(files);
+  return normalized
+    ? crypto
+        .createHash("sha256")
+        .update(JSON.stringify(normalized))
+        .digest("hex")
+    : null;
+}
+
+function verifySourceSet(input: Input): SegmentServingPlan["sourceSet"] {
+  const binding = input.sourceSetBinding;
+  const expected = sourceSetFiles(input.expectedSourceHashes);
+  const reviewed = binding && sourceSetFiles(binding.files);
+  const hash = homeSegmentSourceSetHash(input.expectedSourceHashes);
+  if (
+    !binding ||
+    !binding.snapshot ||
+    !binding.projection ||
+    !expected ||
+    !reviewed ||
+    !hash
+  )
+    return { state: "blocked", hash: null, reason: "source-set-proof-missing" };
+  if (
+    binding.tenantKey !== input.tenantKey ||
+    binding.assessmentId !== input.assessmentId ||
+    binding.reviewState !== "approved" ||
+    binding.sourceSetHash !== hash ||
+    JSON.stringify(reviewed) !== JSON.stringify(expected)
+  )
+    return { state: "blocked", hash, reason: "reviewed-source-set-mismatch" };
+  if (
+    binding.snapshot.tenantKey !== input.tenantKey ||
+    binding.snapshot.assessmentId !== input.assessmentId ||
+    !binding.snapshot.id ||
+    binding.snapshot.qualityState !== "passed" ||
+    binding.snapshot.sourceHash !== hash ||
+    binding.projection.tenantKey !== input.tenantKey ||
+    binding.projection.assessmentId !== input.assessmentId ||
+    binding.projection.snapshotId !== binding.snapshot.id ||
+    binding.projection.qualityState !== "passed" ||
+    binding.projection.sourceHash !== hash
+  )
+    return { state: "blocked", hash, reason: "target-snapshot-mismatch" };
+  const expectedCatalog = expected
+    .map(([filePath, fileHash]) => [path.posix.basename(filePath), fileHash])
+    .sort(([left], [right]) => left.localeCompare(right));
+  const catalog = input.sourceFiles
+    .filter(
+      (file) =>
+        file.tenantKey === input.tenantKey &&
+        file.assessmentId === input.assessmentId &&
+        file.qualityState === "accepted",
+    )
+    .map((file) => [file.fileName, file.fileHash] as [string, string])
+    .sort(([left], [right]) => left.localeCompare(right));
+  if (JSON.stringify(catalog) !== JSON.stringify(expectedCatalog))
+    return { state: "blocked", hash, reason: "source-catalog-mismatch" };
+  return { state: "verified", hash, reason: null };
 }
 
 function verifiedSourceRecord(
@@ -133,6 +249,25 @@ function isDeclaredEdge(edge: DeclaredSegmentEdge): boolean {
 
 /** A review candidate only; source hashes and catalog rows must come from separately governed reads. */
 export function buildHomeSegmentServingPlan(input: Input): SegmentServingPlan {
+  const sourceSet = verifySourceSet(input);
+  if (sourceSet.state === "blocked") {
+    return {
+      sourceSet,
+      candidates: [],
+      withheld: input.records
+        .filter(
+          (record) =>
+            record.tenantKey === input.tenantKey &&
+            (record.objectType === "business_segment" ||
+              record.objectType === "business_function"),
+        )
+        .map((record) => ({
+          objectKey: record.canonicalObjectKey ?? record.sourceObjectId,
+          reason: sourceSet.reason,
+        }))
+        .sort((left, right) => left.objectKey.localeCompare(right.objectKey)),
+    };
+  }
   const withheld: SegmentServingPlan["withheld"] = [];
   const verified = new Map<
     string,
@@ -290,5 +425,5 @@ export function buildHomeSegmentServingPlan(input: Input): SegmentServingPlan {
       left.objectKey.localeCompare(right.objectKey) ||
       left.reason.localeCompare(right.reason),
   );
-  return { candidates, withheld };
+  return { sourceSet, candidates, withheld };
 }
