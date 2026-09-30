@@ -113,7 +113,6 @@
   "src/lib/source/pricing-submissions/__tests__",
   "src/lib/source/proposal-normalization/__tests__",
   "src/lib/source/queue/__tests__",
-  "src/lib/source/reasoning/__tests__",
   "src/lib/source/renewal-cockpit/__tests__",
   "src/lib/source/should-cost/__tests__",
   "src/lib/source/sourcing/__tests__",
@@ -124,7 +123,6 @@
   "src/lib/telemetry/__tests__",
   "src/lib/workforce-economics/__tests__",
   "src/lib/workshops/__tests__",
-  "src/lib/workspace-explorer/__tests__",
   "src/scripts/governance/__tests__",
   "src/scripts/qa/__tests__"
 ]

@@ -1775,6 +1775,23 @@ jobs:
           src/components/intelligence-advisory/__tests__
           --no-coverage --ci
 
+      # Item T-779, the ninth stale-suite draw. Two fully-unrun directories,
+      # each judged whole and each executed file by file on base `af8f66d90d`:
+      # 8 suites, 47 cases, all green, none reading a repository file, and both
+      # subjects imported by live product paths (the Source artifact generate
+      # route; the Moves and Source workspace pages and the setup files route).
+      # Named as DIRECTORIES without a trailing slash, and each line leaves
+      # `product-directory-ci-coverage.baseline.json` in the same change. The
+      # other three drawn directories are held: one red on item 51, two beside
+      # a suite that renders an unreachable component (T-775, T-780). Record:
+      # `docs/architecture/t779-stale-suite-triage.json`.
+      - name: Run the T-779 Source reasoning and workspace-explorer suites
+        run: >-
+          npx jest
+          src/lib/source/reasoning/__tests__
+          src/lib/workspace-explorer/__tests__
+          --no-coverage --ci
+
       # Item T-495, claimable half, suite 2 of 11.
       # `src/__tests__/hygiene/learn-layout-single-nav.test.ts` asserted the
       # single-top-nav rule for `/home/learn` over the BYTES of two files, and was
