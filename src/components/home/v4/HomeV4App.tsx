@@ -214,11 +214,15 @@ function businessBriefingOpening({
 export function HomeV4App({
   bundle,
   recordSource,
+  recordToken,
   tenantKey,
+  requestedProvider,
 }: {
   bundle: HomeReviewBundle;
   recordSource?: HomeRecordRenderSource;
+  recordToken?: string;
   tenantKey: HomePreviewTenantKey;
+  requestedProvider?: string;
 }) {
   const displayBundle = useMemo(
     () => sanitizeHomeReviewBundleNarrative(bundle),
@@ -479,7 +483,7 @@ export function HomeV4App({
   ];
   const exportHrefBase = `/api/home/walkthrough-export?tenant=${encodeURIComponent(
     tenantKey,
-  )}&provider=ecl`;
+  )}${requestedProvider ? `&provider=${encodeURIComponent(requestedProvider)}` : ""}${recordToken ? `&context=${encodeURIComponent(recordToken)}` : ""}`;
   const activeBriefingOpening =
     activeChapter && isGeneratorDeferral(activeChapter.headline)
       ? businessBriefingOpening({
@@ -495,6 +499,8 @@ export function HomeV4App({
       key={tenantKey}
       tenantKey={tenantKey}
       activeChapterId={activeChapter?.chapterId}
+      recordSource={renderedRecordSource}
+      requestedProvider={requestedProvider}
     >
       <div
         style={{

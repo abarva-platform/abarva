@@ -11,6 +11,7 @@ import {
   type HomePreviewTenantKey,
 } from "@/lib/home/preview/golden-snapshot";
 import { getHomeEclProjectionBundleOrReviewedSnapshotWithSource } from "@/lib/home/preview/ecl-projection-bundle";
+import { homeRecordSourceToken } from "@/lib/home/preview/record-source-token";
 import { canonicalTenantKey } from "@/lib/tenant/aliases";
 import { resolveTenant } from "@/lib/tenant/resolveTenant";
 import {
@@ -94,7 +95,9 @@ export default async function HomePage({
       <HomePreviewAppRoot
         bundle={bundle}
         recordSource={recordSource}
+        recordToken={homeRecordSourceToken(tenantKey, recordSource)}
         tenantKey={tenantKey}
+        requestedProvider={provider}
       />
     </AppShell>
   );
