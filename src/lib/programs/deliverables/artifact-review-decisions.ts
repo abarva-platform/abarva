@@ -115,25 +115,26 @@ function cleanList(values: unknown): string[] {
     .slice(0, 20);
 }
 
-function htmlToText(html: string): string {
-  return html
-    .replace(/<script[\s\S]*?<\/script>/gi, " ")
-    .replace(/<style[\s\S]*?<\/style>/gi, " ")
-    .replace(/<[^>]+>/g, " ")
-    .replace(/&nbsp;/g, " ")
-    .replace(/&amp;/g, "&")
-    .replace(/&lt;/g, "<")
-    .replace(/&gt;/g, ">")
-    .replace(/\s+/g, " ")
-    .trim();
-}
-
-function hasText(text: string, pattern: RegExp): boolean {
-  return pattern.test(text);
-}
-
 function unique(values: string[]): string[] {
   return Array.from(new Set(values.filter(Boolean)));
+}
+
+function metadataList(
+  metadata: Record<string, unknown>,
+  ...keys: string[]
+): string[] {
+  return unique(keys.flatMap((key) => cleanList(metadata[key])));
+}
+
+function metadataText(
+  metadata: Record<string, unknown>,
+  ...keys: string[]
+): string | null {
+  for (const key of keys) {
+    const value = metadata[key];
+    if (typeof value === "string" && value.trim()) return value.trim();
+  }
+  return null;
 }
 
 function jsonb(value: unknown): string {
@@ -206,63 +207,50 @@ export function readinessForDecision(
 
 export function buildP2ReviewPacket(args: {
   artifact: MoveArtifactRow;
-  artifactHtml?: string | null;
 }): P2ReviewPacket {
-  const text = htmlToText(args.artifactHtml ?? "");
   const meta = args.artifact.metadata ?? {};
-  const metaOpenItems = cleanList(meta.openItems);
-  const missingInputs = cleanList(meta.missingInputs ?? meta.missing_inputs);
-  const caveats = cleanList(meta.clientCompleteItems ?? meta.client_complete_items);
-
-  const quantifiedFacts = unique([
-    hasText(text, /\b1,872\b/) ? "1,872 monthly invoice exceptions" : "",
-    hasText(text, /\b2,345\b/)
-      ? "2,345 manual touch hours per month"
-      : "",
-    hasText(text, /\b7\.4\b/) ? "7.4 average resolution days" : "",
-    hasText(text, /payment hold/i)
-      ? "Payment hold exposure is visible in the diagnostic evidence"
-      : "",
-    hasText(text, /duplicate[-\s]?payment/i)
-      ? "Duplicate-payment control risk is called out as a control implication"
-      : "",
-  ]);
-
-  const strongestEvidence = unique([
-    quantifiedFacts.length
-      ? "The diagnostic contains quantified exception volume, manual effort, and cycle-time evidence."
-      : "The diagnostic artifact is evidence-bound and available for sponsor review.",
-    hasText(text, /invoice|exception|AP|accounts payable/i)
-      ? "The evidence pattern is tied to invoice exception handling and AP operating work."
-      : "",
-    hasText(text, /triage|classification|routing|duplicate/i)
-      ? "The artifact separates AI-assist opportunities from payment-control decisions."
-      : "",
-    hasText(text, /golden bar|quality score|review required/i)
-      ? "Quality and review posture are visible in the artifact governance metadata."
-      : "",
-  ]);
-
+  const metaOpenItems = metadataList(meta, "openItems", "open_items");
+  const missingInputs = metadataList(meta, "missingInputs", "missing_inputs");
+  const caveats = metadataList(
+    meta,
+    "clientCompleteItems",
+    "client_complete_items",
+  );
+  const quantifiedFacts = metadataList(
+    meta,
+    "quantifiedFacts",
+    "quantified_facts",
+  );
+  const strongestEvidence = metadataList(
+    meta,
+    "strongestEvidence",
+    "strongest_evidence",
+  );
   const knownLimitations = unique([
-    "P2 is review-ready, but it is not final sponsor/signoff approval.",
-    "P3 may proceed only as a draft until final gates are satisfied.",
-    hasText(text, /human|approval|control/i)
-      ? "AI can assist classification, triage, duplicate detection, and routing, but should not bypass human-controlled payment decisions without stronger controls."
-      : "AI-fit boundaries must remain explicit in P3 design.",
+    ...metadataList(meta, "knownLimitations", "known_limitations"),
     ...metaOpenItems,
     ...caveats,
+    "This review action authorizes P3 draft shaping only; it does not satisfy final P2 sponsor sign-off.",
+    "P3 remains subject to its own evidence and approval gates.",
   ]);
-
   const missingEvidence = unique([
     ...missingInputs,
-    "Sponsor/signoff evidence for final P2 approval",
-    "Client-confirmed control owner and payment decision approval boundary",
+    ...metaOpenItems,
+    ...metadataList(meta, "missingEvidence", "missing_evidence"),
+    "Sponsor evidence for final P2 gate approval",
   ]);
+  const diagnosticThesis = metadataText(
+    meta,
+    "diagnosticThesis",
+    "diagnostic_thesis",
+  );
+  const p3Implication = metadataText(meta, "p3Implication", "p3_implication");
 
   return {
-    headline: "P2 diagnostic is review-ready.",
+    headline: `${args.artifact.title} · P2 sponsor review`,
     diagnosticThesis:
-      "The Current Work Diagnostic is strong enough to support P3 future-state draft shaping, provided open evidence and final sponsor/signoff caveats are carried forward.",
+      diagnosticThesis ??
+      `${args.artifact.title} is presented for review. Confirm each conclusion against its cited source evidence and resolve or explicitly carry forward open items before P3 draft shaping.`,
     strongestEvidence,
     quantifiedFacts,
     knownLimitations,
@@ -293,9 +281,10 @@ export function buildP2ReviewPacket(args: {
       },
     ],
     recommendedNextAction:
-      "Approve for P3 draft shaping if the sponsor accepts the diagnostic caveats; otherwise request revisions or hold for evidence.",
+      "Approve for P3 draft shaping only if the cited P2 evidence and explicit limitations are acceptable; otherwise request revisions or hold for evidence.",
     p3Implication:
-      "P3 should reference this P2 diagnostic as the basis and visibly carry forward all unresolved evidence and final-gate caveats.",
+      p3Implication ??
+      "Use only reviewed, source-cited P2 findings as P3 inputs. Carry all open items and final sponsor sign-off forward; P3 remains subject to its own evidence and approval gates.",
   };
 }
 

@@ -1438,7 +1438,23 @@ function ArtifactRow({
                 </div>
                 <div>
                   <strong style={{ color: "#0F172A" }}>Quantified facts</strong>
-                  <BulletList items={sponsorReview.packet.quantifiedFacts} />
+                  {sponsorReview.packet.quantifiedFacts.length ? (
+                    <BulletList items={sponsorReview.packet.quantifiedFacts} />
+                  ) : (
+                    <p style={{ margin: "6px 0 0", color: "#64748B" }}>
+                      No quantified facts were explicitly supplied for this review.
+                    </p>
+                  )}
+                </div>
+                <div>
+                  <strong style={{ color: "#0F172A" }}>Strongest evidence</strong>
+                  {sponsorReview.packet.strongestEvidence.length ? (
+                    <BulletList items={sponsorReview.packet.strongestEvidence} />
+                  ) : (
+                    <p style={{ margin: "6px 0 0", color: "#64748B" }}>
+                      No strongest-evidence items were explicitly supplied for this review.
+                    </p>
+                  )}
                 </div>
                 <div>
                   <strong style={{ color: "#0F172A" }}>

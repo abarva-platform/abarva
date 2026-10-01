@@ -2,10 +2,7 @@ import "server-only";
 
 import { NextRequest } from "next/server";
 import { requireTenancy, tenancyErrorResponse } from "../../../../_auth";
-import {
-  downloadArtifactBytes,
-  getMoveArtifactForTenant,
-} from "@/lib/programs/deliverables/move-artifacts";
+import { getMoveArtifactForTenant } from "@/lib/programs/deliverables/move-artifacts";
 import {
   buildReviewPackageFromArtifacts,
   buildP2ReviewPacket,
@@ -26,16 +23,6 @@ function cleanStringArray(value: unknown): string[] {
     .map((item) => (typeof item === "string" ? item.trim() : ""))
     .filter(Boolean)
     .slice(0, 30);
-}
-
-async function loadArtifactHtml(
-  ctx: Awaited<ReturnType<typeof requireTenancy>>,
-  artifactId: string,
-): Promise<string | null> {
-  const artifact = await downloadArtifactBytes(ctx, artifactId).catch(() => null);
-  if (!artifact?.bytes) return null;
-  if (artifact.fileFormat !== "html" && artifact.fileFormat !== "md") return null;
-  return artifact.bytes.toString("utf-8");
 }
 
 async function findPairedReviewArtifact(
@@ -98,7 +85,6 @@ async function loadReviewState(
     artifact,
     pairedArtifact,
   });
-  const artifactHtml = await loadArtifactHtml(ctx, artifactId);
   const latestDecision =
     (await getLatestArtifactReviewDecision(ctx, {
       moveId: programId,
@@ -113,7 +99,7 @@ async function loadReviewState(
   return {
     artifact,
     reviewPackage,
-    packet: buildP2ReviewPacket({ artifact, artifactHtml }),
+    packet: buildP2ReviewPacket({ artifact }),
     latestDecision,
     readiness,
   };

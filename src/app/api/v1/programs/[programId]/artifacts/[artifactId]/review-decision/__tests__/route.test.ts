@@ -1,8 +1,8 @@
 const tenancy = {
-  clientId: "client-lakeshore",
-  clientKey: "lakeshore",
+  clientId: "client-test-tenant",
+  clientKey: "test-tenant",
   userId: "reviewer-1",
-  email: "cio@lakeshore-holdings.example.com",
+  email: "reviewer@example.test",
 };
 
 const htmlArtifact = {
@@ -15,7 +15,7 @@ const htmlArtifact = {
   file_name: "diagnostic.html",
   file_format: "html",
   blob_container: "context-drops",
-  blob_path: "moves/lakeshore/move-1/generated/p2/diagnostic.html",
+  blob_path: "moves/test-tenant/move-1/generated/p2/diagnostic.html",
   file_size: 42000,
   version: 10,
   status: "review_required",
@@ -127,6 +127,12 @@ describe("artifact review decision route", () => {
     const json = (await res.json()) as {
       ok: boolean;
       reviewPackage: Record<string, unknown>;
+      packet: {
+        diagnosticThesis: string;
+        quantifiedFacts: string[];
+        strongestEvidence: string[];
+        knownLimitations: string[];
+      };
       readiness: { readyForP3Draft: boolean; readyForP3Final: boolean };
     };
 
@@ -141,6 +147,13 @@ describe("artifact review decision route", () => {
       readyForP3Draft: false,
       readyForP3Final: false,
     });
+    expect(json.packet.quantifiedFacts).toEqual([]);
+    expect(json.packet.strongestEvidence).toEqual([]);
+    expect(
+      [json.packet.diagnosticThesis, ...json.packet.knownLimitations]
+        .join(" ")
+        .toLowerCase(),
+    ).not.toMatch(/invoice|payment|accounts payable/);
   });
 
   it("persists approve-for-P3-draft without marking P2 or P3 final", async () => {
@@ -169,7 +182,7 @@ describe("artifact review decision route", () => {
       p2FinalApproved: false,
     });
     expect(insertedDecision).toMatchObject({
-      tenant_key: "lakeshore",
+      tenant_key: "test-tenant",
       move_id: "move-1",
       phase: 2,
       artifact_id: "html-artifact",
