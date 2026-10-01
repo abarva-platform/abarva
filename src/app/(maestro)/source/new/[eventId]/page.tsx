@@ -102,7 +102,7 @@ export default async function SourceNewEventPage({
       clientKey: activeClient.key,
       eventId: event.id,
       categoryId: event.classifiedCategory ?? null,
-      archetypeId: event.archetype ?? null,
+      eventType: event.eventType ?? null,
       asOf: asOfDate,
     }),
     readSourceNewStage05NdaCoverage({
