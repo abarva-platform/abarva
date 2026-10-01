@@ -76,8 +76,13 @@ function activeFilePath(tenantKey, fileName) {
   return path.join(repoRoot, "datasets/tenant-inputs/active", tenantKey, "current", fileName);
 }
 
-function candidateFilePath(tenantKey, fileName) {
-  return path.join(repoRoot, "datasets/tenant-inputs/candidates", tenantKey, CANDIDATE_VERSION, fileName);
+// `candidatesRoot` defaults to the tracked candidates tree, which is where the
+// data build belongs. A test passes its own temp directory (D-512): a suite
+// that writes the tracked tree leaves a diff for whoever stages next.
+const DEFAULT_CANDIDATES_ROOT = path.join(repoRoot, "datasets/tenant-inputs/candidates");
+
+function candidateFilePath(tenantKey, fileName, candidatesRoot = DEFAULT_CANDIDATES_ROOT) {
+  return path.join(candidatesRoot, tenantKey, CANDIDATE_VERSION, fileName);
 }
 
 function csvEscape(value) {
@@ -91,7 +96,7 @@ function writeCsv(filePath, rows, columns) {
   fs.writeFileSync(filePath, lines.join("\n") + "\n");
 }
 
-function fixTenant(tenantKey, targets) {
+function fixTenant(tenantKey, targets, { candidatesRoot = DEFAULT_CANDIDATES_ROOT } = {}) {
   const results = [];
   for (const { file, column, corruptedValues } of targets) {
     const inputPath = activeFilePath(tenantKey, file);
@@ -106,7 +111,7 @@ function fixTenant(tenantKey, targets) {
       }
       return row;
     });
-    const candidatePath = candidateFilePath(tenantKey, file);
+    const candidatePath = candidateFilePath(tenantKey, file, candidatesRoot);
     writeCsv(candidatePath, rows, columns);
     results.push({
       tenant: tenantKey,
