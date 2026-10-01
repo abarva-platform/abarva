@@ -2,7 +2,6 @@ import { notFound, redirect } from "next/navigation";
 import { requireProductModule } from "@/lib/auth/server-module-access";
 import {
   getModuleState,
-  getPhaseSnapshots,
   getStrategicMoveById,
 } from "@/lib/programs/queries";
 import {
@@ -56,15 +55,8 @@ import {
 } from "@/lib/programs/current-state-readiness";
 import { resolveMoveArchetypeForProgram } from "@/lib/programs/move-archetype-resolution";
 import { isFeatureEnabled } from "@/lib/features/is-feature-enabled";
-import {
-  loadApprovedMoveEvidenceSnapshot,
-} from "@/lib/programs/approved-move-evidence-snapshot";
 import { loadP0MinimumEvidenceStatus } from "@/lib/programs/p0-source-evidence";
-import {
-  effectivePhaseAfterEvidenceChange,
-  effectivePhaseAfterGateValidation,
-} from "@/lib/programs/phase-gate-evidence-binding";
-import { evaluateGate } from "@/lib/programs/governance";
+import { resolveEffectiveMovePhase } from "@/lib/programs/effective-move-phase";
 import { buildGateCriteria } from "@/lib/programs/transformers";
 import { getPhaseLabel } from "@/lib/programs/phase-labels";
 import { p0SourceEvidenceNeedPacket } from "@/lib/programs/phase-progress-readiness";
@@ -339,63 +331,11 @@ export default async function StrategicMovePhaseWorkspacePage({
 
   const loadedMove = await getStrategicMoveById(ctx, moveId);
   if (!loadedMove) notFound();
-  const [phaseSnapshots, evidenceSnapshot] = await Promise.all([
-    getPhaseSnapshots(ctx, moveId).catch(() => []),
-    loadApprovedMoveEvidenceSnapshot({
-      tenantKey: ctx.clientKey ?? ctx.clientId,
-      moveId,
-    }).catch(() => null),
-  ]);
-  const evidenceEffectiveCurrentPhase = loadedMove.terminalComplete
-    ? loadedMove.currentPhase
-    : effectivePhaseAfterEvidenceChange(
-        loadedMove.currentPhase,
-        phaseSnapshots,
-        evidenceSnapshot
-          ? {
-              revision: evidenceSnapshot.revision,
-              latestEvidenceActivityAt:
-                evidenceSnapshot.latestEvidenceActivityAt,
-              revisionByPhase: evidenceSnapshot.revisionByPhase,
-              latestEvidenceActivityAtByPhase:
-                evidenceSnapshot.latestEvidenceActivityAtByPhase,
-            }
-          : null,
-      );
-  const reopenedForEvidenceReview =
-    evidenceEffectiveCurrentPhase < loadedMove.currentPhase;
-  let effectiveCurrentPhase = evidenceEffectiveCurrentPhase;
-  if (!loadedMove.terminalComplete && effectiveCurrentPhase > 1) {
-    const gateReadinessByPhase = new Map<number, boolean>();
-    for (
-      let priorPhase = 1;
-      priorPhase < effectiveCurrentPhase;
-      priorPhase += 1
-    ) {
-      try {
-        const gate = await evaluateGate(
-          ctx,
-          moveId,
-          priorPhase,
-          priorPhase + 1,
-          {
-            allowHistoricalPhase: true,
-          },
-        );
-        gateReadinessByPhase.set(
-          priorPhase,
-          !gate.failedChecks.some((check) => check.severity === "hard"),
-        );
-      } catch {
-        gateReadinessByPhase.set(priorPhase, false);
-      }
-    }
-    effectiveCurrentPhase = effectivePhaseAfterGateValidation(
-      effectiveCurrentPhase,
-      gateReadinessByPhase,
-    );
-  }
-  const reopenedForGateReview = effectiveCurrentPhase < loadedMove.currentPhase;
+  const {
+    effectivePhase: effectiveCurrentPhase,
+    reopenedForEvidenceReview,
+    reopenedForGateReview,
+  } = await resolveEffectiveMovePhase(ctx, loadedMove);
   const move =
     effectiveCurrentPhase === loadedMove.currentPhase
       ? loadedMove
