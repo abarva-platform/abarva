@@ -636,7 +636,9 @@ function composeBrief(
   const disallowed = pack?.governanceNote
     ? `${DISALLOWED_FABRICATION} ${pack.governanceNote}`
     : DISALLOWED_FABRICATION;
-  const allowArchetypeAssets = structure.deliverableType !== "charter";
+  const allowArchetypeAssets =
+    structure.deliverableType !== "charter" &&
+    structure.deliverableType !== "design_workshop_guide";
 
   return {
     module: req.module,

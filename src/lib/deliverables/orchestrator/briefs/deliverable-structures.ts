@@ -451,6 +451,85 @@ const MOVES_DISCOVERY: DeliverableStructure = {
   prohibitedContent: [
     "Do not split maturity, benchmark, and gap findings into separate essays; use one integrated diagnostic section.",
     "Do not split readiness and implications into separate essays; readiness only matters through the implication it creates for the next phase.",
+    "When accepted evidence explicitly excludes an unverified value hypothesis or external benchmark, do not repeat its amount, percentage, range, or date even to disclaim it. State qualitatively that unvalidated value hypotheses and external benchmarks are excluded from scoring and forecasts, and that no finance-validated benefit is established. Preserve the exclusion without turning the figure into a client fact or assumption.",
+  ],
+};
+
+const MOVES_DESIGN_WORKSHOP_GUIDE: DeliverableStructure = {
+  module: "moves",
+  deliverableType: "design_workshop_guide",
+  purpose:
+    "Prepare a focused set of future-state decision sessions using accepted discovery evidence, without turning the guide into a completed solution, operating model, or process redesign.",
+  decisionToSupport:
+    "Run the design work needed to produce an estimate-ready scope, surface material trade-offs, and identify what remains for roadmap execution.",
+  sections: [
+    s(
+      "discovery_carry_forward",
+      "Discovery Carry-Forward & Decision Boundary",
+      "Summarize only accepted findings, confirmed constraints, unresolved evidence gaps, and the selected solution route needed to prepare design. Preserve confidence and source status; do not restate the Discovery Report or reopen decisions without new evidence.",
+      "mixed",
+      ["source_register", "evidence_gaps", "solution_route"],
+      "Keep under 350 words. Use a compact fact / status / design implication table. State explicitly that this guide prepares design and is not the completed target state.",
+    ),
+    s(
+      "design_session_plan",
+      "Design Sessions & Decisions",
+      "Define the smallest set of workshops needed to reach estimate-ready scope: session objective, decision question, participants by role, evidence to review, output, and accountable decision owner. Tailor technical depth to the use case and approved route.",
+      "mixed",
+      ["stakeholder_input", "solution_route", "technology_landscape"],
+      "Keep under 700 words. Use one compact session table. Separate what must be decided now to estimate from detailed design and implementation work that belongs in roadmap execution.",
+    ),
+    s(
+      "evidence_carry_forward",
+      "Evidence & Assumptions to Carry into Design",
+      "Identify the specific accepted evidence, source files, assumptions, and open inputs each design decision depends on. Show evidence status and a named owner role for validation; never elevate unvalidated material to fact.",
+      "mixed",
+      [
+        "source_register",
+        "evidence_gaps",
+        "baseline_metrics",
+        "technology_landscape",
+      ],
+      "Keep under 500 words. Use one concise evidence / decision / status / owner table; point back to citations rather than repeating source narratives.",
+    ),
+    s(
+      "facilitation_tradeoffs",
+      "Facilitation & Trade-Off Questions",
+      "Provide neutral prompts to test only the decisions that change scope, estimate, risk, or accountability. Capture selected option, alternatives, rationale, owner, evidence, and follow-up; preserve business ownership of training and adoption when no material operating-model shift is established.",
+      "expert_template",
+      [],
+      "Keep under 850 words. Organize a short question set by business/process, technology/data/security, and delivery ownership. Do not prescribe a complete future-state process, role catalogue, training plan, or low-level build specification.",
+    ),
+    s(
+      "design_gate_readiness",
+      "Design Exit & Roadmap Handoff Readiness",
+      "Set the minimum evidence and human decisions required for an estimate-ready design package, distinguishing design outputs from the detailed work, validation, and change execution that will be scheduled in the approved roadmap.",
+      "mixed",
+      ["evidence_gaps", "decision_log", "estimate_inputs"],
+      "Keep under 400 words. Use a compact readiness checklist with acceptance test, owner role, and status. Do not imply execution approval or that open items are complete.",
+    ),
+  ],
+  requiredSectionKeys: [
+    "discovery_carry_forward",
+    "design_session_plan",
+    "evidence_carry_forward",
+    "facilitation_tradeoffs",
+    "design_gate_readiness",
+  ],
+  fixedStructure: true,
+  forbiddenSectionTopics: [
+    "completed solution design",
+    "full future-state process",
+    "complete operating model",
+    "detailed implementation plan",
+    "execution backlog",
+    "detailed training curriculum",
+    "final ROI",
+  ],
+  prohibitedContent: [
+    "This is a workshop and decision guide, not a second Discovery Report and not a completed future-state solution. Carry forward findings with their actual evidence status; do not repeat discovery analysis.",
+    "Design only to the level needed to compare the route, clarify estimate scope, expose material trade-offs, and identify assumptions. Defer detailed process, operating-model, build, testing, and adoption work to the approved roadmap unless evidence shows it is necessary to estimate.",
+    "Do not invent client facts, quantified benefits, cost, effort, rates, timing, or vendor/internal sourcing decisions. Preserve explicit assumptions and open inputs for human review.",
   ],
 };
 
@@ -1695,6 +1774,7 @@ export const DELIVERABLE_STRUCTURES: DeliverableStructure[] = [
   MOVES_BUSINESS_CASE,
   MOVES_ROADMAP,
   MOVES_DISCOVERY,
+  MOVES_DESIGN_WORKSHOP_GUIDE,
   MOVES_ROOT_CAUSE_WORKSHEET,
   MOVES_TARGET_ARCHITECTURE,
   MOVES_SOLUTION_DESIGN,

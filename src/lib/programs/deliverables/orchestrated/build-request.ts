@@ -22,6 +22,7 @@ import type {
 } from "@/lib/deliverables/orchestrator/types";
 import { resolveQualityBar } from "@/lib/deliverables/orchestrator/quality-bar-registry";
 import { selectRequiredEvidenceSignals } from "@/lib/deliverables/orchestrator/evidence-signals";
+import { getDeliverableSpec } from "@/lib/programs/deliverable-registry";
 
 /** Board-grade defaults shared by orchestrated Move deliverables. */
 const FORMATTING_PROFILE: FormattingProfile = {
@@ -328,6 +329,8 @@ export function buildMoveDeliverableRequest(
     useCaseArchetype,
     phaseOrStage: options.phaseOrStage,
     deliverableType: options.deliverableType,
+    generationPromptGuidance: getDeliverableSpec(options.deliverableType)
+      ?.generationPromptHint,
     audience: options.audience ?? ["board", "cfo", "cio", "steering_committee"],
     decisionContext: options.decisionContext,
     governedEvidenceBundle,

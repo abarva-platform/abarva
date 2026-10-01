@@ -51,9 +51,15 @@ describe("orchestrated deliverable map", () => {
     ).toBe(true);
   });
 
-  it("does not alias later-phase workshop guides to the P1 discovery plan", () => {
+  it("gives the P2 design guide its own brief without aliasing later-phase guides", () => {
+    const designGuide = orchestratorDeliverableType("design_workshop_guide");
+    expect(designGuide).toBe("design_workshop_guide");
+    expect(designGuide).not.toBe("discovery_plan");
+    expect(getDeliverableStructure("moves", designGuide)?.fixedStructure).toBe(
+      true,
+    );
+
     for (const registryKey of [
-      "design_workshop_guide",
       "planning_workshop_guide",
       "mobilization_workshop_guide",
       "execution_kickoff_guide",

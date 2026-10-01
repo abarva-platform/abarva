@@ -107,6 +107,53 @@ describe("deliverable structures", () => {
     );
   });
 
+  it("design_workshop_guide is a bounded facilitation guide, not a generic report binder", () => {
+    const brief = getArtifactBrief(
+      req({
+        module: "moves",
+        deliverableType: "design_workshop_guide",
+        useCaseArchetype: "AI_PDLC",
+      }),
+    );
+
+    expect(brief.fixedStructure).toBe(true);
+    expect(brief.requiredSections).toEqual([
+      "discovery_carry_forward",
+      "design_session_plan",
+      "evidence_carry_forward",
+      "facilitation_tradeoffs",
+      "design_gate_readiness",
+    ]);
+    expect(brief.recommendedStructure).toHaveLength(5);
+    expect(brief.recommendedStructure.map((section) => section.title)).toEqual(
+      expect.arrayContaining([
+        "Design Sessions & Decisions",
+        "Evidence & Assumptions to Carry into Design",
+        "Design Exit & Roadmap Handoff Readiness",
+      ]),
+    );
+    expect(brief.prohibitedContent?.join(" ")).toMatch(
+      /not a completed future-state solution/i,
+    );
+    expect(brief.prohibitedContent?.join(" ")).toMatch(
+      /estimate scope.*approved roadmap/i,
+    );
+    const sectionBudgets = brief.recommendedStructure.map((section) => {
+      const budget = section.expertLatitude.match(/Keep under (\d+) words\./);
+      expect(budget).not.toBeNull();
+      return Number(budget?.[1]);
+    });
+    expect(
+      sectionBudgets.reduce((total, words) => total + words, 0),
+    ).toBeLessThanOrEqual(
+      resolveQualityBar("moves", "design_workshop_guide").targetBodyWordsMax!,
+    );
+    expect(brief.expectedTables.map((table) => table.key)).not.toContain(
+      "risk_register",
+    );
+    expect(brief.expectedExhibits).toHaveLength(0);
+  });
+
   it.each([
     ["roadmap", 7, ["executive_roadmap"]],
     ["discovery_report", 6, []],
