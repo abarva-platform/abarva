@@ -117,6 +117,8 @@ export function buildSystemPrompt(req: DeliverableIntelligenceRequest): string {
     `- Use ONE consolidated Open Inputs Required table for missing inputs. Do not scatter [CLIENT TO COMPLETE] tags through the narrative.`,
     `- Where a client fact is missing, write [EVIDENCE MISSING: <what>], [ASSUMPTION TO VALIDATE: <what>], or [CLIENT TO COMPLETE: <what>] — never fabricate.`,
     `- Never expose internal source ids, chunk ids, table names, fact keys, or system status words in the body.`,
+    `- Translate source data into plain language. Never print a source-system field name, column name, or coded value from the evidence (any snake_case token, or a field compared to a raw value such as "status_flag = true"). State what it means for the reader in business terms and cite it [n].`,
+    `- Start every paragraph and bullet with the claim itself. Never open with a label that names the text's role in the document ("Section verdict.", "Section stance.", "Section boundary.", "Section summary:"), and never use such a label as a heading.`,
     `- Do not use internal phase shorthand (P0, P1, P2, P3, P4, P5) in client prose. Write "origination", "charter", "discovery", "design", "roadmap/business-case planning", or "handoff" instead. If ranking priority, write "Priority 1", not "P1".`,
     `- Use "Source Register" only as the formal appendix heading. In the narrative body, say "cited evidence", "evidence appendix", or "what the evidence shows".`,
     `- Citation and evidence-handling rules are invisible authoring controls. Never explain, restate, or summarize these rules in the client artifact, and never write that a claim is "tied to" an evidence appendix. Simply comply with the rules.`,
@@ -761,10 +763,7 @@ export function buildPassPrompt(
   return {
     pass,
     system,
-    user: redactExcludedNumericClaims(
-      user,
-      req.prohibitedNumericClaims ?? [],
-    ),
+    user: redactExcludedNumericClaims(user, req.prohibitedNumericClaims ?? []),
     ...(user.startsWith(context) ? { cacheableContext: context } : {}),
     maxTokens: resolvePassTokenBudget({
       pass,

@@ -61,8 +61,14 @@ function wordCount(text: string): number {
 // IDIOM labels are ordinary consulting lead-ins: fine inside a paragraph,
 // meaningless alone as a headline.
 
+// "Section" or "Slide" followed by exactly one lowercase word and then a
+// terminator. The word is not enumerated: the first list here named the two
+// labels that had been seen, and the next generated deck opened a paragraph
+// with a third. A sentence that merely starts with the same word runs on past
+// one word and so is not matched ("Section summary tables follow…"), and a
+// numbered reference is not a label ("Section 4.", "Section two:").
 const STRUCTURAL_LABEL =
-  "(?:section|slide)\\s+(?:boundary|verdict|summary|takeaway|purpose|headline|thesis|message|conclusion)" +
+  "(?:section|slide)\\s+(?!(?:one|two|three|four|five|six|seven|eight|nine|ten)\\b)[a-z][a-z-]{2,24}(?=\\s*[.:*_]|\\s[—–-])" +
   "|governing\\s+(?:message|thought|point)" +
   "|speaker\\s+notes?";
 
@@ -133,11 +139,15 @@ export function stripStructuralScaffolding(markdown: string): string {
 }
 
 /**
- * Return the claim whole, or shortened to a complete independent clause, or
- * null when no complete form fits.
+ * Return the claim whole, or its longest complete prefix, or null when no
+ * complete form fits.
  *
- * A semicolon is the only boundary used. Cutting at a comma, colon, dash, or
- * parenthesis can leave a subject without its predicate ("The baseline —"),
+ * Authored points are usually a short lead statement followed by its support
+ * ("Measurement is unreconciled. Candidate measures carry…"). Sentence ends
+ * are the safest cut there is — every sentence kept is whole — so leading
+ * sentences are kept while they fit. Inside the first sentence that does not
+ * fit, the only boundary used is a semicolon: cutting at a comma, colon, dash,
+ * or parenthesis can leave a subject without its predicate ("The baseline —"),
  * which is the defect this replaces.
  */
 export function fitWholeClaim(text: string, maxWords: number): string | null {
@@ -145,16 +155,36 @@ export function fitWholeClaim(text: string, maxWords: number): string | null {
   if (!clean) return null;
   if (wordCount(clean) <= maxWords) return clean;
 
-  const clauses = clean.split(/;\s+/);
-  if (clauses.length < 2) return null;
+  const sentences = splitSlideSentences(clean);
   let kept = "";
-  for (const clause of clauses.slice(0, -1)) {
-    const candidate = kept ? `${kept}; ${clause}` : clause;
-    if (wordCount(candidate) > maxWords) break;
+  let overflow: string | null = null;
+  for (const sentence of sentences) {
+    const candidate = kept ? `${kept} ${sentence}` : sentence;
+    if (wordCount(candidate) > maxWords) {
+      overflow = sentence;
+      break;
+    }
     kept = candidate;
   }
-  if (!kept || wordCount(kept) < MIN_COMPLETE_CLAUSE_WORDS) return null;
-  return /[.!?]$/.test(kept) ? kept : `${kept}.`;
+
+  if (overflow) {
+    const clauses = overflow.split(/;\s+/);
+    let clausePrefix = "";
+    for (const clause of clauses.slice(0, -1)) {
+      const next = clausePrefix ? `${clausePrefix}; ${clause}` : clause;
+      const total = kept ? `${kept} ${next}` : next;
+      if (wordCount(total) > maxWords) break;
+      clausePrefix = next;
+    }
+    if (clausePrefix && wordCount(clausePrefix) >= MIN_COMPLETE_CLAUSE_WORDS) {
+      const closed = /[.!?]$/.test(clausePrefix)
+        ? clausePrefix
+        : `${clausePrefix}.`;
+      kept = kept ? `${kept} ${closed}` : closed;
+    }
+  }
+
+  return kept || null;
 }
 
 function comparable(text: string): string {

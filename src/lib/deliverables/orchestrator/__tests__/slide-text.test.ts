@@ -55,6 +55,40 @@ describe("fitWholeClaim", () => {
     );
   });
 
+  it("keeps the lead sentences of a multi-sentence point when the whole does not fit", () => {
+    // The shape authored points actually take: a short lead statement, then
+    // its support. Dropping the point lost the finding; keeping the lead
+    // keeps it, whole.
+    const lead = "Measurement is unreconciled.";
+    const second = "Candidate measures carry conflicting definitions.";
+    const claim = `${lead} ${second} Then ${words(60)}.`;
+    expect(fitWholeClaim(claim, 12)).toBe(`${lead} ${second}`);
+    expect(fitWholeClaim(claim, 4)).toBe(lead);
+  });
+
+  it("extends kept sentences with a semicolon clause of the next one when it fits", () => {
+    const claim = `Readiness is unknown. Adoption telemetry is absent and training is not designed; ${words(40)}.`;
+    expect(fitWholeClaim(claim, 16)).toBe(
+      "Readiness is unknown. Adoption telemetry is absent and training is not designed.",
+    );
+  });
+
+  it("returns null when even the first sentence cannot be kept whole", () => {
+    expect(fitWholeClaim(`${words(40)}. Short tail.`, 12)).toBeNull();
+  });
+
+  it("every kept form is a prefix of the original ending at a sentence or clause end", () => {
+    const claim =
+      "Integration is unproven. Only one endpoint has been probed in a sandbox; eight of nine interfaces remain unvalidated. Two systems are missing from the inventory.";
+    for (let cap = 1; cap <= 30; cap += 1) {
+      const fitted = fitWholeClaim(claim, cap);
+      if (fitted === null) continue;
+      expect(fitted).toMatch(/[.!?]$/);
+      expect(claim.startsWith(fitted.replace(/\.$/, ""))).toBe(true);
+      expect(fitted).not.toMatch(/(?:\.{3}|…)$/);
+    }
+  });
+
   it("does not cut at a comma, colon, dash, or parenthesis", () => {
     for (const joiner of [", ", ": ", " — ", " ("]) {
       const claim = `The current baseline for the service${joiner}${words(40)}.`;
@@ -78,6 +112,10 @@ describe("stripScaffoldingLabel", () => {
       "This covers the service desk only.",
     ],
     [
+      "Section stance. An escalation route exists.",
+      "An escalation route exists.",
+    ],
+    [
       "Governing message — hold the investment decision.",
       "Hold the investment decision.",
     ],
@@ -98,6 +136,8 @@ describe("stripScaffoldingLabel", () => {
     "Section summary tables follow the narrative in the appendix.",
     "The verdict of the review board was to proceed.",
     "Slide decks were not part of the evidence base.",
+    "Section two: the findings follow.",
+    "Section 4. Current-state findings.",
     "Bottom line: proceed.",
     "In short, the plan holds.",
   ])("leaves the real sentence %j alone", (sentence) => {
