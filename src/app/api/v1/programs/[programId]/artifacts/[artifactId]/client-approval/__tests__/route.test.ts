@@ -14,6 +14,7 @@ const mockLoadApprovedMoveEvidenceSnapshot = jest.fn();
 const mockPackerToBuffer = jest.fn();
 const mockRenderDeliverableDocx = jest.fn();
 const mockRenderDeliverablePptx = jest.fn();
+const mockRenderValidatedDeck = jest.fn();
 
 jest.mock("docx", () => ({
   Packer: { toBuffer: (doc: unknown) => mockPackerToBuffer(doc) },
@@ -132,6 +133,10 @@ jest.mock("@/lib/programs/approved-move-evidence-snapshot", () => ({
 jest.mock("@/lib/deliverables/orchestrator/renderers", () => ({
   renderDeliverableDocx: (doc: unknown) => mockRenderDeliverableDocx(doc),
   renderDeliverablePptx: (doc: unknown) => mockRenderDeliverablePptx(doc),
+}));
+
+jest.mock("@/lib/deliverables/orchestrator/render-validated-deck", () => ({
+  renderValidatedDeck: (doc: unknown) => mockRenderValidatedDeck(doc),
 }));
 
 jest.mock("@/lib/deliverables/quality/deliverable-key-map", () => ({
@@ -269,6 +274,13 @@ beforeEach(() => {
   });
   mockRenderDeliverableDocx.mockReturnValue({ doc: "docx" });
   mockRenderDeliverablePptx.mockResolvedValue(Buffer.from("pptx"));
+  mockRenderValidatedDeck.mockResolvedValue({
+    buffer: Buffer.from("pptx"),
+    physicallyIntact: true,
+    integrityFailures: [],
+    usedSectionFallback: false,
+    verdict: { ok: true, findings: [], renderedPptxSlides: 3 },
+  });
   mockPackerToBuffer.mockResolvedValue(Buffer.from("docx"));
   mockLoadApprovedSolutionApproach.mockResolvedValue({
     decisionHash: "decision-hash",
@@ -411,6 +423,42 @@ describe("POST /api/v1/programs/[programId]/artifacts/[artifactId]/client-approv
     expect(json).toMatchObject({
       error: "artifact_storage_unavailable",
     });
+    expect(mockDraftModuleDeliverable).not.toHaveBeenCalled();
+    expect(mockSignOffDeliverable).not.toHaveBeenCalled();
+  });
+
+  it("does not approve a PPTX whose rendered slide quality gate remains blocked", async () => {
+    mockGetGeneratedArtifactById.mockResolvedValue({
+      ...generatedArtifact,
+      outputFormat: "pptx",
+    });
+    mockRenderValidatedDeck.mockResolvedValue({
+      buffer: Buffer.from("pptx"),
+      physicallyIntact: true,
+      integrityFailures: [],
+      usedSectionFallback: false,
+      verdict: {
+        ok: false,
+        findings: [{ kind: "thin_slide", message: "slide 2 is a placeholder" }],
+        renderedPptxSlides: 3,
+      },
+    });
+    const { POST } = await import("../route");
+
+    const res = await POST(
+      request({
+        reason: "Synthetic reviewer attempted a test approval.",
+      }) as never,
+      { params },
+    );
+    const json = (await res.json()) as Record<string, unknown>;
+
+    expect(res.status).toBe(422);
+    expect(json).toMatchObject({
+      error: "generated_artifact_final_render_failed",
+    });
+    expect(json.detail).toContain("generated_artifact_pptx_quality_failed");
+    expect(mockSaveMoveArtifact).not.toHaveBeenCalled();
     expect(mockDraftModuleDeliverable).not.toHaveBeenCalled();
     expect(mockSignOffDeliverable).not.toHaveBeenCalled();
   });
@@ -692,7 +740,9 @@ describe("POST /api/v1/programs/[programId]/artifacts/[artifactId]/client-approv
     );
 
     expect(res.status).toBe(409);
-    expect(await res.json()).toMatchObject({ error: "stale_evidence_snapshot" });
+    expect(await res.json()).toMatchObject({
+      error: "stale_evidence_snapshot",
+    });
     expect(mockSaveMoveArtifact).not.toHaveBeenCalled();
     expect(mockDraftModuleDeliverable).not.toHaveBeenCalled();
     expect(mockSignOffDeliverable).not.toHaveBeenCalled();

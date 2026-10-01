@@ -38,10 +38,8 @@ import {
 } from "@/lib/programs/approved-solution-approach";
 import { loadCurrentMoveContextExtractFreshness } from "@/lib/programs/move-context-extract";
 import { loadApprovedMoveEvidenceSnapshot } from "@/lib/programs/approved-move-evidence-snapshot";
-import {
-  renderDeliverableDocx,
-  renderDeliverablePptx,
-} from "@/lib/deliverables/orchestrator/renderers";
+import { renderDeliverableDocx } from "@/lib/deliverables/orchestrator/renderers";
+import { renderValidatedDeck } from "@/lib/deliverables/orchestrator/render-validated-deck";
 import type { RenderableDeliverable } from "@/lib/deliverables/orchestrator/types";
 
 export const runtime = "nodejs";
@@ -290,9 +288,19 @@ async function renderAcceptedGeneratedDraft(args: {
   if (!args.doc) return null;
   const structuredDoc = args.doc as unknown as RenderableDeliverable;
   if (args.artifact.outputFormat === "pptx") {
-    const pptx = await renderDeliverablePptx(structuredDoc);
+    const validated = await renderValidatedDeck(structuredDoc);
+    if (!validated.physicallyIntact || !validated.verdict.ok) {
+      const details = validated.physicallyIntact
+        ? validated.verdict.findings
+            .map((finding) => finding.message)
+            .slice(0, 3)
+        : validated.integrityFailures.slice(0, 3);
+      throw new Error(
+        `generated_artifact_pptx_quality_failed: ${details.join("; ")}`,
+      );
+    }
     return {
-      body: Buffer.from(pptx),
+      body: Buffer.from(validated.buffer),
       fileName: safeArtifactFileName(args.title, "pptx"),
       fileFormat: "pptx",
       mimeType: PPTX_CONTENT_TYPE,
@@ -374,7 +382,8 @@ export async function POST(
       return Response.json(
         {
           error: "evidence_snapshot_not_current",
-          detail: "The active tenant key is unavailable; the evidence snapshot cannot be verified.",
+          detail:
+            "The active tenant key is unavailable; the evidence snapshot cannot be verified.",
         },
         { status: 409 },
       );

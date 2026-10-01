@@ -1,4 +1,4 @@
-import 'server-only';
+import "server-only";
 
 // Render a deck and inspect what was rendered, in one call.
 //
@@ -7,10 +7,14 @@ import 'server-only';
 // render path and the check path were different paths, and only one of them
 // ever ran.
 
-import { renderDeliverablePptx } from './renderers';
-import { inspectDeck, type InspectedDeck } from './deck-inspection';
-import { judgeRenderedDeck, type DeckPolicy, type DeckVerdict } from './deck-quality';
-import type { RenderableDeliverable } from './types';
+import { renderDeliverablePptx } from "./renderers";
+import { inspectDeck, type InspectedDeck } from "./deck-inspection";
+import {
+  judgeRenderedDeck,
+  type DeckPolicy,
+  type DeckVerdict,
+} from "./deck-quality";
+import type { RenderableDeliverable } from "./types";
 
 export interface ValidatedDeck {
   buffer: Buffer;
@@ -27,22 +31,58 @@ export interface ValidatedDeck {
    */
   physicallyIntact: boolean;
   integrityFailures: string[];
+  usedSectionFallback: boolean;
 }
 
 export async function renderValidatedDeck(
   doc: RenderableDeliverable,
   policy: DeckPolicy = {},
 ): Promise<ValidatedDeck> {
-  const buffer = await renderDeliverablePptx(doc);
-  const inspection = await inspectDeck(buffer);
-  const verdict = judgeRenderedDeck(inspection, policy);
+  const renderAndJudge = async (candidate: RenderableDeliverable) => {
+    const buffer = await renderDeliverablePptx(candidate);
+    const inspection = await inspectDeck(buffer);
+    return {
+      buffer,
+      inspection,
+      verdict: judgeRenderedDeck(inspection, policy),
+    };
+  };
+
+  let rendered = await renderAndJudge(doc);
+  let usedSectionFallback = false;
+  const hasThinAuthoredSlides = rendered.verdict.findings.some(
+    (finding) => finding.kind === "thin_slide",
+  );
+  const hasSubstantiveSections = doc.generatedSections.some(
+    (section) => section.bodyMarkdown.trim().length > 0,
+  );
+
+  if (
+    (doc.deckSlides?.length ?? 0) > 0 &&
+    hasThinAuthoredSlides &&
+    hasSubstantiveSections
+  ) {
+    const fallback = await renderAndJudge({ ...doc, deckSlides: [] });
+    const initialThinCount = rendered.verdict.findings.filter(
+      (finding) => finding.kind === "thin_slide",
+    ).length;
+    const fallbackThinCount = fallback.verdict.findings.filter(
+      (finding) => finding.kind === "thin_slide",
+    ).length;
+    if (fallback.verdict.ok || fallbackThinCount < initialThinCount) {
+      rendered = fallback;
+      usedSectionFallback = true;
+    }
+  }
+
+  const { buffer, inspection, verdict } = rendered;
 
   const integrityFailures = verdict.findings
-    .filter((f) => f.kind === 'off_canvas' || f.kind === 'canvas')
+    .filter((f) => f.kind === "off_canvas" || f.kind === "canvas")
     .map((f) => f.message);
 
   if (integrityFailures.length > 0) {
-    console.error('[renderValidatedDeck] deck failed physical integrity', {
+    console.error("[renderValidatedDeck] deck failed physical integrity", {
       title: doc.title,
       renderedPptxSlides: verdict.renderedPptxSlides,
       canvas: `${verdict.canvasWidthIn.toFixed(2)}x${verdict.canvasHeightIn.toFixed(2)}in`,
@@ -56,5 +96,6 @@ export async function renderValidatedDeck(
     verdict,
     physicallyIntact: integrityFailures.length === 0,
     integrityFailures,
+    usedSectionFallback,
   };
 }

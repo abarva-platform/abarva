@@ -172,6 +172,36 @@ describe("GET /api/v1/artifacts/[artifactId]", () => {
     expect(buf.subarray(0, 5).toString("latin1")).toBe("%PDF-");
   });
 
+  it("refuses a thin PPTX when no substantive section fallback is available", async () => {
+    const doc = {
+      ...goodDocument(),
+      generatedSections: [],
+      deckSlides: [
+        {
+          key: "executive-answer",
+          title: "Executive Answer",
+          governingMessage: "Give the conclusion before the evidence.",
+          points: ["the finding in one statement"],
+        },
+      ],
+    };
+    mockGetArtifact.mockResolvedValue(
+      recordWith("pptx", {
+        renderedHtml: "<html>preview</html>",
+        renderableDoc: doc,
+      }),
+    );
+
+    const res = await GET(reqUrl(), { params });
+    const json = (await res.json()) as Record<string, unknown>;
+
+    expect(res.status).toBe(422);
+    expect(json).toMatchObject({ error: "deck_failed_content_quality" });
+    expect(json.detail).toEqual(
+      expect.arrayContaining([expect.stringContaining("title and")]),
+    );
+  }, 60_000);
+
   it("honors ?format=pdf on a docx-prescribed artifact", async () => {
     mockGetArtifact.mockResolvedValue(
       recordWith("docx", {

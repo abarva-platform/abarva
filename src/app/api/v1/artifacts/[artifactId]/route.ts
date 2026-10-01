@@ -13,8 +13,7 @@ import {
   renderDeliverablePdf,
 } from "@/lib/deliverables/orchestrator/renderers";
 import { renderValidatedDeck } from "@/lib/deliverables/orchestrator/render-validated-deck";
-import {
-} from "@/lib/deliverables/orchestrator/renderers";
+import {} from "@/lib/deliverables/orchestrator/renderers";
 import type { RenderableDeliverable } from "@/lib/deliverables/orchestrator/types";
 import { getCurrentUser } from "@/lib/auth/current-user";
 
@@ -186,6 +185,23 @@ export async function GET(
               renderedPptxSlides: validated.verdict.renderedPptxSlides,
             },
             { status: 500 },
+          );
+        }
+        if (!validated.verdict.ok) {
+          return Response.json(
+            {
+              error: "deck_failed_content_quality",
+              detail: validated.verdict.findings
+                .filter(
+                  (finding) =>
+                    finding.kind !== "off_canvas" && finding.kind !== "canvas",
+                )
+                .slice(0, 5)
+                .map((finding) => finding.message),
+              renderedPptxSlides: validated.verdict.renderedPptxSlides,
+              usedSectionFallback: validated.usedSectionFallback,
+            },
+            { status: 422 },
           );
         }
         const buf = validated.buffer;

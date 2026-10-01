@@ -127,11 +127,7 @@ function lightTable(columns: string[], rows: string[][]): Table {
     if (label === "type") {
       return 1.1;
     }
-    if (
-      /\b(status|confidence|rating|family|date)\b/.test(
-        label,
-      )
-    ) {
+    if (/\b(status|confidence|rating|family|date)\b/.test(label)) {
       return 0.85;
     }
     if (/\b(owner|role|responsible)\b/.test(label)) return 1.2;
@@ -375,8 +371,7 @@ function normalizeSectionMarkdown(markdown: string, title: string): string {
 
 export function renderDeliverableDocx(doc: RenderableDeliverable): Document {
   const children: (Paragraph | Table)[] = [];
-  const compactMovesCharter =
-    doc.deliverableType === "charter";
+  const compactMovesCharter = doc.deliverableType === "charter";
 
   // Cover
   children.push(eyebrowParagraph("AbarVa · Board-grade deliverable"));
@@ -856,13 +851,23 @@ function svgMatrixExhibit(exhibit: RenderableExhibit): string {
   // cell now lands in the quadrant its own x/y values put it in, and the axes
   // are labelled.
   const data = exhibit.data;
-  if (!data || (data.kind !== "matrix" && data.kind !== "heatmap" && data.kind !== "comparison")) return "";
+  if (
+    !data ||
+    (data.kind !== "matrix" &&
+      data.kind !== "heatmap" &&
+      data.kind !== "comparison")
+  )
+    return "";
   if (data.cells.length === 0) return "";
 
   const axes = data.axes;
   // Distinct axis values in order of appearance decide which half a cell is in.
-  const xs = [...new Set(data.cells.map((c) => String(c.x ?? "")))].filter(Boolean);
-  const ys = [...new Set(data.cells.map((c) => String(c.y ?? "")))].filter(Boolean);
+  const xs = [...new Set(data.cells.map((c) => String(c.x ?? "")))].filter(
+    Boolean,
+  );
+  const ys = [...new Set(data.cells.map((c) => String(c.y ?? "")))].filter(
+    Boolean,
+  );
 
   const placed = data.cells.slice(0, 8).map((cell) => {
     const xi = xs.indexOf(String(cell.x ?? ""));
@@ -883,7 +888,9 @@ function svgMatrixExhibit(exhibit: RenderableExhibit): string {
       items.slice(0, 2).map((p, n) => {
         const x = q.startsWith("r") ? 378 : 36;
         const y = (q.endsWith("b") ? 132 : 44) + n * 34;
-        const value = p.cell.value ? ` · ${esc(String(p.cell.value).slice(0, 14))}` : "";
+        const value = p.cell.value
+          ? ` · ${esc(String(p.cell.value).slice(0, 14))}`
+          : "";
         return `<g>
         <rect x="${x}" y="${y}" width="300" height="30" rx="6" fill="#fff" stroke="var(--line)"/>
         <text x="${x + 14}" y="${y + 19}" font-size="11" font-weight="700">${esc(fitLabelLines(String(p.cell.label ?? ""), 34, 1)[0] ?? "")}${value}</text>
@@ -1216,10 +1223,7 @@ function exhibitSvg(exhibit: RenderableExhibit, index: number): string | null {
     dataExhibit.data?.kind === "comparison"
   )
     return svgMatrixExhibit(dataExhibit);
-  if (
-    dataExhibit.kind === "timeline" ||
-    dataExhibit.data?.kind === "timeline"
-  )
+  if (dataExhibit.kind === "timeline" || dataExhibit.data?.kind === "timeline")
     return svgTimelineExhibit(dataExhibit);
   if (dataExhibit.kind === "conceptual_architecture")
     return svgLayeredArchitectureExhibit(dataExhibit, CONCEPTUAL_LANES);
@@ -1743,16 +1747,36 @@ function cleanMarkdownForSlideText(line: string): string {
  *  the face of it (the full text still lives in the DOCX/PDF/HTML export). */
 function condensedBulletsFromMarkdown(markdown: string, max: number): string[] {
   const governingLine = firstMarkdownLine(markdown);
-  const lines = markdown
+  const sourceLines = markdown
     .split("\n")
     .map((line) => line.trim())
     .filter(Boolean)
-    .filter((line) => !/^#{1,6}\s/.test(line)) // headings become the slide title elsewhere, not a bullet
-    .filter((line) => !/^\|.*\|$/.test(line)) // skip raw markdown table rows
-    .map(cleanMarkdownForSlideText)
-    .filter(Boolean)
-    .filter((line) => line !== governingLine);
-  return lines.slice(0, max).map((line) => truncateWords(line, MAX_PPTX_BULLET_WORDS));
+    .filter((line) => !/^#{1,6}\s/.test(line))
+    .filter((line) => !/^\|.*\|$/.test(line));
+  const hasExplicitBullets = sourceLines.some((line) =>
+    /^(?:[-*]\s+|\d+[.)]\s+)/.test(line),
+  );
+  const candidates = sourceLines.flatMap((line) => {
+    const cleaned = cleanMarkdownForSlideText(line);
+    if (!cleaned) return [];
+    if (hasExplicitBullets && /^(?:[-*]\s+|\d+[.)]\s+)/.test(line)) {
+      return [cleaned];
+    }
+    if (hasExplicitBullets) return [];
+    return splitSlideSentences(cleaned);
+  });
+
+  return candidates
+    .filter((line) => line !== governingLine)
+    .slice(0, max)
+    .map((line) => truncateWords(line, MAX_PPTX_BULLET_WORDS));
+}
+
+function splitSlideSentences(text: string): string[] {
+  return text
+    .split(/(?<=[.!?])\s+(?=[A-Z\[\u201c"'])/u)
+    .map((sentence) => sentence.trim())
+    .filter(Boolean);
 }
 
 /** First non-empty, non-heading line of a section's markdown — used as the
@@ -1762,7 +1786,8 @@ function firstMarkdownLine(markdown: string): string | null {
     .split("\n")
     .map((l) => l.trim())
     .find((l) => l.length > 0 && !/^#{1,6}\s/.test(l) && !/^\|.*\|$/.test(l));
-  return line ? cleanMarkdownForSlideText(line) : null;
+  if (!line) return null;
+  return splitSlideSentences(cleanMarkdownForSlideText(line))[0] ?? null;
 }
 
 type PptxGenJSCtor = (typeof import("pptxgenjs"))["default"];
@@ -1881,7 +1906,10 @@ function addPptxAuthoredSlide(
   doc: RenderableDeliverable,
   slideNumber: number,
   totalSlides: number,
-  exhibitByKey: ReadonlyMap<string, { exhibit: RenderableExhibit; index: number }>,
+  exhibitByKey: ReadonlyMap<
+    string,
+    { exhibit: RenderableExhibit; index: number }
+  >,
 ): void {
   const slide = pptx.addSlide();
   slide.background = { color: PPTX_COLOR.cream };
@@ -1987,7 +2015,9 @@ function addPptxAuthoredSlide(
     authoredSlide.citationsUsed?.length
       ? `Citations: [${authoredSlide.citationsUsed.join(", ")}]`
       : undefined,
-    authoredSlide.exhibitKey ? `Exhibit: ${authoredSlide.exhibitKey}` : undefined,
+    authoredSlide.exhibitKey
+      ? `Exhibit: ${authoredSlide.exhibitKey}`
+      : undefined,
   ].filter(Boolean);
   if (notes.length > 0) slide.addNotes(notes.join("\n"));
 }
