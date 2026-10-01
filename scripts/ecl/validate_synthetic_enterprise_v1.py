@@ -15,6 +15,7 @@ from typing import Any
 
 ROOT = Path(__file__).resolve().parents[2]
 DEFINITION = ROOT / "datasets/synthetic/enterprise-v1/definition.json"
+TENANT_REGISTRY = ROOT / "datasets/tenant-inputs/tenant-input-registry.json"
 
 
 def read_csv(path: Path) -> list[dict[str, str]]:
@@ -55,6 +56,13 @@ def validate(directory: Path) -> dict[str, Any]:
     require(manifest["review_state"] == "candidate_not_loaded", "Generated pack must remain a candidate")
     require(manifest["client_attestation_state"] == "not_client_attested", "Synthetic pack claims client attestation")
     definition = json.loads(DEFINITION.read_text(encoding="utf-8"))
+    require(manifest["tenant_key"] == definition["tenant_key"], "Source-set tenant differs from its definition")
+    registry = json.loads(TENANT_REGISTRY.read_text(encoding="utf-8"))
+    tenant = next((entry for entry in registry["activeTenants"]
+                   if entry["tenantKey"] == manifest["tenant_key"]), None)
+    require(tenant is not None and any(packet.get("classification") == "synthetic-demo"
+                                   for packet in tenant.get("packets", [])),
+            "Source-set tenant is not a registry-declared synthetic tenant")
     definition_hash = hashlib.sha256(json.dumps(definition, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
     require(manifest["definition_hash"] == definition_hash, "Source set was built from a different definition")
     files = manifest["files"]

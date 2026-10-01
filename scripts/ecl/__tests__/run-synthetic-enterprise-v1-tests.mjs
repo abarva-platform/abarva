@@ -76,4 +76,14 @@ test("independent validator rejects a changed source file and an undeclared edge
   const badObject = run(validator, changedObject);
   assert.notEqual(badObject.status, 0);
   assert.match(badObject.stderr, /Object\/source attribute mismatch/);
+
+  const changedTenant = path.join(tmp, "changed-tenant");
+  assert.equal(run(generator, changedTenant).status, 0);
+  const changedTenantManifestPath = path.join(changedTenant, "enterprise_manifest.json");
+  const changedTenantManifest = JSON.parse(fs.readFileSync(changedTenantManifestPath, "utf8"));
+  changedTenantManifest.tenant_key = "another-tenant";
+  fs.writeFileSync(changedTenantManifestPath, JSON.stringify(changedTenantManifest));
+  const badTenant = run(validator, changedTenant);
+  assert.notEqual(badTenant.status, 0);
+  assert.match(badTenant.stderr, /Source-set tenant differs from its definition/);
 });
