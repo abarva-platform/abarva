@@ -24,6 +24,21 @@ describe("a figure carries its grain, because grain is what makes two honest cou
 });
 
 describe("quotability", () => {
+  it("does not treat a deterministic rule as verified source-file lineage", () => {
+    const lineage: FactLineage = {
+      value: 337,
+      label: "this finding",
+      grain: "one data asset or integration",
+      rule: "regulatedDataFlag is true AND qualityStatus is not governed_production_grade",
+      sources: [],
+      agreement: "unverified",
+    };
+    expect(quotability(lineage)).toMatchObject({ quotable: false, tone: "unverified" });
+    expect(quotability(lineage).qualifier).toMatch(/have not been verified/);
+    expect(traceLine(lineage)).toContain("rule regulatedDataFlag is true");
+    expect(traceLine(lineage)).not.toContain(".csv");
+  });
+
   it("keeps a reconciled difference quotable, but only with its grain", () => {
     const standing = quotability(applicationCountLineage(rows, 750));
     expect(standing.quotable).toBe(true);
