@@ -1,0 +1,63 @@
+import assert from "node:assert/strict";
+import { rm } from "node:fs/promises";
+import pg from "pg";
+import {
+  generatePack,
+  loadIntoNewAssessment,
+} from "../load_synthetic_enterprise_v1";
+
+async function main(): Promise<void> {
+  const connectionString = process.env.ECL_ADMISSION_TEST_DATABASE_URL ?? "";
+  const url = new URL(connectionString);
+  assert.ok(["127.0.0.1", "localhost"].includes(url.hostname));
+  assert.equal(url.pathname, "/ecl_admission_test");
+
+  const pack = await generatePack("v2");
+  try {
+    const blobUris = new Map(
+      pack.manifest.files.map((file) => [
+        file.source_room_family,
+        `https://synthetic.invalid/${pack.manifest.source_set_hash}/${file.source_room_family}`,
+      ]),
+    );
+    const readback = await loadIntoNewAssessment(connectionString, pack, blobUris);
+    assert.equal(readback.serving_state, "not_promoted");
+    assert.deepEqual(readback.counts, {
+      source_files: 22,
+      source_records: 17844,
+      objects: 6079,
+      relationships: 11727,
+      applications: 344,
+      application_modules: 726,
+      missing_object_lineage: 0,
+      missing_edge_lineage: 0,
+      missing_source_blob: 0,
+    });
+    const client = new pg.Client({ connectionString });
+    await client.connect();
+    try {
+      const result = await client.query<{ applications: string; services: string; modules: string }>(
+        `select
+          (select count(*) from ecl_context.application_v where tenant_key = $1 and assessment_id = $2) as applications,
+          (select count(*) from ecl_context.object where tenant_key = $1 and assessment_id = $2 and object_type = 'application' and attributes_json->>'application_grain' = 'logical_service') as services,
+          (select count(*) from ecl_context.object where tenant_key = $1 and assessment_id = $2 and object_type = 'application_module') as modules`,
+        [pack.manifest.tenant_key, pack.manifest.assessment_id],
+      );
+      assert.deepEqual(Object.values(result.rows[0]).map(Number), [344, 320, 726]);
+    } finally {
+      await client.end();
+    }
+    await assert.rejects(
+      loadIntoNewAssessment(connectionString, pack, blobUris),
+      /already contains source or canonical rows/,
+    );
+    console.log(JSON.stringify({ accepted: true, ...readback }));
+  } finally {
+    await rm(pack.dir, { recursive: true, force: true });
+  }
+}
+
+main().catch((error: unknown) => {
+  console.error(error);
+  process.exitCode = 1;
+});

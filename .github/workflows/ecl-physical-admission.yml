@@ -10,6 +10,10 @@ on:
       - "scripts/ecl/normalize_synthetic_enterprise_v1.py"
       - "scripts/ecl/__tests__/test_synthetic_ecl_physical_admission.py"
       - "scripts/ecl/__tests__/test_synthetic_enterprise_v1_load.ts"
+      - "scripts/ecl/__tests__/test_synthetic_enterprise_v2_load.ts"
+      - "scripts/ecl/generate_synthetic_enterprise_v1.py"
+      - "scripts/ecl/validate_synthetic_enterprise_v1.py"
+      - "datasets/synthetic/enterprise-v2/**"
       - "scripts/ecl/load_synthetic_enterprise_v1.ts"
       - "supabase/migrations/20261001183000_ecl_enterprise_context_admission.sql"
   workflow_dispatch:
@@ -50,3 +54,7 @@ jobs:
         env:
           ECL_ADMISSION_TEST_DATABASE_URL: postgresql://ecl_test:ecl_test@127.0.0.1:5432/ecl_admission_test
         run: npx tsx scripts/ecl/__tests__/test_synthetic_enterprise_v1_load.ts
+      - name: Load and read back versioned logical applications
+        env:
+          ECL_ADMISSION_TEST_DATABASE_URL: postgresql://ecl_test:ecl_test@127.0.0.1:5432/ecl_admission_test
+        run: npx tsx scripts/ecl/__tests__/test_synthetic_enterprise_v2_load.ts

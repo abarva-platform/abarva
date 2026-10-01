@@ -18,6 +18,17 @@ DEFINITION = ROOT / "datasets/synthetic/enterprise-v1/definition.json"
 TENANT_REGISTRY = ROOT / "datasets/tenant-inputs/tenant-input-registry.json"
 
 
+def load_definition(path: Path) -> dict[str, Any]:
+    definition = json.loads(path.read_text(encoding="utf-8"))
+    expected_base_hash = definition.pop("base_definition_sha256", None)
+    if expected_base_hash is None:
+        return definition
+    base_bytes = DEFINITION.read_bytes()
+    require(hashlib.sha256(base_bytes).hexdigest() == expected_base_hash,
+            "Versioned enterprise definition base has changed")
+    return {**json.loads(base_bytes), **definition}
+
+
 def read_csv(path: Path) -> list[dict[str, str]]:
     with path.open(newline="", encoding="utf-8") as handle:
         return list(csv.DictReader(handle))
@@ -48,14 +59,14 @@ def money_share(rows: list[dict[str, str]], field: str) -> float:
     return sum(values[: max(1, len(values) // 10)]) / sum(values)
 
 
-def validate(directory: Path) -> dict[str, Any]:
+def validate(directory: Path, definition_path: Path = DEFINITION) -> dict[str, Any]:
     root = directory.resolve()
     manifest = json.loads((root / "enterprise_manifest.json").read_text(encoding="utf-8"))
-    require(manifest["dataset_id"] == "MERIDIAN_SYNTHETIC_ENTERPRISE_V1", "Wrong dataset version")
-    require(manifest["assessment_id"] == "assessment-meridian-synthetic-enterprise-v1", "Wrong assessment")
+    definition = load_definition(definition_path)
+    require(manifest["dataset_id"] == definition["dataset_id"], "Wrong dataset version")
+    require(manifest["assessment_id"] == definition["assessment_id"], "Wrong assessment")
     require(manifest["review_state"] == "candidate_not_loaded", "Generated pack must remain a candidate")
     require(manifest["client_attestation_state"] == "not_client_attested", "Synthetic pack claims client attestation")
-    definition = json.loads(DEFINITION.read_text(encoding="utf-8"))
     require(manifest["tenant_key"] == definition["tenant_key"], "Source-set tenant differs from its definition")
     registry = json.loads(TENANT_REGISTRY.read_text(encoding="utf-8"))
     tenant = next((entry for entry in registry["activeTenants"]
@@ -142,11 +153,16 @@ def validate(directory: Path) -> dict[str, Any]:
     app_by_id = {row["application_id"]: row for row in apps}
     products = [row for row in apps if row["application_grain"] == "logical_product"]
     modules = [row for row in apps if row["application_grain"] == "governed_module"]
-    require(len(products) == 24 and len(modules) == 726 and
+    services = [row for row in apps if row["application_grain"] == "logical_service"]
+    expected_services = sum(len(items) for items in definition.get("service_capabilities_by_function", {}).values()) * 4
+    require(len(products) == 24 and len(modules) == 726 and len(services) == expected_services and
             len({row["application_name"] for row in apps}) == len(apps),
             "Application product/module grain is not unique or complete")
     require(all(not row["parent_application_id"] and not row["module_workflow"] and not row["service_area"]
-                for row in products), "Logical product has module fields")
+                for row in products + services), "Logical application has module fields")
+    require(all(row["vendor_name"] in definition["service_suppliers_by_function"][row["business_function_id"]]
+                and row["cost_scope"] == "logical_service_run_allocation"
+                for row in services), "Logical service lacks a declared function supplier or independent cost scope")
     require(all(row["parent_application_id"] in app_by_id and
                 app_by_id[row["parent_application_id"]]["application_grain"] == "logical_product" and
                 row["module_workflow"] and row["service_area"] and
@@ -274,8 +290,9 @@ def validate(directory: Path) -> dict[str, Any]:
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--out-dir", type=Path, required=True)
+    parser.add_argument("--definition", type=Path, default=DEFINITION)
     args = parser.parse_args()
-    print(json.dumps(validate(args.out_dir), indent=2, sort_keys=True))
+    print(json.dumps(validate(args.out_dir, args.definition), indent=2, sort_keys=True))
     return 0
 
 

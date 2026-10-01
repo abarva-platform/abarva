@@ -17,10 +17,9 @@ const root = path.resolve(
   path.dirname(fileURLToPath(import.meta.url)),
   "../..",
 );
-const definitionPath = path.join(
-  root,
-  "datasets/synthetic/enterprise-v1/definition.json",
-);
+type SourceVersion = "v1" | "v2";
+const definitionPath = (version: SourceVersion) =>
+  path.join(root, `datasets/synthetic/enterprise-${version}/definition.json`);
 const containerName = "ecl-synthetic-intake";
 const batchSize = 400;
 
@@ -96,7 +95,9 @@ function stableUuid(...parts: string[]): string {
 
 function id(manifest: Manifest, kind: string, nativeId: string): string {
   return stableUuid(
-    "ecl-synthetic-enterprise-v1",
+    manifest.dataset_id.endsWith("_V2")
+      ? "ecl-synthetic-enterprise-v2"
+      : "ecl-synthetic-enterprise-v1",
     manifest.tenant_key,
     manifest.assessment_id,
     kind,
@@ -114,7 +115,7 @@ function rowsFromCsv(value: string): Record<string, string>[] {
   return parsed.data;
 }
 
-export async function generatePack(): Promise<GeneratedPack> {
+export async function generatePack(version: SourceVersion = "v1"): Promise<GeneratedPack> {
   const dir = await mkdtemp(path.join(tmpdir(), "ecl-enterprise-v1-"));
   const packDir = path.join(dir, "pack");
   const adapterDir = path.join(dir, "adapter");
@@ -123,7 +124,7 @@ export async function generatePack(): Promise<GeneratedPack> {
       [
         "scripts/ecl/generate_synthetic_enterprise_v1.py",
         "--definition",
-        definitionPath,
+        definitionPath(version),
         "--out-dir",
         packDir,
       ],
@@ -131,6 +132,8 @@ export async function generatePack(): Promise<GeneratedPack> {
         "scripts/ecl/normalize_synthetic_enterprise_v1.py",
         "--pack",
         packDir,
+        "--definition",
+        definitionPath(version),
         "--out-dir",
         adapterDir,
       ],
@@ -157,6 +160,7 @@ export async function generatePack(): Promise<GeneratedPack> {
       manifest.assessment_id !== normalized.assessment_id ||
       manifest.client_attestation_state !== "not_client_attested" ||
       normalized.client_attestation_state !== "not_client_attested" ||
+      !manifest.dataset_id.endsWith(`_${version.toUpperCase()}`) ||
       manifest.files.length !== 22 ||
       normalized.unresolved_relationships.length !== 1
     ) {
@@ -534,7 +538,10 @@ async function main(): Promise<void> {
       "Only --execute is supported; absence of it performs a read-only generation check",
     );
   }
-  const pack = await generatePack();
+  const version = process.env.ECL_SYNTHETIC_DATASET_VERSION ?? "v1";
+  if (version !== "v1" && version !== "v2")
+    throw new Error("Unsupported synthetic enterprise source version");
+  const pack = await generatePack(version);
   try {
     const rows = await sourceRows(pack);
     const summary = {

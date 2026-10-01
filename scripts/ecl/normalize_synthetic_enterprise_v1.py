@@ -19,6 +19,7 @@ from validate_synthetic_enterprise_v1 import validate as validate_source_set
 
 
 ROOT = Path(__file__).resolve().parents[2]
+DEFINITION = ROOT / "datasets/synthetic/enterprise-v1/definition.json"
 RELATIONSHIP_MAP_PATH = ROOT / "config/ecl/synthetic-enterprise-v1-relationship-map.json"
 RELATIONSHIP_TYPES = json.loads(
     RELATIONSHIP_MAP_PATH.read_text(encoding="utf-8")
@@ -70,7 +71,7 @@ def canonical_object_type(obj: dict[str, Any]) -> str:
         raise ValueError(f"Unmapped source object type: {native_type}")
     if native_type == "application":
         grain = obj["attributes"].get("application_grain")
-        if grain == "logical_product":
+        if grain in {"logical_product", "logical_service"}:
             return "application"
         if grain == "governed_module":
             return "application_module"
@@ -85,9 +86,10 @@ def canonical_object_type(obj: dict[str, Any]) -> str:
     return OBJECT_TYPES[native_type]
 
 
-def normalize(pack: Path) -> dict[str, Any]:
-    quality = validate_source_set(pack)
+def normalize(pack: Path, definition_path: Path = DEFINITION) -> dict[str, Any]:
+    quality = validate_source_set(pack, definition_path)
     manifest = json.loads((pack / "enterprise_manifest.json").read_text(encoding="utf-8"))
+    source_version = "v2" if manifest["dataset_id"].endswith("_V2") else "v1"
     files = {entry["source_room_family"]: entry for entry in manifest["files"]}
     source_rows = {
         family: {row["source_row_id"]: row for row in read_csv(pack / entry["file_path"])}
@@ -104,7 +106,7 @@ def normalize(pack: Path) -> dict[str, Any]:
         return {
             "source_family": family,
             "source_owner": family,
-            "source_system": "synthetic_enterprise_v1_generator",
+            "source_system": f"synthetic_enterprise_{source_version}_generator",
             "source_file_path": files[family]["file_path"],
             "source_file_sha256": files[family]["sha256"],
             "source_row_id": row_id,
@@ -165,7 +167,7 @@ def normalize(pack: Path) -> dict[str, Any]:
 
     return {
         "schema_version": 1,
-        "adapter_contract_version": "synthetic-enterprise-v1/layer2/v1",
+        "adapter_contract_version": f"synthetic-enterprise-{source_version}/layer2/v1",
         "dataset_id": manifest["dataset_id"],
         "tenant_key": manifest["tenant_key"],
         "assessment_id": manifest["assessment_id"],
@@ -190,10 +192,11 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--pack", type=Path, required=True)
     parser.add_argument("--out-dir", type=Path, required=True)
+    parser.add_argument("--definition", type=Path, default=DEFINITION)
     args = parser.parse_args()
     if args.out_dir.exists() and any(args.out_dir.iterdir()):
         raise ValueError(f"Refusing to overwrite nonempty adapter output: {args.out_dir}")
-    normalized = normalize(args.pack.resolve())
+    normalized = normalize(args.pack.resolve(), args.definition)
     args.out_dir.mkdir(parents=True, exist_ok=True)
     write_json(args.out_dir / "normalized_enterprise.json", normalized)
     print(json.dumps({"dataset_id": normalized["dataset_id"], "source_set_hash": normalized["source_set_hash"],
