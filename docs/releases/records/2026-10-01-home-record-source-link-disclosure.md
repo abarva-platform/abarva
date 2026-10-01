@@ -29,7 +29,7 @@ Release lane: `global-control-lane`.
 
 ## Changes Included
 
-- Preserve admitted, verified source-record IDs through Home's typed record projection, including combined record families.
+- Preserve admitted source-record IDs through Home's typed record projection only when the bridge matches the current projection hash and a tenant-scoped canonical source record exists, including combined record families.
 - Show matched or missing link state in selected-record details without adding technical IDs to the business table.
 - Keep reviewed stored copies unchanged. No migration, ingest, generation, tenant write, or shared-runtime setting change.
 

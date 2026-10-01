@@ -496,7 +496,7 @@ function sourceRefIds(value: unknown): string[] {
   return [...new Set(refs)];
 }
 
-type VerifiedSourceRefs = Map<string, Set<string>>;
+type VerifiedSourceRefs = Map<string, Map<string, Set<string>>>;
 
 function admittedSourceRefs(
   row: HomeProjectionRow,
@@ -507,7 +507,9 @@ function admittedSourceRefs(
     !text(row.source_hash)
   )
     return [];
-  const linked = verifiedSourceRefs.get(row.projection_entry_id ?? "");
+  const linked = verifiedSourceRefs
+    .get(row.projection_entry_id ?? "")
+    ?.get(row.source_hash ?? "");
   if (!linked) return [];
   return sourceRefIds(row.source_refs_json).filter((ref) => linked.has(ref));
 }
@@ -2952,18 +2954,30 @@ async function readVerifiedSourceRefs(
     const links = await azureRead.query<{
       projection_entry_id: string;
       source_record_id: string;
+      source_hash: string;
     }>(
-      `select projection_entry_id::text, source_record_id::text
-       from ecl_projection.projection_entry_source_record_ref
-       where tenant_key = $1 and assessment_id = $2`,
+      `select link.projection_entry_id::text, link.source_record_id::text, link.source_hash
+       from ecl_projection.projection_entry_source_record_ref link
+       join ecl_projection.projection_entry entry
+         on entry.tenant_key = link.tenant_key
+        and entry.assessment_id = link.assessment_id
+        and entry.id = link.projection_entry_id
+        and entry.source_hash = link.source_hash
+       join ecl_source.source_record source
+         on source.tenant_key = link.tenant_key
+        and source.assessment_id = link.assessment_id
+        and source.id = link.source_record_id
+       where link.tenant_key = $1 and link.assessment_id = $2`,
       [tenantKey, assessmentId],
       { missingTable: "empty" },
     );
-    const verified = new Map<string, Set<string>>();
+    const verified: VerifiedSourceRefs = new Map();
     for (const link of links) {
-      const refs = verified.get(link.projection_entry_id) ?? new Set<string>();
+      const byHash = verified.get(link.projection_entry_id) ?? new Map();
+      const refs = byHash.get(link.source_hash) ?? new Set<string>();
       refs.add(link.source_record_id);
-      verified.set(link.projection_entry_id, refs);
+      byHash.set(link.source_hash, refs);
+      verified.set(link.projection_entry_id, byHash);
     }
     return verified;
   } catch (error) {

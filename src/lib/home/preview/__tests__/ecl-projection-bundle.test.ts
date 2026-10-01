@@ -330,6 +330,7 @@ describe("buildTechnologyEstateFromHomeProjectionRows", () => {
         {
           projection_entry_id: "projection-entry-001",
           source_record_id: "source-row-001",
+          source_hash: "source-hash-001",
         },
       ])
       .mockResolvedValueOnce([
@@ -359,6 +360,12 @@ describe("buildTechnologyEstateFromHomeProjectionRows", () => {
     );
     expect(query.mock.calls[2]?.[0]).toEqual(
       expect.stringContaining("projection_entry_source_record_ref"),
+    );
+    expect(query.mock.calls[2]?.[0]).toEqual(
+      expect.stringContaining("entry.source_hash = link.source_hash"),
+    );
+    expect(query.mock.calls[2]?.[0]).toEqual(
+      expect.stringContaining("join ecl_source.source_record source"),
     );
     expect(query.mock.calls[2]?.[1]).toEqual([
       "meridian-health",
@@ -447,6 +454,7 @@ describe("buildTechnologyEstateFromHomeProjectionRows", () => {
         {
           projection_entry_id: "projection-entry-001",
           source_record_id: "source-row-001",
+          source_hash: "source-hash-001",
         },
       ])
       .mockRejectedValueOnce(new Error("source catalog unavailable"));
@@ -1175,7 +1183,12 @@ describe("buildTechnologyEstateFromHomeProjectionRows", () => {
         }),
       ],
       undefined,
-      new Map([["projection-entry-001", new Set(["source-row-001"])]]),
+      new Map([
+        [
+          "projection-entry-001",
+          new Map([["source-hash-001", new Set(["source-row-001"])]]),
+        ],
+      ]),
     );
 
     const contextId = "ctx_ecl_applications_systems_application_APP_001";
@@ -1248,7 +1261,12 @@ describe("buildTechnologyEstateFromHomeProjectionRows", () => {
         }),
       ],
       undefined,
-      new Map([["projection-entry-003", new Set(["different-source-row"])]]),
+      new Map([
+        [
+          "projection-entry-003",
+          new Map([["source-hash-003", new Set(["different-source-row"])]]),
+        ],
+      ]),
     );
 
     expect(
@@ -1263,6 +1281,31 @@ describe("buildTechnologyEstateFromHomeProjectionRows", () => {
       )?.rowSourceRefs,
     ).toEqual([[]]);
     expect(bundle.contextVersion?.sourceSetHash).toBeNull();
+  });
+
+  it("does not reuse a source link from an older version of the served row", () => {
+    const estate = buildTechnologyEstateFromHomeProjectionRows(
+      [
+        row({
+          page_key: "applications_systems",
+          row_key: "APP-004",
+          row_type: "application",
+          title: "Updated application",
+          projection_entry_id: "projection-entry-004",
+          source_hash: "current-hash",
+          source_refs_json: ["source-row-004"],
+          admission_status: "admitted",
+        }),
+      ],
+      new Map([
+        [
+          "projection-entry-004",
+          new Map([["prior-hash", new Set(["source-row-004"])]]),
+        ],
+      ]),
+    );
+
+    expect(estate.recordTypes[0]?.rowSourceRefs).toEqual([[]]);
   });
 
   it("keeps verified references aligned when data flows and workloads share one browser", () => {
@@ -1291,8 +1334,11 @@ describe("buildTechnologyEstateFromHomeProjectionRows", () => {
     const estate = buildTechnologyEstateFromHomeProjectionRows(
       rows,
       new Map([
-        ["workload-entry", new Set(["workload-source"])],
-        ["flow-entry", new Set(["flow-source"])],
+        [
+          "workload-entry",
+          new Map([["workload-hash", new Set(["workload-source"])]]),
+        ],
+        ["flow-entry", new Map([["flow-hash", new Set(["flow-source"])]])],
       ]),
     );
     const data = estate.recordTypes.find(
@@ -1331,7 +1377,12 @@ describe("buildTechnologyEstateFromHomeProjectionRows", () => {
       base,
       rows,
       undefined,
-      new Map([["projection-entry-004", new Set(["source-row-004"])]]),
+      new Map([
+        [
+          "projection-entry-004",
+          new Map([["source-hash-004", new Set(["source-row-004"])]]),
+        ],
+      ]),
     );
 
     expect(before.contextVersion?.projectionContentHash).toBe(
@@ -1369,7 +1420,10 @@ describe("buildTechnologyEstateFromHomeProjectionRows", () => {
       }),
     ];
     const links = new Map([
-      ["projection-entry-005", new Set(["source-row-005"])],
+      [
+        "projection-entry-005",
+        new Map([["row-hash", new Set(["source-row-005"])]]),
+      ],
     ]);
     const sourceFile: HomeSourceFileReviewRow = {
       id: "source-file-005",
@@ -1481,7 +1535,10 @@ describe("buildTechnologyEstateFromHomeProjectionRows", () => {
       }),
     ];
     const links = new Map([
-      ["projection-entry-005", new Set(["source-row-005"])],
+      [
+        "projection-entry-005",
+        new Map([["row-hash", new Set(["source-row-005"])]]),
+      ],
     ]);
     const packetHash = buildHomeReviewBundleFromEclProjectionRows(
       base,
