@@ -32,13 +32,14 @@ Adds a reviewed physical vocabulary for a versioned synthetic enterprise context
 - Exhaustive canonical mapping for all source object types, including logical applications versus modules, data products, deployments, personas, and platform classes.
 - Additive ECL object catalog and relationship constraint migration.
 - Matching disposable-Postgres schema draft and focused normalization tests.
+- Classified the historical dense local proof's object-type catalog increase from 20 to 27; its fixture and product counts remain unchanged.
 
 ## QA / Validation
 
 - Local adapter tests pass with all 5,759 source objects and 10,620 declared relationships preserved (one unresolved edge remains separate).
-- On disposable PostgreSQL, the existing ECL substrate baseline accepted the new migration; a second application also succeeded. Insert-level proof admitted a governed module and an unreceived evidence request linked by `EVIDENCE_REQUESTED_FOR` (two objects, one relationship).
+- On disposable PostgreSQL, the existing ECL substrate baseline accepted the new migration; a second application also succeeded. Insert-level proof admitted a logical application, governed module, and unreceived evidence request, plus all 26 normalized relationship verbs.
 - The updated local schema draft built from scratch and registered the same seven `context_detail` types.
-- Every canonical object type in the normalized source set resolved in the local catalog. Inserting one logical application plus one governed module yielded one row in `application_v` and two rows in the underlying object table.
+- Every canonical object type in the normalized source set resolved in the local catalog. Inserting one logical application plus one governed module and one evidence request yielded one row in `application_v` and three rows in the underlying object table.
 - The migrated relationship constraint contains every normalized source relationship type and retains the old allowlist.
 - A disposable PostgreSQL CI job repeats the baseline upgrade, migration idempotency, canonical-type coverage, application count isolation, all 26 normalized relationship verbs, and unknown-verb rejection.
 - Release and CI checks must pass before merge.
