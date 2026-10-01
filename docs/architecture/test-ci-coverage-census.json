@@ -19,25 +19,25 @@
   ],
   "counts": {
     "testFiles": 2592,
-    "coveredTestFiles": 2389,
-    "pullRequestCoveredTestFiles": 2388,
-    "uncoveredTestFiles": 203,
+    "coveredTestFiles": 2396,
+    "pullRequestCoveredTestFiles": 2395,
+    "uncoveredTestFiles": 196,
     "directoriesWithTests": 497,
-    "directoriesFullyCovered": 392,
+    "directoriesFullyCovered": 399,
     "directoriesPartiallyCovered": 27,
-    "directoriesUncovered": 78,
-    "directoriesWithUnrunTestFiles": 105,
-    "directoriesWithUntriagedUnrunTestFiles": 94,
+    "directoriesUncovered": 71,
+    "directoriesWithUnrunTestFiles": 98,
+    "directoriesWithUntriagedUnrunTestFiles": 87,
     "declaredQuarantineTestFiles": 52,
-    "untriagedUnrunTestFiles": 151,
+    "untriagedUnrunTestFiles": 144,
     "indeterminateInvocations": 0,
     "unresolvedIgnoreArguments": 0,
     "criticalGovernedRiskDirectories": 0,
     "highGovernedRiskDirectories": 0,
-    "unclassifiedRiskDirectories": 88,
+    "unclassifiedRiskDirectories": 81,
     "rankedDirectories": 39,
     "rankedUntriagedUnrunTestFiles": 39,
-    "unclassifiedRiskDirectoriesWithResolvedProductSources": 82,
+    "unclassifiedRiskDirectoriesWithResolvedProductSources": 75,
     "unclassifiedRiskDirectoriesWithNoResolvedProductSource": 6
   },
   "quarantineLists": [
@@ -1226,7 +1226,7 @@
     }
   ],
   "triageVerdicts": {
-    "heldUntriagedUnrunTestFiles": 112,
+    "heldUntriagedUnrunTestFiles": 105,
     "drawableUntriagedUnrunTestFiles": 39,
     "heldByVerdict": {
       "already_verdicted_elsewhere": 27,
@@ -1235,7 +1235,7 @@
       "rewrite_as_behavior": 9,
       "update_with_reason_recorded": 11,
       "vacuous_control_proof": 3,
-      "wire_into_ci": 52
+      "wire_into_ci": 45
     },
     "heldTestPaths": [
       {
@@ -1533,20 +1533,6 @@
         "ownerItem": "T-775"
       },
       {
-        "testPath": "src/lib/dependencies/__tests__/proposals.test.ts",
-        "verdict": "wire_into_ci",
-        "record": "docs/architecture/item26-draw16-stale-suite-triage.json",
-        "recordedAt": "2026-10-01T04:39:29Z",
-        "ownerItem": "26"
-      },
-      {
-        "testPath": "src/lib/email/__tests__/send.test.ts",
-        "verdict": "wire_into_ci",
-        "record": "docs/architecture/item26-draw16-stale-suite-triage.json",
-        "recordedAt": "2026-10-01T04:39:29Z",
-        "ownerItem": "26"
-      },
-      {
         "testPath": "src/lib/enterprise-context/__tests__/derived-enterprise-read.test.ts",
         "verdict": "already_verdicted_elsewhere",
         "record": "docs/architecture/t771-stale-suite-triage.json",
@@ -1556,13 +1542,6 @@
       {
         "testPath": "src/lib/enterprise-data/candidate-version-build/__tests__/candidate-version-build.test.ts",
         "verdict": "repair",
-        "record": "docs/architecture/item26-draw16-stale-suite-triage.json",
-        "recordedAt": "2026-10-01T04:39:29Z",
-        "ownerItem": "26"
-      },
-      {
-        "testPath": "src/lib/enterprise-data/contracts/__tests__/layer3-validation.test.ts",
-        "verdict": "wire_into_ci",
         "record": "docs/architecture/item26-draw16-stale-suite-triage.json",
         "recordedAt": "2026-10-01T04:39:29Z",
         "ownerItem": "26"
@@ -1603,13 +1582,6 @@
         "ownerItem": "26"
       },
       {
-        "testPath": "src/lib/enterprise-knowledge/assembler/__tests__/tower-context-pack-builder.test.ts",
-        "verdict": "wire_into_ci",
-        "record": "docs/architecture/item26-draw16-stale-suite-triage.json",
-        "recordedAt": "2026-10-01T04:39:29Z",
-        "ownerItem": "26"
-      },
-      {
         "testPath": "src/lib/enterprise-knowledge/tower/__tests__/tower-v3-context-pack-from-tenant-inputs.test.ts",
         "verdict": "update_with_reason_recorded",
         "record": "docs/architecture/item26-draw16-stale-suite-triage.json",
@@ -1619,13 +1591,6 @@
       {
         "testPath": "src/lib/evidence/__tests__/ledger.test.ts",
         "verdict": "update_with_reason_recorded",
-        "record": "docs/architecture/item26-draw16-stale-suite-triage.json",
-        "recordedAt": "2026-10-01T04:39:29Z",
-        "ownerItem": "26"
-      },
-      {
-        "testPath": "src/lib/features/__tests__/is-feature-enabled.test.ts",
-        "verdict": "wire_into_ci",
         "record": "docs/architecture/item26-draw16-stale-suite-triage.json",
         "recordedAt": "2026-10-01T04:39:29Z",
         "ownerItem": "26"
@@ -1839,20 +1804,6 @@
         "record": "docs/architecture/t492-stale-suite-triage.json",
         "recordedAt": "2026-09-27T08:50:59.457Z",
         "ownerItem": "T-494"
-      },
-      {
-        "testPath": "src/lib/intelligence/ask/response-policy.test.ts",
-        "verdict": "wire_into_ci",
-        "record": "docs/architecture/item26-draw16-stale-suite-triage.json",
-        "recordedAt": "2026-10-01T04:39:29Z",
-        "ownerItem": "26"
-      },
-      {
-        "testPath": "src/lib/intelligence/binding/__tests__/binding-payload.test.ts",
-        "verdict": "wire_into_ci",
-        "record": "docs/architecture/item26-draw16-stale-suite-triage.json",
-        "recordedAt": "2026-10-01T04:39:29Z",
-        "ownerItem": "26"
       },
       {
         "testPath": "src/lib/intelligence/canonical/agent-grounding-disclosure.test.ts",
@@ -2217,19 +2168,6 @@
       }
     },
     {
-      "directory": "src/lib/email/__tests__",
-      "testFiles": 1,
-      "unrunTestFiles": 1,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 1,
-      "governedRisk": {
-        "score": 0,
-        "band": "unclassified",
-        "signals": [],
-        "productSourceCount": 1
-      }
-    },
-    {
       "directory": "src/lib/enterprise-data/candidate-version-build/__tests__",
       "testFiles": 1,
       "unrunTestFiles": 1,
@@ -2295,46 +2233,7 @@
       }
     },
     {
-      "directory": "src/lib/enterprise-knowledge/assembler/__tests__",
-      "testFiles": 1,
-      "unrunTestFiles": 1,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 1,
-      "governedRisk": {
-        "score": 0,
-        "band": "unclassified",
-        "signals": [],
-        "productSourceCount": 1
-      }
-    },
-    {
       "directory": "src/lib/enterprise-knowledge/tower/__tests__",
-      "testFiles": 1,
-      "unrunTestFiles": 1,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 1,
-      "governedRisk": {
-        "score": 0,
-        "band": "unclassified",
-        "signals": [],
-        "productSourceCount": 1
-      }
-    },
-    {
-      "directory": "src/lib/features/__tests__",
-      "testFiles": 1,
-      "unrunTestFiles": 1,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 1,
-      "governedRisk": {
-        "score": 0,
-        "band": "unclassified",
-        "signals": [],
-        "productSourceCount": 1
-      }
-    },
-    {
-      "directory": "src/lib/intelligence/ask",
       "testFiles": 1,
       "unrunTestFiles": 1,
       "declaredQuarantineTestFiles": 0,
@@ -2724,32 +2623,6 @@
       }
     },
     {
-      "directory": "src/lib/dependencies/__tests__",
-      "testFiles": 1,
-      "unrunTestFiles": 1,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 1,
-      "governedRisk": {
-        "score": 0,
-        "band": "unclassified",
-        "signals": [],
-        "productSourceCount": 2
-      }
-    },
-    {
-      "directory": "src/lib/enterprise-data/contracts/__tests__",
-      "testFiles": 1,
-      "unrunTestFiles": 1,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 1,
-      "governedRisk": {
-        "score": 0,
-        "band": "unclassified",
-        "signals": [],
-        "productSourceCount": 2
-      }
-    },
-    {
       "directory": "src/lib/enterprise-data/module-context-serving/__tests__",
       "testFiles": 1,
       "unrunTestFiles": 1,
@@ -2998,19 +2871,6 @@
     },
     {
       "directory": "src/lib/intelligence/analytics/__tests__",
-      "testFiles": 1,
-      "unrunTestFiles": 1,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 1,
-      "governedRisk": {
-        "score": 0,
-        "band": "unclassified",
-        "signals": [],
-        "productSourceCount": 3
-      }
-    },
-    {
-      "directory": "src/lib/intelligence/binding/__tests__",
       "testFiles": 1,
       "unrunTestFiles": 1,
       "declaredQuarantineTestFiles": 0,
@@ -3394,31 +3254,7 @@
       "via": []
     },
     {
-      "directory": "src/lib/dependencies/__tests__",
-      "testFiles": 1,
-      "coveredTestFiles": 0,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 1,
-      "via": []
-    },
-    {
-      "directory": "src/lib/email/__tests__",
-      "testFiles": 1,
-      "coveredTestFiles": 0,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 1,
-      "via": []
-    },
-    {
       "directory": "src/lib/enterprise-data/candidate-version-build/__tests__",
-      "testFiles": 1,
-      "coveredTestFiles": 0,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 1,
-      "via": []
-    },
-    {
-      "directory": "src/lib/enterprise-data/contracts/__tests__",
       "testFiles": 1,
       "coveredTestFiles": 0,
       "declaredQuarantineTestFiles": 0,
@@ -3466,14 +3302,6 @@
       "via": []
     },
     {
-      "directory": "src/lib/enterprise-knowledge/assembler/__tests__",
-      "testFiles": 1,
-      "coveredTestFiles": 0,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 1,
-      "via": []
-    },
-    {
       "directory": "src/lib/enterprise-knowledge/tower/__tests__",
       "testFiles": 1,
       "coveredTestFiles": 0,
@@ -3483,14 +3311,6 @@
     },
     {
       "directory": "src/lib/evidence/__tests__",
-      "testFiles": 1,
-      "coveredTestFiles": 0,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 1,
-      "via": []
-    },
-    {
-      "directory": "src/lib/features/__tests__",
       "testFiles": 1,
       "coveredTestFiles": 0,
       "declaredQuarantineTestFiles": 0,
@@ -3523,22 +3343,6 @@
     },
     {
       "directory": "src/lib/intelligence/answer/evals/live-answer/__tests__",
-      "testFiles": 1,
-      "coveredTestFiles": 0,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 1,
-      "via": []
-    },
-    {
-      "directory": "src/lib/intelligence/ask",
-      "testFiles": 1,
-      "coveredTestFiles": 0,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 1,
-      "via": []
-    },
-    {
-      "directory": "src/lib/intelligence/binding/__tests__",
       "testFiles": 1,
       "coveredTestFiles": 0,
       "declaredQuarantineTestFiles": 0,
