@@ -8,7 +8,6 @@
   "src/components/tenant/__tests__",
   "src/lib/admin",
   "src/lib/adversarial/__tests__",
-  "src/lib/agent/streaming",
   "src/lib/artifact-excellence/__tests__",
   "src/lib/compliance/__tests__",
   "src/lib/cxo-canvas/__tests__",

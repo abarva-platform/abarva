@@ -19,25 +19,25 @@
   ],
   "counts": {
     "testFiles": 2589,
-    "coveredTestFiles": 2385,
-    "pullRequestCoveredTestFiles": 2384,
-    "uncoveredTestFiles": 204,
+    "coveredTestFiles": 2386,
+    "pullRequestCoveredTestFiles": 2385,
+    "uncoveredTestFiles": 203,
     "directoriesWithTests": 497,
-    "directoriesFullyCovered": 391,
+    "directoriesFullyCovered": 392,
     "directoriesPartiallyCovered": 27,
-    "directoriesUncovered": 79,
-    "directoriesWithUnrunTestFiles": 106,
-    "directoriesWithUntriagedUnrunTestFiles": 95,
+    "directoriesUncovered": 78,
+    "directoriesWithUnrunTestFiles": 105,
+    "directoriesWithUntriagedUnrunTestFiles": 94,
     "declaredQuarantineTestFiles": 52,
-    "untriagedUnrunTestFiles": 152,
+    "untriagedUnrunTestFiles": 151,
     "indeterminateInvocations": 0,
     "unresolvedIgnoreArguments": 0,
     "criticalGovernedRiskDirectories": 0,
     "highGovernedRiskDirectories": 0,
-    "unclassifiedRiskDirectories": 89,
+    "unclassifiedRiskDirectories": 88,
     "rankedDirectories": 59,
     "rankedUntriagedUnrunTestFiles": 59,
-    "unclassifiedRiskDirectoriesWithResolvedProductSources": 83,
+    "unclassifiedRiskDirectoriesWithResolvedProductSources": 82,
     "unclassifiedRiskDirectoriesWithNoResolvedProductSource": 6
   },
   "quarantineLists": [
@@ -1626,13 +1626,13 @@
     }
   ],
   "triageVerdicts": {
-    "heldUntriagedUnrunTestFiles": 93,
+    "heldUntriagedUnrunTestFiles": 92,
     "drawableUntriagedUnrunTestFiles": 59,
     "heldByVerdict": {
       "already_verdicted_elsewhere": 22,
       "real": 1,
       "repair": 4,
-      "rewrite_as_behavior": 10,
+      "rewrite_as_behavior": 9,
       "update_with_reason_recorded": 8,
       "vacuous_control_proof": 3,
       "wire_into_ci": 45
@@ -1896,13 +1896,6 @@
         "record": "docs/architecture/item26-draw15-stale-suite-triage.json",
         "recordedAt": "2026-10-01T01:49:59Z",
         "ownerItem": "T-775"
-      },
-      {
-        "testPath": "src/lib/agent/streaming/toolUseLoop.test.ts",
-        "verdict": "rewrite_as_behavior",
-        "record": "docs/architecture/item26-draw15-stale-suite-triage.json",
-        "recordedAt": "2026-10-01T01:49:59Z",
-        "ownerItem": "26"
       },
       {
         "testPath": "src/lib/artifact-excellence/__tests__/cxo-artifact-excellence-framework.test.ts",
@@ -2459,19 +2452,6 @@
     },
     {
       "directory": "src/lib/adversarial/__tests__",
-      "testFiles": 1,
-      "unrunTestFiles": 1,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 1,
-      "governedRisk": {
-        "score": 0,
-        "band": "unclassified",
-        "signals": [],
-        "productSourceCount": 1
-      }
-    },
-    {
-      "directory": "src/lib/agent/streaming",
       "testFiles": 1,
       "unrunTestFiles": 1,
       "declaredQuarantineTestFiles": 0,
@@ -3643,14 +3623,6 @@
     },
     {
       "directory": "src/lib/adversarial/__tests__",
-      "testFiles": 1,
-      "coveredTestFiles": 0,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 1,
-      "via": []
-    },
-    {
-      "directory": "src/lib/agent/streaming",
       "testFiles": 1,
       "coveredTestFiles": 0,
       "declaredQuarantineTestFiles": 0,

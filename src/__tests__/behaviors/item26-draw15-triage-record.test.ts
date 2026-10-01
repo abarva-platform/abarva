@@ -49,6 +49,15 @@ type Suite = {
     passedTests: number;
     failedTests: number;
   };
+  rewritten?: {
+    rewrittenInThisItem: boolean;
+    reExecutedOn: string;
+    drawnReadsRepositoryFileText: boolean;
+    drawnSourceTextScanner: boolean;
+    totalTests: number;
+    passedTests: number;
+    failedTests: number;
+  };
   unreachableSubject?: { path: string; registry: string; list: string };
   redCause?: {
     kind: "stale_label";
@@ -74,10 +83,12 @@ const readJson = <T>(relative: string) => JSON.parse(readText(relative)) as T;
 const record = readJson<TriageRecord>(RECORD_PATH);
 
 // A row is RUN by an item 26 draw 15 step when its verdict was wire_into_ci, or
-// when it was a stale-label update that this item has since applied. Every
-// other row is a hold and must stay unwired.
+// when it was a stale-label update or a behaviour rewrite that this item has
+// since applied. Every other row is a hold and must stay unwired.
 const isRunRow = (suite: Suite) =>
-  suite.verdict === "wire_into_ci" || suite.updated?.updatedInThisItem === true;
+  suite.verdict === "wire_into_ci" ||
+  suite.updated?.updatedInThisItem === true ||
+  suite.rewritten?.rewrittenInThisItem === true;
 
 const READS_REPOSITORY_TEXT =
   /readFileSync|from ["'](?:node:)?fs(?:\/promises)?["']|process\.cwd\(\)|__dirname/;
@@ -287,6 +298,55 @@ describe("item 26 draw 15 stale suite triage record", () => {
         testStillExpectsOldLiteral: true,
         sourceLacksOldLiteral: true,
         sourceHasCurrentLiteral: true,
+      });
+    }
+  });
+
+  // A rewrite_as_behavior row is held while it is still a byte scan. Once the
+  // rewrite is applied the row must say so, and the file must prove it: no
+  // repository text (re-derived from its bytes), not one of the literals the
+  // scan matched, an import of the subject it now CALLS, and a green
+  // re-execution. The draw-time classification survives in `rewritten.drawn*`.
+  it("holds a rewrite_as_behavior row while it still scans bytes, and accepts it only once the file calls its subject", () => {
+    const rewrites = record.suites.filter((suite) => suite.verdict === "rewrite_as_behavior");
+    expect(rewrites).toHaveLength(record.counts.rewrite_as_behavior);
+    for (const suite of rewrites) {
+      const testText = readText(suite.path);
+      if (!suite.rewritten?.rewrittenInThisItem) {
+        expect({ path: suite.path, scansBytes: READS_REPOSITORY_TEXT.test(testText) }).toEqual({
+          path: suite.path,
+          scansBytes: true,
+        });
+        continue;
+      }
+      expect({
+        path: suite.path,
+        classifiedNow: [suite.readsRepositoryFileText, suite.sourceTextScanner],
+        classifiedAtDraw: [
+          suite.rewritten.drawnReadsRepositoryFileText,
+          suite.rewritten.drawnSourceTextScanner,
+        ],
+        readsRepositoryText: READS_REPOSITORY_TEXT.test(testText),
+        stillMatchesParameterLiteral: testText.includes(
+          "initialToolChoice?: AnthropicMessageStreamParams['tool_choice']",
+        ),
+        stillMatchesSpreadLiteral: testText.includes("turn === 1 && args.initialToolChoice"),
+        importsSubject: testText.includes("from './toolUseLoop'"),
+        reExecutedGreen:
+          suite.rewritten.failedTests === 0 &&
+          suite.rewritten.passedTests === suite.rewritten.totalTests &&
+          suite.rewritten.totalTests > 0,
+        wiredInThisItem: suite.wiredInThisItem,
+      }).toEqual({
+        path: suite.path,
+        classifiedNow: [false, false],
+        classifiedAtDraw: [true, true],
+        readsRepositoryText: false,
+        stillMatchesParameterLiteral: false,
+        stillMatchesSpreadLiteral: false,
+        importsSubject: true,
+        reExecutedGreen: true,
+        wiredInThisItem: true,
       });
     }
   });
