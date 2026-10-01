@@ -524,11 +524,12 @@ function PdfChapter({
     </>
   );
   const prior = (
-    <>
+    <View wrap={false}>
+      {mixed ? <Text style={pdfStyles.h3}>{priorLabel}</Text> : null}
       <Text style={pdfStyles.title}>{chapter.headline}</Text>
       <Text style={pdfStyles.meta}>{chapter.guidingQuestion}</Text>
       <Text style={pdfStyles.text}>{chapter.executive_synthesis}</Text>
-    </>
+    </View>
   );
   return (
     <Page size="LETTER" style={pdfStyles.page}>
@@ -560,7 +561,6 @@ function PdfChapter({
             ) : null}
           </View>
           {currentDepth}
-          <Text style={pdfStyles.h3}>{priorLabel}</Text>
           {prior}
         </>
       ) : (

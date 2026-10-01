@@ -1,4 +1,5 @@
-import { pdf } from "@react-pdf/renderer";
+import { pdf, View } from "@react-pdf/renderer";
+import { isValidElement, type ReactNode } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 
 import * as chapterPageContent from "@/components/home/v4/chapter-page-content";
@@ -278,6 +279,63 @@ describe("Home walkthrough export", () => {
           .chapterDepth,
       );
     }
+  });
+
+  it("keeps each prior interpretation with its heading and question in one PDF block", () => {
+    const bundle = bundleWithGraph();
+    const chapter = bundle.chapters.find(
+      (item) => item.chapterId === "what_needs_attention",
+    );
+    expect(chapter).toBeDefined();
+    const document = buildHomeWalkthroughPdf({
+      bundle,
+      recordSource,
+      tenantLabel: "Test Enterprise",
+      format: "pdf",
+    });
+
+    function rawText(node: ReactNode): string {
+      if (typeof node === "string" || typeof node === "number") {
+        return String(node);
+      }
+      if (Array.isArray(node)) return node.map(rawText).join("");
+      if (!isValidElement(node)) return "";
+      return rawText((node.props as { children?: ReactNode }).children);
+    }
+
+    let unbreakablePriorFound = false;
+    function visit(node: ReactNode): void {
+      if (Array.isArray(node)) {
+        node.forEach(visit);
+        return;
+      }
+      if (!isValidElement(node)) return;
+      const props = node.props as { children?: ReactNode; wrap?: boolean };
+      if (
+        node.type === View &&
+        props.wrap === false &&
+        rawText(props.children).includes(chapter!.headline) &&
+        rawText(props.children).includes(chapter!.guidingQuestion) &&
+        rawText(props.children).includes(chapter!.executive_synthesis)
+      ) {
+        unbreakablePriorFound = true;
+      }
+      if (typeof node.type === "function") {
+        visit(
+          (
+            node.type as (input: {
+              children?: ReactNode;
+              wrap?: boolean;
+            }) => ReactNode
+          )(props),
+        );
+      } else {
+        visit(props.children);
+      }
+    }
+
+    visit(document);
+    expect(unbreakablePriorFound).toBe(true);
   });
 
   it("leads each mixed chapter with current depth and labels prior interpretation", () => {
