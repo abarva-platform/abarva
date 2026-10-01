@@ -37,6 +37,30 @@ function mockMove(overrides: Record<string, unknown> = {}) {
     id: "move-1",
     displayCode: "MOVE-1",
     name: "Member Service Agent Assist",
+    currentPhase: 2,
+    gateCriteria: [
+      {
+        id: "charter_signed_off",
+        label: "Discovery report signed off",
+        severity: "hard",
+        completed: false,
+        verified: true,
+      },
+      {
+        id: "sponsor_assigned",
+        label: "Sponsor assigned",
+        severity: "hard",
+        completed: true,
+        verified: true,
+      },
+      {
+        id: "baseline_captured",
+        label: "Baseline captured",
+        severity: "soft",
+        completed: false,
+        verified: true,
+      },
+    ],
     tenant: {
       id: "tenant-meridian",
       name: "Healthcare Demo",
@@ -56,6 +80,7 @@ function mockMove(overrides: Record<string, unknown> = {}) {
 describe("buildPhaseIntelligenceSummary", () => {
   beforeEach(() => {
     jest.resetModules();
+    buildGateCriteria.mockClear();
     getThreadForArtifact.mockResolvedValue({
       id: "thread-1",
       client_id: "tenant-meridian",
@@ -86,7 +111,7 @@ describe("buildPhaseIntelligenceSummary", () => {
         id: "g1",
         label: "Evidence attached",
         severity: "hard",
-        completed: true,
+        completed: false,
         verified: true,
       },
       {
@@ -125,10 +150,9 @@ describe("buildPhaseIntelligenceSummary", () => {
     });
   });
 
-  it("composes KDD, Function Pack, and gate/evidence truth without a model call", async () => {
-    const { buildPhaseIntelligenceSummary } = await import(
-      "@/lib/programs/phase-intelligence-summary"
-    );
+  it("uses the workspace gate projection for current-phase intelligence", async () => {
+    const { buildPhaseIntelligenceSummary } =
+      await import("@/lib/programs/phase-intelligence-summary");
 
     const summary = await buildPhaseIntelligenceSummary(ctx, {
       moveId: "move-1",
@@ -161,7 +185,56 @@ describe("buildPhaseIntelligenceSummary", () => {
       "move-1",
       "tenant-meridian",
     );
-    expect(buildGateCriteria).toHaveBeenCalledWith(ctx, "move-1", 2);
+    expect(buildGateCriteria).not.toHaveBeenCalled();
+  });
+
+  it("evaluates a historical phase explicitly instead of borrowing the current gate", async () => {
+    getStrategicMoveById.mockResolvedValue(
+      mockMove({
+        currentPhase: 3,
+        gateCriteria: [
+          {
+            id: "design_approved",
+            label: "Current phase gate",
+            severity: "hard",
+            completed: true,
+            verified: true,
+          },
+        ],
+      }),
+    );
+    buildGateCriteria.mockResolvedValue([
+      {
+        id: "discovery_report_signed_off",
+        label: "Discovery synthesis report signed off",
+        severity: "hard",
+        completed: false,
+        verified: true,
+      },
+      {
+        id: "discovery_baseline_attested",
+        label: "Discovery baseline attested",
+        severity: "hard",
+        completed: true,
+        verified: true,
+      },
+    ]);
+
+    const { buildPhaseIntelligenceSummary } = await import(
+      "@/lib/programs/phase-intelligence-summary"
+    );
+    const summary = await buildPhaseIntelligenceSummary(ctx, {
+      moveId: "move-1",
+      phase: 2,
+    });
+
+    expect(buildGateCriteria).toHaveBeenCalledWith(ctx, "move-1", 2, {
+      allowHistoricalPhase: true,
+    });
+    expect(summary.items[2].facts).toContain("1/2 hard gates met");
+    expect(summary.items[2].title).toBe(
+      "1 hard gate open; 1 required evidence gap.",
+    );
   });
 
   it("degrades honestly when there is no KDD or function pack binding", async () => {
