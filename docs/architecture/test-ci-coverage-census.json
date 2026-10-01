@@ -18,9 +18,9 @@
     "No timestamp is recorded, so refreshing this file on an unchanged tree is a no-op."
   ],
   "counts": {
-    "testFiles": 2589,
-    "coveredTestFiles": 2386,
-    "pullRequestCoveredTestFiles": 2385,
+    "testFiles": 2592,
+    "coveredTestFiles": 2389,
+    "pullRequestCoveredTestFiles": 2388,
     "uncoveredTestFiles": 203,
     "directoriesWithTests": 497,
     "directoriesFullyCovered": 392,
@@ -35,8 +35,8 @@
     "criticalGovernedRiskDirectories": 0,
     "highGovernedRiskDirectories": 0,
     "unclassifiedRiskDirectories": 88,
-    "rankedDirectories": 59,
-    "rankedUntriagedUnrunTestFiles": 59,
+    "rankedDirectories": 39,
+    "rankedUntriagedUnrunTestFiles": 39,
     "unclassifiedRiskDirectoriesWithResolvedProductSources": 82,
     "unclassifiedRiskDirectoriesWithNoResolvedProductSource": 6
   },
@@ -171,8 +171,8 @@
   "partiallyCoveredDirectories": [
     {
       "directory": "src/__tests__/integration/source",
-      "testFiles": 105,
-      "coveredTestFiles": 97,
+      "testFiles": 107,
+      "coveredTestFiles": 99,
       "declaredQuarantineTestFiles": 8,
       "untriagedUnrunTestFiles": 0,
       "via": [
@@ -445,406 +445,6 @@
   "governedRiskFiles": [],
   "governedRiskRanking": [
     {
-      "directory": "src/lib/dependencies/__tests__",
-      "testFiles": 1,
-      "unrunTestFiles": 1,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 1,
-      "verdictHeldUntriagedUnrunTestFiles": 0,
-      "drawableUnrunTestFiles": 1,
-      "drawableTestPaths": [
-        "src/lib/dependencies/__tests__/proposals.test.ts"
-      ],
-      "admittedBy": "untriaged_unrun_work",
-      "governedRisk": {
-        "score": 0,
-        "band": "unclassified",
-        "signals": [],
-        "productSourceCount": 2,
-        "rank": 1
-      }
-    },
-    {
-      "directory": "src/lib/email/__tests__",
-      "testFiles": 1,
-      "unrunTestFiles": 1,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 1,
-      "verdictHeldUntriagedUnrunTestFiles": 0,
-      "drawableUnrunTestFiles": 1,
-      "drawableTestPaths": [
-        "src/lib/email/__tests__/send.test.ts"
-      ],
-      "admittedBy": "untriaged_unrun_work",
-      "governedRisk": {
-        "score": 0,
-        "band": "unclassified",
-        "signals": [],
-        "productSourceCount": 1,
-        "rank": 2
-      }
-    },
-    {
-      "directory": "src/lib/enterprise-data/candidate-version-build/__tests__",
-      "testFiles": 1,
-      "unrunTestFiles": 1,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 1,
-      "verdictHeldUntriagedUnrunTestFiles": 0,
-      "drawableUnrunTestFiles": 1,
-      "drawableTestPaths": [
-        "src/lib/enterprise-data/candidate-version-build/__tests__/candidate-version-build.test.ts"
-      ],
-      "admittedBy": "untriaged_unrun_work",
-      "governedRisk": {
-        "score": 0,
-        "band": "unclassified",
-        "signals": [],
-        "productSourceCount": 1,
-        "rank": 3
-      }
-    },
-    {
-      "directory": "src/lib/enterprise-data/contracts/__tests__",
-      "testFiles": 1,
-      "unrunTestFiles": 1,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 1,
-      "verdictHeldUntriagedUnrunTestFiles": 0,
-      "drawableUnrunTestFiles": 1,
-      "drawableTestPaths": [
-        "src/lib/enterprise-data/contracts/__tests__/layer3-validation.test.ts"
-      ],
-      "admittedBy": "untriaged_unrun_work",
-      "governedRisk": {
-        "score": 0,
-        "band": "unclassified",
-        "signals": [],
-        "productSourceCount": 2,
-        "rank": 4
-      }
-    },
-    {
-      "directory": "src/lib/enterprise-data/data-quality/__tests__",
-      "testFiles": 1,
-      "unrunTestFiles": 1,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 1,
-      "verdictHeldUntriagedUnrunTestFiles": 0,
-      "drawableUnrunTestFiles": 1,
-      "drawableTestPaths": [
-        "src/lib/enterprise-data/data-quality/__tests__/all-tenant-data-quality-audit.test.ts"
-      ],
-      "admittedBy": "untriaged_unrun_work",
-      "governedRisk": {
-        "score": 0,
-        "band": "unclassified",
-        "signals": [],
-        "productSourceCount": 1,
-        "rank": 5
-      }
-    },
-    {
-      "directory": "src/lib/enterprise-data/enterprise-profile/__tests__",
-      "testFiles": 1,
-      "unrunTestFiles": 1,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 1,
-      "verdictHeldUntriagedUnrunTestFiles": 0,
-      "drawableUnrunTestFiles": 1,
-      "drawableTestPaths": [
-        "src/lib/enterprise-data/enterprise-profile/__tests__/enterprise-profile-foundation.test.ts"
-      ],
-      "admittedBy": "untriaged_unrun_work",
-      "governedRisk": {
-        "score": 0,
-        "band": "unclassified",
-        "signals": [],
-        "productSourceCount": 1,
-        "rank": 6
-      }
-    },
-    {
-      "directory": "src/lib/enterprise-data/module-context-serving/__tests__",
-      "testFiles": 1,
-      "unrunTestFiles": 1,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 1,
-      "verdictHeldUntriagedUnrunTestFiles": 0,
-      "drawableUnrunTestFiles": 1,
-      "drawableTestPaths": [
-        "src/lib/enterprise-data/module-context-serving/__tests__/module-context-serving.test.ts"
-      ],
-      "admittedBy": "untriaged_unrun_work",
-      "governedRisk": {
-        "score": 0,
-        "band": "unclassified",
-        "signals": [],
-        "productSourceCount": 2,
-        "rank": 7
-      }
-    },
-    {
-      "directory": "src/lib/enterprise-data/remediation/__tests__",
-      "testFiles": 1,
-      "unrunTestFiles": 1,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 1,
-      "verdictHeldUntriagedUnrunTestFiles": 0,
-      "drawableUnrunTestFiles": 1,
-      "drawableTestPaths": [
-        "src/lib/enterprise-data/remediation/__tests__/skyharbor-applications-candidate-regeneration.test.ts"
-      ],
-      "admittedBy": "untriaged_unrun_work",
-      "governedRisk": {
-        "score": 0,
-        "band": "unclassified",
-        "signals": [],
-        "productSourceCount": 1,
-        "rank": 8
-      }
-    },
-    {
-      "directory": "src/lib/enterprise-data/tower-candidate-load/__tests__",
-      "testFiles": 1,
-      "unrunTestFiles": 1,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 1,
-      "verdictHeldUntriagedUnrunTestFiles": 0,
-      "drawableUnrunTestFiles": 1,
-      "drawableTestPaths": [
-        "src/lib/enterprise-data/tower-candidate-load/__tests__/tower-governed-candidate-load.test.ts"
-      ],
-      "admittedBy": "untriaged_unrun_work",
-      "governedRisk": {
-        "score": 0,
-        "band": "unclassified",
-        "signals": [],
-        "productSourceCount": 1,
-        "rank": 9
-      }
-    },
-    {
-      "directory": "src/lib/enterprise-knowledge/assembler/__tests__",
-      "testFiles": 1,
-      "unrunTestFiles": 1,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 1,
-      "verdictHeldUntriagedUnrunTestFiles": 0,
-      "drawableUnrunTestFiles": 1,
-      "drawableTestPaths": [
-        "src/lib/enterprise-knowledge/assembler/__tests__/tower-context-pack-builder.test.ts"
-      ],
-      "admittedBy": "untriaged_unrun_work",
-      "governedRisk": {
-        "score": 0,
-        "band": "unclassified",
-        "signals": [],
-        "productSourceCount": 1,
-        "rank": 10
-      }
-    },
-    {
-      "directory": "src/lib/enterprise-knowledge/tower/__tests__",
-      "testFiles": 1,
-      "unrunTestFiles": 1,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 1,
-      "verdictHeldUntriagedUnrunTestFiles": 0,
-      "drawableUnrunTestFiles": 1,
-      "drawableTestPaths": [
-        "src/lib/enterprise-knowledge/tower/__tests__/tower-v3-context-pack-from-tenant-inputs.test.ts"
-      ],
-      "admittedBy": "untriaged_unrun_work",
-      "governedRisk": {
-        "score": 0,
-        "band": "unclassified",
-        "signals": [],
-        "productSourceCount": 1,
-        "rank": 11
-      }
-    },
-    {
-      "directory": "src/lib/evidence/__tests__",
-      "testFiles": 1,
-      "unrunTestFiles": 1,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 1,
-      "verdictHeldUntriagedUnrunTestFiles": 0,
-      "drawableUnrunTestFiles": 1,
-      "drawableTestPaths": [
-        "src/lib/evidence/__tests__/ledger.test.ts"
-      ],
-      "admittedBy": "untriaged_unrun_work",
-      "governedRisk": {
-        "score": 0,
-        "band": "unclassified",
-        "signals": [],
-        "productSourceCount": 2,
-        "rank": 12
-      }
-    },
-    {
-      "directory": "src/lib/features/__tests__",
-      "testFiles": 1,
-      "unrunTestFiles": 1,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 1,
-      "verdictHeldUntriagedUnrunTestFiles": 0,
-      "drawableUnrunTestFiles": 1,
-      "drawableTestPaths": [
-        "src/lib/features/__tests__/is-feature-enabled.test.ts"
-      ],
-      "admittedBy": "untriaged_unrun_work",
-      "governedRisk": {
-        "score": 0,
-        "band": "unclassified",
-        "signals": [],
-        "productSourceCount": 1,
-        "rank": 13
-      }
-    },
-    {
-      "directory": "src/lib/intelligence/advisory-packet/__tests__",
-      "testFiles": 1,
-      "unrunTestFiles": 1,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 1,
-      "verdictHeldUntriagedUnrunTestFiles": 0,
-      "drawableUnrunTestFiles": 1,
-      "drawableTestPaths": [
-        "src/lib/intelligence/advisory-packet/__tests__/advisory-packet.test.ts"
-      ],
-      "admittedBy": "untriaged_unrun_work",
-      "governedRisk": {
-        "score": 0,
-        "band": "unclassified",
-        "signals": [],
-        "productSourceCount": 3,
-        "rank": 14
-      }
-    },
-    {
-      "directory": "src/lib/intelligence/analytics/__tests__",
-      "testFiles": 1,
-      "unrunTestFiles": 1,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 1,
-      "verdictHeldUntriagedUnrunTestFiles": 0,
-      "drawableUnrunTestFiles": 1,
-      "drawableTestPaths": [
-        "src/lib/intelligence/analytics/__tests__/portfolio.test.ts"
-      ],
-      "admittedBy": "untriaged_unrun_work",
-      "governedRisk": {
-        "score": 0,
-        "band": "unclassified",
-        "signals": [],
-        "productSourceCount": 3,
-        "rank": 15
-      }
-    },
-    {
-      "directory": "src/lib/intelligence/answer/evals/__tests__",
-      "testFiles": 1,
-      "unrunTestFiles": 1,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 1,
-      "verdictHeldUntriagedUnrunTestFiles": 0,
-      "drawableUnrunTestFiles": 1,
-      "drawableTestPaths": [
-        "src/lib/intelligence/answer/evals/__tests__/harness.test.ts"
-      ],
-      "admittedBy": "untriaged_unrun_work",
-      "governedRisk": {
-        "score": 0,
-        "band": "unclassified",
-        "signals": [],
-        "productSourceCount": 2,
-        "rank": 16
-      }
-    },
-    {
-      "directory": "src/lib/intelligence/answer/evals/live-answer/__tests__",
-      "testFiles": 1,
-      "unrunTestFiles": 1,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 1,
-      "verdictHeldUntriagedUnrunTestFiles": 0,
-      "drawableUnrunTestFiles": 1,
-      "drawableTestPaths": [
-        "src/lib/intelligence/answer/evals/live-answer/__tests__/live-answer-bank.test.ts"
-      ],
-      "admittedBy": "untriaged_unrun_work",
-      "governedRisk": {
-        "score": 0,
-        "band": "unclassified",
-        "signals": [],
-        "productSourceCount": 4,
-        "rank": 17
-      }
-    },
-    {
-      "directory": "src/lib/intelligence/ask",
-      "testFiles": 1,
-      "unrunTestFiles": 1,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 1,
-      "verdictHeldUntriagedUnrunTestFiles": 0,
-      "drawableUnrunTestFiles": 1,
-      "drawableTestPaths": [
-        "src/lib/intelligence/ask/response-policy.test.ts"
-      ],
-      "admittedBy": "untriaged_unrun_work",
-      "governedRisk": {
-        "score": 0,
-        "band": "unclassified",
-        "signals": [],
-        "productSourceCount": 1,
-        "rank": 18
-      }
-    },
-    {
-      "directory": "src/lib/intelligence/binding/__tests__",
-      "testFiles": 1,
-      "unrunTestFiles": 1,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 1,
-      "verdictHeldUntriagedUnrunTestFiles": 0,
-      "drawableUnrunTestFiles": 1,
-      "drawableTestPaths": [
-        "src/lib/intelligence/binding/__tests__/binding-payload.test.ts"
-      ],
-      "admittedBy": "untriaged_unrun_work",
-      "governedRisk": {
-        "score": 0,
-        "band": "unclassified",
-        "signals": [],
-        "productSourceCount": 3,
-        "rank": 19
-      }
-    },
-    {
-      "directory": "src/lib/intelligence/canvas/__tests__",
-      "testFiles": 1,
-      "unrunTestFiles": 1,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 1,
-      "verdictHeldUntriagedUnrunTestFiles": 0,
-      "drawableUnrunTestFiles": 1,
-      "drawableTestPaths": [
-        "src/lib/intelligence/canvas/__tests__/governed-canvas-pack-registry.test.ts"
-      ],
-      "admittedBy": "untriaged_unrun_work",
-      "governedRisk": {
-        "score": 0,
-        "band": "unclassified",
-        "signals": [],
-        "productSourceCount": 1,
-        "rank": 20
-      }
-    },
-    {
       "directory": "src/lib/intelligence/dossiers/__tests__",
       "testFiles": 1,
       "unrunTestFiles": 1,
@@ -861,7 +461,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 2,
-        "rank": 21
+        "rank": 1
       }
     },
     {
@@ -881,7 +481,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 2,
-        "rank": 22
+        "rank": 2
       }
     },
     {
@@ -901,7 +501,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 23
+        "rank": 3
       }
     },
     {
@@ -921,7 +521,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 24
+        "rank": 4
       }
     },
     {
@@ -941,7 +541,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 25
+        "rank": 5
       }
     },
     {
@@ -961,7 +561,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 26
+        "rank": 6
       }
     },
     {
@@ -981,7 +581,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 27
+        "rank": 7
       }
     },
     {
@@ -1001,7 +601,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 28
+        "rank": 8
       }
     },
     {
@@ -1021,7 +621,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 5,
-        "rank": 29
+        "rank": 9
       }
     },
     {
@@ -1041,7 +641,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 30
+        "rank": 10
       }
     },
     {
@@ -1061,7 +661,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 31
+        "rank": 11
       }
     },
     {
@@ -1081,7 +681,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 32
+        "rank": 12
       }
     },
     {
@@ -1101,7 +701,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 33
+        "rank": 13
       }
     },
     {
@@ -1121,7 +721,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 2,
-        "rank": 34
+        "rank": 14
       }
     },
     {
@@ -1141,7 +741,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 35
+        "rank": 15
       }
     },
     {
@@ -1161,7 +761,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 2,
-        "rank": 36
+        "rank": 16
       }
     },
     {
@@ -1181,7 +781,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 37
+        "rank": 17
       }
     },
     {
@@ -1201,7 +801,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 2,
-        "rank": 38
+        "rank": 18
       }
     },
     {
@@ -1221,7 +821,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 2,
-        "rank": 39
+        "rank": 19
       }
     },
     {
@@ -1241,7 +841,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 2,
-        "rank": 40
+        "rank": 20
       }
     },
     {
@@ -1261,7 +861,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 41
+        "rank": 21
       }
     },
     {
@@ -1281,7 +881,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 42
+        "rank": 22
       }
     },
     {
@@ -1301,7 +901,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 2,
-        "rank": 43
+        "rank": 23
       }
     },
     {
@@ -1321,7 +921,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 4,
-        "rank": 44
+        "rank": 24
       }
     },
     {
@@ -1341,7 +941,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 45
+        "rank": 25
       }
     },
     {
@@ -1361,7 +961,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 2,
-        "rank": 46
+        "rank": 26
       }
     },
     {
@@ -1381,7 +981,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 8,
-        "rank": 47
+        "rank": 27
       }
     },
     {
@@ -1401,7 +1001,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 2,
-        "rank": 48
+        "rank": 28
       }
     },
     {
@@ -1421,7 +1021,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 49
+        "rank": 29
       }
     },
     {
@@ -1441,7 +1041,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 50
+        "rank": 30
       }
     },
     {
@@ -1461,7 +1061,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 51
+        "rank": 31
       }
     },
     {
@@ -1481,7 +1081,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 4,
-        "rank": 52
+        "rank": 32
       }
     },
     {
@@ -1501,7 +1101,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 53
+        "rank": 33
       }
     },
     {
@@ -1521,7 +1121,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 54
+        "rank": 34
       }
     },
     {
@@ -1541,7 +1141,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 55
+        "rank": 35
       }
     },
     {
@@ -1561,7 +1161,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 56
+        "rank": 36
       }
     },
     {
@@ -1581,7 +1181,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 2,
-        "rank": 57
+        "rank": 37
       }
     },
     {
@@ -1601,7 +1201,7 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 3,
-        "rank": 58
+        "rank": 38
       }
     },
     {
@@ -1621,21 +1221,22 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 1,
-        "rank": 59
+        "rank": 39
       }
     }
   ],
   "triageVerdicts": {
-    "heldUntriagedUnrunTestFiles": 92,
-    "drawableUntriagedUnrunTestFiles": 59,
+    "heldUntriagedUnrunTestFiles": 112,
+    "drawableUntriagedUnrunTestFiles": 39,
     "heldByVerdict": {
-      "already_verdicted_elsewhere": 22,
+      "already_verdicted_elsewhere": 27,
+      "held_unwired": 2,
       "real": 1,
-      "repair": 4,
+      "repair": 9,
       "rewrite_as_behavior": 9,
-      "update_with_reason_recorded": 8,
+      "update_with_reason_recorded": 9,
       "vacuous_control_proof": 3,
-      "wire_into_ci": 45
+      "wire_into_ci": 52
     },
     "heldTestPaths": [
       {
@@ -1933,11 +1534,102 @@
         "ownerItem": "T-775"
       },
       {
+        "testPath": "src/lib/dependencies/__tests__/proposals.test.ts",
+        "verdict": "wire_into_ci",
+        "record": "docs/architecture/item26-draw16-stale-suite-triage.json",
+        "recordedAt": "2026-10-01T04:39:29Z",
+        "ownerItem": "26"
+      },
+      {
+        "testPath": "src/lib/email/__tests__/send.test.ts",
+        "verdict": "wire_into_ci",
+        "record": "docs/architecture/item26-draw16-stale-suite-triage.json",
+        "recordedAt": "2026-10-01T04:39:29Z",
+        "ownerItem": "26"
+      },
+      {
         "testPath": "src/lib/enterprise-context/__tests__/derived-enterprise-read.test.ts",
         "verdict": "already_verdicted_elsewhere",
         "record": "docs/architecture/t771-stale-suite-triage.json",
         "recordedAt": "2026-09-27T19:10:49.000Z",
         "ownerItem": "T-757"
+      },
+      {
+        "testPath": "src/lib/enterprise-data/candidate-version-build/__tests__/candidate-version-build.test.ts",
+        "verdict": "repair",
+        "record": "docs/architecture/item26-draw16-stale-suite-triage.json",
+        "recordedAt": "2026-10-01T04:39:29Z",
+        "ownerItem": "26"
+      },
+      {
+        "testPath": "src/lib/enterprise-data/contracts/__tests__/layer3-validation.test.ts",
+        "verdict": "wire_into_ci",
+        "record": "docs/architecture/item26-draw16-stale-suite-triage.json",
+        "recordedAt": "2026-10-01T04:39:29Z",
+        "ownerItem": "26"
+      },
+      {
+        "testPath": "src/lib/enterprise-data/data-quality/__tests__/all-tenant-data-quality-audit.test.ts",
+        "verdict": "repair",
+        "record": "docs/architecture/item26-draw16-stale-suite-triage.json",
+        "recordedAt": "2026-10-01T04:39:29Z",
+        "ownerItem": "26"
+      },
+      {
+        "testPath": "src/lib/enterprise-data/enterprise-profile/__tests__/enterprise-profile-foundation.test.ts",
+        "verdict": "repair",
+        "record": "docs/architecture/item26-draw16-stale-suite-triage.json",
+        "recordedAt": "2026-10-01T04:39:29Z",
+        "ownerItem": "26"
+      },
+      {
+        "testPath": "src/lib/enterprise-data/module-context-serving/__tests__/module-context-serving.test.ts",
+        "verdict": "repair",
+        "record": "docs/architecture/item26-draw16-stale-suite-triage.json",
+        "recordedAt": "2026-10-01T04:39:29Z",
+        "ownerItem": "26"
+      },
+      {
+        "testPath": "src/lib/enterprise-data/remediation/__tests__/skyharbor-applications-candidate-regeneration.test.ts",
+        "verdict": "repair",
+        "record": "docs/architecture/item26-draw16-stale-suite-triage.json",
+        "recordedAt": "2026-10-01T04:39:29Z",
+        "ownerItem": "26"
+      },
+      {
+        "testPath": "src/lib/enterprise-data/tower-candidate-load/__tests__/tower-governed-candidate-load.test.ts",
+        "verdict": "held_unwired",
+        "record": "docs/architecture/item26-draw16-stale-suite-triage.json",
+        "recordedAt": "2026-10-01T04:39:29Z",
+        "ownerItem": "26"
+      },
+      {
+        "testPath": "src/lib/enterprise-knowledge/assembler/__tests__/tower-context-pack-builder.test.ts",
+        "verdict": "wire_into_ci",
+        "record": "docs/architecture/item26-draw16-stale-suite-triage.json",
+        "recordedAt": "2026-10-01T04:39:29Z",
+        "ownerItem": "26"
+      },
+      {
+        "testPath": "src/lib/enterprise-knowledge/tower/__tests__/tower-v3-context-pack-from-tenant-inputs.test.ts",
+        "verdict": "held_unwired",
+        "record": "docs/architecture/item26-draw16-stale-suite-triage.json",
+        "recordedAt": "2026-10-01T04:39:29Z",
+        "ownerItem": "26"
+      },
+      {
+        "testPath": "src/lib/evidence/__tests__/ledger.test.ts",
+        "verdict": "update_with_reason_recorded",
+        "record": "docs/architecture/item26-draw16-stale-suite-triage.json",
+        "recordedAt": "2026-10-01T04:39:29Z",
+        "ownerItem": "26"
+      },
+      {
+        "testPath": "src/lib/features/__tests__/is-feature-enabled.test.ts",
+        "verdict": "wire_into_ci",
+        "record": "docs/architecture/item26-draw16-stale-suite-triage.json",
+        "recordedAt": "2026-10-01T04:39:29Z",
+        "ownerItem": "26"
       },
       {
         "testPath": "src/lib/instruments/__tests__/instrument-data-layer-migration.test.ts",
@@ -1987,6 +1679,34 @@
         "record": "docs/architecture/t492-stale-suite-triage.json",
         "recordedAt": "2026-09-27T08:50:59.457Z",
         "ownerItem": "T-494"
+      },
+      {
+        "testPath": "src/lib/intelligence/advisory-packet/__tests__/advisory-packet.test.ts",
+        "verdict": "already_verdicted_elsewhere",
+        "record": "docs/architecture/item26-draw16-stale-suite-triage.json",
+        "recordedAt": "2026-10-01T04:39:29Z",
+        "ownerItem": "T-775"
+      },
+      {
+        "testPath": "src/lib/intelligence/analytics/__tests__/portfolio.test.ts",
+        "verdict": "already_verdicted_elsewhere",
+        "record": "docs/architecture/item26-draw16-stale-suite-triage.json",
+        "recordedAt": "2026-10-01T04:39:29Z",
+        "ownerItem": "T-775"
+      },
+      {
+        "testPath": "src/lib/intelligence/answer/evals/__tests__/harness.test.ts",
+        "verdict": "already_verdicted_elsewhere",
+        "record": "docs/architecture/item26-draw16-stale-suite-triage.json",
+        "recordedAt": "2026-10-01T04:39:29Z",
+        "ownerItem": "T-775"
+      },
+      {
+        "testPath": "src/lib/intelligence/answer/evals/live-answer/__tests__/live-answer-bank.test.ts",
+        "verdict": "already_verdicted_elsewhere",
+        "record": "docs/architecture/item26-draw16-stale-suite-triage.json",
+        "recordedAt": "2026-10-01T04:39:29Z",
+        "ownerItem": "T-775"
       },
       {
         "testPath": "src/lib/intelligence/ask/__tests__/ask-guardrails.test.ts",
@@ -2122,6 +1842,20 @@
         "ownerItem": "T-494"
       },
       {
+        "testPath": "src/lib/intelligence/ask/response-policy.test.ts",
+        "verdict": "wire_into_ci",
+        "record": "docs/architecture/item26-draw16-stale-suite-triage.json",
+        "recordedAt": "2026-10-01T04:39:29Z",
+        "ownerItem": "26"
+      },
+      {
+        "testPath": "src/lib/intelligence/binding/__tests__/binding-payload.test.ts",
+        "verdict": "wire_into_ci",
+        "record": "docs/architecture/item26-draw16-stale-suite-triage.json",
+        "recordedAt": "2026-10-01T04:39:29Z",
+        "ownerItem": "26"
+      },
+      {
         "testPath": "src/lib/intelligence/canonical/agent-grounding-disclosure.test.ts",
         "verdict": "wire_into_ci",
         "record": "docs/architecture/t492-stale-suite-triage.json",
@@ -2148,6 +1882,13 @@
         "record": "docs/architecture/t492-stale-suite-triage.json",
         "recordedAt": "2026-09-27T08:50:59.457Z",
         "ownerItem": "T-494"
+      },
+      {
+        "testPath": "src/lib/intelligence/canvas/__tests__/governed-canvas-pack-registry.test.ts",
+        "verdict": "already_verdicted_elsewhere",
+        "record": "docs/architecture/item26-draw16-stale-suite-triage.json",
+        "recordedAt": "2026-10-01T04:39:29Z",
+        "ownerItem": "T-775"
       },
       {
         "testPath": "src/lib/intelligence/synthesis/__tests__/healthcareAnswerContract.test.ts",
