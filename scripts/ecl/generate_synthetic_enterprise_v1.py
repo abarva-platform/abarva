@@ -45,6 +45,19 @@ FAMILIES = {
     "SP21_External_Benchmarks": "External_Benchmarks_SYNTHETIC.csv",
 }
 
+SERVICE_ROLES = ("Portal", "Workbench", "Rules Service", "Integration Service")
+
+
+def load_definition(path: Path) -> dict[str, Any]:
+    definition = json.loads(path.read_text(encoding="utf-8"))
+    expected_base_hash = definition.pop("base_definition_sha256", None)
+    if expected_base_hash is None:
+        return definition
+    base_bytes = DEFINITION.read_bytes()
+    if hashlib.sha256(base_bytes).hexdigest() != expected_base_hash:
+        raise ValueError("Versioned enterprise definition base has changed")
+    return {**json.loads(base_bytes), **definition}
+
 
 def pick(parts: tuple[object, ...], count: int) -> int:
     digest = hashlib.sha256("|".join(map(str, parts)).encode()).digest()
@@ -227,10 +240,23 @@ def build(definition: dict[str, Any]) -> dict[str, Any]:
     if set(workflows) != set(function_by_id) or not service_areas or any(len(items) != 3 for items in workflows.values()):
         raise ValueError("Every function needs three declared module workflows and at least one service area")
     vendor_number_by_name = {name: index for index, name in enumerate(vendors, start=1)}
+    service_capabilities = definition.get("service_capabilities_by_function", {})
+    service_suppliers = definition.get("service_suppliers_by_function", {})
+    if service_capabilities and (
+        set(service_capabilities) != set(function_by_id)
+        or set(service_suppliers) != set(function_by_id)
+        or any(not 4 <= len(items) <= 8 or len(set(items)) != len(items)
+               for items in service_capabilities.values())
+        or len({len(items) for items in service_capabilities.values()}) < 3
+        or sum(len(items) for items in service_capabilities.values()) * len(SERVICE_ROLES) + 24 < 300
+        or any(not items or not set(items).issubset(vendors) for items in service_suppliers.values())
+    ):
+        raise ValueError("Logical service capabilities or suppliers are incomplete")
+    service_count = sum(len(items) for items in service_capabilities.values()) * len(SERVICE_ROLES)
     app_weights = [
         (1 + (8 if i % 31 == 0 else 0) + (4 if i % 11 == 0 else 0))
         * (0.7 + pick(("app-cost", i), 100) / 100)
-        for i in range(1, 751)
+        for i in range(1, 751 + service_count)
     ]
     app_weight_total = sum(app_weights)
     apps: list[str] = []
@@ -281,6 +307,44 @@ def build(definition: dict[str, Any]) -> dict[str, Any]:
         if owner_id:
             relation(app_id, "ACCOUNTABLE_TO", owner_id)
         apps.append(app_id)
+
+    for function_id, capabilities in service_capabilities.items():
+        function = function_by_id[function_id]
+        for capability in capabilities:
+            for role in SERVICE_ROLES:
+                i = len(apps) + 1
+                app_id = f"APP-{i:04d}"
+                name = f"{function['name']} - {capability} {role}"
+                supplier_names = service_suppliers[function_id]
+                supplier_name = supplier_names[pick(("logical-service-supplier", i), len(supplier_names))]
+                vendor_id = f"VEN-{vendor_number_by_name[supplier_name]:04d}"
+                segment_id = function["segment_id"]
+                add("SP03_CMDB", "application", app_id, name, {
+                    "application_id": app_id, "application_name": name,
+                    "base_product_name": name, "vendor_id": vendor_id,
+                    "application_grain": "logical_service", "parent_application_id": "",
+                    "module_workflow": "", "service_area": "",
+                    "vendor_name": supplier_name,
+                    "business_function_id": function_id, "business_function": function["name"],
+                    "segment_id": segment_id, "business_owner_id": function["owner_id"],
+                    "business_owner": owner_by_id[function["owner_id"]]["role"],
+                    "technical_owner": "Technology platform operations",
+                    "application_domain": "clinical" if segment_id == "SEG-0002" else "health_plan" if segment_id == "SEG-0001" else "shared",
+                    "application_subdomain": capability.lower().replace(" ", "_")[:32],
+                    "criticality_tier": "tier_1" if i % 17 == 0 else "tier_2" if i % 3 == 0 else "tier_3",
+                    "lifecycle_state": "replace_candidate" if i % 23 == 0 else "current",
+                    "hosting_model": ("saas", "on_prem", "aws_hosted", "azure_hosted")[i % 4],
+                    "annual_cost_usd": money(round(436500000 * app_weights[i - 1] / app_weight_total)),
+                    "annual_cost_basis": "synthetic_modeled",
+                    "cost_scope": "logical_service_run_allocation",
+                    "interface_count": 2 + i % 11, "environment_count": 1 + i % 4,
+                    "user_count_estimate": 75 + i * 19 % 12000,
+                    "known_gaps": "",
+                })
+                relation(function_id, "SUPPORTED_BY", app_id)
+                relation(app_id, "SUPPLIED_BY", vendor_id)
+                relation(app_id, "ACCOUNTABLE_TO", function["owner_id"])
+                apps.append(app_id)
 
     platforms: list[str] = []
     platform_weights = [("cloud_account", 35), ("database_cluster", 24), ("virtualization", 18),
@@ -630,6 +694,8 @@ def build(definition: dict[str, Any]) -> dict[str, Any]:
         "definition_hash": hashlib.sha256(json.dumps(definition, sort_keys=True, separators=(",", ":")).encode()).hexdigest(),
         "generation_basis": definition["generation_basis"],
         "client_attestation_state": "not_client_attested",
+        **({"service_capability_count": sum(len(items) for items in service_capabilities.values())}
+           if service_capabilities else {}),
         "objects": list(objects.values()),
         "relationships": relationships,
         "source_rows": dict(rows),
@@ -691,7 +757,10 @@ def validate(manifest: dict[str, Any]) -> dict[str, Any]:
     app_by_id = {row["application_id"]: row for row in apps}
     products = [row for row in apps if row["application_grain"] == "logical_product"]
     modules = [row for row in apps if row["application_grain"] == "governed_module"]
-    if len(products) != 24 or len(modules) != 726 or len({row["application_name"] for row in apps}) != 750:
+    services = [row for row in apps if row["application_grain"] == "logical_service"]
+    expected_services = manifest.get("service_capability_count", 0) * len(SERVICE_ROLES)
+    if (len(products) != 24 or len(modules) != 726 or len(services) != expected_services
+            or len({row["application_name"] for row in apps}) != len(apps)):
         raise ValueError("Application product/module grain is not unique or complete")
     if any(row["parent_application_id"] not in app_by_id or
            app_by_id[row["parent_application_id"]]["application_grain"] != "logical_product" or
@@ -748,7 +817,7 @@ def main() -> int:
     parser.add_argument("--definition", type=Path, default=DEFINITION)
     parser.add_argument("--out-dir", type=Path, required=True)
     args = parser.parse_args()
-    definition = json.loads(args.definition.read_text(encoding="utf-8"))
+    definition = load_definition(args.definition)
     manifest = build(definition)
     quality = validate(manifest)
     summary = export(manifest, args.out_dir)

@@ -236,6 +236,7 @@ jobs:
       - name: Prove versioned synthetic enterprise source set
         run: |
           npm run test:ecl-synthetic-enterprise-v1
+          npm run test:ecl-synthetic-enterprise-v2
 
       - name: Prove versioned synthetic enterprise normalization
         run: |
