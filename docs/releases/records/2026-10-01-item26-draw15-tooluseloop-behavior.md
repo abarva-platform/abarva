@@ -151,6 +151,9 @@ branch gives 170 / 1794 / 0; the one added case is the new control case.
 
 **Other gates:**
 
+- DOM integrity linter: 0 violations. The first CI run flagged the test's
+  `Request` URL as a hardcoded localhost URL (`pre_canon_url`); it now uses an
+  `example.test` host, which the loop never reads.
 - census `--check`: exit 0
 - triage-record census reconciliation: exit 0
 - `ai-surface-control-catalog` audit: exit 0

@@ -46,7 +46,7 @@ const toolUse = (id: string, input: Record<string, unknown> = {}) =>
 const text = (value: string) =>
   ({ type: 'text', text: value, citations: null }) as unknown as ContentBlock;
 
-const toolContext = { request: new Request('http://localhost/test'), surface: SURFACE } as ToolContext;
+const toolContext = { request: new Request('https://example.test/api/chat/agent'), surface: SURFACE } as ToolContext;
 const FORCED: ToolChoice = {
   type: 'tool',
   name: 'commit_program',
