@@ -170,13 +170,6 @@ interface MovesPhaseStandaloneClientProps {
   initialStageReadinessPreview?: StageReadinessWorkbookParsePreview | null;
   syntheticEvidencePackHref?: string | null;
   currentStateReadiness?: ReadinessReport | null;
-  /**
-   * Count of attached evidence found inside the current Move context extract.
-   * The phase page and File Cabinet can show evidence before legacy linked
-   * evidence relations exist, so the local phase aVa composer must forward the
-   * same count as the AppShell provider.
-   */
-  moveContextExtractEvidenceCount?: number;
   initialSubstepKey?: SubstepKey;
   /** `moves_pricing_engine` feature flag, resolved server-side (tenant-gated, default OFF) — see the phase page. Gates the "Cost & Effort" rail entry point entirely; when false the button does not render at all. */
   pricingEngineEnabled?: boolean;
@@ -370,6 +363,7 @@ interface StageReadinessWorkbookParsePreview {
     artifactId?: string;
     artifactVersion?: number;
     proposalSetId?: string;
+    transition?: { fromPhase?: number; toPhase?: number };
     status?: string;
     proposalCount?: number;
     pendingCount?: number;
@@ -724,7 +718,6 @@ export function MovesPhaseStandaloneClient({
   initialStageReadinessPreview = null,
   syntheticEvidencePackHref = null,
   currentStateReadiness = null,
-  moveContextExtractEvidenceCount = 0,
   initialSubstepKey,
   pricingEngineEnabled = false,
   riskAssessmentEnabled = false,
@@ -740,6 +733,13 @@ export function MovesPhaseStandaloneClient({
   const readinessWorkbookHref =
     phase.phase < 5
       ? `/api/v1/programs/${encodeURIComponent(move.id)}/stage-readiness-workbook?phase=${phase.phase}`
+      : null;
+  const phaseScopedStageReadinessPreview =
+    initialStageReadinessPreview?.proposalSet?.transition?.fromPhase ===
+      phase.phase &&
+    initialStageReadinessPreview.proposalSet.transition?.toPhase ===
+      phase.phase + 1
+      ? initialStageReadinessPreview
       : null;
   const currentPhase = move.currentPhase ?? 0;
   const terminalComplete = Boolean(move.terminalComplete);
@@ -811,8 +811,14 @@ export function MovesPhaseStandaloneClient({
     evidenceNeedPackets,
     phase.phase,
   );
+  const phaseEvidenceChecklistConfigured =
+    phase.phase < 2 ||
+    (phase.phase === 2
+      ? currentStateReadiness !== null
+      : evidenceNeedPackets.some((packet) => packet.phase === phase.phase));
   const topLevelEvidenceCheckAvailable =
     evidenceReadinessAvailable &&
+    phaseEvidenceChecklistConfigured &&
     (phase.phase !== 2 || currentStateReadiness !== null);
   const p0EvidencePacket = evidenceNeedPackets.find(
     (packet) =>
@@ -832,8 +838,11 @@ export function MovesPhaseStandaloneClient({
   const topLevelHardGateMet = topLevelHardGateCriteria.filter(
     (criterion) => criterion.completed,
   ).length;
-  const topLevelHardGateTotal =
-    topLevelHardGateCriteria.length || move.gateCriteria.length;
+  const topLevelHardGateOpenCount =
+    topLevelHardGateCriteria.length - topLevelHardGateMet;
+  const phaseHardGatesPassed =
+    isHistoricalPhase || gateApproved || topLevelHardGateOpenCount === 0;
+  const topLevelHardGateTotal = topLevelHardGateCriteria.length;
   const hardGateProgressLabel =
     topLevelHardGateTotal > 0
       ? `${topLevelHardGateMet}/${topLevelHardGateTotal} hard met`
@@ -849,7 +858,7 @@ export function MovesPhaseStandaloneClient({
     isHistoricalPhase || gateApproved
       ? "Complete"
       : substep.key === "approve" && topLevelHardGateTotal > 0
-        ? topLevelHardGateMet >= topLevelHardGateTotal && topLevelEvidenceReady
+        ? phaseHardGatesPassed && topLevelEvidenceReady
           ? `Ready · ${hardGateProgressLabel}`
           : `Blocked · ${hardGateProgressLabel}`
         : hardGateProgressLabel;
@@ -1119,9 +1128,14 @@ export function MovesPhaseStandaloneClient({
     phase.phase === 2 && currentStateReadiness
       ? currentStateReadiness.hardGaps.length
       : null;
-  const phaseEvidenceCheckAvailable =
-    evidenceReadinessAvailable &&
-    (phase.phase !== 2 || currentStateReadiness !== null);
+  const phaseEvidenceCheckAvailable = topLevelEvidenceCheckAvailable;
+  const phaseEvidenceCheckBlocker = !evidenceReadinessAvailable
+    ? "Evidence readiness could not be verified. Refresh this phase before continuing."
+    : !phaseEvidenceChecklistConfigured
+      ? "Required evidence checklist is not configured for this phase. Configure it before continuing."
+      : phase.phase === 2 && currentStateReadiness === null
+        ? "Current-state evidence readiness could not be checked. Refresh this phase before continuing."
+        : null;
   const phaseEvidenceGapCount =
     requiredEvidenceGaps.length + (currentStateEvidenceGapCount ?? 0);
   const phaseEvidencePassed =
@@ -1195,7 +1209,8 @@ export function MovesPhaseStandaloneClient({
     : terminalP5Complete
       ? "Move handed off to Tower."
       : !phaseEvidenceCheckAvailable
-        ? "Evidence readiness could not be checked. Refresh this phase before continuing."
+        ? phaseEvidenceCheckBlocker ??
+          "Evidence readiness could not be checked. Refresh this phase before continuing."
         : phaseEvidenceGapCount > 0
           ? `${phaseEvidenceGapCount} required evidence item${
               phaseEvidenceGapCount === 1 ? "" : "s"
@@ -1204,11 +1219,10 @@ export function MovesPhaseStandaloneClient({
             ? `${phaseCaptureMissingCount} phase input${
                 phaseCaptureMissingCount === 1 ? "" : "s"
               } still missing from persisted server state.`
-            : substep.key === "approve" &&
-                topLevelHardGateMet < topLevelHardGateTotal
-              ? `${topLevelHardGateTotal - topLevelHardGateMet} hard gate blocker${
-                  topLevelHardGateTotal - topLevelHardGateMet === 1 ? "" : "s"
-                } remain.`
+            : !phaseHardGatesPassed
+              ? `${topLevelHardGateOpenCount} hard gate blocker${
+                  topLevelHardGateOpenCount === 1 ? "" : "s"
+                } remain before this phase can advance.`
               : "No required input blockers for the current step.";
   const phaseProgressSignals = [
     {
@@ -1216,7 +1230,7 @@ export function MovesPhaseStandaloneClient({
       value: `${phaseCaptureCompleteCount}/${phaseCaptureSections.length}`,
       tone:
         phaseCaptureMissingCount === 0 && phaseCaptureDirtyCount === 0
-          ? phaseEvidencePassed
+          ? phaseEvidencePassed && phaseHardGatesPassed
             ? "ready"
             : "neutral"
           : "open",
@@ -1239,7 +1253,7 @@ export function MovesPhaseStandaloneClient({
       tone:
         isHistoricalPhase ||
         gateApproved ||
-        topLevelHardGateMet >= topLevelHardGateTotal
+        phaseHardGatesPassed
           ? "ready"
           : "blocked",
     },
@@ -1250,7 +1264,8 @@ export function MovesPhaseStandaloneClient({
     },
   ];
   const phaseCaptureBlocker = !phaseEvidenceCheckAvailable
-    ? "Evidence readiness could not be verified. Refresh this phase before Approve & Build."
+    ? phaseEvidenceCheckBlocker ??
+      "Evidence readiness could not be verified. Refresh this phase before Approve & Build."
     : currentStateEvidenceGapCount !== null && currentStateEvidenceGapCount > 0
       ? `${currentStateEvidenceGapCount} current-state evidence famil${
           currentStateEvidenceGapCount === 1 ? "y" : "ies"
@@ -1289,7 +1304,9 @@ export function MovesPhaseStandaloneClient({
         ? { label: "Approved", tone: "complete", openEvidenceCount: 0 }
         : !phaseEvidenceCheckAvailable
           ? {
-              label: "Evidence check unavailable",
+              label: phaseEvidenceChecklistConfigured
+                ? "Evidence check unavailable"
+                : "Evidence checklist missing",
               tone: "open",
               openEvidenceCount: 0,
             }
@@ -1299,7 +1316,13 @@ export function MovesPhaseStandaloneClient({
                 tone: "open",
                 openEvidenceCount: phaseEvidenceGapCount,
               }
-            : phaseProgress.blocker
+            : !phaseHardGatesPassed
+              ? {
+                  label: "Resolve hard gate blockers",
+                  tone: "open",
+                  openEvidenceCount: 0,
+                }
+              : phaseProgress.blocker
               ? {
                   label: "Inputs not ready",
                   tone: "open",
@@ -1766,8 +1789,6 @@ export function MovesPhaseStandaloneClient({
               programId: move.id,
               moveId: move.id,
               phase: phaseNum,
-              moveContextExtractEvidenceCount,
-              moveEvidenceCount: moveContextExtractEvidenceCount,
               moveDisplayCode: move.displayCode,
               moveName: displayMoveName,
               phaseLabel: phase.title,
@@ -1875,7 +1896,6 @@ export function MovesPhaseStandaloneClient({
       phaseCaptureValues,
       phaseTallies,
       phaseNum,
-      moveContextExtractEvidenceCount,
       finderReadinessPack,
     ],
   );
@@ -2634,12 +2654,12 @@ export function MovesPhaseStandaloneClient({
                         <div ref={workbookReviewRef}>
                           <StageReadinessWorkbookPreviewControl
                             key={
-                              initialStageReadinessPreview?.proposalSet
-                                ? `${initialStageReadinessPreview.proposalSet.artifactId ?? ""}:${initialStageReadinessPreview.proposalSet.artifactVersion ?? ""}:${initialStageReadinessPreview.proposalSet.review?.status ?? "unreviewed"}:${initialStageReadinessPreview.proposalSet.review?.pendingCount ?? ""}`
+                              phaseScopedStageReadinessPreview?.proposalSet
+                                ? `${phaseScopedStageReadinessPreview.proposalSet.artifactId ?? ""}:${phaseScopedStageReadinessPreview.proposalSet.artifactVersion ?? ""}:${phaseScopedStageReadinessPreview.proposalSet.review?.status ?? "unreviewed"}:${phaseScopedStageReadinessPreview.proposalSet.review?.pendingCount ?? ""}`
                                 : "no-stored-proposal-set"
                             }
                             apiPath={readinessWorkbookHref}
-                            initialPreview={initialStageReadinessPreview}
+                            initialPreview={phaseScopedStageReadinessPreview}
                             onReviewSaved={() => router.refresh()}
                           />
                         </div>
@@ -2695,6 +2715,7 @@ export function MovesPhaseStandaloneClient({
                       phase={phase}
                       gateApproved={gateApproved}
                       phaseEvidencePassed={phaseEvidencePassed}
+                      phaseHardGatesPassed={phaseHardGatesPassed}
                       evidenceReadinessAvailable={phaseEvidenceCheckAvailable}
                       progressHeaderState={phaseProgressHeaderState}
                       onOpenFiles={openFilesWorkspace}
@@ -2720,6 +2741,7 @@ export function MovesPhaseStandaloneClient({
                           findingsEvidenceLabel={findingsEvidenceLabel}
                           evidenceNeedPackets={evidenceNeedPackets}
                           phaseEvidencePassed={phaseEvidencePassed}
+                          phaseHardGatesPassed={phaseHardGatesPassed}
                           evidenceReadinessAvailable={
                             phaseEvidenceCheckAvailable
                           }
@@ -2780,6 +2802,7 @@ export function MovesPhaseStandaloneClient({
                       }
                       phase={phase}
                       phaseEvidencePassed={phaseEvidencePassed}
+                      phaseHardGatesPassed={phaseHardGatesPassed}
                       evidenceReadinessAvailable={phaseEvidenceCheckAvailable}
                       progressHeaderState={phaseProgressHeaderState}
                       onOpenFiles={openFilesWorkspace}
@@ -2805,6 +2828,7 @@ export function MovesPhaseStandaloneClient({
                           findingsEvidenceLabel={findingsEvidenceLabel}
                           evidenceNeedPackets={evidenceNeedPackets}
                           phaseEvidencePassed={phaseEvidencePassed}
+                          phaseHardGatesPassed={phaseHardGatesPassed}
                           evidenceReadinessAvailable={
                             phaseEvidenceCheckAvailable
                           }
@@ -3419,6 +3443,16 @@ function phaseCaptureStatusForSection(
   return status;
 }
 
+function phaseCaptureStatusForDisplay(
+  status: PhaseCaptureStatusView,
+  phase: number,
+  phaseHardGatesPassed: boolean,
+): PhaseCaptureStatusView {
+  return phase >= 1 && status.complete && !phaseHardGatesPassed
+    ? { label: "Captured · gate open", complete: false, tone: "open" }
+    : status;
+}
+
 function workflowIndexForSelectedSection(
   phase: PhaseContract,
   phaseCaptureSections: readonly PhaseCaptureSection[],
@@ -3510,6 +3544,7 @@ function PhaseContractStepsCanvas({
   phase,
   gateApproved,
   phaseEvidencePassed,
+  phaseHardGatesPassed,
   evidenceReadinessAvailable,
   progressHeaderState,
   onOpenFiles,
@@ -3541,6 +3576,7 @@ function PhaseContractStepsCanvas({
   phase: PhaseContract;
   gateApproved: boolean;
   phaseEvidencePassed: boolean;
+  phaseHardGatesPassed: boolean;
   evidenceReadinessAvailable: boolean;
   progressHeaderState: PhaseProgressHeaderState | null;
   onOpenFiles: () => void;
@@ -3578,31 +3614,26 @@ function PhaseContractStepsCanvas({
         ) + 1
       : phaseCaptureSections.length + substepIndex + 1;
   const totalStepCount = phaseCaptureSections.length + phase.substeps.length;
-  const detailComplete = selectedSection
-    ? phaseCaptureStatusForSection(
-        selectedSection,
-        phaseCaptureValues,
-        persistedPhaseCaptureValues,
-        phaseCaptureSaveStatus,
-        businessChangeAssessment,
-        approvedEvidenceReferences.map((item) => item.evidenceId),
-        phaseEvidencePassed,
-        evidenceReadinessAvailable,
-      ).complete
-    : terminalP5Complete ||
-      (gateApproved && phase.substeps[substepIndex]?.key === "approve");
   const detailStatus = selectedSection
-    ? phaseCaptureStatusForSection(
-        selectedSection,
-        phaseCaptureValues,
-        persistedPhaseCaptureValues,
-        phaseCaptureSaveStatus,
-        businessChangeAssessment,
-        approvedEvidenceReferences.map((item) => item.evidenceId),
-        phaseEvidencePassed,
-        evidenceReadinessAvailable,
+    ? phaseCaptureStatusForDisplay(
+        phaseCaptureStatusForSection(
+          selectedSection,
+          phaseCaptureValues,
+          persistedPhaseCaptureValues,
+          phaseCaptureSaveStatus,
+          businessChangeAssessment,
+          approvedEvidenceReferences.map((item) => item.evidenceId),
+          phaseEvidencePassed,
+          evidenceReadinessAvailable,
+        ),
+        phase.phase,
+        phaseHardGatesPassed,
       )
     : null;
+  const detailComplete = selectedSection
+    ? Boolean(detailStatus?.complete)
+    : terminalP5Complete ||
+      (gateApproved && phase.substeps[substepIndex]?.key === "approve");
   const selectedAvaProposal = selectedSection
     ? (avaDraftProposalsByKey.get(selectedSection.key) ?? null)
     : null;
@@ -3645,7 +3676,7 @@ function PhaseContractStepsCanvas({
         <div className="mxw-contract-group">
           <div className="mxw-contract-group-label">Inputs</div>
           {phaseCaptureSections.map((section) => {
-            const status = phaseCaptureStatusForSection(
+            const captureStatus = phaseCaptureStatusForSection(
               section,
               phaseCaptureValues,
               persistedPhaseCaptureValues,
@@ -3654,6 +3685,11 @@ function PhaseContractStepsCanvas({
               approvedEvidenceReferences.map((item) => item.evidenceId),
               phaseEvidencePassed,
               evidenceReadinessAvailable,
+            );
+            const status = phaseCaptureStatusForDisplay(
+              captureStatus,
+              phase.phase,
+              phaseHardGatesPassed,
             );
             const selected = selectedSectionKey === section.key;
             return (
@@ -3670,7 +3706,10 @@ function PhaseContractStepsCanvas({
                   {status.complete ? "✓" : ""}
                 </span>
                 <strong>{section.label}</strong>
-                {!status.complete &&
+                {captureStatus.complete && !status.complete ? (
+                  <small>Captured · gate open</small>
+                ) : null}
+                {!captureStatus.complete &&
                 (status.label === "Evidence open" ||
                   status.label === "Evidence check unavailable") ? (
                   <small>
@@ -3939,6 +3978,7 @@ function FinderStepsColumns({
   onToggleComingUp,
   phase,
   phaseEvidencePassed,
+  phaseHardGatesPassed,
   evidenceReadinessAvailable,
   businessChangeAssessment,
   approvedEvidenceReferences,
@@ -3962,6 +4002,7 @@ function FinderStepsColumns({
   onToggleComingUp: () => void;
   phase: PhaseContract;
   phaseEvidencePassed: boolean;
+  phaseHardGatesPassed: boolean;
   evidenceReadinessAvailable: boolean;
   businessChangeAssessment: string;
   approvedEvidenceReferences: ApprovedPhaseEvidenceReference[];
@@ -3989,15 +4030,19 @@ function FinderStepsColumns({
   // Reading the raw save-status map here used to miss the case that matters
   // most: a value that diverges from the server with no in-flight save.
   const selectedDetailStatus = selectedSection
-    ? phaseCaptureStatusForSection(
-        selectedSection,
-        phaseCaptureValues,
-        persistedPhaseCaptureValues,
-        phaseCaptureSaveStatus,
-        businessChangeAssessment,
-        approvedEvidenceReferences.map((item) => item.evidenceId),
-        phaseEvidencePassed,
-        evidenceReadinessAvailable,
+    ? phaseCaptureStatusForDisplay(
+        phaseCaptureStatusForSection(
+          selectedSection,
+          phaseCaptureValues,
+          persistedPhaseCaptureValues,
+          phaseCaptureSaveStatus,
+          businessChangeAssessment,
+          approvedEvidenceReferences.map((item) => item.evidenceId),
+          phaseEvidencePassed,
+          evidenceReadinessAvailable,
+        ),
+        phase.phase,
+        phaseHardGatesPassed,
       )
     : null;
 
@@ -4008,7 +4053,7 @@ function FinderStepsColumns({
           <h3>{phase.code} inputs</h3>
           <ul>
             {phaseCaptureSections.map((section) => {
-              const status = phaseCaptureStatusForSection(
+              const captureStatus = phaseCaptureStatusForSection(
                 section,
                 phaseCaptureValues,
                 persistedPhaseCaptureValues,
@@ -4018,7 +4063,13 @@ function FinderStepsColumns({
                 phaseEvidencePassed,
                 evidenceReadinessAvailable,
               );
-              const blocked = section.required && !status.complete;
+              const status = phaseCaptureStatusForDisplay(
+                captureStatus,
+                phase.phase,
+                phaseHardGatesPassed,
+              );
+              const blocked = section.required && !captureStatus.complete;
+              const capturedGateOpen = captureStatus.complete && !status.complete;
               const selected = selectedSectionKey === section.key;
               return (
                 <li key={section.key}>
@@ -4032,15 +4083,19 @@ function FinderStepsColumns({
                     <span className="mxw-finder-step-title">
                       {section.label}
                     </span>
-                    {blocked ? (
+                    {capturedGateOpen ? (
                       <span className="mxw-finder-step-subtitle">
-                        {status.label === "Open"
+                        Captured · gate open
+                      </span>
+                    ) : blocked ? (
+                      <span className="mxw-finder-step-subtitle">
+                        {captureStatus.label === "Open"
                           ? "Needs input"
-                          : status.label === "Evidence open"
+                          : captureStatus.label === "Evidence open"
                             ? "Needs approved evidence"
-                            : status.label === "Evidence check unavailable"
+                            : captureStatus.label === "Evidence check unavailable"
                               ? "Evidence check unavailable"
-                              : status.label}
+                              : captureStatus.label}
                       </span>
                     ) : status.complete ? (
                       <span className="mxw-finder-step-state">Captured</span>
@@ -4328,6 +4383,7 @@ function PhaseBody({
   findingsEvidenceLabel,
   evidenceNeedPackets,
   phaseEvidencePassed,
+  phaseHardGatesPassed,
   evidenceReadinessAvailable,
   gateApproved,
   gateApprovalMessage,
@@ -4369,6 +4425,7 @@ function PhaseBody({
   findingsEvidenceLabel: string;
   evidenceNeedPackets: MoveEvidenceNeedPacket[];
   phaseEvidencePassed: boolean;
+  phaseHardGatesPassed: boolean;
   evidenceReadinessAvailable: boolean;
   gateApproved: boolean;
   gateApprovalMessage: string | null;
@@ -4419,6 +4476,7 @@ function PhaseBody({
           <PhaseCaptureEditor
             completeCount={phaseCaptureCompleteCount}
             evidencePassed={phaseEvidencePassed}
+            phaseHardGatesPassed={phaseHardGatesPassed}
             evidenceReadinessAvailable={evidenceReadinessAvailable}
             businessChangeAssessment={businessChangeAssessment}
             approvedEvidenceReferences={approvedEvidenceReferences}
@@ -4909,6 +4967,7 @@ function PhaseBody({
           compact
           completeCount={phaseCaptureCompleteCount}
           evidencePassed={phaseEvidencePassed}
+          phaseHardGatesPassed={phaseHardGatesPassed}
           evidenceReadinessAvailable={evidenceReadinessAvailable}
           businessChangeAssessment={businessChangeAssessment}
           approvedEvidenceReferences={approvedEvidenceReferences}
@@ -7438,6 +7497,7 @@ function PhaseCaptureEditor({
   compact = false,
   completeCount,
   evidencePassed,
+  phaseHardGatesPassed,
   evidenceReadinessAvailable,
   businessChangeAssessment,
   approvedEvidenceReferences,
@@ -7453,6 +7513,7 @@ function PhaseCaptureEditor({
   compact?: boolean;
   completeCount: number;
   evidencePassed: boolean;
+  phaseHardGatesPassed: boolean;
   evidenceReadinessAvailable: boolean;
   businessChangeAssessment: string;
   approvedEvidenceReferences: ApprovedPhaseEvidenceReference[];
@@ -7488,7 +7549,7 @@ function PhaseCaptureEditor({
       <div className="mxw-capture-grid">
         {sections.map((section, index) => {
           const value = values[section.key] ?? "";
-          const status = phaseCaptureStatusForSection(
+          const captureStatus = phaseCaptureStatusForSection(
             section,
             values,
             persistedValues,
@@ -7497,6 +7558,11 @@ function PhaseCaptureEditor({
             approvedEvidenceReferences.map((item) => item.evidenceId),
             evidencePassed,
             evidenceReadinessAvailable,
+          );
+          const status = phaseCaptureStatusForDisplay(
+            captureStatus,
+            phase.phase,
+            phaseHardGatesPassed,
           );
           return (
             <label
@@ -7507,6 +7573,9 @@ function PhaseCaptureEditor({
               <strong>{section.label}</strong>
               <small>{section.description}</small>
               <em>{status.label}</em>
+              {captureStatus.complete && !status.complete ? (
+                <small>Inputs are captured; the phase gate remains open.</small>
+              ) : null}
               {section.structured === "business-change" ? (
                 <BusinessChangeAssessmentForm
                   value={value}

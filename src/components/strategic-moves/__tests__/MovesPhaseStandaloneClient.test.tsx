@@ -236,6 +236,37 @@ const completeP1CaptureValues = {
   }),
 };
 
+function coveredEvidencePacketsForPhase(
+  phase: number,
+): MoveEvidenceNeedPacket[] {
+  return [
+    {
+      moveId: makeMove().id,
+      phase,
+      artifactType: "phase_evidence",
+      evidenceSlot: `Approved phase ${phase} evidence`,
+      familyId: `phase_${phase}_evidence`,
+      priority: "required",
+      ownerSource: "Process owner",
+      acceptedFormats: ["DOCX", "CSV"],
+      exampleTemplate: "Phase evidence package",
+      exampleContent: [],
+      whyItMatters: "The phase decision must be grounded in reviewed evidence.",
+      blockedArtifacts: [],
+      canDraftBoundary: {
+        canDraft: false,
+        canDraftLabel: "",
+        cannotDraftLabel: "",
+      },
+      preliminaryGenerationCaveat: null,
+      waiverOption: null,
+      nextAction: "Review the approved phase evidence.",
+      status: "covered",
+      evidenceTitles: ["approved-phase-evidence.md"],
+    },
+  ];
+}
+
 function makeCurrentStateReadiness(): ReadinessReport {
   return {
     phase: 2,
@@ -1002,6 +1033,7 @@ describe("MovesPhaseStandaloneClient", () => {
               artifactId: "proposal-artifact-1",
               artifactVersion: 2,
               proposalSetId: "proposal-set-1",
+              transition: { fromPhase: 1, toPhase: 2 },
               status: "accepted",
               proposalCount: 1,
               pendingCount: 0,
@@ -1124,6 +1156,7 @@ describe("MovesPhaseStandaloneClient", () => {
             proposalSet: {
               artifactId: "proposal-artifact-1",
               artifactVersion: 2,
+              transition: { fromPhase: 1, toPhase: 2 },
               status: "review_required",
               proposalCount: 2,
               pendingCount: 2,
@@ -1873,7 +1906,7 @@ describe("MovesPhaseStandaloneClient", () => {
     ).toBeGreaterThan(0);
   });
 
-  it("marks a P1 field done only after save acknowledgment and reload reproduces it", async () => {
+  it("marks a P1 field captured after save and keeps it neutral while the phase gate is open", async () => {
     const savedText = "Sponsor confirms weekly charter review cadence.";
     const { unmount } = render(
       <MovesPhaseStandaloneClient
@@ -1900,7 +1933,9 @@ describe("MovesPhaseStandaloneClient", () => {
 
     await waitFor(
       () => {
-        expect(screen.getAllByText(/^Done$/i).length).toBeGreaterThan(0);
+        expect(
+          screen.getAllByText("Captured · gate open").length,
+        ).toBeGreaterThan(0);
       },
       { timeout: 2_000 },
     );
@@ -1940,7 +1975,9 @@ describe("MovesPhaseStandaloneClient", () => {
       (screen.getAllByLabelText("Sponsor commitment")[0] as HTMLTextAreaElement)
         .value,
     ).toBe(savedText);
-    expect(screen.getAllByText(/^Done$/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Captured · gate open").length).toBeGreaterThan(
+      0,
+    );
   });
 
   it("uses P1 step 2 for uploading evidence, with multiple files enabled", async () => {
@@ -2554,7 +2591,7 @@ describe("MovesPhaseStandaloneClient", () => {
     render(
       <MovesPhaseStandaloneClient
         carriesForwardContent={[]}
-        evidenceNeedPackets={[]}
+        evidenceNeedPackets={coveredEvidencePacketsForPhase(3)}
         initialPhaseCaptureValues={{
           solution_approach:
             "Compare dashboard-only, governed workflow, and command-center options.",
@@ -2714,6 +2751,76 @@ describe("MovesPhaseStandaloneClient", () => {
     );
   });
 
+  it("keeps captured P3 inputs out of the ready-green state while hard gates remain open", () => {
+    const coveredEvidence: MoveEvidenceNeedPacket = {
+      moveId: makeMove().id,
+      phase: 3,
+      artifactType: "target_state_architecture",
+      evidenceSlot: "Current-state workflow evidence",
+      familyId: "current_state_workflow_map",
+      priority: "required",
+      ownerSource: "Process owner",
+      acceptedFormats: ["DOCX", "CSV"],
+      exampleTemplate: "Workflow evidence",
+      exampleContent: [],
+      whyItMatters: "The target design needs an evidence-backed current state.",
+      blockedArtifacts: [],
+      canDraftBoundary: {
+        canDraft: false,
+        canDraftLabel: "",
+        cannotDraftLabel: "",
+      },
+      preliminaryGenerationCaveat: null,
+      waiverOption: null,
+      nextAction: "Review the approved workflow evidence.",
+      status: "covered",
+      evidenceTitles: ["approved-workflow.md"],
+    };
+
+    render(
+      <MovesPhaseStandaloneClient
+        carriesForwardContent={[]}
+        evidenceNeedPackets={[coveredEvidence]}
+        initialPhaseCaptureValues={completeP3CaptureValues}
+        move={makeMove()}
+        phaseNum={3}
+        phaseTallies={[...phaseTallies]}
+      />,
+    );
+
+    const inputStep = contractStepButton(/Solution approach & options/i);
+    expect(inputStep.querySelector("span")).not.toHaveClass("done");
+    expect(inputStep).toHaveTextContent("Captured · gate open");
+    expect(screen.getByLabelText("Phase progress")).toHaveTextContent(
+      /Gate\s*0\/1 hard met/,
+    );
+  });
+
+  it("does not report evidence as covered when the active phase has no evidence checklist", () => {
+    render(
+      <MovesPhaseStandaloneClient
+        carriesForwardContent={[]}
+        evidenceNeedPackets={[]}
+        initialPhaseCaptureValues={completeP3CaptureValues}
+        evidenceReadinessAvailable
+        move={makeMove()}
+        phaseNum={3}
+        phaseTallies={[...phaseTallies]}
+      />,
+    );
+
+    fireEvent.click(
+      contractStepButton(/Approve & Build/i),
+    );
+
+    expect(screen.getByLabelText("Phase progress")).toHaveTextContent(
+      /Evidence\s*Not checked/,
+    );
+    expect(screen.getByTestId("mxw-decision-surface")).toHaveTextContent(
+      "P3 cannot advance yet",
+    );
+  });
+
   it("keeps phase progress blocked when evidence readiness could not be checked", () => {
     render(
       <MovesPhaseStandaloneClient
@@ -2732,8 +2839,8 @@ describe("MovesPhaseStandaloneClient", () => {
       /Evidence\s*Not checked/,
     );
     expect(
-      screen.getByText(/Evidence readiness could not be checked/i),
-    ).toBeInTheDocument();
+      screen.getAllByText(/Evidence readiness could not be verified/i).length,
+    ).toBeGreaterThan(0);
     expect(screen.getByTestId("mxw-decision-surface")).toHaveTextContent(
       "P3 cannot advance yet",
     );
@@ -3896,7 +4003,7 @@ describe("MovesPhaseStandaloneClient", () => {
     const { container } = render(
       <MovesPhaseStandaloneClient
         carriesForwardContent={[]}
-        evidenceNeedPackets={[]}
+        evidenceNeedPackets={coveredEvidencePacketsForPhase(3)}
         initialPhaseCaptureValues={completeP3CaptureValues}
         move={makeMove()}
         phaseNum={3}
@@ -4079,7 +4186,7 @@ describe("MovesPhaseStandaloneClient", () => {
     render(
       <MovesPhaseStandaloneClient
         carriesForwardContent={[]}
-        evidenceNeedPackets={[]}
+        evidenceNeedPackets={coveredEvidencePacketsForPhase(3)}
         initialPhaseCaptureValues={completeP3CaptureValues}
         move={makeMove()}
         phaseNum={3}
@@ -4121,7 +4228,7 @@ describe("MovesPhaseStandaloneClient", () => {
       <MovesPhaseStandaloneClient
         carriesForwardContent={[]}
         currentUser={{ email: "jane@apex-retail.com", role: "client_admin" }}
-        evidenceNeedPackets={[]}
+        evidenceNeedPackets={coveredEvidencePacketsForPhase(3)}
         initialPhaseCaptureValues={completeP3CaptureValues}
         move={makeMove()}
         phaseNum={3}
@@ -4206,7 +4313,7 @@ describe("MovesPhaseStandaloneClient", () => {
       <MovesPhaseStandaloneClient
         carriesForwardContent={[]}
         currentUser={{ email: "jane@apex-retail.com", role: "client_admin" }}
-        evidenceNeedPackets={[]}
+        evidenceNeedPackets={coveredEvidencePacketsForPhase(3)}
         initialPhaseCaptureValues={completeP3CaptureValues}
         move={makeMove()}
         phaseNum={3}
@@ -4266,7 +4373,7 @@ describe("MovesPhaseStandaloneClient", () => {
       <MovesPhaseStandaloneClient
         carriesForwardContent={[]}
         currentUser={{ email: "move.runner@example.com", role: "client_admin" }}
-        evidenceNeedPackets={[]}
+        evidenceNeedPackets={coveredEvidencePacketsForPhase(5)}
         initialPhaseCaptureValues={completeP5CaptureValues}
         initialSubstepKey="approve"
         move={makeMove({
@@ -4338,7 +4445,6 @@ describe("MovesPhaseStandaloneClient", () => {
         carriesForwardContent={[]}
         evidenceNeedPackets={[]}
         move={makeMove()}
-        moveContextExtractEvidenceCount={8}
         phaseNum={3}
         phaseTallies={[...phaseTallies]}
       />,
@@ -4377,8 +4483,10 @@ describe("MovesPhaseStandaloneClient", () => {
       "37ee2d85-5dc0-4d1f-862e-ab8eff60fdd4",
     );
     expect(chatBody.surfaceContext.phase).toBe(3);
-    expect(chatBody.surfaceContext.moveContextExtractEvidenceCount).toBe(8);
-    expect(chatBody.surfaceContext.moveEvidenceCount).toBe(8);
+    expect(chatBody.surfaceContext).not.toHaveProperty(
+      "moveContextExtractEvidenceCount",
+    );
+    expect(chatBody.surfaceContext).not.toHaveProperty("moveEvidenceCount");
   });
 
   it("gets cited aVa drafts without writing, then persists only after Save changes", async () => {
@@ -4743,6 +4851,51 @@ describe("MovesPhaseStandaloneClient", () => {
       expect(
         screen.getByRole("heading", { name: "Current-state findings" }),
       ).toBeInTheDocument();
+    });
+
+    it("does not show a P1-to-P2 workbook review as current P2-to-P3 readiness", () => {
+      render(
+        <MovesPhaseStandaloneClient
+          carriesForwardContent={[]}
+          evidenceNeedPackets={[]}
+          initialStageReadinessPreview={{
+            ok: true,
+            proposalSet: {
+              artifactId: "prior-transition-proposal",
+              transition: { fromPhase: 1, toPhase: 2 },
+              status: "review_required",
+              proposalCount: 1,
+              pendingCount: 1,
+              proposals: [
+                {
+                  proposalId: "prior-transition-response",
+                  question: "P1 baseline question from the prior transition",
+                  response: "Prior-phase response",
+                  answerState: "supported",
+                  disposition: "pending",
+                },
+              ],
+            },
+          }}
+          move={makeMove({
+            currentPhase: 2,
+            phaseLabel: "P2 Discover & Diagnose",
+          })}
+          phaseNum={2}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+
+      const menu = screen.getByLabelText("P2 steps");
+      fireEvent.click(
+        within(menu).getByRole("button", { name: /Upload & Review/i }),
+      );
+      expect(
+        screen.queryByText("P1 baseline question from the prior transition"),
+      ).not.toBeInTheDocument();
+      expect(
+        screen.queryByText(/Stored workbook responses awaiting review/),
+      ).not.toBeInTheDocument();
     });
 
     it("clicking a phase-input row updates the detail pane to that section's real captured value; clicking a workflow row restores the real substep content", () => {

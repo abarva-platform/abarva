@@ -56,17 +56,25 @@ export function phaseProgressReadiness(args: {
   phaseCaptureBlocker: string | null;
   evidenceNeedPackets: readonly MoveEvidenceNeedPacket[];
 }) {
+  const phaseEvidencePackets = args.evidenceNeedPackets.filter(
+    (packet) => packet.phase === args.phase,
+  );
   const requiredEvidenceGaps = currentPhaseRequiredEvidenceGaps(
     args.evidenceNeedPackets,
     args.phase,
   );
+  const evidenceChecklistMissing =
+    args.phase >= 3 && phaseEvidencePackets.length === 0;
 
   return {
     requiredEvidenceGaps,
     ready:
-      args.phaseCaptureBlocker === null && requiredEvidenceGaps.length === 0,
-    blocker:
-      requiredEvidenceGaps.length > 0
+      args.phaseCaptureBlocker === null &&
+      requiredEvidenceGaps.length === 0 &&
+      !evidenceChecklistMissing,
+    blocker: evidenceChecklistMissing
+      ? "Required evidence checklist is not configured for this phase."
+      : requiredEvidenceGaps.length > 0
         ? `${requiredEvidenceGaps.length} required evidence item${requiredEvidenceGaps.length === 1 ? " is" : "s are"} still open.`
         : args.phaseCaptureBlocker,
   };

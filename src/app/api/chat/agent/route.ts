@@ -150,6 +150,7 @@ import {
   shouldBuildMovesAvaPacketForMode,
 } from "@/lib/programs/ava-chat";
 import { resolveMovesAvaVisibleEvidenceCount } from "@/lib/programs/ava-chat/evidence-count";
+import { loadCurrentMoveContextExtractFreshness } from "@/lib/programs/move-context-extract-freshness";
 import {
   buildDeterministicMovesAvaStatusAnswer,
   buildDeterministicPhaseInputDraftAnswer,
@@ -897,19 +898,16 @@ export async function POST(request: Request) {
             ).length;
             const hardGateTotal = blockingGateScope.length;
             const hardGateOpen = hardGateTotal - hardGateMet;
-            const surfaceContextEvidenceCount =
-              typeof surfaceContext.moveContextExtractEvidenceCount ===
-                "number" &&
-              Number.isFinite(surfaceContext.moveContextExtractEvidenceCount)
-                ? surfaceContext.moveContextExtractEvidenceCount
-                : typeof surfaceContext.moveEvidenceCount === "number" &&
-                    Number.isFinite(surfaceContext.moveEvidenceCount)
-                  ? surfaceContext.moveEvidenceCount
-                  : null;
+            const contextExtractFreshness =
+              await loadCurrentMoveContextExtractFreshness({
+                tenantKey: tenancy.clientKey ?? tenancy.clientId,
+                moveId: programId,
+                phase: promptPhase,
+              }).catch(() => null);
             const visibleEvidenceCount = resolveMovesAvaVisibleEvidenceCount({
               liveLinkedEvidenceCount: liveMove?.linkedEvidence.length,
               pageEvidenceCount: evidence.length,
-              surfaceContextEvidenceCount,
+              contextExtractFreshness,
             });
             const terminalHandoffComplete =
               promptPhase === 5 && Boolean(liveMove?.terminalComplete);

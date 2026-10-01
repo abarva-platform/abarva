@@ -56,7 +56,23 @@ describe("phase progress readiness", () => {
         phaseCaptureBlocker: null,
         evidenceNeedPackets: packets,
       }),
-    ).toMatchObject({ ready: false, blocker: "1 required evidence item is still open." });
+    ).toMatchObject({
+      ready: false,
+      blocker: "1 required evidence item is still open.",
+    });
+  });
+
+  it("fails closed when a design-or-later phase has no evidence checklist", () => {
+    expect(
+      phaseProgressReadiness({
+        phase: 3,
+        phaseCaptureBlocker: null,
+        evidenceNeedPackets: [],
+      }),
+    ).toMatchObject({
+      ready: false,
+      blocker: "Required evidence checklist is not configured for this phase.",
+    });
   });
 
   it("enables progression when required evidence is covered or explicitly waived", () => {
