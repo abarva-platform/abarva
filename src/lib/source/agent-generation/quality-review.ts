@@ -66,19 +66,36 @@ const DETERMINISTIC_CLAIM_GATE_CODES = new Set([
 const D09_SERVICE_TARGET =
   /\b(?:availability|uptime|(?:p[1-4]|critical|standard)\s+(?:incident\s+)?(?:response|resolution)|request\s+fulfillment|recovery|rto|rpo|reporting\s+(?:accuracy|timeliness)|maintenance\s+notice|security\s+incident\s+reporting)\b[^\n]{0,100}\b\d+(?:\.\d+)?\s*(?:%|percent\b|business\s+days?\b|minutes?\b|hours?\b|days?\b)/i;
 const D09_REGULATED_OBLIGATION =
-  /\b(?:HIPAA|HITECH|PHI|protected\s+health\s+information|HITRUST|healthcare[-\s]regulated|45\s+CFR|NIST\s+(?:CSF|SP)|SOC\s*2\s*Type\s*II|ISO\s*27001)\b/i;
+  /\b(?:HIPAA|HITECH|PHI|protected\s+health\s+information|HITRUST|healthcare[-\s]regulated|45\s+CFR|NIST\s+(?:CSF|SP)|SOC\s*2(?:\s*Type\s*II)?|ISO\s*27001)\b/gi;
+const D09_SECTOR_CLAIMS = [
+  /\bpatient[-\s]facing\b/i,
+  /\bclinical[-\s]support\b/i,
+  /\bclinical\s+(?:systems?|workloads?|operations?|workflows?|care)\b/i,
+  /\bhealthcare\s+data\s+environments?\b/i,
+];
 const D09_MATERIAL_VALUES = /\$\s*\d[\d,]*(?:\.\d+)?|\b\d+(?:\.\d+)?\s*%/gi;
 const D09_TARGET_VALUE = /\b\d+(?:\.\d+)?\s*(?:%|business\s+days?|minutes?|hours?|days?)/i;
 const D09_TARGET_METRIC =
   /\b(?:availability|uptime|p[1-4]\s+(?:incident\s+)?(?:response|resolution)|request\s+fulfillment|recovery|rto|rpo|reporting\s+(?:accuracy|timeliness)|maintenance\s+notice|security\s+incident\s+reporting)\b/i;
+
+function isExplicitlyUnissuedTerm(line: string, index: number, term: string): boolean {
+  const prefix = line.slice(0, index);
+  const remainder = line.slice(index + term.length);
+  const separator = remainder.search(/[:|;]/);
+  if (separator < 0 || separator > 55) return false;
+  if (/\b(?:must|shall|will|supports?|covers?|applies|comply)\b/i.test(prefix + remainder.slice(0, separator))) {
+    return false;
+  }
+  return /^not issued\b/i.test(remainder.slice(separator + 1).trimStart());
+}
 
 function findUnboundD09Obligations(
   body: string,
   sourceContext: string,
 ): DeterministicSourceClaimViolation[] {
   const sourceLines = sourceContext.split("\n")
-    .map((line) => line.replace(/\s+/g, " ").toLowerCase())
-    .filter((line) => !/\b(?:pending|not issued|not applicable|unapproved|not approved|no approval)\b/.test(line));
+    .map((line) => line.replace(/[-‐‑–—]/g, " ").replace(/\s+/g, " ").toLowerCase())
+    .filter((line) => !/\b(?:pending|not issued|not applicable|unapproved|not approved|no approval|out of scope|excluded|not in scope)\b/.test(line));
   return body.split("\n").flatMap((rawLine) => {
     const line = rawLine.replace(/\s+/g, " ").trim();
     if (!line || sourceLines.some((sourceLine) => sourceLine.includes(line.toLowerCase()))) return [];
@@ -106,12 +123,29 @@ function findUnboundD09Obligations(
         reason: "Quantified commercial or performance claim is absent from the bounded vendor-facing evidence.",
       });
     }
-    const regulatedTerm = line.match(D09_REGULATED_OBLIGATION)?.[0].toLowerCase();
-    if (regulatedTerm && !sourceLines.some((sourceLine) => sourceLine.includes(regulatedTerm))) {
-      violations.push({
-        claim: line.slice(0, 220),
-        reason: "Regulated-data or compliance obligation is absent from the bounded vendor-facing evidence.",
-      });
+    for (const match of line.matchAll(D09_REGULATED_OBLIGATION)) {
+      const term = match[0];
+      const normalizedTerm = term.replace(/\s+/g, "").toLowerCase();
+      if (!isExplicitlyUnissuedTerm(line, match.index, term) &&
+        !sourceLines.some((sourceLine) => sourceLine.replace(/\s+/g, "").includes(normalizedTerm))) {
+        violations.push({
+          claim: line.slice(0, 220),
+          reason: `Regulated-data or compliance obligation (${term}) is absent from the bounded vendor-facing evidence.`,
+        });
+      }
+    }
+    for (const pattern of D09_SECTOR_CLAIMS) {
+      const match = line.match(pattern);
+      const term = match?.[0];
+      if (term && match && !isExplicitlyUnissuedTerm(line, match.index ?? 0, term) &&
+        !sourceLines.some((sourceLine) =>
+        sourceLine.includes(term.replace(/[-‐‑–—]/g, " ").toLowerCase())
+      )) {
+        violations.push({
+          claim: line.slice(0, 220),
+          reason: `Sector or clinical workload claim (${term}) is absent from the bounded vendor-facing evidence.`,
+        });
+      }
     }
     return violations;
   });

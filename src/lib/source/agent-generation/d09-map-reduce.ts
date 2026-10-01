@@ -29,6 +29,8 @@ const SENTINEL_VOICE = `You are a senior sourcing advisor preparing a clear requ
 
 This is a vendor-facing RFP draft. Source context is reference material, not text to copy. Never disclose an internal buyer savings or value target, private planning range, approval metadata, QA fixture status, negotiation strategy, internal gate identifier, or source-system file name. Missing approval or baseline information remains an internal release hold, not an issued vendor commitment.
 
+The buyer name or industry is not evidence of patient-facing or clinical-support workloads, healthcare data environments, regulations, certifications, or supplier obligations. Use those details only when the bounded vendor-disclosable context explicitly states them. Otherwise mark them Not issued, and do not list exemplar standards as if they apply.
+
 Format requirements:
 - Markdown only. Use ## for section headers and ### for subsections.
 - Tables when comparing. Bullet lists when enumerating.
@@ -74,7 +76,7 @@ App/System | Workload Type | Hosting | Criticality | Support Tier | Volume Indic
     instruction: `Write ONLY ## §5 · Service-level, operational, and security obligations.
 250 words max. Include one SLA/obligations table:
 Metric | Current Baseline | Required SLA | Measurement Period | Credit/Penalty
-6 rows max. Use baseline numbers only if approved for vendor disclosure; otherwise mark them not issued. Include the supplier's security and compliance obligations.`,
+6 rows max. Use baseline numbers only if approved for vendor disclosure; otherwise mark them Not issued. Include supplier security and compliance obligations only when explicitly present in the bounded vendor-draft context; otherwise say Security and compliance obligations: Not issued.`,
   },
   {
     key: "s6",
@@ -117,7 +119,7 @@ Use only weights explicitly present in the bounded vendor-draft context. Otherwi
     instruction: `Write ONLY ## §10 · Risk register, transition controls, and failure modes.
 Table only. 8 rows max. Columns:
 Service Risk | Supplier Response Requirement | Required Evidence | Proposed Mitigation
-Describe vendor obligations only; omit buyer-internal risk IDs, release holds, owner placeholders, and gate status. Reference only exhibits explicitly present in the bounded vendor-draft context.`,
+Describe vendor obligations only when explicitly present in the bounded vendor-draft context; otherwise say Service risks and response obligations: Not issued. Omit buyer-internal risk IDs, release holds, owner placeholders, and gate status. Reference only exhibits explicitly present in the bounded vendor-draft context.`,
   },
   {
     key: "s11",
