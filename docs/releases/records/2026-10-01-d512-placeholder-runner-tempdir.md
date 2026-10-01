@@ -29,6 +29,8 @@ guard is kept. This change covers the other case: running the suite directly.
 
 ## Layer Impact
 
+Release lane: `internal-admin` (test and data-build tooling; no client-facing runtime change).
+
 - **Tooling only.** It changes a data-build script's test harness and adds an optional parameter
   to the script it tests. The default output path is unchanged.
 - No source adapter, canonical-model, or product-surface change. No tenant input file changes in
