@@ -1,9 +1,9 @@
 /**
  * Guard for the eighteenth stale-suite triage draw, recorded under P3 item 26.
  *
- * The draw is READ-ONLY: it judges the nineteen unrun files the ranking still
- * held and wires none of them. Every case recomputes a claim from the tree
- * rather than trusting the record's own words:
+ * The draw judged the nineteen unrun files the ranking still held; its second
+ * half applies and wires rows one claim at a time. Every case recomputes a
+ * claim from the tree rather than trusting the record's own words:
  *
  *  - whether a file reads repository text is re-derived from its bytes, so a
  *    file that reads the tree cannot be declared behavioural and then wired;
@@ -12,9 +12,15 @@
  *  - a wiring row's imported subjects are checked against BOTH registries;
  *  - the red row's cause is re-asked of the tree: the product resolves a
  *    tenant key by matching a display name, and no declared display name
- *    matches it while the intended key is still declared. When the resolver
- *    is repaired this control goes red and says the row must be superseded;
- *  - the committed census must resolve every drawn path to this record.
+ *    matches it while the intended key is still declared. Once the record
+ *    says the repair is applied, the resolver must no longer match by name,
+ *    must resolve the intended declared key, and the test must still expect
+ *    rows in the tenant section;
+ *  - every row the record says this item has run (an applied repair, or a
+ *    wired row) must be named in an item 26 draw 18 unit-suites step AND be
+ *    counted as run by the census, and no other row may be named in one;
+ *  - the committed census must resolve every drawn path still held to this
+ *    record.
  *
  * It imports no `src` module on purpose: the behaviour coverage floor is a
  * directory aggregate, and a control that drags product modules into it moves
@@ -22,6 +28,7 @@
  */
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import path from "node:path";
+import yaml from "js-yaml";
 
 const ROOT = process.cwd();
 const RECORD_PATH = "docs/architecture/item26-draw18-stale-suite-triage.json";
@@ -49,6 +56,15 @@ type Suite = {
   textIsTheSubject: boolean;
   verdict: string;
   ownerItem: string;
+  wiredInThisItem?: boolean;
+  repaired?: {
+    repairedInThisItem: boolean;
+    reExecutedOn: string;
+    totalTests: number;
+    passedTests: number;
+    failedTests: number;
+    resolvesByDeclaredKey: string;
+  };
   unreachableSubject?: { path: string; registry: string; list: string };
   redCause?: RedCause;
 };
@@ -67,6 +83,17 @@ const readText = (relative: string) =>
 const readJson = <T>(relative: string) => JSON.parse(readText(relative)) as T;
 
 const record = readJson<TriageRecord>(RECORD_PATH);
+
+// A row is RUN by an item 26 draw 18 step once this item has applied its repair
+// or wired it. Every other row is still a hold and must stay unwired.
+const isRunRow = (suite: Suite) =>
+  suite.repaired?.repairedInThisItem === true || suite.wiredInThisItem === true;
+
+const reExecutedGreen = (suite: Suite) =>
+  suite.repaired !== undefined &&
+  suite.repaired.failedTests === 0 &&
+  suite.repaired.passedTests === suite.repaired.totalTests &&
+  suite.repaired.totalTests > 0;
 
 const READS_REPOSITORY_TEXT =
   /readFileSync|from ["'](?:node:)?fs(?:\/promises)?["']|process\.cwd\(\)|__dirname/;
@@ -284,9 +311,40 @@ describe("item 26 draw 18 stale suite triage record", () => {
           expect(names.length).toBeGreaterThan(0);
           expect(names.length).toBe(keys.size);
           const matcher = regExpFromLiteral(cause!.nameMatcherLiteral);
+          const resolverText = readText(cause!.resolver);
+          if (suite.repaired?.repairedInThisItem) {
+            // Applied: the resolver no longer matches a display name, it
+            // looks the tenant up by key and names the intended declared key,
+            // and the test still expects rows counted into the section.
+            const repaired = suite.repaired;
+            expect({
+              path: suite.path,
+              resolverStillMatchesByName: resolverText.includes(
+                `${cause!.nameMatcherLiteral}.test(t.name)`,
+              ),
+              resolverMatchesByKey: /\bt\.key\s*===/.test(resolverText),
+              resolverNamesKey: resolverText.includes(`"${repaired.resolvesByDeclaredKey}"`),
+              resolvesIntendedKey: repaired.resolvesByDeclaredKey === cause!.intendedTenantKey,
+              intendedKeyDeclared: keys.has(cause!.intendedTenantKey),
+              testExpectsTheSection: /\.skyharbor\.total\)\.toBe\(\s*[1-9]/.test(testText),
+              reExecutedGreen: reExecutedGreen(suite),
+              wiredInThisItem: suite.wiredInThisItem,
+            }).toEqual({
+              path: suite.path,
+              resolverStillMatchesByName: false,
+              resolverMatchesByKey: true,
+              resolverNamesKey: true,
+              resolvesIntendedKey: true,
+              intendedKeyDeclared: true,
+              testExpectsTheSection: true,
+              reExecutedGreen: true,
+              wiredInThisItem: true,
+            });
+            break;
+          }
           expect({
             path: suite.path,
-            resolverStillMatchesByName: readText(cause!.resolver).includes(
+            resolverStillMatchesByName: resolverText.includes(
               `${cause!.nameMatcherLiteral}.test(t.name)`,
             ),
             namesMatched: names.filter((name) => matcher.test(name)),
@@ -316,7 +374,7 @@ describe("item 26 draw 18 stale suite triage record", () => {
     const held = new Map(
       census.triageVerdicts.heldTestPaths.map((row) => [row.testPath, row]),
     );
-    const stillHeld = record.suites;
+    const stillHeld = record.suites.filter((suite) => !isRunRow(suite));
     expect(stillHeld.length).toBeGreaterThan(0);
     for (const suite of stillHeld) {
       const row = held.get(suite.path);
@@ -324,6 +382,69 @@ describe("item 26 draw 18 stale suite triage record", () => {
         path: suite.path,
         record: RECORD_PATH,
         verdict: suite.verdict,
+      });
+    }
+  });
+
+  // A row the record says this item has run must actually be RUN: asked of
+  // the workflow a pull request executes and of the census computed from it,
+  // so neither the record's own flag nor a comment in the YAML satisfies it.
+  it("runs every applied repair and wired row in an item 26 draw 18 unit-suites step, and the census agrees", () => {
+    const workflow = yaml.load(readText(".github/workflows/unit-suites.yml")) as {
+      jobs: Record<string, { steps?: { name?: string; run?: string }[] }>;
+    };
+    const commands = Object.values(workflow.jobs)
+      .flatMap((job) => job.steps ?? [])
+      .filter((step) => (step.name ?? "").includes("item 26 draw 18") && step.run)
+      .map((step) => {
+        // A `>-` block folds to ONE shell line, so a `#` inside it is a shell
+        // comment: every word after it is never passed to jest.
+        const all = (step.run ?? "").split(/\s+/);
+        const comment = all.findIndex((w) => w.startsWith("#"));
+        const words = (comment === -1 ? all : all.slice(0, comment)).map((w) =>
+          w.replace(/^"|"$/g, ""),
+        );
+        return { byPath: words.includes("--runTestsByPath"), words };
+      });
+
+    const census = readJson<{
+      triageVerdicts: { heldTestPaths: { testPath: string }[] };
+      uncoveredDirectories: { directory: string }[];
+    }>("docs/architecture/test-ci-coverage-census.json");
+    const held = new Set(census.triageVerdicts.heldTestPaths.map((row) => row.testPath));
+    const dark = new Set(census.uncoveredDirectories.map((row) => row.directory));
+
+    const run = record.suites.filter(isRunRow);
+    expect(run.length).toBeGreaterThan(0);
+    expect(commands.length).toBeGreaterThan(0);
+    for (const suite of run) {
+      const named = commands.some(({ byPath, words }) =>
+        byPath
+          ? words.includes(suite.path)
+          : words.includes(path.posix.dirname(suite.path)),
+      );
+      expect({
+        path: suite.path,
+        wiredInThisItem: suite.wiredInThisItem,
+        namedInStep: named,
+        stillHeldByCensus: held.has(suite.path),
+        directoryDark: dark.has(path.posix.dirname(suite.path)),
+      }).toEqual({
+        path: suite.path,
+        wiredInThisItem: true,
+        namedInStep: true,
+        stillHeldByCensus: false,
+        directoryDark: false,
+      });
+    }
+    // Rows still held must NOT have been wired by an item 26 draw 18 step.
+    for (const suite of record.suites.filter((s) => !isRunRow(s))) {
+      const named = commands.some(({ words }) =>
+        words.includes(suite.path) || words.includes(path.posix.dirname(suite.path)),
+      );
+      expect({ path: suite.path, namedInStep: named }).toEqual({
+        path: suite.path,
+        namedInStep: false,
       });
     }
   });

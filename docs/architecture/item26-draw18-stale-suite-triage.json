@@ -28,7 +28,12 @@
   "secondHalf": {
     "what": "Wire the wire_into_ci rows, each re-executed on the then-current main first. The one repair row (rank 18) is a product fix plus a stale heading assertion and is claimable under item 26. The T-775 rows stay held until their owner acts.",
     "owner": "26",
-    "status": "open"
+    "status": "the rank 18 repair applied and wired; the fourteen wire_into_ci rows and the four T-775 holds are unchanged and still open",
+    "steps": [
+      "Run the item 26 draw 18 repaired suite"
+    ],
+    "repairAppliedOnBase": "d4721a60078ce1fe303ff318b5733dd9e84925ff",
+    "repairReExecuted": "The repaired file re-executed on the repair base: 1 suite, 3 cases, all green. The workflow step runs as written: 1 suite / 3 cases."
   },
   "suites": [
     {
@@ -362,7 +367,17 @@
         "registry": "src/config/tenants/CANONICAL_TENANTS.ts",
         "intendedTenantKey": "skyharbor-air"
       },
-      "rationale": "Red 0 of 2, behavioural, reads no repository file. The defect is in the product, not the test: promotion-preview-render.ts derives the airline tenant's key by matching /sky\\s?harbor/i against CANONICAL_TENANTS display names, and that tenant's display name was changed to a neutral demo label, so no name matches and the derived key is the empty string. The tenant key skyharbor-air is still declared. buildPreviewData therefore counts zero rows into the tenant-specific section for every input, which is the first failure (expected 2, received 0). Repair: resolve the key from the declared key, never from a display name. The second failure expects the old display name in the rendered heading; the heading now prints the neutral label on purpose, so that assertion is updated in the same repair."
+      "rationale": "Red 0 of 2, behavioural, reads no repository file. The defect is in the product, not the test: promotion-preview-render.ts derives the airline tenant's key by matching /sky\\s?harbor/i against CANONICAL_TENANTS display names, and that tenant's display name was changed to a neutral demo label, so no name matches and the derived key is the empty string. The tenant key skyharbor-air is still declared. buildPreviewData therefore counts zero rows into the tenant-specific section for every input, which is the first failure (expected 2, received 0). Repair: resolve the key from the declared key, never from a display name. The second failure expects the old display name in the rendered heading; the heading now prints the neutral label on purpose, so that assertion is updated in the same repair.",
+      "repaired": {
+        "repairedInThisItem": true,
+        "reExecutedOn": "d4721a60078ce1fe303ff318b5733dd9e84925ff",
+        "totalTests": 3,
+        "passedTests": 3,
+        "failedTests": 0,
+        "resolvesByDeclaredKey": "skyharbor-air",
+        "what": "promotion-preview-render.ts now resolves the airline demo tenant by its declared key in CANONICAL_TENANTS and throws at load when that key is no longer declared, instead of matching a display name and falling back to the empty string. The test's heading assertion now expects the neutral demo label the renderer prints on purpose, plus the row count under it; a third case proves a different tenant's row is not counted into the section."
+      },
+      "wiredInThisItem": true
     },
     {
       "path": "src/scripts/qa/__tests__/scoring.test.ts",
