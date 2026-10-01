@@ -233,6 +233,10 @@ jobs:
         run: |
           npm run test:ecl-dense-source-manifest-integrity
 
+      - name: Prove versioned synthetic enterprise source set
+        run: |
+          npm run test:ecl-synthetic-enterprise-v1
+
       - name: Prove Meridian PHS Moves activation execute contract
         run: |
           npm run test:ecl-meridian-phs-moves-activation-execute
