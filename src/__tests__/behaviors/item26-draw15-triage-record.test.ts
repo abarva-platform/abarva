@@ -42,6 +42,13 @@ type Suite = {
   verdict: string;
   ownerItem: string;
   wiredInThisItem?: boolean;
+  updated?: {
+    updatedInThisItem: boolean;
+    reExecutedOn: string;
+    totalTests: number;
+    passedTests: number;
+    failedTests: number;
+  };
   unreachableSubject?: { path: string; registry: string; list: string };
   redCause?: {
     kind: "stale_label";
@@ -65,6 +72,12 @@ const readText = (relative: string) =>
 const readJson = <T>(relative: string) => JSON.parse(readText(relative)) as T;
 
 const record = readJson<TriageRecord>(RECORD_PATH);
+
+// A row is RUN by an item 26 draw 15 step when its verdict was wire_into_ci, or
+// when it was a stale-label update that this item has since applied. Every
+// other row is a hold and must stay unwired.
+const isRunRow = (suite: Suite) =>
+  suite.verdict === "wire_into_ci" || suite.updated?.updatedInThisItem === true;
 
 const READS_REPOSITORY_TEXT =
   /readFileSync|from ["'](?:node:)?fs(?:\/promises)?["']|process\.cwd\(\)|__dirname/;
@@ -228,7 +241,7 @@ describe("item 26 draw 15 stale suite triage record", () => {
     }
   });
 
-  it("holds each red row only while the stale literal is still in the test and gone from the source", () => {
+  it("holds each red row only while the stale literal is still in the test and gone from the source, unless its update was applied", () => {
     const red = record.suites.filter((suite) => !suite.green);
     expect(red.length).toBe(record.scope.redOnRun);
     for (const suite of red) {
@@ -236,6 +249,34 @@ describe("item 26 draw 15 stale suite triage record", () => {
       const cause = suite.redCause;
       expect(cause?.kind).toBe("stale_label");
       const source = readText(cause!.labelSource);
+      if (suite.updated?.updatedInThisItem) {
+        // Applied: the old literal is gone from the test, the source still
+        // carries the current label, and the test reads the label from that
+        // source module instead of re-typing it. The re-execution must be green.
+        const labelModule = cause!.labelSource.replace(/^src\//, "@/").replace(/\.tsx?$/, "");
+        const testText = readText(suite.path);
+        expect({
+          path: suite.path,
+          testStillExpectsOldLiteral: testText.includes(cause!.expectedLiteral),
+          testRetypesCurrentLiteral: testText.includes(cause!.currentLiteral),
+          sourceHasCurrentLiteral: source.includes(cause!.currentLiteral),
+          testImportsLabelSource: testText.includes(`from "${labelModule}"`),
+          reExecutedGreen:
+            suite.updated.failedTests === 0 &&
+            suite.updated.passedTests === suite.updated.totalTests &&
+            suite.updated.totalTests > 0,
+          wiredInThisItem: suite.wiredInThisItem,
+        }).toEqual({
+          path: suite.path,
+          testStillExpectsOldLiteral: false,
+          testRetypesCurrentLiteral: false,
+          sourceHasCurrentLiteral: true,
+          testImportsLabelSource: true,
+          reExecutedGreen: true,
+          wiredInThisItem: true,
+        });
+        continue;
+      }
       expect({
         path: suite.path,
         testStillExpectsOldLiteral: readText(suite.path).includes(cause!.expectedLiteral),
@@ -259,7 +300,7 @@ describe("item 26 draw 15 stale suite triage record", () => {
     const held = new Map(
       census.triageVerdicts.heldTestPaths.map((row) => [row.testPath, row]),
     );
-    const stillHeld = record.suites.filter((suite) => suite.verdict !== "wire_into_ci");
+    const stillHeld = record.suites.filter((suite) => !isRunRow(suite));
     expect(stillHeld.length).toBeGreaterThan(0);
     for (const suite of stillHeld) {
       const row = held.get(suite.path);
@@ -275,7 +316,7 @@ describe("item 26 draw 15 stale suite triage record", () => {
   // RUN. That is asked of two independent places — the workflow a pull request
   // executes, and the census computed from it — so neither the record's own
   // `wiredInThisItem` flag nor a comment in the YAML can satisfy it.
-  it("runs every wire_into_ci row in an item 26 draw 15 unit-suites step, and the census agrees", () => {
+  it("runs every wire_into_ci row and every applied update in an item 26 draw 15 unit-suites step, and the census agrees", () => {
     const workflow = yaml.load(readText(".github/workflows/unit-suites.yml")) as {
       jobs: Record<string, { steps?: { name?: string; run?: string }[] }>;
     };
@@ -302,7 +343,7 @@ describe("item 26 draw 15 stale suite triage record", () => {
     const held = new Set(census.triageVerdicts.heldTestPaths.map((row) => row.testPath));
     const dark = new Set(census.uncoveredDirectories.map((row) => row.directory));
 
-    const wiring = record.suites.filter((suite) => suite.verdict === "wire_into_ci");
+    const wiring = record.suites.filter(isRunRow);
     for (const suite of wiring) {
       const named = commands.some(({ byPath, words }) =>
         byPath
@@ -324,7 +365,7 @@ describe("item 26 draw 15 stale suite triage record", () => {
       });
     }
     // Held rows must NOT have been wired by an item 26 draw 15 step.
-    for (const suite of record.suites.filter((s) => s.verdict !== "wire_into_ci")) {
+    for (const suite of record.suites.filter((s) => !isRunRow(s))) {
       const named = commands.some(({ words }) =>
         words.includes(suite.path) || words.includes(path.posix.dirname(suite.path)),
       );

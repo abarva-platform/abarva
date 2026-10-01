@@ -29,7 +29,7 @@
     "what": "Wire the wire_into_ci rows (by named file where the directory is partly covered), apply the WorkspaceExplorer label update and wire it, rewrite the toolUseLoop byte scan as behaviour and wire it. The six T-775 rows stay held until their owner acts.",
     "owner": "26",
     "reExecuteFirst": "Re-execute every row on the then-current main before wiring; this record is a snapshot at its base.",
-    "status": "wire_into_ci rows wired; the WorkspaceExplorer label update, the toolUseLoop rewrite and the six T-775 holds are unchanged and still open",
+    "status": "wire_into_ci rows wired; the WorkspaceExplorer label update applied and wired; the toolUseLoop rewrite and the six T-775 holds are unchanged and still open",
     "wiredAt": "2026-10-01T02:21:06Z",
     "wiredOnBase": "3160fbf55bdfd650e40e63a7722781d2f874cdb9",
     "reExecuted": "All 12 wire_into_ci files re-executed one at a time on the wiring base: 12 suites, 94 cases, all green. The two workflow steps run as written: 10 suites / 78 cases and 2 suites / 16 cases.",
@@ -38,10 +38,10 @@
       "Run the item 26 draw 15 agent doctrine and CXO answer-quality suites by named file"
     ],
     "stillHeld": [
-      "update_with_reason_recorded: WorkspaceExplorer (item 26)",
       "rewrite_as_behavior: toolUseLoop (item 26)",
       "already_verdicted_elsewhere: six rows (T-775)"
-    ]
+    ],
+    "labelUpdateAppliedOnBase": "9fc88b46a9f0f47a924e2de24967bb56967d7d8f"
   },
   "suites": [
     {
@@ -93,7 +93,16 @@
         "expectedLiteral": "\"Incumbent contract\"",
         "currentLiteral": "\"Incumbent contract package\""
       },
-      "rationale": "Red 1 of 6. The table case expects getByText(\"Incumbent contract\") as an exact match; the canonical requirement EVID-SRC-STR-INCUMBENT was relabelled 'Incumbent contract package' on 2026-08-07 (commit 0db2bd97a5, 'Expand Source evidence intake contract'), and WorkspaceExplorer renders the canonical label. The behaviour under test (strategy step surfaces its canonical requirements) is unchanged; the literal is stale. Subject is mounted by three routes (source event workspace, strategic-moves workspace, setup files). Update the one expectation, preferably by reading the label from evidenceForStage('strategy'), then wire."
+      "rationale": "Red 1 of 6. The table case expects getByText(\"Incumbent contract\") as an exact match; the canonical requirement EVID-SRC-STR-INCUMBENT was relabelled 'Incumbent contract package' on 2026-08-07 (commit 0db2bd97a5, 'Expand Source evidence intake contract'), and WorkspaceExplorer renders the canonical label. The behaviour under test (strategy step surfaces its canonical requirements) is unchanged; the literal is stale. Subject is mounted by three routes (source event workspace, strategic-moves workspace, setup files). Update the one expectation, preferably by reading the label from evidenceForStage('strategy'), then wire.",
+      "updated": {
+        "updatedInThisItem": true,
+        "reExecutedOn": "9fc88b46a9f0f47a924e2de24967bb56967d7d8f",
+        "totalTests": 6,
+        "passedTests": 6,
+        "failedTests": 0,
+        "what": "The one expectation that named the old requirement label now reads the EVID-SRC-STR-INCUMBENT label from evidenceForStage('strategy') in the canonical spec, the same function WorkspaceExplorer renders from, so the case asserts that the selected step surfaces the canonical label rather than a re-typed copy of it."
+      },
+      "wiredInThisItem": true
     },
     {
       "path": "src/config/tenants/__tests__/tenant-compliance.test.ts",
