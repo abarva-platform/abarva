@@ -56,7 +56,9 @@ import {
 } from "@/lib/programs/current-state-readiness";
 import { resolveMoveArchetypeForProgram } from "@/lib/programs/move-archetype-resolution";
 import { isFeatureEnabled } from "@/lib/features/is-feature-enabled";
-import { loadApprovedMoveEvidenceSnapshot } from "@/lib/programs/approved-move-evidence-snapshot";
+import {
+  loadApprovedMoveEvidenceSnapshot,
+} from "@/lib/programs/approved-move-evidence-snapshot";
 import { loadP0MinimumEvidenceStatus } from "@/lib/programs/p0-source-evidence";
 import {
   effectivePhaseAfterEvidenceChange,
@@ -119,6 +121,7 @@ interface StageReadinessProposalSetPreview {
     artifactId?: string;
     artifactVersion?: number;
     proposalSetId?: string;
+    transition?: { fromPhase?: number; toPhase?: number };
     status?: string;
     proposalCount?: number;
     pendingCount?: number;
@@ -226,6 +229,18 @@ function proposalSetPreviewFromJson(
         typeof proposalSet.proposalSetId === "string"
           ? proposalSet.proposalSetId
           : undefined,
+      transition: objectValue(proposalSet.transition)
+        ? {
+            fromPhase: numberFromMetadata(
+              objectValue(proposalSet.transition),
+              "fromPhase",
+            ),
+            toPhase: numberFromMetadata(
+              objectValue(proposalSet.transition),
+              "toPhase",
+            ),
+          }
+        : undefined,
       status: "review_required",
       proposalCount:
         numberFromMetadata(summary, "proposalCount") || proposals.length,
@@ -299,18 +314,6 @@ function deliverableKeyFromArtifactMetadata(
     }
   }
   return null;
-}
-
-function contextExtractAttachedEvidenceCount(
-  metadata: Record<string, unknown>,
-): number {
-  const extract = objectMetadata(metadata.moveContextExtract);
-  const attached = extract.attachedEvidenceItems;
-  return Array.isArray(attached) ? attached.length : 0;
-}
-
-function isMoveContextExtractArtifact(artifactType: string): boolean {
-  return artifactType.startsWith("move_context_extract_p");
 }
 
 export default async function StrategicMovePhaseWorkspacePage({
@@ -630,29 +633,6 @@ export default async function StrategicMovePhaseWorkspacePage({
     syntheticEvidencePackHref = null;
   }
 
-  let moveContextExtractEvidenceCount = 0;
-  try {
-    const tctx = await requireTenancy();
-    const contextExtractArtifacts = await listMoveArtifacts(tctx, moveId, {
-      family: "session_artifact",
-      currentOnly: true,
-    });
-    const phaseExtract =
-      contextExtractArtifacts.find(
-        (artifact) =>
-          artifact.phase === parsedPhase &&
-          isMoveContextExtractArtifact(artifact.artifact_type),
-      ) ??
-      contextExtractArtifacts.find((artifact) =>
-        isMoveContextExtractArtifact(artifact.artifact_type),
-      );
-    moveContextExtractEvidenceCount = phaseExtract
-      ? contextExtractAttachedEvidenceCount(phaseExtract.metadata)
-      : 0;
-  } catch {
-    moveContextExtractEvidenceCount = 0;
-  }
-
   let phaseBuildArtifacts: Array<{
     artifactId: string;
     deliverableTypeKey: string;
@@ -812,7 +792,6 @@ export default async function StrategicMovePhaseWorkspacePage({
         moveName: move.name,
         phase: parsedPhase,
         currentPhase,
-        moveContextExtractEvidenceCount,
       }}
     >
       <MovesPhaseStandaloneClient
@@ -832,7 +811,6 @@ export default async function StrategicMovePhaseWorkspacePage({
         initialConfirmedSolutionRoute={initialConfirmedSolutionRoute}
         initialStageReadinessPreview={initialStageReadinessPreview}
         syntheticEvidencePackHref={syntheticEvidencePackHref}
-        moveContextExtractEvidenceCount={moveContextExtractEvidenceCount}
         phaseBuildArtifacts={phaseBuildArtifacts}
         initialSubstepKey={
           parsedPhase === 0 && resolvedSearchParams.focus === "gate"

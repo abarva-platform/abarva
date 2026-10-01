@@ -49,17 +49,25 @@ describe("agent route · Moves aVa scoped-context gate", () => {
     expect(derivation).toContain("crossProgramSignalsBlock");
   });
 
-  it("counts visible Move context-extract evidence from surfaceContext before building the packet", () => {
+  it("counts context-extract evidence only from a server-verified current extract", () => {
+    expect(source).toContain(
+      'import { loadCurrentMoveContextExtractFreshness } from "@/lib/programs/move-context-extract-freshness"',
+    );
     const resolverBlock = source.slice(
-      source.indexOf("const surfaceContextEvidenceCount ="),
+      source.indexOf("const contextExtractFreshness ="),
       source.indexOf("const visibleEvidenceCount =") + 420,
     );
 
+    expect(resolverBlock).toContain("loadCurrentMoveContextExtractFreshness");
     expect(resolverBlock).toContain(
+      "tenantKey: tenancy.clientKey ?? tenancy.clientId",
+    );
+    expect(resolverBlock).toContain("moveId: programId");
+    expect(resolverBlock).toContain("phase: promptPhase");
+    expect(resolverBlock).toContain("contextExtractFreshness,");
+    expect(resolverBlock).not.toContain(
       "surfaceContext.moveContextExtractEvidenceCount",
     );
-    expect(resolverBlock).toContain("surfaceContext.moveEvidenceCount");
-    expect(resolverBlock).toContain("surfaceContextEvidenceCount");
     expect(resolverBlock).toContain("resolveMovesAvaVisibleEvidenceCount");
   });
 
