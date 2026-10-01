@@ -1024,6 +1024,7 @@
     "test:npm-script-targets": "node scripts/ecl/__tests__/run-npm-script-target-reconciliation-tests.mjs",
     "test:ecl-legacy-retirement-status": "node scripts/ecl/__tests__/run-ecl-legacy-retirement-status-tests.mjs",
     "test:ecl-product-serving-route-fence": "node scripts/ecl/__tests__/run-ecl-product-serving-route-fence-tests.mjs",
+    "test:ecl-product-browser-smoke-contract": "node --test scripts/ecl/__tests__/run-ecl-product-browser-smoke-contract-tests.mjs",
     "test:ecl-dense-readback-query": "node scripts/ecl/__tests__/run-ecl-dense-readback-query-tests.mjs",
     "test:ecl-dense-azure-gate-validator": "node scripts/ecl/__tests__/run-ecl-dense-azure-gate-validator-tests.mjs",
     "ecl:dense-all-layer:validate-counts": "python3 scripts/ecl/validate_dense_all_layer_local_proof_counts.py",
