@@ -255,6 +255,35 @@ describe("client-final artifact body landing", () => {
     expect(updateArtifactBody).not.toHaveBeenCalled();
   });
 
+  it("refuses an RFP Client Final that falsely declares vendor issuance before storage", async () => {
+    listedArtifacts = [{
+      id: "generated-1",
+      artifactType: "d09_rfp_pack",
+      artifactGroup: "generated",
+      lifecycleState: "current",
+      originalName: "generated.docx",
+      version: 1,
+    }];
+    extractText.mockResolvedValueOnce({
+      text: "**Document status:** DRAFT\n**Release state:** Initial structural issuance.",
+      method: "text",
+      warnings: [],
+    });
+
+    const response = await postClientFinal(
+      clientFinalForm("Reviewed the RFP draft."),
+      "d09_rfp_pack",
+    );
+
+    expect(response.status).toBe(422);
+    expect(await response.json()).toEqual(expect.objectContaining({
+      error: "vendor_disclosure_violation",
+    }));
+    expect(uploadBlob).not.toHaveBeenCalled();
+    expect(registerArtifact).not.toHaveBeenCalled();
+    expect(updateArtifactBody).not.toHaveBeenCalled();
+  });
+
   it("allows a D09 Client Final with ordinary vendor pricing instructions", async () => {
     extractText.mockResolvedValueOnce({
       text: "Submit separate run and change prices in the Pricing Response tab.",

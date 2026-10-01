@@ -199,4 +199,23 @@ describe("D09 RFP map-reduce generation", () => {
       expect(call?.messages[0]?.content).toMatch(/(?:security|compliance|risk).*not issued/i);
     }
   });
+
+  it("keeps every D09 section and assembly call from claiming issuance", async () => {
+    const calls: Array<{ system: string }> = [];
+    const stream = jest.fn((params: { system: string }) => {
+      calls.push(params);
+      return makeStream("## §1 · Executive summary and decision context\n\nNot issued.");
+    });
+
+    await generateD09ViaMapReduce({
+      ctx: makeContext(),
+      upstreamBound: {},
+      client: { messages: { stream } } as unknown as AnthropicDirectClient,
+    });
+
+    expect(calls).toHaveLength(11);
+    for (const call of calls) {
+      expect(call.system).toMatch(/release state.*draft.*not issued/i);
+    }
+  });
 });
