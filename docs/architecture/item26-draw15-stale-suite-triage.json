@@ -29,7 +29,19 @@
     "what": "Wire the wire_into_ci rows (by named file where the directory is partly covered), apply the WorkspaceExplorer label update and wire it, rewrite the toolUseLoop byte scan as behaviour and wire it. The six T-775 rows stay held until their owner acts.",
     "owner": "26",
     "reExecuteFirst": "Re-execute every row on the then-current main before wiring; this record is a snapshot at its base.",
-    "status": "open"
+    "status": "wire_into_ci rows wired; the WorkspaceExplorer label update, the toolUseLoop rewrite and the six T-775 holds are unchanged and still open",
+    "wiredAt": "2026-10-01T02:21:06Z",
+    "wiredOnBase": "3160fbf55bdfd650e40e63a7722781d2f874cdb9",
+    "reExecuted": "All 12 wire_into_ci files re-executed one at a time on the wiring base: 12 suites, 94 cases, all green. The two workflow steps run as written: 10 suites / 78 cases and 2 suites / 16 cases.",
+    "steps": [
+      "Run the item 26 draw 15 config, data and lib suites",
+      "Run the item 26 draw 15 agent doctrine and CXO answer-quality suites by named file"
+    ],
+    "stillHeld": [
+      "update_with_reason_recorded: WorkspaceExplorer (item 26)",
+      "rewrite_as_behavior: toolUseLoop (item 26)",
+      "already_verdicted_elsewhere: six rows (T-775)"
+    ]
   },
   "suites": [
     {
@@ -98,7 +110,8 @@
       "textIsTheSubject": false,
       "verdict": "wire_into_ci",
       "ownerItem": "26",
-      "rationale": "Green 5 of 5, behavioural over CANONICAL_TENANTS (15 product importers), reads no repository file. Not wired in this change: the draw is read-only; wiring is item 26's next draw half."
+      "wiredInThisItem": true,
+      "rationale": "Green 5 of 5, behavioural over CANONICAL_TENANTS (15 product importers), reads no repository file. Wired by item 26 draw 15's second half."
     },
     {
       "path": "src/data/apexretail/__tests__/roster-consistency.test.ts",
@@ -115,7 +128,8 @@
       "textIsTheSubject": false,
       "verdict": "wire_into_ci",
       "ownerItem": "26",
-      "rationale": "Green 4 of 4, behavioural cross-check of the fixture rosters under src/data/apexretail; the modules are reached through src/lib/knowledge/enterprise-data-room.ts (agent-context-broker). interviews.ts itself has no product importer; it sits under src/data, which the orphan report does not watch. Not wired in this change: the draw is read-only; wiring is item 26's next draw half."
+      "wiredInThisItem": true,
+      "rationale": "Green 4 of 4, behavioural cross-check of the fixture rosters under src/data/apexretail; the modules are reached through src/lib/knowledge/enterprise-data-room.ts (agent-context-broker). interviews.ts itself has no product importer; it sits under src/data, which the orphan report does not watch. Wired by item 26 draw 15's second half."
     },
     {
       "path": "src/lib/admin/overview-data.test.ts",
@@ -176,7 +190,8 @@
       "textIsTheSubject": false,
       "verdict": "wire_into_ci",
       "ownerItem": "26",
-      "rationale": "Green 7 of 7, behavioural over all-agent-doctrine.ts, which /api/chat/agent and /api/tower/ask import. Not wired in this change: the draw is read-only; wiring is item 26's next draw half."
+      "wiredInThisItem": true,
+      "rationale": "Green 7 of 7, behavioural over all-agent-doctrine.ts, which /api/chat/agent and /api/tower/ask import. Wired by item 26 draw 15's second half."
     },
     {
       "path": "src/lib/agent/quality/__tests__/cxo-answer-quality.test.ts",
@@ -193,7 +208,8 @@
       "textIsTheSubject": false,
       "verdict": "wire_into_ci",
       "ownerItem": "26",
-      "rationale": "Green 9 of 9, behavioural over cxo-answer-quality.ts, reached by the agent-grounding scorer and the QA live runner; not in orphaned-lib-modules.json. Not wired in this change: the draw is read-only; wiring is item 26's next draw half."
+      "wiredInThisItem": true,
+      "rationale": "Green 9 of 9, behavioural over cxo-answer-quality.ts, reached by the agent-grounding scorer and the QA live runner; not in orphaned-lib-modules.json. Wired by item 26 draw 15's second half."
     },
     {
       "path": "src/lib/agent/streaming/toolUseLoop.test.ts",
@@ -227,7 +243,8 @@
       "textIsTheSubject": false,
       "verdict": "wire_into_ci",
       "ownerItem": "26",
-      "rationale": "Green 15 of 15, behavioural over document-generation-policy.ts, imported by deliverables generate and the orchestrator model caller. Not wired in this change: the draw is read-only; wiring is item 26's next draw half."
+      "wiredInThisItem": true,
+      "rationale": "Green 15 of 15, behavioural over document-generation-policy.ts, imported by deliverables generate and the orchestrator model caller. Wired by item 26 draw 15's second half."
     },
     {
       "path": "src/lib/answer/__tests__/shared-response-shaper.test.ts",
@@ -244,7 +261,8 @@
       "textIsTheSubject": false,
       "verdict": "wire_into_ci",
       "ownerItem": "26",
-      "rationale": "Green 5 of 5, behavioural over shared-response-shaper.ts, reached via agent response-contract and response-shape. Not wired in this change: the draw is read-only; wiring is item 26's next draw half."
+      "wiredInThisItem": true,
+      "rationale": "Green 5 of 5, behavioural over shared-response-shaper.ts, reached via agent response-contract and response-shape. Wired by item 26 draw 15's second half."
     },
     {
       "path": "src/lib/atlas/initiative-deep/joins/__tests__/ai-initiatives.test.ts",
@@ -261,7 +279,8 @@
       "textIsTheSubject": false,
       "verdict": "wire_into_ci",
       "ownerItem": "26",
-      "rationale": "Green 6 of 6, behavioural over the initiative-deep ai-initiatives join with a mocked client; not in orphaned-lib-modules.json. Not wired in this change: the draw is read-only; wiring is item 26's next draw half."
+      "wiredInThisItem": true,
+      "rationale": "Green 6 of 6, behavioural over the initiative-deep ai-initiatives join with a mocked client; not in orphaned-lib-modules.json. Wired by item 26 draw 15's second half."
     },
     {
       "path": "src/lib/azure-connectivity/__tests__/config.test.ts",
@@ -278,7 +297,8 @@
       "textIsTheSubject": false,
       "verdict": "wire_into_ci",
       "ownerItem": "26",
-      "rationale": "Green 4 of 4, behavioural over azure-connectivity/config.ts, imported by /api/health/azure-connectivity. Not wired in this change: the draw is read-only; wiring is item 26's next draw half."
+      "wiredInThisItem": true,
+      "rationale": "Green 4 of 4, behavioural over azure-connectivity/config.ts, imported by /api/health/azure-connectivity. Wired by item 26 draw 15's second half."
     },
     {
       "path": "src/lib/compliance/__tests__/ofac-screening.test.ts",
@@ -317,7 +337,8 @@
       "textIsTheSubject": false,
       "verdict": "wire_into_ci",
       "ownerItem": "26",
-      "rationale": "Green 27 of 27, behavioural over freshness-model.ts (6 product importers including EvidenceTraceDrawer and the Source decision queue read adapter). Not wired in this change: the draw is read-only; wiring is item 26's next draw half."
+      "wiredInThisItem": true,
+      "rationale": "Green 27 of 27, behavioural over freshness-model.ts (6 product importers including EvidenceTraceDrawer and the Source decision queue read adapter). Wired by item 26 draw 15's second half."
     },
     {
       "path": "src/lib/corpus/__tests__/db.test.ts",
@@ -334,7 +355,8 @@
       "textIsTheSubject": false,
       "verdict": "wire_into_ci",
       "ownerItem": "26",
-      "rationale": "Green 5 of 5, behavioural over corpus/db.ts with the database mocked; reached by corpus retrieval and authoring. Not wired in this change: the draw is read-only; wiring is item 26's next draw half."
+      "wiredInThisItem": true,
+      "rationale": "Green 5 of 5, behavioural over corpus/db.ts with the database mocked; reached by corpus retrieval and authoring. Wired by item 26 draw 15's second half."
     },
     {
       "path": "src/lib/cxo-canvas/__tests__/cxo-canvas-renderer.test.tsx",
@@ -373,7 +395,8 @@
       "textIsTheSubject": false,
       "verdict": "wire_into_ci",
       "ownerItem": "26",
-      "rationale": "Green 5 of 5, behavioural over cxo-intel schemas and validators, reached by CxoIntelUploadFlow and the admin cxo-intel setup pages. Not wired in this change: the draw is read-only; wiring is item 26's next draw half."
+      "wiredInThisItem": true,
+      "rationale": "Green 5 of 5, behavioural over cxo-intel schemas and validators, reached by CxoIntelUploadFlow and the admin cxo-intel setup pages. Wired by item 26 draw 15's second half."
     },
     {
       "path": "src/lib/decisions/__tests__/auto-linker-options.test.ts",
@@ -390,7 +413,8 @@
       "textIsTheSubject": false,
       "verdict": "wire_into_ci",
       "ownerItem": "26",
-      "rationale": "Green 2 of 2, behavioural over decisions/auto-linker.ts with postgresCompat mocked; imported by the dossier pages. Not wired in this change: the draw is read-only; wiring is item 26's next draw half."
+      "wiredInThisItem": true,
+      "rationale": "Green 2 of 2, behavioural over decisions/auto-linker.ts with postgresCompat mocked; imported by the dossier pages. Wired by item 26 draw 15's second half."
     },
     {
       "path": "src/lib/deliverables/synthesis/__tests__/charter-shaper.test.ts",

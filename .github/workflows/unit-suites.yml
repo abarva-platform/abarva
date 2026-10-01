@@ -2019,6 +2019,42 @@ jobs:
           "src/app/(maestro)/tower/__tests__/tenant-tower-route-scope.test.ts"
           --no-coverage --ci
 
+      # Item 26, draw 15, second half: the fifteenth stale-suite draw's twelve
+      # `wire_into_ci` rows. Verdicts:
+      # `docs/architecture/item26-draw15-stale-suite-triage.json` (#8767).
+      # Re-executed on base `3160fbf55b` before wiring, each file alone: 12
+      # suites, 94 cases, all green. Ten directories hold exactly one test file,
+      # the drawn one (`jest --listTests` over the ten patterns resolves exactly
+      # those ten files), so they are named whole and leave the dark-directory
+      # baseline in the same change. Two are named BY FILE: `src/lib/agent` as a
+      # pattern would select every suite under `src/lib/agent/**`, and
+      # `src/lib/agent/quality/__tests__` holds a second file that already runs
+      # in `wave0:quality-gate`.
+      # Not wired here, by verdict: the toolUseLoop byte scan
+      # (rewrite_as_behavior), the WorkspaceExplorer stale label
+      # (update_with_reason_recorded) and six rows held for T-775.
+      - name: Run the item 26 draw 15 config, data and lib suites
+        run: >-
+          npx jest
+          src/config/tenants/__tests__
+          src/data/apexretail/__tests__
+          src/lib/ai/__tests__
+          src/lib/answer/__tests__
+          src/lib/atlas/initiative-deep/joins/__tests__
+          src/lib/azure-connectivity/__tests__
+          src/lib/context-trust/__tests__
+          src/lib/corpus/__tests__
+          src/lib/cxo-intel/__tests__
+          src/lib/decisions/__tests__
+          --no-coverage --ci
+
+      - name: Run the item 26 draw 15 agent doctrine and CXO answer-quality suites by named file
+        run: >-
+          npx jest --runTestsByPath
+          src/lib/agent/all-agent-doctrine.test.ts
+          src/lib/agent/quality/__tests__/cxo-answer-quality.test.ts
+          --no-coverage --ci
+
       # Item T-495, claimable half, suite 2 of 11.
       # `src/__tests__/hygiene/learn-layout-single-nav.test.ts` asserted the
       # single-top-nav rule for `/home/learn` over the BYTES of two files, and was
