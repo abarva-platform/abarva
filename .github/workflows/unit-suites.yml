@@ -2030,8 +2030,13 @@ jobs:
       # pattern would select every suite under `src/lib/agent/**`, and
       # `src/lib/agent/quality/__tests__` holds a second file that already runs
       # in `wave0:quality-gate`.
-      # Not wired here, by verdict: the toolUseLoop byte scan
-      # (rewrite_as_behavior) and six rows held for T-775.
+      # Not wired here, by verdict: six rows held for T-775.
+      # `src/lib/agent/streaming/toolUseLoop.test.ts` was the
+      # rewrite_as_behavior row: its byte scan over the loop's source now
+      # drives runToolUseLoop with a scripted Anthropic client and asserts the
+      # explicit tool_choice is sent on the first turn only; re-executed 4 of 4
+      # green on `1fe80e54c0`. Named by file below, since `src/lib/agent` as a
+      # pattern would select every suite under it.
       # `src/components/workspace-explorer/__tests__` was the
       # update_with_reason_recorded row: its stale requirement-label
       # expectation now reads the label from the canonical evidence spec,
@@ -2053,11 +2058,12 @@ jobs:
           src/components/workspace-explorer/__tests__
           --no-coverage --ci
 
-      - name: Run the item 26 draw 15 agent doctrine and CXO answer-quality suites by named file
+      - name: Run the item 26 draw 15 agent doctrine, CXO answer-quality and tool-use loop suites by named file
         run: >-
           npx jest --runTestsByPath
           src/lib/agent/all-agent-doctrine.test.ts
           src/lib/agent/quality/__tests__/cxo-answer-quality.test.ts
+          src/lib/agent/streaming/toolUseLoop.test.ts
           --no-coverage --ci
 
       # Item T-495, claimable half, suite 2 of 11.

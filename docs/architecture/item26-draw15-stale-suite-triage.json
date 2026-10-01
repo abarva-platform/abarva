@@ -29,19 +29,19 @@
     "what": "Wire the wire_into_ci rows (by named file where the directory is partly covered), apply the WorkspaceExplorer label update and wire it, rewrite the toolUseLoop byte scan as behaviour and wire it. The six T-775 rows stay held until their owner acts.",
     "owner": "26",
     "reExecuteFirst": "Re-execute every row on the then-current main before wiring; this record is a snapshot at its base.",
-    "status": "wire_into_ci rows wired; the WorkspaceExplorer label update applied and wired; the toolUseLoop rewrite and the six T-775 holds are unchanged and still open",
+    "status": "wire_into_ci rows wired; the WorkspaceExplorer label update applied and wired; the toolUseLoop rewrite applied and wired; the six T-775 holds are unchanged and still open",
     "wiredAt": "2026-10-01T02:21:06Z",
     "wiredOnBase": "3160fbf55bdfd650e40e63a7722781d2f874cdb9",
     "reExecuted": "All 12 wire_into_ci files re-executed one at a time on the wiring base: 12 suites, 94 cases, all green. The two workflow steps run as written: 10 suites / 78 cases and 2 suites / 16 cases.",
     "steps": [
       "Run the item 26 draw 15 config, data and lib suites",
-      "Run the item 26 draw 15 agent doctrine and CXO answer-quality suites by named file"
+      "Run the item 26 draw 15 agent doctrine, CXO answer-quality and tool-use loop suites by named file"
     ],
     "stillHeld": [
-      "rewrite_as_behavior: toolUseLoop (item 26)",
       "already_verdicted_elsewhere: six rows (T-775)"
     ],
-    "labelUpdateAppliedOnBase": "9fc88b46a9f0f47a924e2de24967bb56967d7d8f"
+    "labelUpdateAppliedOnBase": "9fc88b46a9f0f47a924e2de24967bb56967d7d8f",
+    "rewriteAppliedOnBase": "1fe80e54c07bb3be4935a78968976196e857627c"
   },
   "suites": [
     {
@@ -230,12 +230,24 @@
       "totalTests": 1,
       "passedTests": 1,
       "failedTests": 0,
-      "readsRepositoryFileText": true,
-      "sourceTextScanner": true,
+      "readsRepositoryFileText": false,
+      "sourceTextScanner": false,
       "textIsTheSubject": false,
       "verdict": "rewrite_as_behavior",
       "ownerItem": "26",
-      "rationale": "Green 1 of 1, but the only case reads src/lib/agent/streaming/toolUseLoop.ts with fs.readFileSync and asserts two source literals (the initialToolChoice parameter type and the turn===1 spread). That passes on a comment containing the text and fails on a reflow. The subject is a live control (explicit tool_choice only on the first model turn): rewrite as behaviour by driving the loop with a mocked Anthropic stream and asserting tool_choice is present in the turn-1 request and absent from turn 2, then wire."
+      "rationale": "Green 1 of 1, but the only case reads src/lib/agent/streaming/toolUseLoop.ts with fs.readFileSync and asserts two source literals (the initialToolChoice parameter type and the turn===1 spread). That passes on a comment containing the text and fails on a reflow. The subject is a live control (explicit tool_choice only on the first model turn): rewrite as behaviour by driving the loop with a mocked Anthropic stream and asserting tool_choice is present in the turn-1 request and absent from turn 2, then wire.",
+      "rewritten": {
+        "rewrittenInThisItem": true,
+        "reExecutedOn": "1fe80e54c07bb3be4935a78968976196e857627c",
+        "drawnReadsRepositoryFileText": true,
+        "drawnSourceTextScanner": true,
+        "totalTests": 4,
+        "passedTests": 4,
+        "failedTests": 0,
+        "what": "The one byte-scan case is replaced by four cases that drive runToolUseLoop with a scripted Anthropic client and a registered tool, snapshotting each turn's request: the explicit initial tool_choice is sent on turn 1 and absent from turn 2 while the tools stay offered; a three-turn chain carries it on turn 1 only; no tool_choice key is sent when none is given; and the tool runs before the next turn, which receives its tool_result and streams the confirmation. Seven product mutations were each caught, including tool_choice on every turn, on turn 2 only, an undefined tool_choice key, and an inverted is_error.",
+        "classification": "readsRepositoryFileText and sourceTextScanner on this row describe the file as it is now, because this record's own control re-derives them from the current bytes; the draw-time values are the two drawn* fields above. verdict, green and the counts stay the snapshot at the record's base."
+      },
+      "wiredInThisItem": true
     },
     {
       "path": "src/lib/ai/__tests__/document-generation-policy.test.ts",
