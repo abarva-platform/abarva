@@ -1518,7 +1518,7 @@ describe("buildTechnologyEstateFromHomeProjectionRows", () => {
         title: "Published scope claim",
         summary: "The contract record supplies a scoped business fact.",
         display_payload_json: {
-          evidence_ids: ["ctx_ecl_scope_business_economics_001"],
+          evidence_ids: ["ctx_ecl_vendor_contracts_contract_CTR_005"],
           claim_type: "FACT",
           confidence: "high",
         },
@@ -1586,6 +1586,58 @@ describe("buildTechnologyEstateFromHomeProjectionRows", () => {
     expect(accepted.contextVersion?.sourceSetHash).toEqual(expect.any(String));
     expect(accepted.contextVersion?.coherence).toBe("coherent");
     expect(partial.contextVersion?.coherence).toBe("unverified");
+
+    const withScopeAndRowEvidence = buildHomeReviewBundleFromEclProjectionRows(
+      base,
+      withWriters.map((item) =>
+        item.row_type === "chapter_claim"
+          ? {
+              ...item,
+              display_payload_json: {
+                ...item.display_payload_json,
+                evidence_ids: [
+                  "ctx_ecl_scope_business_economics_001",
+                  "ctx_ecl_vendor_contracts_contract_CTR_005",
+                ],
+              },
+            }
+          : item,
+      ),
+      undefined,
+      links,
+      [sourceFile],
+    );
+    expect(withScopeAndRowEvidence.contextVersion?.coherence).toBe("coherent");
+
+    for (const evidenceId of [
+      "ctx_ecl_scope_business_economics_001",
+      "sig_ecl_contract_value_005",
+    ]) {
+      const withoutRowEvidence = buildHomeReviewBundleFromEclProjectionRows(
+        base,
+        withWriters.map((item) =>
+          item.row_type === "chapter_claim"
+            ? {
+                ...item,
+                display_payload_json: {
+                  ...item.display_payload_json,
+                  evidence_ids: [evidenceId],
+                },
+              }
+            : item,
+        ),
+        undefined,
+        links,
+        [sourceFile],
+      );
+      expect(withoutRowEvidence.contextVersion?.sourceSetHash).toEqual(
+        expect.any(String),
+      );
+      expect(withoutRowEvidence.contextVersion?.narrativePacketHash).toBe(
+        withoutRowEvidence.contextVersion?.deterministicPacketHash,
+      );
+      expect(withoutRowEvidence.contextVersion?.coherence).toBe("unverified");
+    }
   });
 
   it("resolves deterministic writer evidence ids on the Home runtime signal packet", () => {

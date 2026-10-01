@@ -2720,12 +2720,19 @@ function contextVersionForRows(
     ...signalPacket.signals.map((signal) => signal.id),
     ...signalPacket.contextItems.map((item) => item.id),
   ]);
+  // Scope notes and aggregate signals orient a claim; only a linked serving row traces it to source.
+  const sourceBackedContextIds = new Set(
+    citableRows
+      .filter((row) => admittedSourceRefs(row, verifiedSourceRefs).length > 0)
+      .map(contextIdForRow),
+  );
   const claimEvidenceResolved = [...claims.values()]
     .flat()
     .every(
       (claim) =>
         claim.evidence_ids.length > 0 &&
-        claim.evidence_ids.every((id) => evidenceIds.has(id)),
+        claim.evidence_ids.every((id) => evidenceIds.has(id)) &&
+        claim.evidence_ids.some((id) => sourceBackedContextIds.has(id)),
     );
   const writerMatchesRead =
     writers.length === summaries.length &&
