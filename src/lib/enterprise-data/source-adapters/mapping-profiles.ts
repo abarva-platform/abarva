@@ -63,7 +63,7 @@ function sourceRules(
   return specs.map((spec) => sourceRule(sourceClass, mappingProfile, spec));
 }
 
-export const BUILT_IN_MAPPING_PROFILES: MappingProfile[] = [
+const BASE_MAPPING_PROFILES: MappingProfile[] = [
   {
     mappingProfile: "applications-systems-estate/v1",
     version: "2026-07-13.data-pr32",
@@ -2183,13 +2183,13 @@ export const BUILT_IN_MAPPING_PROFILES: MappingProfile[] = [
     version: "2026-08-14.v3-contract-pr1",
     sourceClass: "applications_systems",
     rules: sourceRules("applications_systems", "applications-systems-v3/v1", [
-        {
-          id: "system-name",
-          field: "system_name",
-          aliases: ["systems", "business_name", "capability"],
-          objectType: "application_system",
-          attribute: "systemName",
-          required: true,
+      {
+        id: "system-name",
+        field: "system_name",
+        aliases: ["systems", "business_name", "capability"],
+        objectType: "application_system",
+        attribute: "systemName",
+        required: true,
         confidence: 0.94,
       },
       {
@@ -2201,13 +2201,13 @@ export const BUILT_IN_MAPPING_PROFILES: MappingProfile[] = [
         required: true,
         confidence: 0.96,
       },
-        {
-          id: "source-file",
-          field: "source_file",
-          aliases: ["evidence_location", "__source_path"],
-          objectType: "application_system",
-          attribute: "sourceFile",
-          required: true,
+      {
+        id: "source-file",
+        field: "source_file",
+        aliases: ["evidence_location", "__source_path"],
+        objectType: "application_system",
+        attribute: "sourceFile",
+        required: true,
         confidence: 0.9,
       },
       {
@@ -2560,6 +2560,50 @@ export const BUILT_IN_MAPPING_PROFILES: MappingProfile[] = [
       },
     ],
   },
+];
+
+function businessFunctionSegmentProfile(): MappingProfile {
+  const prior = BASE_MAPPING_PROFILES.find(
+    (profile) =>
+      profile.mappingProfile === "organization-business-functions/v1",
+  );
+  if (!prior) throw new Error("Business function v1 profile is missing.");
+  const mappingProfile = "organization-business-functions/v2";
+  return {
+    mappingProfile,
+    version: "2026-10-01.business-function-segment-v2",
+    sourceClass: "organization_functions",
+    rules: [
+      ...prior.rules.map((rule) => ({
+        ...rule,
+        mappingProfile,
+        mappingRuleId: rule.mappingRuleId.replace(
+          /^organization-business-functions\./,
+          "organization-business-functions-v2.",
+        ),
+        validFrom: "2026-10-01",
+      })),
+      {
+        mappingRuleId:
+          "organization-business-functions-v2.business-segment-key",
+        mappingProfile,
+        sourceClass: "organization_functions",
+        sourceField: "business_segment_key",
+        targetDomain: "enterprise_structure",
+        targetObjectType: "business_function",
+        targetAttribute: "businessSegmentKey",
+        transform: "normalize_code",
+        required: false,
+        confidenceDefault: 0.86,
+        validFrom: "2026-10-01",
+      },
+    ],
+  };
+}
+
+export const BUILT_IN_MAPPING_PROFILES: MappingProfile[] = [
+  ...BASE_MAPPING_PROFILES,
+  businessFunctionSegmentProfile(),
 ];
 
 export function getBuiltInMappingProfile(
