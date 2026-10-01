@@ -28,12 +28,20 @@
   "secondHalf": {
     "what": "Wire the wire_into_ci rows, each re-executed on the then-current main first. The one repair row (rank 18) is a product fix plus a stale heading assertion and is claimable under item 26. The T-775 rows stay held until their owner acts.",
     "owner": "26",
-    "status": "the rank 18 repair applied and wired; the fourteen wire_into_ci rows and the four T-775 holds are unchanged and still open",
+    "status": "the rank 18 repair applied and wired; the fourteen wire_into_ci rows wired; the four T-775 holds are unchanged and still open",
     "steps": [
-      "Run the item 26 draw 18 repaired suite"
+      "Run the item 26 draw 18 repaired suite",
+      "Run the item 26 draw 18 lib suites",
+      "Run the item 26 draw 18 new-workspace file"
     ],
     "repairAppliedOnBase": "d4721a60078ce1fe303ff318b5733dd9e84925ff",
-    "repairReExecuted": "The repaired file re-executed on the repair base: 1 suite, 3 cases, all green. The workflow step runs as written: 1 suite / 3 cases."
+    "repairReExecuted": "The repaired file re-executed on the repair base: 1 suite, 3 cases, all green. The workflow step runs as written: 1 suite / 3 cases.",
+    "wiredAt": "2026-10-01T10:20:00Z",
+    "wiredOnBase": "b14d9a48565ecedff903ddf09f56a8131d942b7c",
+    "reExecuted": "All 14 wire_into_ci files re-executed one at a time on the wiring base: 14 suites, 353 cases, all green. The workflow steps run as written: 13 suites / 347 cases by directory, and 1 suite / 6 cases by path.",
+    "stillHeld": [
+      "already_verdicted_elsewhere: four rows (T-775)"
+    ]
   },
   "suites": [
     {
@@ -51,6 +59,7 @@
       "textIsTheSubject": false,
       "verdict": "wire_into_ci",
       "ownerItem": "26",
+      "wiredInThisItem": true,
       "rationale": "Green 14 of 14, behavioural, reads no repository file. Subject evidence-trace.ts is imported by src/components/source/SourceDecisionQueueView.tsx and SourceExecutionRoomPage.tsx. No resolved subject is in either reachability registry."
     },
     {
@@ -68,6 +77,7 @@
       "textIsTheSubject": false,
       "verdict": "wire_into_ci",
       "ownerItem": "26",
+      "wiredInThisItem": true,
       "rationale": "Green 33 of 33, behavioural, reads no repository file. Subject assemble-deal-pack.ts is imported by the deal-pack and cxo-report routes under src/app/api/v1/source/[eventId]/. No resolved subject is in either reachability registry."
     },
     {
@@ -107,6 +117,7 @@
       "textIsTheSubject": false,
       "verdict": "wire_into_ci",
       "ownerItem": "26",
+      "wiredInThisItem": true,
       "rationale": "Green 8 of 8, behavioural, reads no repository file. Subject industry-intelligence/contract.ts is imported by src/lib/context-ingestion/loader/preserve-original.ts and understand-pipeline.ts. No resolved subject is in either reachability registry."
     },
     {
@@ -124,6 +135,7 @@
       "textIsTheSubject": false,
       "verdict": "wire_into_ci",
       "ownerItem": "26",
+      "wiredInThisItem": true,
       "rationale": "Green 10 of 10, behavioural, reads no repository file. Subject src/lib/source/mrm-screen is re-exported by the src/lib/source/index.ts barrel. No resolved subject is in either reachability registry."
     },
     {
@@ -163,6 +175,7 @@
       "textIsTheSubject": false,
       "verdict": "wire_into_ci",
       "ownerItem": "26",
+      "wiredInThisItem": true,
       "rationale": "Green 6 of 6, behavioural, reads no repository file. Subject stage-plan-snapshot.ts is imported by the mounted page src/app/(maestro)/source/new/[eventId]/page.tsx. No resolved subject is in either reachability registry."
     },
     {
@@ -224,6 +237,7 @@
       "textIsTheSubject": false,
       "verdict": "wire_into_ci",
       "ownerItem": "26",
+      "wiredInThisItem": true,
       "rationale": "Green 25 of 25, behavioural, reads no repository file. Subject should-cost-model.ts is imported by src/lib/source/source-answer-engine.ts and renewal-cockpit/cockpit.ts. No resolved subject is in either reachability registry."
     },
     {
@@ -241,6 +255,7 @@
       "textIsTheSubject": false,
       "verdict": "wire_into_ci",
       "ownerItem": "26",
+      "wiredInThisItem": true,
       "rationale": "Green 2 of 2, behavioural, reads no repository file. Subject bafo-counter-templates.ts is imported by src/lib/source/bafo-negotiation.ts. No resolved subject is in either reachability registry."
     },
     {
@@ -258,6 +273,7 @@
       "textIsTheSubject": false,
       "verdict": "wire_into_ci",
       "ownerItem": "26",
+      "wiredInThisItem": true,
       "rationale": "Green 11 of 11, behavioural, reads no repository file. Subject gate-resolver.ts is imported by the gate and gate-decision routes under src/app/api/v1/source/events/[eventId]/. No resolved subject is in either reachability registry."
     },
     {
@@ -275,6 +291,7 @@
       "textIsTheSubject": false,
       "verdict": "wire_into_ci",
       "ownerItem": "26",
+      "wiredInThisItem": true,
       "rationale": "Green 131 of 131, behavioural, reads no repository file. Subject src/lib/source/stage-packs is imported by src/app/api/chat/agent/route.ts and the src/lib/source barrel. No resolved subject is in either reachability registry."
     },
     {
@@ -292,6 +309,7 @@
       "textIsTheSubject": false,
       "verdict": "wire_into_ci",
       "ownerItem": "26",
+      "wiredInThisItem": true,
       "rationale": "Green 78 of 78, behavioural, reads no repository file. Subject category-taxonomy.ts is imported by the ServiceNow intake review and door1 diagnose routes. No resolved subject is in either reachability registry."
     },
     {
@@ -309,6 +327,7 @@
       "textIsTheSubject": false,
       "verdict": "wire_into_ci",
       "ownerItem": "26",
+      "wiredInThisItem": true,
       "rationale": "Green 3 of 3, behavioural, reads no repository file. Subject product-usage.ts is imported by src/components/ProductUsageTelemetry.tsx. No resolved subject is in either reachability registry."
     },
     {
@@ -326,6 +345,7 @@
       "textIsTheSubject": false,
       "verdict": "wire_into_ci",
       "ownerItem": "26",
+      "wiredInThisItem": true,
       "rationale": "Green 13 of 13, behavioural, reads no repository file. Subject workforce-economics.ts is imported by the board-grade move-pack model under src/lib/programs/expert-kernel/exports/. No resolved subject is in either reachability registry."
     },
     {
@@ -343,6 +363,7 @@
       "textIsTheSubject": false,
       "verdict": "wire_into_ci",
       "ownerItem": "26",
+      "wiredInThisItem": true,
       "rationale": "Green 3 of 3, behavioural, reads no repository file. Subjects render.ts and depth-lint.ts are imported by src/app/api/workshops/[id]/render/route.ts and the src/lib/workshops barrel. No resolved subject is in either reachability registry."
     },
     {
@@ -394,6 +415,7 @@
       "textIsTheSubject": false,
       "verdict": "wire_into_ci",
       "ownerItem": "26",
+      "wiredInThisItem": true,
       "rationale": "Green 16 of 16, behavioural, reads no repository file. Subject src/scripts/qa/scoring.ts is imported by src/lib/source/proposal-intelligence/index.ts and the sentinel QA script. No resolved subject is in either reachability registry."
     }
   ]
