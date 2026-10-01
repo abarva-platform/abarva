@@ -1,4 +1,5 @@
 import { BUILT_IN_MAPPING_PROFILES } from "../../source-adapters/mapping-profiles";
+import relationshipMap from "../../../../../config/ecl/synthetic-enterprise-v1-relationship-map.json";
 import {
   CANONICAL_OBJECT_REGISTRY,
   FACT_AUTHORITY_REGISTRY,
@@ -68,9 +69,9 @@ describe("Layer 3 validation scaffold", () => {
     expect(normalizeRelationshipType("depends on")?.relationshipType).toBe(
       "DEPENDS_ON",
     );
-    expect(normalizeRelationshipType("belongs_to_segment")?.relationshipType).toBe(
-      "BELONGS_TO_SEGMENT",
-    );
+    expect(
+      normalizeRelationshipType("belongs_to_segment")?.relationshipType,
+    ).toBe("BELONGS_TO_SEGMENT");
     expect(
       normalizeRelationshipType("system_of_record")?.relationshipType,
     ).toBe("SYSTEM_OF_RECORD_FOR");
@@ -80,9 +81,9 @@ describe("Layer 3 validation scaffold", () => {
     expect(normalizeRelationshipType("supported_by")?.relationshipType).toBe(
       "SUPPORTED_BY",
     );
-    expect(normalizeRelationshipType("uses_data_domain")?.relationshipType).toBe(
-      "USES_DATA_DOMAIN",
-    );
+    expect(
+      normalizeRelationshipType("uses_data_domain")?.relationshipType,
+    ).toBe("USES_DATA_DOMAIN");
     expect(normalizeRelationshipType("blocked_by")?.relationshipType).toBe(
       "BLOCKED_BY",
     );
@@ -104,14 +105,32 @@ describe("Layer 3 validation scaffold", () => {
     expect(relationshipTypes).toEqual(
       expect.arrayContaining([
         "BELONGS_TO_SEGMENT",
+        "HAS_SEGMENT",
+        "HAS_FUNCTION",
+        "HAS_PRIORITY",
+        "ACCOUNTABLE_TO",
+        "TARGETS_SEGMENT",
         "SUPPORTS",
         "DEPENDS_ON",
         "HOSTED_ON",
+        "DEPLOYMENT_OF",
+        "MODULE_OF",
+        "EVIDENCE_REQUESTED_FOR",
         "OWNED_BY",
         "PRIMARY_SYSTEM_FOR",
         "SYSTEM_OF_RECORD_FOR",
         "VENDOR_SUPPORTS_SYSTEM",
         "INTEGRATES_WITH",
+        "FEEDS",
+        "COST_OF",
+        "WORKS_IN",
+        "ADVANCES_PRIORITY",
+        "CHANGES",
+        "COVERED_BY",
+        "APPLIES_TO",
+        "ATTRIBUTED_TO",
+        "GROUNDED_IN",
+        "USED_BY",
         "SUPPORTED_BY",
         "USES_DATA_DOMAIN",
         "BLOCKED_BY",
@@ -119,6 +138,12 @@ describe("Layer 3 validation scaffold", () => {
         "ROLLS_UP_TO",
       ]),
     );
+    expect(new Set(relationshipTypes).size).toBe(relationshipTypes.length);
+    expect(
+      Object.values(relationshipMap).every((type) =>
+        relationshipTypes.includes(type),
+      ),
+    ).toBe(true);
     expect(
       RELATIONSHIP_TYPE_DICTIONARY.every((entry) => entry.executiveSafe),
     ).toBe(true);

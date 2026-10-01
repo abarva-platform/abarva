@@ -237,6 +237,10 @@ jobs:
         run: |
           npm run test:ecl-synthetic-enterprise-v1
 
+      - name: Prove versioned synthetic enterprise normalization
+        run: |
+          npm run test:ecl-synthetic-enterprise-adapter-v1
+
       - name: Prove Meridian PHS Moves activation execute contract
         run: |
           npm run test:ecl-meridian-phs-moves-activation-execute
