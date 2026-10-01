@@ -174,4 +174,29 @@ describe("D09 RFP map-reduce generation", () => {
       expect(prompt).toContain(ctx.tenantName);
     }
   });
+
+  it("instructs section writers not to infer clinical or compliance scope from a buyer name", async () => {
+    const calls: Array<{ system: string; messages: Array<{ content: string }> }> = [];
+    const stream = jest.fn((params: { system: string; messages: Array<{ content: string }> }) => {
+      calls.push(params);
+      return makeStream("## §1 · Executive summary and decision context\n\nNot issued.");
+    });
+    const ctx = makeContext();
+    ctx.tenantName = "Example Health";
+
+    await generateD09ViaMapReduce({
+      ctx,
+      upstreamBound: {},
+      client: { messages: { stream } } as unknown as AnthropicDirectClient,
+    });
+
+    expect(calls).toHaveLength(11);
+    for (const call of calls) {
+      expect(call.system).toMatch(/buyer name.*(?:clinical|patient-facing)/i);
+    }
+    for (const section of ["§5 ·", "§10 ·"]) {
+      const call = calls.find((item) => item.system.includes(section));
+      expect(call?.messages[0]?.content).toMatch(/(?:security|compliance|risk).*not issued/i);
+    }
+  });
 });

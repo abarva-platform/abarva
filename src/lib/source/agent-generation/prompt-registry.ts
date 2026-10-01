@@ -1579,6 +1579,8 @@ Writing and format requirements:
     upstreamOptional: ["d02_value_target", "d04_app_inv", "d07_ticket_synth"],
     systemPrompt: `You are a procurement writer drafting a vendor-facing RFP package, not an internal sourcing memo. The only case facts you may use are in the bounded vendor-draft context. Prior-stage artifacts, buyer evidence-room files, workflow approvals, release holds, owner names, private cost or value targets, and negotiation strategy are not approved for bidder disclosure merely because Source holds them. Never reproduce or infer them.
 
+The buyer name or industry is not evidence of patient-facing or clinical-support workloads, healthcare data environments, regulations, certifications, or supplier obligations. Use those details only when explicitly present in the bounded vendor-disclosable context; otherwise mark them Not issued. Do not list example obligations as if they apply.
+
 Use formal, concise procurement language. Do not invent names, dates, volumes, baseline amounts, evaluation weights, service levels, issued exhibits, legal terms, or approvals. Mark any unavailable detail as "Not issued" in the relevant vendor-facing table. Do not create an internal source register, release-hold table, gap-closure register, approval checklist, or owner action list. This is an incomplete draft until the release boundary separately approves the full package.
 
 Required sections:

@@ -230,6 +230,70 @@ describe("Source consulting-grade quality gate helpers", () => {
     ]));
   });
 
+  it("rejects clinical workload claims inferred from a buyer name alone", () => {
+    const violations = findDeterministicSourceClaimViolations({
+      artifactCode: "d09_rfp_pack",
+      sourceContext: "Buyer: Example Health. Vendor-disclosable event scope: Not issued.",
+      body: [
+        "The supplier will support patient-facing and clinical-support systems.",
+        "The service covers healthcare data environments.",
+      ].join("\n"),
+    });
+
+    expect(violations).toEqual(expect.arrayContaining([
+      expect.objectContaining({ claim: expect.stringContaining("patient-facing") }),
+      expect.objectContaining({ claim: expect.stringContaining("healthcare data environments") }),
+    ]));
+  });
+
+  it("checks each named compliance standard rather than only the first on a line", () => {
+    const violations = findDeterministicSourceClaimViolations({
+      artifactCode: "d09_rfp_pack",
+      sourceContext: "Approved vendor-disclosable terms: HIPAA applies to the contracted service.",
+      body: "The supplier must comply with HIPAA, SOC 2, and ISO 27001.",
+    });
+
+    expect(violations.map((item) => item.reason)).toEqual(expect.arrayContaining([
+      expect.stringContaining("SOC 2"),
+      expect.stringContaining("ISO 27001"),
+    ]));
+    expect(violations.some((item) => item.reason.includes("HIPAA"))).toBe(false);
+  });
+
+  it("does not mistake explicit not-issued terms for vendor obligations", () => {
+    expect(findDeterministicSourceClaimViolations({
+      artifactCode: "d09_rfp_pack",
+      sourceContext: "Buyer: Example Health. Vendor-disclosable terms: Not issued.",
+      body: "| Patient-facing systems | Not issued |\nHIPAA obligations: Not issued.",
+    })).toEqual([]);
+    const mixed = findDeterministicSourceClaimViolations({
+      artifactCode: "d09_rfp_pack",
+      sourceContext: "Buyer: Example Health. Vendor-disclosable terms: Not issued.",
+      body: "HIPAA: Not issued; the supplier must comply with ISO 27001.",
+    });
+    expect(mixed.map((item) => item.reason)).toEqual([
+      expect.stringContaining("ISO 27001"),
+    ]);
+  });
+
+  it("allows only clinical workload terms present in approved vendor context", () => {
+    const violations = findDeterministicSourceClaimViolations({
+      artifactCode: "d09_rfp_pack",
+      sourceContext: "Approved vendor-disclosable scope: patient-facing applications are in scope.",
+      body: "The supplier will support patient-facing and clinical-support systems.",
+    });
+
+    expect(violations).toEqual(expect.arrayContaining([
+      expect.objectContaining({ claim: expect.stringContaining("clinical-support") }),
+    ]));
+    expect(violations.some((item) => item.reason.includes("patient-facing"))).toBe(false);
+    expect(findDeterministicSourceClaimViolations({
+      artifactCode: "d09_rfp_pack",
+      sourceContext: "Approved vendor-disclosable scope: patient-facing and clinical-support systems are in scope.",
+      body: "The supplier will support patient-facing and clinical-support systems.",
+    })).toEqual([]);
+  });
+
   it("does not treat response completeness as an unapproved D09 service level", () => {
     const body = [
       "Bidders must complete 100% of mandatory response fields.",
