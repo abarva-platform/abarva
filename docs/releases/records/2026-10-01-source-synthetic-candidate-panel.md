@@ -33,12 +33,13 @@ The synthetic candidate CSV adds three managed-services identities and different
 ## QA / Validation
 
 - Red-first package test failed at 20 versus 23 eligible candidates before the data update.
-- Focused Jest package suite: 3/3 passed after the update.
-- Loader integration suite: fixture-count and fail-closed mutation assertions updated for the expanded package; CI rerun pending.
+- Focused package and loader suites: 11/11 passed after the update.
+- ServiceNow acceptance harness: 4/4 passed, including a mutation that removes four of the five managed-services candidates and trips the two-candidate minimum.
 - Context/corpus manifest validator: passed.
 - Package validator: passed with 28 rows, 23 eligible, 5 negative controls, and 5 managed-services candidates.
 - Typecheck: passed on Node 24 with an 8 GB heap.
-- Full release check, CI, operator dry-run, and signed-in readback: pending at candidate status.
+- Scoped ESLint, TypeScript typecheck, full release check, and diff check: passed locally.
+- PR CI, operator dry-run, and signed-in readback: pending at candidate status.
 
 ## Rollout Plan
 
