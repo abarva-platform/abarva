@@ -849,12 +849,17 @@ function ArtifactRow({
 
   useEffect(() => {
     if (!reviewOpen) return;
-    window.requestAnimationFrame(() => {
-      reviewPanelRef.current?.scrollIntoView({
+    const frame = window.requestAnimationFrame(() => {
+      // Guard the method, not just the ref: jsdom and some embedded webviews
+      // do not implement scrollIntoView (U-550).
+      const panel = reviewPanelRef.current;
+      if (typeof panel?.scrollIntoView !== "function") return;
+      panel.scrollIntoView({
         behavior: "smooth",
         block: "nearest",
       });
     });
+    return () => window.cancelAnimationFrame(frame);
   }, [reviewOpen]);
 
   useEffect(() => {
