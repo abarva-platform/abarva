@@ -208,8 +208,10 @@ const DATA_COLUMN_SUFFIXES = [
  * Case-sensitive on purpose: "this section summary shows" is prose.
  */
 const AUTHORING_SCAFFOLD_LABELS = [
-  String.raw`Section (?:boundary|verdict|summary|takeaway|purpose|headline|thesis|message|conclusion)`,
-  String.raw`Slide (?:boundary|verdict|summary|takeaway|purpose|headline|thesis|message|conclusion)`,
+  // One lowercase word after "Section"/"Slide", then a terminator. Not an
+  // enumerated list: the words seen so far (verdict, boundary, stance) are
+  // whatever the author happened to coin, and the next one will be new.
+  String.raw`(?:Section|Slide) [a-z][a-z-]{2,24}`,
   String.raw`Governing (?:message|thought|point)`,
   String.raw`Speaker notes?`,
 ].join("|");
@@ -377,6 +379,11 @@ const RULES: readonly Rule[] = [
       "gm",
     ),
     why: "A label describing the paragraph's role in the document is authoring scaffolding. As a headline it tells the reader nothing.",
+    // "Section two:" is a numbered reference, not a role label.
+    exempt: (match) =>
+      /^(?:Section|Slide) (?:one|two|three|four|five|six|seven|eight|nine|ten)$/.test(
+        match,
+      ),
   },
   {
     kind: "truncated_claim",

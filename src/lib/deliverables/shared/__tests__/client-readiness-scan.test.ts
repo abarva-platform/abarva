@@ -425,6 +425,9 @@ describe("authoring scaffolding", () => {
     "Governing message: proceed to bounded design.",
     "Speaker notes: mention the baseline caveat.",
     "- Section boundary. The evidence base is synthetic.",
+    // A label nobody enumerated: the rule matches the shape, not a word list.
+    "Section stance.\nAn explicit escalation route exists for exceptions.",
+    "Slide takeaway: integration is unproven.",
     "**Section verdict.** The readout supports a bounded design phase.",
   ])("blocks a label that names the paragraph's job: %j", (text) => {
     const result = scanClientReadiness(text);
@@ -440,6 +443,9 @@ describe("authoring scaffolding", () => {
     "The governing message of the charter was cost discipline.",
     "Bottom line: hold the investment decision.",
     "Each section boundary was agreed with the sponsor.",
+    "Section two: findings are summarised below.",
+    "Section 4. Current-state findings.",
+    "Slide decks were not part of the evidence base.",
   ])("does not flag the ordinary sentence %j", (text) => {
     expect(kinds(text)).not.toContain("authoring_scaffold_label");
   });

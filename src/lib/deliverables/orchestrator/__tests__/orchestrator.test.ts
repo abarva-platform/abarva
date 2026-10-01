@@ -124,6 +124,11 @@ describe("multi-pass prompt builder", () => {
     expect(sys).toMatch(/SHORTEST artifact that carries the argument/i);
     expect(sys).not.toMatch(/Do not optimize for short documents/i);
     expect(sys).toMatch(/invisible authoring controls/i);
+    // Evidence is translated, not transcribed; and text starts with its claim.
+    expect(sys).toMatch(/Never print a source-system field name/);
+    expect(sys).toMatch(
+      /Start every paragraph and bullet with the claim itself/,
+    );
     expect(sys).toMatch(/never write that a claim is "tied to"/i);
   });
 
