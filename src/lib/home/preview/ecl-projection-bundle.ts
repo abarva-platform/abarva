@@ -5,6 +5,11 @@ import { createHash } from "node:crypto";
 import { azureRead } from "@/lib/data-plane/azureRead";
 import { denseAssessmentIdForTenant } from "@/lib/ecl/denseAssessment";
 import { normalizeHomeReviewBundle } from "./bundle-normalization";
+import {
+  hashHomeNarrativeValue,
+  homeNarrativeSourceLineageHash,
+  verifiedHomeNarrativePacketArtifact,
+} from "./home-narrative-packet";
 
 import {
   getHomeReviewBundle,
@@ -2603,6 +2608,7 @@ function contextVersionForRows(
   hasPublishedClaims: boolean,
   verifiedSourceRefs: VerifiedSourceRefs,
   sourceCatalogRows: readonly HomeSourceFileReviewRow[] | null,
+  hasVerifiedNarrativePacketArtifact: boolean,
 ): HomeContextVersion {
   const hash = (value: unknown) =>
     createHash("sha256").update(JSON.stringify(value)).digest("hex");
@@ -2622,24 +2628,18 @@ function contextVersionForRows(
       .map((writer) => text(writer.generated_at))
       .filter((value): value is string => Boolean(value)),
   );
-  const deterministicPacketHash = hash(signalPacket);
+  const deterministicPacketHash = hashHomeNarrativeValue(signalPacket);
   const citableRows = rows.filter(
     (row) =>
       row.row_type !== "summary" &&
       row.row_type !== "chapter_claim" &&
       row.row_type !== STORY_PLAN_ROW_TYPE,
   );
-  const sourceRows = citableRows
-    .map((row) => ({
-      pageKey: row.page_key,
-      rowKey: row.row_key,
-      sourceHash: row.source_hash,
-      sourceRefs: admittedSourceRefs(row, verifiedSourceRefs).sort(),
-    }))
-    .sort((a, b) =>
-      `${a.pageKey}:${a.rowKey}`.localeCompare(`${b.pageKey}:${b.rowKey}`),
-    );
-  const sourceLineageHash = hash(sourceRows);
+  const sourceRows = citableRows.map((row) => ({
+    pageKey: row.page_key,
+    sourceRefs: admittedSourceRefs(row, verifiedSourceRefs),
+  }));
+  const sourceLineageHash = homeNarrativeSourceLineageHash(rows, verifiedSourceRefs);
   const familyCoverage = new Map<
     string,
     { pageKey: string; totalRows: number; linkedRows: number }
@@ -2735,6 +2735,7 @@ function contextVersionForRows(
         claim.evidence_ids.some((id) => sourceBackedContextIds.has(id)),
     );
   const writerMatchesRead =
+    hasVerifiedNarrativePacketArtifact &&
     writers.length === summaries.length &&
     writerHashes.size === 1 &&
     narrativePacketHash === deterministicPacketHash &&
@@ -2795,7 +2796,12 @@ export function buildHomeReviewBundleFromEclProjectionRows(
     factualRows,
     verifiedSourceRefs,
   );
-  const signalPacket = buildEclSignalPacket(
+  const storyRow = storyPlanRow(factualRows);
+  const narrativePacketArtifact = storyRow ? verifiedHomeNarrativePacketArtifact(
+    rowPayload(storyRow).narrative_packet_artifact,
+    { tenantKey: base.tenantKey, assessmentId, rows, verifiedSourceRefs },
+  ) : null;
+  const signalPacket = narrativePacketArtifact?.packet ?? buildEclSignalPacket(
     factualRows,
     technologyEstate,
     assessmentId,
@@ -2813,6 +2819,7 @@ export function buildHomeReviewBundleFromEclProjectionRows(
     hasPublishedClaims,
     verifiedSourceRefs,
     sourceCatalogRows,
+    Boolean(narrativePacketArtifact),
   );
   const thesis = hasPublishedClaims
     ? publishedThesisFromRows(factualRows)

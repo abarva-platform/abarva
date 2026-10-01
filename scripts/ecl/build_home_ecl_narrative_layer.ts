@@ -41,6 +41,12 @@ import {
 } from "../../src/lib/governance/agent-context-bundle";
 import { HOME_PAGE_PROMPT_CONTRACT } from "./home_page_prompt_contracts";
 import {
+  createHomeNarrativePacketArtifact,
+  hashHomeNarrativeValue,
+  type HomeNarrativePacketArtifact,
+  type HomeVerifiedSourceRefs,
+} from "../../src/lib/home/preview/home-narrative-packet";
+import {
   PROJECTION_READINESS_TABLE,
   SIGNAL_READINESS_TABLE,
   readinessKey,
@@ -218,6 +224,7 @@ interface HomeNarrativePlanResult {
   chapters: ChapterView[];
   storyPlan?: HomeExecutiveStoryPlanV1;
   signalPacket?: EnterpriseSignalPacket;
+  narrativePacketArtifact?: HomeNarrativePacketArtifact;
   contextPolicyProof?: ContextPolicyProof;
   thesisResult?: VerifiedEnterpriseThesisResult;
   publicationGate?: { accepted?: boolean; issues?: unknown[] };
@@ -2187,6 +2194,41 @@ async function readEclSourceRecordRows(db: Client, tenantKey: string, assessment
   return result.rows;
 }
 
+async function readNarrativeSourceLinks(
+  db: Client,
+  tenantKey: string,
+  assessmentId: string,
+): Promise<HomeVerifiedSourceRefs> {
+  const result = await db.query<{
+    projection_entry_id: string;
+    source_record_id: string;
+    source_hash: string;
+  }>(
+    `select link.projection_entry_id::text, link.source_record_id::text, link.source_hash
+     from ecl_projection.projection_entry_source_record_ref link
+     join ecl_projection.projection_entry entry
+       on entry.tenant_key = link.tenant_key
+      and entry.assessment_id = link.assessment_id
+      and entry.id = link.projection_entry_id
+      and entry.source_hash = link.source_hash
+     join ecl_source.source_record source
+       on source.tenant_key = link.tenant_key
+      and source.assessment_id = link.assessment_id
+      and source.id = link.source_record_id
+     where link.tenant_key = $1 and link.assessment_id = $2`,
+    [tenantKey, assessmentId],
+  );
+  const verified: HomeVerifiedSourceRefs = new Map();
+  for (const link of result.rows) {
+    const byHash = verified.get(link.projection_entry_id) ?? new Map();
+    const refs = byHash.get(link.source_hash) ?? new Set<string>();
+    refs.add(link.source_record_id);
+    byHash.set(link.source_hash, refs);
+    verified.set(link.projection_entry_id, byHash);
+  }
+  return verified;
+}
+
 async function readNarrativeReadinessProofs(
   db: Client,
   tenantKey: string,
@@ -2661,6 +2703,7 @@ function readApprovedNarrativePlan(
   options: CliOptions,
   rows: HomeProjectionWriteRow[],
   signalPacket: EnterpriseSignalPacket,
+  narrativePacketArtifact: HomeNarrativePacketArtifact,
 ): { plan: ApprovedHomeNarrativePlanResult; planSha256: string } {
   if (!options.fromPlanPath) throw new Error("Approved writes require --from-plan <plan-json>.");
   if (!options.planSha256) throw new Error("Approved writes require --plan-sha256 <sha256>.");
@@ -2680,6 +2723,10 @@ function readApprovedNarrativePlan(
   if (!plan.publicationGate?.accepted || (plan.publicationGate.issues ?? []).length) issues.push("plan_publication_gate_not_clean");
   if (!plan.visibleQualityGate?.accepted || (plan.visibleQualityGate.issues ?? []).length) issues.push("plan_visible_quality_gate_not_clean");
   if (!plan.signalPacket || hashJson(plan.signalPacket) !== hashJson(signalPacket)) issues.push("plan_signal_packet_hash_mismatch");
+  if (!plan.narrativePacketArtifact ||
+      hashHomeNarrativeValue(plan.narrativePacketArtifact) !== hashHomeNarrativeValue(narrativePacketArtifact)) {
+    issues.push("plan_narrative_packet_artifact_mismatch");
+  }
   const expectedChapterIds = new Set(options.chapterIds);
   const planChapterIds = new Set((plan.chapters ?? []).map((chapter) => chapter.chapterId));
   const missing = [...expectedChapterIds].filter((chapterId) => !planChapterIds.has(chapterId));
@@ -2704,6 +2751,7 @@ async function writeNarrativeRows(
   chapters: ChapterView[],
   thesisResult: Awaited<ReturnType<typeof buildVerifiedEnterpriseThesisFromSignalPacket>>,
   signalPacket: EnterpriseSignalPacket,
+  narrativePacketArtifact: HomeNarrativePacketArtifact,
   contextPolicyProof: ContextPolicyProof,
 ) {
   const generatedAt = new Date().toISOString();
@@ -2779,7 +2827,7 @@ async function writeNarrativeRows(
             issues: [],
           },
           context_policy: contextPolicyProof,
-          signal_packet_hash: hashJson(signalPacket),
+          signal_packet_hash: narrativePacketArtifact.packetHash,
           claim_rows_written: claimRowsForChapter(chapter).length,
         },
         writer_headline: chapter.headline,
@@ -2945,6 +2993,7 @@ async function writeNarrativeRows(
         contract_version: STORY_PLAN_CONTRACT_VERSION,
       },
       story_plan: storyPlan,
+      narrative_packet_artifact: narrativePacketArtifact,
     };
     const storyPlanEntry = await db.query<{ id: string }>(
       `
@@ -3048,6 +3097,7 @@ async function main() {
     if (rows.length === 0) throw new Error(`No Home ECL projection rows found for ${options.tenantKey}/${options.assessmentId}.`);
 
     const readinessProofs = await readNarrativeReadinessProofs(db, options.tenantKey);
+    const verifiedSourceRefs = await readNarrativeSourceLinks(db, options.tenantKey, options.assessmentId);
     // Source-ledger and repo intake rows stay out of model context until their own
     // indexed, cited, source-version-matched admission path is available.
     const sourceRows: EclSourceRecordSummaryRow[] = [];
@@ -3060,6 +3110,13 @@ async function main() {
       sourceRows,
       readinessProofs,
     );
+    const narrativePacketArtifact = createHomeNarrativePacketArtifact({
+      tenantKey: options.tenantKey,
+      assessmentId: options.assessmentId,
+      rows,
+      verifiedSourceRefs,
+      packet: signalPacket,
+    });
     console.log(
       `${options.tenantKey}/${options.assessmentId}: ${rows.length} Home projection rows -> ` +
         `${signalPacket.signals.length} signals, ${signalPacket.contextItems.length} context items, ` +
@@ -3076,7 +3133,7 @@ async function main() {
     }
 
     if (options.fromPlanPath) {
-      const { plan, planSha256 } = readApprovedNarrativePlan(options, rows, signalPacket);
+      const { plan, planSha256 } = readApprovedNarrativePlan(options, rows, signalPacket, narrativePacketArtifact);
       const result = {
         ...plan,
         writeApplied: true,
@@ -3088,7 +3145,7 @@ async function main() {
       const outFile = path.join(options.outDir, `${options.tenantKey}-home-ecl-narrative-layer.json`);
       fs.writeFileSync(outFile, JSON.stringify(result, null, 2));
       console.log(`-> ${outFile}`);
-      await writeNarrativeRows(db, options, rows, plan.chapters, plan.thesisResult, signalPacket, plan.contextPolicyProof);
+      await writeNarrativeRows(db, options, rows, plan.chapters, plan.thesisResult, signalPacket, narrativePacketArtifact, plan.contextPolicyProof);
       console.log(`✓ wrote ${plan.chapters.length} approved chapter summaries and ${plan.chapters.reduce((sum, chapter) => sum + claimRowsForChapter(chapter).length, 0)} approved chapter claim rows`);
       console.log(JSON.stringify({
         structured_event: "home_ecl_narrative_layer_summary",
@@ -3107,7 +3164,7 @@ async function main() {
         chapter_claim_rows: plan.chapters.reduce((sum, chapter) => sum + claimRowsForChapter(chapter).length, 0),
         thesis_prompt_version: THESIS_PROMPT_VERSION,
         context_policy: plan.contextPolicyProof,
-        signal_packet_hash: hashJson(signalPacket),
+        signal_packet_hash: narrativePacketArtifact.packetHash,
         story_plan_hash: buildHomeExecutiveStoryPlan(options, rows, plan.chapters, signalPacket).storyPlanHash,
         verification: plan.verificationSummary,
         out_file: outFile,
@@ -3158,6 +3215,7 @@ async function main() {
       chapters,
       storyPlan: buildHomeExecutiveStoryPlan(options, rows, chapters, signalPacket),
       signalPacket,
+      narrativePacketArtifact,
       contextPolicyProof,
       thesisResult,
       publicationGate: verificationSummary.publication_gate,
@@ -3176,7 +3234,7 @@ async function main() {
     }
 
     if (WRITE) {
-      await writeNarrativeRows(db, options, rows, chapters, thesisResult, signalPacket, contextPolicyProof);
+      await writeNarrativeRows(db, options, rows, chapters, thesisResult, signalPacket, narrativePacketArtifact, contextPolicyProof);
       console.log(`✓ wrote ${chapters.length} chapter summaries and ${chapters.reduce((sum, chapter) => sum + claimRowsForChapter(chapter).length, 0)} chapter claim rows`);
     } else {
       console.log("Plan-only complete. Set HOME_ECL_NARRATIVE_WRITE=true and HOME_ECL_NARRATIVE_WRITE_APPROVED=true to write ECL projection narrative rows.");
@@ -3197,7 +3255,7 @@ async function main() {
       chapter_claim_rows: chapters.reduce((sum, chapter) => sum + claimRowsForChapter(chapter).length, 0),
       thesis_prompt_version: THESIS_PROMPT_VERSION,
       context_policy: contextPolicyProof,
-      signal_packet_hash: hashJson(signalPacket),
+      signal_packet_hash: narrativePacketArtifact.packetHash,
       story_plan_hash: buildHomeExecutiveStoryPlan(options, rows, chapters, signalPacket).storyPlanHash,
       verification: verificationSummary,
       out_file: outFile,
