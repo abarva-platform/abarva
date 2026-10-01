@@ -1,5 +1,7 @@
 import { pdf } from "@react-pdf/renderer";
+import { renderToStaticMarkup } from "react-dom/server";
 
+import * as chapterPageContent from "@/components/home/v4/chapter-page-content";
 import { getHomeReviewBundle } from "@/lib/home/preview/golden-snapshot";
 import {
   buildHomeWalkthroughPdf,
@@ -9,6 +11,13 @@ import type {
   HomeRecordRenderSource,
   HomeReviewBundle,
 } from "@/lib/home/preview/types";
+
+jest.mock("@/components/home/v4/chapter-page-content", () => {
+  const actual = jest.requireActual(
+    "@/components/home/v4/chapter-page-content",
+  );
+  return { ...actual, chapterDepth: jest.fn(actual.chapterDepth) };
+});
 
 async function pdfText(element: ReturnType<typeof buildHomeWalkthroughPdf>) {
   const stream = await pdf(element).toBuffer();
@@ -190,6 +199,85 @@ describe("Home walkthrough export", () => {
     );
     expect(output).toContain("Registered source dates: 2026-08-23");
     expect(output).toContain("Home chapters");
+  });
+
+  it("preserves table rows, totals, gaps, and cautious lineage in both formats", () => {
+    const rows = Array.from({ length: 17 }, (_, index) => [
+      `ROW-${String(index + 1).padStart(2, "0")}`,
+      index + 1,
+    ]);
+    const depth = jest.mocked(chapterPageContent.chapterDepth).mockReturnValue({
+      findings: [
+        {
+          kind: "established",
+          claim: "A deterministic finding",
+          owner: "Record owner",
+          because: "Computed from rows",
+          trace: {
+            file: "unverified-generated-file.csv",
+            grain: "one contract",
+            rule: "count active contracts",
+          },
+        },
+      ],
+      tables: [
+        {
+          caption: "Long table",
+          columns: ["Name", "Count"],
+          rows,
+          total: ["TOTAL-MARKER", 153],
+          note: "All rows shown",
+        },
+      ],
+      unsupported: [
+        {
+          caption: "Unsupported exhibit",
+          missingColumn: "missing_column",
+          why: "The source field is absent",
+        },
+      ],
+    });
+
+    try {
+      const bundle = bundleWithGraph();
+      const html = renderHomeWalkthroughHtml({
+        bundle,
+        recordSource,
+        tenantLabel: "Test Enterprise",
+        format: "html",
+      });
+      const pdfMarkup = renderToStaticMarkup(
+        buildHomeWalkthroughPdf({
+          bundle,
+          recordSource,
+          tenantLabel: "Test Enterprise",
+          format: "pdf",
+        }),
+      );
+
+      for (const output of [html, pdfMarkup]) {
+        expect(output).toContain("ROW-01");
+        expect(output).toContain("ROW-17");
+        expect(output).toContain("TOTAL-MARKER");
+        expect(output).toContain("Unsupported exhibit");
+        expect(output).toContain("The source field is absent");
+        expect(output).toContain("Rule; source mapping pending");
+        expect(output).toContain("count active contracts");
+        expect(output).not.toContain("unverified-generated-file.csv");
+      }
+      expect(pdfMarkup).toContain("Current-State Exhibits");
+      expect(pdfMarkup).toContain("Architecture");
+      expect(pdfMarkup).toContain("Data flow");
+      for (const output of [html, pdfMarkup]) {
+        expect(output).toContain("not a count of verified flows");
+        expect(output).not.toContain("source-to-target data movement rows");
+      }
+    } finally {
+      depth.mockImplementation(
+        jest.requireActual("@/components/home/v4/chapter-page-content")
+          .chapterDepth,
+      );
+    }
   });
 
   it("leads each mixed chapter with current depth and labels prior interpretation", () => {

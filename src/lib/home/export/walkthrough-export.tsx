@@ -145,9 +145,7 @@ function findingHtml(finding: Finding): string {
     <span>Basis: ${escapeHtml(finding.because)}</span>
     ${
       finding.trace
-        ? `<span>Trace: ${escapeHtml(finding.trace.file)} · ${escapeHtml(
-            finding.trace.grain,
-          )} · ${escapeHtml(finding.trace.rule)}</span>`
+        ? `<span>Rule; source mapping pending: ${escapeHtml(finding.trace.rule)}. One row means ${escapeHtml(finding.trace.grain)}.</span>`
         : ""
     }
   </li>`;
@@ -170,16 +168,37 @@ function familySummaryHtml(bundle: HomeReviewBundle): string {
   </section>`;
 }
 
-function architectureSummaryHtml(bundle: HomeReviewBundle): string {
+function exhibitSummary(bundle: HomeReviewBundle) {
   const applications = recordType(bundle, "application_system");
   const data = recordType(bundle, "data_asset_or_integration");
   const infrastructure = recordType(bundle, "infrastructure_platform");
+  return [
+    {
+      label: "Architecture",
+      summary: `${(applications?.rows.length ?? 0).toLocaleString()} applications and ${(infrastructure?.rows.length ?? 0).toLocaleString()} platforms in the exported Home record.`,
+    },
+    {
+      label: "Data flow",
+      summary: `${(data?.rows.length ?? 0).toLocaleString()} data asset and integration records available for the exhibit; this is not a count of verified flows.`,
+    },
+    {
+      label: "Record browser",
+      summary:
+        "All family counts above come from the same technology estate bundle as the rendered page.",
+    },
+  ];
+}
+
+function architectureSummaryHtml(bundle: HomeReviewBundle): string {
   return `<section class="block">
     <h2>Current-State Exhibits</h2>
     <div class="cards">
-      <div><strong>Architecture</strong><span>${(applications?.rows.length ?? 0).toLocaleString()} applications and ${(infrastructure?.rows.length ?? 0).toLocaleString()} platforms in the served Home record.</span></div>
-      <div><strong>Data flow</strong><span>${(data?.rows.filter((row) => row.recordKind !== "data_analytics_workload").length ?? 0).toLocaleString()} source-to-target data movement rows.</span></div>
-      <div><strong>Record browser</strong><span>All family counts above come from the same technology estate bundle as the rendered page.</span></div>
+      ${exhibitSummary(bundle)
+        .map(
+          (exhibit) =>
+            `<div><strong>${escapeHtml(exhibit.label)}</strong><span>${escapeHtml(exhibit.summary)}</span></div>`,
+        )
+        .join("")}
     </div>
   </section>`;
 }
@@ -392,35 +411,53 @@ const pdfStyles = StyleSheet.create({
 });
 
 function PdfTable({ table }: { table: TableSpec }) {
+  const chunks: TableSpec["rows"][] = [];
+  for (let index = 0; index < table.rows.length; index += 6) {
+    chunks.push(table.rows.slice(index, index + 6));
+  }
+  if (!chunks.length) chunks.push([]);
   return (
-    <View wrap={false}>
-      <Text style={pdfStyles.h3}>{table.caption}</Text>
-      <View style={pdfStyles.table}>
-        <View style={pdfStyles.row}>
-          {table.columns.map((column) => (
-            <Text key={column} style={pdfStyles.th}>
-              {column}
-            </Text>
-          ))}
-        </View>
-        {table.rows.slice(0, 12).map((row, index) => (
-          <View key={`${table.caption}-${index}`} style={pdfStyles.row}>
-            {row.map((cell, cellIndex) => (
-              <Text key={`${index}-${cellIndex}`} style={pdfStyles.td}>
-                {text(cell)}
-              </Text>
+    <>
+      {chunks.map((rows, chunkIndex) => (
+        <View key={`${table.caption}-${chunkIndex}`} wrap={false}>
+          <Text style={pdfStyles.h3}>
+            {table.caption}
+            {chunkIndex ? " (continued)" : ""}
+          </Text>
+          <View style={pdfStyles.table}>
+            <View style={pdfStyles.row}>
+              {table.columns.map((column) => (
+                <Text key={column} style={pdfStyles.th}>
+                  {column}
+                </Text>
+              ))}
+            </View>
+            {rows.map((row, index) => (
+              <View
+                key={`${table.caption}-${chunkIndex}-${index}`}
+                style={pdfStyles.row}
+              >
+                {row.map((cell, cellIndex) => (
+                  <Text key={`${index}-${cellIndex}`} style={pdfStyles.td}>
+                    {text(cell)}
+                  </Text>
+                ))}
+              </View>
             ))}
+            {chunkIndex === chunks.length - 1 && table.total ? (
+              <View style={pdfStyles.row}>
+                {table.total.map((cell, cellIndex) => (
+                  <Text key={`total-${cellIndex}`} style={pdfStyles.th}>
+                    {text(cell)}
+                  </Text>
+                ))}
+              </View>
+            ) : null}
           </View>
-        ))}
-      </View>
-      {table.rows.length > 12 ? (
-        <Text style={pdfStyles.meta}>
-          {table.rows.length - 12} additional rows are available in the HTML
-          export and live record browser.
-        </Text>
-      ) : null}
+        </View>
+      ))}
       {table.note ? <Text style={pdfStyles.meta}>{table.note}</Text> : null}
-    </View>
+    </>
   );
 }
 
@@ -432,8 +469,8 @@ function PdfFinding({ finding }: { finding: Finding }) {
       <Text style={pdfStyles.meta}>Basis: {finding.because}</Text>
       {finding.trace ? (
         <Text style={pdfStyles.meta}>
-          Trace: {finding.trace.file} · {finding.trace.grain} ·{" "}
-          {finding.trace.rule}
+          Rule; source mapping pending: {finding.trace.rule}. One row means{" "}
+          {finding.trace.grain}.
         </Text>
       ) : null}
     </View>
@@ -471,6 +508,16 @@ function PdfChapter({
           <Text style={pdfStyles.h3}>Deterministic Tables</Text>
           {depth.tables.map((table) => (
             <PdfTable key={table.caption} table={table} />
+          ))}
+        </>
+      ) : null}
+      {depth.unsupported.length > 0 ? (
+        <>
+          <Text style={pdfStyles.h3}>Evidence Gaps</Text>
+          {depth.unsupported.map((view) => (
+            <Text key={view.caption} style={pdfStyles.text}>
+              {view.caption}: {view.why}
+            </Text>
           ))}
         </>
       ) : null}
@@ -591,6 +638,13 @@ export function buildHomeWalkthroughPdf({
             </View>
           ))}
         </View>
+        <Text style={pdfStyles.h2}>Current-State Exhibits</Text>
+        {exhibitSummary(bundle).map((exhibit) => (
+          <View key={exhibit.label} wrap={false}>
+            <Text style={pdfStyles.h3}>{exhibit.label}</Text>
+            <Text style={pdfStyles.text}>{exhibit.summary}</Text>
+          </View>
+        ))}
       </Page>
       {bundle.chapters.map((chapter, index) => (
         <PdfChapter
