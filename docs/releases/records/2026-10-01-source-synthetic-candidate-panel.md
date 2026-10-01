@@ -34,6 +34,7 @@ The synthetic candidate CSV adds three managed-services identities and different
 
 - Red-first package test failed at 20 versus 23 eligible candidates before the data update.
 - Focused Jest package suite: 3/3 passed after the update.
+- Loader integration suite: fixture-count and fail-closed mutation assertions updated for the expanded package; CI rerun pending.
 - Context/corpus manifest validator: passed.
 - Package validator: passed with 28 rows, 23 eligible, 5 negative controls, and 5 managed-services candidates.
 - Typecheck: passed on Node 24 with an 8 GB heap.
