@@ -29,7 +29,7 @@ The Home narrative builder now requires independently recorded evidence-readines
 
 ## Changes Included
 
-- Narrative builder governance-ledger read and exact content-hash matching for projected rows and derived signals.
+- Narrative builder governance-ledger read and exact source/content-hash matching for projected rows and derived signals.
 - Intake-source quarantine and removal of locally fabricated retrieval/citation readiness.
 - Focused planted readiness cases and updated narrative contract tests.
 

@@ -1106,6 +1106,7 @@ function rowReadinessCounts(
       proofs.get(readinessKey(PROJECTION_READINESS_TABLE, row.projection_entry_id)),
       tenantKey,
       row.source_hash,
+      hashJson(row),
     )) {
       incrementCount(counts, "ready");
       incrementCount(counts, `ready_quality_${row.quality_state}`);
@@ -1127,7 +1128,7 @@ function governedCandidateForRow(
   tenantKey: string,
   proof: NarrativeReadinessProof | undefined,
 ): GovernedCandidate {
-  const ready = candidateIsReady(row) && verifiedReadiness(proof, tenantKey, row.source_hash);
+  const ready = candidateIsReady(row) && verifiedReadiness(proof, tenantKey, row.source_hash, hashJson(row));
   return {
     id: contextId(row),
     client_key: tenantKey,
@@ -1152,7 +1153,7 @@ function governedCandidateForSignal(
 ): GovernedCandidate {
   const citations = stringArray(signal.evidenceRefs);
   const ready = citations.length > 0 && citations.every((ref) => permittedRowIds.has(ref)) &&
-    verifiedReadiness(proof, tenantKey, hashJson(signal));
+    verifiedReadiness(proof, tenantKey, hashJson(signal), hashJson(signal));
   return {
     id: signal.id,
     client_key: tenantKey,
@@ -2205,7 +2206,8 @@ async function readNarrativeReadinessProofs(
       select object_table, object_id, client_key, tenant_id, source_layer, source_basis,
         classification, retrievability, agent_readiness_status, confidence_level,
         cited_render_verified_at::text, policy_validation_status, policy_version,
-        policy_validated_at::text, provenance->>'source_hash' as source_hash
+        policy_validated_at::text, provenance->>'source_hash' as source_hash,
+        provenance->>'content_hash' as content_hash
       from public.governed_object_readiness
       where client_key = $1 and object_table = any($2::text[])
     `,

@@ -16,6 +16,7 @@ export interface NarrativeReadinessProof {
   policy_version: string;
   policy_validated_at: string | null;
   source_hash: string | null;
+  content_hash: string | null;
 }
 
 export const PROJECTION_READINESS_TABLE = "ecl_projection.home_enterprise_landscape";
@@ -29,6 +30,7 @@ export function verifiedReadiness(
   proof: NarrativeReadinessProof | undefined,
   tenantKey: string,
   expectedHash: string,
+  expectedContentHash: string,
 ): boolean {
   return Boolean(
     proof &&
@@ -40,6 +42,7 @@ export function verifiedReadiness(
     proof.policy_version === POLICY_VERSION &&
     proof.policy_validated_at &&
     proof.source_hash === expectedHash &&
+    proof.content_hash === expectedContentHash &&
     proof.source_basis &&
     proof.agent_readiness_status === "agent_ready" &&
     (proof.retrievability === "fts_indexed" || proof.retrievability === "search_indexed") &&

@@ -18,18 +18,22 @@ const proof: NarrativeReadinessProof = {
   policy_version: "1.0.0",
   policy_validated_at: "2026-01-01T00:00:00Z",
   source_hash: "source-v1",
+  content_hash: "content-v1",
 };
 
 test("only independent, current readiness proof permits a narrative candidate", () => {
-  assert.equal(verifiedReadiness(proof, "tenant-a", "source-v1"), true);
-  assert.equal(verifiedReadiness(undefined, "tenant-a", "source-v1"), false);
-  assert.equal(verifiedReadiness({ ...proof, client_key: "tenant-b" }, "tenant-a", "source-v1"), false);
-  assert.equal(verifiedReadiness({ ...proof, tenant_id: "tenant-b" }, "tenant-a", "source-v1"), false);
-  assert.equal(verifiedReadiness(proof, "tenant-a", "source-v2"), false);
-  assert.equal(verifiedReadiness({ ...proof, policy_validation_status: "pending" }, "tenant-a", "source-v1"), false);
-  assert.equal(verifiedReadiness({ ...proof, policy_version: "0.9.0" }, "tenant-a", "source-v1"), false);
-  assert.equal(verifiedReadiness({ ...proof, agent_readiness_status: "not_reviewed" }, "tenant-a", "source-v1"), false);
-  assert.equal(verifiedReadiness({ ...proof, retrievability: "not_indexed" }, "tenant-a", "source-v1"), false);
-  assert.equal(verifiedReadiness({ ...proof, cited_render_verified_at: null }, "tenant-a", "source-v1"), false);
-  assert.equal(verifiedReadiness({ ...proof, classification: "restricted" }, "tenant-a", "source-v1"), false);
+  const admits = (candidate: NarrativeReadinessProof | undefined, sourceHash = "source-v1", contentHash = "content-v1") =>
+    verifiedReadiness(candidate, "tenant-a", sourceHash, contentHash);
+  assert.equal(admits(proof), true);
+  assert.equal(admits(undefined), false);
+  assert.equal(admits({ ...proof, client_key: "tenant-b" }), false);
+  assert.equal(admits({ ...proof, tenant_id: "tenant-b" }), false);
+  assert.equal(admits(proof, "source-v2"), false);
+  assert.equal(admits(proof, "source-v1", "content-v2"), false);
+  assert.equal(admits({ ...proof, policy_validation_status: "pending" }), false);
+  assert.equal(admits({ ...proof, policy_version: "0.9.0" }), false);
+  assert.equal(admits({ ...proof, agent_readiness_status: "not_reviewed" }), false);
+  assert.equal(admits({ ...proof, retrievability: "not_indexed" }), false);
+  assert.equal(admits({ ...proof, cited_render_verified_at: null }), false);
+  assert.equal(admits({ ...proof, classification: "restricted" }), false);
 });
