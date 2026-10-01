@@ -2136,6 +2136,40 @@ jobs:
           src/scripts/governance/__tests__
           --no-coverage --ci
 
+      # Item 26, draw 18, second half: the eighteenth stale-suite draw's
+      # fourteen `wire_into_ci` rows. Verdicts:
+      # `docs/architecture/item26-draw18-stale-suite-triage.json` (#8797).
+      # Re-executed on base `b14d9a4856` before wiring, each file alone: 14
+      # suites, 353 cases, all green. Thirteen directories hold exactly the
+      # drawn file, so they are named whole and leave the dark-directory
+      # baseline. `src/lib/source/new-workspace` is already partially covered
+      # by name and holds untriaged files, so its one drawn file is named by
+      # path in its own step.
+      # Not wired here, by verdict: four rows held for T-775.
+      - name: Run the item 26 draw 18 lib suites
+        run: >-
+          npx jest
+          src/lib/source/evidence-trace/__tests__
+          src/lib/source/exports/deal-pack/__tests__
+          src/lib/source/industry-intelligence/__tests__
+          src/lib/source/mrm-screen/__tests__
+          src/lib/source/should-cost/__tests__
+          src/lib/source/sourcing/__tests__
+          src/lib/source/stage-gate/__tests__
+          src/lib/source/stage-packs/__tests__
+          src/lib/source/taxonomy/__tests__
+          src/lib/telemetry/__tests__
+          src/lib/workforce-economics/__tests__
+          src/lib/workshops/__tests__
+          src/scripts/qa/__tests__
+          --no-coverage --ci
+
+      - name: Run the item 26 draw 18 new-workspace file
+        run: >-
+          npx jest --runTestsByPath
+          src/lib/source/new-workspace/stage-plan-snapshot.test.ts
+          --no-coverage --ci
+
       # Item T-495, claimable half, suite 2 of 11.
       # `src/__tests__/hygiene/learn-layout-single-nav.test.ts` asserted the
       # single-top-nav rule for `/home/learn` over the BYTES of two files, and was

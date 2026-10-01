@@ -36,22 +36,9 @@
   "src/lib/sentinel/__tests__",
   "src/lib/source/analytics/__tests__",
   "src/lib/source/deliverables/__tests__",
-  "src/lib/source/evidence-trace/__tests__",
-  "src/lib/source/exports/deal-pack/__tests__",
   "src/lib/source/handoff/__tests__",
-  "src/lib/source/industry-intelligence/__tests__",
-  "src/lib/source/mrm-screen/__tests__",
   "src/lib/source/negotiation/__tests__",
   "src/lib/source/proposal-normalization/__tests__",
   "src/lib/source/queue/__tests__",
-  "src/lib/source/should-cost/__tests__",
-  "src/lib/source/sourcing/__tests__",
-  "src/lib/source/stage-gate/__tests__",
-  "src/lib/source/stage-packs/__tests__",
-  "src/lib/source/taxonomy/__tests__",
-  "src/lib/source/vendor-proposals/__tests__",
-  "src/lib/telemetry/__tests__",
-  "src/lib/workforce-economics/__tests__",
-  "src/lib/workshops/__tests__",
-  "src/scripts/qa/__tests__"
+  "src/lib/source/vendor-proposals/__tests__"
 ]
