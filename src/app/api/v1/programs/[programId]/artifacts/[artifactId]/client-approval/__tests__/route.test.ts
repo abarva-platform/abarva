@@ -126,6 +126,7 @@ jest.mock("@/lib/programs/move-context-extract", () => ({
 }));
 
 jest.mock("@/lib/programs/approved-move-evidence-snapshot", () => ({
+  ...jest.requireActual("@/lib/programs/approved-move-evidence-snapshot"),
   loadApprovedMoveEvidenceSnapshot: (input: unknown) =>
     mockLoadApprovedMoveEvidenceSnapshot(input),
 }));
@@ -257,6 +258,21 @@ beforeEach(() => {
     revision: "revision-current",
     approvedEvidenceCount: 1,
     rows: [],
+    latestEvidenceActivityAt: null,
+    revisionByPhase: {
+      1: "revision-current",
+      2: "revision-current",
+      3: "revision-current",
+      4: "revision-current",
+      5: "revision-current",
+    },
+    latestEvidenceActivityAtByPhase: {
+      1: null,
+      2: null,
+      3: null,
+      4: null,
+      5: null,
+    },
   });
   mockHasAuthority.mockResolvedValue(false);
   mockLoadUserProgramAccessPolicy.mockResolvedValue({ canApproveGates: true });
@@ -360,6 +376,8 @@ describe("POST /api/v1/programs/[programId]/artifacts/[artifactId]/client-approv
           source: "generated_artifact_acceptance",
           generatedArtifactId: "artifact-1",
           evidenceSnapshotHash: "revision-current",
+          phaseEvidenceSnapshotHash: "revision-current",
+          evidenceSnapshotScope: "phase",
           approvalMode: "accept_ai_draft_as_authoritative",
         },
       }),
@@ -401,6 +419,8 @@ describe("POST /api/v1/programs/[programId]/artifacts/[artifactId]/client-approv
           source: "generated_artifact_acceptance",
           generatedArtifactId: "artifact-1",
           evidenceSnapshotHash: "revision-current",
+          phaseEvidenceSnapshotHash: "revision-current",
+          evidenceSnapshotScope: "phase",
           approvalMode: "client_approved_replacement",
         },
       }),
@@ -852,6 +872,21 @@ describe("POST /api/v1/programs/[programId]/artifacts/[artifactId]/client-approv
       revision: "revision-after-review",
       approvedEvidenceCount: 2,
       rows: [],
+      latestEvidenceActivityAt: "2026-07-23T00:00:00.000Z",
+      revisionByPhase: {
+        1: "revision-after-review",
+        2: "revision-after-review",
+        3: "revision-after-review",
+        4: "revision-after-review",
+        5: "revision-after-review",
+      },
+      latestEvidenceActivityAtByPhase: {
+        1: "2026-07-23T00:00:00.000Z",
+        2: "2026-07-23T00:00:00.000Z",
+        3: "2026-07-23T00:00:00.000Z",
+        4: "2026-07-23T00:00:00.000Z",
+        5: "2026-07-23T00:00:00.000Z",
+      },
     });
     const { POST } = await import("../route");
 

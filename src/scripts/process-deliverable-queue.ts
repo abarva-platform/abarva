@@ -105,17 +105,25 @@ async function runMovesPremiumArtifact(
 ): Promise<void> {
   const ctx = workerCtxForRun(run);
   try {
-    const { loadApprovedMoveEvidenceSnapshot } =
+    const {
+      isApprovedMoveEvidenceBasisCurrent,
+      approvedMoveEvidenceRevisionForPhase,
+      loadApprovedMoveEvidenceSnapshot,
+    } =
       await import("@/lib/programs/approved-move-evidence-snapshot");
     const evidenceSnapshot = await loadApprovedMoveEvidenceSnapshot({
       tenantKey: run.tenantKey,
       moveId: payload.sourceArtifactRef,
     });
-    if (
-      !evidenceSnapshot ||
-      !payload.evidenceSnapshotHash ||
-      evidenceSnapshot.revision !== payload.evidenceSnapshotHash
-    ) {
+    const evidenceBasisIsCurrent = isApprovedMoveEvidenceBasisCurrent({
+      snapshot: evidenceSnapshot,
+      phase: payload.phase,
+      recordedRevision:
+        payload.phaseEvidenceSnapshotHash ?? payload.evidenceSnapshotHash ?? null,
+      scope: payload.phaseEvidenceSnapshotHash ? "phase" : null,
+      generatedAt: run.createdAt,
+    });
+    if (!evidenceBasisIsCurrent || !evidenceSnapshot) {
       await completeDeliverableRun(run.id, {
         status: "blocked",
         error: "stale_approved_evidence_snapshot",
@@ -207,6 +215,8 @@ async function runMovesPremiumArtifact(
       title: payload.title,
       result,
       evidenceSnapshotHash: evidenceSnapshot.revision,
+      phaseEvidenceSnapshotHash:
+        approvedMoveEvidenceRevisionForPhase(evidenceSnapshot, payload.phase),
     });
 
     await completeDeliverableRun(run.id, {
@@ -270,29 +280,14 @@ async function runClaimed(
       return;
     }
 
-    if (orchestratorPayload.module === "moves") {
-      const { loadApprovedMoveEvidenceSnapshot } =
-        await import("@/lib/programs/approved-move-evidence-snapshot");
-      const snapshot = await loadApprovedMoveEvidenceSnapshot({
-        tenantKey: run.tenantKey,
-        moveId: orchestratorPayload.sourceArtifactRef,
-      });
-      if (
-        !snapshot ||
-        !orchestratorPayload.evidenceSnapshotHash ||
-        snapshot.revision !== orchestratorPayload.evidenceSnapshotHash
-      ) {
-        await completeDeliverableRun(run.id, {
-          status: "blocked",
-          error: "stale_approved_evidence_snapshot",
-          blockers: [
-            "Approved Move evidence changed after this build was queued. Re-run Approve & Build from the current evidence set.",
-          ],
-        }).catch(() => {});
-        return;
-      }
-    }
-
+    const phase =
+      orchestratorPayload.phase ??
+      (orchestratorPayload.module === "moves"
+        ? (phaseForOrchestratorDeliverableType(
+            orchestratorPayload.deliverableTypeKey ??
+              orchestratorPayload.deliverableType,
+          ) ?? undefined)
+        : undefined);
     if (orchestratorPayload.decisionLineage) {
       const { loadApprovedSolutionApproach } =
         await import("@/lib/programs/approved-solution-approach");
@@ -338,6 +333,48 @@ async function runClaimed(
       }
     }
 
+    if (orchestratorPayload.module === "moves") {
+      if (phase === undefined) {
+        await completeDeliverableRun(run.id, {
+          status: "blocked",
+          error: "moves_deliverable_phase_unresolved",
+          blockers: [
+            "The canonical phase for this Moves deliverable could not be resolved, so unscoped evidence was not sent to generation.",
+          ],
+        }).catch(() => {});
+        return;
+      }
+      const {
+        isApprovedMoveEvidenceBasisCurrent,
+        loadApprovedMoveEvidenceSnapshot,
+      } =
+        await import("@/lib/programs/approved-move-evidence-snapshot");
+      const snapshot = await loadApprovedMoveEvidenceSnapshot({
+        tenantKey: run.tenantKey,
+        moveId: orchestratorPayload.sourceArtifactRef,
+      });
+      const evidenceBasisIsCurrent = isApprovedMoveEvidenceBasisCurrent({
+        snapshot,
+        phase,
+        recordedRevision:
+          orchestratorPayload.phaseEvidenceSnapshotHash ??
+          orchestratorPayload.evidenceSnapshotHash ??
+          null,
+        scope: orchestratorPayload.phaseEvidenceSnapshotHash ? "phase" : null,
+        generatedAt: run.createdAt,
+      });
+      if (!evidenceBasisIsCurrent) {
+        await completeDeliverableRun(run.id, {
+          status: "blocked",
+          error: "stale_approved_evidence_snapshot",
+          blockers: [
+            "Approved Move evidence changed after this build was queued. Re-run Approve & Build from the current evidence set.",
+          ],
+        }).catch(() => {});
+        return;
+      }
+    }
+
     let upstreamArtifactContext = "";
     if (run.dependsOnRunId) {
       const predecessor = await getDeliverableRun(
@@ -376,25 +413,6 @@ async function runClaimed(
       ].join("\n");
     }
 
-    const phase =
-      orchestratorPayload.phase ??
-      (orchestratorPayload.module === "moves"
-        ? (phaseForOrchestratorDeliverableType(
-            orchestratorPayload.deliverableTypeKey ??
-              orchestratorPayload.deliverableType,
-          ) ?? undefined)
-        : undefined);
-    if (orchestratorPayload.module === "moves" && phase === undefined) {
-      await completeDeliverableRun(run.id, {
-        status: "blocked",
-        error: "moves_deliverable_phase_unresolved",
-        blockers: [
-          "The canonical phase for this Moves deliverable could not be resolved, so unscoped evidence was not sent to generation.",
-        ],
-      }).catch(() => {});
-      return;
-    }
-
     const result = await runDeliverableForTenant({
       module: orchestratorPayload.module as DeliverableModule,
       useCaseArchetype: orchestratorPayload.useCaseArchetype,
@@ -412,6 +430,8 @@ async function runClaimed(
       approvedSolutionApproach: orchestratorPayload.approvedSolutionApproach,
       decisionLineage: orchestratorPayload.decisionLineage,
       evidenceSnapshotHash: orchestratorPayload.evidenceSnapshotHash,
+      phaseEvidenceSnapshotHash:
+        orchestratorPayload.phaseEvidenceSnapshotHash,
       clientDisplayName: orchestratorPayload.clientDisplayName || "Client",
       initiativeDisplayName:
         orchestratorPayload.initiativeDisplayName ||

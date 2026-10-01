@@ -11,7 +11,11 @@ jest.mock("@/lib/data-plane/postgresCompat", () => ({
   }),
 }));
 
-import { loadApprovedMoveEvidenceSnapshot } from "../approved-move-evidence-snapshot";
+import {
+  approvedMoveEvidenceRevisionForPhase,
+  isApprovedMoveEvidenceBasisCurrent,
+  loadApprovedMoveEvidenceSnapshot,
+} from "../approved-move-evidence-snapshot";
 import { effectivePhaseAfterEvidenceChange } from "../phase-gate-evidence-binding";
 
 beforeEach(() => {
@@ -56,6 +60,87 @@ beforeEach(() => {
 });
 
 describe("approved Move evidence snapshot", () => {
+  it("verifies new phase-scoped bases and migrates legacy hashes only when relevant evidence is unchanged", async () => {
+    mockReviewRows.push({
+      evidence_id: "p2-evidence",
+      decision: "approved",
+      reviewed_at: "2026-09-29T18:00:00.000Z",
+      updated_at: "2026-09-29T18:00:00.000Z",
+      created_at: "2026-09-29T18:00:00.000Z",
+    });
+    mockEvidenceRows.push({
+      id: "p2-evidence",
+      tenant_key: "tenant-a",
+      program_id: "move-a",
+      phase: 2,
+      evidence_type: "upload",
+      title: "P2 discovery evidence",
+      summary: "Approved discovery input.",
+      extracted_structured: {},
+      created_at: "2026-09-29T17:30:00.000Z",
+    });
+
+    const snapshot = await loadApprovedMoveEvidenceSnapshot({
+      tenantKey: "tenant-a",
+      moveId: "move-a",
+    });
+    expect(snapshot).not.toBeNull();
+    if (!snapshot) return;
+
+    const generatedAt = "2026-09-29T17:00:00.000Z";
+    const phaseRevision = approvedMoveEvidenceRevisionForPhase(snapshot, 2);
+    expect(
+      isApprovedMoveEvidenceBasisCurrent({
+        snapshot,
+        phase: 2,
+        recordedRevision: phaseRevision,
+        scope: "phase",
+        generatedAt: "2026-09-29T19:00:00.000Z",
+      }),
+    ).toBe(true);
+    expect(
+      isApprovedMoveEvidenceBasisCurrent({
+        snapshot,
+        phase: 2,
+        recordedRevision: phaseRevision,
+        scope: "phase",
+        generatedAt: "2026-09-29T17:00:00.000Z",
+      }),
+    ).toBe(false);
+    expect(
+      isApprovedMoveEvidenceBasisCurrent({
+        snapshot,
+        phase: 2,
+        recordedRevision: snapshot.revision,
+        generatedAt: "2026-09-29T17:00:00.000Z",
+      }),
+    ).toBe(false);
+    expect(
+      isApprovedMoveEvidenceBasisCurrent({
+        snapshot,
+        phase: 1,
+        recordedRevision: "legacy-whole-move-hash",
+        generatedAt,
+      }),
+    ).toBe(true);
+    expect(
+      isApprovedMoveEvidenceBasisCurrent({
+        snapshot,
+        phase: 2,
+        recordedRevision: "legacy-whole-move-hash",
+        generatedAt: "2026-09-29T17:00:00.000Z",
+      }),
+    ).toBe(false);
+    expect(
+      isApprovedMoveEvidenceBasisCurrent({
+        snapshot,
+        phase: 2,
+        recordedRevision: "wrong-phase-hash",
+        scope: "phase",
+      }),
+    ).toBe(false);
+  });
+
   it("loads only the approved evidence scoped to the exact tenant and Move", async () => {
     mockReviewRows.push({
       evidence_id: "evidence-1",
@@ -155,7 +240,7 @@ describe("approved Move evidence snapshot", () => {
     });
   });
 
-  it("reopens a legacy phase approval when reviewed_at is newer than updated_at", async () => {
+  it("does not reopen an earlier phase for later evidence assigned to another phase", async () => {
     mockReviewRows.push(
       {
         evidence_id: "older-review",
@@ -223,13 +308,16 @@ describe("approved Move evidence snapshot", () => {
           ? {
               revision: evidence.revision,
               latestEvidenceActivityAt: evidence.latestEvidenceActivityAt,
+              revisionByPhase: evidence.revisionByPhase,
+              latestEvidenceActivityAtByPhase:
+                evidence.latestEvidenceActivityAtByPhase,
             }
           : null,
       ),
-    ).toBe(1);
+    ).toBe(2);
   });
 
-  it("reopens a legacy approval when an approved evidence item was created later", async () => {
+  it("does not reopen an earlier phase for a later evidence item assigned to another phase", async () => {
     mockReviewRows.push({
       evidence_id: "evidence-created-later",
       decision: "approved",
@@ -275,6 +363,63 @@ describe("approved Move evidence snapshot", () => {
           ? {
               revision: evidence.revision,
               latestEvidenceActivityAt: evidence.latestEvidenceActivityAt,
+              revisionByPhase: evidence.revisionByPhase,
+              latestEvidenceActivityAtByPhase:
+                evidence.latestEvidenceActivityAtByPhase,
+            }
+          : null,
+      ),
+    ).toBe(2);
+  });
+
+  it("reopens a phase when its own approved evidence is reviewed after approval", async () => {
+    mockReviewRows.push({
+      evidence_id: "same-phase-later",
+      decision: "approved",
+      reviewed_at: "2026-09-29T19:00:00.000Z",
+      updated_at: "2026-09-29T19:00:00.000Z",
+      created_at: "2026-09-29T18:30:00.000Z",
+    });
+    mockEvidenceRows.push({
+      id: "same-phase-later",
+      tenant_key: "tenant-a",
+      program_id: "move-a",
+      phase: 1,
+      evidence_type: "upload",
+      title: "New phase evidence",
+      summary: "Approved after the phase gate.",
+      extracted_structured: {},
+      created_at: "2026-09-29T18:00:00.000Z",
+    });
+
+    const evidence = await loadApprovedMoveEvidenceSnapshot({
+      tenantKey: "tenant-a",
+      moveId: "move-a",
+    });
+
+    expect(
+      effectivePhaseAfterEvidenceChange(
+        2,
+        [
+          {
+            id: "legacy-p1-approval",
+            engagementId: "move-a",
+            phaseNumber: 1,
+            phaseName: null,
+            snapshot: {},
+            lockedByUserId: null,
+            lockedAt: "2026-09-29T18:30:00.000Z",
+            approvalStatus: "approved",
+            createdAt: "2026-09-29T18:30:00.000Z",
+          },
+        ],
+        evidence
+          ? {
+              revision: evidence.revision,
+              latestEvidenceActivityAt: evidence.latestEvidenceActivityAt,
+              revisionByPhase: evidence.revisionByPhase,
+              latestEvidenceActivityAtByPhase:
+                evidence.latestEvidenceActivityAtByPhase,
             }
           : null,
       ),

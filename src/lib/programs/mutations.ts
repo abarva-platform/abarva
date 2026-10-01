@@ -663,6 +663,8 @@ export async function signOffDeliverable(
       source: "generated_artifact_acceptance" | "moves_program_generate";
       generatedArtifactId?: string;
       evidenceSnapshotHash: string;
+      phaseEvidenceSnapshotHash?: string;
+      evidenceSnapshotScope?: "phase";
       approvalMode:
         | "client_approved_replacement"
         | "accept_ai_draft_as_authoritative"

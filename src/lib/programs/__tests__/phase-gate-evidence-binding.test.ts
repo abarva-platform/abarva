@@ -8,6 +8,16 @@ import type { PhaseSnapshot } from "../types.db";
 const currentEvidence = {
   revision: "evidence-revision-2",
   latestEvidenceActivityAt: "2026-09-29T18:00:00.000Z",
+  revisionByPhase: {
+    1: "evidence-revision-2",
+    2: "p2-evidence-1",
+    3: "p3-evidence-1",
+  },
+  latestEvidenceActivityAtByPhase: {
+    1: "2026-09-29T16:00:00.000Z",
+    2: "2026-09-29T18:00:00.000Z",
+    3: null,
+  },
 };
 
 function approvedSnapshot(
@@ -21,12 +31,26 @@ function approvedSnapshot(
     phaseNumber,
     phaseName: null,
     snapshot: evidenceRevision
-      ? { evidenceSnapshotHash: evidenceRevision }
+      ? {
+          evidenceSnapshotHash: evidenceRevision,
+          phaseEvidenceSnapshotHash: evidenceRevision,
+        }
       : {},
     lockedByUserId: null,
     lockedAt: at,
     approvalStatus: "approved",
     createdAt: at,
+  };
+}
+
+function legacyApprovedSnapshot(
+  phaseNumber: number,
+  at: string,
+  evidenceRevision: string,
+): PhaseSnapshot {
+  return {
+    ...approvedSnapshot(phaseNumber, at),
+    snapshot: { evidenceSnapshotHash: evidenceRevision },
   };
 }
 
@@ -45,6 +69,51 @@ describe("phase-gate evidence binding", () => {
       phaseApprovalMatchesEvidence(1, [snapshot], {
         ...currentEvidence,
         revision: "evidence-revision-3",
+        revisionByPhase: {
+          ...currentEvidence.revisionByPhase,
+          1: "evidence-revision-3",
+        },
+      }),
+    ).toBe(false);
+  });
+
+  it("does not reopen a closed phase for later evidence scoped to another phase", () => {
+    const approval = legacyApprovedSnapshot(
+      1,
+      "2026-09-29T17:00:00.000Z",
+      "evidence-revision-1",
+    );
+
+    expect(
+      phaseApprovalMatchesEvidence(1, [approval], {
+        ...currentEvidence,
+        revision: "whole-move-revision-changed",
+        latestEvidenceActivityAt: "2026-09-30T12:00:00.000Z",
+        latestEvidenceActivityAtByPhase: {
+          ...currentEvidence.latestEvidenceActivityAtByPhase,
+          1: "2026-09-29T16:00:00.000Z",
+          2: "2026-09-30T12:00:00.000Z",
+        },
+      }),
+    ).toBe(true);
+  });
+
+  it("still reopens a closed phase when its own evidence changes", () => {
+    const approval = legacyApprovedSnapshot(
+      1,
+      "2026-09-29T17:00:00.000Z",
+      "evidence-revision-1",
+    );
+
+    expect(
+      phaseApprovalMatchesEvidence(1, [approval], {
+        ...currentEvidence,
+        revision: "whole-move-revision-changed",
+        latestEvidenceActivityAt: "2026-09-30T12:00:00.000Z",
+        latestEvidenceActivityAtByPhase: {
+          ...currentEvidence.latestEvidenceActivityAtByPhase,
+          1: "2026-09-30T12:00:00.000Z",
+        },
       }),
     ).toBe(false);
   });
@@ -71,15 +140,29 @@ describe("phase-gate evidence binding", () => {
   });
 
   it("invalidates a legacy approval when approved evidence changed after it", () => {
-    const legacyApproval = approvedSnapshot(1, "2026-09-29T17:00:00.000Z");
+    const legacyApproval = legacyApprovedSnapshot(
+      1,
+      "2026-09-29T17:00:00.000Z",
+      "evidence-revision-1",
+    );
 
     expect(
-      phaseApprovalMatchesEvidence(1, [legacyApproval], currentEvidence),
+      phaseApprovalMatchesEvidence(1, [legacyApproval], {
+        ...currentEvidence,
+        latestEvidenceActivityAtByPhase: {
+          ...currentEvidence.latestEvidenceActivityAtByPhase,
+          1: "2026-09-30T02:56:00.000Z",
+        },
+      }),
     ).toBe(false);
   });
 
   it("preserves legacy approvals when no later evidence review is recorded", () => {
-    const legacyApproval = approvedSnapshot(1, "2026-09-29T17:00:00.000Z");
+    const legacyApproval = legacyApprovedSnapshot(
+      1,
+      "2026-09-29T17:00:00.000Z",
+      "evidence-revision-2",
+    );
 
     expect(
       phaseApprovalMatchesEvidence(1, [legacyApproval], {
@@ -93,6 +176,22 @@ describe("phase-gate evidence binding", () => {
         latestEvidenceActivityAt: null,
       }),
     ).toBe(true);
+  });
+
+  it("fails closed when a legacy hash differs but history cannot prove an unrelated change", () => {
+    const legacyApproval = legacyApprovedSnapshot(
+      1,
+      "2026-09-29T17:00:00.000Z",
+      "evidence-revision-1",
+    );
+
+    expect(
+      phaseApprovalMatchesEvidence(1, [legacyApproval], {
+        revision: "evidence-revision-2",
+        latestEvidenceActivityAt: null,
+        latestEvidenceActivityAtByPhase: { 1: null },
+      }),
+    ).toBe(false);
   });
 
   it("reopens the earliest stale phase without changing the stored phase", () => {

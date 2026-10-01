@@ -47,6 +47,10 @@ import {
 import { getModuleState } from "@/lib/programs/queries";
 import { listApprovedPhaseEvidence } from "@/lib/programs/approved-phase-evidence";
 import {
+  approvedMoveEvidenceRevisionForPhase,
+  loadApprovedMoveEvidenceSnapshot,
+} from "@/lib/programs/approved-move-evidence-snapshot";
+import {
   formatSolutionRouteForP4Prompt,
   formatSolutionRouteDepthForPrompt,
   resolveConfirmedSolutionRoute,
@@ -461,12 +465,21 @@ export async function POST(req: NextRequest) {
       };
     }
 
-    const evidenceSnapshotHash =
-      contextExtract?.freshness.approvedEvidenceRevision;
+    const evidenceSnapshot = await loadApprovedMoveEvidenceSnapshot({
+      tenantKey: clientKey,
+      moveId,
+    });
+    const evidenceSnapshotHash = evidenceSnapshot?.revision;
+    const phaseEvidenceSnapshotHash = evidenceSnapshot
+      ? approvedMoveEvidenceRevisionForPhase(evidenceSnapshot, phase)
+      : null;
     if (
       !contextExtract ||
       contextExtract.status === "error" ||
-      !evidenceSnapshotHash
+      !evidenceSnapshotHash ||
+      !phaseEvidenceSnapshotHash ||
+      contextExtract.freshness.approvedEvidenceRevision !==
+        phaseEvidenceSnapshotHash
     ) {
       return Response.json(
         {
@@ -588,6 +601,7 @@ export async function POST(req: NextRequest) {
           : {}),
         ...(decisionLineage ? { decisionLineage } : {}),
         evidenceSnapshotHash,
+        phaseEvidenceSnapshotHash,
       };
     };
 

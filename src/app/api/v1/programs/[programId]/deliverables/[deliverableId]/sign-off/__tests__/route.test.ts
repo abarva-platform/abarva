@@ -50,6 +50,7 @@ jest.mock("@/lib/programs/evidence-ingestion", () => ({
 }));
 
 jest.mock("@/lib/programs/approved-move-evidence-snapshot", () => ({
+  ...jest.requireActual("@/lib/programs/approved-move-evidence-snapshot"),
   loadApprovedMoveEvidenceSnapshot: (...args: unknown[]) =>
     mockLoadApprovedMoveEvidenceSnapshot(...args),
 }));
@@ -61,6 +62,7 @@ let deliverableRow: {
 } | null;
 let versionRow: {
   id?: string | null;
+  created_at?: string | null;
   structured_data: Record<string, unknown> | null;
   content?: string | null;
 } | null;
@@ -88,7 +90,17 @@ jest.mock("@/lib/programs/programs-auth-mode-server", () => ({
             select: () => ({
               eq: () => ({
                 eq: () => ({
-                  maybeSingle: async () => ({ data: versionRow, error: null }),
+                  maybeSingle: async () => ({
+                    data: versionRow
+                      ? {
+                          ...versionRow,
+                          created_at:
+                            versionRow.created_at ??
+                            "2026-09-29T17:00:00.000Z",
+                        }
+                      : null,
+                    error: null,
+                  }),
                 }),
               }),
             }),
@@ -173,6 +185,20 @@ describe("POST /api/v1/programs/[programId]/deliverables/[deliverableId]/sign-of
       approvedEvidenceCount: 1,
       rows: [],
       latestEvidenceActivityAt: "2026-09-29T16:00:00.000Z",
+      revisionByPhase: {
+        1: "revision-current",
+        2: "revision-current",
+        3: "revision-current",
+        4: "revision-current",
+        5: "revision-current",
+      },
+      latestEvidenceActivityAtByPhase: {
+        1: "2026-09-29T16:00:00.000Z",
+        2: "2026-09-29T16:00:00.000Z",
+        3: "2026-09-29T16:00:00.000Z",
+        4: "2026-09-29T16:00:00.000Z",
+        5: "2026-09-29T16:00:00.000Z",
+      },
     });
     deliverableRow = {
       deliverable_type_key: "business_case",
@@ -275,6 +301,20 @@ describe("POST /api/v1/programs/[programId]/deliverables/[deliverableId]/sign-of
       approvedEvidenceCount: 2,
       rows: [],
       latestEvidenceActivityAt: "2026-09-29T18:00:00.000Z",
+      revisionByPhase: {
+        1: "revision-newer",
+        2: "revision-newer",
+        3: "revision-newer",
+        4: "revision-newer",
+        5: "revision-newer",
+      },
+      latestEvidenceActivityAtByPhase: {
+        1: "2026-09-29T18:00:00.000Z",
+        2: "2026-09-29T18:00:00.000Z",
+        3: "2026-09-29T18:00:00.000Z",
+        4: "2026-09-29T18:00:00.000Z",
+        5: "2026-09-29T18:00:00.000Z",
+      },
     });
 
     const { POST } = await import("../route");

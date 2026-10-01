@@ -15,7 +15,10 @@ import {
   initialReviewedEvidenceExtraction,
   reviewedExtractionFromStoredSourceRef,
 } from "@/lib/programs/evidence-review-contract";
-import { loadApprovedMoveEvidenceSnapshot } from "@/lib/programs/approved-move-evidence-snapshot";
+import {
+  isApprovedMoveEvidenceBasisCurrent,
+  loadApprovedMoveEvidenceSnapshot,
+} from "@/lib/programs/approved-move-evidence-snapshot";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -195,11 +198,13 @@ interface CabinetContextExtract {
   suggestedContextItems?: CabinetContextExtractItem[];
   excludedContextItems?: CabinetContextExtractItem[];
   gapItems?: CabinetContextExtractItem[];
-  freshness?: {
-    approvedEvidenceRevision?: string | null;
-    freshnessStatus?: "fresh" | "stale" | "rebuild_required";
-    currentApprovedEvidenceCount?: number;
-  };
+        freshness?: {
+          approvedEvidenceRevision?: string | null;
+          approvedEvidenceRevisionScope?: "phase" | null;
+          freshnessStatus?: "fresh" | "stale" | "rebuild_required";
+          currentApprovedEvidenceCount?: number;
+          createdAt?: string | null;
+        };
 }
 
 function contextExtractFromMetadata(
@@ -528,6 +533,9 @@ export async function GET(
         visualCompanionArtifactType?: string;
         moveContextExtract?: unknown;
         evidenceSnapshotHash?: string;
+        phaseEvidenceSnapshotHash?: string;
+        evidenceSnapshotScope?: string;
+        phase?: number | string;
       };
       const contextExtract = contextExtractFromMetadata(
         meta?.moveContextExtract,
@@ -537,17 +545,39 @@ export async function GET(
         contextExtract.freshness.currentApprovedEvidenceCount =
           approvedSnapshot?.approvedEvidenceCount;
         contextExtract.freshness.freshnessStatus =
-          !approvedSnapshot || !savedRevision
+          !savedRevision
             ? "rebuild_required"
-            : savedRevision === approvedSnapshot.revision
+            : isApprovedMoveEvidenceBasisCurrent({
+                  snapshot: approvedSnapshot,
+                  phase:
+                    contextExtract.targetPhase ?? r.phase ?? 0,
+                  recordedRevision: savedRevision,
+                  scope:
+                    contextExtract.freshness.approvedEvidenceRevisionScope,
+                  generatedAt: contextExtract.freshness.createdAt,
+                })
               ? "fresh"
               : "stale";
       }
+      const artifactPhase =
+        r.phase ?? phaseFromGeneratedArtifactMetadata(meta) ?? 0;
       const evidenceSnapshotStatus =
         r.artifact_family === "generated_deliverable"
           ? !approvedSnapshot || !meta?.evidenceSnapshotHash
             ? "unverified"
-            : meta.evidenceSnapshotHash === approvedSnapshot.revision
+            : isApprovedMoveEvidenceBasisCurrent({
+                  snapshot: approvedSnapshot,
+                  phase: artifactPhase,
+                  recordedRevision:
+                    typeof meta.phaseEvidenceSnapshotHash === "string"
+                      ? meta.phaseEvidenceSnapshotHash
+                      : meta.evidenceSnapshotHash,
+                  scope:
+                    typeof meta.evidenceSnapshotScope === "string"
+                      ? meta.evidenceSnapshotScope
+                      : null,
+                  generatedAt: r.generated_at ?? r.created_at,
+                })
               ? "current"
               : "stale"
           : undefined;
@@ -631,7 +661,27 @@ export async function GET(
               outputRole?: string;
               provenanceCategory?: string;
               evidenceSnapshotHash?: string;
+              phaseEvidenceSnapshotHash?: string;
+              evidenceSnapshotScope?: string;
             } | null;
+            const generatedPhase =
+              phaseFromGeneratedArtifactMetadata(meta) ?? 0;
+            const generatedEvidenceBasisCurrent =
+              isApprovedMoveEvidenceBasisCurrent({
+                snapshot: approvedSnapshot,
+                phase: generatedPhase,
+                recordedRevision:
+                  typeof meta?.phaseEvidenceSnapshotHash === "string"
+                    ? meta.phaseEvidenceSnapshotHash
+                    : typeof meta?.evidenceSnapshotHash === "string"
+                      ? meta.evidenceSnapshotHash
+                      : null,
+                scope:
+                  typeof meta?.evidenceSnapshotScope === "string"
+                    ? meta.evidenceSnapshotScope
+                    : null,
+                generatedAt: rec.renderedAt,
+              });
             return {
               artifactId: rec.id,
               artifactType: rec.artifactType,
@@ -669,7 +719,7 @@ export async function GET(
               evidenceSnapshotStatus:
                 !approvedSnapshot || !meta?.evidenceSnapshotHash
                   ? "unverified"
-                  : meta.evidenceSnapshotHash === approvedSnapshot.revision
+                  : generatedEvidenceBasisCurrent
                     ? "current"
                     : "stale",
               generatedBy: rec.renderedBy,

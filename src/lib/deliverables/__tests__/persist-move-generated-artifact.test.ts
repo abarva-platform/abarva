@@ -59,6 +59,7 @@ describe("persistMoveGeneratedArtifact", () => {
       artifact: "discovery_report",
       title: "Current Work Diagnostic",
       evidenceSnapshotHash: "approved-revision-1",
+      phaseEvidenceSnapshotHash: "approved-revision-1",
       result: {
         status: "generated",
         html: "<html><body><svg></svg><table></table><p>Diagnostic.</p></body></html>",

@@ -55,7 +55,9 @@ import {
   phaseCaptureModuleKey,
 } from "@/lib/programs/phase-capture-contract";
 import { persistP0PhaseCaptureFromSource } from "@/lib/programs/p0-phase-capture";
-import { loadApprovedMoveEvidenceSnapshot } from "@/lib/programs/approved-move-evidence-snapshot";
+import {
+  loadApprovedMoveEvidenceSnapshot,
+} from "@/lib/programs/approved-move-evidence-snapshot";
 import { loadP0MinimumEvidenceStatus } from "@/lib/programs/p0-source-evidence";
 import {
   phaseApprovalMatchesEvidence,
@@ -187,6 +189,9 @@ async function loadEvidenceState(
       ? {
           revision: snapshot.revision,
           latestEvidenceActivityAt: snapshot.latestEvidenceActivityAt,
+          revisionByPhase: snapshot.revisionByPhase,
+          latestEvidenceActivityAtByPhase:
+            snapshot.latestEvidenceActivityAtByPhase,
         }
       : null;
   } catch {
@@ -248,6 +253,7 @@ async function completeTerminalTowerHandoff(
   rationale: string,
   gatesPassed: unknown,
   evidenceRevision: string,
+  phaseEvidenceRevision: string,
 ): Promise<{ snapshotId: string }> {
   const nowIso = new Date().toISOString();
   const snapshot = {
@@ -256,6 +262,8 @@ async function completeTerminalTowerHandoff(
     terminal_tower_handoff: true,
     capture_path: `/api/v1/programs/${programId}/phase-capture`,
     evidenceSnapshotHash: evidenceRevision,
+    phaseEvidenceSnapshotHash: phaseEvidenceRevision,
+    evidenceSnapshotScope: "phase",
   };
   const { data: snap, error: snapError } = await sb
     .from("phase_snapshots")
@@ -642,7 +650,13 @@ export async function POST(
       humanRationale: rationale,
       signed_in_phase_gate_approval: true,
       capture_path: `/api/v1/programs/${programId}/phase-capture`,
-      ...(evidence ? { evidenceSnapshotHash: evidence.revision } : {}),
+      ...(evidence
+        ? {
+            evidenceSnapshotHash: evidence.revision,
+            phaseEvidenceSnapshotHash: evidence.revisionByPhase?.[phase] ?? "",
+            evidenceSnapshotScope: "phase",
+          }
+        : {}),
     };
     const reapprovingEarlierPhase = phase < (program.currentPhase ?? 0);
     const advanced = reapprovingEarlierPhase
@@ -668,6 +682,7 @@ export async function POST(
               rationale,
               program.gatesPassed,
               evidence?.revision ?? "",
+              evidence?.revisionByPhase?.[phase] ?? "",
             )),
           }
         : await advancePhase(

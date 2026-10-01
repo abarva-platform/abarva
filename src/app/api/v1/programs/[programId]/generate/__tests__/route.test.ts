@@ -64,6 +64,7 @@ jest.mock("@/lib/deliverables/persist-move-generated-artifact", () => ({
 }));
 
 jest.mock("@/lib/programs/approved-move-evidence-snapshot", () => ({
+  ...jest.requireActual("@/lib/programs/approved-move-evidence-snapshot"),
   loadApprovedMoveEvidenceSnapshot: (...args: unknown[]) =>
     mockLoadEvidenceSnapshot(...args),
 }));
@@ -106,6 +107,21 @@ beforeEach(() => {
     revision: "approved-revision-1",
     approvedEvidenceCount: 1,
     rows: [],
+    revisionByPhase: {
+      1: "approved-revision-1",
+      2: "approved-revision-1",
+      3: "approved-revision-1",
+      4: "approved-revision-1",
+      5: "approved-revision-1",
+    },
+    latestEvidenceActivityAt: null,
+    latestEvidenceActivityAtByPhase: {
+      1: null,
+      2: null,
+      3: null,
+      4: null,
+      5: null,
+    },
   });
   mockGenerateArtifact.mockResolvedValue({
     status: "generated",

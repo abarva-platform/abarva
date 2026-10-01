@@ -36,6 +36,7 @@ jest.mock("@/lib/artifacts/repository", () => ({
   }),
 }));
 jest.mock("@/lib/programs/approved-move-evidence-snapshot", () => ({
+  ...jest.requireActual("@/lib/programs/approved-move-evidence-snapshot"),
   loadApprovedMoveEvidenceSnapshot: (...args: unknown[]) =>
     mockLoadApprovedMoveEvidenceSnapshot(...args),
 }));
@@ -80,6 +81,20 @@ beforeEach(() => {
     revision: "revision-current",
     approvedEvidenceCount: 2,
     rows: [],
+    revisionByPhase: {
+      1: "revision-current",
+      2: "revision-current",
+      3: "revision-current",
+      4: "revision-current",
+      5: "revision-current",
+    },
+    latestEvidenceActivityAtByPhase: {
+      1: null,
+      2: null,
+      3: null,
+      4: null,
+      5: null,
+    },
   });
 });
 
@@ -217,6 +232,86 @@ describe("GET /api/v1/programs/[programId]/artifacts — Cabinet merge", () => {
     expect(json.artifacts[0]).toEqual(
       expect.objectContaining({
         artifactId: "gen-stale",
+        evidenceSnapshotStatus: "stale",
+      }),
+    );
+  });
+
+  it("keeps a P1 artifact current for later P2 evidence but stales it for later P1 activity", async () => {
+    const phaseScopedArtifact = {
+      id: "gen-p1-charter",
+      artifactType: "program_charter",
+      sourceArtifactRef: "move-x",
+      outputFormat: "docx",
+      blobUrl: "b",
+      qualityScore: 0.9,
+      renderedAt: "2026-09-29T16:00:00.000Z",
+      renderedBy: "u",
+      quarantineReason: null,
+      metadata: {
+        phase: 1,
+        evidenceSnapshotHash: "whole-move-before-p2",
+        phaseEvidenceSnapshotHash: "p1-current",
+        evidenceSnapshotScope: "phase",
+        renderableDoc: { title: "P1 Charter" },
+      },
+    };
+    generatedRecs = [phaseScopedArtifact];
+    const phase2ChangedSnapshot = {
+      revision: "whole-move-after-p2",
+      approvedEvidenceCount: 2,
+      rows: [],
+      latestEvidenceActivityAt: "2026-09-29T17:00:00.000Z",
+      revisionByPhase: {
+        1: "p1-current",
+        2: "p2-updated",
+        3: "p3-current",
+        4: "p4-current",
+        5: "p5-current",
+      },
+      latestEvidenceActivityAtByPhase: {
+        1: null,
+        2: "2026-09-29T17:00:00.000Z",
+        3: null,
+        4: null,
+        5: null,
+      },
+    };
+    mockLoadApprovedMoveEvidenceSnapshot
+      .mockResolvedValueOnce(phase2ChangedSnapshot)
+      .mockResolvedValueOnce({
+        ...phase2ChangedSnapshot,
+        latestEvidenceActivityAt: "2026-09-29T18:00:00.000Z",
+        revisionByPhase: {
+          ...phase2ChangedSnapshot.revisionByPhase,
+          1: "p1-updated",
+        },
+        latestEvidenceActivityAtByPhase: {
+          ...phase2ChangedSnapshot.latestEvidenceActivityAtByPhase,
+          1: "2026-09-29T18:00:00.000Z",
+        },
+      });
+
+    const afterP2 = await GET(req(), params("move-x"));
+    const afterP2Json = (await afterP2.json()) as {
+      artifacts: Array<Record<string, unknown>>;
+    };
+    expect(afterP2Json.artifacts[0]).toEqual(
+      expect.objectContaining({
+        artifactId: "gen-p1-charter",
+        phase: 1,
+        evidenceSnapshotStatus: "current",
+      }),
+    );
+
+    const afterP1 = await GET(req(), params("move-x"));
+    const afterP1Json = (await afterP1.json()) as {
+      artifacts: Array<Record<string, unknown>>;
+    };
+    expect(afterP1Json.artifacts[0]).toEqual(
+      expect.objectContaining({
+        artifactId: "gen-p1-charter",
+        phase: 1,
         evidenceSnapshotStatus: "stale",
       }),
     );
