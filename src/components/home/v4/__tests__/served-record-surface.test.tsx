@@ -318,7 +318,7 @@ describe("the served path", () => {
 
     expect(
       document.querySelector("[data-home-record-state-band]")?.textContent,
-    ).toContain("Source review incomplete: 0 of 14 files accepted");
+    ).toContain("Source-file quality: 0 of 14 accepted; 14 partial");
   });
 
   it("states when the record on screen is the reviewed snapshot fallback", () => {

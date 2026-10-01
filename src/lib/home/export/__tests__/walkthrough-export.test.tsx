@@ -145,7 +145,7 @@ describe("Home walkthrough export", () => {
     expect(html).toContain("Record on screen: Live governed rows");
     expect(html).toContain("Reviewed narrative; live rows may differ");
     expect(html).toContain("Source-linked: 2 of 3 record rows");
-    expect(html).toContain("Source review incomplete: 0 of 14 files accepted");
+    expect(html).toContain("Source-file quality: 0 of 14 accepted; 14 partial");
     expect(html).toContain("incomplete for metrics");
     expect(html).toContain("Data as of not established");
     expect(html).toContain("home_*:3311");
@@ -177,7 +177,7 @@ describe("Home walkthrough export", () => {
     expect(output).toContain("Reviewed narrative; live rows may differ");
     expect(output).toContain("Source-linked: 2 of 3 record rows");
     expect(output).toContain(
-      "Source review incomplete: 0 of 14 files accepted",
+      "Source-file quality: 0 of 14 accepted; 14 partial",
     );
     expect(output).toContain("Home chapters");
   });

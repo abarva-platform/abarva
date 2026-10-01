@@ -10,7 +10,7 @@
 
 ## Plain-English Summary
 
-Home now places the record/narrative mismatch or reviewed fallback state at the top of every page, not only in its navigation rail. The synthetic provenance line no longer presents an internal assessment identifier as executive copy. No underlying claim, row, or review state changes.
+Home now places the record/narrative mismatch or reviewed fallback state at the top of every page, not only in its navigation rail. Source-file quality is named as quality rather than human approval. The synthetic provenance line no longer presents an internal assessment identifier as executive copy. No underlying claim, row, or review state changes.
 
 ## Layer Impact
 
@@ -28,13 +28,14 @@ Home now places the record/narrative mismatch or reviewed fallback state at the 
 
 ## Changes Included
 
-- Show the existing source, narrative, and source-file review labels before page content when the record is mixed or falling back.
+- Show the existing source, narrative, and source-file quality labels before page content when the record is mixed or falling back.
+- Distinguish a source file's quality state from human source-set approval in the visible copy.
 - Keep the status band absent when a served narrative is coherent or a reviewed snapshot is intentionally selected.
 - Use plain language for a declared synthetic provenance notice while preserving the record marker in the audit data and export.
 
 ## QA / Validation
 
-- PASS: focused served-surface tests, 19/19, including mixed state, source review, fallback, coherent state, and provenance copy.
+- PASS: 67 focused Home tests across four suites, including mixed state, source quality, advisor/export labels, fallback, coherent state, and provenance copy.
 - PASS: TypeScript, touched-file lint, and formatting.
 - PASS: Home ratchet, 771/799 with 12 baselined failing suites and no movement away from the baseline.
 - PASS: release check.

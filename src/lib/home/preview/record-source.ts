@@ -59,13 +59,17 @@ export function homeSourceFileReviewLabelForVersion(
   version: HomeContextVersion | undefined,
 ): string {
   const review = version?.sourceFileReview;
-  if (!review) return "Source file review unavailable";
+  if (!review) return "Source-file quality unavailable";
   if (review.totalFiles === 0)
     return "No source files registered for this record";
   if (review.acceptedFiles === review.totalFiles)
-    return `Source files accepted: ${review.totalFiles} of ${review.totalFiles}`;
+    return `Source-file quality: ${review.totalFiles} of ${review.totalFiles} accepted`;
+  const partial = review.partialFiles ? `; ${review.partialFiles} partial` : "";
   const blocked = review.blockedFiles ? `; ${review.blockedFiles} blocked` : "";
-  return `Source review incomplete: ${review.acceptedFiles} of ${review.totalFiles} files accepted${blocked}`;
+  const superseded = review.supersededFiles
+    ? `; ${review.supersededFiles} superseded`
+    : "";
+  return `Source-file quality: ${review.acceptedFiles} of ${review.totalFiles} accepted${partial}${blocked}${superseded}`;
 }
 
 export function homeSourceCoverageGapLabel(
