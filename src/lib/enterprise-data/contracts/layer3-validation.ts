@@ -233,7 +233,11 @@ export const CANONICAL_OBJECT_REGISTRY: CanonicalObjectDefinition[] = [
 ];
 
 export const FACT_AUTHORITY_REGISTRY: FactAuthorityDefinition[] = [
-  financialFact("business_segment.revenueUsd", "business_segment", "revenueUsd"),
+  financialFact(
+    "business_segment.revenueUsd",
+    "business_segment",
+    "revenueUsd",
+  ),
   {
     factKey: "business_segment.revenueSharePct",
     objectType: "business_segment",
@@ -295,6 +299,16 @@ export const FACT_AUTHORITY_REGISTRY: FactAuthorityDefinition[] = [
 ];
 
 export const RELATIONSHIP_TYPE_DICTIONARY: RelationshipDictionaryEntry[] = [
+  relationship("HAS_SEGMENT", "has segment", "segment of", "rollup"),
+  relationship("HAS_FUNCTION", "has function", "function of", "rollup"),
+  relationship("HAS_PRIORITY", "has priority", "priority of", "governance"),
+  relationship("ACCOUNTABLE_TO", "accountable to", "accountable for", "governance"),
+  relationship(
+    "TARGETS_SEGMENT",
+    "targets segment",
+    "targeted by",
+    "transformation",
+  ),
   relationship(
     "BELONGS_TO_SEGMENT",
     "belongs to segment",
@@ -313,6 +327,7 @@ export const RELATIONSHIP_TYPE_DICTIONARY: RelationshipDictionaryEntry[] = [
     "hosted on",
     "runs on",
   ]),
+  relationship("DEPLOYMENT_OF", "deployment of", "has deployment", "hosting"),
   relationship("OWNED_BY", "owned by", "owns", "ownership", [
     "owner",
     "owned by",
@@ -342,8 +357,22 @@ export const RELATIONSHIP_TYPE_DICTIONARY: RelationshipDictionaryEntry[] = [
   relationship("FUNDS", "funds", "is funded by", "financial"),
   relationship("MITIGATES", "mitigates", "is mitigated by", "risk"),
   relationship("FEEDS", "feeds", "is fed by", "data_flow"),
+  relationship("COST_OF", "cost of", "has cost", "financial"),
+  relationship("WORKS_IN", "works in", "has workforce", "ownership"),
+  relationship(
+    "ADVANCES_PRIORITY",
+    "advances priority",
+    "advanced by",
+    "transformation",
+  ),
+  relationship("CHANGES", "changes", "is changed by", "transformation"),
+  relationship("COVERED_BY", "covered by", "covers", "vendor"),
+  relationship("APPLIES_TO", "applies to", "is subject to", "risk"),
+  relationship("ATTRIBUTED_TO", "attributed to", "is attributed", "governance"),
+  relationship("GROUNDED_IN", "grounded in", "grounds", "governance"),
   relationship("BLOCKS", "blocks", "is blocked by", "dependency"),
   relationship("MEASURES", "measures", "is measured by", "usage"),
+  relationship("USED_BY", "used by", "uses", "usage"),
   relationship("USES", "uses", "is used by", "usage"),
   relationship(
     "INTEGRATES_WITH",
@@ -352,13 +381,10 @@ export const RELATIONSHIP_TYPE_DICTIONARY: RelationshipDictionaryEntry[] = [
     "data_flow",
     ["integrates_with"],
   ),
-  relationship(
-    "SUPPORTED_BY",
-    "supported by",
-    "supports",
-    "dependency",
-    ["supported_by", "is_supported_by"],
-  ),
+  relationship("SUPPORTED_BY", "supported by", "supports", "dependency", [
+    "supported_by",
+    "is_supported_by",
+  ]),
   relationship(
     "TECHNOLOGY_OWNED_BY",
     "technology owned by",
@@ -366,20 +392,12 @@ export const RELATIONSHIP_TYPE_DICTIONARY: RelationshipDictionaryEntry[] = [
     "ownership",
     ["technology_owned_by"],
   ),
-  relationship(
-    "PROVIDED_BY",
-    "provided by",
+  relationship("PROVIDED_BY", "provided by", "provides", "vendor", [
+    "provided_by",
+  ]),
+  relationship("PROVIDES", "provides", "is provided by", "vendor", [
     "provides",
-    "vendor",
-    ["provided_by"],
-  ),
-  relationship(
-    "PROVIDES",
-    "provides",
-    "is provided by",
-    "vendor",
-    ["provides"],
-  ),
+  ]),
   relationship(
     "OWNS_TECHNOLOGY_FOR",
     "owns technology for",
@@ -387,16 +405,11 @@ export const RELATIONSHIP_TYPE_DICTIONARY: RelationshipDictionaryEntry[] = [
     "ownership",
     ["owns_technology_for"],
   ),
-  relationship("OWNS", "owns", "owned by", "ownership", [
-    "owns_function",
+  relationship("OWNS", "owns", "owned by", "ownership", ["owns_function"]),
+  relationship("SUPPLIED_BY", "supplied by", "supplies", "vendor", [
+    "supplied_by",
+    "supplies_or_supports",
   ]),
-  relationship(
-    "SUPPLIED_BY",
-    "supplied by",
-    "supplies",
-    "vendor",
-    ["supplied_by", "supplies_or_supports"],
-  ),
   relationship("REPORTS_TO", "reports to", "receives reports from", "rollup", [
     "reports_to",
   ]),
@@ -424,14 +437,20 @@ export const RELATIONSHIP_TYPE_DICTIONARY: RelationshipDictionaryEntry[] = [
   relationship("BLOCKED_BY", "blocked by", "blocks", "dependency", [
     "blocked_by",
   ]),
-  relationship("REQUIRES_DATA", "requires data", "data required by", "data_flow", [
-    "requires_data",
-    "requires_data_from",
-  ]),
-  relationship("USES_DATA_DOMAIN", "uses data domain", "is used by", "data_flow", [
-    "uses_data_domain",
-    "uses_data_from",
-  ]),
+  relationship(
+    "REQUIRES_DATA",
+    "requires data",
+    "data required by",
+    "data_flow",
+    ["requires_data", "requires_data_from"],
+  ),
+  relationship(
+    "USES_DATA_DOMAIN",
+    "uses data domain",
+    "is used by",
+    "data_flow",
+    ["uses_data_domain", "uses_data_from"],
+  ),
   relationship("SOURCED_FROM", "sourced from", "sources", "data_flow", [
     "sourced_from",
   ]),
