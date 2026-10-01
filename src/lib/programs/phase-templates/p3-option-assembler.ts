@@ -49,6 +49,7 @@ export interface P3OptionSet {
   recommendationConfidence: P3OptionConfidence;
   missingEvidence: string[];
   evidenceBasis: string[];
+  sourceEvidenceLabels?: string[];
   usedGlobalStaticFallback: false;
 }
 
@@ -72,7 +73,7 @@ export interface BuildP3DesignInputsPackInput {
   charter?: unknown;
   linkedEvidence?: Array<{ summary?: string | null; anchor?: string | null }>;
   gateCriteria?: Array<{ label: string; completed: boolean; severity?: string | null }>;
-  carriesForwardContent?: DeliverableContentSignal[];
+  priorPhaseContent?: DeliverableContentSignal[];
   evidenceNeedPackets?: P3OptionEvidenceNeed[];
   readiness?: P3OptionReadinessInput | null;
 }
@@ -135,7 +136,7 @@ const STATIC_LEGACY_LABELS = [
 
 export function buildP3DesignInputsPackFromSignals({
   archetype,
-  carriesForwardContent = [],
+  priorPhaseContent = [],
   charter,
   evidenceNeedPackets = [],
   gateCriteria = [],
@@ -145,7 +146,22 @@ export function buildP3DesignInputsPackFromSignals({
   readiness,
 }: BuildP3DesignInputsPackInput): P3DesignInputsPack {
   const scaffold = extractCharterScaffold(charter);
-  const snippets = groupSignals(carriesForwardContent);
+  const snippets = groupSignals(priorPhaseContent);
+  const priorPhaseGapLabels = priorPhaseContent
+    .filter((signal) =>
+      ['evidence_limits', 'readiness_gaps', 'open_inputs'].includes(signal.key),
+    )
+    .map((signal) =>
+      signal.sourceDeliverableTypeKey
+        ? `P2 ${signal.sourceDeliverableTypeKey}: ${signal.heading}`
+        : `P2: ${signal.heading}`,
+    );
+  const priorPhaseEvidence = priorPhaseContent.map((signal) => {
+    const source = signal.sourceDeliverableTypeKey
+      ? `P2 ${signal.sourceDeliverableTypeKey}`
+      : 'P2 evidence';
+    return `${source} - ${signal.heading}: ${signal.snippet}`;
+  });
   const missingEvidence = evidenceNeedPackets
     .filter((packet) => !isEvidenceCovered(packet.status))
     .map((packet) => packet.evidenceSlot);
@@ -172,10 +188,12 @@ export function buildP3DesignInputsPackFromSignals({
     ]),
     painPointsAndRootCauses: compact([
       ...pickSignals(snippets, ['root_causes', 'risks', 'decisions']),
+      ...pickSignals(snippets, ['hypotheses']),
       problem,
     ]),
     currentSystems: compact([
       ...pickSignals(snippets, ['systems', 'architecture', 'technology']),
+      ...pickSignals(snippets, ['readiness_gaps']),
       scope,
     ]),
     currentDataPlatformState: compact([
@@ -184,6 +202,7 @@ export function buildP3DesignInputsPackFromSignals({
     ]),
     dataReadiness: compact([
       ...pickSignals(snippets, ['data_quality', 'metrics']),
+      ...pickSignals(snippets, ['evidence_limits', 'readiness_gaps']),
       readinessText,
       ...(readiness?.hardGaps ?? []).filter(hasDataWord),
       ...missingEvidence.filter(hasDataWord),
@@ -214,11 +233,13 @@ export function buildP3DesignInputsPackFromSignals({
     ),
     evidenceBackedConstraints: compact([
       ...linkedSummaries,
+      ...priorPhaseEvidence,
       ...openGateCriteria,
       ...missingEvidence.map((item) => `Missing evidence: ${item}`),
     ]),
     unresolvedQuestions: compact([
       ...missingEvidence,
+      ...priorPhaseGapLabels,
       ...(readiness?.hardGaps ?? []),
       ...(readiness?.softGaps ?? []),
     ]),
@@ -229,6 +250,7 @@ export function buildP3DesignInputsPackFromSignals({
     notReadyConditions: compact([
       ...(readiness?.hardGaps ?? []),
       ...missingEvidence,
+      ...priorPhaseGapLabels,
     ]),
     currentWorkflowWithPainPoints: compact([
       ...pickSignals(snippets, ['process', 'current_state', 'findings']),
@@ -297,6 +319,12 @@ export function assembleP3SolutionOptions({
     ...(designInputs.evidenceBackedConstraints ?? []),
     ...designInputs.currentWorkflowWithPainPoints,
   ]).slice(0, 8);
+  const sourceEvidenceLabels = unique(
+    (designInputs.evidenceBackedConstraints ?? []).flatMap((item) => {
+      const sourceMatch = item.match(/^P2 ([\w-]+) -/);
+      return sourceMatch ? [sourceMatch[1]] : [];
+    }),
+  );
   const context = buildScoringContext(text, readiness, missingEvidence, evidenceBasis);
   const options = optionBlueprintsFor(useCasePattern).map((blueprint) =>
     finalizeOption(blueprint, context, missingEvidence, evidenceBasis),
@@ -326,6 +354,7 @@ export function assembleP3SolutionOptions({
       : 'low',
     missingEvidence,
     evidenceBasis,
+    sourceEvidenceLabels,
     usedGlobalStaticFallback: false,
   };
 }
@@ -371,13 +400,22 @@ function finalizeOption(
   ]).slice(0, 6);
 
   const totalScore = SCORE_DIMENSIONS.reduce((sum, key) => sum + scores[key], 0);
-  const confidence = context.evidenceSupported
-    ? optionMissingEvidence.length >= 4
-      ? 'medium'
-      : 'high'
-    : optionMissingEvidence.length >= 2
-      ? 'low'
-      : 'medium';
+  let confidence: P3OptionConfidence = 'high';
+  if (
+    !context.evidenceSupported ||
+    !context.hasMeasuredReadiness ||
+    !context.hasPriorPhaseEvidence ||
+    context.hasUnverifiedEvidence ||
+    (context.coverageScore ?? 0) < 50
+  ) {
+    confidence = 'low';
+  } else if (
+    context.hasReadinessGaps ||
+    optionMissingEvidence.length > 0 ||
+    (context.coverageScore ?? 0) < 85
+  ) {
+    confidence = 'medium';
+  }
 
   return {
     ...blueprint,
@@ -399,6 +437,11 @@ interface ScoringContext {
   changeWeak: boolean;
   fundingTight: boolean;
   evidenceSupported: boolean;
+  hasMeasuredReadiness: boolean;
+  hasPriorPhaseEvidence: boolean;
+  hasReadinessGaps: boolean;
+  hasUnverifiedEvidence: boolean;
+  coverageScore?: number;
 }
 
 function buildScoringContext(
@@ -408,6 +451,7 @@ function buildScoringContext(
   evidenceBasis: string[],
 ): ScoringContext {
   const missingText = normalizeText(missingEvidence.join(' '));
+  const evidenceText = normalizeText(`${text} ${evidenceBasis.join(' ')} ${missingText}`);
   return {
     hasNinetyDayExpectation:
       /\b(90|ninety|quarter|q[1-4]|fast|quick|near[- ]term|pilot|proof)\b/.test(text),
@@ -418,6 +462,16 @@ function buildScoringContext(
     changeWeak: /training|adoption|change|owner|sme|capacity|operating model|workforce/.test(missingText),
     fundingTight: /budget|funding|capacity|cost|run rate|rate card|finance/.test(missingText),
     evidenceSupported: evidenceBasis.length >= 3 || (readiness?.coverageScore ?? 0) >= 50,
+    hasMeasuredReadiness: readiness?.coverageScore != null,
+    hasPriorPhaseEvidence: evidenceBasis.some((item) => /^p2 [\w-]+ -/i.test(item)),
+    hasReadinessGaps:
+      (readiness?.hardGaps?.length ?? 0) > 0 ||
+      (readiness?.softGaps?.length ?? 0) > 0,
+    hasUnverifiedEvidence:
+      /\b(unvalidated|not validated|not established|not proven|unproven|unknown|pending|synthetic|unreconciled|conflict(?:ing)?|stale|not approved)\b/.test(
+        evidenceText,
+      ),
+    coverageScore: readiness?.coverageScore,
   };
 }
 

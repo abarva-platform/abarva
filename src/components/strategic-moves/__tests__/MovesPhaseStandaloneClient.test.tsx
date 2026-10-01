@@ -2837,7 +2837,7 @@ describe("MovesPhaseStandaloneClient", () => {
       within(menu).getByRole("button", { name: /Compare Options/i }),
     );
     expect(screen.getByText("Options & recommendation")).toBeInTheDocument();
-    expect(screen.getByText("P2 design inputs pack")).toBeInTheDocument();
+    expect(screen.getByText("P2 source evidence unavailable")).toBeInTheDocument();
     expect(
       screen.queryByText("How to complete this phase"),
     ).not.toBeInTheDocument();
@@ -3793,7 +3793,9 @@ describe("MovesPhaseStandaloneClient", () => {
         name: "Upload evidence for approach decision",
       }),
     ).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: /\(recommended\)/i }));
+    fireEvent.click(
+      screen.getByRole("button", { name: /Operational playbook and metric discipline/i }),
+    );
 
     fireEvent.click(contractStepButton(/Approve & Build/i));
 
@@ -3922,7 +3924,9 @@ describe("MovesPhaseStandaloneClient", () => {
 
     fireEvent.click(screen.getByRole("button", { name: /Stage workspace/i }));
     fireEvent.click(contractStepButton(/Record Decision/i));
-    fireEvent.click(screen.getByRole("button", { name: /\(recommended\)/i }));
+    fireEvent.click(
+      screen.getByRole("button", { name: /Operational playbook and metric discipline/i }),
+    );
     fireEvent.click(contractStepButton(/Approve & Build/i));
     expect(
       screen.queryByRole("button", { name: /Review governed build/i }),
@@ -4083,7 +4087,9 @@ describe("MovesPhaseStandaloneClient", () => {
     );
 
     fireEvent.click(contractStepButton(/Record Decision/i));
-    fireEvent.click(screen.getByRole("button", { name: /\(recommended\)/i }));
+    fireEvent.click(
+      screen.getByRole("button", { name: /Operational playbook and metric discipline/i }),
+    );
     fireEvent.click(contractStepButton(/Approve & Build/i));
     fireEvent.click(
       screen.getByRole("button", {
@@ -4123,7 +4129,9 @@ describe("MovesPhaseStandaloneClient", () => {
     );
 
     fireEvent.click(contractStepButton(/Record Decision/i));
-    fireEvent.click(screen.getByRole("button", { name: /\(recommended\)/i }));
+    fireEvent.click(
+      screen.getByRole("button", { name: /Operational playbook and metric discipline/i }),
+    );
     fireEvent.click(contractStepButton(/Approve & Build/i));
     fireEvent.click(
       screen.getByRole("button", {
@@ -4206,7 +4214,9 @@ describe("MovesPhaseStandaloneClient", () => {
     );
 
     fireEvent.click(contractStepButton(/Record Decision/i));
-    fireEvent.click(screen.getByRole("button", { name: /\(recommended\)/i }));
+    fireEvent.click(
+      screen.getByRole("button", { name: /Operational playbook and metric discipline/i }),
+    );
     fireEvent.click(contractStepButton(/Approve & Build/i));
     fireEvent.click(
       screen.getByRole("button", {

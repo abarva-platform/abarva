@@ -5,7 +5,10 @@ jest.mock("@/lib/data-plane/azureRead", () => ({
 }));
 
 import { azureRead } from "@/lib/data-plane/azureRead";
-import { readDeliverableContentSignals } from "../deliverable-content-signals";
+import {
+  readApprovedPhaseGateContentSignals,
+  readDeliverableContentSignals,
+} from "../deliverable-content-signals";
 
 const mockQuery = azureRead.query as jest.Mock;
 
@@ -31,6 +34,7 @@ const SYNTHETIC_ROADMAP_HTML = `
 describe("readDeliverableContentSignals", () => {
   beforeEach(() => {
     mockQuery.mockReset();
+    mockQuery.mockResolvedValue([]);
   });
 
   it("returns real extracted signals from the latest generated deliverable version", async () => {
@@ -125,5 +129,41 @@ describe("readDeliverableContentSignals", () => {
     expect(byKey.workstreams?.snippet).toContain("Wave 1 stands up");
     expect(byKey.decisions?.heading).toBe("AI decision & control flow");
     expect(byKey.decisions?.snippet).toContain("Human dispatchers retain override");
+  });
+
+  it("reads P2 gate evidence and retains its explicit readiness limits for P3", async () => {
+    mockQuery.mockResolvedValueOnce([
+      {
+        content: `
+          <h2>Evidence base used — and its evidentiary limits</h2>
+          <p>All evidence is synthetic or unvalidated; no baseline is established.</p>
+          <h2>Systems — production interfaces remain unvalidated</h2>
+          <p>Production connectivity is not validated; owner approval is pending.</p>
+          <h2>Open Inputs Required</h2>
+          <p>Reconcile measures and obtain owner-approved access evidence.</p>
+        `,
+        version: 4,
+      },
+    ]);
+
+    const signals = await readApprovedPhaseGateContentSignals("move-synthetic", 2);
+    const byKey = Object.fromEntries(signals.map((signal) => [signal.key, signal]));
+
+    expect(mockQuery).toHaveBeenCalledTimes(1);
+    expect(mockQuery).toHaveBeenCalledWith(
+      expect.stringContaining("d.deliverable_type_key = $2"),
+      ["move-synthetic", "discovery_report"],
+      { missingTable: "empty" },
+    );
+    expect(mockQuery).toHaveBeenCalledWith(
+      expect.stringContaining(
+        "d.signed_off_version IS NOT NULL AND dv.version = d.signed_off_version",
+      ),
+      ["move-synthetic", "discovery_report"],
+      { missingTable: "empty" },
+    );
+    expect(byKey.readiness_gaps?.heading).toContain("interfaces remain unvalidated");
+    expect(byKey.open_inputs?.snippet).toContain("owner-approved access evidence");
+    expect(byKey.readiness_gaps?.sourceDeliverableTypeKey).toBe("discovery_report");
   });
 });
