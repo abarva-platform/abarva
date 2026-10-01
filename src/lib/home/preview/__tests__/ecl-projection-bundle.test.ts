@@ -1187,6 +1187,11 @@ describe("buildTechnologyEstateFromHomeProjectionRows", () => {
     expect(resolveEvidence([contextId], bundle.thesis.signalPacket)[0]).toEqual(
       expect.objectContaining({ evidenceRefs: ["source-row-001"] }),
     );
+    const applications = bundle.technologyEstate?.recordTypes.find(
+      (type) => type.objectType === "application_system",
+    );
+    expect(applications?.rowSourceRefs).toEqual([["source-row-001"]]);
+    expect(applications?.columns).not.toContain("rowSourceRefs");
     expect(bundle.contextVersion?.sourceSetHash).toEqual(expect.any(String));
   });
 
@@ -1252,7 +1257,50 @@ describe("buildTechnologyEstateFromHomeProjectionRows", () => {
           item.id === "ctx_ecl_applications_systems_application_APP_003",
       )?.evidenceRefs,
     ).toEqual([]);
+    expect(
+      bundle.technologyEstate?.recordTypes.find(
+        (type) => type.objectType === "application_system",
+      )?.rowSourceRefs,
+    ).toEqual([[]]);
     expect(bundle.contextVersion?.sourceSetHash).toBeNull();
+  });
+
+  it("keeps verified references aligned when data flows and workloads share one browser", () => {
+    const rows = [
+      row({
+        page_key: "data_assets_integrations",
+        row_key: "WORKLOAD-1",
+        row_type: "data_analytics_workload",
+        title: "Reporting workload",
+        projection_entry_id: "workload-entry",
+        source_hash: "workload-hash",
+        source_refs_json: ["workload-source"],
+        admission_status: "admitted",
+      }),
+      row({
+        page_key: "current_state_data_flow",
+        row_key: "FLOW-1",
+        row_type: "data_flow",
+        title: "Claims flow",
+        projection_entry_id: "flow-entry",
+        source_hash: "flow-hash",
+        source_refs_json: ["flow-source"],
+        admission_status: "admitted",
+      }),
+    ];
+    const estate = buildTechnologyEstateFromHomeProjectionRows(
+      rows,
+      new Map([
+        ["workload-entry", new Set(["workload-source"])],
+        ["flow-entry", new Set(["flow-source"])],
+      ]),
+    );
+    const data = estate.recordTypes.find(
+      (type) => type.objectType === "data_asset_or_integration",
+    );
+
+    expect(data?.rows).toHaveLength(2);
+    expect(data?.rowSourceRefs).toEqual([["flow-source"], ["workload-source"]]);
   });
 
   it("versions partial source lineage when only a verified link changes", () => {

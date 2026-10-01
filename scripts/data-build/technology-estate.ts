@@ -107,7 +107,9 @@ function isNarrativeKey(key: string): boolean {
   return /Narrative$|Notes$/.test(key);
 }
 
-function formatAttributeValue(value: unknown): string | number | boolean | null {
+function formatAttributeValue(
+  value: unknown,
+): string | number | boolean | null {
   if (value === null || value === undefined) return null;
   if (Array.isArray(value)) return value.map((v) => String(v)).join("; ");
   if (typeof value === "object") return JSON.stringify(value);
@@ -136,6 +138,9 @@ export interface TechRecordType {
    * actually declared them. */
   columns: string[];
   rows: Array<Record<string, string | number | boolean | null>>;
+  /** Verified canonical source-record IDs, aligned with rows. Absent on reviewed copies that did
+   * not carry a serving-row source bridge; an empty entry means the row was not linked. */
+  rowSourceRefs?: string[][];
   /** The column this object type's segmentation filter defaults to -- null if that attribute
    * isn't actually present on this tenant's records (a real, honest gap, not an error). */
   primaryDimension: string | null;
@@ -152,7 +157,9 @@ export interface TechnologyEstateBundle {
 }
 
 /** Extracts canonical records into table-ready rows without a model call. */
-export function buildTechnologyEstateBundle(records: CanonicalIngestionRecord[]): TechnologyEstateBundle {
+export function buildTechnologyEstateBundle(
+  records: CanonicalIngestionRecord[],
+): TechnologyEstateBundle {
   const recordTypes: TechRecordType[] = [];
   for (const objectType of TECH_OBJECT_TYPES) {
     const typeRecords = records.filter((r) => r.objectType === objectType);
@@ -162,7 +169,8 @@ export function buildTechnologyEstateBundle(records: CanonicalIngestionRecord[])
     const seen = new Set<string>();
     for (const r of typeRecords) {
       for (const key of Object.keys(r.attributes)) {
-        if (METADATA_KEYS.has(key) || isNarrativeKey(key) || seen.has(key)) continue;
+        if (METADATA_KEYS.has(key) || isNarrativeKey(key) || seen.has(key))
+          continue;
         seen.add(key);
         columns.push(key);
       }
@@ -177,19 +185,35 @@ export function buildTechnologyEstateBundle(records: CanonicalIngestionRecord[])
     });
 
     const dimensionKey = PRIMARY_DIMENSION_KEY[objectType];
-    const primaryDimension = columns.includes(dimensionKey) ? dimensionKey : null;
+    const primaryDimension = columns.includes(dimensionKey)
+      ? dimensionKey
+      : null;
     const dimensionCounts: Array<{ value: string; count: number }> = [];
     if (primaryDimension) {
       const counts = new Map<string, number>();
       for (const row of rows) {
         const value = row[primaryDimension];
-        const key = value === null || value === undefined || value === "" ? "(not specified)" : String(value);
+        const key =
+          value === null || value === undefined || value === ""
+            ? "(not specified)"
+            : String(value);
         counts.set(key, (counts.get(key) ?? 0) + 1);
       }
-      dimensionCounts.push(...Array.from(counts, ([value, count]) => ({ value, count })).sort((a, b) => b.count - a.count));
+      dimensionCounts.push(
+        ...Array.from(counts, ([value, count]) => ({ value, count })).sort(
+          (a, b) => b.count - a.count,
+        ),
+      );
     }
 
-    recordTypes.push({ objectType, label: TECH_OBJECT_TYPE_LABELS[objectType], columns, rows, primaryDimension, dimensionCounts });
+    recordTypes.push({
+      objectType,
+      label: TECH_OBJECT_TYPE_LABELS[objectType],
+      columns,
+      rows,
+      primaryDimension,
+      dimensionCounts,
+    });
   }
   return { recordTypes };
 }

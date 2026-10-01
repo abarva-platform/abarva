@@ -37,7 +37,12 @@ interface Dimension {
 const COLUMN_PRESETS: Record<TechObjectType, Column[]> = {
   business_segment: [
     { key: "segmentName", label: "Segment", width: 260, priority: "core" },
-    { key: "revenueSharePct", label: "Revenue share %", width: 145, align: "right" },
+    {
+      key: "revenueSharePct",
+      label: "Revenue share %",
+      width: 145,
+      align: "right",
+    },
     { key: "revenueUsd", label: "Revenue", width: 150, kind: "money" },
     { key: "pnlOwnerRole", label: "P&L owner", width: 240 },
     { key: "classificationBasis", label: "Basis", width: 230, kind: "muted" },
@@ -61,7 +66,12 @@ const COLUMN_PRESETS: Record<TechObjectType, Column[]> = {
     { key: "businessFunction", label: "Function", width: 230 },
     { key: "processOwner", label: "Owner", width: 220 },
     { key: "systemsUsed", label: "Systems", width: 250 },
-    { key: "controlPoints", label: "Control points", width: 240, kind: "muted" },
+    {
+      key: "controlPoints",
+      label: "Control points",
+      width: 240,
+      kind: "muted",
+    },
   ],
   // Read as a sentence, left to right: this object, this verb, that object. The verb sits between
   // its endpoints rather than after them, because a grid that lists both names then the type makes
@@ -883,8 +893,8 @@ export function RecordBrowser({
           }}
         >
           <span style={eyebrow(V4.amber)}>
-            {identityCollisions.toLocaleString()} of {rows.length.toLocaleString()}{" "}
-            records share an identifier
+            {identityCollisions.toLocaleString()} of{" "}
+            {rows.length.toLocaleString()} records share an identifier
           </span>
           <p
             style={{
@@ -993,6 +1003,7 @@ export function RecordBrowser({
               row={selected.row}
               ordinal={selected.index + 1}
               declaredColumns={recordType.columns}
+              sourceRefs={recordType.rowSourceRefs?.[selected.index]}
             />
           ) : null}
         </aside>
@@ -1639,7 +1650,8 @@ function relationshipPairsFor(objectType: TechObjectType, rows: RecordRow[]) {
       {
         key: "segment-criticality",
         title: "Function criticality by segment",
-        caption: "How declared function criticality is distributed across segments.",
+        caption:
+          "How declared function criticality is distributed across segments.",
         left: "businessSegment",
         right: "criticality",
       },
@@ -1969,12 +1981,14 @@ function SelectedRecord({
   row,
   ordinal,
   declaredColumns,
+  sourceRefs,
 }: {
   recordType: TechObjectType;
   row: RecordRow;
   ordinal: number;
   /** The source's own column order, so the detail reads in the shape the file declared. */
   declaredColumns?: string[];
+  sourceRefs?: string[];
 }) {
   const fields = detailFieldsFor(recordType, row, declaredColumns);
   // Counted from the row, not from the declared column list. Those differ -- the row can carry keys
@@ -2002,6 +2016,51 @@ function SelectedRecord({
         {fields.length.toLocaleString()} of {carried.toLocaleString()} fields on
         this record; the rest record how the row was loaded
       </div>
+      {sourceRefs ? (
+        <div
+          data-record-source-link={sourceRefs.length ? "verified" : "missing"}
+          style={{
+            borderTop: `1px solid ${V4.rule}`,
+            padding: "12px 0",
+            fontFamily: SANS,
+            fontSize: 12,
+            lineHeight: 1.5,
+            color: V4.inkSoft,
+          }}
+        >
+          <strong style={{ color: sourceRefs.length ? V4.green : V4.amber }}>
+            {sourceRefs.length
+              ? "Source record ID matched"
+              : "Source record link not established"}
+          </strong>
+          {sourceRefs.length ? (
+            <>
+              <div>
+                The row ID is linked; this does not establish source-file
+                acceptance or claim review.
+              </div>
+              <details>
+                <summary style={{ cursor: "pointer" }}>
+                  {sourceRefs.length.toLocaleString()} source record ID
+                  {sourceRefs.length === 1 ? "" : "s"}
+                </summary>
+                <ul style={{ margin: "8px 0 0", paddingLeft: 20 }}>
+                  {sourceRefs.map((ref) => (
+                    <li
+                      key={ref}
+                      style={{ fontFamily: MONO, overflowWrap: "anywhere" }}
+                    >
+                      {ref}
+                    </li>
+                  ))}
+                </ul>
+              </details>
+            </>
+          ) : (
+            <div>No governed source record was verified for this row.</div>
+          )}
+        </div>
+      ) : null}
       {/* Every field the row carries that is not bookkeeping. This used to stop at eighteen, and
           the curated list filled all eighteen -- so a dozen fields the record declares and varies
           were unreachable from anywhere, the cap silently deciding which. A record with more to say
