@@ -10,6 +10,7 @@ import {
 import { resolveEvidence } from "@/components/home/preview/evidence-resolver";
 import { azureRead } from "@/lib/data-plane/azureRead";
 import { getHomeReviewBundle } from "../golden-snapshot";
+import { createHomeNarrativePacketArtifact } from "../home-narrative-packet";
 import { homeRecordSourceToken } from "../record-source-token";
 import {
   homeSourceDateCoverageLabel,
@@ -1540,21 +1541,46 @@ describe("buildTechnologyEstateFromHomeProjectionRows", () => {
         new Map([["row-hash", new Set(["source-row-005"])]]),
       ],
     ]);
-    const packetHash = buildHomeReviewBundleFromEclProjectionRows(
+    const baseline = buildHomeReviewBundleFromEclProjectionRows(
       base,
       rows,
       undefined,
       links,
-    ).contextVersion?.deterministicPacketHash;
+    );
+    const packet = {
+      ...baseline.thesis.signalPacket,
+      enterpriseIdentity: { businessModel: null, industry: null, revenue: null, employeeCount: null },
+      businessEconomics: { operatingSegments: [], customerSegments: [], technologyBudget: 0, technologyBudgetShareOfRevenue: null },
+      strategicPriorities: [],
+      pagePromptContracts: [],
+      coverageManifest: base.thesis.signalPacket.coverageManifest,
+      analyticalLenses: [],
+    };
+    if (!baseline.contextVersion) throw new Error("context version missing");
+    const narrativePacketArtifact = createHomeNarrativePacketArtifact({
+      tenantKey: base.tenantKey,
+      assessmentId: baseline.contextVersion.assessmentId,
+      rows,
+      verifiedSourceRefs: links,
+      packet,
+    });
     const withWriters = rows.map((item) =>
       item.row_type === "summary"
         ? {
             ...item,
             display_payload_json: {
               writer: {
-                signal_packet_hash: packetHash,
+                signal_packet_hash: narrativePacketArtifact.packetHash,
                 generated_at: "2026-09-30T00:00:00.000Z",
               },
+            },
+          }
+        : item.row_type === "story_plan"
+        ? {
+            ...item,
+            display_payload_json: {
+              ...item.display_payload_json,
+              narrative_packet_artifact: narrativePacketArtifact,
             },
           }
         : item,
@@ -1586,6 +1612,20 @@ describe("buildTechnologyEstateFromHomeProjectionRows", () => {
     expect(accepted.contextVersion?.sourceSetHash).toEqual(expect.any(String));
     expect(accepted.contextVersion?.coherence).toBe("coherent");
     expect(partial.contextVersion?.coherence).toBe("unverified");
+    expect(accepted.thesis.signalPacket).toEqual(packet);
+    expect(buildHomeReviewBundleFromEclProjectionRows(base, withWriters.map((item) =>
+      item.row_type === "story_plan" ? { ...item, display_payload_json: { story_plan: storyPlanFixture().display_payload_json?.story_plan } } : item,
+    ), undefined, links, [sourceFile]).contextVersion?.coherence).toBe("unverified");
+    expect(buildHomeReviewBundleFromEclProjectionRows(base, withWriters.map((item) =>
+      item.row_key === "CTR-005" ? { ...item, title: "Changed contract" } : item,
+    ), undefined, links, [sourceFile]).contextVersion?.coherence).toBe("unverified");
+    expect(buildHomeReviewBundleFromEclProjectionRows(base, withWriters, undefined, new Map(), [sourceFile]).contextVersion?.coherence).toBe("unverified");
+    expect(buildHomeReviewBundleFromEclProjectionRows(base, withWriters.map((item) =>
+      item.row_type === "story_plan" ? { ...item, display_payload_json: {
+        ...item.display_payload_json,
+        narrative_packet_artifact: { ...narrativePacketArtifact, packetHash: "tampered" },
+      } } : item,
+    ), undefined, links, [sourceFile]).contextVersion?.coherence).toBe("unverified");
 
     const withScopeAndRowEvidence = buildHomeReviewBundleFromEclProjectionRows(
       base,

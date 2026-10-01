@@ -695,6 +695,14 @@ assert(
   "Home ECL narrative approved writes commit a hash-gated plan artifact instead of regenerating chapter prose",
 );
 assert(
+  script.includes("createHomeNarrativePacketArtifact") &&
+    script.includes("readNarrativeSourceLinks") &&
+    script.includes("plan_narrative_packet_artifact_mismatch") &&
+    script.includes("narrative_packet_artifact: narrativePacketArtifact") &&
+    script.includes("signal_packet_hash: narrativePacketArtifact.packetHash"),
+  "Home ECL narrative writer persists a versioned packet tied to its factual and source-link basis",
+);
+assert(
   thesis.includes("OPENING THESIS BAR") &&
     thesis.includes("business-strategy thesis for a new CEO/CXO") &&
     thesis.includes("Do not open with a vendor") &&
