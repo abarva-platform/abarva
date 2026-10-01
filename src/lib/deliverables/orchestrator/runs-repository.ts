@@ -589,3 +589,52 @@ export async function listSucceededRunsForMove(
   }
   return [...latestByType.values()];
 }
+
+export interface DeliverableRunHistoryForMove {
+  latest: DeliverableRunRecord;
+  latestSucceeded: DeliverableRunRecord | null;
+}
+
+/**
+ * Latest-created run state per deliverable type for a Move, plus the latest
+ * successful artifact when the current attempt did not produce one. Keeping
+ * these separate prevents an old success from masking a newer failed/blocked
+ * attempt on read-only browse surfaces.
+ */
+export async function listDeliverableRunHistoryForMove(
+  clientId: string,
+  moveId: string,
+  db: DbClient = getAzureWriteFluentClient(),
+  limit = 300,
+): Promise<Map<string, DeliverableRunHistoryForMove>> {
+  const { data, error } = await db
+    .from('deliverable_runs')
+    .select('*')
+    .eq('client_id', clientId)
+    .order('created_at', { ascending: false })
+    .limit(limit);
+  if (error) throw new Error(`deliverable_runs move history failed: ${error.message}`);
+
+  const rows = ((data as Record<string, unknown>[] | null) ?? []).map(rowToRecord);
+  const history = new Map<string, DeliverableRunHistoryForMove>();
+  for (const run of rows) {
+    if (run.jobPayload?.sourceArtifactRef !== moveId) continue;
+    const current = history.get(run.deliverableType);
+    if (!current) {
+      history.set(run.deliverableType, {
+        latest: run,
+        latestSucceeded:
+          run.status === 'succeeded' && run.artifactId ? run : null,
+      });
+      continue;
+    }
+    if (
+      !current.latestSucceeded &&
+      run.status === 'succeeded' &&
+      run.artifactId
+    ) {
+      current.latestSucceeded = run;
+    }
+  }
+  return history;
+}

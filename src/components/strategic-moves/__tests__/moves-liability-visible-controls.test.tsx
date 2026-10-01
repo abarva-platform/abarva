@@ -14,7 +14,7 @@ import {
 
 let mockDeliverablesData: unknown[] = [];
 let mockActiveClient: { id: string } | null = null;
-let mockSucceededRuns: unknown[] = [];
+let mockRunHistory: Array<[string, unknown]> = [];
 let mockDeliverableSelect: string | undefined;
 
 jest.mock("@/lib/supabase-server", () => ({
@@ -36,15 +36,15 @@ jest.mock("@/lib/programs/attachments", () => ({
   listAttachmentsForProgram: async () => [],
 }));
 
-// PhaseDocumentsPanel now reads succeeded runs (orchestrator output) to additively
-// show built docs; mock those server deps so the jsdom render doesn't pull the
+// PhaseDocumentsPanel reads tenant-scoped run history to show current output and
+// failed latest attempts; mock those server deps so jsdom doesn't pull the
 // data-plane (ESM) chain. Null active client → no run-built rows, leaving the
 // liability-label assertions unchanged.
 jest.mock("@/lib/active-client", () => ({
   getActiveClientRow: async () => mockActiveClient,
 }));
 jest.mock("@/lib/deliverables/orchestrator/runs-repository", () => ({
-  listSucceededRunsForMove: async () => mockSucceededRuns,
+  listDeliverableRunHistoryForMove: async () => new Map(mockRunHistory),
 }));
 
 // `PhaseDocumentsPanel` resolves tenancy to decide whether it can load discovery
@@ -83,7 +83,7 @@ describe("Strategic Moves visible AI liability controls", () => {
   beforeEach(() => {
     mockDeliverablesData = [];
     mockActiveClient = null;
-    mockSucceededRuns = [];
+    mockRunHistory = [];
     mockDeliverableSelect = undefined;
   });
 
@@ -175,13 +175,29 @@ describe("Strategic Moves visible AI liability controls", () => {
 
   it("keeps a run-built gate artifact signable when its deliverable row has no readable version content", async () => {
     mockActiveClient = { id: "client-1" };
-    mockSucceededRuns = [
+    mockRunHistory = [[
+      "charter",
       {
-        deliverableType: "charter",
-        artifactId: "generated-charter-1",
-        updatedAt: "2026-09-29T12:00:00Z",
+        latest: {
+          id: "run-charter-1",
+          status: "succeeded",
+          deliverableType: "charter",
+          artifactId: "generated-charter-1",
+          updatedAt: "2026-09-29T12:00:00Z",
+          error: null,
+          blockers: [],
+        },
+        latestSucceeded: {
+          id: "run-charter-1",
+          status: "succeeded",
+          deliverableType: "charter",
+          artifactId: "generated-charter-1",
+          updatedAt: "2026-09-29T12:00:00Z",
+          error: null,
+          blockers: [],
+        },
       },
-    ];
+    ]];
     mockDeliverablesData = [
       {
         id: "deliverable-charter-1",
@@ -215,13 +231,29 @@ describe("Strategic Moves visible AI liability controls", () => {
 
   it("never offers sign-off from a run artifact without its deliverables_v2 row", async () => {
     mockActiveClient = { id: "client-1" };
-    mockSucceededRuns = [
+    mockRunHistory = [[
+      "charter",
       {
-        deliverableType: "charter",
-        artifactId: "generated-charter-1",
-        updatedAt: "2026-09-29T12:00:00Z",
+        latest: {
+          id: "run-charter-1",
+          status: "succeeded",
+          deliverableType: "charter",
+          artifactId: "generated-charter-1",
+          updatedAt: "2026-09-29T12:00:00Z",
+          error: null,
+          blockers: [],
+        },
+        latestSucceeded: {
+          id: "run-charter-1",
+          status: "succeeded",
+          deliverableType: "charter",
+          artifactId: "generated-charter-1",
+          updatedAt: "2026-09-29T12:00:00Z",
+          error: null,
+          blockers: [],
+        },
       },
-    ];
+    ]];
 
     render(
       await PhaseDocumentsPanel({
@@ -240,6 +272,59 @@ describe("Strategic Moves visible AI liability controls", () => {
       "href",
       "/api/v1/artifacts/generated-charter-1?format=docx",
     );
+    expect(
+      screen.queryByRole("button", { name: /Approve as-is/i }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("does not present a prior successful artifact as current after the latest attempt fails", async () => {
+    mockActiveClient = { id: "client-1" };
+    mockRunHistory = [[
+      "root_cause_worksheet",
+      {
+        latest: {
+          id: "run-latest-failed",
+          status: "failed",
+          deliverableType: "root_cause_worksheet",
+          artifactId: null,
+          updatedAt: "2026-09-29T13:00:00Z",
+          error: "Generation response did not satisfy the output contract",
+          blockers: [],
+        },
+        latestSucceeded: {
+          id: "run-prior-success",
+          status: "succeeded",
+          deliverableType: "root_cause_worksheet",
+          artifactId: "prior-root-cause-artifact",
+          updatedAt: "2026-09-29T12:00:00Z",
+          error: null,
+          blockers: [],
+        },
+      },
+    ]];
+
+    render(
+      await PhaseDocumentsPanel({
+        moveId: "5f5d7993-18ba-4eb6-84a3-72373aab042b",
+        currentPhase: 2,
+        compact: false,
+        archetype: "ai_enabled_sdlc",
+        moveName: "Synthetic test initiative",
+        clientDisplayName: "Synthetic test workspace",
+      }),
+    );
+
+    expect(screen.getByText("Latest build failed")).toBeInTheDocument();
+    expect(
+      screen.getByText(/did not satisfy the output contract/i),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: "Previous build — not current" }),
+    ).toHaveAttribute(
+      "href",
+      "/api/v1/artifacts/prior-root-cause-artifact?format=html",
+    );
+    expect(screen.queryByText("Built")).not.toBeInTheDocument();
     expect(
       screen.queryByRole("button", { name: /Approve as-is/i }),
     ).not.toBeInTheDocument();

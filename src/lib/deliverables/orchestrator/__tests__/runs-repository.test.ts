@@ -246,12 +246,18 @@ describe('sweepStaleDeliverableRuns', () => {
 // Move-listing: the move id lives inside job_payload, so the repo filters in code
 // and keeps the latest succeeded run per deliverable type (rows arrive newest-first).
 function fakeListDb(rows: Array<Record<string, unknown>>) {
-  const cap: { filters: Array<[string, unknown]> } = { filters: [] };
+  const cap: {
+    filters: Array<[string, unknown]>;
+    orders: Array<[string, unknown]>;
+  } = { filters: [], orders: [] };
   const b: Record<string, unknown> = {};
   b.from = () => b;
   b.select = () => b;
   b.eq = (k: string, v: unknown) => { cap.filters.push([k, v]); return b; };
-  b.order = () => b;
+  b.order = (column: string, options: unknown) => {
+    cap.orders.push([column, options]);
+    return b;
+  };
   b.limit = async () => ({ data: rows, error: null });
   return { db: b as never, cap };
 }
@@ -289,5 +295,49 @@ describe('listSucceededRunsForMove', () => {
       runRow({ id: 'r1', deliverable_type: 'charter', artifact_id: null, job_payload: { sourceArtifactRef: 'move-1' } }),
     ]);
     expect(await listSucceededRunsForMove('c1', 'move-1', db)).toHaveLength(0);
+  });
+});
+
+describe('listDeliverableRunHistoryForMove', () => {
+  it('keeps the latest failed attempt distinct from the prior successful artifact', async () => {
+    const { listDeliverableRunHistoryForMove } = await import('../runs-repository');
+    expect(typeof listDeliverableRunHistoryForMove).toBe('function');
+
+    const { db, cap } = fakeListDb([
+      runRow({
+        id: 'latest-failure',
+        deliverable_type: 'root_cause_worksheet',
+        status: 'failed',
+        artifact_id: null,
+        error: 'Generation failed',
+        updated_at: '2026-10-01T12:00:00Z',
+        job_payload: { sourceArtifactRef: 'move-1' },
+      }),
+      runRow({
+        id: 'prior-success',
+        deliverable_type: 'root_cause_worksheet',
+        status: 'succeeded',
+        artifact_id: 'prior-artifact',
+        updated_at: '2026-10-01T11:00:00Z',
+        job_payload: { sourceArtifactRef: 'move-1' },
+      }),
+      runRow({
+        id: 'other-move-failure',
+        deliverable_type: 'root_cause_worksheet',
+        status: 'failed',
+        error: 'Other move',
+        job_payload: { sourceArtifactRef: 'other-move' },
+      }),
+    ]);
+
+    const history = await listDeliverableRunHistoryForMove('c1', 'move-1', db);
+    expect(cap.filters).toContainEqual(['client_id', 'c1']);
+    expect(cap.filters).not.toContainEqual(['status', 'succeeded']);
+    expect(cap.orders).toContainEqual(['created_at', { ascending: false }]);
+    expect(history.get('root_cause_worksheet')).toMatchObject({
+      latest: { id: 'latest-failure', status: 'failed', error: 'Generation failed' },
+      latestSucceeded: { id: 'prior-success', artifactId: 'prior-artifact' },
+    });
+    expect(history.size).toBe(1);
   });
 });
