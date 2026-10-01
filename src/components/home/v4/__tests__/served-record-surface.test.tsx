@@ -532,12 +532,122 @@ describe("the served path", () => {
     ).not.toHaveAttribute("open");
   });
 
-  it("opens Our Business as a business briefing rather than an empty chapter", () => {
+  it.each(CHAPTER_IDS)(
+    "keeps prior %s interpretation closed when served rows are mixed",
+    (chapterId) => {
+      const { container, unmount } = open(chapterId);
+      expect(
+        container.querySelector("[data-home-mixed-chapter-opening]"),
+      ).toHaveAttribute("data-home-mixed-chapter-opening", chapterId);
+      expect(container.querySelector("h1")).toHaveTextContent(
+        "Current record, interpretation pending review",
+      );
+      expect(
+        container.querySelector("[data-home-reviewed-interpretation]"),
+      ).not.toHaveAttribute("open");
+      unmount();
+    },
+  );
+
+  it("does not lead mixed Leadership with unserved testimony", () => {
+    const { container } = open("leadership_perspective");
+    const opening = container.querySelector(
+      '[data-home-mixed-chapter-opening="leadership_perspective"]',
+    );
+    const prior = container.querySelector(
+      "[data-home-reviewed-interpretation]",
+    );
+
+    expect(opening).toHaveTextContent(
+      "No leadership interview rows are served here",
+    );
+    expect(opening).toHaveTextContent("Not served");
+    expect(opening).not.toHaveTextContent("44 interviewed leaders");
+    expect(prior).not.toHaveAttribute("open");
+    expect(prior).toHaveTextContent("44 interviewed leaders");
+  });
+
+  it("keeps the perspective section inside the prior interpretation", () => {
+    const value = servedBundle();
+    (
+      value.thesis.signalPacket as { analyticalLenses?: unknown[] }
+    ).analyticalLenses = [
+      {
+        kind: "expert_lens",
+        label: "A lens",
+        expertRole: "Chief Data Officer",
+        questions: "What would an answer decide?",
+      },
+    ];
+    window.location.hash = "leadership_perspective";
+    const leadership = render(
+      <HomeV4App bundle={value} tenantKey="meridian-health" />,
+    );
+    expect(
+      leadership.container
+        .querySelector("[data-home-reviewed-interpretation]")
+        ?.querySelector("[data-home-perspective]"),
+    ).not.toBeNull();
+  });
+
+  it("leaves a coherent served Leadership chapter open", () => {
+    const bundle = servedBundle();
+    window.location.hash = "leadership_perspective";
+    const { container } = render(
+      <HomeV4App
+        bundle={bundle}
+        tenantKey="meridian-health"
+        recordSource={{
+          kind: "ecl_serving_projection",
+          canonicalSnapshotHash: bundle.provenance.canonical_snapshot_hash,
+          contextVersion: { ...bundle.contextVersion!, coherence: "coherent" },
+        }}
+      />,
+    );
+    expect(
+      container.querySelector("[data-home-mixed-chapter-opening]"),
+    ).toBeNull();
+    expect(
+      container.querySelector("[data-home-reviewed-interpretation]"),
+    ).toBeNull();
+    expect(container.querySelector("h1")).toHaveTextContent(
+      "Leaders are unanimous",
+    );
+  });
+
+  it("does not hide an undrafted chapter as prior interpretation", () => {
+    const bundle = servedBundle();
+    const chapter = bundle.chapters.find(
+      (item) => item.chapterId === "how_we_operate",
+    );
+    if (!chapter) throw new Error("chapter missing");
+    chapter.headline = "How We Operate synthesis unavailable";
+    window.location.hash = "how_we_operate";
+    const { container } = render(
+      <HomeV4App bundle={bundle} tenantKey="meridian-health" />,
+    );
+    expect(
+      container.querySelector("[data-home-mixed-chapter-opening]"),
+    ).toBeNull();
+    expect(
+      container.querySelector("[data-home-reviewed-interpretation]"),
+    ).toBeNull();
+  });
+
+  it("keeps the prior Our Business briefing available without leading with it", () => {
     const { container } = open("our_business");
     const text = container.textContent ?? "";
     const headline = container.querySelector("h1")?.textContent ?? "";
 
-    expect(headline).toContain("provider/health-plan model");
+    expect(headline).toBe("Current record, interpretation pending review");
+    expect(
+      container.querySelector(
+        '[data-home-mixed-chapter-opening="our_business"]',
+      ),
+    ).toHaveTextContent("business segments");
+    expect(
+      container.querySelector("[data-home-reviewed-interpretation]"),
+    ).toHaveTextContent("provider/health-plan model");
     expect(text).not.toMatch(/Our Business is not yet answered/i);
     expect(text).not.toMatch(
       /Nothing in the loaded record speaks to this question yet/i,
