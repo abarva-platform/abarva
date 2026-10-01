@@ -156,6 +156,7 @@ jobs:
           src/app/api/v1/programs/[programId]/artifacts/[artifactId]/client-approval/__tests__/route.test.ts
           src/components/strategic-moves/__tests__/FileCabinetPanel.labels.test.ts
           src/components/strategic-moves/__tests__/FileCabinetPanel.evidence-review.test.tsx
+          src/components/strategic-moves/__tests__/FileCabinetPanel.scroll-into-view.test.tsx
           --no-coverage --ci
 
       - name: Run the uncovered deliverables component suite
