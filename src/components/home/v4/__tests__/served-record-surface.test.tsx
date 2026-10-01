@@ -17,7 +17,7 @@ import "@testing-library/jest-dom";
 // Must precede the served-path builder import below; see the module for why.
 import "../test-support/text-encoder-polyfill";
 
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 
 import {
   buildHomeReviewBundleFromEclProjectionRows,
@@ -326,7 +326,10 @@ describe("the served path", () => {
       document.querySelector("[data-home-record-state-band]")?.textContent,
     ).toContain("Source-file quality: 0 of 14 accepted; 14 partial");
     expect(
-      screen.getByText(/Registered source dates: 2026-08-23/),
+      screen.getAllByText(/Registered source dates: 2026-08-23/),
+    ).toHaveLength(2);
+    expect(
+      document.querySelector("[data-home-mixed-executive-opening]"),
     ).toHaveTextContent("data currency not attested");
   });
 
@@ -376,6 +379,9 @@ describe("the served path", () => {
     );
 
     expect(document.querySelector("[data-home-record-state-band]")).toBeNull();
+    expect(
+      document.querySelector("[data-home-mixed-executive-opening]"),
+    ).toBeNull();
   });
 
   it.each([
@@ -469,20 +475,61 @@ describe("the served path", () => {
     );
   });
 
-  it("opens the Executive Brief as an executive orientation, not a raw finding", () => {
+  it("leads the mixed Executive Brief with current coverage and keeps old interpretation closed", () => {
     const { container } = open("executive_brief");
-    const text = container.textContent ?? "";
+    const opening = container.querySelector(
+      "[data-home-mixed-executive-opening]",
+    )!;
+    const prior = container.querySelector(
+      "[data-home-reviewed-interpretation]",
+    )!;
     const headline = container.querySelector("h1")?.textContent ?? "";
 
-    expect(headline).toContain("strategic program");
-    expect(headline).not.toContain("100% of the estate is self-hosted.");
-    expect(text).not.toMatch(/Executive Brief is not yet answered/i);
-    expect(text).not.toMatch(
-      /Nothing in the loaded record speaks to this question yet/i,
-    );
-    expect(text).not.toMatch(/Nothing established here yet/i);
+    expect(headline).toBe("Current record, interpretation pending review");
+    expect(within(opening as HTMLElement).getByText("1")).toBeInTheDocument();
+    expect(opening).toHaveTextContent("vendor contracts");
+    expect(prior).not.toHaveAttribute("open");
+    expect(prior).toHaveTextContent("strategic program");
+    expect(prior).toHaveTextContent("In your first ten minutes");
+    expect(prior).toHaveTextContent("not reconciled with current rows");
     expect(container.querySelector("[data-home-briefing-opening]")).toBeNull();
-    expect(text).toContain("In your first ten minutes");
+
+    fireEvent.click(
+      within(opening as HTMLElement).getByRole("button", {
+        name: "Browse the record",
+      }),
+    );
+    expect(window.location.hash).toBe("#browse-the-data");
+    expect(
+      container.querySelector("[data-home-mixed-executive-opening]"),
+    ).toBeNull();
+  });
+
+  it("keeps mixed Executive Brief counts aligned with the live estate", () => {
+    const value = bundleWithReviewedNarrativeAndLiveRows();
+    const served = servedBundle();
+    window.location.hash = "executive_brief";
+    const { container } = render(
+      <HomeV4App
+        bundle={value}
+        tenantKey="meridian-health"
+        recordSource={{
+          kind: "ecl_serving_projection",
+          canonicalSnapshotHash: served.provenance.canonical_snapshot_hash,
+          contextVersion: served.contextVersion,
+        }}
+      />,
+    );
+    const opening = container.querySelector(
+      "[data-home-mixed-executive-opening]",
+    );
+    expect(opening).toHaveTextContent("230");
+    expect(opening).toHaveTextContent("vendor contracts");
+    expect(opening).toHaveTextContent("1,710");
+    expect(opening).toHaveTextContent("data and integration records");
+    expect(
+      container.querySelector("[data-home-reviewed-interpretation]"),
+    ).not.toHaveAttribute("open");
   });
 
   it("opens Our Business as a business briefing rather than an empty chapter", () => {
