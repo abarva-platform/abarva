@@ -8,10 +8,14 @@ import {
 } from "@/lib/programs/approved-move-evidence-revision";
 
 export interface ApprovedMoveEvidenceSnapshot {
+  tenantKey: string;
+  moveId: string;
   revision: string;
   approvedEvidenceCount: number;
   rows: ApprovedMoveEvidenceRevisionRow[];
   latestEvidenceActivityAt: string | null;
+  revisionByPhase: Record<number, string>;
+  latestEvidenceActivityAtByPhase: Record<number, string | null>;
 }
 
 const MAX_APPROVED_EVIDENCE_ROWS = 80;
@@ -103,10 +107,9 @@ export async function loadApprovedMoveEvidenceSnapshot(args: {
       .limit(MAX_APPROVED_EVIDENCE_ROWS + 1),
     db
       .from("program_evidence_reviews")
-      .select("updated_at, reviewed_at, created_at")
+      .select("evidence_id, decision, updated_at, reviewed_at, created_at")
       .eq("tenant_key", args.tenantKey)
       .eq("program_id", args.moveId)
-      .eq("decision", "approved")
       .limit(MAX_REVIEW_ACTIVITY_ROWS + 1),
   ]);
   if (
@@ -124,17 +127,34 @@ export async function loadApprovedMoveEvidenceSnapshot(args: {
     Record<string, unknown>
   >;
   if (reviewActivityRows.length > MAX_REVIEW_ACTIVITY_ROWS) return null;
-  const latestReviewActivityAt = latestReviewTimestamp(reviewActivityRows);
+  const relevantActivityRows = reviewActivityRows.filter(
+    (row) => row.decision !== "pending",
+  );
   const evidenceIds = reviewRows
     .map((row) => stringOrNull(row.evidence_id))
+    .concat(
+      relevantActivityRows.map((row) => stringOrNull(row.evidence_id)),
+    )
     .filter((id): id is string => Boolean(id));
-  if (evidenceIds.length === 0) {
+  const uniqueEvidenceIds = [...new Set(evidenceIds)];
+  if (uniqueEvidenceIds.length === 0) {
     const rows: ApprovedMoveEvidenceRevisionRow[] = [];
     return {
+      tenantKey: args.tenantKey,
+      moveId: args.moveId,
       revision: approvedMoveEvidenceRevision({ ...args, rows }),
       approvedEvidenceCount: 0,
       rows,
-      latestEvidenceActivityAt: latestReviewActivityAt,
+      latestEvidenceActivityAt: null,
+      revisionByPhase: Object.fromEntries(
+        [1, 2, 3, 4, 5].map((phase) => [
+          phase,
+          approvedMoveEvidenceRevision({ ...args, rows }),
+        ]),
+      ),
+      latestEvidenceActivityAtByPhase: Object.fromEntries(
+        [1, 2, 3, 4, 5].map((phase) => [phase, null]),
+      ),
     };
   }
 
@@ -145,7 +165,7 @@ export async function loadApprovedMoveEvidenceSnapshot(args: {
     )
     .eq("tenant_key", args.tenantKey)
     .eq("program_id", args.moveId)
-    .in("id", evidenceIds);
+    .in("id", uniqueEvidenceIds);
   if (evidenceError || !Array.isArray(evidence)) return null;
 
   const evidenceById = new Map(
@@ -161,16 +181,122 @@ export async function loadApprovedMoveEvidenceSnapshot(args: {
     const row = toRevisionRow(review, item);
     return row ? [row] : [];
   });
-  if (rows.length !== evidenceIds.length) return null;
+  if (
+    rows.length !==
+    new Set(reviewRows.map((row) => stringOrNull(row.evidence_id))).size
+  ) {
+    return null;
+  }
+  const activityEvidenceById = new Map(
+    (evidence as Array<Record<string, unknown>>).map((row) => [
+      stringOrNull(row.id),
+      row,
+    ]),
+  );
+  const latestEvidenceActivityAtByPhase = Object.fromEntries(
+    [1, 2, 3, 4, 5].map((phase) => {
+      const scopedActivityRows = relevantActivityRows.filter((activity) => {
+        const evidenceId = stringOrNull(activity.evidence_id);
+        const item = evidenceId ? activityEvidenceById.get(evidenceId) : null;
+        const evidencePhase = item ? numberOrNull(item.phase) : null;
+        return evidencePhase === null || evidencePhase === phase;
+      });
+      return [
+        phase,
+        latestReviewTimestamp([
+          ...scopedActivityRows,
+          ...rows
+            .filter((row) => row.phase === null || row.phase === phase)
+            .map((row) => ({ created_at: row.createdAt })),
+        ]),
+      ];
+    }),
+  ) as Record<number, string | null>;
   const latestEvidenceActivityAt = latestReviewTimestamp([
-    ...reviewActivityRows,
+    ...relevantActivityRows,
     ...rows.map((row) => ({ created_at: row.createdAt })),
   ]);
+  const revisionByPhase = Object.fromEntries(
+    [1, 2, 3, 4, 5].map((phase) => [
+      phase,
+      approvedMoveEvidenceRevision({
+        ...args,
+        rows: rows.filter((row) => row.phase === null || row.phase === phase),
+      }),
+    ]),
+  );
 
   return {
+    tenantKey: args.tenantKey,
+    moveId: args.moveId,
     revision: approvedMoveEvidenceRevision({ ...args, rows }),
     approvedEvidenceCount: rows.length,
     rows,
     latestEvidenceActivityAt,
+    revisionByPhase,
+    latestEvidenceActivityAtByPhase,
   };
+}
+
+export function approvedMoveEvidenceRevisionForPhase(
+  snapshot: ApprovedMoveEvidenceSnapshot,
+  phase: number,
+): string {
+  return snapshot.revisionByPhase[phase] ?? "";
+}
+
+export function isApprovedMoveEvidenceBasisCurrent(args: {
+  snapshot: ApprovedMoveEvidenceSnapshot | null;
+  phase: number;
+  recordedRevision: string | null;
+  scope?: string | null;
+  generatedAt?: string | null;
+}): boolean {
+  const { snapshot, phase, recordedRevision } = args;
+  if (!snapshot || !recordedRevision || phase < 1 || phase > 5) return false;
+
+  const currentPhaseRevision = approvedMoveEvidenceRevisionForPhase(
+    snapshot,
+    phase,
+  );
+  const generatedAt = args.generatedAt ? Date.parse(args.generatedAt) : NaN;
+  if (!Number.isFinite(generatedAt)) return false;
+  const hasPhaseActivity = Object.prototype.hasOwnProperty.call(
+    snapshot.latestEvidenceActivityAtByPhase,
+    phase,
+  );
+  if (!hasPhaseActivity) return false;
+  const latestRelevantActivity =
+    snapshot.latestEvidenceActivityAtByPhase[phase] ?? null;
+  const latestRelevantActivityAt = latestRelevantActivity
+    ? Date.parse(latestRelevantActivity)
+    : null;
+  if (
+    latestRelevantActivityAt !== null &&
+    (!Number.isFinite(latestRelevantActivityAt) ||
+      latestRelevantActivityAt > generatedAt)
+  ) {
+    return false;
+  }
+  if (args.scope === "phase") {
+    return Boolean(currentPhaseRevision && recordedRevision === currentPhaseRevision);
+  }
+  if (recordedRevision === snapshot.revision) return true;
+
+  // Legacy artifacts only recorded the whole-Move hash. Keep them usable when
+  // timestamps prove all changed evidence belongs to other phases; absent or
+  // ambiguous lineage remains blocked.
+  const latestOverallActivity = snapshot.latestEvidenceActivityAt;
+  const latestOverallActivityAt = latestOverallActivity
+    ? Date.parse(latestOverallActivity)
+    : NaN;
+  if (
+    !Number.isFinite(latestOverallActivityAt) ||
+    latestOverallActivityAt <= generatedAt
+  ) {
+    return false;
+  }
+  if (!latestRelevantActivity) return true;
+  const latestActivityAt = Date.parse(latestRelevantActivity);
+  return Number.isFinite(latestActivityAt) && latestActivityAt <= generatedAt;
 }

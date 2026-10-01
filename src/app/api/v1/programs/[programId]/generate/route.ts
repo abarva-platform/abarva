@@ -19,7 +19,10 @@ import { getDeliverableProfile } from "@/lib/deliverables/profiles/registry";
 import { createDeliverableRun, type DeliverableRunJobPayload } from "@/lib/deliverables/orchestrator/runs-repository";
 import { assertPhaseReadyForGeneration } from "@/lib/programs/assert-phase-ready";
 import { persistMoveGeneratedArtifact } from "@/lib/deliverables/persist-move-generated-artifact";
-import { loadApprovedMoveEvidenceSnapshot } from "@/lib/programs/approved-move-evidence-snapshot";
+import {
+  approvedMoveEvidenceRevisionForPhase,
+  loadApprovedMoveEvidenceSnapshot,
+} from "@/lib/programs/approved-move-evidence-snapshot";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -114,6 +117,10 @@ export async function POST(
       { status: 503 },
     );
   }
+  const phaseEvidenceSnapshotHash = approvedMoveEvidenceRevisionForPhase(
+    evidenceSnapshot,
+    targetPhase,
+  );
 
   if (shouldEnqueuePremiumArtifact({ phase: targetPhase, artifact, generationMode })) {
     const gate = await assertPhaseReadyForGeneration(
@@ -147,6 +154,7 @@ export async function POST(
       initiativeDisplayName: program.name,
       sourceArtifactRef: programId,
       evidenceSnapshotHash: evidenceSnapshot.revision,
+      phaseEvidenceSnapshotHash,
       phase: targetPhase,
       artifact,
       generationMode,
@@ -235,6 +243,7 @@ export async function POST(
     title: body.title ?? profile.title,
     result,
     evidenceSnapshotHash: evidenceSnapshot.revision,
+    phaseEvidenceSnapshotHash,
   });
 
   return Response.json({

@@ -65,6 +65,7 @@ const getModuleState: jest.Mock = jest.fn(async () => []);
 let evidencePacketsForTest: MoveEvidenceNeedPacket[] = [];
 const buildMoveEvidenceNeedPackets = jest.fn(() => evidencePacketsForTest);
 const loadDiscoveryEvidenceReadiness = jest.fn(async () => ({}));
+const mockLoadApprovedMoveEvidenceSnapshot = jest.fn();
 const listApprovedPhaseEvidence: jest.Mock = jest.fn(async () => [
   {
     evidenceId: "evidence-approved-1",
@@ -191,6 +192,11 @@ jest.mock("@/lib/programs/move-context-extract", () => ({
   createMoveContextExtract: (input: Record<string, unknown>) =>
     createMoveContextExtract(input),
 }));
+jest.mock("@/lib/programs/approved-move-evidence-snapshot", () => ({
+  ...jest.requireActual("@/lib/programs/approved-move-evidence-snapshot"),
+  loadApprovedMoveEvidenceSnapshot: (...args: unknown[]) =>
+    mockLoadApprovedMoveEvidenceSnapshot(...args),
+}));
 jest.mock("@/lib/programs/approved-solution-approach", () => ({
   loadApprovedSolutionApproach: () => loadApprovedSolutionApproach(),
   formatApprovedSolutionApproach: (approved: { chosenOption: string }) =>
@@ -246,6 +252,29 @@ beforeEach(() => {
   evidencePacketsForTest = [];
   buildMoveEvidenceNeedPackets.mockClear();
   loadDiscoveryEvidenceReadiness.mockClear();
+  mockLoadApprovedMoveEvidenceSnapshot.mockReset();
+  mockLoadApprovedMoveEvidenceSnapshot.mockResolvedValue({
+    tenantKey: "skyharbor-air",
+    moveId: "m-1",
+    revision: "approved-revision-1",
+    approvedEvidenceCount: 1,
+    rows: [],
+    latestEvidenceActivityAt: null,
+    revisionByPhase: {
+      1: "approved-revision-1",
+      2: "approved-revision-1",
+      3: "approved-revision-1",
+      4: "approved-revision-1",
+      5: "approved-revision-1",
+    },
+    latestEvidenceActivityAtByPhase: {
+      1: null,
+      2: null,
+      3: null,
+      4: null,
+      5: null,
+    },
+  });
   listApprovedPhaseEvidence.mockResolvedValue([
     {
       evidenceId: "evidence-approved-1",
@@ -372,7 +401,7 @@ describe("POST /api/v1/deliverables/generate-phase", () => {
         useCaseArchetype: "ai_member_service",
         moveName: "Member Service Agent Assist",
         clientDisplayName: "Client",
-      }),
+  }),
     );
 
     expect(res.status).toBe(202);

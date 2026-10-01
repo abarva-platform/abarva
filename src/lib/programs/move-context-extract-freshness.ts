@@ -1,7 +1,10 @@
 import "server-only";
 
 import { getAzureReadFluentClient } from "@/lib/data-plane/postgresCompat";
-import { loadApprovedMoveEvidenceSnapshot } from "@/lib/programs/approved-move-evidence-snapshot";
+import {
+  isApprovedMoveEvidenceBasisCurrent,
+  loadApprovedMoveEvidenceSnapshot,
+} from "@/lib/programs/approved-move-evidence-snapshot";
 
 export type MoveContextExtractFreshnessStatus =
   | "fresh"
@@ -14,6 +17,7 @@ export interface MoveContextExtractFreshness {
   tenantKey: string;
   evidenceFingerprint: string;
   approvedEvidenceRevision: string | null;
+  approvedEvidenceRevisionScope?: "phase" | null;
   currentApprovedEvidenceCount?: number;
   attachedEvidenceCount: number;
   acceptedEvidenceCount: number;
@@ -60,6 +64,10 @@ export function parseMoveContextExtractFreshness(
   const approvedEvidenceRevision = stringOrNull(
     freshness.approvedEvidenceRevision,
   );
+  const approvedEvidenceRevisionScope =
+    freshness.approvedEvidenceRevisionScope === "phase"
+      ? "phase"
+      : null;
   const blueprintId = stringOrNull(freshness.blueprintId);
   const blueprintVersion = stringOrNull(freshness.blueprintVersion);
   if (!evidenceFingerprint || !blueprintId || !blueprintVersion) return null;
@@ -70,6 +78,7 @@ export function parseMoveContextExtractFreshness(
     tenantKey: stringOrNull(freshness.tenantKey) ?? "",
     evidenceFingerprint,
     approvedEvidenceRevision,
+    approvedEvidenceRevisionScope,
     attachedEvidenceCount: numberOrNull(freshness.attachedEvidenceCount) ?? 0,
     acceptedEvidenceCount: numberOrNull(freshness.acceptedEvidenceCount) ?? 0,
     latestEvidenceUpdatedAt: stringOrNull(freshness.latestEvidenceUpdatedAt),
@@ -120,10 +129,18 @@ export async function loadCurrentMoveContextExtractFreshness(args: {
   if (!current || !parsed.approvedEvidenceRevision) {
     return { ...parsed, freshnessStatus: "rebuild_required" };
   }
+  const freshnessStatus = isApprovedMoveEvidenceBasisCurrent({
+    snapshot: current,
+    phase: args.phase,
+    recordedRevision: parsed.approvedEvidenceRevision,
+    scope: parsed.approvedEvidenceRevisionScope,
+    generatedAt: parsed.createdAt,
+  })
+    ? "fresh"
+    : "stale";
   return {
     ...parsed,
     currentApprovedEvidenceCount: current.approvedEvidenceCount,
-    freshnessStatus:
-      parsed.approvedEvidenceRevision === current.revision ? "fresh" : "stale",
+    freshnessStatus,
   };
 }

@@ -17,6 +17,7 @@ let moveArtifactsFixture: Array<{
   artifact_family: string;
   lifecycle_state: string;
   metadata: Record<string, unknown> | null;
+  created_at?: string | null;
 }>;
 let modulesFixture: Array<{
   module_key: string;
@@ -66,6 +67,7 @@ jest.mock("@/lib/programs/approved-phase-evidence", () => ({
 
 jest.mock("@/lib/programs/approved-move-evidence-snapshot", () => ({
   __esModule: true,
+  ...jest.requireActual("@/lib/programs/approved-move-evidence-snapshot"),
   loadApprovedMoveEvidenceSnapshot: (...args: unknown[]) =>
     loadApprovedMoveEvidenceSnapshotMock(...args),
 }));
@@ -302,6 +304,21 @@ describe("evaluateGate", () => {
       revision: "revision-current",
       approvedEvidenceCount: 0,
       rows: [],
+      latestEvidenceActivityAt: null,
+      revisionByPhase: {
+        1: "revision-current",
+        2: "revision-current",
+        3: "revision-current",
+        4: "revision-current",
+        5: "revision-current",
+      },
+      latestEvidenceActivityAtByPhase: {
+        1: null,
+        2: null,
+        3: null,
+        4: null,
+        5: null,
+      },
     });
     fromMock.mockImplementation(tableResult);
   });
@@ -663,6 +680,7 @@ describe("evaluateGate", () => {
         structured_data: {
           source: "generated_artifact_acceptance",
           evidenceSnapshotHash: "revision-before-new-evidence",
+          generatedAt: "2026-09-29T15:00:00.000Z",
         },
       },
     ];
@@ -755,6 +773,7 @@ describe("evaluateGate", () => {
         move_id: "program-1",
         artifact_family: "generated_deliverable",
         lifecycle_state: "current",
+        created_at: "2026-09-29T15:00:00.000Z",
         metadata: {
           deliverableId: "charter",
           evidenceSnapshotHash: "revision-current",

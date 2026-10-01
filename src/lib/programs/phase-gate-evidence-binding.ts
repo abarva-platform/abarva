@@ -3,6 +3,8 @@ import type { PhaseSnapshot } from "./types.db";
 export interface PhaseGateEvidenceState {
   revision: string;
   latestEvidenceActivityAt: string | null;
+  revisionByPhase?: Record<number, string>;
+  latestEvidenceActivityAtByPhase?: Record<number, string | null>;
 }
 
 function latestSnapshotForPhase(
@@ -30,20 +32,53 @@ export function phaseApprovalMatchesEvidence(
   if (phase === 0) return true;
   if (!evidence?.revision) return false;
 
-  const recordedRevision = approval.snapshot.evidenceSnapshotHash;
-  if (typeof recordedRevision === "string" && recordedRevision.length > 0) {
-    if (recordedRevision !== evidence.revision) return false;
+  const approvalAt = Date.parse(approval.lockedAt ?? approval.createdAt);
+  if (!Number.isFinite(approvalAt)) return false;
+  const recordedPhaseRevision = approval.snapshot.phaseEvidenceSnapshotHash;
+  if (
+    typeof recordedPhaseRevision === "string" &&
+    recordedPhaseRevision.length > 0
+  ) {
+    if (
+      !evidence.revisionByPhase ||
+      recordedPhaseRevision !== evidence.revisionByPhase[phase]
+    ) {
+      return false;
+    }
   }
 
-  // Keep a timestamp check alongside the revision so later approved evidence
-  // activity cannot be masked by a stale or incorrectly preserved hash.
-  if (!evidence.latestEvidenceActivityAt) return true;
-  const approvalAt = Date.parse(approval.lockedAt ?? approval.createdAt);
-  const evidenceChangedAt = Date.parse(evidence.latestEvidenceActivityAt);
+  const recordedRevision = approval.snapshot.evidenceSnapshotHash;
+  const hasRecordedRevision =
+    typeof recordedRevision === "string" && recordedRevision.length > 0;
+
+  const phaseActivityMap = evidence.latestEvidenceActivityAtByPhase;
+  const hasPhaseActivity = Boolean(
+    phaseActivityMap &&
+      Object.prototype.hasOwnProperty.call(phaseActivityMap, phase),
+  );
+  if (phaseActivityMap && !hasPhaseActivity) return false;
+  const latestPhaseActivity = hasPhaseActivity
+    ? phaseActivityMap?.[phase]
+    : evidence.latestEvidenceActivityAt;
+  const phaseActivityAt = latestPhaseActivity
+    ? Date.parse(latestPhaseActivity)
+    : null;
+  if (phaseActivityAt !== null && !Number.isFinite(phaseActivityAt)) return false;
+  if (phaseActivityAt !== null && phaseActivityAt > approvalAt) return false;
+
+  if (!hasRecordedRevision || recordedPhaseRevision) return true;
+  if (recordedRevision === evidence.revision) return true;
+
+  // Legacy snapshots only have a whole-Move hash. Preserve one across an
+  // unrelated-phase change only when both the changed global activity and
+  // unchanged phase activity are timestamped around this approval.
+  const latestOverallActivityAt = evidence.latestEvidenceActivityAt
+    ? Date.parse(evidence.latestEvidenceActivityAt)
+    : NaN;
   return (
-    Number.isFinite(approvalAt) &&
-    Number.isFinite(evidenceChangedAt) &&
-    evidenceChangedAt <= approvalAt
+    Number.isFinite(latestOverallActivityAt) &&
+    latestOverallActivityAt > approvalAt &&
+    (phaseActivityAt === null || phaseActivityAt <= approvalAt)
   );
 }
 

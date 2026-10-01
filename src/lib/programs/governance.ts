@@ -52,7 +52,11 @@ import { isFeatureEnabled } from "@/lib/features/is-feature-enabled";
 import { resolveMoveTier } from "./p0-extended-intake-fields";
 import { listApprovedPhaseEvidence } from "./approved-phase-evidence";
 import { resolveConfirmedSolutionRoute } from "./solution-route-assessment";
-import { loadApprovedMoveEvidenceSnapshot } from "@/lib/programs/approved-move-evidence-snapshot";
+import {
+  isApprovedMoveEvidenceBasisCurrent,
+  loadApprovedMoveEvidenceSnapshot,
+} from "@/lib/programs/approved-move-evidence-snapshot";
+import { DELIVERABLE_REGISTRY } from "@/lib/programs/deliverable-registry";
 
 function assertTenancy(ctx: TenancyCtx): void {
   if (!ctx?.clientId || !ctx?.userId) {
@@ -608,7 +612,7 @@ export async function evaluateGate(
       ? await sb
           .from("move_artifacts")
           .select(
-            "artifact_id, tenant_key, move_id, artifact_family, lifecycle_state, metadata",
+            "artifact_id, tenant_key, move_id, artifact_family, lifecycle_state, created_at, metadata",
           )
           .eq("tenant_key", ctx.clientKey)
           .eq("move_id", programId)
@@ -621,14 +625,16 @@ export async function evaluateGate(
       move_id: string;
       artifact_family: string;
       lifecycle_state: string;
+      created_at?: string | null;
       metadata?: Record<string, unknown> | null;
     }> | null) ?? []).map((artifact) => [artifact.artifact_id, artifact]),
   );
   const isSignedOff = (
     row:
       | {
-          id: string;
-          status: string;
+        id: string;
+        deliverable_type_key: string;
+        status: string;
           approved_artifact_id?: string | null;
           structured_data?: Record<string, unknown> | null;
         }
@@ -646,9 +652,28 @@ export async function evaluateGate(
       typeof structured.evidenceSnapshotHash === "string"
         ? structured.evidenceSnapshotHash
         : null;
+    const deliverablePhase = DELIVERABLE_REGISTRY.find(
+      (spec) => spec.deliverableTypeKey === row.deliverable_type_key,
+    )?.phase;
     const structuredLineageCurrent = Boolean(
       currentEvidenceSnapshot &&
-        structuredEvidenceSnapshotHash === currentEvidenceSnapshot.revision,
+        deliverablePhase &&
+        isApprovedMoveEvidenceBasisCurrent({
+          snapshot: currentEvidenceSnapshot,
+          phase: deliverablePhase,
+          recordedRevision:
+            (typeof structured.phaseEvidenceSnapshotHash === "string"
+              ? structured.phaseEvidenceSnapshotHash
+              : structuredEvidenceSnapshotHash) ?? null,
+          scope:
+            typeof structured.evidenceSnapshotScope === "string"
+              ? structured.evidenceSnapshotScope
+              : null,
+          generatedAt:
+            typeof structured.generatedAt === "string"
+              ? structured.generatedAt
+              : null,
+        }),
     );
     const linkedArtifactId = row.approved_artifact_id;
     const linkedArtifact = linkedArtifactId
@@ -670,7 +695,24 @@ export async function evaluateGate(
         linkedArtifact.artifact_family === "generated_deliverable" &&
         linkedArtifact.lifecycle_state === "current" &&
         linkedArtifactMatchesDeliverable &&
-        linkedMetadata.evidenceSnapshotHash === currentEvidenceSnapshot.revision,
+        Boolean(
+          deliverablePhase &&
+            isApprovedMoveEvidenceBasisCurrent({
+              snapshot: currentEvidenceSnapshot,
+              phase: deliverablePhase,
+              recordedRevision:
+                typeof linkedMetadata.phaseEvidenceSnapshotHash === "string"
+                  ? linkedMetadata.phaseEvidenceSnapshotHash
+                  : typeof linkedMetadata.evidenceSnapshotHash === "string"
+                    ? linkedMetadata.evidenceSnapshotHash
+                    : null,
+              scope:
+                typeof linkedMetadata.evidenceSnapshotScope === "string"
+                  ? linkedMetadata.evidenceSnapshotScope
+                  : null,
+              generatedAt: linkedArtifact.created_at ?? null,
+            }),
+        ),
     );
 
     if (linkedArtifactId && !linkedArtifactCurrent) return false;

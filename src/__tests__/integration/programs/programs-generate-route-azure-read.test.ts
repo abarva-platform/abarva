@@ -59,6 +59,7 @@ jest.mock("@/lib/programs/deliverables/move-artifacts", () => ({
 }));
 
 jest.mock("@/lib/programs/approved-move-evidence-snapshot", () => ({
+  ...jest.requireActual("@/lib/programs/approved-move-evidence-snapshot"),
   loadApprovedMoveEvidenceSnapshot,
 }));
 
@@ -86,6 +87,21 @@ describe("POST /api/v1/programs/[programId]/generate delegates to generateArtifa
       revision: "approved-evidence-revision-1",
       approvedEvidenceCount: 1,
       rows: [],
+      revisionByPhase: {
+        1: "approved-evidence-revision-1",
+        2: "approved-evidence-revision-1",
+        3: "approved-evidence-revision-1",
+        4: "approved-evidence-revision-1",
+        5: "approved-evidence-revision-1",
+      },
+      latestEvidenceActivityAt: null,
+      latestEvidenceActivityAtByPhase: {
+        1: null,
+        2: null,
+        3: null,
+        4: null,
+        5: null,
+      },
     });
     getProgramById.mockResolvedValue({
       id: "program_1",

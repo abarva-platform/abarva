@@ -14,7 +14,10 @@ import { requireTenancy, tenancyErrorResponse } from '@/lib/auth/tenancy';
 import { createDeliverableRun, type DeliverableRunJobPayload } from '@/lib/deliverables/orchestrator/runs-repository';
 import { tenantInvariantHttpStatus, validateDeliverableTenantInvariant } from '@/lib/deliverables/orchestrator/tenant-invariant';
 import type { AudienceRole, DeliverableModule, OutputFormat } from '@/lib/deliverables/orchestrator/types';
-import { loadApprovedMoveEvidenceSnapshot } from '@/lib/programs/approved-move-evidence-snapshot';
+import {
+  approvedMoveEvidenceRevisionForPhase,
+  loadApprovedMoveEvidenceSnapshot,
+} from '@/lib/programs/approved-move-evidence-snapshot';
 import { phaseForOrchestratorDeliverableType } from '@/lib/programs/orchestrated-deliverable-map';
 
 export const runtime = 'nodejs';
@@ -123,6 +126,10 @@ export async function POST(req: NextRequest) {
         { status: 503 },
       );
     }
+    const phaseEvidenceSnapshotHash =
+      evidenceSnapshot && phase !== null
+        ? approvedMoveEvidenceRevisionForPhase(evidenceSnapshot, phase)
+        : undefined;
 
     // Build the self-contained job payload the worker reconstructs the generation input
     // from. clientId/tenantKey/userId are stored as first-class run columns; everything
@@ -138,6 +145,7 @@ export async function POST(req: NextRequest) {
       sourceArtifactRef,
       ...(phase !== null ? { phase } : {}),
       ...(evidenceSnapshot ? { evidenceSnapshotHash: evidenceSnapshot.revision } : {}),
+      ...(phaseEvidenceSnapshotHash ? { phaseEvidenceSnapshotHash } : {}),
       ...(body.evidenceQuery ? { evidenceQuery: body.evidenceQuery } : {}),
       ...(body.outputFormats ? { outputFormats: body.outputFormats } : {}),
       ...(body.model ? { model: body.model } : {}),

@@ -37,7 +37,11 @@ import {
   validateArchitectureGenerationLineage,
 } from "@/lib/programs/approved-solution-approach";
 import { loadCurrentMoveContextExtractFreshness } from "@/lib/programs/move-context-extract";
-import { loadApprovedMoveEvidenceSnapshot } from "@/lib/programs/approved-move-evidence-snapshot";
+import {
+  approvedMoveEvidenceRevisionForPhase,
+  isApprovedMoveEvidenceBasisCurrent,
+  loadApprovedMoveEvidenceSnapshot,
+} from "@/lib/programs/approved-move-evidence-snapshot";
 import { findUnsupportedFinancialClaimDeltas } from "@/lib/programs/reviewed-deliverable-financial-claims";
 import { renderDeliverableDocx } from "@/lib/deliverables/orchestrator/renderers";
 import { renderValidatedDeck } from "@/lib/deliverables/orchestrator/render-validated-deck";
@@ -394,13 +398,24 @@ export async function POST(
       moveId: programId,
     });
     const artifactSnapshotHash =
-      typeof artifact.metadata.evidenceSnapshotHash === "string"
-        ? artifact.metadata.evidenceSnapshotHash
+      typeof artifact.metadata.phaseEvidenceSnapshotHash === "string"
+        ? artifact.metadata.phaseEvidenceSnapshotHash
+        : typeof artifact.metadata.evidenceSnapshotHash === "string"
+          ? artifact.metadata.evidenceSnapshotHash
         : null;
     if (
       !currentEvidenceSnapshot ||
       !artifactSnapshotHash ||
-      currentEvidenceSnapshot.revision !== artifactSnapshotHash
+      !isApprovedMoveEvidenceBasisCurrent({
+        snapshot: currentEvidenceSnapshot,
+        phase,
+        recordedRevision: artifactSnapshotHash,
+        scope:
+          typeof artifact.metadata.evidenceSnapshotScope === "string"
+            ? artifact.metadata.evidenceSnapshotScope
+            : null,
+        generatedAt: artifact.renderedAt,
+      })
     ) {
       return Response.json(
         {
@@ -418,6 +433,9 @@ export async function POST(
         ? artifact.metadata.generationLineage
         : {}) as Record<string, unknown>),
       evidenceSnapshotHash: currentEvidenceSnapshot.revision,
+      phaseEvidenceSnapshotHash:
+        approvedMoveEvidenceRevisionForPhase(currentEvidenceSnapshot, phase),
+      evidenceSnapshotScope: "phase",
     };
 
     if (
@@ -473,6 +491,12 @@ export async function POST(
       verifiedGenerationLineage = {
         ...(validation.lineage as unknown as Record<string, unknown>),
         evidenceSnapshotHash: currentEvidenceSnapshot.revision,
+        phaseEvidenceSnapshotHash:
+          approvedMoveEvidenceRevisionForPhase(
+            currentEvidenceSnapshot,
+            phase,
+          ),
+        evidenceSnapshotScope: "phase",
       };
     }
 
@@ -623,6 +647,12 @@ export async function POST(
           parseMethod: parsed.extractedStructured.parse_method,
           parseWarnings: parsed.extractedStructured.warnings,
           evidenceSnapshotHash: currentEvidenceSnapshot.revision,
+          phaseEvidenceSnapshotHash:
+            approvedMoveEvidenceRevisionForPhase(
+              currentEvidenceSnapshot,
+              phase,
+            ),
+          evidenceSnapshotScope: "phase",
           generationLineage: verifiedGenerationLineage,
         },
       });
@@ -714,6 +744,12 @@ export async function POST(
               ? { generationLineage: verifiedGenerationLineage }
               : {}),
             evidenceSnapshotHash: currentEvidenceSnapshot.revision,
+            phaseEvidenceSnapshotHash:
+              approvedMoveEvidenceRevisionForPhase(
+                currentEvidenceSnapshot,
+                phase,
+              ),
+            evidenceSnapshotScope: "phase",
           },
         });
       } catch (err) {
@@ -747,6 +783,12 @@ export async function POST(
         generatedArtifactType: artifact.artifactType,
         sourceArtifactRef: artifact.sourceArtifactRef,
         evidenceSnapshotHash: currentEvidenceSnapshot.revision,
+        phaseEvidenceSnapshotHash:
+          approvedMoveEvidenceRevisionForPhase(
+            currentEvidenceSnapshot,
+            phase,
+          ),
+        evidenceSnapshotScope: "phase",
         approvalReason: reason,
         mode: isFileUploadApproval
           ? "client_approved_replacement"
@@ -775,6 +817,12 @@ export async function POST(
           source: "generated_artifact_acceptance",
           generatedArtifactId: artifact.id,
           evidenceSnapshotHash: currentEvidenceSnapshot.revision,
+          phaseEvidenceSnapshotHash:
+            approvedMoveEvidenceRevisionForPhase(
+              currentEvidenceSnapshot,
+              phase,
+            ),
+          evidenceSnapshotScope: "phase",
           approvalMode: isFileUploadApproval
             ? "client_approved_replacement"
             : "accept_ai_draft_as_authoritative",

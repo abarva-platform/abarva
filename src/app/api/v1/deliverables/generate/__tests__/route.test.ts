@@ -24,6 +24,7 @@ jest.mock('@/lib/deliverables/orchestrator/runs-repository', () => ({
   }),
 }));
 jest.mock('@/lib/programs/approved-move-evidence-snapshot', () => ({
+  ...jest.requireActual('@/lib/programs/approved-move-evidence-snapshot'),
   loadApprovedMoveEvidenceSnapshot: (...args: unknown[]) => mockLoadApprovedMoveEvidenceSnapshot(...args),
 }));
 const validateDeliverableTenantInvariant: jest.Mock<Promise<unknown>, unknown[]> = jest.fn(async () => ({
@@ -71,6 +72,21 @@ beforeEach(() => {
     revision: 'approved-revision-1',
     approvedEvidenceCount: 1,
     rows: [],
+    latestEvidenceActivityAt: null,
+    revisionByPhase: {
+      1: 'approved-revision-1',
+      2: 'approved-revision-2',
+      3: 'approved-revision-3',
+      4: 'approved-revision-4',
+      5: 'approved-revision-5',
+    },
+    latestEvidenceActivityAtByPhase: {
+      1: null,
+      2: null,
+      3: null,
+      4: null,
+      5: null,
+    },
   });
 });
 

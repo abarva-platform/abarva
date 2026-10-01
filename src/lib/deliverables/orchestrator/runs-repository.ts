@@ -52,6 +52,8 @@ export interface OrchestratorDeliverableRunJobPayload {
   };
   /** Opaque approved-evidence revision captured when this run was queued. */
   evidenceSnapshotHash?: string;
+  /** Phase-scoped approved-evidence basis captured when this run was queued. */
+  phaseEvidenceSnapshotHash?: string;
   /** Moves phase boundary used by the worker's governed evidence assembler. */
   phase?: number;
   clientDisplayName: string;
@@ -73,6 +75,7 @@ export interface MovesPremiumArtifactRunJobPayload {
   initiativeDisplayName: string;
   sourceArtifactRef: string;
   evidenceSnapshotHash?: string;
+  phaseEvidenceSnapshotHash?: string;
   phase: number;
   artifact: DeliverableKey;
   generationMode: GenerationMode;

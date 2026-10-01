@@ -86,6 +86,8 @@ export interface PersistDeliverableOptions {
   evidenceLedgerIds?: string[];
   /** Approved Move evidence revision captured for this generated artifact. */
   evidenceSnapshotHash?: string;
+  /** Phase-scoped approved evidence used directly by this generated artifact. */
+  phaseEvidenceSnapshotHash?: string;
   /** Canonical deliverables_v2 registry key, when it differs from the orchestrator type. */
   deliverableTypeKey?: string;
   userId?: string;
@@ -655,6 +657,12 @@ export async function persistDeliverable(
     ...(opts.evidenceSnapshotHash
       ? { evidenceSnapshotHash: opts.evidenceSnapshotHash }
       : {}),
+    ...(opts.phaseEvidenceSnapshotHash
+      ? {
+          phaseEvidenceSnapshotHash: opts.phaseEvidenceSnapshotHash,
+          evidenceSnapshotScope: "phase",
+        }
+      : {}),
     ...(opts.structuredModels?.architectureModel
       ? { architectureModel: opts.structuredModels.architectureModel }
       : {}),
@@ -697,6 +705,12 @@ export async function persistDeliverable(
             : {}),
           ...(opts.evidenceSnapshotHash
             ? { evidenceSnapshotHash: opts.evidenceSnapshotHash }
+            : {}),
+          ...(opts.phaseEvidenceSnapshotHash
+            ? {
+                phaseEvidenceSnapshotHash: opts.phaseEvidenceSnapshotHash,
+                evidenceSnapshotScope: "phase",
+              }
             : {}),
         },
       },
@@ -741,6 +755,13 @@ export async function persistDeliverable(
             outputFormat,
             ...(opts.evidenceSnapshotHash
               ? { evidenceSnapshotHash: opts.evidenceSnapshotHash }
+              : {}),
+            ...(opts.phaseEvidenceSnapshotHash
+              ? {
+                  phaseEvidenceSnapshotHash:
+                    opts.phaseEvidenceSnapshotHash,
+                  evidenceSnapshotScope: "phase",
+                }
               : {}),
             outputRole: `${officeCompanion.fileFormat}_editable_phase_record`,
           },

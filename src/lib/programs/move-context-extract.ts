@@ -521,8 +521,11 @@ function freshnessFor(args: {
     approvedEvidenceRevision: approvedMoveEvidenceRevision({
       tenantKey: args.input.tenantKey,
       moveId: args.input.moveId,
-      rows: args.approvedEvidenceRows,
+      rows: args.approvedEvidenceRows.filter(
+        (row) => row.phase === null || row.phase === (args.input.targetPhase ?? args.input.phase),
+      ),
     }),
+    approvedEvidenceRevisionScope: "phase",
     attachedEvidenceCount: args.attachedEvidenceCount,
     acceptedEvidenceCount: args.acceptedEvidenceRows.length,
     latestEvidenceUpdatedAt: maxIso(
@@ -785,7 +788,10 @@ export async function createMoveContextExtract(
           moveId: input.moveId,
         })
       : [];
-  const acceptedEvidenceItems = moveEvidenceRows
+  const phaseEvidenceRows = moveEvidenceRows.filter(
+    (row) => row.phase === null || row.phase === targetPhase,
+  );
+  const acceptedEvidenceItems = phaseEvidenceRows
     .filter(evidencePolicyAllowsAttachment)
     .map((row) => attachedItemFromEvidenceRow(input, row));
   const preContextFreshness = freshnessFor({
@@ -793,10 +799,10 @@ export async function createMoveContextExtract(
     generatedAt,
     extractId: null,
     attachedEvidenceCount: acceptedEvidenceItems.length,
-    acceptedEvidenceRows: moveEvidenceRows.filter(
+    acceptedEvidenceRows: phaseEvidenceRows.filter(
       evidencePolicyAllowsAttachment,
     ),
-    approvedEvidenceRows: moveEvidenceRows,
+    approvedEvidenceRows: phaseEvidenceRows,
     blueprintId: blueprint.blueprintId,
     blueprintVersion: blueprint.blueprintVersion,
     sourceMode,
@@ -865,10 +871,10 @@ export async function createMoveContextExtract(
       generatedAt,
       extractId: extractId(input, generatedAt),
       attachedEvidenceCount: attachedEvidenceItems.length,
-      acceptedEvidenceRows: moveEvidenceRows.filter(
+      acceptedEvidenceRows: phaseEvidenceRows.filter(
         evidencePolicyAllowsAttachment,
       ),
-      approvedEvidenceRows: moveEvidenceRows,
+      approvedEvidenceRows: phaseEvidenceRows,
       blueprintId: blueprint.blueprintId,
       blueprintVersion: blueprint.blueprintVersion,
       sourceMode,

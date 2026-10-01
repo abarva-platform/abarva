@@ -72,6 +72,7 @@ export interface GenerateDeliverableServiceInput extends Omit<
     architectureModelVersion: string;
   };
   evidenceSnapshotHash?: string;
+  phaseEvidenceSnapshotHash?: string;
   outputFormats?: OutputFormat[];
   adaptiveDepth?: AdaptiveDepthDecision;
   model?: string;
@@ -503,6 +504,9 @@ export async function runDeliverableForTenant(
     ...(explicitOverride ? { outputFormat: explicitOverride } : {}),
     userId: input.userId,
     evidenceLedgerIds: evidence.map((e) => e.provenanceRef),
+    ...(input.phaseEvidenceSnapshotHash
+      ? { phaseEvidenceSnapshotHash: input.phaseEvidenceSnapshotHash }
+      : {}),
     ...(renderAsDeck ? { renderAsDeck: true } : {}),
     ...(input.tenantClientKey ? { tenantKey: input.tenantClientKey } : {}),
     // Stage 4-7: hand the structured exhibit models to persistence so the profile's
@@ -515,17 +519,37 @@ export async function runDeliverableForTenant(
             ...(input.evidenceSnapshotHash
               ? { evidenceSnapshotHash: input.evidenceSnapshotHash }
               : {}),
+            ...(input.phaseEvidenceSnapshotHash
+              ? {
+                  phaseEvidenceSnapshotHash:
+                    input.phaseEvidenceSnapshotHash,
+                  evidenceSnapshotScope: "phase",
+                }
+              : {}),
           },
         }
       : input.evidenceSnapshotHash
         ? {
             generationLineage: {
               evidenceSnapshotHash: input.evidenceSnapshotHash,
+              ...(input.phaseEvidenceSnapshotHash
+                ? {
+                    phaseEvidenceSnapshotHash:
+                      input.phaseEvidenceSnapshotHash,
+                    evidenceSnapshotScope: "phase",
+                  }
+                : {}),
             },
           }
         : {}),
     ...(input.evidenceSnapshotHash
       ? { evidenceSnapshotHash: input.evidenceSnapshotHash }
+      : {}),
+    ...(input.phaseEvidenceSnapshotHash
+      ? {
+          phaseEvidenceSnapshotHash: input.phaseEvidenceSnapshotHash,
+          evidenceSnapshotScope: "phase",
+        }
       : {}),
     enforceQualityContract,
     governanceOk: true, // the multi-pass generation already cleared audited egress

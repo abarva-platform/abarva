@@ -60,7 +60,11 @@ import {
   validateArchitectureGenerationLineage,
 } from "@/lib/programs/approved-solution-approach";
 import { loadCurrentMoveContextExtractFreshness } from "@/lib/programs/move-context-extract";
-import { loadApprovedMoveEvidenceSnapshot } from "@/lib/programs/approved-move-evidence-snapshot";
+import {
+  approvedMoveEvidenceRevisionForPhase,
+  isApprovedMoveEvidenceBasisCurrent,
+  loadApprovedMoveEvidenceSnapshot,
+} from "@/lib/programs/approved-move-evidence-snapshot";
 import type { TenancyCtx } from "@/lib/programs/types.db";
 
 // Union of every deliberately registered/agent-authorable deliverable type
@@ -255,6 +259,10 @@ export async function POST(
       title: string;
       current_version: number | null;
     };
+    const deliverablePhase =
+      DELIVERABLE_REGISTRY.find(
+        (spec) => spec.deliverableTypeKey === deliverableTypeKey,
+      )?.phase ?? 0;
 
     if (!RECOGNIZED_DELIVERABLE_TYPE_KEYS.has(deliverableTypeKey)) {
       return Response.json(
@@ -334,6 +342,8 @@ export async function POST(
           source: "moves_program_generate";
           generatedArtifactId?: string;
           evidenceSnapshotHash: string;
+          phaseEvidenceSnapshotHash: string;
+          evidenceSnapshotScope: "phase";
           approvalMode: "approve_generated_deliverable_as_is";
         }
       | undefined;
@@ -342,7 +352,7 @@ export async function POST(
     if (!isFileUploadApproval && currentVersion) {
       const { data: versionRow, error: versionError } = await supabase
         .from("deliverable_versions")
-        .select("id, structured_data, content")
+        .select("id, structured_data, content, created_at")
         .eq("deliverable_id", deliverableId)
         .eq("version", currentVersion)
         .maybeSingle();
@@ -383,13 +393,28 @@ export async function POST(
             }).catch(() => null)
           : null;
         const recordedRevision =
-          typeof versionStructuredData.evidenceSnapshotHash === "string"
-            ? versionStructuredData.evidenceSnapshotHash
-            : null;
+          typeof versionStructuredData.phaseEvidenceSnapshotHash === "string"
+            ? versionStructuredData.phaseEvidenceSnapshotHash
+            : typeof versionStructuredData.evidenceSnapshotHash === "string"
+              ? versionStructuredData.evidenceSnapshotHash
+              : null;
         if (
+          deliverablePhase < 1 ||
           !evidenceSnapshot ||
-          !recordedRevision ||
-          recordedRevision !== evidenceSnapshot.revision
+          !isApprovedMoveEvidenceBasisCurrent({
+            snapshot: evidenceSnapshot,
+            phase: deliverablePhase,
+            recordedRevision,
+            scope:
+              typeof versionStructuredData.evidenceSnapshotScope === "string"
+                ? versionStructuredData.evidenceSnapshotScope
+                : null,
+            generatedAt:
+              typeof (versionRow as { created_at?: string | null } | null)
+                ?.created_at === "string"
+                ? (versionRow as { created_at: string }).created_at
+                : null,
+          })
         ) {
           return Response.json(
             {
@@ -411,7 +436,21 @@ export async function POST(
             return (
               metadata.deliverableId === deliverableId &&
               metadata.versionId === versionId &&
-              metadata.evidenceSnapshotHash === evidenceSnapshot.revision
+              isApprovedMoveEvidenceBasisCurrent({
+                snapshot: evidenceSnapshot,
+                phase: deliverablePhase,
+                recordedRevision:
+                  typeof metadata.phaseEvidenceSnapshotHash === "string"
+                    ? metadata.phaseEvidenceSnapshotHash
+                    : typeof metadata.evidenceSnapshotHash === "string"
+                      ? metadata.evidenceSnapshotHash
+                      : null,
+                scope:
+                  typeof metadata.evidenceSnapshotScope === "string"
+                    ? metadata.evidenceSnapshotScope
+                    : null,
+                generatedAt: artifact.created_at,
+              })
             );
           });
           generatedApprovalArtifactId = versionArtifact?.artifact_id;
@@ -424,6 +463,12 @@ export async function POST(
               ? { generatedArtifactId: versionStructuredData.generated_artifact_id }
               : {}),
           evidenceSnapshotHash: evidenceSnapshot.revision,
+          phaseEvidenceSnapshotHash:
+            approvedMoveEvidenceRevisionForPhase(
+              evidenceSnapshot,
+              deliverablePhase,
+            ),
+          evidenceSnapshotScope: "phase",
           approvalMode: "approve_generated_deliverable_as_is",
         };
       }
@@ -592,10 +637,7 @@ export async function POST(
         const title = deliverableTitle;
         const ext = (file.name.split(".").pop() || "bin").toLowerCase();
         const body = Buffer.from(await file.arrayBuffer());
-        const phase =
-          DELIVERABLE_REGISTRY.find(
-            (spec) => spec.deliverableTypeKey === deliverableTypeKey,
-          )?.phase ?? 0;
+        const phase = deliverablePhase;
         const parsed = await extractProgramEvidenceFromUploadBuffer({
           filename: file.name,
           mimeType: file.type || "application/octet-stream",
@@ -681,7 +723,15 @@ export async function POST(
             mime: file.type || null,
             deliverableId,
             ...(approvalEvidenceSnapshot
-              ? { evidenceSnapshotHash: approvalEvidenceSnapshot.revision }
+              ? {
+                  evidenceSnapshotHash: approvalEvidenceSnapshot.revision,
+                  phaseEvidenceSnapshotHash:
+                    approvedMoveEvidenceRevisionForPhase(
+                      approvalEvidenceSnapshot,
+                      phase,
+                    ),
+                  evidenceSnapshotScope: "phase",
+                }
               : {}),
             clientApprovedReplacement: true,
             parseMethod: parsed.extractedStructured.parse_method,

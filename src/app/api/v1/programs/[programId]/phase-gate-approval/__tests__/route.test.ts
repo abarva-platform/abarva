@@ -51,8 +51,22 @@ jest.mock("@/lib/programs/queries", () => ({
 }));
 
 jest.mock("@/lib/programs/approved-move-evidence-snapshot", () => ({
-  loadApprovedMoveEvidenceSnapshot: (...args: unknown[]) =>
-    mockLoadApprovedMoveEvidenceSnapshot(...args),
+  loadApprovedMoveEvidenceSnapshot: async (...args: unknown[]) => {
+    const snapshot = await mockLoadApprovedMoveEvidenceSnapshot(...args);
+    if (!snapshot) return null;
+    const phases = [1, 2, 3, 4, 5];
+    return {
+      ...snapshot,
+      revisionByPhase:
+        snapshot.revisionByPhase ??
+        Object.fromEntries(phases.map((phase) => [phase, snapshot.revision])),
+      latestEvidenceActivityAtByPhase:
+        snapshot.latestEvidenceActivityAtByPhase ??
+        Object.fromEntries(
+          phases.map((phase) => [phase, snapshot.latestEvidenceActivityAt ?? null]),
+        ),
+    };
+  },
 }));
 
 jest.mock("@/lib/programs/p0-source-evidence", () => ({
@@ -764,7 +778,10 @@ describe("POST /api/v1/programs/[programId]/phase-gate-approval", () => {
                   approvalStatus: "approved",
                   lockedAt: "2026-09-29T17:00:00.000Z",
                   createdAt: "2026-09-29T17:00:00.000Z",
-                  snapshot: {},
+                  snapshot: {
+                    evidenceSnapshotHash: "evidence-revision-1",
+                    phaseEvidenceSnapshotHash: "evidence-revision-1",
+                  },
                 },
               ]
             : [],
@@ -1043,7 +1060,10 @@ describe("POST /api/v1/programs/[programId]/phase-gate-approval", () => {
                   approvalStatus: "approved",
                   lockedAt: "2026-09-29T17:00:00.000Z",
                   createdAt: "2026-09-29T17:00:00.000Z",
-                  snapshot: {},
+                  snapshot: {
+                    evidenceSnapshotHash: "evidence-revision-1",
+                    phaseEvidenceSnapshotHash: "evidence-revision-1",
+                  },
                 },
               ]
             : [],

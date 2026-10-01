@@ -36,6 +36,7 @@ jest.mock('@/lib/programs/move-context-extract-freshness', () => ({
   loadCurrentMoveContextExtractFreshness: jest.fn(),
 }));
 jest.mock('@/lib/programs/approved-move-evidence-snapshot', () => ({
+  ...jest.requireActual('@/lib/programs/approved-move-evidence-snapshot'),
   loadApprovedMoveEvidenceSnapshot: jest.fn(),
 }));
 jest.mock('@/lib/deliverables/orchestrator/tenant-invariant', () => ({
@@ -117,8 +118,8 @@ function claimedRow(id: string) {
     claimedAt: 'now',
     workerId: 'w',
     jobPayload,
-    createdAt: 't0',
-    updatedAt: 't0',
+    createdAt: '2026-09-29T17:00:00.000Z',
+    updatedAt: '2026-09-29T17:00:00.000Z',
     batchId: null,
     sequenceNo: null,
     dependsOnRunId: null,
@@ -144,6 +145,21 @@ beforeEach(() => {
     revision: 'revision-current',
     approvedEvidenceCount: 0,
     rows: [],
+    revisionByPhase: {
+      1: 'revision-current',
+      2: 'revision-current',
+      3: 'revision-current',
+      4: 'revision-current',
+      5: 'revision-current',
+    },
+    latestEvidenceActivityAt: null,
+    latestEvidenceActivityAtByPhase: {
+      1: null,
+      2: null,
+      3: null,
+      4: null,
+      5: null,
+    },
   });
   generateArtifact.mockResolvedValue({
     status: 'generated',
@@ -165,6 +181,51 @@ beforeEach(() => {
 });
 
 describe('processDeliverableQueue', () => {
+  it('blocks a queued phase build when same-phase review activity lands after enqueue', async () => {
+    const queuedRun = {
+      ...claimedRow('run-stale-phase-evidence'),
+      clientId: 'client-lake',
+      tenantKey: 'lakeshore-holdings',
+      module: 'moves',
+      deliverableType: 'discovery_report',
+      jobPayload: {
+        kind: 'moves_premium_artifact',
+        module: 'moves',
+        deliverableType: 'discovery_report',
+        sourceArtifactRef: 'move-1',
+        phase: 2,
+        artifact: 'discovery_report',
+        evidenceSnapshotHash: 'revision-current',
+        phaseEvidenceSnapshotHash: 'p2-revision-current',
+      },
+    };
+    claimNextDeliverableRun
+      .mockResolvedValueOnce(queuedRun)
+      .mockResolvedValueOnce(null);
+    approvedEvidence.loadApprovedMoveEvidenceSnapshot.mockResolvedValue({
+      revision: 'revision-current',
+      approvedEvidenceCount: 1,
+      rows: [],
+      revisionByPhase: { 2: 'p2-revision-current' },
+      latestEvidenceActivityAt: '2026-09-29T18:00:00.000Z',
+      latestEvidenceActivityAtByPhase: {
+        2: '2026-09-29T18:00:00.000Z',
+      },
+    });
+
+    await processDeliverableQueue({ workerId: 'worker-stale-p2', batchSize: 5 });
+
+    expect(generateArtifact).not.toHaveBeenCalled();
+    expect(persistMoveGeneratedArtifact).not.toHaveBeenCalled();
+    expect(completeDeliverableRun).toHaveBeenCalledWith(
+      'run-stale-phase-evidence',
+      expect.objectContaining({
+        status: 'blocked',
+        error: 'stale_approved_evidence_snapshot',
+      }),
+    );
+  });
+
   it('sweeps, claims one run, reconstructs input from job_payload, and completes succeeded', async () => {
     claimNextDeliverableRun.mockResolvedValueOnce(claimedRow('run-1')).mockResolvedValueOnce(null); // queue empty → stop
     runDeliverableForTenant.mockResolvedValue({
@@ -387,6 +448,7 @@ describe('processDeliverableQueue', () => {
         phase: 2,
         artifact: 'discovery_report',
         title: 'Current Work Diagnostic',
+        phaseEvidenceSnapshotHash: 'revision-current',
       }),
     );
     expect(completeDeliverableRun).toHaveBeenCalledWith(
@@ -443,6 +505,7 @@ describe('processDeliverableQueue', () => {
         phase: 3,
         artifact: 'target_state_architecture',
         title: 'P3 Future-State Blueprint Draft',
+        phaseEvidenceSnapshotHash: 'revision-current',
       }),
     );
     expect(completeDeliverableRun).toHaveBeenCalledWith(
