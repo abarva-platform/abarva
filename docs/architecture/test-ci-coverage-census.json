@@ -1230,11 +1230,10 @@
     "drawableUntriagedUnrunTestFiles": 39,
     "heldByVerdict": {
       "already_verdicted_elsewhere": 27,
-      "held_unwired": 2,
       "real": 1,
       "repair": 9,
       "rewrite_as_behavior": 9,
-      "update_with_reason_recorded": 9,
+      "update_with_reason_recorded": 11,
       "vacuous_control_proof": 3,
       "wire_into_ci": 52
     },
@@ -1598,7 +1597,7 @@
       },
       {
         "testPath": "src/lib/enterprise-data/tower-candidate-load/__tests__/tower-governed-candidate-load.test.ts",
-        "verdict": "held_unwired",
+        "verdict": "update_with_reason_recorded",
         "record": "docs/architecture/item26-draw16-stale-suite-triage.json",
         "recordedAt": "2026-10-01T04:39:29Z",
         "ownerItem": "26"
@@ -1612,7 +1611,7 @@
       },
       {
         "testPath": "src/lib/enterprise-knowledge/tower/__tests__/tower-v3-context-pack-from-tenant-inputs.test.ts",
-        "verdict": "held_unwired",
+        "verdict": "update_with_reason_recorded",
         "record": "docs/architecture/item26-draw16-stale-suite-triage.json",
         "recordedAt": "2026-10-01T04:39:29Z",
         "ownerItem": "26"

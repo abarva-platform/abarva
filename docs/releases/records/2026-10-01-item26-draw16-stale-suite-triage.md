@@ -33,9 +33,12 @@ Each file was run on its own. 14 were green and 6 were red:
   that hard-codes the deleted path, so the builder script that calls it cannot
   run. Which repair is right is a data-lane call: re-pin to the registry, move
   the case onto a frozen fixture, or retire the builder.
-- **2 are green but held unwired.** They pass today, but they pin exact counts
-  over live tenant intake that is being rebuilt. Wired as they stand, they would
-  become a gate that fails when the data improves.
+- **2 are green, with an update owed before wiring.** They pass today, but they
+  pin exact counts over live tenant intake that is being rebuilt. Wired as they
+  stand, they would become a gate that fails when the data improves. They are
+  recorded as `update_with_reason_recorded`, not `held_unwired`: the repository
+  reserves `held_unwired` for suites that a scoped quarantine list declares, and
+  the first CI run of this change failed on exactly that rule.
 - **1 is green but holds one text case.** Six cases test the evidence ledger's
   behaviour; the seventh asserts the text of a committed migration. Whether that
   case belongs in the unit step or in a migration validator is decided before
@@ -79,7 +82,8 @@ client's build equally, behind no feature gate.
   - whether each red row's cause still holds: a pinned tenant count against the
     tenant registry's active list, a retired tenant key against its retired
     list, a deleted dataset file against the filesystem;
-  - whether each live-data hold still reads the root it names;
+  - whether each live-data row still reads the root it names, and is not offered
+    for wiring;
   - whether any other triage record already judged a drawn file;
   - whether the committed census resolves every drawn path to this record.
 - `docs/architecture/test-ci-coverage-census.json`: regenerated with `--write`.
@@ -100,8 +104,17 @@ drawn file, registry or census input other than adding covered tests.
 **Red first.** The control was run before the census was regenerated: 1 of 10
 failed (the census case). After regeneration: 10 of 10.
 
-**Mutations: 10 of 10 caught.** Each was checked by a sha256 change before the
-run and a sha256 restore after, and each fired the case it targets:
+**First CI run red, on a real rule.** The two live-data rows were first labelled
+`held_unwired`. `Unit suites that pass on main` failed in its Source workspace
+quarantine step: `check-source-workspace-quarantine.test.mjs` requires every
+`held_unwired` verdict to bring a scoped quarantine entry, and the triage
+reconciliation then read both paths as held-but-untriaged. The rows were
+re-labelled `update_with_reason_recorded`; that step now passes locally
+(14 of 14 node tests, quarantine checker exit 0).
+
+**Mutations: 10 of 10 caught**, re-run after the re-label against the green
+census. Each was checked by a sha256 change before the run and a sha256 restore
+after, and each fired the case it targets:
 
 | # | mutation | case that fired |
 |---|---|---|
@@ -116,8 +129,6 @@ run and a sha256 restore after, and each fired the case it targets:
 | 9 | the migration-text row offered for wiring | bytes; wiring reachability |
 | 10 | the census resolves a different verdict for a drawn file | census |
 
-Mutations 1–9 ran before regeneration, so the census case was already red in
-each and is not counted for them.
 
 **Baselines.** Behaviors on a clean detached worktree at `e6645a9a30`:
 170 suites / 1794 tests / 0 failed. On this branch: 171 / 1804 / 0. Census
@@ -158,6 +169,7 @@ unwound in a running environment.
 
 - None of the 7 `wire_into_ci` files runs in CI yet. Wiring them is this draw's
   second half; each must be re-executed on the then-current `main` first.
-- The 5 repair rows and 2 live-data holds wait on one data-lane decision.
+- The 5 repair rows and the 2 live-data update rows wait on one data-lane
+  decision.
 - The migration-text case in the evidence-ledger suite is undecided.
 - The five held subjects need a retire-or-mount decision from their owners.

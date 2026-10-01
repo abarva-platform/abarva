@@ -316,11 +316,12 @@ describe("item 26 draw 16 stale suite triage record", () => {
   });
 
   it("holds a green live-corpus row only while it still reads that corpus", () => {
-    const holds = record.suites.filter((suite) => suite.verdict === "held_unwired");
-    expect(holds).toHaveLength(record.counts.held_unwired);
+    const holds = record.suites.filter((suite) => suite.liveCorpusRoot !== undefined);
+    expect(holds).toHaveLength(2);
     for (const suite of holds) {
       expect({
         path: suite.path,
+        verdict: suite.verdict,
         green: suite.green,
         reads: suite.readsRepositoryFileText,
         corpusExists:
@@ -334,6 +335,7 @@ describe("item 26 draw 16 stale suite triage record", () => {
           readText(suite.liveCorpusNamedIn).includes(suite.liveCorpusRoot!),
       }).toEqual({
         path: suite.path,
+        verdict: "update_with_reason_recorded",
         green: true,
         reads: true,
         corpusExists: true,
