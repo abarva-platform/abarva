@@ -70,5 +70,6 @@ Revert the PR before any data job. If a later scoped job loads this source set, 
 ## Known Gaps
 
 - Existing dense loader and validator still target the historical 14-file profile; this 22-file source set is not load-ready through that path yet.
+- Source-native relationship verbs in the new extract are not all accepted by the current ECL physical relationship constraint or the canonical graph dictionary. The Layer 2 adapter must exhaustively normalize them to reviewed canonical types, with an explicit schema change where semantics have no faithful existing type; unresolved verbs must fail the load rather than be dropped.
 - No canonical/serving promotion, Home segment spine, narrative, aVa or export proof exists for this version.
 - The approved synthetic source-set review does not make any object agent-ready or client-attested.
