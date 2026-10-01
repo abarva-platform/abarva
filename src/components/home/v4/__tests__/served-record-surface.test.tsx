@@ -311,6 +311,12 @@ describe("the served path", () => {
               blockedFiles: 0,
               supersededFiles: 0,
             },
+            sourceDateCoverage: {
+              earliest: "2026-08-23",
+              latest: "2026-08-23",
+              datedFiles: 14,
+              totalFiles: 14,
+            },
           },
         }}
       />,
@@ -319,6 +325,9 @@ describe("the served path", () => {
     expect(
       document.querySelector("[data-home-record-state-band]")?.textContent,
     ).toContain("Source-file quality: 0 of 14 accepted; 14 partial");
+    expect(
+      screen.getByText(/Registered source dates: 2026-08-23/),
+    ).toHaveTextContent("data currency not attested");
   });
 
   it("states when the record on screen is the reviewed snapshot fallback", () => {

@@ -11,7 +11,10 @@ import { resolveEvidence } from "@/components/home/preview/evidence-resolver";
 import { azureRead } from "@/lib/data-plane/azureRead";
 import { getHomeReviewBundle } from "../golden-snapshot";
 import { homeRecordSourceToken } from "../record-source-token";
-import { homeSourceFileReviewLabel } from "../record-source";
+import {
+  homeSourceDateCoverageLabel,
+  homeSourceFileReviewLabel,
+} from "../record-source";
 import type { HomeReviewBundle } from "../types";
 
 type PacketWithCategorySummaries = ReturnType<
@@ -370,6 +373,12 @@ describe("buildTechnologyEstateFromHomeProjectionRows", () => {
       partialFiles: 1,
       blockedFiles: 0,
       supersededFiles: 0,
+    });
+    expect(bundle.contextVersion?.sourceDateCoverage).toEqual({
+      earliest: "2026-09-30",
+      latest: "2026-09-30",
+      datedFiles: 1,
+      totalFiles: 1,
     });
     expect(bundle.thesis.signalPacket.contextItems).toEqual(
       expect.arrayContaining([
@@ -1357,6 +1366,40 @@ describe("buildTechnologyEstateFromHomeProjectionRows", () => {
     );
     expect(homeSourceFileReviewLabel(sourceFor(accepted))).toBe(
       "Source-file quality: 1 of 1 accepted",
+    );
+    const redated = buildHomeReviewBundleFromEclProjectionRows(
+      base,
+      rows,
+      undefined,
+      links,
+      [{ ...sourceFile, source_date: "2026-10-01" }],
+    );
+    expect(redated.contextVersion?.sourceCatalogHash).not.toBe(
+      partial.contextVersion?.sourceCatalogHash,
+    );
+    expect(
+      homeRecordSourceToken("meridian-health", sourceFor(redated)),
+    ).not.toBe(homeRecordSourceToken("meridian-health", sourceFor(partial)));
+    expect(homeSourceDateCoverageLabel(sourceFor(redated))).toBe(
+      "Registered source dates: 2026-10-01 (1 of 1 files); data currency not attested",
+    );
+    const incompletelyDated = buildHomeReviewBundleFromEclProjectionRows(
+      base,
+      rows,
+      undefined,
+      links,
+      [
+        sourceFile,
+        {
+          ...sourceFile,
+          id: "source-file-006",
+          file_name: "undated.csv",
+          source_date: null,
+        },
+      ],
+    );
+    expect(homeSourceDateCoverageLabel(sourceFor(incompletelyDated))).toBe(
+      "Registered source dates: 2026-09-30 (1 of 2 files); data currency not attested",
     );
   });
 

@@ -18,6 +18,7 @@ import type {
 import {
   homeNarrativeStatusLabel,
   homeRecordSourceLabel,
+  homeSourceDateCoverageLabel,
   homeSourceFileReviewLabel,
 } from "@/lib/home/preview/record-source";
 import { sanitizeHomeReviewBundleNarrative } from "@/lib/home/preview/stale-claim-guard";
@@ -527,8 +528,10 @@ export function HomeV4App({
       canonicalSnapshotHash,
       contextVersion: displayBundle.contextVersion,
     } satisfies HomeRecordRenderSource);
+  const sourceDates = homeSourceDateCoverageLabel(renderedRecordSource);
   const compiledLine = [
     `Data as of ${displayBundle.contextVersion?.dataAsOf ?? "not established"}`,
+    ...(sourceDates ? [sourceDates] : []),
     `Narrative generated ${formatCompiledDate(
       displayBundle.contextVersion?.narrativeGeneratedAt ??
         provenance.generated_at,

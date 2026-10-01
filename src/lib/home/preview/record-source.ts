@@ -55,6 +55,25 @@ export function homeSourceFileReviewLabel(
   return homeSourceFileReviewLabelForVersion(source.contextVersion);
 }
 
+export function homeSourceDateCoverageLabel(
+  source: HomeRecordRenderSource,
+): string | null {
+  if (source.kind !== "ecl_serving_projection") return null;
+  return homeSourceDateCoverageLabelForVersion(source.contextVersion);
+}
+
+export function homeSourceDateCoverageLabelForVersion(
+  version: HomeContextVersion | undefined,
+): string | null {
+  const dates = version?.sourceDateCoverage;
+  if (!dates) return null;
+  const span =
+    dates.earliest === dates.latest
+      ? dates.earliest
+      : `${dates.earliest} to ${dates.latest}`;
+  return `Registered source dates: ${span} (${dates.datedFiles} of ${dates.totalFiles} files); data currency not attested`;
+}
+
 export function homeSourceFileReviewLabelForVersion(
   version: HomeContextVersion | undefined,
 ): string {

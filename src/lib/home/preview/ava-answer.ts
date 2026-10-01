@@ -10,6 +10,7 @@ import type {
 import { validateAvaAnswerPacket } from "@/lib/ava-answer/validateAvaAnswerPacket";
 import {
   homeSourceCoverageGapLabelForVersion,
+  homeSourceDateCoverageLabelForVersion,
   homeSourceFileReviewLabelForVersion,
 } from "@/lib/home/preview/record-source";
 import type {
@@ -830,11 +831,14 @@ export async function answerHomeAvaQuestion(args: {
     const sourceReview = homeSourceFileReviewLabelForVersion(
       args.bundle.contextVersion,
     );
+    const sourceDates = homeSourceDateCoverageLabelForVersion(
+      args.bundle.contextVersion,
+    );
     return buildFallbackPacket(
       args.tenantKey,
       question,
       "no_data",
-      `Live rows are available, but their executive narrative has not been verified. I cannot give a cited synthesis yet. ${sourceReview}.${coverageGap ? ` ${coverageGap}` : ""}`,
+      `Live rows are available, but their executive narrative has not been verified. I cannot give a cited synthesis yet. ${sourceReview}.${sourceDates ? ` ${sourceDates}.` : ""}${coverageGap ? ` ${coverageGap}` : ""}`,
       [],
     );
   }

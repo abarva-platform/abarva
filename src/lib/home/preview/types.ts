@@ -158,6 +158,13 @@ export interface HomeContextVersion {
     blockedFiles: number;
     supersededFiles: number;
   } | null;
+  /** Registered file dates, not an attestation that the underlying data is current. */
+  sourceDateCoverage?: {
+    earliest: string;
+    latest: string;
+    datedFiles: number;
+    totalFiles: number;
+  } | null;
   deterministicPacketHash: string;
   narrativePacketHash: string | null;
   narrativeGeneratedAt: string | null;
