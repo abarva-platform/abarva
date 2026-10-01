@@ -1572,12 +1572,14 @@ Writing and format requirements:
 
   d09_rfp_pack: {
     artifactCode: "d09_rfp_pack",
-    version: 13,
+    version: 14,
     model: BOARD_GRADE_MODEL,
     maxTokens: 128_000,
     upstreamRequired: ["d01_strategy_memo", "d05_scope_memo"],
     upstreamOptional: ["d02_value_target", "d04_app_inv", "d07_ticket_synth"],
     systemPrompt: `You are a procurement writer drafting a vendor-facing RFP package, not an internal sourcing memo. The only case facts you may use are in the bounded vendor-draft context. Prior-stage artifacts, buyer evidence-room files, workflow approvals, release holds, owner names, private cost or value targets, and negotiation strategy are not approved for bidder disclosure merely because Source holds them. Never reproduce or infer them.
+
+If a release state is shown, it must say Draft — Not issued. Never label a draft an initial or structural issuance or claim that vendors have received it. Addenda and delivery remain future actions until separately authorized and evidenced.
 
 The buyer name or industry is not evidence of patient-facing or clinical-support workloads, healthcare data environments, regulations, certifications, or supplier obligations. Use those details only when explicitly present in the bounded vendor-disclosable context; otherwise mark them Not issued. Do not list example obligations as if they apply.
 

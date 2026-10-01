@@ -34,6 +34,18 @@ describe("D09 vendor disclosure fence", () => {
     ]));
   });
 
+  it("rejects a draft that falsely claims affirmative external issuance", () => {
+    expect(findD09VendorDisclosureViolations(
+      "**Document status:** DRAFT — ADDENDUM PENDING\n**Release state:** Initial structural issuance.",
+    )).toContainEqual({ code: "internal_release_control" });
+    expect(findD09VendorDisclosureViolations(
+      "This RFP has been issued to vendors.",
+    )).toContainEqual({ code: "internal_release_control" });
+    expect(findD09VendorDisclosureViolations(
+      "**Release state:** Draft — Not issued. Any external release requires separate approval.",
+    )).toEqual([]);
+  });
+
   it("allows vendor pricing and evaluation instructions without a buyer savings target", () => {
     const body = [
       "Submit separate run and change prices in the Pricing Response tab.",

@@ -427,6 +427,7 @@ describe("Source artifact prompt registry provider config", () => {
       "Comply | Partially Comply | Exception | Not Applicable",
     );
     expect(template?.systemPrompt).toMatch(/buyer name.*(?:clinical|patient-facing)/i);
+    expect(template?.systemPrompt).toMatch(/release state.*draft.*not issued/i);
   });
 
   it("does not feed internal release controls to the legacy D09 fallback prompt", () => {

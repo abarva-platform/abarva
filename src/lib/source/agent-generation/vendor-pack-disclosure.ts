@@ -42,6 +42,8 @@ const UNVERIFIED_TIMELINE = [
 const INTERNAL_RELEASE_CONTROL = [
   /\brelease holds?\s+RH-\d+\b/i,
   /\b(?:internal|buyer)\s+(?:release|approval)\s+gate\b/i,
+  /^\s*(?:\*\*)?(?:release state|document status):(?:\*\*)?\s*(?:initial\s+structural\s+issuance|issued|released|published)\b/im,
+  /\b(?:this|the)\s+RFP\s+has\s+been\s+(?:issued|released|published)\s+to\s+vendors\b/i,
 ];
 
 export function findD09VendorDisclosureViolations(
