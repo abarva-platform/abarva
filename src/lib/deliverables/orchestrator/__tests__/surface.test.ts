@@ -285,65 +285,69 @@ describe("assembleGovernedEvidence", () => {
     expect(out.evidence[1].evidenceFamily).toBe("Enterprise Ai Portfolio");
   });
 
-  it("expands structured phase capture into required evidence signals", async () => {
+  it("expands current-phase capture and excludes later-phase signals", async () => {
     const fakeQuery = (async () => []) as never;
+    const captureRows = [
+      {
+        id: "pm-baseline",
+        module_key: "phase_2_baseline_metrics",
+        module_name: "Baseline metrics",
+        phase_number: 2,
+        module_order: 1,
+        status: "completed",
+        state_jsonb: {
+          capture_section_key: "baseline_metrics",
+          label: "Baseline metrics",
+          value: JSON.stringify([
+            {
+              metric: "closure_rate",
+              value: "41.2%",
+              source: "quality_measures.csv",
+            },
+            {
+              metric: "unmonitored_interfaces",
+              value: "33 of 86 plus 18 partial",
+              source: "interface_inventory.csv",
+            },
+          ]),
+        },
+        completed_at: "2026-09-10T12:00:00Z",
+      },
+      {
+        id: "pm-readiness",
+        module_key: "phase_4_launch_readiness",
+        module_name: "Launch readiness",
+        phase_number: 4,
+        module_order: 2,
+        status: "completed",
+        state_jsonb: {
+          capture_section_key: "launch_readiness",
+          label: "Launch readiness",
+          value:
+            "Launch readiness excludes Coastal Region from go-live scope until the weekly legacy feed improves.",
+        },
+        completed_at: "2026-09-10T12:05:00Z",
+      },
+    ];
+    let scopedCaptureRows = [...captureRows];
+    const moduleQuery: Record<string, (...args: unknown[]) => unknown> = {
+      select: () => moduleQuery,
+      eq: () => moduleQuery,
+      lte: (field, value) => {
+        scopedCaptureRows = captureRows.filter(
+          (row) =>
+            Number((row as Record<string, unknown>)[String(field)]) <=
+            Number(value),
+        );
+        return moduleQuery;
+      },
+      order: () => moduleQuery,
+      limit: async () => ({ data: scopedCaptureRows }),
+    };
     const fakeDb = {
       from(table: string) {
         if (table === "program_modules") {
-          return {
-            select: () => ({
-              eq: () => ({
-                order: () => ({
-                  order: () => ({
-                    limit: async () => ({
-                      data: [
-                        {
-                          id: "pm-baseline",
-                          module_key: "phase_2_baseline_metrics",
-                          module_name: "Baseline metrics",
-                          phase_number: 2,
-                          module_order: 1,
-                          status: "completed",
-                          state_jsonb: {
-                            capture_section_key: "baseline_metrics",
-                            label: "Baseline metrics",
-                            value: JSON.stringify([
-                              {
-                                metric: "closure_rate",
-                                value: "41.2%",
-                                source: "quality_measures.csv",
-                              },
-                              {
-                                metric: "unmonitored_interfaces",
-                                value: "33 of 86 plus 18 partial",
-                                source: "interface_inventory.csv",
-                              },
-                            ]),
-                          },
-                          completed_at: "2026-09-10T12:00:00Z",
-                        },
-                        {
-                          id: "pm-readiness",
-                          module_key: "phase_4_launch_readiness",
-                          module_name: "Launch readiness",
-                          phase_number: 4,
-                          module_order: 2,
-                          status: "completed",
-                          state_jsonb: {
-                            capture_section_key: "launch_readiness",
-                            label: "Launch readiness",
-                            value:
-                              "Launch readiness excludes Coastal Region from go-live scope until the weekly legacy feed improves.",
-                          },
-                          completed_at: "2026-09-10T12:05:00Z",
-                        },
-                      ],
-                    }),
-                  }),
-                }),
-              }),
-            }),
-          };
+          return moduleQuery;
         }
         if (table === "evidence_ledger") {
           return {
@@ -397,6 +401,7 @@ describe("assembleGovernedEvidence", () => {
         tenantClientKey: "arcturus",
         clientId: "client-1",
         sourceArtifactRef: "move-1",
+        phase: 2,
         query: "launch readiness baseline",
       },
       { queryTenantContext: fakeQuery, db: fakeDb },
@@ -413,12 +418,198 @@ describe("assembleGovernedEvidence", () => {
           label: "P2 Capture Unmonitored Interfaces",
           statement: expect.stringContaining("33 of 86"),
         }),
-        expect.objectContaining({
-          label: "P4 Capture Scope Caveat",
-          statement: expect.stringContaining("Coastal Region"),
-        }),
       ]),
     );
+    expect(signals.some((signal) => signal.label.startsWith("P4 "))).toBe(
+      false,
+    );
+  });
+
+  it("excludes later-phase ledger, reviewed evidence, and signed-off artifacts", async () => {
+    const fakeQuery = (async () => []) as never;
+    const rowsByTable: Record<string, Array<Record<string, unknown>>> = {
+      program_modules: [],
+      evidence_ledger: [
+        {
+          id: "ledger-p2",
+          client_id: "client-1",
+          surface: "moves",
+          source_ref: { moveId: "move-1", phase: 2, family: "baseline" },
+          claim_text: "P2 baseline approved for discovery.",
+          confidence: 0.8,
+        },
+        {
+          id: "ledger-p4",
+          client_id: "client-1",
+          surface: "moves",
+          source_ref: { moveId: "move-1", phase: 4, family: "investment" },
+          claim_text: "P4 investment budget approved.",
+          confidence: 0.9,
+        },
+      ],
+      program_evidence_reviews: [
+        {
+          id: "review-p2",
+          tenant_key: "tenant-1",
+          program_id: "move-1",
+          evidence_id: "evidence-p2",
+          family_key: "baseline",
+          decision: "approved",
+          phase: 2,
+          source_ref: { filename: "P2 baseline notes" },
+          reviewed_at: "2026-09-20T12:00:00Z",
+        },
+        {
+          id: "review-p4",
+          tenant_key: "tenant-1",
+          program_id: "move-1",
+          evidence_id: "evidence-p4",
+          family_key: "investment",
+          decision: "approved",
+          phase: 4,
+          source_ref: { filename: "P4 investment notes" },
+          reviewed_at: "2026-09-21T12:00:00Z",
+        },
+      ],
+      program_evidence_items: [
+        {
+          id: "evidence-p2",
+          tenant_key: "tenant-1",
+          program_id: "move-1",
+          phase: 2,
+          title: "P2 baseline evidence",
+          summary: "P2 reviewed operating baseline.",
+          evidence_type: "workshop_notes",
+          confidence: 0.8,
+        },
+        {
+          id: "evidence-p4",
+          tenant_key: "tenant-1",
+          program_id: "move-1",
+          phase: 4,
+          title: "P4 investment evidence",
+          summary: "P4 approved rate card and investment model.",
+          evidence_type: "finance_review",
+          confidence: 0.9,
+        },
+      ],
+      deliverables_v2: [
+        {
+          id: "deliverable-charter",
+          engagement_id: "move-1",
+          status: "signed_off",
+          signed_off_version: 1,
+        },
+        {
+          id: "deliverable-business-case",
+          engagement_id: "move-1",
+          status: "signed_off",
+          signed_off_version: 1,
+        },
+      ],
+      deliverable_versions: [
+        {
+          deliverable_id: "deliverable-charter",
+          version: 1,
+          structured_data: { generated_artifact_id: "artifact-charter" },
+        },
+        {
+          deliverable_id: "deliverable-business-case",
+          version: 1,
+          structured_data: { generated_artifact_id: "artifact-business-case" },
+        },
+      ],
+      generated_artifacts: [
+        {
+          id: "artifact-charter",
+          client_id: "client-1",
+          source_artifact_ref: "move-1",
+          quarantine_reason: null,
+          quality_score: 0.9,
+          rendered_at: "2026-09-18T12:00:00Z",
+          metadata: {
+            title: "Approved Charter",
+            deliverableTypeKey: "charter",
+            renderableDoc: {
+              executiveSummary:
+                "P1 authorizes discovery using the approved scope.",
+              generatedSections: [],
+              sourceRegister: [],
+            },
+          },
+        },
+        {
+          id: "artifact-business-case",
+          client_id: "client-1",
+          source_artifact_ref: "move-1",
+          quarantine_reason: null,
+          quality_score: 0.9,
+          rendered_at: "2026-09-22T12:00:00Z",
+          metadata: {
+            title: "Approved Business Case",
+            deliverableTypeKey: "business_case",
+            renderableDoc: {
+              executiveSummary: "P4 commits the approved investment envelope.",
+              generatedSections: [],
+              sourceRegister: [],
+            },
+          },
+        },
+      ],
+    };
+
+    const fakeDb = {
+      from(table: string) {
+        let rows = [...(rowsByTable[table] ?? [])];
+        const query = {
+          select: () => query,
+          eq: (column: string, value: unknown) => {
+            rows = rows.filter((row) => row[column] === value);
+            return query;
+          },
+          lte: (column: string, value: number) => {
+            rows = rows.filter((row) => Number(row[column]) <= value);
+            return query;
+          },
+          in: (column: string, values: unknown[]) => {
+            rows = rows.filter((row) => values.includes(row[column]));
+            return query;
+          },
+          is: (column: string, value: unknown) => {
+            rows = rows.filter((row) => row[column] === value);
+            return query;
+          },
+          order: () => query,
+          limit: async () => ({ data: rows }),
+          then: (
+            resolve: (value: {
+              data: Array<Record<string, unknown>>;
+            }) => unknown,
+          ) => Promise.resolve({ data: rows }).then(resolve),
+        };
+        return query;
+      },
+    } as never;
+
+    const out = await assembleGovernedEvidence(
+      {
+        tenantClientKey: "tenant-1",
+        clientId: "client-1",
+        sourceArtifactRef: "move-1",
+        phase: 2,
+        query: "current state evidence",
+      },
+      { queryTenantContext: fakeQuery, db: fakeDb },
+    );
+    const statements = out.evidence.map((item) => item.statement).join("\n");
+
+    expect(statements).toContain("P2 baseline approved for discovery");
+    expect(statements).toContain("P2 reviewed operating baseline");
+    expect(statements).toContain("P1 authorizes discovery");
+    expect(statements).not.toContain("P4 investment");
+    expect(statements).not.toContain("P4 approved rate card");
+    expect(statements).not.toContain("P4 commits the approved investment");
+    expect(out.coverage.approvedAvailable).toBe(1);
   });
 
   it("uses only the exact signed-off generated Move artifact version in later phases", async () => {
@@ -899,6 +1090,55 @@ describe("runDeliverableForTenant", () => {
     expect(out.retrievedEvidence).toBe(1);
     expect(out.contextCoverage?.packed).toBe(1);
     expect(out.contextCoverage?.cited).toBe(0);
+  });
+
+  it("passes the requested Moves phase into governed evidence assembly", async () => {
+    let assembledParams: Record<string, unknown> | undefined;
+    const phaseAssembler = (async (params: Record<string, unknown>) => {
+      assembledParams = params;
+      return {
+        evidence: [],
+        sourceRegister: [],
+        retrievedCount: 0,
+        coverage: {
+          approvedAvailable: 0,
+          retrieved: 0,
+          packed: 0,
+          droppedForBudget: 0,
+          unreadable: 0,
+          cited: 0,
+          coverageRatio: null,
+          coverageState: "no_approved_evidence",
+          requiresAttention: false,
+          usedTokens: 0,
+          evidenceTokenBudget: 1000,
+        },
+      };
+    }) as never;
+    const generate = (async () =>
+      ({
+        ok: true,
+        brief: {} as never,
+        document: { generatedSections: [] } as never,
+        quality: { pass: true, warnings: [] } as never,
+        passTrace: [],
+      }) as OrchestrationResult) as never;
+    const persist = (async () => ({ id: "art-phase" })) as never;
+
+    await runDeliverableForTenant(
+      {
+        ...baseInput,
+        module: "moves",
+        deliverableType: "solution_design",
+        phase: 3,
+      },
+      { assemble: phaseAssembler, loadPolicy, generate, persist },
+    );
+
+    expect(assembledParams).toMatchObject({
+      sourceArtifactRef: "evt-1",
+      phase: 3,
+    });
   });
 
   it("returns blocked when persistence quarantines the generated artifact", async () => {

@@ -79,6 +79,20 @@ export function orchestratorDeliverableType(registryKey: string): string {
   return REGISTRY_TO_ORCHESTRATOR[normalized] ?? normalized;
 }
 
+/** Resolve the unique canonical Moves phase for a registry or orchestrator key. */
+export function phaseForOrchestratorDeliverableType(
+  deliverableType: string,
+): number | null {
+  const normalized = normalizeDeliverableKey(deliverableType);
+  const phases = new Set(
+    DELIVERABLE_REGISTRY.filter(
+      (spec) =>
+        orchestratorDeliverableType(spec.deliverableTypeKey) === normalized,
+    ).map((spec) => spec.phase),
+  );
+  return phases.size === 1 ? [...phases][0] : null;
+}
+
 /** Prescribed render/download format the orchestrator should persist a deliverable in. */
 export type PrescribedDeliverableFormat = "docx" | "pptx" | "xlsx";
 

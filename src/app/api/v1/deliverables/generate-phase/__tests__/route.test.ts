@@ -66,7 +66,11 @@ let evidencePacketsForTest: MoveEvidenceNeedPacket[] = [];
 const buildMoveEvidenceNeedPackets = jest.fn(() => evidencePacketsForTest);
 const loadDiscoveryEvidenceReadiness = jest.fn(async () => ({}));
 const listApprovedPhaseEvidence: jest.Mock = jest.fn(async () => [
-  { evidenceId: "evidence-approved-1", title: "Approved evidence", familyKey: "workshop_notes" },
+  {
+    evidenceId: "evidence-approved-1",
+    title: "Approved evidence",
+    familyKey: "workshop_notes",
+  },
 ]);
 
 function confirmedRouteModules(
@@ -92,7 +96,9 @@ function confirmedRouteModules(
       state: {
         value: JSON.stringify({
           businessChangeAssessmentSnapshot: businessChangeAssessment,
-          solutionOutput: technical ? "reports_dashboards" : "workflow_automation",
+          solutionOutput: technical
+            ? "reports_dashboards"
+            : "workflow_automation",
           workflowChange: technical ? "none" : processImpact,
           roleAccountabilityChange: "none",
           evidenceReference: "evidence-approved-1",
@@ -124,7 +130,8 @@ function reviewedEstimateModel() {
     assumption: "Scope is a bounded first release",
     confidence: "low",
     aiEligiblePct: 10,
-    aiToolAssumption: "Claude Code assists scaffolding; engineer reviews and tests",
+    aiToolAssumption:
+      "Claude Code assists scaffolding; engineer reviews and tests",
     humanReviewHours: 2,
   };
   return {
@@ -200,9 +207,12 @@ jest.mock("@/lib/programs/approved-phase-evidence", () => ({
 jest.mock("@/lib/programs/discovery/evidence-readiness", () => ({
   loadDiscoveryEvidenceReadiness: () => loadDiscoveryEvidenceReadiness(),
 }));
-jest.mock("@/lib/programs/evidence-readiness/move-evidence-need-packet", () => ({
-  buildMoveEvidenceNeedPackets: () => buildMoveEvidenceNeedPackets(),
-}));
+jest.mock(
+  "@/lib/programs/evidence-readiness/move-evidence-need-packet",
+  () => ({
+    buildMoveEvidenceNeedPackets: () => buildMoveEvidenceNeedPackets(),
+  }),
+);
 
 import { POST } from "../route";
 import type { MoveEvidenceNeedPacket } from "@/lib/programs/evidence-readiness/move-evidence-need-packet";
@@ -237,7 +247,11 @@ beforeEach(() => {
   buildMoveEvidenceNeedPackets.mockClear();
   loadDiscoveryEvidenceReadiness.mockClear();
   listApprovedPhaseEvidence.mockResolvedValue([
-    { evidenceId: "evidence-approved-1", title: "Approved evidence", familyKey: "workshop_notes" },
+    {
+      evidenceId: "evidence-approved-1",
+      title: "Approved evidence",
+      familyKey: "workshop_notes",
+    },
   ]);
   loadApprovedSolutionApproach.mockResolvedValue({
     decisionId: "decision-1",
@@ -481,6 +495,7 @@ describe("POST /api/v1/deliverables/generate-phase", () => {
             contextSnapshotHash: "ctx-hash-1",
           }),
           evidenceSnapshotHash: "approved-revision-1",
+          phase: 3,
         }),
       );
     }
@@ -709,10 +724,7 @@ describe("POST /api/v1/deliverables/generate-phase", () => {
           (c.jobPayload as { adaptiveDepth: { complexityTier: string } })
             .adaptiveDepth.complexityTier,
       ),
-    ).toEqual([
-      "straightforward",
-      "straightforward",
-    ]);
+    ).toEqual(["straightforward", "straightforward"]);
   });
 
   it("queues P2 root-cause with its own type and canonical registry key", async () => {
@@ -848,11 +860,16 @@ describe("POST /api/v1/deliverables/generate-phase", () => {
     );
 
     expect(res.status).toBe(202);
-    const decisionContext = (createCalls[0]?.jobPayload as { decisionContext: string })
-      .decisionContext;
+    const decisionContext = (
+      createCalls[0]?.jobPayload as { decisionContext: string }
+    ).decisionContext;
     expect(decisionContext).toContain("DETERMINISTIC ROADMAP ESTIMATE MODEL");
-    expect(decisionContext).toContain("Read-only reporting foundation / Data engineer / internal");
-    expect(decisionContext).toContain("Read-only reporting foundation / Data engineer / vendor");
+    expect(decisionContext).toContain(
+      "Read-only reporting foundation / Data engineer / internal",
+    );
+    expect(decisionContext).toContain(
+      "Read-only reporting foundation / Data engineer / vendor",
+    );
     expect(decisionContext).toContain("USD 1,100/USD 2,000/USD 2,900");
     expect(decisionContext).toContain("USD 1,650/USD 3,000/USD 4,350");
     expect(decisionContext).toContain("Reviewed by: Finance reviewer");

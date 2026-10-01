@@ -15,10 +15,7 @@ import {
 import type { DeliverableKey } from "@/lib/deliverables/profiles/types";
 import type { GenerationMode } from "@/lib/programs/assert-phase-ready";
 import type { AdaptiveDepthDecision } from "@/lib/deliverables/adaptive-depth";
-import {
-  buildContextCoverage,
-  type ContextCoverage,
-} from "./context-coverage";
+import { buildContextCoverage, type ContextCoverage } from "./context-coverage";
 
 export type DeliverableRunStatus =
   | "queued"
@@ -55,6 +52,8 @@ export interface OrchestratorDeliverableRunJobPayload {
   };
   /** Opaque approved-evidence revision captured when this run was queued. */
   evidenceSnapshotHash?: string;
+  /** Moves phase boundary used by the worker's governed evidence assembler. */
+  phase?: number;
   clientDisplayName: string;
   initiativeDisplayName: string;
   sourceArtifactRef: string;

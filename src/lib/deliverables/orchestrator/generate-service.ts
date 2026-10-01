@@ -55,6 +55,8 @@ export interface GenerateDeliverableServiceInput extends Omit<
   userId: string;
   /** the move / source-event id this deliverable is generated for. */
   sourceArtifactRef: string;
+  /** Moves phase boundary used to keep later evidence out of this prompt. */
+  phase?: number;
   /** Canonical deliverables_v2 registry key, when different from the orchestrator type. */
   deliverableTypeKey?: string;
   /** semantic query used to retrieve governed evidence. */
@@ -230,6 +232,7 @@ export async function runDeliverableForTenant(
       tenantClientKey: input.tenantClientKey,
       clientId: input.clientId,
       sourceArtifactRef: input.sourceArtifactRef,
+      ...(input.phase !== undefined ? { phase: input.phase } : {}),
       query: evidenceQueries[0],
       queries: evidenceQueries,
       audienceIsVendorFacing,
@@ -515,7 +518,11 @@ export async function runDeliverableForTenant(
           },
         }
       : input.evidenceSnapshotHash
-        ? { generationLineage: { evidenceSnapshotHash: input.evidenceSnapshotHash } }
+        ? {
+            generationLineage: {
+              evidenceSnapshotHash: input.evidenceSnapshotHash,
+            },
+          }
         : {}),
     ...(input.evidenceSnapshotHash
       ? { evidenceSnapshotHash: input.evidenceSnapshotHash }

@@ -39,7 +39,11 @@ jest.mock('@/lib/programs/approved-move-evidence-snapshot', () => ({
   loadApprovedMoveEvidenceSnapshot: jest.fn(),
 }));
 jest.mock('@/lib/deliverables/orchestrator/tenant-invariant', () => ({
-  validateDeliverableTenantInvariant: jest.fn(async () => ({ ok: true, sourceKind: 'move', sourceId: 'evt-1' })),
+  validateDeliverableTenantInvariant: jest.fn(async () => ({
+    ok: true,
+    sourceKind: 'move',
+    sourceId: 'evt-1',
+  })),
 }));
 
 import { processDeliverableQueue } from '../process-deliverable-queue';
@@ -94,22 +98,48 @@ const jobPayload = {
 
 function claimedRow(id: string) {
   return {
-    id, clientId: 'c1', tenantKey: 'skyharbor-air', userId: 'u1', module: 'source',
-    archetype: 'AMS_IT_OUTSOURCING', deliverableType: 'rfp_package', status: 'running',
-    artifactId: null, sectionCount: null, retrievedEvidence: null, blockers: [], warnings: [],
-    error: null, progressPct: null, progressLabel: null, claimedAt: 'now', workerId: 'w', jobPayload,
-    createdAt: 't0', updatedAt: 't0',
-    batchId: null, sequenceNo: null, dependsOnRunId: null,
+    id,
+    clientId: 'c1',
+    tenantKey: 'skyharbor-air',
+    userId: 'u1',
+    module: 'source',
+    archetype: 'AMS_IT_OUTSOURCING',
+    deliverableType: 'rfp_package',
+    status: 'running',
+    artifactId: null,
+    sectionCount: null,
+    retrievedEvidence: null,
+    blockers: [],
+    warnings: [],
+    error: null,
+    progressPct: null,
+    progressLabel: null,
+    claimedAt: 'now',
+    workerId: 'w',
+    jobPayload,
+    createdAt: 't0',
+    updatedAt: 't0',
+    batchId: null,
+    sequenceNo: null,
+    dependsOnRunId: null,
   };
 }
 
 beforeEach(() => {
   jest.clearAllMocks();
   sweepStaleDeliverableRuns.mockResolvedValue([]);
-  validateDeliverableTenantInvariant.mockResolvedValue({ ok: true, sourceKind: 'move', sourceId: 'evt-1' });
+  validateDeliverableTenantInvariant.mockResolvedValue({
+    ok: true,
+    sourceKind: 'move',
+    sourceId: 'evt-1',
+  });
   getProgramById.mockResolvedValue({ id: 'move-1', name: 'Move One' });
-  approvedApproach.loadApprovedSolutionApproach.mockResolvedValue({ decisionHash: 'decision-hash-1' });
-  contextExtract.loadCurrentMoveContextExtractFreshness.mockResolvedValue({ evidenceFingerprint: 'context-hash-1' });
+  approvedApproach.loadApprovedSolutionApproach.mockResolvedValue({
+    decisionHash: 'decision-hash-1',
+  });
+  contextExtract.loadCurrentMoveContextExtractFreshness.mockResolvedValue({
+    evidenceFingerprint: 'context-hash-1',
+  });
   approvedEvidence.loadApprovedMoveEvidenceSnapshot.mockResolvedValue({
     revision: 'revision-current',
     approvedEvidenceCount: 0,
@@ -136,12 +166,19 @@ beforeEach(() => {
 
 describe('processDeliverableQueue', () => {
   it('sweeps, claims one run, reconstructs input from job_payload, and completes succeeded', async () => {
-    claimNextDeliverableRun
-      .mockResolvedValueOnce(claimedRow('run-1'))
-      .mockResolvedValueOnce(null); // queue empty → stop
-    runDeliverableForTenant.mockResolvedValue({ ok: true, artifactId: 'art-1', sectionCount: 9, retrievedEvidence: 4, warnings: [] });
+    claimNextDeliverableRun.mockResolvedValueOnce(claimedRow('run-1')).mockResolvedValueOnce(null); // queue empty → stop
+    runDeliverableForTenant.mockResolvedValue({
+      ok: true,
+      artifactId: 'art-1',
+      sectionCount: 9,
+      retrievedEvidence: 4,
+      warnings: [],
+    });
 
-    const result = await processDeliverableQueue({ workerId: 'worker-1', batchSize: 5 });
+    const result = await processDeliverableQueue({
+      workerId: 'worker-1',
+      batchSize: 5,
+    });
 
     expect(sweepStaleDeliverableRuns).toHaveBeenCalledTimes(1);
     expect(result.processed).toEqual(['run-1']);
@@ -167,10 +204,7 @@ describe('processDeliverableQueue', () => {
       clientId: 'c1',
       tenantKey: 'skyharbor-air',
     });
-    expect(completeDeliverableRun).toHaveBeenCalledWith(
-      'run-1',
-      expect.objectContaining({ status: 'succeeded', artifactId: 'art-1' }),
-    );
+    expect(completeDeliverableRun).toHaveBeenCalledWith('run-1', expect.objectContaining({ status: 'succeeded', artifactId: 'art-1' }));
   });
 
   it('preserves a queued Moves registry key when it differs from the orchestrator deliverable type', async () => {
@@ -199,20 +233,55 @@ describe('processDeliverableQueue', () => {
       warnings: [],
     });
 
-    await processDeliverableQueue({ workerId: 'worker-root-cause', batchSize: 5 });
+    await processDeliverableQueue({
+      workerId: 'worker-root-cause',
+      batchSize: 5,
+    });
 
     expect(runDeliverableForTenant).toHaveBeenCalledWith(
       expect.objectContaining({
         module: 'moves',
         deliverableType: 'discovery_report',
         deliverableTypeKey: 'root_cause_worksheet',
+        phase: 2,
         sourceArtifactRef: 'move-1',
         tenantClientKey: 'skyharbor-air',
       }),
     );
     expect(completeDeliverableRun).toHaveBeenCalledWith(
       'run-root-cause',
-      expect.objectContaining({ status: 'succeeded', artifactId: 'art-root-cause' }),
+      expect.objectContaining({
+        status: 'succeeded',
+        artifactId: 'art-root-cause',
+      }),
+    );
+  });
+
+  it('blocks legacy Moves jobs when the canonical deliverable phase is unresolved', async () => {
+    const unresolvedRun = {
+      ...claimedRow('run-unresolved-moves-phase'),
+      module: 'moves',
+      jobPayload: {
+        ...jobPayload,
+        module: 'moves',
+        sourceArtifactRef: 'move-1',
+        evidenceSnapshotHash: 'revision-current',
+      },
+    };
+    claimNextDeliverableRun.mockResolvedValueOnce(unresolvedRun).mockResolvedValueOnce(null);
+
+    await processDeliverableQueue({
+      workerId: 'worker-unresolved-phase',
+      batchSize: 2,
+    });
+
+    expect(runDeliverableForTenant).not.toHaveBeenCalled();
+    expect(completeDeliverableRun).toHaveBeenCalledWith(
+      'run-unresolved-moves-phase',
+      expect.objectContaining({
+        status: 'blocked',
+        error: 'moves_deliverable_phase_unresolved',
+      }),
     );
   });
 
@@ -245,18 +314,22 @@ describe('processDeliverableQueue', () => {
     expect(runDeliverableForTenant).not.toHaveBeenCalled();
     expect(completeDeliverableRun).toHaveBeenCalledWith(
       'run-stale-decision',
-      expect.objectContaining({ status: 'blocked', error: 'stale_decision_basis' }),
+      expect.objectContaining({
+        status: 'blocked',
+        error: 'stale_decision_basis',
+      }),
     );
   });
 
   it('maps a blocked result to status blocked', async () => {
     claimNextDeliverableRun.mockResolvedValueOnce(claimedRow('run-2')).mockResolvedValueOnce(null);
-    runDeliverableForTenant.mockResolvedValue({ ok: false, blockers: ['no register'], blockedReason: 'gate blocked' });
+    runDeliverableForTenant.mockResolvedValue({
+      ok: false,
+      blockers: ['no register'],
+      blockedReason: 'gate blocked',
+    });
     await processDeliverableQueue({ workerId: 'w', batchSize: 5 });
-    expect(completeDeliverableRun).toHaveBeenCalledWith(
-      'run-2',
-      expect.objectContaining({ status: 'blocked', blockers: ['no register'] }),
-    );
+    expect(completeDeliverableRun).toHaveBeenCalledWith('run-2', expect.objectContaining({ status: 'blocked', blockers: ['no register'] }));
   });
 
   it('processes premium Moves artifact jobs through generateArtifact and move_artifacts persistence', async () => {
@@ -321,11 +394,7 @@ describe('processDeliverableQueue', () => {
       expect.objectContaining({
         status: 'succeeded',
         artifactId: 'move-artifact-1',
-        warnings: expect.arrayContaining([
-          'golden_bar_pass=true',
-          'word_count=2200',
-          'svg_count=2',
-        ]),
+        warnings: expect.arrayContaining(['golden_bar_pass=true', 'word_count=2200', 'svg_count=2']),
       }),
     );
   });
@@ -391,7 +460,10 @@ describe('processDeliverableQueue', () => {
     await processDeliverableQueue({ workerId: 'w', batchSize: 5 });
     expect(completeDeliverableRun).toHaveBeenCalledWith(
       'run-3',
-      expect.objectContaining({ status: 'failed', error: expect.stringContaining('claude exploded') }),
+      expect.objectContaining({
+        status: 'failed',
+        error: expect.stringContaining('claude exploded'),
+      }),
     );
   });
 
@@ -402,7 +474,10 @@ describe('processDeliverableQueue', () => {
     expect(runDeliverableForTenant).not.toHaveBeenCalled();
     expect(completeDeliverableRun).toHaveBeenCalledWith(
       'run-4',
-      expect.objectContaining({ status: 'failed', error: expect.stringContaining('job_payload missing') }),
+      expect.objectContaining({
+        status: 'failed',
+        error: expect.stringContaining('job_payload missing'),
+      }),
     );
   });
 
@@ -435,8 +510,15 @@ describe('processDeliverableQueue', () => {
 
   it('is bounded: processes at most batchSize runs per invocation', async () => {
     claimNextDeliverableRun.mockResolvedValue(claimedRow('run-loop')); // always returns a row
-    runDeliverableForTenant.mockResolvedValue({ ok: true, artifactId: 'a', warnings: [] });
-    const result = await processDeliverableQueue({ workerId: 'w', batchSize: 3 });
+    runDeliverableForTenant.mockResolvedValue({
+      ok: true,
+      artifactId: 'a',
+      warnings: [],
+    });
+    const result = await processDeliverableQueue({
+      workerId: 'w',
+      batchSize: 3,
+    });
     expect(result.processed).toHaveLength(3);
     expect(claimNextDeliverableRun).toHaveBeenCalledTimes(3);
   });

@@ -12,12 +12,10 @@
 import type { NextRequest } from 'next/server';
 import { requireTenancy, tenancyErrorResponse } from '@/lib/auth/tenancy';
 import { createDeliverableRun, type DeliverableRunJobPayload } from '@/lib/deliverables/orchestrator/runs-repository';
-import {
-  tenantInvariantHttpStatus,
-  validateDeliverableTenantInvariant,
-} from '@/lib/deliverables/orchestrator/tenant-invariant';
+import { tenantInvariantHttpStatus, validateDeliverableTenantInvariant } from '@/lib/deliverables/orchestrator/tenant-invariant';
 import type { AudienceRole, DeliverableModule, OutputFormat } from '@/lib/deliverables/orchestrator/types';
 import { loadApprovedMoveEvidenceSnapshot } from '@/lib/programs/approved-move-evidence-snapshot';
+import { phaseForOrchestratorDeliverableType } from '@/lib/programs/orchestrated-deliverable-map';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -43,7 +41,13 @@ export async function POST(req: NextRequest) {
   try {
     const ctx = await requireTenancy();
     if (!ctx.clientKey) {
-      return Response.json({ error: 'no_tenant_key', detail: 'Active tenant has no resolvable tenant key.' }, { status: 409 });
+      return Response.json(
+        {
+          error: 'no_tenant_key',
+          detail: 'Active tenant has no resolvable tenant key.',
+        },
+        { status: 409 },
+      );
     }
     const clientKey = ctx.clientKey;
 
@@ -55,7 +59,13 @@ export async function POST(req: NextRequest) {
     }
 
     if (!body.module || !MODULES.includes(body.module)) {
-      return Response.json({ error: 'bad_request', detail: `module must be one of ${MODULES.join(', ')}.` }, { status: 400 });
+      return Response.json(
+        {
+          error: 'bad_request',
+          detail: `module must be one of ${MODULES.join(', ')}.`,
+        },
+        { status: 400 },
+      );
     }
     const useCaseArchetype = body.useCaseArchetype?.trim();
     const deliverableType = body.deliverableType?.trim();
@@ -86,12 +96,24 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const evidenceSnapshot = body.module === 'moves'
-      ? await loadApprovedMoveEvidenceSnapshot({
-          tenantKey: clientKey,
-          moveId: sourceArtifactRef,
-        })
-      : null;
+    const phase = body.module === 'moves' ? phaseForOrchestratorDeliverableType(deliverableType) : null;
+    if (body.module === 'moves' && phase === null) {
+      return Response.json(
+        {
+          error: 'moves_deliverable_phase_unresolved',
+          detail: 'The Moves deliverable must map to exactly one canonical phase before generation.',
+        },
+        { status: 422 },
+      );
+    }
+
+    const evidenceSnapshot =
+      body.module === 'moves'
+        ? await loadApprovedMoveEvidenceSnapshot({
+            tenantKey: clientKey,
+            moveId: sourceArtifactRef,
+          })
+        : null;
     if (body.module === 'moves' && !evidenceSnapshot) {
       return Response.json(
         {
@@ -114,9 +136,8 @@ export async function POST(req: NextRequest) {
       clientDisplayName: body.clientDisplayName?.trim() || 'Client',
       initiativeDisplayName: body.initiativeDisplayName?.trim() || useCaseArchetype,
       sourceArtifactRef,
-      ...(evidenceSnapshot
-        ? { evidenceSnapshotHash: evidenceSnapshot.revision }
-        : {}),
+      ...(phase !== null ? { phase } : {}),
+      ...(evidenceSnapshot ? { evidenceSnapshotHash: evidenceSnapshot.revision } : {}),
       ...(body.evidenceQuery ? { evidenceQuery: body.evidenceQuery } : {}),
       ...(body.outputFormats ? { outputFormats: body.outputFormats } : {}),
       ...(body.model ? { model: body.model } : {}),
