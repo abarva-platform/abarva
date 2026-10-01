@@ -54,6 +54,8 @@ before and after shows zero changed cells outside the id columns.
 
 ## Layer Impact
 
+Release lane: `client-data-lane`. This change is a client-scoped seed/intake data change plus the tooling that guards it.
+
 - **Layer 1, client intake:** the 15 intake CSVs of one synthetic tenant gain or correct id columns.
   Three files gain an id column they did not have. No other cell changes.
 - **Layer 3, canonical model:** the tenant's identity ledger grows from 1,224 to 1,627 entries
