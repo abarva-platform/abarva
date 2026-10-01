@@ -756,6 +756,23 @@ async function getCanonicalAdminClientFallback(): Promise<{
   return { key, name: getClientOption(key).name };
 }
 
+export async function getCanonicalAdminSourceEventReadClient(
+  eventId: string,
+): Promise<{ eventId: string; key: ClientKey; name: string } | null> {
+  if (!isUuid(eventId)) return null;
+  const client = await getCanonicalAdminClientFallback();
+  if (!client) return null;
+  const persistedEvent = await getPersistedSourceEventRow(eventId, client.key);
+  if (
+    !persistedEvent ||
+    persistedEvent.id !== eventId ||
+    !sourceEventBelongsToClientAlias(persistedEvent.client_key, client.key)
+  ) {
+    return null;
+  }
+  return { eventId: persistedEvent.id, ...client };
+}
+
 function formatSourceEventType(eventType: string): string {
   return eventType
     .split(/[_-]+/)

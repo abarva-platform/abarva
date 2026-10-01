@@ -1,6 +1,11 @@
 import { notFound } from "next/navigation";
 import { SourceAnalyticsCanvas } from "@/components/source/canvas/analytics";
-import { getSourcingEvent, getSourcingEventForResolvedClient, isUuid } from "@/lib/source/queries";
+import {
+  getCanonicalAdminSourceEventReadClient,
+  getSourcingEvent,
+  getSourcingEventForResolvedClient,
+  isUuid,
+} from "@/lib/source/queries";
 import { getActiveClientRow } from "@/lib/active-client";
 import { canonicalClientDisplayName } from "@/lib/client-config";
 import { listSourceArtifactsForSourceEventId } from "@/lib/source/artifact-registry";
@@ -109,8 +114,8 @@ export default async function SourceEventDetailPage({
   const canvasTenancy = await requireTenancy().catch(() => null);
   const tenancyClientKey = canvasTenancy?.clientKey?.trim() || null;
   // The event lookup can admit a canonical admin without a clients-row match.
-  // Revalidate the exact event under the authenticated tenant before reading
-  // its facts; an unrelated tenant must never turn a sample into a live view.
+  // Revalidate the exact persisted event through the same authorized path
+  // before reading its facts; an unrelated tenant stays on the sample view.
   const tenantBoundEvent = !clientRow && canvasTenancy && tenancyClientKey
     ? await getSourcingEventForResolvedClient(event.id, {
         activeClientKey: tenancyClientKey,
@@ -118,10 +123,15 @@ export default async function SourceEventDetailPage({
         tenancy: canvasTenancy,
       }).catch(() => null)
     : null;
+  const canonicalAdminReadClient = !clientRow && !canvasTenancy
+    ? await getCanonicalAdminSourceEventReadClient(event.id).catch(() => null)
+    : null;
   const activeClient = clientRow ??
     (tenantBoundEvent?.id === event.id && tenancyClientKey
       ? { key: tenancyClientKey, name: event.accountName }
-      : null);
+      : canonicalAdminReadClient?.eventId === event.id
+        ? canonicalAdminReadClient
+        : null);
 
   // Resolve viewing stage from ?stage=<key>; default to current stage.
   const stageParam = typeof sp.stage === "string" ? sp.stage : null;

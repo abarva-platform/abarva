@@ -1,4 +1,5 @@
 import {
+  getCanonicalAdminSourceEventReadClient,
   getSourcingEvent,
   getSourcingEventForResolvedClient,
   getSourcingEventArtifact,
@@ -6,6 +7,8 @@ import {
 } from "../queries";
 import { CANONICAL_TENANT_KEYS } from "@/config/tenants/CANONICAL_TENANTS";
 import { appClientKeyForTenant } from "@/lib/tenant/aliases";
+import { CANONICAL_CLIENT_ADMIN_EMAILS } from "@/lib/auth/canonical-auth-roster";
+import { inferClientKeyFromEmail } from "@/lib/client-config";
 
 const mockSourceEventsAdapter = {
   getPendingEventsForClient: jest.fn(),
@@ -222,6 +225,52 @@ describe("resolved Source event tenant boundary", () => {
       mockSourceEventsAdapter.getEventByCodeForClient,
     ).not.toHaveBeenCalledWith(foreignEventIdentifier, foreignCanonicalTenant);
     expect(canReadSourceEvent).not.toHaveBeenCalled();
+  });
+});
+
+describe("canonical-admin Source event read context", () => {
+  const eventId = "00000000-0000-4000-8000-000000000111";
+  const adminEmail = CANONICAL_CLIENT_ADMIN_EMAILS[0];
+  const adminClientKey = inferClientKeyFromEmail(adminEmail)!;
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockEmptySourceEventsTable();
+    getCurrentUser.mockResolvedValue({ email: adminEmail });
+    getActiveClientRow.mockResolvedValue(null);
+    requireTenancy.mockRejectedValue(new Error("no_client"));
+  });
+
+  it("returns the exact persisted event's client for a rostered admin without a client row", async () => {
+    mockSourceEventsAdapter.getEventByIdForClient.mockImplementation(async (id: string, key: string) =>
+      id === eventId && key === adminClientKey ? { id: eventId, client_key: adminClientKey } : null);
+
+    await expect(getCanonicalAdminSourceEventReadClient(eventId)).resolves.toMatchObject({
+      eventId,
+      key: adminClientKey,
+    });
+    expect(mockSourceEventsAdapter.getEventByIdForClient).toHaveBeenCalledWith(eventId, adminClientKey);
+  });
+
+  it("rejects a foreign row even if a read adapter returns it", async () => {
+    mockSourceEventsAdapter.getEventByIdForClient.mockResolvedValue({
+      id: eventId,
+      client_key: "unrelated-client",
+    });
+
+    await expect(getCanonicalAdminSourceEventReadClient(eventId)).resolves.toBeNull();
+  });
+
+  it("rejects an unrostered user before querying an event", async () => {
+    getCurrentUser.mockResolvedValue({ email: "not-rostered@example.invalid" });
+
+    await expect(getCanonicalAdminSourceEventReadClient(eventId)).resolves.toBeNull();
+    expect(mockSourceEventsAdapter.getEventByIdForClient).not.toHaveBeenCalled();
+  });
+
+  it("does not turn a seed-only event into a live read context", async () => {
+    await expect(getCanonicalAdminSourceEventReadClient("apex-retail-ams-outsourcing-2026"))
+      .resolves.toBeNull();
   });
 });
 
