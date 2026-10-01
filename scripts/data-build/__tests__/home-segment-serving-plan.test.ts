@@ -20,6 +20,9 @@ const expectedSourceHashes = {
   [functionPath]: functionHash,
 };
 const sourceSetHash = homeSegmentSourceSetHash(expectedSourceHashes)!;
+const snapshotSourceHash = "c".repeat(64);
+const projectionSourceHash = "d".repeat(64);
+const projectionHash = "e".repeat(64);
 const sourceSetBinding: SegmentSourceSetBinding = {
   tenantKey,
   assessmentId,
@@ -30,14 +33,16 @@ const sourceSetBinding: SegmentSourceSetBinding = {
     id: "snapshot-one",
     tenantKey,
     assessmentId,
-    sourceHash: sourceSetHash,
+    sourceHash: snapshotSourceHash,
     qualityState: "passed",
   },
   projection: {
     tenantKey,
     assessmentId,
     snapshotId: "snapshot-one",
-    sourceHash: sourceSetHash,
+    projectionKey: "home_enterprise_landscape",
+    sourceHash: projectionSourceHash,
+    projectionHash,
     qualityState: "passed",
   },
 };
@@ -160,6 +165,8 @@ function plan(
     edges: [edge],
     expectedSourceHashes,
     sourceSetBinding,
+    targetSnapshot: sourceSetBinding.snapshot,
+    targetProjection: sourceSetBinding.projection,
     sourceFiles,
     sourceRecords,
     ...overrides,
@@ -234,23 +241,61 @@ describe("Home segment serving admission plan", () => {
     );
   });
 
-  it("blocks a different snapshot or projection source set", () => {
+  it("requires independently read snapshot and projection hashes to match the approved binding", () => {
+    expect(sourceSetHash).not.toBe(snapshotSourceHash);
+    expect(sourceSetHash).not.toBe(projectionSourceHash);
+    expect(plan().sourceSet.state).toBe("verified");
     expect(
       plan({
-        sourceSetBinding: {
-          ...sourceSetBinding,
-          snapshot: { ...sourceSetBinding.snapshot, sourceHash: "c".repeat(64) },
+        targetSnapshot: {
+          ...sourceSetBinding.snapshot,
+          sourceHash: "e".repeat(64),
         },
       }).sourceSet.reason,
     ).toBe("target-snapshot-mismatch");
     expect(
       plan({
+        targetProjection: {
+          ...sourceSetBinding.projection,
+          sourceHash: "e".repeat(64),
+        },
+      }).sourceSet.reason,
+    ).toBe("target-snapshot-mismatch");
+    expect(
+      plan({
+        targetProjection: {
+          ...sourceSetBinding.projection,
+          snapshotId: "older-snapshot",
+        },
+      }).sourceSet.reason,
+    ).toBe("target-snapshot-mismatch");
+    expect(
+      plan({
+        targetProjection: {
+          ...sourceSetBinding.projection,
+          projectionHash: "f".repeat(64),
+        },
+      }).sourceSet.reason,
+    ).toBe("target-snapshot-mismatch");
+    expect(
+      plan({
+        targetProjection: {
+          ...sourceSetBinding.projection,
+          projectionKey: "source_contract_360",
+        },
+      }).sourceSet.reason,
+    ).toBe("target-snapshot-mismatch");
+    expect(plan({ targetSnapshot: null }).sourceSet.reason).toBe(
+      "source-set-proof-missing",
+    );
+    expect(plan({ targetProjection: null }).sourceSet.reason).toBe(
+      "source-set-proof-missing",
+    );
+    expect(
+      plan({
         sourceSetBinding: {
           ...sourceSetBinding,
-          projection: {
-            ...sourceSetBinding.projection,
-            snapshotId: "older-snapshot",
-          },
+          snapshot: { ...sourceSetBinding.snapshot, sourceHash: "invalid" },
         },
       }).sourceSet.reason,
     ).toBe("target-snapshot-mismatch");
@@ -277,6 +322,21 @@ describe("Home segment serving admission plan", () => {
     ).toBe("source-catalog-mismatch");
     expect(
       plan({ sourceFiles: [...sourceFiles, sourceFiles[0]] }).sourceSet.reason,
+    ).toBe("source-catalog-mismatch");
+    expect(
+      plan({
+        sourceFiles: [
+          ...sourceFiles,
+          {
+            id: "partial-file",
+            tenantKey,
+            assessmentId,
+            fileName: "unreviewed.csv",
+            fileHash: "c".repeat(64),
+            qualityState: "partial",
+          },
+        ],
+      }).sourceSet.reason,
     ).toBe("source-catalog-mismatch");
   });
 

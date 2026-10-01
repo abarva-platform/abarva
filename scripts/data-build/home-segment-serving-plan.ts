@@ -22,26 +22,32 @@ export type EclSourceRecord = {
   parseState: string;
 };
 
+export type EclSnapshotProof = {
+  id: string;
+  tenantKey: string;
+  assessmentId: string;
+  sourceHash: string;
+  qualityState: string;
+};
+
+export type EclProjectionProof = {
+  tenantKey: string;
+  assessmentId: string;
+  snapshotId: string;
+  projectionKey: string;
+  sourceHash: string;
+  projectionHash: string;
+  qualityState: string;
+};
+
 export type SegmentSourceSetBinding = {
   tenantKey: string;
   assessmentId: string;
   reviewState: "approved" | "candidate";
   sourceSetHash: string;
   files: Readonly<Record<string, string>>;
-  snapshot: {
-    id: string;
-    tenantKey: string;
-    assessmentId: string;
-    sourceHash: string;
-    qualityState: string;
-  };
-  projection: {
-    tenantKey: string;
-    assessmentId: string;
-    snapshotId: string;
-    sourceHash: string;
-    qualityState: string;
-  };
+  snapshot: EclSnapshotProof;
+  projection: EclProjectionProof;
 };
 
 export type DeclaredSegmentEdge = {
@@ -88,6 +94,8 @@ type Input = {
   edges: readonly DeclaredSegmentEdge[];
   expectedSourceHashes: Readonly<Record<string, string>>;
   sourceSetBinding: SegmentSourceSetBinding | null;
+  targetSnapshot: EclSnapshotProof | null;
+  targetProjection: EclProjectionProof | null;
   sourceFiles: readonly EclSourceFile[];
   sourceRecords: readonly EclSourceRecord[];
 };
@@ -157,6 +165,8 @@ export function homeSegmentSourceSetHash(
 
 function verifySourceSet(input: Input): SegmentServingPlan["sourceSet"] {
   const binding = input.sourceSetBinding;
+  const snapshot = input.targetSnapshot;
+  const projection = input.targetProjection;
   const expected = sourceSetFiles(input.expectedSourceHashes);
   const reviewed = binding && sourceSetFiles(binding.files);
   const hash = homeSegmentSourceSetHash(input.expectedSourceHashes);
@@ -164,6 +174,8 @@ function verifySourceSet(input: Input): SegmentServingPlan["sourceSet"] {
     !binding ||
     !binding.snapshot ||
     !binding.projection ||
+    !snapshot ||
+    !projection ||
     !expected ||
     !reviewed ||
     !hash
@@ -182,12 +194,26 @@ function verifySourceSet(input: Input): SegmentServingPlan["sourceSet"] {
     binding.snapshot.assessmentId !== input.assessmentId ||
     !binding.snapshot.id ||
     binding.snapshot.qualityState !== "passed" ||
-    binding.snapshot.sourceHash !== hash ||
+    !/^[a-f0-9]{64}$/.test(binding.snapshot.sourceHash) ||
+    snapshot.id !== binding.snapshot.id ||
+    snapshot.tenantKey !== binding.snapshot.tenantKey ||
+    snapshot.assessmentId !== binding.snapshot.assessmentId ||
+    snapshot.sourceHash !== binding.snapshot.sourceHash ||
+    snapshot.qualityState !== binding.snapshot.qualityState ||
     binding.projection.tenantKey !== input.tenantKey ||
     binding.projection.assessmentId !== input.assessmentId ||
     binding.projection.snapshotId !== binding.snapshot.id ||
+    binding.projection.projectionKey !== "home_enterprise_landscape" ||
     binding.projection.qualityState !== "passed" ||
-    binding.projection.sourceHash !== hash
+    !/^[a-f0-9]{64}$/.test(binding.projection.sourceHash) ||
+    !/^[a-f0-9]{64}$/.test(binding.projection.projectionHash) ||
+    projection.tenantKey !== binding.projection.tenantKey ||
+    projection.assessmentId !== binding.projection.assessmentId ||
+    projection.snapshotId !== binding.projection.snapshotId ||
+    projection.projectionKey !== binding.projection.projectionKey ||
+    projection.sourceHash !== binding.projection.sourceHash ||
+    projection.projectionHash !== binding.projection.projectionHash ||
+    projection.qualityState !== binding.projection.qualityState
   )
     return { state: "blocked", hash, reason: "target-snapshot-mismatch" };
   const expectedCatalog = expected
@@ -197,12 +223,16 @@ function verifySourceSet(input: Input): SegmentServingPlan["sourceSet"] {
     .filter(
       (file) =>
         file.tenantKey === input.tenantKey &&
-        file.assessmentId === input.assessmentId &&
-        file.qualityState === "accepted",
+        file.assessmentId === input.assessmentId,
     )
-    .map((file) => [file.fileName, file.fileHash] as [string, string])
+    .map((file) => [file.fileName, file.fileHash, file.qualityState])
     .sort(([left], [right]) => left.localeCompare(right));
-  if (JSON.stringify(catalog) !== JSON.stringify(expectedCatalog))
+  if (
+    JSON.stringify(catalog) !==
+    JSON.stringify(
+      expectedCatalog.map(([name, fileHash]) => [name, fileHash, "accepted"]),
+    )
+  )
     return { state: "blocked", hash, reason: "source-catalog-mismatch" };
   return { state: "verified", hash, reason: null };
 }
