@@ -31,6 +31,7 @@ The Home narrative builder now requires independently recorded evidence-readines
 
 - Narrative builder governance-ledger read and exact source/content-hash matching for projected rows and derived signals.
 - Intake-source quarantine and removal of locally fabricated retrieval/citation readiness.
+- Model-visible coverage and contract denominators count only admitted rows; withheld-row counts remain operator diagnostics.
 - Focused planted readiness cases and updated narrative contract tests.
 
 ## QA / Validation

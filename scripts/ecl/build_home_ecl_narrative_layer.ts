@@ -2016,11 +2016,6 @@ function buildGovernedSignalPacket(
     });
   }
 
-  const applications = rowsOf(rows, "applications_systems", "application");
-  const contracts = rowsOf(rows, "vendor_contracts", "contract");
-  const infrastructure = rowsOf(rows, "infrastructure_platforms", "infrastructure");
-  const dataFlows = dataMovementRows(rows);
-  const dataWorkloads = dataWorkloadRows(rows);
   const permittedApplications = rowsOf(permittedRows, "applications_systems", "application");
   const permittedContracts = rowsOf(permittedRows, "vendor_contracts", "contract");
   const permittedInfrastructure = rowsOf(permittedRows, "infrastructure_platforms", "infrastructure");
@@ -2133,16 +2128,11 @@ function buildGovernedSignalPacket(
     analyticalLenses: [],
     coverageManifest: {
       dimensionCoverage: [
-        { key: "home_applications_systems", recordCount: applications.length, evidencedShare: applications.length ? 1 : 0 },
-        { key: "home_vendor_contracts", recordCount: contracts.length, evidencedShare: contracts.length ? 1 : 0 },
-        { key: "home_infrastructure_platforms", recordCount: infrastructure.length, evidencedShare: infrastructure.length ? 1 : 0 },
-        { key: "home_data_flows", recordCount: dataFlows.length, evidencedShare: dataFlows.length ? 1 : 0 },
-        { key: "home_data_workload_segments", recordCount: dataWorkloads.length, evidencedShare: dataWorkloads.length ? 1 : 0 },
-        { key: "home_agent_ready_applications_systems", recordCount: permittedApplications.length, evidencedShare: applications.length ? permittedApplications.length / applications.length : 0 },
-        { key: "home_agent_ready_vendor_contracts", recordCount: permittedContracts.length, evidencedShare: contracts.length ? permittedContracts.length / contracts.length : 0 },
-        { key: "home_agent_ready_infrastructure_platforms", recordCount: permittedInfrastructure.length, evidencedShare: infrastructure.length ? permittedInfrastructure.length / infrastructure.length : 0 },
-        { key: "home_agent_ready_data_flows", recordCount: permittedDataFlows.length, evidencedShare: dataFlows.length ? permittedDataFlows.length / dataFlows.length : 0 },
-        { key: "home_agent_ready_data_workload_segments", recordCount: permittedDataWorkloads.length, evidencedShare: dataWorkloads.length ? permittedDataWorkloads.length / dataWorkloads.length : 0 },
+        { key: "home_agent_ready_applications_systems", recordCount: permittedApplications.length, evidencedShare: permittedApplications.length ? 1 : 0 },
+        { key: "home_agent_ready_vendor_contracts", recordCount: permittedContracts.length, evidencedShare: permittedContracts.length ? 1 : 0 },
+        { key: "home_agent_ready_infrastructure_platforms", recordCount: permittedInfrastructure.length, evidencedShare: permittedInfrastructure.length ? 1 : 0 },
+        { key: "home_agent_ready_data_flows", recordCount: permittedDataFlows.length, evidencedShare: permittedDataFlows.length ? 1 : 0 },
+        { key: "home_agent_ready_data_workload_segments", recordCount: permittedDataWorkloads.length, evidencedShare: permittedDataWorkloads.length ? 1 : 0 },
       ],
       leadershipToPortfolioLinkage: {
         resolvableRows: 0,
@@ -2153,7 +2143,7 @@ function buildGovernedSignalPacket(
       },
       vendorDocumentEvidence: {
         contractsWithExtraction: 0,
-        totalContracts: contracts.length,
+        totalContracts: permittedContracts.length,
         interpretation: "Document extraction coverage is outside this Home projection narrative input and must be checked in the commercial evidence layer.",
       },
       metricComparability: {
