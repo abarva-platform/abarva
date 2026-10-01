@@ -407,14 +407,16 @@ test("the loader runs when invoked directly, through a symlinked root too, and n
   const scratch = await mkdtemp(path.join(tmpdir(), "ecl-load-gate-entry-"));
   const linkedRoot = path.join(scratch, "linked-root");
   // With no job binding in the environment, an executing run stops at its first gate.
-  const env = Object.fromEntries(
-    Object.entries(process.env).filter(
-      ([key]) =>
-        key !== "DATABASE_URL" &&
-        !key.startsWith("ECL_SYNTHETIC_") &&
-        !key.startsWith("AZURE_STORAGE_"),
-    ),
-  );
+  const env = { ...process.env };
+  for (const key of Object.keys(env)) {
+    if (
+      key === "DATABASE_URL" ||
+      key.startsWith("ECL_SYNTHETIC_") ||
+      key.startsWith("AZURE_STORAGE_")
+    ) {
+      delete env[key];
+    }
+  }
   const run = (cwd: string, args: string[]) =>
     spawnSync(process.execPath, ["--import", "tsx", ...args], {
       cwd,
