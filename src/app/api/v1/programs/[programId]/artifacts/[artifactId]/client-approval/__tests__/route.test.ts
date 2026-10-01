@@ -405,6 +405,127 @@ describe("POST /api/v1/programs/[programId]/artifacts/[artifactId]/client-approv
         },
       }),
     );
+    expect(mockSaveMoveArtifact).toHaveBeenCalledWith(
+      ctx,
+      expect.objectContaining({
+        sourceBasis: "client_approved_deliverable",
+        confidence: "medium",
+        citationReady: false,
+        metadata: expect.objectContaining({
+          factualClaimsIndependentlyEvidenceVerified: false,
+        }),
+      }),
+    );
+  });
+
+  it("blocks a reviewed upload that introduces an unsupported financial amount", async () => {
+    mockGetGeneratedArtifactById.mockResolvedValue({
+      ...generatedArtifact,
+      metadata: {
+        ...generatedArtifact.metadata,
+        renderableDoc: {
+          ...generatedArtifact.metadata.renderableDoc,
+          generatedSections: [
+            {
+              title: "Value hypothesis",
+              bodyMarkdown:
+                "$8.0M is an unvalidated annual value hypothesis; Finance has not confirmed it.",
+            },
+          ],
+        },
+      },
+    });
+    mockExtractProgramEvidenceFromUploadBuffer.mockResolvedValue({
+      extractedText: "$11.5M confirmed savings are approved.",
+      extractedStructured: {
+        parse_method: "docx-mammoth",
+        warnings: [],
+      },
+    });
+    const { POST } = await import("../route");
+
+    const res = await POST(uploadedReviewRequest() as never, { params });
+    const json = (await res.json()) as Record<string, unknown>;
+
+    expect(res.status).toBe(422);
+    expect(json).toMatchObject({
+      error: "unsupported_financial_claim_delta",
+    });
+    expect(json.detail).toContain("financial evidence");
+    expect(mockSaveMoveArtifact).not.toHaveBeenCalled();
+    expect(mockDraftModuleDeliverable).not.toHaveBeenCalled();
+    expect(mockSignOffDeliverable).not.toHaveBeenCalled();
+  });
+
+  it("blocks a reviewed upload that upgrades an existing hypothesis to a confirmed claim", async () => {
+    mockGetGeneratedArtifactById.mockResolvedValue({
+      ...generatedArtifact,
+      metadata: {
+        ...generatedArtifact.metadata,
+        renderableDoc: {
+          ...generatedArtifact.metadata.renderableDoc,
+          generatedSections: [
+            {
+              title: "Value hypothesis",
+              bodyMarkdown:
+                "$8.0M is a value hypothesis and is not Finance validated.",
+            },
+          ],
+        },
+      },
+    });
+    mockExtractProgramEvidenceFromUploadBuffer.mockResolvedValue({
+      extractedText: "$8,000,000 in savings is Finance validated and confirmed.",
+      extractedStructured: {
+        parse_method: "docx-mammoth",
+        warnings: [],
+      },
+    });
+    const { POST } = await import("../route");
+
+    const res = await POST(uploadedReviewRequest() as never, { params });
+    const json = (await res.json()) as Record<string, unknown>;
+
+    expect(res.status).toBe(422);
+    expect(json).toMatchObject({
+      error: "unsupported_financial_claim_delta",
+    });
+    expect(mockSaveMoveArtifact).not.toHaveBeenCalled();
+    expect(mockDraftModuleDeliverable).not.toHaveBeenCalled();
+    expect(mockSignOffDeliverable).not.toHaveBeenCalled();
+  });
+
+  it("allows equivalent formatting of an existing unvalidated amount", async () => {
+    mockGetGeneratedArtifactById.mockResolvedValue({
+      ...generatedArtifact,
+      metadata: {
+        ...generatedArtifact.metadata,
+        renderableDoc: {
+          ...generatedArtifact.metadata.renderableDoc,
+          generatedSections: [
+            {
+              title: "Value hypothesis",
+              bodyMarkdown: "$8.0M remains an unvalidated value hypothesis.",
+            },
+          ],
+        },
+      },
+    });
+    mockExtractProgramEvidenceFromUploadBuffer.mockResolvedValue({
+      extractedText:
+        "$8,000,000 remains an unvalidated value hypothesis.",
+      extractedStructured: {
+        parse_method: "docx-mammoth",
+        warnings: [],
+      },
+    });
+    const { POST } = await import("../route");
+
+    const res = await POST(uploadedReviewRequest() as never, { params });
+
+    expect(res.status).toBe(200);
+    expect(mockSaveMoveArtifact).toHaveBeenCalled();
+    expect(mockSignOffDeliverable).toHaveBeenCalled();
   });
 
   it("does not sign off an accepted AI draft when final artifact storage is unavailable", async () => {
