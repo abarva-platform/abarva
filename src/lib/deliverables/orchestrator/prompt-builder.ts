@@ -37,6 +37,14 @@ const USE_CASE_TITLE: Record<string, string> = {
     "analytics capability repatriation and managed analytics exit",
 };
 
+function isMovesDesignWorkshopGuide(
+  req: DeliverableIntelligenceRequest,
+): boolean {
+  return (
+    req.module === "moves" && req.deliverableType === "design_workshop_guide"
+  );
+}
+
 function describeUseCase(archetype: string): string {
   return (
     USE_CASE_TITLE[archetype] ?? archetype.replace(/_/g, " ").toLowerCase()
@@ -124,6 +132,7 @@ function buildContextBlock(
   brief: DeliverableArtifactBrief,
   evidence: GovernedEvidenceItem[],
 ): string {
+  const designGuide = isMovesDesignWorkshopGuide(req);
   const audience = req.audience.join(", ");
   const missing =
     req.missingEvidence.length === 0
@@ -191,6 +200,13 @@ function buildContextBlock(
     `CLIENT-TO-COMPLETE ITEMS (mark as [CLIENT TO COMPLETE]; never invent):`,
     clientComplete,
     ``,
+    ...(req.generationPromptGuidance
+      ? [
+          `DELIVERABLE-SPECIFIC GENERATION GUIDANCE:`,
+          req.generationPromptGuidance,
+          ``,
+        ]
+      : []),
     `APPROVED ASSUMPTIONS (use, labelled):`,
     assumptions,
     ``,
@@ -218,25 +234,27 @@ function buildContextBlock(
       ? [`PURPOSE BOUNDARY: ${brief.prohibitedContent.join(" ")}`, ``]
       : []),
     `EXPECTED EXHIBITS:`,
-    brief.expectedExhibits.length > 0
-      ? brief.expectedExhibits
-          .map((e) =>
-            e.requiredElements && e.requiredElements.length > 0
-              ? `  - ${e.title} [${e.kind}]: MUST show ${e.requiredElements.join(", ")}.${e.legendRequired ? " Include a legend marking each element illustrative, selected, or client-confirmed." : ""}`
-              : `  - ${e.title} [${e.kind}]: ${e.purpose}`,
-          )
-          .join("\n")
-      : "  (use judgment)",
-    `EXPECTED TABLES: ${brief.expectedTables.map((t) => t.title).join("; ") || "(use judgment)"}`,
+    designGuide
+      ? "  (none; use only the required guide sections)"
+      : brief.expectedExhibits.length > 0
+        ? brief.expectedExhibits
+            .map((e) =>
+              e.requiredElements && e.requiredElements.length > 0
+                ? `  - ${e.title} [${e.kind}]: MUST show ${e.requiredElements.join(", ")}.${e.legendRequired ? " Include a legend marking each element illustrative, selected, or client-confirmed." : ""}`
+                : `  - ${e.title} [${e.kind}]: ${e.purpose}`,
+            )
+            .join("\n")
+        : "  (use judgment)",
+    `EXPECTED TABLES: ${designGuide ? "only the compact tables specified in the five required section instructions; no generic register" : brief.expectedTables.map((t) => t.title).join("; ") || "(use judgment)"}`,
     ``,
-    `QUALITY BAR: ${brief.qualityCriteria.join(" ")} Output must read like a board-grade consulting artifact, not an LLM draft. Strengthen synthesis, implications, and the decision ask.`,
+    `QUALITY BAR: ${designGuide ? "A client-ready operational facilitation guide: concise, evidence-honest, usable in a workshop, and bounded to the decisions needed for estimate-ready scope. Do not turn it into an executive decision memo or a completed design." : `${brief.qualityCriteria.join(" ")} Output must read like a board-grade consulting artifact, not an LLM draft. Strengthen synthesis, implications, and the decision ask.`}`,
     storySpineInstruction(req),
     adaptiveDepthInstruction(req),
     narrativeSpineInstruction(req),
     sizeDisciplineInstruction(req),
     deterministicNumbersInstruction(req),
     ``,
-    `FORMATTING: ${brief.formattingInstructions} Body ≈ ${req.formattingProfile.bodyPointSize}pt. ${req.formattingProfile.wideDataToExcelCompanion ? "Move wide datasets into an Excel companion exhibit rather than tiny in-document tables." : ""} Output formats: ${req.outputFormats.join(", ")}.`,
+    `FORMATTING: ${designGuide ? "Use the five required numbered sections, readable concise prose, and compact tables only where specified. No cover memo, table of contents, generic risk register, or appendix narrative." : brief.formattingInstructions} Body ≈ ${req.formattingProfile.bodyPointSize}pt. ${req.formattingProfile.wideDataToExcelCompanion ? "Move wide datasets into an Excel companion exhibit rather than tiny in-document tables." : ""} Output formats: ${req.outputFormats.join(", ")}.`,
   ].join("\n");
 }
 
@@ -333,6 +351,9 @@ function sizeDisciplineInstruction(
 ): string {
   const qb = req.qualityBar;
   if (!qb.targetBodyWordsMax) return "";
+  if (isMovesDesignWorkshopGuide(req)) {
+    return `\nSIZE DISCIPLINE: Keep the complete guide between ${qb.minBodyWords.toLocaleString()} and ${qb.targetBodyWordsMax.toLocaleString()} body words. This is a HARD QUALITY GATE, not a suggestion. The section budgets are designed to stay below the ceiling; do not add sections, appendices, a second discovery narrative, or execution-level design. This is an operational facilitation guide, not a sponsor decision memo.`;
+  }
   // When the band counts prose only, say so — otherwise the model budgets its
   // tables against a ceiling they do not consume, and under-exhibits to fit.
   const unit = qb.excludeNonProseFromBody
@@ -349,6 +370,16 @@ function conciseInstrumentDraftInstruction(
 ): string {
   const qb = req.qualityBar;
   if (!qb.enforceMaxAsBlocker || !qb.targetBodyWordsMax) return "";
+  if (isMovesDesignWorkshopGuide(req)) {
+    return [
+      `DESIGN-GUIDE LENGTH AND PURPOSE RULES:`,
+      `- Keep the complete body at or below ${qb.targetBodyWordsMax.toLocaleString()} words; follow the per-section hard caps in the REQUIRED STRUCTURE.`,
+      `- Use exactly the five required sections. No extra report, methodology, appendix narrative, or repeated evidence summary.`,
+      `- The guide prepares focused design decisions and estimate-ready scope; it does not complete the process, operating model, solution design, or roadmap execution.`,
+      `- Use compact tables for sessions, evidence carry-forward, and readiness. Include only questions and inputs that could change scope, estimate, risk, or accountability.`,
+      `- Carry forward source status and assumptions exactly; do not repeat excluded or unvalidated numerical claims as facts.`,
+    ].join("\n");
+  }
   if (req.deliverableType !== "charter") {
     return [
       `ENFORCED DOCUMENT-SIZE RULES:`,
@@ -553,19 +584,28 @@ export function buildPassPrompt(
       ].join("\n");
       break;
     case "full_draft":
+      const draftRequirements = isMovesDesignWorkshopGuide(req)
+        ? `Write Markdown with exactly the required guide sections. Include only the compact tables specified in those sections; do not add a recommendation, risk register, separate Open Inputs table, evidence appendix, or next-phase analysis unless the brief explicitly requires it. Preserve citations and placeholders, and do not describe authoring rules in the document.`
+        : `Include the required decision tables, risk/issues/dependencies table, Open Inputs Required table, evidence appendix, and a clear recommendation with next steps. Write in Markdown with numbered headings. Apply citation and evidence rules silently; do not describe those authoring rules in the document body.`;
       user = [
         context,
         ``,
-        `PASS 3 — FULL DRAFT. Using the approved plan below, write the FULL document in senior consulting style. Use governed evidence (cited [n]) for client facts; use expert knowledge for structure, framing, standard sections, exhibits, and professional language. Clearly mark every missing client fact with the correct placeholder tag. Include the required decision tables, risk/issues/dependencies table, Open Inputs Required table, evidence appendix, and a clear recommendation with next steps. Write in Markdown with numbered headings. Apply citation and evidence rules silently; do not describe those authoring rules in the document body.`,
+        `PASS 3 — FULL DRAFT. Using the approved plan below, write the FULL document in senior consulting style. Use governed evidence (cited [n]) for client facts; use expert knowledge for structure, framing, standard sections, exhibits, and professional language. Clearly mark every missing client fact with the correct placeholder tag. ${draftRequirements}`,
         conciseInstrumentDraftInstruction(req),
         `APPROVED PLAN:`,
         inputs.approvedPlanJson ?? "(plan missing)",
       ].join("\n");
       break;
     case "red_team":
+      const reviewRole = isMovesDesignWorkshopGuide(req)
+        ? "a senior engagement lead reviewing a client workshop guide"
+        : "a skeptical senior McKinsey partner and CIO advisor preparing an artifact for a board steering committee";
+      const reviewCriteria = isMovesDesignWorkshopGuide(req)
+        ? `Check the guide against its five required sections, usefulness of the session plan, decision questions, role-based participants, evidence carry-forward, explicit assumptions, facilitation prompts, ownership, readiness checks, source-status accuracy, and section/whole-document size limits. Do not request a generic risk register, executive recommendation, full future-state process, or detailed implementation plan.`
+        : `Identify, specifically and section by section: weak or generic language, missing exhibits/tables, UNSUPPORTED client claims (facts asserted without a [n] citation, an approved assumption, or a placeholder), unclear or missing decisions, thin synthesis, poor formatting, and any place client input is required but not flagged. Also flag if the draft followed the template too mechanically or is too short for a board-grade artifact.`;
       user = [
-        `Review the following ${req.deliverableType.replace(/_/g, " ")} draft as a skeptical senior McKinsey partner and CIO advisor preparing it for a board steering committee.`,
-        `Identify, specifically and section by section: weak or generic language, missing exhibits/tables, UNSUPPORTED client claims (facts asserted without a [n] citation, an approved assumption, or a placeholder), unclear or missing decisions, thin synthesis, poor formatting, and any place client input is required but not flagged. Also flag if the draft followed the template too mechanically or is too short for a board-grade artifact.`,
+        `Review the following ${req.deliverableType.replace(/_/g, " ")} draft as ${reviewRole}.`,
+        reviewCriteria,
         `Be concrete and prescriptive — name the section and the fix. Do not rewrite; produce a critique.`,
         ``,
         `DRAFT:`,
@@ -573,10 +613,16 @@ export function buildPassPrompt(
       ].join("\n");
       break;
     case "board_grade_rewrite":
+      const rewriteStandard = isMovesDesignWorkshopGuide(req)
+        ? "client-ready facilitation-guide quality"
+        : "board-grade quality";
+      const rewriteInstruction = isMovesDesignWorkshopGuide(req)
+        ? `Revise only within the five required sections. Improve usability, specificity, evidence status, and facilitation flow without adding a recommendation, generic risk register, full future-state design, execution plan, or appendix. Respect every section word cap and the total hard ceiling.`
+        : `Strengthen synthesis, implications, the decision ask, tables, exhibits, placeholders, and source discipline. Remove generic language and mechanical template-following.`;
       user = [
         context,
         ``,
-        `PASS 5 — BOARD-GRADE REWRITE. Revise the draft to board-grade quality using the critique. Strengthen synthesis, implications, the decision ask, tables, exhibits, placeholders, and source discipline. Remove generic language and mechanical template-following. Replace any P0/P1/P2/P3/P4/P5 shorthand in body prose with human phase names, and reserve "Source Register" for the appendix/evidence-register heading only. Apply citation and evidence rules silently: remove any sentence that explains those authoring rules or says claims are tied to a Source Register or evidence register. Replace "authorized to build", "not authorized", and "not authorized to build" with executive decision language such as "in scope for delivery", "hold the investment decision", or "requires further validation". DO NOT add unsupported client facts — every client-specific claim stays cited, an approved assumption, or a placeholder. Return the full revised document in Markdown.`,
+        `PASS 5 — BOARD-GRADE REWRITE. Revise the draft to ${rewriteStandard} using the critique. ${rewriteInstruction} Replace any P0/P1/P2/P3/P4/P5 shorthand in body prose with human phase names, and reserve "Source Register" for the appendix/evidence-register heading only. Apply citation and evidence rules silently: remove any sentence that explains those authoring rules or says claims are tied to a Source Register or evidence register. Replace "authorized to build", "not authorized", and "not authorized to build" with executive decision language such as "in scope for delivery", "hold the investment decision", or "requires further validation". DO NOT add unsupported client facts — every client-specific claim stays cited, an approved assumption, or a placeholder. Return the full revised document in Markdown.`,
         conciseInstrumentDraftInstruction(req),
         ``,
         `CRITIQUE TO ADDRESS:`,
@@ -587,8 +633,11 @@ export function buildPassPrompt(
       ].join("\n");
       break;
     case "render_package":
+      const renderInstruction = isMovesDesignWorkshopGuide(req)
+        ? `Convert the final client workshop guide into the structured render package. Preserve the five required sections, citations [n], assumptions, caveats, compact tables, and readiness status exactly. Do not add an executive recommendation, generic risk register, appendix narrative, or detailed future-state design.`
+        : `Convert the final board-grade document into the structured render package below. Preserve all content, citations [n], placeholders, tables, exhibits, assumptions, the Open Inputs Required table, the recommendation, and next actions. Keep evidence traceability in the evidence appendix, not repeated in the narrative body. Wide datasets should be expressed as tables with targetFormat "xlsx".`;
       user = [
-        `Convert the final board-grade document into the structured render package below. Preserve all content, citations [n], placeholders, tables, exhibits, assumptions, the Open Inputs Required table, the recommendation, and next actions. Keep evidence traceability in the evidence appendix, not repeated in the narrative body. Wide datasets should be expressed as tables with targetFormat "xlsx".`,
+        renderInstruction,
         RENDER_SCHEMA_HINT,
         ``,
         `FINAL DOCUMENT:`,
@@ -633,7 +682,7 @@ export function buildPassPrompt(
               `<existing_section_draft>\n${repair.currentBodyMarkdown}\n</existing_section_draft>`,
             ]
           : []),
-        `Write board-grade, senior-consulting Markdown for JUST this section (numbered sub-headings, tables/lists as needed). Use ONLY the assigned evidence below, cited [n]. For any client-specific number / $ / % / date you cannot ground, write [ASSUMPTION TO VALIDATE: <what>] or describe the required input for the Open Inputs Required table — NEVER invent. Before returning, verify EVERY sentence that contains a number, date, dollar value, percentage, range, ratio, or approximation has a [n] citation in that same sentence or an explicit assumption/open-input tag.`,
+        `${isMovesDesignWorkshopGuide(req) ? "Write client-ready facilitation-guide Markdown" : "Write board-grade, senior-consulting Markdown"} for JUST this section (numbered sub-headings, tables/lists as needed). Use ONLY the assigned evidence below, cited [n]. For any client-specific number / $ / % / date you cannot ground, write [ASSUMPTION TO VALIDATE: <what>] or describe the required input for the Open Inputs Required table — NEVER invent. Before returning, verify EVERY sentence that contains a number, date, dollar value, percentage, range, ratio, or approximation has a [n] citation in that same sentence or an explicit assumption/open-input tag.`,
         ``,
         `ASSIGNED EVIDENCE (the only [n] you may cite):`,
         assigned,
@@ -646,9 +695,18 @@ export function buildPassPrompt(
       const summaries = (inputs.sectionDrafts ?? [])
         .map((d) => `## ${d.title}\n${d.summary}`)
         .join("\n\n");
+      const recommendationRequirement = req.qualityBar.requiresRecommendation
+        ? `"recommendation" is 2–3 sentences stating the decision ask.`
+        : `"recommendation" is a concise description of what this working guide enables, not a decision ask.`;
+      const riskTableRequirement = req.qualityBar.requiresRiskTable
+        ? `"tables" MUST include a risk/issues/dependencies table (key:"risk_register", title:"Risk / Issues / Dependencies", columns + rows).`
+        : `Include only tables required by the brief; do not add a generic risk register unless it advances this artifact's purpose.`;
+      const nextActionsRequirement = isMovesDesignWorkshopGuide(req)
+        ? `"nextActions" is 3–6 concise design-session handoffs already reflected in the guide; do not create a project execution plan.`
+        : `"nextActions" is 3–6 concrete items appropriate to this artifact.`;
       user = [
         `You are assembling the EXECUTIVE LAYER of a ${req.deliverableType.replace(/_/g, " ")} for ${req.clientDisplayName} from its drafted sections (summaries below). Produce ONLY the document-level structured fields as JSON — do not rewrite the sections.`,
-        `Requirements: "recommendation" is 2–3 sentences stating the decision ask. "nextActions" is 3–6 concrete items. "tables" MUST include a risk/issues/dependencies table (key:"risk_register", title:"Risk / Issues / Dependencies", columns + rows). If PPTX is requested, "deckSlides" MUST author the slide storyline directly: one governing message, short points, speaker notes, and exhibitKey links to exhibits with typed data. "clientCompleteChecklist" lists what the client must still provide. Do NOT introduce unsupported client facts — any figure needs a [n], an approved assumption, or a placeholder tag.`,
+        `Requirements: ${recommendationRequirement} ${nextActionsRequirement} ${riskTableRequirement} If PPTX is requested, "deckSlides" MUST author the slide storyline directly: one governing message, short points, speaker notes, and exhibitKey links to exhibits with typed data. "clientCompleteChecklist" lists what the client must still provide. Do NOT introduce unsupported client facts — any figure needs a [n], an approved assumption, or a placeholder tag.`,
         SYNTHESIS_SCHEMA_HINT,
         ``,
         `SECTION SUMMARIES:`,

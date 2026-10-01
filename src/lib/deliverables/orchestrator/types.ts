@@ -206,6 +206,8 @@ export interface DeliverableIntelligenceRequest {
   deliverableType: string; // 'rfp_package' | 'business_case' | 'charter' | …
   audience: AudienceRole[];
   decisionContext: string; // the decision this artifact must support
+  /** Registry-authored, deliverable-specific generation constraints. */
+  generationPromptGuidance?: string;
   governedEvidenceBundle: GovernedEvidenceItem[];
   sourceRegister: SourceRegisterEntry[];
   /**
