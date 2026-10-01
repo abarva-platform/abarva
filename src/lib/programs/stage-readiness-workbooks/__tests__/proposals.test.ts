@@ -368,6 +368,70 @@ describe("stage readiness workbook proposals", () => {
     ).toThrow(/unknown stage readiness proposal id/i);
   });
 
+  it("does not allow a blank workbook response to be accepted", () => {
+    const proposalSet = buildStageReadinessProposalSet({
+      ctx,
+      program,
+      parsed: {
+        ...parsed,
+        responses: [
+          {
+            ...parsed.responses[0],
+            response: "",
+            context: "Available evidence: approved workflow notes",
+            evidenceOrSource: "Existing evidence: ev-workflow",
+            status: "prefilled_confirmed",
+            hasUserInput: false,
+          },
+        ],
+      },
+      uploadedWorkbookSha256: "d".repeat(64),
+    });
+
+    expect(proposalSet.proposals[0]).toMatchObject({
+      answerState: "blank",
+      disposition: "pending",
+    });
+    expect(() =>
+      buildStageReadinessProposalReview({
+        ctx,
+        program,
+        proposalSet,
+        sourceProposalSetArtifactId: "proposal-artifact-1",
+        sourceProposalSetArtifactVersion: 1,
+        decisions: [
+          {
+            proposalId: proposalSet.proposals[0].proposalId,
+            disposition: "accepted",
+          },
+        ],
+      }),
+    ).toThrow(/blank.*cannot be accepted/i);
+
+    const staleAnsweredState = {
+      ...proposalSet,
+      proposals: proposalSet.proposals.map((proposal) => ({
+        ...proposal,
+        answerState: "answered" as const,
+      })),
+    };
+    expect(() =>
+      buildStageReadinessProposalReview({
+        ctx,
+        program,
+        proposalSet: staleAnsweredState,
+        sourceProposalSetArtifactId: "proposal-artifact-1",
+        sourceProposalSetArtifactVersion: 1,
+        decisions: [
+          {
+            proposalId: staleAnsweredState.proposals[0].proposalId,
+            disposition: "accepted",
+          },
+        ],
+      }),
+    ).toThrow(/blank.*cannot be accepted/i);
+  });
+
   it("refuses to persist invalid parses", async () => {
     await expect(
       persistStageReadinessProposalSet({

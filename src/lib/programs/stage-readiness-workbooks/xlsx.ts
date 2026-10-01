@@ -56,7 +56,7 @@ function addQuestionRows(
     ];
     ws.addRow({
       question: question.question,
-      response: question.prefilledResponse ? "Needs validation" : "",
+      response: "",
       context: context.join("\n"),
       evidence: evidence.join("; "),
       owner: question.likelyOwnerRole,
@@ -88,8 +88,8 @@ export async function renderStageReadinessWorkbookXlsx(
   start.addRow({ item: "Move", value: spec.moveName });
   start.addRow({ item: "Workbook", value: spec.artifactName });
   start.addRow({
-    item: "Pre-filled questions",
-    value: String(spec.startHere.alreadyPrefilled),
+    item: "Evidence references included",
+    value: String(spec.startHere.evidenceReferencesIncluded),
   });
   start.addRow({
     item: "Needs input",

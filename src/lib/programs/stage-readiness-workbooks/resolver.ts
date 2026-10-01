@@ -55,7 +55,7 @@ function requirementForPriority(
 }
 
 function stateForFamily(family: DiscoveryFamilyCoverage): QuestionState {
-  if (family.status === "covered") return "prefilled_confirmed";
+  if (family.status === "covered") return "prefilled_needs_confirmation";
   return family.required ? "insufficient_evidence" : "needs_answer";
 }
 
@@ -289,7 +289,10 @@ function buildQuestions(
     suggestedEvidence: template.evidence(packet),
     likelyOwnerRole: template.owner(packet),
     required: entry.requirement === "required",
-    state: entry.status,
+    state:
+      family.status === "covered" && template.id !== "confirm_currency"
+        ? "needs_answer"
+        : entry.status,
     prefilledResponse:
       family.status === "covered" && template.id === "confirm_currency"
         ? `Available evidence: ${family.evidenceTitles.join("; ")}`
@@ -363,7 +366,11 @@ export function buildStageReadinessWorkbookSpec(
   const tabs = groupTabs(questions);
   const openItems = questions
     .filter((question) =>
-      ["needs_answer", "insufficient_evidence"].includes(question.state),
+      [
+        "needs_answer",
+        "insufficient_evidence",
+        "prefilled_needs_confirmation",
+      ].includes(question.state),
     )
     .map((question) => {
       const packet = packets.get(question.dimensionId);
@@ -402,8 +409,8 @@ export function buildStageReadinessWorkbookSpec(
     startHere: {
       purpose:
         "Prepare the next phase without asking for information already available in approved evidence.",
-      alreadyPrefilled: questions.filter(
-        (q) => q.state === "prefilled_confirmed",
+      evidenceReferencesIncluded: questions.filter(
+        (question) => question.prefilledResponse !== null,
       ).length,
       needsInput: openItems.length,
       requiredAreas,

@@ -548,6 +548,48 @@ describe("PATCH /api/v1/programs/[programId]/stage-readiness-workbook", () => {
     expect(mockPersistStageReadinessProposalReview).not.toHaveBeenCalled();
   });
 
+  it("rejects acceptance of a blank response even when context and sources exist", async () => {
+    mockDownloadArtifactBytes.mockResolvedValueOnce({
+      fileName: "proposal-set.json",
+      fileFormat: "json",
+      bytes: Buffer.from(
+        JSON.stringify({
+          proposalSetId: "proposal-set-1",
+          moveId: "move-1",
+          transition: { fromPhase: 1, toPhase: 2, stage: "P1 to P2" },
+          proposals: [
+            {
+              proposalId: "blank-proposal",
+              questionId: "q-process-current",
+              answerState: "answered",
+              response: "",
+              context: "Available evidence: current workflow notes",
+              evidenceOrSource: "Existing evidence: workflow-record-1",
+              disposition: "pending",
+            },
+          ],
+        }),
+      ),
+    });
+    const { PATCH } = await import("../route");
+    const res = await PATCH(
+      patchReq({
+        proposalSetArtifactId: "proposal-artifact-1",
+        proposalSetArtifactVersion: 2,
+        decisions: [
+          { proposalId: "blank-proposal", disposition: "accepted" },
+        ],
+      }),
+      { params },
+    );
+
+    expect(res.status).toBe(422);
+    await expect(res.json()).resolves.toMatchObject({
+      error: "blank_workbook_response",
+    });
+    expect(mockPersistStageReadinessProposalReview).not.toHaveBeenCalled();
+  });
+
   it("rejects pending as an explicit human decision", async () => {
     const { PATCH } = await import("../route");
     const res = await PATCH(

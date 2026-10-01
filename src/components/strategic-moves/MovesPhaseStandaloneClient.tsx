@@ -6694,8 +6694,10 @@ function StageReadinessWorkbookPreviewControl({
         initialPreview?.proposalSet?.proposals
           ?.filter(
             (proposal) =>
-              proposal.disposition === "pending" ||
-              proposal.disposition === "needs_validation",
+              proposal.answerState !== "blank" &&
+              Boolean(proposal.response?.trim()) &&
+              (proposal.disposition === "pending" ||
+                proposal.disposition === "needs_validation"),
           )
           .map((proposal) => proposal.proposalId)
           .filter((proposalId): proposalId is string => Boolean(proposalId)) ??
@@ -6872,12 +6874,19 @@ function StageReadinessWorkbookPreviewControl({
       ? `${preview.summary.requiredAnswered ?? 0}/${preview.summary.requiredTotal} required`
       : null;
   const pendingProposalCount = preview?.proposalSet?.pendingCount ?? 0;
+  const blankProposalCount =
+    preview?.proposalSet?.proposals?.filter(
+      (proposal) =>
+        proposal.answerState === "blank" || !proposal.response?.trim(),
+    ).length ?? 0;
   const proposalReview = preview?.proposalSet?.review;
   const reviewActionCount =
     preview?.proposalSet?.proposals?.filter(
       (proposal) =>
-        proposal.disposition === "pending" ||
-        proposal.disposition === "needs_validation",
+        proposal.answerState !== "blank" &&
+        Boolean(proposal.response?.trim()) &&
+        (proposal.disposition === "pending" ||
+          proposal.disposition === "needs_validation"),
     ).length ?? 0;
   const proposalReviewMessage = proposalReview
     ? `Workbook review recorded · ${proposalReview.acceptedCount ?? 0} accepted · ${proposalReview.needsValidationCount ?? 0} needs validation · ${proposalReview.rejectedCount ?? 0} rejected · ${proposalReview.pendingCount ?? 0} pending` +
@@ -6892,8 +6901,14 @@ function StageReadinessWorkbookPreviewControl({
     pendingProposalCount > 0
       ? `Stored workbook responses awaiting review · ${pendingProposalCount}/${preview.proposalSet.proposalCount ?? pendingProposalCount} pending proposals`
       : "";
-  const statusMessage =
-    proposalReviewMessage || message || storedProposalMessage;
+  const statusMessage = [
+    proposalReviewMessage || message || storedProposalMessage,
+    blankProposalCount > 0
+      ? `${blankProposalCount} blank response${blankProposalCount === 1 ? "" : "s"}. Complete the Response cells and upload the workbook again before review.`
+      : "",
+  ]
+    .filter(Boolean)
+    .join(" · ");
 
   return (
     <div className="mxw-workbook-preview">
@@ -6950,6 +6965,8 @@ function StageReadinessWorkbookPreviewControl({
                     checked={selectedProposalIds.has(proposalId)}
                     disabled={
                       !proposalId ||
+                      proposal.answerState === "blank" ||
+                      !proposal.response?.trim() ||
                       reviewStatus === "saving" ||
                       (proposal.disposition !== "pending" &&
                         proposal.disposition !== "needs_validation")
@@ -6971,8 +6988,10 @@ function StageReadinessWorkbookPreviewControl({
                     <b>{proposal.question ?? proposal.questionId}</b>
                     <em>
                       {proposal.requirement ?? "required"} ·{" "}
-                      {proposal.answerState ?? "answered"} ·{" "}
-                      {proposal.disposition ?? "pending"}
+                      {proposal.answerState === "blank" ||
+                      !proposal.response?.trim()
+                        ? "response required in workbook"
+                        : `${proposal.answerState ?? "answered"} · ${proposal.disposition ?? "pending"}`}
                     </em>
                   </span>
                 </label>

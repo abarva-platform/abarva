@@ -73,10 +73,16 @@ describe("renderStageReadinessWorkbookXlsx", () => {
 
     const dataSheet = workbook.getWorksheet("Data & Quality");
     expect(dataSheet?.getCell("A1").value).toBe("Question");
-    expect(dataSheet?.getCell("B2").value).toBe("Needs validation");
+    expect(dataSheet?.getCell("B2").value).toBe("");
+    expect(dataSheet?.getCell("F2").value).toBe("prefilled_needs_confirmation");
     expect(String(dataSheet?.getCell("C2").value)).toContain(
       "Approved data estate profile",
     );
+    const startHere = workbook.getWorksheet("Start Here");
+    expect(startHere?.getCell("A5").value).toBe("Evidence references included");
+    expect(startHere?.getCell("B5").value).toBe("1");
+    expect(startHere?.getCell("A6").value).toBe("Needs input");
+    expect(Number(startHere?.getCell("B6").value)).toBeGreaterThan(0);
     const dataSheetContext = dataSheet
       ? [2, 3, 4].map((row) => String(dataSheet.getCell(`C${row}`).value))
       : [];

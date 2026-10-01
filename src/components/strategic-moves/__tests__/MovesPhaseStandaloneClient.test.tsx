@@ -1021,6 +1021,7 @@ describe("MovesPhaseStandaloneClient", () => {
                 {
                   proposalId: "proposal-1",
                   question: "Provide baseline metrics.",
+                  response: "Baseline metrics remain unverified pending finance confirmation.",
                   answerState: "insufficient_evidence",
                   disposition: "accepted",
                 },
