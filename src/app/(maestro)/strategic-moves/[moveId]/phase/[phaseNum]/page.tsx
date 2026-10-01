@@ -41,12 +41,10 @@ import {
 } from "@/lib/programs/evidence-readiness/move-evidence-need-packet";
 import { isFoundationTenantKey } from "@/lib/tenant/foundation-tenants";
 import { getMovePhaseTallies } from "@/lib/programs/phase-explorer-tallies";
+import { DELIVERABLE_REGISTRY } from "@/lib/programs/deliverable-registry";
 import {
-  DELIVERABLE_REGISTRY,
-  getGateArtifacts,
-} from "@/lib/programs/deliverable-registry";
-import {
-  readDeliverableContentSignals,
+  readApprovedPhaseGateContentSignals,
+  readPhaseGateContentSignals,
   type DeliverableContentSignal,
 } from "@/lib/deliverables/deliverable-content-signals";
 import { AppShell } from "@/components/shell/AppShell";
@@ -720,26 +718,22 @@ export default async function StrategicMovePhaseWorkspacePage({
     phaseBuildArtifacts = [];
   }
 
-  // Real "carries forward" content — extracted from the current phase's own
-  // already-generated gate deliverable(s), not fabricated. A phase whose gate
-  // artifact hasn't been generated yet (or whose content has no matching
-  // heading/table) simply yields no signals; the readiness pack renders that
-  // honestly rather than inventing a punch list.
+  // Keep current-phase carry-forward separate from P2 evidence used to score
+  // P3 options. Otherwise P3 can score itself from its own outputs and omit
+  // the approved discovery limits that should constrain the design choice.
   let carriesForwardContent: DeliverableContentSignal[] = [];
+  let p3PriorPhaseContent: DeliverableContentSignal[] = [];
   try {
-    const gateArtifactTypeKeys = getGateArtifacts(parsedPhase).map(
-      (d) => d.deliverableTypeKey,
-    );
-    const signalsByKey = new Map<string, DeliverableContentSignal>();
-    for (const typeKey of gateArtifactTypeKeys) {
-      const signals = await readDeliverableContentSignals(moveId, typeKey);
-      for (const signal of signals) {
-        if (!signalsByKey.has(signal.key)) signalsByKey.set(signal.key, signal);
-      }
-    }
-    carriesForwardContent = Array.from(signalsByKey.values());
+    carriesForwardContent = await readPhaseGateContentSignals(moveId, parsedPhase);
   } catch {
     carriesForwardContent = [];
+  }
+  if (parsedPhase === 3) {
+    try {
+      p3PriorPhaseContent = await readApprovedPhaseGateContentSignals(moveId, 2);
+    } catch {
+      p3PriorPhaseContent = [];
+    }
   }
 
   let currentStateReadiness: ReadinessReport | null = null;
@@ -820,6 +814,7 @@ export default async function StrategicMovePhaseWorkspacePage({
     >
       <MovesPhaseStandaloneClient
         carriesForwardContent={carriesForwardContent}
+        p3PriorPhaseContent={p3PriorPhaseContent}
         currentStateReadiness={currentStateReadiness}
         evidenceReadinessAvailable={evidenceReadinessAvailable}
         currentUser={{

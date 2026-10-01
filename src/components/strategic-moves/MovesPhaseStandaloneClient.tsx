@@ -164,6 +164,7 @@ interface MovesPhaseStandaloneClientProps {
   evidenceNeedPackets: MoveEvidenceNeedPacket[];
   evidenceReadinessAvailable?: boolean;
   carriesForwardContent: DeliverableContentSignal[];
+  p3PriorPhaseContent?: DeliverableContentSignal[];
   phaseBuildArtifacts?: PhaseBuildArtifact[];
   phaseNavigationStatus?: PhaseNavigationStatus;
   initialStageReadinessPreview?: StageReadinessWorkbookParsePreview | null;
@@ -717,6 +718,7 @@ export function MovesPhaseStandaloneClient({
   evidenceNeedPackets,
   evidenceReadinessAvailable = true,
   carriesForwardContent,
+  p3PriorPhaseContent = [],
   phaseBuildArtifacts = [],
   phaseNavigationStatus,
   initialStageReadinessPreview = null,
@@ -901,7 +903,7 @@ export function MovesPhaseStandaloneClient({
     () =>
       buildP3DesignInputsPackFromSignals({
         archetype: move.archetype,
-        carriesForwardContent,
+        priorPhaseContent: p3PriorPhaseContent,
         charter: move.charter,
         evidenceNeedPackets,
         gateCriteria: move.gateCriteria,
@@ -911,7 +913,7 @@ export function MovesPhaseStandaloneClient({
         readiness: currentStateReadiness,
       }),
     [
-      carriesForwardContent,
+      p3PriorPhaseContent,
       currentStateReadiness,
       evidenceNeedPackets,
       move.archetype,
@@ -7540,10 +7542,14 @@ function P3OptionSummary({ optionSet }: { optionSet: P3OptionSet }) {
     <div className="mxw-option-summary">
       <div>
         <span>Source</span>
-        <strong>P2 design inputs pack</strong>
+        <strong>
+          {optionSet.sourceEvidenceLabels?.length
+            ? `P2 gate evidence: ${optionSet.sourceEvidenceLabels.join(", ")}`
+            : "P2 source evidence unavailable"}
+        </strong>
         <small>
-          {optionSet.evidenceBasis.length} evidence signal
-          {optionSet.evidenceBasis.length === 1 ? "" : "s"}
+          {optionSet.evidenceBasis.length} grounded signal
+          {optionSet.evidenceBasis.length === 1 ? "" : "s"} in the design pack
         </small>
       </div>
       <div>
@@ -7561,7 +7567,7 @@ function P3OptionSummary({ optionSet }: { optionSet: P3OptionSet }) {
         <span>Open gaps</span>
         <strong>{optionSet.missingEvidence.length}</strong>
         <small>
-          {optionSet.missingEvidence[0] ?? "No required gap listed"}
+          {optionSet.missingEvidence[0] ?? "No open gap was supplied to this comparison"}
         </small>
       </div>
     </div>

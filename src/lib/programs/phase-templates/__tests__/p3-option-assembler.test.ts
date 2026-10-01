@@ -184,7 +184,7 @@ describe('P3 dynamic option assembler', () => {
     );
   });
 
-  it('lets missing data foundation and a 90-day target favor a governed minimum-foundation path', () => {
+  it('keeps the governed minimum-foundation path as the top candidate without overclaiming confidence', () => {
     const optionSet = assembleP3SolutionOptions({
       moveId: 'move-meridian',
       moveName: 'Agent Assist 90-day proof',
@@ -200,7 +200,9 @@ describe('P3 dynamic option assembler', () => {
       ],
     });
 
-    expect(optionSet.recommendedOptionId).toBe('B');
+    expect(optionSet.recommendedOptionId).toBeNull();
+    expect(optionSet.recommendationConfidence).toBe('low');
+    expect([...optionSet.options].sort((a, b) => b.totalScore - a.totalScore)[0]?.id).toBe('B');
     const enterpriseFirst = optionSet.options.find((option) => option.id === 'D');
     expect(enterpriseFirst?.recommended).toBe(false);
     expect(enterpriseFirst?.notRecommendedYetReasons.join(' ')).toMatch(/Data foundation/i);
@@ -244,6 +246,45 @@ describe('P3 dynamic option assembler', () => {
     expect(generated).not.toMatch(/40 percent|40%/i);
   });
 
+  it('caps confidence when evidence readiness has not been measured', () => {
+    const optionSet = assembleP3SolutionOptions({
+      moveId: 'move-synthetic',
+      moveName: 'Contact center decision support',
+      archetype: 'Contact Center Agent Assist',
+      designInputs: meridianAgentAssistPack({
+        unresolvedQuestions: [],
+        notReadyConditions: [],
+        openQuestionsForSolutionDesign: [],
+      }),
+    });
+
+    expect(optionSet.recommendedOptionId).toBeNull();
+    expect(optionSet.recommendationConfidence).toBe('low');
+    expect(optionSet.options.every((option) => option.confidence !== 'high')).toBe(true);
+  });
+
+  it('caps option confidence when even one material evidence gap remains open', () => {
+    const optionSet = assembleP3SolutionOptions({
+      moveId: 'move-synthetic',
+      moveName: 'Contact center decision support',
+      archetype: 'Contact Center Agent Assist',
+      designInputs: meridianAgentAssistPack({
+        unresolvedQuestions: [],
+        notReadyConditions: [],
+        openQuestionsForSolutionDesign: [],
+      }),
+      readiness: {
+        coverageScore: 100,
+        hardGaps: ['Production interface validation pending'],
+        softGaps: [],
+      },
+    });
+
+    expect(optionSet.missingEvidence).toContain('Production interface validation pending');
+    expect(optionSet.recommendationConfidence).toBe('low');
+    expect(optionSet.options.every((option) => option.confidence !== 'high')).toBe(true);
+  });
+
   it('builds a P3 design inputs pack from approved phase signals', () => {
     const pack = buildP3DesignInputsPackFromSignals({
       moveId: 'move-meridian',
@@ -258,7 +299,7 @@ describe('P3 dynamic option assembler', () => {
           foundation_readiness: 'Trusted data access, PHI controls, source freshness, and lineage.',
         },
       },
-      carriesForwardContent: [
+      priorPhaseContent: [
         {
           key: 'systems',
           heading: 'Systems',
@@ -275,5 +316,66 @@ describe('P3 dynamic option assembler', () => {
     expect(pack.currentSystems?.join(' ')).toMatch(/CRM|claims/i);
     expect(pack.dataReadiness?.join(' ')).toMatch(/PHI|Data foundation/i);
     expect(pack.openQuestionsForSolutionDesign).toContain('Claims source access');
+  });
+
+  it('carries prior-phase validation limits into P3 gaps and option evidence', () => {
+    const pack = buildP3DesignInputsPackFromSignals({
+      moveId: 'move-synthetic',
+      moveName: 'Contact center decision support',
+      archetype: 'Contact Center Agent Assist',
+      priorPhaseContent: [
+        {
+          key: 'readiness_gaps',
+          heading: 'Systems: production interfaces remain unvalidated',
+          snippet: 'Most production interfaces are not validated; only a mock contract test passed.',
+          sourceDeliverableTypeKey: 'discovery_report',
+        },
+        {
+          key: 'open_inputs',
+          heading: 'Open Inputs Required',
+          snippet: 'Reconcile baseline definitions and obtain owner-approved access evidence.',
+          sourceDeliverableTypeKey: 'discovery_report',
+        },
+      ],
+    });
+
+    expect(pack.notReadyConditions).toContain(
+      'P2 discovery_report: Systems: production interfaces remain unvalidated',
+    );
+    expect(pack.unresolvedQuestions).toContain(
+      'P2 discovery_report: Open Inputs Required',
+    );
+    expect(pack.evidenceBackedConstraints?.join(' ')).toMatch(/mock contract test passed/i);
+  });
+
+  it('downgrades confidence when the approved P2 evidence records unresolved readiness', () => {
+    const pack = buildP3DesignInputsPackFromSignals({
+      moveId: 'move-synthetic',
+      moveName: 'Contact center decision support',
+      archetype: 'Contact Center Agent Assist',
+      priorPhaseContent: [
+        {
+          key: 'readiness_gaps',
+          heading: 'Systems: production interfaces remain unvalidated',
+          snippet: 'Production connectivity is not validated; source-owner approval is pending.',
+          sourceDeliverableTypeKey: 'discovery_report',
+        },
+      ],
+    });
+    const optionSet = assembleP3SolutionOptions({
+      moveId: 'move-synthetic',
+      moveName: 'Contact center decision support',
+      archetype: 'Contact Center Agent Assist',
+      designInputs: pack,
+      readiness: { coverageScore: 100, hardGaps: [], softGaps: [] },
+    });
+
+    expect(optionSet.missingEvidence).toContain(
+      'P2 discovery_report: Systems: production interfaces remain unvalidated',
+    );
+    expect(optionSet.sourceEvidenceLabels).toContain('discovery_report');
+    expect(optionSet.recommendationConfidence).toBe('low');
+    expect(optionSet.recommendedOptionId).toBeNull();
+    expect(optionSet.options.every((option) => option.confidence !== 'high')).toBe(true);
   });
 });
