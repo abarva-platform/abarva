@@ -458,6 +458,28 @@ export async function PATCH(
       );
     }
 
+    const blankResponsesAccepted = decisions.filter(
+      (decision) =>
+        decision.disposition === "accepted" &&
+        loaded.proposalSet.proposals.some(
+          (proposal) =>
+            proposal.proposalId === decision.proposalId &&
+            (proposal.answerState === "blank" ||
+              typeof proposal.response !== "string" ||
+              !proposal.response.trim()),
+        ),
+    );
+    if (blankResponsesAccepted.length > 0) {
+      return Response.json(
+        {
+          error: "blank_workbook_response",
+          detail:
+            "Complete each blank Response cell and upload the workbook again before accepting it.",
+        },
+        { status: 422 },
+      );
+    }
+
     const persistedReview = await persistStageReadinessProposalReview({
       ctx,
       program,

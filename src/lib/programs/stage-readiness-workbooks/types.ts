@@ -93,7 +93,7 @@ export interface StageReadinessWorkbookSpec {
   dimensionPlan: AssessmentDimensionPlan;
   startHere: {
     purpose: string;
-    alreadyPrefilled: number;
+    evidenceReferencesIncluded: number;
     needsInput: number;
     requiredAreas: number;
     recommendedAreas: number;

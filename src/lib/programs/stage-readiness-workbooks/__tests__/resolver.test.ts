@@ -74,8 +74,8 @@ describe("buildStageReadinessWorkbookSpec", () => {
     expect(spec.artifactName).toBe(
       "Discovery Workbook — Member Service Agent Assist",
     );
-    expect(spec.startHere.alreadyPrefilled).toBe(3);
-    expect(spec.startHere.needsInput).toBe(10);
+    expect(spec.startHere.evidenceReferencesIncluded).toBe(1);
+    expect(spec.startHere.needsInput).toBe(13);
     expect(spec.dimensionPlan.dimensions).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
@@ -86,7 +86,7 @@ describe("buildStageReadinessWorkbookSpec", () => {
         }),
         expect.objectContaining({
           dimensionId: "current_state_workflow_map",
-          status: "prefilled_confirmed",
+          status: "prefilled_needs_confirmation",
           evidenceSourceClass: "client_fact",
         }),
       ]),
@@ -125,7 +125,7 @@ describe("buildStageReadinessWorkbookSpec", () => {
     expect(spec.metadata.workbookContentHash).toHaveLength(24);
   });
 
-  it("does not ask covered evidence families as blank questions", () => {
+  it("separates prefilled evidence from responses that still need review", () => {
     const packets = buildMoveEvidenceNeedPackets({
       moveId: "move-1",
       moveName: "Member Service Agent Assist",
@@ -152,11 +152,14 @@ describe("buildStageReadinessWorkbookSpec", () => {
     expect(workflowQuestions).toHaveLength(3);
     expect(workflowQuestion).toMatchObject({
       questionId: "q_current_state_workflow_map_confirm_currency",
-      state: "prefilled_confirmed",
+      state: "prefilled_needs_confirmation",
       prefilledResponse: "Available evidence: Approved workflow notes",
       evidenceRefs: ["ev_workflow"],
     });
     expect(workflowQuestions[1]?.question).toContain("What changed since");
     expect(workflowQuestions[2]?.question).toContain("What is not covered");
+    expect(workflowQuestions.slice(1).map((question) => question.state)).toEqual(
+      ["needs_answer", "needs_answer"],
+    );
   });
 });

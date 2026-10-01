@@ -58,6 +58,40 @@ async function buildWorkbookBuffer(): Promise<Buffer> {
 }
 
 describe("parseStageReadinessWorkbookXlsx", () => {
+  it("does not count generated context, evidence references, or status as a response", async () => {
+    const workbookBytes = await buildWorkbookBuffer();
+    const workbook = new ExcelJS.Workbook();
+    await workbook.xlsx.load(workbookBytes as unknown as ArrayBuffer);
+    const coveredSheet = workbook.getWorksheet("Data & Quality");
+    expect(coveredSheet?.getCell("B2").value).toBe("");
+    expect(coveredSheet?.getCell("F2").value).toBe(
+      "prefilled_needs_confirmation",
+    );
+    expect(coveredSheet?.getCell("B3").value).toBe("");
+    expect(coveredSheet?.getCell("F3").value).toBe("needs_answer");
+
+    const parsed = await parseStageReadinessWorkbookXlsx(workbookBytes, {
+      expectedMoveId: "move-1",
+      expectedPhase: 1,
+    });
+
+    expect(parsed.summary).toMatchObject({
+      totalQuestions: 8,
+      answeredQuestions: 0,
+      requiredAnswered: 0,
+      requiredTotal: 8,
+      errorCount: 0,
+    });
+    expect(parsed.responses[0]).toMatchObject({
+      response: "",
+      hasUserInput: false,
+    });
+    expect(parsed.responses[1]).toMatchObject({
+      response: "",
+      hasUserInput: false,
+    });
+  });
+
   it("round-trips generated workbook responses into proposed response rows", async () => {
     const original = await buildWorkbookBuffer();
     const workbook = new ExcelJS.Workbook();
@@ -89,8 +123,8 @@ describe("parseStageReadinessWorkbookXlsx", () => {
     });
     expect(parsed.summary).toMatchObject({
       totalQuestions: 8,
-      answeredQuestions: 8,
-      requiredAnswered: 8,
+      answeredQuestions: 1,
+      requiredAnswered: 1,
       requiredTotal: 8,
       errorCount: 0,
     });

@@ -302,7 +302,7 @@ export async function parseStageReadinessWorkbookXlsx(
       evidenceOrSource,
       owner,
       status,
-      hasUserInput: Boolean(response || context || evidenceOrSource || status),
+      hasUserInput: Boolean(response),
     });
   }
 
