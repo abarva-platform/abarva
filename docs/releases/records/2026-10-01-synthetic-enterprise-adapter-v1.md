@@ -40,7 +40,7 @@ Adds a deterministic Layer 2 adapter for the versioned synthetic enterprise sour
 ## QA / Validation
 
 - PASS locally: source-set validator runs before normalization; normalized object and relationship denominators equal the source manifest, with unresolved edges counted separately.
-- PASS locally: Python adapter tests and TypeScript dictionary tests. Formatting, diff, release, and relevant CI gates must pass before merge.
+- PASS locally: Python adapter tests and TypeScript dictionary tests. The ECL CI lane runs the adapter test after the source-set test. Formatting, diff, release, and relevant CI gates must pass before merge.
 - NOT RUN: ACA job, tenant write, ECL physical-schema admission, projection generation, aVa retrieval, or signed-in Home proof.
 
 ## Rollout Plan
