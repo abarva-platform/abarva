@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { SourceAnalyticsCanvas } from "@/components/source/canvas/analytics";
-import { getSourcingEvent, isUuid } from "@/lib/source/queries";
+import { getSourcingEvent, getSourcingEventForResolvedClient, isUuid } from "@/lib/source/queries";
 import { getActiveClientRow } from "@/lib/active-client";
 import { canonicalClientDisplayName } from "@/lib/client-config";
 import { listSourceArtifactsForSourceEventId } from "@/lib/source/artifact-registry";
@@ -100,11 +100,28 @@ export default async function SourceEventDetailPage({
   const sp: Record<string, string | string[] | undefined> =
     (await (searchParams ?? Promise.resolve({}))) ?? {};
 
-  const [event, activeClient] = await Promise.all([
+  const [event, clientRow] = await Promise.all([
     getSourcingEvent(eventId),
     getActiveClientRow().catch(() => null),
   ]);
   if (!event) notFound();
+
+  const canvasTenancy = await requireTenancy().catch(() => null);
+  const tenancyClientKey = canvasTenancy?.clientKey?.trim() || null;
+  // The event lookup can admit a canonical admin without a clients-row match.
+  // Revalidate the exact event under the authenticated tenant before reading
+  // its facts; an unrelated tenant must never turn a sample into a live view.
+  const tenantBoundEvent = !clientRow && canvasTenancy && tenancyClientKey
+    ? await getSourcingEventForResolvedClient(event.id, {
+        activeClientKey: tenancyClientKey,
+        activeClientName: event.accountName,
+        tenancy: canvasTenancy,
+      }).catch(() => null)
+    : null;
+  const activeClient = clientRow ??
+    (tenantBoundEvent?.id === event.id && tenancyClientKey
+      ? { key: tenancyClientKey, name: event.accountName }
+      : null);
 
   // Resolve viewing stage from ?stage=<key>; default to current stage.
   const stageParam = typeof sp.stage === "string" ? sp.stage : null;
@@ -138,7 +155,6 @@ export default async function SourceEventDetailPage({
     // stage builder below, where U-517 reads the same policy for its own figure.
     // Fails CLOSED: no tenancy, no client key or a failed policy read all
     // restrict.
-    const canvasTenancy = await requireTenancy().catch(() => null);
     const canvasSourcePolicy =
       canvasTenancy && normalizedClientKey
         ? await loadUserSourceAccessPolicy(canvasTenancy, {
