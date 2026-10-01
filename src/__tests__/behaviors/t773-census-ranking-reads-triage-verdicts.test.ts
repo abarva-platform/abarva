@@ -352,14 +352,27 @@ describe("T-773 · the real tree", () => {
     expect({ wronglyHeld, wronglyDrawable }).toEqual({ wronglyHeld: [], wronglyDrawable: [] });
   });
 
-  it("is not vacuous: real verdicted files are held, and real unjudged files stay drawable", () => {
+  it("is not vacuous: real verdicted files are held, and every real unjudged file stays drawable", () => {
     // Measured at 69 held of 277 untriaged on 6290814f71. The floor is not that
     // number — wiring a held file lowers it, and a floor that goes red when the
     // work gets done is a gate pointed the wrong way. The agreement case above
-    // is what pins the count; this pins that neither side is empty.
+    // is what pins the count; this pins that the held side is not empty.
     expect(held.size).toBeGreaterThan(0);
-    const unjudged = [...drawable].filter((testPath) => !latest.has(testPath));
-    expect(unjudged.length).toBeGreaterThan(0);
+    // Until item 26 draw 18 this also required at least one real unjudged
+    // file, which is a statement that triage is unfinished: draw 18 judged the
+    // last nineteen ranked files and turned it red on completion. The drawable
+    // direction is proven on a fixture ("keeps a file nobody has judged
+    // drawable"); on the real tree, no untriaged file may be both unjudged and
+    // missing from the drawable set, and an empty drawable set must mean an
+    // empty ranking with every untriaged file held.
+    const unjudgedButNotDrawable = [...held].filter((testPath) => !latest.has(testPath));
+    expect(unjudgedButNotDrawable).toEqual([]);
+    if (drawable.size === 0) {
+      expect({
+        rankedDirectories: census.governedRiskRanking.length,
+        heldIsEveryUntriagedFile: held.size === census.counts.untriagedUnrunTestFiles,
+      }).toEqual({ rankedDirectories: 0, heldIsEveryUntriagedFile: true });
+    }
   });
 
   it("holds the T-771 known positives out of the ranking", () => {
