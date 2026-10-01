@@ -2107,14 +2107,34 @@ function headlineFor(objectType: TechObjectType, count: number): string {
   return `${count.toLocaleString()} records.`;
 }
 
+const SELECTED_TITLE_FIELD: Record<TechObjectType, string> = {
+  business_segment: "segmentName",
+  business_function: "functionName",
+  workforce_role: "personaOrRole",
+  operational_process: "processName",
+  application_system: "systemName",
+  vendor_contract: "contractName",
+  infrastructure_platform: "platformName",
+  data_asset_or_integration: "dataAssetName",
+  metric_outcome: "metricName",
+  risk_control: "riskOrControlName",
+  program_initiative: "programName",
+  organization_ownership: "orgUnit",
+  ai_use_case: "useCaseName",
+  executive_interview: "question",
+  relationship_edge: "fromObjectName",
+};
+
 function titleForSelected(objectType: TechObjectType, row: RecordRow): string {
-  const fieldByType: Partial<Record<TechObjectType, string>> = {
-    application_system: "systemName",
-    vendor_contract: "contractName",
-    infrastructure_platform: "platformName",
-    data_asset_or_integration: "dataAssetName",
-  };
-  return humanise(row[fieldByType[objectType] ?? "name"]);
+  if (objectType === "relationship_edge") {
+    const from = humanise(row.fromObjectName);
+    const to = humanise(row.toObjectName);
+    if (from !== "—" && to !== "—") return `${from} to ${to}`;
+  }
+  const title = humanise(
+    row[SELECTED_TITLE_FIELD[objectType]] ?? row.name ?? row.originalRowId,
+  );
+  return title === "—" ? "Unnamed record" : title;
 }
 
 /**

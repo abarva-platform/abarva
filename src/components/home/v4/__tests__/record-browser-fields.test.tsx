@@ -169,3 +169,80 @@ describe("the field count counts the same thing twice", () => {
     expect(carried).toBe(Object.keys(undeclared.rows[0]).length);
   });
 });
+
+describe("selected-record headings", () => {
+  it.each([
+    ["business_segment", "segmentName"],
+    ["business_function", "functionName"],
+    ["workforce_role", "personaOrRole"],
+    ["operational_process", "processName"],
+    ["application_system", "systemName"],
+    ["vendor_contract", "contractName"],
+    ["infrastructure_platform", "platformName"],
+    ["data_asset_or_integration", "dataAssetName"],
+    ["metric_outcome", "metricName"],
+    ["risk_control", "riskOrControlName"],
+    ["program_initiative", "programName"],
+    ["organization_ownership", "orgUnit"],
+    ["ai_use_case", "useCaseName"],
+    ["executive_interview", "question"],
+  ] as Array<[TechRecordType["objectType"], string]>)(
+    "names a selected %s from its declared %s field",
+    (objectType, field) => {
+      const record: TechRecordType = {
+        ...applications,
+        objectType,
+        columns: [field],
+        rows: [{ [field]: "Current record name" }],
+        primaryDimension: null,
+        dimensionCounts: [],
+      };
+      const { container } = render(<RecordBrowser recordType={record} />);
+      expect(
+        container.querySelector("[data-detail-pane] h2"),
+      ).toHaveTextContent("Current record name");
+    },
+  );
+
+  it("names a declared relationship by both endpoints", () => {
+    const record: TechRecordType = {
+      ...applications,
+      objectType: "relationship_edge",
+      columns: ["fromObjectName", "toObjectName"],
+      rows: [
+        { fromObjectName: "Claims platform", toObjectName: "Data warehouse" },
+      ],
+      primaryDimension: null,
+      dimensionCounts: [],
+    };
+    const { container } = render(<RecordBrowser recordType={record} />);
+    expect(container.querySelector("[data-detail-pane] h2")).toHaveTextContent(
+      "Claims platform to Data warehouse",
+    );
+  });
+
+  it("uses a declared row ID when the name is blank, then states when neither exists", () => {
+    const record: TechRecordType = {
+      ...applications,
+      objectType: "ai_use_case",
+      columns: ["useCaseName", "originalRowId"],
+      rows: [{ useCaseName: null, originalRowId: "AI-001" }],
+      primaryDimension: null,
+      dimensionCounts: [],
+    };
+    const { container, rerender } = render(
+      <RecordBrowser recordType={record} />,
+    );
+    expect(container.querySelector("[data-detail-pane] h2")).toHaveTextContent(
+      "AI-001",
+    );
+    rerender(
+      <RecordBrowser
+        recordType={{ ...record, rows: [{ useCaseName: null }] }}
+      />,
+    );
+    expect(container.querySelector("[data-detail-pane] h2")).toHaveTextContent(
+      "Unnamed record",
+    );
+  });
+});
