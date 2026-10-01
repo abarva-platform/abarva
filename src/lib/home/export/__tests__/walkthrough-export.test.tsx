@@ -36,6 +36,14 @@ const recordSource: HomeRecordRenderSource = {
         { pageKey: "vendor_contracts", totalRows: 1, linkedRows: 1 },
       ],
     },
+    sourceCatalogHash: "source-catalog-hash",
+    sourceFileReview: {
+      totalFiles: 14,
+      acceptedFiles: 0,
+      partialFiles: 14,
+      blockedFiles: 0,
+      supersededFiles: 0,
+    },
     deterministicPacketHash: "read-packet-hash",
     narrativePacketHash: null,
     narrativeGeneratedAt: "2026-08-21T00:00:00Z",
@@ -137,6 +145,7 @@ describe("Home walkthrough export", () => {
     expect(html).toContain("Record on screen: Live governed rows");
     expect(html).toContain("Reviewed narrative; live rows may differ");
     expect(html).toContain("Source-linked: 2 of 3 record rows");
+    expect(html).toContain("Source review incomplete: 0 of 14 files accepted");
     expect(html).toContain("incomplete for metrics");
     expect(html).toContain("Data as of not established");
     expect(html).toContain("home_*:3311");
@@ -167,6 +176,9 @@ describe("Home walkthrough export", () => {
     expect(output).toContain("Live governed rows");
     expect(output).toContain("Reviewed narrative; live rows may differ");
     expect(output).toContain("Source-linked: 2 of 3 record rows");
+    expect(output).toContain(
+      "Source review incomplete: 0 of 14 files accepted",
+    );
     expect(output).toContain("Home chapters");
   });
 });

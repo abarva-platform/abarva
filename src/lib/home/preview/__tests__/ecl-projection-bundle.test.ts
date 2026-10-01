@@ -5,10 +5,13 @@ import {
   getHomeEclProjectionBundleOrReviewedSnapshot,
   getHomeEclProjectionBundleOrReviewedSnapshotWithSource,
   type HomeProjectionRow,
+  type HomeSourceFileReviewRow,
 } from "../ecl-projection-bundle";
 import { resolveEvidence } from "@/components/home/preview/evidence-resolver";
 import { azureRead } from "@/lib/data-plane/azureRead";
 import { getHomeReviewBundle } from "../golden-snapshot";
+import { homeRecordSourceToken } from "../record-source-token";
+import { homeSourceFileReviewLabel } from "../record-source";
 import type { HomeReviewBundle } from "../types";
 
 type PacketWithCategorySummaries = ReturnType<
@@ -245,14 +248,19 @@ describe("buildTechnologyEstateFromHomeProjectionRows", () => {
         }),
       ]),
     );
-    expect(bundle.thesis.signalPacket.contextItems.some((item) =>
-      item.id.includes("refused_segment") ||
-      item.id.includes("missing_id") ||
-      item.id.includes("pending_segment"),
-    )).toBe(false);
-    expect(bundle.thesis.signalPacket.sourceSummaries.find(
-      (summary) => summary.domain === "business_segment",
-    )?.exampleRecords).toEqual(["Operating Segment"]);
+    expect(
+      bundle.thesis.signalPacket.contextItems.some(
+        (item) =>
+          item.id.includes("refused_segment") ||
+          item.id.includes("missing_id") ||
+          item.id.includes("pending_segment"),
+      ),
+    ).toBe(false);
+    expect(
+      bundle.thesis.signalPacket.sourceSummaries.find(
+        (summary) => summary.domain === "business_segment",
+      )?.exampleRecords,
+    ).toEqual(["Operating Segment"]);
   });
 
   it("keeps every served intake family in its own context domain", () => {
@@ -269,19 +277,23 @@ describe("buildTechnologyEstateFromHomeProjectionRows", () => {
     ] as const;
     const bundle = buildHomeReviewBundleFromEclProjectionRows(
       base,
-      families.map(([pageKey], index) => row({
-        page_key: pageKey,
-        row_key: `row-${index}`,
-        row_type: "record",
-        title: `Family ${index}`,
-        admission_status: "admitted",
-      })),
+      families.map(([pageKey], index) =>
+        row({
+          page_key: pageKey,
+          row_key: `row-${index}`,
+          row_type: "record",
+          title: `Family ${index}`,
+          admission_status: "admitted",
+        }),
+      ),
     );
 
     for (const [pageKey, domain] of families) {
-      expect(bundle.thesis.signalPacket.contextItems.find(
-        (item) => item.id.startsWith(`ctx_ecl_${pageKey}_record_`),
-      )?.domains).toEqual([domain]);
+      expect(
+        bundle.thesis.signalPacket.contextItems.find((item) =>
+          item.id.startsWith(`ctx_ecl_${pageKey}_record_`),
+        )?.domains,
+      ).toEqual([domain]);
     }
     expect(bundle.thesis.signalPacket.contextItems).toEqual(
       expect.arrayContaining([
@@ -316,6 +328,15 @@ describe("buildTechnologyEstateFromHomeProjectionRows", () => {
           projection_entry_id: "projection-entry-001",
           source_record_id: "source-row-001",
         },
+      ])
+      .mockResolvedValueOnce([
+        {
+          id: "source-file-001",
+          file_name: "applications.csv",
+          file_hash: "a".repeat(64),
+          source_date: "2026-09-30",
+          quality_state: "partial",
+        },
       ]);
     jest.spyOn(console, "warn").mockImplementation(() => {});
 
@@ -340,6 +361,16 @@ describe("buildTechnologyEstateFromHomeProjectionRows", () => {
       "meridian-health",
       "assessment-dense-source-room-20260823",
     ]);
+    expect(query.mock.calls[3]?.[0]).toEqual(
+      expect.stringContaining("ecl_source.source_file"),
+    );
+    expect(bundle.contextVersion?.sourceFileReview).toEqual({
+      totalFiles: 1,
+      acceptedFiles: 0,
+      partialFiles: 1,
+      blockedFiles: 0,
+      supersededFiles: 0,
+    });
     expect(bundle.thesis.signalPacket.contextItems).toEqual(
       expect.arrayContaining([
         expect.objectContaining({ evidenceRefs: ["source-row-001"] }),
@@ -381,6 +412,49 @@ describe("buildTechnologyEstateFromHomeProjectionRows", () => {
     );
     expect(warn).toHaveBeenCalledWith(
       "[home] source-reference resolution unavailable",
+      expect.any(Error),
+    );
+  });
+
+  it("keeps served rows but marks source review unavailable when its catalog read fails", async () => {
+    jest
+      .spyOn(azureRead, "query")
+      .mockResolvedValueOnce([
+        { full_name: "serving.home_applications_systems" },
+      ])
+      .mockResolvedValueOnce([
+        row({
+          page_key: "applications_systems",
+          row_key: "APP-001",
+          row_type: "application",
+          title: "A sourced application",
+          projection_entry_id: "projection-entry-001",
+          source_hash: "source-hash-001",
+          source_refs_json: ["source-row-001"],
+          admission_status: "admitted",
+        }),
+      ])
+      .mockResolvedValueOnce([
+        {
+          projection_entry_id: "projection-entry-001",
+          source_record_id: "source-row-001",
+        },
+      ])
+      .mockRejectedValueOnce(new Error("source catalog unavailable"));
+    const warn = jest.spyOn(console, "warn").mockImplementation(() => {});
+
+    const bundle = await getHomeEclProjectionBundle("meridian-health");
+
+    expect(bundle.technologyEstate?.recordTypes[0]?.rows).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ systemName: "A sourced application" }),
+      ]),
+    );
+    expect(bundle.contextVersion?.sourceFileReview).toBeNull();
+    expect(bundle.contextVersion?.sourceCatalogHash).toBeNull();
+    expect(bundle.contextVersion?.coherence).toBe("stored_narrative");
+    expect(warn).toHaveBeenCalledWith(
+      "[home] source-file review state unavailable",
       expect.any(Error),
     );
   });
@@ -1122,12 +1196,17 @@ describe("buildTechnologyEstateFromHomeProjectionRows", () => {
       }),
     ]);
 
-    expect(bundle.technologyEstate?.recordTypes.some(
-      (type) => type.objectType === "application_system",
-    )).toBe(false);
-    expect(bundle.thesis.signalPacket.contextItems.some(
-      (item) => item.id === "ctx_ecl_applications_systems_application_APP_002",
-    )).toBe(false);
+    expect(
+      bundle.technologyEstate?.recordTypes.some(
+        (type) => type.objectType === "application_system",
+      ),
+    ).toBe(false);
+    expect(
+      bundle.thesis.signalPacket.contextItems.some(
+        (item) =>
+          item.id === "ctx_ecl_applications_systems_application_APP_002",
+      ),
+    ).toBe(false);
     expect(bundle.thesis.signalPacket.contextItems).toEqual(
       expect.arrayContaining([
         expect.objectContaining({ id: "ctx_ecl_gap_withheld_rows_001" }),
@@ -1215,6 +1294,150 @@ describe("buildTechnologyEstateFromHomeProjectionRows", () => {
       ],
     });
     expect(after.contextVersion?.sourceCoverage.linkedRecordRows).toBe(1);
+  });
+
+  it("versions source review changes even when projection rows and links do not change", () => {
+    const base = getHomeReviewBundle("meridian-health");
+    if (!base) throw new Error("stored copy missing");
+    const rows = [
+      row({
+        page_key: "applications_systems",
+        row_key: "APP-005",
+        row_type: "application",
+        title: "One application",
+        projection_entry_id: "projection-entry-005",
+        source_hash: "row-hash",
+        source_refs_json: [{ source_record_id: "source-row-005" }],
+        admission_status: "admitted",
+      }),
+    ];
+    const links = new Map([
+      ["projection-entry-005", new Set(["source-row-005"])],
+    ]);
+    const sourceFile: HomeSourceFileReviewRow = {
+      id: "source-file-005",
+      file_name: "applications.csv",
+      file_hash: "a".repeat(64),
+      source_date: "2026-09-30",
+      quality_state: "partial",
+    };
+    const partial = buildHomeReviewBundleFromEclProjectionRows(
+      base,
+      rows,
+      undefined,
+      links,
+      [sourceFile],
+    );
+    const accepted = buildHomeReviewBundleFromEclProjectionRows(
+      base,
+      rows,
+      undefined,
+      links,
+      [{ ...sourceFile, quality_state: "accepted" }],
+    );
+    expect(partial.contextVersion?.projectionContentHash).toBe(
+      accepted.contextVersion?.projectionContentHash,
+    );
+    expect(partial.contextVersion?.sourceLineageHash).toBe(
+      accepted.contextVersion?.sourceLineageHash,
+    );
+    expect(partial.contextVersion?.sourceCatalogHash).not.toBe(
+      accepted.contextVersion?.sourceCatalogHash,
+    );
+    const sourceFor = (bundle: HomeReviewBundle) => ({
+      kind: "ecl_serving_projection" as const,
+      canonicalSnapshotHash: bundle.provenance.canonical_snapshot_hash,
+      contextVersion: bundle.contextVersion,
+    });
+    expect(
+      homeRecordSourceToken("meridian-health", sourceFor(partial)),
+    ).not.toBe(homeRecordSourceToken("meridian-health", sourceFor(accepted)));
+    expect(homeSourceFileReviewLabel(sourceFor(partial))).toBe(
+      "Source review incomplete: 0 of 1 files accepted",
+    );
+    expect(homeSourceFileReviewLabel(sourceFor(accepted))).toBe(
+      "Source files accepted: 1 of 1",
+    );
+  });
+
+  it("withholds a coherent narrative label until the source files are accepted", () => {
+    const base = getHomeReviewBundle("meridian-health");
+    if (!base) throw new Error("stored copy missing");
+    const rows = [
+      ...chapterSummaryFixtures(),
+      storyPlanFixture(),
+      row({
+        page_key: "executive_brief",
+        row_key: "executive_brief_writer_claim_001",
+        row_type: "chapter_claim",
+        title: "Published scope claim",
+        summary: "The contract record supplies a scoped business fact.",
+        display_payload_json: {
+          evidence_ids: ["ctx_ecl_scope_business_economics_001"],
+          claim_type: "FACT",
+          confidence: "high",
+        },
+      }),
+      row({
+        page_key: "vendor_contracts",
+        row_key: "CTR-005",
+        row_type: "contract",
+        title: "A contract",
+        projection_entry_id: "projection-entry-005",
+        source_hash: "row-hash",
+        source_refs_json: [{ source_record_id: "source-row-005" }],
+        admission_status: "admitted",
+      }),
+    ];
+    const links = new Map([
+      ["projection-entry-005", new Set(["source-row-005"])],
+    ]);
+    const packetHash = buildHomeReviewBundleFromEclProjectionRows(
+      base,
+      rows,
+      undefined,
+      links,
+    ).contextVersion?.deterministicPacketHash;
+    const withWriters = rows.map((item) =>
+      item.row_type === "summary"
+        ? {
+            ...item,
+            display_payload_json: {
+              writer: {
+                signal_packet_hash: packetHash,
+                generated_at: "2026-09-30T00:00:00.000Z",
+              },
+            },
+          }
+        : item,
+    );
+    const sourceFile: HomeSourceFileReviewRow = {
+      id: "source-file-005",
+      file_name: "contracts.csv",
+      file_hash: "a".repeat(64),
+      source_date: "2026-09-30",
+      quality_state: "accepted",
+    };
+    const accepted = buildHomeReviewBundleFromEclProjectionRows(
+      base,
+      withWriters,
+      undefined,
+      links,
+      [sourceFile],
+    );
+    const partial = buildHomeReviewBundleFromEclProjectionRows(
+      base,
+      withWriters,
+      undefined,
+      links,
+      [{ ...sourceFile, quality_state: "partial" }],
+    );
+    expect(accepted.contextVersion?.narrativePacketHash).toBe(
+      accepted.contextVersion?.deterministicPacketHash,
+    );
+    expect(accepted.contextVersion?.sourceSetHash).toEqual(expect.any(String));
+    expect(accepted.contextVersion?.coherence).toBe("coherent");
+    expect(partial.contextVersion?.coherence).toBe("unverified");
   });
 
   it("resolves deterministic writer evidence ids on the Home runtime signal packet", () => {
