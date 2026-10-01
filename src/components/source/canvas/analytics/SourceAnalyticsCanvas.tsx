@@ -2270,6 +2270,8 @@ function FocusedWorkPanel({
     evidenceReadyForStep(step);
   const doneCount = flatSteps.filter(isComplete).length;
   const allReady = flatSteps.length > 0 && doneCount === flatSteps.length;
+  const allInputsCaptured = flatSteps.length > 0 && flatSteps.every((step) =>
+    step.status === "captured" || completedIds.has(step.id));
   const hasArtifactGaps = view.stage.artifactReadiness.blockerCount > 0;
   const requiredEvidenceOpen = requiredEvidenceRows.filter((row) => !row.ready).length;
   const stageInputsReady = !hasArtifactGaps && requiredEvidenceOpen === 0;
@@ -2485,6 +2487,8 @@ function FocusedWorkPanel({
                 // gap and misdescribes the state — live-found on a stage reading
                 // 0/1 whose approval record was already in the ledger.
                 `${view.stage.label} was approved with ${flatSteps.length - doneCount} required input${flatSteps.length - doneCount === 1 ? "" : "s"} still open. The approval stands; the gap is recorded here so it is not mistaken for completed work.`
+              : allInputsCaptured
+                ? `All workflow inputs are captured for ${view.stage.label}; ${requiredEvidenceOpen > 0 ? `${requiredEvidenceOpen} required evidence item${requiredEvidenceOpen === 1 ? " remains" : "s remain"}` : "linked evidence review remains"}. Review Files and gate criteria before approval.`
               : `${flatSteps.length - doneCount} required workflow step${flatSteps.length - doneCount === 1 ? " remains" : "s remain"} for ${view.stage.label}. Review evidence, artifact status, and gate criteria separately in Approvals.`}
         </div>
       </div>
@@ -3379,14 +3383,17 @@ function activeStepNeed(
   const isSelfStrategy = step.id === "strategy.confirm" &&
     step.approvalPolicyCode === "self_v1";
   const uploaded = Boolean(step.file);
+  const captured = step.status === "captured";
   const status = isComplete
     ? "Complete"
-    : step.type === "provide"
-      ? uploaded
-        ? "Uploaded"
-        : "Missing"
-      : "Needs review";
-  const tone: "good" | "warn" = isComplete || uploaded ? "good" : "warn";
+    : captured
+      ? "Captured"
+      : step.type === "provide"
+        ? uploaded
+          ? "Uploaded"
+          : "Missing"
+        : "Needs review";
+  const tone: "good" | "warn" = isComplete || captured || uploaded ? "good" : "warn";
   const readback = stepReadbackLabel(step, isComplete, uploaded);
   return {
     item: requirement.item,
@@ -3414,7 +3421,7 @@ function stepReadbackLabel(
   if (isComplete && step.id === "scope.prior-baseline") {
     return "Readback: baseline requirement resolved from governed evidence.";
   }
-  if (isComplete) {
+  if (isComplete || step.status === "captured") {
     switch (step.sourceBasis) {
       case "live_fact":
         return "Readback: typed facts available.";
@@ -3531,6 +3538,9 @@ function activeStepNextAction(
       default:
         return "Continue is enabled.";
     }
+  }
+  if (step.status === "captured") {
+    return "Review remaining required evidence in Files.";
   }
   if (step.type === "provide") {
     if (uploaded) {
@@ -4019,6 +4029,7 @@ function ActiveStepRequirementRow({
   factTemplateCode?: string;
 }) {
   const need = activeStepNeed(step, isComplete);
+  const captured = step.status === "captured";
   const requirement = stepRequirementFor(step);
   const format =
     factTemplateCode && step.type === "provide"
@@ -4060,10 +4071,10 @@ function ActiveStepRequirementRow({
         <span
           style={{
             border: `1px solid ${
-              isComplete ? "rgba(17, 120, 84, 0.24)" : ANALYTICS.AMBER
+              isComplete || captured ? "rgba(17, 120, 84, 0.24)" : ANALYTICS.AMBER
             }`,
             borderRadius: 999,
-            color: isComplete ? ANALYTICS.GREEN_TEXT : ANALYTICS.AMBER_TEXT,
+            color: isComplete || captured ? ANALYTICS.GREEN_TEXT : ANALYTICS.AMBER_TEXT,
             fontFamily: ANALYTICS.MONO,
             fontSize: 9,
             fontWeight: 900,
@@ -4072,7 +4083,7 @@ function ActiveStepRequirementRow({
             whiteSpace: "nowrap",
           }}
         >
-          {isComplete ? "Accepted" : "Action needed"}
+          {isComplete ? "Accepted" : captured ? "Captured" : "Action needed"}
         </span>
       </div>
       <div

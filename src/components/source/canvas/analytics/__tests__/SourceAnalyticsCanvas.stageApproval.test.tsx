@@ -228,9 +228,72 @@ describe("SourceAnalyticsCanvas stage workflow", () => {
       .toBeInTheDocument();
     expect(screen.getByTestId("source-shell-active-step-needs"))
       .toHaveTextContent("Approved legal and commercial template");
+    expect(screen.getByTestId("source-active-requirement-row"))
+      .toHaveTextContent("Readback: no typed facts yet.");
     expect(screen.getByTestId("task-dropzone")).toBeInTheDocument();
     expect(screen.getByTestId("source-shell-progress-status"))
       .toHaveTextContent("Approval locked");
+    expect(screen.queryByTestId("source-shell-progress-action")).toBeNull();
+  });
+
+  it("reads captured RFP facts without treating missing legal evidence as a missing checklist", () => {
+    const event = {
+      ...EVENT,
+      currentStageKey: "rfp" as const,
+      currentStageLabel: "RFP",
+    };
+    const evidenceStates: SourceEventEvidence[] = evidenceForStage("rfp")
+      .filter((requirement) =>
+        requirement.level === "required" &&
+        requirement.requirementId !== "EVID-SRC-RFP-LEGAL-TEMPLATE",
+      )
+      .map((requirement, index) => ({
+        id: `rfp-captured-evidence-${index}`,
+        sourceEventId: event.id,
+        tenantKey: "demo-client",
+        requirementId: requirement.requirementId,
+        stage: "rfp",
+        currentState: "Usable Evidence",
+        sourceArtifactId: null,
+        sourceEventFactIds: [`fact-${index}`],
+        notes: null,
+        lastSyncedAt: null,
+        createdAt: "2026-10-01T00:00:00Z",
+        updatedAt: "2026-10-01T00:00:00Z",
+      }));
+
+    render(
+      <SourceAnalyticsCanvas
+        event={event}
+        viewStage="rfp"
+        tenantName="Demo Client"
+        stageView={{
+          ...SAMPLE_RFP_STAGE,
+          tasks: SAMPLE_RFP_STAGE.tasks.map((task) => ({
+            ...task,
+            state: "done" as const,
+            evidenceComplete: true,
+          })),
+        }}
+        evidenceStates={evidenceStates}
+        initialWorkspace="steps"
+      />,
+    );
+
+    expect(screen.getByTestId("source-shell-active-step-needs"))
+      .toHaveTextContent("Approved legal and commercial template");
+    expect(screen.getByTestId("source-active-requirement-row"))
+      .toHaveTextContent("Readback: typed facts available.");
+    expect(screen.getByTestId("source-active-requirement-row"))
+      .toHaveTextContent("Captured");
+    expect(screen.getByTestId("source-active-requirement-row"))
+      .not.toHaveTextContent("Upload the clause checklist");
+    expect(screen.getByText(/All workflow inputs are captured.*1 required evidence item remains/))
+      .toBeInTheDocument();
+    expect(screen.getByTestId("source-shell-progress-status"))
+      .toHaveTextContent("Approval locked");
+    expect(screen.getByTestId("source-shell-progress-status"))
+      .toHaveTextContent("Review remaining required evidence in Files.");
     expect(screen.queryByTestId("source-shell-progress-action")).toBeNull();
   });
 
