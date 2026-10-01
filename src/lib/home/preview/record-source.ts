@@ -48,6 +48,26 @@ export function homeSourceCoverageLabel(
   return `Source-linked: ${coverage.linkedRecordRows.toLocaleString()} of ${coverage.totalRecordRows.toLocaleString()} record rows`;
 }
 
+export function homeSourceFileReviewLabel(
+  source: HomeRecordRenderSource,
+): string | null {
+  if (source.kind !== "ecl_serving_projection") return null;
+  return homeSourceFileReviewLabelForVersion(source.contextVersion);
+}
+
+export function homeSourceFileReviewLabelForVersion(
+  version: HomeContextVersion | undefined,
+): string {
+  const review = version?.sourceFileReview;
+  if (!review) return "Source file review unavailable";
+  if (review.totalFiles === 0)
+    return "No source files registered for this record";
+  if (review.acceptedFiles === review.totalFiles)
+    return `Source files accepted: ${review.totalFiles} of ${review.totalFiles}`;
+  const blocked = review.blockedFiles ? `; ${review.blockedFiles} blocked` : "";
+  return `Source review incomplete: ${review.acceptedFiles} of ${review.totalFiles} files accepted${blocked}`;
+}
+
 export function homeSourceCoverageGapLabel(
   source: HomeRecordRenderSource,
 ): string | null {

@@ -149,6 +149,15 @@ export interface HomeContextVersion {
     linkedRecordRows: number;
     families: Array<{ pageKey: string; totalRows: number; linkedRows: number }>;
   };
+  /** Null when the source catalog cannot be read; changes when file review state changes. */
+  sourceCatalogHash?: string | null;
+  sourceFileReview?: {
+    totalFiles: number;
+    acceptedFiles: number;
+    partialFiles: number;
+    blockedFiles: number;
+    supersededFiles: number;
+  } | null;
   deterministicPacketHash: string;
   narrativePacketHash: string | null;
   narrativeGeneratedAt: string | null;

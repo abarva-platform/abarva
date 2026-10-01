@@ -290,6 +290,26 @@ it("refuses to answer if verified source links changed without a row-count chang
   expect(mockedAnswerHomeAvaQuestion).not.toHaveBeenCalled();
 });
 
+it("refuses to answer when source-file review state changes under the same rows", async () => {
+  const expected = liveRecordSource();
+  expected.contextVersion = {
+    ...expected.contextVersion!,
+    sourceCatalogHash: "prior-source-review",
+  };
+
+  const response = await POST(
+    makeRequest({
+      tenantKey: "meridian-health",
+      question: "Where are we commercially exposed?",
+      expectedRecordSource: expected,
+    }),
+  );
+
+  expect(response.status).toBe(409);
+  expect(await response.json()).toEqual({ error: "home_context_changed" });
+  expect(mockedAnswerHomeAvaQuestion).not.toHaveBeenCalled();
+});
+
 it("requires the rendered record marker before answering", async () => {
   const response = await POST(
     makeRequest({

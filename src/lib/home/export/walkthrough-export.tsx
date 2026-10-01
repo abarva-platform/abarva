@@ -20,6 +20,7 @@ import {
   homeRecordSourceLabel,
   homeSourceCoverageGapLabel,
   homeSourceCoverageLabel,
+  homeSourceFileReviewLabel,
 } from "@/lib/home/preview/record-source";
 import type {
   ChapterView,
@@ -216,6 +217,7 @@ export function renderHomeWalkthroughHtml({
   const narrativeStatus = homeNarrativeStatusLabel(recordSource);
   const sourceCoverage = homeSourceCoverageLabel(recordSource);
   const sourceCoverageGap = homeSourceCoverageGapLabel(recordSource);
+  const sourceFileReview = homeSourceFileReviewLabel(recordSource);
   const compiled = formatCompiledDate(
     recordSource.contextVersion?.narrativeGeneratedAt ??
       bundle.provenance.generated_at,
@@ -262,6 +264,7 @@ export function renderHomeWalkthroughHtml({
     <strong>Record on screen: ${escapeHtml(sourceLabel)}</strong>
     <p>${escapeHtml(narrativeStatus)}</p>
     ${sourceCoverage ? `<p>${escapeHtml(sourceCoverage)}</p>` : ""}
+    ${sourceFileReview ? `<p>${escapeHtml(sourceFileReview)}</p>` : ""}
     ${sourceCoverageGap ? `<p>${escapeHtml(sourceCoverageGap)}</p>` : ""}
     <p>Canonical marker: ${escapeHtml(recordSource.canonicalSnapshotHash)}. ${escapeHtml(markerScope(recordSource))} This export is a Home walkthrough export: chapters, deterministic tables, findings, evidence labels, architecture/data-flow summaries, and record-source state. It is not an aVa chat transcript.</p>
   </section>
@@ -451,6 +454,7 @@ export function buildHomeWalkthroughPdf({
   const narrativeStatus = homeNarrativeStatusLabel(recordSource);
   const sourceCoverage = homeSourceCoverageLabel(recordSource);
   const sourceCoverageGap = homeSourceCoverageGapLabel(recordSource);
+  const sourceFileReview = homeSourceFileReviewLabel(recordSource);
   const compiled = formatCompiledDate(
     recordSource.contextVersion?.narrativeGeneratedAt ??
       bundle.provenance.generated_at,
@@ -473,6 +477,9 @@ export function buildHomeWalkthroughPdf({
           <Text style={pdfStyles.text}>{narrativeStatus}</Text>
           {sourceCoverage ? (
             <Text style={pdfStyles.text}>{sourceCoverage}</Text>
+          ) : null}
+          {sourceFileReview ? (
+            <Text style={pdfStyles.text}>{sourceFileReview}</Text>
           ) : null}
           {sourceCoverageGap ? (
             <Text style={pdfStyles.meta}>{sourceCoverageGap}</Text>

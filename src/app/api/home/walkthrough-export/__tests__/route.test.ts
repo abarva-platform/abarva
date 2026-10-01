@@ -196,4 +196,39 @@ describe("/api/home/walkthrough-export", () => {
     expect(await response.json()).toEqual({ error: "home_context_changed" });
     expect(renderHomeWalkthroughHtml).not.toHaveBeenCalled();
   });
+
+  it("refuses an export when source-file review state changes under the same rows", async () => {
+    const { GET } = await import("../route");
+    const token = homeRecordSourceToken("meridian-health", {
+      kind: "ecl_serving_projection",
+      canonicalSnapshotHash: "ecl:test:serving.home_*:3311",
+      contextVersion: {
+        assessmentId: "test",
+        projectionContentHash: "current-content",
+        sourceSetHash: null,
+        sourceLineageHash: "lineage-current",
+        sourceCatalogHash: "prior-source-review",
+        sourceCoverage: {
+          totalRecordRows: 2,
+          linkedRecordRows: 1,
+          families: [],
+        },
+        deterministicPacketHash: "current-packet",
+        narrativePacketHash: null,
+        narrativeGeneratedAt: null,
+        dataAsOf: null,
+        coherence: "unverified",
+      },
+    });
+
+    const response = await GET(
+      request(
+        `https://app.abarva.ai/api/home/walkthrough-export?tenant=meridian-health&format=html&context=${token}`,
+      ),
+    );
+
+    expect(response.status).toBe(409);
+    expect(await response.json()).toEqual({ error: "home_context_changed" });
+    expect(renderHomeWalkthroughHtml).not.toHaveBeenCalled();
+  });
 });

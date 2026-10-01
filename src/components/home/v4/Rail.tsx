@@ -5,6 +5,7 @@ import {
   homeRecordSourceLabel,
   homeSourceCoverageGapLabel,
   homeSourceCoverageLabel,
+  homeSourceFileReviewLabel,
 } from "@/lib/home/preview/record-source";
 import type { HomeRecordRenderSource } from "@/lib/home/preview/types";
 import { MONO, SANS, SERIF, V4, eyebrow } from "./tokens";
@@ -133,6 +134,7 @@ export function Rail({
 }) {
   const sourceCoverageLabel = homeSourceCoverageLabel(recordSource);
   const sourceCoverageGap = homeSourceCoverageGapLabel(recordSource);
+  const sourceFileReviewLabel = homeSourceFileReviewLabel(recordSource);
   return (
     <nav
       style={{
@@ -375,6 +377,9 @@ export function Rail({
           data-home-projection-content-hash={
             recordSource.contextVersion?.projectionContentHash
           }
+          data-home-source-catalog-hash={
+            recordSource.contextVersion?.sourceCatalogHash
+          }
           data-home-narrative-coherence={recordSource.contextVersion?.coherence}
           style={{
             margin: 0,
@@ -408,6 +413,19 @@ export function Rail({
             }}
           >
             {sourceCoverageLabel}
+          </p>
+        ) : null}
+        {sourceFileReviewLabel ? (
+          <p
+            style={{
+              margin: "6px 0 0",
+              fontFamily: SANS,
+              fontSize: 12,
+              lineHeight: 1.4,
+              color: V4.slate,
+            }}
+          >
+            {sourceFileReviewLabel}
           </p>
         ) : null}
         {sourceCoverageGap ? (

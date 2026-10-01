@@ -60,6 +60,14 @@ export interface HomeProjectionRow {
   admission_status?: string | null;
 }
 
+export type HomeSourceFileReviewRow = {
+  id: string;
+  file_name: string;
+  file_hash: string;
+  source_date: string | null;
+  quality_state: string;
+};
+
 const COLUMN_ORDER: Record<TechObjectType, string[]> = {
   business_segment: [
     "segmentName",
@@ -1233,8 +1241,7 @@ export function buildTechnologyEstateFromHomeProjectionRows(
     factualRows
       .filter(
         (row) =>
-          row.page_key === "business_unit_profile" &&
-          row.row_type === rowType,
+          row.page_key === "business_unit_profile" && row.row_type === rowType,
       )
       .map((row) => stripEmpty(enterpriseRow(row)));
   const segments = enterpriseFamily("business_segment");
@@ -1675,13 +1682,18 @@ function buildEclSignalPacket(
   const infrastructure = rowsForType(estate, "infrastructure_platform");
   const dataRecords = rowsForType(estate, "data_asset_or_integration");
   const interviews = rowsForType(estate, "executive_interview");
-  const missingEnterpriseFamilies = ([
-    "business_segment",
-    "business_function",
-    "workforce_role",
-    "operational_process",
-  ] as const)
-    .filter((objectType) => !estate.recordTypes.some((type) => type.objectType === objectType))
+  const missingEnterpriseFamilies = (
+    [
+      "business_segment",
+      "business_function",
+      "workforce_role",
+      "operational_process",
+    ] as const
+  )
+    .filter(
+      (objectType) =>
+        !estate.recordTypes.some((type) => type.objectType === objectType),
+    )
     .map((objectType) => LABELS[objectType]);
   const dataFlows = dataRecords.filter(
     (row) => row.recordKind !== "data_analytics_workload",
@@ -1925,9 +1937,10 @@ function buildEclSignalPacket(
     },
     {
       id: "ctx_ecl_scope_business_economics_001",
-      statement: segments.length > 0
-        ? "Business-segment records are present in the served Home record. Customer and channel economics still require their own cited evidence; do not infer them from segment totals."
-        : "Business-segment records are not supplied by the current Home read. Do not infer the business model from technology and vendor counts.",
+      statement:
+        segments.length > 0
+          ? "Business-segment records are present in the served Home record. Customer and channel economics still require their own cited evidence; do not infer them from segment totals."
+          : "Business-segment records are not supplied by the current Home read. Do not infer the business model from technology and vendor counts.",
       domains: [
         "enterprise_profile",
         "spend_value_fact",
@@ -1937,24 +1950,29 @@ function buildEclSignalPacket(
     },
     {
       id: "ctx_ecl_scope_strategy_programs_001",
-      statement: programs.length > 0
-        ? "Program records are present in the served Home record. Priority-to-program and program-to-outcome links still require explicit cited relationships."
-        : "Program records are not supplied by the current Home read. Do not infer an execution portfolio from chapter prose.",
+      statement:
+        programs.length > 0
+          ? "Program records are present in the served Home record. Priority-to-program and program-to-outcome links still require explicit cited relationships."
+          : "Program records are not supplied by the current Home read. Do not infer an execution portfolio from chapter prose.",
       domains: ["spend_value_fact", "vendor_contract", "evidence_sources"],
     },
     ...(missingEnterpriseFamilies.length > 0
-      ? [{
-          id: "ctx_ecl_gap_enterprise_families_001",
-          statement: `The served Home record does not yet include ${missingEnterpriseFamilies.join(", ")}. That is a coverage gap, not evidence the enterprise lacks them.`,
-          domains: ["evidence_sources"],
-        }]
+      ? [
+          {
+            id: "ctx_ecl_gap_enterprise_families_001",
+            statement: `The served Home record does not yet include ${missingEnterpriseFamilies.join(", ")}. That is a coverage gap, not evidence the enterprise lacks them.`,
+            domains: ["evidence_sources"],
+          },
+        ]
       : []),
     ...(withheldRowCount > 0
-      ? [{
-          id: "ctx_ecl_gap_withheld_rows_001",
-          statement: `${withheldRowCount} record${withheldRowCount === 1 ? " was" : "s were"} excluded from Home facts because source review or identifying fields were insufficient.`,
-          domains: ["evidence_sources"],
-        }]
+      ? [
+          {
+            id: "ctx_ecl_gap_withheld_rows_001",
+            statement: `${withheldRowCount} record${withheldRowCount === 1 ? " was" : "s were"} excluded from Home facts because source review or identifying fields were insufficient.`,
+            domains: ["evidence_sources"],
+          },
+        ]
       : []),
     interviews.length > 0
       ? {
@@ -2510,6 +2528,7 @@ function contextVersionForRows(
   claims: Map<ChapterId, GroundedClaim[]>,
   hasPublishedClaims: boolean,
   verifiedSourceRefs: VerifiedSourceRefs,
+  sourceCatalogRows: readonly HomeSourceFileReviewRow[] | null,
 ): HomeContextVersion {
   const hash = (value: unknown) =>
     createHash("sha256").update(JSON.stringify(value)).digest("hex");
@@ -2569,6 +2588,36 @@ function contextVersionForRows(
       a.pageKey.localeCompare(b.pageKey),
     ),
   };
+  const sourceCatalogHash = sourceCatalogRows
+    ? hash(
+        [...sourceCatalogRows]
+          .map((row) => ({
+            id: row.id,
+            fileName: row.file_name,
+            fileHash: row.file_hash,
+            sourceDate: row.source_date,
+            qualityState: row.quality_state,
+          }))
+          .sort((left, right) => left.id.localeCompare(right.id)),
+      )
+    : null;
+  const sourceFileReview = sourceCatalogRows
+    ? {
+        totalFiles: sourceCatalogRows.length,
+        acceptedFiles: sourceCatalogRows.filter(
+          (row) => row.quality_state === "accepted",
+        ).length,
+        partialFiles: sourceCatalogRows.filter(
+          (row) => row.quality_state === "partial",
+        ).length,
+        blockedFiles: sourceCatalogRows.filter(
+          (row) => row.quality_state === "blocked",
+        ).length,
+        supersededFiles: sourceCatalogRows.filter(
+          (row) => row.quality_state === "superseded",
+        ).length,
+      }
+    : null;
   const sourceSetHash =
     citableRows.length > 0 &&
     citableRows.every(
@@ -2595,7 +2644,15 @@ function contextVersionForRows(
     narrativePacketHash === deterministicPacketHash &&
     writerDates.size === 1 &&
     claimEvidenceResolved &&
-    sourceSetHash !== null;
+    sourceSetHash !== null &&
+    Boolean(
+      sourceCatalogRows?.length &&
+      sourceCatalogRows.every(
+        (row) =>
+          row.quality_state === "accepted" &&
+          /^[a-f0-9]{64}$/.test(row.file_hash),
+      ),
+    );
   const hasCurrentStoryPlan =
     Boolean(storyPlanRow(rows)) || !base.executiveStoryPlan;
 
@@ -2611,6 +2668,8 @@ function contextVersionForRows(
     sourceSetHash,
     sourceLineageHash,
     sourceCoverage,
+    sourceCatalogHash,
+    sourceFileReview,
     deterministicPacketHash,
     narrativePacketHash,
     narrativeGeneratedAt: hasPublishedClaims
@@ -2632,9 +2691,11 @@ export function buildHomeReviewBundleFromEclProjectionRows(
   rows: HomeProjectionRow[],
   assessmentId = denseAssessmentIdForTenant(base.tenantKey),
   verifiedSourceRefs: VerifiedSourceRefs = new Map(),
+  sourceCatalogRows: readonly HomeSourceFileReviewRow[] | null = null,
 ): HomeReviewBundle {
   const factualRows = rows.filter(isFactualHomeRow);
-  const technologyEstate = buildTechnologyEstateFromHomeProjectionRows(factualRows);
+  const technologyEstate =
+    buildTechnologyEstateFromHomeProjectionRows(factualRows);
   const signalPacket = buildEclSignalPacket(
     factualRows,
     technologyEstate,
@@ -2652,6 +2713,7 @@ export function buildHomeReviewBundleFromEclProjectionRows(
     claims,
     hasPublishedClaims,
     verifiedSourceRefs,
+    sourceCatalogRows,
   );
   const thesis = hasPublishedClaims
     ? publishedThesisFromRows(factualRows)
@@ -2820,6 +2882,23 @@ async function readVerifiedSourceRefs(
   }
 }
 
+async function readHomeSourceCatalog(
+  tenantKey: string,
+  assessmentId: string,
+): Promise<HomeSourceFileReviewRow[] | null> {
+  try {
+    return await azureRead.query<HomeSourceFileReviewRow>(
+      `select id::text, file_name, file_hash, source_date::text, quality_state
+       from ecl_source.source_file
+       where tenant_key = $1 and assessment_id = $2`,
+      [tenantKey, assessmentId],
+    );
+  } catch (error) {
+    console.warn("[home] source-file review state unavailable", error);
+    return null;
+  }
+}
+
 export async function getHomeEclProjectionBundle(
   tenantKey: HomePreviewTenantKey,
 ): Promise<HomeReviewBundle> {
@@ -2862,12 +2941,17 @@ export async function getHomeEclProjectionBundle(
     tenantKey,
     assessmentId,
   );
+  const sourceCatalogRows = await readHomeSourceCatalog(
+    tenantKey,
+    assessmentId,
+  );
   return {
     ...buildHomeReviewBundleFromEclProjectionRows(
       base,
       rows,
       assessmentId,
       verifiedSourceRefs,
+      sourceCatalogRows,
     ),
   };
 }

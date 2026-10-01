@@ -672,6 +672,14 @@ describe("answerHomeAvaQuestion", () => {
               { pageKey: "vendor_contracts", totalRows: 2, linkedRows: 1 },
             ],
           },
+          sourceCatalogHash: "source-catalog-hash",
+          sourceFileReview: {
+            totalFiles: 14,
+            acceptedFiles: 0,
+            partialFiles: 14,
+            blockedFiles: 0,
+            supersededFiles: 0,
+          },
           deterministicPacketHash: "read-packet-hash",
           narrativePacketHash: "writer-packet-hash",
           narrativeGeneratedAt: "2026-08-21T00:00:00Z",
@@ -685,6 +693,7 @@ describe("answerHomeAvaQuestion", () => {
 
     expect(answer.status).toBe("no_data");
     expect(answer.directAnswer).toContain("not been verified");
+    expect(answer.directAnswer).toContain("0 of 14 files accepted");
     expect(answer.directAnswer).toContain("incomplete for contracts");
     expect(answer.prose).toBeUndefined();
     expect(mockGetAuditedAnthropicClient).not.toHaveBeenCalled();

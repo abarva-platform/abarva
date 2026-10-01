@@ -8,6 +8,7 @@ import {
   getHomeReviewBundle,
   isHomePreviewTenantKey,
 } from "@/lib/home/preview/golden-snapshot";
+import { homeRecordSourceToken } from "@/lib/home/preview/record-source-token";
 import type { HomeRecordRenderSource } from "@/lib/home/preview/types";
 import {
   isEclProductProvider,
@@ -24,27 +25,6 @@ interface AskBody {
   activeChapterId?: string;
   requestedProvider?: string;
   expectedRecordSource?: HomeRecordRenderSource;
-}
-
-function sameRecordSource(
-  expected: HomeRecordRenderSource,
-  actual: HomeRecordRenderSource,
-): boolean {
-  const left = expected.contextVersion;
-  const right = actual.contextVersion;
-  return (
-    expected.kind === actual.kind &&
-    expected.canonicalSnapshotHash === actual.canonicalSnapshotHash &&
-    left?.assessmentId === right?.assessmentId &&
-    left?.sourceSetHash === right?.sourceSetHash &&
-    left?.sourceLineageHash === right?.sourceLineageHash &&
-    left?.projectionContentHash === right?.projectionContentHash &&
-    left?.deterministicPacketHash === right?.deterministicPacketHash &&
-    left?.narrativePacketHash === right?.narrativePacketHash &&
-    left?.narrativeGeneratedAt === right?.narrativeGeneratedAt &&
-    left?.dataAsOf === right?.dataAsOf &&
-    left?.coherence === right?.coherence
-  );
 }
 
 /** Ask aVa, scoped to the Home preview surface: answers are grounded in the same served bundle
@@ -105,7 +85,10 @@ export async function POST(req: NextRequest) {
     kind: "reviewed_snapshot",
     canonicalSnapshotHash: bundle.provenance.canonical_snapshot_hash,
   };
-  if (!sameRecordSource(body.expectedRecordSource, recordSource)) {
+  if (
+    homeRecordSourceToken(tenantKey, body.expectedRecordSource) !==
+    homeRecordSourceToken(tenantKey, recordSource)
+  ) {
     return NextResponse.json(
       { error: "home_context_changed" },
       { status: 409 },
