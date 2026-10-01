@@ -1,6 +1,7 @@
 import {
   getCanonicalAdminSourceEventReadClient,
   getSourcingEvent,
+  getSourcingEventWithReadContext,
   getSourcingEventForResolvedClient,
   getSourcingEventArtifact,
   listSourcingEvents,
@@ -271,6 +272,57 @@ describe("canonical-admin Source event read context", () => {
   it("does not turn a seed-only event into a live read context", async () => {
     await expect(getCanonicalAdminSourceEventReadClient("apex-retail-ams-outsourcing-2026"))
       .resolves.toBeNull();
+  });
+});
+
+describe("event-bound Source read context", () => {
+  const eventId = "00000000-0000-4000-8000-000000000112";
+  const row = {
+    id: eventId,
+    client_key: "meridian",
+    event_code: "SYNTHETIC-RFP-001",
+    event_name: "Synthetic sourcing event",
+    event_type: "infrastructure",
+    current_stage_key: "rfp",
+    lifecycle_state: "active",
+    linked_program_id: null,
+    estimated_value_usd: null,
+    trigger_description: "Synthetic intake",
+    scope_description: "Application services",
+    decision_owner: "Event owner",
+    created_by_user_id: null,
+    created_at: "2026-01-01T00:00:00Z",
+    updated_at: "2026-01-01T00:00:00Z",
+  };
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockEmptySourceEventsTable();
+    getActiveClientRow.mockResolvedValue({ id: "client-id", key: "meridian", name: "Test client" });
+    requireTenancy.mockRejectedValue(new Error("no_client"));
+    mockSourceEventsAdapter.getEventByIdForClient.mockResolvedValue(row);
+  });
+
+  it("returns the exact matched event and its read client after one client lookup", async () => {
+    const context = await getSourcingEventWithReadContext(eventId);
+    expect(context).toMatchObject({
+      event: { id: eventId },
+      readClient: { key: "meridian", name: "Test client" },
+    });
+    expect(getActiveClientRow).toHaveBeenCalledTimes(1);
+  });
+
+  it("refuses a foreign row returned by the scoped adapter", async () => {
+    mockSourceEventsAdapter.getEventByIdForClient.mockResolvedValue({ ...row, client_key: "other-client" });
+    await expect(getSourcingEventWithReadContext(eventId)).resolves.toBeNull();
+  });
+
+  it("refuses an unrelated event id returned by the scoped adapter", async () => {
+    mockSourceEventsAdapter.getEventByIdForClient.mockResolvedValue({
+      ...row,
+      id: "00000000-0000-4000-8000-000000000113",
+    });
+    await expect(getSourcingEventWithReadContext(eventId)).resolves.toBeNull();
   });
 });
 
