@@ -2031,8 +2031,12 @@ jobs:
       # `src/lib/agent/quality/__tests__` holds a second file that already runs
       # in `wave0:quality-gate`.
       # Not wired here, by verdict: the toolUseLoop byte scan
-      # (rewrite_as_behavior), the WorkspaceExplorer stale label
-      # (update_with_reason_recorded) and six rows held for T-775.
+      # (rewrite_as_behavior) and six rows held for T-775.
+      # `src/components/workspace-explorer/__tests__` was the
+      # update_with_reason_recorded row: its stale requirement-label
+      # expectation now reads the label from the canonical evidence spec,
+      # re-executed 6 of 6 green on `9fc88b46a9`, and it holds only that one
+      # file.
       - name: Run the item 26 draw 15 config, data and lib suites
         run: >-
           npx jest
@@ -2046,6 +2050,7 @@ jobs:
           src/lib/corpus/__tests__
           src/lib/cxo-intel/__tests__
           src/lib/decisions/__tests__
+          src/components/workspace-explorer/__tests__
           --no-coverage --ci
 
       - name: Run the item 26 draw 15 agent doctrine and CXO answer-quality suites by named file

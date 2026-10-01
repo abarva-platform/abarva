@@ -6,7 +6,6 @@
   "src/app/api/intelligence/query/__tests__",
   "src/components/evidence/__tests__",
   "src/components/tenant/__tests__",
-  "src/components/workspace-explorer/__tests__",
   "src/lib/admin",
   "src/lib/adversarial/__tests__",
   "src/lib/agent/streaming",
