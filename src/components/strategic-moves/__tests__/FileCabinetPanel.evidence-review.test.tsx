@@ -5,6 +5,91 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { FileCabinetPanel } from "../FileCabinetPanel";
 
 describe("Moves File Cabinet evidence review", () => {
+  it("makes absent review facts and evidence explicit", async () => {
+    const fetchMock = jest.fn(async (url: string) => {
+      if (url.endsWith("/review-decision")) {
+        return {
+          ok: true,
+          json: async () => ({
+            ok: true,
+            reviewPackage: {
+              reviewedArtifactId: "artifact-1",
+              htmlVisualCompanionArtifactId: "artifact-1",
+              docxEditableArtifactId: null,
+              reviewedArtifactIds: ["artifact-1"],
+            },
+            packet: {
+              headline: "Service diagnostic review",
+              diagnosticThesis: "The artifact is presented for review.",
+              strongestEvidence: [],
+              quantifiedFacts: [],
+              knownLimitations: ["P2 remains subject to final sign-off."],
+              missingEvidence: [],
+              decisionsRequired: [],
+              recommendedNextAction: "Review the source evidence.",
+              p3Implication: "Use only reviewed findings.",
+            },
+            latestDecision: null,
+            readiness: {
+              readyForP3Draft: false,
+              readyForP3Final: false,
+              p2FinalApproved: false,
+              allowedNextAction: "review_p2",
+              reason: "No review decision exists.",
+            },
+          }),
+        } as Response;
+      }
+      return {
+        ok: true,
+        json: async () => ({
+          artifacts: [
+            {
+              artifactId: "artifact-1",
+              artifactType: "discovery_report",
+              family: "generated_deliverable",
+              title: "Service diagnostic",
+              phase: 2,
+              fileFormat: "html",
+              fileName: "diagnostic.html",
+              version: 1,
+              status: "review_required",
+              lifecycleState: "current",
+              qualityScore: null,
+              unsupportedClaims: 0,
+              createdAt: "2026-09-30T00:00:00Z",
+              fileSize: 1000,
+              stored: "azure_blob",
+              openItems: [],
+              downloadUrl: "/api/v1/programs/move-1/artifacts/artifact-1/download",
+            },
+          ],
+          pendingEvidenceReviews: [],
+          evidenceReviewStatus: "available",
+        }),
+      } as Response;
+    });
+    global.fetch = fetchMock as typeof fetch;
+
+    render(<FileCabinetPanel moveId="move-1" phase={2} />);
+    fireEvent.click(await screen.findByRole("button", { name: "Review" }));
+
+    expect(
+      await screen.findByText(
+        "No quantified facts were explicitly supplied for this review.",
+      ),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "No strongest-evidence items were explicitly supplied for this review.",
+      ),
+    ).toBeInTheDocument();
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/v1/programs/move-1/artifacts/artifact-1/review-decision",
+      { credentials: "include" },
+    );
+  });
+
   it("preserves a deliberate session-file classification through the upload request", async () => {
     const uploadedForms: FormData[] = [];
     const fetchMock = jest.fn(async (url: string, init?: RequestInit) => {
