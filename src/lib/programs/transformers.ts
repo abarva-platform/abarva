@@ -216,7 +216,7 @@ export async function buildGateCriteria(
   }));
 }
 
-function buildUnverifiedGateCriteria(
+export function buildUnverifiedGateCriteria(
   currentPhase: number,
 ): StrategicMove["gateCriteria"] {
   const criteria = gateCriteriaForPhase(currentPhase);
