@@ -2096,6 +2096,33 @@ jobs:
           src/lib/intelligence/ask/response-policy.test.ts
           --no-coverage --ci
 
+      # Item 26, draw 17, second half: the seventeenth stale-suite draw's
+      # eleven `wire_into_ci` rows. Verdicts:
+      # `docs/architecture/item26-draw17-stale-suite-triage.json` (#8785).
+      # Re-executed on base `788a99f606` before wiring, each file alone: 11
+      # suites, 155 cases, all green. Every directory holds exactly one test
+      # file, the drawn one (`jest --listTests` over the eleven patterns
+      # resolves exactly those eleven files), so all are named whole and leave
+      # the dark-directory baseline in the same change.
+      # Not wired here, by verdict: two repair rows (draw 16 data-lane decision
+      # owed), two test-only fixture re-key updates, and five rows held for
+      # T-775.
+      - name: Run the item 26 draw 17 lib suites
+        run: >-
+          npx jest
+          src/lib/intelligence/dossiers/__tests__
+          src/lib/intelligence/insight-engine/__tests__
+          src/lib/parallel-run/__tests__
+          src/lib/pilot-dashboard/__tests__
+          src/lib/prompts/__tests__
+          src/lib/runtime/__tests__
+          src/lib/semantic2/dossiers/__tests__
+          src/lib/source/classifier/__tests__
+          src/lib/source/context-writeback/__tests__
+          src/lib/source/delivery-model/__tests__
+          src/lib/source/documentation-standards/__tests__
+          --no-coverage --ci
+
       # Item T-495, claimable half, suite 2 of 11.
       # `src/__tests__/hygiene/learn-layout-single-nav.test.ts` asserted the
       # single-top-nav rule for `/home/learn` over the BYTES of two files, and was

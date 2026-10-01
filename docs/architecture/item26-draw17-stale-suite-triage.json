@@ -29,7 +29,18 @@
   "secondHalf": {
     "what": "Wire the wire_into_ci rows, each re-executed on the then-current main first. The two fixture re-key updates (ranks 8 and 13) are claimable as test-only changes. The two repair rows wait on the draw 16 data-lane decision. The five T-775 rows stay held until their owner acts.",
     "owner": "26",
-    "status": "open"
+    "status": "wire_into_ci rows wired; the two repair rows, the two test-only fixture re-key updates and the five T-775 holds are unchanged and still open",
+    "wiredAt": "2026-10-01T07:03:00Z",
+    "wiredOnBase": "788a99f606c8e50d7cfab8e06663d3e2a2eb9d32",
+    "reExecuted": "All 11 wire_into_ci files re-executed one at a time on the wiring base: 11 suites, 155 cases, all green. The workflow step runs as written: 11 suites / 155 cases.",
+    "steps": [
+      "Run the item 26 draw 17 lib suites"
+    ],
+    "stillHeld": [
+      "repair: two rows reading deleted legacy dataset roots (draw 16 data-lane decision owed, item 26)",
+      "update_with_reason_recorded: two test-only fixture re-key rows (item 26)",
+      "already_verdicted_elsewhere: five rows (T-775)"
+    ]
   },
   "suites": [
     {
@@ -47,6 +58,7 @@
       "textIsTheSubject": false,
       "verdict": "wire_into_ci",
       "ownerItem": "26",
+      "wiredInThisItem": true,
       "rationale": "Green 4 of 4, behavioural, reads no repository file. Subject src/lib/intelligence/dossiers is imported by src/lib/intelligence/ask/index.ts and the advisory-packet assembler; compose-intelligence-answer by src/lib/intelligence/ask/synthesizer.ts. Neither is in a reachability registry."
     },
     {
@@ -108,6 +120,7 @@
       "textIsTheSubject": false,
       "verdict": "wire_into_ci",
       "ownerItem": "26",
+      "wiredInThisItem": true,
       "rationale": "Green 2 of 2, behavioural, reads no repository file. Subject src/lib/intelligence/insight-engine/index.ts is imported by the /api/intelligence/insights routes and src/lib/intelligence/refresh-events.ts. Not in a reachability registry (only rules/stub.ts under it is listed unreferenced, and the test does not import it)."
     },
     {
@@ -148,6 +161,7 @@
       "textIsTheSubject": false,
       "verdict": "wire_into_ci",
       "ownerItem": "26",
+      "wiredInThisItem": true,
       "rationale": "Green 14 of 14, behavioural, reads no repository file. Subject src/lib/parallel-run/invariant-diff.ts is imported by the operator script scripts/parallel-run-diff.ts and is in neither registry."
     },
     {
@@ -165,6 +179,7 @@
       "textIsTheSubject": false,
       "verdict": "wire_into_ci",
       "ownerItem": "26",
+      "wiredInThisItem": true,
       "rationale": "Green 11 of 11, behavioural, reads no repository file. Subject src/lib/pilot-dashboard/aggregates.ts is imported by the platform admin pilot page; the two other imports are type-only. In neither registry."
     },
     {
@@ -227,6 +242,7 @@
       "textIsTheSubject": false,
       "verdict": "wire_into_ci",
       "ownerItem": "26",
+      "wiredInThisItem": true,
       "rationale": "Green 3 of 3, behavioural, reads no repository file. Subject src/lib/prompts/sentinel.ts is imported by src/lib/sentinel/orchestrator.ts and src/lib/depth/rubrics/index.ts. In neither registry."
     },
     {
@@ -244,6 +260,7 @@
       "textIsTheSubject": false,
       "verdict": "wire_into_ci",
       "ownerItem": "26",
+      "wiredInThisItem": true,
       "rationale": "Green 4 of 4, behavioural, reads no repository file. Subject src/lib/runtime/supabaseBootGuard.ts is imported by src/instrumentation.ts, the Next.js boot hook. In neither registry. The cases set and restore process.env themselves."
     },
     {
@@ -307,6 +324,7 @@
       "textIsTheSubject": false,
       "verdict": "wire_into_ci",
       "ownerItem": "26",
+      "wiredInThisItem": true,
       "rationale": "Green 9 of 9, behavioural, reads no repository file. Subject src/lib/semantic2/dossiers is imported by src/lib/semantic2/runtime-contract.ts (itself imported by src/lib/tower/tower-l3-dossiers.ts) and scripts/semantic2-dossier-eligibility-report.ts. In neither registry."
     },
     {
@@ -346,6 +364,7 @@
       "textIsTheSubject": false,
       "verdict": "wire_into_ci",
       "ownerItem": "26",
+      "wiredInThisItem": true,
       "rationale": "Green 30 of 30, behavioural, reads no repository file. Subject src/lib/source/classifier/category-classifier.ts is imported by src/lib/source/queries.ts and the Source reasoning adapters; category-taxonomy by several /api/v1/source routes. In neither registry."
     },
     {
@@ -363,6 +382,7 @@
       "textIsTheSubject": false,
       "verdict": "wire_into_ci",
       "ownerItem": "26",
+      "wiredInThisItem": true,
       "rationale": "Green 19 of 19, behavioural, reads no repository file. Subject src/lib/source/context-writeback is imported by the operator scripts src/scripts/source/writeback-source-facts-to-enterprise-context.ts and verify-source-enterprise-context-readback.ts; the other imports are type-only. In neither registry."
     },
     {
@@ -402,6 +422,7 @@
       "textIsTheSubject": false,
       "verdict": "wire_into_ci",
       "ownerItem": "26",
+      "wiredInThisItem": true,
       "rationale": "Green 19 of 19, behavioural, reads no repository file. Subject src/lib/source/delivery-model/delivery-model-gate.ts is imported by src/lib/source/source-answer-engine.ts and the Moves-to-Source trigger. In neither registry."
     },
     {
@@ -419,6 +440,7 @@
       "textIsTheSubject": false,
       "verdict": "wire_into_ci",
       "ownerItem": "26",
+      "wiredInThisItem": true,
       "rationale": "Green 40 of 40, behavioural, reads no repository file. Subjects source-documentation-standards.ts and source-artifact-profiles.ts are imported by the /api/v1/source/[eventId]/artifacts generate routes. In neither registry."
     }
   ]
