@@ -29,7 +29,19 @@
   "secondHalf": {
     "what": "Wire the 7 wire_into_ci rows, each re-executed on the then-current main first. The 5 repair rows and 2 live-intake update rows wait on one data-lane decision (frozen fixture, registry-pinned expectation, or retirement). The ledger migration-text case is decided before rank 12 is wired. The five T-775 rows stay held until their owner acts.",
     "owner": "26",
-    "status": "open"
+    "status": "wire_into_ci rows wired; the five repair rows, the two live-intake update rows, the ledger migration-text case and the five T-775 holds are unchanged and still open",
+    "wiredAt": "2026-10-01T05:34:00Z",
+    "wiredOnBase": "0858491423b9c6c85af4254ff28ac36c9dbcde4e",
+    "reExecuted": "All 7 wire_into_ci files re-executed one at a time on the wiring base: 7 suites, 59 cases, all green. The two workflow steps run as written: 6 suites / 37 cases and 1 suite / 22 cases.",
+    "steps": [
+      "Run the item 26 draw 16 lib suites",
+      "Run the item 26 draw 16 Intelligence ask response-policy suite by named file"
+    ],
+    "stillHeld": [
+      "repair: five tenant-data rows (data-lane decision owed, item 26)",
+      "update_with_reason_recorded: two live-intake rows (same decision) and the ledger migration-text case (item 26)",
+      "already_verdicted_elsewhere: five rows (T-775)"
+    ]
   },
   "suites": [
     {
@@ -47,6 +59,7 @@
       "textIsTheSubject": false,
       "verdict": "wire_into_ci",
       "ownerItem": "26",
+      "wiredInThisItem": true,
       "rationale": "Green 2 of 2, behavioural, reads no repository file. Subject src/lib/dependencies is imported by the /api/dependencies routes and listed in neither reachability registry."
     },
     {
@@ -64,6 +77,7 @@
       "textIsTheSubject": false,
       "verdict": "wire_into_ci",
       "ownerItem": "26",
+      "wiredInThisItem": true,
       "rationale": "Green 8 of 8, behavioural, reads no repository file. Subject src/lib/email/send.ts is imported by src/lib/notifications/dispatch.ts and src/lib/programs/approval-notifications.ts, and listed in neither registry."
     },
     {
@@ -104,6 +118,7 @@
       "textIsTheSubject": false,
       "verdict": "wire_into_ci",
       "ownerItem": "26",
+      "wiredInThisItem": true,
       "rationale": "Green 4 of 4, behavioural, reads no repository file. Subject layer3-validation.ts is imported by scripts/data-build/refresh-runtime-layers.ts; mapping-profiles.ts by the CSV source adapter. Neither is in a reachability registry."
     },
     {
@@ -232,6 +247,7 @@
       "textIsTheSubject": false,
       "verdict": "wire_into_ci",
       "ownerItem": "26",
+      "wiredInThisItem": true,
       "rationale": "Green 2 of 2, behavioural, reads no repository file. Subject tower-context-pack-builder.ts is imported by context-pack-assembler.ts and the Tower v3 pack builder, and listed in neither registry."
     },
     {
@@ -285,6 +301,7 @@
       "textIsTheSubject": false,
       "verdict": "wire_into_ci",
       "ownerItem": "26",
+      "wiredInThisItem": true,
       "rationale": "Green 16 of 16, behavioural, reads no repository file. Subject is-feature-enabled.ts is imported by Source event pages and listed in neither registry."
     },
     {
@@ -394,6 +411,7 @@
       "textIsTheSubject": false,
       "verdict": "wire_into_ci",
       "ownerItem": "26",
+      "wiredInThisItem": true,
       "rationale": "Green 22 of 22, behavioural, reads no repository file. Subject response-policy.ts is imported by /api/intelligence/ask and /api/tower/ask, and listed in neither registry."
     },
     {
@@ -411,6 +429,7 @@
       "textIsTheSubject": false,
       "verdict": "wire_into_ci",
       "ownerItem": "26",
+      "wiredInThisItem": true,
       "rationale": "Green 5 of 5, behavioural, reads no repository file. Subject binding-payload.ts is imported by HomeSurface.tsx, and listed in neither registry."
     },
     {

@@ -16,10 +16,15 @@
  *    and says the row must be superseded by a later record;
  *  - a live-corpus hold is re-asked: the corpus root must still exist and
  *    still be named where the row says;
- *  - the committed census must resolve every drawn path to THIS record.
+ *  - the committed census must resolve every drawn path still held to THIS
+ *    record;
+ *  - second half: every `wire_into_ci` row must be named in an item 26 draw
+ *    16 unit-suites step AND be counted as run by the census, and no held row
+ *    may be named in such a step.
  */
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import path from "node:path";
+import yaml from "js-yaml";
 
 const ROOT = process.cwd();
 const RECORD_PATH = "docs/architecture/item26-draw16-stale-suite-triage.json";
@@ -55,6 +60,7 @@ type Suite = {
   textIsTheSubject: boolean;
   verdict: string;
   ownerItem: string;
+  wiredInThisItem?: boolean;
   unreachableSubject?: { path: string; registry: string; list: string };
   redCause?: RedCause;
   liveCorpusRoot?: string;
@@ -345,7 +351,7 @@ describe("item 26 draw 16 stale suite triage record", () => {
     }
   });
 
-  it("is the verdict the committed census resolves for every drawn path", () => {
+  it("is the verdict the committed census resolves for every drawn path still held", () => {
     const census = readJson<{
       triageVerdicts: {
         heldTestPaths: { testPath: string; verdict: string; record: string }[];
@@ -354,12 +360,79 @@ describe("item 26 draw 16 stale suite triage record", () => {
     const held = new Map(
       census.triageVerdicts.heldTestPaths.map((row) => [row.testPath, row]),
     );
-    for (const suite of record.suites) {
+    const stillHeld = record.suites.filter((suite) => suite.verdict !== "wire_into_ci");
+    expect(stillHeld.length).toBeGreaterThan(0);
+    for (const suite of stillHeld) {
       const row = held.get(suite.path);
       expect({ path: suite.path, record: row?.record, verdict: row?.verdict }).toEqual({
         path: suite.path,
         record: RECORD_PATH,
         verdict: suite.verdict,
+      });
+    }
+  });
+
+  // Second half (wiring). A `wire_into_ci` row is no longer a hold: it must be
+  // RUN. That is asked of two independent places — the workflow a pull request
+  // executes, and the census computed from it — so neither the record's own
+  // `wiredInThisItem` flag nor a comment in the YAML can satisfy it.
+  it("runs every wire_into_ci row in an item 26 draw 16 unit-suites step, and the census agrees", () => {
+    const workflow = yaml.load(readText(".github/workflows/unit-suites.yml")) as {
+      jobs: Record<string, { steps?: { name?: string; run?: string }[] }>;
+    };
+    const commands = Object.values(workflow.jobs)
+      .flatMap((job) => job.steps ?? [])
+      .filter((step) => (step.name ?? "").includes("item 26 draw 16") && step.run)
+      .map((step) => {
+        // A `>-` block folds to ONE shell line, so a `#` inside it is not a
+        // YAML comment but a shell one: every word after it is never passed
+        // to jest. Cut there, as the shell does.
+        const all = (step.run ?? "").split(/\s+/);
+        const comment = all.findIndex((w) => w.startsWith("#"));
+        const words = (comment === -1 ? all : all.slice(0, comment)).map((w) =>
+          w.replace(/^"|"$/g, ""),
+        );
+        return { byPath: words.includes("--runTestsByPath"), words };
+      });
+    expect(commands.length).toBeGreaterThan(0);
+
+    const census = readJson<{
+      triageVerdicts: { heldTestPaths: { testPath: string }[] };
+      uncoveredDirectories: { directory: string }[];
+    }>("docs/architecture/test-ci-coverage-census.json");
+    const held = new Set(census.triageVerdicts.heldTestPaths.map((row) => row.testPath));
+    const dark = new Set(census.uncoveredDirectories.map((row) => row.directory));
+
+    const wiring = record.suites.filter((suite) => suite.verdict === "wire_into_ci");
+    expect(wiring.length).toBeGreaterThan(0);
+    for (const suite of wiring) {
+      const named = commands.some(({ byPath, words }) =>
+        byPath
+          ? words.includes(suite.path)
+          : words.includes(path.posix.dirname(suite.path)),
+      );
+      expect({
+        path: suite.path,
+        wiredInThisItem: suite.wiredInThisItem,
+        namedInStep: named,
+        stillHeldByCensus: held.has(suite.path),
+        directoryDark: dark.has(path.posix.dirname(suite.path)),
+      }).toEqual({
+        path: suite.path,
+        wiredInThisItem: true,
+        namedInStep: true,
+        stillHeldByCensus: false,
+        directoryDark: false,
+      });
+    }
+    // Held rows must NOT have been wired by an item 26 draw 16 step.
+    for (const suite of record.suites.filter((s) => s.verdict !== "wire_into_ci")) {
+      const named = commands.some(({ words }) =>
+        words.includes(suite.path) || words.includes(path.posix.dirname(suite.path)),
+      );
+      expect({ path: suite.path, namedInStep: named }).toEqual({
+        path: suite.path,
+        namedInStep: false,
       });
     }
   });
