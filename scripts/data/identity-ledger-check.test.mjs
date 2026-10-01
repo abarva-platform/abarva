@@ -1,7 +1,14 @@
 import assert from 'node:assert/strict';
+import { spawnSync } from 'node:child_process';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
 import test from 'node:test';
+import { fileURLToPath } from 'node:url';
 
 import { evaluateTenantIdentity } from './identity-ledger-check.mjs';
+
+const CHECK_SCRIPT = fileURLToPath(new URL('./identity-ledger-check.mjs', import.meta.url));
 
 const ontology = {
   nodeTypes: [
@@ -130,4 +137,49 @@ test('a declared entry no row carries is counted, not failed -- the ledger is ap
   const result = evaluateTenantIdentity(tenant);
   assert.deepEqual(result.findings, []);
   assert.equal(result.perType.find((t) => t.type === 'infrastructure').unreachedLedgerEntries, 1);
+});
+
+/**
+ * The CLI, run against a throwaway repo root. Two registered tenants, each clean; the only
+ * variable is whether the second one's ledger file exists.
+ */
+function runCheckOn({ secondTenantHasLedger }) {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'identity-ledger-cli-'));
+  const write = (rel, body) => {
+    fs.mkdirSync(path.dirname(path.join(root, rel)), { recursive: true });
+    fs.writeFileSync(path.join(root, rel), body);
+  };
+  const csv = (fields, rows) => [fields.join(','), ...rows.map((row) => fields.map((f) => row[f]).join(','))].join('\n') + '\n';
+  const tenantKeys = ['tenant-a', 'tenant-b'];
+  write(
+    'datasets/tenant-inputs/tenant-input-registry.json',
+    JSON.stringify({ activeTenants: tenantKeys.map((tenantKey) => ({ tenantKey, canonicalInputRoot: `datasets/tenant-inputs/active/${tenantKey}/current` })) }),
+  );
+  write('datasets/tenant-inputs/templates/universal/standard-2026-07-v3/ontology.json', JSON.stringify(ontology));
+  for (const tenantKey of tenantKeys) {
+    const tenant = cleanTenant();
+    for (const [name, file] of Object.entries(tenant.files)) {
+      write(`datasets/tenant-inputs/active/${tenantKey}/current/${name}`, csv(file.fields, file.rows));
+    }
+    if (tenantKey === 'tenant-a' || secondTenantHasLedger) {
+      write(`datasets/tenant-inputs/${tenantKey}/identity-ledger.json`, JSON.stringify(tenant.ledger));
+    }
+  }
+  const result = spawnSync(process.execPath, [CHECK_SCRIPT, '--check'], { cwd: root, encoding: 'utf8' });
+  fs.rmSync(root, { recursive: true, force: true });
+  return result;
+}
+
+test('every registered tenant with a ledger that agrees with its files: the check exits 0', () => {
+  const result = runCheckOn({ secondTenantHasLedger: true });
+  assert.equal(result.status, 0, result.stdout + result.stderr);
+  assert.match(result.stdout, /^tenant-a: PASS$/m);
+  assert.match(result.stdout, /^tenant-b: PASS$/m);
+});
+
+test('a registered tenant with no ledger fails the check, even when every other tenant passes', () => {
+  const result = runCheckOn({ secondTenantHasLedger: false });
+  assert.equal(result.status, 1, result.stdout + result.stderr);
+  assert.match(result.stdout, /^tenant-a: PASS$/m);
+  assert.match(result.stdout, /^tenant-b: NOT MEASURED -- no identity ledger at datasets\/tenant-inputs\/tenant-b\/identity-ledger\.json$/m);
 });

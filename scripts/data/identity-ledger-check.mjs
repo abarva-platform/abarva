@@ -171,8 +171,11 @@ function main() {
   for (const tenant of registry.activeTenants ?? []) {
     const { ledgerPath, ledger, ontology, files } = readTenant(root, tenant);
     if (!ledger) {
-      // Printed, never skipped silently: "no ledger" and "clean" must not look alike.
+      // Printed, never skipped silently: "no ledger" and "clean" must not look alike. And it fails:
+      // every registered tenant is minted, so a missing ledger is one deleted or never written, and
+      // a tenant nobody can measure must not pass on the strength of the ones somebody can.
       console.log(`${tenant.tenantKey}: NOT MEASURED -- no identity ledger at ${ledgerPath}`);
+      failures += 1;
       continue;
     }
     measured += 1;
