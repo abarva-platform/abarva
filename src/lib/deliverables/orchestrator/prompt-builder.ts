@@ -18,6 +18,7 @@ import type {
 } from "./types";
 import { renderEvidenceForPrompt } from "./source-register";
 import type { GovernedEvidenceItem } from "./types";
+import { redactExcludedNumericClaims } from "./excluded-numeric-claims";
 import { resolvePassTokenBudget } from "@/lib/ai/document-generation-policy";
 import { roadmapStructuredOutputInstruction } from "@/lib/deliverables/roadmap-structured-output";
 import {
@@ -121,6 +122,9 @@ export function buildSystemPrompt(req: DeliverableIntelligenceRequest): string {
     `- Citation and evidence-handling rules are invisible authoring controls. Never explain, restate, or summarize these rules in the client artifact, and never write that a claim is "tied to" an evidence appendix. Simply comply with the rules.`,
     `- Never write "authorized to build", "not authorized", or "not authorized to build" in client prose. Use executive decision language such as "in scope for delivery", "hold the investment decision", or "requires further validation", as appropriate.`,
     excludedP2NumericClaimsInstruction(req),
+    req.prohibitedNumericClaims && req.prohibitedNumericClaims.length > 0
+      ? `- Deterministic claim boundary: values explicitly marked unsupported or excluded have been withheld from the evidence text. Do not reconstruct or restate them in any numeric format; describe only the qualitative evidence status.`
+      : "",
     conciseInstrument
       ? `- This artifact is a concise approval instrument with an enforced length ceiling. Respect brevity as a quality requirement: use compact tables, remove repetition, and do not expand into later-phase analysis.`
       : `- Optimize for the SHORTEST artifact that carries the argument. Length is not evidence of rigour, and a reader who skims because the document is long has not been persuaded — they have been outlasted. Cut any sentence that does not change what the reader decides.`,
@@ -164,7 +168,7 @@ function buildContextBlock(
       ? req.requiredEvidenceSignals
           .map(
             (signal) =>
-              `- [${signal.citationNumber}] ${signal.label}: ${signal.statement}`,
+              `- [${signal.citationNumber}] ${redactExcludedNumericClaims(signal.label, req.prohibitedNumericClaims ?? [])}: ${redactExcludedNumericClaims(signal.statement, req.prohibitedNumericClaims ?? [])}`,
           )
           .join("\n")
       : "(none selected)";
@@ -192,7 +196,9 @@ function buildContextBlock(
     `REQUIRED EVIDENCE SIGNALS TO CARRY FORWARD:`,
     requiredSignals,
     req.requiredEvidenceSignals && req.requiredEvidenceSignals.length > 0
-      ? `These are the metric-dense facts most likely to anchor the decision. Preserve the exact number/value and its meaning in the artifact, cited with the shown [n]. If they do not fit naturally in a section, carry them in a compact evidence-signals table.`
+      ? req.prohibitedNumericClaims && req.prohibitedNumericClaims.length > 0
+        ? `These are the metric-dense facts most likely to anchor the decision. Preserve exact non-excluded values and their meaning, cited with [n]. Where a value is marked as omitted, preserve only its qualitative status; do not reconstruct it. If signals do not fit naturally in a section, carry them in a compact evidence-signals table.`
+        : `These are the metric-dense facts most likely to anchor the decision. Preserve the exact number/value and its meaning in the artifact, cited with the shown [n]. If they do not fit naturally in a section, carry them in a compact evidence-signals table.`
       : ``,
     ``,
     `MISSING EVIDENCE (mark as [EVIDENCE MISSING] or [ASSUMPTION TO VALIDATE]):`,
@@ -558,7 +564,18 @@ export function buildPassPrompt(
   pass: GenerationPass,
   inputs: PassInputs,
 ): PassPrompt {
-  const { req, brief, evidence } = inputs;
+  const { req, brief } = inputs;
+  const evidence = inputs.evidence.map((item) => ({
+    ...item,
+    label: redactExcludedNumericClaims(
+      item.label,
+      req.prohibitedNumericClaims ?? [],
+    ),
+    statement: redactExcludedNumericClaims(
+      item.statement,
+      req.prohibitedNumericClaims ?? [],
+    ),
+  }));
   const highStakes = req.qualityBar.tone === "board_grade_consulting";
   const system = buildSystemPrompt(req);
   const context = buildContextBlock(req, brief, evidence);
@@ -744,7 +761,10 @@ export function buildPassPrompt(
   return {
     pass,
     system,
-    user,
+    user: redactExcludedNumericClaims(
+      user,
+      req.prohibitedNumericClaims ?? [],
+    ),
     ...(user.startsWith(context) ? { cacheableContext: context } : {}),
     maxTokens: resolvePassTokenBudget({
       pass,

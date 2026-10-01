@@ -236,4 +236,43 @@ describe("the canonical quality contract reaches the runtime request", () => {
       }
     },
   );
+
+  it("derives a P2-only deterministic claim boundary from governed evidence", () => {
+    const input: MoveBusinessCaseInput = {
+      ...move(),
+      governed_evidence_items: [
+        {
+          id: "11111111-1111-4111-8111-111111111112",
+          title: "Finance value hypothesis",
+          summary:
+            "The $8.0M annual value is an unsupported hypothesis; Finance-validated value is $0.",
+          evidence_type: "finance_value_hypothesis",
+          confidence: "low",
+        },
+      ],
+    };
+    const p2 = buildMoveDeliverableRequest(input, {
+      deliverableType: "discovery_report",
+      phaseOrStage: "P2_discover_and_diagnose",
+      artifactStandard: "moves.discovery_report",
+      decisionContext: "Summarize the evidenced current state.",
+    }).request;
+    const p4 = buildMoveDeliverableRequest(input, {
+      deliverableType: "business_case",
+      phaseOrStage: "P4_business_case",
+      artifactStandard: "moves.business_case",
+      decisionContext: "Support investment approval.",
+    }).request;
+    const prompt = buildPassPrompt("full_draft", {
+      req: p2,
+      brief: getArtifactBrief(p2),
+      evidence: p2.governedEvidenceBundle,
+    }).user;
+
+    expect(p2.prohibitedNumericClaims).toHaveLength(1);
+    expect(p2.prohibitedNumericClaims?.[0]?.sourceValue).toBe("$8.0M");
+    expect(prompt).not.toContain("$8.0M");
+    expect(prompt).toContain("Finance-validated value is $0");
+    expect(p4.prohibitedNumericClaims).toEqual([]);
+  });
 });

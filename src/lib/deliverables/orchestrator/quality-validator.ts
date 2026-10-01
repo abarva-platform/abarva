@@ -17,6 +17,7 @@ import { carriesRequiredEvidenceSignal } from "./evidence-signals";
 import { scanForInternalLeaks } from "./source-register";
 import { countBodyWords } from "@/lib/deliverables/shared/body-word-count";
 import { judgeSlideCount } from "@/lib/deliverables/slide-contract";
+import { findExcludedNumericClaims } from "./excluded-numeric-claims";
 
 const DECISION_RE =
   /\b(decision|recommend|we recommend|the ask|approval sought|go\/no-go)\b/i;
@@ -247,6 +248,11 @@ export function validateDeliverableQuality(
       body,
     ) || clientCompleteCount > 0;
   const wholeDocumentText = [
+    doc.title,
+    doc.subtitle ?? "",
+    doc.generatedSections
+      .map((section) => section.rawBodyMarkdown ?? section.bodyMarkdown)
+      .join("\n\n"),
     body,
     doc.tables
       .map(
@@ -258,7 +264,29 @@ export function validateDeliverableQuality(
       .join("\n\n"),
     doc.recommendation,
     doc.nextActions.join("\n"),
+    (doc.deckSlides ?? [])
+      .flatMap((slide) => [
+        slide.title ?? "",
+        slide.governingMessage,
+        ...(slide.points ?? []),
+        slide.speakerNotes ?? "",
+      ])
+      .join("\n"),
+    doc.exhibits
+      .map((exhibit) => `${exhibit.title}\n${exhibit.description}\n${JSON.stringify(exhibit.data ?? {})}`)
+      .join("\n\n"),
+    doc.sourceRegister
+      .map((source) => `${source.label} ${source.evidenceFamily} ${source.asOf ?? ""}`)
+      .join("\n"),
+    doc.assumptions.map((assumption) => assumption.statement).join("\n"),
+    doc.clientCompleteChecklist
+      .map((item) => `${item.label} ${item.placeholderText}`)
+      .join("\n"),
   ].join("\n\n");
+  const excludedNumericClaimHits = findExcludedNumericClaims(
+    wholeDocumentText,
+    req.prohibitedNumericClaims ?? [],
+  );
   const missingRequiredEvidenceSignals = (req.requiredEvidenceSignals ?? [])
     .filter(
       (signal) =>
@@ -286,6 +314,13 @@ export function validateDeliverableQuality(
         .map((s) => `"${s}"`)
         .join("; ")}`,
     );
+  if (excludedNumericClaimHits.length > 0) {
+    blockers.push(
+      `explicitly excluded numeric claim(s) from governed evidence appear in the artifact: ${excludedNumericClaimHits
+        .map((claim) => `${claim.sourceLabel} [${claim.citationNumber}]`)
+        .join("; ")}`,
+    );
+  }
   if (sectionCount < qb.minSections)
     blockers.push(`only ${sectionCount} sections; minimum ${qb.minSections}`);
 

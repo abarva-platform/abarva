@@ -60,6 +60,17 @@ export interface GovernedEvidenceItem {
   provenanceRef: string;
 }
 
+/** A numeric value explicitly marked unsupported or excluded by governed evidence. */
+export interface ExcludedNumericClaim {
+  citationNumber: number;
+  sourceLabel: string;
+  kind: "currency" | "percentage" | "date";
+  /** Regular-expression sources for equivalent renderings of this same value. */
+  matchPatterns: string[];
+  /** Exact source rendering, used only to redact model-facing evidence. */
+  sourceValue: string;
+}
+
 export interface MissingEvidenceItem {
   evidenceFamily: string;
   label: string;
@@ -209,6 +220,8 @@ export interface DeliverableIntelligenceRequest {
   /** Registry-authored, deliverable-specific generation constraints. */
   generationPromptGuidance?: string;
   governedEvidenceBundle: GovernedEvidenceItem[];
+  /** Explicitly excluded values that must not appear in generated client artifacts. */
+  prohibitedNumericClaims?: ExcludedNumericClaim[];
   sourceRegister: SourceRegisterEntry[];
   /**
    * High-signal facts selected from governed evidence that must remain visible

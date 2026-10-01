@@ -20,6 +20,7 @@ import type {
   MissingEvidenceItem,
   SourceRegisterEntry,
 } from "@/lib/deliverables/orchestrator/types";
+import { extractExcludedNumericClaims } from "@/lib/deliverables/orchestrator/excluded-numeric-claims";
 import { resolveQualityBar } from "@/lib/deliverables/orchestrator/quality-bar-registry";
 import { selectRequiredEvidenceSignals } from "@/lib/deliverables/orchestrator/evidence-signals";
 import { getDeliverableSpec } from "@/lib/programs/deliverable-registry";
@@ -323,6 +324,12 @@ export function buildMoveDeliverableRequest(
   const initiativeDisplayName = asString(input.name) ?? "Strategic Move";
   const clientDisplayName =
     asString(input.tenant_name) ?? asString(input.tenant_key) ?? "Client";
+  const prohibitedNumericClaims =
+    options.deliverableType === "discovery_report" ||
+    options.deliverableType === "root_cause_worksheet" ||
+    options.deliverableType === "design_workshop_guide"
+      ? extractExcludedNumericClaims(governedEvidenceBundle)
+      : [];
 
   const request: DeliverableIntelligenceRequest = {
     module: "moves",
@@ -334,6 +341,7 @@ export function buildMoveDeliverableRequest(
     audience: options.audience ?? ["board", "cfo", "cio", "steering_committee"],
     decisionContext: options.decisionContext,
     governedEvidenceBundle,
+    prohibitedNumericClaims,
     sourceRegister,
     requiredEvidenceSignals: isProgramCharterDeliverable(
       options.deliverableType,
