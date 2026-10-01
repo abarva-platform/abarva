@@ -35,7 +35,9 @@ Generated Moves deliverables, approvals, context extracts, and queued builds now
 
 ## QA / Validation
 
-- Targeted Jest validation: 11 suites, 176 tests passed.
+- Focused Moves/generation/approval validation: 12 suites, 177 tests passed.
+- `npm run test:behaviors`: 173 suites, 1,826 tests passed.
+- Programs governance integration slice: 26 suites, 518 passed, 12 skipped.
 - `npm run typecheck`: clean.
 - ESLint on all changed TypeScript and TSX files: clean.
 - `git diff --check`: clean.
