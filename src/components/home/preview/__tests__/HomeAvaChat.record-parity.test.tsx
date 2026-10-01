@@ -33,6 +33,8 @@ const recordSource: HomeRecordRenderSource = {
     assessmentId: "assessment",
     projectionContentHash: "projection-a",
     sourceSetHash: null,
+    sourceLineageHash: "lineage-a",
+    sourceCoverage: { totalRecordRows: 2, linkedRecordRows: 1, families: [] },
     deterministicPacketHash: "packet-a",
     narrativePacketHash: "narrative-old",
     narrativeGeneratedAt: "2026-08-21T00:00:00.000Z",

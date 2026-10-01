@@ -18,6 +18,7 @@ export function homeRecordSourceToken(
         source.canonicalSnapshotHash,
         version?.assessmentId ?? null,
         version?.sourceSetHash ?? null,
+        version?.sourceLineageHash ?? null,
         version?.projectionContentHash ?? null,
         version?.deterministicPacketHash ?? null,
         version?.narrativePacketHash ?? null,

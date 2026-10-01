@@ -37,6 +37,7 @@ function sameRecordSource(
     expected.canonicalSnapshotHash === actual.canonicalSnapshotHash &&
     left?.assessmentId === right?.assessmentId &&
     left?.sourceSetHash === right?.sourceSetHash &&
+    left?.sourceLineageHash === right?.sourceLineageHash &&
     left?.projectionContentHash === right?.projectionContentHash &&
     left?.deterministicPacketHash === right?.deterministicPacketHash &&
     left?.narrativePacketHash === right?.narrativePacketHash &&

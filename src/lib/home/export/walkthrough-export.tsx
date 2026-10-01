@@ -18,6 +18,8 @@ import type { Finding, TableSpec } from "@/components/home/v4/page-tables";
 import {
   homeNarrativeStatusLabel,
   homeRecordSourceLabel,
+  homeSourceCoverageGapLabel,
+  homeSourceCoverageLabel,
 } from "@/lib/home/preview/record-source";
 import type {
   ChapterView,
@@ -212,6 +214,8 @@ export function renderHomeWalkthroughHtml({
   const estate = estateFromBundle(bundle);
   const sourceLabel = homeRecordSourceLabel(recordSource);
   const narrativeStatus = homeNarrativeStatusLabel(recordSource);
+  const sourceCoverage = homeSourceCoverageLabel(recordSource);
+  const sourceCoverageGap = homeSourceCoverageGapLabel(recordSource);
   const compiled = formatCompiledDate(
     recordSource.contextVersion?.narrativeGeneratedAt ??
       bundle.provenance.generated_at,
@@ -257,6 +261,8 @@ export function renderHomeWalkthroughHtml({
   <section class="scope">
     <strong>Record on screen: ${escapeHtml(sourceLabel)}</strong>
     <p>${escapeHtml(narrativeStatus)}</p>
+    ${sourceCoverage ? `<p>${escapeHtml(sourceCoverage)}</p>` : ""}
+    ${sourceCoverageGap ? `<p>${escapeHtml(sourceCoverageGap)}</p>` : ""}
     <p>Canonical marker: ${escapeHtml(recordSource.canonicalSnapshotHash)}. ${escapeHtml(markerScope(recordSource))} This export is a Home walkthrough export: chapters, deterministic tables, findings, evidence labels, architecture/data-flow summaries, and record-source state. It is not an aVa chat transcript.</p>
   </section>
   ${familySummaryHtml(bundle)}
@@ -443,6 +449,8 @@ export function buildHomeWalkthroughPdf({
   const estate = estateFromBundle(bundle);
   const sourceLabel = homeRecordSourceLabel(recordSource);
   const narrativeStatus = homeNarrativeStatusLabel(recordSource);
+  const sourceCoverage = homeSourceCoverageLabel(recordSource);
+  const sourceCoverageGap = homeSourceCoverageGapLabel(recordSource);
   const compiled = formatCompiledDate(
     recordSource.contextVersion?.narrativeGeneratedAt ??
       bundle.provenance.generated_at,
@@ -463,6 +471,12 @@ export function buildHomeWalkthroughPdf({
         <View style={pdfStyles.scope}>
           <Text style={pdfStyles.text}>Record on screen: {sourceLabel}</Text>
           <Text style={pdfStyles.text}>{narrativeStatus}</Text>
+          {sourceCoverage ? (
+            <Text style={pdfStyles.text}>{sourceCoverage}</Text>
+          ) : null}
+          {sourceCoverageGap ? (
+            <Text style={pdfStyles.meta}>{sourceCoverageGap}</Text>
+          ) : null}
           <Text style={pdfStyles.meta}>
             Canonical marker: {recordSource.canonicalSnapshotHash}
           </Text>

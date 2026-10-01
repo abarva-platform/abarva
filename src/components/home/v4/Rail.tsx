@@ -3,6 +3,8 @@ import type { CSSProperties } from "react";
 import {
   homeNarrativeStatusLabel,
   homeRecordSourceLabel,
+  homeSourceCoverageGapLabel,
+  homeSourceCoverageLabel,
 } from "@/lib/home/preview/record-source";
 import type { HomeRecordRenderSource } from "@/lib/home/preview/types";
 import { MONO, SANS, SERIF, V4, eyebrow } from "./tokens";
@@ -129,6 +131,8 @@ export function Rail({
   recordSource: HomeRecordRenderSource;
   exportHrefBase?: string;
 }) {
+  const sourceCoverageLabel = homeSourceCoverageLabel(recordSource);
+  const sourceCoverageGap = homeSourceCoverageGapLabel(recordSource);
   return (
     <nav
       style={{
@@ -393,6 +397,33 @@ export function Rail({
         >
           {homeNarrativeStatusLabel(recordSource)}
         </p>
+        {sourceCoverageLabel ? (
+          <p
+            style={{
+              margin: "6px 0 0",
+              fontFamily: SANS,
+              fontSize: 12,
+              lineHeight: 1.4,
+              color: V4.slate,
+            }}
+          >
+            {sourceCoverageLabel}
+          </p>
+        ) : null}
+        {sourceCoverageGap ? (
+          <details
+            style={{
+              marginTop: 6,
+              fontFamily: SANS,
+              fontSize: 12,
+              lineHeight: 1.4,
+              color: V4.slate,
+            }}
+          >
+            <summary>Source coverage gaps</summary>
+            <p style={{ margin: "5px 0 0" }}>{sourceCoverageGap}</p>
+          </details>
+        ) : null}
       </div>
 
       <div style={{ borderTop: `1px solid ${V4.rule}`, paddingTop: 13 }}>
