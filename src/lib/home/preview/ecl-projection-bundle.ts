@@ -2618,6 +2618,21 @@ function contextVersionForRows(
         ).length,
       }
     : null;
+  const sourceDates = sourceCatalogRows
+    ?.map((row) => row.source_date)
+    .filter((date): date is string =>
+      Boolean(date && /^\d{4}-\d{2}-\d{2}$/.test(date)),
+    )
+    .sort();
+  const sourceDateCoverage =
+    sourceCatalogRows && sourceDates?.length
+      ? {
+          earliest: sourceDates[0]!,
+          latest: sourceDates[sourceDates.length - 1]!,
+          datedFiles: sourceDates.length,
+          totalFiles: sourceCatalogRows.length,
+        }
+      : null;
   const sourceSetHash =
     citableRows.length > 0 &&
     citableRows.every(
@@ -2670,6 +2685,7 @@ function contextVersionForRows(
     sourceCoverage,
     sourceCatalogHash,
     sourceFileReview,
+    sourceDateCoverage,
     deterministicPacketHash,
     narrativePacketHash,
     narrativeGeneratedAt: hasPublishedClaims

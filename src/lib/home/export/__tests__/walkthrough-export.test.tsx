@@ -44,6 +44,12 @@ const recordSource: HomeRecordRenderSource = {
       blockedFiles: 0,
       supersededFiles: 0,
     },
+    sourceDateCoverage: {
+      earliest: "2026-08-23",
+      latest: "2026-08-23",
+      datedFiles: 14,
+      totalFiles: 14,
+    },
     deterministicPacketHash: "read-packet-hash",
     narrativePacketHash: null,
     narrativeGeneratedAt: "2026-08-21T00:00:00Z",
@@ -146,6 +152,9 @@ describe("Home walkthrough export", () => {
     expect(html).toContain("Reviewed narrative; live rows may differ");
     expect(html).toContain("Source-linked: 2 of 3 record rows");
     expect(html).toContain("Source-file quality: 0 of 14 accepted; 14 partial");
+    expect(html).toContain(
+      "Registered source dates: 2026-08-23 (14 of 14 files); data currency not attested",
+    );
     expect(html).toContain("incomplete for metrics");
     expect(html).toContain("Data as of not established");
     expect(html).toContain("home_*:3311");
@@ -179,6 +188,7 @@ describe("Home walkthrough export", () => {
     expect(output).toContain(
       "Source-file quality: 0 of 14 accepted; 14 partial",
     );
+    expect(output).toContain("Registered source dates: 2026-08-23");
     expect(output).toContain("Home chapters");
   });
 });

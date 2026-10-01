@@ -680,6 +680,12 @@ describe("answerHomeAvaQuestion", () => {
             blockedFiles: 0,
             supersededFiles: 0,
           },
+          sourceDateCoverage: {
+            earliest: "2026-08-23",
+            latest: "2026-08-23",
+            datedFiles: 14,
+            totalFiles: 14,
+          },
           deterministicPacketHash: "read-packet-hash",
           narrativePacketHash: "writer-packet-hash",
           narrativeGeneratedAt: "2026-08-21T00:00:00Z",
@@ -695,6 +701,9 @@ describe("answerHomeAvaQuestion", () => {
     expect(answer.directAnswer).toContain("not been verified");
     expect(answer.directAnswer).toContain(
       "Source-file quality: 0 of 14 accepted; 14 partial",
+    );
+    expect(answer.directAnswer).toContain(
+      "Registered source dates: 2026-08-23 (14 of 14 files); data currency not attested",
     );
     expect(answer.directAnswer).toContain("incomplete for contracts");
     expect(answer.prose).toBeUndefined();
