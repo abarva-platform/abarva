@@ -828,6 +828,7 @@
     "ecl:synthetic-enterprise-v1:validate": "python3 scripts/ecl/validate_synthetic_enterprise_v1.py",
     "ecl:synthetic-enterprise-v1:load-job": "tsx scripts/ecl/load_synthetic_enterprise_v1.ts --execute",
     "ecl:synthetic-enterprise-v2:load-job": "ECL_SYNTHETIC_DATASET_VERSION=v2 tsx scripts/ecl/load_synthetic_enterprise_v1.ts --execute",
+    "ecl:synthetic-enterprise-v2:readback-job": "tsx scripts/ecl/readback_synthetic_enterprise_v2.ts",
     "ecl:migrate:enterprise-context-admission:apply": "npx tsx src/scripts/run-migrations.ts --ci --force 20261001183000_ecl_enterprise_context_admission.sql",
     "test:ecl-synthetic-enterprise-v1": "node --test scripts/ecl/__tests__/run-synthetic-enterprise-v1-tests.mjs",
     "test:ecl-synthetic-enterprise-v2": "node --test scripts/ecl/__tests__/run-synthetic-enterprise-v2-tests.mjs",
