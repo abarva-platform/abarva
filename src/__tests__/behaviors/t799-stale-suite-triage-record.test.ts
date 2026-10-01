@@ -46,6 +46,15 @@ type Suite = {
     passedTests: number;
     failedTests: number;
   };
+  rewritten?: {
+    rewrittenInThisItem: boolean;
+    reExecutedOn: string;
+    drawnReadsRepositoryFileText: boolean;
+    drawnSourceTextScanner: boolean;
+    totalTests: number;
+    passedTests: number;
+    failedTests: number;
+  };
   unreachableComponent?: string;
   redCause?: {
     kind: "stale_label" | "formatting_reflow";
@@ -74,10 +83,12 @@ const readJson = <T>(relative: string) => JSON.parse(readText(relative)) as T;
 const record = readJson<TriageRecord>(RECORD_PATH);
 
 // A row is RUN by a T-799 step when its verdict was wire_into_ci, or when it was
-// a stale-label update that this item has since applied. Every other row is a
-// hold and must stay unwired.
+// a stale-label update or a behaviour rewrite that this item has since applied.
+// Every other row is a hold and must stay unwired.
 const isRunRow = (suite: Suite) =>
-  suite.verdict === "wire_into_ci" || suite.updated?.updatedInThisItem === true;
+  suite.verdict === "wire_into_ci" ||
+  suite.updated?.updatedInThisItem === true ||
+  suite.rewritten?.rewrittenInThisItem === true;
 
 const READS_REPOSITORY_TEXT =
   /readFileSync|from ["'](?:node:)?fs(?:\/promises)?["']|process\.cwd\(\)|__dirname/;
@@ -248,6 +259,44 @@ describe("T-799 stale suite triage record", () => {
           testStillExpectsOldLabel: true,
           sourceStillLacksOldLabel: true,
           sourceHasCurrentLabel: true,
+        });
+      } else if (cause?.kind === "formatting_reflow" && suite.rewritten?.rewrittenInThisItem) {
+        // Applied: the byte scan is gone. The row now classifies the file as it
+        // is (no repository text, re-derived above from its bytes; not a
+        // scanner, which T-770 reads), keeps the draw-time classification in
+        // `rewritten.drawn*`, no longer spells the reflowed literal, imports the
+        // three routes it now CALLS, and re-executed green.
+        const imports = (route: string) =>
+          testText.includes(`from "@/app/(maestro)/${route}"`);
+        expect(suite.verdict).toBe("rewrite_as_behavior");
+        expect({
+          path: suite.path,
+          classifiedNow: [suite.readsRepositoryFileText, suite.sourceTextScanner],
+          classifiedAtDraw: [
+            suite.rewritten.drawnReadsRepositoryFileText,
+            suite.rewritten.drawnSourceTextScanner,
+          ],
+          readsRepositoryText: READS_REPOSITORY_TEXT.test(testText),
+          testStillExpectsMultiLineForm: testText.includes("const requestedClient ="),
+          importsGenericRoute: imports("tower/page"),
+          importsTenantRoute: imports("tenant/[tenantSlug]/tower/page"),
+          importsSubsurfaceRoute: imports("tenant/[tenantSlug]/tower/[surface]/page"),
+          reExecutedGreen:
+            suite.rewritten.failedTests === 0 &&
+            suite.rewritten.passedTests === suite.rewritten.totalTests &&
+            suite.rewritten.totalTests > 0,
+          wiredInThisItem: suite.wiredInThisItem,
+        }).toEqual({
+          path: suite.path,
+          classifiedNow: [false, false],
+          classifiedAtDraw: [true, true],
+          readsRepositoryText: false,
+          testStillExpectsMultiLineForm: false,
+          importsGenericRoute: true,
+          importsTenantRoute: true,
+          importsSubsurfaceRoute: true,
+          reExecutedGreen: true,
+          wiredInThisItem: true,
         });
       } else if (cause?.kind === "formatting_reflow") {
         const subject = readText(cause.expectedLiteralFile ?? "");
