@@ -157,7 +157,9 @@ create table if not exists ecl_context.object_type_catalog (
       'enterprise', 'business_segment', 'business_function', 'organization',
       'process', 'application', 'application_deployment', 'data_platform', 'data_product',
       'infrastructure', 'vendor', 'contract', 'program', 'metric',
-      'risk', 'control', 'ai_program', 'ai_use_case', 'ai_tool', 'persona'
+      'risk', 'control', 'ai_program', 'ai_use_case', 'ai_tool', 'persona',
+      'application_module', 'data_flow', 'spend_line', 'evidence_request',
+      'leadership_observation', 'strategic_priority', 'external_benchmark'
     )
   ),
   constraint object_type_catalog_counting_class_check check (
@@ -170,7 +172,8 @@ create table if not exists ecl_context.object_type_catalog (
       'initiative',
       'risk_control',
       'metric_definition',
-      'persona'
+      'persona',
+      'context_detail'
     )
   )
 );
@@ -187,7 +190,9 @@ begin
           'enterprise', 'business_segment', 'business_function', 'organization',
           'process', 'application', 'application_deployment', 'data_platform', 'data_product',
           'infrastructure', 'vendor', 'contract', 'program', 'metric',
-          'risk', 'control', 'ai_program', 'ai_use_case', 'ai_tool', 'persona'
+          'risk', 'control', 'ai_program', 'ai_use_case', 'ai_tool', 'persona',
+          'application_module', 'data_flow', 'spend_line', 'evidence_request',
+          'leadership_observation', 'strategic_priority', 'external_benchmark'
         )
       );
 
@@ -205,7 +210,8 @@ begin
           'initiative',
           'risk_control',
           'metric_definition',
-          'persona'
+          'persona',
+          'context_detail'
         )
       );
   end if;
@@ -237,7 +243,14 @@ insert into ecl_context.object_type_catalog (
 ('ai_program', 'AI Program', 'ai_program', 'initiative', 'AI program or portfolio container.'),
 ('ai_use_case', 'AI Use Case', 'ai_use_case', 'business_entity', 'AI use case or workflow target.'),
 ('ai_tool', 'AI Tool', 'ai_tool', 'technical_component', 'AI tool, model, or platform capability.'),
-('persona', 'Persona', 'persona', 'persona', 'Role or user persona.')
+('persona', 'Persona', 'persona', 'persona', 'Role or user persona.'),
+('application_module', 'Application Module', 'application_module', 'context_detail', 'Governed workflow module of one logical application; excluded from application totals.'),
+('data_flow', 'Data Flow', 'data_flow', 'context_detail', 'Source-declared integration flow; not a data product.'),
+('spend_line', 'Spend Line', 'spend_line', 'context_detail', 'Source financial line; not an independently aggregated spend measure.'),
+('evidence_request', 'Evidence Request', 'evidence_request', 'context_detail', 'Requested artifact not yet received; never supporting evidence.'),
+('leadership_observation', 'Leadership Observation', 'leadership_observation', 'context_detail', 'Role observation with explicit response basis.'),
+('strategic_priority', 'Strategic Priority', 'strategic_priority', 'context_detail', 'Declared priority distinct from a program.'),
+('external_benchmark', 'External Benchmark', 'external_benchmark', 'context_detail', 'External reference, not a client metric.')
 on conflict (object_type) do update set
   display_label = excluded.display_label,
   grain = excluded.grain,
@@ -312,7 +325,9 @@ begin
           'enterprise', 'business_segment', 'business_function', 'organization',
           'process', 'application', 'application_deployment', 'data_platform', 'data_product',
           'infrastructure', 'vendor', 'contract', 'program', 'metric',
-          'risk', 'control', 'ai_program', 'ai_use_case', 'ai_tool', 'persona'
+          'risk', 'control', 'ai_program', 'ai_use_case', 'ai_tool', 'persona',
+          'application_module', 'data_flow', 'spend_line', 'evidence_request',
+          'leadership_observation', 'strategic_priority', 'external_benchmark'
         )
       );
 
@@ -406,7 +421,11 @@ create table if not exists ecl_context.relationship (
     relationship_type in (
       'HAS_FUNCTION', 'OWNED_BY', 'SUPPORTED_BY', 'SUPPLIED_BY', 'COVERED_BY',
       'HOSTED_ON', 'DEPLOYMENT_OF', 'INTEGRATES_WITH', 'PRODUCES', 'CONSUMES', 'DEPENDS_ON',
-      'CHANGES', 'MITIGATES', 'CONTROLS', 'MEASURED_BY', 'USED_BY', 'FUNDED_BY'
+      'CHANGES', 'MITIGATES', 'CONTROLS', 'MEASURED_BY', 'USED_BY', 'FUNDED_BY',
+      'ACCOUNTABLE_TO', 'ADVANCES_PRIORITY', 'APPLIES_TO', 'ATTRIBUTED_TO',
+      'BELONGS_TO_SEGMENT', 'COST_OF', 'EVIDENCE_REQUESTED_FOR', 'FEEDS',
+      'GROUNDED_IN', 'HAS_PRIORITY', 'HAS_SEGMENT', 'MEASURES', 'MODULE_OF',
+      'SPONSORED_BY', 'TARGETS_SEGMENT', 'WORKS_IN'
     )
   ),
   constraint relationship_basis_check check (

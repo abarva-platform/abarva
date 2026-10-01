@@ -23,6 +23,29 @@ RELATIONSHIP_MAP_PATH = ROOT / "config/ecl/synthetic-enterprise-v1-relationship-
 RELATIONSHIP_TYPES = json.loads(
     RELATIONSHIP_MAP_PATH.read_text(encoding="utf-8")
 )
+OBJECT_TYPES = {
+    "enterprise": "enterprise",
+    "business_segment": "business_segment",
+    "business_function": "business_function",
+    "owner": "persona",
+    "workforce_role": "persona",
+    "application": None,
+    "platform": None,
+    "data_asset": "data_product",
+    "vendor": "vendor",
+    "contract": "contract",
+    "program": "program",
+    "priority": "strategic_priority",
+    "metric": "metric",
+    "risk": "risk",
+    "ai_use_case": "ai_use_case",
+    "data_flow": "data_flow",
+    "deployment": "application_deployment",
+    "spend_line": "spend_line",
+    "evidence_request": "evidence_request",
+    "leadership_observation": "leadership_observation",
+    "external_benchmark": "external_benchmark",
+}
 
 
 def read_csv(path: Path) -> list[dict[str, str]]:
@@ -42,14 +65,24 @@ def canonical_relationship_type(native_type: str) -> str:
 
 
 def canonical_object_type(obj: dict[str, Any]) -> str:
-    if obj["object_type"] != "application":
-        return obj["object_type"]
-    grain = obj["attributes"].get("application_grain")
-    if grain == "logical_product":
-        return "application"
-    if grain == "governed_module":
-        return "application_module"
-    raise ValueError(f"Unmapped application grain: {grain}")
+    native_type = obj["object_type"]
+    if native_type not in OBJECT_TYPES:
+        raise ValueError(f"Unmapped source object type: {native_type}")
+    if native_type == "application":
+        grain = obj["attributes"].get("application_grain")
+        if grain == "logical_product":
+            return "application"
+        if grain == "governed_module":
+            return "application_module"
+        raise ValueError(f"Unmapped application grain: {grain}")
+    if native_type == "platform":
+        platform_type = obj["attributes"].get("platform_type")
+        if platform_type in {"database_cluster", "integration_platform"}:
+            return "data_platform"
+        if platform_type in {"cloud_account", "virtualization", "data_center"}:
+            return "infrastructure"
+        raise ValueError(f"Unmapped platform type: {platform_type}")
+    return OBJECT_TYPES[native_type]
 
 
 def normalize(pack: Path) -> dict[str, Any]:
