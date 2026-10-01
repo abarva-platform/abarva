@@ -7,6 +7,8 @@ on:
       - "scripts/data/assign-stable-identity.test.mjs"
       - "scripts/data/identity-ledger-check.mjs"
       - "scripts/data/identity-ledger-check.test.mjs"
+      - "scripts/data-refresh/generate-analytics-topology.mjs"
+      - "scripts/data-refresh/generate-analytics-topology.test.mjs"
       - "datasets/tenant-inputs/active/**/*.csv"
       - "datasets/tenant-inputs/*/identity-ledger.json"
       - "datasets/tenant-inputs/tenant-input-registry.json"
