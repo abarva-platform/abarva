@@ -253,14 +253,14 @@ describe("item 26 draw 15 stale suite triage record", () => {
         // Applied: the old literal is gone from the test, the source still
         // carries the current label, and the test reads the label from that
         // source module instead of re-typing it. The re-execution must be green.
-        const module = cause!.labelSource.replace(/^src\//, "@/").replace(/\.tsx?$/, "");
+        const labelModule = cause!.labelSource.replace(/^src\//, "@/").replace(/\.tsx?$/, "");
         const testText = readText(suite.path);
         expect({
           path: suite.path,
           testStillExpectsOldLiteral: testText.includes(cause!.expectedLiteral),
           testRetypesCurrentLiteral: testText.includes(cause!.currentLiteral),
           sourceHasCurrentLiteral: source.includes(cause!.currentLiteral),
-          testImportsLabelSource: testText.includes(`from "${module}"`),
+          testImportsLabelSource: testText.includes(`from "${labelModule}"`),
           reExecutedGreen:
             suite.updated.failedTests === 0 &&
             suite.updated.passedTests === suite.updated.totalTests &&
