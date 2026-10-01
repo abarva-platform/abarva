@@ -2266,12 +2266,14 @@ function FocusedWorkPanel({
   }, [flatSteps, firstUnreadyStepId, view.event.id, view.stage.key]);
 
   const isComplete = (step: SourceShellStep) =>
-    (step.status === "captured" || completedIds.has(step.id)) &&
+    (step.factTemplateCode
+      ? hasCapturedStepReadback(step)
+      : step.status === "captured" || completedIds.has(step.id)) &&
     evidenceReadyForStep(step);
   const doneCount = flatSteps.filter(isComplete).length;
   const allReady = flatSteps.length > 0 && doneCount === flatSteps.length;
   const allInputsCaptured = flatSteps.length > 0 && flatSteps.every((step) =>
-    step.status === "captured" || completedIds.has(step.id));
+    hasCapturedStepReadback(step) || (!step.factTemplateCode && completedIds.has(step.id)));
   const hasArtifactGaps = view.stage.artifactReadiness.blockerCount > 0;
   const requiredEvidenceOpen = requiredEvidenceRows.filter((row) => !row.ready).length;
   const stageInputsReady = !hasArtifactGaps && requiredEvidenceOpen === 0;
@@ -3375,6 +3377,11 @@ function StepNeedDatum({
   );
 }
 
+function hasCapturedStepReadback(step: SourceShellStep): boolean {
+  return step.status === "captured" &&
+    (!step.factTemplateCode || step.sourceBasis === "live_fact");
+}
+
 function activeStepNeed(
   step: SourceShellStep,
   isComplete: boolean,
@@ -3383,7 +3390,7 @@ function activeStepNeed(
   const isSelfStrategy = step.id === "strategy.confirm" &&
     step.approvalPolicyCode === "self_v1";
   const uploaded = Boolean(step.file);
-  const captured = step.status === "captured";
+  const captured = hasCapturedStepReadback(step);
   const status = isComplete
     ? "Complete"
     : captured
@@ -3421,7 +3428,7 @@ function stepReadbackLabel(
   if (isComplete && step.id === "scope.prior-baseline") {
     return "Readback: baseline requirement resolved from governed evidence.";
   }
-  if (isComplete || step.status === "captured") {
+  if (isComplete || hasCapturedStepReadback(step)) {
     switch (step.sourceBasis) {
       case "live_fact":
         return "Readback: typed facts available.";
@@ -3539,7 +3546,7 @@ function activeStepNextAction(
         return "Continue is enabled.";
     }
   }
-  if (step.status === "captured") {
+  if (hasCapturedStepReadback(step)) {
     return "Review remaining required evidence in Files.";
   }
   if (step.type === "provide") {
@@ -4029,7 +4036,7 @@ function ActiveStepRequirementRow({
   factTemplateCode?: string;
 }) {
   const need = activeStepNeed(step, isComplete);
-  const captured = step.status === "captured";
+  const captured = hasCapturedStepReadback(step);
   const requirement = stepRequirementFor(step);
   const format =
     factTemplateCode && step.type === "provide"

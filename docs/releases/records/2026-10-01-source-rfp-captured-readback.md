@@ -29,14 +29,15 @@ Release lane: `global-control-lane`. Layer 4 Source presentation only. No Layer 
 - Show a captured, fact-backed step as captured with typed-fact readback even when another required evidence row is open.
 - Point the operator to the remaining evidence instead of asking for a duplicate input upload.
 - Distinguish captured workflow inputs from open evidence in the stage summary.
-- Preserve the existing Continue and approval readiness predicates.
+- Require verified live-fact readback before a fact-template step can be considered complete. Stage approval policy and evidence requirements are unchanged.
 
 ## QA / Validation
 
 - The mounted captured-input test failed before the UI correction: expected `Readback: typed facts available.`, observed `Readback: no typed facts yet.` with a duplicate upload instruction.
 - After the correction, the test reads captured facts while still showing the separate missing evidence and a locked approval. Deliberately removing the captured-fact readback condition made the test fail again; restoring it passed.
 - A second red-first assertion caught the false `required workflow step remains` summary; it now identifies one open required evidence item without claiming the workflow input is missing.
-- Three focused and adjacent suites passed 97/97 tests. TypeScript and scoped ESLint passed. Release check and applicable CI are required before merge.
+- A further red-first negative supplied all other required evidence but no typed facts. Before the guard, the canvas hid the step in the ready panel; after it, the fact-template step remains open and requests its source. The full Source canvas component suite passed 40/40 suites and 291/291 tests after the guard.
+- The earlier focused/adjacent run passed 97/97 tests. TypeScript and scoped ESLint passed on the first PR head; they and release check are rerun for the final head before merge.
 - A post-deploy signed-in replay of the exact stage remains required; local tests are not live acceptance.
 
 ## Rollout Plan
