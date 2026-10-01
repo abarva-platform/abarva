@@ -109,7 +109,11 @@ import { evaluateGenerationEligibility } from "@/lib/source/contracts/generation
 import { resolveSourceArtifactGenerationInput } from "@/lib/source/agent-generation/review-existing-body";
 import { findCurrentAcceptedClientFinal } from "@/lib/source/contracts/current-client-final";
 import { readVerifiedClientFinalText } from "@/lib/source/contracts/verified-client-final-text";
-import { readAcceptedCandidatesForEvent } from "@/lib/source/candidate-suppliers/event-candidate-authority-repository";
+import {
+  readAcceptedCandidatesForEvent,
+  type AcceptedEventCandidate,
+} from "@/lib/source/candidate-suppliers/event-candidate-authority-repository";
+import { buildCandidatePanelShortlistDraft } from "@/lib/source/agent-generation/candidate-panel-shortlist";
 
 const REGISTRY_STORAGE_BUCKET = "source-artifacts";
 const SOURCE_QUALITY_REVIEW_TOOL_NAME = "record_source_quality_review";
@@ -459,6 +463,7 @@ export async function generateSourceArtifactDraft(
     );
   }
 
+  let shortlistCandidates: AcceptedEventCandidate[] | null = null;
   if (artifactCode === "d12_vendor_shortlist") {
     const candidates = await readAcceptedCandidatesForEvent({
       clientKey: ctx.tenantKey,
@@ -482,6 +487,7 @@ export async function generateSourceArtifactDraft(
         { status: 409 },
       );
     }
+    shortlistCandidates = candidates.acceptedCandidates;
   }
 
   // Contract-driven eligibility (PR 4B/4C, ADR-0015): stage eligibility (PR
@@ -702,6 +708,10 @@ export async function generateSourceArtifactDraft(
       }
     } else if (!tenancy) {
       return tenancyErrorResponse(tenancyError);
+    } else if (artifactCode === "d12_vendor_shortlist") {
+      body = buildCandidatePanelShortlistDraft(shortlistCandidates ?? []);
+      model = "source-candidate-panel-deterministic-v1";
+      stopReason = "source_bound_candidate_draft";
     } else if (!process.env.ANTHROPIC_API_KEY) {
       model = "source-deterministic-fallback";
       stopReason = "missing_anthropic_api_key";
