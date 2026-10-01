@@ -383,10 +383,10 @@ describe("multi-pass prompt builder", () => {
     expect(p.user).toMatch(/same sentence/i);
     expect(p.user).toMatch(/disagreement rates, counts, totals/i);
     expect(p.user).toMatch(/Open Inputs Required/);
-    expect(p.user).toMatch(
+    expect(p.system).toMatch(
       /do not repeat its amount, percentage, range, or date/i,
     );
-    expect(p.user).toMatch(/no finance-validated benefit is established/i);
+    expect(p.system).toMatch(/no finance-validated benefit is established/i);
   });
 });
 

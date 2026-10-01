@@ -120,6 +120,7 @@ export function buildSystemPrompt(req: DeliverableIntelligenceRequest): string {
     `- Use "Source Register" only as the formal appendix heading. In the narrative body, say "cited evidence", "evidence appendix", or "what the evidence shows".`,
     `- Citation and evidence-handling rules are invisible authoring controls. Never explain, restate, or summarize these rules in the client artifact, and never write that a claim is "tied to" an evidence appendix. Simply comply with the rules.`,
     `- Never write "authorized to build", "not authorized", or "not authorized to build" in client prose. Use executive decision language such as "in scope for delivery", "hold the investment decision", or "requires further validation", as appropriate.`,
+    excludedP2NumericClaimsInstruction(req),
     conciseInstrument
       ? `- This artifact is a concise approval instrument with an enforced length ceiling. Respect brevity as a quality requirement: use compact tables, remove repetition, and do not expand into later-phase analysis.`
       : `- Optimize for the SHORTEST artifact that carries the argument. Length is not evidence of rigour, and a reader who skims because the document is long has not been persuaded — they have been outlasted. Cut any sentence that does not change what the reader decides.`,
@@ -320,6 +321,30 @@ function deterministicNumbersInstruction(
     "what it means, why it is what it is, and what would change it. If a figure " +
     "you need was not supplied, say so plainly and name it as an open input; " +
     "do not estimate it to complete the narrative."
+  );
+}
+
+function excludedP2NumericClaimsInstruction(
+  req: DeliverableIntelligenceRequest,
+): string {
+  if (
+    req.module !== "moves" ||
+    !["discovery_report", "root_cause_worksheet", "design_workshop_guide"].some(
+      (type) => type === req.deliverableType,
+    )
+  ) {
+    return "";
+  }
+
+  return (
+    "\nP2 EXCLUDED-CLAIM SUPPRESSION: When accepted evidence explicitly " +
+    "excludes an unverified value hypothesis or external benchmark, do not " +
+    "repeat its amount, percentage, range, or date, even to disclaim it. Do " +
+    "not evade this rule with rounded, normalized, or spelled-out equivalents. " +
+    "State qualitatively that the excluded claim is not used and that no " +
+    "finance-validated benefit is established. This rule does not suppress " +
+    "distinct evidence-backed metrics merely because they are labelled " +
+    "synthetic or unvalidated; retain those labels and citations."
   );
 }
 

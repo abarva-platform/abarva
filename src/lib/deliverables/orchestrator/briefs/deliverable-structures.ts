@@ -451,7 +451,6 @@ const MOVES_DISCOVERY: DeliverableStructure = {
   prohibitedContent: [
     "Do not split maturity, benchmark, and gap findings into separate essays; use one integrated diagnostic section.",
     "Do not split readiness and implications into separate essays; readiness only matters through the implication it creates for the next phase.",
-    "When accepted evidence explicitly excludes an unverified value hypothesis or external benchmark, do not repeat its amount, percentage, range, or date even to disclaim it. State qualitatively that unvalidated value hypotheses and external benchmarks are excluded from scoring and forecasts, and that no finance-validated benefit is established. Preserve the exclusion without turning the figure into a client fact or assumption.",
   ],
 };
 
