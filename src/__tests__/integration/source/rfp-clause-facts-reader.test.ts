@@ -1,4 +1,4 @@
-import { readRfpClausePresentLeverKeys } from "../event-facts-reader";
+import { readRfpClausePresentLeverKeys } from "@/lib/source/facts/event-facts-reader";
 import { getAzureWriteFluentClient } from "@/lib/data-plane/postgresCompat";
 
 jest.mock("@/lib/data-plane/postgresCompat", () => ({

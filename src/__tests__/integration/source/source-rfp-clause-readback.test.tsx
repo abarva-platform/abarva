@@ -1,4 +1,4 @@
-import SourceEventDetailPage from "../events/[eventId]/page";
+import SourceEventDetailPage from "@/app/(maestro)/source/events/[eventId]/page";
 import { getSourcingEvent } from "@/lib/source/queries";
 import {
   readEventFacts,
