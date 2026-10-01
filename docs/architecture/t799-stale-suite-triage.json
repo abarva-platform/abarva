@@ -26,7 +26,20 @@
   "secondHalf": {
     "what": "Wire the wire_into_ci rows (by named file where the directory is partly covered), apply the LivingMoveView label update and wire it, and leave the Tower byte scan and the ProofPointFooter render held until their owners act.",
     "owner": "T-799",
-    "reExecuteFirst": "Re-execute every row on the then-current main before wiring; this record is a snapshot at its base."
+    "reExecuteFirst": "Re-execute every row on the then-current main before wiring; this record is a snapshot at its base.",
+    "status": "wire_into_ci rows wired; the three held rows are unchanged",
+    "wiredAt": "2026-09-30T23:31:34Z",
+    "wiredOnBase": "a1990c045753c5c78417ff6c7a2e31ec46f0bb53",
+    "reExecuted": "All 17 wire_into_ci files re-executed together on the wiring base: 17 suites, 80 cases, all green. The two workflow steps run as written: 15 suites / 64 cases and 2 suites / 16 cases.",
+    "steps": [
+      "Run the T-799 route handler, setup, programs and strategic-moves suites",
+      "Run the T-799 docs page and Source request-first suites by named file"
+    ],
+    "stillHeld": [
+      "rewrite_as_behavior: tenant-tower-route-scope (T-799)",
+      "update_with_reason_recorded: LivingMoveView (T-799)",
+      "already_verdicted_elsewhere: ProofPointFooter (T-775)"
+    ]
   },
   "suites": [
     {
@@ -44,7 +57,7 @@
       "textIsTheSubject": false,
       "verdict": "wire_into_ci",
       "ownerItem": "T-799",
-      "wiredInThisItem": false,
+      "wiredInThisItem": true,
       "rationale": "Green 2 of 2, behavioural, reads no repository file. Renders the /docs page and its src/lib/help-center/product-docs model; the page is an App Router route. Not wired in this change: the draw is read-only and the wiring is T-799's second half."
     },
     {
@@ -84,7 +97,7 @@
       "textIsTheSubject": false,
       "verdict": "wire_into_ci",
       "ownerItem": "T-799",
-      "wiredInThisItem": false,
+      "wiredInThisItem": true,
       "rationale": "Green 4 of 4, behavioural, reads no repository file. Subject is the App Router handler src/app/api/cron/board-pack/route.ts, reachable by URL. Not wired in this change: the draw is read-only and the wiring is T-799's second half."
     },
     {
@@ -102,7 +115,7 @@
       "textIsTheSubject": false,
       "verdict": "wire_into_ci",
       "ownerItem": "T-799",
-      "wiredInThisItem": false,
+      "wiredInThisItem": true,
       "rationale": "Green 7 of 7, behavioural, reads no repository file. Subject is the App Router handlers src/app/api/cron/notifications-tick/route.ts and its health/route.ts, reachable by URL. Not wired in this change: the draw is read-only and the wiring is T-799's second half."
     },
     {
@@ -120,7 +133,7 @@
       "textIsTheSubject": false,
       "verdict": "wire_into_ci",
       "ownerItem": "T-799",
-      "wiredInThisItem": false,
+      "wiredInThisItem": true,
       "rationale": "Green 2 of 2, behavioural, reads no repository file. Subject is the App Router handler src/app/api/health/route.ts, reachable by URL. Not wired in this change: the draw is read-only and the wiring is T-799's second half."
     },
     {
@@ -138,7 +151,7 @@
       "textIsTheSubject": false,
       "verdict": "wire_into_ci",
       "ownerItem": "T-799",
-      "wiredInThisItem": false,
+      "wiredInThisItem": true,
       "rationale": "Green 4 of 4, behavioural, reads no repository file. Subject is the App Router handler src/app/api/health/postgres-disruption/route.ts, reachable by URL. Not wired in this change: the draw is read-only and the wiring is T-799's second half."
     },
     {
@@ -156,7 +169,7 @@
       "textIsTheSubject": false,
       "verdict": "wire_into_ci",
       "ownerItem": "T-799",
-      "wiredInThisItem": false,
+      "wiredInThisItem": true,
       "rationale": "Green 2 of 2, behavioural, reads no repository file. Subject is the App Router handler src/app/api/knowledge/chunk/route.ts, reachable by URL. Not wired in this change: the draw is read-only and the wiring is T-799's second half."
     },
     {
@@ -174,7 +187,7 @@
       "textIsTheSubject": false,
       "verdict": "wire_into_ci",
       "ownerItem": "T-799",
-      "wiredInThisItem": false,
+      "wiredInThisItem": true,
       "rationale": "Green 1 of 1, behavioural, reads no repository file. Subject is the App Router handler src/app/api/programs/expert-kernel/export/route.ts, reachable by URL. Not wired in this change: the draw is read-only and the wiring is T-799's second half."
     },
     {
@@ -192,7 +205,7 @@
       "textIsTheSubject": false,
       "verdict": "wire_into_ci",
       "ownerItem": "T-799",
-      "wiredInThisItem": false,
+      "wiredInThisItem": true,
       "rationale": "Green 5 of 5, behavioural, reads no repository file. Subject is the App Router handler src/app/api/request-access/route.ts, reachable by URL. Not wired in this change: the draw is read-only and the wiring is T-799's second half."
     },
     {
@@ -210,7 +223,7 @@
       "textIsTheSubject": false,
       "verdict": "wire_into_ci",
       "ownerItem": "T-799",
-      "wiredInThisItem": false,
+      "wiredInThisItem": true,
       "rationale": "Green 8 of 8, behavioural, reads no repository file. Subject is the App Router handlers src/app/api/webhooks/resend/route.ts and health/route.ts plus the resend webhook broker and signature check, reachable by URL. Not wired in this change: the draw is read-only and the wiring is T-799's second half."
     },
     {
@@ -228,7 +241,7 @@
       "textIsTheSubject": false,
       "verdict": "wire_into_ci",
       "ownerItem": "T-799",
-      "wiredInThisItem": false,
+      "wiredInThisItem": true,
       "rationale": "Green 3 of 3, behavioural, reads no repository file. AvaChatShell is imported by src/components/home/preview/HomeAvaChat.tsx (reached from HomeV4App) and src/components/intelligence-advisory/AdvisoryIntelligencePage.tsx (reached from src/app/(maestro)/intelligence/page.tsx). Not wired in this change: the draw is read-only and the wiring is T-799's second half."
     },
     {
@@ -287,7 +300,7 @@
       "textIsTheSubject": false,
       "verdict": "wire_into_ci",
       "ownerItem": "T-799",
-      "wiredInThisItem": false,
+      "wiredInThisItem": true,
       "rationale": "Green 5 of 5, behavioural, reads no repository file. AttachmentChip is imported by src/components/agent/AskAnythingBar.tsx, which src/components/source/canvas/analytics/SourceAnalyticsCanvas.tsx mounts. Not wired in this change: the draw is read-only and the wiring is T-799's second half."
     },
     {
@@ -305,7 +318,7 @@
       "textIsTheSubject": false,
       "verdict": "wire_into_ci",
       "ownerItem": "T-799",
-      "wiredInThisItem": false,
+      "wiredInThisItem": true,
       "rationale": "Green 5 of 5, behavioural, reads no repository file. DropZone and ReviewTable are re-exported by src/components/setup/loader/index.ts and mounted by AdminLoaderClient.tsx, which src/app/(maestro)/admin/setup/loader/page.tsx renders. Not wired in this change: the draw is read-only and the wiring is T-799's second half."
     },
     {
@@ -323,7 +336,7 @@
       "textIsTheSubject": false,
       "verdict": "wire_into_ci",
       "ownerItem": "T-799",
-      "wiredInThisItem": false,
+      "wiredInThisItem": true,
       "rationale": "Green 14 of 14, behavioural, reads no repository file. SourceNewRequestFirstPage is rendered by src/app/(maestro)/source/new/page.tsx. Its directory holds 3 test files and 2 already run, so the wiring must name this file, not the directory. Not wired in this change: the draw is read-only and the wiring is T-799's second half."
     },
     {
@@ -341,7 +354,7 @@
       "textIsTheSubject": false,
       "verdict": "wire_into_ci",
       "ownerItem": "T-799",
-      "wiredInThisItem": false,
+      "wiredInThisItem": true,
       "rationale": "Green 3 of 3, behavioural, reads no repository file. SourceSetupConfigPage is rendered by src/app/(maestro)/source/setup/page.tsx. Not wired in this change: the draw is read-only and the wiring is T-799's second half."
     },
     {
@@ -359,7 +372,7 @@
       "textIsTheSubject": false,
       "verdict": "wire_into_ci",
       "ownerItem": "T-799",
-      "wiredInThisItem": false,
+      "wiredInThisItem": true,
       "rationale": "Green 6 of 6, behavioural, reads no repository file. CostEffortWizard is re-exported by its index.ts and mounted by src/components/strategic-moves/MovesPhaseStandaloneClient.tsx, which src/app/(maestro)/strategic-moves/[moveId]/phase/[phaseNum]/page.tsx renders. Not wired in this change: the draw is read-only and the wiring is T-799's second half."
     },
     {
@@ -377,7 +390,7 @@
       "textIsTheSubject": false,
       "verdict": "wire_into_ci",
       "ownerItem": "T-799",
-      "wiredInThisItem": false,
+      "wiredInThisItem": true,
       "rationale": "Green 5 of 5, behavioural, reads no repository file. RiskAssessmentPanel is re-exported by its index.ts and mounted by MovesPhaseStandaloneClient.tsx, reached from the strategic-moves phase route. Not wired in this change: the draw is read-only and the wiring is T-799's second half."
     },
     {
@@ -395,7 +408,7 @@
       "textIsTheSubject": false,
       "verdict": "wire_into_ci",
       "ownerItem": "T-799",
-      "wiredInThisItem": false,
+      "wiredInThisItem": true,
       "rationale": "Green 4 of 4, behavioural, reads no repository file. SolutioningPanel is re-exported by its index.ts and mounted by MovesPhaseStandaloneClient.tsx, reached from the strategic-moves phase route. Not wired in this change: the draw is read-only and the wiring is T-799's second half."
     }
   ]
