@@ -39,6 +39,15 @@ export function homeNarrativeStatusLabel(
   }
 }
 
+export function homePriorInterpretationLabel(
+  source: HomeRecordRenderSource,
+  narrativeDate: string,
+): string {
+  return source.contextVersion?.coherence === "stored_narrative"
+    ? `Prior reviewed interpretation - generated ${narrativeDate}; not reconciled with current rows`
+    : `Earlier interpretation - generated ${narrativeDate}; lineage not verified against current rows`;
+}
+
 export function homeSourceCoverageLabel(
   source: HomeRecordRenderSource,
 ): string | null {

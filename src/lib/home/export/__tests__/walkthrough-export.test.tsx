@@ -191,4 +191,80 @@ describe("Home walkthrough export", () => {
     expect(output).toContain("Registered source dates: 2026-08-23");
     expect(output).toContain("Home chapters");
   });
+
+  it("leads each mixed chapter with current depth and labels prior interpretation", () => {
+    const html = renderHomeWalkthroughHtml({
+      bundle: bundleWithGraph(),
+      recordSource,
+      tenantLabel: "Meridian Health",
+      format: "html",
+    });
+    const chapters = [
+      ...html.matchAll(/<article class="chapter">([\s\S]*?)<\/article>/g),
+    ].map((match) => match[1]);
+
+    expect(chapters).toHaveLength(8);
+    for (const chapter of chapters) {
+      expect(
+        chapter.indexOf("Current record, interpretation pending review"),
+      ).toBeLessThan(chapter.indexOf("Prior reviewed interpretation"));
+      expect(chapter).toContain(
+        "Prior reviewed interpretation - generated Aug 21, 2026; not reconciled with current rows",
+      );
+    }
+    const leadership = chapters.find((chapter) =>
+      chapter.includes("Leadership Perspective"),
+    );
+    expect(leadership).toContain(
+      "No leadership interview rows are served here",
+    );
+    expect(
+      leadership?.indexOf("No leadership interview rows are served here"),
+    ).toBeLessThan(leadership?.indexOf("Leaders are unanimous") ?? -1);
+  });
+
+  it("keeps coherent and reviewed exports free of a mixed-chapter label", () => {
+    const bundle = bundleWithGraph();
+    for (const source of [
+      {
+        ...recordSource,
+        contextVersion: {
+          ...recordSource.contextVersion!,
+          coherence: "coherent" as const,
+        },
+      },
+      {
+        kind: "reviewed_snapshot" as const,
+        canonicalSnapshotHash: "reviewed-hash",
+      },
+    ]) {
+      const html = renderHomeWalkthroughHtml({
+        bundle,
+        recordSource: source,
+        tenantLabel: "Meridian Health",
+        format: "html",
+      });
+      expect(html).not.toContain("Prior reviewed interpretation - generated");
+      expect(html).not.toContain(
+        "Current record, interpretation pending review",
+      );
+    }
+  });
+
+  it("does not call an unverified narrative reviewed", () => {
+    const html = renderHomeWalkthroughHtml({
+      bundle: bundleWithGraph(),
+      recordSource: {
+        ...recordSource,
+        contextVersion: {
+          ...recordSource.contextVersion!,
+          coherence: "unverified",
+        },
+      },
+      tenantLabel: "Meridian Health",
+      format: "html",
+    });
+    expect(html.match(/Earlier interpretation - generated/g)).toHaveLength(8);
+    expect(html).not.toContain("Prior reviewed interpretation - generated");
+  });
 });

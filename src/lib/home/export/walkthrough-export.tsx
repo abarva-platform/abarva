@@ -17,6 +17,7 @@ import {
 import type { Finding, TableSpec } from "@/components/home/v4/page-tables";
 import {
   homeNarrativeStatusLabel,
+  homePriorInterpretationLabel,
   homeRecordSourceLabel,
   homeSourceCoverageGapLabel,
   homeSourceCoverageLabel,
@@ -67,6 +68,13 @@ function markerScope(recordSource: HomeRecordRenderSource): string {
   return recordSource.kind === "ecl_serving_projection"
     ? "Serving-row marker; governed facts are counted separately from the exported record families above."
     : "Record-source marker for the exported Home bundle.";
+}
+
+function mixedNarrative(recordSource: HomeRecordRenderSource): boolean {
+  return (
+    recordSource.kind === "ecl_serving_projection" &&
+    recordSource.contextVersion?.coherence !== "coherent"
+  );
 }
 
 function text(value: unknown): string {
@@ -180,13 +188,12 @@ function chapterHtml(
   chapter: ChapterView,
   index: number,
   estate: EstateRecordTypes,
+  recordSource: HomeRecordRenderSource,
+  narrativeDate: string,
 ): string {
   const depth = chapterDepth(chapter.chapterId, estate);
-  return `<article class="chapter">
-    <p class="eyebrow">Chapter ${String(index + 1).padStart(2, "0")} · ${escapeHtml(chapter.title)}</p>
-    <h2>${escapeHtml(chapter.headline)}</h2>
-    <p class="question">${escapeHtml(chapter.guidingQuestion)}</p>
-    <p>${escapeHtml(chapter.executive_synthesis)}</p>
+  const mixed = mixedNarrative(recordSource);
+  const currentDepth = `
     ${
       depth.findings.length
         ? `<h3>Deterministic Findings</h3><ol class="findings">${depth.findings
@@ -204,6 +211,26 @@ function chapterHtml(
             )
             .join("")}</ul>`
         : ""
+    }`;
+  const prior = `
+    <h2>${escapeHtml(chapter.headline)}</h2>
+    <p class="question">${escapeHtml(chapter.guidingQuestion)}</p>
+    <p>${escapeHtml(chapter.executive_synthesis)}</p>`;
+  const noInterviews =
+    chapter.chapterId === "leadership_perspective" &&
+    !estate.interviews?.length;
+  const priorLabel = homePriorInterpretationLabel(recordSource, narrativeDate);
+  return `<article class="chapter">
+    <p class="eyebrow">Chapter ${String(index + 1).padStart(2, "0")} · ${escapeHtml(chapter.title)}</p>
+    ${
+      mixed
+        ? `<div class="chapter-state"><h2>Current record, interpretation pending review</h2>
+          <p>${escapeHtml(homeRecordSourceLabel(recordSource))} · ${escapeHtml(homeNarrativeStatusLabel(recordSource))}</p>
+          ${noInterviews ? "<p>No leadership interview rows are served here. The prior interpretation cannot establish what leaders said.</p>" : ""}
+          ${!depth.findings.length && !depth.tables.length ? "<p>No current chapter-specific tables or findings are available in this export.</p>" : ""}
+        </div>${currentDepth}
+        <section class="prior-interpretation"><h3>${escapeHtml(priorLabel)}</h3>${prior}</section>`
+        : `${prior}${currentDepth}`
     }
   </article>`;
 }
@@ -251,6 +278,10 @@ export function renderHomeWalkthroughHtml({
     th { background: #f2eee6; font-size: 11px; text-transform: uppercase; color: #475569; }
     tr.total td { font-weight: 700; background: #f8fafc; }
     .chapter { page-break-before: always; border-top: 1px solid #d6cfc1; padding-top: 28px; margin-top: 34px; }
+    .chapter-state { border-left: 3px solid #0c6b65; padding: 4px 0 4px 14px; margin: 16px 0 20px; }
+    .chapter-state h2 { font-family: Inter, Arial, sans-serif; font-size: 20px; }
+    .chapter-state p { font-size: 13px; }
+    .prior-interpretation { border-top: 1px solid #d6cfc1; margin-top: 28px; padding-top: 10px; }
     .question { font-family: Georgia, serif; font-style: italic; color: #334155; }
     .findings li { margin: 0 0 12px; }
     .findings strong, .findings span { display: block; }
@@ -273,7 +304,7 @@ export function renderHomeWalkthroughHtml({
   </section>
   ${familySummaryHtml(bundle)}
   ${architectureSummaryHtml(bundle)}
-  ${bundle.chapters.map((chapter, index) => chapterHtml(chapter, index, estate)).join("")}
+  ${bundle.chapters.map((chapter, index) => chapterHtml(chapter, index, estate, recordSource, compiled)).join("")}
 </main>
 </body>
 </html>`;
@@ -413,20 +444,20 @@ function PdfChapter({
   chapter,
   index,
   estate,
+  recordSource,
+  narrativeDate,
 }: {
   chapter: ChapterView;
   index: number;
   estate: EstateRecordTypes;
+  recordSource: HomeRecordRenderSource;
+  narrativeDate: string;
 }) {
   const depth = chapterDepth(chapter.chapterId, estate);
-  return (
-    <Page size="LETTER" style={pdfStyles.page}>
-      <Text style={pdfStyles.eyebrow}>
-        Chapter {String(index + 1).padStart(2, "0")} · {chapter.title}
-      </Text>
-      <Text style={pdfStyles.title}>{chapter.headline}</Text>
-      <Text style={pdfStyles.meta}>{chapter.guidingQuestion}</Text>
-      <Text style={pdfStyles.text}>{chapter.executive_synthesis}</Text>
+  const mixed = mixedNarrative(recordSource);
+  const priorLabel = homePriorInterpretationLabel(recordSource, narrativeDate);
+  const currentDepth = (
+    <>
       {depth.findings.length > 0 ? (
         <>
           <Text style={pdfStyles.h3}>Deterministic Findings</Text>
@@ -443,6 +474,54 @@ function PdfChapter({
           ))}
         </>
       ) : null}
+    </>
+  );
+  const prior = (
+    <>
+      <Text style={pdfStyles.title}>{chapter.headline}</Text>
+      <Text style={pdfStyles.meta}>{chapter.guidingQuestion}</Text>
+      <Text style={pdfStyles.text}>{chapter.executive_synthesis}</Text>
+    </>
+  );
+  return (
+    <Page size="LETTER" style={pdfStyles.page}>
+      <Text style={pdfStyles.eyebrow}>
+        Chapter {String(index + 1).padStart(2, "0")} · {chapter.title}
+      </Text>
+      {mixed ? (
+        <>
+          <View style={pdfStyles.scope} wrap={false}>
+            <Text style={pdfStyles.h2}>
+              Current record, interpretation pending review
+            </Text>
+            <Text style={pdfStyles.meta}>
+              {homeRecordSourceLabel(recordSource)} ·{" "}
+              {homeNarrativeStatusLabel(recordSource)}
+            </Text>
+            {chapter.chapterId === "leadership_perspective" &&
+            !estate.interviews?.length ? (
+              <Text style={pdfStyles.text}>
+                No leadership interview rows are served here. The prior
+                interpretation cannot establish what leaders said.
+              </Text>
+            ) : null}
+            {!depth.findings.length && !depth.tables.length ? (
+              <Text style={pdfStyles.text}>
+                No current chapter-specific tables or findings are available in
+                this export.
+              </Text>
+            ) : null}
+          </View>
+          {currentDepth}
+          <Text style={pdfStyles.h3}>{priorLabel}</Text>
+          {prior}
+        </>
+      ) : (
+        <>
+          {prior}
+          {currentDepth}
+        </>
+      )}
     </Page>
   );
 }
@@ -519,6 +598,8 @@ export function buildHomeWalkthroughPdf({
           chapter={chapter}
           index={index}
           estate={estate}
+          recordSource={recordSource}
+          narrativeDate={compiled}
         />
       ))}
     </Document>

@@ -18,6 +18,7 @@ import type {
 } from "@/lib/home/preview/types";
 import {
   homeNarrativeStatusLabel,
+  homePriorInterpretationLabel,
   homeRecordSourceLabel,
   homeSourceCoverageLabel,
   homeSourceDateCoverageLabel,
@@ -463,8 +464,7 @@ function MixedChapterFrame({
             color: V4.inkSoft,
           }}
         >
-          Prior reviewed interpretation - generated {narrativeDate}; not
-          reconciled with current rows
+          {homePriorInterpretationLabel(source, narrativeDate)}
         </summary>
         <div style={{ margin: `0 -${PAGE_X}px` }}>{children}</div>
       </details>
@@ -793,6 +793,7 @@ export function HomeV4App({
         <main style={{ minWidth: 0, overflowY: "auto", padding: "0 0 60px" }}>
           <RecordStateBand source={renderedRecordSource} />
           <MixedChapterFrame
+            key={activeChapter?.chapterId ?? activeView}
             enabled={
               Boolean(activeChapter && isDrafted(activeChapter.chapterId)) &&
               renderedRecordSource.kind === "ecl_serving_projection" &&
