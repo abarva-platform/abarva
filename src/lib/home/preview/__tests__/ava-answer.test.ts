@@ -693,7 +693,9 @@ describe("answerHomeAvaQuestion", () => {
 
     expect(answer.status).toBe("no_data");
     expect(answer.directAnswer).toContain("not been verified");
-    expect(answer.directAnswer).toContain("0 of 14 files accepted");
+    expect(answer.directAnswer).toContain(
+      "Source-file quality: 0 of 14 accepted; 14 partial",
+    );
     expect(answer.directAnswer).toContain("incomplete for contracts");
     expect(answer.prose).toBeUndefined();
     expect(mockGetAuditedAnthropicClient).not.toHaveBeenCalled();

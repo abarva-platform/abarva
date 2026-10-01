@@ -1353,10 +1353,10 @@ describe("buildTechnologyEstateFromHomeProjectionRows", () => {
       homeRecordSourceToken("meridian-health", sourceFor(partial)),
     ).not.toBe(homeRecordSourceToken("meridian-health", sourceFor(accepted)));
     expect(homeSourceFileReviewLabel(sourceFor(partial))).toBe(
-      "Source review incomplete: 0 of 1 files accepted",
+      "Source-file quality: 0 of 1 accepted; 1 partial",
     );
     expect(homeSourceFileReviewLabel(sourceFor(accepted))).toBe(
-      "Source files accepted: 1 of 1",
+      "Source-file quality: 1 of 1 accepted",
     );
   });
 

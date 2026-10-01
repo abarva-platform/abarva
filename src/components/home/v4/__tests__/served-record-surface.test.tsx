@@ -281,6 +281,44 @@ describe("the served path", () => {
     expect(
       screen.getByText("Reviewed narrative; live rows may differ"),
     ).toBeInTheDocument();
+    expect(
+      screen.getByText(/Live rows and the executive interpretation/),
+    ).toBeInTheDocument();
+    const provenance = document.querySelector(
+      "[data-home-declared-provenance]",
+    );
+    expect(provenance?.textContent).toContain("not client-attested");
+    expect(provenance?.textContent).not.toContain(
+      "assessment-dense-source-room",
+    );
+  });
+
+  it("puts source review state on the page without presenting it as accepted", () => {
+    const bundle = servedBundle();
+    render(
+      <HomeV4App
+        bundle={bundle}
+        tenantKey="meridian-health"
+        recordSource={{
+          kind: "ecl_serving_projection",
+          canonicalSnapshotHash: bundle.provenance.canonical_snapshot_hash,
+          contextVersion: {
+            ...bundle.contextVersion!,
+            sourceFileReview: {
+              totalFiles: 14,
+              acceptedFiles: 0,
+              partialFiles: 14,
+              blockedFiles: 0,
+              supersededFiles: 0,
+            },
+          },
+        }}
+      />,
+    );
+
+    expect(
+      document.querySelector("[data-home-record-state-band]")?.textContent,
+    ).toContain("Source-file quality: 0 of 14 accepted; 14 partial");
   });
 
   it("states when the record on screen is the reviewed snapshot fallback", () => {
@@ -309,6 +347,26 @@ describe("the served path", () => {
       "data-home-canonical-snapshot-hash",
       bundle.provenance.canonical_snapshot_hash,
     );
+    expect(
+      document.querySelector("[data-home-record-state-band]")?.textContent,
+    ).toContain("The reviewed stored record is on screen.");
+  });
+
+  it("does not show a mixed-record warning on a coherent served version", () => {
+    const bundle = servedBundle();
+    render(
+      <HomeV4App
+        bundle={bundle}
+        tenantKey="meridian-health"
+        recordSource={{
+          kind: "ecl_serving_projection",
+          canonicalSnapshotHash: bundle.provenance.canonical_snapshot_hash,
+          contextVersion: { ...bundle.contextVersion!, coherence: "coherent" },
+        }}
+      />,
+    );
+
+    expect(document.querySelector("[data-home-record-state-band]")).toBeNull();
   });
 
   it.each([

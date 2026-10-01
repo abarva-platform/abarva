@@ -149,7 +149,7 @@ export interface HomeContextVersion {
     linkedRecordRows: number;
     families: Array<{ pageKey: string; totalRows: number; linkedRows: number }>;
   };
-  /** Null when the source catalog cannot be read; changes when file review state changes. */
+  /** Null when the source catalog cannot be read; hashes file quality, not human approval. */
   sourceCatalogHash?: string | null;
   sourceFileReview?: {
     totalFiles: number;
