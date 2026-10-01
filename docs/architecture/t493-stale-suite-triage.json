@@ -89,7 +89,47 @@
     "deliberateOverlap": "src/scripts/__tests__ re-runs one suite a pinned step already owns. Measured: that suite alone is 1 case in 0.858s because it spawns a node subprocess to check import conditions, against 1.111s for the whole six-suite directory. The pinned step is left in place rather than removed, because it is named in another item's record and renaming another item's check is a widening this change does not need."
   },
   "heldDirectories": {
-    "src/lib/intelligence/synthesis/__tests__": "Held on ONE surviving leg, down from two. The hold stands, and all five files stay unrun. violationsMigration.test.ts is a source-text scanner over a committed migration that T-550's rule refuses to wire, whether it passes or not -- owner T-495, verdict rewrite_as_behavior, and that is now the whole of the reason. The other leg expired on 2026-09-27: violationsSupabaseBackend.test.ts was red on a mock aimed at a seam its subject no longer uses, and item T-497 repaired it (PR #8574) -- the mock now sits on the Azure/Postgres seam the subject actually calls, 3 of 4 cases red before and 0 of 4 after. T-497 did NOT wire it, because this hold is asserted by a control at directory granularity and covers every file here. Three green siblings -- healthcareAnswerContract, outputValidator and violationsRecorder, 36 cases between them -- plus the now-green violationsSupabaseBackend stay dark as a result, so four of the five are blocked solely on the fifth. 10 non-test files import this tree. This reason was rewritten rather than left standing because a hold whose stated basis has half expired reads as more blocked than it is."
+    "src/lib/intelligence/synthesis/__tests__": "Held on ONE surviving leg, down from two. The hold stands, and all five files stay unrun. violationsMigration.test.ts is a source-text scanner over a committed migration that T-550's rule refuses to wire, whether it passes or not -- owner T-495, verdict rewrite_as_behavior, and that is now the whole of the reason. The other leg expired on 2026-09-27: violationsSupabaseBackend.test.ts was red on a mock aimed at a seam its subject no longer uses, and item T-497 repaired it (PR #8574) -- the mock now sits on the Azure/Postgres seam the subject actually calls, 3 of 4 cases red before and 0 of 4 after. T-497 did NOT wire it, because this hold is asserted by a control at directory granularity and covers every file here. Three green siblings -- healthcareAnswerContract, outputValidator and violationsRecorder, 36 cases between them -- plus the now-green violationsSupabaseBackend stay dark as a result, so four of the five are blocked solely on the fifth. 10 non-test files import this tree. This reason was rewritten rather than left standing because a hold whose stated basis has half expired reads as more blocked than it is. UPDATE 2026-10-01 (item 26): the hold now covers the directory NAME and the scanner only. The four green siblings -- healthcareAnswerContract, outputValidator, violationsRecorder and violationsSupabaseBackend, 40 cases on base 35b8b3e7dd, each subject imported by product code -- run by NAMED FILE in .github/workflows/unit-suites.yml (see namedFileWiring). violationsMigration.test.ts stays unrun until T-495 settles its lane."
+  },
+  "namedFileWiring": {
+    "item": "26",
+    "recordedAt": "2026-10-01",
+    "base": "35b8b3e7dd",
+    "workflow": ".github/workflows/unit-suites.yml",
+    "step": "Run the T-493 held synthesis suites by named file",
+    "paths": [
+      "src/lib/intelligence/synthesis/__tests__/healthcareAnswerContract.test.ts",
+      "src/lib/intelligence/synthesis/__tests__/outputValidator.test.ts",
+      "src/lib/intelligence/synthesis/__tests__/violationsRecorder.test.ts",
+      "src/lib/intelligence/synthesis/__tests__/violationsSupabaseBackend.test.ts"
+    ],
+    "leftDark": [
+      "src/lib/intelligence/synthesis/__tests__/violationsMigration.test.ts"
+    ],
+    "reexecutedOnBase": {
+      "healthcareAnswerContract.test.ts": "9/9",
+      "outputValidator.test.ts": "19/19",
+      "violationsRecorder.test.ts": "8/8",
+      "violationsSupabaseBackend.test.ts": "4/4"
+    },
+    "productImporters": {
+      "healthcareAnswerContract": [
+        "src/lib/intelligence/ask/synthesizer.ts"
+      ],
+      "outputValidator": [
+        "src/app/api/chat/agent/route.ts",
+        "src/lib/programs/ava-chat/quality-gate.ts"
+      ],
+      "violationsRecorder": [
+        "src/app/api/chat/agent/route.ts",
+        "src/lib/pilot-dashboard/aggregates.ts"
+      ],
+      "violationsSupabaseBackend": [
+        "src/app/api/chat/agent/route.ts",
+        "src/lib/pilot-dashboard/aggregates.ts"
+      ]
+    },
+    "why": "The suite rows keep wiredInThisItem false: T-493 did not wire them, and its record is history. This block is the later change. A directory holding a declared scanner is never named whole; its green, reachable siblings are named by file, the shape T-780 established."
   },
   "counts": {
     "wire_into_ci": 48,

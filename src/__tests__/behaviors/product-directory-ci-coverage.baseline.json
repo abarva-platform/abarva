@@ -28,7 +28,6 @@
   "src/lib/intelligence/canvas/__tests__",
   "src/lib/intelligence/expert-pack",
   "src/lib/intelligence/exposure",
-  "src/lib/intelligence/synthesis/__tests__",
   "src/lib/lakeshore/__tests__",
   "src/lib/onboarding/__tests__",
   "src/lib/programs/mobilization/__tests__",

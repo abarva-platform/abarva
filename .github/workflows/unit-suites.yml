@@ -1813,6 +1813,24 @@ jobs:
           src/components/context-broker/__tests__/ModeToggle.test.tsx
           --no-coverage --ci
 
+      # Item 26, 2026-10-01. T-493 held `src/lib/intelligence/synthesis/__tests__`
+      # whole. Its red leg was repaired by T-497 (#8574); the one leg left is
+      # `violationsMigration.test.ts`, a source-text scanner over a committed
+      # migration that T-550's rule refuses to wire (owner T-495). The other
+      # four suites are green and every subject has a product importer, so they
+      # are named FILE BY FILE here, the T-780 shape. Do NOT replace these paths
+      # with the directory: jest would select the scanner with them.
+      # `t493-wired-directory-ci-coverage.test.ts` pins this file set and that
+      # the scanner stays dark. Record: `docs/architecture/t493-stale-suite-triage.json`.
+      - name: Run the T-493 held synthesis suites by named file
+        run: >-
+          npx jest --runTestsByPath
+          src/lib/intelligence/synthesis/__tests__/healthcareAnswerContract.test.ts
+          src/lib/intelligence/synthesis/__tests__/outputValidator.test.ts
+          src/lib/intelligence/synthesis/__tests__/violationsRecorder.test.ts
+          src/lib/intelligence/synthesis/__tests__/violationsSupabaseBackend.test.ts
+          --no-coverage --ci
+
       # Item T-781, the tenth stale-suite draw. Two directories, each judged
       # whole and each executed file by file on base `5b976bdbbf`: 7 suites, 28
       # cases, all green, and both subjects imported by non-test modules

@@ -110,6 +110,11 @@ const GOVERNED_ELSEWHERE = "src/__tests__";
  *   `> 50`, a live-corpus precondition that went red only because the dark set
  *   shrank; it is lowered to `> 30` in the same change. It guards against a
  *   filter that matches nothing, not against progress.
+ * 2026-10-01: 41 after item 26 ran four of the five suites in
+ *   `src/lib/intelligence/synthesis/__tests__` by named file. The 2026-09-27
+ *   note above kept it here; it is PARTIAL now (4 of 5), so it leaves this
+ *   fully-dark list. The fifth, a T-495 source-text scanner, stays unrun and
+ *   `t493-wired-directory-ci-coverage.test.ts` asserts it.
  */
 const DARK_PRODUCT_DIRECTORY_COUNT = DARK_PRODUCT_DIRECTORY_BASELINE.length;
 
