@@ -21,10 +21,7 @@ import {
   type GeneratedArtifactRecord,
 } from "@/lib/artifacts/repository";
 import { prescribedFormatForDeliverableType } from "@/lib/programs/orchestrated-deliverable-map";
-import {
-  renderDeliverableDocx,
-  renderDeliverableHtml,
-} from "./renderers";
+import { renderDeliverableDocx, renderDeliverableHtml } from "./renderers";
 import { renderValidatedDeck } from "./render-validated-deck";
 import { humanizeSourceFamily } from "./source-register";
 import { buildDeckHtmlFromDocument } from "@/lib/deliverables/deck-from-result";
@@ -348,6 +345,18 @@ async function renderOfficeCompanion(
           .join("; ")}`,
       );
     }
+    if (!rendered.verdict.ok) {
+      const qualityFailures = rendered.verdict.findings
+        .filter(
+          (finding) =>
+            finding.kind !== "off_canvas" && finding.kind !== "canvas",
+        )
+        .slice(0, 3)
+        .map((finding) => finding.message);
+      throw new Error(
+        `generated_pptx_failed_content_quality: ${qualityFailures.join("; ")}`,
+      );
+    }
     return {
       body: rendered.buffer,
       fileFormat: "pptx",
@@ -486,12 +495,11 @@ export async function persistDeliverable(
     const renderedDeckExhibits = opts.structuredModels?.storylineDeck
       ? deckExhibitsRenderedAsVisual(html, opts.structuredModels.storylineDeck)
       : [];
-    const nativePptxDeckVisualsPresent =
-      nativePptxDeckSatisfiesVisualContract(
-        doc,
-        contractDeliverableKey,
-        outputFormat,
-      );
+    const nativePptxDeckVisualsPresent = nativePptxDeckSatisfiesVisualContract(
+      doc,
+      contractDeliverableKey,
+      outputFormat,
+    );
     additionalExhibits.push(...renderedDeckExhibits);
 
     const contractInput = buildContractInput({
@@ -664,8 +672,7 @@ export async function persistDeliverable(
       renderableDocWithType,
       outputFormat,
     );
-    const materialize =
-      deps.materializeDeliverableDraft ?? completeDeliverable;
+    const materialize = deps.materializeDeliverableDraft ?? completeDeliverable;
     const materialized = await materialize(
       {
         clientId: opts.clientId,
