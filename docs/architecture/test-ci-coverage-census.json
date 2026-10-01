@@ -18,26 +18,26 @@
     "No timestamp is recorded, so refreshing this file on an unchanged tree is a no-op."
   ],
   "counts": {
-    "testFiles": 2595,
-    "coveredTestFiles": 2412,
-    "pullRequestCoveredTestFiles": 2411,
-    "uncoveredTestFiles": 183,
+    "testFiles": 2596,
+    "coveredTestFiles": 2414,
+    "pullRequestCoveredTestFiles": 2413,
+    "uncoveredTestFiles": 182,
     "directoriesWithTests": 497,
-    "directoriesFullyCovered": 412,
+    "directoriesFullyCovered": 413,
     "directoriesPartiallyCovered": 27,
-    "directoriesUncovered": 58,
-    "directoriesWithUnrunTestFiles": 85,
-    "directoriesWithUntriagedUnrunTestFiles": 74,
+    "directoriesUncovered": 57,
+    "directoriesWithUnrunTestFiles": 84,
+    "directoriesWithUntriagedUnrunTestFiles": 73,
     "declaredQuarantineTestFiles": 52,
-    "untriagedUnrunTestFiles": 131,
+    "untriagedUnrunTestFiles": 130,
     "indeterminateInvocations": 0,
     "unresolvedIgnoreArguments": 0,
     "criticalGovernedRiskDirectories": 0,
     "highGovernedRiskDirectories": 0,
-    "unclassifiedRiskDirectories": 68,
+    "unclassifiedRiskDirectories": 67,
     "rankedDirectories": 0,
     "rankedUntriagedUnrunTestFiles": 0,
-    "unclassifiedRiskDirectoriesWithResolvedProductSources": 62,
+    "unclassifiedRiskDirectoriesWithResolvedProductSources": 61,
     "unclassifiedRiskDirectoriesWithNoResolvedProductSource": 6
   },
   "quarantineLists": [
@@ -445,12 +445,12 @@
   "governedRiskFiles": [],
   "governedRiskRanking": [],
   "triageVerdicts": {
-    "heldUntriagedUnrunTestFiles": 131,
+    "heldUntriagedUnrunTestFiles": 130,
     "drawableUntriagedUnrunTestFiles": 0,
     "heldByVerdict": {
       "already_verdicted_elsewhere": 36,
       "real": 1,
-      "repair": 12,
+      "repair": 11,
       "rewrite_as_behavior": 9,
       "update_with_reason_recorded": 11,
       "vacuous_control_proof": 3,
@@ -1361,13 +1361,6 @@
         "ownerItem": "26"
       },
       {
-        "testPath": "src/scripts/governance/__tests__/promotion-preview.test.ts",
-        "verdict": "repair",
-        "record": "docs/architecture/item26-draw18-stale-suite-triage.json",
-        "recordedAt": "2026-10-01T08:37:48Z",
-        "ownerItem": "26"
-      },
-      {
         "testPath": "src/scripts/qa/__tests__/scoring.test.ts",
         "verdict": "wire_into_ci",
         "record": "docs/architecture/item26-draw18-stale-suite-triage.json",
@@ -2128,19 +2121,6 @@
       }
     },
     {
-      "directory": "src/scripts/governance/__tests__",
-      "testFiles": 1,
-      "unrunTestFiles": 1,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 1,
-      "governedRisk": {
-        "score": 0,
-        "band": "unclassified",
-        "signals": [],
-        "productSourceCount": 3
-      }
-    },
-    {
       "directory": "src/lib/intelligence/synthesis/__tests__",
       "testFiles": 5,
       "unrunTestFiles": 5,
@@ -2767,14 +2747,6 @@
     },
     {
       "directory": "src/lib/workshops/__tests__",
-      "testFiles": 1,
-      "coveredTestFiles": 0,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 1,
-      "via": []
-    },
-    {
-      "directory": "src/scripts/governance/__tests__",
       "testFiles": 1,
       "coveredTestFiles": 0,
       "declaredQuarantineTestFiles": 0,

@@ -53,6 +53,5 @@
   "src/lib/telemetry/__tests__",
   "src/lib/workforce-economics/__tests__",
   "src/lib/workshops/__tests__",
-  "src/scripts/governance/__tests__",
   "src/scripts/qa/__tests__"
 ]
