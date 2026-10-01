@@ -158,6 +158,10 @@ function identityFor(type, name) {
 const summary = [];
 const blocked = [];
 const idByTypeName = new Map();
+// Every id a name can reach through any key column. A name usually reaches one row; when an
+// alternate key on one row equals the primary key of another, it reaches two, and the last
+// write to idByTypeName is an accident of row order rather than a resolution.
+const idsByTypeName = new Map();
 const claimedHomeDimensions = new Set();
 
 // 1. Stamp an ID column on every node-type home dimension.
@@ -188,7 +192,11 @@ for (const spec of ontology.nodeTypes) {
     stamped += 1;
     for (const key of keyColumns) {
       const value = String(row[key] ?? '').trim();
-      if (value) idByTypeName.set(`${spec.type} ${normalise(value)}`, id);
+      if (!value) continue;
+      const nameKey = `${spec.type} ${normalise(value)}`;
+      idByTypeName.set(nameKey, id);
+      if (!idsByTypeName.has(nameKey)) idsByTypeName.set(nameKey, new Set());
+      idsByTypeName.get(nameKey).add(id);
     }
   }
 
@@ -223,7 +231,14 @@ if (relationshipsFile) {
       // still carries a pre-rename label must still resolve to the same object, otherwise
       // the ledger protects the node and abandons every edge pointing at it.
       const key = type && name ? `${type} ${normalise(name)}` : '';
-      const id = key ? (idByTypeName.get(key) ?? ledgerByAlias.get(key)?.id) : undefined;
+      // An endpoint already resolved to an id keeps it while its name still reaches
+      // that id. Without this, a row appended later whose name equals another row's alternate
+      // key silently takes over every edge that named the original -- a re-target nobody
+      // declared. A prior id the name no longer reaches (a shared id this run separated) is not
+      // kept, so those edges follow the row they name.
+      const prior = String(row[`${side}_object_id`] ?? '').trim();
+      const keepPrior = Boolean(key && prior && idsByTypeName.get(key)?.has(prior));
+      const id = keepPrior ? prior : key ? (idByTypeName.get(key) ?? ledgerByAlias.get(key)?.id) : undefined;
       row[`${side}_object_id`] = id ?? '';
       if (id) resolved += 1;
       else if (type && name) {
