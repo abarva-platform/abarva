@@ -40,13 +40,13 @@ function fixtureRepo({ orgRows, edges, ledgerEntries }) {
       ],
     }),
   );
-  write(`${INPUT_ROOT}/02_org_ownership.csv`, `${Papa.unparse({ fields: ['org_unit', 'leader_name_or_role', 'org_unit_id'], data: orgRows })}\n`);
+  write(`${INPUT_ROOT}/02_org_ownership.csv`, `${Papa.unparse({ fields: ['org_unit', 'leader_name_or_role', 'org_unit_id'], data: orgRows }, { newline: '\n' })}\n`);
   write(
     `${INPUT_ROOT}/12_relationships.csv`,
     `${Papa.unparse({
       fields: ['from_object_type', 'from_object_name', 'to_object_type', 'to_object_name', 'from_object_id', 'to_object_id'],
       data: edges,
-    })}\n`,
+    }, { newline: '\n' })}\n`,
   );
   write(LEDGER, JSON.stringify({ schemaVersion: 1, tenantKey: TENANT, entries: ledgerEntries }));
   return root;
@@ -114,4 +114,23 @@ test('a renamed row keeps its declared id through a ledger alias, and its edge k
   const { orgs, edges } = mint(root);
   assert.equal(orgs[0].org_unit_id, 'ORG-renamed001');
   assert.equal(edges[0].from_object_id, 'ORG-renamed001');
+});
+
+test('a rewritten file keeps the row terminator it was written with', () => {
+  // Papa.unparse ends rows with CRLF unless told otherwise; appending a final LF to that left
+  // LF-only intake files mixing both, and readers disagree on how many rows such a file has.
+  const root = fixtureRepo({
+    orgRows: [{ org_unit: 'Network Operations', leader_name_or_role: 'VP Network', org_unit_id: '' }],
+    edges: [],
+    ledgerEntries: [],
+  });
+  const crlfFile = path.join(root, INPUT_ROOT, '12_relationships.csv');
+  fs.writeFileSync(crlfFile, 'from_object_type,from_object_name,to_object_type,to_object_name\r\norg_unit,Network Operations,,\r\n');
+  mint(root);
+  const lf = fs.readFileSync(path.join(root, INPUT_ROOT, '02_org_ownership.csv'), 'utf8');
+  assert.equal(lf.includes('\r'), false, 'an LF file gains no CR');
+  assert.ok(lf.endsWith('\n'));
+  const crlf = fs.readFileSync(crlfFile, 'utf8');
+  assert.equal(crlf.split('\r\n').length - 1, crlf.split('\n').length - 1, 'every LF in a CRLF file is part of a CRLF');
+  assert.ok(crlf.endsWith('\r\n'));
 });

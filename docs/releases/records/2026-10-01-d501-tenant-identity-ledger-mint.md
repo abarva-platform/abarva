@@ -48,9 +48,12 @@ This change runs the owning minter. Four things result:
    shared id, an undeclared id, a named row with no id, a relationship carrying an undeclared id, or
    a relationship whose id belongs to a row other than the one it names.
 
-No value, name or description in any row changes; only id columns do. Most of the line churn in
-the CSVs comes from re-serialization (line endings and quoting), not content. Re-parsing every file
-before and after shows zero changed cells outside the id columns.
+No value, name or description in any row changes; only id columns do. Re-parsing every file
+before and after shows zero changed cells outside the id columns. The minter also now writes each
+file back with the row terminator it was read with. Before, it rewrote LF-only files with CRLF rows
+and a final LF, and the tenant-input quality audit correctly refuses that mix, because readers
+count such a file's rows differently. That defect is what made the first push of this change fail
+CI. As a side effect, the 7 CSVs whose ids did not change no longer appear in the diff at all.
 
 ## Layer Impact
 
@@ -83,13 +86,14 @@ done here.
 ## Changes Included
 
 - `scripts/data/assign-stable-identity.mjs`: an ambiguous relationship endpoint keeps its prior id.
-- `scripts/data/assign-stable-identity.test.mjs`: new, 3 cases. Before this, the minter had no tests.
+  Rewritten files keep their own row terminator.
+- `scripts/data/assign-stable-identity.test.mjs`: new, 4 cases. Before this, the minter had no tests.
 - `scripts/data/identity-ledger-check.mjs` and `.test.mjs`: new committed-file gate, 10 cases.
 - `.github/workflows/tenant-identity-ledger.yml`: new workflow. Its paths filter includes the intake
   CSV and ledger globs, not just the scripts.
 - `package.json`: adds the `check:identity-ledger` script.
 - `docs/architecture/ci-gate-registry.json`: classifies the new script as a `pr-gate`.
-- One tenant's 15 intake CSVs and its `identity-ledger.json`: minter output.
+- One tenant's 8 intake CSVs whose ids changed, and its `identity-ledger.json`: minter output.
 
 ## QA / Validation
 
@@ -97,6 +101,9 @@ done here.
   3 of 3. Mutations: 3 of 3 caught. A fourth guard, a "prior id is declared" check, survived
   mutation; on inspection it was redundant (every candidate id was assigned to a named row this
   run), so it was removed rather than kept as an unfailable condition.
+- Row-terminator case: red on the unfixed writer (an LF file gained CRs), then green. Mutations
+  3 of 3 caught: always LF, always CRLF, and the dimension write ignoring the detected terminator.
+  `npm run audit:tenant-input-quality` passes, which it did not on the first push.
 - Gate suite: 10 of 10. Mutations: 9 of 9 caught. The first pass caught 8 of 9; the survivor was a
   wrong-type id on a relationship being reported under the wrong kind, and a case now pins it.
 - Gate over committed files, both directions, from clean worktrees: exit 1 on `main` (200

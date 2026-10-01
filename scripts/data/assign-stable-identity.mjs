@@ -89,7 +89,13 @@ function stableId(type, name) {
 function readCsv(file) {
   const target = abs(`${root}/${file}`);
   if (!fs.existsSync(target)) return null;
-  const parsed = Papa.parse(fs.readFileSync(target, 'utf8').trim(), { header: true, skipEmptyLines: true });
+  const raw = fs.readFileSync(target, 'utf8');
+  const parsed = Papa.parse(raw.trim(), { header: true, skipEmptyLines: true });
+  // Write back with the terminator the file was written with. Papa.unparse defaults to CRLF, and
+  // an LF file rewritten that way -- plus the final LF appended on write -- mixes both, which
+  // readers count differently. A file that is mostly CRLF stays CRLF.
+  const crlf = (raw.match(/\r\n/g) ?? []).length;
+  const newline = crlf > (raw.match(/\n/g) ?? []).length - crlf ? '\r\n' : '\n';
   // Mixed line endings otherwise leave a stray carriage return in the final column of every
   // CRLF row on a parse/unparse round trip.
   for (const row of parsed.data) {
@@ -102,6 +108,7 @@ function readCsv(file) {
   // interpretation back would silently delete rows. Refuse instead, and report it.
   const fatal = parsed.errors.filter((e) => e.code === 'TooManyFields' || e.code === 'TooFewFields' || e.code === 'MissingQuotes');
   return {
+    newline,
     rows: parsed.data,
     fields: (parsed.meta.fields ?? []).map((field) => field.replace(/\r/g, '')),
     parseErrors: fatal,
@@ -205,7 +212,9 @@ for (const spec of ontology.nodeTypes) {
     continue;
   }
   const fields = parsed.fields.includes(idColumn) ? parsed.fields : [...parsed.fields, idColumn];
-  if (!args.dryRun) fs.writeFileSync(abs(`${root}/${file}`), `${Papa.unparse({ fields, data: parsed.rows })}\n`);
+  if (!args.dryRun) {
+    fs.writeFileSync(abs(`${root}/${file}`), `${Papa.unparse({ fields, data: parsed.rows }, { newline: parsed.newline })}${parsed.newline}`);
+  }
   summary.push({ file, idColumn, rows: parsed.rows.length, stamped });
 }
 
@@ -253,7 +262,10 @@ if (relationshipsFile) {
     if (!fields.includes(column)) fields.push(column);
   }
   if (!args.dryRun && parsed.rows.length) {
-    fs.writeFileSync(abs(`${root}/${relationshipsFile}`), `${Papa.unparse({ fields, data: parsed.rows })}\n`);
+    fs.writeFileSync(
+      abs(`${root}/${relationshipsFile}`),
+      `${Papa.unparse({ fields, data: parsed.rows }, { newline: parsed.newline })}${parsed.newline}`,
+    );
   }
   edgeStats = { edges: parsed.rows.length, resolved, unresolved, unresolvedByType };
 }
