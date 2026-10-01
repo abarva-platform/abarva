@@ -8,9 +8,9 @@ jest.mock("@/components/source/canvas/analytics", () => ({
   SourceAnalyticsCanvas: () => null,
 }));
 
-const getSourcingEvent = jest.fn();
+const getSourcingEventWithReadContext = jest.fn();
 jest.mock("@/lib/source/queries", () => ({
-  getSourcingEvent: (...args: unknown[]) => getSourcingEvent(...args),
+  getSourcingEventWithReadContext: (...args: unknown[]) => getSourcingEventWithReadContext(...args),
   isUuid: () => false,
 }));
 jest.mock("@/lib/active-client", () => ({
@@ -87,7 +87,10 @@ async function pageProps(stage: string) {
 
 beforeEach(() => {
   jest.clearAllMocks();
-  getSourcingEvent.mockResolvedValue(EVENT);
+  getSourcingEventWithReadContext.mockResolvedValue({
+    event: EVENT,
+    readClient: { key: "test-client", name: "Test Client" },
+  });
   requireTenancy.mockResolvedValue({ userId: "owner", clientKey: "test-client" });
   loadUserSourceAccessPolicy.mockResolvedValue({ canApproveSourceStages: true, canViewFinancialData: false });
 });
@@ -101,7 +104,10 @@ describe("stage action without a computed value lever", () => {
 
   it("does not arm a future or past stage", async () => {
     expect((await pageProps("rfp")).stageGateAction).toBeUndefined();
-    getSourcingEvent.mockResolvedValue({ ...EVENT, currentStageKey: "rfp" });
+    getSourcingEventWithReadContext.mockResolvedValue({
+      event: { ...EVENT, currentStageKey: "rfp" },
+      readClient: { key: "test-client", name: "Test Client" },
+    });
     expect((await pageProps("scope")).stageGateAction).toBeUndefined();
   });
 

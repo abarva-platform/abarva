@@ -1,12 +1,9 @@
 import { notFound } from "next/navigation";
 import { SourceAnalyticsCanvas } from "@/components/source/canvas/analytics";
 import {
-  getCanonicalAdminSourceEventReadClient,
-  getSourcingEvent,
-  getSourcingEventForResolvedClient,
+  getSourcingEventWithReadContext,
   isUuid,
 } from "@/lib/source/queries";
-import { getActiveClientRow } from "@/lib/active-client";
 import { canonicalClientDisplayName } from "@/lib/client-config";
 import { listSourceArtifactsForSourceEventId } from "@/lib/source/artifact-registry";
 import { listSourceArtifacts } from "@/lib/source/file-cabinet/repository";
@@ -105,33 +102,11 @@ export default async function SourceEventDetailPage({
   const sp: Record<string, string | string[] | undefined> =
     (await (searchParams ?? Promise.resolve({}))) ?? {};
 
-  const [event, clientRow] = await Promise.all([
-    getSourcingEvent(eventId),
-    getActiveClientRow().catch(() => null),
-  ]);
-  if (!event) notFound();
+  const eventReadContext = await getSourcingEventWithReadContext(eventId);
+  if (!eventReadContext) notFound();
+  const { event, readClient: activeClient } = eventReadContext;
 
   const canvasTenancy = await requireTenancy().catch(() => null);
-  const tenancyClientKey = canvasTenancy?.clientKey?.trim() || null;
-  // The event lookup can admit a canonical admin without a clients-row match.
-  // Revalidate the exact persisted event through the same authorized path
-  // before reading its facts; an unrelated tenant stays on the sample view.
-  const tenantBoundEvent = !clientRow && canvasTenancy && tenancyClientKey
-    ? await getSourcingEventForResolvedClient(event.id, {
-        activeClientKey: tenancyClientKey,
-        activeClientName: event.accountName,
-        tenancy: canvasTenancy,
-      }).catch(() => null)
-    : null;
-  const canonicalAdminReadClient = !clientRow && !canvasTenancy
-    ? await getCanonicalAdminSourceEventReadClient(event.id).catch(() => null)
-    : null;
-  const activeClient = clientRow ??
-    (tenantBoundEvent?.id === event.id && tenancyClientKey
-      ? { key: tenancyClientKey, name: event.accountName }
-      : canonicalAdminReadClient?.eventId === event.id
-        ? canonicalAdminReadClient
-        : null);
 
   // Resolve viewing stage from ?stage=<key>; default to current stage.
   const stageParam = typeof sp.stage === "string" ? sp.stage : null;
