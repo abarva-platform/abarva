@@ -39,6 +39,13 @@ type Suite = {
   ownerItem: string;
   rationale: string;
   wiredInThisItem?: boolean;
+  updated?: {
+    updatedInThisItem: boolean;
+    reExecutedOn: string;
+    totalTests: number;
+    passedTests: number;
+    failedTests: number;
+  };
   unreachableComponent?: string;
   redCause?: {
     kind: "stale_label" | "formatting_reflow";
@@ -65,6 +72,12 @@ const readText = (relative: string) =>
 const readJson = <T>(relative: string) => JSON.parse(readText(relative)) as T;
 
 const record = readJson<TriageRecord>(RECORD_PATH);
+
+// A row is RUN by a T-799 step when its verdict was wire_into_ci, or when it was
+// a stale-label update that this item has since applied. Every other row is a
+// hold and must stay unwired.
+const isRunRow = (suite: Suite) =>
+  suite.verdict === "wire_into_ci" || suite.updated?.updatedInThisItem === true;
 
 const READS_REPOSITORY_TEXT =
   /readFileSync|from ["'](?:node:)?fs(?:\/promises)?["']|process\.cwd\(\)|__dirname/;
@@ -199,7 +212,31 @@ describe("T-799 stale suite triage record", () => {
       const cause = suite.redCause;
       expect(cause).toBeDefined();
       const testText = readText(suite.path);
-      if (cause?.kind === "stale_label") {
+      if (cause?.kind === "stale_label" && suite.updated?.updatedInThisItem) {
+        // Applied: the old literal is gone from the test, the registry still
+        // carries the current label, and the test reads the label from that
+        // registry instead of re-typing it. The re-execution must be green.
+        const source = readText(cause.labelSource ?? "");
+        const registry = (cause.labelSource ?? "").replace(/^src\//, "@/").replace(/\.tsx?$/, "");
+        expect({
+          path: suite.path,
+          testStillExpectsOldLabel: testText.includes(cause.expectedLabel ?? "\u0000"),
+          sourceHasCurrentLabel: source.includes(cause.currentLabel ?? "\u0000"),
+          testImportsRegistry: testText.includes(`from '${registry}'`),
+          reExecutedGreen:
+            suite.updated.failedTests === 0 &&
+            suite.updated.passedTests === suite.updated.totalTests &&
+            suite.updated.totalTests > 0,
+          wiredInThisItem: suite.wiredInThisItem,
+        }).toEqual({
+          path: suite.path,
+          testStillExpectsOldLabel: false,
+          sourceHasCurrentLabel: true,
+          testImportsRegistry: true,
+          reExecutedGreen: true,
+          wiredInThisItem: true,
+        });
+      } else if (cause?.kind === "stale_label") {
         const source = readText(cause.labelSource ?? "");
         expect({
           path: suite.path,
@@ -244,7 +281,7 @@ describe("T-799 stale suite triage record", () => {
     const held = new Map(
       census.triageVerdicts.heldTestPaths.map((row) => [row.testPath, row]),
     );
-    const stillHeld = record.suites.filter((suite) => suite.verdict !== "wire_into_ci");
+    const stillHeld = record.suites.filter((suite) => !isRunRow(suite));
     expect(stillHeld.length).toBeGreaterThan(0);
     for (const suite of stillHeld) {
       const row = held.get(suite.path);
@@ -260,7 +297,7 @@ describe("T-799 stale suite triage record", () => {
   // RUN. That is asked of two independent places — the workflow a pull request
   // executes, and the census computed from it — so neither the record's own
   // `wiredInThisItem` flag nor a comment in the YAML can satisfy it.
-  it("runs every wire_into_ci row in a T-799 unit-suites step, and the census agrees", () => {
+  it("runs every wire_into_ci row and every applied update in a T-799 unit-suites step, and the census agrees", () => {
     const workflow = yaml.load(readText(".github/workflows/unit-suites.yml")) as {
       jobs: Record<string, { steps?: { name?: string; run?: string }[] }>;
     };
@@ -280,7 +317,7 @@ describe("T-799 stale suite triage record", () => {
     const held = new Set(census.triageVerdicts.heldTestPaths.map((row) => row.testPath));
     const dark = new Set(census.uncoveredDirectories.map((row) => row.directory));
 
-    const wiring = record.suites.filter((suite) => suite.verdict === "wire_into_ci");
+    const wiring = record.suites.filter(isRunRow);
     for (const suite of wiring) {
       const named = commands.some(({ byPath, words }) =>
         byPath
@@ -302,7 +339,7 @@ describe("T-799 stale suite triage record", () => {
       });
     }
     // Held rows must NOT have been wired by a T-799 step.
-    for (const suite of record.suites.filter((s) => s.verdict !== "wire_into_ci")) {
+    for (const suite of record.suites.filter((s) => !isRunRow(s))) {
       const named = commands.some(({ words }) =>
         words.includes(suite.path) || words.includes(path.posix.dirname(suite.path)),
       );

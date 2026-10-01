@@ -27,7 +27,7 @@
     "what": "Wire the wire_into_ci rows (by named file where the directory is partly covered), apply the LivingMoveView label update and wire it, and leave the Tower byte scan and the ProofPointFooter render held until their owners act.",
     "owner": "T-799",
     "reExecuteFirst": "Re-execute every row on the then-current main before wiring; this record is a snapshot at its base.",
-    "status": "wire_into_ci rows wired; the three held rows are unchanged",
+    "status": "wire_into_ci rows wired; the LivingMoveView label update applied and wired; two held rows unchanged",
     "wiredAt": "2026-09-30T23:31:34Z",
     "wiredOnBase": "a1990c045753c5c78417ff6c7a2e31ec46f0bb53",
     "reExecuted": "All 17 wire_into_ci files re-executed together on the wiring base: 17 suites, 80 cases, all green. The two workflow steps run as written: 15 suites / 64 cases and 2 suites / 16 cases.",
@@ -37,9 +37,9 @@
     ],
     "stillHeld": [
       "rewrite_as_behavior: tenant-tower-route-scope (T-799)",
-      "update_with_reason_recorded: LivingMoveView (T-799)",
       "already_verdicted_elsewhere: ProofPointFooter (T-775)"
-    ]
+    ],
+    "labelUpdateAppliedOnBase": "db5e4afd325ab1831c1fdccac64f079a1eccdadf"
   },
   "suites": [
     {
@@ -283,7 +283,16 @@
         "labelSource": "src/lib/programs/expert-kernel/living-move-cases.ts",
         "expectedLabel": "First Capital Financial",
         "currentLabel": "FS Demo"
-      }
+      },
+      "updated": {
+        "updatedInThisItem": true,
+        "reExecutedOn": "db5e4afd325ab1831c1fdccac64f079a1eccdadf",
+        "totalTests": 8,
+        "passedTests": 8,
+        "failedTests": 0,
+        "what": "The two expectations that named the old switcher label now read LIVING_MOVE_CASES.arcturus.tenantLabel from the case registry, so the case asserts that the switcher renders the registry's label rather than a re-typed copy of it. Mutation: rendering entry.id instead of entry.tenantLabel in LivingMoveView.tsx turns 2 of 8 red."
+      },
+      "wiredInThisItem": true
     },
     {
       "path": "src/components/programs/attachments/__tests__/AttachmentChip.test.tsx",

@@ -1981,8 +1981,11 @@ jobs:
       # segment would be read as a capture group by a bare Jest pattern, and
       # `source/new-workspace` holds two files that already run elsewhere.
       # Not wired here, by verdict: the Tower route-scope byte scan
-      # (rewrite_as_behavior), the LivingMoveView stale label
-      # (update_with_reason_recorded) and ProofPointFooter (held for T-775).
+      # (rewrite_as_behavior) and ProofPointFooter (held for T-775).
+      # `src/components/moves/living/__tests__` was the
+      # update_with_reason_recorded row: its two stale switcher-label
+      # expectations now read the label from the case registry, re-executed
+      # 8 of 8 green on `db5e4afd32`, and it holds only that one file.
       - name: Run the T-799 route handler, setup, programs and strategic-moves suites
         run: >-
           npx jest
@@ -2001,6 +2004,7 @@ jobs:
           src/components/strategic-moves/cost-effort/__tests__
           src/components/strategic-moves/risk-assessment/__tests__
           src/components/strategic-moves/solutioning/__tests__
+          src/components/moves/living/__tests__
           --no-coverage --ci
 
       - name: Run the T-799 docs page and Source request-first suites by named file
