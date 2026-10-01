@@ -4,6 +4,7 @@
 
 import { BlobServiceClient } from "@azure/storage-blob";
 import { ManagedIdentityCredential } from "@azure/identity";
+import path from "node:path";
 import pg from "pg";
 import { generatePack } from "./load_synthetic_enterprise_v1";
 
@@ -92,6 +93,14 @@ async function main(): Promise<void> {
       select relationship_type, count(*) as n from ecl_context.relationship
       where tenant_key = $1 and assessment_id = $2 group by relationship_type
     `, [manifest.tenant_key, manifest.assessment_id]);
+    const sourceCatalog = await db.query<{
+      source_owner: string;
+      file_name: string;
+      file_hash: string;
+    }>(`
+      select source_owner, file_name, file_hash from ecl_source.source_file
+      where tenant_key = $1 and assessment_id = $2
+    `, [manifest.tenant_key, manifest.assessment_id]);
     await db.query("commit");
     const expected = {
       source_files: manifest.files.length,
@@ -112,6 +121,15 @@ async function main(): Promise<void> {
       home_projection_manifests: 0,
     };
     const issues = admissionIssues(actual, expected);
+    const expectedFiles = Object.fromEntries(manifest.files.map((file) => [
+      `${file.source_room_family}/${path.basename(file.file_path)}`, file.sha256,
+    ]));
+    const actualFiles = Object.fromEntries(sourceCatalog.rows.map((file) => [
+      `${file.source_owner}/${file.file_name}`, file.file_hash,
+    ]));
+    for (const key of new Set([...Object.keys(expectedFiles), ...Object.keys(actualFiles)])) {
+      if (actualFiles[key] !== expectedFiles[key]) issues.push(`source file hash drift: ${key}`);
+    }
     const expectedObjectTypes: Record<string, number> = {};
     const expectedEdgeTypes: Record<string, number> = {};
     for (const object of normalized.objects) {
