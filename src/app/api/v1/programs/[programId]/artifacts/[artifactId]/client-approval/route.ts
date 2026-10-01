@@ -38,6 +38,7 @@ import {
 } from "@/lib/programs/approved-solution-approach";
 import { loadCurrentMoveContextExtractFreshness } from "@/lib/programs/move-context-extract";
 import { loadApprovedMoveEvidenceSnapshot } from "@/lib/programs/approved-move-evidence-snapshot";
+import { findUnsupportedFinancialClaimDeltas } from "@/lib/programs/reviewed-deliverable-financial-claims";
 import { renderDeliverableDocx } from "@/lib/deliverables/orchestrator/renderers";
 import { renderValidatedDeck } from "@/lib/deliverables/orchestrator/render-validated-deck";
 import type { RenderableDeliverable } from "@/lib/deliverables/orchestrator/types";
@@ -578,6 +579,22 @@ export async function POST(
         );
       }
 
+      const unsupportedFinancialClaims = findUnsupportedFinancialClaimDeltas(
+        generatedContent,
+        parsedText,
+      );
+      if (unsupportedFinancialClaims.length > 0) {
+        return Response.json(
+          {
+            error: "unsupported_financial_claim_delta",
+            detail:
+              "The reviewed file adds or strengthens financial claims that are not established by the generated source. Attach and approve supporting financial evidence, rebuild the deliverable, then review it again.",
+            unsupportedClaims: unsupportedFinancialClaims,
+          },
+          { status: 422 },
+        );
+      }
+
       const ext = (file.name.split(".").pop() || "bin").toLowerCase();
       const saved = await saveMoveArtifact(ctx, {
         moveId: programId,
@@ -591,9 +608,9 @@ export async function POST(
         fileFormat: ext,
         body,
         status: "approved",
-        sourceBasis: "client_upload",
-        confidence: "high",
-        citationReady: true,
+        sourceBasis: "client_approved_deliverable",
+        confidence: "medium",
+        citationReady: false,
         generatedBy: ctx.email ?? "client-approval",
         metadata: {
           uploadedBy: ctx.email ?? null,
@@ -601,6 +618,7 @@ export async function POST(
           deliverableTypeKey,
           generatedArtifactId: artifact.id,
           clientApprovedReplacement: true,
+          factualClaimsIndependentlyEvidenceVerified: false,
           approvalReason: reason,
           parseMethod: parsed.extractedStructured.parse_method,
           parseWarnings: parsed.extractedStructured.warnings,
