@@ -389,7 +389,7 @@ describe("Source ServiceNow request acceptance harness", () => {
       expectedArchetypes: 10,
       coveredArchetypes: 10,
       requestRows: 10,
-      eligibleSupplierRows: 20,
+      eligibleSupplierRows: 23,
       negativeControlRows: 5,
       decisionGradeRequestRows: 10,
     });
@@ -436,11 +436,11 @@ describe("Source ServiceNow request acceptance harness", () => {
     );
   });
 
-  it("fails when an archetype loses its second eligible supplier candidate", () => {
+  it("fails when an archetype falls below two eligible supplier candidates", () => {
     const supplierCsv = fs
       .readFileSync(supplierCsvPath, "utf8")
       .split(/\r?\n/u)
-      .filter((line) => !line.startsWith("SYN-SUP-AMS-002,"))
+      .filter((line) => !/^SYN-SUP-AMS-00[2-5],/u.test(line))
       .join("\n");
     const matrix = buildAcceptanceMatrix({
       requestCsvText: fs.readFileSync(requestCsvPath, "utf8"),
