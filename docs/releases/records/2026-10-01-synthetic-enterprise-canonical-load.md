@@ -35,6 +35,7 @@ Adds a private operator job that validates a pinned synthetic enterprise source 
 - `.github/workflows/ecl-physical-admission.yml`
 - `Dockerfile` carries the adapter's versioned relationship map into the private job image.
 - `package.json` operator script
+- A narrowly scoped migration operator script applies only the additive admission file before loading.
 
 ## QA / Validation
 
@@ -47,6 +48,8 @@ Adds a private operator job that validates a pinned synthetic enterprise source 
 ## Rollout Plan
 
 Merge through a PR and deploy the image through the ACA main workflow. A separate governed ACA operator job must apply the admission migration and then execute the load with explicit tenant, assessment, source hash, idempotency key, operator identity, image digest, and synthetic review binding. Review readback and quality outputs before any serving promotion.
+
+The job may use a dedicated managed identity with Blob Data Contributor on a private storage account; no storage key is committed or required for that path.
 
 ## Deployment Authority
 

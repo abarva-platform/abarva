@@ -9,6 +9,7 @@ import path from "node:path";
 import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { BlobServiceClient } from "@azure/storage-blob";
+import { ManagedIdentityCredential } from "@azure/identity";
 import Papa from "papaparse";
 import pg from "pg";
 
@@ -559,7 +560,6 @@ async function main(): Promise<void> {
     }
     const required = [
       "DATABASE_URL",
-      "AZURE_STORAGE_CONNECTION_STRING",
       "ECL_SYNTHETIC_RUN_ID",
       "ECL_SYNTHETIC_OPERATOR_IDENTITY",
       "ECL_SYNTHETIC_BUILD_VERSION",
@@ -571,6 +571,18 @@ async function main(): Promise<void> {
     const missing = required.filter((key) => !process.env[key]);
     if (missing.length)
       throw new Error(`Missing governed job bindings: ${missing.join(", ")}`);
+    const storageConnectionString = process.env.AZURE_STORAGE_CONNECTION_STRING;
+    const storageAccount = process.env.AZURE_STORAGE_ACCOUNT_NAME;
+    const storageIdentity =
+      process.env.ECL_SYNTHETIC_STORAGE_IDENTITY_CLIENT_ID;
+    if (!storageConnectionString && (!storageAccount || !storageIdentity)) {
+      throw new Error(
+        "Blob storage requires a connection string or an explicit account and managed identity",
+      );
+    }
+    if (storageAccount && !/^[a-z0-9]{3,24}$/.test(storageAccount)) {
+      throw new Error("Invalid Azure storage account name");
+    }
     if (
       process.env.ECL_SYNTHETIC_LAB_APPROVAL !== "accepted_lab" ||
       process.env.ECL_SYNTHETIC_INPUT_SOURCE_VERSION !==
@@ -586,9 +598,12 @@ async function main(): Promise<void> {
     const runId = process.env.ECL_SYNTHETIC_RUN_ID!;
     if (!/^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$/.test(runId))
       throw new Error("Unsafe run id");
-    const service = BlobServiceClient.fromConnectionString(
-      process.env.AZURE_STORAGE_CONNECTION_STRING!,
-    );
+    const service = storageConnectionString
+      ? BlobServiceClient.fromConnectionString(storageConnectionString)
+      : new BlobServiceClient(
+          `https://${storageAccount}.blob.core.windows.net`,
+          new ManagedIdentityCredential({ clientId: storageIdentity! }),
+        );
     const container = service.getContainerClient(containerName);
     await container.createIfNotExists();
     const prefix = `${pack.manifest.tenant_key}/${pack.manifest.assessment_id}/${pack.manifest.source_set_hash}`;
