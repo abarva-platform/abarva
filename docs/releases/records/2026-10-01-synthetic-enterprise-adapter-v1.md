@@ -32,6 +32,7 @@ Adds a deterministic Layer 2 adapter for the versioned synthetic enterprise sour
 
 - One explicit source-native to canonical relationship map.
 - Distinct `MODULE_OF` and `EVIDENCE_REQUESTED_FOR` semantics; the latter is not a `SUPPORTS` claim.
+- Application rows normalize to 24 logical applications and 726 `application_module` objects, so later estate totals cannot count modules as distinct products.
 - ID-led normalized objects, resolved relationships, and a separate unresolved-edge set.
 - Source-file and row lineage on every normalized object and relationship.
 - Tests for full denominator preservation, flow-row lineage, unknown-verb refusal, and dictionary coverage.

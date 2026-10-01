@@ -32,6 +32,8 @@ class SyntheticEnterpriseAdapterTests(unittest.TestCase):
         self.assertEqual(len(normalized["unresolved_relationships"]), 1)
         self.assertEqual(normalized["quality"]["source_flow_row_count"], 1350)
         self.assertEqual(normalized["quality"]["object_types"]["evidence_request"], 224)
+        self.assertEqual(normalized["quality"]["object_types"]["application"], 24)
+        self.assertEqual(normalized["quality"]["object_types"]["application_module"], 726)
         self.assertEqual(normalized["quality"]["relationship_types"]["MODULE_OF"], 726)
         self.assertEqual(normalized["quality"]["relationship_types"]["EVIDENCE_REQUESTED_FOR"], 224)
         self.assertNotIn("SUPPORTS", normalized["quality"]["relationship_types"])

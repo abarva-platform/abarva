@@ -41,6 +41,17 @@ def canonical_relationship_type(native_type: str) -> str:
     return canonical_type
 
 
+def canonical_object_type(obj: dict[str, Any]) -> str:
+    if obj["object_type"] != "application":
+        return obj["object_type"]
+    grain = obj["attributes"].get("application_grain")
+    if grain == "logical_product":
+        return "application"
+    if grain == "governed_module":
+        return "application_module"
+    raise ValueError(f"Unmapped application grain: {grain}")
+
+
 def normalize(pack: Path) -> dict[str, Any]:
     quality = validate_source_set(pack)
     manifest = json.loads((pack / "enterprise_manifest.json").read_text(encoding="utf-8"))
@@ -71,7 +82,8 @@ def normalize(pack: Path) -> dict[str, Any]:
     for obj in manifest["objects"]:
         objects.append({
             "id": obj["object_id"],
-            "type": obj["object_type"],
+            "type": canonical_object_type(obj),
+            "source_object_type": obj["object_type"],
             "name": obj["name"],
             "attributes": obj["attributes"],
             "source_as_of": obj["source_as_of"],
