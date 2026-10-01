@@ -496,7 +496,7 @@ function sourceRefIds(value: unknown): string[] {
   return [...new Set(refs)];
 }
 
-type VerifiedSourceRefs = Map<string, Set<string>>;
+type VerifiedSourceRefs = Map<string, Map<string, Set<string>>>;
 
 function admittedSourceRefs(
   row: HomeProjectionRow,
@@ -507,7 +507,9 @@ function admittedSourceRefs(
     !text(row.source_hash)
   )
     return [];
-  const linked = verifiedSourceRefs.get(row.projection_entry_id ?? "");
+  const linked = verifiedSourceRefs
+    .get(row.projection_entry_id ?? "")
+    ?.get(row.source_hash ?? "");
   if (!linked) return [];
   return sourceRefIds(row.source_refs_json).filter((ref) => linked.has(ref));
 }
@@ -1195,8 +1197,13 @@ function buildCategorySummaries(args: {
 function recordType(
   objectType: TechObjectType,
   rows: Array<Record<string, string | number | boolean | null>>,
+  sourceRows?: HomeProjectionRow[],
+  verifiedSourceRefs?: VerifiedSourceRefs,
 ): TechRecordType | null {
   if (rows.length === 0) return null;
+  if (sourceRows && sourceRows.length !== rows.length) {
+    throw new Error(`Source-row alignment failed for ${objectType}`);
+  }
   const populated = (column: string) =>
     rows.some(
       (row) =>
@@ -1226,6 +1233,13 @@ function recordType(
     label: LABELS[objectType],
     columns,
     rows,
+    ...(sourceRows && verifiedSourceRefs
+      ? {
+          rowSourceRefs: sourceRows.map((row) =>
+            admittedSourceRefs(row, verifiedSourceRefs),
+          ),
+        }
+      : {}),
     primaryDimension,
     dimensionCounts: primaryDimension
       ? dimensionCounts(rows, primaryDimension)
@@ -1235,19 +1249,22 @@ function recordType(
 
 export function buildTechnologyEstateFromHomeProjectionRows(
   rows: HomeProjectionRow[],
+  verifiedSourceRefs?: VerifiedSourceRefs,
 ): TechnologyEstateBundle {
   const factualRows = rows.filter(isFactualHomeRow);
-  const enterpriseFamily = (rowType: TechObjectType) =>
-    factualRows
-      .filter(
-        (row) =>
-          row.page_key === "business_unit_profile" && row.row_type === rowType,
-      )
-      .map((row) => stripEmpty(enterpriseRow(row)));
-  const segments = enterpriseFamily("business_segment");
-  const functions = enterpriseFamily("business_function");
-  const workforce = enterpriseFamily("workforce_role");
-  const processes = enterpriseFamily("operational_process");
+  const enterpriseFamilyRows = (rowType: TechObjectType) =>
+    factualRows.filter(
+      (row) =>
+        row.page_key === "business_unit_profile" && row.row_type === rowType,
+    );
+  const segmentRows = enterpriseFamilyRows("business_segment");
+  const functionRows = enterpriseFamilyRows("business_function");
+  const workforceRows = enterpriseFamilyRows("workforce_role");
+  const processRows = enterpriseFamilyRows("operational_process");
+  const segments = segmentRows.map((row) => stripEmpty(enterpriseRow(row)));
+  const functions = functionRows.map((row) => stripEmpty(enterpriseRow(row)));
+  const workforce = workforceRows.map((row) => stripEmpty(enterpriseRow(row)));
+  const processes = processRows.map((row) => stripEmpty(enterpriseRow(row)));
   const applicationRows = factualRows.filter(
     (row) =>
       row.page_key === "applications_systems" && row.row_type === "application",
@@ -1257,19 +1274,13 @@ export function buildTechnologyEstateFromHomeProjectionRows(
       row.page_key === "infrastructure_platforms" &&
       row.row_type === "infrastructure",
   );
-  const applications = factualRows
-    .filter(
-      (row) =>
-        row.page_key === "applications_systems" &&
-        row.row_type === "application",
-    )
-    .map((row) => stripEmpty(applicationRow(row)));
-  const contracts = factualRows
-    .filter(
-      (row) =>
-        row.page_key === "vendor_contracts" && row.row_type === "contract",
-    )
-    .map((row) => stripEmpty(contractRow(row)));
+  const applications = applicationRows.map((row) =>
+    stripEmpty(applicationRow(row)),
+  );
+  const contractRows = factualRows.filter(
+    (row) => row.page_key === "vendor_contracts" && row.row_type === "contract",
+  );
+  const contracts = contractRows.map((row) => stripEmpty(contractRow(row)));
   const infrastructure = infrastructureRows.map((row) =>
     stripEmpty(infrastructureRow(row)),
   );
@@ -1286,60 +1297,123 @@ export function buildTechnologyEstateFromHomeProjectionRows(
     const label = text(mapped.platformName);
     if (ref && label) labelsByRef.set(ref, label);
   }
-  const dataFlows = factualRows
-    .filter(
-      (row) =>
-        row.page_key === "current_state_data_flow" &&
-        row.row_type === "data_flow",
-    )
-    .map((row) => stripEmpty(dataFlowRow(row, labelsByRef)));
-  const dataWorkloads = factualRows
-    .filter(
-      (row) =>
-        row.page_key === "data_assets_integrations" &&
-        row.row_type === "data_analytics_workload",
-    )
-    .map((row) => stripEmpty(dataAnalyticsWorkloadRow(row)));
+  const dataFlowRows = factualRows.filter(
+    (row) =>
+      row.page_key === "current_state_data_flow" &&
+      row.row_type === "data_flow",
+  );
+  const dataWorkloadRows = factualRows.filter(
+    (row) =>
+      row.page_key === "data_assets_integrations" &&
+      row.row_type === "data_analytics_workload",
+  );
+  const dataFlows = dataFlowRows.map((row) =>
+    stripEmpty(dataFlowRow(row, labelsByRef)),
+  );
+  const dataWorkloads = dataWorkloadRows.map((row) =>
+    stripEmpty(dataAnalyticsWorkloadRow(row)),
+  );
 
   // The five intake families the projection carries as of the active-intake page-key slice. Each
   // builds only when its page key has rows: a family the projection has not loaded yet produces no
   // record type at all, which is what lets a surface report the absence rather than an empty table.
-  const intakeFamily = (
-    pageKey: string,
-    map: (row: HomeProjectionRow) => JsonRecord,
-  ) =>
-    factualRows
-      .filter((row) => row.page_key === pageKey)
-      .map((row) => stripEmpty(map(row)));
-
-  const metrics = intakeFamily("metrics_outcomes", metricOutcomeRow);
-  const risks = intakeFamily("risks_controls", riskControlRow);
-  const programs = intakeFamily("programs_initiatives", programInitiativeRow);
-  const orgUnits = intakeFamily("org_ownership", organizationOwnershipRow);
-  const aiUseCases = intakeFamily("ai_use_cases", aiUseCaseRow);
-  const interviews = intakeFamily(
-    "executive_interviews",
-    executiveInterviewRow,
+  const intakeFamilyRows = (pageKey: string) =>
+    factualRows.filter((row) => row.page_key === pageKey);
+  const metricRows = intakeFamilyRows("metrics_outcomes");
+  const riskRows = intakeFamilyRows("risks_controls");
+  const programRows = intakeFamilyRows("programs_initiatives");
+  const orgRows = intakeFamilyRows("org_ownership");
+  const aiRows = intakeFamilyRows("ai_use_cases");
+  const interviewRows = intakeFamilyRows("executive_interviews");
+  const relationshipRows = intakeFamilyRows("relationships");
+  const metrics = metricRows.map((row) => stripEmpty(metricOutcomeRow(row)));
+  const risks = riskRows.map((row) => stripEmpty(riskControlRow(row)));
+  const programs = programRows.map((row) =>
+    stripEmpty(programInitiativeRow(row)),
   );
-  const relationships = intakeFamily("relationships", relationshipEdgeRow);
+  const orgUnits = orgRows.map((row) =>
+    stripEmpty(organizationOwnershipRow(row)),
+  );
+  const aiUseCases = aiRows.map((row) => stripEmpty(aiUseCaseRow(row)));
+  const interviews = interviewRows.map((row) =>
+    stripEmpty(executiveInterviewRow(row)),
+  );
+  const relationships = relationshipRows.map((row) =>
+    stripEmpty(relationshipEdgeRow(row)),
+  );
 
   return {
     recordTypes: [
-      recordType("business_segment", segments),
-      recordType("business_function", functions),
-      recordType("workforce_role", workforce),
-      recordType("operational_process", processes),
-      recordType("application_system", applications),
-      recordType("vendor_contract", contracts),
-      recordType("infrastructure_platform", infrastructure),
-      recordType("data_asset_or_integration", [...dataFlows, ...dataWorkloads]),
-      recordType("metric_outcome", metrics),
-      recordType("risk_control", risks),
-      recordType("program_initiative", programs),
-      recordType("organization_ownership", orgUnits),
-      recordType("ai_use_case", aiUseCases),
-      recordType("executive_interview", interviews),
-      recordType("relationship_edge", relationships),
+      recordType("business_segment", segments, segmentRows, verifiedSourceRefs),
+      recordType(
+        "business_function",
+        functions,
+        functionRows,
+        verifiedSourceRefs,
+      ),
+      recordType(
+        "workforce_role",
+        workforce,
+        workforceRows,
+        verifiedSourceRefs,
+      ),
+      recordType(
+        "operational_process",
+        processes,
+        processRows,
+        verifiedSourceRefs,
+      ),
+      recordType(
+        "application_system",
+        applications,
+        applicationRows,
+        verifiedSourceRefs,
+      ),
+      recordType(
+        "vendor_contract",
+        contracts,
+        contractRows,
+        verifiedSourceRefs,
+      ),
+      recordType(
+        "infrastructure_platform",
+        infrastructure,
+        infrastructureRows,
+        verifiedSourceRefs,
+      ),
+      recordType(
+        "data_asset_or_integration",
+        [...dataFlows, ...dataWorkloads],
+        [...dataFlowRows, ...dataWorkloadRows],
+        verifiedSourceRefs,
+      ),
+      recordType("metric_outcome", metrics, metricRows, verifiedSourceRefs),
+      recordType("risk_control", risks, riskRows, verifiedSourceRefs),
+      recordType(
+        "program_initiative",
+        programs,
+        programRows,
+        verifiedSourceRefs,
+      ),
+      recordType(
+        "organization_ownership",
+        orgUnits,
+        orgRows,
+        verifiedSourceRefs,
+      ),
+      recordType("ai_use_case", aiUseCases, aiRows, verifiedSourceRefs),
+      recordType(
+        "executive_interview",
+        interviews,
+        interviewRows,
+        verifiedSourceRefs,
+      ),
+      recordType(
+        "relationship_edge",
+        relationships,
+        relationshipRows,
+        verifiedSourceRefs,
+      ),
     ].filter((row): row is TechRecordType => Boolean(row)),
   };
 }
@@ -2710,8 +2784,10 @@ export function buildHomeReviewBundleFromEclProjectionRows(
   sourceCatalogRows: readonly HomeSourceFileReviewRow[] | null = null,
 ): HomeReviewBundle {
   const factualRows = rows.filter(isFactualHomeRow);
-  const technologyEstate =
-    buildTechnologyEstateFromHomeProjectionRows(factualRows);
+  const technologyEstate = buildTechnologyEstateFromHomeProjectionRows(
+    factualRows,
+    verifiedSourceRefs,
+  );
   const signalPacket = buildEclSignalPacket(
     factualRows,
     technologyEstate,
@@ -2878,18 +2954,30 @@ async function readVerifiedSourceRefs(
     const links = await azureRead.query<{
       projection_entry_id: string;
       source_record_id: string;
+      source_hash: string;
     }>(
-      `select projection_entry_id::text, source_record_id::text
-       from ecl_projection.projection_entry_source_record_ref
-       where tenant_key = $1 and assessment_id = $2`,
+      `select link.projection_entry_id::text, link.source_record_id::text, link.source_hash
+       from ecl_projection.projection_entry_source_record_ref link
+       join ecl_projection.projection_entry entry
+         on entry.tenant_key = link.tenant_key
+        and entry.assessment_id = link.assessment_id
+        and entry.id = link.projection_entry_id
+        and entry.source_hash = link.source_hash
+       join ecl_source.source_record source
+         on source.tenant_key = link.tenant_key
+        and source.assessment_id = link.assessment_id
+        and source.id = link.source_record_id
+       where link.tenant_key = $1 and link.assessment_id = $2`,
       [tenantKey, assessmentId],
       { missingTable: "empty" },
     );
-    const verified = new Map<string, Set<string>>();
+    const verified: VerifiedSourceRefs = new Map();
     for (const link of links) {
-      const refs = verified.get(link.projection_entry_id) ?? new Set<string>();
+      const byHash = verified.get(link.projection_entry_id) ?? new Map();
+      const refs = byHash.get(link.source_hash) ?? new Set<string>();
       refs.add(link.source_record_id);
-      verified.set(link.projection_entry_id, refs);
+      byHash.set(link.source_hash, refs);
+      verified.set(link.projection_entry_id, byHash);
     }
     return verified;
   } catch (error) {

@@ -56,13 +56,19 @@ function recordTypeOf(tenantKey: string, objectType: string): TechRecordType {
  * and every record type on the other governed tenant were measured through the same key function
  * and are unique, so this is the one known positive.
  */
-const COLLIDING = { tenant: "skyharbor-air", objectType: "infrastructure_platform" };
+const COLLIDING = {
+  tenant: "skyharbor-air",
+  objectType: "infrastructure_platform",
+};
 
 /**
  * A control, so a green suite cannot mean "the assertions do not bite". If the row cap or the
  * filter silently dropped rows, this record type would fail too.
  */
-const CLEAN = { tenant: "meridian-health", objectType: "infrastructure_platform" };
+const CLEAN = {
+  tenant: "meridian-health",
+  objectType: "infrastructure_platform",
+};
 
 describe("record browser row identity", () => {
   for (const { tenant, objectType } of [COLLIDING, CLEAN]) {
@@ -76,7 +82,9 @@ describe("record browser row identity", () => {
       expect(total).toBeGreaterThan(0);
 
       const { container } = render(<RecordBrowser recordType={recordType} />);
-      const rendered = container.querySelectorAll("table[data-records] tbody tr");
+      const rendered = container.querySelectorAll(
+        "table[data-records] tbody tr",
+      );
       expect(rendered).toHaveLength(total);
     });
 
@@ -106,7 +114,9 @@ describe("record browser row identity", () => {
             "",
         ).replace(/_/g, " ");
         if (expected && heading !== expected) {
-          misrouted.push(`row ${index + 1}: clicked "${expected}", shown "${heading}"`);
+          misrouted.push(
+            `row ${index + 1}: clicked "${expected}", shown "${heading}"`,
+          );
         }
       });
 
@@ -124,7 +134,11 @@ describe("record browser row identity", () => {
       objectType: "infrastructure_platform",
       label: "Infrastructure",
       rows: [
-        { platformName: "Alpha", originalRowId: "SAME-1", criticality: "tier1" },
+        {
+          platformName: "Alpha",
+          originalRowId: "SAME-1",
+          criticality: "tier1",
+        },
         { platformName: "Beta", originalRowId: "SAME-1", criticality: "tier2" },
         { platformName: "Gamma", originalRowId: "OWN-2", criticality: "tier3" },
       ],
@@ -153,6 +167,39 @@ describe("record browser row identity", () => {
     const notice = screen.getByTestId("record-identity-collision");
     expect(notice).toBeInTheDocument();
     expect(notice.textContent).toMatch(/2 of 3/);
+  });
+
+  it("shows the selected row's verified source link even when declared IDs collide", () => {
+    const recordType = {
+      objectType: "infrastructure_platform",
+      label: "Infrastructure",
+      rows: [
+        { platformName: "Alpha", originalRowId: "SAME-1" },
+        { platformName: "Beta", originalRowId: "SAME-1" },
+        { platformName: "Gamma", originalRowId: "OWN-2" },
+      ],
+      rowSourceRefs: [["source-alpha"], ["source-beta"], []],
+    } as unknown as TechRecordType;
+    const { container } = render(<RecordBrowser recordType={recordType} />);
+    const rendered = container.querySelectorAll<HTMLTableRowElement>(
+      "table[data-records] tbody tr",
+    );
+
+    act(() => rendered[1].click());
+    const linked = container.querySelector(
+      '[data-record-source-link="verified"]',
+    );
+    expect(linked).toHaveTextContent("Source record ID matched");
+    expect(linked).toHaveTextContent(
+      "does not establish source-file acceptance or claim review",
+    );
+    expect(linked).toHaveTextContent("source-beta");
+    expect(linked).not.toHaveTextContent("source-alpha");
+
+    act(() => rendered[2].click());
+    expect(
+      container.querySelector('[data-record-source-link="missing"]'),
+    ).toHaveTextContent("No governed source record was verified for this row.");
   });
 
   it("says nothing when every identifier is already unique", () => {
