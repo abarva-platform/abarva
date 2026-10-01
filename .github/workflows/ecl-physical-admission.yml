@@ -28,6 +28,7 @@ on:
       - "scripts/ecl/retire_synthetic_enterprise_home.ts"
       - "scripts/ecl/synthetic_enterprise_home_rows.ts"
       - "scripts/ecl/load_synthetic_enterprise_v1.ts"
+      - "scripts/exec/cli-entry.mjs"
       - "src/config/tenants/CANONICAL_TENANTS.ts"
       - "src/lib/governance/context-corpus-policy.ts"
       - "src/lib/governance/dataset-manifest.ts"

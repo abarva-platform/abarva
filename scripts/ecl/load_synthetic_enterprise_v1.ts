@@ -17,6 +17,7 @@ import {
   type LoadApproval,
   type LoadBinding,
 } from "../../src/lib/governance/dataset-manifest";
+import { isDirectInvocation } from "../exec/cli-entry.mjs";
 
 const root = path.resolve(
   path.dirname(fileURLToPath(import.meta.url)),
@@ -865,10 +866,9 @@ async function main(): Promise<void> {
   }
 }
 
-if (
-  process.argv[1] &&
-  path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)
-) {
+// Compares resolved files: a path comparison answers "imported" for a run
+// through a symlinked directory, and the job would exit 0 having done nothing.
+if (isDirectInvocation(import.meta.url)) {
   main().catch((error: unknown) => {
     process.stderr.write(
       `${error instanceof Error ? error.message : String(error)}\n`,

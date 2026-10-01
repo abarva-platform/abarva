@@ -1,8 +1,10 @@
 import assert from "node:assert/strict";
-import { mkdtemp, rm, writeFile } from "node:fs/promises";
+import { spawnSync } from "node:child_process";
+import { mkdtemp, rm, symlink, unlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { test } from "node:test";
+import { fileURLToPath, pathToFileURL } from "node:url";
 import { CANONICAL_TENANT_KEYS } from "../../../src/config/tenants/CANONICAL_TENANTS";
 import {
   resolveLoadApproval,
@@ -393,5 +395,67 @@ test("the committed registry describes every source version the loader generates
     } finally {
       await rm(pack.dir, { recursive: true, force: true });
     }
+  }
+});
+
+test("the loader runs when invoked directly, through a symlinked root too, and never on import", async () => {
+  const repoRoot = path.resolve(
+    path.dirname(fileURLToPath(import.meta.url)),
+    "../../..",
+  );
+  const script = "scripts/ecl/load_synthetic_enterprise_v1.ts";
+  const scratch = await mkdtemp(path.join(tmpdir(), "ecl-load-gate-entry-"));
+  const linkedRoot = path.join(scratch, "linked-root");
+  // With no job binding in the environment, an executing run stops at its first gate.
+  const env = Object.fromEntries(
+    Object.entries(process.env).filter(
+      ([key]) =>
+        key !== "DATABASE_URL" &&
+        !key.startsWith("ECL_SYNTHETIC_") &&
+        !key.startsWith("AZURE_STORAGE_"),
+    ),
+  );
+  const run = (cwd: string, args: string[]) =>
+    spawnSync(process.execPath, ["--import", "tsx", ...args], {
+      cwd,
+      env,
+      encoding: "utf8",
+    });
+  const refused = /^Missing governed job bindings: DATABASE_URL/;
+  let linked = false;
+  try {
+    // An importer whose own path contains the loader's name.
+    const importer = path.join(
+      scratch,
+      "imports-load_synthetic_enterprise_v1.mjs",
+    );
+    await writeFile(
+      importer,
+      'await import(process.argv[2]);\nconsole.log("imported without running");\n',
+    );
+    const imported = run(repoRoot, [
+      importer,
+      pathToFileURL(path.join(repoRoot, script)).href,
+      "--execute",
+    ]);
+    assert.equal(imported.status, 0, imported.stderr);
+    assert.equal(imported.stdout, "imported without running\n");
+
+    const direct = run(repoRoot, [script, "--execute"]);
+    assert.equal(direct.status, 1, direct.stderr);
+    assert.match(direct.stderr, refused);
+
+    await symlink(repoRoot, linkedRoot, "dir");
+    linked = true;
+    const throughLink = run(linkedRoot, [
+      path.join(linkedRoot, script),
+      "--execute",
+    ]);
+    assert.equal(throughLink.status, 1, throughLink.stderr);
+    assert.match(throughLink.stderr, refused);
+  } finally {
+    // Remove the link itself before the directory that holds it.
+    if (linked) await unlink(linkedRoot);
+    await rm(scratch, { recursive: true, force: true });
   }
 });

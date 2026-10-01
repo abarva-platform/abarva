@@ -16,6 +16,8 @@ The loader now reads the dataset registry and refuses to execute unless the one 
 
 Rows are loaded as not reviewed. The approval is recorded once, on the source files and in the proof bundle. A run that fails now records the stage it failed at instead of leaving its progress at "running".
 
+The loader also no longer exits successfully without running. Its entry check compared unresolved paths, so a run started through a symlinked directory was treated as an import: it printed nothing and exited 0, in read-only and executing mode alike.
+
 ## Layer Impact
 
 - Release lane: `client-data-lane` for the synthetic lab loader (operator job code only), and `global-control-lane` for the dataset-manifest contract and its CI validator.
@@ -36,7 +38,7 @@ Rows are loaded as not reviewed. The approval is recorded once, on the source fi
 
 - `src/lib/governance/dataset-manifest.ts`: `load_approval` schema, a named-person rule for its approver, `resolveLoadApproval`, and registry-wide rules (one manifest per dataset, the approval's release record exists).
 - `src/scripts/governance/validate-context-corpus.ts`: the `manifests` check applies the registry-wide rules.
-- `scripts/ecl/load_synthetic_enterprise_v1.ts`: execution gate resolved from the registry before anything is written; the insert path requires an approval bound to the pack; rows load as `not_reviewed`; failed stages are recorded.
+- `scripts/ecl/load_synthetic_enterprise_v1.ts`: execution gate resolved from the registry before anything is written; the insert path requires an approval bound to the pack; rows load as `not_reviewed`; failed stages are recorded; the entry check uses the repository's `isDirectInvocation`, which compares resolved files.
 - `scripts/ecl/__tests__/test_synthetic_enterprise_v1_load_gate.ts` (new), `scripts/ecl/__tests__/test_synthetic_enterprise_v1_load.ts`, `src/lib/governance/__tests__/dataset-manifest.test.ts`.
 - `.github/workflows/ecl-physical-admission.yml`: runs the gate test, and triggers on every file the generator, adapter, loader and tests read, including the source definition, the relationship map and the dataset registry.
 - `.github/workflows/context-corpus-governance.yml`: triggers on changes to the dataset registry, so a change that only adds an approval is validated.
@@ -45,9 +47,9 @@ Rows are loaded as not reviewed. The approval is recorded once, on the source fi
 ## QA / Validation
 
 - PASS: `npx jest --runTestsByPath src/lib/governance/__tests__/dataset-manifest.test.ts` - 44 tests.
-- PASS: `node --import tsx --test scripts/ecl/__tests__/test_synthetic_enterprise_v1_load_gate.ts` - 9 tests, including a run with every job binding present and correct and no recorded approval, which is refused.
+- PASS: `node --import tsx --test scripts/ecl/__tests__/test_synthetic_enterprise_v1_load_gate.ts` - 10 tests, including a run with every job binding present and correct and no recorded approval, which is refused, and the loader started directly, through a symlinked root, and by import.
 - PASS: disposable local Postgres - `test_synthetic_ecl_physical_admission.py`, then `test_synthetic_enterprise_v1_load.ts`: counts unchanged, every loaded object and relationship is `not_reviewed`, all source files carry the approval, a mismatched approval and a second load are refused.
-- PASS: mutation check - 34 of 34 single-condition mutants of the new rules, the loader gate, stage recording and the loaded review state were each failed by a named test.
+- PASS: mutation check - 37 of 37 single-condition mutants of the new rules, the loader gate, stage recording, the entry check and the loaded review state were each failed by a named test.
 - PASS: the loader CLI with `--execute` and a full set of job bindings exits 1 with `Load approval gate failed: manifest carries no load_approval`, before any storage or database client is created.
 - PASS: the loader's read-only mode run from a directory containing only the paths the runtime image copies.
 - PASS: `npm run validate:context-corpus`; a planted manifest with a non-person approver, a duplicate dataset id and a missing release record fails it on all three and passes again once removed.
