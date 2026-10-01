@@ -1,0 +1,937 @@
+{
+  "dataset_id": "MERIDIAN_SYNTHETIC_ENTERPRISE_V1",
+  "tenant_key": "meridian-health",
+  "assessment_id": "assessment-meridian-synthetic-enterprise-v1",
+  "as_of": "2026-09-30",
+  "seed": 20260930,
+  "generation_basis": "synthetic_enterprise_v1_formula_1",
+  "client_attestation_state": "not_client_attested",
+  "enterprise": {
+    "id": "ENT-0001",
+    "name": "Meridian Health",
+    "description": "Integrated payer and care-delivery reference enterprise"
+  },
+  "segments": [
+    {
+      "id": "SEG-0001",
+      "name": "Health Plan",
+      "revenue_share_pct": 38,
+      "revenue_usd": 7600000000,
+      "owner_id": "OWN-0001"
+    },
+    {
+      "id": "SEG-0002",
+      "name": "Care Delivery",
+      "revenue_share_pct": 44,
+      "revenue_usd": 8800000000,
+      "owner_id": "OWN-0002"
+    },
+    {
+      "id": "SEG-0003",
+      "name": "Community and Specialty",
+      "revenue_share_pct": 18,
+      "revenue_usd": 3600000000,
+      "owner_id": "OWN-0003"
+    }
+  ],
+  "owners": [
+    {
+      "id": "OWN-0001",
+      "role": "President, Health Plan",
+      "accountability": "Health Plan P&L"
+    },
+    {
+      "id": "OWN-0002",
+      "role": "Chief Clinical Officer",
+      "accountability": "Care Delivery P&L"
+    },
+    {
+      "id": "OWN-0003",
+      "role": "President, Community and Specialty",
+      "accountability": "Community and Specialty P&L"
+    },
+    {
+      "id": "OWN-0004",
+      "role": "Chief Financial Officer",
+      "accountability": "Capital and benefit validation"
+    },
+    {
+      "id": "OWN-0005",
+      "role": "Chief Information Officer",
+      "accountability": "Technology and data"
+    },
+    {
+      "id": "OWN-0006",
+      "role": "Chief Operating Officer",
+      "accountability": "Operating model and service levels"
+    },
+    {
+      "id": "OWN-0007",
+      "role": "Chief Risk Officer",
+      "accountability": "Risk and control"
+    }
+  ],
+  "functions": [
+    {
+      "id": "FUNC-0001",
+      "name": "Health Plan Operations",
+      "segment_id": "SEG-0001",
+      "owner_id": "OWN-0001"
+    },
+    {
+      "id": "FUNC-0002",
+      "name": "Member Services",
+      "segment_id": "SEG-0001",
+      "owner_id": "OWN-0001"
+    },
+    {
+      "id": "FUNC-0003",
+      "name": "Provider Network",
+      "segment_id": "SEG-0001",
+      "owner_id": "OWN-0001"
+    },
+    {
+      "id": "FUNC-0004",
+      "name": "Pharmacy",
+      "segment_id": "SEG-0001",
+      "owner_id": "OWN-0001"
+    },
+    {
+      "id": "FUNC-0005",
+      "name": "Clinical Operations",
+      "segment_id": "SEG-0002",
+      "owner_id": "OWN-0002"
+    },
+    {
+      "id": "FUNC-0006",
+      "name": "Revenue Cycle",
+      "segment_id": "SEG-0002",
+      "owner_id": "OWN-0004"
+    },
+    {
+      "id": "FUNC-0007",
+      "name": "Community Care",
+      "segment_id": "SEG-0003",
+      "owner_id": "OWN-0003"
+    },
+    {
+      "id": "FUNC-0008",
+      "name": "Specialty Services",
+      "segment_id": "SEG-0003",
+      "owner_id": "OWN-0003"
+    },
+    {
+      "id": "FUNC-0009",
+      "name": "Finance",
+      "segment_id": "",
+      "owner_id": "OWN-0004"
+    },
+    {
+      "id": "FUNC-0010",
+      "name": "Information Technology",
+      "segment_id": "",
+      "owner_id": "OWN-0005"
+    },
+    {
+      "id": "FUNC-0011",
+      "name": "Data and Analytics",
+      "segment_id": "",
+      "owner_id": "OWN-0005"
+    },
+    {
+      "id": "FUNC-0012",
+      "name": "Risk and Compliance",
+      "segment_id": "",
+      "owner_id": "OWN-0007"
+    },
+    {
+      "id": "FUNC-0013",
+      "name": "Human Resources",
+      "segment_id": "",
+      "owner_id": "OWN-0006"
+    },
+    {
+      "id": "FUNC-0014",
+      "name": "Supply Chain",
+      "segment_id": "",
+      "owner_id": "OWN-0006"
+    }
+  ],
+  "priorities": [
+    {
+      "id": "PRI-0001",
+      "name": "Improve MA Star Rating",
+      "target": "4.5+ by 2028",
+      "owner_id": "OWN-0001",
+      "segment_id": "SEG-0001"
+    },
+    {
+      "id": "PRI-0002",
+      "name": "Reduce avoidable care and improve access",
+      "target": "Lower avoidable admissions",
+      "owner_id": "OWN-0002",
+      "segment_id": "SEG-0002"
+    },
+    {
+      "id": "PRI-0003",
+      "name": "Modernize clinical and data platforms",
+      "target": "Retire critical integration debt",
+      "owner_id": "OWN-0005",
+      "segment_id": ""
+    },
+    {
+      "id": "PRI-0004",
+      "name": "Prove transformation value",
+      "target": "Finance-validated benefits",
+      "owner_id": "OWN-0004",
+      "segment_id": ""
+    },
+    {
+      "id": "PRI-0005",
+      "name": "Strengthen privacy and resilience",
+      "target": "Close high-severity control gaps",
+      "owner_id": "OWN-0007",
+      "segment_id": ""
+    }
+  ],
+  "program_names": [
+    "RAF capture modernization",
+    "Star quality measure automation",
+    "Member outreach redesign",
+    "Provider directory integrity",
+    "Care management integration",
+    "Referral access improvement",
+    "Epic Community Connect expansion",
+    "Clinical documentation reliability",
+    "Revenue cycle denial reduction",
+    "Ambulatory scheduling",
+    "Community care coordination",
+    "Specialty referral network",
+    "Cloud landing zone",
+    "Enterprise data platform",
+    "Interface modernization",
+    "Identity and privileged access",
+    "Value realization office",
+    "Capital portfolio controls",
+    "Contract renewal discipline",
+    "Service management redesign",
+    "Resilience test program",
+    "PHI movement controls",
+    "AI clinical review governance",
+    "Workforce capability academy"
+  ],
+  "program_priority_ids": [
+    "PRI-0001",
+    "PRI-0001",
+    "PRI-0001",
+    "PRI-0001",
+    "PRI-0002",
+    "PRI-0002",
+    "PRI-0003",
+    "PRI-0002",
+    "PRI-0004",
+    "PRI-0002",
+    "PRI-0002",
+    "PRI-0002",
+    "PRI-0003",
+    "PRI-0003",
+    "PRI-0003",
+    "PRI-0005",
+    "PRI-0004",
+    "PRI-0004",
+    "PRI-0004",
+    "PRI-0003",
+    "PRI-0005",
+    "PRI-0005",
+    "PRI-0005",
+    ""
+  ],
+  "program_function_ids": [
+    "FUNC-0001",
+    "FUNC-0001",
+    "FUNC-0002",
+    "FUNC-0003",
+    "FUNC-0005",
+    "FUNC-0005",
+    "FUNC-0005",
+    "FUNC-0005",
+    "FUNC-0006",
+    "FUNC-0005",
+    "FUNC-0007",
+    "FUNC-0008",
+    "FUNC-0010",
+    "FUNC-0011",
+    "FUNC-0010",
+    "FUNC-0012",
+    "FUNC-0009",
+    "FUNC-0009",
+    "FUNC-0009",
+    "FUNC-0010",
+    "FUNC-0010",
+    "FUNC-0012",
+    "FUNC-0005",
+    "FUNC-0013"
+  ],
+  "app_products": [
+    "Epic Tapestry",
+    "Facets",
+    "HealthRules Payor",
+    "QNXT",
+    "Jiva",
+    "TruCare",
+    "Epic Hyperspace",
+    "Epic Beaker",
+    "Epic Radiant",
+    "Oracle Health Millennium",
+    "Meditech Expanse",
+    "Workday Financial Management",
+    "Workday HCM",
+    "Infor Lawson ERP",
+    "ServiceNow ITSM",
+    "Tableau Server",
+    "Power BI Premium",
+    "Informatica PowerCenter",
+    "Netezza Warehouse",
+    "Snowflake Enterprise",
+    "MuleSoft Anypoint",
+    "Azure API Management",
+    "Salesforce Health Cloud",
+    "Kronos Workforce"
+  ],
+  "app_function_ids": {
+    "Epic Tapestry": "FUNC-0001",
+    "Facets": "FUNC-0001",
+    "HealthRules Payor": "FUNC-0001",
+    "QNXT": "FUNC-0001",
+    "Jiva": "FUNC-0005",
+    "TruCare": "FUNC-0005",
+    "Epic Hyperspace": "FUNC-0005",
+    "Epic Beaker": "FUNC-0005",
+    "Epic Radiant": "FUNC-0005",
+    "Oracle Health Millennium": "FUNC-0005",
+    "Meditech Expanse": "FUNC-0005",
+    "Workday Financial Management": "FUNC-0009",
+    "Workday HCM": "FUNC-0013",
+    "Infor Lawson ERP": "FUNC-0014",
+    "ServiceNow ITSM": "FUNC-0010",
+    "Tableau Server": "FUNC-0011",
+    "Power BI Premium": "FUNC-0011",
+    "Informatica PowerCenter": "FUNC-0011",
+    "Netezza Warehouse": "FUNC-0011",
+    "Snowflake Enterprise": "FUNC-0011",
+    "MuleSoft Anypoint": "FUNC-0010",
+    "Azure API Management": "FUNC-0010",
+    "Salesforce Health Cloud": "FUNC-0002",
+    "Kronos Workforce": "FUNC-0013"
+  },
+  "vendor_names": [
+    "Epic Systems Corporation",
+    "Microsoft Corporation",
+    "Amazon Web Services",
+    "Oracle Corporation",
+    "IBM Corporation",
+    "Cognizant Technology Solutions",
+    "Workday Inc.",
+    "ServiceNow Inc.",
+    "Salesforce Inc.",
+    "Snowflake Inc.",
+    "HealthEdge Software",
+    "TriZetto Corporation",
+    "ZeOmega",
+    "Casenet",
+    "Infor Inc.",
+    "Informatica LLC",
+    "MuleSoft LLC",
+    "R1 RCM",
+    "Optum",
+    "Surescripts",
+    "Change Healthcare",
+    "Accenture",
+    "Deloitte",
+    "Kyndryl",
+    "CDW",
+    "SHI International",
+    "AT&T",
+    "Verizon",
+    "Cisco Systems",
+    "Palo Alto Networks",
+    "CrowdStrike",
+    "Okta",
+    "Databricks",
+    "Palantir",
+    "NVIDIA",
+    "Nuance Communications",
+    "Premier Inc.",
+    "Vizient",
+    "Cardinal Health",
+    "McKesson",
+    "AmerisourceBergen",
+    "Quest Diagnostics",
+    "Labcorp",
+    "Teladoc Health",
+    "Amwell",
+    "Wolters Kluwer",
+    "Elsevier",
+    "Experian Health",
+    "Availity",
+    "Waystar",
+    "Zelis",
+    "Cedar",
+    "Notable",
+    "Artera",
+    "Innovaccer",
+    "Arcadia",
+    "Health Catalyst",
+    "Redox",
+    "InterSystems",
+    "Oracle Cerner"
+  ],
+  "ai_use_cases": [
+    {
+      "name": "Ambient clinical documentation",
+      "function_id": "FUNC-0005",
+      "vendor_id": "VEN-0036",
+      "tool": "Nuance DAX",
+      "category": "clinical_documentation"
+    },
+    {
+      "name": "Prior authorization triage",
+      "function_id": "FUNC-0001",
+      "vendor_id": "VEN-0002",
+      "tool": "Microsoft Copilot",
+      "category": "authorization"
+    },
+    {
+      "name": "Member service reply assist",
+      "function_id": "FUNC-0002",
+      "vendor_id": "VEN-0002",
+      "tool": "Microsoft Copilot",
+      "category": "member_service"
+    },
+    {
+      "name": "Provider directory reconciliation",
+      "function_id": "FUNC-0003",
+      "vendor_id": "VEN-0055",
+      "tool": "Innovaccer Analytics",
+      "category": "provider_data"
+    },
+    {
+      "name": "Pharmacy adherence outreach",
+      "function_id": "FUNC-0004",
+      "vendor_id": "VEN-0002",
+      "tool": "Microsoft Copilot",
+      "category": "member_outreach"
+    },
+    {
+      "name": "Readmission risk review",
+      "function_id": "FUNC-0005",
+      "vendor_id": "VEN-0057",
+      "tool": "Health Catalyst Analytics",
+      "category": "clinical_review"
+    },
+    {
+      "name": "Denial root-cause analysis",
+      "function_id": "FUNC-0006",
+      "vendor_id": "VEN-0050",
+      "tool": "Waystar Analytics",
+      "category": "revenue_cycle"
+    },
+    {
+      "name": "Community follow-up prioritization",
+      "function_id": "FUNC-0007",
+      "vendor_id": "VEN-0056",
+      "tool": "Arcadia Analytics",
+      "category": "care_coordination"
+    },
+    {
+      "name": "Specialty referral matching",
+      "function_id": "FUNC-0008",
+      "vendor_id": "VEN-0055",
+      "tool": "Innovaccer Analytics",
+      "category": "referrals"
+    },
+    {
+      "name": "Finance variance explanation",
+      "function_id": "FUNC-0009",
+      "vendor_id": "VEN-0002",
+      "tool": "Microsoft Copilot",
+      "category": "finance"
+    },
+    {
+      "name": "Incident summary drafting",
+      "function_id": "FUNC-0010",
+      "vendor_id": "VEN-0008",
+      "tool": "ServiceNow Now Assist",
+      "category": "it_operations"
+    },
+    {
+      "name": "Data quality rule recommendation",
+      "function_id": "FUNC-0011",
+      "vendor_id": "VEN-0033",
+      "tool": "Databricks Assistant",
+      "category": "data_quality"
+    },
+    {
+      "name": "Control evidence classification",
+      "function_id": "FUNC-0012",
+      "vendor_id": "VEN-0002",
+      "tool": "Microsoft Copilot",
+      "category": "grc"
+    },
+    {
+      "name": "Workforce schedule support",
+      "function_id": "FUNC-0013",
+      "vendor_id": "VEN-0002",
+      "tool": "Microsoft Copilot",
+      "category": "workforce"
+    },
+    {
+      "name": "Supply demand forecast review",
+      "function_id": "FUNC-0014",
+      "vendor_id": "VEN-0002",
+      "tool": "Microsoft Copilot",
+      "category": "supply_chain"
+    },
+    {
+      "name": "Star measure gap explanation",
+      "function_id": "FUNC-0001",
+      "vendor_id": "VEN-0057",
+      "tool": "Health Catalyst Analytics",
+      "category": "quality"
+    },
+    {
+      "name": "Claims exception classification",
+      "function_id": "FUNC-0001",
+      "vendor_id": "VEN-0002",
+      "tool": "Microsoft Copilot",
+      "category": "claims"
+    },
+    {
+      "name": "Call transcript summarization",
+      "function_id": "FUNC-0002",
+      "vendor_id": "VEN-0002",
+      "tool": "Microsoft Copilot",
+      "category": "member_service"
+    },
+    {
+      "name": "Network adequacy exception review",
+      "function_id": "FUNC-0003",
+      "vendor_id": "VEN-0055",
+      "tool": "Innovaccer Analytics",
+      "category": "provider_network"
+    },
+    {
+      "name": "Medication reconciliation support",
+      "function_id": "FUNC-0004",
+      "vendor_id": "VEN-0036",
+      "tool": "Nuance DAX",
+      "category": "pharmacy"
+    },
+    {
+      "name": "Clinical coding assist",
+      "function_id": "FUNC-0005",
+      "vendor_id": "VEN-0036",
+      "tool": "Nuance DAX",
+      "category": "clinical_documentation"
+    },
+    {
+      "name": "Revenue integrity anomaly review",
+      "function_id": "FUNC-0006",
+      "vendor_id": "VEN-0050",
+      "tool": "Waystar Analytics",
+      "category": "revenue_cycle"
+    },
+    {
+      "name": "Social needs referral routing",
+      "function_id": "FUNC-0007",
+      "vendor_id": "VEN-0056",
+      "tool": "Arcadia Analytics",
+      "category": "community_care"
+    },
+    {
+      "name": "Specialty scheduling assist",
+      "function_id": "FUNC-0008",
+      "vendor_id": "VEN-0002",
+      "tool": "Microsoft Copilot",
+      "category": "scheduling"
+    },
+    {
+      "name": "Contract obligation extraction",
+      "function_id": "FUNC-0009",
+      "vendor_id": "VEN-0002",
+      "tool": "Microsoft Copilot",
+      "category": "commercial"
+    },
+    {
+      "name": "Infrastructure change impact review",
+      "function_id": "FUNC-0010",
+      "vendor_id": "VEN-0008",
+      "tool": "ServiceNow Now Assist",
+      "category": "it_operations"
+    },
+    {
+      "name": "Data catalog description drafting",
+      "function_id": "FUNC-0011",
+      "vendor_id": "VEN-0033",
+      "tool": "Databricks Assistant",
+      "category": "data_governance"
+    },
+    {
+      "name": "Privacy incident intake assist",
+      "function_id": "FUNC-0012",
+      "vendor_id": "VEN-0002",
+      "tool": "Microsoft Copilot",
+      "category": "privacy"
+    },
+    {
+      "name": "Role taxonomy normalization",
+      "function_id": "FUNC-0013",
+      "vendor_id": "VEN-0002",
+      "tool": "Microsoft Copilot",
+      "category": "workforce"
+    },
+    {
+      "name": "Purchase order exception review",
+      "function_id": "FUNC-0014",
+      "vendor_id": "VEN-0002",
+      "tool": "Microsoft Copilot",
+      "category": "supply_chain"
+    }
+  ],
+  "leadership_themes": [
+    {
+      "theme": "Star ambition and execution",
+      "observation": "The 4.5 Star ambition is ahead of the 4.1 synthetic current measure; programme progress needs a clearer bridge to the outcome.",
+      "evidence_object_id": "MET-0001"
+    },
+    {
+      "theme": "Value validation",
+      "observation": "Only 24 percent of synthetic claimed benefits is represented as finance-validated; the value register needs a reconciliation basis.",
+      "evidence_object_id": "MET-0034"
+    },
+    {
+      "theme": "Integration concentration",
+      "observation": "A small number of data targets carry concentrated inbound flows; recovery posture should be checked before further expansion.",
+      "evidence_object_id": "DATA-0001"
+    },
+    {
+      "theme": "Accountability coverage",
+      "observation": "Application ownership is incomplete in the long tail, which limits confident service and risk attribution.",
+      "evidence_object_id": "APP-0061"
+    },
+    {
+      "theme": "Commercial timing",
+      "observation": "One renewal notice window is at risk and should be resolved against the contract register rather than inferred from spend rank.",
+      "evidence_object_id": "CTR-0002"
+    },
+    {
+      "theme": "Priority alignment",
+      "observation": "One programme lacks a declared priority and accountable owner; the connection should remain unresolved until assigned.",
+      "evidence_object_id": "PROG-0024"
+    }
+  ],
+  "external_benchmark": {
+    "id": "BENCH-0001",
+    "name": "MA-PD contracts with four or more stars",
+    "benchmark_year": 2026,
+    "value": 40,
+    "unit": "percent_approximately",
+    "population": "US MA-PD contracts offered in 2026",
+    "source_name": "CMS 2026 Medicare Advantage and Part D Star Ratings Fact Sheet",
+    "source_url": "https://www.cms.gov/files/document/2026-star-ratings-fact-sheet.pdf",
+    "source_published_at": "2025-11-18",
+    "source_as_of": "2025-10-09",
+    "related_metric_id": "MET-0001",
+    "comparability_state": "national_contract_distribution_not_directly_comparable_to_tenant_rating"
+  },
+  "kpis": [
+    {
+      "name": "MA Star Rating",
+      "unit": "stars",
+      "actual": 4.1,
+      "target": 4.5,
+      "direction": "higher",
+      "priority_id": "PRI-0001"
+    },
+    {
+      "name": "HEDIS gap closure",
+      "unit": "percent",
+      "actual": 74,
+      "target": 85,
+      "direction": "higher",
+      "priority_id": "PRI-0001"
+    },
+    {
+      "name": "Medication adherence",
+      "unit": "percent",
+      "actual": 76,
+      "target": 80,
+      "direction": "higher",
+      "priority_id": "PRI-0001"
+    },
+    {
+      "name": "Risk adjustment capture",
+      "unit": "percent",
+      "actual": 68,
+      "target": 92,
+      "direction": "higher",
+      "priority_id": "PRI-0001"
+    },
+    {
+      "name": "Member retention",
+      "unit": "percent",
+      "actual": 89,
+      "target": 92,
+      "direction": "higher",
+      "priority_id": "PRI-0001"
+    },
+    {
+      "name": "Claims auto-adjudication",
+      "unit": "percent",
+      "actual": 73,
+      "target": 80,
+      "direction": "higher",
+      "priority_id": "PRI-0001"
+    },
+    {
+      "name": "Claims cycle time",
+      "unit": "days",
+      "actual": 18,
+      "target": 12,
+      "direction": "lower",
+      "priority_id": "PRI-0001"
+    },
+    {
+      "name": "Provider directory accuracy",
+      "unit": "percent",
+      "actual": 83,
+      "target": 95,
+      "direction": "higher",
+      "priority_id": "PRI-0001"
+    },
+    {
+      "name": "Call abandonment",
+      "unit": "percent",
+      "actual": 8,
+      "target": 5,
+      "direction": "lower",
+      "priority_id": "PRI-0001"
+    },
+    {
+      "name": "First call resolution",
+      "unit": "percent",
+      "actual": 74,
+      "target": 80,
+      "direction": "higher",
+      "priority_id": "PRI-0001"
+    },
+    {
+      "name": "Avoidable admissions",
+      "unit": "per_1000",
+      "actual": 42,
+      "target": 35,
+      "direction": "lower",
+      "priority_id": "PRI-0002"
+    },
+    {
+      "name": "Readmission rate",
+      "unit": "percent",
+      "actual": 13,
+      "target": 10,
+      "direction": "lower",
+      "priority_id": "PRI-0002"
+    },
+    {
+      "name": "Emergency department diversion",
+      "unit": "percent",
+      "actual": 24,
+      "target": 30,
+      "direction": "higher",
+      "priority_id": "PRI-0002"
+    },
+    {
+      "name": "Referral completion",
+      "unit": "percent",
+      "actual": 77,
+      "target": 90,
+      "direction": "higher",
+      "priority_id": "PRI-0002"
+    },
+    {
+      "name": "Appointment access days",
+      "unit": "days",
+      "actual": 12,
+      "target": 7,
+      "direction": "lower",
+      "priority_id": "PRI-0002"
+    },
+    {
+      "name": "Length of stay",
+      "unit": "days",
+      "actual": 5.1,
+      "target": 4.2,
+      "direction": "lower",
+      "priority_id": "PRI-0002"
+    },
+    {
+      "name": "Clinical documentation completeness",
+      "unit": "percent",
+      "actual": 82,
+      "target": 95,
+      "direction": "higher",
+      "priority_id": "PRI-0002"
+    },
+    {
+      "name": "Denial rate",
+      "unit": "percent",
+      "actual": 10,
+      "target": 6,
+      "direction": "lower",
+      "priority_id": "PRI-0004"
+    },
+    {
+      "name": "Net collection rate",
+      "unit": "percent",
+      "actual": 93,
+      "target": 98,
+      "direction": "higher",
+      "priority_id": "PRI-0004"
+    },
+    {
+      "name": "Days in accounts receivable",
+      "unit": "days",
+      "actual": 48,
+      "target": 40,
+      "direction": "lower",
+      "priority_id": "PRI-0004"
+    },
+    {
+      "name": "Community follow-up rate",
+      "unit": "percent",
+      "actual": 68,
+      "target": 85,
+      "direction": "higher",
+      "priority_id": "PRI-0002"
+    },
+    {
+      "name": "Specialty referral leakage",
+      "unit": "percent",
+      "actual": 17,
+      "target": 10,
+      "direction": "lower",
+      "priority_id": "PRI-0002"
+    },
+    {
+      "name": "Behavioral health access",
+      "unit": "days",
+      "actual": 21,
+      "target": 14,
+      "direction": "lower",
+      "priority_id": "PRI-0002"
+    },
+    {
+      "name": "Digital self-service adoption",
+      "unit": "percent",
+      "actual": 41,
+      "target": 55,
+      "direction": "higher",
+      "priority_id": "PRI-0001"
+    },
+    {
+      "name": "Critical application availability",
+      "unit": "percent",
+      "actual": 99.2,
+      "target": 99.9,
+      "direction": "higher",
+      "priority_id": "PRI-0003"
+    },
+    {
+      "name": "Priority-one incident recovery",
+      "unit": "minutes",
+      "actual": 110,
+      "target": 60,
+      "direction": "lower",
+      "priority_id": "PRI-0005"
+    },
+    {
+      "name": "Interface failure rate",
+      "unit": "percent",
+      "actual": 2.8,
+      "target": 1,
+      "direction": "lower",
+      "priority_id": "PRI-0003"
+    },
+    {
+      "name": "Data quality exception closure",
+      "unit": "percent",
+      "actual": 72,
+      "target": 90,
+      "direction": "higher",
+      "priority_id": "PRI-0003"
+    },
+    {
+      "name": "PHI access exception age",
+      "unit": "days",
+      "actual": 29,
+      "target": 15,
+      "direction": "lower",
+      "priority_id": "PRI-0005"
+    },
+    {
+      "name": "Privileged access coverage",
+      "unit": "percent",
+      "actual": 76,
+      "target": 98,
+      "direction": "higher",
+      "priority_id": "PRI-0005"
+    },
+    {
+      "name": "Disaster recovery test success",
+      "unit": "percent",
+      "actual": 81,
+      "target": 100,
+      "direction": "higher",
+      "priority_id": "PRI-0005"
+    },
+    {
+      "name": "Cloud migration completion",
+      "unit": "percent",
+      "actual": 28,
+      "target": 60,
+      "direction": "higher",
+      "priority_id": "PRI-0003"
+    },
+    {
+      "name": "Program milestone attainment",
+      "unit": "percent",
+      "actual": 62,
+      "target": 85,
+      "direction": "higher",
+      "priority_id": "PRI-0004"
+    },
+    {
+      "name": "Finance-validated benefits",
+      "unit": "percent",
+      "actual": 24,
+      "target": 70,
+      "direction": "higher",
+      "priority_id": "PRI-0004"
+    },
+    {
+      "name": "Contract renewal notice compliance",
+      "unit": "percent",
+      "actual": 89,
+      "target": 100,
+      "direction": "higher",
+      "priority_id": "PRI-0004"
+    },
+    {
+      "name": "AI use-case review completion",
+      "unit": "percent",
+      "actual": 68,
+      "target": 100,
+      "direction": "higher",
+      "priority_id": "PRI-0005"
+    }
+  ]
+}
