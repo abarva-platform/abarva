@@ -28,11 +28,14 @@ import {
   reviewedExtractionFromStoredSourceRef,
   toStoredReviewedStructured,
 } from "@/lib/programs/evidence-review-contract";
+import { DELIVERABLE_REGISTRY } from "@/lib/programs/deliverable-registry";
 
 export interface AssembleEvidenceParams {
   tenantClientKey: string;
   clientId?: string;
   sourceArtifactRef?: string;
+  /** Move phase whose evidence is allowed to inform this generation. */
+  phase?: number;
   query?: string;
   queries?: string[];
   topK?: number;
@@ -84,6 +87,16 @@ function stringOrNull(value: unknown): string | null {
 
 function numberOrDefault(value: unknown, fallback: number): number {
   return typeof value === "number" && Number.isFinite(value) ? value : fallback;
+}
+
+function phaseNumberOrNull(value: unknown): number | null {
+  const phase = typeof value === "number" ? value : Number(value);
+  return Number.isInteger(phase) && phase >= 0 && phase <= 5 ? phase : null;
+}
+
+function isAtOrBeforePhase(value: unknown, requestedPhase: number): boolean {
+  const phase = phaseNumberOrNull(value);
+  return phase !== null && phase <= requestedPhase;
 }
 
 function confidenceFromScore(
@@ -435,7 +448,7 @@ function generatedArtifactToCandidate(
 async function loadMoveCurrentStateCandidates(
   params: Pick<
     AssembleEvidenceParams,
-    "tenantClientKey" | "clientId" | "sourceArtifactRef"
+    "tenantClientKey" | "clientId" | "sourceArtifactRef" | "phase"
   >,
   db: FluentDb = getAzureWriteFluentClient(),
 ): Promise<{
@@ -457,17 +470,26 @@ async function loadMoveCurrentStateCandidates(
   // it must lead generation context so broad tenant facts cannot hijack a
   // specific Move narrative.
   try {
-    const { data: modules } = await db
+    let moduleQuery = db
       .from("program_modules")
       .select(
         "id, module_key, module_name, phase_number, module_order, status, state_jsonb, updated_at, completed_at",
       )
-      .eq("engagement_id", moveId)
+      .eq("engagement_id", moveId);
+    if (params.phase !== undefined) {
+      moduleQuery = moduleQuery.lte("phase_number", params.phase);
+    }
+    const { data: modules } = await moduleQuery
       .order("phase_number", { ascending: true })
       .order("module_order", { ascending: true })
       .limit(MOVE_PHASE_CAPTURE_LIMIT);
     if (Array.isArray(modules)) {
       for (const row of modules as Array<Record<string, unknown>>) {
+        if (
+          params.phase !== undefined &&
+          !isAtOrBeforePhase(row.phase_number, params.phase)
+        )
+          continue;
         const status = stringOrNull(row.status);
         if (status !== "completed" && status !== "in_progress") continue;
         const moduleKey = stringOrNull(row.module_key);
@@ -497,6 +519,11 @@ async function loadMoveCurrentStateCandidates(
       for (const row of data as Array<Record<string, unknown>>) {
         const sourceRef = sourceRefObject(row.source_ref);
         if (stringOrNull(sourceRef.moveId) !== moveId) continue;
+        if (
+          params.phase !== undefined &&
+          !isAtOrBeforePhase(sourceRef.phase, params.phase)
+        )
+          continue;
         const statement = stringOrNull(row.claim_text);
         if (!statement) continue;
         const family =
@@ -521,14 +548,23 @@ async function loadMoveCurrentStateCandidates(
   // program_evidence_items. Pull approved review rows and their extracted
   // summaries/signals first so explicit human review remains the preferred path.
   try {
-    const { data: reviewSummary } = await db
+    let reviewSummaryQuery = db
       .from("program_evidence_reviews")
-      .select("decision, source_ref")
+      .select("decision, source_ref, phase")
       .eq("tenant_key", params.tenantClientKey)
-      .eq("program_id", moveId)
-      .limit(MOVE_REVIEW_LIMIT);
+      .eq("program_id", moveId);
+    if (params.phase !== undefined) {
+      reviewSummaryQuery = reviewSummaryQuery.lte("phase", params.phase);
+    }
+    const { data: reviewSummary } =
+      await reviewSummaryQuery.limit(MOVE_REVIEW_LIMIT);
     if (Array.isArray(reviewSummary)) {
       for (const review of reviewSummary as Array<Record<string, unknown>>) {
+        if (
+          params.phase !== undefined &&
+          !isAtOrBeforePhase(review.phase, params.phase)
+        )
+          continue;
         if (stringOrNull(review.decision) === "approved")
           approvedAvailable += 1;
         const sourceRef = sourceRefObject(review.source_ref);
@@ -551,28 +587,41 @@ async function loadMoveCurrentStateCandidates(
   }
 
   try {
-    const { data: reviews } = await db
+    let reviewsQuery = db
       .from("program_evidence_reviews")
-      .select("evidence_id, family_key, source_ref, reviewed_at, decision")
+      .select(
+        "evidence_id, family_key, source_ref, reviewed_at, decision, phase",
+      )
       .eq("tenant_key", params.tenantClientKey)
       .eq("program_id", moveId)
-      .eq("decision", "approved")
-      .limit(MOVE_REVIEW_LIMIT);
+      .eq("decision", "approved");
+    if (params.phase !== undefined) {
+      reviewsQuery = reviewsQuery.lte("phase", params.phase);
+    }
+    const { data: reviews } = await reviewsQuery.limit(MOVE_REVIEW_LIMIT);
     if (Array.isArray(reviews) && reviews.length > 0) {
-      if (approvedAvailable === 0) approvedAvailable = reviews.length;
-      const reviewRows = reviews as Array<Record<string, unknown>>;
+      const reviewRows = (reviews as Array<Record<string, unknown>>).filter(
+        (review) =>
+          params.phase === undefined ||
+          isAtOrBeforePhase(review.phase, params.phase),
+      );
+      if (approvedAvailable === 0) approvedAvailable = reviewRows.length;
       const evidenceIds = reviewRows
         .map((r) => stringOrNull(r.evidence_id))
         .filter((id): id is string => Boolean(id));
       if (evidenceIds.length > 0) {
-        const { data: evidenceRows } = await db
+        let evidenceQuery = db
           .from("program_evidence_items")
           .select(
-            "id, title, summary, extracted_text, extracted_structured, evidence_type, confidence, created_at",
+            "id, title, summary, extracted_text, extracted_structured, evidence_type, confidence, created_at, phase",
           )
           .eq("tenant_key", params.tenantClientKey)
           .eq("program_id", moveId)
           .in("id", evidenceIds);
+        if (params.phase !== undefined) {
+          evidenceQuery = evidenceQuery.lte("phase", params.phase);
+        }
+        const { data: evidenceRows } = await evidenceQuery;
         const byId = new Map(
           (Array.isArray(evidenceRows) ? evidenceRows : []).map((row) => [
             stringOrNull((row as Record<string, unknown>).id),
@@ -688,6 +737,11 @@ async function loadMoveCurrentStateCandidates(
       const approvedIds = new Set(approvedArtifactIds);
       for (const row of artifacts as Array<Record<string, unknown>>) {
         if (!approvedIds.has(stringOrNull(row.id) ?? "")) continue;
+        if (
+          params.phase !== undefined &&
+          !isGeneratedArtifactAtOrBeforePhase(row, params.phase)
+        )
+          continue;
         const candidate = generatedArtifactToCandidate(row);
         if (candidate) candidates.push(candidate);
       }
@@ -710,6 +764,19 @@ async function loadMoveCurrentStateCandidates(
     approvedAvailable,
     unreadable,
   };
+}
+
+function isGeneratedArtifactAtOrBeforePhase(
+  row: Record<string, unknown>,
+  requestedPhase: number,
+): boolean {
+  const metadata = sourceRefObject(row.metadata);
+  const typeKey = stringOrNull(metadata.deliverableTypeKey);
+  if (!typeKey) return false;
+  const artifactPhase = DELIVERABLE_REGISTRY.find(
+    (spec) => spec.deliverableTypeKey === typeKey,
+  )?.phase;
+  return artifactPhase !== undefined && artifactPhase <= requestedPhase;
 }
 
 function normalizedQueries(params: AssembleEvidenceParams): string[] {

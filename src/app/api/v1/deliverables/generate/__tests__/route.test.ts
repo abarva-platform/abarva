@@ -3,23 +3,34 @@
 // in the request (the durable worker runs the generation). Auth + runs-repo are mocked;
 // the generation engine is mocked purely to assert it is NEVER called from the route.
 
-const tenancy = { clientId: 'client-uuid', clientKey: 'skyharbor-air', userId: 'u1' };
+const tenancy = {
+  clientId: 'client-uuid',
+  clientKey: 'skyharbor-air',
+  userId: 'u1',
+};
 const created: Array<Record<string, unknown>> = [];
 const mockLoadApprovedMoveEvidenceSnapshot = jest.fn();
 
 jest.mock('@/lib/auth/tenancy', () => ({
   requireTenancy: jest.fn(async () => tenancy),
-  tenancyErrorResponse: jest.fn(() => { throw new Error('not a tenancy error'); }),
+  tenancyErrorResponse: jest.fn(() => {
+    throw new Error('not a tenancy error');
+  }),
 }));
 jest.mock('@/lib/deliverables/orchestrator/runs-repository', () => ({
-  createDeliverableRun: jest.fn(async (input: Record<string, unknown>) => { created.push(input); return { id: 'run-1' }; }),
+  createDeliverableRun: jest.fn(async (input: Record<string, unknown>) => {
+    created.push(input);
+    return { id: 'run-1' };
+  }),
 }));
 jest.mock('@/lib/programs/approved-move-evidence-snapshot', () => ({
   loadApprovedMoveEvidenceSnapshot: (...args: unknown[]) => mockLoadApprovedMoveEvidenceSnapshot(...args),
 }));
-const validateDeliverableTenantInvariant: jest.Mock<Promise<unknown>, unknown[]> = jest.fn(
-  async () => ({ ok: true, sourceKind: 'unsupported', sourceId: null }),
-);
+const validateDeliverableTenantInvariant: jest.Mock<Promise<unknown>, unknown[]> = jest.fn(async () => ({
+  ok: true,
+  sourceKind: 'unsupported',
+  sourceId: null,
+}));
 jest.mock('@/lib/deliverables/orchestrator/tenant-invariant', () => ({
   validateDeliverableTenantInvariant: (...args: unknown[]) => validateDeliverableTenantInvariant(...(args as [])),
   tenantInvariantHttpStatus: () => 403,
@@ -32,19 +43,29 @@ jest.mock('@/lib/deliverables/orchestrator/generate-service', () => ({
 import { POST } from '../route';
 
 function reqWith(body: unknown): import('next/server').NextRequest {
-  return { json: async () => body } as unknown as import('next/server').NextRequest;
+  return {
+    json: async () => body,
+  } as unknown as import('next/server').NextRequest;
 }
 const validBody = {
-  module: 'source', useCaseArchetype: 'AMS_IT_OUTSOURCING', deliverableType: 'rfp_package',
-  sourceArtifactRef: 'evt-1', decisionContext: 'approve issuance',
-  clientDisplayName: 'SkyHarbor Air', initiativeDisplayName: 'AMS resourcing',
+  module: 'source',
+  useCaseArchetype: 'AMS_IT_OUTSOURCING',
+  deliverableType: 'rfp_package',
+  sourceArtifactRef: 'evt-1',
+  decisionContext: 'approve issuance',
+  clientDisplayName: 'SkyHarbor Air',
+  initiativeDisplayName: 'AMS resourcing',
 };
 
 beforeEach(() => {
   created.length = 0;
   runDeliverableForTenant.mockClear();
   validateDeliverableTenantInvariant.mockClear();
-  validateDeliverableTenantInvariant.mockResolvedValue({ ok: true, sourceKind: 'unsupported', sourceId: null });
+  validateDeliverableTenantInvariant.mockResolvedValue({
+    ok: true,
+    sourceKind: 'unsupported',
+    sourceId: null,
+  });
   mockLoadApprovedMoveEvidenceSnapshot.mockReset();
   mockLoadApprovedMoveEvidenceSnapshot.mockResolvedValue({
     revision: 'approved-revision-1',
@@ -60,7 +81,8 @@ describe('POST /api/v1/deliverables/generate (enqueue-only)', () => {
   });
 
   it('400 when decisionContext missing', async () => {
-    const { decisionContext, ...rest } = validBody; void decisionContext;
+    const { decisionContext, ...rest } = validBody;
+    void decisionContext;
     const res = await POST(reqWith(rest));
     expect(res.status).toBe(400);
   });
@@ -99,33 +121,60 @@ describe('POST /api/v1/deliverables/generate (enqueue-only)', () => {
   });
 
   it('binds a queued Moves run to the current approved-evidence revision', async () => {
-    const res = await POST(reqWith({
-      ...validBody,
-      module: 'moves',
-      sourceArtifactRef: 'move-1',
-    }));
+    const res = await POST(
+      reqWith({
+        ...validBody,
+        module: 'moves',
+        deliverableType: 'charter',
+        sourceArtifactRef: 'move-1',
+      }),
+    );
 
     expect(res.status).toBe(202);
     expect(mockLoadApprovedMoveEvidenceSnapshot).toHaveBeenCalledWith({
       tenantKey: 'skyharbor-air',
       moveId: 'move-1',
     });
-    expect((created[0]?.jobPayload as Record<string, unknown>)).toEqual(
-      expect.objectContaining({ evidenceSnapshotHash: 'approved-revision-1' }),
+    expect(created[0]?.jobPayload as Record<string, unknown>).toEqual(
+      expect.objectContaining({
+        evidenceSnapshotHash: 'approved-revision-1',
+        phase: 1,
+      }),
     );
+  });
+
+  it('fails closed when a Moves deliverable has no unique canonical phase', async () => {
+    const res = await POST(
+      reqWith({
+        ...validBody,
+        module: 'moves',
+        sourceArtifactRef: 'move-1',
+      }),
+    );
+
+    expect(res.status).toBe(422);
+    expect(await res.json()).toMatchObject({
+      error: 'moves_deliverable_phase_unresolved',
+    });
+    expect(created).toHaveLength(0);
   });
 
   it('does not queue a Moves run when the evidence revision cannot be verified', async () => {
     mockLoadApprovedMoveEvidenceSnapshot.mockResolvedValueOnce(null);
 
-    const res = await POST(reqWith({
-      ...validBody,
-      module: 'moves',
-      sourceArtifactRef: 'move-1',
-    }));
+    const res = await POST(
+      reqWith({
+        ...validBody,
+        module: 'moves',
+        deliverableType: 'charter',
+        sourceArtifactRef: 'move-1',
+      }),
+    );
 
     expect(res.status).toBe(503);
-    expect(await res.json()).toMatchObject({ error: 'evidence_snapshot_unavailable' });
+    expect(await res.json()).toMatchObject({
+      error: 'evidence_snapshot_unavailable',
+    });
     expect(created).toHaveLength(0);
   });
 
@@ -142,7 +191,14 @@ describe('POST /api/v1/deliverables/generate (enqueue-only)', () => {
       actualTenantKey: 'first-capital',
     });
 
-    const res = await POST(reqWith({ ...validBody, module: 'moves', sourceArtifactRef: 'move-fc' }));
+    const res = await POST(
+      reqWith({
+        ...validBody,
+        module: 'moves',
+        deliverableType: 'charter',
+        sourceArtifactRef: 'move-fc',
+      }),
+    );
     expect(res.status).toBe(403);
     expect(created).toHaveLength(0);
     expect(runDeliverableForTenant).not.toHaveBeenCalled();

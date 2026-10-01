@@ -152,7 +152,9 @@ async function buildPhaseCaptureDecisionContext(args: {
   const lines: string[] = [];
   for (const section of sections) {
     const moduleKey = phaseCaptureModuleKey(args.phase, section.key);
-    const captureModule = modules.find((entry) => entry.moduleKey === moduleKey);
+    const captureModule = modules.find(
+      (entry) => entry.moduleKey === moduleKey,
+    );
     const state = (captureModule?.state ?? {}) as Record<string, unknown>;
     const value = typeof state.value === "string" ? state.value.trim() : "";
     if (!value) continue;
@@ -579,6 +581,7 @@ export async function POST(req: NextRequest) {
         clientDisplayName,
         initiativeDisplayName: moveName,
         sourceArtifactRef: moveId,
+        phase,
         adaptiveDepth,
         ...(approvedApproachBlock
           ? { approvedSolutionApproach: approvedApproachBlock }

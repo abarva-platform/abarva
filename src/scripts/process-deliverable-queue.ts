@@ -40,6 +40,7 @@ import {
 } from "@/lib/deliverables/orchestrator/runs-repository";
 import { getProgramById } from "@/lib/programs/queries";
 import { getGeneratedArtifactById } from "@/lib/artifacts/repository";
+import { phaseForOrchestratorDeliverableType } from "@/lib/programs/orchestrated-deliverable-map";
 import type { TenancyCtx } from "@/lib/programs/types.db";
 import type {
   AudienceRole,
@@ -375,6 +376,25 @@ async function runClaimed(
       ].join("\n");
     }
 
+    const phase =
+      orchestratorPayload.phase ??
+      (orchestratorPayload.module === "moves"
+        ? (phaseForOrchestratorDeliverableType(
+            orchestratorPayload.deliverableTypeKey ??
+              orchestratorPayload.deliverableType,
+          ) ?? undefined)
+        : undefined);
+    if (orchestratorPayload.module === "moves" && phase === undefined) {
+      await completeDeliverableRun(run.id, {
+        status: "blocked",
+        error: "moves_deliverable_phase_unresolved",
+        blockers: [
+          "The canonical phase for this Moves deliverable could not be resolved, so unscoped evidence was not sent to generation.",
+        ],
+      }).catch(() => {});
+      return;
+    }
+
     const result = await runDeliverableForTenant({
       module: orchestratorPayload.module as DeliverableModule,
       useCaseArchetype: orchestratorPayload.useCaseArchetype,
@@ -397,6 +417,7 @@ async function runClaimed(
         orchestratorPayload.initiativeDisplayName ||
         orchestratorPayload.useCaseArchetype,
       sourceArtifactRef: orchestratorPayload.sourceArtifactRef,
+      ...(phase !== undefined ? { phase } : {}),
       evidenceQuery: orchestratorPayload.evidenceQuery,
       outputFormats: orchestratorPayload.outputFormats as
         | OutputFormat[]
