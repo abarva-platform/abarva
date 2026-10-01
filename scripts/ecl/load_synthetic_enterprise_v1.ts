@@ -456,6 +456,7 @@ export async function loadIntoNewAssessment(
       objects: string;
       relationships: string;
       applications: string;
+      application_modules: string;
       missing_object_lineage: string;
       missing_edge_lineage: string;
       missing_source_blob: string;
@@ -467,6 +468,7 @@ export async function loadIntoNewAssessment(
         (select count(*) from ecl_context.object where tenant_key = $1 and assessment_id = $2) as objects,
         (select count(*) from ecl_context.relationship where tenant_key = $1 and assessment_id = $2) as relationships,
         (select count(*) from ecl_context.application_v where tenant_key = $1 and assessment_id = $2) as applications,
+        (select count(*) from ecl_context.object where tenant_key = $1 and assessment_id = $2 and object_type = 'application_module') as application_modules,
         (select count(*) from ecl_context.object where tenant_key = $1 and assessment_id = $2 and source_record_id is null) as missing_object_lineage,
         (select count(*) from ecl_context.relationship where tenant_key = $1 and assessment_id = $2 and source_record_id is null) as missing_edge_lineage,
         (select count(*) from ecl_source.source_file where tenant_key = $1 and assessment_id = $2 and blob_uri !~ '^https://') as missing_source_blob
@@ -486,6 +488,9 @@ export async function loadIntoNewAssessment(
       relationships: relationshipRows.length,
       applications: objectRows.filter(
         (row) => row.object_type === "application",
+      ).length,
+      application_modules: objectRows.filter(
+        (row) => row.object_type === "application_module",
       ).length,
       missing_object_lineage: 0,
       missing_edge_lineage: 0,
@@ -658,8 +663,12 @@ async function main(): Promise<void> {
       pack,
       blobUris,
     );
+    const applicationCount = (proof.counts as Record<string, number>)
+      .applications;
+    const servingEligible = applicationCount >= 300;
     const result = {
       ...proof,
+      serving_eligible: servingEligible,
       job_name: "ecl-synthetic-enterprise-v1-load",
       run_id: runId,
       operator_identity: process.env.ECL_SYNTHETIC_OPERATOR_IDENTITY,
@@ -685,7 +694,11 @@ async function main(): Promise<void> {
       Buffer.from(
         JSON.stringify(
           {
-            accepted: true,
+            load_integrity_pass: true,
+            serving_eligible: servingEligible,
+            serving_blockers: servingEligible
+              ? []
+              : ["logical_application_depth_below_300"],
             counts: proof.counts,
             unresolved_relationships: proof.unresolved_relationships,
             serving_state: "not_promoted",

@@ -36,6 +36,7 @@ async function main(): Promise<void> {
       objects: 5759,
       relationships: 10619,
       applications: 24,
+      application_modules: 726,
       missing_object_lineage: 0,
       missing_edge_lineage: 0,
       missing_source_blob: 0,

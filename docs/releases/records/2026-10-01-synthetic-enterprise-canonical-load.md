@@ -72,4 +72,5 @@ Do not promote the new assessment. The loader is insert-only and refuses occupie
 ## Known Gaps
 
 - The new assessment is not served until a separate governed projection and promotion step.
+- The source inventory has 750 application-related rows, but only 24 are logical applications; 726 are modules. The job records both denominators and marks serving ineligible against the 300-logical-application depth target until the synthetic source set is expanded or that target is explicitly revised.
 - The unresolved relationship is retained in source and quality output, not materialized as a resolved canonical edge.
