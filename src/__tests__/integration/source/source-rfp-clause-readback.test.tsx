@@ -1,5 +1,9 @@
 import SourceEventDetailPage from "@/app/(maestro)/source/events/[eventId]/page";
-import { getSourcingEvent, getSourcingEventForResolvedClient } from "@/lib/source/queries";
+import {
+  getCanonicalAdminSourceEventReadClient,
+  getSourcingEvent,
+  getSourcingEventForResolvedClient,
+} from "@/lib/source/queries";
 import { getActiveClientRow } from "@/lib/active-client";
 import { requireTenancy } from "@/lib/auth/tenancy";
 import {
@@ -15,6 +19,7 @@ jest.mock("@/components/source/canvas/analytics", () => ({
 jest.mock("@/lib/source/queries", () => ({
   getSourcingEvent: jest.fn(),
   getSourcingEventForResolvedClient: jest.fn(),
+  getCanonicalAdminSourceEventReadClient: jest.fn(),
   isUuid: jest.fn(() => false),
 }));
 jest.mock("@/lib/active-client", () => ({
@@ -55,6 +60,7 @@ jest.mock("@/lib/auth/tenancy", () => ({
 
 const mockedEvent = getSourcingEvent as jest.Mock;
 const mockedResolvedEvent = getSourcingEventForResolvedClient as jest.Mock;
+const mockedCanonicalReadClient = getCanonicalAdminSourceEventReadClient as jest.Mock;
 const mockedClient = getActiveClientRow as jest.Mock;
 const mockedTenancy = requireTenancy as jest.Mock;
 const mockedFacts = readEventFacts as jest.Mock;
@@ -74,6 +80,7 @@ describe("signed-in RFP clause readback view", () => {
     mockedClient.mockResolvedValue({ id: "tenant-id", key: "test-client", name: "Test client" });
     mockedTenancy.mockRejectedValue(new Error("no stage approval in test"));
     mockedResolvedEvent.mockResolvedValue(null);
+    mockedCanonicalReadClient.mockResolvedValue(null);
     mockedEvent.mockResolvedValue({
       id: eventId,
       code: "SYNTHETIC-RFP-001",
@@ -157,6 +164,38 @@ describe("signed-in RFP clause readback view", () => {
     const page = await renderRfpPage();
     expect(page.props.stageView).toBeUndefined();
     expect(mockedResolvedEvent).not.toHaveBeenCalled();
+    expect(mockedFacts).not.toHaveBeenCalled();
+  });
+
+  it("reads the exact persisted event for a rostered admin when tenancy has no client row", async () => {
+    mockedClient.mockResolvedValue(null);
+    mockedTenancy.mockRejectedValue(new Error("no_client"));
+    mockedCanonicalReadClient.mockResolvedValue({ eventId, key: "test-client", name: "Test client" });
+    const requiredKeys = resolveValueArchetype("infrastructure", "ams")!.valueLeverRules!.map((rule) => rule.key);
+    mockedRfp.mockResolvedValue({
+      signalPresent: true,
+      presentLeverKeys: new Set<string>(),
+      assessedLeverKeys: new Set(requiredKeys),
+    });
+
+    const page = await renderRfpPage();
+    expect(mockedCanonicalReadClient).toHaveBeenCalledWith(eventId);
+    expect(mockedFacts).toHaveBeenCalledWith({ eventId, clientKey: "test-client" });
+    expect(page.props.stageView?.tasks[0].evidenceComplete).toBe(true);
+    expect(page.props.stageView?.gate.action).toBeUndefined();
+  });
+
+  it("refuses a canonical-admin read context for a different event", async () => {
+    mockedClient.mockResolvedValue(null);
+    mockedTenancy.mockRejectedValue(new Error("no_client"));
+    mockedCanonicalReadClient.mockResolvedValue({
+      eventId: "00000000-0000-4000-8000-000000000002",
+      key: "test-client",
+      name: "Test client",
+    });
+
+    const page = await renderRfpPage();
+    expect(page.props.stageView).toBeUndefined();
     expect(mockedFacts).not.toHaveBeenCalled();
   });
 });
