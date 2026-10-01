@@ -82,6 +82,8 @@ export interface HydrateTaskEvidenceInput {
   stageKey?: string;
   /** Verified, current-artifact delegate receipt plus confirmed sponsor notice. */
   verifiedDelegatedSponsorAcknowledgement?: boolean;
+  /** All archetype RFP levers have a valid newest persisted 0/1 decision. */
+  rfpClauseChecklistComplete?: boolean;
 }
 
 /**
@@ -116,6 +118,7 @@ export function hydrateTaskEvidenceState(
     artifacts = [],
     evidenceStates = [],
     verifiedDelegatedSponsorAcknowledgement = false,
+    rfpClauseChecklistComplete = false,
   } = input;
 
   const evidenceStateByRequirementId = new Map<
@@ -197,7 +200,11 @@ export function hydrateTaskEvidenceState(
 
     const taskFactTemplateCode = factTemplateCodeForTask(task);
     if (taskFactTemplateCode) {
-      if (taskFactTemplateCode === "TICKET_HISTORY_V1") {
+      if (taskFactTemplateCode === "RFP_CLAUSES_V1") {
+        if (rfpClauseChecklistComplete && templateFactsPresent(taskFactTemplateCode, factInputs)) {
+          return { ...task, evidenceComplete: true };
+        }
+      } else if (taskFactTemplateCode === "TICKET_HISTORY_V1") {
         const requirementId = evidenceRequirementIdForTask(task);
         const requirement = requirementId ? evidenceById(requirementId) : null;
         const factReceipt = evidenceStates.find((evidence) =>

@@ -111,6 +111,22 @@ describe('buildLiveStageView', () => {
     expect(view).toBeNull();
   });
 
+  it('shows a reviewed RFP checklist without inventing a monetary waterfall', () => {
+    const view = buildLiveStageView({
+      inputs: { rfp_clause_present: 0 },
+      citations: {},
+      archetypeId: ARCHETYPE_ID,
+      stageKey: 'rfp',
+      rfpClausePresentLeverKeys: new Set(),
+    });
+    expect(view).not.toBeNull();
+    expect(view!.intel.provenance).toBe('live');
+    expect(view!.waterfall).toBeUndefined();
+    expect(view!.tasks[0].id).toBe('rfp.clause-coverage');
+    expect(view!.tasks[0].subtitle).toContain('0 of 6');
+    expect(view!.intel.lead).not.toContain('value we computed');
+  });
+
   it('builds Cloud FinOps analytics without evaluating AMS rules', () => {
     const view = buildLiveStageView({
       inputs: {
