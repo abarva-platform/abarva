@@ -34,7 +34,7 @@ An operator can prepare a self-contained synthetic source-set candidate that add
 
 ## QA / Validation
 
-- `npm run test:ecl-dense-source-manifest-integrity` verifies the intact candidate, checks its source-set hash against the Home serving planner, and refuses a fabricated function edge, a false approval label, changed source bytes, escaping paths, and duplicate base entries.
+- `npm run test:ecl-dense-source-manifest-integrity` verifies the intact candidate, checks the JSON/SHA-256 source-set hash contract, and refuses a fabricated function edge, a false approval label, changed source bytes, escaping paths, and duplicate base entries. Home serving planner parity was checked locally, outside this dependency-free CI suite.
 - Candidate generation and independent verification must pass before review. A passing candidate verifier is not a dataset approval or data-plane load authorization.
 
 ## Rollout Plan

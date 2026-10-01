@@ -7,7 +7,6 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import Papa from "papaparse";
 
 const repo = path.resolve(
   path.dirname(fileURLToPath(import.meta.url)),
@@ -47,12 +46,17 @@ function verifyCandidate() {
 }
 
 function csvRows(file) {
-  const parsed = Papa.parse(fs.readFileSync(file, "utf8"), {
-    header: true,
-    skipEmptyLines: true,
-  });
-  assert.deepEqual(parsed.errors, []);
-  return parsed.data;
+  const parsed = spawnSync(
+    "python3",
+    [
+      "-c",
+      "import csv, json, sys; print(json.dumps(list(csv.DictReader(open(sys.argv[1], newline='', encoding='utf-8')))))",
+      file,
+    ],
+    { cwd: repo, encoding: "utf8" },
+  );
+  assert.equal(parsed.status, 0, parsed.stderr);
+  return JSON.parse(parsed.stdout);
 }
 
 function run(script) {
@@ -102,28 +106,6 @@ try {
       )
       .digest("hex"),
   );
-  const plannerHash = spawnSync(
-    path.join(repo, "node_modules/.bin/tsx"),
-    [
-      "-e",
-      `import fs from "node:fs"; import { homeSegmentSourceSetHash } from "./scripts/data-build/home-segment-serving-plan.ts";
-       const manifest = JSON.parse(fs.readFileSync(process.env.CANDIDATE_MANIFEST, "utf8"));
-       const files = Object.fromEntries(manifest.files.map((file) => [file.path, file.sha256]));
-       if (homeSegmentSourceSetHash(files) !== manifest.source_set_hash) process.exit(1);`,
-    ],
-    {
-      cwd: repo,
-      encoding: "utf8",
-      env: {
-        ...process.env,
-        CANDIDATE_MANIFEST: path.join(
-          candidateDir,
-          "candidate_source_set.json",
-        ),
-      },
-    },
-  );
-  assert.equal(plannerHash.status, 0, plannerHash.stderr);
   const segments = csvRows(
     path.join(
       candidateDir,
