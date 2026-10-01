@@ -15,7 +15,10 @@ up front, in a manifest, and checked in CI.
    classification rules, and sensitive-data handling. A failing manifest blocks
    the PR.
 3. **Then load.** Run the load (admin bulk loader, structured promotion, operator
-   ACA job, etc.) declared in `ingestion_method`.
+   ACA job, etc.) declared in `ingestion_method`. A loader that writes through the
+   data plane reads this registry first and refuses to execute unless the manifest
+   carries a `load_approval` for the exact version it is about to load (see
+   [Load approval](#load-approval)).
 4. **Prove it, don't assume it.** If `retrieval_proof_required` is true (the
    default for any retrievable dataset), the dataset is not `agent_ready` until
    live signed-in retrieval + cite-render verification is shown (PR-3 readiness
@@ -36,7 +39,8 @@ up front, in a manifest, and checked in CI.
 | `retrieval_plan`              | `postgres_fts` / `azure_ai_search` / `fts_plus_search` / `move_scoped_prompt_context` / `not_retrievable`. |
 | `retrieval_proof_required`    | Whether live retrieval proof gates `agent_ready`.                           |
 | `pii_phi_handling`            | Required for sensitive classifications.                                     |
-| `approved_by` / `approved_at` | Human sign-off.                                                             |
+| `approved_by` / `approved_at` | Human sign-off for declaring the dataset. It does not approve loading it.   |
+| `load_approval`               | Optional until a load is approved. A named person's approval for ONE exact version: `approved_by`, `approved_at`, `assessment_id`, `source_set_hash`, `release_record`. |
 
 ## Hard rules enforced by CI
 
@@ -46,7 +50,42 @@ up front, in a manifest, and checked in CI.
 - Sensitive (pii/phi/restricted) targeting `corpus_global` → **fail**.
 - Sensitive classification without `pii_phi_handling` → **fail**.
 - Unknown manifest fields (strict schema) → **fail**.
+- `load_approval.approved_by` naming an agent, a team, a role or a delegation → **fail**.
+- `load_approval.release_record` that is not an existing `docs/releases/records/*.md` file → **fail**.
+- Two manifests declaring the same `dataset_id` → **fail**.
 - Retrievable plan with `retrieval_proof_required: false` → **warn**.
+
+## Load approval
+
+Declaring a dataset and loading it are two decisions. The manifest's `approved_by`
+covers the first. A data-plane load needs the second, recorded in the same manifest:
+
+```json
+"load_approval": {
+  "approved_by": "<the approving person's name>",
+  "approved_at": "YYYY-MM-DD",
+  "assessment_id": "<the assessment the load writes>",
+  "source_set_hash": "<sha256 of the exact source set>",
+  "release_record": "docs/releases/records/<record>.md"
+}
+```
+
+- It is bound to one assessment and one source-set hash. If the data changes, the
+  hash changes, the approval no longer matches, and the loader refuses again.
+- The loader finds the manifest by the `dataset_id` it declares, never by filename,
+  and also checks that the manifest's tenant, `ingestion_method` and
+  `expected_object_count` describe what it is about to load.
+- A value the job supplies about itself (an environment flag, an operator string)
+  cannot stand in for it. The job's release-record binding must equal the one the
+  approval names.
+- The check on `approved_by` refuses strings that plainly are not a person. It
+  cannot prove who typed the name; the control is that the approval is a committed,
+  reviewed line. An agent must not write it on a person's behalf.
+- Approving a load is not reviewing its rows. Loaded rows stay `not_reviewed` until
+  a review step says otherwise.
+
+Enforced today by `resolveLoadApproval` in `src/lib/governance/dataset-manifest.ts`
+and by the synthetic enterprise context loader. Other loaders do not read it yet.
 
 This closes the framework: PR-1 contract → PR-3 readiness → PR-4 CI gate →
 PR-5 runtime seam → PR-6 coverage → **PR-8 onboarding gate** ensures the next

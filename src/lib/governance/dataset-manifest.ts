@@ -37,6 +37,34 @@ export const RETRIEVAL_PLANS = [
   "not_retrievable",
 ] as const;
 
+/**
+ * Approval to load ONE exact version of a dataset through the data plane.
+ *
+ * The manifest's own `approved_by` approves declaring the dataset; it does not
+ * approve loading it. A load is approved separately, by a named person, and the
+ * approval names the assessment and the source-set hash it was given for, so it
+ * cannot carry over to data that changed afterwards.
+ */
+export const LoadApprovalSchema = z
+  .object({
+    approved_by: z.string().min(1),
+    approved_at: z
+      .string()
+      .regex(/^\d{4}-\d{2}-\d{2}$/, "approved_at must be YYYY-MM-DD"),
+    assessment_id: z.string().min(1),
+    source_set_hash: z
+      .string()
+      .regex(/^[0-9a-f]{64}$/, "source_set_hash must be a sha256 hex digest"),
+    release_record: z
+      .string()
+      .regex(
+        /^docs\/releases\/records\/[A-Za-z0-9._-]+\.md$/,
+        "release_record must be a docs/releases/records/*.md path",
+      ),
+  })
+  .strict();
+export type LoadApproval = z.infer<typeof LoadApprovalSchema>;
+
 export const DatasetManifestSchema = z
   .object({
     dataset_id: z.string().min(3),
@@ -63,10 +91,25 @@ export const DatasetManifestSchema = z
     approved_at: z
       .string()
       .regex(/^\d{4}-\d{2}-\d{2}$/, "approved_at must be YYYY-MM-DD"),
+    /** Absent until a named person approves loading one exact version. */
+    load_approval: LoadApprovalSchema.nullable().optional(),
     notes: z.string().nullable().optional(),
   })
   .strict();
 export type DatasetManifest = z.infer<typeof DatasetManifestSchema>;
+
+// A load approver must be a person. This cannot prove that a person typed the
+// name. It refuses a string that plainly names an agent, a team, a role or a
+// delegation; what makes the approval reviewable is that it is a committed
+// line, bound to one source-set hash, that a pull request has to show.
+const PERSON_NAME =
+  /^\p{Lu}[\p{L}'’.-]*(?: [\p{L}'’.-]+)* \p{Lu}[\p{L}'’.-]*$/u;
+const NON_PERSON_APPROVER =
+  /\b(?:codex|claude|cursor|copilot|gpt|gemini|agent|assistant|bot|automation|automated|operator|reviewer|owner|team|engineering|delegat\w*|authori[sz]\w*|approval)\b/i;
+
+export function namesAPerson(value: string): boolean {
+  return PERSON_NAME.test(value) && !NON_PERSON_APPROVER.test(value);
+}
 
 export interface ManifestValidation {
   ok: boolean;
@@ -129,5 +172,120 @@ export function validateManifest(raw: unknown): ManifestValidation {
       "retrieval_plan is set but retrieval_proof_required is false — agent-usable context should be retrieval-proven",
     );
   }
+  if (m.load_approval && !namesAPerson(m.load_approval.approved_by)) {
+    errors.push(
+      "load_approval.approved_by must be a named person, not an agent, team, role or delegation",
+    );
+  }
   return { ok: errors.length === 0, errors, warnings };
+}
+
+/**
+ * Rules that no single manifest can check about itself: a dataset is declared
+ * once, and the release record a load approval names is a file that exists.
+ * A manifest that does not parse is skipped here; `validateManifest` reports it.
+ */
+export function validateManifestRegistry(
+  entries: Array<{ file: string; raw: unknown }>,
+  recordExists: (repoRelativePath: string) => boolean,
+): string[] {
+  const errors: string[] = [];
+  const declaredBy = new Map<string, string>();
+  for (const { file, raw } of entries) {
+    const parsed = DatasetManifestSchema.safeParse(raw);
+    if (!parsed.success) continue;
+    const m = parsed.data;
+    const first = declaredBy.get(m.dataset_id);
+    if (first) {
+      errors.push(
+        `${file}: dataset_id ${m.dataset_id} is already declared by ${first}`,
+      );
+    } else {
+      declaredBy.set(m.dataset_id, file);
+    }
+    if (m.load_approval && !recordExists(m.load_approval.release_record)) {
+      errors.push(
+        `${file}: load_approval.release_record ${m.load_approval.release_record} does not exist`,
+      );
+    }
+  }
+  return errors;
+}
+
+/** What a loader is about to write, stated by the loader from the data itself. */
+export interface LoadBinding {
+  dataset_id: string;
+  tenant_key: string;
+  assessment_id: string;
+  source_set_hash: string;
+  object_count: number;
+  ingestion_method: (typeof INGESTION_METHODS)[number];
+}
+
+export type LoadApprovalDecision =
+  | { approved: true; approval: LoadApproval }
+  | { approved: false; reasons: string[] };
+
+/**
+ * Decide whether one exact dataset version may be loaded.
+ *
+ * `manifests` is every parsed manifest in the registry. The dataset is found by
+ * the `dataset_id` it declares, never by a filename, and a load is approved
+ * only when that one manifest is valid, describes what is being loaded, and
+ * carries a load approval for this assessment and this source-set hash.
+ */
+export function resolveLoadApproval(
+  manifests: unknown[],
+  binding: LoadBinding,
+): LoadApprovalDecision {
+  const declared = manifests.filter(
+    (raw) =>
+      typeof raw === "object" &&
+      raw !== null &&
+      (raw as { dataset_id?: unknown }).dataset_id === binding.dataset_id,
+  );
+  if (declared.length !== 1) {
+    return {
+      approved: false,
+      reasons: [
+        `expected exactly one manifest declaring ${binding.dataset_id}, found ${declared.length}`,
+      ],
+    };
+  }
+  const validation = validateManifest(declared[0]);
+  if (!validation.ok) {
+    return {
+      approved: false,
+      reasons: validation.errors.map((e) => `manifest is invalid: ${e}`),
+    };
+  }
+  const m = DatasetManifestSchema.parse(declared[0]);
+  const reasons: string[] = [];
+  if (m.client_key !== binding.tenant_key) {
+    reasons.push("manifest client_key is not the tenant being loaded");
+  }
+  if (m.ingestion_method !== binding.ingestion_method) {
+    reasons.push(
+      `manifest declares ingestion_method ${m.ingestion_method}, not ${binding.ingestion_method}`,
+    );
+  }
+  if (m.expected_object_count !== binding.object_count) {
+    reasons.push(
+      `manifest expects ${m.expected_object_count ?? "an undeclared number of"} objects, the load has ${binding.object_count}`,
+    );
+  }
+  const approval = m.load_approval;
+  if (!approval) {
+    reasons.push("manifest carries no load_approval");
+    return { approved: false, reasons };
+  }
+  if (approval.assessment_id !== binding.assessment_id) {
+    reasons.push("load_approval is for a different assessment");
+  }
+  if (approval.source_set_hash !== binding.source_set_hash) {
+    reasons.push("load_approval is for a different source-set hash");
+  }
+  return reasons.length > 0
+    ? { approved: false, reasons }
+    : { approved: true, approval };
 }
