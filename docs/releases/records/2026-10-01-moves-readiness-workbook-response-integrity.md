@@ -37,6 +37,7 @@ Readiness workbooks now distinguish evidence references supplied by the product 
 ## QA / Validation
 
 - Targeted workbook, route, phase-navigation, accepted-context, and Moves UI suites: **126 tests passed**.
+- Complete stage-readiness workbook suite: **20 tests passed**.
 - Related phase-gate, workshop-readiness, and Programs API integration suites: **151 tests passed**.
 - `npm run typecheck` — clean.
 - Targeted ESLint over changed route, UI, and workbook modules — clean.
