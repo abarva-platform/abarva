@@ -1,4 +1,3 @@
-import { NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
 import { getActiveClientRow } from "@/lib/active-client";
 import { requireTenancy, tenancyErrorResponse } from "@/lib/auth/tenancy";
@@ -94,5 +93,5 @@ export async function POST(request: Request, { params }: RouteContext) {
 
   const path = `/source/new/${encodeURIComponent(eventId)}`;
   revalidatePath(path);
-  return NextResponse.redirect(new URL(path, request.url), 303);
+  return new Response(null, { status: 303, headers: { Location: path } });
 }
