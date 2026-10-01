@@ -120,6 +120,7 @@ COPY --from=build --chown=node:node /app/src/lib ./src/lib
 COPY --from=build --chown=node:node /app/src/scripts ./src/scripts
 COPY --from=build --chown=node:node /app/intelligence ./intelligence
 COPY --from=build --chown=node:node /app/scripts ./scripts
+COPY --from=build --chown=node:node /app/config/ecl ./config/ecl
 COPY --from=build --chown=node:node /app/cube ./cube
 COPY --from=build --chown=node:node /app/docs/architecture/meridian-demo-findings-20260824.json ./docs/architecture/meridian-demo-findings-20260824.json
 COPY --from=build --chown=node:node /app/docs/architecture/ecl-retired-code-reference-manifest.json ./docs/architecture/ecl-retired-code-reference-manifest.json

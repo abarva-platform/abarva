@@ -826,6 +826,7 @@
     "ecl:source-room-dense:validate": "python3 scripts/ecl/validate_dense_source_room_extracts.py",
     "ecl:synthetic-enterprise-v1:generate": "python3 scripts/ecl/generate_synthetic_enterprise_v1.py",
     "ecl:synthetic-enterprise-v1:validate": "python3 scripts/ecl/validate_synthetic_enterprise_v1.py",
+    "ecl:synthetic-enterprise-v1:load-job": "tsx scripts/ecl/load_synthetic_enterprise_v1.ts --execute",
     "test:ecl-synthetic-enterprise-v1": "node --test scripts/ecl/__tests__/run-synthetic-enterprise-v1-tests.mjs",
     "test:ecl-synthetic-enterprise-adapter-v1": "python3 -m unittest discover -s scripts/ecl/__tests__ -p 'test_normalize_synthetic_enterprise_v1.py' -v",
     "ecl:source-room-producers:report": "python3 scripts/ecl/write_dense_source_room_ecl_producer_coverage.py",
