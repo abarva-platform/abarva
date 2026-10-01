@@ -11,7 +11,10 @@
 
 import { getServerSupabase } from "@/lib/supabase-server";
 import { getActiveClientRow } from "@/lib/active-client";
-import { listSucceededRunsForMove } from "@/lib/deliverables/orchestrator/runs-repository";
+import {
+  listDeliverableRunHistoryForMove,
+  type DeliverableRunRecord,
+} from "@/lib/deliverables/orchestrator/runs-repository";
 import { orchestratorDeliverableType } from "@/lib/programs/orchestrated-deliverable-map";
 import { listAttachmentsForProgram } from "@/lib/programs/attachments";
 import { buildMoveEvidenceNeedPackets } from "@/lib/programs/evidence-readiness/move-evidence-need-packet";
@@ -313,6 +316,8 @@ function DocumentRow({
   moveId,
   phaseLabel,
   runArtifact,
+  runState,
+  previousRunArtifact,
   presentationMode = false,
 }: {
   spec: DeliverableSpec;
@@ -322,6 +327,10 @@ function DocumentRow({
   /** A succeeded Approve & Build run for this slot (orchestrator output in
    *  generated_artifacts), used when deliverables_v2 has no content for it. */
   runArtifact?: { artifactId: string; updatedAt: string };
+  /** Most recent attempt, including failures that must not be hidden by old output. */
+  runState?: DeliverableRunRecord;
+  /** Last successful artifact, shown only as history when a newer run did not succeed. */
+  previousRunArtifact?: { artifactId: string; updatedAt: string };
   presentationMode?: boolean;
 }) {
   const calmBrowse = presentationMode;
@@ -330,6 +339,25 @@ function DocumentRow({
   // deliverable version is unavailable in this projection. A run artifact
   // alone never authorizes sign-off; approval remains bound to dbRow.id.
   const builtViaRun = !hasContent && Boolean(runArtifact);
+  const runNeedsAttention = Boolean(
+    runState && (runState.status !== "succeeded" || !runArtifact),
+  );
+  const runStateLabel =
+    runState?.status === "queued"
+      ? "Latest build queued"
+      : runState?.status === "running"
+        ? "Latest build in progress"
+        : runState?.status === "blocked"
+          ? "Latest build held below quality gate"
+          : runState?.status === "failed"
+            ? "Latest build failed"
+            : runState?.status === "succeeded"
+              ? "Build succeeded, but its artifact is unavailable"
+              : null;
+  const runStateColor =
+    runState?.status === "queued" || runState?.status === "running"
+      ? "#1D4ED8"
+      : "#B4513C";
   const dot = dbRow ? statusDot(dbRow.status) : null;
   const isExcel = spec.formatRecommendation === "excel";
   const base = `/api/programs/${moveId}/deliverables/${dbRow?.id}/content-export`;
@@ -447,6 +475,21 @@ function DocumentRow({
             />
             <span style={{ fontSize: 10, color: "#6B7280" }}>Built</span>
           </>
+        ) : runNeedsAttention ? (
+          <>
+            <span
+              style={{
+                width: 6,
+                height: 6,
+                borderRadius: "50%",
+                backgroundColor: runStateColor,
+                flexShrink: 0,
+              }}
+            />
+            <span style={{ fontSize: 10, color: runStateColor }}>
+              {runStateLabel}
+            </span>
+          </>
         ) : (
           <span style={{ fontSize: 10, color: "#b4b4b8", fontStyle: "italic" }}>
             not generated
@@ -456,7 +499,12 @@ function DocumentRow({
           <span
             style={{
               fontSize: 9,
-              color: builtViaRun || hasContent ? "#3F7A5B" : "#9AA3B2",
+              color:
+                builtViaRun || hasContent
+                  ? "#3F7A5B"
+                  : runNeedsAttention
+                    ? runStateColor
+                    : "#9AA3B2",
               fontFamily: "JetBrains Mono, monospace",
               textTransform: "uppercase",
               marginLeft: 6,
@@ -464,7 +512,9 @@ function DocumentRow({
           >
             {builtViaRun || hasContent
               ? "Quality: available"
-              : "Quality: not run"}
+              : runNeedsAttention
+                ? `Quality: ${runState?.status ?? "unavailable"}`
+                : "Quality: not run"}
           </span>
         )}
       </div>
@@ -529,6 +579,32 @@ function DocumentRow({
               />
             )}
           </>
+        ) : runNeedsAttention ? (
+          <div
+            style={{
+              display: "flex",
+              gap: 8,
+              alignItems: "center",
+              flexWrap: "wrap",
+            }}
+          >
+            <span style={{ fontSize: 10.5, color: runStateColor }}>
+              {runStateLabel}
+              {runState?.error ? `: ${runState.error}` : ""}
+              {!runState?.error && runState?.blockers.length
+                ? `: ${runState.blockers.join("; ")}`
+                : ""}
+            </span>
+            {previousRunArtifact && (
+              <a
+                href={`/api/v1/artifacts/${previousRunArtifact.artifactId}?format=html`}
+                style={linkStyle("ghost")}
+                title="Prior successful output; it is not the result of the latest build attempt."
+              >
+                Previous build — not current
+              </a>
+            )}
+          </div>
         ) : (
           // Read-only browse. Generation is NOT a per-document action here — a
           // document is produced when its phase is built via Approve & Build in
@@ -646,24 +722,40 @@ export async function PhaseDocumentsPanel({
     })
     .catch(() => []);
 
-  // Map the latest succeeded run per registry key as a display/download fallback.
-  // The run is never approval authority: that remains the deliverables_v2 row.
+  // Keep latest attempts separate from the latest successful file. A failed
+  // rebuild must not make an earlier run look like the current output.
   const runByKey = new Map<string, { artifactId: string; updatedAt: string }>();
+  const runStateByKey = new Map<string, DeliverableRunRecord>();
+  const previousRunByKey = new Map<
+    string,
+    { artifactId: string; updatedAt: string }
+  >();
   const activeClient = await getActiveClientRow().catch(() => null);
   if (activeClient) {
-    const runs = await listSucceededRunsForMove(activeClient.id, moveId).catch(
-      () => [] as Awaited<ReturnType<typeof listSucceededRunsForMove>>,
+    const history = await listDeliverableRunHistoryForMove(
+      activeClient.id,
+      moveId,
+    ).catch(
+      () => new Map<string, { latest: DeliverableRunRecord; latestSucceeded: DeliverableRunRecord | null }>(),
     );
     for (const spec of DELIVERABLE_REGISTRY) {
       const orchType = orchestratorDeliverableType(spec.deliverableTypeKey);
-      const run = runs.find(
-        (r) => r.deliverableType === orchType && r.artifactId,
-      );
-      if (run?.artifactId) {
+      const runHistory = history.get(orchType);
+      if (!runHistory) continue;
+      const latest = runHistory.latest;
+      if (latest.status === "succeeded" && latest.artifactId) {
         runByKey.set(spec.deliverableTypeKey, {
-          artifactId: run.artifactId,
-          updatedAt: run.updatedAt,
+          artifactId: latest.artifactId,
+          updatedAt: latest.updatedAt,
         });
+      } else {
+        runStateByKey.set(spec.deliverableTypeKey, latest);
+        if (runHistory.latestSucceeded?.artifactId) {
+          previousRunByKey.set(spec.deliverableTypeKey, {
+            artifactId: runHistory.latestSucceeded.artifactId,
+            updatedAt: runHistory.latestSucceeded.updatedAt,
+          });
+        }
       }
     }
   }
@@ -918,6 +1010,10 @@ export async function PhaseDocumentsPanel({
                   moveId={moveId}
                   phaseLabel={getPhaseLabel(phase)}
                   runArtifact={runByKey.get(spec.deliverableTypeKey)}
+                  runState={runStateByKey.get(spec.deliverableTypeKey)}
+                  previousRunArtifact={previousRunByKey.get(
+                    spec.deliverableTypeKey,
+                  )}
                   presentationMode={calmBrowse}
                 />
               ))}
