@@ -15,6 +15,11 @@ import type {
   TechRecordType,
   TechObjectType,
 } from "@/lib/home/preview/types";
+import {
+  homeNarrativeStatusLabel,
+  homeRecordSourceLabel,
+  homeSourceFileReviewLabel,
+} from "@/lib/home/preview/record-source";
 import { sanitizeHomeReviewBundleNarrative } from "@/lib/home/preview/stale-claim-guard";
 import { ArchitecturePage } from "./ArchitecturePage";
 import { ChapterPage, type BriefingOpening } from "./ChapterPage";
@@ -33,7 +38,7 @@ import {
 import { DataFlowPage } from "./DataFlowPage";
 import { NotDraftedPage } from "./NotDraftedPage";
 import { Rail, type RailGroup, type RailItem } from "./Rail";
-import { SANS, V4 } from "./tokens";
+import { PAGE_X, SANS, V4 } from "./tokens";
 
 /**
  * Home v4 -- "Record and Reading".
@@ -209,6 +214,56 @@ function businessBriefingOpening({
   }
 
   return undefined;
+}
+
+function RecordStateBand({ source }: { source: HomeRecordRenderSource }) {
+  if (
+    source.kind === "ecl_serving_projection" &&
+    source.contextVersion?.coherence === "coherent"
+  ) {
+    return null;
+  }
+  if (source.kind === "reviewed_snapshot") return null;
+
+  const fallback = source.kind === "reviewed_snapshot_fallback";
+  const sourceReview = homeSourceFileReviewLabel(source);
+  return (
+    <aside
+      data-home-record-state-band
+      style={{
+        padding: `15px ${PAGE_X}px`,
+        borderBottom: `1px solid ${V4.rule}`,
+        background: V4.surface,
+      }}
+    >
+      <p
+        style={{
+          margin: 0,
+          fontFamily: SANS,
+          fontSize: 13,
+          fontWeight: 700,
+          lineHeight: 1.45,
+          color: V4.ink,
+        }}
+      >
+        {fallback
+          ? "The reviewed stored record is on screen."
+          : "Live rows and the executive interpretation are not yet one verified version."}
+      </p>
+      <p
+        style={{
+          margin: "3px 0 0",
+          fontFamily: SANS,
+          fontSize: 12,
+          lineHeight: 1.5,
+          color: V4.slate,
+        }}
+      >
+        {homeRecordSourceLabel(source)} · {homeNarrativeStatusLabel(source)}
+        {sourceReview ? ` · ${sourceReview}` : ""}
+      </p>
+    </aside>
+  );
 }
 
 export function HomeV4App({
@@ -529,6 +584,7 @@ export function HomeV4App({
         />
 
         <main style={{ minWidth: 0, overflowY: "auto", padding: "0 0 60px" }}>
+          <RecordStateBand source={renderedRecordSource} />
           {activeChapter ? (
             isDrafted(activeChapter.chapterId) ? (
               <ChapterPage

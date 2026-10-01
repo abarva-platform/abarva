@@ -564,7 +564,9 @@ function DeclaredProvenance({
       <span style={{ ...eyebrow(V4.stone), fontSize: 10 }}>
         Declared provenance
       </span>
-      <p style={provenanceTextStyle}>{cxoText(declared.statement)}</p>
+      <p style={provenanceTextStyle}>
+        Synthetic demonstration record. This briefing is not client-attested.
+      </p>
     </aside>
   );
 }
