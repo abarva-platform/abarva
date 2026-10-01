@@ -40,6 +40,13 @@ import {
   type ValidatedAgentContextBundle,
 } from "../../src/lib/governance/agent-context-bundle";
 import { HOME_PAGE_PROMPT_CONTRACT } from "./home_page_prompt_contracts";
+import {
+  PROJECTION_READINESS_TABLE,
+  SIGNAL_READINESS_TABLE,
+  readinessKey,
+  verifiedReadiness,
+  type NarrativeReadinessProof,
+} from "./home-narrative-readiness";
 
 type EnterpriseSignalPacket = ReturnType<typeof buildEnterpriseSignalPacket>;
 type VerifiedEnterpriseThesisResult = Awaited<ReturnType<typeof buildVerifiedEnterpriseThesisFromSignalPacket>>;
@@ -112,7 +119,6 @@ const HOME_PAGE_PROMPT_CONTRACT_PATH = "docs/architecture/home-v2-page-prompt-co
 const DEFAULT_TENANT_KEY = "meridian-health";
 const DEFAULT_ASSESSMENT_ID = "assessment-dense-source-room-20260823";
 const DEFAULT_OUT_DIR = "/tmp/home-ecl-narrative-layer";
-const DEFAULT_ACTIVE_SOURCE_ROOT = "datasets/tenant-inputs/active";
 const PROJECTION_VERSION = 1;
 const STORY_PLAN_CONTRACT_VERSION = "home-executive-story-plan/v1" as const;
 const WRITE = process.env.HOME_ECL_NARRATIVE_WRITE === "true" && process.env.HOME_ECL_NARRATIVE_WRITE_APPROVED === "true";
@@ -288,6 +294,7 @@ interface EclSourceRecordSummaryRow {
   row_number: number | null;
   payload_json: JsonRecord | null;
 }
+
 
 type SourceTableSummary = {
   rows: EclSourceRecordSummaryRow[];
@@ -552,117 +559,6 @@ function countSourceRows(rows: EclSourceRecordSummaryRow[], field: string, patte
 
 function sourceFileRows(rows: EclSourceRecordSummaryRow[], filePattern: RegExp): EclSourceRecordSummaryRow[] {
   return sourceRowsMatching(rows, filePattern).filter((row) => row.record_type);
-}
-
-function sourceTypeForFile(fileName: string): string {
-  const stem = sanitizeIdPart(fileName);
-  if (/enterprise_profile|business_segments/.test(stem)) return "enterprise_profile";
-  if (/business_functions|org_ownership|workforce_roles/.test(stem)) return "organization_operating_model";
-  if (/applications_systems/.test(stem)) return "application_system";
-  if (/data_assets_integrations|data_analytics/.test(stem)) return "data_asset_or_integration";
-  if (/infrastructure_platforms/.test(stem)) return "infrastructure_platform";
-  if (/vendors_contracts|service_scope/.test(stem)) return "vendor_contract";
-  if (/spend_value|metrics_outcomes|kpi/.test(stem)) return "spend_value_fact";
-  if (/programs_initiatives/.test(stem)) return "program_initiative";
-  if (/ai_/.test(stem)) return "ai_value";
-  if (/risks_controls/.test(stem)) return "risk_control";
-  if (/relationships/.test(stem)) return "relationship";
-  if (/evidence_sources|industry_context|expert_lenses/.test(stem)) return "evidence_sources";
-  return "client_intake";
-}
-
-function parseCsvRecords(csvText: string): JsonRecord[] {
-  const rows: string[][] = [];
-  let field = "";
-  let row: string[] = [];
-  let inQuotes = false;
-  for (let i = 0; i < csvText.length; i += 1) {
-    const char = csvText[i];
-    const next = csvText[i + 1];
-    if (char === '"') {
-      if (inQuotes && next === '"') {
-        field += '"';
-        i += 1;
-      } else {
-        inQuotes = !inQuotes;
-      }
-      continue;
-    }
-    if (char === "," && !inQuotes) {
-      row.push(field);
-      field = "";
-      continue;
-    }
-    if ((char === "\n" || char === "\r") && !inQuotes) {
-      if (char === "\r" && next === "\n") i += 1;
-      row.push(field);
-      field = "";
-      if (row.some((value) => value.trim().length > 0)) rows.push(row);
-      row = [];
-      continue;
-    }
-    field += char;
-  }
-  row.push(field);
-  if (row.some((value) => value.trim().length > 0)) rows.push(row);
-  if (rows.length === 0) return [];
-  const headers = rows[0].map((header) => header.trim());
-  return rows.slice(1).map((values) => {
-    const record: JsonRecord = {};
-    headers.forEach((header, index) => {
-      record[header] = (values[index] ?? "").trim();
-    });
-    return record;
-  });
-}
-
-function activeSourceRootForTenant(tenantKey: string): string {
-  const configured = process.env.HOME_ECL_ACTIVE_SOURCE_ROOT;
-  if (configured) return path.resolve(configured);
-  return path.join(process.cwd(), DEFAULT_ACTIVE_SOURCE_ROOT, tenantKey, "current");
-}
-
-function readActiveTenantSourceRows(tenantKey: string): EclSourceRecordSummaryRow[] {
-  const root = activeSourceRootForTenant(tenantKey);
-  if (!fs.existsSync(root)) return [];
-  const files = fs.readdirSync(root)
-    .filter((fileName) => fileName.endsWith(".csv") && !/^00_GUIDE/i.test(fileName))
-    .sort();
-  const rows: EclSourceRecordSummaryRow[] = [];
-  for (const fileName of files) {
-    const filePath = path.join(root, fileName);
-    const content = fs.readFileSync(filePath, "utf8");
-    const fileHash = crypto.createHash("sha256").update(content).digest("hex");
-    parseCsvRecords(content).forEach((record, index) => {
-      rows.push({
-        source_record_id: `active:${tenantKey}:${fileName}:${index + 1}`,
-        file_name: fileName,
-        source_type: sourceTypeForFile(fileName),
-        origin: "client_intake_repo_package",
-        source_owner: payloadField(record, "source_owner", "likely_owner") ?? "active tenant source package",
-        quality_state: "passed",
-        record_type: sanitizeIdPart(fileName),
-        row_number: index + 1,
-        payload_json: { ...record, __source_file_hash: fileHash },
-      });
-    });
-  }
-  return rows;
-}
-
-function mergeSourceRows(
-  dbRows: EclSourceRecordSummaryRow[],
-  activeRows: EclSourceRecordSummaryRow[],
-): EclSourceRecordSummaryRow[] {
-  const seen = new Set<string>();
-  const merged: EclSourceRecordSummaryRow[] = [];
-  for (const row of [...dbRows, ...activeRows]) {
-    const key = row.source_record_id ?? `${row.origin}:${row.file_name}:${row.row_number ?? "file"}`;
-    if (seen.has(key)) continue;
-    seen.add(key);
-    merged.push(row);
-  }
-  return merged;
 }
 
 function buildSourceRecordContextItems(sourceRows: EclSourceRecordSummaryRow[]): ContextItem[] {
@@ -1196,22 +1092,26 @@ function candidateIsReady(row: HomeProjectionWriteRow): boolean {
   );
 }
 
-function confidenceForRow(row: HomeProjectionWriteRow): GovernedCandidate["confidence_level"] {
-  if (!candidateIsReady(row)) return "unverified";
-  return row.quality_state === "passed" || row.quality_state === "accepted" ? "high" : "medium";
-}
-
-function rowReadinessCounts(rows: HomeProjectionWriteRow[]): Record<string, number> {
+function rowReadinessCounts(
+  rows: HomeProjectionWriteRow[],
+  tenantKey: string,
+  proofs: Map<string, NarrativeReadinessProof>,
+): Record<string, number> {
   const counts = new Map<string, number>();
   for (const row of rows) {
     const sourceRefs = sourceRefIds(row.source_refs_json);
     const admitted = row.admission_status === "admitted" || row.admission_status === "not_applicable";
     const usableQuality = ["passed", "warning", "accepted", "usable"].includes(row.quality_state);
-    if (candidateIsReady(row)) {
+    if (candidateIsReady(row) && verifiedReadiness(
+      proofs.get(readinessKey(PROJECTION_READINESS_TABLE, row.projection_entry_id)),
+      tenantKey,
+      row.source_hash,
+    )) {
       incrementCount(counts, "ready");
       incrementCount(counts, `ready_quality_${row.quality_state}`);
       continue;
     }
+    if (candidateIsReady(row)) incrementCount(counts, "blocked_missing_governance_proof");
     if (!admitted) incrementCount(counts, `blocked_admission_${row.admission_status || "missing"}`);
     if (row.value_state !== "known") incrementCount(counts, `blocked_value_${row.value_state || "missing"}`);
     if (!usableQuality) incrementCount(counts, `blocked_quality_${row.quality_state || "missing"}`);
@@ -1222,43 +1122,48 @@ function rowReadinessCounts(rows: HomeProjectionWriteRow[]): Record<string, numb
   return Object.fromEntries([...counts.entries()].sort(([a], [b]) => a.localeCompare(b)));
 }
 
-function readinessStatus(row: HomeProjectionWriteRow): GovernedCandidate["agent_readiness_status"] {
-  if (candidateIsReady(row)) return "agent_ready";
-  if (row.admission_status === "refused" || row.quality_state === "blocked") return "blocked";
-  return "not_reviewed";
-}
-
-function governedCandidateForRow(row: HomeProjectionWriteRow, tenantKey: string, renderedAt: string): GovernedCandidate {
+function governedCandidateForRow(
+  row: HomeProjectionWriteRow,
+  tenantKey: string,
+  proof: NarrativeReadinessProof | undefined,
+): GovernedCandidate {
+  const ready = candidateIsReady(row) && verifiedReadiness(proof, tenantKey, row.source_hash);
   return {
     id: contextId(row),
     client_key: tenantKey,
     tenant_id: tenantKey,
     source_layer: "signal",
-    source_basis: row.basis_summary,
+    source_basis: ready ? proof!.source_basis : row.basis_summary,
     classification: "internal",
-    retrievability: candidateIsReady(row) ? "fts_indexed" : "not_indexed",
-    agent_readiness_status: readinessStatus(row),
-    confidence_level: confidenceForRow(row),
-    cited_render_verified_at: candidateIsReady(row) ? renderedAt : null,
+    retrievability: ready ? proof!.retrievability as GovernedCandidate["retrievability"] : "not_indexed",
+    agent_readiness_status: ready ? "agent_ready" : "not_reviewed",
+    confidence_level: ready ? proof!.confidence_level as GovernedCandidate["confidence_level"] : "unverified",
+    cited_render_verified_at: ready ? proof!.cited_render_verified_at : null,
     title: row.title,
     citations: sourceRefIds(row.source_refs_json),
   };
 }
 
-function governedCandidateForSignal(signal: Signal, tenantKey: string, renderedAt: string): GovernedCandidate {
+function governedCandidateForSignal(
+  signal: Signal,
+  tenantKey: string,
+  proof: NarrativeReadinessProof | undefined,
+  permittedRowIds: Set<string>,
+): GovernedCandidate {
   const citations = stringArray(signal.evidenceRefs);
-  const ready = citations.length > 0;
+  const ready = citations.length > 0 && citations.every((ref) => permittedRowIds.has(ref)) &&
+    verifiedReadiness(proof, tenantKey, hashJson(signal));
   return {
     id: signal.id,
     client_key: tenantKey,
     tenant_id: tenantKey,
     source_layer: "signal",
-    source_basis: "deterministic_home_signal_packet_v2",
+    source_basis: ready ? proof!.source_basis : null,
     classification: "internal",
-    retrievability: ready ? "fts_indexed" : "not_indexed",
+    retrievability: ready ? proof!.retrievability as GovernedCandidate["retrievability"] : "not_indexed",
     agent_readiness_status: ready ? "agent_ready" : "not_reviewed",
-    confidence_level: ready ? "high" : "unverified",
-    cited_render_verified_at: ready ? renderedAt : null,
+    confidence_level: ready ? proof!.confidence_level as GovernedCandidate["confidence_level"] : "unverified",
+    cited_render_verified_at: ready ? proof!.cited_render_verified_at : null,
     title: signal.kind,
     citations,
   };
@@ -2079,26 +1984,36 @@ function buildGovernedSignalPacket(
   assessmentId: string,
   sourceSummaries: SourceSummary[] = [],
   sourceRows: EclSourceRecordSummaryRow[] = [],
+  proofs: Map<string, NarrativeReadinessProof> = new Map(),
 ): GovernedSignalPacketBuild {
-  const renderedAt = new Date().toISOString();
   const rowContentByCandidateId = new Map<string, ExecutiveSignalContent>();
   const rowCandidates: GovernedCandidate[] = [];
-  const labelByIdentifier = buildVisibleIdentifierLabels(rows);
 
   for (const row of rows.filter((item) => item.row_type !== "summary" && item.row_type !== "chapter_claim")) {
-    const candidate = governedCandidateForRow(row, tenantKey, renderedAt);
+    const candidate = governedCandidateForRow(
+      row,
+      tenantKey,
+      proofs.get(readinessKey(PROJECTION_READINESS_TABLE, row.projection_entry_id)),
+    );
     rowCandidates.push(candidate);
-    rowContentByCandidateId.set(candidate.id, {
+  }
+
+  const validatedRows = buildValidatedAgentContextBundle(rowCandidates, { requireAgentReady: true });
+  const readinessCounts = rowReadinessCounts(
+    rows.filter((item) => item.row_type !== "summary" && item.row_type !== "chapter_claim"),
+    tenantKey,
+    proofs,
+  );
+  const permittedRowIds = new Set(validatedRows.usable.map((candidate) => candidate.id));
+  const permittedRows = rows.filter((row) => permittedRowIds.has(contextId(row)));
+  const labelByIdentifier = buildVisibleIdentifierLabels(permittedRows);
+  for (const row of permittedRows) {
+    rowContentByCandidateId.set(contextId(row), {
       row,
       statement: rowStatement(row, labelByIdentifier),
       domains: rowDomains(row),
     });
   }
-
-  const validatedRows = buildValidatedAgentContextBundle(rowCandidates, { requireAgentReady: true });
-  const readinessCounts = rowReadinessCounts(rows.filter((item) => item.row_type !== "summary" && item.row_type !== "chapter_claim"));
-  const permittedRowIds = new Set(validatedRows.usable.map((candidate) => candidate.id));
-  const permittedRows = rows.filter((row) => permittedRowIds.has(contextId(row)));
 
   const applications = rowsOf(rows, "applications_systems", "application");
   const contracts = rowsOf(rows, "vendor_contracts", "contract");
@@ -2124,7 +2039,12 @@ function buildGovernedSignalPacket(
     vendorRows,
   });
   rawSignals.unshift(...buildSourceFamilyHomeSignals(sourceRows, sourceContextItems));
-  const signalCandidates = rawSignals.map((signal) => governedCandidateForSignal(signal, tenantKey, renderedAt));
+  const signalCandidates = rawSignals.map((signal) => governedCandidateForSignal(
+    signal,
+    tenantKey,
+    proofs.get(readinessKey(SIGNAL_READINESS_TABLE, signal.id)),
+    permittedRowIds,
+  ));
   const validatedSignals = buildValidatedAgentContextBundle(signalCandidates, { requireAgentReady: true });
   const usableSignalIds = new Set(validatedSignals.usable.map((candidate) => candidate.id));
   const signals = rawSignals.filter((signal) => usableSignalIds.has(signal.id));
@@ -2136,7 +2056,7 @@ function buildGovernedSignalPacket(
       domains: ["enterprise_profile", "evidence_sources"],
     },
     ...sourceContextItems,
-    ...buildScopeContextItems({ rows, sourceSummaries, sourceRows }),
+    ...buildScopeContextItems({ rows: permittedRows, sourceSummaries, sourceRows }),
     ...validatedRows.usable
       .map((candidate) => {
         const content = rowContentByCandidateId.get(candidate.id);
@@ -2274,6 +2194,24 @@ async function readEclSourceRecordRows(db: Client, tenantKey: string, assessment
     [tenantKey, assessmentId],
   );
   return result.rows;
+}
+
+async function readNarrativeReadinessProofs(
+  db: Client,
+  tenantKey: string,
+): Promise<Map<string, NarrativeReadinessProof>> {
+  const result = await db.query<NarrativeReadinessProof>(
+    `
+      select object_table, object_id, client_key, tenant_id, source_layer, source_basis,
+        classification, retrievability, agent_readiness_status, confidence_level,
+        cited_render_verified_at::text, policy_validation_status, policy_version,
+        policy_validated_at::text, provenance->>'source_hash' as source_hash
+      from public.governed_object_readiness
+      where client_key = $1 and object_table = any($2::text[])
+    `,
+    [tenantKey, [PROJECTION_READINESS_TABLE, SIGNAL_READINESS_TABLE]],
+  );
+  return new Map(result.rows.map((proof) => [readinessKey(proof.object_table, proof.object_id), proof]));
 }
 
 function buildEclSourceSummaries(rows: EclSourceRecordSummaryRow[]): SourceSummary[] {
@@ -3117,22 +3055,24 @@ async function main() {
     const rows = await readHomeProjectionRows(db, options.tenantKey, options.assessmentId);
     if (rows.length === 0) throw new Error(`No Home ECL projection rows found for ${options.tenantKey}/${options.assessmentId}.`);
 
-    const dbSourceRows = await readEclSourceRecordRows(db, options.tenantKey, options.assessmentId);
-    const activeSourceRows = readActiveTenantSourceRows(options.tenantKey);
-    const sourceRows = mergeSourceRows(dbSourceRows, activeSourceRows);
-    const sourceSummaries = buildEclSourceSummaries(sourceRows);
+    const readinessProofs = await readNarrativeReadinessProofs(db, options.tenantKey);
+    // Source-ledger and repo intake rows stay out of model context until their own
+    // indexed, cited, source-version-matched admission path is available.
+    const sourceRows: EclSourceRecordSummaryRow[] = [];
+    const sourceSummaries: SourceSummary[] = [];
     const { signalPacket, contextPolicyProof } = buildGovernedSignalPacket(
       rows,
       options.tenantKey,
       options.assessmentId,
       sourceSummaries,
       sourceRows,
+      readinessProofs,
     );
     console.log(
       `${options.tenantKey}/${options.assessmentId}: ${rows.length} Home projection rows -> ` +
         `${signalPacket.signals.length} signals, ${signalPacket.contextItems.length} context items, ` +
         `${signalPacket.sourceSummaries.length} source summaries; ` +
-        `${activeSourceRows.length.toLocaleString()} active intake source rows; ` +
+        `${readinessProofs.size.toLocaleString()} independent readiness records; ` +
         `${contextPolicyProof.usable_count}/${contextPolicyProof.candidate_count} governed candidates usable`,
     );
     console.log(`row readiness: ${JSON.stringify(contextPolicyProof.row_readiness_counts)}`);
@@ -3170,7 +3110,7 @@ async function main() {
         context_item_count: signalPacket.contextItems.length,
         source_summary_count: signalPacket.sourceSummaries.length,
         source_summary_rows: signalPacket.sourceSummaries.reduce((sum, item) => sum + (item.rawRowCount ?? item.recordCount), 0),
-        active_source_file_rows: activeSourceRows.length,
+        active_source_file_rows: 0,
         chapter_count: plan.chapters.length,
         chapter_claim_rows: plan.chapters.reduce((sum, chapter) => sum + claimRowsForChapter(chapter).length, 0),
         thesis_prompt_version: THESIS_PROMPT_VERSION,
@@ -3260,7 +3200,7 @@ async function main() {
       context_item_count: signalPacket.contextItems.length,
       source_summary_count: signalPacket.sourceSummaries.length,
       source_summary_rows: signalPacket.sourceSummaries.reduce((sum, item) => sum + (item.rawRowCount ?? item.recordCount), 0),
-      active_source_file_rows: activeSourceRows.length,
+      active_source_file_rows: 0,
       chapter_count: chapters.length,
       chapter_claim_rows: chapters.reduce((sum, chapter) => sum + claimRowsForChapter(chapter).length, 0),
       thesis_prompt_version: THESIS_PROMPT_VERSION,

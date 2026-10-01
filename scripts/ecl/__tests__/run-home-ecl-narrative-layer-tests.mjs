@@ -2,6 +2,7 @@
 
 import fs from "node:fs";
 import path from "node:path";
+import { spawnSync } from "node:child_process";
 
 const repoRoot = process.cwd();
 const scriptPath = path.join(repoRoot, "scripts/ecl/build_home_ecl_narrative_layer.ts");
@@ -246,13 +247,14 @@ assert(
   script.includes("candidateIsReady") &&
     script.includes("sourceRefIds") &&
     script.includes("source_record_id") &&
-    script.includes("row.quality_state === \"passed\"") &&
+    script.includes("[\"passed\", \"warning\", \"accepted\", \"usable\"].includes(row.quality_state)") &&
     script.includes("\"warning\"") &&
-    script.includes("confidenceForRow") &&
+    script.includes("verifiedReadiness") &&
+    script.includes("readNarrativeReadinessProofs") &&
     script.includes("row.value_state === \"known\"") &&
     script.includes("row.admission_status === \"admitted\"") &&
     script.includes("sourceRefs.length > 0"),
-  "ECL narrative job requires usable quality, value, admission, source refs, and source hash before a row can enter the packet",
+  "ECL narrative job requires local eligibility and independent readiness proof before a row can enter the packet",
 );
 assert(
   script.includes("text(ref.source_record_id)") &&
@@ -270,33 +272,26 @@ assert(
   "ECL narrative job emits safe policy-gap and readiness metadata without copying blocked payloads into model context",
 );
 assert(
-  script.includes("readEclSourceRecordRows") &&
-    script.includes("readActiveTenantSourceRows") &&
-    script.includes("client_intake_repo_package") &&
-    script.includes("__source_file_hash") &&
-    script.includes("active_source_file_rows") &&
-    script.includes("buildEclSourceSummaries") &&
-    script.includes("ecl_source.source_file") &&
-    script.includes("ecl_source.source_record") &&
-    script.includes("sourceSummaries") &&
-    script.includes("source_summary_count") &&
-    script.includes("coverage_context_not_citable"),
-  "ECL narrative job passes source-ledger breadth summaries as non-citable packet context",
+  !script.includes("readActiveTenantSourceRows") &&
+    !script.includes("client_intake_repo_package") &&
+    script.includes("const sourceRows: EclSourceRecordSummaryRow[] = []") &&
+    script.includes("const sourceSummaries: SourceSummary[] = []") &&
+    script.includes("active_source_file_rows: 0") &&
+    script.includes("public.governed_object_readiness") &&
+    script.includes("provenance->>'source_hash'"),
+  "ECL narrative job quarantines unadmitted source rows and reads independent, versioned governance proof",
 );
 assert(
   script.includes("buildSourceRecordContextItems") &&
-    script.includes("ctx_ecl_source_enterprise_profile_001") &&
-    script.includes("ctx_ecl_source_business_segments_001") &&
-    script.includes("ctx_ecl_source_strategic_priorities_001") &&
-    script.includes("ctx_ecl_source_leadership_excerpts_001") &&
-    script.includes("ctx_ecl_source_org_accountability_001") &&
-    script.includes("ctx_ecl_source_spend_value_001") &&
-    script.includes("ctx_ecl_source_metrics_outcomes_001") &&
-    script.includes("ctx_ecl_source_ai_value_001") &&
-    script.includes("ctx_ecl_source_risks_controls_001") &&
-    script.includes("SA10_AI_Value_Interview_Evidence"),
-  "ECL narrative job promotes source-backed profile, segment, strategy, org, value, risk, AI, and interview records into citable ctx_* context",
+    script.includes("const sourceContextItems = buildSourceRecordContextItems(sourceRows)") &&
+    script.includes("sourceRows: EclSourceRecordSummaryRow[] = []"),
+  "ECL narrative job keeps source-derived context empty until it has its own admission path",
 );
+const readinessTest = spawnSync(process.execPath, ["--import", "tsx", "--test", "scripts/ecl/__tests__/home-narrative-readiness.test.ts"], {
+  cwd: repoRoot,
+  encoding: "utf8",
+});
+assert(readinessTest.status === 0, `narrative readiness planted cases pass: ${readinessTest.stderr || readinessTest.stdout}`);
 assert(
   script.includes("Home ECL narrative refused: no governed usable evidence reached the executive packet") &&
     script.includes("contextPolicyProof.usable_count === 0") &&
