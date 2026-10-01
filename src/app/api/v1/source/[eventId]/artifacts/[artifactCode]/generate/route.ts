@@ -109,6 +109,7 @@ import { evaluateGenerationEligibility } from "@/lib/source/contracts/generation
 import { resolveSourceArtifactGenerationInput } from "@/lib/source/agent-generation/review-existing-body";
 import { findCurrentAcceptedClientFinal } from "@/lib/source/contracts/current-client-final";
 import { readVerifiedClientFinalText } from "@/lib/source/contracts/verified-client-final-text";
+import { readAcceptedCandidatesForEvent } from "@/lib/source/candidate-suppliers/event-candidate-authority-repository";
 
 const REGISTRY_STORAGE_BUCKET = "source-artifacts";
 const SOURCE_QUALITY_REVIEW_TOOL_NAME = "record_source_quality_review";
@@ -456,6 +457,31 @@ export async function generateSourceArtifactDraft(
       },
       { status: 409 },
     );
+  }
+
+  if (artifactCode === "d12_vendor_shortlist") {
+    const candidates = await readAcceptedCandidatesForEvent({
+      clientKey: ctx.tenantKey,
+      eventId: ctx.event.id,
+    }).catch(() => null);
+    if (!candidates?.registryAvailable) {
+      return Response.json(
+        {
+          error: "candidate_authority_unavailable",
+          detail: "The accepted candidate panel could not be verified for this event.",
+        },
+        { status: 503 },
+      );
+    }
+    if (candidates.acceptedCandidates.length === 0) {
+      return Response.json(
+        {
+          error: "candidate_panel_required",
+          detail: "Accept at least one governed supplier onto this event's candidate panel before drafting a shortlist.",
+        },
+        { status: 409 },
+      );
+    }
   }
 
   // Contract-driven eligibility (PR 4B/4C, ADR-0015): stage eligibility (PR
