@@ -9,6 +9,7 @@ import { demoSafeClientText } from "@/lib/client-config";
 import type { HomePreviewTenantKey } from "@/lib/home/preview/golden-snapshot";
 import type {
   ChapterId,
+  ChapterView,
   EnterpriseSignalPacket,
   HomeRecordRenderSource,
   HomeReviewBundle,
@@ -268,9 +269,40 @@ function RecordStateBand({ source }: { source: HomeRecordRenderSource }) {
   );
 }
 
-function MixedExecutiveFrame({
+const MIXED_CHAPTER_EVIDENCE = [
+  { family: "applications", type: "application_system", label: "applications" },
+  { family: "vendors", type: "vendor_contract", label: "vendor contracts" },
+  {
+    family: "infrastructure",
+    type: "infrastructure_platform",
+    label: "infrastructure and platform records",
+  },
+  {
+    family: "data",
+    type: "data_asset_or_integration",
+    label: "data and integration records",
+  },
+  { family: "metrics", type: "metric_outcome", label: "metrics and outcomes" },
+  { family: "risks", type: "risk_control", label: "risks and controls" },
+  { family: "programs", type: "program_initiative", label: "programs" },
+  { family: "ai", type: "ai_use_case", label: "AI use cases" },
+  {
+    family: "organization",
+    type: "organization_ownership",
+    label: "organization and ownership records",
+  },
+  {
+    family: "interviews",
+    type: "executive_interview",
+    label: "leadership interview records",
+  },
+] as const;
+
+function MixedChapterFrame({
   children,
   enabled,
+  chapter,
+  chapterNumber,
   source,
   recordTypes,
   narrativeGeneratedAt,
@@ -278,25 +310,44 @@ function MixedExecutiveFrame({
 }: {
   children: ReactNode;
   enabled: boolean;
+  chapter: ChapterView | undefined;
+  chapterNumber: number;
   source: HomeRecordRenderSource;
   recordTypes: TechRecordType[];
   narrativeGeneratedAt: string | null;
   onBrowse: () => void;
 }) {
-  if (!enabled) return <>{children}</>;
+  if (!enabled || !chapter) return <>{children}</>;
 
-  const coverage = [
-    { type: "application_system", label: "applications" },
-    { type: "vendor_contract", label: "vendor contracts" },
-    {
-      type: "data_asset_or_integration",
-      label: "data and integration records",
-    },
-  ].map(({ type, label }) => ({
+  const evidence =
+    chapter.chapterId === "executive_brief"
+      ? MIXED_CHAPTER_EVIDENCE.filter(({ type }) =>
+          [
+            "application_system",
+            "vendor_contract",
+            "data_asset_or_integration",
+          ].includes(type),
+        )
+      : chapter.chapterId === "our_business"
+        ? [
+            { type: "business_segment", label: "business segments" },
+            { type: "business_function", label: "business functions" },
+          ]
+        : MIXED_CHAPTER_EVIDENCE.filter(({ family }) =>
+            chapterArguesFrom(chapter.chapterId, family),
+          );
+  const coverage = evidence.map(({ type, label }) => ({
     label,
     count: recordTypes.find((recordType) => recordType.objectType === type)
       ?.rows.length,
   }));
+  const noInterviews =
+    chapter.chapterId === "leadership_perspective" &&
+    !recordTypes.some(
+      (recordType) =>
+        recordType.objectType === "executive_interview" &&
+        recordType.rows.length > 0,
+    );
   const sourceCoverage = homeSourceCoverageLabel(source);
   const sourceQuality = homeSourceFileReviewLabel(source);
   const sourceDates = homeSourceDateCoverageLabel(source);
@@ -307,14 +358,17 @@ function MixedExecutiveFrame({
   return (
     <>
       <section
-        data-home-mixed-executive-opening
+        data-home-mixed-chapter-opening={chapter.chapterId}
+        data-home-mixed-executive-opening={
+          chapter.chapterId === "executive_brief" ? "" : undefined
+        }
         style={{
           padding: `38px ${PAGE_X}px 30px`,
           borderBottom: `1px solid ${V4.rule}`,
         }}
       >
         <p style={{ ...eyebrow(V4.blue), margin: "0 0 12px" }}>
-          Executive Brief
+          Chapter {String(chapterNumber).padStart(2, "0")} · {chapter.title}
         </p>
         <h1
           style={{
@@ -338,8 +392,9 @@ function MixedExecutiveFrame({
             maxWidth: "70ch",
           }}
         >
-          These are counted records, not a current assessment of business
-          performance or priorities.
+          {noInterviews
+            ? "No leadership interview rows are served here. The prior interpretation cannot establish what leaders said."
+            : "These are counted records, not a current assessment of business performance or priorities."}
         </p>
         <div
           style={{
@@ -355,7 +410,7 @@ function MixedExecutiveFrame({
               <strong
                 style={{ display: "block", fontSize: 26, lineHeight: 1.2 }}
               >
-                {count === undefined ? "Not available" : count.toLocaleString()}
+                {count === undefined ? "Not served" : count.toLocaleString()}
               </strong>
               <span style={{ fontSize: 13, color: V4.slate }}>{label}</span>
             </div>
@@ -701,11 +756,6 @@ export function HomeV4App({
           techRecordTypes,
         })
       : undefined;
-  const mixedExecutiveBrief =
-    activeChapter?.chapterId === "executive_brief" &&
-    renderedRecordSource.kind === "ecl_serving_projection" &&
-    renderedRecordSource.contextVersion?.coherence !== "coherent";
-
   return (
     <HomeAvaChat
       key={tenantKey}
@@ -742,8 +792,14 @@ export function HomeV4App({
 
         <main style={{ minWidth: 0, overflowY: "auto", padding: "0 0 60px" }}>
           <RecordStateBand source={renderedRecordSource} />
-          <MixedExecutiveFrame
-            enabled={mixedExecutiveBrief}
+          <MixedChapterFrame
+            enabled={
+              Boolean(activeChapter && isDrafted(activeChapter.chapterId)) &&
+              renderedRecordSource.kind === "ecl_serving_projection" &&
+              renderedRecordSource.contextVersion?.coherence !== "coherent"
+            }
+            chapter={activeChapter}
+            chapterNumber={activeIndex + 1}
             source={renderedRecordSource}
             recordTypes={techRecordTypes}
             narrativeGeneratedAt={
@@ -870,15 +926,13 @@ export function HomeV4App({
             {activeChapter?.chapterId === "executive_brief" ? (
               <BusinessBriefingSections briefing={businessBriefing} />
             ) : null}
-          </MixedExecutiveFrame>
-
-          {activeChapter?.chapterId === "leadership_perspective" ? (
-            <PerspectiveSections perspective={businessBriefing.perspective} />
-          ) : null}
-
-          {activeChapter?.chapterId === "our_business" ? (
-            <BusinessBriefingSections briefing={businessBriefing} />
-          ) : null}
+            {activeChapter?.chapterId === "leadership_perspective" ? (
+              <PerspectiveSections perspective={businessBriefing.perspective} />
+            ) : null}
+            {activeChapter?.chapterId === "our_business" ? (
+              <BusinessBriefingSections briefing={businessBriefing} />
+            ) : null}
+          </MixedChapterFrame>
 
           {activeView === "architecture" && applications ? (
             <ArchitecturePage
