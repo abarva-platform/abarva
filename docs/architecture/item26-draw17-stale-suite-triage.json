@@ -29,18 +29,20 @@
   "secondHalf": {
     "what": "Wire the wire_into_ci rows, each re-executed on the then-current main first. The two fixture re-key updates (ranks 8 and 13) are claimable as test-only changes. The two repair rows wait on the draw 16 data-lane decision. The five T-775 rows stay held until their owner acts.",
     "owner": "26",
-    "status": "wire_into_ci rows wired; the two repair rows, the two test-only fixture re-key updates and the five T-775 holds are unchanged and still open",
+    "status": "wire_into_ci rows wired; the two test-only fixture re-key updates applied and wired; the two repair rows and the five T-775 holds are unchanged and still open",
     "wiredAt": "2026-10-01T07:03:00Z",
     "wiredOnBase": "788a99f606c8e50d7cfab8e06663d3e2a2eb9d32",
     "reExecuted": "All 11 wire_into_ci files re-executed one at a time on the wiring base: 11 suites, 155 cases, all green. The workflow step runs as written: 11 suites / 155 cases.",
     "steps": [
-      "Run the item 26 draw 17 lib suites"
+      "Run the item 26 draw 17 lib suites",
+      "Run the item 26 draw 17 fixture-updated suites"
     ],
     "stillHeld": [
       "repair: two rows reading deleted legacy dataset roots (draw 16 data-lane decision owed, item 26)",
-      "update_with_reason_recorded: two test-only fixture re-key rows (item 26)",
       "already_verdicted_elsewhere: five rows (T-775)"
-    ]
+    ],
+    "fixtureUpdatesAppliedOnBase": "0b237ac29b47b0a01c2b932066a4ff1ea272c015",
+    "fixtureUpdatesReExecuted": "Both updated files re-executed on the update base: 2 suites, 21 cases, all green. The workflow step runs as written: 2 suites / 21 cases."
   },
   "suites": [
     {
@@ -203,7 +205,17 @@
         "retiredTenantKey": "first-capital",
         "pinnedLiteral": "tenant_key: \"first-capital\""
       },
-      "rationale": "Red 2 of 16. The two promotion-preview cases build an inline fixture row for tenant first-capital, which ca47ed85eb (2026-08-16) removed from CANONICAL_TENANTS; the canonical promotion evaluator now blocks the row as a non-canonical client_key, so the preview is blocked rather than preview_ready. The product behaviour is the intended one. The update is to re-key the inline fixture to a declared tenant, recorded with this reason; it reads no corpus, so it needs no data-lane decision. Not updated and not wired here."
+      "rationale": "Red 2 of 16. The two promotion-preview cases build an inline fixture row for tenant first-capital, which ca47ed85eb (2026-08-16) removed from CANONICAL_TENANTS; the canonical promotion evaluator now blocks the row as a non-canonical client_key, so the preview is blocked rather than preview_ready. The product behaviour is the intended one. The update is to re-key the inline fixture to a declared tenant, recorded with this reason; it reads no corpus, so it needs no data-lane decision. Not updated and not wired here.",
+      "updated": {
+        "updatedInThisItem": true,
+        "reExecutedOn": "0b237ac29b47b0a01c2b932066a4ff1ea272c015",
+        "totalTests": 16,
+        "passedTests": 16,
+        "failedTests": 0,
+        "rekeyedTo": "skyharbor-air",
+        "what": "The two promotion-preview cases now build their inline fixture rows for skyharbor-air, a tenant CANONICAL_TENANTS declares, so the canonical promotion evaluator judges the row on its gates rather than blocking it on a non-canonical client_key. The other cases keep their alias fixtures; they do not reach the evaluator's client_key check."
+      },
+      "wiredInThisItem": true
     },
     {
       "path": "src/lib/programs/mobilization/__tests__/mobilization-plan.test.ts",
@@ -307,7 +319,16 @@
         "expectedCanonicalKey": "lakeshore-holdings",
         "retiredBy": "a33cf43c0e"
       },
-      "rationale": "Red 1 of 5. One positive case expects a holdco alias to normalize to lakeshore-holdings; a33cf43c0e (2026-07-02) removed that alias from src/lib/tenant/aliases.ts, so the runtime contract now rejects it as non-canonical. The rejection is the intended behaviour. The update is to move that input from the accepted list to the rejected list, recorded with this reason. Not updated and not wired here."
+      "rationale": "Red 1 of 5. One positive case expects a holdco alias to normalize to lakeshore-holdings; a33cf43c0e (2026-07-02) removed that alias from src/lib/tenant/aliases.ts, so the runtime contract now rejects it as non-canonical. The rejection is the intended behaviour. The update is to move that input from the accepted list to the rejected list, recorded with this reason. Not updated and not wired here.",
+      "updated": {
+        "updatedInThisItem": true,
+        "reExecutedOn": "0b237ac29b47b0a01c2b932066a4ff1ea272c015",
+        "totalTests": 5,
+        "passedTests": 5,
+        "failedTests": 0,
+        "what": "The retired holdco alias moved from the normalizes-to list to the rejects list, so the case asserts the runtime contract refuses it instead of expecting the resolution a33cf43c0e removed."
+      },
+      "wiredInThisItem": true
     },
     {
       "path": "src/lib/semantic2/dossiers/__tests__/dossier-surface-eligibility.test.ts",

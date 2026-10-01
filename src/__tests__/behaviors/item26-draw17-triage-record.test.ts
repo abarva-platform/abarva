@@ -17,9 +17,12 @@
  *    superseded by a later record;
  *  - the committed census must resolve every drawn path still held to this
  *    record;
- *  - second half: every `wire_into_ci` row must be named in an item 26 draw
- *    17 unit-suites step AND be counted as run by the census, and no held row
- *    may be named in such a step.
+ *  - second half: every `wire_into_ci` row, and every fixture update this item
+ *    has applied, must be named in an item 26 draw 17 unit-suites step AND be
+ *    counted as run by the census, and no held row may be named in such a step;
+ *  - an applied fixture update must show in the test's bytes: a re-keyed
+ *    fixture pins a tenant the registry declares, a moved alias no longer
+ *    expects a retired input to resolve.
  *
  * It imports no `src` module on purpose: the behaviour coverage floor is a
  * directory aggregate, and a control that drags product modules into it moves
@@ -69,6 +72,14 @@ type Suite = {
   verdict: string;
   ownerItem: string;
   wiredInThisItem?: boolean;
+  updated?: {
+    updatedInThisItem: boolean;
+    reExecutedOn: string;
+    totalTests: number;
+    passedTests: number;
+    failedTests: number;
+    rekeyedTo?: string;
+  };
   unreachableSubject?: { path: string; registry: string; list: string };
   redCause?: RedCause;
 };
@@ -87,6 +98,18 @@ const readText = (relative: string) =>
 const readJson = <T>(relative: string) => JSON.parse(readText(relative)) as T;
 
 const record = readJson<TriageRecord>(RECORD_PATH);
+
+// A row is RUN by an item 26 draw 17 step when its verdict was wire_into_ci, or
+// when it was a fixture update that this item has since applied. Every other
+// row is a hold and must stay unwired.
+const isRunRow = (suite: Suite) =>
+  suite.verdict === "wire_into_ci" || suite.updated?.updatedInThisItem === true;
+
+const reExecutedGreen = (suite: Suite) =>
+  suite.updated !== undefined &&
+  suite.updated.failedTests === 0 &&
+  suite.updated.passedTests === suite.updated.totalTests &&
+  suite.updated.totalTests > 0;
 
 const READS_REPOSITORY_TEXT =
   /readFileSync|from ["'](?:node:)?fs(?:\/promises)?["']|process\.cwd\(\)|__dirname/;
@@ -309,6 +332,27 @@ describe("item 26 draw 17 stale suite triage record", () => {
           // Calibration: the reader must find the declarations it reads, or
           // "not declared" would be true of every key.
           expect(declared.size).toBeGreaterThan(0);
+          if (suite.updated?.updatedInThisItem) {
+            // Applied: the retired key is still undeclared (the cause stands),
+            // and the test now pins a fixture to a key the registry declares.
+            const rekeyedTo = suite.updated.rekeyedTo ?? "";
+            expect({
+              path: suite.path,
+              stillDeclared: declared.has(cause!.retiredTenantKey),
+              rekeyedToDeclared: declared.has(rekeyedTo),
+              testPinsRekeyedTenant: testText.includes(`tenant_key: "${rekeyedTo}"`),
+              reExecutedGreen: reExecutedGreen(suite),
+              wiredInThisItem: suite.wiredInThisItem,
+            }).toEqual({
+              path: suite.path,
+              stillDeclared: false,
+              rekeyedToDeclared: true,
+              testPinsRekeyedTenant: true,
+              reExecutedGreen: true,
+              wiredInThisItem: true,
+            });
+            break;
+          }
           expect({
             path: suite.path,
             testStillPins: testText.includes(cause!.pinnedLiteral),
@@ -335,6 +379,24 @@ describe("item 26 draw 17 stale suite triage record", () => {
             .map((match) => match[1].toLowerCase());
           const retired = inputs.filter((input) => !aliases.has(input));
           const declared = inputs.filter((input) => aliases.has(input));
+          if (suite.updated?.updatedInThisItem) {
+            // Applied: the reader still sees a declared input, and no input
+            // the test expects to resolve is one the table has retired.
+            expect({
+              path: suite.path,
+              someDeclared: declared.length > 0,
+              retired,
+              reExecutedGreen: reExecutedGreen(suite),
+              wiredInThisItem: suite.wiredInThisItem,
+            }).toEqual({
+              path: suite.path,
+              someDeclared: true,
+              retired: [],
+              reExecutedGreen: true,
+              wiredInThisItem: true,
+            });
+            break;
+          }
           // Both directions: one expected input the table still declares
           // (so the reader can see a declaration), and at least one it no
           // longer does (the cause).
@@ -360,7 +422,7 @@ describe("item 26 draw 17 stale suite triage record", () => {
     const held = new Map(
       census.triageVerdicts.heldTestPaths.map((row) => [row.testPath, row]),
     );
-    const stillHeld = record.suites.filter((suite) => suite.verdict !== "wire_into_ci");
+    const stillHeld = record.suites.filter((suite) => !isRunRow(suite));
     expect(stillHeld.length).toBeGreaterThan(0);
     for (const suite of stillHeld) {
       const row = held.get(suite.path);
@@ -376,7 +438,7 @@ describe("item 26 draw 17 stale suite triage record", () => {
   // RUN. That is asked of two independent places — the workflow a pull request
   // executes, and the census computed from it — so neither the record's own
   // `wiredInThisItem` flag nor a comment in the YAML can satisfy it.
-  it("runs every wire_into_ci row in an item 26 draw 17 unit-suites step, and the census agrees", () => {
+  it("runs every wire_into_ci row and applied update in an item 26 draw 17 unit-suites step, and the census agrees", () => {
     const workflow = yaml.load(readText(".github/workflows/unit-suites.yml")) as {
       jobs: Record<string, { steps?: { name?: string; run?: string }[] }>;
     };
@@ -403,7 +465,7 @@ describe("item 26 draw 17 stale suite triage record", () => {
     const held = new Set(census.triageVerdicts.heldTestPaths.map((row) => row.testPath));
     const dark = new Set(census.uncoveredDirectories.map((row) => row.directory));
 
-    const wiring = record.suites.filter((suite) => suite.verdict === "wire_into_ci");
+    const wiring = record.suites.filter(isRunRow);
     expect(wiring.length).toBeGreaterThan(0);
     for (const suite of wiring) {
       const named = commands.some(({ byPath, words }) =>
@@ -426,7 +488,7 @@ describe("item 26 draw 17 stale suite triage record", () => {
       });
     }
     // Held rows must NOT have been wired by an item 26 draw 17 step.
-    for (const suite of record.suites.filter((s) => s.verdict !== "wire_into_ci")) {
+    for (const suite of record.suites.filter((s) => !isRunRow(s))) {
       const named = commands.some(({ words }) =>
         words.includes(suite.path) || words.includes(path.posix.dirname(suite.path)),
       );

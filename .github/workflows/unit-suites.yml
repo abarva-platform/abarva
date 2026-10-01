@@ -2123,6 +2123,13 @@ jobs:
           src/lib/source/documentation-standards/__tests__
           --no-coverage --ci
 
+      - name: Run the item 26 draw 17 fixture-updated suites
+        run: >-
+          npx jest
+          src/lib/programs/learning-writeback/__tests__
+          src/lib/semantic2/__tests__
+          --no-coverage --ci
+
       # Item T-495, claimable half, suite 2 of 11.
       # `src/__tests__/hygiene/learn-layout-single-nav.test.ts` asserted the
       # single-top-nav rule for `/home/learn` over the BYTES of two files, and was
