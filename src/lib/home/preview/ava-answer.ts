@@ -8,6 +8,7 @@ import type {
   AvaCitation,
 } from "@/lib/ava-answer/contract";
 import { validateAvaAnswerPacket } from "@/lib/ava-answer/validateAvaAnswerPacket";
+import { homeSourceCoverageGapLabelForVersion } from "@/lib/home/preview/record-source";
 import type {
   ChapterId,
   ChapterView,
@@ -820,11 +821,14 @@ export async function answerHomeAvaQuestion(args: {
     args.bundle.contextVersion &&
     args.bundle.contextVersion.coherence !== "coherent"
   ) {
+    const coverageGap = homeSourceCoverageGapLabelForVersion(
+      args.bundle.contextVersion,
+    );
     return buildFallbackPacket(
       args.tenantKey,
       question,
       "no_data",
-      "The live record is available, but its executive narrative has not been verified against those rows. I cannot give a cited synthesis yet.",
+      `The live record is available, but its executive narrative has not been verified against those rows. I cannot give a cited synthesis yet.${coverageGap ? ` ${coverageGap}` : ""}`,
       [],
     );
   }

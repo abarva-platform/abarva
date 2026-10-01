@@ -128,6 +128,8 @@ function liveRecordSource(): HomeRecordRenderSource {
       assessmentId: "assessment-dense-source-room-20260823",
       projectionContentHash: "projection-content-a",
       sourceSetHash: null,
+      sourceLineageHash: "lineage-a",
+      sourceCoverage: { totalRecordRows: 2, linkedRecordRows: 1, families: [] },
       deterministicPacketHash: "packet-a",
       narrativePacketHash: "narrative-old",
       narrativeGeneratedAt: "2026-08-21T00:00:00.000Z",
@@ -253,6 +255,26 @@ it("refuses to answer if the projection content changed without a row-count chan
   expected.contextVersion = {
     ...expected.contextVersion!,
     projectionContentHash: "projection-content-before",
+  };
+
+  const response = await POST(
+    makeRequest({
+      tenantKey: "meridian-health",
+      question: "Where are we commercially exposed?",
+      expectedRecordSource: expected,
+    }),
+  );
+
+  expect(response.status).toBe(409);
+  expect(await response.json()).toEqual({ error: "home_context_changed" });
+  expect(mockedAnswerHomeAvaQuestion).not.toHaveBeenCalled();
+});
+
+it("refuses to answer if verified source links changed without a row-count change", async () => {
+  const expected = liveRecordSource();
+  expected.contextVersion = {
+    ...expected.contextVersion!,
+    sourceLineageHash: "lineage-before",
   };
 
   const response = await POST(

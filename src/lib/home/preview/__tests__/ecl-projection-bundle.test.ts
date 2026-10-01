@@ -1167,6 +1167,56 @@ describe("buildTechnologyEstateFromHomeProjectionRows", () => {
     expect(bundle.contextVersion?.sourceSetHash).toBeNull();
   });
 
+  it("versions partial source lineage when only a verified link changes", () => {
+    const base = getHomeReviewBundle("meridian-health");
+    if (!base) throw new Error("stored copy missing");
+    const rows = [
+      row({
+        page_key: "applications_systems",
+        row_key: "APP-004",
+        row_type: "application",
+        title: "Linked application",
+        projection_entry_id: "projection-entry-004",
+        source_hash: "source-hash-004",
+        source_refs_json: [{ source_record_id: "source-row-004" }],
+        admission_status: "admitted",
+      }),
+      row({
+        page_key: "metrics_outcomes",
+        row_key: "MET-001",
+        row_type: "metric",
+        title: "Unlinked metric",
+        source_hash: "source-hash-005",
+        admission_status: "admitted",
+      }),
+    ];
+    const before = buildHomeReviewBundleFromEclProjectionRows(base, rows);
+    const after = buildHomeReviewBundleFromEclProjectionRows(
+      base,
+      rows,
+      undefined,
+      new Map([["projection-entry-004", new Set(["source-row-004"])]]),
+    );
+
+    expect(before.contextVersion?.projectionContentHash).toBe(
+      after.contextVersion?.projectionContentHash,
+    );
+    expect(before.contextVersion?.sourceSetHash).toBeNull();
+    expect(after.contextVersion?.sourceSetHash).toBeNull();
+    expect(before.contextVersion?.sourceLineageHash).not.toBe(
+      after.contextVersion?.sourceLineageHash,
+    );
+    expect(before.contextVersion?.sourceCoverage).toEqual({
+      totalRecordRows: 2,
+      linkedRecordRows: 0,
+      families: [
+        { pageKey: "applications_systems", totalRows: 1, linkedRows: 0 },
+        { pageKey: "metrics_outcomes", totalRows: 1, linkedRows: 0 },
+      ],
+    });
+    expect(after.contextVersion?.sourceCoverage.linkedRecordRows).toBe(1);
+  });
+
   it("resolves deterministic writer evidence ids on the Home runtime signal packet", () => {
     const base = getHomeReviewBundle("meridian-health");
     expect(base).toBeTruthy();

@@ -2546,12 +2546,35 @@ function contextVersionForRows(
     .sort((a, b) =>
       `${a.pageKey}:${a.rowKey}`.localeCompare(`${b.pageKey}:${b.rowKey}`),
     );
+  const sourceLineageHash = hash(sourceRows);
+  const familyCoverage = new Map<
+    string,
+    { pageKey: string; totalRows: number; linkedRows: number }
+  >();
+  for (const sourceRow of sourceRows) {
+    const family = familyCoverage.get(sourceRow.pageKey) ?? {
+      pageKey: sourceRow.pageKey,
+      totalRows: 0,
+      linkedRows: 0,
+    };
+    family.totalRows += 1;
+    if (sourceRow.sourceRefs.length > 0) family.linkedRows += 1;
+    familyCoverage.set(sourceRow.pageKey, family);
+  }
+  const sourceCoverage = {
+    totalRecordRows: sourceRows.length,
+    linkedRecordRows: sourceRows.filter((row) => row.sourceRefs.length > 0)
+      .length,
+    families: [...familyCoverage.values()].sort((a, b) =>
+      a.pageKey.localeCompare(b.pageKey),
+    ),
+  };
   const sourceSetHash =
     citableRows.length > 0 &&
     citableRows.every(
       (row) => admittedSourceRefs(row, verifiedSourceRefs).length > 0,
     )
-      ? hash(sourceRows)
+      ? sourceLineageHash
       : null;
   const narrativePacketHash =
     writerHashes.size === 1 ? [...writerHashes][0]! : null;
@@ -2586,6 +2609,8 @@ function contextVersionForRows(
       ),
     ),
     sourceSetHash,
+    sourceLineageHash,
+    sourceCoverage,
     deterministicPacketHash,
     narrativePacketHash,
     narrativeGeneratedAt: hasPublishedClaims

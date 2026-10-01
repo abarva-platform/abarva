@@ -663,6 +663,15 @@ describe("answerHomeAvaQuestion", () => {
         contextVersion: {
           assessmentId: "assessment-test",
           projectionContentHash: "rows-hash",
+          sourceSetHash: null,
+          sourceLineageHash: "lineage-hash",
+          sourceCoverage: {
+            totalRecordRows: 2,
+            linkedRecordRows: 1,
+            families: [
+              { pageKey: "vendor_contracts", totalRows: 2, linkedRows: 1 },
+            ],
+          },
           deterministicPacketHash: "read-packet-hash",
           narrativePacketHash: "writer-packet-hash",
           narrativeGeneratedAt: "2026-08-21T00:00:00Z",
@@ -676,6 +685,7 @@ describe("answerHomeAvaQuestion", () => {
 
     expect(answer.status).toBe("no_data");
     expect(answer.directAnswer).toContain("not been verified");
+    expect(answer.directAnswer).toContain("incomplete for contracts");
     expect(answer.prose).toBeUndefined();
     expect(mockGetAuditedAnthropicClient).not.toHaveBeenCalled();
   });

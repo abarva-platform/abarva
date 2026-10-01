@@ -142,6 +142,13 @@ export interface HomeContextVersion {
   projectionContentHash: string;
   /** Null until every citable serving row has admitted source references and a source hash. */
   sourceSetHash?: string | null;
+  /** Changes when verified row-level source links change, even while coverage is incomplete. */
+  sourceLineageHash: string;
+  sourceCoverage: {
+    totalRecordRows: number;
+    linkedRecordRows: number;
+    families: Array<{ pageKey: string; totalRows: number; linkedRows: number }>;
+  };
   deterministicPacketHash: string;
   narrativePacketHash: string | null;
   narrativeGeneratedAt: string | null;
