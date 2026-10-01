@@ -34,6 +34,16 @@ class SyntheticEnterpriseAdapterTests(unittest.TestCase):
         self.assertEqual(normalized["quality"]["object_types"]["evidence_request"], 224)
         self.assertEqual(normalized["quality"]["object_types"]["application"], 24)
         self.assertEqual(normalized["quality"]["object_types"]["application_module"], 726)
+        self.assertEqual(normalized["quality"]["object_types"]["data_product"], 360)
+        self.assertEqual(normalized["quality"]["object_types"]["persona"], 79)
+        self.assertEqual(normalized["quality"]["object_types"]["application_deployment"], 1650)
+        self.assertEqual(normalized["quality"]["object_types"]["strategic_priority"], 5)
+        self.assertEqual(normalized["quality"]["object_types"]["data_flow"], 1350)
+        self.assertEqual(normalized["quality"]["object_types"]["spend_line"], 480)
+        self.assertEqual(normalized["quality"]["object_types"]["leadership_observation"], 42)
+        self.assertEqual(normalized["quality"]["object_types"]["external_benchmark"], 1)
+        self.assertEqual(normalized["quality"]["object_types"]["data_platform"] +
+                         normalized["quality"]["object_types"]["infrastructure"], 220)
         self.assertEqual(normalized["quality"]["relationship_types"]["MODULE_OF"], 726)
         self.assertEqual(normalized["quality"]["relationship_types"]["EVIDENCE_REQUESTED_FOR"], 224)
         self.assertNotIn("SUPPORTS", normalized["quality"]["relationship_types"])
@@ -58,8 +68,15 @@ class SyntheticEnterpriseAdapterTests(unittest.TestCase):
         source = generator.build(json.loads(generator.DEFINITION.read_text(encoding="utf-8")))
         source_types = {edge["relationship_type"] for edge in source["relationships"]}
         self.assertEqual(source_types, set(adapter.RELATIONSHIP_TYPES))
+        self.assertEqual({obj["object_type"] for obj in source["objects"]}, set(adapter.OBJECT_TYPES))
         with self.assertRaisesRegex(ValueError, "Unmapped relationship type"):
             adapter.canonical_relationship_type("PROPOSED_BUT_UNREVIEWED")
+        with self.assertRaisesRegex(ValueError, "Unmapped source object type"):
+            adapter.canonical_object_type({"object_type": "unreviewed_type", "attributes": {}})
+        with self.assertRaisesRegex(ValueError, "Unmapped application grain"):
+            adapter.canonical_object_type({"object_type": "application", "attributes": {"application_grain": "unknown"}})
+        with self.assertRaisesRegex(ValueError, "Unmapped platform type"):
+            adapter.canonical_object_type({"object_type": "platform", "attributes": {"platform_type": "unknown"}})
 
 
 if __name__ == "__main__":

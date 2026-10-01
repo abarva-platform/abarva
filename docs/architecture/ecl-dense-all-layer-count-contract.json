@@ -2,6 +2,15 @@
   "contract_id": "ecl-dense-all-layer-local-proof-counts-2026-08-24",
   "delta_classifications": [
     {
+      "after": 27,
+      "before": 20,
+      "classification": "additive_schema_catalog",
+      "delta": 7,
+      "explanation": "The enterprise-context admission migration adds seven canonical context-detail types. The dense fixture rows and all product denominators remain unchanged.",
+      "key": "context.object_type_catalog",
+      "release_record": "docs/releases/records/2026-10-01-ecl-enterprise-context-admission-v1.md"
+    },
+    {
       "after": 41,
       "before": 36,
       "classification": "expected_increase",
@@ -298,7 +307,7 @@
       "measure_metric_drift": 0,
       "metric_definition": 128,
       "object": 3828,
-      "object_type_catalog": 20,
+      "object_type_catalog": 27,
       "relationship": 8978,
       "relationship_endpoint_drift": 0,
       "vendor": 216
