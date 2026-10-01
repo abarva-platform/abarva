@@ -10,7 +10,7 @@
 
 ## Plain-English Summary
 
-Adds an internal persistence function for executed NDA authority. It records an event-only agreement only when a canonical supplier is accepted on that exact event, the executed artifact is current and hashed on that event, a Legal-published template was applicable when signed, and bilateral signature metadata is complete. No route or form invokes this function yet.
+Adds an internal persistence function for executed NDA authority. It records an event-only agreement only when a canonical supplier is accepted on that exact event, the executed artifact is current and hashed on that event, a Legal-published template was applicable when signed, bilateral signature metadata is complete, and certificate or private signed-evidence provenance is present. No route or form invokes this function yet.
 
 ## Layer Impact
 
@@ -29,7 +29,7 @@ Adds an internal persistence function for executed NDA authority. It records an 
 ## Changes Included
 
 - One transaction-scoped, tenant- and event-fenced authority insert.
-- Refusal of absent candidate, foreign-event artifact, incomplete signature evidence, unpublished template, and unverified affiliate scope.
+- Refusal of absent candidate, foreign-event artifact, incomplete signature or provenance evidence, unpublished template, and unverified affiliate scope.
 - A focused behavioral suite and a removal mutation of the event predicate.
 
 ## QA / Validation

@@ -123,7 +123,8 @@ export async function recordExecutedNda(
       );
       if (
         signature.state !== "complete" ||
-        (input.certificateSha256 !== null && !validHash(input.certificateSha256))
+        (input.certificateSha256 !== null && !validHash(input.certificateSha256)) ||
+        (!nonempty(input.certificateSha256) && !nonempty(input.privateEvidenceRef))
       ) {
         return { ok: false, code: "signature_evidence_incomplete" };
       }

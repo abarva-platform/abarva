@@ -101,6 +101,14 @@ describe("recordExecutedNda", () => {
     )).toEqual({ ok: false, code: "signature_evidence_incomplete" });
     expect(missingSigner.statements.some((sql) => sql.includes("INSERT INTO"))).toBe(false);
 
+    const missingProvenance = fakeTransaction();
+    expect(await recordExecutedNda(
+      { ...input, privateEvidenceRef: null },
+      missingProvenance.tx,
+      "2026-10-01T00:00:00.000Z",
+    )).toEqual({ ok: false, code: "signature_evidence_incomplete" });
+    expect(missingProvenance.statements.some((sql) => sql.includes("INSERT INTO"))).toBe(false);
+
     const unpublished = fakeTransaction({ published: false });
     expect(await recordExecutedNda(input, unpublished.tx, "2026-10-01T00:00:00.000Z")).toEqual({
       ok: false,
