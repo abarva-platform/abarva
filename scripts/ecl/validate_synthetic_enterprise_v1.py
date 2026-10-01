@@ -8,6 +8,7 @@ import csv
 import hashlib
 import json
 from collections import Counter
+from decimal import Decimal, InvalidOperation
 from pathlib import Path
 from typing import Any
 
@@ -28,6 +29,17 @@ def file_hash(path: Path) -> str:
 def require(condition: bool, message: str) -> None:
     if not condition:
         raise ValueError(message)
+
+
+def matches_csv_value(raw: str | None, value: Any) -> bool:
+    if value is None:
+        return raw in (None, "")
+    if isinstance(value, (int, float)) and not isinstance(value, bool):
+        try:
+            return raw is not None and Decimal(raw) == Decimal(str(value))
+        except InvalidOperation:
+            return False
+    return raw == str(value)
 
 
 def money_share(rows: list[dict[str, str]], field: str) -> float:
@@ -77,10 +89,31 @@ def validate(directory: Path) -> dict[str, Any]:
 
     objects = {obj["object_id"]: obj for obj in manifest["objects"]}
     require(len(objects) == len(manifest["objects"]), "Duplicate governed object IDs")
+    source_rows = {
+        family: {row["source_row_id"]: row for row in family_rows}
+        for family, family_rows in rows.items()
+    }
+    for obj in objects.values():
+        family = obj["source_family"]
+        source_row = source_rows.get(family, {}).get(obj["source_row_id"])
+        require(source_row is not None, f"Object has no source row: {obj['object_id']}")
+        require(source_row["governed_object_id"] == obj["object_id"],
+                f"Object/source identity mismatch: {obj['object_id']}")
+        require(source_row["source_as_of"] == obj["source_as_of"]
+                and source_row["provenance_class"] == obj["provenance_class"],
+                f"Object/source provenance mismatch: {obj['object_id']}")
+        require(all(matches_csv_value(source_row.get(key), value)
+                    for key, value in obj["attributes"].items()),
+                f"Object/source attribute mismatch: {obj['object_id']}")
     require(len({edge["relationship_id"] for edge in manifest["relationships"]})
             == len(manifest["relationships"]), "Duplicate relationship IDs")
+    relationship_rows = source_rows["SP17_Relationships"]
     missing = []
     for edge in manifest["relationships"]:
+        source_row = relationship_rows.get(edge["relationship_id"])
+        require(source_row is not None and all(source_row.get(key) == str(value)
+                for key, value in edge.items()),
+                f"Relationship/source row mismatch: {edge['relationship_id']}")
         require(edge["from_object_id"] in objects, f"Unknown edge source: {edge['relationship_id']}")
         if edge["to_object_id"] not in objects:
             require(edge["resolution_state"] == "unresolved", "Undeclared dangling relationship")

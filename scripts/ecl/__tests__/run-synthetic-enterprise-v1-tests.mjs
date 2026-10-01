@@ -65,5 +65,15 @@ test("independent validator rejects a changed source file and an undeclared edge
   fs.writeFileSync(cleanManifestPath, JSON.stringify(cleanManifest));
   const badEdge = run(validator, clean);
   assert.notEqual(badEdge.status, 0);
-  assert.match(badEdge.stderr, /Undeclared dangling relationship/);
+  assert.match(badEdge.stderr, /Relationship\/source row mismatch/);
+
+  const changedObject = path.join(tmp, "changed-object");
+  assert.equal(run(generator, changedObject).status, 0);
+  const changedObjectManifestPath = path.join(changedObject, "enterprise_manifest.json");
+  const changedObjectManifest = JSON.parse(fs.readFileSync(changedObjectManifestPath, "utf8"));
+  changedObjectManifest.objects[0].attributes.enterprise_name = "Different name";
+  fs.writeFileSync(changedObjectManifestPath, JSON.stringify(changedObjectManifest));
+  const badObject = run(validator, changedObject);
+  assert.notEqual(badObject.status, 0);
+  assert.match(badObject.stderr, /Object\/source attribute mismatch/);
 });

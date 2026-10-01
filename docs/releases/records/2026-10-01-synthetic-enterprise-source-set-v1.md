@@ -38,8 +38,8 @@ Adds one deterministic synthetic enterprise definition and generator. It emits o
 ## QA / Validation
 
 - Generated the source set twice and confirmed identical file-set hashes.
-- Independently validated 22 file hashes and row counts, object/edge integrity, temporal KPI observations, known gaps, application/program/contract joins, and distribution checks.
-- Mutation tests reject changed source bytes and undeclared graph endpoints.
+- Independently validated 22 file hashes and row counts, exact object/relationship-to-source-row reconciliation, temporal KPI observations, known gaps, application/program/contract joins, and distribution checks.
+- Mutation tests reject changed source bytes, changed object attributes, and undeclared graph endpoints.
 - `node --test scripts/ecl/__tests__/run-synthetic-enterprise-v1-tests.mjs` passed.
 - Context-corpus manifest validation and release check must pass before merge.
 - No ACA job, tenant write, projection generation, aVa retrieval, or signed-in Home proof is claimed for this data set.
