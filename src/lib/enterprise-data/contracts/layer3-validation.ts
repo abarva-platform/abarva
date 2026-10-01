@@ -328,6 +328,13 @@ export const RELATIONSHIP_TYPE_DICTIONARY: RelationshipDictionaryEntry[] = [
     "runs on",
   ]),
   relationship("DEPLOYMENT_OF", "deployment of", "has deployment", "hosting"),
+  relationship("MODULE_OF", "module of", "has module", "rollup"),
+  relationship(
+    "EVIDENCE_REQUESTED_FOR",
+    "evidence requested for",
+    "has evidence request",
+    "governance",
+  ),
   relationship("OWNED_BY", "owned by", "owns", "ownership", [
     "owner",
     "owned by",

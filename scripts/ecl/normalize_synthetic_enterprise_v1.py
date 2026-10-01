@@ -86,12 +86,12 @@ def normalize(pack: Path) -> dict[str, Any]:
         native_type = edge["relationship_type"]
         canonical_type = canonical_relationship_type(native_type)
         source_obj = objects_by_id[edge["from_object_id"]]
-        supporting = [source_ref(source_obj["source_family"], source_obj["source_row_id"])]
+        source_refs = [source_ref(source_obj["source_family"], source_obj["source_row_id"])]
         if native_type == "FEEDS":
             flow_ids = flows_by_pair.get((edge["from_object_id"], edge["to_object_id"]), [])
             if not flow_ids:
                 raise ValueError(f"FEEDS edge has no source flow: {edge['relationship_id']}")
-            supporting.extend(source_ref("SP13_Data_Flows_Integrations", flow_id) for flow_id in flow_ids)
+            source_refs.extend(source_ref("SP13_Data_Flows_Integrations", flow_id) for flow_id in flow_ids)
         normalized = {
             "id": edge["relationship_id"],
             "from_object_id": edge["from_object_id"],
@@ -102,7 +102,7 @@ def normalize(pack: Path) -> dict[str, Any]:
             "source_as_of": edge["source_as_of"],
             "provenance_class": edge["provenance_class"],
             "declaration_source": source_ref("SP17_Relationships", edge["relationship_id"]),
-            "supporting_sources": supporting,
+            "source_refs": source_refs,
         }
         (unresolved if edge["resolution_state"] == "unresolved" else relationships).append(normalized)
 
@@ -113,10 +113,10 @@ def normalize(pack: Path) -> dict[str, Any]:
     if any(edge["to_object_id"] not in objects_by_id for edge in relationships):
         raise ValueError("Resolved relationship has a missing target")
     flow_refs = [ref["source_row_id"] for edge in relationships if edge["type"] == "FEEDS"
-                 for ref in edge["supporting_sources"]
+                 for ref in edge["source_refs"]
                  if ref["source_family"] == "SP13_Data_Flows_Integrations"]
     if len(flow_refs) != len(set(flow_refs)) or set(flow_refs) != set(source_rows["SP13_Data_Flows_Integrations"]):
-        raise ValueError("Layer 2 normalization lost or duplicated source flow evidence")
+        raise ValueError("Layer 2 normalization lost or duplicated source flow rows")
 
     return {
         "schema_version": 1,
@@ -134,7 +134,7 @@ def normalize(pack: Path) -> dict[str, Any]:
             "object_count": len(objects),
             "relationship_count": len(relationships),
             "unresolved_relationship_count": len(unresolved),
-            "source_flow_evidence_count": len(flow_refs),
+            "source_flow_row_count": len(flow_refs),
             "object_types": dict(sorted(Counter(obj["type"] for obj in objects).items())),
             "relationship_types": dict(sorted(Counter(edge["type"] for edge in relationships).items())),
         },

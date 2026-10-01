@@ -10,7 +10,7 @@
 
 ## Plain-English Summary
 
-Adds a deterministic Layer 2 adapter for the versioned synthetic enterprise source set. It preserves declared IDs, source-file hashes, source-row IDs, source system, value source, attestation state, and unresolved relationships. An explicit map normalizes relationship vocabulary without fuzzy name matching or silent edge loss. This release does not write a database or activate a product surface.
+Adds a deterministic Layer 2 adapter for the versioned synthetic enterprise source set. It preserves declared IDs, source-file hashes, source-row IDs, source system, value source, attestation state, and unresolved relationships. An explicit map normalizes relationship vocabulary without fuzzy name matching or silent edge loss. Product modules retain their parent relationship, while unreceived evidence requests remain requests rather than supporting proof. This release does not write a database or activate a product surface.
 
 ## Layer Impact
 
@@ -31,9 +31,10 @@ Adds a deterministic Layer 2 adapter for the versioned synthetic enterprise sour
 ## Changes Included
 
 - One explicit source-native to canonical relationship map.
+- Distinct `MODULE_OF` and `EVIDENCE_REQUESTED_FOR` semantics; the latter is not a `SUPPORTS` claim.
 - ID-led normalized objects, resolved relationships, and a separate unresolved-edge set.
 - Source-file and row lineage on every normalized object and relationship.
-- Tests for full denominator preservation, flow-row support, unknown-verb refusal, and dictionary coverage.
+- Tests for full denominator preservation, flow-row lineage, unknown-verb refusal, and dictionary coverage.
 
 ## QA / Validation
 

@@ -114,6 +114,8 @@ describe("Layer 3 validation scaffold", () => {
         "DEPENDS_ON",
         "HOSTED_ON",
         "DEPLOYMENT_OF",
+        "MODULE_OF",
+        "EVIDENCE_REQUESTED_FOR",
         "OWNED_BY",
         "PRIMARY_SYSTEM_FOR",
         "SYSTEM_OF_RECORD_FOR",

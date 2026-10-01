@@ -30,19 +30,23 @@ class SyntheticEnterpriseAdapterTests(unittest.TestCase):
             len(source["relationships"]),
         )
         self.assertEqual(len(normalized["unresolved_relationships"]), 1)
-        self.assertEqual(normalized["quality"]["source_flow_evidence_count"], 1350)
+        self.assertEqual(normalized["quality"]["source_flow_row_count"], 1350)
+        self.assertEqual(normalized["quality"]["object_types"]["evidence_request"], 224)
+        self.assertEqual(normalized["quality"]["relationship_types"]["MODULE_OF"], 726)
+        self.assertEqual(normalized["quality"]["relationship_types"]["EVIDENCE_REQUESTED_FOR"], 224)
+        self.assertNotIn("SUPPORTS", normalized["quality"]["relationship_types"])
         self.assertGreater(normalized["quality"]["relationship_types"]["ACCOUNTABLE_TO"], 0)
         self.assertTrue(all(obj["source"]["source_row_id"] for obj in normalized["objects"]))
         self.assertTrue(all(obj["source"]["source_system"] == "synthetic_enterprise_v1_generator"
                             and obj["source"]["value_source"] == "synthetic_generated"
                             for obj in normalized["objects"]))
         self.assertTrue(all(edge["declaration_source"]["source_file_sha256"]
-                            and edge["supporting_sources"] for edge in normalized["relationships"]))
+                            and edge["source_refs"] for edge in normalized["relationships"]))
         object_ids = {obj["id"] for obj in normalized["objects"]}
         self.assertTrue(all(edge["to_object_id"] in object_ids for edge in normalized["relationships"]))
         feed = next(edge for edge in normalized["relationships"] if edge["type"] == "FEEDS")
         self.assertTrue(any(ref["source_family"] == "SP13_Data_Flows_Integrations"
-                            for ref in feed["supporting_sources"]))
+                            for ref in feed["source_refs"]))
         self.assertEqual(normalized["client_attestation_state"], "not_client_attested")
         self.assertEqual(normalized["adapter_contract_version"], "synthetic-enterprise-v1/layer2/v1")
         self.assertEqual(normalized["relationship_map_hash"],
