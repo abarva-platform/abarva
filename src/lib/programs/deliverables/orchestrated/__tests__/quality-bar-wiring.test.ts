@@ -189,4 +189,51 @@ describe("the canonical quality contract reaches the runtime request", () => {
     expect(request.qualityBar.targetBodyWordsMax).toBe(3_000);
     expect(request.qualityBar.enforceMaxAsBlocker).toBe(true);
   });
+
+  it.each([
+    "discovery_report",
+    "root_cause_worksheet",
+    "design_workshop_guide",
+  ])(
+    "carries excluded-value suppression into every %s generation pass",
+    (deliverableType) => {
+      const { request } = buildMoveDeliverableRequest(move(), {
+        deliverableType,
+        phaseOrStage: "P2_discover_and_diagnose",
+        artifactStandard: `moves.${deliverableType}`,
+        decisionContext:
+          "Carry only supported P2 findings into the next decision.",
+      });
+      const brief = getArtifactBrief(request);
+      const shared = {
+        req: request,
+        brief,
+        evidence: request.governedEvidenceBundle,
+      };
+      const systemPrompts = [
+        buildPassPrompt("full_draft", {
+          ...shared,
+          approvedPlanJson: "{}",
+        }).system,
+        buildPassPrompt("red_team", {
+          ...shared,
+          draftMarkdown: "draft",
+        }).system,
+        buildPassPrompt("render_package", {
+          ...shared,
+          revisedDraftMarkdown: "draft",
+        }).system,
+      ];
+
+      for (const prompt of systemPrompts) {
+        expect(prompt).toMatch(
+          /excluded.*value hypothesis.*external benchmark/i,
+        );
+        expect(prompt).toMatch(
+          /do not repeat.*amount.*percentage.*range.*date/i,
+        );
+        expect(prompt).toMatch(/no finance-validated benefit is established/i);
+      }
+    },
+  );
 });
