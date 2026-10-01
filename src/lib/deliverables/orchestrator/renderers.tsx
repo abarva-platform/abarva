@@ -64,6 +64,13 @@ import type {
 } from "./types";
 import { clientCompleteReasonLabel } from "./client-complete-labels";
 import { humanizeSourceFamily } from "./source-register";
+import {
+  MAX_SLIDE_BULLETS,
+  governingFontSize,
+  normaliseSlideText,
+  sectionSlideText,
+  stripStructuralScaffolding,
+} from "./slide-text";
 
 // ── AI-generated disclosure — the single source of truth for this exact
 // text, per the Moves Continuous Execution Directive's requirement that
@@ -76,6 +83,11 @@ import { humanizeSourceFamily } from "./source-register";
 // of governance-critical text) worth fixing here rather than repeating a
 // third time. ──
 const DOC_STATUS_LABEL = "AI-generated working draft — not approved.";
+// The cover eyebrow is part of the same disclosure. Every artifact these
+// renderers produce is an unapproved draft (the approved version is a separate
+// uploaded record), so the eyebrow may not assert a grade the status line
+// directly beneath it denies.
+const DOC_COVER_EYEBROW = "AbarVa · Working draft for review";
 const DOC_STATUS_STEPS = [
   "Review for factual accuracy and completeness.",
   "Resolve highlighted assumptions and evidence gaps.",
@@ -361,9 +373,8 @@ function replaceSectionJsonObjects(markdown: string): string {
 }
 
 function normalizeSectionMarkdown(markdown: string, title: string): string {
-  return withoutDuplicateSectionHeading(
-    replaceSectionJsonObjects(markdown),
-    title,
+  return stripStructuralScaffolding(
+    withoutDuplicateSectionHeading(replaceSectionJsonObjects(markdown), title),
   );
 }
 
@@ -374,7 +385,7 @@ export function renderDeliverableDocx(doc: RenderableDeliverable): Document {
   const compactMovesCharter = doc.deliverableType === "charter";
 
   // Cover
-  children.push(eyebrowParagraph("AbarVa · Board-grade deliverable"));
+  children.push(eyebrowParagraph(DOC_COVER_EYEBROW));
   children.push(coverTitleParagraph(doc.title));
   if (doc.subtitle) children.push(coverSubtitleParagraph(doc.subtitle));
   children.push(
@@ -1403,7 +1414,7 @@ export function renderDeliverableHtml(doc: RenderableDeliverable): string {
   .doc-status .status-line{font-weight:600;color:#5A4A1A}
   .doc-status ol{margin:6px 0 6px 18px;padding:0}
   </style></head><body><div class="wrap">
-  <div class="eyebrow">AbarVa · Board-grade deliverable</div>
+  <div class="eyebrow">${esc(DOC_COVER_EYEBROW)}</div>
   <h1>${esc(doc.title)}</h1>
   ${doc.subtitle ? `<div class="muted" style="color:var(--muted);font-size:13.5px;margin:2px 0">${esc(doc.subtitle)}</div>` : ""}
   <p class="eyebrow">${esc(doc.clientDisplayName)} — ${esc(doc.initiativeDisplayName)}</p>
@@ -1578,9 +1589,7 @@ export function renderDeliverablePdf(
       producer="AbarVa"
     >
       <PdfPage size="LETTER" style={PDF_STYLES.page} wrap>
-        <PdfText style={PDF_STYLES.eyebrow}>
-          AbarVa · Board-grade deliverable
-        </PdfText>
+        <PdfText style={PDF_STYLES.eyebrow}>{DOC_COVER_EYEBROW}</PdfText>
         <PdfText style={PDF_STYLES.title}>{doc.title}</PdfText>
         {doc.subtitle ? (
           <PdfText style={{ ...PDF_STYLES.meta, fontSize: 12 }}>
@@ -1716,78 +1725,18 @@ const PPTX_COLOR = {
   white: "FFFFFF",
 } as const;
 
-const MAX_BULLETS_PER_SLIDE = 6;
-const MAX_PPTX_GOVERNING_WORDS = 18;
-const MAX_PPTX_BULLET_WORDS = 12;
+const MAX_BULLETS_PER_SLIDE = MAX_SLIDE_BULLETS;
+
+// `bullet: { type: "bullet" }` reads as a request for a bullet and emits none:
+// the library treats `type` as "number or nothing", so every list on every
+// slide rendered as unmarked, unspaced paragraphs. With points now printed as
+// whole sentences, a list a reader cannot separate into its items is not a
+// list. The space after each item is what keeps a wrapped point from reading
+// as part of the next one.
+const PPTX_BULLET = { bullet: true, paraSpaceAfter: 6 } as const;
 
 function safePptxText(s: string): string {
-  return s.replace(/\s+/g, " ").trim();
-}
-
-function truncateWords(text: string, maxWords: number): string {
-  const clean = safePptxText(text);
-  const words = clean.split(" ").filter(Boolean);
-  if (words.length <= maxWords) return clean;
-  return `${words.slice(0, maxWords).join(" ")}...`;
-}
-
-function cleanMarkdownForSlideText(line: string): string {
-  return safePptxText(
-    line
-      .replace(/^[-*]\s+/, "")
-      .replace(/^\d+[.)]\s+/, "")
-      .replace(/\*\*([^*]+)\*\*/g, "$1")
-      .replace(/\*([^*]+)\*/g, "$1")
-      .replace(/`([^`]+)`/g, "$1"),
-  );
-}
-
-/** Condense a section's authored markdown into a handful of slide bullets —
- *  a slide is scanned, not read, so full prose paragraphs never belong on
- *  the face of it (the full text still lives in the DOCX/PDF/HTML export). */
-function condensedBulletsFromMarkdown(markdown: string, max: number): string[] {
-  const governingLine = firstMarkdownLine(markdown);
-  const sourceLines = markdown
-    .split("\n")
-    .map((line) => line.trim())
-    .filter(Boolean)
-    .filter((line) => !/^#{1,6}\s/.test(line))
-    .filter((line) => !/^\|.*\|$/.test(line));
-  const hasExplicitBullets = sourceLines.some((line) =>
-    /^(?:[-*]\s+|\d+[.)]\s+)/.test(line),
-  );
-  const candidates = sourceLines.flatMap((line) => {
-    const cleaned = cleanMarkdownForSlideText(line);
-    if (!cleaned) return [];
-    if (hasExplicitBullets && /^(?:[-*]\s+|\d+[.)]\s+)/.test(line)) {
-      return [cleaned];
-    }
-    if (hasExplicitBullets) return [];
-    return splitSlideSentences(cleaned);
-  });
-
-  return candidates
-    .filter((line) => line !== governingLine)
-    .slice(0, max)
-    .map((line) => truncateWords(line, MAX_PPTX_BULLET_WORDS));
-}
-
-function splitSlideSentences(text: string): string[] {
-  return text
-    .split(/(?<=[.!?])\s+(?=[A-Z\[\u201c"'])/u)
-    .map((sentence) => sentence.trim())
-    .filter(Boolean);
-}
-
-/** First non-empty, non-heading line of a section's markdown — used as the
- *  slide's governing message when the section title alone is too generic. */
-function firstMarkdownLine(markdown: string): string | null {
-  const line = markdown
-    .split("\n")
-    .map((l) => l.trim())
-    .find((l) => l.length > 0 && !/^#{1,6}\s/.test(l) && !/^\|.*\|$/.test(l));
-  if (!line) return null;
-  return splitSlideSentences(cleanMarkdownForSlideText(line))[0] ?? null;
+  return normaliseSlideText(s);
 }
 
 type PptxGenJSCtor = (typeof import("pptxgenjs"))["default"];
@@ -1946,7 +1895,7 @@ function addPptxAuthoredSlide(
         (point) =>
           ({
             text: point,
-            options: { bullet: { type: "bullet" as const } },
+            options: PPTX_BULLET,
           }) as const,
       ),
       {
@@ -2143,7 +2092,7 @@ export async function renderDeliverablePptx(
   // Title slide.
   const titleSlide = pptx.addSlide();
   titleSlide.background = { color: PPTX_COLOR.ink };
-  titleSlide.addText("ABARVA · BOARD-GRADE DELIVERABLE", {
+  titleSlide.addText(DOC_COVER_EYEBROW.toUpperCase(), {
     x: 0.72,
     y: 0.7,
     w: 10,
@@ -2246,42 +2195,45 @@ export async function renderDeliverablePptx(
         section.bodyMarkdown,
         section.title,
       );
-      const governing = truncateWords(
-        firstMarkdownLine(sectionMarkdown) ?? section.title,
-        MAX_PPTX_GOVERNING_WORDS,
+      // A slide is scanned, not read — but what is on it is a whole claim.
+      // Anything too long to print whole is held off the face and carried in
+      // the notes; nothing is cut at a word count. See ./slide-text.
+      const slideText = sectionSlideText(
+        sectionMarkdown,
+        section.title,
+        MAX_BULLETS_PER_SLIDE,
       );
-      slide.addText(safePptxText(section.title), {
-        x: 0.72,
-        y: 0.85,
-        w: 11.8,
-        h: 0.5,
-        fontFace: "Arial",
-        fontSize: 11,
-        bold: true,
-        color: PPTX_COLOR.accent,
-        charSpacing: 0.5,
-      });
-      slide.addText(governing, {
+      if (!slideText.governingIsTitle) {
+        slide.addText(safePptxText(section.title), {
+          x: 0.72,
+          y: 0.85,
+          w: 11.8,
+          h: 0.5,
+          fontFace: "Arial",
+          fontSize: 11,
+          bold: true,
+          color: PPTX_COLOR.accent,
+          charSpacing: 0.5,
+        });
+      }
+      slide.addText(slideText.governing, {
         x: 0.72,
         y: 1.35,
         w: 11.8,
         h: 1.1,
         fontFace: "Georgia",
-        fontSize: 22,
+        fontSize: governingFontSize(slideText.governing),
         color: PPTX_COLOR.ink,
         fit: "shrink",
       });
-      const bullets = condensedBulletsFromMarkdown(
-        sectionMarkdown,
-        MAX_BULLETS_PER_SLIDE,
-      );
+      const bullets = slideText.bullets;
       if (bullets.length > 0) {
         slide.addText(
           bullets.map(
             (b) =>
               ({
                 text: b,
-                options: { bullet: { type: "bullet" as const } },
+                options: PPTX_BULLET,
               }) as const,
           ),
           {
@@ -2297,11 +2249,19 @@ export async function renderDeliverablePptx(
           },
         );
       }
+      const noteLines: string[] = [];
       if (section.citationsUsed.length > 0) {
-        slide.addNotes(
+        noteLines.push(
           `Grounding: ${section.groundingMode}; citations [${section.citationsUsed.join(", ")}]`,
         );
       }
+      if (slideText.heldOffFace.length > 0) {
+        noteLines.push(
+          "In full (too long for the slide face):",
+          ...slideText.heldOffFace.map((claim) => `• ${claim}`),
+        );
+      }
+      if (noteLines.length > 0) slide.addNotes(noteLines.join("\n"));
       slideNumber += 1;
     }
 
@@ -2356,7 +2316,7 @@ export async function renderDeliverablePptx(
           (b) =>
             ({
               text: b,
-              options: { bullet: { type: "bullet" as const } },
+              options: PPTX_BULLET,
             }) as const,
         ),
       ],
@@ -2387,7 +2347,7 @@ export async function renderDeliverablePptx(
           (b) =>
             ({
               text: b,
-              options: { bullet: { type: "bullet" as const } },
+              options: PPTX_BULLET,
             }) as const,
         ),
       ],
