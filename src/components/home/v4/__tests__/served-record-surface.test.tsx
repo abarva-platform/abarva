@@ -567,6 +567,49 @@ describe("the served path", () => {
     expect(prior).toHaveTextContent("44 interviewed leaders");
   });
 
+  it("does not call unverified chapter interpretation reviewed", () => {
+    const bundle = servedBundle();
+    window.location.hash = "leadership_perspective";
+    const { container } = render(
+      <HomeV4App
+        bundle={bundle}
+        tenantKey="meridian-health"
+        recordSource={{
+          kind: "ecl_serving_projection",
+          canonicalSnapshotHash: bundle.provenance.canonical_snapshot_hash,
+          contextVersion: {
+            ...bundle.contextVersion!,
+            coherence: "unverified",
+          },
+        }}
+      />,
+    );
+    const prior = container.querySelector(
+      "[data-home-reviewed-interpretation]",
+    );
+    expect(prior).toHaveTextContent("Earlier interpretation");
+    expect(prior).toHaveTextContent("lineage not verified");
+    expect(prior).not.toHaveTextContent("Prior reviewed interpretation");
+  });
+
+  it("closes prior interpretation when navigating to another mixed chapter", () => {
+    const { container } = open("strategy_value_creation");
+    const prior = container.querySelector(
+      "[data-home-reviewed-interpretation]",
+    )!;
+    fireEvent.click(prior.querySelector("summary")!);
+    expect(prior).toHaveAttribute("open");
+
+    fireEvent.click(screen.getByRole("link", { name: /Executive Brief/ }));
+    expect(window.location.hash).toBe("#executive_brief");
+    expect(
+      container.querySelector("[data-home-reviewed-interpretation]"),
+    ).not.toHaveAttribute("open");
+    expect(container.querySelector("h1")).toHaveTextContent(
+      "Current record, interpretation pending review",
+    );
+  });
+
   it("keeps the perspective section inside the prior interpretation", () => {
     const value = servedBundle();
     (
