@@ -175,9 +175,8 @@ export interface BuildLiveStageInput {
 }
 
 /**
- * Build a live StageAnalyticsView, or null when the facts are too thin to compute
- * a single lever. The waterfall beat is live + cited; the intel lead reflects the
- * real computed / needs-evidence counts.
+ * Build a live StageAnalyticsView when value facts compute, or when a complete
+ * RFP clause assessment is supplied. The latter never creates a value waterfall.
  */
 export function buildLiveStageView(
   input: BuildLiveStageInput,
@@ -190,37 +189,40 @@ export function buildLiveStageView(
   const factMap: EventFactMap = input.inputs;
   const leverResults = evaluateValueLevers(archetype, factMap);
   const waterfall = buildValueWaterfall(leverResults);
+  const hasQuantifiedValue = waterfall.computedLeverCount > 0;
+  const hasRfpChecklist = input.stageKey === RFP_STAGE_KEY &&
+    input.rfpClausePresentLeverKeys !== undefined &&
+    (input.inputs.rfp_clause_present === 0 || input.inputs.rfp_clause_present === 1);
 
-  // Gate: only go live when at least one lever actually computed. Otherwise the
-  // canvas falls back to the honestly-marked sample view.
-  if (waterfall.computedLeverCount < 1) return null;
+  if (!hasQuantifiedValue && !hasRfpChecklist) return null;
 
-  const waterfallView = buildLiveWaterfallView({
+  const waterfallView = hasQuantifiedValue ? buildLiveWaterfallView({
     leverResults,
     archetypeId: archetype.id,
     citations: input.citations,
     baselineLabel: input.baselineLabel ?? 'Committed value baseline',
     baselineAmount: input.baselineAmount ?? 0,
-  });
+  }) : undefined;
 
-  const rollup = quantifiedRollup(waterfallView.bands);
+  const rollup = waterfallView ? quantifiedRollup(waterfallView.bands) : null;
   const insufficientCount = waterfall.insufficientLevers.length;
 
-  const intelPoints: IntelPointView[] = [
-    {
+  const intelPoints: IntelPointView[] = hasQuantifiedValue && rollup ? [{
       tone: 'found',
       tag: 'Computed',
       text:
         `${rollup.quantifiedBandCount} value ${rollup.quantifiedBandCount === 1 ? 'lever' : 'levers'} ` +
         `computed from committed facts — every figure traces to a cited ${'source_event_facts'} row.`,
-    },
-    {
+    }, {
       tone: 'archetype',
       tag: 'Archetype',
       text: `${archetype.name} value-lever rules drove the classification into the five value types.`,
-    },
-  ];
-  if (insufficientCount > 0) {
+    }] : [{
+      tone: 'found',
+      tag: 'Checklist reviewed',
+      text: `${input.rfpClausePresentLeverKeys?.size ?? 0} of ${archetype.valueLeverRules?.length ?? 0} value-lever clauses have an included-clause fact. An explicit absence is not an included clause.`,
+    }];
+  if (hasQuantifiedValue && insufficientCount > 0) {
     intelPoints.push({
       tone: 'muted',
       tag: 'Needs evidence',
@@ -322,8 +324,9 @@ export function buildLiveStageView(
     purpose: scaffold.purpose,
     intel: {
       provenance: 'live',
-      lead:
-        "Here's the value we computed from your committed facts — each band is math over a cited fact, not an estimate.",
+      lead: hasQuantifiedValue
+        ? "Here's the value we computed from your committed facts — each band is math over a cited fact, not an estimate."
+        : 'The RFP clause checklist has persisted decisions. No monetary value is computed from this review.',
       points: intelPoints,
     },
     // Derived where `factBeats` is present; otherwise the intake beats are not

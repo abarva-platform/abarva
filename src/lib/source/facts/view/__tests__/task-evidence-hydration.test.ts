@@ -35,6 +35,17 @@ const APP_INVENTORY_TASK: StageTaskView = {
   factTemplateCode: "APP_INVENTORY_V1",
 };
 
+const RFP_CLAUSE_TASK: StageTaskView = {
+  id: "rfp.clause-coverage",
+  title: "Confirm RFP clause coverage",
+  subtitle: "One row per value lever",
+  type: "provide",
+  state: "todo",
+  guide: "Upload the checklist.",
+  cta: "Confirm clause coverage",
+  factTemplateCode: "RFP_CLAUSES_V1",
+};
+
 const PRIOR_BASELINE_TASK: StageTaskView = {
   id: "scope.prior-baseline",
   title: "Review the prior commercial baseline",
@@ -107,6 +118,35 @@ describe("templateFactsPresent", () => {
 });
 
 describe("hydrateTaskEvidenceState", () => {
+  it("credits a fully assessed RFP checklist even when every persisted value is zero", () => {
+    const hydrated = hydrateTaskEvidenceState({
+      tasks: [RFP_CLAUSE_TASK],
+      factInputs: { rfp_clause_present: 0 },
+      stageKey: "rfp",
+      rfpClauseChecklistComplete: true,
+    });
+    expect(hydrated[0].evidenceComplete).toBe(true);
+  });
+
+  it("does not credit a partial RFP checklist merely because one fact exists", () => {
+    const hydrated = hydrateTaskEvidenceState({
+      tasks: [RFP_CLAUSE_TASK],
+      factInputs: { rfp_clause_present: 0 },
+      stageKey: "rfp",
+      rfpClauseChecklistComplete: false,
+    });
+    expect(hydrated[0].evidenceComplete).toBeUndefined();
+  });
+
+  it("does not credit an RFP checklist without the collapsed persisted fact", () => {
+    const hydrated = hydrateTaskEvidenceState({
+      tasks: [RFP_CLAUSE_TASK],
+      factInputs: {},
+      stageKey: "rfp",
+      rfpClauseChecklistComplete: true,
+    });
+    expect(hydrated[0].evidenceComplete).toBeUndefined();
+  });
   it("marks a template task complete when the event HAS its facts", () => {
     const inputs = { [volumetricsFactKey()]: 4200 };
     const hydrated = hydrateTaskEvidenceState({

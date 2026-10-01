@@ -33,7 +33,10 @@ import {
   readVendorLeverResponses,
   readVendorBids,
 } from "@/lib/source/facts/event-facts-reader";
-import { buildLiveStageView } from "@/lib/source/facts/view/stage-analytics-builder";
+import {
+  buildLiveStageView,
+  resolveValueArchetype,
+} from "@/lib/source/facts/view/stage-analytics-builder";
 import { buildStepInsight } from "@/lib/source/facts/view/step-insight-builder";
 import {
   hydrateTaskEvidenceState,
@@ -325,6 +328,7 @@ export default async function SourceEventDetailPage({
     // checklist's done-state can be re-derived from persisted evidence on load
     // (a reload / tab switch must reflect uploaded facts, not reset to empty).
     let hydrationFactInputs: Record<string, number> = {};
+    let rfpClauseChecklistComplete = false;
     let analyticsEvidenceStates: Awaited<
       ReturnType<typeof listEffectiveEvidenceStatesForEvent>
     > = [];
@@ -501,17 +505,24 @@ export default async function SourceEventDetailPage({
         // RFP clause coverage reads a per-lever presence signal (one
         // rfp_clause_present fact per lever, keyed by lever key in entity_ref)
         // that the collapsed event-facts read cannot express. Only fetch it on the
-        // RFP stage. `undefined` (no signal) keeps the insight an honest MODEL;
-        // a set (even empty) flips it LIVE.
+        // RFP stage. Only a valid decision for every required lever becomes a
+        // live checklist; a partial assessment remains unproven.
         let rfpClausePresentLeverKeys: ReadonlySet<string> | undefined =
           undefined;
         if (viewStage === "rfp") {
-          const { signalPresent, presentLeverKeys } =
+          const { signalPresent, presentLeverKeys, assessedLeverKeys } =
             await readRfpClausePresentLeverKeys({
               eventId: event.id,
               clientKey: activeClient.key,
             });
-          rfpClausePresentLeverKeys = signalPresent
+          const requiredLeverKeys = resolveValueArchetype(
+            event.eventType,
+            event.classifiedCategory,
+          )?.valueLeverRules?.map((rule) => rule.key) ?? [];
+          rfpClauseChecklistComplete = signalPresent &&
+            requiredLeverKeys.length > 0 &&
+            requiredLeverKeys.every((key) => assessedLeverKeys.has(key));
+          rfpClausePresentLeverKeys = rfpClauseChecklistComplete
             ? presentLeverKeys
             : undefined;
         }
@@ -711,6 +722,7 @@ export default async function SourceEventDetailPage({
             evidenceStates: analyticsEvidenceStates,
             stageKey: journeyStageView.stageKey,
             verifiedDelegatedSponsorAcknowledgement,
+            rfpClauseChecklistComplete,
           }),
         };
       } catch (error) {
