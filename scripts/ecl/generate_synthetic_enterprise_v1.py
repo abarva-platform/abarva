@@ -33,7 +33,7 @@ FAMILIES = {
     "SP09_GRC": "GRC_Risk_Control_Exceptions_SYNTHETIC.csv",
     "SP10_KPI_Operations": "KPI_Operations_Summary_SYNTHETIC.csv",
     "SP11_AI_Usage_Models": "AI_Usage_Telemetry_SYNTHETIC.csv",
-    "SP12_Evidence_Room": "Owner_Attestation_and_Evidence_Register_SYNTHETIC.csv",
+    "SP12_Evidence_Room": "Evidence_Request_Register_SYNTHETIC.csv",
     "SP13_Data_Flows_Integrations": "Data_Flows_Integrations_SYNTHETIC.csv",
     "SP14_Deployments_Hosting": "Application_Deployments_Hosting_SYNTHETIC.csv",
     "SP15_Enterprise_Structure": "Business_Segments_SYNTHETIC.csv",
@@ -222,6 +222,10 @@ def build(definition: dict[str, Any]) -> dict[str, Any]:
         raise ValueError("Every application product needs a declared function ID")
     if not set(definition["app_function_ids"].values()).issubset(function_by_id):
         raise ValueError("Application product references an unknown function ID")
+    workflows = definition["module_workflows_by_function"]
+    service_areas = definition["service_areas"]
+    if set(workflows) != set(function_by_id) or not service_areas or any(len(items) != 3 for items in workflows.values()):
+        raise ValueError("Every function needs three declared module workflows and at least one service area")
     vendor_number_by_name = {name: index for index, name in enumerate(vendors, start=1)}
     app_weights = [
         (1 + (8 if i % 31 == 0 else 0) + (4 if i % 11 == 0 else 0))
@@ -238,10 +242,18 @@ def build(definition: dict[str, Any]) -> dict[str, Any]:
         vendor_id = f"VEN-{vendor_number_by_name[supplier_name]:04d}"
         segment_id = function["segment_id"]
         owner_id = "" if i % 61 == 0 else function["owner_id"]
-        name = product if i <= len(app_products) else f"{product} - service area {(i - 1) // len(app_products) + 1:02d}"
+        module_number = (i - 1) // len(app_products)
+        is_module = module_number > 0
+        parent_application_id = f"APP-{(i - 1) % len(app_products) + 1:04d}" if is_module else ""
+        workflow = workflows[function["id"]][(module_number - 1) % 3] if is_module else ""
+        service_area = service_areas[((module_number - 1) // 3) % len(service_areas)] if is_module else ""
+        name = f"{product} - {workflow.title()} ({service_area})" if is_module else product
         add("SP03_CMDB", "application", app_id, name, {
             "application_id": app_id, "application_name": name,
             "base_product_name": product, "vendor_id": vendor_id,
+            "application_grain": "governed_module" if is_module else "logical_product",
+            "parent_application_id": parent_application_id,
+            "module_workflow": workflow, "service_area": service_area,
             "vendor_name": supplier_name,
             "business_function_id": function["id"], "business_function": function["name"],
             "segment_id": segment_id, "business_owner_id": owner_id,
@@ -257,12 +269,15 @@ def build(definition: dict[str, Any]) -> dict[str, Any]:
             "hosting_model": ("saas", "on_prem", "aws_hosted", "azure_hosted")[i % 4],
             "annual_cost_usd": money(round(436500000 * app_weights[i - 1] / app_weight_total)),
             "annual_cost_basis": "synthetic_modeled",
+            "cost_scope": "module_run_allocation" if is_module else "product_license_allocation",
             "interface_count": 2 + i % 11, "environment_count": 1 + i % 4,
             "user_count_estimate": 75 + i * 19 % 12000,
             "known_gaps": "Business owner not attributed." if not owner_id else "",
         })
         relation(function["id"], "SUPPORTED_BY", app_id)
         relation(app_id, "SUPPLIED_BY", vendor_id)
+        if is_module:
+            relation(app_id, "MODULE_OF", parent_application_id)
         if owner_id:
             relation(app_id, "ACCOUNTABLE_TO", owner_id)
         apps.append(app_id)
@@ -479,8 +494,13 @@ def build(definition: dict[str, Any]) -> dict[str, Any]:
         risk_id = f"RISK-{i:04d}"
         function = functions[pick(("risk-function", i), len(functions))]
         target = apps[pick(("risk-app", i), len(apps))] if i % 3 else platforms[pick(("risk-platform", i), len(platforms))]
-        add("SP09_GRC", "risk", risk_id, f"{('PHI access', 'Recovery', 'Vendor concentration', 'Delivery')[i % 4]} risk {i:02d}", {
-            "risk_or_control_id": risk_id, "risk_type": ("privacy", "resilience", "vendor", "delivery")[i % 4],
+        risk_type = weighted_pick(("risk-type", i), [("privacy", 28), ("resilience", 22),
+                                                     ("vendor", 18), ("delivery", 32)])
+        risk_prefix = {"privacy": "PHI handling exposure", "resilience": "Recovery capacity gap",
+                       "vendor": "Supplier dependency", "delivery": "Delivery dependency"}[risk_type]
+        risk_name = f"{risk_prefix}: {objects[target]['name']} / {function['name']} ({risk_id})"
+        add("SP09_GRC", "risk", risk_id, risk_name, {
+            "risk_or_control_id": risk_id, "risk_name": risk_name, "risk_type": risk_type,
             "business_function_id": function["id"], "business_function": function["name"],
             "object_ref": target, "severity": "critical" if i % 13 == 0 else "high" if i % 4 == 0 else "medium",
             "control_state": "unknown" if i % 11 == 0 else "partially_effective" if i % 3 == 0 else "effective",
@@ -547,15 +567,16 @@ def build(definition: dict[str, Any]) -> dict[str, Any]:
         relation(interview_id, "ATTRIBUTED_TO_ROLE", owner["id"])
         relation(interview_id, "GROUNDED_IN", theme["evidence_object_id"])
 
-    for i in range(1, 501):
+    for i in range(1, 225):
         evidence_id = f"EVID-{i:04d}"
-        subject = f"RISK-{i:04d}" if i <= 200 else f"PROG-{(i - 201) % 24 + 1:04d}"
-        add("SP12_Evidence_Room", "evidence", evidence_id, f"Synthetic evidence index {i:03d}", {
-            "evidence_id": evidence_id, "artifact_type": "attestation" if i % 4 == 0 else "dashboard_export",
-            "subject_object_id": subject, "document_date": as_of,
-            "verification_state": "not_client_attested", "page_ref": "", "span_ref": "",
+        subject = f"RISK-{i:04d}" if i <= 200 else f"PROG-{i - 200:04d}"
+        add("SP12_Evidence_Room", "evidence_request", evidence_id, f"Evidence requested for {subject}", {
+            "evidence_id": evidence_id, "subject_object_id": subject,
+            "requested_artifact_type": "control_attestation" if i <= 200 else "benefit_validation",
+            "request_state": "requested_not_received", "verification_state": "not_received",
+            "document_date": "", "page_ref": "", "span_ref": "",
         })
-        relation(evidence_id, "SUPPORTS", subject)
+        relation(evidence_id, "EVIDENCE_REQUESTED_FOR", subject)
 
     # One historical source is intentionally stale; a second source defines the
     # same KPI differently. Both conditions are explicit, never reconciled away.
@@ -616,7 +637,7 @@ def build(definition: dict[str, Any]) -> dict[str, Any]:
             "12 unattributed applications", "one program without a priority relationship",
             "one KPI with conflicting definitions", "one stale data source",
             "one unsupported value hypothesis", "one external benchmark", "one modelled leadership observation",
-            "one renewal notice risk", "one unresolved dependency",
+            "one renewal notice risk", "one unresolved dependency", "224 evidence requests with no received artifact",
         ],
     }
 
@@ -666,6 +687,26 @@ def validate(manifest: dict[str, Any]) -> dict[str, Any]:
     periods = Counter(row["period"] for row in rows["SP10_KPI_Operations"])
     if periods["2026-Q2"] != 36 or periods["2026-Q3"] != 37:
         raise ValueError("Every KPI needs comparable Q2 and Q3 observations")
+    apps = rows["SP03_CMDB"]
+    app_by_id = {row["application_id"]: row for row in apps}
+    products = [row for row in apps if row["application_grain"] == "logical_product"]
+    modules = [row for row in apps if row["application_grain"] == "governed_module"]
+    if len(products) != 24 or len(modules) != 726 or len({row["application_name"] for row in apps}) != 750:
+        raise ValueError("Application product/module grain is not unique or complete")
+    if any(row["parent_application_id"] not in app_by_id or
+           app_by_id[row["parent_application_id"]]["application_grain"] != "logical_product" or
+           any(row[key] != app_by_id[row["parent_application_id"]][key]
+               for key in ("base_product_name", "vendor_id", "business_function_id"))
+           for row in modules):
+        raise ValueError("Application module does not reconcile to its parent product")
+    evidence_requests = rows["SP12_Evidence_Room"]
+    if len(evidence_requests) != 224 or any(row["request_state"] != "requested_not_received" or
+           row["verification_state"] != "not_received" or row["subject_object_id"] not in objects
+           for row in evidence_requests):
+        raise ValueError("Evidence requests were mistaken for received proof")
+    edge_counts = Counter(edge["relationship_type"] for edge in manifest["relationships"])
+    if edge_counts["MODULE_OF"] != 726 or edge_counts["EVIDENCE_REQUESTED_FOR"] != 224 or edge_counts["SUPPORTS"]:
+        raise ValueError("Product/module or evidence-request relationships changed")
     return {"object_counts": dict(sorted(counts.items())), "relationship_count": len(manifest["relationships"]),
             "unresolved_relationships": unresolved,
             "source_family_rows": {family: len(family_rows) for family, family_rows in rows.items()},

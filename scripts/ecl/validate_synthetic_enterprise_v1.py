@@ -139,6 +139,22 @@ def validate(directory: Path) -> dict[str, Any]:
         require(counts[kind] >= floor, f"Too few {kind} objects")
 
     apps = rows["SP03_CMDB"]
+    app_by_id = {row["application_id"]: row for row in apps}
+    products = [row for row in apps if row["application_grain"] == "logical_product"]
+    modules = [row for row in apps if row["application_grain"] == "governed_module"]
+    require(len(products) == 24 and len(modules) == 726 and
+            len({row["application_name"] for row in apps}) == len(apps),
+            "Application product/module grain is not unique or complete")
+    require(all(not row["parent_application_id"] and not row["module_workflow"] and not row["service_area"]
+                for row in products), "Logical product has module fields")
+    require(all(row["parent_application_id"] in app_by_id and
+                app_by_id[row["parent_application_id"]]["application_grain"] == "logical_product" and
+                row["module_workflow"] and row["service_area"] and
+                all(row[key] == app_by_id[row["parent_application_id"]][key]
+                    for key in ("base_product_name", "vendor_id", "business_function_id"))
+                for row in modules), "Governed module has no consistent parent product")
+    edge_counts = Counter(edge["relationship_type"] for edge in manifest["relationships"])
+    require(edge_counts["MODULE_OF"] == len(modules), "Module relationships are incomplete")
     contracts = rows["SP08_Vendor_Contract"]
     programs = rows["SP07_PPM"]
     metrics = rows["SP10_KPI_Operations"]
@@ -146,7 +162,6 @@ def validate(directory: Path) -> dict[str, Any]:
     require(sum(not row["business_owner_id"] for row in apps) == 12, "Application ownership gap changed")
     require(all(row["vendor_id"] in objects and row["business_function_id"] in objects for row in apps),
             "Application identity join is broken")
-    app_by_id = {row["application_id"]: row for row in apps}
     epic = next(row for row in apps if row["application_id"] == "APP-0007")
     require(epic["business_function_id"] == "FUNC-0005" and epic["criticality_tier"] == "tier_1",
             "Core clinical application mapping is implausible")
@@ -203,6 +218,20 @@ def validate(directory: Path) -> dict[str, Any]:
     require(all(row["evidence_object_id"] in objects and "Not a transcribed client statement." in row["synthetic_answer"]
                 for row in rows["SP01_Documents_Interviews"]),
             "Leadership material lost its evidence or synthetic basis")
+    requests = rows["SP12_Evidence_Room"]
+    require(len(requests) == 224 and counts["evidence_request"] == 224,
+            "Evidence-request register changed size or object type")
+    require(all(row["request_state"] == "requested_not_received" and
+                row["verification_state"] == "not_received" and
+                not row["document_date"] and not row["page_ref"] and not row["span_ref"] and
+                row["subject_object_id"] in objects for row in requests),
+            "Unreceived evidence was presented as received proof")
+    require(edge_counts["EVIDENCE_REQUESTED_FOR"] == 224 and edge_counts["SUPPORTS"] == 0,
+            "Evidence request has a supporting-proof edge")
+    require(all(row["evidence_ref"] in objects and
+                objects[row["evidence_ref"]]["object_type"] == "evidence_request" and
+                objects[row["evidence_ref"]]["attributes"]["subject_object_id"] == row["risk_or_control_id"]
+                for row in rows["SP09_GRC"]), "Risk evidence request does not reconcile")
     require(all(row["vendor_id"] in objects and row["business_function_id"] in objects
                 for row in rows["SP11_AI_Usage_Models"]),
             "AI use case owner or supplier join is broken")

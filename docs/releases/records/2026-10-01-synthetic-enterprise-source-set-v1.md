@@ -10,7 +10,7 @@
 
 ## Plain-English Summary
 
-Adds one deterministic synthetic enterprise definition and generator. It emits owner-shaped source files, stable object identities, typed relationships, source provenance, two comparable KPI periods, declared imperfections, and one externally sourced benchmark with an explicit comparability boundary. This release does not load the data or change the record currently shown in Home.
+Adds one deterministic synthetic enterprise definition and generator. It emits owner-shaped source files, stable object identities, typed relationships, source provenance, two comparable KPI periods, declared imperfections, and one externally sourced benchmark with an explicit comparability boundary. The application register distinguishes logical products from governed workflow modules, and the evidence-room register contains requests for missing artifacts, not proof. This release does not load the data or change the record currently shown in Home.
 
 ## Layer Impact
 
@@ -33,12 +33,14 @@ Adds one deterministic synthetic enterprise definition and generator. It emits o
 - Deterministic source-set generator and independent output validator.
 - Mutation and reproducibility tests.
 - A public-source benchmark cited to the issuing agency, kept separate from synthetic tenant metrics.
+- 24 logical products and 726 governed modules with explicit parent relationships; these are different grains, not 750 distinct products.
+- 224 unreceived evidence requests linked to their subjects without supporting-proof edges.
 - Dataset onboarding manifest recording delegated synthetic-lab review; no real-client attestation.
 
 ## QA / Validation
 
 - Generated the source set twice and confirmed identical file-set hashes.
-- Independently validated 22 file hashes and row counts, exact object/relationship-to-source-row reconciliation, temporal KPI observations, known gaps, application/program/contract joins, and distribution checks.
+- Independently validated 22 file hashes and row counts, exact object/relationship-to-source-row reconciliation, temporal KPI observations, known gaps, application/program/contract joins, product/module grain, missing-proof requests, and distribution checks.
 - Mutation tests reject changed source bytes, changed object attributes, undeclared graph endpoints, and a tenant identity changed outside the registry-backed definition.
 - `node --test scripts/ecl/__tests__/run-synthetic-enterprise-v1-tests.mjs` passed.
 - Context-corpus manifest validation and release check must pass before merge.

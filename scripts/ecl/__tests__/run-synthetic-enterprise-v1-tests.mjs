@@ -30,6 +30,8 @@ test("one definition reproducibly emits a coherent, imperfect enterprise source 
   assert.equal(a.source_set_hash, b.source_set_hash);
   assert.equal(a.files, 22);
   assert.equal(a.object_counts.application, 750);
+  assert.equal(a.object_counts.evidence_request, 224);
+  assert.equal(a.objects, 5759);
   assert.equal(a.object_counts.contract, 230);
   assert.equal(a.object_counts.business_segment, 3);
   assert.equal(a.imperfection_checks.unresolved_program_owners, 1);
@@ -42,6 +44,13 @@ test("one definition reproducibly emits a coherent, imperfect enterprise source 
   assert.equal(edge.to_object_id, "UNKNOWN-DEPENDENCY-0001");
   assert.equal(manifest.client_attestation_state, "not_client_attested");
   assert.equal(manifest.review_state, "candidate_not_loaded");
+  const apps = manifest.objects.filter((item) => item.object_type === "application");
+  assert.equal(apps.filter((item) => item.attributes.application_grain === "logical_product").length, 24);
+  assert.equal(apps.filter((item) => item.attributes.application_grain === "governed_module").length, 726);
+  assert.equal(new Set(apps.map((item) => item.name)).size, 750);
+  assert.equal(manifest.relationships.filter((item) => item.relationship_type === "MODULE_OF").length, 726);
+  assert.equal(manifest.relationships.filter((item) => item.relationship_type === "EVIDENCE_REQUESTED_FOR").length, 224);
+  assert.equal(manifest.relationships.filter((item) => item.relationship_type === "SUPPORTS").length, 0);
 });
 
 test("independent validator rejects a changed source file and an undeclared edge", (t) => {
