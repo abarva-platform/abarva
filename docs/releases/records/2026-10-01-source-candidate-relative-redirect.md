@@ -34,7 +34,7 @@ After a procurement reviewer accepts a candidate onto a Source event panel, the 
 
 - The new route regression failed before the fix and passed after it.
 - Restoring the absolute internal-host redirect as a mutation failed the regression.
-- Focused and adjacent tests, TypeScript, ESLint, release validation, applicable CI, and signed-in post-deploy replay are recorded in the PR and private smoke ledger as completed.
+- Focused and adjacent tests, TypeScript, ESLint, and release validation passed locally. Applicable CI and signed-in post-deploy replay must be recorded separately when complete.
 
 ## Rollout Plan
 
