@@ -1,5 +1,7 @@
 import SourceEventDetailPage from "@/app/(maestro)/source/events/[eventId]/page";
-import { getSourcingEvent } from "@/lib/source/queries";
+import { getSourcingEvent, getSourcingEventForResolvedClient } from "@/lib/source/queries";
+import { getActiveClientRow } from "@/lib/active-client";
+import { requireTenancy } from "@/lib/auth/tenancy";
 import {
   readEventFacts,
   readRfpClausePresentLeverKeys,
@@ -12,6 +14,7 @@ jest.mock("@/components/source/canvas/analytics", () => ({
 }));
 jest.mock("@/lib/source/queries", () => ({
   getSourcingEvent: jest.fn(),
+  getSourcingEventForResolvedClient: jest.fn(),
   isUuid: jest.fn(() => false),
 }));
 jest.mock("@/lib/active-client", () => ({
@@ -51,6 +54,9 @@ jest.mock("@/lib/auth/tenancy", () => ({
 }));
 
 const mockedEvent = getSourcingEvent as jest.Mock;
+const mockedResolvedEvent = getSourcingEventForResolvedClient as jest.Mock;
+const mockedClient = getActiveClientRow as jest.Mock;
+const mockedTenancy = requireTenancy as jest.Mock;
 const mockedFacts = readEventFacts as jest.Mock;
 const mockedRfp = readRfpClausePresentLeverKeys as jest.Mock;
 const eventId = "00000000-0000-4000-8000-000000000001";
@@ -64,6 +70,10 @@ async function renderRfpPage() {
 
 describe("signed-in RFP clause readback view", () => {
   beforeEach(() => {
+    jest.clearAllMocks();
+    mockedClient.mockResolvedValue({ id: "tenant-id", key: "test-client", name: "Test client" });
+    mockedTenancy.mockRejectedValue(new Error("no stage approval in test"));
+    mockedResolvedEvent.mockResolvedValue(null);
     mockedEvent.mockResolvedValue({
       id: eventId,
       code: "SYNTHETIC-RFP-001",
@@ -107,5 +117,46 @@ describe("signed-in RFP clause readback view", () => {
     const page = await renderRfpPage();
     expect(page.props.stageView).toBeUndefined();
     expect(page.props.stepInsight?.provenance).toBe("sample");
+  });
+
+  it("uses the authenticated event tenant when a client row lookup is unavailable", async () => {
+    mockedClient.mockResolvedValue(null);
+    mockedTenancy.mockResolvedValue({ clientKey: "test-client", userId: "owner" });
+    mockedResolvedEvent.mockImplementation(async () => mockedEvent());
+    const requiredKeys = resolveValueArchetype("infrastructure", "ams")!.valueLeverRules!.map((rule) => rule.key);
+    mockedRfp.mockResolvedValue({
+      signalPresent: true,
+      presentLeverKeys: new Set<string>(),
+      assessedLeverKeys: new Set(requiredKeys),
+    });
+
+    const page = await renderRfpPage();
+    expect(mockedResolvedEvent).toHaveBeenCalledWith(eventId, expect.objectContaining({
+      activeClientKey: "test-client",
+      tenancy: expect.objectContaining({ clientKey: "test-client" }),
+    }));
+    expect(mockedFacts).toHaveBeenCalledWith({ eventId, clientKey: "test-client" });
+    expect(page.props.stageView?.tasks[0].evidenceComplete).toBe(true);
+    expect(page.props.stageView?.gate.action).toBeUndefined();
+  });
+
+  it("does not use a tenancy key that cannot read the event", async () => {
+    mockedClient.mockResolvedValue(null);
+    mockedTenancy.mockResolvedValue({ clientKey: "other-client", userId: "owner" });
+    mockedResolvedEvent.mockResolvedValue(null);
+
+    const page = await renderRfpPage();
+    expect(page.props.stageView).toBeUndefined();
+    expect(mockedFacts).not.toHaveBeenCalled();
+  });
+
+  it("does not fall back without an authenticated tenant key", async () => {
+    mockedClient.mockResolvedValue(null);
+    mockedTenancy.mockResolvedValue({ userId: "owner" });
+
+    const page = await renderRfpPage();
+    expect(page.props.stageView).toBeUndefined();
+    expect(mockedResolvedEvent).not.toHaveBeenCalled();
+    expect(mockedFacts).not.toHaveBeenCalled();
   });
 });
