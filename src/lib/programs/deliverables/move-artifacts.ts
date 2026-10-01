@@ -54,6 +54,9 @@ export function artifactTypeForUpload({
   fileName: string;
   phase: number;
 }): string {
+  if (family === "session_artifact") {
+    return `session_artifact_p${phase}_${safeArtifactSlug(fileName)}`;
+  }
   if (family !== "uploaded_evidence") return family;
   const hash = createHash("sha256").update(body).digest("hex").slice(0, 12);
   return `uploaded_evidence_p${phase}_${safeArtifactSlug(fileName)}_${hash}`;
