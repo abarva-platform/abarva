@@ -2,7 +2,6 @@
   "src/app/(maestro)/admin/context-layer/__tests__",
   "src/app/(maestro)/admin/context-layer/templates/__tests__",
   "src/app/(maestro)/admin/data-layer-explorer/__tests__",
-  "src/app/(maestro)/tower/__tests__",
   "src/app/api/chat/step/__tests__",
   "src/app/api/intelligence/query/__tests__",
   "src/components/evidence/__tests__",

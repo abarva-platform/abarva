@@ -27,19 +27,19 @@
     "what": "Wire the wire_into_ci rows (by named file where the directory is partly covered), apply the LivingMoveView label update and wire it, and leave the Tower byte scan and the ProofPointFooter render held until their owners act.",
     "owner": "T-799",
     "reExecuteFirst": "Re-execute every row on the then-current main before wiring; this record is a snapshot at its base.",
-    "status": "wire_into_ci rows wired; the LivingMoveView label update applied and wired; two held rows unchanged",
+    "status": "wire_into_ci rows wired; the LivingMoveView label update applied and wired; the Tower route-scope byte scan rewritten as behaviour and wired; one held row unchanged",
     "wiredAt": "2026-09-30T23:31:34Z",
     "wiredOnBase": "a1990c045753c5c78417ff6c7a2e31ec46f0bb53",
     "reExecuted": "All 17 wire_into_ci files re-executed together on the wiring base: 17 suites, 80 cases, all green. The two workflow steps run as written: 15 suites / 64 cases and 2 suites / 16 cases.",
     "steps": [
       "Run the T-799 route handler, setup, programs and strategic-moves suites",
-      "Run the T-799 docs page and Source request-first suites by named file"
+      "Run the T-799 docs page, Source request-first and Tower route-scope suites by named file"
     ],
     "stillHeld": [
-      "rewrite_as_behavior: tenant-tower-route-scope (T-799)",
       "already_verdicted_elsewhere: ProofPointFooter (T-775)"
     ],
-    "labelUpdateAppliedOnBase": "db5e4afd325ab1831c1fdccac64f079a1eccdadf"
+    "labelUpdateAppliedOnBase": "db5e4afd325ab1831c1fdccac64f079a1eccdadf",
+    "behaviourRewriteAppliedOnBase": "70e59be18076d46f0f9a0f96f51b60038a25cf29"
   },
   "suites": [
     {
@@ -70,8 +70,8 @@
       "totalTests": 4,
       "passedTests": 3,
       "failedTests": 1,
-      "readsRepositoryFileText": true,
-      "sourceTextScanner": true,
+      "readsRepositoryFileText": false,
+      "sourceTextScanner": false,
       "textIsTheSubject": false,
       "verdict": "rewrite_as_behavior",
       "ownerItem": "T-799",
@@ -80,7 +80,19 @@
         "kind": "formatting_reflow",
         "expectedLiteralFile": "src/app/(maestro)/tower/page.tsx",
         "presentForm": "const requestedClient = trustedTenant?.clientKey ?? rawRequestedClient;"
-      }
+      },
+      "rewritten": {
+        "rewrittenInThisItem": true,
+        "reExecutedOn": "70e59be18076d46f0f9a0f96f51b60038a25cf29",
+        "drawnReadsRepositoryFileText": true,
+        "drawnSourceTextScanner": true,
+        "totalTests": 6,
+        "passedTests": 6,
+        "failedTests": 0,
+        "what": "The four byte-scan cases are replaced by six cases that call the routes with their collaborators mocked: the tenant route resolves and reads only the key assertTenantAccess returned, even with a foreign client query; a refused access reads nothing; the subsurface route is tenant-scoped and 404s an unknown surface; neither tenant route redirects; the generic route passes the client query into getActiveClientRow; and the readTowerCommandCenter result is what the view model receives. Eight product mutations were each caught, including the reversal of the trusted-key-over-query precedence that the old red case was written for.",
+        "classification": "readsRepositoryFileText and sourceTextScanner on this row describe the file as it is now, because the T-770 refusal and this record's own control re-derive them from the current bytes; the draw-time values are the two drawn* fields above. verdict, green and the red counts stay the snapshot at the record's base."
+      },
+      "wiredInThisItem": true
     },
     {
       "path": "src/app/api/cron/board-pack/__tests__/route.test.ts",

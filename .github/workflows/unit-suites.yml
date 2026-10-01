@@ -1980,8 +1980,12 @@ jobs:
       # in the same change. Two are named BY FILE: the `(maestro)` route-group
       # segment would be read as a capture group by a bare Jest pattern, and
       # `source/new-workspace` holds two files that already run elsewhere.
-      # Not wired here, by verdict: the Tower route-scope byte scan
-      # (rewrite_as_behavior) and ProofPointFooter (held for T-775).
+      # Not wired here, by verdict: ProofPointFooter (held for T-775).
+      # `src/app/(maestro)/tower/__tests__/tenant-tower-route-scope.test.ts`
+      # was the rewrite_as_behavior row: its byte scan, red on a formatter
+      # reflow, now calls the three Tower routes with mocked collaborators and
+      # asserts which client key reaches the resolver; re-executed 6 of 6 green
+      # on `70e59be180`. Named by file below for the `(maestro)` segment.
       # `src/components/moves/living/__tests__` was the
       # update_with_reason_recorded row: its two stale switcher-label
       # expectations now read the label from the case registry, re-executed
@@ -2007,11 +2011,12 @@ jobs:
           src/components/moves/living/__tests__
           --no-coverage --ci
 
-      - name: Run the T-799 docs page and Source request-first suites by named file
+      - name: Run the T-799 docs page, Source request-first and Tower route-scope suites by named file
         run: >-
           npx jest --runTestsByPath
           "src/app/(maestro)/docs/__tests__/product-docs-page.test.tsx"
           src/components/source/new-workspace/SourceNewRequestFirstPage.test.tsx
+          "src/app/(maestro)/tower/__tests__/tenant-tower-route-scope.test.ts"
           --no-coverage --ci
 
       # Item T-495, claimable half, suite 2 of 11.
