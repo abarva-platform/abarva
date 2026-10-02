@@ -28,6 +28,7 @@ import { humanizeSourceFamily } from "./source-register";
 import { deckContract } from "@/lib/deliverables/shared/deck-story-contract";
 import { SLIDE_BANDS } from "@/lib/deliverables/slide-contract";
 import type { DeliverableKey } from "@/lib/deliverables/profiles/types";
+import { factTokens } from "./numeric-lineage-tokens";
 
 /** Bounded-concurrency map that preserves input order. */
 export async function mapWithConcurrency<T, R>(
@@ -52,8 +53,6 @@ export async function mapWithConcurrency<T, R>(
 // Mirror of quality-validator.ts countUnsupportedClaims — keep in lockstep.
 const FACT_LIKE =
   /(\$\s?\d|\b\d{1,3}(?:,\d{3})+\b|\b\d+%|\bFY?20\d\d\b|\b\d{4}-\d{2}-\d{2}\b)/;
-const FACT_TOKEN_RE =
-  /(\$\s?\d[\d,]*(?:\.\d+)?[kmb]?|\b\d{1,3}(?:,\d{3})+\b|\b\d+(?:\.\d+)?%|\bFY?20\d\d\b|\b\d{4}-\d{2}-\d{2}\b)/gi;
 const SUPPORTED =
   /\[\d+\]|\[ASSUMPTION TO VALIDATE|\[CLIENT TO COMPLETE|\[EVIDENCE MISSING|\(open input\s*[\u2013\u2014-]\s*see Open Inputs Required\)/i;
 const DECISIVE_RECOMMENDATION =
@@ -72,15 +71,6 @@ export function extractUnsupportedFigureClaims(markdown: string): string[] {
     .split(/(?<=[.!?])\s+/)
     .map((s) => s.trim())
     .filter((s) => FACT_LIKE.test(s) && !SUPPORTED.test(s));
-}
-
-function normalizeFactToken(value: string): string {
-  return value.toLowerCase().replace(/[\s,$]/g, "");
-}
-
-function factTokens(value: string): string[] {
-  const matches = value.match(FACT_TOKEN_RE) ?? [];
-  return Array.from(new Set(matches.map(normalizeFactToken)));
 }
 
 function sentenceEvidenceCitations(

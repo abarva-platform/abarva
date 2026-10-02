@@ -7,6 +7,9 @@ import {
   repairEvidenceBackedUncitedFigures,
 } from "../section-generation";
 import { evaluateEstimateModel } from "@/lib/programs/estimate-model";
+import { untracedFigures } from "../numeric-lineage-tokens";
+import { validateDeliverableQuality } from "../quality-validator";
+import { goodDocument, amsRfpRequest } from "../__fixtures__/ams-rfp";
 import type { GovernedEvidenceItem } from "../types";
 
 function line(
@@ -190,5 +193,55 @@ describe("the reviewed estimate as a citable evidence statement", () => {
 
   it("applies only to the estimate section", () => {
     expect(estimateCaptureStatement("value_plan", model())).toBeNull();
+  });
+});
+
+describe("a blocked figure is named", () => {
+  const statement = "Scenario cost $107,943 low, $143,848 base; rate $150/h.";
+  const evidence: GovernedEvidenceItem[] = [
+    {
+      citationNumber: 3,
+      label: "Reviewed estimate",
+      statement,
+      evidenceFamily: "phase_capture:estimates_capacity",
+      confidence: "high",
+      disclosureTier: "internal_only",
+      provenanceRef: "test:estimate",
+    },
+  ];
+
+  it("lists only the figures that match no evidence, as written", () => {
+    const table =
+      "| Internal | USD 107,943 | USD 143,848 | | Difference | USD 35,905 | 33% |";
+    expect(untracedFigures(table, evidence)).toEqual(["35,905", "33%"]);
+    expect(untracedFigures("USD 107,943 at $150", evidence)).toEqual([]);
+    expect(untracedFigures(table, [])).toEqual([
+      "107,943",
+      "143,848",
+      "35,905",
+      "33%",
+    ]);
+  });
+
+  it("puts them in the quality gate's blocker", () => {
+    const doc = goodDocument();
+    doc.generatedSections = [
+      {
+        ...doc.generatedSections[0],
+        // Ends with a full stop so the claim is this table alone: the gate
+        // reads up to the next sentence end, across section boundaries.
+        bodyMarkdown:
+          "| Internal | USD 107,943 | USD 143,848 | | Difference | USD 35,905 | Planning only.",
+        rawBodyMarkdown:
+          "| Internal | USD 107,943 | USD 143,848 | | Difference | USD 35,905 | Planning only.",
+      },
+      ...doc.generatedSections.slice(1),
+    ];
+    const req = { ...amsRfpRequest(), governedEvidenceBundle: evidence };
+    const result = validateDeliverableQuality(doc, req);
+    const blocker = result.blockers.find((b) =>
+      /unsupported client-fact claim/.test(b),
+    );
+    expect(blocker).toContain("[figures with no match in evidence: 35,905]");
   });
 });

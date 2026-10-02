@@ -16,6 +16,8 @@ Two tables were still blocked on a deployed build. The cause was how the estimat
 
 The estimate text now writes every quantity with thousands separators and US dollar amounts with the dollar sign. Nothing about the matching rule changes: a figure the estimate does not contain is still unsupported.
 
+A blocked figure is also now named. The message that reports an unsupported table quoted only its first characters, so the figure that failed to trace had to be guessed. It now lists the figures in the blocked text that match no evidence. What is blocked is unchanged; the message says more.
+
 ## Layer Impact
 
 **Release lane: `global-control-lane`.** Shared deliverable generation for every client; not behind a feature flag.
@@ -35,6 +37,9 @@ The estimate text now writes every quantity with thousands separators and US dol
 ## Changes Included
 
 - `src/lib/programs/estimate-model.ts`: quantities with thousands separators; US dollar amounts with the dollar sign.
+- `src/lib/deliverables/orchestrator/numeric-lineage-tokens.ts` (new): the one definition of a traceable figure, used by the citation repair and by the blocker message; `untracedFigures`.
+- `src/lib/deliverables/orchestrator/quality-validator.ts`: the unsupported-figure blocker names the figures with no match in evidence.
+- `src/lib/deliverables/orchestrator/section-generation.ts`: uses the shared definition instead of its own copy.
 - Tests: a table of hours over a thousand and dollar-sign rates traces to the estimate; an hours figure the estimate does not contain stays unsupported.
 
 ## QA / Validation
@@ -45,7 +50,7 @@ The estimate text now writes every quantity with thousands separators and US dol
 - `node scripts/release-check.mjs --base origin/main --head HEAD`: pass.
 - Typecheck: deferred to CI (the local compiler run is not reliable on this machine).
 - Deployed-runtime observation that motivated the change: after the earlier change, a rebuilt roadmap on a synthetic workflow was blocked on two tables instead of three; the cost-only table traced, and the two that remained carried hours.
-- The exact unmatched figure could not be read from the run record, which shows only the start of each blocked table. This change addresses the two forms that the estimate text demonstrably did not carry.
+- The exact unmatched figure could not be read from the run record, which shows only the start of each blocked table. This change addresses the two forms that the estimate text demonstrably did not carry, and makes the next blocked table name its untraced figures. A second deliverable was blocked on a table that appeared to hold only traced costs; that case is not explained yet and is what the new message is for.
 - Signed-in runtime verification of this change: pending deployment.
 
 ## Rollout Plan
@@ -74,6 +79,6 @@ Use the repo-owned ACA main deploy workflow to redeploy the prior approved diges
 
 ## Known Gaps
 
-- A blocked table is reported by its first characters only. The figure that failed to trace is not named, which is why this cause had to be inferred.
+- The check reads text up to the next sentence end, across table rows and section boundaries. A table followed by a cited sentence is treated as one cited claim; a table with one untraceable figure is blocked as a whole.
 - Currencies other than the US dollar have no symbol form the lineage check recognises.
 - A writer that derives a new figure from the estimate — a difference, a percentage change — is still blocked, as intended.
