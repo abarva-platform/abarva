@@ -10,13 +10,13 @@
     "This census ranks and does not repair. Each repair is its own backlog item so that a sweep finding twenty routes is not one change nobody reads."
   ],
   "counts": {
-    "routes": 394,
-    "fenced": 218,
-    "fencedDirect": 94,
+    "routes": 395,
+    "fenced": 219,
+    "fencedDirect": 95,
     "fencedIndirect": 124,
     "unfenced": 176,
     "unfencedButReachesFenceModule": 94,
-    "behavioral": 73,
+    "behavioral": 74,
     "byteScannerOnly": 6,
     "none": 139
   },
@@ -6452,6 +6452,23 @@
           "scripts/exec/signed-in-proof-reconcile.test.mjs",
           "src/__tests__/integration/source/source-nexus-api-stub.test.ts"
         ]
+      }
+    },
+    {
+      "route": "src/app/api/v1/source/[eventId]/rfx-release/contacts/approve/route.ts",
+      "fence": "direct",
+      "fenceSymbols": [
+        "requireTenancy",
+        "tenancyErrorResponse"
+      ],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": "behavioral",
+      "suites": {
+        "behavioral": [
+          "src/__tests__/behaviors/source-rfx-contact-approval-route.test.ts"
+        ],
+        "byteScanner": []
       }
     },
     {
