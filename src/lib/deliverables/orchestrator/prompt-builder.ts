@@ -26,7 +26,11 @@ import {
   storySpineFor,
 } from "@/lib/deliverables/shared/executive-story-contract";
 import { renderAdaptiveDepthPrompt } from "@/lib/deliverables/adaptive-depth";
-import type { MovesDeliverableKey } from "@/lib/deliverables/profiles/types";
+import type {
+  DeliverableKey,
+  MovesDeliverableKey,
+} from "@/lib/deliverables/profiles/types";
+import { SLIDE_BANDS } from "@/lib/deliverables/slide-contract";
 import { CHARTER_CONTRACT } from "@/lib/deliverables/shared/artifact-contracts";
 
 const USE_CASE_TITLE: Record<string, string> = {
@@ -514,6 +518,24 @@ const PLAN_SCHEMA_HINT = `Return ONLY JSON matching DeliverableGenerationPlan:
 const SECTION_SCHEMA_HINT = `Return ONLY JSON for THIS ONE section:
 { "key","title","bodyMarkdown","groundingMode","citationsUsed":[n] }`;
 
+/**
+ * The deck length the artifact will be judged against, stated to the pass that
+ * authors the deck.
+ *
+ * The slide band was enforced by the quality gate and told to no one: the
+ * synthesis pass was asked to "populate deckSlides" with no count, chose its
+ * own, and the artifact was blocked for having too few. A requirement the
+ * writer cannot see is not a quality bar, it is a coin toss.
+ */
+export function deckLengthInstruction(
+  req: DeliverableIntelligenceRequest,
+): string {
+  if (!req.outputFormats.includes("pptx")) return "";
+  const band = SLIDE_BANDS[req.deliverableType as DeliverableKey];
+  if (!band) return "";
+  return `DECK LENGTH: "deckSlides" must contain between ${band.min} and ${band.max} slides. This deck is for: ${band.purpose}. Fewer than ${band.min} reads as a section list, not an argument, and fails the quality gate; more than ${band.max} stops being read. One governing message per slide. Reach the band by giving each distinct step of the argument its own slide — never by repeating a message or adding a slide with nothing to decide.`;
+}
+
 const SYNTHESIS_SCHEMA_HINT = `Return ONLY JSON (the document-level executive layer):
 { "title","subtitle","recommendation","nextActions":[],
   "deckSlides":[{"key","title","governingMessage","points":[],"exhibitKey","speakerNotes","citationsUsed":[n]}],
@@ -751,6 +773,7 @@ export function buildPassPrompt(
       user = [
         `You are assembling the EXECUTIVE LAYER of a ${req.deliverableType.replace(/_/g, " ")} for ${req.clientDisplayName} from its drafted sections (summaries below). Produce ONLY the document-level structured fields as JSON — do not rewrite the sections.`,
         `Requirements: ${recommendationRequirement} ${nextActionsRequirement} ${riskTableRequirement} If PPTX is requested, "deckSlides" MUST author the slide storyline directly: one governing message, short points, speaker notes, and exhibitKey links to exhibits with typed data. "clientCompleteChecklist" lists what the client must still provide. Do NOT introduce unsupported client facts — any figure needs a [n], an approved assumption, or a placeholder tag.`,
+        deckLengthInstruction(req),
         SYNTHESIS_SCHEMA_HINT,
         ``,
         `SECTION SUMMARIES:`,

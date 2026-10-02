@@ -111,3 +111,17 @@ export function countBodyWordsFromHtml(
     : withoutInert;
   return countTokens(stripped.replace(/<[^>]+>/g, " "));
 }
+
+/**
+ * The words each section must carry for the document to clear its floor.
+ *
+ * An even share with a small margin: the gate counts the assembled document,
+ * and a document that lands exactly on the floor by this count can still fall
+ * a few words short of it after assembly.
+ */
+export function sectionShareOfFloor(
+  minBodyWords: number,
+  sectionCount: number,
+): number {
+  return Math.ceil((minBodyWords * 1.05) / Math.max(sectionCount, 1));
+}

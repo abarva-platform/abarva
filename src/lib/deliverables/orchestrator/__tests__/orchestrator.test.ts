@@ -21,6 +21,7 @@ import { validateDeliverableQuality } from "../quality-validator";
 import { runDeliverableOrchestration, extractJson } from "../orchestrator";
 import { resolveQualityBar } from "../quality-bar-registry";
 import type { ModelCaller } from "../orchestrator";
+import type { DeliverableIntelligenceRequest } from "../types";
 import { amsRfpRequest, goodPlan, goodDocument } from "../__fixtures__/ams-rfp";
 
 describe("source register + citation discipline", () => {
@@ -649,6 +650,90 @@ describe("full multi-pass orchestration (injected stub model)", () => {
     expect(res.ok).toBe(true);
     expect(res.document?.title).toMatch(/SkyHarbor/);
     expect(res.quality?.pass).toBe(true);
+  });
+
+  // The length floor was enforced on every deliverable and repaired only on
+  // the charter. Observed on a deployed build: an architecture document came
+  // in a few hundred words under its floor and was blocked outright, with no
+  // attempt to close the gap. These pin that the gap is repaired first — and
+  // that the floor still blocks when the repair does not close it.
+  describe("a document under its length floor", () => {
+    const sectionCount = goodPlan().sectionPlan.length;
+    // The stub's sections total well under this, so the floor is not met.
+    const floor = 4_000;
+    const underFloorReq: DeliverableIntelligenceRequest = {
+      ...req,
+      qualityBar: { ...req.qualityBar, minBodyWords: floor },
+    };
+    const grown = (words: number) =>
+      "## Detail\nWe recommend proceeding. The baseline is supported by governed evidence [1]. " +
+      "This added paragraph explains a control point and its owner. ".repeat(
+        Math.ceil(words / 10),
+      );
+
+    it("repairs each short section to its share of the floor, then passes the unchanged gate", async () => {
+      const targets: number[] = [];
+      const caller: ModelCaller = async (prompt, callReq) => {
+        if (prompt.pass === "section_repair") {
+          const target = Number(
+            prompt.user.match(/at least (\d+) prose words/)?.[1],
+          );
+          targets.push(target);
+          return {
+            text: JSON.stringify({
+              key: "sec",
+              title: "Section",
+              bodyMarkdown: grown(target),
+              groundingMode: "mixed",
+              citationsUsed: [1],
+            }),
+          };
+        }
+        return stub(prompt, callReq);
+      };
+
+      const result = await runDeliverableOrchestration(underFloorReq, caller);
+
+      expect(targets).toHaveLength(sectionCount);
+      // An even share of the floor, with margin: the shares sum past it.
+      expect(new Set(targets).size).toBe(1);
+      expect(targets[0] * sectionCount).toBeGreaterThanOrEqual(floor);
+      expect(result.quality?.metrics.bodyWordCount).toBeGreaterThanOrEqual(
+        floor,
+      );
+      expect(
+        (result.quality?.blockers ?? []).filter((b) => /too short/.test(b)),
+      ).toEqual([]);
+    });
+
+    it("does not repair a document that already clears its floor", async () => {
+      const result = await runDeliverableOrchestration(req, stub);
+      expect(
+        result.passTrace.some((entry) => entry.pass === "section_repair"),
+      ).toBe(false);
+    });
+
+    it("never takes a repair that is no longer than the draft, and stays blocked", async () => {
+      const caller: ModelCaller = async (prompt, callReq) =>
+        prompt.pass === "section_repair"
+          ? { text: "{}" }
+          : stub(prompt, callReq);
+
+      const before = await runDeliverableOrchestration(req, stub);
+      const result = await runDeliverableOrchestration(underFloorReq, caller);
+
+      expect(
+        result.passTrace.filter((entry) => entry.pass === "section_repair"),
+      ).toHaveLength(sectionCount);
+      // The malformed repairs were discarded: the document is what was drafted.
+      expect(result.quality?.metrics.bodyWordCount).toBe(
+        before.quality?.metrics.bodyWordCount,
+      );
+      expect(result.quality?.blockers.join(" ")).toMatch(
+        new RegExp(`document too short: \\d+ words; minimum ${floor}`),
+      );
+      expect(result.ok).toBe(false);
+    });
   });
 
   it("repairs under-target canonical charter sections before the unchanged prose gate", async () => {
