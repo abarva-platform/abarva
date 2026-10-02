@@ -19,7 +19,11 @@ import {
   MAX_ATTACHMENT_SIZE_BYTES,
 } from "@/lib/programs/attachments/mime";
 import { getProgramById } from "@/lib/programs/queries";
-import { ingestUploadedMoveEvidence } from "@/lib/programs/current-state-doc-ingest";
+import {
+  assessMoveUploadSensitivity,
+  ingestUploadedMoveEvidence,
+} from "@/lib/programs/current-state-doc-ingest";
+import { sensitiveUploadRejectedResponse } from "@/lib/security/sensitive-upload-guard";
 import {
   buildDiscoveryBlueprintInputFromProgram,
   resolveDeclaredEvidenceFamily,
@@ -108,6 +112,23 @@ export async function POST(
     const title = String(form.get("title") ?? "").trim() || file.name;
     const ext = (file.name.split(".").pop() || "bin").toLowerCase();
     const body = Buffer.from(await file.arrayBuffer());
+
+    // Sensitive-data guard, before anything is stored. This route used to
+    // save the bytes first and scan only inside evidence ingestion, where a
+    // hit skipped model enrichment but still left the file stored and open
+    // for ordinary review. Every family is checked: a filled template or an
+    // approval record can carry the same identifiers as an evidence file.
+    const dataProtection = await assessMoveUploadSensitivity({
+      filename: file.name,
+      mimeType: file.type || "application/octet-stream",
+      buffer: body,
+      declaredClassification: form.get("dataClassification"),
+      cacheScope: ctx.clientKey ?? undefined,
+    });
+    if (dataProtection.decision === "quarantine") {
+      return sensitiveUploadRejectedResponse(dataProtection);
+    }
+
     const artifactType = artifactTypeForUpload({
       body,
       family,
