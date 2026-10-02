@@ -8,6 +8,8 @@ jest.mock("@/lib/data-plane/azureRead", () => ({
 }));
 
 import { readApprovedContactsForEvent } from "@/lib/source/rfx-delivery/release-authority-repository";
+import { approveRfxContact } from "@/lib/source/rfx-delivery/write-contact-approval";
+import type { SqlRunner, TxSessionRunner } from "@/lib/data-plane/read-adapters/azureSession";
 
 const eventId = "11111111-1111-4111-8111-111111111111";
 const row = {
@@ -112,5 +114,78 @@ describe("Stage 06 named-contact authority read", () => {
     await expect(readApprovedContactsForEvent({ clientKey: "", eventId }))
       .resolves.toEqual({ registryAvailable: false, approvedContacts: [] });
     expect(withSessionMock).not.toHaveBeenCalled();
+  });
+});
+
+describe("Stage 06 named-contact approval write", () => {
+  const input = {
+    clientKey: "tenant-alpha",
+    eventId,
+    vendorId: "vendor-1",
+    contactId: "contact-1",
+    approvedByUserId: "reviewer-1",
+    evidenceReference: "Reviewed canonical contact and event invitation scope.",
+  };
+  const candidate = {
+    authority_id: "candidate-authority-1",
+    vendor_raw_payload: { candidate_supplier_registry: { contactPolicy: "contact_allowed" } },
+  };
+  const contact = {
+    display_name: "Named contact",
+    email: "contact@example.test",
+    contact_policy: "contact_allowed",
+    contact_state: "active",
+  };
+  const transaction = (resolve: (sql: string) => unknown[]): TxSessionRunner =>
+    async <T>(callback: (run: SqlRunner) => Promise<T>): Promise<T> => {
+      const run: SqlRunner = async <R>(sql: string) => resolve(sql) as R[];
+      return callback(run);
+    };
+
+  it("binds approved authority to an accepted candidate and canonical active contact", async () => {
+    const sqls: string[] = [];
+    const tx = transaction((sql) => {
+      sqls.push(sql);
+      if (sql.includes("FROM source_event_candidate_supplier_authority")) return [candidate];
+      if (sql.includes("FROM source.vendor_contact")) return [contact];
+      if (sql.includes("INSERT INTO source_event_rfx_contact_authority")) return [{ id: "row-1" }];
+      return [];
+    });
+    await expect(approveRfxContact(input, tx, () => "2026-10-02T01:00:00Z", () => "approval-1"))
+      .resolves.toEqual({ ok: true, id: "row-1", authorityId: "approval-1" });
+    const candidateQuery = sqls.find((sql) => sql.includes("FROM source_event_candidate_supplier_authority"))!;
+    expect(candidateQuery).toContain("authority.client_key = $1");
+    expect(candidateQuery).toContain("authority.source_event_id = $2::uuid");
+    expect(candidateQuery).toContain("authority.vendor_id = $3");
+    const insert = sqls.find((sql) => sql.includes("INSERT INTO source_event_rfx_contact_authority"))!;
+    expect(insert).toContain("approved_contact_name");
+    expect(insert).toContain("approved_contact_email");
+  });
+
+  it("refuses an unknown or foreign-event candidate before reading a contact or writing", async () => {
+    const sqls: string[] = [];
+    const tx = transaction((sql) => {
+      sqls.push(sql);
+      if (sql.includes("FROM source_event_candidate_supplier_authority")) {
+        return sql.includes("authority.source_event_id = $2::uuid") ? [] : [candidate];
+      }
+      if (sql.includes("FROM source.vendor_contact")) return [contact];
+      if (sql.includes("INSERT INTO source_event_rfx_contact_authority")) return [{ id: "row-1" }];
+      return [];
+    });
+    await expect(approveRfxContact(input, tx, () => "2026-10-02T01:00:00Z", () => "approval-1"))
+      .resolves.toEqual({ ok: false, code: "candidate_not_accepted" });
+    expect(sqls.some((sql) => sql.includes("FROM source.vendor_contact"))).toBe(false);
+    expect(sqls.some((sql) => sql.includes("INSERT INTO source_event_rfx_contact_authority"))).toBe(false);
+  });
+
+  it.each(["review_required", "do_not_contact"])("refuses a %s canonical contact policy", async (policy) => {
+    const tx = transaction((sql) => {
+      if (sql.includes("FROM source_event_candidate_supplier_authority")) return [candidate];
+      if (sql.includes("FROM source.vendor_contact")) return [{ ...contact, contact_policy: policy }];
+      return [];
+    });
+    await expect(approveRfxContact(input, tx, () => "2026-10-02T01:00:00Z", () => "approval-1"))
+      .resolves.toEqual({ ok: false, code: "contact_not_allowed" });
   });
 });
