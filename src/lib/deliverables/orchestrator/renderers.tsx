@@ -64,6 +64,7 @@ import type {
 } from "./types";
 import { clientCompleteReasonLabel } from "./client-complete-labels";
 import { humanizeSourceFamily } from "./source-register";
+import { cellTone, CELL_TONE_HEX } from "@/lib/deliverables/shared/cell-tone";
 import {
   MAX_SLIDE_BULLETS,
   bulletFontSize,
@@ -2015,11 +2016,34 @@ function addPptxTableSlide(
       fill: { color: PPTX_COLOR.paper },
     },
   }));
+  const statusCol =
+    typeof table.statusColumn === "number" &&
+    table.statusColumn >= 0 &&
+    table.statusColumn < table.columns.length
+      ? table.statusColumn
+      : null;
   const bodyRows = table.rows.slice(0, 14).map((row) =>
-    row.map((cell) => ({
-      text: cell,
-      options: { color: PPTX_COLOR.ink, fontFace: "Arial", fontSize: 10 },
-    })),
+    row.map((cell, colIndex) => {
+      // Colour the declared status/RAG/ownership column by its value so the
+      // table reads at a glance; every other cell renders plain.
+      if (statusCol !== null && colIndex === statusCol) {
+        const tone = CELL_TONE_HEX[cellTone(cell)];
+        return {
+          text: cell,
+          options: {
+            color: tone.text,
+            bold: tone.fill !== null,
+            fontFace: "Arial",
+            fontSize: 10,
+            ...(tone.fill ? { fill: { color: tone.fill } } : {}),
+          },
+        };
+      }
+      return {
+        text: cell,
+        options: { color: PPTX_COLOR.ink, fontFace: "Arial", fontSize: 10 },
+      };
+    }),
   );
   slide.addTable([header, ...bodyRows], {
     x: 0.72,

@@ -543,6 +543,13 @@ export interface RenderableTable {
   columns: string[];
   rows: string[][];
   targetFormat: OutputFormat;
+  /**
+   * Zero-based index of the column that carries a status / RAG / ownership value
+   * (e.g. a risk level, an acceptance pass/fail, a readiness state). When set,
+   * the renderer colours that column's cells by value (see shared/cell-tone.ts),
+   * so an executive table reads at a glance. Undefined renders a plain table.
+   */
+  statusColumn?: number;
 }
 
 export interface ExhibitFlowNode {
