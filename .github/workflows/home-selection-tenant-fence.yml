@@ -23,6 +23,7 @@ on:
       - "src/lib/data-plane/tenantConnectionResolver.ts"
       - "src/lib/ecl/denseAssessment.ts"
       - "src/lib/home/preview/bundle-normalization.ts"
+      - "src/lib/home/preview/ecl-dependency-proof.ts"
       - "src/lib/home/preview/ecl-enterprise-context.ts"
       - "src/lib/home/preview/ecl-projection-bundle.ts"
       - "src/lib/home/preview/golden-snapshot.ts"

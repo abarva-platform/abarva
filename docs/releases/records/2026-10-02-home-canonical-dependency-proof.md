@@ -32,14 +32,14 @@ Home can explain selected risk and change-program dependencies using canonical r
 - Version-2 shadow Home projection includes a bounded set of canonical risk, program, application, vendor, contract, data-product, and platform edges, with endpoint and edge source links.
 - Promotion validates the exact projection version, manifest, source hash, row counts, source links, serving views, and Home context before switching the active declaration. Rollback validates the prior version-1 projection before restoring it.
 - Home renders the same selected paths in its Technology & Data context, advisor narrative and graph exhibit, record browser, and walkthrough export.
-- Pure builder, reader, advisor, UI, export, and projection-job tests cover the versioned contract.
+- Pure builder, reader, advisor, UI, export, and projection-job tests cover the versioned contract. The Home selection tenant-fence workflow watches the new proof module.
 
 ## QA / Validation
 
 - Synthetic projection proof test: passed locally, including 3,643 object rows, 346 selected relationship rows, and canonical source references.
 - Focused Home advisor, dependency, UI, and export tests: 41 passed locally after rebasing, including an exact-edge drill click test.
 - Home ratchet: 911/939 passing; the same 12 baselined suites, with no new or worsened failure. Typecheck and touched-file lint passed locally after rebasing.
-- Local PostgreSQL projection integration: not run because no local admission-test database is configured. Release check, CI, private-job readback, and signed-in proof: pending at candidate creation; update evidence before merge or promotion.
+- Local PostgreSQL projection integration: not run because no local admission-test database is configured. Release check: 11/11 gates passed. CI, private-job readback, and signed-in proof: pending at candidate creation; update evidence before merge or promotion.
 
 ## Rollout Plan
 
