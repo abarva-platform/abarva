@@ -17,7 +17,7 @@ import {
   isHomePreviewTenantKey,
   HOME_PREVIEW_TENANT_KEYS,
 } from "@/lib/home/preview/golden-snapshot";
-import { getHomeEclProjectionBundle } from "@/lib/home/preview/ecl-projection-bundle";
+import { getHomeEclProjectionBundleOrReviewedSnapshotWithSource } from "@/lib/home/preview/ecl-projection-bundle";
 import { homeRecordSourceToken } from "@/lib/home/preview/record-source-token";
 import type { HomeRecordRenderSource } from "@/lib/home/preview/types";
 import { canonicalTenantKey } from "@/lib/tenant/aliases";
@@ -102,9 +102,10 @@ export default async function HomePreviewPage({
   // One tenant per render. Reviewers pick with ?tenant=<key>; the page never loads a second
   // tenant's bundle, so no other client's data reaches the response and the UI carries no
   // cross-client control. A client-facing surface must look tenant-isolated because it is.
-  const bundle = isEclProvider
-    ? await getHomeEclProjectionBundle(tenantKey)
-    : getHomeReviewBundle(tenantKey);
+  const serving = isEclProvider
+    ? await getHomeEclProjectionBundleOrReviewedSnapshotWithSource(tenantKey)
+    : null;
+  const bundle = serving?.bundle ?? getHomeReviewBundle(tenantKey);
   if (!bundle) {
     // Fail loudly and specifically rather than rendering a blank page -- a missing golden
     // snapshot file is a real setup defect, not something to paper over with an empty state.
@@ -112,10 +113,9 @@ export default async function HomePreviewPage({
       `Home preview: missing golden snapshot for ${tenantKey}. Expected a file under src/lib/home/preview/golden-snapshots/.`,
     );
   }
-  const recordSource: HomeRecordRenderSource = {
-    kind: isEclProvider ? "ecl_serving_projection" : "reviewed_snapshot",
+  const recordSource: HomeRecordRenderSource = serving?.recordSource ?? {
+    kind: "reviewed_snapshot",
     canonicalSnapshotHash: bundle.provenance.canonical_snapshot_hash,
-    contextVersion: isEclProvider ? bundle.contextVersion : undefined,
   };
 
   return (

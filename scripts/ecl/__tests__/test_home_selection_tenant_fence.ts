@@ -563,6 +563,20 @@ async function main(): Promise<void> {
        set state = 'retired', retired_at = now() where tenant_key = $1`,
       [second],
     );
+    assert.deepEqual(await selectHomeAssessment(second), {
+      assessmentId: secondDefault,
+      declared: null,
+      retired: true,
+    });
+    assert.deepEqual(await servedRecord(second), {
+      kind: "reviewed_snapshot",
+      isReviewedSnapshot: true,
+    });
+    await assert.rejects(getHomeEclProjectionBundle(second), {
+      reason: "retired_declaration",
+    });
+    assert.deepEqual(await servedApplications(first), firstDeclared.titles);
+    assert.deepEqual(takeSignals(), [], "retirement is an intentional source selection");
     await declare(db, second, firstDeclared);
     await assert.rejects(selectHomeAssessment(second), {
       reason: "declaration_not_bound_to_manifest",

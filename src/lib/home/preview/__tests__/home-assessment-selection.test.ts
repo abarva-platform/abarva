@@ -13,6 +13,7 @@ const DEFAULTS = Object.entries(DENSE_ECL_ASSESSMENT_IDS);
 
 const BOUND_DECLARATION = {
   assessment_id: "assessment-declared",
+  state: "active",
   projection_hash: "a".repeat(64),
   source_set_hash: "b".repeat(64),
   manifest_id: "11111111-1111-4111-8111-111111111111",
@@ -63,6 +64,32 @@ describe("Home active assessment declaration", () => {
         sourceSetHash: BOUND_DECLARATION.source_set_hash,
         rowCount: BOUND_DECLARATION.row_count,
       },
+    });
+  });
+
+  it("distinguishes an explicit retirement from an absent declaration", async () => {
+    const [tenantKey, defaultAssessmentId] = DEFAULTS[0]!;
+    jest.spyOn(azureRead, "query").mockResolvedValue([
+      { ...BOUND_DECLARATION, state: "retired" },
+    ]);
+
+    await expect(selectHomeAssessment(tenantKey)).resolves.toEqual({
+      assessmentId: defaultAssessmentId,
+      declared: null,
+      retired: true,
+    });
+  });
+
+  it("keeps an active declaration authoritative when older ones are retired", async () => {
+    const [tenantKey] = DEFAULTS[0]!;
+    jest.spyOn(azureRead, "query").mockResolvedValue([
+      { ...BOUND_DECLARATION, state: "retired" },
+      BOUND_DECLARATION,
+    ]);
+
+    await expect(selectHomeAssessment(tenantKey)).resolves.toMatchObject({
+      assessmentId: BOUND_DECLARATION.assessment_id,
+      declared: { manifestId: BOUND_DECLARATION.manifest_id },
     });
   });
 
