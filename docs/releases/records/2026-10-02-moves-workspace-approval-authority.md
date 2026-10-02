@@ -44,7 +44,7 @@ Moves product approvals are recorded by an authenticated workspace user with app
 - TypeScript check passed with Node 24 and a 6 GB heap.
 - Focused ESLint passed with zero errors; the full-source lint also reported zero errors and repository warnings.
 - Test-CI census is current; the library orphan audit reports no change against baseline.
-- Release-check and GitHub CI results are pending PR revalidation.
+- Local release-check passed all 11 gates against the current `main`; GitHub CI is pending revised-PR validation.
 - Signed-in production verification is pending deployment and must not be inferred from these tests.
 
 ## Rollout Plan
