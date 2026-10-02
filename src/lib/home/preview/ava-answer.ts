@@ -9,6 +9,10 @@ import type {
 } from "@/lib/ava-answer/contract";
 import { validateAvaAnswerPacket } from "@/lib/ava-answer/validateAvaAnswerPacket";
 import {
+  answerHomeCurrentContext,
+  canAnswerFromCurrentContext,
+} from "@/lib/home/preview/current-context-answer";
+import {
   homeSourceCoverageGapLabelForVersion,
   homeSourceDateCoverageLabelForVersion,
   homeSourceFileReviewLabelForVersion,
@@ -28,7 +32,7 @@ type AvaAnswerBundleSlice = Pick<
   HomeReviewBundle,
   "chapters" | "technologyEstate"
 > &
-  Partial<Pick<HomeReviewBundle, "thesis" | "contextVersion">>;
+  Partial<Pick<HomeReviewBundle, "thesis" | "contextVersion" | "provenance">>;
 
 const PROMPT_VERSION = "home-preview-ava-answer-v1";
 const CLAUDE_MODEL = "claude-sonnet-5";
@@ -821,6 +825,30 @@ export async function answerHomeAvaQuestion(args: {
   userId?: string | null;
 }): Promise<AvaAnswerPacket> {
   const question = args.question.trim();
+  const currentContext = args.bundle.thesis?.signalPacket.homeEnterpriseContext;
+  if (
+    currentContext &&
+    args.bundle.contextVersion &&
+    canAnswerFromCurrentContext(args.bundle.contextVersion)
+  ) {
+    if (isGraphExhibitRequest(question)) {
+      return buildFallbackPacket(
+        args.tenantKey,
+        question,
+        "no_data",
+        "A verified relationship graph is not available for this current record. I cannot draw or infer those connections yet.",
+        [],
+      );
+    }
+    const currentAnswer = answerHomeCurrentContext({
+      context: currentContext,
+      version: args.bundle.contextVersion,
+      recordMarker: args.bundle.provenance?.canonical_snapshot_hash,
+      tenantKey: args.tenantKey,
+      question,
+    });
+    if (currentAnswer) return currentAnswer;
+  }
   if (
     args.bundle.contextVersion &&
     args.bundle.contextVersion.coherence !== "coherent"

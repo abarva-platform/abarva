@@ -167,6 +167,16 @@ export interface QualityBar {
    * still being tuned against real generations.
    */
   advisoryBandMax?: number;
+  /**
+   * Depth-aware override for this deck's slide floor. When set, it REPLACES the
+   * fixed SLIDE_BANDS[type].min for both the generator instruction
+   * (deckLengthInstruction) and the gate (judgeSlideCount), so a smaller-scope
+   * Move is not forced to the full-scope slide count. Derived in build-request
+   * from confirmed scope (see shared/depth-aware-floor.ts); only ever lowers the
+   * band's min, never raises it, and the band ceiling is untouched. Undefined
+   * preserves the fixed band exactly.
+   */
+  slideFloor?: number;
   requiresCitations: boolean;
   requiresDecisionSection: boolean;
   requiresRecommendation: boolean;
@@ -543,6 +553,13 @@ export interface RenderableTable {
   columns: string[];
   rows: string[][];
   targetFormat: OutputFormat;
+  /**
+   * Zero-based index of the column that carries a status / RAG / ownership value
+   * (e.g. a risk level, an acceptance pass/fail, a readiness state). When set,
+   * the renderer colours that column's cells by value (see shared/cell-tone.ts),
+   * so an executive table reads at a glance. Undefined renders a plain table.
+   */
+  statusColumn?: number;
 }
 
 export interface ExhibitFlowNode {

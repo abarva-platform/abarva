@@ -16,7 +16,15 @@ export interface EnterpriseContextFact {
   asOf: string | null;
 }
 
+/** A segment's own row. Revenue is what that row records, or null when it records none. */
+export interface EnterpriseContextSegmentFact extends EnterpriseContextFact {
+  revenueUsd: number | null;
+  revenueSharePct: number | null;
+}
+
 export interface EnterpriseContextFunction extends EnterpriseContextFact {
+  /** The identifier other records name this function by. How its rows are found, not shown. */
+  functionId: string;
   segmentKey: string | null;
   executiveOwner: string | null;
   applicationCount: number;
@@ -25,12 +33,31 @@ export interface EnterpriseContextFunction extends EnterpriseContextFact {
 }
 
 export interface EnterpriseContextPriority extends EnterpriseContextFact {
+  /** The identifier programs and measures name this priority by. */
+  priorityId: string;
   segmentKey: string | null;
   ownerRole: string | null;
   targetOutcome: string | null;
   programCount: number;
   atRiskProgramCount: number;
   metricCount: number;
+}
+
+export interface EnterpriseContextProgram extends EnterpriseContextFact {
+  programId: string;
+}
+
+/**
+ * Why records are counted outside every segment. Three different facts, kept apart: one number
+ * for all three reads as "shared" when part of it is a link that does not resolve.
+ */
+export interface AttributionGap {
+  /** The record's function is in this record and declares no segment. */
+  functionWithoutSegment: number;
+  /** The record names a function that is not in this record. */
+  functionNotInRecord: number;
+  /** The record names no function. */
+  noFunctionRecorded: number;
 }
 
 export interface EnterpriseContextRisk extends EnterpriseContextFact {
@@ -47,7 +74,33 @@ export interface EnterpriseRiskTriage {
   highOrCritical: number;
   partialControl: number;
   unknownControl: number;
+  ownerIsConstant: boolean;
   attentionRisks: EnterpriseContextRisk[];
+}
+
+export interface EnterpriseValuePriority extends EnterpriseContextFact {
+  unlinked?: boolean;
+  ownerRole: string | null;
+  programCount: number;
+  approvedBudgetUsd: number;
+  forecastUsd: number;
+  overBudgetProgramCount: number;
+  missingFinancialCount: number;
+}
+
+export interface EnterpriseValueProof {
+  asOf: string | null;
+  programCount: number;
+  approvedBudgetUsd: number;
+  forecastUsd: number;
+  overBudgetProgramCount: number;
+  missingFinancialCount: number;
+  modelledClaimCount: number;
+  unsupportedClaimCount: number;
+  otherClaimCount: number;
+  completedPeriodSpendLines: number;
+  excludedSpendLines: number;
+  priorities: EnterpriseValuePriority[];
 }
 
 export interface HomeEnterpriseContext {
@@ -55,16 +108,32 @@ export interface HomeEnterpriseContext {
     businessModel: string;
     annualRevenueUsd: number | null;
   };
+  /**
+   * `revenueUsd` and `revenueSharePct` on a spine row are inputs to its arithmetic and read 0
+   * where the segment's row records none. To show a segment's revenue, read `segmentFacts`.
+   */
   segmentSpine: SegmentSpineReport;
-  segmentFacts: Record<string, EnterpriseContextFact>;
+  segmentFacts: Record<string, EnterpriseContextSegmentFact>;
   functions: EnterpriseContextFunction[];
   priorities: EnterpriseContextPriority[];
+  valueProof: EnterpriseValueProof;
   riskTriage: EnterpriseRiskTriage;
+  /** Functions whose row declares no segment. Says nothing about why. */
   sharedFunctionIds: string[];
-  unlinkedPrograms: EnterpriseContextFact[];
+  unlinkedPrograms: EnterpriseContextProgram[];
+  /** By the same domain names the spine uses; sums to that domain's `unattributed` count. */
+  attributionGaps: Record<string, AttributionGap>;
+  /** Spend lines that record no amount. They are counted, and add nothing to any total. */
+  unrecordedSpendAmounts: number;
   excludedUncitedRows: number;
   evidenceClass: "synthetic_reference";
 }
+
+/** Rows a narrative build writes about the record. They are not part of it and cite nothing. */
+const NARRATIVE_ROW_TYPES = new Set(["summary", "chapter_claim", "story_plan"]);
+
+/** The spine's own name for "in no segment"; a function with no segment is routed there. */
+const NO_SEGMENT = "Unattributed";
 
 type SourceRefsForRow = (row: HomeProjectionRow) => string[];
 
@@ -96,16 +165,32 @@ function fact(
   };
 }
 
+function completedFiscalPeriod(row: HomeProjectionRow, recordAsOf: string): boolean {
+  const data = payload(row);
+  const period = stringValue(data.fiscal_period);
+  const rowAsOf = stringValue(data.source_as_of);
+  const validDate = (value: string) => {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+    const [year, month, day] = value.split("-").map(Number);
+    return new Date(Date.UTC(year, month - 1, day)).toISOString().slice(0, 10) === value;
+  };
+  if (!/^\d{4}-\d{2}$/.test(period) || !validDate(recordAsOf) || !validDate(rowAsOf)) return false;
+  const [year, month] = period.split("-").map(Number);
+  if (month < 1 || month > 12) return false;
+  const end = `${period}-${String(new Date(Date.UTC(year, month, 0)).getUTCDate()).padStart(2, "0")}`;
+  return end <= recordAsOf && end <= rowAsOf;
+}
+
 /** A source-linked, ID-joined business spine for one governed Home assessment. */
 export function buildHomeEnterpriseContext(
   rows: HomeProjectionRow[],
   sourceRefs: SourceRefsForRow,
 ): HomeEnterpriseContext | null {
-  const cited = rows.filter((row) => sourceRefs(row).length > 0);
-  const excludedUncitedRows =
-    rows.filter(
-      (row) => row.row_type !== "summary" && row.row_type !== "chapter_claim",
-    ).length - cited.length;
+  const recordRows = rows.filter(
+    (row) => !NARRATIVE_ROW_TYPES.has(row.row_type),
+  );
+  const cited = recordRows.filter((row) => sourceRefs(row).length > 0);
+  const excludedUncitedRows = recordRows.length - cited.length;
   const byType = (rowType: string) =>
     cited.filter((row) => row.row_type === rowType);
   const profileRows = byType("enterprise_profile");
@@ -150,7 +235,7 @@ export function buildHomeEnterpriseContext(
     if (segmentId && !segmentKeys.has(segmentId)) return null;
     if (!segmentId) sharedFunctionIds.push(functionId);
     functionMap[functionId] = {
-      segment_key: segmentId || "Unattributed",
+      segment_key: segmentId || NO_SEGMENT,
       clinical: false,
       office: "",
     };
@@ -159,7 +244,7 @@ export function buildHomeEnterpriseContext(
   const domainSpecs = [
     ["programs", "program", "sponsor_function_id"],
     ["applications", "application", "business_function_id"],
-    ["data assets", "data_analytics_workload", "business_function_id"],
+    ["data assets", "data_analytics_workload", "function_id"],
     ["platforms", "infrastructure", "business_function_id"],
     ["workforce roles", "workforce_role", "function_id"],
     ["KPIs", "metric", "business_function_id"],
@@ -173,22 +258,66 @@ export function buildHomeEnterpriseContext(
         stringValue(payload(row)[key]),
       ),
   );
-  contributions.push(
-    attributeByFunction(
+  // Only spend in a completed fiscal period with a recorded amount feeds a total, so a
+  // segment with no such line carries no spend domain at all rather than a total of zero.
+  // Lines excluded here are counted in valueProof.excludedSpendLines, not silently dropped.
+  const spendRows = byType("spend_line");
+  const completedSpendRows = spendRows.filter((row) =>
+    completedFiscalPeriod(row, stringValue(profilePayload.source_as_of)) &&
+    numberValue(payload(row).actual_usd) !== null,
+  );
+  if (completedSpendRows.length > 0) {
+    const spend = attributeByFunction(
       "spend",
-      byType("spend_line"),
+      completedSpendRows,
       functionMap,
       (row) => stringValue(payload(row).business_function_id),
       (row) => numberValue(payload(row).actual_usd) ?? 0,
-    ),
-  );
-  contributions[contributions.length - 1].moneyLabel = "actual spend (USD)";
-  const segmentSpine = buildSegmentSpine(segments, contributions);
+    );
+    spend.moneyLabel = "actual spend in completed fiscal periods (USD)";
+    contributions.push(spend);
+  }
+  const spine = buildSegmentSpine(segments, contributions);
   const segmentFacts = Object.fromEntries(
-    segmentRows.map((row) => [
-      stringValue(payload(row).segment_key),
-      fact(row, sourceRefs),
-    ]),
+    segmentRows.map((row) => {
+      const data = payload(row);
+      return [
+        stringValue(data.segment_key),
+        {
+          ...fact(row, sourceRefs),
+          revenueUsd: numberValue(data.revenue_usd),
+          revenueSharePct: numberValue(data.revenue_share_pct),
+        },
+      ];
+    }),
+  );
+  // A share compared against a revenue share nobody recorded is a number about nothing.
+  const segmentSpine: SegmentSpineReport = {
+    ...spine,
+    shareVsRevenue: spine.shareVsRevenue.filter(
+      (entry) => segmentFacts[entry.segmentKey]?.revenueSharePct !== null,
+    ),
+  };
+  const functionsWithoutSegment = new Set(sharedFunctionIds);
+  const attributionGaps: Record<string, AttributionGap> = Object.fromEntries(
+    [
+      ...domainSpecs,
+      ["spend", "spend_line", "business_function_id"] as const,
+    ].map(([domain, rowType, key]) => {
+      const gap: AttributionGap = {
+        functionWithoutSegment: 0,
+        functionNotInRecord: 0,
+        noFunctionRecorded: 0,
+      };
+      for (const row of byType(rowType)) {
+        const functionId = stringValue(payload(row)[key]);
+        if (!functionId) gap.noFunctionRecorded += 1;
+        else if (!functionMap[functionId]) gap.functionNotInRecord += 1;
+        else if (functionsWithoutSegment.has(functionId))
+          gap.functionWithoutSegment += 1;
+      }
+      return [domain, gap];
+    }),
   );
   const countFor = (rowType: string, functionId: string, key: string) =>
     byType(rowType).filter(
@@ -199,6 +328,7 @@ export function buildHomeEnterpriseContext(
     const functionId = stringValue(data.function_id);
     return {
       ...fact(row, sourceRefs),
+      functionId,
       segmentKey: stringValue(data.business_segment_key) || null,
       executiveOwner: stringValue(data.executive_owner) || null,
       applicationCount: countFor(
@@ -222,9 +352,14 @@ export function buildHomeEnterpriseContext(
   const priorityIds = new Set(
     priorityRows.map((row) => stringValue(payload(row).priority_id)),
   );
-  const unlinkedPrograms = programRows
-    .filter((row) => !priorityIds.has(stringValue(payload(row).priority_id)))
-    .map((row) => fact(row, sourceRefs))
+  const unlinkedProgramRows = programRows.filter((row) =>
+    !priorityIds.has(stringValue(payload(row).priority_id)),
+  );
+  const unlinkedPrograms = unlinkedProgramRows
+    .map((row) => ({
+      ...fact(row, sourceRefs),
+      programId: stringValue(payload(row).program_id) || row.row_key,
+    }))
     .sort((a, b) => a.rowKey.localeCompare(b.rowKey));
   const priorities: EnterpriseContextPriority[] = priorityRows.map((row) => {
     const data = payload(row);
@@ -234,6 +369,7 @@ export function buildHomeEnterpriseContext(
     );
     return {
       ...fact(row, sourceRefs),
+      priorityId,
       segmentKey: stringValue(data.segment_id) || null,
       ownerRole: ownerById.get(stringValue(data.owner_id)) || null,
       targetOutcome: stringValue(data.target_outcome) || null,
@@ -246,6 +382,66 @@ export function buildHomeEnterpriseContext(
       ).length,
     };
   });
+
+  const programAmounts = (programs: HomeProjectionRow[]) => {
+    const withAmounts = programs.map((program) => ({
+      budget: numberValue(payload(program).approved_budget_usd),
+      forecast: numberValue(payload(program).forecast_usd),
+    }));
+    return {
+      programCount: programs.length,
+      approvedBudgetUsd: withAmounts.reduce((sum, item) => sum + (item.budget ?? 0), 0),
+      forecastUsd: withAmounts.reduce((sum, item) => sum + (item.forecast ?? 0), 0),
+      overBudgetProgramCount: withAmounts.filter((item) =>
+        item.budget !== null && item.forecast !== null && item.forecast > item.budget,
+      ).length,
+      missingFinancialCount: withAmounts.filter((item) =>
+        item.budget === null || item.forecast === null,
+      ).length,
+    };
+  };
+  const commonSourceDate = (sourceRows: HomeProjectionRow[]): string | null => {
+    const dates = sourceRows.map((row) => stringValue(payload(row).source_as_of));
+    return dates.length > 0 && dates.every((date) => date && date === dates[0])
+      ? dates[0]
+      : null;
+  };
+  const valueProof: EnterpriseValueProof = {
+    ...programAmounts(programRows),
+    asOf: commonSourceDate(programRows),
+    modelledClaimCount: programRows.filter((row) =>
+      stringValue(payload(row).value_claim_status) === "modelled_not_finance_validated",
+    ).length,
+    unsupportedClaimCount: programRows.filter((row) =>
+      stringValue(payload(row).value_claim_status) === "unsupported_hypothesis",
+    ).length,
+    otherClaimCount: programRows.filter((row) =>
+      !["modelled_not_finance_validated", "unsupported_hypothesis"].includes(
+        stringValue(payload(row).value_claim_status),
+      ),
+    ).length,
+    completedPeriodSpendLines: completedSpendRows.length,
+    excludedSpendLines: spendRows.length - completedSpendRows.length,
+    priorities: [...priorityRows.map((row): EnterpriseValuePriority => {
+      const programs = programRows.filter((program) =>
+        stringValue(payload(program).priority_id) === stringValue(payload(row).priority_id),
+      );
+      return {
+        ...fact(row, sourceRefs),
+        ownerRole: ownerById.get(stringValue(payload(row).owner_id)) || null,
+        sourceRefs: [...new Set([sourceRefs(row), ...programs.map(sourceRefs)].flat())],
+        ...programAmounts(programs),
+      };
+    }), ...(unlinkedProgramRows.length > 0 ? [{
+      rowKey: "unlinked-programs",
+      title: "No declared priority",
+      sourceRefs: [...new Set(unlinkedProgramRows.map(sourceRefs).flat())],
+      asOf: commonSourceDate(unlinkedProgramRows),
+      unlinked: true,
+      ownerRole: null,
+      ...programAmounts(unlinkedProgramRows),
+    }] : [])],
+  };
 
   const namedObjects = new Map(cited.map((row) => [row.row_key, row.title]));
   const functionNames = new Map(
@@ -262,8 +458,14 @@ export function buildHomeEnterpriseContext(
       (severity !== "critical" && severity !== "high") ||
       (controlState !== "partially_effective" && controlState !== "unknown")
     ) return [];
+    const sourceTitle = stringValue(data.risk_name) || row.title;
+    const riskId = stringValue(data.risk_or_control_id);
+    const idSuffix = riskId ? ` (${riskId})` : "";
     return [{
       ...fact(row, sourceRefs),
+      title: idSuffix && sourceTitle.endsWith(idSuffix)
+        ? sourceTitle.slice(0, -idSuffix.length)
+        : sourceTitle,
       riskType: stringValue(data.risk_type) || null,
       severity,
       controlState,
@@ -277,6 +479,10 @@ export function buildHomeEnterpriseContext(
       (risk.controlState === "unknown" ? 0 : 1);
     return priority(a) - priority(b) || a.rowKey.localeCompare(b.rowKey);
   });
+  const riskOwnerRoles = riskRows.map((row) => {
+    const data = payload(row);
+    return ownerById.get(stringValue(data.owner_id)) || stringValue(data.control_owner) || "";
+  });
   const riskTriage: EnterpriseRiskTriage = {
     totalRisks: riskRows.length,
     highOrCritical: riskRows.filter((row) =>
@@ -284,6 +490,7 @@ export function buildHomeEnterpriseContext(
     ).length,
     partialControl: attentionRisks.filter((risk) => risk.controlState === "partially_effective").length,
     unknownControl: attentionRisks.filter((risk) => risk.controlState === "unknown").length,
+    ownerIsConstant: riskOwnerRoles.length > 1 && Boolean(riskOwnerRoles[0]) && new Set(riskOwnerRoles).size === 1,
     attentionRisks,
   };
 
@@ -297,9 +504,14 @@ export function buildHomeEnterpriseContext(
     segmentFacts,
     functions,
     priorities,
+    valueProof,
     riskTriage,
     sharedFunctionIds: sharedFunctionIds.sort(),
     unlinkedPrograms,
+    attributionGaps,
+    unrecordedSpendAmounts: spendRows.filter(
+      (row) => numberValue(payload(row).actual_usd) === null,
+    ).length,
     excludedUncitedRows,
     evidenceClass: "synthetic_reference",
   };

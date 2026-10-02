@@ -537,9 +537,22 @@ function constantColumnsOf(recordType: TechRecordType): ConstantColumn[] {
   return recordType.constantColumns ?? constantColumnsForRecord(recordType);
 }
 
+/**
+ * An exact match on one field, named by what the reader calls it.
+ *
+ * A figure counted by joining on a declared identifier opens its rows by that identifier. The
+ * identifier is how the rows are found; the label is what the banner says.
+ */
+export interface RecordRowMatch {
+  field: string;
+  value: string;
+  label: string;
+}
+
 export function RecordBrowser({
   recordType,
   initialQuery,
+  initialMatch,
 }: {
   recordType: TechRecordType;
   /**
@@ -551,8 +564,13 @@ export function RecordBrowser({
    * filtered view without being told.
    */
   initialQuery?: string;
+  /** A match the browser opens already applied. Stated in the same banner, by its label. */
+  initialMatch?: RecordRowMatch;
 }) {
   const [query, setQuery] = useState(initialQuery ?? "");
+  const [match, setMatch] = useState<RecordRowMatch | null>(
+    initialMatch ?? null,
+  );
   const [sliceField, setSliceField] = useState<string | null>(null);
   const [sliceValue, setSliceValue] = useState("all");
   const [diceField, setDiceField] = useState("none");
@@ -598,6 +616,7 @@ export function RecordBrowser({
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     return indexedRows.filter(({ row }) => {
+      if (match && String(row[match.field] ?? "") !== match.value) return false;
       if (
         activeSlice &&
         sliceValue !== "all" &&
@@ -627,6 +646,7 @@ export function RecordBrowser({
     activeSlice,
     diceValue,
     indexedRows,
+    match,
     query,
     recordType.columns,
     sliceValue,
@@ -650,10 +670,12 @@ export function RecordBrowser({
   const activeFilterCount =
     Number(sliceValue !== "all") +
     Number(diceValue !== "all") +
-    Number(Boolean(query.trim()));
+    Number(Boolean(query.trim())) +
+    Number(Boolean(match));
 
   function clearFilters() {
     setQuery("");
+    setMatch(null);
     setSliceValue("all");
     setDiceValue("all");
   }
@@ -793,7 +815,7 @@ export function RecordBrowser({
         </div>
       </div>
 
-      {initialQuery && query === initialQuery ? (
+      {match || (initialQuery && query === initialQuery) ? (
         <div
           data-record-arrived-filtered
           style={{
@@ -811,11 +833,14 @@ export function RecordBrowser({
         >
           <span style={{ fontFamily: SANS, fontSize: 13.5, lineHeight: 1.45 }}>
             Showing the rows behind a figure you came from — filtered to{" "}
-            <strong style={{ fontWeight: 600 }}>{initialQuery}</strong>.
+            <strong style={{ fontWeight: 600 }}>
+              {match ? match.label : initialQuery}
+            </strong>
+            .
           </span>
           <button
             type="button"
-            onClick={() => setQuery("")}
+            onClick={() => (match ? setMatch(null) : setQuery(""))}
             style={{
               fontFamily: MONO,
               fontSize: 11,
@@ -1621,6 +1646,13 @@ const PROVENANCE_FIELDS = new Set([
   "orgUnitId",
   "useCaseId",
   "relationshipId",
+  // The identifiers one record names another by. They are how a figure finds its rows; the row
+  // already shows the name each one stands for.
+  "functionId",
+  "priorityId",
+  "sponsorFunctionId",
+  "segmentId",
+  "businessFunctionId",
 ]);
 
 /**

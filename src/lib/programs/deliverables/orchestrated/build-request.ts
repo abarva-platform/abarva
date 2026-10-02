@@ -22,6 +22,9 @@ import type {
 } from "@/lib/deliverables/orchestrator/types";
 import { extractExcludedNumericClaims } from "@/lib/deliverables/orchestrator/excluded-numeric-claims";
 import { resolveQualityBar } from "@/lib/deliverables/orchestrator/quality-bar-registry";
+import { depthAwareFloors } from "@/lib/deliverables/shared/depth-aware-floor";
+import { SLIDE_BANDS } from "@/lib/deliverables/slide-contract";
+import { deliverableKeyForOrchestratorType } from "@/lib/deliverables/quality/deliverable-key-map";
 import { selectRequiredEvidenceSignals } from "@/lib/deliverables/orchestrator/evidence-signals";
 import { getDeliverableSpec } from "@/lib/programs/deliverable-registry";
 
@@ -331,6 +334,22 @@ export function buildMoveDeliverableRequest(
       ? extractExcludedNumericClaims(governedEvidenceBundle)
       : [];
 
+  const baseMovesQualityBar = resolveQualityBar(
+    "moves",
+    options.deliverableType,
+  );
+  const movesSlideBandKey = deliverableKeyForOrchestratorType(
+    options.deliverableType,
+  );
+  const movesFloors = depthAwareFloors({
+    deliverableType: options.deliverableType,
+    baseMinWords: baseMovesQualityBar.minBodyWords,
+    baseSlideMin: movesSlideBandKey
+      ? SLIDE_BANDS[movesSlideBandKey]?.min
+      : undefined,
+    confirmedEvidenceCount: governedEvidenceBundle.length,
+  });
+
   const request: DeliverableIntelligenceRequest = {
     module: "moves",
     useCaseArchetype,
@@ -364,7 +383,15 @@ export function buildMoveDeliverableRequest(
     // having at least one governed evidence item upstream, so a missing register
     // here is a real defect, not an empty-bundle edge case.
     qualityBar: {
-      ...resolveQualityBar("moves", options.deliverableType),
+      ...baseMovesQualityBar,
+      // Depth-aware floor keyed to confirmed-evidence volume — this path does
+      // not resolve adaptiveDepth, so the count of governed evidence items the
+      // deliverable is built from is the honest scope signal. No-op for every
+      // type not in the depth-scaled set. See shared/depth-aware-floor.ts.
+      minBodyWords: movesFloors.minBodyWords,
+      ...(movesFloors.slideMin !== undefined
+        ? { slideFloor: movesFloors.slideMin }
+        : {}),
       requiresSourceRegister: true,
     },
     clientDisplayName,
