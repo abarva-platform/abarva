@@ -2,6 +2,7 @@ import {
   assembleP3SolutionOptions,
   buildP3DesignInputsPackFromSignals,
   containsLegacyStaticP3Labels,
+  p2SourceEvidenceTitle,
 } from '../p3-option-assembler';
 import type { P3DesignInputsPack } from '../types';
 
@@ -107,6 +108,60 @@ describe('P3 dynamic option assembler', () => {
     ]);
     expect(containsLegacyStaticP3Labels(optionSet)).toBe(false);
     expect(optionSet.usedGlobalStaticFallback).toBe(false);
+  });
+
+  it('does not hand a member-service Move the operations option set over one incidental word', () => {
+    // Observed: a contact-centre agent-assist Move was shown the generic
+    // operations options. Its evidence mentions a review "SLA" and a
+    // "disruption" risk — terms the operations pattern tested first, as bare
+    // substrings, and returned on the first hit.
+    const optionSet = assembleP3SolutionOptions({
+      moveId: 'move-member',
+      moveName: 'Synthetic Agent Assist',
+      archetype: null,
+      designInputs: meridianAgentAssistPack({
+        evidenceBackedConstraints: [
+          'Some knowledge articles are older than the review SLA.',
+          'A premature build risks operational disruption at the agent station.',
+        ],
+      }),
+    });
+
+    expect(optionSet.useCasePattern).toBe('member_service_agent_assist');
+    expect(optionSet.options[1].label).toBe('Governed agent-assist layer on current systems');
+  });
+
+  it('takes the use-case pattern from a declared archetype, by id or by name, whatever the prose says', () => {
+    for (const archetype of ['CONTACT_CENTER_AGENT_ASSIST', 'Contact Center Agent Assist']) {
+      const optionSet = assembleP3SolutionOptions({
+        moveId: 'move-declared',
+        moveName: 'Airport baggage disruption recovery',
+        archetype,
+        designInputs: legalContractPack(),
+      });
+      expect(optionSet.useCasePattern).toBe('member_service_agent_assist');
+    }
+  });
+
+  it('matches pattern vocabulary as whole words, not as fragments of other words', () => {
+    const pack = legalContractPack();
+    const blank = Object.fromEntries(
+      Object.entries(pack).map(([key, value]) => [key, Array.isArray(value) ? [] : value]),
+    ) as unknown as P3DesignInputsPack;
+    const optionSet = assembleP3SolutionOptions({
+      moveId: 'move-fragments',
+      // "sla" in translate, "bag" in cabbage, "station" in workstation,
+      // "gl" in single, "phi" in graphics, "close" in disclosed.
+      moveName: 'Translate cabbage workstation single graphics disclosed',
+      archetype: null,
+      designInputs: { ...blank, moveId: 'move-fragments', businessOutcome: '' },
+    });
+    expect(optionSet.useCasePattern).toBe('generic_bounded_solution');
+  });
+
+  it('names a P2 source by its document title, not its internal key', () => {
+    expect(p2SourceEvidenceTitle('discovery_report')).toBe('Discovery & Diagnosis Report');
+    expect(p2SourceEvidenceTitle('some_unregistered_key')).toBe('some unregistered key');
   });
 
   it('produces materially different P3 options for a legal contract intake Move', () => {
