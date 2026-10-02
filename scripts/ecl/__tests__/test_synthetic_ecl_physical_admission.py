@@ -18,6 +18,7 @@ sys.path.insert(0, str(ROOT / "scripts/ecl"))
 
 import generate_synthetic_enterprise_v1 as source  # noqa: E402
 import normalize_synthetic_enterprise_v1 as adapter  # noqa: E402
+from synthetic_source_versions import load_definition  # noqa: E402
 
 
 def connection() -> tuple[list[str], dict[str, str]]:
@@ -81,7 +82,7 @@ def main() -> None:
     psql("-f", migration)
     psql("-f", migration)
 
-    definition = json.loads(source.DEFINITION.read_text(encoding="utf-8"))
+    definition = load_definition("v1")
     generated = source.build(definition)
     source.validate(generated)
     with tempfile.TemporaryDirectory() as temp:

@@ -6,20 +6,19 @@ import { spawnSync } from "node:child_process";
 import test from "node:test";
 
 const root = path.resolve(import.meta.dirname, "../../..");
-const definition = path.join(root, "datasets/synthetic/enterprise-v2/definition.json");
 const generator = path.join(root, "scripts/ecl/generate_synthetic_enterprise_v1.py");
 const validator = path.join(root, "scripts/ecl/validate_synthetic_enterprise_v1.py");
 const adapter = path.join(root, "scripts/ecl/normalize_synthetic_enterprise_v1.py");
 const expectedHash = "deb504f6d34d3381dd2f09d323f352302d106076c96fa182b5d485084fd93829";
 
 function run(script, ...args) {
-  return spawnSync("python3", [script, ...args, "--definition", definition], {
+  return spawnSync("python3", [script, ...args, "--source-version", "v2"], {
     cwd: root,
     encoding: "utf8",
   });
 }
 
-test("v2 emits independently counted logical applications with source lineage", (t) => {
+test("v2 adds generated logical services beside the declared products, with source lineage", (t) => {
   const temp = fs.mkdtempSync(path.join(os.tmpdir(), "synthetic-enterprise-v2-"));
   t.after(() => fs.rmSync(temp, { recursive: true, force: true }));
   const pack = path.join(temp, "pack");

@@ -93,6 +93,27 @@ async function main(): Promise<void> {
         ),
         1,
       );
+      // A row the generator multiplied out by formula is computed, not
+      // recorded; a product the definition names is recorded.
+      const bases = await client.query<{
+        basis: string;
+        grain: string | null;
+        count: string;
+      }>(
+        `select basis, attributes_json->>'application_grain' as grain, count(*)
+           from ecl_context.object where assessment_id = $1
+          group by basis, grain order by basis, grain`,
+        [pack.manifest.assessment_id],
+      );
+      assert.deepEqual(
+        bases.rows.map((row) => [row.basis, row.grain, Number(row.count)]),
+        [
+          ["calculated", "governed_module", 726],
+          ["model_inferred", null, 1],
+          ["source_recorded", "logical_product", 24],
+          ["source_recorded", null, 5008],
+        ],
+      );
       // The load is approved as a whole; no row is recorded as reviewed.
       const reviewStates = await client.query<{
         review_state: string;

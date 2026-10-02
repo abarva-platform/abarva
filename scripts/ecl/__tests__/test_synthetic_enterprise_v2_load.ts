@@ -58,6 +58,28 @@ async function main(): Promise<void> {
         [pack.manifest.tenant_key, pack.manifest.assessment_id],
       );
       assert.deepEqual(Object.values(result.rows[0]).map(Number), [344, 320, 726]);
+      // Generated services and modules load as computed; only the products the
+      // definition names load as recorded.
+      const bases = await client.query<{
+        basis: string;
+        grain: string | null;
+        count: string;
+      }>(
+        `select basis, attributes_json->>'application_grain' as grain, count(*)
+           from ecl_context.object where tenant_key = $1 and assessment_id = $2
+          group by basis, grain order by basis, grain`,
+        [pack.manifest.tenant_key, pack.manifest.assessment_id],
+      );
+      assert.deepEqual(
+        bases.rows.map((row) => [row.basis, row.grain, Number(row.count)]),
+        [
+          ["calculated", "governed_module", 726],
+          ["calculated", "logical_service", 320],
+          ["model_inferred", null, 1],
+          ["source_recorded", "logical_product", 24],
+          ["source_recorded", null, 5008],
+        ],
+      );
     } finally {
       await client.end();
     }

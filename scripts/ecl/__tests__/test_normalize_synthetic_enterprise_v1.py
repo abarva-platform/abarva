@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import json
 import hashlib
 import tempfile
 import unittest
@@ -13,13 +12,14 @@ sys.path.insert(0, str(ECL_SCRIPTS))
 
 import generate_synthetic_enterprise_v1 as generator
 import normalize_synthetic_enterprise_v1 as adapter
+from synthetic_source_versions import load_definition
 
 
 class SyntheticEnterpriseAdapterTests(unittest.TestCase):
     def test_every_source_object_and_relationship_is_normalized_with_lineage(self) -> None:
         with tempfile.TemporaryDirectory() as temp:
             pack = Path(temp) / "pack"
-            source = generator.build(json.loads(generator.DEFINITION.read_text(encoding="utf-8")))
+            source = generator.build(load_definition("v1"))
             generator.validate(source)
             generator.export(source, pack)
             normalized = adapter.normalize(pack)
@@ -65,7 +65,7 @@ class SyntheticEnterpriseAdapterTests(unittest.TestCase):
                          hashlib.sha256(adapter.RELATIONSHIP_MAP_PATH.read_bytes()).hexdigest())
 
     def test_relationship_vocabulary_is_exhaustive_and_fail_closed(self) -> None:
-        source = generator.build(json.loads(generator.DEFINITION.read_text(encoding="utf-8")))
+        source = generator.build(load_definition("v1"))
         source_types = {edge["relationship_type"] for edge in source["relationships"]}
         self.assertEqual(source_types, set(adapter.RELATIONSHIP_TYPES))
         self.assertEqual({obj["object_type"] for obj in source["objects"]}, set(adapter.OBJECT_TYPES))

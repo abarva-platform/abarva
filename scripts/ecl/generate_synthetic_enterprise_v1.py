@@ -16,9 +16,10 @@ from collections import Counter, defaultdict
 from pathlib import Path
 from typing import Any
 
+from synthetic_source_versions import load_definition
+
 
 ROOT = Path(__file__).resolve().parents[2]
-DEFINITION = ROOT / "datasets/synthetic/enterprise-v1/definition.json"
 TENANT_REGISTRY = ROOT / "datasets/tenant-inputs/tenant-input-registry.json"
 FAMILIES = {
     "SP00_Enterprise_Profile": "Enterprise_Profile_SYNTHETIC.csv",
@@ -46,17 +47,6 @@ FAMILIES = {
 }
 
 SERVICE_ROLES = ("Portal", "Workbench", "Rules Service", "Integration Service")
-
-
-def load_definition(path: Path) -> dict[str, Any]:
-    definition = json.loads(path.read_text(encoding="utf-8"))
-    expected_base_hash = definition.pop("base_definition_sha256", None)
-    if expected_base_hash is None:
-        return definition
-    base_bytes = DEFINITION.read_bytes()
-    if hashlib.sha256(base_bytes).hexdigest() != expected_base_hash:
-        raise ValueError("Versioned enterprise definition base has changed")
-    return {**json.loads(base_bytes), **definition}
 
 
 def pick(parts: tuple[object, ...], count: int) -> int:
@@ -248,7 +238,6 @@ def build(definition: dict[str, Any]) -> dict[str, Any]:
         or any(not 4 <= len(items) <= 8 or len(set(items)) != len(items)
                for items in service_capabilities.values())
         or len({len(items) for items in service_capabilities.values()}) < 3
-        or sum(len(items) for items in service_capabilities.values()) * len(SERVICE_ROLES) + 24 < 300
         or any(not items or not set(items).issubset(vendors) for items in service_suppliers.values())
     ):
         raise ValueError("Logical service capabilities or suppliers are incomplete")
@@ -760,6 +749,7 @@ def validate(manifest: dict[str, Any]) -> dict[str, Any]:
     services = [row for row in apps if row["application_grain"] == "logical_service"]
     expected_services = manifest.get("service_capability_count", 0) * len(SERVICE_ROLES)
     if (len(products) != 24 or len(modules) != 726 or len(services) != expected_services
+            or len(apps) != 24 + 726 + expected_services
             or len({row["application_name"] for row in apps}) != len(apps)):
         raise ValueError("Application product/module grain is not unique or complete")
     if any(row["parent_application_id"] not in app_by_id or
@@ -814,11 +804,10 @@ def export(manifest: dict[str, Any], out_dir: Path) -> dict[str, Any]:
 
 def main() -> int:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--definition", type=Path, default=DEFINITION)
+    parser.add_argument("--source-version", default="v1")
     parser.add_argument("--out-dir", type=Path, required=True)
     args = parser.parse_args()
-    definition = load_definition(args.definition)
-    manifest = build(definition)
+    manifest = build(load_definition(args.source_version))
     quality = validate(manifest)
     summary = export(manifest, args.out_dir)
     print(json.dumps({**summary, **quality}, indent=2, sort_keys=True))

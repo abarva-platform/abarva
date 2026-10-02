@@ -13,6 +13,7 @@ import {
   runStages,
   type GeneratedPack,
 } from "../load_synthetic_enterprise_v1";
+import { readSourceVersions } from "../synthetic_source_versions";
 import {
   ASSESSMENT,
   HASH,
@@ -303,7 +304,9 @@ test("a failed stage is recorded against the stage it reached, and the cause sur
 
 test("the committed registry describes every source version the loader generates", async () => {
   const manifests = await readDatasetManifests();
-  for (const version of ["v1", "v2"] as const) {
+  // Every version the source-version registry lists, so a newly registered
+  // version without a dataset manifest fails here.
+  for (const version of readSourceVersions().keys()) {
     const pack = await generatePack(version);
     try {
       const decision = resolveLoadApproval(manifests, loadBinding(pack));

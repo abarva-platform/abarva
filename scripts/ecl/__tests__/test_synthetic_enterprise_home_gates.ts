@@ -10,11 +10,18 @@ import {
   loadBinding,
   readDatasetManifests,
 } from "../load_synthetic_enterprise_v1";
-import { assertProjectionApproved } from "../project_synthetic_enterprise_home";
+import {
+  assertProjectionApproved,
+  assertReadbackProof,
+  type ReadbackProof,
+} from "../project_synthetic_enterprise_home";
 import { homeServingDecision } from "../promote_synthetic_enterprise_home";
 import {
+  ASSESSMENT,
+  HASH,
   OTHER_HASH,
   REPO_ROOT,
+  TENANT,
   approval,
   fixturePack,
   jobProcessEnv,
@@ -140,6 +147,49 @@ test("a projection is written only for a version whose load is approved", () => 
     () => assertProjectionApproved([], fixturePack()),
     /Projection gate failed: expected exactly one manifest/,
   );
+});
+
+test("a projection is authorised only by a passed, content-compared readback taken before any projection", () => {
+  const proof = (over: Partial<ReadbackProof> = {}): ReadbackProof => ({
+    status: "passed",
+    tenant_scope: TENANT,
+    assessment_id: ASSESSMENT,
+    source_set_hash: HASH,
+    client_attestation_state: "not_client_attested",
+    expected_home_projection: "absent",
+    actual: {
+      applications: 3,
+      invalid_source_files: 0,
+      home_projection_manifests: 0,
+    },
+    content: { object: { differing_rows: 0 } },
+    ...over,
+  });
+  assert.doesNotThrow(() => assertReadbackProof(proof(), fixturePack()));
+  for (const refusedProof of [
+    proof({ status: "failed" }),
+    proof({ tenant_scope: "another-tenant" }),
+    proof({ assessment_id: "assessment-other" }),
+    proof({ source_set_hash: OTHER_HASH }),
+    proof({ client_attestation_state: "client_attested" }),
+    // Taken after a projection already existed, or without saying which.
+    proof({ expected_home_projection: "present" }),
+    proof({ expected_home_projection: undefined }),
+    // A proof that only counted rows carries no content comparison.
+    proof({ content: undefined }),
+    proof({ content: null as unknown as undefined }),
+    proof({ actual: { ...proof().actual, applications: 2 } }),
+    proof({ actual: { ...proof().actual, invalid_source_files: 1 } }),
+    proof({ actual: { ...proof().actual, home_projection_manifests: 1 } }),
+  ]) {
+    assert.throws(
+      () => assertReadbackProof(refusedProof, fixturePack()),
+      /^Error: Admission readback proof did not authorize this projection$/,
+      JSON.stringify(refusedProof),
+    );
+  }
+  // The application count is the pack's own, not a constant.
+  assert.throws(() => assertReadbackProof(proof(), fixturePack(4)));
 });
 
 test("each job runs when invoked directly, through a symlinked root too, and never on import", async () => {

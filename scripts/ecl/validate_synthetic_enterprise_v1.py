@@ -12,21 +12,11 @@ from decimal import Decimal, InvalidOperation
 from pathlib import Path
 from typing import Any
 
+from synthetic_source_versions import load_definition, source_version_for_dataset
+
 
 ROOT = Path(__file__).resolve().parents[2]
-DEFINITION = ROOT / "datasets/synthetic/enterprise-v1/definition.json"
 TENANT_REGISTRY = ROOT / "datasets/tenant-inputs/tenant-input-registry.json"
-
-
-def load_definition(path: Path) -> dict[str, Any]:
-    definition = json.loads(path.read_text(encoding="utf-8"))
-    expected_base_hash = definition.pop("base_definition_sha256", None)
-    if expected_base_hash is None:
-        return definition
-    base_bytes = DEFINITION.read_bytes()
-    require(hashlib.sha256(base_bytes).hexdigest() == expected_base_hash,
-            "Versioned enterprise definition base has changed")
-    return {**json.loads(base_bytes), **definition}
 
 
 def read_csv(path: Path) -> list[dict[str, str]]:
@@ -59,12 +49,16 @@ def money_share(rows: list[dict[str, str]], field: str) -> float:
     return sum(values[: max(1, len(values) // 10)]) / sum(values)
 
 
-def validate(directory: Path, definition_path: Path = DEFINITION) -> dict[str, Any]:
+def validate(directory: Path, source_version: str | None = None) -> dict[str, Any]:
     root = directory.resolve()
     manifest = json.loads((root / "enterprise_manifest.json").read_text(encoding="utf-8"))
-    definition = load_definition(definition_path)
-    require(manifest["dataset_id"] == definition["dataset_id"], "Wrong dataset version")
-    require(manifest["assessment_id"] == definition["assessment_id"], "Wrong assessment")
+    # The pack says which dataset it is; the registry says whether that dataset
+    # exists, which assessment it loads into and which definition builds it.
+    # A caller cannot supply any of the three.
+    version_key, version = source_version_for_dataset(manifest.get("dataset_id"))
+    require(source_version is None or source_version == version_key, "Wrong dataset version")
+    require(manifest["assessment_id"] == version["assessment_id"], "Wrong assessment")
+    definition = load_definition(version_key)
     require(manifest["review_state"] == "candidate_not_loaded", "Generated pack must remain a candidate")
     require(manifest["client_attestation_state"] == "not_client_attested", "Synthetic pack claims client attestation")
     require(manifest["tenant_key"] == definition["tenant_key"], "Source-set tenant differs from its definition")
@@ -156,6 +150,7 @@ def validate(directory: Path, definition_path: Path = DEFINITION) -> dict[str, A
     services = [row for row in apps if row["application_grain"] == "logical_service"]
     expected_services = sum(len(items) for items in definition.get("service_capabilities_by_function", {}).values()) * 4
     require(len(products) == 24 and len(modules) == 726 and len(services) == expected_services and
+            len(apps) == 24 + 726 + expected_services and
             len({row["application_name"] for row in apps}) == len(apps),
             "Application product/module grain is not unique or complete")
     require(all(not row["parent_application_id"] and not row["module_workflow"] and not row["service_area"]
@@ -290,9 +285,9 @@ def validate(directory: Path, definition_path: Path = DEFINITION) -> dict[str, A
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--out-dir", type=Path, required=True)
-    parser.add_argument("--definition", type=Path, default=DEFINITION)
+    parser.add_argument("--source-version")
     args = parser.parse_args()
-    print(json.dumps(validate(args.out_dir, args.definition), indent=2, sort_keys=True))
+    print(json.dumps(validate(args.out_dir, args.source_version), indent=2, sort_keys=True))
     return 0
 
 

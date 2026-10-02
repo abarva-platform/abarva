@@ -18,19 +18,21 @@ import {
   type LoadBinding,
 } from "../../src/lib/governance/dataset-manifest";
 import { isDirectInvocation } from "../exec/cli-entry.mjs";
+import {
+  resolveSourceVersion,
+  type GrainOrigin,
+  type SourceVersion,
+} from "./synthetic_source_versions";
 
 const root = path.resolve(
   path.dirname(fileURLToPath(import.meta.url)),
   "../..",
 );
-type SourceVersion = "v1" | "v2";
-const definitionPath = (version: SourceVersion) =>
-  path.join(root, `datasets/synthetic/enterprise-${version}/definition.json`);
 const manifestsDir = path.join(root, "docs/governance/dataset-manifests");
 const containerName = "ecl-synthetic-intake";
 const batchSize = 400;
 
-type SourceFile = {
+export type SourceFile = {
   source_room_family: string;
   file_path: string;
   row_count: number;
@@ -69,6 +71,8 @@ type Manifest = {
   files: SourceFile[];
 };
 type Normalized = {
+  adapter_contract_version: string;
+  dataset_id: string;
   source_set_hash: string;
   tenant_key: string;
   assessment_id: string;
@@ -86,6 +90,8 @@ export type GeneratedPack = {
   dir: string;
   manifest: Manifest;
   normalized: Normalized;
+  /** The registered source version this pack was generated as. */
+  source: SourceVersion;
 };
 
 function sha256(value: Buffer | string): string {
@@ -100,16 +106,45 @@ function stableUuid(...parts: string[]): string {
   return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
 }
 
-function id(manifest: Manifest, kind: string, nativeId: string): string {
+type IdentifiedPack = Pick<GeneratedPack, "manifest" | "source">;
+
+/**
+ * A persisted row id. Its first part is the id namespace the registry declares
+ * for the source version, so an id never depends on how a dataset is named.
+ */
+function id(pack: IdentifiedPack, kind: string, nativeId: string): string {
   return stableUuid(
-    manifest.dataset_id.endsWith("_V2")
-      ? "ecl-synthetic-enterprise-v2"
-      : "ecl-synthetic-enterprise-v1",
-    manifest.tenant_key,
-    manifest.assessment_id,
+    pack.source.id_namespace,
+    pack.manifest.tenant_key,
+    pack.manifest.assessment_id,
     kind,
     nativeId,
   );
+}
+
+/**
+ * A generated pack and its adapter output must be the dataset, the assessment
+ * and the adapter contract the registry declares for the requested version.
+ */
+export function assertRegisteredIdentity(
+  source: SourceVersion,
+  manifest: Pick<Manifest, "dataset_id" | "assessment_id">,
+  normalized: Pick<
+    Normalized,
+    "dataset_id" | "assessment_id" | "adapter_contract_version"
+  >,
+): void {
+  if (
+    manifest.dataset_id !== source.dataset_id ||
+    normalized.dataset_id !== source.dataset_id ||
+    manifest.assessment_id !== source.assessment_id ||
+    normalized.assessment_id !== source.assessment_id ||
+    normalized.adapter_contract_version !== source.adapter_contract_version
+  ) {
+    throw new Error(
+      `Generated pack is not the registered source version ${source.key}`,
+    );
+  }
 }
 
 function rowsFromCsv(value: string): Record<string, string>[] {
@@ -122,16 +157,20 @@ function rowsFromCsv(value: string): Record<string, string>[] {
   return parsed.data;
 }
 
-export async function generatePack(version: SourceVersion = "v1"): Promise<GeneratedPack> {
-  const dir = await mkdtemp(path.join(tmpdir(), "ecl-enterprise-v1-"));
+export async function generatePack(
+  version: string = "v1",
+): Promise<GeneratedPack> {
+  // Fails closed on a version the registry does not list, before anything runs.
+  const source = resolveSourceVersion(version);
+  const dir = await mkdtemp(path.join(tmpdir(), "ecl-enterprise-pack-"));
   const packDir = path.join(dir, "pack");
   const adapterDir = path.join(dir, "adapter");
   try {
     for (const args of [
       [
         "scripts/ecl/generate_synthetic_enterprise_v1.py",
-        "--definition",
-        definitionPath(version),
+        "--source-version",
+        source.key,
         "--out-dir",
         packDir,
       ],
@@ -139,8 +178,8 @@ export async function generatePack(version: SourceVersion = "v1"): Promise<Gener
         "scripts/ecl/normalize_synthetic_enterprise_v1.py",
         "--pack",
         packDir,
-        "--definition",
-        definitionPath(version),
+        "--source-version",
+        source.key,
         "--out-dir",
         adapterDir,
       ],
@@ -149,37 +188,51 @@ export async function generatePack(version: SourceVersion = "v1"): Promise<Gener
         cwd: root,
         encoding: "utf8",
       });
-      if (result.status !== 0)
-        throw new Error(`${args[0]} failed: ${result.stderr || result.stdout}`);
+      if (result.status !== 0) {
+        // A process that never started has no output; say why it did not start.
+        throw new Error(
+          `${args[0]} failed: ${result.error?.message || result.stderr || result.stdout}`,
+        );
+      }
     }
-    const manifest = JSON.parse(
-      await readFile(path.join(packDir, "enterprise_manifest.json"), "utf8"),
-    ) as Manifest;
-    const normalized = JSON.parse(
-      await readFile(
-        path.join(adapterDir, "normalized_enterprise.json"),
-        "utf8",
-      ),
-    ) as Normalized;
-    if (
-      manifest.source_set_hash !== normalized.source_set_hash ||
-      manifest.tenant_key !== normalized.tenant_key ||
-      manifest.assessment_id !== normalized.assessment_id ||
-      manifest.client_attestation_state !== "not_client_attested" ||
-      normalized.client_attestation_state !== "not_client_attested" ||
-      !manifest.dataset_id.endsWith(`_${version.toUpperCase()}`) ||
-      manifest.files.length !== 22 ||
-      normalized.unresolved_relationships.length !== 1
-    ) {
-      throw new Error(
-        "Source pack and Layer 2 adapter did not agree on the pinned synthetic contract",
-      );
-    }
-    return { dir, manifest, normalized };
+    return await readGeneratedPack(dir, source);
   } catch (error) {
     await rm(dir, { recursive: true, force: true });
     throw error;
   }
+}
+
+/**
+ * Reads the pack and adapter output a generation left in `dir`, and refuses
+ * them unless they are the source version the caller resolved.
+ */
+export async function readGeneratedPack(
+  dir: string,
+  source: SourceVersion,
+): Promise<GeneratedPack> {
+  const manifest = JSON.parse(
+    await readFile(path.join(dir, "pack", "enterprise_manifest.json"), "utf8"),
+  ) as Manifest;
+  const normalized = JSON.parse(
+    await readFile(
+      path.join(dir, "adapter", "normalized_enterprise.json"),
+      "utf8",
+    ),
+  ) as Normalized;
+  assertRegisteredIdentity(source, manifest, normalized);
+  if (
+    manifest.source_set_hash !== normalized.source_set_hash ||
+    manifest.tenant_key !== normalized.tenant_key ||
+    manifest.client_attestation_state !== "not_client_attested" ||
+    normalized.client_attestation_state !== "not_client_attested" ||
+    manifest.files.length !== 22 ||
+    normalized.unresolved_relationships.length !== 1
+  ) {
+    throw new Error(
+      "Source pack and Layer 2 adapter did not agree on the pinned synthetic contract",
+    );
+  }
+  return { dir, manifest, normalized, source };
 }
 
 export async function sourceRows(
@@ -372,28 +425,254 @@ function valueState(object: CanonicalObject): string {
   return "known";
 }
 
-export async function loadIntoNewAssessment(
-  connectionString: string,
-  pack: GeneratedPack,
-  blobUris: Map<string, string>,
-  approval: LoadApproval,
-): Promise<Record<string, unknown>> {
-  const { manifest, normalized } = pack;
-  if (
-    approval.assessment_id !== manifest.assessment_id ||
-    approval.source_set_hash !== manifest.source_set_hash
-  ) {
+const applicationTypes = new Set(["application", "application_module"]);
+
+/**
+ * How an application-family row came to exist: the origin the registry declares
+ * for the grain the row itself declares. Null for every other object type. It
+ * is never read from a name, and a grain the registry does not list is refused.
+ */
+export function applicationGrainOrigin(
+  object: Pick<CanonicalObject, "id" | "type" | "attributes">,
+  source: Pick<SourceVersion, "key" | "application_grain_origin">,
+): GrainOrigin | null {
+  if (!applicationTypes.has(object.type)) return null;
+  const grain = object.attributes.application_grain;
+  if (!grain || !Object.hasOwn(source.application_grain_origin, grain)) {
     throw new Error(
-      "Load approval does not bind this assessment and source-set hash",
+      `Application row ${object.id} carries a grain source version ${source.key} does not register`,
     );
   }
-  const nativeRows = await sourceRows(pack);
-  const expectedSourceRows = [...nativeRows.values()].reduce(
-    (sum, rows) => sum + rows.length,
-    0,
-  );
+  return source.application_grain_origin[grain];
+}
+
+function objectBasis(
+  object: CanonicalObject,
+  source: Pick<SourceVersion, "key" | "application_grain_origin">,
+): string {
+  if (
+    object.type === "leadership_observation" &&
+    object.attributes.response_basis === "modelled"
+  ) {
+    return "model_inferred";
+  }
+  // A row the generator multiplied out by formula was computed, not recorded.
+  return applicationGrainOrigin(object, source) === "generated_by_formula"
+    ? "calculated"
+    : "source_recorded";
+}
+
+/** The depth of logical applications the serving check asks for. */
+export const APPLICATION_DEPTH_TARGET = 300;
+
+export type ApplicationDepth = {
+  depth_target: number;
+  /** Applications the definition names. */
+  declared_applications: number;
+  /** Application rows the generator multiplied out by formula. */
+  generated_applications: number;
+  /** Modules of an application; never an application. */
+  application_modules: number;
+  applications_by_grain: Record<string, number>;
+  /** Only declared applications count toward the target. */
+  counted_toward_target: number;
+  serving_eligible: boolean;
+  serving_blockers: string[];
+};
+
+/**
+ * Application depth by declared grain. Whether generated rows may count toward
+ * the target is a product decision this code does not make: it counts only
+ * declared applications, and when the target is reached only by adding
+ * generated rows it says exactly that.
+ */
+export function applicationDepth(
+  objects: readonly Pick<CanonicalObject, "id" | "type" | "attributes">[],
+  source: Pick<SourceVersion, "key" | "application_grain_origin">,
+): ApplicationDepth {
+  let declared = 0;
+  let generated = 0;
+  let modules = 0;
+  const byGrain: Record<string, number> = {};
+  for (const object of objects) {
+    const origin = applicationGrainOrigin(object, source);
+    if (origin === null) continue;
+    const grain = object.attributes.application_grain;
+    byGrain[grain] = (byGrain[grain] ?? 0) + 1;
+    if (object.type === "application_module") modules += 1;
+    else if (origin === "declared_in_definition") declared += 1;
+    else generated += 1;
+  }
+  const blockers =
+    declared >= APPLICATION_DEPTH_TARGET
+      ? []
+      : declared + generated >= APPLICATION_DEPTH_TARGET
+        ? ["logical_application_depth_met_only_with_generated_rows"]
+        : [`logical_application_depth_below_${APPLICATION_DEPTH_TARGET}`];
+  return {
+    depth_target: APPLICATION_DEPTH_TARGET,
+    declared_applications: declared,
+    generated_applications: generated,
+    application_modules: modules,
+    applications_by_grain: byGrain,
+    counted_toward_target: declared,
+    serving_eligible: blockers.length === 0,
+    serving_blockers: blockers,
+  };
+}
+
+/** The job name a load of this source version records. */
+export function loadJobName(source: Pick<SourceVersion, "key">): string {
+  return `ecl-synthetic-enterprise-${source.key}-load`;
+}
+
+/** What the quality-gate output of a committed load states. */
+export function qualityGate(
+  pack: Pick<GeneratedPack, "manifest" | "normalized" | "source">,
+  proof: Record<string, unknown>,
+): Record<string, unknown> {
+  const depth = applicationDepth(pack.normalized.objects, pack.source);
+  return {
+    load_integrity_pass: true,
+    serving_eligible: depth.serving_eligible,
+    serving_blockers: depth.serving_blockers,
+    application_depth: depth,
+    counts: proof.counts,
+    unresolved_relationships: proof.unresolved_relationships,
+    serving_state: "not_promoted",
+    client_attestation_state: pack.manifest.client_attestation_state,
+  };
+}
+
+type LoadRun = { runId: string; startedAt: string };
+
+/** What a run records about the stage it has reached. */
+export function progressRecord(
+  pack: Pick<GeneratedPack, "manifest" | "source">,
+  run: LoadRun,
+  stage: string,
+  status: string,
+): Record<string, unknown> {
+  return {
+    job_name: loadJobName(pack.source),
+    run_id: run.runId,
+    tenant_scope: pack.manifest.tenant_key,
+    assessment_id: pack.manifest.assessment_id,
+    input_source_version: pack.manifest.source_set_hash,
+    stage,
+    status,
+    started_at: run.startedAt,
+    updated_at: new Date().toISOString(),
+  };
+}
+
+/**
+ * The proof of a committed load: what the load read back, the depth facts, and
+ * what the run was. `outputs` is the Blob location the run writes under.
+ */
+export function loadProof(
+  pack: Pick<GeneratedPack, "manifest" | "normalized" | "source">,
+  committed: Record<string, unknown>,
+  run: LoadRun,
+  env: Record<string, string | undefined>,
+  outputs: string,
+): Record<string, unknown> {
+  const gate = qualityGate(pack, committed);
+  return {
+    ...committed,
+    serving_eligible: gate.serving_eligible,
+    application_depth: gate.application_depth,
+    job_name: loadJobName(pack.source),
+    run_id: run.runId,
+    operator_identity: env.ECL_SYNTHETIC_OPERATOR_IDENTITY,
+    build_version: env.ECL_SYNTHETIC_BUILD_VERSION,
+    input_source_version: env.ECL_SYNTHETIC_INPUT_SOURCE_VERSION,
+    idempotency_key: env.ECL_SYNTHETIC_IDEMPOTENCY_KEY,
+    image_digest: env.ECL_SYNTHETIC_IMAGE_DIGEST,
+    release_record: env.ECL_SYNTHETIC_RELEASE_RECORD,
+    retry_count: Number(env.ECL_SYNTHETIC_RETRY_COUNT ?? "0"),
+    timeout_seconds: Number(env.ECL_SYNTHETIC_TIMEOUT_SECONDS ?? "1800"),
+    status: "succeeded",
+    started_at: run.startedAt,
+    finished_at: new Date().toISOString(),
+    blob_proof_bundle: `${outputs}/proof.json`,
+    validation_output: `${outputs}/validation.json`,
+    quality_gate_output: `${outputs}/quality-gate.json`,
+    progress_output: `${outputs}/progress.json`,
+  };
+}
+
+/** The columns each load writes, in insert order. The readback compares the same ones. */
+export const loadColumns = {
+  source_file: [
+    "id",
+    "source_type",
+    "origin",
+    "source_owner",
+    "file_name",
+    "blob_uri",
+    "file_hash",
+    "source_date",
+    "access_class",
+    "quality_state",
+    "metadata_json",
+  ],
+  source_record: [
+    "id",
+    "source_file_id",
+    "native_id",
+    "record_type",
+    "row_number",
+    "payload_json",
+    "parse_state",
+    "parse_notes",
+  ],
+  object: [
+    "id",
+    "object_key",
+    "object_type",
+    "display_name",
+    "lifecycle_state",
+    "source_record_id",
+    "basis",
+    "value_state",
+    "review_state",
+    "attributes_json",
+  ],
+  relationship: [
+    "id",
+    "from_object_id",
+    "relationship_type",
+    "to_object_id",
+    "source_record_id",
+    "basis",
+    "value_state",
+    "review_state",
+    "attributes_json",
+  ],
+} as const;
+
+export type LoadTable = keyof typeof loadColumns;
+export type LoadRow = Record<string, unknown> & { id: string };
+export type LoadRows = Record<LoadTable, LoadRow[]>;
+
+/**
+ * Every row a load of this pack writes, from the pack alone. The loader inserts
+ * these rows; the readback compares what is persisted against them. `approval`
+ * is recorded on the source files when the caller has one.
+ */
+export function buildLoadRows(
+  pack: Pick<GeneratedPack, "manifest" | "normalized" | "source">,
+  nativeRows: Map<string, Record<string, string>[]>,
+  blobUris: Map<string, string>,
+  approval?: Pick<
+    LoadApproval,
+    "approved_by" | "approved_at" | "release_record"
+  >,
+): LoadRows {
+  const { manifest, normalized, source } = pack;
   const sourceFileRows = manifest.files.map((file) => ({
-    id: id(manifest, "source_file", file.source_room_family),
+    id: id(pack, "source_file", file.source_room_family),
     source_type: "synthetic_source_room",
     origin: "synthetic_generator",
     source_owner: file.source_room_family,
@@ -408,23 +687,25 @@ export async function loadIntoNewAssessment(
       source_set_hash: manifest.source_set_hash,
       client_attestation_state: manifest.client_attestation_state,
       synthetic_review_state: "accepted_lab",
-      load_approval: {
-        approved_by: approval.approved_by,
-        approved_at: approval.approved_at,
-        release_record: approval.release_record,
-      },
+      ...(approval
+        ? {
+            load_approval: {
+              approved_by: approval.approved_by,
+              approved_at: approval.approved_at,
+              release_record: approval.release_record,
+            },
+          }
+        : {}),
     },
   }));
-  if (sourceFileRows.some((row) => !row.blob_uri))
-    throw new Error("Every source file needs an immutable Blob URI");
   const sourceRecordRows = manifest.files.flatMap((file) =>
     (nativeRows.get(file.source_room_family) ?? []).map((row, index) => ({
       id: id(
-        manifest,
+        pack,
         "source_record",
         `${file.source_room_family}/${row.source_row_id}`,
       ),
-      source_file_id: id(manifest, "source_file", file.source_room_family),
+      source_file_id: id(pack, "source_file", file.source_room_family),
       native_id: row.source_row_id,
       record_type: file.source_room_family,
       row_number: index + 1,
@@ -434,22 +715,18 @@ export async function loadIntoNewAssessment(
     })),
   );
   const objectRows = normalized.objects.map((object) => ({
-    id: id(manifest, "object", object.id),
+    id: id(pack, "object", object.id),
     object_key: object.id,
     object_type: object.type,
     display_name: object.name,
     lifecycle_state:
       object.type === "external_benchmark" ? "benchmark" : "current",
     source_record_id: id(
-      manifest,
+      pack,
       "source_record",
       `${object.source.source_family}/${object.source.source_row_id}`,
     ),
-    basis:
-      object.type === "leadership_observation" &&
-      object.attributes.response_basis === "modelled"
-        ? "model_inferred"
-        : "source_recorded",
+    basis: objectBasis(object, source),
     value_state: valueState(object),
     // Approving a load is not reviewing its rows.
     review_state: "not_reviewed",
@@ -463,12 +740,12 @@ export async function loadIntoNewAssessment(
     },
   }));
   const relationshipRows = normalized.relationships.map((edge) => ({
-    id: id(manifest, "relationship", edge.id),
-    from_object_id: id(manifest, "object", edge.from_object_id),
-    to_object_id: id(manifest, "object", edge.to_object_id),
+    id: id(pack, "relationship", edge.id),
+    from_object_id: id(pack, "object", edge.from_object_id),
+    to_object_id: id(pack, "object", edge.to_object_id),
     relationship_type: edge.type,
     source_record_id: id(
-      manifest,
+      pack,
       "source_record",
       `${edge.declaration_source.source_family}/${edge.declaration_source.source_row_id}`,
     ),
@@ -485,6 +762,33 @@ export async function loadIntoNewAssessment(
       synthetic_review_state: "accepted_lab",
     },
   }));
+  return {
+    source_file: sourceFileRows,
+    source_record: sourceRecordRows,
+    object: objectRows,
+    relationship: relationshipRows,
+  };
+}
+
+export async function loadIntoNewAssessment(
+  connectionString: string,
+  pack: GeneratedPack,
+  blobUris: Map<string, string>,
+  approval: LoadApproval,
+): Promise<Record<string, unknown>> {
+  const { manifest, normalized } = pack;
+  if (
+    approval.assessment_id !== manifest.assessment_id ||
+    approval.source_set_hash !== manifest.source_set_hash
+  ) {
+    throw new Error(
+      "Load approval does not bind this assessment and source-set hash",
+    );
+  }
+  const nativeRows = await sourceRows(pack);
+  const rows = buildLoadRows(pack, nativeRows, blobUris, approval);
+  if (rows.source_file.some((row) => !row.blob_uri))
+    throw new Error("Every source file needs an immutable Blob URI");
   const client = new pg.Client({ connectionString });
   await client.connect();
   try {
@@ -512,77 +816,19 @@ export async function loadIntoNewAssessment(
     );
     const knownTypes = new Set(catalog.rows.map((row) => row.object_type));
     const missingTypes = [
-      ...new Set(objectRows.map((row) => row.object_type)),
+      ...new Set(rows.object.map((row) => String(row.object_type))),
     ].filter((type) => !knownTypes.has(type));
     if (missingTypes.length)
       throw new Error(
         `Physical admission migration is missing types: ${missingTypes.join(", ")}`,
       );
-    for (const [table, columns, rows] of [
-      [
-        "ecl_source.source_file",
-        [
-          "id",
-          "source_type",
-          "origin",
-          "source_owner",
-          "file_name",
-          "blob_uri",
-          "file_hash",
-          "source_date",
-          "access_class",
-          "quality_state",
-          "metadata_json",
-        ],
-        sourceFileRows,
-      ],
-      [
-        "ecl_source.source_record",
-        [
-          "id",
-          "source_file_id",
-          "native_id",
-          "record_type",
-          "row_number",
-          "payload_json",
-          "parse_state",
-          "parse_notes",
-        ],
-        sourceRecordRows,
-      ],
-      [
-        "ecl_context.object",
-        [
-          "id",
-          "object_key",
-          "object_type",
-          "display_name",
-          "lifecycle_state",
-          "source_record_id",
-          "basis",
-          "value_state",
-          "review_state",
-          "attributes_json",
-        ],
-        objectRows,
-      ],
-      [
-        "ecl_context.relationship",
-        [
-          "id",
-          "from_object_id",
-          "relationship_type",
-          "to_object_id",
-          "source_record_id",
-          "basis",
-          "value_state",
-          "review_state",
-          "attributes_json",
-        ],
-        relationshipRows,
-      ],
+    for (const [table, kind] of [
+      ["ecl_source.source_file", "source_file"],
+      ["ecl_source.source_record", "source_record"],
+      ["ecl_context.object", "object"],
+      ["ecl_context.relationship", "relationship"],
     ] as const) {
-      const withScope = rows.map((row) => ({
+      const withScope = rows[kind].map((row) => ({
         ...row,
         tenant_key: manifest.tenant_key,
         assessment_id: manifest.assessment_id,
@@ -590,7 +836,7 @@ export async function loadIntoNewAssessment(
       await insertBatch(
         client,
         table,
-        ["tenant_key", "assessment_id", ...columns],
+        ["tenant_key", "assessment_id", ...loadColumns[kind]],
         withScope,
       );
     }
@@ -626,14 +872,14 @@ export async function loadIntoNewAssessment(
       ]),
     );
     const expected = {
-      source_files: manifest.files.length,
-      source_records: expectedSourceRows,
-      objects: objectRows.length,
-      relationships: relationshipRows.length,
-      applications: objectRows.filter(
+      source_files: rows.source_file.length,
+      source_records: rows.source_record.length,
+      objects: rows.object.length,
+      relationships: rows.relationship.length,
+      applications: rows.object.filter(
         (row) => row.object_type === "application",
       ).length,
-      application_modules: objectRows.filter(
+      application_modules: rows.object.filter(
         (row) => row.object_type === "application_module",
       ).length,
       missing_object_lineage: 0,
@@ -678,13 +924,14 @@ async function main(): Promise<void> {
       "Only --execute is supported; absence of it performs a read-only generation check",
     );
   }
-  const version = process.env.ECL_SYNTHETIC_DATASET_VERSION ?? "v1";
-  if (version !== "v1" && version !== "v2")
-    throw new Error("Unsupported synthetic enterprise source version");
-  const pack = await generatePack(version);
+  // The registry decides which versions exist; an unlisted one is refused.
+  const pack = await generatePack(
+    process.env.ECL_SYNTHETIC_DATASET_VERSION ?? "v1",
+  );
   try {
     const rows = await sourceRows(pack);
     const summary = {
+      source_version: pack.source.key,
       dataset_id: pack.manifest.dataset_id,
       tenant_key: pack.manifest.tenant_key,
       assessment_id: pack.manifest.assessment_id,
@@ -698,6 +945,7 @@ async function main(): Promise<void> {
       relationships: pack.normalized.relationships.length,
       unresolved_relationships: pack.normalized.unresolved_relationships.length,
       client_attestation_state: pack.manifest.client_attestation_state,
+      application_depth: applicationDepth(pack.normalized.objects, pack.source),
     };
     const manifests = await readDatasetManifests();
     if (!args.length) {
@@ -757,17 +1005,7 @@ async function main(): Promise<void> {
         .uploadData(
           Buffer.from(
             JSON.stringify(
-              {
-                job_name: "ecl-synthetic-enterprise-v1-load",
-                run_id: runId,
-                tenant_scope: pack.manifest.tenant_key,
-                assessment_id: pack.manifest.assessment_id,
-                input_source_version: pack.manifest.source_set_hash,
-                stage,
-                status,
-                started_at: startedAt,
-                updated_at: new Date().toISOString(),
-              },
+              progressRecord(pack, { runId, startedAt }, stage, status),
               null,
               2,
             ),
@@ -808,51 +1046,16 @@ async function main(): Promise<void> {
       // The rows are committed from here on; a failure below is a proof-output
       // failure and is reported as one.
       await enter("proof_output");
-      const applicationCount = (proof.counts as Record<string, number>)
-        .applications;
-      const servingEligible = applicationCount >= 300;
-      const result = {
-        ...proof,
-        serving_eligible: servingEligible,
-        job_name: "ecl-synthetic-enterprise-v1-load",
-        run_id: runId,
-        operator_identity: process.env.ECL_SYNTHETIC_OPERATOR_IDENTITY,
-        build_version: process.env.ECL_SYNTHETIC_BUILD_VERSION,
-        input_source_version: process.env.ECL_SYNTHETIC_INPUT_SOURCE_VERSION,
-        idempotency_key: process.env.ECL_SYNTHETIC_IDEMPOTENCY_KEY,
-        image_digest: process.env.ECL_SYNTHETIC_IMAGE_DIGEST,
-        release_record: process.env.ECL_SYNTHETIC_RELEASE_RECORD,
-        retry_count: Number(process.env.ECL_SYNTHETIC_RETRY_COUNT ?? "0"),
-        timeout_seconds: Number(
-          process.env.ECL_SYNTHETIC_TIMEOUT_SECONDS ?? "1800",
-        ),
-        status: "succeeded",
-        started_at: startedAt,
-        finished_at: new Date().toISOString(),
-        blob_proof_bundle: `${container.url}/${runPrefix}/proof.json`,
-        validation_output: `${container.url}/${runPrefix}/validation.json`,
-        quality_gate_output: `${container.url}/${runPrefix}/quality-gate.json`,
-        progress_output: `${container.url}/${runPrefix}/progress.json`,
-      };
+      const result = loadProof(
+        pack,
+        proof,
+        { runId, startedAt },
+        process.env,
+        `${container.url}/${runPrefix}`,
+      );
       await uploadImmutable(
         `${runPrefix}/quality-gate.json`,
-        Buffer.from(
-          JSON.stringify(
-            {
-              load_integrity_pass: true,
-              serving_eligible: servingEligible,
-              serving_blockers: servingEligible
-                ? []
-                : ["logical_application_depth_below_300"],
-              counts: proof.counts,
-              unresolved_relationships: proof.unresolved_relationships,
-              serving_state: "not_promoted",
-              client_attestation_state: pack.manifest.client_attestation_state,
-            },
-            null,
-            2,
-          ),
-        ),
+        Buffer.from(JSON.stringify(qualityGate(pack, proof), null, 2)),
       );
       await uploadImmutable(
         `${runPrefix}/proof.json`,
