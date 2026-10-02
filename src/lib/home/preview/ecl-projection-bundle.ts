@@ -4,7 +4,15 @@ import { createHash } from "node:crypto";
 
 import { azureRead } from "@/lib/data-plane/azureRead";
 import { denseAssessmentIdForTenant } from "@/lib/ecl/denseAssessment";
-import { selectedHomeAssessmentId } from "./home-assessment-selection";
+import {
+  selectHomeAssessment,
+  type HomeDeclaredProjection,
+} from "./home-assessment-selection";
+import {
+  HomeProjectionFault,
+  homeProjectionFaultReason,
+  reportHomeProjectionFault,
+} from "./home-projection-fault";
 import { normalizeHomeReviewBundle } from "./bundle-normalization";
 import { buildHomeEnterpriseContext } from "./ecl-enterprise-context";
 import { homeProjectionPayload } from "./projection-row-payload";
@@ -2935,11 +2943,18 @@ export interface HomeProjectionRead {
 async function readHomeProjectionRows(
   tenantKey: string,
   assessmentId: string,
+  declared: HomeDeclaredProjection | null = null,
 ): Promise<HomeProjectionRead> {
   const present = await presentServingViews();
   const usable = HOME_SERVING_VIEWS.filter((view) => present.has(view));
   const absentViews = HOME_SERVING_VIEWS.filter((view) => !present.has(view));
   if (usable.length === 0) return { rows: [], absentViews };
+  // A declared assessment is read as the projection its declaration names, not as every row the
+  // tenant holds under that assessment: a row written later under another manifest or another
+  // projection version is not part of what was declared, and is not served.
+  const declaredOnly = declared
+    ? " and projection_manifest_id = $3::uuid and projection_version = $4"
+    : "";
   const sql =
     usable
       .map(
@@ -2957,12 +2972,19 @@ async function readHomeProjectionRows(
         admission_status,
         payload_json as display_payload_json
       from ${view}
-      where tenant_key = $1 and assessment_id = $2`,
+      where tenant_key = $1 and assessment_id = $2${declaredOnly}`,
       )
       .join("\n      union all\n") + "\n      order by page_key, row_key";
   const rows = await azureRead.query<HomeProjectionRow>(
     sql,
-    [tenantKey, assessmentId],
+    declared
+      ? [
+          tenantKey,
+          assessmentId,
+          declared.manifestId,
+          declared.projectionVersion,
+        ]
+      : [tenantKey, assessmentId],
     { missingTable: "empty" },
   );
   return { rows, absentViews };
@@ -3035,10 +3057,11 @@ export async function getHomeEclProjectionBundle(
     );
   }
 
-  const assessmentId = await selectedHomeAssessmentId(tenantKey);
+  const { assessmentId, declared } = await selectHomeAssessment(tenantKey);
   const { rows, absentViews } = await readHomeProjectionRows(
     tenantKey,
     assessmentId,
+    declared,
   );
   if (rows.length === 0) {
     // Naming the absent views in the message. The same failure used to read as "no rows", which
@@ -3046,14 +3069,38 @@ export async function getHomeEclProjectionBundle(
     const missing = absentViews.length
       ? ` No serving view for: ${absentViews.join(", ")}.`
       : "";
-    throw new Error(
+    throw new HomeProjectionFault(
+      declared
+        ? "declared_assessment_has_no_rows"
+        : "default_assessment_has_no_rows",
       `Home ECL preview: no serving Home rows for ${tenantKey}/${assessmentId}.${missing}`,
+      { assessmentId },
     );
   }
   if (!rows.some(isFactualHomeRow)) {
-    throw new Error(
+    throw new HomeProjectionFault(
+      "no_admissible_rows",
       `Home ECL preview: no admissible Home rows for ${tenantKey}/${assessmentId}.`,
+      { assessmentId },
     );
+  }
+  if (
+    declared &&
+    absentViews.length === 0 &&
+    rows.length !== declared.rowCount
+  ) {
+    // The rows carry the declared manifest and version, and their number is not the number that
+    // manifest recorded. Rows can be added or removed under a manifest after it was declared, and
+    // nothing in the schema ties a row to the proof. They are still served -- refusing them is a
+    // decision about what Home shows -- and the difference is reported rather than left unseen.
+    // Not judged when a view is absent: the read is then known to be short for another reason.
+    reportHomeProjectionFault({
+      tenantKey,
+      reason: "declared_row_count_differs",
+      served: "declared_projection",
+      assessmentId,
+      detail: `read ${rows.length} rows; the declared manifest records ${declared.rowCount}`,
+    });
   }
   if (absentViews.length > 0) {
     // Served, but not completely. Recorded rather than swallowed: a family this environment cannot
@@ -3106,10 +3153,18 @@ export async function getHomeEclProjectionBundleOrReviewedSnapshotWithSource(
       },
     };
   } catch (error) {
-    console.warn(
-      `[home] ECL projection unavailable for ${tenantKey}; rendering reviewed Home snapshot.`,
-      error,
-    );
+    reportHomeProjectionFault({
+      tenantKey,
+      reason: homeProjectionFaultReason(error),
+      served: "reviewed_snapshot",
+      assessmentId:
+        error instanceof HomeProjectionFault ? error.assessmentId : null,
+      detail: error instanceof Error ? error.message : String(error),
+      stack:
+        error instanceof Error && !(error instanceof HomeProjectionFault)
+          ? error.stack
+          : null,
+    });
     return {
       bundle: base,
       recordSource: {
