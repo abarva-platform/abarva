@@ -51,6 +51,29 @@ const withProvenance: TechRecordType = JSON.parse(
   (r: { objectType: string }) => r.objectType === "application_system",
 );
 
+it("summarizes risk controls as risks, not applications", () => {
+  const record: TechRecordType = {
+    ...applications,
+    objectType: "risk_control",
+    label: "Risks & Controls",
+    columns: ["riskOrControlName", "severity", "controlStatus"],
+    rows: [
+      { riskOrControlName: "Risk A", severity: "critical", controlStatus: "unknown" },
+      { riskOrControlName: "Risk B", severity: "high", controlStatus: "partially_effective" },
+      { riskOrControlName: "Risk C", severity: "medium", controlStatus: "effective" },
+    ],
+    primaryDimension: "severity",
+    dimensionCounts: [],
+  };
+  const { container } = render(<RecordBrowser recordType={record} />);
+  const summary = container.querySelector("[data-record-metrics]");
+  expect(summary).toHaveTextContent("3risks");
+  expect(summary).toHaveTextContent("2high or critical");
+  expect(summary).toHaveTextContent("1partial control");
+  expect(summary).toHaveTextContent("1control state unknown");
+  expect(summary).not.toHaveTextContent("applications");
+});
+
 /** The labels the detail panel itself renders -- not the page, which also carries facet names. */
 function detailLabels(record: TechRecordType = applications): string[] {
   render(<RecordBrowser recordType={record} />);

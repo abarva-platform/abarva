@@ -33,6 +33,23 @@ export interface EnterpriseContextPriority extends EnterpriseContextFact {
   metricCount: number;
 }
 
+export interface EnterpriseContextRisk extends EnterpriseContextFact {
+  riskType: string | null;
+  severity: "critical" | "high";
+  controlState: "partially_effective" | "unknown";
+  ownerRole: string | null;
+  functionName: string | null;
+  affectedObject: string | null;
+}
+
+export interface EnterpriseRiskTriage {
+  totalRisks: number;
+  highOrCritical: number;
+  partialControl: number;
+  unknownControl: number;
+  attentionRisks: EnterpriseContextRisk[];
+}
+
 export interface HomeEnterpriseContext {
   profile: EnterpriseContextFact & {
     businessModel: string;
@@ -42,6 +59,7 @@ export interface HomeEnterpriseContext {
   segmentFacts: Record<string, EnterpriseContextFact>;
   functions: EnterpriseContextFunction[];
   priorities: EnterpriseContextPriority[];
+  riskTriage: EnterpriseRiskTriage;
   sharedFunctionIds: string[];
   unlinkedPrograms: EnterpriseContextFact[];
   excludedUncitedRows: number;
@@ -229,6 +247,46 @@ export function buildHomeEnterpriseContext(
     };
   });
 
+  const namedObjects = new Map(cited.map((row) => [row.row_key, row.title]));
+  const functionNames = new Map(
+    functionRows.map((row) => [stringValue(payload(row).function_id), row.title]),
+  );
+  const riskRows = byType("risk");
+  const attentionRisks = riskRows.flatMap((row): EnterpriseContextRisk[] => {
+    const data = payload(row);
+    const severity = stringValue(data.severity).toLowerCase();
+    const controlState = stringValue(data.control_status ?? data.control_state)
+      .toLowerCase()
+      .replaceAll(" ", "_");
+    if (
+      (severity !== "critical" && severity !== "high") ||
+      (controlState !== "partially_effective" && controlState !== "unknown")
+    ) return [];
+    return [{
+      ...fact(row, sourceRefs),
+      riskType: stringValue(data.risk_type) || null,
+      severity,
+      controlState,
+      ownerRole: ownerById.get(stringValue(data.owner_id)) || stringValue(data.control_owner) || null,
+      functionName: functionNames.get(stringValue(data.business_function_id)) || null,
+      affectedObject: namedObjects.get(stringValue(data.object_ref)) || null,
+    }];
+  }).sort((a, b) => {
+    const priority = (risk: EnterpriseContextRisk) =>
+      (risk.severity === "critical" ? 0 : 2) +
+      (risk.controlState === "unknown" ? 0 : 1);
+    return priority(a) - priority(b) || a.rowKey.localeCompare(b.rowKey);
+  });
+  const riskTriage: EnterpriseRiskTriage = {
+    totalRisks: riskRows.length,
+    highOrCritical: riskRows.filter((row) =>
+      ["critical", "high"].includes(stringValue(payload(row).severity).toLowerCase()),
+    ).length,
+    partialControl: attentionRisks.filter((risk) => risk.controlState === "partially_effective").length,
+    unknownControl: attentionRisks.filter((risk) => risk.controlState === "unknown").length,
+    attentionRisks,
+  };
+
   return {
     profile: {
       ...fact(profileRows[0], sourceRefs),
@@ -239,6 +297,7 @@ export function buildHomeEnterpriseContext(
     segmentFacts,
     functions,
     priorities,
+    riskTriage,
     sharedFunctionIds: sharedFunctionIds.sort(),
     unlinkedPrograms,
     excludedUncitedRows,

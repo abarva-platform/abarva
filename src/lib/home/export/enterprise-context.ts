@@ -66,6 +66,7 @@ export function enterpriseContextExportSection(
           ["Declared priorities", context.priorities.length],
           ["Programs", programs],
           ["At-risk linked programs", atRisk],
+          ["High/critical risks with partial or unknown controls", context.riskTriage.attentionRisks.length],
         ],
         note: "Synthetic reference; not client-attested. Values are source-linked, not performance judgments.",
       }],
@@ -144,6 +145,30 @@ export function enterpriseContextExportSection(
           evidence(fn),
         ]),
         note: "Synthetic reference; not client-attested. Shared functions remain unallocated.",
+      }],
+    };
+  }
+
+  if (chapterId === "what_needs_attention") {
+    return {
+      title: "Risk review queue",
+      paragraphs: [
+        `${context.riskTriage.totalRisks} risks are recorded; ${context.riskTriage.highOrCritical} are high or critical. ${context.riskTriage.partialControl} high/critical risks have partially effective controls and ${context.riskTriage.unknownControl} have unknown control state. Unknown is not uncontrolled.`,
+        "The queue is ordered for review, not scored as a formal risk assessment. Control effectiveness is not independently attested here.",
+        caveat,
+      ],
+      tables: [{
+        caption: "High and critical risks needing control review",
+        columns: ["Risk", "Severity", "Control state", "Owner", "Affected record", "Evidence"],
+        rows: context.riskTriage.attentionRisks.slice(0, 10).map((risk) => [
+          risk.riskType ?? risk.title,
+          risk.severity,
+          risk.controlState === "unknown" ? "Unknown" : "Partially effective",
+          risk.ownerRole ?? "Not recorded",
+          risk.affectedObject ?? "Not resolved",
+          evidence(risk),
+        ]),
+        note: `Synthetic reference; not client-attested. Showing ${Math.min(10, context.riskTriage.attentionRisks.length)} of ${context.riskTriage.attentionRisks.length} review items.`,
       }],
     };
   }
